@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PickTagViewDecorator.java,v 1.3 2011/01/21 02:22:35 jeffw Exp $
+ *  $Id: SnapNetworkViewDecorator.java,v 1.1 2011/01/21 20:05:35 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.ui.treeviewers;
@@ -14,8 +14,8 @@ import org.eclipse.swt.graphics.Image;
 /**
  *  @author jeffw
  */
-public class PickTagViewDecorator extends LabelProvider implements ILabelDecorator {
-	public PickTagViewDecorator() {
+public class SnapNetworkViewDecorator extends LabelProvider implements ILabelDecorator {
+	public SnapNetworkViewDecorator() {
 		super();
 	}
 

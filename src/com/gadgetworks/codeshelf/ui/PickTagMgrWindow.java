@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PickTagMgrWindow.java,v 1.4 2011/01/21 05:12:25 jeffw Exp $
+ *  $Id: PickTagMgrWindow.java,v 1.5 2011/01/21 20:05:36 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.ui;
 
@@ -26,7 +26,7 @@ import com.gadgetworks.codeshelf.application.CodeShelfApplication;
 import com.gadgetworks.codeshelf.application.Util;
 import com.gadgetworks.codeshelf.model.dao.IDAOListener;
 import com.gadgetworks.codeshelf.ui.action.ActionConsole;
-import com.gadgetworks.codeshelf.ui.treeviewers.PickTagView;
+import com.gadgetworks.codeshelf.ui.treeviewers.SnapNetworkView;
 
 // --------------------------------------------------------------------------
 /**
@@ -43,7 +43,7 @@ public final class PickTagMgrWindow extends ApplicationWindow implements IDAOLis
 	private static final Log	LOGGER				= LogFactory.getLog(PickTagMgrWindow.class);
 
 	private CodeShelfApplication	mApplication;
-	private PickTagView		mPickTagView;
+	private SnapNetworkView		mPickTagView;
 	private Shell				mShell;
 
 	private ActionConsole		mConsoleAction;
@@ -111,7 +111,7 @@ public final class PickTagMgrWindow extends ApplicationWindow implements IDAOLis
 		composite.setLayout(new GridLayout());
 		composite.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, true, true));
 
-		mPickTagView = new PickTagView(composite, mApplication.getController(), SWT.BORDER);
+		mPickTagView = new SnapNetworkView(composite, mApplication.getController(), SWT.BORDER);
 		Util.getSystemDAO().registerDAOListener(mPickTagView);
 
 		return composite;

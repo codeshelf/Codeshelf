@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PickTagView.java,v 1.4 2011/01/21 05:12:25 jeffw Exp $
+ *  $Id: SnapNetworkView.java,v 1.1 2011/01/21 20:05:35 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.ui.treeviewers;
 
@@ -48,6 +48,7 @@ import com.gadgetworks.codeshelf.model.persist.PickTag;
 import com.gadgetworks.codeshelf.model.persist.SnapNetwork;
 import com.gadgetworks.codeshelf.ui.LocaleUtils;
 import com.gadgetworks.codeshelf.ui.wizards.PickTagDeviceWizard;
+import com.gadgetworks.codeshelf.ui.wizards.SnapNetworkWizard;
 
 // --------------------------------------------------------------------------
 /**
@@ -55,24 +56,24 @@ import com.gadgetworks.codeshelf.ui.wizards.PickTagDeviceWizard;
  * 
  * @author jeffw
  */
-public final class PickTagView implements ISelectionChangedListener, IDoubleClickListener, MenuListener, IDAOListener {
+public final class SnapNetworkView implements ISelectionChangedListener, IDoubleClickListener, MenuListener, IDAOListener {
 
 	//	private static final Log			LOGGER				= LogFactory.getLog(PickTagView.class);
 
-	private static final int			ID_COL_WIDTH		= 150;
-	private static final int			DESC_COL_WIDTH		= 200;
-	private static final int			DETAILS_COL_WIDTH	= 600;
+	private static final int				ID_COL_WIDTH		= 150;
+	private static final int				DESC_COL_WIDTH		= 200;
+	private static final int				DETAILS_COL_WIDTH	= 600;
 
-	private static final Log			LOGGER				= LogFactory.getLog(PickTagView.class);
+	private static final Log				LOGGER				= LogFactory.getLog(SnapNetworkView.class);
 
-	private Shell						mShell;
-	private TreeViewer					mTreeViewer;
-	private Tree						mTree;
-	private PickTagViewContentProvider	mPickTagViewContentProvider;
-	private Menu						mPopup;
-	private IController					mController;
+	private Shell							mShell;
+	private TreeViewer						mTreeViewer;
+	private Tree							mTree;
+	private SnapNetworkViewContentProvider	mSnapNetViewContentProvider;
+	private Menu							mPopup;
+	private IController						mController;
 
-	public PickTagView(final Composite inParent, final IController inController, final int inStyle) {
+	public SnapNetworkView(final Composite inParent, final IController inController, final int inStyle) {
 
 		mController = inController;
 		mShell = inParent.getShell();
@@ -120,34 +121,34 @@ public final class PickTagView implements ISelectionChangedListener, IDoubleClic
 		column.setWidth(ID_COL_WIDTH);
 		column.setText(LocaleUtils.getStr("snapnetview.id_col.label"));
 		column.setResizable(true);
-		column.setData(PickTagViewDecoratedLabelProvider.ID_COL);
+		column.setData(SnapNetworkViewDecoratedLabelProvider.ID_COL);
 
 		column = new TreeColumn(mTree, SWT.NONE);
 		column.setWidth(DESC_COL_WIDTH);
 		column.setText(LocaleUtils.getStr("snapnetview.desc_col.label"));
 		column.setResizable(true);
 		column.setMoveable(true);
-		column.setData(PickTagViewDecoratedLabelProvider.DESC_COL);
+		column.setData(SnapNetworkViewDecoratedLabelProvider.DESC_COL);
 
 		column = new TreeColumn(mTree, SWT.NONE);
 		column.setWidth(DETAILS_COL_WIDTH);
 		column.setText(LocaleUtils.getStr("snapnetview.details_col.label"));
 		column.setResizable(true);
 		column.setMoveable(true);
-		column.setData(PickTagViewDecoratedLabelProvider.DETAILS_COL);
+		column.setData(SnapNetworkViewDecoratedLabelProvider.DETAILS_COL);
 
-		mPickTagViewContentProvider = new PickTagViewContentProvider();
+		mSnapNetViewContentProvider = new SnapNetworkViewContentProvider();
 
-		mTreeViewer.setContentProvider(mPickTagViewContentProvider);
-		mTreeViewer.setComparator(new PickTagViewSorter());
-		mTreeViewer.setLabelProvider(new PickTagViewDecoratedLabelProvider(mTree,
-			new PickTagViewLabelProvider(),
-			new PickTagViewDecorator()));
+		mTreeViewer.setContentProvider(mSnapNetViewContentProvider);
+		mTreeViewer.setComparator(new SnapNetworkViewSorter());
+		mTreeViewer.setLabelProvider(new SnapNetworkViewDecoratedLabelProvider(mTree,
+			new SnapNetworkViewLabelProvider(),
+			new SnapNetworkViewDecorator()));
 		//		mTreeViewer.addFilter(new ActiveAccountsFilter());
 		//		mTreeViewer.setComparer(new ObjectIDComparer());
 		mTreeViewer.addSelectionChangedListener(this);
 		mTreeViewer.addDoubleClickListener(this);
-		mTreeViewer.setInput(PickTagViewContentProvider.PICKTAGVIEW_ROOT);
+		mTreeViewer.setInput(SnapNetworkViewContentProvider.PICKTAGVIEW_ROOT);
 	}
 
 	// --------------------------------------------------------------------------
@@ -227,14 +228,124 @@ public final class PickTagView implements ISelectionChangedListener, IDoubleClic
 		}
 
 		if (itemData == null) {
-			pickTagMenu(null);
-		} else if (itemData instanceof PickTag) {
-			PickTag pickTag = (PickTag) itemData;
-			pickTagMenu(pickTag);
+			snapNetworkMenu(null);
+		} else if (itemData instanceof SnapNetwork) {
+			SnapNetwork snapNetwork = (SnapNetwork) itemData;
+			snapNetworkMenu(snapNetwork);
 		} else if (itemData instanceof ControlGroup) {
 			ControlGroup controlGroup = (ControlGroup) itemData;
 			controlGroupMenu(controlGroup);
+		} else if (itemData instanceof PickTag) {
+			PickTag pickTag = (PickTag) itemData;
+			pickTagMenu(pickTag);
 		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * This is the popup menu when the user clicks on a PickTagModule in the PickTagView.
+	 * 
+	 * @param inSnapNetwork
+	 */
+	private void snapNetworkMenu(final SnapNetwork inSnapNetwork) {
+
+		// Add SnapNetwork menu item.
+		final MenuItem adItem = new MenuItem(mPopup, SWT.NONE);
+		adItem.setText(LocaleUtils.getStr("snapnetview.menu.add_snapnetwork"));
+		adItem.addListener(SWT.Selection, new Listener() {
+			public void handleEvent(Event inEvent) {
+				SnapNetworkWizard.addSnapNetwork(inSnapNetwork);
+			}
+		});
+
+		// Edit SnapNetwork menu item.
+		final MenuItem editItem = new MenuItem(mPopup, SWT.NONE);
+		editItem.setText(LocaleUtils.getStr("snapnetview.menu.edit_snapnetwork"));
+		editItem.setData(inSnapNetwork);
+		editItem.addListener(SWT.Selection, new Listener() {
+			public void handleEvent(Event inEvent) {
+				SnapNetworkWizard.editSnapNetwork(inSnapNetwork);
+			}
+		});
+
+		// Delete SnapNetwork menu item.
+		final MenuItem deleteItem = new MenuItem(mPopup, SWT.NONE);
+		deleteItem.setText(LocaleUtils.getStr("snapnetview.menu.delete_snapnetwork"));
+		deleteItem.setData(inSnapNetwork);
+		deleteItem.addListener(SWT.Selection, new Listener() {
+			public void handleEvent(Event inEvent) {
+				boolean deletePickTagModule = MessageDialog.openQuestion(Display.getCurrent().getActiveShell(),
+					LocaleUtils.getStr("snapnetview.menu.delete_snapnetwork.title"),
+					LocaleUtils.getStr("snapnetview.menu.delete_snapnetwork.prompt",
+						new String[] { inSnapNetwork.getDescription() }));
+				if (deletePickTagModule) {
+					try {
+						Util.getSystemDAO().deleteSnapNetwork(inSnapNetwork);
+					} catch (DAOException e) {
+						LOGGER.error(e);
+					}
+				}
+			}
+		});
+
+		new MenuItem(mPopup, SWT.SEPARATOR);
+
+		editItem.setEnabled(true);
+		deleteItem.setEnabled(true);
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * This is the popup menu when the user clicks on a PickTagModule in the PickTagView.
+	 * 
+	 * @param inControlGroup
+	 */
+	private void controlGroupMenu(final ControlGroup inControlGroup) {
+
+		// Add ControlGroup menu item.
+		final MenuItem adItem = new MenuItem(mPopup, SWT.NONE);
+		adItem.setText(LocaleUtils.getStr("snapnetview.menu.add_controlgroup"));
+		adItem.setData(inControlGroup.getParentSnapNetwork());
+		adItem.addListener(SWT.Selection, new Listener() {
+			public void handleEvent(Event inEvent) {
+				//				RulesetWizard.addPickTagRuleset(inPickTagModule.getParentPickTag());
+			}
+		});
+
+		// Edit ControlGroup menu item.
+		final MenuItem editItem = new MenuItem(mPopup, SWT.NONE);
+		editItem.setText(LocaleUtils.getStr("snapnetview.menu.edit_controlgroup"));
+		editItem.setData(inControlGroup);
+		editItem.addListener(SWT.Selection, new Listener() {
+			public void handleEvent(Event inEvent) {
+				//				RulesetWizard.editPickTagRuleset(inPickTagModule);
+			}
+		});
+
+		// Delete ControlGroup menu item.
+		final MenuItem deleteItem = new MenuItem(mPopup, SWT.NONE);
+		deleteItem.setText(LocaleUtils.getStr("snapnetview.menu.delete_controlgroup"));
+		deleteItem.setData(inControlGroup);
+		deleteItem.addListener(SWT.Selection, new Listener() {
+			public void handleEvent(Event inEvent) {
+				boolean deletePickTagModule = MessageDialog.openQuestion(Display.getCurrent().getActiveShell(),
+					LocaleUtils.getStr("snapnetview.menu.delete_controlgroup.title"),
+					LocaleUtils.getStr("snapnetview.menu.delete_controlgroup.prompt",
+						new String[] { inControlGroup.getDescription() }));
+				if (deletePickTagModule) {
+					try {
+						Util.getSystemDAO().deleteControlGroup(inControlGroup);
+					} catch (DAOException e) {
+						LOGGER.error(e);
+					}
+				}
+			}
+		});
+
+		new MenuItem(mPopup, SWT.SEPARATOR);
+
+		editItem.setEnabled(true);
+		deleteItem.setEnabled(true);
 	}
 
 	// --------------------------------------------------------------------------
@@ -274,9 +385,7 @@ public final class PickTagView implements ISelectionChangedListener, IDoubleClic
 					LocaleUtils.getStr("snapnetview.menu.delete_picktag.prompt", new String[] { inPickTag.getDescription() }));
 				if (deletePickTag) {
 					try {
-						if (inPickTag instanceof PickTag) {
-							Util.getSystemDAO().deletePickTag((PickTag) inPickTag);
-						}
+						Util.getSystemDAO().deletePickTag(inPickTag);
 					} catch (DAOException e) {
 						LOGGER.error("", e);
 					}
@@ -310,60 +419,6 @@ public final class PickTagView implements ISelectionChangedListener, IDoubleClic
 
 	// --------------------------------------------------------------------------
 	/**
-	 * This is the popup menu when the user clicks on a PickTagModule in the PickTagView.
-	 * 
-	 * @param inControlGroup
-	 */
-	private void controlGroupMenu(final ControlGroup inControlGroup) {
-
-		// Add ControlGroup menu item.
-		final MenuItem adItem = new MenuItem(mPopup, SWT.NONE);
-		adItem.setText(LocaleUtils.getStr("snapnetview.menu.add_picktagmodule"));
-		adItem.setData(inControlGroup.getParentSnapNetwork());
-		adItem.addListener(SWT.Selection, new Listener() {
-			public void handleEvent(Event inEvent) {
-				//				RulesetWizard.addPickTagRuleset(inPickTagModule.getParentPickTag());
-			}
-		});
-
-		// Edit ControlGroup menu item.
-		final MenuItem editItem = new MenuItem(mPopup, SWT.NONE);
-		editItem.setText(LocaleUtils.getStr("snapnetview.menu.edit_datoblockmodule"));
-		editItem.setData(inControlGroup);
-		editItem.addListener(SWT.Selection, new Listener() {
-			public void handleEvent(Event inEvent) {
-				//				RulesetWizard.editPickTagRuleset(inPickTagModule);
-			}
-		});
-
-		// Delete ControlGroup menu item.
-		final MenuItem deleteItem = new MenuItem(mPopup, SWT.NONE);
-		deleteItem.setText(LocaleUtils.getStr("snapnetview.menu.delete_picktagmodule"));
-		deleteItem.setData(inControlGroup);
-		deleteItem.addListener(SWT.Selection, new Listener() {
-			public void handleEvent(Event inEvent) {
-				boolean deletePickTagModule = MessageDialog.openQuestion(Display.getCurrent().getActiveShell(),
-					LocaleUtils.getStr("snapnetview.menu.delete_picktagmodule.title"),
-					LocaleUtils.getStr("snapnetview.menu.delete_picktagmodule.prompt",
-						new String[] { inControlGroup.getDescription() }));
-				if (deletePickTagModule) {
-					try {
-						Util.getSystemDAO().deleteControlGroup(inControlGroup);
-					} catch (DAOException e) {
-						LOGGER.error(e);
-					}
-				}
-			}
-		});
-
-		new MenuItem(mPopup, SWT.SEPARATOR);
-
-		editItem.setEnabled(true);
-		deleteItem.setEnabled(true);
-	}
-
-	// --------------------------------------------------------------------------
-	/**
 	 */
 	public void switchToSelection() {
 		if (mTreeViewer.getTree().getSelectionCount() > 0) {
@@ -383,7 +438,7 @@ public final class PickTagView implements ISelectionChangedListener, IDoubleClic
 	public void objectAdded(Object inObject) {
 		if (doesDAOChangeApply(inObject)) {
 			if (inObject instanceof SnapNetwork) {
-				mTreeViewer.add(PickTagViewContentProvider.PICKTAGVIEW_ROOT, inObject);
+				mTreeViewer.add(SnapNetworkViewContentProvider.PICKTAGVIEW_ROOT, inObject);
 			} else if (inObject instanceof ControlGroup) {
 				ControlGroup controlGroup = (ControlGroup) inObject;
 				SnapNetwork snapNetwork = controlGroup.getParentSnapNetwork();

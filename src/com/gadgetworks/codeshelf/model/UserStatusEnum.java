@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: UserStatusEnum.java,v 1.2 2011/01/21 01:12:12 jeffw Exp $
+ *  $Id: UserStatusEnum.java,v 1.3 2011/01/21 20:05:36 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model;
 
@@ -69,7 +69,7 @@ public enum UserStatusEnum {
 		return mName;
 	}
 
-	final static class UserStatusNum {
+	static final class UserStatusNum {
 
 		static final byte	INVALID		= 0;
 		static final byte	AVAILABLE	= 1;

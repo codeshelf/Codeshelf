@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PickTagViewContentProvider.java,v 1.3 2011/01/21 02:22:35 jeffw Exp $
+ *  $Id: SnapNetworkViewContentProvider.java,v 1.1 2011/01/21 20:05:35 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.ui.treeviewers;
@@ -14,11 +14,11 @@ import com.gadgetworks.codeshelf.model.persist.ControlGroup;
 import com.gadgetworks.codeshelf.model.persist.PickTag;
 import com.gadgetworks.codeshelf.model.persist.SnapNetwork;
 
-public class PickTagViewContentProvider implements ITreeContentProvider {
+public class SnapNetworkViewContentProvider implements ITreeContentProvider {
 
 	public static final String	PICKTAGVIEW_ROOT	= "picktagroot";
 
-	public PickTagViewContentProvider() {
+	public SnapNetworkViewContentProvider() {
 
 	}
 

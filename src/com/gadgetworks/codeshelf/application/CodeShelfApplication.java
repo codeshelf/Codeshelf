@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfApplication.java,v 1.2 2011/01/21 05:12:25 jeffw Exp $
+ *  $Id: CodeShelfApplication.java,v 1.3 2011/01/21 20:05:36 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -44,11 +44,12 @@ import com.gadgetworks.codeshelf.model.dao.H2SchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.persist.DBProperty;
 import com.gadgetworks.codeshelf.model.persist.PersistentProperty;
+import com.gadgetworks.codeshelf.model.persist.SnapNetwork;
 import com.gadgetworks.codeshelf.model.persist.WirelessDevice;
 import com.gadgetworks.codeshelf.server.JmsHandler;
 import com.gadgetworks.codeshelf.server.jms.ActiveMqManager;
-import com.gadgetworks.codeshelf.ui.PickTagMgrWindow;
 import com.gadgetworks.codeshelf.ui.LocaleUtils;
+import com.gadgetworks.codeshelf.ui.PickTagMgrWindow;
 import com.gadgetworks.codeshelf.ui.preferences.Preferences;
 
 public final class CodeShelfApplication {
@@ -181,7 +182,10 @@ public final class CodeShelfApplication {
 			Util.openConsole();
 
 		List<IGatewayInterface> interfaceList = new ArrayList<IGatewayInterface>();
-		interfaceList.add(new SnapInterface());
+		// Create a Snap interface for each snap network we have.
+		for (SnapNetwork network : Util.getSystemDAO().getSnapNetworks()) {
+			interfaceList.add(new SnapInterface(network));			
+		}
 		mController = new SnapController(Util.getSystemDAO(), interfaceList);
 
 		mWirelessDeviceEventHandler = new WirelessDeviceEventHandler(mController);

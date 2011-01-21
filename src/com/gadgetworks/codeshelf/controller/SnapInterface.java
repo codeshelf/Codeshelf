@@ -13,6 +13,7 @@ import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
 import org.apache.xmlrpc.client.XmlRpcCommonsTransportFactory;
 
 import com.gadgetworks.codeshelf.command.ICommand;
+import com.gadgetworks.codeshelf.model.persist.SnapNetwork;
 
 public final class SnapInterface implements IGatewayInterface {
 
@@ -23,8 +24,13 @@ public final class SnapInterface implements IGatewayInterface {
 	private static final String	E10_RPC_CMD_NAME			= "rpc";
 	private static final String	E10_MCAST_RPC_NAME			= "macstRpc";
 
-	private XmlRpcClient		mClient;
+	private SnapNetwork			mSnapNetwork;
+	private XmlRpcClient		mXmlRpcClient;
 	private boolean				mIsStarted					= false;
+
+	public SnapInterface(SnapNetwork inSnapNetwork) {
+		mSnapNetwork = inSnapNetwork;
+	}
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
@@ -37,16 +43,16 @@ public final class SnapInterface implements IGatewayInterface {
 			config.setEnabledForExtensions(true);
 			config.setReplyTimeout(5000);
 			config.setConnectionTimeout(5000);
-			mClient = new XmlRpcClient();
-			mClient.setTransportFactory(new XmlRpcCommonsTransportFactory(mClient));
-			mClient.setConfig(config);
+			mXmlRpcClient = new XmlRpcClient();
+			mXmlRpcClient.setTransportFactory(new XmlRpcCommonsTransportFactory(mXmlRpcClient));
+			mXmlRpcClient.setConfig(config);
 		} catch (MalformedURLException e) {
 			LOGGER.error("", e);
 		}
 
 		try {
 			Object[] params = new Object[] { E10_SERIAL_TYPE, E10_STANDARD_SERIAL_PORT, false };
-			Object result = (Object) mClient.execute("connectSerial", params);
+			Object result = (Object) mXmlRpcClient.execute("connectSerial", params);
 			mIsStarted = true;
 		} catch (XmlRpcException e) {
 			//LOGGER.error("", e);
@@ -70,11 +76,11 @@ public final class SnapInterface implements IGatewayInterface {
 		if (mIsStarted) {
 			try {
 				Object[] params = new Object[] { E10_SERIAL_TYPE, E10_STANDARD_SERIAL_PORT, false };
-				Object result = (Object) mClient.execute("disconnect", params);
+				Object result = (Object) mXmlRpcClient.execute("disconnect", params);
 			} catch (XmlRpcException e) {
 				//LOGGER.error("", e);
 			}
-			mClient = null;
+			mXmlRpcClient = null;
 		}
 	}
 
@@ -83,7 +89,7 @@ public final class SnapInterface implements IGatewayInterface {
 	 * @see com.gadgetworks.codeshelf.controller.IGatewayInterface#isStarted()
 	 */
 	public boolean isStarted() {
-		return mClient != null;
+		return mXmlRpcClient != null;
 	}
 
 	// --------------------------------------------------------------------------
@@ -121,7 +127,7 @@ public final class SnapInterface implements IGatewayInterface {
 			}
 
 			// Send the command.
-			Object result = (Object) mClient.execute(E10_RPC_CMD_NAME, params);
+			Object result = (Object) mXmlRpcClient.execute(E10_RPC_CMD_NAME, params);
 		} catch (XmlRpcException e) {
 			LOGGER.error("", e);
 		}

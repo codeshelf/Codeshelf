@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: SnapNetwork.java,v 1.4 2011/01/21 04:25:54 jeffw Exp $
+ *  $Id: SnapNetwork.java,v 1.5 2011/01/21 20:05:36 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -52,6 +52,9 @@ public class SnapNetwork extends PersistABC {
 	// Active/Inactive network
 	@Column(nullable = false)
 	private boolean				mIsActive;
+	// Network Id
+	@Column(nullable = false)
+	private byte[]				mNetworkId;
 	// For a network this is a list of all of the control groups that belong in the set.
 	@OneToMany(mappedBy = "mParentSnapNetwork")
 	private List<ControlGroup>	mControlGroups		= new ArrayList<ControlGroup>();
@@ -88,6 +91,14 @@ public class SnapNetwork extends PersistABC {
 
 	public final void setIsActive(boolean inIsActive) {
 		mIsActive = inIsActive;
+	}
+
+	public final byte[] getNetworkId() {
+		return mNetworkId;
+	}
+
+	public final void setNetworkId(byte[] inNetworkId) {
+		mNetworkId = inNetworkId;
 	}
 
 	// We always need to return the object cached in the DAO.
