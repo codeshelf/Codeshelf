@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="lib" path="build" sourcepath="src"/>
-	<classpathentry excluding="com/gadgetworks/idnet/application/CarbonMenuDelegate.java|com/gadgetworks/idnet/application/MainCarbon.java|com/gadgetworks/idnet/application/MainCocoa.java|com/gadgetworks/idnet/application/SWTCocoaEnhancerDelegate.java|com/gadgetworks/idnet/model/dao/GWDerbyAdapter.java|com/gadgetworks/idnet/model/dao/GWH2Adapter.java|com/gadgetworks/idnet/p2p/jingle/speex/|org/datanucleus/springframework/**" kind="src" path="src"/>
+	<classpathentry excluding="com/gadgetworks/codeshelf/application/CarbonMenuDelegate.java|com/gadgetworks/codeshelf/application/MainCarbon.java|com/gadgetworks/codeshelf/application/MainCocoa.java|com/gadgetworks/codeshelf/application/SWTCocoaEnhancerDelegate.java|com/gadgetworks/codeshelf/model/dao/GWDerbyAdapter.java|com/gadgetworks/codeshelf/model/dao/GWH2Adapter.java|com/gadgetworks/codeshelf/p2p/jingle/speex/|org/datanucleus/springframework/**" kind="src" path="src"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/FlyWeightController"/>
 	<classpathentry kind="lib" path="lib/dist/log4j-1.2.14.jar" sourcepath="APIs/log4j-src.zip"/>
 	<classpathentry kind="lib" path="lib/dist/commons-logging-1.1.1.jar" sourcepath="APIs/commons-logging-1.1.1-src.zip"/>

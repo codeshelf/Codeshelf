@@ -13,7 +13,7 @@
 	<resources>
 		<property name="apple.laf.useScreenMenuBar" value="true"/>
 		<nativelib href="./lib/FlyWeightController.jar"/>
-		<jar href="./lib/idnet.jar" main="true"/>
+		<jar href="./lib/codeshelf.jar" main="true"/>
 		<jar href="./lib/c3p0-0.9.1.2.jar"/>
 		<jar href="./lib/commons-logging.jar"/>
 		<jar href="./lib/derby.jar"/>
@@ -61,5 +61,5 @@
 		<jar href="./bin/osx/swt.jar"/>
 		<jar href="./bin/osx/jmf-2.1.1e.jar"/>
 	</resources>
-	<application-desc main-class="com.gadgetworks.idnet.application.Main"/>
+	<application-desc main-class="com.gadgetworks.codeshelf.application.Main"/>
 </jnlp>

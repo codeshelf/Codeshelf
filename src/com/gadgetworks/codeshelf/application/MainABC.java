@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: MainABC.java,v 1.2 2011/01/21 01:12:11 jeffw Exp $
+ *  $Id: MainABC.java,v 1.3 2011/01/21 04:25:54 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -21,7 +21,7 @@ abstract class MainABC {
 	}
 	private static final Log	LOGGER	= LogFactory.getLog(MainABC.class);
 
-	protected IdNetApplication	mApplication;
+	protected CodeShelfApplication	mApplication;
 
 	// --------------------------------------------------------------------------
 	/**
@@ -38,7 +38,7 @@ abstract class MainABC {
 	public void mainStart() {
 
 		// Create and start the application.
-		mApplication = new IdNetApplication();
+		mApplication = new CodeShelfApplication();
 		mApplication.startApplication();
 		// This executes any platform-specific application setup.
 		platformSetup();

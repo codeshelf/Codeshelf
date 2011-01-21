@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: IdNetApplication.java,v 1.2 2011/01/21 01:12:11 jeffw Exp $
+ *  $Id: CodeShelfApplication.java,v 1.1 2011/01/21 04:25:54 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -51,15 +51,15 @@ import com.gadgetworks.codeshelf.ui.PickTagMgrWindow;
 import com.gadgetworks.codeshelf.ui.LocaleUtils;
 import com.gadgetworks.codeshelf.ui.preferences.Preferences;
 
-public final class IdNetApplication {
+public final class CodeShelfApplication {
 
-	private static final Log			LOGGER		= LogFactory.getLog(IdNetApplication.class);
+	private static final Log			LOGGER		= LogFactory.getLog(CodeShelfApplication.class);
 
 	private static boolean				isDBStarted;
 
 	private boolean						mIsRunning	= true;
 	private Display						mDisplay;
-	private PickTagMgrWindow			mIdNetApplicationWindow;
+	private PickTagMgrWindow			mCodeShelfApplicationWindow;
 	private Tray						mSystemTray;
 	private TrayItem					mSystemTrayItem;
 	private IController					mController;
@@ -68,7 +68,7 @@ public final class IdNetApplication {
 	private Thread						mShutdownHookThread;
 	private Runnable					mShutdownRunnable;
 
-	public IdNetApplication() {
+	public CodeShelfApplication() {
 
 		// Prepare the shutdown hook.
 		mShutdownRunnable = new Runnable() {
@@ -124,7 +124,7 @@ public final class IdNetApplication {
 
 		// Set a class loader that can access the classpath when searching for resources.
 		Thread.currentThread().setContextClassLoader(ClassLoader.getSystemClassLoader());
-		System.loadLibrary("jd2xx");
+		//System.loadLibrary("jd2xx");
 
 		LOGGER.warn("CodeShelf version: " + Util.getVersionString());
 		LOGGER.info("user.dir = " + System.getProperty("user.dir"));
@@ -229,8 +229,8 @@ public final class IdNetApplication {
 
 		LOGGER.info("Stopping application");
 
-		if (mIdNetApplicationWindow != null) {
-			mIdNetApplicationWindow.close();
+		if (mCodeShelfApplicationWindow != null) {
+			mCodeShelfApplicationWindow.close();
 		}
 
 		mSystemTrayItem.dispose();
@@ -319,28 +319,28 @@ public final class IdNetApplication {
 	 */
 	private void launchNewApplicationWindow() {
 
-		if (mIdNetApplicationWindow != null) {
-			Shell shell = mIdNetApplicationWindow.getShell();
+		if (mCodeShelfApplicationWindow != null) {
+			Shell shell = mCodeShelfApplicationWindow.getShell();
 			if (shell == null) {
-				mIdNetApplicationWindow = null;
+				mCodeShelfApplicationWindow = null;
 			} else if (shell.isDisposed()) {
-				mIdNetApplicationWindow = null;
+				mCodeShelfApplicationWindow = null;
 			}
 		}
 
-		if (mIdNetApplicationWindow == null) {
+		if (mCodeShelfApplicationWindow == null) {
 			// Setup the main application window.
 			Shell shell = new Shell(mDisplay);
-			mIdNetApplicationWindow = new PickTagMgrWindow(shell, this);
+			mCodeShelfApplicationWindow = new PickTagMgrWindow(shell, this);
 			shell.pack();
-			mIdNetApplicationWindow.setBlockOnOpen(false);
-			mIdNetApplicationWindow.open();
+			mCodeShelfApplicationWindow.setBlockOnOpen(false);
+			mCodeShelfApplicationWindow.open();
 		} else {
 		}
 
-		if (mIdNetApplicationWindow != null) {
-			mIdNetApplicationWindow.getShell().forceActive();
-			mIdNetApplicationWindow.getShell().forceFocus();
+		if (mCodeShelfApplicationWindow != null) {
+			mCodeShelfApplicationWindow.getShell().forceActive();
+			mCodeShelfApplicationWindow.getShell().forceFocus();
 		}
 
 	}
@@ -581,7 +581,7 @@ public final class IdNetApplication {
 		mi.setText(LocaleUtils.getStr("system.tray.open_window"));
 		mi.addListener(SWT.Selection, new Listener() {
 			public void handleEvent(Event inEvent) {
-				// Open the IdNetApplicationWindow if it's not already open.
+				// Open the CodeShelfApplicationWindow if it's not already open.
 				launchNewApplicationWindow();
 			}
 		});

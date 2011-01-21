@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: SnapNetwork.java,v 1.3 2011/01/21 02:22:35 jeffw Exp $
+ *  $Id: SnapNetwork.java,v 1.4 2011/01/21 04:25:54 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -23,10 +23,11 @@ import com.gadgetworks.codeshelf.model.dao.ISystemDAO;
 
 // --------------------------------------------------------------------------
 /**
- * Ruleset
+ * SnapNetwork
  * 
- * The Ruleset object holds information about rules to process against a remote source of events/notifications.
- *  * 
+ * The SnapNetwork object holds information about how to create a standalone Snap network.
+ * (There may be more than one running at a facility.)
+ * 
  * @author jeffw
  */
 
@@ -34,11 +35,11 @@ import com.gadgetworks.codeshelf.model.dao.ISystemDAO;
 @DiscriminatorColumn(name = "DTYPE", discriminatorType = DiscriminatorType.STRING)
 //@MappedSuperclass
 @Entity
-@Table(name = "RULESET")
+@Table(name = "SNAPNETWORK")
 @DiscriminatorValue("REAL")
 public class SnapNetwork extends PersistABC {
 
-	//	private static final Log		LOGGER			= LogFactory.getLog(Ruleset.class);
+	//	private static final Log		LOGGER			= LogFactory.getLog(SnapNetwork.class);
 
 	private static final long	serialVersionUID	= 3001609308065821464L;
 
@@ -52,10 +53,8 @@ public class SnapNetwork extends PersistABC {
 	@Column(nullable = false)
 	private boolean				mIsActive;
 	// For a network this is a list of all of the control groups that belong in the set.
-	@OneToMany(mappedBy = "mParentRuleset")
-	private List<ControlGroup>	mControlGroups				= new ArrayList<ControlGroup>();
-
-	// For a Ruleset this is a list of all of the rules that belong in the set.
+	@OneToMany(mappedBy = "mParentSnapNetwork")
+	private List<ControlGroup>	mControlGroups		= new ArrayList<ControlGroup>();
 
 	public SnapNetwork() {
 		mId = "";

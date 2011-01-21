@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ResponseActorKVP.java,v 1.3 2011/01/21 02:22:35 jeffw Exp $
+ *  $Id: ResponseActorKVP.java,v 1.4 2011/01/21 04:25:54 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.query;
 
@@ -9,8 +9,6 @@ import java.io.IOException;
 
 import com.gadgetworks.codeshelf.controller.INetworkDevice;
 import com.gadgetworks.codeshelf.controller.ITransport;
-import com.gadgetworks.codeshelf.controller.NetResponseTypeID;
-
 
 //--------------------------------------------------------------------------
 /**
@@ -33,7 +31,7 @@ public final class ResponseActorKVP extends ResponseABC {
 	public static final String	BEAN_ID			= "ResponseActorKVP";
 	public static final byte	KVPNUMBER_SIZE	= 1;
 
-	private byte[]				mGUID			= new byte[INetworkDevice.UNIQUEID_BYTES];
+	private String				mGUID;
 	private byte				mKVPNumber;
 	private String				mKeyStr;
 	private String				mValueStr;
@@ -42,7 +40,7 @@ public final class ResponseActorKVP extends ResponseABC {
 		super();
 	}
 
-	public ResponseActorKVP(byte[] inGUID, byte inKVPNumber, String inKeyStr, String inValueStr) {
+	public ResponseActorKVP(String inGUID, byte inKVPNumber, String inKeyStr, String inValueStr) {
 		mGUID = inGUID;
 		mKVPNumber = inKVPNumber;
 		mKeyStr = inKeyStr;
@@ -63,10 +61,10 @@ public final class ResponseActorKVP extends ResponseABC {
 	 */
 	@Override
 	protected void doFromTransport(ITransport inTransport) throws IOException {
-		inBitFieldInputStream.readBytes(mGUID, INetworkDevice.UNIQUEID_BYTES);
-		mKVPNumber = inBitFieldInputStream.readByte();
-		mKeyStr = inBitFieldInputStream.readPString();
-		mValueStr = inBitFieldInputStream.readPString();
+		mGUID = (String) inTransport.getParam(1);
+		mKVPNumber = ((Byte) inTransport.getParam(2)).byteValue();
+		mKeyStr = (String) inTransport.getParam(3);
+		mValueStr = (String) inTransport.getParam(4);
 	}
 
 	// --------------------------------------------------------------------------
@@ -75,10 +73,10 @@ public final class ResponseActorKVP extends ResponseABC {
 	 */
 	@Override
 	protected void doToTransport(ITransport inTransport) throws IOException {
-		inBitFieldOutputStream.writeBytes(mGUID);
-		inBitFieldOutputStream.writeByte(mKVPNumber);
-		inBitFieldOutputStream.writePString(mKeyStr);
-		inBitFieldOutputStream.writePString(mValueStr);
+		inTransport.setParam(mGUID, 1);
+		inTransport.setParam(mKVPNumber, 2);
+		inTransport.setParam(mKeyStr, 3);
+		inTransport.setParam(mValueStr, 4);
 	}
 
 	/* --------------------------------------------------------------------------

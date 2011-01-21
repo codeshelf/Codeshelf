@@ -1,12 +1,11 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: IResponse.java,v 1.3 2011/01/21 02:22:35 jeffw Exp $
+ *  $Id: IResponse.java,v 1.4 2011/01/21 04:25:54 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.query;
 
 import com.gadgetworks.codeshelf.controller.ITransport;
-import com.gadgetworks.codeshelf.controller.NetResponseTypeID;
 
 //--------------------------------------------------------------------------
 /**

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Util.java,v 1.2 2011/01/21 01:12:11 jeffw Exp $
+ *  $Id: Util.java,v 1.3 2011/01/21 04:25:54 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -252,9 +252,9 @@ public final class Util {
 	 *  Only do this once.
 	 *  @param inShell
 	 */
-	public static synchronized void startConsole(Shell inShell, IdNetApplication inIdNetApplication) {
+	public static synchronized void startConsole(Shell inShell, CodeShelfApplication inCodeShelfApplication) {
 		if (mConsole == null) {
-			mConsole = new Console(inShell, inIdNetApplication);
+			mConsole = new Console(inShell, inCodeShelfApplication);
 		} else {
 			LOGGER.error("Console already started - only do this once.");
 		}

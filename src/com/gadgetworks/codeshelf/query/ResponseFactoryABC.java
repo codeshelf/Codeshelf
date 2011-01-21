@@ -1,14 +1,13 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ResponseFactoryABC.java,v 1.2 2011/01/21 01:12:11 jeffw Exp $
+ *  $Id: ResponseFactoryABC.java,v 1.3 2011/01/21 04:25:54 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.query;
 
 import java.io.IOException;
 
 import com.gadgetworks.codeshelf.controller.ITransport;
-import com.gadgetworks.codeshelf.controller.NetResponseTypeID;
 
 // --------------------------------------------------------------------------
 /**
@@ -16,7 +15,7 @@ import com.gadgetworks.codeshelf.controller.NetResponseTypeID;
  */
 public abstract class ResponseFactoryABC implements IResponseFactory {
 
-	protected abstract IResponse doCreateResponse(int inResponseTypeID);
+	protected abstract IResponse doCreateResponse(ResponseTypeEnum inResponseType);
 	
 	// --------------------------------------------------------------------------
 	/**
@@ -29,15 +28,15 @@ public abstract class ResponseFactoryABC implements IResponseFactory {
 	public final IResponse createResponse(ITransport inTransport) throws IOException {
 
 		// Read the Response ID from the input stream, and create the Response for it.
-		NetResponseTypeID responseTypeID;
+		ResponseTypeEnum responseTypeId;
 		IResponse result = null;
 
-		responseTypeID = inTransport.getParam(inParamKey);
+		responseTypeId = (ResponseTypeEnum) inTransport.getParam(1);
 		
-		result = this.doCreateResponse(responseTypeID.getParamValue());
+		result = this.doCreateResponse(responseTypeId);
 		
 		if (result != null) {
-			result.fromStream(inInputStream, inResponseByteCount);
+			result.fromTransport(inTransport);
 		}
 
 		return result;

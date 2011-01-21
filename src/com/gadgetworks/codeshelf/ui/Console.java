@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Console.java,v 1.2 2011/01/21 01:12:12 jeffw Exp $
+ *  $Id: Console.java,v 1.3 2011/01/21 04:25:54 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.ui;
 
@@ -30,7 +30,7 @@ import org.eclipse.swt.widgets.Decorations;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 
-import com.gadgetworks.codeshelf.application.IdNetApplication;
+import com.gadgetworks.codeshelf.application.CodeShelfApplication;
 import com.gadgetworks.codeshelf.application.Util;
 import com.gadgetworks.codeshelf.ui.action.ActionConsole;
 
@@ -71,7 +71,7 @@ public final class Console implements ShellListener, IStructuredContentProvider 
 	/**
 	 *  @param inParentShell
 	 */
-	public Console(final Shell inParentShell, final IdNetApplication inIdNetApplication) {
+	public Console(final Shell inParentShell, final CodeShelfApplication inCodeShelfApplication) {
 
 		LOGGER.debug("Creating console");
 
@@ -92,7 +92,7 @@ public final class Console implements ShellListener, IStructuredContentProvider 
 
 		//		mPrefsAction = new Action("&Prefs\tCtrl+,") {
 		//			public void run() {
-		//				inIdNetApplication.editPreferences();
+		//				inCodeShelfApplication.editPreferences();
 		//			}
 		//		};
 		//		mAboutAction = new Action("&About\t") {
