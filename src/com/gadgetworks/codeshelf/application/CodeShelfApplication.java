@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfApplication.java,v 1.1 2011/01/21 04:25:54 jeffw Exp $
+ *  $Id: CodeShelfApplication.java,v 1.2 2011/01/21 05:12:25 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -192,14 +192,14 @@ public final class CodeShelfApplication {
 
 		launchNewApplicationWindow();
 
-		setupSystemTray();
+		//setupSystemTray();
 
 		// Start the ActiveMQ test server if required.
 		property = Util.getSystemDAO().findPersistentProperty(PersistentProperty.ACTIVEMQ_RUN);
 		if ((property != null) && (property.getCurrentValueAsBoolean())) {
 			ActiveMqManager.startBrokerService();
 		}
-		
+
 		// Start the JMS message handler.
 		JmsHandler.startJmsHandler();
 
@@ -233,9 +233,11 @@ public final class CodeShelfApplication {
 			mCodeShelfApplicationWindow.close();
 		}
 
-		mSystemTrayItem.dispose();
-		mSystemTray.dispose();
-
+		if (mSystemTrayItem != null) {
+			mSystemTrayItem.dispose();
+			mSystemTray.dispose();
+		}
+		
 		ActiveMqManager.stopBrokerService();
 
 		Util.closeConsole();
@@ -616,7 +618,7 @@ public final class CodeShelfApplication {
 			//			if (Util.getSystemDAO().getCardPendingUpdateCount() == 0) {
 			//				mSystemTrayItem.setImage(Util.getImageRegistry().get(Util.SYSTEM_TRAY_ICON_CLEAR));
 			//			} else {
-			mSystemTrayItem.setImage(Util.getImageRegistry().get(Util.SYSTEM_TRAY_ICON_UPDATES));
+			//				mSystemTrayItem.setImage(Util.getImageRegistry().get(Util.SYSTEM_TRAY_ICON_UPDATES));
 			//			}
 		}
 	}

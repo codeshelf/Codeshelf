@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PickTagView.java,v 1.3 2011/01/21 02:22:35 jeffw Exp $
+ *  $Id: PickTagView.java,v 1.4 2011/01/21 05:12:25 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.ui.treeviewers;
 
@@ -81,7 +81,7 @@ public final class PickTagView implements ISelectionChangedListener, IDoubleClic
 		mTree = mTreeViewer.getTree();
 
 		mTree.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
-		mTree.setFont(Util.getFontRegistry().get(Util.DATOBLOKVIEW_TEXT));
+		mTree.setFont(Util.getFontRegistry().get(Util.SNAP_NETWORK_VIEW_TEXT));
 		mTree.setHeaderVisible(true);
 		mTree.setLinesVisible(false);
 		mTree.setBackground(Util.getColorRegistry().get(Util.BACKGROUND_COLOR));
@@ -118,20 +118,20 @@ public final class PickTagView implements ISelectionChangedListener, IDoubleClic
 
 		TreeColumn column = new TreeColumn(mTree, SWT.NONE);
 		column.setWidth(ID_COL_WIDTH);
-		column.setText(LocaleUtils.getStr("datoblokview.id_col.label"));
+		column.setText(LocaleUtils.getStr("snapnetview.id_col.label"));
 		column.setResizable(true);
 		column.setData(PickTagViewDecoratedLabelProvider.ID_COL);
 
 		column = new TreeColumn(mTree, SWT.NONE);
 		column.setWidth(DESC_COL_WIDTH);
-		column.setText(LocaleUtils.getStr("datoblokview.desc_col.label"));
+		column.setText(LocaleUtils.getStr("snapnetview.desc_col.label"));
 		column.setResizable(true);
 		column.setMoveable(true);
 		column.setData(PickTagViewDecoratedLabelProvider.DESC_COL);
 
 		column = new TreeColumn(mTree, SWT.NONE);
 		column.setWidth(DETAILS_COL_WIDTH);
-		column.setText(LocaleUtils.getStr("datoblokview.details_col.label"));
+		column.setText(LocaleUtils.getStr("snapnetview.details_col.label"));
 		column.setResizable(true);
 		column.setMoveable(true);
 		column.setData(PickTagViewDecoratedLabelProvider.DETAILS_COL);
@@ -229,11 +229,11 @@ public final class PickTagView implements ISelectionChangedListener, IDoubleClic
 		if (itemData == null) {
 			pickTagMenu(null);
 		} else if (itemData instanceof PickTag) {
-			PickTag datoblok = (PickTag) itemData;
-			pickTagMenu(datoblok);
+			PickTag pickTag = (PickTag) itemData;
+			pickTagMenu(pickTag);
 		} else if (itemData instanceof ControlGroup) {
-			ControlGroup datoBlokModule = (ControlGroup) itemData;
-			controlGroupMenu(datoBlokModule);
+			ControlGroup controlGroup = (ControlGroup) itemData;
+			controlGroupMenu(controlGroup);
 		}
 	}
 
@@ -246,7 +246,7 @@ public final class PickTagView implements ISelectionChangedListener, IDoubleClic
 	private void pickTagMenu(final PickTag inPickTag) {
 
 		final MenuItem addItem = new MenuItem(mPopup, SWT.NONE);
-		addItem.setText(LocaleUtils.getStr("datoblokview.menu.add_datoblok"));
+		addItem.setText(LocaleUtils.getStr("snapnetview.menu.add_picktag"));
 		addItem.setData(null);
 		addItem.addListener(SWT.Selection, new Listener() {
 			public void handleEvent(Event inEvent) {
@@ -255,23 +255,23 @@ public final class PickTagView implements ISelectionChangedListener, IDoubleClic
 		});
 
 		final MenuItem editItem = new MenuItem(mPopup, SWT.NONE);
-		editItem.setText(LocaleUtils.getStr("datoblokview.menu.edit_datoblok"));
+		editItem.setText(LocaleUtils.getStr("snapnetview.menu.edit_picktag"));
 		editItem.setData(inPickTag);
 		editItem.addListener(SWT.Selection, new Listener() {
 			public void handleEvent(Event inEvent) {
-				PickTag datoblok = Util.getSystemDAO().loadPickTag(inPickTag.getPersistentId());
-				PickTagDeviceWizard.editPickTagDevice(datoblok, mController, mShell);
+				PickTag pickTag = Util.getSystemDAO().loadPickTag(inPickTag.getPersistentId());
+				PickTagDeviceWizard.editPickTagDevice(pickTag, mController, mShell);
 			}
 		});
 
 		final MenuItem deleteItem = new MenuItem(mPopup, SWT.NONE);
-		deleteItem.setText(LocaleUtils.getStr("datoblokview.menu.delete_datoblok"));
+		deleteItem.setText(LocaleUtils.getStr("snapnetview.menu.delete_picktag"));
 		deleteItem.setData(inPickTag);
 		deleteItem.addListener(SWT.Selection, new Listener() {
 			public void handleEvent(Event inEvent) {
 				boolean deletePickTag = MessageDialog.openQuestion(Display.getCurrent().getActiveShell(),
-					LocaleUtils.getStr("datoblokview.menu.delete_datoblok.title"),
-					LocaleUtils.getStr("datoblokview.menu.delete_datoblok.prompt", new String[] { inPickTag.getDescription() }));
+					LocaleUtils.getStr("snapnetview.menu.delete_picktag.title"),
+					LocaleUtils.getStr("snapnetview.menu.delete_picktag.prompt", new String[] { inPickTag.getDescription() }));
 				if (deletePickTag) {
 					try {
 						if (inPickTag instanceof PickTag) {
@@ -288,7 +288,7 @@ public final class PickTagView implements ISelectionChangedListener, IDoubleClic
 
 		// Add module menu item.
 		final MenuItem adItem = new MenuItem(mPopup, SWT.NONE);
-		adItem.setText(LocaleUtils.getStr("datoblokview.menu.add_datoblokmodule"));
+		adItem.setText(LocaleUtils.getStr("snapnetview.menu.add_picktagmodule"));
 		adItem.setData(inPickTag);
 		adItem.addListener(SWT.Selection, new Listener() {
 			public void handleEvent(Event inEvent) {
@@ -318,7 +318,7 @@ public final class PickTagView implements ISelectionChangedListener, IDoubleClic
 
 		// Add ControlGroup menu item.
 		final MenuItem adItem = new MenuItem(mPopup, SWT.NONE);
-		adItem.setText(LocaleUtils.getStr("datoblokview.menu.add_datoblokmodule"));
+		adItem.setText(LocaleUtils.getStr("snapnetview.menu.add_picktagmodule"));
 		adItem.setData(inControlGroup.getParentSnapNetwork());
 		adItem.addListener(SWT.Selection, new Listener() {
 			public void handleEvent(Event inEvent) {
@@ -328,7 +328,7 @@ public final class PickTagView implements ISelectionChangedListener, IDoubleClic
 
 		// Edit ControlGroup menu item.
 		final MenuItem editItem = new MenuItem(mPopup, SWT.NONE);
-		editItem.setText(LocaleUtils.getStr("datoblokview.menu.edit_datoblockmodule"));
+		editItem.setText(LocaleUtils.getStr("snapnetview.menu.edit_datoblockmodule"));
 		editItem.setData(inControlGroup);
 		editItem.addListener(SWT.Selection, new Listener() {
 			public void handleEvent(Event inEvent) {
@@ -338,13 +338,13 @@ public final class PickTagView implements ISelectionChangedListener, IDoubleClic
 
 		// Delete ControlGroup menu item.
 		final MenuItem deleteItem = new MenuItem(mPopup, SWT.NONE);
-		deleteItem.setText(LocaleUtils.getStr("datoblokview.menu.delete_datoblokmodule"));
+		deleteItem.setText(LocaleUtils.getStr("snapnetview.menu.delete_picktagmodule"));
 		deleteItem.setData(inControlGroup);
 		deleteItem.addListener(SWT.Selection, new Listener() {
 			public void handleEvent(Event inEvent) {
 				boolean deletePickTagModule = MessageDialog.openQuestion(Display.getCurrent().getActiveShell(),
-					LocaleUtils.getStr("datoblokview.menu.delete_datoblokmodule.title"),
-					LocaleUtils.getStr("datoblokview.menu.delete_datoblokmodule.prompt",
+					LocaleUtils.getStr("snapnetview.menu.delete_picktagmodule.title"),
+					LocaleUtils.getStr("snapnetview.menu.delete_picktagmodule.prompt",
 						new String[] { inControlGroup.getDescription() }));
 				if (deletePickTagModule) {
 					try {
@@ -471,8 +471,8 @@ public final class PickTagView implements ISelectionChangedListener, IDoubleClic
 				for (TreeItem treeItem : mTree.getItems()) {
 					if (treeItem.getData() instanceof PickTag) {
 						if (!treeItem.getExpanded()) {
-							PickTag datoblok = (PickTag) treeItem.getData();
-							if (datoblok.getNetworkDeviceState().equals(NetworkDeviceStateEnum.STARTED)) {
+							PickTag pickTag = (PickTag) treeItem.getData();
+							if (pickTag.getNetworkDeviceState().equals(NetworkDeviceStateEnum.STARTED)) {
 								mTreeViewer.expandToLevel(treeItem.getData(), 1);
 							}
 						}

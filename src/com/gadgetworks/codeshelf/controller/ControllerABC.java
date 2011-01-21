@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ControllerABC.java,v 1.2 2011/01/21 01:12:11 jeffw Exp $
+ *  $Id: ControllerABC.java,v 1.3 2011/01/21 05:12:25 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.controller;
@@ -75,6 +75,7 @@ public abstract class ControllerABC implements IController {
 	private static final int									INTERFACESTARTER_THREAD_PRIORITY	= Thread.NORM_PRIORITY;
 
 	private static final long									CTRL_START_DELAY_MILLIS				= 200;
+	private static final long									CTRL_NOCMD_DELAY_MILLIS				= 5;
 	private static final long									NETCHECK_DELAY_MILLIS				= 250;
 
 	private static final long									QUERY_TIMEOUT_MILLIS				= 500;
@@ -1175,6 +1176,12 @@ public abstract class ControllerABC implements IController {
 										processAckCommand(command);
 									} else {
 										receiveCommand(command, command.getSrcAddr());
+									}
+								} else {
+									try {
+										Thread.sleep(CTRL_NOCMD_DELAY_MILLIS);
+									} catch (InterruptedException e) {
+										LOGGER.error("", e);
 									}
 								}
 							} else {

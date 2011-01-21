@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ActiveMqManager.java,v 1.2 2011/01/21 01:12:12 jeffw Exp $
+ *  $Id: ActiveMqManager.java,v 1.3 2011/01/21 05:12:25 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.server.jms;
 
@@ -40,7 +40,7 @@ import com.gadgetworks.codeshelf.model.persist.PersistentProperty;
  */
 public final class ActiveMqManager {
 
-	public static final String					DEFAULT_DATOBLOK_MESSAGE_QUEUE	= "PickTagMsgQueue";
+	public static final String					DEFAULT_PICKTAGS_MESSAGE_QUEUE	= "PickTagMsgQueue";
 
 	private static final Log					LOGGER							= LogFactory.getLog(ActiveMqManager.class);
 
@@ -99,7 +99,7 @@ public final class ActiveMqManager {
 				mConnection = mConnectionFactory.createConnection();
 				mConnection.start();
 				mSession = mConnection.createSession(mTransacted, Session.AUTO_ACKNOWLEDGE);
-				mPickTagMsgQueue = mSession.createQueue(DEFAULT_DATOBLOK_MESSAGE_QUEUE);
+				mPickTagMsgQueue = mSession.createQueue(DEFAULT_PICKTAGS_MESSAGE_QUEUE);
 			}
 		} catch (Exception e) {
 			LOGGER.error("", e);
@@ -238,15 +238,15 @@ public final class ActiveMqManager {
 				connection.begin("tx1");
 				headers.clear();
 				headers.put("persistent", "true");
-				connection.send(STOMP_PREFIX + DEFAULT_DATOBLOK_MESSAGE_QUEUE, "message1", "tx1", headers);
-				connection.send(STOMP_PREFIX + DEFAULT_DATOBLOK_MESSAGE_QUEUE, "message2", "tx1", headers);
+				connection.send(STOMP_PREFIX + DEFAULT_PICKTAGS_MESSAGE_QUEUE, "message1", "tx1", headers);
+				connection.send(STOMP_PREFIX + DEFAULT_PICKTAGS_MESSAGE_QUEUE, "message2", "tx1", headers);
 				connection.commit("tx1");
 
 				//				connection.begin("tx2");
 				//
 				//				headers.clear();
 				//				headers.put("transaction", "tx2");
-				//				connection.subscribe(STOMP_PREFIX + DATOBLOK_MESSAGE_QUEUE, Subscribe.AckModeValues.CLIENT, headers);
+				//				connection.subscribe(STOMP_PREFIX + DEFAULT_PICKTAGS_MESSAGE_QUEUE, Subscribe.AckModeValues.CLIENT, headers);
 				//
 				//				StompFrame message = connection.receive();
 				//				LOGGER.info(message.getBody());

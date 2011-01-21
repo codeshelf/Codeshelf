@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PickTagMgrWindow.java,v 1.3 2011/01/21 04:25:54 jeffw Exp $
+ *  $Id: PickTagMgrWindow.java,v 1.4 2011/01/21 05:12:25 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.ui;
 
@@ -105,7 +105,7 @@ public final class PickTagMgrWindow extends ApplicationWindow implements IDAOLis
 	protected Control createContents(Composite inParentShell) {
 
 		mShell = (Shell) inParentShell;
-		mShell.setText(LocaleUtils.getStr("datoblokmgr_window.title"));
+		mShell.setText(LocaleUtils.getStr("snapnetworkmgr_window.title"));
 
 		Composite composite = new Composite(mShell, SWT.NULL);
 		composite.setLayout(new GridLayout());

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PickTagDeviceWizard.java,v 1.2 2011/01/21 01:12:12 jeffw Exp $
+ *  $Id: PickTagDeviceWizard.java,v 1.3 2011/01/21 05:12:25 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.ui.wizards;
@@ -40,16 +40,16 @@ public class PickTagDeviceWizard extends Wizard {
 	public static PickTag createPickTagDevice(Shell inShell, IController inController) {
 
 		PickTag result = null;
-		PickTag datoBlok = new PickTag();
+		PickTag pickTag = new PickTag();
 
-		PickTagDeviceWizard wizard = new PickTagDeviceWizard(datoBlok);
+		PickTagDeviceWizard wizard = new PickTagDeviceWizard(pickTag);
 		WizardDialog dialog = new WizardDialog(inShell, wizard);
 		dialog.setBlockOnOpen(true);
 
 		int returnCode = dialog.open();
 		if (returnCode == Dialog.OK) {
-			result = datoBlok;
-			Util.getSystemDAO().storeWirelessDevice(datoBlok);
+			result = pickTag;
+			Util.getSystemDAO().storeWirelessDevice(pickTag);
 		}
 
 		return result;
@@ -87,7 +87,7 @@ public class PickTagDeviceWizard extends Wizard {
 		mPickTag = inPickTag;
 		mPickTagDeviceSetupPage = new PickTagDeviceSetupPage(inPickTag);
 
-		setWindowTitle(LocaleUtils.getStr("datoblok_wizard.title"));
+		setWindowTitle(LocaleUtils.getStr("snapnetwork_wizard.title"));
 		setNeedsProgressMonitor(true);
 	}
 

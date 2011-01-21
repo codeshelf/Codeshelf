@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: MainCocoa.java,v 1.2 2011/01/21 01:12:11 jeffw Exp $
+ *  $Id: MainCocoa.java,v 1.3 2011/01/21 05:12:25 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -149,7 +149,7 @@ public final class MainCocoa extends MainABC {
 		}
 
 		// enable quit menu
-		appMenu.itemAtIndex(QUIT_MENUITEM).setEnabled(false);
+		appMenu.itemAtIndex(QUIT_MENUITEM).setEnabled(true);
 
 		// enable pref menu
 		appMenu.itemAtIndex(PREFS_MENUITEM).setEnabled(true);
@@ -200,7 +200,7 @@ public final class MainCocoa extends MainABC {
 	 */
 	void quitMenuItemSelected() {
 		// We don't want the user to be able to quit the application.
-		//mApplication.stopApplication();
+		mApplication.stopApplication();
 	}
 
 	// --------------------------------------------------------------------------

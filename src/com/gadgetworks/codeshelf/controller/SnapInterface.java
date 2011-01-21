@@ -24,6 +24,7 @@ public final class SnapInterface implements IGatewayInterface {
 	private static final String	E10_MCAST_RPC_NAME			= "macstRpc";
 
 	private XmlRpcClient		mClient;
+	private boolean				mIsStarted					= false;
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
@@ -44,6 +45,7 @@ public final class SnapInterface implements IGatewayInterface {
 		try {
 			Object[] params = new Object[] { E10_SERIAL_TYPE, E10_STANDARD_SERIAL_PORT, false };
 			Object result = (Object) mClient.execute("connectSerial", params);
+			mIsStarted = true;
 		} catch (XmlRpcException e) {
 			LOGGER.error("", e);
 		}
@@ -63,13 +65,15 @@ public final class SnapInterface implements IGatewayInterface {
 	 * @see com.gadgetworks.codeshelf.controller.IGatewayInterface#stopInterface()
 	 */
 	public void stopInterface() {
-		try {
-			Object[] params = new Object[] { E10_SERIAL_TYPE, E10_STANDARD_SERIAL_PORT, false };
-			Object result = (Object) mClient.execute("disconnect", params);
-		} catch (XmlRpcException e) {
-			LOGGER.error("", e);
+		if (mIsStarted) {
+			try {
+				Object[] params = new Object[] { E10_SERIAL_TYPE, E10_STANDARD_SERIAL_PORT, false };
+				Object result = (Object) mClient.execute("disconnect", params);
+			} catch (XmlRpcException e) {
+				LOGGER.error("", e);
+			}
+			mClient = null;
 		}
-		mClient = null;
 	}
 
 	// --------------------------------------------------------------------------
@@ -85,7 +89,7 @@ public final class SnapInterface implements IGatewayInterface {
 	 * @see com.gadgetworks.codeshelf.controller.IGatewayInterface#sendCommand(com.gadgetworks.codeshelf.command.ICommand)
 	 */
 	public void sendCommand(ICommand inCommand) {
-		
+
 		ITransport transport = new SnapTransport();
 		inCommand.toTransport(transport);
 		sendRpcCommand(transport);
@@ -99,21 +103,21 @@ public final class SnapInterface implements IGatewayInterface {
 		try {
 			// Create a list to hold the RPC command parameters.
 			List<Object> params = new ArrayList<Object>();
-			
+
 			// Src addr
 			params.add(inTransport.getSrcAddr().getParamValue());
-			
+
 			// Dst addr
 			params.add(inTransport.getDstAddr().getParamValue());
-			
+
 			// RPC method name
 			params.add(inTransport.getCommandId().getName());
-			
+
 			// Command params
 			for (Object param : inTransport.getParams()) {
 				params.add(param);
 			}
-			
+
 			// Send the command.
 			Object result = (Object) mClient.execute(E10_RPC_CMD_NAME, params);
 		} catch (XmlRpcException e) {

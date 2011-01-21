@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PickTag.java,v 1.3 2011/01/21 02:22:35 jeffw Exp $
+ *  $Id: PickTag.java,v 1.4 2011/01/21 05:12:25 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -32,7 +32,7 @@ import com.gadgetworks.codeshelf.command.CommandControlABC;
  */
 @Entity
 @Table(name = "WIRELESSDEVICE")
-@DiscriminatorValue("DATOBLOK")
+@DiscriminatorValue("PICKTAG")
 public class PickTag extends WirelessDevice {
 
 	private static final long	serialVersionUID	= 501063502863299855L;
