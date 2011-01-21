@@ -1,7 +1,7 @@
 /*******************************************************************************
- *  FlyWeightController
- *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandGroupEnum.java,v 1.1 2011/01/21 01:08:20 jeffw Exp $
+ *  CodeShelf
+ *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
+ *  $Id: CommandGroupEnum.java,v 1.2 2011/01/21 01:12:11 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.command;
 

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  ESController
  *  Copyright (c) 2005-2009, Jeffrey B. Williams, All rights reserved
- *  $Id: IDeviceMaintainer.java,v 1.1 2011/01/21 01:08:21 jeffw Exp $
+ *  $Id: IDeviceMaintainer.java,v 1.2 2011/01/21 01:12:11 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.controller;
 
@@ -10,7 +10,7 @@ import java.util.List;
 
 // --------------------------------------------------------------------------
 /**
- *  This interface allows the higher lever users of FlyWeightController to be able to provide a way to 
+ *  This interface allows the higher lever users of CodeShelf to be able to provide a way to 
  *  manage the persistence of the INetworkDevices.  
  *  
  *  @author jeffw

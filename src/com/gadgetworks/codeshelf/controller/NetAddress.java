@@ -1,7 +1,7 @@
 /*******************************************************************************
- *  FlyWeightController
- *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: NetAddress.java,v 1.1 2011/01/21 01:08:21 jeffw Exp $
+ *  CodeShelf
+ *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
+ *  $Id: NetAddress.java,v 1.2 2011/01/21 01:12:12 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.controller;
