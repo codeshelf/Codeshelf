@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: SnapController.java,v 1.2 2011/01/21 01:12:11 jeffw Exp $
+ *  $Id: SnapController.java,v 1.3 2011/01/21 02:22:35 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.controller;
@@ -129,7 +129,7 @@ public final class SnapController extends ControllerABC {
 	 */
 	protected void doProcessResponse(IResponse inResponse, IQuery inQuery) {
 
-		ResponseTypeEnum responseType = ResponseTypeEnum.getResponseTypeEnum((int) inResponse.getResponseTypeID().getParamValue()[0]);
+		ResponseTypeEnum responseType = inResponse.getResponseType();
 
 		// Figure out what session the response is for.
 		INetworkDevice networkDevice = inQuery.getQueryNetworkDevice();

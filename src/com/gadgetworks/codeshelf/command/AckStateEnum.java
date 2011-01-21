@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  OmniBox
- *  Copyright (c) 2005-2007, Jeffrey B. Williams, All rights reserved
- *  $Id: AckStateEnum.java,v 1.1 2011/01/21 01:08:20 jeffw Exp $
+ *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
+ *  $Id: AckStateEnum.java,v 1.2 2011/01/21 02:22:35 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.command;
 

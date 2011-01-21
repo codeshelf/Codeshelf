@@ -1,7 +1,7 @@
 /*******************************************************************************
- *  HoobeeNet
+ *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PickTag.java,v 1.2 2011/01/21 01:12:12 jeffw Exp $
+ *  $Id: PickTag.java,v 1.3 2011/01/21 02:22:35 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -63,7 +63,7 @@ public class PickTag extends WirelessDevice {
 		return mParentControlGroup;
 	}
 
-	public void setParentSnapNetwork(ControlGroup inControlGroup) {
+	public void setParentControlGroup(ControlGroup inControlGroup) {
 		mParentControlGroup = inControlGroup;
 	}
 

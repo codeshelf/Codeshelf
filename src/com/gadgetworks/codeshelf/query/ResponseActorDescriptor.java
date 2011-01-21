@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ResponseActorDescriptor.java,v 1.2 2011/01/21 01:12:11 jeffw Exp $
+ *  $Id: ResponseActorDescriptor.java,v 1.3 2011/01/21 02:22:35 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.query;
 
@@ -59,8 +59,8 @@ public final class ResponseActorDescriptor extends ResponseABC {
 	 * (non-Javadoc)
 	 * @see com.gadgetworks.query.IQuery#getQueryTypeID()
 	 */
-	public NetResponseTypeID getResponseTypeID() {
-		return new NetResponseTypeID(ResponseTypeEnum.ACTOR_DESCRIPTOR.getValue());
+	public ResponseTypeEnum getResponseType() {
+		return ResponseTypeEnum.ACTOR_DESCRIPTOR;
 	}
 
 	/* --------------------------------------------------------------------------
@@ -93,7 +93,7 @@ public final class ResponseActorDescriptor extends ResponseABC {
 	 */
 	@Override
 	protected String doToString() {
-		return BEAN_ID + " GUID=" + new String(mGUID) + " desc=" + mDescStr + " kvpCnt=" + mKVPCount + " epCnt=" + mEndpointCount;
+		return BEAN_ID + " GUID=" + new String(mGUID) + " desc=" + mDescStr + " kvpCnt=" + mKVPCount;
 	}
 
 	public String getGUIDStr() {

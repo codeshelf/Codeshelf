@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: QueryActorKVP.java,v 1.2 2011/01/21 01:12:11 jeffw Exp $
+ *  $Id: QueryActorKVP.java,v 1.3 2011/01/21 02:22:35 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.query;
 
@@ -51,8 +51,8 @@ public final class QueryActorKVP extends QueryABC {
 	 * (non-Javadoc)
 	 * @see com.gadgetworks.query.IQuery#getQueryTypeID()
 	 */
-	public NetQueryTypeId getQueryTypeID() {
-		return new NetQueryTypeId(QueryTypeEnum.ACTOR_KVP.getValue());
+	public QueryTypeEnum getQueryType() {
+		return QueryTypeEnum.ACTOR_KVP;
 	}
 
 	/* --------------------------------------------------------------------------

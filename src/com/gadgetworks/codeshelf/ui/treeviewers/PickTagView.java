@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PickTagView.java,v 1.2 2011/01/21 01:12:11 jeffw Exp $
+ *  $Id: PickTagView.java,v 1.3 2011/01/21 02:22:35 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.ui.treeviewers;
 
@@ -42,8 +42,10 @@ import com.gadgetworks.codeshelf.controller.IController;
 import com.gadgetworks.codeshelf.controller.NetworkDeviceStateEnum;
 import com.gadgetworks.codeshelf.model.dao.DAOException;
 import com.gadgetworks.codeshelf.model.dao.IDAOListener;
+import com.gadgetworks.codeshelf.model.persist.ControlGroup;
 import com.gadgetworks.codeshelf.model.persist.PersistABC;
 import com.gadgetworks.codeshelf.model.persist.PickTag;
+import com.gadgetworks.codeshelf.model.persist.SnapNetwork;
 import com.gadgetworks.codeshelf.ui.LocaleUtils;
 import com.gadgetworks.codeshelf.ui.wizards.PickTagDeviceWizard;
 
@@ -97,7 +99,7 @@ public final class PickTagView implements ISelectionChangedListener, IDoubleClic
 		dragSource.addDragListener(new DragSourceAdapter() {
 			public void dragStart(DragSourceEvent inEvent) {
 				PersistABC persistentObject = (PersistABC) mTree.getSelection()[0].getData();
-				if (!(persistentObject instanceof PickTagModule)) {
+				if (!(persistentObject instanceof SnapNetwork)) {
 					inEvent.doit = false;
 				}
 				LOGGER.info(persistentObject);
@@ -145,7 +147,7 @@ public final class PickTagView implements ISelectionChangedListener, IDoubleClic
 		//		mTreeViewer.setComparer(new ObjectIDComparer());
 		mTreeViewer.addSelectionChangedListener(this);
 		mTreeViewer.addDoubleClickListener(this);
-		mTreeViewer.setInput(PickTagViewContentProvider.DATOBLOK_ROOT);
+		mTreeViewer.setInput(PickTagViewContentProvider.PICKTAGVIEW_ROOT);
 	}
 
 	// --------------------------------------------------------------------------
@@ -225,13 +227,13 @@ public final class PickTagView implements ISelectionChangedListener, IDoubleClic
 		}
 
 		if (itemData == null) {
-			datoblokMenu(null);
+			pickTagMenu(null);
 		} else if (itemData instanceof PickTag) {
 			PickTag datoblok = (PickTag) itemData;
-			datoblokMenu(datoblok);
-		} else if (itemData instanceof PickTagModule) {
-			PickTagModule datoBlokModule = (PickTagModule) itemData;
-			datoBlokModuleMenu(datoBlokModule);
+			pickTagMenu(datoblok);
+		} else if (itemData instanceof ControlGroup) {
+			ControlGroup datoBlokModule = (ControlGroup) itemData;
+			controlGroupMenu(datoBlokModule);
 		}
 	}
 
@@ -241,7 +243,7 @@ public final class PickTagView implements ISelectionChangedListener, IDoubleClic
 	 * 
 	 * @param inPickTag
 	 */
-	private void datoblokMenu(final PickTag inPickTag) {
+	private void pickTagMenu(final PickTag inPickTag) {
 
 		final MenuItem addItem = new MenuItem(mPopup, SWT.NONE);
 		addItem.setText(LocaleUtils.getStr("datoblokview.menu.add_datoblok"));
@@ -290,7 +292,7 @@ public final class PickTagView implements ISelectionChangedListener, IDoubleClic
 		adItem.setData(inPickTag);
 		adItem.addListener(SWT.Selection, new Listener() {
 			public void handleEvent(Event inEvent) {
-//				RulesetWizard.addPickTagRuleset(inPickTag);
+				//				RulesetWizard.addPickTagRuleset(inPickTag);
 			}
 		});
 
@@ -310,43 +312,43 @@ public final class PickTagView implements ISelectionChangedListener, IDoubleClic
 	/**
 	 * This is the popup menu when the user clicks on a PickTagModule in the PickTagView.
 	 * 
-	 * @param inPickTagModule
+	 * @param inControlGroup
 	 */
-	private void datoBlokModuleMenu(final PickTagModule inPickTagModule) {
+	private void controlGroupMenu(final ControlGroup inControlGroup) {
 
-		// Add PickTagModule menu item.
+		// Add ControlGroup menu item.
 		final MenuItem adItem = new MenuItem(mPopup, SWT.NONE);
 		adItem.setText(LocaleUtils.getStr("datoblokview.menu.add_datoblokmodule"));
-		adItem.setData(inPickTagModule.getParentPickTag());
+		adItem.setData(inControlGroup.getParentSnapNetwork());
 		adItem.addListener(SWT.Selection, new Listener() {
 			public void handleEvent(Event inEvent) {
-//				RulesetWizard.addPickTagRuleset(inPickTagModule.getParentPickTag());
+				//				RulesetWizard.addPickTagRuleset(inPickTagModule.getParentPickTag());
 			}
 		});
 
-		// Edit PickTagModule menu item.
+		// Edit ControlGroup menu item.
 		final MenuItem editItem = new MenuItem(mPopup, SWT.NONE);
 		editItem.setText(LocaleUtils.getStr("datoblokview.menu.edit_datoblockmodule"));
-		editItem.setData(inPickTagModule);
+		editItem.setData(inControlGroup);
 		editItem.addListener(SWT.Selection, new Listener() {
 			public void handleEvent(Event inEvent) {
-//				RulesetWizard.editPickTagRuleset(inPickTagModule);
+				//				RulesetWizard.editPickTagRuleset(inPickTagModule);
 			}
 		});
 
-		// Delete PickTagModule menu item.
+		// Delete ControlGroup menu item.
 		final MenuItem deleteItem = new MenuItem(mPopup, SWT.NONE);
 		deleteItem.setText(LocaleUtils.getStr("datoblokview.menu.delete_datoblokmodule"));
-		deleteItem.setData(inPickTagModule);
+		deleteItem.setData(inControlGroup);
 		deleteItem.addListener(SWT.Selection, new Listener() {
 			public void handleEvent(Event inEvent) {
 				boolean deletePickTagModule = MessageDialog.openQuestion(Display.getCurrent().getActiveShell(),
 					LocaleUtils.getStr("datoblokview.menu.delete_datoblokmodule.title"),
 					LocaleUtils.getStr("datoblokview.menu.delete_datoblokmodule.prompt",
-						new String[] { inPickTagModule.getDescription() }));
+						new String[] { inControlGroup.getDescription() }));
 				if (deletePickTagModule) {
 					try {
-						Util.getSystemDAO().deletePickTagModule(inPickTagModule);
+						Util.getSystemDAO().deleteControlGroup(inControlGroup);
 					} catch (DAOException e) {
 						LOGGER.error(e);
 					}
@@ -380,13 +382,19 @@ public final class PickTagView implements ISelectionChangedListener, IDoubleClic
 	 */
 	public void objectAdded(Object inObject) {
 		if (doesDAOChangeApply(inObject)) {
-			if (inObject instanceof PickTag) {
-				mTreeViewer.add(PickTagViewContentProvider.DATOBLOK_ROOT, inObject);
-			} else if (inObject instanceof PickTagModule) {
-				PickTagModule datoBlokModule = (PickTagModule) inObject;
-				PickTag datoblok = datoBlokModule.getParentPickTag();
-				if (datoblok != null) {
-					mTreeViewer.add(datoblok, inObject);
+			if (inObject instanceof SnapNetwork) {
+				mTreeViewer.add(PickTagViewContentProvider.PICKTAGVIEW_ROOT, inObject);
+			} else if (inObject instanceof ControlGroup) {
+				ControlGroup controlGroup = (ControlGroup) inObject;
+				SnapNetwork snapNetwork = controlGroup.getParentSnapNetwork();
+				if (snapNetwork != null) {
+					mTreeViewer.add(snapNetwork, inObject);
+				}
+			} else if (inObject instanceof PickTag) {
+				PickTag pickTag = (PickTag) inObject;
+				ControlGroup controlGroup = pickTag.getParentControlGroup();
+				if (controlGroup != null) {
+					mTreeViewer.add(controlGroup, inObject);
 				}
 			}
 		}
@@ -413,18 +421,20 @@ public final class PickTagView implements ISelectionChangedListener, IDoubleClic
 	 */
 	public void objectUpdated(Object inObject) {
 		if (doesDAOChangeApply(inObject)) {
-			Object refreshParentHoobee = inObject;
+			Object refreshParentObject = inObject;
 
-			if (inObject instanceof PickTag) {
-				refreshParentHoobee = inObject;
-			} else if (inObject instanceof PickTagModule) {
-				refreshParentHoobee = ((PickTagModule) inObject).getParentPickTag();
+			if (inObject instanceof SnapNetwork) {
+				refreshParentObject = inObject;
+			} else if (inObject instanceof ControlGroup) {
+				refreshParentObject = ((ControlGroup) inObject).getParentSnapNetwork();
+			} else if (inObject instanceof PickTag) {
+				refreshParentObject = ((PickTag) inObject).getParentControlGroup();
 			}
 
 			String[] properties = { " " };
 			mTreeViewer.update(inObject, properties);
-			if (refreshParentHoobee != null) {
-				mTreeViewer.refresh(refreshParentHoobee, true);
+			if (refreshParentObject != null) {
+				mTreeViewer.refresh(refreshParentObject, true);
 			}
 			expandOnlinePickTagz();
 		}
@@ -439,9 +449,11 @@ public final class PickTagView implements ISelectionChangedListener, IDoubleClic
 		boolean result = false;
 
 		// We only want to update if it's an account or buddy update.
-		if (inObject instanceof PickTag) {
+		if (inObject instanceof SnapNetwork) {
 			result = true;
-		} else if (inObject instanceof PickTagModule) {
+		} else if (inObject instanceof ControlGroup) {
+			result = true;
+		} else if (inObject instanceof PickTag) {
 			result = true;
 		}
 		return result;
@@ -481,21 +493,21 @@ public final class PickTagView implements ISelectionChangedListener, IDoubleClic
 		 * (non-Javadoc)
 		 * @see org.eclipse.jface.viewers.ViewerDropAdapter#performDrop(java.lang.Object)
 		 */
-		public boolean performDrop(Object inData) {
-			PickTagModule datoBlokModule = Util.getSystemDAO().loadPickTagModule(Integer.valueOf((String) inData));
-			if (datoBlokModule != null) {
-				PickTag parentPickTag = datoBlokModule.getParentPickTag();
-				if (getCurrentTarget() instanceof PickTag) {
-					PickTag datoblok = (PickTag) getCurrentTarget();
-					datoblok.addPickTagModule(datoBlokModule);
-					datoBlokModule.setParentPickTag(datoblok);
+		public boolean performDrop(Object inDroppedObject) {
+			PickTag pickTag = Util.getSystemDAO().loadPickTag(Integer.valueOf((String) inDroppedObject));
+			if (pickTag != null) {
+				ControlGroup parentControlGroup = pickTag.getParentControlGroup();
+				if (getCurrentTarget() instanceof ControlGroup) {
+					ControlGroup controlGroup = (ControlGroup) getCurrentTarget();
+					controlGroup.addPickTag(pickTag);
+					pickTag.setParentControlGroup(controlGroup);
 					try {
-						Util.getSystemDAO().storePickTagModule(datoBlokModule);
-						Util.getSystemDAO().storePickTag(datoblok);
+						Util.getSystemDAO().storePickTag(pickTag);
+						Util.getSystemDAO().storeControlGroup(controlGroup);
 					} catch (DAOException e) {
 						LOGGER.error("", e);
 					}
-					Util.getSystemDAO().pushNonPersistentUpdates(parentPickTag);
+					Util.getSystemDAO().pushNonPersistentUpdates(parentControlGroup);
 				}
 			}
 			return true;

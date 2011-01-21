@@ -1,7 +1,7 @@
 /*******************************************************************************
- *  HoobeeNet
+ *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ControlGroup.java,v 1.2 2011/01/21 01:12:12 jeffw Exp $
+ *  $Id: ControlGroup.java,v 1.3 2011/01/21 02:22:35 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -35,6 +35,9 @@ public final class ControlGroup extends PersistABC {
 	// The control group ID
 	@Column(nullable = false)
 	private String				mId;
+	// The control group description.
+	@Column(nullable = false)
+	private String				mDescription;
 	// Active/Inactive rule
 	@Column(nullable = false)
 	private boolean				mIsActive;
@@ -49,7 +52,7 @@ public final class ControlGroup extends PersistABC {
 	}
 
 	public String toString() {
-		return mParentSnapNetwork.toString() + "->" + mId;
+		return mParentSnapNetwork.toString() + "->" + mId + " " + mDescription;
 	}
 
 	public SnapNetwork getParentSnapNetwork() {
@@ -70,6 +73,14 @@ public final class ControlGroup extends PersistABC {
 
 	public void setId(String inId) {
 		mId = inId;
+	}
+
+	public final String getDescription() {
+		return mDescription;
+	}
+
+	public final void setDescription(String inDescription) {
+		mDescription = inDescription;
 	}
 
 	public boolean getIsActive() {

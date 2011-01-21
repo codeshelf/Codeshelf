@@ -1,7 +1,7 @@
 /*******************************************************************************
- *  HoobeeNet
+ *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PickTagViewLabelProvider.java,v 1.2 2011/01/21 01:12:11 jeffw Exp $
+ *  $Id: PickTagViewLabelProvider.java,v 1.3 2011/01/21 02:22:35 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.ui.treeviewers;
@@ -10,6 +10,7 @@ import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.swt.graphics.Image;
 
 import com.gadgetworks.codeshelf.application.Util;
+import com.gadgetworks.codeshelf.controller.NetworkDeviceStateEnum;
 import com.gadgetworks.codeshelf.model.persist.PickTag;
 
 public class PickTagViewLabelProvider extends LabelProvider {

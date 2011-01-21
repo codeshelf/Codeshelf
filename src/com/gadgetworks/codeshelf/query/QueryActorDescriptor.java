@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: QueryActorDescriptor.java,v 1.2 2011/01/21 01:12:11 jeffw Exp $
+ *  $Id: QueryActorDescriptor.java,v 1.3 2011/01/21 02:22:35 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.query;
 
@@ -36,10 +36,10 @@ public final class QueryActorDescriptor extends QueryABC {
 
 	/* --------------------------------------------------------------------------
 	 * (non-Javadoc)
-	 * @see com.gadgetworks.query.IQuery#getQueryTypeID()
+	 * @see com.gadgetworks.query.IQuery#getQueryType()
 	 */
-	public NetQueryTypeId getQueryTypeID() {
-		return new NetQueryTypeId(QueryTypeEnum.ACTOR_DESCRIPTOR.getValue());
+	public QueryTypeEnum getQueryType() {
+		return QueryTypeEnum.ACTOR_DESCRIPTOR;
 	}
 
 	/* --------------------------------------------------------------------------

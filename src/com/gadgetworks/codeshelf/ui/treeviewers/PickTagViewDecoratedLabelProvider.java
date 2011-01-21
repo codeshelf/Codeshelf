@@ -1,7 +1,7 @@
 /*******************************************************************************
- *  HoobeeNet
+ *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PickTagViewDecoratedLabelProvider.java,v 1.2 2011/01/21 01:12:11 jeffw Exp $
+ *  $Id: PickTagViewDecoratedLabelProvider.java,v 1.3 2011/01/21 02:22:35 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.ui.treeviewers;
@@ -19,8 +19,10 @@ import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
 
 import com.gadgetworks.codeshelf.application.Util;
+import com.gadgetworks.codeshelf.controller.NetworkDeviceStateEnum;
+import com.gadgetworks.codeshelf.model.persist.ControlGroup;
 import com.gadgetworks.codeshelf.model.persist.PickTag;
-import com.gadgetworks.codeshelf.model.persist.PickTagModule;
+import com.gadgetworks.codeshelf.model.persist.SnapNetwork;
 
 // --------------------------------------------------------------------------
 /**
@@ -65,12 +67,6 @@ public final class PickTagViewDecoratedLabelProvider extends DecoratingLabelProv
 				} else {
 					result = Util.getImageRegistry().get(Util.ACCOUNT_ICON_GREEN);
 				}
-			} else if (inElement instanceof PickTagModule) {
-				//				PickTagModule ruleset = (PickTagModule) inElement;
-				//				result = Util.getImageRegistry().get(Util.ACCOUNT_ICON_QUARTER_ALPHA);
-				//				Color color = new Color(Display.getCurrent(), ruleset.getPickTagBehavior().getRedValue(), ruleset.getPickTagBehavior()
-				//					.getGreenValue(), ruleset.getPickTagBehavior().getBlueValue());
-				//				result.setBackground(color);
 			}
 		}
 
@@ -87,26 +83,40 @@ public final class PickTagViewDecoratedLabelProvider extends DecoratingLabelProv
 		TreeColumn column = mTree.getColumn(inColumnIndex);
 
 		if (inElement instanceof PickTag) {
-			PickTag hoobee = (PickTag) inElement;
+			PickTag pickTag = (PickTag) inElement;
 			if (column.getData().equals(ID_COL)) {
-				displayStr = hoobee.getGUID();
+				displayStr = pickTag.getGUID();
 			} else if (column.getData().equals(DESC_COL)) {
-				displayStr = hoobee.getDescription();
+				displayStr = pickTag.getDescription();
 			} else if (column.getData().equals(DETAILS_COL)) {
-				displayStr = "firmware=" + hoobee.getSWRevision() + " hw=" + hoobee.getHWDesc();
+				displayStr = "firmware=" + pickTag.getSWRevision() + " hw=" + pickTag.getHWDesc();
 			}
-		} else if (inElement instanceof PickTagModule) {
-			PickTagModule ruleset = (PickTagModule) inElement;
+		} else if (inElement instanceof SnapNetwork) {
+			SnapNetwork snapNetwork = (SnapNetwork) inElement;
 			if (column.getData().equals(ID_COL)) {
-				displayStr = ruleset.getDescription();
+				displayStr = snapNetwork.getDescription();
 			} else if (column.getData().equals(DESC_COL)) {
 				displayStr = "";
 			} else if (column.getData().equals(DETAILS_COL)) {
-//				StringBuffer buf = new StringBuffer();
-//				for (SearchParameter parameter : ruleset.getSearchParameters()) {
-//					buf.append(parameter.getId() + "->" + parameter.getValue() + " ");
-//				}
-//				displayStr = buf.toString();
+				//				StringBuffer buf = new StringBuffer();
+				//				for (SearchParameter parameter : ruleset.getSearchParameters()) {
+				//					buf.append(parameter.getId() + "->" + parameter.getValue() + " ");
+				//				}
+				//				displayStr = buf.toString();
+				displayStr = "";
+			}
+		} else if (inElement instanceof ControlGroup) {
+			ControlGroup controlGroup = (ControlGroup) inElement;
+			if (column.getData().equals(ID_COL)) {
+				displayStr = controlGroup.getDescription();
+			} else if (column.getData().equals(DESC_COL)) {
+				displayStr = "";
+			} else if (column.getData().equals(DETAILS_COL)) {
+				//				StringBuffer buf = new StringBuffer();
+				//				for (SearchParameter parameter : ruleset.getSearchParameters()) {
+				//					buf.append(parameter.getId() + "->" + parameter.getValue() + " ");
+				//				}
+				//				displayStr = buf.toString();
 				displayStr = "";
 			}
 		}
@@ -126,9 +136,14 @@ public final class PickTagViewDecoratedLabelProvider extends DecoratingLabelProv
 			if (((PickTag) inElement).getNetworkDeviceState() != NetworkDeviceStateEnum.STARTED) {
 				color = Display.getCurrent().getSystemColor(SWT.COLOR_DARK_GRAY);
 			}
-		} else if (inElement instanceof PickTagModule) {
-			PickTagModule ruleset = (PickTagModule) inElement;
-			if (!ruleset.getIsActive()) {
+		} else if (inElement instanceof SnapNetwork) {
+			SnapNetwork snapNetwork = (SnapNetwork) inElement;
+			if (!snapNetwork.getIsActive()) {
+				color = Display.getCurrent().getSystemColor(SWT.COLOR_GRAY);
+			}
+		} else if (inElement instanceof ControlGroup) {
+			ControlGroup controlGroup = (ControlGroup) inElement;
+			if (!controlGroup.getIsActive()) {
 				color = Display.getCurrent().getSystemColor(SWT.COLOR_GRAY);
 			}
 		}

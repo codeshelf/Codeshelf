@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: IQuery.java,v 1.2 2011/01/21 01:12:11 jeffw Exp $
+ *  $Id: IQuery.java,v 1.3 2011/01/21 02:22:35 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.query;
 
@@ -42,10 +42,10 @@ public interface IQuery {
 	
 	// --------------------------------------------------------------------------
 	/**
-	 *  Get the query type in network encoded form.
-	 *  @return	The network encoded form of the query type.
+	 *  Get the query type.
+	 *  @return	The query type.
 	 */
-	NetQueryTypeId getQueryTypeID();
+	QueryTypeEnum getQueryType();
 	
 	// --------------------------------------------------------------------------
 	/**
