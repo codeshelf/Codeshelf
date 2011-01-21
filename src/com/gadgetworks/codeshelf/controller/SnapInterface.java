@@ -35,6 +35,8 @@ public final class SnapInterface implements IGatewayInterface {
 			XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
 			config.setServerURL(new URL("http://10.0.5.110:8080/RPC2/"));
 			config.setEnabledForExtensions(true);
+			config.setReplyTimeout(5000);
+			config.setConnectionTimeout(5000);
 			mClient = new XmlRpcClient();
 			mClient.setTransportFactory(new XmlRpcCommonsTransportFactory(mClient));
 			mClient.setConfig(config);
@@ -47,7 +49,7 @@ public final class SnapInterface implements IGatewayInterface {
 			Object result = (Object) mClient.execute("connectSerial", params);
 			mIsStarted = true;
 		} catch (XmlRpcException e) {
-			LOGGER.error("", e);
+			//LOGGER.error("", e);
 		}
 	}
 
@@ -70,7 +72,7 @@ public final class SnapInterface implements IGatewayInterface {
 				Object[] params = new Object[] { E10_SERIAL_TYPE, E10_STANDARD_SERIAL_PORT, false };
 				Object result = (Object) mClient.execute("disconnect", params);
 			} catch (XmlRpcException e) {
-				LOGGER.error("", e);
+				//LOGGER.error("", e);
 			}
 			mClient = null;
 		}
