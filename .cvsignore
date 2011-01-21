@@ -1,0 +1,15 @@
+database
+*.log
+eclipse-bin
+target
+.classpath
+example-src
+logs
+showprefs.properties
+compare-file-2.txt
+compare-file-1.txt
+resources.jar
+.ebean.h2.dictionary
+.ebean.h2.autofetch
+$jarplug.work
+activemq-data

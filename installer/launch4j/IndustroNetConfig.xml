@@ -1,0 +1,75 @@
+<launch4jConfig>
+  <dontWrapJar>true</dontWrapJar>
+  <headerType>gui</headerType>
+  <jar>..\..\target\appjar-codeshelf\codeshelf.jar</jar>
+  <outfile>..\..\target\appjar-codeshelf\CodeShelf.exe</outfile>
+  <errTitle>CodeShelf</errTitle>
+  <cmdLine></cmdLine>
+  <chdir>.</chdir>
+  <priority>high</priority>
+  <downloadUrl>http://javadl.sun.com/webapps/download/AutoDL?BundleId=22933&amp;/jre-1_5_0_17-windows-i586-p.exe</downloadUrl>
+  <supportUrl></supportUrl>
+  <customProcName>true</customProcName>
+  <stayAlive>false</stayAlive>
+  <manifest></manifest>
+  <icon>..\..\target\appjar-codeshelf\codeshelf.ico</icon>
+  <singleInstance>
+    <mutexName>codeshelf_mutex</mutexName>
+    <windowTitle>CodeShelf</windowTitle>
+  </singleInstance>
+  <classPath>
+    <mainClass>com.gadgetworks.codeshelf.application.MainWin32</mainClass>
+    <cp>codeshelf.jar</cp>
+    <cp>lib/swt.jar</cp>
+    <cp>lib/JD2XX.jar</cp>
+    <cp>lib/cmu_us_kal.jar</cp>
+    <cp>lib/cmulex.jar</cp>
+    <cp>lib/commons-logging-1.1.1.jar</cp>
+    <cp>lib/datamodels.jar</cp>
+    <cp>lib/ebean-1.0.2.jar</cp>
+    <cp>lib/en_us.jar</cp>
+    <cp>lib/freetts.jar</cp>
+    <cp>lib/h2.jar</cp>
+    <cp>lib/i4jruntime.jar</cp>
+    <cp>lib/javax.persistence_1.0.0.jar</cp>
+    <cp>lib/jsapi.jar</cp>
+    <cp>lib/log4j-1.2.14.jar</cp>
+    <cp>lib/org.eclipse.core.commands_3.4.0.I20080509-2000.jar</cp>
+    <cp>lib/org.eclipse.core.runtime_3.4.0.v20080512.jar</cp>
+    <cp>lib/org.eclipse.equinox.common_3.4.0.v20080421-2006.jar</cp>
+    <cp>lib/org.eclipse.jface.databinding_1.2.0.I20080515-2000a.jar</cp>
+    <cp>lib/org.eclipse.jface.text_3.4.0.v20080522-1800.jar</cp>
+    <cp>lib/org.eclipse.jface_3.4.0.I20080606-1300.jar</cp>
+    <cp>lib/org.eclipse.text_3.4.0.v20080522-1800.jar</cp>
+    <cp>lib/codeshelf-obfs.jar</cp>
+    <cp>lib/codeshelf-unobfs.jar</cp>
+    <cp>lib/smack.jar</cp>
+    <cp>lib/smackx-debug.jar</cp>
+    <cp>lib/smackx-jingle.jar</cp>
+    <cp>lib/smackx.jar</cp>
+    <cp>lib/tritonus_remaining-0.3.7.jar</cp>
+    <cp>lib/tritonus_share-0.3.7.jar</cp>
+    <cp>lib/jmf-2.1.1e.jar</cp>
+  </classPath>
+  <jre>
+    <path></path>
+    <minVersion>1.5.0</minVersion>
+    <maxVersion></maxVersion>
+    <jdkPreference>preferJre</jdkPreference>
+    <initialHeapSize>16</initialHeapSize>
+    <maxHeapSize>64</maxHeapSize>
+    <opt>-jar codeshelf.jar</opt>
+  </jre>
+  <versionInfo>
+    <fileVersion>1.0.0.0</fileVersion>
+    <txtFileVersion>1.0.0</txtFileVersion>
+    <fileDescription>CodeShelf Application</fileDescription>
+    <copyright>Copyright 2006-2009, Gadgetworks, LLC all rights reserved</copyright>
+    <productVersion>1.0.0.0</productVersion>
+    <txtProductVersion>1.0.0</txtProductVersion>
+    <productName>CodeShelf</productName>
+    <companyName>Gadgetworks, LLC</companyName>
+    <internalName>CodeShelf</internalName>
+    <originalFilename>CodeShelf.exe</originalFilename>
+  </versionInfo>
+</launch4jConfig>

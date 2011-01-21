@@ -1,0 +1,76 @@
+<!--
+===================================================================
+build.xml
+===================================================================
+-->
+<project name="ebean-enhance" default="enhance"  basedir=".">
+
+	<!-- environment -->
+
+	<property name="module.dir" value="${basedir}/.." />
+	<property name="module.lib.dir" value="${module.dir}/lib/" />
+	<property name="module.build.dir" value="${module.dir}/build/" />
+	<property name="module.conf.dir" value="${module.dir}/conf/" />
+	<property name="module.eclipse-bin.dir" value="${module.dir}/eclipse-bin/" />
+	<property name="modules.model.dir" value="${module.dir}/src/com/gadgetworks/codeshelf/model/persist" />
+	<property name="modules.enhance.dir" value="${module.dir}/build/com/gadgetworks/codeshelf/model/persist" />
+	
+	<taskdef resource="net/sf/antcontrib/antcontrib.properties">
+		<classpath>
+			<pathelement location="${basedir}/lib/ant-contrib.jar" />
+		</classpath>
+	</taskdef>
+
+	<!-- libs necessary to build the module -->
+	<path id="module.lib.classpath">
+		<fileset dir="${module.build.dir}">
+			<include name="lib/*.jar" />
+		</fileset>
+		<fileset dir="${module.lib.dir}">
+			<include name="**/*.jar" />
+		</fileset>
+		<dirset dir="${module.build.dir}" />
+		<dirset dir="${module.conf.dir}" />
+		<dirset dir="${module.eclipse-bin.dir}" />
+	</path>
+
+	<!-- ebean-clean -->
+	<target name="ebean-clean">
+		<delete quiet="true">
+			<fileset dir="${modules.enhance.dir}">
+				<include name="**/*.class" />
+			</fileset>
+		</delete>
+	</target>
+
+	<!-- compile -->
+	<target name="compile" depends="ebean-clean">
+		<mkdir dir="${module.build.dir}" />
+		<javac srcdir="${modules.model.dir}"
+		       destdir="${module.build.dir}"
+		       target="1.5"
+		       verbose="false"
+		       debug="on"
+		       classpathref="module.lib.classpath">
+		</javac>
+
+	</target>
+
+	<!-- enhance -->
+	<target name="enhance" depends="compile" description="Enhance classes">
+
+		<echo message="===================================================================" />
+		<echo message="Enhancing the MODULE files" />
+		<echo message="===================================================================" />
+
+		<!-- define the task enhancer -->
+		<taskdef name="ebeanEnhance" 
+			classpathref="module.lib.classpath"
+			classname="com.avaje.ebean.enhance.ant.AntEnhanceTask" />
+
+		<!-- enhance -->
+		<ebeanEnhance classSource="${modules.enhance.dir}" packages="**" transformArgs="debug=1"/>
+
+	</target>
+
+</project>

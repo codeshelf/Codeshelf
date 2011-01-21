@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>English</string>
+	<key>CFBundleExecutable</key>
+	<string>CodeShelf</string>
+	<key>CFBundleIconFile</key>
+	<string>codeshelf-logo</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.gadgetworks.codeshelf.prefpane</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>CodeShelf</string>
+	<key>CFBundlePackageType</key>
+	<string>BNDL</string>
+	<key>CFBundleVersion</key>
+	<string>1.0</string>
+	<key>NSMainNibFile</key>
+	<string>CodeShelfPrefPane</string>
+	<key>NSPrefPaneIconFile</key>
+	<string>codeshelf-logo.png</string>
+	<key>NSPrefPaneIconLabel</key>
+	<string>CodeShelf</string>
+	<key>NSPrincipalClass</key>
+	<string>CodeShelfPrefPane</string>
+	<key>IFMajorVersion</key>
+	<string>1</string>
+	<key>IFMinorVersion</key>
+	<string>0</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.0</string>
+	<key>CFBundleGetInfoString</key>
+	<string>Copyright © Gadgetworks, LLC. 2010. All rights reserved.</string>
+</dict>
+</plist>
