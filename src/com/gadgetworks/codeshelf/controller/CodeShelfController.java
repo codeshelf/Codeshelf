@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: SnapController.java,v 1.3 2011/01/21 02:22:35 jeffw Exp $
+ *  $Id: CodeShelfController.java,v 1.1 2011/01/22 01:04:39 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.controller;
@@ -21,12 +21,12 @@ import com.gadgetworks.codeshelf.query.ResponseActorDescriptor;
 import com.gadgetworks.codeshelf.query.ResponseActorKVP;
 import com.gadgetworks.codeshelf.query.ResponseTypeEnum;
 
-public final class SnapController extends ControllerABC {
+public final class CodeShelfController extends ControllerABC {
 
-	public static final String	BEAN_ID					= "SnapController";
+	public static final String	BEAN_ID					= "CodeShelfController";
 	public static final String	CONTROLLER_THREAD_NAME	= "Controller";
 
-	private static final Log	LOGGER					= LogFactory.getLog(SnapController.class);
+	private static final Log	LOGGER					= LogFactory.getLog(CodeShelfController.class);
 
 	private static final int	STD_SLEEP_TIME			= 50;
 	// Timeout after 5 minutes.
@@ -39,7 +39,7 @@ public final class SnapController extends ControllerABC {
 	/**
 	 *  @param inSessionManager
 	 */
-	public SnapController(final IDeviceMaintainer inDeviceMaintainer, final List<IGatewayInterface> inInterfaceList) {
+	public CodeShelfController(final IDeviceMaintainer inDeviceMaintainer, final List<IGatewayInterface> inInterfaceList) {
 		super(inDeviceMaintainer, inInterfaceList);
 
 	}

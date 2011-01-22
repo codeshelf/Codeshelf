@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: SnapNetwork.java,v 1.5 2011/01/21 20:05:36 jeffw Exp $
+ *  $Id: CodeShelfNetwork.java,v 1.1 2011/01/22 01:04:39 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -23,9 +23,9 @@ import com.gadgetworks.codeshelf.model.dao.ISystemDAO;
 
 // --------------------------------------------------------------------------
 /**
- * SnapNetwork
+ * CodeShelfNetwork
  * 
- * The SnapNetwork object holds information about how to create a standalone Snap network.
+ * The CodeShelfNetwork object holds information about how to create a standalone CodeShelf network.
  * (There may be more than one running at a facility.)
  * 
  * @author jeffw
@@ -35,11 +35,11 @@ import com.gadgetworks.codeshelf.model.dao.ISystemDAO;
 @DiscriminatorColumn(name = "DTYPE", discriminatorType = DiscriminatorType.STRING)
 //@MappedSuperclass
 @Entity
-@Table(name = "SNAPNETWORK")
+@Table(name = "CODESHELFNETWORK")
 @DiscriminatorValue("REAL")
-public class SnapNetwork extends PersistABC {
+public class CodeShelfNetwork extends PersistABC {
 
-	//	private static final Log		LOGGER			= LogFactory.getLog(SnapNetwork.class);
+	//	private static final Log		LOGGER			= LogFactory.getLog(CodeShelfNetwork.class);
 
 	private static final long	serialVersionUID	= 3001609308065821464L;
 
@@ -56,10 +56,10 @@ public class SnapNetwork extends PersistABC {
 	@Column(nullable = false)
 	private byte[]				mNetworkId;
 	// For a network this is a list of all of the control groups that belong in the set.
-	@OneToMany(mappedBy = "mParentSnapNetwork")
+	@OneToMany(mappedBy = "mParentCodeShelfNetwork")
 	private List<ControlGroup>	mControlGroups		= new ArrayList<ControlGroup>();
 
-	public SnapNetwork() {
+	public CodeShelfNetwork() {
 		mId = "";
 		mDescription = "";
 		mIsActive = true;
@@ -109,7 +109,7 @@ public class SnapNetwork extends PersistABC {
 				result = mControlGroups;
 			} else {
 				for (ControlGroup controlGroup : Util.getSystemDAO().getControlGroups()) {
-					if (controlGroup.getParentSnapNetwork().equals(this)) {
+					if (controlGroup.getParentCodeShelfNetwork().equals(this)) {
 						result.add(controlGroup);
 					}
 				}

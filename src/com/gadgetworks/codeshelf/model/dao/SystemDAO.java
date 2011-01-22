@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: SystemDAO.java,v 1.2 2011/01/21 01:12:12 jeffw Exp $
+ *  $Id: SystemDAO.java,v 1.3 2011/01/22 01:04:39 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -32,7 +32,7 @@ import com.gadgetworks.codeshelf.model.persist.DBProperty;
 import com.gadgetworks.codeshelf.model.persist.PersistABC;
 import com.gadgetworks.codeshelf.model.persist.PersistentProperty;
 import com.gadgetworks.codeshelf.model.persist.PickTag;
-import com.gadgetworks.codeshelf.model.persist.SnapNetwork;
+import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork;
 import com.gadgetworks.codeshelf.model.persist.WirelessDevice;
 
 // --------------------------------------------------------------------------
@@ -50,7 +50,7 @@ public final class SystemDAO implements ISystemDAO {
 
 	private Map<Integer, PersistentProperty>	mPersistentPropertyCacheMap;
 	private Map<Integer, WirelessDevice>		mWirelessDeviceCacheMap;
-	private Map<Integer, SnapNetwork>			mSnapNetworkCacheMap;
+	private Map<Integer, CodeShelfNetwork>		mCodeShelfNetworkCacheMap;
 	private Map<Integer, ControlGroup>			mControlGroupCacheMap;
 	private Map<NetAddress, WirelessDevice>		mAddressLookupMap;
 
@@ -190,13 +190,13 @@ public final class SystemDAO implements ISystemDAO {
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	private void initSnapNetworkCacheMap() {
-		Query<SnapNetwork> query = Ebean.createQuery(SnapNetwork.class);
+	private void initCodeShelfNetworkCacheMap() {
+		Query<CodeShelfNetwork> query = Ebean.createQuery(CodeShelfNetwork.class);
 		query = query.setUseCache(true);
-		Collection<SnapNetwork> networks = query.findList();
-		mSnapNetworkCacheMap = new HashMap<Integer, SnapNetwork>();
-		for (SnapNetwork network : networks) {
-			mSnapNetworkCacheMap.put(network.getPersistentId(), network);
+		Collection<CodeShelfNetwork> networks = query.findList();
+		mCodeShelfNetworkCacheMap = new HashMap<Integer, CodeShelfNetwork>();
+		for (CodeShelfNetwork network : networks) {
+			mCodeShelfNetworkCacheMap.put(network.getPersistentId(), network);
 		}
 	}
 
@@ -512,35 +512,35 @@ public final class SystemDAO implements ISystemDAO {
 
 	/* --------------------------------------------------------------------------
 	 * (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.dao.ISystemDAO#loadSnapNetwork(long)
+	 * @see com.gadgetworks.codeshelf.model.dao.ISystemDAO#loadCodeShelfNetwork(long)
 	 */
-	public SnapNetwork loadSnapNetwork(Integer inID) {
+	public CodeShelfNetwork loadCodeShelfNetwork(Integer inID) {
 		if (!mUseDAOCache) {
-			return Ebean.find(SnapNetwork.class, inID);
+			return Ebean.find(CodeShelfNetwork.class, inID);
 		} else {
-			if (mSnapNetworkCacheMap == null) {
-				initSnapNetworkCacheMap();
+			if (mCodeShelfNetworkCacheMap == null) {
+				initCodeShelfNetworkCacheMap();
 			}
-			return mSnapNetworkCacheMap.get(inID);
+			return mCodeShelfNetworkCacheMap.get(inID);
 		}
 	}
 
 	/* --------------------------------------------------------------------------
 	 * (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.dao.ISystemDAO#findSnapNetwork(java.lang.String)
+	 * @see com.gadgetworks.codeshelf.model.dao.ISystemDAO#findCodeShelfNetwork(java.lang.String)
 	 */
-	public SnapNetwork findSnapNetwork(String inPropertyID) {
+	public CodeShelfNetwork findCodeShelfNetwork(String inPropertyID) {
 		if (!mUseDAOCache) {
-			Query<SnapNetwork> query = Ebean.createQuery(SnapNetwork.class);
+			Query<CodeShelfNetwork> query = Ebean.createQuery(CodeShelfNetwork.class);
 			query.where().eq("mPropertyID", inPropertyID);
 			query = query.setUseCache(true);
 			return query.findUnique();
 		} else {
-			SnapNetwork result = null;
-			if (mSnapNetworkCacheMap == null) {
-				initSnapNetworkCacheMap();
+			CodeShelfNetwork result = null;
+			if (mCodeShelfNetworkCacheMap == null) {
+				initCodeShelfNetworkCacheMap();
 			}
-			for (SnapNetwork property : mSnapNetworkCacheMap.values()) {
+			for (CodeShelfNetwork property : mCodeShelfNetworkCacheMap.values()) {
 				if (property.getId().equals(inPropertyID)) {
 					result = property;
 				}
@@ -552,55 +552,55 @@ public final class SystemDAO implements ISystemDAO {
 
 	/* --------------------------------------------------------------------------
 	 * (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.dao.ISystemDAO#storeSnapNetwork(com.gadgetworks.codeshelf.model.persist.SnapNetwork)
+	 * @see com.gadgetworks.codeshelf.model.dao.ISystemDAO#storeCodeShelfNetwork(com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork)
 	 */
-	public void storeSnapNetwork(SnapNetwork inSnapNetwork) {
+	public void storeCodeShelfNetwork(CodeShelfNetwork inCodeShelfNetwork) {
 
-		if (inSnapNetwork.getPersistentId() == null) {
-			Ebean.save(inSnapNetwork);
-			privateBroadcastAdd(inSnapNetwork);
+		if (inCodeShelfNetwork.getPersistentId() == null) {
+			Ebean.save(inCodeShelfNetwork);
+			privateBroadcastAdd(inCodeShelfNetwork);
 		} else {
-			Ebean.save(inSnapNetwork);
-			privateBroadcastUpdate(inSnapNetwork);
+			Ebean.save(inCodeShelfNetwork);
+			privateBroadcastUpdate(inCodeShelfNetwork);
 		}
 		if (mUseDAOCache) {
-			if (mSnapNetworkCacheMap == null) {
-				initSnapNetworkCacheMap();
+			if (mCodeShelfNetworkCacheMap == null) {
+				initCodeShelfNetworkCacheMap();
 			}
-			mSnapNetworkCacheMap.put(inSnapNetwork.getPersistentId(), inSnapNetwork);
+			mCodeShelfNetworkCacheMap.put(inCodeShelfNetwork.getPersistentId(), inCodeShelfNetwork);
 		}
 	}
 
 	/* --------------------------------------------------------------------------
 	 * (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.dao.ISystemDAO#deleteSnapNetwork(com.gadgetworks.codeshelf.model.persist.SnapNetwork)
+	 * @see com.gadgetworks.codeshelf.model.dao.ISystemDAO#deleteCodeShelfNetwork(com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork)
 	 */
-	public void deleteSnapNetwork(SnapNetwork inSnapNetwork) {
+	public void deleteCodeShelfNetwork(CodeShelfNetwork inCodeShelfNetwork) {
 		if (mUseDAOCache) {
-			if (mSnapNetworkCacheMap == null) {
-				initSnapNetworkCacheMap();
+			if (mCodeShelfNetworkCacheMap == null) {
+				initCodeShelfNetworkCacheMap();
 			}
-			mSnapNetworkCacheMap.remove(inSnapNetwork.getPersistentId());
+			mCodeShelfNetworkCacheMap.remove(inCodeShelfNetwork.getPersistentId());
 		}
-		Ebean.delete(inSnapNetwork);
-		privateBroadcastDelete(inSnapNetwork);
+		Ebean.delete(inCodeShelfNetwork);
+		privateBroadcastDelete(inCodeShelfNetwork);
 	}
 
 	/* --------------------------------------------------------------------------
 	 * (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.dao.ISystemDAO#getPersistentProperties()
 	 */
-	public Collection<SnapNetwork> getSnapNetworks() {
+	public Collection<CodeShelfNetwork> getCodeShelfNetworks() {
 		if (!mUseDAOCache) {
-			Query<SnapNetwork> query = Ebean.createQuery(SnapNetwork.class);
+			Query<CodeShelfNetwork> query = Ebean.createQuery(CodeShelfNetwork.class);
 			query = query.setUseCache(true);
 			return query.findList();
 		} else {
-			if (mSnapNetworkCacheMap == null) {
-				initSnapNetworkCacheMap();
+			if (mCodeShelfNetworkCacheMap == null) {
+				initCodeShelfNetworkCacheMap();
 			}
 			// Use the accounts cache.
-			return mSnapNetworkCacheMap.values();
+			return mCodeShelfNetworkCacheMap.values();
 		}
 	}
 

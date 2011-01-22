@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 
-cd /opt/HoobeetNet
+cd /opt/CodeShelf
 java -Djava.library.path=./ -jar codeshelf.jar

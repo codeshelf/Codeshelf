@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ControlGroup.java,v 1.3 2011/01/21 02:22:35 jeffw Exp $
+ *  $Id: ControlGroup.java,v 1.4 2011/01/22 01:04:39 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -18,7 +18,7 @@ import com.gadgetworks.codeshelf.model.dao.ISystemDAO;
 
 // --------------------------------------------------------------------------
 /**
- * This is the persistence object that contains information about the control group associated with a SNAP network.
+ * This is the persistence object that contains information about the control group associated with a CodeShelf network.
  * 
  * @author jeffw
  */
@@ -28,10 +28,10 @@ public final class ControlGroup extends PersistABC {
 
 	private static final long	serialVersionUID	= -4923129546531851147L;
 
-	// The owning Snap network.
+	// The owning CodeShelf network.
 	@Column(nullable = false)
 	@ManyToOne
-	private SnapNetwork			mParentSnapNetwork;
+	private CodeShelfNetwork			mParentCodeShelfNetwork;
 	// The control group ID
 	@Column(nullable = false)
 	private String				mId;
@@ -46,25 +46,25 @@ public final class ControlGroup extends PersistABC {
 	private List<PickTag>		mPickTags			= new ArrayList<PickTag>();
 
 	public ControlGroup() {
-		mParentSnapNetwork = null;
+		mParentCodeShelfNetwork = null;
 		mId = "";
 		mIsActive = true;
 	}
 
 	public String toString() {
-		return mParentSnapNetwork.toString() + "->" + mId + " " + mDescription;
+		return mParentCodeShelfNetwork.toString() + "->" + mId + " " + mDescription;
 	}
 
-	public SnapNetwork getParentSnapNetwork() {
+	public CodeShelfNetwork getParentCodeShelfNetwork() {
 		// Yes, this is weird, but we MUST always return the same instance of these persistent objects.
-		if (mParentSnapNetwork != null) {
-			mParentSnapNetwork = Util.getSystemDAO().loadSnapNetwork(mParentSnapNetwork.getPersistentId());
+		if (mParentCodeShelfNetwork != null) {
+			mParentCodeShelfNetwork = Util.getSystemDAO().loadCodeShelfNetwork(mParentCodeShelfNetwork.getPersistentId());
 		}
-		return mParentSnapNetwork;
+		return mParentCodeShelfNetwork;
 	}
 
-	public void setParentSnapNetwork(SnapNetwork inSnapNetwork) {
-		mParentSnapNetwork = inSnapNetwork;
+	public void setParentCodeShelfNetwork(CodeShelfNetwork inCodeShelfNetwork) {
+		mParentCodeShelfNetwork = inCodeShelfNetwork;
 	}
 
 	public String getId() {

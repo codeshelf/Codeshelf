@@ -1,7 +1,7 @@
 /*******************************************************************************
- *  HoobeeNet
- *  Copyright (c) 2005-2010, Jeffrey B. Williams, All rights reserved
- *  $Id: SnapNetworkWizard.java,v 1.1 2011/01/21 20:05:35 jeffw Exp $
+ *  CodeShelf
+ *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
+ *  $Id: CodeShelfNetWizard.java,v 1.1 2011/01/22 01:04:39 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.ui.wizards;
 
@@ -13,41 +13,40 @@ import org.eclipse.jface.wizard.Wizard;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.widgets.Display;
 
-import com.gadgetworks.codeshelf.model.persist.SnapNetwork;
+import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork;
 import com.gadgetworks.codeshelf.ui.LocaleUtils;
-import com.gadgetworks.hbnet.model.persist.HooBee;
-import com.gadgetworks.hbnet.model.persist.Ruleset;
-import com.gadgetworks.hbnet.model.persist.TemplateRuleset;
 
 // --------------------------------------------------------------------------
 /**
  *  @author jeffw
  */
-public final class SnapNetworkWizard extends Wizard implements IPageChangingListener {
+public final class CodeShelfNetWizard extends Wizard implements IPageChangingListener {
 
-	private SnapNetwork			mSnapNetwork;
+	private CodeShelfNetwork			mCodeShelfNetwork;
 
-	private SnapNetworkAddPage	mAddPage;
-	private SnapNetworkEditPage	mEditPage;
+	private CodeShelfAddPage	mAddPage;
+	private CodeShelfEditPage	mEditPage;
 
-	public SnapNetworkWizard(final SnapNetwork inSnapNetwork) {
+	public CodeShelfNetWizard(final CodeShelfNetwork inCodeShelfNetwork) {
 
-		mSnapNetwork = inSnapNetwork;
+		mCodeShelfNetwork = inCodeShelfNetwork;
 
-		mAddPage = new SnapNetworkAddPage();
-		mEditPage = new SnapNetworkEditPage(inSnapNetwork);
+		mAddPage = new CodeShelfAddPage();
+		mEditPage = new CodeShelfEditPage(inCodeShelfNetwork);
 
-		setWindowTitle(LocaleUtils.getStr("hoobee_add_ruleset_wizard.title"));
+		setWindowTitle(LocaleUtils.getStr("codeshelfnet_add_wizard.title"));
 		setNeedsProgressMonitor(true);
 	}
 
 	// --------------------------------------------------------------------------
 	/**
-	 *  @param inSnapNetwork
+	 *  @param inCodeShelfNetwork
 	 */
-	public static void addSnapNetwork(SnapNetwork inSnapNetwork) {
+	public static void addCodeShelfNetwork(CodeShelfNetwork inCodeShelfNetwork) {
 
-		SnapNetworkWizard wizard = new SnapNetworkWizard(null);
+		CodeShelfNetwork codeShelfNetwork = new CodeShelfNetwork();
+		
+		CodeShelfNetWizard wizard = new CodeShelfNetWizard(codeShelfNetwork);
 		WizardDialog dialog = new WizardDialog(Display.getCurrent().getActiveShell(), wizard);
 		dialog.setBlockOnOpen(true);
 		dialog.addPageChangingListener(wizard);
@@ -60,11 +59,11 @@ public final class SnapNetworkWizard extends Wizard implements IPageChangingList
 
 	// --------------------------------------------------------------------------
 	/**
-	 * @param inSnapNetwork
+	 * @param inCodeShelfNetwork
 	 */
-	public static void editSnapNetwork(SnapNetwork inSnapNetwork) {
+	public static void editCodeShelfNetwork(CodeShelfNetwork inCodeShelfNetwork) {
 
-		SnapNetworkWizard wizard = new SnapNetworkWizard(inSnapNetwork);
+		CodeShelfNetWizard wizard = new CodeShelfNetWizard(inCodeShelfNetwork);
 		WizardDialog dialog = new WizardDialog(Display.getCurrent().getActiveShell(), wizard);
 		dialog.setBlockOnOpen(true);
 		dialog.addPageChangingListener(wizard);
@@ -82,7 +81,7 @@ public final class SnapNetworkWizard extends Wizard implements IPageChangingList
 	public void addPages() {
 
 		// If there is no specified ruleset, or it's a template then add a page for selecting a ruleset.
-		if (mSnapNetwork == null) {
+		if (mCodeShelfNetwork == null) {
 			addPage(mAddPage);
 		}
 		addPage(mEditPage);
@@ -95,7 +94,7 @@ public final class SnapNetworkWizard extends Wizard implements IPageChangingList
 	@Override
 	public IWizardPage getStartingPage() {
 		IWizardPage result = null;
-		if (mSnapNetwork == null) {
+		if (mCodeShelfNetwork == null) {
 			result = mAddPage;
 		} else {
 			result = mEditPage;
@@ -138,8 +137,8 @@ public final class SnapNetworkWizard extends Wizard implements IPageChangingList
 	 */
 	public boolean performFinish() {
 
-		// Save the values entered into the SnapNetwork.
-		return mEditPage.saveSnapNetwork();
+		// Save the values entered into the CodeShelfNetwork.
+		return mEditPage.saveCodeShelfNetwork();
 	}
 
 	/* --------------------------------------------------------------------------
@@ -148,7 +147,7 @@ public final class SnapNetworkWizard extends Wizard implements IPageChangingList
 	 */
 	public void handlePageChanging(PageChangingEvent inEvent) {
 		if ((inEvent.getCurrentPage().equals(mAddPage)) && (inEvent.getTargetPage().equals(mEditPage))) {
-			mEditPage.setSnapNetwork(mSnapNetwork);
+			mEditPage.setCodeShelfNetwork(mCodeShelfNetwork);
 		}
 		if (inEvent.getTargetPage().equals(mEditPage)) {
 			mEditPage.preparePage();

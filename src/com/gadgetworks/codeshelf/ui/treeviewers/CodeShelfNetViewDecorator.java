@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: SnapNetworkViewDecorator.java,v 1.1 2011/01/21 20:05:35 jeffw Exp $
+ *  $Id: CodeShelfNetViewDecorator.java,v 1.1 2011/01/22 01:04:39 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.ui.treeviewers;
@@ -14,8 +14,8 @@ import org.eclipse.swt.graphics.Image;
 /**
  *  @author jeffw
  */
-public class SnapNetworkViewDecorator extends LabelProvider implements ILabelDecorator {
-	public SnapNetworkViewDecorator() {
+public class CodeShelfNetViewDecorator extends LabelProvider implements ILabelDecorator {
+	public CodeShelfNetViewDecorator() {
 		super();
 	}
 

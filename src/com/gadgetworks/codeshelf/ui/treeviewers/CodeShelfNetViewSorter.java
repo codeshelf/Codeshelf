@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: SnapNetworkViewSorter.java,v 1.1 2011/01/21 20:05:35 jeffw Exp $
+ *  $Id: CodeShelfNetViewSorter.java,v 1.1 2011/01/22 01:04:39 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.ui.treeviewers;
@@ -11,7 +11,7 @@ import org.eclipse.jface.viewers.ViewerComparator;
 
 import com.gadgetworks.codeshelf.model.persist.PickTag;
 
-public class SnapNetworkViewSorter extends ViewerComparator {
+public class CodeShelfNetViewSorter extends ViewerComparator {
 	
 	public final String PICKTAG_GUID_PROPERTY = "GUIDPROP";
 

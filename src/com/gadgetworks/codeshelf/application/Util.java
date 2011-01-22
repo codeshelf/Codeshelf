@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Util.java,v 1.4 2011/01/21 05:12:25 jeffw Exp $
+ *  $Id: Util.java,v 1.5 2011/01/22 01:04:39 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -118,7 +118,7 @@ public final class Util {
 
 	public static final String			CONSOLE_TEXT						= "consoleText";
 	public static final String			OWNERBOX_TEXT						= "personBoxText";
-	public static final String			SNAP_NETWORK_VIEW_TEXT				= "snapNetworkViewText";
+	public static final String			CODESHELF_NET_VIEW_TEXT				= "codeShelfViewText";
 	public static final String			WIRELESSDEVICEBOX_TEXT				= "wirelessdeviceBoxText";
 
 	private static final String			KEEP_FORWARD_THREAD_NAME			= "Keep Dialog Forward";

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfApplication.java,v 1.3 2011/01/21 20:05:36 jeffw Exp $
+ *  $Id: CodeShelfApplication.java,v 1.4 2011/01/22 01:04:39 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -37,14 +37,14 @@ import com.gadgetworks.codeshelf.controller.ControllerABC;
 import com.gadgetworks.codeshelf.controller.IController;
 import com.gadgetworks.codeshelf.controller.IGatewayInterface;
 import com.gadgetworks.codeshelf.controller.NetworkDeviceStateEnum;
-import com.gadgetworks.codeshelf.controller.SnapController;
-import com.gadgetworks.codeshelf.controller.SnapInterface;
+import com.gadgetworks.codeshelf.controller.CodeShelfController;
+import com.gadgetworks.codeshelf.controller.CodeShelfInterface;
 import com.gadgetworks.codeshelf.model.PreferencesStore;
 import com.gadgetworks.codeshelf.model.dao.H2SchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
+import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork;
 import com.gadgetworks.codeshelf.model.persist.DBProperty;
 import com.gadgetworks.codeshelf.model.persist.PersistentProperty;
-import com.gadgetworks.codeshelf.model.persist.SnapNetwork;
 import com.gadgetworks.codeshelf.model.persist.WirelessDevice;
 import com.gadgetworks.codeshelf.server.JmsHandler;
 import com.gadgetworks.codeshelf.server.jms.ActiveMqManager;
@@ -182,11 +182,11 @@ public final class CodeShelfApplication {
 			Util.openConsole();
 
 		List<IGatewayInterface> interfaceList = new ArrayList<IGatewayInterface>();
-		// Create a Snap interface for each snap network we have.
-		for (SnapNetwork network : Util.getSystemDAO().getSnapNetworks()) {
-			interfaceList.add(new SnapInterface(network));			
+		// Create a CodeShelf interface for each CodeShelf network we have.
+		for (CodeShelfNetwork network : Util.getSystemDAO().getCodeShelfNetworks()) {
+			interfaceList.add(new CodeShelfInterface(network));			
 		}
-		mController = new SnapController(Util.getSystemDAO(), interfaceList);
+		mController = new CodeShelfController(Util.getSystemDAO(), interfaceList);
 
 		mWirelessDeviceEventHandler = new WirelessDeviceEventHandler(mController);
 		//		mServerConnectionManager = new FacebookConnectionManager(mController);
@@ -481,7 +481,7 @@ public final class CodeShelfApplication {
 		//			
 		//		}
 		try {
-			Connection connection = DriverManager.getConnection(Util.getApplicationDatabaseURL(), "hoobeenet", "hoobeenet");
+			Connection connection = DriverManager.getConnection(Util.getApplicationDatabaseURL(), "codeshelf", "codeshelf");
 
 			// Try to switch to the proper schema.
 			Statement stmt = connection.createStatement();

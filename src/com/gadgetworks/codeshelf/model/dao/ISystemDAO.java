@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ISystemDAO.java,v 1.2 2011/01/21 01:12:12 jeffw Exp $
+ *  $Id: ISystemDAO.java,v 1.3 2011/01/22 01:04:39 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -13,7 +13,7 @@ import com.gadgetworks.codeshelf.model.persist.DBProperty;
 import com.gadgetworks.codeshelf.model.persist.PersistABC;
 import com.gadgetworks.codeshelf.model.persist.PersistentProperty;
 import com.gadgetworks.codeshelf.model.persist.PickTag;
-import com.gadgetworks.codeshelf.model.persist.SnapNetwork;
+import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork;
 import com.gadgetworks.codeshelf.model.persist.WirelessDevice;
 
 public interface ISystemDAO extends IDeviceMaintainer {
@@ -72,17 +72,17 @@ public interface ISystemDAO extends IDeviceMaintainer {
 	Collection<WirelessDevice> getWirelessDevices();
 	
 	// --------------------------------------------------------------------------
-	// SnapNetwork
+	// CodeShelfNetwork
 
-	SnapNetwork loadSnapNetwork(Integer inID);
+	CodeShelfNetwork loadCodeShelfNetwork(Integer inID);
 
-	SnapNetwork findSnapNetwork(String inNetworkId);
+	CodeShelfNetwork findCodeShelfNetwork(String inNetworkId);
 
-	void storeSnapNetwork(SnapNetwork inSnapNetwork) throws DAOException;
+	void storeCodeShelfNetwork(CodeShelfNetwork inCodeShelfNetwork) throws DAOException;
 
-	void deleteSnapNetwork(SnapNetwork inSnapNetwork) throws DAOException;
+	void deleteCodeShelfNetwork(CodeShelfNetwork inCodeShelfNetwork) throws DAOException;
 
-	Collection<SnapNetwork> getSnapNetworks();
+	Collection<CodeShelfNetwork> getCodeShelfNetworks();
 	
 	// --------------------------------------------------------------------------
 	// ControlGroup

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: SnapNetworkViewDecoratedLabelProvider.java,v 1.1 2011/01/21 20:05:35 jeffw Exp $
+ *  $Id: CodeShelfNetViewDecoratedLabelProvider.java,v 1.1 2011/01/22 01:04:39 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.ui.treeviewers;
@@ -22,13 +22,13 @@ import com.gadgetworks.codeshelf.application.Util;
 import com.gadgetworks.codeshelf.controller.NetworkDeviceStateEnum;
 import com.gadgetworks.codeshelf.model.persist.ControlGroup;
 import com.gadgetworks.codeshelf.model.persist.PickTag;
-import com.gadgetworks.codeshelf.model.persist.SnapNetwork;
+import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork;
 
 // --------------------------------------------------------------------------
 /**
  *  @author jeffw
  */
-public final class SnapNetworkViewDecoratedLabelProvider extends DecoratingLabelProvider implements
+public final class CodeShelfNetViewDecoratedLabelProvider extends DecoratingLabelProvider implements
 	ITableLabelProvider,
 	ITableColorProvider {
 
@@ -44,7 +44,7 @@ public final class SnapNetworkViewDecoratedLabelProvider extends DecoratingLabel
 	 *  @param inProvider
 	 *  @param inDecorator
 	 */
-	public SnapNetworkViewDecoratedLabelProvider(final Tree inTree, final ILabelProvider inProvider, final ILabelDecorator inDecorator) {
+	public CodeShelfNetViewDecoratedLabelProvider(final Tree inTree, final ILabelProvider inProvider, final ILabelDecorator inDecorator) {
 		super(inProvider, inDecorator);
 
 		mTree = inTree;
@@ -61,8 +61,8 @@ public final class SnapNetworkViewDecoratedLabelProvider extends DecoratingLabel
 
 		if (column.getData().equals(ID_COL)) {
 			if (inElement instanceof PickTag) {
-				PickTag hoobee = (PickTag) inElement;
-				if (hoobee.getNetworkDeviceState() != NetworkDeviceStateEnum.STARTED) {
+				PickTag pickTag = (PickTag) inElement;
+				if (pickTag.getNetworkDeviceState() != NetworkDeviceStateEnum.STARTED) {
 					result = Util.getImageRegistry().get(Util.ACCOUNT_ICON_QUARTER_ALPHA);
 				} else {
 					result = Util.getImageRegistry().get(Util.ACCOUNT_ICON_GREEN);
@@ -91,10 +91,10 @@ public final class SnapNetworkViewDecoratedLabelProvider extends DecoratingLabel
 			} else if (column.getData().equals(DETAILS_COL)) {
 				displayStr = "firmware=" + pickTag.getSWRevision() + " hw=" + pickTag.getHWDesc();
 			}
-		} else if (inElement instanceof SnapNetwork) {
-			SnapNetwork snapNetwork = (SnapNetwork) inElement;
+		} else if (inElement instanceof CodeShelfNetwork) {
+			CodeShelfNetwork codeShelfNetwork = (CodeShelfNetwork) inElement;
 			if (column.getData().equals(ID_COL)) {
-				displayStr = snapNetwork.getDescription();
+				displayStr = codeShelfNetwork.getDescription();
 			} else if (column.getData().equals(DESC_COL)) {
 				displayStr = "";
 			} else if (column.getData().equals(DETAILS_COL)) {
@@ -136,9 +136,9 @@ public final class SnapNetworkViewDecoratedLabelProvider extends DecoratingLabel
 			if (((PickTag) inElement).getNetworkDeviceState() != NetworkDeviceStateEnum.STARTED) {
 				color = Display.getCurrent().getSystemColor(SWT.COLOR_DARK_GRAY);
 			}
-		} else if (inElement instanceof SnapNetwork) {
-			SnapNetwork snapNetwork = (SnapNetwork) inElement;
-			if (!snapNetwork.getIsActive()) {
+		} else if (inElement instanceof CodeShelfNetwork) {
+			CodeShelfNetwork codeShelfNetwork = (CodeShelfNetwork) inElement;
+			if (!codeShelfNetwork.getIsActive()) {
 				color = Display.getCurrent().getSystemColor(SWT.COLOR_GRAY);
 			}
 		} else if (inElement instanceof ControlGroup) {

@@ -1,7 +1,7 @@
 /*******************************************************************************
- *  HoobeeNet
- *  Copyright (c) 2005-2010, Jeffrey B. Williams, All rights reserved
- *  $Id: SnapNetworkEditPage.java,v 1.1 2011/01/21 20:05:35 jeffw Exp $
+ *  CodeShelf
+ *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
+ *  $Id: CodeShelfEditPage.java,v 1.1 2011/01/22 01:04:39 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.ui.wizards;
 
@@ -23,46 +23,46 @@ import org.eclipse.swt.widgets.Text;
 import com.gadgetworks.codeshelf.application.Util;
 import com.gadgetworks.codeshelf.model.dao.DAOException;
 import com.gadgetworks.codeshelf.model.dao.IDAOListener;
-import com.gadgetworks.codeshelf.model.persist.SnapNetwork;
+import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork;
 import com.gadgetworks.codeshelf.ui.LocaleUtils;
 
 // --------------------------------------------------------------------------
 /**
  *  @author jeffw
  */
-public final class SnapNetworkEditPage extends WizardPage implements IDoubleClickListener, IDAOListener {
+public final class CodeShelfEditPage extends WizardPage implements IDoubleClickListener, IDAOListener {
 
-	private static final Log	LOGGER			= LogFactory.getLog(SnapNetworkEditPage.class);
+	private static final Log	LOGGER			= LogFactory.getLog(CodeShelfEditPage.class);
 
 	private static final int	VALUE_COL_WIDTH	= 500;
 
-	private SnapNetwork			mSnapNetwork;
+	private CodeShelfNetwork	mCodeShelfNetwork;
 	private Button				mIsActiveButton;
 	private Label				mDescriptionLabel;
 	private Text				mDescriptionField;
 	private Listener			mEditListener;
 	private Composite			mEditComposite;
 
-	public SnapNetworkEditPage(final SnapNetwork inSnapNetwork) {
-		super(LocaleUtils.getStr("snapnetwork_wizard.edit_page.page_name"));
+	public CodeShelfEditPage(final CodeShelfNetwork inCodeShelfNetwork) {
+		super(LocaleUtils.getStr("codeshelfnet_wizard.edit_page.page_name"));
 
-		mSnapNetwork = inSnapNetwork;
+		mCodeShelfNetwork = inCodeShelfNetwork;
 
-		if (mSnapNetwork != null) {
-			setTitle(mSnapNetwork.getDescription());
+		if (mCodeShelfNetwork != null) {
+			setTitle(mCodeShelfNetwork.getDescription());
 		} else {
-			setTitle(LocaleUtils.getStr("snapnetwork_wizard.edit_page.title"));
+			setTitle(LocaleUtils.getStr("codeshelfnet_wizard.edit_page.title"));
 		}
-		setDescription(LocaleUtils.getStr("snapnetwork_wizard.edit_page.desc"));
+		setDescription(LocaleUtils.getStr("codeshelfnet_wizard.edit_page.desc"));
 		setPageComplete(false);
 	}
 
 	// --------------------------------------------------------------------------
 	/**
-	 *  @param inSnapNetwork
+	 *  @param inCodeShelfNetwork
 	 */
-	public final void setSnapNetwork(SnapNetwork inSnapNetwork) {
-		mSnapNetwork = inSnapNetwork;
+	public final void setCodeShelfNetwork(CodeShelfNetwork inCodeShelfNetwork) {
+		mCodeShelfNetwork = inCodeShelfNetwork;
 	}
 
 	/* --------------------------------------------------------------------------
@@ -75,7 +75,7 @@ public final class SnapNetworkEditPage extends WizardPage implements IDoubleClic
 
 		Util.getSystemDAO().registerDAOListener(this);
 
-		Composite mEditComposite = new Composite(inParent, SWT.NULL);
+		mEditComposite = new Composite(inParent, SWT.NULL);
 		mEditComposite.setLayout(new GridLayout(1, false));
 
 		setControl(mEditComposite);
@@ -124,29 +124,30 @@ public final class SnapNetworkEditPage extends WizardPage implements IDoubleClic
 	}
 
 	public void preparePage() {
-		if (mSnapNetwork != null) {
-			setTitle(mSnapNetwork.getDescription());
-
-			// Add the "is active" button.
-			mIsActiveButton = new Button(mEditComposite, SWT.CHECK);
-			mIsActiveButton.setSelection(mSnapNetwork.getIsActive());
-			mIsActiveButton.setText(LocaleUtils.getStr("snapnetwork_wizard.edit_page.isactive"));
-			GridData gridData = new GridData(SWT.LEFT, SWT.TOP, false, false, 10, 1);
-			mIsActiveButton.setLayoutData(gridData);
+		if (mCodeShelfNetwork != null) {
+			setTitle(mCodeShelfNetwork.getDescription());
 
 			// Description field.
 			mDescriptionLabel = new Label(mEditComposite, SWT.RIGHT);
 			mDescriptionField = new Text(mEditComposite, SWT.SINGLE | SWT.BORDER);
-			String labelStr = LocaleUtils.getStr("snapnetwork_wizard.edit_page.desc_field");
+			String labelStr = LocaleUtils.getStr("codeshelfnet_wizard.edit_page.desc_field");
 			createInputField(mDescriptionLabel, mDescriptionField, mEditComposite, labelStr, 1, 4, 5);
-			mDescriptionField.setText(mSnapNetwork.getDescription());
-			mDescriptionField.addListener(SWT.Modify, mEditListener);
+			mDescriptionField.setText(mCodeShelfNetwork.getDescription());
+
+			// Add the "is active" button.
+			mIsActiveButton = new Button(mEditComposite, SWT.CHECK);
+			mIsActiveButton.setSelection(mCodeShelfNetwork.getIsActive());
+			mIsActiveButton.setText(LocaleUtils.getStr("codeshelfnet_wizard.edit_page.isactive"));
+			GridData gridData = new GridData(SWT.LEFT, SWT.TOP, false, false, 10, 1);
+			mIsActiveButton.setLayoutData(gridData);
 
 			mEditListener = new Listener() {
 				public void handleEvent(Event inEvent) {
 					setPageComplete(isPageComplete());
 				}
 			};
+
+			mDescriptionField.addListener(SWT.Modify, mEditListener);
 
 			mEditComposite.pack();
 			mEditComposite.getParent().layout();
@@ -172,20 +173,20 @@ public final class SnapNetworkEditPage extends WizardPage implements IDoubleClic
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	public boolean saveSnapNetwork() {
+	public boolean saveCodeShelfNetwork() {
 
 		boolean result = true;
 
 		Text field;
 
-		if ((result == true) && (mSnapNetwork != null)) {
+		if ((result == true) && (mCodeShelfNetwork != null)) {
 
-			mSnapNetwork.setDescription(mDescriptionField.getText());
-			mSnapNetwork.setIsActive(mIsActiveButton.getSelection());
+			mCodeShelfNetwork.setDescription(mDescriptionField.getText());
+			mCodeShelfNetwork.setIsActive(mIsActiveButton.getSelection());
 
-			// Save the Snap Network.
+			// Save the CodeShelf Network.
 			try {
-				Util.getSystemDAO().storeSnapNetwork(mSnapNetwork);
+				Util.getSystemDAO().storeCodeShelfNetwork(mCodeShelfNetwork);
 			} catch (DAOException e) {
 				LOGGER.error("", e);
 			}
@@ -201,7 +202,7 @@ public final class SnapNetworkEditPage extends WizardPage implements IDoubleClic
 	 */
 	public void objectAdded(Object inObject) {
 		if (doesDAOChangeApply(inObject)) {
-			if (inObject instanceof SnapNetwork) {
+			if (inObject instanceof CodeShelfNetwork) {
 
 			}
 		}
@@ -215,7 +216,7 @@ public final class SnapNetworkEditPage extends WizardPage implements IDoubleClic
 	 */
 	public void objectDeleted(Object inObject) {
 		if (doesDAOChangeApply(inObject)) {
-			if (inObject instanceof SnapNetwork) {
+			if (inObject instanceof CodeShelfNetwork) {
 
 			}
 		}
@@ -229,7 +230,7 @@ public final class SnapNetworkEditPage extends WizardPage implements IDoubleClic
 	 */
 	public void objectUpdated(Object inObject) {
 		if (doesDAOChangeApply(inObject)) {
-			if (inObject instanceof SnapNetwork) {
+			if (inObject instanceof CodeShelfNetwork) {
 
 			}
 		}
@@ -244,9 +245,9 @@ public final class SnapNetworkEditPage extends WizardPage implements IDoubleClic
 		boolean result = false;
 
 		// We only want to update if it's an account or buddy update.
-		if (inObject instanceof SnapNetwork) {
-			SnapNetwork snapNetwork = (SnapNetwork) inObject;
-			if (snapNetwork.equals(mSnapNetwork)) {
+		if (inObject instanceof CodeShelfNetwork) {
+			CodeShelfNetwork codeShelfNetwork = (CodeShelfNetwork) inObject;
+			if (codeShelfNetwork.equals(mCodeShelfNetwork)) {
 				result = true;
 			}
 		}

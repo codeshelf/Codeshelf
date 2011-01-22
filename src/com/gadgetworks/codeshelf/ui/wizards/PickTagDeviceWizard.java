@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PickTagDeviceWizard.java,v 1.3 2011/01/21 05:12:25 jeffw Exp $
+ *  $Id: PickTagDeviceWizard.java,v 1.4 2011/01/22 01:04:39 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.ui.wizards;
@@ -87,7 +87,7 @@ public class PickTagDeviceWizard extends Wizard {
 		mPickTag = inPickTag;
 		mPickTagDeviceSetupPage = new PickTagDeviceSetupPage(inPickTag);
 
-		setWindowTitle(LocaleUtils.getStr("snapnetwork_wizard.title"));
+		setWindowTitle(LocaleUtils.getStr("codeshelfnet_wizard.title"));
 		setNeedsProgressMonitor(true);
 	}
 

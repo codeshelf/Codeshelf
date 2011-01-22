@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: SnapNetworkViewLabelProvider.java,v 1.1 2011/01/21 20:05:35 jeffw Exp $
+ *  $Id: CodeShelfNetViewLabelProvider.java,v 1.1 2011/01/22 01:04:39 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.ui.treeviewers;
@@ -13,7 +13,7 @@ import com.gadgetworks.codeshelf.application.Util;
 import com.gadgetworks.codeshelf.controller.NetworkDeviceStateEnum;
 import com.gadgetworks.codeshelf.model.persist.PickTag;
 
-public class SnapNetworkViewLabelProvider extends LabelProvider {
+public class CodeShelfNetViewLabelProvider extends LabelProvider {
 
 	public final String getText(Object inElement) {
 		if (inElement instanceof PickTag) {

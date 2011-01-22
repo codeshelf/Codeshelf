@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: IController.java,v 1.2 2011/01/21 01:12:11 jeffw Exp $
+ *  $Id: IController.java,v 1.3 2011/01/22 01:04:39 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.controller;
 
@@ -15,7 +15,7 @@ import com.gadgetworks.codeshelf.command.ICommand;
  */
 public interface IController extends Runnable {
 
-	String		BEAN_ID					= "SNAPController";
+	String		BEAN_ID					= "IController";
 
 	NetAddress	GATEWAY_ADDRESS			= new NetAddress(new byte[] { (byte) 0xff, (byte) 0xff, (byte) 0xff });
 	NetAddress	BROADCAST_ADDRESS		= new NetAddress(new byte[] { (byte) 0xff, (byte) 0xff, (byte) 0xff });

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PickTagMgrWindow.java,v 1.5 2011/01/21 20:05:36 jeffw Exp $
+ *  $Id: PickTagMgrWindow.java,v 1.6 2011/01/22 01:04:39 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.ui;
 
@@ -26,7 +26,7 @@ import com.gadgetworks.codeshelf.application.CodeShelfApplication;
 import com.gadgetworks.codeshelf.application.Util;
 import com.gadgetworks.codeshelf.model.dao.IDAOListener;
 import com.gadgetworks.codeshelf.ui.action.ActionConsole;
-import com.gadgetworks.codeshelf.ui.treeviewers.SnapNetworkView;
+import com.gadgetworks.codeshelf.ui.treeviewers.CodeShelfNetView;
 
 // --------------------------------------------------------------------------
 /**
@@ -43,7 +43,7 @@ public final class PickTagMgrWindow extends ApplicationWindow implements IDAOLis
 	private static final Log	LOGGER				= LogFactory.getLog(PickTagMgrWindow.class);
 
 	private CodeShelfApplication	mApplication;
-	private SnapNetworkView		mPickTagView;
+	private CodeShelfNetView		mPickTagView;
 	private Shell				mShell;
 
 	private ActionConsole		mConsoleAction;
@@ -105,13 +105,13 @@ public final class PickTagMgrWindow extends ApplicationWindow implements IDAOLis
 	protected Control createContents(Composite inParentShell) {
 
 		mShell = (Shell) inParentShell;
-		mShell.setText(LocaleUtils.getStr("snapnetworkmgr_window.title"));
+		mShell.setText(LocaleUtils.getStr("codeshelfnetworkmgr_window.title"));
 
 		Composite composite = new Composite(mShell, SWT.NULL);
 		composite.setLayout(new GridLayout());
 		composite.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, true, true));
 
-		mPickTagView = new SnapNetworkView(composite, mApplication.getController(), SWT.BORDER);
+		mPickTagView = new CodeShelfNetView(composite, mApplication.getController(), SWT.BORDER);
 		Util.getSystemDAO().registerDAOListener(mPickTagView);
 
 		return composite;

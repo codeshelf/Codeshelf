@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: SnapNetworkView.java,v 1.1 2011/01/21 20:05:35 jeffw Exp $
+ *  $Id: CodeShelfNetView.java,v 1.1 2011/01/22 01:04:39 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.ui.treeviewers;
 
@@ -45,10 +45,10 @@ import com.gadgetworks.codeshelf.model.dao.IDAOListener;
 import com.gadgetworks.codeshelf.model.persist.ControlGroup;
 import com.gadgetworks.codeshelf.model.persist.PersistABC;
 import com.gadgetworks.codeshelf.model.persist.PickTag;
-import com.gadgetworks.codeshelf.model.persist.SnapNetwork;
+import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork;
 import com.gadgetworks.codeshelf.ui.LocaleUtils;
 import com.gadgetworks.codeshelf.ui.wizards.PickTagDeviceWizard;
-import com.gadgetworks.codeshelf.ui.wizards.SnapNetworkWizard;
+import com.gadgetworks.codeshelf.ui.wizards.CodeShelfNetWizard;
 
 // --------------------------------------------------------------------------
 /**
@@ -56,7 +56,7 @@ import com.gadgetworks.codeshelf.ui.wizards.SnapNetworkWizard;
  * 
  * @author jeffw
  */
-public final class SnapNetworkView implements ISelectionChangedListener, IDoubleClickListener, MenuListener, IDAOListener {
+public final class CodeShelfNetView implements ISelectionChangedListener, IDoubleClickListener, MenuListener, IDAOListener {
 
 	//	private static final Log			LOGGER				= LogFactory.getLog(PickTagView.class);
 
@@ -64,16 +64,16 @@ public final class SnapNetworkView implements ISelectionChangedListener, IDouble
 	private static final int				DESC_COL_WIDTH		= 200;
 	private static final int				DETAILS_COL_WIDTH	= 600;
 
-	private static final Log				LOGGER				= LogFactory.getLog(SnapNetworkView.class);
+	private static final Log				LOGGER				= LogFactory.getLog(CodeShelfNetView.class);
 
 	private Shell							mShell;
 	private TreeViewer						mTreeViewer;
 	private Tree							mTree;
-	private SnapNetworkViewContentProvider	mSnapNetViewContentProvider;
+	private CodeShelfNetViewContentProvider	mCodeShelfNetworkViewContentProvider;
 	private Menu							mPopup;
 	private IController						mController;
 
-	public SnapNetworkView(final Composite inParent, final IController inController, final int inStyle) {
+	public CodeShelfNetView(final Composite inParent, final IController inController, final int inStyle) {
 
 		mController = inController;
 		mShell = inParent.getShell();
@@ -82,7 +82,7 @@ public final class SnapNetworkView implements ISelectionChangedListener, IDouble
 		mTree = mTreeViewer.getTree();
 
 		mTree.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
-		mTree.setFont(Util.getFontRegistry().get(Util.SNAP_NETWORK_VIEW_TEXT));
+		mTree.setFont(Util.getFontRegistry().get(Util.CODESHELF_NET_VIEW_TEXT));
 		mTree.setHeaderVisible(true);
 		mTree.setLinesVisible(false);
 		mTree.setBackground(Util.getColorRegistry().get(Util.BACKGROUND_COLOR));
@@ -100,7 +100,7 @@ public final class SnapNetworkView implements ISelectionChangedListener, IDouble
 		dragSource.addDragListener(new DragSourceAdapter() {
 			public void dragStart(DragSourceEvent inEvent) {
 				PersistABC persistentObject = (PersistABC) mTree.getSelection()[0].getData();
-				if (!(persistentObject instanceof SnapNetwork)) {
+				if (!(persistentObject instanceof CodeShelfNetwork)) {
 					inEvent.doit = false;
 				}
 				LOGGER.info(persistentObject);
@@ -119,36 +119,36 @@ public final class SnapNetworkView implements ISelectionChangedListener, IDouble
 
 		TreeColumn column = new TreeColumn(mTree, SWT.NONE);
 		column.setWidth(ID_COL_WIDTH);
-		column.setText(LocaleUtils.getStr("snapnetview.id_col.label"));
+		column.setText(LocaleUtils.getStr("codeshelfview.id_col.label"));
 		column.setResizable(true);
-		column.setData(SnapNetworkViewDecoratedLabelProvider.ID_COL);
+		column.setData(CodeShelfNetViewDecoratedLabelProvider.ID_COL);
 
 		column = new TreeColumn(mTree, SWT.NONE);
 		column.setWidth(DESC_COL_WIDTH);
-		column.setText(LocaleUtils.getStr("snapnetview.desc_col.label"));
+		column.setText(LocaleUtils.getStr("codeshelfview.desc_col.label"));
 		column.setResizable(true);
 		column.setMoveable(true);
-		column.setData(SnapNetworkViewDecoratedLabelProvider.DESC_COL);
+		column.setData(CodeShelfNetViewDecoratedLabelProvider.DESC_COL);
 
 		column = new TreeColumn(mTree, SWT.NONE);
 		column.setWidth(DETAILS_COL_WIDTH);
-		column.setText(LocaleUtils.getStr("snapnetview.details_col.label"));
+		column.setText(LocaleUtils.getStr("codeshelfview.details_col.label"));
 		column.setResizable(true);
 		column.setMoveable(true);
-		column.setData(SnapNetworkViewDecoratedLabelProvider.DETAILS_COL);
+		column.setData(CodeShelfNetViewDecoratedLabelProvider.DETAILS_COL);
 
-		mSnapNetViewContentProvider = new SnapNetworkViewContentProvider();
+		mCodeShelfNetworkViewContentProvider = new CodeShelfNetViewContentProvider();
 
-		mTreeViewer.setContentProvider(mSnapNetViewContentProvider);
-		mTreeViewer.setComparator(new SnapNetworkViewSorter());
-		mTreeViewer.setLabelProvider(new SnapNetworkViewDecoratedLabelProvider(mTree,
-			new SnapNetworkViewLabelProvider(),
-			new SnapNetworkViewDecorator()));
+		mTreeViewer.setContentProvider(mCodeShelfNetworkViewContentProvider);
+		mTreeViewer.setComparator(new CodeShelfNetViewSorter());
+		mTreeViewer.setLabelProvider(new CodeShelfNetViewDecoratedLabelProvider(mTree,
+			new CodeShelfNetViewLabelProvider(),
+			new CodeShelfNetViewDecorator()));
 		//		mTreeViewer.addFilter(new ActiveAccountsFilter());
 		//		mTreeViewer.setComparer(new ObjectIDComparer());
 		mTreeViewer.addSelectionChangedListener(this);
 		mTreeViewer.addDoubleClickListener(this);
-		mTreeViewer.setInput(SnapNetworkViewContentProvider.PICKTAGVIEW_ROOT);
+		mTreeViewer.setInput(CodeShelfNetViewContentProvider.PICKTAGVIEW_ROOT);
 	}
 
 	// --------------------------------------------------------------------------
@@ -228,10 +228,10 @@ public final class SnapNetworkView implements ISelectionChangedListener, IDouble
 		}
 
 		if (itemData == null) {
-			snapNetworkMenu(null);
-		} else if (itemData instanceof SnapNetwork) {
-			SnapNetwork snapNetwork = (SnapNetwork) itemData;
-			snapNetworkMenu(snapNetwork);
+			codeShelfNetworkMenu(null);
+		} else if (itemData instanceof CodeShelfNetwork) {
+			CodeShelfNetwork codeShelfNetwork = (CodeShelfNetwork) itemData;
+			codeShelfNetworkMenu(codeShelfNetwork);
 		} else if (itemData instanceof ControlGroup) {
 			ControlGroup controlGroup = (ControlGroup) itemData;
 			controlGroupMenu(controlGroup);
@@ -245,42 +245,42 @@ public final class SnapNetworkView implements ISelectionChangedListener, IDouble
 	/**
 	 * This is the popup menu when the user clicks on a PickTagModule in the PickTagView.
 	 * 
-	 * @param inSnapNetwork
+	 * @param inCodeShelfNetwork
 	 */
-	private void snapNetworkMenu(final SnapNetwork inSnapNetwork) {
+	private void codeShelfNetworkMenu(final CodeShelfNetwork inCodeShelfNetwork) {
 
-		// Add SnapNetwork menu item.
+		// Add CodeShelfNetwork menu item.
 		final MenuItem adItem = new MenuItem(mPopup, SWT.NONE);
-		adItem.setText(LocaleUtils.getStr("snapnetview.menu.add_snapnetwork"));
+		adItem.setText(LocaleUtils.getStr("codeshelfview.menu.add_codeshelfnetwork"));
 		adItem.addListener(SWT.Selection, new Listener() {
 			public void handleEvent(Event inEvent) {
-				SnapNetworkWizard.addSnapNetwork(inSnapNetwork);
+				CodeShelfNetWizard.addCodeShelfNetwork(inCodeShelfNetwork);
 			}
 		});
 
-		// Edit SnapNetwork menu item.
+		// Edit CodeShelfNetwork menu item.
 		final MenuItem editItem = new MenuItem(mPopup, SWT.NONE);
-		editItem.setText(LocaleUtils.getStr("snapnetview.menu.edit_snapnetwork"));
-		editItem.setData(inSnapNetwork);
+		editItem.setText(LocaleUtils.getStr("codeshelfview.menu.edit_codeshelfnetwork"));
+		editItem.setData(inCodeShelfNetwork);
 		editItem.addListener(SWT.Selection, new Listener() {
 			public void handleEvent(Event inEvent) {
-				SnapNetworkWizard.editSnapNetwork(inSnapNetwork);
+				CodeShelfNetWizard.editCodeShelfNetwork(inCodeShelfNetwork);
 			}
 		});
 
-		// Delete SnapNetwork menu item.
+		// Delete CodeShelfNetwork menu item.
 		final MenuItem deleteItem = new MenuItem(mPopup, SWT.NONE);
-		deleteItem.setText(LocaleUtils.getStr("snapnetview.menu.delete_snapnetwork"));
-		deleteItem.setData(inSnapNetwork);
+		deleteItem.setText(LocaleUtils.getStr("codeshelfview.menu.delete_codeshelfnetwork"));
+		deleteItem.setData(inCodeShelfNetwork);
 		deleteItem.addListener(SWT.Selection, new Listener() {
 			public void handleEvent(Event inEvent) {
 				boolean deletePickTagModule = MessageDialog.openQuestion(Display.getCurrent().getActiveShell(),
-					LocaleUtils.getStr("snapnetview.menu.delete_snapnetwork.title"),
-					LocaleUtils.getStr("snapnetview.menu.delete_snapnetwork.prompt",
-						new String[] { inSnapNetwork.getDescription() }));
+					LocaleUtils.getStr("codeshelfview.menu.delete_codeshelfnetwork.title"),
+					LocaleUtils.getStr("codeshelfview.menu.delete_codeshelfnetwork.prompt",
+						new String[] { inCodeShelfNetwork.getDescription() }));
 				if (deletePickTagModule) {
 					try {
-						Util.getSystemDAO().deleteSnapNetwork(inSnapNetwork);
+						Util.getSystemDAO().deleteCodeShelfNetwork(inCodeShelfNetwork);
 					} catch (DAOException e) {
 						LOGGER.error(e);
 					}
@@ -304,8 +304,8 @@ public final class SnapNetworkView implements ISelectionChangedListener, IDouble
 
 		// Add ControlGroup menu item.
 		final MenuItem adItem = new MenuItem(mPopup, SWT.NONE);
-		adItem.setText(LocaleUtils.getStr("snapnetview.menu.add_controlgroup"));
-		adItem.setData(inControlGroup.getParentSnapNetwork());
+		adItem.setText(LocaleUtils.getStr("codeshelfview.menu.add_controlgroup"));
+		adItem.setData(inControlGroup.getParentCodeShelfNetwork());
 		adItem.addListener(SWT.Selection, new Listener() {
 			public void handleEvent(Event inEvent) {
 				//				RulesetWizard.addPickTagRuleset(inPickTagModule.getParentPickTag());
@@ -314,7 +314,7 @@ public final class SnapNetworkView implements ISelectionChangedListener, IDouble
 
 		// Edit ControlGroup menu item.
 		final MenuItem editItem = new MenuItem(mPopup, SWT.NONE);
-		editItem.setText(LocaleUtils.getStr("snapnetview.menu.edit_controlgroup"));
+		editItem.setText(LocaleUtils.getStr("codeshelfview.menu.edit_controlgroup"));
 		editItem.setData(inControlGroup);
 		editItem.addListener(SWT.Selection, new Listener() {
 			public void handleEvent(Event inEvent) {
@@ -324,13 +324,13 @@ public final class SnapNetworkView implements ISelectionChangedListener, IDouble
 
 		// Delete ControlGroup menu item.
 		final MenuItem deleteItem = new MenuItem(mPopup, SWT.NONE);
-		deleteItem.setText(LocaleUtils.getStr("snapnetview.menu.delete_controlgroup"));
+		deleteItem.setText(LocaleUtils.getStr("codeshelfview.menu.delete_controlgroup"));
 		deleteItem.setData(inControlGroup);
 		deleteItem.addListener(SWT.Selection, new Listener() {
 			public void handleEvent(Event inEvent) {
 				boolean deletePickTagModule = MessageDialog.openQuestion(Display.getCurrent().getActiveShell(),
-					LocaleUtils.getStr("snapnetview.menu.delete_controlgroup.title"),
-					LocaleUtils.getStr("snapnetview.menu.delete_controlgroup.prompt",
+					LocaleUtils.getStr("codeshelfview.menu.delete_controlgroup.title"),
+					LocaleUtils.getStr("codeshelfview.menu.delete_controlgroup.prompt",
 						new String[] { inControlGroup.getDescription() }));
 				if (deletePickTagModule) {
 					try {
@@ -357,7 +357,7 @@ public final class SnapNetworkView implements ISelectionChangedListener, IDouble
 	private void pickTagMenu(final PickTag inPickTag) {
 
 		final MenuItem addItem = new MenuItem(mPopup, SWT.NONE);
-		addItem.setText(LocaleUtils.getStr("snapnetview.menu.add_picktag"));
+		addItem.setText(LocaleUtils.getStr("codeshelfview.menu.add_picktag"));
 		addItem.setData(null);
 		addItem.addListener(SWT.Selection, new Listener() {
 			public void handleEvent(Event inEvent) {
@@ -366,7 +366,7 @@ public final class SnapNetworkView implements ISelectionChangedListener, IDouble
 		});
 
 		final MenuItem editItem = new MenuItem(mPopup, SWT.NONE);
-		editItem.setText(LocaleUtils.getStr("snapnetview.menu.edit_picktag"));
+		editItem.setText(LocaleUtils.getStr("codeshelfview.menu.edit_picktag"));
 		editItem.setData(inPickTag);
 		editItem.addListener(SWT.Selection, new Listener() {
 			public void handleEvent(Event inEvent) {
@@ -376,13 +376,13 @@ public final class SnapNetworkView implements ISelectionChangedListener, IDouble
 		});
 
 		final MenuItem deleteItem = new MenuItem(mPopup, SWT.NONE);
-		deleteItem.setText(LocaleUtils.getStr("snapnetview.menu.delete_picktag"));
+		deleteItem.setText(LocaleUtils.getStr("codeshelfview.menu.delete_picktag"));
 		deleteItem.setData(inPickTag);
 		deleteItem.addListener(SWT.Selection, new Listener() {
 			public void handleEvent(Event inEvent) {
 				boolean deletePickTag = MessageDialog.openQuestion(Display.getCurrent().getActiveShell(),
-					LocaleUtils.getStr("snapnetview.menu.delete_picktag.title"),
-					LocaleUtils.getStr("snapnetview.menu.delete_picktag.prompt", new String[] { inPickTag.getDescription() }));
+					LocaleUtils.getStr("codeshelfview.menu.delete_picktag.title"),
+					LocaleUtils.getStr("codeshelfview.menu.delete_picktag.prompt", new String[] { inPickTag.getDescription() }));
 				if (deletePickTag) {
 					try {
 						Util.getSystemDAO().deletePickTag(inPickTag);
@@ -397,7 +397,7 @@ public final class SnapNetworkView implements ISelectionChangedListener, IDouble
 
 		// Add module menu item.
 		final MenuItem adItem = new MenuItem(mPopup, SWT.NONE);
-		adItem.setText(LocaleUtils.getStr("snapnetview.menu.add_picktagmodule"));
+		adItem.setText(LocaleUtils.getStr("codeshelfview.menu.add_picktagmodule"));
 		adItem.setData(inPickTag);
 		adItem.addListener(SWT.Selection, new Listener() {
 			public void handleEvent(Event inEvent) {
@@ -437,13 +437,13 @@ public final class SnapNetworkView implements ISelectionChangedListener, IDouble
 	 */
 	public void objectAdded(Object inObject) {
 		if (doesDAOChangeApply(inObject)) {
-			if (inObject instanceof SnapNetwork) {
-				mTreeViewer.add(SnapNetworkViewContentProvider.PICKTAGVIEW_ROOT, inObject);
+			if (inObject instanceof CodeShelfNetwork) {
+				mTreeViewer.add(CodeShelfNetViewContentProvider.PICKTAGVIEW_ROOT, inObject);
 			} else if (inObject instanceof ControlGroup) {
 				ControlGroup controlGroup = (ControlGroup) inObject;
-				SnapNetwork snapNetwork = controlGroup.getParentSnapNetwork();
-				if (snapNetwork != null) {
-					mTreeViewer.add(snapNetwork, inObject);
+				CodeShelfNetwork codeShelfNetwork = controlGroup.getParentCodeShelfNetwork();
+				if (codeShelfNetwork != null) {
+					mTreeViewer.add(codeShelfNetwork, inObject);
 				}
 			} else if (inObject instanceof PickTag) {
 				PickTag pickTag = (PickTag) inObject;
@@ -478,10 +478,10 @@ public final class SnapNetworkView implements ISelectionChangedListener, IDouble
 		if (doesDAOChangeApply(inObject)) {
 			Object refreshParentObject = inObject;
 
-			if (inObject instanceof SnapNetwork) {
+			if (inObject instanceof CodeShelfNetwork) {
 				refreshParentObject = inObject;
 			} else if (inObject instanceof ControlGroup) {
-				refreshParentObject = ((ControlGroup) inObject).getParentSnapNetwork();
+				refreshParentObject = ((ControlGroup) inObject).getParentCodeShelfNetwork();
 			} else if (inObject instanceof PickTag) {
 				refreshParentObject = ((PickTag) inObject).getParentControlGroup();
 			}
@@ -504,7 +504,7 @@ public final class SnapNetworkView implements ISelectionChangedListener, IDouble
 		boolean result = false;
 
 		// We only want to update if it's an account or buddy update.
-		if (inObject instanceof SnapNetwork) {
+		if (inObject instanceof CodeShelfNetwork) {
 			result = true;
 		} else if (inObject instanceof ControlGroup) {
 			result = true;

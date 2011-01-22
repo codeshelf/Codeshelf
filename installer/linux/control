@@ -6,7 +6,7 @@ Architecture: all
 Depends: sun-java5-jre (>= 1.5.0-17)
 Maintainer: Gadgetworks, LLC
 Homepage: http://www.gadgetworks.com
-Description: Embedded social controller for managing HooBeez and other objects
+Description: Embedded social controller for managing CodeShelf
  .
  This program manages your collection of embedded social devices.
  .
