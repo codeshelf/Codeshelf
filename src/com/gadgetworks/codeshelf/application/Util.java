@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Util.java,v 1.5 2011/01/22 01:04:39 jeffw Exp $
+ *  $Id: Util.java,v 1.6 2011/01/22 07:58:31 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -60,27 +60,17 @@ public final class Util {
 	public static final String			CODESHELF_ABOUT_ICON				= "codeshelf_about_icon";
 
 	public static final String			DEBUG_ICON							= "debug";
-	public static final String			PERSON_ICON							= "person";
-	public static final String			PERSON_ICON_QUARTER_ALPHA			= "person-fourth";
-	public static final String			PERSON_ICON_RED						= "person-yellow";
-	public static final String			PERSON_ICON_YELLOW					= "person-yellow";
-	public static final String			PERSON_ICON_GREEN					= "person-yellow";
-	public static final String			ACCOUNT_ICON						= "account";
-	public static final String			ACCOUNT_ICON_QUARTER_ALPHA			= "account-fourth";
-	public static final String			ACCOUNT_ICON_RED					= "account-red";
-	public static final String			ACCOUNT_ICON_YELLOW					= "account-yellow";
-	public static final String			ACCOUNT_ICON_GREEN					= "account-green";
+	public static final String			PICKTAG_ICON						= "picktag";
+	public static final String			PICKTAG_ICON_QUARTER_ALPHA			= "picktag-fourth";
+	public static final String			PICKTAG_ICON_RED					= "picktag-yellow";
+	public static final String			PICKTAG_ICON_YELLOW					= "picktag-yellow";
+	public static final String			PICKTAG_ICON_GREEN					= "picktag-yellow";
 	public static final String			WIRELESS_DEVICE_ICON				= "radio";
 	public static final String			WIRELESS_DEVICE_ICON_QUARTER_ALPHA	= "radio-fourth";
 
 	public static final String			SYSTEM_TRAY_ICON_CLEAR				= "system-tray-icon-clear";
 	public static final String			SYSTEM_TRAY_ICON_UPDATES			= "system-tray-icon-updates";
 
-	public static final String			TWITTER_ICON						= "twitter";
-	public static final String			FACEBOOK_SMALL_ICON					= "facebook-small";
-	public static final String			FACEBOOK_BIG_ICON					= "facebook-big";
-
-	public static final String			DPF_ICON							= "dpf";
 	public static final String			SETTINGS_ICON						= "settings";
 	public static final String			LOCK_SMALL_ICON						= "lock-small";
 	public static final String			LOCK_BIG_ICON						= "lock-big";
@@ -374,27 +364,18 @@ public final class Util {
 
 				mImageRegistry.put(DEBUG_ICON, ImageDescriptor.createFromURL(findResource("images/debug.gif")));
 
-				mImageRegistry.put(PERSON_ICON, ImageDescriptor.createFromURL(findResource("images/person.png")));
-				mImageRegistry.put(PERSON_ICON_RED, ImageDescriptor.createFromURL(findResource("images/person_red.png")));
-				mImageRegistry.put(PERSON_ICON_YELLOW, ImageDescriptor.createFromURL(findResource("images/person_yellow.png")));
-				mImageRegistry.put(PERSON_ICON_GREEN, ImageDescriptor.createFromURL(findResource("images/person_green.png")));
-
-				mImageRegistry.put(ACCOUNT_ICON, ImageDescriptor.createFromURL(findResource("images/account.png")));
-				mImageRegistry.put(ACCOUNT_ICON_RED, ImageDescriptor.createFromURL(findResource("images/account_red.png")));
-				mImageRegistry.put(ACCOUNT_ICON_YELLOW, ImageDescriptor.createFromURL(findResource("images/account_yellow.png")));
-				mImageRegistry.put(ACCOUNT_ICON_GREEN, ImageDescriptor.createFromURL(findResource("images/account_green.png")));
+				mImageRegistry.put(PICKTAG_ICON, ImageDescriptor.createFromURL(findResource("images/person.png")));
+				mImageRegistry.put(PICKTAG_ICON_RED, ImageDescriptor.createFromURL(findResource("images/person_red.png")));
+				mImageRegistry.put(PICKTAG_ICON_YELLOW, ImageDescriptor.createFromURL(findResource("images/person_yellow.png")));
+				mImageRegistry.put(PICKTAG_ICON_GREEN, ImageDescriptor.createFromURL(findResource("images/person_green.png")));
 
 				mImageRegistry.put(WIRELESS_DEVICE_ICON, ImageDescriptor.createFromURL(findResource("images/account.tiff")));
 
-				mImageRegistry.put(TWITTER_ICON, ImageDescriptor.createFromURL(findResource("images/twitter.png")));
-				mImageRegistry.put(FACEBOOK_SMALL_ICON, ImageDescriptor.createFromURL(findResource("images/facebook_small.png")));
-				mImageRegistry.put(FACEBOOK_BIG_ICON, ImageDescriptor.createFromURL(findResource("images/facebook_big.png")));
 				mImageRegistry.put(SYSTEM_TRAY_ICON_CLEAR,
 					ImageDescriptor.createFromURL(findResource("images/system_tray_icon_clear.png")));
 				mImageRegistry.put(SYSTEM_TRAY_ICON_UPDATES,
 					ImageDescriptor.createFromURL(findResource("images/system_tray_icon_updates.png")));
 
-				mImageRegistry.put(DPF_ICON, ImageDescriptor.createFromURL(findResource("images/dpf.png")));
 				mImageRegistry.put(SETTINGS_ICON, ImageDescriptor.createFromURL(findResource("images/settings.png")));
 				mImageRegistry.put(LOCK_SMALL_ICON, ImageDescriptor.createFromURL(findResource("images/lock_small.png")));
 				mImageRegistry.put(LOCK_BIG_ICON, ImageDescriptor.createFromURL(findResource("images/lock_big.png")));
@@ -408,13 +389,9 @@ public final class Util {
 				mImageRegistry.put(STOP_BUTTON_ICON, ImageDescriptor.createFromURL(findResource("images/button_stop.gif")));
 				mImageRegistry.put(TALK_BUTTON_ICON, ImageDescriptor.createFromURL(findResource("images/button_talk.gif")));
 
-				ImageData imageData = mImageRegistry.getDescriptor(PERSON_ICON).getImageData();
+				ImageData imageData = mImageRegistry.getDescriptor(PICKTAG_ICON).getImageData();
 				imageData.alpha = Util.ALPHA_LEVEL_QUARTER;
-				mImageRegistry.put(PERSON_ICON_QUARTER_ALPHA, new Image(Display.getDefault(), imageData));
-
-				imageData = mImageRegistry.getDescriptor(ACCOUNT_ICON).getImageData();
-				imageData.alpha = Util.ALPHA_LEVEL_QUARTER;
-				mImageRegistry.put(ACCOUNT_ICON_QUARTER_ALPHA, new Image(Display.getDefault(), imageData));
+				mImageRegistry.put(PICKTAG_ICON_QUARTER_ALPHA, new Image(Display.getDefault(), imageData));
 
 				imageData = mImageRegistry.getDescriptor(WIRELESS_DEVICE_ICON).getImageData();
 				imageData.alpha = Util.ALPHA_LEVEL_QUARTER;

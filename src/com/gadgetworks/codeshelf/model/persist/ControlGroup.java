@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ControlGroup.java,v 1.4 2011/01/22 01:04:39 jeffw Exp $
+ *  $Id: ControlGroup.java,v 1.5 2011/01/22 07:58:31 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -24,7 +24,7 @@ import com.gadgetworks.codeshelf.model.dao.ISystemDAO;
  */
 
 @Entity
-public final class ControlGroup extends PersistABC {
+public class ControlGroup extends PersistABC {
 
 	private static final long	serialVersionUID	= -4923129546531851147L;
 

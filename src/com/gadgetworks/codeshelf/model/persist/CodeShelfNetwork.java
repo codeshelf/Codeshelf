@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfNetwork.java,v 1.2 2011/01/22 02:06:13 jeffw Exp $
+ *  $Id: CodeShelfNetwork.java,v 1.3 2011/01/22 07:58:31 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -70,8 +70,8 @@ public class CodeShelfNetwork extends PersistABC {
 		return Arrays.toString(mNetworkId) + " " + mDescription;
 	}
 
-	public final byte[] getNetworkId() {
-		return mNetworkId;
+	public final NetworkId getNetworkId() {
+		return new NetworkId(mNetworkId);
 	}
 
 	public final void setNetworkId(byte[] inNetworkId) {

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PersistentProperty.java,v 1.2 2011/01/21 01:12:12 jeffw Exp $
+ *  $Id: PersistentProperty.java,v 1.3 2011/01/22 07:58:31 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -17,7 +17,7 @@ import javax.persistence.Entity;
  */
 
 @Entity
-public final class PersistentProperty extends PersistABC {
+public class PersistentProperty extends PersistABC {
 
 	public static final String	SHOW_CONSOLE_PREF			= "SHOWCONS";
 	public static final String	SHOW_CONNECTION_DEBUG_PREF	= "CONNDBUG";

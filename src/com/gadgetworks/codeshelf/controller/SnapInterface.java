@@ -113,10 +113,10 @@ public final class SnapInterface implements IGatewayInterface {
 			List<Object> params = new ArrayList<Object>();
 
 			// Src addr
-			params.add(inTransport.getSrcAddr().getParamValue());
+			params.add(inTransport.getSrcAddr().getParamValueAsByteArray());
 
 			// Dst addr
-			params.add(inTransport.getDstAddr().getParamValue());
+			params.add(inTransport.getDstAddr().getParamValueAsByteArray());
 
 			// RPC method name
 			params.add(inTransport.getCommandId().getName());

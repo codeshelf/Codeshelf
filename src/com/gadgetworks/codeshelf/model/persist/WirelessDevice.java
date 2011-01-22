@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WirelessDevice.java,v 1.2 2011/01/21 01:12:12 jeffw Exp $
+ *  $Id: WirelessDevice.java,v 1.3 2011/01/22 07:58:31 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -119,7 +119,7 @@ public class WirelessDevice extends PersistABC implements INetworkDevice {
 	}
 
 	public final void setNetAddress(NetAddress inNetworkAddress) {
-		mNetworkAddress = inNetworkAddress.getParamValue();
+		mNetworkAddress = inNetworkAddress.getParamValueAsByteArray();
 	}
 
 	public final NetAddress getNetAddress() {

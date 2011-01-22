@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfNetViewDecoratedLabelProvider.java,v 1.1 2011/01/22 01:04:39 jeffw Exp $
+ *  $Id: CodeShelfNetViewDecoratedLabelProvider.java,v 1.2 2011/01/22 07:58:31 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.ui.treeviewers;
@@ -44,7 +44,9 @@ public final class CodeShelfNetViewDecoratedLabelProvider extends DecoratingLabe
 	 *  @param inProvider
 	 *  @param inDecorator
 	 */
-	public CodeShelfNetViewDecoratedLabelProvider(final Tree inTree, final ILabelProvider inProvider, final ILabelDecorator inDecorator) {
+	public CodeShelfNetViewDecoratedLabelProvider(final Tree inTree,
+		final ILabelProvider inProvider,
+		final ILabelDecorator inDecorator) {
 		super(inProvider, inDecorator);
 
 		mTree = inTree;
@@ -63,9 +65,9 @@ public final class CodeShelfNetViewDecoratedLabelProvider extends DecoratingLabe
 			if (inElement instanceof PickTag) {
 				PickTag pickTag = (PickTag) inElement;
 				if (pickTag.getNetworkDeviceState() != NetworkDeviceStateEnum.STARTED) {
-					result = Util.getImageRegistry().get(Util.ACCOUNT_ICON_QUARTER_ALPHA);
+					result = Util.getImageRegistry().get(Util.PICKTAG_ICON_QUARTER_ALPHA);
 				} else {
-					result = Util.getImageRegistry().get(Util.ACCOUNT_ICON_GREEN);
+					result = Util.getImageRegistry().get(Util.PICKTAG_ICON_GREEN);
 				}
 			}
 		}
@@ -82,21 +84,12 @@ public final class CodeShelfNetViewDecoratedLabelProvider extends DecoratingLabe
 		String displayStr = "";
 		TreeColumn column = mTree.getColumn(inColumnIndex);
 
-		if (inElement instanceof PickTag) {
-			PickTag pickTag = (PickTag) inElement;
-			if (column.getData().equals(ID_COL)) {
-				displayStr = pickTag.getGUID();
-			} else if (column.getData().equals(DESC_COL)) {
-				displayStr = pickTag.getDescription();
-			} else if (column.getData().equals(DETAILS_COL)) {
-				displayStr = "firmware=" + pickTag.getSWRevision() + " hw=" + pickTag.getHWDesc();
-			}
-		} else if (inElement instanceof CodeShelfNetwork) {
+		if (inElement instanceof CodeShelfNetwork) {
 			CodeShelfNetwork codeShelfNetwork = (CodeShelfNetwork) inElement;
 			if (column.getData().equals(ID_COL)) {
-				displayStr = codeShelfNetwork.getDescription();
+				displayStr = codeShelfNetwork.getNetworkId().toString();
 			} else if (column.getData().equals(DESC_COL)) {
-				displayStr = "";
+				displayStr = codeShelfNetwork.getDescription();
 			} else if (column.getData().equals(DETAILS_COL)) {
 				//				StringBuffer buf = new StringBuffer();
 				//				for (SearchParameter parameter : ruleset.getSearchParameters()) {
@@ -119,8 +112,17 @@ public final class CodeShelfNetViewDecoratedLabelProvider extends DecoratingLabe
 				//				displayStr = buf.toString();
 				displayStr = "";
 			}
+		} else if (inElement instanceof PickTag) {
+			PickTag pickTag = (PickTag) inElement;
+			if (column.getData().equals(ID_COL)) {
+				displayStr = pickTag.getGUID();
+			} else if (column.getData().equals(DESC_COL)) {
+				displayStr = pickTag.getDescription();
+			} else if (column.getData().equals(DETAILS_COL)) {
+				displayStr = "firmware=" + pickTag.getSWRevision() + " hw=" + pickTag.getHWDesc();
+			}
 		}
-
+		
 		return displayStr;
 	}
 

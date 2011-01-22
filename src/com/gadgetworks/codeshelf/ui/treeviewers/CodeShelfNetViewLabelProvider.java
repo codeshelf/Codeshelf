@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfNetViewLabelProvider.java,v 1.1 2011/01/22 01:04:39 jeffw Exp $
+ *  $Id: CodeShelfNetViewLabelProvider.java,v 1.2 2011/01/22 07:58:31 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.ui.treeviewers;
@@ -28,9 +28,9 @@ public class CodeShelfNetViewLabelProvider extends LabelProvider {
 
 		if (inElement instanceof PickTag) {
 			if (((PickTag) inElement).getNetworkDeviceState() == NetworkDeviceStateEnum.STARTED) {
-				result = Util.getImageRegistry().get(Util.PERSON_ICON);
+				result = Util.getImageRegistry().get(Util.PICKTAG_ICON);
 			} else {
-				result = Util.getImageRegistry().get(Util.PERSON_ICON_QUARTER_ALPHA);
+				result = Util.getImageRegistry().get(Util.PICKTAG_ICON_QUARTER_ALPHA);
 			}
 		} else {
 			result = null;

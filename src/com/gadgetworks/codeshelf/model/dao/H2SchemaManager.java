@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: H2SchemaManager.java,v 1.6 2011/01/22 02:06:13 jeffw Exp $
+ *  $Id: H2SchemaManager.java,v 1.7 2011/01/22 07:58:31 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -182,7 +182,7 @@ public final class H2SchemaManager implements ISchemaManager {
 		execOneSQLCommand("CREATE TABLE CODESHELF.CONTROLGROUP ( " //
 				+ "DTYPE VARCHAR(20) NOT NULL," //
 				+ "MPERSISTENTID INT AUTO_INCREMENT NOT NULL, " //
-				+ "MPARENTcodeshelfnet_MPERSISTENTID BIGINT NOT NULL, " //
+				+ "MPARENTCODESHELFNETWORK_MPERSISTENTID BIGINT NOT NULL, " //
 				+ "MID VARCHAR(16) NOT NULL, " //
 				+ "MDESCRIPTION VARCHAR(64) NOT NULL, " //
 				+ "MISACTIVE BOOLEAN DEFAULT TRUE NOT NULL," //
@@ -190,10 +190,10 @@ public final class H2SchemaManager implements ISchemaManager {
 				+ "PRIMARY KEY (MPERSISTENTID));");
 
 		execOneSQLCommand("ALTER TABLE CODESHELF.CONTROLGROUP " //
-				+ "ADD FOREIGN KEY (MPARENTcodeshelfnet_MPERSISTENTID) " //
+				+ "ADD FOREIGN KEY (MPARENTCODESHELFNETWORK_MPERSISTENTID) " //
 				+ "REFERENCES DATABASE.CODESHELF.CODESHELFNETWORK (MPERSISTENTID);");
 
-		execOneSQLCommand("CREATE INDEX CODESHELF.CONTROLGROUP_PARENT_CODESHELFNETWORK ON CODESHELF.CONTROLGROUP (MPARENTcodeshelfnet_MPERSISTENTID)");
+		execOneSQLCommand("CREATE INDEX CODESHELF.CONTROLGROUP_PARENT_CODESHELFNETWORK ON CODESHELF.CONTROLGROUP (MPARENTCODESHELFNETWORK_MPERSISTENTID)");
 
 		// WirelessDevice (includes the subclass variants in one table)
 		execOneSQLCommand("CREATE TABLE CODESHELF.WIRELESSDEVICE (" //
