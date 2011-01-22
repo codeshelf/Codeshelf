@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: SystemDAO.java,v 1.3 2011/01/22 01:04:39 jeffw Exp $
+ *  $Id: SystemDAO.java,v 1.4 2011/01/22 02:06:13 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -27,12 +27,13 @@ import com.avaje.ebean.config.ServerConfig;
 import com.gadgetworks.codeshelf.application.Util;
 import com.gadgetworks.codeshelf.controller.INetworkDevice;
 import com.gadgetworks.codeshelf.controller.NetAddress;
+import com.gadgetworks.codeshelf.controller.NetworkId;
+import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork;
 import com.gadgetworks.codeshelf.model.persist.ControlGroup;
 import com.gadgetworks.codeshelf.model.persist.DBProperty;
 import com.gadgetworks.codeshelf.model.persist.PersistABC;
 import com.gadgetworks.codeshelf.model.persist.PersistentProperty;
 import com.gadgetworks.codeshelf.model.persist.PickTag;
-import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork;
 import com.gadgetworks.codeshelf.model.persist.WirelessDevice;
 
 // --------------------------------------------------------------------------
@@ -529,10 +530,10 @@ public final class SystemDAO implements ISystemDAO {
 	 * (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.dao.ISystemDAO#findCodeShelfNetwork(java.lang.String)
 	 */
-	public CodeShelfNetwork findCodeShelfNetwork(String inPropertyID) {
+	public CodeShelfNetwork findCodeShelfNetwork(NetworkId inNetworkId) {
 		if (!mUseDAOCache) {
 			Query<CodeShelfNetwork> query = Ebean.createQuery(CodeShelfNetwork.class);
-			query.where().eq("mPropertyID", inPropertyID);
+			query.where().eq("mNetworkId", inNetworkId);
 			query = query.setUseCache(true);
 			return query.findUnique();
 		} else {
@@ -540,9 +541,9 @@ public final class SystemDAO implements ISystemDAO {
 			if (mCodeShelfNetworkCacheMap == null) {
 				initCodeShelfNetworkCacheMap();
 			}
-			for (CodeShelfNetwork property : mCodeShelfNetworkCacheMap.values()) {
-				if (property.getId().equals(inPropertyID)) {
-					result = property;
+			for (CodeShelfNetwork codeShelfNetwork : mCodeShelfNetworkCacheMap.values()) {
+				if (codeShelfNetwork.getNetworkId().equals(inNetworkId)) {
+					result = codeShelfNetwork;
 				}
 			}
 			return result;

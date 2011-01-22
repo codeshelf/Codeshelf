@@ -15,20 +15,20 @@ import org.apache.xmlrpc.client.XmlRpcCommonsTransportFactory;
 import com.gadgetworks.codeshelf.command.ICommand;
 import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork;
 
-public final class CodeShelfInterface implements IGatewayInterface {
+public final class SnapInterface implements IGatewayInterface {
 
-	private static final Log	LOGGER						= LogFactory.getLog(CodeShelfInterface.class);
+	private static final Log	LOGGER						= LogFactory.getLog(SnapInterface.class);
 
 	private static final int	E10_SERIAL_TYPE				= 1;
 	private static final int	E10_STANDARD_SERIAL_PORT	= 1;
 	private static final String	E10_RPC_CMD_NAME			= "rpc";
 	private static final String	E10_MCAST_RPC_NAME			= "macstRpc";
 
-	private CodeShelfNetwork			mCodeShelfNetwork;
+	private CodeShelfNetwork	mCodeShelfNetwork;
 	private XmlRpcClient		mXmlRpcClient;
 	private boolean				mIsStarted					= false;
 
-	public CodeShelfInterface(CodeShelfNetwork inCodeShelfNetwork) {
+	public SnapInterface(CodeShelfNetwork inCodeShelfNetwork) {
 		mCodeShelfNetwork = inCodeShelfNetwork;
 	}
 
@@ -98,7 +98,7 @@ public final class CodeShelfInterface implements IGatewayInterface {
 	 */
 	public void sendCommand(ICommand inCommand) {
 
-		ITransport transport = new CodeShelfTransport();
+		ITransport transport = new SnapTransport();
 		inCommand.toTransport(transport);
 		sendRpcCommand(transport);
 	}

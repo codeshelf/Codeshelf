@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: NetParameter.java,v 1.2 2011/01/21 01:12:11 jeffw Exp $
+ *  $Id: NetParameter.java,v 1.3 2011/01/22 02:06:13 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.controller;
@@ -15,10 +15,8 @@ public class NetParameter {
 	private byte[]	mParamValue;
 
 	public NetParameter(final byte[] inParamValue, final int inParamByteCount) {
-		if (inParamValue.length != inParamByteCount)
-			throw new OutOfRangeException("Net parameter is the wrong size");
-		mParamValue = inParamValue;
 		mParamByteCount = inParamByteCount;
+		setParamValue(inParamValue);
 	}
 
 	public final byte[] getParamValue() {

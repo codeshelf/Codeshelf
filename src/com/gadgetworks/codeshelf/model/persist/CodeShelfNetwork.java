@@ -1,11 +1,12 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfNetwork.java,v 1.1 2011/01/22 01:04:39 jeffw Exp $
+ *  $Id: CodeShelfNetwork.java,v 1.2 2011/01/22 02:06:13 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.persistence.Column;
@@ -19,6 +20,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 import com.gadgetworks.codeshelf.application.Util;
+import com.gadgetworks.codeshelf.controller.NetworkId;
 import com.gadgetworks.codeshelf.model.dao.ISystemDAO;
 
 // --------------------------------------------------------------------------
@@ -45,7 +47,7 @@ public class CodeShelfNetwork extends PersistABC {
 
 	// The network ID.
 	@Column(nullable = false)
-	private String				mId;
+	private byte[]				mNetworkId;
 	// The network description.
 	@Column(nullable = false)
 	private String				mDescription;
@@ -54,27 +56,26 @@ public class CodeShelfNetwork extends PersistABC {
 	private boolean				mIsActive;
 	// Network Id
 	@Column(nullable = false)
-	private byte[]				mNetworkId;
 	// For a network this is a list of all of the control groups that belong in the set.
 	@OneToMany(mappedBy = "mParentCodeShelfNetwork")
 	private List<ControlGroup>	mControlGroups		= new ArrayList<ControlGroup>();
 
 	public CodeShelfNetwork() {
-		mId = "";
+		mNetworkId = new byte[NetworkId.NETWORK_ID_BYTES];
 		mDescription = "";
 		mIsActive = true;
 	}
 
 	public final String toString() {
-		return mId + " " + mDescription;
+		return Arrays.toString(mNetworkId) + " " + mDescription;
 	}
 
-	public final String getId() {
-		return mId;
+	public final byte[] getNetworkId() {
+		return mNetworkId;
 	}
 
-	public final void setId(String inId) {
-		mId = inId;
+	public final void setNetworkId(byte[] inNetworkId) {
+		mNetworkId = inNetworkId;
 	}
 
 	public final String getDescription() {
@@ -91,14 +92,6 @@ public class CodeShelfNetwork extends PersistABC {
 
 	public final void setIsActive(boolean inIsActive) {
 		mIsActive = inIsActive;
-	}
-
-	public final byte[] getNetworkId() {
-		return mNetworkId;
-	}
-
-	public final void setNetworkId(byte[] inNetworkId) {
-		mNetworkId = inNetworkId;
 	}
 
 	// We always need to return the object cached in the DAO.

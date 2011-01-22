@@ -1,13 +1,14 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ISystemDAO.java,v 1.3 2011/01/22 01:04:39 jeffw Exp $
+ *  $Id: ISystemDAO.java,v 1.4 2011/01/22 02:06:13 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
 import java.util.Collection;
 
 import com.gadgetworks.codeshelf.controller.IDeviceMaintainer;
+import com.gadgetworks.codeshelf.controller.NetworkId;
 import com.gadgetworks.codeshelf.model.persist.ControlGroup;
 import com.gadgetworks.codeshelf.model.persist.DBProperty;
 import com.gadgetworks.codeshelf.model.persist.PersistABC;
@@ -76,7 +77,7 @@ public interface ISystemDAO extends IDeviceMaintainer {
 
 	CodeShelfNetwork loadCodeShelfNetwork(Integer inID);
 
-	CodeShelfNetwork findCodeShelfNetwork(String inNetworkId);
+	CodeShelfNetwork findCodeShelfNetwork(NetworkId inNetworkId);
 
 	void storeCodeShelfNetwork(CodeShelfNetwork inCodeShelfNetwork) throws DAOException;
 

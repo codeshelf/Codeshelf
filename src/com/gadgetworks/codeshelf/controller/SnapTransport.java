@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfTransport.java,v 1.1 2011/01/22 01:04:39 jeffw Exp $
+ *  $Id: SnapTransport.java,v 1.5 2011/01/22 02:06:13 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.controller;
 
@@ -14,7 +14,7 @@ import com.gadgetworks.codeshelf.command.CommandIdEnum;
  * @author jeffw
  *
  */
-public final class CodeShelfTransport implements ITransport {
+public final class SnapTransport implements ITransport {
 
 	private CommandIdEnum	mCommandId;
 	private NetworkId		mNetworkId;
@@ -22,7 +22,7 @@ public final class CodeShelfTransport implements ITransport {
 	private NetAddress		mDstAddr;
 	private List<Object>	mParams;
 
-	public CodeShelfTransport() {
+	public SnapTransport() {
 		mParams = new ArrayList<Object>();
 	}
 

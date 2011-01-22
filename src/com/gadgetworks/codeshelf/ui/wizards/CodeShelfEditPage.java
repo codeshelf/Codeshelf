@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfEditPage.java,v 1.1 2011/01/22 01:04:39 jeffw Exp $
+ *  $Id: CodeShelfEditPage.java,v 1.2 2011/01/22 02:06:13 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.ui.wizards;
 
@@ -21,6 +21,7 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Text;
 
 import com.gadgetworks.codeshelf.application.Util;
+import com.gadgetworks.codeshelf.controller.NetworkId;
 import com.gadgetworks.codeshelf.model.dao.DAOException;
 import com.gadgetworks.codeshelf.model.dao.IDAOListener;
 import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork;
@@ -37,9 +38,11 @@ public final class CodeShelfEditPage extends WizardPage implements IDoubleClickL
 	private static final int	VALUE_COL_WIDTH	= 500;
 
 	private CodeShelfNetwork	mCodeShelfNetwork;
-	private Button				mIsActiveButton;
+	private Label				mNetworkIdLabel;
+	private Text				mNetworkIdField;
 	private Label				mDescriptionLabel;
 	private Text				mDescriptionField;
+	private Button				mIsActiveButton;
 	private Listener			mEditListener;
 	private Composite			mEditComposite;
 
@@ -76,7 +79,7 @@ public final class CodeShelfEditPage extends WizardPage implements IDoubleClickL
 		Util.getSystemDAO().registerDAOListener(this);
 
 		mEditComposite = new Composite(inParent, SWT.NULL);
-		mEditComposite.setLayout(new GridLayout(1, false));
+		mEditComposite.setLayout(new GridLayout(5, false));
 
 		setControl(mEditComposite);
 
@@ -127,10 +130,17 @@ public final class CodeShelfEditPage extends WizardPage implements IDoubleClickL
 		if (mCodeShelfNetwork != null) {
 			setTitle(mCodeShelfNetwork.getDescription());
 
+			// Id field.
+			mNetworkIdLabel = new Label(mEditComposite, SWT.RIGHT);
+			mNetworkIdField = new Text(mEditComposite, SWT.SINGLE | SWT.BORDER);
+			String labelStr = LocaleUtils.getStr("codeshelfnet_wizard.edit_page.id_field");
+			createInputField(mNetworkIdLabel, mNetworkIdField, mEditComposite, labelStr, 1, 4, 5);
+			mNetworkIdLabel.setText(mCodeShelfNetwork.getDescription());
+
 			// Description field.
 			mDescriptionLabel = new Label(mEditComposite, SWT.RIGHT);
 			mDescriptionField = new Text(mEditComposite, SWT.SINGLE | SWT.BORDER);
-			String labelStr = LocaleUtils.getStr("codeshelfnet_wizard.edit_page.desc_field");
+			labelStr = LocaleUtils.getStr("codeshelfnet_wizard.edit_page.desc_field");
 			createInputField(mDescriptionLabel, mDescriptionField, mEditComposite, labelStr, 1, 4, 5);
 			mDescriptionField.setText(mCodeShelfNetwork.getDescription());
 
@@ -181,6 +191,8 @@ public final class CodeShelfEditPage extends WizardPage implements IDoubleClickL
 
 		if ((result == true) && (mCodeShelfNetwork != null)) {
 
+			NetworkId networkId = new NetworkId(mNetworkIdField.getText());
+			mCodeShelfNetwork.setNetworkId(networkId.getParamValue());
 			mCodeShelfNetwork.setDescription(mDescriptionField.getText());
 			mCodeShelfNetwork.setIsActive(mIsActiveButton.getSelection());
 

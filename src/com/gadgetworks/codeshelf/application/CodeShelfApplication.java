@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfApplication.java,v 1.4 2011/01/22 01:04:39 jeffw Exp $
+ *  $Id: CodeShelfApplication.java,v 1.5 2011/01/22 02:06:13 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -38,7 +38,7 @@ import com.gadgetworks.codeshelf.controller.IController;
 import com.gadgetworks.codeshelf.controller.IGatewayInterface;
 import com.gadgetworks.codeshelf.controller.NetworkDeviceStateEnum;
 import com.gadgetworks.codeshelf.controller.CodeShelfController;
-import com.gadgetworks.codeshelf.controller.CodeShelfInterface;
+import com.gadgetworks.codeshelf.controller.SnapInterface;
 import com.gadgetworks.codeshelf.model.PreferencesStore;
 import com.gadgetworks.codeshelf.model.dao.H2SchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
@@ -184,7 +184,7 @@ public final class CodeShelfApplication {
 		List<IGatewayInterface> interfaceList = new ArrayList<IGatewayInterface>();
 		// Create a CodeShelf interface for each CodeShelf network we have.
 		for (CodeShelfNetwork network : Util.getSystemDAO().getCodeShelfNetworks()) {
-			interfaceList.add(new CodeShelfInterface(network));			
+			interfaceList.add(new SnapInterface(network));			
 		}
 		mController = new CodeShelfController(Util.getSystemDAO(), interfaceList);
 
