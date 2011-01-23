@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfNetwork.java,v 1.3 2011/01/22 07:58:31 jeffw Exp $
+ *  $Id: CodeShelfNetwork.java,v 1.4 2011/01/23 07:22:45 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -33,12 +33,8 @@ import com.gadgetworks.codeshelf.model.dao.ISystemDAO;
  * @author jeffw
  */
 
-@Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
-@DiscriminatorColumn(name = "DTYPE", discriminatorType = DiscriminatorType.STRING)
-//@MappedSuperclass
 @Entity
 @Table(name = "CODESHELFNETWORK")
-@DiscriminatorValue("REAL")
 public class CodeShelfNetwork extends PersistABC {
 
 	//	private static final Log		LOGGER			= LogFactory.getLog(CodeShelfNetwork.class);

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfNetViewDecoratedLabelProvider.java,v 1.2 2011/01/22 07:58:31 jeffw Exp $
+ *  $Id: CodeShelfNetViewDecoratedLabelProvider.java,v 1.3 2011/01/23 07:22:45 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.ui.treeviewers;
@@ -101,9 +101,9 @@ public final class CodeShelfNetViewDecoratedLabelProvider extends DecoratingLabe
 		} else if (inElement instanceof ControlGroup) {
 			ControlGroup controlGroup = (ControlGroup) inElement;
 			if (column.getData().equals(ID_COL)) {
-				displayStr = controlGroup.getDescription();
+				displayStr = controlGroup.getId();
 			} else if (column.getData().equals(DESC_COL)) {
-				displayStr = "";
+				displayStr = controlGroup.getDescription();
 			} else if (column.getData().equals(DETAILS_COL)) {
 				//				StringBuffer buf = new StringBuffer();
 				//				for (SearchParameter parameter : ruleset.getSearchParameters()) {

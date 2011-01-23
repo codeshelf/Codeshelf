@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfNetView.java,v 1.1 2011/01/22 01:04:39 jeffw Exp $
+ *  $Id: CodeShelfNetView.java,v 1.2 2011/01/23 07:22:45 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.ui.treeviewers;
 
@@ -42,13 +42,14 @@ import com.gadgetworks.codeshelf.controller.IController;
 import com.gadgetworks.codeshelf.controller.NetworkDeviceStateEnum;
 import com.gadgetworks.codeshelf.model.dao.DAOException;
 import com.gadgetworks.codeshelf.model.dao.IDAOListener;
+import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork;
 import com.gadgetworks.codeshelf.model.persist.ControlGroup;
 import com.gadgetworks.codeshelf.model.persist.PersistABC;
 import com.gadgetworks.codeshelf.model.persist.PickTag;
-import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork;
 import com.gadgetworks.codeshelf.ui.LocaleUtils;
-import com.gadgetworks.codeshelf.ui.wizards.PickTagDeviceWizard;
 import com.gadgetworks.codeshelf.ui.wizards.CodeShelfNetWizard;
+import com.gadgetworks.codeshelf.ui.wizards.ControlGroupWizard;
+import com.gadgetworks.codeshelf.ui.wizards.PickTagDeviceWizard;
 
 // --------------------------------------------------------------------------
 /**
@@ -250,9 +251,9 @@ public final class CodeShelfNetView implements ISelectionChangedListener, IDoubl
 	private void codeShelfNetworkMenu(final CodeShelfNetwork inCodeShelfNetwork) {
 
 		// Add CodeShelfNetwork menu item.
-		final MenuItem adItem = new MenuItem(mPopup, SWT.NONE);
-		adItem.setText(LocaleUtils.getStr("codeshelfview.menu.add_codeshelfnetwork"));
-		adItem.addListener(SWT.Selection, new Listener() {
+		final MenuItem addItem = new MenuItem(mPopup, SWT.NONE);
+		addItem.setText(LocaleUtils.getStr("codeshelfview.menu.add_codeshelfnetwork"));
+		addItem.addListener(SWT.Selection, new Listener() {
 			public void handleEvent(Event inEvent) {
 				CodeShelfNetWizard.addCodeShelfNetwork(inCodeShelfNetwork);
 			}
@@ -288,7 +289,20 @@ public final class CodeShelfNetView implements ISelectionChangedListener, IDoubl
 			}
 		});
 
-		new MenuItem(mPopup, SWT.SEPARATOR);
+		if (inCodeShelfNetwork != null) {
+			new MenuItem(mPopup, SWT.SEPARATOR);
+
+			// Add ControlGroup menu item.
+			final MenuItem addCtrlItem = new MenuItem(mPopup, SWT.NONE);
+			addCtrlItem.setText(LocaleUtils.getStr("codeshelfview.menu.add_controlgroup"));
+			addCtrlItem.setData(inCodeShelfNetwork);
+			addCtrlItem.addListener(SWT.Selection, new Listener() {
+				public void handleEvent(Event inEvent) {
+					ControlGroupWizard.addControlGroup(inCodeShelfNetwork);
+				}
+			});
+
+		}
 
 		editItem.setEnabled(true);
 		deleteItem.setEnabled(true);

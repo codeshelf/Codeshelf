@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: H2SchemaManager.java,v 1.7 2011/01/22 07:58:31 jeffw Exp $
+ *  $Id: H2SchemaManager.java,v 1.8 2011/01/23 07:22:45 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -170,7 +170,6 @@ public final class H2SchemaManager implements ISchemaManager {
 
 		// CodeShelfNetwork
 		execOneSQLCommand("CREATE TABLE CODESHELF.CODESHELFNETWORK ( " //
-				+ "DTYPE VARCHAR(20) NOT NULL," //
 				+ "MPERSISTENTID INT AUTO_INCREMENT NOT NULL, " //
 				+ "MNETWORKID BINARY(2) DEFAULT 0 NOT NULL," //
 				+ "MDESCRIPTION VARCHAR(64) NOT NULL, " //
@@ -180,7 +179,6 @@ public final class H2SchemaManager implements ISchemaManager {
 
 		// ControlGroup
 		execOneSQLCommand("CREATE TABLE CODESHELF.CONTROLGROUP ( " //
-				+ "DTYPE VARCHAR(20) NOT NULL," //
 				+ "MPERSISTENTID INT AUTO_INCREMENT NOT NULL, " //
 				+ "MPARENTCODESHELFNETWORK_MPERSISTENTID BIGINT NOT NULL, " //
 				+ "MID VARCHAR(16) NOT NULL, " //

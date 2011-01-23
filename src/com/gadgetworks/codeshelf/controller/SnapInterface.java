@@ -47,7 +47,7 @@ public final class SnapInterface implements IGatewayInterface {
 			mXmlRpcClient.setTransportFactory(new XmlRpcCommonsTransportFactory(mXmlRpcClient));
 			mXmlRpcClient.setConfig(config);
 		} catch (MalformedURLException e) {
-			LOGGER.error("", e);
+			//LOGGER.error("", e);
 		}
 
 		try {

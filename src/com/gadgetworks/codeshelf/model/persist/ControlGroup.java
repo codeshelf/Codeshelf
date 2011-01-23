@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ControlGroup.java,v 1.5 2011/01/22 07:58:31 jeffw Exp $
+ *  $Id: ControlGroup.java,v 1.6 2011/01/23 07:22:45 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -12,6 +12,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.Table;
 
 import com.gadgetworks.codeshelf.application.Util;
 import com.gadgetworks.codeshelf.model.dao.ISystemDAO;
@@ -24,6 +25,7 @@ import com.gadgetworks.codeshelf.model.dao.ISystemDAO;
  */
 
 @Entity
+@Table(name = "CONTROLGROUP")
 public class ControlGroup extends PersistABC {
 
 	private static final long	serialVersionUID	= -4923129546531851147L;
@@ -31,7 +33,7 @@ public class ControlGroup extends PersistABC {
 	// The owning CodeShelf network.
 	@Column(nullable = false)
 	@ManyToOne
-	private CodeShelfNetwork			mParentCodeShelfNetwork;
+	private CodeShelfNetwork	mParentCodeShelfNetwork;
 	// The control group ID
 	@Column(nullable = false)
 	private String				mId;
@@ -48,6 +50,7 @@ public class ControlGroup extends PersistABC {
 	public ControlGroup() {
 		mParentCodeShelfNetwork = null;
 		mId = "";
+		mDescription = "";
 		mIsActive = true;
 	}
 
@@ -90,7 +93,7 @@ public class ControlGroup extends PersistABC {
 	public void setIsActive(boolean inIsActive) {
 		mIsActive = inIsActive;
 	}
-	
+
 	// We always need to return the object cached in the DAO.
 	public final List<PickTag> getPickTags() {
 		if (ISystemDAO.USE_CACHE) {
