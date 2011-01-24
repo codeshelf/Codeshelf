@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandAssocCheck.java,v 1.2 2011/01/21 01:12:11 jeffw Exp $
+ *  $Id: CommandAssocCheck.java,v 1.3 2011/01/24 07:22:42 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.command;
@@ -10,11 +10,12 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.gadgetworks.codeshelf.controller.ITransport;
+import com.gadgetworks.codeshelf.controller.NetMacAddress;
 
 // --------------------------------------------------------------------------
 /**
  *  A command associate check is broadcast by a remote to all controllers on a channel.
- *  Only the controller that manages that remote device (known by its GUID) will send an associate ack.
+ *  Only the controller that manages that remote device (known by its MacAddr) will send an associate ack.
  *  
  *  @author jeffw
  */
@@ -35,8 +36,8 @@ public final class CommandAssocCheck extends CommandAssocABC {
 	 *  @param inDatagramBytes
 	 *  @param inEndpoint
 	 */
-	public CommandAssocCheck(final byte inDeviceVersion, final String inRemoteGUID, final byte inBatteryLevel) {
-		super(CommandIdEnum.ASSOC_CHECK, inRemoteGUID);
+	public CommandAssocCheck(final byte inDeviceVersion, final NetMacAddress inRemoteMacAddr, final byte inBatteryLevel) {
+		super(CommandIdEnum.ASSOC_CHECK, inRemoteMacAddr);
 
 		mDeviceVersion = inDeviceVersion;
 		mBatteryLevel = inBatteryLevel;

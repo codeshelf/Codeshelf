@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfNetViewDecoratedLabelProvider.java,v 1.3 2011/01/23 07:22:45 jeffw Exp $
+ *  $Id: CodeShelfNetViewDecoratedLabelProvider.java,v 1.4 2011/01/24 07:22:42 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.ui.treeviewers;
@@ -87,7 +87,7 @@ public final class CodeShelfNetViewDecoratedLabelProvider extends DecoratingLabe
 		if (inElement instanceof CodeShelfNetwork) {
 			CodeShelfNetwork codeShelfNetwork = (CodeShelfNetwork) inElement;
 			if (column.getData().equals(ID_COL)) {
-				displayStr = codeShelfNetwork.getNetworkId().toString();
+				displayStr = codeShelfNetwork.getId().toString();
 			} else if (column.getData().equals(DESC_COL)) {
 				displayStr = codeShelfNetwork.getDescription();
 			} else if (column.getData().equals(DETAILS_COL)) {
@@ -101,7 +101,7 @@ public final class CodeShelfNetViewDecoratedLabelProvider extends DecoratingLabe
 		} else if (inElement instanceof ControlGroup) {
 			ControlGroup controlGroup = (ControlGroup) inElement;
 			if (column.getData().equals(ID_COL)) {
-				displayStr = controlGroup.getId();
+				displayStr = controlGroup.getId().toString();
 			} else if (column.getData().equals(DESC_COL)) {
 				displayStr = controlGroup.getDescription();
 			} else if (column.getData().equals(DETAILS_COL)) {
@@ -115,7 +115,7 @@ public final class CodeShelfNetViewDecoratedLabelProvider extends DecoratingLabe
 		} else if (inElement instanceof PickTag) {
 			PickTag pickTag = (PickTag) inElement;
 			if (column.getData().equals(ID_COL)) {
-				displayStr = pickTag.getGUID();
+				displayStr = pickTag.getMacAddress().toString();
 			} else if (column.getData().equals(DESC_COL)) {
 				displayStr = pickTag.getDescription();
 			} else if (column.getData().equals(DETAILS_COL)) {

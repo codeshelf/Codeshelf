@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ControllerABC.java,v 1.3 2011/01/21 05:12:25 jeffw Exp $
+ *  $Id: ControllerABC.java,v 1.4 2011/01/24 07:22:42 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.controller;
@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
@@ -24,22 +23,21 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.gadgetworks.codeshelf.command.AckStateEnum;
-import com.gadgetworks.codeshelf.command.CommandGroupEnum;
-import com.gadgetworks.codeshelf.command.CommandIdEnum;
-import com.gadgetworks.codeshelf.command.CommandNetMgmtABC;
-import com.gadgetworks.codeshelf.command.CommandNetMgmtCheck;
-import com.gadgetworks.codeshelf.command.CommandNetMgmtIntfTest;
-import com.gadgetworks.codeshelf.command.CommandNetMgmtSetup;
-import com.gadgetworks.codeshelf.command.ICommand;
 import com.gadgetworks.codeshelf.command.CommandAssocABC;
 import com.gadgetworks.codeshelf.command.CommandAssocAck;
 import com.gadgetworks.codeshelf.command.CommandAssocCheck;
 import com.gadgetworks.codeshelf.command.CommandAssocReq;
 import com.gadgetworks.codeshelf.command.CommandAssocResp;
 import com.gadgetworks.codeshelf.command.CommandControlABC;
+import com.gadgetworks.codeshelf.command.CommandIdEnum;
 import com.gadgetworks.codeshelf.command.CommandInfoABC;
 import com.gadgetworks.codeshelf.command.CommandInfoQuery;
 import com.gadgetworks.codeshelf.command.CommandInfoResponse;
+import com.gadgetworks.codeshelf.command.CommandNetMgmtABC;
+import com.gadgetworks.codeshelf.command.CommandNetMgmtCheck;
+import com.gadgetworks.codeshelf.command.CommandNetMgmtIntfTest;
+import com.gadgetworks.codeshelf.command.CommandNetMgmtSetup;
+import com.gadgetworks.codeshelf.command.ICommand;
 import com.gadgetworks.codeshelf.query.IQuery;
 import com.gadgetworks.codeshelf.query.IResponse;
 
@@ -51,8 +49,8 @@ import com.gadgetworks.codeshelf.query.IResponse;
 public abstract class ControllerABC implements IController {
 
 	// Right now, the devices are not sending back their network ID.
-	public static final String									PRIVATE_GUID						= "00000000";
-	public static final String									VIRTUAL_GUID						= "%%%%%%%%";
+	public static final String									PRIVATE_MacAddr						= "00000000";
+	public static final String									VIRTUAL_MacAddr						= "%%%%%%%%";
 
 	public static final String									CONTROLLER_THREAD_NAME				= "Controller";
 
@@ -536,7 +534,7 @@ public abstract class ControllerABC implements IController {
 				 * 
 				 * 1. Choose a channel.
 				 * 2. Send a net-check command on that channel.
-				 * 3. Wait for responses.  (One response will come directly from the gateway (dongle) with a GUID = '00000000'
+				 * 3. Wait for responses.  (One response will come directly from the gateway (dongle) with a MacAddr = '00000000'
 				 * 4. Repeat until all channels have been checked.
 				 * 5. Choose the best channel.
 				 * 6. Send a net-setup command directly to the dongle to tell it the channel ID.
@@ -555,7 +553,7 @@ public abstract class ControllerABC implements IController {
 
 					CommandNetMgmtCheck netCheck = new CommandNetMgmtCheck(CommandNetMgmtCheck.NETCHECK_REQ,
 						mBroadcastNetworkId,
-						PRIVATE_GUID);
+						PRIVATE_MacAddr);
 					sendCommandNow(netCheck, mBroadcastAddress, false);
 
 					// Wait NETCHECK delay millis before sending the next net-check.
@@ -833,16 +831,16 @@ public abstract class ControllerABC implements IController {
 
 			// If it's an all-network broadcast, or a request to our network then respond.
 			boolean shouldRespond = false;
-			String responseGUID = "";
+			String responseMacAddr = "";
 			if (inCommand.getNetCheckType() == CommandNetMgmtCheck.NETCHECK_RESP) {
-				// For a broadcast request we respond with the private GUID.  This will cause the gateway (dongle)
-				// to insert its own GUID before transmitting it to the air.
+				// For a broadcast request we respond with the private MacAddr.  This will cause the gateway (dongle)
+				// to insert its own MacAddr before transmitting it to the air.
 				shouldRespond = true;
-				responseGUID = PRIVATE_GUID;
+				responseMacAddr = PRIVATE_MacAddr;
 			} else if (networkId.equals(mNetworkId)) {
-				// For a network-specific request we respond with the GUID of the requester.
+				// For a network-specific request we respond with the MacAddr of the requester.
 				shouldRespond = true;
-				responseGUID = inCommand.getGUID();
+				responseMacAddr = inCommand.getMacAddr();
 			}
 
 			if (shouldRespond) {
@@ -850,7 +848,7 @@ public abstract class ControllerABC implements IController {
 				// Send a network check response command back to the sender.
 				CommandNetMgmtCheck netCheck = new CommandNetMgmtCheck(CommandNetMgmtCheck.NETCHECK_RESP,
 					inCommand.getNetworkId(),
-					responseGUID);
+					responseMacAddr);
 				this.sendCommandNow(netCheck, mBroadcastAddress, false);
 			}
 		} else {
@@ -862,7 +860,7 @@ public abstract class ControllerABC implements IController {
 //				// Find the ChannelInfo instance for this channel.
 //				byte channel = inCommand.getChannel();
 //
-//				if (inCommand.getGUID().equals(PRIVATE_GUID)) {
+//				if (inCommand.getMacAddr().equals(PRIVATE_MacAddr)) {
 //					// This came from the gateway (dongle) directly.
 //					// The gateway (dongle) will have inserted an energy detect value for the channel.
 //					mChannelInfo[channel].setChannelEnergy(inCommand.getChannelEnergy().getValue());
@@ -948,7 +946,7 @@ public abstract class ControllerABC implements IController {
 	private void processAssocReqCommand(CommandAssocReq inCommand, NetAddress inSrcAddr) {
 
 		// First get the unique ID from the command.
-		String uid = inCommand.getGUID();
+		NetMacAddress macAddr = inCommand.getMacAddr();
 
 		LOGGER.info("AssocReq rcvd: " + inCommand.toString());
 
@@ -958,14 +956,14 @@ public abstract class ControllerABC implements IController {
 		// Indicate to listeners that there is a new actor.
 		boolean canAssociate = false;
 		for (IControllerEventListener listener : getControllerEventListeners()) {
-			if (listener.canNetworkDeviceAssociate(uid)) {
+			if (listener.canNetworkDeviceAssociate(macAddr)) {
 				canAssociate = true;
 			}
 		}
 
 		if (canAssociate) {
 
-			INetworkDevice foundDevice = mDeviceMaintainer.findNetworkDeviceByGUID(uid);
+			INetworkDevice foundDevice = mDeviceMaintainer.findNetworkDeviceByMacAddr(macAddr);
 
 			if (foundDevice != null) {
 				foundDevice.setNetworkDeviceState(NetworkDeviceStateEnum.SETUP);
@@ -1016,7 +1014,7 @@ public abstract class ControllerABC implements IController {
 				}
 
 				// Create and send an assign command to the remote that just woke up.
-				CommandAssocResp assignCmd = new CommandAssocResp(uid, mNetworkId, foundDevice.getNetAddress());
+				CommandAssocResp assignCmd = new CommandAssocResp(macAddr, mNetworkId, foundDevice.getNetAddress());
 				this.sendCommandTimed(assignCmd, mBroadcastNetworkId, mBroadcastAddress, 0, false);
 				foundDevice.setNetworkDeviceState(NetworkDeviceStateEnum.ASSIGN_SENT);
 				mDeviceMaintainer.deviceUpdated(foundDevice, false);
@@ -1048,9 +1046,9 @@ public abstract class ControllerABC implements IController {
 	private void processAssocCheckCommand(CommandAssocCheck inCommand, NetAddress inSrcAddr) {
 
 		// First get the unique ID from the command.
-		String uid = inCommand.getGUID();
+		NetMacAddress macAddr = inCommand.getMacAddr();
 
-		INetworkDevice foundDevice = mDeviceMaintainer.findNetworkDeviceByGUID(uid);
+		INetworkDevice foundDevice = mDeviceMaintainer.findNetworkDeviceByMacAddr(macAddr);
 
 		if (foundDevice != null) {
 			CommandAssocAck ackCmd;
@@ -1070,11 +1068,11 @@ public abstract class ControllerABC implements IController {
 				LOGGER.info("AssocCheck - NOT ASSOC: state was: " + foundDevice.getNetworkDeviceState());
 			}
 
-			// If the found device has the wrong GUID then we have the wrong device.
+			// If the found device has the wrong MacAddr then we have the wrong device.
 			// (This could be two matching network IDs on the same channel.  
 			// This could be a serious flaw in the network protocol.)
-			if (!foundDevice.getGUID().equals(uid)) {
-				LOGGER.info("AssocCheck - NOT ASSOC: GUID mismatch: " + foundDevice.getGUID() + " and " + uid);
+			if (!foundDevice.getMacAddress().equals(macAddr)) {
+				LOGGER.info("AssocCheck - NOT ASSOC: MacAddr mismatch: " + foundDevice.getMacAddress() + " and " + macAddr);
 				status = CommandAssocAck.IS_NOT_ASSOCIATED;
 			}
 
@@ -1083,7 +1081,7 @@ public abstract class ControllerABC implements IController {
 			//					|| (foundDevice.getNetworkDeviceState().equals(NetworkDeviceStateEnum.STARTED))
 			//					|| (foundDevice.getNetworkDeviceState().equals(NetworkDeviceStateEnum.LOST))) {
 			// Create and send an ack command to the remote that we think is in the running state.
-			ackCmd = new CommandAssocAck(uid, status);
+			ackCmd = new CommandAssocAck(macAddr, status);
 
 			// Send the command.
 			sendCommandNow(ackCmd, inSrcAddr, false);

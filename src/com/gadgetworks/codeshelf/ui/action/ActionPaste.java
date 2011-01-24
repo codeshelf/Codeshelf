@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ActionPaste.java,v 1.2 2011/01/21 01:12:12 jeffw Exp $
+ *  $Id: ActionPaste.java,v 1.3 2011/01/24 07:22:42 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.ui.action;
@@ -12,12 +12,12 @@ import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.swt.SWT;
 
 import com.gadgetworks.codeshelf.application.Util;
-import com.gadgetworks.codeshelf.ui.PickTagMgrWindow;
+import com.gadgetworks.codeshelf.ui.CodeShelfNetworkMgrWindow;
 
 public class ActionPaste extends Action implements ISelectionChangedListener {
-	private PickTagMgrWindow	mDeviceDebugWindow;
+	private CodeShelfNetworkMgrWindow	mDeviceDebugWindow;
 
-	public ActionPaste(final PickTagMgrWindow inDeviceDebugWindow) {
+	public ActionPaste(final CodeShelfNetworkMgrWindow inDeviceDebugWindow) {
 		mDeviceDebugWindow = inDeviceDebugWindow;
 		setEnabled(false);
 		setToolTipText("Paste");

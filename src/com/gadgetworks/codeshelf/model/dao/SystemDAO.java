@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: SystemDAO.java,v 1.4 2011/01/22 02:06:13 jeffw Exp $
+ *  $Id: SystemDAO.java,v 1.5 2011/01/24 07:22:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -27,6 +27,7 @@ import com.avaje.ebean.config.ServerConfig;
 import com.gadgetworks.codeshelf.application.Util;
 import com.gadgetworks.codeshelf.controller.INetworkDevice;
 import com.gadgetworks.codeshelf.controller.NetAddress;
+import com.gadgetworks.codeshelf.controller.NetMacAddress;
 import com.gadgetworks.codeshelf.controller.NetworkId;
 import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork;
 import com.gadgetworks.codeshelf.model.persist.ControlGroup;
@@ -394,12 +395,12 @@ public final class SystemDAO implements ISystemDAO {
 
 	/* --------------------------------------------------------------------------
 	 * (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.dao.ISystemDAO#findWirelessDeviceByGUID(java.lang.String)
+	 * @see com.gadgetworks.codeshelf.model.dao.ISystemDAO#findWirelessDeviceByMacAddr(java.lang.String)
 	 */
-	public WirelessDevice findWirelessDeviceByGUID(String inGUID) {
+	public WirelessDevice findWirelessDeviceByMacAddr(NetMacAddress inMacAddr) {
 		if (!mUseDAOCache) {
 			Query<WirelessDevice> query = Ebean.createQuery(WirelessDevice.class);
-			query.where().eq("mGUID", inGUID);
+			query.where().eq("mMacAddr", inMacAddr.toString());
 			query = query.setUseCache(true);
 			return query.findUnique();
 		} else {
@@ -408,7 +409,7 @@ public final class SystemDAO implements ISystemDAO {
 				initWirelessDeviceCacheMap();
 			}
 			for (WirelessDevice wirelessDevice : mWirelessDeviceCacheMap.values()) {
-				if ((wirelessDevice.getGUID().equals(inGUID))) {
+				if ((wirelessDevice.getMacAddress().equals(inMacAddr))) {
 					result = wirelessDevice;
 				}
 			}
@@ -477,10 +478,10 @@ public final class SystemDAO implements ISystemDAO {
 
 	/* --------------------------------------------------------------------------
 	 * (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.controller.IDeviceMaintainer#findNetworkDeviceByGUID(java.lang.String)
+	 * @see com.gadgetworks.codeshelf.controller.IDeviceMaintainer#findNetworkDeviceByMacAddr(java.lang.String)
 	 */
-	public INetworkDevice findNetworkDeviceByGUID(String inGUID) {
-		return findWirelessDeviceByGUID(inGUID);
+	public INetworkDevice findNetworkDeviceByMacAddr(NetMacAddress inMacAddr) {
+		return findWirelessDeviceByMacAddr(inMacAddr);
 	}
 
 	/* --------------------------------------------------------------------------
@@ -542,7 +543,7 @@ public final class SystemDAO implements ISystemDAO {
 				initCodeShelfNetworkCacheMap();
 			}
 			for (CodeShelfNetwork codeShelfNetwork : mCodeShelfNetworkCacheMap.values()) {
-				if (codeShelfNetwork.getNetworkId().equals(inNetworkId)) {
+				if (codeShelfNetwork.getId().equals(inNetworkId)) {
 					result = codeShelfNetwork;
 				}
 			}
@@ -717,10 +718,10 @@ public final class SystemDAO implements ISystemDAO {
 
 	/* --------------------------------------------------------------------------
 	 * (non-Javadoc)
-	 * @see com.gadgetworks.hbnet.model.dao.ISystemDAO#findPickTagByGUID(java.lang.String)
+	 * @see com.gadgetworks.hbnet.model.dao.ISystemDAO#findPickTagByMacAddr(java.lang.String)
 	 */
-	public PickTag findPickTagByGUID(String inGUID) {
-		return (PickTag) findWirelessDeviceByGUID(inGUID);
+	public PickTag findPickTagByMacAddr(NetMacAddress inMacAddr) {
+		return (PickTag) findWirelessDeviceByMacAddr(inMacAddr);
 	}
 
 	/* --------------------------------------------------------------------------

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WirelessDeviceWizard.java,v 1.2 2011/01/21 01:12:12 jeffw Exp $
+ *  $Id: WirelessDeviceWizard.java,v 1.3 2011/01/24 07:22:42 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.ui.wizards;
@@ -98,7 +98,7 @@ public class WirelessDeviceWizard extends Wizard {
 	public final boolean performFinish() {
 
 		// Update the account with the information from the dialog.
-		mWirelessDevice.setGUID(mWirelessDeviceSetupPage.getGUID());
+		mWirelessDevice.setMacAddress(mWirelessDeviceSetupPage.getMacAddr());
 		mWirelessDevice.setDescription(mWirelessDeviceSetupPage.getDescription());
 		return true;
 	}

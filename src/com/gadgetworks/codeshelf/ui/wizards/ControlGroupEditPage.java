@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ControlGroupEditPage.java,v 1.1 2011/01/23 07:22:45 jeffw Exp $
+ *  $Id: ControlGroupEditPage.java,v 1.2 2011/01/24 07:22:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.ui.wizards;
 
@@ -21,6 +21,7 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Text;
 
 import com.gadgetworks.codeshelf.application.Util;
+import com.gadgetworks.codeshelf.controller.NetGroup;
 import com.gadgetworks.codeshelf.model.dao.DAOException;
 import com.gadgetworks.codeshelf.model.dao.IDAOListener;
 import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork;
@@ -191,7 +192,8 @@ public final class ControlGroupEditPage extends WizardPage implements IDoubleCli
 
 		if ((result == true) && (mControlGroup != null)) {
 
-			mControlGroup.setId(mIdField.getText());
+			NetGroup netGroup = new NetGroup(mIdField.getText());
+			mControlGroup.setId(netGroup);
 			mControlGroup.setDescription(mDescriptionField.getText());
 			mControlGroup.setIsActive(mIsActiveButton.getSelection());
 

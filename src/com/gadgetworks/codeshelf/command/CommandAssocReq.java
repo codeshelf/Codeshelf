@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandAssocReq.java,v 1.2 2011/01/21 01:12:11 jeffw Exp $
+ *  $Id: CommandAssocReq.java,v 1.3 2011/01/24 07:22:42 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.command;
@@ -10,11 +10,12 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.gadgetworks.codeshelf.controller.ITransport;
+import com.gadgetworks.codeshelf.controller.NetMacAddress;
 
 // --------------------------------------------------------------------------
 /**
  *  A command associate request is broadcast by a remote to all controllers on a channel.
- *  Only the controller that manages that remote device (known by its GUID) will send an associate response.
+ *  Only the controller that manages that remote device (known by its MacAddr) will send an associate response.
  *  
  *  @author jeffw
  */
@@ -32,8 +33,8 @@ public final class CommandAssocReq extends CommandAssocABC {
 	 *  @param inDatagramBytes
 	 *  @param inEndpoint
 	 */
-	public CommandAssocReq(final byte inDeviceVersion, final byte inSystemStatus, final String inRemoteGUID) {
-		super(CommandIdEnum.ASSOC_REQ, inRemoteGUID);
+	public CommandAssocReq(final byte inDeviceVersion, final byte inSystemStatus, final NetMacAddress inRemoteMacAddr) {
+		super(CommandIdEnum.ASSOC_REQ, inRemoteMacAddr);
 
 		mDeviceVersion = inDeviceVersion;
 		mSystemStatus = inSystemStatus;

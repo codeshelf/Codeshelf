@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ActionCopy.java,v 1.2 2011/01/21 01:12:12 jeffw Exp $
+ *  $Id: ActionCopy.java,v 1.3 2011/01/24 07:22:42 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.ui.action;
@@ -15,12 +15,12 @@ import org.eclipse.swt.dnd.TextTransfer;
 import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.widgets.Display;
 
-import com.gadgetworks.codeshelf.ui.PickTagMgrWindow;
+import com.gadgetworks.codeshelf.ui.CodeShelfNetworkMgrWindow;
 
 public class ActionCopy extends Action implements ISelectionChangedListener {
-	private PickTagMgrWindow	mDeviceDebugWindow;
+	private CodeShelfNetworkMgrWindow	mDeviceDebugWindow;
 
-	public ActionCopy(final PickTagMgrWindow inDeviceDebugWindow) {
+	public ActionCopy(final CodeShelfNetworkMgrWindow inDeviceDebugWindow) {
 		mDeviceDebugWindow = inDeviceDebugWindow;
 		setEnabled(false);
 		setToolTipText("Copy");

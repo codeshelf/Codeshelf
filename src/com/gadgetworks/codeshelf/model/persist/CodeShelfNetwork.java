@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfNetwork.java,v 1.4 2011/01/23 07:22:45 jeffw Exp $
+ *  $Id: CodeShelfNetwork.java,v 1.5 2011/01/24 07:22:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -43,7 +43,7 @@ public class CodeShelfNetwork extends PersistABC {
 
 	// The network ID.
 	@Column(nullable = false)
-	private byte[]				mNetworkId;
+	private byte[]				mId;
 	// The network description.
 	@Column(nullable = false)
 	private String				mDescription;
@@ -57,21 +57,21 @@ public class CodeShelfNetwork extends PersistABC {
 	private List<ControlGroup>	mControlGroups		= new ArrayList<ControlGroup>();
 
 	public CodeShelfNetwork() {
-		mNetworkId = new byte[NetworkId.NETWORK_ID_BYTES];
+		mId = new byte[NetworkId.NETWORK_ID_BYTES];
 		mDescription = "";
 		mIsActive = true;
 	}
 
 	public final String toString() {
-		return Arrays.toString(mNetworkId) + " " + mDescription;
+		return getId().toString() + " " + mDescription;
 	}
 
-	public final NetworkId getNetworkId() {
-		return new NetworkId(mNetworkId);
+	public final NetworkId getId() {
+		return new NetworkId(mId);
 	}
 
-	public final void setNetworkId(byte[] inNetworkId) {
-		mNetworkId = inNetworkId;
+	public final void setId(NetworkId inNetworkId) {
+		mId = inNetworkId.getParamValueAsByteArray();
 	}
 
 	public final String getDescription() {

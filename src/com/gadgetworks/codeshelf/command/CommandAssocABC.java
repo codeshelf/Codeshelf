@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandAssocABC.java,v 1.2 2011/01/21 01:12:11 jeffw Exp $
+ *  $Id: CommandAssocABC.java,v 1.3 2011/01/24 07:22:42 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.command;
@@ -11,6 +11,7 @@ import org.apache.commons.logging.LogFactory;
 
 import com.gadgetworks.codeshelf.controller.INetworkDevice;
 import com.gadgetworks.codeshelf.controller.ITransport;
+import com.gadgetworks.codeshelf.controller.NetMacAddress;
 import com.gadgetworks.codeshelf.controller.OutOfRangeException;
 
 //--------------------------------------------------------------------------
@@ -30,9 +31,9 @@ import com.gadgetworks.codeshelf.controller.OutOfRangeException;
  */
 public abstract class CommandAssocABC extends CommandABC {
 
-	private static final Log	LOGGER				= LogFactory.getLog(CommandAssocABC.class);
+	private static final Log	LOGGER	= LogFactory.getLog(CommandAssocABC.class);
 
-	private String				mGUID;
+	private NetMacAddress		mMacAddr;
 
 	// --------------------------------------------------------------------------
 	/**
@@ -40,12 +41,10 @@ public abstract class CommandAssocABC extends CommandABC {
 	 *  @param inDatagramBytes
 	 *  @param inEndpoint
 	 */
-	public CommandAssocABC(final CommandIdEnum inCommandID, final String inRemoteGUID) {
+	public CommandAssocABC(final CommandIdEnum inCommandID, final NetMacAddress inRemoteMacAddr) {
 		super(inCommandID);
 
-		if (inRemoteGUID.length() != INetworkDevice.UNIQUEID_BYTES)
-			throw new OutOfRangeException("GUID is the wrong size");
-		mGUID = inRemoteGUID;
+		mMacAddr = inRemoteMacAddr;
 	}
 
 	// --------------------------------------------------------------------------
@@ -72,8 +71,8 @@ public abstract class CommandAssocABC extends CommandABC {
 
 		String resultStr = "";
 
-		if (mGUID != null) {
-			resultStr = " id=" + mGUID;
+		if (mMacAddr != null) {
+			resultStr = " id=" + mMacAddr;
 		}
 
 		return resultStr;
@@ -85,8 +84,8 @@ public abstract class CommandAssocABC extends CommandABC {
 	 */
 	protected void doToTransport(ITransport inTransport) {
 		super.doToTransport(inTransport);
-		// Write the GUID.
-		inTransport.setParam(mGUID, 1);
+		// Write the MacAddr.
+		inTransport.setParam(mMacAddr, 1);
 	}
 
 	/* --------------------------------------------------------------------------
@@ -96,14 +95,14 @@ public abstract class CommandAssocABC extends CommandABC {
 	protected void doFromTransport(ITransport inTransport) {
 		super.doFromTransport(inTransport);
 		// Read the unique ID.
-		mGUID = (String) inTransport.getParam(1);
+		mMacAddr = new NetMacAddress((String) inTransport.getParam(1));
 	}
 
 	// --------------------------------------------------------------------------
 	/**
 	 *  @return
 	 */
-	public final String getGUID() {
-		return mGUID;
+	public final NetMacAddress getMacAddr() {
+		return mMacAddr;
 	}
 }

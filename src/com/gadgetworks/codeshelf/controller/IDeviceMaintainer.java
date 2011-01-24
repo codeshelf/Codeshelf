@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  ESController
  *  Copyright (c) 2005-2009, Jeffrey B. Williams, All rights reserved
- *  $Id: IDeviceMaintainer.java,v 1.2 2011/01/21 01:12:11 jeffw Exp $
+ *  $Id: IDeviceMaintainer.java,v 1.3 2011/01/24 07:22:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.controller;
 
@@ -31,11 +31,11 @@ public interface IDeviceMaintainer {
 	
 	// --------------------------------------------------------------------------
 	/**
-	 *  Allow the persistence layer to locate a managed device by GUID.
-	 *  @param inGUID
+	 *  Allow the persistence layer to locate a managed device by MacAddr.
+	 *  @param inMacAddr
 	 *  @return
 	 */
-	INetworkDevice findNetworkDeviceByGUID(String inGUID);
+	INetworkDevice findNetworkDeviceByMacAddr(NetMacAddress inMacAddr);
 	
 	// --------------------------------------------------------------------------
 	/**

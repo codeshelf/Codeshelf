@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  OmniBox
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WirelessDeviceEventHandler.java,v 1.2 2011/01/21 02:22:35 jeffw Exp $
+ *  $Id: WirelessDeviceEventHandler.java,v 1.3 2011/01/24 07:22:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.application;
 
@@ -11,6 +11,7 @@ import org.apache.commons.logging.LogFactory;
 import com.gadgetworks.codeshelf.controller.IController;
 import com.gadgetworks.codeshelf.controller.IControllerEventListener;
 import com.gadgetworks.codeshelf.controller.INetworkDevice;
+import com.gadgetworks.codeshelf.controller.NetMacAddress;
 import com.gadgetworks.codeshelf.controller.NetworkDeviceStateEnum;
 import com.gadgetworks.codeshelf.model.persist.WirelessDevice;
 
@@ -23,7 +24,7 @@ public final class WirelessDeviceEventHandler implements IControllerEventListene
 	private static final Log	LOGGER	= LogFactory.getLog(WirelessDeviceEventHandler.class);
 
 	private IController			mController;
-//	private List<String>		mDeviceGUIDsToIgnore;
+//	private List<String>		mDeviceMacAddrsToIgnore;
 
 	// --------------------------------------------------------------------------
 	/**
@@ -34,28 +35,28 @@ public final class WirelessDeviceEventHandler implements IControllerEventListene
 
 		mController = inController;
 		mController.addControllerEventListener(this);
-//		mDeviceGUIDsToIgnore = new ArrayList<String>();
+//		mDeviceMacAddrsToIgnore = new ArrayList<String>();
 	}
 
-	/* --------------------------------------------------------------------------
-	 * (non-Javadoc)
-	 * @see com.gadgetworks.controller.IControllerListener#canActorAssociate(com.gadgetworks.actor.IActor)
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.controller.IControllerEventListener#canNetworkDeviceAssociate(com.gadgetworks.codeshelf.controller.NetMacAddress)
 	 */
-	public boolean canNetworkDeviceAssociate(final String inGUID) {
+	public boolean canNetworkDeviceAssociate(final NetMacAddress inMacAddr) {
 		boolean result = false;
 
-		WirelessDevice wirelessDevice = Util.getSystemDAO().findWirelessDeviceByGUID(inGUID);
+		WirelessDevice wirelessDevice = Util.getSystemDAO().findWirelessDeviceByMacAddr(inMacAddr);
 		if (wirelessDevice != null) {
 			result = true;
 		} else {
 			//			// If we're not ignoring this device then see if the user wants to add it.
-			//			if (!mDeviceGUIDsToIgnore.contains(inGUID)) {
-			//				mDeviceGUIDsToIgnore.add(inGUID);
+			//			if (!mDeviceMacAddrsToIgnore.contains(inMacAddr)) {
+			//				mDeviceMacAddrsToIgnore.add(inMacAddr);
 			//				final Runnable ask = new Runnable() {
 			//					public void run() {
 			//						boolean shouldAssociate = MessageDialog.openQuestion(Display.getCurrent().getActiveShell(),
 			//							LocaleUtils.getStr("should_assoc_dlog.title"),
-			//							LocaleUtils.getStr("should_assoc_dlog.prompt", new String[] { inGUID }));
+			//							LocaleUtils.getStr("should_assoc_dlog.prompt", new String[] { inMacAddr }));
 			//
 			//						if (shouldAssociate) {
 			//						} else {
@@ -76,10 +77,10 @@ public final class WirelessDeviceEventHandler implements IControllerEventListene
 	 */
 	public void deviceAdded(INetworkDevice inNetworkDevice) {
 
-		WirelessDevice wirelessDevice = Util.getSystemDAO().findWirelessDeviceByGUID(inNetworkDevice.getGUID());
+		WirelessDevice wirelessDevice = Util.getSystemDAO().findWirelessDeviceByMacAddr(inNetworkDevice.getMacAddress());
 
 		if (wirelessDevice == null) {
-			LOGGER.error("Radio device: " + inNetworkDevice.getGUID() + " not found in DB");
+			LOGGER.error("Radio device: " + inNetworkDevice.getMacAddress() + " not found in DB");
 		} else {
 			///Util.getSystemDAO().pushNonPersistentUpdates(wirelessDevice);
 			Util.getSystemDAO().storeWirelessDevice(wirelessDevice);
@@ -93,7 +94,7 @@ public final class WirelessDeviceEventHandler implements IControllerEventListene
 	public void deviceLost(INetworkDevice inNetworkDevice) {
 
 		if (inNetworkDevice != null) {
-			WirelessDevice wirelessDevice = Util.getSystemDAO().findWirelessDeviceByGUID(inNetworkDevice.getGUID());
+			WirelessDevice wirelessDevice = Util.getSystemDAO().findWirelessDeviceByMacAddr(inNetworkDevice.getMacAddress());
 
 			if (wirelessDevice != null) {
 				wirelessDevice.setNetworkDeviceState(NetworkDeviceStateEnum.LOST);
@@ -111,7 +112,7 @@ public final class WirelessDeviceEventHandler implements IControllerEventListene
 	public void deviceRemoved(INetworkDevice inNetworkDevice) {
 
 		if (inNetworkDevice != null) {
-			WirelessDevice wirelessDevice = Util.getSystemDAO().findWirelessDeviceByGUID(inNetworkDevice.getGUID());
+			WirelessDevice wirelessDevice = Util.getSystemDAO().findWirelessDeviceByMacAddr(inNetworkDevice.getMacAddress());
 
 			if (wirelessDevice != null) {
 				wirelessDevice.setNetworkDeviceState(NetworkDeviceStateEnum.LOST);

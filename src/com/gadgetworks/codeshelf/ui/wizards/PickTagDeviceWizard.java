@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PickTagDeviceWizard.java,v 1.4 2011/01/22 01:04:39 jeffw Exp $
+ *  $Id: PickTagDeviceWizard.java,v 1.5 2011/01/24 07:22:42 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.ui.wizards;
@@ -16,7 +16,9 @@ import org.eclipse.swt.widgets.Shell;
 
 import com.gadgetworks.codeshelf.application.Util;
 import com.gadgetworks.codeshelf.controller.IController;
+import com.gadgetworks.codeshelf.controller.NetAddress;
 import com.gadgetworks.codeshelf.model.dao.DAOException;
+import com.gadgetworks.codeshelf.model.persist.ControlGroup;
 import com.gadgetworks.codeshelf.model.persist.PickTag;
 import com.gadgetworks.codeshelf.ui.LocaleUtils;
 
@@ -37,10 +39,12 @@ public class PickTagDeviceWizard extends Wizard {
 	 *  @param inShell
 	 *  @return
 	 */
-	public static PickTag createPickTagDevice(Shell inShell, IController inController) {
+	public static PickTag createPickTagDevice(ControlGroup inControlGroup, Shell inShell, IController inController) {
 
 		PickTag result = null;
 		PickTag pickTag = new PickTag();
+		pickTag.setParentControlGroup(inControlGroup);
+		inControlGroup.addPickTag(pickTag);
 
 		PickTagDeviceWizard wizard = new PickTagDeviceWizard(pickTag);
 		WizardDialog dialog = new WizardDialog(inShell, wizard);
@@ -69,7 +73,7 @@ public class PickTagDeviceWizard extends Wizard {
 
 		int returnCode = dialog.open();
 		if (returnCode == Dialog.OK) {
-			// Create the person's first account
+			// Create the picktag
 			try {
 				Util.getSystemDAO().storePickTag(inPickTag);
 			} catch (DAOException e) {
@@ -106,7 +110,11 @@ public class PickTagDeviceWizard extends Wizard {
 	public final boolean performFinish() {
 
 		// Update the account with the information from the dialog.
-		mPickTag.setGUID(mPickTagDeviceSetupPage.getGUID());
+		mPickTag.setMacAddress(mPickTagDeviceSetupPage.getMacAddr());
+		String macAddrString = mPickTag.getMacAddress().toString();
+		String netAddrString = macAddrString.substring(8, 14);
+		NetAddress networkAddress = new NetAddress("0x" + netAddrString);
+		mPickTag.setNetAddress(networkAddress);
 		mPickTag.setDescription(mPickTagDeviceSetupPage.getDescription());
 		return true;
 	}

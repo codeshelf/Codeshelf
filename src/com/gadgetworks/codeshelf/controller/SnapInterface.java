@@ -80,6 +80,7 @@ public final class SnapInterface implements IGatewayInterface {
 			} catch (XmlRpcException e) {
 				//LOGGER.error("", e);
 			}
+			mIsStarted = false;
 			mXmlRpcClient = null;
 		}
 	}
@@ -89,7 +90,7 @@ public final class SnapInterface implements IGatewayInterface {
 	 * @see com.gadgetworks.codeshelf.controller.IGatewayInterface#isStarted()
 	 */
 	public boolean isStarted() {
-		return mXmlRpcClient != null;
+		return mIsStarted;
 	}
 
 	// --------------------------------------------------------------------------

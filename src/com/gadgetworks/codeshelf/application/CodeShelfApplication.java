@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfApplication.java,v 1.5 2011/01/22 02:06:13 jeffw Exp $
+ *  $Id: CodeShelfApplication.java,v 1.6 2011/01/24 07:22:42 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -49,7 +49,7 @@ import com.gadgetworks.codeshelf.model.persist.WirelessDevice;
 import com.gadgetworks.codeshelf.server.JmsHandler;
 import com.gadgetworks.codeshelf.server.jms.ActiveMqManager;
 import com.gadgetworks.codeshelf.ui.LocaleUtils;
-import com.gadgetworks.codeshelf.ui.PickTagMgrWindow;
+import com.gadgetworks.codeshelf.ui.CodeShelfNetworkMgrWindow;
 import com.gadgetworks.codeshelf.ui.preferences.Preferences;
 
 public final class CodeShelfApplication {
@@ -60,7 +60,7 @@ public final class CodeShelfApplication {
 
 	private boolean						mIsRunning	= true;
 	private Display						mDisplay;
-	private PickTagMgrWindow			mCodeShelfApplicationWindow;
+	private CodeShelfNetworkMgrWindow			mCodeShelfApplicationWindow;
 	private Tray						mSystemTray;
 	private TrayItem					mSystemTrayItem;
 	private IController					mController;
@@ -111,7 +111,7 @@ public final class CodeShelfApplication {
 
 		// Some radio device fields have no meaning from the last invocation of the application.
 		for (WirelessDevice wirelessDevice : Util.getSystemDAO().getWirelessDevices()) {
-			LOGGER.debug("Init data for wireless device id: " + wirelessDevice.getGUID());
+			LOGGER.debug("Init data for wireless device id: " + wirelessDevice.getMacAddress());
 			wirelessDevice.setNetworkDeviceState(NetworkDeviceStateEnum.INVALID);
 			Util.getSystemDAO().storeWirelessDevice(wirelessDevice);
 		}
@@ -337,7 +337,7 @@ public final class CodeShelfApplication {
 		if (mCodeShelfApplicationWindow == null) {
 			// Setup the main application window.
 			Shell shell = new Shell(mDisplay);
-			mCodeShelfApplicationWindow = new PickTagMgrWindow(shell, this);
+			mCodeShelfApplicationWindow = new CodeShelfNetworkMgrWindow(shell, this);
 			shell.pack();
 			mCodeShelfApplicationWindow.setBlockOnOpen(false);
 			mCodeShelfApplicationWindow.open();

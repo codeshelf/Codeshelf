@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ResponseActorDescriptor.java,v 1.4 2011/01/21 04:25:54 jeffw Exp $
+ *  $Id: ResponseActorDescriptor.java,v 1.5 2011/01/24 07:22:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.query;
 
@@ -16,7 +16,7 @@ import com.gadgetworks.codeshelf.controller.ITransport;
  * 
  * The response format is:
  * 
- * 8B - The GUID for the remote device.
+ * 8B - The MacAddr for the remote device.
  * 1B - The device type for the remote device.
  * NB - The device description as a pascal-style string.
  * 1B - The number of KVPs for the remote device actor.
@@ -33,7 +33,7 @@ public final class ResponseActorDescriptor extends ResponseABC {
 	public static final byte	KVP_CNT_SIZE		= 1;
 	public static final byte	ENDPOINT_CNT_SIZE	= 1;
 
-	private String				mGUID;
+	private String				mMacAddr;
 	private String				mDescStr;
 	// These really are bytes on the stream, but Java doesn't allow unsigned bytes
 	private short				mDeviceType;
@@ -43,12 +43,12 @@ public final class ResponseActorDescriptor extends ResponseABC {
 		super();
 	}
 
-	public ResponseActorDescriptor(final String inGUID,
+	public ResponseActorDescriptor(final String inMacAddr,
 		final String inDescStr,
 		final short inDeviceType,
 		final short inKVPCount,
 		final short inEndpointCount) {
-		mGUID = inGUID;
+		mMacAddr = inMacAddr;
 		mDescStr = inDescStr;
 		mDeviceType = inDeviceType;
 		mKVPCount = inKVPCount;
@@ -68,7 +68,7 @@ public final class ResponseActorDescriptor extends ResponseABC {
 	 */
 	@Override
 	protected void doFromTransport(ITransport inTransport) throws IOException {
-		mGUID = (String) inTransport.getParam(1);
+		mMacAddr = (String) inTransport.getParam(1);
 		mDeviceType = ((Short) inTransport.getParam(2)).shortValue();
 		mDescStr = (String) inTransport.getParam(3);
 		mKVPCount = ((Short) inTransport.getParam(4)).shortValue();
@@ -80,7 +80,7 @@ public final class ResponseActorDescriptor extends ResponseABC {
 	 */
 	@Override
 	protected void doToTransport(ITransport inTransport) throws IOException {
-		inTransport.setParam(mGUID, 1);
+		inTransport.setParam(mMacAddr, 1);
 		inTransport.setParam((byte) mDeviceType, 2);
 		inTransport.setParam(mDescStr, 3);
 		inTransport.setParam((byte) mKVPCount, 4);
@@ -92,11 +92,11 @@ public final class ResponseActorDescriptor extends ResponseABC {
 	 */
 	@Override
 	protected String doToString() {
-		return BEAN_ID + " GUID=" + new String(mGUID) + " desc=" + mDescStr + " kvpCnt=" + mKVPCount;
+		return BEAN_ID + " MacAddr=" + new String(mMacAddr) + " desc=" + mDescStr + " kvpCnt=" + mKVPCount;
 	}
 
-	public String getGUIDStr() {
-		return new String(mGUID);
+	public String getMacAddrStr() {
+		return new String(mMacAddr);
 	}
 
 	public short getDeviceType() {

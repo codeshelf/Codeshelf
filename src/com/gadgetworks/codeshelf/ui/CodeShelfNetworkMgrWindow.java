@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PickTagMgrWindow.java,v 1.6 2011/01/22 01:04:39 jeffw Exp $
+ *  $Id: CodeShelfNetworkMgrWindow.java,v 1.1 2011/01/24 07:22:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.ui;
 
@@ -33,28 +33,28 @@ import com.gadgetworks.codeshelf.ui.treeviewers.CodeShelfNetView;
  *  @author jeffw
  */
 
-public final class PickTagMgrWindow extends ApplicationWindow implements IDAOListener {
+public final class CodeShelfNetworkMgrWindow extends ApplicationWindow implements IDAOListener {
 
-	public static final Point	DEFAULT_SIZE		= new Point(480, 320);
-	public static final Point	DEFAULT_LOCATION	= new Point(10, 350);
+	public static final Point		DEFAULT_SIZE		= new Point(480, 320);
+	public static final Point		DEFAULT_LOCATION	= new Point(10, 350);
 
-	private static final String	SHELL_NAME			= "Device Debug";
+	private static final String		SHELL_NAME			= "Device Debug";
 
-	private static final Log	LOGGER				= LogFactory.getLog(PickTagMgrWindow.class);
+	private static final Log		LOGGER				= LogFactory.getLog(CodeShelfNetworkMgrWindow.class);
 
 	private CodeShelfApplication	mApplication;
-	private CodeShelfNetView		mPickTagView;
-	private Shell				mShell;
+	private CodeShelfNetView		mCondeShelfNetworkView;
+	private Shell					mShell;
 
-	private ActionConsole		mConsoleAction;
-	private Action				mPrefsAction;
-	private Action				mAboutAction;
-	private Action				mExitAction;
+	private ActionConsole			mConsoleAction;
+	private Action					mPrefsAction;
+	private Action					mAboutAction;
+	private Action					mExitAction;
 
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	public PickTagMgrWindow(final Shell inShell, final CodeShelfApplication inApplication) {
+	public CodeShelfNetworkMgrWindow(final Shell inShell, final CodeShelfApplication inApplication) {
 
 		super(null);
 
@@ -72,7 +72,7 @@ public final class PickTagMgrWindow extends ApplicationWindow implements IDAOLis
 		};
 		mExitAction = new Action("&Exit\tCtrl+X") {
 			public void run() {
-				Util.getSystemDAO().unregisterDAOListener(mPickTagView);
+				Util.getSystemDAO().unregisterDAOListener(mCondeShelfNetworkView);
 				mApplication.stopApplication();
 			}
 		};
@@ -105,14 +105,14 @@ public final class PickTagMgrWindow extends ApplicationWindow implements IDAOLis
 	protected Control createContents(Composite inParentShell) {
 
 		mShell = (Shell) inParentShell;
-		mShell.setText(LocaleUtils.getStr("codeshelfnetworkmgr_window.title"));
+		mShell.setText(LocaleUtils.getStr("codeshelfview.window.title"));
 
 		Composite composite = new Composite(mShell, SWT.NULL);
 		composite.setLayout(new GridLayout());
 		composite.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, true, true));
 
-		mPickTagView = new CodeShelfNetView(composite, mApplication.getController(), SWT.BORDER);
-		Util.getSystemDAO().registerDAOListener(mPickTagView);
+		mCondeShelfNetworkView = new CodeShelfNetView(composite, mApplication.getController(), SWT.BORDER);
+		Util.getSystemDAO().registerDAOListener(mCondeShelfNetworkView);
 
 		return composite;
 	}
@@ -214,7 +214,7 @@ public final class PickTagMgrWindow extends ApplicationWindow implements IDAOLis
 		// Perform a system shutdown.
 		//stopApplication();
 
-		Util.getSystemDAO().unregisterDAOListener(mPickTagView);
+		Util.getSystemDAO().unregisterDAOListener(mCondeShelfNetworkView);
 
 		//mShell.setMinimized(true);
 

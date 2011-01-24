@@ -1,20 +1,21 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ISystemDAO.java,v 1.4 2011/01/22 02:06:13 jeffw Exp $
+ *  $Id: ISystemDAO.java,v 1.5 2011/01/24 07:22:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
 import java.util.Collection;
 
 import com.gadgetworks.codeshelf.controller.IDeviceMaintainer;
+import com.gadgetworks.codeshelf.controller.NetMacAddress;
 import com.gadgetworks.codeshelf.controller.NetworkId;
+import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork;
 import com.gadgetworks.codeshelf.model.persist.ControlGroup;
 import com.gadgetworks.codeshelf.model.persist.DBProperty;
 import com.gadgetworks.codeshelf.model.persist.PersistABC;
 import com.gadgetworks.codeshelf.model.persist.PersistentProperty;
 import com.gadgetworks.codeshelf.model.persist.PickTag;
-import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork;
 import com.gadgetworks.codeshelf.model.persist.WirelessDevice;
 
 public interface ISystemDAO extends IDeviceMaintainer {
@@ -64,7 +65,7 @@ public interface ISystemDAO extends IDeviceMaintainer {
 
 	WirelessDevice loadWirelessDevice(Integer inID);
 
-	WirelessDevice findWirelessDeviceByGUID(String inGUID);
+	WirelessDevice findWirelessDeviceByMacAddr(NetMacAddress inMacAddr);
 
 	void storeWirelessDevice(WirelessDevice inWirelessDevice);
 
@@ -103,7 +104,7 @@ public interface ISystemDAO extends IDeviceMaintainer {
 
 	PickTag loadPickTag(Integer inID);
 
-	PickTag findPickTagByGUID(String inGUID);
+	PickTag findPickTagByMacAddr(NetMacAddress inMacAddr);
 
 	void storePickTag(PickTag inPickTag) throws DAOException;
 

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: NetParameter.java,v 1.4 2011/01/22 07:58:31 jeffw Exp $
+ *  $Id: NetParameter.java,v 1.5 2011/01/24 07:22:42 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.controller;
@@ -73,7 +73,12 @@ public class NetParameter {
 		StringBuffer result = new StringBuffer("0x");
 		
 		for (int i = 0; i < mParamBytes.length; i++) {
-			result.append(Integer.toHexString(mParamBytes[i]));
+			String hexByte = Integer.toHexString(mParamBytes[i]);
+			if (hexByte.length() == 1) {
+				result.append("0");
+			}
+			result.append(hexByte);
+			
 		}
 
 		return result.toString();

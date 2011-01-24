@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  OmniBox
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: INetworkDevice.java,v 1.2 2011/01/21 02:22:35 jeffw Exp $
+ *  $Id: INetworkDevice.java,v 1.3 2011/01/24 07:22:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.controller;
 
@@ -24,9 +24,9 @@ public interface INetworkDevice {
 	// --------------------------------------------------------------------------
 	/**
 	 *  Every device has a globally unique ID.
-	 *  @return	The GUID for this device.
+	 *  @return	The MacAddr for this device.
 	 */
-	String getGUID();
+	NetMacAddress getMacAddress();
 
 	// --------------------------------------------------------------------------
 	/**
@@ -58,11 +58,11 @@ public interface INetworkDevice {
 
 	// --------------------------------------------------------------------------
 	/**
-	 *  Determine if this device's session matches a device GUID.
-	 *  @param inGUIDStr	The GUID
+	 *  Determine if this device's session matches a device MacAddr.
+	 *  @param inMacAddrStr	The MacAddr
 	 *  @return	True if there is a match.
 	 */
-	boolean doesMatch(String inGUIDStr);
+	boolean doesMatch(String inMacAddrStr);
 
 	// --------------------------------------------------------------------------
 	/**

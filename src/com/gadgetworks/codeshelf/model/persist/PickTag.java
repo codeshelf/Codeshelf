@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PickTag.java,v 1.4 2011/01/21 05:12:25 jeffw Exp $
+ *  $Id: PickTag.java,v 1.5 2011/01/24 07:22:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -52,7 +52,7 @@ public class PickTag extends WirelessDevice {
 	 * @see java.lang.Object#toString()
 	 */
 	public String toString() {
-		return "PickTag: " + getGUID() + " " + getDescription();
+		return "PickTag: " + getMacAddress() + " " + getDescription();
 	}
 
 	public ControlGroup getParentControlGroup() {

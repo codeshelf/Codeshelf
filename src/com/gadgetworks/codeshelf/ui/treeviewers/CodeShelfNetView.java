@@ -1,18 +1,20 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfNetView.java,v 1.2 2011/01/23 07:22:45 jeffw Exp $
+ *  $Id: CodeShelfNetView.java,v 1.3 2011/01/24 07:22:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.ui.treeviewers;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.util.LocalSelectionTransfer;
 import org.eclipse.jface.viewers.DoubleClickEvent;
 import org.eclipse.jface.viewers.IDoubleClickListener;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
+import org.eclipse.jface.viewers.TreeSelection;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.ViewerDropAdapter;
 import org.eclipse.swt.SWT;
@@ -20,7 +22,6 @@ import org.eclipse.swt.dnd.DND;
 import org.eclipse.swt.dnd.DragSource;
 import org.eclipse.swt.dnd.DragSourceAdapter;
 import org.eclipse.swt.dnd.DragSourceEvent;
-import org.eclipse.swt.dnd.TextTransfer;
 import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.dnd.TransferData;
 import org.eclipse.swt.events.MenuEvent;
@@ -39,7 +40,6 @@ import org.eclipse.swt.widgets.TreeItem;
 
 import com.gadgetworks.codeshelf.application.Util;
 import com.gadgetworks.codeshelf.controller.IController;
-import com.gadgetworks.codeshelf.controller.NetworkDeviceStateEnum;
 import com.gadgetworks.codeshelf.model.dao.DAOException;
 import com.gadgetworks.codeshelf.model.dao.IDAOListener;
 import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork;
@@ -97,25 +97,32 @@ public final class CodeShelfNetView implements ISelectionChangedListener, IDoubl
 
 		// Create a drag source on the tree.
 		DragSource dragSource = new DragSource(mTree, DND.DROP_MOVE);
-		dragSource.setTransfer(new Transfer[] { TextTransfer.getInstance() });
+		dragSource.setTransfer(new Transfer[] { LocalSelectionTransfer.getTransfer() });
 		dragSource.addDragListener(new DragSourceAdapter() {
 			public void dragStart(DragSourceEvent inEvent) {
 				PersistABC persistentObject = (PersistABC) mTree.getSelection()[0].getData();
 				if (!(persistentObject instanceof CodeShelfNetwork)) {
-					inEvent.doit = false;
+					inEvent.doit = true;
 				}
 				LOGGER.info(persistentObject);
 			}
 
 			public void dragSetData(DragSourceEvent inEvent) {
-				// Set the data to be the first selected item's text
-				PersistABC persistentObject = (PersistABC) mTree.getSelection()[0].getData();
-				inEvent.data = persistentObject.getPersistentId().toString();
+
+				LocalSelectionTransfer transfer = LocalSelectionTransfer.getTransfer();
+				if (transfer.isSupportedType(inEvent.dataType)) {
+					// Set the data to be the first selected item's text
+					PersistABC persistentObject = (PersistABC) mTree.getSelection()[0].getData();
+					inEvent.data = persistentObject;//.getPersistentId().toString();
+
+					transfer.setSelection(getTreeSelection());
+				}
+
 			}
 		});
 
 		// Create the drop target on the tree.
-		Transfer[] transfers = new Transfer[] { TextTransfer.getInstance() };
+		Transfer[] transfers = new Transfer[] { LocalSelectionTransfer.getTransfer() };
 		mTreeViewer.addDropSupport(DND.DROP_MOVE, transfers, new PickTagViewDropAdapter(mTreeViewer));
 
 		TreeColumn column = new TreeColumn(mTree, SWT.NONE);
@@ -145,10 +152,9 @@ public final class CodeShelfNetView implements ISelectionChangedListener, IDoubl
 		mTreeViewer.setLabelProvider(new CodeShelfNetViewDecoratedLabelProvider(mTree,
 			new CodeShelfNetViewLabelProvider(),
 			new CodeShelfNetViewDecorator()));
-		//		mTreeViewer.addFilter(new ActiveAccountsFilter());
-		//		mTreeViewer.setComparer(new ObjectIDComparer());
 		mTreeViewer.addSelectionChangedListener(this);
 		mTreeViewer.addDoubleClickListener(this);
+
 		mTreeViewer.setInput(CodeShelfNetViewContentProvider.PICKTAGVIEW_ROOT);
 	}
 
@@ -316,23 +322,13 @@ public final class CodeShelfNetView implements ISelectionChangedListener, IDoubl
 	 */
 	private void controlGroupMenu(final ControlGroup inControlGroup) {
 
-		// Add ControlGroup menu item.
-		final MenuItem adItem = new MenuItem(mPopup, SWT.NONE);
-		adItem.setText(LocaleUtils.getStr("codeshelfview.menu.add_controlgroup"));
-		adItem.setData(inControlGroup.getParentCodeShelfNetwork());
-		adItem.addListener(SWT.Selection, new Listener() {
-			public void handleEvent(Event inEvent) {
-				//				RulesetWizard.addPickTagRuleset(inPickTagModule.getParentPickTag());
-			}
-		});
-
 		// Edit ControlGroup menu item.
 		final MenuItem editItem = new MenuItem(mPopup, SWT.NONE);
 		editItem.setText(LocaleUtils.getStr("codeshelfview.menu.edit_controlgroup"));
 		editItem.setData(inControlGroup);
 		editItem.addListener(SWT.Selection, new Listener() {
 			public void handleEvent(Event inEvent) {
-				//				RulesetWizard.editPickTagRuleset(inPickTagModule);
+				ControlGroupWizard.editControlGroup(inControlGroup);
 			}
 		});
 
@@ -358,6 +354,16 @@ public final class CodeShelfNetView implements ISelectionChangedListener, IDoubl
 
 		new MenuItem(mPopup, SWT.SEPARATOR);
 
+		// Add PickTag menu item.
+		final MenuItem adItem = new MenuItem(mPopup, SWT.NONE);
+		adItem.setText(LocaleUtils.getStr("codeshelfview.menu.add_picktag"));
+		adItem.setData(inControlGroup.getParentCodeShelfNetwork());
+		adItem.addListener(SWT.Selection, new Listener() {
+			public void handleEvent(Event inEvent) {
+				PickTagDeviceWizard.createPickTagDevice(inControlGroup, mShell, mController);
+			}
+		});
+
 		editItem.setEnabled(true);
 		deleteItem.setEnabled(true);
 	}
@@ -369,15 +375,6 @@ public final class CodeShelfNetView implements ISelectionChangedListener, IDoubl
 	 * @param inPickTag
 	 */
 	private void pickTagMenu(final PickTag inPickTag) {
-
-		final MenuItem addItem = new MenuItem(mPopup, SWT.NONE);
-		addItem.setText(LocaleUtils.getStr("codeshelfview.menu.add_picktag"));
-		addItem.setData(null);
-		addItem.addListener(SWT.Selection, new Listener() {
-			public void handleEvent(Event inEvent) {
-				PickTagDeviceWizard.createPickTagDevice(Display.getCurrent().getActiveShell(), mController);
-			}
-		});
 
 		final MenuItem editItem = new MenuItem(mPopup, SWT.NONE);
 		editItem.setText(LocaleUtils.getStr("codeshelfview.menu.edit_picktag"));
@@ -421,11 +418,9 @@ public final class CodeShelfNetView implements ISelectionChangedListener, IDoubl
 
 		// Decide which menu items should be enabled.
 		if (inPickTag == null) {
-			addItem.setEnabled(true);
 			editItem.setEnabled(false);
 			deleteItem.setEnabled(false);
 		} else {
-			addItem.setEnabled(true);
 			editItem.setEnabled(true);
 			deleteItem.setEnabled(true);
 		}
@@ -501,11 +496,10 @@ public final class CodeShelfNetView implements ISelectionChangedListener, IDoubl
 			}
 
 			String[] properties = { " " };
-			mTreeViewer.update(inObject, properties);
-			if (refreshParentObject != null) {
-				mTreeViewer.refresh(refreshParentObject, true);
-			}
-			expandOnlinePickTagz();
+			//			mTreeViewer.update(inObject, properties);
+			//			if (refreshParentObject != null) {
+			//				mTreeViewer.refresh(refreshParentObject, true);
+			//			}
 		}
 	}
 
@@ -528,30 +522,10 @@ public final class CodeShelfNetView implements ISelectionChangedListener, IDoubl
 		return result;
 	}
 
-	// --------------------------------------------------------------------------
 	/**
+	 * @author jeffw
+	 *
 	 */
-	private void expandOnlinePickTagz() {
-
-		// Expand any accounts that are online.
-		Display display = Display.getDefault();
-		display.asyncExec(new Runnable() {
-			public void run() {
-				for (TreeItem treeItem : mTree.getItems()) {
-					if (treeItem.getData() instanceof PickTag) {
-						if (!treeItem.getExpanded()) {
-							PickTag pickTag = (PickTag) treeItem.getData();
-							if (pickTag.getNetworkDeviceState().equals(NetworkDeviceStateEnum.STARTED)) {
-								mTreeViewer.expandToLevel(treeItem.getData(), 1);
-							}
-						}
-					}
-				}
-			}
-		});
-
-	}
-
 	private static class PickTagViewDropAdapter extends ViewerDropAdapter {
 
 		public PickTagViewDropAdapter(final TreeViewer inTreeViewer) {
@@ -563,20 +537,25 @@ public final class CodeShelfNetView implements ISelectionChangedListener, IDoubl
 		 * @see org.eclipse.jface.viewers.ViewerDropAdapter#performDrop(java.lang.Object)
 		 */
 		public boolean performDrop(Object inDroppedObject) {
-			PickTag pickTag = Util.getSystemDAO().loadPickTag(Integer.valueOf((String) inDroppedObject));
-			if (pickTag != null) {
-				ControlGroup parentControlGroup = pickTag.getParentControlGroup();
-				if (getCurrentTarget() instanceof ControlGroup) {
-					ControlGroup controlGroup = (ControlGroup) getCurrentTarget();
-					controlGroup.addPickTag(pickTag);
-					pickTag.setParentControlGroup(controlGroup);
-					try {
-						Util.getSystemDAO().storePickTag(pickTag);
-						Util.getSystemDAO().storeControlGroup(controlGroup);
-					} catch (DAOException e) {
-						LOGGER.error("", e);
+
+			if (inDroppedObject instanceof TreeSelection) {
+				TreeSelection selection = (TreeSelection) inDroppedObject;
+				Object first = selection.getFirstElement();
+				if (first instanceof PickTag) {
+					PickTag pickTag = (PickTag) first;
+					ControlGroup parentControlGroup = pickTag.getParentControlGroup();
+					if (getCurrentTarget() instanceof ControlGroup) {
+						ControlGroup controlGroup = (ControlGroup) getCurrentTarget();
+						controlGroup.addPickTag(pickTag);
+						pickTag.setParentControlGroup(controlGroup);
+						try {
+							Util.getSystemDAO().storePickTag(pickTag);
+							Util.getSystemDAO().storeControlGroup(controlGroup);
+						} catch (DAOException e) {
+							LOGGER.error("", e);
+						}
+						Util.getSystemDAO().pushNonPersistentUpdates(parentControlGroup);
 					}
-					Util.getSystemDAO().pushNonPersistentUpdates(parentControlGroup);
 				}
 			}
 			return true;
@@ -588,7 +567,7 @@ public final class CodeShelfNetView implements ISelectionChangedListener, IDoubl
 		 */
 		public boolean validateDrop(Object inTarget, int inOperation, TransferData inTransferType) {
 			boolean result = false;
-			if (inTarget instanceof PickTag) {
+			if ((inTarget instanceof CodeShelfNetwork) || (inTarget instanceof ControlGroup)) {
 				result = true;
 			}
 			return result;

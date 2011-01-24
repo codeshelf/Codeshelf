@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WirelessDevice.java,v 1.3 2011/01/22 07:58:31 jeffw Exp $
+ *  $Id: WirelessDevice.java,v 1.4 2011/01/24 07:22:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -26,6 +26,7 @@ import org.apache.commons.logging.LogFactory;
 import com.gadgetworks.codeshelf.command.CommandControlABC;
 import com.gadgetworks.codeshelf.controller.INetworkDevice;
 import com.gadgetworks.codeshelf.controller.NetAddress;
+import com.gadgetworks.codeshelf.controller.NetMacAddress;
 import com.gadgetworks.codeshelf.controller.NetworkDeviceStateEnum;
 
 // --------------------------------------------------------------------------
@@ -46,20 +47,15 @@ import com.gadgetworks.codeshelf.controller.NetworkDeviceStateEnum;
 @DiscriminatorValue("ABC")
 public class WirelessDevice extends PersistABC implements INetworkDevice {
 
-	public static final int				GUID_BYTES			= 8;
+	public static final int				MacAddr_BYTES			= 8;
 	public static final int				PUBLIC_KEY_BYTES	= 8;
 
 	private static final long			serialVersionUID	= 2371198193026330676L;
 
 	private static final Log			LOGGER				= LogFactory.getLog(WirelessDevice.class);
 
-	//	The owning account.
-	//	@Column(nullable = false)
-	//	@ManyToOne(optional = false)
-	//	@Transient
-	//	private Account					mParentAccount;
 	@Column(nullable = false)
-	private String						mGUID;
+	private byte[]						mMacAddress;
 	@Column(nullable = false)
 	private String						mPublicKey;
 	// The description.
@@ -87,19 +83,19 @@ public class WirelessDevice extends PersistABC implements INetworkDevice {
 	//	private short						mDeviceType;
 
 	public WirelessDevice() {
-		mGUID = "";
+		mMacAddress = new byte[NetMacAddress.NET_MACADDR_BYTES];
 		mPublicKey = "";
 		mDescription = "";
 		mLastBatteryLevel = 0;
 		mKVPMap = new HashMap<String, String>();
 	}
 
-	public final String getGUID() {
-		return mGUID;
+	public final NetMacAddress getMacAddress() {
+		return new NetMacAddress(mMacAddress);
 	}
 
-	public final void setGUID(String inGUID) {
-		mGUID = inGUID;
+	public final void setMacAddress(NetMacAddress inMacAddress) {
+		mMacAddress = inMacAddress.getParamValueAsByteArray();
 	}
 
 	public final String getPublicKey() {
@@ -126,8 +122,8 @@ public class WirelessDevice extends PersistABC implements INetworkDevice {
 		return new NetAddress(mNetworkAddress);
 	}
 
-	public final boolean doesMatch(String inGUID) {
-		return mGUID.equals(inGUID);
+	public final boolean doesMatch(String inMacAddr) {
+		return mMacAddress.equals(inMacAddr);
 	}
 
 	public final long getLastContactTime() {
@@ -160,7 +156,7 @@ public class WirelessDevice extends PersistABC implements INetworkDevice {
 	}
 
 	public final void setNetworkDeviceState(NetworkDeviceStateEnum inState) {
-		LOGGER.debug(mGUID + " state changed: " + mNetworkDeviceStatus + "->" + inState);
+		LOGGER.debug(mMacAddress + " state changed: " + mNetworkDeviceStatus + "->" + inState);
 		mNetworkDeviceStatus = inState;
 	}
 

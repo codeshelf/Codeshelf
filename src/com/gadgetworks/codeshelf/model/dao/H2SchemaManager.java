@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: H2SchemaManager.java,v 1.8 2011/01/23 07:22:45 jeffw Exp $
+ *  $Id: H2SchemaManager.java,v 1.9 2011/01/24 07:22:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -171,7 +171,7 @@ public final class H2SchemaManager implements ISchemaManager {
 		// CodeShelfNetwork
 		execOneSQLCommand("CREATE TABLE CODESHELF.CODESHELFNETWORK ( " //
 				+ "MPERSISTENTID INT AUTO_INCREMENT NOT NULL, " //
-				+ "MNETWORKID BINARY(2) DEFAULT 0 NOT NULL," //
+				+ "MID BINARY(2) DEFAULT 0 NOT NULL," //
 				+ "MDESCRIPTION VARCHAR(64) NOT NULL, " //
 				+ "MISACTIVE BOOLEAN DEFAULT TRUE NOT NULL," //
 				+ "MVERSION TIMESTAMP, " //
@@ -181,7 +181,7 @@ public final class H2SchemaManager implements ISchemaManager {
 		execOneSQLCommand("CREATE TABLE CODESHELF.CONTROLGROUP ( " //
 				+ "MPERSISTENTID INT AUTO_INCREMENT NOT NULL, " //
 				+ "MPARENTCODESHELFNETWORK_MPERSISTENTID BIGINT NOT NULL, " //
-				+ "MID VARCHAR(16) NOT NULL, " //
+				+ "MID BINARY(2) DEFAULT 0 NOT NULL, " //
 				+ "MDESCRIPTION VARCHAR(64) NOT NULL, " //
 				+ "MISACTIVE BOOLEAN DEFAULT TRUE NOT NULL," //
 				+ "MVERSION TIMESTAMP, " //
@@ -198,11 +198,11 @@ public final class H2SchemaManager implements ISchemaManager {
 				+ "DTYPE VARCHAR(20) NOT NULL," //
 				+ "MPERSISTENTID INT AUTO_INCREMENT NOT NULL," //
 				+ "MPARENTCONTROLGROUP_MPERSISTENTID BIGINT NOT NULL, " //
-				+ "MGUID VARCHAR(16) NOT NULL," //
+				+ "MMACADDRESS BINARY(6) DEFAULT 0 NOT NULL," //
 				+ "MPUBLICKEY VARCHAR(16) NOT NULL," //
 				+ "MDESCRIPTION VARCHAR(64)," //
 				+ "MLASTBATTERYLEVEL SMALLINT DEFAULT 0 NOT NULL," //
-				+ "MNETWORKADDRESS INTEGER NOT NULL," //
+				+ "MNETWORKADDRESS BINARY(3) DEFAULT 0 NOT NULL," //
 				+ "MNETWORKDEVICESTATUS VARCHAR(16) DEFAULT 'INVALID'," //
 				+ "MLASTCONTACTTIME BIGINT DEFAULT 0," //
 				+ "MVERSION TIMESTAMP," //
@@ -214,6 +214,6 @@ public final class H2SchemaManager implements ISchemaManager {
 
 		execOneSQLCommand("CREATE UNIQUE INDEX CODESHELF.WIRELESS_DEVICE_PRIMARY_KEY ON CODESHELF.WIRELESSDEVICE (MPERSISTENTID)");
 
-		execOneSQLCommand("CREATE UNIQUE INDEX CODESHELF.WIRELESSDEVICE_GUID_INDEX ON CODESHELF.WIRELESSDEVICE (MGUID)");
+		execOneSQLCommand("CREATE UNIQUE INDEX CODESHELF.WIRELESSDEVICE_MACADDRESS_INDEX ON CODESHELF.WIRELESSDEVICE (MMACADDRESS)");
 	}
 }

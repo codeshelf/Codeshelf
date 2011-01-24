@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandAssocAck.java,v 1.2 2011/01/21 01:12:11 jeffw Exp $
+ *  $Id: CommandAssocAck.java,v 1.3 2011/01/24 07:22:42 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.command;
@@ -13,17 +13,18 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.gadgetworks.codeshelf.controller.ITransport;
+import com.gadgetworks.codeshelf.controller.NetMacAddress;
 
 // --------------------------------------------------------------------------
 /**
  *  @author jeffw
- *  The controller sends the associate ack command to any device whose GUID is under management by this controller.  
+ *  The controller sends the associate ack command to any device whose MacAddr is under management by this controller.  
  *  If the controller is not now managing this device it will send a not-managed flag to indicate that the remote
  *  should attempt to (re)associate.  This would happen when the user shuts down the controller while the remote was
  *  associated.  (The remote never shutsdown, but it might crash/reboot.)
  *  
- *  There is a possibility that no controller will have the remote device's GUID under management.  It's also possible
- *  that the controller that *does* manage the remote device's GUID is not running.  In either case the remote will
+ *  There is a possibility that no controller will have the remote device's MacAddr under management.  It's also possible
+ *  that the controller that *does* manage the remote device's MacAddr is not running.  In either case the remote will
  *  not receive any response.  The remote must periodically retry as necessary.
  */
 public final class CommandAssocAck extends CommandAssocABC {
@@ -41,10 +42,10 @@ public final class CommandAssocAck extends CommandAssocABC {
 	// --------------------------------------------------------------------------
 	/**
 	 *  @param inEndpoint	The endpoint to send the command.
-	 *  @param inUniqueID	The GUID of the device. 
+	 *  @param inMacAddress	The MacAddr of the device. 
 	 */
-	public CommandAssocAck(final String inUniqueID, final boolean inAssociatedState) {
-		super(CommandIdEnum.ASSOC_ACK, inUniqueID);
+	public CommandAssocAck(final NetMacAddress inMacAddress, final boolean inAssociatedState) {
+		super(CommandIdEnum.ASSOC_ACK, inMacAddress);
 
 		GregorianCalendar cal = new GregorianCalendar();
 

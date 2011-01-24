@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandNetMgmtCheck.java,v 1.2 2011/01/21 01:12:11 jeffw Exp $
+ *  $Id: CommandNetMgmtCheck.java,v 1.3 2011/01/24 07:22:42 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.command;
@@ -45,8 +45,8 @@ import com.gadgetworks.codeshelf.controller.NetworkId;
  *  this ED value along with any other net-check responses to determine the most suitable channel 
  *  for the new network.
  *  
- *  Also, the dongle should insert it's own GUID into the out-bound net-check packet before it puts it on-the-air.
- *  However, for the net-check responses coming directly from the gateway (dongle), per above, would have a GUID
+ *  Also, the dongle should insert it's own MacAddr into the out-bound net-check packet before it puts it on-the-air.
+ *  However, for the net-check responses coming directly from the gateway (dongle), per above, would have a MacAddr
  *  of '00000000'.  In this way, the controller differentiates net-check responses sent by other controllers
  *  as opposed to net-check responses sent by the gateway (dongle) itself.  (The gateway (dongle) should reject
  *  '00000000' packets received over-the-air.)
@@ -64,7 +64,7 @@ public final class CommandNetMgmtCheck extends CommandNetMgmtABC {
 
 	private byte				mNetCheckType;
 	private NetworkId			mNetworkId;
-	private String				mGUID;
+	private String				mMacAddr;
 
 	// --------------------------------------------------------------------------
 	/**
@@ -72,12 +72,12 @@ public final class CommandNetMgmtCheck extends CommandNetMgmtABC {
 	 *  @param inDatagramBytes
 	 *  @param inEndpoint
 	 */
-	public CommandNetMgmtCheck(final byte inNetCheckType, final NetworkId inNetworkId, final String inGUID) {
+	public CommandNetMgmtCheck(final byte inNetCheckType, final NetworkId inNetworkId, final String inMacAddr) {
 		super(CommandIdEnum.NET_CHECK);
 
 		mNetCheckType = inNetCheckType;
 		mNetworkId = inNetworkId;
-		mGUID = inGUID;
+		mMacAddr = inMacAddr;
 	}
 
 	// --------------------------------------------------------------------------
@@ -107,7 +107,7 @@ public final class CommandNetMgmtCheck extends CommandNetMgmtABC {
 			default:
 		}
 
-		resultStr = CommandIdEnum.NET_CHECK + " type=" + checkType + " GUID=" + mGUID + " netID=" + mNetworkId;
+		resultStr = CommandIdEnum.NET_CHECK + " type=" + checkType + " MacAddr=" + mMacAddr + " netID=" + mNetworkId;
 
 		return resultStr;
 	}
@@ -121,7 +121,7 @@ public final class CommandNetMgmtCheck extends CommandNetMgmtABC {
 
 		inTransport.setParam(Byte.toString(mNetCheckType), 1);
 		inTransport.setParam(mNetworkId.toString(), 2);
-		inTransport.setParam(mGUID, 3);
+		inTransport.setParam(mMacAddr, 3);
 	}
 
 	/* --------------------------------------------------------------------------
@@ -133,7 +133,7 @@ public final class CommandNetMgmtCheck extends CommandNetMgmtABC {
 
 		mNetCheckType = ((Byte) inTransport.getParam(1)).byteValue();
 		mNetworkId = ((NetworkId) inTransport.getParam(2));
-		mGUID = (String) inTransport.getParam(3);
+		mMacAddr = (String) inTransport.getParam(3);
 	}
 
 	// --------------------------------------------------------------------------
@@ -156,7 +156,7 @@ public final class CommandNetMgmtCheck extends CommandNetMgmtABC {
 	/**
 	 *  @return
 	 */
-	public String getGUID() {
-		return mGUID;
+	public String getMacAddr() {
+		return mMacAddr;
 	}
 }

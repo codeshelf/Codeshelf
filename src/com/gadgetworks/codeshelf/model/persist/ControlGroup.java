@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ControlGroup.java,v 1.6 2011/01/23 07:22:45 jeffw Exp $
+ *  $Id: ControlGroup.java,v 1.7 2011/01/24 07:22:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -15,6 +15,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 import com.gadgetworks.codeshelf.application.Util;
+import com.gadgetworks.codeshelf.controller.NetGroup;
 import com.gadgetworks.codeshelf.model.dao.ISystemDAO;
 
 // --------------------------------------------------------------------------
@@ -36,7 +37,7 @@ public class ControlGroup extends PersistABC {
 	private CodeShelfNetwork	mParentCodeShelfNetwork;
 	// The control group ID
 	@Column(nullable = false)
-	private String				mId;
+	private byte[]				mId;
 	// The control group description.
 	@Column(nullable = false)
 	private String				mDescription;
@@ -49,13 +50,13 @@ public class ControlGroup extends PersistABC {
 
 	public ControlGroup() {
 		mParentCodeShelfNetwork = null;
-		mId = "";
+		mId = new byte[NetGroup.NET_GROUP_BYTES];
 		mDescription = "";
 		mIsActive = true;
 	}
 
 	public String toString() {
-		return mParentCodeShelfNetwork.toString() + "->" + mId + " " + mDescription;
+		return mParentCodeShelfNetwork.toString() + "->" + getId().toString() + " " + mDescription;
 	}
 
 	public CodeShelfNetwork getParentCodeShelfNetwork() {
@@ -70,12 +71,12 @@ public class ControlGroup extends PersistABC {
 		mParentCodeShelfNetwork = inCodeShelfNetwork;
 	}
 
-	public String getId() {
-		return mId;
+	public NetGroup getId() {
+		return new NetGroup(mId);
 	}
 
-	public void setId(String inId) {
-		mId = inId;
+	public void setId(NetGroup inId) {
+		mId = inId.getParamValueAsByteArray();
 	}
 
 	public final String getDescription() {

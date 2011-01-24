@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfEditPage.java,v 1.3 2011/01/22 07:58:31 jeffw Exp $
+ *  $Id: CodeShelfEditPage.java,v 1.4 2011/01/24 07:22:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.ui.wizards;
 
@@ -135,7 +135,7 @@ public final class CodeShelfEditPage extends WizardPage implements IDoubleClickL
 			mNetworkIdField = new Text(mEditComposite, SWT.SINGLE | SWT.BORDER);
 			String labelStr = LocaleUtils.getStr("codeshelfnet_wizard.edit_page.id_field");
 			createInputField(mNetworkIdLabel, mNetworkIdField, mEditComposite, labelStr, 1, 4, 5);
-			mNetworkIdField.setText(mCodeShelfNetwork.getNetworkId().toString());
+			mNetworkIdField.setText(mCodeShelfNetwork.getId().toString());
 
 			// Description field.
 			mDescriptionLabel = new Label(mEditComposite, SWT.RIGHT);
@@ -192,7 +192,7 @@ public final class CodeShelfEditPage extends WizardPage implements IDoubleClickL
 		if ((result == true) && (mCodeShelfNetwork != null)) {
 
 			NetworkId networkId = new NetworkId(mNetworkIdField.getText());
-			mCodeShelfNetwork.setNetworkId(networkId.getParamValueAsByteArray());
+			mCodeShelfNetwork.setId(networkId);
 			mCodeShelfNetwork.setDescription(mDescriptionField.getText());
 			mCodeShelfNetwork.setIsActive(mIsActiveButton.getSelection());
 
