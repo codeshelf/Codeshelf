@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PersistABC.java,v 1.2 2011/01/21 01:12:12 jeffw Exp $
+ *  $Id: PersistABC.java,v 1.3 2011/01/24 19:22:23 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -49,7 +49,7 @@ public abstract class PersistABC {
 	public final void setPersistentId(Integer inPersistentId) {
 		mPersistentId = inPersistentId;
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 *  @return
@@ -57,7 +57,7 @@ public abstract class PersistABC {
 	public final Timestamp getVersion() {
 		return mVersion;
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 *  @param inTimestamp
@@ -71,11 +71,17 @@ public abstract class PersistABC {
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	public final boolean equals(Object inObject) {
+
+		boolean result = false;
+
 		if (inObject instanceof PersistABC) {
-			return (mPersistentId == ((PersistABC) inObject).getPersistentId());
+			if (this.getClass().equals(inObject.getClass())) {
+				result = (mPersistentId == ((PersistABC) inObject).getPersistentId());
+			}
 		} else {
-			return super.equals(inObject);
+			result = super.equals(inObject);
 		}
+		return result;
 	}
 
 	/* --------------------------------------------------------------------------

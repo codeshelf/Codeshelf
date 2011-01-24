@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfNetView.java,v 1.3 2011/01/24 07:22:42 jeffw Exp $
+ *  $Id: CodeShelfNetView.java,v 1.4 2011/01/24 19:22:23 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.ui.treeviewers;
 
@@ -11,6 +11,7 @@ import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.util.LocalSelectionTransfer;
 import org.eclipse.jface.viewers.DoubleClickEvent;
 import org.eclipse.jface.viewers.IDoubleClickListener;
+import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
@@ -22,6 +23,7 @@ import org.eclipse.swt.dnd.DND;
 import org.eclipse.swt.dnd.DragSource;
 import org.eclipse.swt.dnd.DragSourceAdapter;
 import org.eclipse.swt.dnd.DragSourceEvent;
+import org.eclipse.swt.dnd.DropTargetEvent;
 import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.dnd.TransferData;
 import org.eclipse.swt.events.MenuEvent;
@@ -99,10 +101,18 @@ public final class CodeShelfNetView implements ISelectionChangedListener, IDoubl
 		DragSource dragSource = new DragSource(mTree, DND.DROP_MOVE);
 		dragSource.setTransfer(new Transfer[] { LocalSelectionTransfer.getTransfer() });
 		dragSource.addDragListener(new DragSourceAdapter() {
+
 			public void dragStart(DragSourceEvent inEvent) {
 				PersistABC persistentObject = (PersistABC) mTree.getSelection()[0].getData();
 				if (!(persistentObject instanceof CodeShelfNetwork)) {
 					inEvent.doit = true;
+
+					LocalSelectionTransfer transfer = LocalSelectionTransfer.getTransfer();
+					//					if (transfer.isSupportedType(inEvent.dataType)) {
+					// Set the data to be the first selected item's text
+					inEvent.data = persistentObject;
+					transfer.setSelection(getTreeSelection());
+					//					}
 				}
 				LOGGER.info(persistentObject);
 			}
@@ -495,11 +505,11 @@ public final class CodeShelfNetView implements ISelectionChangedListener, IDoubl
 				refreshParentObject = ((PickTag) inObject).getParentControlGroup();
 			}
 
-			String[] properties = { " " };
-			//			mTreeViewer.update(inObject, properties);
-			//			if (refreshParentObject != null) {
-			//				mTreeViewer.refresh(refreshParentObject, true);
-			//			}
+			String[] properties = { CodeShelfNetViewSorter.PICKTAG_MACADDR_PROPERTY };
+			mTreeViewer.update(inObject, properties);
+			if (refreshParentObject != null) {
+				mTreeViewer.refresh(refreshParentObject, true);
+			}
 		}
 	}
 
@@ -567,10 +577,33 @@ public final class CodeShelfNetView implements ISelectionChangedListener, IDoubl
 		 */
 		public boolean validateDrop(Object inTarget, int inOperation, TransferData inTransferType) {
 			boolean result = false;
-			if ((inTarget instanceof CodeShelfNetwork) || (inTarget instanceof ControlGroup)) {
-				result = true;
+
+			LocalSelectionTransfer transfer = LocalSelectionTransfer.getTransfer();
+
+			ISelection selection = transfer.getSelection();
+			if (selection instanceof TreeSelection) {
+				TreeSelection treeSelection = (TreeSelection) selection;
+				Object first = treeSelection.getFirstElement();
+				if (first instanceof PickTag) {
+					if (inTarget instanceof ControlGroup) {
+						result = true;
+					}
+				} else if (first instanceof ControlGroup ) {
+					if (inTarget instanceof CodeShelfNetwork) {
+						result = true;
+					}
+				}
 			}
 			return result;
+		}
+
+		// --------------------------------------------------------------------------
+		/* (non-Javadoc)
+		 * @see org.eclipse.jface.viewers.ViewerDropAdapter#dragOver(org.eclipse.swt.dnd.DropTargetEvent)
+		 */
+		@Override
+		public void dragOver(DropTargetEvent inEvent) {
+			super.dragOver(inEvent);
 		}
 
 	}
