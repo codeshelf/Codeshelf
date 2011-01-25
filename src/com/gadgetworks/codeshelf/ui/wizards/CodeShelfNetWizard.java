@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfNetWizard.java,v 1.1 2011/01/22 01:04:39 jeffw Exp $
+ *  $Id: CodeShelfNetWizard.java,v 1.2 2011/01/25 02:10:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.ui.wizards;
 
@@ -21,17 +21,11 @@ import com.gadgetworks.codeshelf.ui.LocaleUtils;
  *  @author jeffw
  */
 public final class CodeShelfNetWizard extends Wizard implements IPageChangingListener {
-
-	private CodeShelfNetwork			mCodeShelfNetwork;
-
-	private CodeShelfAddPage	mAddPage;
+	
 	private CodeShelfEditPage	mEditPage;
 
 	public CodeShelfNetWizard(final CodeShelfNetwork inCodeShelfNetwork) {
 
-		mCodeShelfNetwork = inCodeShelfNetwork;
-
-		mAddPage = new CodeShelfAddPage();
 		mEditPage = new CodeShelfEditPage(inCodeShelfNetwork);
 
 		setWindowTitle(LocaleUtils.getStr("codeshelfnet_add_wizard.title"));
@@ -45,7 +39,8 @@ public final class CodeShelfNetWizard extends Wizard implements IPageChangingLis
 	public static void addCodeShelfNetwork(CodeShelfNetwork inCodeShelfNetwork) {
 
 		CodeShelfNetwork codeShelfNetwork = new CodeShelfNetwork();
-		
+		codeShelfNetwork.setGatewayUrl("http://10.0.5.110:8080/RPC2/");
+
 		CodeShelfNetWizard wizard = new CodeShelfNetWizard(codeShelfNetwork);
 		WizardDialog dialog = new WizardDialog(Display.getCurrent().getActiveShell(), wizard);
 		dialog.setBlockOnOpen(true);
@@ -79,11 +74,6 @@ public final class CodeShelfNetWizard extends Wizard implements IPageChangingLis
 	 * @see org.eclipse.jface.wizard.Wizard#addPages()
 	 */
 	public void addPages() {
-
-		// If there is no specified ruleset, or it's a template then add a page for selecting a ruleset.
-		if (mCodeShelfNetwork == null) {
-			addPage(mAddPage);
-		}
 		addPage(mEditPage);
 	}
 
@@ -94,12 +84,7 @@ public final class CodeShelfNetWizard extends Wizard implements IPageChangingLis
 	@Override
 	public IWizardPage getStartingPage() {
 		IWizardPage result = null;
-		if (mCodeShelfNetwork == null) {
-			result = mAddPage;
-		} else {
-			result = mEditPage;
-		}
-
+		result = mEditPage;
 		return result;
 	}
 
@@ -110,11 +95,7 @@ public final class CodeShelfNetWizard extends Wizard implements IPageChangingLis
 	@Override
 	public IWizardPage getNextPage(IWizardPage inPage) {
 		IWizardPage result = null;
-		if (getContainer().getCurrentPage() == null) {
-			result = mAddPage;
-		} else if (getContainer().getCurrentPage() == mAddPage) {
-			result = mEditPage;
-		}
+		result = mEditPage;
 		return result;
 	}
 
@@ -146,9 +127,6 @@ public final class CodeShelfNetWizard extends Wizard implements IPageChangingLis
 	 * @see org.eclipse.jface.dialogs.IPageChangingListener#handlePageChanging(org.eclipse.jface.dialogs.PageChangingEvent)
 	 */
 	public void handlePageChanging(PageChangingEvent inEvent) {
-		if ((inEvent.getCurrentPage().equals(mAddPage)) && (inEvent.getTargetPage().equals(mEditPage))) {
-			mEditPage.setCodeShelfNetwork(mCodeShelfNetwork);
-		}
 		if (inEvent.getTargetPage().equals(mEditPage)) {
 			mEditPage.preparePage();
 		}

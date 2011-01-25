@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ControllerABC.java,v 1.4 2011/01/24 07:22:42 jeffw Exp $
+ *  $Id: ControllerABC.java,v 1.5 2011/01/25 02:10:59 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.controller;
@@ -35,7 +35,6 @@ import com.gadgetworks.codeshelf.command.CommandInfoQuery;
 import com.gadgetworks.codeshelf.command.CommandInfoResponse;
 import com.gadgetworks.codeshelf.command.CommandNetMgmtABC;
 import com.gadgetworks.codeshelf.command.CommandNetMgmtCheck;
-import com.gadgetworks.codeshelf.command.CommandNetMgmtIntfTest;
 import com.gadgetworks.codeshelf.command.CommandNetMgmtSetup;
 import com.gadgetworks.codeshelf.command.ICommand;
 import com.gadgetworks.codeshelf.query.IQuery;
@@ -101,7 +100,6 @@ public abstract class ControllerABC implements IController {
 	private int													mCommandSendConsumerPos;
 	private List<IControllerEventListener>						mEventListeners;
 	private long												mLastIntfCheckMillis;
-	private boolean												mIntfCheckPending;
 	private byte												mNextCommandID;
 	private volatile Map<NetAddress, BlockingQueue<ICommand>>	mPendingAcksMap;
 
@@ -353,30 +351,11 @@ public abstract class ControllerABC implements IController {
 				// Check to see if we should perform an interface check.
 				// (Only perform this interface check on the radio interface.)
 				if (mLastIntfCheckMillis + INTERFACE_CHECK_MILLIS < System.currentTimeMillis()) {
-					if (mIntfCheckPending) {
 						for (IGatewayInterface gwInterface : mInterfaceList) {
-							if (gwInterface.isStarted()) {
-								//gwInterface.resetInterface();
-							} else {
-								try {
-									Thread.sleep(CTRL_START_DELAY_MILLIS);
-								} catch (Exception e) {
-									LOGGER.error("", e);
-								}
+							if (!gwInterface.checkInterfaceOk()) {
+								gwInterface.resetInterface();
 							}
 						}
-						// Now reselect the channel.
-						//selectChannel();
-
-						// Wait for the next check.
-						Thread.sleep(INTERFACE_CHECK_MILLIS);
-					}
-
-					if (testNum == MAX_NETWORK_TEST_NUM)
-						testNum = 0;
-					CommandNetMgmtIntfTest netIntTestCmd = new CommandNetMgmtIntfTest(testNum++);
-					sendCommandNow(netIntTestCmd, mBroadcastAddress, false);
-					mIntfCheckPending = true;
 
 					mLastIntfCheckMillis = System.currentTimeMillis();
 				}
@@ -516,80 +495,80 @@ public abstract class ControllerABC implements IController {
 	 */
 	private final void selectChannel() {
 
-		if (mShouldRun) {
-
-			// Pause for a few seconds to let the serial interface come up.
-			try {
-				Thread.sleep(CTRL_START_DELAY_MILLIS);
-			} catch (InterruptedException e) {
-				LOGGER.error("", e);
-			}
-
-			// If the user has a preferred channel then use it.
-			if (mPreferredChannel != NO_PREFERRED_CHANNEL) {
-				setRadioChannel(mPreferredChannel);
-			} else {
-
-				/* The process for selecting a channel goes like this: 
-				 * 
-				 * 1. Choose a channel.
-				 * 2. Send a net-check command on that channel.
-				 * 3. Wait for responses.  (One response will come directly from the gateway (dongle) with a MacAddr = '00000000'
-				 * 4. Repeat until all channels have been checked.
-				 * 5. Choose the best channel.
-				 * 6. Send a net-setup command directly to the dongle to tell it the channel ID.
-				 */
-
-				for (byte channel = 0; channel < MAX_CHANNELS; channel++) {
-
-					// First setup the ChannelInfo structure for the channel.
-					if (mChannelInfo[channel] == null) {
-						mChannelInfo[channel] = new ChannelInfo();
-						mChannelInfo[channel].setChannelEnergy((short) MAX_CHANNEL_VALUE);
-					} else {
-						mChannelInfo[channel].setControllerCount(0);
-						mChannelInfo[channel].setChannelEnergy((short) MAX_CHANNEL_VALUE);
-					}
-
-					CommandNetMgmtCheck netCheck = new CommandNetMgmtCheck(CommandNetMgmtCheck.NETCHECK_REQ,
-						mBroadcastNetworkId,
-						PRIVATE_MacAddr);
-					sendCommandNow(netCheck, mBroadcastAddress, false);
-
-					// Wait NETCHECK delay millis before sending the next net-check.
-					try {
-						Thread.sleep(NETCHECK_DELAY_MILLIS);
-					} catch (InterruptedException e) {
-						LOGGER.error("", e);
-					}
-				}
-
-				// At this point the ChannelInfo structures will contain all of the information we need to make a channel choice.
-				mPreferredChannel = 0;
-				// First find the channel with the lowest number of controllers.
-				for (byte channel = 0; channel < MAX_CHANNELS; channel++) {
-					if (mPreferredChannel != channel) {
-						// The most important test is the number of controllers already on a channel.
-						if (mChannelInfo[channel].getControllerCount() < mChannelInfo[mPreferredChannel].getControllerCount()) {
-							mPreferredChannel = channel;
-						}
-					}
-				}
-
-				// By the above we will have picked the first channel with the lowest number of controllers.
-				// There may be more than one channel with this same number of controllers.
-				// So now search those equal channels for the one with the lowest energy.
-				int lowestControllerCount = mChannelInfo[mPreferredChannel].getControllerCount();
-				for (byte channel = 0; channel < MAX_CHANNELS; channel++) {
-					if ((mPreferredChannel != channel) && (mChannelInfo[channel].getControllerCount() == lowestControllerCount)) {
-						if (mChannelInfo[channel].getChannelEnergy() < mChannelInfo[mPreferredChannel].getChannelEnergy()) {
-							mPreferredChannel = channel;
-						}
-					}
-				}
-				setRadioChannel(mPreferredChannel);
-			}
-		}
+		//		if (mShouldRun) {
+		//
+		//			// Pause for a few seconds to let the serial interface come up.
+		//			try {
+		//				Thread.sleep(CTRL_START_DELAY_MILLIS);
+		//			} catch (InterruptedException e) {
+		//				LOGGER.error("", e);
+		//			}
+		//
+		//			// If the user has a preferred channel then use it.
+		//			if (mPreferredChannel != NO_PREFERRED_CHANNEL) {
+		//				setRadioChannel(mPreferredChannel);
+		//			} else {
+		//
+		//				/* The process for selecting a channel goes like this: 
+		//				 * 
+		//				 * 1. Choose a channel.
+		//				 * 2. Send a net-check command on that channel.
+		//				 * 3. Wait for responses.  (One response will come directly from the gateway (dongle) with a MacAddr = '00000000'
+		//				 * 4. Repeat until all channels have been checked.
+		//				 * 5. Choose the best channel.
+		//				 * 6. Send a net-setup command directly to the dongle to tell it the channel ID.
+		//				 */
+		//
+		//				for (byte channel = 0; channel < MAX_CHANNELS; channel++) {
+		//
+		//					// First setup the ChannelInfo structure for the channel.
+		//					if (mChannelInfo[channel] == null) {
+		//						mChannelInfo[channel] = new ChannelInfo();
+		//						mChannelInfo[channel].setChannelEnergy((short) MAX_CHANNEL_VALUE);
+		//					} else {
+		//						mChannelInfo[channel].setControllerCount(0);
+		//						mChannelInfo[channel].setChannelEnergy((short) MAX_CHANNEL_VALUE);
+		//					}
+		//
+		//					CommandNetMgmtCheck netCheck = new CommandNetMgmtCheck(CommandNetMgmtCheck.NETCHECK_REQ,
+		//						mBroadcastNetworkId,
+		//						PRIVATE_MacAddr);
+		//					sendCommandNow(netCheck, mBroadcastAddress, false);
+		//
+		//					// Wait NETCHECK delay millis before sending the next net-check.
+		//					try {
+		//						Thread.sleep(NETCHECK_DELAY_MILLIS);
+		//					} catch (InterruptedException e) {
+		//						LOGGER.error("", e);
+		//					}
+		//				}
+		//
+		//				// At this point the ChannelInfo structures will contain all of the information we need to make a channel choice.
+		//				mPreferredChannel = 0;
+		//				// First find the channel with the lowest number of controllers.
+		//				for (byte channel = 0; channel < MAX_CHANNELS; channel++) {
+		//					if (mPreferredChannel != channel) {
+		//						// The most important test is the number of controllers already on a channel.
+		//						if (mChannelInfo[channel].getControllerCount() < mChannelInfo[mPreferredChannel].getControllerCount()) {
+		//							mPreferredChannel = channel;
+		//						}
+		//					}
+		//				}
+		//
+		//				// By the above we will have picked the first channel with the lowest number of controllers.
+		//				// There may be more than one channel with this same number of controllers.
+		//				// So now search those equal channels for the one with the lowest energy.
+		//				int lowestControllerCount = mChannelInfo[mPreferredChannel].getControllerCount();
+		//				for (byte channel = 0; channel < MAX_CHANNELS; channel++) {
+		//					if ((mPreferredChannel != channel) && (mChannelInfo[channel].getControllerCount() == lowestControllerCount)) {
+		//						if (mChannelInfo[channel].getChannelEnergy() < mChannelInfo[mPreferredChannel].getChannelEnergy()) {
+		//							mPreferredChannel = channel;
+		//						}
+		//					}
+		//				}
+		//				setRadioChannel(mPreferredChannel);
+		//			}
+		//		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -788,10 +767,6 @@ public abstract class ControllerABC implements IController {
 				processNetworkCheckCommand((CommandNetMgmtCheck) inCommand, inSrcAddr);
 				break;
 
-			case NET_TEST:
-				processNetworkIntfTestCommand((CommandNetMgmtIntfTest) inCommand, inSrcAddr);
-				break;
-
 			default:
 		}
 
@@ -853,41 +828,25 @@ public abstract class ControllerABC implements IController {
 			}
 		} else {
 			// This is a net-check response.
-//			if (networkId.equals(IController.BROADCAST_NETWORK_ID)) {
-//
-//				// If this is a all-network net-check broadcast response then book keep the values.
-//
-//				// Find the ChannelInfo instance for this channel.
-//				byte channel = inCommand.getChannel();
-//
-//				if (inCommand.getMacAddr().equals(PRIVATE_MacAddr)) {
-//					// This came from the gateway (dongle) directly.
-//					// The gateway (dongle) will have inserted an energy detect value for the channel.
-//					mChannelInfo[channel].setChannelEnergy(inCommand.getChannelEnergy().getValue());
-//				} else {
-//					// This came from another controller on the same channel, so increment the number of controllers on the channel.
-//					mChannelInfo[channel].incrementControllerCount();
-//				}
-//			} else {
-//				// The controller never receives network-specific net-check responses.
-//			}
+			//			if (networkId.equals(IController.BROADCAST_NETWORK_ID)) {
+			//
+			//				// If this is a all-network net-check broadcast response then book keep the values.
+			//
+			//				// Find the ChannelInfo instance for this channel.
+			//				byte channel = inCommand.getChannel();
+			//
+			//				if (inCommand.getMacAddr().equals(PRIVATE_MacAddr)) {
+			//					// This came from the gateway (dongle) directly.
+			//					// The gateway (dongle) will have inserted an energy detect value for the channel.
+			//					mChannelInfo[channel].setChannelEnergy(inCommand.getChannelEnergy().getValue());
+			//				} else {
+			//					// This came from another controller on the same channel, so increment the number of controllers on the channel.
+			//					mChannelInfo[channel].incrementControllerCount();
+			//				}
+			//			} else {
+			//				// The controller never receives network-specific net-check responses.
+			//			}
 		}
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 *  Due to a bug in FTDI's driver software we need to periodically test the serial interface to see if
-	 *  it's still working.  The controller sends a net interface test command to the gateway (dongle) and the
-	 *  gateway (dongle) sends an immediate reply if it's up-and-running.
-	 *  
-	 *  Here we just note that we got a response by indicating that no check is pending.
-	 *  
-	 *  @param inCommand
-	 *  @param inNetworkType
-	 *  @param inSrcAddr
-	 */
-	private void processNetworkIntfTestCommand(CommandNetMgmtIntfTest inCommand, NetAddress inSrcAddr) {
-		mIntfCheckPending = false;
 	}
 
 	// --------------------------------------------------------------------------
@@ -993,24 +952,24 @@ public abstract class ControllerABC implements IController {
 
 				// If the device has no address then assign one.
 				if ((foundDevice.getNetAddress() == null) || (foundDevice.getNetAddress().equals(mServerAddress))) {
-//					// Put all of the candidate addresses into a map.
-//					int totalAddresses = (int) Math.pow(2, IPacket.ADDRESS_BITS) - 2;
-//					Map<Byte, NetAddress> addrMap = new HashMap<Byte, NetAddress>();
-//					for (short addr = 1; addr < totalAddresses; addr++) {
-//						addrMap.put((byte) addr, new NetAddress((byte) addr));
-//					}
-//					// Remove the candidates already in use.
-//					for (INetworkDevice networkDevice : this.getNetworkDevices()) {
-//						if (networkDevice.getNetAddress() != null) {
-//							addrMap.remove(networkDevice.getNetAddress().getValue());
-//						}
-//					}
-//					// Assign the first address left in the map.
-//					if (!addrMap.values().isEmpty()) {
-//						NetAddress newAddress = (NetAddress) addrMap.values().toArray()[0];
-//						foundDevice.setNetAddress(newAddress);
-//						mDeviceMaintainer.deviceUpdated(foundDevice, true);
-//					}
+					//					// Put all of the candidate addresses into a map.
+					//					int totalAddresses = (int) Math.pow(2, IPacket.ADDRESS_BITS) - 2;
+					//					Map<Byte, NetAddress> addrMap = new HashMap<Byte, NetAddress>();
+					//					for (short addr = 1; addr < totalAddresses; addr++) {
+					//						addrMap.put((byte) addr, new NetAddress((byte) addr));
+					//					}
+					//					// Remove the candidates already in use.
+					//					for (INetworkDevice networkDevice : this.getNetworkDevices()) {
+					//						if (networkDevice.getNetAddress() != null) {
+					//							addrMap.remove(networkDevice.getNetAddress().getValue());
+					//						}
+					//					}
+					//					// Assign the first address left in the map.
+					//					if (!addrMap.values().isEmpty()) {
+					//						NetAddress newAddress = (NetAddress) addrMap.values().toArray()[0];
+					//						foundDevice.setNetAddress(newAddress);
+					//						mDeviceMaintainer.deviceUpdated(foundDevice, true);
+					//					}
 				}
 
 				// Create and send an assign command to the remote that just woke up.

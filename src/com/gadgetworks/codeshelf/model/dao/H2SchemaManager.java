@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: H2SchemaManager.java,v 1.9 2011/01/24 07:22:42 jeffw Exp $
+ *  $Id: H2SchemaManager.java,v 1.10 2011/01/25 02:10:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -173,6 +173,8 @@ public final class H2SchemaManager implements ISchemaManager {
 				+ "MPERSISTENTID INT AUTO_INCREMENT NOT NULL, " //
 				+ "MID BINARY(2) DEFAULT 0 NOT NULL," //
 				+ "MDESCRIPTION VARCHAR(64) NOT NULL, " //
+				+ "MGATEWAYADDR BINARY(3) NOT NULL, " //
+				+ "MGATEWAYURL VARCHAR(64) NOT NULL, " //
 				+ "MISACTIVE BOOLEAN DEFAULT TRUE NOT NULL," //
 				+ "MVERSION TIMESTAMP, " //
 				+ "PRIMARY KEY (MPERSISTENTID));");
@@ -183,6 +185,7 @@ public final class H2SchemaManager implements ISchemaManager {
 				+ "MPARENTCODESHELFNETWORK_MPERSISTENTID BIGINT NOT NULL, " //
 				+ "MID BINARY(2) DEFAULT 0 NOT NULL, " //
 				+ "MDESCRIPTION VARCHAR(64) NOT NULL, " //
+				+ "MINTERFACEPORTNUM INT NOT NULL, " //
 				+ "MISACTIVE BOOLEAN DEFAULT TRUE NOT NULL," //
 				+ "MVERSION TIMESTAMP, " //
 				+ "PRIMARY KEY (MPERSISTENTID));");
@@ -198,7 +201,7 @@ public final class H2SchemaManager implements ISchemaManager {
 				+ "DTYPE VARCHAR(20) NOT NULL," //
 				+ "MPERSISTENTID INT AUTO_INCREMENT NOT NULL," //
 				+ "MPARENTCONTROLGROUP_MPERSISTENTID BIGINT NOT NULL, " //
-				+ "MMACADDRESS BINARY(6) DEFAULT 0 NOT NULL," //
+				+ "MMACADDRESS BINARY(8) DEFAULT 0 NOT NULL," //
 				+ "MPUBLICKEY VARCHAR(16) NOT NULL," //
 				+ "MDESCRIPTION VARCHAR(64)," //
 				+ "MLASTBATTERYLEVEL SMALLINT DEFAULT 0 NOT NULL," //

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandIdEnum.java,v 1.2 2011/01/21 01:12:11 jeffw Exp $
+ *  $Id: CommandIdEnum.java,v 1.3 2011/01/25 02:10:59 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.command;
@@ -17,7 +17,6 @@ public enum CommandIdEnum {
 	RESPONSE(CommandIdNum.RESPONSE, "RESPONSE"),
 	NET_SETUP(CommandIdNum.NET_SETUP, "NET_SETUP"),
 	NET_CHECK(CommandIdNum.NET_CHECK, "NET_CHECK"),
-	NET_TEST(CommandIdNum.NET_TEST, "NET_TEST"),
 	BUTTON(CommandIdNum.BUTTON, "BUTTON");
 
 	private int		mValue;
@@ -69,9 +68,6 @@ public enum CommandIdEnum {
 			case CommandIdNum.NET_CHECK:
 				result = CommandIdEnum.NET_CHECK;
 				break;
-			case CommandIdNum.NET_TEST:
-				result = CommandIdEnum.NET_TEST;
-				break;
 			case CommandIdNum.BUTTON:
 				result = CommandIdEnum.BUTTON;
 				break;
@@ -109,8 +105,7 @@ public enum CommandIdEnum {
 		static final int	RESPONSE	= 7;
 		static final int	NET_SETUP	= 8;
 		static final int	NET_CHECK	= 9;
-		static final int	NET_TEST	= 10;
-		static final int	BUTTON		= 11;
+		static final int	BUTTON		= 10;
 
 		private CommandIdNum() {
 

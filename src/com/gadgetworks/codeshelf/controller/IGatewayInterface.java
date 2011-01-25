@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: IGatewayInterface.java,v 1.2 2011/01/21 01:12:11 jeffw Exp $
+ *  $Id: IGatewayInterface.java,v 1.3 2011/01/25 02:10:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.controller;
 
@@ -39,6 +39,12 @@ public interface IGatewayInterface {
 	 *  @return
 	 */
 	boolean isStarted();
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * @return
+	 */
+	boolean checkInterfaceOk();
 	
 	// --------------------------------------------------------------------------
 	/**

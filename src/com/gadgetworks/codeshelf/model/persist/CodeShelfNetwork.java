@@ -1,25 +1,21 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfNetwork.java,v 1.5 2011/01/24 07:22:42 jeffw Exp $
+ *  $Id: CodeShelfNetwork.java,v 1.6 2011/01/25 02:10:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import javax.persistence.Column;
-import javax.persistence.DiscriminatorColumn;
-import javax.persistence.DiscriminatorType;
-import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
-import javax.persistence.Inheritance;
-import javax.persistence.InheritanceType;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 
 import com.gadgetworks.codeshelf.application.Util;
+import com.gadgetworks.codeshelf.controller.NetAddress;
 import com.gadgetworks.codeshelf.controller.NetworkId;
 import com.gadgetworks.codeshelf.model.dao.ISystemDAO;
 
@@ -50,16 +46,27 @@ public class CodeShelfNetwork extends PersistABC {
 	// Active/Inactive network
 	@Column(nullable = false)
 	private boolean				mIsActive;
-	// Network Id
+	// The network ID.
 	@Column(nullable = false)
+	private byte[]				mGatewayAddr;
+	// The gateway URL.
+	@Column(nullable = false)
+	private String				mGatewayUrl;
 	// For a network this is a list of all of the control groups that belong in the set.
+	@Column(nullable = false)
 	@OneToMany(mappedBy = "mParentCodeShelfNetwork")
 	private List<ControlGroup>	mControlGroups		= new ArrayList<ControlGroup>();
+
+	@Transient()
+	private boolean				mIsConnected;
 
 	public CodeShelfNetwork() {
 		mId = new byte[NetworkId.NETWORK_ID_BYTES];
 		mDescription = "";
+		mGatewayAddr = new byte[NetAddress.NET_ADDRESS_BYTES];
+		mGatewayUrl = "";
 		mIsActive = true;
+		mIsConnected = false;
 	}
 
 	public final String toString() {
@@ -88,6 +95,30 @@ public class CodeShelfNetwork extends PersistABC {
 
 	public final void setIsActive(boolean inIsActive) {
 		mIsActive = inIsActive;
+	}
+
+	public final boolean getIsConnected() {
+		return mIsConnected;
+	}
+
+	public final void setIsConnected(boolean inIsConnected) {
+		mIsConnected = inIsConnected;
+	}
+
+	public final NetAddress getGatewayAddr() {
+		return new NetAddress(mGatewayAddr);
+	}
+
+	public final void setGatewayAddr(NetAddress inNetAddress) {
+		mGatewayAddr = inNetAddress.getParamValueAsByteArray();
+	}
+
+	public final String getGatewayUrl() {
+		return mGatewayUrl;
+	}
+
+	public final void setGatewayUrl(String inUrlString) {
+		mGatewayUrl = inUrlString;
 	}
 
 	// We always need to return the object cached in the DAO.

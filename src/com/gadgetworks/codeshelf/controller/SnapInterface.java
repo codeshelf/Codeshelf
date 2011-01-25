@@ -3,6 +3,7 @@ package com.gadgetworks.codeshelf.controller;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
@@ -12,6 +13,7 @@ import org.apache.xmlrpc.client.XmlRpcClient;
 import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
 import org.apache.xmlrpc.client.XmlRpcCommonsTransportFactory;
 
+import com.gadgetworks.codeshelf.application.Util;
 import com.gadgetworks.codeshelf.command.ICommand;
 import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork;
 
@@ -20,15 +22,17 @@ public final class SnapInterface implements IGatewayInterface {
 	private static final Log	LOGGER						= LogFactory.getLog(SnapInterface.class);
 
 	private static final int	E10_SERIAL_TYPE				= 1;
-	private static final int	E10_STANDARD_SERIAL_PORT	= 1;
+	private static final String	E10_STANDARD_SERIAL_PORT	= "/dev/ttyS1";
 	private static final String	E10_RPC_CMD_NAME			= "rpc";
 	private static final String	E10_MCAST_RPC_NAME			= "macstRpc";
+	
+	private static final int	E10_TIMEOUT_MILLIS			= 5000;
 
 	private CodeShelfNetwork	mCodeShelfNetwork;
 	private XmlRpcClient		mXmlRpcClient;
-	private boolean				mIsStarted					= false;
+	private boolean				mIsStarted;
 
-	public SnapInterface(CodeShelfNetwork inCodeShelfNetwork) {
+	public SnapInterface(final CodeShelfNetwork inCodeShelfNetwork) {
 		mCodeShelfNetwork = inCodeShelfNetwork;
 	}
 
@@ -39,10 +43,10 @@ public final class SnapInterface implements IGatewayInterface {
 	public void startInterface() {
 		try {
 			XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
-			config.setServerURL(new URL("http://10.0.5.110:8080/RPC2/"));
+			config.setServerURL(new URL(mCodeShelfNetwork.getGatewayUrl()));
 			config.setEnabledForExtensions(true);
-			config.setReplyTimeout(5000);
-			config.setConnectionTimeout(5000);
+			config.setReplyTimeout(E10_TIMEOUT_MILLIS);
+			config.setConnectionTimeout(E10_TIMEOUT_MILLIS);
 			mXmlRpcClient = new XmlRpcClient();
 			mXmlRpcClient.setTransportFactory(new XmlRpcCommonsTransportFactory(mXmlRpcClient));
 			mXmlRpcClient.setConfig(config);
@@ -54,6 +58,8 @@ public final class SnapInterface implements IGatewayInterface {
 			Object[] params = new Object[] { E10_SERIAL_TYPE, E10_STANDARD_SERIAL_PORT, false };
 			Object result = (Object) mXmlRpcClient.execute("connectSerial", params);
 			mIsStarted = true;
+			mCodeShelfNetwork.setIsConnected(true);
+			Util.getSystemDAO().pushNonPersistentUpdates(mCodeShelfNetwork);
 		} catch (XmlRpcException e) {
 			//LOGGER.error("", e);
 		}
@@ -75,13 +81,15 @@ public final class SnapInterface implements IGatewayInterface {
 	public void stopInterface() {
 		if (mIsStarted) {
 			try {
-				Object[] params = new Object[] { E10_SERIAL_TYPE, E10_STANDARD_SERIAL_PORT, false };
+				Object[] params = new Object[] { };
 				Object result = (Object) mXmlRpcClient.execute("disconnect", params);
 			} catch (XmlRpcException e) {
 				//LOGGER.error("", e);
 			}
 			mIsStarted = false;
 			mXmlRpcClient = null;
+			mCodeShelfNetwork.setIsConnected(false);
+			Util.getSystemDAO().pushNonPersistentUpdates(mCodeShelfNetwork);
 		}
 	}
 
@@ -91,6 +99,31 @@ public final class SnapInterface implements IGatewayInterface {
 	 */
 	public boolean isStarted() {
 		return mIsStarted;
+	}
+	
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.controller.IGatewayInterface#checkInterfaceOk()
+	 */
+	public boolean checkInterfaceOk() {
+		boolean result = false;
+
+		try {
+			Object[] params = new Object[] { };
+			Object results = (Object) mXmlRpcClient.execute("gatewayInfo", params);
+			if (results instanceof HashMap) {
+				HashMap map = (HashMap) results;
+				Object object = map.get("connected");
+				if (object instanceof Boolean) {
+					Boolean connected = (Boolean) object;
+					result = connected;
+				}
+			}
+		} catch (XmlRpcException e) {
+			//LOGGER.error("", e);
+		}
+
+		return result;
 	}
 
 	// --------------------------------------------------------------------------
@@ -114,7 +147,7 @@ public final class SnapInterface implements IGatewayInterface {
 			List<Object> params = new ArrayList<Object>();
 
 			// Src addr
-			params.add(inTransport.getSrcAddr().getParamValueAsByteArray());
+			params.add(mCodeShelfNetwork.getGatewayAddr().getParamValueAsByteArray());
 
 			// Dst addr
 			params.add(inTransport.getDstAddr().getParamValueAsByteArray());
@@ -123,9 +156,11 @@ public final class SnapInterface implements IGatewayInterface {
 			params.add(inTransport.getCommandId().getName());
 
 			// Command params
+			List<Object> argList = new ArrayList<Object>();
 			for (Object param : inTransport.getParams()) {
-				params.add(param);
+				argList.add(param);
 			}
+			params.add(argList.toArray());
 
 			// Send the command.
 			Object result = (Object) mXmlRpcClient.execute(E10_RPC_CMD_NAME, params);

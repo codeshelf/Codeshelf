@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ControlGroupEditPage.java,v 1.2 2011/01/24 07:22:42 jeffw Exp $
+ *  $Id: ControlGroupEditPage.java,v 1.3 2011/01/25 02:10:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.ui.wizards;
 
@@ -43,6 +43,8 @@ public final class ControlGroupEditPage extends WizardPage implements IDoubleCli
 	private Text				mIdField;
 	private Label				mDescriptionLabel;
 	private Text				mDescriptionField;
+	private Label				mInterfacePortNumLabel;
+	private Text				mInterfacePortNumField;
 	private Button				mIsActiveButton;
 	private Listener			mEditListener;
 	private Composite			mEditComposite;
@@ -145,6 +147,13 @@ public final class ControlGroupEditPage extends WizardPage implements IDoubleCli
 			createInputField(mDescriptionLabel, mDescriptionField, mEditComposite, labelStr, 1, 4, 5);
 			mDescriptionField.setText(mControlGroup.getDescription());
 
+			// Interface Port Number field.
+			mInterfacePortNumLabel = new Label(mEditComposite, SWT.RIGHT);
+			mInterfacePortNumField = new Text(mEditComposite, SWT.SINGLE | SWT.BORDER);
+			labelStr = LocaleUtils.getStr("controlgroup_wizard.edit_page.port_field");
+			createInputField(mInterfacePortNumLabel, mInterfacePortNumField, mEditComposite, labelStr, 1, 4, 5);
+			mInterfacePortNumField.setText(Short.toString(mControlGroup.getInterfacePortNum()));
+
 			// Add the "is active" button.
 			mIsActiveButton = new Button(mEditComposite, SWT.CHECK);
 			mIsActiveButton.setSelection(mControlGroup.getIsActive());
@@ -195,6 +204,7 @@ public final class ControlGroupEditPage extends WizardPage implements IDoubleCli
 			NetGroup netGroup = new NetGroup(mIdField.getText());
 			mControlGroup.setId(netGroup);
 			mControlGroup.setDescription(mDescriptionField.getText());
+			mControlGroup.setInterfacePortNum(Short.parseShort(mInterfacePortNumField.getText()));
 			mControlGroup.setIsActive(mIsActiveButton.getSelection());
 
 			// Save the CodeShelf Network.

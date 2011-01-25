@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WirelessDevice.java,v 1.4 2011/01/24 07:22:42 jeffw Exp $
+ *  $Id: WirelessDevice.java,v 1.5 2011/01/25 02:10:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -47,35 +47,35 @@ import com.gadgetworks.codeshelf.controller.NetworkDeviceStateEnum;
 @DiscriminatorValue("ABC")
 public class WirelessDevice extends PersistABC implements INetworkDevice {
 
-	public static final int				MacAddr_BYTES			= 8;
-	public static final int				PUBLIC_KEY_BYTES	= 8;
+	public static final int			MAC_ADDR_BYTES		= 8;
+	public static final int			PUBLIC_KEY_BYTES	= 8;
 
-	private static final long			serialVersionUID	= 2371198193026330676L;
+	private static final long		serialVersionUID	= 2371198193026330676L;
 
-	private static final Log			LOGGER				= LogFactory.getLog(WirelessDevice.class);
+	private static final Log		LOGGER				= LogFactory.getLog(WirelessDevice.class);
 
 	@Column(nullable = false)
-	private byte[]						mMacAddress;
+	private byte[]					mMacAddress;
 	@Column(nullable = false)
-	private String						mPublicKey;
+	private String					mPublicKey;
 	// The description.
-	private String						mDescription;
+	private String					mDescription;
 	// The network address last assigned to this wireless device.
-	private byte[]						mNetworkAddress;
+	private byte[]					mNetworkAddress;
 	// The last seen battery level.
-	private short						mLastBatteryLevel;
+	private short					mLastBatteryLevel;
 	//@Transient
 	@Enumerated(value = EnumType.STRING)
-	private NetworkDeviceStateEnum		mNetworkDeviceStatus;
+	private NetworkDeviceStateEnum	mNetworkDeviceStatus;
 	//@Transient
-	private Long						mLastContactTime;
+	private Long					mLastContactTime;
 
 	@Transient
-	private short						mExpectedEndpointCount;
+	private short					mExpectedEndpointCount;
 	@Transient
-	private Map<String, String>			mKVPMap;
+	private Map<String, String>		mKVPMap;
 	@Transient
-	private short						mExpectedKVPCount;
+	private short					mExpectedKVPCount;
 
 	//	@Transient
 	//	private String						mDeviceDesc;

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ControlGroup.java,v 1.7 2011/01/24 07:22:42 jeffw Exp $
+ *  $Id: ControlGroup.java,v 1.8 2011/01/25 02:10:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -41,6 +41,9 @@ public class ControlGroup extends PersistABC {
 	// The control group description.
 	@Column(nullable = false)
 	private String				mDescription;
+	// Interface port number
+	@Column(nullable = false)
+	private short				mInterfacePortNum;
 	// Active/Inactive rule
 	@Column(nullable = false)
 	private boolean				mIsActive;
@@ -71,11 +74,11 @@ public class ControlGroup extends PersistABC {
 		mParentCodeShelfNetwork = inCodeShelfNetwork;
 	}
 
-	public NetGroup getId() {
+	public final NetGroup getId() {
 		return new NetGroup(mId);
 	}
 
-	public void setId(NetGroup inId) {
+	public final void setId(NetGroup inId) {
 		mId = inId.getParamValueAsByteArray();
 	}
 
@@ -86,12 +89,20 @@ public class ControlGroup extends PersistABC {
 	public final void setDescription(String inDescription) {
 		mDescription = inDescription;
 	}
+	
+	public final short getInterfacePortNum() {
+		return mInterfacePortNum;
+	}
 
-	public boolean getIsActive() {
+	public final void setInterfacePortNum(short inPortNumber) {
+		mInterfacePortNum = inPortNumber;
+	}
+	
+	public final boolean getIsActive() {
 		return mIsActive;
 	}
 
-	public void setIsActive(boolean inIsActive) {
+	public final void setIsActive(boolean inIsActive) {
 		mIsActive = inIsActive;
 	}
 

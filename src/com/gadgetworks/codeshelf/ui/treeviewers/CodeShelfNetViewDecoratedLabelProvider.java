@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfNetViewDecoratedLabelProvider.java,v 1.4 2011/01/24 07:22:42 jeffw Exp $
+ *  $Id: CodeShelfNetViewDecoratedLabelProvider.java,v 1.5 2011/01/25 02:10:59 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.ui.treeviewers;
@@ -122,7 +122,7 @@ public final class CodeShelfNetViewDecoratedLabelProvider extends DecoratingLabe
 				displayStr = "firmware=" + pickTag.getSWRevision() + " hw=" + pickTag.getHWDesc();
 			}
 		}
-		
+
 		return displayStr;
 	}
 
@@ -134,19 +134,19 @@ public final class CodeShelfNetViewDecoratedLabelProvider extends DecoratingLabe
 
 		Color color = Display.getCurrent().getSystemColor(SWT.COLOR_LIST_FOREGROUND);
 
-		if (inElement instanceof PickTag) {
-			if (((PickTag) inElement).getNetworkDeviceState() != NetworkDeviceStateEnum.STARTED) {
-				color = Display.getCurrent().getSystemColor(SWT.COLOR_DARK_GRAY);
-			}
-		} else if (inElement instanceof CodeShelfNetwork) {
+		if (inElement instanceof CodeShelfNetwork) {
 			CodeShelfNetwork codeShelfNetwork = (CodeShelfNetwork) inElement;
-			if (!codeShelfNetwork.getIsActive()) {
-				color = Display.getCurrent().getSystemColor(SWT.COLOR_GRAY);
+			if (!codeShelfNetwork.getIsConnected()) {
+				color = Display.getCurrent().getSystemColor(SWT.COLOR_DARK_GRAY);
 			}
 		} else if (inElement instanceof ControlGroup) {
 			ControlGroup controlGroup = (ControlGroup) inElement;
 			if (!controlGroup.getIsActive()) {
 				color = Display.getCurrent().getSystemColor(SWT.COLOR_GRAY);
+			}
+		} else if (inElement instanceof PickTag) {
+			if (((PickTag) inElement).getNetworkDeviceState() != NetworkDeviceStateEnum.STARTED) {
+				color = Display.getCurrent().getSystemColor(SWT.COLOR_DARK_GRAY);
 			}
 		}
 

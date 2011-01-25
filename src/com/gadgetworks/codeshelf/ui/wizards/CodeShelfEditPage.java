@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfEditPage.java,v 1.4 2011/01/24 07:22:42 jeffw Exp $
+ *  $Id: CodeShelfEditPage.java,v 1.5 2011/01/25 02:10:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.ui.wizards;
 
@@ -21,6 +21,7 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Text;
 
 import com.gadgetworks.codeshelf.application.Util;
+import com.gadgetworks.codeshelf.controller.NetAddress;
 import com.gadgetworks.codeshelf.controller.NetworkId;
 import com.gadgetworks.codeshelf.model.dao.DAOException;
 import com.gadgetworks.codeshelf.model.dao.IDAOListener;
@@ -42,6 +43,10 @@ public final class CodeShelfEditPage extends WizardPage implements IDoubleClickL
 	private Text				mNetworkIdField;
 	private Label				mDescriptionLabel;
 	private Text				mDescriptionField;
+	private Label				mGatewayAddrLabel;
+	private Text				mGatewayAddrField;
+	private Label				mGatewayUrlLabel;
+	private Text				mGatewayUrlField;
 	private Button				mIsActiveButton;
 	private Listener			mEditListener;
 	private Composite			mEditComposite;
@@ -144,6 +149,20 @@ public final class CodeShelfEditPage extends WizardPage implements IDoubleClickL
 			createInputField(mDescriptionLabel, mDescriptionField, mEditComposite, labelStr, 1, 4, 5);
 			mDescriptionField.setText(mCodeShelfNetwork.getDescription());
 
+			// Gateway Address field.
+			mGatewayAddrLabel = new Label(mEditComposite, SWT.RIGHT);
+			mGatewayAddrField = new Text(mEditComposite, SWT.SINGLE | SWT.BORDER);
+			labelStr = LocaleUtils.getStr("codeshelfnet_wizard.edit_page.gateway_addr_field");
+			createInputField(mGatewayAddrLabel, mGatewayAddrField, mEditComposite, labelStr, 1, 4, 5);
+			mGatewayAddrField.setText(mCodeShelfNetwork.getGatewayAddr().toString());
+
+			// Gateway Url field.
+			mGatewayUrlLabel = new Label(mEditComposite, SWT.RIGHT);
+			mGatewayUrlField = new Text(mEditComposite, SWT.SINGLE | SWT.BORDER);
+			labelStr = LocaleUtils.getStr("codeshelfnet_wizard.edit_page.gateway_url_field");
+			createInputField(mGatewayUrlLabel, mGatewayUrlField, mEditComposite, labelStr, 1, 4, 5);
+			mGatewayUrlField.setText(mCodeShelfNetwork.getGatewayUrl());
+
 			// Add the "is active" button.
 			mIsActiveButton = new Button(mEditComposite, SWT.CHECK);
 			mIsActiveButton.setSelection(mCodeShelfNetwork.getIsActive());
@@ -187,13 +206,13 @@ public final class CodeShelfEditPage extends WizardPage implements IDoubleClickL
 
 		boolean result = true;
 
-		Text field;
-
-		if ((result == true) && (mCodeShelfNetwork != null)) {
+		if (mCodeShelfNetwork != null) {
 
 			NetworkId networkId = new NetworkId(mNetworkIdField.getText());
 			mCodeShelfNetwork.setId(networkId);
 			mCodeShelfNetwork.setDescription(mDescriptionField.getText());
+			mCodeShelfNetwork.setGatewayAddr(new NetAddress(mGatewayAddrField.getText()));
+			mCodeShelfNetwork.setGatewayUrl(mGatewayUrlField.getText());
 			mCodeShelfNetwork.setIsActive(mIsActiveButton.getSelection());
 
 			// Save the CodeShelf Network.

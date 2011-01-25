@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: NetParameter.java,v 1.5 2011/01/24 07:22:42 jeffw Exp $
+ *  $Id: NetParameter.java,v 1.6 2011/01/25 02:10:59 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.controller;
@@ -71,14 +71,16 @@ public class NetParameter {
 	 */
 	private String getByteArrayAsString(byte[] inByteArray) {
 		StringBuffer result = new StringBuffer("0x");
-		
+
 		for (int i = 0; i < mParamBytes.length; i++) {
 			String hexByte = Integer.toHexString(mParamBytes[i]);
-			if (hexByte.length() == 1) {
+			if (hexByte.length() > 2) {
+				hexByte = hexByte.substring(hexByte.length() - 2);
+			} else if (hexByte.length() == 1) {
 				result.append("0");
 			}
 			result.append(hexByte);
-			
+
 		}
 
 		return result.toString();
@@ -96,7 +98,7 @@ public class NetParameter {
 			//grab the hex in pairs
 			String output = inString.substring(i, (i + 2));
 			//convert hex to byte
-			result[i / 2] = Byte.parseByte(output, 16);
+			result[i / 2] = (byte) (0xff & Short.parseShort(output, 16));
 		}
 
 		return result;
