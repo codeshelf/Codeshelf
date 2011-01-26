@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ControllerABC.java,v 1.5 2011/01/25 02:10:59 jeffw Exp $
+ *  $Id: ControllerABC.java,v 1.6 2011/01/26 00:30:43 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.controller;
@@ -277,9 +277,16 @@ public abstract class ControllerABC implements IController {
 		// They start on a thread since this op won't complete if no dongle is attached.
 		Thread interfaceStarterThread = new Thread(new Runnable() {
 			public void run() {
-				for (IGatewayInterface gwInterface : mInterfaceList) {
-					gwInterface.startInterface();
-				}
+				boolean allStarted;
+				do {
+					allStarted = true;
+					for (IGatewayInterface gwInterface : mInterfaceList) {
+						gwInterface.startInterface();
+						if (!gwInterface.isStarted()) {
+							allStarted = false;
+						}
+					}
+				} while (!allStarted);
 			}
 		}, INTERFACESTARTER_THREAD_NAME);
 		interfaceStarterThread.setPriority(INTERFACESTARTER_THREAD_PRIORITY);
@@ -351,11 +358,11 @@ public abstract class ControllerABC implements IController {
 				// Check to see if we should perform an interface check.
 				// (Only perform this interface check on the radio interface.)
 				if (mLastIntfCheckMillis + INTERFACE_CHECK_MILLIS < System.currentTimeMillis()) {
-						for (IGatewayInterface gwInterface : mInterfaceList) {
-							if (!gwInterface.checkInterfaceOk()) {
-								gwInterface.resetInterface();
-							}
+					for (IGatewayInterface gwInterface : mInterfaceList) {
+						if (!gwInterface.checkInterfaceOk()) {
+							gwInterface.resetInterface();
 						}
+					}
 
 					mLastIntfCheckMillis = System.currentTimeMillis();
 				}
