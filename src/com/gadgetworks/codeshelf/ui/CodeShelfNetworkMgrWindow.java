@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfNetworkMgrWindow.java,v 1.1 2011/01/24 07:22:42 jeffw Exp $
+ *  $Id: CodeShelfNetworkMgrWindow.java,v 1.2 2011/02/04 02:53:53 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.ui;
 
@@ -35,7 +35,7 @@ import com.gadgetworks.codeshelf.ui.treeviewers.CodeShelfNetView;
 
 public final class CodeShelfNetworkMgrWindow extends ApplicationWindow implements IDAOListener {
 
-	public static final Point		DEFAULT_SIZE		= new Point(480, 320);
+	public static final Point		DEFAULT_SIZE		= new Point(640, 320);
 	public static final Point		DEFAULT_LOCATION	= new Point(10, 350);
 
 	private static final String		SHELL_NAME			= "Device Debug";
@@ -106,6 +106,7 @@ public final class CodeShelfNetworkMgrWindow extends ApplicationWindow implement
 
 		mShell = (Shell) inParentShell;
 		mShell.setText(LocaleUtils.getStr("codeshelfview.window.title"));
+		mShell.setSize(DEFAULT_SIZE);
 
 		Composite composite = new Composite(mShell, SWT.NULL);
 		composite.setLayout(new GridLayout());

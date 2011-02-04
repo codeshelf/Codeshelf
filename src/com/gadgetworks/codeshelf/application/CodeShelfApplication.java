@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfApplication.java,v 1.6 2011/01/24 07:22:42 jeffw Exp $
+ *  $Id: CodeShelfApplication.java,v 1.7 2011/02/04 02:53:53 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -60,7 +60,7 @@ public final class CodeShelfApplication {
 
 	private boolean						mIsRunning	= true;
 	private Display						mDisplay;
-	private CodeShelfNetworkMgrWindow			mCodeShelfApplicationWindow;
+	private CodeShelfNetworkMgrWindow	mCodeShelfApplicationWindow;
 	private Tray						mSystemTray;
 	private TrayItem					mSystemTrayItem;
 	private IController					mController;
@@ -184,7 +184,7 @@ public final class CodeShelfApplication {
 		List<IGatewayInterface> interfaceList = new ArrayList<IGatewayInterface>();
 		// Create a CodeShelf interface for each CodeShelf network we have.
 		for (CodeShelfNetwork network : Util.getSystemDAO().getCodeShelfNetworks()) {
-			interfaceList.add(new SnapInterface(network));			
+			interfaceList.add(new SnapInterface(network));
 		}
 		mController = new CodeShelfController(Util.getSystemDAO(), interfaceList);
 
@@ -241,7 +241,7 @@ public final class CodeShelfApplication {
 			mSystemTrayItem.dispose();
 			mSystemTray.dispose();
 		}
-		
+
 		ActiveMqManager.stopBrokerService();
 
 		Util.closeConsole();

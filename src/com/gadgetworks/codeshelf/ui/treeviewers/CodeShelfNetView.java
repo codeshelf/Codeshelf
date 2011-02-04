@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfNetView.java,v 1.4 2011/01/24 19:22:23 jeffw Exp $
+ *  $Id: CodeShelfNetView.java,v 1.5 2011/02/04 02:53:53 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.ui.treeviewers;
 
@@ -63,9 +63,9 @@ public final class CodeShelfNetView implements ISelectionChangedListener, IDoubl
 
 	//	private static final Log			LOGGER				= LogFactory.getLog(PickTagView.class);
 
-	private static final int				ID_COL_WIDTH		= 150;
+	private static final int				ID_COL_WIDTH		= 200;
 	private static final int				DESC_COL_WIDTH		= 200;
-	private static final int				DETAILS_COL_WIDTH	= 600;
+	private static final int				DETAILS_COL_WIDTH	= 400;
 
 	private static final Log				LOGGER				= LogFactory.getLog(CodeShelfNetView.class);
 

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ControlGroup.java,v 1.8 2011/01/25 02:10:59 jeffw Exp $
+ *  $Id: ControlGroup.java,v 1.9 2011/02/04 02:53:53 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -16,6 +16,7 @@ import javax.persistence.Table;
 
 import com.gadgetworks.codeshelf.application.Util;
 import com.gadgetworks.codeshelf.controller.NetGroup;
+import com.gadgetworks.codeshelf.model.TagProtocolEnum;
 import com.gadgetworks.codeshelf.model.dao.ISystemDAO;
 
 // --------------------------------------------------------------------------
@@ -47,6 +48,9 @@ public class ControlGroup extends PersistABC {
 	// Active/Inactive rule
 	@Column(nullable = false)
 	private boolean				mIsActive;
+	// Active/Inactive rule
+	@Column(nullable = false)
+	private TagProtocolEnum		mTagProtocolEnum;
 	// For a control group this is a list of all of the pick tags that belong in the set.
 	@OneToMany(mappedBy = "mParentControlGroup")
 	private List<PickTag>		mPickTags			= new ArrayList<PickTag>();
@@ -56,6 +60,7 @@ public class ControlGroup extends PersistABC {
 		mId = new byte[NetGroup.NET_GROUP_BYTES];
 		mDescription = "";
 		mIsActive = true;
+		mTagProtocolEnum = TagProtocolEnum.ATOP;
 	}
 
 	public String toString() {
@@ -89,7 +94,7 @@ public class ControlGroup extends PersistABC {
 	public final void setDescription(String inDescription) {
 		mDescription = inDescription;
 	}
-	
+
 	public final short getInterfacePortNum() {
 		return mInterfacePortNum;
 	}
@@ -97,13 +102,25 @@ public class ControlGroup extends PersistABC {
 	public final void setInterfacePortNum(short inPortNumber) {
 		mInterfacePortNum = inPortNumber;
 	}
-	
+
 	public final boolean getIsActive() {
 		return mIsActive;
 	}
 
 	public final void setIsActive(boolean inIsActive) {
 		mIsActive = inIsActive;
+	}
+	
+	public TagProtocolEnum getTagProtocol() {
+		TagProtocolEnum result = mTagProtocolEnum;
+		if (result == null) {
+			result = TagProtocolEnum.getTagProtocolEnum(0); //INVALID;
+		}
+		return result;
+	}
+
+	public void setTagProtocol(TagProtocolEnum inTagProtocolEnum) {
+		mTagProtocolEnum = inTagProtocolEnum;
 	}
 
 	// We always need to return the object cached in the DAO.

@@ -1,12 +1,12 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ControlGroupInterface.java,v 1.1 2011/01/26 00:30:43 jeffw Exp $
+ *  $Id: AtopControllerConnection.java,v 1.1 2011/02/04 02:53:53 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.server.swiftpic;
+package com.gadgetworks.codeshelf.server.tags;
 
+import java.io.DataInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -19,22 +19,24 @@ import com.gadgetworks.codeshelf.model.persist.ControlGroup;
  * @author jeffw
  *
  */
-public final class ControlGroupInterface {
+public final class AtopControllerConnection implements IControllerConnection {
 
-	private static final Log	LOGGER						= LogFactory.getLog(ControlGroupInterface.class);
+	private static final Log	LOGGER						= LogFactory.getLog(AtopControllerConnection.class);
 
-	private static final String	INTERFACE_THREAD_NAME		= "Control Group Socket ";
+	private static final String	INTERFACE_THREAD_NAME		= "Control Group Socket Listener";
 	private static final String	CONNECTION_THREAD_NAME		= "Control Group Connection ";
 
 	private static final int	INTERFACE_THREAD_PRIORITY	= Thread.NORM_PRIORITY - 1;
 	private static final int	CONNECTION_THREAD_PRIORITY	= Thread.NORM_PRIORITY - 1;
+
+	private static final int	SOCKET_TIMEOUT_MILLIS		= 500;
 
 	private ControlGroup		mControlGroup;
 	private Thread				mServerThread;
 	private ServerSocket		mServerSocket;
 	private boolean				mShouldRun;
 
-	public ControlGroupInterface(final ControlGroup inControlGroup) {
+	public AtopControllerConnection(final ControlGroup inControlGroup) {
 		mControlGroup = inControlGroup;
 	}
 
@@ -81,11 +83,12 @@ public final class ControlGroupInterface {
 		while (mShouldRun) {
 			try {
 				final Socket socket = mServerSocket.accept();
+				//socket.setSoTimeout(SOCKET_TIMEOUT_MILLIS);
 				LOGGER.info("Socket connected: " + socket.toString());
 
 				Thread connectionThread = new Thread(new Runnable() {
 					public void run() {
-						processConnection(socket);
+						processConnectionData(socket);
 					}
 				}, CONNECTION_THREAD_NAME + socket.getRemoteSocketAddress());
 				connectionThread.setPriority(CONNECTION_THREAD_PRIORITY);
@@ -98,27 +101,25 @@ public final class ControlGroupInterface {
 		}
 	}
 
-	private void processConnection(Socket inSocket) {
-		InputStream inputStream = null;
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inSocket
+	 */
+	private void processConnectionData(Socket inSocket) {
+		DataInputStream dataInputStream = null;
 		try {
-			inputStream = inSocket.getInputStream();
+			dataInputStream = new DataInputStream(inSocket.getInputStream());
 		} catch (IOException e) {
 			LOGGER.error("", e);
 		}
 
-		if (inputStream != null) {
+		if (dataInputStream != null) {
 			while (!inSocket.isClosed()) {
-				try {
-					int data = inputStream.read();
-					LOGGER.info(data);
-					if (data == '#') {
-						inSocket.close();
-					}
-				} catch (Exception e) {
-					LOGGER.error("", e);
+				IAtopCommand command = AtopCommandFactory.getNextCommand(dataInputStream);
+				if (command != null) {
+					LOGGER.info(command.toString());
 				}
 			}
 		}
 	}
-
 }

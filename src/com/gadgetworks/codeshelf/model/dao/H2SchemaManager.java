@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: H2SchemaManager.java,v 1.10 2011/01/25 02:10:59 jeffw Exp $
+ *  $Id: H2SchemaManager.java,v 1.11 2011/02/04 02:53:53 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -187,6 +187,7 @@ public final class H2SchemaManager implements ISchemaManager {
 				+ "MDESCRIPTION VARCHAR(64) NOT NULL, " //
 				+ "MINTERFACEPORTNUM INT NOT NULL, " //
 				+ "MISACTIVE BOOLEAN DEFAULT TRUE NOT NULL," //
+				+ "MTAGPROTOCOLENUM VARCHAR(16) NOT NULL, " //
 				+ "MVERSION TIMESTAMP, " //
 				+ "PRIMARY KEY (MPERSISTENTID));");
 

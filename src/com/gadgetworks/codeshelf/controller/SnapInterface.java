@@ -16,7 +16,7 @@ import org.apache.xmlrpc.client.XmlRpcCommonsTransportFactory;
 import com.gadgetworks.codeshelf.application.Util;
 import com.gadgetworks.codeshelf.command.ICommand;
 import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork;
-import com.gadgetworks.codeshelf.server.swiftpic.ControlGroupManager;
+import com.gadgetworks.codeshelf.server.tags.ControlGroupManager;
 
 public final class SnapInterface implements IGatewayInterface {
 
@@ -79,7 +79,14 @@ public final class SnapInterface implements IGatewayInterface {
 				}
 			}
 		} catch (XmlRpcException e) {
+			// Excetions may happen in normal cases such as the remote controller being down.
 			//LOGGER.error("", e);
+			// But we should sleep here to reduce CPU usage in cases where we cannot connect.
+			try {
+				Thread.sleep(E10_TIMEOUT_MILLIS);
+			} catch (InterruptedException e1) {
+				LOGGER.error("", e1);
+			}
 		}
 
 		// Push out the changes.

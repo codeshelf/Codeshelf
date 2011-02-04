@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfNetWizard.java,v 1.2 2011/01/25 02:10:59 jeffw Exp $
+ *  $Id: CodeShelfNetWizard.java,v 1.3 2011/02/04 02:53:53 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.ui.wizards;
 
@@ -39,7 +39,7 @@ public final class CodeShelfNetWizard extends Wizard implements IPageChangingLis
 	public static void addCodeShelfNetwork(CodeShelfNetwork inCodeShelfNetwork) {
 
 		CodeShelfNetwork codeShelfNetwork = new CodeShelfNetwork();
-		codeShelfNetwork.setGatewayUrl("http://10.0.5.110:8080/RPC2/");
+		codeShelfNetwork.setGatewayUrl("http://10.0.4.201:8080/RPC2/");
 
 		CodeShelfNetWizard wizard = new CodeShelfNetWizard(codeShelfNetwork);
 		WizardDialog dialog = new WizardDialog(Display.getCurrent().getActiveShell(), wizard);
