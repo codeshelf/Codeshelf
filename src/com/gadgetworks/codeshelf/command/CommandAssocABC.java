@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandAssocABC.java,v 1.3 2011/01/24 07:22:42 jeffw Exp $
+ *  $Id: CommandAssocABC.java,v 1.4 2011/02/05 01:41:56 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.command;
@@ -9,10 +9,8 @@ package com.gadgetworks.codeshelf.command;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.gadgetworks.codeshelf.controller.INetworkDevice;
 import com.gadgetworks.codeshelf.controller.ITransport;
 import com.gadgetworks.codeshelf.controller.NetMacAddress;
-import com.gadgetworks.codeshelf.controller.OutOfRangeException;
 
 //--------------------------------------------------------------------------
 /**
@@ -83,7 +81,7 @@ public abstract class CommandAssocABC extends CommandABC {
 	 * @see com.gadgetworks.controller.CommandABC#doToTransport(com.gadgetworks.bitfields.BitFieldOutputStream)
 	 */
 	protected void doToTransport(ITransport inTransport) {
-		super.doToTransport(inTransport);
+
 		// Write the MacAddr.
 		inTransport.setParam(mMacAddr, 1);
 	}
@@ -93,7 +91,7 @@ public abstract class CommandAssocABC extends CommandABC {
 	 * @see com.gadgetworks.controller.CommandABC#doFromTransport(com.gadgetworks.bitfields.BitFieldInputStream, int)
 	 */
 	protected void doFromTransport(ITransport inTransport) {
-		super.doFromTransport(inTransport);
+
 		// Read the unique ID.
 		mMacAddr = new NetMacAddress((String) inTransport.getParam(1));
 	}

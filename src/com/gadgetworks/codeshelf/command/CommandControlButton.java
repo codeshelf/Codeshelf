@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandControlButton.java,v 1.2 2011/01/21 01:12:11 jeffw Exp $
+ *  $Id: CommandControlButton.java,v 1.3 2011/02/05 01:41:56 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.command;
@@ -75,8 +75,6 @@ public final class CommandControlButton extends CommandControlABC {
 	 * @see com.gadgetworks.codeshelf.command.CommandControlABC#doToTransport(com.gadgetworks.codeshelf.controller.ITransport)
 	 */
 	protected void doToTransport(ITransport inTransport) {
-		super.doToTransport(inTransport);
-
 		inTransport.setParam(mButtonNumber, 1);
 		inTransport.setParam(mFunctionType, 2);
 	}
@@ -86,8 +84,6 @@ public final class CommandControlButton extends CommandControlABC {
 	 * @see com.gadgetworks.codeshelf.command.CommandControlABC#doFromTransport(com.gadgetworks.codeshelf.controller.ITransport)
 	 */
 	protected void doFromTransport(ITransport inTransport) {
-		super.doFromTransport(inTransport);
-
 		mButtonNumber = ((Byte) inTransport.getParam(1)).byteValue();
 		mFunctionType = ((Byte) inTransport.getParam(2)).byteValue();
 	}

@@ -1,18 +1,18 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: AtopAlphaNumericOffCmd.java,v 1.1 2011/02/04 02:53:53 jeffw Exp $
+ *  $Id: CommandAtopDigitLimit.java,v 1.1 2011/02/05 01:41:56 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.server.tags;
+package com.gadgetworks.codeshelf.command;
 
 /**
  * @author jeffw
  *
  */
-public class AtopAlphaNumericOffCmd extends AtopCommandABC {
-	
-	public AtopAlphaNumericOffCmd(final short inMsgType, final short inSubCommand) {
-		super(inMsgType, inSubCommand);
+public class CommandAtopDigitLimit extends CommandAtopABC {
+
+	public CommandAtopDigitLimit(final short inMsgType, final short inSubCommand) {
+		super(CommandIdEnum.ATOP_DIGIT_LIMIT, inMsgType, inSubCommand);
 	}
 
 	// --------------------------------------------------------------------------
@@ -25,10 +25,10 @@ public class AtopAlphaNumericOffCmd extends AtopCommandABC {
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.server.tags.AtopCommandABC#doGetCommandName()
+	 * @see com.gadgetworks.codeshelf.server.tags.CommandAtopABC#toString()
 	 */
-	protected final String doGetCommandName() {
-		return "AlphanumericOff";
+	public final String doToString() {
+		String result = super.doToString() + "\nLimit: " + getDataBytes()[0];
+		return result;
 	}
-
 }

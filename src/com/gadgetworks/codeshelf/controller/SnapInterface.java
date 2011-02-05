@@ -18,7 +18,7 @@ import com.gadgetworks.codeshelf.command.ICommand;
 import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork;
 import com.gadgetworks.codeshelf.server.tags.ControlGroupManager;
 
-public final class SnapInterface implements IGatewayInterface {
+public final class SnapInterface implements IWirelessInterface {
 
 	private static final Log	LOGGER						= LogFactory.getLog(SnapInterface.class);
 
@@ -59,7 +59,7 @@ public final class SnapInterface implements IGatewayInterface {
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.controller.IGatewayInterface#startInterface()
+	 * @see com.gadgetworks.codeshelf.controller.IWirelessInterface#startInterface()
 	 */
 	public void startInterface() {
 
@@ -95,7 +95,7 @@ public final class SnapInterface implements IGatewayInterface {
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.controller.IGatewayInterface#resetInterface()
+	 * @see com.gadgetworks.codeshelf.controller.IWirelessInterface#resetInterface()
 	 */
 	public void resetInterface() {
 		stopInterface();
@@ -104,7 +104,7 @@ public final class SnapInterface implements IGatewayInterface {
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.controller.IGatewayInterface#stopInterface()
+	 * @see com.gadgetworks.codeshelf.controller.IWirelessInterface#stopInterface()
 	 */
 	public void stopInterface() {
 		if (mIsStarted) {
@@ -125,7 +125,7 @@ public final class SnapInterface implements IGatewayInterface {
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.controller.IGatewayInterface#isStarted()
+	 * @see com.gadgetworks.codeshelf.controller.IWirelessInterface#isStarted()
 	 */
 	public boolean isStarted() {
 		return mIsStarted;
@@ -133,7 +133,7 @@ public final class SnapInterface implements IGatewayInterface {
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.controller.IGatewayInterface#checkInterfaceOk()
+	 * @see com.gadgetworks.codeshelf.controller.IWirelessInterface#checkInterfaceOk()
 	 */
 	public boolean checkInterfaceOk() {
 		boolean result = false;
@@ -158,7 +158,7 @@ public final class SnapInterface implements IGatewayInterface {
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.controller.IGatewayInterface#sendCommand(com.gadgetworks.codeshelf.command.ICommand)
+	 * @see com.gadgetworks.codeshelf.controller.IWirelessInterface#sendCommand(com.gadgetworks.codeshelf.command.ICommand)
 	 */
 	public void sendCommand(ICommand inCommand) {
 
@@ -208,7 +208,7 @@ public final class SnapInterface implements IGatewayInterface {
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.controller.IGatewayInterface#receiveCommand(com.gadgetworks.codeshelf.command.NetworkId)
+	 * @see com.gadgetworks.codeshelf.controller.IWirelessInterface#receiveCommand(com.gadgetworks.codeshelf.command.NetworkId)
 	 */
 	public ICommand receiveCommand(NetworkId inMyNetworkId) {
 		return null;

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfApplication.java,v 1.7 2011/02/04 02:53:53 jeffw Exp $
+ *  $Id: CodeShelfApplication.java,v 1.8 2011/02/05 01:41:56 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -35,7 +35,7 @@ import com.avaje.ebean.Ebean;
 import com.avaje.ebeaninternal.server.lib.ShutdownManager;
 import com.gadgetworks.codeshelf.controller.ControllerABC;
 import com.gadgetworks.codeshelf.controller.IController;
-import com.gadgetworks.codeshelf.controller.IGatewayInterface;
+import com.gadgetworks.codeshelf.controller.IWirelessInterface;
 import com.gadgetworks.codeshelf.controller.NetworkDeviceStateEnum;
 import com.gadgetworks.codeshelf.controller.CodeShelfController;
 import com.gadgetworks.codeshelf.controller.SnapInterface;
@@ -181,10 +181,12 @@ public final class CodeShelfApplication {
 		if ((property != null) && (property.getCurrentValueAsBoolean()))
 			Util.openConsole();
 
-		List<IGatewayInterface> interfaceList = new ArrayList<IGatewayInterface>();
+		List<IWirelessInterface> interfaceList = new ArrayList<IWirelessInterface>();
 		// Create a CodeShelf interface for each CodeShelf network we have.
 		for (CodeShelfNetwork network : Util.getSystemDAO().getCodeShelfNetworks()) {
-			interfaceList.add(new SnapInterface(network));
+			SnapInterface snapInterface = new SnapInterface(network);
+			network.setWirelessInterface(snapInterface);
+			interfaceList.add(snapInterface);
 		}
 		mController = new CodeShelfController(Util.getSystemDAO(), interfaceList);
 

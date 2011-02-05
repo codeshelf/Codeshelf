@@ -1,22 +1,25 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: AtopCommandABC.java,v 1.1 2011/02/04 02:53:53 jeffw Exp $
+ *  $Id: CommandAtopABC.java,v 1.1 2011/02/05 01:41:56 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.server.tags;
+package com.gadgetworks.codeshelf.command;
+
+import com.gadgetworks.codeshelf.controller.ITransport;
 
 /**
  * @author jeffw
  *
  */
-public abstract class AtopCommandABC implements IAtopCommand {
+public abstract class CommandAtopABC extends CommandABC implements IAtopCommand {
 
 	private short	mMsgType;
 	private short	mSubCommand;
 	private short	mSubNode;
 	private byte[]	mDataBytes;
 
-	public AtopCommandABC(final short inMsgType, final short inSubCommand) {
+	public CommandAtopABC(final CommandIdEnum inCommandIdEnum, final short inMsgType, final short inSubCommand) {
+		super(inCommandIdEnum);
 		mMsgType = inMsgType;
 		mSubCommand = inSubCommand;
 	}
@@ -27,13 +30,28 @@ public abstract class AtopCommandABC implements IAtopCommand {
 	 * @return
 	 */
 	protected abstract boolean doHasSubNode();
-	
+
 	// --------------------------------------------------------------------------
-	/**
-	 * Return the command name.
-	 * @return
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.command.CommandABC#doToTransport(com.gadgetworks.codeshelf.controller.ITransport)
 	 */
-	protected abstract String doGetCommandName();
+	protected void doToTransport(ITransport inTransport) {
+	}
+
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.command.CommandABC#doFromTransport(com.gadgetworks.codeshelf.controller.ITransport)
+	 */
+	protected void doFromTransport(ITransport inTransport) {
+	}
+
+	/* --------------------------------------------------------------------------
+	 * (non-Javadoc)
+	 * @see com.gadgetworks.command.CommandABC#getCommandTypeEnum()
+	 */
+	public final CommandGroupEnum getCommandGroupEnum() {
+		return CommandGroupEnum.ATOP;
+	}
 
 	// --------------------------------------------------------------------------
 	/**
@@ -42,7 +60,7 @@ public abstract class AtopCommandABC implements IAtopCommand {
 	public final boolean hasSubNode() {
 		return doHasSubNode();
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.server.tags.IAtopCommand#getSubNode()
@@ -50,7 +68,7 @@ public abstract class AtopCommandABC implements IAtopCommand {
 	public final short getSubNode() {
 		return mSubNode;
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.server.tags.IAtopCommand#setSubNode(short)
@@ -79,10 +97,9 @@ public abstract class AtopCommandABC implements IAtopCommand {
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */
-	public String toString() {
-		String result = "ATOP Msg:" + mMsgType + " SubCmd:" + doGetCommandName() + " SubNode:" + mSubNode;
-		;
-
+	public String doToString() {
+		CommandIdEnum cmdId = getCommandIdEnum();
+		String result = "MsgType:" + Integer.toHexString(mMsgType) + " SubCmd:" + cmdId.toString() + " SubNode:" + mSubNode;
 		return result;
 	}
 }

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfController.java,v 1.1 2011/01/22 01:04:39 jeffw Exp $
+ *  $Id: CodeShelfController.java,v 1.2 2011/02/05 01:41:55 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.controller;
@@ -39,7 +39,7 @@ public final class CodeShelfController extends ControllerABC {
 	/**
 	 *  @param inSessionManager
 	 */
-	public CodeShelfController(final IDeviceMaintainer inDeviceMaintainer, final List<IGatewayInterface> inInterfaceList) {
+	public CodeShelfController(final IDeviceMaintainer inDeviceMaintainer, final List<IWirelessInterface> inInterfaceList) {
 		super(inDeviceMaintainer, inInterfaceList);
 
 	}

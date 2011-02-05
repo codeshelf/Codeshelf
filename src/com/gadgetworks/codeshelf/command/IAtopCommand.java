@@ -1,15 +1,15 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: IAtopCommand.java,v 1.1 2011/02/04 02:53:53 jeffw Exp $
+ *  $Id: IAtopCommand.java,v 1.1 2011/02/05 01:41:56 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.server.tags;
+package com.gadgetworks.codeshelf.command;
 
 /**
  * @author jeffw
  *
  */
-public interface IAtopCommand {
+public interface IAtopCommand extends ICommand {
 	
 	// --------------------------------------------------------------------------
 	/**

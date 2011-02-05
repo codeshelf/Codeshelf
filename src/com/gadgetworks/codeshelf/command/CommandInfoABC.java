@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandInfoABC.java,v 1.2 2011/01/21 01:12:11 jeffw Exp $
+ *  $Id: CommandInfoABC.java,v 1.3 2011/02/05 01:41:56 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.command;
@@ -51,22 +51,20 @@ public abstract class CommandInfoABC extends CommandABC {
 	public final CommandGroupEnum getCommandGroupEnum() {
 		return CommandGroupEnum.INFO;
 	}
-
+	
 	/* --------------------------------------------------------------------------
 	 * (non-Javadoc)
-	 * @see com.gadgetworks.controller.CommandABC#doToTransport(com.gadgetworks.bitfields.BitFieldOutputStream)
+	 * @see com.gadgetworks.controller.CommandABC#localDecode(com.gadgetworks.bitfields.BitFieldOutputStream, int)
 	 */
 	protected void doToTransport(ITransport inTransport) {
-		super.doToTransport(inTransport);
 
 	}
 
 	/* --------------------------------------------------------------------------
 	 * (non-Javadoc)
-	 * @see com.gadgetworks.controller.CommandABC#doFromTransport(com.gadgetworks.bitfields.BitFieldInputStream, int)
+	 * @see com.gadgetworks.controller.CommandABC#localEncode(com.gadgetworks.bitfields.BitFieldInputStream)
 	 */
 	protected void doFromTransport(ITransport inTransport) {
-		super.doFromTransport(inTransport);
 
 	}
 }

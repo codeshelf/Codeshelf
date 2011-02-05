@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PickTag.java,v 1.5 2011/01/24 07:22:42 jeffw Exp $
+ *  $Id: PickTag.java,v 1.6 2011/02/05 01:41:56 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -26,10 +26,6 @@ import com.gadgetworks.codeshelf.command.CommandControlABC;
  * @author jeffw
  */
 
-/**
- * @author jeffw
- *
- */
 @Entity
 @Table(name = "WIRELESSDEVICE")
 @DiscriminatorValue("PICKTAG")
@@ -39,6 +35,8 @@ public class PickTag extends WirelessDevice {
 
 	private static final Log	LOGGER				= LogFactory.getLog(PickTag.class);
 
+	@Column(nullable = false)
+	private short				mSerialBusPosition;
 	@Column(nullable = false)
 	@ManyToOne
 	private ControlGroup		mParentControlGroup;
@@ -51,11 +49,19 @@ public class PickTag extends WirelessDevice {
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */
-	public String toString() {
+	public final String toString() {
 		return "PickTag: " + getMacAddress() + " " + getDescription();
 	}
 
-	public ControlGroup getParentControlGroup() {
+	public final short getSerialBusPosition() {
+		return mSerialBusPosition;
+	}
+
+	public final void setSerialBusPosition(short inSerialBusPosition) {
+		mSerialBusPosition = inSerialBusPosition;
+	}
+
+	public final ControlGroup getParentControlGroup() {
 		// Yes, this is weird, but we MUST always return the same instance of these persistent objects.
 		if (mParentControlGroup != null) {
 			mParentControlGroup = Util.getSystemDAO().loadControlGroup(mParentControlGroup.getPersistentId());
@@ -63,7 +69,7 @@ public class PickTag extends WirelessDevice {
 		return mParentControlGroup;
 	}
 
-	public void setParentControlGroup(ControlGroup inControlGroup) {
+	public final void setParentControlGroup(ControlGroup inControlGroup) {
 		mParentControlGroup = inControlGroup;
 	}
 

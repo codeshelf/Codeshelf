@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: AtopControllerConnection.java,v 1.1 2011/02/04 02:53:53 jeffw Exp $
+ *  $Id: AtopControllerConnection.java,v 1.2 2011/02/05 01:41:56 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.server.tags;
 
@@ -9,11 +9,18 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.gadgetworks.codeshelf.command.AtopCommandFactory;
+import com.gadgetworks.codeshelf.command.IAtopCommand;
+import com.gadgetworks.codeshelf.controller.IWirelessInterface;
+import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork;
 import com.gadgetworks.codeshelf.model.persist.ControlGroup;
+import com.gadgetworks.codeshelf.model.persist.PickTag;
 
 /**
  * @author jeffw
@@ -21,23 +28,36 @@ import com.gadgetworks.codeshelf.model.persist.ControlGroup;
  */
 public final class AtopControllerConnection implements IControllerConnection {
 
-	private static final Log	LOGGER						= LogFactory.getLog(AtopControllerConnection.class);
+	private static final Log		LOGGER						= LogFactory.getLog(AtopControllerConnection.class);
 
-	private static final String	INTERFACE_THREAD_NAME		= "Control Group Socket Listener";
-	private static final String	CONNECTION_THREAD_NAME		= "Control Group Connection ";
+	private static final String		INTERFACE_THREAD_NAME		= "Control Group Socket Listener";
+	private static final String		CONNECTION_THREAD_NAME		= "Control Group Connection ";
 
-	private static final int	INTERFACE_THREAD_PRIORITY	= Thread.NORM_PRIORITY - 1;
-	private static final int	CONNECTION_THREAD_PRIORITY	= Thread.NORM_PRIORITY - 1;
+	private static final int		INTERFACE_THREAD_PRIORITY	= Thread.NORM_PRIORITY - 1;
+	private static final int		CONNECTION_THREAD_PRIORITY	= Thread.NORM_PRIORITY - 1;
 
-	private static final int	SOCKET_TIMEOUT_MILLIS		= 500;
+	private static final int		SOCKET_TIMEOUT_MILLIS		= 500;
+	private static final short		BROADCAST_NODE				= 0x00fc;
 
-	private ControlGroup		mControlGroup;
-	private Thread				mServerThread;
-	private ServerSocket		mServerSocket;
-	private boolean				mShouldRun;
+	private ControlGroup			mControlGroup;
+	private Thread					mServerThread;
+	private ServerSocket			mServerSocket;
+	private boolean					mShouldRun;
+	private Map<Short, PickTag>	mSerialBusMap;
 
 	public AtopControllerConnection(final ControlGroup inControlGroup) {
 		mControlGroup = inControlGroup;
+
+		// Atop tags do not have unique IDs.  Instead they are "numbered" on a serial bus from 1-to-200.
+		// The host s/w must remember the bus number for each device on the controller.
+		// We, on the other hand, have a MAC for each device.  We address commands to the MAC address
+		// of the device (anywhere on the network).
+
+		// To deal with the mismatch here, we maintain a mapping from the serial bus order to the MAC address.
+		mSerialBusMap = new HashMap<Short, PickTag>();
+		for (PickTag tag : mControlGroup.getPickTags()) {
+			mSerialBusMap.put(tag.getSerialBusPosition(), tag);
+		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -115,9 +135,28 @@ public final class AtopControllerConnection implements IControllerConnection {
 
 		if (dataInputStream != null) {
 			while (!inSocket.isClosed()) {
-				IAtopCommand command = AtopCommandFactory.getNextCommand(dataInputStream);
+				IAtopCommand command = AtopCommandFactory.getNextCommand(inSocket, dataInputStream);
 				if (command != null) {
-					LOGGER.info(command.toString());
+					if (command.hasSubNode()) {
+						if (command.getSubNode() == BROADCAST_NODE) {
+							// Broadcast the command to all tags.
+						} else {
+							// Unicast the command to a single tag.
+							PickTag tag = mSerialBusMap.get(command.getSubNode());
+							if (tag != null) {
+								command.setDstAddr(tag.getNetAddress());
+								CodeShelfNetwork network = mControlGroup.getParentCodeShelfNetwork();
+								IWirelessInterface wirelessInterface = network.getWirelessInterface();
+								wirelessInterface.sendCommand(command);
+							}
+						}
+					}
+					LOGGER.info(mControlGroup.getId() + ": " + command.toString());
+				}
+				try {
+					Thread.sleep(5);
+				} catch (InterruptedException e) {
+					LOGGER.error(command.toString());
 				}
 			}
 		}

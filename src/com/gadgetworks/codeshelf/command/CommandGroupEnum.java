@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandGroupEnum.java,v 1.2 2011/01/21 01:12:11 jeffw Exp $
+ *  $Id: CommandGroupEnum.java,v 1.3 2011/02/05 01:41:56 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.command;
 
@@ -15,7 +15,8 @@ public enum CommandGroupEnum {
 	NETMGMT(CommandGroupNum.NETMGMT, "NETMGMT"),
 	ASSOC(CommandGroupNum.ASSOC, "ASSOC"),
 	INFO(CommandGroupNum.INFO, "INFO"),
-	CONTROL(CommandGroupNum.CONTROL, "CONTROL");
+	CONTROL(CommandGroupNum.CONTROL, "CONTROL"),
+	ATOP(CommandGroupNum.ATOP, "ATOP");
 
 	private byte	mValue;
 	private String	mName;
@@ -51,6 +52,9 @@ public enum CommandGroupEnum {
 			case CommandGroupNum.CONTROL:
 				result = CommandGroupEnum.CONTROL;
 				break;
+			case CommandGroupNum.ATOP:
+				result = CommandGroupEnum.ATOP;
+				break;
 			default:
 				break;
 		}
@@ -80,6 +84,7 @@ public enum CommandGroupEnum {
 		static final byte	ASSOC		= 1;
 		static final byte	INFO		= 2;
 		static final byte	CONTROL		= 3;
+		static final byte	ATOP		= 4;
 
 		public CommandGroupNum() {
 

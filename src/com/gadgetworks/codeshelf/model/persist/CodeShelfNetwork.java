@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfNetwork.java,v 1.6 2011/01/25 02:10:59 jeffw Exp $
+ *  $Id: CodeShelfNetwork.java,v 1.7 2011/02/05 01:41:56 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -15,6 +15,7 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 
 import com.gadgetworks.codeshelf.application.Util;
+import com.gadgetworks.codeshelf.controller.IWirelessInterface;
 import com.gadgetworks.codeshelf.controller.NetAddress;
 import com.gadgetworks.codeshelf.controller.NetworkId;
 import com.gadgetworks.codeshelf.model.dao.ISystemDAO;
@@ -59,6 +60,8 @@ public class CodeShelfNetwork extends PersistABC {
 
 	@Transient()
 	private boolean				mIsConnected;
+	@Transient()
+	private IWirelessInterface	mWirelessInterface;
 
 	public CodeShelfNetwork() {
 		mId = new byte[NetworkId.NETWORK_ID_BYTES];
@@ -103,6 +106,14 @@ public class CodeShelfNetwork extends PersistABC {
 
 	public final void setIsConnected(boolean inIsConnected) {
 		mIsConnected = inIsConnected;
+	}
+
+	public final IWirelessInterface getWirelessInterface() {
+		return mWirelessInterface;
+	}
+
+	public final void setWirelessInterface(IWirelessInterface inGatewayInterface) {
+		mWirelessInterface = inGatewayInterface;
 	}
 
 	public final NetAddress getGatewayAddr() {

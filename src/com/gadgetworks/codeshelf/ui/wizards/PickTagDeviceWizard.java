@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PickTagDeviceWizard.java,v 1.5 2011/01/24 07:22:42 jeffw Exp $
+ *  $Id: PickTagDeviceWizard.java,v 1.6 2011/02/05 01:41:56 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.ui.wizards;
@@ -116,6 +116,7 @@ public class PickTagDeviceWizard extends Wizard {
 		NetAddress networkAddress = new NetAddress("0x" + netAddrString);
 		mPickTag.setNetAddress(networkAddress);
 		mPickTag.setDescription(mPickTagDeviceSetupPage.getDescription());
+		mPickTag.setSerialBusPosition(Short.parseShort(mPickTagDeviceSetupPage.getSerialBusPosition()));
 		return true;
 	}
 

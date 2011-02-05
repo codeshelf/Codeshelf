@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PickTagDeviceSetupPage.java,v 1.3 2011/01/24 07:22:42 jeffw Exp $
+ *  $Id: PickTagDeviceSetupPage.java,v 1.4 2011/02/05 01:41:56 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.ui.wizards;
@@ -17,6 +17,7 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Text;
 
 import com.gadgetworks.codeshelf.controller.NetMacAddress;
+import com.gadgetworks.codeshelf.model.persist.PickTag;
 import com.gadgetworks.codeshelf.model.persist.WirelessDevice;
 import com.gadgetworks.codeshelf.ui.LocaleUtils;
 
@@ -25,15 +26,16 @@ import com.gadgetworks.codeshelf.ui.LocaleUtils;
  */
 public class PickTagDeviceSetupPage extends WizardPage {
 
-	private WirelessDevice	mWirelessDevice;
-	private Text			mMacAddr;
-	private Text			mDescription;
+	private PickTag	mPickTag;
+	private Text	mMacAddr;
+	private Text	mDescription;
+	private Text	mSerialBusPosition;
 
-	public PickTagDeviceSetupPage(final WirelessDevice inWirelessDevice) {
+	public PickTagDeviceSetupPage(final PickTag inPickTag) {
 
 		super(LocaleUtils.getStr("network_device_wizard.setup_page.page_name"));
 
-		mWirelessDevice = inWirelessDevice;
+		mPickTag = inPickTag;
 
 		setTitle(LocaleUtils.getStr("network_device_wizard.setup_page.page_title"));
 		setDescription(LocaleUtils.getStr("network_device_wizard.setup_page.page_desc"));
@@ -46,6 +48,10 @@ public class PickTagDeviceSetupPage extends WizardPage {
 
 	public final String getDescription() {
 		return mDescription.getText();
+	}
+
+	public final String getSerialBusPosition() {
+		return mSerialBusPosition.getText();
 	}
 
 	/*
@@ -62,13 +68,19 @@ public class PickTagDeviceSetupPage extends WizardPage {
 		new Label(composite, SWT.NULL).setText(LocaleUtils.getStr("network_device_wizard.setup_page.guid"));
 		mMacAddr = new Text(composite, SWT.SINGLE | SWT.BORDER);
 		mMacAddr.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-		mMacAddr.setText(mWirelessDevice.getMacAddress().toString());
+		mMacAddr.setText(mPickTag.getMacAddress().toString());
 
 		// Description
 		new Label(composite, SWT.NULL).setText(LocaleUtils.getStr("network_device_wizard.setup_page.description"));
 		mDescription = new Text(composite, SWT.SINGLE | SWT.BORDER);
 		mDescription.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-		mDescription.setText(mWirelessDevice.getDescription());
+		mDescription.setText(mPickTag.getDescription());
+
+		// Serial Bus Position
+		new Label(composite, SWT.NULL).setText(LocaleUtils.getStr("network_device_wizard.setup_page.bus_pos"));
+		mSerialBusPosition = new Text(composite, SWT.SINGLE | SWT.BORDER);
+		mSerialBusPosition.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		mSerialBusPosition.setText(Integer.toString(mPickTag.getSerialBusPosition()));
 
 		Listener listener = new Listener() {
 			public void handleEvent(Event inEvent) {
@@ -83,6 +95,7 @@ public class PickTagDeviceSetupPage extends WizardPage {
 
 		mMacAddr.addListener(SWT.Modify, listener);
 		mDescription.addListener(SWT.Modify, listener);
+		mSerialBusPosition.addListener(SWT.Modify, listener);
 
 		setControl(composite);
 	}

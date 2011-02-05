@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ControllerABC.java,v 1.6 2011/01/26 00:30:43 jeffw Exp $
+ *  $Id: ControllerABC.java,v 1.7 2011/02/05 01:41:55 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.controller;
@@ -89,7 +89,7 @@ public abstract class ControllerABC implements IController {
 
 	protected IDeviceMaintainer									mDeviceMaintainer;
 	private Boolean												mShouldRun							= true;
-	private List<IGatewayInterface>								mInterfaceList;
+	private List<IWirelessInterface>								mInterfaceList;
 	private NetAddress											mServerAddress;
 	private NetAddress											mBroadcastAddress;
 	private NetworkId											mBroadcastNetworkId;
@@ -121,7 +121,7 @@ public abstract class ControllerABC implements IController {
 	/**
 	 *  @param inSessionManager   The session manager for this controller.
 	 */
-	public ControllerABC(final IDeviceMaintainer inDeviceMaintainer, final List<IGatewayInterface> inInterfaceList) {
+	public ControllerABC(final IDeviceMaintainer inDeviceMaintainer, final List<IWirelessInterface> inInterfaceList) {
 
 		mDeviceMaintainer = inDeviceMaintainer;
 		mInterfaceList = inInterfaceList;
@@ -209,7 +209,7 @@ public abstract class ControllerABC implements IController {
 	public final void stopController() {
 
 		// Stop all of the interfaces.
-		for (IGatewayInterface gwInterface : mInterfaceList) {
+		for (IWirelessInterface gwInterface : mInterfaceList) {
 			gwInterface.stopInterface();
 		}
 
@@ -235,7 +235,7 @@ public abstract class ControllerABC implements IController {
 	 * (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.controller.IController#getInterfaces()
 	 */
-	public final List<IGatewayInterface> getInterfaces() {
+	public final List<IWirelessInterface> getInterfaces() {
 		return mInterfaceList;
 	}
 
@@ -280,7 +280,7 @@ public abstract class ControllerABC implements IController {
 				boolean allStarted;
 				do {
 					allStarted = true;
-					for (IGatewayInterface gwInterface : mInterfaceList) {
+					for (IWirelessInterface gwInterface : mInterfaceList) {
 						gwInterface.startInterface();
 						if (!gwInterface.isStarted()) {
 							allStarted = false;
@@ -331,7 +331,7 @@ public abstract class ControllerABC implements IController {
 		boolean allStarted;
 		do {
 			allStarted = true;
-			for (IGatewayInterface gwInterface : mInterfaceList) {
+			for (IWirelessInterface gwInterface : mInterfaceList) {
 				if (!gwInterface.isStarted()) {
 					allStarted = false;
 				}
@@ -358,7 +358,7 @@ public abstract class ControllerABC implements IController {
 				// Check to see if we should perform an interface check.
 				// (Only perform this interface check on the radio interface.)
 				if (mLastIntfCheckMillis + INTERFACE_CHECK_MILLIS < System.currentTimeMillis()) {
-					for (IGatewayInterface gwInterface : mInterfaceList) {
+					for (IWirelessInterface gwInterface : mInterfaceList) {
 						if (!gwInterface.checkInterfaceOk()) {
 							gwInterface.resetInterface();
 						}
@@ -1125,7 +1125,7 @@ public abstract class ControllerABC implements IController {
 	 */
 	private void startCommandReceivers() {
 
-		for (final IGatewayInterface gwInterface : mInterfaceList) {
+		for (final IWirelessInterface gwInterface : mInterfaceList) {
 
 			Thread gwThread = new Thread(new Runnable() {
 				public void run() {
@@ -1250,7 +1250,7 @@ public abstract class ControllerABC implements IController {
 	 * @param inCommand
 	 */
 	private void sendCommand(ICommand inCommand) {
-		for (IGatewayInterface gwInterface : mInterfaceList) {
+		for (IWirelessInterface gwInterface : mInterfaceList) {
 			if (gwInterface.isStarted()) {
 				inCommand.setSentTimeMillis(System.currentTimeMillis());
 				gwInterface.sendCommand(inCommand);

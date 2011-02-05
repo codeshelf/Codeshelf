@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: H2SchemaManager.java,v 1.11 2011/02/04 02:53:53 jeffw Exp $
+ *  $Id: H2SchemaManager.java,v 1.12 2011/02/05 01:41:56 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -208,6 +208,7 @@ public final class H2SchemaManager implements ISchemaManager {
 				+ "MLASTBATTERYLEVEL SMALLINT DEFAULT 0 NOT NULL," //
 				+ "MNETWORKADDRESS BINARY(3) DEFAULT 0 NOT NULL," //
 				+ "MNETWORKDEVICESTATUS VARCHAR(16) DEFAULT 'INVALID'," //
+				+ "MSERIALBUSPOSITION INT DEFAULT 0," //
 				+ "MLASTCONTACTTIME BIGINT DEFAULT 0," //
 				+ "MVERSION TIMESTAMP," //
 				+ "PRIMARY KEY (MPERSISTENTID));");

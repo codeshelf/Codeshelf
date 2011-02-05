@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandABC.java,v 1.2 2011/01/21 01:12:11 jeffw Exp $
+ *  $Id: CommandABC.java,v 1.3 2011/02/05 01:41:56 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.command;
@@ -63,24 +63,14 @@ public abstract class CommandABC implements ICommand {
 	 *  The "do" method for reading the command off of the input stream.
 	 *  @param inTransport	The transport to read.
 	 */
-	protected void doFromTransport(ITransport inTransport) {
-		mCommandId = inTransport.getCommandId();
-		mNetworkId = inTransport.getNetworkId();
-		mSrcAddr = inTransport.getSrcAddr();
-		mDstAddr = inTransport.getDstAddr();
-	}
+	protected abstract void doFromTransport(ITransport inTransport);
 
 	// --------------------------------------------------------------------------
 	/**
 	 *  The "do" method for writing the command to the output stream.
 	 *  @param inTransport	The output stream to write.
 	 */
-	protected void doToTransport(ITransport inTransport) {
-		inTransport.setCommandId(mCommandId);
-		inTransport.setNetworkId(mNetworkId);
-		inTransport.setSrcAddr(mSrcAddr);
-		inTransport.setDstAddr(mDstAddr);
-	}
+	protected abstract void doToTransport(ITransport inTransport);
 
 	// --------------------------------------------------------------------------
 	/**
@@ -93,7 +83,7 @@ public abstract class CommandABC implements ICommand {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.command.ICommand#getCommandIdEnum()
 	 */
-	public CommandIdEnum getCommandIdEnum() {
+	public final CommandIdEnum getCommandIdEnum() {
 		return mCommandId;
 	}
 
@@ -110,7 +100,12 @@ public abstract class CommandABC implements ICommand {
 	 *  The parent method that controls the reading of a command from the input stream.
 	 *  @param inTransport	The transport to read.
 	 */
-	public void fromTransport(ITransport inTransport) {
+	public final void fromTransport(ITransport inTransport) {
+
+		mCommandId = inTransport.getCommandId();
+		mNetworkId = inTransport.getNetworkId();
+		mSrcAddr = inTransport.getSrcAddr();
+		mDstAddr = inTransport.getDstAddr();
 
 		// Have the subclasses get their data from the input stream.
 		doFromTransport(inTransport);
@@ -121,7 +116,12 @@ public abstract class CommandABC implements ICommand {
 	 *  The parent method that controls the writing of a command to the output stream.
 	 *  @param inTransport	The transport to write.
 	 */
-	public void toTransport(ITransport inTransport) {
+	public final void toTransport(ITransport inTransport) {
+
+		inTransport.setCommandId(mCommandId);
+		inTransport.setNetworkId(mNetworkId);
+		inTransport.setSrcAddr(mSrcAddr);
+		inTransport.setDstAddr(mDstAddr);
 
 		// Have the subclasses put their data into the output stream.
 		doToTransport(inTransport);
