@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PickTagDeviceWizard.java,v 1.6 2011/02/05 01:41:56 jeffw Exp $
+ *  $Id: PickTagDeviceWizard.java,v 1.7 2011/02/07 20:11:35 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.ui.wizards;
@@ -112,7 +112,7 @@ public class PickTagDeviceWizard extends Wizard {
 		// Update the account with the information from the dialog.
 		mPickTag.setMacAddress(mPickTagDeviceSetupPage.getMacAddr());
 		String macAddrString = mPickTag.getMacAddress().toString();
-		String netAddrString = macAddrString.substring(8, 14);
+		String netAddrString = macAddrString.substring(12, 18);
 		NetAddress networkAddress = new NetAddress("0x" + netAddrString);
 		mPickTag.setNetAddress(networkAddress);
 		mPickTag.setDescription(mPickTagDeviceSetupPage.getDescription());

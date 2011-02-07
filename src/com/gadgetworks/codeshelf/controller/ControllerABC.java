@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ControllerABC.java,v 1.7 2011/02/05 01:41:55 jeffw Exp $
+ *  $Id: ControllerABC.java,v 1.8 2011/02/07 20:11:35 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.controller;
@@ -62,7 +62,6 @@ public abstract class ControllerABC implements IController {
 
 	private static final String									BACKGROUND_THREAD_NAME				= "Controller Background";
 	private static final String									RECEIVER_THREAD_NAME				= "Packet Receiver";
-	//private static final String					PROCESSOR_THREAD_NAME		= "Packet Processor";
 	private static final String									SENDER_THREAD_NAME					= "Packet Sender";
 	private static final String									INTERFACESTARTER_THREAD_NAME		= "Intferface Starter";
 
@@ -89,7 +88,7 @@ public abstract class ControllerABC implements IController {
 
 	protected IDeviceMaintainer									mDeviceMaintainer;
 	private Boolean												mShouldRun							= true;
-	private List<IWirelessInterface>								mInterfaceList;
+	private List<IWirelessInterface>							mInterfaceList;
 	private NetAddress											mServerAddress;
 	private NetAddress											mBroadcastAddress;
 	private NetworkId											mBroadcastNetworkId;
@@ -110,7 +109,6 @@ public abstract class ControllerABC implements IController {
 
 	private Thread												mControllerThread;
 	private Thread												mBackgroundThread;
-	//	private Thread									mPacketReceiverThread;
 	private Thread												mPacketProcessorThread;
 	private Thread												mPacketSenderThread;
 
@@ -132,9 +130,6 @@ public abstract class ControllerABC implements IController {
 		mCommandSendCircularBuffer = new ICommand[MAX_PACKET_QUEUE_SIZE];
 		mCommandSendConsumerPos = 0;
 		mCommandSendProducerPos = 0;
-		//		mPacketRcvCircularBuffer = new Packet[MAX_PACKET_QUEUE_SIZE];
-		//		mPacketRcvConsumerPos = 0;
-		//		mPacketRcvProducerPos = 0;
 		mEventListeners = new ArrayList<IControllerEventListener>();
 
 		mNetworkId = IController.DEFAULT_NETWORK_ID;

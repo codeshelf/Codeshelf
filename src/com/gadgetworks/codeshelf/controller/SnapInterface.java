@@ -1,10 +1,12 @@
 package com.gadgetworks.codeshelf.controller;
 
 import java.net.MalformedURLException;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -27,11 +29,12 @@ public final class SnapInterface implements IWirelessInterface {
 	private static final String	E10_RPC_CMD_NAME			= "rpc";
 	//	private static final String	E10_MCAST_RPC_NAME			= "macstRpc";
 
-	private static final int	E10_TIMEOUT_MILLIS			= 5000;
+	private static final int	OUTBOUND_TIMEOUT_MILLIS		= 5000;
 
 	private ControlGroupManager	mControlGroupManager;
 	private CodeShelfNetwork	mCodeShelfNetwork;
-	private XmlRpcClient		mXmlRpcClient;
+	private XmlRpcClient		mInboundXmlRpcClient;
+	private XmlRpcClient		mOutboundXmlRpcClient;
 	private boolean				mIsStarted;
 
 	public SnapInterface(final CodeShelfNetwork inCodeShelfNetwork) {
@@ -42,16 +45,28 @@ public final class SnapInterface implements IWirelessInterface {
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	private void setupXmlRpcClient() {
+	private void setupXmlRpcClients() {
 		try {
+
+			// Setup the inbound XML RPC client config.
 			XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
 			config.setServerURL(new URL(mCodeShelfNetwork.getGatewayUrl()));
 			config.setEnabledForExtensions(true);
-			config.setReplyTimeout(E10_TIMEOUT_MILLIS);
-			config.setConnectionTimeout(E10_TIMEOUT_MILLIS);
-			mXmlRpcClient = new XmlRpcClient();
-			mXmlRpcClient.setTransportFactory(new XmlRpcCommonsTransportFactory(mXmlRpcClient));
-			mXmlRpcClient.setConfig(config);
+			//			config.setReplyTimeout(INBOUND_TIMEOUT_MILLIS);
+			//			config.setConnectionTimeout(INBOUND_TIMEOUT_MILLIS);
+			mInboundXmlRpcClient = new XmlRpcClient();
+			mInboundXmlRpcClient.setTransportFactory(new XmlRpcCommonsTransportFactory(mInboundXmlRpcClient));
+			mInboundXmlRpcClient.setConfig(config);
+
+			// Setup the outbound XML RPC client config.
+			config = new XmlRpcClientConfigImpl();
+			config.setServerURL(new URL(mCodeShelfNetwork.getGatewayUrl()));
+			config.setEnabledForExtensions(true);
+			config.setReplyTimeout(OUTBOUND_TIMEOUT_MILLIS);
+			config.setConnectionTimeout(OUTBOUND_TIMEOUT_MILLIS);
+			mOutboundXmlRpcClient = new XmlRpcClient();
+			mOutboundXmlRpcClient.setTransportFactory(new XmlRpcCommonsTransportFactory(mOutboundXmlRpcClient));
+			mOutboundXmlRpcClient.setConfig(config);
 		} catch (MalformedURLException e) {
 			//LOGGER.error("", e);
 		}
@@ -63,13 +78,13 @@ public final class SnapInterface implements IWirelessInterface {
 	 */
 	public void startInterface() {
 
-		setupXmlRpcClient();
+		setupXmlRpcClients();
 
 		try {
 			Object[] params = new Object[] { E10_SERIAL_TYPE, E10_STANDARD_SERIAL_PORT, false };
-			Object results = (Object) mXmlRpcClient.execute("connectSerial", params);
-			if (results instanceof Boolean) {
-				Boolean connected = (Boolean) results;
+			Object xmlRpcResult = (Object) mOutboundXmlRpcClient.execute("connectSerial", params);
+			if (xmlRpcResult instanceof Boolean) {
+				Boolean connected = (Boolean) xmlRpcResult;
 				if (connected) {
 					mIsStarted = true;
 					mCodeShelfNetwork.setIsConnected(true);
@@ -83,7 +98,7 @@ public final class SnapInterface implements IWirelessInterface {
 			//LOGGER.error("", e);
 			// But we should sleep here to reduce CPU usage in cases where we cannot connect.
 			try {
-				Thread.sleep(E10_TIMEOUT_MILLIS);
+				Thread.sleep(OUTBOUND_TIMEOUT_MILLIS);
 			} catch (InterruptedException e1) {
 				LOGGER.error("", e1);
 			}
@@ -110,12 +125,17 @@ public final class SnapInterface implements IWirelessInterface {
 		if (mIsStarted) {
 			try {
 				Object[] params = new Object[] {};
-				Object result = (Object) mXmlRpcClient.execute("disconnect", params);
+				Object xmlRpcResult = (Object) mOutboundXmlRpcClient.execute("disconnect", params);
+				if (xmlRpcResult instanceof Boolean) {
+					Boolean connected = (Boolean) xmlRpcResult;
+					if (connected) {
+					}
+				}
 			} catch (XmlRpcException e) {
 				//LOGGER.error("", e);
 			}
 			mIsStarted = false;
-			mXmlRpcClient = null;
+			mOutboundXmlRpcClient = null;
 			mCodeShelfNetwork.setIsConnected(false);
 			Util.getSystemDAO().pushNonPersistentUpdates(mCodeShelfNetwork);
 
@@ -140,9 +160,9 @@ public final class SnapInterface implements IWirelessInterface {
 
 		try {
 			Object[] params = new Object[] {};
-			Object results = (Object) mXmlRpcClient.execute("gatewayInfo", params);
-			if (results instanceof HashMap) {
-				HashMap map = (HashMap) results;
+			Object xmlRpcResult = (Object) mOutboundXmlRpcClient.execute("gatewayInfo", params);
+			if (xmlRpcResult instanceof Map<?, ?>) {
+				Map<String, Object> map = (Map<String, Object>) xmlRpcResult;
 				Object object = map.get("connected");
 				if (object instanceof Boolean) {
 					Boolean connected = (Boolean) object;
@@ -164,14 +184,19 @@ public final class SnapInterface implements IWirelessInterface {
 
 		ITransport transport = new SnapTransport();
 		inCommand.toTransport(transport);
-		sendRpcCommand(transport);
+		if (sendRpcCommand(transport)) {
+			LOGGER.info(inCommand.toString());
+		}
 	}
 
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inCommand
 	 */
-	private void sendRpcCommand(ITransport inTransport) {
+	private boolean sendRpcCommand(ITransport inTransport) {
+		
+		boolean result = false;
+		
 		try {
 			// Create a list to hold the RPC command parameters.
 			List<Object> params = new ArrayList<Object>();
@@ -193,17 +218,18 @@ public final class SnapInterface implements IWirelessInterface {
 			params.add(argList.toArray());
 
 			// Send the command.
-			Object results = (Object) mXmlRpcClient.execute(E10_RPC_CMD_NAME, params);
-			if (results instanceof HashMap) {
-				HashMap map = (HashMap) results;
-				Object object = map.get("connected");
-				if (object instanceof Boolean) {
+			Object xmlRpcResult = (Object) mOutboundXmlRpcClient.execute(E10_RPC_CMD_NAME, params);
+			if (xmlRpcResult instanceof Boolean) {
+				Boolean success = (Boolean) xmlRpcResult;
+				if (!success) {
+					result = true;
 				}
 			}
 		} catch (XmlRpcException e) {
 			LOGGER.error("", e);
 		}
 
+		return result;
 	}
 
 	// --------------------------------------------------------------------------
@@ -211,7 +237,23 @@ public final class SnapInterface implements IWirelessInterface {
 	 * @see com.gadgetworks.codeshelf.controller.IWirelessInterface#receiveCommand(com.gadgetworks.codeshelf.command.NetworkId)
 	 */
 	public ICommand receiveCommand(NetworkId inMyNetworkId) {
-		return null;
-	}
+		ICommand result = null;
 
+		try {
+			Object[] params = new Object[] { mCodeShelfNetwork.getGatewayAddr().getParamValueAsByteArray(), false,
+					Integer.valueOf(0), Integer.valueOf(0), new Float(1.0) };
+			Object xmlRpcResult = (Object) mInboundXmlRpcClient.execute("waitOnEvent", params);
+			if (xmlRpcResult instanceof HashMap) {
+				HashMap map = (HashMap) xmlRpcResult;
+			}
+		} catch (XmlRpcException e) {
+			if (e.linkedException instanceof SocketTimeoutException) {
+				// Don't worry about socket timeouts.
+			} else {
+				LOGGER.error("", e);
+			}
+		}
+
+		return result;
+	}
 }

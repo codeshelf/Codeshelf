@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: AtopControllerConnection.java,v 1.2 2011/02/05 01:41:56 jeffw Exp $
+ *  $Id: AtopControllerConnection.java,v 1.3 2011/02/07 20:11:35 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.server.tags;
 
@@ -151,7 +151,6 @@ public final class AtopControllerConnection implements IControllerConnection {
 							}
 						}
 					}
-					LOGGER.info(mControlGroup.getId() + ": " + command.toString());
 				}
 				try {
 					Thread.sleep(5);
