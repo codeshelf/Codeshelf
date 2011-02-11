@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandAssocAck.java,v 1.3 2011/01/24 07:22:42 jeffw Exp $
+ *  $Id: CommandAssocAck.java,v 1.4 2011/02/11 23:23:57 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.command;
@@ -77,8 +77,8 @@ public final class CommandAssocAck extends CommandAssocABC {
 		super.doToTransport(inTransport);
 
 		// First write the unique ID.
-		inTransport.setParam(new Boolean(mAssociatedState), 1);
-		inTransport.setParam(new Long(mUnixTime), 2);
+		inTransport.setNextParam(new Boolean(mAssociatedState));
+		inTransport.setNextParam(new Long(mUnixTime));
 	}
 
 	/* --------------------------------------------------------------------------

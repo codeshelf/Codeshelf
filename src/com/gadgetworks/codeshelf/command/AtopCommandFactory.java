@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: AtopCommandFactory.java,v 1.1 2011/02/05 01:41:56 jeffw Exp $
+ *  $Id: AtopCommandFactory.java,v 1.2 2011/02/11 23:23:57 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.command;
 
@@ -13,7 +13,6 @@ import java.net.Socket;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-
 /**
  * @author jeffw
  *
@@ -22,9 +21,8 @@ public final class AtopCommandFactory {
 
 	private static final Log	LOGGER					= LogFactory.getLog(AtopCommandFactory.class);
 
-	private static final int	EOF_EXCEPTION_MILLIS	= 10;
-
-	private static final int	HEADER_BYTES			= 8;
+	private static final int	SHORT_HEADER_BYTES		= 7;
+	private static final int	LONG_HEADER_BYTES		= 8;
 	private static final short	BYTE_MASK				= (short) 0xff;
 	private static final int	SHIFT_BYTE_BITS			= 8;
 
@@ -84,8 +82,10 @@ public final class AtopCommandFactory {
 					if (result.hasSubNode()) {
 						subNode = (short) (BYTE_MASK & inDataInputStream.readByte());
 						result.setSubNode(subNode);
+						cmdSize -= LONG_HEADER_BYTES;
+					} else {
+						cmdSize -= SHORT_HEADER_BYTES;
 					}
-					cmdSize -= HEADER_BYTES;
 					if (cmdSize < 0) {
 						LOGGER.error("ATOP command size smaller than the header!");
 					} else {
@@ -147,8 +147,8 @@ public final class AtopCommandFactory {
 				result = new CommandAtopDigitLimit(inMsgType, inSubCommand);
 				break;
 
-			case LED_COLOR:
-				result = new CommandAtopLedColor(inMsgType, inSubCommand);
+			case TAG_CONFIG:
+				result = new CommandAtopTagConfig(inMsgType, inSubCommand);
 				break;
 
 			default:

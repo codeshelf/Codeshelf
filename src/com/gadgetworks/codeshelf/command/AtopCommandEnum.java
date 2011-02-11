@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: AtopCommandEnum.java,v 1.1 2011/02/05 01:41:56 jeffw Exp $
+ *  $Id: AtopCommandEnum.java,v 1.2 2011/02/11 23:23:57 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.command;
 
@@ -20,7 +20,7 @@ public enum AtopCommandEnum {
 	READ_ALL_STATUS(AtopCommandNum.READ_ALL_STATUS, "READ_ALL_STATUS"),
 	PICK_MODE(AtopCommandNum.PICK_MODE, "PICK_MODE"),
 	DIGIT_LIMIT(AtopCommandNum.DIGIT_LIMIT, "DIGIT_LIMIT"),
-	LED_COLOR(AtopCommandNum.LED_COLOR, "LED_COLOR");
+	TAG_CONFIG(AtopCommandNum.TAG_CONFIG, "TAG_CONFIG");
 
 	private int		mValue;
 	private String	mName;
@@ -66,8 +66,8 @@ public enum AtopCommandEnum {
 				result = AtopCommandEnum.DIGIT_LIMIT;
 				break;
 
-			case AtopCommandNum.LED_COLOR:
-				result = AtopCommandEnum.LED_COLOR;
+			case AtopCommandNum.TAG_CONFIG:
+				result = AtopCommandEnum.TAG_CONFIG;
 				break;
 
 			default:
@@ -96,8 +96,8 @@ public enum AtopCommandEnum {
 		static final byte	SET_MAX_DEVICES	= 0x08;
 		static final byte	READ_ALL_STATUS	= 0x09;
 		static final byte	PICK_MODE		= 0x1a;
-		static final byte	DIGIT_LIMIT	= 0x1e;
-		static final byte	LED_COLOR		= 0x1f;
+		static final byte	DIGIT_LIMIT		= 0x1e;
+		static final byte	TAG_CONFIG		= 0x1f;
 
 		private AtopCommandNum() {
 

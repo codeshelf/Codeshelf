@@ -1,9 +1,12 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandAtopDigitLimit.java,v 1.1 2011/02/05 01:41:56 jeffw Exp $
+ *  $Id: CommandAtopDigitLimit.java,v 1.2 2011/02/11 23:23:57 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.command;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author jeffw
@@ -29,6 +32,16 @@ public class CommandAtopDigitLimit extends CommandAtopABC {
 	 */
 	public final String doToString() {
 		String result = super.doToString() + "\nLimit: " + getDataBytes()[0];
+		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.command.CommandAtopABC#doSetupOutboundCsCommands()
+	 */
+	public final List<ICsCommand> doSetupOutboundCsCommands() {
+		
+		List<ICsCommand> result = new ArrayList<ICsCommand>();;
 		return result;
 	}
 }

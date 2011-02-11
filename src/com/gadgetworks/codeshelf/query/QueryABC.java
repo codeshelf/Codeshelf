@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: QueryABC.java,v 1.3 2011/01/21 02:22:35 jeffw Exp $
+ *  $Id: QueryABC.java,v 1.4 2011/02/11 23:23:57 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.query;
 
@@ -120,8 +120,8 @@ public abstract class QueryABC implements IQuery {
 
 		try {
 			// Output the query ID type code.
-			inTransport.setParam(this.getQueryType(), 1);
-			inTransport.setParam(mQueryTimeMillis, 2);
+			inTransport.setNextParam(this.getQueryType());
+			inTransport.setNextParam(mQueryTimeMillis);
 
 			this.doToTransport(inTransport);
 		} catch (IOException e) {

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandAssocReq.java,v 1.3 2011/01/24 07:22:42 jeffw Exp $
+ *  $Id: CommandAssocReq.java,v 1.4 2011/02/11 23:23:57 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.command;
@@ -68,8 +68,8 @@ public final class CommandAssocReq extends CommandAssocABC {
 		super.doToTransport(inTransport);
 
 		// Write the device version.
-		inTransport.setParam(Byte.toString(mDeviceVersion), 1);
-		inTransport.setParam(Byte.toString(mSystemStatus), 2);
+		inTransport.setNextParam(Byte.toString(mDeviceVersion));
+		inTransport.setNextParam(Byte.toString(mSystemStatus));
 	}
 
 	/* --------------------------------------------------------------------------

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: SnapTransport.java,v 1.5 2011/01/22 02:06:13 jeffw Exp $
+ *  $Id: SnapTransport.java,v 1.6 2011/02/11 23:23:57 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.controller;
 
@@ -94,8 +94,8 @@ public final class SnapTransport implements ITransport {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.controller.ITransport#setParam(java.lang.Object, int)
 	 */
-	public void setParam(Object inParam, int inParamNum) {
-		mParams.add(inParamNum - 1, inParam);
+	public void setNextParam(Object inParam) {
+		mParams.add(inParam);
 	}
 
 	// --------------------------------------------------------------------------

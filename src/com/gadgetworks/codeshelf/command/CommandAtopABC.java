@@ -1,9 +1,12 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandAtopABC.java,v 1.1 2011/02/05 01:41:56 jeffw Exp $
+ *  $Id: CommandAtopABC.java,v 1.2 2011/02/11 23:23:57 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.command;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import com.gadgetworks.codeshelf.controller.ITransport;
 
@@ -91,6 +94,21 @@ public abstract class CommandAtopABC extends CommandABC implements IAtopCommand 
 	 */
 	public final void setDataBytes(byte[] inDataBytes) {
 		mDataBytes = inDataBytes;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * All the subclasses to setup their own outbound commands.
+	 * @return
+	 */
+	public abstract List<ICsCommand> doSetupOutboundCsCommands();
+
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.command.IAtopCommand#setupOutboundCsCommands()
+	 */
+	public List<ICsCommand> setupOutboundCsCommands() {
+		return doSetupOutboundCsCommands();
 	}
 
 	// --------------------------------------------------------------------------

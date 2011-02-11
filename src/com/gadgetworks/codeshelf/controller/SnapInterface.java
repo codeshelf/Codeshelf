@@ -184,8 +184,8 @@ public final class SnapInterface implements IWirelessInterface {
 
 		ITransport transport = new SnapTransport();
 		inCommand.toTransport(transport);
-		if (sendRpcCommand(transport)) {
-			LOGGER.info(inCommand.toString());
+		if (!sendRpcCommand(transport)) {
+			LOGGER.info("RPC failed: " + inCommand.toString());
 		}
 	}
 
@@ -221,7 +221,7 @@ public final class SnapInterface implements IWirelessInterface {
 			Object xmlRpcResult = (Object) mOutboundXmlRpcClient.execute(E10_RPC_CMD_NAME, params);
 			if (xmlRpcResult instanceof Boolean) {
 				Boolean success = (Boolean) xmlRpcResult;
-				if (!success) {
+				if (success) {
 					result = true;
 				}
 			}

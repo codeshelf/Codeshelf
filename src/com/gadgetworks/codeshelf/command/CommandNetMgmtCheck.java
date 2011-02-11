@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandNetMgmtCheck.java,v 1.3 2011/01/24 07:22:42 jeffw Exp $
+ *  $Id: CommandNetMgmtCheck.java,v 1.4 2011/02/11 23:23:57 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.command;
@@ -119,9 +119,9 @@ public final class CommandNetMgmtCheck extends CommandNetMgmtABC {
 	protected void doToTransport(ITransport inTransport) {
 		super.doToTransport(inTransport);
 
-		inTransport.setParam(Byte.toString(mNetCheckType), 1);
-		inTransport.setParam(mNetworkId.toString(), 2);
-		inTransport.setParam(mMacAddr, 3);
+		inTransport.setNextParam(Byte.toString(mNetCheckType));
+		inTransport.setNextParam(mNetworkId.toString());
+		inTransport.setNextParam(mMacAddr);
 	}
 
 	/* --------------------------------------------------------------------------

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: QueryActorKVP.java,v 1.3 2011/01/21 02:22:35 jeffw Exp $
+ *  $Id: QueryActorKVP.java,v 1.4 2011/02/11 23:23:57 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.query;
 
@@ -76,7 +76,7 @@ public final class QueryActorKVP extends QueryABC {
 	 * @see com.gadgetworks.query.IQuery#toStream(com.gadgetworks.bitfields.BitFieldOutputStream)
 	 */
 	public void doToTransport(ITransport inTransport) throws IOException {
-		inTransport.setParam(mKVPNumber, 1);
+		inTransport.setNextParam(mKVPNumber);
 	}
 
 	/* --------------------------------------------------------------------------

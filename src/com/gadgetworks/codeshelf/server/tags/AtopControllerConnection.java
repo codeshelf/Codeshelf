@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: AtopControllerConnection.java,v 1.3 2011/02/07 20:11:35 jeffw Exp $
+ *  $Id: AtopControllerConnection.java,v 1.4 2011/02/11 23:23:57 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.server.tags;
 
@@ -17,6 +17,7 @@ import org.apache.commons.logging.LogFactory;
 
 import com.gadgetworks.codeshelf.command.AtopCommandFactory;
 import com.gadgetworks.codeshelf.command.IAtopCommand;
+import com.gadgetworks.codeshelf.command.ICsCommand;
 import com.gadgetworks.codeshelf.controller.IWirelessInterface;
 import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork;
 import com.gadgetworks.codeshelf.model.persist.ControlGroup;
@@ -144,10 +145,18 @@ public final class AtopControllerConnection implements IControllerConnection {
 							// Unicast the command to a single tag.
 							PickTag tag = mSerialBusMap.get(command.getSubNode());
 							if (tag != null) {
-								command.setDstAddr(tag.getNetAddress());
-								CodeShelfNetwork network = mControlGroup.getParentCodeShelfNetwork();
-								IWirelessInterface wirelessInterface = network.getWirelessInterface();
-								wirelessInterface.sendCommand(command);
+								LOGGER.info("Cmd rcvd:" + command.toString());
+								
+								// Map to a set of commands for the CodeShelf network.
+								for (ICsCommand sendCommand : command.setupOutboundCsCommands()) {	
+									CodeShelfNetwork network = mControlGroup.getParentCodeShelfNetwork();
+									IWirelessInterface wirelessInterface = network.getWirelessInterface();
+									sendCommand.setDstAddr(tag.getNetAddress());
+									wirelessInterface.sendCommand(sendCommand);
+									LOGGER.info("Cmd sent:" + sendCommand.toString());
+								}
+							} else {
+								//LOGGER.info("Missing tag:" + command.toString());
 							}
 						}
 					}

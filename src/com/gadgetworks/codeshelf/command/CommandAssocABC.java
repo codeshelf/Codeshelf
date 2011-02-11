@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandAssocABC.java,v 1.4 2011/02/05 01:41:56 jeffw Exp $
+ *  $Id: CommandAssocABC.java,v 1.5 2011/02/11 23:23:57 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.command;
@@ -83,7 +83,7 @@ public abstract class CommandAssocABC extends CommandABC {
 	protected void doToTransport(ITransport inTransport) {
 
 		// Write the MacAddr.
-		inTransport.setParam(mMacAddr, 1);
+		inTransport.setNextParam(mMacAddr);
 	}
 
 	/* --------------------------------------------------------------------------

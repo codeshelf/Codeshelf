@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ResponseActorKVP.java,v 1.5 2011/01/24 07:22:42 jeffw Exp $
+ *  $Id: ResponseActorKVP.java,v 1.6 2011/02/11 23:23:57 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.query;
 
@@ -73,10 +73,10 @@ public final class ResponseActorKVP extends ResponseABC {
 	 */
 	@Override
 	protected void doToTransport(ITransport inTransport) throws IOException {
-		inTransport.setParam(mMacAddr, 1);
-		inTransport.setParam(mKVPNumber, 2);
-		inTransport.setParam(mKeyStr, 3);
-		inTransport.setParam(mValueStr, 4);
+		inTransport.setNextParam(mMacAddr);
+		inTransport.setNextParam(mKVPNumber);
+		inTransport.setNextParam(mKeyStr);
+		inTransport.setNextParam(mValueStr);
 	}
 
 	/* --------------------------------------------------------------------------
