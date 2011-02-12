@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandIdEnum.java,v 1.5 2011/02/11 23:23:57 jeffw Exp $
+ *  $Id: CommandIdEnum.java,v 1.6 2011/02/12 02:00:19 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.command;
@@ -18,19 +18,21 @@ public enum CommandIdEnum {
 	NET_SETUP(CommandIdNum.NET_SETUP, "NET_SETUP"),
 	NET_CHECK(CommandIdNum.NET_CHECK, "NET_CHECK"),
 	BUTTON(CommandIdNum.BUTTON, "BUTTON"),
-	ATOP_ALPHA_NUM_PUSH(CommandIdNum.ATOP_ALPHA_NUM_PUSH, "alphaNumPush"),
-	ATOP_ALPHA_NUM_CLEAR(CommandIdNum.ATOP_ALPHA_NUM_CLEAR, "alphaNumClear"),
-	ATOP_LED_ON(CommandIdNum.ATOP_LED_ON, "indicatorOn"),
-	ATOP_LED_OFF(CommandIdNum.ATOP_LED_OFF, "indicatorOff"),
-	ATOP_SET_MAX_DEVICES(CommandIdNum.ATOP_SET_MAX_DEVICES, "setMaxDevices"),
-	ATOP_READ_ALL_STATUS(CommandIdNum.ATOP_READ_ALL_STATUS, "readAllStatuses"),
-	ATOP_PICK_MODE(CommandIdNum.ATOP_PICK_MODE, "setPickMode"),
-	ATOP_DIGIT_LIMIT(CommandIdNum.ATOP_DIGIT_LIMIT, "setDigitLimit"),
-	ATOP_TAG_CONFIG(CommandIdNum.ATOP_TAG_CONFIG, "tagConfig"),
+	ATOP_ALPHA_NUM_PUSH(CommandIdNum.ATOP_ALPHA_NUM_PUSH, "ATOP_ALPHA_NUM_PUSH"),
+	ATOP_ALPHA_NUM_CLEAR(CommandIdNum.ATOP_ALPHA_NUM_CLEAR, "ATOP_ALPHA_NUM_CLEAR"),
+	ATOP_LED_ON(CommandIdNum.ATOP_LED_ON, "ATOP_LED_ON"),
+	ATOP_LED_OFF(CommandIdNum.ATOP_LED_OFF, "ATOP_LED_OFF"),
+	ATOP_SET_MAX_DEVICES(CommandIdNum.ATOP_SET_MAX_DEVICES, "ATOP_SET_MAX_DEVICES"),
+	ATOP_READ_ALL_STATUS(CommandIdNum.ATOP_READ_ALL_STATUS, "ATOP_READ_ALL_STATUS"),
+	ATOP_PICK_MODE(CommandIdNum.ATOP_PICK_MODE, "ATOP_PICK_MODE"),
+	ATOP_DIGIT_LIMIT(CommandIdNum.ATOP_DIGIT_LIMIT, "ATOP_DIGIT_LIMIT"),
+	ATOP_TAG_CONFIG(CommandIdNum.ATOP_TAG_CONFIG, "ATOP_TAG_CONFIG"),
+	ATOP_SPECIAL_RETURN(CommandIdNum.ATOP_SPECIAL_RETURN, "ATOP_SPECIAL_RETURN"),
 	CS_DISPLAY_CLEAR(CommandIdNum.CS_DISPLAY_CLEAR, "displayClear"),
 	CS_INDICATOR_ON(CommandIdNum.CS_INDICATOR_ON, "indicatorOn"),
 	CS_INDICATOR_OFF(CommandIdNum.CS_INDICATOR_OFF, "indicatorOn"),
-	CS_INDICATOR_BLINK(CommandIdNum.CS_INDICATOR_BLINK, "indicatorBlink");
+	CS_INDICATOR_BLINK(CommandIdNum.CS_INDICATOR_BLINK, "indicatorBlink"),
+	CS_ACK_PRESSED(CommandIdNum.CS_ACK_PRESSED, "ackPressed");
 
 	private int		mValue;
 	private String	mName;
@@ -128,10 +130,12 @@ public enum CommandIdEnum {
 		static final byte	ATOP_PICK_MODE			= 17;
 		static final byte	ATOP_DIGIT_LIMIT		= 18;
 		static final byte	ATOP_TAG_CONFIG			= 19;
-		static final byte	CS_DISPLAY_CLEAR		= 20;
-		static final byte	CS_INDICATOR_ON			= 21;
-		static final byte	CS_INDICATOR_OFF		= 22;
-		static final byte	CS_INDICATOR_BLINK		= 23;
+		static final byte	ATOP_SPECIAL_RETURN		= 20;
+		static final byte	CS_DISPLAY_CLEAR		= 21;
+		static final byte	CS_INDICATOR_ON			= 22;
+		static final byte	CS_INDICATOR_OFF		= 23;
+		static final byte	CS_INDICATOR_BLINK		= 24;
+		static final byte	CS_ACK_PRESSED			= 25;
 
 		private CommandIdNum() {
 

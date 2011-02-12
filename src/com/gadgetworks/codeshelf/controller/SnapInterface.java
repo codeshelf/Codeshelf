@@ -16,6 +16,9 @@ import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
 import org.apache.xmlrpc.client.XmlRpcCommonsTransportFactory;
 
 import com.gadgetworks.codeshelf.application.Util;
+import com.gadgetworks.codeshelf.command.CommandAtopSpecialReturn;
+import com.gadgetworks.codeshelf.command.CommandIdEnum;
+import com.gadgetworks.codeshelf.command.IAtopCommand;
 import com.gadgetworks.codeshelf.command.ICommand;
 import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork;
 import com.gadgetworks.codeshelf.server.tags.ControlGroupManager;
@@ -194,9 +197,9 @@ public final class SnapInterface implements IWirelessInterface {
 	 * @param inCommand
 	 */
 	private boolean sendRpcCommand(ITransport inTransport) {
-		
+
 		boolean result = false;
-		
+
 		try {
 			// Create a list to hold the RPC command parameters.
 			List<Object> params = new ArrayList<Object>();
@@ -240,11 +243,27 @@ public final class SnapInterface implements IWirelessInterface {
 		ICommand result = null;
 
 		try {
-			Object[] params = new Object[] { mCodeShelfNetwork.getGatewayAddr().getParamValueAsByteArray(), false,
-					Integer.valueOf(0), Integer.valueOf(0), new Float(1.0) };
-			Object xmlRpcResult = (Object) mInboundXmlRpcClient.execute("waitOnEvent", params);
+			String methodName = null;
+			NetAddress netAddr = null;
+			Object object;
+			
+			//			Object[] params = new Object[] { mCodeShelfNetwork.getGatewayAddr().getParamValueAsByteArray(), false,
+			//					Integer.valueOf(0), Integer.valueOf(0), new Float(1.0) };
+			Object[] params = new Object[] { mCodeShelfNetwork.getGatewayAddr().getParamValueAsByteArray(), false };
+			Object xmlRpcResult = (Object) mOutboundXmlRpcClient.execute("waitOnEvent", params);
 			if (xmlRpcResult instanceof HashMap) {
 				HashMap map = (HashMap) xmlRpcResult;
+				object = map.get("methodName");
+				if (object instanceof String) {
+					methodName = (String) object;
+				}
+				object = map.get("netAddr");
+				if (object instanceof byte[]) {
+					 netAddr = new NetAddress((byte[]) object);
+				}
+				if ((methodName != null) && (netAddr != null)) {
+					result = createCommand(methodName, netAddr);
+				}
 			}
 		} catch (XmlRpcException e) {
 			if (e.linkedException instanceof SocketTimeoutException) {
@@ -252,6 +271,22 @@ public final class SnapInterface implements IWirelessInterface {
 			} else {
 				LOGGER.error("", e);
 			}
+		}
+
+		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inMethodName
+	 * @param inNetAddr
+	 * @return
+	 */
+	private IAtopCommand createCommand(String inMethodName, NetAddress inNetAddr) {
+		IAtopCommand result = null;
+		
+		if (inMethodName.equals(CommandIdEnum.CS_ACK_PRESSED.getName())) {
+			result = new CommandAtopSpecialReturn((short) 0x60);
 		}
 
 		return result;

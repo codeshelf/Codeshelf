@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandAtopTagConfig.java,v 1.1 2011/02/11 23:23:57 jeffw Exp $
+ *  $Id: CommandAtopTagConfig.java,v 1.2 2011/02/12 02:00:19 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.command;
 
@@ -91,7 +91,7 @@ public class CommandAtopTagConfig extends CommandAtopABC {
 				break;
 			case 0x01:
 				// Green
-				result = new CommandCsIndicatorColor(CommandCsIndicatorColor.RED_OFF, CommandCsIndicatorColor.GREEN_ON, CommandCsIndicatorColor.BLUE_OFF);
+				result = new CommandCsIndicatorColor(CommandCsIndicatorColor.RED_ON, CommandCsIndicatorColor.GREEN_OFF, CommandCsIndicatorColor.BLUE_OFF);
 				break;
 			case 0x02:
 				// Orange

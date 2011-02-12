@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ControllerABC.java,v 1.8 2011/02/07 20:11:35 jeffw Exp $
+ *  $Id: ControllerABC.java,v 1.9 2011/02/12 02:00:19 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.controller;
@@ -623,6 +623,10 @@ public abstract class ControllerABC implements IController {
 							LOGGER.error("Receive CONTROL command: device not found");
 						}
 					}
+					break;
+					
+				case ATOP:
+					LOGGER.info("Rcvd cmd: " + inCommand.toString());
 					break;
 
 				default:

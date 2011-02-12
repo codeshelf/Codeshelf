@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: AtopCommandEnum.java,v 1.2 2011/02/11 23:23:57 jeffw Exp $
+ *  $Id: AtopCommandEnum.java,v 1.3 2011/02/12 02:00:19 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.command;
 
@@ -20,12 +20,13 @@ public enum AtopCommandEnum {
 	READ_ALL_STATUS(AtopCommandNum.READ_ALL_STATUS, "READ_ALL_STATUS"),
 	PICK_MODE(AtopCommandNum.PICK_MODE, "PICK_MODE"),
 	DIGIT_LIMIT(AtopCommandNum.DIGIT_LIMIT, "DIGIT_LIMIT"),
-	TAG_CONFIG(AtopCommandNum.TAG_CONFIG, "TAG_CONFIG");
+	TAG_CONFIG(AtopCommandNum.TAG_CONFIG, "TAG_CONFIG"),
+	SPECIAL_RETURN(AtopCommandNum.SPECIAL_RETURN, "SPECIAL_RETURN");
 
-	private int		mValue;
+	private byte	mValue;
 	private String	mName;
 
-	AtopCommandEnum(final int inValue, final String inName) {
+	AtopCommandEnum(final byte inValue, final String inName) {
 		mValue = inValue;
 		mName = inName;
 	}
@@ -70,6 +71,10 @@ public enum AtopCommandEnum {
 				result = AtopCommandEnum.TAG_CONFIG;
 				break;
 
+			case AtopCommandNum.SPECIAL_RETURN:
+				result = AtopCommandEnum.SPECIAL_RETURN;
+				break;
+
 			default:
 				result = AtopCommandEnum.INVALID;
 				break;
@@ -78,7 +83,7 @@ public enum AtopCommandEnum {
 		return result;
 	}
 
-	public int getValue() {
+	public byte getValue() {
 		return mValue;
 	}
 
@@ -98,6 +103,7 @@ public enum AtopCommandEnum {
 		static final byte	PICK_MODE		= 0x1a;
 		static final byte	DIGIT_LIMIT		= 0x1e;
 		static final byte	TAG_CONFIG		= 0x1f;
+		static final byte	SPECIAL_RETURN	= 0x64;
 
 		private AtopCommandNum() {
 

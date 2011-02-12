@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandCsIndicatorColor.java,v 1.1 2011/02/11 23:23:57 jeffw Exp $
+ *  $Id: CommandCsIndicatorColor.java,v 1.2 2011/02/12 02:00:19 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.command;
 
@@ -44,7 +44,7 @@ public class CommandCsIndicatorColor extends CommandCsABC {
 	public final String doToString() {
 		StringBuffer result = new StringBuffer(super.doToString());
 
-		result.append("Colors red: " + mRed + " grn: " + mGreen + " blue: " + mBlue);
+		result.append(" Colors red: " + mRed + " grn: " + mGreen + " blue: " + mBlue);
 		
 		return result.toString();
 	}
