@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: SystemDAO.java,v 1.5 2011/01/24 07:22:42 jeffw Exp $
+ *  $Id: SystemDAO.java,v 1.6 2011/02/15 02:39:46 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -722,6 +722,21 @@ public final class SystemDAO implements ISystemDAO {
 	 */
 	public PickTag findPickTagByMacAddr(NetMacAddress inMacAddr) {
 		return (PickTag) findWirelessDeviceByMacAddr(inMacAddr);
+	}
+
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.dao.ISystemDAO#findPickTagByNetAddr(com.gadgetworks.codeshelf.controller.NetAddress)
+	 */
+	public PickTag findPickTagByNetAddr(NetAddress inNetAddr) {
+		PickTag result = null;
+
+		for (PickTag pickTag : this.getPickTags()) {
+			if (pickTag.getNetAddress().equals(inNetAddr)) {
+				result = pickTag;
+			}
+		}
+		return result;
 	}
 
 	/* --------------------------------------------------------------------------

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ControlGroup.java,v 1.9 2011/02/04 02:53:53 jeffw Exp $
+ *  $Id: ControlGroup.java,v 1.10 2011/02/15 02:39:46 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -13,11 +13,13 @@ import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 
 import com.gadgetworks.codeshelf.application.Util;
 import com.gadgetworks.codeshelf.controller.NetGroup;
 import com.gadgetworks.codeshelf.model.TagProtocolEnum;
 import com.gadgetworks.codeshelf.model.dao.ISystemDAO;
+import com.gadgetworks.codeshelf.server.tags.IControllerConnection;
 
 // --------------------------------------------------------------------------
 /**
@@ -30,30 +32,33 @@ import com.gadgetworks.codeshelf.model.dao.ISystemDAO;
 @Table(name = "CONTROLGROUP")
 public class ControlGroup extends PersistABC {
 
-	private static final long	serialVersionUID	= -4923129546531851147L;
+	private static final long		serialVersionUID	= -4923129546531851147L;
 
 	// The owning CodeShelf network.
 	@Column(nullable = false)
 	@ManyToOne
-	private CodeShelfNetwork	mParentCodeShelfNetwork;
+	private CodeShelfNetwork		mParentCodeShelfNetwork;
 	// The control group ID
 	@Column(nullable = false)
-	private byte[]				mId;
+	private byte[]					mId;
 	// The control group description.
 	@Column(nullable = false)
-	private String				mDescription;
+	private String					mDescription;
 	// Interface port number
 	@Column(nullable = false)
-	private short				mInterfacePortNum;
+	private short					mInterfacePortNum;
 	// Active/Inactive rule
 	@Column(nullable = false)
-	private boolean				mIsActive;
+	private boolean					mIsActive;
 	// Active/Inactive rule
 	@Column(nullable = false)
-	private TagProtocolEnum		mTagProtocolEnum;
+	private TagProtocolEnum			mTagProtocolEnum;
 	// For a control group this is a list of all of the pick tags that belong in the set.
 	@OneToMany(mappedBy = "mParentControlGroup")
-	private List<PickTag>		mPickTags			= new ArrayList<PickTag>();
+	private List<PickTag>			mPickTags			= new ArrayList<PickTag>();
+
+	@Transient()
+	private IControllerConnection	mControllerConnection;
 
 	public ControlGroup() {
 		mParentCodeShelfNetwork = null;
@@ -110,7 +115,7 @@ public class ControlGroup extends PersistABC {
 	public final void setIsActive(boolean inIsActive) {
 		mIsActive = inIsActive;
 	}
-	
+
 	public TagProtocolEnum getTagProtocol() {
 		TagProtocolEnum result = mTagProtocolEnum;
 		if (result == null) {
@@ -152,4 +157,41 @@ public class ControlGroup extends PersistABC {
 		mPickTags.remove(inPickTag);
 	}
 
+	// --------------------------------------------------------------------------
+	/**
+	 * Atop tags do not have unique IDs.  Instead they are "numbered" on a serial bus from 1-to-200.
+	 * The host s/w must remember the bus number for each device on the controller.
+	 * We, on the other hand, have a MAC for each device.  We address commands to the MAC address
+	 * of the device (anywhere on the network).
+	 * @param inSerialBusNumber
+	 * @return
+	 */
+	public PickTag getPickTagBySerialBusNumber(short inSerialBusNumber) {
+
+		PickTag result = null;
+
+		// To deal with the mismatch here, we maintain a mapping from the serial bus order to the MAC address.
+		for (PickTag tag : getPickTags()) {
+			if (tag.getSerialBusPosition() == inSerialBusNumber) {
+				result = tag;
+			}
+		}
+		return result;
+	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * @return
+	 */
+	public IControllerConnection getControllerConnection() {
+		return mControllerConnection;
+	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inControllerConnection
+	 */
+	public void setControllerConnection(IControllerConnection inControllerConnection) {
+		mControllerConnection = inControllerConnection;
+	}
 }

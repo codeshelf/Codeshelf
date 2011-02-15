@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfController.java,v 1.2 2011/02/05 01:41:55 jeffw Exp $
+ *  $Id: CodeShelfController.java,v 1.3 2011/02/15 02:39:46 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.controller;
@@ -13,6 +13,7 @@ import org.apache.commons.logging.LogFactory;
 
 import com.gadgetworks.codeshelf.command.CommandControlABC;
 import com.gadgetworks.codeshelf.command.CommandControlButton;
+import com.gadgetworks.codeshelf.command.CommandCsABC;
 import com.gadgetworks.codeshelf.query.IQuery;
 import com.gadgetworks.codeshelf.query.IResponse;
 import com.gadgetworks.codeshelf.query.QueryActorDescriptor;
@@ -20,6 +21,7 @@ import com.gadgetworks.codeshelf.query.QueryActorKVP;
 import com.gadgetworks.codeshelf.query.ResponseActorDescriptor;
 import com.gadgetworks.codeshelf.query.ResponseActorKVP;
 import com.gadgetworks.codeshelf.query.ResponseTypeEnum;
+import com.gadgetworks.codeshelf.server.tags.AtopStreamProcessor;
 
 public final class CodeShelfController extends ControllerABC {
 
@@ -209,6 +211,15 @@ public final class CodeShelfController extends ControllerABC {
 			default:
 				break;
 		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 *  Handle the request of a remote device that wants to associate to our controller.
+	 *  @param inCommand    The association command that we want to process.  (The one just received.)
+	 */
+	protected void doProcessCodeShelfCmd(CommandCsABC inCommand) {
+		AtopStreamProcessor.sendCsCommandsToAtopConnection(inCommand);
 	}
 
 	// --------------------------------------------------------------------------

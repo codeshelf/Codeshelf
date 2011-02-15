@@ -1,11 +1,12 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandCsIndicatorOn.java,v 1.1 2011/02/11 23:23:57 jeffw Exp $
+ *  $Id: CommandCsIndicatorOn.java,v 1.2 2011/02/15 02:39:46 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.command;
 
 import com.gadgetworks.codeshelf.controller.ITransport;
+import com.gadgetworks.codeshelf.model.persist.PickTag;
 
 /**
  * @author jeffw
@@ -13,8 +14,8 @@ import com.gadgetworks.codeshelf.controller.ITransport;
  */
 public class CommandCsIndicatorOn extends CommandCsABC {
 
-	public CommandCsIndicatorOn() {
-		super(CommandIdEnum.CS_INDICATOR_ON);
+	public CommandCsIndicatorOn(final PickTag inPickTag) {
+		super(CommandIdEnum.CS_INDICATOR_ON, inPickTag);
 	}
 	
 	// --------------------------------------------------------------------------

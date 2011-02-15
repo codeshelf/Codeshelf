@@ -16,12 +16,16 @@ import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
 import org.apache.xmlrpc.client.XmlRpcCommonsTransportFactory;
 
 import com.gadgetworks.codeshelf.application.Util;
-import com.gadgetworks.codeshelf.command.CommandAtopSpecialReturn;
+import com.gadgetworks.codeshelf.command.CommandCsAckPressed;
 import com.gadgetworks.codeshelf.command.CommandIdEnum;
-import com.gadgetworks.codeshelf.command.IAtopCommand;
 import com.gadgetworks.codeshelf.command.ICommand;
+import com.gadgetworks.codeshelf.command.ICsCommand;
+import com.gadgetworks.codeshelf.model.TagProtocolEnum;
 import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork;
-import com.gadgetworks.codeshelf.server.tags.ControlGroupManager;
+import com.gadgetworks.codeshelf.model.persist.ControlGroup;
+import com.gadgetworks.codeshelf.model.persist.PickTag;
+import com.gadgetworks.codeshelf.server.tags.AtopControllerConnection;
+import com.gadgetworks.codeshelf.server.tags.IControllerConnection;
 
 public final class SnapInterface implements IWirelessInterface {
 
@@ -34,7 +38,6 @@ public final class SnapInterface implements IWirelessInterface {
 
 	private static final int	OUTBOUND_TIMEOUT_MILLIS		= 5000;
 
-	private ControlGroupManager	mControlGroupManager;
 	private CodeShelfNetwork	mCodeShelfNetwork;
 	private XmlRpcClient		mInboundXmlRpcClient;
 	private XmlRpcClient		mOutboundXmlRpcClient;
@@ -42,7 +45,6 @@ public final class SnapInterface implements IWirelessInterface {
 
 	public SnapInterface(final CodeShelfNetwork inCodeShelfNetwork) {
 		mCodeShelfNetwork = inCodeShelfNetwork;
-		mControlGroupManager = new ControlGroupManager(inCodeShelfNetwork);
 	}
 
 	// --------------------------------------------------------------------------
@@ -93,7 +95,18 @@ public final class SnapInterface implements IWirelessInterface {
 					mCodeShelfNetwork.setIsConnected(true);
 
 					// Start the interfaces for the control groups.
-					mControlGroupManager.start();
+					for (ControlGroup controlGroup : mCodeShelfNetwork.getControlGroups()) {
+						IControllerConnection connection = controlGroup.getControllerConnection();
+						if (connection == null) {
+							if (controlGroup.getTagProtocol().equals(TagProtocolEnum.ATOP)) {
+								connection = new AtopControllerConnection(controlGroup);
+							}
+							controlGroup.setControllerConnection(connection);
+						}
+						if (connection != null) {
+							connection.start();
+						}
+					}
 				}
 			}
 		} catch (XmlRpcException e) {
@@ -142,7 +155,12 @@ public final class SnapInterface implements IWirelessInterface {
 			mCodeShelfNetwork.setIsConnected(false);
 			Util.getSystemDAO().pushNonPersistentUpdates(mCodeShelfNetwork);
 
-			mControlGroupManager.stop();
+			for (ControlGroup controlGroup : mCodeShelfNetwork.getControlGroups()) {
+				IControllerConnection connection = controlGroup.getControllerConnection();
+				if (connection != null) {
+					connection.stop();
+				}
+			}
 		}
 	}
 
@@ -246,7 +264,7 @@ public final class SnapInterface implements IWirelessInterface {
 			String methodName = null;
 			NetAddress netAddr = null;
 			Object object;
-			
+
 			//			Object[] params = new Object[] { mCodeShelfNetwork.getGatewayAddr().getParamValueAsByteArray(), false,
 			//					Integer.valueOf(0), Integer.valueOf(0), new Float(1.0) };
 			Object[] params = new Object[] { mCodeShelfNetwork.getGatewayAddr().getParamValueAsByteArray(), false };
@@ -259,7 +277,7 @@ public final class SnapInterface implements IWirelessInterface {
 				}
 				object = map.get("netAddr");
 				if (object instanceof byte[]) {
-					 netAddr = new NetAddress((byte[]) object);
+					netAddr = new NetAddress((byte[]) object);
 				}
 				if ((methodName != null) && (netAddr != null)) {
 					result = createCommand(methodName, netAddr);
@@ -282,11 +300,13 @@ public final class SnapInterface implements IWirelessInterface {
 	 * @param inNetAddr
 	 * @return
 	 */
-	private IAtopCommand createCommand(String inMethodName, NetAddress inNetAddr) {
-		IAtopCommand result = null;
-		
+	private ICsCommand createCommand(String inMethodName, NetAddress inNetAddr) {
+		ICsCommand result = null;
+
+		PickTag pickTag = Util.getSystemDAO().findPickTagByNetAddr(inNetAddr);
+
 		if (inMethodName.equals(CommandIdEnum.CS_ACK_PRESSED.getName())) {
-			result = new CommandAtopSpecialReturn((short) 0x60);
+			result = new CommandCsAckPressed(pickTag);
 		}
 
 		return result;

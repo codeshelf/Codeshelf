@@ -1,12 +1,13 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: NetParameter.java,v 1.6 2011/01/25 02:10:59 jeffw Exp $
+ *  $Id: NetParameter.java,v 1.7 2011/02/15 02:39:46 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.controller;
 
-import org.apache.commons.codec.binary.Hex;
+import java.util.Arrays;
+
 
 public class NetParameter {
 
@@ -102,5 +103,26 @@ public class NetParameter {
 		}
 
 		return result;
+	}
+	
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	public boolean equals(Object inObject) {
+		boolean result = false;
+		if (inObject instanceof NetParameter) {
+			NetParameter netParam = (NetParameter) inObject;
+			result = Arrays.equals(mParamBytes, netParam.getParamValueAsByteArray());
+		}
+		return result;
+	}
+	
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see java.lang.Object#hashCode()
+	 */
+	public int hashCode() {
+		return mParamBytes.hashCode();
 	}
 }

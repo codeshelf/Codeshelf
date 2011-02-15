@@ -1,19 +1,23 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandCsABC.java,v 1.2 2011/02/12 02:00:19 jeffw Exp $
+ *  $Id: CommandCsABC.java,v 1.3 2011/02/15 02:39:46 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.command;
 
+import com.gadgetworks.codeshelf.model.persist.PickTag;
 
 /**
  * @author jeffw
  *
  */
 public abstract class CommandCsABC extends CommandABC implements ICsCommand {
-	
-	public CommandCsABC(final CommandIdEnum inCommandIdEnum) {
+
+	private PickTag	mPickTag;
+
+	public CommandCsABC(final CommandIdEnum inCommandIdEnum, final PickTag inPickTag) {
 		super(inCommandIdEnum);
+		mPickTag = inPickTag;
 	}
 
 	/* --------------------------------------------------------------------------
@@ -21,7 +25,15 @@ public abstract class CommandCsABC extends CommandABC implements ICsCommand {
 	 * @see com.gadgetworks.command.CommandABC#getCommandTypeEnum()
 	 */
 	public final CommandGroupEnum getCommandGroupEnum() {
-		return CommandGroupEnum.CS;
+		return CommandGroupEnum.CODESHELF;
+	}
+	
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.command.ICsCommand#getPickTag()
+	 */
+	public final PickTag getPickTag() {
+		return mPickTag;
 	}
 
 	// --------------------------------------------------------------------------
@@ -30,7 +42,7 @@ public abstract class CommandCsABC extends CommandABC implements ICsCommand {
 	 */
 	protected String doToString() {
 		CommandIdEnum cmdId = getCommandIdEnum();
-		String result = "subcmd: " + cmdId.getName();
+		String result = "tag:" + String.valueOf(mPickTag) + "subcmd: " + cmdId.getName();
 		return result;
 	}
 }

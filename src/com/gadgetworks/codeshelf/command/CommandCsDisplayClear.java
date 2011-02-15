@@ -1,11 +1,12 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandCsDisplayClear.java,v 1.1 2011/02/11 23:23:57 jeffw Exp $
+ *  $Id: CommandCsDisplayClear.java,v 1.2 2011/02/15 02:39:46 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.command;
 
 import com.gadgetworks.codeshelf.controller.ITransport;
+import com.gadgetworks.codeshelf.model.persist.PickTag;
 
 
 /**
@@ -14,8 +15,8 @@ import com.gadgetworks.codeshelf.controller.ITransport;
  */
 public class CommandCsDisplayClear extends CommandCsABC {
 	
-	public CommandCsDisplayClear() {
-		super(CommandIdEnum.CS_DISPLAY_CLEAR);
+	public CommandCsDisplayClear(PickTag inPickTag) {
+		super(CommandIdEnum.CS_DISPLAY_CLEAR, inPickTag);
 	}
 
 	// --------------------------------------------------------------------------

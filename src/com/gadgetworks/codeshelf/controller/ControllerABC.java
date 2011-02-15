@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ControllerABC.java,v 1.9 2011/02/12 02:00:19 jeffw Exp $
+ *  $Id: ControllerABC.java,v 1.10 2011/02/15 02:39:46 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.controller;
@@ -29,6 +29,7 @@ import com.gadgetworks.codeshelf.command.CommandAssocCheck;
 import com.gadgetworks.codeshelf.command.CommandAssocReq;
 import com.gadgetworks.codeshelf.command.CommandAssocResp;
 import com.gadgetworks.codeshelf.command.CommandControlABC;
+import com.gadgetworks.codeshelf.command.CommandCsABC;
 import com.gadgetworks.codeshelf.command.CommandIdEnum;
 import com.gadgetworks.codeshelf.command.CommandInfoABC;
 import com.gadgetworks.codeshelf.command.CommandInfoQuery;
@@ -183,6 +184,14 @@ public abstract class ControllerABC implements IController {
 	 *  @param inSrcAddr
 	 */
 	protected abstract void doProcessControlCmd(CommandControlABC inCommand, INetworkDevice inNetworkDevice);
+
+	// --------------------------------------------------------------------------
+	/**
+	 * The CodeShelf command gets processed by the subclass since this is where the application-specific knowledge resides.
+	 * @param inCommand
+	 * @param inNetworkDevice
+	 */
+	protected abstract void doProcessCodeShelfCmd(CommandCsABC inCommand);
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
@@ -625,8 +634,9 @@ public abstract class ControllerABC implements IController {
 					}
 					break;
 					
-				case ATOP:
+				case CODESHELF:
 					LOGGER.info("Rcvd cmd: " + inCommand.toString());
+					doProcessCodeShelfCmd((CommandCsABC) inCommand);
 					break;
 
 				default:

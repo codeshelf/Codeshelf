@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandGroupEnum.java,v 1.4 2011/02/11 23:23:57 jeffw Exp $
+ *  $Id: CommandGroupEnum.java,v 1.5 2011/02/15 02:39:46 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.command;
 
@@ -16,8 +16,7 @@ public enum CommandGroupEnum {
 	ASSOC(CommandGroupNum.ASSOC, "ASSOC"),
 	INFO(CommandGroupNum.INFO, "INFO"),
 	CONTROL(CommandGroupNum.CONTROL, "CONTROL"),
-	ATOP(CommandGroupNum.ATOP, "ATOP"),
-	CS(CommandGroupNum.CS, "CS");
+	CODESHELF(CommandGroupNum.CODESHELF, "CODESHELF");
 
 	private byte	mValue;
 	private String	mName;
@@ -53,11 +52,8 @@ public enum CommandGroupEnum {
 			case CommandGroupNum.CONTROL:
 				result = CommandGroupEnum.CONTROL;
 				break;
-			case CommandGroupNum.ATOP:
-				result = CommandGroupEnum.ATOP;
-				break;
-			case CommandGroupNum.CS:
-				result = CommandGroupEnum.CS;
+			case CommandGroupNum.CODESHELF:
+				result = CommandGroupEnum.CODESHELF;
 				break;
 			default:
 				break;
@@ -88,8 +84,7 @@ public enum CommandGroupEnum {
 		static final byte	ASSOC	= 1;
 		static final byte	INFO	= 2;
 		static final byte	CONTROL	= 3;
-		static final byte	ATOP	= 4;
-		static final byte	CS		= 5;
+		static final byte	CODESHELF		= 4;
 
 		public CommandGroupNum() {
 

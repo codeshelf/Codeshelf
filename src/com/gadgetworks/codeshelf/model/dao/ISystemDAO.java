@@ -1,13 +1,14 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ISystemDAO.java,v 1.5 2011/01/24 07:22:42 jeffw Exp $
+ *  $Id: ISystemDAO.java,v 1.6 2011/02/15 02:39:46 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
 import java.util.Collection;
 
 import com.gadgetworks.codeshelf.controller.IDeviceMaintainer;
+import com.gadgetworks.codeshelf.controller.NetAddress;
 import com.gadgetworks.codeshelf.controller.NetMacAddress;
 import com.gadgetworks.codeshelf.controller.NetworkId;
 import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork;
@@ -105,6 +106,8 @@ public interface ISystemDAO extends IDeviceMaintainer {
 	PickTag loadPickTag(Integer inID);
 
 	PickTag findPickTagByMacAddr(NetMacAddress inMacAddr);
+
+	PickTag findPickTagByNetAddr(NetAddress inMacAddr);
 
 	void storePickTag(PickTag inPickTag) throws DAOException;
 
