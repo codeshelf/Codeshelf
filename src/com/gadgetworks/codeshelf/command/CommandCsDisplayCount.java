@@ -1,22 +1,24 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandCsDisplayClear.java,v 1.3 2011/02/15 22:16:04 jeffw Exp $
+ *  $Id: CommandCsDisplayCount.java,v 1.1 2011/02/15 22:16:04 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.command;
 
 import com.gadgetworks.codeshelf.controller.ITransport;
 import com.gadgetworks.codeshelf.model.persist.PickTag;
 
-
 /**
  * @author jeffw
  *
  */
-public class CommandCsDisplayClear extends CommandCsABC {
-	
-	public CommandCsDisplayClear(final PickTag inPickTag) {
-		super(CommandIdEnum.CS_DISPLAY_CLEAR, inPickTag);
+public class CommandCsDisplayCount extends CommandCsABC {
+
+	private int	mQuantity;
+
+	public CommandCsDisplayCount(final PickTag inPickTag, final int inQuantity) {
+		super(CommandIdEnum.CS_DISPLAY_COUNT, inPickTag);
+		mQuantity = inQuantity;
 	}
 
 	// --------------------------------------------------------------------------
@@ -24,9 +26,9 @@ public class CommandCsDisplayClear extends CommandCsABC {
 	 * @see com.gadgetworks.codeshelf.command.CommandABC#doToTransport(com.gadgetworks.codeshelf.controller.ITransport)
 	 */
 	protected final void doToTransport(ITransport inTransport) {
-
+		inTransport.setNextParam(mQuantity);
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.command.CommandABC#doFromTransport(com.gadgetworks.codeshelf.controller.ITransport)

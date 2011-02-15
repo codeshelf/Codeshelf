@@ -232,11 +232,11 @@ public final class SnapInterface implements IWirelessInterface {
 			params.add(inTransport.getCommandId().getName());
 
 			// Command params
-			List<Object> argList = new ArrayList<Object>();
-			for (Object param : inTransport.getParams()) {
-				argList.add(param);
-			}
-			params.add(argList.toArray());
+//			List<Object> argList = new ArrayList<Object>();
+//			for (Object param : inTransport.getParams()) {
+//				argList.add(param);
+//			}
+			params.add(inTransport.getParams().toArray());
 
 			// Send the command.
 			Object xmlRpcResult = (Object) mOutboundXmlRpcClient.execute(E10_RPC_CMD_NAME, params);

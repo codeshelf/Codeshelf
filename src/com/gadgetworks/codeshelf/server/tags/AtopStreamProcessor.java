@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: AtopStreamProcessor.java,v 1.1 2011/02/15 02:39:46 jeffw Exp $
+ *  $Id: AtopStreamProcessor.java,v 1.2 2011/02/15 22:16:04 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.server.tags;
 
@@ -10,13 +10,13 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.gadgetworks.codeshelf.command.ICsCommand;
-import com.gadgetworks.codeshelf.controller.ITransport;
 import com.gadgetworks.codeshelf.model.persist.ControlGroup;
 import com.gadgetworks.codeshelf.model.persist.PickTag;
 
@@ -88,7 +88,11 @@ public final class AtopStreamProcessor {
 					inDataInputStream.readFully(cmdDataBytes);
 				}
 
-				convertToCsCommands(result, inControlGroup, commandEnum, subNode, cmdDataBytes);
+				if (commandEnum == AtopCommandEnum.INVALID) {
+					LOGGER.error("Unsupported ATOP sub-command: " + subCommand);
+				} else {
+					convertToCsCommands(result, inControlGroup, commandEnum, subNode, cmdDataBytes);
+				}
 			} catch (EOFException e) {
 				// EOF is caused by a dropped socket - don't trace it - just close the socket.
 				inSocket.close();
@@ -134,6 +138,9 @@ public final class AtopStreamProcessor {
 
 		PickTag pickTag = inControlGroup.getPickTagBySerialBusNumber(inSubNode);
 		if (pickTag != null) {
+
+			LOGGER.info("Atop cmd: " + inCommandEnum.getName() + " node:" + inSubNode + " data:" + Arrays.toString(inDataBytes));
+
 			switch (inCommandEnum) {
 				case ALPHA_NUM_PUSH:
 					AtopCmdMapperAlphaPush.mapAtopToCodeShelf(inResultsList, pickTag, inDataBytes);
@@ -172,7 +179,6 @@ public final class AtopStreamProcessor {
 					break;
 
 				default:
-					LOGGER.error("Unsupported ATOP sub-command: " + inCommandEnum);
 					break;
 			}
 		}
@@ -184,14 +190,14 @@ public final class AtopStreamProcessor {
 	 */
 	public static void sendCsCommandsToAtopConnection(ICsCommand inCsCommands) {
 
-			PickTag pickTag = inCsCommands.getPickTag();
-			ControlGroup controlGroup = pickTag.getParentControlGroup();
-			IControllerConnection connection = controlGroup.getControllerConnection();
+		PickTag pickTag = inCsCommands.getPickTag();
+		ControlGroup controlGroup = pickTag.getParentControlGroup();
+		IControllerConnection connection = controlGroup.getControllerConnection();
 
-			if (connection != null) {
-				byte[] dataBytes = convertFromCsCommand(inCsCommands, pickTag);
-				connection.sendDataBytes(dataBytes);
-			}
+		if (connection != null) {
+			byte[] dataBytes = convertFromCsCommand(inCsCommands, pickTag);
+			connection.sendDataBytes(dataBytes);
+		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -201,7 +207,7 @@ public final class AtopStreamProcessor {
 	 */
 	private static byte[] convertFromCsCommand(ICsCommand inCommand, PickTag inPickTag) {
 		byte[] result = null;
-		
+
 		switch (inCommand.getCommandIdEnum()) {
 			case CS_ACK_PRESSED:
 				result = new byte[10];

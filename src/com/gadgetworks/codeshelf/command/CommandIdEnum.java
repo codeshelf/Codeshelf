@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandIdEnum.java,v 1.7 2011/02/15 02:39:46 jeffw Exp $
+ *  $Id: CommandIdEnum.java,v 1.8 2011/02/15 22:16:04 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.command;
@@ -19,6 +19,7 @@ public enum CommandIdEnum {
 	NET_CHECK(CommandIdNum.NET_CHECK, "NET_CHECK"),
 	BUTTON(CommandIdNum.BUTTON, "BUTTON"),
 	CS_DISPLAY_CLEAR(CommandIdNum.CS_DISPLAY_CLEAR, "displayClear"),
+	CS_DISPLAY_COUNT(CommandIdNum.CS_DISPLAY_COUNT, "displayCount"),
 	CS_INDICATOR_ON(CommandIdNum.CS_INDICATOR_ON, "indicatorOn"),
 	CS_INDICATOR_OFF(CommandIdNum.CS_INDICATOR_OFF, "indicatorOn"),
 	CS_INDICATOR_BLINK(CommandIdNum.CS_INDICATOR_BLINK, "indicatorBlink"),
@@ -100,22 +101,23 @@ public enum CommandIdEnum {
 	}
 
 	static final class CommandIdNum {
-		static final int	INVALID					= 0;
-		static final int	ACK						= 1;
-		static final int	ASSOC_REQ				= 2;
-		static final int	ASSOC_RESP				= 3;
-		static final int	ASSOC_CHECK				= 4;
-		static final int	ASSOC_ACK				= 5;
-		static final int	QUERY					= 6;
-		static final int	RESPONSE				= 7;
-		static final int	NET_SETUP				= 8;
-		static final int	NET_CHECK				= 9;
-		static final int	BUTTON					= 10;
-		static final byte	CS_DISPLAY_CLEAR		= 11;
-		static final byte	CS_INDICATOR_ON			= 12;
-		static final byte	CS_INDICATOR_OFF		= 13;
-		static final byte	CS_INDICATOR_BLINK		= 14;
-		static final byte	CS_ACK_PRESSED			= 15;
+		static final int	INVALID				= 0;
+		static final int	ACK					= 1;
+		static final int	ASSOC_REQ			= 2;
+		static final int	ASSOC_RESP			= 3;
+		static final int	ASSOC_CHECK			= 4;
+		static final int	ASSOC_ACK			= 5;
+		static final int	QUERY				= 6;
+		static final int	RESPONSE			= 7;
+		static final int	NET_SETUP			= 8;
+		static final int	NET_CHECK			= 9;
+		static final int	BUTTON				= 10;
+		static final byte	CS_DISPLAY_CLEAR	= 11;
+		static final byte	CS_DISPLAY_COUNT	= 12;
+		static final byte	CS_INDICATOR_ON		= 13;
+		static final byte	CS_INDICATOR_OFF	= 14;
+		static final byte	CS_INDICATOR_BLINK	= 15;
+		static final byte	CS_ACK_PRESSED		= 16;
 
 		private CommandIdNum() {
 

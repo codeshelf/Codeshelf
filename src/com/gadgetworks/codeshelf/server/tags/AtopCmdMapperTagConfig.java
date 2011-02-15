@@ -1,13 +1,16 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: AtopCmdMapperTagConfig.java,v 1.1 2011/02/15 02:39:46 jeffw Exp $
+ *  $Id: AtopCmdMapperTagConfig.java,v 1.2 2011/02/15 22:16:04 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.server.tags;
 
 import java.util.List;
 
+import com.gadgetworks.codeshelf.command.CommandCsIndicatorBlink;
 import com.gadgetworks.codeshelf.command.CommandCsIndicatorColor;
+import com.gadgetworks.codeshelf.command.CommandCsIndicatorOff;
+import com.gadgetworks.codeshelf.command.CommandCsIndicatorOn;
 import com.gadgetworks.codeshelf.command.ICsCommand;
 import com.gadgetworks.codeshelf.model.persist.PickTag;
 
@@ -32,7 +35,7 @@ public final class AtopCmdMapperTagConfig {
 
 		switch (inDataBytes[0]) {
 			case 0:
-				outboundCommand = getColorCsCmd(inPickTag, inDataBytes);
+				outboundCommand = createIndicatorColorCmd(inPickTag, inDataBytes);
 				break;
 			case 1:
 				break;
@@ -41,7 +44,7 @@ public final class AtopCmdMapperTagConfig {
 			case 3:
 				break;
 			case 4:
-				outboundCommand = getIndicatorBlink(inPickTag, inDataBytes);
+				outboundCommand = createIndicatorBlinkCmd(inPickTag, inDataBytes);
 				break;
 			case 5:
 				break;
@@ -61,7 +64,7 @@ public final class AtopCmdMapperTagConfig {
 	/**
 	 * @param inTransport
 	 */
-	private final static ICsCommand getColorCsCmd(PickTag inPickTag, byte[] inDataBytes) {
+	private final static ICsCommand createIndicatorColorCmd(PickTag inPickTag, byte[] inDataBytes) {
 
 		// Create a CommandCsIndColor.
 		CommandCsIndicatorColor result = null;
@@ -77,8 +80,8 @@ public final class AtopCmdMapperTagConfig {
 			case 0x01:
 				// Green
 				result = new CommandCsIndicatorColor(inPickTag,
-					CommandCsIndicatorColor.RED_ON,
-					CommandCsIndicatorColor.GREEN_OFF,
+					CommandCsIndicatorColor.RED_OFF,
+					CommandCsIndicatorColor.GREEN_ON,
 					CommandCsIndicatorColor.BLUE_OFF);
 				break;
 			case 0x02:
@@ -124,18 +127,38 @@ public final class AtopCmdMapperTagConfig {
 	/**
 	 * @param inTransport
 	 */
-	private static ICsCommand getIndicatorBlink(PickTag inPickTag, byte[] inDataBytes) {
+	private static ICsCommand createIndicatorBlinkCmd(PickTag inPickTag, byte[] inDataBytes) {
 
 		ICsCommand result = null;
 
 		switch (inDataBytes[1]) {
 			case 0x00:
-				// Off
+				// On
+				result = new CommandCsIndicatorOn(inPickTag);
 				break;
 			case 0x01:
-				// Red
+				// Off
+				result = new CommandCsIndicatorOff(inPickTag);
+				break;
+			case 0x02:
+				// 2 second
+				result = new CommandCsIndicatorBlink(inPickTag, 2000);
+				break;
+			case 0x03:
+				// 1 second
+				result = new CommandCsIndicatorBlink(inPickTag, 1000);
+				break;
+			case 0x04:
+				// 1/2 second
+				result = new CommandCsIndicatorBlink(inPickTag, 500);
+				break;
+			case 0x05:
+				// 1/4 second
+				result = new CommandCsIndicatorBlink(inPickTag, 250);
 				break;
 			default:
+				// On
+				result = new CommandCsIndicatorOn(inPickTag);
 		}
 
 		return result;
