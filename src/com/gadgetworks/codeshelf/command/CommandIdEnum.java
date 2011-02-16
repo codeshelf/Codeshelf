@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandIdEnum.java,v 1.8 2011/02/15 22:16:04 jeffw Exp $
+ *  $Id: CommandIdEnum.java,v 1.9 2011/02/16 23:40:40 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.command;
@@ -19,10 +19,12 @@ public enum CommandIdEnum {
 	NET_CHECK(CommandIdNum.NET_CHECK, "NET_CHECK"),
 	BUTTON(CommandIdNum.BUTTON, "BUTTON"),
 	CS_DISPLAY_CLEAR(CommandIdNum.CS_DISPLAY_CLEAR, "displayClear"),
-	CS_DISPLAY_COUNT(CommandIdNum.CS_DISPLAY_COUNT, "displayCount"),
+	CS_SET_COUNT(CommandIdNum.CS_SET_COUNT, "setCount"),
 	CS_INDICATOR_ON(CommandIdNum.CS_INDICATOR_ON, "indicatorOn"),
 	CS_INDICATOR_OFF(CommandIdNum.CS_INDICATOR_OFF, "indicatorOn"),
 	CS_INDICATOR_BLINK(CommandIdNum.CS_INDICATOR_BLINK, "indicatorBlink"),
+	CS_REPORT_PICK(CommandIdNum.CS_REPORT_PICK, "reportPick"),
+	CS_REPORT_SHORT(CommandIdNum.CS_REPORT_SHORT, "reportShort"),
 	CS_ACK_PRESSED(CommandIdNum.CS_ACK_PRESSED, "ackPressed");
 
 	private int		mValue;
@@ -113,11 +115,13 @@ public enum CommandIdEnum {
 		static final int	NET_CHECK			= 9;
 		static final int	BUTTON				= 10;
 		static final byte	CS_DISPLAY_CLEAR	= 11;
-		static final byte	CS_DISPLAY_COUNT	= 12;
+		static final byte	CS_SET_COUNT	= 12;
 		static final byte	CS_INDICATOR_ON		= 13;
 		static final byte	CS_INDICATOR_OFF	= 14;
 		static final byte	CS_INDICATOR_BLINK	= 15;
 		static final byte	CS_ACK_PRESSED		= 16;
+		static final byte	CS_REPORT_PICK		= 17;
+		static final byte	CS_REPORT_SHORT		= 18;
 
 		private CommandIdNum() {
 

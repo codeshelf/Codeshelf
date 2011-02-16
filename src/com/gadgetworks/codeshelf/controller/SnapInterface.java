@@ -17,6 +17,8 @@ import org.apache.xmlrpc.client.XmlRpcCommonsTransportFactory;
 
 import com.gadgetworks.codeshelf.application.Util;
 import com.gadgetworks.codeshelf.command.CommandCsAckPressed;
+import com.gadgetworks.codeshelf.command.CommandCsReportPick;
+import com.gadgetworks.codeshelf.command.CommandCsReportShort;
 import com.gadgetworks.codeshelf.command.CommandIdEnum;
 import com.gadgetworks.codeshelf.command.ICommand;
 import com.gadgetworks.codeshelf.command.ICsCommand;
@@ -36,6 +38,7 @@ public final class SnapInterface implements IWirelessInterface {
 	private static final String	E10_RPC_CMD_NAME			= "rpc";
 	//	private static final String	E10_MCAST_RPC_NAME			= "macstRpc";
 
+	private static final int	INBOUND_TIMEOUT_MILLIS		= 5000;
 	private static final int	OUTBOUND_TIMEOUT_MILLIS		= 5000;
 
 	private CodeShelfNetwork	mCodeShelfNetwork;
@@ -54,24 +57,24 @@ public final class SnapInterface implements IWirelessInterface {
 		try {
 
 			// Setup the inbound XML RPC client config.
-			XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
-			config.setServerURL(new URL(mCodeShelfNetwork.getGatewayUrl()));
-			config.setEnabledForExtensions(true);
-			//			config.setReplyTimeout(INBOUND_TIMEOUT_MILLIS);
-			//			config.setConnectionTimeout(INBOUND_TIMEOUT_MILLIS);
+			XmlRpcClientConfigImpl inConfig = new XmlRpcClientConfigImpl();
+			inConfig.setServerURL(new URL(mCodeShelfNetwork.getGatewayUrl()));
+			inConfig.setEnabledForExtensions(true);
+			inConfig.setReplyTimeout(INBOUND_TIMEOUT_MILLIS);
+			inConfig.setConnectionTimeout(INBOUND_TIMEOUT_MILLIS);
 			mInboundXmlRpcClient = new XmlRpcClient();
 			mInboundXmlRpcClient.setTransportFactory(new XmlRpcCommonsTransportFactory(mInboundXmlRpcClient));
-			mInboundXmlRpcClient.setConfig(config);
+			mInboundXmlRpcClient.setConfig(inConfig);
 
 			// Setup the outbound XML RPC client config.
-			config = new XmlRpcClientConfigImpl();
-			config.setServerURL(new URL(mCodeShelfNetwork.getGatewayUrl()));
-			config.setEnabledForExtensions(true);
-			config.setReplyTimeout(OUTBOUND_TIMEOUT_MILLIS);
-			config.setConnectionTimeout(OUTBOUND_TIMEOUT_MILLIS);
+			XmlRpcClientConfigImpl outConfig = new XmlRpcClientConfigImpl();
+			outConfig.setServerURL(new URL(mCodeShelfNetwork.getGatewayUrl()));
+			outConfig.setEnabledForExtensions(true);
+			outConfig.setReplyTimeout(OUTBOUND_TIMEOUT_MILLIS);
+			outConfig.setConnectionTimeout(OUTBOUND_TIMEOUT_MILLIS);
 			mOutboundXmlRpcClient = new XmlRpcClient();
 			mOutboundXmlRpcClient.setTransportFactory(new XmlRpcCommonsTransportFactory(mOutboundXmlRpcClient));
-			mOutboundXmlRpcClient.setConfig(config);
+			mOutboundXmlRpcClient.setConfig(outConfig);
 		} catch (MalformedURLException e) {
 			//LOGGER.error("", e);
 		}
@@ -267,10 +270,10 @@ public final class SnapInterface implements IWirelessInterface {
 
 			//			Object[] params = new Object[] { mCodeShelfNetwork.getGatewayAddr().getParamValueAsByteArray(), false,
 			//					Integer.valueOf(0), Integer.valueOf(0), new Float(1.0) };
-			Object[] params = new Object[] { mCodeShelfNetwork.getGatewayAddr().getParamValueAsByteArray(), false };
+			Object[] params = new Object[] { mCodeShelfNetwork.getGatewayAddr().getParamValueAsByteArray() , false };//, E10_SERIAL_TYPE, E10_STANDARD_SERIAL_PORT, 5.0 };
 			Object xmlRpcResult = (Object) mOutboundXmlRpcClient.execute("waitOnEvent", params);
 			if (xmlRpcResult instanceof HashMap) {
-				HashMap map = (HashMap) xmlRpcResult;
+				Map map = (HashMap) xmlRpcResult;
 				object = map.get("methodName");
 				if (object instanceof String) {
 					methodName = (String) object;
@@ -307,6 +310,10 @@ public final class SnapInterface implements IWirelessInterface {
 
 		if (inMethodName.equals(CommandIdEnum.CS_ACK_PRESSED.getName())) {
 			result = new CommandCsAckPressed(pickTag);
+		} else if (inMethodName.equals(CommandIdEnum.CS_REPORT_PICK.getName())) {
+			result = new CommandCsReportPick(pickTag);
+		} else if (inMethodName.equals(CommandIdEnum.CS_REPORT_SHORT.getName())) {
+			result = new CommandCsReportShort(pickTag);
 		}
 
 		return result;

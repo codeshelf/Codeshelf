@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfController.java,v 1.3 2011/02/15 02:39:46 jeffw Exp $
+ *  $Id: CodeShelfController.java,v 1.4 2011/02/16 23:40:40 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.controller;
@@ -219,7 +219,7 @@ public final class CodeShelfController extends ControllerABC {
 	 *  @param inCommand    The association command that we want to process.  (The one just received.)
 	 */
 	protected void doProcessCodeShelfCmd(CommandCsABC inCommand) {
-		AtopStreamProcessor.sendCsCommandsToAtopConnection(inCommand);
+		AtopStreamProcessor.sendCsCommandToAtopConnection(inCommand);
 	}
 
 	// --------------------------------------------------------------------------

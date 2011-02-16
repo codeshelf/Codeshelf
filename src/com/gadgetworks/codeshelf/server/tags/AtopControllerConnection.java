@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: AtopControllerConnection.java,v 1.5 2011/02/15 02:39:46 jeffw Exp $
+ *  $Id: AtopControllerConnection.java,v 1.6 2011/02/16 23:40:40 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.server.tags;
 
@@ -146,7 +146,7 @@ public final class AtopControllerConnection implements IControllerConnection {
 	/**
 	 */
 	public void sendDataBytes(byte[] inDataBytes) {
-		if ((!mSocket.isClosed()) && (mDataOutputStream != null)) {
+		if ((mSocket != null) && (!mSocket.isClosed()) && (mDataOutputStream != null)) {
 			try {
 				mDataOutputStream.write(inDataBytes);
 			} catch (IOException e) {

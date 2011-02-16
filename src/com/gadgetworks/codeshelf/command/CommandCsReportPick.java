@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandCsDisplayCount.java,v 1.1 2011/02/15 22:16:04 jeffw Exp $
+ *  $Id: CommandCsReportPick.java,v 1.1 2011/02/16 23:40:40 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.command;
 
@@ -12,21 +12,20 @@ import com.gadgetworks.codeshelf.model.persist.PickTag;
  * @author jeffw
  *
  */
-public class CommandCsDisplayCount extends CommandCsABC {
+public class CommandCsReportPick extends CommandCsABC {
 
 	private int	mQuantity;
 
-	public CommandCsDisplayCount(final PickTag inPickTag, final int inQuantity) {
-		super(CommandIdEnum.CS_DISPLAY_COUNT, inPickTag);
-		mQuantity = inQuantity;
+	public CommandCsReportPick(final PickTag inPickTag) {
+		super(CommandIdEnum.CS_REPORT_PICK, inPickTag);
 	}
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.command.CommandABC#doToTransport(com.gadgetworks.codeshelf.controller.ITransport)
+	 * @see com.gadgetworks.codeshelf.command.CommandAtopABC#doToTransport(com.gadgetworks.codeshelf.controller.ITransport)
 	 */
 	protected final void doToTransport(ITransport inTransport) {
-		inTransport.setNextParam(mQuantity);
+
 	}
 
 	// --------------------------------------------------------------------------
@@ -34,6 +33,13 @@ public class CommandCsDisplayCount extends CommandCsABC {
 	 * @see com.gadgetworks.codeshelf.command.CommandABC#doFromTransport(com.gadgetworks.codeshelf.controller.ITransport)
 	 */
 	protected final void doFromTransport(ITransport inTransport) {
+		Object object = inTransport.getParam(0);
+		if (object instanceof Integer) {
+			mQuantity = (Integer) object;
+		}
+	}
 
+	public final int getQuantity() {
+		return mQuantity;
 	}
 }

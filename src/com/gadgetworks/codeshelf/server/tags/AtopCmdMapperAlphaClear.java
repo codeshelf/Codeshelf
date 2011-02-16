@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: AtopCmdMapperAlphaClear.java,v 1.1 2011/02/15 02:39:46 jeffw Exp $
+ *  $Id: AtopCmdMapperAlphaClear.java,v 1.2 2011/02/16 23:40:40 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.server.tags;
 
@@ -15,7 +15,7 @@ import com.gadgetworks.codeshelf.model.persist.PickTag;
  * @author jeffw
  *
  */
-public final class AtopCmdMapperAlphaClear {
+public final class AtopCmdMapperAlphaClear extends AtopCmdMapper {
 
 	private AtopCmdMapperAlphaClear() {
 

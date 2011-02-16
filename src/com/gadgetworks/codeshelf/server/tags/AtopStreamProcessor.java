@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: AtopStreamProcessor.java,v 1.2 2011/02/15 22:16:04 jeffw Exp $
+ *  $Id: AtopStreamProcessor.java,v 1.3 2011/02/16 23:40:40 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.server.tags;
 
@@ -16,6 +16,7 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.gadgetworks.codeshelf.command.CommandCsReportPick;
 import com.gadgetworks.codeshelf.command.ICsCommand;
 import com.gadgetworks.codeshelf.model.persist.ControlGroup;
 import com.gadgetworks.codeshelf.model.persist.PickTag;
@@ -188,43 +189,29 @@ public final class AtopStreamProcessor {
 	/**
 	 * @param inCsCommands
 	 */
-	public static void sendCsCommandsToAtopConnection(ICsCommand inCsCommands) {
+	public static void sendCsCommandToAtopConnection(ICsCommand inCsCommand) {
 
-		PickTag pickTag = inCsCommands.getPickTag();
+		PickTag pickTag = inCsCommand.getPickTag();
 		ControlGroup controlGroup = pickTag.getParentControlGroup();
 		IControllerConnection connection = controlGroup.getControllerConnection();
 
 		if (connection != null) {
-			byte[] dataBytes = convertFromCsCommand(inCsCommands, pickTag);
-			connection.sendDataBytes(dataBytes);
+			byte[] dataBytes = null;
+			switch (inCsCommand.getCommandIdEnum()) {
+				case CS_ACK_PRESSED:
+					dataBytes = AtopCmdMapperReturn.mapCodeShelfToAtop(inCsCommand, pickTag);
+					break;
+				case CS_REPORT_PICK:
+					dataBytes = AtopCmdMapperConfirm.mapCodeShelfToAtop(inCsCommand, pickTag);
+					break;
+				case CS_REPORT_SHORT:
+					dataBytes = AtopCmdMapperShortage.mapCodeShelfToAtop(inCsCommand, pickTag);
+					break;
+				default:
+			}
+			if (dataBytes != null) {
+				connection.sendDataBytes(dataBytes);
+			}
 		}
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * @param inCommand
-	 * @return
-	 */
-	private static byte[] convertFromCsCommand(ICsCommand inCommand, PickTag inPickTag) {
-		byte[] result = null;
-
-		switch (inCommand.getCommandIdEnum()) {
-			case CS_ACK_PRESSED:
-				result = new byte[10];
-				result[0] = 0x0a;
-				result[1] = 0x00;
-				result[2] = 0x60;
-				result[3] = 0x00;
-				result[4] = 0x00;
-				result[5] = 0x00;
-				result[6] = 0x64;
-				result[7] = (byte) inPickTag.getSerialBusPosition();
-				result[8] = 0x00;
-				result[9] = 0x16;
-				break;
-			default:
-		}
-
-		return result;
 	}
 }
