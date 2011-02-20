@@ -1,12 +1,15 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: AtopCmdMapperReturn.java,v 1.1 2011/02/16 23:40:40 jeffw Exp $
+ *  $Id: AtopCmdMapperReturn.java,v 1.2 2011/02/20 00:18:34 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.server.tags;
 
+import java.lang.reflect.Array;
+import java.util.Arrays;
 import java.util.List;
 
+import com.gadgetworks.codeshelf.command.CommandCsAckPressed;
 import com.gadgetworks.codeshelf.command.CommandCsDisplayClear;
 import com.gadgetworks.codeshelf.command.ICsCommand;
 import com.gadgetworks.codeshelf.model.persist.PickTag;
@@ -38,11 +41,27 @@ public final class AtopCmdMapperReturn extends AtopCmdMapper {
 	 * @return
 	 */
 	public static byte[] mapCodeShelfToAtop(final ICsCommand inCommand, final PickTag inPickTag) {
-		byte[] result = new byte[10];
 
-		buildHeader(result, (byte) 10, (byte) 0x64, (byte) inPickTag.getSerialBusPosition());
-		result[8] = 0x00;
-		result[9] = 0x16;
+		byte[] result = null;
+		if (inCommand instanceof CommandCsAckPressed) {
+
+			CommandCsAckPressed ackCmd = (CommandCsAckPressed) inCommand;
+
+			String menuText = ackCmd.getMenuText();
+
+			if ((menuText == null) || (menuText.length() == 0)) {
+				// Send a simple 0x64 Ack ATOP command.
+				result = new byte[10];
+				buildHeader(result, (byte) 10, (byte) 0x64, (byte) inPickTag.getSerialBusPosition());
+				result[8] = 0x00;
+				result[9] = 0x16;
+			} else {
+				// Send an 0x06 menu select ATOP command.
+				result = new byte[10 + menuText.length()];
+				buildHeader(result, (byte) 10, (byte) 0x06, (byte) inPickTag.getSerialBusPosition());
+				System.arraycopy(menuText.getBytes(), 0, result, 9, menuText.length());
+			}
+		}
 
 		return result;
 	}

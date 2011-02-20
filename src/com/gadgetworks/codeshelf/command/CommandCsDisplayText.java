@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandCsAckPressed.java,v 1.2 2011/02/20 00:18:34 jeffw Exp $
+ *  $Id: CommandCsDisplayText.java,v 1.1 2011/02/20 00:18:34 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.command;
 
@@ -12,38 +12,28 @@ import com.gadgetworks.codeshelf.model.persist.PickTag;
  * @author jeffw
  *
  */
-public class CommandCsAckPressed extends CommandCsABC {
+public class CommandCsDisplayText extends CommandCsABC {
 
-	private String	mMenuText;
+	private String	mText;
 
-	public CommandCsAckPressed(final PickTag inPickTag) {
-		super(CommandIdEnum.CS_ACK_PRESSED, inPickTag);
+	public CommandCsDisplayText(final PickTag inPickTag, final String inText) {
+		super(CommandIdEnum.CS_DISPLAY_TEXT, inPickTag);
+		mText = inText.trim();
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.command.CommandAtopABC#doToTransport(com.gadgetworks.codeshelf.controller.ITransport)
+	 * @see com.gadgetworks.codeshelf.command.CommandABC#doToTransport(com.gadgetworks.codeshelf.controller.ITransport)
 	 */
 	protected final void doToTransport(ITransport inTransport) {
-		inTransport.setNextParam(true);
-		inTransport.setNextParam(false);
-		inTransport.setNextParam(false);
+		inTransport.setNextParam(mText);
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.command.CommandABC#doFromTransport(com.gadgetworks.codeshelf.controller.ITransport)
 	 */
 	protected final void doFromTransport(ITransport inTransport) {
-		Object object = inTransport.getParam(0);
-		if (object instanceof String) {
-			mMenuText = (String) object;
-		} else if (object instanceof byte[]) {
-			mMenuText = new String((byte[]) object);
-		}
-	}
 
-	public final String getMenuText() {
-		return mMenuText;
 	}
 }

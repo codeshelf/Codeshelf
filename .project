@@ -3,7 +3,6 @@
 	<name>CodeShelf</name>
 	<comment></comment>
 	<projects>
-		<project>FlyWeightController</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

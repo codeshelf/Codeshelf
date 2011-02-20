@@ -235,10 +235,10 @@ public final class SnapInterface implements IWirelessInterface {
 			params.add(inTransport.getCommandId().getName());
 
 			// Command params
-//			List<Object> argList = new ArrayList<Object>();
-//			for (Object param : inTransport.getParams()) {
-//				argList.add(param);
-//			}
+			//			List<Object> argList = new ArrayList<Object>();
+			//			for (Object param : inTransport.getParams()) {
+			//				argList.add(param);
+			//			}
 			params.add(inTransport.getParams().toArray());
 
 			// Send the command.
@@ -270,7 +270,7 @@ public final class SnapInterface implements IWirelessInterface {
 
 			//			Object[] params = new Object[] { mCodeShelfNetwork.getGatewayAddr().getParamValueAsByteArray(), false,
 			//					Integer.valueOf(0), Integer.valueOf(0), new Float(1.0) };
-			Object[] params = new Object[] { mCodeShelfNetwork.getGatewayAddr().getParamValueAsByteArray() , false };//, E10_SERIAL_TYPE, E10_STANDARD_SERIAL_PORT, 5.0 };
+			Object[] params = new Object[] { mCodeShelfNetwork.getGatewayAddr().getParamValueAsByteArray(), false };//, E10_SERIAL_TYPE, E10_STANDARD_SERIAL_PORT, 5.0 };
 			Object xmlRpcResult = (Object) mOutboundXmlRpcClient.execute("waitOnEvent", params);
 			if (xmlRpcResult instanceof HashMap) {
 				Map map = (HashMap) xmlRpcResult;
@@ -284,6 +284,23 @@ public final class SnapInterface implements IWirelessInterface {
 				}
 				if ((methodName != null) && (netAddr != null)) {
 					result = createCommand(methodName, netAddr);
+					if (result != null) {
+						object = map.get("parameters");
+						if (object instanceof Object[]) {
+							Object[] methodParams = (Object[]) object;
+							ITransport transport = new SnapTransport();
+							transport.setNetworkId(result.getNetworkId());
+							transport.setCommandId(result.getCommandIdEnum());
+							transport.setDstAddr(result.getDstAddr());
+							transport.setSrcAddr(netAddr);
+							
+							for (int i = 0; i < methodParams.length; i++) {
+								Object methodParam = methodParams[i];
+								transport.setNextParam(methodParam);								
+							}
+							result.fromTransport(transport);
+						}
+					}
 				}
 			}
 		} catch (XmlRpcException e) {

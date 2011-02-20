@@ -1,15 +1,13 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: QueryFactoryABC.java,v 1.3 2011/01/21 04:25:54 jeffw Exp $
+ *  $Id: QueryFactoryABC.java,v 1.4 2011/02/20 00:18:34 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.query;
 
 import java.io.IOException;
 
 import com.gadgetworks.codeshelf.controller.ITransport;
-import com.gadgetworks.codeshelf.controller.NetQueryTypeId;
-import com.gadgetworks.flyweightcontroller.bitfields.NBitInteger;
 
 // --------------------------------------------------------------------------
 /**
