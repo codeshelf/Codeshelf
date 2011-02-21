@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: AtopCmdMapperReturn.java,v 1.2 2011/02/20 00:18:34 jeffw Exp $
+ *  $Id: AtopCmdMapperReturn.java,v 1.3 2011/02/21 21:33:46 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.server.tags;
 
@@ -52,13 +52,13 @@ public final class AtopCmdMapperReturn extends AtopCmdMapper {
 			if ((menuText == null) || (menuText.length() == 0)) {
 				// Send a simple 0x64 Ack ATOP command.
 				result = new byte[10];
-				buildHeader(result, (byte) 10, (byte) 0x64, (byte) inPickTag.getSerialBusPosition());
+				buildHeader(result, (byte) 0x64, (byte) inPickTag.getSerialBusPosition());
 				result[8] = 0x00;
 				result[9] = 0x16;
 			} else {
 				// Send an 0x06 menu select ATOP command.
 				result = new byte[10 + menuText.length()];
-				buildHeader(result, (byte) 10, (byte) 0x06, (byte) inPickTag.getSerialBusPosition());
+				buildHeader(result, (byte) 0x06, (byte) inPickTag.getSerialBusPosition());
 				System.arraycopy(menuText.getBytes(), 0, result, 9, menuText.length());
 			}
 		}

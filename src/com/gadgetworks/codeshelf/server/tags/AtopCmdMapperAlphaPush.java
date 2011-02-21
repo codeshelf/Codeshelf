@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: AtopCmdMapperAlphaPush.java,v 1.4 2011/02/20 00:18:34 jeffw Exp $
+ *  $Id: AtopCmdMapperAlphaPush.java,v 1.5 2011/02/21 21:33:46 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.server.tags;
 
@@ -34,7 +34,7 @@ public final class AtopCmdMapperAlphaPush extends AtopCmdMapper {
 		for (int pos = 0; pos < 6; pos++) {
 			if ((inDataBytes[pos] >= 0x30) && (inDataBytes[pos] <= 0x39)) {
 				quantity += (inDataBytes[pos] - 0x30) * multiplier;
-			} else {
+			} else if ((inDataBytes[pos] != 0x00) && (inDataBytes[pos] != 0x20)) {
 				isInteger = false;
 			}
 			multiplier /= 10;
