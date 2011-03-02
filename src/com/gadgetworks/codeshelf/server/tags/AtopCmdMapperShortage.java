@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: AtopCmdMapperShortage.java,v 1.2 2011/02/21 21:33:46 jeffw Exp $
+ *  $Id: AtopCmdMapperShortage.java,v 1.3 2011/03/02 02:34:07 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.server.tags;
 
@@ -40,7 +40,7 @@ public final class AtopCmdMapperShortage extends AtopCmdMapper {
 	public static byte[] mapCodeShelfToAtop(final ICsCommand inCommand, final PickTag inPickTag) {
 		byte[] result = new byte[15];
 
-		buildHeader(result, (byte) 15, (byte) inPickTag.getSerialBusPosition());
+		buildHeader(result, (byte) 0x07, (byte) inPickTag.getSerialBusPosition());
 
 		CommandCsReportShort command = (CommandCsReportShort) inCommand;
 		byte[] qtyStr = Integer.toString(command.getQuantity()).getBytes();
