@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: AtopStreamProcessor.java,v 1.3 2011/02/16 23:40:40 jeffw Exp $
+ *  $Id: AtopStreamProcessor.java,v 1.4 2011/10/22 06:57:58 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.server.tags;
 
@@ -192,25 +192,27 @@ public final class AtopStreamProcessor {
 	public static void sendCsCommandToAtopConnection(ICsCommand inCsCommand) {
 
 		PickTag pickTag = inCsCommand.getPickTag();
-		ControlGroup controlGroup = pickTag.getParentControlGroup();
-		IControllerConnection connection = controlGroup.getControllerConnection();
+		if (pickTag != null) {
+			ControlGroup controlGroup = pickTag.getParentControlGroup();
+			IControllerConnection connection = controlGroup.getControllerConnection();
 
-		if (connection != null) {
-			byte[] dataBytes = null;
-			switch (inCsCommand.getCommandIdEnum()) {
-				case CS_ACK_PRESSED:
-					dataBytes = AtopCmdMapperReturn.mapCodeShelfToAtop(inCsCommand, pickTag);
-					break;
-				case CS_REPORT_PICK:
-					dataBytes = AtopCmdMapperConfirm.mapCodeShelfToAtop(inCsCommand, pickTag);
-					break;
-				case CS_REPORT_SHORT:
-					dataBytes = AtopCmdMapperShortage.mapCodeShelfToAtop(inCsCommand, pickTag);
-					break;
-				default:
-			}
-			if (dataBytes != null) {
-				connection.sendDataBytes(dataBytes);
+			if (connection != null) {
+				byte[] dataBytes = null;
+				switch (inCsCommand.getCommandIdEnum()) {
+					case CS_ACK_PRESSED:
+						dataBytes = AtopCmdMapperReturn.mapCodeShelfToAtop(inCsCommand, pickTag);
+						break;
+					case CS_REPORT_PICK:
+						dataBytes = AtopCmdMapperConfirm.mapCodeShelfToAtop(inCsCommand, pickTag);
+						break;
+					case CS_REPORT_SHORT:
+						dataBytes = AtopCmdMapperShortage.mapCodeShelfToAtop(inCsCommand, pickTag);
+						break;
+					default:
+				}
+				if (dataBytes != null) {
+					connection.sendDataBytes(dataBytes);
+				}
 			}
 		}
 	}

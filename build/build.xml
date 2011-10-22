@@ -128,6 +128,7 @@
 				<or>
 					<contains string="${ant.version}" substring="1.6" />
 					<contains string="${ant.version}" substring="1.7" />
+					<contains string="${ant.version}" substring="1.8" />
 				</or>
 			</not>
 		</condition>
@@ -139,8 +140,8 @@
 				</or>
 			</not>
 		</condition>
-		<fail if="ant.not.ok" message="Must use Ant 1.6.x or 1.7.x to build Spark" />
-		<fail if="java.not.ok" message="Must use JDK 1.5.x or higher to build Spark" />
+		<fail if="ant.not.ok" message="Must use Ant 1.6.x, 1.7.x, or 1.8.x to build CodeShelf" />
+		<fail if="java.not.ok" message="Must use JDK 1.5.x or higher to build CodeShelf" />
 
 		<!-- Platform-specific initializations -->
 		<condition property="windows">
@@ -419,12 +420,13 @@
 			-dontoptimize
 			-dontusemixedcaseclassnames
 			-ignorewarnings
+			-libraryjars "${target.lib}/activation.jar"
+			-libraryjars "${target.lib}/activemq-core-5.4.1.jar"
 			-libraryjars "${target.lib}/avaje-juli-1.0.0.jar"
 			-libraryjars "${target.lib}/commons-io-1.4.jar"
 			-libraryjars "${target.lib}/commons-logging-1.1.1.jar"
 			-libraryjars "${target.lib}/ebean-2.6.1.jar"
 			-libraryjars "${target.lib}/facebook-java-api-3.0.4-SNAPSHOT.jar"
-			-libraryjars "${target.lib}/fat32-lib-0.6-SNAPSHOT.jar"
 			-libraryjars "${target.lib}/h2-1.2.143.jar"
 			-libraryjars "${target.lib}/htmllexer.jar"
 			-libraryjars "${target.lib}/htmlparser.jar"
@@ -436,12 +438,10 @@
 			-libraryjars "${target.lib}/jcommon-1.0.16.jar"
 			-libraryjars "${target.lib}/JD2XX.jar"
 			-libraryjars "${target.lib}/jdom.jar"
-			-libraryjars "${target.lib}/JJIL.jar"
 			-libraryjars "${target.lib}/jregex1.2_01.jar"
 			-libraryjars "${target.lib}/json-1.0.jar"
 			-libraryjars "${target.lib}/log4j-1.2.14.jar"
 			-libraryjars "${target.lib}/mailapi.jar"
-			-libraryjars "${target.lib}/mediautil.jar"
 			-libraryjars "${target.lib}/org.eclipse.core.commands_3.6.0.I20100512-1500.jar"
 			-libraryjars "${target.lib}/org.eclipse.core.runtime_3.6.0.v20100505.jar"
 			-libraryjars "${target.lib}/org.eclipse.equinox.common_3.6.0.v20100503.jar"
