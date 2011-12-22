@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: H2SchemaManager.java,v 1.13 2011/12/22 11:46:31 jeffw Exp $
+ *  $Id: H2SchemaManager.java,v 1.14 2011/12/22 12:43:04 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -195,7 +195,7 @@ public final class H2SchemaManager implements ISchemaManager {
 				+ "ID VARCHAR(64) NOT NULL," //
 				+ "VERSION TIMESTAMP, " //
 				+ "PARENTCODESHELFNETWORK_PERSISTENTID BIGINT NOT NULL, " //
-				+ "CONTROLID BINARY(2) DEFAULT 0 NOT NULL, " //
+				+ "CONTROLGROUPID BINARY(2) DEFAULT 0 NOT NULL, " //
 				+ "DESCRIPTION VARCHAR(64) NOT NULL, " //
 				+ "INTERFACEPORTNUM INT NOT NULL, " //
 				+ "ISACTIVE BOOLEAN DEFAULT TRUE NOT NULL," //

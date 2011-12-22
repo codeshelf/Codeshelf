@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ControlGroup.java,v 1.11 2011/12/22 11:46:32 jeffw Exp $
+ *  $Id: ControlGroup.java,v 1.12 2011/12/22 12:43:04 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -39,8 +39,8 @@ public class ControlGroup extends PersistABC {
 	@ManyToOne
 	private CodeShelfNetwork		mParentCodeShelfNetwork;
 	// The control group ID
-	@Column(name="netGroupId", nullable = false)
-	private byte[]					mNetGroupId;
+	@Column(name="controlGroupId", nullable = false)
+	private byte[]					mControlGroupId;
 	// The control group description.
 	@Column(name="description", nullable = false)
 	private String					mDescription;
@@ -62,7 +62,7 @@ public class ControlGroup extends PersistABC {
 
 	public ControlGroup() {
 		mParentCodeShelfNetwork = null;
-		mNetGroupId = new byte[NetGroup.NET_GROUP_BYTES];
+		mControlGroupId = new byte[NetGroup.NET_GROUP_BYTES];
 		mDescription = "";
 		mIsActive = true;
 		mTagProtocolEnum = TagProtocolEnum.ATOP;
@@ -84,12 +84,12 @@ public class ControlGroup extends PersistABC {
 		mParentCodeShelfNetwork = inCodeShelfNetwork;
 	}
 
-	public final NetGroup getNetGroupId() {
-		return new NetGroup(mNetGroupId);
+	public final NetGroup getControlGroupId() {
+		return new NetGroup(mControlGroupId);
 	}
 
-	public final void setNetGrouptId(NetGroup inId) {
-		mNetGroupId = inId.getParamValueAsByteArray();
+	public final void setControlGroupId(NetGroup inId) {
+		mControlGroupId = inId.getParamValueAsByteArray();
 	}
 
 	public final String getDescription() {

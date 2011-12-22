@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ControlGroupEditPage.java,v 1.4 2011/12/22 11:46:32 jeffw Exp $
+ *  $Id: ControlGroupEditPage.java,v 1.5 2011/12/22 12:43:04 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.ui.wizards;
 
@@ -202,7 +202,7 @@ public final class ControlGroupEditPage extends WizardPage implements IDoubleCli
 		if ((result == true) && (mControlGroup != null)) {
 
 			NetGroup netGroup = new NetGroup(mIdField.getText());
-			mControlGroup.setNetGrouptId(netGroup);
+			mControlGroup.setControlGroupId(netGroup);
 			mControlGroup.setDescription(mDescriptionField.getText());
 			mControlGroup.setInterfacePortNum(Short.parseShort(mInterfacePortNumField.getText()));
 			mControlGroup.setIsActive(mIsActiveButton.getSelection());
