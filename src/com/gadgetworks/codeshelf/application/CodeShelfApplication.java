@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfApplication.java,v 1.8 2011/02/05 01:41:56 jeffw Exp $
+ *  $Id: CodeShelfApplication.java,v 1.9 2011/12/22 11:46:33 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -32,14 +32,19 @@ import org.eclipse.swt.widgets.Tray;
 import org.eclipse.swt.widgets.TrayItem;
 
 import com.avaje.ebean.Ebean;
+import com.avaje.ebean.EbeanServer;
+import com.avaje.ebean.EbeanServerFactory;
+import com.avaje.ebean.LogLevel;
+import com.avaje.ebean.config.ServerConfig;
 import com.avaje.ebeaninternal.server.lib.ShutdownManager;
+import com.gadgetworks.codeshelf.controller.CodeShelfController;
 import com.gadgetworks.codeshelf.controller.ControllerABC;
 import com.gadgetworks.codeshelf.controller.IController;
 import com.gadgetworks.codeshelf.controller.IWirelessInterface;
 import com.gadgetworks.codeshelf.controller.NetworkDeviceStateEnum;
-import com.gadgetworks.codeshelf.controller.CodeShelfController;
 import com.gadgetworks.codeshelf.controller.SnapInterface;
 import com.gadgetworks.codeshelf.model.PreferencesStore;
+import com.gadgetworks.codeshelf.model.dao.GWEbeanNamingConvention;
 import com.gadgetworks.codeshelf.model.dao.H2SchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork;
@@ -48,8 +53,8 @@ import com.gadgetworks.codeshelf.model.persist.PersistentProperty;
 import com.gadgetworks.codeshelf.model.persist.WirelessDevice;
 import com.gadgetworks.codeshelf.server.JmsHandler;
 import com.gadgetworks.codeshelf.server.jms.ActiveMqManager;
-import com.gadgetworks.codeshelf.ui.LocaleUtils;
 import com.gadgetworks.codeshelf.ui.CodeShelfNetworkMgrWindow;
+import com.gadgetworks.codeshelf.ui.LocaleUtils;
 import com.gadgetworks.codeshelf.ui.preferences.Preferences;
 
 public final class CodeShelfApplication {
@@ -449,6 +454,25 @@ public final class CodeShelfApplication {
 			}
 		}
 
+		// Setup the EBean server configuration.
+		ServerConfig config = new ServerConfig();
+		config.setName("h2");
+		config.loadFromProperties();
+		config.setNamingConvention(new GWEbeanNamingConvention());
+		config.setDefaultServer(true);
+		config.setDebugSql(false);
+		config.setLoggingLevel(LogLevel.NONE);
+//		config.setLoggingLevelQuery(LogLevelStmt.NONE);
+//		config.setLoggingLevelSqlQuery(LogLevelStmt.NONE);
+//		config.setLoggingLevelIud(LogLevelStmt.NONE);
+//		config.setLoggingLevelTxnCommit(LogLevelTxnCommit.DEBUG);
+		config.setLoggingToJavaLogger(true);
+		config.setResourceDirectory(Util.getApplicationDataDirPath());
+		EbeanServer server = EbeanServerFactory.create(config);
+		if (server == null) {
+			Util.exitSystem();
+		}
+
 		// The H2 database has a serious problem with deleting temp files for LOBs.  We have to do it ourselves, or it will grow without bound.
 		String[] extensions = { "temp.lob.db" };
 		boolean recursive = true;
@@ -507,11 +531,11 @@ public final class CodeShelfApplication {
 		// Set our class loader to the system classloader, so ebean can find the enhanced classes.
 		Thread.currentThread().setContextClassLoader(ClassLoader.getSystemClassLoader());
 
-		DBProperty dbVersionProp = Util.getSystemDAO().findDBProperty(DBProperty.DB_SCHEMA_VERSION);
+		DBProperty dbVersionProp = DBProperty.DAO.findById(DBProperty.DB_SCHEMA_VERSION);
 		if (dbVersionProp == null) {
 			// No database schema version has been set yet, so set it to the current schema version.
 			dbVersionProp = new DBProperty();
-			dbVersionProp.setPropertyId(DBProperty.DB_SCHEMA_VERSION);
+			dbVersionProp.setId(DBProperty.DB_SCHEMA_VERSION);
 			dbVersionProp.setValueStr(Integer.toString(ISchemaManager.DATABASE_VERSION_CUR));
 			Ebean.save(dbVersionProp);
 		} else {

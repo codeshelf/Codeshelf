@@ -1,11 +1,14 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: DBProperty.java,v 1.3 2011/01/22 07:58:31 jeffw Exp $
+ *  $Id: DBProperty.java,v 1.4 2011/12/22 11:46:32 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
+
+import com.gadgetworks.codeshelf.model.dao.GenericDao;
 
 // --------------------------------------------------------------------------
 /**
@@ -19,34 +22,27 @@ import javax.persistence.Entity;
 @Entity
 public class DBProperty extends PersistABC {
 
-	public static final String	DB_SCHEMA_VERSION	= "SCHMAVER";
+	public static final String					DB_SCHEMA_VERSION	= "SCHMAVER";
 
-	private String				mPropertyId;
-	private String				mCurrentValueStr;
+	public static final GenericDao<DBProperty>	DAO					= new GenericDao<DBProperty>(DBProperty.class);
+
+	@Column(name = "valueStr", nullable = false)
+	private String								mValueStr;
 
 	public DBProperty() {
-		mPropertyId = "";
-		mCurrentValueStr = "";
+		mValueStr = "";
 	}
 
 	public String toString() {
-		return mPropertyId;
-	}
-
-	public String getPropertyId() {
-		return mPropertyId;
-	}
-
-	public void setPropertyId(String inPropertyId) {
-		mPropertyId = inPropertyId;
+		return getId();
 	}
 
 	public String getValueStr() {
-		return mCurrentValueStr;
+		return mValueStr;
 	}
 
 	public void setValueStr(String inValueStr) {
-		mCurrentValueStr = inValueStr;
+		mValueStr = inValueStr;
 	}
 
 }

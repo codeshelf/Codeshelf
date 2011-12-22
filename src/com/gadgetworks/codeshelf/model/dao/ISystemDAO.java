@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ISystemDAO.java,v 1.6 2011/02/15 02:39:46 jeffw Exp $
+ *  $Id: ISystemDAO.java,v 1.7 2011/12/22 11:46:31 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -11,9 +11,11 @@ import com.gadgetworks.codeshelf.controller.IDeviceMaintainer;
 import com.gadgetworks.codeshelf.controller.NetAddress;
 import com.gadgetworks.codeshelf.controller.NetMacAddress;
 import com.gadgetworks.codeshelf.controller.NetworkId;
+import com.gadgetworks.codeshelf.model.persist.Aisle;
 import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork;
 import com.gadgetworks.codeshelf.model.persist.ControlGroup;
 import com.gadgetworks.codeshelf.model.persist.DBProperty;
+import com.gadgetworks.codeshelf.model.persist.Facility;
 import com.gadgetworks.codeshelf.model.persist.PersistABC;
 import com.gadgetworks.codeshelf.model.persist.PersistentProperty;
 import com.gadgetworks.codeshelf.model.persist.PickTag;
@@ -38,15 +40,15 @@ public interface ISystemDAO extends IDeviceMaintainer {
 	// --------------------------------------------------------------------------
 	// DBProperty
 
-	DBProperty loadDBProperty(Integer inID);
-
-	DBProperty findDBProperty(String inPropertyID);
-
-	void storeDBProperty(DBProperty inProperty);
-
-	void deleteDBProperty(DBProperty inProperty);
-
-	Collection<DBProperty> getDBProperties();
+//	DBProperty loadDBProperty(Integer inID);
+//
+//	DBProperty findDBProperty(String inPropertyID);
+//
+//	void storeDBProperty(DBProperty inProperty);
+//
+//	void deleteDBProperty(DBProperty inProperty);
+//
+//	Collection<DBProperty> getDBProperties();
 
 	// --------------------------------------------------------------------------
 	// PersistentProperty
@@ -86,6 +88,30 @@ public interface ISystemDAO extends IDeviceMaintainer {
 	void deleteCodeShelfNetwork(CodeShelfNetwork inCodeShelfNetwork) throws DAOException;
 
 	Collection<CodeShelfNetwork> getCodeShelfNetworks();
+	
+	// --------------------------------------------------------------------------
+	// Facility
+
+	Facility loadFacility(Integer inID);
+
+	Facility findFacility(String inFacilityId);
+
+	void storeFacility(Facility inFacility) throws DAOException;
+
+	void deleteFacility(Facility inFacility) throws DAOException;
+
+	Collection<Facility> getFacilities();
+	
+	// --------------------------------------------------------------------------
+	// Aisle
+
+	Aisle loadAisle(Integer inID);
+
+	void storeAisle(Aisle inAisle) throws DAOException;
+
+	void deleteAisle(Aisle inAisle) throws DAOException;
+
+	Collection<Aisle> getAisles();
 	
 	// --------------------------------------------------------------------------
 	// ControlGroup

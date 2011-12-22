@@ -80,7 +80,7 @@
 	<property name="osx.dmg.volume" value="CodeShelf-${version.major}.${version.minor}.${version.revision}" />
 	<property name="pack200.excludes" value="jingle.jar,mail.jar,activation.jar,dom4j.jar,startup.jar,base.jar,i4jruntime.jar" />
 
-	<property name="javac.compile.using.version" value="1.5" />
+	<property name="javac.compile.using.version" value="1.6" />
 
 	<property name="jws.build.dir" value="${target}/jws-codeshelf" />
 	<property name="appjar.build.dir" value="${target}/appjar-codeshelf" />
@@ -275,7 +275,7 @@
 			classname="com.avaje.ebean.enhance.ant.AntEnhanceTask" >
 			<classpath>
 				<!--pathelement location="${orm-classes.dir}" /-->
-				<pathelement location="${ebean.lib.dir}/ebean-2.6.1-agent.jar" />
+				<pathelement location="${ebean.lib.dir}/ebean-2.7.4-agent.jar" />
 				<pathelement location="${target.obfuscated.classes}" />
 				<path refid="compile-libs" />
 			</classpath>
@@ -411,7 +411,7 @@
 		<taskdef resource="proguard/ant/task.properties" classpath="${basedir}/build/lib/proguard.jar" />
 
 		<proguard>
-			-target 1.5
+			-target 1.6
 			-injars      "${target.compiled.classes}"
 			-outjars     "${target.obfuscated.classes}"
 			-printmapping "${target}/codeshelf-obfs.map"
@@ -425,9 +425,9 @@
 			-libraryjars "${target.lib}/avaje-juli-1.0.0.jar"
 			-libraryjars "${target.lib}/commons-io-1.4.jar"
 			-libraryjars "${target.lib}/commons-logging-1.1.1.jar"
-			-libraryjars "${target.lib}/ebean-2.6.1.jar"
+			-libraryjars "${target.lib}/ebean-2.7.4.jar"
 			-libraryjars "${target.lib}/facebook-java-api-3.0.4-SNAPSHOT.jar"
-			-libraryjars "${target.lib}/h2-1.2.143.jar"
+			-libraryjars "${target.lib}/h2-1.3.162.jar"
 			-libraryjars "${target.lib}/htmllexer.jar"
 			-libraryjars "${target.lib}/htmlparser.jar"
 			-libraryjars "${target.lib}/imap.jar"

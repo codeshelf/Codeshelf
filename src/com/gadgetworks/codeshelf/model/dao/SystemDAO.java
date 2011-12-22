@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: SystemDAO.java,v 1.6 2011/02/15 02:39:46 jeffw Exp $
+ *  $Id: SystemDAO.java,v 1.7 2011/12/22 11:46:31 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -15,13 +15,11 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.eclipse.swt.widgets.Display;
 
-import com.avaje.ebean.AdminLogging.LogLevel;
-import com.avaje.ebean.AdminLogging.LogLevelStmt;
-import com.avaje.ebean.AdminLogging.LogLevelTxnCommit;
 import com.avaje.ebean.BeanState;
 import com.avaje.ebean.Ebean;
 import com.avaje.ebean.EbeanServer;
 import com.avaje.ebean.EbeanServerFactory;
+import com.avaje.ebean.LogLevel;
 import com.avaje.ebean.Query;
 import com.avaje.ebean.config.ServerConfig;
 import com.gadgetworks.codeshelf.application.Util;
@@ -29,9 +27,11 @@ import com.gadgetworks.codeshelf.controller.INetworkDevice;
 import com.gadgetworks.codeshelf.controller.NetAddress;
 import com.gadgetworks.codeshelf.controller.NetMacAddress;
 import com.gadgetworks.codeshelf.controller.NetworkId;
+import com.gadgetworks.codeshelf.model.persist.Aisle;
 import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork;
 import com.gadgetworks.codeshelf.model.persist.ControlGroup;
 import com.gadgetworks.codeshelf.model.persist.DBProperty;
+import com.gadgetworks.codeshelf.model.persist.Facility;
 import com.gadgetworks.codeshelf.model.persist.PersistABC;
 import com.gadgetworks.codeshelf.model.persist.PersistentProperty;
 import com.gadgetworks.codeshelf.model.persist.PickTag;
@@ -55,26 +55,11 @@ public final class SystemDAO implements ISystemDAO {
 	private Map<Integer, CodeShelfNetwork>		mCodeShelfNetworkCacheMap;
 	private Map<Integer, ControlGroup>			mControlGroupCacheMap;
 	private Map<NetAddress, WirelessDevice>		mAddressLookupMap;
+	private Map<Integer, Facility>				mFacilityCacheMap;
+	private Map<Integer, Aisle>					mAisleCacheMap;
 
 	public SystemDAO() {
 		mListeners = new ArrayList<IDAOListener>();
-		ServerConfig config = new ServerConfig();
-		config.setName("h2");
-		config.loadFromProperties();
-		config.setNamingConvention(new GWEbeanNamingConvention());
-		config.setDefaultServer(true);
-		config.setDebugSql(false);
-		config.setLoggingLevel(LogLevel.NONE);
-		config.setLoggingLevelQuery(LogLevelStmt.NONE);
-		config.setLoggingLevelSqlQuery(LogLevelStmt.NONE);
-		config.setLoggingLevelIud(LogLevelStmt.NONE);
-		config.setLoggingLevelTxnCommit(LogLevelTxnCommit.DEBUG);
-		config.setLoggingToJavaLogger(true);
-		config.setResourceDirectory(Util.getApplicationDataDirPath());
-		EbeanServer server = EbeanServerFactory.create(config);
-		if (server == null) {
-			Util.exitSystem();
-		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -212,6 +197,32 @@ public final class SystemDAO implements ISystemDAO {
 		mControlGroupCacheMap = new HashMap<Integer, ControlGroup>();
 		for (ControlGroup group : groups) {
 			mControlGroupCacheMap.put(group.getPersistentId(), group);
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 */
+	private void initFacilityCacheMap() {
+		Query<Facility> query = Ebean.createQuery(Facility.class);
+		query = query.setUseCache(true);
+		Collection<Facility> facilities = query.findList();
+		mFacilityCacheMap = new HashMap<Integer, Facility>();
+		for (Facility facility : facilities) {
+			mFacilityCacheMap.put(facility.getPersistentId(), facility);
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 */
+	private void initAisleCacheMap() {
+		Query<Aisle> query = Ebean.createQuery(Aisle.class);
+		query = query.setUseCache(true);
+		Collection<Aisle> aisles = query.findList();
+		mAisleCacheMap = new HashMap<Integer, Aisle>();
+		for (Aisle aisle : aisles) {
+			mAisleCacheMap.put(aisle.getPersistentId(), aisle);
 		}
 	}
 
@@ -603,6 +614,194 @@ public final class SystemDAO implements ISystemDAO {
 			}
 			// Use the accounts cache.
 			return mCodeShelfNetworkCacheMap.values();
+		}
+	}
+
+	/* --------------------------------------------------------------------------
+	 * (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.dao.ISystemDAO#loadFacility(long)
+	 */
+	public Facility loadFacility(Integer inID) {
+		if (!mUseDAOCache) {
+			return Ebean.find(Facility.class, inID);
+		} else {
+			if (mFacilityCacheMap == null) {
+				initFacilityCacheMap();
+			}
+			return mFacilityCacheMap.get(inID);
+		}
+	}
+
+	/* --------------------------------------------------------------------------
+	 * (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.dao.ISystemDAO#findFacility(java.lang.String)
+	 */
+	public Facility findFacility(String inFacilityId) {
+		if (!mUseDAOCache) {
+			Query<Facility> query = Ebean.createQuery(Facility.class);
+			query.where().eq("mNetworkId", inFacilityId);
+			query = query.setUseCache(true);
+			return query.findUnique();
+		} else {
+			Facility result = null;
+			if (mFacilityCacheMap == null) {
+				initFacilityCacheMap();
+			}
+			for (Facility facility : mFacilityCacheMap.values()) {
+				if (facility.getId().equals(inFacilityId)) {
+					result = facility;
+				}
+			}
+			return result;
+		}
+
+	}
+
+	/* --------------------------------------------------------------------------
+	 * (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.dao.ISystemDAO#storeFacility(com.gadgetworks.codeshelf.model.persist.Facility)
+	 */
+	public void storeFacility(Facility inFacility) {
+
+		if (inFacility.getPersistentId() == null) {
+			Ebean.save(inFacility);
+			privateBroadcastAdd(inFacility);
+		} else {
+			Ebean.save(inFacility);
+			privateBroadcastUpdate(inFacility);
+		}
+		if (mUseDAOCache) {
+			if (mFacilityCacheMap == null) {
+				initFacilityCacheMap();
+			}
+			mFacilityCacheMap.put(inFacility.getPersistentId(), inFacility);
+		}
+	}
+
+	/* --------------------------------------------------------------------------
+	 * (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.dao.ISystemDAO#deleteFacility(com.gadgetworks.codeshelf.model.persist.Facility)
+	 */
+	public void deleteFacility(Facility inFacility) {
+		if (mUseDAOCache) {
+			if (mFacilityCacheMap == null) {
+				initFacilityCacheMap();
+			}
+			mFacilityCacheMap.remove(inFacility.getPersistentId());
+		}
+		Ebean.delete(inFacility);
+		privateBroadcastDelete(inFacility);
+	}
+
+	/* --------------------------------------------------------------------------
+	 * (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.dao.ISystemDAO#getPersistentProperties()
+	 */
+	public Collection<Facility> getFacilities() {
+		if (!mUseDAOCache) {
+			Query<Facility> query = Ebean.createQuery(Facility.class);
+			query = query.setUseCache(true);
+			return query.findList();
+		} else {
+			if (mFacilityCacheMap == null) {
+				initFacilityCacheMap();
+			}
+			// Use the accounts cache.
+			return mFacilityCacheMap.values();
+		}
+	}
+
+	/* --------------------------------------------------------------------------
+	 * (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.dao.ISystemDAO#loadAisle(long)
+	 */
+	public Aisle loadAisle(Integer inID) {
+		if (!mUseDAOCache) {
+			return Ebean.find(Aisle.class, inID);
+		} else {
+			if (mAisleCacheMap == null) {
+				initAisleCacheMap();
+			}
+			return mAisleCacheMap.get(inID);
+		}
+	}
+
+	/* --------------------------------------------------------------------------
+	 * (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.dao.ISystemDAO#findAisle(java.lang.String)
+	 */
+	public Aisle findAisle(String inAisleId) {
+		if (!mUseDAOCache) {
+			Query<Aisle> query = Ebean.createQuery(Aisle.class);
+			query.where().eq("mNetworkId", inAisleId);
+			query = query.setUseCache(true);
+			return query.findUnique();
+		} else {
+			Aisle result = null;
+			if (mAisleCacheMap == null) {
+				initAisleCacheMap();
+			}
+			for (Aisle aisle : mAisleCacheMap.values()) {
+				if (aisle.getId().equals(inAisleId)) {
+					result = aisle;
+				}
+			}
+			return result;
+		}
+
+	}
+
+	/* --------------------------------------------------------------------------
+	 * (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.dao.ISystemDAO#storeAisle(com.gadgetworks.codeshelf.model.persist.Aisle)
+	 */
+	public void storeAisle(Aisle inAisle) {
+
+		if (inAisle.getPersistentId() == null) {
+			Ebean.save(inAisle);
+			privateBroadcastAdd(inAisle);
+		} else {
+			Ebean.save(inAisle);
+			privateBroadcastUpdate(inAisle);
+		}
+		if (mUseDAOCache) {
+			if (mAisleCacheMap == null) {
+				initAisleCacheMap();
+			}
+			mAisleCacheMap.put(inAisle.getPersistentId(), inAisle);
+		}
+	}
+
+	/* --------------------------------------------------------------------------
+	 * (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.dao.ISystemDAO#deleteAisle(com.gadgetworks.codeshelf.model.persist.Aisle)
+	 */
+	public void deleteAisle(Aisle inAisle) {
+		if (mUseDAOCache) {
+			if (mAisleCacheMap == null) {
+				initAisleCacheMap();
+			}
+			mAisleCacheMap.remove(inAisle.getPersistentId());
+		}
+		Ebean.delete(inAisle);
+		privateBroadcastDelete(inAisle);
+	}
+
+	/* --------------------------------------------------------------------------
+	 * (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.dao.ISystemDAO#getPersistentProperties()
+	 */
+	public Collection<Aisle> getAisles() {
+		if (!mUseDAOCache) {
+			Query<Aisle> query = Ebean.createQuery(Aisle.class);
+			query = query.setUseCache(true);
+			return query.findList();
+		} else {
+			if (mAisleCacheMap == null) {
+				initAisleCacheMap();
+			}
+			// Use the accounts cache.
+			return mAisleCacheMap.values();
 		}
 	}
 

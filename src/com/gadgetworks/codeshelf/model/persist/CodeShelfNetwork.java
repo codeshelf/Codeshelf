@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfNetwork.java,v 1.7 2011/02/05 01:41:56 jeffw Exp $
+ *  $Id: CodeShelfNetwork.java,v 1.8 2011/12/22 11:46:32 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -39,22 +39,22 @@ public class CodeShelfNetwork extends PersistABC {
 	private static final long	serialVersionUID	= 3001609308065821464L;
 
 	// The network ID.
-	@Column(nullable = false)
-	private byte[]				mId;
+	@Column(name="networkId", nullable = false)
+	private byte[]				mNetworkId;
 	// The network description.
-	@Column(nullable = false)
+	@Column(name="description", nullable = false)
 	private String				mDescription;
 	// Active/Inactive network
-	@Column(nullable = false)
+	@Column(name="isActive", nullable = false)
 	private boolean				mIsActive;
 	// The network ID.
-	@Column(nullable = false)
+	@Column(name="gatewayAddr", nullable = false)
 	private byte[]				mGatewayAddr;
 	// The gateway URL.
-	@Column(nullable = false)
+	@Column(name="gatewayUrl", nullable = false)
 	private String				mGatewayUrl;
 	// For a network this is a list of all of the control groups that belong in the set.
-	@Column(nullable = false)
+	@Column(name="controlGroups", nullable = false)
 	@OneToMany(mappedBy = "mParentCodeShelfNetwork")
 	private List<ControlGroup>	mControlGroups		= new ArrayList<ControlGroup>();
 
@@ -64,7 +64,7 @@ public class CodeShelfNetwork extends PersistABC {
 	private IWirelessInterface	mWirelessInterface;
 
 	public CodeShelfNetwork() {
-		mId = new byte[NetworkId.NETWORK_ID_BYTES];
+		mNetworkId = new byte[NetworkId.NETWORK_ID_BYTES];
 		mDescription = "";
 		mGatewayAddr = new byte[NetAddress.NET_ADDRESS_BYTES];
 		mGatewayUrl = "";
@@ -76,12 +76,12 @@ public class CodeShelfNetwork extends PersistABC {
 		return getId().toString() + " " + mDescription;
 	}
 
-	public final NetworkId getId() {
-		return new NetworkId(mId);
+	public final NetworkId getNetworkId() {
+		return new NetworkId(mNetworkId);
 	}
 
-	public final void setId(NetworkId inNetworkId) {
-		mId = inNetworkId.getParamValueAsByteArray();
+	public final void setNetworkId(NetworkId inNetworkId) {
+		mNetworkId = inNetworkId.getParamValueAsByteArray();
 	}
 
 	public final String getDescription() {

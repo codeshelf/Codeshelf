@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PickTag.java,v 1.6 2011/02/05 01:41:56 jeffw Exp $
+ *  $Id: PickTag.java,v 1.7 2011/12/22 11:46:32 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -35,11 +35,11 @@ public class PickTag extends WirelessDevice {
 
 	private static final Log	LOGGER				= LogFactory.getLog(PickTag.class);
 
-	@Column(nullable = false)
+	@Column(name="serialBusPosition", nullable = false)
 	private short				mSerialBusPosition;
-	@Column(nullable = false)
 	@ManyToOne
-	private ControlGroup		mParentControlGroup;
+	@Column(name="parentControlGroup", nullable = false)
+	private ControlGroup		parentControlGroup;
 
 	public PickTag() {
 		super();
@@ -63,14 +63,14 @@ public class PickTag extends WirelessDevice {
 
 	public final ControlGroup getParentControlGroup() {
 		// Yes, this is weird, but we MUST always return the same instance of these persistent objects.
-		if (mParentControlGroup != null) {
-			mParentControlGroup = Util.getSystemDAO().loadControlGroup(mParentControlGroup.getPersistentId());
+		if (parentControlGroup != null) {
+			parentControlGroup = Util.getSystemDAO().loadControlGroup(parentControlGroup.getPersistentId());
 		}
-		return mParentControlGroup;
+		return parentControlGroup;
 	}
 
 	public final void setParentControlGroup(ControlGroup inControlGroup) {
-		mParentControlGroup = inControlGroup;
+		parentControlGroup = inControlGroup;
 	}
 
 	/* --------------------------------------------------------------------------

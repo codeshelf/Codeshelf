@@ -1,10 +1,11 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PersistentProperty.java,v 1.3 2011/01/22 07:58:31 jeffw Exp $
+ *  $Id: PersistentProperty.java,v 1.4 2011/12/22 11:46:32 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 
 // --------------------------------------------------------------------------
@@ -30,26 +31,18 @@ public class PersistentProperty extends PersistABC {
 	public static final String	ACTIVEMQ_JMS_PORTNUM		= "ACTMQJMS";
 	public static final String	ACTIVEMQ_STOMP_PORTNUM		= "ACTMQSTM";
 
-	private String				mPropertyId;
+	@Column(name = "defaultValueStr", nullable = false)
 	private String				mDefaultValueStr;
+	@Column(name = "currentValueStr", nullable = false)
 	private String				mCurrentValueStr;
 
 	public PersistentProperty() {
-		mPropertyId = "";
 		mDefaultValueStr = "";
 		mCurrentValueStr = "";
 	}
 
 	public String toString() {
-		return mPropertyId + "val: " + getCurrentValueAsStr() + " (default: " + getDefaultValueAsStr() + ")";
-	}
-
-	public String getId() {
-		return mPropertyId;
-	}
-
-	public void setId(String inPropertyId) {
-		mPropertyId = inPropertyId;
+		return getId() + "val: " + getCurrentValueAsStr() + " (default: " + getDefaultValueAsStr() + ")";
 	}
 
 	// Default value methods.

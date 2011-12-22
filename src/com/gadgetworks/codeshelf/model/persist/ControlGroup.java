@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ControlGroup.java,v 1.10 2011/02/15 02:39:46 jeffw Exp $
+ *  $Id: ControlGroup.java,v 1.11 2011/12/22 11:46:32 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -35,26 +35,26 @@ public class ControlGroup extends PersistABC {
 	private static final long		serialVersionUID	= -4923129546531851147L;
 
 	// The owning CodeShelf network.
-	@Column(nullable = false)
+	@Column(name="parentCodeShelfNetwork", nullable = false)
 	@ManyToOne
 	private CodeShelfNetwork		mParentCodeShelfNetwork;
 	// The control group ID
-	@Column(nullable = false)
-	private byte[]					mId;
+	@Column(name="netGroupId", nullable = false)
+	private byte[]					mNetGroupId;
 	// The control group description.
-	@Column(nullable = false)
+	@Column(name="description", nullable = false)
 	private String					mDescription;
 	// Interface port number
-	@Column(nullable = false)
+	@Column(name="interfacePortNum", nullable = false)
 	private short					mInterfacePortNum;
 	// Active/Inactive rule
-	@Column(nullable = false)
+	@Column(name="isActive", nullable = false)
 	private boolean					mIsActive;
 	// Active/Inactive rule
-	@Column(nullable = false)
+	@Column(name="tagProtocolEnum", nullable = false)
 	private TagProtocolEnum			mTagProtocolEnum;
 	// For a control group this is a list of all of the pick tags that belong in the set.
-	@OneToMany(mappedBy = "mParentControlGroup")
+	@OneToMany(mappedBy = "parentControlGroup")
 	private List<PickTag>			mPickTags			= new ArrayList<PickTag>();
 
 	@Transient()
@@ -62,7 +62,7 @@ public class ControlGroup extends PersistABC {
 
 	public ControlGroup() {
 		mParentCodeShelfNetwork = null;
-		mId = new byte[NetGroup.NET_GROUP_BYTES];
+		mNetGroupId = new byte[NetGroup.NET_GROUP_BYTES];
 		mDescription = "";
 		mIsActive = true;
 		mTagProtocolEnum = TagProtocolEnum.ATOP;
@@ -84,12 +84,12 @@ public class ControlGroup extends PersistABC {
 		mParentCodeShelfNetwork = inCodeShelfNetwork;
 	}
 
-	public final NetGroup getId() {
-		return new NetGroup(mId);
+	public final NetGroup getNetGroupId() {
+		return new NetGroup(mNetGroupId);
 	}
 
-	public final void setId(NetGroup inId) {
-		mId = inId.getParamValueAsByteArray();
+	public final void setNetGrouptId(NetGroup inId) {
+		mNetGroupId = inId.getParamValueAsByteArray();
 	}
 
 	public final String getDescription() {

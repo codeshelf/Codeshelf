@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ISchemaManager.java,v 1.2 2011/01/21 01:12:12 jeffw Exp $
+ *  $Id: ISchemaManager.java,v 1.3 2011/12/22 11:46:31 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -15,8 +15,9 @@ public interface ISchemaManager {
 
 	// Database schema version increases monotonically as there are incompatible changes to the DB schema.	
 	int		DATABASE_VERSION_1		= 1;					// Original DB
+	int		DATABASE_VERSION_2		= 2;					// Facility, Aisle, Bay
 
-	int		DATABASE_VERSION_CUR	= DATABASE_VERSION_1;
+	int		DATABASE_VERSION_CUR	= DATABASE_VERSION_2;
 
 	boolean doesSchemaExist();
 

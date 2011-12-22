@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfEditPage.java,v 1.5 2011/01/25 02:10:59 jeffw Exp $
+ *  $Id: CodeShelfEditPage.java,v 1.6 2011/12/22 11:46:32 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.ui.wizards;
 
@@ -209,7 +209,7 @@ public final class CodeShelfEditPage extends WizardPage implements IDoubleClickL
 		if (mCodeShelfNetwork != null) {
 
 			NetworkId networkId = new NetworkId(mNetworkIdField.getText());
-			mCodeShelfNetwork.setId(networkId);
+			mCodeShelfNetwork.setNetworkId(networkId);
 			mCodeShelfNetwork.setDescription(mDescriptionField.getText());
 			mCodeShelfNetwork.setGatewayAddr(new NetAddress(mGatewayAddrField.getText()));
 			mCodeShelfNetwork.setGatewayUrl(mGatewayUrlField.getText());

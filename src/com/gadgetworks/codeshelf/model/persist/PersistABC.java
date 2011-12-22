@@ -1,12 +1,13 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PersistABC.java,v 1.3 2011/01/24 19:22:23 jeffw Exp $
+ *  $Id: PersistABC.java,v 1.4 2011/12/22 11:46:32 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
 import java.sql.Timestamp;
 
+import javax.persistence.Column;
 import javax.persistence.Id;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.Version;
@@ -24,14 +25,28 @@ import javax.persistence.Version;
 //@Entity
 public abstract class PersistABC {
 
+	// This is the internal GUID for the object.
 	@Id
+	@Column(name = "persistentId", nullable = false)
 	private Integer		mPersistentId;
+	// The domain ID
+	@Column(name = "id", nullable = false)
+	private String		mId;
 	// This is not an application-editable field.
 	// It's for the private use of the ORM transaction system.
 	@Version
+	@Column(name = "version", nullable = false)
 	private Timestamp	mVersion;
 
 	public PersistABC() {
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @return	Return the name of the column used to store the domain key.  Used by EBean to find objects.
+	 */
+	public static String getIdColumnName() {
+		return "mId";
 	}
 
 	// --------------------------------------------------------------------------
@@ -48,6 +63,22 @@ public abstract class PersistABC {
 	 */
 	public final void setPersistentId(Integer inPersistentId) {
 		mPersistentId = inPersistentId;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 *  @return
+	 */
+	public final String getId() {
+		return mId;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 *  @param inPersistentID
+	 */
+	public final void setId(String inId) {
+		mId = inId;
 	}
 
 	// --------------------------------------------------------------------------
@@ -89,6 +120,10 @@ public abstract class PersistABC {
 	 * @see java.lang.Object#hashCode()
 	 */
 	public final int hashCode() {
-		return mPersistentId.hashCode();
+		if (mPersistentId != null) {
+			return mPersistentId.hashCode();
+		} else {
+			return 0;
+		}
 	}
 }

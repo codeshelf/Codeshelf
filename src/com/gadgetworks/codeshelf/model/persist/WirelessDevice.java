@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WirelessDevice.java,v 1.5 2011/01/25 02:10:59 jeffw Exp $
+ *  $Id: WirelessDevice.java,v 1.6 2011/12/22 11:46:32 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -54,20 +54,25 @@ public class WirelessDevice extends PersistABC implements INetworkDevice {
 
 	private static final Log		LOGGER				= LogFactory.getLog(WirelessDevice.class);
 
-	@Column(nullable = false)
+	@Column(name="macAddress", nullable = false)
 	private byte[]					mMacAddress;
-	@Column(nullable = false)
+	@Column(name="publicKey", nullable = false)
 	private String					mPublicKey;
 	// The description.
+	@Column(name="description")
 	private String					mDescription;
 	// The network address last assigned to this wireless device.
+	@Column(name="networkAddress")
 	private byte[]					mNetworkAddress;
 	// The last seen battery level.
+	@Column(name="lastBatteryLevel")
 	private short					mLastBatteryLevel;
 	//@Transient
 	@Enumerated(value = EnumType.STRING)
+	@Column(name="networkDeviceStatus")
 	private NetworkDeviceStateEnum	mNetworkDeviceStatus;
 	//@Transient
+	@Column(name="lastContactTime")
 	private Long					mLastContactTime;
 
 	@Transient
