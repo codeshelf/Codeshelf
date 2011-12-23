@@ -1,12 +1,14 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PersistentProperty.java,v 1.4 2011/12/22 11:46:32 jeffw Exp $
+ *  $Id: PersistentProperty.java,v 1.5 2011/12/23 23:21:32 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+
+import lombok.Data;
 
 // --------------------------------------------------------------------------
 /**
@@ -32,123 +34,123 @@ public class PersistentProperty extends PersistABC {
 	public static final String	ACTIVEMQ_STOMP_PORTNUM		= "ACTMQSTM";
 
 	@Column(name = "defaultValueStr", nullable = false)
-	private String				mDefaultValueStr;
+	private String				defaultValueStr;
 	@Column(name = "currentValueStr", nullable = false)
-	private String				mCurrentValueStr;
+	private String				currentValueStr;
 
 	public PersistentProperty() {
-		mDefaultValueStr = "";
-		mCurrentValueStr = "";
+		defaultValueStr = "";
+		currentValueStr = "";
 	}
 
-	public String toString() {
+	public final String toString() {
 		return getId() + "val: " + getCurrentValueAsStr() + " (default: " + getDefaultValueAsStr() + ")";
 	}
 
 	// Default value methods.
-	public String getDefaultValueAsStr() {
-		return mDefaultValueStr;
+	public final String getDefaultValueAsStr() {
+		return defaultValueStr;
 	}
 
-	public void setDefaultValueAsStr(String inValueStr) {
-		mDefaultValueStr = inValueStr;
+	public final void setDefaultValueAsStr(String inValueStr) {
+		defaultValueStr = inValueStr;
 	}
 
-	public void setDefaultValueAsBoolean(boolean inBoolean) {
-		mDefaultValueStr = Boolean.toString(inBoolean);
+	public final void setDefaultValueAsBoolean(boolean inBoolean) {
+		defaultValueStr = Boolean.toString(inBoolean);
 	}
 
-	public boolean getDefaultValueAsBoolean() {
-		return Boolean.parseBoolean(mDefaultValueStr);
+	public final boolean getDefaultValueAsBoolean() {
+		return Boolean.parseBoolean(defaultValueStr);
 	}
 
-	public void setDefaultValueAsInt(int inInt) {
-		mDefaultValueStr = Integer.toString(inInt);
+	public final void setDefaultValueAsInt(int inInt) {
+		defaultValueStr = Integer.toString(inInt);
 	}
 
-	public int getDefaultValueAsInt() {
-		return Integer.parseInt(mDefaultValueStr);
+	public final int getDefaultValueAsInt() {
+		return Integer.parseInt(defaultValueStr);
 	}
 
-	public void setDefaultValueAsLong(long inLong) {
-		mDefaultValueStr = Long.toString(inLong);
+	public final void setDefaultValueAsLong(long inLong) {
+		defaultValueStr = Long.toString(inLong);
 	}
 
-	public long getDefaultValueAsLong() {
-		return Long.parseLong(mDefaultValueStr);
+	public final long getDefaultValueAsLong() {
+		return Long.parseLong(defaultValueStr);
 	}
 
-	public void setDefaultValueAsFloat(float inFloat) {
-		mDefaultValueStr = Float.toString(inFloat);
+	public final void setDefaultValueAsFloat(float inFloat) {
+		defaultValueStr = Float.toString(inFloat);
 	}
 
-	public float getDefaultValueAsFloat() {
-		return Float.parseFloat(mDefaultValueStr);
+	public final float getDefaultValueAsFloat() {
+		return Float.parseFloat(defaultValueStr);
 	}
 
-	public void setDefaultValueAsDouble(double inDouble) {
-		mDefaultValueStr = Double.toString(inDouble);
+	public final void setDefaultValueAsDouble(double inDouble) {
+		defaultValueStr = Double.toString(inDouble);
 	}
 
-	public double getDefaultValueAsDouble() {
-		return Double.parseDouble(mDefaultValueStr);
+	public final double getDefaultValueAsDouble() {
+		return Double.parseDouble(defaultValueStr);
 	}
 
 	// Current value methods.
-	public String getCurrentValueAsStr() {
-		return mCurrentValueStr;
+	public final String getCurrentValueAsStr() {
+		return currentValueStr;
 	}
 
-	public void setCurrentValueAsStr(String inValueStr) {
-		mCurrentValueStr = inValueStr;
+	public final void setCurrentValueAsStr(String inValueStr) {
+		currentValueStr = inValueStr;
 	}
 
-	public void setCurrentValueAsBoolean(boolean inBoolean) {
-		mCurrentValueStr = Boolean.toString(inBoolean);
+	public final void setCurrentValueAsBoolean(boolean inBoolean) {
+		currentValueStr = Boolean.toString(inBoolean);
 	}
 
-	public boolean getCurrentValueAsBoolean() {
-		return Boolean.parseBoolean(mCurrentValueStr);
+	public final boolean getCurrentValueAsBoolean() {
+		return Boolean.parseBoolean(currentValueStr);
 	}
 
-	public void setCurrentValueAsInt(int inInt) {
-		mCurrentValueStr = Integer.toString(inInt);
+	public final void setCurrentValueAsInt(int inInt) {
+		currentValueStr = Integer.toString(inInt);
 	}
 
-	public int getCurrentValueAsInt() {
-		if (mCurrentValueStr.length() == 0)
-			mCurrentValueStr = "0";
-		return Integer.parseInt(mCurrentValueStr);
+	public final int getCurrentValueAsInt() {
+		if (currentValueStr.length() == 0)
+			currentValueStr = "0";
+		return Integer.parseInt(currentValueStr);
 	}
 
-	public void setCurrentValueAsLong(long inLong) {
-		mCurrentValueStr = Long.toString(inLong);
+	public final void setCurrentValueAsLong(long inLong) {
+		currentValueStr = Long.toString(inLong);
 	}
 
-	public long getCurrentValueAsLong() {
-		if (mCurrentValueStr.length() == 0)
-			mCurrentValueStr = "0";
-		return Long.parseLong(mCurrentValueStr);
+	public final long getCurrentValueAsLong() {
+		if (currentValueStr.length() == 0)
+			currentValueStr = "0";
+		return Long.parseLong(currentValueStr);
 	}
 
-	public void setCurrentValueAsFloat(float inFloat) {
-		mCurrentValueStr = Float.toString(inFloat);
+	public final void setCurrentValueAsFloat(float inFloat) {
+		currentValueStr = Float.toString(inFloat);
 	}
 
-	public float getCurrentValueAsFloat() {
-		if (mCurrentValueStr.length() == 0)
-			mCurrentValueStr = "0.0";
-		return Float.parseFloat(mCurrentValueStr);
+	public final float getCurrentValueAsFloat() {
+		if (currentValueStr.length() == 0)
+			currentValueStr = "0.0";
+		return Float.parseFloat(currentValueStr);
 	}
 
-	public void setCurrentValueAsDouble(double inDouble) {
-		mCurrentValueStr = Double.toString(inDouble);
+	public final void setCurrentValueAsDouble(double inDouble) {
+		currentValueStr = Double.toString(inDouble);
 	}
 
-	public double getCurrentValueAsDouble() {
-		if (mCurrentValueStr.length() == 0)
-			mCurrentValueStr = "0.0";
-		return Double.parseDouble(mCurrentValueStr);
+	public final double getCurrentValueAsDouble() {
+		if (currentValueStr.length() == 0)
+			currentValueStr = "0.0";
+		return Double.parseDouble(currentValueStr);
 	}
 
 }

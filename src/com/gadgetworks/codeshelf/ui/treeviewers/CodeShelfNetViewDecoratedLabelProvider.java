@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfNetViewDecoratedLabelProvider.java,v 1.5 2011/01/25 02:10:59 jeffw Exp $
+ *  $Id: CodeShelfNetViewDecoratedLabelProvider.java,v 1.6 2011/12/23 23:21:32 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.ui.treeviewers;
@@ -136,12 +136,12 @@ public final class CodeShelfNetViewDecoratedLabelProvider extends DecoratingLabe
 
 		if (inElement instanceof CodeShelfNetwork) {
 			CodeShelfNetwork codeShelfNetwork = (CodeShelfNetwork) inElement;
-			if (!codeShelfNetwork.getIsConnected()) {
+			if (!codeShelfNetwork.isConnected()) {
 				color = Display.getCurrent().getSystemColor(SWT.COLOR_DARK_GRAY);
 			}
 		} else if (inElement instanceof ControlGroup) {
 			ControlGroup controlGroup = (ControlGroup) inElement;
-			if (!controlGroup.getIsActive()) {
+			if (!controlGroup.isActive()) {
 				color = Display.getCurrent().getSystemColor(SWT.COLOR_GRAY);
 			}
 		} else if (inElement instanceof PickTag) {

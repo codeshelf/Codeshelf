@@ -98,7 +98,7 @@ public final class SnapInterface implements IWirelessInterface {
 				Boolean connected = (Boolean) xmlRpcResult;
 				if (connected) {
 					mIsStarted = true;
-					mCodeShelfNetwork.setIsConnected(true);
+					mCodeShelfNetwork.setConnected(true);
 
 					// Start the interfaces for the control groups.
 					for (ControlGroup controlGroup : mCodeShelfNetwork.getControlGroups()) {
@@ -158,7 +158,7 @@ public final class SnapInterface implements IWirelessInterface {
 			}
 			mIsStarted = false;
 			mOutboundXmlRpcClient = null;
-			mCodeShelfNetwork.setIsConnected(false);
+			mCodeShelfNetwork.setConnected(false);
 			Util.getSystemDAO().pushNonPersistentUpdates(mCodeShelfNetwork);
 
 			for (ControlGroup controlGroup : mCodeShelfNetwork.getControlGroups()) {

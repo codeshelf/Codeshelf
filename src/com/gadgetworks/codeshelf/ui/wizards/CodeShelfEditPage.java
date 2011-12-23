@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfEditPage.java,v 1.7 2011/12/22 12:43:04 jeffw Exp $
+ *  $Id: CodeShelfEditPage.java,v 1.8 2011/12/23 23:21:32 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.ui.wizards;
 
@@ -165,7 +165,7 @@ public final class CodeShelfEditPage extends WizardPage implements IDoubleClickL
 
 			// Add the "is active" button.
 			mIsActiveButton = new Button(mEditComposite, SWT.CHECK);
-			mIsActiveButton.setSelection(mCodeShelfNetwork.getIsActive());
+			mIsActiveButton.setSelection(mCodeShelfNetwork.isActive());
 			mIsActiveButton.setText(LocaleUtils.getStr("codeshelfnet_wizard.edit_page.isactive"));
 			GridData gridData = new GridData(SWT.LEFT, SWT.TOP, false, false, 10, 1);
 			mIsActiveButton.setLayoutData(gridData);
@@ -214,7 +214,7 @@ public final class CodeShelfEditPage extends WizardPage implements IDoubleClickL
 			mCodeShelfNetwork.setDescription(mDescriptionField.getText());
 			mCodeShelfNetwork.setGatewayAddr(new NetAddress(mGatewayAddrField.getText()));
 			mCodeShelfNetwork.setGatewayUrl(mGatewayUrlField.getText());
-			mCodeShelfNetwork.setIsActive(mIsActiveButton.getSelection());
+			mCodeShelfNetwork.setActive(mIsActiveButton.getSelection());
 
 			// Save the CodeShelf Network.
 			try {

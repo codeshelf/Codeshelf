@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PickTag.java,v 1.7 2011/12/22 11:46:32 jeffw Exp $
+ *  $Id: PickTag.java,v 1.8 2011/12/23 23:21:32 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -10,6 +10,10 @@ import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+
+import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -35,31 +39,33 @@ public class PickTag extends WirelessDevice {
 
 	private static final Log	LOGGER				= LogFactory.getLog(PickTag.class);
 
-	@Column(name="serialBusPosition", nullable = false)
-	private short				mSerialBusPosition;
+	@Getter
+	@Setter
+	@Column(nullable = false)
+	private short				serialBusPosition;
 	@ManyToOne
-	@Column(name="parentControlGroup", nullable = false)
+	@Column(nullable = false)
 	private ControlGroup		parentControlGroup;
 
 	public PickTag() {
 		super();
 	}
 
-	// --------------------------------------------------------------------------
-	/* (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
-	public final String toString() {
-		return "PickTag: " + getMacAddress() + " " + getDescription();
-	}
-
-	public final short getSerialBusPosition() {
-		return mSerialBusPosition;
-	}
-
-	public final void setSerialBusPosition(short inSerialBusPosition) {
-		mSerialBusPosition = inSerialBusPosition;
-	}
+	//	// --------------------------------------------------------------------------
+	//	/* (non-Javadoc)
+	//	 * @see java.lang.Object#toString()
+	//	 */
+	//	public final String toString() {
+	//		return "PickTag: " + getMacAddress() + " " + getDescription();
+	//	}
+	//
+	//	public final short getSerialBusPosition() {
+	//		return mSerialBusPosition;
+	//	}
+	//
+	//	public final void setSerialBusPosition(short inSerialBusPosition) {
+	//		mSerialBusPosition = inSerialBusPosition;
+	//	}
 
 	public final ControlGroup getParentControlGroup() {
 		// Yes, this is weird, but we MUST always return the same instance of these persistent objects.

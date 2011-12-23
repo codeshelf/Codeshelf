@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ControlGroupEditPage.java,v 1.5 2011/12/22 12:43:04 jeffw Exp $
+ *  $Id: ControlGroupEditPage.java,v 1.6 2011/12/23 23:21:32 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.ui.wizards;
 
@@ -156,7 +156,7 @@ public final class ControlGroupEditPage extends WizardPage implements IDoubleCli
 
 			// Add the "is active" button.
 			mIsActiveButton = new Button(mEditComposite, SWT.CHECK);
-			mIsActiveButton.setSelection(mControlGroup.getIsActive());
+			mIsActiveButton.setSelection(mControlGroup.isActive());
 			mIsActiveButton.setText(LocaleUtils.getStr("controlgroup_wizard.edit_page.isactive"));
 			GridData gridData = new GridData(SWT.LEFT, SWT.TOP, false, false, 10, 1);
 			mIsActiveButton.setLayoutData(gridData);
@@ -205,7 +205,7 @@ public final class ControlGroupEditPage extends WizardPage implements IDoubleCli
 			mControlGroup.setControlGroupId(netGroup);
 			mControlGroup.setDescription(mDescriptionField.getText());
 			mControlGroup.setInterfacePortNum(Short.parseShort(mInterfacePortNumField.getText()));
-			mControlGroup.setIsActive(mIsActiveButton.getSelection());
+			mControlGroup.setActive(mIsActiveButton.getSelection());
 
 			// Save the CodeShelf Network.
 			try {

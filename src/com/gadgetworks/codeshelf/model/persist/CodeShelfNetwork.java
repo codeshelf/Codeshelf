@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfNetwork.java,v 1.8 2011/12/22 11:46:32 jeffw Exp $
+ *  $Id: CodeShelfNetwork.java,v 1.9 2011/12/23 23:21:32 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -13,6 +13,9 @@ import javax.persistence.Entity;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.Transient;
+
+import lombok.Getter;
+import lombok.Setter;
 
 import com.gadgetworks.codeshelf.application.Util;
 import com.gadgetworks.codeshelf.controller.IWirelessInterface;
@@ -39,105 +42,115 @@ public class CodeShelfNetwork extends PersistABC {
 	private static final long	serialVersionUID	= 3001609308065821464L;
 
 	// The network ID.
-	@Column(name="networkId", nullable = false)
-	private byte[]				mNetworkId;
+	@Column(nullable = false)
+	private byte[]				networkId;
 	// The network description.
-	@Column(name="description", nullable = false)
-	private String				mDescription;
+	@Getter
+	@Setter
+	@Column(nullable = false)
+	private String				description;
 	// Active/Inactive network
-	@Column(name="isActive", nullable = false)
-	private boolean				mIsActive;
+	@Getter
+	@Setter
+	@Column(nullable = false)
+	private boolean				isActive;
 	// The network ID.
-	@Column(name="gatewayAddr", nullable = false)
-	private byte[]				mGatewayAddr;
+	@Column(nullable = false)
+	private byte[]				gatewayAddr;
 	// The gateway URL.
-	@Column(name="gatewayUrl", nullable = false)
-	private String				mGatewayUrl;
+	@Getter
+	@Setter
+	@Column(nullable = false)
+	private String				gatewayUrl;
 	// For a network this is a list of all of the control groups that belong in the set.
-	@Column(name="controlGroups", nullable = false)
-	@OneToMany(mappedBy = "mParentCodeShelfNetwork")
-	private List<ControlGroup>	mControlGroups		= new ArrayList<ControlGroup>();
+	@Column(nullable = false)
+	@OneToMany(mappedBy = "parentCodeShelfNetwork")
+	private List<ControlGroup>	controlGroups		= new ArrayList<ControlGroup>();
 
-	@Transient()
-	private boolean				mIsConnected;
-	@Transient()
-	private IWirelessInterface	mWirelessInterface;
+	@Getter
+	@Setter
+	@Transient
+	private boolean				isConnected;
+	@Getter
+	@Setter
+	@Transient
+	private IWirelessInterface	wirelessInterface;
 
 	public CodeShelfNetwork() {
-		mNetworkId = new byte[NetworkId.NETWORK_ID_BYTES];
-		mDescription = "";
-		mGatewayAddr = new byte[NetAddress.NET_ADDRESS_BYTES];
-		mGatewayUrl = "";
-		mIsActive = true;
-		mIsConnected = false;
+		networkId = new byte[NetworkId.NETWORK_ID_BYTES];
+		description = "";
+		gatewayAddr = new byte[NetAddress.NET_ADDRESS_BYTES];
+		gatewayUrl = "";
+		isActive = true;
+		isConnected = false;
 	}
 
-	public final String toString() {
-		return getId().toString() + " " + mDescription;
-	}
+//	public final String toString() {
+//		return getId().toString() + " " + mDescription;
+//	}
 
 	public final NetworkId getNetworkId() {
-		return new NetworkId(mNetworkId);
+		return new NetworkId(networkId);
 	}
 
 	public final void setNetworkId(NetworkId inNetworkId) {
-		mNetworkId = inNetworkId.getParamValueAsByteArray();
+		networkId = inNetworkId.getParamValueAsByteArray();
 	}
 
-	public final String getDescription() {
-		return mDescription;
-	}
-
-	public final void setDescription(String inDescription) {
-		mDescription = inDescription;
-	}
-
-	public final boolean getIsActive() {
-		return mIsActive;
-	}
-
-	public final void setIsActive(boolean inIsActive) {
-		mIsActive = inIsActive;
-	}
-
-	public final boolean getIsConnected() {
-		return mIsConnected;
-	}
-
-	public final void setIsConnected(boolean inIsConnected) {
-		mIsConnected = inIsConnected;
-	}
-
-	public final IWirelessInterface getWirelessInterface() {
-		return mWirelessInterface;
-	}
-
-	public final void setWirelessInterface(IWirelessInterface inGatewayInterface) {
-		mWirelessInterface = inGatewayInterface;
-	}
+//	public final String getDescription() {
+//		return mDescription;
+//	}
+//
+//	public final void setDescription(String inDescription) {
+//		mDescription = inDescription;
+//	}
+//
+//	public final boolean getIsActive() {
+//		return mIsActive;
+//	}
+//
+//	public final void setIsActive(boolean inIsActive) {
+//		mIsActive = inIsActive;
+//	}
+//
+//	public final boolean getIsConnected() {
+//		return mIsConnected;
+//	}
+//
+//	public final void setIsConnected(boolean inIsConnected) {
+//		mIsConnected = inIsConnected;
+//	}
+//
+//	public final IWirelessInterface getWirelessInterface() {
+//		return mWirelessInterface;
+//	}
+//
+//	public final void setWirelessInterface(IWirelessInterface inGatewayInterface) {
+//		mWirelessInterface = inGatewayInterface;
+//	}
 
 	public final NetAddress getGatewayAddr() {
-		return new NetAddress(mGatewayAddr);
+		return new NetAddress(gatewayAddr);
 	}
 
 	public final void setGatewayAddr(NetAddress inNetAddress) {
-		mGatewayAddr = inNetAddress.getParamValueAsByteArray();
+		gatewayAddr = inNetAddress.getParamValueAsByteArray();
 	}
 
-	public final String getGatewayUrl() {
-		return mGatewayUrl;
-	}
-
-	public final void setGatewayUrl(String inUrlString) {
-		mGatewayUrl = inUrlString;
-	}
+//	public final String getGatewayUrl() {
+//		return mGatewayUrl;
+//	}
+//
+//	public final void setGatewayUrl(String inUrlString) {
+//		mGatewayUrl = inUrlString;
+//	}
 
 	// We always need to return the object cached in the DAO.
 	public final List<ControlGroup> getControlGroups() {
 		if (ISystemDAO.USE_CACHE) {
 			List<ControlGroup> result = new ArrayList<ControlGroup>();
 			if (!Util.getSystemDAO().isObjectPersisted(this)) {
-				result = mControlGroups;
+				result = controlGroups;
 			} else {
 				for (ControlGroup controlGroup : Util.getSystemDAO().getControlGroups()) {
 					if (controlGroup.getParentCodeShelfNetwork().equals(this)) {
@@ -147,17 +160,17 @@ public class CodeShelfNetwork extends PersistABC {
 			}
 			return result;
 		} else {
-			return mControlGroups;
+			return controlGroups;
 		}
 	}
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void addControlGroup(ControlGroup inControlGroup) {
-		mControlGroups.add(inControlGroup);
+		controlGroups.add(inControlGroup);
 	}
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void removeControlGroup(ControlGroup inControlGroup) {
-		mControlGroups.remove(inControlGroup);
+		controlGroups.remove(inControlGroup);
 	}
 }

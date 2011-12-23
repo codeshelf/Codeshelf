@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Aisle.java,v 1.1 2011/12/22 11:46:32 jeffw Exp $
+ *  $Id: Aisle.java,v 1.2 2011/12/23 23:21:32 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -9,6 +9,9 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+
+import lombok.Getter;
+import lombok.Setter;
 
 import com.gadgetworks.codeshelf.application.Util;
 
@@ -33,25 +36,25 @@ public class Aisle extends PersistABC {
 	// The owning CodeShelf network.
 	@Column(name = "parentFacility", nullable = false)
 	@ManyToOne
-	private Facility			mParentFacility;
+	private Facility			parentFacility;
 
 	public Aisle() {
-		mParentFacility = null;
+		parentFacility = null;
 	}
 
-	public final String toString() {
-		return getId();
-	}
+	//	public final String toString() {
+	//		return getId();
+	//	}
 
 	public final Facility getParentFacility() {
 		// Yes, this is weird, but we MUST always return the same instance of these persistent objects.
-		if (mParentFacility != null) {
-			mParentFacility = Util.getSystemDAO().loadFacility(mParentFacility.getPersistentId());
+		if (parentFacility != null) {
+			parentFacility = Util.getSystemDAO().loadFacility(parentFacility.getPersistentId());
 		}
-		return mParentFacility;
+		return parentFacility;
 	}
 
 	public final void setParentFacility(Facility inParentFacility) {
-		mParentFacility = inParentFacility;
+		parentFacility = inParentFacility;
 	}
 }
