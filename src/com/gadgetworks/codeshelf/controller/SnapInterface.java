@@ -26,6 +26,7 @@ import com.gadgetworks.codeshelf.model.TagProtocolEnum;
 import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork;
 import com.gadgetworks.codeshelf.model.persist.ControlGroup;
 import com.gadgetworks.codeshelf.model.persist.PickTag;
+import com.gadgetworks.codeshelf.model.persist.WirelessDevice;
 import com.gadgetworks.codeshelf.server.tags.AtopControllerConnection;
 import com.gadgetworks.codeshelf.server.tags.IControllerConnection;
 import com.gadgetworks.codeshelf.server.tags.SnapXmlRpcNilTypeSupport;
@@ -127,7 +128,7 @@ public final class SnapInterface implements IWirelessInterface {
 		}
 
 		// Push out the changes.
-		Util.getSystemDAO().pushNonPersistentUpdates(mCodeShelfNetwork);
+		CodeShelfNetwork.DAO.pushNonPersistentUpdates(mCodeShelfNetwork);
 	}
 
 	// --------------------------------------------------------------------------
@@ -159,7 +160,7 @@ public final class SnapInterface implements IWirelessInterface {
 			mIsStarted = false;
 			mOutboundXmlRpcClient = null;
 			mCodeShelfNetwork.setConnected(false);
-			Util.getSystemDAO().pushNonPersistentUpdates(mCodeShelfNetwork);
+			CodeShelfNetwork.DAO.pushNonPersistentUpdates(mCodeShelfNetwork);
 
 			for (ControlGroup controlGroup : mCodeShelfNetwork.getControlGroups()) {
 				IControllerConnection connection = controlGroup.getControllerConnection();
@@ -325,7 +326,7 @@ public final class SnapInterface implements IWirelessInterface {
 	private ICsCommand createCommand(String inMethodName, NetAddress inNetAddr) {
 		ICsCommand result = null;
 
-		PickTag pickTag = Util.getSystemDAO().findPickTagByNetAddr(inNetAddr);
+		PickTag pickTag = (PickTag) WirelessDevice.DAO.getNetworkDevice(inNetAddr);
 
 		if (inMethodName.equals(CommandIdEnum.CS_ACK_PRESSED.getName())) {
 			result = new CommandCsAckPressed(pickTag);

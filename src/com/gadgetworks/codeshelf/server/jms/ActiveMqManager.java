@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ActiveMqManager.java,v 1.3 2011/01/21 05:12:25 jeffw Exp $
+ *  $Id: ActiveMqManager.java,v 1.4 2011/12/29 09:15:35 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.server.jms;
 
@@ -66,10 +66,10 @@ public final class ActiveMqManager {
 	public static void setupBrokerService() {
 
 		try {
-			PersistentProperty userIDProp = Util.getSystemDAO().findPersistentProperty(PersistentProperty.ACTIVEMQ_USERID);
-			PersistentProperty passwordProp = Util.getSystemDAO().findPersistentProperty(PersistentProperty.ACTIVEMQ_PASSWORD);
-			PersistentProperty jmsProp = Util.getSystemDAO().findPersistentProperty(PersistentProperty.ACTIVEMQ_JMS_PORTNUM);
-			PersistentProperty stompProp = Util.getSystemDAO().findPersistentProperty(PersistentProperty.ACTIVEMQ_STOMP_PORTNUM);
+			PersistentProperty userIDProp = PersistentProperty.DAO.findById(PersistentProperty.ACTIVEMQ_USERID);
+			PersistentProperty passwordProp = PersistentProperty.DAO.findById(PersistentProperty.ACTIVEMQ_PASSWORD);
+			PersistentProperty jmsProp = PersistentProperty.DAO.findById(PersistentProperty.ACTIVEMQ_JMS_PORTNUM);
+			PersistentProperty stompProp = PersistentProperty.DAO.findById(PersistentProperty.ACTIVEMQ_STOMP_PORTNUM);
 			if ((userIDProp != null) && (passwordProp != null) && (stompProp != null)) {
 
 				String userid = userIDProp.getCurrentValueAsStr();
@@ -182,7 +182,7 @@ public final class ActiveMqManager {
 	 */
 	public static void setServerFromSettings() {
 
-		PersistentProperty activeMqProp = Util.getSystemDAO().findPersistentProperty(PersistentProperty.ACTIVEMQ_RUN);
+		PersistentProperty activeMqProp = PersistentProperty.DAO.findById(PersistentProperty.ACTIVEMQ_RUN);
 		boolean shouldRun = activeMqProp.getCurrentValueAsBoolean();
 		if (shouldRun) {
 			if ((mBrokerService == null) || (!mBrokerService.isStarted())) {
@@ -222,9 +222,9 @@ public final class ActiveMqManager {
 			HashMap<String, String> headers = new HashMap<String, String>();
 
 			StompConnection connection = new StompConnection();
-			PersistentProperty userIDProp = Util.getSystemDAO().findPersistentProperty(PersistentProperty.ACTIVEMQ_USERID);
-			PersistentProperty passwordProp = Util.getSystemDAO().findPersistentProperty(PersistentProperty.ACTIVEMQ_PASSWORD);
-			PersistentProperty stompProp = Util.getSystemDAO().findPersistentProperty(PersistentProperty.ACTIVEMQ_STOMP_PORTNUM);
+			PersistentProperty userIDProp = PersistentProperty.DAO.findById(PersistentProperty.ACTIVEMQ_USERID);
+			PersistentProperty passwordProp = PersistentProperty.DAO.findById(PersistentProperty.ACTIVEMQ_PASSWORD);
+			PersistentProperty stompProp = PersistentProperty.DAO.findById(PersistentProperty.ACTIVEMQ_STOMP_PORTNUM);
 			if ((userIDProp != null) && (passwordProp != null) && (stompProp != null)) {
 
 				connection.open(ACTIVEMQ_HOST, stompProp.getCurrentValueAsInt());

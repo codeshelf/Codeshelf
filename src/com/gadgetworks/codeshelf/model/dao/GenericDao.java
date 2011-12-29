@@ -1,21 +1,20 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: GenericDao.java,v 1.1 2011/12/22 11:46:31 jeffw Exp $
+ *  $Id: GenericDao.java,v 1.2 2011/12/29 09:15:35 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.eclipse.swt.widgets.Display;
 
+import com.avaje.ebean.BeanState;
 import com.avaje.ebean.Ebean;
 import com.avaje.ebean.Query;
-import com.gadgetworks.codeshelf.model.persist.Aisle;
 import com.gadgetworks.codeshelf.model.persist.PersistABC;
 
 /**
@@ -24,12 +23,8 @@ import com.gadgetworks.codeshelf.model.persist.PersistABC;
  */
 public class GenericDao<T extends PersistABC> implements IGenericDao<T> {
 
-	private static List<IDAOListener>	mListeners		= new ArrayList<IDAOListener>();
-
-	private Boolean						mUseDaoCache	= true;
-	private Map<Integer, T>				mCacheMap;
-
-	private Class<T>					mClass;
+	protected Map<Long, T>	mCacheMap;
+	protected Class<T>		mClass;
 
 	public GenericDao(final Class<T> inClass) {
 		mClass = inClass;
@@ -43,9 +38,7 @@ public class GenericDao<T extends PersistABC> implements IGenericDao<T> {
 		Display display = Display.getDefault();
 		display.asyncExec(new Runnable() {
 			public void run() {
-				for (IDAOListener daoListener : mListeners) {
-					daoListener.objectAdded(inObject);
-				}
+				DaoManager.gDaoManager.objectAdded(inObject);
 			}
 		});
 
@@ -59,9 +52,7 @@ public class GenericDao<T extends PersistABC> implements IGenericDao<T> {
 		Display display = Display.getDefault();
 		display.asyncExec(new Runnable() {
 			public void run() {
-				for (IDAOListener daoListener : mListeners) {
-					daoListener.objectUpdated(inObject);
-				}
+				DaoManager.gDaoManager.objectUpdated(inObject);
 			}
 		});
 	}
@@ -74,41 +65,17 @@ public class GenericDao<T extends PersistABC> implements IGenericDao<T> {
 		Display display = Display.getDefault();
 		display.asyncExec(new Runnable() {
 			public void run() {
-				for (IDAOListener daoListener : mListeners) {
-					daoListener.objectDeleted(inObject);
-				}
+				DaoManager.gDaoManager.objectDeleted(inObject);
 			}
 		});
 	}
 
-	/*
-	 * --------------------------------------------------------------------------
+	/* --------------------------------------------------------------------------
 	 * (non-Javadoc)
-	 * 
-	 * @see com.gadgetworks.codeshelf.model.dao.ISystemDAO#registerDAOListener(com.gadgetworks.codeshelf.model.dao.IDAOListener)
+	 * @see com.gadgetworks.codeshelf.model.dao.ISystemDAO#pushNonPersistentAccountUpdates(com.gadgetworks.codeshelf.model.persist.Account)
 	 */
-	public void registerDAOListener(IDAOListener inListener) {
-		mListeners.add(inListener);
-	}
-
-	/*
-	 * --------------------------------------------------------------------------
-	 * (non-Javadoc)
-	 * 
-	 * @see com.gadgetworks.codeshelf.model.dao.ISystemDAO#unRegisterDAOListener(com.gadgetworks.codeshelf.model.dao.IDAOListener)
-	 */
-	public void unregisterDAOListener(IDAOListener inListener) {
-		mListeners.remove(inListener);
-	}
-
-	/*
-	 * --------------------------------------------------------------------------
-	 * (non-Javadoc)
-	 * 
-	 * @see com.gadgetworks.codeshelf.model.dao.ISystemDAO#unRegisterDAOListener(com.gadgetworks.codeshelf.model.dao.IDAOListener)
-	 */
-	public void removeDAOListeners() {
-		mListeners.clear();
+	public void pushNonPersistentUpdates(PersistABC inPerstitentObject) {
+		privateBroadcastUpdate(inPerstitentObject);
 	}
 
 	// --------------------------------------------------------------------------
@@ -117,22 +84,39 @@ public class GenericDao<T extends PersistABC> implements IGenericDao<T> {
 	 * The GUI is not stateless (in some cases), so we can't deal with new instances.
 	 * If it were a straight-up webapp this wouldn't be a problem, but a desktop UI contains obj refs.
 	 */
-	private void initCacheMap() {
+	protected void initCacheMap() {
 		Query<T> query = Ebean.createQuery(mClass);
 		query = query.setUseCache(true);
 		Collection<T> daoObjects = query.findList();
-		mCacheMap = new HashMap<Integer, T>();
+		mCacheMap = new HashMap<Long, T>();
 		for (T daoObject : daoObjects) {
 			mCacheMap.put(daoObject.getPersistentId(), daoObject);
 		}
 	}
 
 	// --------------------------------------------------------------------------
+	/**
+	 * @param inDomainObject
+	 * @return
+	 */
+	public final boolean isObjectPersisted(PersistABC inDomainObject) {
+		boolean result = false;
+
+		BeanState state = Ebean.getBeanState(inDomainObject);
+		// If there is a bean state and it's not new then this object was once persisted.
+		if ((state != null) && (!state.isNew())) {
+			result = true;
+		}
+
+		return result;
+	}
+
+	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#loadByPersistentId(java.lang.Integer)
 	 */
-	public T loadByPersistentId(Integer inID) {
-		if (!mUseDaoCache) {
+	public T loadByPersistentId(Long inID) {
+		if (!USE_DAO_CACHE) {
 			return Ebean.find(mClass, inID);
 		} else {
 			if (mCacheMap == null) {
@@ -147,7 +131,7 @@ public class GenericDao<T extends PersistABC> implements IGenericDao<T> {
 	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#findById(java.lang.String)
 	 */
 	public T findById(final String inId) {
-		if (!mUseDaoCache) {
+		if (!USE_DAO_CACHE) {
 			Query<T> query = Ebean.createQuery(mClass);
 			query.where().eq(T.getIdColumnName(), inId);
 			query = query.setUseCache(true);
@@ -170,7 +154,7 @@ public class GenericDao<T extends PersistABC> implements IGenericDao<T> {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#store(java.lang.Object)
 	 */
-	public void store(final T inDomainObject) {
+	public final void store(final T inDomainObject) throws DAOException {
 		if (inDomainObject.getPersistentId() == null) {
 			Ebean.save(inDomainObject);
 			privateBroadcastAdd(inDomainObject);
@@ -178,7 +162,7 @@ public class GenericDao<T extends PersistABC> implements IGenericDao<T> {
 			Ebean.save(inDomainObject);
 			privateBroadcastUpdate(inDomainObject);
 		}
-		if (mUseDaoCache) {
+		if (USE_DAO_CACHE) {
 			if (mCacheMap == null) {
 				initCacheMap();
 			}
@@ -190,8 +174,8 @@ public class GenericDao<T extends PersistABC> implements IGenericDao<T> {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#delete(java.lang.Object)
 	 */
-	public void delete(final T inDomainObject) {
-		if (mUseDaoCache) {
+	public final void delete(final T inDomainObject) throws DAOException {
+		if (USE_DAO_CACHE) {
 			if (mCacheMap == null) {
 				initCacheMap();
 			}
@@ -205,8 +189,8 @@ public class GenericDao<T extends PersistABC> implements IGenericDao<T> {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#getAll()
 	 */
-	public Collection<T> getAll() {
-		if (!mUseDaoCache) {
+	public final Collection<T> getAll() {
+		if (!USE_DAO_CACHE) {
 			Query<T> query = Ebean.createQuery(mClass);
 			query = query.setUseCache(true);
 			return query.findList();

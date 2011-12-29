@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PickTag.java,v 1.8 2011/12/23 23:21:32 jeffw Exp $
+ *  $Id: PickTag.java,v 1.9 2011/12/29 09:15:35 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -11,14 +11,12 @@ import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.gadgetworks.codeshelf.application.Util;
 import com.gadgetworks.codeshelf.command.CommandControlABC;
 
 // --------------------------------------------------------------------------
@@ -67,15 +65,15 @@ public class PickTag extends WirelessDevice {
 	//		mSerialBusPosition = inSerialBusPosition;
 	//	}
 
-	public final ControlGroup getParentControlGroup() {
+	public ControlGroup getParentControlGroup() {
 		// Yes, this is weird, but we MUST always return the same instance of these persistent objects.
 		if (parentControlGroup != null) {
-			parentControlGroup = Util.getSystemDAO().loadControlGroup(parentControlGroup.getPersistentId());
+			parentControlGroup = ControlGroup.DAO.loadByPersistentId(parentControlGroup.getPersistentId());
 		}
 		return parentControlGroup;
 	}
 
-	public final void setParentControlGroup(ControlGroup inControlGroup) {
+	public void setParentControlGroup(ControlGroup inControlGroup) {
 		parentControlGroup = inControlGroup;
 	}
 
@@ -90,7 +88,7 @@ public class PickTag extends WirelessDevice {
 	 * (non-Javadoc)
 	 * @see com.gadgetworks.controller.IControllerListener#buttonPressed(com.gadgetworks.actor.IActor, byte)
 	 */
-	public final void buttonCommandReceived(final byte inButtonNumberPressed, final byte inFunctionType) {
+	public void buttonCommandReceived(final byte inButtonNumberPressed, final byte inFunctionType) {
 
 		LOGGER.debug(this.toString() + ": button " + inButtonNumberPressed);
 

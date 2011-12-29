@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfNetViewContentProvider.java,v 1.1 2011/01/22 01:04:39 jeffw Exp $
+ *  $Id: CodeShelfNetViewContentProvider.java,v 1.2 2011/12/29 09:15:35 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.ui.treeviewers;
@@ -27,7 +27,7 @@ public class CodeShelfNetViewContentProvider implements ITreeContentProvider {
 		Object[] result = new Object[0];
 
 		if (PICKTAGVIEW_ROOT.equals(inElement)) {
-			result = Util.getSystemDAO().getCodeShelfNetworks().toArray();
+			result = CodeShelfNetwork.DAO.getAll().toArray();
 		} else if (inElement instanceof CodeShelfNetwork) {
 			result = ((CodeShelfNetwork) inElement).getControlGroups().toArray();
 		} else if (inElement instanceof ControlGroup) {
@@ -47,7 +47,7 @@ public class CodeShelfNetViewContentProvider implements ITreeContentProvider {
 		Object[] result = null;
 
 		if (inParentElement == PICKTAGVIEW_ROOT) {
-			result = Util.getSystemDAO().getCodeShelfNetworks().toArray();
+			result = CodeShelfNetwork.DAO.getAll().toArray();
 		} else if (inParentElement instanceof CodeShelfNetwork) {
 			result = ((CodeShelfNetwork) inParentElement).getControlGroups().toArray();
 		} else if (inParentElement instanceof ControlGroup) {

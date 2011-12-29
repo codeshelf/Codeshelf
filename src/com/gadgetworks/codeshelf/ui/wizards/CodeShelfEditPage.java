@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfEditPage.java,v 1.8 2011/12/23 23:21:32 jeffw Exp $
+ *  $Id: CodeShelfEditPage.java,v 1.9 2011/12/29 09:15:35 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.ui.wizards;
 
@@ -24,6 +24,7 @@ import com.gadgetworks.codeshelf.application.Util;
 import com.gadgetworks.codeshelf.controller.NetAddress;
 import com.gadgetworks.codeshelf.controller.NetworkId;
 import com.gadgetworks.codeshelf.model.dao.DAOException;
+import com.gadgetworks.codeshelf.model.dao.DaoManager;
 import com.gadgetworks.codeshelf.model.dao.IDAOListener;
 import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork;
 import com.gadgetworks.codeshelf.ui.LocaleUtils;
@@ -81,7 +82,7 @@ public final class CodeShelfEditPage extends WizardPage implements IDoubleClickL
 
 		GridData gridData;
 
-		Util.getSystemDAO().registerDAOListener(this);
+		DaoManager.gDaoManager.registerDAOListener(this);
 
 		mEditComposite = new Composite(inParent, SWT.NULL);
 		mEditComposite.setLayout(new GridLayout(5, false));
@@ -218,7 +219,7 @@ public final class CodeShelfEditPage extends WizardPage implements IDoubleClickL
 
 			// Save the CodeShelf Network.
 			try {
-				Util.getSystemDAO().storeCodeShelfNetwork(mCodeShelfNetwork);
+				CodeShelfNetwork.DAO.store(mCodeShelfNetwork);
 			} catch (DAOException e) {
 				LOGGER.error("", e);
 			}
@@ -293,7 +294,7 @@ public final class CodeShelfEditPage extends WizardPage implements IDoubleClickL
 	 */
 	@Override
 	public void dispose() {
-		Util.getSystemDAO().unregisterDAOListener(this);
+		DaoManager.gDaoManager.unregisterDAOListener(this);
 		super.dispose();
 	}
 }

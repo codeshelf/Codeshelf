@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfApplication.java,v 1.9 2011/12/22 11:46:33 jeffw Exp $
+ *  $Id: CodeShelfApplication.java,v 1.10 2011/12/29 09:15:35 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -44,6 +44,8 @@ import com.gadgetworks.codeshelf.controller.IWirelessInterface;
 import com.gadgetworks.codeshelf.controller.NetworkDeviceStateEnum;
 import com.gadgetworks.codeshelf.controller.SnapInterface;
 import com.gadgetworks.codeshelf.model.PreferencesStore;
+import com.gadgetworks.codeshelf.model.dao.DAOException;
+import com.gadgetworks.codeshelf.model.dao.DaoManager;
 import com.gadgetworks.codeshelf.model.dao.GWEbeanNamingConvention;
 import com.gadgetworks.codeshelf.model.dao.H2SchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
@@ -115,10 +117,14 @@ public final class CodeShelfApplication {
 	private void initializeApplicationData() {
 
 		// Some radio device fields have no meaning from the last invocation of the application.
-		for (WirelessDevice wirelessDevice : Util.getSystemDAO().getWirelessDevices()) {
+		for (WirelessDevice wirelessDevice : WirelessDevice.DAO.getAll()) {
 			LOGGER.debug("Init data for wireless device id: " + wirelessDevice.getMacAddress());
 			wirelessDevice.setNetworkDeviceState(NetworkDeviceStateEnum.INVALID);
-			Util.getSystemDAO().storeWirelessDevice(wirelessDevice);
+			try {
+				WirelessDevice.DAO.store(wirelessDevice);
+			} catch (DAOException e) {
+				LOGGER.error("", e);
+			}
 		}
 	}
 
@@ -182,18 +188,18 @@ public final class CodeShelfApplication {
 		// Start the console and then check to see if the user wants it to open at startup.
 		Shell shell = new Shell(mDisplay);
 		Util.startConsole(shell, this);
-		PersistentProperty property = Util.getSystemDAO().findPersistentProperty(PersistentProperty.SHOW_CONSOLE_PREF);
+		PersistentProperty property = PersistentProperty.DAO.findById(PersistentProperty.SHOW_CONSOLE_PREF);
 		if ((property != null) && (property.getCurrentValueAsBoolean()))
 			Util.openConsole();
 
 		List<IWirelessInterface> interfaceList = new ArrayList<IWirelessInterface>();
 		// Create a CodeShelf interface for each CodeShelf network we have.
-		for (CodeShelfNetwork network : Util.getSystemDAO().getCodeShelfNetworks()) {
+		for (CodeShelfNetwork network : CodeShelfNetwork.DAO.getAll()) {
 			SnapInterface snapInterface = new SnapInterface(network);
 			network.setWirelessInterface(snapInterface);
 			interfaceList.add(snapInterface);
 		}
-		mController = new CodeShelfController(Util.getSystemDAO(), interfaceList);
+		mController = new CodeShelfController(WirelessDevice.DAO, interfaceList);
 
 		mWirelessDeviceEventHandler = new WirelessDeviceEventHandler(mController);
 		//		mServerConnectionManager = new FacebookConnectionManager(mController);
@@ -206,7 +212,7 @@ public final class CodeShelfApplication {
 		//setupSystemTray();
 
 		// Start the ActiveMQ test server if required.
-		property = Util.getSystemDAO().findPersistentProperty(PersistentProperty.ACTIVEMQ_RUN);
+		property = PersistentProperty.DAO.findById(PersistentProperty.ACTIVEMQ_RUN);
 		if ((property != null) && (property.getCurrentValueAsBoolean())) {
 			ActiveMqManager.startBrokerService();
 		}
@@ -254,7 +260,7 @@ public final class CodeShelfApplication {
 		Util.closeConsole();
 
 		// Remove all listeners from the DAO.
-		Util.getSystemDAO().removeDAOListeners();
+		DaoManager.gDaoManager.removeDAOListeners();
 
 		// Stop the event harvester
 		//EventHarvester.stopEventHarvester();
@@ -299,7 +305,7 @@ public final class CodeShelfApplication {
 	 */
 	public byte getPreferredChannel() {
 		byte result = 0;
-		PersistentProperty preferredChannelProp = Util.getSystemDAO().findPersistentProperty(PersistentProperty.FORCE_CHANNEL);
+		PersistentProperty preferredChannelProp = PersistentProperty.DAO.findById(PersistentProperty.FORCE_CHANNEL);
 		if (preferredChannelProp != null) {
 			if (ControllerABC.NO_PREFERRED_CHANNEL_TEXT.equals(preferredChannelProp.getCurrentValueAsStr())) {
 				result = ControllerABC.NO_PREFERRED_CHANNEL;

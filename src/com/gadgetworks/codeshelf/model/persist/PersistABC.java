@@ -1,11 +1,12 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PersistABC.java,v 1.5 2011/12/23 23:21:32 jeffw Exp $
+ *  $Id: PersistABC.java,v 1.6 2011/12/29 09:15:35 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
 import java.sql.Timestamp;
+import java.util.UUID;
 
 import javax.persistence.Column;
 import javax.persistence.Id;
@@ -33,7 +34,7 @@ public abstract class PersistABC {
 	@Id
 	@Column(nullable = false)
 	@NonNull
-	private Integer		persistentId;
+	private Long		persistentId;
 	// The domain ID
 	@Column(nullable = false)
 	private String		id;
@@ -58,7 +59,7 @@ public abstract class PersistABC {
 	//	/**
 	//	 *  @return
 	//	 */
-	//	public final Integer getPersistentId() {
+	//	public  Integer getPersistentId() {
 	//		return mPersistentId;
 	//	}
 	//
@@ -66,7 +67,7 @@ public abstract class PersistABC {
 	//	/**
 	//	 *  @param inPersistentID
 	//	 */
-	//	public final void setPersistentId(Integer inPersistentId) {
+	//	public  void setPersistentId(Integer inPersistentId) {
 	//		mPersistentId = inPersistentId;
 	//	}
 	//
@@ -74,7 +75,7 @@ public abstract class PersistABC {
 	//	/**
 	//	 *  @return
 	//	 */
-	//	public final String getId() {
+	//	public  String getId() {
 	//		return mId;
 	//	}
 	//
@@ -82,7 +83,7 @@ public abstract class PersistABC {
 	//	/**
 	//	 *  @param inPersistentID
 	//	 */
-	//	public final void setId(String inId) {
+	//	public  void setId(String inId) {
 	//		mId = inId;
 	//	}
 	//
@@ -90,7 +91,7 @@ public abstract class PersistABC {
 	//	/**
 	//	 *  @return
 	//	 */
-	//	public final Timestamp getVersion() {
+	//	public  Timestamp getVersion() {
 	//		return mVersion;
 	//	}
 	//
@@ -98,7 +99,7 @@ public abstract class PersistABC {
 	//	/**
 	//	 *  @param inTimestamp
 	//	 */
-	//	public final void setVersion(Timestamp inTimestamp) {
+	//	public  void setVersion(Timestamp inTimestamp) {
 	//		mVersion = inTimestamp;
 	//	}
 
@@ -106,7 +107,7 @@ public abstract class PersistABC {
 	 * (non-Javadoc)
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
-	public final boolean equals(Object inObject) {
+	public boolean equals(Object inObject) {
 
 		boolean result = false;
 
@@ -124,7 +125,7 @@ public abstract class PersistABC {
 	 * (non-Javadoc)
 	 * @see java.lang.Object#hashCode()
 	 */
-	public final int hashCode() {
+	public int hashCode() {
 		if (persistentId != null) {
 			return persistentId.hashCode();
 		} else {

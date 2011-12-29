@@ -3,7 +3,7 @@
 build.xml
 ===================================================================
 -->
-<project name="ebean-enhance" default="enhance"  basedir=".">
+<project name="ebean-enhance" default="enhance" basedir=".">
 
 	<!-- environment -->
 
@@ -14,7 +14,9 @@ build.xml
 	<property name="module.eclipse-bin.dir" value="${module.dir}/eclipse-bin/" />
 	<property name="modules.model.dir" value="${module.dir}/src/com/gadgetworks/codeshelf/model/persist" />
 	<property name="modules.enhance.dir" value="${module.dir}/build/com/gadgetworks/codeshelf/model/persist" />
-	
+
+	<property name="javac.compile.using.version" value="1.6" />
+
 	<taskdef resource="net/sf/antcontrib/antcontrib.properties">
 		<classpath>
 			<pathelement location="${basedir}/lib/ant-contrib.jar" />
@@ -46,12 +48,7 @@ build.xml
 	<!-- compile -->
 	<target name="compile" depends="ebean-clean">
 		<mkdir dir="${module.build.dir}" />
-		<javac srcdir="${modules.model.dir}"
-		       destdir="${module.build.dir}"
-		       target="1.5"
-		       verbose="false"
-		       debug="on"
-		       classpathref="module.lib.classpath">
+		<javac srcdir="${modules.model.dir}" destdir="${module.build.dir}" source="${javac.compile.using.version}" target="${javac.compile.using.version}" verbose="false" debug="on" classpathref="module.lib.classpath" includeantruntime="false">
 		</javac>
 
 	</target>
@@ -64,13 +61,10 @@ build.xml
 		<echo message="===================================================================" />
 
 		<!-- define the task enhancer -->
-		<taskdef name="ebeanEnhance" 
-			classpathref="module.lib.classpath"
-			classname="com.avaje.ebean.enhance.ant.AntEnhanceTask" />
+		<taskdef name="ebeanEnhance" classpathref="module.lib.classpath" classname="com.avaje.ebean.enhance.ant.AntEnhanceTask" />
 
 		<!-- enhance -->
-		<ebeanEnhance classSource="${modules.enhance.dir}" packages="**" transformArgs="debug=1"/>
+		<ebeanEnhance packages="**" classSource="${modules.enhance.dir}" transformArgs="debug=1" />
 
 	</target>
-
 </project>

@@ -1,19 +1,21 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WirelessDeviceWizard.java,v 1.3 2011/01/24 07:22:42 jeffw Exp $
+ *  $Id: WirelessDeviceWizard.java,v 1.4 2011/12/29 09:15:35 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.ui.wizards;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.wizard.Wizard;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.widgets.Shell;
 
-import com.gadgetworks.codeshelf.application.Util;
 import com.gadgetworks.codeshelf.controller.IController;
+import com.gadgetworks.codeshelf.model.dao.DAOException;
 import com.gadgetworks.codeshelf.model.persist.WirelessDevice;
 import com.gadgetworks.codeshelf.ui.LocaleUtils;
 
@@ -22,6 +24,8 @@ import com.gadgetworks.codeshelf.ui.LocaleUtils;
  *  @author jeffw
  */
 public class WirelessDeviceWizard extends Wizard {
+
+	private static final Log		LOGGER	= LogFactory.getLog(WirelessDeviceWizard.class);
 
 	private WirelessDevice			mWirelessDevice;
 	private WirelessDeviceSetupPage	mWirelessDeviceSetupPage;
@@ -44,7 +48,11 @@ public class WirelessDeviceWizard extends Wizard {
 		int returnCode = dialog.open();
 		if (returnCode == Dialog.OK) {
 			result = wirelessDevice;
-			Util.getSystemDAO().storeWirelessDevice(wirelessDevice);
+			try {
+				WirelessDevice.DAO.store(wirelessDevice);
+			} catch (DAOException e) {
+				LOGGER.error(e);
+			}
 		}
 
 		return result;
@@ -65,7 +73,11 @@ public class WirelessDeviceWizard extends Wizard {
 		int returnCode = dialog.open();
 		if (returnCode == Dialog.OK) {
 			// Create the person's first account
-			Util.getSystemDAO().storeWirelessDevice(inWirelessDevice);
+			try {
+				WirelessDevice.DAO.store(inWirelessDevice);
+			} catch (DAOException e) {
+				LOGGER.error("", e);
+			}
 		}
 
 	}
@@ -111,9 +123,7 @@ public class WirelessDeviceWizard extends Wizard {
 		if (!mWirelessDeviceSetupPage.isPageComplete()) {
 			result = true;
 		} else {
-			result = MessageDialog.openConfirm(getShell(),
-				LocaleUtils.getStr("all_wizards.confirmation"),
-				LocaleUtils.getStr("all_wizards.check_cancel"));
+			result = MessageDialog.openConfirm(getShell(), LocaleUtils.getStr("all_wizards.confirmation"), LocaleUtils.getStr("all_wizards.check_cancel"));
 		}
 		return result;
 	}

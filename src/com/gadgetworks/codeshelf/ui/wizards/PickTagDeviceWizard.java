@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PickTagDeviceWizard.java,v 1.7 2011/02/07 20:11:35 jeffw Exp $
+ *  $Id: PickTagDeviceWizard.java,v 1.8 2011/12/29 09:15:35 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.ui.wizards;
@@ -14,12 +14,12 @@ import org.eclipse.jface.wizard.Wizard;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.widgets.Shell;
 
-import com.gadgetworks.codeshelf.application.Util;
 import com.gadgetworks.codeshelf.controller.IController;
 import com.gadgetworks.codeshelf.controller.NetAddress;
 import com.gadgetworks.codeshelf.model.dao.DAOException;
 import com.gadgetworks.codeshelf.model.persist.ControlGroup;
 import com.gadgetworks.codeshelf.model.persist.PickTag;
+import com.gadgetworks.codeshelf.model.persist.WirelessDevice;
 import com.gadgetworks.codeshelf.ui.LocaleUtils;
 
 // --------------------------------------------------------------------------
@@ -30,7 +30,7 @@ public class PickTagDeviceWizard extends Wizard {
 
 	private static final Log		LOGGER	= LogFactory.getLog(PickTagDeviceWizard.class);
 
-	private PickTag				mPickTag;
+	private PickTag					mPickTag;
 	private PickTagDeviceSetupPage	mPickTagDeviceSetupPage;
 
 	// --------------------------------------------------------------------------
@@ -53,7 +53,11 @@ public class PickTagDeviceWizard extends Wizard {
 		int returnCode = dialog.open();
 		if (returnCode == Dialog.OK) {
 			result = pickTag;
-			Util.getSystemDAO().storeWirelessDevice(pickTag);
+			try {
+				WirelessDevice.DAO.store(pickTag);
+			} catch (DAOException e) {
+				LOGGER.error("", e);
+			}
 		}
 
 		return result;
@@ -75,7 +79,7 @@ public class PickTagDeviceWizard extends Wizard {
 		if (returnCode == Dialog.OK) {
 			// Create the picktag
 			try {
-				Util.getSystemDAO().storePickTag(inPickTag);
+				WirelessDevice.DAO.store(inPickTag);
 			} catch (DAOException e) {
 				LOGGER.error("", e);
 			}
@@ -114,6 +118,7 @@ public class PickTagDeviceWizard extends Wizard {
 		String macAddrString = mPickTag.getMacAddress().toString();
 		String netAddrString = macAddrString.substring(12, 18);
 		NetAddress networkAddress = new NetAddress("0x" + netAddrString);
+		mPickTag.setId(macAddrString);
 		mPickTag.setNetAddress(networkAddress);
 		mPickTag.setDescription(mPickTagDeviceSetupPage.getDescription());
 		mPickTag.setSerialBusPosition(Short.parseShort(mPickTagDeviceSetupPage.getSerialBusPosition()));
@@ -128,9 +133,7 @@ public class PickTagDeviceWizard extends Wizard {
 		if (!mPickTagDeviceSetupPage.isPageComplete()) {
 			result = true;
 		} else {
-			result = MessageDialog.openConfirm(getShell(),
-				LocaleUtils.getStr("all_wizards.confirmation"),
-				LocaleUtils.getStr("all_wizards.check_cancel"));
+			result = MessageDialog.openConfirm(getShell(), LocaleUtils.getStr("all_wizards.confirmation"), LocaleUtils.getStr("all_wizards.check_cancel"));
 		}
 		return result;
 	}

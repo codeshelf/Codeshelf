@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Util.java,v 1.6 2011/01/22 07:58:31 jeffw Exp $
+ *  $Id: Util.java,v 1.7 2011/12/29 09:15:35 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -42,8 +42,6 @@ import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 
-import com.gadgetworks.codeshelf.model.dao.ISystemDAO;
-import com.gadgetworks.codeshelf.model.dao.SystemDAO;
 import com.gadgetworks.codeshelf.model.persist.PersistentProperty;
 import com.gadgetworks.codeshelf.ui.AboutBox;
 import com.gadgetworks.codeshelf.ui.Console;
@@ -120,7 +118,7 @@ public final class Util {
 	//private static ApplicationContext	mAppContext					= new ClassPathXmlApplicationContext(new String[] { "CodeShelfContext.xml" });
 	//private static ISystemDAO			mSystemDAO					= (ISystemDAO) mAppContext.getBean(APP_BEAN_ID);
 	//private static ISystemDAO		mSystemDAO						= (ISystemDAO) SystemBeanFactory.getBean(DAO_BEAN_ID);
-	private static volatile ISystemDAO	mSystemDAO;
+	//private static volatile ISystemDAO	mSystemDAO;
 	private static Console				mConsole;
 
 	private static boolean				isLinux								= SWT.getPlatform().equalsIgnoreCase("gtk");
@@ -525,13 +523,13 @@ public final class Util {
 	/**
 	 *  @return
 	 */
-	public static ISystemDAO getSystemDAO() {
-		if (mSystemDAO == null) {
-			//mSystemDAO = (ISystemDAO) SystemBeanFactory.getBean(DAO_BEAN_ID);
-			mSystemDAO = new SystemDAO();
-		}
-		return mSystemDAO;
-	}
+//	public static ISystemDAO getSystemDAO() {
+//		if (mSystemDAO == null) {
+//			//mSystemDAO = (ISystemDAO) SystemBeanFactory.getBean(DAO_BEAN_ID);
+//			mSystemDAO = new SystemDAO();
+//		}
+//		return mSystemDAO;
+//	}
 
 	// --------------------------------------------------------------------------
 	/**
@@ -539,12 +537,12 @@ public final class Util {
 	 */
 	public static void setLoggingLevelsFromPrefs() {
 
-		PersistentProperty gwLogLvlProp = Util.getSystemDAO().findPersistentProperty(PersistentProperty.GENERAL_INTF_LOG_LEVEL);
+		PersistentProperty gwLogLvlProp = PersistentProperty.DAO.findById(PersistentProperty.GENERAL_INTF_LOG_LEVEL);
 		Level level = Level.toLevel(gwLogLvlProp.getCurrentValueAsStr());
 		Logger.getRootLogger().setLevel(level);
 		Logger.getLogger("com.gadgetworks").setLevel(level);
 
-		gwLogLvlProp = Util.getSystemDAO().findPersistentProperty(PersistentProperty.GATEWAY_INTF_LOG_LEVEL);
+		gwLogLvlProp = PersistentProperty.DAO.findById(PersistentProperty.GATEWAY_INTF_LOG_LEVEL);
 		level = Level.toLevel(gwLogLvlProp.getCurrentValueAsStr());
 		//Logger.getRootLogger().setLevel(level);
 		//Logger.getLogger("com.gadgetworks.codeshelf.controller").setLevel(level);

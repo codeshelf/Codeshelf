@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PreferencesStore.java,v 1.2 2011/01/21 01:12:12 jeffw Exp $
+ *  $Id: PreferencesStore.java,v 1.3 2011/12/29 09:15:35 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model;
 
@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.log4j.Level;
 import org.eclipse.core.commands.common.EventManager;
 import org.eclipse.jface.preference.IPersistentPreferenceStore;
@@ -19,7 +21,7 @@ import org.eclipse.jface.util.SafeRunnable;
 
 import com.gadgetworks.codeshelf.application.Util;
 import com.gadgetworks.codeshelf.controller.ControllerABC;
-import com.gadgetworks.codeshelf.model.dao.ISystemDAO;
+import com.gadgetworks.codeshelf.model.dao.DAOException;
 import com.gadgetworks.codeshelf.model.persist.PersistentProperty;
 
 // --------------------------------------------------------------------------
@@ -28,9 +30,9 @@ import com.gadgetworks.codeshelf.model.persist.PersistentProperty;
  */
 public final class PreferencesStore extends EventManager implements IPersistentPreferenceStore {
 
-//	private static final Log			LOGGER						= LogFactory.getLog(PreferencesStore.class);
+	private static final Log				LOGGER	= LogFactory.getLog(PreferencesStore.class);
 
-	private static PreferencesStore		mPreferencesStore;
+	private static PreferencesStore			mPreferencesStore;
 	private Map<String, PersistentProperty>	mChangedProperties;
 
 	private PreferencesStore() {
@@ -40,7 +42,7 @@ public final class PreferencesStore extends EventManager implements IPersistentP
 	public static void initPreferencesStore() {
 		// Setup the preferences store singleton.
 		mPreferencesStore = new PreferencesStore();
-		
+
 		initPreference(PersistentProperty.SHOW_CONSOLE_PREF, "Show the console at startup", String.valueOf(false));
 		initPreference(PersistentProperty.SHOW_CONNECTION_DEBUG_PREF, "Show a connection debug dialog", String.valueOf(false));
 		initPreference(PersistentProperty.FORCE_CHANNEL, "Preferred wireless channel", ControllerABC.NO_PREFERRED_CHANNEL_TEXT);
@@ -74,7 +76,7 @@ public final class PreferencesStore extends EventManager implements IPersistentP
 		boolean shouldUpdate = false;
 
 		// Find the property in the DB.
-		PersistentProperty property = Util.getSystemDAO().findPersistentProperty(inPropertyID);
+		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
 
 		// If the property doesn't exist then create it.
 		if (property == null) {
@@ -93,7 +95,11 @@ public final class PreferencesStore extends EventManager implements IPersistentP
 
 		// If the property changed then we need to persist the change.
 		if (shouldUpdate) {
-			Util.getSystemDAO().storePersistentProperty(property);
+			try {
+				PersistentProperty.DAO.store(property);
+			} catch (DAOException e) {
+				LOGGER.error("", e);
+			}
 		}
 	}
 
@@ -102,9 +108,12 @@ public final class PreferencesStore extends EventManager implements IPersistentP
 	 * @see org.eclipse.jface.preference.IPersistentPreferenceStore#save()
 	 */
 	public void save() throws IOException {
-		ISystemDAO systemDAO = Util.getSystemDAO();
 		for (PersistentProperty property : mChangedProperties.values()) {
-			systemDAO.storePersistentProperty(property);
+			try {
+				PersistentProperty.DAO.store(property);
+			} catch (DAOException e) {
+				LOGGER.error("", e);
+			}
 		}
 		mChangedProperties.clear();
 	}
@@ -122,7 +131,7 @@ public final class PreferencesStore extends EventManager implements IPersistentP
 	 * @see org.eclipse.jface.preference.IPreferenceStore#contains(java.lang.String)
 	 */
 	public boolean contains(String inPropertyID) {
-		PersistentProperty property = Util.getSystemDAO().findPersistentProperty(inPropertyID);
+		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
 		return (property != null);
 	}
 
@@ -152,7 +161,7 @@ public final class PreferencesStore extends EventManager implements IPersistentP
 	 */
 	public boolean getBoolean(String inPropertyID) {
 		boolean result = false;
-		PersistentProperty property = Util.getSystemDAO().findPersistentProperty(inPropertyID);
+		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
 		if (property != null)
 			result = property.getCurrentValueAsBoolean();
 		return result;
@@ -164,7 +173,7 @@ public final class PreferencesStore extends EventManager implements IPersistentP
 	 */
 	public boolean getDefaultBoolean(String inPropertyID) {
 		boolean result = false;
-		PersistentProperty property = Util.getSystemDAO().findPersistentProperty(inPropertyID);
+		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
 		if (property != null)
 			result = property.getDefaultValueAsBoolean();
 		return result;
@@ -176,7 +185,7 @@ public final class PreferencesStore extends EventManager implements IPersistentP
 	 */
 	public double getDefaultDouble(String inPropertyID) {
 		double result = 0;
-		PersistentProperty property = Util.getSystemDAO().findPersistentProperty(inPropertyID);
+		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
 		if (property != null)
 			result = property.getDefaultValueAsDouble();
 		return result;
@@ -188,7 +197,7 @@ public final class PreferencesStore extends EventManager implements IPersistentP
 	 */
 	public float getDefaultFloat(String inPropertyID) {
 		float result = 0;
-		PersistentProperty property = Util.getSystemDAO().findPersistentProperty(inPropertyID);
+		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
 		if (property != null)
 			result = property.getDefaultValueAsFloat();
 		return result;
@@ -200,7 +209,7 @@ public final class PreferencesStore extends EventManager implements IPersistentP
 	 */
 	public int getDefaultInt(String inPropertyID) {
 		int result = 0;
-		PersistentProperty property = Util.getSystemDAO().findPersistentProperty(inPropertyID);
+		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
 		if (property != null)
 			result = property.getDefaultValueAsInt();
 		return result;
@@ -212,7 +221,7 @@ public final class PreferencesStore extends EventManager implements IPersistentP
 	 */
 	public long getDefaultLong(String inPropertyID) {
 		long result = 0;
-		PersistentProperty property = Util.getSystemDAO().findPersistentProperty(inPropertyID);
+		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
 		if (property != null)
 			result = property.getDefaultValueAsLong();
 		return result;
@@ -224,7 +233,7 @@ public final class PreferencesStore extends EventManager implements IPersistentP
 	 */
 	public String getDefaultString(String inPropertyID) {
 		String result = "";
-		PersistentProperty property = Util.getSystemDAO().findPersistentProperty(inPropertyID);
+		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
 		if (property != null)
 			result = property.getDefaultValueAsStr();
 		return result;
@@ -236,7 +245,7 @@ public final class PreferencesStore extends EventManager implements IPersistentP
 	 */
 	public double getDouble(String inPropertyID) {
 		double result = 0;
-		PersistentProperty property = Util.getSystemDAO().findPersistentProperty(inPropertyID);
+		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
 		if (property != null)
 			result = property.getCurrentValueAsDouble();
 		return result;
@@ -248,7 +257,7 @@ public final class PreferencesStore extends EventManager implements IPersistentP
 	 */
 	public float getFloat(String inPropertyID) {
 		float result = 0;
-		PersistentProperty property = Util.getSystemDAO().findPersistentProperty(inPropertyID);
+		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
 		if (property != null)
 			result = property.getCurrentValueAsFloat();
 		return result;
@@ -260,7 +269,7 @@ public final class PreferencesStore extends EventManager implements IPersistentP
 	 */
 	public int getInt(String inPropertyID) {
 		int result = 0;
-		PersistentProperty property = Util.getSystemDAO().findPersistentProperty(inPropertyID);
+		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
 		if (property != null)
 			result = property.getCurrentValueAsInt();
 		return result;
@@ -272,7 +281,7 @@ public final class PreferencesStore extends EventManager implements IPersistentP
 	 */
 	public long getLong(String inPropertyID) {
 		long result = 0;
-		PersistentProperty property = Util.getSystemDAO().findPersistentProperty(inPropertyID);
+		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
 		if (property != null)
 			result = property.getCurrentValueAsLong();
 		return result;
@@ -284,7 +293,7 @@ public final class PreferencesStore extends EventManager implements IPersistentP
 	 */
 	public String getString(String inPropertyID) {
 		String result = "";
-		PersistentProperty property = Util.getSystemDAO().findPersistentProperty(inPropertyID);
+		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
 		if (property != null)
 			result = property.getCurrentValueAsStr();
 		return result;
@@ -296,7 +305,7 @@ public final class PreferencesStore extends EventManager implements IPersistentP
 	 */
 	public boolean isDefault(String inPropertyID) {
 		boolean result = true;
-		PersistentProperty property = Util.getSystemDAO().findPersistentProperty(inPropertyID);
+		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
 		if (property != null)
 			result = (property.getCurrentValueAsStr().equals(property.getDefaultValueAsStr()));
 		return result;
@@ -315,7 +324,7 @@ public final class PreferencesStore extends EventManager implements IPersistentP
 	 * @see org.eclipse.jface.preference.IPreferenceStore#putValue(java.lang.String, java.lang.String)
 	 */
 	public void putValue(String inPropertyID, String inValue) {
-		PersistentProperty property = Util.getSystemDAO().findPersistentProperty(inPropertyID);
+		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
 		if (property != null) {
 			property.setCurrentValueAsStr(inValue);
 			mChangedProperties.put(property.getId(), property);
@@ -335,7 +344,7 @@ public final class PreferencesStore extends EventManager implements IPersistentP
 	 * @see org.eclipse.jface.preference.IPreferenceStore#setDefault(java.lang.String, double)
 	 */
 	public void setDefault(String inPropertyID, double inValue) {
-		PersistentProperty property = Util.getSystemDAO().findPersistentProperty(inPropertyID);
+		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
 		if (property != null) {
 			property.setDefaultValueAsDouble(inValue);
 			mChangedProperties.put(property.getId(), property);
@@ -347,7 +356,7 @@ public final class PreferencesStore extends EventManager implements IPersistentP
 	 * @see org.eclipse.jface.preference.IPreferenceStore#setDefault(java.lang.String, float)
 	 */
 	public void setDefault(String inPropertyID, float inValue) {
-		PersistentProperty property = Util.getSystemDAO().findPersistentProperty(inPropertyID);
+		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
 		if (property != null) {
 			property.setDefaultValueAsFloat(inValue);
 			mChangedProperties.put(property.getId(), property);
@@ -359,7 +368,7 @@ public final class PreferencesStore extends EventManager implements IPersistentP
 	 * @see org.eclipse.jface.preference.IPreferenceStore#setDefault(java.lang.String, int)
 	 */
 	public void setDefault(String inPropertyID, int inValue) {
-		PersistentProperty property = Util.getSystemDAO().findPersistentProperty(inPropertyID);
+		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
 		if (property != null) {
 			property.setCurrentValueAsInt(inValue);
 			mChangedProperties.put(property.getId(), property);
@@ -371,7 +380,7 @@ public final class PreferencesStore extends EventManager implements IPersistentP
 	 * @see org.eclipse.jface.preference.IPreferenceStore#setDefault(java.lang.String, long)
 	 */
 	public void setDefault(String inPropertyID, long inValue) {
-		PersistentProperty property = Util.getSystemDAO().findPersistentProperty(inPropertyID);
+		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
 		if (property != null) {
 			property.setDefaultValueAsLong(inValue);
 			mChangedProperties.put(property.getId(), property);
@@ -383,7 +392,7 @@ public final class PreferencesStore extends EventManager implements IPersistentP
 	 * @see org.eclipse.jface.preference.IPreferenceStore#setDefault(java.lang.String, java.lang.String)
 	 */
 	public void setDefault(String inPropertyID, String inValue) {
-		PersistentProperty property = Util.getSystemDAO().findPersistentProperty(inPropertyID);
+		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
 		if (property != null) {
 			property.setDefaultValueAsStr(inValue);
 			mChangedProperties.put(property.getId(), property);
@@ -395,7 +404,7 @@ public final class PreferencesStore extends EventManager implements IPersistentP
 	 * @see org.eclipse.jface.preference.IPreferenceStore#setDefault(java.lang.String, boolean)
 	 */
 	public void setDefault(String inPropertyID, boolean inValue) {
-		PersistentProperty property = Util.getSystemDAO().findPersistentProperty(inPropertyID);
+		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
 		if (property != null) {
 			property.setDefaultValueAsBoolean(inValue);
 			mChangedProperties.put(property.getId(), property);
@@ -407,7 +416,7 @@ public final class PreferencesStore extends EventManager implements IPersistentP
 	 * @see org.eclipse.jface.preference.IPreferenceStore#setToDefault(java.lang.String)
 	 */
 	public void setToDefault(String inPropertyID) {
-		PersistentProperty property = Util.getSystemDAO().findPersistentProperty(inPropertyID);
+		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
 		if (property != null) {
 			property.setCurrentValueAsStr(property.getDefaultValueAsStr());
 			mChangedProperties.put(property.getId(), property);
@@ -419,7 +428,7 @@ public final class PreferencesStore extends EventManager implements IPersistentP
 	 * @see org.eclipse.jface.preference.IPreferenceStore#setValue(java.lang.String, double)
 	 */
 	public void setValue(String inPropertyID, double inValue) {
-		PersistentProperty property = Util.getSystemDAO().findPersistentProperty(inPropertyID);
+		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
 		if (property != null) {
 			property.setCurrentValueAsDouble(inValue);
 			mChangedProperties.put(property.getId(), property);
@@ -431,7 +440,7 @@ public final class PreferencesStore extends EventManager implements IPersistentP
 	 * @see org.eclipse.jface.preference.IPreferenceStore#setValue(java.lang.String, float)
 	 */
 	public void setValue(String inPropertyID, float inValue) {
-		PersistentProperty property = Util.getSystemDAO().findPersistentProperty(inPropertyID);
+		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
 		if (property != null) {
 			property.setCurrentValueAsFloat(inValue);
 			mChangedProperties.put(property.getId(), property);
@@ -443,7 +452,7 @@ public final class PreferencesStore extends EventManager implements IPersistentP
 	 * @see org.eclipse.jface.preference.IPreferenceStore#setValue(java.lang.String, int)
 	 */
 	public void setValue(String inPropertyID, int inValue) {
-		PersistentProperty property = Util.getSystemDAO().findPersistentProperty(inPropertyID);
+		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
 		if (property != null) {
 			property.setCurrentValueAsInt(inValue);
 			mChangedProperties.put(property.getId(), property);
@@ -455,7 +464,7 @@ public final class PreferencesStore extends EventManager implements IPersistentP
 	 * @see org.eclipse.jface.preference.IPreferenceStore#setValue(java.lang.String, long)
 	 */
 	public void setValue(String inPropertyID, long inValue) {
-		PersistentProperty property = Util.getSystemDAO().findPersistentProperty(inPropertyID);
+		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
 		if (property != null) {
 			property.setCurrentValueAsLong(inValue);
 			mChangedProperties.put(property.getId(), property);
@@ -467,7 +476,7 @@ public final class PreferencesStore extends EventManager implements IPersistentP
 	 * @see org.eclipse.jface.preference.IPreferenceStore#setValue(java.lang.String, java.lang.String)
 	 */
 	public void setValue(String inPropertyID, String inValue) {
-		PersistentProperty property = Util.getSystemDAO().findPersistentProperty(inPropertyID);
+		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
 		if (property != null) {
 			property.setCurrentValueAsStr(inValue);
 			mChangedProperties.put(property.getId(), property);
@@ -479,7 +488,7 @@ public final class PreferencesStore extends EventManager implements IPersistentP
 	 * @see org.eclipse.jface.preference.IPreferenceStore#setValue(java.lang.String, boolean)
 	 */
 	public void setValue(String inPropertyID, boolean inValue) {
-		PersistentProperty property = Util.getSystemDAO().findPersistentProperty(inPropertyID);
+		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
 		if (property != null) {
 			property.setCurrentValueAsBoolean(inValue);
 			mChangedProperties.put(property.getId(), property);

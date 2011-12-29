@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: H2SchemaManager.java,v 1.14 2011/12/22 12:43:04 jeffw Exp $
+ *  $Id: H2SchemaManager.java,v 1.15 2011/12/29 09:15:35 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -154,7 +154,7 @@ public final class H2SchemaManager implements ISchemaManager {
 
 		// DBProperty
 		execOneSQLCommand("CREATE TABLE CODESHELF.DBPROPERTY (" //
-				+ "PERSISTENTID INT AUTO_INCREMENT NOT NULL, " //
+				+ "PERSISTENTID IDENTITY NOT NULL, " //
 				+ "ID VARCHAR(64) NOT NULL," //
 				+ "VERSION TIMESTAMP, " //
 				+ "VALUESTR VARCHAR(256)," //
@@ -162,7 +162,7 @@ public final class H2SchemaManager implements ISchemaManager {
 
 		// PersistentProperty
 		execOneSQLCommand("CREATE TABLE CODESHELF.PERSISTENTPROPERTY (" //
-				+ "PERSISTENTID INT AUTO_INCREMENT NOT NULL, " //
+				+ "PERSISTENTID IDENTITY NOT NULL, " //
 				+ "ID VARCHAR(64) NOT NULL," //
 				+ "VERSION TIMESTAMP, " //
 				+ "CURRENTVALUESTR VARCHAR(256)," //
@@ -171,7 +171,7 @@ public final class H2SchemaManager implements ISchemaManager {
 
 		// Facility
 		execOneSQLCommand("CREATE TABLE CODESHELF.FACILITY ( " //
-				+ "PERSISTENTID INT AUTO_INCREMENT NOT NULL, " //
+				+ "PERSISTENTID IDENTITY NOT NULL, " //
 				+ "ID VARCHAR(64) NOT NULL," //
 				+ "VERSION TIMESTAMP, " //
 				+ "DESCRIPTION VARCHAR(64) NOT NULL, " //
@@ -179,7 +179,7 @@ public final class H2SchemaManager implements ISchemaManager {
 
 		// CodeShelfNetwork
 		execOneSQLCommand("CREATE TABLE CODESHELF.CODESHELFNETWORK ( " //
-				+ "PERSISTENTID INT AUTO_INCREMENT NOT NULL, " //
+				+ "PERSISTENTID IDENTITY NOT NULL, " //
 				+ "ID VARCHAR(64) NOT NULL," //
 				+ "VERSION TIMESTAMP, " //
 				+ "NETWORKID BINARY(2) DEFAULT 0 NOT NULL," //
@@ -191,10 +191,10 @@ public final class H2SchemaManager implements ISchemaManager {
 
 		// ControlGroup
 		execOneSQLCommand("CREATE TABLE CODESHELF.CONTROLGROUP ( " //
-				+ "PERSISTENTID INT AUTO_INCREMENT NOT NULL, " //
+				+ "PERSISTENTID IDENTITY NOT NULL, " //
 				+ "ID VARCHAR(64) NOT NULL," //
 				+ "VERSION TIMESTAMP, " //
-				+ "PARENTCODESHELFNETWORK_PERSISTENTID BIGINT NOT NULL, " //
+				+ "PARENTCODESHELFNETWORK_PERSISTENTID LONG NOT NULL, " //
 				+ "CONTROLGROUPID BINARY(2) DEFAULT 0 NOT NULL, " //
 				+ "DESCRIPTION VARCHAR(64) NOT NULL, " //
 				+ "INTERFACEPORTNUM INT NOT NULL, " //
@@ -211,10 +211,10 @@ public final class H2SchemaManager implements ISchemaManager {
 		// WirelessDevice (includes the subclass variants in one table)
 		execOneSQLCommand("CREATE TABLE CODESHELF.WIRELESSDEVICE (" //
 				+ "DTYPE VARCHAR(20) NOT NULL," //
-				+ "PERSISTENTID INT AUTO_INCREMENT NOT NULL, " //
+				+ "PERSISTENTID IDENTITY NOT NULL, " //
 				+ "ID VARCHAR(64) NOT NULL," //
 				+ "VERSION TIMESTAMP, " //
-				+ "PARENTCONTROLGROUP_PERSISTENTID BIGINT NOT NULL, " //
+				+ "PARENTCONTROLGROUP_PERSISTENTID LONG NOT NULL, " //
 				+ "MACADDRESS BINARY(8) DEFAULT 0 NOT NULL," //
 				+ "PUBLICKEY VARCHAR(16) NOT NULL," //
 				+ "DESCRIPTION VARCHAR(64)," //

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfNetView.java,v 1.5 2011/02/04 02:53:53 jeffw Exp $
+ *  $Id: CodeShelfNetView.java,v 1.6 2011/12/29 09:15:35 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.ui.treeviewers;
 
@@ -48,6 +48,7 @@ import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork;
 import com.gadgetworks.codeshelf.model.persist.ControlGroup;
 import com.gadgetworks.codeshelf.model.persist.PersistABC;
 import com.gadgetworks.codeshelf.model.persist.PickTag;
+import com.gadgetworks.codeshelf.model.persist.WirelessDevice;
 import com.gadgetworks.codeshelf.ui.LocaleUtils;
 import com.gadgetworks.codeshelf.ui.wizards.CodeShelfNetWizard;
 import com.gadgetworks.codeshelf.ui.wizards.ControlGroupWizard;
@@ -297,7 +298,7 @@ public final class CodeShelfNetView implements ISelectionChangedListener, IDoubl
 						new String[] { inCodeShelfNetwork.getDescription() }));
 				if (deletePickTagModule) {
 					try {
-						Util.getSystemDAO().deleteCodeShelfNetwork(inCodeShelfNetwork);
+						CodeShelfNetwork.DAO.delete(inCodeShelfNetwork);
 					} catch (DAOException e) {
 						LOGGER.error(e);
 					}
@@ -354,7 +355,7 @@ public final class CodeShelfNetView implements ISelectionChangedListener, IDoubl
 						new String[] { inControlGroup.getDescription() }));
 				if (deletePickTagModule) {
 					try {
-						Util.getSystemDAO().deleteControlGroup(inControlGroup);
+						ControlGroup.DAO.delete(inControlGroup);
 					} catch (DAOException e) {
 						LOGGER.error(e);
 					}
@@ -391,7 +392,7 @@ public final class CodeShelfNetView implements ISelectionChangedListener, IDoubl
 		editItem.setData(inPickTag);
 		editItem.addListener(SWT.Selection, new Listener() {
 			public void handleEvent(Event inEvent) {
-				PickTag pickTag = Util.getSystemDAO().loadPickTag(inPickTag.getPersistentId());
+				PickTag pickTag = (PickTag) WirelessDevice.DAO.loadByPersistentId(inPickTag.getPersistentId());
 				PickTagDeviceWizard.editPickTagDevice(pickTag, mController, mShell);
 			}
 		});
@@ -406,7 +407,7 @@ public final class CodeShelfNetView implements ISelectionChangedListener, IDoubl
 					LocaleUtils.getStr("codeshelfview.menu.delete_picktag.prompt", new String[] { inPickTag.getDescription() }));
 				if (deletePickTag) {
 					try {
-						Util.getSystemDAO().deletePickTag(inPickTag);
+						WirelessDevice.DAO.delete(inPickTag);
 					} catch (DAOException e) {
 						LOGGER.error("", e);
 					}
@@ -559,12 +560,12 @@ public final class CodeShelfNetView implements ISelectionChangedListener, IDoubl
 						controlGroup.addPickTag(pickTag);
 						pickTag.setParentControlGroup(controlGroup);
 						try {
-							Util.getSystemDAO().storePickTag(pickTag);
-							Util.getSystemDAO().storeControlGroup(controlGroup);
+							WirelessDevice.DAO.store(pickTag);
+							ControlGroup.DAO.store(controlGroup);
 						} catch (DAOException e) {
 							LOGGER.error("", e);
 						}
-						Util.getSystemDAO().pushNonPersistentUpdates(parentControlGroup);
+						ControlGroup.DAO.pushNonPersistentUpdates(parentControlGroup);
 					}
 				}
 			}

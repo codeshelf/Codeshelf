@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfNetworkMgrWindow.java,v 1.2 2011/02/04 02:53:53 jeffw Exp $
+ *  $Id: CodeShelfNetworkMgrWindow.java,v 1.3 2011/12/29 09:15:35 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.ui;
 
@@ -24,6 +24,7 @@ import org.eclipse.swt.widgets.Shell;
 
 import com.gadgetworks.codeshelf.application.CodeShelfApplication;
 import com.gadgetworks.codeshelf.application.Util;
+import com.gadgetworks.codeshelf.model.dao.DaoManager;
 import com.gadgetworks.codeshelf.model.dao.IDAOListener;
 import com.gadgetworks.codeshelf.ui.action.ActionConsole;
 import com.gadgetworks.codeshelf.ui.treeviewers.CodeShelfNetView;
@@ -72,7 +73,7 @@ public final class CodeShelfNetworkMgrWindow extends ApplicationWindow implement
 		};
 		mExitAction = new Action("&Exit\tCtrl+X") {
 			public void run() {
-				Util.getSystemDAO().unregisterDAOListener(mCondeShelfNetworkView);
+				DaoManager.gDaoManager.unregisterDAOListener(mCondeShelfNetworkView);
 				mApplication.stopApplication();
 			}
 		};
@@ -113,7 +114,7 @@ public final class CodeShelfNetworkMgrWindow extends ApplicationWindow implement
 		composite.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, true, true));
 
 		mCondeShelfNetworkView = new CodeShelfNetView(composite, mApplication.getController(), SWT.BORDER);
-		Util.getSystemDAO().registerDAOListener(mCondeShelfNetworkView);
+		DaoManager.gDaoManager.registerDAOListener(mCondeShelfNetworkView);
 
 		return composite;
 	}
@@ -215,7 +216,7 @@ public final class CodeShelfNetworkMgrWindow extends ApplicationWindow implement
 		// Perform a system shutdown.
 		//stopApplication();
 
-		Util.getSystemDAO().unregisterDAOListener(mCondeShelfNetworkView);
+		DaoManager.gDaoManager.unregisterDAOListener(mCondeShelfNetworkView);
 
 		//mShell.setMinimized(true);
 

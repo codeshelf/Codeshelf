@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ControlGroupEditPage.java,v 1.6 2011/12/23 23:21:32 jeffw Exp $
+ *  $Id: ControlGroupEditPage.java,v 1.7 2011/12/29 09:15:35 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.ui.wizards;
 
@@ -23,6 +23,7 @@ import org.eclipse.swt.widgets.Text;
 import com.gadgetworks.codeshelf.application.Util;
 import com.gadgetworks.codeshelf.controller.NetGroup;
 import com.gadgetworks.codeshelf.model.dao.DAOException;
+import com.gadgetworks.codeshelf.model.dao.DaoManager;
 import com.gadgetworks.codeshelf.model.dao.IDAOListener;
 import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork;
 import com.gadgetworks.codeshelf.model.persist.ControlGroup;
@@ -79,7 +80,7 @@ public final class ControlGroupEditPage extends WizardPage implements IDoubleCli
 
 		GridData gridData;
 
-		Util.getSystemDAO().registerDAOListener(this);
+		DaoManager.gDaoManager.registerDAOListener(this);
 
 		mEditComposite = new Composite(inParent, SWT.NULL);
 		mEditComposite.setLayout(new GridLayout(5, false));
@@ -202,6 +203,7 @@ public final class ControlGroupEditPage extends WizardPage implements IDoubleCli
 		if ((result == true) && (mControlGroup != null)) {
 
 			NetGroup netGroup = new NetGroup(mIdField.getText());
+			mControlGroup.setId(mIdField.getText());
 			mControlGroup.setControlGroupId(netGroup);
 			mControlGroup.setDescription(mDescriptionField.getText());
 			mControlGroup.setInterfacePortNum(Short.parseShort(mInterfacePortNumField.getText()));
@@ -209,7 +211,7 @@ public final class ControlGroupEditPage extends WizardPage implements IDoubleCli
 
 			// Save the CodeShelf Network.
 			try {
-				Util.getSystemDAO().storeControlGroup(mControlGroup);
+				ControlGroup.DAO.store(mControlGroup);
 			} catch (DAOException e) {
 				LOGGER.error("", e);
 			}
@@ -284,7 +286,7 @@ public final class ControlGroupEditPage extends WizardPage implements IDoubleCli
 	 */
 	@Override
 	public void dispose() {
-		Util.getSystemDAO().unregisterDAOListener(this);
+		DaoManager.gDaoManager.unregisterDAOListener(this);
 		super.dispose();
 	}
 }

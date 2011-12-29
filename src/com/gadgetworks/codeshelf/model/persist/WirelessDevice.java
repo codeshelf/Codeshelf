@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WirelessDevice.java,v 1.7 2011/12/23 23:21:32 jeffw Exp $
+ *  $Id: WirelessDevice.java,v 1.8 2011/12/29 09:15:35 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -20,7 +20,8 @@ import javax.persistence.InheritanceType;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -30,6 +31,7 @@ import com.gadgetworks.codeshelf.controller.INetworkDevice;
 import com.gadgetworks.codeshelf.controller.NetAddress;
 import com.gadgetworks.codeshelf.controller.NetMacAddress;
 import com.gadgetworks.codeshelf.controller.NetworkDeviceStateEnum;
+import com.gadgetworks.codeshelf.model.dao.WirelessDeviceDao;
 
 // --------------------------------------------------------------------------
 /**
@@ -50,40 +52,46 @@ import com.gadgetworks.codeshelf.controller.NetworkDeviceStateEnum;
 @DiscriminatorValue("ABC")
 public class WirelessDevice extends PersistABC implements INetworkDevice {
 
-	public static final int			MAC_ADDR_BYTES		= 8;
-	public static final int			PUBLIC_KEY_BYTES	= 8;
+	public static final int									MAC_ADDR_BYTES		= 8;
+	public static final int									PUBLIC_KEY_BYTES	= 8;
 
-	private static final long		serialVersionUID	= 2371198193026330676L;
+	public static final WirelessDeviceDao<WirelessDevice>	DAO					= new WirelessDeviceDao<WirelessDevice>(WirelessDevice.class);
 
-	private static final Log		LOGGER				= LogFactory.getLog(WirelessDevice.class);
+	private static final long								serialVersionUID	= 2371198193026330676L;
+
+	private static final Log								LOGGER				= LogFactory.getLog(WirelessDevice.class);
 
 	@Column(nullable = false)
-	private byte[]					macAddress;
+//	@Getter
+//	@Setter
+	private byte[]											macAddress;
 	@Column(nullable = false)
-	private String					publicKey;
+	private String											publicKey;
 	// The description.
-	@Column()
-	private String					description;
+	@Column
+	private String											description;
 	// The network address last assigned to this wireless device.
-	@Column()
-	private byte[]					networkAddress;
+	@Column
+	@Getter
+	@Setter
+	private byte[]											networkAddress;
 	// The last seen battery level.
-	@Column()
-	private short					lastBatteryLevel;
+	@Column
+	private short											lastBatteryLevel;
 	//@Transient
 	@Enumerated(value = EnumType.STRING)
-	@Column()
-	private NetworkDeviceStateEnum	networkDeviceStatus;
+	@Column
+	private NetworkDeviceStateEnum							networkDeviceStatus;
 	//@Transient
-	@Column()
-	private Long					lastContactTime;
+	@Column
+	private Long											lastContactTime;
 
 	@Transient
-	private short					expectedEndpointCount;
+	private short											expectedEndpointCount;
 	@Transient
-	private Map<String, String>		KVPMap;
+	private Map<String, String>								KVPMap;
 	@Transient
-	private short					expectedKVPCount;
+	private short											expectedKVPCount;
 
 	//	@Transient
 	//	private String						mDeviceDesc;
@@ -98,43 +106,43 @@ public class WirelessDevice extends PersistABC implements INetworkDevice {
 		KVPMap = new HashMap<String, String>();
 	}
 
-	public final NetMacAddress getMacAddress() {
+	public NetMacAddress getMacAddress() {
 		return new NetMacAddress(macAddress);
 	}
 
-	public final void setMacAddress(NetMacAddress inMacAddress) {
+	public void setMacAddress(NetMacAddress inMacAddress) {
 		macAddress = inMacAddress.getParamValueAsByteArray();
 	}
 
-	public final String getPublicKey() {
+	public String getPublicKey() {
 		return publicKey;
 	}
 
-	public final void setPublicKey(String inPublicKey) {
+	public void setPublicKey(String inPublicKey) {
 		publicKey = inPublicKey;
 	}
 
-	public final String getDescription() {
+	public String getDescription() {
 		return description;
 	}
 
-	public final void setDescription(String inDescription) {
+	public void setDescription(String inDescription) {
 		description = inDescription;
 	}
 
-	public final void setNetAddress(NetAddress inNetworkAddress) {
+	public void setNetAddress(NetAddress inNetworkAddress) {
 		networkAddress = inNetworkAddress.getParamValueAsByteArray();
 	}
 
-	public final NetAddress getNetAddress() {
+	public NetAddress getNetAddress() {
 		return new NetAddress(networkAddress);
 	}
 
-	public final boolean doesMatch(String inMacAddr) {
+	public boolean doesMatch(String inMacAddr) {
 		return macAddress.equals(inMacAddr);
 	}
 
-	public final long getLastContactTime() {
+	public long getLastContactTime() {
 		long result = 0;
 		Long longVal = lastContactTime;
 		if (longVal != null) {
@@ -143,19 +151,19 @@ public class WirelessDevice extends PersistABC implements INetworkDevice {
 		return result;
 	}
 
-	public final void setLastContactTime(long inContactTime) {
+	public void setLastContactTime(long inContactTime) {
 		lastContactTime = inContactTime;
 	}
 
-	public final short getLastBatteryLevel() {
+	public short getLastBatteryLevel() {
 		return lastBatteryLevel;
 	}
 
-	public final void setLastBatteryLevel(short inLastBatteryLevel) {
+	public void setLastBatteryLevel(short inLastBatteryLevel) {
 		lastBatteryLevel = inLastBatteryLevel;
 	}
 
-	public final NetworkDeviceStateEnum getNetworkDeviceState() {
+	public NetworkDeviceStateEnum getNetworkDeviceState() {
 		NetworkDeviceStateEnum result = networkDeviceStatus;
 		if (result == null) {
 			result = NetworkDeviceStateEnum.getNetworkDeviceStateEnum(0); //INVALID;
@@ -163,7 +171,7 @@ public class WirelessDevice extends PersistABC implements INetworkDevice {
 		return result;
 	}
 
-	public final void setNetworkDeviceState(NetworkDeviceStateEnum inState) {
+	public void setNetworkDeviceState(NetworkDeviceStateEnum inState) {
 		LOGGER.debug(macAddress + " state changed: " + networkDeviceStatus + "->" + inState);
 		networkDeviceStatus = inState;
 	}
@@ -197,7 +205,7 @@ public class WirelessDevice extends PersistABC implements INetworkDevice {
 	 * (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.controller.INetworkDevice#getExpectedKVPCount()
 	 */
-	public final short getExpectedKVPCount() {
+	public short getExpectedKVPCount() {
 		return expectedKVPCount;
 	}
 
@@ -205,7 +213,7 @@ public class WirelessDevice extends PersistABC implements INetworkDevice {
 	 * (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.controller.INetworkDevice#getStoredKVPCount()
 	 */
-	public final short getStoredKVPCount() {
+	public short getStoredKVPCount() {
 		return (short) KVPMap.size();
 	}
 
@@ -213,7 +221,7 @@ public class WirelessDevice extends PersistABC implements INetworkDevice {
 	 * (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.controller.INetworkDevice#setKVPCount(short)
 	 */
-	public final void setKVPCount(short inKVPCount) {
+	public void setKVPCount(short inKVPCount) {
 		expectedKVPCount = inKVPCount;
 	}
 
@@ -221,7 +229,7 @@ public class WirelessDevice extends PersistABC implements INetworkDevice {
 	 * (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.controller.INetworkDevice#getHWDesc()
 	 */
-	public final String getHWDesc() {
+	public String getHWDesc() {
 		String result;
 		result = KVPMap.get(INetworkDevice.HW_VERSION_KEY);
 		if (result == null) {
@@ -234,7 +242,7 @@ public class WirelessDevice extends PersistABC implements INetworkDevice {
 	 * (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.controller.INetworkDevice#getSWRevision()
 	 */
-	public final String getSWRevision() {
+	public String getSWRevision() {
 		String result;
 		result = KVPMap.get(INetworkDevice.SW_VERSION_KEY);
 		if (result == null) {
@@ -247,7 +255,7 @@ public class WirelessDevice extends PersistABC implements INetworkDevice {
 	 * (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.controller.INetworkDevice#setDesc(java.lang.String)
 	 */
-	public final void setDesc(String inDeviceDescription) {
+	public void setDesc(String inDeviceDescription) {
 		//		mDeviceDesc = inDeviceDescription;
 	}
 
@@ -255,7 +263,8 @@ public class WirelessDevice extends PersistABC implements INetworkDevice {
 	 * (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.controller.INetworkDevice#setDeviceType(short)
 	 */
-	public final void setDeviceType(short inDeviceType) {
+	public void setDeviceType(short inDeviceType) {
 		//		mDeviceType = inDeviceType;
 	}
+
 }
