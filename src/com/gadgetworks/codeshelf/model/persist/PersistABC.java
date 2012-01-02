@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PersistABC.java,v 1.6 2011/12/29 09:15:35 jeffw Exp $
+ *  $Id: PersistABC.java,v 1.7 2012/01/02 11:43:18 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -55,59 +55,11 @@ public abstract class PersistABC {
 		return "mId";
 	}
 
-	//	// --------------------------------------------------------------------------
-	//	/**
-	//	 *  @return
-	//	 */
-	//	public  Integer getPersistentId() {
-	//		return mPersistentId;
-	//	}
-	//
-	//	// --------------------------------------------------------------------------
-	//	/**
-	//	 *  @param inPersistentID
-	//	 */
-	//	public  void setPersistentId(Integer inPersistentId) {
-	//		mPersistentId = inPersistentId;
-	//	}
-	//
-	//	// --------------------------------------------------------------------------
-	//	/**
-	//	 *  @return
-	//	 */
-	//	public  String getId() {
-	//		return mId;
-	//	}
-	//
-	//	// --------------------------------------------------------------------------
-	//	/**
-	//	 *  @param inPersistentID
-	//	 */
-	//	public  void setId(String inId) {
-	//		mId = inId;
-	//	}
-	//
-	//	// --------------------------------------------------------------------------
-	//	/**
-	//	 *  @return
-	//	 */
-	//	public  Timestamp getVersion() {
-	//		return mVersion;
-	//	}
-	//
-	//	// --------------------------------------------------------------------------
-	//	/**
-	//	 *  @param inTimestamp
-	//	 */
-	//	public  void setVersion(Timestamp inTimestamp) {
-	//		mVersion = inTimestamp;
-	//	}
-
 	/* --------------------------------------------------------------------------
 	 * (non-Javadoc)
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
-	public boolean equals(Object inObject) {
+	public final boolean equals(Object inObject) {
 
 		boolean result = false;
 
@@ -125,7 +77,7 @@ public abstract class PersistABC {
 	 * (non-Javadoc)
 	 * @see java.lang.Object#hashCode()
 	 */
-	public int hashCode() {
+	public final int hashCode() {
 		if (persistentId != null) {
 			return persistentId.hashCode();
 		} else {

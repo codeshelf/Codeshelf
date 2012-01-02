@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PickTag.java,v 1.9 2011/12/29 09:15:35 jeffw Exp $
+ *  $Id: PickTag.java,v 1.10 2012/01/02 11:43:18 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -49,23 +49,7 @@ public class PickTag extends WirelessDevice {
 		super();
 	}
 
-	//	// --------------------------------------------------------------------------
-	//	/* (non-Javadoc)
-	//	 * @see java.lang.Object#toString()
-	//	 */
-	//	public final String toString() {
-	//		return "PickTag: " + getMacAddress() + " " + getDescription();
-	//	}
-	//
-	//	public final short getSerialBusPosition() {
-	//		return mSerialBusPosition;
-	//	}
-	//
-	//	public final void setSerialBusPosition(short inSerialBusPosition) {
-	//		mSerialBusPosition = inSerialBusPosition;
-	//	}
-
-	public ControlGroup getParentControlGroup() {
+	public final ControlGroup getParentControlGroup() {
 		// Yes, this is weird, but we MUST always return the same instance of these persistent objects.
 		if (parentControlGroup != null) {
 			parentControlGroup = ControlGroup.DAO.loadByPersistentId(parentControlGroup.getPersistentId());
@@ -73,7 +57,7 @@ public class PickTag extends WirelessDevice {
 		return parentControlGroup;
 	}
 
-	public void setParentControlGroup(ControlGroup inControlGroup) {
+	public final void setParentControlGroup(ControlGroup inControlGroup) {
 		parentControlGroup = inControlGroup;
 	}
 
@@ -81,17 +65,15 @@ public class PickTag extends WirelessDevice {
 	* (non-Javadoc)
 	* @see com.gadgetworks.controller.IControllerListener#commandControlReceived(com.gadgetworks.command.CommandControlABC, com.gadgetworks.command.NetAddress)
 	*/
-	public void controlCommandReceived(CommandControlABC inCommand) {
+	public final void controlCommandReceived(CommandControlABC inCommand) {
 	}
 
 	/* --------------------------------------------------------------------------
 	 * (non-Javadoc)
 	 * @see com.gadgetworks.controller.IControllerListener#buttonPressed(com.gadgetworks.actor.IActor, byte)
 	 */
-	public void buttonCommandReceived(final byte inButtonNumberPressed, final byte inFunctionType) {
-
+	public final void buttonCommandReceived(final byte inButtonNumberPressed, final byte inFunctionType) {
 		LOGGER.debug(this.toString() + ": button " + inButtonNumberPressed);
-
 	}
 
 }

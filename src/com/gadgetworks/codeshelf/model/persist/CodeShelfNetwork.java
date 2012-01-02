@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfNetwork.java,v 1.10 2011/12/29 09:15:35 jeffw Exp $
+ *  $Id: CodeShelfNetwork.java,v 1.11 2012/01/02 11:43:18 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -48,9 +48,6 @@ public class CodeShelfNetwork extends PersistABC {
 
 	// The network ID.
 	@Column(nullable = false)
-	//	@Getter
-	//	@Setter
-	//@Embedded
 	private byte[]										networkId;
 	// The network description.
 	@Column(nullable = false)
@@ -64,8 +61,6 @@ public class CodeShelfNetwork extends PersistABC {
 	private boolean										isActive;
 	// The network ID.
 	@Column(nullable = false)
-	//	@Getter
-	//	@Setter
 	private byte[]										gatewayAddr;
 	// The gateway URL.
 	@Column(nullable = false)
@@ -74,8 +69,6 @@ public class CodeShelfNetwork extends PersistABC {
 	private String										gatewayUrl;
 	// For a network this is a list of all of the control groups that belong in the set.
 	@Column(nullable = false)
-	//	@Getter
-	//	@Setter
 	@OneToMany(mappedBy = "parentCodeShelfNetwork")
 	private List<ControlGroup>							controlGroups		= new ArrayList<ControlGroup>();
 
@@ -97,68 +90,24 @@ public class CodeShelfNetwork extends PersistABC {
 		isConnected = false;
 	}
 
-	//	public final String toString() {
-	//		return getId().toString() + " " + mDescription;
-	//	}
-
-	public NetworkId getNetworkId() {
+	public final NetworkId getNetworkId() {
 		return new NetworkId(networkId);
 	}
 
-	public void setNetworkId(NetworkId inNetworkId) {
+	public final void setNetworkId(NetworkId inNetworkId) {
 		networkId = inNetworkId.getParamValueAsByteArray();
 	}
 
-	//	public  String getDescription() {
-	//		return mDescription;
-	//	}
-	//
-	//	public  void setDescription(String inDescription) {
-	//		mDescription = inDescription;
-	//	}
-	//
-	//	public  boolean getIsActive() {
-	//		return mIsActive;
-	//	}
-	//
-	//	public  void setIsActive(boolean inIsActive) {
-	//		mIsActive = inIsActive;
-	//	}
-	//
-	//	public  boolean getIsConnected() {
-	//		return mIsConnected;
-	//	}
-	//
-	//	public  void setIsConnected(boolean inIsConnected) {
-	//		mIsConnected = inIsConnected;
-	//	}
-	//
-	//	public  IWirelessInterface getWirelessInterface() {
-	//		return mWirelessInterface;
-	//	}
-	//
-	//	public  void setWirelessInterface(IWirelessInterface inGatewayInterface) {
-	//		mWirelessInterface = inGatewayInterface;
-	//	}
-
-	public NetAddress getGatewayAddr() {
+	public final NetAddress getGatewayAddr() {
 		return new NetAddress(gatewayAddr);
 	}
 
-	public void setGatewayAddr(NetAddress inNetAddress) {
+	public final void setGatewayAddr(NetAddress inNetAddress) {
 		gatewayAddr = inNetAddress.getParamValueAsByteArray();
 	}
 
-	//	public  String getGatewayUrl() {
-	//		return mGatewayUrl;
-	//	}
-	//
-	//	public  void setGatewayUrl(String inUrlString) {
-	//		mGatewayUrl = inUrlString;
-	//	}
-
 	// We always need to return the object cached in the DAO.
-	public List<ControlGroup> getControlGroups() {
+	public final List<ControlGroup> getControlGroups() {
 		if (IGenericDao.USE_DAO_CACHE) {
 			List<ControlGroup> result = new ArrayList<ControlGroup>();
 			if (!CodeShelfNetwork.DAO.isObjectPersisted(this)) {
@@ -177,12 +126,12 @@ public class CodeShelfNetwork extends PersistABC {
 	}
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
-	public void addControlGroup(ControlGroup inControlGroup) {
+	public final void addControlGroup(ControlGroup inControlGroup) {
 		controlGroups.add(inControlGroup);
 	}
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
-	public void removeControlGroup(ControlGroup inControlGroup) {
+	public final void removeControlGroup(ControlGroup inControlGroup) {
 		controlGroups.remove(inControlGroup);
 	}
 }

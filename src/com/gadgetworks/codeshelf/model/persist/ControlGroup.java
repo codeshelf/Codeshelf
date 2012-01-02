@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ControlGroup.java,v 1.14 2011/12/29 09:15:35 jeffw Exp $
+ *  $Id: ControlGroup.java,v 1.15 2012/01/02 11:43:18 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -87,22 +87,6 @@ public class ControlGroup extends PersistABC {
 		tagProtocolEnum = TagProtocolEnum.ATOP;
 	}
 
-	//	public String toString() {
-	//		return mParentCodeShelfNetwork.toString() + "->" + getId().toString() + " " + mDescription;
-	//	}
-	//
-	//	public CodeShelfNetwork getParentCodeShelfNetwork() {
-	//		// Yes, this is weird, but we MUST always return the same instance of these persistent objects.
-	//		if (mParentCodeShelfNetwork != null) {
-	//			mParentCodeShelfNetwork = Util.getSystemDAO().loadCodeShelfNetwork(mParentCodeShelfNetwork.getPersistentId());
-	//		}
-	//		return mParentCodeShelfNetwork;
-	//	}
-	//
-	//	public void setParentCodeShelfNetwork(CodeShelfNetwork inCodeShelfNetwork) {
-	//		mParentCodeShelfNetwork = inCodeShelfNetwork;
-	//	}
-
 	public NetGroup getControlGroupId() {
 		return new NetGroup(controlGroupId);
 	}
@@ -110,30 +94,6 @@ public class ControlGroup extends PersistABC {
 	public void setControlGroupId(NetGroup inId) {
 		controlGroupId = inId.getParamValueAsByteArray();
 	}
-
-	//	public  String getDescription() {
-	//		return mDescription;
-	//	}
-	//
-	//	public  void setDescription(String inDescription) {
-	//		mDescription = inDescription;
-	//	}
-	//
-	//	public  short getInterfacePortNum() {
-	//		return mInterfacePortNum;
-	//	}
-	//
-	//	public  void setInterfacePortNum(short inPortNumber) {
-	//		mInterfacePortNum = inPortNumber;
-	//	}
-	//
-	//	public  boolean getIsActive() {
-	//		return mIsActive;
-	//	}
-	//
-	//	public  void setIsActive(boolean inIsActive) {
-	//		mIsActive = inIsActive;
-	//	}
 
 	public TagProtocolEnum getTagProtocol() {
 		TagProtocolEnum result = tagProtocolEnum;
