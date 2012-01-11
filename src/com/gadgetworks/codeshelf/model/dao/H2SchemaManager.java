@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: H2SchemaManager.java,v 1.15 2011/12/29 09:15:35 jeffw Exp $
+ *  $Id: H2SchemaManager.java,v 1.16 2012/01/11 18:13:15 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -169,6 +169,34 @@ public final class H2SchemaManager implements ISchemaManager {
 				+ "DEFAULTVALUESTR VARCHAR(256)," //
 				+ "PRIMARY KEY (PERSISTENTID));");
 
+		// PromoCode
+		execOneSQLCommand("CREATE TABLE CODESHELF.PROMOCODE ( " //
+				+ "PERSISTENTID IDENTITY NOT NULL, " //
+				+ "ID VARCHAR(64) NOT NULL," //
+				+ "VERSION TIMESTAMP, " //
+				+ "PROMOCODE VARCHAR(64) NOT NULL, " //
+				+ "COOKIE VARCHAR(64) NOT NULL, " //
+				+ "EMAIL VARCHAR(64) NOT NULL, " //
+				+ "CREATED TIMESTAMP NOT NULL, " //
+				+ "ACTIVE BOOLEAN DEFAULT TRUE NOT NULL," //
+				+ "PRIMARY KEY (PERSISTENTID));");
+
+		// PromoCodeUse
+		execOneSQLCommand("CREATE TABLE CODESHELF.PROMOCODEUSE ( " //
+				+ "PERSISTENTID IDENTITY NOT NULL, " //
+				+ "ID VARCHAR(64) NOT NULL," //
+				+ "VERSION TIMESTAMP, " //
+				+ "PARENTPROMOCODE_PERSISTENTID LONG NOT NULL, " //
+				+ "ACTIVITY VARCHAR(64) NOT NULL, " //
+				+ "CREATED TIMESTAMP NOT NULL, " //
+				+ "PRIMARY KEY (PERSISTENTID));");
+
+		execOneSQLCommand("ALTER TABLE CODESHELF.PROMOCODEUSE " //
+				+ "ADD FOREIGN KEY (PARENTPROMOCODE_PERSISTENTID) " //
+				+ "REFERENCES DATABASE.CODESHELF.PROMOCODE (PERSISTENTID);");
+
+		execOneSQLCommand("CREATE INDEX CODESHELF.PROMOCODEUSE_PARENT_PROMOCODE ON CODESHELF.PROMOCODEUSE (PARENTPROMOCODE_PERSISTENTID)");
+
 		// Facility
 		execOneSQLCommand("CREATE TABLE CODESHELF.FACILITY ( " //
 				+ "PERSISTENTID IDENTITY NOT NULL, " //
@@ -176,6 +204,20 @@ public final class H2SchemaManager implements ISchemaManager {
 				+ "VERSION TIMESTAMP, " //
 				+ "DESCRIPTION VARCHAR(64) NOT NULL, " //
 				+ "PRIMARY KEY (PERSISTENTID));");
+
+		// Aisle
+		execOneSQLCommand("CREATE TABLE CODESHELF.AISLE ( " //
+				+ "PERSISTENTID IDENTITY NOT NULL, " //
+				+ "ID VARCHAR(64) NOT NULL," //
+				+ "VERSION TIMESTAMP, " //
+				+ "PARENTFACILITY_PERSISTENTID LONG NOT NULL, " //
+				+ "PRIMARY KEY (PERSISTENTID));");
+
+		execOneSQLCommand("ALTER TABLE CODESHELF.AISLE " //
+				+ "ADD FOREIGN KEY (PARENTFACILITY_PERSISTENTID) " //
+				+ "REFERENCES DATABASE.CODESHELF.FACILITY (PERSISTENTID);");
+
+		execOneSQLCommand("CREATE INDEX CODESHELF.AISLE_PARENT_FACILITY ON CODESHELF.AISLE (PARENTFACILITY_PERSISTENTID)");
 
 		// CodeShelfNetwork
 		execOneSQLCommand("CREATE TABLE CODESHELF.CODESHELFNETWORK ( " //
@@ -186,7 +228,7 @@ public final class H2SchemaManager implements ISchemaManager {
 				+ "DESCRIPTION VARCHAR(64) NOT NULL, " //
 				+ "GATEWAYADDR BINARY(3) NOT NULL, " //
 				+ "GATEWAYURL VARCHAR(64) NOT NULL, " //
-				+ "ISACTIVE BOOLEAN DEFAULT TRUE NOT NULL," //
+				+ "ACTIVE BOOLEAN DEFAULT TRUE NOT NULL," //
 				+ "PRIMARY KEY (PERSISTENTID));");
 
 		// ControlGroup
@@ -198,7 +240,7 @@ public final class H2SchemaManager implements ISchemaManager {
 				+ "CONTROLGROUPID BINARY(2) DEFAULT 0 NOT NULL, " //
 				+ "DESCRIPTION VARCHAR(64) NOT NULL, " //
 				+ "INTERFACEPORTNUM INT NOT NULL, " //
-				+ "ISACTIVE BOOLEAN DEFAULT TRUE NOT NULL," //
+				+ "ACTIVE BOOLEAN DEFAULT TRUE NOT NULL," //
 				+ "TAGPROTOCOLENUM VARCHAR(16) NOT NULL, " //
 				+ "PRIMARY KEY (PERSISTENTID));");
 

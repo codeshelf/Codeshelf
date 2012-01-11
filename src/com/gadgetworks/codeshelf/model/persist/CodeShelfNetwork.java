@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfNetwork.java,v 1.11 2012/01/02 11:43:18 jeffw Exp $
+ *  $Id: CodeShelfNetwork.java,v 1.12 2012/01/11 18:13:15 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -58,7 +58,7 @@ public class CodeShelfNetwork extends PersistABC {
 	@Column(nullable = false)
 	@Getter
 	@Setter
-	private boolean										isActive;
+	private boolean										active;
 	// The network ID.
 	@Column(nullable = false)
 	private byte[]										gatewayAddr;
@@ -75,7 +75,7 @@ public class CodeShelfNetwork extends PersistABC {
 	@Transient
 	@Getter
 	@Setter
-	private boolean										isConnected;
+	private boolean										connected;
 	@Transient
 	@Getter
 	@Setter
@@ -86,8 +86,8 @@ public class CodeShelfNetwork extends PersistABC {
 		description = "";
 		gatewayAddr = new byte[NetAddress.NET_ADDRESS_BYTES];
 		gatewayUrl = "";
-		isActive = true;
-		isConnected = false;
+		active = true;
+		connected = false;
 	}
 
 	public final NetworkId getNetworkId() {
