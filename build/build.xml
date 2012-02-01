@@ -440,6 +440,7 @@
 			-libraryjars "${target.lib}/jdom.jar"
 			-libraryjars "${target.lib}/jregex1.2_01.jar"
 			-libraryjars "${target.lib}/json-1.0.jar"
+			-libraryjars "${target.lib}/lombok.jar"
 			-libraryjars "${target.lib}/log4j-1.2.14.jar"
 			-libraryjars "${target.lib}/mailapi.jar"
 			-libraryjars "${target.lib}/org.eclipse.core.commands_3.6.0.I20110111-0800.jar"
