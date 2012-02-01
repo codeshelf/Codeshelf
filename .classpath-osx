@@ -2,7 +2,6 @@
 <classpath>
 	<classpathentry kind="lib" path="build" sourcepath="src"/>
 	<classpathentry excluding="com/gadgetworks/codeshelf/application/CarbonMenuDelegate.java|com/gadgetworks/codeshelf/application/MainCarbon.java|com/gadgetworks/codeshelf/application/MainWin32.java|com/gadgetworks/codeshelf/model/dao/GWDerbyAdapter.java|com/gadgetworks/codeshelf/model/dao/GWH2Adapter.java|com/gadgetworks/codeshelf/p2p/jingle/speex/|org/datanucleus/springframework/**" kind="src" path="src"/>
-	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/FlyWeightController"/>
 	<classpathentry kind="lib" path="lib/dist/log4j-1.2.14.jar" sourcepath="APIs/log4j-src.zip"/>
 	<classpathentry kind="lib" path="lib/dist/commons-logging-1.1.1.jar" sourcepath="APIs/commons-logging-1.1.1-src.zip"/>
 	<classpathentry kind="lib" path="resources"/>
@@ -14,40 +13,33 @@
 	<classpathentry kind="lib" path="lib/dist/jcommon-1.0.16.jar"/>
 	<classpathentry kind="lib" path="lib/dist/json-1.0.jar"/>
 	<classpathentry kind="lib" path="lib/dist/jaxb-api-2.1.jar"/>
-	<classpathentry kind="lib" path="lib/dist/rome-1.0.jar" sourcepath="APIs/rome-1.0-sources.jar"/>
 	<classpathentry kind="lib" path="lib/dist/jdom.jar"/>
 	<classpathentry kind="lib" path="lib/dist/jregex1.2_01.jar" sourcepath="APIs/jregex1.2_01-src.jar"/>
-	<classpathentry kind="lib" path="lib/dist/mailapi.jar" sourcepath="APIs/JavaMail-1.4.2-src.zip"/>
-	<classpathentry kind="lib" path="lib/dist/pop3.jar" sourcepath="APIs/JavaMail-1.4.2-src.zip"/>
 	<classpathentry kind="lib" path="lib/dist/activation.jar"/>
-	<classpathentry kind="lib" path="lib/dist/imap.jar" sourcepath="APIs/JavaMail-1.4.2-src.zip"/>
 	<classpathentry kind="con" path="SWT_CONTAINER"/>
-	<classpathentry kind="lib" path="lib/dist/rome-fetcher-1.0.jar" sourcepath="APIs/rome-fetcher-1.0-sources.jar"/>
 	<classpathentry kind="lib" path="lib/dist/htmlparser.jar" sourcepath="APIs/htmlparser-src.zip"/>
 	<classpathentry kind="lib" path="lib/dist/htmllexer.jar"/>
-	<classpathentry kind="lib" path="lib/dist/activemq-core-5.3.0.jar" sourcepath="APIs/apachemq-src.zip"/>
 	<classpathentry kind="lib" path="lib/dist/geronimo-jms_1.1_spec-1.1.1.jar" sourcepath="APIs/jms-src.zip"/>
 	<classpathentry kind="lib" path="lib/dist/geronimo-j2ee-management_1.0_spec-1.0.jar"/>
-	<classpathentry kind="lib" path="lib/dist/spring-core-2.5.6.jar"/>
-	<classpathentry kind="lib" path="lib/dist/spring-jms-2.5.6.jar"/>
-	<classpathentry kind="lib" path="lib/dist/spring-beans-2.5.6.jar"/>
-	<classpathentry kind="lib" path="lib/dist/spring-context-2.5.6.jar"/>
-	<classpathentry kind="lib" path="lib/dist/jackson-core-asl-1.3.5.jar" sourcepath="APIs/jackson-src-1.3.5.zip"/>
-	<classpathentry kind="lib" path="lib/dist/jackson-mapper-asl-1.3.5.jar" sourcepath="APIs/jackson-src-1.3.5.zip"/>
 	<classpathentry kind="lib" path="lib/dist/commons-lang-2.2.jar"/>
-	<classpathentry kind="lib" path="lib/dist/fat32-lib-1.0-SNAPSHOT.jar" sourcepath="APIs/fat32-lib-1.0-SNAPSHOT-sources.jar"/>
-	<classpathentry kind="lib" path="lib/dist/ebean-2.6.1-agent.jar"/>
-	<classpathentry kind="lib" path="lib/dist/ebean-2.6.1.jar" sourcepath="APIs/ebean-2.6.1-sources.jar"/>
-	<classpathentry kind="lib" path="lib/dist/facebook-java-api-3.0.4-SNAPSHOT.jar" sourcepath="APIs/facebook-java-api-3.0.4-SNAPSHOT-sources.jar"/>
-	<classpathentry kind="lib" path="lib/dist/org.eclipse.core.commands_3.6.0.I20100512-1500.jar"/>
-	<classpathentry kind="lib" path="lib/dist/org.eclipse.core.runtime_3.6.0.v20100505.jar"/>
-	<classpathentry kind="lib" path="lib/dist/org.eclipse.equinox.common_3.6.0.v20100503.jar" sourcepath="/Developer/Applications/eclipse-3.6/plugins/org.eclipse.equinox.common.source_3.6.0.v20100503.jar"/>
-	<classpathentry kind="lib" path="lib/dist/org.eclipse.jface_3.6.0.I20100601-0800.jar" sourcepath="/Developer/Applications/eclipse-3.6/plugins/org.eclipse.jface.source_3.6.0.I20100601-0800.jar"/>
-	<classpathentry kind="lib" path="lib/dist/org.eclipse.jface.databinding_1.4.0.I20100601-0800.jar"/>
-	<classpathentry kind="lib" path="lib/dist/org.eclipse.text_3.5.0.v20100601-1300.jar"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/org.eclipse.nebula.widgets.gallery"/>
 	<classpathentry kind="lib" path="lib/dist/commons-io-1.4.jar" sourcepath="APIs/commons-io-1.4-sources.jar"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.5"/>
-	<classpathentry kind="lib" path="lib/dist/h2-1.2.143.jar" sourcepath="APIs/h2-src.zip"/>
+	<classpathentry kind="lib" path="lib/dist/activemq-core-5.4.1.jar" sourcepath="/Users/jeffw/.m2/repository/org/apache/activemq/activemq-core/5.4.1/activemq-core-5.4.1-sources.jar"/>
+	<classpathentry kind="lib" path="lib/dist/kahadb-5.4.1.jar"/>
+	<classpathentry kind="lib" path="lib/dist/commons-codec-1.4.jar"/>
+	<classpathentry kind="lib" path="lib/dist/commons-httpclient-3.1.jar"/>
+	<classpathentry kind="lib" path="lib/dist/ws-commons-util-1.0.2.jar"/>
+	<classpathentry kind="lib" path="lib/dist/xmlrpc-client-3.1.3.jar" sourcepath="/Users/jeffw/.m2/repository/org/apache/xmlrpc/xmlrpc-client/3.1.3/xmlrpc-client-3.1.3-sources.jar"/>
+	<classpathentry kind="lib" path="lib/dist/xmlrpc-common-3.1.3.jar" sourcepath="/Users/jeffw/.m2/repository/org/apache/xmlrpc/xmlrpc-common/3.1.3/xmlrpc-common-3.1.3-sources.jar"/>
+	<classpathentry kind="lib" path="lib/dist/ebean-2.7.4-agent.jar" sourcepath="APIs/ebean-2.7.4-sources.jar"/>
+	<classpathentry kind="lib" path="lib/dist/ebean-2.7.4.jar" sourcepath="APIs/ebean-2.7.4-sources.jar"/>
+	<classpathentry kind="lib" path="lib/dist/h2-1.3.162.jar" sourcepath="APIs/h2-src.zip"/>
+	<classpathentry kind="lib" path="lib/dist/org.eclipse.core.commands_3.6.0.I20110111-0800.jar"/>
+	<classpathentry kind="lib" path="lib/dist/org.eclipse.core.runtime_3.7.0.v20110110.jar"/>
+	<classpathentry kind="lib" path="lib/dist/org.eclipse.equinox.common_3.6.0.v20110523.jar"/>
+	<classpathentry kind="lib" path="lib/dist/org.eclipse.jface_3.7.0.I20110522-1430.jar" sourcepath="/Developer/Applications/eclipse-3.7.1/plugins/org.eclipse.jface.source_3.7.0.I20110522-1430.jar"/>
+	<classpathentry kind="lib" path="lib/dist/org.eclipse.jface.databinding_1.5.0.I20100907-0800.jar"/>
+	<classpathentry kind="lib" path="lib/dist/org.eclipse.text_3.5.101.r371_v20110810-0800.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.launching.macosx.MacOSXType/JVM 1.5.0"/>
+	<classpathentry kind="lib" path="lib/dist/lombok-0.10.8.jar"/>
 	<classpathentry kind="output" path="eclipse-bin"/>
 </classpath>
