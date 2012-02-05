@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSocketManager.java,v 1.1 2012/02/05 02:53:21 jeffw Exp $
+ *  $Id: WebSocketManager.java,v 1.2 2012/02/05 08:41:31 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websocket;
 
@@ -78,7 +78,11 @@ public final class WebSocketManager implements WebSocketListener {
 		mServerThread = new Thread(new Runnable() {
 			public void run() {
 				while (mShouldRun) {
-					processSocketEvents();
+					try {
+						processSocketEvents();
+					} catch (Exception e) {
+						LOGGER.debug("Exception during web socket handling", e);
+					}
 				}
 			}
 		}, INTERFACE_THREAD_NAME);
@@ -98,6 +102,9 @@ public final class WebSocketManager implements WebSocketListener {
 			} catch (IOException e) {
 				LOGGER.error("", e);
 			}
+		}
+		for (WebSocket webSocket : mWebSockets) {
+			webSocket.close();
 		}
 	}
 

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfApplication.java,v 1.11 2012/02/05 02:53:22 jeffw Exp $
+ *  $Id: CodeShelfApplication.java,v 1.12 2012/02/05 08:41:31 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -53,7 +53,6 @@ import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork;
 import com.gadgetworks.codeshelf.model.persist.DBProperty;
 import com.gadgetworks.codeshelf.model.persist.PersistentProperty;
 import com.gadgetworks.codeshelf.model.persist.WirelessDevice;
-import com.gadgetworks.codeshelf.server.jms.ActiveMqManager;
 import com.gadgetworks.codeshelf.ui.CodeShelfNetworkMgrWindow;
 import com.gadgetworks.codeshelf.ui.LocaleUtils;
 import com.gadgetworks.codeshelf.ui.preferences.Preferences;
@@ -339,7 +338,7 @@ public final class CodeShelfApplication {
 			mController.setRadioChannel(getPreferredChannel());
 
 			// The user may have changed the ActiveMQ settings.
-			ActiveMqManager.setServerFromSettings();
+			//ActiveMqManager.setServerFromSettings();
 		}
 	}
 
