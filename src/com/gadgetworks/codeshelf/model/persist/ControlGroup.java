@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ControlGroup.java,v 1.15 2012/01/02 11:43:18 jeffw Exp $
+ *  $Id: ControlGroup.java,v 1.16 2012/02/05 02:53:21 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -64,7 +64,7 @@ public class ControlGroup extends PersistABC {
 	@Getter
 	@Setter
 	@Column(nullable = false)
-	private boolean									isActive;
+	private boolean									active;
 	// Active/Inactive rule
 	@Getter
 	@Setter
@@ -83,7 +83,7 @@ public class ControlGroup extends PersistABC {
 		parentCodeShelfNetwork = null;
 		controlGroupId = new byte[NetGroup.NET_GROUP_BYTES];
 		description = "";
-		isActive = true;
+		active = true;
 		tagProtocolEnum = TagProtocolEnum.ATOP;
 	}
 

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfApplication.java,v 1.10 2011/12/29 09:15:35 jeffw Exp $
+ *  $Id: CodeShelfApplication.java,v 1.11 2012/02/05 02:53:22 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -53,11 +53,12 @@ import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork;
 import com.gadgetworks.codeshelf.model.persist.DBProperty;
 import com.gadgetworks.codeshelf.model.persist.PersistentProperty;
 import com.gadgetworks.codeshelf.model.persist.WirelessDevice;
-import com.gadgetworks.codeshelf.server.JmsHandler;
 import com.gadgetworks.codeshelf.server.jms.ActiveMqManager;
 import com.gadgetworks.codeshelf.ui.CodeShelfNetworkMgrWindow;
 import com.gadgetworks.codeshelf.ui.LocaleUtils;
 import com.gadgetworks.codeshelf.ui.preferences.Preferences;
+import com.gadgetworks.codeshelf.web.websession.WebSessionManager;
+import com.gadgetworks.codeshelf.web.websocket.WebSocketManager;
 
 public final class CodeShelfApplication {
 
@@ -73,6 +74,7 @@ public final class CodeShelfApplication {
 	private IController					mController;
 	@SuppressWarnings("unused")
 	private WirelessDeviceEventHandler	mWirelessDeviceEventHandler;
+	private WebSocketManager			mWebSocketManager;
 	private Thread						mShutdownHookThread;
 	private Runnable					mShutdownRunnable;
 
@@ -204,6 +206,11 @@ public final class CodeShelfApplication {
 		mWirelessDeviceEventHandler = new WirelessDeviceEventHandler(mController);
 		//		mServerConnectionManager = new FacebookConnectionManager(mController);
 
+		// Start the WebSocket UX handler
+		WebSessionManager webSessionManager = new WebSessionManager();
+		mWebSocketManager = new WebSocketManager(webSessionManager);
+		mWebSocketManager.start();
+
 		// Some persistent objects need some of their fields set to a base/start state when the system restarts.
 		initializeApplicationData();
 
@@ -212,13 +219,13 @@ public final class CodeShelfApplication {
 		//setupSystemTray();
 
 		// Start the ActiveMQ test server if required.
-		property = PersistentProperty.DAO.findById(PersistentProperty.ACTIVEMQ_RUN);
-		if ((property != null) && (property.getCurrentValueAsBoolean())) {
-			ActiveMqManager.startBrokerService();
-		}
-
-		// Start the JMS message handler.
-		JmsHandler.startJmsHandler();
+		//		property = PersistentProperty.DAO.findById(PersistentProperty.ACTIVEMQ_RUN);
+		//		if ((property != null) && (property.getCurrentValueAsBoolean())) {
+		//			ActiveMqManager.startBrokerService();
+		//		}
+		//
+		//		// Start the JMS message handler.
+		//		JmsHandler.startJmsHandler();
 
 		byte preferredChannel = getPreferredChannel();
 
@@ -255,7 +262,7 @@ public final class CodeShelfApplication {
 			mSystemTray.dispose();
 		}
 
-		ActiveMqManager.stopBrokerService();
+		//		ActiveMqManager.stopBrokerService();
 
 		Util.closeConsole();
 
@@ -264,6 +271,9 @@ public final class CodeShelfApplication {
 
 		// Stop the event harvester
 		//EventHarvester.stopEventHarvester();
+
+		// Stop the web socket manager.
+		mWebSocketManager.stop();
 
 		// First shutdown the FlyWeight controller if there is one.
 		mController.stopController();
@@ -468,10 +478,10 @@ public final class CodeShelfApplication {
 		config.setDefaultServer(true);
 		config.setDebugSql(false);
 		config.setLoggingLevel(LogLevel.NONE);
-//		config.setLoggingLevelQuery(LogLevelStmt.NONE);
-//		config.setLoggingLevelSqlQuery(LogLevelStmt.NONE);
-//		config.setLoggingLevelIud(LogLevelStmt.NONE);
-//		config.setLoggingLevelTxnCommit(LogLevelTxnCommit.DEBUG);
+		//		config.setLoggingLevelQuery(LogLevelStmt.NONE);
+		//		config.setLoggingLevelSqlQuery(LogLevelStmt.NONE);
+		//		config.setLoggingLevelIud(LogLevelStmt.NONE);
+		//		config.setLoggingLevelTxnCommit(LogLevelTxnCommit.DEBUG);
 		config.setLoggingToJavaLogger(true);
 		config.setResourceDirectory(Util.getApplicationDataDirPath());
 		EbeanServer server = EbeanServerFactory.create(config);
