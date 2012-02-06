@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSession.java,v 1.2 2012/02/05 08:41:31 jeffw Exp $
+ *  $Id: WebSession.java,v 1.3 2012/02/06 08:00:46 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession;
 
@@ -14,6 +14,7 @@ import org.codehaus.jackson.JsonProcessingException;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import com.gadgetworks.codeshelf.web.websession.command.IWebSessionCommand;
+import com.gadgetworks.codeshelf.web.websession.command.WebSessionCommandFactory;
 
 /**
  * @author jeffw
