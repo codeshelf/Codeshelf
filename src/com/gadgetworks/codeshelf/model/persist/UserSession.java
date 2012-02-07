@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PromoCodeUse.java,v 1.1 2012/01/11 18:13:15 jeffw Exp $
+ *  $Id: UserSession.java,v 1.1 2012/02/07 08:17:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -30,46 +30,46 @@ import com.gadgetworks.codeshelf.model.dao.GenericDao;
  */
 
 @Entity
-@Table(name = "PROMOCODEUSE")
-public class PromoCodeUse extends PersistABC {
+@Table(name = "USERSESSION")
+public class UserSession extends PersistABC {
 
-	public static final GenericDao<PromoCodeUse>	DAO					= new GenericDao<PromoCodeUse>(PromoCodeUse.class);
+	public static final GenericDao<UserSession>	DAO					= new GenericDao<UserSession>(UserSession.class);
 
-	private static final Log						LOGGER				= LogFactory.getLog(PromoCodeUse.class);
+	private static final Log					LOGGER				= LogFactory.getLog(UserSession.class);
 
-	private static final long						serialVersionUID	= 3001609308065821464L;
+	private static final long					serialVersionUID	= 3001609308065821464L;
 
 	// The owning CodeShelf network.
-	@Column(name = "parentPromoCode", nullable = false)
+	@Column(name = "parentUser", nullable = false)
 	@ManyToOne
-	private PromoCode								parentPromoCode;
+	private User								parentUser;
 
 	// Create date.
 	@Getter
 	@Setter
 	@Column(nullable = false)
-	private Timestamp								created;
+	private Timestamp							created;
 
 	// Activity note.
 	@Getter
 	@Setter
 	@Column(nullable = false)
-	private String									note;
+	private String								note;
 
-	public PromoCodeUse() {
-		parentPromoCode = null;
+	public UserSession() {
+		parentUser = null;
 		created = new Timestamp(System.currentTimeMillis());
 	}
 
-	public final PromoCode getParentPromoCode() {
+	public final User getParentUser() {
 		// Yes, this is weird, but we MUST always return the same instance of these persistent objects.
-		if (parentPromoCode != null) {
-			parentPromoCode = PromoCode.DAO.loadByPersistentId(parentPromoCode.getPersistentId());
+		if (parentUser != null) {
+			parentUser = User.DAO.loadByPersistentId(parentUser.getPersistentId());
 		}
-		return parentPromoCode;
+		return parentUser;
 	}
 
-	public final void setParentPromoCode(PromoCode inParentPromoCode) {
-		parentPromoCode = inParentPromoCode;
+	public final void setParentUser(User inParentUser) {
+		parentUser = inParentUser;
 	}
 }

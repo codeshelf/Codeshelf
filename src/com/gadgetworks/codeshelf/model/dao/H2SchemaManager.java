@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: H2SchemaManager.java,v 1.16 2012/01/11 18:13:15 jeffw Exp $
+ *  $Id: H2SchemaManager.java,v 1.17 2012/02/07 08:17:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -169,33 +169,34 @@ public final class H2SchemaManager implements ISchemaManager {
 				+ "DEFAULTVALUESTR VARCHAR(256)," //
 				+ "PRIMARY KEY (PERSISTENTID));");
 
-		// PromoCode
-		execOneSQLCommand("CREATE TABLE CODESHELF.PROMOCODE ( " //
+		// User
+		execOneSQLCommand("CREATE TABLE CODESHELF.USER ( " //
 				+ "PERSISTENTID IDENTITY NOT NULL, " //
 				+ "ID VARCHAR(64) NOT NULL," //
 				+ "VERSION TIMESTAMP, " //
-				+ "PROMOCODE VARCHAR(64) NOT NULL, " //
-				+ "COOKIE VARCHAR(64) NOT NULL, " //
-				+ "EMAIL VARCHAR(64) NOT NULL, " //
-				+ "CREATED TIMESTAMP NOT NULL, " //
+				+ "HASHEDPASSWORD VARCHAR(64), " //
+				+ "EMAIL VARCHAR(64), " //
+				+ "CREATED TIMESTAMP, " //
 				+ "ACTIVE BOOLEAN DEFAULT TRUE NOT NULL," //
 				+ "PRIMARY KEY (PERSISTENTID));");
 
-		// PromoCodeUse
-		execOneSQLCommand("CREATE TABLE CODESHELF.PROMOCODEUSE ( " //
+		execOneSQLCommand("CREATE UNIQUE INDEX CODESHELF.USER_ID_KEY ON CODESHELF.USER (ID)");
+
+		// UserSession
+		execOneSQLCommand("CREATE TABLE CODESHELF.USERSESSION ( " //
 				+ "PERSISTENTID IDENTITY NOT NULL, " //
 				+ "ID VARCHAR(64) NOT NULL," //
 				+ "VERSION TIMESTAMP, " //
-				+ "PARENTPROMOCODE_PERSISTENTID LONG NOT NULL, " //
+				+ "PARENTUSERSESSION_PERSISTENTID LONG NOT NULL, " //
 				+ "ACTIVITY VARCHAR(64) NOT NULL, " //
 				+ "CREATED TIMESTAMP NOT NULL, " //
 				+ "PRIMARY KEY (PERSISTENTID));");
 
-		execOneSQLCommand("ALTER TABLE CODESHELF.PROMOCODEUSE " //
-				+ "ADD FOREIGN KEY (PARENTPROMOCODE_PERSISTENTID) " //
-				+ "REFERENCES DATABASE.CODESHELF.PROMOCODE (PERSISTENTID);");
+		execOneSQLCommand("ALTER TABLE CODESHELF.USERSESSION " //
+				+ "ADD FOREIGN KEY (PARENTUSERSESSION_PERSISTENTID) " //
+				+ "REFERENCES DATABASE.CODESHELF.USER (PERSISTENTID);");
 
-		execOneSQLCommand("CREATE INDEX CODESHELF.PROMOCODEUSE_PARENT_PROMOCODE ON CODESHELF.PROMOCODEUSE (PARENTPROMOCODE_PERSISTENTID)");
+		execOneSQLCommand("CREATE INDEX CODESHELF.USERSESSION_PARENT_USER ON CODESHELF.USER (PARENTUSERSESSION_PERSISTENTID)");
 
 		// Facility
 		execOneSQLCommand("CREATE TABLE CODESHELF.FACILITY ( " //

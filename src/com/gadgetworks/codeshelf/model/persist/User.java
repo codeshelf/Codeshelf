@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PromoCode.java,v 1.1 2012/01/11 18:13:15 jeffw Exp $
+ *  $Id: User.java,v 1.1 2012/02/07 08:17:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -25,7 +25,7 @@ import com.gadgetworks.codeshelf.model.dao.IGenericDao;
 
 // --------------------------------------------------------------------------
 /**
- * PromoCode
+ * User
  * 
  * This holds all of the information about limited-time use codes we send to prospects.
  * 
@@ -33,65 +33,59 @@ import com.gadgetworks.codeshelf.model.dao.IGenericDao;
  */
 
 @Entity
-@Table(name = "PROMOCODE")
-public class PromoCode extends PersistABC {
+@Table(name = "USER")
+public class User extends PersistABC {
 
-	public static final GenericDao<PromoCode>	DAO					= new GenericDao<PromoCode>(PromoCode.class);
+	public static final GenericDao<User>	DAO					= new GenericDao<User>(User.class);
 
-	private static final Log					LOGGER				= LogFactory.getLog(PromoCode.class);
+	private static final Log				LOGGER				= LogFactory.getLog(User.class);
 
-	private static final long					serialVersionUID	= 3001609308065821464L;
+	private static final long				serialVersionUID	= 3001609308065821464L;
 
-	// The Promo code.
+	// The hashed password
+	// A User with a null hashed password is a promo user (with limited abilities).
 	@Getter
 	@Setter
-	@Column(nullable = false)
-	private String								promoCode;
-
-	// The browser cookie use for the code code.
-	@Getter
-	@Setter
-	@Column(nullable = false)
-	private String								cookie;
+	@Column(nullable = true)
+	private String							hashedPassword;
 
 	// Email.
 	@Getter
 	@Setter
 	@Column(nullable = false)
-	private String								email;
+	private String							email;
 
 	// Create date.
 	@Getter
 	@Setter
 	@Column(nullable = false)
-	private Timestamp							created;
+	private Timestamp						created;
 
 	// Is it active.
 	@Getter
 	@Setter
 	@Column(nullable = false)
-	private Boolean								active;
+	private Boolean							active;
 
 	// For a network this is a list of all of the control groups that belong in the set.
-	@OneToMany(mappedBy = "parentPromoCode")
-	private List<PromoCodeUse>					uses				= new ArrayList<PromoCodeUse>();
+	@OneToMany(mappedBy = "parentUser")
+	private List<UserSession>				uses				= new ArrayList<UserSession>();
 
-	public PromoCode() {
-		promoCode = "";
+	public User() {
 		email = "";
 		created = new Timestamp(System.currentTimeMillis());
 		active = true;
 	}
 
 	// We always need to return the object cached in the DAO.
-	public final List<PromoCodeUse> getPromoCodeUses() {
+	public final List<UserSession> getUserSessions() {
 		if (IGenericDao.USE_DAO_CACHE) {
-			List<PromoCodeUse> result = new ArrayList<PromoCodeUse>();
-			if (!PromoCodeUse.DAO.isObjectPersisted(this)) {
+			List<UserSession> result = new ArrayList<UserSession>();
+			if (!UserSession.DAO.isObjectPersisted(this)) {
 				result = uses;
 			} else {
-				for (PromoCodeUse promoCodeUse : PromoCodeUse.DAO.getAll()) {
-					if (promoCodeUse.getParentPromoCode().equals(this)) {
+				for (UserSession promoCodeUse : UserSession.DAO.getAll()) {
+					if (promoCodeUse.getParentUser().equals(this)) {
 						result.add(promoCodeUse);
 					}
 				}
@@ -103,12 +97,12 @@ public class PromoCode extends PersistABC {
 	}
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
-	public final void addPromoCodeUse(PromoCodeUse inPromoCodeUse) {
+	public final void addUserSession(UserSession inPromoCodeUse) {
 		uses.add(inPromoCodeUse);
 	}
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
-	public final void removePromoCodeUse(PromoCodeUse inPromoCodeUse) {
+	public final void removeUserSession(UserSession inPromoCodeUse) {
 		uses.remove(inPromoCodeUse);
 	}
 }
