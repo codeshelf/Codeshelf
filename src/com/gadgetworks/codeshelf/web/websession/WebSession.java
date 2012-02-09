@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSession.java,v 1.4 2012/02/07 08:17:59 jeffw Exp $
+ *  $Id: WebSession.java,v 1.5 2012/02/09 07:29:23 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession;
 
@@ -43,7 +43,7 @@ public class WebSession {
 
 			String result = command.exec();
 
-			if ((result != null) && (result.length() > 0)) {
+			if (result != null) {
 				try {
 					mWebSocket.send(result);
 				} catch (InterruptedException e) {

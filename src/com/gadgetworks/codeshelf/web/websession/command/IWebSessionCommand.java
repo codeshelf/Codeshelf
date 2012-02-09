@@ -1,9 +1,11 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: IWebSessionCommand.java,v 1.2 2012/02/07 08:17:59 jeffw Exp $
+ *  $Id: IWebSessionCommand.java,v 1.3 2012/02/09 07:29:23 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command;
+
+import org.codehaus.jackson.JsonNode;
 
 /**
  * @author jeffw

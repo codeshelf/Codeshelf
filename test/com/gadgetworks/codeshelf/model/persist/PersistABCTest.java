@@ -19,6 +19,12 @@ public class PersistABCTest {
 	}
 
 	@Test
+	public void testGetId() {
+		PersistABCStub persist = new PersistABCStub();
+		assertEquals(persist.getIdColumnName(), "Id");
+	}
+
+	@Test
 	public void testHashCode() {
 		PersistABCStub persist = new PersistABCStub();
 		assertEquals(persist.hashCode(), 0);
