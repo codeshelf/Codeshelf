@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfApplication.java,v 1.12 2012/02/05 08:41:31 jeffw Exp $
+ *  $Id: CodeShelfApplication.java,v 1.13 2012/02/12 19:36:26 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -82,7 +82,11 @@ public final class CodeShelfApplication {
 		// Prepare the shutdown hook.
 		mShutdownRunnable = new Runnable() {
 			public void run() {
-				stopApplication();
+				// Only execute this hook if the application is still running at (external) shutdown.
+				// (This is to help where the shutdown is done externally and not through our own means.)
+				if (mIsRunning) {
+					stopApplication();
+				}
 			}
 		};
 		mShutdownHookThread = new Thread() {

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSocketManager.java,v 1.2 2012/02/05 08:41:31 jeffw Exp $
+ *  $Id: WebSocketManager.java,v 1.3 2012/02/12 19:36:26 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websocket;
 
@@ -48,7 +48,7 @@ public final class WebSocketManager implements WebSocketListener {
 	private WebSessionManager				mWebSessionManager;
 	private boolean							mShouldRun;
 
-	public WebSocketManager(WebSessionManager inWebSessionManager) {
+	public WebSocketManager(final WebSessionManager inWebSessionManager) {
 		try {
 			mAddress = new InetSocketAddress(InetAddress.getByName(WEBSOCKET_ADDRESS), WEBSOCKET_PORT);
 			mServerSocket = ServerSocketChannel.open();
@@ -84,6 +84,7 @@ public final class WebSocketManager implements WebSocketListener {
 						LOGGER.debug("Exception during web socket handling", e);
 					}
 				}
+				LOGGER.info("Exited websocket manager");
 			}
 		}, INTERFACE_THREAD_NAME);
 		mServerThread.setPriority(INTERFACE_THREAD_PRIORITY);
@@ -96,12 +97,15 @@ public final class WebSocketManager implements WebSocketListener {
 	 */
 	public void stop() {
 		mShouldRun = false;
-		if (mServerSocket != null) {
-			try {
-				mServerSocket.close();
-			} catch (IOException e) {
-				LOGGER.error("", e);
+		try {
+			if (mSelector != null) {
+				mSelector.close();
 			}
+			if (mServerSocket != null) {
+				mServerSocket.close();
+			}
+		} catch (IOException e) {
+			LOGGER.error("", e);
 		}
 		for (WebSocket webSocket : mWebSockets) {
 			webSocket.close();
