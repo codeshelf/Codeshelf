@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: IWebSessionCommand.java,v 1.4 2012/02/12 02:08:26 jeffw Exp $
+ *  $Id: IWebSessionCommand.java,v 1.5 2012/02/21 02:45:11 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command;
 
@@ -25,6 +25,7 @@ public interface IWebSessionCommand {
 	
 	String getCommandId();
 	
-	String exec();
-
+	IWebSessionCommand exec();
+	
+	String serialize();
 }

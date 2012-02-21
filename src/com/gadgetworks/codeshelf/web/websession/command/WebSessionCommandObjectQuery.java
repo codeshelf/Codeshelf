@@ -1,0 +1,83 @@
+/*******************************************************************************
+ *  CodeShelf
+ *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
+ *  $Id: WebSessionCommandObjectQuery.java,v 1.1 2012/02/21 02:45:11 jeffw Exp $
+ *******************************************************************************/
+package com.gadgetworks.codeshelf.web.websession.command;
+
+import java.io.IOException;
+import java.util.List;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.codehaus.jackson.JsonGenerationException;
+import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.map.JsonMappingException;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.node.ObjectNode;
+
+import com.avaje.ebean.Ebean;
+import com.avaje.ebean.Query;
+import com.gadgetworks.codeshelf.model.persist.Aisle;
+import com.gadgetworks.codeshelf.model.persist.PersistABC;
+
+/**
+ * @author jeffw
+ *
+ */
+public class WebSessionCommandObjectQuery extends WebSessionCommandABC {
+
+	private static final Log	LOGGER		= LogFactory.getLog(Aisle.class);
+
+	private static final String	CLASS_NODE	= "class";
+	private static final String	QUERY_NODE	= "query";
+
+	private String				mObjectClass;
+	private String				mQuery;
+
+	public WebSessionCommandObjectQuery(final JsonNode inCommandAsJson) {
+		super(inCommandAsJson);
+
+		JsonNode dataJsonNode = getDataJsonNode();
+		JsonNode classNode = dataJsonNode.get(CLASS_NODE);
+		mObjectClass = classNode.getTextValue();
+
+		JsonNode queryNode = dataJsonNode.get(QUERY_NODE);
+		mQuery = queryNode.getTextValue();
+	}
+
+	public final WebSessionCommandEnum getCommandEnum() {
+		return WebSessionCommandEnum.LAUNCH_CODE;
+	}
+
+	public final JsonNode doExec() {
+		JsonNode result = null;
+
+		// CRITICAL SECUTIRY CONCEPT.
+		// The remote end can NEVER get object results outside of it's own scope.
+		// Today, the scope is set by the user's ORGANIZATION.
+		// That means we can never return objects not part of the current (logged in) user's organization.
+		// THAT MEANS WE MUST ALWAYS ADD A WHERE CLAUSE HERE THAT LOCKS US INTO THIS.
+		// (We should also defend against other, weird query constructs that may be trying to circumvent this restriction.)
+
+		try {
+			Class<? extends PersistABC> clazz = (Class<? extends PersistABC>) Class.forName(mObjectClass);
+			Query<? extends PersistABC> query = Ebean.find(clazz);
+			query.where(mQuery);
+
+			List<? extends PersistABC> searchList = query.findList();
+
+			// Convert the list of ojects into a JSon object.
+			ObjectMapper mapper = new ObjectMapper();
+			ObjectNode dataNode = mapper.createObjectNode();
+			dataNode.putPOJO("query result", searchList);
+			
+			result = dataNode;
+
+		} catch (ClassNotFoundException e) {
+			LOGGER.error("", e);
+		}
+
+		return result;
+	}
+}

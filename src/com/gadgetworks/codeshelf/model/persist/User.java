@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: User.java,v 1.1 2012/02/07 08:17:59 jeffw Exp $
+ *  $Id: User.java,v 1.2 2012/02/21 02:45:12 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -11,6 +11,7 @@ import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
@@ -71,10 +72,27 @@ public class User extends PersistABC {
 	@OneToMany(mappedBy = "parentUser")
 	private List<UserSession>				uses				= new ArrayList<UserSession>();
 
+	// The owning facility.
+	@Column(name = "parentOrganization", nullable = false)
+	@ManyToOne
+	private Organization						parentOrganization;
+
 	public User() {
 		email = "";
 		created = new Timestamp(System.currentTimeMillis());
 		active = true;
+	}
+
+	public final Organization getParentOrganization() {
+		// Yes, this is weird, but we MUST always return the same instance of these persistent objects.
+		if (parentOrganization != null) {
+			parentOrganization = Organization.DAO.loadByPersistentId(parentOrganization.getPersistentId());
+		}
+		return parentOrganization;
+	}
+
+	public final void setparentOrganization(Organization inparentOrganization) {
+		parentOrganization = inparentOrganization;
 	}
 
 	// We always need to return the object cached in the DAO.

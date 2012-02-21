@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSession.java,v 1.5 2012/02/09 07:29:23 jeffw Exp $
+ *  $Id: WebSession.java,v 1.6 2012/02/21 02:45:12 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession;
 
@@ -10,6 +10,7 @@ import java.io.IOException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonProcessingException;
 import org.codehaus.jackson.map.ObjectMapper;
 
@@ -41,11 +42,11 @@ public class WebSession {
 			IWebSessionCommand command = WebSessionCommandFactory.createWebSessionCommand(rootNode);
 			LOGGER.debug(command);
 
-			String result = command.exec();
+			IWebSessionCommand respCommand = command.exec();
 
-			if (result != null) {
+			if (respCommand != null) {
 				try {
-					mWebSocket.send(result);
+					mWebSocket.send(respCommand.serialize());
 				} catch (InterruptedException e) {
 					LOGGER.error("Can't send response", e);
 				}

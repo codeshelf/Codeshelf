@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionManager.java,v 1.2 2012/02/07 08:17:59 jeffw Exp $
+ *  $Id: WebSessionManager.java,v 1.3 2012/02/21 02:45:12 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession;
 
@@ -12,6 +12,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.gadgetworks.codeshelf.model.dao.DAOException;
+import com.gadgetworks.codeshelf.model.persist.Organization;
 import com.gadgetworks.codeshelf.model.persist.User;
 import com.gadgetworks.codeshelf.web.websocket.WebSocket;
 
@@ -29,30 +30,8 @@ public class WebSessionManager {
 		mWebSessions = new HashMap<WebSocket, WebSession>();
 
 		// Create two dummy users for testing.
-		User user1 = User.DAO.findById("1234");
-		if (user1 == null) {
-			user1 = new User();
-			user1.setActive(true);
-			user1.setId("1234");
-			user1.setHashedPassword("TEST");
-			try {
-				User.DAO.store(user1);
-			} catch (DAOException e) {
-				e.printStackTrace();
-			}
-		}
-
-		User user2 = User.DAO.findById("12345");
-		if (user2 == null) {
-			user2 = new User();
-			user2.setActive(true);
-			user2.setId("12345");
-			try {
-				User.DAO.store(user2);
-			} catch (DAOException e) {
-				e.printStackTrace();
-			}
-		}
+		createUser("1234", "passowrd");
+		createUser("12345", null);
 	}
 
 	public final void handleSessionOpen(WebSocket inWebSocket) {
@@ -79,6 +58,35 @@ public class WebSessionManager {
 		WebSession webSession = mWebSessions.get(inWebSocket);
 		if (webSession != null) {
 			webSession.processMessage(inMessage);
+		}
+	}
+	
+	private void createUser(String userID, String password) {
+		Organization organization = Organization.DAO.findById(userID);
+		if (organization == null) {
+			organization = new Organization();
+			organization.setId(userID);
+			try {
+				Organization.DAO.store(organization);
+			} catch (DAOException e) {
+				e.printStackTrace();
+			}
+		}
+
+		User user = User.DAO.findById(userID);
+		if (user == null) {
+			user = new User();
+			user.setActive(true);
+			user.setId(userID);
+			if (password != null) {
+				user.setHashedPassword(password);
+			}
+			user.setparentOrganization(organization);
+			try {
+				User.DAO.store(user);
+			} catch (DAOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 }

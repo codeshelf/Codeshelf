@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: H2SchemaManager.java,v 1.17 2012/02/07 08:17:59 jeffw Exp $
+ *  $Id: H2SchemaManager.java,v 1.18 2012/02/21 02:45:12 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -169,6 +169,29 @@ public final class H2SchemaManager implements ISchemaManager {
 				+ "DEFAULTVALUESTR VARCHAR(256)," //
 				+ "PRIMARY KEY (PERSISTENTID));");
 
+		// organization
+		execOneSQLCommand("CREATE TABLE CODESHELF.ORGANIZATION ( " //
+				+ "PERSISTENTID IDENTITY NOT NULL, " //
+				+ "ID VARCHAR(64) NOT NULL," //
+				+ "VERSION TIMESTAMP, " //
+				+ "DESCRIPTION VARCHAR(64) NOT NULL, " //
+				+ "PRIMARY KEY (PERSISTENTID));");
+
+		// Facility
+		execOneSQLCommand("CREATE TABLE CODESHELF.FACILITY ( " //
+				+ "PERSISTENTID IDENTITY NOT NULL, " //
+				+ "ID VARCHAR(64) NOT NULL," //
+				+ "VERSION TIMESTAMP, " //
+				+ "DESCRIPTION VARCHAR(64) NOT NULL, " //
+				+ "PARENTORGANIZATION_PERSISTENTID LONG NOT NULL, " //
+				+ "PRIMARY KEY (PERSISTENTID));");
+
+		execOneSQLCommand("ALTER TABLE CODESHELF.FACILITY " //
+			+ "ADD FOREIGN KEY (PARENTORGANIZATION_PERSISTENTID) " //
+			+ "REFERENCES DATABASE.CODESHELF.ORGANIZATION (PERSISTENTID);");
+
+		execOneSQLCommand("CREATE INDEX CODESHELF.FACILITY_PARENT_ORGANIZATION ON CODESHELF.FACILITY (PARENTORGANIZATION_PERSISTENTID)");
+
 		// User
 		execOneSQLCommand("CREATE TABLE CODESHELF.USER ( " //
 				+ "PERSISTENTID IDENTITY NOT NULL, " //
@@ -178,9 +201,16 @@ public final class H2SchemaManager implements ISchemaManager {
 				+ "EMAIL VARCHAR(64), " //
 				+ "CREATED TIMESTAMP, " //
 				+ "ACTIVE BOOLEAN DEFAULT TRUE NOT NULL," //
+				+ "PARENTORGANIZATION_PERSISTENTID LONG NOT NULL, " //
 				+ "PRIMARY KEY (PERSISTENTID));");
 
 		execOneSQLCommand("CREATE UNIQUE INDEX CODESHELF.USER_ID_KEY ON CODESHELF.USER (ID)");
+
+		execOneSQLCommand("ALTER TABLE CODESHELF.USER " //
+			+ "ADD FOREIGN KEY (PARENTORGANIZATION_PERSISTENTID) " //
+			+ "REFERENCES DATABASE.CODESHELF.ORGANIZATION (PERSISTENTID);");
+
+		execOneSQLCommand("CREATE INDEX CODESHELF.USER_PARENT_ORGANIZATION ON CODESHELF.USER (PARENTORGANIZATION_PERSISTENTID)");
 
 		// UserSession
 		execOneSQLCommand("CREATE TABLE CODESHELF.USERSESSION ( " //
@@ -197,14 +227,6 @@ public final class H2SchemaManager implements ISchemaManager {
 				+ "REFERENCES DATABASE.CODESHELF.USER (PERSISTENTID);");
 
 		execOneSQLCommand("CREATE INDEX CODESHELF.USERSESSION_PARENT_USER ON CODESHELF.USER (PARENTUSERSESSION_PERSISTENTID)");
-
-		// Facility
-		execOneSQLCommand("CREATE TABLE CODESHELF.FACILITY ( " //
-				+ "PERSISTENTID IDENTITY NOT NULL, " //
-				+ "ID VARCHAR(64) NOT NULL," //
-				+ "VERSION TIMESTAMP, " //
-				+ "DESCRIPTION VARCHAR(64) NOT NULL, " //
-				+ "PRIMARY KEY (PERSISTENTID));");
 
 		// Aisle
 		execOneSQLCommand("CREATE TABLE CODESHELF.AISLE ( " //

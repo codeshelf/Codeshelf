@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Aisle.java,v 1.4 2012/01/02 11:43:18 jeffw Exp $
+ *  $Id: Aisle.java,v 1.5 2012/02/21 02:45:12 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -32,11 +32,9 @@ public class Aisle extends PersistABC {
 
 	public static final GenericDao<Aisle>	DAO					= new GenericDao<Aisle>(Aisle.class);
 
-	private static final Log				LOGGER				= LogFactory.getLog(CodeShelfNetwork.class);
+	private static final Log				LOGGER				= LogFactory.getLog(Aisle.class);
 
-	private static final long				serialVersionUID	= 3001609308065821464L;
-
-	// The owning CodeShelf network.
+	// The owning facility.
 	@Column(name = "parentFacility", nullable = false)
 	@ManyToOne
 	private Facility						parentFacility;

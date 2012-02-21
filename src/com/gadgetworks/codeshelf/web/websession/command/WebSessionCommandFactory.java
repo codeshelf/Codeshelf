@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionCommandFactory.java,v 1.3 2012/02/12 02:08:26 jeffw Exp $
+ *  $Id: WebSessionCommandFactory.java,v 1.4 2012/02/21 02:45:11 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command;
 
@@ -31,6 +31,14 @@ public final class WebSessionCommandFactory {
 				result = new WebSessionCommandLaunch(inCommandAsJson);
 				break;
 
+			case OBJECT_QUERY_REQ:
+				result = new WebSessionCommandObjectQuery(inCommandAsJson);
+				break;
+
+			case OBJECT_GETBYID_REQ:
+				//result = new WebSessionCommandObjectGetById(inCommandAsJson);
+				break;
+
 			default:
 				break;
 		}
@@ -47,8 +55,8 @@ public final class WebSessionCommandFactory {
 
 		JsonNode commandTypeNode = inCommandAsJson.get(IWebSessionCommand.COMMAND_TYPE_ELEMENT);
 		if (commandTypeNode != null) {
-			String mCommandType = commandTypeNode.getTextValue();
-			result = WebSessionCommandEnum.valueOf(mCommandType);
+			String commandType = commandTypeNode.getTextValue();
+			result = WebSessionCommandEnum.valueOf(commandType);
 		}
 
 		return result;

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionCommandLaunch.java,v 1.4 2012/02/12 02:08:26 jeffw Exp $
+ *  $Id: WebSessionCommandLaunch.java,v 1.5 2012/02/21 02:45:11 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command;
 
@@ -12,6 +12,8 @@ import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.node.ObjectNode;
 
 import com.gadgetworks.codeshelf.model.persist.User;
 
@@ -21,7 +23,8 @@ import com.gadgetworks.codeshelf.model.persist.User;
  */
 public class WebSessionCommandLaunch extends WebSessionCommandABC {
 
-	private static final String	LAUNCH_CODE	= "LAUNCH_CODE";
+	private static final String	LAUNCH_CODE			= "LAUNCH_CODE";
+	private static final String	LAUNCH_CODE_RESP	= "LAUNCH_CODE_RESP";
 
 	private String				mLaunchCode;
 
@@ -37,8 +40,8 @@ public class WebSessionCommandLaunch extends WebSessionCommandABC {
 		return WebSessionCommandEnum.LAUNCH_CODE;
 	}
 
-	public final String exec() {
-		String result = null;
+	protected final IWebSessionCommand doExec() {
+		IWebSessionCommand result = null;
 
 		String authenticateResult = IWebSessionCommand.FAIL;
 
@@ -57,26 +60,31 @@ public class WebSessionCommandLaunch extends WebSessionCommandABC {
 			}
 		}
 
-		try {
-			StringWriter writer = new StringWriter();
-			JsonFactory factory = new JsonFactory();
-			JsonGenerator generator = factory.createJsonGenerator(writer);
-			generator.writeStartObject();
-			generator.writeStringField("id", getCommandId());
-			generator.writeStringField("type", LAUNCH_CODE);
-			generator.writeObjectFieldStart("data");
-			generator.writeStringField("LAUNCH_CODE_RESULT", authenticateResult);
-			generator.writeEndObject();
-			generator.writeEndObject();
-			generator.close();
-			result = writer.toString();
-		} catch (JsonGenerationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+//		try {
+			ObjectMapper treeMapper = new ObjectMapper();
+			ObjectNode objectNode = treeMapper.createObjectNode();
+			objectNode.put(LAUNCH_CODE_RESP, authenticateResult);
+			result = objectNode;
+
+//			StringWriter writer = new StringWriter();
+//			JsonFactory factory = new JsonFactory();
+//			JsonGenerator generator = factory.createJsonGenerator(writer);
+//			generator.writeStartObject();
+//			generator.writeStringField(COMMAND_ID_ELEMENT, getCommandId());
+//			generator.writeStringField(COMMAND_ID_ELEMENT, LAUNCH_CODE);
+//			generator.writeObjectFieldStart(DATA_ELEMENT);
+//			generator.writeStringField(LAUNCH_CODE_RESP, authenticateResult);
+//			generator.writeEndObject();
+//			generator.writeEndObject();
+//			generator.close();
+//			result = writer.toString();
+//		} catch (JsonGenerationException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
 
 		return result;
 	}
