@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.5 2012/02/21 02:45:12 jeffw Exp $
+ *  $Id: Facility.java,v 1.6 2012/02/21 23:32:30 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -19,16 +19,18 @@ import lombok.Setter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.codehaus.jackson.annotate.JsonBackReference;
+import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonManagedReference;
 
 import com.gadgetworks.codeshelf.model.dao.GenericDao;
 import com.gadgetworks.codeshelf.model.dao.IGenericDao;
 
 // --------------------------------------------------------------------------
 /**
- * CodeShelfNetwork
+ * Facility
  * 
- * The CodeShelfNetwork object holds information about how to create a standalone CodeShelf network.
- * (There may be more than one running at a facility.)
+ * The basic unit that holds all of the locations and equipment for a single facility in an organization.
  * 
  * @author jeffw
  */
@@ -52,10 +54,12 @@ public class Facility extends PersistABC {
 	// The owning facility.
 	@Column(name = "parentOrganization", nullable = false)
 	@ManyToOne
+	@JsonIgnore
 	private Organization						parentOrganization;
 
 	// For a network this is a list of all of the control groups that belong in the set.
 	@OneToMany(mappedBy = "parentFacility")
+	@JsonIgnore
 	private List<Aisle>							aisles				= new ArrayList<Aisle>();
 
 	public Facility() {
@@ -72,6 +76,10 @@ public class Facility extends PersistABC {
 
 	public final void setparentOrganization(Organization inparentOrganization) {
 		parentOrganization = inparentOrganization;
+	}
+	
+	public final String getParentOrganizationID() {
+		return getParentOrganization().getId();
 	}
 
 	// We always need to return the object cached in the DAO.

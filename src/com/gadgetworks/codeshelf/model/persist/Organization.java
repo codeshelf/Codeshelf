@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Organization.java,v 1.1 2012/02/21 02:45:12 jeffw Exp $
+ *  $Id: Organization.java,v 1.2 2012/02/21 23:32:30 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -18,6 +18,8 @@ import lombok.Setter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonManagedReference;
 
 import com.gadgetworks.codeshelf.model.dao.GenericDao;
 import com.gadgetworks.codeshelf.model.dao.IGenericDao;
@@ -48,6 +50,7 @@ public class Organization extends PersistABC {
 
 	// For a network this is a list of all of the control groups that belong in the set.
 	@OneToMany(mappedBy = "parentOrganization")
+	@JsonIgnore
 	private List<Facility>							facilities	= new ArrayList<Facility>();
 
 	public Organization() {

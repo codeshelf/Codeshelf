@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionCommandObjectQuery.java,v 1.2 2012/02/21 08:36:00 jeffw Exp $
+ *  $Id: WebSessionCommandObjectQuery.java,v 1.3 2012/02/21 23:32:30 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command;
 
@@ -11,11 +11,11 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
 
 import com.avaje.ebean.Ebean;
 import com.avaje.ebean.Query;
-import com.gadgetworks.codeshelf.model.persist.Aisle;
 import com.gadgetworks.codeshelf.model.persist.PersistABC;
 
 /**
@@ -28,6 +28,7 @@ public class WebSessionCommandObjectQuery extends WebSessionCommandABC {
 
 	private static final String	CLASS_NODE	= "class";
 	private static final String	QUERY_NODE	= "query";
+	private static final String OBJECT_RESULTS_NODE = "objects";
 
 	private String				mObjectClass;
 	private String				mQuery;
@@ -71,12 +72,22 @@ public class WebSessionCommandObjectQuery extends WebSessionCommandABC {
 			// Convert the list of ojects into a JSon object.
 			ObjectMapper mapper = new ObjectMapper();
 			ObjectNode dataNode = mapper.createObjectNode();
-			dataNode.putPOJO("query result", searchList.toArray());
+			//String results = mapper.writeValueAsString(searchList);
+			//dataNode.put(OBJECT_RESULTS_NODE, results);
+			ArrayNode searchListNode = mapper.valueToTree(searchList);
+			//ArrayNode resultsNode = dataNode.putArray("objects");
+			dataNode.put("objects", searchListNode);
 			
 			result = new WebSessionCommandObjectQueryResp(dataNode);
 
 		} catch (ClassNotFoundException e) {
 			LOGGER.error("", e);
+//		} catch (JsonGenerationException e) {
+//			LOGGER.error("", e);
+//		} catch (JsonMappingException e) {
+//			LOGGER.error("", e);
+//		} catch (IOException e) {
+//			LOGGER.error("", e);
 		}
 
 		return result;
