@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionCommandEnum.java,v 1.2 2012/02/21 02:45:11 jeffw Exp $
+ *  $Id: WebSessionCommandEnum.java,v 1.3 2012/02/21 08:36:00 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command;
 
@@ -12,6 +12,7 @@ package com.gadgetworks.codeshelf.web.websession.command;
 public enum WebSessionCommandEnum {
 	INVALID(WebSessionCommandNum.INVALID, "INVALID"),
 	LAUNCH_CODE(WebSessionCommandNum.LAUNCH_CODE, "LAUNCH_CODE"),
+	LAUNCH_CODE_RESP(WebSessionCommandNum.LAUNCH_CODE_RESP, "LAUNCH_CODE_RESP"),
 	OBJECT_QUERY_REQ(WebSessionCommandNum.OBJECT_QUERY_REQ, "OBJECT_QUERY_REQ"),
 	OBJECT_CREATE_REQ(WebSessionCommandNum.OBJECT_CREATE_REQ, "OBJECT_CREATE_REQ"),
 	OBJECT_GETBYID_REQ(WebSessionCommandNum.OBJECT_GETBYID_REQ, "OBJECT_GETBYID_REQ"),
@@ -36,6 +37,10 @@ public enum WebSessionCommandEnum {
 
 			case WebSessionCommandNum.LAUNCH_CODE:
 				result = WebSessionCommandEnum.LAUNCH_CODE;
+				break;
+
+			case WebSessionCommandNum.LAUNCH_CODE_RESP:
+				result = WebSessionCommandEnum.LAUNCH_CODE_RESP;
 				break;
 
 			case WebSessionCommandNum.OBJECT_QUERY_REQ:
@@ -76,13 +81,14 @@ public enum WebSessionCommandEnum {
 	}
 
 	final static class WebSessionCommandNum {
-		static final byte	INVALID			= 0;
-		static final byte	LAUNCH_CODE		= 1;
-		static final byte	OBJECT_QUERY_REQ		= 2;
-		static final byte	OBJECT_GETBYID_REQ		= 3;
-		static final byte	OBJECT_CREATE_REQ	= 4;
-		static final byte	OBJECT_CHANGE_REQ	= 5;
-		static final byte	OBJECT_DELETE_REQ	= 6;
+		static final byte	INVALID				= 0;
+		static final byte	LAUNCH_CODE			= 1;
+		static final byte	LAUNCH_CODE_RESP	= 2;
+		static final byte	OBJECT_QUERY_REQ	= 3;
+		static final byte	OBJECT_GETBYID_REQ	= 4;
+		static final byte	OBJECT_CREATE_REQ	= 5;
+		static final byte	OBJECT_CHANGE_REQ	= 6;
+		static final byte	OBJECT_DELETE_REQ	= 7;
 
 		private WebSessionCommandNum() {
 

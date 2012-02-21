@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionCommandFactory.java,v 1.4 2012/02/21 02:45:11 jeffw Exp $
+ *  $Id: WebSessionCommandFactory.java,v 1.5 2012/02/21 08:36:00 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command;
 
@@ -21,22 +21,30 @@ public final class WebSessionCommandFactory {
 
 	}
 
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inCommandAsJson
+	 * @return
+	 */
 	public static IWebSessionCommand createWebSessionCommand(JsonNode inCommandAsJson) {
 		IWebSessionCommand result = null;
 
 		WebSessionCommandEnum commandEnum = getCommandTypeEnum(inCommandAsJson);
+		
+		String commandId = inCommandAsJson.get(IWebSessionCommand.COMMAND_ID_ELEMENT).getTextValue();
+		JsonNode dataNode = inCommandAsJson.get(IWebSessionCommand.DATA_ELEMENT);
 
 		switch (commandEnum) {
 			case LAUNCH_CODE:
-				result = new WebSessionCommandLaunch(inCommandAsJson);
+				result = new WebSessionCommandLaunchCode(commandId, dataNode);
 				break;
 
 			case OBJECT_QUERY_REQ:
-				result = new WebSessionCommandObjectQuery(inCommandAsJson);
+				result = new WebSessionCommandObjectQuery(commandId, dataNode);
 				break;
 
 			case OBJECT_GETBYID_REQ:
-				//result = new WebSessionCommandObjectGetById(inCommandAsJson);
+				//result = new WebSessionCommandObjectGetById(commandId, dataNode);
 				break;
 
 			default:

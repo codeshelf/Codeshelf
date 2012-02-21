@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSession.java,v 1.6 2012/02/21 02:45:12 jeffw Exp $
+ *  $Id: WebSession.java,v 1.7 2012/02/21 08:36:00 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession;
 
@@ -42,11 +42,11 @@ public class WebSession {
 			IWebSessionCommand command = WebSessionCommandFactory.createWebSessionCommand(rootNode);
 			LOGGER.debug(command);
 
-			IWebSessionCommand respCommand = command.exec();
+			IWebSessionCommand respCommand = command.receive();
 
 			if (respCommand != null) {
 				try {
-					mWebSocket.send(respCommand.serialize());
+					mWebSocket.send(respCommand.prepareToSend());
 				} catch (InterruptedException e) {
 					LOGGER.error("Can't send response", e);
 				}

@@ -1,18 +1,15 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionCommandObjectQuery.java,v 1.1 2012/02/21 02:45:11 jeffw Exp $
+ *  $Id: WebSessionCommandObjectQuery.java,v 1.2 2012/02/21 08:36:00 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command;
 
-import java.io.IOException;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ObjectNode;
 
@@ -27,7 +24,7 @@ import com.gadgetworks.codeshelf.model.persist.PersistABC;
  */
 public class WebSessionCommandObjectQuery extends WebSessionCommandABC {
 
-	private static final Log	LOGGER		= LogFactory.getLog(Aisle.class);
+	private static final Log	LOGGER		= LogFactory.getLog(WebSessionCommandObjectQuery.class);
 
 	private static final String	CLASS_NODE	= "class";
 	private static final String	QUERY_NODE	= "query";
@@ -35,8 +32,12 @@ public class WebSessionCommandObjectQuery extends WebSessionCommandABC {
 	private String				mObjectClass;
 	private String				mQuery;
 
-	public WebSessionCommandObjectQuery(final JsonNode inCommandAsJson) {
-		super(inCommandAsJson);
+	/**
+	 * @param inCommandId
+	 * @param inDataNodeAsJson
+	 */
+	public WebSessionCommandObjectQuery(final String inCommandId, final JsonNode inDataNodeAsJson) {
+		super(inCommandId, inDataNodeAsJson);
 
 		JsonNode dataJsonNode = getDataJsonNode();
 		JsonNode classNode = dataJsonNode.get(CLASS_NODE);
@@ -50,8 +51,8 @@ public class WebSessionCommandObjectQuery extends WebSessionCommandABC {
 		return WebSessionCommandEnum.LAUNCH_CODE;
 	}
 
-	public final JsonNode doExec() {
-		JsonNode result = null;
+	public final IWebSessionCommand doExec() {
+		IWebSessionCommand result = null;
 
 		// CRITICAL SECUTIRY CONCEPT.
 		// The remote end can NEVER get object results outside of it's own scope.
@@ -70,14 +71,18 @@ public class WebSessionCommandObjectQuery extends WebSessionCommandABC {
 			// Convert the list of ojects into a JSon object.
 			ObjectMapper mapper = new ObjectMapper();
 			ObjectNode dataNode = mapper.createObjectNode();
-			dataNode.putPOJO("query result", searchList);
+			dataNode.putPOJO("query result", searchList.toArray());
 			
-			result = dataNode;
+			result = new WebSessionCommandObjectQueryResp(dataNode);
 
 		} catch (ClassNotFoundException e) {
 			LOGGER.error("", e);
 		}
 
 		return result;
+	}
+
+	protected final void prepareDataNode(ObjectNode inOutDataNode) {
+		// TODO Auto-generated method stub
 	}
 }

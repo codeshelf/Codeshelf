@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: IWebSessionCommand.java,v 1.5 2012/02/21 02:45:11 jeffw Exp $
+ *  $Id: IWebSessionCommand.java,v 1.6 2012/02/21 08:36:00 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command;
 
@@ -17,15 +17,13 @@ public interface IWebSessionCommand {
 	String	COMMAND_TYPE_ELEMENT	= "type";
 	String	DATA_ELEMENT			= "data";
 
-	String	SUCCEED		= "SUCCEED";
-	String	FAIL		= "FAIL";
-	String	NEED_LOGIN	= "NEED_LOGIN";
-
 	WebSessionCommandEnum getCommandEnum();
 	
 	String getCommandId();
 	
-	IWebSessionCommand exec();
+	void setCommandId(String inCommandId);
 	
-	String serialize();
+	IWebSessionCommand receive();
+	
+	String prepareToSend();
 }
