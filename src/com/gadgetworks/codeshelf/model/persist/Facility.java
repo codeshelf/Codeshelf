@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.6 2012/02/21 23:32:30 jeffw Exp $
+ *  $Id: Facility.java,v 1.7 2012/02/24 07:41:23 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -83,7 +83,7 @@ public class Facility extends PersistABC {
 	}
 
 	// We always need to return the object cached in the DAO.
-	public final List<Aisle> getAisless() {
+	public final List<Aisle> getAisles() {
 		if (IGenericDao.USE_DAO_CACHE) {
 			List<Aisle> result = new ArrayList<Aisle>();
 			if (!Aisle.DAO.isObjectPersisted(this)) {
@@ -102,12 +102,12 @@ public class Facility extends PersistABC {
 	}
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
-	public final void addControlGroup(Aisle inAisle) {
+	public final void addAisle(Aisle inAisle) {
 		aisles.add(inAisle);
 	}
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
-	public final void removeControlGroup(Aisle inAisle) {
+	public final void removeAisle(Aisle inAisle) {
 		aisles.remove(inAisle);
 	}
 }

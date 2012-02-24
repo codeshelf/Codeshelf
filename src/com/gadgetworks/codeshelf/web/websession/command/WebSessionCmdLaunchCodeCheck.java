@@ -1,20 +1,21 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionCommandLaunchCode.java,v 1.1 2012/02/21 08:36:00 jeffw Exp $
+ *  $Id: WebSessionCmdLaunchCodeCheck.java,v 1.1 2012/02/24 07:41:23 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command;
 
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ObjectNode;
 
+import com.gadgetworks.codeshelf.model.persist.Organization;
 import com.gadgetworks.codeshelf.model.persist.User;
 
 /**
  * @author jeffw
  *
  */
-public class WebSessionCommandLaunchCode extends WebSessionCommandABC {
+public class WebSessionCmdLaunchCodeCheck extends WebSessionCmdABC {
 
 	private static final String	LAUNCH_CODE			= "LAUNCH_CODE";
 
@@ -24,24 +25,25 @@ public class WebSessionCommandLaunchCode extends WebSessionCommandABC {
 
 	private String				mLaunchCode;
 
-	public WebSessionCommandLaunchCode(final String inCommandId, final JsonNode inDataNodeAsJson) {
+	public WebSessionCmdLaunchCodeCheck(final String inCommandId, final JsonNode inDataNodeAsJson) {
 		super(inCommandId, inDataNodeAsJson);
 
 		JsonNode launchNode = inDataNodeAsJson.get("launchCode");
 		mLaunchCode = launchNode.getTextValue();
 	}
 
-	public final WebSessionCommandEnum getCommandEnum() {
-		return WebSessionCommandEnum.LAUNCH_CODE;
+	public final WebSessionCmdEnum getCommandEnum() {
+		return WebSessionCmdEnum.LAUNCH_CODE_CHECK;
 	}
 
-	protected final IWebSessionCommand doExec() {
-		IWebSessionCommand result = null;
+	protected final IWebSessionCmd doExec() {
+		IWebSessionCmd result = null;
 
 		String authenticateResult = FAIL;
 
 		// Search for a user with the specified ID (that has no password).
 		User user = User.DAO.findById(mLaunchCode);
+		Organization organization = null;
 
 		// CRITICAL SECURITY CONCEPT.
 		// LaunchCodes are anonymous users that we create WITHOUT passwords or final userIDs.
@@ -52,10 +54,11 @@ public class WebSessionCommandLaunchCode extends WebSessionCommandABC {
 				authenticateResult = NEED_LOGIN;
 			} else {
 				authenticateResult = SUCCEED;
+				organization = user.getParentOrganization();
 			}
 		}
 
-		result = new WebSessionCommandLaunchCodeResp(authenticateResult);
+		result = new WebSessionCmdLaunchCodeResp(authenticateResult, organization);
 
 		return result;
 	}

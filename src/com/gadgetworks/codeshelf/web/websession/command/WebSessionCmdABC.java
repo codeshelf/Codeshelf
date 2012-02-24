@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionCommandABC.java,v 1.3 2012/02/21 08:36:00 jeffw Exp $
+ *  $Id: WebSessionCmdABC.java,v 1.1 2012/02/24 07:41:23 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command;
 
@@ -13,12 +13,12 @@ import org.codehaus.jackson.node.ObjectNode;
  * @author jeffw
  *
  */
-public abstract class WebSessionCommandABC implements IWebSessionCommand {
+public abstract class WebSessionCmdABC implements IWebSessionCmd {
 
 	private String		mCommandId;
 	private JsonNode	mDataJsonNode;
 
-	public WebSessionCommandABC() {
+	public WebSessionCmdABC() {
 
 	}
 
@@ -26,14 +26,14 @@ public abstract class WebSessionCommandABC implements IWebSessionCommand {
 	 * @param inCommandId
 	 * @param inDataAsJson
 	 */
-	public WebSessionCommandABC(final String inCommandId, final JsonNode inDataAsJson) {
+	public WebSessionCmdABC(final String inCommandId, final JsonNode inDataAsJson) {
 
 		mCommandId = inCommandId;
 		mDataJsonNode = inDataAsJson;
 	}
 
 	// The subclasses execute the command and return a command data reesponse.
-	protected abstract IWebSessionCommand doExec();
+	protected abstract IWebSessionCmd doExec();
 
 	protected abstract void prepareDataNode(ObjectNode inOutDataNode);
 
@@ -53,8 +53,8 @@ public abstract class WebSessionCommandABC implements IWebSessionCommand {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.web.websession.command.IWebSessionCommand#exec()
 	 */
-	public final IWebSessionCommand receive() {
-		IWebSessionCommand result = null;
+	public final IWebSessionCmd receive() {
+		IWebSessionCmd result = null;
 
 		result = doExec();
 

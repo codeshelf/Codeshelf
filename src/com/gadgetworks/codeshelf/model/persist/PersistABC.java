@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PersistABC.java,v 1.9 2012/02/09 07:29:23 jeffw Exp $
+ *  $Id: PersistABC.java,v 1.10 2012/02/24 07:41:23 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -14,6 +14,9 @@ import javax.persistence.Version;
 
 import lombok.Data;
 import lombok.NonNull;
+
+import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonProperty;
 
 // --------------------------------------------------------------------------
 /**
@@ -52,6 +55,15 @@ public abstract class PersistABC {
 	 */
 	public static String getIdColumnName() {
 		return "Id";
+	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * @return
+	 */
+	@JsonProperty
+	public final String getClassName() {
+		return this.getClass().getName();
 	}
 
 	/* --------------------------------------------------------------------------

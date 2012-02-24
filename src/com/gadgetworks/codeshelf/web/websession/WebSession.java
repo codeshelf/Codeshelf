@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSession.java,v 1.7 2012/02/21 08:36:00 jeffw Exp $
+ *  $Id: WebSession.java,v 1.8 2012/02/24 07:41:23 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession;
 
@@ -14,8 +14,8 @@ import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonProcessingException;
 import org.codehaus.jackson.map.ObjectMapper;
 
-import com.gadgetworks.codeshelf.web.websession.command.IWebSessionCommand;
-import com.gadgetworks.codeshelf.web.websession.command.WebSessionCommandFactory;
+import com.gadgetworks.codeshelf.web.websession.command.IWebSessionCmd;
+import com.gadgetworks.codeshelf.web.websession.command.WebSessionCmdFactory;
 import com.gadgetworks.codeshelf.web.websocket.WebSocket;
 
 /**
@@ -39,10 +39,10 @@ public class WebSession {
 		ObjectMapper mapper = new ObjectMapper();
 		try {
 			JsonNode rootNode = mapper.readTree(inMessage);
-			IWebSessionCommand command = WebSessionCommandFactory.createWebSessionCommand(rootNode);
+			IWebSessionCmd command = WebSessionCmdFactory.createWebSessionCommand(rootNode);
 			LOGGER.debug(command);
 
-			IWebSessionCommand respCommand = command.receive();
+			IWebSessionCmd respCommand = command.receive();
 
 			if (respCommand != null) {
 				try {
