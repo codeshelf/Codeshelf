@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionCmdObjectGetterReq.java,v 1.1 2012/02/24 07:41:23 jeffw Exp $
+ *  $Id: WebSessionCmdObjectGetterReq.java,v 1.2 2012/02/25 19:49:33 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command;
 
@@ -65,7 +65,6 @@ public class WebSessionCmdObjectGetterReq extends WebSessionCmdABC {
 		// Today, the scope is set by the user's ORGANIZATION.
 		// That means we can never return objects not part of the current (logged in) user's organization.
 		// THAT MEANS WE MUST ALWAYS ADD A WHERE CLAUSE HERE THAT LOCKS US INTO THIS.
-		// (We should also defend against other, weird query constructs that may be trying to circumvent this restriction.)
 
 		try {
 			// First we find the parent object (by it's ID).
@@ -78,8 +77,6 @@ public class WebSessionCmdObjectGetterReq extends WebSessionCmdABC {
 
 				//				Query<? extends PersistABC> query = Ebean.find(clazz);
 				//				//query.where(mQuery);
-				//				query.setId(mParentId);
-				//				Class<? extends PersistABC> parentObject = query.findUnique();
 				//				//List<? extends PersistABC> resultsList = query.findList();
 
 				// Execute the "get" method against the parents to return the children.
