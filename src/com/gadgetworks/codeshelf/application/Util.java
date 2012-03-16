@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Util.java,v 1.8 2012/03/16 15:59:09 jeffw Exp $
+ *  $Id: Util.java,v 1.9 2012/03/16 23:34:12 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -38,7 +38,7 @@ import com.gadgetworks.codeshelf.model.persist.PersistentProperty;
 
 public final class Util {
 
-	public static final String			DAO_BEAN_ID							= "systemDAO";
+	public static final String	DAO_BEAN_ID	= "systemDAO";
 
 	// This is a slightly weird case.
 	// log4j needs to find a system property for one of its file appenders (in log4j.properties, but
@@ -76,7 +76,7 @@ public final class Util {
 		}
 	}
 
-	private static final Log			LOGGER								= LogFactory.getLog(Util.class);
+	private static final Log	LOGGER		= LogFactory.getLog(Util.class);
 
 	// --------------------------------------------------------------------------
 	/**
@@ -148,15 +148,18 @@ public final class Util {
 	public static String getApplicationDataDirPath() {
 		String result = "";
 
-		// Setup the data directory for this application.
+		  // Setup the data directory for this application.
 		result = System.getProperty("user.home");
 		String platform = System.getProperty("os.name");
-		if (platform.equals("OSX")) {
+		if (platform.toLowerCase().indexOf("mac") > -1) {
 			result += "/Library/Application Support/CodeShelf";
-		} else if (platform.equals("Windows")) {
+		} else if (platform.toLowerCase().indexOf("windows") > -1) {
 			result += System.getProperty("file.separator") + "Application Data" + System.getProperty("file.separator") + "CodeShelf";
-		} else {
+		} else if (platform.toLowerCase().indexOf("linux") > -1){
 			result += System.getProperty("file.separator") + ".CodeShelf";
+		} else {
+			// It's an OS we don't support (yet).
+			exitSystem();
 		}
 
 		return result;
@@ -170,8 +173,7 @@ public final class Util {
 		String result = "";
 
 		// Setup the data directory for this application.
-		result = "jdbc:h2:" + getApplicationDataDirPath() + System.getProperty("file.separator") + "db"
-				+ System.getProperty("file.separator") + "database" + ";TRACE_LEVEL_FILE=0";
+		result = "jdbc:h2:" + getApplicationDataDirPath() + System.getProperty("file.separator") + "db" + System.getProperty("file.separator") + "database" + ";TRACE_LEVEL_FILE=0";
 
 		return result;
 	}
@@ -184,8 +186,7 @@ public final class Util {
 		String result = "";
 
 		// Setup the data directory for this application.
-		result = "jdbc:h2:" + getApplicationDataDirPath() + System.getProperty("file.separator") + "db"
-				+ System.getProperty("file.separator") + "database" + ";SCHEMA=CODESHELF;TRACE_LEVEL_FILE=0";
+		result = "jdbc:h2:" + getApplicationDataDirPath() + System.getProperty("file.separator") + "db" + System.getProperty("file.separator") + "database" + ";SCHEMA=CODESHELF;TRACE_LEVEL_FILE=0";
 
 		return result;
 	}

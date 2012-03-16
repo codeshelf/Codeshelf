@@ -1,16 +1,13 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfApplication.java,v 1.14 2012/03/16 15:59:09 jeffw Exp $
+ *  $Id: CodeShelfApplication.java,v 1.15 2012/03/16 23:34:12 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
 
 import java.io.File;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -18,6 +15,7 @@ import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.log4j.LogManager;
 
 import com.avaje.ebean.Ebean;
 import com.avaje.ebean.EbeanServer;
@@ -48,8 +46,6 @@ public final class CodeShelfApplication {
 
 	private static final Log			LOGGER		= LogFactory.getLog(CodeShelfApplication.class);
 
-	private static boolean				isDBStarted;
-
 	private boolean						mIsRunning	= true;
 	private IController					mController;
 	@SuppressWarnings("unused")
@@ -76,9 +72,14 @@ public final class CodeShelfApplication {
 					LOGGER.info("Shutdown signal received");
 					// Start the shutdown thread to cleanup and shutdown everything in an orderly manner.
 					Thread shutdownThread = new Thread(mShutdownRunnable);
+					// Set the class loader for this thread, so we can get stuff out of our own JARs.
+					//shutdownThread.setContextClassLoader(ClassLoader.getSystemClassLoader());
 					shutdownThread.start();
-					// Indicate that we're shutdown.
-					Thread.sleep(1000 * 7);
+					long time = System.currentTimeMillis();
+					// Wait until the shutdown thread succeeds, but not more than 20 sec.
+					while ((mIsRunning) && ((System.currentTimeMillis() - time) < 20000)) {
+						Thread.sleep(1000);						
+					}
 					System.out.println("Shutdown signal handled");
 				} catch (Exception e) {
 					System.out.println("Shutdown signal exception:" + e);
@@ -86,6 +87,7 @@ public final class CodeShelfApplication {
 				}
 			}
 		};
+		mShutdownHookThread.setContextClassLoader(ClassLoader.getSystemClassLoader());
 		Runtime.getRuntime().addShutdownHook(mShutdownHookThread);
 	}
 
@@ -139,10 +141,12 @@ public final class CodeShelfApplication {
 
 		setupLibraries();
 
+		String processName = ManagementFactory.getRuntimeMXBean().getName();
+		LOGGER.info("Process info: " + processName);
+		
 		LOGGER.info("Starting database");
 		startEmbeddedDB();
-		LOGGER.info("Database isDBStarted");
-		isDBStarted = true;
+		LOGGER.info("Database started");
 
 		PreferencesStore.initPreferencesStore();
 
@@ -211,29 +215,14 @@ public final class CodeShelfApplication {
 		// First shutdown the FlyWeight controller if there is one.
 		mController.stopController();
 
-		// If the AWT thread came up (Smack debugger windows is AWT) then we have no choice, but to force a shutdown.
-		ThreadGroup group = Thread.currentThread().getThreadGroup();
-		int count = group.activeCount();
-		Thread[] threadArray = new Thread[count];
-		group.enumerate(threadArray);
-		for (int i = 0; i < threadArray.length; i++) {
-			if ((threadArray[i] != null) && (threadArray[i].getName().equals("AWT-Shutdown"))) {
-				try {
-					Thread.sleep(3000);
-				} catch (InterruptedException e) {
-					LOGGER.error("", e);
-				}
-				stopEmbeddedDB();
-				LOGGER.info("Application terminated with hung threads");
-				Util.exitSystem();
-			}
-		}
-
 		stopEmbeddedDB();
 
 		mIsRunning = false;
 
 		LOGGER.info("Application terminated normally");
+		
+		LogFactory.releaseAll();
+		LogManager.shutdown();
 	}
 
 	/* --------------------------------------------------------------------------
@@ -357,26 +346,17 @@ public final class CodeShelfApplication {
 	private void stopEmbeddedDB() {
 		LOGGER.info("Stopping DAO");
 
-		// Shutdown HSQLDB
-		// org.hsqldb.DatabaseManager.closeDatabases(0);
-
-		// Shutdown Derby
-		//		try {
-		//			DriverManager.getConnection("jdbc:derby:;shutdown=true");
-		//		} catch (SQLException inException) {
-		//			
-		//		}
-		try {
-			Connection connection = DriverManager.getConnection(Util.getApplicationDatabaseURL(), "codeshelf", "codeshelf");
-
-			// Try to switch to the proper schema.
-			Statement stmt = connection.createStatement();
-			stmt.execute("SHUTDOWN COMPACT");
-			stmt.close();
-			connection.close();
-		} catch (SQLException e) {
-			LOGGER.error("", e);
-		}
+//		try {
+//			Connection connection = DriverManager.getConnection(Util.getApplicationDatabaseURL(), "codeshelf", "codeshelf");
+//
+//			// Try to switch to the proper schema.
+//			Statement stmt = connection.createStatement();
+//			stmt.execute("SHUTDOWN COMPACT");
+//			stmt.close();
+//			connection.close();
+//		} catch (SQLException e) {
+//			LOGGER.error("", e);
+//		}
 
 		ShutdownManager.shutdown();
 
