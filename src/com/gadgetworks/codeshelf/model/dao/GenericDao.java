@@ -1,16 +1,13 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: GenericDao.java,v 1.2 2011/12/29 09:15:35 jeffw Exp $
+ *  $Id: GenericDao.java,v 1.3 2012/03/16 15:59:10 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
-
-import org.eclipse.swt.widgets.Display;
 
 import com.avaje.ebean.BeanState;
 import com.avaje.ebean.Ebean;
@@ -34,40 +31,24 @@ public class GenericDao<T extends PersistABC> implements IGenericDao<T> {
 	/**
 	 * @param inObject
 	 */
-	private static void privateBroadcastAdd(final Object inObject) {
-		Display display = Display.getDefault();
-		display.asyncExec(new Runnable() {
-			public void run() {
-				DaoManager.gDaoManager.objectAdded(inObject);
-			}
-		});
-
+	private void privateBroadcastAdd(final Object inObject) {
+		DaoManager.gDaoManager.objectAdded(inObject);
 	}
 
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inObject
 	 */
-	private static void privateBroadcastUpdate(final Object inObject) {
-		Display display = Display.getDefault();
-		display.asyncExec(new Runnable() {
-			public void run() {
-				DaoManager.gDaoManager.objectUpdated(inObject);
-			}
-		});
+	private void privateBroadcastUpdate(final Object inObject) {
+		DaoManager.gDaoManager.objectUpdated(inObject);
 	}
 
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inObject
 	 */
-	private static void privateBroadcastDelete(final Object inObject) {
-		Display display = Display.getDefault();
-		display.asyncExec(new Runnable() {
-			public void run() {
-				DaoManager.gDaoManager.objectDeleted(inObject);
-			}
-		});
+	private void privateBroadcastDelete(final Object inObject) {
+		DaoManager.gDaoManager.objectDeleted(inObject);
 	}
 
 	/* --------------------------------------------------------------------------

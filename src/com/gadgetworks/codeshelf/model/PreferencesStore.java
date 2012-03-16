@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PreferencesStore.java,v 1.3 2011/12/29 09:15:35 jeffw Exp $
+ *  $Id: PreferencesStore.java,v 1.4 2012/03/16 15:59:11 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model;
 
@@ -12,14 +12,7 @@ import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.log4j.Level;
-import org.eclipse.core.commands.common.EventManager;
-import org.eclipse.jface.preference.IPersistentPreferenceStore;
-import org.eclipse.jface.resource.JFaceResources;
-import org.eclipse.jface.util.IPropertyChangeListener;
-import org.eclipse.jface.util.PropertyChangeEvent;
-import org.eclipse.jface.util.SafeRunnable;
 
-import com.gadgetworks.codeshelf.application.Util;
 import com.gadgetworks.codeshelf.controller.ControllerABC;
 import com.gadgetworks.codeshelf.model.dao.DAOException;
 import com.gadgetworks.codeshelf.model.persist.PersistentProperty;
@@ -28,7 +21,7 @@ import com.gadgetworks.codeshelf.model.persist.PersistentProperty;
 /**
  *  @author jeffw
  */
-public final class PreferencesStore extends EventManager implements IPersistentPreferenceStore {
+public final class PreferencesStore {
 
 	private static final Log				LOGGER	= LogFactory.getLog(PreferencesStore.class);
 
@@ -120,39 +113,11 @@ public final class PreferencesStore extends EventManager implements IPersistentP
 
 	/* --------------------------------------------------------------------------
 	 * (non-Javadoc)
-	 * @see org.eclipse.jface.preference.IPreferenceStore#addPropertyChangeListener(org.eclipse.jface.util.IPropertyChangeListener)
-	 */
-	public void addPropertyChangeListener(IPropertyChangeListener inListener) {
-		addListenerObject(inListener);
-	}
-
-	/* --------------------------------------------------------------------------
-	 * (non-Javadoc)
 	 * @see org.eclipse.jface.preference.IPreferenceStore#contains(java.lang.String)
 	 */
 	public boolean contains(String inPropertyID) {
 		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
 		return (property != null);
-	}
-
-	/* --------------------------------------------------------------------------
-	 * (non-Javadoc)
-	 * @see org.eclipse.jface.preference.IPreferenceStore#firePropertyChangeEvent(java.lang.String, java.lang.Object, java.lang.Object)
-	 */
-	public void firePropertyChangeEvent(String inPropertyID, Object inOldValue, Object inNewValue) {
-		final Object[] finalListeners = getListeners();
-		// Do we need to fire an event.
-		if (finalListeners.length > 0 && (inOldValue == null || !inOldValue.equals(inNewValue))) {
-			final PropertyChangeEvent propChangeEvent = new PropertyChangeEvent(this, inPropertyID, inOldValue, inNewValue);
-			for (Object listener : finalListeners) {
-				final IPropertyChangeListener propertyListener = (IPropertyChangeListener) listener;
-				SafeRunnable.run(new SafeRunnable(JFaceResources.getString("PreferenceStore.changeError")) { //$NON-NLS-1$
-					public void run() {
-						propertyListener.propertyChange(propChangeEvent);
-					}
-				});
-			}
-		}
 	}
 
 	/* --------------------------------------------------------------------------
@@ -329,14 +294,6 @@ public final class PreferencesStore extends EventManager implements IPersistentP
 			property.setCurrentValueAsStr(inValue);
 			mChangedProperties.put(property.getId(), property);
 		}
-	}
-
-	/* --------------------------------------------------------------------------
-	 * (non-Javadoc)
-	 * @see org.eclipse.jface.preference.IPreferenceStore#removePropertyChangeListener(org.eclipse.jface.util.IPropertyChangeListener)
-	 */
-	public void removePropertyChangeListener(IPropertyChangeListener inListener) {
-		removeListenerObject(inListener);
 	}
 
 	/* --------------------------------------------------------------------------

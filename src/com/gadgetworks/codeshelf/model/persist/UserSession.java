@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: UserSession.java,v 1.1 2012/02/07 08:17:59 jeffw Exp $
+ *  $Id: UserSession.java,v 1.2 2012/03/16 15:59:10 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -64,7 +64,7 @@ public class UserSession extends PersistABC {
 	public final User getParentUser() {
 		// Yes, this is weird, but we MUST always return the same instance of these persistent objects.
 		if (parentUser != null) {
-			parentUser = User.DAO.loadByPersistentId(parentUser.getPersistentId());
+//			parentUser = User.DAO.loadByPersistentId(parentUser.getPersistentId());
 		}
 		return parentUser;
 	}

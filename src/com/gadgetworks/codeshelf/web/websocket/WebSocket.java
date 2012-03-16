@@ -25,7 +25,7 @@ import com.gadgetworks.codeshelf.web.websocket.exceptions.InvalidDataException;
 import com.gadgetworks.codeshelf.web.websocket.exceptions.InvalidFrameException;
 import com.gadgetworks.codeshelf.web.websocket.exceptions.InvalidHandshakeException;
 
-public final class WebSocket {
+public final class WebSocket implements IWebSocket {
 
 	public enum Role {
 		CLIENT,
