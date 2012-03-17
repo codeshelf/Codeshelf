@@ -15,7 +15,6 @@ import org.apache.xmlrpc.client.XmlRpcClient;
 import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
 import org.apache.xmlrpc.client.XmlRpcCommonsTransportFactory;
 
-import com.gadgetworks.codeshelf.application.Util;
 import com.gadgetworks.codeshelf.command.CommandCsAckPressed;
 import com.gadgetworks.codeshelf.command.CommandCsReportPick;
 import com.gadgetworks.codeshelf.command.CommandCsReportShort;
@@ -23,7 +22,9 @@ import com.gadgetworks.codeshelf.command.CommandIdEnum;
 import com.gadgetworks.codeshelf.command.ICommand;
 import com.gadgetworks.codeshelf.command.ICsCommand;
 import com.gadgetworks.codeshelf.model.TagProtocolEnum;
+import com.gadgetworks.codeshelf.model.dao.IWirelessDeviceDao;
 import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork;
+import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork.ICodeShelfNetworkDao;
 import com.gadgetworks.codeshelf.model.persist.ControlGroup;
 import com.gadgetworks.codeshelf.model.persist.PickTag;
 import com.gadgetworks.codeshelf.model.persist.WirelessDevice;
@@ -33,24 +34,28 @@ import com.gadgetworks.codeshelf.server.tags.SnapXmlRpcNilTypeSupport;
 
 public final class SnapInterface implements IWirelessInterface {
 
-	private static final Log	LOGGER						= LogFactory.getLog(SnapInterface.class);
+	private static final Log		LOGGER						= LogFactory.getLog(SnapInterface.class);
 
-	private static final int	E10_SERIAL_TYPE				= 1;
-	private static final String	E10_STANDARD_SERIAL_PORT	= "/dev/ttyS1";
-	private static final String	E10_RPC_CMD_NAME			= "rpc";
+	private static final int		E10_SERIAL_TYPE				= 1;
+	private static final String		E10_STANDARD_SERIAL_PORT	= "/dev/ttyS1";
+	private static final String		E10_RPC_CMD_NAME			= "rpc";
 	//	private static final String	E10_MCAST_RPC_NAME			= "macstRpc";
 
-	private static final double	WAITONEVENT_TIMEOUT_MILLIS	= 5.0;
-	private static final int	INBOUND_TIMEOUT_MILLIS		= 5100;
-	private static final int	OUTBOUND_TIMEOUT_MILLIS		= 5000;
+	private static final double		WAITONEVENT_TIMEOUT_MILLIS	= 5.0;
+	private static final int		INBOUND_TIMEOUT_MILLIS		= 5100;
+	private static final int		OUTBOUND_TIMEOUT_MILLIS		= 5000;
 
-	private CodeShelfNetwork	mCodeShelfNetwork;
-	private XmlRpcClient		mInboundXmlRpcClient;
-	private XmlRpcClient		mOutboundXmlRpcClient;
-	private boolean				mIsStarted;
+	private CodeShelfNetwork		mCodeShelfNetwork;
+	private ICodeShelfNetworkDao	mCodeShelfNetworkDao;
+	private IWirelessDeviceDao		mWirelessDeviceDao;
+	private XmlRpcClient			mInboundXmlRpcClient;
+	private XmlRpcClient			mOutboundXmlRpcClient;
+	private boolean					mIsStarted;
 
-	public SnapInterface(final CodeShelfNetwork inCodeShelfNetwork) {
+	public SnapInterface(final CodeShelfNetwork inCodeShelfNetwork, final ICodeShelfNetworkDao inCodeShelfNetworkDao, final IWirelessDeviceDao inWirelessDeviceDao) {
 		mCodeShelfNetwork = inCodeShelfNetwork;
+		mCodeShelfNetworkDao = inCodeShelfNetworkDao;
+		mWirelessDeviceDao = inWirelessDeviceDao;
 	}
 
 	// --------------------------------------------------------------------------
@@ -128,7 +133,7 @@ public final class SnapInterface implements IWirelessInterface {
 		}
 
 		// Push out the changes.
-		CodeShelfNetwork.DAO.pushNonPersistentUpdates(mCodeShelfNetwork);
+		mCodeShelfNetworkDao.pushNonPersistentUpdates(mCodeShelfNetwork);
 	}
 
 	// --------------------------------------------------------------------------
@@ -160,7 +165,7 @@ public final class SnapInterface implements IWirelessInterface {
 			mIsStarted = false;
 			mOutboundXmlRpcClient = null;
 			mCodeShelfNetwork.setConnected(false);
-			CodeShelfNetwork.DAO.pushNonPersistentUpdates(mCodeShelfNetwork);
+			mCodeShelfNetworkDao.pushNonPersistentUpdates(mCodeShelfNetwork);
 
 			for (ControlGroup controlGroup : mCodeShelfNetwork.getControlGroups()) {
 				IControllerConnection connection = controlGroup.getControllerConnection();
@@ -272,8 +277,7 @@ public final class SnapInterface implements IWirelessInterface {
 			NetAddress netAddr = null;
 			Object object;
 
-			Object[] params = new Object[] { mCodeShelfNetwork.getGatewayAddr().getParamValueAsByteArray(), false, E10_SERIAL_TYPE,
-					E10_STANDARD_SERIAL_PORT, WAITONEVENT_TIMEOUT_MILLIS };
+			Object[] params = new Object[] { mCodeShelfNetwork.getGatewayAddr().getParamValueAsByteArray(), false, E10_SERIAL_TYPE, E10_STANDARD_SERIAL_PORT, WAITONEVENT_TIMEOUT_MILLIS };
 			Object xmlRpcResult = (Object) mInboundXmlRpcClient.execute("waitOnEvent", params);
 			if (xmlRpcResult instanceof HashMap) {
 				Map map = (HashMap) xmlRpcResult;
@@ -326,7 +330,7 @@ public final class SnapInterface implements IWirelessInterface {
 	private ICsCommand createCommand(String inMethodName, NetAddress inNetAddr) {
 		ICsCommand result = null;
 
-		PickTag pickTag = (PickTag) WirelessDevice.DAO.getNetworkDevice(inNetAddr);
+		PickTag pickTag = (PickTag) mWirelessDeviceDao.getNetworkDevice(inNetAddr);
 
 		if (inMethodName.equals(CommandIdEnum.CS_ACK_PRESSED.getName())) {
 			result = new CommandCsAckPressed(pickTag);

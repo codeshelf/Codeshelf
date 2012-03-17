@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Aisle.java,v 1.5 2012/02/21 02:45:12 jeffw Exp $
+ *  $Id: Aisle.java,v 1.6 2012/03/17 23:49:23 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -10,11 +10,16 @@ import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.gadgetworks.codeshelf.application.Util;
 import com.gadgetworks.codeshelf.model.dao.GenericDao;
+import com.gadgetworks.codeshelf.model.dao.IDaoRegistry;
+import com.gadgetworks.codeshelf.model.dao.IGenericDao;
+import com.google.inject.Inject;
 
 // --------------------------------------------------------------------------
 /**
@@ -30,28 +35,39 @@ import com.gadgetworks.codeshelf.model.dao.GenericDao;
 @Table(name = "AISLE")
 public class Aisle extends PersistABC {
 
-	public static final GenericDao<Aisle>	DAO					= new GenericDao<Aisle>(Aisle.class);
+	public interface IAisleDao extends IGenericDao<Aisle> {		
+	}
+	
+	public class AisleDao extends GenericDao<Aisle> implements IAisleDao {
+		@Inject
+		public AisleDao(final IDaoRegistry inDaoRegistry) {
+			super(Aisle.class, inDaoRegistry);
+		}
+	}
 
 	private static final Log				LOGGER				= LogFactory.getLog(Aisle.class);
 
 	// The owning facility.
 	@Column(name = "parentFacility", nullable = false)
 	@ManyToOne
+	@Getter
+	@Setter
 	private Facility						parentFacility;
 
 	public Aisle() {
 		parentFacility = null;
 	}
 
-	public final Facility getParentFacility() {
-		// Yes, this is weird, but we MUST always return the same instance of these persistent objects.
-		if (parentFacility != null) {
-			parentFacility = Facility.DAO.loadByPersistentId(parentFacility.getPersistentId());
-		}
-		return parentFacility;
-	}
+//	public final Facility getParentFacility() {
+//		// Yes, this is weird, but we MUST always return the same instance of these persistent objects.
+//		if (parentFacility != null) {
+//			FacilityDao dao = new FacilityDao();
+//			parentFacility = dao.loadByPersistentId(parentFacility.getPersistentId());
+//		}
+//		return parentFacility;
+//	}
 
-	public final void setParentFacility(Facility inParentFacility) {
-		parentFacility = inParentFacility;
-	}
+//	public final void setParentFacility(Facility inParentFacility) {
+//		parentFacility = inParentFacility;
+//	}
 }

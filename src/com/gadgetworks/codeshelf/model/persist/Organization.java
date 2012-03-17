@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Organization.java,v 1.2 2012/02/21 23:32:30 jeffw Exp $
+ *  $Id: Organization.java,v 1.3 2012/03/17 23:49:23 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -19,10 +19,11 @@ import lombok.Setter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.annotate.JsonIgnore;
-import org.codehaus.jackson.annotate.JsonManagedReference;
 
 import com.gadgetworks.codeshelf.model.dao.GenericDao;
+import com.gadgetworks.codeshelf.model.dao.IDaoRegistry;
 import com.gadgetworks.codeshelf.model.dao.IGenericDao;
+import com.google.inject.Inject;
 
 // --------------------------------------------------------------------------
 /**
@@ -38,7 +39,15 @@ import com.gadgetworks.codeshelf.model.dao.IGenericDao;
 @Table(name = "ORGANIZATION")
 public class Organization extends PersistABC {
 
-	public static final GenericDao<Organization>	DAO			= new GenericDao<Organization>(Organization.class);
+	public interface IOrganizationDao extends IGenericDao<Organization> {		
+	}
+	
+	public class OrganizationDao extends GenericDao<Organization> implements IOrganizationDao {
+		@Inject
+		public OrganizationDao(final IDaoRegistry inDaoRegistry) {
+			super(Organization.class, inDaoRegistry);
+		}
+	}
 
 	private static final Log						LOGGER		= LogFactory.getLog(Organization.class);
 
@@ -51,30 +60,33 @@ public class Organization extends PersistABC {
 	// For a network this is a list of all of the control groups that belong in the set.
 	@OneToMany(mappedBy = "parentOrganization")
 	@JsonIgnore
+	@Getter
 	private List<Facility>							facilities	= new ArrayList<Facility>();
 
 	public Organization() {
 		description = "";
 	}
 
-	// We always need to return the object cached in the DAO.
-	public final List<Facility> getFacilities() {
-		if (IGenericDao.USE_DAO_CACHE) {
-			List<Facility> result = new ArrayList<Facility>();
-			if (!Facility.DAO.isObjectPersisted(this)) {
-				result = facilities;
-			} else {
-				for (Facility facility : Facility.DAO.getAll()) {
-					if (facility.getParentOrganization().equals(this)) {
-						result.add(facility);
-					}
-				}
-			}
-			return result;
-		} else {
-			return facilities;
-		}
-	}
+//	// We always need to return the object cached in the DAO.
+//	public final List<Facility> getFacilities() {
+//		if (IGenericDao.USE_DAO_CACHE) {
+//			List<Facility> result = new ArrayList<Facility>();
+//			OrganizationDao organizationDao = new OrganizationDao();
+//			if (!organizationDao.isObjectPersisted(this)) {
+//				result = facilities;
+//			} else {
+//				FacilityDao facilityDao = new FacilityDao();
+//				for (Facility facility : facilityDao.getAll()) {
+//					if (facility.getParentOrganization().equals(this)) {
+//						result.add(facility);
+//					}
+//				}
+//			}
+//			return result;
+//		} else {
+//			return facilities;
+//		}
+//	}
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void addControlGroup(Facility inFacility) {

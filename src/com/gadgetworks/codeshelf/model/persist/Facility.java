@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.7 2012/02/24 07:41:23 jeffw Exp $
+ *  $Id: Facility.java,v 1.8 2012/03/17 23:49:23 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -19,12 +19,12 @@ import lombok.Setter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.codehaus.jackson.annotate.JsonBackReference;
 import org.codehaus.jackson.annotate.JsonIgnore;
-import org.codehaus.jackson.annotate.JsonManagedReference;
 
 import com.gadgetworks.codeshelf.model.dao.GenericDao;
+import com.gadgetworks.codeshelf.model.dao.IDaoRegistry;
 import com.gadgetworks.codeshelf.model.dao.IGenericDao;
+import com.google.inject.Inject;
 
 // --------------------------------------------------------------------------
 /**
@@ -39,7 +39,15 @@ import com.gadgetworks.codeshelf.model.dao.IGenericDao;
 @Table(name = "FACILITY")
 public class Facility extends PersistABC {
 
-	public static final GenericDao<Facility>	DAO					= new GenericDao<Facility>(Facility.class);
+	public interface IFacilityDao extends IGenericDao<Facility> {		
+	}
+	
+	public class FacilityDao extends GenericDao<Facility> implements IFacilityDao {
+		@Inject
+		public FacilityDao(final IDaoRegistry inDaoRegistry) {
+			super(Facility.class, inDaoRegistry);
+		}
+	}
 
 	private static final Log					LOGGER				= LogFactory.getLog(Facility.class);
 
@@ -55,24 +63,27 @@ public class Facility extends PersistABC {
 	@Column(name = "parentOrganization", nullable = false)
 	@ManyToOne
 	@JsonIgnore
+	@Getter
 	private Organization						parentOrganization;
 
 	// For a network this is a list of all of the control groups that belong in the set.
 	@OneToMany(mappedBy = "parentFacility")
 	@JsonIgnore
+	@Getter
 	private List<Aisle>							aisles				= new ArrayList<Aisle>();
 
 	public Facility() {
 		description = "";
 	}
 	
-	public final Organization getParentOrganization() {
-		// Yes, this is weird, but we MUST always return the same instance of these persistent objects.
-		if (parentOrganization != null) {
-			parentOrganization = Organization.DAO.loadByPersistentId(parentOrganization.getPersistentId());
-		}
-		return parentOrganization;
-	}
+//	public final Organization getParentOrganization() {
+//		// Yes, this is weird, but we MUST always return the same instance of these persistent objects.
+//		if (parentOrganization != null) {
+//			OrganizationDao dao = new OrganizationDao();
+//			parentOrganization = dao.loadByPersistentId(parentOrganization.getPersistentId());
+//		}
+//		return parentOrganization;
+//	}
 
 	public final void setparentOrganization(Organization inparentOrganization) {
 		parentOrganization = inparentOrganization;
@@ -82,24 +93,25 @@ public class Facility extends PersistABC {
 		return getParentOrganization().getId();
 	}
 
-	// We always need to return the object cached in the DAO.
-	public final List<Aisle> getAisles() {
-		if (IGenericDao.USE_DAO_CACHE) {
-			List<Aisle> result = new ArrayList<Aisle>();
-			if (!Aisle.DAO.isObjectPersisted(this)) {
-				result = aisles;
-			} else {
-				for (Aisle aisle : Aisle.DAO.getAll()) {
-					if (aisle.getParentFacility().equals(this)) {
-						result.add(aisle);
-					}
-				}
-			}
-			return result;
-		} else {
-			return aisles;
-		}
-	}
+//	// We always need to return the object cached in the DAO.
+//	public final List<Aisle> getAisles() {
+//		if (IGenericDao.USE_DAO_CACHE) {
+//			List<Aisle> result = new ArrayList<Aisle>();
+//			AisleDao aisleDao = new AisleDao();
+//			if (!aisleDao.isObjectPersisted(this)) {
+//				result = aisles;
+//			} else {
+//				for (Aisle aisle : aisleDao.getAll()) {
+//					if (aisle.getParentFacility().equals(this)) {
+//						result.add(aisle);
+//					}
+//				}
+//			}
+//			return result;
+//		} else {
+//			return aisles;
+//		}
+//	}
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void addAisle(Aisle inAisle) {

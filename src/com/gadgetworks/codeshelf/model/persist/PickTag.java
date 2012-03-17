@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PickTag.java,v 1.10 2012/01/02 11:43:18 jeffw Exp $
+ *  $Id: PickTag.java,v 1.11 2012/03/17 23:49:23 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -43,19 +43,21 @@ public class PickTag extends WirelessDevice {
 	private short				serialBusPosition;
 	@ManyToOne
 	@Column(nullable = false)
+	@Getter
 	private ControlGroup		parentControlGroup;
 
 	public PickTag() {
 		super();
 	}
 
-	public final ControlGroup getParentControlGroup() {
-		// Yes, this is weird, but we MUST always return the same instance of these persistent objects.
-		if (parentControlGroup != null) {
-			parentControlGroup = ControlGroup.DAO.loadByPersistentId(parentControlGroup.getPersistentId());
-		}
-		return parentControlGroup;
-	}
+//	public final ControlGroup getParentControlGroup() {
+//		// Yes, this is weird, but we MUST always return the same instance of these persistent objects.
+//		if (parentControlGroup != null) {
+//			ControlGroupDao controlGroupDao = new ControlGroupDao();
+//			parentControlGroup = controlGroupDao.loadByPersistentId(parentControlGroup.getPersistentId());
+//		}
+//		return parentControlGroup;
+//	}
 
 	public final void setParentControlGroup(ControlGroup inControlGroup) {
 		parentControlGroup = inControlGroup;

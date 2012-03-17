@@ -7,9 +7,10 @@ import lombok.Getter;
 
 import org.junit.Test;
 
+import com.gadgetworks.codeshelf.application.Main.IUserDao;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
+import com.gadgetworks.codeshelf.model.dao.IDaoListener;
 import com.gadgetworks.codeshelf.model.persist.User;
-import com.gadgetworks.codeshelf.model.persist.User.IUserDao;
 import com.gadgetworks.codeshelf.web.websession.WebSession;
 import com.gadgetworks.codeshelf.web.websocket.IWebSocket;
 
@@ -54,6 +55,22 @@ public class WebSessionTest {
 		@Override
 		public Collection<User> getAll() {
 			return null;
+		}
+
+		@Override
+		public void pushNonPersistentUpdates(User inDomainObject) {
+		}
+
+		@Override
+		public void registerDAOListener(IDaoListener inListener) {
+		}
+
+		@Override
+		public void unregisterDAOListener(IDaoListener inListener) {
+		}
+
+		@Override
+		public void removeDAOListeners() {
 		}	
 	}
 

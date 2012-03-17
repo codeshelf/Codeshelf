@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: User.java,v 1.3 2012/03/17 09:07:03 jeffw Exp $
+ *  $Id: User.java,v 1.4 2012/03/17 23:49:23 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -23,6 +23,7 @@ import org.apache.commons.logging.LogFactory;
 
 import com.gadgetworks.codeshelf.model.dao.GenericDao;
 import com.gadgetworks.codeshelf.model.dao.IGenericDao;
+import com.google.inject.Inject;
 
 // --------------------------------------------------------------------------
 /**
@@ -37,18 +38,6 @@ import com.gadgetworks.codeshelf.model.dao.IGenericDao;
 @Table(name = "USER")
 public class User extends PersistABC {
 	
-	public interface IUserDao extends IGenericDao<User> {
-		
-	}
-	
-	public static class UserDao extends GenericDao<User> implements IUserDao {
-		public UserDao() {
-			super(User.class);
-		}
-	}
-	
-	//public static final GenericDao<User>	DAO					= new GenericDao<User>(User.class);
-
 	private static final Log				LOGGER				= LogFactory.getLog(User.class);
 
 	private static final long				serialVersionUID	= 3001609308065821464L;
@@ -80,11 +69,14 @@ public class User extends PersistABC {
 
 	// For a network this is a list of all of the control groups that belong in the set.
 	@OneToMany(mappedBy = "parentUser")
+	@Getter
 	private List<UserSession>				uses				= new ArrayList<UserSession>();
 
 	// The owning facility.
 	@Column(name = "parentOrganization", nullable = false)
 	@ManyToOne
+	@Getter
+	@Setter
 	private Organization						parentOrganization;
 
 	public User() {
@@ -93,36 +85,38 @@ public class User extends PersistABC {
 		active = true;
 	}
 
-	public final Organization getParentOrganization() {
-		// Yes, this is weird, but we MUST always return the same instance of these persistent objects.
-		if (parentOrganization != null) {
-			parentOrganization = Organization.DAO.loadByPersistentId(parentOrganization.getPersistentId());
-		}
-		return parentOrganization;
-	}
-
-	public final void setparentOrganization(Organization inparentOrganization) {
-		parentOrganization = inparentOrganization;
-	}
-
-	// We always need to return the object cached in the DAO.
-	public final List<UserSession> getUserSessions() {
-		if (IGenericDao.USE_DAO_CACHE) {
-			List<UserSession> result = new ArrayList<UserSession>();
-			if (!UserSession.DAO.isObjectPersisted(this)) {
-				result = uses;
-			} else {
-				for (UserSession promoCodeUse : UserSession.DAO.getAll()) {
-					if (promoCodeUse.getParentUser().equals(this)) {
-						result.add(promoCodeUse);
-					}
-				}
-			}
-			return result;
-		} else {
-			return uses;
-		}
-	}
+//	public final Organization getParentOrganization() {
+//		// Yes, this is weird, but we MUST always return the same instance of these persistent objects.
+//		if (parentOrganization != null) {
+//			OrganizationDao organizationDao = new OrganizationDao();
+//			parentOrganization = organizationDao.loadByPersistentId(parentOrganization.getPersistentId());
+//		}
+//		return parentOrganization;
+//	}
+//
+//	public final void setparentOrganization(Organization inparentOrganization) {
+//		parentOrganization = inparentOrganization;
+//	}
+//
+//	// We always need to return the object cached in the DAO.
+//	public final List<UserSession> getUserSessions() {
+//		if (IGenericDao.USE_DAO_CACHE) {
+//			List<UserSession> result = new ArrayList<UserSession>();
+//			UserSessionDao userSessionDao = new UserSessionDao();
+//			if (!userSessionDao.isObjectPersisted(this)) {
+//				result = uses;
+//			} else {
+//				for (UserSession promoCodeUse : userSessionDao.getAll()) {
+//					if (promoCodeUse.getParentUser().equals(this)) {
+//						result.add(promoCodeUse);
+//					}
+//				}
+//			}
+//			return result;
+//		} else {
+//			return uses;
+//		}
+//	}
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void addUserSession(UserSession inPromoCodeUse) {

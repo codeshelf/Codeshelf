@@ -1,16 +1,13 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WirelessDeviceDao.java,v 1.2 2012/03/17 09:07:02 jeffw Exp $
+ *  $Id: WirelessDeviceDao.java,v 1.3 2012/03/17 23:49:23 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -27,30 +24,30 @@ import com.gadgetworks.codeshelf.model.persist.WirelessDevice;
  * @author jeffw
  *
  */
-public class WirelessDeviceDao<T extends WirelessDevice> extends GenericDao<T> implements IDeviceMaintainer{
+public final class WirelessDeviceDao extends GenericDao<WirelessDevice> implements IWirelessDeviceDao, IDeviceMaintainer {
 
 	private static final Log			LOGGER		= LogFactory.getLog(WirelessDeviceDao.class);
 
 	private Map<NetAddress, WirelessDevice>	mAddressLookupMap;
 
-	public WirelessDeviceDao(final Class<T> inClass) {
-		super(inClass);
+	public WirelessDeviceDao(final Class<WirelessDevice> inClass, final IDaoRegistry inDaoRegistry) {
+		super(inClass, inDaoRegistry);
 	}
 
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	protected void initCacheMap() {
-		Query<T> query = Ebean.createQuery(mClass);
-		query = query.setUseCache(true);
-		Collection<T> wirelessDevices = query.findList();
-		mCacheMap = new HashMap<Long, T>();
-		mAddressLookupMap = new HashMap<NetAddress, WirelessDevice>();
-		for (T wirelessDevice : wirelessDevices) {
-			mCacheMap.put(wirelessDevice.getPersistentId(), wirelessDevice);
-			mAddressLookupMap.put(wirelessDevice.getNetAddress(), wirelessDevice);
-		}
-	}
+//	protected void initCacheMap() {
+//		Query<WirelessDevice> query = Ebean.createQuery(mClass);
+//		query = query.setUseCache(true);
+//		Collection<WirelessDevice> wirelessDevices = query.findList();
+//		mCacheMap = new HashMap<Long, WirelessDevice>();
+//		mAddressLookupMap = new HashMap<NetAddress, WirelessDevice>();
+//		for (WirelessDevice wirelessDevice : wirelessDevices) {
+//			mCacheMap.put(wirelessDevice.getPersistentId(), wirelessDevice);
+//			mAddressLookupMap.put(wirelessDevice.getNetAddress(), wirelessDevice);
+//		}
+//	}
 
 	/* --------------------------------------------------------------------------
 	 * (non-Javadoc)
@@ -83,7 +80,7 @@ public class WirelessDeviceDao<T extends WirelessDevice> extends GenericDao<T> i
 	public final void deviceUpdated(INetworkDevice inNetworkDevice, boolean inPersistentDataChanged) {
 		if (inPersistentDataChanged) {
 			try { 
-				store((T) inNetworkDevice);
+				store((WirelessDevice) inNetworkDevice);
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}
@@ -97,22 +94,22 @@ public class WirelessDeviceDao<T extends WirelessDevice> extends GenericDao<T> i
 	 * @see com.gadgetworks.codeshelf.model.dao.ISystemDAO#findWirelessDeviceByMacAddr(java.lang.String)
 	 */
 	public final WirelessDevice findWirelessDeviceByMacAddr(NetMacAddress inMacAddr) {
-		if (!USE_DAO_CACHE) {
+//		if (!USE_DAO_CACHE) {
 			Query<WirelessDevice> query = Ebean.createQuery(WirelessDevice.class);
 			query.where().eq("mMacAddr", inMacAddr.toString());
 			query = query.setUseCache(true);
 			return query.findUnique();
-		} else {
-			WirelessDevice result = null;
-			if (mCacheMap == null) {
-				initCacheMap();
-			}
-			for (WirelessDevice wirelessDevice : mCacheMap.values()) {
-				if ((wirelessDevice.getMacAddress().equals(inMacAddr))) {
-					result = wirelessDevice;
-				}
-			}
-			return result;
-		}
+//		} else {
+//			WirelessDevice result = null;
+//			if (mCacheMap == null) {
+//				initCacheMap();
+//			}
+//			for (WirelessDevice wirelessDevice : mCacheMap.values()) {
+//				if ((wirelessDevice.getMacAddress().equals(inMacAddr))) {
+//					result = wirelessDevice;
+//				}
+//			}
+//			return result;
+//		}
 	}
 }

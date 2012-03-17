@@ -1,13 +1,13 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: GenericDao.java,v 1.4 2012/03/17 09:07:02 jeffw Exp $
+ *  $Id: GenericDao.java,v 1.5 2012/03/17 23:49:23 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 import com.avaje.ebean.BeanState;
 import com.avaje.ebean.Ebean;
@@ -20,11 +20,14 @@ import com.gadgetworks.codeshelf.model.persist.PersistABC;
  */
 public class GenericDao<T extends PersistABC> implements IGenericDao<T> {
 
-	protected Map<Long, T>	mCacheMap;
-	protected Class<T>		mClass;
+//	protected Map<Long, T>		mCacheMap;
+	protected Class<T>			mClass;
 
-	public GenericDao(final Class<T> inClass) {
+	private List<IDaoListener>	mListeners	= new ArrayList<IDaoListener>();
+
+	public GenericDao(final Class<T> inClass, final IDaoRegistry inDaoRegistry) {
 		mClass = inClass;
+		inDaoRegistry.addDao(this);
 	}
 
 	// --------------------------------------------------------------------------
@@ -32,7 +35,9 @@ public class GenericDao<T extends PersistABC> implements IGenericDao<T> {
 	 * @param inObject
 	 */
 	private void privateBroadcastAdd(final Object inObject) {
-		DaoManager.gDaoManager.objectAdded(inObject);
+		for (IDaoListener daoListener : mListeners) {
+			daoListener.objectAdded(inObject);
+		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -40,7 +45,9 @@ public class GenericDao<T extends PersistABC> implements IGenericDao<T> {
 	 * @param inObject
 	 */
 	private void privateBroadcastUpdate(final Object inObject) {
-		DaoManager.gDaoManager.objectUpdated(inObject);
+		for (IDaoListener daoListener : mListeners) {
+			daoListener.objectUpdated(inObject);
+		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -48,14 +55,16 @@ public class GenericDao<T extends PersistABC> implements IGenericDao<T> {
 	 * @param inObject
 	 */
 	private void privateBroadcastDelete(final Object inObject) {
-		DaoManager.gDaoManager.objectDeleted(inObject);
+		for (IDaoListener daoListener : mListeners) {
+			daoListener.objectDeleted(inObject);
+		}
 	}
 
 	/* --------------------------------------------------------------------------
 	 * (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.dao.ISystemDAO#pushNonPersistentAccountUpdates(com.gadgetworks.codeshelf.model.persist.Account)
 	 */
-	public void pushNonPersistentUpdates(PersistABC inPerstitentObject) {
+	public final void pushNonPersistentUpdates(T inPerstitentObject) {
 		privateBroadcastUpdate(inPerstitentObject);
 	}
 
@@ -65,15 +74,15 @@ public class GenericDao<T extends PersistABC> implements IGenericDao<T> {
 	 * The GUI is not stateless (in some cases), so we can't deal with new instances.
 	 * If it were a straight-up webapp this wouldn't be a problem, but a desktop UI contains obj refs.
 	 */
-	protected void initCacheMap() {
-		Query<T> query = Ebean.createQuery(mClass);
-		query = query.setUseCache(true);
-		Collection<T> daoObjects = query.findList();
-		mCacheMap = new HashMap<Long, T>();
-		for (T daoObject : daoObjects) {
-			mCacheMap.put(daoObject.getPersistentId(), daoObject);
-		}
-	}
+//	protected void initCacheMap() {
+//		Query<T> query = Ebean.createQuery(mClass);
+//		query = query.setUseCache(true);
+//		Collection<T> daoObjects = query.findList();
+//		mCacheMap = new HashMap<Long, T>();
+//		for (T daoObject : daoObjects) {
+//			mCacheMap.put(daoObject.getPersistentId(), daoObject);
+//		}
+//	}
 
 	// --------------------------------------------------------------------------
 	/**
@@ -97,14 +106,14 @@ public class GenericDao<T extends PersistABC> implements IGenericDao<T> {
 	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#loadByPersistentId(java.lang.Integer)
 	 */
 	public T loadByPersistentId(Long inID) {
-		if (!USE_DAO_CACHE) {
+//		if (!USE_DAO_CACHE) {
 			return Ebean.find(mClass, inID);
-		} else {
-			if (mCacheMap == null) {
-				initCacheMap();
-			}
-			return mCacheMap.get(inID);
-		}
+//		} else {
+//			if (mCacheMap == null) {
+//				initCacheMap();
+//			}
+//			return mCacheMap.get(inID);
+//		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -112,23 +121,23 @@ public class GenericDao<T extends PersistABC> implements IGenericDao<T> {
 	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#findById(java.lang.String)
 	 */
 	public T findById(final String inId) {
-		if (!USE_DAO_CACHE) {
+//		if (!USE_DAO_CACHE) {
 			Query<T> query = Ebean.createQuery(mClass);
 			query.where().eq(T.getIdColumnName(), inId);
 			query = query.setUseCache(true);
 			return query.findUnique();
-		} else {
-			T result = null;
-			if (mCacheMap == null) {
-				initCacheMap();
-			}
-			for (T daoObject : mCacheMap.values()) {
-				if (daoObject.getId().equals(inId)) {
-					result = daoObject;
-				}
-			}
-			return result;
-		}
+//		} else {
+//			T result = null;
+//			if (mCacheMap == null) {
+//				initCacheMap();
+//			}
+//			for (T daoObject : mCacheMap.values()) {
+//				if (daoObject.getId().equals(inId)) {
+//					result = daoObject;
+//				}
+//			}
+//			return result;
+//		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -143,12 +152,12 @@ public class GenericDao<T extends PersistABC> implements IGenericDao<T> {
 			Ebean.save(inDomainObject);
 			privateBroadcastUpdate(inDomainObject);
 		}
-		if (USE_DAO_CACHE) {
-			if (mCacheMap == null) {
-				initCacheMap();
-			}
-			mCacheMap.put(inDomainObject.getPersistentId(), inDomainObject);
-		}
+//		if (USE_DAO_CACHE) {
+//			if (mCacheMap == null) {
+//				initCacheMap();
+//			}
+//			mCacheMap.put(inDomainObject.getPersistentId(), inDomainObject);
+//		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -156,12 +165,12 @@ public class GenericDao<T extends PersistABC> implements IGenericDao<T> {
 	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#delete(java.lang.Object)
 	 */
 	public final void delete(final T inDomainObject) throws DaoException {
-		if (USE_DAO_CACHE) {
-			if (mCacheMap == null) {
-				initCacheMap();
-			}
-			mCacheMap.remove(inDomainObject.getPersistentId());
-		}
+//		if (USE_DAO_CACHE) {
+//			if (mCacheMap == null) {
+//				initCacheMap();
+//			}
+//			mCacheMap.remove(inDomainObject.getPersistentId());
+//		}
 		Ebean.delete(inDomainObject);
 		privateBroadcastDelete(inDomainObject);
 	}
@@ -171,16 +180,46 @@ public class GenericDao<T extends PersistABC> implements IGenericDao<T> {
 	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#getAll()
 	 */
 	public final Collection<T> getAll() {
-		if (!USE_DAO_CACHE) {
+//		if (!USE_DAO_CACHE) {
 			Query<T> query = Ebean.createQuery(mClass);
 			query = query.setUseCache(true);
 			return query.findList();
-		} else {
-			if (mCacheMap == null) {
-				initCacheMap();
-			}
-			// Use the accounts cache.
-			return mCacheMap.values();
-		}
+//		} else {
+//			if (mCacheMap == null) {
+//				initCacheMap();
+//			}
+//			// Use the accounts cache.
+//			return mCacheMap.values();
+//		}
+	}
+
+	/*
+	 * --------------------------------------------------------------------------
+	 * (non-Javadoc)
+	 * 
+	 * @see com.gadgetworks.codeshelf.model.dao.ISystemDAO#registerDAOListener(com.gadgetworks.codeshelf.model.dao.IDAOListener)
+	 */
+	public final void registerDAOListener(IDaoListener inListener) {
+		mListeners.add(inListener);
+	}
+
+	/*
+	 * --------------------------------------------------------------------------
+	 * (non-Javadoc)
+	 * 
+	 * @see com.gadgetworks.codeshelf.model.dao.ISystemDAO#unRegisterDAOListener(com.gadgetworks.codeshelf.model.dao.IDAOListener)
+	 */
+	public final void unregisterDAOListener(IDaoListener inListener) {
+		mListeners.remove(inListener);
+	}
+
+	/*
+	 * --------------------------------------------------------------------------
+	 * (non-Javadoc)
+	 * 
+	 * @see com.gadgetworks.codeshelf.model.dao.ISystemDAO#unRegisterDAOListener(com.gadgetworks.codeshelf.model.dao.IDAOListener)
+	 */
+	public final void removeDAOListeners() {
+		mListeners.clear();
 	}
 }

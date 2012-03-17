@@ -1,6 +1,8 @@
 package com.gadgetworks.codeshelf.model.dao;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.fail;
+
+import java.util.List;
 
 import org.junit.Test;
 
@@ -12,6 +14,18 @@ public class GenericDaoTest {
 		// Stub object needed to test abstract class.
 		// Ensures the Liskov Substitution Principle.
 	}
+	
+	class DaoRegistryStub implements IDaoRegistry {
+
+		@Override
+		public void addDao(IDao inDao) {
+		}
+
+		@Override
+		public List<IDao> getDaoList() {
+			return null;
+		}
+	}
 
 	@Test
 	public void testPushNonPersistentUpdates() {
@@ -20,7 +34,8 @@ public class GenericDaoTest {
 
 	@Test
 	public void testInitCacheMap() {
-		GenericDao<PersistABCStub> generic = new GenericDao<PersistABCStub>(PersistABCStub.class);
+		DaoRegistryStub daoRegistryStub = new DaoRegistryStub();
+		GenericDao<PersistABCStub> generic = new GenericDao<PersistABCStub>(PersistABCStub.class, daoRegistryStub);
 		fail("Not yet implemented");
 	}
 

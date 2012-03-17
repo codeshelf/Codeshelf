@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfNetwork.java,v 1.12 2012/01/11 18:13:15 jeffw Exp $
+ *  $Id: CodeShelfNetwork.java,v 1.13 2012/03/17 23:49:23 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -24,7 +24,9 @@ import com.gadgetworks.codeshelf.controller.IWirelessInterface;
 import com.gadgetworks.codeshelf.controller.NetAddress;
 import com.gadgetworks.codeshelf.controller.NetworkId;
 import com.gadgetworks.codeshelf.model.dao.GenericDao;
+import com.gadgetworks.codeshelf.model.dao.IDaoRegistry;
 import com.gadgetworks.codeshelf.model.dao.IGenericDao;
+import com.google.inject.Inject;
 
 // --------------------------------------------------------------------------
 /**
@@ -40,7 +42,15 @@ import com.gadgetworks.codeshelf.model.dao.IGenericDao;
 @Table(name = "CODESHELFNETWORK")
 public class CodeShelfNetwork extends PersistABC {
 
-	public static final GenericDao<CodeShelfNetwork>	DAO					= new GenericDao<CodeShelfNetwork>(CodeShelfNetwork.class);
+	public interface ICodeShelfNetworkDao extends IGenericDao<CodeShelfNetwork> {		
+	}
+	
+	public static class CodeShelfNetworkDao extends GenericDao<CodeShelfNetwork> implements ICodeShelfNetworkDao {
+		@Inject
+		public CodeShelfNetworkDao(final IDaoRegistry inDaoRegistry) {
+			super(CodeShelfNetwork.class, inDaoRegistry);
+		}
+	}
 
 	private static final Log							LOGGER				= LogFactory.getLog(CodeShelfNetwork.class);
 
@@ -69,6 +79,7 @@ public class CodeShelfNetwork extends PersistABC {
 	private String										gatewayUrl;
 	// For a network this is a list of all of the control groups that belong in the set.
 	@Column(nullable = false)
+	@Getter
 	@OneToMany(mappedBy = "parentCodeShelfNetwork")
 	private List<ControlGroup>							controlGroups		= new ArrayList<ControlGroup>();
 
@@ -107,23 +118,25 @@ public class CodeShelfNetwork extends PersistABC {
 	}
 
 	// We always need to return the object cached in the DAO.
-	public final List<ControlGroup> getControlGroups() {
-		if (IGenericDao.USE_DAO_CACHE) {
-			List<ControlGroup> result = new ArrayList<ControlGroup>();
-			if (!CodeShelfNetwork.DAO.isObjectPersisted(this)) {
-				result = controlGroups;
-			} else {
-				for (ControlGroup controlGroup : ControlGroup.DAO.getAll()) {
-					if (controlGroup.getParentCodeShelfNetwork().equals(this)) {
-						result.add(controlGroup);
-					}
-				}
-			}
-			return result;
-		} else {
-			return controlGroups;
-		}
-	}
+//	public final List<ControlGroup> getControlGroups() {
+//		if (IGenericDao.USE_DAO_CACHE) {
+//			List<ControlGroup> result = new ArrayList<ControlGroup>();
+//			CodeShelfNetworkDao codeShelfNetworkDao = new CodeShelfNetworkDao();
+//			if (!codeShelfNetworkDao.isObjectPersisted(this)) {
+//				result = controlGroups;
+//			} else {
+//				ControlGroupDao controlGroupDao = new ControlGroupDao();
+//				for (ControlGroup controlGroup : controlGroupDao.getAll()) {
+//					if (controlGroup.getParentCodeShelfNetwork().equals(this)) {
+//						result.add(controlGroup);
+//					}
+//				}
+//			}
+//			return result;
+//		} else {
+//			return controlGroups;
+//		}
+//	}
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void addControlGroup(ControlGroup inControlGroup) {

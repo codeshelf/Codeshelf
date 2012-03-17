@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PersistentProperty.java,v 1.7 2012/01/02 11:43:18 jeffw Exp $
+ *  $Id: PersistentProperty.java,v 1.8 2012/03/17 23:49:23 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -12,6 +12,9 @@ import lombok.Getter;
 import lombok.Setter;
 
 import com.gadgetworks.codeshelf.model.dao.GenericDao;
+import com.gadgetworks.codeshelf.model.dao.IDaoRegistry;
+import com.gadgetworks.codeshelf.model.dao.IGenericDao;
+import com.google.inject.Inject;
 
 // --------------------------------------------------------------------------
 /**
@@ -36,7 +39,15 @@ public class PersistentProperty extends PersistABC {
 	public static final String							ACTIVEMQ_JMS_PORTNUM		= "ACTMQJMS";
 	public static final String							ACTIVEMQ_STOMP_PORTNUM		= "ACTMQSTM";
 
-	public static final GenericDao<PersistentProperty>	DAO							= new GenericDao<PersistentProperty>(PersistentProperty.class);
+	public interface IPersistentPropertyDao extends IGenericDao<PersistentProperty> {		
+	}
+	
+	public static class PersistentPropertyDao extends GenericDao<PersistentProperty> implements IPersistentPropertyDao {
+		@Inject
+		public PersistentPropertyDao(final IDaoRegistry inDaoRegistry) {
+			super(PersistentProperty.class, inDaoRegistry);
+		}
+	}
 
 	private static final long							serialVersionUID			= -7735810092352246641L;
 

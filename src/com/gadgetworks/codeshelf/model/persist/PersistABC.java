@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PersistABC.java,v 1.10 2012/02/24 07:41:23 jeffw Exp $
+ *  $Id: PersistABC.java,v 1.11 2012/03/17 23:49:23 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -56,7 +56,7 @@ public abstract class PersistABC {
 	public static String getIdColumnName() {
 		return "Id";
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * @return

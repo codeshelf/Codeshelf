@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PreferencesStore.java,v 1.5 2012/03/17 09:07:02 jeffw Exp $
+ *  $Id: PreferencesStore.java,v 1.6 2012/03/17 23:49:23 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model;
 
@@ -16,6 +16,7 @@ import org.apache.log4j.Level;
 import com.gadgetworks.codeshelf.controller.ControllerABC;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.persist.PersistentProperty;
+import com.gadgetworks.codeshelf.model.persist.PersistentProperty.IPersistentPropertyDao;
 
 // --------------------------------------------------------------------------
 /**
@@ -27,14 +28,16 @@ public final class PreferencesStore {
 
 	private static PreferencesStore			mPreferencesStore;
 	private Map<String, PersistentProperty>	mChangedProperties;
+	private static IPersistentPropertyDao			mPersistentPropertyDao;
 
-	private PreferencesStore() {
+	private PreferencesStore(IPersistentPropertyDao inPersistentPropertyDao) {
 		mChangedProperties = new HashMap<String, PersistentProperty>();
+		mPersistentPropertyDao = inPersistentPropertyDao;
 	}
 
-	public static void initPreferencesStore() {
+	public static void initPreferencesStore(IPersistentPropertyDao inPersistentPropertyDao) {
 		// Setup the preferences store singleton.
-		mPreferencesStore = new PreferencesStore();
+		mPreferencesStore = new PreferencesStore(inPersistentPropertyDao);
 
 		initPreference(PersistentProperty.SHOW_CONSOLE_PREF, "Show the console at startup", String.valueOf(false));
 		initPreference(PersistentProperty.SHOW_CONNECTION_DEBUG_PREF, "Show a connection debug dialog", String.valueOf(false));
@@ -52,9 +55,9 @@ public final class PreferencesStore {
 	/**
 	 *  @return
 	 */
-	public static PreferencesStore getPreferencesStore() {
+	public static PreferencesStore getPreferencesStore(IPersistentPropertyDao inPersistentPropertyDao) {
 		if (mPreferencesStore == null) {
-			initPreferencesStore();
+			initPreferencesStore(inPersistentPropertyDao);
 		}
 		return mPreferencesStore;
 	}
@@ -69,7 +72,7 @@ public final class PreferencesStore {
 		boolean shouldUpdate = false;
 
 		// Find the property in the DB.
-		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
+		PersistentProperty property = mPersistentPropertyDao.findById(inPropertyID);
 
 		// If the property doesn't exist then create it.
 		if (property == null) {
@@ -89,7 +92,7 @@ public final class PreferencesStore {
 		// If the property changed then we need to persist the change.
 		if (shouldUpdate) {
 			try {
-				PersistentProperty.DAO.store(property);
+				mPersistentPropertyDao.store(property);
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}
@@ -103,7 +106,7 @@ public final class PreferencesStore {
 	public void save() throws IOException {
 		for (PersistentProperty property : mChangedProperties.values()) {
 			try {
-				PersistentProperty.DAO.store(property);
+				mPersistentPropertyDao.store(property);
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}
@@ -116,7 +119,7 @@ public final class PreferencesStore {
 	 * @see org.eclipse.jface.preference.IPreferenceStore#contains(java.lang.String)
 	 */
 	public boolean contains(String inPropertyID) {
-		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
+		PersistentProperty property = mPersistentPropertyDao.findById(inPropertyID);
 		return (property != null);
 	}
 
@@ -126,7 +129,7 @@ public final class PreferencesStore {
 	 */
 	public boolean getBoolean(String inPropertyID) {
 		boolean result = false;
-		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
+		PersistentProperty property = mPersistentPropertyDao.findById(inPropertyID);
 		if (property != null)
 			result = property.getCurrentValueAsBoolean();
 		return result;
@@ -138,7 +141,7 @@ public final class PreferencesStore {
 	 */
 	public boolean getDefaultBoolean(String inPropertyID) {
 		boolean result = false;
-		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
+		PersistentProperty property = mPersistentPropertyDao.findById(inPropertyID);
 		if (property != null)
 			result = property.getDefaultValueAsBoolean();
 		return result;
@@ -150,7 +153,7 @@ public final class PreferencesStore {
 	 */
 	public double getDefaultDouble(String inPropertyID) {
 		double result = 0;
-		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
+		PersistentProperty property = mPersistentPropertyDao.findById(inPropertyID);
 		if (property != null)
 			result = property.getDefaultValueAsDouble();
 		return result;
@@ -162,7 +165,7 @@ public final class PreferencesStore {
 	 */
 	public float getDefaultFloat(String inPropertyID) {
 		float result = 0;
-		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
+		PersistentProperty property = mPersistentPropertyDao.findById(inPropertyID);
 		if (property != null)
 			result = property.getDefaultValueAsFloat();
 		return result;
@@ -174,7 +177,7 @@ public final class PreferencesStore {
 	 */
 	public int getDefaultInt(String inPropertyID) {
 		int result = 0;
-		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
+		PersistentProperty property = mPersistentPropertyDao.findById(inPropertyID);
 		if (property != null)
 			result = property.getDefaultValueAsInt();
 		return result;
@@ -186,7 +189,7 @@ public final class PreferencesStore {
 	 */
 	public long getDefaultLong(String inPropertyID) {
 		long result = 0;
-		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
+		PersistentProperty property = mPersistentPropertyDao.findById(inPropertyID);
 		if (property != null)
 			result = property.getDefaultValueAsLong();
 		return result;
@@ -198,7 +201,7 @@ public final class PreferencesStore {
 	 */
 	public String getDefaultString(String inPropertyID) {
 		String result = "";
-		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
+		PersistentProperty property = mPersistentPropertyDao.findById(inPropertyID);
 		if (property != null)
 			result = property.getDefaultValueAsStr();
 		return result;
@@ -210,7 +213,7 @@ public final class PreferencesStore {
 	 */
 	public double getDouble(String inPropertyID) {
 		double result = 0;
-		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
+		PersistentProperty property = mPersistentPropertyDao.findById(inPropertyID);
 		if (property != null)
 			result = property.getCurrentValueAsDouble();
 		return result;
@@ -222,7 +225,7 @@ public final class PreferencesStore {
 	 */
 	public float getFloat(String inPropertyID) {
 		float result = 0;
-		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
+		PersistentProperty property = mPersistentPropertyDao.findById(inPropertyID);
 		if (property != null)
 			result = property.getCurrentValueAsFloat();
 		return result;
@@ -234,7 +237,7 @@ public final class PreferencesStore {
 	 */
 	public int getInt(String inPropertyID) {
 		int result = 0;
-		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
+		PersistentProperty property = mPersistentPropertyDao.findById(inPropertyID);
 		if (property != null)
 			result = property.getCurrentValueAsInt();
 		return result;
@@ -246,7 +249,7 @@ public final class PreferencesStore {
 	 */
 	public long getLong(String inPropertyID) {
 		long result = 0;
-		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
+		PersistentProperty property = mPersistentPropertyDao.findById(inPropertyID);
 		if (property != null)
 			result = property.getCurrentValueAsLong();
 		return result;
@@ -258,7 +261,7 @@ public final class PreferencesStore {
 	 */
 	public String getString(String inPropertyID) {
 		String result = "";
-		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
+		PersistentProperty property = mPersistentPropertyDao.findById(inPropertyID);
 		if (property != null)
 			result = property.getCurrentValueAsStr();
 		return result;
@@ -270,7 +273,7 @@ public final class PreferencesStore {
 	 */
 	public boolean isDefault(String inPropertyID) {
 		boolean result = true;
-		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
+		PersistentProperty property = mPersistentPropertyDao.findById(inPropertyID);
 		if (property != null)
 			result = (property.getCurrentValueAsStr().equals(property.getDefaultValueAsStr()));
 		return result;
@@ -289,7 +292,7 @@ public final class PreferencesStore {
 	 * @see org.eclipse.jface.preference.IPreferenceStore#putValue(java.lang.String, java.lang.String)
 	 */
 	public void putValue(String inPropertyID, String inValue) {
-		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
+		PersistentProperty property = mPersistentPropertyDao.findById(inPropertyID);
 		if (property != null) {
 			property.setCurrentValueAsStr(inValue);
 			mChangedProperties.put(property.getId(), property);
@@ -301,7 +304,7 @@ public final class PreferencesStore {
 	 * @see org.eclipse.jface.preference.IPreferenceStore#setDefault(java.lang.String, double)
 	 */
 	public void setDefault(String inPropertyID, double inValue) {
-		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
+		PersistentProperty property = mPersistentPropertyDao.findById(inPropertyID);
 		if (property != null) {
 			property.setDefaultValueAsDouble(inValue);
 			mChangedProperties.put(property.getId(), property);
@@ -313,7 +316,7 @@ public final class PreferencesStore {
 	 * @see org.eclipse.jface.preference.IPreferenceStore#setDefault(java.lang.String, float)
 	 */
 	public void setDefault(String inPropertyID, float inValue) {
-		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
+		PersistentProperty property = mPersistentPropertyDao.findById(inPropertyID);
 		if (property != null) {
 			property.setDefaultValueAsFloat(inValue);
 			mChangedProperties.put(property.getId(), property);
@@ -325,7 +328,7 @@ public final class PreferencesStore {
 	 * @see org.eclipse.jface.preference.IPreferenceStore#setDefault(java.lang.String, int)
 	 */
 	public void setDefault(String inPropertyID, int inValue) {
-		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
+		PersistentProperty property = mPersistentPropertyDao.findById(inPropertyID);
 		if (property != null) {
 			property.setCurrentValueAsInt(inValue);
 			mChangedProperties.put(property.getId(), property);
@@ -337,7 +340,7 @@ public final class PreferencesStore {
 	 * @see org.eclipse.jface.preference.IPreferenceStore#setDefault(java.lang.String, long)
 	 */
 	public void setDefault(String inPropertyID, long inValue) {
-		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
+		PersistentProperty property = mPersistentPropertyDao.findById(inPropertyID);
 		if (property != null) {
 			property.setDefaultValueAsLong(inValue);
 			mChangedProperties.put(property.getId(), property);
@@ -349,7 +352,7 @@ public final class PreferencesStore {
 	 * @see org.eclipse.jface.preference.IPreferenceStore#setDefault(java.lang.String, java.lang.String)
 	 */
 	public void setDefault(String inPropertyID, String inValue) {
-		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
+		PersistentProperty property = mPersistentPropertyDao.findById(inPropertyID);
 		if (property != null) {
 			property.setDefaultValueAsStr(inValue);
 			mChangedProperties.put(property.getId(), property);
@@ -361,7 +364,7 @@ public final class PreferencesStore {
 	 * @see org.eclipse.jface.preference.IPreferenceStore#setDefault(java.lang.String, boolean)
 	 */
 	public void setDefault(String inPropertyID, boolean inValue) {
-		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
+		PersistentProperty property = mPersistentPropertyDao.findById(inPropertyID);
 		if (property != null) {
 			property.setDefaultValueAsBoolean(inValue);
 			mChangedProperties.put(property.getId(), property);
@@ -373,7 +376,7 @@ public final class PreferencesStore {
 	 * @see org.eclipse.jface.preference.IPreferenceStore#setToDefault(java.lang.String)
 	 */
 	public void setToDefault(String inPropertyID) {
-		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
+		PersistentProperty property = mPersistentPropertyDao.findById(inPropertyID);
 		if (property != null) {
 			property.setCurrentValueAsStr(property.getDefaultValueAsStr());
 			mChangedProperties.put(property.getId(), property);
@@ -385,7 +388,7 @@ public final class PreferencesStore {
 	 * @see org.eclipse.jface.preference.IPreferenceStore#setValue(java.lang.String, double)
 	 */
 	public void setValue(String inPropertyID, double inValue) {
-		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
+		PersistentProperty property = mPersistentPropertyDao.findById(inPropertyID);
 		if (property != null) {
 			property.setCurrentValueAsDouble(inValue);
 			mChangedProperties.put(property.getId(), property);
@@ -397,7 +400,7 @@ public final class PreferencesStore {
 	 * @see org.eclipse.jface.preference.IPreferenceStore#setValue(java.lang.String, float)
 	 */
 	public void setValue(String inPropertyID, float inValue) {
-		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
+		PersistentProperty property = mPersistentPropertyDao.findById(inPropertyID);
 		if (property != null) {
 			property.setCurrentValueAsFloat(inValue);
 			mChangedProperties.put(property.getId(), property);
@@ -409,7 +412,7 @@ public final class PreferencesStore {
 	 * @see org.eclipse.jface.preference.IPreferenceStore#setValue(java.lang.String, int)
 	 */
 	public void setValue(String inPropertyID, int inValue) {
-		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
+		PersistentProperty property = mPersistentPropertyDao.findById(inPropertyID);
 		if (property != null) {
 			property.setCurrentValueAsInt(inValue);
 			mChangedProperties.put(property.getId(), property);
@@ -421,7 +424,7 @@ public final class PreferencesStore {
 	 * @see org.eclipse.jface.preference.IPreferenceStore#setValue(java.lang.String, long)
 	 */
 	public void setValue(String inPropertyID, long inValue) {
-		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
+		PersistentProperty property = mPersistentPropertyDao.findById(inPropertyID);
 		if (property != null) {
 			property.setCurrentValueAsLong(inValue);
 			mChangedProperties.put(property.getId(), property);
@@ -433,7 +436,7 @@ public final class PreferencesStore {
 	 * @see org.eclipse.jface.preference.IPreferenceStore#setValue(java.lang.String, java.lang.String)
 	 */
 	public void setValue(String inPropertyID, String inValue) {
-		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
+		PersistentProperty property = mPersistentPropertyDao.findById(inPropertyID);
 		if (property != null) {
 			property.setCurrentValueAsStr(inValue);
 			mChangedProperties.put(property.getId(), property);
@@ -445,7 +448,7 @@ public final class PreferencesStore {
 	 * @see org.eclipse.jface.preference.IPreferenceStore#setValue(java.lang.String, boolean)
 	 */
 	public void setValue(String inPropertyID, boolean inValue) {
-		PersistentProperty property = PersistentProperty.DAO.findById(inPropertyID);
+		PersistentProperty property = mPersistentPropertyDao.findById(inPropertyID);
 		if (property != null) {
 			property.setCurrentValueAsBoolean(inValue);
 			mChangedProperties.put(property.getId(), property);

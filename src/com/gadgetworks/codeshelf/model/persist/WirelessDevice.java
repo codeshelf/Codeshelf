@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WirelessDevice.java,v 1.9 2012/01/02 11:43:18 jeffw Exp $
+ *  $Id: WirelessDevice.java,v 1.10 2012/03/17 23:49:23 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -31,7 +31,6 @@ import com.gadgetworks.codeshelf.controller.INetworkDevice;
 import com.gadgetworks.codeshelf.controller.NetAddress;
 import com.gadgetworks.codeshelf.controller.NetMacAddress;
 import com.gadgetworks.codeshelf.controller.NetworkDeviceStateEnum;
-import com.gadgetworks.codeshelf.model.dao.WirelessDeviceDao;
 
 // --------------------------------------------------------------------------
 /**
@@ -54,8 +53,6 @@ public class WirelessDevice extends PersistABC implements INetworkDevice {
 
 	public static final int									MAC_ADDR_BYTES		= 8;
 	public static final int									PUBLIC_KEY_BYTES	= 8;
-
-	public static final WirelessDeviceDao<WirelessDevice>	DAO					= new WirelessDeviceDao<WirelessDevice>(WirelessDevice.class);
 
 	private static final long								serialVersionUID	= 2371198193026330676L;
 

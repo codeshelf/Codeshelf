@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ControlGroup.java,v 1.16 2012/02/05 02:53:21 jeffw Exp $
+ *  $Id: ControlGroup.java,v 1.17 2012/03/17 23:49:23 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -21,8 +21,10 @@ import lombok.Setter;
 import com.gadgetworks.codeshelf.controller.NetGroup;
 import com.gadgetworks.codeshelf.model.TagProtocolEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDao;
+import com.gadgetworks.codeshelf.model.dao.IDaoRegistry;
 import com.gadgetworks.codeshelf.model.dao.IGenericDao;
 import com.gadgetworks.codeshelf.server.tags.IControllerConnection;
+import com.google.inject.Inject;
 
 // --------------------------------------------------------------------------
 /**
@@ -35,7 +37,15 @@ import com.gadgetworks.codeshelf.server.tags.IControllerConnection;
 @Table(name = "CONTROLGROUP")
 public class ControlGroup extends PersistABC {
 
-	public static final GenericDao<ControlGroup>	DAO					= new GenericDao<ControlGroup>(ControlGroup.class);
+	public interface IControlGroupDao extends IGenericDao<ControlGroup> {		
+	}
+	
+	public class ControlGroupDao extends GenericDao<ControlGroup> implements IControlGroupDao {
+		@Inject
+		public ControlGroupDao(final IDaoRegistry inDaoRegistry) {
+			super(ControlGroup.class, inDaoRegistry);
+		}
+	}
 
 	private static final long						serialVersionUID	= -4923129546531851147L;
 
@@ -72,8 +82,7 @@ public class ControlGroup extends PersistABC {
 	private TagProtocolEnum							tagProtocolEnum;
 	// For a control group this is a list of all of the pick tags that belong in the set.
 	@OneToMany(mappedBy = "parentControlGroup")
-	//	@Getter
-	//	@Setter
+	@Getter
 	private List<PickTag>							pickTags			= new ArrayList<PickTag>();
 
 	@Transient()
@@ -107,27 +116,29 @@ public class ControlGroup extends PersistABC {
 		tagProtocolEnum = inTagProtocolEnum;
 	}
 
-	// We always need to return the object cached in the DAO.
-	public List<PickTag> getPickTags() {
-		if (IGenericDao.USE_DAO_CACHE) {
-			List<PickTag> result = new ArrayList<PickTag>();
-			if (!ControlGroup.DAO.isObjectPersisted(this)) {
-				result = pickTags;
-			} else {
-				for (WirelessDevice wirelessDevice : WirelessDevice.DAO.getAll()) {
-					if (wirelessDevice instanceof PickTag) {
-						PickTag pickTag = (PickTag) wirelessDevice;
-						if (pickTag.getParentControlGroup().equals(this)) {
-							result.add(pickTag);
-						}
-					}
-				}
-			}
-			return result;
-		} else {
-			return pickTags;
-		}
-	}
+//	// We always need to return the object cached in the DAO.
+//	public List<PickTag> getPickTags() {
+//		if (IGenericDao.USE_DAO_CACHE) {
+//			List<PickTag> result = new ArrayList<PickTag>();
+//			ControlGroupDao controlGroupDao = new ControlGroupDao();
+//			if (!controlGroupDao.isObjectPersisted(this)) {
+//				result = pickTags;
+//			} else {
+//				WirelessDeviceDao wirelessDeviceDao = new WirelessDeviceDao(WirelessDevice.class);
+//				for (WirelessDevice wirelessDevice : wirelessDeviceDao.getAll()) {
+//					if (wirelessDevice instanceof PickTag) {
+//						PickTag pickTag = (PickTag) wirelessDevice;
+//						if (pickTag.getParentControlGroup().equals(this)) {
+//							result.add(pickTag);
+//						}
+//					}
+//				}
+//			}
+//			return result;
+//		} else {
+//			return pickTags;
+//		}
+//	}
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public void addPickTag(PickTag inPickTag) {
