@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: User.java,v 1.2 2012/02/21 02:45:12 jeffw Exp $
+ *  $Id: User.java,v 1.3 2012/03/17 09:07:03 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -36,8 +36,18 @@ import com.gadgetworks.codeshelf.model.dao.IGenericDao;
 @Entity
 @Table(name = "USER")
 public class User extends PersistABC {
-
-	public static final GenericDao<User>	DAO					= new GenericDao<User>(User.class);
+	
+	public interface IUserDao extends IGenericDao<User> {
+		
+	}
+	
+	public static class UserDao extends GenericDao<User> implements IUserDao {
+		public UserDao() {
+			super(User.class);
+		}
+	}
+	
+	//public static final GenericDao<User>	DAO					= new GenericDao<User>(User.class);
 
 	private static final Log				LOGGER				= LogFactory.getLog(User.class);
 

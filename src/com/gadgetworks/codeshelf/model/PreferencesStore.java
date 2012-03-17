@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PreferencesStore.java,v 1.4 2012/03/16 15:59:11 jeffw Exp $
+ *  $Id: PreferencesStore.java,v 1.5 2012/03/17 09:07:02 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model;
 
@@ -14,7 +14,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.log4j.Level;
 
 import com.gadgetworks.codeshelf.controller.ControllerABC;
-import com.gadgetworks.codeshelf.model.dao.DAOException;
+import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.persist.PersistentProperty;
 
 // --------------------------------------------------------------------------
@@ -90,7 +90,7 @@ public final class PreferencesStore {
 		if (shouldUpdate) {
 			try {
 				PersistentProperty.DAO.store(property);
-			} catch (DAOException e) {
+			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}
 		}
@@ -104,7 +104,7 @@ public final class PreferencesStore {
 		for (PersistentProperty property : mChangedProperties.values()) {
 			try {
 				PersistentProperty.DAO.store(property);
-			} catch (DAOException e) {
+			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}
 		}

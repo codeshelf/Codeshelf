@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfApplication.java,v 1.15 2012/03/16 23:34:12 jeffw Exp $
+ *  $Id: CodeShelfApplication.java,v 1.16 2012/03/17 09:07:03 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -30,19 +30,22 @@ import com.gadgetworks.codeshelf.controller.IWirelessInterface;
 import com.gadgetworks.codeshelf.controller.NetworkDeviceStateEnum;
 import com.gadgetworks.codeshelf.controller.SnapInterface;
 import com.gadgetworks.codeshelf.model.PreferencesStore;
-import com.gadgetworks.codeshelf.model.dao.DAOException;
+import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.DaoManager;
 import com.gadgetworks.codeshelf.model.dao.GWEbeanNamingConvention;
 import com.gadgetworks.codeshelf.model.dao.H2SchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork;
 import com.gadgetworks.codeshelf.model.persist.DBProperty;
+import com.gadgetworks.codeshelf.model.persist.Organization;
 import com.gadgetworks.codeshelf.model.persist.PersistentProperty;
+import com.gadgetworks.codeshelf.model.persist.User;
+import com.gadgetworks.codeshelf.model.persist.User.IUserDao;
 import com.gadgetworks.codeshelf.model.persist.WirelessDevice;
-import com.gadgetworks.codeshelf.web.websession.WebSessionManager;
-import com.gadgetworks.codeshelf.web.websocket.WebSocketManager;
+import com.gadgetworks.codeshelf.web.websocket.IWebSocketListener;
+import com.google.inject.Inject;
 
-public final class CodeShelfApplication {
+public final class CodeShelfApplication implements ICodeShelfApplication {
 
 	private static final Log			LOGGER		= LogFactory.getLog(CodeShelfApplication.class);
 
@@ -50,45 +53,15 @@ public final class CodeShelfApplication {
 	private IController					mController;
 	@SuppressWarnings("unused")
 	private WirelessDeviceEventHandler	mWirelessDeviceEventHandler;
-	private WebSocketManager			mWebSocketManager;
+	private IWebSocketListener			mWebSocketListener;
+	private IUserDao					mUserDao;
 	private Thread						mShutdownHookThread;
 	private Runnable					mShutdownRunnable;
 
-	public CodeShelfApplication() {
-
-		// Prepare the shutdown hook.
-		mShutdownRunnable = new Runnable() {
-			public void run() {
-				// Only execute this hook if the application is still running at (external) shutdown.
-				// (This is to help where the shutdown is done externally and not through our own means.)
-				if (mIsRunning) {
-					stopApplication();
-				}
-			}
-		};
-		mShutdownHookThread = new Thread() {
-			public void run() {
-				try {
-					LOGGER.info("Shutdown signal received");
-					// Start the shutdown thread to cleanup and shutdown everything in an orderly manner.
-					Thread shutdownThread = new Thread(mShutdownRunnable);
-					// Set the class loader for this thread, so we can get stuff out of our own JARs.
-					//shutdownThread.setContextClassLoader(ClassLoader.getSystemClassLoader());
-					shutdownThread.start();
-					long time = System.currentTimeMillis();
-					// Wait until the shutdown thread succeeds, but not more than 20 sec.
-					while ((mIsRunning) && ((System.currentTimeMillis() - time) < 20000)) {
-						Thread.sleep(1000);						
-					}
-					System.out.println("Shutdown signal handled");
-				} catch (Exception e) {
-					System.out.println("Shutdown signal exception:" + e);
-					e.printStackTrace();
-				}
-			}
-		};
-		mShutdownHookThread.setContextClassLoader(ClassLoader.getSystemClassLoader());
-		Runtime.getRuntime().addShutdownHook(mShutdownHookThread);
+	@Inject
+	public CodeShelfApplication(final IWebSocketListener inWebSocketManager, final IUserDao inUserDao) {
+		mWebSocketListener = inWebSocketManager;
+		mUserDao = inUserDao;
 	}
 
 	// --------------------------------------------------------------------------
@@ -105,14 +78,47 @@ public final class CodeShelfApplication {
 	 */
 	private void initializeApplicationData() {
 
+		// Create two dummy users for testing.
+		createUser("1234", "passowrd");
+		createUser("12345", null);
+
 		// Some radio device fields have no meaning from the last invocation of the application.
 		for (WirelessDevice wirelessDevice : WirelessDevice.DAO.getAll()) {
 			LOGGER.debug("Init data for wireless device id: " + wirelessDevice.getMacAddress());
 			wirelessDevice.setNetworkDeviceState(NetworkDeviceStateEnum.INVALID);
 			try {
 				WirelessDevice.DAO.store(wirelessDevice);
-			} catch (DAOException e) {
+			} catch (DaoException e) {
 				LOGGER.error("", e);
+			}
+		}
+	}
+
+	private void createUser(String userID, String password) {
+		Organization organization = Organization.DAO.findById(userID);
+		if (organization == null) {
+			organization = new Organization();
+			organization.setId(userID);
+			try {
+				Organization.DAO.store(organization);
+			} catch (DaoException e) {
+				e.printStackTrace();
+			}
+		}
+
+		User user = mUserDao.findById(userID);
+		if (user == null) {
+			user = new User();
+			user.setActive(true);
+			user.setId(userID);
+			if (password != null) {
+				user.setHashedPassword(password);
+			}
+			user.setparentOrganization(organization);
+			try {
+				mUserDao.store(user);
+			} catch (DaoException e) {
+				e.printStackTrace();
 			}
 		}
 	}
@@ -131,7 +137,6 @@ public final class CodeShelfApplication {
 		LOGGER.info("user.dir = " + System.getProperty("user.dir"));
 		LOGGER.info("java.class.path = " + System.getProperty("java.class.path"));
 		LOGGER.info("java.library.path = " + System.getProperty("java.library.path"));
-
 	}
 
 	// --------------------------------------------------------------------------
@@ -143,7 +148,9 @@ public final class CodeShelfApplication {
 
 		String processName = ManagementFactory.getRuntimeMXBean().getName();
 		LOGGER.info("Process info: " + processName);
-		
+
+		installShutdownHook();
+
 		LOGGER.info("Starting database");
 		startEmbeddedDB();
 		LOGGER.info("Database started");
@@ -162,12 +169,9 @@ public final class CodeShelfApplication {
 		mController = new CodeShelfController(WirelessDevice.DAO, interfaceList);
 
 		mWirelessDeviceEventHandler = new WirelessDeviceEventHandler(mController);
-		//		mServerConnectionManager = new FacebookConnectionManager(mController);
 
 		// Start the WebSocket UX handler
-		WebSessionManager webSessionManager = new WebSessionManager();
-		mWebSocketManager = new WebSocketManager(webSessionManager);
-		mWebSocketManager.start();
+		mWebSocketListener.start();
 
 		// Some persistent objects need some of their fields set to a base/start state when the system restarts.
 		initializeApplicationData();
@@ -210,7 +214,7 @@ public final class CodeShelfApplication {
 		DaoManager.gDaoManager.removeDAOListeners();
 
 		// Stop the web socket manager.
-		mWebSocketManager.stop();
+		mWebSocketListener.stop();
 
 		// First shutdown the FlyWeight controller if there is one.
 		mController.stopController();
@@ -220,7 +224,7 @@ public final class CodeShelfApplication {
 		mIsRunning = false;
 
 		LOGGER.info("Application terminated normally");
-		
+
 		LogFactory.releaseAll();
 		LogManager.shutdown();
 	}
@@ -267,9 +271,6 @@ public final class CodeShelfApplication {
 		Thread.currentThread().setContextClassLoader(ClassLoader.getSystemClassLoader());
 
 		String appDataDir = Util.getApplicationDataDirPath();
-		// Set Derby's base directory to the application's data directory.
-		//System.setProperty("derby.system.home", appDataDir);
-		//String origUserHome = System.getProperty("user.home");
 		System.setProperty("app.data.dir", appDataDir);
 		System.setProperty("app.database.url", Util.getApplicationDatabaseURL());
 		System.setProperty("ebean.props.file", "conf/ebean.properties");
@@ -346,17 +347,17 @@ public final class CodeShelfApplication {
 	private void stopEmbeddedDB() {
 		LOGGER.info("Stopping DAO");
 
-//		try {
-//			Connection connection = DriverManager.getConnection(Util.getApplicationDatabaseURL(), "codeshelf", "codeshelf");
-//
-//			// Try to switch to the proper schema.
-//			Statement stmt = connection.createStatement();
-//			stmt.execute("SHUTDOWN COMPACT");
-//			stmt.close();
-//			connection.close();
-//		} catch (SQLException e) {
-//			LOGGER.error("", e);
-//		}
+		//		try {
+		//			Connection connection = DriverManager.getConnection(Util.getApplicationDatabaseURL(), "codeshelf", "codeshelf");
+		//
+		//			// Try to switch to the proper schema.
+		//			Statement stmt = connection.createStatement();
+		//			stmt.execute("SHUTDOWN COMPACT");
+		//			stmt.close();
+		//			connection.close();
+		//		} catch (SQLException e) {
+		//			LOGGER.error("", e);
+		//		}
 
 		ShutdownManager.shutdown();
 
@@ -395,5 +396,44 @@ public final class CodeShelfApplication {
 				//				Ebean.save(dbVersionProp);
 			}
 		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 */
+	private void installShutdownHook() {
+		// Prepare the shutdown hook.
+		mShutdownRunnable = new Runnable() {
+			public void run() {
+				// Only execute this hook if the application is still running at (external) shutdown.
+				// (This is to help where the shutdown is done externally and not through our own means.)
+				if (mIsRunning) {
+					stopApplication();
+				}
+			}
+		};
+		mShutdownHookThread = new Thread() {
+			public void run() {
+				try {
+					LOGGER.info("Shutdown signal received");
+					// Start the shutdown thread to cleanup and shutdown everything in an orderly manner.
+					Thread shutdownThread = new Thread(mShutdownRunnable);
+					// Set the class loader for this thread, so we can get stuff out of our own JARs.
+					//shutdownThread.setContextClassLoader(ClassLoader.getSystemClassLoader());
+					shutdownThread.start();
+					long time = System.currentTimeMillis();
+					// Wait until the shutdown thread succeeds, but not more than 20 sec.
+					while ((mIsRunning) && ((System.currentTimeMillis() - time) < 20000)) {
+						Thread.sleep(1000);
+					}
+					System.out.println("Shutdown signal handled");
+				} catch (Exception e) {
+					System.out.println("Shutdown signal exception:" + e);
+					e.printStackTrace();
+				}
+			}
+		};
+		mShutdownHookThread.setContextClassLoader(ClassLoader.getSystemClassLoader());
+		Runtime.getRuntime().addShutdownHook(mShutdownHookThread);
 	}
 }

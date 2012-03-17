@@ -49,7 +49,7 @@ public final class WebSocket implements IWebSocket {
 	private boolean						mIsHandshakeComplete;
 	private boolean						mIsHandshakeClosed;
 	// The listener to notify of WebSocket events.
-	private WebSocketListener			mWebSocketListener;
+	private IWebSocketListener			mWebSocketListener;
 	// Buffer where data is read to from the socket
 	private ByteBuffer					mSocketBuffer;
 	// Queue of buffers that need to be sent to the client.
@@ -70,14 +70,14 @@ public final class WebSocket implements IWebSocket {
 	 *            write to. The channel should already be registered
 	 *            with a Selector before construction of this object.
 	 * @param inListener
-	 *            The {@link WebSocketListener} to notify of events when
+	 *            The {@link IWebSocketListener} to notify of events when
 	 *            they occur.
 	 */
-	public WebSocket(final WebSocketListener inListener, final Draft inDraft, final SocketChannel inSocketChannel) {
+	public WebSocket(final IWebSocketListener inListener, final Draft inDraft, final SocketChannel inSocketChannel) {
 		init(inListener, inDraft, inSocketChannel);
 	}
 
-	public WebSocket(final WebSocketListener inListener, final List<Draft> inDraftList, final SocketChannel inSocketChannel) {
+	public WebSocket(final IWebSocketListener inListener, final List<Draft> inDraftList, final SocketChannel inSocketChannel) {
 		init(inListener, null, inSocketChannel);
 		mRole = Role.SERVER;
 		if (mKnownDraftsList == null || mKnownDraftsList.isEmpty()) {
@@ -91,7 +91,7 @@ public final class WebSocket implements IWebSocket {
 		}
 	}
 
-	private void init(WebSocketListener inListener, Draft inDraft, SocketChannel inSocketChannel) {
+	private void init(IWebSocketListener inListener, Draft inDraft, SocketChannel inSocketChannel) {
 		mSocketChannel = inSocketChannel;
 		mBufferQueue = new LinkedBlockingQueue<ByteBuffer>(BUFFER_QUEUE_SIZE);
 		mSocketBuffer = ByteBuffer.allocate(BUFFER_SIZE);

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: IGenericDao.java,v 1.2 2011/12/29 09:15:35 jeffw Exp $
+ *  $Id: IGenericDao.java,v 1.3 2012/03/17 09:07:02 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -22,9 +22,9 @@ public interface IGenericDao<T> {
 
 	T findById(String inId);
 
-	void store(T inDomainObject) throws DAOException;
+	void store(T inDomainObject) throws DaoException;
 
-	void delete(T inDomainObject) throws DAOException;
+	void delete(T inDomainObject) throws DaoException;
 
 	Collection<T> getAll();
 

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WirelessDeviceDao.java,v 1.1 2011/12/29 09:15:35 jeffw Exp $
+ *  $Id: WirelessDeviceDao.java,v 1.2 2012/03/17 09:07:02 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -84,7 +84,7 @@ public class WirelessDeviceDao<T extends WirelessDevice> extends GenericDao<T> i
 		if (inPersistentDataChanged) {
 			try { 
 				store((T) inNetworkDevice);
-			} catch (DAOException e) {
+			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}
 		} else {

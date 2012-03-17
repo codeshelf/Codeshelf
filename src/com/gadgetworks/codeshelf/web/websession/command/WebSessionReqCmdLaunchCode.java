@@ -1,15 +1,15 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdLaunchCode.java,v 1.1 2012/03/16 15:59:07 jeffw Exp $
+ *  $Id: WebSessionReqCmdLaunchCode.java,v 1.2 2012/03/17 09:07:02 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command;
 
 import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.node.ObjectNode;
 
 import com.gadgetworks.codeshelf.model.persist.Organization;
 import com.gadgetworks.codeshelf.model.persist.User;
+import com.gadgetworks.codeshelf.model.persist.User.IUserDao;
 
 /**
  * @author jeffw
@@ -17,14 +17,17 @@ import com.gadgetworks.codeshelf.model.persist.User;
  */
 public class WebSessionReqCmdLaunchCode extends WebSessionReqCmdABC {
 
-	private static final String	LAUNCH_CODE			= "LAUNCH_CODE";
+	private static final String	LAUNCH_CODE	= "LAUNCH_CODE";
 
-	private static final String	SUCCEED				= "SUCCEED";
-	private static final String	FAIL				= "FAIL";
-	private static final String	NEED_LOGIN			= "NEED_LOGIN";
+	private static final String	SUCCEED		= "SUCCEED";
+	private static final String	FAIL		= "FAIL";
+	private static final String	NEED_LOGIN	= "NEED_LOGIN";
 
-	public WebSessionReqCmdLaunchCode(final String inCommandId, final JsonNode inDataNodeAsJson) {
+	private IUserDao			mUserDao;
+
+	public WebSessionReqCmdLaunchCode(final String inCommandId, final JsonNode inDataNodeAsJson, final IUserDao inUserDao) {
 		super(inCommandId, inDataNodeAsJson);
+		mUserDao = inUserDao;
 	}
 
 	public final WebSessionReqCmdEnum getCommandEnum() {
@@ -40,7 +43,7 @@ public class WebSessionReqCmdLaunchCode extends WebSessionReqCmdABC {
 
 		JsonNode launchNode = getDataJsonNode().get("launchCode");
 		String launchCode = launchNode.getTextValue();
-		User user = User.DAO.findById(launchCode);
+		User user = mUserDao.findById(launchCode);
 		Organization organization = null;
 
 		// CRITICAL SECURITY CONCEPT.

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: GenericDao.java,v 1.3 2012/03/16 15:59:10 jeffw Exp $
+ *  $Id: GenericDao.java,v 1.4 2012/03/17 09:07:02 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -135,7 +135,7 @@ public class GenericDao<T extends PersistABC> implements IGenericDao<T> {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#store(java.lang.Object)
 	 */
-	public final void store(final T inDomainObject) throws DAOException {
+	public final void store(final T inDomainObject) throws DaoException {
 		if (inDomainObject.getPersistentId() == null) {
 			Ebean.save(inDomainObject);
 			privateBroadcastAdd(inDomainObject);
@@ -155,7 +155,7 @@ public class GenericDao<T extends PersistABC> implements IGenericDao<T> {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#delete(java.lang.Object)
 	 */
-	public final void delete(final T inDomainObject) throws DAOException {
+	public final void delete(final T inDomainObject) throws DaoException {
 		if (USE_DAO_CACHE) {
 			if (mCacheMap == null) {
 				initCacheMap();

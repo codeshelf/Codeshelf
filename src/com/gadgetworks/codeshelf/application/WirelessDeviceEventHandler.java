@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  OmniBox
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WirelessDeviceEventHandler.java,v 1.4 2011/12/29 09:15:35 jeffw Exp $
+ *  $Id: WirelessDeviceEventHandler.java,v 1.5 2012/03/17 09:07:03 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.application;
 
@@ -13,7 +13,7 @@ import com.gadgetworks.codeshelf.controller.IControllerEventListener;
 import com.gadgetworks.codeshelf.controller.INetworkDevice;
 import com.gadgetworks.codeshelf.controller.NetMacAddress;
 import com.gadgetworks.codeshelf.controller.NetworkDeviceStateEnum;
-import com.gadgetworks.codeshelf.model.dao.DAOException;
+import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.persist.WirelessDevice;
 
 // --------------------------------------------------------------------------
@@ -87,7 +87,7 @@ public final class WirelessDeviceEventHandler implements IControllerEventListene
 			///WirelessDevice.DAO.pushNonPersistentUpdates(wirelessDevice);
 			try {
 				WirelessDevice.DAO.store(wirelessDevice);
-			} catch (DAOException e) {
+			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}
 		}
@@ -108,7 +108,7 @@ public final class WirelessDeviceEventHandler implements IControllerEventListene
 				//WirelessDevice.DAO.pushNonPersistentUpdates(wirelessDevice);
 				try {
 					WirelessDevice.DAO.store(wirelessDevice);
-				} catch (DAOException e) {
+				} catch (DaoException e) {
 					LOGGER.error("", e);
 				}
 			}
@@ -130,7 +130,7 @@ public final class WirelessDeviceEventHandler implements IControllerEventListene
 				//WirelessDevice.DAO.pushNonPersistentUpdates(wirelessDevice);
 				try {
 					WirelessDevice.DAO.store(wirelessDevice);
-				} catch (DAOException e) {
+				} catch (DaoException e) {
 					LOGGER.error("", e);
 				}
 			}
