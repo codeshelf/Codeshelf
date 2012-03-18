@@ -1,15 +1,15 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdLaunchCode.java,v 1.3 2012/03/17 23:49:23 jeffw Exp $
+ *  $Id: WebSessionReqCmdLaunchCode.java,v 1.4 2012/03/18 04:12:26 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command;
 
 import org.codehaus.jackson.JsonNode;
 
-import com.gadgetworks.codeshelf.application.Main.IUserDao;
 import com.gadgetworks.codeshelf.model.persist.Organization;
 import com.gadgetworks.codeshelf.model.persist.User;
+import com.gadgetworks.codeshelf.model.persist.User.IUserDao;
 
 /**
  * @author jeffw

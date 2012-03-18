@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionManager.java,v 1.4 2012/03/17 09:07:02 jeffw Exp $
+ *  $Id: WebSessionManager.java,v 1.5 2012/03/18 04:12:26 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession;
 
@@ -14,21 +14,24 @@ import org.apache.commons.logging.LogFactory;
 import com.gadgetworks.codeshelf.web.websession.command.WebSessionReqCmdFactory;
 import com.gadgetworks.codeshelf.web.websocket.WebSocket;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
 /**
  * @author jeffw
  *
  */
+@Singleton
 public class WebSessionManager implements IWebSessionManager {
 
 	private static final Log			LOGGER	= LogFactory.getLog(WebSessionManager.class);
 
 	private Map<WebSocket, WebSession>	mWebSessions;
-	private WebSessionReqCmdFactory mWebSessionReqCmdFactory;
+	private WebSessionReqCmdFactory		mWebSessionReqCmdFactory;
 
 	@Inject
 	public WebSessionManager(final WebSessionReqCmdFactory inWebSessionReqCmdFactory) {
 		mWebSessions = new HashMap<WebSocket, WebSession>();
+		mWebSessionReqCmdFactory = inWebSessionReqCmdFactory;
 	}
 
 	public final void handleSessionOpen(WebSocket inWebSocket) {

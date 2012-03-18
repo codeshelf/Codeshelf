@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: DBProperty.java,v 1.6 2012/03/17 23:49:23 jeffw Exp $
+ *  $Id: DBProperty.java,v 1.7 2012/03/18 04:12:26 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -33,13 +33,6 @@ public class DBProperty extends PersistABC {
 	public interface IDBPropertyDao extends IGenericDao<DBProperty> {		
 	}
 	
-	public static class DBPropertyDao extends GenericDao<DBProperty> implements IDBPropertyDao {
-		@Inject
-		public DBPropertyDao(final IDaoRegistry inDaoRegistry) {
-			super(DBProperty.class, inDaoRegistry);
-		}
-	}
-
 	@Getter
 	@Setter
 	@Column(nullable = false)

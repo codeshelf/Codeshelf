@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: User.java,v 1.4 2012/03/17 23:49:23 jeffw Exp $
+ *  $Id: User.java,v 1.5 2012/03/18 04:12:26 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -38,6 +38,9 @@ import com.google.inject.Inject;
 @Table(name = "USER")
 public class User extends PersistABC {
 	
+	public interface IUserDao extends IGenericDao<User> {
+	}
+
 	private static final Log				LOGGER				= LogFactory.getLog(User.class);
 
 	private static final long				serialVersionUID	= 3001609308065821464L;

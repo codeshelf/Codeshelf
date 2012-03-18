@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WirelessDevice.java,v 1.10 2012/03/17 23:49:23 jeffw Exp $
+ *  $Id: WirelessDevice.java,v 1.11 2012/03/18 04:12:26 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -27,10 +27,12 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.gadgetworks.codeshelf.command.CommandControlABC;
+import com.gadgetworks.codeshelf.controller.IDeviceMaintainer;
 import com.gadgetworks.codeshelf.controller.INetworkDevice;
 import com.gadgetworks.codeshelf.controller.NetAddress;
 import com.gadgetworks.codeshelf.controller.NetMacAddress;
 import com.gadgetworks.codeshelf.controller.NetworkDeviceStateEnum;
+import com.gadgetworks.codeshelf.model.dao.IGenericDao;
 
 // --------------------------------------------------------------------------
 /**
@@ -50,6 +52,16 @@ import com.gadgetworks.codeshelf.controller.NetworkDeviceStateEnum;
 @Table(name = "WIRELESSDEVICE")
 @DiscriminatorValue("ABC")
 public class WirelessDevice extends PersistABC implements INetworkDevice {
+
+	public interface IWirelessDeviceDao extends IGenericDao<WirelessDevice>, IDeviceMaintainer {
+
+		WirelessDevice findWirelessDeviceByMacAddr(NetMacAddress inMacAddr);
+		
+		INetworkDevice findNetworkDeviceByMacAddr(NetMacAddress inMacAddr);
+		
+		INetworkDevice getNetworkDevice(NetAddress inAddress);
+		
+	}
 
 	public static final int									MAC_ADDR_BYTES		= 8;
 	public static final int									PUBLIC_KEY_BYTES	= 8;

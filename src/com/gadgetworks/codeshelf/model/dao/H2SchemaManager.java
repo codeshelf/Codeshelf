@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: H2SchemaManager.java,v 1.18 2012/02/21 02:45:12 jeffw Exp $
+ *  $Id: H2SchemaManager.java,v 1.19 2012/03/18 04:12:26 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -226,7 +226,7 @@ public final class H2SchemaManager implements ISchemaManager {
 				+ "ADD FOREIGN KEY (PARENTUSERSESSION_PERSISTENTID) " //
 				+ "REFERENCES DATABASE.CODESHELF.USER (PERSISTENTID);");
 
-		execOneSQLCommand("CREATE INDEX CODESHELF.USERSESSION_PARENT_USER ON CODESHELF.USER (PARENTUSERSESSION_PERSISTENTID)");
+		execOneSQLCommand("CREATE INDEX CODESHELF.USERSESSION_PARENT_USER ON CODESHELF.USERSESSION (PARENTUSERSESSION_PERSISTENTID)");
 
 		// Aisle
 		execOneSQLCommand("CREATE TABLE CODESHELF.AISLE ( " //

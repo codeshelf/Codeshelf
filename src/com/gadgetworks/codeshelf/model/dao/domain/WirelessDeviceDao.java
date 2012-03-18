@@ -1,9 +1,9 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WirelessDeviceDao.java,v 1.3 2012/03/17 23:49:23 jeffw Exp $
+ *  $Id: WirelessDeviceDao.java,v 1.1 2012/03/18 04:12:26 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.model.dao;
+package com.gadgetworks.codeshelf.model.dao.domain;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,20 +18,28 @@ import com.gadgetworks.codeshelf.controller.IDeviceMaintainer;
 import com.gadgetworks.codeshelf.controller.INetworkDevice;
 import com.gadgetworks.codeshelf.controller.NetAddress;
 import com.gadgetworks.codeshelf.controller.NetMacAddress;
+import com.gadgetworks.codeshelf.model.dao.DaoException;
+import com.gadgetworks.codeshelf.model.dao.GenericDao;
+import com.gadgetworks.codeshelf.model.dao.IDaoRegistry;
 import com.gadgetworks.codeshelf.model.persist.WirelessDevice;
+import com.gadgetworks.codeshelf.model.persist.WirelessDevice.IWirelessDeviceDao;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
 /**
  * @author jeffw
  *
  */
+@Singleton
 public final class WirelessDeviceDao extends GenericDao<WirelessDevice> implements IWirelessDeviceDao, IDeviceMaintainer {
 
 	private static final Log			LOGGER		= LogFactory.getLog(WirelessDeviceDao.class);
 
 	private Map<NetAddress, WirelessDevice>	mAddressLookupMap;
 
-	public WirelessDeviceDao(final Class<WirelessDevice> inClass, final IDaoRegistry inDaoRegistry) {
-		super(inClass, inDaoRegistry);
+	@Inject
+	public WirelessDeviceDao(final IDaoRegistry inDaoRegistry) {
+		super(WirelessDevice.class, inDaoRegistry);
 	}
 
 	// --------------------------------------------------------------------------

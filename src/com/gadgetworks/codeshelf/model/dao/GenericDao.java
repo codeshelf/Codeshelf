@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: GenericDao.java,v 1.5 2012/03/17 23:49:23 jeffw Exp $
+ *  $Id: GenericDao.java,v 1.6 2012/03/18 04:12:26 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -124,7 +124,7 @@ public class GenericDao<T extends PersistABC> implements IGenericDao<T> {
 //		if (!USE_DAO_CACHE) {
 			Query<T> query = Ebean.createQuery(mClass);
 			query.where().eq(T.getIdColumnName(), inId);
-			query = query.setUseCache(true);
+			//query = query.setUseCache(true);
 			return query.findUnique();
 //		} else {
 //			T result = null;

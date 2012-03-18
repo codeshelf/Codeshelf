@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfApplication.java,v 1.17 2012/03/17 23:49:23 jeffw Exp $
+ *  $Id: CodeShelfApplication.java,v 1.18 2012/03/18 04:12:26 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -23,7 +23,6 @@ import com.avaje.ebean.EbeanServerFactory;
 import com.avaje.ebean.LogLevel;
 import com.avaje.ebean.config.ServerConfig;
 import com.avaje.ebeaninternal.server.lib.ShutdownManager;
-import com.gadgetworks.codeshelf.application.Main.IUserDao;
 import com.gadgetworks.codeshelf.controller.CodeShelfController;
 import com.gadgetworks.codeshelf.controller.ControllerABC;
 import com.gadgetworks.codeshelf.controller.IController;
@@ -37,7 +36,6 @@ import com.gadgetworks.codeshelf.model.dao.H2SchemaManager;
 import com.gadgetworks.codeshelf.model.dao.IDao;
 import com.gadgetworks.codeshelf.model.dao.IDaoRegistry;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
-import com.gadgetworks.codeshelf.model.dao.IWirelessDeviceDao;
 import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork;
 import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork.ICodeShelfNetworkDao;
 import com.gadgetworks.codeshelf.model.persist.DBProperty;
@@ -47,7 +45,9 @@ import com.gadgetworks.codeshelf.model.persist.Organization.IOrganizationDao;
 import com.gadgetworks.codeshelf.model.persist.PersistentProperty;
 import com.gadgetworks.codeshelf.model.persist.PersistentProperty.IPersistentPropertyDao;
 import com.gadgetworks.codeshelf.model.persist.User;
+import com.gadgetworks.codeshelf.model.persist.User.IUserDao;
 import com.gadgetworks.codeshelf.model.persist.WirelessDevice;
+import com.gadgetworks.codeshelf.model.persist.WirelessDevice.IWirelessDeviceDao;
 import com.gadgetworks.codeshelf.web.websocket.IWebSocketListener;
 import com.google.inject.Inject;
 

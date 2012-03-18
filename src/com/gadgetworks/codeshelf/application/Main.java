@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Main.java,v 1.3 2012/03/17 23:49:23 jeffw Exp $
+ *  $Id: Main.java,v 1.4 2012/03/18 04:12:26 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -15,11 +15,25 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.gadgetworks.codeshelf.model.dao.DaoRegistry;
-import com.gadgetworks.codeshelf.model.dao.GenericDao;
 import com.gadgetworks.codeshelf.model.dao.IDaoRegistry;
-import com.gadgetworks.codeshelf.model.dao.IGenericDao;
-import com.gadgetworks.codeshelf.model.persist.Organization.OrganizationDao;
-import com.gadgetworks.codeshelf.model.persist.User;
+import com.gadgetworks.codeshelf.model.dao.domain.AisleDao;
+import com.gadgetworks.codeshelf.model.dao.domain.CodeShelfNetworkDao;
+import com.gadgetworks.codeshelf.model.dao.domain.ControlGroupDao;
+import com.gadgetworks.codeshelf.model.dao.domain.DBPropertyDao;
+import com.gadgetworks.codeshelf.model.dao.domain.FacilityDao;
+import com.gadgetworks.codeshelf.model.dao.domain.OrganizationDao;
+import com.gadgetworks.codeshelf.model.dao.domain.PersistentPropertyDao;
+import com.gadgetworks.codeshelf.model.dao.domain.UserDao;
+import com.gadgetworks.codeshelf.model.dao.domain.WirelessDeviceDao;
+import com.gadgetworks.codeshelf.model.persist.Aisle.IAisleDao;
+import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork.ICodeShelfNetworkDao;
+import com.gadgetworks.codeshelf.model.persist.ControlGroup.IControlGroupDao;
+import com.gadgetworks.codeshelf.model.persist.DBProperty.IDBPropertyDao;
+import com.gadgetworks.codeshelf.model.persist.Facility.IFacilityDao;
+import com.gadgetworks.codeshelf.model.persist.Organization.IOrganizationDao;
+import com.gadgetworks.codeshelf.model.persist.PersistentProperty.IPersistentPropertyDao;
+import com.gadgetworks.codeshelf.model.persist.User.IUserDao;
+import com.gadgetworks.codeshelf.model.persist.WirelessDevice.IWirelessDeviceDao;
 import com.gadgetworks.codeshelf.web.websession.IWebSessionManager;
 import com.gadgetworks.codeshelf.web.websession.WebSessionManager;
 import com.gadgetworks.codeshelf.web.websession.command.IWebSessionReqCmdFactory;
@@ -29,10 +43,7 @@ import com.gadgetworks.codeshelf.web.websocket.WebSocketListener;
 import com.google.inject.AbstractModule;
 import com.google.inject.BindingAnnotation;
 import com.google.inject.Guice;
-import com.google.inject.Inject;
 import com.google.inject.Injector;
-import com.google.inject.Key;
-import com.google.inject.PrivateModule;
 
 // --------------------------------------------------------------------------
 /**
@@ -61,8 +72,8 @@ public final class Main {
 		// Guice (injector) will invoke log4j, so we need to set some log dir parameters before we call it.
 		String appDataDir = Util.getApplicationDataDirPath();
 		System.setProperty("app.data.dir", appDataDir);
-         
-        // Create and start the application.
+
+		// Create and start the application.
 		Injector injector = setupInjector();
 		ICodeShelfApplication application = injector.getInstance(CodeShelfApplication.class);
 		application.startApplication();
@@ -72,7 +83,7 @@ public final class Main {
 
 		LOGGER.info("Exiting Main()");
 	}
-	
+
 	// --------------------------------------------------------------------------
 
 	@Retention(RetentionPolicy.RUNTIME)
@@ -86,16 +97,6 @@ public final class Main {
 	@BindingAnnotation
 	@interface OrganizationDaoSelector {
 	}
-	
-	public interface IUserDao extends IGenericDao<User> {		
-	}
-	
-	public class UserDao extends GenericDao<User> implements IUserDao {
-		@Inject
-		public UserDao(final IDaoRegistry inDaoRegistry) {
-			super(User.class, inDaoRegistry);
-		}
-	}
 
 	// --------------------------------------------------------------------------
 	/**
@@ -108,38 +109,20 @@ public final class Main {
 				bind(ICodeShelfApplication.class).to(CodeShelfApplication.class);
 				bind(IWebSocketListener.class).to(WebSocketListener.class);
 				bind(IWebSessionManager.class).to(WebSessionManager.class);
+				bind(IOrganizationDao.class).to(OrganizationDao.class);
+				bind(IFacilityDao.class).to(FacilityDao.class);
+				bind(IAisleDao.class).to(AisleDao.class);
+				bind(IPersistentPropertyDao.class).to(PersistentPropertyDao.class);
+				bind(IDBPropertyDao.class).to(DBPropertyDao.class);
 				bind(IUserDao.class).to(UserDao.class);
+				bind(ICodeShelfNetworkDao.class).to(CodeShelfNetworkDao.class);
+				bind(IControlGroupDao.class).to(ControlGroupDao.class);
+				bind(IWirelessDeviceDao.class).to(WirelessDeviceDao.class);
 				bind(IWebSessionReqCmdFactory.class).to(WebSessionReqCmdFactory.class);
 				bind(IDaoRegistry.class).to(DaoRegistry.class);
-				//bind(IUserDao.class).toProvider(DaoProviderFactory.createProvider(IUserDao.class)); 
-				//install(new XmlBeanModule(xmlUrl));
-			}
-		}, new PrivateModule() {
-			@Override
-			protected void configure() {
-				// private Module is different story
-				// Bind car annotated with blue and expose it
-				bind(IGenericDao.class).annotatedWith(UserDaoSelector.class).to(IGenericDao.class);
-				expose(IGenericDao.class).annotatedWith(UserDaoSelector.class);
-
-				// What we bind in here only applies to the exposed stuff
-				// i.e. the exposed car from this module will get this injected
-				// where stuff in regular module (Engine,Driveline) is "inherited" - it is global
-				bind(IGenericDao.class).to(UserDao.class);
-			}
-		}, new PrivateModule() {
-			@Override
-			protected void configure() {
-				bind(IGenericDao.class).annotatedWith(OrganizationDaoSelector.class).to(IGenericDao.class);
-				expose(IGenericDao.class).annotatedWith(OrganizationDaoSelector.class);
-
-				bind(IGenericDao.class).to(OrganizationDao.class);
 			}
 		});
 
-		IGenericDao blueCar = injector.getInstance(Key.get(IGenericDao.class, UserDaoSelector.class));
-        IGenericDao redCar = injector.getInstance(Key.get(IGenericDao.class, OrganizationDaoSelector.class));
-        
-        return injector;
+		return injector;
 	}
 }

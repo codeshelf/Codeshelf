@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfNetwork.java,v 1.13 2012/03/17 23:49:23 jeffw Exp $
+ *  $Id: CodeShelfNetwork.java,v 1.14 2012/03/18 04:12:26 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -45,13 +45,6 @@ public class CodeShelfNetwork extends PersistABC {
 	public interface ICodeShelfNetworkDao extends IGenericDao<CodeShelfNetwork> {		
 	}
 	
-	public static class CodeShelfNetworkDao extends GenericDao<CodeShelfNetwork> implements ICodeShelfNetworkDao {
-		@Inject
-		public CodeShelfNetworkDao(final IDaoRegistry inDaoRegistry) {
-			super(CodeShelfNetwork.class, inDaoRegistry);
-		}
-	}
-
 	private static final Log							LOGGER				= LogFactory.getLog(CodeShelfNetwork.class);
 
 	private static final long							serialVersionUID	= 3001609308065821464L;
