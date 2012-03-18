@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ControlGroup.java,v 1.18 2012/03/18 04:12:26 jeffw Exp $
+ *  $Id: ControlGroup.java,v 1.19 2012/03/18 09:03:39 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -46,7 +46,7 @@ public class ControlGroup extends PersistABC {
 	@Getter
 	@Setter
 	@Column(nullable = false)
-	@ManyToOne
+	@ManyToOne(optional = false)
 	private CodeShelfNetwork						parentCodeShelfNetwork;
 	// The control group ID
 	@Column(nullable = false)
@@ -78,7 +78,7 @@ public class ControlGroup extends PersistABC {
 	@Getter
 	private List<PickTag>							pickTags			= new ArrayList<PickTag>();
 
-	@Transient()
+	@Transient
 	private IControllerConnection					controllerConnection;
 
 	public ControlGroup() {

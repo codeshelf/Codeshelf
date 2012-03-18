@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PickTag.java,v 1.11 2012/03/17 23:49:23 jeffw Exp $
+ *  $Id: PickTag.java,v 1.12 2012/03/18 09:03:39 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -41,7 +41,8 @@ public class PickTag extends WirelessDevice {
 	@Setter
 	@Column(nullable = false)
 	private short				serialBusPosition;
-	@ManyToOne
+	
+	@ManyToOne(optional = false)
 	@Column(nullable = false)
 	@Getter
 	private ControlGroup		parentControlGroup;

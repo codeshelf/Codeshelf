@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfApplication.java,v 1.18 2012/03/18 04:12:26 jeffw Exp $
+ *  $Id: CodeShelfApplication.java,v 1.19 2012/03/18 09:03:39 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -119,6 +119,11 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 		}
 	}
 
+	// --------------------------------------------------------------------------
+	/**
+	 * @param userID
+	 * @param password
+	 */
 	private void createUser(String userID, String password) {
 		Organization organization = mOrganizationDao.findById(userID);
 		if (organization == null) {

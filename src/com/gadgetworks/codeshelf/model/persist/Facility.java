@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.9 2012/03/18 04:12:26 jeffw Exp $
+ *  $Id: Facility.java,v 1.10 2012/03/18 09:03:39 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -53,8 +53,8 @@ public class Facility extends PersistABC {
 	private String								description;
 
 	// The owning facility.
-	@Column(name = "parentOrganization", nullable = false)
-	@ManyToOne
+	@Column(nullable = false)
+	@ManyToOne(optional = false)
 	@JsonIgnore
 	@Getter
 	private Organization						parentOrganization;

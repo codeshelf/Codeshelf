@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: User.java,v 1.5 2012/03/18 04:12:26 jeffw Exp $
+ *  $Id: User.java,v 1.6 2012/03/18 09:03:39 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -77,7 +77,7 @@ public class User extends PersistABC {
 
 	// The owning facility.
 	@Column(name = "parentOrganization", nullable = false)
-	@ManyToOne
+	@ManyToOne(optional = false)
 	@Getter
 	@Setter
 	private Organization						parentOrganization;

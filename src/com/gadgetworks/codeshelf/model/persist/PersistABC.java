@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PersistABC.java,v 1.11 2012/03/17 23:49:23 jeffw Exp $
+ *  $Id: PersistABC.java,v 1.12 2012/03/18 09:03:39 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -54,7 +54,7 @@ public abstract class PersistABC {
 	 * @return	Return the name of the column used to store the domain key.  Used by EBean to find objects.
 	 */
 	public static String getIdColumnName() {
-		return "Id";
+		return "id";
 	}
 
 	// --------------------------------------------------------------------------

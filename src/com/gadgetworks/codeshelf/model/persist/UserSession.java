@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: UserSession.java,v 1.4 2012/03/18 04:12:26 jeffw Exp $
+ *  $Id: UserSession.java,v 1.5 2012/03/18 09:03:39 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -44,7 +44,7 @@ public class UserSession extends PersistABC {
 
 	// The owning CodeShelf network.
 	@Column(name = "parentUser", nullable = false)
-	@ManyToOne
+	@ManyToOne(optional = false)
 	private User								parentUser;
 
 	// Create date.

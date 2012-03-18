@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Aisle.java,v 1.7 2012/03/18 04:12:26 jeffw Exp $
+ *  $Id: Aisle.java,v 1.8 2012/03/18 09:03:39 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -41,8 +41,8 @@ public class Aisle extends PersistABC {
 	private static final Log				LOGGER				= LogFactory.getLog(Aisle.class);
 
 	// The owning facility.
-	@Column(name = "parentFacility", nullable = false)
-	@ManyToOne
+	@Column(nullable = false)
+	@ManyToOne(optional = false)
 	@Getter
 	@Setter
 	private Facility						parentFacility;

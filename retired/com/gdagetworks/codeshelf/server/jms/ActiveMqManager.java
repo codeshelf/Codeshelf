@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ActiveMqManager.java,v 1.4 2011/12/29 09:15:35 jeffw Exp $
+ *  $Id: ActiveMqManager.java,v 1.1 2012/03/18 09:03:39 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.server.jms;
 
