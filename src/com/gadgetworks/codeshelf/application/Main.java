@@ -1,13 +1,17 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Main.java,v 1.5 2012/03/19 04:05:19 jeffw Exp $
+ *  $Id: Main.java,v 1.6 2012/03/19 09:40:01 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
 
+import java.util.logging.Handler;
+import java.util.logging.LogManager;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import com.gadgetworks.codeshelf.model.dao.DaoRegistry;
 import com.gadgetworks.codeshelf.model.dao.IDaoRegistry;
@@ -66,6 +70,13 @@ public final class Main {
 		// Guice (injector) will invoke log4j, so we need to set some log dir parameters before we call it.
 		String appDataDir = Util.getApplicationDataDirPath();
 		System.setProperty("app.data.dir", appDataDir);
+
+//		java.util.logging.Logger rootLogger = LogManager.getLogManager().getLogger("");
+//		Handler[] handlers = rootLogger.getHandlers();
+//		for (int i = 0; i < handlers.length; i++) {
+//			rootLogger.removeHandler(handlers[i]);
+//		}
+//		SLF4JBridgeHandler.install();
 
 		// Create and start the application.
 		Injector injector = setupInjector();

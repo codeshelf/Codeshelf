@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfApplication.java,v 1.20 2012/03/19 04:05:19 jeffw Exp $
+ *  $Id: CodeShelfApplication.java,v 1.21 2012/03/19 09:40:01 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -13,9 +13,9 @@ import java.util.Collection;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.log4j.LogManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.EbeanServer;
 import com.avaje.ebean.EbeanServerFactory;
@@ -54,7 +54,7 @@ import com.google.inject.Inject;
 
 public final class CodeShelfApplication implements ICodeShelfApplication {
 
-	private static final Log			LOGGER		= LogFactory.getLog(CodeShelfApplication.class);
+	private static final Logger			LOGGER		= LoggerFactory.getLogger(CodeShelfApplication.class);
 
 	private boolean						mIsRunning	= true;
 	private IDaoRegistry				mDaoRegistry;
@@ -99,75 +99,6 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 	 */
 	public IController getController() {
 		return mController;
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 *	Reset some of the persistent object fields to a base state at start-up.
-	 */
-	private void initializeApplicationData() {
-
-		// Create two dummy users for testing.
-		createUser("1234", "passowrd");
-		createUser("12345", null);
-
-		// Some radio device fields have no meaning from the last invocation of the application.
-		for (WirelessDevice wirelessDevice : mWirelessDeviceDao.getAll()) {
-			LOGGER.debug("Init data for wireless device id: " + wirelessDevice.getMacAddress());
-			wirelessDevice.setNetworkDeviceState(NetworkDeviceStateEnum.INVALID);
-			try {
-				mWirelessDeviceDao.store(wirelessDevice);
-			} catch (DaoException e) {
-				LOGGER.error("", e);
-			}
-		}
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * @param inUserID
-	 * @param inPassword
-	 */
-	private void createUser(String inUserID, String inPassword) {
-		Organization organization = mOrganizationDao.findById(inUserID);
-		if (organization == null) {
-			organization = new Organization();
-			organization.setId(inUserID);
-			try {
-				mOrganizationDao.store(organization);
-			} catch (DaoException e) {
-				e.printStackTrace();
-			}
-		}
-
-		Facility facility = mFacilityDao.findById(inUserID);
-		if (facility == null) {
-			facility = new Facility();
-			facility.setId(inUserID);
-			facility.setDescription(inUserID);
-			facility.setparentOrganization(organization);
-			try {
-				mFacilityDao.store(facility);
-			} catch (DaoException e) {
-				LOGGER.error(e, null);
-			}
-		}
-
-		User user = mUserDao.findById(inUserID);
-		if (user == null) {
-			user = new User();
-			user.setActive(true);
-			user.setId(inUserID);
-			if (inPassword != null) {
-				user.setHashedPassword(inPassword);
-			}
-			user.setParentOrganization(organization);
-			try {
-				mUserDao.store(user);
-			} catch (DaoException e) {
-				LOGGER.error(e, null);
-			}
-		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -274,8 +205,77 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 
 		LOGGER.info("Application terminated normally");
 
-		LogFactory.releaseAll();
-		LogManager.shutdown();
+		//LoggerFactory.releaseAll();
+		//LogManager.shutdown();
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 *	Reset some of the persistent object fields to a base state at start-up.
+	 */
+	private void initializeApplicationData() {
+
+		// Create two dummy users for testing.
+		createUser("1234", "passowrd");
+		createUser("12345", null);
+
+		// Some radio device fields have no meaning from the last invocation of the application.
+		for (WirelessDevice wirelessDevice : mWirelessDeviceDao.getAll()) {
+			LOGGER.debug("Init data for wireless device id: " + wirelessDevice.getMacAddress());
+			wirelessDevice.setNetworkDeviceState(NetworkDeviceStateEnum.INVALID);
+			try {
+				mWirelessDeviceDao.store(wirelessDevice);
+			} catch (DaoException e) {
+				LOGGER.error("", e);
+			}
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inUserID
+	 * @param inPassword
+	 */
+	private void createUser(String inUserID, String inPassword) {
+		Organization organization = mOrganizationDao.findById(inUserID);
+		if (organization == null) {
+			organization = new Organization();
+			organization.setId(inUserID);
+			try {
+				mOrganizationDao.store(organization);
+			} catch (DaoException e) {
+				e.printStackTrace();
+			}
+		}
+
+		Facility facility = mFacilityDao.findById(inUserID);
+		if (facility == null) {
+			facility = new Facility();
+			facility.setId(inUserID);
+			facility.setDescription(inUserID);
+			facility.setparentOrganization(organization);
+			try {
+				mFacilityDao.store(facility);
+			} catch (DaoException e) {
+				LOGGER.error(null, e);
+			}
+		}
+
+		User user = mUserDao.findById(inUserID);
+		if (user == null) {
+			user = new User();
+			user.setActive(true);
+			user.setId(inUserID);
+			if (inPassword != null) {
+				user.setHashedPassword(inPassword);
+			}
+			user.setParentOrganization(organization);
+			try {
+				mUserDao.store(user);
+			} catch (DaoException e) {
+				LOGGER.error(null, e);
+			}
+		}
 	}
 
 	/* --------------------------------------------------------------------------

@@ -2,7 +2,6 @@ database
 *.log
 eclipse-bin
 target
-.classpath
 example-src
 logs
 showprefs.properties

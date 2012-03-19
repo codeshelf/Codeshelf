@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Util.java,v 1.11 2012/03/19 04:05:19 jeffw Exp $
+ *  $Id: Util.java,v 1.12 2012/03/19 09:40:01 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -47,6 +47,7 @@ public final class Util {
 	// be part of pre-main static initialization.  Since it uses methods from Util we moved it
 	// here before Util tries to use the LogFactory.
 	static {
+		
 		String appLogPath = getApplicationLogDirPath();
 		System.setProperty("codeshelf.logfile", appLogPath + System.getProperty("file.separator") + "codeshelf.log");
 		File appDir = new File(appLogPath);
