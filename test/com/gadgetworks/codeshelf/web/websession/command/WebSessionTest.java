@@ -12,6 +12,8 @@ import com.gadgetworks.codeshelf.model.dao.IDaoListener;
 import com.gadgetworks.codeshelf.model.persist.User;
 import com.gadgetworks.codeshelf.model.persist.User.IUserDao;
 import com.gadgetworks.codeshelf.web.websession.WebSession;
+import com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmdFactory;
+import com.gadgetworks.codeshelf.web.websession.command.req.WebSessionReqCmdFactory;
 import com.gadgetworks.codeshelf.web.websocket.IWebSocket;
 
 public class WebSessionTest {

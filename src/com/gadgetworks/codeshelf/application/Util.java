@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Util.java,v 1.10 2012/03/17 23:49:23 jeffw Exp $
+ *  $Id: Util.java,v 1.11 2012/03/19 04:05:19 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -174,7 +174,7 @@ public final class Util {
 		String result = "";
 
 		// Setup the data directory for this application.
-		result = "jdbc:h2:" + getApplicationDataDirPath() + System.getProperty("file.separator") + "db" + System.getProperty("file.separator") + "database" + ";TRACE_LEVEL_FILE=0";
+		result = "jdbc:h2:" + getApplicationDataDirPath() + System.getProperty("file.separator") + "db" + System.getProperty("file.separator") + "database" + ";TRACE_LEVEL_FILE=0;AUTO_SERVER=TRUE";
 
 		return result;
 	}
@@ -187,7 +187,7 @@ public final class Util {
 		String result = "";
 
 		// Setup the data directory for this application.
-		result = "jdbc:h2:" + getApplicationDataDirPath() + System.getProperty("file.separator") + "db" + System.getProperty("file.separator") + "database" + ";SCHEMA=CODESHELF;TRACE_LEVEL_FILE=0";
+		result = "jdbc:h2:" + getApplicationDataDirPath() + System.getProperty("file.separator") + "db" + System.getProperty("file.separator") + "database" + ";SCHEMA=CODESHELF;TRACE_LEVEL_FILE=0;AUTO_SERVER=TRUE";
 
 		return result;
 	}

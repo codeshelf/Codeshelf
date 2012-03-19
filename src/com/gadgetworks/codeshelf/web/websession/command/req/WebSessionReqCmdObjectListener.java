@@ -1,9 +1,9 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectListener.java,v 1.1 2012/03/16 15:59:07 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectListener.java,v 1.1 2012/03/19 04:05:19 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.web.websession.command;
+package com.gadgetworks.codeshelf.web.websession.command.req;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -23,6 +23,8 @@ import org.codehaus.jackson.type.TypeReference;
 import com.avaje.ebean.Ebean;
 import com.avaje.ebean.Query;
 import com.gadgetworks.codeshelf.model.persist.PersistABC;
+import com.gadgetworks.codeshelf.web.websession.command.resp.IWebSessionRespCmd;
+import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdObjectListener;
 
 /**
  * @author jeffw
@@ -36,6 +38,10 @@ public class WebSessionReqCmdObjectListener extends WebSessionReqCmdABC {
 	private static final String	OBJECT_ID_LIST		= "objectIds";
 	private static final String	PROPERTY_NAME_LIST	= "propertyNames";
 	private static final String	OBJECT_RESULTS_NODE	= "results";
+
+	private Class<PersistABC>	mPersistenceClass;
+	private List<Long>			mObjectIdList;
+	private List<String>		mPropertyNames;
 
 	/**
 	 * @param inCommandId
@@ -61,55 +67,67 @@ public class WebSessionReqCmdObjectListener extends WebSessionReqCmdABC {
 		try {
 			JsonNode dataJsonNode = getDataJsonNode();
 			JsonNode objectClassNode = dataJsonNode.get(OBJECT_CLASS);
-			String mParentClass = objectClassNode.getTextValue();
+			String objectClass = objectClassNode.getTextValue();
 			JsonNode objectIdListNode = dataJsonNode.get(OBJECT_ID_LIST);
 			ObjectMapper mapper = new ObjectMapper();
-			List<Long> mObjectIdList = mapper.readValue(objectIdListNode, new TypeReference<List<Long>>() {
+			mObjectIdList = mapper.readValue(objectIdListNode, new TypeReference<List<Long>>() {
 			});
 			JsonNode propertyNamesNode = dataJsonNode.get(PROPERTY_NAME_LIST);
-			List<String> mPropertyNames = mapper.readValue(propertyNamesNode, new TypeReference<List<String>>() {
+			mPropertyNames = mapper.readValue(propertyNamesNode, new TypeReference<List<String>>() {
 			});
 
-			// First we find the parent object (by it's ID).
-			Class<?> classObject = Class.forName(mParentClass);
+			// First we find the object (by it's ID).
+			Class<?> classObject = Class.forName(objectClass);
 			if (PersistABC.class.isAssignableFrom(classObject)) {
-				@SuppressWarnings("unchecked")
-				// The above is a safety check not known to FindBugs or CheckStyle.
-				Class<PersistABC> persistenceClass = (Class<PersistABC>) classObject;
-
-				Query<PersistABC> query = Ebean.find(persistenceClass);
-				List<PersistABC> methodResultsList = query.where().in("persistentId", mObjectIdList).findList();
-
-				List<Map<String, String>> resultsList = new ArrayList<Map<String, String>>();
-				for (PersistABC matchedObject : methodResultsList) {
-					Map<String, String> propertiesMap = new HashMap<String, String>();
-					propertiesMap.put("persistentId", matchedObject.getPersistentId().toString());
-					for (String propertyName : mPropertyNames) {
-						// Execute the "get" method against the parents to return the children.
-						// (The method *must* start with "get" to ensure other methods don't get called.)
-						String getterName = "get" + propertyName;
-						java.lang.reflect.Method method = matchedObject.getClass().getMethod(getterName, (Class<?>[]) null);
-						Object resultObject = method.invoke(matchedObject, (Object[]) null);
-						propertiesMap.put(propertyName, resultObject.toString());
-					}
-					resultsList.add(propertiesMap);
-				}
-
-				// Convert the list of objects into a JSon object.
-				mapper = new ObjectMapper();
-				ObjectNode dataNode = mapper.createObjectNode();
-				ArrayNode searchListNode = mapper.valueToTree(resultsList);
-				dataNode.put(OBJECT_RESULTS_NODE, searchListNode);
-
-				result = new WebSessionRespCmdObjectListener(dataNode);
+				mPersistenceClass = (Class<PersistABC>) classObject;
+				result = getProperties();
 			}
-
 		} catch (IOException e) {
 			LOGGER.error("", e);
 		} catch (ClassNotFoundException e) {
 			LOGGER.error("", e);
 		} catch (SecurityException e) {
 			LOGGER.error("", e);
+		}
+
+		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @return
+	 */
+	public final IWebSessionRespCmd getProperties() {
+
+		IWebSessionRespCmd result = null;
+
+		try {
+			Query<PersistABC> query = Ebean.find(mPersistenceClass);
+			List<PersistABC> methodResultsList = query.where().in("persistentId", mObjectIdList).findList();
+
+			List<Map<String, String>> resultsList = new ArrayList<Map<String, String>>();
+			for (PersistABC matchedObject : methodResultsList) {
+				Map<String, String> propertiesMap = new HashMap<String, String>();
+				propertiesMap.put("persistentId", matchedObject.getPersistentId().toString());
+				for (String propertyName : mPropertyNames) {
+					// Execute the "get" method against the parents to return the children.
+					// (The method *must* start with "get" to ensure other methods don't get called.)
+					String getterName = "get" + propertyName;
+					java.lang.reflect.Method method = matchedObject.getClass().getMethod(getterName, (Class<?>[]) null);
+					Object resultObject = method.invoke(matchedObject, (Object[]) null);
+					propertiesMap.put(propertyName, resultObject.toString());
+				}
+				resultsList.add(propertiesMap);
+			}
+
+			// Convert the list of objects into a JSon object.
+			ObjectMapper mapper = new ObjectMapper();
+			ObjectNode dataNode = mapper.createObjectNode();
+			ArrayNode searchListNode = mapper.valueToTree(resultsList);
+			dataNode.put(OBJECT_RESULTS_NODE, searchListNode);
+
+			result = new WebSessionRespCmdObjectListener(dataNode);
+
 		} catch (NoSuchMethodException e) {
 			LOGGER.error("", e);
 		} catch (IllegalArgumentException e) {
@@ -121,5 +139,13 @@ public class WebSessionReqCmdObjectListener extends WebSessionReqCmdABC {
 		}
 
 		return result;
+	}
+	
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmd#doesPersist()
+	 */
+	public final boolean doesPersist() {
+		return true;
 	}
 }

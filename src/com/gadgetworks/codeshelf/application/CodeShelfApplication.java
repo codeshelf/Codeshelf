@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfApplication.java,v 1.19 2012/03/18 09:03:39 jeffw Exp $
+ *  $Id: CodeShelfApplication.java,v 1.20 2012/03/19 04:05:19 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -17,7 +17,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.log4j.LogManager;
 
-import com.avaje.ebean.Ebean;
 import com.avaje.ebean.EbeanServer;
 import com.avaje.ebean.EbeanServerFactory;
 import com.avaje.ebean.LogLevel;
@@ -40,6 +39,8 @@ import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork;
 import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork.ICodeShelfNetworkDao;
 import com.gadgetworks.codeshelf.model.persist.DBProperty;
 import com.gadgetworks.codeshelf.model.persist.DBProperty.IDBPropertyDao;
+import com.gadgetworks.codeshelf.model.persist.Facility;
+import com.gadgetworks.codeshelf.model.persist.Facility.IFacilityDao;
 import com.gadgetworks.codeshelf.model.persist.Organization;
 import com.gadgetworks.codeshelf.model.persist.Organization.IOrganizationDao;
 import com.gadgetworks.codeshelf.model.persist.PersistentProperty;
@@ -61,8 +62,9 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 	@SuppressWarnings("unused")
 	private WirelessDeviceEventHandler	mWirelessDeviceEventHandler;
 	private IWebSocketListener			mWebSocketListener;
-	private IUserDao					mUserDao;
 	private IOrganizationDao			mOrganizationDao;
+	private IFacilityDao				mFacilityDao;
+	private IUserDao					mUserDao;
 	private IWirelessDeviceDao			mWirelessDeviceDao;
 	private IPersistentPropertyDao		mPersistentPropertyDao;
 	private ICodeShelfNetworkDao		mCodeShelfNetworkDao;
@@ -73,16 +75,18 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 	@Inject
 	public CodeShelfApplication(final IDaoRegistry inDaoRegistry,
 		final IWebSocketListener inWebSocketManager,
-		final IUserDao inUserDao,
 		final IOrganizationDao inOrganizationDao,
+		final IFacilityDao inFacilityDao,
+		final IUserDao inUserDao,
 		final IWirelessDeviceDao inWirelessDeviceDao,
 		final IPersistentPropertyDao inPersistentPropertyDao,
 		final ICodeShelfNetworkDao inCodeShelfNetworkDao,
 		final IDBPropertyDao inDBPropertyDao) {
 		mDaoRegistry = inDaoRegistry;
 		mWebSocketListener = inWebSocketManager;
-		mUserDao = inUserDao;
 		mOrganizationDao = inOrganizationDao;
+		mFacilityDao = inFacilityDao;
+		mUserDao = inUserDao;
 		mWirelessDeviceDao = inWirelessDeviceDao;
 		mPersistentPropertyDao = inPersistentPropertyDao;
 		mCodeShelfNetworkDao = inCodeShelfNetworkDao;
@@ -121,14 +125,14 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * @param userID
-	 * @param password
+	 * @param inUserID
+	 * @param inPassword
 	 */
-	private void createUser(String userID, String password) {
-		Organization organization = mOrganizationDao.findById(userID);
+	private void createUser(String inUserID, String inPassword) {
+		Organization organization = mOrganizationDao.findById(inUserID);
 		if (organization == null) {
 			organization = new Organization();
-			organization.setId(userID);
+			organization.setId(inUserID);
 			try {
 				mOrganizationDao.store(organization);
 			} catch (DaoException e) {
@@ -136,19 +140,32 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 			}
 		}
 
-		User user = mUserDao.findById(userID);
+		Facility facility = mFacilityDao.findById(inUserID);
+		if (facility == null) {
+			facility = new Facility();
+			facility.setId(inUserID);
+			facility.setDescription(inUserID);
+			facility.setparentOrganization(organization);
+			try {
+				mFacilityDao.store(facility);
+			} catch (DaoException e) {
+				LOGGER.error(e, null);
+			}
+		}
+
+		User user = mUserDao.findById(inUserID);
 		if (user == null) {
 			user = new User();
 			user.setActive(true);
-			user.setId(userID);
-			if (password != null) {
-				user.setHashedPassword(password);
+			user.setId(inUserID);
+			if (inPassword != null) {
+				user.setHashedPassword(inPassword);
 			}
 			user.setParentOrganization(organization);
 			try {
 				mUserDao.store(user);
 			} catch (DaoException e) {
-				e.printStackTrace();
+				LOGGER.error(e, null);
 			}
 		}
 	}
@@ -297,7 +314,9 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	private void startEmbeddedDB() {
+	private EbeanServer startEmbeddedDB() {
+
+		EbeanServer result = null;
 
 		// Set our class loader to the system classloader, so ebean can find the enhanced classes.
 		Thread.currentThread().setContextClassLoader(ClassLoader.getSystemClassLoader());
@@ -348,12 +367,14 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 		//		config.setLoggingLevelSqlQuery(LogLevelStmt.NONE);
 		//		config.setLoggingLevelIud(LogLevelStmt.NONE);
 		//		config.setLoggingLevelTxnCommit(LogLevelTxnCommit.DEBUG);
-		config.setLoggingToJavaLogger(true);
+		config.setLoggingToJavaLogger(false);
 		config.setResourceDirectory(Util.getApplicationDataDirPath());
 		EbeanServer server = EbeanServerFactory.create(config);
 		if (server == null) {
 			Util.exitSystem();
 		}
+
+		result = server;
 
 		// The H2 database has a serious problem with deleting temp files for LOBs.  We have to do it ourselves, or it will grow without bound.
 		String[] extensions = { "temp.lob.db" };
@@ -368,9 +389,11 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 			}
 		}
 
-		validateDatabase();
+		validateDatabase(server);
 
 		LOGGER.info("Database started");
+
+		return result;
 	}
 
 	// --------------------------------------------------------------------------
@@ -399,7 +422,7 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	private void validateDatabase() {
+	private void validateDatabase(final EbeanServer inServer) {
 
 		// Set our class loader to the system classloader, so ebean can find the enhanced classes.
 		Thread.currentThread().setContextClassLoader(ClassLoader.getSystemClassLoader());
@@ -410,7 +433,7 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 			dbVersionProp = new DBProperty();
 			dbVersionProp.setId(DBProperty.DB_SCHEMA_VERSION);
 			dbVersionProp.setValueStr(Integer.toString(ISchemaManager.DATABASE_VERSION_CUR));
-			Ebean.save(dbVersionProp);
+			inServer.save(dbVersionProp);
 		} else {
 			// The database schema version is set, so make sure that we're compatible.
 			String dbVersion = dbVersionProp.getValueStr();
@@ -419,13 +442,13 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 				ISchemaManager schemaManager = new H2SchemaManager();
 				schemaManager.upgradeSchema(verInt, ISchemaManager.DATABASE_VERSION_CUR);
 				dbVersionProp.setValueStr(Integer.toString(ISchemaManager.DATABASE_VERSION_CUR));
-				Ebean.save(dbVersionProp);
+				inServer.save(dbVersionProp);
 			} else if (verInt > ISchemaManager.DATABASE_VERSION_CUR) {
 				// We don't actually support downgrading a DB.
 				//				ISchemaManager schemaManager = new H2SchemaManager();
 				//				schemaManager.downgradeSchema(verInt, DATABASE_VERSION_CUR);
 				//				dbVersionProp.setValueStr(Integer.toString(DATABASE_VERSION_CUR));
-				//				Ebean.save(dbVersionProp);
+				//				inServer.save(dbVersionProp);
 			}
 		}
 	}

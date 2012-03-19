@@ -1,11 +1,13 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdABC.java,v 1.1 2012/03/16 15:59:07 jeffw Exp $
+ *  $Id: WebSessionReqCmdABC.java,v 1.1 2012/03/19 04:05:19 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.web.websession.command;
+package com.gadgetworks.codeshelf.web.websession.command.req;
 
 import org.codehaus.jackson.JsonNode;
+
+import com.gadgetworks.codeshelf.web.websession.command.resp.IWebSessionRespCmd;
 
 /**
  * The general form of a request command (in JSON) is:

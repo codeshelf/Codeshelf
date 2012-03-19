@@ -1,9 +1,9 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionRespCmdABC.java,v 1.1 2012/03/16 15:59:07 jeffw Exp $
+ *  $Id: WebSessionRespCmdABC.java,v 1.1 2012/03/19 04:05:19 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.web.websession.command;
+package com.gadgetworks.codeshelf.web.websession.command.resp;
 
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;

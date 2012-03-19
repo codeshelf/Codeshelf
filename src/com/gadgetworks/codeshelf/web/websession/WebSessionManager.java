@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionManager.java,v 1.5 2012/03/18 04:12:26 jeffw Exp $
+ *  $Id: WebSessionManager.java,v 1.6 2012/03/19 04:05:19 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession;
 
@@ -11,7 +11,7 @@ import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.gadgetworks.codeshelf.web.websession.command.WebSessionReqCmdFactory;
+import com.gadgetworks.codeshelf.web.websession.command.req.WebSessionReqCmdFactory;
 import com.gadgetworks.codeshelf.web.websocket.WebSocket;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;

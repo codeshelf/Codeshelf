@@ -1,15 +1,10 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Main.java,v 1.4 2012/03/18 04:12:26 jeffw Exp $
+ *  $Id: Main.java,v 1.5 2012/03/19 04:05:19 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
-
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -36,12 +31,11 @@ import com.gadgetworks.codeshelf.model.persist.User.IUserDao;
 import com.gadgetworks.codeshelf.model.persist.WirelessDevice.IWirelessDeviceDao;
 import com.gadgetworks.codeshelf.web.websession.IWebSessionManager;
 import com.gadgetworks.codeshelf.web.websession.WebSessionManager;
-import com.gadgetworks.codeshelf.web.websession.command.IWebSessionReqCmdFactory;
-import com.gadgetworks.codeshelf.web.websession.command.WebSessionReqCmdFactory;
+import com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmdFactory;
+import com.gadgetworks.codeshelf.web.websession.command.req.WebSessionReqCmdFactory;
 import com.gadgetworks.codeshelf.web.websocket.IWebSocketListener;
 import com.gadgetworks.codeshelf.web.websocket.WebSocketListener;
 import com.google.inject.AbstractModule;
-import com.google.inject.BindingAnnotation;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
@@ -82,20 +76,6 @@ public final class Main {
 		application.handleEvents();
 
 		LOGGER.info("Exiting Main()");
-	}
-
-	// --------------------------------------------------------------------------
-
-	@Retention(RetentionPolicy.RUNTIME)
-	@Target({ ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD })
-	@BindingAnnotation
-	@interface UserDaoSelector {
-	}
-
-	@Retention(RetentionPolicy.RUNTIME)
-	@Target({ ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD })
-	@BindingAnnotation
-	@interface OrganizationDaoSelector {
 	}
 
 	// --------------------------------------------------------------------------

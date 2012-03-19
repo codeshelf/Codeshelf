@@ -1,15 +1,16 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdFactory.java,v 1.4 2012/03/18 04:12:26 jeffw Exp $
+ *  $Id: WebSessionReqCmdFactory.java,v 1.1 2012/03/19 04:05:19 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.web.websession.command;
+package com.gadgetworks.codeshelf.web.websession.command.req;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
 
 import com.gadgetworks.codeshelf.model.persist.User.IUserDao;
+import com.gadgetworks.codeshelf.web.websession.command.IWebSessionCmd;
 import com.google.inject.Inject;
 
 /**
@@ -51,6 +52,10 @@ public final class WebSessionReqCmdFactory implements IWebSessionReqCmdFactory {
 
 			case OBJECT_LISTENER_REQ:
 				result = new WebSessionReqCmdObjectListener(commandId, dataNode);
+				break;
+
+			case OBJECT_UPDATE_REQ:
+				result = new WebSessionReqCmdObjectUpdate(commandId, dataNode);
 				break;
 
 			default:

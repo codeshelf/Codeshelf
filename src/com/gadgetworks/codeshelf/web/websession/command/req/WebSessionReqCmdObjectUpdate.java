@@ -1,9 +1,9 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectGetter.java,v 1.1 2012/03/16 15:59:07 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectUpdate.java,v 1.1 2012/03/19 04:05:19 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.web.websession.command;
+package com.gadgetworks.codeshelf.web.websession.command.req;
 
 import java.lang.reflect.InvocationTargetException;
 
@@ -16,30 +16,33 @@ import org.codehaus.jackson.node.ObjectNode;
 
 import com.avaje.ebean.Ebean;
 import com.gadgetworks.codeshelf.model.persist.PersistABC;
+import com.gadgetworks.codeshelf.web.websession.command.resp.IWebSessionRespCmd;
+import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdObjectGetter;
 
 /**
  * @author jeffw
  *
  */
-public class WebSessionReqCmdObjectGetter extends WebSessionReqCmdABC {
+public class WebSessionReqCmdObjectUpdate extends WebSessionReqCmdABC {
 
-	private static final Log	LOGGER				= LogFactory.getLog(WebSessionReqCmdObjectGetter.class);
+	private static final Log	LOGGER				= LogFactory.getLog(WebSessionReqCmdObjectUpdate.class);
 
 	private static final String	CLASS_NODE			= "class";
 	private static final String	ID_NODE				= "persistentId";
-	private static final String	GETTER_METHOD		= "getterMethod";
+	private static final String	SETTER_METHOD		= "setterMethod";
+	private static final String	SETTER_VALUE		= "setterValue";
 	private static final String	OBJECT_RESULTS_NODE	= "result";
 
 	/**
 	 * @param inCommandId
 	 * @param inDataNodeAsJson
 	 */
-	public WebSessionReqCmdObjectGetter(final String inCommandId, final JsonNode inDataNodeAsJson) {
+	public WebSessionReqCmdObjectUpdate(final String inCommandId, final JsonNode inDataNodeAsJson) {
 		super(inCommandId, inDataNodeAsJson);
 	}
 
 	public final WebSessionReqCmdEnum getCommandEnum() {
-		return WebSessionReqCmdEnum.OBJECT_GETTER_REQ;
+		return WebSessionReqCmdEnum.OBJECT_UPDATE_REQ;
 	}
 
 	public final IWebSessionRespCmd doExec() {
@@ -58,8 +61,10 @@ public class WebSessionReqCmdObjectGetter extends WebSessionReqCmdABC {
 			String parentClass = parentClassNode.getTextValue();
 			JsonNode parentIdNode = dataJsonNode.get(ID_NODE);
 			String parentId = String.valueOf(parentIdNode.getIntValue());
-			JsonNode getMethodNode = dataJsonNode.get(GETTER_METHOD);
-			String getterMethodName = getMethodNode.getTextValue();
+			JsonNode setterMethodNode = dataJsonNode.get(SETTER_METHOD);
+			String setterMethodName = setterMethodNode.getTextValue();
+			JsonNode setterValueNode = dataJsonNode.get(SETTER_VALUE);
+			String setterValue = setterValueNode.getTextValue();
 
 			// First we find the parent object (by it's ID).
 			Class<?> classObject = Class.forName(parentClass);
@@ -69,17 +74,15 @@ public class WebSessionReqCmdObjectGetter extends WebSessionReqCmdABC {
 				//				Class<?> clazz = classObject.getClass();
 				Object parentObject = Ebean.find(classObject, parentId);
 
-				//				Query<? extends PersistABC> query = Ebean.find(clazz);
-				//				//query.where(mQuery);
-				//				//List<? extends PersistABC> resultsList = query.findList();
+				// Execute the "set" method against the parents to return the children.
+				// (The method *must* start with "set" to ensure other methods don't get called.)
+				if (setterMethodName.startsWith("set")) {
+					Class<?>[] types = new Class<?>[] { String.class };
+					Object[] value = new Object[] { setterValue };
+					java.lang.reflect.Method method = parentObject.getClass().getMethod(setterMethodName, types);
+					Object resultObject = method.invoke(parentObject, value);
 
-				// Execute the "get" method against the parents to return the children.
-				// (The method *must* start with "get" to ensure other methods don't get called.)
-				if (getterMethodName.startsWith("get")) {
-					java.lang.reflect.Method method = parentObject.getClass().getMethod(getterMethodName, (Class<?>[]) null);
-					Object resultObject = method.invoke(parentObject, (Object[]) null);
-
-					// Convert the list of ojects into a JSon object.
+					// Convert the list of objects into a JSon object.
 					ObjectMapper mapper = new ObjectMapper();
 					ObjectNode dataNode = mapper.createObjectNode();
 					ArrayNode searchListNode = mapper.valueToTree(resultObject);
@@ -104,5 +107,13 @@ public class WebSessionReqCmdObjectGetter extends WebSessionReqCmdABC {
 		}
 
 		return result;
+	}
+	
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmd#doesPersist()
+	 */
+	public final boolean doesPersist() {
+		return false;
 	}
 }
