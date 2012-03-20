@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectGetter.java,v 1.1 2012/03/19 04:05:19 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectGetter.java,v 1.2 2012/03/20 06:28:32 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -27,7 +27,7 @@ public class WebSessionReqCmdObjectGetter extends WebSessionReqCmdABC {
 
 	private static final Log	LOGGER				= LogFactory.getLog(WebSessionReqCmdObjectGetter.class);
 
-	private static final String	CLASS_NODE			= "class";
+	private static final String	CLASS_NODE			= "className";
 	private static final String	ID_NODE				= "persistentId";
 	private static final String	GETTER_METHOD		= "getterMethod";
 	private static final String	OBJECT_RESULTS_NODE	= "result";

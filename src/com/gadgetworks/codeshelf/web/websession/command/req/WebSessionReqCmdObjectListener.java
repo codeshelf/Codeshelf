@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectListener.java,v 1.1 2012/03/19 04:05:19 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectListener.java,v 1.2 2012/03/20 06:28:32 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -34,10 +34,10 @@ public class WebSessionReqCmdObjectListener extends WebSessionReqCmdABC {
 
 	private static final Log	LOGGER				= LogFactory.getLog(WebSessionReqCmdObjectListener.class);
 
-	private static final String	OBJECT_CLASS		= "class";
+	private static final String	OBJECT_CLASS		= "className";
 	private static final String	OBJECT_ID_LIST		= "objectIds";
 	private static final String	PROPERTY_NAME_LIST	= "propertyNames";
-	private static final String	OBJECT_RESULTS_NODE	= "results";
+	private static final String	OBJECT_RESULTS_NODE	= "result";
 
 	private Class<PersistABC>	mPersistenceClass;
 	private List<Long>			mObjectIdList;
@@ -75,6 +75,8 @@ public class WebSessionReqCmdObjectListener extends WebSessionReqCmdABC {
 			JsonNode propertyNamesNode = dataJsonNode.get(PROPERTY_NAME_LIST);
 			mPropertyNames = mapper.readValue(propertyNamesNode, new TypeReference<List<String>>() {
 			});
+			// Always add the class name to the properties.
+			mPropertyNames.add("ClassName");
 
 			// First we find the object (by it's ID).
 			Class<?> classObject = Class.forName(objectClass);

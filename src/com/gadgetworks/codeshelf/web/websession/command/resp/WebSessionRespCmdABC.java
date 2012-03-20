@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionRespCmdABC.java,v 1.1 2012/03/19 04:05:19 jeffw Exp $
+ *  $Id: WebSessionRespCmdABC.java,v 1.2 2012/03/20 06:28:32 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.resp;
 
@@ -17,6 +17,7 @@ public abstract class WebSessionRespCmdABC implements IWebSessionRespCmd {
 
 	private String		mCommandId;
 	private JsonNode	mDataJsonNode;
+	private ObjectNode				mResponseNode;
 
 	public WebSessionRespCmdABC() {
 
@@ -46,6 +47,15 @@ public abstract class WebSessionRespCmdABC implements IWebSessionRespCmd {
 		return mDataJsonNode;
 	}
 
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	public String toString() {
+		String result = "Command Id: " + mCommandId + " Data: " + mDataJsonNode;
+		return result;
+	}
+	
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.web.websession.command.IWebSessionCommand#serialize()

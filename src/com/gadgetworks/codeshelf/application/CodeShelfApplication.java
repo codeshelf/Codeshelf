@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfApplication.java,v 1.21 2012/03/19 09:40:01 jeffw Exp $
+ *  $Id: CodeShelfApplication.java,v 1.22 2012/03/20 06:28:32 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -125,6 +125,7 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 		setupLibraries();
 
 		String processName = ManagementFactory.getRuntimeMXBean().getName();
+		LOGGER.info("------------------------------------------------------------");
 		LOGGER.info("Process info: " + processName);
 
 		installShutdownHook();

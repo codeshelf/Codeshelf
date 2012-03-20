@@ -12,3 +12,4 @@ resources.jar
 .ebean.h2.autofetch
 $jarplug.work
 activemq-data
+trace.db

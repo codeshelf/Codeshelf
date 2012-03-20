@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSession.java,v 1.11 2012/03/19 04:05:19 jeffw Exp $
+ *  $Id: WebSession.java,v 1.12 2012/03/20 06:28:32 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession;
 
@@ -62,9 +62,10 @@ public class WebSession implements IDaoListener {
 			}
 
 			if (respCommand != null) {
-				LOGGER.debug(respCommand);
 				try {
-					mWebSocket.send(respCommand.getResponseMsg());
+					String message = respCommand.getResponseMsg();
+					LOGGER.info("Sent Command: " + respCommand.getCommandId() + " Data: " + message);
+					mWebSocket.send(message);
 				} catch (InterruptedException e) {
 					LOGGER.error("Can't send response", e);
 				}
