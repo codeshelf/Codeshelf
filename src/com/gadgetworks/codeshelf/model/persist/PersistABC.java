@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PersistABC.java,v 1.13 2012/03/22 06:21:48 jeffw Exp $
+ *  $Id: PersistABC.java,v 1.14 2012/03/22 20:17:06 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -47,6 +47,8 @@ public abstract class PersistABC {
 
 	public PersistABC() {
 	}
+	
+	public abstract PersistABC getParent();
 
 	// --------------------------------------------------------------------------
 	/**

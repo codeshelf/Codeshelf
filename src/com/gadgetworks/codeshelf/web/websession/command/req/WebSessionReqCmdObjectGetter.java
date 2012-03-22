@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectGetter.java,v 1.4 2012/03/22 07:35:11 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectGetter.java,v 1.5 2012/03/22 20:17:06 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -15,7 +15,6 @@ import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
 
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
-import com.gadgetworks.codeshelf.model.dao.IDbFacade;
 import com.gadgetworks.codeshelf.model.dao.IGenericDao;
 import com.gadgetworks.codeshelf.model.persist.PersistABC;
 import com.gadgetworks.codeshelf.web.websession.command.resp.IWebSessionRespCmd;
@@ -34,7 +33,6 @@ public class WebSessionReqCmdObjectGetter extends WebSessionReqCmdABC {
 	private static final String		GETTER_METHOD		= "getterMethod";
 	private static final String		OBJECT_RESULTS_NODE	= "result";
 
-	private IDbFacade<PersistABC>	mDbFacade;
 	private IDaoProvider			mDaoProvider;
 
 	/**

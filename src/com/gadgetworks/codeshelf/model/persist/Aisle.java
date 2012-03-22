@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Aisle.java,v 1.9 2012/03/22 06:58:44 jeffw Exp $
+ *  $Id: Aisle.java,v 1.10 2012/03/22 20:17:06 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -15,11 +15,6 @@ import lombok.Setter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
-import com.gadgetworks.codeshelf.model.dao.GenericDao;
-import com.gadgetworks.codeshelf.model.dao.IDaoRegistry;
-import com.gadgetworks.codeshelf.model.dao.IGenericDao;
-import com.google.inject.Inject;
 
 // --------------------------------------------------------------------------
 /**
@@ -46,6 +41,14 @@ public class Aisle extends PersistABC {
 
 	public Aisle() {
 		parentFacility = null;
+	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * @return
+	 */
+	public final PersistABC getParent() {
+		return getParentFacility();
 	}
 
 //	public final Facility getParentFacility() {

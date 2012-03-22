@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: DBProperty.java,v 1.8 2012/03/22 06:58:44 jeffw Exp $
+ *  $Id: DBProperty.java,v 1.9 2012/03/22 20:17:06 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -10,11 +10,6 @@ import javax.persistence.Entity;
 
 import lombok.Getter;
 import lombok.Setter;
-
-import com.gadgetworks.codeshelf.model.dao.GenericDao;
-import com.gadgetworks.codeshelf.model.dao.IDaoRegistry;
-import com.gadgetworks.codeshelf.model.dao.IGenericDao;
-import com.google.inject.Inject;
 
 // --------------------------------------------------------------------------
 /**
@@ -34,5 +29,13 @@ public class DBProperty extends PersistABC {
 	@Setter
 	@Column(nullable = false)
 	private String								valueStr;
-
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * DBProperties don't belong to anyone.
+	 * @return
+	 */
+	public final PersistABC getParent() {
+		return null;
+	}
 }

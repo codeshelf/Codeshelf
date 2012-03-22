@@ -10,9 +10,13 @@ import com.gadgetworks.codeshelf.model.persist.PersistABC;
 
 public class GenericDaoTest {
 
-	class PersistABCStub extends PersistABC {
+	public class PersistABCStub extends PersistABC {
 		// Stub object needed to test abstract class.
 		// Ensures the Liskov Substitution Principle.
+		
+		public PersistABC getParent() {
+			return null;
+		}
 	}
 	
 	class DaoRegistryStub implements IDaoRegistry {

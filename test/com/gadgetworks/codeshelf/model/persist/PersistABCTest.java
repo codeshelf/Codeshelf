@@ -1,19 +1,27 @@
 package com.gadgetworks.codeshelf.model.persist;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
 public class PersistABCTest {
 	
 	class PersistABCStub extends PersistABC {
+
+		public PersistABC getParent() {
+			return null;
+		}
 		// Stub object needed to test abstract class.
 		// Ensures the Liskov Substitution Principle.
 	}
 	
 	class PersistABCOtherStub extends PersistABC {
+
+		public PersistABC getParent() {
+			return null;
+		}
 		// Stub object needed to test abstract class.
 		// Ensures the Liskov Substitution Principle.
 	}

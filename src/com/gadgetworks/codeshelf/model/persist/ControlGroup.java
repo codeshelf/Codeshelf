@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ControlGroup.java,v 1.20 2012/03/22 06:58:44 jeffw Exp $
+ *  $Id: ControlGroup.java,v 1.21 2012/03/22 20:17:06 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -20,11 +20,7 @@ import lombok.Setter;
 
 import com.gadgetworks.codeshelf.controller.NetGroup;
 import com.gadgetworks.codeshelf.model.TagProtocolEnum;
-import com.gadgetworks.codeshelf.model.dao.GenericDao;
-import com.gadgetworks.codeshelf.model.dao.IDaoRegistry;
-import com.gadgetworks.codeshelf.model.dao.IGenericDao;
 import com.gadgetworks.codeshelf.server.tags.IControllerConnection;
-import com.google.inject.Inject;
 
 // --------------------------------------------------------------------------
 /**
@@ -37,46 +33,46 @@ import com.google.inject.Inject;
 @Table(name = "CONTROLGROUP")
 public class ControlGroup extends PersistABC {
 
-	private static final long						serialVersionUID	= -4923129546531851147L;
+	private static final long		serialVersionUID	= -4923129546531851147L;
 
 	// The owning CodeShelf network.
 	@Getter
 	@Setter
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	private CodeShelfNetwork						parentCodeShelfNetwork;
+	private CodeShelfNetwork		parentCodeShelfNetwork;
 	// The control group ID
 	@Column(nullable = false)
 	//	@Getter
 	//	@Setter
-	private byte[]									controlGroupId;
+	private byte[]					controlGroupId;
 	// The control group description.
 	@Getter
 	@Setter
 	@Column(nullable = false)
-	private String									description;
+	private String					description;
 	// Interface port number
 	@Getter
 	@Setter
 	@Column(nullable = false)
-	private short									interfacePortNum;
+	private short					interfacePortNum;
 	// Active/Inactive rule
 	@Getter
 	@Setter
 	@Column(nullable = false)
-	private boolean									active;
+	private boolean					active;
 	// Active/Inactive rule
 	@Getter
 	@Setter
 	@Column(nullable = false)
-	private TagProtocolEnum							tagProtocolEnum;
+	private TagProtocolEnum			tagProtocolEnum;
 	// For a control group this is a list of all of the pick tags that belong in the set.
 	@OneToMany(mappedBy = "parentControlGroup")
 	@Getter
-	private List<PickTag>							pickTags			= new ArrayList<PickTag>();
+	private List<WirelessDevice>	wirelessDevices		= new ArrayList<WirelessDevice>();
 
 	@Transient
-	private IControllerConnection					controllerConnection;
+	private IControllerConnection	controllerConnection;
 
 	public ControlGroup() {
 		parentCodeShelfNetwork = null;
@@ -86,15 +82,19 @@ public class ControlGroup extends PersistABC {
 		tagProtocolEnum = TagProtocolEnum.ATOP;
 	}
 
-	public NetGroup getControlGroupId() {
+	public final PersistABC getParent() {
+		return getParentCodeShelfNetwork();
+	}
+
+	public final NetGroup getControlGroupId() {
 		return new NetGroup(controlGroupId);
 	}
 
-	public void setControlGroupId(NetGroup inId) {
+	public final void setControlGroupId(NetGroup inId) {
 		controlGroupId = inId.getParamValueAsByteArray();
 	}
 
-	public TagProtocolEnum getTagProtocol() {
+	public final TagProtocolEnum getTagProtocol() {
 		TagProtocolEnum result = tagProtocolEnum;
 		if (result == null) {
 			result = TagProtocolEnum.getTagProtocolEnum(0); //INVALID;
@@ -102,42 +102,18 @@ public class ControlGroup extends PersistABC {
 		return result;
 	}
 
-	public void setTagProtocol(TagProtocolEnum inTagProtocolEnum) {
+	public final void setTagProtocol(TagProtocolEnum inTagProtocolEnum) {
 		tagProtocolEnum = inTagProtocolEnum;
 	}
 
-//	// We always need to return the object cached in the DAO.
-//	public List<PickTag> getPickTags() {
-//		if (IGenericDao.USE_DAO_CACHE) {
-//			List<PickTag> result = new ArrayList<PickTag>();
-//			ControlGroupDao controlGroupDao = new ControlGroupDao();
-//			if (!controlGroupDao.isObjectPersisted(this)) {
-//				result = pickTags;
-//			} else {
-//				WirelessDeviceDao wirelessDeviceDao = new WirelessDeviceDao(WirelessDevice.class);
-//				for (WirelessDevice wirelessDevice : wirelessDeviceDao.getAll()) {
-//					if (wirelessDevice instanceof PickTag) {
-//						PickTag pickTag = (PickTag) wirelessDevice;
-//						if (pickTag.getParentControlGroup().equals(this)) {
-//							result.add(pickTag);
-//						}
-//					}
-//				}
-//			}
-//			return result;
-//		} else {
-//			return pickTags;
-//		}
-//	}
-
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
-	public void addPickTag(PickTag inPickTag) {
-		pickTags.add(inPickTag);
+	public final void addWirelessDevice(WirelessDevice inWirelessDevice) {
+		wirelessDevices.add(inWirelessDevice);
 	}
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
-	public void removePickTag(PickTag inPickTag) {
-		pickTags.remove(inPickTag);
+	public final void removeWirelessDevice(WirelessDevice inWirelessDevice) {
+		wirelessDevices.remove(inWirelessDevice);
 	}
 
 	// --------------------------------------------------------------------------
@@ -149,14 +125,17 @@ public class ControlGroup extends PersistABC {
 	 * @param inSerialBusNumber
 	 * @return
 	 */
-	public PickTag getPickTagBySerialBusNumber(short inSerialBusNumber) {
+	public final WirelessDevice getWirelessDeviceBySerialBusNumber(short inSerialBusNumber) {
 
-		PickTag result = null;
+		WirelessDevice result = null;
 
 		// To deal with the mismatch here, we maintain a mapping from the serial bus order to the MAC address.
-		for (PickTag tag : getPickTags()) {
-			if (tag.getSerialBusPosition() == inSerialBusNumber) {
-				result = tag;
+		for (WirelessDevice device : getWirelessDevices()) {
+			if (device instanceof PickTag) {
+				PickTag tag = (PickTag) device;
+				if (tag.getSerialBusPosition() == inSerialBusNumber) {
+					result = tag;
+				}
 			}
 		}
 		return result;
@@ -166,7 +145,7 @@ public class ControlGroup extends PersistABC {
 	/**
 	 * @return
 	 */
-	public IControllerConnection getControllerConnection() {
+	public final IControllerConnection getControllerConnection() {
 		return controllerConnection;
 	}
 
@@ -174,7 +153,7 @@ public class ControlGroup extends PersistABC {
 	/**
 	 * @param inControllerConnection
 	 */
-	public void setControllerConnection(IControllerConnection inControllerConnection) {
+	public final void setControllerConnection(IControllerConnection inControllerConnection) {
 		controllerConnection = inControllerConnection;
 	}
 }

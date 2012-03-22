@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdFactory.java,v 1.4 2012/03/22 07:35:11 jeffw Exp $
+ *  $Id: WebSessionReqCmdFactory.java,v 1.5 2012/03/22 20:17:06 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -10,9 +10,7 @@ import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
 
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
-import com.gadgetworks.codeshelf.model.dao.IDbFacade;
 import com.gadgetworks.codeshelf.model.dao.IGenericDao;
-import com.gadgetworks.codeshelf.model.persist.PersistABC;
 import com.gadgetworks.codeshelf.model.persist.User;
 import com.gadgetworks.codeshelf.web.websession.command.IWebSessionCmd;
 import com.google.inject.Inject;
@@ -26,13 +24,11 @@ public final class WebSessionReqCmdFactory implements IWebSessionReqCmdFactory {
 	private static final Log		LOGGER	= LogFactory.getLog(WebSessionReqCmdFactory.class);
 
 	private IGenericDao<User>		mUserDao;
-	private IDbFacade<PersistABC>	mDbFacade;
 	private IDaoProvider			mDaoProvider;
 
 	@Inject
-	public WebSessionReqCmdFactory(final IGenericDao<User> inUserDao, final IDbFacade<PersistABC> inDbFacade, IDaoProvider inDaoPovider) {
+	public WebSessionReqCmdFactory(final IGenericDao<User> inUserDao, final IDaoProvider inDaoPovider) {
 		mUserDao = inUserDao;
-		mDbFacade = inDbFacade;
 		mDaoProvider = inDaoPovider;
 	}
 

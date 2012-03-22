@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Main.java,v 1.9 2012/03/22 07:35:11 jeffw Exp $
+ *  $Id: Main.java,v 1.10 2012/03/22 20:17:07 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -9,10 +9,10 @@ package com.gadgetworks.codeshelf.application;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.gadgetworks.codeshelf.model.dao.DaoProvider;
 import com.gadgetworks.codeshelf.model.dao.DaoRegistry;
-import com.gadgetworks.codeshelf.model.dao.DbFacade;
+import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.IDaoRegistry;
-import com.gadgetworks.codeshelf.model.dao.IDbFacade;
 import com.gadgetworks.codeshelf.model.dao.IGenericDao;
 import com.gadgetworks.codeshelf.model.dao.domain.AisleDao;
 import com.gadgetworks.codeshelf.model.dao.domain.CodeShelfNetworkDao;
@@ -29,11 +29,8 @@ import com.gadgetworks.codeshelf.model.persist.ControlGroup;
 import com.gadgetworks.codeshelf.model.persist.DBProperty;
 import com.gadgetworks.codeshelf.model.persist.Facility;
 import com.gadgetworks.codeshelf.model.persist.Organization;
-import com.gadgetworks.codeshelf.model.persist.PersistABC;
 import com.gadgetworks.codeshelf.model.persist.PersistentProperty;
 import com.gadgetworks.codeshelf.model.persist.User;
-import com.gadgetworks.codeshelf.model.persist.UserSession;
-import com.gadgetworks.codeshelf.model.persist.WirelessDevice;
 import com.gadgetworks.codeshelf.model.persist.WirelessDevice.IWirelessDeviceDao;
 import com.gadgetworks.codeshelf.web.websession.IWebSessionManager;
 import com.gadgetworks.codeshelf.web.websession.WebSessionManager;
@@ -122,39 +119,7 @@ public final class Main {
 				bind(IWirelessDeviceDao.class).to(WirelessDeviceDao.class);
 				bind(IWebSessionReqCmdFactory.class).to(WebSessionReqCmdFactory.class);
 				bind(IDaoRegistry.class).to(DaoRegistry.class);
-				bind(new TypeLiteral<IDbFacade<PersistABC>>() {
-				}).to(new TypeLiteral<DbFacade<PersistABC>>() {
-				});
-				bind(new TypeLiteral<IDbFacade<Aisle>>() {
-				}).to(new TypeLiteral<DbFacade<Aisle>>() {
-				});
-				bind(new TypeLiteral<IDbFacade<CodeShelfNetwork>>() {
-				}).to(new TypeLiteral<DbFacade<CodeShelfNetwork>>() {
-				});
-				bind(new TypeLiteral<IDbFacade<ControlGroup>>() {
-				}).to(new TypeLiteral<DbFacade<ControlGroup>>() {
-				});
-				bind(new TypeLiteral<IDbFacade<DBProperty>>() {
-				}).to(new TypeLiteral<DbFacade<DBProperty>>() {
-				});
-				bind(new TypeLiteral<IDbFacade<Facility>>() {
-				}).to(new TypeLiteral<DbFacade<Facility>>() {
-				});
-				bind(new TypeLiteral<IDbFacade<Organization>>() {
-				}).to(new TypeLiteral<DbFacade<Organization>>() {
-				});
-				bind(new TypeLiteral<IDbFacade<PersistentProperty>>() {
-				}).to(new TypeLiteral<DbFacade<PersistentProperty>>() {
-				});
-				bind(new TypeLiteral<IDbFacade<User>>() {
-				}).to(new TypeLiteral<DbFacade<User>>() {
-				});
-				bind(new TypeLiteral<IDbFacade<UserSession>>() {
-				}).to(new TypeLiteral<DbFacade<UserSession>>() {
-				});
-				bind(new TypeLiteral<IDbFacade<WirelessDevice>>() {
-				}).to(new TypeLiteral<DbFacade<WirelessDevice>>() {
-				});
+				bind(IDaoProvider.class).to(DaoProvider.class);
 			}
 		});
 

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.11 2012/03/22 06:58:44 jeffw Exp $
+ *  $Id: Facility.java,v 1.12 2012/03/22 20:17:06 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -49,7 +49,7 @@ public class Facility extends PersistABC {
 	@Column(nullable = false)
 	private String								description;
 
-	// The owning facility.
+	// The owning organization.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	@JsonIgnore
@@ -66,14 +66,13 @@ public class Facility extends PersistABC {
 		description = "";
 	}
 	
-//	public final Organization getParentOrganization() {
-//		// Yes, this is weird, but we MUST always return the same instance of these persistent objects.
-//		if (parentOrganization != null) {
-//			OrganizationDao dao = new OrganizationDao();
-//			parentOrganization = dao.loadByPersistentId(parentOrganization.getPersistentId());
-//		}
-//		return parentOrganization;
-//	}
+	// --------------------------------------------------------------------------
+	/**
+	 * @return
+	 */
+	public final PersistABC getParent() {
+		return getParentOrganization();
+	}
 
 	public final void setparentOrganization(Organization inparentOrganization) {
 		parentOrganization = inparentOrganization;

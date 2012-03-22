@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: AtopStreamProcessor.java,v 1.4 2011/10/22 06:57:58 jeffw Exp $
+ *  $Id: AtopStreamProcessor.java,v 1.5 2012/03/22 20:17:06 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.server.tags;
 
@@ -16,10 +16,10 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.gadgetworks.codeshelf.command.CommandCsReportPick;
 import com.gadgetworks.codeshelf.command.ICsCommand;
 import com.gadgetworks.codeshelf.model.persist.ControlGroup;
 import com.gadgetworks.codeshelf.model.persist.PickTag;
+import com.gadgetworks.codeshelf.model.persist.WirelessDevice;
 
 /**
  * @author jeffw
@@ -137,8 +137,9 @@ public final class AtopStreamProcessor {
 		short inSubNode,
 		byte[] inDataBytes) {
 
-		PickTag pickTag = inControlGroup.getPickTagBySerialBusNumber(inSubNode);
-		if (pickTag != null) {
+		WirelessDevice device = inControlGroup.getWirelessDeviceBySerialBusNumber(inSubNode);
+		if ((device != null) && (device instanceof PickTag)) {
+			PickTag pickTag = (PickTag) device;
 
 			LOGGER.info("Atop cmd: " + inCommandEnum.getName() + " node:" + inSubNode + " data:" + Arrays.toString(inDataBytes));
 

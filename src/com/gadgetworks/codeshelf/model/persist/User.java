@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: User.java,v 1.7 2012/03/22 06:58:44 jeffw Exp $
+ *  $Id: User.java,v 1.8 2012/03/22 20:17:06 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -20,10 +20,6 @@ import lombok.Setter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
-import com.gadgetworks.codeshelf.model.dao.GenericDao;
-import com.gadgetworks.codeshelf.model.dao.IGenericDao;
-import com.google.inject.Inject;
 
 // --------------------------------------------------------------------------
 /**
@@ -85,38 +81,9 @@ public class User extends PersistABC {
 		active = true;
 	}
 
-//	public final Organization getParentOrganization() {
-//		// Yes, this is weird, but we MUST always return the same instance of these persistent objects.
-//		if (parentOrganization != null) {
-//			OrganizationDao organizationDao = new OrganizationDao();
-//			parentOrganization = organizationDao.loadByPersistentId(parentOrganization.getPersistentId());
-//		}
-//		return parentOrganization;
-//	}
-//
-//	public final void setparentOrganization(Organization inparentOrganization) {
-//		parentOrganization = inparentOrganization;
-//	}
-//
-//	// We always need to return the object cached in the DAO.
-//	public final List<UserSession> getUserSessions() {
-//		if (IGenericDao.USE_DAO_CACHE) {
-//			List<UserSession> result = new ArrayList<UserSession>();
-//			UserSessionDao userSessionDao = new UserSessionDao();
-//			if (!userSessionDao.isObjectPersisted(this)) {
-//				result = uses;
-//			} else {
-//				for (UserSession promoCodeUse : userSessionDao.getAll()) {
-//					if (promoCodeUse.getParentUser().equals(this)) {
-//						result.add(promoCodeUse);
-//					}
-//				}
-//			}
-//			return result;
-//		} else {
-//			return uses;
-//		}
-//	}
+	public final PersistABC getParent() {
+		return getParentOrganization();
+	}
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void addUserSession(UserSession inPromoCodeUse) {

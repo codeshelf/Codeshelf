@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: H2SchemaManager.java,v 1.19 2012/03/18 04:12:26 jeffw Exp $
+ *  $Id: H2SchemaManager.java,v 1.20 2012/03/22 20:17:07 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -164,10 +164,17 @@ public final class H2SchemaManager implements ISchemaManager {
 		execOneSQLCommand("CREATE TABLE CODESHELF.PERSISTENTPROPERTY (" //
 				+ "PERSISTENTID IDENTITY NOT NULL, " //
 				+ "ID VARCHAR(64) NOT NULL," //
+				+ "PARENTORGANIZATION_PERSISTENTID LONG NOT NULL, " //
 				+ "VERSION TIMESTAMP, " //
 				+ "CURRENTVALUESTR VARCHAR(256)," //
 				+ "DEFAULTVALUESTR VARCHAR(256)," //
 				+ "PRIMARY KEY (PERSISTENTID));");
+
+		execOneSQLCommand("ALTER TABLE CODESHELF.PERSISTENTPROPERTY " //
+			+ "ADD FOREIGN KEY (PARENTORGANIZATION_PERSISTENTID) " //
+			+ "REFERENCES DATABASE.CODESHELF.PERSISTENTPROPERTY (PERSISTENTID);");
+
+		execOneSQLCommand("CREATE INDEX CODESHELF.PERSISTENTPROPERTY_PARENT_ORGANIZATION ON CODESHELF.PERSISTENTPROPERTY (PARENTORGANIZATION_PERSISTENTID)");
 
 		// organization
 		execOneSQLCommand("CREATE TABLE CODESHELF.ORGANIZATION ( " //
@@ -247,12 +254,19 @@ public final class H2SchemaManager implements ISchemaManager {
 				+ "PERSISTENTID IDENTITY NOT NULL, " //
 				+ "ID VARCHAR(64) NOT NULL," //
 				+ "VERSION TIMESTAMP, " //
+				+ "PARENTFACILITY_PERSISTENTID LONG NOT NULL, " //
 				+ "NETWORKID BINARY(2) DEFAULT 0 NOT NULL," //
 				+ "DESCRIPTION VARCHAR(64) NOT NULL, " //
 				+ "GATEWAYADDR BINARY(3) NOT NULL, " //
 				+ "GATEWAYURL VARCHAR(64) NOT NULL, " //
 				+ "ACTIVE BOOLEAN DEFAULT TRUE NOT NULL," //
 				+ "PRIMARY KEY (PERSISTENTID));");
+
+		execOneSQLCommand("ALTER TABLE CODESHELF.CODESHELFNETWORK " //
+			+ "ADD FOREIGN KEY (PARENTFACILITY_PERSISTENTID) " //
+			+ "REFERENCES DATABASE.CODESHELF.CODESHELFNETWORK (PERSISTENTID);");
+
+		execOneSQLCommand("CREATE INDEX CODESHELF.CODESHELFNETWORK_PARENT_FACILITY ON CODESHELF.CODESHELFNETWORK (PARENTFACILITY_PERSISTENTID)");
 
 		// ControlGroup
 		execOneSQLCommand("CREATE TABLE CODESHELF.CONTROLGROUP ( " //

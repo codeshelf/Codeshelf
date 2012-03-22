@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: UserSession.java,v 1.6 2012/03/22 06:58:44 jeffw Exp $
+ *  $Id: UserSession.java,v 1.7 2012/03/22 20:17:06 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -17,10 +17,6 @@ import lombok.Setter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
-import com.gadgetworks.codeshelf.model.dao.GenericDao;
-import com.gadgetworks.codeshelf.model.dao.IDaoRegistry;
-import com.gadgetworks.codeshelf.model.dao.IGenericDao;
 
 // --------------------------------------------------------------------------
 /**
@@ -59,6 +55,10 @@ public class UserSession extends PersistABC {
 	public UserSession() {
 		parentUser = null;
 		created = new Timestamp(System.currentTimeMillis());
+	}
+
+	public final PersistABC getParent() {
+		return getParentUser();
 	}
 
 	public final User getParentUser() {

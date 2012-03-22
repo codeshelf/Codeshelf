@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfNetwork.java,v 1.15 2012/03/22 06:58:44 jeffw Exp $
+ *  $Id: CodeShelfNetwork.java,v 1.16 2012/03/22 20:17:06 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -10,6 +10,7 @@ import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.Transient;
@@ -42,45 +43,52 @@ import com.google.inject.Inject;
 @Table(name = "CODESHELFNETWORK")
 public class CodeShelfNetwork extends PersistABC {
 
-	private static final Log							LOGGER				= LogFactory.getLog(CodeShelfNetwork.class);
+	private static final Log	LOGGER				= LogFactory.getLog(CodeShelfNetwork.class);
 
-	private static final long							serialVersionUID	= 3001609308065821464L;
+	private static final long	serialVersionUID	= 3001609308065821464L;
 
 	// The network ID.
 	@Column(nullable = false)
-	private byte[]										networkId;
+	private byte[]				networkId;
 	// The network description.
 	@Column(nullable = false)
 	@Getter
 	@Setter
-	private String										description;
+	private String				description;
 	// Active/Inactive network
 	@Column(nullable = false)
 	@Getter
 	@Setter
-	private boolean										active;
+	private boolean				active;
 	// The network ID.
 	@Column(nullable = false)
-	private byte[]										gatewayAddr;
+	private byte[]				gatewayAddr;
 	// The gateway URL.
 	@Column(nullable = false)
 	@Getter
 	@Setter
-	private String										gatewayUrl;
+	private String				gatewayUrl;
 	// For a network this is a list of all of the control groups that belong in the set.
 	@Column(nullable = false)
 	@Getter
 	@OneToMany(mappedBy = "parentCodeShelfNetwork")
-	private List<ControlGroup>							controlGroups		= new ArrayList<ControlGroup>();
+	private List<ControlGroup>	controlGroups		= new ArrayList<ControlGroup>();
 
 	@Transient
 	@Getter
 	@Setter
-	private boolean										connected;
+	private boolean				connected;
 	@Transient
 	@Getter
 	@Setter
-	private IWirelessInterface							wirelessInterface;
+	private IWirelessInterface	wirelessInterface;
+
+	// The owning facility.
+	@Column(nullable = false)
+	@ManyToOne(optional = false)
+	@Getter
+	@Setter
+	private Facility			parentFacility;
 
 	public CodeShelfNetwork() {
 		networkId = new byte[NetworkId.NETWORK_ID_BYTES];
@@ -89,6 +97,10 @@ public class CodeShelfNetwork extends PersistABC {
 		gatewayUrl = "";
 		active = true;
 		connected = false;
+	}
+
+	public PersistABC getParent() {
+		return getParentFacility();
 	}
 
 	public final NetworkId getNetworkId() {
@@ -108,25 +120,25 @@ public class CodeShelfNetwork extends PersistABC {
 	}
 
 	// We always need to return the object cached in the DAO.
-//	public final List<ControlGroup> getControlGroups() {
-//		if (IGenericDao.USE_DAO_CACHE) {
-//			List<ControlGroup> result = new ArrayList<ControlGroup>();
-//			CodeShelfNetworkDao codeShelfNetworkDao = new CodeShelfNetworkDao();
-//			if (!codeShelfNetworkDao.isObjectPersisted(this)) {
-//				result = controlGroups;
-//			} else {
-//				ControlGroupDao controlGroupDao = new ControlGroupDao();
-//				for (ControlGroup controlGroup : controlGroupDao.getAll()) {
-//					if (controlGroup.getParentCodeShelfNetwork().equals(this)) {
-//						result.add(controlGroup);
-//					}
-//				}
-//			}
-//			return result;
-//		} else {
-//			return controlGroups;
-//		}
-//	}
+	//	public final List<ControlGroup> getControlGroups() {
+	//		if (IGenericDao.USE_DAO_CACHE) {
+	//			List<ControlGroup> result = new ArrayList<ControlGroup>();
+	//			CodeShelfNetworkDao codeShelfNetworkDao = new CodeShelfNetworkDao();
+	//			if (!codeShelfNetworkDao.isObjectPersisted(this)) {
+	//				result = controlGroups;
+	//			} else {
+	//				ControlGroupDao controlGroupDao = new ControlGroupDao();
+	//				for (ControlGroup controlGroup : controlGroupDao.getAll()) {
+	//					if (controlGroup.getParentCodeShelfNetwork().equals(this)) {
+	//						result.add(controlGroup);
+	//					}
+	//				}
+	//			}
+	//			return result;
+	//		} else {
+	//			return controlGroups;
+	//		}
+	//	}
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void addControlGroup(ControlGroup inControlGroup) {

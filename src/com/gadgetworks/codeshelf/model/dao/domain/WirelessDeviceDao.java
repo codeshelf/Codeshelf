@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WirelessDeviceDao.java,v 1.3 2012/03/22 07:35:11 jeffw Exp $
+ *  $Id: WirelessDeviceDao.java,v 1.4 2012/03/22 20:17:06 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao.domain;
 
@@ -21,7 +21,6 @@ import com.gadgetworks.codeshelf.controller.NetMacAddress;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDao;
 import com.gadgetworks.codeshelf.model.dao.IDaoRegistry;
-import com.gadgetworks.codeshelf.model.dao.IDbFacade;
 import com.gadgetworks.codeshelf.model.persist.WirelessDevice;
 import com.gadgetworks.codeshelf.model.persist.WirelessDevice.IWirelessDeviceDao;
 import com.google.inject.Inject;
@@ -39,8 +38,8 @@ public final class WirelessDeviceDao extends GenericDao<WirelessDevice> implemen
 	private Map<NetAddress, WirelessDevice>	mAddressLookupMap;
 
 	@Inject
-	public WirelessDeviceDao(final IDaoRegistry inDaoRegistry, final IDbFacade<WirelessDevice> inDbFacade) {
-		super(WirelessDevice.class, inDaoRegistry, inDbFacade);
+	public WirelessDeviceDao(final IDaoRegistry inDaoRegistry) {
+		super(WirelessDevice.class, inDaoRegistry);
 	}
 
 	/* --------------------------------------------------------------------------

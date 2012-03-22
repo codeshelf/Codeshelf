@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: GenericDao.java,v 1.9 2012/03/22 07:35:11 jeffw Exp $
+ *  $Id: GenericDao.java,v 1.10 2012/03/22 20:17:07 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -9,6 +9,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import javax.persistence.PersistenceException;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.avaje.ebean.Ebean;
+import com.avaje.ebean.Query;
 import com.gadgetworks.codeshelf.model.persist.PersistABC;
 
 /**
@@ -17,16 +24,14 @@ import com.gadgetworks.codeshelf.model.persist.PersistABC;
  */
 public class GenericDao<T extends PersistABC> implements IGenericDao<T> {
 
-	//private static final Log	LOGGER		= LogFactory.getLog(GenericDao.class);
+	private static final Log	LOGGER		= LogFactory.getLog(GenericDao.class);
 
 	private Class<T>			mClass;
-	private IDbFacade<T>		mDbFacade;
 
 	private List<IDaoListener>	mListeners	= new ArrayList<IDaoListener>();
 
-	public GenericDao(final Class<T> inClass, final IDaoRegistry inDaoRegistry, final IDbFacade<T> inDbFacade) {
+	public GenericDao(final Class<T> inClass, final IDaoRegistry inDaoRegistry) {
 		mClass = inClass;
-		mDbFacade = inDbFacade;
 		inDaoRegistry.addDao(this);
 	}
 
@@ -89,8 +94,14 @@ public class GenericDao<T extends PersistABC> implements IGenericDao<T> {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#loadByPersistentId(java.lang.Integer)
 	 */
-	public final T loadByPersistentId(Long inID) {
-		return mDbFacade.findByPersistentId(mClass, inID);
+	public final T loadByPersistentId(Long inPersistentId) {
+		T result = null;
+		try {
+			result = Ebean.find(mClass, inPersistentId);
+		} catch (PersistenceException e) {
+			LOGGER.error("", e);
+		}
+		return result;
 	}
 
 	// --------------------------------------------------------------------------
@@ -98,15 +109,26 @@ public class GenericDao<T extends PersistABC> implements IGenericDao<T> {
 	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#findById(java.lang.String)
 	 */
 	public final T findByDomainId(final String inId) {
-		return mDbFacade.findByDomainId(mClass, inId);
+		T result = null;
+		try {
+			Query<T> query = Ebean.createQuery(mClass);
+			query.where().eq(T.getIdColumnName(), inId);
+			//query = query.setUseCache(true);
+			result = query.findUnique();
+		} catch (PersistenceException e) {
+			LOGGER.error("", e);
+		}
+		return result;
 	}
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#findByIdList(java.util.List)
 	 */
-	public List<T> findByPersistentIdList(List<Long> inIdList) {
-		return mDbFacade.findByPersistentIdList(mClass, inIdList);
+	public final List<T> findByPersistentIdList(List<Long> inIdList) {
+		Query<T> query = Ebean.find(mClass);
+		List<T> methodResultsList = query.where().in("persistentId", inIdList).findList();
+		return methodResultsList;
 	}
 
 	// --------------------------------------------------------------------------
@@ -115,10 +137,10 @@ public class GenericDao<T extends PersistABC> implements IGenericDao<T> {
 	 */
 	public final void store(final T inDomainObject) throws DaoException {
 		if (inDomainObject.getPersistentId() == null) {
-			mDbFacade.save(inDomainObject);
+			Ebean.save(inDomainObject);
 			privateBroadcastAdd(inDomainObject);
 		} else {
-			mDbFacade.save(inDomainObject);
+			Ebean.save(inDomainObject);
 			privateBroadcastUpdate(inDomainObject);
 		}
 	}
@@ -128,7 +150,7 @@ public class GenericDao<T extends PersistABC> implements IGenericDao<T> {
 	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#delete(java.lang.Object)
 	 */
 	public final void delete(final T inDomainObject) throws DaoException {
-		mDbFacade.delete(inDomainObject);
+		Ebean.delete(inDomainObject);
 		privateBroadcastDelete(inDomainObject);
 	}
 
@@ -137,7 +159,9 @@ public class GenericDao<T extends PersistABC> implements IGenericDao<T> {
 	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#getAll()
 	 */
 	public final Collection<T> getAll() {
-		return mDbFacade.getAll(mClass);
+		Query<T> query = Ebean.createQuery(mClass);
+		query = query.setUseCache(true);
+		return query.findList();
 	}
 
 	/*
