@@ -8,6 +8,8 @@ import lombok.Getter;
 import org.junit.Test;
 
 import com.gadgetworks.codeshelf.model.dao.DaoException;
+import com.gadgetworks.codeshelf.model.dao.DaoProvider;
+import com.gadgetworks.codeshelf.model.dao.DbFacade;
 import com.gadgetworks.codeshelf.model.dao.IDaoListener;
 import com.gadgetworks.codeshelf.model.persist.User;
 import com.gadgetworks.codeshelf.model.persist.User.IUserDao;
@@ -31,10 +33,10 @@ public class WebSessionTest {
 	
 	private class TestUserDao implements IUserDao {
 
-		@Override
-		public boolean isObjectPersisted(User inDomainObject) {
-			return false;
-		}
+//		@Override
+//		public boolean isObjectPersisted(User inDomainObject) {
+//			return false;
+//		}
 
 		@Override
 		public User loadByPersistentId(Long inID) {
@@ -79,7 +81,7 @@ public class WebSessionTest {
 	@Test
 	public void testProcessMessageLaunchCodeCheck() {
 		TestWebSocket testWebSocket = new TestWebSocket();
-		IWebSessionReqCmdFactory factory = new WebSessionReqCmdFactory(new TestUserDao());
+		IWebSessionReqCmdFactory factory = new WebSessionReqCmdFactory(new TestUserDao(), new DbFacade(), null);
 		WebSession webSession = new WebSession(testWebSocket, factory);
 		String inMessage = "{\"id\":\"cmdid_5\",\"type\":\"LAUNCH_CODE_CHECK\",\"data\":{\"launchCode\":\"12345\"}}";
 		

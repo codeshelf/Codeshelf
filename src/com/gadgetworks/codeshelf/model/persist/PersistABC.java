@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PersistABC.java,v 1.12 2012/03/18 09:03:39 jeffw Exp $
+ *  $Id: PersistABC.java,v 1.13 2012/03/22 06:21:48 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -15,7 +15,6 @@ import javax.persistence.Version;
 import lombok.Data;
 import lombok.NonNull;
 
-import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
 
 // --------------------------------------------------------------------------

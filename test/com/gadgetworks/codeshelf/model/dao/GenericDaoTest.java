@@ -33,13 +33,6 @@ public class GenericDaoTest {
 	}
 
 	@Test
-	public void testInitCacheMap() {
-		DaoRegistryStub daoRegistryStub = new DaoRegistryStub();
-		GenericDao<PersistABCStub> generic = new GenericDao<PersistABCStub>(PersistABCStub.class, daoRegistryStub);
-		fail("Not yet implemented");
-	}
-
-	@Test
 	public void testIsObjectPersisted() {
 		fail("Not yet implemented");
 	}

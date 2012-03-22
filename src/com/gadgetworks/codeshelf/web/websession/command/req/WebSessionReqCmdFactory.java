@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdFactory.java,v 1.1 2012/03/19 04:05:19 jeffw Exp $
+ *  $Id: WebSessionReqCmdFactory.java,v 1.2 2012/03/22 06:21:47 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -9,6 +9,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
 
+import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
+import com.gadgetworks.codeshelf.model.dao.IDbFacade;
+import com.gadgetworks.codeshelf.model.persist.PersistABC;
 import com.gadgetworks.codeshelf.model.persist.User.IUserDao;
 import com.gadgetworks.codeshelf.web.websession.command.IWebSessionCmd;
 import com.google.inject.Inject;
@@ -19,13 +22,17 @@ import com.google.inject.Inject;
  */
 public final class WebSessionReqCmdFactory implements IWebSessionReqCmdFactory {
 
-	private static final Log	LOGGER	= LogFactory.getLog(WebSessionReqCmdFactory.class);
+	private static final Log		LOGGER	= LogFactory.getLog(WebSessionReqCmdFactory.class);
 
-	private IUserDao			mUserDao;
+	private IUserDao				mUserDao;
+	private IDbFacade<PersistABC>	mDbFacade;
+	private IDaoProvider			mDaoProvider;
 
 	@Inject
-	public WebSessionReqCmdFactory(final IUserDao inUserDao) {
+	public WebSessionReqCmdFactory(final IUserDao inUserDao, final IDbFacade<PersistABC> inDbFacade, IDaoProvider inDaoPovider) {
 		mUserDao = inUserDao;
+		mDbFacade = inDbFacade;
+		mDaoProvider = inDaoPovider;
 	}
 
 	// --------------------------------------------------------------------------
@@ -47,7 +54,7 @@ public final class WebSessionReqCmdFactory implements IWebSessionReqCmdFactory {
 				break;
 
 			case OBJECT_GETTER_REQ:
-				result = new WebSessionReqCmdObjectGetter(commandId, dataNode);
+				result = new WebSessionReqCmdObjectGetter(commandId, dataNode, mDaoProvider);
 				break;
 
 			case OBJECT_LISTENER_REQ:
