@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Organization.java,v 1.4 2012/03/18 04:12:26 jeffw Exp $
+ *  $Id: Organization.java,v 1.5 2012/03/22 06:58:44 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -39,8 +39,8 @@ import com.google.inject.Inject;
 @Table(name = "ORGANIZATION")
 public class Organization extends PersistABC {
 
-	public interface IOrganizationDao extends IGenericDao<Organization> {		
-	}
+//	public interface IOrganizationDao extends IGenericDao<Organization> {		
+//	}
 
 	private static final Log						LOGGER		= LogFactory.getLog(Organization.class);
 

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Aisle.java,v 1.8 2012/03/18 09:03:39 jeffw Exp $
+ *  $Id: Aisle.java,v 1.9 2012/03/22 06:58:44 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -35,9 +35,6 @@ import com.google.inject.Inject;
 @Table(name = "AISLE")
 public class Aisle extends PersistABC {
 
-	public interface IAisleDao extends IGenericDao<Aisle> {		
-	}
-	
 	private static final Log				LOGGER				= LogFactory.getLog(Aisle.class);
 
 	// The owning facility.

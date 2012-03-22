@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.10 2012/03/18 09:03:39 jeffw Exp $
+ *  $Id: Facility.java,v 1.11 2012/03/22 06:58:44 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -39,9 +39,6 @@ import com.google.inject.Inject;
 @Table(name = "FACILITY")
 public class Facility extends PersistABC {
 
-	public interface IFacilityDao extends IGenericDao<Facility> {		
-	}
-	
 	private static final Log					LOGGER				= LogFactory.getLog(Facility.class);
 
 	private static final long					serialVersionUID	= 3001609308065821464L;

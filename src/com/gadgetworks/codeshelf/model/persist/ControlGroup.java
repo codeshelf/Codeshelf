@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ControlGroup.java,v 1.19 2012/03/18 09:03:39 jeffw Exp $
+ *  $Id: ControlGroup.java,v 1.20 2012/03/22 06:58:44 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -37,9 +37,6 @@ import com.google.inject.Inject;
 @Table(name = "CONTROLGROUP")
 public class ControlGroup extends PersistABC {
 
-	public interface IControlGroupDao extends IGenericDao<ControlGroup> {		
-	}
-	
 	private static final long						serialVersionUID	= -4923129546531851147L;
 
 	// The owning CodeShelf network.

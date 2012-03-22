@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Main.java,v 1.7 2012/03/22 06:21:47 jeffw Exp $
+ *  $Id: Main.java,v 1.8 2012/03/22 06:58:44 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -15,6 +15,7 @@ import com.gadgetworks.codeshelf.model.dao.DbFacade;
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.IDaoRegistry;
 import com.gadgetworks.codeshelf.model.dao.IDbFacade;
+import com.gadgetworks.codeshelf.model.dao.IGenericDao;
 import com.gadgetworks.codeshelf.model.dao.domain.AisleDao;
 import com.gadgetworks.codeshelf.model.dao.domain.CodeShelfNetworkDao;
 import com.gadgetworks.codeshelf.model.dao.domain.ControlGroupDao;
@@ -25,22 +26,14 @@ import com.gadgetworks.codeshelf.model.dao.domain.PersistentPropertyDao;
 import com.gadgetworks.codeshelf.model.dao.domain.UserDao;
 import com.gadgetworks.codeshelf.model.dao.domain.WirelessDeviceDao;
 import com.gadgetworks.codeshelf.model.persist.Aisle;
-import com.gadgetworks.codeshelf.model.persist.Aisle.IAisleDao;
 import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork;
-import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork.ICodeShelfNetworkDao;
 import com.gadgetworks.codeshelf.model.persist.ControlGroup;
-import com.gadgetworks.codeshelf.model.persist.ControlGroup.IControlGroupDao;
 import com.gadgetworks.codeshelf.model.persist.DBProperty;
-import com.gadgetworks.codeshelf.model.persist.DBProperty.IDBPropertyDao;
 import com.gadgetworks.codeshelf.model.persist.Facility;
-import com.gadgetworks.codeshelf.model.persist.Facility.IFacilityDao;
 import com.gadgetworks.codeshelf.model.persist.Organization;
-import com.gadgetworks.codeshelf.model.persist.Organization.IOrganizationDao;
 import com.gadgetworks.codeshelf.model.persist.PersistABC;
 import com.gadgetworks.codeshelf.model.persist.PersistentProperty;
-import com.gadgetworks.codeshelf.model.persist.PersistentProperty.IPersistentPropertyDao;
 import com.gadgetworks.codeshelf.model.persist.User;
-import com.gadgetworks.codeshelf.model.persist.User.IUserDao;
 import com.gadgetworks.codeshelf.model.persist.UserSession;
 import com.gadgetworks.codeshelf.model.persist.WirelessDevice;
 import com.gadgetworks.codeshelf.model.persist.WirelessDevice.IWirelessDeviceDao;
@@ -112,14 +105,22 @@ public final class Main {
 				bind(ICodeShelfApplication.class).to(CodeShelfApplication.class);
 				bind(IWebSocketListener.class).to(WebSocketListener.class);
 				bind(IWebSessionManager.class).to(WebSessionManager.class);
-				bind(IOrganizationDao.class).to(OrganizationDao.class);
-				bind(IFacilityDao.class).to(FacilityDao.class);
-				bind(IAisleDao.class).to(AisleDao.class);
-				bind(IPersistentPropertyDao.class).to(PersistentPropertyDao.class);
-				bind(IDBPropertyDao.class).to(DBPropertyDao.class);
-				bind(IUserDao.class).to(UserDao.class);
-				bind(ICodeShelfNetworkDao.class).to(CodeShelfNetworkDao.class);
-				bind(IControlGroupDao.class).to(ControlGroupDao.class);
+				bind(new TypeLiteral<IGenericDao<Organization>>() {
+				}).to(OrganizationDao.class);
+				bind(new TypeLiteral<IGenericDao<Facility>>() {
+				}).to(FacilityDao.class);
+				bind(new TypeLiteral<IGenericDao<Aisle>>() {
+				}).to(AisleDao.class);
+				bind(new TypeLiteral<IGenericDao<PersistentProperty>>() {
+				}).to(PersistentPropertyDao.class);
+				bind(new TypeLiteral<IGenericDao<DBProperty>>() {
+				}).to(DBPropertyDao.class);
+				bind(new TypeLiteral<IGenericDao<User>>() {
+				}).to(UserDao.class);
+				bind(new TypeLiteral<IGenericDao<CodeShelfNetwork>>() {
+				}).to(CodeShelfNetworkDao.class);
+				bind(new TypeLiteral<IGenericDao<ControlGroup>>() {
+				}).to(ControlGroupDao.class);
 				bind(IWirelessDeviceDao.class).to(WirelessDeviceDao.class);
 				bind(IWebSessionReqCmdFactory.class).to(WebSessionReqCmdFactory.class);
 				bind(IDaoRegistry.class).to(DaoRegistry.class);

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PersistentProperty.java,v 1.9 2012/03/18 04:12:26 jeffw Exp $
+ *  $Id: PersistentProperty.java,v 1.10 2012/03/22 06:58:44 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -39,9 +39,6 @@ public class PersistentProperty extends PersistABC {
 	public static final String							ACTIVEMQ_JMS_PORTNUM		= "ACTMQJMS";
 	public static final String							ACTIVEMQ_STOMP_PORTNUM		= "ACTMQSTM";
 
-	public interface IPersistentPropertyDao extends IGenericDao<PersistentProperty> {		
-	}
-	
 	private static final long							serialVersionUID			= -7735810092352246641L;
 
 	@Column(nullable = false)

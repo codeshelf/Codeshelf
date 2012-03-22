@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PreferencesStore.java,v 1.6 2012/03/17 23:49:23 jeffw Exp $
+ *  $Id: PreferencesStore.java,v 1.7 2012/03/22 06:58:44 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model;
 
@@ -15,8 +15,8 @@ import org.apache.log4j.Level;
 
 import com.gadgetworks.codeshelf.controller.ControllerABC;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
+import com.gadgetworks.codeshelf.model.dao.IGenericDao;
 import com.gadgetworks.codeshelf.model.persist.PersistentProperty;
-import com.gadgetworks.codeshelf.model.persist.PersistentProperty.IPersistentPropertyDao;
 
 // --------------------------------------------------------------------------
 /**
@@ -28,14 +28,14 @@ public final class PreferencesStore {
 
 	private static PreferencesStore			mPreferencesStore;
 	private Map<String, PersistentProperty>	mChangedProperties;
-	private static IPersistentPropertyDao			mPersistentPropertyDao;
+	private static IGenericDao<PersistentProperty>			mPersistentPropertyDao;
 
-	private PreferencesStore(IPersistentPropertyDao inPersistentPropertyDao) {
+	private PreferencesStore(IGenericDao<PersistentProperty> inPersistentPropertyDao) {
 		mChangedProperties = new HashMap<String, PersistentProperty>();
 		mPersistentPropertyDao = inPersistentPropertyDao;
 	}
 
-	public static void initPreferencesStore(IPersistentPropertyDao inPersistentPropertyDao) {
+	public static void initPreferencesStore(IGenericDao<PersistentProperty> inPersistentPropertyDao) {
 		// Setup the preferences store singleton.
 		mPreferencesStore = new PreferencesStore(inPersistentPropertyDao);
 
@@ -55,7 +55,7 @@ public final class PreferencesStore {
 	/**
 	 *  @return
 	 */
-	public static PreferencesStore getPreferencesStore(IPersistentPropertyDao inPersistentPropertyDao) {
+	public static PreferencesStore getPreferencesStore(IGenericDao<PersistentProperty> inPersistentPropertyDao) {
 		if (mPreferencesStore == null) {
 			initPreferencesStore(inPersistentPropertyDao);
 		}

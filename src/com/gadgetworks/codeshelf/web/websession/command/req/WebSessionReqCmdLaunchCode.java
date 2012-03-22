@@ -1,15 +1,15 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdLaunchCode.java,v 1.1 2012/03/19 04:05:19 jeffw Exp $
+ *  $Id: WebSessionReqCmdLaunchCode.java,v 1.2 2012/03/22 06:58:44 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
 import org.codehaus.jackson.JsonNode;
 
+import com.gadgetworks.codeshelf.model.dao.IGenericDao;
 import com.gadgetworks.codeshelf.model.persist.Organization;
 import com.gadgetworks.codeshelf.model.persist.User;
-import com.gadgetworks.codeshelf.model.persist.User.IUserDao;
 import com.gadgetworks.codeshelf.web.websession.command.resp.IWebSessionRespCmd;
 import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdLaunchCode;
 
@@ -25,9 +25,9 @@ public class WebSessionReqCmdLaunchCode extends WebSessionReqCmdABC {
 	private static final String	FAIL		= "FAIL";
 	private static final String	NEED_LOGIN	= "NEED_LOGIN";
 
-	private IUserDao			mUserDao;
+	private IGenericDao<User>	mUserDao;
 
-	public WebSessionReqCmdLaunchCode(final String inCommandId, final JsonNode inDataNodeAsJson, final IUserDao inUserDao) {
+	public WebSessionReqCmdLaunchCode(final String inCommandId, final JsonNode inDataNodeAsJson, final IGenericDao<User> inUserDao) {
 		super(inCommandId, inDataNodeAsJson);
 		mUserDao = inUserDao;
 	}
@@ -65,7 +65,7 @@ public class WebSessionReqCmdLaunchCode extends WebSessionReqCmdABC {
 
 		return result;
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmd#doesPersist()

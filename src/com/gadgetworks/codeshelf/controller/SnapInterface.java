@@ -22,8 +22,8 @@ import com.gadgetworks.codeshelf.command.CommandIdEnum;
 import com.gadgetworks.codeshelf.command.ICommand;
 import com.gadgetworks.codeshelf.command.ICsCommand;
 import com.gadgetworks.codeshelf.model.TagProtocolEnum;
+import com.gadgetworks.codeshelf.model.dao.IGenericDao;
 import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork;
-import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork.ICodeShelfNetworkDao;
 import com.gadgetworks.codeshelf.model.persist.ControlGroup;
 import com.gadgetworks.codeshelf.model.persist.PickTag;
 import com.gadgetworks.codeshelf.model.persist.WirelessDevice.IWirelessDeviceDao;
@@ -33,25 +33,25 @@ import com.gadgetworks.codeshelf.server.tags.SnapXmlRpcNilTypeSupport;
 
 public final class SnapInterface implements IWirelessInterface {
 
-	private static final Log		LOGGER						= LogFactory.getLog(SnapInterface.class);
+	private static final Log				LOGGER						= LogFactory.getLog(SnapInterface.class);
 
-	private static final int		E10_SERIAL_TYPE				= 1;
-	private static final String		E10_STANDARD_SERIAL_PORT	= "/dev/ttyS1";
-	private static final String		E10_RPC_CMD_NAME			= "rpc";
+	private static final int				E10_SERIAL_TYPE				= 1;
+	private static final String				E10_STANDARD_SERIAL_PORT	= "/dev/ttyS1";
+	private static final String				E10_RPC_CMD_NAME			= "rpc";
 	//	private static final String	E10_MCAST_RPC_NAME			= "macstRpc";
 
-	private static final double		WAITONEVENT_TIMEOUT_MILLIS	= 5.0;
-	private static final int		INBOUND_TIMEOUT_MILLIS		= 5100;
-	private static final int		OUTBOUND_TIMEOUT_MILLIS		= 5000;
+	private static final double				WAITONEVENT_TIMEOUT_MILLIS	= 5.0;
+	private static final int				INBOUND_TIMEOUT_MILLIS		= 5100;
+	private static final int				OUTBOUND_TIMEOUT_MILLIS		= 5000;
 
-	private CodeShelfNetwork		mCodeShelfNetwork;
-	private ICodeShelfNetworkDao	mCodeShelfNetworkDao;
-	private IWirelessDeviceDao		mWirelessDeviceDao;
-	private XmlRpcClient			mInboundXmlRpcClient;
-	private XmlRpcClient			mOutboundXmlRpcClient;
-	private boolean					mIsStarted;
+	private CodeShelfNetwork				mCodeShelfNetwork;
+	private IGenericDao<CodeShelfNetwork>	mCodeShelfNetworkDao;
+	private IWirelessDeviceDao				mWirelessDeviceDao;
+	private XmlRpcClient					mInboundXmlRpcClient;
+	private XmlRpcClient					mOutboundXmlRpcClient;
+	private boolean							mIsStarted;
 
-	public SnapInterface(final CodeShelfNetwork inCodeShelfNetwork, final ICodeShelfNetworkDao inCodeShelfNetworkDao, final IWirelessDeviceDao inWirelessDeviceDao) {
+	public SnapInterface(final CodeShelfNetwork inCodeShelfNetwork, final IGenericDao<CodeShelfNetwork> inCodeShelfNetworkDao, final IWirelessDeviceDao inWirelessDeviceDao) {
 		mCodeShelfNetwork = inCodeShelfNetwork;
 		mCodeShelfNetworkDao = inCodeShelfNetworkDao;
 		mWirelessDeviceDao = inWirelessDeviceDao;

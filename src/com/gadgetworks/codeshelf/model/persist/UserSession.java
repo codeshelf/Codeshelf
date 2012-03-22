@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: UserSession.java,v 1.5 2012/03/18 09:03:39 jeffw Exp $
+ *  $Id: UserSession.java,v 1.6 2012/03/22 06:58:44 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -35,9 +35,6 @@ import com.gadgetworks.codeshelf.model.dao.IGenericDao;
 @Table(name = "USERSESSION")
 public class UserSession extends PersistABC {
 
-	public interface IUserSessionDao extends IGenericDao<UserSession> {		
-	}
-	
 	private static final Log					LOGGER				= LogFactory.getLog(UserSession.class);
 
 	private static final long					serialVersionUID	= 3001609308065821464L;

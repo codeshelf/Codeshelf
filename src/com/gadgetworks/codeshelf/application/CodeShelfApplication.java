@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfApplication.java,v 1.22 2012/03/20 06:28:32 jeffw Exp $
+ *  $Id: CodeShelfApplication.java,v 1.23 2012/03/22 06:58:44 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -13,7 +13,6 @@ import java.util.Collection;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.LogManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,19 +33,14 @@ import com.gadgetworks.codeshelf.model.dao.GWEbeanNamingConvention;
 import com.gadgetworks.codeshelf.model.dao.H2SchemaManager;
 import com.gadgetworks.codeshelf.model.dao.IDao;
 import com.gadgetworks.codeshelf.model.dao.IDaoRegistry;
+import com.gadgetworks.codeshelf.model.dao.IGenericDao;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork;
-import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork.ICodeShelfNetworkDao;
 import com.gadgetworks.codeshelf.model.persist.DBProperty;
-import com.gadgetworks.codeshelf.model.persist.DBProperty.IDBPropertyDao;
 import com.gadgetworks.codeshelf.model.persist.Facility;
-import com.gadgetworks.codeshelf.model.persist.Facility.IFacilityDao;
 import com.gadgetworks.codeshelf.model.persist.Organization;
-import com.gadgetworks.codeshelf.model.persist.Organization.IOrganizationDao;
 import com.gadgetworks.codeshelf.model.persist.PersistentProperty;
-import com.gadgetworks.codeshelf.model.persist.PersistentProperty.IPersistentPropertyDao;
 import com.gadgetworks.codeshelf.model.persist.User;
-import com.gadgetworks.codeshelf.model.persist.User.IUserDao;
 import com.gadgetworks.codeshelf.model.persist.WirelessDevice;
 import com.gadgetworks.codeshelf.model.persist.WirelessDevice.IWirelessDeviceDao;
 import com.gadgetworks.codeshelf.web.websocket.IWebSocketListener;
@@ -54,34 +48,34 @@ import com.google.inject.Inject;
 
 public final class CodeShelfApplication implements ICodeShelfApplication {
 
-	private static final Logger			LOGGER		= LoggerFactory.getLogger(CodeShelfApplication.class);
+	private static final Logger				LOGGER		= LoggerFactory.getLogger(CodeShelfApplication.class);
 
-	private boolean						mIsRunning	= true;
-	private IDaoRegistry				mDaoRegistry;
-	private IController					mController;
+	private boolean							mIsRunning	= true;
+	private IDaoRegistry					mDaoRegistry;
+	private IController						mController;
 	@SuppressWarnings("unused")
-	private WirelessDeviceEventHandler	mWirelessDeviceEventHandler;
-	private IWebSocketListener			mWebSocketListener;
-	private IOrganizationDao			mOrganizationDao;
-	private IFacilityDao				mFacilityDao;
-	private IUserDao					mUserDao;
-	private IWirelessDeviceDao			mWirelessDeviceDao;
-	private IPersistentPropertyDao		mPersistentPropertyDao;
-	private ICodeShelfNetworkDao		mCodeShelfNetworkDao;
-	private IDBPropertyDao				mDBPropertyDao;
-	private Thread						mShutdownHookThread;
-	private Runnable					mShutdownRunnable;
+	private WirelessDeviceEventHandler		mWirelessDeviceEventHandler;
+	private IWebSocketListener				mWebSocketListener;
+	private IGenericDao<Organization>		mOrganizationDao;
+	private IGenericDao<Facility>			mFacilityDao;
+	private IGenericDao<User>				mUserDao;
+	private IWirelessDeviceDao				mWirelessDeviceDao;
+	private IGenericDao<PersistentProperty>	mPersistentPropertyDao;
+	private IGenericDao<CodeShelfNetwork>	mCodeShelfNetworkDao;
+	private IGenericDao<DBProperty>			mDBPropertyDao;
+	private Thread							mShutdownHookThread;
+	private Runnable						mShutdownRunnable;
 
 	@Inject
 	public CodeShelfApplication(final IDaoRegistry inDaoRegistry,
 		final IWebSocketListener inWebSocketManager,
-		final IOrganizationDao inOrganizationDao,
-		final IFacilityDao inFacilityDao,
-		final IUserDao inUserDao,
+		final IGenericDao<Organization> inOrganizationDao,
+		final IGenericDao<Facility> inFacilityDao,
+		final IGenericDao<User> inUserDao,
 		final IWirelessDeviceDao inWirelessDeviceDao,
-		final IPersistentPropertyDao inPersistentPropertyDao,
-		final ICodeShelfNetworkDao inCodeShelfNetworkDao,
-		final IDBPropertyDao inDBPropertyDao) {
+		final IGenericDao<PersistentProperty> inPersistentPropertyDao,
+		final IGenericDao<CodeShelfNetwork> inCodeShelfNetworkDao,
+		final IGenericDao<DBProperty> inDBPropertyDao) {
 		mDaoRegistry = inDaoRegistry;
 		mWebSocketListener = inWebSocketManager;
 		mOrganizationDao = inOrganizationDao;
