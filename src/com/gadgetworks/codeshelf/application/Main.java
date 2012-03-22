@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Main.java,v 1.8 2012/03/22 06:58:44 jeffw Exp $
+ *  $Id: Main.java,v 1.9 2012/03/22 07:35:11 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -9,10 +9,8 @@ package com.gadgetworks.codeshelf.application;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.gadgetworks.codeshelf.model.dao.DaoProvider;
 import com.gadgetworks.codeshelf.model.dao.DaoRegistry;
 import com.gadgetworks.codeshelf.model.dao.DbFacade;
-import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.IDaoRegistry;
 import com.gadgetworks.codeshelf.model.dao.IDbFacade;
 import com.gadgetworks.codeshelf.model.dao.IGenericDao;
@@ -124,7 +122,6 @@ public final class Main {
 				bind(IWirelessDeviceDao.class).to(WirelessDeviceDao.class);
 				bind(IWebSessionReqCmdFactory.class).to(WebSessionReqCmdFactory.class);
 				bind(IDaoRegistry.class).to(DaoRegistry.class);
-				bind(IDaoProvider.class).to(DaoProvider.class);
 				bind(new TypeLiteral<IDbFacade<PersistABC>>() {
 				}).to(new TypeLiteral<DbFacade<PersistABC>>() {
 				});

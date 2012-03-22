@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: GenericDao.java,v 1.8 2012/03/22 06:21:47 jeffw Exp $
+ *  $Id: GenericDao.java,v 1.9 2012/03/22 07:35:11 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -97,8 +97,16 @@ public class GenericDao<T extends PersistABC> implements IGenericDao<T> {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#findById(java.lang.String)
 	 */
-	public final T findById(final String inId) {
+	public final T findByDomainId(final String inId) {
 		return mDbFacade.findByDomainId(mClass, inId);
+	}
+
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#findByIdList(java.util.List)
+	 */
+	public List<T> findByPersistentIdList(List<Long> inIdList) {
+		return mDbFacade.findByPersistentIdList(mClass, inIdList);
 	}
 
 	// --------------------------------------------------------------------------

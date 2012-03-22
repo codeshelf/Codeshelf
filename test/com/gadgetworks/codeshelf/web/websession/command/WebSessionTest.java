@@ -1,6 +1,7 @@
 package com.gadgetworks.codeshelf.web.websession.command;
 
 import java.util.Collection;
+import java.util.List;
 
 import junit.framework.Assert;
 import lombok.Getter;
@@ -43,7 +44,7 @@ public class WebSessionTest {
 		}
 
 		@Override
-		public User findById(String inId) {
+		public User findByDomainId(String inId) {
 			return null;
 		}
 
@@ -74,6 +75,12 @@ public class WebSessionTest {
 
 		@Override
 		public void removeDAOListeners() {
+		}
+
+		@Override
+		public List<User> findByPersistentIdList(List<Long> inIdList) {
+			// TODO Auto-generated method stub
+			return null;
 		}
 	}
 

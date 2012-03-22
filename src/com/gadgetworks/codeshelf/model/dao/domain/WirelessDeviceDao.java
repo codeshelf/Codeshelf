@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WirelessDeviceDao.java,v 1.2 2012/03/22 06:21:47 jeffw Exp $
+ *  $Id: WirelessDeviceDao.java,v 1.3 2012/03/22 07:35:11 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao.domain;
 
@@ -34,7 +34,7 @@ import com.google.inject.Singleton;
 @Singleton
 public final class WirelessDeviceDao extends GenericDao<WirelessDevice> implements IWirelessDeviceDao, IDeviceMaintainer {
 
-	private static final Log			LOGGER		= LogFactory.getLog(WirelessDeviceDao.class);
+	private static final Log				LOGGER	= LogFactory.getLog(WirelessDeviceDao.class);
 
 	private Map<NetAddress, WirelessDevice>	mAddressLookupMap;
 
@@ -43,26 +43,11 @@ public final class WirelessDeviceDao extends GenericDao<WirelessDevice> implemen
 		super(WirelessDevice.class, inDaoRegistry, inDbFacade);
 	}
 
-	// --------------------------------------------------------------------------
-	/**
-	 */
-//	protected void initCacheMap() {
-//		Query<WirelessDevice> query = Ebean.createQuery(mClass);
-//		query = query.setUseCache(true);
-//		Collection<WirelessDevice> wirelessDevices = query.findList();
-//		mCacheMap = new HashMap<Long, WirelessDevice>();
-//		mAddressLookupMap = new HashMap<NetAddress, WirelessDevice>();
-//		for (WirelessDevice wirelessDevice : wirelessDevices) {
-//			mCacheMap.put(wirelessDevice.getPersistentId(), wirelessDevice);
-//			mAddressLookupMap.put(wirelessDevice.getNetAddress(), wirelessDevice);
-//		}
-//	}
-
 	/* --------------------------------------------------------------------------
 	 * (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.controller.IDeviceMaintainer#findNetworkDeviceByMacAddr(java.lang.String)
 	 */
-	public final INetworkDevice findNetworkDeviceByMacAddr(NetMacAddress inMacAddr) {
+	public INetworkDevice findNetworkDeviceByMacAddr(NetMacAddress inMacAddr) {
 		return findWirelessDeviceByMacAddr(inMacAddr);
 	}
 
@@ -70,7 +55,7 @@ public final class WirelessDeviceDao extends GenericDao<WirelessDevice> implemen
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.controller.IDeviceMaintainer#getNetworkDevice(com.gadgetworks.codeshelf.command.NetAddress)
 	 */
-	public final INetworkDevice getNetworkDevice(NetAddress inAddress) {
+	public INetworkDevice getNetworkDevice(NetAddress inAddress) {
 		return mAddressLookupMap.get(inAddress);
 	}
 
@@ -88,7 +73,7 @@ public final class WirelessDeviceDao extends GenericDao<WirelessDevice> implemen
 	 */
 	public final void deviceUpdated(INetworkDevice inNetworkDevice, boolean inPersistentDataChanged) {
 		if (inPersistentDataChanged) {
-			try { 
+			try {
 				store((WirelessDevice) inNetworkDevice);
 			} catch (DaoException e) {
 				LOGGER.error("", e);
@@ -103,22 +88,22 @@ public final class WirelessDeviceDao extends GenericDao<WirelessDevice> implemen
 	 * @see com.gadgetworks.codeshelf.model.dao.ISystemDAO#findWirelessDeviceByMacAddr(java.lang.String)
 	 */
 	public final WirelessDevice findWirelessDeviceByMacAddr(NetMacAddress inMacAddr) {
-//		if (!USE_DAO_CACHE) {
-			Query<WirelessDevice> query = Ebean.createQuery(WirelessDevice.class);
-			query.where().eq("mMacAddr", inMacAddr.toString());
-			query = query.setUseCache(true);
-			return query.findUnique();
-//		} else {
-//			WirelessDevice result = null;
-//			if (mCacheMap == null) {
-//				initCacheMap();
-//			}
-//			for (WirelessDevice wirelessDevice : mCacheMap.values()) {
-//				if ((wirelessDevice.getMacAddress().equals(inMacAddr))) {
-//					result = wirelessDevice;
-//				}
-//			}
-//			return result;
-//		}
+		//		if (!USE_DAO_CACHE) {
+		Query<WirelessDevice> query = Ebean.createQuery(WirelessDevice.class);
+		query.where().eq("mMacAddr", inMacAddr.toString());
+		query = query.setUseCache(true);
+		return query.findUnique();
+		//		} else {
+		//			WirelessDevice result = null;
+		//			if (mCacheMap == null) {
+		//				initCacheMap();
+		//			}
+		//			for (WirelessDevice wirelessDevice : mCacheMap.values()) {
+		//				if ((wirelessDevice.getMacAddress().equals(inMacAddr))) {
+		//					result = wirelessDevice;
+		//				}
+		//			}
+		//			return result;
+		//		}
 	}
 }

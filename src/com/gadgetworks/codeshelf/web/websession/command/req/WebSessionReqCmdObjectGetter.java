@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectGetter.java,v 1.3 2012/03/22 06:21:47 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectGetter.java,v 1.4 2012/03/22 07:35:11 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -65,7 +65,7 @@ public class WebSessionReqCmdObjectGetter extends WebSessionReqCmdABC {
 			JsonNode parentClassNode = dataJsonNode.get(CLASS_NODE);
 			String parentClass = parentClassNode.getTextValue();
 			JsonNode parentIdNode = dataJsonNode.get(ID_NODE);
-			long parentId = parentIdNode.asLong();
+			long parentId = parentIdNode.getLongValue();
 			JsonNode getMethodNode = dataJsonNode.get(GETTER_METHOD);
 			String getterMethodName = getMethodNode.getTextValue();
 

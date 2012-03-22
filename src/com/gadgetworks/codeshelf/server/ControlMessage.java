@@ -1,9 +1,11 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ControlMessage.java,v 1.1 2011/01/21 02:22:35 jeffw Exp $
+ *  $Id: ControlMessage.java,v 1.2 2012/03/22 07:35:11 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.server;
+
+import com.gadgetworks.codeshelf.model.ControlProtocolEnum;
 
 /**
  * @author jeffw

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdFactory.java,v 1.3 2012/03/22 06:58:44 jeffw Exp $
+ *  $Id: WebSessionReqCmdFactory.java,v 1.4 2012/03/22 07:35:11 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -59,11 +59,11 @@ public final class WebSessionReqCmdFactory implements IWebSessionReqCmdFactory {
 				break;
 
 			case OBJECT_LISTENER_REQ:
-				result = new WebSessionReqCmdObjectListener(commandId, dataNode);
+				result = new WebSessionReqCmdObjectListener(commandId, dataNode, mDaoProvider);
 				break;
 
 			case OBJECT_UPDATE_REQ:
-				result = new WebSessionReqCmdObjectUpdate(commandId, dataNode);
+				result = new WebSessionReqCmdObjectUpdate(commandId, dataNode, mDaoProvider);
 				break;
 
 			default:

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectListener.java,v 1.2 2012/03/20 06:28:32 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectListener.java,v 1.3 2012/03/22 07:35:11 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -20,8 +20,8 @@ import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
 import org.codehaus.jackson.type.TypeReference;
 
-import com.avaje.ebean.Ebean;
-import com.avaje.ebean.Query;
+import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
+import com.gadgetworks.codeshelf.model.dao.IGenericDao;
 import com.gadgetworks.codeshelf.model.persist.PersistABC;
 import com.gadgetworks.codeshelf.web.websession.command.resp.IWebSessionRespCmd;
 import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdObjectListener;
@@ -42,13 +42,15 @@ public class WebSessionReqCmdObjectListener extends WebSessionReqCmdABC {
 	private Class<PersistABC>	mPersistenceClass;
 	private List<Long>			mObjectIdList;
 	private List<String>		mPropertyNames;
+	private IDaoProvider		mDaoProvider;
 
 	/**
 	 * @param inCommandId
 	 * @param inDataNodeAsJson
 	 */
-	public WebSessionReqCmdObjectListener(final String inCommandId, final JsonNode inDataNodeAsJson) {
+	public WebSessionReqCmdObjectListener(final String inCommandId, final JsonNode inDataNodeAsJson, final IDaoProvider inDaoProvider) {
 		super(inCommandId, inDataNodeAsJson);
+		mDaoProvider = inDaoProvider;
 	}
 
 	public final WebSessionReqCmdEnum getCommandEnum() {
@@ -104,8 +106,8 @@ public class WebSessionReqCmdObjectListener extends WebSessionReqCmdABC {
 		IWebSessionRespCmd result = null;
 
 		try {
-			Query<PersistABC> query = Ebean.find(mPersistenceClass);
-			List<PersistABC> methodResultsList = query.where().in("persistentId", mObjectIdList).findList();
+			IGenericDao<PersistABC> dao = mDaoProvider.getDaoInstance((Class<PersistABC>) mPersistenceClass);
+			List<PersistABC> methodResultsList = dao.findByPersistentIdList(mObjectIdList);
 
 			List<Map<String, String>> resultsList = new ArrayList<Map<String, String>>();
 			for (PersistABC matchedObject : methodResultsList) {
@@ -142,7 +144,7 @@ public class WebSessionReqCmdObjectListener extends WebSessionReqCmdABC {
 
 		return result;
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmd#doesPersist()

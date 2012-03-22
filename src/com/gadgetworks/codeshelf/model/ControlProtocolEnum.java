@@ -1,9 +1,9 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ControlProtocolEnum.java,v 1.1 2011/01/21 02:22:35 jeffw Exp $
+ *  $Id: ControlProtocolEnum.java,v 1.1 2012/03/22 07:35:11 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.server;
+package com.gadgetworks.codeshelf.model;
 
 import com.avaje.ebean.annotation.EnumMapping;
 

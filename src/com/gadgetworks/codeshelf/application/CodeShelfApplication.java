@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfApplication.java,v 1.23 2012/03/22 06:58:44 jeffw Exp $
+ *  $Id: CodeShelfApplication.java,v 1.24 2012/03/22 07:35:11 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -232,7 +232,7 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 	 * @param inPassword
 	 */
 	private void createUser(String inUserID, String inPassword) {
-		Organization organization = mOrganizationDao.findById(inUserID);
+		Organization organization = mOrganizationDao.findByDomainId(inUserID);
 		if (organization == null) {
 			organization = new Organization();
 			organization.setId(inUserID);
@@ -243,7 +243,7 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 			}
 		}
 
-		Facility facility = mFacilityDao.findById(inUserID);
+		Facility facility = mFacilityDao.findByDomainId(inUserID);
 		if (facility == null) {
 			facility = new Facility();
 			facility.setId(inUserID);
@@ -256,7 +256,7 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 			}
 		}
 
-		User user = mUserDao.findById(inUserID);
+		User user = mUserDao.findByDomainId(inUserID);
 		if (user == null) {
 			user = new User();
 			user.setActive(true);
@@ -278,7 +278,7 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 	 */
 	public byte getPreferredChannel() {
 		byte result = 0;
-		PersistentProperty preferredChannelProp = mPersistentPropertyDao.findById(PersistentProperty.FORCE_CHANNEL);
+		PersistentProperty preferredChannelProp = mPersistentPropertyDao.findByDomainId(PersistentProperty.FORCE_CHANNEL);
 		if (preferredChannelProp != null) {
 			if (ControllerABC.NO_PREFERRED_CHANNEL_TEXT.equals(preferredChannelProp.getCurrentValueAsStr())) {
 				result = ControllerABC.NO_PREFERRED_CHANNEL;
@@ -422,7 +422,7 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 		// Set our class loader to the system classloader, so ebean can find the enhanced classes.
 		Thread.currentThread().setContextClassLoader(ClassLoader.getSystemClassLoader());
 
-		DBProperty dbVersionProp = mDBPropertyDao.findById(DBProperty.DB_SCHEMA_VERSION);
+		DBProperty dbVersionProp = mDBPropertyDao.findByDomainId(DBProperty.DB_SCHEMA_VERSION);
 		if (dbVersionProp == null) {
 			// No database schema version has been set yet, so set it to the current schema version.
 			dbVersionProp = new DBProperty();

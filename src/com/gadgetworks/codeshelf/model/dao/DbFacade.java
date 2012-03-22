@@ -1,11 +1,12 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: DbFacade.java,v 1.1 2012/03/22 06:21:47 jeffw Exp $
+ *  $Id: DbFacade.java,v 1.2 2012/03/22 07:35:11 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
 import java.util.Collection;
+import java.util.List;
 
 import javax.persistence.PersistenceException;
 
@@ -55,6 +56,16 @@ public class DbFacade<T extends PersistABC> implements IDbFacade<T> {
 			LOGGER.error("", e);
 		}
 		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.dao.IDbFacade#findByIdList(java.util.List)
+	 */
+	public final List<T> findByPersistentIdList(Class<T> inClass, List<Long> inIdList) {
+		Query<T> query = Ebean.find(inClass);
+		List<T> methodResultsList = query.where().in("persistentId", inIdList).findList();
+		return methodResultsList;
 	}
 
 	// --------------------------------------------------------------------------

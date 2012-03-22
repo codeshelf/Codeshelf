@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdLaunchCode.java,v 1.2 2012/03/22 06:58:44 jeffw Exp $
+ *  $Id: WebSessionReqCmdLaunchCode.java,v 1.3 2012/03/22 07:35:11 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -45,7 +45,7 @@ public class WebSessionReqCmdLaunchCode extends WebSessionReqCmdABC {
 
 		JsonNode launchNode = getDataJsonNode().get("launchCode");
 		String launchCode = launchNode.getTextValue();
-		User user = mUserDao.findById(launchCode);
+		User user = mUserDao.findByDomainId(launchCode);
 		Organization organization = null;
 
 		// CRITICAL SECURITY CONCEPT.

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Util.java,v 1.13 2012/03/22 06:58:44 jeffw Exp $
+ *  $Id: Util.java,v 1.14 2012/03/22 07:35:11 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -212,12 +212,12 @@ public final class Util {
 	 */
 	public static void setLoggingLevelsFromPrefs(IGenericDao<PersistentProperty> inPersistentPropertyDao) {
 
-		PersistentProperty gwLogLvlProp = inPersistentPropertyDao.findById(PersistentProperty.GENERAL_INTF_LOG_LEVEL);
+		PersistentProperty gwLogLvlProp = inPersistentPropertyDao.findByDomainId(PersistentProperty.GENERAL_INTF_LOG_LEVEL);
 		Level level = Level.toLevel(gwLogLvlProp.getCurrentValueAsStr());
 		Logger.getRootLogger().setLevel(level);
 		Logger.getLogger("com.gadgetworks").setLevel(level);
 
-		gwLogLvlProp = inPersistentPropertyDao.findById(PersistentProperty.GATEWAY_INTF_LOG_LEVEL);
+		gwLogLvlProp = inPersistentPropertyDao.findByDomainId(PersistentProperty.GATEWAY_INTF_LOG_LEVEL);
 		level = Level.toLevel(gwLogLvlProp.getCurrentValueAsStr());
 		//Logger.getRootLogger().setLevel(level);
 		//Logger.getLogger("com.gadgetworks.codeshelf.controller").setLevel(level);
