@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: GenericDao.java,v 1.10 2012/03/22 20:17:07 jeffw Exp $
+ *  $Id: GenericDao.java,v 1.11 2012/03/23 06:04:44 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -108,11 +108,19 @@ public class GenericDao<T extends PersistABC> implements IGenericDao<T> {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#findById(java.lang.String)
 	 */
-	public final T findByDomainId(final String inId) {
+	public final T findByDomainId(final PersistABC inParentObject, final String inId) {
 		T result = null;
+		
+		String effectiveId;
+		if (inParentObject != null) {
+			effectiveId = inParentObject.getId() + "." + inId;
+		} else {
+			effectiveId = inId;
+		}
+		
 		try {
 			Query<T> query = Ebean.createQuery(mClass);
-			query.where().eq(T.getIdColumnName(), inId);
+			query.where().eq(T.getIdColumnName(), effectiveId);
 			//query = query.setUseCache(true);
 			result = query.findUnique();
 		} catch (PersistenceException e) {

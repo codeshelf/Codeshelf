@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ControllerABC.java,v 1.10 2011/02/15 02:39:46 jeffw Exp $
+ *  $Id: ControllerABC.java,v 1.11 2012/03/23 06:04:44 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.controller;
@@ -38,6 +38,9 @@ import com.gadgetworks.codeshelf.command.CommandNetMgmtABC;
 import com.gadgetworks.codeshelf.command.CommandNetMgmtCheck;
 import com.gadgetworks.codeshelf.command.CommandNetMgmtSetup;
 import com.gadgetworks.codeshelf.command.ICommand;
+import com.gadgetworks.codeshelf.model.dao.IGenericDao;
+import com.gadgetworks.codeshelf.model.persist.Facility;
+import com.gadgetworks.codeshelf.model.persist.PersistentProperty;
 import com.gadgetworks.codeshelf.query.IQuery;
 import com.gadgetworks.codeshelf.query.IResponse;
 
@@ -87,6 +90,8 @@ public abstract class ControllerABC implements IController {
 	private static final short									HIGH_WATER							= 14;
 	private static final int									MAX_NETWORK_TEST_NUM				= 64;
 
+	private IGenericDao<PersistentProperty>						mPersistentPropertyDao;
+	private Facility											mFacility;
 	protected IDeviceMaintainer									mDeviceMaintainer;
 	private Boolean												mShouldRun							= true;
 	private List<IWirelessInterface>							mInterfaceList;
@@ -120,10 +125,13 @@ public abstract class ControllerABC implements IController {
 	/**
 	 *  @param inSessionManager   The session manager for this controller.
 	 */
-	public ControllerABC(final IDeviceMaintainer inDeviceMaintainer, final List<IWirelessInterface> inInterfaceList) {
+	public ControllerABC(final IDeviceMaintainer inDeviceMaintainer, final List<IWirelessInterface> inInterfaceList, final Facility inFacility, final IGenericDao<PersistentProperty> inPersistentPropertyDao) {
 
 		mDeviceMaintainer = inDeviceMaintainer;
 		mInterfaceList = inInterfaceList;
+		mFacility = inFacility;
+		mPersistentPropertyDao = inPersistentPropertyDao;
+		
 		mServerAddress = IController.GATEWAY_ADDRESS;
 		mBroadcastAddress = IController.BROADCAST_ADDRESS;
 		mBroadcastNetworkId = IController.BROADCAST_NETWORK_ID;
@@ -197,9 +205,9 @@ public abstract class ControllerABC implements IController {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.controller.IController#startController(byte)
 	 */
-	public final void startController(final byte inPreferredChannel) {
+	public final void startController() {
 
-		mPreferredChannel = inPreferredChannel;
+		mPreferredChannel = getPreferredChannel();
 
 		LOGGER.info("Starting controller");
 		mControllerThread = new Thread(this, CONTROLLER_THREAD_NAME);
@@ -233,6 +241,22 @@ public abstract class ControllerABC implements IController {
 			}
 		}
 
+	}
+
+	/* --------------------------------------------------------------------------
+	 * Get the preferred channel from the preferences store.
+	 */
+	public final byte getPreferredChannel() {
+		byte result = 0;
+		PersistentProperty preferredChannelProp = mPersistentPropertyDao.findByDomainId(mFacility.getParentOrganization(), PersistentProperty.FORCE_CHANNEL);
+		if (preferredChannelProp != null) {
+			if (ControllerABC.NO_PREFERRED_CHANNEL_TEXT.equals(preferredChannelProp.getCurrentValueAsStr())) {
+				result = ControllerABC.NO_PREFERRED_CHANNEL;
+			} else {
+				result = (byte) preferredChannelProp.getCurrentValueAsInt();
+			}
+		}
+		return result;
 	}
 
 	/* --------------------------------------------------------------------------
@@ -427,14 +451,11 @@ public abstract class ControllerABC implements IController {
 
 								INetworkDevice networkDevice = query.getQueryNetworkDevice();
 
-								if ((networkDevice == null)
-										|| (networkDevice.getNetworkDeviceState().equals(NetworkDeviceStateEnum.LOST))
-										|| (query.getSendCount() > QUERY_SEND_RETRY_COUNT)) {
+								if ((networkDevice == null) || (networkDevice.getNetworkDeviceState().equals(NetworkDeviceStateEnum.LOST)) || (query.getSendCount() > QUERY_SEND_RETRY_COUNT)) {
 									// The session is invalid, so the query is invalid as well.
 
 								} else {
-									LOGGER.info("*** Resend query (" + queryCmd.getQuery().getSendCount() + ") "
-											+ Long.toHexString(queryCmd.getQuery().getQueryID()));
+									LOGGER.info("*** Resend query (" + queryCmd.getQuery().getSendCount() + ") " + Long.toHexString(queryCmd.getQuery().getQueryID()));
 									sendCommandNow(queryCmd, networkDevice.getNetAddress(), false);
 									query.incrementSendCount();
 									//query.setQueryTimeMillis(System.currentTimeMillis());
@@ -633,7 +654,7 @@ public abstract class ControllerABC implements IController {
 						}
 					}
 					break;
-					
+
 				case CODESHELF:
 					LOGGER.info("Rcvd cmd: " + inCommand.toString());
 					doProcessCodeShelfCmd((CommandCsABC) inCommand);
@@ -665,11 +686,7 @@ public abstract class ControllerABC implements IController {
 	 * (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.controller.IController#sendCommand(com.gadgetworks.codeshelf.command.ICommand, com.gadgetworks.codeshelf.command.NetworkId, com.gadgetworks.codeshelf.command.NetAddress, long)
 	 */
-	public final void sendCommandTimed(ICommand inCommand,
-		NetworkId inNetworkId,
-		NetAddress inDstAddr,
-		long inSendTimeNanos,
-		boolean inAckRequested) {
+	public final void sendCommandTimed(ICommand inCommand, NetworkId inNetworkId, NetAddress inDstAddr, long inSendTimeNanos, boolean inAckRequested) {
 
 		inCommand.setNetworkId(inNetworkId);
 		inCommand.setSrcAddr(mServerAddress);
@@ -691,8 +708,7 @@ public abstract class ControllerABC implements IController {
 		 * - If a command queue does exist for the destination then just put the command in it.
 		 */
 
-		if ((inAckRequested)
-				&& ((!inNetworkId.equals(IController.BROADCAST_NETWORK_ID)) && (!inDstAddr.equals(IController.BROADCAST_ADDRESS)))) {
+		if ((inAckRequested) && ((!inNetworkId.equals(IController.BROADCAST_NETWORK_ID)) && (!inDstAddr.equals(IController.BROADCAST_ADDRESS)))) {
 			//			synchronized (mPendingAcksMap) {
 
 			// Set the command ID.
@@ -837,9 +853,7 @@ public abstract class ControllerABC implements IController {
 			if (shouldRespond) {
 				// If this is a network check for us then response back to the sender.
 				// Send a network check response command back to the sender.
-				CommandNetMgmtCheck netCheck = new CommandNetMgmtCheck(CommandNetMgmtCheck.NETCHECK_RESP,
-					inCommand.getNetworkId(),
-					responseMacAddr);
+				CommandNetMgmtCheck netCheck = new CommandNetMgmtCheck(CommandNetMgmtCheck.NETCHECK_RESP, inCommand.getNetworkId(), responseMacAddr);
 				this.sendCommandNow(netCheck, mBroadcastAddress, false);
 			}
 		} else {
@@ -1233,9 +1247,8 @@ public abstract class ControllerABC implements IController {
 						Thread.sleep(2);
 
 						if (LOGGER.isInfoEnabled()) {
-							LOGGER.info("packet sched delay: " + ((commandSchedTime - lastCommandSchedTimeNanos) / 100000)
-									+ " act delay: " + ((System.nanoTime() - lastCommandSentTimeNanos) / 100000) + " behind: "
-									+ ((System.nanoTime() - commandSchedTime) / 100000));
+							LOGGER.info("packet sched delay: " + ((commandSchedTime - lastCommandSchedTimeNanos) / 100000) + " act delay: " + ((System.nanoTime() - lastCommandSentTimeNanos) / 100000)
+									+ " behind: " + ((System.nanoTime() - commandSchedTime) / 100000));
 						}
 						lastCommandSchedTimeNanos = commandSchedTime;
 					} else {

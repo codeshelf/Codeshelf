@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfController.java,v 1.4 2011/02/16 23:40:40 jeffw Exp $
+ *  $Id: CodeShelfController.java,v 1.5 2012/03/23 06:04:44 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.controller;
@@ -14,6 +14,9 @@ import org.apache.commons.logging.LogFactory;
 import com.gadgetworks.codeshelf.command.CommandControlABC;
 import com.gadgetworks.codeshelf.command.CommandControlButton;
 import com.gadgetworks.codeshelf.command.CommandCsABC;
+import com.gadgetworks.codeshelf.model.dao.IGenericDao;
+import com.gadgetworks.codeshelf.model.persist.Facility;
+import com.gadgetworks.codeshelf.model.persist.PersistentProperty;
 import com.gadgetworks.codeshelf.query.IQuery;
 import com.gadgetworks.codeshelf.query.IResponse;
 import com.gadgetworks.codeshelf.query.QueryActorDescriptor;
@@ -33,7 +36,7 @@ public final class CodeShelfController extends ControllerABC {
 	private static final int	STD_SLEEP_TIME			= 50;
 	// Timeout after 5 minutes.
 	private static final long	SESSION_CHECK_MILLIS	= 20 * 1000;
-	private static final long	SESSION_TIMEOUT_MILLIS	= 10 * 60 * 1000;							// 10 minutes
+	private static final long	SESSION_TIMEOUT_MILLIS	= 10 * 60 * 1000;								// 10 minutes
 
 	private long				mLastTimeChecked		= System.currentTimeMillis();
 
@@ -41,9 +44,11 @@ public final class CodeShelfController extends ControllerABC {
 	/**
 	 *  @param inSessionManager
 	 */
-	public CodeShelfController(final IDeviceMaintainer inDeviceMaintainer, final List<IWirelessInterface> inInterfaceList) {
-		super(inDeviceMaintainer, inInterfaceList);
-
+	public CodeShelfController(final IDeviceMaintainer inDeviceMaintainer,
+		final List<IWirelessInterface> inInterfaceList,
+		final Facility inFacility,
+		final IGenericDao<PersistentProperty> inPersistentPropertyDao) {
+		super(inDeviceMaintainer, inInterfaceList, inFacility, inPersistentPropertyDao);
 	}
 
 	/* --------------------------------------------------------------------------

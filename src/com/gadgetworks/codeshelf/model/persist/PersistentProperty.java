@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PersistentProperty.java,v 1.11 2012/03/22 20:17:06 jeffw Exp $
+ *  $Id: PersistentProperty.java,v 1.12 2012/03/23 06:04:44 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -31,16 +31,16 @@ import com.google.inject.Inject;
 @Entity
 public class PersistentProperty extends PersistABC {
 
-	public static final String	SHOW_CONSOLE_PREF			= "SHOWCONS";
-	public static final String	SHOW_CONNECTION_DEBUG_PREF	= "CONNDBUG";
+//	public static final String	SHOW_CONSOLE_PREF			= "SHOWCONS";
+//	public static final String	SHOW_CONNECTION_DEBUG_PREF	= "CONNDBUG";
 	public static final String	FORCE_CHANNEL				= "PREFCHAN";
 	public static final String	GENERAL_INTF_LOG_LEVEL		= "GENLLOGL";
 	public static final String	GATEWAY_INTF_LOG_LEVEL		= "GATELOGL";
-	public static final String	ACTIVEMQ_RUN				= "ACTMQRUN";
-	public static final String	ACTIVEMQ_USERID				= "ACTMQUID";
-	public static final String	ACTIVEMQ_PASSWORD			= "ACTMQPWD";
-	public static final String	ACTIVEMQ_JMS_PORTNUM		= "ACTMQJMS";
-	public static final String	ACTIVEMQ_STOMP_PORTNUM		= "ACTMQSTM";
+//	public static final String	ACTIVEMQ_RUN				= "ACTMQRUN";
+//	public static final String	ACTIVEMQ_USERID				= "ACTMQUID";
+//	public static final String	ACTIVEMQ_PASSWORD			= "ACTMQPWD";
+//	public static final String	ACTIVEMQ_JMS_PORTNUM		= "ACTMQJMS";
+//	public static final String	ACTIVEMQ_STOMP_PORTNUM		= "ACTMQSTM";
 
 	private static final long	serialVersionUID			= -7735810092352246641L;
 
@@ -57,6 +57,7 @@ public class PersistentProperty extends PersistABC {
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	@JsonIgnore
+	@Setter
 	@Getter
 	private Organization		parentOrganization;
 

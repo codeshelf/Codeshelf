@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PersistABC.java,v 1.14 2012/03/22 20:17:06 jeffw Exp $
+ *  $Id: PersistABC.java,v 1.15 2012/03/23 06:04:44 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -12,8 +12,9 @@ import javax.persistence.Id;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.Version;
 
-import lombok.Data;
+import lombok.Getter;
 import lombok.NonNull;
+import lombok.Setter;
 
 import org.codehaus.jackson.annotate.JsonProperty;
 
@@ -28,26 +29,32 @@ import org.codehaus.jackson.annotate.JsonProperty;
 //@Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
 @MappedSuperclass
 //@Entity
-@Data
+//@Data
 public abstract class PersistABC {
 
 	// This is the internal GUID for the object.
 	@Id
 	@Column(nullable = false)
 	@NonNull
+	@Getter
+	@Setter
 	private Long		persistentId;
 	// The domain ID
 	@Column(nullable = false)
+	@NonNull
+	@Getter
 	private String		id;
 	// This is not an application-editable field.
 	// It's for the private use of the ORM transaction system.
 	@Version
 	@Column(nullable = false)
+	@Getter
+	@Setter
 	private Timestamp	version;
 
 	public PersistABC() {
 	}
-	
+
 	public abstract PersistABC getParent();
 
 	// --------------------------------------------------------------------------
@@ -65,6 +72,21 @@ public abstract class PersistABC {
 	@JsonProperty
 	public final String getClassName() {
 		return this.getClass().getName();
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * To make sure the the domain object IDs are unique, we name them according to the parent object's get ID.
+	 * This will result in a hierarchical ID naming scheme to guarantee that objects have a unique name.
+	 * @param inParentObject
+	 * @param inId
+	 */
+	public final void setId(final PersistABC inParentObject, String inId) {
+		if (inParentObject != null) {
+			id = inParentObject.getId() + "." + inId;
+		} else {
+			id = inId;
+		}
 	}
 
 	/* --------------------------------------------------------------------------

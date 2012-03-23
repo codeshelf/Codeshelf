@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.12 2012/03/22 20:17:06 jeffw Exp $
+ *  $Id: Facility.java,v 1.13 2012/03/23 06:04:44 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -39,33 +39,39 @@ import com.google.inject.Inject;
 @Table(name = "FACILITY")
 public class Facility extends PersistABC {
 
-	private static final Log					LOGGER				= LogFactory.getLog(Facility.class);
+	private static final Log		LOGGER				= LogFactory.getLog(Facility.class);
 
-	private static final long					serialVersionUID	= 3001609308065821464L;
+	private static final long		serialVersionUID	= 3001609308065821464L;
 
 	// The facility description.
 	@Getter
 	@Setter
 	@Column(nullable = false)
-	private String								description;
+	private String					description;
 
 	// The owning organization.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	@JsonIgnore
 	@Getter
-	private Organization						parentOrganization;
+	private Organization			parentOrganization;
 
 	// For a network this is a list of all of the control groups that belong in the set.
 	@OneToMany(mappedBy = "parentFacility")
 	@JsonIgnore
 	@Getter
-	private List<Aisle>							aisles				= new ArrayList<Aisle>();
+	private List<Aisle>				aisles				= new ArrayList<Aisle>();
+
+	// For a network this is a list of all of the control groups that belong in the set.
+	@OneToMany(mappedBy = "parentFacility")
+	@JsonIgnore
+	@Getter
+	private List<CodeShelfNetwork>	networks			= new ArrayList<CodeShelfNetwork>();
 
 	public Facility() {
 		description = "";
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * @return
@@ -77,30 +83,30 @@ public class Facility extends PersistABC {
 	public final void setparentOrganization(Organization inparentOrganization) {
 		parentOrganization = inparentOrganization;
 	}
-	
+
 	public final String getParentOrganizationID() {
 		return getParentOrganization().getId();
 	}
 
-//	// We always need to return the object cached in the DAO.
-//	public final List<Aisle> getAisles() {
-//		if (IGenericDao.USE_DAO_CACHE) {
-//			List<Aisle> result = new ArrayList<Aisle>();
-//			AisleDao aisleDao = new AisleDao();
-//			if (!aisleDao.isObjectPersisted(this)) {
-//				result = aisles;
-//			} else {
-//				for (Aisle aisle : aisleDao.getAll()) {
-//					if (aisle.getParentFacility().equals(this)) {
-//						result.add(aisle);
-//					}
-//				}
-//			}
-//			return result;
-//		} else {
-//			return aisles;
-//		}
-//	}
+	//	// We always need to return the object cached in the DAO.
+	//	public final List<Aisle> getAisles() {
+	//		if (IGenericDao.USE_DAO_CACHE) {
+	//			List<Aisle> result = new ArrayList<Aisle>();
+	//			AisleDao aisleDao = new AisleDao();
+	//			if (!aisleDao.isObjectPersisted(this)) {
+	//				result = aisles;
+	//			} else {
+	//				for (Aisle aisle : aisleDao.getAll()) {
+	//					if (aisle.getParentFacility().equals(this)) {
+	//						result.add(aisle);
+	//					}
+	//				}
+	//			}
+	//			return result;
+	//		} else {
+	//			return aisles;
+	//		}
+	//	}
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void addAisle(Aisle inAisle) {

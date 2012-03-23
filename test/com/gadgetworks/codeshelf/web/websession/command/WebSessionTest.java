@@ -11,6 +11,7 @@ import org.junit.Test;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.IDaoListener;
 import com.gadgetworks.codeshelf.model.dao.IGenericDao;
+import com.gadgetworks.codeshelf.model.persist.PersistABC;
 import com.gadgetworks.codeshelf.model.persist.User;
 import com.gadgetworks.codeshelf.web.websession.WebSession;
 import com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmdFactory;
@@ -43,7 +44,7 @@ public class WebSessionTest {
 		}
 
 		@Override
-		public User findByDomainId(String inId) {
+		public User findByDomainId(PersistABC inParentObject, String inId) {
 			return null;
 		}
 

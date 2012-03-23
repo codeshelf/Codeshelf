@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: IController.java,v 1.5 2011/02/05 01:41:56 jeffw Exp $
+ *  $Id: IController.java,v 1.6 2012/03/23 06:04:44 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.controller;
 
@@ -63,7 +63,7 @@ public interface IController extends Runnable {
 	/**
 	 *	Perform a controlled start of the controller.
 	 */
-	void startController(byte inPreferredChannel);
+	void startController();
 
 	// --------------------------------------------------------------------------
 	/**

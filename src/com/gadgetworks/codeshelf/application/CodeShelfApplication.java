@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfApplication.java,v 1.24 2012/03/22 07:35:11 jeffw Exp $
+ *  $Id: CodeShelfApplication.java,v 1.25 2012/03/23 06:04:44 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -13,6 +13,7 @@ import java.util.Collection;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.log4j.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,7 +28,6 @@ import com.gadgetworks.codeshelf.controller.IController;
 import com.gadgetworks.codeshelf.controller.IWirelessInterface;
 import com.gadgetworks.codeshelf.controller.NetworkDeviceStateEnum;
 import com.gadgetworks.codeshelf.controller.SnapInterface;
-import com.gadgetworks.codeshelf.model.PreferencesStore;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GWEbeanNamingConvention;
 import com.gadgetworks.codeshelf.model.dao.H2SchemaManager;
@@ -128,26 +128,31 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 		startEmbeddedDB();
 		LOGGER.info("Database started");
 
-		PreferencesStore.initPreferencesStore(mPersistentPropertyDao);
+		// Some persistent objects need some of their fields set to a base/start state when the system restarts.
+		initializeApplicationData();
 
-		Util.setLoggingLevelsFromPrefs(mPersistentPropertyDao);
+		Collection<Organization> organizations = mOrganizationDao.getAll();
+		for (Organization organization : organizations) {
+			initPreferencesStore(organization, mPersistentPropertyDao);
+			Util.setLoggingLevelsFromPrefs(organization, mPersistentPropertyDao);
+			for (Facility facility : organization.getFacilities()) {
 
-		List<IWirelessInterface> interfaceList = new ArrayList<IWirelessInterface>();
-		// Create a CodeShelf interface for each CodeShelf network we have.
-		for (CodeShelfNetwork network : mCodeShelfNetworkDao.getAll()) {
-			SnapInterface snapInterface = new SnapInterface(network, mCodeShelfNetworkDao, mWirelessDeviceDao);
-			network.setWirelessInterface(snapInterface);
-			interfaceList.add(snapInterface);
+				List<IWirelessInterface> interfaceList = new ArrayList<IWirelessInterface>();
+				// Create a CodeShelf interface for each CodeShelf network we have.
+				for (CodeShelfNetwork network : facility.getNetworks()) {
+					SnapInterface snapInterface = new SnapInterface(network, mCodeShelfNetworkDao, mWirelessDeviceDao);
+					network.setWirelessInterface(snapInterface);
+					interfaceList.add(snapInterface);
+				}
+
+				mController = new CodeShelfController(mWirelessDeviceDao, interfaceList, facility, mPersistentPropertyDao);
+			}
 		}
-		mController = new CodeShelfController(mWirelessDeviceDao, interfaceList);
 
 		mWirelessDeviceEventHandler = new WirelessDeviceEventHandler(mController, mWirelessDeviceDao);
 
 		// Start the WebSocket UX handler
 		mWebSocketListener.start();
-
-		// Some persistent objects need some of their fields set to a base/start state when the system restarts.
-		initializeApplicationData();
 
 		// Start the ActiveMQ test server if required.
 		//		property = PersistentProperty.DAO.findById(PersistentProperty.ACTIVEMQ_RUN);
@@ -158,11 +163,9 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 		//		// Start the JMS message handler.
 		//		JmsHandler.startJmsHandler();
 
-		byte preferredChannel = getPreferredChannel();
-
 		// Start the background startup and wait until it's finished.
 		LOGGER.info("Starting controller");
-		mController.startController(preferredChannel);
+		mController.startController();
 
 		// Initialize the TTS system.
 		// (Do it on a thread, so we don't pause the start of the application.)
@@ -200,10 +203,56 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 
 		LOGGER.info("Application terminated normally");
 
-		//LoggerFactory.releaseAll();
-		//LogManager.shutdown();
 	}
 
+	public void initPreferencesStore(Organization inOrganization, IGenericDao<PersistentProperty> inPersistentPropertyDao) {
+		initPreference(inOrganization, PersistentProperty.FORCE_CHANNEL, "Preferred wireless channel", ControllerABC.NO_PREFERRED_CHANNEL_TEXT);
+		initPreference(inOrganization, PersistentProperty.GENERAL_INTF_LOG_LEVEL, "Preferred general log level", Level.INFO.toString());
+		initPreference(inOrganization, PersistentProperty.GATEWAY_INTF_LOG_LEVEL, "Preferred gateway log level", Level.INFO.toString());
+//		initPreference(PersistentProperty.ACTIVEMQ_RUN, "Run ActiveMQ", String.valueOf(false));
+//		initPreference(PersistentProperty.ACTIVEMQ_USERID, "ActiveMQ User Id", "");
+//		initPreference(PersistentProperty.ACTIVEMQ_PASSWORD, "ActiveMQ Password", "");
+//		initPreference(PersistentProperty.ACTIVEMQ_STOMP_PORTNUM, "ActiveMQ STOMP Portnum", "61613");
+//		initPreference(PersistentProperty.ACTIVEMQ_JMS_PORTNUM, "ActiveMQ JMS Portnum", "61616");
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 *  @param inPropertyID
+	 *  @param inDescription
+	 *  @param inDefaultValue
+	 */
+	private void initPreference(Organization inOrganization, String inPropertyID, String inDescription, String inDefaultValue) {
+		boolean shouldUpdate = false;
+
+		// Find the property in the DB.
+		PersistentProperty property = mPersistentPropertyDao.findByDomainId(inOrganization, inPropertyID);
+
+		// If the property doesn't exist then create it.
+		if (property == null) {
+			property = new PersistentProperty();
+			property.setId(inOrganization, inPropertyID);
+			property.setParentOrganization(inOrganization);
+			property.setCurrentValueAsStr(inDefaultValue);
+			property.setDefaultValueAsStr(inDefaultValue);
+			shouldUpdate = true;
+		}
+
+		// If the stored default value doesn't match then change it.
+		if (!property.getDefaultValueAsStr().equals(inDefaultValue)) {
+			property.setDefaultValueAsStr(inDefaultValue);
+			shouldUpdate = true;
+		}
+
+		// If the property changed then we need to persist the change.
+		if (shouldUpdate) {
+			try {
+				mPersistentPropertyDao.store(property);
+			} catch (DaoException e) {
+				LOGGER.error("", e);
+			}
+		}
+	}
 	// --------------------------------------------------------------------------
 	/**
 	 *	Reset some of the persistent object fields to a base state at start-up.
@@ -232,10 +281,10 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 	 * @param inPassword
 	 */
 	private void createUser(String inUserID, String inPassword) {
-		Organization organization = mOrganizationDao.findByDomainId(inUserID);
+		Organization organization = mOrganizationDao.findByDomainId(null, inUserID);
 		if (organization == null) {
 			organization = new Organization();
-			organization.setId(inUserID);
+			organization.setId(null, inUserID);
 			try {
 				mOrganizationDao.store(organization);
 			} catch (DaoException e) {
@@ -243,10 +292,10 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 			}
 		}
 
-		Facility facility = mFacilityDao.findByDomainId(inUserID);
+		Facility facility = mFacilityDao.findByDomainId(organization, inUserID);
 		if (facility == null) {
 			facility = new Facility();
-			facility.setId(inUserID);
+			facility.setId(organization, inUserID);
 			facility.setDescription(inUserID);
 			facility.setparentOrganization(organization);
 			try {
@@ -256,11 +305,11 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 			}
 		}
 
-		User user = mUserDao.findByDomainId(inUserID);
+		User user = mUserDao.findByDomainId(organization, inUserID);
 		if (user == null) {
 			user = new User();
 			user.setActive(true);
-			user.setId(inUserID);
+			user.setId(organization, inUserID);
 			if (inPassword != null) {
 				user.setHashedPassword(inPassword);
 			}
@@ -271,22 +320,6 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 				LOGGER.error(null, e);
 			}
 		}
-	}
-
-	/* --------------------------------------------------------------------------
-	 * Get the preferred channel from the preferences store.
-	 */
-	public byte getPreferredChannel() {
-		byte result = 0;
-		PersistentProperty preferredChannelProp = mPersistentPropertyDao.findByDomainId(PersistentProperty.FORCE_CHANNEL);
-		if (preferredChannelProp != null) {
-			if (ControllerABC.NO_PREFERRED_CHANNEL_TEXT.equals(preferredChannelProp.getCurrentValueAsStr())) {
-				result = ControllerABC.NO_PREFERRED_CHANNEL;
-			} else {
-				result = (byte) preferredChannelProp.getCurrentValueAsInt();
-			}
-		}
-		return result;
 	}
 
 	/* --------------------------------------------------------------------------
@@ -422,11 +455,11 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 		// Set our class loader to the system classloader, so ebean can find the enhanced classes.
 		Thread.currentThread().setContextClassLoader(ClassLoader.getSystemClassLoader());
 
-		DBProperty dbVersionProp = mDBPropertyDao.findByDomainId(DBProperty.DB_SCHEMA_VERSION);
+		DBProperty dbVersionProp = mDBPropertyDao.findByDomainId(null, DBProperty.DB_SCHEMA_VERSION);
 		if (dbVersionProp == null) {
 			// No database schema version has been set yet, so set it to the current schema version.
 			dbVersionProp = new DBProperty();
-			dbVersionProp.setId(DBProperty.DB_SCHEMA_VERSION);
+			dbVersionProp.setId(null, DBProperty.DB_SCHEMA_VERSION);
 			dbVersionProp.setValueStr(Integer.toString(ISchemaManager.DATABASE_VERSION_CUR));
 			inServer.save(dbVersionProp);
 		} else {
