@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdFactory.java,v 1.5 2012/03/22 20:17:06 jeffw Exp $
+ *  $Id: WebSessionReqCmdFactory.java,v 1.6 2012/03/24 06:49:33 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -11,7 +11,7 @@ import org.codehaus.jackson.JsonNode;
 
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.IGenericDao;
-import com.gadgetworks.codeshelf.model.persist.User;
+import com.gadgetworks.codeshelf.model.persist.Organization;
 import com.gadgetworks.codeshelf.web.websession.command.IWebSessionCmd;
 import com.google.inject.Inject;
 
@@ -21,14 +21,14 @@ import com.google.inject.Inject;
  */
 public final class WebSessionReqCmdFactory implements IWebSessionReqCmdFactory {
 
-	private static final Log		LOGGER	= LogFactory.getLog(WebSessionReqCmdFactory.class);
+	private static final Log			LOGGER	= LogFactory.getLog(WebSessionReqCmdFactory.class);
 
-	private IGenericDao<User>		mUserDao;
-	private IDaoProvider			mDaoProvider;
+	private IGenericDao<Organization>	mOrganizationDao;
+	private IDaoProvider				mDaoProvider;
 
 	@Inject
-	public WebSessionReqCmdFactory(final IGenericDao<User> inUserDao, final IDaoProvider inDaoPovider) {
-		mUserDao = inUserDao;
+	public WebSessionReqCmdFactory(final IGenericDao<Organization> inOrganizationDao, final IDaoProvider inDaoPovider) {
+		mOrganizationDao = inOrganizationDao;
 		mDaoProvider = inDaoPovider;
 	}
 
@@ -47,7 +47,7 @@ public final class WebSessionReqCmdFactory implements IWebSessionReqCmdFactory {
 
 		switch (commandEnum) {
 			case LAUNCH_CODE_CHECK:
-				result = new WebSessionReqCmdLaunchCode(commandId, dataNode, mUserDao);
+				result = new WebSessionReqCmdLaunchCode(commandId, dataNode, mOrganizationDao);
 				break;
 
 			case OBJECT_GETTER_REQ:
@@ -60,6 +60,10 @@ public final class WebSessionReqCmdFactory implements IWebSessionReqCmdFactory {
 
 			case OBJECT_UPDATE_REQ:
 				result = new WebSessionReqCmdObjectUpdate(commandId, dataNode, mDaoProvider);
+				break;
+
+			case OBJECT_FILTER_REQ:
+				result = new WebSessionReqCmdObjectFilter(commandId, dataNode, mDaoProvider);
 				break;
 
 			default:

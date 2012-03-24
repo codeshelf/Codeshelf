@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionRespCmdEnum.java,v 1.1 2012/03/19 04:05:19 jeffw Exp $
+ *  $Id: WebSessionRespCmdEnum.java,v 1.2 2012/03/24 06:49:33 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.resp;
 
@@ -13,11 +13,12 @@ public enum WebSessionRespCmdEnum {
 	INVALID(WebSessionRespCmdNum.INVALID, "INVALID"),
 	LAUNCH_CODE_RESP(WebSessionRespCmdNum.LAUNCH_CODE_RESP, "LAUNCH_CODE_RESP"),
 	OBJECT_GETTER_RESP(WebSessionRespCmdNum.OBJECT_GETTER_RESP, "OBJECT_GETTER_RESP"),
-	OBJECT_CREATE_RESP(WebSessionRespCmdNum.OBJECT_CREATE_RESP, "OBJECT_CREATE_RESP"),
 	OBJECT_GETBYID_RESP(WebSessionRespCmdNum.OBJECT_GETBYID_RESP, "OBJECT_GETBYID_RESP"),
+	OBJECT_CREATE_RESP(WebSessionRespCmdNum.OBJECT_CREATE_RESP, "OBJECT_CREATE_RESP"),
 	OBJECT_UPDATE_RESP(WebSessionRespCmdNum.OBJECT_UPDATE_RESP, "OBJECT_UPDATE_RESP"),
 	OBJECT_DELETE_RESP(WebSessionRespCmdNum.OBJECT_DELETE_RESP, "OBJECT_DELETE_RESP"),
-	OBJECT_LISTENER_RESP(WebSessionRespCmdNum.OBJECT_LISTENER_RESP, "OBJECT_LISTENER_RESP");
+	OBJECT_LISTENER_RESP(WebSessionRespCmdNum.OBJECT_LISTENER_RESP, "OBJECT_LISTENER_RESP"),
+	OBJECT_FILTER_RESP(WebSessionRespCmdNum.OBJECT_LISTENER_RESP, "OBJECT_FILTER_RESP");
 
 	private int		mValue;
 	private String	mName;

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: GenericDao.java,v 1.11 2012/03/23 06:04:44 jeffw Exp $
+ *  $Id: GenericDao.java,v 1.12 2012/03/24 06:49:33 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -94,7 +94,7 @@ public class GenericDao<T extends PersistABC> implements IGenericDao<T> {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#loadByPersistentId(java.lang.Integer)
 	 */
-	public final T loadByPersistentId(Long inPersistentId) {
+	public final T findByPersistentId(Long inPersistentId) {
 		T result = null;
 		try {
 			result = Ebean.find(mClass, inPersistentId);
@@ -141,6 +141,16 @@ public class GenericDao<T extends PersistABC> implements IGenericDao<T> {
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#findByIdList(java.util.List)
+	 */
+	public final List<T> findByFilter(String inFilter) {
+		Query<T> query = Ebean.find(mClass);
+		List<T> methodResultsList = query.where(inFilter).findList();
+		return methodResultsList;
+	}
+
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#store(java.lang.Object)
 	 */
 	public final void store(final T inDomainObject) throws DaoException {
@@ -168,7 +178,7 @@ public class GenericDao<T extends PersistABC> implements IGenericDao<T> {
 	 */
 	public final Collection<T> getAll() {
 		Query<T> query = Ebean.createQuery(mClass);
-		query = query.setUseCache(true);
+		//query = query.setUseCache(true);
 		return query.findList();
 	}
 

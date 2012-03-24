@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdLaunchCode.java,v 1.3 2012/03/22 07:35:11 jeffw Exp $
+ *  $Id: WebSessionReqCmdLaunchCode.java,v 1.4 2012/03/24 06:49:33 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -9,11 +9,22 @@ import org.codehaus.jackson.JsonNode;
 
 import com.gadgetworks.codeshelf.model.dao.IGenericDao;
 import com.gadgetworks.codeshelf.model.persist.Organization;
-import com.gadgetworks.codeshelf.model.persist.User;
+import com.gadgetworks.codeshelf.web.websession.IWebSession;
 import com.gadgetworks.codeshelf.web.websession.command.resp.IWebSessionRespCmd;
 import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdLaunchCode;
 
 /**
+ * 
+ * The format of the command is:
+ * 
+ * command {
+ * 	id: <cmd_id>,
+ * 	type: LAUNCH_CODE_CHECK,
+ * 	data {
+ * 		launchCode: <launch_code>
+ * 	}
+ * }
+ * 
  * @author jeffw
  *
  */
@@ -25,18 +36,18 @@ public class WebSessionReqCmdLaunchCode extends WebSessionReqCmdABC {
 	private static final String	FAIL		= "FAIL";
 	private static final String	NEED_LOGIN	= "NEED_LOGIN";
 
-	private IGenericDao<User>	mUserDao;
+	private IGenericDao<Organization>	mOrganizationDao;
 
-	public WebSessionReqCmdLaunchCode(final String inCommandId, final JsonNode inDataNodeAsJson, final IGenericDao<User> inUserDao) {
+	public WebSessionReqCmdLaunchCode(final String inCommandId, final JsonNode inDataNodeAsJson, final IGenericDao<Organization> inOrganizationDao) {
 		super(inCommandId, inDataNodeAsJson);
-		mUserDao = inUserDao;
+		mOrganizationDao = inOrganizationDao;
 	}
 
 	public final WebSessionReqCmdEnum getCommandEnum() {
 		return WebSessionReqCmdEnum.LAUNCH_CODE_CHECK;
 	}
 
-	protected final IWebSessionRespCmd doExec() {
+	protected final IWebSessionRespCmd doExec(IWebSession inWebSession) {
 		IWebSessionRespCmd result = null;
 
 		String authenticateResult = FAIL;
@@ -45,19 +56,17 @@ public class WebSessionReqCmdLaunchCode extends WebSessionReqCmdABC {
 
 		JsonNode launchNode = getDataJsonNode().get("launchCode");
 		String launchCode = launchNode.getTextValue();
-		User user = mUserDao.findByDomainId(launchCode);
-		Organization organization = null;
+		Organization organization = mOrganizationDao.findByDomainId(null, launchCode);
 
 		// CRITICAL SECURITY CONCEPT.
 		// LaunchCodes are anonymous users that we create WITHOUT passwords or final userIDs.
 		// If a user has a NULL hashed password then this is a launch code (promo) user.
 		// A user with a launch code can elect to become a real user and change their userId (and created a password).
-		if ((user != null) && (user.getActive())) {
-			if (user.getHashedPassword() != null) {
-				authenticateResult = NEED_LOGIN;
-			} else {
+		if (organization != null) {
+			// If there are any users associated with this organization then the launch code is no good,
+			// and the user must login.
+			if (organization.getUsers().size() == 0) {
 				authenticateResult = SUCCEED;
-				organization = user.getParentOrganization();
 			}
 		}
 
@@ -72,5 +81,9 @@ public class WebSessionReqCmdLaunchCode extends WebSessionReqCmdABC {
 	 */
 	public final boolean doesPersist() {
 		return false;
+	}
+
+	public final IWebSessionRespCmd getResponseCmd() {
+		return null;
 	}
 }

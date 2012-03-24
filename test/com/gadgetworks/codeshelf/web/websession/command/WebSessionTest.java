@@ -11,8 +11,9 @@ import org.junit.Test;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.IDaoListener;
 import com.gadgetworks.codeshelf.model.dao.IGenericDao;
+import com.gadgetworks.codeshelf.model.persist.Organization;
 import com.gadgetworks.codeshelf.model.persist.PersistABC;
-import com.gadgetworks.codeshelf.model.persist.User;
+import com.gadgetworks.codeshelf.web.websession.IWebSession;
 import com.gadgetworks.codeshelf.web.websession.WebSession;
 import com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmdFactory;
 import com.gadgetworks.codeshelf.web.websession.command.req.WebSessionReqCmdFactory;
@@ -31,55 +32,43 @@ public class WebSessionTest {
 		}
 	}
 
-	private class TestUserDao implements IGenericDao<User> {
+	private class TestOrganizationDao implements IGenericDao<Organization> {
 
-		//		@Override
-		//		public boolean isObjectPersisted(User inDomainObject) {
-		//			return false;
-		//		}
-
-		@Override
-		public User loadByPersistentId(Long inID) {
+		public Organization findByPersistentId(Long inID) {
 			return null;
 		}
 
-		@Override
-		public User findByDomainId(PersistABC inParentObject, String inId) {
+		public Organization findByDomainId(PersistABC inParentObject, String inId) {
 			return null;
 		}
 
-		@Override
-		public void store(User inDomainObject) throws DaoException {
+		public void store(Organization inDomainObject) throws DaoException {
 		}
 
-		@Override
-		public void delete(User inDomainObject) throws DaoException {
+		public void delete(Organization inDomainObject) throws DaoException {
 		}
 
-		@Override
-		public Collection<User> getAll() {
+		public Collection<Organization> getAll() {
 			return null;
 		}
 
-		@Override
-		public void pushNonPersistentUpdates(User inDomainObject) {
+		public void pushNonPersistentUpdates(Organization inDomainObject) {
 		}
 
-		@Override
 		public void registerDAOListener(IDaoListener inListener) {
 		}
 
-		@Override
 		public void unregisterDAOListener(IDaoListener inListener) {
 		}
 
-		@Override
 		public void removeDAOListeners() {
 		}
 
-		@Override
-		public List<User> findByPersistentIdList(List<Long> inIdList) {
-			// TODO Auto-generated method stub
+		public List<Organization> findByPersistentIdList(List<Long> inIdList) {
+			return null;
+		}
+
+		public List<Organization> findByFilter(String inFilter) {
 			return null;
 		}
 	}
@@ -87,8 +76,8 @@ public class WebSessionTest {
 	@Test
 	public void testProcessMessageLaunchCodeCheck() {
 		TestWebSocket testWebSocket = new TestWebSocket();
-		IWebSessionReqCmdFactory factory = new WebSessionReqCmdFactory(new TestUserDao(), null);
-		WebSession webSession = new WebSession(testWebSocket, factory);
+		IWebSessionReqCmdFactory factory = new WebSessionReqCmdFactory(new TestOrganizationDao(), null);
+		IWebSession webSession = new WebSession(testWebSocket, factory);
 		String inMessage = "{\"id\":\"cmdid_5\",\"type\":\"LAUNCH_CODE_CHECK\",\"data\":{\"launchCode\":\"12345\"}}";
 
 		webSession.processMessage(inMessage);

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfApplication.java,v 1.25 2012/03/23 06:04:44 jeffw Exp $
+ *  $Id: CodeShelfApplication.java,v 1.26 2012/03/24 06:49:33 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -260,8 +260,8 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 	private void initializeApplicationData() {
 
 		// Create two dummy users for testing.
-		createUser("1234", "passowrd");
-		createUser("12345", null);
+		createOrganzation("1234");
+		createOrganzation("12345");
 
 		// Some radio device fields have no meaning from the last invocation of the application.
 		for (WirelessDevice wirelessDevice : mWirelessDeviceDao.getAll()) {
@@ -277,14 +277,14 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * @param inUserID
+	 * @param inOrganizationId
 	 * @param inPassword
 	 */
-	private void createUser(String inUserID, String inPassword) {
-		Organization organization = mOrganizationDao.findByDomainId(null, inUserID);
+	private void createOrganzation(String inOrganizationId) {
+		Organization organization = mOrganizationDao.findByDomainId(null, inOrganizationId);
 		if (organization == null) {
 			organization = new Organization();
-			organization.setId(null, inUserID);
+			organization.setId(null, inOrganizationId);
 			try {
 				mOrganizationDao.store(organization);
 			} catch (DaoException e) {
@@ -292,30 +292,14 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 			}
 		}
 
-		Facility facility = mFacilityDao.findByDomainId(organization, inUserID);
+		Facility facility = mFacilityDao.findByDomainId(organization, inOrganizationId);
 		if (facility == null) {
 			facility = new Facility();
-			facility.setId(organization, inUserID);
-			facility.setDescription(inUserID);
+			facility.setId(organization, inOrganizationId);
+			facility.setDescription(inOrganizationId);
 			facility.setparentOrganization(organization);
 			try {
 				mFacilityDao.store(facility);
-			} catch (DaoException e) {
-				LOGGER.error(null, e);
-			}
-		}
-
-		User user = mUserDao.findByDomainId(organization, inUserID);
-		if (user == null) {
-			user = new User();
-			user.setActive(true);
-			user.setId(organization, inUserID);
-			if (inPassword != null) {
-				user.setHashedPassword(inPassword);
-			}
-			user.setParentOrganization(organization);
-			try {
-				mUserDao.store(user);
 			} catch (DaoException e) {
 				LOGGER.error(null, e);
 			}

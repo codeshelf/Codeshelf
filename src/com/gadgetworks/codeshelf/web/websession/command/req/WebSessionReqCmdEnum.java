@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdEnum.java,v 1.1 2012/03/19 04:05:19 jeffw Exp $
+ *  $Id: WebSessionReqCmdEnum.java,v 1.2 2012/03/24 06:49:33 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -13,11 +13,12 @@ public enum WebSessionReqCmdEnum {
 	INVALID(WebSessionReqCmdNum.INVALID, "INVALID"),
 	LAUNCH_CODE_CHECK(WebSessionReqCmdNum.LAUNCH_CODE_CHECK, "LAUNCH_CODE_CHECK"),
 	OBJECT_GETTER_REQ(WebSessionReqCmdNum.OBJECT_GETTER_REQ, "OBJECT_GETTER_REQ"),
+//	OBJECT_GETBYID_REQ(WebSessionReqCmdNum.OBJECT_GETBYID_REQ, "OBJECT_GETBYID_REQ"),
 	OBJECT_CREATE_REQ(WebSessionReqCmdNum.OBJECT_CREATE_REQ, "OBJECT_CREATE_REQ"),
-	OBJECT_GETBYID_REQ(WebSessionReqCmdNum.OBJECT_GETBYID_REQ, "OBJECT_GETBYID_REQ"),
 	OBJECT_UPDATE_REQ(WebSessionReqCmdNum.OBJECT_UPDATE_REQ, "OBJECT_UPDATE_REQ"),
 	OBJECT_DELETE_REQ(WebSessionReqCmdNum.OBJECT_DELETE_REQ, "OBJECT_DELETE_REQ"),
-	OBJECT_LISTENER_REQ(WebSessionReqCmdNum.OBJECT_LISTENER_REQ, "OBJECT_LISTENER_REQ");
+	OBJECT_LISTENER_REQ(WebSessionReqCmdNum.OBJECT_LISTENER_REQ, "OBJECT_LISTENER_REQ"),
+	OBJECT_FILTER_REQ(WebSessionReqCmdNum.OBJECT_FILTER_REQ, "OBJECT_FILTER_REQ");
 
 	private int		mValue;
 	private String	mName;
@@ -43,9 +44,9 @@ public enum WebSessionReqCmdEnum {
 				result = WebSessionReqCmdEnum.OBJECT_GETTER_REQ;
 				break;
 
-			case WebSessionReqCmdNum.OBJECT_GETBYID_REQ:
-				result = WebSessionReqCmdEnum.OBJECT_GETBYID_REQ;
-				break;
+//			case WebSessionReqCmdNum.OBJECT_GETBYID_REQ:
+//				result = WebSessionReqCmdEnum.OBJECT_GETBYID_REQ;
+//				break;
 
 			case WebSessionReqCmdNum.OBJECT_CREATE_REQ:
 				result = WebSessionReqCmdEnum.OBJECT_CREATE_REQ;
@@ -61,6 +62,10 @@ public enum WebSessionReqCmdEnum {
 
 			case WebSessionReqCmdNum.OBJECT_LISTENER_REQ:
 				result = WebSessionReqCmdEnum.OBJECT_LISTENER_REQ;
+				break;
+
+			case WebSessionReqCmdNum.OBJECT_FILTER_REQ:
+				result = WebSessionReqCmdEnum.OBJECT_FILTER_REQ;
 				break;
 
 			default:
@@ -81,14 +86,15 @@ public enum WebSessionReqCmdEnum {
 	}
 
 	final static class WebSessionReqCmdNum {
-		static final byte	INVALID					= 0;
-		static final byte	LAUNCH_CODE_CHECK		= 1;
-		static final byte	OBJECT_GETTER_REQ		= 2;
-		static final byte	OBJECT_GETBYID_REQ		= 3;
-		static final byte	OBJECT_CREATE_REQ		= 4;
-		static final byte	OBJECT_UPDATE_REQ		= 5;
-		static final byte	OBJECT_DELETE_REQ		= 6;
-		static final byte	OBJECT_LISTENER_REQ		= 7;
+		static final byte	INVALID				= 0;
+		static final byte	LAUNCH_CODE_CHECK	= 1;
+		static final byte	OBJECT_GETTER_REQ	= 2;
+		static final byte	OBJECT_GETBYID_REQ	= 3;
+		static final byte	OBJECT_CREATE_REQ	= 4;
+		static final byte	OBJECT_UPDATE_REQ	= 5;
+		static final byte	OBJECT_DELETE_REQ	= 6;
+		static final byte	OBJECT_LISTENER_REQ	= 7;
+		static final byte	OBJECT_FILTER_REQ	= 8;
 
 		private WebSessionReqCmdNum() {
 

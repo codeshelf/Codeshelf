@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSession.java,v 1.12 2012/03/20 06:28:32 jeffw Exp $
+ *  $Id: WebSession.java,v 1.13 2012/03/24 06:49:33 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession;
 
@@ -25,7 +25,7 @@ import com.gadgetworks.codeshelf.web.websocket.IWebSocket;
  * @author jeffw
  *
  */
-public class WebSession implements IDaoListener {
+public class WebSession implements IWebSession, IDaoListener {
 
 	private static final Log				LOGGER	= LogFactory.getLog(WebSession.class);
 
@@ -49,7 +49,7 @@ public class WebSession implements IDaoListener {
 			IWebSessionReqCmd command = mWebSessionReqCmdFactory.createWebSessionCommand(rootNode);
 			LOGGER.debug(command);
 
-			IWebSessionRespCmd respCommand = command.exec();
+			IWebSessionRespCmd respCommand = command.exec(this);
 
 			// Some commands persist, and we use them to respond to data changes.
 			if (command.doesPersist()) {
@@ -87,10 +87,13 @@ public class WebSession implements IDaoListener {
 	public void objectUpdated(Object inObject) {
 		for (IWebSessionReqCmd command : mPersistentCommands.values()) {
 //			if (command.matches(inObject)) {
-				IWebSessionRespCmd respCommand = command.exec();
+				IWebSessionRespCmd respCommand = command.getResponseCmd();
 				if (respCommand != null) {
+					respCommand.setCommandId(command.getCommandId());
 					try {
-						mWebSocket.send(respCommand.getResponseMsg());
+						String message = respCommand.getResponseMsg();
+						LOGGER.info("Sent Command: " + respCommand.getCommandId() + " Data: " + message);
+						mWebSocket.send(message);
 					} catch (InterruptedException e) {
 						LOGGER.error("Can't send response", e);
 					}

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Organization.java,v 1.6 2012/03/22 20:17:06 jeffw Exp $
+ *  $Id: Organization.java,v 1.7 2012/03/24 06:49:33 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -34,22 +34,28 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 @Table(name = "ORGANIZATION")
 public class Organization extends PersistABC {
 
-//	public interface IOrganizationDao extends IGenericDao<Organization> {		
-//	}
+	//	public interface IOrganizationDao extends IGenericDao<Organization> {		
+	//	}
 
-	private static final Log						LOGGER		= LogFactory.getLog(Organization.class);
+	private static final Log	LOGGER		= LogFactory.getLog(Organization.class);
 
 	// The facility description.
 	@Getter
 	@Setter
 	@Column(nullable = false)
-	private String									description;
+	private String				description;
 
-	// For a network this is a list of all of the control groups that belong in the set.
+	// For a network this is a list of all of the users that belong in the set.
 	@OneToMany(mappedBy = "parentOrganization")
 	@JsonIgnore
 	@Getter
-	private List<Facility>							facilities	= new ArrayList<Facility>();
+	private List<User>			users		= new ArrayList<User>();
+
+	// For a network this is a list of all of the facilities that belong in the set.
+	@OneToMany(mappedBy = "parentOrganization")
+	@JsonIgnore
+	@Getter
+	private List<Facility>		facilities	= new ArrayList<Facility>();
 
 	public Organization() {
 		description = "";

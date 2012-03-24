@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectListener.java,v 1.4 2012/03/24 06:49:33 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectFilter.java,v 1.1 2012/03/24 06:49:33 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -15,6 +15,8 @@ import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.JsonParseException;
+import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
@@ -25,47 +27,46 @@ import com.gadgetworks.codeshelf.model.dao.IGenericDao;
 import com.gadgetworks.codeshelf.model.persist.PersistABC;
 import com.gadgetworks.codeshelf.web.websession.IWebSession;
 import com.gadgetworks.codeshelf.web.websession.command.resp.IWebSessionRespCmd;
-import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdObjectListener;
+import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdObjectFilter;
 
 /**
  * command {
  * 	id: <cmd_id>,
- * 	type: OBJECT_LISTENER_REQ,
+ * 	type: OBJECT_FILTER_REQ,
  * 	data {
- *		className:    <class_name>,
- *		objectIds:    [ <persistentId>, <persistentId>, <persistentId> ],
- *		propertyNames:[ <property>, <property>, <property> ]
+ *		className:		<class_name>,
+ *		propertyNames:[ <property>, <property>, <property> ],
+ *		whereClause:	<where_clause>
  * 	}
  * }
  *
  * @author jeffw
  *
  */
-public class WebSessionReqCmdObjectListener extends WebSessionReqCmdABC {
-
-	private static final Log	LOGGER				= LogFactory.getLog(WebSessionReqCmdObjectFilter.class);
+public class WebSessionReqCmdObjectFilter extends WebSessionReqCmdABC {
+	private static final Log	LOGGER				= LogFactory.getLog(WebSessionReqCmdObjectListener.class);
 
 	private static final String	OBJECT_CLASS		= "className";
-	private static final String	OBJECT_ID_LIST		= "objectIds";
 	private static final String	PROPERTY_NAME_LIST	= "propertyNames";
+	private static final String	FILTER_CLAUSE		= "filterClause";
 	private static final String	OBJECT_RESULTS_NODE	= "result";
 
 	private Class<PersistABC>	mPersistenceClass;
-	private List<Long>			mObjectIdList;
 	private List<String>		mPropertyNames;
+	private String				mFilterClause;
 	private IDaoProvider		mDaoProvider;
 
 	/**
 	 * @param inCommandId
 	 * @param inDataNodeAsJson
 	 */
-	public WebSessionReqCmdObjectListener(final String inCommandId, final JsonNode inDataNodeAsJson, final IDaoProvider inDaoProvider) {
+	public WebSessionReqCmdObjectFilter(final String inCommandId, final JsonNode inDataNodeAsJson, final IDaoProvider inDaoProvider) {
 		super(inCommandId, inDataNodeAsJson);
 		mDaoProvider = inDaoProvider;
 	}
 
 	public final WebSessionReqCmdEnum getCommandEnum() {
-		return WebSessionReqCmdEnum.OBJECT_LISTENER_REQ;
+		return WebSessionReqCmdEnum.OBJECT_FILTER_REQ;
 	}
 
 	public final IWebSessionRespCmd doExec(IWebSession inWebSession) {
@@ -84,13 +85,12 @@ public class WebSessionReqCmdObjectListener extends WebSessionReqCmdABC {
 			if (!objectClassName.startsWith("com.gadgetworks.codeshelf.model.persist.")) {
 				objectClassName = "com.gadgetworks.codeshelf.model.persist." + objectClassName;
 			}
-			JsonNode objectIdListNode = dataJsonNode.get(OBJECT_ID_LIST);
-			ObjectMapper mapper = new ObjectMapper();
-			mObjectIdList = mapper.readValue(objectIdListNode, new TypeReference<List<Long>>() {
-			});
 			JsonNode propertyNamesNode = dataJsonNode.get(PROPERTY_NAME_LIST);
+			ObjectMapper mapper = new ObjectMapper();
 			mPropertyNames = mapper.readValue(propertyNamesNode, new TypeReference<List<String>>() {
 			});
+			JsonNode filterClauseNode = dataJsonNode.get(FILTER_CLAUSE);
+			mFilterClause = filterClauseNode.getTextValue();
 
 			// First we find the object (by it's ID).
 			Class<?> classObject = Class.forName(objectClassName);
@@ -100,11 +100,15 @@ public class WebSessionReqCmdObjectListener extends WebSessionReqCmdABC {
 				dao.registerDAOListener(inWebSession);
 				result = getProperties();
 			}
-		} catch (IOException e) {
-			LOGGER.error("", e);
 		} catch (ClassNotFoundException e) {
 			LOGGER.error("", e);
 		} catch (SecurityException e) {
+			LOGGER.error("", e);
+		} catch (JsonParseException e) {
+			LOGGER.error("", e);
+		} catch (JsonMappingException e) {
+			LOGGER.error("", e);
+		} catch (IOException e) {
 			LOGGER.error("", e);
 		}
 
@@ -115,16 +119,16 @@ public class WebSessionReqCmdObjectListener extends WebSessionReqCmdABC {
 	/**
 	 * @return
 	 */
-	public final IWebSessionRespCmd getProperties() {
+	private final IWebSessionRespCmd getProperties() {
 
 		IWebSessionRespCmd result = null;
 
 		try {
 			IGenericDao<PersistABC> dao = mDaoProvider.getDaoInstance((Class<PersistABC>) mPersistenceClass);
-			List<PersistABC> methodResultsList = dao.findByPersistentIdList(mObjectIdList);
+			List<PersistABC> objectList = dao.findByFilter(mFilterClause);
 
 			List<Map<String, String>> resultsList = new ArrayList<Map<String, String>>();
-			for (PersistABC matchedObject : methodResultsList) {
+			for (PersistABC matchedObject : objectList) {
 				Map<String, String> propertiesMap = new HashMap<String, String>();
 				// Always include the class naem and persistent ID in the results.
 				propertiesMap.put("ClassName", matchedObject.getClassName().toString());
@@ -146,15 +150,15 @@ public class WebSessionReqCmdObjectListener extends WebSessionReqCmdABC {
 			ArrayNode searchListNode = mapper.valueToTree(resultsList);
 			dataNode.put(OBJECT_RESULTS_NODE, searchListNode);
 
-			result = new WebSessionRespCmdObjectListener(dataNode);
+			result = new WebSessionRespCmdObjectFilter(dataNode);
 
 		} catch (NoSuchMethodException e) {
 			LOGGER.error("", e);
 		} catch (IllegalArgumentException e) {
 			LOGGER.error("", e);
-		} catch (IllegalAccessException e) {
-			LOGGER.error("", e);
 		} catch (InvocationTargetException e) {
+			LOGGER.error("", e);
+		} catch (IllegalAccessException e) {
 			LOGGER.error("", e);
 		}
 

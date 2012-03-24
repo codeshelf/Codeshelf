@@ -1,12 +1,13 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdABC.java,v 1.1 2012/03/19 04:05:19 jeffw Exp $
+ *  $Id: WebSessionReqCmdABC.java,v 1.2 2012/03/24 06:49:33 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
 import org.codehaus.jackson.JsonNode;
 
+import com.gadgetworks.codeshelf.web.websession.IWebSession;
 import com.gadgetworks.codeshelf.web.websession.command.resp.IWebSessionRespCmd;
 
 /**
@@ -41,7 +42,7 @@ public abstract class WebSessionReqCmdABC implements IWebSessionReqCmd {
 	}
 
 	// The subclasses execute the command and return a command data reesponse.
-	protected abstract IWebSessionRespCmd doExec();
+	protected abstract IWebSessionRespCmd doExec(IWebSession inWebSession);
 
 	public final String getCommandId() {
 		return mCommandId;
@@ -59,10 +60,10 @@ public abstract class WebSessionReqCmdABC implements IWebSessionReqCmd {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.web.websession.command.IWebSessionCommand#exec()
 	 */
-	public final IWebSessionRespCmd exec() {
+	public final IWebSessionRespCmd exec(IWebSession inWebSession) {
 		IWebSessionRespCmd result = null;
 
-		result = doExec();
+		result = doExec(inWebSession);
 
 		if (result != null) {
 			result.setCommandId(this.getCommandId());

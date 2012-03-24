@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionManager.java,v 1.6 2012/03/19 04:05:19 jeffw Exp $
+ *  $Id: WebSessionManager.java,v 1.7 2012/03/24 06:49:33 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession;
 
@@ -25,12 +25,12 @@ public class WebSessionManager implements IWebSessionManager {
 
 	private static final Log			LOGGER	= LogFactory.getLog(WebSessionManager.class);
 
-	private Map<WebSocket, WebSession>	mWebSessions;
+	private Map<WebSocket, IWebSession>	mWebSessions;
 	private WebSessionReqCmdFactory		mWebSessionReqCmdFactory;
 
 	@Inject
 	public WebSessionManager(final WebSessionReqCmdFactory inWebSessionReqCmdFactory) {
-		mWebSessions = new HashMap<WebSocket, WebSession>();
+		mWebSessions = new HashMap<WebSocket, IWebSession>();
 		mWebSessionReqCmdFactory = inWebSessionReqCmdFactory;
 	}
 
@@ -40,7 +40,7 @@ public class WebSessionManager implements IWebSessionManager {
 			LOGGER.error("Opening new web socket for session that exists!");
 			// Don't remove it, because it could be a security risk (someone else may be trying to masquerade).
 		} else {
-			WebSession webSession = new WebSession(inWebSocket, mWebSessionReqCmdFactory);
+			IWebSession webSession = new WebSession(inWebSocket, mWebSessionReqCmdFactory);
 			mWebSessions.put(inWebSocket, webSession);
 		}
 	}
@@ -55,7 +55,7 @@ public class WebSessionManager implements IWebSessionManager {
 	}
 
 	public final void handleSessionMessage(WebSocket inWebSocket, String inMessage) {
-		WebSession webSession = mWebSessions.get(inWebSocket);
+		IWebSession webSession = mWebSessions.get(inWebSocket);
 		if (webSession != null) {
 			webSession.processMessage(inMessage);
 		}

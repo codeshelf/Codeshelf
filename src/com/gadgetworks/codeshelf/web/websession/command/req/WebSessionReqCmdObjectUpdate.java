@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectUpdate.java,v 1.3 2012/03/22 07:35:11 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectUpdate.java,v 1.4 2012/03/24 06:49:33 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -18,10 +18,22 @@ import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.IGenericDao;
 import com.gadgetworks.codeshelf.model.persist.PersistABC;
+import com.gadgetworks.codeshelf.web.websession.IWebSession;
 import com.gadgetworks.codeshelf.web.websession.command.resp.IWebSessionRespCmd;
 import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdObjectUpdate;
 
 /**
+ * command {
+ * 	id: <cmd_id>,
+ * 	type: OBJECT_LISTENER_REQ,
+ * 	data {
+ *		className:		<class_name>,
+ *		persistentId:	<persistentId>,
+ *		setterMethod:	<setterMethod>,
+ *		setterValue: 	<setterValue>
+ * 	}
+ * }
+ *
  * @author jeffw
  *
  */
@@ -50,7 +62,7 @@ public class WebSessionReqCmdObjectUpdate extends WebSessionReqCmdABC {
 		return WebSessionReqCmdEnum.OBJECT_UPDATE_REQ;
 	}
 
-	public final IWebSessionRespCmd doExec() {
+	public final IWebSessionRespCmd doExec(IWebSession inWebSession) {
 		IWebSessionRespCmd result = null;
 
 		// CRITICAL SECUTIRY CONCEPT.
@@ -63,7 +75,10 @@ public class WebSessionReqCmdObjectUpdate extends WebSessionReqCmdABC {
 
 			JsonNode dataJsonNode = getDataJsonNode();
 			JsonNode parentClassNode = dataJsonNode.get(CLASS_NODE);
-			String parentClass = parentClassNode.getTextValue();
+			String parentClassName = parentClassNode.getTextValue();
+			if (!parentClassName.startsWith("com.gadgetworks.codeshelf.model.persist.")) {
+				parentClassName = "com.gadgetworks.codeshelf.model.persist." + parentClassName;
+			}
 			JsonNode parentIdNode = dataJsonNode.get(ID_NODE);
 			long parentId = Long.valueOf(parentIdNode.getTextValue());
 			JsonNode setterMethodNode = dataJsonNode.get(SETTER_METHOD);
@@ -72,12 +87,12 @@ public class WebSessionReqCmdObjectUpdate extends WebSessionReqCmdABC {
 			String setterValue = setterValueNode.getTextValue();
 
 			// First we find the parent object (by it's ID).
-			Class<?> classObject = Class.forName(parentClass);
+			Class<?> classObject = Class.forName(parentClassName);
 			if (PersistABC.class.isAssignableFrom(classObject)) {
 
 				// First locate an instance of the parent class.
 				IGenericDao<PersistABC> dao = mDaoProvider.getDaoInstance((Class<PersistABC>) classObject);
-				PersistABC parentObject = dao.loadByPersistentId(parentId);
+				PersistABC parentObject = dao.findByPersistentId(parentId);
 
 				// Execute the "set" method against the parents to return the children.
 				// (The method *must* start with "set" to ensure other methods don't get called.)
@@ -125,5 +140,9 @@ public class WebSessionReqCmdObjectUpdate extends WebSessionReqCmdABC {
 	 */
 	public final boolean doesPersist() {
 		return false;
+	}
+
+	public IWebSessionRespCmd getResponseCmd() {
+		return null;
 	}
 }
