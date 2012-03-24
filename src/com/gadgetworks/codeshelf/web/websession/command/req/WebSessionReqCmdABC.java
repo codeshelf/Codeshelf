@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdABC.java,v 1.2 2012/03/24 06:49:33 jeffw Exp $
+ *  $Id: WebSessionReqCmdABC.java,v 1.3 2012/03/24 18:28:01 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -42,7 +42,7 @@ public abstract class WebSessionReqCmdABC implements IWebSessionReqCmd {
 	}
 
 	// The subclasses execute the command and return a command data reesponse.
-	protected abstract IWebSessionRespCmd doExec(IWebSession inWebSession);
+	protected abstract IWebSessionRespCmd doExec();
 
 	public final String getCommandId() {
 		return mCommandId;
@@ -60,10 +60,10 @@ public abstract class WebSessionReqCmdABC implements IWebSessionReqCmd {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.web.websession.command.IWebSessionCommand#exec()
 	 */
-	public final IWebSessionRespCmd exec(IWebSession inWebSession) {
+	public final IWebSessionRespCmd exec() {
 		IWebSessionRespCmd result = null;
 
-		result = doExec(inWebSession);
+		result = doExec();
 
 		if (result != null) {
 			result.setCommandId(this.getCommandId());

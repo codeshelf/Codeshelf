@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectGetter.java,v 1.6 2012/03/24 06:49:33 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectGetter.java,v 1.7 2012/03/24 18:28:01 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -61,7 +61,7 @@ public class WebSessionReqCmdObjectGetter extends WebSessionReqCmdABC {
 		return WebSessionReqCmdEnum.OBJECT_GETTER_REQ;
 	}
 
-	public final IWebSessionRespCmd doExec(IWebSession inWebSession) {
+	public final IWebSessionRespCmd doExec() {
 		IWebSessionRespCmd result = null;
 
 		// CRITICAL SECUTIRY CONCEPT.
@@ -133,5 +133,17 @@ public class WebSessionReqCmdObjectGetter extends WebSessionReqCmdABC {
 
 	public final IWebSessionRespCmd getResponseCmd() {
 		return null;
+	}
+
+	@Override
+	public void registerSessionWithDaos(IWebSession inWebSession) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void unregisterSessionWithDaos(IWebSession inWebSession) {
+		// TODO Auto-generated method stub
+		
 	}
 }

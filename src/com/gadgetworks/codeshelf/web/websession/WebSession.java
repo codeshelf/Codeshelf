@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSession.java,v 1.13 2012/03/24 06:49:33 jeffw Exp $
+ *  $Id: WebSession.java,v 1.14 2012/03/24 18:28:01 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession;
 
@@ -49,14 +49,16 @@ public class WebSession implements IWebSession, IDaoListener {
 			IWebSessionReqCmd command = mWebSessionReqCmdFactory.createWebSessionCommand(rootNode);
 			LOGGER.debug(command);
 
-			IWebSessionRespCmd respCommand = command.exec(this);
+			IWebSessionRespCmd respCommand = command.exec();
 
 			// Some commands persist, and we use them to respond to data changes.
 			if (command.doesPersist()) {
 				// If the command is already in the map then remove it, otherwise add it.
 				if (mPersistentCommands.get(command.getCommandId()) != null) {
+					command.unregisterSessionWithDaos(this);
 					mPersistentCommands.remove(command.getCommandId());
 				} else {
+					command.registerSessionWithDaos(this);
 					mPersistentCommands.put(command.getCommandId(), command);
 				}
 			}
@@ -77,14 +79,18 @@ public class WebSession implements IWebSession, IDaoListener {
 			LOGGER.debug("", e);
 		}
 	}
+	
+	public final void endSession() {
+		for (IWebSessionReqCmd command : mPersistentCommands.values()) {
+			command.unregisterSessionWithDaos(this);
+		}
+	}
 
-	@Override
-	public void objectAdded(Object inObject) {
+	public final void objectAdded(Object inObject) {
 
 	}
 
-	@Override
-	public void objectUpdated(Object inObject) {
+	public final void objectUpdated(Object inObject) {
 		for (IWebSessionReqCmd command : mPersistentCommands.values()) {
 //			if (command.matches(inObject)) {
 				IWebSessionRespCmd respCommand = command.getResponseCmd();
@@ -102,8 +108,7 @@ public class WebSession implements IWebSession, IDaoListener {
 		}
 	}
 
-	@Override
-	public void objectDeleted(Object inObject) {
+	public final void objectDeleted(Object inObject) {
 
 	}
 }

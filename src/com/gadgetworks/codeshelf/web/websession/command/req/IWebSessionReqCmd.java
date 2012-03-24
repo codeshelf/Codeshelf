@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: IWebSessionReqCmd.java,v 1.2 2012/03/24 06:49:33 jeffw Exp $
+ *  $Id: IWebSessionReqCmd.java,v 1.3 2012/03/24 18:28:01 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -22,9 +22,14 @@ public interface IWebSessionReqCmd extends IWebSessionCmd {
 	
 	void setCommandId(String inCommandId);
 	
-	IWebSessionRespCmd exec(IWebSession inWebSession);
+	IWebSessionRespCmd exec();
 	
 	IWebSessionRespCmd getResponseCmd();
 	
 	boolean doesPersist();
+	
+	void registerSessionWithDaos(IWebSession inWebSession);
+
+	void unregisterSessionWithDaos(IWebSession inWebSession);
+
 }

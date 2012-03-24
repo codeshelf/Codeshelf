@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdLaunchCode.java,v 1.4 2012/03/24 06:49:33 jeffw Exp $
+ *  $Id: WebSessionReqCmdLaunchCode.java,v 1.5 2012/03/24 18:28:01 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -47,7 +47,7 @@ public class WebSessionReqCmdLaunchCode extends WebSessionReqCmdABC {
 		return WebSessionReqCmdEnum.LAUNCH_CODE_CHECK;
 	}
 
-	protected final IWebSessionRespCmd doExec(IWebSession inWebSession) {
+	protected final IWebSessionRespCmd doExec() {
 		IWebSessionRespCmd result = null;
 
 		String authenticateResult = FAIL;
@@ -85,5 +85,17 @@ public class WebSessionReqCmdLaunchCode extends WebSessionReqCmdABC {
 
 	public final IWebSessionRespCmd getResponseCmd() {
 		return null;
+	}
+
+	@Override
+	public void registerSessionWithDaos(IWebSession inWebSession) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void unregisterSessionWithDaos(IWebSession inWebSession) {
+		// TODO Auto-generated method stub
+		
 	}
 }

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionManager.java,v 1.7 2012/03/24 06:49:33 jeffw Exp $
+ *  $Id: WebSessionManager.java,v 1.8 2012/03/24 18:28:01 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession;
 
@@ -50,6 +50,8 @@ public class WebSessionManager implements IWebSessionManager {
 		if (!mWebSessions.containsKey(inWebSocket)) {
 			LOGGER.error("Closing web socket for session that doesn't exist!");
 		} else {
+			IWebSession session = mWebSessions.get(inWebSocket);
+			session.endSession();
 			mWebSessions.remove(inWebSocket);
 		}
 	}
