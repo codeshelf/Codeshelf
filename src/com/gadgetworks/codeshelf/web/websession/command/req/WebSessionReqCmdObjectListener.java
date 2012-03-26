@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectListener.java,v 1.5 2012/03/24 18:28:01 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectListener.java,v 1.6 2012/03/26 03:32:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -124,9 +124,9 @@ public class WebSessionReqCmdObjectListener extends WebSessionReqCmdABC {
 			List<PersistABC> methodResultsList = dao.findByPersistentIdList(mObjectIdList);
 			mDaoList.add(dao);
 
-			List<Map<String, String>> resultsList = new ArrayList<Map<String, String>>();
+			List<Map<String, Object>> resultsList = new ArrayList<Map<String, Object>>();
 			for (PersistABC matchedObject : methodResultsList) {
-				Map<String, String> propertiesMap = new HashMap<String, String>();
+				Map<String, Object> propertiesMap = new HashMap<String, Object>();
 				// Always include the class naem and persistent ID in the results.
 				propertiesMap.put("ClassName", matchedObject.getClassName().toString());
 				propertiesMap.put("persistentId", matchedObject.getPersistentId().toString());
@@ -136,7 +136,7 @@ public class WebSessionReqCmdObjectListener extends WebSessionReqCmdABC {
 					String getterName = "get" + propertyName;
 					java.lang.reflect.Method method = matchedObject.getClass().getMethod(getterName, (Class<?>[]) null);
 					Object resultObject = method.invoke(matchedObject, (Object[]) null);
-					propertiesMap.put(propertyName, resultObject.toString());
+					propertiesMap.put(propertyName, resultObject);
 				}
 				resultsList.add(propertiesMap);
 			}

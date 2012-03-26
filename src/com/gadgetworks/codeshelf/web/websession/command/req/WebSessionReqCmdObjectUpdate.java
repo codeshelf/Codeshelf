@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectUpdate.java,v 1.5 2012/03/24 18:28:01 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectUpdate.java,v 1.6 2012/03/26 03:32:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -80,7 +80,7 @@ public class WebSessionReqCmdObjectUpdate extends WebSessionReqCmdABC {
 				parentClassName = "com.gadgetworks.codeshelf.model.persist." + parentClassName;
 			}
 			JsonNode parentIdNode = dataJsonNode.get(ID_NODE);
-			long parentId = Long.valueOf(parentIdNode.getTextValue());
+			long parentId = parentIdNode.getLongValue();
 			JsonNode setterMethodNode = dataJsonNode.get(SETTER_METHOD);
 			String setterMethodName = setterMethodNode.getTextValue();
 			JsonNode setterValueNode = dataJsonNode.get(SETTER_VALUE);

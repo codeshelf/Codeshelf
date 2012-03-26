@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: GenericDao.java,v 1.12 2012/03/24 06:49:33 jeffw Exp $
+ *  $Id: GenericDao.java,v 1.13 2012/03/26 03:32:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -110,14 +110,14 @@ public class GenericDao<T extends PersistABC> implements IGenericDao<T> {
 	 */
 	public final T findByDomainId(final PersistABC inParentObject, final String inId) {
 		T result = null;
-		
+
 		String effectiveId;
 		if (inParentObject != null) {
 			effectiveId = inParentObject.getId() + "." + inId;
 		} else {
 			effectiveId = inId;
 		}
-		
+
 		try {
 			Query<T> query = Ebean.createQuery(mClass);
 			query.where().eq(T.getIdColumnName(), effectiveId);
@@ -189,7 +189,9 @@ public class GenericDao<T extends PersistABC> implements IGenericDao<T> {
 	 * @see com.gadgetworks.codeshelf.model.dao.ISystemDAO#registerDAOListener(com.gadgetworks.codeshelf.model.dao.IDAOListener)
 	 */
 	public final void registerDAOListener(IDaoListener inListener) {
-		mListeners.add(inListener);
+		if (!mListeners.contains(inListener)) {
+			mListeners.add(inListener);
+		}
 	}
 
 	/*
