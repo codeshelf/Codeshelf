@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PersistentProperty.java,v 1.12 2012/03/23 06:04:44 jeffw Exp $
+ *  $Id: PersistentProperty.java,v 1.13 2012/03/27 03:12:19 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -71,7 +71,7 @@ public class PersistentProperty extends PersistABC {
 	}
 
 	public final String toString() {
-		return getId() + "val: " + getCurrentValueAsStr() + " (default: " + getDefaultValueAsStr() + ")";
+		return getDomainId() + "val: " + getCurrentValueAsStr() + " (default: " + getDefaultValueAsStr() + ")";
 	}
 
 	// Default value methods.

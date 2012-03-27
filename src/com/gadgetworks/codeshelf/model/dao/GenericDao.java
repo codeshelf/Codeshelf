@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: GenericDao.java,v 1.13 2012/03/26 03:32:42 jeffw Exp $
+ *  $Id: GenericDao.java,v 1.14 2012/03/27 03:12:19 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -113,7 +113,7 @@ public class GenericDao<T extends PersistABC> implements IGenericDao<T> {
 
 		String effectiveId;
 		if (inParentObject != null) {
-			effectiveId = inParentObject.getId() + "." + inId;
+			effectiveId = inParentObject.getDomainId() + "." + inId;
 		} else {
 			effectiveId = inId;
 		}

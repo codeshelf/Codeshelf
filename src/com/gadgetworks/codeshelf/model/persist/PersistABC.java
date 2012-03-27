@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PersistABC.java,v 1.15 2012/03/23 06:04:44 jeffw Exp $
+ *  $Id: PersistABC.java,v 1.16 2012/03/27 03:12:19 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -43,7 +43,7 @@ public abstract class PersistABC {
 	@Column(nullable = false)
 	@NonNull
 	@Getter
-	private String		id;
+	private String		domainId;
 	// This is not an application-editable field.
 	// It's for the private use of the ORM transaction system.
 	@Version
@@ -62,7 +62,7 @@ public abstract class PersistABC {
 	 * @return	Return the name of the column used to store the domain key.  Used by EBean to find objects.
 	 */
 	public static String getIdColumnName() {
-		return "id";
+		return "domainId";
 	}
 
 	// --------------------------------------------------------------------------
@@ -81,11 +81,11 @@ public abstract class PersistABC {
 	 * @param inParentObject
 	 * @param inId
 	 */
-	public final void setId(final PersistABC inParentObject, String inId) {
+	public final void setDomainId(final PersistABC inParentObject, String inId) {
 		if (inParentObject != null) {
-			id = inParentObject.getId() + "." + inId;
+			domainId = inParentObject.getDomainId() + "." + inId;
 		} else {
-			id = inId;
+			domainId = inId;
 		}
 	}
 

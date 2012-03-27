@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfApplication.java,v 1.26 2012/03/24 06:49:33 jeffw Exp $
+ *  $Id: CodeShelfApplication.java,v 1.27 2012/03/27 03:12:19 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -231,7 +231,7 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 		// If the property doesn't exist then create it.
 		if (property == null) {
 			property = new PersistentProperty();
-			property.setId(inOrganization, inPropertyID);
+			property.setDomainId(inOrganization, inPropertyID);
 			property.setParentOrganization(inOrganization);
 			property.setCurrentValueAsStr(inDefaultValue);
 			property.setDefaultValueAsStr(inDefaultValue);
@@ -284,7 +284,7 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 		Organization organization = mOrganizationDao.findByDomainId(null, inOrganizationId);
 		if (organization == null) {
 			organization = new Organization();
-			organization.setId(null, inOrganizationId);
+			organization.setDomainId(null, inOrganizationId);
 			try {
 				mOrganizationDao.store(organization);
 			} catch (DaoException e) {
@@ -295,7 +295,7 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 		Facility facility = mFacilityDao.findByDomainId(organization, inOrganizationId);
 		if (facility == null) {
 			facility = new Facility();
-			facility.setId(organization, inOrganizationId);
+			facility.setDomainId(organization, inOrganizationId);
 			facility.setDescription(inOrganizationId);
 			facility.setparentOrganization(organization);
 			try {
@@ -443,7 +443,7 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 		if (dbVersionProp == null) {
 			// No database schema version has been set yet, so set it to the current schema version.
 			dbVersionProp = new DBProperty();
-			dbVersionProp.setId(null, DBProperty.DB_SCHEMA_VERSION);
+			dbVersionProp.setDomainId(null, DBProperty.DB_SCHEMA_VERSION);
 			dbVersionProp.setValueStr(Integer.toString(ISchemaManager.DATABASE_VERSION_CUR));
 			inServer.save(dbVersionProp);
 		} else {
