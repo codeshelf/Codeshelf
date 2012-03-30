@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectUpdate.java,v 1.6 2012/03/26 03:32:42 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectUpdate.java,v 1.7 2012/03/30 23:21:35 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -142,10 +142,6 @@ public class WebSessionReqCmdObjectUpdate extends WebSessionReqCmdABC {
 		return false;
 	}
 
-	public IWebSessionRespCmd getResponseCmd() {
-		return null;
-	}
-
 	@Override
 	public void registerSessionWithDaos(IWebSession inWebSession) {
 		// TODO Auto-generated method stub
@@ -156,5 +152,20 @@ public class WebSessionReqCmdObjectUpdate extends WebSessionReqCmdABC {
 	public void unregisterSessionWithDaos(IWebSession inWebSession) {
 		// TODO Auto-generated method stub
 		
+	}
+
+	public final IWebSessionRespCmd processObjectAdd(PersistABC inDomainObject) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public final IWebSessionRespCmd processObjectUpdate(PersistABC inDomainObject) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public final IWebSessionRespCmd processObjectDelete(PersistABC inDomainObject) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

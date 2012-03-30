@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionRespCmdABC.java,v 1.2 2012/03/20 06:28:32 jeffw Exp $
+ *  $Id: WebSessionRespCmdABC.java,v 1.3 2012/03/30 23:21:35 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.resp;
 
@@ -51,7 +51,7 @@ public abstract class WebSessionRespCmdABC implements IWebSessionRespCmd {
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */
-	public String toString() {
+	public final String toString() {
 		String result = "Command Id: " + mCommandId + " Data: " + mDataJsonNode;
 		return result;
 	}

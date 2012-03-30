@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: IWebSessionRespCmd.java,v 1.1 2012/03/19 04:05:19 jeffw Exp $
+ *  $Id: IWebSessionRespCmd.java,v 1.2 2012/03/30 23:21:35 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.resp;
 
@@ -18,6 +18,11 @@ public interface IWebSessionRespCmd extends IWebSessionCmd {
 	
 	void setCommandId(String inCommandId);
 
+	// --------------------------------------------------------------------------
+	/**
+	 * Call this method to get the JSON encoded response-message for the command.
+	 * @return
+	 */
 	String getResponseMsg();
-
+	
 }

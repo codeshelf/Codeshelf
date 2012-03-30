@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSession.java,v 1.14 2012/03/24 18:28:01 jeffw Exp $
+ *  $Id: WebSession.java,v 1.15 2012/03/30 23:21:35 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession;
 
@@ -16,6 +16,7 @@ import org.codehaus.jackson.JsonProcessingException;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import com.gadgetworks.codeshelf.model.dao.IDaoListener;
+import com.gadgetworks.codeshelf.model.persist.PersistABC;
 import com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmd;
 import com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmdFactory;
 import com.gadgetworks.codeshelf.web.websession.command.resp.IWebSessionRespCmd;
@@ -79,36 +80,34 @@ public class WebSession implements IWebSession, IDaoListener {
 			LOGGER.debug("", e);
 		}
 	}
-	
+
 	public final void endSession() {
 		for (IWebSessionReqCmd command : mPersistentCommands.values()) {
 			command.unregisterSessionWithDaos(this);
 		}
 	}
 
-	public final void objectAdded(Object inObject) {
+	public final void objectAdded(PersistABC inDomainObject) {
 
 	}
 
-	public final void objectUpdated(Object inObject) {
+	public final void objectUpdated(PersistABC inDomainObject) {
 		for (IWebSessionReqCmd command : mPersistentCommands.values()) {
-//			if (command.matches(inObject)) {
-				IWebSessionRespCmd respCommand = command.getResponseCmd();
-				if (respCommand != null) {
-					respCommand.setCommandId(command.getCommandId());
-					try {
-						String message = respCommand.getResponseMsg();
-						LOGGER.info("Sent Command: " + respCommand.getCommandId() + " Data: " + message);
-						mWebSocket.send(message);
-					} catch (InterruptedException e) {
-						LOGGER.error("Can't send response", e);
-					}
+			IWebSessionRespCmd respCommand = command.processObjectAdd(inDomainObject);
+			if (respCommand != null) {
+				respCommand.setCommandId(command.getCommandId());
+				try {
+					String message = respCommand.getResponseMsg();
+					LOGGER.info("Sent Command: " + respCommand.getCommandId() + " Data: " + message);
+					mWebSocket.send(message);
+				} catch (InterruptedException e) {
+					LOGGER.error("Can't send response", e);
 				}
-//			}
+			}
 		}
 	}
 
-	public final void objectDeleted(Object inObject) {
+	public final void objectDeleted(PersistABC inDomainObject) {
 
 	}
 }

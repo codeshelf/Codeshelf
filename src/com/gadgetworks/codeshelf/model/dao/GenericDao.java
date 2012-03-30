@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: GenericDao.java,v 1.14 2012/03/27 03:12:19 jeffw Exp $
+ *  $Id: GenericDao.java,v 1.15 2012/03/30 23:21:35 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -37,31 +37,31 @@ public class GenericDao<T extends PersistABC> implements IGenericDao<T> {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * @param inObject
+	 * @param inDomainObject
 	 */
-	private void privateBroadcastAdd(final Object inObject) {
+	private void privateBroadcastAdd(final PersistABC inDomainObject) {
 		for (IDaoListener daoListener : mListeners) {
-			daoListener.objectAdded(inObject);
+			daoListener.objectAdded(inDomainObject);
 		}
 	}
 
 	// --------------------------------------------------------------------------
 	/**
-	 * @param inObject
+	 * @param inDomainObject
 	 */
-	private void privateBroadcastUpdate(final Object inObject) {
+	private void privateBroadcastUpdate(final PersistABC inDomainObject) {
 		for (IDaoListener daoListener : mListeners) {
-			daoListener.objectUpdated(inObject);
+			daoListener.objectUpdated(inDomainObject);
 		}
 	}
 
 	// --------------------------------------------------------------------------
 	/**
-	 * @param inObject
+	 * @param inDomainObject
 	 */
-	private void privateBroadcastDelete(final Object inObject) {
+	private void privateBroadcastDelete(final PersistABC inDomainObject) {
 		for (IDaoListener daoListener : mListeners) {
-			daoListener.objectDeleted(inObject);
+			daoListener.objectDeleted(inDomainObject);
 		}
 	}
 

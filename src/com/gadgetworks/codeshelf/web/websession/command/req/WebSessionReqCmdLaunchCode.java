@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdLaunchCode.java,v 1.5 2012/03/24 18:28:01 jeffw Exp $
+ *  $Id: WebSessionReqCmdLaunchCode.java,v 1.6 2012/03/30 23:21:35 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -9,6 +9,7 @@ import org.codehaus.jackson.JsonNode;
 
 import com.gadgetworks.codeshelf.model.dao.IGenericDao;
 import com.gadgetworks.codeshelf.model.persist.Organization;
+import com.gadgetworks.codeshelf.model.persist.PersistABC;
 import com.gadgetworks.codeshelf.web.websession.IWebSession;
 import com.gadgetworks.codeshelf.web.websession.command.resp.IWebSessionRespCmd;
 import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdLaunchCode;
@@ -83,19 +84,29 @@ public class WebSessionReqCmdLaunchCode extends WebSessionReqCmdABC {
 		return false;
 	}
 
-	public final IWebSessionRespCmd getResponseCmd() {
+	public void registerSessionWithDaos(IWebSession inWebSession) {
+		// TODO Auto-generated method stub
+	}
+
+	public void unregisterSessionWithDaos(IWebSession inWebSession) {
+		// TODO Auto-generated method stub
+	}
+
+	@Override
+	public IWebSessionRespCmd processObjectAdd(PersistABC inDomainObject) {
+		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public void registerSessionWithDaos(IWebSession inWebSession) {
+	public IWebSessionRespCmd processObjectUpdate(PersistABC inDomainObject) {
 		// TODO Auto-generated method stub
-		
+		return null;
 	}
 
 	@Override
-	public void unregisterSessionWithDaos(IWebSession inWebSession) {
+	public IWebSessionRespCmd processObjectDelete(PersistABC inDomainObject) {
 		// TODO Auto-generated method stub
-		
+		return null;
 	}
 }
