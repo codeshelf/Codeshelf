@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSession.java,v 1.15 2012/03/30 23:21:35 jeffw Exp $
+ *  $Id: WebSession.java,v 1.16 2012/03/31 01:17:30 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession;
 
@@ -65,13 +65,7 @@ public class WebSession implements IWebSession, IDaoListener {
 			}
 
 			if (respCommand != null) {
-				try {
-					String message = respCommand.getResponseMsg();
-					LOGGER.info("Sent Command: " + respCommand.getCommandId() + " Data: " + message);
-					mWebSocket.send(message);
-				} catch (InterruptedException e) {
-					LOGGER.error("Can't send response", e);
-				}
+				sendCommand(respCommand);
 			}
 
 		} catch (JsonProcessingException e) {
@@ -87,27 +81,48 @@ public class WebSession implements IWebSession, IDaoListener {
 		}
 	}
 
-	public final void objectAdded(PersistABC inDomainObject) {
-
+	// --------------------------------------------------------------------------
+	/**
+	 * The the response command back over the WebSession's WebSocket.
+	 * @param inCommand
+	 */
+	private void sendCommand(IWebSessionRespCmd inCommand) {
+		try {
+			String message = inCommand.getResponseMsg();
+			LOGGER.info("Sent Command: " + inCommand.getCommandId() + " Data: " + message);
+			mWebSocket.send(message);
+		} catch (InterruptedException e) {
+			LOGGER.error("Can't send response", e);
+		}
 	}
 
-	public final void objectUpdated(PersistABC inDomainObject) {
+	public final void objectAdded(PersistABC inDomainObject) {
 		for (IWebSessionReqCmd command : mPersistentCommands.values()) {
 			IWebSessionRespCmd respCommand = command.processObjectAdd(inDomainObject);
 			if (respCommand != null) {
 				respCommand.setCommandId(command.getCommandId());
-				try {
-					String message = respCommand.getResponseMsg();
-					LOGGER.info("Sent Command: " + respCommand.getCommandId() + " Data: " + message);
-					mWebSocket.send(message);
-				} catch (InterruptedException e) {
-					LOGGER.error("Can't send response", e);
-				}
+				sendCommand(respCommand);
+			}
+		}
+	}
+
+	public final void objectUpdated(PersistABC inDomainObject) {
+		for (IWebSessionReqCmd command : mPersistentCommands.values()) {
+			IWebSessionRespCmd respCommand = command.processObjectUpdate(inDomainObject);
+			if (respCommand != null) {
+				respCommand.setCommandId(command.getCommandId());
+				sendCommand(respCommand);
 			}
 		}
 	}
 
 	public final void objectDeleted(PersistABC inDomainObject) {
-
+		for (IWebSessionReqCmd command : mPersistentCommands.values()) {
+			IWebSessionRespCmd respCommand = command.processObjectDelete(inDomainObject);
+			if (respCommand != null) {
+				respCommand.setCommandId(command.getCommandId());
+				sendCommand(respCommand);
+			}
+		}
 	}
 }

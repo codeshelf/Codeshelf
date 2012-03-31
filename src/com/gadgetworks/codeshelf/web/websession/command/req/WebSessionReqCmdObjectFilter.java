@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectFilter.java,v 1.3 2012/03/30 23:21:35 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectFilter.java,v 1.4 2012/03/31 01:17:30 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -105,13 +105,13 @@ public class WebSessionReqCmdObjectFilter extends WebSessionReqCmdABC {
 			Class<?> classObject = Class.forName(objectClassName);
 			if (PersistABC.class.isAssignableFrom(classObject)) {
 				mPersistenceClass = (Class<PersistABC>) classObject;
-				result = getProperties(mObjectMatchList, OP_TYPE_ADD);
+				
+				IGenericDao<PersistABC> dao = mDaoProvider.getDaoInstance((Class<PersistABC>) mPersistenceClass);
+				mObjectMatchList = dao.findByFilter(mFilterClause);
+				mDaoList.add(dao);
+
+				result = getProperties(mObjectMatchList, OP_TYPE_UPDATE);
 			}
-
-			IGenericDao<PersistABC> dao = mDaoProvider.getDaoInstance((Class<PersistABC>) mPersistenceClass);
-			mObjectMatchList = dao.findByFilter(mFilterClause);
-			mDaoList.add(dao);
-
 		} catch (ClassNotFoundException e) {
 			LOGGER.error("", e);
 		} catch (SecurityException e) {
