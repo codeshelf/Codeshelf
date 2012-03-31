@@ -1,12 +1,11 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: GenericDao.java,v 1.15 2012/03/30 23:21:35 jeffw Exp $
+ *  $Id: GenericDao.java,v 1.16 2012/03/31 07:27:14 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import javax.persistence.PersistenceException;
@@ -144,9 +143,15 @@ public class GenericDao<T extends PersistABC> implements IGenericDao<T> {
 	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#findByIdList(java.util.List)
 	 */
 	public final List<T> findByFilter(String inFilter) {
-		Query<T> query = Ebean.find(mClass);
-		List<T> methodResultsList = query.where(inFilter).findList();
-		return methodResultsList;
+		if ((inFilter != null) && (inFilter.length() > 0)) {
+			// If we have a valid filter then get the filtered objects.
+			Query<T> query = Ebean.find(mClass);
+			List<T> methodResultsList = query.where(inFilter).findList();
+			return methodResultsList;
+		} else {
+			// Otherwise get everything.
+			return getAll();
+		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -176,7 +181,7 @@ public class GenericDao<T extends PersistABC> implements IGenericDao<T> {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#getAll()
 	 */
-	public final Collection<T> getAll() {
+	public final List<T> getAll() {
 		Query<T> query = Ebean.createQuery(mClass);
 		//query = query.setUseCache(true);
 		return query.findList();

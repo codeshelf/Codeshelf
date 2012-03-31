@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: IGenericDao.java,v 1.9 2012/03/24 06:49:33 jeffw Exp $
+ *  $Id: IGenericDao.java,v 1.10 2012/03/31 07:27:14 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -30,7 +30,7 @@ public interface IGenericDao<T> extends IDao {
 
 	void delete(T inDomainObject) throws DaoException;
 
-	Collection<T> getAll();
+	List<T> getAll();
 
 	void pushNonPersistentUpdates(T inDomainObject);
 
