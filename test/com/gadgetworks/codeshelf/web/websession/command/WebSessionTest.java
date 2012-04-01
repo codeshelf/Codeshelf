@@ -1,6 +1,5 @@
 package com.gadgetworks.codeshelf.web.websession.command;
 
-import java.util.Collection;
 import java.util.List;
 
 import junit.framework.Assert;
@@ -48,7 +47,7 @@ public class WebSessionTest {
 		public void delete(Organization inDomainObject) throws DaoException {
 		}
 
-		public Collection<Organization> getAll() {
+		public List<Organization> getAll() {
 			return null;
 		}
 

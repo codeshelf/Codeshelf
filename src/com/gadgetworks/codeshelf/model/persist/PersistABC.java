@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PersistABC.java,v 1.16 2012/03/27 03:12:19 jeffw Exp $
+ *  $Id: PersistABC.java,v 1.17 2012/04/01 00:24:35 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -42,7 +42,6 @@ public abstract class PersistABC {
 	// The domain ID
 	@Column(nullable = false)
 	@NonNull
-	@Getter
 	private String		domainId;
 	// This is not an application-editable field.
 	// It's for the private use of the ORM transaction system.
@@ -87,6 +86,33 @@ public abstract class PersistABC {
 		} else {
 			domainId = inId;
 		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Return the short domain ID for this object (that is unique among all of the objects under this parent).
+	 * @return
+	 */
+	public final String getDomainId() {
+		String result = "";
+
+		int lastPeriodPos = domainId.lastIndexOf('.');
+		if (lastPeriodPos == -1) {
+			result = domainId;
+		} else {
+			result = domainId.substring(0, lastPeriodPos);
+		}
+
+		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Return the full domain ID (that includes the "dotted" domain ID of each parent up to the top of the hierarchy).
+	 * @return
+	 */
+	public final String getFullDomainId() {
+		return domainId;
 	}
 
 	/* --------------------------------------------------------------------------
