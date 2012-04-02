@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfApplication.java,v 1.27 2012/03/27 03:12:19 jeffw Exp $
+ *  $Id: CodeShelfApplication.java,v 1.28 2012/04/02 07:58:53 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -260,8 +260,9 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 	private void initializeApplicationData() {
 
 		// Create two dummy users for testing.
-		createOrganzation("1234");
-		createOrganzation("12345");
+		createOrganzation("123", "123", "first");
+		createOrganzation("123", "456", "second");
+		createOrganzation("123", "789", "third");
 
 		// Some radio device fields have no meaning from the last invocation of the application.
 		for (WirelessDevice wirelessDevice : mWirelessDeviceDao.getAll()) {
@@ -280,7 +281,7 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 	 * @param inOrganizationId
 	 * @param inPassword
 	 */
-	private void createOrganzation(String inOrganizationId) {
+	private void createOrganzation(String inOrganizationId, String inFacilityId, String inFacilityName) {
 		Organization organization = mOrganizationDao.findByDomainId(null, inOrganizationId);
 		if (organization == null) {
 			organization = new Organization();
@@ -292,11 +293,11 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 			}
 		}
 
-		Facility facility = mFacilityDao.findByDomainId(organization, inOrganizationId);
+		Facility facility = mFacilityDao.findByDomainId(organization, inFacilityId);
 		if (facility == null) {
 			facility = new Facility();
-			facility.setDomainId(organization, inOrganizationId);
-			facility.setDescription(inOrganizationId);
+			facility.setDomainId(organization, inFacilityId);
+			facility.setDescription(inFacilityName);
 			facility.setparentOrganization(organization);
 			try {
 				mFacilityDao.store(facility);

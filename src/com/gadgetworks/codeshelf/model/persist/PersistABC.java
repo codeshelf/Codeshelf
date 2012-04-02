@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PersistABC.java,v 1.17 2012/04/01 00:24:35 jeffw Exp $
+ *  $Id: PersistABC.java,v 1.18 2012/04/02 07:58:53 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -100,7 +100,7 @@ public abstract class PersistABC {
 		if (lastPeriodPos == -1) {
 			result = domainId;
 		} else {
-			result = domainId.substring(0, lastPeriodPos);
+			result = domainId.substring(lastPeriodPos + 1);
 		}
 
 		return result;
