@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.14 2012/03/27 03:12:19 jeffw Exp $
+ *  $Id: Facility.java,v 1.15 2012/04/05 00:02:46 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -35,8 +35,6 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 public class Facility extends PersistABC {
 
 	private static final Log		LOGGER				= LogFactory.getLog(Facility.class);
-
-	private static final long		serialVersionUID	= 3001609308065821464L;
 
 	// The facility description.
 	@Getter
@@ -75,33 +73,13 @@ public class Facility extends PersistABC {
 		return getParentOrganization();
 	}
 
-	public final void setparentOrganization(Organization inparentOrganization) {
+	public final void setparentOrganization(final Organization inparentOrganization) {
 		parentOrganization = inparentOrganization;
 	}
 
 	public final String getParentOrganizationID() {
 		return getParentOrganization().getDomainId();
 	}
-
-	//	// We always need to return the object cached in the DAO.
-	//	public final List<Aisle> getAisles() {
-	//		if (IGenericDao.USE_DAO_CACHE) {
-	//			List<Aisle> result = new ArrayList<Aisle>();
-	//			AisleDao aisleDao = new AisleDao();
-	//			if (!aisleDao.isObjectPersisted(this)) {
-	//				result = aisles;
-	//			} else {
-	//				for (Aisle aisle : aisleDao.getAll()) {
-	//					if (aisle.getParentFacility().equals(this)) {
-	//						result.add(aisle);
-	//					}
-	//				}
-	//			}
-	//			return result;
-	//		} else {
-	//			return aisles;
-	//		}
-	//	}
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void addAisle(Aisle inAisle) {

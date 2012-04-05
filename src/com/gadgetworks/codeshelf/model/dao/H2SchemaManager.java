@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: H2SchemaManager.java,v 1.21 2012/03/27 03:12:19 jeffw Exp $
+ *  $Id: H2SchemaManager.java,v 1.22 2012/04/05 00:02:46 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -199,6 +199,33 @@ public final class H2SchemaManager implements ISchemaManager {
 
 		execOneSQLCommand("CREATE INDEX CODESHELF.FACILITY_PARENT_ORGANIZATION ON CODESHELF.FACILITY (PARENTORGANIZATION_PERSISTENTID)");
 
+		// Location
+		execOneSQLCommand("CREATE TABLE CODESHELF.LOCATION ( " //
+				+ "PERSISTENTID IDENTITY NOT NULL, " //
+				+ "DOMAINID VARCHAR(64) NOT NULL," //
+				+ "VERSION TIMESTAMP, " //
+				+ "POSX LONG NOT NULL, " //
+				+ "POSY LONG NOT NULL, " //
+				+ "POSZ LONG NOT NULL, " //
+				+ "PARENTSTRUCTURE_PERSISTENTID LONG NOT NULL, " //
+				+ "PRIMARY KEY (PERSISTENTID));");
+
+		// Vertex
+		execOneSQLCommand("CREATE TABLE CODESHELF.VERTEX ( " //
+				+ "PERSISTENTID IDENTITY NOT NULL, " //
+				+ "DOMAINID VARCHAR(64) NOT NULL," //
+				+ "VERSION TIMESTAMP, " //
+				+ "POSX LONG NOT NULL, " //
+				+ "POSY LONG NOT NULL, " //
+				+ "PARENTLOCATION_PERSISTENTID LONG NOT NULL, " //
+				+ "PRIMARY KEY (PERSISTENTID));");
+
+		execOneSQLCommand("ALTER TABLE CODESHELF.VERTEX " //
+			+ "ADD FOREIGN KEY (PARENTLOCATION_PERSISTENTID) " //
+			+ "REFERENCES DATABASE.CODESHELF.LOCATION (PERSISTENTID);");
+
+		execOneSQLCommand("CREATE INDEX CODESHELF.VERTEX_PARENT_LOCATION ON CODESHELF.VERTEX (PARENTLOCATION_PERSISTENTID)");
+
 		// User
 		execOneSQLCommand("CREATE TABLE CODESHELF.USER ( " //
 				+ "PERSISTENTID IDENTITY NOT NULL, " //
@@ -211,7 +238,7 @@ public final class H2SchemaManager implements ISchemaManager {
 				+ "PARENTORGANIZATION_PERSISTENTID LONG NOT NULL, " //
 				+ "PRIMARY KEY (PERSISTENTID));");
 
-		execOneSQLCommand("CREATE UNIQUE INDEX CODESHELF.USER_ID_KEY ON CODESHELF.USER (ID)");
+		execOneSQLCommand("CREATE UNIQUE INDEX CODESHELF.USER_ID_KEY ON CODESHELF.USER (PERSISTENTID)");
 
 		execOneSQLCommand("ALTER TABLE CODESHELF.USER " //
 			+ "ADD FOREIGN KEY (PARENTORGANIZATION_PERSISTENTID) " //
