@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: H2SchemaManager.java,v 1.22 2012/04/05 00:02:46 jeffw Exp $
+ *  $Id: H2SchemaManager.java,v 1.23 2012/04/06 20:45:11 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -184,31 +184,35 @@ public final class H2SchemaManager implements ISchemaManager {
 				+ "DESCRIPTION VARCHAR(64) NOT NULL, " //
 				+ "PRIMARY KEY (PERSISTENTID));");
 
-		// Facility
-		execOneSQLCommand("CREATE TABLE CODESHELF.FACILITY ( " //
-				+ "PERSISTENTID IDENTITY NOT NULL, " //
-				+ "DOMAINID VARCHAR(64) NOT NULL," //
-				+ "VERSION TIMESTAMP, " //
-				+ "DESCRIPTION VARCHAR(64) NOT NULL, " //
-				+ "PARENTORGANIZATION_PERSISTENTID LONG NOT NULL, " //
-				+ "PRIMARY KEY (PERSISTENTID));");
-
-		execOneSQLCommand("ALTER TABLE CODESHELF.FACILITY " //
-			+ "ADD FOREIGN KEY (PARENTORGANIZATION_PERSISTENTID) " //
-			+ "REFERENCES DATABASE.CODESHELF.ORGANIZATION (PERSISTENTID);");
-
-		execOneSQLCommand("CREATE INDEX CODESHELF.FACILITY_PARENT_ORGANIZATION ON CODESHELF.FACILITY (PARENTORGANIZATION_PERSISTENTID)");
-
 		// Location
 		execOneSQLCommand("CREATE TABLE CODESHELF.LOCATION ( " //
+				+ "DTYPE VARCHAR(20) NOT NULL," //
 				+ "PERSISTENTID IDENTITY NOT NULL, " //
 				+ "DOMAINID VARCHAR(64) NOT NULL," //
 				+ "VERSION TIMESTAMP, " //
 				+ "POSX LONG NOT NULL, " //
 				+ "POSY LONG NOT NULL, " //
 				+ "POSZ LONG NOT NULL, " //
-				+ "PARENTSTRUCTURE_PERSISTENTID LONG NOT NULL, " //
+				+ "DESCRIPTION VARCHAR(64), "// NOT NULL, " //
+				+ "PARENTLOCATION_PERSISTENTID LONG, "// NOT NULL, " //
+				+ "PARENTORGANIZATION_PERSISTENTID LONG, "// NOT NULL, " //
 				+ "PRIMARY KEY (PERSISTENTID));");
+
+		// Add the foreign key constraint for Facility organization.
+		execOneSQLCommand("ALTER TABLE CODESHELF.LOCATION " //
+			+ "ADD FOREIGN KEY (PARENTORGANIZATION_PERSISTENTID) " //
+			+ "REFERENCES DATABASE.CODESHELF.ORGANIZATION (PERSISTENTID);");
+
+		// Add an index to make the facility-organization foreign key higher performance.
+		execOneSQLCommand("CREATE INDEX CODESHELF.FACILITY_PARENT_ORGANIZATION ON CODESHELF.LOCATION (PARENTORGANIZATION_PERSISTENTID)");
+
+		// Add the foreign key constraint for parent-child location arrangements.
+		execOneSQLCommand("ALTER TABLE CODESHELF.LOCATION " //
+			+ "ADD FOREIGN KEY (PARENTLOCATION_PERSISTENTID) " //
+			+ "REFERENCES DATABASE.CODESHELF.LOCATION (PERSISTENTID);");
+
+		// Add an index to make the parent-child location foreign key higher performance.
+		execOneSQLCommand("CREATE INDEX CODESHELF.LOCATION_PARENT_LOCATION ON CODESHELF.LOCATION (PARENTLOCATION_PERSISTENTID)");
 
 		// Vertex
 		execOneSQLCommand("CREATE TABLE CODESHELF.VERTEX ( " //
@@ -217,6 +221,7 @@ public final class H2SchemaManager implements ISchemaManager {
 				+ "VERSION TIMESTAMP, " //
 				+ "POSX LONG NOT NULL, " //
 				+ "POSY LONG NOT NULL, " //
+				+ "SORTORDER INT NOT NULL, " //
 				+ "PARENTLOCATION_PERSISTENTID LONG NOT NULL, " //
 				+ "PRIMARY KEY (PERSISTENTID));");
 
@@ -261,20 +266,6 @@ public final class H2SchemaManager implements ISchemaManager {
 				+ "REFERENCES DATABASE.CODESHELF.USER (PERSISTENTID);");
 
 		execOneSQLCommand("CREATE INDEX CODESHELF.USERSESSION_PARENT_USER ON CODESHELF.USERSESSION (PARENTUSERSESSION_PERSISTENTID)");
-
-		// Aisle
-		execOneSQLCommand("CREATE TABLE CODESHELF.AISLE ( " //
-				+ "PERSISTENTID IDENTITY NOT NULL, " //
-				+ "DOMAINID VARCHAR(64) NOT NULL," //
-				+ "VERSION TIMESTAMP, " //
-				+ "PARENTFACILITY_PERSISTENTID LONG NOT NULL, " //
-				+ "PRIMARY KEY (PERSISTENTID));");
-
-		execOneSQLCommand("ALTER TABLE CODESHELF.AISLE " //
-				+ "ADD FOREIGN KEY (PARENTFACILITY_PERSISTENTID) " //
-				+ "REFERENCES DATABASE.CODESHELF.FACILITY (PERSISTENTID);");
-
-		execOneSQLCommand("CREATE INDEX CODESHELF.AISLE_PARENT_FACILITY ON CODESHELF.AISLE (PARENTFACILITY_PERSISTENTID)");
 
 		// CodeShelfNetwork
 		execOneSQLCommand("CREATE TABLE CODESHELF.CODESHELFNETWORK ( " //

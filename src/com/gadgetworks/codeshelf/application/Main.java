@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Main.java,v 1.10 2012/03/22 20:17:07 jeffw Exp $
+ *  $Id: Main.java,v 1.11 2012/04/06 20:45:11 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -19,6 +19,7 @@ import com.gadgetworks.codeshelf.model.dao.domain.CodeShelfNetworkDao;
 import com.gadgetworks.codeshelf.model.dao.domain.ControlGroupDao;
 import com.gadgetworks.codeshelf.model.dao.domain.DBPropertyDao;
 import com.gadgetworks.codeshelf.model.dao.domain.FacilityDao;
+import com.gadgetworks.codeshelf.model.dao.domain.LocationDao;
 import com.gadgetworks.codeshelf.model.dao.domain.OrganizationDao;
 import com.gadgetworks.codeshelf.model.dao.domain.PersistentPropertyDao;
 import com.gadgetworks.codeshelf.model.dao.domain.UserDao;
@@ -28,6 +29,7 @@ import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork;
 import com.gadgetworks.codeshelf.model.persist.ControlGroup;
 import com.gadgetworks.codeshelf.model.persist.DBProperty;
 import com.gadgetworks.codeshelf.model.persist.Facility;
+import com.gadgetworks.codeshelf.model.persist.Location;
 import com.gadgetworks.codeshelf.model.persist.Organization;
 import com.gadgetworks.codeshelf.model.persist.PersistentProperty;
 import com.gadgetworks.codeshelf.model.persist.User;
@@ -104,6 +106,8 @@ public final class Main {
 				}).to(OrganizationDao.class);
 				bind(new TypeLiteral<IGenericDao<Facility>>() {
 				}).to(FacilityDao.class);
+				bind(new TypeLiteral<IGenericDao<Location>>() {
+				}).to(LocationDao.class);
 				bind(new TypeLiteral<IGenericDao<Aisle>>() {
 				}).to(AisleDao.class);
 				bind(new TypeLiteral<IGenericDao<PersistentProperty>>() {

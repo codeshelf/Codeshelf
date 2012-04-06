@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WirelessDevice.java,v 1.12 2012/03/22 20:17:06 jeffw Exp $
+ *  $Id: WirelessDevice.java,v 1.13 2012/04/06 20:45:11 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -45,11 +45,9 @@ import com.gadgetworks.codeshelf.model.dao.IGenericDao;
  * @author jeffw
  */
 
-@Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "DTYPE", discriminatorType = DiscriminatorType.STRING)
-//@MappedSuperclass
 @Entity
-//@Data
 @Table(name = "WIRELESSDEVICE")
 @DiscriminatorValue("ABC")
 public class WirelessDevice extends PersistABC implements INetworkDevice {

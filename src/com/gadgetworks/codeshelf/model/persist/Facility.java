@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.15 2012/04/05 00:02:46 jeffw Exp $
+ *  $Id: Facility.java,v 1.16 2012/04/06 20:45:11 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -9,13 +9,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.persistence.Column;
+import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 import lombok.Getter;
-import lombok.Setter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -31,16 +31,11 @@ import org.codehaus.jackson.annotate.JsonIgnore;
  */
 
 @Entity
-@Table(name = "FACILITY")
-public class Facility extends PersistABC {
+@Table(name = "LOCATION")
+@DiscriminatorValue("FACILITY")
+public class Facility extends Location {
 
 	private static final Log		LOGGER				= LogFactory.getLog(Facility.class);
-
-	// The facility description.
-	@Getter
-	@Setter
-	@Column(nullable = false)
-	private String					description;
 
 	// The owning organization.
 	@Column(nullable = false)
@@ -62,15 +57,9 @@ public class Facility extends PersistABC {
 	private List<CodeShelfNetwork>	networks			= new ArrayList<CodeShelfNetwork>();
 
 	public Facility() {
-		description = "";
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * @return
-	 */
-	public final PersistABC getParent() {
-		return getParentOrganization();
+		// Facilities have no parent location, but we don't want to allow ANY lcoation to not have a parent.
+		// So in this case we make the facility its own parent.  It's also a way to know when we've topped-out in the location tree.
+		this.setParentLocation(this);
 	}
 
 	public final void setparentOrganization(final Organization inparentOrganization) {

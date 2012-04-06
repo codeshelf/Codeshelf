@@ -1,12 +1,14 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Aisle.java,v 1.10 2012/03/22 20:17:06 jeffw Exp $
+ *  $Id: Aisle.java,v 1.11 2012/04/06 20:45:11 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
 import javax.persistence.Column;
+import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
@@ -15,6 +17,7 @@ import lombok.Setter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.codehaus.jackson.annotate.JsonIgnore;
 
 // --------------------------------------------------------------------------
 /**
@@ -27,40 +30,21 @@ import org.apache.commons.logging.LogFactory;
  */
 
 @Entity
-@Table(name = "AISLE")
-public class Aisle extends PersistABC {
+@Table(name = "LOCATION")
+@DiscriminatorValue("AISLE")
+public class Aisle extends Location {
 
-	private static final Log				LOGGER				= LogFactory.getLog(Aisle.class);
+	private static final Log	LOGGER	= LogFactory.getLog(Aisle.class);
 
-	// The owning facility.
-	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	@Getter
+	@JoinColumn(name = "PARENTLOCATION_PERSISTENTID")
+	@Column(nullable = false, name = "parentLocation")
+	@JsonIgnore
 	@Setter
-	private Facility						parentFacility;
+	@Getter
+	private Facility			parentFacility;
 
 	public Aisle() {
-		parentFacility = null;
-	}
-	
-	// --------------------------------------------------------------------------
-	/**
-	 * @return
-	 */
-	public final PersistABC getParent() {
-		return getParentFacility();
-	}
 
-//	public final Facility getParentFacility() {
-//		// Yes, this is weird, but we MUST always return the same instance of these persistent objects.
-//		if (parentFacility != null) {
-//			FacilityDao dao = new FacilityDao();
-//			parentFacility = dao.loadByPersistentId(parentFacility.getPersistentId());
-//		}
-//		return parentFacility;
-//	}
-
-//	public final void setParentFacility(Facility inParentFacility) {
-//		parentFacility = inParentFacility;
-//	}
+	}
 }

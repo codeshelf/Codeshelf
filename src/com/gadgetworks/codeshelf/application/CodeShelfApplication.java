@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfApplication.java,v 1.28 2012/04/02 07:58:53 jeffw Exp $
+ *  $Id: CodeShelfApplication.java,v 1.29 2012/04/06 20:45:11 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -38,6 +38,7 @@ import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork;
 import com.gadgetworks.codeshelf.model.persist.DBProperty;
 import com.gadgetworks.codeshelf.model.persist.Facility;
+import com.gadgetworks.codeshelf.model.persist.Location;
 import com.gadgetworks.codeshelf.model.persist.Organization;
 import com.gadgetworks.codeshelf.model.persist.PersistentProperty;
 import com.gadgetworks.codeshelf.model.persist.User;
@@ -58,6 +59,7 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 	private IWebSocketListener				mWebSocketListener;
 	private IGenericDao<Organization>		mOrganizationDao;
 	private IGenericDao<Facility>			mFacilityDao;
+	private IGenericDao<Location>			mLocationDao;
 	private IGenericDao<User>				mUserDao;
 	private IWirelessDeviceDao				mWirelessDeviceDao;
 	private IGenericDao<PersistentProperty>	mPersistentPropertyDao;
@@ -71,6 +73,7 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 		final IWebSocketListener inWebSocketManager,
 		final IGenericDao<Organization> inOrganizationDao,
 		final IGenericDao<Facility> inFacilityDao,
+		final IGenericDao<Location> inLocationDao,
 		final IGenericDao<User> inUserDao,
 		final IWirelessDeviceDao inWirelessDeviceDao,
 		final IGenericDao<PersistentProperty> inPersistentPropertyDao,
@@ -80,6 +83,7 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 		mWebSocketListener = inWebSocketManager;
 		mOrganizationDao = inOrganizationDao;
 		mFacilityDao = inFacilityDao;
+		mLocationDao = inLocationDao;
 		mUserDao = inUserDao;
 		mWirelessDeviceDao = inWirelessDeviceDao;
 		mPersistentPropertyDao = inPersistentPropertyDao;
@@ -292,7 +296,7 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 				e.printStackTrace();
 			}
 		}
-
+		
 		Facility facility = mFacilityDao.findByDomainId(organization, inFacilityId);
 		if (facility == null) {
 			facility = new Facility();
@@ -305,6 +309,19 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 				LOGGER.error(null, e);
 			}
 		}
+		
+		Location location = mLocationDao.findByDomainId(facility, inFacilityId);
+		if (location == null) {
+			location = new Location();
+			location.setDomainId(facility, inFacilityId);
+			location.setParentLocation(facility);
+			try {
+				mLocationDao.store(location);
+			} catch (DaoException e) {
+				LOGGER.error(null, e);
+			}
+		}
+
 	}
 
 	/* --------------------------------------------------------------------------

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Vertex.java,v 1.1 2012/04/05 00:02:46 jeffw Exp $
+ *  $Id: Vertex.java,v 1.2 2012/04/06 20:45:11 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -48,6 +48,12 @@ public class Vertex extends PersistABC {
 	@ManyToOne(optional = false)
 	@Getter
 	private long				posY;
+
+	// The vertex order/position (zero-based).
+	@Column(nullable = false)
+	@ManyToOne(optional = false)
+	@Getter
+	private int					sortOrder;
 
 	// The owning location.
 	@Column(nullable = false)
