@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.16 2012/04/06 20:45:11 jeffw Exp $
+ *  $Id: Facility.java,v 1.17 2012/04/07 19:42:16 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -45,7 +45,7 @@ public class Facility extends Location {
 	private Organization			parentOrganization;
 
 	// For a network this is a list of all of the control groups that belong in the set.
-	@OneToMany(mappedBy = "parentFacility")
+	@OneToMany(mappedBy = "parentLocation")
 	@JsonIgnore
 	@Getter
 	private List<Aisle>				aisles				= new ArrayList<Aisle>();

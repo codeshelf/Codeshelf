@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Aisle.java,v 1.11 2012/04/06 20:45:11 jeffw Exp $
+ *  $Id: Aisle.java,v 1.12 2012/04/07 19:42:16 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -36,15 +36,23 @@ public class Aisle extends Location {
 
 	private static final Log	LOGGER	= LogFactory.getLog(Aisle.class);
 
-	@ManyToOne(optional = false)
-	@JoinColumn(name = "PARENTLOCATION_PERSISTENTID")
-	@Column(nullable = false, name = "parentLocation")
-	@JsonIgnore
-	@Setter
-	@Getter
-	private Facility			parentFacility;
+//	@ManyToOne(optional = false)
+//	@JoinColumn(name = "PARENTLOCATION_PERSISTENTID")
+//	@Column(nullable = false, name = "parentLocation")
+//	@JsonIgnore
+//	@Setter
+//	@Getter
+//	private Facility			parentFacility;
 
 	public Aisle() {
 
+	}
+	
+	public Facility getParentFacility() {
+		return (Facility) getParentLocation();
+	}
+	
+	public void setParentFacility(Facility inParentFacility) {
+		setParentLocation(inParentFacility);
 	}
 }

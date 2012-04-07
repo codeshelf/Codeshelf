@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PersistABC.java,v 1.18 2012/04/02 07:58:53 jeffw Exp $
+ *  $Id: PersistABC.java,v 1.19 2012/04/07 19:42:16 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -82,7 +82,7 @@ public abstract class PersistABC {
 	 */
 	public final void setDomainId(final PersistABC inParentObject, String inId) {
 		if (inParentObject != null) {
-			domainId = inParentObject.getDomainId() + "." + inId;
+			domainId = inParentObject.getFullDomainId() + "." + inId;
 		} else {
 			domainId = inId;
 		}

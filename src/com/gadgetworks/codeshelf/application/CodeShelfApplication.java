@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfApplication.java,v 1.29 2012/04/06 20:45:11 jeffw Exp $
+ *  $Id: CodeShelfApplication.java,v 1.30 2012/04/07 19:42:17 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -35,10 +35,10 @@ import com.gadgetworks.codeshelf.model.dao.IDao;
 import com.gadgetworks.codeshelf.model.dao.IDaoRegistry;
 import com.gadgetworks.codeshelf.model.dao.IGenericDao;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
+import com.gadgetworks.codeshelf.model.persist.Aisle;
 import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork;
 import com.gadgetworks.codeshelf.model.persist.DBProperty;
 import com.gadgetworks.codeshelf.model.persist.Facility;
-import com.gadgetworks.codeshelf.model.persist.Location;
 import com.gadgetworks.codeshelf.model.persist.Organization;
 import com.gadgetworks.codeshelf.model.persist.PersistentProperty;
 import com.gadgetworks.codeshelf.model.persist.User;
@@ -59,7 +59,7 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 	private IWebSocketListener				mWebSocketListener;
 	private IGenericDao<Organization>		mOrganizationDao;
 	private IGenericDao<Facility>			mFacilityDao;
-	private IGenericDao<Location>			mLocationDao;
+	private IGenericDao<Aisle>				mAisleDao;
 	private IGenericDao<User>				mUserDao;
 	private IWirelessDeviceDao				mWirelessDeviceDao;
 	private IGenericDao<PersistentProperty>	mPersistentPropertyDao;
@@ -73,7 +73,7 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 		final IWebSocketListener inWebSocketManager,
 		final IGenericDao<Organization> inOrganizationDao,
 		final IGenericDao<Facility> inFacilityDao,
-		final IGenericDao<Location> inLocationDao,
+		final IGenericDao<Aisle> inAisleDao,
 		final IGenericDao<User> inUserDao,
 		final IWirelessDeviceDao inWirelessDeviceDao,
 		final IGenericDao<PersistentProperty> inPersistentPropertyDao,
@@ -83,7 +83,7 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 		mWebSocketListener = inWebSocketManager;
 		mOrganizationDao = inOrganizationDao;
 		mFacilityDao = inFacilityDao;
-		mLocationDao = inLocationDao;
+		mAisleDao = inAisleDao;
 		mUserDao = inUserDao;
 		mWirelessDeviceDao = inWirelessDeviceDao;
 		mPersistentPropertyDao = inPersistentPropertyDao;
@@ -213,11 +213,11 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 		initPreference(inOrganization, PersistentProperty.FORCE_CHANNEL, "Preferred wireless channel", ControllerABC.NO_PREFERRED_CHANNEL_TEXT);
 		initPreference(inOrganization, PersistentProperty.GENERAL_INTF_LOG_LEVEL, "Preferred general log level", Level.INFO.toString());
 		initPreference(inOrganization, PersistentProperty.GATEWAY_INTF_LOG_LEVEL, "Preferred gateway log level", Level.INFO.toString());
-//		initPreference(PersistentProperty.ACTIVEMQ_RUN, "Run ActiveMQ", String.valueOf(false));
-//		initPreference(PersistentProperty.ACTIVEMQ_USERID, "ActiveMQ User Id", "");
-//		initPreference(PersistentProperty.ACTIVEMQ_PASSWORD, "ActiveMQ Password", "");
-//		initPreference(PersistentProperty.ACTIVEMQ_STOMP_PORTNUM, "ActiveMQ STOMP Portnum", "61613");
-//		initPreference(PersistentProperty.ACTIVEMQ_JMS_PORTNUM, "ActiveMQ JMS Portnum", "61616");
+		//		initPreference(PersistentProperty.ACTIVEMQ_RUN, "Run ActiveMQ", String.valueOf(false));
+		//		initPreference(PersistentProperty.ACTIVEMQ_USERID, "ActiveMQ User Id", "");
+		//		initPreference(PersistentProperty.ACTIVEMQ_PASSWORD, "ActiveMQ Password", "");
+		//		initPreference(PersistentProperty.ACTIVEMQ_STOMP_PORTNUM, "ActiveMQ STOMP Portnum", "61613");
+		//		initPreference(PersistentProperty.ACTIVEMQ_JMS_PORTNUM, "ActiveMQ JMS Portnum", "61616");
 	}
 
 	// --------------------------------------------------------------------------
@@ -257,6 +257,7 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 			}
 		}
 	}
+
 	// --------------------------------------------------------------------------
 	/**
 	 *	Reset some of the persistent object fields to a base state at start-up.
@@ -264,9 +265,9 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 	private void initializeApplicationData() {
 
 		// Create two dummy users for testing.
-		createOrganzation("123", "123", "first");
-		createOrganzation("123", "456", "second");
-		createOrganzation("123", "789", "third");
+		createOrganzation("O1", "F1", "first");
+		createOrganzation("O1", "F2", "second");
+		createOrganzation("O1", "F3", "third");
 
 		// Some radio device fields have no meaning from the last invocation of the application.
 		for (WirelessDevice wirelessDevice : mWirelessDeviceDao.getAll()) {
@@ -296,7 +297,7 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 				e.printStackTrace();
 			}
 		}
-		
+
 		Facility facility = mFacilityDao.findByDomainId(organization, inFacilityId);
 		if (facility == null) {
 			facility = new Facility();
@@ -309,19 +310,30 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 				LOGGER.error(null, e);
 			}
 		}
-		
-		Location location = mLocationDao.findByDomainId(facility, inFacilityId);
-		if (location == null) {
-			location = new Location();
-			location.setDomainId(facility, inFacilityId);
-			location.setParentLocation(facility);
+
+		Aisle aisle = mAisleDao.findByDomainId(facility, inFacilityId);
+		if (aisle == null) {
+			aisle = new Aisle();
+			aisle.setDomainId(facility, "A1");
+			aisle.setParentLocation(facility);
 			try {
-				mLocationDao.store(location);
+				mAisleDao.store(aisle);
 			} catch (DaoException e) {
 				LOGGER.error(null, e);
 			}
 		}
 
+		aisle = mAisleDao.findByDomainId(facility, inFacilityId);
+		if (aisle == null) {
+			aisle = new Aisle();
+			aisle.setDomainId(facility, "A2");
+			aisle.setParentLocation(facility);
+			try {
+				mAisleDao.store(aisle);
+			} catch (DaoException e) {
+				LOGGER.error(null, e);
+			}
+		}
 	}
 
 	/* --------------------------------------------------------------------------

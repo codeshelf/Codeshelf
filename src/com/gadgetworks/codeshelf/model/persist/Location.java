@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Location.java,v 1.2 2012/04/06 20:45:11 jeffw Exp $
+ *  $Id: Location.java,v 1.3 2012/04/07 19:42:16 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -75,7 +75,7 @@ public class Location extends PersistABC {
 	private List<Vertex>		vertices	= new ArrayList<Vertex>();
 
 	// The owning location.
-	@Column(nullable = true)
+	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	@JsonIgnore
 	@Setter
