@@ -1,9 +1,11 @@
 /*******************************************************************************
  *  OmniBox
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WirelessDeviceEventHandler.java,v 1.7 2012/03/18 04:12:26 jeffw Exp $
+ *  $Id: WirelessDeviceEventHandler.java,v 1.8 2012/04/10 08:01:19 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.application;
+
+import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -25,7 +27,6 @@ public final class WirelessDeviceEventHandler implements IControllerEventListene
 
 	private static final Log	LOGGER	= LogFactory.getLog(WirelessDeviceEventHandler.class);
 
-	private IController			mController;
 	private IWirelessDeviceDao	mWirelessDeviceDao;
 
 	//	private List<String>		mDeviceMacAddrsToIgnore;
@@ -35,10 +36,11 @@ public final class WirelessDeviceEventHandler implements IControllerEventListene
 	 *  @param inController
 	 *  @param inServerConnectionManager
 	 */
-	public WirelessDeviceEventHandler(final IController inController, final IWirelessDeviceDao inIWirelessDeviceDao) {
+	public WirelessDeviceEventHandler(final List<IController> inControllerList, final IWirelessDeviceDao inIWirelessDeviceDao) {
 
-		mController = inController;
-		mController.addControllerEventListener(this);
+		for (IController controller : inControllerList) {
+			controller.addControllerEventListener(this);			
+		}
 		mWirelessDeviceDao = inIWirelessDeviceDao;
 		//		mDeviceMacAddrsToIgnore = new ArrayList<String>();
 	}

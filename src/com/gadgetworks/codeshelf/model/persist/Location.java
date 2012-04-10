@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Location.java,v 1.3 2012/04/07 19:42:16 jeffw Exp $
+ *  $Id: Location.java,v 1.4 2012/04/10 08:01:19 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -26,6 +26,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.annotate.JsonIgnore;
 
+import com.gadgetworks.codeshelf.model.PositionTypeEnum;
+
 // --------------------------------------------------------------------------
 /**
  * Location
@@ -35,12 +37,12 @@ import org.codehaus.jackson.annotate.JsonIgnore;
  * @author jeffw
  */
 
+@Entity
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "DTYPE", discriminatorType = DiscriminatorType.STRING)
-@Entity
 @Table(name = "LOCATION")
 @DiscriminatorValue("ABC")
-public class Location extends PersistABC {
+public abstract class Location extends PersistABC {
 
 	private static final Log	LOGGER		= LogFactory.getLog(Location.class);
 
@@ -48,19 +50,25 @@ public class Location extends PersistABC {
 	@Getter
 	@Setter
 	@Column(nullable = false)
-	private long				posX;
+	private PositionTypeEnum	posType;
+
+	// The X anchor position.
+	@Getter
+	@Setter
+	@Column(nullable = false)
+	private Double				posX;
 
 	// The Y anchor position.
 	@Getter
 	@Setter
 	@Column(nullable = false)
-	private long				posY;
+	private Double				posY;
 
 	// The Z anchor position.
 	@Getter
 	@Setter
 	@Column(nullable = false)
-	private long				posZ;
+	private Double				posZ;
 
 	// The location description.
 	@Getter
@@ -89,20 +97,12 @@ public class Location extends PersistABC {
 	private List<Location>		locations	= new ArrayList<Location>();
 
 	public Location() {
-
+		// Z pos is non-null so that it doesn't need to be explicitly set.
+		posZ = 0.0;
 	}
 
-	public final PersistABC getParent() {
-		// Every location must have a parent location except we top-out at facility.
-		// But we don't want to allow ANY location to have a null parent.  For this reason
-		// the facility has itself as its own parent.  We detect that here, so if we parse the location
-		// "tree" we can detect a null return value (fpr a facility) and stop.
-		PersistABC parent = getParentLocation();
-		if (parent == this) {
-			return null;
-		} else {
-			return parent;
-		}
+	public final void setPosTypeByStr(String inPosTypeStr) {
+		setPosType(PositionTypeEnum.valueOf(inPosTypeStr));
 	}
 
 	public final void addVertex(Vertex inVertex) {

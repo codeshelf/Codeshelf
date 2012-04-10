@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectGetter.java,v 1.8 2012/03/30 23:21:35 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectGetter.java,v 1.9 2012/04/10 08:01:19 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -17,7 +17,6 @@ import org.codehaus.jackson.node.ObjectNode;
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.IGenericDao;
 import com.gadgetworks.codeshelf.model.persist.PersistABC;
-import com.gadgetworks.codeshelf.web.websession.IWebSession;
 import com.gadgetworks.codeshelf.web.websession.command.resp.IWebSessionRespCmd;
 import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdObjectGetter;
 
@@ -40,11 +39,6 @@ import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdOb
 public class WebSessionReqCmdObjectGetter extends WebSessionReqCmdABC {
 
 	private static final Log		LOGGER				= LogFactory.getLog(WebSessionReqCmdObjectGetter.class);
-
-	private static final String		CLASS_NODE			= "className";
-	private static final String		ID_NODE				= "persistentId";
-	private static final String		GETTER_METHOD		= "getterMethod";
-	private static final String		OBJECT_RESULTS_NODE	= "result";
 
 	private IDaoProvider			mDaoProvider;
 
@@ -73,12 +67,12 @@ public class WebSessionReqCmdObjectGetter extends WebSessionReqCmdABC {
 		try {
 
 			JsonNode dataJsonNode = getDataJsonNode();
-			JsonNode parentClassNode = dataJsonNode.get(CLASS_NODE);
+			JsonNode parentClassNode = dataJsonNode.get(CLASSNAME);
 			String parentClassName = parentClassNode.getTextValue();
 			if (!parentClassName.startsWith("com.gadgetworks.codeshelf.model.persist.")) {
 				parentClassName = "com.gadgetworks.codeshelf.model.persist." + parentClassName;
 			}
-			JsonNode parentIdNode = dataJsonNode.get(ID_NODE);
+			JsonNode parentIdNode = dataJsonNode.get(PERSISTENT_ID);
 			long parentId = parentIdNode.getLongValue();
 			JsonNode getMethodNode = dataJsonNode.get(GETTER_METHOD);
 			String getterMethodName = getMethodNode.getTextValue();
@@ -100,7 +94,7 @@ public class WebSessionReqCmdObjectGetter extends WebSessionReqCmdABC {
 					ObjectMapper mapper = new ObjectMapper();
 					ObjectNode dataNode = mapper.createObjectNode();
 					ArrayNode searchListNode = mapper.valueToTree(resultObject);
-					dataNode.put(OBJECT_RESULTS_NODE, searchListNode);
+					dataNode.put(RESULTS, searchListNode);
 
 					result = new WebSessionRespCmdObjectGetter(dataNode);
 				}
@@ -121,43 +115,5 @@ public class WebSessionReqCmdObjectGetter extends WebSessionReqCmdABC {
 		}
 
 		return result;
-	}
-
-	// --------------------------------------------------------------------------
-	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmd#doesPersist()
-	 */
-	public final boolean doesPersist() {
-		return false;
-	}
-
-	@Override
-	public void registerSessionWithDaos(IWebSession inWebSession) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void unregisterSessionWithDaos(IWebSession inWebSession) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public IWebSessionRespCmd processObjectAdd(PersistABC inDomainObject) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public IWebSessionRespCmd processObjectUpdate(PersistABC inDomainObject) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public IWebSessionRespCmd processObjectDelete(PersistABC inDomainObject) {
-		// TODO Auto-generated method stub
-		return null;
 	}
 }

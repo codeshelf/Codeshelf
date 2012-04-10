@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: DBProperty.java,v 1.9 2012/03/22 20:17:06 jeffw Exp $
+ *  $Id: DBProperty.java,v 1.10 2012/04/10 08:01:19 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -38,4 +38,10 @@ public class DBProperty extends PersistABC {
 	public final PersistABC getParent() {
 		return null;
 	}
+	
+	public final void setParent(PersistABC inParent) {
+
+	}
+	
+
 }

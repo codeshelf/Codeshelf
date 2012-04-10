@@ -17,6 +17,10 @@ public class GenericDaoTest {
 		public PersistABC getParent() {
 			return null;
 		}
+
+		public void setParent(PersistABC inParent) {
+			
+		}
 	}
 	
 	class DaoRegistryStub implements IDaoRegistry {

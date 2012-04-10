@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Organization.java,v 1.7 2012/03/24 06:49:33 jeffw Exp $
+ *  $Id: Organization.java,v 1.8 2012/04/10 08:01:19 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -70,6 +70,10 @@ public class Organization extends PersistABC {
 		return null;
 	}
 
+	public final void setParent(PersistABC inParent) {
+
+	}
+	
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void addControlGroup(Facility inFacility) {
 		facilities.add(inFacility);

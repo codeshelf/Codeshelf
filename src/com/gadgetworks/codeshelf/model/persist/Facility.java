@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.17 2012/04/07 19:42:16 jeffw Exp $
+ *  $Id: Facility.java,v 1.18 2012/04/10 08:01:19 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -62,8 +62,18 @@ public class Facility extends Location {
 		this.setParentLocation(this);
 	}
 
-	public final void setparentOrganization(final Organization inparentOrganization) {
-		parentOrganization = inparentOrganization;
+	public final PersistABC getParent() {
+		return getParentOrganization();
+	}
+	
+	public final void setParent(PersistABC inParent) {
+		if (inParent instanceof Organization) {
+			setParentOrganization((Organization) inParent);
+		}
+	}
+	
+	public final void setParentOrganization(final Organization inParentOrganization) {
+		parentOrganization = inParentOrganization;
 	}
 
 	public final String getParentOrganizationID() {

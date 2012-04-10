@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: User.java,v 1.8 2012/03/22 20:17:06 jeffw Exp $
+ *  $Id: User.java,v 1.9 2012/04/10 08:01:19 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -85,6 +85,12 @@ public class User extends PersistABC {
 		return getParentOrganization();
 	}
 
+	public final void setParent(PersistABC inParent) {
+		if (inParent instanceof Organization) {
+			setParentOrganization((Organization) inParent);
+		}
+	}
+	
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void addUserSession(UserSession inPromoCodeUse) {
 		uses.add(inPromoCodeUse);

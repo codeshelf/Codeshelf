@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WirelessDevice.java,v 1.13 2012/04/06 20:45:11 jeffw Exp $
+ *  $Id: WirelessDevice.java,v 1.14 2012/04/10 08:01:19 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -123,6 +123,12 @@ public class WirelessDevice extends PersistABC implements INetworkDevice {
 		return getParentControlGroup();
 	}
 
+	public final void setParent(PersistABC inParent) {
+		if (inParent instanceof ControlGroup) {
+			setParentControlGroup((ControlGroup) inParent);
+		}
+	}
+	
 	public final NetMacAddress getMacAddress() {
 		return new NetMacAddress(macAddress);
 	}

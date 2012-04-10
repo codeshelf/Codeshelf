@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PersistentProperty.java,v 1.13 2012/03/27 03:12:19 jeffw Exp $
+ *  $Id: PersistentProperty.java,v 1.14 2012/04/10 08:01:19 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -70,6 +70,12 @@ public class PersistentProperty extends PersistABC {
 		return getParentOrganization();
 	}
 
+	public final void setParent(PersistABC inParent) {
+		if (inParent instanceof Organization) {
+			setParentOrganization((Organization) inParent);
+		}
+	}
+	
 	public final String toString() {
 		return getDomainId() + "val: " + getCurrentValueAsStr() + " (default: " + getDefaultValueAsStr() + ")";
 	}

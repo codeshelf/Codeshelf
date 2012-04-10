@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ControlGroup.java,v 1.21 2012/03/22 20:17:06 jeffw Exp $
+ *  $Id: ControlGroup.java,v 1.22 2012/04/10 08:01:19 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -86,6 +86,12 @@ public class ControlGroup extends PersistABC {
 		return getParentCodeShelfNetwork();
 	}
 
+	public final void setParent(PersistABC inParent) {
+		if (inParent instanceof CodeShelfNetwork) {
+			setParentCodeShelfNetwork((CodeShelfNetwork) inParent);
+		}
+	}
+	
 	public final NetGroup getControlGroupId() {
 		return new NetGroup(controlGroupId);
 	}

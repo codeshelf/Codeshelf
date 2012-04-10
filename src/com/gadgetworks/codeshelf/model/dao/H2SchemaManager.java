@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: H2SchemaManager.java,v 1.24 2012/04/07 19:42:16 jeffw Exp $
+ *  $Id: H2SchemaManager.java,v 1.25 2012/04/10 08:01:19 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -194,9 +194,10 @@ public final class H2SchemaManager implements ISchemaManager {
 				+ "PERSISTENTID BIGINT NOT NULL, " //
 				+ "DOMAINID VARCHAR(64) NOT NULL," //
 				+ "VERSION TIMESTAMP, " //
-				+ "POSX LONG NOT NULL, " //
-				+ "POSY LONG NOT NULL, " //
-				+ "POSZ LONG NOT NULL, " //
+				+ "POSTYPE VARCHAR(64) NOT NULL, " //
+				+ "POSX DOUBLE NOT NULL, " //
+				+ "POSY DOUBLE NOT NULL, " //
+				+ "POSZ DOUBLE NOT NULL, " //
 				+ "DESCRIPTION VARCHAR(64), "// NOT NULL, " //
 				+ "PARENTLOCATION_PERSISTENTID LONG NOT NULL, " //
 				+ "PARENTORGANIZATION_PERSISTENTID LONG, "// NOT NULL, " //
@@ -224,8 +225,8 @@ public final class H2SchemaManager implements ISchemaManager {
 				+ "PERSISTENTID BIGINT NOT NULL, " //
 				+ "DOMAINID VARCHAR(64) NOT NULL," //
 				+ "VERSION TIMESTAMP, " //
-				+ "POSX LONG NOT NULL, " //
-				+ "POSY LONG NOT NULL, " //
+				+ "POSXMETERS DOUBLE NOT NULL, " //
+				+ "POSYMETERS DOUBLE NOT NULL, " //
 				+ "SORTORDER INT NOT NULL, " //
 				+ "PARENTLOCATION_PERSISTENTID LONG NOT NULL, " //
 				+ "PRIMARY KEY (PERSISTENTID));");

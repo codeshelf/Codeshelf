@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSession.java,v 1.16 2012/03/31 01:17:30 jeffw Exp $
+ *  $Id: WebSession.java,v 1.17 2012/04/10 08:01:19 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession;
 
@@ -17,6 +17,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 
 import com.gadgetworks.codeshelf.model.dao.IDaoListener;
 import com.gadgetworks.codeshelf.model.persist.PersistABC;
+import com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionPersistentReqCmd;
 import com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmd;
 import com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmdFactory;
 import com.gadgetworks.codeshelf.web.websession.command.resp.IWebSessionRespCmd;
@@ -28,18 +29,18 @@ import com.gadgetworks.codeshelf.web.websocket.IWebSocket;
  */
 public class WebSession implements IWebSession, IDaoListener {
 
-	private static final Log				LOGGER	= LogFactory.getLog(WebSession.class);
+	private static final Log							LOGGER	= LogFactory.getLog(WebSession.class);
 
-	private WebSessionStateEnum				mState;
-	private IWebSocket						mWebSocket;
-	private IWebSessionReqCmdFactory		mWebSessionReqCmdFactory;
-	private Map<String, IWebSessionReqCmd>	mPersistentCommands;
+	private WebSessionStateEnum							mState;
+	private IWebSocket									mWebSocket;
+	private IWebSessionReqCmdFactory					mWebSessionReqCmdFactory;
+	private Map<String, IWebSessionPersistentReqCmd>	mPersistentCommands;
 
 	public WebSession(final IWebSocket inWebSocket, final IWebSessionReqCmdFactory inWebSessionReqCmdFactory) {
 		mWebSocket = inWebSocket;
 		mWebSessionReqCmdFactory = inWebSessionReqCmdFactory;
 		mState = WebSessionStateEnum.INVALID;
-		mPersistentCommands = new HashMap<String, IWebSessionReqCmd>();
+		mPersistentCommands = new HashMap<String, IWebSessionPersistentReqCmd>();
 	}
 
 	public final void processMessage(String inMessage) {
@@ -53,14 +54,15 @@ public class WebSession implements IWebSession, IDaoListener {
 			IWebSessionRespCmd respCommand = command.exec();
 
 			// Some commands persist, and we use them to respond to data changes.
-			if (command.doesPersist()) {
+			if (command instanceof IWebSessionPersistentReqCmd) {
+				IWebSessionPersistentReqCmd persistCmd = (IWebSessionPersistentReqCmd) command;
 				// If the command is already in the map then remove it, otherwise add it.
 				if (mPersistentCommands.get(command.getCommandId()) != null) {
-					command.unregisterSessionWithDaos(this);
+					persistCmd.unregisterSessionWithDaos(this);
 					mPersistentCommands.remove(command.getCommandId());
 				} else {
-					command.registerSessionWithDaos(this);
-					mPersistentCommands.put(command.getCommandId(), command);
+					persistCmd.registerSessionWithDaos(this);
+					mPersistentCommands.put(command.getCommandId(), persistCmd);
 				}
 			}
 
@@ -76,7 +78,7 @@ public class WebSession implements IWebSession, IDaoListener {
 	}
 
 	public final void endSession() {
-		for (IWebSessionReqCmd command : mPersistentCommands.values()) {
+		for (IWebSessionPersistentReqCmd command : mPersistentCommands.values()) {
 			command.unregisterSessionWithDaos(this);
 		}
 	}
@@ -97,7 +99,7 @@ public class WebSession implements IWebSession, IDaoListener {
 	}
 
 	public final void objectAdded(PersistABC inDomainObject) {
-		for (IWebSessionReqCmd command : mPersistentCommands.values()) {
+		for (IWebSessionPersistentReqCmd command : mPersistentCommands.values()) {
 			IWebSessionRespCmd respCommand = command.processObjectAdd(inDomainObject);
 			if (respCommand != null) {
 				respCommand.setCommandId(command.getCommandId());
@@ -107,7 +109,7 @@ public class WebSession implements IWebSession, IDaoListener {
 	}
 
 	public final void objectUpdated(PersistABC inDomainObject) {
-		for (IWebSessionReqCmd command : mPersistentCommands.values()) {
+		for (IWebSessionPersistentReqCmd command : mPersistentCommands.values()) {
 			IWebSessionRespCmd respCommand = command.processObjectUpdate(inDomainObject);
 			if (respCommand != null) {
 				respCommand.setCommandId(command.getCommandId());
@@ -117,7 +119,7 @@ public class WebSession implements IWebSession, IDaoListener {
 	}
 
 	public final void objectDeleted(PersistABC inDomainObject) {
-		for (IWebSessionReqCmd command : mPersistentCommands.values()) {
+		for (IWebSessionPersistentReqCmd command : mPersistentCommands.values()) {
 			IWebSessionRespCmd respCommand = command.processObjectDelete(inDomainObject);
 			if (respCommand != null) {
 				respCommand.setCommandId(command.getCommandId());

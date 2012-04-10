@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectListener.java,v 1.8 2012/03/31 01:17:30 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectListener.java,v 1.9 2012/04/10 08:01:19 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -45,17 +45,6 @@ public class WebSessionReqCmdObjectListener extends WebSessionReqCmdABC {
 
 	private static final Log				LOGGER				= LogFactory.getLog(WebSessionReqCmdObjectFilter.class);
 
-	private static final String				OBJECT_CLASS		= "className";
-	private static final String				OBJECT_ID_LIST		= "objectIds";
-	private static final String				PROPERTY_NAME_LIST	= "propertyNames";
-	private static final String				PERSISTENT_ID		= "persistentId";
-	private static final String				OP_TYPE				= "opType";
-	private static final String				OBJECT_RESULTS_NODE	= "result";
-
-	private static final String				OP_TYPE_ADD			= "add";
-	private static final String				OP_TYPE_UPDATE		= "update";
-	private static final String				OP_TYPE_DELETE		= "delete";
-
 	private Class<PersistABC>				mPersistenceClass;
 	private List<PersistABC>				mObjectMatchList;
 	private List<Long>						mObjectIdList;
@@ -88,7 +77,7 @@ public class WebSessionReqCmdObjectListener extends WebSessionReqCmdABC {
 
 		try {
 			JsonNode dataJsonNode = getDataJsonNode();
-			JsonNode objectClassNode = dataJsonNode.get(OBJECT_CLASS);
+			JsonNode objectClassNode = dataJsonNode.get(CLASSNAME);
 			String objectClassName = objectClassNode.getTextValue();
 			if (!objectClassName.startsWith("com.gadgetworks.codeshelf.model.persist.")) {
 				objectClassName = "com.gadgetworks.codeshelf.model.persist." + objectClassName;
@@ -127,7 +116,7 @@ public class WebSessionReqCmdObjectListener extends WebSessionReqCmdABC {
 	/**
 	 * @return
 	 */
-	public final IWebSessionRespCmd getProperties(List<PersistABC> inDomainObjectList, String inOperationType) {
+	private final IWebSessionRespCmd getProperties(List<PersistABC> inDomainObjectList, String inOperationType) {
 
 		IWebSessionRespCmd result = null;
 
@@ -136,7 +125,7 @@ public class WebSessionReqCmdObjectListener extends WebSessionReqCmdABC {
 			for (PersistABC matchedObject : inDomainObjectList) {
 				Map<String, Object> propertiesMap = new HashMap<String, Object>();
 				// Always include the class naem and persistent ID in the results.
-				propertiesMap.put(OBJECT_CLASS, matchedObject.getClassName().toString());
+				propertiesMap.put(CLASSNAME, matchedObject.getClassName().toString());
 				propertiesMap.put(OP_TYPE, inOperationType);
 				propertiesMap.put(PERSISTENT_ID, matchedObject.getPersistentId().toString());
 				for (String propertyName : mPropertyNames) {
@@ -154,7 +143,7 @@ public class WebSessionReqCmdObjectListener extends WebSessionReqCmdABC {
 			ObjectMapper mapper = new ObjectMapper();
 			ObjectNode dataNode = mapper.createObjectNode();
 			ArrayNode searchListNode = mapper.valueToTree(resultsList);
-			dataNode.put(OBJECT_RESULTS_NODE, searchListNode);
+			dataNode.put(RESULTS, searchListNode);
 
 			result = new WebSessionRespCmdObjectListener(dataNode);
 
@@ -171,18 +160,10 @@ public class WebSessionReqCmdObjectListener extends WebSessionReqCmdABC {
 		return result;
 	}
 
-	// --------------------------------------------------------------------------
-	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmd#doesPersist()
-	 */
-	public final boolean doesPersist() {
-		return true;
-	}
-
 	public final IWebSessionRespCmd processObjectAdd(PersistABC inDomainObject) {
 		List<PersistABC> domainObjectList = new ArrayList<PersistABC>();
 		domainObjectList.add(inDomainObject);
-		return getProperties(domainObjectList, OP_TYPE_ADD);
+		return getProperties(domainObjectList, OP_TYPE_CREATE);
 	}
 
 	public final IWebSessionRespCmd processObjectUpdate(PersistABC inDomainObject) {

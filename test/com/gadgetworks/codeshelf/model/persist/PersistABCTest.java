@@ -13,8 +13,10 @@ public class PersistABCTest {
 		public PersistABC getParent() {
 			return null;
 		}
-		// Stub object needed to test abstract class.
-		// Ensures the Liskov Substitution Principle.
+
+		public void setParent(PersistABC inParent) {
+			
+		}
 	}
 	
 	class PersistABCOtherStub extends PersistABC {
@@ -22,8 +24,10 @@ public class PersistABCTest {
 		public PersistABC getParent() {
 			return null;
 		}
-		// Stub object needed to test abstract class.
-		// Ensures the Liskov Substitution Principle.
+
+		public void setParent(PersistABC inParent) {
+
+		}
 	}
 
 	@Test

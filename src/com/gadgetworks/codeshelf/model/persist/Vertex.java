@@ -1,17 +1,13 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Vertex.java,v 1.2 2012/04/06 20:45:11 jeffw Exp $
+ *  $Id: Vertex.java,v 1.3 2012/04/10 08:01:19 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 import lombok.Getter;
@@ -41,13 +37,13 @@ public class Vertex extends PersistABC {
 	@Getter
 	@Setter
 	@Column(nullable = false)
-	private long				posX;
+	private double				posXMeters;
 
 	// The Y position.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	@Getter
-	private long				posY;
+	private double				posYMeters;
 
 	// The vertex order/position (zero-based).
 	@Column(nullable = false)
@@ -74,7 +70,13 @@ public class Vertex extends PersistABC {
 		return getParentLocation();
 	}
 
-	public final void setparentLocation(final Location inParentLocation) {
+	public final void setParent(PersistABC inParent) {
+		if (inParent instanceof Location) {
+			setParentLocation((Location) inParent);
+		}
+	}
+	
+	public final void setParentLocation(final Location inParentLocation) {
 		parentLocation = inParentLocation;
 	}
 }

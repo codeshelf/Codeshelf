@@ -1,23 +1,16 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Aisle.java,v 1.12 2012/04/07 19:42:16 jeffw Exp $
+ *  $Id: Aisle.java,v 1.13 2012/04/10 08:01:19 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
-import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 import javax.persistence.Table;
-
-import lombok.Getter;
-import lombok.Setter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.codehaus.jackson.annotate.JsonIgnore;
 
 // --------------------------------------------------------------------------
 /**
@@ -36,23 +29,25 @@ public class Aisle extends Location {
 
 	private static final Log	LOGGER	= LogFactory.getLog(Aisle.class);
 
-//	@ManyToOne(optional = false)
-//	@JoinColumn(name = "PARENTLOCATION_PERSISTENTID")
-//	@Column(nullable = false, name = "parentLocation")
-//	@JsonIgnore
-//	@Setter
-//	@Getter
-//	private Facility			parentFacility;
-
 	public Aisle() {
 
 	}
 	
-	public Facility getParentFacility() {
+	public final PersistABC getParent() {
+		return getParentLocation();
+	}
+	
+	public final void setParent(PersistABC inParent) {
+		if (inParent instanceof Facility) {
+			setParentLocation((Facility) inParent);
+		}
+	}
+	
+	public final Facility getParentFacility() {
 		return (Facility) getParentLocation();
 	}
 	
-	public void setParentFacility(Facility inParentFacility) {
+	public final void setParentFacility(Facility inParentFacility) {
 		setParentLocation(inParentFacility);
 	}
 }

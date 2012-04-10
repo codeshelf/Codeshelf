@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfApplication.java,v 1.30 2012/04/07 19:42:17 jeffw Exp $
+ *  $Id: CodeShelfApplication.java,v 1.31 2012/04/10 08:01:19 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -49,18 +49,18 @@ import com.google.inject.Inject;
 
 public final class CodeShelfApplication implements ICodeShelfApplication {
 
-	private static final Logger				LOGGER		= LoggerFactory.getLogger(CodeShelfApplication.class);
+	private static final Logger				LOGGER			= LoggerFactory.getLogger(CodeShelfApplication.class);
 
-	private boolean							mIsRunning	= true;
+	private boolean							mIsRunning		= true;
 	private IDaoRegistry					mDaoRegistry;
-	private IController						mController;
+	private List<IController>				mControllerList;
 	@SuppressWarnings("unused")
 	private WirelessDeviceEventHandler		mWirelessDeviceEventHandler;
 	private IWebSocketListener				mWebSocketListener;
 	private IGenericDao<Organization>		mOrganizationDao;
-	private IGenericDao<Facility>			mFacilityDao;
-	private IGenericDao<Aisle>				mAisleDao;
-	private IGenericDao<User>				mUserDao;
+//	private IGenericDao<Facility>			mFacilityDao;
+//	private IGenericDao<Aisle>				mAisleDao;
+//	private IGenericDao<User>				mUserDao;
 	private IWirelessDeviceDao				mWirelessDeviceDao;
 	private IGenericDao<PersistentProperty>	mPersistentPropertyDao;
 	private IGenericDao<CodeShelfNetwork>	mCodeShelfNetworkDao;
@@ -82,21 +82,14 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 		mDaoRegistry = inDaoRegistry;
 		mWebSocketListener = inWebSocketManager;
 		mOrganizationDao = inOrganizationDao;
-		mFacilityDao = inFacilityDao;
-		mAisleDao = inAisleDao;
-		mUserDao = inUserDao;
+//		mFacilityDao = inFacilityDao;
+//		mAisleDao = inAisleDao;
+//		mUserDao = inUserDao;
 		mWirelessDeviceDao = inWirelessDeviceDao;
 		mPersistentPropertyDao = inPersistentPropertyDao;
 		mCodeShelfNetworkDao = inCodeShelfNetworkDao;
 		mDBPropertyDao = inDBPropertyDao;
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * @return
-	 */
-	public IController getController() {
-		return mController;
+		mControllerList = new ArrayList<IController>();
 	}
 
 	// --------------------------------------------------------------------------
@@ -149,11 +142,11 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 					interfaceList.add(snapInterface);
 				}
 
-				mController = new CodeShelfController(mWirelessDeviceDao, interfaceList, facility, mPersistentPropertyDao);
+				mControllerList.add(new CodeShelfController(mWirelessDeviceDao, interfaceList, facility, mPersistentPropertyDao));
 			}
 		}
 
-		mWirelessDeviceEventHandler = new WirelessDeviceEventHandler(mController, mWirelessDeviceDao);
+		mWirelessDeviceEventHandler = new WirelessDeviceEventHandler(mControllerList, mWirelessDeviceDao);
 
 		// Start the WebSocket UX handler
 		mWebSocketListener.start();
@@ -168,8 +161,10 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 		//		JmsHandler.startJmsHandler();
 
 		// Start the background startup and wait until it's finished.
-		LOGGER.info("Starting controller");
-		mController.startController();
+		LOGGER.info("Starting controllers");
+		for (IController controller : mControllerList) {
+			controller.startController();
+		}
 
 		// Initialize the TTS system.
 		// (Do it on a thread, so we don't pause the start of the application.)
@@ -198,8 +193,10 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 		// Stop the web socket manager.
 		mWebSocketListener.stop();
 
-		// First shutdown the FlyWeight controller if there is one.
-		mController.stopController();
+		// Shutdown the controllers
+		for (IController controller : mControllerList) {
+			controller.stopController();
+		}
 
 		stopEmbeddedDB();
 
@@ -235,8 +232,8 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 		// If the property doesn't exist then create it.
 		if (property == null) {
 			property = new PersistentProperty();
-			property.setDomainId(inOrganization, inPropertyID);
 			property.setParentOrganization(inOrganization);
+			property.setDomainId(inPropertyID);
 			property.setCurrentValueAsStr(inDefaultValue);
 			property.setDefaultValueAsStr(inDefaultValue);
 			shouldUpdate = true;
@@ -266,8 +263,6 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 
 		// Create two dummy users for testing.
 		createOrganzation("O1", "F1", "first");
-		createOrganzation("O1", "F2", "second");
-		createOrganzation("O1", "F3", "third");
 
 		// Some radio device fields have no meaning from the last invocation of the application.
 		for (WirelessDevice wirelessDevice : mWirelessDeviceDao.getAll()) {
@@ -290,7 +285,7 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 		Organization organization = mOrganizationDao.findByDomainId(null, inOrganizationId);
 		if (organization == null) {
 			organization = new Organization();
-			organization.setDomainId(null, inOrganizationId);
+			organization.setDomainId(inOrganizationId);
 			try {
 				mOrganizationDao.store(organization);
 			} catch (DaoException e) {
@@ -298,42 +293,42 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 			}
 		}
 
-		Facility facility = mFacilityDao.findByDomainId(organization, inFacilityId);
-		if (facility == null) {
-			facility = new Facility();
-			facility.setDomainId(organization, inFacilityId);
-			facility.setDescription(inFacilityName);
-			facility.setparentOrganization(organization);
-			try {
-				mFacilityDao.store(facility);
-			} catch (DaoException e) {
-				LOGGER.error(null, e);
-			}
-		}
-
-		Aisle aisle = mAisleDao.findByDomainId(facility, inFacilityId);
-		if (aisle == null) {
-			aisle = new Aisle();
-			aisle.setDomainId(facility, "A1");
-			aisle.setParentLocation(facility);
-			try {
-				mAisleDao.store(aisle);
-			} catch (DaoException e) {
-				LOGGER.error(null, e);
-			}
-		}
-
-		aisle = mAisleDao.findByDomainId(facility, inFacilityId);
-		if (aisle == null) {
-			aisle = new Aisle();
-			aisle.setDomainId(facility, "A2");
-			aisle.setParentLocation(facility);
-			try {
-				mAisleDao.store(aisle);
-			} catch (DaoException e) {
-				LOGGER.error(null, e);
-			}
-		}
+		//		Facility facility = mFacilityDao.findByDomainId(organization, inFacilityId);
+		//		if (facility == null) {
+		//			facility = new Facility();
+		//			facility.setDomainId(organization, inFacilityId);
+		//			facility.setDescription(inFacilityName);
+		//			facility.setparentOrganization(organization);
+		//			try {
+		//				mFacilityDao.store(facility);
+		//			} catch (DaoException e) {
+		//				LOGGER.error(null, e);
+		//			}
+		//		}
+		//
+		//		Aisle aisle = mAisleDao.findByDomainId(facility, inFacilityId);
+		//		if (aisle == null) {
+		//			aisle = new Aisle();
+		//			aisle.setDomainId(facility, "A1");
+		//			aisle.setParentLocation(facility);
+		//			try {
+		//				mAisleDao.store(aisle);
+		//			} catch (DaoException e) {
+		//				LOGGER.error(null, e);
+		//			}
+		//		}
+		//
+		//		aisle = mAisleDao.findByDomainId(facility, inFacilityId);
+		//		if (aisle == null) {
+		//			aisle = new Aisle();
+		//			aisle.setDomainId(facility, "A2");
+		//			aisle.setParentLocation(facility);
+		//			try {
+		//				mAisleDao.store(aisle);
+		//			} catch (DaoException e) {
+		//				LOGGER.error(null, e);
+		//			}
+		//		}
 	}
 
 	/* --------------------------------------------------------------------------
@@ -473,7 +468,7 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 		if (dbVersionProp == null) {
 			// No database schema version has been set yet, so set it to the current schema version.
 			dbVersionProp = new DBProperty();
-			dbVersionProp.setDomainId(null, DBProperty.DB_SCHEMA_VERSION);
+			dbVersionProp.setDomainId(DBProperty.DB_SCHEMA_VERSION);
 			dbVersionProp.setValueStr(Integer.toString(ISchemaManager.DATABASE_VERSION_CUR));
 			inServer.save(dbVersionProp);
 		} else {

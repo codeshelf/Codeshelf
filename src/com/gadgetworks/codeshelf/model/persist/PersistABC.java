@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PersistABC.java,v 1.19 2012/04/07 19:42:16 jeffw Exp $
+ *  $Id: PersistABC.java,v 1.20 2012/04/10 08:01:19 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -55,6 +55,7 @@ public abstract class PersistABC {
 	}
 
 	public abstract PersistABC getParent();
+	public abstract void setParent(PersistABC inParent);
 
 	// --------------------------------------------------------------------------
 	/**
@@ -80,9 +81,10 @@ public abstract class PersistABC {
 	 * @param inParentObject
 	 * @param inId
 	 */
-	public final void setDomainId(final PersistABC inParentObject, String inId) {
-		if (inParentObject != null) {
-			domainId = inParentObject.getFullDomainId() + "." + inId;
+	public final void setDomainId(String inId) {
+		PersistABC parentObject = getParent();
+		if (parentObject != null) {
+			domainId = parentObject.getFullDomainId() + "." + inId;
 		} else {
 			domainId = inId;
 		}

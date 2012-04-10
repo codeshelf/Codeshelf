@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdLaunchCode.java,v 1.6 2012/03/30 23:21:35 jeffw Exp $
+ *  $Id: WebSessionReqCmdLaunchCode.java,v 1.7 2012/04/10 08:01:19 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -9,8 +9,6 @@ import org.codehaus.jackson.JsonNode;
 
 import com.gadgetworks.codeshelf.model.dao.IGenericDao;
 import com.gadgetworks.codeshelf.model.persist.Organization;
-import com.gadgetworks.codeshelf.model.persist.PersistABC;
-import com.gadgetworks.codeshelf.web.websession.IWebSession;
 import com.gadgetworks.codeshelf.web.websession.command.resp.IWebSessionRespCmd;
 import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdLaunchCode;
 
@@ -30,12 +28,6 @@ import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdLa
  *
  */
 public class WebSessionReqCmdLaunchCode extends WebSessionReqCmdABC {
-
-	private static final String	LAUNCH_CODE	= "LAUNCH_CODE";
-
-	private static final String	SUCCEED		= "SUCCEED";
-	private static final String	FAIL		= "FAIL";
-	private static final String	NEED_LOGIN	= "NEED_LOGIN";
 
 	private IGenericDao<Organization>	mOrganizationDao;
 
@@ -74,39 +66,5 @@ public class WebSessionReqCmdLaunchCode extends WebSessionReqCmdABC {
 		result = new WebSessionRespCmdLaunchCode(authenticateResult, organization);
 
 		return result;
-	}
-
-	// --------------------------------------------------------------------------
-	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmd#doesPersist()
-	 */
-	public final boolean doesPersist() {
-		return false;
-	}
-
-	public void registerSessionWithDaos(IWebSession inWebSession) {
-		// TODO Auto-generated method stub
-	}
-
-	public void unregisterSessionWithDaos(IWebSession inWebSession) {
-		// TODO Auto-generated method stub
-	}
-
-	@Override
-	public IWebSessionRespCmd processObjectAdd(PersistABC inDomainObject) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public IWebSessionRespCmd processObjectUpdate(PersistABC inDomainObject) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public IWebSessionRespCmd processObjectDelete(PersistABC inDomainObject) {
-		// TODO Auto-generated method stub
-		return null;
 	}
 }

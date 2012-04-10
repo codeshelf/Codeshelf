@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfNetwork.java,v 1.16 2012/03/22 20:17:06 jeffw Exp $
+ *  $Id: CodeShelfNetwork.java,v 1.17 2012/04/10 08:01:19 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -24,10 +24,6 @@ import org.apache.commons.logging.LogFactory;
 import com.gadgetworks.codeshelf.controller.IWirelessInterface;
 import com.gadgetworks.codeshelf.controller.NetAddress;
 import com.gadgetworks.codeshelf.controller.NetworkId;
-import com.gadgetworks.codeshelf.model.dao.GenericDao;
-import com.gadgetworks.codeshelf.model.dao.IDaoRegistry;
-import com.gadgetworks.codeshelf.model.dao.IGenericDao;
-import com.google.inject.Inject;
 
 // --------------------------------------------------------------------------
 /**
@@ -103,6 +99,12 @@ public class CodeShelfNetwork extends PersistABC {
 		return getParentFacility();
 	}
 
+	public final void setParent(PersistABC inParent) {
+		if (inParent instanceof Facility) {
+			setParentFacility((Facility) inParent);
+		}
+	}
+	
 	public final NetworkId getNetworkId() {
 		return new NetworkId(networkId);
 	}
