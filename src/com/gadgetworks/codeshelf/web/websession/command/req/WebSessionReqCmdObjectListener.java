@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectListener.java,v 1.9 2012/04/10 08:01:19 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectListener.java,v 1.10 2012/04/11 05:13:07 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -41,7 +41,7 @@ import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdOb
  * @author jeffw
  *
  */
-public class WebSessionReqCmdObjectListener extends WebSessionReqCmdABC {
+public class WebSessionReqCmdObjectListener extends WebSessionReqCmdABC  implements IWebSessionPersistentReqCmd {
 
 	private static final Log				LOGGER				= LogFactory.getLog(WebSessionReqCmdObjectFilter.class);
 

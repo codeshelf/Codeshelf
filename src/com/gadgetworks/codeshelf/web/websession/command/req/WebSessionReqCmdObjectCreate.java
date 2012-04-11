@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectCreate.java,v 1.1 2012/04/10 08:01:19 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectCreate.java,v 1.2 2012/04/11 05:13:07 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -27,7 +27,7 @@ import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.IGenericDao;
 import com.gadgetworks.codeshelf.model.persist.PersistABC;
 import com.gadgetworks.codeshelf.web.websession.command.resp.IWebSessionRespCmd;
-import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdObjectListener;
+import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdObjectCreate;
 
 /**
  * 
@@ -61,7 +61,7 @@ import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdOb
  */
 public class WebSessionReqCmdObjectCreate extends WebSessionReqCmdABC {
 
-	private static final Log	LOGGER				= LogFactory.getLog(WebSessionReqCmdObjectCreate.class);
+	private static final Log	LOGGER	= LogFactory.getLog(WebSessionReqCmdObjectCreate.class);
 
 	private IDaoProvider		mDaoProvider;
 	private Map<String, Object>	mUpdateProperties;
@@ -110,9 +110,9 @@ public class WebSessionReqCmdObjectCreate extends WebSessionReqCmdABC {
 			List<Map<String, Object>> objectArray = mapper.readValue(propertiesNode, new TypeReference<List<Map<String, Object>>>() {
 			});
 			for (Map<String, Object> map : objectArray) {
-					String name = (String) map.get("name");
-					Object value = map.get("value");
-					mUpdateProperties.put(name, value);
+				String name = (String) map.get("name");
+				Object value = map.get("value");
+				mUpdateProperties.put(name, value);
 			}
 
 			mapper = new ObjectMapper();
@@ -153,12 +153,16 @@ public class WebSessionReqCmdObjectCreate extends WebSessionReqCmdABC {
 							}
 							childClassDao.store(newChildObject);
 
-							// Convert the list of objects into a JSon object.
-							dataNode.put(RESULTS, newChildObject.getPersistentId());
+							// Convert the new object into a JSon object.
+							mapper = new ObjectMapper();
+							dataNode = mapper.createObjectNode();
+							JsonNode searchListNode = mapper.valueToTree(newChildObject);
+							dataNode.put(RESULTS, searchListNode);
+
+							result = new WebSessionRespCmdObjectCreate(dataNode);
 						}
 					}
 				}
-				result = new WebSessionRespCmdObjectListener(dataNode);
 			}
 		} catch (ClassNotFoundException e) {
 			LOGGER.error("", e);
