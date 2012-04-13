@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectFilter.java,v 1.5 2012/04/10 08:01:19 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectFilter.java,v 1.6 2012/04/13 18:54:27 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -50,6 +50,7 @@ public class WebSessionReqCmdObjectFilter extends WebSessionReqCmdABC implements
 	private List<PersistABC>				mObjectMatchList;
 	private List<String>					mPropertyNames;
 	private String							mFilterClause;
+	private Map<String, Object>				mFilterParams;
 	private IDaoProvider					mDaoProvider;
 	private List<IGenericDao<PersistABC>>	mDaoList;
 
@@ -60,6 +61,7 @@ public class WebSessionReqCmdObjectFilter extends WebSessionReqCmdABC implements
 	public WebSessionReqCmdObjectFilter(final String inCommandId, final JsonNode inDataNodeAsJson, final IDaoProvider inDaoProvider) {
 		super(inCommandId, inDataNodeAsJson);
 		mDaoProvider = inDaoProvider;
+		mFilterParams = new HashMap<String, Object>();
 		mDaoList = new ArrayList<IGenericDao<PersistABC>>();
 	}
 
@@ -90,13 +92,22 @@ public class WebSessionReqCmdObjectFilter extends WebSessionReqCmdABC implements
 			JsonNode filterClauseNode = dataJsonNode.get(FILTER_CLAUSE);
 			mFilterClause = filterClauseNode.getTextValue();
 
+			JsonNode propertiesNode = dataJsonNode.get(FILTER_PARAMS);
+			List<Map<String, Object>> objectArray = mapper.readValue(propertiesNode, new TypeReference<List<Map<String, Object>>>() {
+			});
+			for (Map<String, Object> map : objectArray) {
+				String name = (String) map.get("name");
+				Object value = map.get("value");
+				mFilterParams.put(name, value);
+			}
+
 			// First we find the object (by it's ID).
 			Class<?> classObject = Class.forName(objectClassName);
 			if (PersistABC.class.isAssignableFrom(classObject)) {
 				mPersistenceClass = (Class<PersistABC>) classObject;
 				
 				IGenericDao<PersistABC> dao = mDaoProvider.getDaoInstance((Class<PersistABC>) mPersistenceClass);
-				mObjectMatchList = dao.findByFilter(mFilterClause);
+				mObjectMatchList = dao.findByFilter(mFilterClause, mFilterParams);
 				mDaoList.add(dao);
 
 				result = getProperties(mObjectMatchList, OP_TYPE_UPDATE);

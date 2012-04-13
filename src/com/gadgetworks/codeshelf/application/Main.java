@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Main.java,v 1.12 2012/04/07 19:42:17 jeffw Exp $
+ *  $Id: Main.java,v 1.13 2012/04/13 18:54:27 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -22,6 +22,7 @@ import com.gadgetworks.codeshelf.model.dao.domain.FacilityDao;
 import com.gadgetworks.codeshelf.model.dao.domain.OrganizationDao;
 import com.gadgetworks.codeshelf.model.dao.domain.PersistentPropertyDao;
 import com.gadgetworks.codeshelf.model.dao.domain.UserDao;
+import com.gadgetworks.codeshelf.model.dao.domain.VertexDao;
 import com.gadgetworks.codeshelf.model.dao.domain.WirelessDeviceDao;
 import com.gadgetworks.codeshelf.model.persist.Aisle;
 import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork;
@@ -31,6 +32,7 @@ import com.gadgetworks.codeshelf.model.persist.Facility;
 import com.gadgetworks.codeshelf.model.persist.Organization;
 import com.gadgetworks.codeshelf.model.persist.PersistentProperty;
 import com.gadgetworks.codeshelf.model.persist.User;
+import com.gadgetworks.codeshelf.model.persist.Vertex;
 import com.gadgetworks.codeshelf.model.persist.WirelessDevice.IWirelessDeviceDao;
 import com.gadgetworks.codeshelf.web.websession.IWebSessionManager;
 import com.gadgetworks.codeshelf.web.websession.WebSessionManager;
@@ -102,6 +104,8 @@ public final class Main {
 				bind(IWebSessionManager.class).to(WebSessionManager.class);
 				bind(new TypeLiteral<IGenericDao<Organization>>() {
 				}).to(OrganizationDao.class);
+				bind(new TypeLiteral<IGenericDao<Vertex>>() {
+				}).to(VertexDao.class);
 				bind(new TypeLiteral<IGenericDao<Facility>>() {
 				}).to(FacilityDao.class);
 				bind(new TypeLiteral<IGenericDao<Aisle>>() {

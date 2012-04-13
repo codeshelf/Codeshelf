@@ -1,12 +1,14 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: GenericDao.java,v 1.16 2012/03/31 07:27:14 jeffw Exp $
+ *  $Id: GenericDao.java,v 1.17 2012/04/13 18:54:27 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.persistence.PersistenceException;
 
@@ -142,11 +144,15 @@ public class GenericDao<T extends PersistABC> implements IGenericDao<T> {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#findByIdList(java.util.List)
 	 */
-	public final List<T> findByFilter(String inFilter) {
+	public final List<T> findByFilter(String inFilter, Map<String, Object> inFilterParams) {
 		if ((inFilter != null) && (inFilter.length() > 0)) {
 			// If we have a valid filter then get the filtered objects.
 			Query<T> query = Ebean.find(mClass);
-			List<T> methodResultsList = query.where(inFilter).findList();
+			query = query.where(inFilter);
+			for (Entry<String, Object> param : inFilterParams.entrySet()) {
+				query.setParameter(param.getKey(), param.getValue());
+			}
+			List<T> methodResultsList = query.findList();
 			return methodResultsList;
 		} else {
 			// Otherwise get everything.

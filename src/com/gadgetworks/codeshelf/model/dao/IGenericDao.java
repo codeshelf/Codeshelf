@@ -1,12 +1,13 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: IGenericDao.java,v 1.10 2012/03/31 07:27:14 jeffw Exp $
+ *  $Id: IGenericDao.java,v 1.11 2012/04/13 18:54:27 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import com.gadgetworks.codeshelf.model.persist.PersistABC;
 
@@ -24,7 +25,7 @@ public interface IGenericDao<T> extends IDao {
 
 	List<T> findByPersistentIdList(List<Long> inPersistentIdList);
 
-	List<T> findByFilter(String inFilter);
+	List<T> findByFilter(String inFilter, Map<String, Object> inFilterParams);
 
 	void store(T inDomainObject) throws DaoException;
 

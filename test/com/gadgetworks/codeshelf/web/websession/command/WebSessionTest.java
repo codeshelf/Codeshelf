@@ -1,6 +1,7 @@
 package com.gadgetworks.codeshelf.web.websession.command;
 
 import java.util.List;
+import java.util.Map;
 
 import junit.framework.Assert;
 import lombok.Getter;
@@ -67,7 +68,7 @@ public class WebSessionTest {
 			return null;
 		}
 
-		public List<Organization> findByFilter(String inFilter) {
+		public List<Organization> findByFilter(String inFilter, Map<String, Object> inFilterParams) {
 			return null;
 		}
 	}

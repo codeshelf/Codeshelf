@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: IWebSessionReqCmd.java,v 1.5 2012/04/10 08:01:19 jeffw Exp $
+ *  $Id: IWebSessionReqCmd.java,v 1.6 2012/04/13 18:54:27 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -40,6 +40,7 @@ public interface IWebSessionReqCmd extends IWebSessionCmd {
 	String	PROPERTY_NAME_LIST	= "propertyNames";
 	String	PROPERTIES			= "properties";
 	String	FILTER_CLAUSE		= "filterClause";
+	String	FILTER_PARAMS		= "filterParams";
 
 	String	RESULTS				= "result";
 
