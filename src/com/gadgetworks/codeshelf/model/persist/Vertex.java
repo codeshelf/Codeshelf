@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Vertex.java,v 1.3 2012/04/10 08:01:19 jeffw Exp $
+ *  $Id: Vertex.java,v 1.4 2012/04/20 07:00:54 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -16,6 +16,8 @@ import lombok.Setter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.annotate.JsonIgnore;
+
+import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 
 // --------------------------------------------------------------------------
 /**
@@ -33,23 +35,29 @@ public class Vertex extends PersistABC {
 
 	private static final Log	LOGGER	= LogFactory.getLog(Vertex.class);
 
-	// The X position.
+	// The position type (GPS, METERS, etc.).
+	@Column(nullable = false)
 	@Getter
 	@Setter
+	private PositionTypeEnum	posType;
+
+	// The X position.
 	@Column(nullable = false)
-	private double				posXMeters;
+	@Getter
+	@Setter
+	private Double				posX;
 
 	// The Y position.
 	@Column(nullable = false)
-	@ManyToOne(optional = false)
 	@Getter
-	private double				posYMeters;
+	@Setter	
+	private Double				posY;
 
 	// The vertex order/position (zero-based).
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	@Getter
-	private int					sortOrder;
+	private int					drawOrder;
 
 	// The owning location.
 	@Column(nullable = false)
@@ -78,5 +86,9 @@ public class Vertex extends PersistABC {
 	
 	public final void setParentLocation(final Location inParentLocation) {
 		parentLocation = inParentLocation;
+	}
+	
+	public final void setPosTypeByStr(String inPosTypeStr) {
+		setPosType(PositionTypeEnum.valueOf(inPosTypeStr));
 	}
 }

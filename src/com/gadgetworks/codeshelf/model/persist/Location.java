@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Location.java,v 1.4 2012/04/10 08:01:19 jeffw Exp $
+ *  $Id: Location.java,v 1.5 2012/04/20 07:00:54 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -46,7 +46,7 @@ public abstract class Location extends PersistABC {
 
 	private static final Log	LOGGER		= LogFactory.getLog(Location.class);
 
-	// The X anchor position.
+	// The position type (GPS, METERS, etc.).
 	@Getter
 	@Setter
 	@Column(nullable = false)
