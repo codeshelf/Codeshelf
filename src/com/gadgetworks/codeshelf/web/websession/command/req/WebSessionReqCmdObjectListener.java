@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectListener.java,v 1.10 2012/04/11 05:13:07 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectListener.java,v 1.11 2012/04/21 08:23:29 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -41,9 +41,9 @@ import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdOb
  * @author jeffw
  *
  */
-public class WebSessionReqCmdObjectListener extends WebSessionReqCmdABC  implements IWebSessionPersistentReqCmd {
+public class WebSessionReqCmdObjectListener extends WebSessionReqCmdABC implements IWebSessionPersistentReqCmd {
 
-	private static final Log				LOGGER				= LogFactory.getLog(WebSessionReqCmdObjectFilter.class);
+	private static final Log				LOGGER	= LogFactory.getLog(WebSessionReqCmdObjectFilter.class);
 
 	private Class<PersistABC>				mPersistenceClass;
 	private List<PersistABC>				mObjectMatchList;
@@ -125,16 +125,20 @@ public class WebSessionReqCmdObjectListener extends WebSessionReqCmdABC  impleme
 			for (PersistABC matchedObject : inDomainObjectList) {
 				Map<String, Object> propertiesMap = new HashMap<String, Object>();
 				// Always include the class naem and persistent ID in the results.
-				propertiesMap.put(CLASSNAME, matchedObject.getClassName().toString());
+				propertiesMap.put(CLASSNAME, matchedObject.getClassName());
 				propertiesMap.put(OP_TYPE, inOperationType);
-				propertiesMap.put(PERSISTENT_ID, matchedObject.getPersistentId().toString());
+				propertiesMap.put(PERSISTENT_ID, matchedObject.getPersistentId());
 				for (String propertyName : mPropertyNames) {
 					// Execute the "get" method against the parents to return the children.
 					// (The method *must* start with "get" to ensure other methods don't get called.)
-					String getterName = "get" + propertyName;
-					java.lang.reflect.Method method = matchedObject.getClass().getMethod(getterName, (Class<?>[]) null);
-					Object resultObject = method.invoke(matchedObject, (Object[]) null);
-					propertiesMap.put(propertyName, resultObject);
+					try {
+						String getterName = "get" + propertyName;
+						java.lang.reflect.Method method = matchedObject.getClass().getMethod(getterName, (Class<?>[]) null);
+						Object resultObject = method.invoke(matchedObject, (Object[]) null);
+						propertiesMap.put(propertyName, resultObject);
+					} catch (NoSuchMethodException e) {
+						LOGGER.error("Method not found", e);
+					}
 				}
 				resultsList.add(propertiesMap);
 			}
@@ -147,8 +151,6 @@ public class WebSessionReqCmdObjectListener extends WebSessionReqCmdABC  impleme
 
 			result = new WebSessionRespCmdObjectListener(dataNode);
 
-		} catch (NoSuchMethodException e) {
-			LOGGER.error("", e);
 		} catch (IllegalArgumentException e) {
 			LOGGER.error("", e);
 		} catch (IllegalAccessException e) {
@@ -162,19 +164,25 @@ public class WebSessionReqCmdObjectListener extends WebSessionReqCmdABC  impleme
 
 	public final IWebSessionRespCmd processObjectAdd(PersistABC inDomainObject) {
 		List<PersistABC> domainObjectList = new ArrayList<PersistABC>();
-		domainObjectList.add(inDomainObject);
+		if (mObjectMatchList.contains(inDomainObject)) {
+			domainObjectList.add(inDomainObject);
+		}
 		return getProperties(domainObjectList, OP_TYPE_CREATE);
 	}
 
 	public final IWebSessionRespCmd processObjectUpdate(PersistABC inDomainObject) {
 		List<PersistABC> domainObjectList = new ArrayList<PersistABC>();
-		domainObjectList.add(inDomainObject);
+		if (mObjectMatchList.contains(inDomainObject)) {
+			domainObjectList.add(inDomainObject);
+		}
 		return getProperties(domainObjectList, OP_TYPE_UPDATE);
 	}
 
 	public final IWebSessionRespCmd processObjectDelete(PersistABC inDomainObject) {
 		List<PersistABC> domainObjectList = new ArrayList<PersistABC>();
-		domainObjectList.add(inDomainObject);
+		if (mObjectMatchList.contains(inDomainObject)) {
+			domainObjectList.add(inDomainObject);
+		}
 		return getProperties(domainObjectList, OP_TYPE_DELETE);
 	}
 

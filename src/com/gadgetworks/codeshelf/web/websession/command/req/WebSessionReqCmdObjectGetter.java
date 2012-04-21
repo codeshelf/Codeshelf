@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectGetter.java,v 1.9 2012/04/10 08:01:19 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectGetter.java,v 1.10 2012/04/21 08:23:29 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -38,9 +38,9 @@ import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdOb
  */
 public class WebSessionReqCmdObjectGetter extends WebSessionReqCmdABC {
 
-	private static final Log		LOGGER				= LogFactory.getLog(WebSessionReqCmdObjectGetter.class);
+	private static final Log	LOGGER	= LogFactory.getLog(WebSessionReqCmdObjectGetter.class);
 
-	private IDaoProvider			mDaoProvider;
+	private IDaoProvider		mDaoProvider;
 
 	/**
 	 * @param inCommandId
@@ -87,8 +87,13 @@ public class WebSessionReqCmdObjectGetter extends WebSessionReqCmdABC {
 				// Execute the "get" method against the parents to return the children.
 				// (The method *must* start with "get" to ensure other methods don't get called.)
 				if (getterMethodName.startsWith("get")) {
-					java.lang.reflect.Method method = parentObject.getClass().getMethod(getterMethodName, (Class<?>[]) null);
-					Object resultObject = method.invoke(parentObject, (Object[]) null);
+					Object resultObject = null;
+					try {
+						java.lang.reflect.Method method = parentObject.getClass().getMethod(getterMethodName, (Class<?>[]) null);
+						resultObject = method.invoke(parentObject, (Object[]) null);
+					} catch (NoSuchMethodException e) {
+						LOGGER.error("Method not found", e);
+					}
 
 					// Convert the list of ojects into a JSon object.
 					ObjectMapper mapper = new ObjectMapper();
@@ -103,8 +108,6 @@ public class WebSessionReqCmdObjectGetter extends WebSessionReqCmdABC {
 		} catch (ClassNotFoundException e) {
 			LOGGER.error("", e);
 		} catch (SecurityException e) {
-			LOGGER.error("", e);
-		} catch (NoSuchMethodException e) {
 			LOGGER.error("", e);
 		} catch (IllegalArgumentException e) {
 			LOGGER.error("", e);

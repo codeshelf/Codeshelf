@@ -43,7 +43,7 @@ public final class WebSocket implements IWebSocket {
 
 	private static final byte[]			FLASH_POLICY_REQUEST	= Charsetfunctions.utf8Bytes("<policy-file-request/>");
 	private static int					BUFFER_SIZE				= 65558;
-	private static int					BUFFER_QUEUE_SIZE		= 10;
+	private static int					BUFFER_QUEUE_SIZE		= 16;
 
 	// Internally used to determine whether to receive data as part of the remote handshake, or as part of a text frame.
 	private boolean						mIsHandshakeComplete;

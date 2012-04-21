@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectFilter.java,v 1.6 2012/04/13 18:54:27 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectFilter.java,v 1.7 2012/04/21 08:23:29 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -44,7 +44,7 @@ import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdOb
  *
  */
 public class WebSessionReqCmdObjectFilter extends WebSessionReqCmdABC implements IWebSessionPersistentReqCmd {
-	private static final Log				LOGGER				= LogFactory.getLog(WebSessionReqCmdObjectListener.class);
+	private static final Log				LOGGER	= LogFactory.getLog(WebSessionReqCmdObjectListener.class);
 
 	private Class<PersistABC>				mPersistenceClass;
 	private List<PersistABC>				mObjectMatchList;
@@ -105,7 +105,7 @@ public class WebSessionReqCmdObjectFilter extends WebSessionReqCmdABC implements
 			Class<?> classObject = Class.forName(objectClassName);
 			if (PersistABC.class.isAssignableFrom(classObject)) {
 				mPersistenceClass = (Class<PersistABC>) classObject;
-				
+
 				IGenericDao<PersistABC> dao = mDaoProvider.getDaoInstance((Class<PersistABC>) mPersistenceClass);
 				mObjectMatchList = dao.findByFilter(mFilterClause, mFilterParams);
 				mDaoList.add(dao);
@@ -136,20 +136,24 @@ public class WebSessionReqCmdObjectFilter extends WebSessionReqCmdABC implements
 		IWebSessionRespCmd result = null;
 
 		try {
-			List<Map<String, String>> resultsList = new ArrayList<Map<String, String>>();
+			List<Map<String, Object>> resultsList = new ArrayList<Map<String, Object>>();
 			for (PersistABC matchedObject : inDomainObjectList) {
-				Map<String, String> propertiesMap = new HashMap<String, String>();
+				Map<String, Object> propertiesMap = new HashMap<String, Object>();
 				// Always include the class naem and persistent ID in the results.
-				propertiesMap.put(CLASSNAME, matchedObject.getClassName().toString());
+				propertiesMap.put(CLASSNAME, matchedObject.getClassName());
 				propertiesMap.put(OP_TYPE, inOperationType);
-				propertiesMap.put(PERSISTENT_ID, matchedObject.getPersistentId().toString());
+				propertiesMap.put(PERSISTENT_ID, matchedObject.getPersistentId());
 				for (String propertyName : mPropertyNames) {
 					// Execute the "get" method against the parents to return the children.
 					// (The method *must* start with "get" to ensure other methods don't get called.)
-					String getterName = "get" + propertyName;
-					java.lang.reflect.Method method = matchedObject.getClass().getMethod(getterName, (Class<?>[]) null);
-					Object resultObject = method.invoke(matchedObject, (Object[]) null);
-					propertiesMap.put(propertyName, resultObject.toString());
+					try {
+						String getterName = "get" + propertyName;
+						java.lang.reflect.Method method = matchedObject.getClass().getMethod(getterName, (Class<?>[]) null);
+						Object resultObject = method.invoke(matchedObject, (Object[]) null);
+						propertiesMap.put(propertyName, resultObject);
+					} catch (NoSuchMethodException e) {
+						LOGGER.error("Method not found", e);
+					}
 				}
 				resultsList.add(propertiesMap);
 			}
@@ -162,8 +166,6 @@ public class WebSessionReqCmdObjectFilter extends WebSessionReqCmdABC implements
 
 			result = new WebSessionRespCmdObjectFilter(dataNode);
 
-		} catch (NoSuchMethodException e) {
-			LOGGER.error("", e);
 		} catch (IllegalArgumentException e) {
 			LOGGER.error("", e);
 		} catch (InvocationTargetException e) {
@@ -176,20 +178,32 @@ public class WebSessionReqCmdObjectFilter extends WebSessionReqCmdABC implements
 	}
 
 	public final IWebSessionRespCmd processObjectAdd(PersistABC inDomainObject) {
+		IGenericDao<PersistABC> dao = mDaoProvider.getDaoInstance((Class<PersistABC>) mPersistenceClass);
+		mObjectMatchList = dao.findByFilter(mFilterClause, mFilterParams);
 		List<PersistABC> domainObjectList = new ArrayList<PersistABC>();
-		domainObjectList.add(inDomainObject);
+		if (mObjectMatchList.contains(inDomainObject)) {
+			domainObjectList.add(inDomainObject);
+		}
 		return getProperties(domainObjectList, OP_TYPE_CREATE);
 	}
 
 	public final IWebSessionRespCmd processObjectUpdate(PersistABC inDomainObject) {
+		IGenericDao<PersistABC> dao = mDaoProvider.getDaoInstance((Class<PersistABC>) mPersistenceClass);
+		mObjectMatchList = dao.findByFilter(mFilterClause, mFilterParams);
 		List<PersistABC> domainObjectList = new ArrayList<PersistABC>();
-		domainObjectList.add(inDomainObject);
+		if (mObjectMatchList.contains(inDomainObject)) {
+			domainObjectList.add(inDomainObject);
+		}
 		return getProperties(domainObjectList, OP_TYPE_UPDATE);
 	}
 
 	public final IWebSessionRespCmd processObjectDelete(PersistABC inDomainObject) {
+		IGenericDao<PersistABC> dao = mDaoProvider.getDaoInstance((Class<PersistABC>) mPersistenceClass);
+		mObjectMatchList = dao.findByFilter(mFilterClause, mFilterParams);
 		List<PersistABC> domainObjectList = new ArrayList<PersistABC>();
-		domainObjectList.add(inDomainObject);
+		if (mObjectMatchList.contains(inDomainObject)) {
+			domainObjectList.add(inDomainObject);
+		}
 		return getProperties(domainObjectList, OP_TYPE_DELETE);
 	}
 

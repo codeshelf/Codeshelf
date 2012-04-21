@@ -1,26 +1,22 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectUpdate.java,v 1.9 2012/04/21 08:23:29 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectDelete.java,v 1.1 2012/04/21 08:23:29 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
-
-import java.lang.reflect.InvocationTargetException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
 
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.IGenericDao;
 import com.gadgetworks.codeshelf.model.persist.PersistABC;
-import com.gadgetworks.codeshelf.web.websession.IWebSession;
 import com.gadgetworks.codeshelf.web.websession.command.resp.IWebSessionRespCmd;
-import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdObjectUpdate;
+import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdObjectDelete;
 
 /**
  * command {
@@ -29,17 +25,15 @@ import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdOb
  * 	data {
  *		className:		<class_name>,
  *		persistentId:	<persistentId>,
- *		setterMethod:	<setterMethod>,
- *		setterValue: 	<setterValue>
  * 	}
  * }
  *
  * @author jeffw
  *
  */
-public class WebSessionReqCmdObjectUpdate extends WebSessionReqCmdABC {
+public class WebSessionReqCmdObjectDelete extends WebSessionReqCmdABC {
 
-	private static final Log	LOGGER	= LogFactory.getLog(WebSessionReqCmdObjectUpdate.class);
+	private static final Log	LOGGER				= LogFactory.getLog(WebSessionReqCmdObjectDelete.class);
 
 	private IDaoProvider		mDaoProvider;
 
@@ -47,13 +41,13 @@ public class WebSessionReqCmdObjectUpdate extends WebSessionReqCmdABC {
 	 * @param inCommandId
 	 * @param inDataNodeAsJson
 	 */
-	public WebSessionReqCmdObjectUpdate(final String inCommandId, final JsonNode inDataNodeAsJson, final IDaoProvider inDaoProvider) {
+	public WebSessionReqCmdObjectDelete(final String inCommandId, final JsonNode inDataNodeAsJson, final IDaoProvider inDaoProvider) {
 		super(inCommandId, inDataNodeAsJson);
 		mDaoProvider = inDaoProvider;
 	}
 
 	public final WebSessionReqCmdEnum getCommandEnum() {
-		return WebSessionReqCmdEnum.OBJECT_UPDATE_REQ;
+		return WebSessionReqCmdEnum.OBJECT_DELETE_REQ;
 	}
 
 	public final IWebSessionRespCmd doExec() {
@@ -68,35 +62,27 @@ public class WebSessionReqCmdObjectUpdate extends WebSessionReqCmdABC {
 		try {
 
 			JsonNode dataJsonNode = getDataJsonNode();
-			JsonNode parentClassNode = dataJsonNode.get(CLASSNAME);
-			String parentClassName = parentClassNode.getTextValue();
-			if (!parentClassName.startsWith("com.gadgetworks.codeshelf.model.persist.")) {
-				parentClassName = "com.gadgetworks.codeshelf.model.persist." + parentClassName;
+			JsonNode classNode = dataJsonNode.get(CLASSNAME);
+			String className = classNode.getTextValue();
+			if (!className.startsWith("com.gadgetworks.codeshelf.model.persist.")) {
+				className = "com.gadgetworks.codeshelf.model.persist." + className;
 			}
-			JsonNode parentIdNode = dataJsonNode.get(PERSISTENT_ID);
-			long parentId = parentIdNode.getLongValue();
-			JsonNode setterMethodNode = dataJsonNode.get(SETTER_METHOD);
-			String setterMethodName = setterMethodNode.getTextValue();
-			JsonNode setterValueNode = dataJsonNode.get(SETTER_VALUE);
-			String setterValue = setterValueNode.getTextValue();
+			JsonNode objectIdNode = dataJsonNode.get(PERSISTENT_ID);
+			long objectIdId = objectIdNode.getLongValue();
 
 			// First we find the parent object (by it's ID).
-			Class<?> classObject = Class.forName(parentClassName);
+			Class<?> classObject = Class.forName(className);
 			if (PersistABC.class.isAssignableFrom(classObject)) {
 
 				// First locate an instance of the parent class.
 				IGenericDao<PersistABC> dao = mDaoProvider.getDaoInstance((Class<PersistABC>) classObject);
-				PersistABC parentObject = dao.findByPersistentId(parentId);
+				PersistABC object = dao.findByPersistentId(objectIdId);
 
 				// Execute the "set" method against the parents to return the children.
 				// (The method *must* start with "set" to ensure other methods don't get called.)
-				if ((parentObject != null) && (setterMethodName.startsWith("set"))) {
-					Class<?>[] types = new Class<?>[] { String.class };
-					Object[] value = new Object[] { setterValue };
-					java.lang.reflect.Method method = parentObject.getClass().getMethod(setterMethodName, types);
-					Object resultObject = method.invoke(parentObject, value);
+				if (object != null) {
 					try {
-						dao.store(parentObject);
+						dao.delete(object);
 					} catch (DaoException e) {
 						LOGGER.error("", e);
 					}
@@ -104,10 +90,9 @@ public class WebSessionReqCmdObjectUpdate extends WebSessionReqCmdABC {
 					// Convert the list of objects into a JSon object.
 					ObjectMapper mapper = new ObjectMapper();
 					ObjectNode dataNode = mapper.createObjectNode();
-					ArrayNode searchListNode = mapper.valueToTree(resultObject);
-					dataNode.put(RESULTS, searchListNode);
+					dataNode.put(RESULTS, "");
 
-					result = new WebSessionRespCmdObjectUpdate(dataNode);
+					result = new WebSessionRespCmdObjectDelete(dataNode);
 				}
 			}
 
@@ -115,13 +100,7 @@ public class WebSessionReqCmdObjectUpdate extends WebSessionReqCmdABC {
 			LOGGER.error("", e);
 		} catch (SecurityException e) {
 			LOGGER.error("", e);
-		} catch (NoSuchMethodException e) {
-			LOGGER.error("", e);
 		} catch (IllegalArgumentException e) {
-			LOGGER.error("", e);
-		} catch (IllegalAccessException e) {
-			LOGGER.error("", e);
-		} catch (InvocationTargetException e) {
 			LOGGER.error("", e);
 		}
 
