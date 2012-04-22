@@ -1,12 +1,13 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectUpdate.java,v 1.10 2012/04/22 04:03:27 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectUpdate.java,v 1.11 2012/04/22 08:10:28 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -25,20 +26,34 @@ import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.IGenericDao;
 import com.gadgetworks.codeshelf.model.persist.PersistABC;
-import com.gadgetworks.codeshelf.web.websession.IWebSession;
 import com.gadgetworks.codeshelf.web.websession.command.resp.IWebSessionRespCmd;
 import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdObjectUpdate;
 
 /**
+ * 
+ * INBOUND COMMAND STRUCTURE:
+ * 
  * command {
  * 	id: <cmd_id>,
- * 	type: OBJECT_LISTENER_REQ,
+ * 	type: OBJECT_UPDATE_REQ,
  * 	data {
- *		className:		<class_name>,
- *		persistentId:	<persistentId>,
- *		setterMethod:	<setterMethod>,
- *		setterValue: 	<setterValue>
+ *		parentClassName:	<class_name>,
+ *		parentPeristentID:	<id>,
+ *		className:			<class_name>,
+ *		propertiesToSet [
+ *			propertyName:	<propertyValue>
+ *		]
  * 	}
+ * }
+ * 
+ * OUTBOUND COMMAND STRUCTURE:
+ * 
+ * command {
+ * 	id: <cmd_id>,
+ * 	type: OBJECT_UPDATE_RESP,
+ * 	data {
+ * 		newPersistentID: <id>
+ *  }
  * }
  *
  * @author jeffw
@@ -58,6 +73,7 @@ public class WebSessionReqCmdObjectUpdate extends WebSessionReqCmdABC {
 	public WebSessionReqCmdObjectUpdate(final String inCommandId, final JsonNode inDataNodeAsJson, final IDaoProvider inDaoProvider) {
 		super(inCommandId, inDataNodeAsJson);
 		mDaoProvider = inDaoProvider;
+		mUpdateProperties = new HashMap<String, Object>();
 	}
 
 	public final WebSessionReqCmdEnum getCommandEnum() {
@@ -126,7 +142,7 @@ public class WebSessionReqCmdObjectUpdate extends WebSessionReqCmdABC {
 					// Convert the list of objects into a JSon object.
 					mapper = new ObjectMapper();
 					ObjectNode dataNode = mapper.createObjectNode();
-					ArrayNode searchListNode = mapper.valueToTree(updateObject);
+					JsonNode searchListNode = mapper.valueToTree(updateObject);
 					dataNode.put(RESULTS, searchListNode);
 
 					result = new WebSessionRespCmdObjectUpdate(dataNode);

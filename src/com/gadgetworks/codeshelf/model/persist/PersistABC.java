@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PersistABC.java,v 1.20 2012/04/10 08:01:19 jeffw Exp $
+ *  $Id: PersistABC.java,v 1.21 2012/04/22 08:10:28 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -127,7 +127,7 @@ public abstract class PersistABC {
 
 		if (inObject instanceof PersistABC) {
 			if (this.getClass().equals(inObject.getClass())) {
-				result = (persistentId == ((PersistABC) inObject).getPersistentId());
+				result = (persistentId.equals(((PersistABC) inObject).getPersistentId()));
 			}
 		} else {
 			result = super.equals(inObject);

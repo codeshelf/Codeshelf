@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectCreate.java,v 1.2 2012/04/11 05:13:07 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectCreate.java,v 1.3 2012/04/22 08:10:28 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -35,7 +35,7 @@ import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdOb
  * 
  * command {
  * 	id: <cmd_id>,
- * 	type: OBJECT_LISTENER_REQ,
+ * 	type: OBJECT_CREATE_REQ,
  * 	data {
  *		parentClassName:	<class_name>,
  *		parentPeristentID:	<id>,
@@ -50,7 +50,7 @@ import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdOb
  * 
  * command {
  * 	id: <cmd_id>,
- * 	type: OBJECT_LISTENER_REQ,
+ * 	type: OBJECT_CREATE_RESP,
  * 	data {
  * 		newPersistentID: <id>
  *  }
