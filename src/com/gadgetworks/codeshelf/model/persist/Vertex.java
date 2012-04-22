@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Vertex.java,v 1.4 2012/04/20 07:00:54 jeffw Exp $
+ *  $Id: Vertex.java,v 1.5 2012/04/22 04:03:27 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -50,14 +50,15 @@ public class Vertex extends PersistABC {
 	// The Y position.
 	@Column(nullable = false)
 	@Getter
-	@Setter	
+	@Setter
 	private Double				posY;
 
 	// The vertex order/position (zero-based).
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
+	@Setter
 	@Getter
-	private int					drawOrder;
+	private Integer				drawOrder;
 
 	// The owning location.
 	@Column(nullable = false)
@@ -83,11 +84,11 @@ public class Vertex extends PersistABC {
 			setParentLocation((Location) inParent);
 		}
 	}
-	
+
 	public final void setParentLocation(final Location inParentLocation) {
 		parentLocation = inParentLocation;
 	}
-	
+
 	public final void setPosTypeByStr(String inPosTypeStr) {
 		setPosType(PositionTypeEnum.valueOf(inPosTypeStr));
 	}

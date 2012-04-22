@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectDelete.java,v 1.1 2012/04/21 08:23:29 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectDelete.java,v 1.2 2012/04/22 04:03:27 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -90,7 +90,8 @@ public class WebSessionReqCmdObjectDelete extends WebSessionReqCmdABC {
 					// Convert the list of objects into a JSon object.
 					ObjectMapper mapper = new ObjectMapper();
 					ObjectNode dataNode = mapper.createObjectNode();
-					dataNode.put(RESULTS, "");
+					JsonNode searchListNode = mapper.valueToTree(object);
+					dataNode.put(RESULTS, searchListNode);
 
 					result = new WebSessionRespCmdObjectDelete(dataNode);
 				}

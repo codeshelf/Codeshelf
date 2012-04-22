@@ -1,18 +1,25 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectUpdate.java,v 1.9 2012/04/21 08:23:29 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectUpdate.java,v 1.10 2012/04/22 04:03:27 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.JsonParseException;
+import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
+import org.codehaus.jackson.type.TypeReference;
 
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
@@ -42,6 +49,7 @@ public class WebSessionReqCmdObjectUpdate extends WebSessionReqCmdABC {
 	private static final Log	LOGGER	= LogFactory.getLog(WebSessionReqCmdObjectUpdate.class);
 
 	private IDaoProvider		mDaoProvider;
+	private Map<String, Object>	mUpdateProperties;
 
 	/**
 	 * @param inCommandId
@@ -68,43 +76,57 @@ public class WebSessionReqCmdObjectUpdate extends WebSessionReqCmdABC {
 		try {
 
 			JsonNode dataJsonNode = getDataJsonNode();
-			JsonNode parentClassNode = dataJsonNode.get(CLASSNAME);
-			String parentClassName = parentClassNode.getTextValue();
-			if (!parentClassName.startsWith("com.gadgetworks.codeshelf.model.persist.")) {
-				parentClassName = "com.gadgetworks.codeshelf.model.persist." + parentClassName;
+			JsonNode classNode = dataJsonNode.get(CLASSNAME);
+			String className = classNode.getTextValue();
+			if (!className.startsWith("com.gadgetworks.codeshelf.model.persist.")) {
+				className = "com.gadgetworks.codeshelf.model.persist." + className;
 			}
-			JsonNode parentIdNode = dataJsonNode.get(PERSISTENT_ID);
-			long parentId = parentIdNode.getLongValue();
-			JsonNode setterMethodNode = dataJsonNode.get(SETTER_METHOD);
-			String setterMethodName = setterMethodNode.getTextValue();
-			JsonNode setterValueNode = dataJsonNode.get(SETTER_VALUE);
-			String setterValue = setterValueNode.getTextValue();
+			JsonNode idNode = dataJsonNode.get(PERSISTENT_ID);
+			long objectId = idNode.getLongValue();
+
+			ObjectMapper mapper = new ObjectMapper();
+			JsonNode propertiesNode = dataJsonNode.get(PROPERTIES);
+			List<Map<String, Object>> objectArray = mapper.readValue(propertiesNode, new TypeReference<List<Map<String, Object>>>() {
+			});
+			for (Map<String, Object> map : objectArray) {
+				String name = (String) map.get("name");
+				Object value = map.get("value");
+				mUpdateProperties.put(name, value);
+			}
 
 			// First we find the parent object (by it's ID).
-			Class<?> classObject = Class.forName(parentClassName);
+			Class<?> classObject = Class.forName(className);
 			if (PersistABC.class.isAssignableFrom(classObject)) {
 
 				// First locate an instance of the parent class.
 				IGenericDao<PersistABC> dao = mDaoProvider.getDaoInstance((Class<PersistABC>) classObject);
-				PersistABC parentObject = dao.findByPersistentId(parentId);
+				PersistABC updateObject = dao.findByPersistentId(objectId);
 
 				// Execute the "set" method against the parents to return the children.
 				// (The method *must* start with "set" to ensure other methods don't get called.)
-				if ((parentObject != null) && (setterMethodName.startsWith("set"))) {
-					Class<?>[] types = new Class<?>[] { String.class };
-					Object[] value = new Object[] { setterValue };
-					java.lang.reflect.Method method = parentObject.getClass().getMethod(setterMethodName, types);
-					Object resultObject = method.invoke(parentObject, value);
+				if (updateObject != null) {
+
+					// Loop over all the properties, setting each one.
+					for (Entry<String, Object> property : mUpdateProperties.entrySet()) {
+						// Execute the "set" method against the child object.
+						// (The method *must* start with "get" to ensure other methods don't get called.)
+						String propertyName = property.getKey();
+						Object propertyValue = property.getValue();
+						String setterName = "set" + propertyName;
+						java.lang.reflect.Method method = classObject.getMethod(setterName, propertyValue.getClass());
+						method.invoke(updateObject, propertyValue);
+					}
+
 					try {
-						dao.store(parentObject);
+						dao.store(updateObject);
 					} catch (DaoException e) {
 						LOGGER.error("", e);
 					}
 
 					// Convert the list of objects into a JSon object.
-					ObjectMapper mapper = new ObjectMapper();
+					mapper = new ObjectMapper();
 					ObjectNode dataNode = mapper.createObjectNode();
-					ArrayNode searchListNode = mapper.valueToTree(resultObject);
+					ArrayNode searchListNode = mapper.valueToTree(updateObject);
 					dataNode.put(RESULTS, searchListNode);
 
 					result = new WebSessionRespCmdObjectUpdate(dataNode);
@@ -122,6 +144,12 @@ public class WebSessionReqCmdObjectUpdate extends WebSessionReqCmdABC {
 		} catch (IllegalAccessException e) {
 			LOGGER.error("", e);
 		} catch (InvocationTargetException e) {
+			LOGGER.error("", e);
+		} catch (JsonParseException e) {
+			LOGGER.error("", e);
+		} catch (JsonMappingException e) {
+			LOGGER.error("", e);
+		} catch (IOException e) {
 			LOGGER.error("", e);
 		}
 
