@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectFilter.java,v 1.7 2012/04/21 08:23:29 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectFilter.java,v 1.8 2012/04/22 20:15:11 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -198,8 +198,9 @@ public class WebSessionReqCmdObjectFilter extends WebSessionReqCmdABC implements
 	}
 
 	public final IWebSessionRespCmd processObjectDelete(PersistABC inDomainObject) {
-		IGenericDao<PersistABC> dao = mDaoProvider.getDaoInstance((Class<PersistABC>) mPersistenceClass);
-		mObjectMatchList = dao.findByFilter(mFilterClause, mFilterParams);
+		// Delete is a bit of a weird case.  We don't want to refresh the member list since we want the delete to propagate to anyone listening with a filter.
+//		IGenericDao<PersistABC> dao = mDaoProvider.getDaoInstance((Class<PersistABC>) mPersistenceClass);
+//		mObjectMatchList = dao.findByFilter(mFilterClause, mFilterParams);
 		List<PersistABC> domainObjectList = new ArrayList<PersistABC>();
 		if (mObjectMatchList.contains(inDomainObject)) {
 			domainObjectList.add(inDomainObject);
