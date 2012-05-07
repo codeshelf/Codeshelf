@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PersistABC.java,v 1.21 2012/04/22 08:10:28 jeffw Exp $
+ *  $Id: PersistABC.java,v 1.22 2012/05/07 06:34:27 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -71,7 +71,7 @@ public abstract class PersistABC {
 	 */
 	@JsonProperty
 	public final String getClassName() {
-		return this.getClass().getName();
+		return this.getClass().getSimpleName();
 	}
 
 	// --------------------------------------------------------------------------

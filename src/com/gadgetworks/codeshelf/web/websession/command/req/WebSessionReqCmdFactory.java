@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdFactory.java,v 1.8 2012/04/21 08:23:29 jeffw Exp $
+ *  $Id: WebSessionReqCmdFactory.java,v 1.9 2012/05/07 06:34:27 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -91,7 +91,7 @@ public final class WebSessionReqCmdFactory implements IWebSessionReqCmdFactory {
 		JsonNode commandTypeNode = inCommandAsJson.get(IWebSessionCmd.COMMAND_TYPE_ELEMENT);
 		if (commandTypeNode != null) {
 			String commandType = commandTypeNode.getTextValue();
-			result = WebSessionReqCmdEnum.valueOf(commandType);
+			result = WebSessionReqCmdEnum.fromString(commandType);
 		}
 
 		return result;

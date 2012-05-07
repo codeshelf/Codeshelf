@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionRespCmdLaunchCode.java,v 1.1 2012/03/19 04:05:19 jeffw Exp $
+ *  $Id: WebSessionRespCmdLaunchCode.java,v 1.2 2012/05/07 06:34:27 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.resp;
 
@@ -18,7 +18,7 @@ import com.gadgetworks.codeshelf.web.websession.command.IWebSessionCmd;
  */
 public class WebSessionRespCmdLaunchCode extends WebSessionRespCmdABC {
 
-	private static final String	LAUNCH_CODE_RESP	= "LAUNCH_CODE_RESP";
+	private static final String	LAUNCH_CODE_RESP	= "LAUNCH_CODE_RS";
 
 	private String				mResponseValue;
 	private Organization		mOrganization;

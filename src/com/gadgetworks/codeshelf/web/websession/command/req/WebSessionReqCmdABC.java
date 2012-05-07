@@ -1,13 +1,12 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdABC.java,v 1.3 2012/03/24 18:28:01 jeffw Exp $
+ *  $Id: WebSessionReqCmdABC.java,v 1.4 2012/05/07 06:34:27 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
 import org.codehaus.jackson.JsonNode;
 
-import com.gadgetworks.codeshelf.web.websession.IWebSession;
 import com.gadgetworks.codeshelf.web.websession.command.resp.IWebSessionRespCmd;
 
 /**

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdEnum.java,v 1.2 2012/03/24 06:49:33 jeffw Exp $
+ *  $Id: WebSessionReqCmdEnum.java,v 1.3 2012/05/07 06:34:27 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -11,14 +11,14 @@ package com.gadgetworks.codeshelf.web.websession.command.req;
  */
 public enum WebSessionReqCmdEnum {
 	INVALID(WebSessionReqCmdNum.INVALID, "INVALID"),
-	LAUNCH_CODE_CHECK(WebSessionReqCmdNum.LAUNCH_CODE_CHECK, "LAUNCH_CODE_CHECK"),
-	OBJECT_GETTER_REQ(WebSessionReqCmdNum.OBJECT_GETTER_REQ, "OBJECT_GETTER_REQ"),
-//	OBJECT_GETBYID_REQ(WebSessionReqCmdNum.OBJECT_GETBYID_REQ, "OBJECT_GETBYID_REQ"),
-	OBJECT_CREATE_REQ(WebSessionReqCmdNum.OBJECT_CREATE_REQ, "OBJECT_CREATE_REQ"),
-	OBJECT_UPDATE_REQ(WebSessionReqCmdNum.OBJECT_UPDATE_REQ, "OBJECT_UPDATE_REQ"),
-	OBJECT_DELETE_REQ(WebSessionReqCmdNum.OBJECT_DELETE_REQ, "OBJECT_DELETE_REQ"),
-	OBJECT_LISTENER_REQ(WebSessionReqCmdNum.OBJECT_LISTENER_REQ, "OBJECT_LISTENER_REQ"),
-	OBJECT_FILTER_REQ(WebSessionReqCmdNum.OBJECT_FILTER_REQ, "OBJECT_FILTER_REQ");
+	LAUNCH_CODE_CHECK(WebSessionReqCmdNum.LAUNCH_CODE_CHECK, "LAUNCH_CODE_RQ"),
+	OBJECT_GETTER_REQ(WebSessionReqCmdNum.OBJECT_GETTER_REQ, "OBJ_GET_RQ"),
+	//	OBJECT_GETBYID_REQ(WebSessionReqCmdNum.OBJECT_GETBYID_REQ, "OBJECT_GETBYID_REQ"),
+	OBJECT_CREATE_REQ(WebSessionReqCmdNum.OBJECT_CREATE_REQ, "OBJ_CRE_RQ"),
+	OBJECT_UPDATE_REQ(WebSessionReqCmdNum.OBJECT_UPDATE_REQ, "OBJ_UPD_RQ"),
+	OBJECT_DELETE_REQ(WebSessionReqCmdNum.OBJECT_DELETE_REQ, "OBJ_DEL_RQ"),
+	OBJECT_LISTENER_REQ(WebSessionReqCmdNum.OBJECT_LISTENER_REQ, "OBJ_LSN_RQ"),
+	OBJECT_FILTER_REQ(WebSessionReqCmdNum.OBJECT_FILTER_REQ, "OBJ_FLT_RQ");
 
 	private int		mValue;
 	private String	mName;
@@ -44,9 +44,9 @@ public enum WebSessionReqCmdEnum {
 				result = WebSessionReqCmdEnum.OBJECT_GETTER_REQ;
 				break;
 
-//			case WebSessionReqCmdNum.OBJECT_GETBYID_REQ:
-//				result = WebSessionReqCmdEnum.OBJECT_GETBYID_REQ;
-//				break;
+			//			case WebSessionReqCmdNum.OBJECT_GETBYID_REQ:
+			//				result = WebSessionReqCmdEnum.OBJECT_GETBYID_REQ;
+			//				break;
 
 			case WebSessionReqCmdNum.OBJECT_CREATE_REQ:
 				result = WebSessionReqCmdEnum.OBJECT_CREATE_REQ;
@@ -83,6 +83,17 @@ public enum WebSessionReqCmdEnum {
 
 	public String getName() {
 		return mName;
+	}
+
+	public static WebSessionReqCmdEnum fromString(String inEnumNameStr) {
+		if (inEnumNameStr != null) {
+			for (WebSessionReqCmdEnum enumEntry : WebSessionReqCmdEnum.values()) {
+				if (inEnumNameStr.equalsIgnoreCase(enumEntry.getName())) {
+					return enumEntry;
+				}
+			}
+		}
+		return null;
 	}
 
 	final static class WebSessionReqCmdNum {
