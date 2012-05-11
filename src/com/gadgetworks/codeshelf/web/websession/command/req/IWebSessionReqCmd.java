@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: IWebSessionReqCmd.java,v 1.7 2012/05/07 06:34:27 jeffw Exp $
+ *  $Id: IWebSessionReqCmd.java,v 1.8 2012/05/11 07:32:55 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -17,7 +17,7 @@ public interface IWebSessionReqCmd extends IWebSessionCmd {
 	String	OP_TYPE				= "op";
 	String	OP_TYPE_CREATE		= "cr";
 	String	OP_TYPE_UPDATE		= "up";
-	String	OP_TYPE_DELETE		= "de";
+	String	OP_TYPE_DELETE		= "dl";
 
 	String	LAUNCH_CODE			= "LAUNCH_CODE";
 
