@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfApplication.java,v 1.31 2012/04/10 08:01:19 jeffw Exp $
+ *  $Id: CodeShelfApplication.java,v 1.32 2012/05/13 03:03:52 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -262,7 +262,9 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 	private void initializeApplicationData() {
 
 		// Create two dummy users for testing.
-		createOrganzation("O1", "F1", "first");
+		createOrganzation("O1", "F1", "New Facility");
+		createOrganzation("O2", "F2", "New Facility");
+		createOrganzation("O3", "F3", "New Facility");
 
 		// Some radio device fields have no meaning from the last invocation of the application.
 		for (WirelessDevice wirelessDevice : mWirelessDeviceDao.getAll()) {
