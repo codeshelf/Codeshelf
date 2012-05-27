@@ -294,11 +294,11 @@
 	<!-- jar-final =================================================================================== -->
 	<target name="jar-final" depends="">
 
-		<copy todir="${appjar.build.dir}/lib">
+		<!--copy todir="${appjar.build.dir}/lib">
 			<fileset dir="${target.lib}/${osdir}">
 				<include name="**/*.jar" />
 			</fileset>
-		</copy>
+		</copy-->
 
 		<copy todir="${appjar.build.dir}/lib">
 			<fileset dir="${target.lib}">
@@ -348,11 +348,11 @@
 			<fileset dir="${target.lib}">
 				<include name="${codeshelf.app.jar.name}" />
 			</fileset>
-			<fileset dir="${target.lib}/${osdir}/">
+			<!--fileset dir="${target.lib}/${osdir}/">
 				<include name="**/*.dll" />
 				<include name="**/*.so" />
 				<include name="**/*.jnilib" />
-			</fileset>
+			</fileset-->
 			<fileset dir="${resources.dir}/images">
 				<include name="**/codeshelf.ico" />
 			</fileset>
@@ -421,39 +421,31 @@
 			-dontusemixedcaseclassnames
 			-ignorewarnings
 			-libraryjars "${target.lib}/activation.jar"
-			-libraryjars "${target.lib}/activemq-core-5.4.1.jar"
+			-libraryjars "${target.lib}/aopalliance.jar"
 			-libraryjars "${target.lib}/avaje-juli-1.0.0.jar"
+			-libraryjars "${target.lib}/commons-codec-1.4.jar"
+			-libraryjars "${target.lib}/commons-httpclient-3.1.jar"
 			-libraryjars "${target.lib}/commons-io-1.4.jar"
+			-libraryjars "${target.lib}/commons-lang-2.2.jar"
 			-libraryjars "${target.lib}/commons-logging-1.1.1.jar"
+			-libraryjars "${target.lib}/ebean-2.7.4-agent.jar"
 			-libraryjars "${target.lib}/ebean-2.7.4.jar"
-			-libraryjars "${target.lib}/facebook-java-api-3.0.4-SNAPSHOT.jar"
+			-libraryjars "${target.lib}/guice-3.0.jar"
 			-libraryjars "${target.lib}/h2-1.3.162.jar"
-			-libraryjars "${target.lib}/htmllexer.jar"
-			-libraryjars "${target.lib}/htmlparser.jar"
-			-libraryjars "${target.lib}/imap.jar"
-			-libraryjars "${target.lib}/jackson-core-asl-1.3.5.jar"
-			-libraryjars "${target.lib}/jackson-mapper-asl-1.3.5.jar"
+			-libraryjars "${target.lib}/jackson-core-asl-1.9.4.jar"
+			-libraryjars "${target.lib}/jackson-mapper-asl-1.9.4.jar"
+			-libraryjars "${target.lib}/javax.inject.jar"
 			-libraryjars "${target.lib}/javax.persistence_1.0.0.jar"
-			-libraryjars "${target.lib}/jaxb-api-2.1.jar"
 			-libraryjars "${target.lib}/jcommon-1.0.16.jar"
-			-libraryjars "${target.lib}/JD2XX.jar"
-			-libraryjars "${target.lib}/jdom.jar"
-			-libraryjars "${target.lib}/jregex1.2_01.jar"
 			-libraryjars "${target.lib}/json-1.0.jar"
-			-libraryjars "${target.lib}/lombok.jar"
+			-libraryjars "${target.lib}/jul-to-slf4j-1.6.4.jar"
 			-libraryjars "${target.lib}/log4j-1.2.14.jar"
-			-libraryjars "${target.lib}/mailapi.jar"
-			-libraryjars "${target.lib}/org.eclipse.core.commands_3.6.0.I20110111-0800.jar"
-			-libraryjars "${target.lib}/org.eclipse.core.runtime_3.7.0.v20110110.jar"
-			-libraryjars "${target.lib}/org.eclipse.equinox.common_3.6.0.v20110523.jar"
-			-libraryjars "${target.lib}/org.eclipse.jface_3.7.0.I20110522-1430.jar"
-			-libraryjars "${target.lib}/org.eclipse.jface.databinding_1.5.0.I20100907-0800.jar"
-			-libraryjars "${target.lib}/org.eclipse.nebula.widgets.gallery_0.5.2.R_0_20090418.jar"
-			-libraryjars "${target.lib}/org.eclipse.text_3.5.101.r371_v20110810-0800.jar"			
-			-libraryjars "${target.lib}/osx/swt.jar"
-			-libraryjars "${target.lib}/pop3.jar"
-			-libraryjars "${target.lib}/rome-1.0.jar"
-			-libraryjars "${target.lib}/smtp.jar"
+			-libraryjars "${target.lib}/lombok-0.11.0.jar"
+			-libraryjars "${target.lib}/slf4j-api-1.6.4.jar"
+			-libraryjars "${target.lib}/slf4j-log4j12-1.6.4.jar"
+			-libraryjars "${target.lib}/ws-commons-util-1.0.2.jar"
+			-libraryjars "${target.lib}/xmlrpc-client-3.1.3.jar"
+			-libraryjars "${target.lib}/xmlrpc-common-3.1.3.jar"
 			-libraryjars "${obfuscate.core.classes}"
 			-libraryjars "${obfuscate.crypto.classes}"
 			-libraryjars "${obfuscate.jsse.classes}"
