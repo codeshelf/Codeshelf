@@ -72,7 +72,7 @@
 
 	<property name="osx.app.dir" value="${target}/osx-app" />
 	<property name="osx.app.file" value="${osx.app.dir}/CodeShelf.app" />
-    <property name="osx.prefpane.dir" value="${target}/osx-prefPane"/>
+	<property name="osx.prefpane.dir" value="${target}/osx-prefPane" />
 	<property name="osx.package.dir" value="${target}/osx-package" />
 	<property name="osx.package.file" value="CodeShelf-${version.major}.${version.minor}.${version.revision}.pkg" />
 	<property name="osx.dmg.dir" value="${target}/osx-dmg" />
@@ -92,7 +92,7 @@
 	<property name="ebean.build.dir" value="${basedir}/build" />
 	<property name="ebean.lib.dir" value="${ebean.build.dir}/lib" />
 	<property name="ebean.enhance.dir" value="${target.lib}/codeshelf-unobfs.jar" />
-	
+
 	<!-- Define the compile set -->
 	<path id="compile-libs">
 		<!-- smackx-jingle.jar has to go first, or the system won't compile. -->
@@ -221,7 +221,7 @@
 				<include name="**/*.*" />
 				<exclude name="**/FlyWeightController.jar*" />
 			</fileset>
-		</copy> 
+		</copy>
 		<copy todir="${target.lib}">
 			<fileset dir="${basedir}/build/lib">
 				<include name="i4jruntime.jar" />
@@ -254,7 +254,7 @@
 			</fileset>
 		</unjar>
 
-					<!-- Put the main application classes in one JAR. -->
+		<!-- Put the main application classes in one JAR. -->
 		<jar duplicate="fail" jarfile="${target.lib}/codeshelf-unobfs.jar">
 			<!-- codeshelf classes (exclude any org.xxx classes) -->
 			<fileset dir="${target.compiled.classes}">
@@ -271,8 +271,7 @@
 		<echo message="===================================================================" />
 
 		<!-- define the task enhancer -->
-		<taskdef name="ebeanEnhance" 
-			classname="com.avaje.ebean.enhance.ant.AntEnhanceTask" >
+		<taskdef name="ebeanEnhance" classname="com.avaje.ebean.enhance.ant.AntEnhanceTask">
 			<classpath>
 				<!--pathelement location="${orm-classes.dir}" /-->
 				<pathelement location="${ebean.lib.dir}/ebean-2.7.4-agent.jar" />
@@ -282,23 +281,20 @@
 		</taskdef>
 
 		<!-- enhance -->
-		<ebeanEnhance packages="com.gadgetworks.codeshelf.model.persist"
-			classdestination="${target.enhanced.classes}"
-			classsource="${target.obfuscated.classes}" 
-			transformargs="debug=1"
-			classpath="${target.lib}/*.jar" 
-		/>
+		<ebeanEnhance packages="com.gadgetworks.codeshelf.model.persist" classdestination="${target.enhanced.classes}" classsource="${target.obfuscated.classes}" transformargs="debug=1" classpath="${target.lib}/*.jar" />
 
 	</target>
 
 	<!-- jar-final =================================================================================== -->
 	<target name="jar-final" depends="">
 
-		<!--copy todir="${appjar.build.dir}/lib">
+		<mkdir dir="${target.lib}/${osdir}" />
+
+		<copy todir="${appjar.build.dir}/lib">
 			<fileset dir="${target.lib}/${osdir}">
 				<include name="**/*.jar" />
 			</fileset>
-		</copy-->
+		</copy>
 
 		<copy todir="${appjar.build.dir}/lib">
 			<fileset dir="${target.lib}">
@@ -348,11 +344,11 @@
 			<fileset dir="${target.lib}">
 				<include name="${codeshelf.app.jar.name}" />
 			</fileset>
-			<!--fileset dir="${target.lib}/${osdir}/">
+			<fileset dir="${target.lib}/${osdir}/">
 				<include name="**/*.dll" />
 				<include name="**/*.so" />
 				<include name="**/*.jnilib" />
-			</fileset-->
+			</fileset>
 			<fileset dir="${resources.dir}/images">
 				<include name="**/codeshelf.ico" />
 			</fileset>
@@ -383,24 +379,6 @@
 			</fileset>
 			<fileset dir="${libs.linux.dir}">
 				<include name="**/*.jar" />
-			</fileset>
-		</signjar>
-	</target>
-
-	<!-- sign-jars-win =================================================================================== -->
-	<target name="sign-jars-win">
-		<echo message="Sign JARs  ${appjar.build.dir}\${codeshelf.app.jar.name}" />
-		<!--<signjar jar="${target.lib}/base.jar" keystore="${keystore}" alias="myself" storepass="password" />-->
-		<signjar keystore="${keystore}" alias="myself" storepass="password" jar="${appjar.build.dir}\${codeshelf.app.jar.name}" />
-	</target>
-
-	<!-- sign-jars-jws =================================================================================== -->
-	<target name="sign-jars-jws">
-		<echo message="Sign JARs in ${jws.build.dir}/lib" />
-		<!--<signjar jar="${target.lib}/base.jar" keystore="${keystore}" alias="myself" storepass="password" />-->
-		<signjar keystore="${keystore}" alias="myself" storepass="password">
-			<fileset dir="${jws.build.dir}/lib">
-				<include name="${codeshelf.app.jar.name}" />
 			</fileset>
 		</signjar>
 	</target>
@@ -463,33 +441,33 @@
 					&lt;methods&gt;;
 				}
 			-keep
-				enum com.gadgetworks.flyweightcontroller.command.AckedStateEnum extends java.lang.Enum {
+				enum com.gadgetworks.codeshelf.command.AckedStateEnum extends java.lang.Enum {
 					&lt;fields&gt;;
 					&lt;methods&gt;;
 				}
 			-keep
-				public interface com.gadgetworks.flyweightcontroller.command.ICommand {
+				public interface com.gadgetworks.codeshelf.command.ICommand {
 					&lt;methods&gt;;
 				}
 			-keep
-				public class com.gadgetworks.flyweightcontroller.command.NetAddress {
+				public class com.gadgetworks.codeshelf.command.NetAddress {
 					&lt;methods&gt;;
 				}
 			-keep
-				public class com.gadgetworks.flyweightcontroller.command.NetEndpoint {
+				public class com.gadgetworks.codeshelf.command.NetEndpoint {
 					&lt;methods&gt;;
 				}
 			-keep
-				public class com.gadgetworks.flyweightcontroller.command.NetworkID {
+				public class com.gadgetworks.codeshelf.command.NetworkID {
 					&lt;methods&gt;;
 				}
 			-keep
-				enum com.gadgetworks.flyweightcontroller.command.NetworkTypeEnum extends java.lang.Enum {
+				enum com.gadgetworks.codeshelf.command.NetworkTypeEnum extends java.lang.Enum {
 					&lt;fields&gt;;
 					&lt;methods&gt;;
 				}
 			-keep
-				enum com.gadgetworks.flyweightcontroller.controller.NetworkDeviceStateEnum extends java.lang.Enum {
+				enum com.gadgetworks.codeshelf.controller.NetworkDeviceStateEnum extends java.lang.Enum {
 					&lt;fields&gt;;
 					&lt;methods&gt;;
 				}
@@ -502,6 +480,19 @@
 					&lt;fields&gt;;
 					&lt;methods&gt;;
 				}
+<!--
+			-keepclassmembers class * {
+			    public &lt;init&gt;(...);
+				}
+-->
+			-keepattributes *Annotation*,Signature  
+			-keep class com.google.inject.Binder    
+			-keep public class com.google.inject.Inject
+			 # keeps all fields and Constructors with @Inject
+			-keepclassmembers,allowobfuscation class * {
+			    @com.google.inject.Inject &lt;fields&gt;;
+			    @com.google.inject.Inject &lt;init&gt;(...);
+			}
 		</proguard>
 		<!--delete file="${target.lib}/codeshelf-unobfs.jar" /-->
 	</target>
@@ -540,7 +531,7 @@
 	<!-- OS X launchable jar builder =================================================================================== -->
 	<target name="osx.jar" depends="osx.clean, build" description="Build the app as a launchable jar">
 
-		<property name="main.class" value="com.gadgetworks.codeshelf.application.MainCocoa" />
+		<property name="main.class" value="com.gadgetworks.codeshelf.application.Main" />
 		<mkdir dir="${appjar.build.dir}" />
 		<mkdir dir="${appjar.build.dir}/lib" />
 
@@ -550,15 +541,10 @@
 		<property name="obfuscate.jsse.classes" value="${java.home}/../Classes/jsse.jar" />
 		<property name="keep.main.classes" value="		
 			-keep 
-            public class com.gadgetworks.codeshelf.application.MainCocoa {
+            public class com.gadgetworks.codeshelf.application.Main {
                 public static void main(java.lang.String[]);
                 static int actionProc(int, int, int);
-            }
-			-keep
-			public class com.gadgetworks.codeshelf.application.SWTCocoaEnhancerDelegate {
-				public SWTCocoaEnhancerDelegate();
-				public SWTCocoaEnhancerDelegate(int);
-			}" />
+            }" />
 
 		<antcall target="jar-final" />
 		<antcall target="sign-jars-osx" />
@@ -574,7 +560,7 @@
 
 		<mkdir dir="${osx.app.dir}" />
 
-		<jarbundler verbose="true" dir="${osx.app.dir}" name="CodeShelf" mainclass="com.gadgetworks.codeshelf.application.MainCocoa" icon="${target}/build/resources/images/codeshelf.icns" version="${version}" infostring="CodeShelf ${version}, (c) Gadgetworks, LLC" aboutmenuname="CodeShelf" bundleid="com.gadgetworks.CodeShelfBundle" developmentregion="English" jvmversion="1.5+" smalltabs="true" antialiasedgraphics="true" antialiasedtext="true" liveresize="true" growbox="true" growboxintrudes="true" screenmenu="true" vmoptions="-Xmx64m -Debean.props.file=conf/ebean.properties -Dappdir=$APP_PACKAGE/Contents/Resources -Dswing.aatext=true -Duser.language=en -Duser.country=US -Dlog4j.configuration=file:conf/log4j.properties" workingdirectory="$APP_PACKAGE/Contents/Resources/" extraclasspath="/System/Library/Java:$APP_PACKAGE/Contents/Resources/ $APP_PACKAGE/Contents/Resources/conf/" stubfile="CodeShelf" startonmainthread="true">
+		<jarbundler verbose="true" dir="${osx.app.dir}" name="CodeShelf" mainclass="com.gadgetworks.codeshelf.application.Main" icon="${target}/build/resources/images/codeshelf.icns" version="${version}" infostring="CodeShelf ${version}, (c) Gadgetworks, LLC" aboutmenuname="CodeShelf" bundleid="com.gadgetworks.CodeShelfBundle" developmentregion="English" jvmversion="1.5+" smalltabs="true" antialiasedgraphics="true" antialiasedtext="true" liveresize="true" growbox="true" growboxintrudes="true" screenmenu="true" vmoptions="-Xmx64m -Debean.props.file=conf/ebean.properties -Dappdir=$APP_PACKAGE/Contents/Resources -Dswing.aatext=true -Duser.language=en -Duser.country=US -Dlog4j.configuration=file:conf/log4j.properties" workingdirectory="$APP_PACKAGE/Contents/Resources/" extraclasspath="/System/Library/Java:$APP_PACKAGE/Contents/Resources/ $APP_PACKAGE/Contents/Resources/conf/" stubfile="CodeShelf" startonmainthread="true">
 
 			<jarfileset dir="${target.lib}">
 				<include name="**/osx/*.jar" />
@@ -614,7 +600,7 @@
 
 		<!-- Hack!  Write the JVMArchs Info.plist in order to get SWT working on OS X with 64-bit support.
 			Info.plist will always contain a MainClass key in the right place. -->
-<!--		<replace file="${osx.app.file}/Contents/Info.plist" token="&lt;key&gt;ClassPath" value="&lt;key&gt;StartOnMainThread&lt;/key&gt;&lt;true/&gt; &lt;key&gt;ClassPath" /-->
+		<!--		<replace file="${osx.app.file}/Contents/Info.plist" token="&lt;key&gt;ClassPath" value="&lt;key&gt;StartOnMainThread&lt;/key&gt;&lt;true/&gt; &lt;key&gt;ClassPath" /-->
 		<replace file="${osx.app.file}/Contents/Info.plist" token="&lt;key&gt;MainClass" value="&lt;key&gt;JVMArchs&lt;/key&gt;&lt;array&gt;&lt;string&gt;i386&lt;/string&gt;&lt;string&gt;x86_64&lt;/string&gt;&lt;string&gt;ppc&lt;/string&gt;&lt;/array&gt; &lt;key&gt;MainClass" />
 		<replace file="${osx.app.file}/Contents/Info.plist" token="&lt;key&gt;CFBundleName" value="&lt;key&gt;LSUIElement&lt;/key&gt;&lt;true/&gt; &lt;key&gt;CFBundleName" />
 
@@ -663,20 +649,20 @@
 	<!-- os x pref pane =================================================================================== -->
 
 	<target name="osx.prefpane">
-    <!-- install will put it in macpkg/Library/PreferencePanes/ as specified in the target settings -->
-        <delete dir="${osx.prefpane.dir}" failonerror="false"/>
-        <copy todir="${osx.prefpane.dir}" >
-            <fileset dir="${basedir}/installer/osx/CodeShelfPrefPane" />
-        </copy>
-        <exec executable="/usr/bin/xcodebuild" dir="${osx.prefpane.dir}" failonerror="true">
-            <arg value="-configuration"/>
-            <arg value="Deployment"/>
-            <arg value="-target"/>
-            <arg value="CodeShelf"/>
-            <arg value="clean"/>
-            <arg value="install"/>
-        </exec>
-    </target>
+		<!-- install will put it in macpkg/Library/PreferencePanes/ as specified in the target settings -->
+		<delete dir="${osx.prefpane.dir}" failonerror="false" />
+		<copy todir="${osx.prefpane.dir}">
+			<fileset dir="${basedir}/installer/osx/CodeShelfPrefPane" />
+		</copy>
+		<exec executable="/usr/bin/xcodebuild" dir="${osx.prefpane.dir}" failonerror="true">
+			<arg value="-configuration" />
+			<arg value="Deployment" />
+			<arg value="-target" />
+			<arg value="CodeShelf" />
+			<arg value="clean" />
+			<arg value="install" />
+		</exec>
+	</target>
 
 	<!-- package os x =================================================================================== -->
 
@@ -706,8 +692,8 @@
 		<exec executable="hdiutil" failonerror="true" logerror="true">
 			<arg line="create -srcfolder '${osx.package.dir}' -volname '${osx.dmg.volume}' -fs HFS+ -fsargs '-c c=64,a=16,e=16' -format UDRW '${target}/tmp.dmg'" />
 		</exec>
-		
-<!--		<echo message="attach" />
+
+		<!--		<echo message="attach" />
 		<exec executable="hdiutil" failonerror="true"  logerror="true">
 			<arg line="attach '${target}/tmp.dmg' -readwrite -noverify -noautoopen -mountpoint '${target}/tmp'" />
 		</exec>
@@ -716,78 +702,27 @@
 		<exec executable="hdiutil" failonerror="true"  logerror="true">
 			<arg line="detach ${target}/tmp -quiet -force" />
 		</exec>-->
-		
+
 		<echo message="convert" />
-		<exec executable="hdiutil" failonerror="true"  logerror="true" >
+		<exec executable="hdiutil" failonerror="true" logerror="true">
 			<arg line="convert -quiet ${target}/tmp.dmg -format UDZO -imagekey zlib-level=9 -o ${osx.dmg.file}" />
 		</exec>
-		
+
 		<echo message="internet-enable" />
-		<exec executable="hdiutil" failonerror="true"  logerror="true">
+		<exec executable="hdiutil" failonerror="true" logerror="true">
 			<arg line="internet-enable -yes ${osx.dmg.file}" />
 		</exec>
-		
+
 		<delete file="${target}/tmp.dmg" />
 		<!-- <symlink action="delete" failonerror="true" link="${osx.app.dir}/Applications"/> -->
-		
+
 		<echo message="osx.dmg completed" />
-	</target>
-
-	<!-- windows jar builder =================================================================================== -->
-	<target name="win.jar" depends="clean, build" description="Build the app as a launchable jar">
-
-		<property name="main.class" value="com.gadgetworks.codeshelf.application.MainWin32" />
-		<mkdir dir="${appjar.build.dir}" />
-		<mkdir dir="${appjar.build.dir}/lib" />
-
-		<property name="osdir" value="win32" />
-		<property name="obfuscate.core.classes" value="${java.home}/lib/rt.jar" />
-		<property name="obfuscate.crypto.classes" value="${java.home}/lib/jce.jar" />
-		<property name="obfuscate.jsse.classes" value="${java.home}/lib/jsse.jar" />
-		<property name="keep.main.classes" value="		
-    -keep  
-        public class com.gadgetworks.codeshelf.application.MainWin32 { 
-            public static void main(java.lang.String[]); 
-            static int actionProc(int, int, int); 
-			}" />
-
-		<antcall target="jar-final" />
-		<antcall target="sign-jars-win" />
-	</target>
-
-	<!-- Windows Launch4J runner =================================================================================== -->
-	<target name="win.launch4j" depends="win.jar" description="Create Launch4J Windows">
-
-		<taskdef name="launch4j" classname="net.sf.launch4j.ant.Launch4jTask" classpath="${basedir}/installer/launch4j/launch4j.jar:${basedir}/installer/launch4j/lib/xstream.jar" />
-
-		<launch4j configFile="./installer/launch4j/CodeShelfConfig.xml" fileVersion="${version.nsis.short}" txtfileversion="${version.nsis.long}" productversion="${version.nsis.short}" txtproductversion="${version.nsis.long}" />
-
-		<echo message="win.launch4j completed" />
-	</target>
-
-	<!-- windows installer =================================================================================== -->
-	<target name="win.installer" depends="win.launch4j" description="Create Windows installer">
-
-		<!-- First we need to copy the driver files to the appjar.build.dir -->
-		<copy todir="${appjar.build.dir}/drivers">
-			<fileset dir="${basedir}/installer/drivers/CDM 2.04.06 GW">
-				<include name="**/*.*" />
-			</fileset>
-		</copy>
-
-		<!-- Now create the installer. -->
-		<taskdef name="nsis" classpath="${basedir}/build/lib/nsisant-1.2.jar" classname="net.sf.nsisant.Task" />
-		<nsis script="./installer/nsis/CodeShelfInstaller.nsi" path="C:\Program Files\NSIS" verbosity="4">
-			<define name="VERSION_SHORT" value="${version.nsis.short}" />
-			<define name="VERSION_LONG" value="${version.nsis.long}" />
-		</nsis>
-		<echo message="win.installer completed" />
 	</target>
 
 	<!-- Linux jar builder =================================================================================== -->
 	<target name="linux.jar" depends="clean, build" description="Build the app as a launchable jar">
 
-		<property name="main.class" value="com.gadgetworks.codeshelf.application.MainGTK" />
+		<property name="main.class" value="com.gadgetworks.codeshelf.application.Main" />
 		<mkdir dir="${appjar.build.dir}" />
 		<mkdir dir="${appjar.build.dir}/lib" />
 
@@ -839,16 +774,16 @@
 		<taskdef name="deb" classpath="${basedir}/build/lib/jdeb-0.7.jar" classname="org.vafer.jdeb.ant.DebAntTask" />
 		<deb destfile="${target}/CodeShelf-${version.major}.${version.minor}.${version.revision}.deb" control="${debian.installer.dir}/DEBIAN/" verbose="true">
 			<tarfileset dir="${debian.installer.dir}" mode="755" username="root" group="root" preserveleadingslashes="false">
-				<exclude name="**/DEBIAN/**"/>
-				<include name="**/opt/**"/>
-				<include name="**/usr/**"/>
-				<include name="**/etc/**"/>
+				<exclude name="**/DEBIAN/**" />
+				<include name="**/opt/**" />
+				<include name="**/usr/**" />
+				<include name="**/etc/**" />
 			</tarfileset>
 			<!--data src="${debian.installer.dir}">
 				<exclude name="**/DEBIAN/**"/>
 			</data-->
 		</deb>
-		
+
 		<echo message="linux.installer completed" />
 
 	</target>
