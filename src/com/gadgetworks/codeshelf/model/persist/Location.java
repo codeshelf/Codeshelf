@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Location.java,v 1.5 2012/04/20 07:00:54 jeffw Exp $
+ *  $Id: Location.java,v 1.6 2012/06/27 05:07:51 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -38,6 +38,9 @@ import com.gadgetworks.codeshelf.model.PositionTypeEnum;
  */
 
 @Entity
+// Location is the only class we use table-per-class strategy.
+// The location hierarchy will get very deep, but each parent has concrete/leaf instances of its children.
+// This removes the biggest hassle/hurdle to inheritance-per-class.
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "DTYPE", discriminatorType = DiscriminatorType.STRING)
 @Table(name = "LOCATION")

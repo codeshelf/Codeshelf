@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PersistABC.java,v 1.22 2012/05/07 06:34:27 jeffw Exp $
+ *  $Id: PersistABC.java,v 1.23 2012/06/27 05:07:51 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -28,8 +28,6 @@ import org.codehaus.jackson.annotate.JsonProperty;
 
 //@Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
 @MappedSuperclass
-//@Entity
-//@Data
 public abstract class PersistABC {
 
 	// This is the internal GUID for the object.
@@ -55,6 +53,7 @@ public abstract class PersistABC {
 	}
 
 	public abstract PersistABC getParent();
+
 	public abstract void setParent(PersistABC inParent);
 
 	// --------------------------------------------------------------------------

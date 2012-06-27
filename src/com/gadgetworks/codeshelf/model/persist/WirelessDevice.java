@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WirelessDevice.java,v 1.14 2012/04/10 08:01:19 jeffw Exp $
+ *  $Id: WirelessDevice.java,v 1.15 2012/06/27 05:07:51 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -23,6 +23,7 @@ import javax.persistence.Transient;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.experimental.Accessors;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -102,9 +103,9 @@ public class WirelessDevice extends PersistABC implements INetworkDevice {
 	@Transient
 	private short					expectedEndpointCount;
 	@Transient
-	private Map<String, String>		KVPMap;
+	private Map<String, String>		kvpMap;
 	@Transient
-	private short					expectedKVPCount;
+	private short					expectedKvpCount;
 
 	//	@Transient
 	//	private String						mDeviceDesc;
@@ -116,7 +117,7 @@ public class WirelessDevice extends PersistABC implements INetworkDevice {
 		publicKey = "";
 		description = "";
 		lastBatteryLevel = 0;
-		KVPMap = new HashMap<String, String>();
+		kvpMap = new HashMap<String, String>();
 	}
 
 	public PersistABC getParent() {
@@ -128,7 +129,7 @@ public class WirelessDevice extends PersistABC implements INetworkDevice {
 			setParentControlGroup((ControlGroup) inParent);
 		}
 	}
-	
+
 	public final NetMacAddress getMacAddress() {
 		return new NetMacAddress(macAddress);
 	}
@@ -221,7 +222,7 @@ public class WirelessDevice extends PersistABC implements INetworkDevice {
 	 * @see com.gadgetworks.codeshelf.controller.INetworkDevice#addKeyValuePair(java.lang.String, java.lang.String)
 	 */
 	public final void addKeyValuePair(String inKey, String inValue) {
-		KVPMap.put(inKey, inValue);
+		kvpMap.put(inKey, inValue);
 	}
 
 	/* --------------------------------------------------------------------------
@@ -229,7 +230,7 @@ public class WirelessDevice extends PersistABC implements INetworkDevice {
 	 * @see com.gadgetworks.codeshelf.controller.INetworkDevice#getExpectedKVPCount()
 	 */
 	public final short getExpectedKVPCount() {
-		return expectedKVPCount;
+		return expectedKvpCount;
 	}
 
 	/* --------------------------------------------------------------------------
@@ -237,7 +238,7 @@ public class WirelessDevice extends PersistABC implements INetworkDevice {
 	 * @see com.gadgetworks.codeshelf.controller.INetworkDevice#getStoredKVPCount()
 	 */
 	public final short getStoredKVPCount() {
-		return (short) KVPMap.size();
+		return (short) kvpMap.size();
 	}
 
 	/* --------------------------------------------------------------------------
@@ -245,7 +246,7 @@ public class WirelessDevice extends PersistABC implements INetworkDevice {
 	 * @see com.gadgetworks.codeshelf.controller.INetworkDevice#setKVPCount(short)
 	 */
 	public final void setKVPCount(short inKVPCount) {
-		expectedKVPCount = inKVPCount;
+		expectedKvpCount = inKVPCount;
 	}
 
 	/* --------------------------------------------------------------------------
@@ -254,7 +255,7 @@ public class WirelessDevice extends PersistABC implements INetworkDevice {
 	 */
 	public final String getHWDesc() {
 		String result;
-		result = KVPMap.get(INetworkDevice.HW_VERSION_KEY);
+		result = kvpMap.get(INetworkDevice.HW_VERSION_KEY);
 		if (result == null) {
 			result = "unknown";
 		}
@@ -267,7 +268,7 @@ public class WirelessDevice extends PersistABC implements INetworkDevice {
 	 */
 	public final String getSWRevision() {
 		String result;
-		result = KVPMap.get(INetworkDevice.SW_VERSION_KEY);
+		result = kvpMap.get(INetworkDevice.SW_VERSION_KEY);
 		if (result == null) {
 			result = "unknown";
 		}

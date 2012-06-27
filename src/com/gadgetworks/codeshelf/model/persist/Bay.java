@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Aisle.java,v 1.14 2012/06/27 05:07:51 jeffw Exp $
+ *  $Id: Bay.java,v 1.1 2012/06/27 05:07:51 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -16,39 +16,39 @@ import org.apache.commons.logging.LogFactory;
 
 // --------------------------------------------------------------------------
 /**
- * Aisle
+ * Bay
  * 
- * Aisle is a facility-level location that holds a collection of bays.
+ * The object that models a storage bay in an aisle (pallet bay, etc.)
  * 
  * @author jeffw
  */
 
 @Entity
-@Table(name = "AISLE")
-@DiscriminatorValue("AISLE")
-public class Aisle extends Location {
+@Table(name = "BAY")
+@DiscriminatorValue("BAY")
+public class Bay extends Location {
 
-	private static final Log	LOGGER	= LogFactory.getLog(Aisle.class);
+	private static final Log	LOGGER	= LogFactory.getLog(Bay.class);
 
-	public Aisle() {
+	public Bay() {
 
 	}
-	
+
 	public final PersistABC getParent() {
 		return getParentLocation();
 	}
-	
+
 	public final void setParent(PersistABC inParent) {
-		if (inParent instanceof Facility) {
-			setParentLocation((Facility) inParent);
+		if (inParent instanceof Aisle) {
+			setParentLocation((Aisle) inParent);
 		}
 	}
-	
-	public final Facility getParentFacility() {
-		return (Facility) getParentLocation();
+
+	public final Aisle getParentAisle() {
+		return (Aisle) getParentLocation();
 	}
-	
-	public final void setParentFacility(Facility inParentFacility) {
-		setParentLocation(inParentFacility);
+
+	public final void setParentAisle(Aisle inParentAisle) {
+		setParentLocation(inParentAisle);
 	}
 }

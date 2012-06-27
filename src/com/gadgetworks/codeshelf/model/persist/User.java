@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: User.java,v 1.9 2012/04/10 08:01:19 jeffw Exp $
+ *  $Id: User.java,v 1.10 2012/06/27 05:07:51 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -17,6 +17,7 @@ import javax.persistence.Table;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.experimental.Accessors;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -33,47 +34,47 @@ import org.apache.commons.logging.LogFactory;
 @Entity
 @Table(name = "USER")
 public class User extends PersistABC {
-	
-	private static final Log				LOGGER				= LogFactory.getLog(User.class);
 
-	private static final long				serialVersionUID	= 3001609308065821464L;
+	private static final Log	LOGGER				= LogFactory.getLog(User.class);
+
+	private static final long	serialVersionUID	= 3001609308065821464L;
 
 	// The hashed password
 	// A User with a null hashed password is a promo user (with limited abilities).
 	@Getter
 	@Setter
 	@Column(nullable = true)
-	private String							hashedPassword;
+	private String				hashedPassword;
 
 	// Email.
 	@Getter
 	@Setter
 	@Column(nullable = false)
-	private String							email;
+	private String				email;
 
 	// Create date.
 	@Getter
 	@Setter
 	@Column(nullable = false)
-	private Timestamp						created;
+	private Timestamp			created;
 
 	// Is it active.
 	@Getter
 	@Setter
 	@Column(nullable = false)
-	private Boolean							active;
+	private Boolean				active;
 
 	// For a network this is a list of all of the control groups that belong in the set.
 	@OneToMany(mappedBy = "parentUser")
 	@Getter
-	private List<UserSession>				uses				= new ArrayList<UserSession>();
+	private List<UserSession>	users				= new ArrayList<UserSession>();
 
 	// The owning facility.
 	@Column(name = "parentOrganization", nullable = false)
 	@ManyToOne(optional = false)
 	@Getter
 	@Setter
-	private Organization						parentOrganization;
+	private Organization		parentOrganization;
 
 	public User() {
 		email = "";
@@ -90,14 +91,14 @@ public class User extends PersistABC {
 			setParentOrganization((Organization) inParent);
 		}
 	}
-	
+
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void addUserSession(UserSession inPromoCodeUse) {
-		uses.add(inPromoCodeUse);
+		users.add(inPromoCodeUse);
 	}
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void removeUserSession(UserSession inPromoCodeUse) {
-		uses.remove(inPromoCodeUse);
+		users.remove(inPromoCodeUse);
 	}
 }

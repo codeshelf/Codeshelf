@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: UserSession.java,v 1.8 2012/04/10 08:01:19 jeffw Exp $
+ *  $Id: UserSession.java,v 1.9 2012/06/27 05:07:51 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -14,15 +14,16 @@ import javax.persistence.Table;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.experimental.Accessors;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 // --------------------------------------------------------------------------
 /**
- * PromoCodeUse
+ * UserSession
  * 
- * Information gathered with each use of the promo code.
+ * Information gathered as part of a user's session with the system.
  * 
  * @author jeffw
  */
@@ -31,26 +32,26 @@ import org.apache.commons.logging.LogFactory;
 @Table(name = "USERSESSION")
 public class UserSession extends PersistABC {
 
-	private static final Log					LOGGER				= LogFactory.getLog(UserSession.class);
+	private static final Log	LOGGER				= LogFactory.getLog(UserSession.class);
 
-	private static final long					serialVersionUID	= 3001609308065821464L;
+	private static final long	serialVersionUID	= 3001609308065821464L;
 
 	// The owning CodeShelf network.
 	@Column(name = "parentUser", nullable = false)
 	@ManyToOne(optional = false)
-	private User								parentUser;
+	private User				parentUser;
 
 	// Create date.
 	@Getter
 	@Setter
 	@Column(nullable = false)
-	private Timestamp							created;
+	private Timestamp			created;
 
 	// Activity note.
 	@Getter
 	@Setter
 	@Column(nullable = false)
-	private String								note;
+	private String				note;
 
 	public UserSession() {
 		parentUser = null;
@@ -66,11 +67,11 @@ public class UserSession extends PersistABC {
 			setParentUser((User) inParent);
 		}
 	}
-	
+
 	public final User getParentUser() {
 		// Yes, this is weird, but we MUST always return the same instance of these persistent objects.
 		if (parentUser != null) {
-//			parentUser = User.DAO.loadByPersistentId(parentUser.getPersistentId());
+			//			parentUser = User.DAO.loadByPersistentId(parentUser.getPersistentId());
 		}
 		return parentUser;
 	}

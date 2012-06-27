@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: H2SchemaManager.java,v 1.26 2012/04/20 07:00:54 jeffw Exp $
+ *  $Id: H2SchemaManager.java,v 1.27 2012/06/27 05:07:51 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -237,6 +237,31 @@ public final class H2SchemaManager implements ISchemaManager {
 			+ "REFERENCES DATABASE.CODESHELF.LOCATION (PERSISTENTID);");
 
 		execOneSQLCommand("CREATE INDEX CODESHELF.VERTEX_PARENT_LOCATION ON CODESHELF.VERTEX (PARENTLOCATION_PERSISTENTID)");
+
+		// Path
+		execOneSQLCommand("CREATE SEQUENCE CODESHELF.PATH_SEQ");
+		execOneSQLCommand("CREATE TABLE CODESHELF.PATH ( " //
+				+ "PERSISTENTID BIGINT NOT NULL, " //
+				+ "DOMAINID VARCHAR(64) NOT NULL," //
+				+ "VERSION TIMESTAMP, " //
+				+ "DESCRIPTION VARCHAR(64) NOT NULL, " //
+				+ "PARENTFACILITY_PERSISTENTID LONG NOT NULL, " //
+				+ "PRIMARY KEY (PERSISTENTID));");
+
+		// PathSegment
+		execOneSQLCommand("CREATE SEQUENCE CODESHELF.PATHSEGMENT_SEQ");
+		execOneSQLCommand("CREATE TABLE CODESHELF.PATHSEGMENT ( " //
+				+ "PERSISTENTID BIGINT NOT NULL, " //
+				+ "DOMAINID VARCHAR(64) NOT NULL," //
+				+ "VERSION TIMESTAMP, " //
+				+ "PARENTPATH_PERSISTENTID LONG NOT NULL, " //
+				+ "PRIMARY KEY (PERSISTENTID));");
+
+		execOneSQLCommand("ALTER TABLE CODESHELF.PATHSEGMENT " //
+				+ "ADD FOREIGN KEY (PARENTPATH_PERSISTENTID) " //
+				+ "REFERENCES DATABASE.CODESHELF.PATH (PERSISTENTID);");
+
+		execOneSQLCommand("CREATE INDEX CODESHELF.PATHSEGMENT_PARENT_PATH ON CODESHELF.PATHSEGMENT (PARENTPATH_PERSISTENTID)");
 
 		// User
 		execOneSQLCommand("CREATE SEQUENCE CODESHELF.USER_SEQ");

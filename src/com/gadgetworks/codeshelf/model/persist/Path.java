@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Organization.java,v 1.9 2012/06/27 05:07:51 jeffw Exp $
+ *  $Id: Path.java,v 1.1 2012/06/27 05:07:51 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -15,6 +15,7 @@ import javax.persistence.Table;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.experimental.Accessors;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -22,45 +23,41 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 
 // --------------------------------------------------------------------------
 /**
- * Organization
+ * Path
  * 
- * The organization is the top-level object that is the parent of all other objects.
- * To handle user-scope/security, all objects in the system must satisfy getParent()/setParent(), but since 
- * organization is the top-most object it's parent is null.
- * 
- * There is a DB constraint that parent cannot be null.  In the case of organization we break that constraint.
+ * A collection of PathSegments that make up a path that a ContainerHandler can travel for work.
  * 
  * @author jeffw
  */
 
 @Entity
-@Table(name = "ORGANIZATION")
-public class Organization extends PersistABC {
+@Table(name = "PATH")
+public class Path extends PersistABC {
 
 	//	public interface IOrganizationDao extends IGenericDao<Organization> {		
 	//	}
 
-	private static final Log	LOGGER		= LogFactory.getLog(Organization.class);
+	private static final Log	LOGGER		= LogFactory.getLog(Path.class);
 
-	// The facility description.
+	// The parent facility.
+	@Getter
+	@Setter
+	@Column(nullable = false)
+	private PersistABC			parentFacility;
+
+	// The path description.
 	@Getter
 	@Setter
 	@Column(nullable = false)
 	private String				description;
 
 	// For a network this is a list of all of the users that belong in the set.
-	@OneToMany(mappedBy = "parentOrganization")
+	@OneToMany(mappedBy = "parentPath")
 	@JsonIgnore
 	@Getter
-	private List<User>			users		= new ArrayList<User>();
+	private List<PathSegment>	segments	= new ArrayList<PathSegment>();
 
-	// For a network this is a list of all of the facilities that belong in the set.
-	@OneToMany(mappedBy = "parentOrganization")
-	@JsonIgnore
-	@Getter
-	private List<Facility>		facilities	= new ArrayList<Facility>();
-
-	public Organization() {
+	public Path() {
 		description = "";
 	}
 
@@ -70,20 +67,20 @@ public class Organization extends PersistABC {
 	 * @return
 	 */
 	public final PersistABC getParent() {
-		return null;
+		return parentFacility;
 	}
 
 	public final void setParent(PersistABC inParent) {
-
+		parentFacility = inParent;
 	}
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
-	public final void addFacility(Facility inFacility) {
-		facilities.add(inFacility);
+	public final void addPathSegment(PathSegment inPathSegment) {
+		segments.add(inPathSegment);
 	}
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
-	public final void removeFacility(Facility inFacility) {
-		facilities.remove(inFacility);
+	public final void removePathSegment(PathSegment inPathSegment) {
+		segments.remove(inPathSegment);
 	}
 }
