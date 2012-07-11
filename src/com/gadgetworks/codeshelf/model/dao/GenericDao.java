@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: GenericDao.java,v 1.17 2012/04/13 18:54:27 jeffw Exp $
+ *  $Id: GenericDao.java,v 1.18 2012/07/11 07:15:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -23,7 +23,7 @@ import com.gadgetworks.codeshelf.model.persist.PersistABC;
  * @author jeffw
  *
  */
-public class GenericDao<T extends PersistABC> implements IGenericDao<T> {
+public class GenericDao<T extends PersistABC> implements ITypedDao<T> {
 
 	private static final Log	LOGGER		= LogFactory.getLog(GenericDao.class);
 

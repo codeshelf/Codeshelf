@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Util.java,v 1.15 2012/03/23 06:04:44 jeffw Exp $
+ *  $Id: Util.java,v 1.16 2012/07/11 07:15:42 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -29,7 +29,7 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
-import com.gadgetworks.codeshelf.model.dao.IGenericDao;
+import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.persist.Organization;
 import com.gadgetworks.codeshelf.model.persist.PersistentProperty;
 
@@ -211,7 +211,7 @@ public final class Util {
 	/**
 	 * After we've either initialized the prefs or changed them then call this to effect the changes.
 	 */
-	public static void setLoggingLevelsFromPrefs(Organization inOrganization, IGenericDao<PersistentProperty> inPersistentPropertyDao) {
+	public static void setLoggingLevelsFromPrefs(Organization inOrganization, ITypedDao<PersistentProperty> inPersistentPropertyDao) {
 
 		PersistentProperty gwLogLvlProp = inPersistentPropertyDao.findByDomainId(inOrganization, PersistentProperty.GENERAL_INTF_LOG_LEVEL);
 		Level level = Level.toLevel(gwLogLvlProp.getCurrentValueAsStr());

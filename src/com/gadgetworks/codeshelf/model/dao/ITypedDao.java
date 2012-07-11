@@ -1,11 +1,10 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: IGenericDao.java,v 1.11 2012/04/13 18:54:27 jeffw Exp $
+ *  $Id: ITypedDao.java,v 1.1 2012/07/11 07:15:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -15,7 +14,7 @@ import com.gadgetworks.codeshelf.model.persist.PersistABC;
  * @author jeffw
  *
  */
-public interface IGenericDao<T> extends IDao {
+public interface ITypedDao<T> extends IDao {
 
 	//	boolean isObjectPersisted(T inDomainObject);
 

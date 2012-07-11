@@ -1,13 +1,13 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: DBPropertyDao.java,v 1.4 2012/03/22 20:17:06 jeffw Exp $
+ *  $Id: DBPropertyDao.java,v 1.5 2012/07/11 07:15:41 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao.domain;
 
 import com.gadgetworks.codeshelf.model.dao.GenericDao;
 import com.gadgetworks.codeshelf.model.dao.IDaoRegistry;
-import com.gadgetworks.codeshelf.model.dao.IGenericDao;
+import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.persist.DBProperty;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -17,7 +17,7 @@ import com.google.inject.Singleton;
  *
  */
 @Singleton
-public class DBPropertyDao extends GenericDao<DBProperty> implements IGenericDao<DBProperty> {
+public class DBPropertyDao extends GenericDao<DBProperty> implements ITypedDao<DBProperty> {
 	@Inject
 	public DBPropertyDao(final IDaoRegistry inDaoRegistry) {
 		super(DBProperty.class, inDaoRegistry);

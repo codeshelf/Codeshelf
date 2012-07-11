@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectUpdate.java,v 1.11 2012/04/22 08:10:28 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectUpdate.java,v 1.12 2012/07/11 07:15:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -24,7 +24,7 @@ import org.codehaus.jackson.type.TypeReference;
 
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
-import com.gadgetworks.codeshelf.model.dao.IGenericDao;
+import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.persist.PersistABC;
 import com.gadgetworks.codeshelf.web.websession.command.resp.IWebSessionRespCmd;
 import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdObjectUpdate;
@@ -115,7 +115,7 @@ public class WebSessionReqCmdObjectUpdate extends WebSessionReqCmdABC {
 			if (PersistABC.class.isAssignableFrom(classObject)) {
 
 				// First locate an instance of the parent class.
-				IGenericDao<PersistABC> dao = mDaoProvider.getDaoInstance((Class<PersistABC>) classObject);
+				ITypedDao<PersistABC> dao = mDaoProvider.getDaoInstance((Class<PersistABC>) classObject);
 				PersistABC updateObject = dao.findByPersistentId(objectId);
 
 				// Execute the "set" method against the parents to return the children.

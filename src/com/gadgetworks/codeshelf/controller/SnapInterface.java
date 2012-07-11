@@ -22,7 +22,7 @@ import com.gadgetworks.codeshelf.command.CommandIdEnum;
 import com.gadgetworks.codeshelf.command.ICommand;
 import com.gadgetworks.codeshelf.command.ICsCommand;
 import com.gadgetworks.codeshelf.model.TagProtocolEnum;
-import com.gadgetworks.codeshelf.model.dao.IGenericDao;
+import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork;
 import com.gadgetworks.codeshelf.model.persist.ControlGroup;
 import com.gadgetworks.codeshelf.model.persist.PickTag;
@@ -45,13 +45,13 @@ public final class SnapInterface implements IWirelessInterface {
 	private static final int				OUTBOUND_TIMEOUT_MILLIS		= 5000;
 
 	private CodeShelfNetwork				mCodeShelfNetwork;
-	private IGenericDao<CodeShelfNetwork>	mCodeShelfNetworkDao;
+	private ITypedDao<CodeShelfNetwork>	mCodeShelfNetworkDao;
 	private IWirelessDeviceDao				mWirelessDeviceDao;
 	private XmlRpcClient					mInboundXmlRpcClient;
 	private XmlRpcClient					mOutboundXmlRpcClient;
 	private boolean							mIsStarted;
 
-	public SnapInterface(final CodeShelfNetwork inCodeShelfNetwork, final IGenericDao<CodeShelfNetwork> inCodeShelfNetworkDao, final IWirelessDeviceDao inWirelessDeviceDao) {
+	public SnapInterface(final CodeShelfNetwork inCodeShelfNetwork, final ITypedDao<CodeShelfNetwork> inCodeShelfNetworkDao, final IWirelessDeviceDao inWirelessDeviceDao) {
 		mCodeShelfNetwork = inCodeShelfNetwork;
 		mCodeShelfNetworkDao = inCodeShelfNetworkDao;
 		mWirelessDeviceDao = inWirelessDeviceDao;

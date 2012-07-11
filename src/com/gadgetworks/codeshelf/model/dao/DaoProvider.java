@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: DaoProvider.java,v 1.3 2012/03/22 07:35:11 jeffw Exp $
+ *  $Id: DaoProvider.java,v 1.4 2012/07/11 07:15:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -26,7 +26,7 @@ public class DaoProvider  implements IDaoProvider {
 		mInjector = inInjector;
 	}
 
-	public final <T extends PersistABC> IGenericDao<T> getDaoInstance(final Class<T> inDomainObjectClass) {
+	public final <T extends PersistABC> ITypedDao<T> getDaoInstance(final Class<T> inDomainObjectClass) {
 
 		final ParameterizedType parameterizedDaoType = new ParameterizedType() {
 
@@ -39,14 +39,14 @@ public class DaoProvider  implements IDaoProvider {
 			}
 
 			public Type getRawType() {
-				return IGenericDao.class;
+				return ITypedDao.class;
 			}
 		};
 
 		TypeLiteral<?> type = TypeLiteral.get(parameterizedDaoType);
 
 		if (mInjector.findBindingsByType(type).size() > 0) {
-			return (IGenericDao<T>) mInjector.findBindingsByType(type).get(0).getProvider().get();
+			return (ITypedDao<T>) mInjector.findBindingsByType(type).get(0).getProvider().get();
 		}
 
 		return null;

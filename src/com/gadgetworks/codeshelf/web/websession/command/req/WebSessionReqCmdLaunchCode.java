@@ -1,13 +1,13 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdLaunchCode.java,v 1.7 2012/04/10 08:01:19 jeffw Exp $
+ *  $Id: WebSessionReqCmdLaunchCode.java,v 1.8 2012/07/11 07:15:41 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
 import org.codehaus.jackson.JsonNode;
 
-import com.gadgetworks.codeshelf.model.dao.IGenericDao;
+import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.persist.Organization;
 import com.gadgetworks.codeshelf.web.websession.command.resp.IWebSessionRespCmd;
 import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdLaunchCode;
@@ -29,11 +29,11 @@ import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdLa
  */
 public class WebSessionReqCmdLaunchCode extends WebSessionReqCmdABC {
 
-	private IGenericDao<Organization>	mOrganizationDao;
+//	private ITypedDao<Organization>	mOrganizationDao;
 
-	public WebSessionReqCmdLaunchCode(final String inCommandId, final JsonNode inDataNodeAsJson, final IGenericDao<Organization> inOrganizationDao) {
+	public WebSessionReqCmdLaunchCode(final String inCommandId, final JsonNode inDataNodeAsJson/*, final ITypedDao<Organization> inOrganizationDao*/) {
 		super(inCommandId, inDataNodeAsJson);
-		mOrganizationDao = inOrganizationDao;
+//		mOrganizationDao = inOrganizationDao;
 	}
 
 	public final WebSessionReqCmdEnum getCommandEnum() {
@@ -49,7 +49,7 @@ public class WebSessionReqCmdLaunchCode extends WebSessionReqCmdABC {
 
 		JsonNode launchNode = getDataJsonNode().get("launchCode");
 		String launchCode = launchNode.getTextValue();
-		Organization organization = mOrganizationDao.findByDomainId(null, launchCode);
+		Organization organization = Organization.DAO.findByDomainId(null, launchCode);
 
 		// CRITICAL SECURITY CONCEPT.
 		// LaunchCodes are anonymous users that we create WITHOUT passwords or final userIDs.

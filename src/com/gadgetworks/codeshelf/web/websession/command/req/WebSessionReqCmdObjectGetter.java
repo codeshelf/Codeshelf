@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectGetter.java,v 1.10 2012/04/21 08:23:29 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectGetter.java,v 1.11 2012/07/11 07:15:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -15,7 +15,7 @@ import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
 
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
-import com.gadgetworks.codeshelf.model.dao.IGenericDao;
+import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.persist.PersistABC;
 import com.gadgetworks.codeshelf.web.websession.command.resp.IWebSessionRespCmd;
 import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdObjectGetter;
@@ -81,7 +81,7 @@ public class WebSessionReqCmdObjectGetter extends WebSessionReqCmdABC {
 			Class<?> classObject = Class.forName(parentClassName);
 			if (PersistABC.class.isAssignableFrom(classObject)) {
 
-				IGenericDao<PersistABC> dao = mDaoProvider.getDaoInstance((Class<PersistABC>) classObject);
+				ITypedDao<PersistABC> dao = mDaoProvider.getDaoInstance((Class<PersistABC>) classObject);
 				PersistABC parentObject = dao.findByPersistentId(parentId);
 
 				// Execute the "get" method against the parents to return the children.

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PersistABC.java,v 1.23 2012/06/27 05:07:51 jeffw Exp $
+ *  $Id: PersistABC.java,v 1.24 2012/07/11 07:15:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -26,7 +26,6 @@ import org.codehaus.jackson.annotate.JsonProperty;
  *  @author jeffw
  */
 
-//@Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
 @MappedSuperclass
 public abstract class PersistABC {
 

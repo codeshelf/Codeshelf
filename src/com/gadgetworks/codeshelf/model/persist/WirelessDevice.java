@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WirelessDevice.java,v 1.15 2012/06/27 05:07:51 jeffw Exp $
+ *  $Id: WirelessDevice.java,v 1.16 2012/07/11 07:15:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -23,7 +23,6 @@ import javax.persistence.Transient;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.experimental.Accessors;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -34,7 +33,9 @@ import com.gadgetworks.codeshelf.controller.INetworkDevice;
 import com.gadgetworks.codeshelf.controller.NetAddress;
 import com.gadgetworks.codeshelf.controller.NetMacAddress;
 import com.gadgetworks.codeshelf.controller.NetworkDeviceStateEnum;
-import com.gadgetworks.codeshelf.model.dao.IGenericDao;
+import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.codeshelf.model.dao.domain.WirelessDeviceDao;
+import com.google.inject.Inject;
 
 // --------------------------------------------------------------------------
 /**
@@ -53,7 +54,7 @@ import com.gadgetworks.codeshelf.model.dao.IGenericDao;
 @DiscriminatorValue("ABC")
 public class WirelessDevice extends PersistABC implements INetworkDevice {
 
-	public interface IWirelessDeviceDao extends IGenericDao<WirelessDevice>, IDeviceMaintainer {
+	public interface IWirelessDeviceDao extends ITypedDao<WirelessDevice>, IDeviceMaintainer {
 
 		WirelessDevice findWirelessDeviceByMacAddr(NetMacAddress inMacAddr);
 
@@ -66,7 +67,11 @@ public class WirelessDevice extends PersistABC implements INetworkDevice {
 	public static final int			MAC_ADDR_BYTES		= 8;
 	public static final int			PUBLIC_KEY_BYTES	= 8;
 
-	private static final long		serialVersionUID	= 2371198193026330676L;
+	@Inject
+	public static IWirelessDeviceDao DAO;
+//	public static IWirelessDeviceDao DAO = new WirelessDeviceDao(null);
+
+//	private static final long		serialVersionUID	= 2371198193026330676L;
 
 	private static final Log		LOGGER				= LogFactory.getLog(WirelessDevice.class);
 

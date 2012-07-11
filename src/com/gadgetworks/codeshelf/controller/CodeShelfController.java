@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfController.java,v 1.5 2012/03/23 06:04:44 jeffw Exp $
+ *  $Id: CodeShelfController.java,v 1.6 2012/07/11 07:15:42 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.controller;
@@ -14,7 +14,7 @@ import org.apache.commons.logging.LogFactory;
 import com.gadgetworks.codeshelf.command.CommandControlABC;
 import com.gadgetworks.codeshelf.command.CommandControlButton;
 import com.gadgetworks.codeshelf.command.CommandCsABC;
-import com.gadgetworks.codeshelf.model.dao.IGenericDao;
+import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.persist.Facility;
 import com.gadgetworks.codeshelf.model.persist.PersistentProperty;
 import com.gadgetworks.codeshelf.query.IQuery;
@@ -47,7 +47,7 @@ public final class CodeShelfController extends ControllerABC {
 	public CodeShelfController(final IDeviceMaintainer inDeviceMaintainer,
 		final List<IWirelessInterface> inInterfaceList,
 		final Facility inFacility,
-		final IGenericDao<PersistentProperty> inPersistentPropertyDao) {
+		final ITypedDao<PersistentProperty> inPersistentPropertyDao) {
 		super(inDeviceMaintainer, inInterfaceList, inFacility, inPersistentPropertyDao);
 	}
 

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectDelete.java,v 1.2 2012/04/22 04:03:27 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectDelete.java,v 1.3 2012/07/11 07:15:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -13,7 +13,7 @@ import org.codehaus.jackson.node.ObjectNode;
 
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
-import com.gadgetworks.codeshelf.model.dao.IGenericDao;
+import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.persist.PersistABC;
 import com.gadgetworks.codeshelf.web.websession.command.resp.IWebSessionRespCmd;
 import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdObjectDelete;
@@ -75,7 +75,7 @@ public class WebSessionReqCmdObjectDelete extends WebSessionReqCmdABC {
 			if (PersistABC.class.isAssignableFrom(classObject)) {
 
 				// First locate an instance of the parent class.
-				IGenericDao<PersistABC> dao = mDaoProvider.getDaoInstance((Class<PersistABC>) classObject);
+				ITypedDao<PersistABC> dao = mDaoProvider.getDaoInstance((Class<PersistABC>) classObject);
 				PersistABC object = dao.findByPersistentId(objectIdId);
 
 				// Execute the "set" method against the parents to return the children.

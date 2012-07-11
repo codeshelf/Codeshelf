@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ControllerABC.java,v 1.11 2012/03/23 06:04:44 jeffw Exp $
+ *  $Id: ControllerABC.java,v 1.12 2012/07/11 07:15:42 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.controller;
@@ -38,7 +38,7 @@ import com.gadgetworks.codeshelf.command.CommandNetMgmtABC;
 import com.gadgetworks.codeshelf.command.CommandNetMgmtCheck;
 import com.gadgetworks.codeshelf.command.CommandNetMgmtSetup;
 import com.gadgetworks.codeshelf.command.ICommand;
-import com.gadgetworks.codeshelf.model.dao.IGenericDao;
+import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.persist.Facility;
 import com.gadgetworks.codeshelf.model.persist.PersistentProperty;
 import com.gadgetworks.codeshelf.query.IQuery;
@@ -90,7 +90,7 @@ public abstract class ControllerABC implements IController {
 	private static final short									HIGH_WATER							= 14;
 	private static final int									MAX_NETWORK_TEST_NUM				= 64;
 
-	private IGenericDao<PersistentProperty>						mPersistentPropertyDao;
+	private ITypedDao<PersistentProperty>						mPersistentPropertyDao;
 	private Facility											mFacility;
 	protected IDeviceMaintainer									mDeviceMaintainer;
 	private Boolean												mShouldRun							= true;
@@ -125,7 +125,7 @@ public abstract class ControllerABC implements IController {
 	/**
 	 *  @param inSessionManager   The session manager for this controller.
 	 */
-	public ControllerABC(final IDeviceMaintainer inDeviceMaintainer, final List<IWirelessInterface> inInterfaceList, final Facility inFacility, final IGenericDao<PersistentProperty> inPersistentPropertyDao) {
+	public ControllerABC(final IDeviceMaintainer inDeviceMaintainer, final List<IWirelessInterface> inInterfaceList, final Facility inFacility, final ITypedDao<PersistentProperty> inPersistentPropertyDao) {
 
 		mDeviceMaintainer = inDeviceMaintainer;
 		mInterfaceList = inInterfaceList;

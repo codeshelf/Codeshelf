@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectCreate.java,v 1.3 2012/04/22 08:10:28 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectCreate.java,v 1.4 2012/07/11 07:15:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -24,7 +24,7 @@ import org.codehaus.jackson.type.TypeReference;
 
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
-import com.gadgetworks.codeshelf.model.dao.IGenericDao;
+import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.persist.PersistABC;
 import com.gadgetworks.codeshelf.web.websession.command.resp.IWebSessionRespCmd;
 import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdObjectCreate;
@@ -123,7 +123,7 @@ public class WebSessionReqCmdObjectCreate extends WebSessionReqCmdABC {
 			if ((parentClass != null) && (PersistABC.class.isAssignableFrom(parentClass))) {
 
 				// First locate an instance of the parent class.
-				IGenericDao<PersistABC> parentClassDao = mDaoProvider.getDaoInstance((Class<PersistABC>) parentClass);
+				ITypedDao<PersistABC> parentClassDao = mDaoProvider.getDaoInstance((Class<PersistABC>) parentClass);
 				PersistABC parentObject = parentClassDao.findByPersistentId(parentId);
 
 				// Then we find the class of the object we want to create.
@@ -131,7 +131,7 @@ public class WebSessionReqCmdObjectCreate extends WebSessionReqCmdABC {
 				if ((childClass != null) && (PersistABC.class.isAssignableFrom(childClass))) {
 
 					// First locate an instance of the parent class.
-					IGenericDao<PersistABC> childClassDao = mDaoProvider.getDaoInstance((Class<PersistABC>) childClass);
+					ITypedDao<PersistABC> childClassDao = mDaoProvider.getDaoInstance((Class<PersistABC>) childClass);
 
 					if (parentObject != null) {
 						// Now create the new object as a child of the parent object.

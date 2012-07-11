@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.18 2012/04/10 08:01:19 jeffw Exp $
+ *  $Id: Facility.java,v 1.19 2012/07/11 07:15:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -17,9 +17,13 @@ import javax.persistence.Table;
 
 import lombok.Getter;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.annotate.JsonIgnore;
+
+import com.gadgetworks.codeshelf.model.dao.GenericDao;
+import com.gadgetworks.codeshelf.model.dao.IDaoRegistry;
+import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
@@ -35,7 +39,9 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 @DiscriminatorValue("FACILITY")
 public class Facility extends Location {
 
-	private static final Log		LOGGER				= LogFactory.getLog(Facility.class);
+	@Inject
+	public static ITypedDao<Facility> DAO;
+	//public static ITypedDao<Facility> DAO = new GenericDao<Facility>(Facility.class);
 
 	// The owning organization.
 	@Column(nullable = false)
@@ -88,5 +94,10 @@ public class Facility extends Location {
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void removeAisle(Aisle inAisle) {
 		aisles.remove(inAisle);
+	}
+	
+	public final void createAisle(Location inAnchorLocation, Bay inPrototypeBay, int inBaysHigh, int inBaysLong) {
+		Aisle aisle = new Aisle();
+		
 	}
 }

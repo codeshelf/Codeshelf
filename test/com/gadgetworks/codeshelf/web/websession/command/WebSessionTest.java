@@ -10,7 +10,7 @@ import org.junit.Test;
 
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.IDaoListener;
-import com.gadgetworks.codeshelf.model.dao.IGenericDao;
+import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.persist.Organization;
 import com.gadgetworks.codeshelf.model.persist.PersistABC;
 import com.gadgetworks.codeshelf.web.websession.IWebSession;
@@ -32,7 +32,7 @@ public class WebSessionTest {
 		}
 	}
 
-	private class TestOrganizationDao implements IGenericDao<Organization> {
+	private class TestOrganizationDao implements ITypedDao<Organization> {
 
 		public Organization findByPersistentId(Long inID) {
 			return null;
@@ -76,7 +76,7 @@ public class WebSessionTest {
 	@Test
 	public void testProcessMessageLaunchCodeCheck() {
 		TestWebSocket testWebSocket = new TestWebSocket();
-		IWebSessionReqCmdFactory factory = new WebSessionReqCmdFactory(new TestOrganizationDao(), null);
+		IWebSessionReqCmdFactory factory = new WebSessionReqCmdFactory(/*new TestOrganizationDao(),*/ null);
 		IWebSession webSession = new WebSession(testWebSocket, factory);
 		String inMessage = "{\"id\":\"cmdid_5\",\"type\":\"LAUNCH_CODE_CHECK\",\"data\":{\"launchCode\":\"12345\"}}";
 

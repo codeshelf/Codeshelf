@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfNetwork.java,v 1.18 2012/06/27 05:07:51 jeffw Exp $
+ *  $Id: CodeShelfNetwork.java,v 1.19 2012/07/11 07:15:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -17,7 +17,6 @@ import javax.persistence.Transient;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.experimental.Accessors;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -25,6 +24,9 @@ import org.apache.commons.logging.LogFactory;
 import com.gadgetworks.codeshelf.controller.IWirelessInterface;
 import com.gadgetworks.codeshelf.controller.NetAddress;
 import com.gadgetworks.codeshelf.controller.NetworkId;
+import com.gadgetworks.codeshelf.model.dao.GenericDao;
+import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.google.inject.Inject;
 
 // --------------------------------------------------------------------------
 /**
@@ -39,6 +41,10 @@ import com.gadgetworks.codeshelf.controller.NetworkId;
 @Entity
 @Table(name = "CODESHELFNETWORK")
 public class CodeShelfNetwork extends PersistABC {
+
+	@Inject
+	public static ITypedDao<CodeShelfNetwork> DAO;
+//	public static ITypedDao<CodeShelfNetwork> DAO = new GenericDao<CodeShelfNetwork>(CodeShelfNetwork.class);
 
 	private static final Log	LOGGER				= LogFactory.getLog(CodeShelfNetwork.class);
 

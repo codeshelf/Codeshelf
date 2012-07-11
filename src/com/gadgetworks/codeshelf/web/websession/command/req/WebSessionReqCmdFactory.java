@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdFactory.java,v 1.9 2012/05/07 06:34:27 jeffw Exp $
+ *  $Id: WebSessionReqCmdFactory.java,v 1.10 2012/07/11 07:15:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -10,7 +10,7 @@ import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
 
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
-import com.gadgetworks.codeshelf.model.dao.IGenericDao;
+import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.persist.Organization;
 import com.gadgetworks.codeshelf.web.websession.command.IWebSessionCmd;
 import com.google.inject.Inject;
@@ -23,12 +23,12 @@ public final class WebSessionReqCmdFactory implements IWebSessionReqCmdFactory {
 
 	private static final Log			LOGGER	= LogFactory.getLog(WebSessionReqCmdFactory.class);
 
-	private IGenericDao<Organization>	mOrganizationDao;
+//	private ITypedDao<Organization>	mOrganizationDao;
 	private IDaoProvider				mDaoProvider;
 
 	@Inject
-	public WebSessionReqCmdFactory(final IGenericDao<Organization> inOrganizationDao, final IDaoProvider inDaoPovider) {
-		mOrganizationDao = inOrganizationDao;
+	public WebSessionReqCmdFactory(/*final ITypedDao<Organization> inOrganizationDao, */ final IDaoProvider inDaoPovider) {
+//		mOrganizationDao = inOrganizationDao;
 		mDaoProvider = inDaoPovider;
 	}
 
@@ -47,7 +47,7 @@ public final class WebSessionReqCmdFactory implements IWebSessionReqCmdFactory {
 
 		switch (commandEnum) {
 			case LAUNCH_CODE_CHECK:
-				result = new WebSessionReqCmdLaunchCode(commandId, dataNode, mOrganizationDao);
+				result = new WebSessionReqCmdLaunchCode(commandId, dataNode);//, mOrganizationDao);
 				break;
 
 			case OBJECT_GETTER_REQ:

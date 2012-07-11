@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectFilter.java,v 1.8 2012/04/22 20:15:11 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectFilter.java,v 1.9 2012/07/11 07:15:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -23,7 +23,7 @@ import org.codehaus.jackson.node.ObjectNode;
 import org.codehaus.jackson.type.TypeReference;
 
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
-import com.gadgetworks.codeshelf.model.dao.IGenericDao;
+import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.persist.PersistABC;
 import com.gadgetworks.codeshelf.web.websession.IWebSession;
 import com.gadgetworks.codeshelf.web.websession.command.resp.IWebSessionRespCmd;
@@ -52,7 +52,7 @@ public class WebSessionReqCmdObjectFilter extends WebSessionReqCmdABC implements
 	private String							mFilterClause;
 	private Map<String, Object>				mFilterParams;
 	private IDaoProvider					mDaoProvider;
-	private List<IGenericDao<PersistABC>>	mDaoList;
+	private List<ITypedDao<PersistABC>>	mDaoList;
 
 	/**
 	 * @param inCommandId
@@ -62,7 +62,7 @@ public class WebSessionReqCmdObjectFilter extends WebSessionReqCmdABC implements
 		super(inCommandId, inDataNodeAsJson);
 		mDaoProvider = inDaoProvider;
 		mFilterParams = new HashMap<String, Object>();
-		mDaoList = new ArrayList<IGenericDao<PersistABC>>();
+		mDaoList = new ArrayList<ITypedDao<PersistABC>>();
 	}
 
 	public final WebSessionReqCmdEnum getCommandEnum() {
@@ -106,7 +106,7 @@ public class WebSessionReqCmdObjectFilter extends WebSessionReqCmdABC implements
 			if (PersistABC.class.isAssignableFrom(classObject)) {
 				mPersistenceClass = (Class<PersistABC>) classObject;
 
-				IGenericDao<PersistABC> dao = mDaoProvider.getDaoInstance((Class<PersistABC>) mPersistenceClass);
+				ITypedDao<PersistABC> dao = mDaoProvider.getDaoInstance((Class<PersistABC>) mPersistenceClass);
 				mObjectMatchList = dao.findByFilter(mFilterClause, mFilterParams);
 				mDaoList.add(dao);
 
@@ -178,7 +178,7 @@ public class WebSessionReqCmdObjectFilter extends WebSessionReqCmdABC implements
 	}
 
 	public final IWebSessionRespCmd processObjectAdd(PersistABC inDomainObject) {
-		IGenericDao<PersistABC> dao = mDaoProvider.getDaoInstance((Class<PersistABC>) mPersistenceClass);
+		ITypedDao<PersistABC> dao = mDaoProvider.getDaoInstance((Class<PersistABC>) mPersistenceClass);
 		mObjectMatchList = dao.findByFilter(mFilterClause, mFilterParams);
 		List<PersistABC> domainObjectList = new ArrayList<PersistABC>();
 		if (mObjectMatchList.contains(inDomainObject)) {
@@ -188,7 +188,7 @@ public class WebSessionReqCmdObjectFilter extends WebSessionReqCmdABC implements
 	}
 
 	public final IWebSessionRespCmd processObjectUpdate(PersistABC inDomainObject) {
-		IGenericDao<PersistABC> dao = mDaoProvider.getDaoInstance((Class<PersistABC>) mPersistenceClass);
+		ITypedDao<PersistABC> dao = mDaoProvider.getDaoInstance((Class<PersistABC>) mPersistenceClass);
 		mObjectMatchList = dao.findByFilter(mFilterClause, mFilterParams);
 		List<PersistABC> domainObjectList = new ArrayList<PersistABC>();
 		if (mObjectMatchList.contains(inDomainObject)) {
@@ -209,13 +209,13 @@ public class WebSessionReqCmdObjectFilter extends WebSessionReqCmdABC implements
 	}
 
 	public final void registerSessionWithDaos(IWebSession inWebSession) {
-		for (IGenericDao<PersistABC> dao : mDaoList) {
+		for (ITypedDao<PersistABC> dao : mDaoList) {
 			dao.registerDAOListener(inWebSession);
 		}
 	}
 
 	public final void unregisterSessionWithDaos(IWebSession inWebSession) {
-		for (IGenericDao<PersistABC> dao : mDaoList) {
+		for (ITypedDao<PersistABC> dao : mDaoList) {
 			dao.unregisterDAOListener(inWebSession);
 		}
 	}
