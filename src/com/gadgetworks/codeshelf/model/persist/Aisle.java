@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Aisle.java,v 1.15 2012/07/11 07:15:42 jeffw Exp $
+ *  $Id: Aisle.java,v 1.16 2012/07/12 08:18:06 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -15,6 +15,7 @@ import org.apache.commons.logging.LogFactory;
 import com.gadgetworks.codeshelf.model.dao.GenericDao;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
@@ -31,6 +32,13 @@ import com.google.inject.Inject;
 public class Aisle extends Location {
 
 	private static final Log	LOGGER	= LogFactory.getLog(Aisle.class);
+	
+	@Singleton
+	public static class AisleDao extends GenericDao<Aisle> {
+		public AisleDao() {
+			super(Aisle.class);
+		}
+	}
 	
 	@Inject
 	public static ITypedDao<Aisle> DAO;

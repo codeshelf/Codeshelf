@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PersistentProperty.java,v 1.16 2012/07/11 07:15:42 jeffw Exp $
+ *  $Id: PersistentProperty.java,v 1.17 2012/07/12 08:18:06 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -17,6 +17,7 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 import com.gadgetworks.codeshelf.model.dao.GenericDao;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
@@ -29,6 +30,13 @@ import com.google.inject.Inject;
 
 @Entity
 public class PersistentProperty extends PersistABC {
+
+	@Singleton
+	public static class PersistentPropertyDao extends GenericDao<PersistentProperty> implements ITypedDao<PersistentProperty> {
+		public PersistentPropertyDao() {
+			super(PersistentProperty.class);
+		}
+	}
 
 	@Inject
 	public static ITypedDao<PersistentProperty> DAO;

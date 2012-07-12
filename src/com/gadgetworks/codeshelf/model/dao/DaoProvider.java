@@ -1,23 +1,28 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: DaoProvider.java,v 1.4 2012/07/11 07:15:42 jeffw Exp $
+ *  $Id: DaoProvider.java,v 1.5 2012/07/12 08:18:06 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import com.gadgetworks.codeshelf.model.persist.PersistABC;
+import com.google.inject.Binding;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
+import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
 
 /**
  * @author jeffw
  *
  */
-public class DaoProvider  implements IDaoProvider {
+public class DaoProvider implements IDaoProvider {
 
 	private Injector	mInjector;
 
@@ -50,5 +55,20 @@ public class DaoProvider  implements IDaoProvider {
 		}
 
 		return null;
+	}
+
+	public final <T extends PersistABC> List<ITypedDao<T>> getAllDaos() {
+
+		List<ITypedDao<T>> result = new ArrayList<ITypedDao<T>>();
+
+		Map<Key<?>, Binding<?>> bindings = mInjector.getBindings();
+
+		for (Binding<?> binding : bindings.values()) {
+			if (GenericDao.class.isAssignableFrom(binding.getProvider().get().getClass())) {
+				result.add((ITypedDao<T> )binding.getProvider().get());
+			}
+		}
+
+		return result;
 	}
 }

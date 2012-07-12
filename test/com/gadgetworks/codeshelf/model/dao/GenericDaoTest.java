@@ -23,18 +23,6 @@ public class GenericDaoTest {
 		}
 	}
 	
-	class DaoRegistryStub implements IDaoRegistry {
-
-		@Override
-		public void addDao(IDao inDao) {
-		}
-
-		@Override
-		public List<IDao> getDaoList() {
-			return null;
-		}
-	}
-
 	@Test
 	public void testPushNonPersistentUpdates() {
 		fail("Not yet implemented");

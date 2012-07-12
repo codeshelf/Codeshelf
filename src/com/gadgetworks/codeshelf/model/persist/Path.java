@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Path.java,v 1.1 2012/06/27 05:07:51 jeffw Exp $
+ *  $Id: Path.java,v 1.2 2012/07/12 08:18:06 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -15,11 +15,15 @@ import javax.persistence.Table;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.experimental.Accessors;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.annotate.JsonIgnore;
+
+import com.gadgetworks.codeshelf.model.dao.GenericDao;
+import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
@@ -34,10 +38,18 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 @Table(name = "PATH")
 public class Path extends PersistABC {
 
-	//	public interface IOrganizationDao extends IGenericDao<Organization> {		
-	//	}
-
 	private static final Log	LOGGER		= LogFactory.getLog(Path.class);
+
+	@Singleton
+	public static class PathDao extends GenericDao<Path> implements ITypedDao<Path> {
+		public PathDao() {
+			super(Path.class);
+		}
+	}
+
+	@Inject
+	public static ITypedDao<Path> DAO;
+//	public static ITypedDao<Path> DAO = new GenericDao<Path>(Path.class);
 
 	// The parent facility.
 	@Getter

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: UserSession.java,v 1.9 2012/06/27 05:07:51 jeffw Exp $
+ *  $Id: UserSession.java,v 1.10 2012/07/12 08:18:05 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -14,10 +14,14 @@ import javax.persistence.Table;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.experimental.Accessors;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import com.gadgetworks.codeshelf.model.dao.GenericDao;
+import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
@@ -35,6 +39,17 @@ public class UserSession extends PersistABC {
 	private static final Log	LOGGER				= LogFactory.getLog(UserSession.class);
 
 	private static final long	serialVersionUID	= 3001609308065821464L;
+
+	@Singleton
+	public static class UserSessionDao extends GenericDao<UserSession> implements ITypedDao<UserSession> {
+		public UserSessionDao() {
+			super(UserSession.class);
+		}
+	}
+
+	@Inject
+	public static ITypedDao<UserSession> DAO;
+//	public static final ITypedDao<UserSession> DAO  = new GenericDao<UserSession>(UserSession.class);
 
 	// The owning CodeShelf network.
 	@Column(name = "parentUser", nullable = false)

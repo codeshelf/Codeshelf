@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Vertex.java,v 1.6 2012/06/27 05:07:51 jeffw Exp $
+ *  $Id: Vertex.java,v 1.7 2012/07/12 08:18:06 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -12,13 +12,16 @@ import javax.persistence.Table;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.experimental.Accessors;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.annotate.JsonIgnore;
 
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
+import com.gadgetworks.codeshelf.model.dao.GenericDao;
+import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
@@ -35,6 +38,17 @@ import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 public class Vertex extends PersistABC {
 
 	private static final Log	LOGGER	= LogFactory.getLog(Vertex.class);
+
+	@Singleton
+	public static class VertexDao extends GenericDao<Vertex> implements ITypedDao<Vertex> {
+		public VertexDao() {
+			super(Vertex.class);
+		}
+	}
+
+	@Inject
+	public static ITypedDao<Vertex> DAO;
+//	public static final ITypedDao<Vertex> DAO  = new GenericDao<Vertex>(Vertex.class);
 
 	// The position type (GPS, METERS, etc.).
 	@Column(nullable = false)

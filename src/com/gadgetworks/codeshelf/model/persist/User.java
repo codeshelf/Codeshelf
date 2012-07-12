@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: User.java,v 1.10 2012/06/27 05:07:51 jeffw Exp $
+ *  $Id: User.java,v 1.11 2012/07/12 08:18:06 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -17,10 +17,14 @@ import javax.persistence.Table;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.experimental.Accessors;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import com.gadgetworks.codeshelf.model.dao.GenericDao;
+import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
@@ -38,6 +42,17 @@ public class User extends PersistABC {
 	private static final Log	LOGGER				= LogFactory.getLog(User.class);
 
 	private static final long	serialVersionUID	= 3001609308065821464L;
+
+	@Singleton
+	public static class UserDao extends GenericDao<User> implements ITypedDao<User> {
+		public UserDao() {
+			super(User.class);
+		}
+	}
+
+	@Inject
+	public static ITypedDao<User> DAO;
+//	public static final ITypedDao<User> DAO  = new GenericDao<User>(User.class);
 
 	// The hashed password
 	// A User with a null hashed password is a promo user (with limited abilities).

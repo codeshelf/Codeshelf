@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: GenericDao.java,v 1.18 2012/07/11 07:15:42 jeffw Exp $
+ *  $Id: GenericDao.java,v 1.19 2012/07/12 08:18:06 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -31,9 +31,8 @@ public class GenericDao<T extends PersistABC> implements ITypedDao<T> {
 
 	private List<IDaoListener>	mListeners	= new ArrayList<IDaoListener>();
 
-	public GenericDao(final Class<T> inClass, final IDaoRegistry inDaoRegistry) {
+	public GenericDao(final Class<T> inClass) {
 		mClass = inClass;
-		inDaoRegistry.addDao(this);
 	}
 
 	// --------------------------------------------------------------------------

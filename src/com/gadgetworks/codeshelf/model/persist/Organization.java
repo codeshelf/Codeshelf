@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Organization.java,v 1.10 2012/07/11 07:15:42 jeffw Exp $
+ *  $Id: Organization.java,v 1.11 2012/07/12 08:18:06 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -21,7 +21,6 @@ import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.annotate.JsonIgnore;
 
 import com.gadgetworks.codeshelf.model.dao.GenericDao;
-import com.gadgetworks.codeshelf.model.dao.IDaoRegistry;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -42,6 +41,13 @@ import com.google.inject.Singleton;
 @Entity
 @Table(name = "ORGANIZATION")
 public class Organization extends PersistABC {
+
+	@Singleton
+	public static class OrganizationDao extends GenericDao<Organization> implements ITypedDao<Organization> {
+		public OrganizationDao() {
+			super(Organization.class);
+		}
+	}
 
 	@Inject
 	public static ITypedDao<Organization> DAO;

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ControlGroup.java,v 1.23 2012/06/27 05:07:51 jeffw Exp $
+ *  $Id: ControlGroup.java,v 1.24 2012/07/12 08:18:06 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -17,11 +17,14 @@ import javax.persistence.Transient;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.experimental.Accessors;
 
 import com.gadgetworks.codeshelf.controller.NetGroup;
 import com.gadgetworks.codeshelf.model.TagProtocolEnum;
+import com.gadgetworks.codeshelf.model.dao.GenericDao;
+import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.server.tags.IControllerConnection;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
@@ -33,6 +36,17 @@ import com.gadgetworks.codeshelf.server.tags.IControllerConnection;
 @Entity
 @Table(name = "CONTROLGROUP")
 public class ControlGroup extends PersistABC {
+
+	@Singleton
+	public static class ControlGroupDao extends GenericDao<ControlGroup> implements ITypedDao<ControlGroup> {
+		public ControlGroupDao() {
+			super(ControlGroup.class);
+		}
+	}
+
+	@Inject
+	public static ITypedDao<ControlGroup> DAO;
+//	public static ITypedDao<ControlGroup> DAO = new GenericDao<ControlGroup>(ControlGroup.class);
 
 	private static final long		serialVersionUID	= -4923129546531851147L;
 
