@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Vertex.java,v 1.8 2012/07/13 08:08:41 jeffw Exp $
+ *  $Id: Vertex.java,v 1.9 2012/07/13 21:56:56 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -46,6 +46,9 @@ public class Vertex extends PersistABC {
 		}
 	}
 
+	@Inject
+	public static ITypedDao<Vertex> DAO;
+
 	// The position type (GPS, METERS, etc.).
 	@Column(nullable = false)
 	@Getter
@@ -78,9 +81,7 @@ public class Vertex extends PersistABC {
 	@Getter
 	private Location			parentLocation;
 
-	@Inject
-	public Vertex(final VertexDao inOrm) {
-		super(inOrm);
+	public Vertex() {
 	}
 
 	// --------------------------------------------------------------------------

@@ -22,11 +22,10 @@ import com.gadgetworks.codeshelf.command.CommandIdEnum;
 import com.gadgetworks.codeshelf.command.ICommand;
 import com.gadgetworks.codeshelf.command.ICsCommand;
 import com.gadgetworks.codeshelf.model.TagProtocolEnum;
-import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork;
 import com.gadgetworks.codeshelf.model.persist.ControlGroup;
 import com.gadgetworks.codeshelf.model.persist.PickTag;
-import com.gadgetworks.codeshelf.model.persist.WirelessDevice.IWirelessDeviceDao;
+import com.gadgetworks.codeshelf.model.persist.WirelessDevice;
 import com.gadgetworks.codeshelf.server.tags.AtopControllerConnection;
 import com.gadgetworks.codeshelf.server.tags.IControllerConnection;
 import com.gadgetworks.codeshelf.server.tags.SnapXmlRpcNilTypeSupport;
@@ -45,16 +44,12 @@ public final class SnapInterface implements IWirelessInterface {
 	private static final int				OUTBOUND_TIMEOUT_MILLIS		= 5000;
 
 	private CodeShelfNetwork				mCodeShelfNetwork;
-	private ITypedDao<CodeShelfNetwork>	mCodeShelfNetworkDao;
-	private IWirelessDeviceDao				mWirelessDeviceDao;
 	private XmlRpcClient					mInboundXmlRpcClient;
 	private XmlRpcClient					mOutboundXmlRpcClient;
 	private boolean							mIsStarted;
 
-	public SnapInterface(final CodeShelfNetwork inCodeShelfNetwork, final ITypedDao<CodeShelfNetwork> inCodeShelfNetworkDao, final IWirelessDeviceDao inWirelessDeviceDao) {
+	public SnapInterface(final CodeShelfNetwork inCodeShelfNetwork) {
 		mCodeShelfNetwork = inCodeShelfNetwork;
-		mCodeShelfNetworkDao = inCodeShelfNetworkDao;
-		mWirelessDeviceDao = inWirelessDeviceDao;
 	}
 
 	// --------------------------------------------------------------------------
@@ -132,7 +127,7 @@ public final class SnapInterface implements IWirelessInterface {
 		}
 
 		// Push out the changes.
-		mCodeShelfNetworkDao.pushNonPersistentUpdates(mCodeShelfNetwork);
+		CodeShelfNetwork.DAO.pushNonPersistentUpdates(mCodeShelfNetwork);
 	}
 
 	// --------------------------------------------------------------------------
@@ -164,7 +159,7 @@ public final class SnapInterface implements IWirelessInterface {
 			mIsStarted = false;
 			mOutboundXmlRpcClient = null;
 			mCodeShelfNetwork.setConnected(false);
-			mCodeShelfNetworkDao.pushNonPersistentUpdates(mCodeShelfNetwork);
+			CodeShelfNetwork.DAO.pushNonPersistentUpdates(mCodeShelfNetwork);
 
 			for (ControlGroup controlGroup : mCodeShelfNetwork.getControlGroups()) {
 				IControllerConnection connection = controlGroup.getControllerConnection();
@@ -329,7 +324,7 @@ public final class SnapInterface implements IWirelessInterface {
 	private ICsCommand createCommand(String inMethodName, NetAddress inNetAddr) {
 		ICsCommand result = null;
 
-		PickTag pickTag = (PickTag) mWirelessDeviceDao.getNetworkDevice(inNetAddr);
+		PickTag pickTag = (PickTag) WirelessDevice.DAO.getNetworkDevice(inNetAddr);
 
 		if (inMethodName.equals(CommandIdEnum.CS_ACK_PRESSED.getName())) {
 			result = new CommandCsAckPressed(pickTag);

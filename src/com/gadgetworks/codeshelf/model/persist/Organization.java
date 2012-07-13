@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Organization.java,v 1.12 2012/07/13 08:08:41 jeffw Exp $
+ *  $Id: Organization.java,v 1.13 2012/07/13 21:56:56 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -49,6 +49,9 @@ public class Organization extends PersistABC {
 		}
 	}
 
+	@Inject
+	public static ITypedDao<Organization> DAO;
+
 	private static final Log	LOGGER		= LogFactory.getLog(Organization.class);
 
 	// The facility description.
@@ -69,10 +72,7 @@ public class Organization extends PersistABC {
 	@Getter
 	private List<Facility>		facilities	= new ArrayList<Facility>();
 
-	@Inject
-	public Organization(final ITypedDao<Organization> inOrm) {
-		super(inOrm);
-
+	public Organization() {
 		description = "";
 	}
 

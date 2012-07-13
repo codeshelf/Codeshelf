@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PersistentProperty.java,v 1.18 2012/07/13 08:08:41 jeffw Exp $
+ *  $Id: PersistentProperty.java,v 1.19 2012/07/13 21:56:56 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -38,6 +38,9 @@ public class PersistentProperty<T extends PersistABC> extends PersistABC {
 		}
 	}
 
+	@Inject
+	public static ITypedDao<PersistentProperty> DAO;
+
 	//	public static final String	SHOW_CONSOLE_PREF			= "SHOWCONS";
 	//	public static final String	SHOW_CONNECTION_DEBUG_PREF	= "CONNDBUG";
 	public static final String	FORCE_CHANNEL			= "PREFCHAN";
@@ -68,9 +71,7 @@ public class PersistentProperty<T extends PersistABC> extends PersistABC {
 	@Getter
 	private Organization		parentOrganization;
 
-	@Inject
-	public PersistentProperty(final ITypedDao<T> inOrm) {
-		super(inOrm);
+	public PersistentProperty() {
 		defaultValueStr = "";
 		currentValueStr = "";
 	}

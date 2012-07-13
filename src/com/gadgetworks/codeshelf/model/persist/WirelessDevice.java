@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WirelessDevice.java,v 1.17 2012/07/13 08:08:41 jeffw Exp $
+ *  $Id: WirelessDevice.java,v 1.18 2012/07/13 21:56:56 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -34,7 +34,7 @@ import com.gadgetworks.codeshelf.controller.NetAddress;
 import com.gadgetworks.codeshelf.controller.NetMacAddress;
 import com.gadgetworks.codeshelf.controller.NetworkDeviceStateEnum;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.model.dao.domain.WirelessDeviceDao;
+import com.google.inject.Inject;
 
 // --------------------------------------------------------------------------
 /**
@@ -63,55 +63,57 @@ public class WirelessDevice<T extends PersistABC> extends PersistABC implements 
 
 	}
 
-	public static final int			MAC_ADDR_BYTES		= 8;
-	public static final int			PUBLIC_KEY_BYTES	= 8;
+	public static final int				MAC_ADDR_BYTES		= 8;
+	public static final int				PUBLIC_KEY_BYTES	= 8;
 
-	private static final Log		LOGGER				= LogFactory.getLog(WirelessDevice.class);
+	private static final Log			LOGGER				= LogFactory.getLog(WirelessDevice.class);
+
+	@Inject
+	public static IWirelessDeviceDao	DAO;
 
 	@Column(nullable = false)
-	private byte[]					macAddress;
+	private byte[]						macAddress;
 	@Column(nullable = false)
-	private String					publicKey;
+	private String						publicKey;
 	// The description.
 	@Column
-	private String					description;
+	private String						description;
 	// The network address last assigned to this wireless device.
 	@Column
 	@Getter
 	@Setter
-	private byte[]					networkAddress;
+	private byte[]						networkAddress;
 	// The last seen battery level.
 	@Column
-	private short					lastBatteryLevel;
+	private short						lastBatteryLevel;
 	//@Transient
 	@Enumerated(value = EnumType.STRING)
 	@Column
-	private NetworkDeviceStateEnum	networkDeviceStatus;
+	private NetworkDeviceStateEnum		networkDeviceStatus;
 	//@Transient
 	@Column
-	private Long					lastContactTime;
+	private Long						lastContactTime;
 
 	// The owning network.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	@Getter
 	@Setter
-	private ControlGroup			parentControlGroup;
+	private ControlGroup				parentControlGroup;
 
 	@Transient
-	private short					expectedEndpointCount;
+	private short						expectedEndpointCount;
 	@Transient
-	private Map<String, String>		kvpMap;
+	private Map<String, String>			kvpMap;
 	@Transient
-	private short					expectedKvpCount;
+	private short						expectedKvpCount;
 
 	//	@Transient
 	//	private String						mDeviceDesc;
 	//	@Transient
 	//	private short						mDeviceType;
 
-	public WirelessDevice(final WirelessDeviceDao inOrm) {
-		super(inOrm);
+	public WirelessDevice() {
 		macAddress = new byte[NetMacAddress.NET_MACADDR_BYTES];
 		publicKey = "";
 		description = "";

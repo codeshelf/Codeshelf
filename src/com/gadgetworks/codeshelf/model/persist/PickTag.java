@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PickTag.java,v 1.15 2012/07/13 08:08:41 jeffw Exp $
+ *  $Id: PickTag.java,v 1.16 2012/07/13 21:56:56 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -17,6 +17,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.gadgetworks.codeshelf.command.CommandControlABC;
+import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.dao.domain.WirelessDeviceDao;
 import com.google.inject.Inject;
 
@@ -43,9 +44,7 @@ public class PickTag extends WirelessDevice {
 	@Column(nullable = false)
 	private short				serialBusPosition;
 	
-	@Inject
-	public PickTag(final WirelessDeviceDao inOrm) {
-		super(inOrm);
+	public PickTag() {
 	}
 
 	/* --------------------------------------------------------------------------

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ControllerABC.java,v 1.12 2012/07/11 07:15:42 jeffw Exp $
+ *  $Id: ControllerABC.java,v 1.13 2012/07/13 21:56:56 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.controller;
@@ -38,9 +38,9 @@ import com.gadgetworks.codeshelf.command.CommandNetMgmtABC;
 import com.gadgetworks.codeshelf.command.CommandNetMgmtCheck;
 import com.gadgetworks.codeshelf.command.CommandNetMgmtSetup;
 import com.gadgetworks.codeshelf.command.ICommand;
-import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.persist.Facility;
 import com.gadgetworks.codeshelf.model.persist.PersistentProperty;
+import com.gadgetworks.codeshelf.model.persist.WirelessDevice;
 import com.gadgetworks.codeshelf.query.IQuery;
 import com.gadgetworks.codeshelf.query.IResponse;
 
@@ -90,9 +90,7 @@ public abstract class ControllerABC implements IController {
 	private static final short									HIGH_WATER							= 14;
 	private static final int									MAX_NETWORK_TEST_NUM				= 64;
 
-	private ITypedDao<PersistentProperty>						mPersistentPropertyDao;
 	private Facility											mFacility;
-	protected IDeviceMaintainer									mDeviceMaintainer;
 	private Boolean												mShouldRun							= true;
 	private List<IWirelessInterface>							mInterfaceList;
 	private NetAddress											mServerAddress;
@@ -125,13 +123,11 @@ public abstract class ControllerABC implements IController {
 	/**
 	 *  @param inSessionManager   The session manager for this controller.
 	 */
-	public ControllerABC(final IDeviceMaintainer inDeviceMaintainer, final List<IWirelessInterface> inInterfaceList, final Facility inFacility, final ITypedDao<PersistentProperty> inPersistentPropertyDao) {
+	public ControllerABC(final List<IWirelessInterface> inInterfaceList, final Facility inFacility) {
 
-		mDeviceMaintainer = inDeviceMaintainer;
 		mInterfaceList = inInterfaceList;
 		mFacility = inFacility;
-		mPersistentPropertyDao = inPersistentPropertyDao;
-		
+
 		mServerAddress = IController.GATEWAY_ADDRESS;
 		mBroadcastAddress = IController.BROADCAST_ADDRESS;
 		mBroadcastNetworkId = IController.BROADCAST_NETWORK_ID;
@@ -248,7 +244,7 @@ public abstract class ControllerABC implements IController {
 	 */
 	public final byte getPreferredChannel() {
 		byte result = 0;
-		PersistentProperty preferredChannelProp = mPersistentPropertyDao.findByDomainId(mFacility.getParentOrganization(), PersistentProperty.FORCE_CHANNEL);
+		PersistentProperty preferredChannelProp = PersistentProperty.DAO.findByDomainId(mFacility.getParentOrganization(), PersistentProperty.FORCE_CHANNEL);
 		if (preferredChannelProp != null) {
 			if (ControllerABC.NO_PREFERRED_CHANNEL_TEXT.equals(preferredChannelProp.getCurrentValueAsStr())) {
 				result = ControllerABC.NO_PREFERRED_CHANNEL;
@@ -272,7 +268,7 @@ public abstract class ControllerABC implements IController {
 	 *  @return
 	 */
 	public final INetworkDevice getNetworkDevice(NetAddress inAddress) {
-		return mDeviceMaintainer.getNetworkDevice(inAddress);
+		return WirelessDevice.DAO.getNetworkDevice(inAddress);
 	}
 
 	// --------------------------------------------------------------------------
@@ -280,7 +276,7 @@ public abstract class ControllerABC implements IController {
 	 *  @return
 	 */
 	public final List<INetworkDevice> getNetworkDevices() {
-		return mDeviceMaintainer.getNetworkDevices();
+		return WirelessDevice.DAO.getNetworkDevices();
 	}
 
 	/* --------------------------------------------------------------------------
@@ -629,7 +625,7 @@ public abstract class ControllerABC implements IController {
 					if (mChannelSelected) {
 						processAssocCmd((CommandAssocABC) inCommand, inSrcAddr);
 						if (foundDevice != null) {
-							mDeviceMaintainer.deviceUpdated(foundDevice, false);
+							WirelessDevice.DAO.deviceUpdated(foundDevice, false);
 						}
 					}
 					break;
@@ -638,7 +634,7 @@ public abstract class ControllerABC implements IController {
 					if (mChannelSelected) {
 						if (foundDevice != null) {
 							processInfoCmd((CommandInfoABC) inCommand, foundDevice);
-							mDeviceMaintainer.deviceUpdated(foundDevice, false);
+							WirelessDevice.DAO.deviceUpdated(foundDevice, false);
 						} else {
 							LOGGER.error("Receive INFO command: device not found");
 						}
@@ -952,11 +948,11 @@ public abstract class ControllerABC implements IController {
 
 		if (canAssociate) {
 
-			INetworkDevice foundDevice = mDeviceMaintainer.findNetworkDeviceByMacAddr(macAddr);
+			INetworkDevice foundDevice = WirelessDevice.DAO.findNetworkDeviceByMacAddr(macAddr);
 
 			if (foundDevice != null) {
 				foundDevice.setNetworkDeviceState(NetworkDeviceStateEnum.SETUP);
-				mDeviceMaintainer.deviceUpdated(foundDevice, true);
+				WirelessDevice.DAO.deviceUpdated(foundDevice, true);
 
 				LOGGER.info("----------------------------------------------------");
 				LOGGER.info("Device associated: " + foundDevice.toString());
@@ -998,7 +994,7 @@ public abstract class ControllerABC implements IController {
 					//					if (!addrMap.values().isEmpty()) {
 					//						NetAddress newAddress = (NetAddress) addrMap.values().toArray()[0];
 					//						foundDevice.setNetAddress(newAddress);
-					//						mDeviceMaintainer.deviceUpdated(foundDevice, true);
+					//						WirelessDevice.DAO.deviceUpdated(foundDevice, true);
 					//					}
 				}
 
@@ -1006,7 +1002,7 @@ public abstract class ControllerABC implements IController {
 				CommandAssocResp assignCmd = new CommandAssocResp(macAddr, mNetworkId, foundDevice.getNetAddress());
 				this.sendCommandTimed(assignCmd, mBroadcastNetworkId, mBroadcastAddress, 0, false);
 				foundDevice.setNetworkDeviceState(NetworkDeviceStateEnum.ASSIGN_SENT);
-				mDeviceMaintainer.deviceUpdated(foundDevice, false);
+				WirelessDevice.DAO.deviceUpdated(foundDevice, false);
 
 				// We should wait a bit for the remote to prepare to accept commands.
 				try {
@@ -1037,7 +1033,7 @@ public abstract class ControllerABC implements IController {
 		// First get the unique ID from the command.
 		NetMacAddress macAddr = inCommand.getMacAddr();
 
-		INetworkDevice foundDevice = mDeviceMaintainer.findNetworkDeviceByMacAddr(macAddr);
+		INetworkDevice foundDevice = WirelessDevice.DAO.findNetworkDeviceByMacAddr(macAddr);
 
 		if (foundDevice != null) {
 			CommandAssocAck ackCmd;
@@ -1046,7 +1042,7 @@ public abstract class ControllerABC implements IController {
 			short level = inCommand.getBatteryLevel();
 			if (foundDevice.getLastBatteryLevel() != level) {
 				foundDevice.setLastBatteryLevel(level);
-				mDeviceMaintainer.deviceUpdated(foundDevice, true);
+				WirelessDevice.DAO.deviceUpdated(foundDevice, true);
 			}
 
 			boolean status = CommandAssocAck.IS_ASSOCIATED;

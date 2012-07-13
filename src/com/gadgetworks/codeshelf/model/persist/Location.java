@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Location.java,v 1.7 2012/07/13 08:08:41 jeffw Exp $
+ *  $Id: Location.java,v 1.8 2012/07/13 21:56:56 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -29,6 +29,7 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDao;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
@@ -58,7 +59,7 @@ public abstract class Location<T extends PersistABC> extends PersistABC {
 			super(Location.class);
 		}
 	}
-	
+
 	// The position type (GPS, METERS, etc.).
 	@Getter
 	@Setter
@@ -109,8 +110,10 @@ public abstract class Location<T extends PersistABC> extends PersistABC {
 	@Getter
 	private List<Location>		locations	= new ArrayList<Location>();
 
-	public Location(final ITypedDao<T> inOrm) {
-		super(inOrm);
+	public Location(final PositionTypeEnum inPosType, final Double inPosX, final double inPosY) {
+		posType = inPosType;
+		posX = inPosX;
+		posY = inPosY;
 		// Z pos is non-null so that it doesn't need to be explicitly set.
 		posZ = 0.0;
 	}

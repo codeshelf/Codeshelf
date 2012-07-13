@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Aisle.java,v 1.17 2012/07/13 08:08:41 jeffw Exp $
+ *  $Id: Aisle.java,v 1.18 2012/07/13 21:56:56 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -12,6 +12,7 @@ import javax.persistence.Table;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDao;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.google.inject.Inject;
@@ -41,8 +42,10 @@ public class Aisle extends Location {
 	}
 	
 	@Inject
-	public Aisle(final ITypedDao<Aisle> inOrm) {
-		super(inOrm);
+	public static ITypedDao<Aisle> DAO;
+
+	public Aisle(final Double inPosX, final double inPosY) {
+		super(PositionTypeEnum.METERS_FROM_PARENT, inPosX, inPosY);
 	}
 	
 	public final PersistABC getParent() {

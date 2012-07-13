@@ -14,7 +14,6 @@ public class GenericDaoTest {
 		
 		
 		public PersistABCStub() {
-			super(new GenericDao<PersistABCStub>(PersistABCStub.class));
 		}
 
 		public PersistABC getParent() {

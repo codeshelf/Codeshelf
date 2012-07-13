@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: User.java,v 1.12 2012/07/13 08:08:41 jeffw Exp $
+ *  $Id: User.java,v 1.13 2012/07/13 21:56:56 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -50,6 +50,9 @@ public class User extends PersistABC {
 		}
 	}
 
+	@Inject
+	public static ITypedDao<User> DAO;
+
 	// The hashed password
 	// A User with a null hashed password is a promo user (with limited abilities).
 	@Getter
@@ -87,9 +90,7 @@ public class User extends PersistABC {
 	@Setter
 	private Organization		parentOrganization;
 
-	@Inject
-	public User(final UserDao inOrm) {
-		super(inOrm);
+	public User() {
 		email = "";
 		created = new Timestamp(System.currentTimeMillis());
 		active = true;

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: DBProperty.java,v 1.14 2012/07/13 08:08:41 jeffw Exp $
+ *  $Id: DBProperty.java,v 1.15 2012/07/13 21:56:56 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -35,6 +35,9 @@ public class DBProperty extends PersistABC {
 		}
 	}
 
+	@Inject
+	public static ITypedDao<DBProperty> DAO;
+
 	public static final String	DB_SCHEMA_VERSION	= "SCHMAVER";
 
 	@Getter
@@ -42,9 +45,8 @@ public class DBProperty extends PersistABC {
 	@Column(nullable = false)
 	private String				valueStr;
 
-	@Inject
-	public DBProperty(final ITypedDao<DBProperty> inOrm) {
-		super(inOrm);
+	public DBProperty() {
+		super();
 	}
 
 	// --------------------------------------------------------------------------

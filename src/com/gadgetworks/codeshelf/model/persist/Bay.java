@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Bay.java,v 1.3 2012/07/13 08:08:41 jeffw Exp $
+ *  $Id: Bay.java,v 1.4 2012/07/13 21:56:56 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -12,8 +12,10 @@ import javax.persistence.Table;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDao;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
@@ -39,8 +41,11 @@ public class Bay extends Location {
 		}
 	}
 
-	public Bay(final BayDao inOrm) {
-		super(inOrm);
+	@Inject
+	public static ITypedDao<Bay> DAO;
+
+	public Bay(final Double inPosX, final double inPosY) {
+		super(PositionTypeEnum.METERS_FROM_PARENT, inPosX, inPosY);
 	}
 
 	public final PersistABC getParent() {

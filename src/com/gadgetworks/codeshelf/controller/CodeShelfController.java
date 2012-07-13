@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfController.java,v 1.6 2012/07/11 07:15:42 jeffw Exp $
+ *  $Id: CodeShelfController.java,v 1.7 2012/07/13 21:56:56 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.controller;
@@ -17,6 +17,7 @@ import com.gadgetworks.codeshelf.command.CommandCsABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.persist.Facility;
 import com.gadgetworks.codeshelf.model.persist.PersistentProperty;
+import com.gadgetworks.codeshelf.model.persist.WirelessDevice;
 import com.gadgetworks.codeshelf.query.IQuery;
 import com.gadgetworks.codeshelf.query.IResponse;
 import com.gadgetworks.codeshelf.query.QueryActorDescriptor;
@@ -44,11 +45,9 @@ public final class CodeShelfController extends ControllerABC {
 	/**
 	 *  @param inSessionManager
 	 */
-	public CodeShelfController(final IDeviceMaintainer inDeviceMaintainer,
-		final List<IWirelessInterface> inInterfaceList,
-		final Facility inFacility,
-		final ITypedDao<PersistentProperty> inPersistentPropertyDao) {
-		super(inDeviceMaintainer, inInterfaceList, inFacility, inPersistentPropertyDao);
+	public CodeShelfController(final List<IWirelessInterface> inInterfaceList,
+		final Facility inFacility) {
+		super(inInterfaceList, inFacility);
 	}
 
 	/* --------------------------------------------------------------------------
@@ -119,7 +118,7 @@ public final class CodeShelfController extends ControllerABC {
 		QueryActorDescriptor query = new QueryActorDescriptor();
 		this.sendQuery(query, inNetworkDevice);
 		inNetworkDevice.setNetworkDeviceState(NetworkDeviceStateEnum.SETUP);
-		mDeviceMaintainer.deviceUpdated(inNetworkDevice, true);
+		WirelessDevice.DAO.deviceUpdated(inNetworkDevice, true);
 	}
 
 	/* --------------------------------------------------------------------------

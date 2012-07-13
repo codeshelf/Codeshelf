@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.21 2012/07/13 08:08:41 jeffw Exp $
+ *  $Id: Facility.java,v 1.22 2012/07/13 21:56:56 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -19,6 +19,7 @@ import lombok.Getter;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
 
+import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDao;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.google.inject.Inject;
@@ -33,7 +34,6 @@ import com.google.inject.Singleton;
  * @author jeffw
  */
 
-
 @Entity
 @Table(name = "LOCATION")
 @DiscriminatorValue("FACILITY")
@@ -46,6 +46,9 @@ public class Facility extends Location {
 		}
 	}
 
+	@Inject
+	public static ITypedDao<Facility> DAO;
+
 	// The owning organization.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
@@ -57,17 +60,16 @@ public class Facility extends Location {
 	@OneToMany(mappedBy = "parentLocation")
 	@JsonIgnore
 	@Getter
-	private List<Aisle>				aisles				= new ArrayList<Aisle>();
+	private List<Aisle>				aisles		= new ArrayList<Aisle>();
 
 	// For a network this is a list of all of the control groups that belong in the set.
 	@OneToMany(mappedBy = "parentFacility")
 	@JsonIgnore
 	@Getter
-	private List<CodeShelfNetwork>	networks			= new ArrayList<CodeShelfNetwork>();
+	private List<CodeShelfNetwork>	networks	= new ArrayList<CodeShelfNetwork>();
 
-	@Inject
-	public Facility(final FacilityDao inOrm) {
-		super(inOrm);
+	public Facility(final Double inPosX, final double inPosY) {
+		super(PositionTypeEnum.GPS, inPosX, inPosY);
 		// Facilities have no parent location, but we don't want to allow ANY lcoation to not have a parent.
 		// So in this case we make the facility its own parent.  It's also a way to know when we've topped-out in the location tree.
 		this.setParentLocation(this);
@@ -76,13 +78,13 @@ public class Facility extends Location {
 	public final PersistABC getParent() {
 		return getParentOrganization();
 	}
-	
+
 	public final void setParent(PersistABC inParent) {
 		if (inParent instanceof Organization) {
 			setParentOrganization((Organization) inParent);
 		}
 	}
-	
+
 	public final void setParentOrganization(final Organization inParentOrganization) {
 		parentOrganization = inParentOrganization;
 	}
@@ -100,9 +102,10 @@ public class Facility extends Location {
 	public final void removeAisle(Aisle inAisle) {
 		aisles.remove(inAisle);
 	}
-	
-	public final void createAisle(Location inAnchorLocation, Bay inPrototypeBay, int inBaysHigh, int inBaysLong) {
-		Aisle aisle = new Aisle(this.getOrm());
-		
+
+	public final void createAisle(Double inPosX, Double inPosY, Double inProtoBayHeight, Double inProtoBayWidth, Double inProtoBayDepth, int inBaysHigh, int inBaysLong) {
+		Aisle aisle = new Aisle(inPosX, inPosY);
+
+		//Bay protoBay = new Bay(this)
 	}
 }

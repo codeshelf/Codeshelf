@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Path.java,v 1.3 2012/07/13 08:08:41 jeffw Exp $
+ *  $Id: Path.java,v 1.4 2012/07/13 21:56:56 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -47,6 +47,9 @@ public class Path extends PersistABC {
 		}
 	}
 
+	@Inject
+	public static ITypedDao<Path> DAO;
+
 	// The parent facility.
 	@Getter
 	@Setter
@@ -65,9 +68,7 @@ public class Path extends PersistABC {
 	@Getter
 	private List<PathSegment>	segments	= new ArrayList<PathSegment>();
 
-	@Inject
-	public Path(final PathDao inOrm) {
-		super(inOrm);
+	public Path() {
 		description = "";
 	}
 
