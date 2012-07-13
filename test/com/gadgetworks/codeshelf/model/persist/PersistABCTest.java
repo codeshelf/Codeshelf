@@ -6,9 +6,15 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
+import com.gadgetworks.codeshelf.model.dao.GenericDao;
+
 public class PersistABCTest {
 	
 	class PersistABCStub extends PersistABC {
+		
+		public PersistABCStub() {
+			super(new GenericDao<PersistABCStub>(PersistABCStub.class));
+		}
 
 		public PersistABC getParent() {
 			return null;
@@ -20,6 +26,10 @@ public class PersistABCTest {
 	}
 	
 	class PersistABCOtherStub extends PersistABC {
+
+		public PersistABCOtherStub() {
+			super(new GenericDao<PersistABCOtherStub>(PersistABCOtherStub.class));
+		}
 
 		public PersistABC getParent() {
 			return null;

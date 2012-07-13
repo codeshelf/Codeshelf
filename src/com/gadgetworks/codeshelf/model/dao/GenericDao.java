@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: GenericDao.java,v 1.19 2012/07/12 08:18:06 jeffw Exp $
+ *  $Id: GenericDao.java,v 1.20 2012/07/13 08:08:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -28,7 +28,6 @@ public class GenericDao<T extends PersistABC> implements ITypedDao<T> {
 	private static final Log	LOGGER		= LogFactory.getLog(GenericDao.class);
 
 	private Class<T>			mClass;
-
 	private List<IDaoListener>	mListeners	= new ArrayList<IDaoListener>();
 
 	public GenericDao(final Class<T> inClass) {
@@ -36,6 +35,7 @@ public class GenericDao<T extends PersistABC> implements ITypedDao<T> {
 	}
 
 	// --------------------------------------------------------------------------
+
 	/**
 	 * @param inDomainObject
 	 */

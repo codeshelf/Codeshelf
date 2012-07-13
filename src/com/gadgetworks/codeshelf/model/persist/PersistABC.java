@@ -1,22 +1,31 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PersistABC.java,v 1.24 2012/07/11 07:15:42 jeffw Exp $
+ *  $Id: PersistABC.java,v 1.25 2012/07/13 08:08:41 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
 import java.sql.Timestamp;
+import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Id;
 import javax.persistence.MappedSuperclass;
+import javax.persistence.PersistenceException;
+import javax.persistence.Transient;
 import javax.persistence.Version;
 
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.annotate.JsonProperty;
+
+import com.avaje.ebean.Ebean;
+import com.avaje.ebean.Query;
+import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 
 // --------------------------------------------------------------------------
 /**
@@ -27,7 +36,9 @@ import org.codehaus.jackson.annotate.JsonProperty;
  */
 
 @MappedSuperclass
-public abstract class PersistABC {
+public abstract class PersistABC<T extends PersistABC> {
+
+	private static final Log	LOGGER	= LogFactory.getLog(PersistABC.class);
 
 	// This is the internal GUID for the object.
 	@Id
@@ -35,20 +46,26 @@ public abstract class PersistABC {
 	@NonNull
 	@Getter
 	@Setter
-	private Long		persistentId;
+	private Long				persistentId;
 	// The domain ID
 	@Column(nullable = false)
 	@NonNull
-	private String		domainId;
+	private String				domainId;
 	// This is not an application-editable field.
 	// It's for the private use of the ORM transaction system.
 	@Version
 	@Column(nullable = false)
 	@Getter
 	@Setter
-	private Timestamp	version;
+	private Timestamp			version;
 
-	public PersistABC() {
+	@Transient
+	@Getter
+	@Setter
+	private ITypedDao<T>		orm;
+
+	public PersistABC(final ITypedDao<T> inORm) {
+		orm = inORm;
 	}
 
 	public abstract PersistABC getParent();
@@ -144,4 +161,31 @@ public abstract class PersistABC {
 			return 0;
 		}
 	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inPersistentId
+	 * @param inClass
+	 * @return
+	 */
+	public static <T extends PersistABC> T findByPersistentId(Long inPersistentId, Class<T> inClass) {
+		T result = null;
+		try {
+			result = Ebean.find(inClass, inPersistentId);
+		} catch (PersistenceException e) {
+			LOGGER.error("", e);
+		}
+		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @return
+	 */
+	public static <T extends PersistABC> List<T> getAll(Class<T> inClass) {
+		Query<T> query = Ebean.createQuery(inClass);
+		//query = query.setUseCache(true);
+		return query.findList();
+	}
+
 }

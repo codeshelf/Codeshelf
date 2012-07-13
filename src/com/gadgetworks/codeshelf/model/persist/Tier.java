@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Tier.java,v 1.2 2012/07/12 08:18:06 jeffw Exp $
+ *  $Id: Tier.java,v 1.3 2012/07/13 08:08:41 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -41,11 +41,8 @@ public class Tier extends Location {
 	}
 
 	@Inject
-	public static ITypedDao<Tier> DAO;
-//	public static ITypedDao<Tier> DAO = new GenericDao<Tier>(Tier.class);
-
-	public Tier() {
-
+	public Tier(final TierDao inOrm) {
+		super(inOrm);
 	}
 	
 	public final PersistABC getParent() {

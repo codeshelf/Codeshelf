@@ -2,8 +2,6 @@ package com.gadgetworks.codeshelf.model.dao;
 
 import static org.junit.Assert.fail;
 
-import java.util.List;
-
 import org.junit.Test;
 
 import com.gadgetworks.codeshelf.model.persist.PersistABC;
@@ -14,6 +12,11 @@ public class GenericDaoTest {
 		// Stub object needed to test abstract class.
 		// Ensures the Liskov Substitution Principle.
 		
+		
+		public PersistABCStub() {
+			super(new GenericDao<PersistABCStub>(PersistABCStub.class));
+		}
+
 		public PersistABC getParent() {
 			return null;
 		}

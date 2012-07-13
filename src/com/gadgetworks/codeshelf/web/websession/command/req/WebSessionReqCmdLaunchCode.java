@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdLaunchCode.java,v 1.8 2012/07/11 07:15:41 jeffw Exp $
+ *  $Id: WebSessionReqCmdLaunchCode.java,v 1.9 2012/07/13 08:08:41 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -29,11 +29,11 @@ import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdLa
  */
 public class WebSessionReqCmdLaunchCode extends WebSessionReqCmdABC {
 
-//	private ITypedDao<Organization>	mOrganizationDao;
+	private ITypedDao<Organization>	mOrganizationDao;
 
-	public WebSessionReqCmdLaunchCode(final String inCommandId, final JsonNode inDataNodeAsJson/*, final ITypedDao<Organization> inOrganizationDao*/) {
+	public WebSessionReqCmdLaunchCode(final String inCommandId, final JsonNode inDataNodeAsJson, final ITypedDao<Organization> inOrganizationDao) {
 		super(inCommandId, inDataNodeAsJson);
-//		mOrganizationDao = inOrganizationDao;
+		mOrganizationDao = inOrganizationDao;
 	}
 
 	public final WebSessionReqCmdEnum getCommandEnum() {
@@ -49,7 +49,7 @@ public class WebSessionReqCmdLaunchCode extends WebSessionReqCmdABC {
 
 		JsonNode launchNode = getDataJsonNode().get("launchCode");
 		String launchCode = launchNode.getTextValue();
-		Organization organization = Organization.DAO.findByDomainId(null, launchCode);
+		Organization organization = mOrganizationDao.findByDomainId(null, launchCode);
 
 		// CRITICAL SECURITY CONCEPT.
 		// LaunchCodes are anonymous users that we create WITHOUT passwords or final userIDs.

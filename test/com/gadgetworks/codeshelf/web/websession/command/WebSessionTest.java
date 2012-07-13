@@ -76,7 +76,7 @@ public class WebSessionTest {
 	@Test
 	public void testProcessMessageLaunchCodeCheck() {
 		TestWebSocket testWebSocket = new TestWebSocket();
-		IWebSessionReqCmdFactory factory = new WebSessionReqCmdFactory(/*new TestOrganizationDao(),*/ null);
+		IWebSessionReqCmdFactory factory = new WebSessionReqCmdFactory(new TestOrganizationDao(), null);
 		IWebSession webSession = new WebSession(testWebSocket, factory);
 		String inMessage = "{\"id\":\"cmdid_5\",\"type\":\"LAUNCH_CODE_CHECK\",\"data\":{\"launchCode\":\"12345\"}}";
 

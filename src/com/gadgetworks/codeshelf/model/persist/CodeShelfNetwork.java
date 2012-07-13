@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfNetwork.java,v 1.20 2012/07/12 08:18:06 jeffw Exp $
+ *  $Id: CodeShelfNetwork.java,v 1.21 2012/07/13 08:08:41 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -50,10 +50,6 @@ public class CodeShelfNetwork extends PersistABC {
 		}
 	}
 
-	@Inject
-	public static ITypedDao<CodeShelfNetwork> DAO;
-//	public static ITypedDao<CodeShelfNetwork> DAO = new GenericDao<CodeShelfNetwork>(CodeShelfNetwork.class);
-
 	private static final Log	LOGGER				= LogFactory.getLog(CodeShelfNetwork.class);
 
 	private static final long	serialVersionUID	= 3001609308065821464L;
@@ -101,7 +97,9 @@ public class CodeShelfNetwork extends PersistABC {
 	@Setter
 	private Facility			parentFacility;
 
-	public CodeShelfNetwork() {
+	@Inject
+	public CodeShelfNetwork(final CodeShelfNetworkDao inOrm) {
+		super(inOrm);
 		networkId = new byte[NetworkId.NETWORK_ID_BYTES];
 		description = "";
 		gatewayAddr = new byte[NetAddress.NET_ADDRESS_BYTES];

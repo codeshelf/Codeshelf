@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: UserSession.java,v 1.10 2012/07/12 08:18:05 jeffw Exp $
+ *  $Id: UserSession.java,v 1.11 2012/07/13 08:08:41 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -47,28 +47,26 @@ public class UserSession extends PersistABC {
 		}
 	}
 
-	@Inject
-	public static ITypedDao<UserSession> DAO;
-//	public static final ITypedDao<UserSession> DAO  = new GenericDao<UserSession>(UserSession.class);
-
 	// The owning CodeShelf network.
 	@Column(name = "parentUser", nullable = false)
 	@ManyToOne(optional = false)
-	private User				parentUser;
+	private User		parentUser;
 
 	// Create date.
 	@Getter
 	@Setter
 	@Column(nullable = false)
-	private Timestamp			created;
+	private Timestamp	created;
 
 	// Activity note.
 	@Getter
 	@Setter
 	@Column(nullable = false)
-	private String				note;
+	private String		note;
 
-	public UserSession() {
+	@Inject
+	public UserSession(final UserSessionDao inOrm) {
+		super(inOrm);
 		parentUser = null;
 		created = new Timestamp(System.currentTimeMillis());
 	}

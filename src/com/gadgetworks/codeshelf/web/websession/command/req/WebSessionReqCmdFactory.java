@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdFactory.java,v 1.10 2012/07/11 07:15:42 jeffw Exp $
+ *  $Id: WebSessionReqCmdFactory.java,v 1.11 2012/07/13 08:08:41 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -21,14 +21,14 @@ import com.google.inject.Inject;
  */
 public final class WebSessionReqCmdFactory implements IWebSessionReqCmdFactory {
 
-	private static final Log			LOGGER	= LogFactory.getLog(WebSessionReqCmdFactory.class);
+	private static final Log		LOGGER	= LogFactory.getLog(WebSessionReqCmdFactory.class);
 
-//	private ITypedDao<Organization>	mOrganizationDao;
-	private IDaoProvider				mDaoProvider;
+	private ITypedDao<Organization>	mOrganizationDao;
+	private IDaoProvider			mDaoProvider;
 
 	@Inject
-	public WebSessionReqCmdFactory(/*final ITypedDao<Organization> inOrganizationDao, */ final IDaoProvider inDaoPovider) {
-//		mOrganizationDao = inOrganizationDao;
+	public WebSessionReqCmdFactory(final ITypedDao<Organization> inOrganizationDao, final IDaoProvider inDaoPovider) {
+		mOrganizationDao = inOrganizationDao;
 		mDaoProvider = inDaoPovider;
 	}
 
@@ -47,7 +47,7 @@ public final class WebSessionReqCmdFactory implements IWebSessionReqCmdFactory {
 
 		switch (commandEnum) {
 			case LAUNCH_CODE_CHECK:
-				result = new WebSessionReqCmdLaunchCode(commandId, dataNode);//, mOrganizationDao);
+				result = new WebSessionReqCmdLaunchCode(commandId, dataNode, mOrganizationDao);
 				break;
 
 			case OBJECT_GETTER_REQ:

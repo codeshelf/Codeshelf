@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Path.java,v 1.2 2012/07/12 08:18:06 jeffw Exp $
+ *  $Id: Path.java,v 1.3 2012/07/13 08:08:41 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -38,7 +38,7 @@ import com.google.inject.Singleton;
 @Table(name = "PATH")
 public class Path extends PersistABC {
 
-	private static final Log	LOGGER		= LogFactory.getLog(Path.class);
+	private static final Log	LOGGER	= LogFactory.getLog(Path.class);
 
 	@Singleton
 	public static class PathDao extends GenericDao<Path> implements ITypedDao<Path> {
@@ -46,10 +46,6 @@ public class Path extends PersistABC {
 			super(Path.class);
 		}
 	}
-
-	@Inject
-	public static ITypedDao<Path> DAO;
-//	public static ITypedDao<Path> DAO = new GenericDao<Path>(Path.class);
 
 	// The parent facility.
 	@Getter
@@ -69,7 +65,9 @@ public class Path extends PersistABC {
 	@Getter
 	private List<PathSegment>	segments	= new ArrayList<PathSegment>();
 
-	public Path() {
+	@Inject
+	public Path(final PathDao inOrm) {
+		super(inOrm);
 		description = "";
 	}
 

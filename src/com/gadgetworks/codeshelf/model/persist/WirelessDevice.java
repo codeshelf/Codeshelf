@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WirelessDevice.java,v 1.16 2012/07/11 07:15:42 jeffw Exp $
+ *  $Id: WirelessDevice.java,v 1.17 2012/07/13 08:08:41 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -35,7 +35,6 @@ import com.gadgetworks.codeshelf.controller.NetMacAddress;
 import com.gadgetworks.codeshelf.controller.NetworkDeviceStateEnum;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.dao.domain.WirelessDeviceDao;
-import com.google.inject.Inject;
 
 // --------------------------------------------------------------------------
 /**
@@ -52,7 +51,7 @@ import com.google.inject.Inject;
 @Entity
 @Table(name = "WIRELESSDEVICE")
 @DiscriminatorValue("ABC")
-public class WirelessDevice extends PersistABC implements INetworkDevice {
+public class WirelessDevice<T extends PersistABC> extends PersistABC implements INetworkDevice {
 
 	public interface IWirelessDeviceDao extends ITypedDao<WirelessDevice>, IDeviceMaintainer {
 
@@ -66,12 +65,6 @@ public class WirelessDevice extends PersistABC implements INetworkDevice {
 
 	public static final int			MAC_ADDR_BYTES		= 8;
 	public static final int			PUBLIC_KEY_BYTES	= 8;
-
-	@Inject
-	public static IWirelessDeviceDao DAO;
-//	public static IWirelessDeviceDao DAO = new WirelessDeviceDao(null);
-
-//	private static final long		serialVersionUID	= 2371198193026330676L;
 
 	private static final Log		LOGGER				= LogFactory.getLog(WirelessDevice.class);
 
@@ -117,7 +110,8 @@ public class WirelessDevice extends PersistABC implements INetworkDevice {
 	//	@Transient
 	//	private short						mDeviceType;
 
-	public WirelessDevice() {
+	public WirelessDevice(final WirelessDeviceDao inOrm) {
+		super(inOrm);
 		macAddress = new byte[NetMacAddress.NET_MACADDR_BYTES];
 		publicKey = "";
 		description = "";

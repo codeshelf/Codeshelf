@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: User.java,v 1.11 2012/07/12 08:18:06 jeffw Exp $
+ *  $Id: User.java,v 1.12 2012/07/13 08:08:41 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -50,10 +50,6 @@ public class User extends PersistABC {
 		}
 	}
 
-	@Inject
-	public static ITypedDao<User> DAO;
-//	public static final ITypedDao<User> DAO  = new GenericDao<User>(User.class);
-
 	// The hashed password
 	// A User with a null hashed password is a promo user (with limited abilities).
 	@Getter
@@ -82,7 +78,7 @@ public class User extends PersistABC {
 	// For a network this is a list of all of the control groups that belong in the set.
 	@OneToMany(mappedBy = "parentUser")
 	@Getter
-	private List<UserSession>	users				= new ArrayList<UserSession>();
+	private List<UserSession>	users	= new ArrayList<UserSession>();
 
 	// The owning facility.
 	@Column(name = "parentOrganization", nullable = false)
@@ -91,7 +87,9 @@ public class User extends PersistABC {
 	@Setter
 	private Organization		parentOrganization;
 
-	public User() {
+	@Inject
+	public User(final UserDao inOrm) {
+		super(inOrm);
 		email = "";
 		created = new Timestamp(System.currentTimeMillis());
 		active = true;

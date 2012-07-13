@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.20 2012/07/12 08:18:06 jeffw Exp $
+ *  $Id: Facility.java,v 1.21 2012/07/13 08:08:41 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -33,6 +33,7 @@ import com.google.inject.Singleton;
  * @author jeffw
  */
 
+
 @Entity
 @Table(name = "LOCATION")
 @DiscriminatorValue("FACILITY")
@@ -44,10 +45,6 @@ public class Facility extends Location {
 			super(Facility.class);
 		}
 	}
-
-	@Inject
-	public static ITypedDao<Facility> DAO;
-	//public static ITypedDao<Facility> DAO = new GenericDao<Facility>(Facility.class);
 
 	// The owning organization.
 	@Column(nullable = false)
@@ -68,7 +65,9 @@ public class Facility extends Location {
 	@Getter
 	private List<CodeShelfNetwork>	networks			= new ArrayList<CodeShelfNetwork>();
 
-	public Facility() {
+	@Inject
+	public Facility(final FacilityDao inOrm) {
+		super(inOrm);
 		// Facilities have no parent location, but we don't want to allow ANY lcoation to not have a parent.
 		// So in this case we make the facility its own parent.  It's also a way to know when we've topped-out in the location tree.
 		this.setParentLocation(this);
@@ -103,7 +102,7 @@ public class Facility extends Location {
 	}
 	
 	public final void createAisle(Location inAnchorLocation, Bay inPrototypeBay, int inBaysHigh, int inBaysLong) {
-		Aisle aisle = new Aisle();
+		Aisle aisle = new Aisle(this.getOrm());
 		
 	}
 }
