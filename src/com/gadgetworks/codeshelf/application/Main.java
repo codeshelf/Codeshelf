@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Main.java,v 1.15 2012/07/12 08:18:06 jeffw Exp $
+ *  $Id: Main.java,v 1.16 2012/07/17 07:57:43 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -15,6 +15,8 @@ import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.dao.domain.WirelessDeviceDao;
 import com.gadgetworks.codeshelf.model.persist.Aisle;
 import com.gadgetworks.codeshelf.model.persist.Aisle.AisleDao;
+import com.gadgetworks.codeshelf.model.persist.Bay;
+import com.gadgetworks.codeshelf.model.persist.Bay.BayDao;
 import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork;
 import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork.CodeShelfNetworkDao;
 import com.gadgetworks.codeshelf.model.persist.ControlGroup;
@@ -109,6 +111,8 @@ public final class Main {
 				}).to(FacilityDao.class);
 				bind(new TypeLiteral<ITypedDao<Aisle>>() {
 				}).to(AisleDao.class);
+				bind(new TypeLiteral<ITypedDao<Bay>>() {
+				}).to(BayDao.class);
 				bind(new TypeLiteral<ITypedDao<PersistentProperty>>() {
 				}).to(PersistentPropertyDao.class);
 				bind(new TypeLiteral<ITypedDao<DBProperty>>() {
@@ -124,6 +128,8 @@ public final class Main {
 				bind(IDaoProvider.class).to(DaoProvider.class);
 				requestStaticInjection(Organization.class);
 				requestStaticInjection(Facility.class);
+				requestStaticInjection(Aisle.class);
+				requestStaticInjection(Bay.class);
 				requestStaticInjection(WirelessDevice.class);
 				requestStaticInjection(PersistentProperty.class);
 				requestStaticInjection(DBProperty.class);

@@ -1,22 +1,18 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectMethod.java,v 1.1 2012/07/17 00:31:43 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectMethod.java,v 1.2 2012/07/17 07:57:43 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 
-import lombok.Getter;
-import lombok.Setter;
 import lombok.libs.org.objectweb.asm.tree.ClassNode;
 import lombok.libs.org.objectweb.asm.tree.LocalVariableNode;
 import lombok.libs.org.objectweb.asm.tree.MethodNode;
@@ -118,16 +114,17 @@ public class WebSessionReqCmdObjectMethod extends WebSessionReqCmdABC {
 
 			ObjectMapper mapper = new ObjectMapper();
 			JsonNode argumentsNode = dataJsonNode.get(METHODARGS);
-//			List<Map<String, Object>> objectArray = mapper.readValue(argumentsNode, new TypeReference<List<Map<String, Object>>>() {
-//			});
-//			for (Map<String, Object> map : objectArray) {
-//				String name = (String) map.get("name");
-//				Object value = map.get("value");
-//				mMethodArguments.put(name, value);
-//			}
-			
-			mMethodArguments = mapper.readValue(argumentsNode, new TypeReference<List<ArgsClass>>() { });
-			
+			//			List<Map<String, Object>> objectArray = mapper.readValue(argumentsNode, new TypeReference<List<Map<String, Object>>>() {
+			//			});
+			//			for (Map<String, Object> map : objectArray) {
+			//				String name = (String) map.get("name");
+			//				Object value = map.get("value");
+			//				mMethodArguments.put(name, value);
+			//			}
+
+			mMethodArguments = mapper.readValue(argumentsNode, new TypeReference<List<ArgsClass>>() {
+			});
+
 			//			JsonNode argumentsNode = dataJsonNode.get(ARGUMENTS);
 			//
 			//			ObjectMapper mapper = new ObjectMapper();
@@ -151,24 +148,34 @@ public class WebSessionReqCmdObjectMethod extends WebSessionReqCmdABC {
 
 					// Loop over all the properties, setting each one.
 					List<Class<?>> signatureClasses = new ArrayList<Class<?>>();
+					List<Object> cookedArguments = new ArrayList<Object>();
 					for (ArgsClass arg : mMethodArguments) {
 						// (The method *must* start with "get" to ensure other methods don't get called.)
 						String argumentName = arg.getName();
 						Object argumentValue = arg.getValue();
 						Class classType = Class.forName(arg.getClassType());
 						signatureClasses.add(classType);
+
+						Object typedArg;
+						try {
+							Constructor<?> ctor = classType.getConstructor(String.class);
+							typedArg = ctor.newInstance(new Object[] { argumentValue.toString() });
+							cookedArguments.add(typedArg);
+						} catch (IllegalArgumentException e) {
+							LOGGER.error("", e);
+						} catch (InstantiationException e) {
+							LOGGER.error("", e);
+						} catch (IllegalAccessException e) {
+							LOGGER.error("", e);
+						} catch (InvocationTargetException e) {
+							LOGGER.error("", e);
+						}
 					}
 
 					java.lang.reflect.Method method = classObject.getMethod(methodName, signatureClasses.toArray(new Class[0]));
 					if (method != null) {
-						// Figure out where in the method call signature this parameter goes.
-						List<String> arguments = getParameterNames(method);
-						for (String argument : arguments) {
-							// Do something.
-						}
-						Object[] cookedArguments = new Object[mMethodArguments.size()];
 						try {
-							method.invoke(targetObject, cookedArguments);
+							method.invoke(targetObject, cookedArguments.toArray(new Object[0]));
 						} catch (IllegalArgumentException e) {
 							LOGGER.error("", e);
 						} catch (IllegalAccessException e) {
