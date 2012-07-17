@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Aisle.java,v 1.18 2012/07/13 21:56:56 jeffw Exp $
+ *  $Id: Aisle.java,v 1.19 2012/07/17 00:31:43 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -44,8 +44,9 @@ public class Aisle extends Location {
 	@Inject
 	public static ITypedDao<Aisle> DAO;
 
-	public Aisle(final Double inPosX, final double inPosY) {
+	public Aisle(final Facility inParentFacility, final Double inPosX, final double inPosY) {
 		super(PositionTypeEnum.METERS_FROM_PARENT, inPosX, inPosY);
+		setParentFacility(inParentFacility);
 	}
 	
 	public final PersistABC getParent() {

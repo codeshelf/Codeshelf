@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: IWebSessionReqCmd.java,v 1.8 2012/05/11 07:32:55 jeffw Exp $
+ *  $Id: IWebSessionReqCmd.java,v 1.9 2012/07/17 00:31:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -27,6 +27,8 @@ public interface IWebSessionReqCmd extends IWebSessionCmd {
 
 	String	PERSISTENT_ID		= "persistentId";
 	String	CLASSNAME			= "className";
+	String	METHODNAME			= "methodName";
+	String	METHODARGS			= "methodArgs";
 
 	String	PARENT_CLASS		= "parentClassName";
 	String	PARENT_ID			= "parentPersistentId";

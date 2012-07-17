@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.22 2012/07/13 21:56:56 jeffw Exp $
+ *  $Id: Facility.java,v 1.23 2012/07/17 00:31:43 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -17,9 +17,12 @@ import javax.persistence.Table;
 
 import lombok.Getter;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.annotate.JsonIgnore;
 
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
+import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDao;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.google.inject.Inject;
@@ -39,6 +42,8 @@ import com.google.inject.Singleton;
 @DiscriminatorValue("FACILITY")
 public class Facility extends Location {
 
+	private static final Log	LOGGER	= LogFactory.getLog(Facility.class);
+
 	@Singleton
 	public static class FacilityDao extends GenericDao<Facility> implements ITypedDao<Facility> {
 		public FacilityDao() {
@@ -47,26 +52,26 @@ public class Facility extends Location {
 	}
 
 	@Inject
-	public static ITypedDao<Facility> DAO;
+	public static ITypedDao<Facility>	DAO;
 
 	// The owning organization.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	@JsonIgnore
 	@Getter
-	private Organization			parentOrganization;
+	private Organization				parentOrganization;
 
 	// For a network this is a list of all of the control groups that belong in the set.
 	@OneToMany(mappedBy = "parentLocation")
 	@JsonIgnore
 	@Getter
-	private List<Aisle>				aisles		= new ArrayList<Aisle>();
+	private List<Aisle>					aisles		= new ArrayList<Aisle>();
 
 	// For a network this is a list of all of the control groups that belong in the set.
 	@OneToMany(mappedBy = "parentFacility")
 	@JsonIgnore
 	@Getter
-	private List<CodeShelfNetwork>	networks	= new ArrayList<CodeShelfNetwork>();
+	private List<CodeShelfNetwork>		networks	= new ArrayList<CodeShelfNetwork>();
 
 	public Facility(final Double inPosX, final double inPosY) {
 		super(PositionTypeEnum.GPS, inPosX, inPosY);
@@ -103,9 +108,46 @@ public class Facility extends Location {
 		aisles.remove(inAisle);
 	}
 
-	public final void createAisle(Double inPosX, Double inPosY, Double inProtoBayHeight, Double inProtoBayWidth, Double inProtoBayDepth, int inBaysHigh, int inBaysLong) {
-		Aisle aisle = new Aisle(inPosX, inPosY);
+	// --------------------------------------------------------------------------
+	/**
+	 * Create a new aisle with prototype bays.
+	 * @param inPosX
+	 * @param inPosY
+	 * @param inProtoBayHeight
+	 * @param inProtoBayWidth
+	 * @param inProtoBayDepth
+	 * @param inBaysHigh
+	 * @param inBaysLong
+	 */
+	public final void createAisle(Double inPosX,
+		Double inPosY,
+		Double inProtoBayHeight,
+		Double inProtoBayWidth,
+		Double inProtoBayDepth,
+		Integer inBaysHigh,
+		Integer inBaysLong,
+		Boolean inCreateBackToBack) {
+		Aisle aisle = new Aisle(this, inPosX, inPosY);
 
-		//Bay protoBay = new Bay(this)
+		Double anchorPosX = inPosX;
+		Double anchorPosY = inPosY;
+		for (int bayLongNum = 0; bayLongNum < inBaysLong; bayLongNum++) {
+			Double anchorPosZ = 0.0;
+			for (int bayHighNum = 0; bayHighNum < inBaysHigh; bayHighNum++) {
+				Bay protoBay = new Bay(anchorPosX, anchorPosY, anchorPosZ);
+				try {
+					Bay.DAO.store(protoBay);
+				} catch (DaoException e) {
+					LOGGER.error("", e);
+				}
+				anchorPosZ += inProtoBayHeight;
+			}
+			anchorPosY += inProtoBayWidth;
+		}
+		try {
+			Aisle.DAO.store(aisle);
+		} catch (DaoException e) {
+			LOGGER.error("", e);
+		}
 	}
 }

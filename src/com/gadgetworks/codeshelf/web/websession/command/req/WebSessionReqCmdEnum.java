@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdEnum.java,v 1.3 2012/05/07 06:34:27 jeffw Exp $
+ *  $Id: WebSessionReqCmdEnum.java,v 1.4 2012/07/17 00:31:43 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -18,7 +18,8 @@ public enum WebSessionReqCmdEnum {
 	OBJECT_UPDATE_REQ(WebSessionReqCmdNum.OBJECT_UPDATE_REQ, "OBJ_UPD_RQ"),
 	OBJECT_DELETE_REQ(WebSessionReqCmdNum.OBJECT_DELETE_REQ, "OBJ_DEL_RQ"),
 	OBJECT_LISTENER_REQ(WebSessionReqCmdNum.OBJECT_LISTENER_REQ, "OBJ_LSN_RQ"),
-	OBJECT_FILTER_REQ(WebSessionReqCmdNum.OBJECT_FILTER_REQ, "OBJ_FLT_RQ");
+	OBJECT_FILTER_REQ(WebSessionReqCmdNum.OBJECT_FILTER_REQ, "OBJ_FLT_RQ"),
+	OBJECT_METHOD_REQ(WebSessionReqCmdNum.OBJECT_METHOD_REQ, "OBJ_METH_RQ");
 
 	private int		mValue;
 	private String	mName;
@@ -68,6 +69,10 @@ public enum WebSessionReqCmdEnum {
 				result = WebSessionReqCmdEnum.OBJECT_FILTER_REQ;
 				break;
 
+			case WebSessionReqCmdNum.OBJECT_METHOD_REQ:
+				result = WebSessionReqCmdEnum.OBJECT_METHOD_REQ;
+				break;
+
 			default:
 				result = WebSessionReqCmdEnum.INVALID;
 				break;
@@ -106,6 +111,7 @@ public enum WebSessionReqCmdEnum {
 		static final byte	OBJECT_DELETE_REQ	= 6;
 		static final byte	OBJECT_LISTENER_REQ	= 7;
 		static final byte	OBJECT_FILTER_REQ	= 8;
+		static final byte	OBJECT_METHOD_REQ			= 9;
 
 		private WebSessionReqCmdNum() {
 

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionRespCmdEnum.java,v 1.3 2012/05/07 06:34:27 jeffw Exp $
+ *  $Id: WebSessionRespCmdEnum.java,v 1.4 2012/07/17 00:31:43 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.resp;
 
@@ -18,7 +18,8 @@ public enum WebSessionRespCmdEnum {
 	OBJECT_UPDATE_RESP(WebSessionRespCmdNum.OBJECT_UPDATE_RESP, "OBJ_UPD_RS"),
 	OBJECT_DELETE_RESP(WebSessionRespCmdNum.OBJECT_DELETE_RESP, "OBJ_DEL_RS"),
 	OBJECT_LISTENER_RESP(WebSessionRespCmdNum.OBJECT_LISTENER_RESP, "OBJ_LSN_RS"),
-	OBJECT_FILTER_RESP(WebSessionRespCmdNum.OBJECT_LISTENER_RESP, "OBJ_FLT_RS");
+	OBJECT_FILTER_RESP(WebSessionRespCmdNum.OBJECT_FILTER_RESP, "OBJ_FLT_RS"),
+	OBJECT_METHOD_RESP(WebSessionRespCmdNum.OBJECT_METHOD_RESP, "OBJ_METH_RS");
 
 	private int		mValue;
 	private String	mName;
@@ -44,9 +45,9 @@ public enum WebSessionRespCmdEnum {
 				result = WebSessionRespCmdEnum.OBJECT_GETTER_RESP;
 				break;
 
-//			case WebSessionRespCmdNum.OBJECT_GETBYID_RESP:
-//				result = WebSessionRespCmdEnum.OBJECT_GETBYID_RESP;
-//				break;
+			//			case WebSessionRespCmdNum.OBJECT_GETBYID_RESP:
+			//				result = WebSessionRespCmdEnum.OBJECT_GETBYID_RESP;
+			//				break;
 
 			case WebSessionRespCmdNum.OBJECT_CREATE_RESP:
 				result = WebSessionRespCmdEnum.OBJECT_CREATE_RESP;
@@ -62,6 +63,10 @@ public enum WebSessionRespCmdEnum {
 
 			case WebSessionRespCmdNum.OBJECT_LISTENER_RESP:
 				result = WebSessionRespCmdEnum.OBJECT_LISTENER_RESP;
+				break;
+
+			case WebSessionRespCmdNum.OBJECT_METHOD_RESP:
+				result = WebSessionRespCmdEnum.OBJECT_METHOD_RESP;
 				break;
 
 			default:
@@ -80,7 +85,7 @@ public enum WebSessionRespCmdEnum {
 	public String getName() {
 		return mName;
 	}
-	
+
 	public String toString() {
 		return getName();
 	}
@@ -94,6 +99,8 @@ public enum WebSessionRespCmdEnum {
 		static final byte	OBJECT_UPDATE_RESP		= 5;
 		static final byte	OBJECT_DELETE_RESP		= 6;
 		static final byte	OBJECT_LISTENER_RESP	= 7;
+		static final byte	OBJECT_FILTER_RESP		= 8;
+		static final byte	OBJECT_METHOD_RESP		= 9;
 
 		private WebSessionRespCmdNum() {
 

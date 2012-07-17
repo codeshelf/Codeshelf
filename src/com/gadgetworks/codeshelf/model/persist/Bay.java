@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Bay.java,v 1.4 2012/07/13 21:56:56 jeffw Exp $
+ *  $Id: Bay.java,v 1.5 2012/07/17 00:31:43 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -44,8 +44,8 @@ public class Bay extends Location {
 	@Inject
 	public static ITypedDao<Bay> DAO;
 
-	public Bay(final Double inPosX, final double inPosY) {
-		super(PositionTypeEnum.METERS_FROM_PARENT, inPosX, inPosY);
+	public Bay(final Double inPosX, final double inPosY, final double inPosZ) {
+		super(PositionTypeEnum.METERS_FROM_PARENT, inPosX, inPosY, inPosZ);
 	}
 
 	public final PersistABC getParent() {

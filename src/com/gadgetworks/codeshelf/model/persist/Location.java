@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Location.java,v 1.8 2012/07/13 21:56:56 jeffw Exp $
+ *  $Id: Location.java,v 1.9 2012/07/17 00:31:43 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.persist;
 
@@ -51,7 +51,7 @@ import com.google.inject.Singleton;
 @DiscriminatorValue("ABC")
 public abstract class Location<T extends PersistABC> extends PersistABC {
 
-	private static final Log	LOGGER		= LogFactory.getLog(Location.class);
+	private static final Log	LOGGER	= LogFactory.getLog(Location.class);
 
 	@Singleton
 	public static class LocationDao extends GenericDao<Location> {
@@ -116,6 +116,13 @@ public abstract class Location<T extends PersistABC> extends PersistABC {
 		posY = inPosY;
 		// Z pos is non-null so that it doesn't need to be explicitly set.
 		posZ = 0.0;
+	}
+
+	public Location(final PositionTypeEnum inPosType, final Double inPosX, final double inPosY, final double inPosZ) {
+		posType = inPosType;
+		posX = inPosX;
+		posY = inPosY;
+		posZ = inPosZ;
 	}
 
 	public final void setPosTypeByStr(String inPosTypeStr) {

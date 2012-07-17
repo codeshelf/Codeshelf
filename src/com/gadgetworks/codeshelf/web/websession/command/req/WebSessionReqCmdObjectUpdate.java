@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectUpdate.java,v 1.12 2012/07/11 07:15:42 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectUpdate.java,v 1.13 2012/07/17 00:31:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -37,9 +37,8 @@ import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdOb
  * 	id: <cmd_id>,
  * 	type: OBJECT_UPDATE_REQ,
  * 	data {
- *		parentClassName:	<class_name>,
- *		parentPeristentID:	<id>,
  *		className:			<class_name>,
+ *		parentPeristentID:	<id>,
  *		propertiesToSet [
  *			propertyName:	<propertyValue>
  *		]
