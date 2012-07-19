@@ -1,9 +1,12 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Tier.java,v 1.4 2012/07/13 21:56:56 jeffw Exp $
+ *  $Id: Tier.java,v 1.1 2012/07/19 06:11:32 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.model.persist;
+package com.gadgetworks.codeshelf.model.domain;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
@@ -48,11 +51,11 @@ public class Tier extends Location {
 		super(PositionTypeEnum.METERS_FROM_PARENT, inPosX, inPosY);
 	}
 	
-	public final PersistABC getParent() {
+	public final IDomainObject getParent() {
 		return getParentBay();
 	}
 	
-	public final void setParent(PersistABC inParent) {
+	public final void setParent(IDomainObject inParent) {
 		if (inParent instanceof Bay) {
 			setParentLocation((Bay) inParent);
 		}

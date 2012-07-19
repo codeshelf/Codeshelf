@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: DaoProvider.java,v 1.5 2012/07/12 08:18:06 jeffw Exp $
+ *  $Id: DaoProvider.java,v 1.6 2012/07/19 06:11:33 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import com.gadgetworks.codeshelf.model.persist.PersistABC;
+import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.google.inject.Binding;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
@@ -31,7 +31,7 @@ public class DaoProvider implements IDaoProvider {
 		mInjector = inInjector;
 	}
 
-	public final <T extends PersistABC> ITypedDao<T> getDaoInstance(final Class<T> inDomainObjectClass) {
+	public final <T extends IDomainObject> ITypedDao<T> getDaoInstance(final Class<T> inDomainObjectClass) {
 
 		final ParameterizedType parameterizedDaoType = new ParameterizedType() {
 
@@ -57,7 +57,7 @@ public class DaoProvider implements IDaoProvider {
 		return null;
 	}
 
-	public final <T extends PersistABC> List<ITypedDao<T>> getAllDaos() {
+	public final <T extends IDomainObject> List<ITypedDao<T>> getAllDaos() {
 
 		List<ITypedDao<T>> result = new ArrayList<ITypedDao<T>>();
 
@@ -65,7 +65,7 @@ public class DaoProvider implements IDaoProvider {
 
 		for (Binding<?> binding : bindings.values()) {
 			if (GenericDao.class.isAssignableFrom(binding.getProvider().get().getClass())) {
-				result.add((ITypedDao<T> )binding.getProvider().get());
+				result.add((ITypedDao<T>) binding.getProvider().get());
 			}
 		}
 

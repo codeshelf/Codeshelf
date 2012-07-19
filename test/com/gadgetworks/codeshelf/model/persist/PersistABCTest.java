@@ -4,44 +4,72 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.util.List;
+
 import org.junit.Test;
 
 import com.gadgetworks.codeshelf.model.dao.GenericDao;
+import com.gadgetworks.codeshelf.model.domain.DomainObjectABC;
+import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 
 public class PersistABCTest {
 	
-	class PersistABCStub extends PersistABC {
+	class PersistABCStub extends DomainObjectABC {
 		
 		public PersistABCStub() {
 		}
 
-		public PersistABC getParent() {
+		public DomainObjectABC getParent() {
 			return null;
 		}
 
-		public void setParent(PersistABC inParent) {
+		public void setParent(DomainObjectABC inParent) {
 			
+		}
+
+		@Override
+		public void setParent(IDomainObject inParent) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public List<IDomainObject> getChildren() {
+			// TODO Auto-generated method stub
+			return null;
 		}
 	}
 	
-	class PersistABCOtherStub extends PersistABC {
+	class PersistABCOtherStub extends DomainObjectABC {
 
 		public PersistABCOtherStub() {
 		}
 
-		public PersistABC getParent() {
+		public DomainObjectABC getParent() {
 			return null;
 		}
 
-		public void setParent(PersistABC inParent) {
+		public void setParent(DomainObjectABC inParent) {
 
+		}
+
+		@Override
+		public void setParent(IDomainObject inParent) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public List<IDomainObject> getChildren() {
+			// TODO Auto-generated method stub
+			return null;
 		}
 	}
 
 	@Test
 	public void testGetId() {
 		PersistABCStub persist = new PersistABCStub();
-		assertEquals(persist.getIdColumnName(), "Id");
+		assertEquals(IDomainObject.ID_COLUMN_NAME, "Id");
 	}
 
 	@Test

@@ -12,8 +12,8 @@ build.xml
 	<property name="module.build.dir" value="${module.dir}/build/" />
 	<property name="module.conf.dir" value="${module.dir}/conf/" />
 	<property name="module.eclipse-bin.dir" value="${module.dir}/eclipse-bin/" />
-	<property name="modules.model.dir" value="${module.dir}/src/com/gadgetworks/codeshelf/model/persist" />
-	<property name="modules.enhance.dir" value="${module.dir}/build/com/gadgetworks/codeshelf/model/persist" />
+	<property name="modules.model.dir" value="${module.dir}/src/com/gadgetworks/codeshelf/model/domain" />
+	<property name="modules.enhance.dir" value="${module.dir}/build/com/gadgetworks/codeshelf/model/domain" />
 
 	<property name="javac.compile.using.version" value="1.6" />
 

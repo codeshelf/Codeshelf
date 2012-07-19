@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: GenericDao.java,v 1.20 2012/07/13 08:08:42 jeffw Exp $
+ *  $Id: GenericDao.java,v 1.21 2012/07/19 06:11:33 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -17,13 +17,13 @@ import org.apache.commons.logging.LogFactory;
 
 import com.avaje.ebean.Ebean;
 import com.avaje.ebean.Query;
-import com.gadgetworks.codeshelf.model.persist.PersistABC;
+import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 
 /**
  * @author jeffw
  *
  */
-public class GenericDao<T extends PersistABC> implements ITypedDao<T> {
+public class GenericDao<T extends IDomainObject> implements ITypedDao<T> {
 
 	private static final Log	LOGGER		= LogFactory.getLog(GenericDao.class);
 
@@ -39,7 +39,7 @@ public class GenericDao<T extends PersistABC> implements ITypedDao<T> {
 	/**
 	 * @param inDomainObject
 	 */
-	private void privateBroadcastAdd(final PersistABC inDomainObject) {
+	private void privateBroadcastAdd(final IDomainObject inDomainObject) {
 		for (IDaoListener daoListener : mListeners) {
 			daoListener.objectAdded(inDomainObject);
 		}
@@ -49,7 +49,7 @@ public class GenericDao<T extends PersistABC> implements ITypedDao<T> {
 	/**
 	 * @param inDomainObject
 	 */
-	private void privateBroadcastUpdate(final PersistABC inDomainObject) {
+	private void privateBroadcastUpdate(final IDomainObject inDomainObject) {
 		for (IDaoListener daoListener : mListeners) {
 			daoListener.objectUpdated(inDomainObject);
 		}
@@ -59,7 +59,7 @@ public class GenericDao<T extends PersistABC> implements ITypedDao<T> {
 	/**
 	 * @param inDomainObject
 	 */
-	private void privateBroadcastDelete(final PersistABC inDomainObject) {
+	private void privateBroadcastDelete(final IDomainObject inDomainObject) {
 		for (IDaoListener daoListener : mListeners) {
 			daoListener.objectDeleted(inDomainObject);
 		}
@@ -67,7 +67,7 @@ public class GenericDao<T extends PersistABC> implements ITypedDao<T> {
 
 	/* --------------------------------------------------------------------------
 	 * (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.dao.ISystemDAO#pushNonPersistentAccountUpdates(com.gadgetworks.codeshelf.model.persist.Account)
+	 * @see com.gadgetworks.codeshelf.model.dao.ISystemDAO#pushNonPersistentAccountUpdates(com.gadgetworks.codeshelf.model.domain.Account)
 	 */
 	public final void pushNonPersistentUpdates(T inPerstitentObject) {
 		privateBroadcastUpdate(inPerstitentObject);
@@ -78,7 +78,7 @@ public class GenericDao<T extends PersistABC> implements ITypedDao<T> {
 	 * @param inDomainObject
 	 * @return
 	 */
-	//	public final boolean isObjectPersisted(PersistABC inDomainObject) {
+	//	public final boolean isObjectPersisted(IDomainObject inDomainObject) {
 	//		boolean result = false;
 	//
 	//		BeanState state = Ebean.getBeanState(inDomainObject);
@@ -108,7 +108,7 @@ public class GenericDao<T extends PersistABC> implements ITypedDao<T> {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#findById(java.lang.String)
 	 */
-	public final T findByDomainId(final PersistABC inParentObject, final String inId) {
+	public final T findByDomainId(final IDomainObject inParentObject, final String inId) {
 		T result = null;
 
 		String effectiveId;
@@ -120,7 +120,7 @@ public class GenericDao<T extends PersistABC> implements ITypedDao<T> {
 
 		try {
 			Query<T> query = Ebean.createQuery(mClass);
-			query.where().eq(T.getIdColumnName(), effectiveId);
+			query.where().eq(IDomainObject.ID_COLUMN_NAME, effectiveId);
 			//query = query.setUseCache(true);
 			result = query.findUnique();
 		} catch (PersistenceException e) {

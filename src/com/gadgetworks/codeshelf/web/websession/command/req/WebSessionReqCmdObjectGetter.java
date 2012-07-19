@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectGetter.java,v 1.11 2012/07/11 07:15:42 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectGetter.java,v 1.12 2012/07/19 06:11:33 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -16,7 +16,7 @@ import org.codehaus.jackson.node.ObjectNode;
 
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.model.persist.PersistABC;
+import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.web.websession.command.resp.IWebSessionRespCmd;
 import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdObjectGetter;
 
@@ -69,8 +69,8 @@ public class WebSessionReqCmdObjectGetter extends WebSessionReqCmdABC {
 			JsonNode dataJsonNode = getDataJsonNode();
 			JsonNode parentClassNode = dataJsonNode.get(CLASSNAME);
 			String parentClassName = parentClassNode.getTextValue();
-			if (!parentClassName.startsWith("com.gadgetworks.codeshelf.model.persist.")) {
-				parentClassName = "com.gadgetworks.codeshelf.model.persist." + parentClassName;
+			if (!parentClassName.startsWith("com.gadgetworks.codeshelf.model.domain.")) {
+				parentClassName = "com.gadgetworks.codeshelf.model.domain." + parentClassName;
 			}
 			JsonNode parentIdNode = dataJsonNode.get(PERSISTENT_ID);
 			long parentId = parentIdNode.getLongValue();
@@ -79,10 +79,10 @@ public class WebSessionReqCmdObjectGetter extends WebSessionReqCmdABC {
 
 			// First we find the parent object (by it's ID).
 			Class<?> classObject = Class.forName(parentClassName);
-			if (PersistABC.class.isAssignableFrom(classObject)) {
+			if (IDomainObject.class.isAssignableFrom(classObject)) {
 
-				ITypedDao<PersistABC> dao = mDaoProvider.getDaoInstance((Class<PersistABC>) classObject);
-				PersistABC parentObject = dao.findByPersistentId(parentId);
+				ITypedDao<IDomainObject> dao = mDaoProvider.getDaoInstance((Class<IDomainObject>) classObject);
+				IDomainObject parentObject = dao.findByPersistentId(parentId);
 
 				// Execute the "get" method against the parents to return the children.
 				// (The method *must* start with "get" to ensure other methods don't get called.)

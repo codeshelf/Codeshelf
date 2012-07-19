@@ -1,9 +1,9 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Location.java,v 1.9 2012/07/17 00:31:43 jeffw Exp $
+ *  $Id: Location.java,v 1.1 2012/07/19 06:11:32 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.model.persist;
+package com.gadgetworks.codeshelf.model.domain;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,8 +28,6 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDao;
-import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
@@ -49,7 +47,7 @@ import com.google.inject.Singleton;
 @DiscriminatorColumn(name = "DTYPE", discriminatorType = DiscriminatorType.STRING)
 @Table(name = "LOCATION")
 @DiscriminatorValue("ABC")
-public abstract class Location<T extends PersistABC> extends PersistABC {
+public abstract class Location extends DomainObjectABC {
 
 	private static final Log	LOGGER	= LogFactory.getLog(Location.class);
 
@@ -125,6 +123,11 @@ public abstract class Location<T extends PersistABC> extends PersistABC {
 		posZ = inPosZ;
 	}
 
+	@JsonIgnore
+	public final List<? extends IDomainObject> getChildren() {
+		return getLocations();
+	}
+	
 	public final void setPosTypeByStr(String inPosTypeStr) {
 		setPosType(PositionTypeEnum.valueOf(inPosTypeStr));
 	}

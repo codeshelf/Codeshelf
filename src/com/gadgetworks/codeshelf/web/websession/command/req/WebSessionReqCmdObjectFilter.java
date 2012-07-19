@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectFilter.java,v 1.9 2012/07/11 07:15:42 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectFilter.java,v 1.10 2012/07/19 06:11:33 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -24,7 +24,7 @@ import org.codehaus.jackson.type.TypeReference;
 
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.model.persist.PersistABC;
+import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.web.websession.IWebSession;
 import com.gadgetworks.codeshelf.web.websession.command.resp.IWebSessionRespCmd;
 import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdObjectFilter;
@@ -46,13 +46,13 @@ import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdOb
 public class WebSessionReqCmdObjectFilter extends WebSessionReqCmdABC implements IWebSessionPersistentReqCmd {
 	private static final Log				LOGGER	= LogFactory.getLog(WebSessionReqCmdObjectListener.class);
 
-	private Class<PersistABC>				mPersistenceClass;
-	private List<PersistABC>				mObjectMatchList;
+	private Class<IDomainObject>				mPersistenceClass;
+	private List<IDomainObject>				mObjectMatchList;
 	private List<String>					mPropertyNames;
 	private String							mFilterClause;
 	private Map<String, Object>				mFilterParams;
 	private IDaoProvider					mDaoProvider;
-	private List<ITypedDao<PersistABC>>	mDaoList;
+	private List<ITypedDao<IDomainObject>>	mDaoList;
 
 	/**
 	 * @param inCommandId
@@ -62,7 +62,7 @@ public class WebSessionReqCmdObjectFilter extends WebSessionReqCmdABC implements
 		super(inCommandId, inDataNodeAsJson);
 		mDaoProvider = inDaoProvider;
 		mFilterParams = new HashMap<String, Object>();
-		mDaoList = new ArrayList<ITypedDao<PersistABC>>();
+		mDaoList = new ArrayList<ITypedDao<IDomainObject>>();
 	}
 
 	public final WebSessionReqCmdEnum getCommandEnum() {
@@ -82,8 +82,8 @@ public class WebSessionReqCmdObjectFilter extends WebSessionReqCmdABC implements
 			JsonNode dataJsonNode = getDataJsonNode();
 			JsonNode objectClassNode = dataJsonNode.get(CLASSNAME);
 			String objectClassName = objectClassNode.getTextValue();
-			if (!objectClassName.startsWith("com.gadgetworks.codeshelf.model.persist.")) {
-				objectClassName = "com.gadgetworks.codeshelf.model.persist." + objectClassName;
+			if (!objectClassName.startsWith("com.gadgetworks.codeshelf.model.domain.")) {
+				objectClassName = "com.gadgetworks.codeshelf.model.domain." + objectClassName;
 			}
 			JsonNode propertyNamesNode = dataJsonNode.get(PROPERTY_NAME_LIST);
 			ObjectMapper mapper = new ObjectMapper();
@@ -103,10 +103,10 @@ public class WebSessionReqCmdObjectFilter extends WebSessionReqCmdABC implements
 
 			// First we find the object (by it's ID).
 			Class<?> classObject = Class.forName(objectClassName);
-			if (PersistABC.class.isAssignableFrom(classObject)) {
-				mPersistenceClass = (Class<PersistABC>) classObject;
+			if (IDomainObject.class.isAssignableFrom(classObject)) {
+				mPersistenceClass = (Class<IDomainObject>) classObject;
 
-				ITypedDao<PersistABC> dao = mDaoProvider.getDaoInstance((Class<PersistABC>) mPersistenceClass);
+				ITypedDao<IDomainObject> dao = mDaoProvider.getDaoInstance((Class<IDomainObject>) mPersistenceClass);
 				mObjectMatchList = dao.findByFilter(mFilterClause, mFilterParams);
 				mDaoList.add(dao);
 
@@ -131,13 +131,13 @@ public class WebSessionReqCmdObjectFilter extends WebSessionReqCmdABC implements
 	/**
 	 * @return
 	 */
-	private IWebSessionRespCmd getProperties(List<PersistABC> inDomainObjectList, String inOperationType) {
+	private IWebSessionRespCmd getProperties(List<IDomainObject> inDomainObjectList, String inOperationType) {
 
 		IWebSessionRespCmd result = null;
 
 		try {
 			List<Map<String, Object>> resultsList = new ArrayList<Map<String, Object>>();
-			for (PersistABC matchedObject : inDomainObjectList) {
+			for (IDomainObject matchedObject : inDomainObjectList) {
 				Map<String, Object> propertiesMap = new HashMap<String, Object>();
 				// Always include the class naem and persistent ID in the results.
 				propertiesMap.put(CLASSNAME, matchedObject.getClassName());
@@ -177,31 +177,31 @@ public class WebSessionReqCmdObjectFilter extends WebSessionReqCmdABC implements
 		return result;
 	}
 
-	public final IWebSessionRespCmd processObjectAdd(PersistABC inDomainObject) {
-		ITypedDao<PersistABC> dao = mDaoProvider.getDaoInstance((Class<PersistABC>) mPersistenceClass);
+	public final IWebSessionRespCmd processObjectAdd(IDomainObject inDomainObject) {
+		ITypedDao<IDomainObject> dao = mDaoProvider.getDaoInstance((Class<IDomainObject>) mPersistenceClass);
 		mObjectMatchList = dao.findByFilter(mFilterClause, mFilterParams);
-		List<PersistABC> domainObjectList = new ArrayList<PersistABC>();
+		List<IDomainObject> domainObjectList = new ArrayList<IDomainObject>();
 		if (mObjectMatchList.contains(inDomainObject)) {
 			domainObjectList.add(inDomainObject);
 		}
 		return getProperties(domainObjectList, OP_TYPE_CREATE);
 	}
 
-	public final IWebSessionRespCmd processObjectUpdate(PersistABC inDomainObject) {
-		ITypedDao<PersistABC> dao = mDaoProvider.getDaoInstance((Class<PersistABC>) mPersistenceClass);
+	public final IWebSessionRespCmd processObjectUpdate(IDomainObject inDomainObject) {
+		ITypedDao<IDomainObject> dao = mDaoProvider.getDaoInstance((Class<IDomainObject>) mPersistenceClass);
 		mObjectMatchList = dao.findByFilter(mFilterClause, mFilterParams);
-		List<PersistABC> domainObjectList = new ArrayList<PersistABC>();
+		List<IDomainObject> domainObjectList = new ArrayList<IDomainObject>();
 		if (mObjectMatchList.contains(inDomainObject)) {
 			domainObjectList.add(inDomainObject);
 		}
 		return getProperties(domainObjectList, OP_TYPE_UPDATE);
 	}
 
-	public final IWebSessionRespCmd processObjectDelete(PersistABC inDomainObject) {
+	public final IWebSessionRespCmd processObjectDelete(IDomainObject inDomainObject) {
 		// Delete is a bit of a weird case.  We don't want to refresh the member list since we want the delete to propagate to anyone listening with a filter.
-//		IGenericDao<PersistABC> dao = mDaoProvider.getDaoInstance((Class<PersistABC>) mPersistenceClass);
+//		IGenericDao<IDomainObject> dao = mDaoProvider.getDaoInstance((Class<IDomainObject>) mPersistenceClass);
 //		mObjectMatchList = dao.findByFilter(mFilterClause, mFilterParams);
-		List<PersistABC> domainObjectList = new ArrayList<PersistABC>();
+		List<IDomainObject> domainObjectList = new ArrayList<IDomainObject>();
 		if (mObjectMatchList.contains(inDomainObject)) {
 			domainObjectList.add(inDomainObject);
 		}
@@ -209,13 +209,13 @@ public class WebSessionReqCmdObjectFilter extends WebSessionReqCmdABC implements
 	}
 
 	public final void registerSessionWithDaos(IWebSession inWebSession) {
-		for (ITypedDao<PersistABC> dao : mDaoList) {
+		for (ITypedDao<IDomainObject> dao : mDaoList) {
 			dao.registerDAOListener(inWebSession);
 		}
 	}
 
 	public final void unregisterSessionWithDaos(IWebSession inWebSession) {
-		for (ITypedDao<PersistABC> dao : mDaoList) {
+		for (ITypedDao<IDomainObject> dao : mDaoList) {
 			dao.unregisterDAOListener(inWebSession);
 		}
 	}

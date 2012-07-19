@@ -1,9 +1,9 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Organization.java,v 1.13 2012/07/13 21:56:56 jeffw Exp $
+ *  $Id: Organization.java,v 1.1 2012/07/19 06:11:32 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.model.persist;
+package com.gadgetworks.codeshelf.model.domain;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,7 +40,7 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "ORGANIZATION")
-public class Organization extends PersistABC {
+public class Organization extends DomainObjectABC {
 
 	@Singleton
 	public static class OrganizationDao extends GenericDao<Organization> implements ITypedDao<Organization> {
@@ -81,12 +81,17 @@ public class Organization extends PersistABC {
 	 * Someday, organizations may have other organizations.
 	 * @return
 	 */
-	public final PersistABC getParent() {
+	public final IDomainObject getParent() {
 		return null;
 	}
 
-	public final void setParent(PersistABC inParent) {
+	public final void setParent(IDomainObject inParent) {
 
+	}
+
+	@JsonIgnore
+	public final List<? extends IDomainObject> getChildren() {
+		return getFacilities();
 	}
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.

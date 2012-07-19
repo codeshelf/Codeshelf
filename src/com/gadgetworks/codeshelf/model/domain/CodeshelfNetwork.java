@@ -1,9 +1,9 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfNetwork.java,v 1.22 2012/07/13 21:56:56 jeffw Exp $
+ *  $Id: CodeshelfNetwork.java,v 1.1 2012/07/19 06:11:32 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.model.persist;
+package com.gadgetworks.codeshelf.model.domain;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,6 +20,7 @@ import lombok.Setter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.codehaus.jackson.annotate.JsonIgnore;
 
 import com.gadgetworks.codeshelf.controller.IWirelessInterface;
 import com.gadgetworks.codeshelf.controller.NetAddress;
@@ -41,7 +42,7 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "CODESHELFNETWORK")
-public class CodeShelfNetwork extends PersistABC {
+public class CodeShelfNetwork extends DomainObjectABC {
 
 	@Singleton
 	public static class CodeShelfNetworkDao extends GenericDao<CodeShelfNetwork> implements ITypedDao<CodeShelfNetwork> {
@@ -109,14 +110,19 @@ public class CodeShelfNetwork extends PersistABC {
 		connected = false;
 	}
 
-	public PersistABC getParent() {
+	public final IDomainObject getParent() {
 		return getParentFacility();
 	}
 
-	public final void setParent(PersistABC inParent) {
+	public final void setParent(IDomainObject inParent) {
 		if (inParent instanceof Facility) {
 			setParentFacility((Facility) inParent);
 		}
+	}
+	
+	@JsonIgnore
+	public final List<? extends IDomainObject> getChildren() {
+		return getControlGroups();
 	}
 	
 	public final NetworkId getNetworkId() {

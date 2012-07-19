@@ -1,11 +1,11 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: IWebSessionPersistentReqCmd.java,v 1.1 2012/04/10 08:01:19 jeffw Exp $
+ *  $Id: IWebSessionPersistentReqCmd.java,v 1.2 2012/07/19 06:11:33 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
-import com.gadgetworks.codeshelf.model.persist.PersistABC;
+import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.web.websession.IWebSession;
 import com.gadgetworks.codeshelf.web.websession.command.resp.IWebSessionRespCmd;
 
@@ -21,7 +21,7 @@ public interface IWebSessionPersistentReqCmd extends IWebSessionReqCmd {
 	 * @param inDomainObject	The domain object that changed.
 	 * @return	The response command.
 	 */
-	IWebSessionRespCmd processObjectAdd(PersistABC inDomainObject);
+	IWebSessionRespCmd processObjectAdd(IDomainObject inDomainObject);
 
 	// --------------------------------------------------------------------------
 	/**
@@ -29,7 +29,7 @@ public interface IWebSessionPersistentReqCmd extends IWebSessionReqCmd {
 	 * @param inDomainObject	The domain object that changed.
 	 * @return	The response command.
 	 */
-	IWebSessionRespCmd processObjectUpdate(PersistABC inDomainObject);
+	IWebSessionRespCmd processObjectUpdate(IDomainObject inDomainObject);
 
 	// --------------------------------------------------------------------------
 	/**
@@ -37,7 +37,7 @@ public interface IWebSessionPersistentReqCmd extends IWebSessionReqCmd {
 	 * @param inDomainObject	The domain object that changed.
 	 * @return	The response command.
 	 */
-	IWebSessionRespCmd processObjectDelete(PersistABC inDomainObject);
+	IWebSessionRespCmd processObjectDelete(IDomainObject inDomainObject);
 
 	// --------------------------------------------------------------------------
 	/**

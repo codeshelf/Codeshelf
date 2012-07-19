@@ -1,9 +1,12 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PersistentProperty.java,v 1.19 2012/07/13 21:56:56 jeffw Exp $
+ *  $Id: PersistentProperty.java,v 1.1 2012/07/19 06:11:32 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.model.persist;
+package com.gadgetworks.codeshelf.model.domain;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -29,7 +32,7 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-public class PersistentProperty<T extends PersistABC> extends PersistABC {
+public class PersistentProperty<T extends DomainObjectABC> extends DomainObjectABC {
 
 	@Singleton
 	public static class PersistentPropertyDao extends GenericDao<PersistentProperty> implements ITypedDao<PersistentProperty> {
@@ -76,14 +79,19 @@ public class PersistentProperty<T extends PersistABC> extends PersistABC {
 		currentValueStr = "";
 	}
 
-	public final PersistABC getParent() {
+	public final IDomainObject getParent() {
 		return getParentOrganization();
 	}
 
-	public final void setParent(PersistABC inParent) {
+	public final void setParent(IDomainObject inParent) {
 		if (inParent instanceof Organization) {
 			setParentOrganization((Organization) inParent);
 		}
+	}
+
+	@JsonIgnore
+	public final List<IDomainObject> getChildren() {
+		return new ArrayList<IDomainObject>();
 	}
 
 	public final String toString() {

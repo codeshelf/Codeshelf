@@ -1,9 +1,9 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ControlGroup.java,v 1.26 2012/07/13 21:56:56 jeffw Exp $
+ *  $Id: ControlGroup.java,v 1.1 2012/07/19 06:11:32 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.model.persist;
+package com.gadgetworks.codeshelf.model.domain;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,6 +14,8 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.Transient;
+
+import org.codehaus.jackson.annotate.JsonIgnore;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -35,7 +37,7 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "CONTROLGROUP")
-public class ControlGroup extends PersistABC {
+public class ControlGroup extends DomainObjectABC {
 
 	@Singleton
 	public static class ControlGroupDao extends GenericDao<ControlGroup> implements ITypedDao<ControlGroup> {
@@ -96,14 +98,19 @@ public class ControlGroup extends PersistABC {
 		tagProtocolEnum = TagProtocolEnum.ATOP;
 	}
 
-	public final PersistABC getParent() {
+	public final IDomainObject getParent() {
 		return getParentCodeShelfNetwork();
 	}
 
-	public final void setParent(PersistABC inParent) {
+	public final void setParent(IDomainObject inParent) {
 		if (inParent instanceof CodeShelfNetwork) {
 			setParentCodeShelfNetwork((CodeShelfNetwork) inParent);
 		}
+	}
+	
+	@JsonIgnore
+	public final List<? extends IDomainObject> getChildren() {
+		return getWirelessDevices();
 	}
 	
 	public final NetGroup getControlGroupId() {

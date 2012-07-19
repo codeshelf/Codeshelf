@@ -1,9 +1,9 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Bay.java,v 1.5 2012/07/17 00:31:43 jeffw Exp $
+ *  $Id: Bay.java,v 1.1 2012/07/19 06:11:32 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.model.persist;
+package com.gadgetworks.codeshelf.model.domain;
 
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
@@ -48,11 +48,11 @@ public class Bay extends Location {
 		super(PositionTypeEnum.METERS_FROM_PARENT, inPosX, inPosY, inPosZ);
 	}
 
-	public final PersistABC getParent() {
+	public final IDomainObject getParent() {
 		return getParentLocation();
 	}
 
-	public final void setParent(PersistABC inParent) {
+	public final void setParent(IDomainObject inParent) {
 		if (inParent instanceof Aisle) {
 			setParentLocation((Aisle) inParent);
 		}

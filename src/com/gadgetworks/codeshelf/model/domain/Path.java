@@ -1,9 +1,9 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Path.java,v 1.4 2012/07/13 21:56:56 jeffw Exp $
+ *  $Id: Path.java,v 1.1 2012/07/19 06:11:32 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.model.persist;
+package com.gadgetworks.codeshelf.model.domain;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +36,7 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "PATH")
-public class Path extends PersistABC {
+public class Path extends DomainObjectABC {
 
 	private static final Log	LOGGER	= LogFactory.getLog(Path.class);
 
@@ -54,7 +54,7 @@ public class Path extends PersistABC {
 	@Getter
 	@Setter
 	@Column(nullable = false)
-	private PersistABC			parentFacility;
+	private Facility			parentFacility;
 
 	// The path description.
 	@Getter
@@ -77,14 +77,21 @@ public class Path extends PersistABC {
 	 * Someday, organizations may have other organizations.
 	 * @return
 	 */
-	public final PersistABC getParent() {
+	public final IDomainObject getParent() {
 		return parentFacility;
 	}
 
-	public final void setParent(PersistABC inParent) {
-		parentFacility = inParent;
+	public final void setParent(IDomainObject inParent) {
+		if (inParent instanceof Facility) {
+			setParentFacility((Facility) inParent);
+		}
 	}
 
+	@JsonIgnore
+	public final List<? extends IDomainObject> getChildren() {
+		return getSegments();
+	}
+	
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void addPathSegment(PathSegment inPathSegment) {
 		segments.add(inPathSegment);

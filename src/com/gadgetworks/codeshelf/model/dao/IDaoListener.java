@@ -1,11 +1,11 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: IDaoListener.java,v 1.4 2012/03/30 23:21:35 jeffw Exp $
+ *  $Id: IDaoListener.java,v 1.5 2012/07/19 06:11:33 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
-import com.gadgetworks.codeshelf.model.persist.PersistABC;
+import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 
 // --------------------------------------------------------------------------
 /**
@@ -13,10 +13,10 @@ import com.gadgetworks.codeshelf.model.persist.PersistABC;
  */
 public interface IDaoListener {
 	
-	void objectAdded(PersistABC inObject);
+	void objectAdded(IDomainObject inObject);
 	
-	void objectUpdated(PersistABC inObject);
+	void objectUpdated(IDomainObject inObject);
 	
-	void objectDeleted(PersistABC inObject);
+	void objectDeleted(IDomainObject inObject);
 
 }

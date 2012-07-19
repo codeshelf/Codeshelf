@@ -281,7 +281,7 @@
 		</taskdef>
 
 		<!-- enhance -->
-		<ebeanEnhance packages="com.gadgetworks.codeshelf.model.persist" classdestination="${target.enhanced.classes}" classsource="${target.obfuscated.classes}" transformargs="debug=1" classpath="${target.lib}/*.jar" />
+		<ebeanEnhance packages="com.gadgetworks.codeshelf.model.domain" classdestination="${target.enhanced.classes}" classsource="${target.obfuscated.classes}" transformargs="debug=1" classpath="${target.lib}/*.jar" />
 
 	</target>
 
@@ -418,7 +418,7 @@
 			-libraryjars "${target.lib}/json-1.0.jar"
 			-libraryjars "${target.lib}/jul-to-slf4j-1.6.4.jar"
 			-libraryjars "${target.lib}/log4j-1.2.14.jar"
-			-libraryjars "${target.lib}/lombok-0.11.0.jar"
+			-libraryjars "${target.lib}/lombok-0.11.2.jar"
 			-libraryjars "${target.lib}/slf4j-api-1.6.4.jar"
 			-libraryjars "${target.lib}/slf4j-log4j12-1.6.4.jar"
 			-libraryjars "${target.lib}/ws-commons-util-1.0.2.jar"
@@ -436,7 +436,7 @@
  -->
 			${keep.main.classes}
 			-keep
-				public class com.gadgetworks.codeshelf.model.persist.* {
+				public class com.gadgetworks.codeshelf.model.domain.* {
 					&lt;fields&gt;;
 					&lt;methods&gt;;
 				}

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ActiveMqManager.java,v 1.1 2012/03/18 09:03:39 jeffw Exp $
+ *  $Id: ActiveMqManager.java,v 1.2 2012/07/19 06:11:34 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.server.jms;
 
@@ -32,7 +32,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.gadgetworks.codeshelf.application.Util;
-import com.gadgetworks.codeshelf.model.persist.PersistentProperty;
+import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
 
 // --------------------------------------------------------------------------
 /**

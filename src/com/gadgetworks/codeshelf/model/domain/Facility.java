@@ -1,9 +1,9 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.23 2012/07/17 00:31:43 jeffw Exp $
+ *  $Id: Facility.java,v 1.1 2012/07/19 06:11:32 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.model.persist;
+package com.gadgetworks.codeshelf.model.domain;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -80,11 +80,11 @@ public class Facility extends Location {
 		this.setParentLocation(this);
 	}
 
-	public final PersistABC getParent() {
+	public final IDomainObject getParent() {
 		return getParentOrganization();
 	}
 
-	public final void setParent(PersistABC inParent) {
+	public final void setParent(IDomainObject inParent) {
 		if (inParent instanceof Organization) {
 			setParentOrganization((Organization) inParent);
 		}

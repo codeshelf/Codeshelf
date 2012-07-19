@@ -1,12 +1,17 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: DBProperty.java,v 1.15 2012/07/13 21:56:56 jeffw Exp $
+ *  $Id: DBProperty.java,v 1.1 2012/07/19 06:11:32 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.model.persist;
+package com.gadgetworks.codeshelf.model.domain;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+
+import org.codehaus.jackson.annotate.JsonIgnore;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -26,7 +31,7 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-public class DBProperty extends PersistABC {
+public class DBProperty extends DomainObjectABC {
 
 	@Singleton
 	public static class DBPropertyDao extends GenericDao<DBProperty> implements ITypedDao<DBProperty> {
@@ -54,12 +59,16 @@ public class DBProperty extends PersistABC {
 	 * DBProperties don't belong to anyone.
 	 * @return
 	 */
-	public final PersistABC getParent() {
+	public final IDomainObject getParent() {
 		return null;
 	}
 
-	public final void setParent(PersistABC inParent) {
+	public final void setParent(IDomainObject inParent) {
 
 	}
 
+	@JsonIgnore
+	public final List<IDomainObject> getChildren() {
+		return new ArrayList<IDomainObject>();
+	}
 }

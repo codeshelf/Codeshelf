@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PickTagDeviceWizard.java,v 1.1 2012/03/16 15:59:08 jeffw Exp $
+ *  $Id: PickTagDeviceWizard.java,v 1.2 2012/07/19 06:11:33 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.ui.wizards;
@@ -17,9 +17,9 @@ import org.eclipse.swt.widgets.Shell;
 import com.gadgetworks.codeshelf.controller.IController;
 import com.gadgetworks.codeshelf.controller.NetAddress;
 import com.gadgetworks.codeshelf.model.dao.DAOException;
-import com.gadgetworks.codeshelf.model.persist.ControlGroup;
-import com.gadgetworks.codeshelf.model.persist.PickTag;
-import com.gadgetworks.codeshelf.model.persist.WirelessDevice;
+import com.gadgetworks.codeshelf.model.domain.ControlGroup;
+import com.gadgetworks.codeshelf.model.domain.PickTag;
+import com.gadgetworks.codeshelf.model.domain.WirelessDevice;
 import com.gadgetworks.codeshelf.ui.LocaleUtils;
 
 // --------------------------------------------------------------------------

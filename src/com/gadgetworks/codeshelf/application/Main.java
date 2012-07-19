@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Main.java,v 1.16 2012/07/17 07:57:43 jeffw Exp $
+ *  $Id: Main.java,v 1.17 2012/07/19 06:11:34 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -13,28 +13,28 @@ import com.gadgetworks.codeshelf.model.dao.DaoProvider;
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.dao.domain.WirelessDeviceDao;
-import com.gadgetworks.codeshelf.model.persist.Aisle;
-import com.gadgetworks.codeshelf.model.persist.Aisle.AisleDao;
-import com.gadgetworks.codeshelf.model.persist.Bay;
-import com.gadgetworks.codeshelf.model.persist.Bay.BayDao;
-import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork;
-import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork.CodeShelfNetworkDao;
-import com.gadgetworks.codeshelf.model.persist.ControlGroup;
-import com.gadgetworks.codeshelf.model.persist.ControlGroup.ControlGroupDao;
-import com.gadgetworks.codeshelf.model.persist.DBProperty;
-import com.gadgetworks.codeshelf.model.persist.DBProperty.DBPropertyDao;
-import com.gadgetworks.codeshelf.model.persist.Facility;
-import com.gadgetworks.codeshelf.model.persist.Facility.FacilityDao;
-import com.gadgetworks.codeshelf.model.persist.Organization;
-import com.gadgetworks.codeshelf.model.persist.Organization.OrganizationDao;
-import com.gadgetworks.codeshelf.model.persist.PersistentProperty;
-import com.gadgetworks.codeshelf.model.persist.PersistentProperty.PersistentPropertyDao;
-import com.gadgetworks.codeshelf.model.persist.User;
-import com.gadgetworks.codeshelf.model.persist.User.UserDao;
-import com.gadgetworks.codeshelf.model.persist.Vertex;
-import com.gadgetworks.codeshelf.model.persist.Vertex.VertexDao;
-import com.gadgetworks.codeshelf.model.persist.WirelessDevice;
-import com.gadgetworks.codeshelf.model.persist.WirelessDevice.IWirelessDeviceDao;
+import com.gadgetworks.codeshelf.model.domain.Aisle;
+import com.gadgetworks.codeshelf.model.domain.Aisle.AisleDao;
+import com.gadgetworks.codeshelf.model.domain.Bay;
+import com.gadgetworks.codeshelf.model.domain.Bay.BayDao;
+import com.gadgetworks.codeshelf.model.domain.CodeShelfNetwork;
+import com.gadgetworks.codeshelf.model.domain.CodeShelfNetwork.CodeShelfNetworkDao;
+import com.gadgetworks.codeshelf.model.domain.ControlGroup;
+import com.gadgetworks.codeshelf.model.domain.ControlGroup.ControlGroupDao;
+import com.gadgetworks.codeshelf.model.domain.DBProperty;
+import com.gadgetworks.codeshelf.model.domain.DBProperty.DBPropertyDao;
+import com.gadgetworks.codeshelf.model.domain.Facility;
+import com.gadgetworks.codeshelf.model.domain.Facility.FacilityDao;
+import com.gadgetworks.codeshelf.model.domain.Organization;
+import com.gadgetworks.codeshelf.model.domain.Organization.OrganizationDao;
+import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
+import com.gadgetworks.codeshelf.model.domain.PersistentProperty.PersistentPropertyDao;
+import com.gadgetworks.codeshelf.model.domain.User;
+import com.gadgetworks.codeshelf.model.domain.User.UserDao;
+import com.gadgetworks.codeshelf.model.domain.Vertex;
+import com.gadgetworks.codeshelf.model.domain.Vertex.VertexDao;
+import com.gadgetworks.codeshelf.model.domain.WirelessDevice;
+import com.gadgetworks.codeshelf.model.domain.WirelessDevice.IWirelessDeviceDao;
 import com.gadgetworks.codeshelf.web.websession.IWebSessionManager;
 import com.gadgetworks.codeshelf.web.websession.WebSessionManager;
 import com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmdFactory;

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ControllerABC.java,v 1.13 2012/07/13 21:56:56 jeffw Exp $
+ *  $Id: ControllerABC.java,v 1.14 2012/07/19 06:11:33 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.controller;
@@ -38,9 +38,9 @@ import com.gadgetworks.codeshelf.command.CommandNetMgmtABC;
 import com.gadgetworks.codeshelf.command.CommandNetMgmtCheck;
 import com.gadgetworks.codeshelf.command.CommandNetMgmtSetup;
 import com.gadgetworks.codeshelf.command.ICommand;
-import com.gadgetworks.codeshelf.model.persist.Facility;
-import com.gadgetworks.codeshelf.model.persist.PersistentProperty;
-import com.gadgetworks.codeshelf.model.persist.WirelessDevice;
+import com.gadgetworks.codeshelf.model.domain.Facility;
+import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
+import com.gadgetworks.codeshelf.model.domain.WirelessDevice;
 import com.gadgetworks.codeshelf.query.IQuery;
 import com.gadgetworks.codeshelf.query.IResponse;
 

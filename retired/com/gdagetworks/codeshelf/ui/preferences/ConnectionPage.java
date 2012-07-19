@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ConnectionPage.java,v 1.1 2012/03/16 15:59:10 jeffw Exp $
+ *  $Id: ConnectionPage.java,v 1.2 2012/07/19 06:11:34 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.ui.preferences;
 
@@ -15,7 +15,7 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
 
 import com.gadgetworks.codeshelf.controller.ControllerABC;
-import com.gadgetworks.codeshelf.model.persist.PersistentProperty;
+import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
 import com.gadgetworks.codeshelf.ui.LocaleUtils;
 
 // --------------------------------------------------------------------------

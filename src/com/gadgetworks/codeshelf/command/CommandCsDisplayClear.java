@@ -1,12 +1,12 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandCsDisplayClear.java,v 1.3 2011/02/15 22:16:04 jeffw Exp $
+ *  $Id: CommandCsDisplayClear.java,v 1.4 2012/07/19 06:11:33 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.command;
 
 import com.gadgetworks.codeshelf.controller.ITransport;
-import com.gadgetworks.codeshelf.model.persist.PickTag;
+import com.gadgetworks.codeshelf.model.domain.PickTag;
 
 
 /**

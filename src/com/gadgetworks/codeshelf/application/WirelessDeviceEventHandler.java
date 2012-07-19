@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  OmniBox
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WirelessDeviceEventHandler.java,v 1.9 2012/07/13 21:56:56 jeffw Exp $
+ *  $Id: WirelessDeviceEventHandler.java,v 1.10 2012/07/19 06:11:34 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.application;
 
@@ -16,8 +16,8 @@ import com.gadgetworks.codeshelf.controller.INetworkDevice;
 import com.gadgetworks.codeshelf.controller.NetMacAddress;
 import com.gadgetworks.codeshelf.controller.NetworkDeviceStateEnum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
-import com.gadgetworks.codeshelf.model.persist.WirelessDevice;
-import com.gadgetworks.codeshelf.model.persist.WirelessDevice.IWirelessDeviceDao;
+import com.gadgetworks.codeshelf.model.domain.WirelessDevice;
+import com.gadgetworks.codeshelf.model.domain.WirelessDevice.IWirelessDeviceDao;
 
 // --------------------------------------------------------------------------
 /**

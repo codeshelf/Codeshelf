@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfController.java,v 1.7 2012/07/13 21:56:56 jeffw Exp $
+ *  $Id: CodeShelfController.java,v 1.8 2012/07/19 06:11:33 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.controller;
@@ -15,9 +15,9 @@ import com.gadgetworks.codeshelf.command.CommandControlABC;
 import com.gadgetworks.codeshelf.command.CommandControlButton;
 import com.gadgetworks.codeshelf.command.CommandCsABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.model.persist.Facility;
-import com.gadgetworks.codeshelf.model.persist.PersistentProperty;
-import com.gadgetworks.codeshelf.model.persist.WirelessDevice;
+import com.gadgetworks.codeshelf.model.domain.Facility;
+import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
+import com.gadgetworks.codeshelf.model.domain.WirelessDevice;
 import com.gadgetworks.codeshelf.query.IQuery;
 import com.gadgetworks.codeshelf.query.IResponse;
 import com.gadgetworks.codeshelf.query.QueryActorDescriptor;

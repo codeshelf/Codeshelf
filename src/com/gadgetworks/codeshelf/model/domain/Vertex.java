@@ -1,9 +1,12 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Vertex.java,v 1.9 2012/07/13 21:56:56 jeffw Exp $
+ *  $Id: Vertex.java,v 1.1 2012/07/19 06:11:32 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.model.persist;
+package com.gadgetworks.codeshelf.model.domain;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -35,7 +38,7 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "VERTEX")
-public class Vertex extends PersistABC {
+public class Vertex extends DomainObjectABC {
 
 	private static final Log	LOGGER	= LogFactory.getLog(Vertex.class);
 
@@ -88,14 +91,19 @@ public class Vertex extends PersistABC {
 	/**
 	 * @return
 	 */
-	public final PersistABC getParent() {
+	public final IDomainObject getParent() {
 		return getParentLocation();
 	}
 
-	public final void setParent(PersistABC inParent) {
+	public final void setParent(IDomainObject inParent) {
 		if (inParent instanceof Location) {
 			setParentLocation((Location) inParent);
 		}
+	}
+	
+	@JsonIgnore
+	public final List<IDomainObject> getChildren() {
+		return new ArrayList<IDomainObject>();
 	}
 
 	public final void setParentLocation(final Location inParentLocation) {

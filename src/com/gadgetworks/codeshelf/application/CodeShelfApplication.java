@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfApplication.java,v 1.36 2012/07/13 21:56:56 jeffw Exp $
+ *  $Id: CodeShelfApplication.java,v 1.37 2012/07/19 06:11:34 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -34,16 +34,13 @@ import com.gadgetworks.codeshelf.model.dao.H2SchemaManager;
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.model.persist.Aisle;
-import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork;
-import com.gadgetworks.codeshelf.model.persist.DBProperty;
-import com.gadgetworks.codeshelf.model.persist.Facility;
-import com.gadgetworks.codeshelf.model.persist.Organization;
-import com.gadgetworks.codeshelf.model.persist.PersistABC;
-import com.gadgetworks.codeshelf.model.persist.PersistentProperty;
-import com.gadgetworks.codeshelf.model.persist.User;
-import com.gadgetworks.codeshelf.model.persist.WirelessDevice;
-import com.gadgetworks.codeshelf.model.persist.WirelessDevice.IWirelessDeviceDao;
+import com.gadgetworks.codeshelf.model.domain.CodeShelfNetwork;
+import com.gadgetworks.codeshelf.model.domain.DBProperty;
+import com.gadgetworks.codeshelf.model.domain.Facility;
+import com.gadgetworks.codeshelf.model.domain.IDomainObject;
+import com.gadgetworks.codeshelf.model.domain.Organization;
+import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
+import com.gadgetworks.codeshelf.model.domain.WirelessDevice;
 import com.gadgetworks.codeshelf.web.websocket.IWebSocketListener;
 import com.google.inject.Inject;
 
@@ -164,7 +161,7 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 		//		for (IDao dao : mDaoRegistry.getDaoList()) {
 		//			dao.removeDAOListeners();
 		//		}
-		for (ITypedDao<PersistABC> dao : mDaoProvider.getAllDaos()) {
+		for (ITypedDao<IDomainObject> dao : mDaoProvider.getAllDaos()) {
 			dao.removeDAOListeners();
 		}
 

@@ -1,12 +1,12 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandCsIndicatorOn.java,v 1.2 2011/02/15 02:39:46 jeffw Exp $
+ *  $Id: CommandCsIndicatorOn.java,v 1.3 2012/07/19 06:11:33 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.command;
 
 import com.gadgetworks.codeshelf.controller.ITransport;
-import com.gadgetworks.codeshelf.model.persist.PickTag;
+import com.gadgetworks.codeshelf.model.domain.PickTag;
 
 /**
  * @author jeffw

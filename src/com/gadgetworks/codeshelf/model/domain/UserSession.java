@@ -1,11 +1,13 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: UserSession.java,v 1.12 2012/07/13 21:56:56 jeffw Exp $
+ *  $Id: UserSession.java,v 1.1 2012/07/19 06:11:32 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.model.persist;
+package com.gadgetworks.codeshelf.model.domain;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -17,6 +19,7 @@ import lombok.Setter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.codehaus.jackson.annotate.JsonIgnore;
 
 import com.gadgetworks.codeshelf.model.dao.GenericDao;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
@@ -34,7 +37,7 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "USERSESSION")
-public class UserSession extends PersistABC {
+public class UserSession extends DomainObjectABC {
 
 	private static final Log	LOGGER				= LogFactory.getLog(UserSession.class);
 
@@ -72,14 +75,19 @@ public class UserSession extends PersistABC {
 		created = new Timestamp(System.currentTimeMillis());
 	}
 
-	public final PersistABC getParent() {
+	public final IDomainObject getParent() {
 		return getParentUser();
 	}
 
-	public final void setParent(PersistABC inParent) {
+	public final void setParent(IDomainObject inParent) {
 		if (inParent instanceof User) {
 			setParentUser((User) inParent);
 		}
+	}
+	
+	@JsonIgnore
+	public final List<IDomainObject> getChildren() {
+		return new ArrayList<IDomainObject>();
 	}
 
 	public final User getParentUser() {

@@ -1,9 +1,9 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PersistABC.java,v 1.26 2012/07/13 21:56:56 jeffw Exp $
+ *  $Id: DomainObjectABC.java,v 1.1 2012/07/19 06:11:32 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.model.persist;
+package com.gadgetworks.codeshelf.model.domain;
 
 import java.sql.Timestamp;
 import java.util.List;
@@ -12,7 +12,6 @@ import javax.persistence.Column;
 import javax.persistence.Id;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.PersistenceException;
-import javax.persistence.Transient;
 import javax.persistence.Version;
 
 import lombok.Getter;
@@ -25,7 +24,6 @@ import org.codehaus.jackson.annotate.JsonProperty;
 
 import com.avaje.ebean.Ebean;
 import com.avaje.ebean.Query;
-import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 
 // --------------------------------------------------------------------------
 /**
@@ -36,9 +34,9 @@ import com.gadgetworks.codeshelf.model.dao.ITypedDao;
  */
 
 @MappedSuperclass
-public abstract class PersistABC<T extends PersistABC> {
+public abstract class DomainObjectABC implements IDomainObject {
 
-	private static final Log	LOGGER	= LogFactory.getLog(PersistABC.class);
+	private static final Log	LOGGER	= LogFactory.getLog(DomainObjectABC.class);
 
 	// This is the internal GUID for the object.
 	@Id
@@ -59,19 +57,7 @@ public abstract class PersistABC<T extends PersistABC> {
 	@Setter
 	private Timestamp			version;
 
-	public PersistABC() {
-	}
-
-	public abstract PersistABC getParent();
-
-	public abstract void setParent(PersistABC inParent);
-
-	// --------------------------------------------------------------------------
-	/**
-	 * @return	Return the name of the column used to store the domain key.  Used by EBean to find objects.
-	 */
-	public static String getIdColumnName() {
-		return "domainId";
+	public DomainObjectABC() {
 	}
 
 	// --------------------------------------------------------------------------
@@ -91,7 +77,7 @@ public abstract class PersistABC<T extends PersistABC> {
 	 * @param inId
 	 */
 	public final void setDomainId(String inId) {
-		PersistABC parentObject = getParent();
+		IDomainObject parentObject = getParent();
 		if (parentObject != null) {
 			domainId = parentObject.getFullDomainId() + "." + inId;
 		} else {
@@ -134,9 +120,9 @@ public abstract class PersistABC<T extends PersistABC> {
 
 		boolean result = false;
 
-		if (inObject instanceof PersistABC) {
+		if (inObject instanceof DomainObjectABC) {
 			if (this.getClass().equals(inObject.getClass())) {
-				result = (persistentId.equals(((PersistABC) inObject).getPersistentId()));
+				result = (persistentId.equals(((DomainObjectABC) inObject).getPersistentId()));
 			}
 		} else {
 			result = super.equals(inObject);
@@ -162,7 +148,7 @@ public abstract class PersistABC<T extends PersistABC> {
 	 * @param inClass
 	 * @return
 	 */
-	public static <T extends PersistABC> T findByPersistentId(Long inPersistentId, Class<T> inClass) {
+	public static <T extends DomainObjectABC> T findByPersistentId(Long inPersistentId, Class<T> inClass) {
 		T result = null;
 		try {
 			result = Ebean.find(inClass, inPersistentId);
@@ -176,7 +162,7 @@ public abstract class PersistABC<T extends PersistABC> {
 	/**
 	 * @return
 	 */
-	public static <T extends PersistABC> List<T> getAll(Class<T> inClass) {
+	public static <T extends DomainObjectABC> List<T> getAll(Class<T> inClass) {
 		Query<T> query = Ebean.createQuery(inClass);
 		//query = query.setUseCache(true);
 		return query.findList();

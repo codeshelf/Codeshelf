@@ -31,7 +31,7 @@
 				<prop key="datanucleus.validateConstraints">true</prop>
 				<prop key="datanucleus.validateColumns">true</prop>
 				<prop key="datanucleus.identifierFactory">jpox2</prop>
-				<prop key="datanucleus.autoStartClassNames">com.gadgetworks.codeshelf.model.persist.Account, com.gadgetworks.codeshelf.model.persist.Person</prop>
+				<prop key="datanucleus.autoStartClassNames">com.gadgetworks.codeshelf.model.domain.Account, com.gadgetworks.codeshelf.model.domain.Person</prop>
 				<prop key="datanucleus.maxFetchDepth">-1</prop>
 				<prop key="datanucleus.rdbms.sql.allowAllSQLStatements">true</prop>
 				<prop key="datanucleus.query.flushBeforeExecution">true</prop>

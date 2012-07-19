@@ -1,11 +1,11 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: IWidget.java,v 1.1 2011/01/21 02:22:35 jeffw Exp $
+ *  $Id: IWidget.java,v 1.2 2012/07/19 06:11:34 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.server;
 
-import com.gadgetworks.codeshelf.model.persist.PickTag;
+import com.gadgetworks.codeshelf.model.domain.PickTag;
 
 /**
  * @author jeffw

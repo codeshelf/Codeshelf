@@ -1,9 +1,12 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PathSegment.java,v 1.4 2012/07/13 21:56:56 jeffw Exp $
+ *  $Id: PathSegment.java,v 1.1 2012/07/19 06:11:32 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.model.persist;
+package com.gadgetworks.codeshelf.model.domain;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -32,7 +35,7 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "PATHSEGMENT")
-public class PathSegment extends PersistABC {
+public class PathSegment extends DomainObjectABC implements IDomainObject {
 
 	private static final Log	LOGGER	= LogFactory.getLog(PathSegment.class);
 
@@ -56,11 +59,11 @@ public class PathSegment extends PersistABC {
 	public PathSegment() {
 	}
 
-	public final PersistABC getParent() {
+	public final IDomainObject getParent() {
 		return getParentPath();
 	}
 
-	public final void setParent(PersistABC inParent) {
+	public final void setParent(IDomainObject inParent) {
 		if (inParent instanceof Path) {
 			setParentPath((Path) inParent);
 		}
@@ -70,7 +73,13 @@ public class PathSegment extends PersistABC {
 		parentPath = inParentPath;
 	}
 
+	@JsonIgnore
+	public final List<IDomainObject> getChildren() {
+		return new ArrayList<IDomainObject>();
+	}
+
 	public final String getParentPathID() {
 		return getParentPath().getDomainId();
 	}
+	
 }

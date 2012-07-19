@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfNetViewDecoratedLabelProvider.java,v 1.1 2012/03/16 15:59:08 jeffw Exp $
+ *  $Id: CodeShelfNetViewDecoratedLabelProvider.java,v 1.2 2012/07/19 06:11:33 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.ui.treeviewers;
@@ -20,9 +20,9 @@ import org.eclipse.swt.widgets.TreeColumn;
 
 import com.gadgetworks.codeshelf.application.Util;
 import com.gadgetworks.codeshelf.controller.NetworkDeviceStateEnum;
-import com.gadgetworks.codeshelf.model.persist.ControlGroup;
-import com.gadgetworks.codeshelf.model.persist.PickTag;
-import com.gadgetworks.codeshelf.model.persist.CodeShelfNetwork;
+import com.gadgetworks.codeshelf.model.domain.ControlGroup;
+import com.gadgetworks.codeshelf.model.domain.PickTag;
+import com.gadgetworks.codeshelf.model.domain.CodeShelfNetwork;
 
 // --------------------------------------------------------------------------
 /**

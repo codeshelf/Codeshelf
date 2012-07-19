@@ -1,11 +1,13 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WirelessDevice.java,v 1.18 2012/07/13 21:56:56 jeffw Exp $
+ *  $Id: WirelessDevice.java,v 1.1 2012/07/19 06:11:32 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.model.persist;
+package com.gadgetworks.codeshelf.model.domain;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.persistence.Column;
@@ -26,6 +28,7 @@ import lombok.Setter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.codehaus.jackson.annotate.JsonIgnore;
 
 import com.gadgetworks.codeshelf.command.CommandControlABC;
 import com.gadgetworks.codeshelf.controller.IDeviceMaintainer;
@@ -51,7 +54,7 @@ import com.google.inject.Inject;
 @Entity
 @Table(name = "WIRELESSDEVICE")
 @DiscriminatorValue("ABC")
-public class WirelessDevice<T extends PersistABC> extends PersistABC implements INetworkDevice {
+public class WirelessDevice extends DomainObjectABC implements INetworkDevice {
 
 	public interface IWirelessDeviceDao extends ITypedDao<WirelessDevice>, IDeviceMaintainer {
 
@@ -121,16 +124,21 @@ public class WirelessDevice<T extends PersistABC> extends PersistABC implements 
 		kvpMap = new HashMap<String, String>();
 	}
 
-	public PersistABC getParent() {
+	public final IDomainObject getParent() {
 		return getParentControlGroup();
 	}
 
-	public final void setParent(PersistABC inParent) {
+	public final void setParent(IDomainObject inParent) {
 		if (inParent instanceof ControlGroup) {
 			setParentControlGroup((ControlGroup) inParent);
 		}
 	}
-
+	
+	@JsonIgnore
+	public final List<IDomainObject> getChildren() {
+		return new ArrayList<IDomainObject>();
+	}
+	
 	public final NetMacAddress getMacAddress() {
 		return new NetMacAddress(macAddress);
 	}

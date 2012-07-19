@@ -1,9 +1,11 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Aisle.java,v 1.19 2012/07/17 00:31:43 jeffw Exp $
+ *  $Id: Aisle.java,v 1.1 2012/07/19 06:11:32 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.model.persist;
+package com.gadgetworks.codeshelf.model.domain;
+
+import java.util.List;
 
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
@@ -49,11 +51,11 @@ public class Aisle extends Location {
 		setParentFacility(inParentFacility);
 	}
 	
-	public final PersistABC getParent() {
+	public final IDomainObject getParent() {
 		return getParentLocation();
 	}
 	
-	public final void setParent(PersistABC inParent) {
+	public final void setParent(IDomainObject inParent) {
 		if (inParent instanceof Facility) {
 			setParentLocation((Facility) inParent);
 		}

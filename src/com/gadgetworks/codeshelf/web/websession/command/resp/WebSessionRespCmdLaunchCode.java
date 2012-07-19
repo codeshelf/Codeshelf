@@ -1,15 +1,14 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionRespCmdLaunchCode.java,v 1.2 2012/05/07 06:34:27 jeffw Exp $
+ *  $Id: WebSessionRespCmdLaunchCode.java,v 1.3 2012/07/19 06:11:34 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.resp;
 
 import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
 
-import com.gadgetworks.codeshelf.model.persist.Organization;
+import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.web.websession.command.IWebSessionCmd;
 
 /**

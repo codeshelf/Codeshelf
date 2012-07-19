@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: AtopStreamProcessor.java,v 1.5 2012/03/22 20:17:06 jeffw Exp $
+ *  $Id: AtopStreamProcessor.java,v 1.6 2012/07/19 06:11:33 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.server.tags;
 
@@ -17,9 +17,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.gadgetworks.codeshelf.command.ICsCommand;
-import com.gadgetworks.codeshelf.model.persist.ControlGroup;
-import com.gadgetworks.codeshelf.model.persist.PickTag;
-import com.gadgetworks.codeshelf.model.persist.WirelessDevice;
+import com.gadgetworks.codeshelf.model.domain.ControlGroup;
+import com.gadgetworks.codeshelf.model.domain.PickTag;
+import com.gadgetworks.codeshelf.model.domain.WirelessDevice;
 
 /**
  * @author jeffw

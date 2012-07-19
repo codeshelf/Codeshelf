@@ -1,9 +1,9 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: User.java,v 1.13 2012/07/13 21:56:56 jeffw Exp $
+ *  $Id: User.java,v 1.1 2012/07/19 06:11:32 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.model.persist;
+package com.gadgetworks.codeshelf.model.domain;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -20,6 +20,7 @@ import lombok.Setter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.codehaus.jackson.annotate.JsonIgnore;
 
 import com.gadgetworks.codeshelf.model.dao.GenericDao;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
@@ -37,7 +38,7 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "USER")
-public class User extends PersistABC {
+public class User extends DomainObjectABC {
 
 	private static final Log	LOGGER				= LogFactory.getLog(User.class);
 
@@ -81,7 +82,7 @@ public class User extends PersistABC {
 	// For a network this is a list of all of the control groups that belong in the set.
 	@OneToMany(mappedBy = "parentUser")
 	@Getter
-	private List<UserSession>	users	= new ArrayList<UserSession>();
+	private List<UserSession>	userSessions	= new ArrayList<UserSession>();
 
 	// The owning facility.
 	@Column(name = "parentOrganization", nullable = false)
@@ -96,23 +97,28 @@ public class User extends PersistABC {
 		active = true;
 	}
 
-	public final PersistABC getParent() {
+	public final IDomainObject getParent() {
 		return getParentOrganization();
 	}
 
-	public final void setParent(PersistABC inParent) {
+	public final void setParent(IDomainObject inParent) {
 		if (inParent instanceof Organization) {
 			setParentOrganization((Organization) inParent);
 		}
 	}
+	
+	@JsonIgnore
+	public final List<? extends IDomainObject> getChildren() {
+		return getUserSessions();
+	}
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void addUserSession(UserSession inPromoCodeUse) {
-		users.add(inPromoCodeUse);
+		userSessions.add(inPromoCodeUse);
 	}
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void removeUserSession(UserSession inPromoCodeUse) {
-		users.remove(inPromoCodeUse);
+		userSessions.remove(inPromoCodeUse);
 	}
 }

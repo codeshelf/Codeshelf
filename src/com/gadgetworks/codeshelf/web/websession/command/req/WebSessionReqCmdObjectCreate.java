@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectCreate.java,v 1.4 2012/07/11 07:15:42 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectCreate.java,v 1.5 2012/07/19 06:11:33 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -25,7 +25,8 @@ import org.codehaus.jackson.type.TypeReference;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.model.persist.PersistABC;
+import com.gadgetworks.codeshelf.model.domain.DomainObjectABC;
+import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.web.websession.command.resp.IWebSessionRespCmd;
 import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdObjectCreate;
 
@@ -94,15 +95,15 @@ public class WebSessionReqCmdObjectCreate extends WebSessionReqCmdABC {
 			JsonNode dataJsonNode = getDataJsonNode();
 			JsonNode parentClassNode = dataJsonNode.get(PARENT_CLASS);
 			String parentClassName = parentClassNode.getTextValue();
-			if (!parentClassName.startsWith("com.gadgetworks.codeshelf.model.persist.")) {
-				parentClassName = "com.gadgetworks.codeshelf.model.persist." + parentClassName;
+			if (!parentClassName.startsWith("com.gadgetworks.codeshelf.model.domain.")) {
+				parentClassName = "com.gadgetworks.codeshelf.model.domain." + parentClassName;
 			}
 			JsonNode parentIdNode = dataJsonNode.get(PARENT_ID);
 			long parentId = parentIdNode.getLongValue();
 			JsonNode childClassNode = dataJsonNode.get(CLASSNAME);
 			String childClassName = childClassNode.getTextValue();
-			if (!childClassName.startsWith("com.gadgetworks.codeshelf.model.persist.")) {
-				childClassName = "com.gadgetworks.codeshelf.model.persist." + childClassName;
+			if (!childClassName.startsWith("com.gadgetworks.codeshelf.model.domain.")) {
+				childClassName = "com.gadgetworks.codeshelf.model.domain." + childClassName;
 			}
 
 			ObjectMapper mapper = new ObjectMapper();
@@ -120,25 +121,25 @@ public class WebSessionReqCmdObjectCreate extends WebSessionReqCmdABC {
 
 			// First we find the class of the parent object.
 			Class<?> parentClass = Class.forName(parentClassName);
-			if ((parentClass != null) && (PersistABC.class.isAssignableFrom(parentClass))) {
+			if ((parentClass != null) && (IDomainObject.class.isAssignableFrom(parentClass))) {
 
 				// First locate an instance of the parent class.
-				ITypedDao<PersistABC> parentClassDao = mDaoProvider.getDaoInstance((Class<PersistABC>) parentClass);
-				PersistABC parentObject = parentClassDao.findByPersistentId(parentId);
+				ITypedDao<IDomainObject> parentClassDao = mDaoProvider.getDaoInstance((Class<IDomainObject>) parentClass);
+				IDomainObject parentObject = parentClassDao.findByPersistentId(parentId);
 
 				// Then we find the class of the object we want to create.
 				Class<?> childClass = Class.forName(childClassName);
-				if ((childClass != null) && (PersistABC.class.isAssignableFrom(childClass))) {
+				if ((childClass != null) && (IDomainObject.class.isAssignableFrom(childClass))) {
 
 					// First locate an instance of the parent class.
-					ITypedDao<PersistABC> childClassDao = mDaoProvider.getDaoInstance((Class<PersistABC>) childClass);
+					ITypedDao<IDomainObject> childClassDao = mDaoProvider.getDaoInstance((Class<IDomainObject>) childClass);
 
 					if (parentObject != null) {
 						// Now create the new object as a child of the parent object.
 						Constructor<?> ctor = childClass.getConstructor();
 						Object object = ctor.newInstance();
-						if (object instanceof PersistABC) {
-							PersistABC newChildObject = (PersistABC) object;
+						if (object instanceof IDomainObject) {
+							IDomainObject newChildObject = (IDomainObject) object;
 							newChildObject.setParent(parentObject);
 
 							// Loop over all the properties, setting each one.

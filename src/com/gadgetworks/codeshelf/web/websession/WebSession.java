@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSession.java,v 1.17 2012/04/10 08:01:19 jeffw Exp $
+ *  $Id: WebSession.java,v 1.18 2012/07/19 06:11:33 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession;
 
@@ -16,7 +16,7 @@ import org.codehaus.jackson.JsonProcessingException;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import com.gadgetworks.codeshelf.model.dao.IDaoListener;
-import com.gadgetworks.codeshelf.model.persist.PersistABC;
+import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionPersistentReqCmd;
 import com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmd;
 import com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmdFactory;
@@ -98,7 +98,7 @@ public class WebSession implements IWebSession, IDaoListener {
 		}
 	}
 
-	public final void objectAdded(PersistABC inDomainObject) {
+	public final void objectAdded(IDomainObject inDomainObject) {
 		for (IWebSessionPersistentReqCmd command : mPersistentCommands.values()) {
 			IWebSessionRespCmd respCommand = command.processObjectAdd(inDomainObject);
 			if (respCommand != null) {
@@ -108,7 +108,7 @@ public class WebSession implements IWebSession, IDaoListener {
 		}
 	}
 
-	public final void objectUpdated(PersistABC inDomainObject) {
+	public final void objectUpdated(IDomainObject inDomainObject) {
 		for (IWebSessionPersistentReqCmd command : mPersistentCommands.values()) {
 			IWebSessionRespCmd respCommand = command.processObjectUpdate(inDomainObject);
 			if (respCommand != null) {
@@ -118,7 +118,7 @@ public class WebSession implements IWebSession, IDaoListener {
 		}
 	}
 
-	public final void objectDeleted(PersistABC inDomainObject) {
+	public final void objectDeleted(IDomainObject inDomainObject) {
 		for (IWebSessionPersistentReqCmd command : mPersistentCommands.values()) {
 			IWebSessionRespCmd respCommand = command.processObjectDelete(inDomainObject);
 			if (respCommand != null) {
