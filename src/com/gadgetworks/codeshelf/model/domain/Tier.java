@@ -1,12 +1,9 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Tier.java,v 1.1 2012/07/19 06:11:32 jeffw Exp $
+ *  $Id: Tier.java,v 1.2 2012/07/22 08:49:37 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
@@ -45,26 +42,34 @@ public class Tier extends Location {
 	}
 
 	@Inject
-	public static ITypedDao<Facility> DAO;
+	public static ITypedDao<Tier>	DAO;
 
 	public Tier(final Double inPosX, final double inPosY) {
 		super(PositionTypeEnum.METERS_FROM_PARENT, inPosX, inPosY);
 	}
-	
+
+	public final ITypedDao<Tier> getDao() {
+		return DAO;
+	}
+
+	public final String getDefaultDomainIdPrefix() {
+		return "T";
+	}
+
 	public final IDomainObject getParent() {
 		return getParentBay();
 	}
-	
+
 	public final void setParent(IDomainObject inParent) {
 		if (inParent instanceof Bay) {
 			setParentLocation((Bay) inParent);
 		}
 	}
-	
+
 	public final Bay getParentBay() {
 		return (Bay) getParentLocation();
 	}
-	
+
 	public final void setParentBay(Bay inParentBay) {
 		setParentLocation(inParentBay);
 	}

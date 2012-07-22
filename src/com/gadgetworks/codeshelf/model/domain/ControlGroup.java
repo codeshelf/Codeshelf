@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ControlGroup.java,v 1.1 2012/07/19 06:11:32 jeffw Exp $
+ *  $Id: ControlGroup.java,v 1.2 2012/07/22 08:49:37 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -47,48 +47,48 @@ public class ControlGroup extends DomainObjectABC {
 	}
 
 	@Inject
-	public static ITypedDao<ControlGroup> DAO;
+	public static ITypedDao<ControlGroup>	DAO;
 
-	private static final long		serialVersionUID	= -4923129546531851147L;
+	private static final long				serialVersionUID	= -4923129546531851147L;
 
 	// The owning CodeShelf network.
 	@Getter
 	@Setter
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	private CodeShelfNetwork		parentCodeShelfNetwork;
+	private CodeShelfNetwork				parentCodeShelfNetwork;
 	// The control group ID
 	@Column(nullable = false)
 	//	@Getter
 	//	@Setter
-	private byte[]					controlGroupId;
+	private byte[]							controlGroupId;
 	// The control group description.
 	@Getter
 	@Setter
 	@Column(nullable = false)
-	private String					description;
+	private String							description;
 	// Interface port number
 	@Getter
 	@Setter
 	@Column(nullable = false)
-	private short					interfacePortNum;
+	private short							interfacePortNum;
 	// Active/Inactive rule
 	@Getter
 	@Setter
 	@Column(nullable = false)
-	private boolean					active;
+	private boolean							active;
 	// Active/Inactive rule
 	@Getter
 	@Setter
 	@Column(nullable = false)
-	private TagProtocolEnum			tagProtocolEnum;
+	private TagProtocolEnum					tagProtocolEnum;
 	// For a control group this is a list of all of the pick tags that belong in the set.
 	@OneToMany(mappedBy = "parentControlGroup")
 	@Getter
-	private List<WirelessDevice>	wirelessDevices		= new ArrayList<WirelessDevice>();
+	private List<WirelessDevice>			wirelessDevices		= new ArrayList<WirelessDevice>();
 
 	@Transient
-	private IControllerConnection	controllerConnection;
+	private IControllerConnection			controllerConnection;
 
 	public ControlGroup() {
 		parentCodeShelfNetwork = null;
@@ -96,6 +96,14 @@ public class ControlGroup extends DomainObjectABC {
 		description = "";
 		active = true;
 		tagProtocolEnum = TagProtocolEnum.ATOP;
+	}
+
+	public final ITypedDao<ControlGroup> getDao() {
+		return DAO;
+	}
+
+	public final String getDefaultDomainIdPrefix() {
+		return "CG";
 	}
 
 	public final IDomainObject getParent() {
@@ -107,12 +115,12 @@ public class ControlGroup extends DomainObjectABC {
 			setParentCodeShelfNetwork((CodeShelfNetwork) inParent);
 		}
 	}
-	
+
 	@JsonIgnore
 	public final List<? extends IDomainObject> getChildren() {
 		return getWirelessDevices();
 	}
-	
+
 	public final NetGroup getControlGroupId() {
 		return new NetGroup(controlGroupId);
 	}

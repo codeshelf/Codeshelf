@@ -38,6 +38,18 @@ public class GenericDaoTest {
 			// TODO Auto-generated method stub
 			return null;
 		}
+
+		@Override
+		public String getDefaultDomainIdPrefix() {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public <T extends IDomainObject> ITypedDao<T> getDao() {
+			// TODO Auto-generated method stub
+			return null;
+		}
 	}
 	
 	@Test

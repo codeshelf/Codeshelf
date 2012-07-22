@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Path.java,v 1.1 2012/07/19 06:11:32 jeffw Exp $
+ *  $Id: Path.java,v 1.2 2012/07/22 08:49:37 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -48,28 +48,36 @@ public class Path extends DomainObjectABC {
 	}
 
 	@Inject
-	public static ITypedDao<Path> DAO;
+	public static ITypedDao<Path>	DAO;
 
 	// The parent facility.
 	@Getter
 	@Setter
 	@Column(nullable = false)
-	private Facility			parentFacility;
+	private Facility				parentFacility;
 
 	// The path description.
 	@Getter
 	@Setter
 	@Column(nullable = false)
-	private String				description;
+	private String					description;
 
 	// For a network this is a list of all of the users that belong in the set.
 	@OneToMany(mappedBy = "parentPath")
 	@JsonIgnore
 	@Getter
-	private List<PathSegment>	segments	= new ArrayList<PathSegment>();
+	private List<PathSegment>		segments	= new ArrayList<PathSegment>();
 
 	public Path() {
 		description = "";
+	}
+
+	public final ITypedDao<Path> getDao() {
+		return DAO;
+	}
+
+	public final String getDefaultDomainIdPrefix() {
+		return "P";
 	}
 
 	// --------------------------------------------------------------------------
@@ -91,7 +99,7 @@ public class Path extends DomainObjectABC {
 	public final List<? extends IDomainObject> getChildren() {
 		return getSegments();
 	}
-	
+
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void addPathSegment(PathSegment inPathSegment) {
 		segments.add(inPathSegment);

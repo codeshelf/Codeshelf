@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: DBProperty.java,v 1.1 2012/07/19 06:11:32 jeffw Exp $
+ *  $Id: DBProperty.java,v 1.2 2012/07/22 08:49:37 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -11,10 +11,10 @@ import java.util.List;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 
-import org.codehaus.jackson.annotate.JsonIgnore;
-
 import lombok.Getter;
 import lombok.Setter;
+
+import org.codehaus.jackson.annotate.JsonIgnore;
 
 import com.gadgetworks.codeshelf.model.dao.GenericDao;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
@@ -41,17 +41,25 @@ public class DBProperty extends DomainObjectABC {
 	}
 
 	@Inject
-	public static ITypedDao<DBProperty> DAO;
+	public static ITypedDao<DBProperty>	DAO;
 
-	public static final String	DB_SCHEMA_VERSION	= "SCHMAVER";
+	public static final String			DB_SCHEMA_VERSION	= "SCHMAVER";
 
 	@Getter
 	@Setter
 	@Column(nullable = false)
-	private String				valueStr;
+	private String						valueStr;
 
 	public DBProperty() {
 		super();
+	}
+
+	public final ITypedDao<DBProperty> getDao() {
+		return DAO;
+	}
+
+	public final String getDefaultDomainIdPrefix() {
+		return "DB";
 	}
 
 	// --------------------------------------------------------------------------

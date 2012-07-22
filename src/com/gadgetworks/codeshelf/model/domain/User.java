@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: User.java,v 1.1 2012/07/19 06:11:32 jeffw Exp $
+ *  $Id: User.java,v 1.2 2012/07/22 08:49:37 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -52,49 +52,57 @@ public class User extends DomainObjectABC {
 	}
 
 	@Inject
-	public static ITypedDao<User> DAO;
+	public static ITypedDao<User>	DAO;
 
 	// The hashed password
 	// A User with a null hashed password is a promo user (with limited abilities).
 	@Getter
 	@Setter
 	@Column(nullable = true)
-	private String				hashedPassword;
+	private String					hashedPassword;
 
 	// Email.
 	@Getter
 	@Setter
 	@Column(nullable = false)
-	private String				email;
+	private String					email;
 
 	// Create date.
 	@Getter
 	@Setter
 	@Column(nullable = false)
-	private Timestamp			created;
+	private Timestamp				created;
 
 	// Is it active.
 	@Getter
 	@Setter
 	@Column(nullable = false)
-	private Boolean				active;
+	private Boolean					active;
 
 	// For a network this is a list of all of the control groups that belong in the set.
 	@OneToMany(mappedBy = "parentUser")
 	@Getter
-	private List<UserSession>	userSessions	= new ArrayList<UserSession>();
+	private List<UserSession>		userSessions	= new ArrayList<UserSession>();
 
 	// The owning facility.
 	@Column(name = "parentOrganization", nullable = false)
 	@ManyToOne(optional = false)
 	@Getter
 	@Setter
-	private Organization		parentOrganization;
+	private Organization			parentOrganization;
 
 	public User() {
 		email = "";
 		created = new Timestamp(System.currentTimeMillis());
 		active = true;
+	}
+
+	public final ITypedDao<User> getDao() {
+		return DAO;
+	}
+
+	public final String getDefaultDomainIdPrefix() {
+		return "U";
 	}
 
 	public final IDomainObject getParent() {
@@ -106,7 +114,7 @@ public class User extends DomainObjectABC {
 			setParentOrganization((Organization) inParent);
 		}
 	}
-	
+
 	@JsonIgnore
 	public final List<? extends IDomainObject> getChildren() {
 		return getUserSessions();

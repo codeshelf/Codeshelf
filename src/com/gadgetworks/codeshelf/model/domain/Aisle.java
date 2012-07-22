@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Aisle.java,v 1.1 2012/07/19 06:11:32 jeffw Exp $
+ *  $Id: Aisle.java,v 1.2 2012/07/22 08:49:37 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -49,6 +49,15 @@ public class Aisle extends Location {
 	public Aisle(final Facility inParentFacility, final Double inPosX, final double inPosY) {
 		super(PositionTypeEnum.METERS_FROM_PARENT, inPosX, inPosY);
 		setParentFacility(inParentFacility);
+		setDomainId(getDefaultDomainId());
+	}
+	
+	public final ITypedDao<Aisle> getDao() {
+		return DAO;
+	}
+	
+	public final String getDefaultDomainIdPrefix() {
+		return "A";
 	}
 	
 	public final IDomainObject getParent() {

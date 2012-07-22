@@ -9,6 +9,7 @@ import java.util.List;
 import org.junit.Test;
 
 import com.gadgetworks.codeshelf.model.dao.GenericDao;
+import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.DomainObjectABC;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 
@@ -38,6 +39,18 @@ public class PersistABCTest {
 			// TODO Auto-generated method stub
 			return null;
 		}
+
+		@Override
+		public String getDefaultDomainIdPrefix() {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public <T extends IDomainObject> ITypedDao<T> getDao() {
+			// TODO Auto-generated method stub
+			return null;
+		}
 	}
 	
 	class PersistABCOtherStub extends DomainObjectABC {
@@ -61,6 +74,18 @@ public class PersistABCTest {
 
 		@Override
 		public List<IDomainObject> getChildren() {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public String getDefaultDomainIdPrefix() {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public <T extends IDomainObject> ITypedDao<T> getDao() {
 			// TODO Auto-generated method stub
 			return null;
 		}

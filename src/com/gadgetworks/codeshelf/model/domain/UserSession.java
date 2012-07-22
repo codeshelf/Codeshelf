@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: UserSession.java,v 1.1 2012/07/19 06:11:32 jeffw Exp $
+ *  $Id: UserSession.java,v 1.2 2012/07/22 08:49:37 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -51,28 +51,36 @@ public class UserSession extends DomainObjectABC {
 	}
 
 	@Inject
-	public static ITypedDao<UserSession> DAO;
+	public static ITypedDao<UserSession>	DAO;
 
 	// The owning CodeShelf network.
 	@Column(name = "parentUser", nullable = false)
 	@ManyToOne(optional = false)
-	private User		parentUser;
+	private User							parentUser;
 
 	// Create date.
 	@Getter
 	@Setter
 	@Column(nullable = false)
-	private Timestamp	created;
+	private Timestamp						created;
 
 	// Activity note.
 	@Getter
 	@Setter
 	@Column(nullable = false)
-	private String		note;
+	private String							note;
 
 	public UserSession() {
 		parentUser = null;
 		created = new Timestamp(System.currentTimeMillis());
+	}
+
+	public final ITypedDao<UserSession> getDao() {
+		return DAO;
+	}
+
+	public final String getDefaultDomainIdPrefix() {
+		return "US";
 	}
 
 	public final IDomainObject getParent() {
@@ -84,7 +92,7 @@ public class UserSession extends DomainObjectABC {
 			setParentUser((User) inParent);
 		}
 	}
-	
+
 	@JsonIgnore
 	public final List<IDomainObject> getChildren() {
 		return new ArrayList<IDomainObject>();

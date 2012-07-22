@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeshelfNetwork.java,v 1.1 2012/07/19 06:11:32 jeffw Exp $
+ *  $Id: CodeshelfNetwork.java,v 1.2 2012/07/22 08:49:37 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -108,6 +108,14 @@ public class CodeShelfNetwork extends DomainObjectABC {
 		gatewayUrl = "";
 		active = true;
 		connected = false;
+	}
+	
+	public final ITypedDao<CodeShelfNetwork> getDao() {
+		return DAO;
+	}
+	
+	public final String getDefaultDomainIdPrefix() {
+		return "NET";
 	}
 
 	public final IDomainObject getParent() {

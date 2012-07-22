@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: DomainObjectABC.java,v 1.1 2012/07/19 06:11:32 jeffw Exp $
+ *  $Id: DomainObjectABC.java,v 1.2 2012/07/22 08:49:37 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -20,10 +20,12 @@ import lombok.Setter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
 
 import com.avaje.ebean.Ebean;
 import com.avaje.ebean.Query;
+import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 
 // --------------------------------------------------------------------------
 /**
@@ -49,6 +51,12 @@ public abstract class DomainObjectABC implements IDomainObject {
 	@Column(nullable = false)
 	@NonNull
 	private String				domainId;
+	// The last sequence used to generate a sequence ID.
+	@Column(nullable = false)
+	@NonNull
+	@Getter
+	@Setter
+	private Integer				lastDefaultSequenceId;
 	// This is not an application-editable field.
 	// It's for the private use of the ORM transaction system.
 	@Version
@@ -58,6 +66,41 @@ public abstract class DomainObjectABC implements IDomainObject {
 	private Timestamp			version;
 
 	public DomainObjectABC() {
+		lastDefaultSequenceId = 1;
+	}
+
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.domain.IDomainObject#getDefaultDomainId()
+	 */
+	@JsonIgnore
+	public final String getDefaultDomainId() {
+
+		String result = getDefaultDomainIdPrefix() + String.valueOf(System.currentTimeMillis());
+
+		ITypedDao<IDomainObject> dao = getDao();
+
+		IDomainObject parentObject = this.getParent();
+		if ((parentObject != null) && (dao != null)) {
+
+			String newID = null;
+
+			boolean foundId = false;
+			int maxTries = 100;
+
+			do {
+				Integer nextSeq = parentObject.getLastDefaultSequenceId();
+				String testId = getDefaultDomainIdPrefix() + nextSeq.toString();
+				IDomainObject testIdObject = dao.findByDomainId(parentObject, testId);
+
+				if (testIdObject == null) {
+					foundId = true;
+					result = testId;
+				}
+			} while ((!foundId) && (maxTries > 0));
+		}
+
+		return result;
 	}
 
 	// --------------------------------------------------------------------------

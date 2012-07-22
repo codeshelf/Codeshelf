@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.1 2012/07/19 06:11:32 jeffw Exp $
+ *  $Id: Facility.java,v 1.2 2012/07/22 08:49:37 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -73,11 +73,26 @@ public class Facility extends Location {
 	@Getter
 	private List<CodeShelfNetwork>		networks	= new ArrayList<CodeShelfNetwork>();
 
-	public Facility(final Double inPosX, final double inPosY) {
-		super(PositionTypeEnum.GPS, inPosX, inPosY);
-		// Facilities have no parent location, but we don't want to allow ANY lcoation to not have a parent.
+	public Facility() {
+		// Facilities have no parent location, but we don't want to allow ANY location to not have a parent.
 		// So in this case we make the facility its own parent.  It's also a way to know when we've topped-out in the location tree.
 		this.setParentLocation(this);
+	}
+
+	public Facility(final Double inPosX, final double inPosY) {
+		super(PositionTypeEnum.GPS, inPosX, inPosY);
+		// Facilities have no parent location, but we don't want to allow ANY location to not have a parent.
+		// So in this case we make the facility its own parent.  It's also a way to know when we've topped-out in the location tree.
+		this.setParentLocation(this);
+	}
+
+	public final String getDefaultDomainIdPrefix() {
+		return "F";
+	}
+
+	@JsonIgnore
+	public final ITypedDao<Facility> getDao() {
+		return DAO;
 	}
 
 	public final IDomainObject getParent() {

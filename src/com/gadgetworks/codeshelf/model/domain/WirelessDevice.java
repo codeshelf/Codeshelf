@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WirelessDevice.java,v 1.1 2012/07/19 06:11:32 jeffw Exp $
+ *  $Id: WirelessDevice.java,v 1.2 2012/07/22 08:49:37 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -124,6 +124,14 @@ public class WirelessDevice extends DomainObjectABC implements INetworkDevice {
 		kvpMap = new HashMap<String, String>();
 	}
 
+	public final ITypedDao<WirelessDevice> getDao() {
+		return DAO;
+	}
+
+	public final String getDefaultDomainIdPrefix() {
+		return "W";
+	}
+
 	public final IDomainObject getParent() {
 		return getParentControlGroup();
 	}
@@ -133,12 +141,12 @@ public class WirelessDevice extends DomainObjectABC implements INetworkDevice {
 			setParentControlGroup((ControlGroup) inParent);
 		}
 	}
-	
+
 	@JsonIgnore
 	public final List<IDomainObject> getChildren() {
 		return new ArrayList<IDomainObject>();
 	}
-	
+
 	public final NetMacAddress getMacAddress() {
 		return new NetMacAddress(macAddress);
 	}

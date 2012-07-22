@@ -1,11 +1,13 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: IDomainObject.java,v 1.1 2012/07/19 06:11:32 jeffw Exp $
+ *  $Id: IDomainObject.java,v 1.2 2012/07/22 08:49:37 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
 import java.util.List;
+
+import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 
 /**
  * @author jeffw
@@ -14,7 +16,31 @@ import java.util.List;
 public interface IDomainObject {
 
 	String	ID_COLUMN_NAME	= "domainId";
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * For constructors that don't pass a domain ID, create one.
+	 * @return
+	 */
+	String getDefaultDomainId();
 
+	// --------------------------------------------------------------------------
+	/**
+	 * The prefix to use when creating a default domain ID.
+	 * @return
+	 */
+	String getDefaultDomainIdPrefix();
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * @return
+	 */
+	Integer getLastDefaultSequenceId();
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inId
+	 */
 	void setDomainId(String inId);
 
 	// --------------------------------------------------------------------------
@@ -60,5 +86,11 @@ public interface IDomainObject {
 	 * @return
 	 */
 	Long getPersistentId();
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * @return
+	 */
+	<T extends IDomainObject> ITypedDao<T> getDao();
 
 }

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: H2SchemaManager.java,v 1.27 2012/06/27 05:07:51 jeffw Exp $
+ *  $Id: H2SchemaManager.java,v 1.28 2012/07/22 08:49:37 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -166,6 +166,7 @@ public final class H2SchemaManager implements ISchemaManager {
 		execOneSQLCommand("CREATE TABLE CODESHELF.PERSISTENTPROPERTY (" //
 				+ "PERSISTENTID BIGINT NOT NULL, " //
 				+ "DOMAINID VARCHAR(64) NOT NULL," //
+				+ "LASTDEFAULTSEQID INT NOT NULL, " //
 				+ "PARENTORGANIZATION_PERSISTENTID LONG NOT NULL, " //
 				+ "VERSION TIMESTAMP, " //
 				+ "CURRENTVALUESTR VARCHAR(256)," //
@@ -197,7 +198,7 @@ public final class H2SchemaManager implements ISchemaManager {
 				+ "POSTYPE VARCHAR(64) NOT NULL, " //
 				+ "POSX DOUBLE NOT NULL, " //
 				+ "POSY DOUBLE NOT NULL, " //
-				+ "POSZ DOUBLE NOT NULL, " //
+				+ "POSZ DOUBLE, " // NOT NULL, " //
 				+ "DESCRIPTION VARCHAR(64), "// NOT NULL, " //
 				+ "PARENTLOCATION_PERSISTENTID LONG NOT NULL, " //
 				+ "PARENTORGANIZATION_PERSISTENTID LONG, "// NOT NULL, " //

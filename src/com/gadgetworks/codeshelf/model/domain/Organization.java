@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Organization.java,v 1.1 2012/07/19 06:11:32 jeffw Exp $
+ *  $Id: Organization.java,v 1.2 2012/07/22 08:49:37 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -50,30 +50,39 @@ public class Organization extends DomainObjectABC {
 	}
 
 	@Inject
-	public static ITypedDao<Organization> DAO;
+	public static ITypedDao<Organization>	DAO;
 
-	private static final Log	LOGGER		= LogFactory.getLog(Organization.class);
+	private static final Log				LOGGER		= LogFactory.getLog(Organization.class);
 
 	// The facility description.
 	@Getter
 	@Setter
 	@Column(nullable = false)
-	private String				description;
+	private String							description;
 
 	// For a network this is a list of all of the users that belong in the set.
 	@OneToMany(mappedBy = "parentOrganization")
 	@JsonIgnore
 	@Getter
-	private List<User>			users		= new ArrayList<User>();
+	private List<User>						users		= new ArrayList<User>();
 
 	// For a network this is a list of all of the facilities that belong in the set.
 	@OneToMany(mappedBy = "parentOrganization")
 	@JsonIgnore
 	@Getter
-	private List<Facility>		facilities	= new ArrayList<Facility>();
+	private List<Facility>					facilities	= new ArrayList<Facility>();
 
 	public Organization() {
 		description = "";
+	}
+
+	@JsonIgnore
+	public final ITypedDao<Organization> getDao() {
+		return DAO;
+	}
+
+	public final String getDefaultDomainIdPrefix() {
+		return "O";
 	}
 
 	// --------------------------------------------------------------------------

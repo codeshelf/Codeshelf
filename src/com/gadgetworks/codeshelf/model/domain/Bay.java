@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Bay.java,v 1.1 2012/07/19 06:11:32 jeffw Exp $
+ *  $Id: Bay.java,v 1.2 2012/07/22 08:49:37 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -43,9 +43,17 @@ public class Bay extends Location {
 
 	@Inject
 	public static ITypedDao<Bay> DAO;
+	
+	public final ITypedDao<Bay> getDao() {
+		return DAO;
+	}
 
 	public Bay(final Double inPosX, final double inPosY, final double inPosZ) {
 		super(PositionTypeEnum.METERS_FROM_PARENT, inPosX, inPosY, inPosZ);
+	}
+	
+	public String getDefaultDomainIdPrefix() {
+		return "B";
 	}
 
 	public final IDomainObject getParent() {

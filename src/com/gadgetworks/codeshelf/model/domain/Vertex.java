@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Vertex.java,v 1.1 2012/07/19 06:11:32 jeffw Exp $
+ *  $Id: Vertex.java,v 1.2 2012/07/22 08:49:37 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -50,41 +50,49 @@ public class Vertex extends DomainObjectABC {
 	}
 
 	@Inject
-	public static ITypedDao<Vertex> DAO;
+	public static ITypedDao<Vertex>	DAO;
 
 	// The position type (GPS, METERS, etc.).
 	@Column(nullable = false)
 	@Getter
 	@Setter
-	private PositionTypeEnum	posType;
+	private PositionTypeEnum		posType;
 
 	// The X position.
 	@Column(nullable = false)
 	@Getter
 	@Setter
-	private Double				posX;
+	private Double					posX;
 
 	// The Y position.
 	@Column(nullable = false)
 	@Getter
 	@Setter
-	private Double				posY;
+	private Double					posY;
 
 	// The vertex order/position (zero-based).
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	@Setter
 	@Getter
-	private Integer				drawOrder;
+	private Integer					drawOrder;
 
 	// The owning location.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	@JsonIgnore
 	@Getter
-	private Location			parentLocation;
+	private Location				parentLocation;
 
 	public Vertex() {
+	}
+
+	public final ITypedDao<Vertex> getDao() {
+		return DAO;
+	}
+
+	public final String getDefaultDomainIdPrefix() {
+		return "V";
 	}
 
 	// --------------------------------------------------------------------------
@@ -100,7 +108,7 @@ public class Vertex extends DomainObjectABC {
 			setParentLocation((Location) inParent);
 		}
 	}
-	
+
 	@JsonIgnore
 	public final List<IDomainObject> getChildren() {
 		return new ArrayList<IDomainObject>();

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PathSegment.java,v 1.1 2012/07/19 06:11:32 jeffw Exp $
+ *  $Id: PathSegment.java,v 1.2 2012/07/22 08:49:37 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -47,16 +47,24 @@ public class PathSegment extends DomainObjectABC implements IDomainObject {
 	}
 
 	@Inject
-	public static ITypedDao<PathSegment> DAO;
+	public static ITypedDao<PathSegment>	DAO;
 
 	// The owning organization.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	@JsonIgnore
 	@Getter
-	private Path	parentPath;
+	private Path							parentPath;
 
 	public PathSegment() {
+	}
+
+	public final ITypedDao<PathSegment> getDao() {
+		return DAO;
+	}
+
+	public final String getDefaultDomainIdPrefix() {
+		return "PS";
 	}
 
 	public final IDomainObject getParent() {
@@ -81,5 +89,5 @@ public class PathSegment extends DomainObjectABC implements IDomainObject {
 	public final String getParentPathID() {
 		return getParentPath().getDomainId();
 	}
-	
+
 }

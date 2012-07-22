@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Location.java,v 1.1 2012/07/19 06:11:32 jeffw Exp $
+ *  $Id: Location.java,v 1.2 2012/07/22 08:49:37 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -79,7 +79,8 @@ public abstract class Location extends DomainObjectABC {
 	// The Z anchor position.
 	@Getter
 	@Setter
-	@Column(nullable = false)
+	@Column(nullable = true)
+	// Null means it's at the same nominal z coord as the parent.
 	private Double				posZ;
 
 	// The location description.
@@ -107,6 +108,10 @@ public abstract class Location extends DomainObjectABC {
 	@JsonIgnore
 	@Getter
 	private List<Location>		locations	= new ArrayList<Location>();
+	
+	public Location() {
+		
+	}
 
 	public Location(final PositionTypeEnum inPosType, final Double inPosX, final double inPosY) {
 		posType = inPosType;
