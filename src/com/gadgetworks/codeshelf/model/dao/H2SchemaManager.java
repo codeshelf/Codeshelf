@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: H2SchemaManager.java,v 1.28 2012/07/22 08:49:37 jeffw Exp $
+ *  $Id: H2SchemaManager.java,v 1.29 2012/07/22 20:14:04 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -157,6 +157,7 @@ public final class H2SchemaManager implements ISchemaManager {
 		execOneSQLCommand("CREATE TABLE CODESHELF.DBPROPERTY (" //
 				+ "PERSISTENTID BIGINT NOT NULL, " //
 				+ "DOMAINID VARCHAR(64) NOT NULL," //
+				+ "LASTDEFAULTSEQUENCEID INT NOT NULL, " //
 				+ "VERSION TIMESTAMP, " //
 				+ "VALUESTR VARCHAR(256)," //
 				+ "PRIMARY KEY (PERSISTENTID));");
@@ -166,7 +167,7 @@ public final class H2SchemaManager implements ISchemaManager {
 		execOneSQLCommand("CREATE TABLE CODESHELF.PERSISTENTPROPERTY (" //
 				+ "PERSISTENTID BIGINT NOT NULL, " //
 				+ "DOMAINID VARCHAR(64) NOT NULL," //
-				+ "LASTDEFAULTSEQID INT NOT NULL, " //
+				+ "LASTDEFAULTSEQUENCEID INT NOT NULL, " //
 				+ "PARENTORGANIZATION_PERSISTENTID LONG NOT NULL, " //
 				+ "VERSION TIMESTAMP, " //
 				+ "CURRENTVALUESTR VARCHAR(256)," //
@@ -184,6 +185,7 @@ public final class H2SchemaManager implements ISchemaManager {
 		execOneSQLCommand("CREATE TABLE CODESHELF.ORGANIZATION ( " //
 				+ "PERSISTENTID BIGINT NOT NULL, " //
 				+ "DOMAINID VARCHAR(64) NOT NULL," //
+				+ "LASTDEFAULTSEQUENCEID INT NOT NULL, " //
 				+ "VERSION TIMESTAMP, " //
 				+ "DESCRIPTION VARCHAR(64) NOT NULL, " //
 				+ "PRIMARY KEY (PERSISTENTID));");
@@ -194,6 +196,7 @@ public final class H2SchemaManager implements ISchemaManager {
 				+ "DTYPE VARCHAR(20) NOT NULL," //
 				+ "PERSISTENTID BIGINT NOT NULL, " //
 				+ "DOMAINID VARCHAR(64) NOT NULL," //
+				+ "LASTDEFAULTSEQUENCEID INT NOT NULL, " //
 				+ "VERSION TIMESTAMP, " //
 				+ "POSTYPE VARCHAR(64) NOT NULL, " //
 				+ "POSX DOUBLE NOT NULL, " //
@@ -225,6 +228,7 @@ public final class H2SchemaManager implements ISchemaManager {
 		execOneSQLCommand("CREATE TABLE CODESHELF.VERTEX ( " //
 				+ "PERSISTENTID BIGINT NOT NULL, " //
 				+ "DOMAINID VARCHAR(64) NOT NULL," //
+				+ "LASTDEFAULTSEQUENCEID INT NOT NULL, " //
 				+ "VERSION TIMESTAMP, " //
 				+ "POSTYPE VARCHAR(64) NOT NULL, " //
 				+ "POSX DOUBLE NOT NULL, " //
@@ -244,6 +248,7 @@ public final class H2SchemaManager implements ISchemaManager {
 		execOneSQLCommand("CREATE TABLE CODESHELF.PATH ( " //
 				+ "PERSISTENTID BIGINT NOT NULL, " //
 				+ "DOMAINID VARCHAR(64) NOT NULL," //
+				+ "LASTDEFAULTSEQUENCEID INT NOT NULL, " //
 				+ "VERSION TIMESTAMP, " //
 				+ "DESCRIPTION VARCHAR(64) NOT NULL, " //
 				+ "PARENTFACILITY_PERSISTENTID LONG NOT NULL, " //
@@ -254,6 +259,7 @@ public final class H2SchemaManager implements ISchemaManager {
 		execOneSQLCommand("CREATE TABLE CODESHELF.PATHSEGMENT ( " //
 				+ "PERSISTENTID BIGINT NOT NULL, " //
 				+ "DOMAINID VARCHAR(64) NOT NULL," //
+				+ "LASTDEFAULTSEQUENCEID INT NOT NULL, " //
 				+ "VERSION TIMESTAMP, " //
 				+ "PARENTPATH_PERSISTENTID LONG NOT NULL, " //
 				+ "PRIMARY KEY (PERSISTENTID));");
@@ -269,6 +275,7 @@ public final class H2SchemaManager implements ISchemaManager {
 		execOneSQLCommand("CREATE TABLE CODESHELF.USER ( " //
 				+ "PERSISTENTID BIGINT NOT NULL, " //
 				+ "DOMAINID VARCHAR(64) NOT NULL," //
+				+ "LASTDEFAULTSEQUENCEID INT NOT NULL, " //
 				+ "VERSION TIMESTAMP, " //
 				+ "HASHEDPASSWORD VARCHAR(64), " //
 				+ "EMAIL VARCHAR(64), " //
@@ -290,6 +297,7 @@ public final class H2SchemaManager implements ISchemaManager {
 		execOneSQLCommand("CREATE TABLE CODESHELF.USERSESSION ( " //
 				+ "PERSISTENTID BIGINT NOT NULL, " //
 				+ "DOMAINID VARCHAR(64) NOT NULL," //
+				+ "LASTDEFAULTSEQUENCEID INT NOT NULL, " //
 				+ "VERSION TIMESTAMP, " //
 				+ "PARENTUSERSESSION_PERSISTENTID LONG NOT NULL, " //
 				+ "ACTIVITY VARCHAR(64) NOT NULL, " //
@@ -307,6 +315,7 @@ public final class H2SchemaManager implements ISchemaManager {
 		execOneSQLCommand("CREATE TABLE CODESHELF.CODESHELFNETWORK ( " //
 				+ "PERSISTENTID BIGINT NOT NULL, " //
 				+ "DOMAINID VARCHAR(64) NOT NULL," //
+				+ "LASTDEFAULTSEQUENCEID INT NOT NULL, " //
 				+ "VERSION TIMESTAMP, " //
 				+ "PARENTFACILITY_PERSISTENTID LONG NOT NULL, " //
 				+ "NETWORKID BINARY(2) DEFAULT 0 NOT NULL," //
@@ -327,6 +336,7 @@ public final class H2SchemaManager implements ISchemaManager {
 		execOneSQLCommand("CREATE TABLE CODESHELF.CONTROLGROUP ( " //
 				+ "PERSISTENTID BIGINT NOT NULL, " //
 				+ "DOMAINID VARCHAR(64) NOT NULL," //
+				+ "LASTDEFAULTSEQUENCEID INT NOT NULL, " //
 				+ "VERSION TIMESTAMP, " //
 				+ "PARENTCODESHELFNETWORK_PERSISTENTID LONG NOT NULL, " //
 				+ "CONTROLGROUPID BINARY(2) DEFAULT 0 NOT NULL, " //
@@ -348,6 +358,7 @@ public final class H2SchemaManager implements ISchemaManager {
 				+ "DTYPE VARCHAR(20) NOT NULL," //
 				+ "PERSISTENTID BIGINT NOT NULL, " //
 				+ "DOMAINID VARCHAR(64) NOT NULL," //
+				+ "LASTDEFAULTSEQUENCEID INT NOT NULL, " //
 				+ "VERSION TIMESTAMP, " //
 				+ "PARENTCONTROLGROUP_PERSISTENTID LONG NOT NULL, " //
 				+ "MACADDRESS BINARY(8) DEFAULT 0 NOT NULL," //

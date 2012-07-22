@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: DBProperty.java,v 1.2 2012/07/22 08:49:37 jeffw Exp $
+ *  $Id: DBProperty.java,v 1.3 2012/07/22 20:14:04 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -33,15 +33,15 @@ import com.google.inject.Singleton;
 @Entity
 public class DBProperty extends DomainObjectABC {
 
+	@Inject
+	public static ITypedDao<DBProperty>	DAO;
+
 	@Singleton
 	public static class DBPropertyDao extends GenericDao<DBProperty> implements ITypedDao<DBProperty> {
 		public DBPropertyDao() {
 			super(DBProperty.class);
 		}
 	}
-
-	@Inject
-	public static ITypedDao<DBProperty>	DAO;
 
 	public static final String			DB_SCHEMA_VERSION	= "SCHMAVER";
 

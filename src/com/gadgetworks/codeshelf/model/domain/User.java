@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: User.java,v 1.2 2012/07/22 08:49:37 jeffw Exp $
+ *  $Id: User.java,v 1.3 2012/07/22 20:14:04 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -40,9 +40,8 @@ import com.google.inject.Singleton;
 @Table(name = "USER")
 public class User extends DomainObjectABC {
 
-	private static final Log	LOGGER				= LogFactory.getLog(User.class);
-
-	private static final long	serialVersionUID	= 3001609308065821464L;
+	@Inject
+	public static ITypedDao<User>	DAO;
 
 	@Singleton
 	public static class UserDao extends GenericDao<User> implements ITypedDao<User> {
@@ -51,8 +50,9 @@ public class User extends DomainObjectABC {
 		}
 	}
 
-	@Inject
-	public static ITypedDao<User>	DAO;
+	private static final Log	LOGGER				= LogFactory.getLog(User.class);
+
+	private static final long	serialVersionUID	= 3001609308065821464L;
 
 	// The hashed password
 	// A User with a null hashed password is a promo user (with limited abilities).

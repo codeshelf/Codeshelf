@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeshelfNetwork.java,v 1.2 2012/07/22 08:49:37 jeffw Exp $
+ *  $Id: CodeshelfNetwork.java,v 1.3 2012/07/22 20:14:04 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -44,6 +44,9 @@ import com.google.inject.Singleton;
 @Table(name = "CODESHELFNETWORK")
 public class CodeShelfNetwork extends DomainObjectABC {
 
+	@Inject
+	public static ITypedDao<CodeShelfNetwork> DAO;
+
 	@Singleton
 	public static class CodeShelfNetworkDao extends GenericDao<CodeShelfNetwork> implements ITypedDao<CodeShelfNetwork> {
 		public CodeShelfNetworkDao() {
@@ -51,12 +54,7 @@ public class CodeShelfNetwork extends DomainObjectABC {
 		}
 	}
 
-	@Inject
-	public static ITypedDao<CodeShelfNetwork> DAO;
-
 	private static final Log	LOGGER				= LogFactory.getLog(CodeShelfNetwork.class);
-
-	private static final long	serialVersionUID	= 3001609308065821464L;
 
 	// The network ID.
 	@Column(nullable = false)

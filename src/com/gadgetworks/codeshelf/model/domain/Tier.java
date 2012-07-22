@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Tier.java,v 1.2 2012/07/22 08:49:37 jeffw Exp $
+ *  $Id: Tier.java,v 1.3 2012/07/22 20:14:04 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -30,9 +30,10 @@ import com.google.inject.Singleton;
 @Entity
 @Table(name = "LOCATION")
 @DiscriminatorValue("TIER")
-public class Tier extends Location {
+public class Tier extends LocationABC {
 
-	private static final Log	LOGGER	= LogFactory.getLog(Tier.class);
+	@Inject
+	public static ITypedDao<Tier>	DAO;
 
 	@Singleton
 	public static class TierDao extends GenericDao<Tier> implements ITypedDao<Tier> {
@@ -41,8 +42,7 @@ public class Tier extends Location {
 		}
 	}
 
-	@Inject
-	public static ITypedDao<Tier>	DAO;
+	private static final Log	LOGGER	= LogFactory.getLog(Tier.class);
 
 	public Tier(final Double inPosX, final double inPosY) {
 		super(PositionTypeEnum.METERS_FROM_PARENT, inPosX, inPosY);

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.2 2012/07/22 08:49:37 jeffw Exp $
+ *  $Id: Facility.java,v 1.3 2012/07/22 20:14:04 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -40,9 +40,10 @@ import com.google.inject.Singleton;
 @Entity
 @Table(name = "LOCATION")
 @DiscriminatorValue("FACILITY")
-public class Facility extends Location {
+public class Facility extends LocationABC {
 
-	private static final Log	LOGGER	= LogFactory.getLog(Facility.class);
+	@Inject
+	public static ITypedDao<Facility>	DAO;
 
 	@Singleton
 	public static class FacilityDao extends GenericDao<Facility> implements ITypedDao<Facility> {
@@ -51,8 +52,7 @@ public class Facility extends Location {
 		}
 	}
 
-	@Inject
-	public static ITypedDao<Facility>	DAO;
+	private static final Log	LOGGER	= LogFactory.getLog(Facility.class);
 
 	// The owning organization.
 	@Column(nullable = false)
@@ -144,12 +144,12 @@ public class Facility extends Location {
 		Boolean inCreateBackToBack) {
 		Aisle aisle = new Aisle(this, inPosX, inPosY);
 
-		Double anchorPosX = inPosX;
-		Double anchorPosY = inPosY;
+		Double anchorPosX = 0.0;
+		Double anchorPosY = 0.0;
 		for (int bayLongNum = 0; bayLongNum < inBaysLong; bayLongNum++) {
 			Double anchorPosZ = 0.0;
 			for (int bayHighNum = 0; bayHighNum < inBaysHigh; bayHighNum++) {
-				Bay protoBay = new Bay(anchorPosX, anchorPosY, anchorPosZ);
+				Bay protoBay = new Bay(aisle, anchorPosX, anchorPosY, anchorPosZ);
 				try {
 					Bay.DAO.store(protoBay);
 				} catch (DaoException e) {

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PathSegment.java,v 1.2 2012/07/22 08:49:37 jeffw Exp $
+ *  $Id: PathSegment.java,v 1.3 2012/07/22 20:14:04 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -37,7 +37,8 @@ import com.google.inject.Singleton;
 @Table(name = "PATHSEGMENT")
 public class PathSegment extends DomainObjectABC implements IDomainObject {
 
-	private static final Log	LOGGER	= LogFactory.getLog(PathSegment.class);
+	@Inject
+	public static ITypedDao<PathSegment>	DAO;
 
 	@Singleton
 	public static class PathSegmentDao extends GenericDao<PathSegment> implements ITypedDao<PathSegment> {
@@ -46,15 +47,14 @@ public class PathSegment extends DomainObjectABC implements IDomainObject {
 		}
 	}
 
-	@Inject
-	public static ITypedDao<PathSegment>	DAO;
+	private static final Log	LOGGER	= LogFactory.getLog(PathSegment.class);
 
 	// The owning organization.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	@JsonIgnore
 	@Getter
-	private Path							parentPath;
+	private Path				parentPath;
 
 	public PathSegment() {
 	}

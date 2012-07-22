@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Location.java,v 1.2 2012/07/22 08:49:37 jeffw Exp $
+ *  $Id: LocationABC.java,v 1.1 2012/07/22 20:14:04 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -27,12 +27,10 @@ import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.annotate.JsonIgnore;
 
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
-import com.gadgetworks.codeshelf.model.dao.GenericDao;
-import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
- * Location
+ * LocationABC
  * 
  * The anchor point and vertex collection to define the planar space of a work structure (e.g. facility, bay, shelf, etc.)
  * 
@@ -40,23 +38,16 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-// Location is the only class we use table-per-class strategy.
+// LocationABC is the only class we use table-per-class strategy.
 // The location hierarchy will get very deep, but each parent has concrete/leaf instances of its children.
 // This removes the biggest hassle/hurdle to inheritance-per-class.
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "DTYPE", discriminatorType = DiscriminatorType.STRING)
 @Table(name = "LOCATION")
 @DiscriminatorValue("ABC")
-public abstract class Location extends DomainObjectABC {
+public abstract class LocationABC extends DomainObjectABC {
 
-	private static final Log	LOGGER	= LogFactory.getLog(Location.class);
-
-	@Singleton
-	public static class LocationDao extends GenericDao<Location> {
-		public LocationDao(Class inClass) {
-			super(Location.class);
-		}
-	}
+	private static final Log	LOGGER	= LogFactory.getLog(LocationABC.class);
 
 	// The position type (GPS, METERS, etc.).
 	@Getter
@@ -101,19 +92,19 @@ public abstract class Location extends DomainObjectABC {
 	@JsonIgnore
 	@Setter
 	@Getter
-	private Location			parentLocation;
+	private LocationABC			parentLocation;
 
 	// The child locations.
 	@OneToMany(mappedBy = "parentLocation")
 	@JsonIgnore
 	@Getter
-	private List<Location>		locations	= new ArrayList<Location>();
+	private List<LocationABC>		locations	= new ArrayList<LocationABC>();
 	
-	public Location() {
+	public LocationABC() {
 		
 	}
 
-	public Location(final PositionTypeEnum inPosType, final Double inPosX, final double inPosY) {
+	public LocationABC(final PositionTypeEnum inPosType, final Double inPosX, final double inPosY) {
 		posType = inPosType;
 		posX = inPosX;
 		posY = inPosY;
@@ -121,7 +112,7 @@ public abstract class Location extends DomainObjectABC {
 		posZ = 0.0;
 	}
 
-	public Location(final PositionTypeEnum inPosType, final Double inPosX, final double inPosY, final double inPosZ) {
+	public LocationABC(final PositionTypeEnum inPosType, final Double inPosX, final double inPosY, final double inPosZ) {
 		posType = inPosType;
 		posX = inPosX;
 		posY = inPosY;

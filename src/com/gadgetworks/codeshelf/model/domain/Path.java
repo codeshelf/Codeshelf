@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Path.java,v 1.2 2012/07/22 08:49:37 jeffw Exp $
+ *  $Id: Path.java,v 1.3 2012/07/22 20:14:04 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -38,7 +38,8 @@ import com.google.inject.Singleton;
 @Table(name = "PATH")
 public class Path extends DomainObjectABC {
 
-	private static final Log	LOGGER	= LogFactory.getLog(Path.class);
+	@Inject
+	public static ITypedDao<Path>	DAO;
 
 	@Singleton
 	public static class PathDao extends GenericDao<Path> implements ITypedDao<Path> {
@@ -47,26 +48,25 @@ public class Path extends DomainObjectABC {
 		}
 	}
 
-	@Inject
-	public static ITypedDao<Path>	DAO;
+	private static final Log	LOGGER		= LogFactory.getLog(Path.class);
 
 	// The parent facility.
 	@Getter
 	@Setter
 	@Column(nullable = false)
-	private Facility				parentFacility;
+	private Facility			parentFacility;
 
 	// The path description.
 	@Getter
 	@Setter
 	@Column(nullable = false)
-	private String					description;
+	private String				description;
 
 	// For a network this is a list of all of the users that belong in the set.
 	@OneToMany(mappedBy = "parentPath")
 	@JsonIgnore
 	@Getter
-	private List<PathSegment>		segments	= new ArrayList<PathSegment>();
+	private List<PathSegment>	segments	= new ArrayList<PathSegment>();
 
 	public Path() {
 		description = "";

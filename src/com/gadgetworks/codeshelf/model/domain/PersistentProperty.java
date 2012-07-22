@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PersistentProperty.java,v 1.2 2012/07/22 08:49:37 jeffw Exp $
+ *  $Id: PersistentProperty.java,v 1.3 2012/07/22 20:14:04 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -34,15 +34,15 @@ import com.google.inject.Singleton;
 @Entity
 public class PersistentProperty<T extends DomainObjectABC> extends DomainObjectABC {
 
+	@Inject
+	public static ITypedDao<PersistentProperty>	DAO;
+
 	@Singleton
 	public static class PersistentPropertyDao extends GenericDao<PersistentProperty> implements ITypedDao<PersistentProperty> {
 		public PersistentPropertyDao() {
 			super(PersistentProperty.class);
 		}
 	}
-
-	@Inject
-	public static ITypedDao<PersistentProperty>	DAO;
 
 	//	public static final String	SHOW_CONSOLE_PREF			= "SHOWCONS";
 	//	public static final String	SHOW_CONNECTION_DEBUG_PREF	= "CONNDBUG";

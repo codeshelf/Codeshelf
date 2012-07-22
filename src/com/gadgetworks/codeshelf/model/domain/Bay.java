@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Bay.java,v 1.2 2012/07/22 08:49:37 jeffw Exp $
+ *  $Id: Bay.java,v 1.3 2012/07/22 20:14:04 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -28,31 +28,33 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-@Table(name = "BAY")
+@Table(name = "LOCATION")
 @DiscriminatorValue("BAY")
-public class Bay extends Location {
+public class Bay extends LocationABC {
 
-	private static final Log	LOGGER	= LogFactory.getLog(Bay.class);
-
+	@Inject
+	public static ITypedDao<Bay> DAO;
+	
 	@Singleton
-	public static class BayDao extends GenericDao<Bay> implements ITypedDao<Bay> {
+	public static class BayDao extends GenericDao<Bay> {
 		public BayDao() {
 			super(Bay.class);
 		}
 	}
 
-	@Inject
-	public static ITypedDao<Bay> DAO;
+	private static final Log	LOGGER	= LogFactory.getLog(Bay.class);
+
+	public Bay(final Aisle inAisle, final Double inPosX, final double inPosY, final double inPosZ) {
+		super(PositionTypeEnum.METERS_FROM_PARENT, inPosX, inPosY, inPosZ);
+		setParentAisle(inAisle);
+		setDomainId(getDefaultDomainId());
+	}
 	
 	public final ITypedDao<Bay> getDao() {
 		return DAO;
 	}
 
-	public Bay(final Double inPosX, final double inPosY, final double inPosZ) {
-		super(PositionTypeEnum.METERS_FROM_PARENT, inPosX, inPosY, inPosZ);
-	}
-	
-	public String getDefaultDomainIdPrefix() {
+	public final String getDefaultDomainIdPrefix() {
 		return "B";
 	}
 

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PickTag.java,v 1.1 2012/07/19 06:11:32 jeffw Exp $
+ *  $Id: PickTag.java,v 1.2 2012/07/22 20:14:04 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -31,8 +31,6 @@ import com.gadgetworks.codeshelf.command.CommandControlABC;
 @Table(name = "WIRELESSDEVICE")
 @DiscriminatorValue("PICKTAG")
 public class PickTag extends WirelessDevice {
-
-	private static final long	serialVersionUID	= 501063502863299855L;
 
 	private static final Log	LOGGER				= LogFactory.getLog(PickTag.class);
 

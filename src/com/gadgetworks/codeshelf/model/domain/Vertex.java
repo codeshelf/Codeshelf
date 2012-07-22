@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Vertex.java,v 1.2 2012/07/22 08:49:37 jeffw Exp $
+ *  $Id: Vertex.java,v 1.3 2012/07/22 20:14:04 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -40,7 +40,8 @@ import com.google.inject.Singleton;
 @Table(name = "VERTEX")
 public class Vertex extends DomainObjectABC {
 
-	private static final Log	LOGGER	= LogFactory.getLog(Vertex.class);
+	@Inject
+	public static ITypedDao<Vertex>	DAO;
 
 	@Singleton
 	public static class VertexDao extends GenericDao<Vertex> implements ITypedDao<Vertex> {
@@ -49,8 +50,7 @@ public class Vertex extends DomainObjectABC {
 		}
 	}
 
-	@Inject
-	public static ITypedDao<Vertex>	DAO;
+	private static final Log	LOGGER	= LogFactory.getLog(Vertex.class);
 
 	// The position type (GPS, METERS, etc.).
 	@Column(nullable = false)
@@ -82,7 +82,7 @@ public class Vertex extends DomainObjectABC {
 	@ManyToOne(optional = false)
 	@JsonIgnore
 	@Getter
-	private Location				parentLocation;
+	private LocationABC				parentLocation;
 
 	public Vertex() {
 	}
@@ -104,8 +104,8 @@ public class Vertex extends DomainObjectABC {
 	}
 
 	public final void setParent(IDomainObject inParent) {
-		if (inParent instanceof Location) {
-			setParentLocation((Location) inParent);
+		if (inParent instanceof LocationABC) {
+			setParentLocation((LocationABC) inParent);
 		}
 	}
 
@@ -114,7 +114,7 @@ public class Vertex extends DomainObjectABC {
 		return new ArrayList<IDomainObject>();
 	}
 
-	public final void setParentLocation(final Location inParentLocation) {
+	public final void setParentLocation(final LocationABC inParentLocation) {
 		parentLocation = inParentLocation;
 	}
 

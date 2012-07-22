@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: UserSession.java,v 1.2 2012/07/22 08:49:37 jeffw Exp $
+ *  $Id: UserSession.java,v 1.3 2012/07/22 20:14:04 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -39,9 +39,8 @@ import com.google.inject.Singleton;
 @Table(name = "USERSESSION")
 public class UserSession extends DomainObjectABC {
 
-	private static final Log	LOGGER				= LogFactory.getLog(UserSession.class);
-
-	private static final long	serialVersionUID	= 3001609308065821464L;
+	@Inject
+	public static ITypedDao<UserSession>	DAO;
 
 	@Singleton
 	public static class UserSessionDao extends GenericDao<UserSession> implements ITypedDao<UserSession> {
@@ -49,9 +48,10 @@ public class UserSession extends DomainObjectABC {
 			super(UserSession.class);
 		}
 	}
+	
+	private static final Log	LOGGER				= LogFactory.getLog(UserSession.class);
 
-	@Inject
-	public static ITypedDao<UserSession>	DAO;
+	private static final long	serialVersionUID	= 3001609308065821464L;
 
 	// The owning CodeShelf network.
 	@Column(name = "parentUser", nullable = false)

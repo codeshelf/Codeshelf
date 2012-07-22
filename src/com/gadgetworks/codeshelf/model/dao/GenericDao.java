@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: GenericDao.java,v 1.22 2012/07/22 08:49:37 jeffw Exp $
+ *  $Id: GenericDao.java,v 1.23 2012/07/22 20:14:04 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -17,7 +17,6 @@ import org.apache.commons.logging.LogFactory;
 
 import com.avaje.ebean.Ebean;
 import com.avaje.ebean.Query;
-import com.avaje.ebean.SqlRow;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 
 /**

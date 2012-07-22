@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: DomainObjectABC.java,v 1.2 2012/07/22 08:49:37 jeffw Exp $
+ *  $Id: DomainObjectABC.java,v 1.3 2012/07/22 20:14:04 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -25,6 +25,7 @@ import org.codehaus.jackson.annotate.JsonProperty;
 
 import com.avaje.ebean.Ebean;
 import com.avaje.ebean.Query;
+import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 
 // --------------------------------------------------------------------------
@@ -68,6 +69,14 @@ public abstract class DomainObjectABC implements IDomainObject {
 	public DomainObjectABC() {
 		lastDefaultSequenceId = 1;
 	}
+	
+	public String toString() {
+		String result = "";
+		
+		result = "ID: " + getDomainId();
+		
+		return result;
+	}
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
@@ -89,13 +98,19 @@ public abstract class DomainObjectABC implements IDomainObject {
 			int maxTries = 100;
 
 			do {
-				Integer nextSeq = parentObject.getLastDefaultSequenceId();
-				String testId = getDefaultDomainIdPrefix() + nextSeq.toString();
+				Integer nextSeq = parentObject.getLastDefaultSequenceId() + 1;
+				String testId = getDefaultDomainIdPrefix() + String.format("%02d", nextSeq);
 				IDomainObject testIdObject = dao.findByDomainId(parentObject, testId);
 
 				if (testIdObject == null) {
 					foundId = true;
 					result = testId;
+					parentObject.setLastDefaultSequenceId(nextSeq);
+					try {
+						parentObject.getDao().store(parentObject);
+					} catch (DaoException e) {
+						LOGGER.error("", e);
+					}
 				}
 			} while ((!foundId) && (maxTries > 0));
 		}

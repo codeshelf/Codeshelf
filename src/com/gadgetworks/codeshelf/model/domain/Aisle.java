@@ -1,11 +1,9 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Aisle.java,v 1.2 2012/07/22 08:49:37 jeffw Exp $
+ *  $Id: Aisle.java,v 1.3 2012/07/22 20:14:04 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
-
-import java.util.List;
 
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
@@ -30,12 +28,13 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-@Table(name = "AISLE")
+@Table(name = "LOCATION")
 @DiscriminatorValue("AISLE")
-public class Aisle extends Location {
+public class Aisle extends LocationABC {
 
-	private static final Log	LOGGER	= LogFactory.getLog(Aisle.class);
-	
+	@Inject
+	public static ITypedDao<Aisle> DAO;
+
 	@Singleton
 	public static class AisleDao extends GenericDao<Aisle> {
 		public AisleDao() {
@@ -43,9 +42,8 @@ public class Aisle extends Location {
 		}
 	}
 	
-	@Inject
-	public static ITypedDao<Aisle> DAO;
-
+	private static final Log	LOGGER	= LogFactory.getLog(Aisle.class);
+	
 	public Aisle(final Facility inParentFacility, final Double inPosX, final double inPosY) {
 		super(PositionTypeEnum.METERS_FROM_PARENT, inPosX, inPosY);
 		setParentFacility(inParentFacility);

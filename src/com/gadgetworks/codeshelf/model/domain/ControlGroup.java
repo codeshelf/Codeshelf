@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ControlGroup.java,v 1.2 2012/07/22 08:49:37 jeffw Exp $
+ *  $Id: ControlGroup.java,v 1.3 2012/07/22 20:14:04 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -39,17 +39,15 @@ import com.google.inject.Singleton;
 @Table(name = "CONTROLGROUP")
 public class ControlGroup extends DomainObjectABC {
 
+	@Inject
+	public static ITypedDao<ControlGroup>	DAO;
+
 	@Singleton
 	public static class ControlGroupDao extends GenericDao<ControlGroup> implements ITypedDao<ControlGroup> {
 		public ControlGroupDao() {
 			super(ControlGroup.class);
 		}
 	}
-
-	@Inject
-	public static ITypedDao<ControlGroup>	DAO;
-
-	private static final long				serialVersionUID	= -4923129546531851147L;
 
 	// The owning CodeShelf network.
 	@Getter
