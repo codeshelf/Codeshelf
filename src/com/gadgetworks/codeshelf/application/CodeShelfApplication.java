@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfApplication.java,v 1.37 2012/07/19 06:11:34 jeffw Exp $
+ *  $Id: CodeShelfApplication.java,v 1.38 2012/07/24 16:59:01 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -9,6 +9,7 @@ package com.gadgetworks.codeshelf.application;
 import java.io.File;
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -20,6 +21,8 @@ import org.slf4j.LoggerFactory;
 import com.avaje.ebean.EbeanServer;
 import com.avaje.ebean.EbeanServerFactory;
 import com.avaje.ebean.LogLevel;
+import com.avaje.ebean.Transaction;
+import com.avaje.ebean.config.DataSourceConfig;
 import com.avaje.ebean.config.ServerConfig;
 import com.avaje.ebeaninternal.server.lib.ShutdownManager;
 import com.gadgetworks.codeshelf.controller.CodeShelfController;
@@ -46,19 +49,18 @@ import com.google.inject.Inject;
 
 public final class CodeShelfApplication implements ICodeShelfApplication {
 
-	private static final Logger				LOGGER		= LoggerFactory.getLogger(CodeShelfApplication.class);
+	private static final Logger			LOGGER		= LoggerFactory.getLogger(CodeShelfApplication.class);
 
-	private boolean							mIsRunning	= true;
-	private List<IController>				mControllerList;
-	private WirelessDeviceEventHandler		mWirelessDeviceEventHandler;
-	private IWebSocketListener				mWebSocketListener;
-	private IDaoProvider					mDaoProvider;
-	private Thread							mShutdownHookThread;
-	private Runnable						mShutdownRunnable;
+	private boolean						mIsRunning	= true;
+	private List<IController>			mControllerList;
+	private WirelessDeviceEventHandler	mWirelessDeviceEventHandler;
+	private IWebSocketListener			mWebSocketListener;
+	private IDaoProvider				mDaoProvider;
+	private Thread						mShutdownHookThread;
+	private Runnable					mShutdownRunnable;
 
 	@Inject
-	public CodeShelfApplication(final IWebSocketListener inWebSocketManager,
-		final IDaoProvider inDaoProvider) {
+	public CodeShelfApplication(final IWebSocketListener inWebSocketManager, final IDaoProvider inDaoProvider) {
 		mWebSocketListener = inWebSocketManager;
 		mDaoProvider = inDaoProvider;
 		mControllerList = new ArrayList<IController>();
@@ -369,20 +371,36 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 			}
 		}
 
+		DataSourceConfig dataSourceConfig = new DataSourceConfig();
+		dataSourceConfig.setUsername("codeshelf");
+		dataSourceConfig.setPassword("codeshelf");
+		dataSourceConfig.setUrl(System.getProperty("app.database.url"));// + "SCHEMA=CODESHELF;TRACE_LEVEL_FILE=0;AUTO_SERVER=TRUE");
+		dataSourceConfig.setDriver("org.h2.Driver");
+		dataSourceConfig.setMinConnections(1);
+		dataSourceConfig.setMaxConnections(25);
+		dataSourceConfig.setIsolationLevel(Transaction.READ_COMMITTED);
+		dataSourceConfig.setHeartbeatSql("select count(*) from dual");
+
 		// Setup the EBean server configuration.
 		ServerConfig config = new ServerConfig();
 		config.setName("h2");
-		config.loadFromProperties();
+		//		config.loadFromProperties();
+		config.setDataSourceConfig(dataSourceConfig);
 		config.setNamingConvention(new GWEbeanNamingConvention());
 		config.setDefaultServer(true);
 		config.setDebugSql(false);
-		config.setLoggingLevel(LogLevel.NONE);
-		//		config.setLoggingLevelQuery(LogLevelStmt.NONE);
-		//		config.setLoggingLevelSqlQuery(LogLevelStmt.NONE);
-		//		config.setLoggingLevelIud(LogLevelStmt.NONE);
-		//		config.setLoggingLevelTxnCommit(LogLevelTxnCommit.DEBUG);
+		config.setLoggingLevel(LogLevel.SQL);
 		config.setLoggingToJavaLogger(false);
 		config.setResourceDirectory(Util.getApplicationDataDirPath());
+		config.setDebugLazyLoad(true);
+		config.setDebugSql(true);
+		config.setLoggingToJavaLogger(true);
+		config.setPackages(new ArrayList<String>(Arrays.asList("com.gadgetworks.codeshelf.model.domain")));
+		config.setJars(new ArrayList<String>(Arrays.asList("codeshelf.jar")));
+		config.setUpdateChangesOnly(true);
+		config.setDdlGenerate(true);
+		config.setDdlRun(false);
+
 		EbeanServer server = EbeanServerFactory.create(config);
 		if (server == null) {
 			Util.exitSystem();

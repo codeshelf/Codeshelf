@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: H2SchemaManager.java,v 1.29 2012/07/22 20:14:04 jeffw Exp $
+ *  $Id: H2SchemaManager.java,v 1.30 2012/07/24 16:59:01 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -213,7 +213,7 @@ public final class H2SchemaManager implements ISchemaManager {
 			+ "REFERENCES DATABASE.CODESHELF.ORGANIZATION (PERSISTENTID);");
 
 		// Add an index to make the facility-organization foreign key higher performance.
-		execOneSQLCommand("CREATE INDEX CODESHELF.FACILITY_PARENT_ORGANIZATION ON CODESHELF.LOCATION (PARENTORGANIZATION_PERSISTENTID)");
+		execOneSQLCommand("CREATE INDEX CODESHELF.LOCATION_PARENT_ORGANIZATION ON CODESHELF.LOCATION (PARENTORGANIZATION_PERSISTENTID)");
 
 		// Add the foreign key constraint for parent-child location arrangements.
 		execOneSQLCommand("ALTER TABLE CODESHELF.LOCATION " //
@@ -327,7 +327,7 @@ public final class H2SchemaManager implements ISchemaManager {
 
 		execOneSQLCommand("ALTER TABLE CODESHELF.CODESHELFNETWORK " //
 			+ "ADD FOREIGN KEY (PARENTFACILITY_PERSISTENTID) " //
-			+ "REFERENCES DATABASE.CODESHELF.CODESHELFNETWORK (PERSISTENTID);");
+			+ "REFERENCES DATABASE.CODESHELF.LOCATION (PERSISTENTID);");
 
 		execOneSQLCommand("CREATE INDEX CODESHELF.CODESHELFNETWORK_PARENT_FACILITY ON CODESHELF.CODESHELFNETWORK (PARENTFACILITY_PERSISTENTID)");
 

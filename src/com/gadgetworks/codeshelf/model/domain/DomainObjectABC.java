@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: DomainObjectABC.java,v 1.3 2012/07/22 20:14:04 jeffw Exp $
+ *  $Id: DomainObjectABC.java,v 1.4 2012/07/24 16:59:01 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -67,7 +67,7 @@ public abstract class DomainObjectABC implements IDomainObject {
 	private Timestamp			version;
 
 	public DomainObjectABC() {
-		lastDefaultSequenceId = 1;
+		lastDefaultSequenceId = 0;
 	}
 	
 	public String toString() {
