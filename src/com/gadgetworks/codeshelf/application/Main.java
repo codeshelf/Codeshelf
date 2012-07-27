@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Main.java,v 1.17 2012/07/19 06:11:34 jeffw Exp $
+ *  $Id: Main.java,v 1.18 2012/07/27 01:47:49 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -27,10 +27,16 @@ import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Facility.FacilityDao;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Organization.OrganizationDao;
+import com.gadgetworks.codeshelf.model.domain.Path;
+import com.gadgetworks.codeshelf.model.domain.Path.PathDao;
+import com.gadgetworks.codeshelf.model.domain.PathSegment;
+import com.gadgetworks.codeshelf.model.domain.PathSegment.PathSegmentDao;
 import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
 import com.gadgetworks.codeshelf.model.domain.PersistentProperty.PersistentPropertyDao;
 import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.model.domain.User.UserDao;
+import com.gadgetworks.codeshelf.model.domain.UserSession;
+import com.gadgetworks.codeshelf.model.domain.UserSession.UserSessionDao;
 import com.gadgetworks.codeshelf.model.domain.Vertex;
 import com.gadgetworks.codeshelf.model.domain.Vertex.VertexDao;
 import com.gadgetworks.codeshelf.model.domain.WirelessDevice;
@@ -103,36 +109,64 @@ public final class Main {
 				bind(ICodeShelfApplication.class).to(CodeShelfApplication.class);
 				bind(IWebSocketListener.class).to(WebSocketListener.class);
 				bind(IWebSessionManager.class).to(WebSessionManager.class);
-				bind(new TypeLiteral<ITypedDao<Organization>>() {
-				}).to(OrganizationDao.class);
-				bind(new TypeLiteral<ITypedDao<Vertex>>() {
-				}).to(VertexDao.class);
-				bind(new TypeLiteral<ITypedDao<Facility>>() {
-				}).to(FacilityDao.class);
-				bind(new TypeLiteral<ITypedDao<Aisle>>() {
-				}).to(AisleDao.class);
-				bind(new TypeLiteral<ITypedDao<Bay>>() {
-				}).to(BayDao.class);
-				bind(new TypeLiteral<ITypedDao<PersistentProperty>>() {
-				}).to(PersistentPropertyDao.class);
+				
+				requestStaticInjection(DBProperty.class);
 				bind(new TypeLiteral<ITypedDao<DBProperty>>() {
 				}).to(DBPropertyDao.class);
+				
+				requestStaticInjection(Organization.class);
+				bind(new TypeLiteral<ITypedDao<Organization>>() {
+				}).to(OrganizationDao.class);
+
+				requestStaticInjection(PersistentProperty.class);
+				bind(new TypeLiteral<ITypedDao<PersistentProperty>>() {
+				}).to(PersistentPropertyDao.class);
+
+				requestStaticInjection(Facility.class);
+				bind(new TypeLiteral<ITypedDao<Facility>>() {
+				}).to(FacilityDao.class);
+
+				requestStaticInjection(Aisle.class);
+				bind(new TypeLiteral<ITypedDao<Aisle>>() {
+				}).to(AisleDao.class);
+
+				requestStaticInjection(Bay.class);
+				bind(new TypeLiteral<ITypedDao<Bay>>() {
+				}).to(BayDao.class);
+
+				requestStaticInjection(Vertex.class);
+				bind(new TypeLiteral<ITypedDao<Vertex>>() {
+				}).to(VertexDao.class);
+				
+				requestStaticInjection(Path.class);
+				bind(new TypeLiteral<ITypedDao<Path>>() {
+				}).to(PathDao.class);
+
+				requestStaticInjection(PathSegment.class);
+				bind(new TypeLiteral<ITypedDao<PathSegment>>() {
+				}).to(PathSegmentDao.class);
+
+				requestStaticInjection(User.class);
 				bind(new TypeLiteral<ITypedDao<User>>() {
 				}).to(UserDao.class);
+
+				requestStaticInjection(UserSession.class);
+				bind(new TypeLiteral<ITypedDao<UserSession>>() {
+				}).to(UserSessionDao.class);
+
+				requestStaticInjection(CodeShelfNetwork.class);
 				bind(new TypeLiteral<ITypedDao<CodeShelfNetwork>>() {
 				}).to(CodeShelfNetworkDao.class);
+
+				requestStaticInjection(ControlGroup.class);
 				bind(new TypeLiteral<ITypedDao<ControlGroup>>() {
 				}).to(ControlGroupDao.class);
+
+				requestStaticInjection(WirelessDevice.class);
 				bind(IWirelessDeviceDao.class).to(WirelessDeviceDao.class);
+
 				bind(IWebSessionReqCmdFactory.class).to(WebSessionReqCmdFactory.class);
 				bind(IDaoProvider.class).to(DaoProvider.class);
-				requestStaticInjection(Organization.class);
-				requestStaticInjection(Facility.class);
-				requestStaticInjection(Aisle.class);
-				requestStaticInjection(Bay.class);
-				requestStaticInjection(WirelessDevice.class);
-				requestStaticInjection(PersistentProperty.class);
-				requestStaticInjection(DBProperty.class);
 			}
 		});
 

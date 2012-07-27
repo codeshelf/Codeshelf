@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.3 2012/07/22 20:14:04 jeffw Exp $
+ *  $Id: Facility.java,v 1.4 2012/07/27 01:47:49 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -52,26 +52,26 @@ public class Facility extends LocationABC {
 		}
 	}
 
-	private static final Log	LOGGER	= LogFactory.getLog(Facility.class);
+	private static final Log		LOGGER		= LogFactory.getLog(Facility.class);
 
 	// The owning organization.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	@JsonIgnore
 	@Getter
-	private Organization				parentOrganization;
+	private Organization			parentOrganization;
 
 	// For a network this is a list of all of the control groups that belong in the set.
 	@OneToMany(mappedBy = "parentLocation")
 	@JsonIgnore
 	@Getter
-	private List<Aisle>					aisles		= new ArrayList<Aisle>();
+	private List<Aisle>				aisles		= new ArrayList<Aisle>();
 
 	// For a network this is a list of all of the control groups that belong in the set.
 	@OneToMany(mappedBy = "parentFacility")
 	@JsonIgnore
 	@Getter
-	private List<CodeShelfNetwork>		networks	= new ArrayList<CodeShelfNetwork>();
+	private List<CodeShelfNetwork>	networks	= new ArrayList<CodeShelfNetwork>();
 
 	public Facility() {
 		// Facilities have no parent location, but we don't want to allow ANY location to not have a parent.
@@ -128,24 +128,28 @@ public class Facility extends LocationABC {
 	 * Create a new aisle with prototype bays.
 	 * @param inPosX
 	 * @param inPosY
-	 * @param inProtoBayHeight
-	 * @param inProtoBayWidth
-	 * @param inProtoBayDepth
+	 * @param inProtoBayXDim
+	 * @param inProtoBayYDim
+	 * @param inProtoBayZDim
 	 * @param inBaysHigh
 	 * @param inBaysLong
 	 */
 	public final void createAisle(Double inPosX,
 		Double inPosY,
-		Double inProtoBayHeight,
-		Double inProtoBayWidth,
-		Double inProtoBayDepth,
+		Double inProtoBayXDim,
+		Double inProtoBayYDim,
+		Double inProtoBayZDim,
 		Integer inBaysHigh,
 		Integer inBaysLong,
+		Boolean inRunInXDir,
 		Boolean inCreateBackToBack) {
 		Aisle aisle = new Aisle(this, inPosX, inPosY);
 
 		Double anchorPosX = 0.0;
 		Double anchorPosY = 0.0;
+		Double aisleBoundaryX = 0.0;
+		Double aisleBoundaryY = 0.0;
+
 		for (int bayLongNum = 0; bayLongNum < inBaysLong; bayLongNum++) {
 			Double anchorPosZ = 0.0;
 			for (int bayHighNum = 0; bayHighNum < inBaysHigh; bayHighNum++) {
@@ -155,14 +159,43 @@ public class Facility extends LocationABC {
 				} catch (DaoException e) {
 					LOGGER.error("", e);
 				}
-				anchorPosZ += inProtoBayHeight;
+				anchorPosZ += inProtoBayZDim;
 			}
-			anchorPosY += inProtoBayWidth;
+			
+			if ((anchorPosX + inProtoBayXDim) > aisleBoundaryX) {
+				aisleBoundaryX = anchorPosX + inProtoBayXDim;
+			}
+
+			if ((anchorPosY + inProtoBayYDim) > aisleBoundaryY) {
+				aisleBoundaryY = anchorPosY + inProtoBayYDim;
+			}
+
+			// Prepare the anchor point for the next bay.
+			if (inRunInXDir) {
+				anchorPosX += inProtoBayXDim;
+			} else {
+				anchorPosY += inProtoBayYDim;
+			}
 		}
 		try {
 			Aisle.DAO.store(aisle);
 		} catch (DaoException e) {
 			LOGGER.error("", e);
 		}
+
+		try {
+			// Create four simple vertices around the aisle.
+			Vertex vertex1 = new Vertex(aisle, PositionTypeEnum.METERS_FROM_PARENT, 0, 0.0, 0.0);
+			Vertex.DAO.store(vertex1);
+			Vertex vertex2 = new Vertex(aisle, PositionTypeEnum.METERS_FROM_PARENT, 1, aisleBoundaryX, 0.0);
+			Vertex.DAO.store(vertex2);
+			Vertex vertex3 = new Vertex(aisle, PositionTypeEnum.METERS_FROM_PARENT, 2, 0.0, aisleBoundaryY);
+			Vertex.DAO.store(vertex3);
+			Vertex vertex4 = new Vertex(aisle, PositionTypeEnum.METERS_FROM_PARENT, 3, aisleBoundaryX, aisleBoundaryY);
+			Vertex.DAO.store(vertex4);
+		} catch (DaoException e) {
+			LOGGER.error("", e);
+		}
+
 	}
 }

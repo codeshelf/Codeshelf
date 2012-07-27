@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PathSegment.java,v 1.3 2012/07/22 20:14:04 jeffw Exp $
+ *  $Id: PathSegment.java,v 1.4 2012/07/27 01:47:49 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -35,7 +35,7 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "PATHSEGMENT")
-public class PathSegment extends DomainObjectABC implements IDomainObject {
+public class PathSegment extends DomainObjectABC {
 
 	@Inject
 	public static ITypedDao<PathSegment>	DAO;
