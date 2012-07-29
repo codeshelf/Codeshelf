@@ -1,12 +1,13 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ITypedDao.java,v 1.3 2012/07/22 08:49:37 jeffw Exp $
+ *  $Id: ITypedDao.java,v 1.4 2012/07/29 09:30:19 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 

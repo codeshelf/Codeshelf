@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.4 2012/07/27 01:47:49 jeffw Exp $
+ *  $Id: Facility.java,v 1.5 2012/07/29 09:30:19 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -144,6 +144,11 @@ public class Facility extends LocationABC {
 		Boolean inRunInXDir,
 		Boolean inCreateBackToBack) {
 		Aisle aisle = new Aisle(this, inPosX, inPosY);
+		try {
+			Aisle.DAO.store(aisle);
+		} catch (DaoException e) {
+			LOGGER.error("", e);
+		}
 
 		Double anchorPosX = 0.0;
 		Double anchorPosY = 0.0;
@@ -176,11 +181,6 @@ public class Facility extends LocationABC {
 			} else {
 				anchorPosY += inProtoBayYDim;
 			}
-		}
-		try {
-			Aisle.DAO.store(aisle);
-		} catch (DaoException e) {
-			LOGGER.error("", e);
 		}
 
 		try {

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectFilter.java,v 1.10 2012/07/19 06:11:33 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectFilter.java,v 1.11 2012/07/29 09:30:19 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -46,7 +47,7 @@ import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdOb
 public class WebSessionReqCmdObjectFilter extends WebSessionReqCmdABC implements IWebSessionPersistentReqCmd {
 	private static final Log				LOGGER	= LogFactory.getLog(WebSessionReqCmdObjectListener.class);
 
-	private Class<IDomainObject>				mPersistenceClass;
+	private Class<IDomainObject>			mPersistenceClass;
 	private List<IDomainObject>				mObjectMatchList;
 	private List<String>					mPropertyNames;
 	private String							mFilterClause;
@@ -136,6 +137,7 @@ public class WebSessionReqCmdObjectFilter extends WebSessionReqCmdABC implements
 		IWebSessionRespCmd result = null;
 
 		try {
+
 			List<Map<String, Object>> resultsList = new ArrayList<Map<String, Object>>();
 			for (IDomainObject matchedObject : inDomainObjectList) {
 				Map<String, Object> propertiesMap = new HashMap<String, Object>();
@@ -158,13 +160,15 @@ public class WebSessionReqCmdObjectFilter extends WebSessionReqCmdABC implements
 				resultsList.add(propertiesMap);
 			}
 
-			// Convert the list of objects into a JSon object.
-			ObjectMapper mapper = new ObjectMapper();
-			ObjectNode dataNode = mapper.createObjectNode();
-			ArrayNode searchListNode = mapper.valueToTree(resultsList);
-			dataNode.put(RESULTS, searchListNode);
+			if (resultsList.size() > 0) {
+				// Convert the list of objects into a JSon object.
+				ObjectMapper mapper = new ObjectMapper();
+				ObjectNode dataNode = mapper.createObjectNode();
+				ArrayNode searchListNode = mapper.valueToTree(resultsList);
+				dataNode.put(RESULTS, searchListNode);
 
-			result = new WebSessionRespCmdObjectFilter(dataNode);
+				result = new WebSessionRespCmdObjectFilter(dataNode);
+			}
 
 		} catch (IllegalArgumentException e) {
 			LOGGER.error("", e);
@@ -187,20 +191,32 @@ public class WebSessionReqCmdObjectFilter extends WebSessionReqCmdABC implements
 		return getProperties(domainObjectList, OP_TYPE_CREATE);
 	}
 
-	public final IWebSessionRespCmd processObjectUpdate(IDomainObject inDomainObject) {
-		ITypedDao<IDomainObject> dao = mDaoProvider.getDaoInstance((Class<IDomainObject>) mPersistenceClass);
-		mObjectMatchList = dao.findByFilter(mFilterClause, mFilterParams);
-		List<IDomainObject> domainObjectList = new ArrayList<IDomainObject>();
-		if (mObjectMatchList.contains(inDomainObject)) {
-			domainObjectList.add(inDomainObject);
+	public final IWebSessionRespCmd processObjectUpdate(IDomainObject inDomainObject, Set<String> inChangedProperties) {
+		// FIrst see if any changed properties match the filtered properties.
+		boolean matchedChangedProperty = false;
+		for (String propertyName : mPropertyNames) {
+			if ((inChangedProperties != null) && (inChangedProperties.contains(propertyName))) {
+				matchedChangedProperty = true;
+			}
 		}
-		return getProperties(domainObjectList, OP_TYPE_UPDATE);
+
+		if (matchedChangedProperty) {
+			ITypedDao<IDomainObject> dao = mDaoProvider.getDaoInstance((Class<IDomainObject>) mPersistenceClass);
+			mObjectMatchList = dao.findByFilter(mFilterClause, mFilterParams);
+			List<IDomainObject> domainObjectList = new ArrayList<IDomainObject>();
+			if (mObjectMatchList.contains(inDomainObject)) {
+				domainObjectList.add(inDomainObject);
+			}
+			return getProperties(domainObjectList, OP_TYPE_UPDATE);
+		} else {
+			return null;
+		}
 	}
 
 	public final IWebSessionRespCmd processObjectDelete(IDomainObject inDomainObject) {
 		// Delete is a bit of a weird case.  We don't want to refresh the member list since we want the delete to propagate to anyone listening with a filter.
-//		IGenericDao<IDomainObject> dao = mDaoProvider.getDaoInstance((Class<IDomainObject>) mPersistenceClass);
-//		mObjectMatchList = dao.findByFilter(mFilterClause, mFilterParams);
+		//		IGenericDao<IDomainObject> dao = mDaoProvider.getDaoInstance((Class<IDomainObject>) mPersistenceClass);
+		//		mObjectMatchList = dao.findByFilter(mFilterClause, mFilterParams);
 		List<IDomainObject> domainObjectList = new ArrayList<IDomainObject>();
 		if (mObjectMatchList.contains(inDomainObject)) {
 			domainObjectList.add(inDomainObject);

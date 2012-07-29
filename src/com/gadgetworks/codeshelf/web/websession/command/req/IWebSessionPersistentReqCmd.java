@@ -1,9 +1,11 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: IWebSessionPersistentReqCmd.java,v 1.2 2012/07/19 06:11:33 jeffw Exp $
+ *  $Id: IWebSessionPersistentReqCmd.java,v 1.3 2012/07/29 09:30:19 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
+
+import java.util.Set;
 
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.web.websession.IWebSession;
@@ -29,7 +31,7 @@ public interface IWebSessionPersistentReqCmd extends IWebSessionReqCmd {
 	 * @param inDomainObject	The domain object that changed.
 	 * @return	The response command.
 	 */
-	IWebSessionRespCmd processObjectUpdate(IDomainObject inDomainObject);
+	IWebSessionRespCmd processObjectUpdate(IDomainObject inDomainObject, Set<String> inChangedProperties);
 
 	// --------------------------------------------------------------------------
 	/**

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfApplication.java,v 1.38 2012/07/24 16:59:01 jeffw Exp $
+ *  $Id: CodeShelfApplication.java,v 1.39 2012/07/29 09:30:19 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -389,16 +389,16 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 		config.setNamingConvention(new GWEbeanNamingConvention());
 		config.setDefaultServer(true);
 		config.setDebugSql(false);
-		config.setLoggingLevel(LogLevel.SQL);
 		config.setLoggingToJavaLogger(false);
 		config.setResourceDirectory(Util.getApplicationDataDirPath());
 		config.setDebugLazyLoad(true);
-		config.setDebugSql(true);
+		config.setDebugSql(false);
+		config.setLoggingLevel(LogLevel.NONE);
 		config.setLoggingToJavaLogger(true);
 		config.setPackages(new ArrayList<String>(Arrays.asList("com.gadgetworks.codeshelf.model.domain")));
 		config.setJars(new ArrayList<String>(Arrays.asList("codeshelf.jar")));
 		config.setUpdateChangesOnly(true);
-		config.setDdlGenerate(true);
+		config.setDdlGenerate(false);
 		config.setDdlRun(false);
 
 		EbeanServer server = EbeanServerFactory.create(config);

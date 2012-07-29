@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: GenericDao.java,v 1.23 2012/07/22 20:14:04 jeffw Exp $
+ *  $Id: GenericDao.java,v 1.24 2012/07/29 09:30:19 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import javax.persistence.PersistenceException;
 
@@ -17,6 +18,7 @@ import org.apache.commons.logging.LogFactory;
 
 import com.avaje.ebean.Ebean;
 import com.avaje.ebean.Query;
+import com.avaje.ebean.bean.EntityBean;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 
 /**
@@ -49,9 +51,9 @@ public class GenericDao<T extends IDomainObject> implements ITypedDao<T> {
 	/**
 	 * @param inDomainObject
 	 */
-	private void privateBroadcastUpdate(final IDomainObject inDomainObject) {
+	private void privateBroadcastUpdate(final IDomainObject inDomainObject, Set<String> inChangedProperties) {
 		for (IDaoListener daoListener : mListeners) {
-			daoListener.objectUpdated(inDomainObject);
+			daoListener.objectUpdated(inDomainObject, inChangedProperties);
 		}
 	}
 
@@ -70,7 +72,9 @@ public class GenericDao<T extends IDomainObject> implements ITypedDao<T> {
 	 * @see com.gadgetworks.codeshelf.model.dao.ISystemDAO#pushNonPersistentAccountUpdates(com.gadgetworks.codeshelf.model.domain.Account)
 	 */
 	public final void pushNonPersistentUpdates(T inPerstitentObject) {
-		privateBroadcastUpdate(inPerstitentObject);
+		EntityBean bean = (EntityBean) inPerstitentObject;
+		Set<String> changedProps = bean._ebean_getIntercept().getChangedProps();
+		privateBroadcastUpdate(inPerstitentObject, changedProps);
 	}
 
 	// --------------------------------------------------------------------------
@@ -168,8 +172,10 @@ public class GenericDao<T extends IDomainObject> implements ITypedDao<T> {
 			Ebean.save(inDomainObject);
 			privateBroadcastAdd(inDomainObject);
 		} else {
+			EntityBean bean = (EntityBean) inDomainObject;
+			Set<String> changedProps = bean._ebean_getIntercept().getChangedProps();
 			Ebean.save(inDomainObject);
-			privateBroadcastUpdate(inDomainObject);
+			privateBroadcastUpdate(inDomainObject, changedProps);
 		}
 	}
 

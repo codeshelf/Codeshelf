@@ -1,13 +1,14 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSession.java,v 1.18 2012/07/19 06:11:33 jeffw Exp $
+ *  $Id: WebSession.java,v 1.19 2012/07/29 09:30:19 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -108,9 +109,9 @@ public class WebSession implements IWebSession, IDaoListener {
 		}
 	}
 
-	public final void objectUpdated(IDomainObject inDomainObject) {
+	public final void objectUpdated(IDomainObject inDomainObject, Set<String> inChangedProperties) {
 		for (IWebSessionPersistentReqCmd command : mPersistentCommands.values()) {
-			IWebSessionRespCmd respCommand = command.processObjectUpdate(inDomainObject);
+			IWebSessionRespCmd respCommand = command.processObjectUpdate(inDomainObject, inChangedProperties);
 			if (respCommand != null) {
 				respCommand.setCommandId(command.getCommandId());
 				sendCommand(respCommand);

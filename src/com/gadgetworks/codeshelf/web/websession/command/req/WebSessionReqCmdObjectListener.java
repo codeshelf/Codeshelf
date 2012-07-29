@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectListener.java,v 1.13 2012/07/19 06:11:33 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectListener.java,v 1.14 2012/07/29 09:30:19 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -143,14 +144,15 @@ public class WebSessionReqCmdObjectListener extends WebSessionReqCmdABC implemen
 				resultsList.add(propertiesMap);
 			}
 
-			// Convert the list of objects into a JSon object.
-			ObjectMapper mapper = new ObjectMapper();
-			ObjectNode dataNode = mapper.createObjectNode();
-			ArrayNode searchListNode = mapper.valueToTree(resultsList);
-			dataNode.put(RESULTS, searchListNode);
+			if (resultsList.size() > 0) {
+				// Convert the list of objects into a JSon object.
+				ObjectMapper mapper = new ObjectMapper();
+				ObjectNode dataNode = mapper.createObjectNode();
+				ArrayNode searchListNode = mapper.valueToTree(resultsList);
+				dataNode.put(RESULTS, searchListNode);
 
-			result = new WebSessionRespCmdObjectListener(dataNode);
-
+				result = new WebSessionRespCmdObjectListener(dataNode);
+			}
 		} catch (IllegalArgumentException e) {
 			LOGGER.error("", e);
 		} catch (IllegalAccessException e) {
@@ -170,7 +172,7 @@ public class WebSessionReqCmdObjectListener extends WebSessionReqCmdABC implemen
 		return getProperties(domainObjectList, OP_TYPE_CREATE);
 	}
 
-	public final IWebSessionRespCmd processObjectUpdate(IDomainObject inDomainObject) {
+	public final IWebSessionRespCmd processObjectUpdate(IDomainObject inDomainObject, Set<String> inChangedProperties) {
 		List<IDomainObject> domainObjectList = new ArrayList<IDomainObject>();
 		if (mObjectMatchList.contains(inDomainObject)) {
 			domainObjectList.add(inDomainObject);
