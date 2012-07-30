@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Vertex.java,v 1.5 2012/07/30 01:06:49 jeffw Exp $
+ *  $Id: Vertex.java,v 1.6 2012/07/30 17:44:28 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -21,7 +21,7 @@ import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.annotate.JsonIgnore;
 
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
-import com.gadgetworks.codeshelf.model.dao.GenericDao;
+import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -44,9 +44,9 @@ public class Vertex extends DomainObjectABC {
 	public static ITypedDao<Vertex>	DAO;
 
 	@Singleton
-	public static class VertexDao extends GenericDao<Vertex> implements ITypedDao<Vertex> {
-		public VertexDao() {
-			super(Vertex.class);
+	public static class VertexDao extends GenericDaoABC<Vertex> implements ITypedDao<Vertex> {
+		public final Class<Vertex> getDaoClass() {
+			return Vertex.class;
 		}
 	}
 

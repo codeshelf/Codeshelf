@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.5 2012/07/29 09:30:19 jeffw Exp $
+ *  $Id: Facility.java,v 1.6 2012/07/30 17:44:28 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -23,7 +23,7 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
-import com.gadgetworks.codeshelf.model.dao.GenericDao;
+import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -46,9 +46,9 @@ public class Facility extends LocationABC {
 	public static ITypedDao<Facility>	DAO;
 
 	@Singleton
-	public static class FacilityDao extends GenericDao<Facility> implements ITypedDao<Facility> {
-		public FacilityDao() {
-			super(Facility.class);
+	public static class FacilityDao extends GenericDaoABC<Facility> implements ITypedDao<Facility> {
+		public final Class<Facility> getDaoClass() {
+			return Facility.class;
 		}
 	}
 

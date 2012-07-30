@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: DomainObjectABC.java,v 1.6 2012/07/30 01:06:49 jeffw Exp $
+ *  $Id: DomainObjectABC.java,v 1.7 2012/07/30 17:44:28 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -17,6 +17,7 @@ import javax.persistence.Version;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
+import lombok.ToString;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -37,6 +38,7 @@ import com.gadgetworks.codeshelf.model.dao.ITypedDao;
  */
 
 @MappedSuperclass
+@ToString
 public abstract class DomainObjectABC implements IDomainObject {
 
 	private static final Log	LOGGER	= LogFactory.getLog(DomainObjectABC.class);
@@ -70,13 +72,13 @@ public abstract class DomainObjectABC implements IDomainObject {
 		lastDefaultSequenceId = 0;
 	}
 
-	public String toString() {
-		String result = "";
-
-		result = "ID: " + getDomainId();
-
-		return result;
-	}
+//	public String toString() {
+//		String result = "";
+//
+//		result = "ID: " + getDomainId();
+//
+//		return result;
+//	}
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)

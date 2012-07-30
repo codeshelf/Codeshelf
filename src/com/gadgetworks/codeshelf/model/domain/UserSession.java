@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: UserSession.java,v 1.4 2012/07/30 01:06:49 jeffw Exp $
+ *  $Id: UserSession.java,v 1.5 2012/07/30 17:44:28 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -21,7 +21,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.annotate.JsonIgnore;
 
-import com.gadgetworks.codeshelf.model.dao.GenericDao;
+import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -43,9 +43,9 @@ public class UserSession extends DomainObjectABC {
 	public static ITypedDao<UserSession>	DAO;
 
 	@Singleton
-	public static class UserSessionDao extends GenericDao<UserSession> implements ITypedDao<UserSession> {
-		public UserSessionDao() {
-			super(UserSession.class);
+	public static class UserSessionDao extends GenericDaoABC<UserSession> implements ITypedDao<UserSession> {
+		public final Class<UserSession> getDaoClass() {
+			return UserSession.class;
 		}
 	}
 	

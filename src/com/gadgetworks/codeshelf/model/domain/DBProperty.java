@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: DBProperty.java,v 1.3 2012/07/22 20:14:04 jeffw Exp $
+ *  $Id: DBProperty.java,v 1.4 2012/07/30 17:44:28 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -16,7 +16,7 @@ import lombok.Setter;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
 
-import com.gadgetworks.codeshelf.model.dao.GenericDao;
+import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -37,18 +37,18 @@ public class DBProperty extends DomainObjectABC {
 	public static ITypedDao<DBProperty>	DAO;
 
 	@Singleton
-	public static class DBPropertyDao extends GenericDao<DBProperty> implements ITypedDao<DBProperty> {
-		public DBPropertyDao() {
-			super(DBProperty.class);
+	public static class DBPropertyDao extends GenericDaoABC<DBProperty> implements ITypedDao<DBProperty> {
+		public final Class<DBProperty> getDaoClass() {
+			return DBProperty.class;
 		}
 	}
 
-	public static final String			DB_SCHEMA_VERSION	= "SCHMAVER";
+	public static final String	DB_SCHEMA_VERSION	= "SCHMAVER";
 
 	@Getter
 	@Setter
 	@Column(nullable = false)
-	private String						valueStr;
+	private String				valueStr;
 
 	public DBProperty() {
 		super();

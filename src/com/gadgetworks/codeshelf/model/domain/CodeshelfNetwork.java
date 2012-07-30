@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeshelfNetwork.java,v 1.3 2012/07/22 20:14:04 jeffw Exp $
+ *  $Id: CodeshelfNetwork.java,v 1.4 2012/07/30 17:44:28 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -25,7 +25,7 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 import com.gadgetworks.codeshelf.controller.IWirelessInterface;
 import com.gadgetworks.codeshelf.controller.NetAddress;
 import com.gadgetworks.codeshelf.controller.NetworkId;
-import com.gadgetworks.codeshelf.model.dao.GenericDao;
+import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -48,9 +48,9 @@ public class CodeShelfNetwork extends DomainObjectABC {
 	public static ITypedDao<CodeShelfNetwork> DAO;
 
 	@Singleton
-	public static class CodeShelfNetworkDao extends GenericDao<CodeShelfNetwork> implements ITypedDao<CodeShelfNetwork> {
-		public CodeShelfNetworkDao() {
-			super(CodeShelfNetwork.class);
+	public static class CodeShelfNetworkDao extends GenericDaoABC<CodeShelfNetwork> implements ITypedDao<CodeShelfNetwork> {
+		public final Class<CodeShelfNetwork> getDaoClass() {
+			return CodeShelfNetwork.class;
 		}
 	}
 

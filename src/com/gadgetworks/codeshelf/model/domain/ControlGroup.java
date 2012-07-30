@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ControlGroup.java,v 1.3 2012/07/22 20:14:04 jeffw Exp $
+ *  $Id: ControlGroup.java,v 1.4 2012/07/30 17:44:28 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -15,14 +15,14 @@ import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 
-import org.codehaus.jackson.annotate.JsonIgnore;
-
 import lombok.Getter;
 import lombok.Setter;
 
+import org.codehaus.jackson.annotate.JsonIgnore;
+
 import com.gadgetworks.codeshelf.controller.NetGroup;
 import com.gadgetworks.codeshelf.model.TagProtocolEnum;
-import com.gadgetworks.codeshelf.model.dao.GenericDao;
+import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.server.tags.IControllerConnection;
 import com.google.inject.Inject;
@@ -43,9 +43,9 @@ public class ControlGroup extends DomainObjectABC {
 	public static ITypedDao<ControlGroup>	DAO;
 
 	@Singleton
-	public static class ControlGroupDao extends GenericDao<ControlGroup> implements ITypedDao<ControlGroup> {
-		public ControlGroupDao() {
-			super(ControlGroup.class);
+	public static class ControlGroupDao extends GenericDaoABC<ControlGroup> implements ITypedDao<ControlGroup> {
+		public final Class<ControlGroup> getDaoClass() {
+			return ControlGroup.class;
 		}
 	}
 

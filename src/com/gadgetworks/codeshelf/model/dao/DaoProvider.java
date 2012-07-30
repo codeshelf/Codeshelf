@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: DaoProvider.java,v 1.6 2012/07/19 06:11:33 jeffw Exp $
+ *  $Id: DaoProvider.java,v 1.7 2012/07/30 17:44:28 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -64,7 +64,7 @@ public class DaoProvider implements IDaoProvider {
 		Map<Key<?>, Binding<?>> bindings = mInjector.getBindings();
 
 		for (Binding<?> binding : bindings.values()) {
-			if (GenericDao.class.isAssignableFrom(binding.getProvider().get().getClass())) {
+			if (GenericDaoABC.class.isAssignableFrom(binding.getProvider().get().getClass())) {
 				result.add((ITypedDao<T>) binding.getProvider().get());
 			}
 		}

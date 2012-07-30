@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: GenericDao.java,v 1.24 2012/07/29 09:30:19 jeffw Exp $
+ *  $Id: GenericDaoABC.java,v 1.1 2012/07/30 17:44:28 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -25,15 +25,13 @@ import com.gadgetworks.codeshelf.model.domain.IDomainObject;
  * @author jeffw
  *
  */
-public class GenericDao<T extends IDomainObject> implements ITypedDao<T> {
+public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDao<T> {
 
-	private static final Log	LOGGER		= LogFactory.getLog(GenericDao.class);
+	private static final Log	LOGGER		= LogFactory.getLog(GenericDaoABC.class);
 
-	private Class<T>			mClass;
 	private List<IDaoListener>	mListeners	= new ArrayList<IDaoListener>();
 
-	public GenericDao(final Class<T> inClass) {
-		mClass = inClass;
+	public GenericDaoABC() {
 	}
 
 	// --------------------------------------------------------------------------
@@ -101,7 +99,7 @@ public class GenericDao<T extends IDomainObject> implements ITypedDao<T> {
 	public final T findByPersistentId(Long inPersistentId) {
 		T result = null;
 		try {
-			result = Ebean.find(mClass, inPersistentId);
+			result = Ebean.find(getDaoClass(), inPersistentId);
 		} catch (PersistenceException e) {
 			LOGGER.error("", e);
 		}
@@ -123,7 +121,7 @@ public class GenericDao<T extends IDomainObject> implements ITypedDao<T> {
 		}
 
 		try {
-			Query<T> query = Ebean.createQuery(mClass);
+			Query<T> query = Ebean.createQuery(getDaoClass());
 			query.where().eq(IDomainObject.ID_COLUMN_NAME, effectiveId);
 			//query = query.setUseCache(true);
 			result = query.findUnique();
@@ -138,7 +136,7 @@ public class GenericDao<T extends IDomainObject> implements ITypedDao<T> {
 	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#findByIdList(java.util.List)
 	 */
 	public final List<T> findByPersistentIdList(List<Long> inIdList) {
-		Query<T> query = Ebean.find(mClass);
+		Query<T> query = Ebean.find(getDaoClass());
 		List<T> methodResultsList = query.where().in("persistentId", inIdList).findList();
 		return methodResultsList;
 	}
@@ -150,7 +148,7 @@ public class GenericDao<T extends IDomainObject> implements ITypedDao<T> {
 	public final List<T> findByFilter(String inFilter, Map<String, Object> inFilterParams) {
 		if ((inFilter != null) && (inFilter.length() > 0)) {
 			// If we have a valid filter then get the filtered objects.
-			Query<T> query = Ebean.find(mClass);
+			Query<T> query = Ebean.find(getDaoClass());
 			query = query.where(inFilter);
 			for (Entry<String, Object> param : inFilterParams.entrySet()) {
 				query.setParameter(param.getKey(), param.getValue());
@@ -193,7 +191,7 @@ public class GenericDao<T extends IDomainObject> implements ITypedDao<T> {
 	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#getAll()
 	 */
 	public final List<T> getAll() {
-		Query<T> query = Ebean.createQuery(mClass);
+		Query<T> query = Ebean.createQuery(getDaoClass());
 		//query = query.setUseCache(true);
 		return query.findList();
 	}

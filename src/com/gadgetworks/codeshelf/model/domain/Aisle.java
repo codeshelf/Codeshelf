@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Aisle.java,v 1.4 2012/07/30 01:06:49 jeffw Exp $
+ *  $Id: Aisle.java,v 1.5 2012/07/30 17:44:28 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -14,7 +14,7 @@ import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.annotate.JsonIgnore;
 
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
-import com.gadgetworks.codeshelf.model.dao.GenericDao;
+import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -37,9 +37,9 @@ public class Aisle extends LocationABC {
 	public static ITypedDao<Aisle> DAO;
 
 	@Singleton
-	public static class AisleDao extends GenericDao<Aisle> {
-		public AisleDao() {
-			super(Aisle.class);
+	public static class AisleDao extends GenericDaoABC<Aisle>  implements ITypedDao<Aisle> {
+		public final Class<Aisle> getDaoClass() {
+			return Aisle.class;
 		}
 	}
 	

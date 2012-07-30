@@ -72,6 +72,10 @@ public class WebSessionTest {
 		public List<Organization> findByFilter(String inFilter, Map<String, Object> inFilterParams) {
 			return null;
 		}
+
+		public Class<Organization> getDaoClass() {
+			return null;
+		}
 	}
 
 	@Test

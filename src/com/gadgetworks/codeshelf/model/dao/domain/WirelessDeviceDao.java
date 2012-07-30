@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WirelessDeviceDao.java,v 1.6 2012/07/19 06:11:33 jeffw Exp $
+ *  $Id: WirelessDeviceDao.java,v 1.7 2012/07/30 17:44:28 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao.domain;
 
@@ -19,7 +19,7 @@ import com.gadgetworks.codeshelf.controller.INetworkDevice;
 import com.gadgetworks.codeshelf.controller.NetAddress;
 import com.gadgetworks.codeshelf.controller.NetMacAddress;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
-import com.gadgetworks.codeshelf.model.dao.GenericDao;
+import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.domain.WirelessDevice;
 import com.gadgetworks.codeshelf.model.domain.WirelessDevice.IWirelessDeviceDao;
 import com.google.inject.Inject;
@@ -30,7 +30,7 @@ import com.google.inject.Singleton;
  *
  */
 @Singleton
-public final class WirelessDeviceDao extends GenericDao<WirelessDevice> implements IWirelessDeviceDao, IDeviceMaintainer {
+public final class WirelessDeviceDao extends GenericDaoABC<WirelessDevice> implements IWirelessDeviceDao, IDeviceMaintainer {
 
 	private static final Log				LOGGER	= LogFactory.getLog(WirelessDeviceDao.class);
 
@@ -38,7 +38,7 @@ public final class WirelessDeviceDao extends GenericDao<WirelessDevice> implemen
 
 	@Inject
 	public WirelessDeviceDao() {
-		super(WirelessDevice.class);
+
 	}
 
 	/* --------------------------------------------------------------------------
@@ -61,7 +61,7 @@ public final class WirelessDeviceDao extends GenericDao<WirelessDevice> implemen
 	 * (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.controller.IDeviceMaintainer#getNetworkDevices()
 	 */
-	public final List<INetworkDevice> getNetworkDevices() {
+	public List<INetworkDevice> getNetworkDevices() {
 		return new ArrayList<INetworkDevice>(this.getAll());
 	}
 
@@ -69,7 +69,7 @@ public final class WirelessDeviceDao extends GenericDao<WirelessDevice> implemen
 	 * (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.controller.IDeviceMaintainer#persistChanges(com.gadgetworks.codeshelf.controller.INetworkDevice)
 	 */
-	public final void deviceUpdated(INetworkDevice inNetworkDevice, boolean inPersistentDataChanged) {
+	public void deviceUpdated(INetworkDevice inNetworkDevice, boolean inPersistentDataChanged) {
 		if (inPersistentDataChanged) {
 			try {
 				store((WirelessDevice) inNetworkDevice);
@@ -85,7 +85,7 @@ public final class WirelessDeviceDao extends GenericDao<WirelessDevice> implemen
 	 * (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.dao.ISystemDAO#findWirelessDeviceByMacAddr(java.lang.String)
 	 */
-	public final WirelessDevice findWirelessDeviceByMacAddr(NetMacAddress inMacAddr) {
+	public WirelessDevice findWirelessDeviceByMacAddr(NetMacAddress inMacAddr) {
 		//		if (!USE_DAO_CACHE) {
 		Query<WirelessDevice> query = Ebean.createQuery(WirelessDevice.class);
 		query.where().eq("mMacAddr", inMacAddr.toString());
@@ -103,5 +103,13 @@ public final class WirelessDeviceDao extends GenericDao<WirelessDevice> implemen
 		//			}
 		//			return result;
 		//		}
+	}
+
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.dao.ITypedDao#getDaoClass()
+	 */
+	public Class<WirelessDevice> getDaoClass() {
+		return WirelessDevice.class;
 	}
 }

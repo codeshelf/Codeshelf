@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Tier.java,v 1.4 2012/07/30 01:06:49 jeffw Exp $
+ *  $Id: Tier.java,v 1.5 2012/07/30 17:44:28 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -14,7 +14,7 @@ import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.annotate.JsonIgnore;
 
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
-import com.gadgetworks.codeshelf.model.dao.GenericDao;
+import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -37,9 +37,9 @@ public class Tier extends LocationABC {
 	public static ITypedDao<Tier>	DAO;
 
 	@Singleton
-	public static class TierDao extends GenericDao<Tier> implements ITypedDao<Tier> {
-		public TierDao() {
-			super(Tier.class);
+	public static class TierDao extends GenericDaoABC<Tier> implements ITypedDao<Tier> {
+		public final Class<Tier> getDaoClass() {
+			return Tier.class;
 		}
 	}
 

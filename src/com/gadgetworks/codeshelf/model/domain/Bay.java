@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Bay.java,v 1.3 2012/07/22 20:14:04 jeffw Exp $
+ *  $Id: Bay.java,v 1.4 2012/07/30 17:44:28 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -13,7 +13,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
-import com.gadgetworks.codeshelf.model.dao.GenericDao;
+import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -33,12 +33,12 @@ import com.google.inject.Singleton;
 public class Bay extends LocationABC {
 
 	@Inject
-	public static ITypedDao<Bay> DAO;
-	
+	public static ITypedDao<Bay>	DAO;
+
 	@Singleton
-	public static class BayDao extends GenericDao<Bay> {
-		public BayDao() {
-			super(Bay.class);
+	public static class BayDao extends GenericDaoABC<Bay> implements ITypedDao<Bay> {
+		public final Class<Bay> getDaoClass() {
+			return Bay.class;
 		}
 	}
 
@@ -49,7 +49,7 @@ public class Bay extends LocationABC {
 		setParentAisle(inAisle);
 		setDomainId(getDefaultDomainId());
 	}
-	
+
 	public final ITypedDao<Bay> getDao() {
 		return DAO;
 	}

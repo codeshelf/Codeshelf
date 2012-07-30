@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PersistentProperty.java,v 1.3 2012/07/22 20:14:04 jeffw Exp $
+ *  $Id: PersistentProperty.java,v 1.4 2012/07/30 17:44:28 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -17,7 +17,7 @@ import lombok.Setter;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
 
-import com.gadgetworks.codeshelf.model.dao.GenericDao;
+import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -38,33 +38,33 @@ public class PersistentProperty<T extends DomainObjectABC> extends DomainObjectA
 	public static ITypedDao<PersistentProperty>	DAO;
 
 	@Singleton
-	public static class PersistentPropertyDao extends GenericDao<PersistentProperty> implements ITypedDao<PersistentProperty> {
-		public PersistentPropertyDao() {
-			super(PersistentProperty.class);
+	public static class PersistentPropertyDao extends GenericDaoABC<PersistentProperty> implements ITypedDao<PersistentProperty> {
+		public final Class<PersistentProperty> getDaoClass() {
+			return PersistentProperty.class;
 		}
 	}
 
 	//	public static final String	SHOW_CONSOLE_PREF			= "SHOWCONS";
 	//	public static final String	SHOW_CONNECTION_DEBUG_PREF	= "CONNDBUG";
-	public static final String					FORCE_CHANNEL			= "PREFCHAN";
-	public static final String					GENERAL_INTF_LOG_LEVEL	= "GENLLOGL";
-	public static final String					GATEWAY_INTF_LOG_LEVEL	= "GATELOGL";
+	public static final String	FORCE_CHANNEL			= "PREFCHAN";
+	public static final String	GENERAL_INTF_LOG_LEVEL	= "GENLLOGL";
+	public static final String	GATEWAY_INTF_LOG_LEVEL	= "GATELOGL";
 	//	public static final String	ACTIVEMQ_RUN				= "ACTMQRUN";
 	//	public static final String	ACTIVEMQ_USERID				= "ACTMQUID";
 	//	public static final String	ACTIVEMQ_PASSWORD			= "ACTMQPWD";
 	//	public static final String	ACTIVEMQ_JMS_PORTNUM		= "ACTMQJMS";
 	//	public static final String	ACTIVEMQ_STOMP_PORTNUM		= "ACTMQSTM";
 
-	private static final long					serialVersionUID		= -7735810092352246641L;
+	private static final long	serialVersionUID		= -7735810092352246641L;
 
 	@Column(nullable = false)
 	@Getter
 	@Setter
-	private String								defaultValueStr;
+	private String				defaultValueStr;
 	@Column(nullable = false)
 	@Getter
 	@Setter
-	private String								currentValueStr;
+	private String				currentValueStr;
 
 	// The owning organization.
 	@Column(nullable = false)
@@ -72,7 +72,7 @@ public class PersistentProperty<T extends DomainObjectABC> extends DomainObjectA
 	@JsonIgnore
 	@Setter
 	@Getter
-	private Organization						parentOrganization;
+	private Organization		parentOrganization;
 
 	public PersistentProperty() {
 		defaultValueStr = "";

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: PathSegment.java,v 1.5 2012/07/30 01:06:49 jeffw Exp $
+ *  $Id: PathSegment.java,v 1.6 2012/07/30 17:44:28 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -19,7 +19,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.annotate.JsonIgnore;
 
-import com.gadgetworks.codeshelf.model.dao.GenericDao;
+import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -41,9 +41,9 @@ public class PathSegment extends DomainObjectABC {
 	public static ITypedDao<PathSegment>	DAO;
 
 	@Singleton
-	public static class PathSegmentDao extends GenericDao<PathSegment> implements ITypedDao<PathSegment> {
-		public PathSegmentDao() {
-			super(PathSegment.class);
+	public static class PathSegmentDao extends GenericDaoABC<PathSegment> implements ITypedDao<PathSegment> {
+		public final Class<PathSegment> getDaoClass() {
+			return PathSegment.class;
 		}
 	}
 

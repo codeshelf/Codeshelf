@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Organization.java,v 1.3 2012/07/22 20:14:04 jeffw Exp $
+ *  $Id: Organization.java,v 1.4 2012/07/30 17:44:28 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -20,7 +20,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.annotate.JsonIgnore;
 
-import com.gadgetworks.codeshelf.model.dao.GenericDao;
+import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -46,9 +46,9 @@ public class Organization extends DomainObjectABC {
 	public static ITypedDao<Organization>	DAO;
 
 	@Singleton
-	public static class OrganizationDao extends GenericDao<Organization> implements ITypedDao<Organization> {
-		public OrganizationDao() {
-			super(Organization.class);
+	public static class OrganizationDao extends GenericDaoABC<Organization> implements ITypedDao<Organization> {
+		public final Class<Organization> getDaoClass() {
+			return Organization.class;
 		}
 	}
 

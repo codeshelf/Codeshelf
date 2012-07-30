@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Path.java,v 1.4 2012/07/30 01:06:49 jeffw Exp $
+ *  $Id: Path.java,v 1.5 2012/07/30 17:44:28 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -20,7 +20,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.annotate.JsonIgnore;
 
-import com.gadgetworks.codeshelf.model.dao.GenericDao;
+import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -42,9 +42,9 @@ public class Path extends DomainObjectABC {
 	public static ITypedDao<Path>	DAO;
 
 	@Singleton
-	public static class PathDao extends GenericDao<Path> implements ITypedDao<Path> {
-		public PathDao() {
-			super(Path.class);
+	public static class PathDao extends GenericDaoABC<Path> implements ITypedDao<Path> {
+		public final Class<Path> getDaoClass() {
+			return Path.class;
 		}
 	}
 
