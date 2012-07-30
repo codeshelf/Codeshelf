@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: DomainObjectABC.java,v 1.5 2012/07/29 09:30:19 jeffw Exp $
+ *  $Id: DomainObjectABC.java,v 1.6 2012/07/30 01:06:49 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -25,8 +25,6 @@ import org.codehaus.jackson.annotate.JsonProperty;
 
 import com.avaje.ebean.Ebean;
 import com.avaje.ebean.Query;
-import com.avaje.ebean.bean.EntityBean;
-import com.avaje.ebean.bean.EntityBeanIntercept;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 
@@ -170,6 +168,15 @@ public abstract class DomainObjectABC implements IDomainObject {
 	 */
 	public final String getFullDomainId() {
 		return domainId;
+	}
+	
+	public final Long getParentPersistentId() {
+		Long result = null;
+		IDomainObject domainObject = getParent();
+		if (domainObject != null) {
+			result = domainObject.getPersistentId();
+		}
+		return result;
 	}
 
 	/* --------------------------------------------------------------------------

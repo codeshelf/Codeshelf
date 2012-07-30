@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Tier.java,v 1.3 2012/07/22 20:14:04 jeffw Exp $
+ *  $Id: Tier.java,v 1.4 2012/07/30 01:06:49 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -11,6 +11,7 @@ import javax.persistence.Table;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.codehaus.jackson.annotate.JsonIgnore;
 
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDao;
@@ -48,6 +49,7 @@ public class Tier extends LocationABC {
 		super(PositionTypeEnum.METERS_FROM_PARENT, inPosX, inPosY);
 	}
 
+	@JsonIgnore
 	public final ITypedDao<Tier> getDao() {
 		return DAO;
 	}

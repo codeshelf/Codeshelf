@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Path.java,v 1.3 2012/07/22 20:14:04 jeffw Exp $
+ *  $Id: Path.java,v 1.4 2012/07/30 01:06:49 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -72,6 +72,7 @@ public class Path extends DomainObjectABC {
 		description = "";
 	}
 
+	@JsonIgnore
 	public final ITypedDao<Path> getDao() {
 		return DAO;
 	}

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Vertex.java,v 1.4 2012/07/27 01:47:49 jeffw Exp $
+ *  $Id: Vertex.java,v 1.5 2012/07/30 01:06:49 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -97,6 +97,7 @@ public class Vertex extends DomainObjectABC {
 		setDomainId(getDefaultDomainId());
 	}
 
+	@JsonIgnore
 	public final ITypedDao<Vertex> getDao() {
 		return DAO;
 	}
