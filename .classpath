@@ -32,6 +32,6 @@
 	<classpathentry kind="lib" path="lib/dist/slf4j-log4j12-1.6.4.jar"/>
 	<classpathentry kind="lib" path="lib/dist/jul-to-slf4j-1.6.4.jar"/>
 	<classpathentry kind="lib" path="lib/dist/log4j-1.2.14.jar"/>
-	<classpathentry kind="lib" path="lib/dist/lombok-0.11.2.jar"/>
+	<classpathentry kind="lib" path="lib/dist/lombok-0.11.2.jar" sourcepath="/Users/jeffw/.m2/repository/org/projectlombok/lombok/0.11.2/lombok-0.11.2-sources.jar"/>
 	<classpathentry kind="output" path="eclipse-bin"/>
 </classpath>
