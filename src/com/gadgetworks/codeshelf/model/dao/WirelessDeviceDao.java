@@ -1,9 +1,9 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: WirelessDeviceDao.java,v 1.7 2012/07/30 17:44:28 jeffw Exp $
+ *  $Id: WirelessDeviceDao.java,v 1.5 2012/07/31 05:53:34 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.model.dao.domain;
+package com.gadgetworks.codeshelf.model.dao;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,8 +18,6 @@ import com.gadgetworks.codeshelf.controller.IDeviceMaintainer;
 import com.gadgetworks.codeshelf.controller.INetworkDevice;
 import com.gadgetworks.codeshelf.controller.NetAddress;
 import com.gadgetworks.codeshelf.controller.NetMacAddress;
-import com.gadgetworks.codeshelf.model.dao.DaoException;
-import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.domain.WirelessDevice;
 import com.gadgetworks.codeshelf.model.domain.WirelessDevice.IWirelessDeviceDao;
 import com.google.inject.Inject;

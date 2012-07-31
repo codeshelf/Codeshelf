@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.6 2012/07/30 17:44:28 jeffw Exp $
+ *  $Id: Facility.java,v 1.7 2012/07/31 05:53:34 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -134,16 +134,16 @@ public class Facility extends LocationABC {
 	 * @param inBaysHigh
 	 * @param inBaysLong
 	 */
-	public final void createAisle(Double inPosX,
-		Double inPosY,
-		Double inProtoBayXDim,
-		Double inProtoBayYDim,
-		Double inProtoBayZDim,
+	public final void createAisle(Double inPosXMeters,
+		Double inPosYMeters,
+		Double inProtoBayXDimMeters,
+		Double inProtoBayYDimMeters,
+		Double inProtoBayZDimMeters,
 		Integer inBaysHigh,
 		Integer inBaysLong,
 		Boolean inRunInXDir,
 		Boolean inCreateBackToBack) {
-		Aisle aisle = new Aisle(this, inPosX, inPosY);
+		Aisle aisle = new Aisle(this, inPosXMeters, inPosYMeters);
 		try {
 			Aisle.DAO.store(aisle);
 		} catch (DaoException e) {
@@ -164,22 +164,22 @@ public class Facility extends LocationABC {
 				} catch (DaoException e) {
 					LOGGER.error("", e);
 				}
-				anchorPosZ += inProtoBayZDim;
+				anchorPosZ += inProtoBayZDimMeters;
 			}
 			
-			if ((anchorPosX + inProtoBayXDim) > aisleBoundaryX) {
-				aisleBoundaryX = anchorPosX + inProtoBayXDim;
+			if ((anchorPosX + inProtoBayXDimMeters) > aisleBoundaryX) {
+				aisleBoundaryX = anchorPosX + inProtoBayXDimMeters;
 			}
 
-			if ((anchorPosY + inProtoBayYDim) > aisleBoundaryY) {
-				aisleBoundaryY = anchorPosY + inProtoBayYDim;
+			if ((anchorPosY + inProtoBayYDimMeters) > aisleBoundaryY) {
+				aisleBoundaryY = anchorPosY + inProtoBayYDimMeters;
 			}
 
 			// Prepare the anchor point for the next bay.
 			if (inRunInXDir) {
-				anchorPosX += inProtoBayXDim;
+				anchorPosX += inProtoBayXDimMeters;
 			} else {
-				anchorPosY += inProtoBayYDim;
+				anchorPosY += inProtoBayYDimMeters;
 			}
 		}
 
@@ -189,10 +189,10 @@ public class Facility extends LocationABC {
 			Vertex.DAO.store(vertex1);
 			Vertex vertex2 = new Vertex(aisle, PositionTypeEnum.METERS_FROM_PARENT, 1, aisleBoundaryX, 0.0);
 			Vertex.DAO.store(vertex2);
-			Vertex vertex3 = new Vertex(aisle, PositionTypeEnum.METERS_FROM_PARENT, 2, 0.0, aisleBoundaryY);
-			Vertex.DAO.store(vertex3);
-			Vertex vertex4 = new Vertex(aisle, PositionTypeEnum.METERS_FROM_PARENT, 3, aisleBoundaryX, aisleBoundaryY);
+			Vertex vertex4 = new Vertex(aisle, PositionTypeEnum.METERS_FROM_PARENT, 2, aisleBoundaryX, aisleBoundaryY);
 			Vertex.DAO.store(vertex4);
+			Vertex vertex3 = new Vertex(aisle, PositionTypeEnum.METERS_FROM_PARENT, 3, 0.0, aisleBoundaryY);
+			Vertex.DAO.store(vertex3);
 		} catch (DaoException e) {
 			LOGGER.error("", e);
 		}

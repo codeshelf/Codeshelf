@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Main.java,v 1.18 2012/07/27 01:47:49 jeffw Exp $
+ *  $Id: Main.java,v 1.19 2012/07/31 05:53:34 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -12,7 +12,7 @@ import org.apache.commons.logging.LogFactory;
 import com.gadgetworks.codeshelf.model.dao.DaoProvider;
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.model.dao.domain.WirelessDeviceDao;
+import com.gadgetworks.codeshelf.model.dao.WirelessDeviceDao;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Aisle.AisleDao;
 import com.gadgetworks.codeshelf.model.domain.Bay;
