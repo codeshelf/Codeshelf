@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.7 2012/07/31 05:53:34 jeffw Exp $
+ *  $Id: Facility.java,v 1.8 2012/08/01 08:49:24 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -164,6 +164,10 @@ public class Facility extends LocationABC {
 				} catch (DaoException e) {
 					LOGGER.error("", e);
 				}
+				
+				// Create the bay's boundary vertices.
+				createVertices(protoBay, inProtoBayXDimMeters, inProtoBayYDimMeters);
+				
 				anchorPosZ += inProtoBayZDimMeters;
 			}
 			
@@ -183,19 +187,23 @@ public class Facility extends LocationABC {
 			}
 		}
 
+		// Create the aisle's boundary vertices.
+		createVertices(aisle, aisleBoundaryX, aisleBoundaryY);
+	}
+	
+	private void createVertices(LocationABC inLocation, Double inXDimMeters, Double inYDimMeters) {
 		try {
 			// Create four simple vertices around the aisle.
-			Vertex vertex1 = new Vertex(aisle, PositionTypeEnum.METERS_FROM_PARENT, 0, 0.0, 0.0);
+			Vertex vertex1 = new Vertex(inLocation, PositionTypeEnum.METERS_FROM_PARENT, 0, 0.0, 0.0);
 			Vertex.DAO.store(vertex1);
-			Vertex vertex2 = new Vertex(aisle, PositionTypeEnum.METERS_FROM_PARENT, 1, aisleBoundaryX, 0.0);
+			Vertex vertex2 = new Vertex(inLocation, PositionTypeEnum.METERS_FROM_PARENT, 1, inXDimMeters, 0.0);
 			Vertex.DAO.store(vertex2);
-			Vertex vertex4 = new Vertex(aisle, PositionTypeEnum.METERS_FROM_PARENT, 2, aisleBoundaryX, aisleBoundaryY);
+			Vertex vertex4 = new Vertex(inLocation, PositionTypeEnum.METERS_FROM_PARENT, 2, inXDimMeters, inYDimMeters);
 			Vertex.DAO.store(vertex4);
-			Vertex vertex3 = new Vertex(aisle, PositionTypeEnum.METERS_FROM_PARENT, 3, 0.0, aisleBoundaryY);
+			Vertex vertex3 = new Vertex(inLocation, PositionTypeEnum.METERS_FROM_PARENT, 3, 0.0, inYDimMeters);
 			Vertex.DAO.store(vertex3);
 		} catch (DaoException e) {
 			LOGGER.error("", e);
 		}
-
 	}
 }
