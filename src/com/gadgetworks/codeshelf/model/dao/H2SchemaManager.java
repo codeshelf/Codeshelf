@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: H2SchemaManager.java,v 1.31 2012/07/27 01:47:49 jeffw Exp $
+ *  $Id: H2SchemaManager.java,v 1.32 2012/09/06 06:43:37 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -104,10 +104,47 @@ public final class H2SchemaManager implements ISchemaManager {
 		}
 
 		// We need to add the "default connection" to the account object.
-		if (inOldVersion < ISchemaManager.DATABASE_VERSION_2) {
+		if (inOldVersion < ISchemaManager.DATABASE_VERSION_3) {
 
+			// EdiService
+			execOneSQLCommand("CREATE SEQUENCE CODESHELF.EDISERVICE_SEQ");
+			execOneSQLCommand("CREATE TABLE CODESHELF.EDISERVICE ( " //
+					+ "PERSISTENTID BIGINT NOT NULL, " //
+					+ "DOMAINID VARCHAR(64) NOT NULL," //
+					+ "PROVIDERENUM VARCHAR(16) NOT NULL, " //
+					+ "PROVIDERCREDENTIALS VARCHAR(256) NOT NULL, " //
+					+ "VERSION TIMESTAMP, " //
+					+ "PARENTORGANIZATION_PERSISTENTID LONG NOT NULL, " //
+					+ "PRIMARY KEY (PERSISTENTID));");
+
+			execOneSQLCommand("ALTER TABLE CODESHELF.EDISERVICE " //
+					+ "ADD FOREIGN KEY (PARENTORGANIZATION_PERSISTENTID) " //
+					+ "REFERENCES DATABASE.CODESHELF.ORGANIZATION (PERSISTENTID)" //
+					+ " ON DELETE RESTRICT ON UPDATE RESTRICT;");
+
+			execOneSQLCommand("CREATE INDEX CODESHELF.EDISERVICE_PARENT_ORGANIZATION ON CODESHELF.EDISERVICE (PARENTORGANIZATION_PERSISTENTID)");
+
+			// EdiDocumentLocator
+			execOneSQLCommand("CREATE SEQUENCE CODESHELF.EDIDOCUMENTLOCATOR_SEQ");
+			execOneSQLCommand("CREATE TABLE CODESHELF.EDIDOCUMENTLOCATOR ( " //
+					+ "PERSISTENTID BIGINT NOT NULL, " //
+					+ "DOMAINID VARCHAR(64) NOT NULL," //
+					+ "DOCUMENTID VARCHAR(64) NOT NULL," //
+					+ "DOCUMENTNAME VARCHAR(256) NOT NULL," //
+					+ "DOCUMENTSTATEENUM VARCHAR(16) NOT NULL, " //
+					+ "RECEIVED TIMESTAMP, " //
+					+ "PROCESSED TIMESTAMP, " //
+					+ "VERSION TIMESTAMP, " //
+					+ "PARENTEDIDOCUMENTLOCATOR_PERSISTENTID LONG NOT NULL, " //
+					+ "PRIMARY KEY (PERSISTENTID));");
+
+			execOneSQLCommand("ALTER TABLE CODESHELF.EDIDOCUMENTLOCATOR " //
+					+ "ADD FOREIGN KEY (PARENTUSERSESSION_PERSISTENTID) " //
+					+ "REFERENCES DATABASE.CODESHELF.EDISERVICE (PERSISTENTID)" //
+					+ " ON DELETE RESTRICT ON UPDATE RESTRICT;");
+
+			execOneSQLCommand("CREATE INDEX CODESHELF.USERSESSION_PARENT_EDISERVICE ON CODESHELF.EDIDOCUMENTLOCATOR (PARENTEDIDOCUMENTLOCATOR_PERSISTENTID)");
 		}
-
 	}
 
 	// --------------------------------------------------------------------------

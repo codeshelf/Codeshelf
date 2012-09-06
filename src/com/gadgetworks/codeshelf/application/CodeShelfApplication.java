@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfApplication.java,v 1.39 2012/07/29 09:30:19 jeffw Exp $
+ *  $Id: CodeShelfApplication.java,v 1.40 2012/09/06 06:43:38 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -392,8 +392,8 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 		config.setLoggingToJavaLogger(false);
 		config.setResourceDirectory(Util.getApplicationDataDirPath());
 		config.setDebugLazyLoad(true);
-		config.setDebugSql(false);
-		config.setLoggingLevel(LogLevel.NONE);
+		config.setDebugSql(true);
+		config.setLoggingLevel(LogLevel.SQL);
 		config.setLoggingToJavaLogger(true);
 		config.setPackages(new ArrayList<String>(Arrays.asList("com.gadgetworks.codeshelf.model.domain")));
 		config.setJars(new ArrayList<String>(Arrays.asList("codeshelf.jar")));
