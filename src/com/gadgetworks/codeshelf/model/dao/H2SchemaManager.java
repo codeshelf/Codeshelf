@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: H2SchemaManager.java,v 1.32 2012/09/06 06:43:37 jeffw Exp $
+ *  $Id: H2SchemaManager.java,v 1.33 2012/09/06 22:59:19 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -112,6 +112,7 @@ public final class H2SchemaManager implements ISchemaManager {
 					+ "PERSISTENTID BIGINT NOT NULL, " //
 					+ "DOMAINID VARCHAR(64) NOT NULL," //
 					+ "PROVIDERENUM VARCHAR(16) NOT NULL, " //
+					+ "SERVICESTATEENUM VARCHAR(16) NOT NULL, " //
 					+ "PROVIDERCREDENTIALS VARCHAR(256) NOT NULL, " //
 					+ "VERSION TIMESTAMP, " //
 					+ "PARENTORGANIZATION_PERSISTENTID LONG NOT NULL, " //

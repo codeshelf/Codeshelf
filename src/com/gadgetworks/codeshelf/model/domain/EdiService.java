@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiService.java,v 1.1 2012/09/06 06:43:38 jeffw Exp $
+ *  $Id: EdiService.java,v 1.2 2012/09/06 22:59:19 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -21,6 +21,7 @@ import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.annotate.JsonIgnore;
 
 import com.gadgetworks.codeshelf.model.EdiProviderEnum;
+import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.google.inject.Inject;
@@ -65,7 +66,14 @@ public class EdiService extends DomainObjectABC {
 	@Getter
 	private EdiProviderEnum				providerEnum;
 
-	// The provider.
+	// Service state.
+	@Column(nullable = false)
+	@ManyToOne(optional = false)
+	@JsonIgnore
+	@Getter
+	private EdiServiceStateEnum			serviceStateEnum;
+
+	// The credentials (encoded toekns or obfuscated keys only).
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	@JsonIgnore
