@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DropboxService.java,v 1.2 2012/09/08 04:27:11 jeffw Exp $
+ *  $Id: DropboxService.java,v 1.3 2012/09/08 23:46:12 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -20,6 +20,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.JsonProcessingException;
+import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import com.dropbox.client2.DropboxAPI;
@@ -33,6 +34,10 @@ import com.dropbox.client2.session.WebAuthSession;
 import com.gadgetworks.codeshelf.model.EdiDocumentStateEnum;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
+import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
+import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
@@ -48,19 +53,19 @@ import com.gadgetworks.codeshelf.model.dao.DaoException;
 @DiscriminatorValue("DROPBOX")
 public class DropboxService extends EdiServiceABC {
 
-	//	@Inject
-	//	public static ITypedDao<DropboxService>	DAO;
-	//
-	//	@Singleton
-	//	public static class DropboxServiceDao extends GenericDaoABC<DropboxService> implements ITypedDao<DropboxService> {
-	//		public final Class<DropboxService> getDaoClass() {
-	//			return DropboxService.class;
-	//		}
-	//	}
-	//
+	@Inject
+	public static ITypedDao<DropboxService>	DAO;
+
+	@Singleton
+	public static class DropboxServiceDao extends GenericDaoABC<DropboxService> implements ITypedDao<DropboxService> {
+		public final Class<DropboxService> getDaoClass() {
+			return DropboxService.class;
+		}
+	}
+
 	private static final Log	LOGGER	= LogFactory.getLog(DropboxService.class);
 
-	@Column(nullable = false)
+	@Column(nullable = true)
 	@Getter
 	@Setter
 	private String				cursor;
@@ -69,13 +74,12 @@ public class DropboxService extends EdiServiceABC {
 
 	}
 
-	//	@JsonIgnore
-	//	public final ITypedDao<DropboxService> getDao() {
-	//		return DAO;
-	//	}
+	@JsonIgnore
+	public final ITypedDao<DropboxService> getDao() {
+		return DAO;
+	}
 
-	@Override
-	public void updateDocuments() {
+	public final void updateDocuments() {
 		// Make sure we believe that we're properly registered with the service before we try to contact it.
 		if (this.getServiceStateEnum().equals(EdiServiceStateEnum.REGISTERED)) {
 			if (connect()) {
@@ -90,7 +94,7 @@ public class DropboxService extends EdiServiceABC {
 	 */
 	private boolean connect() {
 
-		Boolean result = true;
+		boolean result = false;
 
 		try {
 			String credentials = this.getProviderCredentials();
@@ -106,29 +110,15 @@ public class DropboxService extends EdiServiceABC {
 			session.setAccessTokenPair(accessToken);
 			DropboxAPI<?> client = new DropboxAPI<WebAuthSession>(session);
 
-			DeltaPage<Entry> page = null;
-			do {
-				page = client.delta(null);
-				for (DeltaEntry<Entry> entry : page.entries) {
-					LOGGER.info(entry.lcPath);
-					EdiDocumentLocator locator = EdiDocumentLocator.DAO.findByDomainId(this, entry.lcPath);
-					if (locator == null) {
-						locator = new EdiDocumentLocator();
-						locator.setParentEdiService(this);
-						locator.setReceived(new Timestamp(System.currentTimeMillis()));
-						locator.setDocumentStateEnum(EdiDocumentStateEnum.NEW);
-						locator.setDomainId(entry.lcPath);
-						locator.setDocumentId(entry.lcPath);
-						locator.setDocumentName(entry.metadata.fileName());
-						try {
-							EdiDocumentLocator.DAO.store(locator);
-						} catch (DaoException e) {
-							LOGGER.error("", e);
-						}
-					}
+			DropboxHelper dropboxHelper = new DropboxHelper(this);
+			if (client != null) {
+				result = true;
+				DeltaPage<Entry> page = null;
+				while ((page == null) || (page.hasMore)) {
+					page = client.delta(getCursor());
+					dropboxHelper.handlePage(page);
 				}
-			} while (page.hasMore);
-
+			}
 		} catch (JsonProcessingException e) {
 			LOGGER.error("Couldn't process JSON credentials for Dropbox", e);
 		} catch (IOException e) {
@@ -145,5 +135,59 @@ public class DropboxService extends EdiServiceABC {
 	 */
 	private void documentCheck() {
 
+	}
+	
+	/**
+	 * @author jeffw
+	 * 
+	 * We need this bit of nonsense since there is some weird byte-code rewrite problem between EBean, Lombok and the Dropbox API.
+	 * It appears that if we call these methods when there is a java-generics local variable then part of this becomes messed up.
+	 * 
+	 * The results is Java VerifyError or Internal Exception 35.
+	 * 
+	 * We've already wasted several hours on this stupid problem.  Please don't waste more time on this unless your CERTAIN how to first fix it.
+	 *
+	 */
+	private class DropboxHelper {
+		
+		private DropboxService mDropboxService;
+		
+		public DropboxHelper(final DropboxService inDropboxService) {
+			mDropboxService = inDropboxService;
+		}
+
+		private void handlePage(DeltaPage<Entry> inPage) {
+			DropboxService service = DropboxService.DAO.findByPersistentId(mDropboxService.getPersistentId());
+			if ((inPage != null) && (inPage.cursor != null) && (!inPage.cursor.equals(service.getCursor()))) {
+				service.setCursor(inPage.cursor);
+				try {
+					DropboxService.DAO.store(service);
+				} catch (DaoException e) {
+					LOGGER.error("", e);
+				}
+				iteratePage(inPage);
+			}
+		}
+
+		private void iteratePage(DeltaPage<Entry> inPage) {
+			for (DeltaEntry<Entry> entry : inPage.entries) {
+				LOGGER.info(entry.lcPath);
+				EdiDocumentLocator locator = EdiDocumentLocator.DAO.findByDomainId(mDropboxService, entry.lcPath);
+				if (locator == null) {
+					locator = new EdiDocumentLocator();
+					locator.setParentEdiService(mDropboxService);
+					locator.setReceived(new Timestamp(System.currentTimeMillis()));
+					locator.setDocumentStateEnum(EdiDocumentStateEnum.NEW);
+					locator.setDomainId(entry.lcPath);
+					locator.setDocumentId(entry.lcPath);
+					locator.setDocumentName(entry.metadata.fileName());
+					try {
+						EdiDocumentLocator.DAO.store(locator);
+					} catch (DaoException e) {
+						LOGGER.error("", e);
+					}
+				}
+			}
+		}
 	}
 }

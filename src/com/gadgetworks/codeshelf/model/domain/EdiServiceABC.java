@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiServiceABC.java,v 1.2 2012/09/08 04:27:11 jeffw Exp $
+ *  $Id: EdiServiceABC.java,v 1.3 2012/09/08 23:46:12 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -50,15 +50,15 @@ import com.google.inject.Singleton;
 @DiscriminatorValue("ABC")
 public abstract class EdiServiceABC extends DomainObjectABC implements IEdiService {
 
-	@Inject
-	public static EdiServiceDao	DAO;
-
-	@Singleton
-	public static class EdiServiceDao extends GenericDaoABC<EdiServiceABC> implements ITypedDao<EdiServiceABC> {
-		public final Class<EdiServiceABC> getDaoClass() {
-			return EdiServiceABC.class;
-		}
-	}
+//	@Inject
+//	public static EdiServiceDao	DAO;
+//
+//	@Singleton
+//	public static class EdiServiceDao extends GenericDaoABC<EdiServiceABC> implements ITypedDao<EdiServiceABC> {
+//		public final Class<EdiServiceABC> getDaoClass() {
+//			return EdiServiceABC.class;
+//		}
+//	}
 
 	private static final Log			LOGGER				= LogFactory.getLog(EdiServiceABC.class);
 
@@ -97,10 +97,10 @@ public abstract class EdiServiceABC extends DomainObjectABC implements IEdiServi
 
 	}
 
-	@JsonIgnore
-	public final EdiServiceDao getDao() {
-		return DAO;
-	}
+//	@JsonIgnore
+//	public final EdiServiceDao getDao() {
+//		return DAO;
+//	}
 
 	public final IDomainObject getParent() {
 		return getParentFacility();

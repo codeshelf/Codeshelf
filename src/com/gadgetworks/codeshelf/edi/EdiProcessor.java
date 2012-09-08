@@ -1,14 +1,18 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiProcessor.java,v 1.2 2012/09/08 04:27:11 jeffw Exp $
+ *  $Id: EdiProcessor.java,v 1.3 2012/09/08 23:46:12 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
+import java.io.IOException;
+import java.io.StringWriter;
 import java.util.Collection;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.codehaus.jackson.JsonGenerationException;
+import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ObjectNode;
 
@@ -178,7 +182,7 @@ public final class EdiProcessor {
 
 		LOGGER.debug("Begin EDI harvest cycle.");
 
-		Collection<EdiServiceABC> ediServices = EdiServiceABC.DAO.getAll();
+		Collection<DropboxService> ediServices = DropboxService.DAO.getAll();
 
 		if (ediServices.size() == 0) {
 			createTestLink();
@@ -194,29 +198,32 @@ public final class EdiProcessor {
 	}
 
 	private void createTestLink() {
-//		try {
+		try {
 			String credentials = "";
-			
-//			AppKeyPair appKeyPair = new AppKeyPair("feh3ontnajdmmin", "4jm05vbugwnq9pe");
-//			WebAuthSession was = new WebAuthSession(appKeyPair, Session.AccessType.APP_FOLDER);
-//
-//			// Make the user log in and authorize us.
-//			WebAuthSession.WebAuthInfo info = was.getAuthInfo();
-//			LOGGER.info(info.url);
-//
-//			was.retrieveWebAccessToken(info.requestTokenPair);
-//			AccessTokenPair accessToken = was.getAccessTokenPair();
-//			LOGGER.info(accessToken);
-//
-//			ObjectMapper mapper = new ObjectMapper();
-//			ObjectNode credentialsNode = mapper.createObjectNode();
-//			ObjectNode appNode = credentialsNode.putObject("appToken");
-//			appNode.put("key", "feh3ontnajdmmin");
-//			appNode.put("secret", "4jm05vbugwnq9pe");
-//			ObjectNode accessNode = credentialsNode.putObject("accessToken");
-//			accessNode.put("key", accessToken.key);
-//			accessNode.put("secret", accessToken.secret);
-//			credentials = credentialsNode.getValueAsText();
+
+			AppKeyPair appKeyPair = new AppKeyPair("feh3ontnajdmmin", "4jm05vbugwnq9pe");
+			WebAuthSession was = new WebAuthSession(appKeyPair, Session.AccessType.APP_FOLDER);
+
+			// Make the user log in and authorize us.
+			WebAuthSession.WebAuthInfo info = was.getAuthInfo();
+			LOGGER.info(info.url);
+
+			was.retrieveWebAccessToken(info.requestTokenPair);
+			AccessTokenPair accessToken = was.getAccessTokenPair();
+			LOGGER.info(accessToken);
+
+			ObjectMapper mapper = new ObjectMapper();
+			ObjectNode credentialsNode = mapper.createObjectNode();
+			ObjectNode appNode = credentialsNode.putObject("appToken");
+			appNode.put("key", "feh3ontnajdmmin");
+			appNode.put("secret", "4jm05vbugwnq9pe");
+			ObjectNode accessNode = credentialsNode.putObject("accessToken");
+			accessNode.put("key", accessToken.key);
+			accessNode.put("secret", accessToken.secret);
+
+			StringWriter sw = new StringWriter();
+			mapper.writeValue(sw, credentialsNode);
+			credentials = sw.toString();
 
 			DropboxService dropbox = new DropboxService();
 			dropbox.setDomainId("dropbox");
@@ -230,8 +237,14 @@ public final class EdiProcessor {
 				LOGGER.error("", e);
 			}
 
-//		} catch (DropboxException e) {
-//			LOGGER.error("", e);
-//		}
+		} catch (DropboxException e) {
+			LOGGER.error("", e);
+		} catch (JsonGenerationException e) {
+			LOGGER.error("", e);
+		} catch (JsonMappingException e) {
+			LOGGER.error("", e);
+		} catch (IOException e) {
+			LOGGER.error("", e);
+		}
 	}
 }
