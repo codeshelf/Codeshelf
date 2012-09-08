@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
- *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiDocumentLocator.java,v 1.1 2012/09/06 06:43:38 jeffw Exp $
+ *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
+ *  $Id: EdiDocumentLocator.java,v 1.2 2012/09/08 03:03:21 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -56,7 +56,7 @@ public class EdiDocumentLocator extends DomainObjectABC {
 	@ManyToOne(optional = false)
 	@JsonIgnore
 	@Getter
-	private EdiService				parentEdiService;
+	private EdiServiceABC			parentEdiService;
 
 	// Document ID
 	@Column(nullable = false)
@@ -108,8 +108,8 @@ public class EdiDocumentLocator extends DomainObjectABC {
 	}
 
 	public final void setParent(IDomainObject inParent) {
-		if (inParent instanceof EdiService) {
-			setParentEdiService((EdiService) inParent);
+		if (inParent instanceof EdiServiceABC) {
+			setParentEdiService((EdiServiceABC) inParent);
 		}
 	}
 
@@ -118,7 +118,7 @@ public class EdiDocumentLocator extends DomainObjectABC {
 		return null; //getEdiTransactionDetails();
 	}
 
-	public final void setParentEdiService(final EdiService inEdiService) {
+	public final void setParentEdiService(final EdiServiceABC inEdiService) {
 		parentEdiService = inEdiService;
 	}
 

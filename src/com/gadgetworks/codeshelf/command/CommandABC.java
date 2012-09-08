@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
- *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandABC.java,v 1.3 2011/02/05 01:41:56 jeffw Exp $
+ *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
+ *  $Id: CommandABC.java,v 1.4 2012/09/08 03:03:22 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.command;

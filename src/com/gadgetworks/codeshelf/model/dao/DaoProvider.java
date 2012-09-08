@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
- *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: DaoProvider.java,v 1.7 2012/07/30 17:44:28 jeffw Exp $
+ *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
+ *  $Id: DaoProvider.java,v 1.8 2012/09/08 03:03:24 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
- *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Main.java,v 1.19 2012/07/31 05:53:34 jeffw Exp $
+ *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
+ *  $Id: Main.java,v 1.20 2012/09/08 03:03:24 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -23,6 +23,8 @@ import com.gadgetworks.codeshelf.model.domain.ControlGroup;
 import com.gadgetworks.codeshelf.model.domain.ControlGroup.ControlGroupDao;
 import com.gadgetworks.codeshelf.model.domain.DBProperty;
 import com.gadgetworks.codeshelf.model.domain.DBProperty.DBPropertyDao;
+import com.gadgetworks.codeshelf.model.domain.EdiServiceABC;
+import com.gadgetworks.codeshelf.model.domain.EdiServiceABC.EdiServiceDao;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Facility.FacilityDao;
 import com.gadgetworks.codeshelf.model.domain.Organization;
@@ -50,6 +52,7 @@ import com.gadgetworks.codeshelf.web.websocket.WebSocketListener;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Provides;
 import com.google.inject.TypeLiteral;
 
 // --------------------------------------------------------------------------
@@ -110,22 +113,6 @@ public final class Main {
 				bind(IWebSocketListener.class).to(WebSocketListener.class);
 				bind(IWebSessionManager.class).to(WebSessionManager.class);
 				
-				requestStaticInjection(DBProperty.class);
-				bind(new TypeLiteral<ITypedDao<DBProperty>>() {
-				}).to(DBPropertyDao.class);
-				
-				requestStaticInjection(Organization.class);
-				bind(new TypeLiteral<ITypedDao<Organization>>() {
-				}).to(OrganizationDao.class);
-
-				requestStaticInjection(PersistentProperty.class);
-				bind(new TypeLiteral<ITypedDao<PersistentProperty>>() {
-				}).to(PersistentPropertyDao.class);
-
-				requestStaticInjection(Facility.class);
-				bind(new TypeLiteral<ITypedDao<Facility>>() {
-				}).to(FacilityDao.class);
-
 				requestStaticInjection(Aisle.class);
 				bind(new TypeLiteral<ITypedDao<Aisle>>() {
 				}).to(AisleDao.class);
@@ -133,26 +120,6 @@ public final class Main {
 				requestStaticInjection(Bay.class);
 				bind(new TypeLiteral<ITypedDao<Bay>>() {
 				}).to(BayDao.class);
-
-				requestStaticInjection(Vertex.class);
-				bind(new TypeLiteral<ITypedDao<Vertex>>() {
-				}).to(VertexDao.class);
-				
-				requestStaticInjection(Path.class);
-				bind(new TypeLiteral<ITypedDao<Path>>() {
-				}).to(PathDao.class);
-
-				requestStaticInjection(PathSegment.class);
-				bind(new TypeLiteral<ITypedDao<PathSegment>>() {
-				}).to(PathSegmentDao.class);
-
-				requestStaticInjection(User.class);
-				bind(new TypeLiteral<ITypedDao<User>>() {
-				}).to(UserDao.class);
-
-				requestStaticInjection(UserSession.class);
-				bind(new TypeLiteral<ITypedDao<UserSession>>() {
-				}).to(UserSessionDao.class);
 
 				requestStaticInjection(CodeShelfNetwork.class);
 				bind(new TypeLiteral<ITypedDao<CodeShelfNetwork>>() {
@@ -162,11 +129,52 @@ public final class Main {
 				bind(new TypeLiteral<ITypedDao<ControlGroup>>() {
 				}).to(ControlGroupDao.class);
 
+				requestStaticInjection(DBProperty.class);
+				bind(new TypeLiteral<ITypedDao<DBProperty>>() {
+				}).to(DBPropertyDao.class);
+				
+				requestStaticInjection(EdiServiceABC.class);
+				bind(new TypeLiteral<ITypedDao<EdiServiceABC>>() {
+				}).to(EdiServiceDao.class);
+				
+				requestStaticInjection(Facility.class);
+				bind(new TypeLiteral<ITypedDao<Facility>>() {
+				}).to(FacilityDao.class);
+
+				requestStaticInjection(Organization.class);
+				bind(new TypeLiteral<ITypedDao<Organization>>() {
+				}).to(OrganizationDao.class);
+
+				requestStaticInjection(Path.class);
+				bind(new TypeLiteral<ITypedDao<Path>>() {
+				}).to(PathDao.class);
+
+				requestStaticInjection(PathSegment.class);
+				bind(new TypeLiteral<ITypedDao<PathSegment>>() {
+				}).to(PathSegmentDao.class);
+
+				requestStaticInjection(PersistentProperty.class);
+				bind(new TypeLiteral<ITypedDao<PersistentProperty>>() {
+				}).to(PersistentPropertyDao.class);
+
+				requestStaticInjection(User.class);
+				bind(new TypeLiteral<ITypedDao<User>>() {
+				}).to(UserDao.class);
+
+				requestStaticInjection(UserSession.class);
+				bind(new TypeLiteral<ITypedDao<UserSession>>() {
+				}).to(UserSessionDao.class);
+
+				requestStaticInjection(Vertex.class);
+				bind(new TypeLiteral<ITypedDao<Vertex>>() {
+				}).to(VertexDao.class);
+				
 				requestStaticInjection(WirelessDevice.class);
 				bind(IWirelessDeviceDao.class).to(WirelessDeviceDao.class);
 
 				bind(IWebSessionReqCmdFactory.class).to(WebSessionReqCmdFactory.class);
 				bind(IDaoProvider.class).to(DaoProvider.class);
+				
 			}
 		});
 

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
- *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandGroupEnum.java,v 1.5 2011/02/15 02:39:46 jeffw Exp $
+ *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
+ *  $Id: CommandGroupEnum.java,v 1.6 2012/09/08 03:03:22 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.command;
 

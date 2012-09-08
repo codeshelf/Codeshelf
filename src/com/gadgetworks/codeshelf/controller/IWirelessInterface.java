@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
- *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: IWirelessInterface.java,v 1.1 2011/02/05 01:41:55 jeffw Exp $
+ *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
+ *  $Id: IWirelessInterface.java,v 1.2 2012/09/08 03:03:23 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.controller;
 

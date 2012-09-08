@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
- *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiService.java,v 1.2 2012/09/06 22:59:19 jeffw Exp $
+ *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
+ *  $Id: EdiServiceABC.java,v 1.1 2012/09/08 03:03:21 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -9,12 +9,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.persistence.Column;
+import javax.persistence.DiscriminatorColumn;
+import javax.persistence.DiscriminatorType;
+import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
+import javax.persistence.Inheritance;
+import javax.persistence.InheritanceType;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 import lombok.Getter;
+import lombok.Setter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -22,6 +28,7 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 
 import com.gadgetworks.codeshelf.model.EdiProviderEnum;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
+import com.gadgetworks.codeshelf.model.IEdiService;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.google.inject.Inject;
@@ -37,33 +44,37 @@ import com.google.inject.Singleton;
  */
 
 @Entity
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name = "DTYPE", discriminatorType = DiscriminatorType.STRING)
 @Table(name = "EDISERVICE")
-public class EdiService extends DomainObjectABC {
+@DiscriminatorValue("ABC")
+public abstract class EdiServiceABC extends DomainObjectABC implements IEdiService {
 
 	@Inject
-	public static ITypedDao<EdiService>	DAO;
+	public static EdiServiceDao	DAO;
 
 	@Singleton
-	public static class EdiServiceDao extends GenericDaoABC<EdiService> implements ITypedDao<EdiService> {
-		public final Class<EdiService> getDaoClass() {
-			return EdiService.class;
+	public static class EdiServiceDao extends GenericDaoABC<EdiServiceABC> implements ITypedDao<EdiServiceABC> {
+		public final Class<EdiServiceABC> getDaoClass() {
+			return EdiServiceABC.class;
 		}
 	}
 
-	private static final Log			LOGGER				= LogFactory.getLog(EdiService.class);
+	private static final Log			LOGGER				= LogFactory.getLog(EdiServiceABC.class);
 
-	// The owning organization.
+	// The owning Facility.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	@JsonIgnore
 	@Getter
-	private Organization				parentOrganization;
+	private Facility					parentFacility;
 
 	// The provider.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	@JsonIgnore
 	@Getter
+	@Setter
 	private EdiProviderEnum				providerEnum;
 
 	// Service state.
@@ -71,6 +82,7 @@ public class EdiService extends DomainObjectABC {
 	@ManyToOne(optional = false)
 	@JsonIgnore
 	@Getter
+	@Setter
 	private EdiServiceStateEnum			serviceStateEnum;
 
 	// The credentials (encoded toekns or obfuscated keys only).
@@ -78,7 +90,8 @@ public class EdiService extends DomainObjectABC {
 	@ManyToOne(optional = false)
 	@JsonIgnore
 	@Getter
-	private String						credentials;
+	@Setter
+	private String						providerCredentials;
 
 	// For a network this is a list of all of the control groups that belong in the set.
 	@OneToMany(mappedBy = "parentEdiService")
@@ -86,17 +99,22 @@ public class EdiService extends DomainObjectABC {
 	@Getter
 	private List<EdiDocumentLocator>	documentLocators	= new ArrayList<EdiDocumentLocator>();
 
-	public EdiService() {
+	public EdiServiceABC() {
 
+	}
+
+	@JsonIgnore
+	public final EdiServiceDao getDao() {
+		return DAO;
 	}
 
 	public final IDomainObject getParent() {
-		return getParentOrganization();
+		return getParentFacility();
 	}
 
 	public final void setParent(IDomainObject inParent) {
-		if (inParent instanceof Organization) {
-			setParentOrganization((Organization) inParent);
+		if (inParent instanceof Facility) {
+			setParentFacility((Facility) inParent);
 		}
 	}
 
@@ -105,13 +123,8 @@ public class EdiService extends DomainObjectABC {
 		return null; //getEdiDocuments();
 	}
 
-	public final void setParentOrganization(final Organization inParentOrganization) {
-		parentOrganization = inParentOrganization;
-	}
-
-	@JsonIgnore
-	public final ITypedDao<EdiService> getDao() {
-		return DAO;
+	public final void setParentFacility(final Facility inParentFacility) {
+		parentFacility = inParentFacility;
 	}
 
 	public final String getDefaultDomainIdPrefix() {

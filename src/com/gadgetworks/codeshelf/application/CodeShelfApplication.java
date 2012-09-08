@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
- *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfApplication.java,v 1.40 2012/09/06 06:43:38 jeffw Exp $
+ *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
+ *  $Id: CodeShelfApplication.java,v 1.41 2012/09/08 03:03:24 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -31,6 +31,7 @@ import com.gadgetworks.codeshelf.controller.IController;
 import com.gadgetworks.codeshelf.controller.IWirelessInterface;
 import com.gadgetworks.codeshelf.controller.NetworkDeviceStateEnum;
 import com.gadgetworks.codeshelf.controller.SnapInterface;
+import com.gadgetworks.codeshelf.edi.EdiProcessor;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GWEbeanNamingConvention;
 import com.gadgetworks.codeshelf.model.dao.H2SchemaManager;
@@ -134,10 +135,18 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 		//		// Start the JMS message handler.
 		//		JmsHandler.startJmsHandler();
 
-		// Start the background startup and wait until it's finished.
+		// Start the controllers.
 		LOGGER.info("Starting controllers");
 		for (IController controller : mControllerList) {
 			controller.startController();
+		}
+
+		Organization organization = Organization.DAO.findByDomainId(null, "O1");
+		if (organization != null) {
+			Facility facility = Facility.DAO.findByDomainId(organization, "F1");
+			if (facility != null) {
+				EdiProcessor.startProcessor(facility);
+			}
 		}
 
 		// Initialize the TTS system.
@@ -156,6 +165,8 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 	public void stopApplication() {
 
 		LOGGER.info("Stopping application");
+
+		EdiProcessor.stopProcessor();
 
 		//		ActiveMqManager.stopBrokerService();
 
@@ -392,8 +403,8 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 		config.setLoggingToJavaLogger(false);
 		config.setResourceDirectory(Util.getApplicationDataDirPath());
 		config.setDebugLazyLoad(true);
-		config.setDebugSql(true);
-		config.setLoggingLevel(LogLevel.SQL);
+		config.setDebugSql(false);
+		config.setLoggingLevel(LogLevel.SUMMARY);
 		config.setLoggingToJavaLogger(true);
 		config.setPackages(new ArrayList<String>(Arrays.asList("com.gadgetworks.codeshelf.model.domain")));
 		config.setJars(new ArrayList<String>(Arrays.asList("codeshelf.jar")));

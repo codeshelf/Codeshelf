@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
- *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: H2SchemaManager.java,v 1.33 2012/09/06 22:59:19 jeffw Exp $
+ *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
+ *  $Id: H2SchemaManager.java,v 1.34 2012/09/08 03:03:24 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -114,16 +114,18 @@ public final class H2SchemaManager implements ISchemaManager {
 					+ "PROVIDERENUM VARCHAR(16) NOT NULL, " //
 					+ "SERVICESTATEENUM VARCHAR(16) NOT NULL, " //
 					+ "PROVIDERCREDENTIALS VARCHAR(256) NOT NULL, " //
+					+ "DTYPE VARCHAR(64) NOT NULL," //
+					+ "LASTDEFAULTSEQUENCEID INT NOT NULL, " //
 					+ "VERSION TIMESTAMP, " //
-					+ "PARENTORGANIZATION_PERSISTENTID LONG NOT NULL, " //
+					+ "PARENTFACILITY_PERSISTENTID LONG NOT NULL, " //
 					+ "PRIMARY KEY (PERSISTENTID));");
 
 			execOneSQLCommand("ALTER TABLE CODESHELF.EDISERVICE " //
-					+ "ADD FOREIGN KEY (PARENTORGANIZATION_PERSISTENTID) " //
-					+ "REFERENCES DATABASE.CODESHELF.ORGANIZATION (PERSISTENTID)" //
+					+ "ADD FOREIGN KEY (PARENTFACILITY_PERSISTENTID) " //
+					+ "REFERENCES DATABASE.CODESHELF.FACILITY (PERSISTENTID)" //
 					+ " ON DELETE RESTRICT ON UPDATE RESTRICT;");
 
-			execOneSQLCommand("CREATE INDEX CODESHELF.EDISERVICE_PARENT_ORGANIZATION ON CODESHELF.EDISERVICE (PARENTORGANIZATION_PERSISTENTID)");
+			execOneSQLCommand("CREATE INDEX CODESHELF.EDISERVICE_PARENT_FACILITY ON CODESHELF.EDISERVICE (PARENTFACILITY_PERSISTENTID)");
 
 			// EdiDocumentLocator
 			execOneSQLCommand("CREATE SEQUENCE CODESHELF.EDIDOCUMENTLOCATOR_SEQ");
@@ -135,6 +137,7 @@ public final class H2SchemaManager implements ISchemaManager {
 					+ "DOCUMENTSTATEENUM VARCHAR(16) NOT NULL, " //
 					+ "RECEIVED TIMESTAMP, " //
 					+ "PROCESSED TIMESTAMP, " //
+					+ "LASTDEFAULTSEQUENCEID INT NOT NULL, " //
 					+ "VERSION TIMESTAMP, " //
 					+ "PARENTEDIDOCUMENTLOCATOR_PERSISTENTID LONG NOT NULL, " //
 					+ "PRIMARY KEY (PERSISTENTID));");

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
- *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandControlButton.java,v 1.4 2011/02/11 23:23:57 jeffw Exp $
+ *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
+ *  $Id: CommandControlButton.java,v 1.5 2012/09/08 03:03:22 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.command;

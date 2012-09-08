@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
- *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: ControllerABC.java,v 1.14 2012/07/19 06:11:33 jeffw Exp $
+ *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
+ *  $Id: ControllerABC.java,v 1.15 2012/09/08 03:03:23 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.controller;

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
- *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: Util.java,v 1.17 2012/07/19 06:11:34 jeffw Exp $
+ *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
+ *  $Id: Util.java,v 1.18 2012/09/08 03:03:24 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;

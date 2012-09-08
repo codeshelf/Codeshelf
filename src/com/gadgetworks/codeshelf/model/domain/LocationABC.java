@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
- *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: LocationABC.java,v 1.1 2012/07/22 20:14:04 jeffw Exp $
+ *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
+ *  $Id: LocationABC.java,v 1.2 2012/09/08 03:03:21 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -38,9 +38,6 @@ import com.gadgetworks.codeshelf.model.PositionTypeEnum;
  */
 
 @Entity
-// LocationABC is the only class we use table-per-class strategy.
-// The location hierarchy will get very deep, but each parent has concrete/leaf instances of its children.
-// This removes the biggest hassle/hurdle to inheritance-per-class.
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "DTYPE", discriminatorType = DiscriminatorType.STRING)
 @Table(name = "LOCATION")

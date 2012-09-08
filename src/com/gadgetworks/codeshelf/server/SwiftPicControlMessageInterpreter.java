@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
- *  Copyright (c) 2005-2011, Jeffrey B. Williams, All rights reserved
- *  $Id: SwiftPicControlMessageInterpreter.java,v 1.1 2011/01/26 00:30:43 jeffw Exp $
+ *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
+ *  $Id: SwiftPicControlMessageInterpreter.java,v 1.2 2012/09/08 03:03:22 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.server;
 
