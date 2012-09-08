@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiDocumentLocator.java,v 1.2 2012/09/08 03:03:21 jeffw Exp $
+ *  $Id: EdiDocumentLocator.java,v 1.3 2012/09/08 04:27:11 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -63,32 +63,34 @@ public class EdiDocumentLocator extends DomainObjectABC {
 	@ManyToOne(optional = false)
 	@JsonIgnore
 	@Getter
+	@Setter
 	private String					documentId;
 
 	// Document Name
-	@Column(nullable = false)
+	@Column(nullable = true)
 	@ManyToOne(optional = false)
 	@JsonIgnore
 	@Getter
+	@Setter
 	private String					documentName;
 
 	// Received date.
+	@Column(nullable = false)
 	@Getter
 	@Setter
-	@Column(nullable = false)
 	private Timestamp				received;
 
 	// Process date.
+	@Column(nullable = true)
 	@Getter
 	@Setter
-	@Column(nullable = false)
 	private Timestamp				processed;
 
 	// Document state.
 	@Getter
 	@Setter
 	@Column(nullable = false)
-	private EdiDocumentStateEnum	documentState;
+	private EdiDocumentStateEnum	documentStateEnum;
 
 	public EdiDocumentLocator() {
 

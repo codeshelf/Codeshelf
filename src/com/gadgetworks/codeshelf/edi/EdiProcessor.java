@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiProcessor.java,v 1.1 2012/09/08 03:03:23 jeffw Exp $
+ *  $Id: EdiProcessor.java,v 1.2 2012/09/08 04:27:11 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -31,7 +31,7 @@ import com.gadgetworks.codeshelf.model.domain.Facility;
  */
 public final class EdiProcessor {
 
-	public static final long				PROCESS_INTERVAL_MILLIS		= 1 * 60 * 1000;
+	public static final long				PROCESS_INTERVAL_MILLIS		= 1 * 20 * 1000;
 
 	private static final Log				LOGGER						= LogFactory.getLog(EdiProcessor.class);
 
@@ -178,7 +178,25 @@ public final class EdiProcessor {
 
 		LOGGER.debug("Begin EDI harvest cycle.");
 
+		Collection<EdiServiceABC> ediServices = EdiServiceABC.DAO.getAll();
+
+		if (ediServices.size() == 0) {
+			createTestLink();
+		}
+
+		for (IEdiService ediService : ediServices) {
+			if (ediService.getServiceStateEnum().equals(EdiServiceStateEnum.REGISTERED)) {
+				ediService.updateDocuments();
+			}
+		}
+
+		LOGGER.debug("End EDI harvest cycle.");
+	}
+
+	private void createTestLink() {
 //		try {
+			String credentials = "";
+			
 //			AppKeyPair appKeyPair = new AppKeyPair("feh3ontnajdmmin", "4jm05vbugwnq9pe");
 //			WebAuthSession was = new WebAuthSession(appKeyPair, Session.AccessType.APP_FOLDER);
 //
@@ -198,31 +216,22 @@ public final class EdiProcessor {
 //			ObjectNode accessNode = credentialsNode.putObject("accessToken");
 //			accessNode.put("key", accessToken.key);
 //			accessNode.put("secret", accessToken.secret);
-//			String credentials = credentialsNode.asText();
-//
-//			DropboxService dropbox = new DropboxService();
-//			dropbox.setDomainId("dropbox");
-//			dropbox.setParentFacility(mFacility);
-//			dropbox.setProviderEnum(EdiProviderEnum.DROPBOX);
-//			dropbox.setServiceStateEnum(EdiServiceStateEnum.REGISTERED);
-//			dropbox.setProviderCredentials(credentials);
-//			try {
-//				dropbox.getDao().store(dropbox);
-//			} catch (DaoException e) {
-//				LOGGER.error("", e);
-//			}
-//
+//			credentials = credentialsNode.getValueAsText();
+
+			DropboxService dropbox = new DropboxService();
+			dropbox.setDomainId("dropbox");
+			dropbox.setParentFacility(mFacility);
+			dropbox.setProviderEnum(EdiProviderEnum.DROPBOX);
+			dropbox.setServiceStateEnum(EdiServiceStateEnum.REGISTERED);
+			dropbox.setProviderCredentials(credentials);
+			try {
+				DropboxService.DAO.store(dropbox);
+			} catch (DaoException e) {
+				LOGGER.error("", e);
+			}
+
 //		} catch (DropboxException e) {
 //			LOGGER.error("", e);
 //		}
-
-		Collection<EdiServiceABC> ediServices = EdiServiceABC.DAO.getAll();
-		for (IEdiService ediService : ediServices) {
-			if (ediService.getServiceStateEnum().equals(EdiServiceStateEnum.REGISTERED)) {
-				ediService.updateDocuments();
-			}
-		}
-
-		LOGGER.debug("End EDI harvest cycle.");
 	}
 }

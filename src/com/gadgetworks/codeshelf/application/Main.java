@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Main.java,v 1.20 2012/09/08 03:03:24 jeffw Exp $
+ *  $Id: Main.java,v 1.21 2012/09/08 04:27:11 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -23,6 +23,8 @@ import com.gadgetworks.codeshelf.model.domain.ControlGroup;
 import com.gadgetworks.codeshelf.model.domain.ControlGroup.ControlGroupDao;
 import com.gadgetworks.codeshelf.model.domain.DBProperty;
 import com.gadgetworks.codeshelf.model.domain.DBProperty.DBPropertyDao;
+import com.gadgetworks.codeshelf.model.domain.EdiDocumentLocator;
+import com.gadgetworks.codeshelf.model.domain.EdiDocumentLocator.EdiDocumentLocatorDao;
 import com.gadgetworks.codeshelf.model.domain.EdiServiceABC;
 import com.gadgetworks.codeshelf.model.domain.EdiServiceABC.EdiServiceDao;
 import com.gadgetworks.codeshelf.model.domain.Facility;
@@ -52,7 +54,6 @@ import com.gadgetworks.codeshelf.web.websocket.WebSocketListener;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Provides;
 import com.google.inject.TypeLiteral;
 
 // --------------------------------------------------------------------------
@@ -132,6 +133,10 @@ public final class Main {
 				requestStaticInjection(DBProperty.class);
 				bind(new TypeLiteral<ITypedDao<DBProperty>>() {
 				}).to(DBPropertyDao.class);
+				
+				requestStaticInjection(EdiDocumentLocator.class);
+				bind(new TypeLiteral<ITypedDao<EdiDocumentLocator>>() {
+				}).to(EdiDocumentLocatorDao.class);
 				
 				requestStaticInjection(EdiServiceABC.class);
 				bind(new TypeLiteral<ITypedDao<EdiServiceABC>>() {

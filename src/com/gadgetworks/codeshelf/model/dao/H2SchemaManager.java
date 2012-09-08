@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: H2SchemaManager.java,v 1.34 2012/09/08 03:03:24 jeffw Exp $
+ *  $Id: H2SchemaManager.java,v 1.35 2012/09/08 04:27:11 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -115,6 +115,7 @@ public final class H2SchemaManager implements ISchemaManager {
 					+ "SERVICESTATEENUM VARCHAR(16) NOT NULL, " //
 					+ "PROVIDERCREDENTIALS VARCHAR(256) NOT NULL, " //
 					+ "DTYPE VARCHAR(64) NOT NULL," //
+					+ "CURSOR VARCHAR(256) NOT NULL," //
 					+ "LASTDEFAULTSEQUENCEID INT NOT NULL, " //
 					+ "VERSION TIMESTAMP, " //
 					+ "PARENTFACILITY_PERSISTENTID LONG NOT NULL, " //
@@ -139,15 +140,15 @@ public final class H2SchemaManager implements ISchemaManager {
 					+ "PROCESSED TIMESTAMP, " //
 					+ "LASTDEFAULTSEQUENCEID INT NOT NULL, " //
 					+ "VERSION TIMESTAMP, " //
-					+ "PARENTEDIDOCUMENTLOCATOR_PERSISTENTID LONG NOT NULL, " //
+					+ "PARENTEDISERVICE_PERSISTENTID LONG NOT NULL, " //
 					+ "PRIMARY KEY (PERSISTENTID));");
 
 			execOneSQLCommand("ALTER TABLE CODESHELF.EDIDOCUMENTLOCATOR " //
-					+ "ADD FOREIGN KEY (PARENTUSERSESSION_PERSISTENTID) " //
+					+ "ADD FOREIGN KEY (PARENTEDISERVICE_PERSISTENTID) " //
 					+ "REFERENCES DATABASE.CODESHELF.EDISERVICE (PERSISTENTID)" //
 					+ " ON DELETE RESTRICT ON UPDATE RESTRICT;");
 
-			execOneSQLCommand("CREATE INDEX CODESHELF.USERSESSION_PARENT_EDISERVICE ON CODESHELF.EDIDOCUMENTLOCATOR (PARENTEDIDOCUMENTLOCATOR_PERSISTENTID)");
+			execOneSQLCommand("CREATE INDEX CODESHELF.EDIDOCUMENTLOCATOR_PARENT_EDISERVICE ON CODESHELF.EDIDOCUMENTLOCATOR (PARENTEDISERVICE_PERSISTENTID)");
 		}
 	}
 

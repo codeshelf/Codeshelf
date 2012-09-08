@@ -1,15 +1,20 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DropboxService.java,v 1.1 2012/09/08 03:03:21 jeffw Exp $
+ *  $Id: DropboxService.java,v 1.2 2012/09/08 04:27:11 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
 import java.io.IOException;
+import java.sql.Timestamp;
 
+import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.Table;
+
+import lombok.Getter;
+import lombok.Setter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -25,7 +30,9 @@ import com.dropbox.client2.exception.DropboxException;
 import com.dropbox.client2.session.AccessTokenPair;
 import com.dropbox.client2.session.AppKeyPair;
 import com.dropbox.client2.session.WebAuthSession;
+import com.gadgetworks.codeshelf.model.EdiDocumentStateEnum;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
+import com.gadgetworks.codeshelf.model.dao.DaoException;
 
 // --------------------------------------------------------------------------
 /**
@@ -52,6 +59,11 @@ public class DropboxService extends EdiServiceABC {
 	//	}
 	//
 	private static final Log	LOGGER	= LogFactory.getLog(DropboxService.class);
+
+	@Column(nullable = false)
+	@Getter
+	@Setter
+	private String				cursor;
 
 	public DropboxService() {
 
@@ -94,10 +106,28 @@ public class DropboxService extends EdiServiceABC {
 			session.setAccessTokenPair(accessToken);
 			DropboxAPI<?> client = new DropboxAPI<WebAuthSession>(session);
 
-			DeltaPage<Entry> page = client.delta(null);
-			for (DeltaEntry<Entry> entry : page.entries) {
-				LOGGER.info(entry.lcPath);
-			}
+			DeltaPage<Entry> page = null;
+			do {
+				page = client.delta(null);
+				for (DeltaEntry<Entry> entry : page.entries) {
+					LOGGER.info(entry.lcPath);
+					EdiDocumentLocator locator = EdiDocumentLocator.DAO.findByDomainId(this, entry.lcPath);
+					if (locator == null) {
+						locator = new EdiDocumentLocator();
+						locator.setParentEdiService(this);
+						locator.setReceived(new Timestamp(System.currentTimeMillis()));
+						locator.setDocumentStateEnum(EdiDocumentStateEnum.NEW);
+						locator.setDomainId(entry.lcPath);
+						locator.setDocumentId(entry.lcPath);
+						locator.setDocumentName(entry.metadata.fileName());
+						try {
+							EdiDocumentLocator.DAO.store(locator);
+						} catch (DaoException e) {
+							LOGGER.error("", e);
+						}
+					}
+				}
+			} while (page.hasMore);
 
 		} catch (JsonProcessingException e) {
 			LOGGER.error("Couldn't process JSON credentials for Dropbox", e);
