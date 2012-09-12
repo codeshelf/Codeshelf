@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionRespCmdEnum.java,v 1.5 2012/09/08 03:03:23 jeffw Exp $
+ *  $Id: WebSessionRespCmdEnum.java,v 1.6 2012/09/12 23:30:36 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.resp;
 
@@ -19,7 +19,8 @@ public enum WebSessionRespCmdEnum {
 	OBJECT_DELETE_RESP(WebSessionRespCmdNum.OBJECT_DELETE_RESP, "OBJ_DEL_RS"),
 	OBJECT_LISTENER_RESP(WebSessionRespCmdNum.OBJECT_LISTENER_RESP, "OBJ_LSN_RS"),
 	OBJECT_FILTER_RESP(WebSessionRespCmdNum.OBJECT_FILTER_RESP, "OBJ_FLT_RS"),
-	OBJECT_METHOD_RESP(WebSessionRespCmdNum.OBJECT_METHOD_RESP, "OBJ_METH_RS");
+	OBJECT_METHOD_RESP(WebSessionRespCmdNum.OBJECT_METHOD_RESP, "OBJ_METH_RS"),
+	REGISTER_EDI_RESP(WebSessionRespCmdNum.REGISTER_EDI_RESP, "REGISTER_EDI_RESP");
 
 	private int		mValue;
 	private String	mName;
@@ -69,6 +70,10 @@ public enum WebSessionRespCmdEnum {
 				result = WebSessionRespCmdEnum.OBJECT_METHOD_RESP;
 				break;
 
+			case WebSessionRespCmdNum.REGISTER_EDI_RESP:
+				result = WebSessionRespCmdEnum.REGISTER_EDI_RESP;
+				break;
+
 			default:
 				result = WebSessionRespCmdEnum.INVALID;
 				break;
@@ -101,6 +106,7 @@ public enum WebSessionRespCmdEnum {
 		static final byte	OBJECT_LISTENER_RESP	= 7;
 		static final byte	OBJECT_FILTER_RESP		= 8;
 		static final byte	OBJECT_METHOD_RESP		= 9;
+		static final byte	REGISTER_EDI_RESP		= 10;
 
 		private WebSessionRespCmdNum() {
 

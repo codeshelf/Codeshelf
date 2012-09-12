@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DropboxService.java,v 1.3 2012/09/08 23:46:12 jeffw Exp $
+ *  $Id: DropboxService.java,v 1.4 2012/09/12 23:30:36 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -140,7 +140,7 @@ public class DropboxService extends EdiServiceABC {
 	/**
 	 * @author jeffw
 	 * 
-	 * We need this bit of nonsense since there is some weird byte-code rewrite problem between EBean, Lombok and the Dropbox API.
+	 * We need this bit of nonsense private class since there is some weird byte-code gen problem between EBean, Lombok and the Dropbox API.
 	 * It appears that if we call these methods when there is a java-generics local variable then part of this becomes messed up.
 	 * 
 	 * The results is Java VerifyError or Internal Exception 35.
