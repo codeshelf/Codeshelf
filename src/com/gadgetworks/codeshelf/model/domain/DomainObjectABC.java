@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DomainObjectABC.java,v 1.8 2012/09/08 03:03:21 jeffw Exp $
+ *  $Id: DomainObjectABC.java,v 1.9 2012/09/16 00:12:44 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -50,16 +50,19 @@ public abstract class DomainObjectABC implements IDomainObject {
 	@Getter
 	@Setter
 	private Long				persistentId;
+	
 	// The domain ID
 	@Column(nullable = false)
 	@NonNull
 	private String				domainId;
+	
 	// The last sequence used to generate a sequence ID.
 	@Column(nullable = false)
 	@NonNull
 	@Getter
 	@Setter
 	private Integer				lastDefaultSequenceId;
+	
 	// This is not an application-editable field.
 	// It's for the private use of the ORM transaction system.
 	@Version

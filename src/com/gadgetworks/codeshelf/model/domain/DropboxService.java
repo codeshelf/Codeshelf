@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DropboxService.java,v 1.4 2012/09/12 23:30:36 jeffw Exp $
+ *  $Id: DropboxService.java,v 1.5 2012/09/16 00:12:44 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -178,7 +178,7 @@ public class DropboxService extends EdiServiceABC {
 					locator.setParentEdiService(mDropboxService);
 					locator.setReceived(new Timestamp(System.currentTimeMillis()));
 					locator.setDocumentStateEnum(EdiDocumentStateEnum.NEW);
-					locator.setDomainId(entry.lcPath);
+					locator.setDomainId(getDefaultDomainId());
 					locator.setDocumentId(entry.lcPath);
 					locator.setDocumentName(entry.metadata.fileName());
 					try {

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: LocationABC.java,v 1.2 2012/09/08 03:03:21 jeffw Exp $
+ *  $Id: LocationABC.java,v 1.3 2012/09/16 00:12:44 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -44,7 +44,7 @@ import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 @DiscriminatorValue("ABC")
 public abstract class LocationABC extends DomainObjectABC {
 
-	private static final Log	LOGGER	= LogFactory.getLog(LocationABC.class);
+	private static final Log	LOGGER		= LogFactory.getLog(LocationABC.class);
 
 	// The position type (GPS, METERS, etc.).
 	@Getter
@@ -95,10 +95,10 @@ public abstract class LocationABC extends DomainObjectABC {
 	@OneToMany(mappedBy = "parentLocation")
 	@JsonIgnore
 	@Getter
-	private List<LocationABC>		locations	= new ArrayList<LocationABC>();
-	
+	private List<LocationABC>	locations	= new ArrayList<LocationABC>();
+
 	public LocationABC() {
-		
+
 	}
 
 	public LocationABC(final PositionTypeEnum inPosType, final Double inPosX, final double inPosY) {
@@ -120,7 +120,7 @@ public abstract class LocationABC extends DomainObjectABC {
 	public final List<? extends IDomainObject> getChildren() {
 		return getLocations();
 	}
-	
+
 	public final void setPosTypeByStr(String inPosTypeStr) {
 		setPosType(PositionTypeEnum.valueOf(inPosTypeStr));
 	}

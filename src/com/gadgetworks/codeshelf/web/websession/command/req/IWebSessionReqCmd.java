@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: IWebSessionReqCmd.java,v 1.10 2012/09/08 03:03:23 jeffw Exp $
+ *  $Id: IWebSessionReqCmd.java,v 1.11 2012/09/16 00:12:44 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -44,7 +44,7 @@ public interface IWebSessionReqCmd extends IWebSessionCmd {
 	String	FILTER_CLAUSE		= "filterClause";
 	String	FILTER_PARAMS		= "filterParams";
 
-	String	RESULTS				= "r";
+	String	RESULTS				= "results";
 
 	WebSessionReqCmdEnum getCommandEnum();
 

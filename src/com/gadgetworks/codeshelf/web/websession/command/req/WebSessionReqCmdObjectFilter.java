@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectFilter.java,v 1.12 2012/09/08 03:03:23 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectFilter.java,v 1.13 2012/09/16 00:12:44 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -151,6 +151,7 @@ public class WebSessionReqCmdObjectFilter extends WebSessionReqCmdABC implements
 					try {
 						String getterName = "get" + propertyName;
 						java.lang.reflect.Method method = matchedObject.getClass().getMethod(getterName, (Class<?>[]) null);
+						Class<?> methodReturnType = method.getReturnType();
 						Object resultObject = method.invoke(matchedObject, (Object[]) null);
 						propertiesMap.put(propertyName, resultObject);
 					} catch (NoSuchMethodException e) {
