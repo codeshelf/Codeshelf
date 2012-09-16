@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Path.java,v 1.6 2012/09/08 03:03:21 jeffw Exp $
+ *  $Id: Path.java,v 1.7 2012/09/16 07:22:15 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -51,10 +51,8 @@ public class Path extends DomainObjectABC {
 	private static final Log	LOGGER		= LogFactory.getLog(Path.class);
 
 	// The parent facility.
-	@Getter
-	@Setter
 	@Column(nullable = false)
-	private Facility			parentFacility;
+	private Facility			parent;
 
 	// The path description.
 	@Getter
@@ -63,7 +61,7 @@ public class Path extends DomainObjectABC {
 	private String				description;
 
 	// For a network this is a list of all of the users that belong in the set.
-	@OneToMany(mappedBy = "parentPath")
+	@OneToMany(mappedBy = "parent")
 	@JsonIgnore
 	@Getter
 	private List<PathSegment>	segments	= new ArrayList<PathSegment>();
@@ -81,13 +79,16 @@ public class Path extends DomainObjectABC {
 		return "P";
 	}
 
-	// --------------------------------------------------------------------------
-	/**
-	 * Someday, organizations may have other organizations.
-	 * @return
-	 */
+	public final Facility getParentFacility() {
+		return parent;
+	}
+
+	public final void setParentFacility(final Facility inFacility) {
+		parent = inFacility;
+	}
+
 	public final IDomainObject getParent() {
-		return parentFacility;
+		return parent;
 	}
 
 	public final void setParent(IDomainObject inParent) {

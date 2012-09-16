@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WirelessDevice.java,v 1.5 2012/09/08 03:03:22 jeffw Exp $
+ *  $Id: WirelessDevice.java,v 1.6 2012/09/16 07:22:15 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -100,14 +100,14 @@ public class WirelessDevice extends DomainObjectABC implements INetworkDevice {
 	// The owning network.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	@Getter
-	@Setter
-	private ControlGroup				parentControlGroup;
+	private ControlGroup				parent;
 
 	@Transient
 	private short						expectedEndpointCount;
+	
 	@Transient
 	private Map<String, String>			kvpMap;
+	
 	@Transient
 	private short						expectedKvpCount;
 
@@ -131,6 +131,14 @@ public class WirelessDevice extends DomainObjectABC implements INetworkDevice {
 
 	public final String getDefaultDomainIdPrefix() {
 		return "W";
+	}
+
+	public final ControlGroup getParentControlGroup() {
+		return parent;
+	}
+
+	public final void setParentControlGroup(final ControlGroup inControlGroup) {
+		parent = inControlGroup;
 	}
 
 	public final IDomainObject getParent() {

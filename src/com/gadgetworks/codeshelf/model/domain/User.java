@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: User.java,v 1.6 2012/09/08 03:03:21 jeffw Exp $
+ *  $Id: User.java,v 1.7 2012/09/16 07:22:15 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -80,16 +80,14 @@ public class User extends DomainObjectABC {
 	private Boolean					active;
 
 	// For a network this is a list of all of the control groups that belong in the set.
-	@OneToMany(mappedBy = "parentUser")
+	@OneToMany(mappedBy = "parent")
 	@Getter
 	private List<UserSession>		userSessions	= new ArrayList<UserSession>();
 
 	// The owning facility.
 	@Column(name = "parentOrganization", nullable = false)
 	@ManyToOne(optional = false)
-	@Getter
-	@Setter
-	private Organization			parentOrganization;
+	private Organization			parent;
 
 	public User() {
 		email = "";
@@ -104,6 +102,14 @@ public class User extends DomainObjectABC {
 
 	public final String getDefaultDomainIdPrefix() {
 		return "U";
+	}
+
+	public final Organization getParentOrganization() {
+		return parent;
+	}
+
+	public final void setParentOrganization(final Organization inOrganization) {
+		parent = inOrganization;
 	}
 
 	public final IDomainObject getParent() {

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: PersistentProperty.java,v 1.5 2012/09/08 03:03:21 jeffw Exp $
+ *  $Id: PersistentProperty.java,v 1.6 2012/09/16 07:22:15 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -70,9 +70,7 @@ public class PersistentProperty<T extends DomainObjectABC> extends DomainObjectA
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	@JsonIgnore
-	@Setter
-	@Getter
-	private Organization		parentOrganization;
+	private Organization		parent;
 
 	public PersistentProperty() {
 		defaultValueStr = "";
@@ -85,6 +83,14 @@ public class PersistentProperty<T extends DomainObjectABC> extends DomainObjectA
 
 	public final String getDefaultDomainIdPrefix() {
 		return "PP";
+	}
+
+	public final Organization getParentOrganization() {
+		return parent;
+	}
+
+	public final void setParentOrganization(final Organization inOrganization) {
+		parent = inOrganization;
 	}
 
 	public final IDomainObject getParent() {

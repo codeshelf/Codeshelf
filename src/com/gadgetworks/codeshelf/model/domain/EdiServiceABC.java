@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiServiceABC.java,v 1.3 2012/09/08 23:46:12 jeffw Exp $
+ *  $Id: EdiServiceABC.java,v 1.4 2012/09/16 07:22:15 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -66,8 +66,7 @@ public abstract class EdiServiceABC extends DomainObjectABC implements IEdiServi
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	@JsonIgnore
-	@Getter
-	private Facility					parentFacility;
+	private Facility					parent;
 
 	// The provider.
 	@Column(nullable = false)
@@ -88,7 +87,7 @@ public abstract class EdiServiceABC extends DomainObjectABC implements IEdiServi
 	private String						providerCredentials;
 
 	// For a network this is a list of all of the control groups that belong in the set.
-	@OneToMany(mappedBy = "parentEdiService")
+	@OneToMany(mappedBy = "parent")
 	@JsonIgnore
 	@Getter
 	private List<EdiDocumentLocator>	documentLocators	= new ArrayList<EdiDocumentLocator>();
@@ -97,10 +96,13 @@ public abstract class EdiServiceABC extends DomainObjectABC implements IEdiServi
 
 	}
 
-//	@JsonIgnore
-//	public final EdiServiceDao getDao() {
-//		return DAO;
-//	}
+	public final Facility getParentFacility() {
+		return parent;
+	}
+
+	public final void setParentFacility(final Facility inFacility) {
+		parent = inFacility;
+	}
 
 	public final IDomainObject getParent() {
 		return getParentFacility();
@@ -115,10 +117,6 @@ public abstract class EdiServiceABC extends DomainObjectABC implements IEdiServi
 	@JsonIgnore
 	public final List<? extends IDomainObject> getChildren() {
 		return null; //getEdiDocuments();
-	}
-
-	public final void setParentFacility(final Facility inParentFacility) {
-		parentFacility = inParentFacility;
 	}
 
 	public final String getDefaultDomainIdPrefix() {

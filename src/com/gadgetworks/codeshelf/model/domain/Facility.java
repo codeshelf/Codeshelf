@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.9 2012/09/08 03:03:21 jeffw Exp $
+ *  $Id: Facility.java,v 1.10 2012/09/16 07:22:15 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -58,17 +58,16 @@ public class Facility extends LocationABC {
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	@JsonIgnore
-	@Getter
 	private Organization			parentOrganization;
 
 	// For a network this is a list of all of the control groups that belong in the set.
-	@OneToMany(mappedBy = "parentLocation")
+	@OneToMany(mappedBy = "parent")
 	@JsonIgnore
 	@Getter
 	private List<Aisle>				aisles		= new ArrayList<Aisle>();
 
 	// For a network this is a list of all of the control groups that belong in the set.
-	@OneToMany(mappedBy = "parentFacility")
+	@OneToMany(mappedBy = "parent")
 	@JsonIgnore
 	@Getter
 	private List<CodeShelfNetwork>	networks	= new ArrayList<CodeShelfNetwork>();
@@ -95,6 +94,14 @@ public class Facility extends LocationABC {
 		return DAO;
 	}
 
+	public final Organization getParentOrganization() {
+		return parentOrganization;
+	}
+
+	public final void setParentOrganization(final Organization inOrganization) {
+		parentOrganization = inOrganization;
+	}
+
 	public final IDomainObject getParent() {
 		return getParentOrganization();
 	}
@@ -103,10 +110,6 @@ public class Facility extends LocationABC {
 		if (inParent instanceof Organization) {
 			setParentOrganization((Organization) inParent);
 		}
-	}
-
-	public final void setParentOrganization(final Organization inParentOrganization) {
-		parentOrganization = inParentOrganization;
 	}
 
 	public final String getParentOrganizationID() {

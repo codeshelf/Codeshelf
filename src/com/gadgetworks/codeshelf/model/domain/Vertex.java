@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Vertex.java,v 1.7 2012/09/08 03:03:22 jeffw Exp $
+ *  $Id: Vertex.java,v 1.8 2012/09/16 07:22:15 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -81,8 +81,7 @@ public class Vertex extends DomainObjectABC {
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	@JsonIgnore
-	@Getter
-	private LocationABC				parentLocation;
+	private LocationABC				parent;
 	
 	public Vertex() {
 		
@@ -106,10 +105,14 @@ public class Vertex extends DomainObjectABC {
 		return "V";
 	}
 
-	// --------------------------------------------------------------------------
-	/**
-	 * @return
-	 */
+	public final LocationABC getParentLocation() {
+		return parent;
+	}
+	
+	public final void setParentLocation(final LocationABC inParentLocation) {
+		parent = inParentLocation;
+	}
+
 	public final IDomainObject getParent() {
 		return getParentLocation();
 	}
@@ -123,10 +126,6 @@ public class Vertex extends DomainObjectABC {
 	@JsonIgnore
 	public final List<IDomainObject> getChildren() {
 		return new ArrayList<IDomainObject>();
-	}
-
-	public final void setParentLocation(final LocationABC inParentLocation) {
-		parentLocation = inParentLocation;
 	}
 
 	public final void setPosTypeByStr(String inPosTypeStr) {

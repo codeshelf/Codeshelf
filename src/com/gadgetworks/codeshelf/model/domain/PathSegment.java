@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: PathSegment.java,v 1.7 2012/09/08 03:03:21 jeffw Exp $
+ *  $Id: PathSegment.java,v 1.8 2012/09/16 07:22:15 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -53,8 +53,7 @@ public class PathSegment extends DomainObjectABC {
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	@JsonIgnore
-	@Getter
-	private Path				parentPath;
+	private Path				parent;
 
 	public PathSegment() {
 	}
@@ -68,6 +67,14 @@ public class PathSegment extends DomainObjectABC {
 		return "PS";
 	}
 
+	public final Path getParentPath() {
+		return parent;
+	}
+
+	public final void setParentPath(final Path inPath) {
+		parent = inPath;
+	}
+
 	public final IDomainObject getParent() {
 		return getParentPath();
 	}
@@ -76,10 +83,6 @@ public class PathSegment extends DomainObjectABC {
 		if (inParent instanceof Path) {
 			setParentPath((Path) inParent);
 		}
-	}
-
-	public final void setParentPath(final Path inParentPath) {
-		parentPath = inParentPath;
 	}
 
 	@JsonIgnore

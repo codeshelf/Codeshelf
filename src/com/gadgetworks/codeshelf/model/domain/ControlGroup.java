@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ControlGroup.java,v 1.5 2012/09/08 03:03:22 jeffw Exp $
+ *  $Id: ControlGroup.java,v 1.6 2012/09/16 07:22:15 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -50,38 +50,36 @@ public class ControlGroup extends DomainObjectABC {
 	}
 
 	// The owning CodeShelf network.
-	@Getter
-	@Setter
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	private CodeShelfNetwork				parentCodeShelfNetwork;
+	private CodeShelfNetwork				parent;
 	// The control group ID
 	@Column(nullable = false)
 	//	@Getter
 	//	@Setter
 	private byte[]							controlGroupId;
 	// The control group description.
+	@Column(nullable = false)
 	@Getter
 	@Setter
-	@Column(nullable = false)
 	private String							description;
 	// Interface port number
+	@Column(nullable = false)
 	@Getter
 	@Setter
-	@Column(nullable = false)
 	private short							interfacePortNum;
 	// Active/Inactive rule
+	@Column(nullable = false)
 	@Getter
 	@Setter
-	@Column(nullable = false)
 	private boolean							active;
 	// Active/Inactive rule
+	@Column(nullable = false)
 	@Getter
 	@Setter
-	@Column(nullable = false)
 	private TagProtocolEnum					tagProtocolEnum;
 	// For a control group this is a list of all of the pick tags that belong in the set.
-	@OneToMany(mappedBy = "parentControlGroup")
+	@OneToMany(mappedBy = "parent")
 	@Getter
 	private List<WirelessDevice>			wirelessDevices		= new ArrayList<WirelessDevice>();
 
@@ -89,7 +87,6 @@ public class ControlGroup extends DomainObjectABC {
 	private IControllerConnection			controllerConnection;
 
 	public ControlGroup() {
-		parentCodeShelfNetwork = null;
 		controlGroupId = new byte[NetGroup.NET_GROUP_BYTES];
 		description = "";
 		active = true;
@@ -102,6 +99,14 @@ public class ControlGroup extends DomainObjectABC {
 
 	public final String getDefaultDomainIdPrefix() {
 		return "CG";
+	}
+
+	public final CodeShelfNetwork getParentCodeShelfNetwork() {
+		return parent;
+	}
+	
+	public final void setParentCodeShelfNetwork(CodeShelfNetwork inParentCodeShelfNetwork) {
+		parent = inParentCodeShelfNetwork;
 	}
 
 	public final IDomainObject getParent() {

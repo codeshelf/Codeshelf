@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: LocationABC.java,v 1.3 2012/09/16 00:12:44 jeffw Exp $
+ *  $Id: LocationABC.java,v 1.4 2012/09/16 07:22:15 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -78,7 +78,7 @@ public abstract class LocationABC extends DomainObjectABC {
 	private String				description;
 
 	// All of the vertices that define the location's footprint.
-	@OneToMany(mappedBy = "parentLocation")
+	@OneToMany(mappedBy = "parent")
 	@JsonIgnore
 	@Getter
 	private List<Vertex>		vertices	= new ArrayList<Vertex>();
@@ -87,12 +87,10 @@ public abstract class LocationABC extends DomainObjectABC {
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	@JsonIgnore
-	@Setter
-	@Getter
-	private LocationABC			parentLocation;
+	private LocationABC			parent;
 
 	// The child locations.
-	@OneToMany(mappedBy = "parentLocation")
+	@OneToMany(mappedBy = "parent")
 	@JsonIgnore
 	@Getter
 	private List<LocationABC>	locations	= new ArrayList<LocationABC>();
@@ -114,6 +112,15 @@ public abstract class LocationABC extends DomainObjectABC {
 		posX = inPosX;
 		posY = inPosY;
 		posZ = inPosZ;
+	}
+	
+	@JsonIgnore
+	public final LocationABC getParentLocation() {
+		return parent;
+	}
+	
+	public final void setParentLocation(LocationABC inParentLocation) {
+		parent = inParentLocation;
 	}
 
 	@JsonIgnore

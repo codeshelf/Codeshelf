@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeshelfNetwork.java,v 1.5 2012/09/08 03:03:21 jeffw Exp $
+ *  $Id: CodeshelfNetwork.java,v 1.6 2012/09/16 07:22:15 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -80,7 +80,7 @@ public class CodeShelfNetwork extends DomainObjectABC {
 	// For a network this is a list of all of the control groups that belong in the set.
 	@Column(nullable = false)
 	@Getter
-	@OneToMany(mappedBy = "parentCodeShelfNetwork")
+	@OneToMany(mappedBy = "parent")
 	private List<ControlGroup>	controlGroups		= new ArrayList<ControlGroup>();
 
 	@Transient
@@ -95,9 +95,8 @@ public class CodeShelfNetwork extends DomainObjectABC {
 	// The owning facility.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	@Getter
-	@Setter
-	private Facility			parentFacility;
+	
+	private Facility			parent;
 
 	public CodeShelfNetwork() {
 		networkId = new byte[NetworkId.NETWORK_ID_BYTES];
@@ -114,6 +113,14 @@ public class CodeShelfNetwork extends DomainObjectABC {
 	
 	public final String getDefaultDomainIdPrefix() {
 		return "NET";
+	}
+	
+	public final Facility getParentFacility() {
+		return parent;
+	}
+	
+	public final void setParentFacility(Facility inParentFacility) {
+		parent = inParentFacility;
 	}
 
 	public final IDomainObject getParent() {

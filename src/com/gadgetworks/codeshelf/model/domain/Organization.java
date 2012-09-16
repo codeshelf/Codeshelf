@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Organization.java,v 1.5 2012/09/08 03:03:21 jeffw Exp $
+ *  $Id: Organization.java,v 1.6 2012/09/16 07:22:15 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -61,7 +61,7 @@ public class Organization extends DomainObjectABC {
 	private String				description;
 
 	// For a network this is a list of all of the users that belong in the set.
-	@OneToMany(mappedBy = "parentOrganization")
+	@OneToMany(mappedBy = "parent")
 	@JsonIgnore
 	@Getter
 	private List<User>			users		= new ArrayList<User>();
