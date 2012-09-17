@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiProcessor.java,v 1.4 2012/09/16 00:12:44 jeffw Exp $
+ *  $Id: EdiProcessor.java,v 1.5 2012/09/17 04:20:09 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -227,7 +227,7 @@ public final class EdiProcessor {
 
 			DropboxService dropbox = new DropboxService();
 			dropbox.setParentFacility(mFacility);
-			dropbox.setDomainId(dropbox.getDefaultDomainId());
+			dropbox.setDomainId(dropbox.computeDefaultDomainId());
 			dropbox.setProviderEnum(EdiProviderEnum.DROPBOX);
 			dropbox.setServiceStateEnum(EdiServiceStateEnum.REGISTERED);
 			dropbox.setProviderCredentials(credentials);

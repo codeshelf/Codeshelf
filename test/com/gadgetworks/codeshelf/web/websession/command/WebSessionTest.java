@@ -8,6 +8,7 @@ import lombok.Getter;
 
 import org.junit.Test;
 
+import com.avaje.ebean.Query;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.IDaoListener;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
@@ -74,6 +75,11 @@ public class WebSessionTest {
 		}
 
 		public Class<Organization> getDaoClass() {
+			return null;
+		}
+
+		@Override
+		public Query<Organization> query() {
 			return null;
 		}
 	}

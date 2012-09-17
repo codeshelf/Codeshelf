@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiServiceABC.java,v 1.4 2012/09/16 07:22:15 jeffw Exp $
+ *  $Id: EdiServiceABC.java,v 1.5 2012/09/17 04:20:08 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -120,7 +120,7 @@ public abstract class EdiServiceABC extends DomainObjectABC implements IEdiServi
 	}
 
 	public final String getDefaultDomainIdPrefix() {
-		return "EDI";
+		return "EDISERVICE";
 	}
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.

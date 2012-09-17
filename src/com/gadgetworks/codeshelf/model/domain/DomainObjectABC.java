@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DomainObjectABC.java,v 1.9 2012/09/16 00:12:44 jeffw Exp $
+ *  $Id: DomainObjectABC.java,v 1.10 2012/09/17 04:20:08 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -75,21 +75,14 @@ public abstract class DomainObjectABC implements IDomainObject {
 		lastDefaultSequenceId = 0;
 	}
 
-//	public String toString() {
-//		String result = "";
-//
-//		result = "ID: " + getDomainId();
-//
-//		return result;
-//	}
-
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.IDomainObject#getDefaultDomainId()
 	 */
 	@JsonIgnore
-	public final String getDefaultDomainId() {
+	public final String computeDefaultDomainId() {
 
+		// The default value in case we can't compute one.
 		String result = getDefaultDomainIdPrefix() + String.valueOf(System.currentTimeMillis());
 
 		ITypedDao<IDomainObject> dao = getDao();
@@ -104,7 +97,7 @@ public abstract class DomainObjectABC implements IDomainObject {
 
 			do {
 				Integer nextSeq = parentObject.getLastDefaultSequenceId() + 1;
-				String testId = getDefaultDomainIdPrefix() + String.format("%02d", nextSeq);
+				String testId = getDefaultDomainIdPrefix() + String.format("%0" + Integer.toString(getIdDigits() )+ "d", nextSeq);
 				IDomainObject testIdObject = dao.findByDomainId(parentObject, testId);
 
 				if (testIdObject == null) {
@@ -121,6 +114,14 @@ public abstract class DomainObjectABC implements IDomainObject {
 		}
 
 		return result;
+	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * @return
+	 */
+	public Integer getIdDigits() {
+		return 2;
 	}
 
 	// --------------------------------------------------------------------------

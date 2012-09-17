@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSocketListener.java,v 1.3 2012/09/08 03:03:23 jeffw Exp $
+ *  $Id: WebSocketListener.java,v 1.4 2012/09/17 04:20:09 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websocket;
 
@@ -262,7 +262,16 @@ public final class WebSocketListener implements IWebSocketListener {
 
 	@Override
 	public void onWriteDemand(WebSocket inWebSocket) {
-		// TODO Auto-generated method stub
-
+		try {
+			if ((inWebSocket != null) && (inWebSocket.hasBufferedData())) {
+				inWebSocket.handleWrite();
+			}
+		} catch (IOException ex) {
+			LOGGER.error("Websocket problem", ex);
+			onError(inWebSocket, ex);
+			if (inWebSocket != null) {
+				inWebSocket.close();
+			}
+		}
 	}
 }

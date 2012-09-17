@@ -1,12 +1,14 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DropboxService.java,v 1.5 2012/09/16 00:12:44 jeffw Exp $
+ *  $Id: DropboxService.java,v 1.6 2012/09/17 04:20:08 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
 import java.io.IOException;
 import java.sql.Timestamp;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
@@ -23,6 +25,7 @@ import org.codehaus.jackson.JsonProcessingException;
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.map.ObjectMapper;
 
+import com.avaje.ebean.Query;
 import com.dropbox.client2.DropboxAPI;
 import com.dropbox.client2.DropboxAPI.DeltaEntry;
 import com.dropbox.client2.DropboxAPI.DeltaPage;
@@ -86,6 +89,19 @@ public class DropboxService extends EdiServiceABC {
 				documentCheck();
 			}
 		}
+	}
+	
+	public final EdiDocumentLocator getDocumentLocatorByPath(String inPath) {
+		EdiDocumentLocator result = null;
+		
+		for (EdiDocumentLocator locator : getDocumentLocators()) {
+			if (locator.getDocumentId().equals(inPath)) {
+				result = locator;
+				break;
+			}
+		}
+		
+		return result;
 	}
 
 	// --------------------------------------------------------------------------
@@ -172,20 +188,41 @@ public class DropboxService extends EdiServiceABC {
 		private void iteratePage(DeltaPage<Entry> inPage) {
 			for (DeltaEntry<Entry> entry : inPage.entries) {
 				LOGGER.info(entry.lcPath);
-				EdiDocumentLocator locator = EdiDocumentLocator.DAO.findByDomainId(mDropboxService, entry.lcPath);
-				if (locator == null) {
-					locator = new EdiDocumentLocator();
-					locator.setParentEdiService(mDropboxService);
-					locator.setReceived(new Timestamp(System.currentTimeMillis()));
-					locator.setDocumentStateEnum(EdiDocumentStateEnum.NEW);
-					locator.setDomainId(getDefaultDomainId());
-					locator.setDocumentId(entry.lcPath);
-					locator.setDocumentName(entry.metadata.fileName());
-					try {
-						EdiDocumentLocator.DAO.store(locator);
-					} catch (DaoException e) {
-						LOGGER.error("", e);
-					}
+				
+				if (entry.metadata != null) { 
+					// Add, or modify.
+					modifyEntry(entry);
+				} else {
+					deleteEntry(entry);
+				}
+			}
+		}
+		
+		private void modifyEntry(DeltaEntry<Entry> inEntry) {
+			EdiDocumentLocator locator = mDropboxService.getDocumentLocatorByPath(inEntry.lcPath);
+			if (locator == null) {
+				locator = new EdiDocumentLocator();
+				locator.setParentEdiService(mDropboxService);
+				locator.setReceived(new Timestamp(System.currentTimeMillis()));
+				locator.setDocumentStateEnum(EdiDocumentStateEnum.NEW);
+				locator.setDomainId(computeDefaultDomainId());
+				locator.setDocumentId(inEntry.lcPath);
+				locator.setDocumentName(inEntry.metadata.fileName());
+				try {
+					EdiDocumentLocator.DAO.store(locator);
+				} catch (DaoException e) {
+					LOGGER.error("", e);
+				}
+			}
+		}
+		
+		private void deleteEntry(DeltaEntry<Entry> inEntry) {
+			EdiDocumentLocator locator = mDropboxService.getDocumentLocatorByPath(inEntry.lcPath);
+			if (locator != null) {
+				try {
+					EdiDocumentLocator.DAO.delete(locator);
+				} catch (DaoException e) {
+					LOGGER.error("", e);
 				}
 			}
 		}

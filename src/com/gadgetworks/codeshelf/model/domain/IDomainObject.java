@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: IDomainObject.java,v 1.6 2012/09/08 03:03:22 jeffw Exp $
+ *  $Id: IDomainObject.java,v 1.7 2012/09/17 04:20:08 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -23,7 +23,7 @@ public interface IDomainObject {
 	 * For constructors that don't pass a domain ID, create one.
 	 * @return
 	 */
-	String getDefaultDomainId();
+	String computeDefaultDomainId();
 
 	// --------------------------------------------------------------------------
 	/**
