@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiProcessor.java,v 1.6 2012/09/18 06:25:01 jeffw Exp $
+ *  $Id: EdiProcessor.java,v 1.7 2012/09/18 14:47:57 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -169,9 +169,18 @@ public final class EdiProcessor {
 		DropboxService dropboxService = mFacility.getDropboxService();
 
 		if (dropboxService != null) {
-			if (!dropboxService.getServiceStateEnum().equals(EdiServiceStateEnum.REGISTERED)) {
+			if (!dropboxService.getServiceStateEnum().equals(EdiServiceStateEnum.LINKED)) {
 				dropboxService.link();
-			} else {
+				while (dropboxService.getServiceStateEnum().equals(EdiServiceStateEnum.LINKING)) {
+					try {
+						Thread.sleep(100);
+					} catch (InterruptedException e) {
+						LOGGER.error("", e);
+					}
+				}
+			}
+			
+			if (dropboxService.getServiceStateEnum().equals(EdiServiceStateEnum.LINKED)) {
 				dropboxService.updateDocuments();
 			}
 		}

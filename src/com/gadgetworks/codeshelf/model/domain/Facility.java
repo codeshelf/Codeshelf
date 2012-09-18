@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.11 2012/09/18 06:25:01 jeffw Exp $
+ *  $Id: Facility.java,v 1.12 2012/09/18 14:47:57 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -242,10 +242,11 @@ public class Facility extends LocationABC {
 			result = dropboxService;
 			break;
 		}
-
+		
 		if (result == null) {
-			result = createDropboxService();
+			result = this.createDropboxService();
 		}
+
 		return result;
 	}
 
@@ -260,13 +261,25 @@ public class Facility extends LocationABC {
 		result.setParentFacility(this);
 		result.setDomainId(result.computeDefaultDomainId());
 		result.setProviderEnum(EdiProviderEnum.DROPBOX);
-		result.setServiceStateEnum(EdiServiceStateEnum.UNREGISTERED);
+		result.setServiceStateEnum(EdiServiceStateEnum.UNLINKED);
 		try {
 			DropboxService.DAO.store(result);
 		} catch (DaoException e) {
 			LOGGER.error("", e);
 		}
 
+		return result;
+	}
+	
+	public String linkDropbox() {
+		String result = "";
+		
+		DropboxService dropboxService = this.getDropboxService();
+		
+		if (dropboxService != null) {
+			result = dropboxService.link();
+		}
+		
 		return result;
 	}
 }

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DropboxService.java,v 1.7 2012/09/18 06:25:01 jeffw Exp $
+ *  $Id: DropboxService.java,v 1.8 2012/09/18 14:47:57 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -90,7 +90,7 @@ public class DropboxService extends EdiServiceABC {
 
 	public final void updateDocuments() {
 		// Make sure we believe that we're properly registered with the service before we try to contact it.
-		if (this.getServiceStateEnum().equals(EdiServiceStateEnum.REGISTERED)) {
+		if (this.getServiceStateEnum().equals(EdiServiceStateEnum.LINKED)) {
 			if (connect()) {
 				documentCheck();
 			}
@@ -165,26 +165,57 @@ public class DropboxService extends EdiServiceABC {
 	/**
 	 * @return
 	 */
-	public final boolean link() {
-		boolean result = false;
+	public final String link() {
+		String result = "";
+
+		try {
+			this.setServiceStateEnum(EdiServiceStateEnum.LINKING);
+			try {
+				DropboxService.DAO.store(this);
+			} catch (DaoException e) {
+				LOGGER.error("", e);
+			}
+
+			AppKeyPair appKeyPair = new AppKeyPair(APPKEY, APPSECRET);
+			final WebAuthSession authSession = new WebAuthSession(appKeyPair, Session.AccessType.APP_FOLDER);
+
+			// Make the user log in and authorize us.
+			final WebAuthSession.WebAuthInfo authInfo = authSession.getAuthInfo();
+			result = authInfo.url;
+
+			Runnable runnable = new Runnable() {
+				public void run() {
+					tryCredentials(authSession, authInfo);
+				}
+			};
+			
+			Thread linkThread = new Thread(runnable);
+			linkThread.start();
+
+		} catch (DropboxException e) {
+			LOGGER.error("", e);
+		}
+
+		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inAuthSession
+	 * @param inAuthInfo
+	 */
+	private void tryCredentials(final WebAuthSession inAuthSession, final WebAuthSession.WebAuthInfo inAuthInfo) {
 
 		String credentials = "";
 
+		// Try 10 times for 60sec each and then give up.
 		try {
-			AppKeyPair appKeyPair = new AppKeyPair(APPKEY, APPSECRET);
-			WebAuthSession was = new WebAuthSession(appKeyPair, Session.AccessType.APP_FOLDER);
-
-			// Make the user log in and authorize us.
-			WebAuthSession.WebAuthInfo info = was.getAuthInfo();
-			LOGGER.info(info.url);
-
-			// Try 10 times for 60sec each and then give up.
 			AccessTokenPair accessToken = null;
 			int retries = 0;
 			while ((accessToken == null) && (retries < 10)) {
 				try {
-					was.retrieveWebAccessToken(info.requestTokenPair);
-					accessToken = was.getAccessTokenPair();
+					inAuthSession.retrieveWebAccessToken(inAuthInfo.requestTokenPair);
+					accessToken = inAuthSession.getAccessTokenPair();
 					LOGGER.info(accessToken);
 				} catch (DropboxException e) {
 					LOGGER.error("", e);
@@ -199,7 +230,7 @@ public class DropboxService extends EdiServiceABC {
 
 			// We got an access token.
 			if (accessToken == null) {
-				this.setServiceStateEnum(EdiServiceStateEnum.FAILED);
+				this.setServiceStateEnum(EdiServiceStateEnum.LINK_FAILED);
 				try {
 					DropboxService.DAO.store(this);
 				} catch (DaoException e) {
@@ -220,16 +251,13 @@ public class DropboxService extends EdiServiceABC {
 				credentials = sw.toString();
 
 				this.setProviderCredentials(credentials);
-				this.setServiceStateEnum(EdiServiceStateEnum.REGISTERED);
+				this.setServiceStateEnum(EdiServiceStateEnum.LINKED);
 				try {
 					DropboxService.DAO.store(this);
 				} catch (DaoException e) {
 					LOGGER.error("", e);
 				}
 			}
-
-		} catch (DropboxException e) {
-			LOGGER.error("", e);
 		} catch (JsonGenerationException e) {
 			LOGGER.error("", e);
 		} catch (JsonMappingException e) {
@@ -237,7 +265,6 @@ public class DropboxService extends EdiServiceABC {
 		} catch (IOException e) {
 			LOGGER.error("", e);
 		}
-		return result;
 	}
 
 	/**
