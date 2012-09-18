@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiDocumentLocator.java,v 1.5 2012/09/17 04:20:08 jeffw Exp $
+ *  $Id: EdiDocumentLocator.java,v 1.6 2012/09/18 06:25:01 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -64,6 +64,14 @@ public class EdiDocumentLocator extends DomainObjectABC {
 	@Getter
 	@Setter
 	private String					documentId;
+
+	// Document ID
+	@Column(nullable = false)
+	@ManyToOne(optional = false)
+	@JsonIgnore
+	@Getter
+	@Setter
+	private String					documentPath;
 
 	// Document Name
 	@Column(nullable = true)

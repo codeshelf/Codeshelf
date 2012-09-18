@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: IDomainObject.java,v 1.7 2012/09/17 04:20:08 jeffw Exp $
+ *  $Id: IDomainObject.java,v 1.8 2012/09/18 06:25:01 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -17,7 +17,7 @@ import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 public interface IDomainObject {
 
 	String	ID_COLUMN_NAME	= "domainId";
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * For constructors that don't pass a domain ID, create one.
@@ -31,19 +31,19 @@ public interface IDomainObject {
 	 * @return
 	 */
 	String getDefaultDomainIdPrefix();
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * @return
 	 */
 	Integer getLastDefaultSequenceId();
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inLastDefaultSewquenceId
 	 */
 	void setLastDefaultSequenceId(Integer inLastDefaultSewquenceId);
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inId
@@ -90,6 +90,13 @@ public interface IDomainObject {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * Return the parent object's full domain ID (that includes the "dotted" domain ID of each parent up to the top of the hieararchy).
+	 * @return
+	 */
+	String getParentFullDomainId();
+
+	// --------------------------------------------------------------------------
+	/**
 	 * @return
 	 */
 	String getClassName();
@@ -99,7 +106,7 @@ public interface IDomainObject {
 	 * @return
 	 */
 	Long getPersistentId();
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * @return

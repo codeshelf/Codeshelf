@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: H2SchemaManager.java,v 1.37 2012/09/16 07:22:15 jeffw Exp $
+ *  $Id: H2SchemaManager.java,v 1.38 2012/09/18 06:25:01 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -408,7 +408,7 @@ public final class H2SchemaManager implements ISchemaManager {
 				+ "DOMAINID VARCHAR(64) NOT NULL," //
 				+ "PROVIDERENUM VARCHAR(16) NOT NULL, " //
 				+ "SERVICESTATEENUM VARCHAR(16) NOT NULL, " //
-				+ "PROVIDERCREDENTIALS VARCHAR(256) NOT NULL, " //
+				+ "PROVIDERCREDENTIALS VARCHAR(256), " //
 				+ "DTYPE VARCHAR(64) NOT NULL," //
 				+ "CURSOR VARCHAR(256)," //
 				+ "LASTDEFAULTSEQUENCEID INT NOT NULL, " //
@@ -430,6 +430,7 @@ public final class H2SchemaManager implements ISchemaManager {
 				+ "PERSISTENTID BIGINT NOT NULL, " //
 				+ "DOMAINID VARCHAR(64) NOT NULL," //
 				+ "DOCUMENTID VARCHAR(64) NOT NULL," //
+				+ "DOCUMENTPATH VARCHAR(256) NOT NULL," //
 				+ "DOCUMENTNAME VARCHAR(256) NOT NULL," //
 				+ "DOCUMENTSTATEENUM VARCHAR(16) NOT NULL, " //
 				+ "RECEIVED TIMESTAMP, " //

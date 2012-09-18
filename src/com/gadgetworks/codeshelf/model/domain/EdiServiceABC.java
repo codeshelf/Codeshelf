@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiServiceABC.java,v 1.5 2012/09/17 04:20:08 jeffw Exp $
+ *  $Id: EdiServiceABC.java,v 1.6 2012/09/18 06:25:01 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -81,7 +81,7 @@ public abstract class EdiServiceABC extends DomainObjectABC implements IEdiServi
 	private EdiServiceStateEnum			serviceStateEnum;
 
 	// The credentials (encoded toekns or obfuscated keys only).
-	@Column(nullable = false)
+	@Column(nullable = true)
 	@Getter
 	@Setter
 	private String						providerCredentials;

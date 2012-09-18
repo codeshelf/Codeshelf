@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DomainObjectABC.java,v 1.10 2012/09/17 04:20:08 jeffw Exp $
+ *  $Id: DomainObjectABC.java,v 1.11 2012/09/18 06:25:01 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -168,14 +168,31 @@ public abstract class DomainObjectABC implements IDomainObject {
 	}
 
 	// --------------------------------------------------------------------------
-	/**
-	 * Return the full domain ID (that includes the "dotted" domain ID of each parent up to the top of the hierarchy).
-	 * @return
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.domain.IDomainObject#getFullDomainId()
 	 */
 	public final String getFullDomainId() {
 		return domainId;
 	}
 	
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.domain.IDomainObject#getFullParentDomainId()
+	 */
+	public final String getParentFullDomainId() {
+		String result = "";
+		
+		IDomainObject parent = getParent();
+		if (parent != null) {
+			result = parent.getFullDomainId();
+		}
+		return result;
+	}
+	
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.domain.IDomainObject#getParentPersistentId()
+	 */
 	public final Long getParentPersistentId() {
 		Long result = null;
 		IDomainObject domainObject = getParent();

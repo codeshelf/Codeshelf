@@ -1,10 +1,12 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.10 2012/09/16 07:22:15 jeffw Exp $
+ *  $Id: Facility.java,v 1.11 2012/09/18 06:25:01 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
+import java.io.IOException;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,8 +21,19 @@ import lombok.Getter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.map.JsonMappingException;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.node.ObjectNode;
 
+import com.dropbox.client2.exception.DropboxException;
+import com.dropbox.client2.session.AccessTokenPair;
+import com.dropbox.client2.session.AppKeyPair;
+import com.dropbox.client2.session.Session;
+import com.dropbox.client2.session.WebAuthSession;
+import com.gadgetworks.codeshelf.model.EdiProviderEnum;
+import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
@@ -52,7 +65,7 @@ public class Facility extends LocationABC {
 		}
 	}
 
-	private static final Log		LOGGER		= LogFactory.getLog(Facility.class);
+	private static final Log		LOGGER			= LogFactory.getLog(Facility.class);
 
 	// The owning organization.
 	@Column(nullable = false)
@@ -64,13 +77,19 @@ public class Facility extends LocationABC {
 	@OneToMany(mappedBy = "parent")
 	@JsonIgnore
 	@Getter
-	private List<Aisle>				aisles		= new ArrayList<Aisle>();
+	private List<Aisle>				aisles			= new ArrayList<Aisle>();
 
 	// For a network this is a list of all of the control groups that belong in the set.
 	@OneToMany(mappedBy = "parent")
 	@JsonIgnore
 	@Getter
-	private List<CodeShelfNetwork>	networks	= new ArrayList<CodeShelfNetwork>();
+	private List<CodeShelfNetwork>	networks		= new ArrayList<CodeShelfNetwork>();
+
+	// For a network this is a list of all of the control groups that belong in the set.
+	@OneToMany(mappedBy = "parent")
+	@JsonIgnore
+	@Getter
+	private List<DropboxService>	dropboxServices	= new ArrayList<DropboxService>();
 
 	public Facility() {
 		// Facilities have no parent location, but we don't want to allow ANY location to not have a parent.
@@ -167,13 +186,13 @@ public class Facility extends LocationABC {
 				} catch (DaoException e) {
 					LOGGER.error("", e);
 				}
-				
+
 				// Create the bay's boundary vertices.
 				createVertices(protoBay, inProtoBayXDimMeters, inProtoBayYDimMeters);
-				
+
 				anchorPosZ += inProtoBayZDimMeters;
 			}
-			
+
 			if ((anchorPosX + inProtoBayXDimMeters) > aisleBoundaryX) {
 				aisleBoundaryX = anchorPosX + inProtoBayXDimMeters;
 			}
@@ -193,7 +212,7 @@ public class Facility extends LocationABC {
 		// Create the aisle's boundary vertices.
 		createVertices(aisle, aisleBoundaryX, aisleBoundaryY);
 	}
-	
+
 	private void createVertices(LocationABC inLocation, Double inXDimMeters, Double inYDimMeters) {
 		try {
 			// Create four simple vertices around the aisle.
@@ -208,5 +227,46 @@ public class Facility extends LocationABC {
 		} catch (DaoException e) {
 			LOGGER.error("", e);
 		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inFacility
+	 * @return
+	 */
+	@JsonIgnore
+	public final DropboxService getDropboxService() {
+		DropboxService result = null;
+
+		for (DropboxService dropboxService : getDropboxServices()) {
+			result = dropboxService;
+			break;
+		}
+
+		if (result == null) {
+			result = createDropboxService();
+		}
+		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 */
+	public final DropboxService createDropboxService() {
+
+		DropboxService result = null;
+
+		result = new DropboxService();
+		result.setParentFacility(this);
+		result.setDomainId(result.computeDefaultDomainId());
+		result.setProviderEnum(EdiProviderEnum.DROPBOX);
+		result.setServiceStateEnum(EdiServiceStateEnum.UNREGISTERED);
+		try {
+			DropboxService.DAO.store(result);
+		} catch (DaoException e) {
+			LOGGER.error("", e);
+		}
+
+		return result;
 	}
 }
