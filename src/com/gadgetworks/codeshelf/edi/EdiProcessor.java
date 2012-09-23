@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiProcessor.java,v 1.8 2012/09/23 03:05:43 jeffw Exp $
+ *  $Id: EdiProcessor.java,v 1.9 2012/09/23 03:33:16 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -18,7 +18,7 @@ import com.gadgetworks.codeshelf.model.domain.Facility;
  */
 public final class EdiProcessor {
 
-	public static final long				PROCESS_INTERVAL_MILLIS		= 1 * 20 * 1000;
+	public static final long				PROCESS_INTERVAL_MILLIS		= 1 * 10 * 1000;
 
 	private static final Log				LOGGER						= LogFactory.getLog(EdiProcessor.class);
 

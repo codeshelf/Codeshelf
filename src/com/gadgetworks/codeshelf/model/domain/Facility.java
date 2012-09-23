@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.13 2012/09/23 03:05:42 jeffw Exp $
+ *  $Id: Facility.java,v 1.14 2012/09/23 03:33:16 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -89,7 +89,7 @@ public class Facility extends LocationABC {
 	public Facility() {
 		// Facilities have no parent location, but we don't want to allow ANY location to not have a parent.
 		// So in this case we make the facility its own parent.  It's also a way to know when we've topped-out in the location tree.
-		this.setParent(this);
+		//this.setParent(this);
 	}
 
 	public Facility(final Double inPosX, final double inPosY) {
@@ -115,15 +115,15 @@ public class Facility extends LocationABC {
 
 	@JsonIgnore
 	public final IDomainObject getParent() {
-		return parent;
+		return parentOrganization;
 	}
 
 	public final void setParent(final IDomainObject inParent) {
 		if (inParent instanceof Facility) {
-			parent = (Facility) inParent;
+			parentOrganization = (Organization) inParent;
 		}
 	}
-
+	
 	public final void setParentOrganization(final Organization inOrganization) {
 		parentOrganization = inOrganization;
 	}
@@ -136,14 +136,6 @@ public class Facility extends LocationABC {
 		}
 		return result;
 	}
-
-	//	public final LocationABC getParentLocation() {
-	//		return parentFacility;
-	//	}
-	//
-	//	public final void setParentLocation(final LocationABC inLocation) {
-	//		parentFacility = inLocation;
-	//	}
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void addAisle(Aisle inAisle) {

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DropboxService.java,v 1.9 2012/09/23 03:05:42 jeffw Exp $
+ *  $Id: DropboxService.java,v 1.10 2012/09/23 03:33:16 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -28,7 +28,6 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ObjectNode;
 
 import com.avaje.ebean.annotation.CacheStrategy;
-import com.avaje.ebean.annotation.CacheTuning;
 import com.dropbox.client2.DropboxAPI;
 import com.dropbox.client2.DropboxAPI.DeltaEntry;
 import com.dropbox.client2.DropboxAPI.DeltaPage;
@@ -39,7 +38,6 @@ import com.dropbox.client2.session.AppKeyPair;
 import com.dropbox.client2.session.Session;
 import com.dropbox.client2.session.WebAuthSession;
 import com.gadgetworks.codeshelf.model.EdiDocumentStateEnum;
-import com.gadgetworks.codeshelf.model.EdiProviderEnum;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
@@ -76,8 +74,8 @@ public class DropboxService extends EdiServiceABC {
 
 	private static final String		APPKEY			= "feh3ontnajdmmin";
 	private static final String		APPSECRET		= "4jm05vbugwnq9pe";
-	private static final Integer	LINK_RETRIES	= 5;
-	private static final Integer	RETRY_SECONDS	= 30;
+	private static final Integer	LINK_RETRIES	= 20;
+	private static final Integer	RETRY_SECONDS	= 10;
 
 	@Column(nullable = true)
 	@Getter
