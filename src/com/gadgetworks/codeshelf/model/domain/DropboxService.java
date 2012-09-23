@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DropboxService.java,v 1.8 2012/09/18 14:47:57 jeffw Exp $
+ *  $Id: DropboxService.java,v 1.9 2012/09/23 03:05:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -27,6 +27,8 @@ import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ObjectNode;
 
+import com.avaje.ebean.annotation.CacheStrategy;
+import com.avaje.ebean.annotation.CacheTuning;
 import com.dropbox.client2.DropboxAPI;
 import com.dropbox.client2.DropboxAPI.DeltaEntry;
 import com.dropbox.client2.DropboxAPI.DeltaPage;
@@ -57,6 +59,7 @@ import com.google.inject.Singleton;
 @Entity
 @Table(name = "EDISERVICE")
 @DiscriminatorValue("DROPBOX")
+@CacheStrategy
 public class DropboxService extends EdiServiceABC {
 
 	@Inject
@@ -69,15 +72,17 @@ public class DropboxService extends EdiServiceABC {
 		}
 	}
 
-	private static final Log	LOGGER		= LogFactory.getLog(DropboxService.class);
+	private static final Log		LOGGER			= LogFactory.getLog(DropboxService.class);
 
-	private final static String	APPKEY		= "feh3ontnajdmmin";
-	private final static String	APPSECRET	= "4jm05vbugwnq9pe";
+	private static final String		APPKEY			= "feh3ontnajdmmin";
+	private static final String		APPSECRET		= "4jm05vbugwnq9pe";
+	private static final Integer	LINK_RETRIES	= 5;
+	private static final Integer	RETRY_SECONDS	= 30;
 
 	@Column(nullable = true)
 	@Getter
 	@Setter
-	private String				cursor;
+	private String					cursor;
 
 	public DropboxService() {
 
@@ -188,7 +193,7 @@ public class DropboxService extends EdiServiceABC {
 					tryCredentials(authSession, authInfo);
 				}
 			};
-			
+
 			Thread linkThread = new Thread(runnable);
 			linkThread.start();
 
@@ -212,7 +217,7 @@ public class DropboxService extends EdiServiceABC {
 		try {
 			AccessTokenPair accessToken = null;
 			int retries = 0;
-			while ((accessToken == null) && (retries < 10)) {
+			while ((accessToken == null) && (retries < LINK_RETRIES)) {
 				try {
 					inAuthSession.retrieveWebAccessToken(inAuthInfo.requestTokenPair);
 					accessToken = inAuthSession.getAccessTokenPair();
@@ -221,7 +226,7 @@ public class DropboxService extends EdiServiceABC {
 					LOGGER.error("", e);
 					retries++;
 					try {
-						Thread.sleep(60 * 1000);
+						Thread.sleep(RETRY_SECONDS * 1000);
 					} catch (InterruptedException e1) {
 						LOGGER.error("", e);
 					}

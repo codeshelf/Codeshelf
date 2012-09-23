@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: UserSession.java,v 1.7 2012/09/16 07:22:15 jeffw Exp $
+ *  $Id: UserSession.java,v 1.8 2012/09/23 03:05:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -21,6 +21,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.annotate.JsonIgnore;
 
+import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.google.inject.Inject;
@@ -37,6 +38,7 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "USERSESSION")
+@CacheStrategy
 public class UserSession extends DomainObjectABC {
 
 	@Inject

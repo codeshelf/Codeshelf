@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WirelessDevice.java,v 1.6 2012/09/16 07:22:15 jeffw Exp $
+ *  $Id: WirelessDevice.java,v 1.7 2012/09/23 03:05:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -13,14 +13,12 @@ import java.util.Map;
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorColumn;
 import javax.persistence.DiscriminatorType;
-import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 import javax.persistence.ManyToOne;
-import javax.persistence.Table;
 import javax.persistence.Transient;
 
 import lombok.Getter;
@@ -49,11 +47,11 @@ import com.google.inject.Inject;
  * @author jeffw
  */
 
+@Entity
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "DTYPE", discriminatorType = DiscriminatorType.STRING)
-@Entity
-@Table(name = "WIRELESSDEVICE")
-@DiscriminatorValue("ABC")
+//@Table(name = "WIRELESSDEVICE")
+//@DiscriminatorValue("ABC")
 public class WirelessDevice extends DomainObjectABC implements INetworkDevice {
 
 	public interface IWirelessDeviceDao extends ITypedDao<WirelessDevice>, IDeviceMaintainer {

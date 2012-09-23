@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: LocationABC.java,v 1.4 2012/09/16 07:22:15 jeffw Exp $
+ *  $Id: LocationABC.java,v 1.5 2012/09/23 03:05:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -16,6 +16,7 @@ import javax.persistence.Entity;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 import javax.persistence.ManyToOne;
+import javax.persistence.MappedSuperclass;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
@@ -38,11 +39,12 @@ import com.gadgetworks.codeshelf.model.PositionTypeEnum;
  */
 
 @Entity
+@MappedSuperclass
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "DTYPE", discriminatorType = DiscriminatorType.STRING)
 @Table(name = "LOCATION")
 @DiscriminatorValue("ABC")
-public abstract class LocationABC extends DomainObjectABC {
+public abstract class LocationABC extends DomainObjectABC implements ILocation {
 
 	private static final Log	LOGGER		= LogFactory.getLog(LocationABC.class);
 
@@ -77,17 +79,17 @@ public abstract class LocationABC extends DomainObjectABC {
 	@Column(nullable = true)
 	private String				description;
 
+	// The owning location.
+	@Column(nullable = false)
+	@ManyToOne(optional = true)
+	@JsonIgnore
+	protected LocationABC		parent;
+
 	// All of the vertices that define the location's footprint.
 	@OneToMany(mappedBy = "parent")
 	@JsonIgnore
 	@Getter
 	private List<Vertex>		vertices	= new ArrayList<Vertex>();
-
-	// The owning location.
-	@Column(nullable = false)
-	@ManyToOne(optional = false)
-	@JsonIgnore
-	private LocationABC			parent;
 
 	// The child locations.
 	@OneToMany(mappedBy = "parent")
@@ -112,15 +114,6 @@ public abstract class LocationABC extends DomainObjectABC {
 		posX = inPosX;
 		posY = inPosY;
 		posZ = inPosZ;
-	}
-	
-	@JsonIgnore
-	public final LocationABC getParentLocation() {
-		return parent;
-	}
-	
-	public final void setParentLocation(LocationABC inParentLocation) {
-		parent = inParentLocation;
 	}
 
 	@JsonIgnore

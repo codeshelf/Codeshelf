@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSession.java,v 1.20 2012/09/08 03:03:22 jeffw Exp $
+ *  $Id: WebSession.java,v 1.21 2012/09/23 03:05:43 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession;
 
@@ -101,30 +101,36 @@ public class WebSession implements IWebSession, IDaoListener {
 
 	public final void objectAdded(IDomainObject inDomainObject) {
 		for (IWebSessionPersistentReqCmd command : mPersistentCommands.values()) {
-			IWebSessionRespCmd respCommand = command.processObjectAdd(inDomainObject);
-			if (respCommand != null) {
-				respCommand.setCommandId(command.getCommandId());
-				sendCommand(respCommand);
+			if (inDomainObject.getClass().equals(command.getPersistenceClass())) {
+				IWebSessionRespCmd respCommand = command.processObjectAdd(inDomainObject);
+				if (respCommand != null) {
+					respCommand.setCommandId(command.getCommandId());
+					sendCommand(respCommand);
+				}
 			}
 		}
 	}
 
 	public final void objectUpdated(IDomainObject inDomainObject, Set<String> inChangedProperties) {
 		for (IWebSessionPersistentReqCmd command : mPersistentCommands.values()) {
-			IWebSessionRespCmd respCommand = command.processObjectUpdate(inDomainObject, inChangedProperties);
-			if (respCommand != null) {
-				respCommand.setCommandId(command.getCommandId());
-				sendCommand(respCommand);
+			if (inDomainObject.getClass().equals(command.getPersistenceClass())) {
+				IWebSessionRespCmd respCommand = command.processObjectUpdate(inDomainObject, inChangedProperties);
+				if (respCommand != null) {
+					respCommand.setCommandId(command.getCommandId());
+					sendCommand(respCommand);
+				}
 			}
 		}
 	}
 
 	public final void objectDeleted(IDomainObject inDomainObject) {
 		for (IWebSessionPersistentReqCmd command : mPersistentCommands.values()) {
-			IWebSessionRespCmd respCommand = command.processObjectDelete(inDomainObject);
-			if (respCommand != null) {
-				respCommand.setCommandId(command.getCommandId());
-				sendCommand(respCommand);
+			if (inDomainObject.getClass().equals(command.getPersistenceClass())) {
+				IWebSessionRespCmd respCommand = command.processObjectDelete(inDomainObject);
+				if (respCommand != null) {
+					respCommand.setCommandId(command.getCommandId());
+					sendCommand(respCommand);
+				}
 			}
 		}
 	}

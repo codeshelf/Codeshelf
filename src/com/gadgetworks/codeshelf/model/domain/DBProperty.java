@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DBProperty.java,v 1.5 2012/09/08 03:03:22 jeffw Exp $
+ *  $Id: DBProperty.java,v 1.6 2012/09/23 03:05:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -10,12 +10,14 @@ import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.Table;
 
 import lombok.Getter;
 import lombok.Setter;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
 
+import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.google.inject.Inject;
@@ -31,6 +33,8 @@ import com.google.inject.Singleton;
  */
 
 @Entity
+@Table(name = "DBPROPERTY")
+@CacheStrategy
 public class DBProperty extends DomainObjectABC {
 
 	@Inject

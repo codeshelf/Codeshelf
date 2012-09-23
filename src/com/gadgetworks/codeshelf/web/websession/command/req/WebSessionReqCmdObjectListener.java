@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectListener.java,v 1.15 2012/09/08 03:03:23 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectListener.java,v 1.16 2012/09/23 03:05:43 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -133,7 +133,8 @@ public class WebSessionReqCmdObjectListener extends WebSessionReqCmdABC implemen
 					// Execute the "get" method against the parents to return the children.
 					// (The method *must* start with "get" to ensure other methods don't get called.)
 					try {
-						String getterName = "get" + propertyName;
+						String getterName = "get" + Character.toUpperCase(propertyName.charAt(0)) + propertyName.substring(1);
+						//String getterName = "get" + propertyName;
 						java.lang.reflect.Method method = matchedObject.getClass().getMethod(getterName, (Class<?>[]) null);
 						Object resultObject = method.invoke(matchedObject, (Object[]) null);
 						propertiesMap.put(propertyName, resultObject);
@@ -200,4 +201,7 @@ public class WebSessionReqCmdObjectListener extends WebSessionReqCmdABC implemen
 		}
 	}
 
+	public final Class<IDomainObject> getPersistenceClass() {
+		return mPersistenceClass;
+	}
 }

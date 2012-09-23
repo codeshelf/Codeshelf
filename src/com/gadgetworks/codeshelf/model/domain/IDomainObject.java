@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: IDomainObject.java,v 1.8 2012/09/18 06:25:01 jeffw Exp $
+ *  $Id: IDomainObject.java,v 1.9 2012/09/23 03:05:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -72,12 +72,6 @@ public interface IDomainObject {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * @return
-	 */
-	Long getParentPersistentId();
-
-	// --------------------------------------------------------------------------
-	/**
 	 * @param inParent
 	 */
 	void setParent(IDomainObject inParent);
@@ -87,6 +81,12 @@ public interface IDomainObject {
 	 * @return
 	 */
 	List<? extends IDomainObject> getChildren();
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @return
+	 */
+	Long getParentPersistentId();
 
 	// --------------------------------------------------------------------------
 	/**

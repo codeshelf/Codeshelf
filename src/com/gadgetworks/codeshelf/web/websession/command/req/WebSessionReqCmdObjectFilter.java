@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectFilter.java,v 1.13 2012/09/16 00:12:44 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectFilter.java,v 1.14 2012/09/23 03:05:43 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -149,7 +149,9 @@ public class WebSessionReqCmdObjectFilter extends WebSessionReqCmdABC implements
 					// Execute the "get" method against the parents to return the children.
 					// (The method *must* start with "get" to ensure other methods don't get called.)
 					try {
-						String getterName = "get" + propertyName;
+						// Capitalize the property name to invoke the getter for it.
+						String getterName = "get" + Character.toUpperCase(propertyName.charAt(0)) + propertyName.substring(1);
+						//String getterName = "get" + propertyName;
 						java.lang.reflect.Method method = matchedObject.getClass().getMethod(getterName, (Class<?>[]) null);
 						Class<?> methodReturnType = method.getReturnType();
 						Object resultObject = method.invoke(matchedObject, (Object[]) null);
@@ -235,5 +237,9 @@ public class WebSessionReqCmdObjectFilter extends WebSessionReqCmdABC implements
 		for (ITypedDao<IDomainObject> dao : mDaoList) {
 			dao.unregisterDAOListener(inWebSession);
 		}
+	}
+
+	public final Class<IDomainObject> getPersistenceClass() {
+		return mPersistenceClass;
 	}
 }

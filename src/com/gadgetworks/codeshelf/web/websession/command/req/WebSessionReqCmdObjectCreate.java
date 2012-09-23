@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectCreate.java,v 1.6 2012/09/08 03:03:23 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectCreate.java,v 1.7 2012/09/23 03:05:43 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -148,7 +148,8 @@ public class WebSessionReqCmdObjectCreate extends WebSessionReqCmdABC {
 								// (The method *must* start with "get" to ensure other methods don't get called.)
 								String propertyName = property.getKey();
 								Object propertyValue = property.getValue();
-								String setterName = "set" + propertyName;
+								String setterName = "set" + Character.toUpperCase(propertyName.charAt(0)) + propertyName.substring(1);
+								//String setterName = "set" + propertyName;
 								java.lang.reflect.Method method = childClass.getMethod(setterName, propertyValue.getClass());
 								method.invoke(newChildObject, propertyValue);
 							}

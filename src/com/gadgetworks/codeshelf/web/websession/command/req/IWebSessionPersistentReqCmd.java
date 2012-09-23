@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: IWebSessionPersistentReqCmd.java,v 1.4 2012/09/08 03:03:23 jeffw Exp $
+ *  $Id: IWebSessionPersistentReqCmd.java,v 1.5 2012/09/23 03:05:43 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -16,6 +16,8 @@ import com.gadgetworks.codeshelf.web.websession.command.resp.IWebSessionRespCmd;
  *
  */
 public interface IWebSessionPersistentReqCmd extends IWebSessionReqCmd {
+	
+	Class<IDomainObject> getPersistenceClass();
 
 	// --------------------------------------------------------------------------
 	/**

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Vertex.java,v 1.9 2012/09/17 04:20:08 jeffw Exp $
+ *  $Id: Vertex.java,v 1.10 2012/09/23 03:05:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -10,6 +10,7 @@ import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
@@ -20,6 +21,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.annotate.JsonIgnore;
 
+import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
@@ -38,6 +40,7 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "VERTEX")
+@CacheStrategy
 public class Vertex extends DomainObjectABC {
 
 	@Inject
@@ -79,7 +82,7 @@ public class Vertex extends DomainObjectABC {
 
 	// The owning location.
 	@Column(nullable = false)
-	@ManyToOne(optional = false)
+	@ManyToOne(optional = false, fetch = FetchType.LAZY)
 	@JsonIgnore
 	private LocationABC				parent;
 	
@@ -105,6 +108,7 @@ public class Vertex extends DomainObjectABC {
 		return "V";
 	}
 
+	@JsonIgnore
 	public final LocationABC getParentLocation() {
 		return parent;
 	}
@@ -113,6 +117,7 @@ public class Vertex extends DomainObjectABC {
 		parent = inParentLocation;
 	}
 
+	@JsonIgnore
 	public final IDomainObject getParent() {
 		return getParentLocation();
 	}

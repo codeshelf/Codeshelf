@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiDocumentLocator.java,v 1.6 2012/09/18 06:25:01 jeffw Exp $
+ *  $Id: EdiDocumentLocator.java,v 1.7 2012/09/23 03:05:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -10,6 +10,7 @@ import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
@@ -20,6 +21,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.annotate.JsonIgnore;
 
+import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.EdiDocumentStateEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
@@ -37,6 +39,7 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "EDIDOCUMENTLOCATOR")
+@CacheStrategy
 public class EdiDocumentLocator extends DomainObjectABC {
 
 	@Inject
@@ -53,9 +56,9 @@ public class EdiDocumentLocator extends DomainObjectABC {
 
 	// The owning EdiService.
 	@Column(nullable = false)
-	@ManyToOne(optional = false)
+	@ManyToOne(optional = false, fetch=FetchType.LAZY)
 	@JsonIgnore
-	private EdiServiceABC			parent;
+	private DropboxService			parent;
 
 	// Document ID
 	@Column(nullable = false)
@@ -120,7 +123,7 @@ public class EdiDocumentLocator extends DomainObjectABC {
 		return parent;
 	}
 
-	public final void setParentEdiService(final EdiServiceABC inEdiService) {
+	public final void setParentEdiService(final DropboxService inEdiService) {
 		parent = inEdiService;
 	}
 
@@ -129,8 +132,8 @@ public class EdiDocumentLocator extends DomainObjectABC {
 	}
 
 	public final void setParent(IDomainObject inParent) {
-		if (inParent instanceof EdiServiceABC) {
-			setParentEdiService((EdiServiceABC) inParent);
+		if (inParent instanceof DropboxService) {
+			setParentEdiService((DropboxService) inParent);
 		}
 	}
 

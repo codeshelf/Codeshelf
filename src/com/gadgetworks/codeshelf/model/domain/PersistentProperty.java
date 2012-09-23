@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: PersistentProperty.java,v 1.6 2012/09/16 07:22:15 jeffw Exp $
+ *  $Id: PersistentProperty.java,v 1.7 2012/09/23 03:05:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -11,12 +11,14 @@ import java.util.List;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
+import javax.persistence.Table;
 
 import lombok.Getter;
 import lombok.Setter;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
 
+import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.google.inject.Inject;
@@ -32,6 +34,8 @@ import com.google.inject.Singleton;
  */
 
 @Entity
+@Table(name = "PERSISTENTPROPERTY")
+@CacheStrategy
 public class PersistentProperty<T extends DomainObjectABC> extends DomainObjectABC {
 
 	@Inject

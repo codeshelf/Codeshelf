@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectMethod.java,v 1.4 2012/09/08 03:03:23 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectMethod.java,v 1.5 2012/09/23 03:05:43 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -33,6 +33,7 @@ import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.web.websession.command.resp.IWebSessionRespCmd;
+import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdObjectMethod;
 import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdObjectUpdate;
 
 /**
@@ -172,10 +173,11 @@ public class WebSessionReqCmdObjectMethod extends WebSessionReqCmdABC {
 						}
 					}
 
+					Object methodResult = null;
 					java.lang.reflect.Method method = classObject.getMethod(methodName, signatureClasses.toArray(new Class[0]));
 					if (method != null) {
 						try {
-							method.invoke(targetObject, cookedArguments.toArray(new Object[0]));
+							methodResult = method.invoke(targetObject, cookedArguments.toArray(new Object[0]));
 						} catch (IllegalArgumentException e) {
 							LOGGER.error("", e);
 						} catch (IllegalAccessException e) {
@@ -188,10 +190,10 @@ public class WebSessionReqCmdObjectMethod extends WebSessionReqCmdABC {
 					// Create the result JSon object.
 					mapper = new ObjectMapper();
 					ObjectNode dataNode = mapper.createObjectNode();
-					JsonNode searchListNode = mapper.valueToTree(targetObject);
+					JsonNode searchListNode = mapper.valueToTree(methodResult);
 					dataNode.put(RESULTS, searchListNode);
 
-					result = new WebSessionRespCmdObjectUpdate(dataNode);
+					result = new WebSessionRespCmdObjectMethod(dataNode);
 				}
 			}
 		} catch (SecurityException e) {

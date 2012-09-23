@@ -1,18 +1,24 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Tier.java,v 1.6 2012/09/08 03:03:21 jeffw Exp $
+ *  $Id: Tier.java,v 1.7 2012/09/23 03:05:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
+import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+
+import lombok.Getter;
+import lombok.Setter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.annotate.JsonIgnore;
 
+import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
@@ -31,10 +37,11 @@ import com.google.inject.Singleton;
 @Entity
 @Table(name = "LOCATION")
 @DiscriminatorValue("TIER")
+@CacheStrategy
 public class Tier extends LocationABC {
 
 	@Inject
-	public static ITypedDao<Tier>	DAO;
+	public static TierDao	DAO;
 
 	@Singleton
 	public static class TierDao extends GenericDaoABC<Tier> implements ITypedDao<Tier> {
@@ -49,6 +56,16 @@ public class Tier extends LocationABC {
 		super(PositionTypeEnum.METERS_FROM_PARENT, inPosX, inPosY);
 	}
 
+	public final IDomainObject getParent() {
+		return parent;
+	}
+
+	public final void setParent(final IDomainObject inParent) {
+		if (inParent instanceof Bay) {
+			parent = (Bay) inParent;
+		}
+	}
+
 	@JsonIgnore
 	public final ITypedDao<Tier> getDao() {
 		return DAO;
@@ -56,23 +73,5 @@ public class Tier extends LocationABC {
 
 	public final String getDefaultDomainIdPrefix() {
 		return "T";
-	}
-
-	public final IDomainObject getParent() {
-		return getParentBay();
-	}
-
-	public final void setParent(IDomainObject inParent) {
-		if (inParent instanceof Bay) {
-			setParentLocation((Bay) inParent);
-		}
-	}
-
-	public final Bay getParentBay() {
-		return (Bay) getParentLocation();
-	}
-
-	public final void setParentBay(Bay inParentBay) {
-		setParentLocation(inParentBay);
 	}
 }

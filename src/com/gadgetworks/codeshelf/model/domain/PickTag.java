@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: PickTag.java,v 1.3 2012/09/08 03:03:21 jeffw Exp $
+ *  $Id: PickTag.java,v 1.4 2012/09/23 03:05:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -16,6 +16,7 @@ import lombok.Setter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.command.CommandControlABC;
 
 // --------------------------------------------------------------------------
@@ -30,6 +31,7 @@ import com.gadgetworks.codeshelf.command.CommandControlABC;
 @Entity
 @Table(name = "WIRELESSDEVICE")
 @DiscriminatorValue("PICKTAG")
+@CacheStrategy
 public class PickTag extends WirelessDevice {
 
 	private static final Log	LOGGER				= LogFactory.getLog(PickTag.class);

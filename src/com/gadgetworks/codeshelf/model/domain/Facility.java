@@ -1,15 +1,14 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.12 2012/09/18 14:47:57 jeffw Exp $
+ *  $Id: Facility.java,v 1.13 2012/09/23 03:05:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
-import java.io.IOException;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.persistence.AssociationOverride;
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
@@ -18,20 +17,14 @@ import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.annotate.JsonIgnore;
-import org.codehaus.jackson.map.JsonMappingException;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.node.ObjectNode;
 
-import com.dropbox.client2.exception.DropboxException;
-import com.dropbox.client2.session.AccessTokenPair;
-import com.dropbox.client2.session.AppKeyPair;
-import com.dropbox.client2.session.Session;
-import com.dropbox.client2.session.WebAuthSession;
+import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.EdiProviderEnum;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
@@ -53,6 +46,8 @@ import com.google.inject.Singleton;
 @Entity
 @Table(name = "LOCATION")
 @DiscriminatorValue("FACILITY")
+@CacheStrategy
+@ToString
 public class Facility extends LocationABC {
 
 	@Inject
@@ -94,14 +89,14 @@ public class Facility extends LocationABC {
 	public Facility() {
 		// Facilities have no parent location, but we don't want to allow ANY location to not have a parent.
 		// So in this case we make the facility its own parent.  It's also a way to know when we've topped-out in the location tree.
-		this.setParentLocation(this);
+		this.setParent(this);
 	}
 
 	public Facility(final Double inPosX, final double inPosY) {
 		super(PositionTypeEnum.GPS, inPosX, inPosY);
 		// Facilities have no parent location, but we don't want to allow ANY location to not have a parent.
 		// So in this case we make the facility its own parent.  It's also a way to know when we've topped-out in the location tree.
-		this.setParentLocation(this);
+		this.setParent(this);
 	}
 
 	public final String getDefaultDomainIdPrefix() {
@@ -113,27 +108,42 @@ public class Facility extends LocationABC {
 		return DAO;
 	}
 
+	@JsonIgnore
 	public final Organization getParentOrganization() {
 		return parentOrganization;
+	}
+
+	@JsonIgnore
+	public final IDomainObject getParent() {
+		return parent;
+	}
+
+	public final void setParent(final IDomainObject inParent) {
+		if (inParent instanceof Facility) {
+			parent = (Facility) inParent;
+		}
 	}
 
 	public final void setParentOrganization(final Organization inOrganization) {
 		parentOrganization = inOrganization;
 	}
 
-	public final IDomainObject getParent() {
-		return getParentOrganization();
-	}
-
-	public final void setParent(IDomainObject inParent) {
-		if (inParent instanceof Organization) {
-			setParentOrganization((Organization) inParent);
-		}
-	}
-
 	public final String getParentOrganizationID() {
-		return getParentOrganization().getDomainId();
+		String result = "";
+		Organization parentOrganization = getParentOrganization();
+		if (parentOrganization != null) {
+			result = parentOrganization.getDomainId();
+		}
+		return result;
 	}
+
+	//	public final LocationABC getParentLocation() {
+	//		return parentFacility;
+	//	}
+	//
+	//	public final void setParentLocation(final LocationABC inLocation) {
+	//		parentFacility = inLocation;
+	//	}
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void addAisle(Aisle inAisle) {
@@ -143,6 +153,16 @@ public class Facility extends LocationABC {
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void removeAisle(Aisle inAisle) {
 		aisles.remove(inAisle);
+	}
+
+	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
+	public final void addDropboxService(DropboxService inDropboxService) {
+		dropboxServices.add(inDropboxService);
+	}
+
+	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
+	public final void removeDropboxService(DropboxService inDropboxServices) {
+		dropboxServices.remove(inDropboxServices);
 	}
 
 	// --------------------------------------------------------------------------
@@ -242,7 +262,7 @@ public class Facility extends LocationABC {
 			result = dropboxService;
 			break;
 		}
-		
+
 		if (result == null) {
 			result = this.createDropboxService();
 		}
@@ -262,6 +282,8 @@ public class Facility extends LocationABC {
 		result.setDomainId(result.computeDefaultDomainId());
 		result.setProviderEnum(EdiProviderEnum.DROPBOX);
 		result.setServiceStateEnum(EdiServiceStateEnum.UNLINKED);
+
+		this.addDropboxService(result);
 		try {
 			DropboxService.DAO.store(result);
 		} catch (DaoException e) {
@@ -270,16 +292,20 @@ public class Facility extends LocationABC {
 
 		return result;
 	}
-	
-	public String linkDropbox() {
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @return
+	 */
+	public final String linkDropbox() {
 		String result = "";
-		
+
 		DropboxService dropboxService = this.getDropboxService();
-		
+
 		if (dropboxService != null) {
 			result = dropboxService.link();
 		}
-		
+
 		return result;
 	}
 }

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DomainObjectABC.java,v 1.11 2012/09/18 06:25:01 jeffw Exp $
+ *  $Id: DomainObjectABC.java,v 1.12 2012/09/23 03:05:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -9,8 +9,8 @@ import java.sql.Timestamp;
 import java.util.List;
 
 import javax.persistence.Column;
+import javax.persistence.Entity;
 import javax.persistence.Id;
-import javax.persistence.MappedSuperclass;
 import javax.persistence.PersistenceException;
 import javax.persistence.Version;
 
@@ -37,7 +37,8 @@ import com.gadgetworks.codeshelf.model.dao.ITypedDao;
  *  @author jeffw
  */
 
-@MappedSuperclass
+@Entity
+//@MappedSuperclass
 @ToString
 public abstract class DomainObjectABC implements IDomainObject {
 
@@ -50,19 +51,19 @@ public abstract class DomainObjectABC implements IDomainObject {
 	@Getter
 	@Setter
 	private Long				persistentId;
-	
+
 	// The domain ID
 	@Column(nullable = false)
 	@NonNull
 	private String				domainId;
-	
+
 	// The last sequence used to generate a sequence ID.
 	@Column(nullable = false)
 	@NonNull
 	@Getter
 	@Setter
 	private Integer				lastDefaultSequenceId;
-	
+
 	// This is not an application-editable field.
 	// It's for the private use of the ORM transaction system.
 	@Version
@@ -97,7 +98,7 @@ public abstract class DomainObjectABC implements IDomainObject {
 
 			do {
 				Integer nextSeq = parentObject.getLastDefaultSequenceId() + 1;
-				String testId = getDefaultDomainIdPrefix() + String.format("%0" + Integer.toString(getIdDigits() )+ "d", nextSeq);
+				String testId = getDefaultDomainIdPrefix() + String.format("%0" + Integer.toString(getIdDigits()) + "d", nextSeq);
 				IDomainObject testIdObject = dao.findByDomainId(parentObject, testId);
 
 				if (testIdObject == null) {
@@ -115,7 +116,7 @@ public abstract class DomainObjectABC implements IDomainObject {
 
 		return result;
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * @return
@@ -157,13 +158,14 @@ public abstract class DomainObjectABC implements IDomainObject {
 	public final String getDomainId() {
 		String result = "";
 
-		int lastPeriodPos = domainId.lastIndexOf('.');
-		if (lastPeriodPos == -1) {
-			result = domainId;
-		} else {
-			result = domainId.substring(lastPeriodPos + 1);
+		if (domainId != null) {
+			int lastPeriodPos = domainId.lastIndexOf('.');
+			if (lastPeriodPos == -1) {
+				result = domainId;
+			} else {
+				result = domainId.substring(lastPeriodPos + 1);
+			}
 		}
-
 		return result;
 	}
 
@@ -174,21 +176,21 @@ public abstract class DomainObjectABC implements IDomainObject {
 	public final String getFullDomainId() {
 		return domainId;
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.IDomainObject#getFullParentDomainId()
 	 */
 	public final String getParentFullDomainId() {
 		String result = "";
-		
+
 		IDomainObject parent = getParent();
 		if (parent != null) {
 			result = parent.getFullDomainId();
 		}
 		return result;
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.IDomainObject#getParentPersistentId()

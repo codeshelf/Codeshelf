@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionRespCmdObjectMethod.java,v 1.2 2012/09/08 03:03:23 jeffw Exp $
+ *  $Id: WebSessionRespCmdObjectMethod.java,v 1.3 2012/09/23 03:05:43 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.resp;
 
@@ -25,7 +25,7 @@ public class WebSessionRespCmdObjectMethod extends WebSessionRespCmdABC {
 	}
 
 	public final WebSessionRespCmdEnum getCommandEnum() {
-		return WebSessionRespCmdEnum.OBJECT_GETTER_RESP;
+		return WebSessionRespCmdEnum.OBJECT_METHOD_RESP;
 	}
 
 	protected final IWebSessionCmd doExec() {
