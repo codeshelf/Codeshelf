@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Vertex.java,v 1.10 2012/09/23 03:05:42 jeffw Exp $
+ *  $Id: Vertex.java,v 1.11 2012/09/24 17:07:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -82,7 +82,7 @@ public class Vertex extends DomainObjectABC {
 
 	// The owning location.
 	@Column(nullable = false)
-	@ManyToOne(optional = false, fetch = FetchType.LAZY)
+	@ManyToOne(optional = false)
 	@JsonIgnore
 	private LocationABC				parent;
 	
