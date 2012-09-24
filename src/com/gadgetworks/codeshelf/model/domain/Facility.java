@@ -1,23 +1,22 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.14 2012/09/23 03:33:16 jeffw Exp $
+ *  $Id: Facility.java,v 1.15 2012/09/24 08:23:47 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.persistence.AssociationOverride;
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 import lombok.Getter;
-import lombok.Setter;
 import lombok.ToString;
 
 import org.apache.commons.logging.Log;
@@ -68,6 +67,12 @@ public class Facility extends LocationABC {
 	@JsonIgnore
 	private Organization			parentOrganization;
 
+	// These are all the order for this facility.
+	@OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
+	@JsonIgnore
+	@Getter
+	private List<OrderHeader>		orderHeaders	= new ArrayList<OrderHeader>();
+
 	// For a network this is a list of all of the control groups that belong in the set.
 	@OneToMany(mappedBy = "parent")
 	@JsonIgnore
@@ -90,6 +95,7 @@ public class Facility extends LocationABC {
 		// Facilities have no parent location, but we don't want to allow ANY location to not have a parent.
 		// So in this case we make the facility its own parent.  It's also a way to know when we've topped-out in the location tree.
 		//this.setParent(this);
+		orderHeaders	= new ArrayList<OrderHeader>();
 	}
 
 	public Facility(final Double inPosX, final double inPosY) {
@@ -97,6 +103,7 @@ public class Facility extends LocationABC {
 		// Facilities have no parent location, but we don't want to allow ANY location to not have a parent.
 		// So in this case we make the facility its own parent.  It's also a way to know when we've topped-out in the location tree.
 		this.setParent(this);
+		orderHeaders	= new ArrayList<OrderHeader>();
 	}
 
 	public final String getDefaultDomainIdPrefix() {
@@ -123,7 +130,7 @@ public class Facility extends LocationABC {
 			parentOrganization = (Organization) inParent;
 		}
 	}
-	
+
 	public final void setParentOrganization(final Organization inOrganization) {
 		parentOrganization = inOrganization;
 	}
@@ -155,6 +162,29 @@ public class Facility extends LocationABC {
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void removeDropboxService(DropboxService inDropboxServices) {
 		dropboxServices.remove(inDropboxServices);
+	}
+
+	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
+	public final void addOrderHeader(OrderHeader inOrderHeader) {
+		orderHeaders.add(inOrderHeader);
+	}
+
+	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
+	public final void removeOrderHeader(OrderHeader inOrderHeaders) {
+		orderHeaders.remove(inOrderHeaders);
+	}
+
+	public final OrderHeader findOrder(String inOrderID) {
+		OrderHeader result = null;
+
+		for (OrderHeader order : getOrderHeaders()) {
+			if (order.getOrderId().equals(inOrderID)) {
+				result = order;
+				break;
+			}
+		}
+
+		return result;
 	}
 
 	// --------------------------------------------------------------------------

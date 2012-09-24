@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: H2SchemaManager.java,v 1.39 2012/09/23 03:05:43 jeffw Exp $
+ *  $Id: H2SchemaManager.java,v 1.40 2012/09/24 08:23:47 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -103,10 +103,34 @@ public final class H2SchemaManager implements ISchemaManager {
 			}
 		}
 
-		// We need to add the "default connection" to the account object.
-		if (inOldVersion < ISchemaManager.DATABASE_VERSION_3) {
+		if (inOldVersion < ISchemaManager.DATABASE_VERSION_4) {
 
+			// OrderHeader
+			createTable("ORDERHEADER", //
+				"ORDERID VARCHAR(64)," //
+						+ "PARENT_PERSISTENTID LONG NOT NULL " //
+			);
+
+			linkToParentTable("ORDERHEADER", "PARENT", "LOCATION");
+
+			// One extra wireless device index: to ensure uniqueness of the MAC addresses, and to find them fast by that address.
+			execOneSQLCommand("CREATE UNIQUE INDEX CODESHELF.FACILITY_ORDERID_INDEX ON CODESHELF.ORDERHEADER (PARENT_PERSISTENTID, ORDERID)");
+
+			// OrderDetail
+			createTable("ORDERDETAIL", //
+				"ORDERID VARCHAR(64) NOT NULL," //
+						+ "DETAILID VARCHAR(64) NOT NULL," //
+						+ "SKU VARCHAR(64) NOT NULL," //
+						+ "DESCRIPTION VARCHAR(256) NOT NULL," //
+						+ "QUANTITY INTEGER NOT NULL, " //
+						+ "UOM VARCHAR(16) NOT NULL," //
+						+ "ORDERDATE TIMESTAMP, " //
+						+ "PARENT_PERSISTENTID LONG NOT NULL " //
+			);
+
+			linkToParentTable("ORDERDETAIL", "PARENT", "ORDERHEADER");
 		}
+
 	}
 
 	// --------------------------------------------------------------------------
@@ -340,5 +364,30 @@ public final class H2SchemaManager implements ISchemaManager {
 		);
 
 		linkToParentTable("EDIDOCUMENTLOCATOR", "PARENT", "EDISERVICE");
+
+		// OrderHeader
+		createTable("ORDERHEADER", //
+			"ORDERID VARCHAR(64)," //
+					+ "PARENT_PERSISTENTID LONG NOT NULL " //
+		);
+
+		linkToParentTable("ORDERHEADER", "PARENT", "LOCATION");
+
+		// One extra wireless device index: to ensure uniqueness of the MAC addresses, and to find them fast by that address.
+		execOneSQLCommand("CREATE UNIQUE INDEX CODESHELF.FACILITY_ORDERID_INDEX ON CODESHELF.ORDERHEADER (PARENT_PERSISTENTID, ORDERID)");
+
+		// OrderDetail
+		createTable("ORDERDETAIL", //
+			"ORDERID VARCHAR(64) NOT NULL," //
+					+ "DETAILID VARCHAR(64) NOT NULL," //
+					+ "SKU VARCHAR(64) NOT NULL," //
+					+ "DESCRIPTION VARCHAR(256) NOT NULL," //
+					+ "QUANTITY INTEGER NOT NULL, " //
+					+ "UOM VARCHAR(16) NOT NULL," //
+					+ "ORDERDATE TIMESTAMP, " //
+					+ "PARENT_PERSISTENTID LONG NOT NULL " //
+		);
+
+		linkToParentTable("ORDERDETAIL", "PARENT", "ORDERHEADER");
 	}
 }

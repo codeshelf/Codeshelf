@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: GenericDaoABC.java,v 1.3 2012/09/17 04:20:09 jeffw Exp $
+ *  $Id: GenericDaoABC.java,v 1.4 2012/09/24 08:23:47 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import javax.persistence.OptimisticLockException;
 import javax.persistence.PersistenceException;
 
 import org.apache.commons.logging.Log;
@@ -91,13 +92,13 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	//
 	//		return result;
 	//	}
-	
+
 	public final Query<T> query() {
-		
+
 		Query<T> result = null;
-		
+
 		result = Ebean.find(getDaoClass());
-		
+
 		return result;
 	}
 
@@ -175,14 +176,19 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#store(java.lang.Object)
 	 */
 	public final void store(final T inDomainObject) throws DaoException {
-		if (inDomainObject.getPersistentId() == null) {
-			Ebean.save(inDomainObject);
-			privateBroadcastAdd(inDomainObject);
-		} else {
-			EntityBean bean = (EntityBean) inDomainObject;
-			Set<String> changedProps = bean._ebean_getIntercept().getChangedProps();
-			Ebean.save(inDomainObject);
-			privateBroadcastUpdate(inDomainObject, changedProps);
+		try {
+			if (inDomainObject.getPersistentId() == null) {
+				Ebean.save(inDomainObject);
+				privateBroadcastAdd(inDomainObject);
+			} else {
+				EntityBean bean = (EntityBean) inDomainObject;
+				Set<String> changedProps = bean._ebean_getIntercept().getChangedProps();
+				Ebean.save(inDomainObject);
+				privateBroadcastUpdate(inDomainObject, changedProps);
+			}
+		} catch (OptimisticLockException e) {
+			LOGGER.error("", e);
+			throw new DaoException(e.getMessage());
 		}
 	}
 
@@ -191,8 +197,13 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#delete(java.lang.Object)
 	 */
 	public final void delete(final T inDomainObject) throws DaoException {
-		Ebean.delete(inDomainObject);
-		privateBroadcastDelete(inDomainObject);
+		try {
+			Ebean.delete(inDomainObject);
+			privateBroadcastDelete(inDomainObject);
+		} catch (OptimisticLockException e) {
+			LOGGER.error("", e);
+			throw new DaoException(e.getMessage());
+		}
 	}
 
 	// --------------------------------------------------------------------------

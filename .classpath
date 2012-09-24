@@ -37,5 +37,6 @@
 	<classpathentry kind="lib" path="lib/dist/dropbox-java-sdk-1.5.1.jar" sourcepath="APIs/dropbox-1.5.1-src.zip"/>
 	<classpathentry kind="lib" path="lib/dist/lombok-0.11.4.jar" sourcepath="/Users/jeffw/.m2/repository/org/projectlombok/lombok/0.11.4/lombok-0.11.4-sources.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/ebean"/>
+	<classpathentry kind="lib" path="lib/dist/opencsv-2.3.jar" sourcepath="APIs/opencsv-2.3.-src..zip"/>
 	<classpathentry kind="output" path="eclipse-bin"/>
 </classpath>

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Main.java,v 1.22 2012/09/08 23:46:12 jeffw Exp $
+ *  $Id: Main.java,v 1.23 2012/09/24 08:23:47 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -29,6 +29,10 @@ import com.gadgetworks.codeshelf.model.domain.EdiDocumentLocator;
 import com.gadgetworks.codeshelf.model.domain.EdiDocumentLocator.EdiDocumentLocatorDao;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Facility.FacilityDao;
+import com.gadgetworks.codeshelf.model.domain.OrderDetail;
+import com.gadgetworks.codeshelf.model.domain.OrderDetail.OrderDetailDao;
+import com.gadgetworks.codeshelf.model.domain.OrderHeader;
+import com.gadgetworks.codeshelf.model.domain.OrderHeader.OrderHeaderDao;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Organization.OrganizationDao;
 import com.gadgetworks.codeshelf.model.domain.Path;
@@ -145,6 +149,14 @@ public final class Main {
 				requestStaticInjection(Facility.class);
 				bind(new TypeLiteral<ITypedDao<Facility>>() {
 				}).to(FacilityDao.class);
+
+				requestStaticInjection(OrderDetail.class);
+				bind(new TypeLiteral<ITypedDao<OrderDetail>>() {
+				}).to(OrderDetailDao.class);
+
+				requestStaticInjection(OrderHeader.class);
+				bind(new TypeLiteral<ITypedDao<OrderHeader>>() {
+				}).to(OrderHeaderDao.class);
 
 				requestStaticInjection(Organization.class);
 				bind(new TypeLiteral<ITypedDao<Organization>>() {
