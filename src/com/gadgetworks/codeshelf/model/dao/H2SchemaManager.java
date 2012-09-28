@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: H2SchemaManager.java,v 1.40 2012/09/24 08:23:47 jeffw Exp $
+ *  $Id: H2SchemaManager.java,v 1.41 2012/09/28 23:04:46 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -380,7 +380,7 @@ public final class H2SchemaManager implements ISchemaManager {
 		createTable("ORDERDETAIL", //
 			"ORDERID VARCHAR(64) NOT NULL," //
 					+ "DETAILID VARCHAR(64) NOT NULL," //
-					+ "SKU VARCHAR(64) NOT NULL," //
+					+ "ITEMID VARCHAR(64) NOT NULL," //
 					+ "DESCRIPTION VARCHAR(256) NOT NULL," //
 					+ "QUANTITY INTEGER NOT NULL, " //
 					+ "UOM VARCHAR(16) NOT NULL," //

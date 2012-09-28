@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CsvOrderImportBean.java,v 1.1 2012/09/24 08:23:47 jeffw Exp $
+ *  $Id: CsvOrderImportBean.java,v 1.2 2012/09/28 23:04:46 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -25,7 +25,7 @@ public class CsvOrderImportBean {
 
 	@Getter
 	@Setter
-	private String	sku;
+	private String	itemId;
 
 	@Getter
 	@Setter
@@ -37,9 +37,25 @@ public class CsvOrderImportBean {
 
 	@Getter
 	@Setter
-	private String	uom;
+	private String	uomId;
 
 	@Getter
 	@Setter
 	private String	orderDate;
+	
+	@Getter
+	@Setter
+	private String	dueDate;
+	
+	@Getter
+	@Setter
+	private String	accountId;
+	
+	@Getter
+	@Setter
+	private String	orderGroupId;
+
+	@Getter
+	@Setter
+	private String	destinationId;
 }

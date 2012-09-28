@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DropboxService.java,v 1.11 2012/09/24 08:23:47 jeffw Exp $
+ *  $Id: DropboxService.java,v 1.12 2012/09/28 23:04:46 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -524,13 +524,12 @@ public class DropboxService extends EdiServiceABC {
 						orderDetail.setParentOrderHeader(order);
 						orderDetail.setDomainId(importBean.getOrderDetailId());
 						orderDetail.setDetailId(importBean.getOrderDetailId());
-						orderDetail.setOrderId(order.getOrderId());
 						order.addOrderDetail(orderDetail);
 					}
-					orderDetail.setSku(importBean.getSku());
+					orderDetail.setItemId(importBean.getItemId());
 					orderDetail.setDescription(importBean.getDescription());
 					orderDetail.setQuantity(Integer.valueOf(importBean.getQuantity()));
-					orderDetail.setUom(importBean.getUom());
+					orderDetail.setUomId(importBean.getUomId());
 					orderDetail.setOrderDate(Timestamp.valueOf(importBean.getOrderDate()));
 					
 					try {
