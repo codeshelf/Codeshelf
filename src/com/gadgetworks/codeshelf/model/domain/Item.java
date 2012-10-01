@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Item.java,v 1.1 2012/10/01 01:35:46 jeffw Exp $
+ *  $Id: Item.java,v 1.2 2012/10/01 07:16:28 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -59,17 +59,17 @@ public class Item extends DomainObjectABC {
 	@Column(nullable = false)
 	private Float				quantity;
 
-	// The owning item master.
-	@Column(nullable = false)
-	@ManyToOne(optional = false)
-	@JsonIgnore
-	private ItemMaster			parent;
-
 	// The actual UoM.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	@JsonIgnore
 	private UomMaster			uom;
+
+	// The owning item master.
+	@Column(nullable = false)
+	@ManyToOne(optional = false)
+	@JsonIgnore
+	private ItemMaster			parent;
 
 	public Item() {
 	}

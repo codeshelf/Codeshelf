@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiDocumentStateEnum.java,v 1.2 2012/09/08 03:03:23 jeffw Exp $
+ *  $Id: EdiDocumentStatusEnum.java,v 1.1 2012/10/01 07:16:28 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model;
 
@@ -12,7 +12,7 @@ import com.avaje.ebean.annotation.EnumMapping;
  *  @author jeffw
  */
 @EnumMapping(nameValuePairs = "INVALID=INVALID, NEW=NEW, SUCCESS=SUCCESS, FAILED=FAILED")
-public enum EdiDocumentStateEnum {
+public enum EdiDocumentStatusEnum {
 	INVALID(EdiDocumentStateType.INVALID, "INVALID"),
 	NEW(EdiDocumentStateType.NEW, "NEW"),
 	SUCCESS(EdiDocumentStateType.SUCCESS, "SUCCESS"),
@@ -21,29 +21,29 @@ public enum EdiDocumentStateEnum {
 	private int		mValue;
 	private String	mName;
 
-	EdiDocumentStateEnum(final int inValue, final String inName) {
+	EdiDocumentStatusEnum(final int inValue, final String inName) {
 		mValue = inValue;
 		mName = inName;
 	}
 
-	public static EdiDocumentStateEnum getPositionTypeEnum(int inPositionTypeID) {
-		EdiDocumentStateEnum result;
+	public static EdiDocumentStatusEnum getPositionTypeEnum(int inPositionTypeID) {
+		EdiDocumentStatusEnum result;
 
 		switch (inPositionTypeID) {
 			case EdiDocumentStateType.NEW:
-				result = EdiDocumentStateEnum.NEW;
+				result = EdiDocumentStatusEnum.NEW;
 				break;
 
 			case EdiDocumentStateType.SUCCESS:
-				result = EdiDocumentStateEnum.SUCCESS;
+				result = EdiDocumentStatusEnum.SUCCESS;
 				break;
 
 			case EdiDocumentStateType.FAILED:
-				result = EdiDocumentStateEnum.FAILED;
+				result = EdiDocumentStatusEnum.FAILED;
 				break;
 
 			default:
-				result = EdiDocumentStateEnum.INVALID;
+				result = EdiDocumentStatusEnum.INVALID;
 				break;
 
 		}

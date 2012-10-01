@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Container.java,v 1.1 2012/10/01 01:35:46 jeffw Exp $
+ *  $Id: Container.java,v 1.2 2012/10/01 07:16:28 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -51,13 +51,13 @@ public class Container extends DomainObjectABC {
 		}
 	}
 
-	private static final Log	LOGGER			= LogFactory.getLog(Container.class);
+	private static final Log	LOGGER	= LogFactory.getLog(Container.class);
 
-	// The parent facility.
+	// The container ID.
+	@Getter
+	@Setter
 	@Column(nullable = false)
-	@ManyToOne(optional = false)
-	@JsonIgnore
-	private Facility			parent;
+	private String				containerId;
 
 	// The container kind.
 	@Column(nullable = false)
@@ -65,11 +65,11 @@ public class Container extends DomainObjectABC {
 	@JsonIgnore
 	private ContainerKind		kind;
 
-	// The container ID.
-	@Getter
-	@Setter
+	// The parent facility.
 	@Column(nullable = false)
-	private String				containerId;
+	@ManyToOne(optional = false)
+	@JsonIgnore
+	private Facility			parent;
 
 	// For a network this is a list of all of the users that belong in the set.
 	@OneToMany(mappedBy = "parent")

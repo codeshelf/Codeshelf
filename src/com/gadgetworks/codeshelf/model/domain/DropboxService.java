@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DropboxService.java,v 1.12 2012/09/28 23:04:46 jeffw Exp $
+ *  $Id: DropboxService.java,v 1.13 2012/10/01 07:16:28 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -47,7 +47,7 @@ import com.dropbox.client2.session.AppKeyPair;
 import com.dropbox.client2.session.Session;
 import com.dropbox.client2.session.WebAuthSession;
 import com.gadgetworks.codeshelf.edi.CsvOrderImportBean;
-import com.gadgetworks.codeshelf.model.EdiDocumentStateEnum;
+import com.gadgetworks.codeshelf.model.EdiDocumentStatusEnum;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
@@ -462,7 +462,7 @@ public class DropboxService extends EdiServiceABC {
 					locator.setParentEdiService(mDropboxService);
 					locator.setDomainId(computeDefaultDomainId());
 					locator.setReceived(new Timestamp(System.currentTimeMillis()));
-					locator.setDocumentStateEnum(EdiDocumentStateEnum.NEW);
+					locator.setDocumentStateEnum(EdiDocumentStatusEnum.NEW);
 					locator.setDocumentId(inEntry.lcPath);
 					locator.setDocumentPath(inEntry.metadata.parentPath());
 					locator.setDocumentName(inEntry.metadata.fileName());

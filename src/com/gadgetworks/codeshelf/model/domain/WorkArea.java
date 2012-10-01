@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WorkArea.java,v 1.1 2012/10/01 01:35:46 jeffw Exp $
+ *  $Id: WorkArea.java,v 1.2 2012/10/01 07:16:28 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -63,7 +63,7 @@ public class WorkArea extends DomainObjectABC {
 	@Getter
 	@Setter
 	@Column(nullable = false)
-	private String					id;
+	private String					workAreaId;
 
 	// The work description.
 	@Getter
@@ -90,7 +90,7 @@ public class WorkArea extends DomainObjectABC {
 	private List<WorkInstruction>	workInstructions	= new ArrayList<WorkInstruction>();
 
 	public WorkArea() {
-		id = "";
+		workAreaId = "";
 	}
 
 	@JsonIgnore

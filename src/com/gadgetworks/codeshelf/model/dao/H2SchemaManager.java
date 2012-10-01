@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: H2SchemaManager.java,v 1.41 2012/09/28 23:04:46 jeffw Exp $
+ *  $Id: H2SchemaManager.java,v 1.42 2012/10/01 07:16:28 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -103,34 +103,81 @@ public final class H2SchemaManager implements ISchemaManager {
 			}
 		}
 
-		if (inOldVersion < ISchemaManager.DATABASE_VERSION_4) {
+		if (inOldVersion < ISchemaManager.DATABASE_VERSION_5) {
 
-			// OrderHeader
-			createTable("ORDERHEADER", //
-				"ORDERID VARCHAR(64)," //
-						+ "PARENT_PERSISTENTID LONG NOT NULL " //
-			);
-
-			linkToParentTable("ORDERHEADER", "PARENT", "LOCATION");
-
-			// One extra wireless device index: to ensure uniqueness of the MAC addresses, and to find them fast by that address.
-			execOneSQLCommand("CREATE UNIQUE INDEX CODESHELF.FACILITY_ORDERID_INDEX ON CODESHELF.ORDERHEADER (PARENT_PERSISTENTID, ORDERID)");
-
-			// OrderDetail
-			createTable("ORDERDETAIL", //
-				"ORDERID VARCHAR(64) NOT NULL," //
-						+ "DETAILID VARCHAR(64) NOT NULL," //
-						+ "SKU VARCHAR(64) NOT NULL," //
+			// ItemMaster
+			createTable("ITEMMASTER", //
+				"ITEMID VARCHAR(64) NOT NULL," //
 						+ "DESCRIPTION VARCHAR(256) NOT NULL," //
-						+ "QUANTITY INTEGER NOT NULL, " //
-						+ "UOM VARCHAR(16) NOT NULL," //
-						+ "ORDERDATE TIMESTAMP, " //
+						+ "STANDARDUOM_PERSISTENTID LONG NOT NULL," //
 						+ "PARENT_PERSISTENTID LONG NOT NULL " //
 			);
 
-			linkToParentTable("ORDERDETAIL", "PARENT", "ORDERHEADER");
-		}
+			linkToParentTable("ITEMMASTER", "PARENT", "LOCATION");
 
+			// Item
+			createTable("ITEM", //
+				"QUANTITY DECIMAL NOT NULL," //
+						+ "UOM_PERSISTENTID LONG NOT NULL," //
+						+ "PARENT_PERSISTENTID LONG NOT NULL " //
+			);
+
+			linkToParentTable("ITEM", "PARENT", "ITEMMASTER");
+
+			// ContainerKind
+			createTable("CONTAINERKIND", //
+				"CLASSID VARCHAR(64) NOT NULL," //
+						+ "LENGTHMETERS DECIMAL NOT NULL," //
+						+ "HEIGHTMETERS DECIMAL NOT NULL," //
+						+ "WIDTHMETERS DECIMAL NOT NULL," //
+						+ "PARENT_PERSISTENTID LONG NOT NULL " //
+			);
+
+			linkToParentTable("CONTAINERKIND", "PARENT", "LOCATION");
+
+			// Container
+			createTable("CONTAINER", //
+				"CONTAINERID VARCHAR(64) NOT NULL," //
+						+ "KIND_PERSISTENTID LONG NOT NULL," //
+						+ "PARENT_PERSISTENTID LONG NOT NULL " //
+			);
+
+			linkToParentTable("CONTAINER", "PARENT", "CONTAINERKIND");
+
+			// ContainerUse
+			createTable("CONTAINERUSE", //
+				"USETIMESTAMP TIMESTAMP NOT NULL," //
+						+ "PARENT_PERSISTENTID LONG NOT NULL " //
+			);
+
+			linkToParentTable("CONTAINERUSE", "PARENT", "CONTAINER");
+
+			// WorkInstruction
+			createTable("WORKINSTRUCTION", //
+				"OPENUM VARCHAR(16) NOT NULL, " //
+						+ "PLANENUM VARCHAR(16) NOT NULL, " //
+						+ "STATUSENUM VARCHAR(16) NOT NULL, " //
+						+ "SUBJECTCONTAINER_PERSISTENTID LONG NOT NULL, " //
+						+ "SUBJECTITEM_PERSISTENTID LONG NOT NULL, " //
+						+ "FROMLOCATION_PERSISTENTID LONG NOT NULL, " //
+						+ "TOLOCATION_PERSISTENTID LONG NOT NULL, " //
+						+ "FROMCONTAINER_PERSISTENTID LONG NOT NULL, " //
+						+ "TOCONTAIENR_PERSISTENTID LONG NOT NULL, " //
+						+ "PARENT_PERSISTENTID LONG NOT NULL " //
+			);
+
+			linkToParentTable("WORKINSTRUCTION", "PARENT", "LOCATION");
+
+			// WorkArea
+			createTable("WORKAREA", //
+				"WORKAREAID VARCHAR(64) NOT NULL," //
+						+ "DESCRIPTION VARCHAR(256) NOT NULL," //
+						+ "PARENT_PERSISTENTID LONG NOT NULL " //
+			);
+
+			linkToParentTable("WORKAREA", "PARENT", "LOCATION");
+
+		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -389,5 +436,78 @@ public final class H2SchemaManager implements ISchemaManager {
 		);
 
 		linkToParentTable("ORDERDETAIL", "PARENT", "ORDERHEADER");
+
+		// ItemMaster
+		createTable("ITEMMASTER", //
+			"ITEMID VARCHAR(64) NOT NULL," //
+					+ "DESCRIPTION VARCHAR(256) NOT NULL," //
+					+ "STANDARDUOM_PERSISTENTID LONG NOT NULL," //
+					+ "PARENT_PERSISTENTID LONG NOT NULL " //
+		);
+
+		linkToParentTable("ITEMMASTER", "PARENT", "LOCATION");
+
+		// Item
+		createTable("ITEM", //
+			"QUANTITY DECIMAL NOT NULL," //
+					+ "UOM_PERSISTENTID LONG NOT NULL," //
+					+ "PARENT_PERSISTENTID LONG NOT NULL " //
+		);
+
+		linkToParentTable("ITEM", "PARENT", "ITEMMASTER");
+
+		// ContainerKind
+		createTable("CONTAINERKIND", //
+			"CLASSID VARCHAR(64) NOT NULL," //
+					+ "LENGTHMETERS DECIMAL NOT NULL," //
+					+ "HEIGHTMETERS DECIMAL NOT NULL," //
+					+ "WIDTHMETERS DECIMAL NOT NULL," //
+					+ "PARENT_PERSISTENTID LONG NOT NULL " //
+		);
+
+		linkToParentTable("CONTAINERKIND", "PARENT", "LOCATION");
+
+		// Container
+		createTable("CONTAINER", //
+			"CONTAINERID VARCHAR(64) NOT NULL," //
+					+ "KIND_PERSISTENTID LONG NOT NULL," //
+					+ "PARENT_PERSISTENTID LONG NOT NULL " //
+		);
+
+		linkToParentTable("CONTAINER", "PARENT", "CONTAINERKIND");
+
+		// ContainerUse
+		createTable("CONTAINERUSE", //
+			"USETIMESTAMP TIMESTAMP NOT NULL," //
+					+ "PARENT_PERSISTENTID LONG NOT NULL " //
+		);
+
+		linkToParentTable("CONTAINERUSE", "PARENT", "CONTAINER");
+
+		// WorkInstruction
+		createTable("WORKINSTRUCTION", //
+			"OPENUM VARCHAR(16) NOT NULL, " //
+					+ "PLANENUM VARCHAR(16) NOT NULL, " //
+					+ "STATUSENUM VARCHAR(16) NOT NULL, " //
+					+ "SUBJECTCONTAINER_PERSISTENTID LONG NOT NULL, " //
+					+ "SUBJECTITEM_PERSISTENTID LONG NOT NULL, " //
+					+ "FROMLOCATION_PERSISTENTID LONG NOT NULL, " //
+					+ "TOLOCATION_PERSISTENTID LONG NOT NULL, " //
+					+ "FROMCONTAINER_PERSISTENTID LONG NOT NULL, " //
+					+ "TOCONTAIENR_PERSISTENTID LONG NOT NULL, " //
+					+ "PARENT_PERSISTENTID LONG NOT NULL " //
+		);
+
+		linkToParentTable("WORKINSTRUCTION", "PARENT", "LOCATION");
+
+		// WorkArea
+		createTable("WORKAREA", //
+			"WORKAREAID VARCHAR(64) NOT NULL," //
+					+ "DESCRIPTION VARCHAR(256) NOT NULL," //
+					+ "PARENT_PERSISTENTID LONG NOT NULL " //
+		);
+
+		linkToParentTable("WORKAREA", "PARENT", "LOCATION");
+
 	}
 }

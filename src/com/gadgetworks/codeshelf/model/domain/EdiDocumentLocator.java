@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiDocumentLocator.java,v 1.7 2012/09/23 03:05:42 jeffw Exp $
+ *  $Id: EdiDocumentLocator.java,v 1.8 2012/10/01 07:16:28 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -22,7 +22,7 @@ import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.annotate.JsonIgnore;
 
 import com.avaje.ebean.annotation.CacheStrategy;
-import com.gadgetworks.codeshelf.model.EdiDocumentStateEnum;
+import com.gadgetworks.codeshelf.model.EdiDocumentStatusEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.google.inject.Inject;
@@ -56,7 +56,7 @@ public class EdiDocumentLocator extends DomainObjectABC {
 
 	// The owning EdiService.
 	@Column(nullable = false)
-	@ManyToOne(optional = false, fetch=FetchType.LAZY)
+	@ManyToOne(optional = false, fetch = FetchType.LAZY)
 	@JsonIgnore
 	private DropboxService			parent;
 
@@ -100,7 +100,7 @@ public class EdiDocumentLocator extends DomainObjectABC {
 	@Getter
 	@Setter
 	@Column(nullable = false)
-	private EdiDocumentStateEnum	documentStateEnum;
+	private EdiDocumentStatusEnum	documentStateEnum;
 
 	public EdiDocumentLocator() {
 
@@ -109,7 +109,7 @@ public class EdiDocumentLocator extends DomainObjectABC {
 	public final String getDefaultDomainIdPrefix() {
 		return "DOC";
 	}
-	
+
 	public final Integer getIdDigits() {
 		return 9;
 	}

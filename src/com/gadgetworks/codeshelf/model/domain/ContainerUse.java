@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ContainerUse.java,v 1.1 2012/10/01 01:35:46 jeffw Exp $
+ *  $Id: ContainerUse.java,v 1.2 2012/10/01 07:16:28 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -52,6 +52,12 @@ public class ContainerUse extends DomainObjectABC {
 	}
 
 	private static final Log	LOGGER	= LogFactory.getLog(ContainerUse.class);
+
+	// Use date.
+	@Column(nullable = false)
+	@ManyToOne(optional = false)
+	@JsonIgnore
+	private Timestamp			useTimeStamp;
 
 	// The container used.
 	@Column(nullable = false)

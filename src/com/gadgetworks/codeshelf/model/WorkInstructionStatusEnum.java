@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WorkInstructionStateEnum.java,v 1.1 2012/10/01 01:35:46 jeffw Exp $
+ *  $Id: WorkInstructionStatusEnum.java,v 1.1 2012/10/01 07:16:28 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model;
 
@@ -12,7 +12,7 @@ import com.avaje.ebean.annotation.EnumMapping;
  *  @author jeffw
  */
 @EnumMapping(nameValuePairs = "INVALID=INVALID, NEW=NEW, INPROGRESS=INPROGRESS, COMPLETE=COMPLETE, REVERTED=REVERTED")
-public enum WorkInstructionStateEnum {
+public enum WorkInstructionStatusEnum {
 	INVALID(WorkInstructionStateNum.INVALID, "INVALID"),
 	NEW(WorkInstructionStateNum.NEW, "NEW"),
 	INPROGRESS(WorkInstructionStateNum.INPROGRESS, "INPROGRESS"),
@@ -22,33 +22,33 @@ public enum WorkInstructionStateEnum {
 	private int		mValue;
 	private String	mName;
 
-	WorkInstructionStateEnum(final int inValue, final String inName) {
+	WorkInstructionStatusEnum(final int inValue, final String inName) {
 		mValue = inValue;
 		mName = inName;
 	}
 
-	public static WorkInstructionStateEnum getWorkInstructionStateEnum(int inOnlineStatusID) {
-		WorkInstructionStateEnum result;
+	public static WorkInstructionStatusEnum getWorkInstructionStateEnum(int inOnlineStatusID) {
+		WorkInstructionStatusEnum result;
 
 		switch (inOnlineStatusID) {
 			case WorkInstructionStateNum.NEW:
-				result = WorkInstructionStateEnum.NEW;
+				result = WorkInstructionStatusEnum.NEW;
 				break;
 
 			case WorkInstructionStateNum.INPROGRESS:
-				result = WorkInstructionStateEnum.INPROGRESS;
+				result = WorkInstructionStatusEnum.INPROGRESS;
 				break;
 
 			case WorkInstructionStateNum.COMPLETE:
-				result = WorkInstructionStateEnum.COMPLETE;
+				result = WorkInstructionStatusEnum.COMPLETE;
 				break;
 
 			case WorkInstructionStateNum.REVERTED:
-				result = WorkInstructionStateEnum.REVERTED;
+				result = WorkInstructionStatusEnum.REVERTED;
 				break;
 
 			default:
-				result = WorkInstructionStateEnum.INVALID;
+				result = WorkInstructionStatusEnum.INVALID;
 				break;
 
 		}
