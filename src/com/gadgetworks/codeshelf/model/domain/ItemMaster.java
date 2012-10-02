@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ItemMaster.java,v 1.2 2012/10/02 03:17:58 jeffw Exp $
+ *  $Id: ItemMaster.java,v 1.3 2012/10/02 15:12:22 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -62,13 +62,15 @@ public class ItemMaster extends DomainObjectABC {
 	// The description.
 	@Getter
 	@Setter
-	@Column(nullable = false)
+	@Column(nullable = true)
 	private String				description;
 
 	// The standard UoM.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	@JsonIgnore
+	@Getter
+	@Setter
 	private UomMaster			standardUoM;
 
 	// For a network this is a list of all of the users that belong in the set.

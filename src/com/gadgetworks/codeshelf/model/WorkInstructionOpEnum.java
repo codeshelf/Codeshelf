@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WorkInstructionOpEnum.java,v 1.1 2012/10/01 07:16:28 jeffw Exp $
+ *  $Id: WorkInstructionOpEnum.java,v 1.2 2012/10/02 15:12:22 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model;
 
@@ -25,7 +25,7 @@ public enum WorkInstructionOpEnum {
 		mName = inName;
 	}
 
-	public static WorkInstructionOpEnum getWorkInstructionStateEnum(int inOnlineStatusID) {
+	public static WorkInstructionOpEnum getWorkInstructionOpEnum(int inOnlineStatusID) {
 		WorkInstructionOpEnum result;
 
 		switch (inOnlineStatusID) {

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderGroup.java,v 1.2 2012/10/02 05:57:40 jeffw Exp $
+ *  $Id: OrderGroup.java,v 1.3 2012/10/02 15:12:22 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -22,6 +22,7 @@ import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.annotate.JsonIgnore;
 
 import com.avaje.ebean.annotation.CacheStrategy;
+import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.google.inject.Inject;
@@ -52,6 +53,13 @@ public class OrderGroup extends DomainObjectABC {
 	}
 
 	private static final Log	LOGGER			= LogFactory.getLog(OrderGroup.class);
+
+	// The collective order status.
+	@Column(nullable = false)
+	@JsonIgnore
+	@Getter
+	@Setter
+	private OrderStatusEnum		statusEnum;
 
 	// The description.
 	@Column(nullable = true)

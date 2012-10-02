@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: UomMaster.java,v 1.1 2012/10/01 01:35:46 jeffw Exp $
+ *  $Id: UomMaster.java,v 1.2 2012/10/02 15:12:22 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -35,7 +35,7 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-@Table(name = "UOM")
+@Table(name = "UOMMASTER")
 @CacheStrategy
 public class UomMaster extends DomainObjectABC {
 
@@ -57,14 +57,8 @@ public class UomMaster extends DomainObjectABC {
 	@JsonIgnore
 	private Facility			parent;
 
-	// The UoM ID.
-	@Getter
-	@Setter
-	@Column(nullable = false)
-	private String				uomId;
-
 	public UomMaster() {
-		uomId = "";
+
 	}
 
 	@JsonIgnore

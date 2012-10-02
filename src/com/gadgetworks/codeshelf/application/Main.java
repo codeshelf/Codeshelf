@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Main.java,v 1.24 2012/10/02 05:57:40 jeffw Exp $
+ *  $Id: Main.java,v 1.25 2012/10/02 15:12:22 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -35,6 +35,10 @@ import com.gadgetworks.codeshelf.model.domain.EdiDocumentLocator;
 import com.gadgetworks.codeshelf.model.domain.EdiDocumentLocator.EdiDocumentLocatorDao;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Facility.FacilityDao;
+import com.gadgetworks.codeshelf.model.domain.Item;
+import com.gadgetworks.codeshelf.model.domain.Item.ItemDao;
+import com.gadgetworks.codeshelf.model.domain.ItemMaster;
+import com.gadgetworks.codeshelf.model.domain.ItemMaster.ItemMasterDao;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail.OrderDetailDao;
 import com.gadgetworks.codeshelf.model.domain.OrderGroup;
@@ -49,6 +53,8 @@ import com.gadgetworks.codeshelf.model.domain.PathSegment;
 import com.gadgetworks.codeshelf.model.domain.PathSegment.PathSegmentDao;
 import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
 import com.gadgetworks.codeshelf.model.domain.PersistentProperty.PersistentPropertyDao;
+import com.gadgetworks.codeshelf.model.domain.UomMaster;
+import com.gadgetworks.codeshelf.model.domain.UomMaster.UomMasterDao;
 import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.model.domain.User.UserDao;
 import com.gadgetworks.codeshelf.model.domain.UserSession;
@@ -174,6 +180,14 @@ public final class Main {
 				bind(new TypeLiteral<ITypedDao<Facility>>() {
 				}).to(FacilityDao.class);
 
+				requestStaticInjection(Item.class);
+				bind(new TypeLiteral<ITypedDao<Item>>() {
+				}).to(ItemDao.class);
+
+				requestStaticInjection(ItemMaster.class);
+				bind(new TypeLiteral<ITypedDao<ItemMaster>>() {
+				}).to(ItemMasterDao.class);
+
 				requestStaticInjection(OrderDetail.class);
 				bind(new TypeLiteral<ITypedDao<OrderDetail>>() {
 				}).to(OrderDetailDao.class);
@@ -201,6 +215,10 @@ public final class Main {
 				requestStaticInjection(PersistentProperty.class);
 				bind(new TypeLiteral<ITypedDao<PersistentProperty>>() {
 				}).to(PersistentPropertyDao.class);
+
+				requestStaticInjection(UomMaster.class);
+				bind(new TypeLiteral<ITypedDao<UomMaster>>() {
+				}).to(UomMasterDao.class);
 
 				requestStaticInjection(User.class);
 				bind(new TypeLiteral<ITypedDao<User>>() {

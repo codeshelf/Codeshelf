@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WorkInstructionStatusEnum.java,v 1.1 2012/10/01 07:16:28 jeffw Exp $
+ *  $Id: WorkInstructionStatusEnum.java,v 1.2 2012/10/02 15:12:22 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model;
 
@@ -13,11 +13,11 @@ import com.avaje.ebean.annotation.EnumMapping;
  */
 @EnumMapping(nameValuePairs = "INVALID=INVALID, NEW=NEW, INPROGRESS=INPROGRESS, COMPLETE=COMPLETE, REVERTED=REVERTED")
 public enum WorkInstructionStatusEnum {
-	INVALID(WorkInstructionStateNum.INVALID, "INVALID"),
-	NEW(WorkInstructionStateNum.NEW, "NEW"),
-	INPROGRESS(WorkInstructionStateNum.INPROGRESS, "INPROGRESS"),
-	COMPLETE(WorkInstructionStateNum.COMPLETE, "COMPLETE"),
-	REVERTED(WorkInstructionStateNum.REVERTED, "REVERTED");
+	INVALID(WorkInstructionStatusNum.INVALID, "INVALID"),
+	NEW(WorkInstructionStatusNum.NEW, "NEW"),
+	INPROGRESS(WorkInstructionStatusNum.INPROGRESS, "INPROGRESS"),
+	COMPLETE(WorkInstructionStatusNum.COMPLETE, "COMPLETE"),
+	REVERTED(WorkInstructionStatusNum.REVERTED, "REVERTED");
 
 	private int		mValue;
 	private String	mName;
@@ -27,23 +27,23 @@ public enum WorkInstructionStatusEnum {
 		mName = inName;
 	}
 
-	public static WorkInstructionStatusEnum getWorkInstructionStateEnum(int inOnlineStatusID) {
+	public static WorkInstructionStatusEnum getWorkInstructionStatusEnum(int inOnlineStatusID) {
 		WorkInstructionStatusEnum result;
 
 		switch (inOnlineStatusID) {
-			case WorkInstructionStateNum.NEW:
+			case WorkInstructionStatusNum.NEW:
 				result = WorkInstructionStatusEnum.NEW;
 				break;
 
-			case WorkInstructionStateNum.INPROGRESS:
+			case WorkInstructionStatusNum.INPROGRESS:
 				result = WorkInstructionStatusEnum.INPROGRESS;
 				break;
 
-			case WorkInstructionStateNum.COMPLETE:
+			case WorkInstructionStatusNum.COMPLETE:
 				result = WorkInstructionStatusEnum.COMPLETE;
 				break;
 
-			case WorkInstructionStateNum.REVERTED:
+			case WorkInstructionStatusNum.REVERTED:
 				result = WorkInstructionStatusEnum.REVERTED;
 				break;
 
@@ -64,7 +64,7 @@ public enum WorkInstructionStatusEnum {
 		return mName;
 	}
 
-	static final class WorkInstructionStateNum {
+	static final class WorkInstructionStatusNum {
 
 		static final byte	INVALID		= 0;
 		static final byte	NEW			= 1;
@@ -72,7 +72,7 @@ public enum WorkInstructionStatusEnum {
 		static final byte	COMPLETE	= 3;
 		static final byte	REVERTED	= 4;
 
-		private WorkInstructionStateNum() {
+		private WorkInstructionStatusNum() {
 		};
 	}
 }

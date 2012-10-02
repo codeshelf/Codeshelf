@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: H2SchemaManager.java,v 1.44 2012/10/02 05:57:40 jeffw Exp $
+ *  $Id: H2SchemaManager.java,v 1.45 2012/10/02 15:12:22 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -103,7 +103,14 @@ public final class H2SchemaManager implements ISchemaManager {
 			}
 		}
 
-		if (inOldVersion < ISchemaManager.DATABASE_VERSION_5) {
+		if (inOldVersion < ISchemaManager.DATABASE_VERSION_6) {
+			// UomMaster
+			createTable("UOMMASTER", //
+				"DESCRIPTION VARCHAR(256), " //
+						+ "PARENT_PERSISTENTID LONG NOT NULL " //
+			);
+
+			linkToParentTable("UOMMASTER", "PARENT", "LOCATION");
 
 		}
 	}
@@ -155,7 +162,7 @@ public final class H2SchemaManager implements ISchemaManager {
 		execOneSQLCommand("CREATE SEQUENCE CODESHELF." + inTableName + "_SEQ");
 		execOneSQLCommand("CREATE TABLE CODESHELF." + inTableName + " (" //
 				+ "PERSISTENTID BIGINT NOT NULL, " //
-				+ "DOMAINID VARCHAR(64) NOT NULL," //
+				+ "DOMAINID VARCHAR(64) NOT NULL, " //
 				+ "LASTDEFAULTSEQUENCEID INT NOT NULL, " //
 				+ "VERSION TIMESTAMP, " //
 				+ inColumns //
@@ -203,8 +210,8 @@ public final class H2SchemaManager implements ISchemaManager {
 
 		// PersistentProperty
 		createTable("PERSISTENTPROPERTY", //
-			"CURRENTVALUESTR VARCHAR(256)," //
-					+ "DEFAULTVALUESTR VARCHAR(256)," //
+			"CURRENTVALUESTR VARCHAR(256), " //
+					+ "DEFAULTVALUESTR VARCHAR(256), " //
 					+ "PARENT_PERSISTENTID LONG NOT NULL" //
 		);
 
@@ -212,7 +219,7 @@ public final class H2SchemaManager implements ISchemaManager {
 
 		// Location
 		createTable("LOCATION", //
-			"DTYPE VARCHAR(64) NOT NULL," //
+			"DTYPE VARCHAR(64) NOT NULL, " //
 					+ "POSTYPE VARCHAR(64) NOT NULL, " //
 					+ "POSX DOUBLE NOT NULL, " //
 					+ "POSY DOUBLE NOT NULL, " //
@@ -257,7 +264,7 @@ public final class H2SchemaManager implements ISchemaManager {
 			"HASHEDPASSWORD VARCHAR(64), " //
 					+ "EMAIL VARCHAR(64), " //
 					+ "CREATED TIMESTAMP, " //
-					+ "ACTIVE BOOLEAN DEFAULT TRUE NOT NULL," //
+					+ "ACTIVE BOOLEAN DEFAULT TRUE NOT NULL, " //
 					+ "PARENT_PERSISTENTID LONG NOT NULL " //
 		);
 
@@ -274,11 +281,11 @@ public final class H2SchemaManager implements ISchemaManager {
 
 		// CodeShelfNetwork
 		createTable("CODESHELFNETWORK", //
-			"SERIALIZEDID BINARY(2) DEFAULT 0 NOT NULL," //
+			"SERIALIZEDID BINARY(2) DEFAULT 0 NOT NULL, " //
 					+ "DESCRIPTION VARCHAR(64) NOT NULL, " //
 					+ "GATEWAYADDR BINARY(3) NOT NULL, " //
 					+ "GATEWAYURL VARCHAR(64) NOT NULL, " //
-					+ "ACTIVE BOOLEAN DEFAULT TRUE NOT NULL," //
+					+ "ACTIVE BOOLEAN DEFAULT TRUE NOT NULL, " //
 					+ "PARENT_PERSISTENTID LONG NOT NULL " //
 		);
 
@@ -286,10 +293,10 @@ public final class H2SchemaManager implements ISchemaManager {
 
 		// ControlGroup
 		createTable("CONTROLGROUP", //
-			"SERIALIZEDID BINARY(2) DEFAULT 0 NOT NULL," //
+			"SERIALIZEDID BINARY(2) DEFAULT 0 NOT NULL, " //
 					+ "DESCRIPTION VARCHAR(64) NOT NULL, " //
 					+ "INTERFACEPORTNUM INT NOT NULL, " //
-					+ "ACTIVE BOOLEAN DEFAULT TRUE NOT NULL," //
+					+ "ACTIVE BOOLEAN DEFAULT TRUE NOT NULL, " //
 					+ "TAGPROTOCOLENUM VARCHAR(16) NOT NULL, " //
 					+ "PARENT_PERSISTENTID LONG NOT NULL " //
 		);
@@ -298,15 +305,15 @@ public final class H2SchemaManager implements ISchemaManager {
 
 		// WirelessDevice (includes the subclass variants in one table)
 		createTable("WIRELESSDEVICE", //
-			"DTYPE VARCHAR(64) NOT NULL," //
-					+ "MACADDRESS BINARY(8) DEFAULT 0 NOT NULL," //
-					+ "PUBLICKEY VARCHAR(16) NOT NULL," //
-					+ "DESCRIPTION VARCHAR(64)," //
-					+ "LASTBATTERYLEVEL SMALLINT DEFAULT 0 NOT NULL," //
-					+ "NETWORKADDRESS BINARY(3) DEFAULT 0 NOT NULL," //
-					+ "NETWORKDEVICESTATUS VARCHAR(16) DEFAULT 'INVALID'," //
-					+ "SERIALBUSPOSITION INT DEFAULT 0," //
-					+ "LASTCONTACTTIME BIGINT DEFAULT 0," //
+			"DTYPE VARCHAR(64) NOT NULL, " //
+					+ "MACADDRESS BINARY(8) DEFAULT 0 NOT NULL, " //
+					+ "PUBLICKEY VARCHAR(16) NOT NULL, " //
+					+ "DESCRIPTION VARCHAR(64), " //
+					+ "LASTBATTERYLEVEL SMALLINT DEFAULT 0 NOT NULL, " //
+					+ "NETWORKADDRESS BINARY(3) DEFAULT 0 NOT NULL, " //
+					+ "NETWORKDEVICESTATUS VARCHAR(16) DEFAULT 'INVALID', " //
+					+ "SERIALBUSPOSITION INT DEFAULT 0, " //
+					+ "LASTCONTACTTIME BIGINT DEFAULT 0, " //
 					+ "PARENT_PERSISTENTID LONG NOT NULL " //
 		);
 
@@ -317,11 +324,11 @@ public final class H2SchemaManager implements ISchemaManager {
 
 		// EdiService
 		createTable("EDISERVICE", //
-			"DTYPE VARCHAR(64) NOT NULL," //
+			"DTYPE VARCHAR(64) NOT NULL, " //
 					+ "PROVIDERENUM VARCHAR(16) NOT NULL, " //
 					+ "SERVICESTATEENUM VARCHAR(16) NOT NULL, " //
 					+ "PROVIDERCREDENTIALS VARCHAR(256), " //
-					+ "CURSOR VARCHAR(256)," //
+					+ "CURSOR VARCHAR(256), " //
 					+ "PARENT_PERSISTENTID LONG NOT NULL " //
 		);
 
@@ -329,8 +336,8 @@ public final class H2SchemaManager implements ISchemaManager {
 
 		// EdiDocumentLocator
 		createTable("EDIDOCUMENTLOCATOR", //
-			"DOCUMENTPATH VARCHAR(256) NOT NULL," //
-					+ "DOCUMENTNAME VARCHAR(256) NOT NULL," //
+			"DOCUMENTPATH VARCHAR(256) NOT NULL, " //
+					+ "DOCUMENTNAME VARCHAR(256) NOT NULL, " //
 					+ "DOCUMENTSTATEENUM VARCHAR(16) NOT NULL, " //
 					+ "RECEIVED TIMESTAMP, " //
 					+ "PROCESSED TIMESTAMP, " //
@@ -341,13 +348,15 @@ public final class H2SchemaManager implements ISchemaManager {
 
 		// OrderGroup
 		createTable("ORDERGROUP", //
-			"DESCRIPTION VARCHAR(256)," //
+			"STATUSENUM VARCHAR(16) NOT NULL, " //
+					+ "DESCRIPTION VARCHAR(256), " //
 					+ "PARENT_PERSISTENTID LONG NOT NULL " //
 		);
 
 		// OrderHeader
 		createTable("ORDERHEADER", //
-			"ORDERGROUP_PERSISTENTID LONG NOT NULL " //
+			"STATUSENUM VARCHAR(16) NOT NULL, " //
+					+ "ORDERGROUP_PERSISTENTID LONG NOT NULL, " //
 					+ "PARENT_PERSISTENTID LONG NOT NULL " //
 		);
 
@@ -355,20 +364,29 @@ public final class H2SchemaManager implements ISchemaManager {
 
 		// OrderDetail
 		createTable("ORDERDETAIL", //
-			"ITEMID VARCHAR(64) NOT NULL," //
-					+ "DESCRIPTION VARCHAR(256) NOT NULL," //
+			"STATUSENUM VARCHAR(16) NOT NULL, " //
+					+ "ITEMMASTER_PERSISTENTID LONG NOT NULL, " //
+					+ "DESCRIPTION VARCHAR(256) NOT NULL, " //
 					+ "QUANTITY INTEGER NOT NULL, " //
-					+ "UOMID VARCHAR(16) NOT NULL," //
+					+ "UOMID VARCHAR(16) NOT NULL, " //
 					+ "ORDERDATE TIMESTAMP, " //
 					+ "PARENT_PERSISTENTID LONG NOT NULL " //
 		);
 
 		linkToParentTable("ORDERDETAIL", "PARENT", "ORDERHEADER");
 
+		// UomMaster
+		createTable("UOMMASTER", //
+			"DESCRIPTION VARCHAR(256), " //
+					+ "PARENT_PERSISTENTID LONG NOT NULL " //
+		);
+
+		linkToParentTable("UOMMASTER", "PARENT", "LOCATION");
+
 		// ItemMaster
 		createTable("ITEMMASTER", //
-			"DESCRIPTION VARCHAR(256) NOT NULL," //
-					+ "STANDARDUOM_PERSISTENTID LONG NOT NULL," //
+			"DESCRIPTION VARCHAR(256), " //
+					+ "STANDARDUOM_PERSISTENTID LONG NOT NULL, " //
 					+ "PARENT_PERSISTENTID LONG NOT NULL " //
 		);
 
@@ -376,8 +394,8 @@ public final class H2SchemaManager implements ISchemaManager {
 
 		// Item
 		createTable("ITEM", //
-			"QUANTITY DECIMAL NOT NULL," //
-					+ "UOM_PERSISTENTID LONG NOT NULL," //
+			"QUANTITY DECIMAL NOT NULL, " //
+					+ "UOM_PERSISTENTID LONG NOT NULL, " //
 					+ "PARENT_PERSISTENTID LONG NOT NULL " //
 		);
 
@@ -385,10 +403,10 @@ public final class H2SchemaManager implements ISchemaManager {
 
 		// ContainerKind
 		createTable("CONTAINERKIND", //
-			"CLASSID VARCHAR(64) NOT NULL," //
-					+ "LENGTHMETERS DECIMAL NOT NULL," //
-					+ "HEIGHTMETERS DECIMAL NOT NULL," //
-					+ "WIDTHMETERS DECIMAL NOT NULL," //
+			"CLASSID VARCHAR(64) NOT NULL, " //
+					+ "LENGTHMETERS DECIMAL NOT NULL, " //
+					+ "HEIGHTMETERS DECIMAL NOT NULL, " //
+					+ "WIDTHMETERS DECIMAL NOT NULL, " //
 					+ "PARENT_PERSISTENTID LONG NOT NULL " //
 		);
 
@@ -396,7 +414,7 @@ public final class H2SchemaManager implements ISchemaManager {
 
 		// Container
 		createTable("CONTAINER", //
-			"KIND_PERSISTENTID LONG NOT NULL," //
+			"KIND_PERSISTENTID LONG NOT NULL, " //
 					+ "PARENT_PERSISTENTID LONG NOT NULL " //
 		);
 
@@ -404,7 +422,7 @@ public final class H2SchemaManager implements ISchemaManager {
 
 		// ContainerUse
 		createTable("CONTAINERUSE", //
-			"USETIMESTAMP TIMESTAMP NOT NULL," //
+			"USETIMESTAMP TIMESTAMP NOT NULL, " //
 					+ "PARENT_PERSISTENTID LONG NOT NULL " //
 		);
 
@@ -428,8 +446,8 @@ public final class H2SchemaManager implements ISchemaManager {
 
 		// WorkArea
 		createTable("WORKAREA", //
-			"WORKAREAID VARCHAR(64) NOT NULL," //
-					+ "DESCRIPTION VARCHAR(256) NOT NULL," //
+			"WORKAREAID VARCHAR(64) NOT NULL, " //
+					+ "DESCRIPTION VARCHAR(256) NOT NULL, " //
 					+ "PARENT_PERSISTENTID LONG NOT NULL " //
 		);
 

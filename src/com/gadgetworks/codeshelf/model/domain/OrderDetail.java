@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderDetail.java,v 1.3 2012/10/02 03:17:58 jeffw Exp $
+ *  $Id: OrderDetail.java,v 1.4 2012/10/02 15:12:22 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -22,6 +22,7 @@ import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.annotate.JsonIgnore;
 
 import com.avaje.ebean.annotation.CacheStrategy;
+import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.google.inject.Inject;
@@ -53,11 +54,18 @@ public class OrderDetail extends DomainObjectABC {
 
 	private static final Log	LOGGER	= LogFactory.getLog(OrderDetail.class);
 
+	// The collective order status.
+	@Column(nullable = false)
+	@JsonIgnore
+	@Getter
+	@Setter
+	private OrderStatusEnum		statusEnum;
+
 	// The item ID.
 	@Getter
 	@Setter
 	@Column(nullable = false)
-	private String				itemId;
+	private ItemMaster			itemMaster;
 
 	// The description.
 	@Getter

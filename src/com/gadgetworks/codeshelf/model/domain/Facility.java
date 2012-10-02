@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.17 2012/10/02 05:57:40 jeffw Exp $
+ *  $Id: Facility.java,v 1.18 2012/10/02 15:12:22 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -67,11 +67,23 @@ public class Facility extends LocationABC {
 	@JsonIgnore
 	private Organization			parentOrganization;
 
+	// These are all the uom masters for this facility.
+	@OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
+	@JsonIgnore
+	@Getter
+	private List<UomMaster>			uomMasters		= new ArrayList<UomMaster>();
+
+	// These are all the item masters for this facility.
+	@OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
+	@JsonIgnore
+	@Getter
+	private List<ItemMaster>		itemMasters		= new ArrayList<ItemMaster>();
+
 	// These are all the order groups for this facility.
 	@OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
 	@JsonIgnore
 	@Getter
-	private List<OrderGroup>		orderGroups	= new ArrayList<OrderGroup>();
+	private List<OrderGroup>		orderGroups		= new ArrayList<OrderGroup>();
 
 	// These are all the order headers for this facility.
 	@OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
@@ -80,19 +92,19 @@ public class Facility extends LocationABC {
 	private List<OrderHeader>		orderHeaders	= new ArrayList<OrderHeader>();
 
 	// For a network this is a list of all of the control groups that belong in the set.
-	@OneToMany(mappedBy = "parent")
+	@OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
 	@JsonIgnore
 	@Getter
 	private List<Aisle>				aisles			= new ArrayList<Aisle>();
 
 	// For a network this is a list of all of the control groups that belong in the set.
-	@OneToMany(mappedBy = "parent")
+	@OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
 	@JsonIgnore
 	@Getter
 	private List<CodeShelfNetwork>	networks		= new ArrayList<CodeShelfNetwork>();
 
 	// For a network this is a list of all of the control groups that belong in the set.
-	@OneToMany(mappedBy = "parent")
+	@OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
 	@JsonIgnore
 	@Getter
 	private List<DropboxService>	dropboxServices	= new ArrayList<DropboxService>();
@@ -188,6 +200,26 @@ public class Facility extends LocationABC {
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void removeOrderGroup(OrderGroup inOrderGroups) {
 		orderGroups.remove(inOrderGroups);
+	}
+
+	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
+	public final void addItemMaster(ItemMaster inItemMaster) {
+		itemMasters.add(inItemMaster);
+	}
+
+	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
+	public final void removeItemMaster(ItemMaster inItemMasters) {
+		itemMasters.remove(inItemMasters);
+	}
+
+	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
+	public final void addUomMaster(UomMaster inUomMaster) {
+		uomMasters.add(inUomMaster);
+	}
+
+	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
+	public final void removeUomMaster(UomMaster inUomMasters) {
+		uomMasters.remove(inUomMasters);
 	}
 
 	// --------------------------------------------------------------------------

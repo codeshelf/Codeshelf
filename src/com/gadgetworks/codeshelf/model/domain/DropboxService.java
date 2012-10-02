@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DropboxService.java,v 1.15 2012/10/02 05:57:40 jeffw Exp $
+ *  $Id: DropboxService.java,v 1.16 2012/10/02 15:12:22 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -49,6 +49,7 @@ import com.dropbox.client2.session.WebAuthSession;
 import com.gadgetworks.codeshelf.edi.CsvOrderImportBean;
 import com.gadgetworks.codeshelf.model.EdiDocumentStatusEnum;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
+import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
@@ -501,6 +502,7 @@ public class DropboxService extends EdiServiceABC {
 					if ((group == null) && (importBean.getOrderGroupId() != null) && (importBean.getOrderGroupId().length() > 0)) {
 						group = new OrderGroup();
 						group.setDomainId(importBean.getOrderGroupId());
+						group.setStatusEnum(OrderStatusEnum.NEW);
 						group.setParentFacility(parentFacility);
 						parentFacility.addOrderGroup(group);
 						try {
@@ -516,6 +518,7 @@ public class DropboxService extends EdiServiceABC {
 						order = new OrderHeader();
 						order.setParentFacility(getParentFacility());
 						order.setDomainId(importBean.getOrderId());
+						order.setStatusEnum(OrderStatusEnum.NEW);
 						parentFacility.addOrderHeader(order);
 						if (group != null) {
 							group.addOrderHeader(order);
@@ -533,14 +536,44 @@ public class DropboxService extends EdiServiceABC {
 						}
 					}
 
+					ItemMaster itemMaster = ItemMaster.DAO.findByDomainId(parentFacility, importBean.getItemId());
+					if (itemMaster == null) {
+						
+						UomMaster uomMaster = UomMaster.DAO.findByDomainId(parentFacility, importBean.getUomId());
+						if (uomMaster == null) {
+							uomMaster = new UomMaster();
+							uomMaster.setDomainId(importBean.getUomId());
+							uomMaster.setParentFacility(parentFacility);
+							parentFacility.addUomMaster(uomMaster);
+							try {
+								UomMaster.DAO.store(uomMaster);
+							} catch (DaoException e) {
+								LOGGER.error("", e);
+							}
+						}
+						itemMaster = new ItemMaster();
+						itemMaster.setDomainId(importBean.getItemId());
+						itemMaster.setStandardUoM(uomMaster);
+						itemMaster.setParentFacility(parentFacility);
+						parentFacility.addItemMaster(itemMaster);
+						try {
+							ItemMaster.DAO.store(itemMaster);
+						} catch (DaoException e) {
+							LOGGER.error("", e);
+						}
+					}
+					
 					OrderDetail orderDetail = order.findOrderDetail(importBean.getOrderDetailId());
 					if (orderDetail == null) {
 						orderDetail = new OrderDetail();
 						orderDetail.setParentOrderHeader(order);
 						orderDetail.setDomainId(importBean.getOrderDetailId());
+						orderDetail.setStatusEnum(OrderStatusEnum.NEW);
+
 						order.addOrderDetail(orderDetail);
 					}
-					orderDetail.setItemId(importBean.getItemId());
+					
+					orderDetail.setItemMaster(itemMaster);
 					orderDetail.setDescription(importBean.getDescription());
 					orderDetail.setQuantity(Integer.valueOf(importBean.getQuantity()));
 					orderDetail.setUomId(importBean.getUomId());
