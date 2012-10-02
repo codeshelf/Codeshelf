@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ContainerKind.java,v 1.1 2012/10/01 01:35:46 jeffw Exp $
+ *  $Id: ContainerKind.java,v 1.2 2012/10/02 05:57:40 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -41,10 +41,10 @@ import com.google.inject.Singleton;
 public class ContainerKind extends DomainObjectABC {
 
 	@Inject
-	public static ContainerTypeDao	DAO;
+	public static ContainerKindDao	DAO;
 
 	@Singleton
-	public static class ContainerTypeDao extends GenericDaoABC<ContainerKind> implements ITypedDao<ContainerKind> {
+	public static class ContainerKindDao extends GenericDaoABC<ContainerKind> implements ITypedDao<ContainerKind> {
 		public final Class<ContainerKind> getDaoClass() {
 			return ContainerKind.class;
 		}

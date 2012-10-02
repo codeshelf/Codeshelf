@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderHeader.java,v 1.2 2012/10/02 03:17:58 jeffw Exp $
+ *  $Id: OrderHeader.java,v 1.3 2012/10/02 05:57:40 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -51,7 +51,15 @@ public class OrderHeader extends DomainObjectABC {
 		}
 	}
 
-	private static final Log	LOGGER	= LogFactory.getLog(OrderHeader.class);
+	private static final Log	LOGGER			= LogFactory.getLog(OrderHeader.class);
+
+	// The parent order group.
+	@Column(nullable = false)
+	@ManyToOne(optional = false)
+	@JsonIgnore
+	@Getter
+	@Setter
+	private OrderGroup			orderGroup;
 
 	// The parent facility.
 	@Column(nullable = false)

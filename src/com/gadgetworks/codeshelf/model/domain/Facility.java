@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.16 2012/10/02 03:17:58 jeffw Exp $
+ *  $Id: Facility.java,v 1.17 2012/10/02 05:57:40 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -67,7 +67,13 @@ public class Facility extends LocationABC {
 	@JsonIgnore
 	private Organization			parentOrganization;
 
-	// These are all the order for this facility.
+	// These are all the order groups for this facility.
+	@OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
+	@JsonIgnore
+	@Getter
+	private List<OrderGroup>		orderGroups	= new ArrayList<OrderGroup>();
+
+	// These are all the order headers for this facility.
 	@OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
 	@JsonIgnore
 	@Getter
@@ -174,6 +180,39 @@ public class Facility extends LocationABC {
 		orderHeaders.remove(inOrderHeaders);
 	}
 
+	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
+	public final void addOrderGroup(OrderGroup inOrderGroup) {
+		orderGroups.add(inOrderGroup);
+	}
+
+	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
+	public final void removeOrderGroup(OrderGroup inOrderGroups) {
+		orderGroups.remove(inOrderGroups);
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inOrderID
+	 * @return
+	 */
+	public final OrderGroup findOrderGroup(String inOrderGroupID) {
+		OrderGroup result = null;
+
+		for (OrderGroup orderGroup : getOrderGroups()) {
+			if (orderGroup.getDomainId().equals(inOrderGroupID)) {
+				result = orderGroup;
+				break;
+			}
+		}
+
+		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inOrderID
+	 * @return
+	 */
 	public final OrderHeader findOrder(String inOrderID) {
 		OrderHeader result = null;
 

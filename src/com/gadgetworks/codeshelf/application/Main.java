@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Main.java,v 1.23 2012/09/24 08:23:47 jeffw Exp $
+ *  $Id: Main.java,v 1.24 2012/10/02 05:57:40 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -19,6 +19,12 @@ import com.gadgetworks.codeshelf.model.domain.Bay;
 import com.gadgetworks.codeshelf.model.domain.Bay.BayDao;
 import com.gadgetworks.codeshelf.model.domain.CodeShelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.CodeShelfNetwork.CodeShelfNetworkDao;
+import com.gadgetworks.codeshelf.model.domain.Container;
+import com.gadgetworks.codeshelf.model.domain.Container.ContainerDao;
+import com.gadgetworks.codeshelf.model.domain.ContainerKind;
+import com.gadgetworks.codeshelf.model.domain.ContainerKind.ContainerKindDao;
+import com.gadgetworks.codeshelf.model.domain.ContainerUse;
+import com.gadgetworks.codeshelf.model.domain.ContainerUse.ContainerUseDao;
 import com.gadgetworks.codeshelf.model.domain.ControlGroup;
 import com.gadgetworks.codeshelf.model.domain.ControlGroup.ControlGroupDao;
 import com.gadgetworks.codeshelf.model.domain.DBProperty;
@@ -31,6 +37,8 @@ import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Facility.FacilityDao;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail.OrderDetailDao;
+import com.gadgetworks.codeshelf.model.domain.OrderGroup;
+import com.gadgetworks.codeshelf.model.domain.OrderGroup.OrderGroupDao;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader.OrderHeaderDao;
 import com.gadgetworks.codeshelf.model.domain.Organization;
@@ -49,6 +57,10 @@ import com.gadgetworks.codeshelf.model.domain.Vertex;
 import com.gadgetworks.codeshelf.model.domain.Vertex.VertexDao;
 import com.gadgetworks.codeshelf.model.domain.WirelessDevice;
 import com.gadgetworks.codeshelf.model.domain.WirelessDevice.IWirelessDeviceDao;
+import com.gadgetworks.codeshelf.model.domain.WorkArea;
+import com.gadgetworks.codeshelf.model.domain.WorkArea.WorkAreaDao;
+import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
+import com.gadgetworks.codeshelf.model.domain.WorkInstruction.WorkInstructionDao;
 import com.gadgetworks.codeshelf.web.websession.IWebSessionManager;
 import com.gadgetworks.codeshelf.web.websession.WebSessionManager;
 import com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmdFactory;
@@ -130,6 +142,18 @@ public final class Main {
 				bind(new TypeLiteral<ITypedDao<CodeShelfNetwork>>() {
 				}).to(CodeShelfNetworkDao.class);
 
+				requestStaticInjection(Container.class);
+				bind(new TypeLiteral<ITypedDao<Container>>() {
+				}).to(ContainerDao.class);
+
+				requestStaticInjection(ContainerKind.class);
+				bind(new TypeLiteral<ITypedDao<ContainerKind>>() {
+				}).to(ContainerKindDao.class);
+
+				requestStaticInjection(ContainerUse.class);
+				bind(new TypeLiteral<ITypedDao<ContainerUse>>() {
+				}).to(ContainerUseDao.class);
+
 				requestStaticInjection(ControlGroup.class);
 				bind(new TypeLiteral<ITypedDao<ControlGroup>>() {
 				}).to(ControlGroupDao.class);
@@ -158,6 +182,10 @@ public final class Main {
 				bind(new TypeLiteral<ITypedDao<OrderHeader>>() {
 				}).to(OrderHeaderDao.class);
 
+				requestStaticInjection(OrderGroup.class);
+				bind(new TypeLiteral<ITypedDao<OrderGroup>>() {
+				}).to(OrderGroupDao.class);
+
 				requestStaticInjection(Organization.class);
 				bind(new TypeLiteral<ITypedDao<Organization>>() {
 				}).to(OrganizationDao.class);
@@ -185,6 +213,14 @@ public final class Main {
 				requestStaticInjection(Vertex.class);
 				bind(new TypeLiteral<ITypedDao<Vertex>>() {
 				}).to(VertexDao.class);
+				
+				requestStaticInjection(WorkArea.class);
+				bind(new TypeLiteral<ITypedDao<WorkArea>>() {
+				}).to(WorkAreaDao.class);
+				
+				requestStaticInjection(WorkInstruction.class);
+				bind(new TypeLiteral<ITypedDao<WorkInstruction>>() {
+				}).to(WorkInstructionDao.class);
 				
 				requestStaticInjection(WirelessDevice.class);
 				bind(IWirelessDeviceDao.class).to(WirelessDeviceDao.class);

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: H2SchemaManager.java,v 1.43 2012/10/02 03:17:58 jeffw Exp $
+ *  $Id: H2SchemaManager.java,v 1.44 2012/10/02 05:57:40 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -341,13 +341,14 @@ public final class H2SchemaManager implements ISchemaManager {
 
 		// OrderGroup
 		createTable("ORDERGROUP", //
-			"DESCRIPTION VARCHAR(256) NOT NULL," //
+			"DESCRIPTION VARCHAR(256)," //
 					+ "PARENT_PERSISTENTID LONG NOT NULL " //
 		);
 
 		// OrderHeader
 		createTable("ORDERHEADER", //
-			"PARENT_PERSISTENTID LONG NOT NULL " //
+			"ORDERGROUP_PERSISTENTID LONG NOT NULL " //
+					+ "PARENT_PERSISTENTID LONG NOT NULL " //
 		);
 
 		linkToParentTable("ORDERHEADER", "PARENT", "LOCATION");

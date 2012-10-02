@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DropboxService.java,v 1.14 2012/10/02 03:17:58 jeffw Exp $
+ *  $Id: DropboxService.java,v 1.15 2012/10/02 05:57:40 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -486,29 +486,46 @@ public class DropboxService extends EdiServiceABC {
 				DropboxInputStream stream = inClientSession.getFileStream(inEntry.lcPath, null);
 				InputStreamReader reader = new InputStreamReader(stream);
 				csvReader = new CSVReader(reader);
-				//				List<String[]> entries = csvReader.readAll();
-				//				for (String[] entry : entries) {
-				//					LOGGER.debug(entry);
-				//				}
 
 				HeaderColumnNameMappingStrategy<CsvOrderImportBean> strategy = new HeaderColumnNameMappingStrategy<CsvOrderImportBean>();
 				strategy.setType(CsvOrderImportBean.class);
-				//				String[] columns = new String[] {"orderId", "description"};
-				//				strategy.setColumnMapping(columns);
 
 				CsvToBean<CsvOrderImportBean> csv = new CsvToBean<CsvOrderImportBean>();
 				List<CsvOrderImportBean> list = csv.parse(strategy, csvReader);
+				Facility parentFacility = mDropboxService.getParentFacility();
 
 				for (CsvOrderImportBean importBean : list) {
 					LOGGER.info(importBean);
 
-					OrderHeader order = mDropboxService.getParentFacility().findOrder(importBean.getOrderId());
+					OrderGroup group = parentFacility.findOrderGroup(importBean.getOrderGroupId());
+					if ((group == null) && (importBean.getOrderGroupId() != null) && (importBean.getOrderGroupId().length() > 0)) {
+						group = new OrderGroup();
+						group.setDomainId(importBean.getOrderGroupId());
+						group.setParentFacility(parentFacility);
+						parentFacility.addOrderGroup(group);
+						try {
+							OrderGroup.DAO.store(group);
+						} catch (DaoException e) {
+							LOGGER.error("", e);
+						}
+					}
+
+					OrderHeader order = parentFacility.findOrder(importBean.getOrderId());
 
 					if (order == null) {
 						order = new OrderHeader();
 						order.setParentFacility(getParentFacility());
 						order.setDomainId(importBean.getOrderId());
-						mDropboxService.getParentFacility().addOrderHeader(order);
+						parentFacility.addOrderHeader(order);
+						if (group != null) {
+							group.addOrderHeader(order);
+							order.setOrderGroup(group);
+							try {
+								OrderGroup.DAO.store(group);
+							} catch (DaoException e) {
+								LOGGER.error("", e);
+							}
+						}
 						try {
 							OrderHeader.DAO.store(order);
 						} catch (DaoException e) {
@@ -528,7 +545,7 @@ public class DropboxService extends EdiServiceABC {
 					orderDetail.setQuantity(Integer.valueOf(importBean.getQuantity()));
 					orderDetail.setUomId(importBean.getUomId());
 					orderDetail.setOrderDate(Timestamp.valueOf(importBean.getOrderDate()));
-					
+
 					try {
 						OrderDetail.DAO.store(orderDetail);
 					} catch (DaoException e) {
