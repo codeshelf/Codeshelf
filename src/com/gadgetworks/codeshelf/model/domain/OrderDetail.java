@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderDetail.java,v 1.2 2012/09/28 23:04:46 jeffw Exp $
+ *  $Id: OrderDetail.java,v 1.3 2012/10/02 03:17:58 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -52,12 +52,6 @@ public class OrderDetail extends DomainObjectABC {
 	}
 
 	private static final Log	LOGGER	= LogFactory.getLog(OrderDetail.class);
-
-	// The detail ID.
-	@Getter
-	@Setter
-	@Column(nullable = false)
-	private String				detailId;
 
 	// The item ID.
 	@Getter

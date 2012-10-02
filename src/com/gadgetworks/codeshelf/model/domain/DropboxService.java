@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DropboxService.java,v 1.13 2012/10/01 07:16:28 jeffw Exp $
+ *  $Id: DropboxService.java,v 1.14 2012/10/02 03:17:58 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -120,7 +120,7 @@ public class DropboxService extends EdiServiceABC {
 		EdiDocumentLocator result = null;
 
 		for (EdiDocumentLocator locator : getDocumentLocators()) {
-			if (locator.getDocumentId().equals(inPath)) {
+			if (locator.getDomainId().equals(inPath)) {
 				result = locator;
 				break;
 			}
@@ -460,10 +460,9 @@ public class DropboxService extends EdiServiceABC {
 				if (locator == null) {
 					locator = new EdiDocumentLocator();
 					locator.setParentEdiService(mDropboxService);
-					locator.setDomainId(computeDefaultDomainId());
 					locator.setReceived(new Timestamp(System.currentTimeMillis()));
 					locator.setDocumentStateEnum(EdiDocumentStatusEnum.NEW);
-					locator.setDocumentId(inEntry.lcPath);
+					locator.setDomainId(inEntry.lcPath);
 					locator.setDocumentPath(inEntry.metadata.parentPath());
 					locator.setDocumentName(inEntry.metadata.fileName());
 
@@ -509,7 +508,6 @@ public class DropboxService extends EdiServiceABC {
 						order = new OrderHeader();
 						order.setParentFacility(getParentFacility());
 						order.setDomainId(importBean.getOrderId());
-						order.setOrderId(importBean.getOrderId());
 						mDropboxService.getParentFacility().addOrderHeader(order);
 						try {
 							OrderHeader.DAO.store(order);
@@ -523,7 +521,6 @@ public class DropboxService extends EdiServiceABC {
 						orderDetail = new OrderDetail();
 						orderDetail.setParentOrderHeader(order);
 						orderDetail.setDomainId(importBean.getOrderDetailId());
-						orderDetail.setDetailId(importBean.getOrderDetailId());
 						order.addOrderDetail(orderDetail);
 					}
 					orderDetail.setItemId(importBean.getItemId());

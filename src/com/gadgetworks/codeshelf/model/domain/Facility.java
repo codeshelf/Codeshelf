@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.15 2012/09/24 08:23:47 jeffw Exp $
+ *  $Id: Facility.java,v 1.16 2012/10/02 03:17:58 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -94,16 +94,16 @@ public class Facility extends LocationABC {
 	public Facility() {
 		// Facilities have no parent location, but we don't want to allow ANY location to not have a parent.
 		// So in this case we make the facility its own parent.  It's also a way to know when we've topped-out in the location tree.
-		//this.setParent(this);
-		orderHeaders	= new ArrayList<OrderHeader>();
+		parent = this;
+		orderHeaders = new ArrayList<OrderHeader>();
 	}
 
 	public Facility(final Double inPosX, final double inPosY) {
 		super(PositionTypeEnum.GPS, inPosX, inPosY);
 		// Facilities have no parent location, but we don't want to allow ANY location to not have a parent.
 		// So in this case we make the facility its own parent.  It's also a way to know when we've topped-out in the location tree.
-		this.setParent(this);
-		orderHeaders	= new ArrayList<OrderHeader>();
+		parent = this;
+		orderHeaders = new ArrayList<OrderHeader>();
 	}
 
 	public final String getDefaultDomainIdPrefix() {
@@ -126,7 +126,7 @@ public class Facility extends LocationABC {
 	}
 
 	public final void setParent(final IDomainObject inParent) {
-		if (inParent instanceof Facility) {
+		if (inParent instanceof Organization) {
 			parentOrganization = (Organization) inParent;
 		}
 	}
@@ -178,7 +178,7 @@ public class Facility extends LocationABC {
 		OrderHeader result = null;
 
 		for (OrderHeader order : getOrderHeaders()) {
-			if (order.getOrderId().equals(inOrderID)) {
+			if (order.getDomainId().equals(inOrderID)) {
 				result = order;
 				break;
 			}

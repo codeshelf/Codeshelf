@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderHeader.java,v 1.1 2012/09/24 08:23:47 jeffw Exp $
+ *  $Id: OrderHeader.java,v 1.2 2012/10/02 03:17:58 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -59,12 +59,6 @@ public class OrderHeader extends DomainObjectABC {
 	@JsonIgnore
 	private Facility			parent;
 
-	// The order ID.
-	@Getter
-	@Setter
-	@Column(nullable = false)
-	private String				orderId;
-
 	// For a network this is a list of all of the users that belong in the set.
 	@OneToMany(mappedBy = "parent")
 	@JsonIgnore
@@ -72,7 +66,7 @@ public class OrderHeader extends DomainObjectABC {
 	private List<OrderDetail>	orderDetails	= new ArrayList<OrderDetail>();
 
 	public OrderHeader() {
-		orderId = "";
+
 	}
 
 	@JsonIgnore
@@ -114,7 +108,7 @@ public class OrderHeader extends DomainObjectABC {
 		OrderDetail result = null;
 
 		for (OrderDetail orderDetail : getOrderDetails()) {
-			if (orderDetail.getDetailId().equals(inOrderDetailId)) {
+			if (orderDetail.getDomainId().equals(inOrderDetailId)) {
 				result = orderDetail;
 				break;
 			}

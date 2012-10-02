@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeshelfNetwork.java,v 1.7 2012/09/23 03:05:42 jeffw Exp $
+ *  $Id: CodeshelfNetwork.java,v 1.8 2012/10/02 03:17:58 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -47,7 +47,7 @@ import com.google.inject.Singleton;
 public class CodeShelfNetwork extends DomainObjectABC {
 
 	@Inject
-	public static ITypedDao<CodeShelfNetwork> DAO;
+	public static ITypedDao<CodeShelfNetwork>	DAO;
 
 	@Singleton
 	public static class CodeShelfNetworkDao extends GenericDaoABC<CodeShelfNetwork> implements ITypedDao<CodeShelfNetwork> {
@@ -56,39 +56,39 @@ public class CodeShelfNetwork extends DomainObjectABC {
 		}
 	}
 
-	private static final Log	LOGGER				= LogFactory.getLog(CodeShelfNetwork.class);
+	private static final Log	LOGGER			= LogFactory.getLog(CodeShelfNetwork.class);
 
 	// The network ID.
 	@Column(nullable = false)
-	private byte[]				networkId;
+	private byte[]				serializedId;
+
 	// The network description.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	private String				description;
+
 	// Active/Inactive network
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	private boolean				active;
+
 	// The network ID.
 	@Column(nullable = false)
 	private byte[]				gatewayAddr;
+
 	// The gateway URL.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	private String				gatewayUrl;
-	// For a network this is a list of all of the control groups that belong in the set.
-	@Column(nullable = false)
-	@Getter
-	@OneToMany(mappedBy = "parent")
-	private List<ControlGroup>	controlGroups		= new ArrayList<ControlGroup>();
 
 	@Transient
 	@Getter
 	@Setter
 	private boolean				connected;
+
 	@Transient
 	@Getter
 	@Setter
@@ -97,30 +97,35 @@ public class CodeShelfNetwork extends DomainObjectABC {
 	// The owning facility.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	
 	private Facility			parent;
 
+	// For a network this is a list of all of the control groups that belong in the set.
+	@Column(nullable = false)
+	@Getter
+	@OneToMany(mappedBy = "parent")
+	private List<ControlGroup>	controlGroups	= new ArrayList<ControlGroup>();
+
 	public CodeShelfNetwork() {
-		networkId = new byte[NetworkId.NETWORK_ID_BYTES];
+		serializedId = new byte[NetworkId.NETWORK_ID_BYTES];
 		description = "";
 		gatewayAddr = new byte[NetAddress.NET_ADDRESS_BYTES];
 		gatewayUrl = "";
 		active = true;
 		connected = false;
 	}
-	
+
 	public final ITypedDao<CodeShelfNetwork> getDao() {
 		return DAO;
 	}
-	
+
 	public final String getDefaultDomainIdPrefix() {
 		return "NET";
 	}
-	
+
 	public final Facility getParentFacility() {
 		return parent;
 	}
-	
+
 	public final void setParentFacility(Facility inParentFacility) {
 		parent = inParentFacility;
 	}
@@ -134,18 +139,18 @@ public class CodeShelfNetwork extends DomainObjectABC {
 			setParentFacility((Facility) inParent);
 		}
 	}
-	
+
 	@JsonIgnore
 	public final List<? extends IDomainObject> getChildren() {
 		return getControlGroups();
 	}
-	
+
 	public final NetworkId getNetworkId() {
-		return new NetworkId(networkId);
+		return new NetworkId(serializedId);
 	}
 
 	public final void setNetworkId(NetworkId inNetworkId) {
-		networkId = inNetworkId.getParamValueAsByteArray();
+		serializedId = inNetworkId.getParamValueAsByteArray();
 	}
 
 	public final NetAddress getGatewayAddr() {

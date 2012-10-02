@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ItemMaster.java,v 1.1 2012/10/01 01:35:46 jeffw Exp $
+ *  $Id: ItemMaster.java,v 1.2 2012/10/02 03:17:58 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -59,12 +59,6 @@ public class ItemMaster extends DomainObjectABC {
 	@JsonIgnore
 	private Facility			parent;
 
-	// The item ID.
-	@Getter
-	@Setter
-	@Column(nullable = false)
-	private String				itemId;
-
 	// The description.
 	@Getter
 	@Setter
@@ -84,7 +78,7 @@ public class ItemMaster extends DomainObjectABC {
 	private List<Item>			items	= new ArrayList<Item>();
 
 	public ItemMaster() {
-		itemId = "";
+
 	}
 
 	@JsonIgnore

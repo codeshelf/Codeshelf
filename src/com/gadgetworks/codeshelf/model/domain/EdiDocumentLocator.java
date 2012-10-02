@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiDocumentLocator.java,v 1.8 2012/10/01 07:16:28 jeffw Exp $
+ *  $Id: EdiDocumentLocator.java,v 1.9 2012/10/02 03:17:58 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -60,15 +60,7 @@ public class EdiDocumentLocator extends DomainObjectABC {
 	@JsonIgnore
 	private DropboxService			parent;
 
-	// Document ID
-	@Column(nullable = false)
-	@ManyToOne(optional = false)
-	@JsonIgnore
-	@Getter
-	@Setter
-	private String					documentId;
-
-	// Document ID
+	// Document Path
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	@JsonIgnore

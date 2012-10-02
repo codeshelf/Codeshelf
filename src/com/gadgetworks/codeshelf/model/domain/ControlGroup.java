@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ControlGroup.java,v 1.7 2012/09/23 03:05:42 jeffw Exp $
+ *  $Id: ControlGroup.java,v 1.8 2012/10/02 03:17:58 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -51,35 +51,40 @@ public class ControlGroup extends DomainObjectABC {
 		}
 	}
 
-	// The owning CodeShelf network.
-	@Column(nullable = false)
-	@ManyToOne(optional = false)
-	private CodeShelfNetwork				parent;
 	// The control group ID
 	@Column(nullable = false)
-	//	@Getter
-	//	@Setter
-	private byte[]							controlGroupId;
+
+	private byte[]							serializedId;
+	
 	// The control group description.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	private String							description;
+	
 	// Interface port number
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	private short							interfacePortNum;
+	
 	// Active/Inactive rule
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	private boolean							active;
+	
 	// Active/Inactive rule
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	private TagProtocolEnum					tagProtocolEnum;
+	
+	// The owning CodeShelf network.
+	@Column(nullable = false)
+	@ManyToOne(optional = false)
+	private CodeShelfNetwork				parent;
+	
 	// For a control group this is a list of all of the pick tags that belong in the set.
 	@OneToMany(mappedBy = "parent")
 	@Getter
@@ -89,7 +94,7 @@ public class ControlGroup extends DomainObjectABC {
 	private IControllerConnection			controllerConnection;
 
 	public ControlGroup() {
-		controlGroupId = new byte[NetGroup.NET_GROUP_BYTES];
+		serializedId = new byte[NetGroup.NET_GROUP_BYTES];
 		description = "";
 		active = true;
 		tagProtocolEnum = TagProtocolEnum.ATOP;
@@ -127,11 +132,11 @@ public class ControlGroup extends DomainObjectABC {
 	}
 
 	public final NetGroup getControlGroupId() {
-		return new NetGroup(controlGroupId);
+		return new NetGroup(serializedId);
 	}
 
 	public final void setControlGroupId(NetGroup inId) {
-		controlGroupId = inId.getParamValueAsByteArray();
+		serializedId = inId.getParamValueAsByteArray();
 	}
 
 	public final TagProtocolEnum getTagProtocol() {

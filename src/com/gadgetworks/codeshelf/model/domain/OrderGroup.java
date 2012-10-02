@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Container.java,v 1.3 2012/10/02 03:17:58 jeffw Exp $
+ *  $Id: OrderGroup.java,v 1.1 2012/10/02 03:17:58 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -29,35 +29,35 @@ import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
- * Container
+ * OrderGroup
  * 
- * An instance of a container class (ever) used in the facility.
+ * A collection of OrderHeaders that can be released and worked as a single unit.
  * 
  * @author jeffw
  */
 
 @Entity
-@Table(name = "CONTAINER")
+@Table(name = "ORDERGROUP")
 @CacheStrategy
-public class Container extends DomainObjectABC {
+public class OrderGroup extends DomainObjectABC {
 
 	@Inject
-	public static ContainerDao	DAO;
+	public static OrderGroupDao	DAO;
 
 	@Singleton
-	public static class ContainerDao extends GenericDaoABC<Container> implements ITypedDao<Container> {
-		public final Class<Container> getDaoClass() {
-			return Container.class;
+	public static class OrderGroupDao extends GenericDaoABC<OrderGroup> implements ITypedDao<OrderGroup> {
+		public final Class<OrderGroup> getDaoClass() {
+			return OrderGroup.class;
 		}
 	}
 
-	private static final Log	LOGGER	= LogFactory.getLog(Container.class);
+	private static final Log	LOGGER			= LogFactory.getLog(OrderGroup.class);
 
-	// The container kind.
+	// The description.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	@JsonIgnore
-	private ContainerKind		kind;
+	private String				description;
 
 	// The parent facility.
 	@Column(nullable = false)
@@ -69,14 +69,14 @@ public class Container extends DomainObjectABC {
 	@OneToMany(mappedBy = "parent")
 	@JsonIgnore
 	@Getter
-	private List<ContainerUse>	uses	= new ArrayList<ContainerUse>();
+	private List<OrderHeader>	orderHeaders	= new ArrayList<OrderHeader>();
 
-	public Container() {
+	public OrderGroup() {
 
 	}
 
 	@JsonIgnore
-	public final ITypedDao<Container> getDao() {
+	public final ITypedDao<OrderGroup> getDao() {
 		return DAO;
 	}
 
@@ -106,16 +106,16 @@ public class Container extends DomainObjectABC {
 
 	@JsonIgnore
 	public final List<? extends IDomainObject> getChildren() {
-		return getUses();
+		return getOrderHeaders();
 	}
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
-	public final void addContainerUse(ContainerUse inContainerUse) {
-		uses.add(inContainerUse);
+	public final void addOrderHeader(OrderHeader inOrderHeader) {
+		orderHeaders.add(inOrderHeader);
 	}
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
-	public final void removeContainerUse(ContainerUse inContainerUse) {
-		uses.remove(inContainerUse);
+	public final void removeOrderHeader(OrderHeader inOrderHeader) {
+		orderHeaders.remove(inOrderHeader);
 	}
 }
