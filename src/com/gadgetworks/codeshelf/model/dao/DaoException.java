@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DaoException.java,v 1.4 2012/09/08 03:03:24 jeffw Exp $
+ *  $Id: DaoException.java,v 1.5 2012/10/03 06:39:02 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -9,7 +9,7 @@ package com.gadgetworks.codeshelf.model.dao;
 /**
  *  @author jeffw
  */
-public class DaoException extends Exception {
+public class DaoException extends RuntimeException {
 
 	private static final long	serialVersionUID	= -8652996336581739434L;
 

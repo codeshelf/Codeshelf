@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DomainObjectABC.java,v 1.12 2012/09/23 03:05:42 jeffw Exp $
+ *  $Id: DomainObjectABC.java,v 1.13 2012/10/03 06:39:02 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -142,8 +142,16 @@ public abstract class DomainObjectABC implements IDomainObject {
 	 * @param inId
 	 */
 	public final void setDomainId(String inId) {
+		
+		inId = inId.toUpperCase();
+		
 		IDomainObject parentObject = getParent();
-		if (parentObject != null) {
+
+		// All domain objects except Organization, have a parent domain object.
+		if ((parentObject == null) && (!(this instanceof Organization))) {
+			throw new DaoException("Domain object must have a parent");
+		} else if ((parentObject != null) && (!(parentObject instanceof Organization))) {
+			// Don't add the organization ID to the full domain ID.
 			domainId = parentObject.getFullDomainId() + "." + inId;
 		} else {
 			domainId = inId;
@@ -166,7 +174,7 @@ public abstract class DomainObjectABC implements IDomainObject {
 				result = domainId.substring(lastPeriodPos + 1);
 			}
 		}
-		return result;
+		return result.toUpperCase();
 	}
 
 	// --------------------------------------------------------------------------

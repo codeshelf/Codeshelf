@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DropboxService.java,v 1.16 2012/10/02 15:12:22 jeffw Exp $
+ *  $Id: DropboxService.java,v 1.17 2012/10/03 06:39:02 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -501,9 +501,9 @@ public class DropboxService extends EdiServiceABC {
 					OrderGroup group = parentFacility.findOrderGroup(importBean.getOrderGroupId());
 					if ((group == null) && (importBean.getOrderGroupId() != null) && (importBean.getOrderGroupId().length() > 0)) {
 						group = new OrderGroup();
-						group.setDomainId(importBean.getOrderGroupId());
-						group.setStatusEnum(OrderStatusEnum.NEW);
 						group.setParentFacility(parentFacility);
+						group.setOrderGroupId(importBean.getOrderGroupId());
+						group.setStatusEnum(OrderStatusEnum.NEW);
 						parentFacility.addOrderGroup(group);
 						try {
 							OrderGroup.DAO.store(group);
@@ -542,8 +542,8 @@ public class DropboxService extends EdiServiceABC {
 						UomMaster uomMaster = UomMaster.DAO.findByDomainId(parentFacility, importBean.getUomId());
 						if (uomMaster == null) {
 							uomMaster = new UomMaster();
-							uomMaster.setDomainId(importBean.getUomId());
 							uomMaster.setParentFacility(parentFacility);
+							uomMaster.setUomMasterId(importBean.getUomId());
 							parentFacility.addUomMaster(uomMaster);
 							try {
 								UomMaster.DAO.store(uomMaster);
@@ -552,9 +552,9 @@ public class DropboxService extends EdiServiceABC {
 							}
 						}
 						itemMaster = new ItemMaster();
-						itemMaster.setDomainId(importBean.getItemId());
-						itemMaster.setStandardUoM(uomMaster);
 						itemMaster.setParentFacility(parentFacility);
+						itemMaster.setItemMasterId(importBean.getItemId());
+						itemMaster.setStandardUoM(uomMaster);
 						parentFacility.addItemMaster(itemMaster);
 						try {
 							ItemMaster.DAO.store(itemMaster);

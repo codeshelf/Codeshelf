@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.18 2012/10/02 15:12:22 jeffw Exp $
+ *  $Id: Facility.java,v 1.19 2012/10/03 06:39:02 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -114,6 +114,7 @@ public class Facility extends LocationABC {
 		// So in this case we make the facility its own parent.  It's also a way to know when we've topped-out in the location tree.
 		parent = this;
 		orderHeaders = new ArrayList<OrderHeader>();
+		uomMasters = new ArrayList<UomMaster>();
 	}
 
 	public Facility(final Double inPosX, final double inPosY) {
@@ -122,6 +123,7 @@ public class Facility extends LocationABC {
 		// So in this case we make the facility its own parent.  It's also a way to know when we've topped-out in the location tree.
 		parent = this;
 		orderHeaders = new ArrayList<OrderHeader>();
+		uomMasters = new ArrayList<UomMaster>();
 	}
 
 	public final String getDefaultDomainIdPrefix() {

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderDetail.java,v 1.4 2012/10/02 15:12:22 jeffw Exp $
+ *  $Id: OrderDetail.java,v 1.5 2012/10/03 06:39:02 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -61,10 +61,11 @@ public class OrderDetail extends DomainObjectABC {
 	@Setter
 	private OrderStatusEnum		statusEnum;
 
-	// The item ID.
+	// The item master.
+	@Column(nullable = false)
+	@ManyToOne(optional = false)
 	@Getter
 	@Setter
-	@Column(nullable = false)
 	private ItemMaster			itemMaster;
 
 	// The description.
@@ -115,6 +116,15 @@ public class OrderDetail extends DomainObjectABC {
 
 	public final void setParentOrderHeader(final OrderHeader inOrder) {
 		parent = inOrder;
+	}
+
+	@JsonIgnore
+	public String getOrderDetailId() {
+		return getDomainId();
+	}
+
+	public final void setOrderDetailId(String inOrderDetailId) {
+		setDomainId(inOrderDetailId);
 	}
 
 	public final IDomainObject getParent() {

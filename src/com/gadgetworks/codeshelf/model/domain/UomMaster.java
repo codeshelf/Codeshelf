@@ -1,10 +1,11 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: UomMaster.java,v 1.2 2012/10/02 15:12:22 jeffw Exp $
+ *  $Id: UomMaster.java,v 1.3 2012/10/03 06:39:02 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.persistence.Column;
@@ -92,17 +93,15 @@ public class UomMaster extends DomainObjectABC {
 
 	@JsonIgnore
 	public final List<? extends IDomainObject> getChildren() {
-//		return getOrderDetails();
-		return null;
+		return new ArrayList<IDomainObject>();
 	}
 
-//	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
-//	public final void addOrderDetail(OrderDetail inOrderDetail) {
-//		orderDetails.add(inOrderDetail);
-//	}
-//
-//	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
-//	public final void removeOrderDetail(OrderDetail inOrderDetail) {
-//		orderDetails.remove(inOrderDetail);
-//	}
+	@JsonIgnore
+	public final String getUomMasterId() {
+		return getDomainId();
+	}
+
+	public final void setUomMasterId(String inUomMasterId) {
+		setDomainId(inUomMasterId);
+	}
 }

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: GenericDaoABC.java,v 1.4 2012/09/24 08:23:47 jeffw Exp $
+ *  $Id: GenericDaoABC.java,v 1.5 2012/10/03 06:39:02 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -21,6 +21,7 @@ import com.avaje.ebean.Ebean;
 import com.avaje.ebean.Query;
 import com.avaje.ebean.bean.EntityBean;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
+import com.gadgetworks.codeshelf.model.domain.Organization;
 
 /**
  * @author jeffw
@@ -122,12 +123,13 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	 */
 	public final T findByDomainId(final IDomainObject inParentObject, final String inId) {
 		T result = null;
-
+		
 		String effectiveId;
-		if (inParentObject != null) {
-			effectiveId = inParentObject.getDomainId() + "." + inId;
+		// The organization ID is not part of any domain ID.
+		if ((inParentObject != null) && (!(inParentObject instanceof Organization))) {
+			effectiveId = inParentObject.getDomainId() + "." + inId.toUpperCase();
 		} else {
-			effectiveId = inId;
+			effectiveId = inId.toUpperCase();
 		}
 
 		try {

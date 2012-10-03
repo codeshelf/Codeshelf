@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiProcessor.java,v 1.9 2012/09/23 03:33:16 jeffw Exp $
+ *  $Id: EdiProcessor.java,v 1.10 2012/10/03 06:39:02 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -31,10 +31,7 @@ public final class EdiProcessor {
 	private Thread							mProcessorThread;
 	private ThreadGroup						mProcessThreadGroup;
 
-	private Facility						mFacility;
-
-	public EdiProcessor(final Facility inFacility) {
-		mFacility = inFacility;
+	public EdiProcessor() {
 		mShouldRun = false;
 		mLastProcessMillis = 0;
 		mProcessThreadGroup = new ThreadGroup(EDIPROCESSOR_THREAD_NAME);
@@ -51,9 +48,9 @@ public final class EdiProcessor {
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	public static void startProcessor(final Facility inFacility) {
+	public static void startProcessor() {
 		if (mEdiProcessor == null) {
-			mEdiProcessor = new EdiProcessor(inFacility);
+			mEdiProcessor = new EdiProcessor();
 		}
 		mEdiProcessor.doStartProcessor();
 	}
@@ -164,23 +161,15 @@ public final class EdiProcessor {
 	private void checkEdiServices() {
 
 		LOGGER.debug("Begin EDI harvest cycle.");
+		
+		// Loop through each facility to make sure that it's EDI service processes any queued EDI.
+		for (Facility facility : Facility.DAO.getAll()) {
+			DropboxService dropboxService = facility.getDropboxService();
 
-		DropboxService dropboxService = mFacility.getDropboxService();
-
-		if (dropboxService != null) {
-//			if (!dropboxService.getServiceStateEnum().equals(EdiServiceStateEnum.LINKED)) {
-//				dropboxService.link();
-//				while (dropboxService.getServiceStateEnum().equals(EdiServiceStateEnum.LINKING)) {
-//					try {
-//						Thread.sleep(100);
-//					} catch (InterruptedException e) {
-//						LOGGER.error("", e);
-//					}
-//				}
-//			}
-			
-			if (dropboxService.getServiceStateEnum().equals(EdiServiceStateEnum.LINKED)) {
-				dropboxService.updateDocuments();
+			if (dropboxService != null) {			
+				if (dropboxService.getServiceStateEnum().equals(EdiServiceStateEnum.LINKED)) {
+					dropboxService.updateDocuments();
+				}
 			}
 		}
 

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfApplication.java,v 1.41 2012/09/08 03:03:24 jeffw Exp $
+ *  $Id: CodeShelfApplication.java,v 1.42 2012/10/03 06:39:02 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -39,7 +39,6 @@ import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.CodeShelfNetwork;
-import com.gadgetworks.codeshelf.model.domain.DBProperty;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.model.domain.Organization;
@@ -145,9 +144,10 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 		if (organization != null) {
 			Facility facility = Facility.DAO.findByDomainId(organization, "F1");
 			if (facility != null) {
-				EdiProcessor.startProcessor(facility);
 			}
 		}
+
+		EdiProcessor.startProcessor();
 
 		// Initialize the TTS system.
 		// (Do it on a thread, so we don't pause the start of the application.)
@@ -374,13 +374,7 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 			}
 		}
 
-		ISchemaManager schemaManager = new H2SchemaManager();
-		if (!schemaManager.doesSchemaExist()) {
-			if (!schemaManager.creatNewSchema()) {
-				LOGGER.error("Cannot create DB schema");
-				Util.exitSystem();
-			}
-		}
+		validateDatabase();
 
 		DataSourceConfig dataSourceConfig = new DataSourceConfig();
 		dataSourceConfig.setUsername("codeshelf");
@@ -432,8 +426,6 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 			}
 		}
 
-		validateDatabase(server);
-
 		LOGGER.info("Database started");
 
 		return result;
@@ -465,35 +457,14 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	private void validateDatabase(final EbeanServer inServer) {
+	private void validateDatabase() {
 
 		// Set our class loader to the system classloader, so ebean can find the enhanced classes.
 		Thread.currentThread().setContextClassLoader(ClassLoader.getSystemClassLoader());
+		
+		ISchemaManager schemaManager = new H2SchemaManager();
+		schemaManager.verifySchema();
 
-		DBProperty dbVersionProp = DBProperty.DAO.findByDomainId(null, DBProperty.DB_SCHEMA_VERSION);
-		if (dbVersionProp == null) {
-			// No database schema version has been set yet, so set it to the current schema version.
-			dbVersionProp = new DBProperty();
-			dbVersionProp.setDomainId(DBProperty.DB_SCHEMA_VERSION);
-			dbVersionProp.setValueStr(Integer.toString(ISchemaManager.DATABASE_VERSION_CUR));
-			inServer.save(dbVersionProp);
-		} else {
-			// The database schema version is set, so make sure that we're compatible.
-			String dbVersion = dbVersionProp.getValueStr();
-			int verInt = Integer.decode(dbVersion);
-			if (verInt < ISchemaManager.DATABASE_VERSION_CUR) {
-				ISchemaManager schemaManager = new H2SchemaManager();
-				schemaManager.upgradeSchema(verInt, ISchemaManager.DATABASE_VERSION_CUR);
-				dbVersionProp.setValueStr(Integer.toString(ISchemaManager.DATABASE_VERSION_CUR));
-				inServer.save(dbVersionProp);
-			} else if (verInt > ISchemaManager.DATABASE_VERSION_CUR) {
-				// We don't actually support downgrading a DB.
-				//				ISchemaManager schemaManager = new H2SchemaManager();
-				//				schemaManager.downgradeSchema(verInt, DATABASE_VERSION_CUR);
-				//				dbVersionProp.setValueStr(Integer.toString(DATABASE_VERSION_CUR));
-				//				inServer.save(dbVersionProp);
-			}
-		}
 	}
 
 	// --------------------------------------------------------------------------

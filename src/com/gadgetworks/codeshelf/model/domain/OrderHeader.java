@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderHeader.java,v 1.4 2012/10/02 15:12:22 jeffw Exp $
+ *  $Id: OrderHeader.java,v 1.5 2012/10/03 06:39:02 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -112,6 +112,15 @@ public class OrderHeader extends DomainObjectABC {
 		if (inParent instanceof Facility) {
 			setParentFacility((Facility) inParent);
 		}
+	}
+	
+	@JsonIgnore
+	public String getOrderId() {
+		return getDomainId();
+	}
+
+	public final void setOrderId(String inOrderId) {
+		setDomainId(inOrderId);
 	}
 
 	@JsonIgnore

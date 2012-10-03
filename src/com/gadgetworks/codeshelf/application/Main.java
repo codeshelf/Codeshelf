@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Main.java,v 1.25 2012/10/02 15:12:22 jeffw Exp $
+ *  $Id: Main.java,v 1.26 2012/10/03 06:39:02 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -27,8 +27,6 @@ import com.gadgetworks.codeshelf.model.domain.ContainerUse;
 import com.gadgetworks.codeshelf.model.domain.ContainerUse.ContainerUseDao;
 import com.gadgetworks.codeshelf.model.domain.ControlGroup;
 import com.gadgetworks.codeshelf.model.domain.ControlGroup.ControlGroupDao;
-import com.gadgetworks.codeshelf.model.domain.DBProperty;
-import com.gadgetworks.codeshelf.model.domain.DBProperty.DBPropertyDao;
 import com.gadgetworks.codeshelf.model.domain.DropboxService;
 import com.gadgetworks.codeshelf.model.domain.DropboxService.DropboxServiceDao;
 import com.gadgetworks.codeshelf.model.domain.EdiDocumentLocator;
@@ -164,10 +162,6 @@ public final class Main {
 				bind(new TypeLiteral<ITypedDao<ControlGroup>>() {
 				}).to(ControlGroupDao.class);
 
-				requestStaticInjection(DBProperty.class);
-				bind(new TypeLiteral<ITypedDao<DBProperty>>() {
-				}).to(DBPropertyDao.class);
-				
 				requestStaticInjection(EdiDocumentLocator.class);
 				bind(new TypeLiteral<ITypedDao<EdiDocumentLocator>>() {
 				}).to(EdiDocumentLocatorDao.class);

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ItemMaster.java,v 1.3 2012/10/02 15:12:22 jeffw Exp $
+ *  $Id: ItemMaster.java,v 1.4 2012/10/03 06:39:02 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -125,5 +125,14 @@ public class ItemMaster extends DomainObjectABC {
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void removeItem(Item inItem) {
 		items.remove(inItem);
+	}
+
+	@JsonIgnore
+	public final String getItemMasterId() {
+		return getDomainId();
+	}
+
+	public final void setItemMasterId(String inItemMasterId) {
+		setDomainId(inItemMasterId);
 	}
 }
