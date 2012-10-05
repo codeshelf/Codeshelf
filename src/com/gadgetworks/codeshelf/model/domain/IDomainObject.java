@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: IDomainObject.java,v 1.9 2012/09/23 03:05:42 jeffw Exp $
+ *  $Id: IDomainObject.java,v 1.10 2012/10/05 21:01:40 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -46,16 +46,10 @@ public interface IDomainObject {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * @param inId
-	 */
-	void setDomainId(String inId);
-
-	// --------------------------------------------------------------------------
-	/**
 	 * Return the short domain ID for this object (that is unique among all of the objects under this parent).
 	 * @return
 	 */
-	String getDomainId();
+	String getShortDomainId();
 
 	// --------------------------------------------------------------------------
 	/**
@@ -63,6 +57,12 @@ public interface IDomainObject {
 	 * @return
 	 */
 	String getFullDomainId();
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inId
+	 */
+	void setShortDomainId(String inId);
 
 	// --------------------------------------------------------------------------
 	/**

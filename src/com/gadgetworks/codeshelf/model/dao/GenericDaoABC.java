@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: GenericDaoABC.java,v 1.5 2012/10/03 06:39:02 jeffw Exp $
+ *  $Id: GenericDaoABC.java,v 1.6 2012/10/05 21:01:41 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -127,7 +127,7 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 		String effectiveId;
 		// The organization ID is not part of any domain ID.
 		if ((inParentObject != null) && (!(inParentObject instanceof Organization))) {
-			effectiveId = inParentObject.getDomainId() + "." + inId.toUpperCase();
+			effectiveId = inParentObject.getShortDomainId() + "." + inId.toUpperCase();
 		} else {
 			effectiveId = inId.toUpperCase();
 		}

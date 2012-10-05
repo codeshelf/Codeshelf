@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.19 2012/10/03 06:39:02 jeffw Exp $
+ *  $Id: Facility.java,v 1.20 2012/10/05 21:01:40 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -159,7 +159,7 @@ public class Facility extends LocationABC {
 		String result = "";
 		Organization parentOrganization = getParentOrganization();
 		if (parentOrganization != null) {
-			result = parentOrganization.getDomainId();
+			result = parentOrganization.getShortDomainId();
 		}
 		return result;
 	}
@@ -233,7 +233,7 @@ public class Facility extends LocationABC {
 		OrderGroup result = null;
 
 		for (OrderGroup orderGroup : getOrderGroups()) {
-			if (orderGroup.getDomainId().equals(inOrderGroupID)) {
+			if (orderGroup.getShortDomainId().equals(inOrderGroupID)) {
 				result = orderGroup;
 				break;
 			}
@@ -251,7 +251,7 @@ public class Facility extends LocationABC {
 		OrderHeader result = null;
 
 		for (OrderHeader order : getOrderHeaders()) {
-			if (order.getDomainId().equals(inOrderID)) {
+			if (order.getShortDomainId().equals(inOrderID)) {
 				result = order;
 				break;
 			}
@@ -374,7 +374,7 @@ public class Facility extends LocationABC {
 
 		result = new DropboxService();
 		result.setParentFacility(this);
-		result.setDomainId(result.computeDefaultDomainId());
+		result.setShortDomainId(result.computeDefaultDomainId());
 		result.setProviderEnum(EdiProviderEnum.DROPBOX);
 		result.setServiceStateEnum(EdiServiceStateEnum.UNLINKED);
 

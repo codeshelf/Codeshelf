@@ -15,7 +15,7 @@ build.xml
 	<property name="modules.model.dir" value="${module.dir}/src/com/gadgetworks/codeshelf/model/domain" />
 	<property name="modules.enhance.dir" value="${module.dir}/build/com/gadgetworks/codeshelf/model/domain" />
 
-	<property name="javac.compile.using.version" value="1.6" />
+	<property name="javac.compile.using.version" value="1.7" />
 
 	<taskdef resource="net/sf/antcontrib/antcontrib.properties">
 		<classpath>

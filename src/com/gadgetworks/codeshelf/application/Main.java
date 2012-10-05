@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Main.java,v 1.26 2012/10/03 06:39:02 jeffw Exp $
+ *  $Id: Main.java,v 1.27 2012/10/05 21:01:41 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -133,7 +133,10 @@ public final class Main {
 				bind(ICodeShelfApplication.class).to(CodeShelfApplication.class);
 				bind(IWebSocketListener.class).to(WebSocketListener.class);
 				bind(IWebSessionManager.class).to(WebSessionManager.class);
-				
+				bind(IWebSessionReqCmdFactory.class).to(WebSessionReqCmdFactory.class);
+				bind(IDaoProvider.class).to(DaoProvider.class);
+				bind(IHttpServer.class).to(HttpServer.class);
+								
 				requestStaticInjection(Aisle.class);
 				bind(new TypeLiteral<ITypedDao<Aisle>>() {
 				}).to(AisleDao.class);
@@ -236,10 +239,6 @@ public final class Main {
 				
 				requestStaticInjection(WirelessDevice.class);
 				bind(IWirelessDeviceDao.class).to(WirelessDeviceDao.class);
-
-				bind(IWebSessionReqCmdFactory.class).to(WebSessionReqCmdFactory.class);
-				bind(IDaoProvider.class).to(DaoProvider.class);
-				
 			}
 		});
 

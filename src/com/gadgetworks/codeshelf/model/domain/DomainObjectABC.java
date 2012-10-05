@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DomainObjectABC.java,v 1.13 2012/10/03 06:39:02 jeffw Exp $
+ *  $Id: DomainObjectABC.java,v 1.14 2012/10/05 21:01:40 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -121,8 +121,12 @@ public abstract class DomainObjectABC implements IDomainObject {
 	/**
 	 * @return
 	 */
-	public Integer getIdDigits() {
+	protected Integer getIdDigits() {
 		return 2;
+	}
+	
+	protected boolean addParentIdToDomainId() {
+		return true;
 	}
 
 	// --------------------------------------------------------------------------
@@ -141,7 +145,7 @@ public abstract class DomainObjectABC implements IDomainObject {
 	 * @param inParentObject
 	 * @param inId
 	 */
-	public final void setDomainId(String inId) {
+	public final void setShortDomainId(String inId) {
 		
 		inId = inId.toUpperCase();
 		
@@ -150,7 +154,7 @@ public abstract class DomainObjectABC implements IDomainObject {
 		// All domain objects except Organization, have a parent domain object.
 		if ((parentObject == null) && (!(this instanceof Organization))) {
 			throw new DaoException("Domain object must have a parent");
-		} else if ((parentObject != null) && (!(parentObject instanceof Organization))) {
+		} else if ((parentObject != null) && (addParentIdToDomainId())) {
 			// Don't add the organization ID to the full domain ID.
 			domainId = parentObject.getFullDomainId() + "." + inId;
 		} else {
@@ -163,7 +167,7 @@ public abstract class DomainObjectABC implements IDomainObject {
 	 * Return the short domain ID for this object (that is unique among all of the objects under this parent).
 	 * @return
 	 */
-	public final String getDomainId() {
+	public final String getShortDomainId() {
 		String result = "";
 
 		if (domainId != null) {

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfApplication.java,v 1.42 2012/10/03 06:39:02 jeffw Exp $
+ *  $Id: CodeShelfApplication.java,v 1.43 2012/10/05 21:01:41 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -56,13 +56,15 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 	private WirelessDeviceEventHandler	mWirelessDeviceEventHandler;
 	private IWebSocketListener			mWebSocketListener;
 	private IDaoProvider				mDaoProvider;
+	private IHttpServer					mHttpServer;
 	private Thread						mShutdownHookThread;
 	private Runnable					mShutdownRunnable;
 
 	@Inject
-	public CodeShelfApplication(final IWebSocketListener inWebSocketManager, final IDaoProvider inDaoProvider) {
+	public CodeShelfApplication(final IWebSocketListener inWebSocketManager, final IDaoProvider inDaoProvider, final IHttpServer inHttpServer) {
 		mWebSocketListener = inWebSocketManager;
 		mDaoProvider = inDaoProvider;
+		mHttpServer = inHttpServer;
 		mControllerList = new ArrayList<IController>();
 	}
 
@@ -148,6 +150,8 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 		}
 
 		EdiProcessor.startProcessor();
+		
+		mHttpServer.startServer();
 
 		// Initialize the TTS system.
 		// (Do it on a thread, so we don't pause the start of the application.)
@@ -165,6 +169,8 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 	public void stopApplication() {
 
 		LOGGER.info("Stopping application");
+
+		mHttpServer.stopServer();
 
 		EdiProcessor.stopProcessor();
 
@@ -221,7 +227,7 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 		if (property == null) {
 			property = new PersistentProperty();
 			property.setParentOrganization(inOrganization);
-			property.setDomainId(inPropertyID);
+			property.setShortDomainId(inPropertyID);
 			property.setCurrentValueAsStr(inDefaultValue);
 			property.setDefaultValueAsStr(inDefaultValue);
 			shouldUpdate = true;
@@ -275,7 +281,7 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 		Organization organization = Organization.DAO.findByDomainId(null, inOrganizationId);
 		if (organization == null) {
 			organization = new Organization();
-			organization.setDomainId(inOrganizationId);
+			organization.setShortDomainId(inOrganizationId);
 			try {
 				Organization.DAO.store(organization);
 			} catch (DaoException e) {
@@ -461,7 +467,7 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 
 		// Set our class loader to the system classloader, so ebean can find the enhanced classes.
 		Thread.currentThread().setContextClassLoader(ClassLoader.getSystemClassLoader());
-		
+
 		ISchemaManager schemaManager = new H2SchemaManager();
 		schemaManager.verifySchema();
 

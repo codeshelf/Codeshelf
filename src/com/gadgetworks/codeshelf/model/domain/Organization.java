@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Organization.java,v 1.7 2012/09/23 03:05:42 jeffw Exp $
+ *  $Id: Organization.java,v 1.8 2012/10/05 21:01:40 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -86,6 +86,10 @@ public class Organization extends DomainObjectABC {
 
 	public final String getDefaultDomainIdPrefix() {
 		return "O";
+	}
+
+	protected boolean addParentIdToDomainId() {
+		return false;
 	}
 
 	// --------------------------------------------------------------------------

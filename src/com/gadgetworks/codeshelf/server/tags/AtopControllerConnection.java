@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: AtopControllerConnection.java,v 1.9 2012/09/08 03:03:23 jeffw Exp $
+ *  $Id: AtopControllerConnection.java,v 1.10 2012/10/05 21:01:41 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.server.tags;
 
@@ -62,7 +62,7 @@ public final class AtopControllerConnection implements IControllerConnection {
 				public void run() {
 					processConnectAttempts();
 				}
-			}, INTERFACE_THREAD_NAME + mControlGroup.getDomainId().toString());
+			}, INTERFACE_THREAD_NAME + mControlGroup.getShortDomainId().toString());
 			mServerThread.setPriority(INTERFACE_THREAD_PRIORITY);
 			mServerThread.setDaemon(true);
 			mServerThread.start();

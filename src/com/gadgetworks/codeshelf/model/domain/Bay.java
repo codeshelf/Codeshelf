@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Bay.java,v 1.7 2012/09/23 03:05:42 jeffw Exp $
+ *  $Id: Bay.java,v 1.8 2012/10/05 21:01:40 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -55,7 +55,7 @@ public class Bay extends LocationABC {
 	public Bay(final Aisle inAisle, final Double inPosX, final double inPosY, final double inPosZ) {
 		super(PositionTypeEnum.METERS_FROM_PARENT, inPosX, inPosY, inPosZ);
 		setParent(inAisle);
-		setDomainId(computeDefaultDomainId());
+		setShortDomainId(computeDefaultDomainId());
 	}
 
 	@JsonIgnore

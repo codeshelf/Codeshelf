@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DropboxService.java,v 1.17 2012/10/03 06:39:02 jeffw Exp $
+ *  $Id: DropboxService.java,v 1.18 2012/10/05 21:01:40 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -121,7 +121,7 @@ public class DropboxService extends EdiServiceABC {
 		EdiDocumentLocator result = null;
 
 		for (EdiDocumentLocator locator : getDocumentLocators()) {
-			if (locator.getDomainId().equals(inPath)) {
+			if (locator.getShortDomainId().equals(inPath)) {
 				result = locator;
 				break;
 			}
@@ -166,15 +166,23 @@ public class DropboxService extends EdiServiceABC {
 	/**
 	 * @return
 	 */
-	public String getFacilityPath() {
-		return FACILITY_FOLDER_PATH + getParent().getDomainId();
+	public final String getFacilityPath() {
+		return FACILITY_FOLDER_PATH + getParent().getShortDomainId();
 	}
 
-	public String getImportPath() {
+	// --------------------------------------------------------------------------
+	/**
+	 * @return
+	 */
+	public final String getImportPath() {
 		return getFacilityPath() + IMPORT_PATH;
 	}
 
-	public String getExportPath() {
+	// --------------------------------------------------------------------------
+	/**
+	 * @return
+	 */
+	public final String getExportPath() {
 		return getFacilityPath() + EXPORT_PATH;
 	}
 
@@ -204,7 +212,7 @@ public class DropboxService extends EdiServiceABC {
 	private boolean ensureBaseDirectories(DropboxAPI<Session> inClientSession) {
 		boolean result = false;
 
-		String facilityPath = FACILITY_FOLDER_PATH + getParent().getDomainId();
+		String facilityPath = FACILITY_FOLDER_PATH + getParent().getShortDomainId();
 		String importPath = facilityPath + IMPORT_PATH;
 		String exportPath = facilityPath + EXPORT_PATH;
 
@@ -463,7 +471,7 @@ public class DropboxService extends EdiServiceABC {
 					locator.setParentEdiService(mDropboxService);
 					locator.setReceived(new Timestamp(System.currentTimeMillis()));
 					locator.setDocumentStateEnum(EdiDocumentStatusEnum.NEW);
-					locator.setDomainId(inEntry.lcPath);
+					locator.setShortDomainId(inEntry.lcPath);
 					locator.setDocumentPath(inEntry.metadata.parentPath());
 					locator.setDocumentName(inEntry.metadata.fileName());
 
@@ -517,7 +525,7 @@ public class DropboxService extends EdiServiceABC {
 					if (order == null) {
 						order = new OrderHeader();
 						order.setParentFacility(getParentFacility());
-						order.setDomainId(importBean.getOrderId());
+						order.setShortDomainId(importBean.getOrderId());
 						order.setStatusEnum(OrderStatusEnum.NEW);
 						parentFacility.addOrderHeader(order);
 						if (group != null) {
@@ -567,7 +575,7 @@ public class DropboxService extends EdiServiceABC {
 					if (orderDetail == null) {
 						orderDetail = new OrderDetail();
 						orderDetail.setParentOrderHeader(order);
-						orderDetail.setDomainId(importBean.getOrderDetailId());
+						orderDetail.setShortDomainId(importBean.getOrderDetailId());
 						orderDetail.setStatusEnum(OrderStatusEnum.NEW);
 
 						order.addOrderDetail(orderDetail);

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Vertex.java,v 1.11 2012/09/24 17:07:42 jeffw Exp $
+ *  $Id: Vertex.java,v 1.12 2012/10/05 21:01:40 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -96,7 +96,7 @@ public class Vertex extends DomainObjectABC {
 		setDrawOrder(inDrawOrder);
 		setPosX(inPosX);
 		setPosY(inPosY);
-		setDomainId(computeDefaultDomainId());
+		setShortDomainId(computeDefaultDomainId());
 	}
 
 	@JsonIgnore

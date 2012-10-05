@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiServiceABC.java,v 1.9 2012/09/24 08:23:47 jeffw Exp $
+ *  $Id: EdiServiceABC.java,v 1.10 2012/10/05 21:01:40 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -29,7 +29,6 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 
 import com.gadgetworks.codeshelf.model.EdiProviderEnum;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
-import com.gadgetworks.codeshelf.model.IEdiService;
 
 // --------------------------------------------------------------------------
 /**

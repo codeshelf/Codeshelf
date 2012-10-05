@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderHeader.java,v 1.5 2012/10/03 06:39:02 jeffw Exp $
+ *  $Id: OrderHeader.java,v 1.6 2012/10/05 21:01:40 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -116,11 +116,11 @@ public class OrderHeader extends DomainObjectABC {
 	
 	@JsonIgnore
 	public String getOrderId() {
-		return getDomainId();
+		return getShortDomainId();
 	}
 
 	public final void setOrderId(String inOrderId) {
-		setDomainId(inOrderId);
+		setShortDomainId(inOrderId);
 	}
 
 	@JsonIgnore
@@ -133,7 +133,7 @@ public class OrderHeader extends DomainObjectABC {
 		OrderDetail result = null;
 
 		for (OrderDetail orderDetail : getOrderDetails()) {
-			if (orderDetail.getDomainId().equals(inOrderDetailId)) {
+			if (orderDetail.getShortDomainId().equals(inOrderDetailId)) {
 				result = orderDetail;
 				break;
 			}
