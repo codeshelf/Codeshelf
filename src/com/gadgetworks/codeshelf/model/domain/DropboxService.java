@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DropboxService.java,v 1.18 2012/10/05 21:01:40 jeffw Exp $
+ *  $Id: DropboxService.java,v 1.19 2012/10/06 07:09:33 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -121,7 +121,7 @@ public class DropboxService extends EdiServiceABC {
 		EdiDocumentLocator result = null;
 
 		for (EdiDocumentLocator locator : getDocumentLocators()) {
-			if (locator.getShortDomainId().equals(inPath)) {
+			if (locator.getDocumentPath().equals(inPath)) {
 				result = locator;
 				break;
 			}
@@ -465,7 +465,7 @@ public class DropboxService extends EdiServiceABC {
 			}
 
 			if (shouldUpdateEntry) {
-				EdiDocumentLocator locator = mDropboxService.getDocumentLocatorByPath(inEntry.lcPath);
+				EdiDocumentLocator locator = EdiDocumentLocator.DAO.findByDomainId(mDropboxService, inEntry.lcPath);
 				if (locator == null) {
 					locator = new EdiDocumentLocator();
 					locator.setParentEdiService(mDropboxService);

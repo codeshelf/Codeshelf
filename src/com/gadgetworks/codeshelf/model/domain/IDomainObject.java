@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: IDomainObject.java,v 1.10 2012/10/05 21:01:40 jeffw Exp $
+ *  $Id: IDomainObject.java,v 1.11 2012/10/06 07:09:33 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -31,6 +31,32 @@ public interface IDomainObject {
 	 * @return
 	 */
 	String getDefaultDomainIdPrefix();
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * @return
+	 */
+	boolean includeMeInDomainId();
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Return the short domain ID for this object (that is unique among all of the objects under this parent).
+	 * @return
+	 */
+	String getShortDomainId();
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inId
+	 */
+	void setShortDomainId(String inId);
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Return the full domain ID (that includes the "dotted" domain ID of each parent up to the top of the hierarchy).
+	 * @return
+	 */
+	String getFullDomainId();
 
 	// --------------------------------------------------------------------------
 	/**
@@ -43,26 +69,6 @@ public interface IDomainObject {
 	 * @param inLastDefaultSewquenceId
 	 */
 	void setLastDefaultSequenceId(Integer inLastDefaultSewquenceId);
-
-	// --------------------------------------------------------------------------
-	/**
-	 * Return the short domain ID for this object (that is unique among all of the objects under this parent).
-	 * @return
-	 */
-	String getShortDomainId();
-
-	// --------------------------------------------------------------------------
-	/**
-	 * Return the full domain ID (that includes the "dotted" domain ID of each parent up to the top of the hierarchy).
-	 * @return
-	 */
-	String getFullDomainId();
-
-	// --------------------------------------------------------------------------
-	/**
-	 * @param inId
-	 */
-	void setShortDomainId(String inId);
 
 	// --------------------------------------------------------------------------
 	/**

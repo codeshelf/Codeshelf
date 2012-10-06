@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DomainObjectABC.java,v 1.14 2012/10/05 21:01:40 jeffw Exp $
+ *  $Id: DomainObjectABC.java,v 1.15 2012/10/06 07:09:33 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -125,7 +125,7 @@ public abstract class DomainObjectABC implements IDomainObject {
 		return 2;
 	}
 	
-	protected boolean addParentIdToDomainId() {
+	public boolean includeMeInDomainId() {
 		return true;
 	}
 
@@ -154,8 +154,7 @@ public abstract class DomainObjectABC implements IDomainObject {
 		// All domain objects except Organization, have a parent domain object.
 		if ((parentObject == null) && (!(this instanceof Organization))) {
 			throw new DaoException("Domain object must have a parent");
-		} else if ((parentObject != null) && (addParentIdToDomainId())) {
-			// Don't add the organization ID to the full domain ID.
+		} else if ((parentObject != null) && (parentObject.includeMeInDomainId())) {
 			domainId = parentObject.getFullDomainId() + "." + inId;
 		} else {
 			domainId = inId;
