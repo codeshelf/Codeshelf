@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Main.java,v 1.27 2012/10/05 21:01:41 jeffw Exp $
+ *  $Id: Main.java,v 1.28 2012/10/10 22:15:19 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -9,6 +9,10 @@ package com.gadgetworks.codeshelf.application;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.gadgetworks.codeshelf.edi.EdiProcessor;
+import com.gadgetworks.codeshelf.edi.IEdiProcessor;
+import com.gadgetworks.codeshelf.edi.IOrderImporter;
+import com.gadgetworks.codeshelf.edi.OrderImporter;
 import com.gadgetworks.codeshelf.model.dao.DaoProvider;
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
@@ -136,6 +140,8 @@ public final class Main {
 				bind(IWebSessionReqCmdFactory.class).to(WebSessionReqCmdFactory.class);
 				bind(IDaoProvider.class).to(DaoProvider.class);
 				bind(IHttpServer.class).to(HttpServer.class);
+				bind(IEdiProcessor.class).to(EdiProcessor.class);
+				bind(IOrderImporter.class).to(OrderImporter.class);
 								
 				requestStaticInjection(Aisle.class);
 				bind(new TypeLiteral<ITypedDao<Aisle>>() {

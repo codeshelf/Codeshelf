@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DomainObjectABC.java,v 1.15 2012/10/06 07:09:33 jeffw Exp $
+ *  $Id: DomainObjectABC.java,v 1.16 2012/10/10 22:15:19 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -18,9 +18,12 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import lombok.ToString;
+import lombok.experimental.NonFinal;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.codehaus.jackson.annotate.JsonAutoDetect;
+import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
 
@@ -40,26 +43,29 @@ import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 @Entity
 //@MappedSuperclass
 @ToString
+@JsonAutoDetect(getterVisibility=Visibility.NONE)
 public abstract class DomainObjectABC implements IDomainObject {
 
 	private static final Log	LOGGER	= LogFactory.getLog(DomainObjectABC.class);
 
 	// This is the internal GUID for the object.
 	@Id
-	@Column(nullable = false)
 	@NonNull
+	@Column(nullable = false)
 	@Getter
 	@Setter
+	@JsonProperty
 	private Long				persistentId;
 
 	// The domain ID
-	@Column(nullable = false)
 	@NonNull
+	@Column(nullable = false)
+	@JsonProperty
 	private String				domainId;
 
 	// The last sequence used to generate a sequence ID.
-	@Column(nullable = false)
 	@NonNull
+	@Column(nullable = false)
 	@Getter
 	@Setter
 	private Integer				lastDefaultSequenceId;
@@ -67,6 +73,7 @@ public abstract class DomainObjectABC implements IDomainObject {
 	// This is not an application-editable field.
 	// It's for the private use of the ORM transaction system.
 	@Version
+	@NonNull
 	@Column(nullable = false)
 	@Getter
 	@Setter
@@ -80,7 +87,6 @@ public abstract class DomainObjectABC implements IDomainObject {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.IDomainObject#getDefaultDomainId()
 	 */
-	@JsonIgnore
 	public final String computeDefaultDomainId() {
 
 		// The default value in case we can't compute one.
@@ -145,6 +151,7 @@ public abstract class DomainObjectABC implements IDomainObject {
 	 * @param inParentObject
 	 * @param inId
 	 */
+	@JsonProperty
 	public final void setShortDomainId(String inId) {
 		
 		inId = inId.toUpperCase();
@@ -166,6 +173,7 @@ public abstract class DomainObjectABC implements IDomainObject {
 	 * Return the short domain ID for this object (that is unique among all of the objects under this parent).
 	 * @return
 	 */
+	@JsonProperty
 	public final String getShortDomainId() {
 		String result = "";
 
@@ -184,6 +192,7 @@ public abstract class DomainObjectABC implements IDomainObject {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.IDomainObject#getFullDomainId()
 	 */
+	@JsonProperty
 	public final String getFullDomainId() {
 		return domainId;
 	}
@@ -192,6 +201,7 @@ public abstract class DomainObjectABC implements IDomainObject {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.IDomainObject#getFullParentDomainId()
 	 */
+	@JsonProperty
 	public final String getParentFullDomainId() {
 		String result = "";
 
@@ -206,6 +216,7 @@ public abstract class DomainObjectABC implements IDomainObject {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.IDomainObject#getParentPersistentId()
 	 */
+	@JsonProperty
 	public final Long getParentPersistentId() {
 		Long result = null;
 		IDomainObject domainObject = getParent();

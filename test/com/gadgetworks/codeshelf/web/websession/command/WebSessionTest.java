@@ -12,13 +12,14 @@ import com.avaje.ebean.Query;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.IDaoListener;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.codeshelf.model.dao.MockDao;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.model.domain.Organization;
-import com.gadgetworks.codeshelf.model.domain.DomainObjectABC;
 import com.gadgetworks.codeshelf.web.websession.IWebSession;
 import com.gadgetworks.codeshelf.web.websession.WebSession;
 import com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmdFactory;
 import com.gadgetworks.codeshelf.web.websession.command.req.WebSessionReqCmdFactory;
+import com.gadgetworks.codeshelf.web.websession.command.resp.IWebSessionRespCmd;
 import com.gadgetworks.codeshelf.web.websocket.IWebSocket;
 
 public class WebSessionTest {
@@ -34,65 +35,39 @@ public class WebSessionTest {
 		}
 	}
 
-	private class TestOrganizationDao implements ITypedDao<Organization> {
-
-		public Organization findByPersistentId(Long inID) {
-			return null;
-		}
-
-		public Organization findByDomainId(IDomainObject inParentObject, String inId) {
-			return null;
-		}
-
-		public void store(Organization inDomainObject) throws DaoException {
-		}
-
-		public void delete(Organization inDomainObject) throws DaoException {
-		}
-
-		public List<Organization> getAll() {
-			return null;
-		}
-
-		public void pushNonPersistentUpdates(Organization inDomainObject) {
-		}
-
-		public void registerDAOListener(IDaoListener inListener) {
-		}
-
-		public void unregisterDAOListener(IDaoListener inListener) {
-		}
-
-		public void removeDAOListeners() {
-		}
-
-		public List<Organization> findByPersistentIdList(List<Long> inIdList) {
-			return null;
-		}
-
-		public List<Organization> findByFilter(String inFilter, Map<String, Object> inFilterParams) {
-			return null;
-		}
-
-		public Class<Organization> getDaoClass() {
-			return null;
-		}
-
-		@Override
-		public Query<Organization> query() {
-			return null;
-		}
-	}
-
 	@Test
-	public void testProcessMessageLaunchCodeCheck() {
+	public final void testLaunchCodeCheckSucceed() {
+		
+		MockDao<Organization> organizationDao = new MockDao<Organization>();
+		
+		Organization organization = new Organization();
+		organization.setShortDomainId("O1");
+		organizationDao.store(organization);
+		
 		TestWebSocket testWebSocket = new TestWebSocket();
-		IWebSessionReqCmdFactory factory = new WebSessionReqCmdFactory(new TestOrganizationDao(), null);
+		IWebSessionReqCmdFactory factory = new WebSessionReqCmdFactory(organizationDao, null);
 		IWebSession webSession = new WebSession(testWebSocket, factory);
-		String inMessage = "{\"id\":\"cmdid_5\",\"type\":\"LAUNCH_CODE_CHECK\",\"data\":{\"launchCode\":\"12345\"}}";
+		String inMessage = "{\"id\":\"cid_5\",\"type\":\"LAUNCH_CODE_RQ\",\"data\":{\"launchCode\":\"O1\"}}";
+		IWebSessionRespCmd respCommand = webSession.processMessage(inMessage);
 
-		webSession.processMessage(inMessage);
+		Assert.assertEquals("{\"id\":\"cid_5\",\"type\":\"LAUNCH_CODE_RS\",\"data\":{\"LAUNCH_CODE_RS\":\"SUCCEED\",\"organization\":{\"persistentId\":null,\"domainId\":\"O1\",\"description\":\"\",\"className\":\"Organization\",\"shortDomainId\":\"O1\",\"fullDomainId\":\"O1\",\"parentPersistentId\":null,\"parentFullDomainId\":\"\"}}}", respCommand.getResponseMsg());
+	}
+	
+	@Test
+	public final void testLaunchCodeCheckFail() {
 
-		Assert.assertEquals("{\"id\":\"cmdid_5\",\"type\":\"LAUNCH_CODE_RESP\",\"data\":{\"LAUNCH_CODE_RESP\":\"FAIL\"}}", testWebSocket.getSendString());
+		MockDao<Organization> organizationDao = new MockDao<Organization>();
+		
+		Organization organization = new Organization();
+		organization.setShortDomainId("O1");
+		organizationDao.store(organization);
+		
+		TestWebSocket testWebSocket = new TestWebSocket();
+		IWebSessionReqCmdFactory factory = new WebSessionReqCmdFactory(organizationDao, null);
+		IWebSession webSession = new WebSession(testWebSocket, factory);
+		String inMessage = "{\"id\":\"cid_5\",\"type\":\"LAUNCH_CODE_RQ\",\"data\":{\"launchCode\":\"XXX\"}}";
+		IWebSessionRespCmd respCommand = webSession.processMessage(inMessage);
+
+		Assert.assertEquals("{\"id\":\"cid_5\",\"type\":\"LAUNCH_CODE_RS\",\"data\":{\"LAUNCH_CODE_RS\":\"FAIL\"}}", respCommand.getResponseMsg());
 	}
 }

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Organization.java,v 1.9 2012/10/06 07:09:33 jeffw Exp $
+ *  $Id: Organization.java,v 1.10 2012/10/10 22:15:19 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -14,12 +14,16 @@ import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.Setter;
 import lombok.ToString;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.codehaus.jackson.annotate.JsonAutoDetect;
+import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonProperty;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
@@ -43,6 +47,7 @@ import com.google.inject.Singleton;
 @Entity
 @Table(name = "ORGANIZATION")
 @ToString
+@JsonAutoDetect(getterVisibility=Visibility.NONE)
 public class Organization extends DomainObjectABC {
 
 	@Inject
@@ -58,20 +63,20 @@ public class Organization extends DomainObjectABC {
 	private static final Log	LOGGER		= LogFactory.getLog(Organization.class);
 
 	// The facility description.
+	@NonNull
+	@Column(nullable = false)
 	@Getter
 	@Setter
-	@Column(nullable = false)
+	@JsonProperty
 	private String				description;
 
 	// For a network this is a list of all of the users that belong in the set.
 	@OneToMany(mappedBy = "parent")
-	@JsonIgnore
 	@Getter
 	private List<User>			users		= new ArrayList<User>();
 
 	// For a network this is a list of all of the facilities that belong in the set.
 	@OneToMany(mappedBy = "parentOrganization")
-	@JsonIgnore
 	@Getter
 	private List<Facility>		facilities	= new ArrayList<Facility>();
 
@@ -79,7 +84,6 @@ public class Organization extends DomainObjectABC {
 		description = "";
 	}
 
-	@JsonIgnore
 	public final ITypedDao<Organization> getDao() {
 		return DAO;
 	}
@@ -105,7 +109,6 @@ public class Organization extends DomainObjectABC {
 
 	}
 
-	@JsonIgnore
 	public final List<? extends IDomainObject> getChildren() {
 		return getFacilities();
 	}

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiProcessor.java,v 1.10 2012/10/03 06:39:02 jeffw Exp $
+ *  $Id: EdiProcessor.java,v 1.11 2012/10/10 22:15:20 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -11,90 +11,43 @@ import org.apache.commons.logging.LogFactory;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.domain.DropboxService;
 import com.gadgetworks.codeshelf.model.domain.Facility;
+import com.gadgetworks.codeshelf.model.domain.Facility.FacilityDao;
+import com.google.inject.Inject;
 
 // --------------------------------------------------------------------------
 /**
  *  @author jeffw
  */
-public final class EdiProcessor {
+public final class EdiProcessor implements IEdiProcessor {
 
-	public static final long				PROCESS_INTERVAL_MILLIS		= 1 * 10 * 1000;
+	public static final long	PROCESS_INTERVAL_MILLIS		= 1 * 10 * 1000;
 
-	private static final Log				LOGGER						= LogFactory.getLog(EdiProcessor.class);
+	private static final Log	LOGGER						= LogFactory.getLog(EdiProcessor.class);
 
-	private static final String				EDIPROCESSOR_THREAD_NAME	= "EDI Processor";
+	private static final String	EDIPROCESSOR_THREAD_NAME	= "EDI Processor";
 
-	private static volatile EdiProcessor	mEdiProcessor;
+	private long				mLastProcessMillis;
+	private boolean				mShouldRun;
+	private Thread				mProcessorThread;
 
-	private long							mLastProcessMillis;
-	private boolean							mShouldRun;
-	private Thread							mProcessorThread;
-	private ThreadGroup						mProcessThreadGroup;
+	private IOrderImporter		mOrderImporter;
+	private FacilityDao			mFacilityDao;
 
-	public EdiProcessor() {
+	@Inject
+	public EdiProcessor(final IOrderImporter inOrderImporter, final FacilityDao inFacilityDao) {
+
+		mOrderImporter = inOrderImporter;
+		mFacilityDao = inFacilityDao;
+
 		mShouldRun = false;
 		mLastProcessMillis = 0;
-		mProcessThreadGroup = new ThreadGroup(EDIPROCESSOR_THREAD_NAME);
-	}
 
-	public static ThreadGroup getProcessingThreadGroup() {
-		ThreadGroup result = null;
-		if (mEdiProcessor != null) {
-			result = mEdiProcessor.doGetProcessingThreadGroup();
-		}
-		return result;
 	}
 
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	public static void startProcessor() {
-		if (mEdiProcessor == null) {
-			mEdiProcessor = new EdiProcessor();
-		}
-		mEdiProcessor.doStartProcessor();
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 */
-	public static void restartProcessor() {
-		if (mEdiProcessor != null) {
-			mEdiProcessor.doRestartProcessor();
-		} else {
-			LOGGER.error("restartEventHarvester(): EdiProcessor was never started!");
-		}
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 */
-	public static void stopProcessor() {
-		if (mEdiProcessor != null) {
-			mEdiProcessor.doStopProcessor();
-		}
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 *  @param inHooBee
-	 */
-	public static void processForDropbox() {
-		mEdiProcessor.checkEdiServices();
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * @return
-	 */
-	public ThreadGroup doGetProcessingThreadGroup() {
-		return mProcessThreadGroup;
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 */
-	private void doStartProcessor() {
+	public void startProcessor() {
 		mShouldRun = true;
 		mProcessorThread = new Thread(new Runnable() {
 			public void run() {
@@ -109,10 +62,10 @@ public final class EdiProcessor {
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	private void doRestartProcessor() {
+	public void restartProcessor() {
 		mLastProcessMillis = 0;
 
-		doStopProcessor();
+		stopProcessor();
 		// Loop until the existing threads stop.
 		while (mProcessorThread.isAlive()) {
 			try {
@@ -121,13 +74,13 @@ public final class EdiProcessor {
 				LOGGER.error("", e);
 			}
 		}
-		doStartProcessor();
+		startProcessor();
 	}
 
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	private void doStopProcessor() {
+	public void stopProcessor() {
 		mShouldRun = false;
 	}
 
@@ -161,14 +114,14 @@ public final class EdiProcessor {
 	private void checkEdiServices() {
 
 		LOGGER.debug("Begin EDI harvest cycle.");
-		
+
 		// Loop through each facility to make sure that it's EDI service processes any queued EDI.
-		for (Facility facility : Facility.DAO.getAll()) {
+		for (Facility facility : mFacilityDao.getAll()) {
 			DropboxService dropboxService = facility.getDropboxService();
 
-			if (dropboxService != null) {			
+			if (dropboxService != null) {
 				if (dropboxService.getServiceStateEnum().equals(EdiServiceStateEnum.LINKED)) {
-					dropboxService.updateDocuments();
+					dropboxService.checkForOrderUpdates(mOrderImporter);
 				}
 			}
 		}

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfApplication.java,v 1.43 2012/10/05 21:01:41 jeffw Exp $
+ *  $Id: CodeShelfApplication.java,v 1.44 2012/10/10 22:15:19 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -31,7 +31,7 @@ import com.gadgetworks.codeshelf.controller.IController;
 import com.gadgetworks.codeshelf.controller.IWirelessInterface;
 import com.gadgetworks.codeshelf.controller.NetworkDeviceStateEnum;
 import com.gadgetworks.codeshelf.controller.SnapInterface;
-import com.gadgetworks.codeshelf.edi.EdiProcessor;
+import com.gadgetworks.codeshelf.edi.IEdiProcessor;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GWEbeanNamingConvention;
 import com.gadgetworks.codeshelf.model.dao.H2SchemaManager;
@@ -53,6 +53,7 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 
 	private boolean						mIsRunning	= true;
 	private List<IController>			mControllerList;
+	private IEdiProcessor				mEdiProcessor;
 	private WirelessDeviceEventHandler	mWirelessDeviceEventHandler;
 	private IWebSocketListener			mWebSocketListener;
 	private IDaoProvider				mDaoProvider;
@@ -61,10 +62,11 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 	private Runnable					mShutdownRunnable;
 
 	@Inject
-	public CodeShelfApplication(final IWebSocketListener inWebSocketManager, final IDaoProvider inDaoProvider, final IHttpServer inHttpServer) {
+	public CodeShelfApplication(final IWebSocketListener inWebSocketManager, final IDaoProvider inDaoProvider, final IHttpServer inHttpServer, final IEdiProcessor inEdiProcessor) {
 		mWebSocketListener = inWebSocketManager;
 		mDaoProvider = inDaoProvider;
 		mHttpServer = inHttpServer;
+		mEdiProcessor = inEdiProcessor;
 		mControllerList = new ArrayList<IController>();
 	}
 
@@ -149,7 +151,7 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 			}
 		}
 
-		EdiProcessor.startProcessor();
+		mEdiProcessor.startProcessor();
 		
 		mHttpServer.startServer();
 
@@ -172,7 +174,7 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 
 		mHttpServer.stopServer();
 
-		EdiProcessor.stopProcessor();
+		mEdiProcessor.stopProcessor();
 
 		//		ActiveMqManager.stopBrokerService();
 

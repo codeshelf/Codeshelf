@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSession.java,v 1.21 2012/09/23 03:05:43 jeffw Exp $
+ *  $Id: WebSession.java,v 1.22 2012/10/10 22:15:19 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession;
 
@@ -44,7 +44,9 @@ public class WebSession implements IWebSession, IDaoListener {
 		mPersistentCommands = new HashMap<String, IWebSessionPersistentReqCmd>();
 	}
 
-	public final void processMessage(String inMessage) {
+	public final IWebSessionRespCmd processMessage(String inMessage) {
+		
+		IWebSessionRespCmd result = null;
 
 		try {
 			ObjectMapper mapper = new ObjectMapper();
@@ -52,7 +54,7 @@ public class WebSession implements IWebSession, IDaoListener {
 			IWebSessionReqCmd command = mWebSessionReqCmdFactory.createWebSessionCommand(rootNode);
 			LOGGER.debug(command);
 
-			IWebSessionRespCmd respCommand = command.exec();
+			result = command.exec();
 
 			// Some commands persist, and we use them to respond to data changes.
 			if (command instanceof IWebSessionPersistentReqCmd) {
@@ -67,15 +69,13 @@ public class WebSession implements IWebSession, IDaoListener {
 				}
 			}
 
-			if (respCommand != null) {
-				sendCommand(respCommand);
-			}
-
 		} catch (JsonProcessingException e) {
 			LOGGER.debug("", e);
 		} catch (IOException e) {
 			LOGGER.debug("", e);
 		}
+		
+		return result;
 	}
 
 	public final void endSession() {
@@ -89,7 +89,7 @@ public class WebSession implements IWebSession, IDaoListener {
 	 * The the response command back over the WebSession's WebSocket.
 	 * @param inCommand
 	 */
-	private void sendCommand(IWebSessionRespCmd inCommand) {
+	public final void sendCommand(IWebSessionRespCmd inCommand) {
 		try {
 			String message = inCommand.getResponseMsg();
 			LOGGER.info("Sent Command: " + inCommand.getCommandId() + " Data: " + message);

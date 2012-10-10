@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DropboxService.java,v 1.19 2012/10/06 07:09:33 jeffw Exp $
+ *  $Id: DropboxService.java,v 1.20 2012/10/10 22:15:19 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -17,6 +17,7 @@ import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -47,6 +48,7 @@ import com.dropbox.client2.session.AppKeyPair;
 import com.dropbox.client2.session.Session;
 import com.dropbox.client2.session.WebAuthSession;
 import com.gadgetworks.codeshelf.edi.CsvOrderImportBean;
+import com.gadgetworks.codeshelf.edi.IOrderImporter;
 import com.gadgetworks.codeshelf.model.EdiDocumentStatusEnum;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
@@ -93,8 +95,8 @@ public class DropboxService extends EdiServiceABC {
 	private static final String		EXPORT_PATH				= "/export";
 
 	@Column(nullable = true)
-	@Getter
-	@Setter
+	@Getter(value = AccessLevel.PRIVATE)
+	@Setter(value = AccessLevel.PRIVATE)
 	private String					cursor;
 
 	public DropboxService() {
@@ -106,13 +108,13 @@ public class DropboxService extends EdiServiceABC {
 		return DAO;
 	}
 
-	public final void updateDocuments() {
+	public final void checkForOrderUpdates(IOrderImporter inOrderImporter) {
 		// Make sure we believe that we're properly registered with the service before we try to contact it.
 		if (this.getServiceStateEnum().equals(EdiServiceStateEnum.LINKED)) {
 
 			DropboxAPI<Session> clientSession = getClientSession();
 			if (clientSession != null) {
-				documentCheck(clientSession);
+				documentCheck(clientSession, inOrderImporter);
 			}
 		}
 	}
@@ -190,14 +192,14 @@ public class DropboxService extends EdiServiceABC {
 	/**
 	 * @param inClientSession
 	 */
-	private void documentCheck(DropboxAPI<Session> inClientSession) {
+	private void documentCheck(DropboxAPI<Session> inClientSession, IOrderImporter inOrderImporter) {
 		if (ensureBaseDirectories(inClientSession)) {
 			try {
 				DropboxServiceHelper dropboxHelper = new DropboxServiceHelper(this);
 				DeltaPage<Entry> page = null;
 				while ((page == null) || (page.hasMore)) {
 					page = inClientSession.delta(getCursor());
-					dropboxHelper.processDeltas(inClientSession, page);
+					dropboxHelper.processDeltas(inClientSession, page, inOrderImporter);
 				}
 			} catch (DropboxException e) {
 				LOGGER.error("Dropbox session error", e);
@@ -413,9 +415,9 @@ public class DropboxService extends EdiServiceABC {
 		 * @param inClientSession
 		 * @param inPage
 		 */
-		private void processDeltas(DropboxAPI<Session> inClientSession, DeltaPage<Entry> inPage) {
+		private void processDeltas(DropboxAPI<Session> inClientSession, DeltaPage<Entry> inPage, IOrderImporter inOrderImporter) {
 			if ((inPage != null) && (inPage.cursor != null) && (!inPage.cursor.equals(mDropboxService.getCursor()))) {
-				iteratePage(inClientSession, inPage);
+				iteratePage(inClientSession, inPage, inOrderImporter);
 
 				mDropboxService.setCursor(inPage.cursor);
 				try {
@@ -431,13 +433,13 @@ public class DropboxService extends EdiServiceABC {
 		 * @param inClientSession
 		 * @param inPage
 		 */
-		private void iteratePage(DropboxAPI<Session> inClientSession, DeltaPage<Entry> inPage) {
+		private void iteratePage(DropboxAPI<Session> inClientSession, DeltaPage<Entry> inPage, IOrderImporter inOrderImporter) {
 			for (DeltaEntry<Entry> entry : inPage.entries) {
 				LOGGER.info(entry.lcPath);
 
 				if (entry.metadata != null) {
 					// Add, or modify.
-					processEntry(inClientSession, entry);
+					processEntry(inClientSession, entry, inOrderImporter);
 				} else {
 					removeEntry(inClientSession, entry);
 				}
@@ -448,13 +450,13 @@ public class DropboxService extends EdiServiceABC {
 		/**
 		 * @param inEntry
 		 */
-		private void processEntry(DropboxAPI<Session> inClientSession, DeltaEntry<Entry> inEntry) {
+		private void processEntry(DropboxAPI<Session> inClientSession, DeltaEntry<Entry> inEntry, IOrderImporter inOrderImporter) {
 
 			boolean shouldUpdateEntry = false;
 
 			if (inEntry.metadata.path.startsWith(mDropboxService.getImportPath())) {
 				if (!inEntry.metadata.isDir) {
-					handleImport(inClientSession, inEntry);
+					handleImport(inClientSession, inEntry, inOrderImporter);
 					shouldUpdateEntry = true;
 				}
 			} else if (inEntry.metadata.path.startsWith(mDropboxService.getExportPath())) {
@@ -488,117 +490,14 @@ public class DropboxService extends EdiServiceABC {
 		// --------------------------------------------------------------------------
 		/**
 		 */
-		private void handleImport(DropboxAPI<Session> inClientSession, DeltaEntry<Entry> inEntry) {
-			CSVReader csvReader = null;
+		private void handleImport(DropboxAPI<Session> inClientSession, DeltaEntry<Entry> inEntry, IOrderImporter inOrderImporter) {
+
 			try {
 
 				DropboxInputStream stream = inClientSession.getFileStream(inEntry.lcPath, null);
 				InputStreamReader reader = new InputStreamReader(stream);
-				csvReader = new CSVReader(reader);
-
-				HeaderColumnNameMappingStrategy<CsvOrderImportBean> strategy = new HeaderColumnNameMappingStrategy<CsvOrderImportBean>();
-				strategy.setType(CsvOrderImportBean.class);
-
-				CsvToBean<CsvOrderImportBean> csv = new CsvToBean<CsvOrderImportBean>();
-				List<CsvOrderImportBean> list = csv.parse(strategy, csvReader);
-				Facility parentFacility = mDropboxService.getParentFacility();
-
-				for (CsvOrderImportBean importBean : list) {
-					LOGGER.info(importBean);
-
-					OrderGroup group = parentFacility.findOrderGroup(importBean.getOrderGroupId());
-					if ((group == null) && (importBean.getOrderGroupId() != null) && (importBean.getOrderGroupId().length() > 0)) {
-						group = new OrderGroup();
-						group.setParentFacility(parentFacility);
-						group.setOrderGroupId(importBean.getOrderGroupId());
-						group.setStatusEnum(OrderStatusEnum.NEW);
-						parentFacility.addOrderGroup(group);
-						try {
-							OrderGroup.DAO.store(group);
-						} catch (DaoException e) {
-							LOGGER.error("", e);
-						}
-					}
-
-					OrderHeader order = parentFacility.findOrder(importBean.getOrderId());
-
-					if (order == null) {
-						order = new OrderHeader();
-						order.setParentFacility(getParentFacility());
-						order.setShortDomainId(importBean.getOrderId());
-						order.setStatusEnum(OrderStatusEnum.NEW);
-						parentFacility.addOrderHeader(order);
-						if (group != null) {
-							group.addOrderHeader(order);
-							order.setOrderGroup(group);
-							try {
-								OrderGroup.DAO.store(group);
-							} catch (DaoException e) {
-								LOGGER.error("", e);
-							}
-						}
-						try {
-							OrderHeader.DAO.store(order);
-						} catch (DaoException e) {
-							LOGGER.error("", e);
-						}
-					}
-
-					ItemMaster itemMaster = ItemMaster.DAO.findByDomainId(parentFacility, importBean.getItemId());
-					if (itemMaster == null) {
-						
-						UomMaster uomMaster = UomMaster.DAO.findByDomainId(parentFacility, importBean.getUomId());
-						if (uomMaster == null) {
-							uomMaster = new UomMaster();
-							uomMaster.setParentFacility(parentFacility);
-							uomMaster.setUomMasterId(importBean.getUomId());
-							parentFacility.addUomMaster(uomMaster);
-							try {
-								UomMaster.DAO.store(uomMaster);
-							} catch (DaoException e) {
-								LOGGER.error("", e);
-							}
-						}
-						itemMaster = new ItemMaster();
-						itemMaster.setParentFacility(parentFacility);
-						itemMaster.setItemMasterId(importBean.getItemId());
-						itemMaster.setStandardUoM(uomMaster);
-						parentFacility.addItemMaster(itemMaster);
-						try {
-							ItemMaster.DAO.store(itemMaster);
-						} catch (DaoException e) {
-							LOGGER.error("", e);
-						}
-					}
-					
-					OrderDetail orderDetail = order.findOrderDetail(importBean.getOrderDetailId());
-					if (orderDetail == null) {
-						orderDetail = new OrderDetail();
-						orderDetail.setParentOrderHeader(order);
-						orderDetail.setShortDomainId(importBean.getOrderDetailId());
-						orderDetail.setStatusEnum(OrderStatusEnum.NEW);
-
-						order.addOrderDetail(orderDetail);
-					}
-					
-					orderDetail.setItemMaster(itemMaster);
-					orderDetail.setDescription(importBean.getDescription());
-					orderDetail.setQuantity(Integer.valueOf(importBean.getQuantity()));
-					orderDetail.setUomId(importBean.getUomId());
-					orderDetail.setOrderDate(Timestamp.valueOf(importBean.getOrderDate()));
-
-					try {
-						OrderDetail.DAO.store(orderDetail);
-					} catch (DaoException e) {
-						LOGGER.error("", e);
-					}
-				}
-
-				csvReader.close();
-			} catch (FileNotFoundException e) {
-				LOGGER.error("", e);
-			} catch (IOException e) {
-				LOGGER.error("", e);
+				inOrderImporter.importerFromCsvStream(reader, mDropboxService.getParentFacility());
+				
 			} catch (DropboxException e) {
 				LOGGER.error("", e);
 			}

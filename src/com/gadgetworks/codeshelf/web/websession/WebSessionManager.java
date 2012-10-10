@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionManager.java,v 1.9 2012/09/08 03:03:22 jeffw Exp $
+ *  $Id: WebSessionManager.java,v 1.10 2012/10/10 22:15:19 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession;
 
@@ -12,6 +12,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.gadgetworks.codeshelf.web.websession.command.req.WebSessionReqCmdFactory;
+import com.gadgetworks.codeshelf.web.websession.command.resp.IWebSessionRespCmd;
 import com.gadgetworks.codeshelf.web.websocket.WebSocket;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -59,7 +60,10 @@ public class WebSessionManager implements IWebSessionManager {
 	public final void handleSessionMessage(WebSocket inWebSocket, String inMessage) {
 		IWebSession webSession = mWebSessions.get(inWebSocket);
 		if (webSession != null) {
-			webSession.processMessage(inMessage);
+			IWebSessionRespCmd respCommand = webSession.processMessage(inMessage);
+			if (respCommand != null) {
+				webSession.sendCommand(respCommand);
+			}
 		}
 	}
 }

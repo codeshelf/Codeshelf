@@ -1,18 +1,13 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Bay.java,v 1.8 2012/10/05 21:01:40 jeffw Exp $
+ *  $Id: Bay.java,v 1.9 2012/10/10 22:15:19 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
-import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
-import javax.persistence.ManyToOne;
 import javax.persistence.Table;
-
-import lombok.Getter;
-import lombok.Setter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;

@@ -8,7 +8,6 @@ import java.util.List;
 
 import org.junit.Test;
 
-import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.DomainObjectABC;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
@@ -94,7 +93,7 @@ public class PersistABCTest {
 	@Test
 	public void testGetId() {
 		PersistABCStub persist = new PersistABCStub();
-		assertEquals(IDomainObject.ID_COLUMN_NAME, "Id");
+		assertEquals(IDomainObject.ID_COLUMN_NAME, "domainId");
 	}
 
 	@Test
