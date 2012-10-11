@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiProcessor.java,v 1.11 2012/10/10 22:15:20 jeffw Exp $
+ *  $Id: EdiProcessor.java,v 1.12 2012/10/11 02:42:39 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -9,9 +9,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
-import com.gadgetworks.codeshelf.model.domain.DropboxService;
+import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.Facility.FacilityDao;
+import com.gadgetworks.codeshelf.model.domain.IEdiService;
 import com.google.inject.Inject;
 
 // --------------------------------------------------------------------------
@@ -20,21 +20,19 @@ import com.google.inject.Inject;
  */
 public final class EdiProcessor implements IEdiProcessor {
 
-	public static final long	PROCESS_INTERVAL_MILLIS		= 1 * 10 * 1000;
+	public static final long	PROCESS_INTERVAL_MILLIS	= 1 * 10 * 1000;
 
-	private static final Log	LOGGER						= LogFactory.getLog(EdiProcessor.class);
-
-	private static final String	EDIPROCESSOR_THREAD_NAME	= "EDI Processor";
+	private static final Log	LOGGER					= LogFactory.getLog(EdiProcessor.class);
 
 	private long				mLastProcessMillis;
 	private boolean				mShouldRun;
 	private Thread				mProcessorThread;
 
 	private IOrderImporter		mOrderImporter;
-	private FacilityDao			mFacilityDao;
+	private ITypedDao<Facility>	mFacilityDao;
 
 	@Inject
-	public EdiProcessor(final IOrderImporter inOrderImporter, final FacilityDao inFacilityDao) {
+	public EdiProcessor(final IOrderImporter inOrderImporter, final ITypedDao<Facility> inFacilityDao) {
 
 		mOrderImporter = inOrderImporter;
 		mFacilityDao = inFacilityDao;
@@ -117,11 +115,9 @@ public final class EdiProcessor implements IEdiProcessor {
 
 		// Loop through each facility to make sure that it's EDI service processes any queued EDI.
 		for (Facility facility : mFacilityDao.getAll()) {
-			DropboxService dropboxService = facility.getDropboxService();
-
-			if (dropboxService != null) {
-				if (dropboxService.getServiceStateEnum().equals(EdiServiceStateEnum.LINKED)) {
-					dropboxService.checkForOrderUpdates(mOrderImporter);
+			for (IEdiService ediService : facility.getEdiServices()) {
+				if (ediService.getServiceStateEnum().equals(EdiServiceStateEnum.LINKED)) {
+					ediService.checkForOrderUpdates(mOrderImporter);
 				}
 			}
 		}

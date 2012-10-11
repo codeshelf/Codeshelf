@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiServiceABC.java,v 1.10 2012/10/05 21:01:40 jeffw Exp $
+ *  $Id: EdiServiceABC.java,v 1.11 2012/10/11 02:42:39 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -11,6 +11,7 @@ import java.util.List;
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorColumn;
 import javax.persistence.DiscriminatorType;
+import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
@@ -42,20 +43,11 @@ import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 @Entity
 @MappedSuperclass
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@DiscriminatorColumn(name = "DTYPE", discriminatorType = DiscriminatorType.STRING)
 @Table(name = "EDISERVICE")
+@DiscriminatorColumn(name = "DTYPE", discriminatorType = DiscriminatorType.STRING)
+@DiscriminatorValue("ABC")
 @ToString
 public abstract class EdiServiceABC extends DomainObjectABC implements IEdiService {
-
-//	@Inject
-//	public static EdiServiceDao	DAO;
-//
-//	@Singleton
-//	public static class EdiServiceDao extends GenericDaoABC<EdiServiceABC> implements ITypedDao<EdiServiceABC> {
-//		public final Class<EdiServiceABC> getDaoClass() {
-//			return EdiServiceABC.class;
-//		}
-//	}
 
 	private static final Log			LOGGER				= LogFactory.getLog(EdiServiceABC.class);
 
@@ -129,5 +121,4 @@ public abstract class EdiServiceABC extends DomainObjectABC implements IEdiServi
 	public final void removeEdiDocumentLocator(EdiDocumentLocator inEdiDocumentLocator) {
 		documentLocators.remove(inEdiDocumentLocator);
 	}
-
 }

@@ -1,15 +1,22 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionRespCmdLaunchCode.java,v 1.4 2012/09/08 03:03:23 jeffw Exp $
+ *  $Id: WebSessionRespCmdLaunchCode.java,v 1.5 2012/10/11 02:42:39 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.resp;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
 
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.web.websession.command.IWebSessionCmd;
+import com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmd;
 
 /**
  * @author jeffw
@@ -49,7 +56,15 @@ public class WebSessionRespCmdLaunchCode extends WebSessionRespCmdABC {
 		// For valid response codes, also return the organization object;
 		if (mOrganization != null) {
 			ObjectMapper mapper = new ObjectMapper();
-			ObjectNode searchListNode = mapper.valueToTree(mOrganization);
+			Map<String, Object> propertiesMap = new HashMap<String, Object>();
+			propertiesMap.put(IWebSessionReqCmd.CLASSNAME, mOrganization.getClassName());
+			propertiesMap.put(IWebSessionReqCmd.PERSISTENT_ID, mOrganization.getPersistentId());
+			propertiesMap.put(IWebSessionReqCmd.SHORT_DOMAIN_ID, mOrganization.getFullDomainId());
+			propertiesMap.put(IWebSessionReqCmd.DESC, mOrganization.getDescription());
+			
+//			List<Map<String, Object>> resultsList = new ArrayList<Map<String, Object>>();
+//			resultsList.add(propertiesMap);
+			ObjectNode searchListNode = mapper.valueToTree(propertiesMap);
 			inOutDataNode.put("organization", searchListNode);
 		}
 	}

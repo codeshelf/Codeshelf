@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.20 2012/10/05 21:01:40 jeffw Exp $
+ *  $Id: Facility.java,v 1.21 2012/10/11 02:42:39 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -16,6 +16,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
+import lombok.Delegate;
 import lombok.Getter;
 import lombok.ToString;
 
@@ -104,10 +105,10 @@ public class Facility extends LocationABC {
 	private List<CodeShelfNetwork>	networks		= new ArrayList<CodeShelfNetwork>();
 
 	// For a network this is a list of all of the control groups that belong in the set.
-	@OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
+	@OneToMany(mappedBy = "parent", fetch = FetchType.LAZY, targetEntity = DropboxService.class)
 	@JsonIgnore
 	@Getter
-	private List<DropboxService>	dropboxServices	= new ArrayList<DropboxService>();
+	private List<IEdiService>		ediServices		= new ArrayList<IEdiService>();
 
 	public Facility() {
 		// Facilities have no parent location, but we don't want to allow ANY location to not have a parent.
@@ -175,13 +176,13 @@ public class Facility extends LocationABC {
 	}
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
-	public final void addDropboxService(DropboxService inDropboxService) {
-		dropboxServices.add(inDropboxService);
+	public final void addEdiService(IEdiService inEdiService) {
+		ediServices.add(inEdiService);
 	}
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
-	public final void removeDropboxService(DropboxService inDropboxServices) {
-		dropboxServices.remove(inDropboxServices);
+	public final void removeEdiService(IEdiService inEdiService) {
+		ediServices.remove(inEdiService);
 	}
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
@@ -353,8 +354,10 @@ public class Facility extends LocationABC {
 	public final DropboxService getDropboxService() {
 		DropboxService result = null;
 
-		for (DropboxService dropboxService : getDropboxServices()) {
-			result = dropboxService;
+		for (IEdiService ediService : getEdiServices()) {
+			if (ediService instanceof DropboxService) {
+				result = (DropboxService) ediService;
+			}
 			break;
 		}
 
@@ -378,7 +381,7 @@ public class Facility extends LocationABC {
 		result.setProviderEnum(EdiProviderEnum.DROPBOX);
 		result.setServiceStateEnum(EdiServiceStateEnum.UNLINKED);
 
-		this.addDropboxService(result);
+		this.addEdiService(result);
 		try {
 			DropboxService.DAO.store(result);
 		} catch (DaoException e) {

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DomainObjectABC.java,v 1.16 2012/10/10 22:15:19 jeffw Exp $
+ *  $Id: DomainObjectABC.java,v 1.17 2012/10/11 02:42:39 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -18,13 +18,11 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import lombok.ToString;
-import lombok.experimental.NonFinal;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
-import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
 
 import com.avaje.ebean.Ebean;
@@ -41,7 +39,6 @@ import com.gadgetworks.codeshelf.model.dao.ITypedDao;
  */
 
 @Entity
-//@MappedSuperclass
 @ToString
 @JsonAutoDetect(getterVisibility=Visibility.NONE)
 public abstract class DomainObjectABC implements IDomainObject {
