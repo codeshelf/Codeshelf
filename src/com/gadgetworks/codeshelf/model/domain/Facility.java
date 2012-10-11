@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.21 2012/10/11 02:42:39 jeffw Exp $
+ *  $Id: Facility.java,v 1.22 2012/10/11 09:04:36 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -118,7 +118,7 @@ public class Facility extends LocationABC {
 		uomMasters = new ArrayList<UomMaster>();
 	}
 
-	public Facility(final Double inPosX, final double inPosY) {
+	public Facility(final Double inPosX, final Double inPosY) {
 		super(PositionTypeEnum.GPS, inPosX, inPosY);
 		// Facilities have no parent location, but we don't want to allow ANY location to not have a parent.
 		// So in this case we make the facility its own parent.  It's also a way to know when we've topped-out in the location tree.

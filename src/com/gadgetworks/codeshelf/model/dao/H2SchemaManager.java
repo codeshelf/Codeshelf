@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: H2SchemaManager.java,v 1.46 2012/10/03 06:39:02 jeffw Exp $
+ *  $Id: H2SchemaManager.java,v 1.47 2012/10/11 09:04:36 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -16,7 +16,8 @@ import java.sql.Timestamp;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.gadgetworks.codeshelf.application.Util;
+import com.gadgetworks.codeshelf.application.IUtil;
+import com.google.inject.Inject;
 
 // --------------------------------------------------------------------------
 /**
@@ -25,6 +26,13 @@ import com.gadgetworks.codeshelf.application.Util;
 public final class H2SchemaManager implements ISchemaManager {
 
 	private static final Log	LOGGER	= LogFactory.getLog(H2SchemaManager.class);
+	
+	private IUtil mUtil;
+	
+	@Inject
+	public H2SchemaManager(final IUtil inUtil) {
+		mUtil = inUtil;
+	}
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
@@ -36,14 +44,14 @@ public final class H2SchemaManager implements ISchemaManager {
 		if (!doesSchemaExist()) {
 			if (!creatNewSchema()) {
 				LOGGER.error("Cannot create DB schema");
-				Util.exitSystem();
+				mUtil.exitSystem();
 			} else {
 				result = true;
 			}
 		} else {
 			try {
 				Class.forName("org.h2.Driver");
-				Connection connection = DriverManager.getConnection(Util.getApplicationDatabaseURL(), "codeshelf", "codeshelf");
+				Connection connection = DriverManager.getConnection(mUtil.getApplicationDatabaseURL(), "codeshelf", "codeshelf");
 
 				// Try to switch to the proper schema.
 				Statement stmt = connection.createStatement();
@@ -51,7 +59,7 @@ public final class H2SchemaManager implements ISchemaManager {
 
 				if (!resultSet.next()) {
 					LOGGER.error("Cannot create DB schema");
-					Util.exitSystem();
+					mUtil.exitSystem();
 				} else {
 					Integer schemaVersion = resultSet.getInt("VERSION");
 					if (schemaVersion < ISchemaManager.DATABASE_VERSION_CUR) {
@@ -81,7 +89,7 @@ public final class H2SchemaManager implements ISchemaManager {
 
 		try {
 			Class.forName("org.h2.Driver");
-			Connection connection = DriverManager.getConnection(Util.getApplicationDatabaseURL(), "codeshelf", "codeshelf");
+			Connection connection = DriverManager.getConnection(mUtil.getApplicationDatabaseURL(), "codeshelf", "codeshelf");
 
 			// Try to switch to the proper schema.
 			Statement stmt = connection.createStatement();
@@ -109,7 +117,7 @@ public final class H2SchemaManager implements ISchemaManager {
 
 		try {
 			Class.forName("org.h2.Driver");
-			Connection connection = DriverManager.getConnection(Util.getApplicationInitDatabaseURL(), "codeshelf", "codeshelf");
+			Connection connection = DriverManager.getConnection(mUtil.getApplicationInitDatabaseURL(), "codeshelf", "codeshelf");
 
 			// Try to switch to the proper schema.
 			Statement stmt = connection.createStatement();
@@ -139,7 +147,7 @@ public final class H2SchemaManager implements ISchemaManager {
 
 		try {
 			Class.forName("org.h2.Driver");
-			Connection connection = DriverManager.getConnection(Util.getApplicationInitDatabaseURL(), "codeshelf", "codeshelf");
+			Connection connection = DriverManager.getConnection(mUtil.getApplicationInitDatabaseURL(), "codeshelf", "codeshelf");
 
 			// Try to switch to the proper schema.
 			Statement stmt = connection.createStatement();
@@ -166,7 +174,7 @@ public final class H2SchemaManager implements ISchemaManager {
 		boolean result = false;
 		try {
 			Class.forName("org.h2.Driver");
-			Connection connection = DriverManager.getConnection(Util.getApplicationInitDatabaseURL(), "codeshelf", "codeshelf");
+			Connection connection = DriverManager.getConnection(mUtil.getApplicationInitDatabaseURL(), "codeshelf", "codeshelf");
 
 			// Try to switch to the proper schema.
 			Statement stmt = connection.createStatement();
@@ -206,7 +214,7 @@ public final class H2SchemaManager implements ISchemaManager {
 		// Apply these upgrades in version order.
 
 		// First get rid of the eBean dictionary file, so that the internal schema dictionary gets rebuilt.
-		File dictFile = new File(Util.getApplicationLogDirPath() + System.getProperty("file.separator") + ".ebean.h2.dictionary");
+		File dictFile = new File(mUtil.getApplicationLogDirPath() + System.getProperty("file.separator") + ".ebean.h2.dictionary");
 		if (dictFile.exists()) {
 			try {
 				dictFile.delete();
@@ -253,7 +261,7 @@ public final class H2SchemaManager implements ISchemaManager {
 
 		try {
 			Class.forName("org.h2.Driver");
-			Connection connection = DriverManager.getConnection(Util.getApplicationDatabaseURL(), "codeshelf", "codeshelf");
+			Connection connection = DriverManager.getConnection(mUtil.getApplicationDatabaseURL(), "codeshelf", "codeshelf");
 
 			// Try to switch to the proper schema.
 			Statement stmt = connection.createStatement();
@@ -489,7 +497,7 @@ public final class H2SchemaManager implements ISchemaManager {
 		// OrderHeader
 		result &= createTable("ORDERHEADER", //
 			"STATUSENUM VARCHAR(16) NOT NULL, " //
-					+ "ORDERGROUP_PERSISTENTID LONG NOT NULL, " //
+					+ "ORDERGROUP_PERSISTENTID LONG, " //
 					+ "PARENT_PERSISTENTID LONG NOT NULL " //
 		);
 

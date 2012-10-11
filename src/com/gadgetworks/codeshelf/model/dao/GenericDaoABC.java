@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: GenericDaoABC.java,v 1.7 2012/10/06 07:09:33 jeffw Exp $
+ *  $Id: GenericDaoABC.java,v 1.8 2012/10/11 09:04:36 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -94,14 +94,14 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	//		return result;
 	//	}
 
-	public final Query<T> query() {
-
-		Query<T> result = null;
-
-		result = Ebean.find(getDaoClass());
-
-		return result;
-	}
+	//	public final Query<T> query() {
+	//
+	//		Query<T> result = null;
+	//
+	//		result = Ebean.find(getDaoClass());
+	//
+	//		return result;
+	//	}
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
@@ -123,7 +123,7 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	 */
 	public final T findByDomainId(final IDomainObject inParentObject, final String inId) {
 		T result = null;
-		
+
 		String effectiveId;
 		if ((inParentObject != null) && (inParentObject.includeMeInDomainId())) {
 			// Only include the parent in the domain ID if requested for this class.

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderHeader.java,v 1.6 2012/10/05 21:01:40 jeffw Exp $
+ *  $Id: OrderHeader.java,v 1.7 2012/10/11 09:04:36 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -62,8 +62,8 @@ public class OrderHeader extends DomainObjectABC {
 	private OrderStatusEnum		statusEnum;
 
 	// The parent order group.
-	@Column(nullable = false)
-	@ManyToOne(optional = false)
+	@Column(nullable = true)
+	@ManyToOne(optional = true)
 	@JsonIgnore
 	@Getter
 	@Setter

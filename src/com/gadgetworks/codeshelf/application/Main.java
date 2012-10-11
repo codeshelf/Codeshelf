@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Main.java,v 1.28 2012/10/10 22:15:19 jeffw Exp $
+ *  $Id: Main.java,v 1.29 2012/10/11 09:04:36 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -14,7 +14,11 @@ import com.gadgetworks.codeshelf.edi.IEdiProcessor;
 import com.gadgetworks.codeshelf.edi.IOrderImporter;
 import com.gadgetworks.codeshelf.edi.OrderImporter;
 import com.gadgetworks.codeshelf.model.dao.DaoProvider;
+import com.gadgetworks.codeshelf.model.dao.Database;
+import com.gadgetworks.codeshelf.model.dao.H2SchemaManager;
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
+import com.gadgetworks.codeshelf.model.dao.IDatabase;
+import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.dao.WirelessDeviceDao;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
@@ -105,7 +109,8 @@ public final class Main {
 	public static void main(String[] inArgs) {
 
 		// Guice (injector) will invoke log4j, so we need to set some log dir parameters before we call it.
-		String appDataDir = Util.getApplicationDataDirPath();
+		Util util = new Util();
+		String appDataDir = util.getApplicationDataDirPath();
 		System.setProperty("app.data.dir", appDataDir);
 
 		//		java.util.logging.Logger rootLogger = LogManager.getLogManager().getLogger("");
@@ -134,6 +139,9 @@ public final class Main {
 		Injector injector = Guice.createInjector(new AbstractModule() {
 			@Override
 			protected void configure() {
+				bind(IUtil.class).to(Util.class);
+				bind(ISchemaManager.class).to(H2SchemaManager.class);
+				bind(IDatabase.class).to(Database.class);
 				bind(ICodeShelfApplication.class).to(CodeShelfApplication.class);
 				bind(IWebSocketListener.class).to(WebSocketListener.class);
 				bind(IWebSessionManager.class).to(WebSessionManager.class);

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Util.java,v 1.18 2012/09/08 03:03:24 jeffw Exp $
+ *  $Id: Util.java,v 1.19 2012/10/11 09:04:36 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -38,7 +38,7 @@ import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
  *  @author jeffw
  */
 
-public final class Util {
+public final class Util implements IUtil {
 
 	public static final String	DAO_BEAN_ID	= "systemDAO";
 
@@ -49,7 +49,8 @@ public final class Util {
 	// here before Util tries to use the LogFactory.
 	static {
 		
-		String appLogPath = getApplicationLogDirPath();
+		Util util = new Util();
+		String appLogPath = util.getApplicationLogDirPath();
 		System.setProperty("codeshelf.logfile", appLogPath + System.getProperty("file.separator") + "codeshelf.log");
 		File appDir = new File(appLogPath);
 		if (!appDir.exists()) {
@@ -57,7 +58,7 @@ public final class Util {
 				appDir.mkdir();
 			} catch (SecurityException e) {
 				e.printStackTrace();
-				exitSystem();
+				util.exitSystem();
 			}
 		}
 
@@ -81,11 +82,10 @@ public final class Util {
 
 	private static final Log	LOGGER		= LogFactory.getLog(Util.class);
 
-	// --------------------------------------------------------------------------
 	/**
-	 * Default constructor hidden for static class.
+	 * 
 	 */
-	private Util() {
+	public Util() {
 
 	}
 
@@ -93,7 +93,7 @@ public final class Util {
 	/**
 	 *  @return
 	 */
-	public static String getVersionString() {
+	public String getVersionString() {
 		String result = "???";
 
 		Properties versionProps = new Properties();
@@ -119,7 +119,7 @@ public final class Util {
 	/**
 	 * Handle ungraceful error/exit conditions.
 	 */
-	public static void exitSystem() {
+	public void exitSystem() {
 		System.exit(-1);
 	}
 
@@ -135,7 +135,7 @@ public final class Util {
 	 *  @param inURLName
 	 *  @return
 	 */
-	public static URL findResource(String inResourceName) {
+	public URL findResource(String inResourceName) {
 		//		try {
 		//			//return new URL(inURLName);
 		return Util.class.getClassLoader().getResource(inResourceName);
@@ -148,7 +148,7 @@ public final class Util {
 	/**
 	 *  @return
 	 */
-	public static String getApplicationDataDirPath() {
+	public String getApplicationDataDirPath() {
 		String result = "";
 
 		  // Setup the data directory for this application.
@@ -172,7 +172,7 @@ public final class Util {
 	/**
 	 *  @return
 	 */
-	public static String getApplicationInitDatabaseURL() {
+	public String getApplicationInitDatabaseURL() {
 		String result = "";
 
 		// Setup the data directory for this application.
@@ -185,7 +185,7 @@ public final class Util {
 	/**
 	 *  @return
 	 */
-	public static String getApplicationDatabaseURL() {
+	public String getApplicationDatabaseURL() {
 		String result = "";
 
 		// Setup the data directory for this application.
@@ -198,7 +198,7 @@ public final class Util {
 	/**
 	 * @return
 	 */
-	public static String getApplicationLogDirPath() {
+	public String getApplicationLogDirPath() {
 		String result = "";
 
 		// Setup the data directory for this application.
@@ -211,7 +211,7 @@ public final class Util {
 	/**
 	 * After we've either initialized the prefs or changed them then call this to effect the changes.
 	 */
-	public static void setLoggingLevelsFromPrefs(Organization inOrganization, ITypedDao<PersistentProperty> inPersistentPropertyDao) {
+	public void setLoggingLevelsFromPrefs(Organization inOrganization, ITypedDao<PersistentProperty> inPersistentPropertyDao) {
 
 		PersistentProperty gwLogLvlProp = inPersistentPropertyDao.findByDomainId(inOrganization, PersistentProperty.GENERAL_INTF_LOG_LEVEL);
 		Level level = Level.toLevel(gwLogLvlProp.getCurrentValueAsStr());
@@ -232,7 +232,7 @@ public final class Util {
 	 *  @throws Exception
 	 */
 
-	public static Cipher getCipher(int inMode, char[] inPassword) throws Exception {
+	public Cipher getCipher(int inMode, char[] inPassword) throws Exception {
 
 		int saltBytes = 8;
 		byte[] salt = new byte[saltBytes];
@@ -240,7 +240,7 @@ public final class Util {
 
 		// First let's get the salt from the .salt file.
 		// NB: The salt is not secret - it's just meant to protect against dictionary attacks on the PBE algol for various keys.
-		File file = new File(Util.getApplicationDataDirPath() + File.separatorChar + ".salt");
+		File file = new File(this.getApplicationDataDirPath() + File.separatorChar + ".salt");
 		if (!file.exists()) {
 			// The salt file didn't exist, so let's create one, and populate it with a new, random salt.
 
