@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfApplication.java,v 1.45 2012/10/11 09:04:36 jeffw Exp $
+ *  $Id: CodeShelfApplication.java,v 1.46 2012/10/12 07:55:56 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -28,7 +28,6 @@ import com.gadgetworks.codeshelf.model.dao.IDatabase;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.CodeShelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
 import com.gadgetworks.codeshelf.model.domain.WirelessDevice;
@@ -37,19 +36,24 @@ import com.google.inject.Inject;
 
 public final class CodeShelfApplication implements ICodeShelfApplication {
 
-	private static final Logger			LOGGER		= LoggerFactory.getLogger(CodeShelfApplication.class);
+	private static final Logger				LOGGER		= LoggerFactory.getLogger(CodeShelfApplication.class);
 
-	private boolean						mIsRunning	= true;
-	private List<IController>			mControllerList;
-	private IEdiProcessor				mEdiProcessor;
-	private WirelessDeviceEventHandler	mWirelessDeviceEventHandler;
-	private IWebSocketListener			mWebSocketListener;
-	private IDaoProvider				mDaoProvider;
-	private IHttpServer					mHttpServer;
-	private IDatabase					mDatabase;
-	private IUtil mUtil;
-	private Thread						mShutdownHookThread;
-	private Runnable					mShutdownRunnable;
+	private boolean							mIsRunning	= true;
+	private List<IController>				mControllerList;
+	private IEdiProcessor					mEdiProcessor;
+	private WirelessDeviceEventHandler		mWirelessDeviceEventHandler;
+	private IWebSocketListener				mWebSocketListener;
+	private IDaoProvider					mDaoProvider;
+	private IHttpServer						mHttpServer;
+	private IDatabase						mDatabase;
+	private IUtil							mUtil;
+	private Thread							mShutdownHookThread;
+	private Runnable						mShutdownRunnable;
+
+	private ITypedDao<PersistentProperty>	mPersistentPropertyDao;
+	private ITypedDao<Organization>			mOrganizationDao;
+	private ITypedDao<Facility>				mFacilityDao;
+	private ITypedDao<WirelessDevice>		mWirelessDeviceDao;
 
 	@Inject
 	public CodeShelfApplication(final IWebSocketListener inWebSocketManager,
@@ -57,13 +61,21 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 		final IHttpServer inHttpServer,
 		final IEdiProcessor inEdiProcessor,
 		final IDatabase inDatabase,
-		final IUtil inUtil) {
+		final IUtil inUtil,
+		ITypedDao<PersistentProperty> inPersistentPropertyDao,
+		ITypedDao<Organization> inOrganizationDao,
+		ITypedDao<Facility> inFacilityDao,
+		ITypedDao<WirelessDevice> inWirelessDeviceDao) {
 		mWebSocketListener = inWebSocketManager;
 		mDaoProvider = inDaoProvider;
 		mHttpServer = inHttpServer;
 		mEdiProcessor = inEdiProcessor;
 		mDatabase = inDatabase;
 		mUtil = inUtil;
+		mPersistentPropertyDao = inPersistentPropertyDao;
+		mOrganizationDao = inOrganizationDao;
+		mFacilityDao = inFacilityDao;
+		mWirelessDeviceDao = inWirelessDeviceDao;
 		mControllerList = new ArrayList<IController>();
 	}
 
@@ -103,10 +115,10 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 		// Some persistent objects need some of their fields set to a base/start state when the system restarts.
 		initializeApplicationData();
 
-		Collection<Organization> organizations = Organization.DAO.getAll();
+		Collection<Organization> organizations = mOrganizationDao.getAll();
 		for (Organization organization : organizations) {
 			initPreferencesStore(organization);
-			mUtil.setLoggingLevelsFromPrefs(organization, PersistentProperty.DAO);
+			mUtil.setLoggingLevelsFromPrefs(organization, mPersistentPropertyDao);
 			for (Facility facility : organization.getFacilities()) {
 
 				List<IWirelessInterface> interfaceList = new ArrayList<IWirelessInterface>();
@@ -127,7 +139,7 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 		mWebSocketListener.start();
 
 		// Start the ActiveMQ test server if required.
-		//		property = PersistentProperty.DAO.findById(PersistentProperty.ACTIVEMQ_RUN);
+		//		property = mPersistentPropertyDao.findById(PersistentProperty.ACTIVEMQ_RUN);
 		//		if ((property != null) && (property.getCurrentValueAsBoolean())) {
 		//			ActiveMqManager.startBrokerService();
 		//		}
@@ -141,9 +153,9 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 			controller.startController();
 		}
 
-		Organization organization = Organization.DAO.findByDomainId(null, "O1");
+		Organization organization = mOrganizationDao.findByDomainId(null, "O1");
 		if (organization != null) {
-			Facility facility = Facility.DAO.findByDomainId(organization, "F1");
+			Facility facility = mFacilityDao.findByDomainId(organization, "F1");
 			if (facility != null) {
 			}
 		}
@@ -175,13 +187,9 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 
 		//		ActiveMqManager.stopBrokerService();
 
-		// Remove all listeners from all of the DAOs.
-		//		for (IDao dao : mDaoRegistry.getDaoList()) {
-		//			dao.removeDAOListeners();
-		//		}
-		for (ITypedDao<IDomainObject> dao : mDaoProvider.getAllDaos()) {
-			dao.removeDAOListeners();
-		}
+//		for (ITypedDao<IDomainObject> dao : mDaoProvider.getAllDaos()) {
+//			dao.removeDAOListeners();
+//		}
 
 		// Stop the web socket manager.
 		mWebSocketListener.stop();
@@ -199,7 +207,7 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 
 	}
 
-	public void initPreferencesStore(Organization inOrganization) {
+	private void initPreferencesStore(Organization inOrganization) {
 		initPreference(inOrganization, PersistentProperty.FORCE_CHANNEL, "Preferred wireless channel", ControllerABC.NO_PREFERRED_CHANNEL_TEXT);
 		initPreference(inOrganization, PersistentProperty.GENERAL_INTF_LOG_LEVEL, "Preferred general log level", Level.INFO.toString());
 		initPreference(inOrganization, PersistentProperty.GATEWAY_INTF_LOG_LEVEL, "Preferred gateway log level", Level.INFO.toString());
@@ -220,7 +228,7 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 		boolean shouldUpdate = false;
 
 		// Find the property in the DB.
-		PersistentProperty property = PersistentProperty.DAO.findByDomainId(inOrganization, inPropertyID);
+		PersistentProperty property = mPersistentPropertyDao.findByDomainId(inOrganization, inPropertyID);
 
 		// If the property doesn't exist then create it.
 		if (property == null) {
@@ -241,7 +249,7 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 		// If the property changed then we need to persist the change.
 		if (shouldUpdate) {
 			try {
-				PersistentProperty.DAO.store(property);
+				mPersistentPropertyDao.store(property);
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}
@@ -260,11 +268,11 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 		createOrganzation("O3", "F3", "New Facility");
 
 		// Some radio device fields have no meaning from the last invocation of the application.
-		for (WirelessDevice wirelessDevice : WirelessDevice.DAO.getAll()) {
+		for (WirelessDevice wirelessDevice : mWirelessDeviceDao.getAll()) {
 			LOGGER.debug("Init data for wireless device id: " + wirelessDevice.getMacAddress());
 			wirelessDevice.setNetworkDeviceState(NetworkDeviceStateEnum.INVALID);
 			try {
-				WirelessDevice.DAO.store(wirelessDevice);
+				mWirelessDeviceDao.store(wirelessDevice);
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}
@@ -277,12 +285,12 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 	 * @param inPassword
 	 */
 	private void createOrganzation(String inOrganizationId, String inFacilityId, String inFacilityName) {
-		Organization organization = Organization.DAO.findByDomainId(null, inOrganizationId);
+		Organization organization = mOrganizationDao.findByDomainId(null, inOrganizationId);
 		if (organization == null) {
 			organization = new Organization();
 			organization.setShortDomainId(inOrganizationId);
 			try {
-				Organization.DAO.store(organization);
+				mOrganizationDao.store(organization);
 			} catch (DaoException e) {
 				e.printStackTrace();
 			}

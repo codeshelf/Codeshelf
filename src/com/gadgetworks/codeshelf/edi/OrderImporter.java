@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderImporter.java,v 1.1 2012/10/10 22:15:20 jeffw Exp $
+ *  $Id: OrderImporter.java,v 1.2 2012/10/12 07:55:56 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -20,12 +20,14 @@ import au.com.bytecode.opencsv.bean.HeaderColumnNameMappingStrategy;
 
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
+import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderGroup;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.UomMaster;
+import com.google.inject.Inject;
 
 /**
  * @author jeffw
@@ -33,7 +35,27 @@ import com.gadgetworks.codeshelf.model.domain.UomMaster;
  */
 public class OrderImporter implements IOrderImporter {
 
-	private static final Log	LOGGER	= LogFactory.getLog(EdiProcessor.class);
+	private static final Log		LOGGER	= LogFactory.getLog(EdiProcessor.class);
+
+	private ITypedDao<OrderGroup>	mOrderGroupDao;
+	private ITypedDao<OrderHeader>	mOrderHeaderDao;
+	private ITypedDao<OrderDetail>	mOrderDetailDao;
+	private ITypedDao<ItemMaster>	mItemMasterDao;
+	private ITypedDao<UomMaster>	mUomMasterDao;
+
+	@Inject
+	public OrderImporter(final ITypedDao<OrderGroup> inOrderGroupDao,
+		final ITypedDao<OrderHeader> inOrderHeaderDao,
+		final ITypedDao<OrderDetail> inOrderDetailDao,
+		final ITypedDao<ItemMaster> inItemMasterDao,
+		final ITypedDao<UomMaster> inUomMasterDao) {
+
+		mOrderGroupDao = inOrderGroupDao;
+		mOrderHeaderDao = inOrderHeaderDao;
+		mOrderDetailDao = inOrderDetailDao;
+		mItemMasterDao = inItemMasterDao;
+		mUomMasterDao = inUomMasterDao;
+	}
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
@@ -94,7 +116,7 @@ public class OrderImporter implements IOrderImporter {
 			result.setStatusEnum(OrderStatusEnum.NEW);
 			inFacility.addOrderGroup(result);
 			try {
-				OrderGroup.DAO.store(result);
+				mOrderGroupDao.store(result);
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}
@@ -126,7 +148,7 @@ public class OrderImporter implements IOrderImporter {
 				result.setOrderGroup(inOrderGroup);
 			}
 			try {
-				OrderHeader.DAO.store(result);
+				mOrderHeaderDao.store(result);
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}
@@ -144,17 +166,17 @@ public class OrderImporter implements IOrderImporter {
 	private ItemMaster ensureItemMaster(final CsvOrderImportBean inCsvImportBean, final Facility inFacility) {
 		ItemMaster result = null;
 
-		result = ItemMaster.DAO.findByDomainId(inFacility, inCsvImportBean.getItemId());
+		result = mItemMasterDao.findByDomainId(inFacility, inCsvImportBean.getItemId());
 		if (result == null) {
 
-			UomMaster uomMaster = UomMaster.DAO.findByDomainId(inFacility, inCsvImportBean.getUomId());
+			UomMaster uomMaster = mUomMasterDao.findByDomainId(inFacility, inCsvImportBean.getUomId());
 			if (uomMaster == null) {
 				uomMaster = new UomMaster();
 				uomMaster.setParentFacility(inFacility);
 				uomMaster.setUomMasterId(inCsvImportBean.getUomId());
 				inFacility.addUomMaster(uomMaster);
 				try {
-					UomMaster.DAO.store(uomMaster);
+					mUomMasterDao.store(uomMaster);
 				} catch (DaoException e) {
 					LOGGER.error("", e);
 				}
@@ -165,7 +187,7 @@ public class OrderImporter implements IOrderImporter {
 			result.setStandardUoM(uomMaster);
 			inFacility.addItemMaster(result);
 			try {
-				ItemMaster.DAO.store(result);
+				mItemMasterDao.store(result);
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}
@@ -201,7 +223,7 @@ public class OrderImporter implements IOrderImporter {
 		result.setOrderDate(Timestamp.valueOf(inCsvImportBean.getOrderDate()));
 
 		try {
-			OrderDetail.DAO.store(result);
+			mOrderDetailDao.store(result);
 		} catch (DaoException e) {
 			LOGGER.error("", e);
 		}

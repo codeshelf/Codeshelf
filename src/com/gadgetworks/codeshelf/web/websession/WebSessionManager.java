@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionManager.java,v 1.10 2012/10/10 22:15:19 jeffw Exp $
+ *  $Id: WebSessionManager.java,v 1.11 2012/10/12 07:55:56 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession;
 
@@ -11,7 +11,7 @@ import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.gadgetworks.codeshelf.web.websession.command.req.WebSessionReqCmdFactory;
+import com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmdFactory;
 import com.gadgetworks.codeshelf.web.websession.command.resp.IWebSessionRespCmd;
 import com.gadgetworks.codeshelf.web.websocket.WebSocket;
 import com.google.inject.Inject;
@@ -27,10 +27,10 @@ public class WebSessionManager implements IWebSessionManager {
 	private static final Log			LOGGER	= LogFactory.getLog(WebSessionManager.class);
 
 	private Map<WebSocket, IWebSession>	mWebSessions;
-	private WebSessionReqCmdFactory		mWebSessionReqCmdFactory;
+	private IWebSessionReqCmdFactory		mWebSessionReqCmdFactory;
 
 	@Inject
-	public WebSessionManager(final WebSessionReqCmdFactory inWebSessionReqCmdFactory) {
+	public WebSessionManager(final IWebSessionReqCmdFactory inWebSessionReqCmdFactory) {
 		mWebSessions = new HashMap<WebSocket, IWebSession>();
 		mWebSessionReqCmdFactory = inWebSessionReqCmdFactory;
 	}

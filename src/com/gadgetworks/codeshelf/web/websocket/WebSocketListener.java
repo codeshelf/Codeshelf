@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSocketListener.java,v 1.4 2012/09/17 04:20:09 jeffw Exp $
+ *  $Id: WebSocketListener.java,v 1.5 2012/10/12 07:55:56 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websocket;
 
@@ -111,8 +111,10 @@ public final class WebSocketListener implements IWebSocketListener {
 		} catch (IOException e) {
 			LOGGER.error("", e);
 		}
-		for (WebSocket webSocket : mWebSockets) {
-			webSocket.close();
+		if (mWebSockets != null) {
+			for (WebSocket webSocket : mWebSockets) {
+				webSocket.close();
+			}
 		}
 	}
 

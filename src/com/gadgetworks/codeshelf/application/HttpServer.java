@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: HttpServer.java,v 1.1 2012/10/05 21:01:41 jeffw Exp $
+ *  $Id: HttpServer.java,v 1.2 2012/10/12 07:55:56 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.application;
 
@@ -22,6 +22,7 @@ public class HttpServer implements IHttpServer {
 
 	private static final Log		LOGGER					= LogFactory.getLog(HttpServer.class);
 
+	private static final String		HTTPSERVER_THREADNAME	= "HTTP Server";
 	private static final Integer	HTTP_SERVER_PORT_NUM	= 8000;
 
 	private Server					mServer;
@@ -31,6 +32,17 @@ public class HttpServer implements IHttpServer {
 	 * @see com.gadgetworks.codeshelf.application.IHttpServer#startServer()
 	 */
 	public final void startServer() {
+
+		Thread httpThread = new Thread(new Runnable() {
+			public void run() {
+				doStartServer();
+			}
+		}, HTTPSERVER_THREADNAME);
+		httpThread.start();
+	}
+
+	private void doStartServer() {
+
 		mServer = new Server();
 		NetworkTrafficSelectChannelConnector connector = new NetworkTrafficSelectChannelConnector(mServer);
 		connector.setPort(HTTP_SERVER_PORT_NUM);
