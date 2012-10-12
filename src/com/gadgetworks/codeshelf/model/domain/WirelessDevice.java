@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WirelessDevice.java,v 1.7 2012/09/23 03:05:42 jeffw Exp $
+ *  $Id: WirelessDevice.java,v 1.8 2012/10/12 08:09:24 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -35,6 +35,7 @@ import com.gadgetworks.codeshelf.controller.NetAddress;
 import com.gadgetworks.codeshelf.controller.NetMacAddress;
 import com.gadgetworks.codeshelf.controller.NetworkDeviceStateEnum;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.codeshelf.model.dao.WirelessDeviceDao;
 import com.google.inject.Inject;
 
 // --------------------------------------------------------------------------
@@ -54,6 +55,9 @@ import com.google.inject.Inject;
 //@DiscriminatorValue("ABC")
 public class WirelessDevice extends DomainObjectABC implements INetworkDevice {
 
+	@Inject
+	public static WirelessDeviceDao	DAO;
+
 	public interface IWirelessDeviceDao extends ITypedDao<WirelessDevice>, IDeviceMaintainer {
 
 		WirelessDevice findWirelessDeviceByMacAddr(NetMacAddress inMacAddr);
@@ -64,8 +68,8 @@ public class WirelessDevice extends DomainObjectABC implements INetworkDevice {
 
 	}
 
-	@Inject
-	public static IWirelessDeviceDao	DAO;
+//	@Inject
+//	public static IWirelessDeviceDao	DAO;
 
 	public static final int				MAC_ADDR_BYTES		= 8;
 	public static final int				PUBLIC_KEY_BYTES	= 8;

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Main.java,v 1.29 2012/10/11 09:04:36 jeffw Exp $
+ *  $Id: Main.java,v 1.30 2012/10/12 08:09:24 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -68,7 +68,6 @@ import com.gadgetworks.codeshelf.model.domain.UserSession.UserSessionDao;
 import com.gadgetworks.codeshelf.model.domain.Vertex;
 import com.gadgetworks.codeshelf.model.domain.Vertex.VertexDao;
 import com.gadgetworks.codeshelf.model.domain.WirelessDevice;
-import com.gadgetworks.codeshelf.model.domain.WirelessDevice.IWirelessDeviceDao;
 import com.gadgetworks.codeshelf.model.domain.WorkArea;
 import com.gadgetworks.codeshelf.model.domain.WorkArea.WorkAreaDao;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
@@ -243,16 +242,20 @@ public final class Main {
 				bind(new TypeLiteral<ITypedDao<Vertex>>() {
 				}).to(VertexDao.class);
 				
+				requestStaticInjection(WirelessDevice.class);
+				bind(new TypeLiteral<ITypedDao<WirelessDevice>>() {
+				}).to(WirelessDeviceDao.class);
+
 				requestStaticInjection(WorkArea.class);
 				bind(new TypeLiteral<ITypedDao<WorkArea>>() {
 				}).to(WorkAreaDao.class);
-				
+
 				requestStaticInjection(WorkInstruction.class);
 				bind(new TypeLiteral<ITypedDao<WorkInstruction>>() {
 				}).to(WorkInstructionDao.class);
 				
-				requestStaticInjection(WirelessDevice.class);
-				bind(IWirelessDeviceDao.class).to(WirelessDeviceDao.class);
+//				requestStaticInjection(WirelessDevice.class);
+//				bind(IWirelessDeviceDao.class).to(WirelessDeviceDao.class);
 			}
 		});
 
