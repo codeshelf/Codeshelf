@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  OmniBox
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WirelessDeviceEventHandler.java,v 1.11 2012/09/08 03:03:24 jeffw Exp $
+ *  $Id: WirelessDeviceEventHandler.java,v 1.12 2012/10/13 22:14:24 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.application;
 
@@ -18,6 +18,7 @@ import com.gadgetworks.codeshelf.controller.NetworkDeviceStateEnum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.domain.WirelessDevice;
 import com.gadgetworks.codeshelf.model.domain.WirelessDevice.IWirelessDeviceDao;
+import com.google.inject.Inject;
 
 // --------------------------------------------------------------------------
 /**
@@ -26,6 +27,8 @@ import com.gadgetworks.codeshelf.model.domain.WirelessDevice.IWirelessDeviceDao;
 public final class WirelessDeviceEventHandler implements IControllerEventListener {
 
 	private static final Log	LOGGER	= LogFactory.getLog(WirelessDeviceEventHandler.class);
+	
+	private IWirelessDeviceDao mWirelessDeviceDao;
 
 	//	private List<String>		mDeviceMacAddrsToIgnore;
 
@@ -34,7 +37,10 @@ public final class WirelessDeviceEventHandler implements IControllerEventListene
 	 *  @param inController
 	 *  @param inServerConnectionManager
 	 */
-	public WirelessDeviceEventHandler(final List<IController> inControllerList) {
+	@Inject
+	public WirelessDeviceEventHandler(final List<IController> inControllerList, final IWirelessDeviceDao inWirelessDeviceDao) {
+		
+		mWirelessDeviceDao = inWirelessDeviceDao;
 
 		for (IController controller : inControllerList) {
 			controller.addControllerEventListener(this);			
@@ -49,7 +55,7 @@ public final class WirelessDeviceEventHandler implements IControllerEventListene
 	public boolean canNetworkDeviceAssociate(final NetMacAddress inMacAddr) {
 		boolean result = false;
 
-		WirelessDevice wirelessDevice = WirelessDevice.DAO.findWirelessDeviceByMacAddr(inMacAddr);
+		WirelessDevice wirelessDevice = mWirelessDeviceDao.findWirelessDeviceByMacAddr(inMacAddr);
 		if (wirelessDevice != null) {
 			result = true;
 		} else {
@@ -81,14 +87,14 @@ public final class WirelessDeviceEventHandler implements IControllerEventListene
 	 */
 	public void deviceAdded(INetworkDevice inNetworkDevice) {
 
-		WirelessDevice wirelessDevice = WirelessDevice.DAO.findWirelessDeviceByMacAddr(inNetworkDevice.getMacAddress());
+		WirelessDevice wirelessDevice = mWirelessDeviceDao.findWirelessDeviceByMacAddr(inNetworkDevice.getMacAddress());
 
 		if (wirelessDevice == null) {
 			LOGGER.error("Radio device: " + inNetworkDevice.getMacAddress() + " not found in DB");
 		} else {
-			///WirelessDevice.DAO.pushNonPersistentUpdates(wirelessDevice);
+			///mWirelessDeviceDao.pushNonPersistentUpdates(wirelessDevice);
 			try {
-				WirelessDevice.DAO.store(wirelessDevice);
+				mWirelessDeviceDao.store(wirelessDevice);
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}
@@ -102,14 +108,14 @@ public final class WirelessDeviceEventHandler implements IControllerEventListene
 	public void deviceLost(INetworkDevice inNetworkDevice) {
 
 		if (inNetworkDevice != null) {
-			WirelessDevice wirelessDevice = WirelessDevice.DAO.findWirelessDeviceByMacAddr(inNetworkDevice.getMacAddress());
+			WirelessDevice wirelessDevice = mWirelessDeviceDao.findWirelessDeviceByMacAddr(inNetworkDevice.getMacAddress());
 
 			if (wirelessDevice != null) {
 				wirelessDevice.setNetworkDeviceState(NetworkDeviceStateEnum.LOST);
 
-				//WirelessDevice.DAO.pushNonPersistentUpdates(wirelessDevice);
+				//mWirelessDeviceDao.pushNonPersistentUpdates(wirelessDevice);
 				try {
-					WirelessDevice.DAO.store(wirelessDevice);
+					mWirelessDeviceDao.store(wirelessDevice);
 				} catch (DaoException e) {
 					LOGGER.error("", e);
 				}
@@ -124,14 +130,14 @@ public final class WirelessDeviceEventHandler implements IControllerEventListene
 	public void deviceRemoved(INetworkDevice inNetworkDevice) {
 
 		if (inNetworkDevice != null) {
-			WirelessDevice wirelessDevice = WirelessDevice.DAO.findWirelessDeviceByMacAddr(inNetworkDevice.getMacAddress());
+			WirelessDevice wirelessDevice = mWirelessDeviceDao.findWirelessDeviceByMacAddr(inNetworkDevice.getMacAddress());
 
 			if (wirelessDevice != null) {
 				wirelessDevice.setNetworkDeviceState(NetworkDeviceStateEnum.LOST);
 
-				//WirelessDevice.DAO.pushNonPersistentUpdates(wirelessDevice);
+				//mWirelessDeviceDao.pushNonPersistentUpdates(wirelessDevice);
 				try {
-					WirelessDevice.DAO.store(wirelessDevice);
+					mWirelessDeviceDao.store(wirelessDevice);
 				} catch (DaoException e) {
 					LOGGER.error("", e);
 				}

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WorkInstruction.java,v 1.2 2012/10/01 07:16:28 jeffw Exp $
+ *  $Id: WorkInstruction.java,v 1.3 2012/10/13 22:14:24 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -44,7 +44,7 @@ import com.google.inject.Singleton;
 public abstract class WorkInstruction extends DomainObjectABC {
 
 	@Inject
-	public static WorkInstructionDao	DAO;
+	public static ITypedDao<WorkInstruction>	DAO;
 
 	@Singleton
 	public static class WorkInstructionDao extends GenericDaoABC<WorkInstruction> implements ITypedDao<WorkInstruction> {

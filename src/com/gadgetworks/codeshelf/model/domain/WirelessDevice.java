@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WirelessDevice.java,v 1.8 2012/10/12 08:09:24 jeffw Exp $
+ *  $Id: WirelessDevice.java,v 1.9 2012/10/13 22:14:24 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -56,7 +56,7 @@ import com.google.inject.Inject;
 public class WirelessDevice extends DomainObjectABC implements INetworkDevice {
 
 	@Inject
-	public static WirelessDeviceDao	DAO;
+	private static IWirelessDeviceDao	DAO;
 
 	public interface IWirelessDeviceDao extends ITypedDao<WirelessDevice>, IDeviceMaintainer {
 
@@ -68,50 +68,50 @@ public class WirelessDevice extends DomainObjectABC implements INetworkDevice {
 
 	}
 
-//	@Inject
-//	public static IWirelessDeviceDao	DAO;
+	//	@Inject
+	//	public static IWirelessDeviceDao	DAO;
 
-	public static final int				MAC_ADDR_BYTES		= 8;
-	public static final int				PUBLIC_KEY_BYTES	= 8;
+	public static final int			MAC_ADDR_BYTES		= 8;
+	public static final int			PUBLIC_KEY_BYTES	= 8;
 
-	private static final Log			LOGGER				= LogFactory.getLog(WirelessDevice.class);
+	private static final Log		LOGGER				= LogFactory.getLog(WirelessDevice.class);
 
 	@Column(nullable = false)
-	private byte[]						macAddress;
+	private byte[]					macAddress;
 	@Column(nullable = false)
-	private String						publicKey;
+	private String					publicKey;
 	// The description.
 	@Column
-	private String						description;
+	private String					description;
 	// The network address last assigned to this wireless device.
 	@Column
 	@Getter
 	@Setter
-	private byte[]						networkAddress;
+	private byte[]					networkAddress;
 	// The last seen battery level.
 	@Column
-	private short						lastBatteryLevel;
+	private short					lastBatteryLevel;
 	//@Transient
 	@Enumerated(value = EnumType.STRING)
 	@Column
-	private NetworkDeviceStateEnum		networkDeviceStatus;
+	private NetworkDeviceStateEnum	networkDeviceStatus;
 	//@Transient
 	@Column
-	private Long						lastContactTime;
+	private Long					lastContactTime;
 
 	// The owning network.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	private ControlGroup				parent;
+	private ControlGroup			parent;
 
 	@Transient
-	private short						expectedEndpointCount;
-	
+	private short					expectedEndpointCount;
+
 	@Transient
-	private Map<String, String>			kvpMap;
-	
+	private Map<String, String>		kvpMap;
+
 	@Transient
-	private short						expectedKvpCount;
+	private short					expectedKvpCount;
 
 	//	@Transient
 	//	private String						mDeviceDesc;

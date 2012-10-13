@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Main.java,v 1.30 2012/10/12 08:09:24 jeffw Exp $
+ *  $Id: Main.java,v 1.31 2012/10/13 22:14:24 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -68,6 +68,7 @@ import com.gadgetworks.codeshelf.model.domain.UserSession.UserSessionDao;
 import com.gadgetworks.codeshelf.model.domain.Vertex;
 import com.gadgetworks.codeshelf.model.domain.Vertex.VertexDao;
 import com.gadgetworks.codeshelf.model.domain.WirelessDevice;
+import com.gadgetworks.codeshelf.model.domain.WirelessDevice.IWirelessDeviceDao;
 import com.gadgetworks.codeshelf.model.domain.WorkArea;
 import com.gadgetworks.codeshelf.model.domain.WorkArea.WorkAreaDao;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
@@ -243,7 +244,7 @@ public final class Main {
 				}).to(VertexDao.class);
 				
 				requestStaticInjection(WirelessDevice.class);
-				bind(new TypeLiteral<ITypedDao<WirelessDevice>>() {
+				bind(new TypeLiteral<IWirelessDeviceDao>() {
 				}).to(WirelessDeviceDao.class);
 
 				requestStaticInjection(WorkArea.class);

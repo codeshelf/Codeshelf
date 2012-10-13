@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Bay.java,v 1.9 2012/10/10 22:15:19 jeffw Exp $
+ *  $Id: Bay.java,v 1.10 2012/10/13 22:14:24 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -36,7 +36,7 @@ import com.google.inject.Singleton;
 public class Bay extends LocationABC {
 
 	@Inject
-	public static BayDao	DAO;
+	public static ITypedDao<Bay>	DAO;
 
 	@Singleton
 	public static class BayDao extends GenericDaoABC<Bay> implements ITypedDao<Bay> {

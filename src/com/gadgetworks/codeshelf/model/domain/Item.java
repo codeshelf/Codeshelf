@@ -1,11 +1,10 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Item.java,v 1.2 2012/10/01 07:16:28 jeffw Exp $
+ *  $Id: Item.java,v 1.3 2012/10/13 22:14:24 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,7 +41,7 @@ import com.google.inject.Singleton;
 public class Item extends DomainObjectABC {
 
 	@Inject
-	public static ItemDao	DAO;
+	public static ITypedDao<Item>	DAO;
 
 	@Singleton
 	public static class ItemDao extends GenericDaoABC<Item> implements ITypedDao<Item> {

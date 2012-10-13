@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Tier.java,v 1.7 2012/09/23 03:05:42 jeffw Exp $
+ *  $Id: Tier.java,v 1.8 2012/10/13 22:14:24 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -41,7 +41,7 @@ import com.google.inject.Singleton;
 public class Tier extends LocationABC {
 
 	@Inject
-	public static TierDao	DAO;
+	public static ITypedDao<Tier>	DAO;
 
 	@Singleton
 	public static class TierDao extends GenericDaoABC<Tier> implements ITypedDao<Tier> {

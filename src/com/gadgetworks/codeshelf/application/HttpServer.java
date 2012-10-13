@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: HttpServer.java,v 1.2 2012/10/12 07:55:56 jeffw Exp $
+ *  $Id: HttpServer.java,v 1.3 2012/10/13 22:14:24 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.application;
 
@@ -45,6 +45,7 @@ public class HttpServer implements IHttpServer {
 
 		mServer = new Server();
 		NetworkTrafficSelectChannelConnector connector = new NetworkTrafficSelectChannelConnector(mServer);
+		connector.setHost("localhost");
 		connector.setPort(HTTP_SERVER_PORT_NUM);
 		mServer.addConnector(connector);
 

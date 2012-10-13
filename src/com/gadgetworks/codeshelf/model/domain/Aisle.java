@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Aisle.java,v 1.9 2012/10/05 21:01:40 jeffw Exp $
+ *  $Id: Aisle.java,v 1.10 2012/10/13 22:14:24 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -41,7 +41,7 @@ import com.google.inject.Singleton;
 public class Aisle extends LocationABC {
 
 	@Inject
-	public static AisleDao	DAO;
+	public static ITypedDao<Aisle>	DAO;
 
 	@Singleton
 	public static class AisleDao extends GenericDaoABC<Aisle> implements ITypedDao<Aisle> {
@@ -70,7 +70,7 @@ public class Aisle extends LocationABC {
 	}
 
 	@JsonIgnore
-	public final AisleDao getDao() {
+	public final ITypedDao<Aisle> getDao() {
 		return DAO;
 	}
 

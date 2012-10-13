@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderDetail.java,v 1.6 2012/10/05 21:01:40 jeffw Exp $
+ *  $Id: OrderDetail.java,v 1.7 2012/10/13 22:14:24 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -43,7 +43,7 @@ import com.google.inject.Singleton;
 public class OrderDetail extends DomainObjectABC {
 
 	@Inject
-	public static OrderDetailDao	DAO;
+	public static ITypedDao<OrderDetail>	DAO;
 
 	@Singleton
 	public static class OrderDetailDao extends GenericDaoABC<OrderDetail> implements ITypedDao<OrderDetail> {

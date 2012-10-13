@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: UomMaster.java,v 1.4 2012/10/05 21:01:40 jeffw Exp $
+ *  $Id: UomMaster.java,v 1.5 2012/10/13 22:14:24 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -41,7 +41,7 @@ import com.google.inject.Singleton;
 public class UomMaster extends DomainObjectABC {
 
 	@Inject
-	public static UomMasterDao	DAO;
+	public static ITypedDao<UomMaster>	DAO;
 
 	@Singleton
 	public static class UomMasterDao extends GenericDaoABC<UomMaster> implements ITypedDao<UomMaster> {

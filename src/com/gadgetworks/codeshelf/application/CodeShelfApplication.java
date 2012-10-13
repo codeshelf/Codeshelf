@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfApplication.java,v 1.46 2012/10/12 07:55:56 jeffw Exp $
+ *  $Id: CodeShelfApplication.java,v 1.47 2012/10/13 22:14:24 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -31,6 +31,7 @@ import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
 import com.gadgetworks.codeshelf.model.domain.WirelessDevice;
+import com.gadgetworks.codeshelf.model.domain.WirelessDevice.IWirelessDeviceDao;
 import com.gadgetworks.codeshelf.web.websocket.IWebSocketListener;
 import com.google.inject.Inject;
 
@@ -53,7 +54,7 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 	private ITypedDao<PersistentProperty>	mPersistentPropertyDao;
 	private ITypedDao<Organization>			mOrganizationDao;
 	private ITypedDao<Facility>				mFacilityDao;
-	private ITypedDao<WirelessDevice>		mWirelessDeviceDao;
+	private IWirelessDeviceDao				mWirelessDeviceDao;
 
 	@Inject
 	public CodeShelfApplication(final IWebSocketListener inWebSocketManager,
@@ -62,10 +63,10 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 		final IEdiProcessor inEdiProcessor,
 		final IDatabase inDatabase,
 		final IUtil inUtil,
-		ITypedDao<PersistentProperty> inPersistentPropertyDao,
-		ITypedDao<Organization> inOrganizationDao,
-		ITypedDao<Facility> inFacilityDao,
-		ITypedDao<WirelessDevice> inWirelessDeviceDao) {
+		final ITypedDao<PersistentProperty> inPersistentPropertyDao,
+		final ITypedDao<Organization> inOrganizationDao,
+		final ITypedDao<Facility> inFacilityDao,
+		final IWirelessDeviceDao inWirelessDeviceDao) {
 		mWebSocketListener = inWebSocketManager;
 		mDaoProvider = inDaoProvider;
 		mHttpServer = inHttpServer;
@@ -124,16 +125,16 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 				List<IWirelessInterface> interfaceList = new ArrayList<IWirelessInterface>();
 				// Create a CodeShelf interface for each CodeShelf network we have.
 				for (CodeShelfNetwork network : facility.getNetworks()) {
-					SnapInterface snapInterface = new SnapInterface(network);
+					SnapInterface snapInterface = new SnapInterface(network, mWirelessDeviceDao);
 					network.setWirelessInterface(snapInterface);
 					interfaceList.add(snapInterface);
 				}
 
-				mControllerList.add(new CodeShelfController(interfaceList, facility));
+				mControllerList.add(new CodeShelfController(interfaceList, facility, mWirelessDeviceDao));
 			}
 		}
 
-		mWirelessDeviceEventHandler = new WirelessDeviceEventHandler(mControllerList);
+		mWirelessDeviceEventHandler = new WirelessDeviceEventHandler(mControllerList, mWirelessDeviceDao);
 
 		// Start the WebSocket UX handler
 		mWebSocketListener.start();
@@ -187,9 +188,9 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 
 		//		ActiveMqManager.stopBrokerService();
 
-//		for (ITypedDao<IDomainObject> dao : mDaoProvider.getAllDaos()) {
-//			dao.removeDAOListeners();
-//		}
+		//		for (ITypedDao<IDomainObject> dao : mDaoProvider.getAllDaos()) {
+		//			dao.removeDAOListeners();
+		//		}
 
 		// Stop the web socket manager.
 		mWebSocketListener.stop();

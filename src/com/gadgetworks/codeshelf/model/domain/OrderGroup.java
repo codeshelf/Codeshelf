@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderGroup.java,v 1.5 2012/10/05 21:01:40 jeffw Exp $
+ *  $Id: OrderGroup.java,v 1.6 2012/10/13 22:14:24 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -43,7 +43,7 @@ import com.google.inject.Singleton;
 public class OrderGroup extends DomainObjectABC {
 
 	@Inject
-	public static OrderGroupDao	DAO;
+	public static ITypedDao<OrderGroup>	DAO;
 
 	@Singleton
 	public static class OrderGroupDao extends GenericDaoABC<OrderGroup> implements ITypedDao<OrderGroup> {
@@ -110,12 +110,12 @@ public class OrderGroup extends DomainObjectABC {
 			setParentFacility((Facility) inParent);
 		}
 	}
-	
+
 	@JsonIgnore
 	public String getOrderGroupId() {
 		return getShortDomainId();
 	}
-	
+
 	public final void setOrderGroupId(String inOrderGroupId) {
 		setShortDomainId(inOrderGroupId);
 	}
@@ -133,5 +133,17 @@ public class OrderGroup extends DomainObjectABC {
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void removeOrderHeader(OrderHeader inOrderHeader) {
 		orderHeaders.remove(inOrderHeader);
+	}
+
+	public final Boolean release() {
+		Boolean result = false;
+
+		// We can only release order groyps that are in the new state.
+		if (getStatusEnum().equals(OrderStatusEnum.NEW)) {
+			setStatusEnum(OrderStatusEnum.RELEASED);
+			OrderGroup.DAO.store(this);
+		}
+
+		return result;
 	}
 }

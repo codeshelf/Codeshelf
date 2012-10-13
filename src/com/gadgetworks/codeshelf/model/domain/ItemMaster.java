@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ItemMaster.java,v 1.5 2012/10/05 21:01:40 jeffw Exp $
+ *  $Id: ItemMaster.java,v 1.6 2012/10/13 22:14:24 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -42,7 +42,7 @@ import com.google.inject.Singleton;
 public class ItemMaster extends DomainObjectABC {
 
 	@Inject
-	public static ItemMasterDao	DAO;
+	public static ITypedDao<ItemMaster>	DAO;
 
 	@Singleton
 	public static class ItemMasterDao extends GenericDaoABC<ItemMaster> implements ITypedDao<ItemMaster> {
@@ -84,7 +84,7 @@ public class ItemMaster extends DomainObjectABC {
 	}
 
 	@JsonIgnore
-	public final ItemMasterDao getDao() {
+	public final ITypedDao<ItemMaster> getDao() {
 		return DAO;
 	}
 

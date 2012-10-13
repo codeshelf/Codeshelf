@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderHeader.java,v 1.7 2012/10/11 09:04:36 jeffw Exp $
+ *  $Id: OrderHeader.java,v 1.8 2012/10/13 22:14:24 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -43,7 +43,7 @@ import com.google.inject.Singleton;
 public class OrderHeader extends DomainObjectABC {
 
 	@Inject
-	public static OrderHeaderDao	DAO;
+	public static ITypedDao<OrderHeader>	DAO;
 
 	@Singleton
 	public static class OrderHeaderDao extends GenericDaoABC<OrderHeader> implements ITypedDao<OrderHeader> {
@@ -113,7 +113,7 @@ public class OrderHeader extends DomainObjectABC {
 			setParentFacility((Facility) inParent);
 		}
 	}
-	
+
 	@JsonIgnore
 	public String getOrderId() {
 		return getShortDomainId();

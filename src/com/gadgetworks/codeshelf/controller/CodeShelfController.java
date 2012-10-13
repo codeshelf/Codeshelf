@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfController.java,v 1.9 2012/09/08 03:03:24 jeffw Exp $
+ *  $Id: CodeShelfController.java,v 1.10 2012/10/13 22:14:24 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.controller;
@@ -14,10 +14,9 @@ import org.apache.commons.logging.LogFactory;
 import com.gadgetworks.codeshelf.command.CommandControlABC;
 import com.gadgetworks.codeshelf.command.CommandControlButton;
 import com.gadgetworks.codeshelf.command.CommandCsABC;
-import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
 import com.gadgetworks.codeshelf.model.domain.WirelessDevice;
+import com.gadgetworks.codeshelf.model.domain.WirelessDevice.IWirelessDeviceDao;
 import com.gadgetworks.codeshelf.query.IQuery;
 import com.gadgetworks.codeshelf.query.IResponse;
 import com.gadgetworks.codeshelf.query.QueryActorDescriptor;
@@ -46,8 +45,8 @@ public final class CodeShelfController extends ControllerABC {
 	 *  @param inSessionManager
 	 */
 	public CodeShelfController(final List<IWirelessInterface> inInterfaceList,
-		final Facility inFacility) {
-		super(inInterfaceList, inFacility);
+		final Facility inFacility, final IWirelessDeviceDao inWirelessDeviceDao) {
+		super(inInterfaceList, inFacility, inWirelessDeviceDao);
 	}
 
 	/* --------------------------------------------------------------------------
@@ -118,7 +117,7 @@ public final class CodeShelfController extends ControllerABC {
 		QueryActorDescriptor query = new QueryActorDescriptor();
 		this.sendQuery(query, inNetworkDevice);
 		inNetworkDevice.setNetworkDeviceState(NetworkDeviceStateEnum.SETUP);
-		WirelessDevice.DAO.deviceUpdated(inNetworkDevice, true);
+		mWirelessDeviceDao.deviceUpdated(inNetworkDevice, true);
 	}
 
 	/* --------------------------------------------------------------------------

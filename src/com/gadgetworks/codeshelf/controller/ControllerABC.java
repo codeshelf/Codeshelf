@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ControllerABC.java,v 1.15 2012/09/08 03:03:23 jeffw Exp $
+ *  $Id: ControllerABC.java,v 1.16 2012/10/13 22:14:24 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.controller;
@@ -41,8 +41,10 @@ import com.gadgetworks.codeshelf.command.ICommand;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
 import com.gadgetworks.codeshelf.model.domain.WirelessDevice;
+import com.gadgetworks.codeshelf.model.domain.WirelessDevice.IWirelessDeviceDao;
 import com.gadgetworks.codeshelf.query.IQuery;
 import com.gadgetworks.codeshelf.query.IResponse;
+import com.google.inject.Inject;
 
 // --------------------------------------------------------------------------
 /**
@@ -91,6 +93,7 @@ public abstract class ControllerABC implements IController {
 	private static final int									MAX_NETWORK_TEST_NUM				= 64;
 
 	private Facility											mFacility;
+	protected IWirelessDeviceDao								mWirelessDeviceDao;
 	private Boolean												mShouldRun							= true;
 	private List<IWirelessInterface>							mInterfaceList;
 	private NetAddress											mServerAddress;
@@ -123,10 +126,12 @@ public abstract class ControllerABC implements IController {
 	/**
 	 *  @param inSessionManager   The session manager for this controller.
 	 */
-	public ControllerABC(final List<IWirelessInterface> inInterfaceList, final Facility inFacility) {
+	@Inject
+	public ControllerABC(final List<IWirelessInterface> inInterfaceList, final Facility inFacility, final IWirelessDeviceDao inWirelessDeviceDao) {
 
 		mInterfaceList = inInterfaceList;
 		mFacility = inFacility;
+		mWirelessDeviceDao = inWirelessDeviceDao;
 
 		mServerAddress = IController.GATEWAY_ADDRESS;
 		mBroadcastAddress = IController.BROADCAST_ADDRESS;
@@ -268,7 +273,7 @@ public abstract class ControllerABC implements IController {
 	 *  @return
 	 */
 	public final INetworkDevice getNetworkDevice(NetAddress inAddress) {
-		return WirelessDevice.DAO.getNetworkDevice(inAddress);
+		return mWirelessDeviceDao.getNetworkDevice(inAddress);
 	}
 
 	// --------------------------------------------------------------------------
@@ -276,7 +281,7 @@ public abstract class ControllerABC implements IController {
 	 *  @return
 	 */
 	public final List<INetworkDevice> getNetworkDevices() {
-		return WirelessDevice.DAO.getNetworkDevices();
+		return mWirelessDeviceDao.getNetworkDevices();
 	}
 
 	/* --------------------------------------------------------------------------
@@ -625,7 +630,7 @@ public abstract class ControllerABC implements IController {
 					if (mChannelSelected) {
 						processAssocCmd((CommandAssocABC) inCommand, inSrcAddr);
 						if (foundDevice != null) {
-							WirelessDevice.DAO.deviceUpdated(foundDevice, false);
+							mWirelessDeviceDao.deviceUpdated(foundDevice, false);
 						}
 					}
 					break;
@@ -634,7 +639,7 @@ public abstract class ControllerABC implements IController {
 					if (mChannelSelected) {
 						if (foundDevice != null) {
 							processInfoCmd((CommandInfoABC) inCommand, foundDevice);
-							WirelessDevice.DAO.deviceUpdated(foundDevice, false);
+							mWirelessDeviceDao.deviceUpdated(foundDevice, false);
 						} else {
 							LOGGER.error("Receive INFO command: device not found");
 						}
@@ -948,11 +953,11 @@ public abstract class ControllerABC implements IController {
 
 		if (canAssociate) {
 
-			INetworkDevice foundDevice = WirelessDevice.DAO.findNetworkDeviceByMacAddr(macAddr);
+			INetworkDevice foundDevice = mWirelessDeviceDao.findNetworkDeviceByMacAddr(macAddr);
 
 			if (foundDevice != null) {
 				foundDevice.setNetworkDeviceState(NetworkDeviceStateEnum.SETUP);
-				WirelessDevice.DAO.deviceUpdated(foundDevice, true);
+				mWirelessDeviceDao.deviceUpdated(foundDevice, true);
 
 				LOGGER.info("----------------------------------------------------");
 				LOGGER.info("Device associated: " + foundDevice.toString());
@@ -994,7 +999,7 @@ public abstract class ControllerABC implements IController {
 					//					if (!addrMap.values().isEmpty()) {
 					//						NetAddress newAddress = (NetAddress) addrMap.values().toArray()[0];
 					//						foundDevice.setNetAddress(newAddress);
-					//						WirelessDevice.DAO.deviceUpdated(foundDevice, true);
+					//						mWirelessDeviceDao.deviceUpdated(foundDevice, true);
 					//					}
 				}
 
@@ -1002,7 +1007,7 @@ public abstract class ControllerABC implements IController {
 				CommandAssocResp assignCmd = new CommandAssocResp(macAddr, mNetworkId, foundDevice.getNetAddress());
 				this.sendCommandTimed(assignCmd, mBroadcastNetworkId, mBroadcastAddress, 0, false);
 				foundDevice.setNetworkDeviceState(NetworkDeviceStateEnum.ASSIGN_SENT);
-				WirelessDevice.DAO.deviceUpdated(foundDevice, false);
+				mWirelessDeviceDao.deviceUpdated(foundDevice, false);
 
 				// We should wait a bit for the remote to prepare to accept commands.
 				try {
@@ -1033,7 +1038,7 @@ public abstract class ControllerABC implements IController {
 		// First get the unique ID from the command.
 		NetMacAddress macAddr = inCommand.getMacAddr();
 
-		INetworkDevice foundDevice = WirelessDevice.DAO.findNetworkDeviceByMacAddr(macAddr);
+		INetworkDevice foundDevice = mWirelessDeviceDao.findNetworkDeviceByMacAddr(macAddr);
 
 		if (foundDevice != null) {
 			CommandAssocAck ackCmd;
@@ -1042,7 +1047,7 @@ public abstract class ControllerABC implements IController {
 			short level = inCommand.getBatteryLevel();
 			if (foundDevice.getLastBatteryLevel() != level) {
 				foundDevice.setLastBatteryLevel(level);
-				WirelessDevice.DAO.deviceUpdated(foundDevice, true);
+				mWirelessDeviceDao.deviceUpdated(foundDevice, true);
 			}
 
 			boolean status = CommandAssocAck.IS_ASSOCIATED;
@@ -1243,8 +1248,8 @@ public abstract class ControllerABC implements IController {
 						Thread.sleep(2);
 
 						if (LOGGER.isInfoEnabled()) {
-							LOGGER.info("packet sched delay: " + ((commandSchedTime - lastCommandSchedTimeNanos) / 100000) + " act delay: " + ((System.nanoTime() - lastCommandSentTimeNanos) / 100000)
-									+ " behind: " + ((System.nanoTime() - commandSchedTime) / 100000));
+							LOGGER.info("packet sched delay: " + ((commandSchedTime - lastCommandSchedTimeNanos) / 100000) + " act delay: "
+									+ ((System.nanoTime() - lastCommandSentTimeNanos) / 100000) + " behind: " + ((System.nanoTime() - commandSchedTime) / 100000));
 						}
 						lastCommandSchedTimeNanos = commandSchedTime;
 					} else {
