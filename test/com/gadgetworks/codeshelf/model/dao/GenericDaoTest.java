@@ -46,10 +46,6 @@ public class GenericDaoTest {
 		}
 	}
 	
-	public class Result {
-		public boolean result = false;
-	}
-
 	private static IUtil			mUtil;
 	private static ISchemaManager	mSchemaManager;
 	private static IDatabase		mDatabase;

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderStatusEnum.java,v 1.2 2012/10/13 22:14:24 jeffw Exp $
+ *  $Id: OrderStatusEnum.java,v 1.3 2012/10/14 01:05:22 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model;
 
@@ -11,10 +11,10 @@ import com.avaje.ebean.annotation.EnumMapping;
 /**
  *  @author jeffw
  */
-@EnumMapping(nameValuePairs = "INVALID=INVALID, NEW=NEW, RELEASED=RELEASED, INPROGRESS=INPROGRESS, COMPLETE=COMPLETE")
+@EnumMapping(nameValuePairs = "INVALID=INVALID, CREATED=CREATED, RELEASED=RELEASED, INPROGRESS=INPROGRESS, COMPLETE=COMPLETE")
 public enum OrderStatusEnum {
 	INVALID(OrderStatusNum.INVALID, "INVALID"),
-	NEW(OrderStatusNum.NEW, "NEW"),
+	CREATED(OrderStatusNum.CREATED, "CREATED"),
 	RELEASED(OrderStatusNum.RELEASED, "RELEASED"),
 	INPROGRESS(OrderStatusNum.INPROGRESS, "INPROGRESS"),
 	COMPLETE(OrderStatusNum.COMPLETE, "COMPLETE");
@@ -31,8 +31,8 @@ public enum OrderStatusEnum {
 		OrderStatusEnum result;
 
 		switch (inOnlineStatusID) {
-			case OrderStatusNum.NEW:
-				result = OrderStatusEnum.NEW;
+			case OrderStatusNum.CREATED:
+				result = OrderStatusEnum.CREATED;
 				break;
 
 			case OrderStatusNum.RELEASED:
@@ -67,7 +67,7 @@ public enum OrderStatusEnum {
 	static final class OrderStatusNum {
 
 		static final byte	INVALID		= 0;
-		static final byte	NEW			= 1;
+		static final byte	CREATED			= 1;
 		static final byte	RELEASED	= 2;
 		static final byte	INPROGRESS	= 3;
 		static final byte	COMPLETE	= 4;

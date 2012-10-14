@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: MockDao.java,v 1.1 2012/10/10 22:15:19 jeffw Exp $
+ *  $Id: MockDao.java,v 1.2 2012/10/14 01:05:23 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -69,6 +69,7 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 
 	public void store(T inDomainObject) throws DaoException {
 		mStorage.put(inDomainObject.getFullDomainId(), inDomainObject);
+		inDomainObject.setPersistentId((long) inDomainObject.getFullDomainId().hashCode());
 	}
 
 	public void delete(T inDomainObject) throws DaoException {

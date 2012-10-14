@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: IDomainObject.java,v 1.11 2012/10/06 07:09:33 jeffw Exp $
+ *  $Id: IDomainObject.java,v 1.12 2012/10/14 01:05:22 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -112,6 +112,12 @@ public interface IDomainObject {
 	 * @return
 	 */
 	Long getPersistentId();
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inPersistentId
+	 */
+	void setPersistentId(Long inPersistentId);
 
 	// --------------------------------------------------------------------------
 	/**

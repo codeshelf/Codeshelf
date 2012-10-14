@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Organization.java,v 1.11 2012/10/13 22:14:24 jeffw Exp $
+ *  $Id: Organization.java,v 1.12 2012/10/14 01:05:22 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -94,6 +94,10 @@ public class Organization extends DomainObjectABC {
 
 	public final boolean includeMeInDomainId() {
 		return false;
+	}
+
+	public final void setOrganizationId(String inOrganizationId) {
+		setShortDomainId(inOrganizationId);
 	}
 
 	// --------------------------------------------------------------------------

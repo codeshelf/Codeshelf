@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiProcessorTest.java,v 1.2 2012/10/11 02:42:39 jeffw Exp $
+ *  $Id: EdiProcessorTest.java,v 1.3 2012/10/14 01:05:22 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -16,6 +16,7 @@ import com.gadgetworks.codeshelf.model.dao.MockDao;
 import com.gadgetworks.codeshelf.model.domain.DropboxService;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.IEdiService;
+import com.gadgetworks.codeshelf.model.domain.Organization;
 
 /**
  * @author jeffw
@@ -109,7 +110,12 @@ public class EdiProcessorTest {
 			}
 		};
 
+		Organization organization = new Organization();
+		organization.setOrganizationId("O1");
+		
 		Facility facility = new Facility();
+		facility.setParentOrganization(organization);
+		facility.setFacilityId("F1");
 		facility.addEdiService(ediServiceLinked);
 		facility.addEdiService(ediServiceUnlinked);
 		facilityDao.store(facility);

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.22 2012/10/11 09:04:36 jeffw Exp $
+ *  $Id: Facility.java,v 1.23 2012/10/14 01:05:22 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -163,6 +163,10 @@ public class Facility extends LocationABC {
 			result = parentOrganization.getShortDomainId();
 		}
 		return result;
+	}
+
+	public final void setFacilityId(String inFacilityId) {
+		setShortDomainId(inFacilityId);
 	}
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.

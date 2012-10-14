@@ -37,35 +37,37 @@ public class WebSessionTest {
 
 	@Test
 	public final void testLaunchCodeCheckSucceed() {
-		
+
 		MockDao<Organization> organizationDao = new MockDao<Organization>();
-		
+
 		Organization organization = new Organization();
 		organization.setPersistentId(1L);
 		organization.setShortDomainId("O1");
 		organization.setDescription("TEST");
 		organizationDao.store(organization);
-		
+
 		TestWebSocket testWebSocket = new TestWebSocket();
 		IWebSessionReqCmdFactory factory = new WebSessionReqCmdFactory(organizationDao, null);
 		IWebSession webSession = new WebSession(testWebSocket, factory);
 		String inMessage = "{\"id\":\"cid_5\",\"type\":\"LAUNCH_CODE_RQ\",\"data\":{\"launchCode\":\"O1\"}}";
 		IWebSessionRespCmd respCommand = webSession.processMessage(inMessage);
 
-		Assert.assertEquals("{\"id\":\"cid_5\",\"type\":\"LAUNCH_CODE_RS\",\"data\":{\"LAUNCH_CODE_RS\":\"SUCCEED\",\"organization\":{\"description\":\"TEST\",\"shortDomainId\":\"O1\",\"persistentId\":1,\"className\":\"Organization\"}}}", respCommand.getResponseMsg());
+		Assert.assertEquals("{\"id\":\"cid_5\",\"type\":\"LAUNCH_CODE_RS\",\"data\":{\"LAUNCH_CODE_RS\":\"SUCCEED\",\"organization\":{\"description\":\"TEST\",\"shortDomainId\":\"O1\",\"persistentId\":"
+				+ organization.getPersistentId() + ",\"className\":\"Organization\"}}}",
+			respCommand.getResponseMsg());
 	}
-	
+
 	@Test
 	public final void testLaunchCodeCheckFail() {
 
 		MockDao<Organization> organizationDao = new MockDao<Organization>();
-		
+
 		Organization organization = new Organization();
 		organization.setPersistentId(1L);
 		organization.setShortDomainId("O1");
 		organization.setDescription("TEST");
 		organizationDao.store(organization);
-		
+
 		TestWebSocket testWebSocket = new TestWebSocket();
 		IWebSessionReqCmdFactory factory = new WebSessionReqCmdFactory(organizationDao, null);
 		IWebSession webSession = new WebSession(testWebSocket, factory);

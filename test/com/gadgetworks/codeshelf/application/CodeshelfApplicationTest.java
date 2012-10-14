@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeshelfApplicationTest.java,v 1.2 2012/10/13 22:14:24 jeffw Exp $
+ *  $Id: CodeshelfApplicationTest.java,v 1.3 2012/10/14 01:05:23 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.application;
 
@@ -27,6 +27,7 @@ import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.dao.MockDao;
 import com.gadgetworks.codeshelf.model.dao.MockWirelessDeviceDao;
+import com.gadgetworks.codeshelf.model.dao.Result;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
@@ -35,7 +36,6 @@ import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
 import com.gadgetworks.codeshelf.model.domain.UomMaster;
-import com.gadgetworks.codeshelf.model.domain.WirelessDevice;
 import com.gadgetworks.codeshelf.model.domain.WirelessDevice.IWirelessDeviceDao;
 import com.gadgetworks.codeshelf.web.websession.IWebSessionManager;
 import com.gadgetworks.codeshelf.web.websession.WebSessionManager;
@@ -242,18 +242,23 @@ public class CodeshelfApplicationTest {
 			facilityDao,
 			wirelessDeviceDao);
 
+		final Result checkAppRunning = new Result();
+
 		Thread appThread = new Thread(new Runnable() {
 			public void run() {
 				application.startApplication();
 				Assert.assertTrue(true);
+				checkAppRunning.result = true;
 				application.handleEvents();
 			}
 		}, "APP_TEST_THREAD");
 		appThread.start();
 
-		try {
-			Thread.sleep(10000);
-		} catch (InterruptedException e) {
+		while (!checkAppRunning.result) {
+			try {
+				Thread.sleep(500);
+			} catch (InterruptedException e) {
+			}
 		}
 
 		application.stopApplication();

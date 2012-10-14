@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderGroup.java,v 1.6 2012/10/13 22:14:24 jeffw Exp $
+ *  $Id: OrderGroup.java,v 1.7 2012/10/14 01:05:22 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -79,7 +79,7 @@ public class OrderGroup extends DomainObjectABC {
 	private List<OrderHeader>	orderHeaders	= new ArrayList<OrderHeader>();
 
 	public OrderGroup() {
-
+		statusEnum = OrderStatusEnum.CREATED;
 	}
 
 	@JsonIgnore
@@ -125,21 +125,38 @@ public class OrderGroup extends DomainObjectABC {
 		return getOrderHeaders();
 	}
 
-	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
-	public final void addOrderHeader(OrderHeader inOrderHeader) {
-		orderHeaders.add(inOrderHeader);
+	// We can only add an order to the order group if it is in the CREATED state.
+	public final boolean addOrderHeader(OrderHeader inOrderHeader) {
+		boolean result = false;
+		if (getStatusEnum().equals(OrderStatusEnum.CREATED)) {
+			orderHeaders.add(inOrderHeader);
+			result = true;
+		}
+		return result;
 	}
 
-	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
-	public final void removeOrderHeader(OrderHeader inOrderHeader) {
-		orderHeaders.remove(inOrderHeader);
+	// We can only remove an order to the order group if it is in the CREATED state.
+	public final boolean removeOrderHeader(OrderHeader inOrderHeader) {
+		boolean result = false;
+		if (getStatusEnum().equals(OrderStatusEnum.CREATED)) {
+			orderHeaders.remove(inOrderHeader);
+			result = true;
+		}
+		return result;
 	}
 
+	// --------------------------------------------------------------------------
+	/**
+	 * Release the order group to production.
+	 * You can only release an order group in the CREATED state.
+	 * @return
+	 */
 	public final Boolean release() {
 		Boolean result = false;
 
 		// We can only release order groyps that are in the new state.
-		if (getStatusEnum().equals(OrderStatusEnum.NEW)) {
+		if (getStatusEnum().equals(OrderStatusEnum.CREATED)) {
+			result = true;
 			setStatusEnum(OrderStatusEnum.RELEASED);
 			OrderGroup.DAO.store(this);
 		}

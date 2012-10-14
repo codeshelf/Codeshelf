@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderImporter.java,v 1.2 2012/10/12 07:55:56 jeffw Exp $
+ *  $Id: OrderImporter.java,v 1.3 2012/10/14 01:05:23 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -113,7 +113,7 @@ public class OrderImporter implements IOrderImporter {
 			result = new OrderGroup();
 			result.setParentFacility(inFacility);
 			result.setOrderGroupId(inCsvImportBean.getOrderGroupId());
-			result.setStatusEnum(OrderStatusEnum.NEW);
+			result.setStatusEnum(OrderStatusEnum.CREATED);
 			inFacility.addOrderGroup(result);
 			try {
 				mOrderGroupDao.store(result);
@@ -141,7 +141,7 @@ public class OrderImporter implements IOrderImporter {
 			result = new OrderHeader();
 			result.setParentFacility(inFacility);
 			result.setShortDomainId(inCsvImportBean.getOrderId());
-			result.setStatusEnum(OrderStatusEnum.NEW);
+			result.setStatusEnum(OrderStatusEnum.CREATED);
 			inFacility.addOrderHeader(result);
 			if (inOrderGroup != null) {
 				inOrderGroup.addOrderHeader(result);
@@ -211,7 +211,7 @@ public class OrderImporter implements IOrderImporter {
 			result = new OrderDetail();
 			result.setParentOrderHeader(inOrder);
 			result.setShortDomainId(inCsvImportBean.getOrderDetailId());
-			result.setStatusEnum(OrderStatusEnum.NEW);
+			result.setStatusEnum(OrderStatusEnum.CREATED);
 
 			inOrder.addOrderDetail(result);
 		}
