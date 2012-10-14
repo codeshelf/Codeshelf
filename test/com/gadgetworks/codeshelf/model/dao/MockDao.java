@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: MockDao.java,v 1.2 2012/10/14 01:05:23 jeffw Exp $
+ *  $Id: MockDao.java,v 1.3 2012/10/14 05:34:46 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -49,7 +49,7 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 
 	public final T findByDomainId(IDomainObject inParentObject, String inDomainId) {
 		String domainId = "";
-		if (inParentObject != null) {
+		if ((inParentObject != null) && (inParentObject.includeMeInDomainId())) {
 			domainId = inParentObject.getFullDomainId() + "." + inDomainId;
 		} else {
 			domainId = inDomainId;

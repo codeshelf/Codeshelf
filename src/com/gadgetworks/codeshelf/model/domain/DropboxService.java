@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DropboxService.java,v 1.21 2012/10/11 02:42:39 jeffw Exp $
+ *  $Id: DropboxService.java,v 1.22 2012/10/14 05:34:45 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -86,10 +86,10 @@ public class DropboxService extends EdiServiceABC {
 	private static final String		IMPORT_PATH				= "/import";
 	private static final String		EXPORT_PATH				= "/export";
 
-	@Column(nullable = true)
+	@Column(nullable = true, name="CURSOR")
 	@Getter(value = AccessLevel.PRIVATE)
 	@Setter(value = AccessLevel.PRIVATE)
-	private String					cursor;
+	private String					dbCursor;
 
 	public DropboxService() {
 
@@ -187,11 +187,10 @@ public class DropboxService extends EdiServiceABC {
 	private void documentCheck(DropboxAPI<Session> inClientSession, IOrderImporter inOrderImporter) {
 		if (ensureBaseDirectories(inClientSession)) {
 			try {
-				DropboxServiceHelper dropboxHelper = new DropboxServiceHelper(this);
 				DeltaPage<Entry> page = null;
 				while ((page == null) || (page.hasMore)) {
-					page = inClientSession.delta(getCursor());
-					dropboxHelper.processDeltas(inClientSession, page, inOrderImporter);
+					page = inClientSession.delta(dbCursor);
+					processDeltas(inClientSession, page, inOrderImporter);
 				}
 			} catch (DropboxException e) {
 				LOGGER.error("Dropbox session error", e);
@@ -383,37 +382,18 @@ public class DropboxService extends EdiServiceABC {
 		return result;
 	}
 
-	/**
-	 * @author jeffw
-	 * 
-	 * We need this bit of nonsense private class since there is some weird byte-code gen problem between EBean, Lombok and the Dropbox API.
-	 * It appears that if we call these methods when there is a java-generics local variable then part of this becomes messed up.
-	 * 
-	 * The results is Java VerifyError or Internal Exception 35.
-	 * 
-	 * We've already wasted several hours on this stupid problem.  Please don't waste more time on this unless you're CERTAIN how to first fix it.
-	 *
-	 */
-	private class DropboxServiceHelper {
-
-		private DropboxService	mDropboxService;
-
-		public DropboxServiceHelper(final DropboxService inDropboxService) {
-			mDropboxService = inDropboxService;
-		}
-
 		// --------------------------------------------------------------------------
 		/**
 		 * @param inClientSession
 		 * @param inPage
 		 */
 		private void processDeltas(DropboxAPI<Session> inClientSession, DeltaPage<Entry> inPage, IOrderImporter inOrderImporter) {
-			if ((inPage != null) && (inPage.cursor != null) && (!inPage.cursor.equals(mDropboxService.getCursor()))) {
+			if ((inPage != null) && (inPage.cursor != null) && (!inPage.cursor.equals(dbCursor))) {
 				iteratePage(inClientSession, inPage, inOrderImporter);
 
-				mDropboxService.setCursor(inPage.cursor);
+				dbCursor = inPage.cursor;
 				try {
-					DropboxService.DAO.store(mDropboxService);
+					DropboxService.DAO.store(this);
 				} catch (DaoException e) {
 					LOGGER.error("", e);
 				}
@@ -446,12 +426,12 @@ public class DropboxService extends EdiServiceABC {
 
 			boolean shouldUpdateEntry = false;
 
-			if (inEntry.metadata.path.startsWith(mDropboxService.getImportPath())) {
+			if (inEntry.metadata.path.startsWith(this.getImportPath())) {
 				if (!inEntry.metadata.isDir) {
 					handleImport(inClientSession, inEntry, inOrderImporter);
 					shouldUpdateEntry = true;
 				}
-			} else if (inEntry.metadata.path.startsWith(mDropboxService.getExportPath())) {
+			} else if (inEntry.metadata.path.startsWith(this.getExportPath())) {
 				if (!inEntry.metadata.isDir) {
 					//handleExport();
 					shouldUpdateEntry = true;
@@ -459,17 +439,17 @@ public class DropboxService extends EdiServiceABC {
 			}
 
 			if (shouldUpdateEntry) {
-				EdiDocumentLocator locator = EdiDocumentLocator.DAO.findByDomainId(mDropboxService, inEntry.lcPath);
+				EdiDocumentLocator locator = EdiDocumentLocator.DAO.findByDomainId(this, inEntry.lcPath);
 				if (locator == null) {
 					locator = new EdiDocumentLocator();
-					locator.setParentEdiService(mDropboxService);
+					locator.setParentEdiService(this);
 					locator.setReceived(new Timestamp(System.currentTimeMillis()));
 					locator.setDocumentStateEnum(EdiDocumentStatusEnum.NEW);
 					locator.setShortDomainId(inEntry.lcPath);
 					locator.setDocumentPath(inEntry.metadata.parentPath());
 					locator.setDocumentName(inEntry.metadata.fileName());
 
-					mDropboxService.addEdiDocumentLocator(locator);
+					this.addEdiDocumentLocator(locator);
 					try {
 						EdiDocumentLocator.DAO.store(locator);
 					} catch (DaoException e) {
@@ -488,7 +468,7 @@ public class DropboxService extends EdiServiceABC {
 
 				DropboxInputStream stream = inClientSession.getFileStream(inEntry.lcPath, null);
 				InputStreamReader reader = new InputStreamReader(stream);
-				inOrderImporter.importerFromCsvStream(reader, mDropboxService.getParentFacility());
+				inOrderImporter.importerFromCsvStream(reader, this.getParentFacility());
 				
 			} catch (DropboxException e) {
 				LOGGER.error("", e);
@@ -500,7 +480,7 @@ public class DropboxService extends EdiServiceABC {
 		 * @param inEntry
 		 */
 		private void removeEntry(DropboxAPI<Session> inClientSession, DeltaEntry<Entry> inEntry) {
-			EdiDocumentLocator locator = mDropboxService.getDocumentLocatorByPath(inEntry.lcPath);
+			EdiDocumentLocator locator = this.getDocumentLocatorByPath(inEntry.lcPath);
 			if (locator != null) {
 				try {
 					EdiDocumentLocator.DAO.delete(locator);
@@ -509,5 +489,4 @@ public class DropboxService extends EdiServiceABC {
 				}
 			}
 		}
-	}
 }
