@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: H2SchemaManager.java,v 1.47 2012/10/11 09:04:36 jeffw Exp $
+ *  $Id: H2SchemaManager.java,v 1.48 2012/10/16 06:23:21 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -26,9 +26,9 @@ import com.google.inject.Inject;
 public final class H2SchemaManager implements ISchemaManager {
 
 	private static final Log	LOGGER	= LogFactory.getLog(H2SchemaManager.class);
-	
-	private IUtil mUtil;
-	
+
+	private IUtil				mUtil;
+
 	@Inject
 	public H2SchemaManager(final IUtil inUtil) {
 		mUtil = inUtil;
@@ -488,6 +488,7 @@ public final class H2SchemaManager implements ISchemaManager {
 		// OrderGroup
 		result &= createTable("ORDERGROUP", //
 			"STATUSENUM VARCHAR(16) NOT NULL, " //
+					+ "WORKSEQUENCE LONG, " //
 					+ "DESCRIPTION VARCHAR(256), " //
 					+ "PARENT_PERSISTENTID LONG NOT NULL " //
 		);
@@ -498,6 +499,7 @@ public final class H2SchemaManager implements ISchemaManager {
 		result &= createTable("ORDERHEADER", //
 			"STATUSENUM VARCHAR(16) NOT NULL, " //
 					+ "ORDERGROUP_PERSISTENTID LONG, " //
+					+ "WORKSEQUENCE LONG, " //
 					+ "PARENT_PERSISTENTID LONG NOT NULL " //
 		);
 

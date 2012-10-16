@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectMethod.java,v 1.5 2012/09/23 03:05:43 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectMethod.java,v 1.6 2012/10/16 06:23:21 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -143,8 +143,6 @@ public class WebSessionReqCmdObjectMethod extends WebSessionReqCmdABC {
 				ITypedDao<IDomainObject> dao = mDaoProvider.getDaoInstance((Class<IDomainObject>) classObject);
 				IDomainObject targetObject = dao.findByPersistentId(objectId);
 
-				// Execute the "set" method against the parents to return the children.
-				// (The method *must* start with "set" to ensure other methods don't get called.)
 				if (targetObject != null) {
 
 					// Loop over all the properties, setting each one.
@@ -160,7 +158,11 @@ public class WebSessionReqCmdObjectMethod extends WebSessionReqCmdABC {
 						Object typedArg;
 						try {
 							Constructor<?> ctor = classType.getConstructor(String.class);
-							typedArg = ctor.newInstance(new Object[] { argumentValue.toString() });
+							if (argumentValue == null) {
+								typedArg =  null;
+							} else {
+								typedArg = ctor.newInstance(new Object[] { argumentValue.toString() });
+							}
 							cookedArguments.add(typedArg);
 						} catch (IllegalArgumentException e) {
 							LOGGER.error("", e);

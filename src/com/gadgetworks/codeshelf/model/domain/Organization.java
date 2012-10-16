@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Organization.java,v 1.13 2012/10/14 05:34:45 jeffw Exp $
+ *  $Id: Organization.java,v 1.14 2012/10/16 06:23:21 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -125,5 +125,22 @@ public class Organization extends DomainObjectABC {
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void removeFacility(Facility inFacility) {
 		facilities.remove(inFacility);
+	}
+	
+	public final void createFacility(final String inShortDomainId, final String inDescription, final String inPosTypeByStr, final Double inPosx, final Double inPosY) {
+		
+		Facility facility = new Facility();
+		facility.setParentOrganization(this);
+		facility.setShortDomainId(inShortDomainId);
+		facility.setDescription(inDescription);
+		facility.setPosTypeByStr(inPosTypeByStr);
+		facility.setPosX(inPosx);
+		facility.setPosY(inPosY);
+		this.addFacility(facility);
+		
+		Facility.DAO.store(facility);
+		
+		// We also need to create a first Dropbox Service entry for this facility.
+		DropboxService dropboxService = facility.createDropboxService();
 	}
 }

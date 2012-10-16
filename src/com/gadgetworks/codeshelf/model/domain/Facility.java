@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.23 2012/10/14 01:05:22 jeffw Exp $
+ *  $Id: Facility.java,v 1.24 2012/10/16 06:23:21 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -22,7 +22,9 @@ import lombok.ToString;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.EdiProviderEnum;
@@ -48,6 +50,7 @@ import com.google.inject.Singleton;
 @DiscriminatorValue("FACILITY")
 @CacheStrategy
 @ToString
+@JsonAutoDetect(getterVisibility=Visibility.NONE)
 public class Facility extends LocationABC {
 
 	@Inject
@@ -65,48 +68,40 @@ public class Facility extends LocationABC {
 	// The owning organization.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	@JsonIgnore
 	private Organization			parentOrganization;
 
 	// These are all the uom masters for this facility.
 	@OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
-	@JsonIgnore
 	@Getter
 	private List<UomMaster>			uomMasters		= new ArrayList<UomMaster>();
 
 	// These are all the item masters for this facility.
 	@OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
-	@JsonIgnore
 	@Getter
 	private List<ItemMaster>		itemMasters		= new ArrayList<ItemMaster>();
 
 	// These are all the order groups for this facility.
 	@OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
-	@JsonIgnore
 	@Getter
 	private List<OrderGroup>		orderGroups		= new ArrayList<OrderGroup>();
 
 	// These are all the order headers for this facility.
 	@OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
-	@JsonIgnore
 	@Getter
 	private List<OrderHeader>		orderHeaders	= new ArrayList<OrderHeader>();
 
 	// For a network this is a list of all of the control groups that belong in the set.
 	@OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
-	@JsonIgnore
 	@Getter
 	private List<Aisle>				aisles			= new ArrayList<Aisle>();
 
 	// For a network this is a list of all of the control groups that belong in the set.
 	@OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
-	@JsonIgnore
 	@Getter
 	private List<CodeShelfNetwork>	networks		= new ArrayList<CodeShelfNetwork>();
 
 	// For a network this is a list of all of the control groups that belong in the set.
 	@OneToMany(mappedBy = "parent", fetch = FetchType.LAZY, targetEntity = DropboxService.class)
-	@JsonIgnore
 	@Getter
 	private List<IEdiService>		ediServices		= new ArrayList<IEdiService>();
 
@@ -123,25 +118,20 @@ public class Facility extends LocationABC {
 		// Facilities have no parent location, but we don't want to allow ANY location to not have a parent.
 		// So in this case we make the facility its own parent.  It's also a way to know when we've topped-out in the location tree.
 		parent = this;
-		orderHeaders = new ArrayList<OrderHeader>();
-		uomMasters = new ArrayList<UomMaster>();
 	}
 
 	public final String getDefaultDomainIdPrefix() {
 		return "F";
 	}
 
-	@JsonIgnore
 	public final ITypedDao<Facility> getDao() {
 		return DAO;
 	}
 
-	@JsonIgnore
 	public final Organization getParentOrganization() {
 		return parentOrganization;
 	}
 
-	@JsonIgnore
 	public final IDomainObject getParent() {
 		return parentOrganization;
 	}
@@ -276,15 +266,15 @@ public class Facility extends LocationABC {
 	 * @param inBaysHigh
 	 * @param inBaysLong
 	 */
-	public final void createAisle(Double inPosXMeters,
-		Double inPosYMeters,
-		Double inProtoBayXDimMeters,
-		Double inProtoBayYDimMeters,
-		Double inProtoBayZDimMeters,
-		Integer inBaysHigh,
-		Integer inBaysLong,
-		Boolean inRunInXDir,
-		Boolean inCreateBackToBack) {
+	public final void createAisle(final Double inPosXMeters,
+		final Double inPosYMeters,
+		final Double inProtoBayXDimMeters,
+		final Double inProtoBayYDimMeters,
+		final Double inProtoBayZDimMeters,
+		final Integer inBaysHigh,
+		final Integer inBaysLong,
+		final Boolean inRunInXDir,
+		final Boolean inCreateBackToBack) {
 		Aisle aisle = new Aisle(this, inPosXMeters, inPosYMeters);
 		try {
 			Aisle.DAO.store(aisle);
@@ -333,6 +323,34 @@ public class Facility extends LocationABC {
 		createVertices(aisle, aisleBoundaryX, aisleBoundaryY);
 	}
 
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inShortDomainId
+	 * @param inPosTypeByStr
+	 * @param inPosX
+	 * @param inPosY
+	 * @param inDrawOrder
+	 */
+	public final void createVertex(final String inShortDomainId, final String inPosTypeByStr, final Double inPosX, final Double inPosY, final Integer inDrawOrder) {
+
+		Vertex vertex = new Vertex();
+		vertex.setParentLocation(this);
+		vertex.setShortDomainId(inShortDomainId);
+		vertex.setPosTypeByStr(inPosTypeByStr);
+		vertex.setPosX(inPosX);
+		vertex.setPosY(inPosY);
+		vertex.setDrawOrder(inDrawOrder);
+		this.addVertex(vertex);
+
+		Vertex.DAO.store(vertex);
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inLocation
+	 * @param inXDimMeters
+	 * @param inYDimMeters
+	 */
 	private void createVertices(LocationABC inLocation, Double inXDimMeters, Double inYDimMeters) {
 		try {
 			// Create four simple vertices around the aisle.
@@ -354,7 +372,6 @@ public class Facility extends LocationABC {
 	 * @param inFacility
 	 * @return
 	 */
-	@JsonIgnore
 	public final DropboxService getDropboxService() {
 		DropboxService result = null;
 
@@ -364,11 +381,6 @@ public class Facility extends LocationABC {
 			}
 			break;
 		}
-
-		if (result == null) {
-			result = this.createDropboxService();
-		}
-
 		return result;
 	}
 

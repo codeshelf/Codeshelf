@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdFactory.java,v 1.14 2012/09/08 03:03:23 jeffw Exp $
+ *  $Id: WebSessionReqCmdFactory.java,v 1.15 2012/10/16 06:23:21 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -64,10 +64,6 @@ public final class WebSessionReqCmdFactory implements IWebSessionReqCmdFactory {
 
 			case OBJECT_FILTER_REQ:
 				result = new WebSessionReqCmdObjectFilter(commandId, dataNode, mDaoProvider);
-				break;
-
-			case OBJECT_CREATE_REQ:
-				result = new WebSessionReqCmdObjectCreate(commandId, dataNode, mDaoProvider);
 				break;
 
 			case OBJECT_DELETE_REQ:

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: FacilityTest.java,v 1.1 2012/10/14 05:34:46 jeffw Exp $
+ *  $Id: FacilityTest.java,v 1.2 2012/10/16 06:23:21 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -18,7 +18,7 @@ import com.gadgetworks.codeshelf.model.dao.MockDao;
 public class FacilityTest {
 
 	@Test
-	public void createAisleTest() {
+	public final void createAisleTest() {
 
 		Organization.DAO = new MockDao<Organization>();
 		Facility.DAO = new MockDao<Facility>();

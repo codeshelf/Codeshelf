@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderHeader.java,v 1.9 2012/10/14 01:05:22 jeffw Exp $
+ *  $Id: OrderHeader.java,v 1.10 2012/10/16 06:23:21 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -68,6 +68,15 @@ public class OrderHeader extends DomainObjectABC {
 	@Getter
 	@Setter
 	private OrderGroup			orderGroup;
+
+	// The work sequence.
+	// This is a sort of the actively working order groups in a facility.
+	// Lower numbers work first.
+	@Column(nullable = true)
+	@JsonIgnore
+	@Getter
+	@Setter
+	private Integer				workSequence;
 
 	// The parent facility.
 	@Column(nullable = false)

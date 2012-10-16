@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: LocationABC.java,v 1.6 2012/10/11 02:42:39 jeffw Exp $
+ *  $Id: LocationABC.java,v 1.7 2012/10/16 06:23:21 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -25,7 +25,9 @@ import lombok.Setter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonAutoDetect;
+import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
+import org.codehaus.jackson.annotate.JsonProperty;
 
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 
@@ -44,56 +46,59 @@ import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 @Table(name = "LOCATION")
 @DiscriminatorColumn(name = "DTYPE", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorValue("ABC")
+@JsonAutoDetect(getterVisibility=Visibility.NONE)
 public abstract class LocationABC extends DomainObjectABC implements ILocation {
 
 	private static final Log	LOGGER		= LogFactory.getLog(LocationABC.class);
 
 	// The position type (GPS, METERS, etc.).
+	@Column(nullable = false)
+	@JsonProperty
 	@Getter
 	@Setter
-	@Column(nullable = false)
 	private PositionTypeEnum	posType;
 
 	// The X anchor position.
+	@Column(nullable = false)
+	@JsonProperty
 	@Getter
 	@Setter
-	@Column(nullable = false)
 	private Double				posX;
 
 	// The Y anchor position.
+	@Column(nullable = false)
+	@JsonProperty
 	@Getter
 	@Setter
-	@Column(nullable = false)
 	private Double				posY;
 
 	// The Z anchor position.
+	@Column(nullable = true)
+	@JsonProperty
 	@Getter
 	@Setter
-	@Column(nullable = true)
 	// Null means it's at the same nominal z coord as the parent.
 	private Double				posZ;
 
 	// The location description.
+	@Column(nullable = true)
+	@JsonProperty
 	@Getter
 	@Setter
-	@Column(nullable = true)
 	private String				description;
 
 	// The owning location.
 	@Column(nullable = false)
 	@ManyToOne(optional = true)
-	@JsonIgnore
 	protected LocationABC		parent;
 
 	// All of the vertices that define the location's footprint.
 	@OneToMany(mappedBy = "parent")
-	@JsonIgnore
 	@Getter
 	private List<Vertex>		vertices	= new ArrayList<Vertex>();
 
 	// The child locations.
 	@OneToMany(mappedBy = "parent")
-	@JsonIgnore
 	@Getter
 	private List<LocationABC>	locations	= new ArrayList<LocationABC>();
 
@@ -116,7 +121,6 @@ public abstract class LocationABC extends DomainObjectABC implements ILocation {
 		posZ = inPosZ;
 	}
 
-	@JsonIgnore
 	public final List<? extends IDomainObject> getChildren() {
 		return getLocations();
 	}
