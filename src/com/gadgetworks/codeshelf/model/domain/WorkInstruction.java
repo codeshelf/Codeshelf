@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WorkInstruction.java,v 1.3 2012/10/13 22:14:24 jeffw Exp $
+ *  $Id: WorkInstruction.java,v 1.4 2012/10/21 02:02:17 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -10,6 +10,8 @@ import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
@@ -18,7 +20,9 @@ import lombok.Setter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonAutoDetect;
+import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
+import org.codehaus.jackson.annotate.JsonProperty;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.WorkInstructionOpEnum;
@@ -41,6 +45,7 @@ import com.google.inject.Singleton;
 @Entity
 @Table(name = "WORKINSTRUCTION")
 @CacheStrategy
+@JsonAutoDetect(getterVisibility = Visibility.NONE)
 public abstract class WorkInstruction extends DomainObjectABC {
 
 	@Inject
@@ -58,68 +63,78 @@ public abstract class WorkInstruction extends DomainObjectABC {
 	// The parent facility.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	@JsonIgnore
 	private Facility					parent;
 
 	// Operation.
+	@Column(nullable = false)
+	@Enumerated(value = EnumType.STRING)
 	@Getter
 	@Setter
-	@Column(nullable = false)
+	@JsonProperty
 	private WorkInstructionOpEnum		opEnum;
 
 	// Kind.
+	@Column(nullable = false)
+	@Enumerated(value = EnumType.STRING)
 	@Getter
 	@Setter
-	@Column(nullable = false)
+	@JsonProperty
 	private WorkInstructionPlanEnum		planEnum;
 
 	// Status.
+	@Column(nullable = false)
+	@Enumerated(value = EnumType.STRING)
 	@Getter
 	@Setter
-	@Column(nullable = false)
+	@JsonProperty
 	private WorkInstructionStatusEnum	statusEnum;
 
 	// The subject container.
+	@Column(nullable = false)
 	@Getter
 	@Setter
-	@Column(nullable = false)
+	@JsonProperty
 	private Container					subjectContainer;
 
 	// The subject item.
+	@Column(nullable = false)
 	@Getter
 	@Setter
-	@Column(nullable = false)
+	@JsonProperty
 	private Item						subjectItem;
 
 	// fromLoc.
+	@Column(nullable = false)
 	@Getter
 	@Setter
-	@Column(nullable = false)
+	@JsonProperty
 	private LocationABC					fromLocation;
 
 	// toLoc.
+	@Column(nullable = false)
 	@Getter
 	@Setter
-	@Column(nullable = false)
+	@JsonProperty
 	private LocationABC					toLocation;
 
 	// fromContainer.
+	@Column(nullable = false)
 	@Getter
 	@Setter
-	@Column(nullable = false)
+	@JsonProperty
 	private LocationABC					fromContainer;
 
 	// toContainer.
+	@Column(nullable = false)
 	@Getter
 	@Setter
-	@Column(nullable = false)
+	@JsonProperty
 	private LocationABC					toContainer;
 
 	public WorkInstruction() {
 
 	}
 
-	@JsonIgnore
 	public final ITypedDao<WorkInstruction> getDao() {
 		return DAO;
 	}
@@ -128,7 +143,6 @@ public abstract class WorkInstruction extends DomainObjectABC {
 		return "WI";
 	}
 
-	@JsonIgnore
 	public final Facility getParentFacility() {
 		return parent;
 	}
@@ -137,7 +151,6 @@ public abstract class WorkInstruction extends DomainObjectABC {
 		parent = inFacility;
 	}
 
-	@JsonIgnore
 	public final IDomainObject getParent() {
 		return parent;
 	}
@@ -148,7 +161,6 @@ public abstract class WorkInstruction extends DomainObjectABC {
 		}
 	}
 
-	@JsonIgnore
 	public final List<? extends IDomainObject> getChildren() {
 		return new ArrayList<IDomainObject>();
 	}

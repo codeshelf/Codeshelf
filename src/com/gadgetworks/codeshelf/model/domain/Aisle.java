@@ -1,22 +1,18 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Aisle.java,v 1.10 2012/10/13 22:14:24 jeffw Exp $
+ *  $Id: Aisle.java,v 1.11 2012/10/21 02:02:17 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
-import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
-import javax.persistence.ManyToOne;
 import javax.persistence.Table;
-
-import lombok.Getter;
-import lombok.Setter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonAutoDetect;
+import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
@@ -38,6 +34,7 @@ import com.google.inject.Singleton;
 @Table(name = "LOCATION")
 @DiscriminatorValue("AISLE")
 @CacheStrategy
+@JsonAutoDetect(getterVisibility=Visibility.NONE)
 public class Aisle extends LocationABC {
 
 	@Inject
@@ -58,7 +55,6 @@ public class Aisle extends LocationABC {
 		setShortDomainId(computeDefaultDomainId());
 	}
 
-	@JsonIgnore
 	public final IDomainObject getParent() {
 		return parent;
 	}
@@ -69,7 +65,6 @@ public class Aisle extends LocationABC {
 		}
 	}
 
-	@JsonIgnore
 	public final ITypedDao<Aisle> getDao() {
 		return DAO;
 	}

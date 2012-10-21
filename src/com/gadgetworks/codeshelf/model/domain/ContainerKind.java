@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ContainerKind.java,v 1.3 2012/10/13 22:14:24 jeffw Exp $
+ *  $Id: ContainerKind.java,v 1.4 2012/10/21 02:02:18 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -18,7 +18,9 @@ import lombok.Setter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonAutoDetect;
+import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
+import org.codehaus.jackson.annotate.JsonProperty;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
@@ -38,6 +40,7 @@ import com.google.inject.Singleton;
 @Entity
 @Table(name = "CONTAINERKIND")
 @CacheStrategy
+@JsonAutoDetect(getterVisibility=Visibility.NONE)
 public class ContainerKind extends DomainObjectABC {
 
 	@Inject
@@ -50,43 +53,47 @@ public class ContainerKind extends DomainObjectABC {
 		}
 	}
 
-	private static final Log	LOGGER	= LogFactory.getLog(ContainerKind.class);
+	private static final Log	LOGGER					= LogFactory.getLog(ContainerKind.class);
+
+	public static final String	DEFAULT_CONTAINER_KIND	= "DEFAULT";
 
 	// The parent facility.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	@JsonIgnore
 	private Facility			parent;
 
 	// The container class ID.
+	@Column(nullable = false)
 	@Getter
 	@Setter
-	@Column(nullable = false)
+	@JsonProperty
 	private String				classId;
 
 	// Length.
+	@Column(nullable = false)
 	@Getter
 	@Setter
-	@Column(nullable = false)
-	private Float				lengthMeters;
+	@JsonProperty
+	private Double				lengthMeters;
 
 	// Width.
+	@Column(nullable = false)
 	@Getter
 	@Setter
-	@Column(nullable = false)
-	private Float				widthMeters;
+	@JsonProperty
+	private Double				widthMeters;
 
 	// Height.
+	@Column(nullable = false)
 	@Getter
 	@Setter
-	@Column(nullable = false)
-	private Float				heightMeters;
+	@JsonProperty
+	private Double				heightMeters;
 
 	public ContainerKind() {
 		classId = "";
 	}
 
-	@JsonIgnore
 	public final ITypedDao<ContainerKind> getDao() {
 		return DAO;
 	}
@@ -95,7 +102,6 @@ public class ContainerKind extends DomainObjectABC {
 		return "P";
 	}
 
-	@JsonIgnore
 	public final Facility getParentFacility() {
 		return parent;
 	}
@@ -104,7 +110,6 @@ public class ContainerKind extends DomainObjectABC {
 		parent = inFacility;
 	}
 
-	@JsonIgnore
 	public final IDomainObject getParent() {
 		return parent;
 	}
@@ -115,7 +120,6 @@ public class ContainerKind extends DomainObjectABC {
 		}
 	}
 
-	@JsonIgnore
 	public final List<IDomainObject> getChildren() {
 		return new ArrayList<IDomainObject>();
 	}

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Container.java,v 1.6 2012/10/13 22:14:24 jeffw Exp $
+ *  $Id: Container.java,v 1.7 2012/10/21 02:02:18 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -19,7 +19,9 @@ import lombok.Setter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonAutoDetect;
+import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
+import org.codehaus.jackson.annotate.JsonProperty;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
@@ -39,6 +41,7 @@ import com.google.inject.Singleton;
 @Entity
 @Table(name = "CONTAINER")
 @CacheStrategy
+@JsonAutoDetect(getterVisibility=Visibility.NONE)
 public class Container extends DomainObjectABC {
 
 	@Inject
@@ -56,18 +59,18 @@ public class Container extends DomainObjectABC {
 	// The container kind.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	@JsonIgnore
+	@Getter
+	@Setter
+	@JsonProperty
 	private ContainerKind		kind;
 
 	// The parent facility.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	@JsonIgnore
 	private Facility			parent;
 
 	// For a network this is a list of all of the users that belong in the set.
 	@OneToMany(mappedBy = "parent")
-	@JsonIgnore
 	@Getter
 	private List<ContainerUse>	uses	= new ArrayList<ContainerUse>();
 
@@ -75,7 +78,6 @@ public class Container extends DomainObjectABC {
 
 	}
 
-	@JsonIgnore
 	public final ITypedDao<Container> getDao() {
 		return DAO;
 	}
@@ -84,7 +86,6 @@ public class Container extends DomainObjectABC {
 		return "P";
 	}
 
-	@JsonIgnore
 	public final Facility getParentFacility() {
 		return parent;
 	}
@@ -93,7 +94,6 @@ public class Container extends DomainObjectABC {
 		parent = inFacility;
 	}
 
-	@JsonIgnore
 	public final String getContainerId() {
 		return getShortDomainId();
 	}
@@ -102,7 +102,6 @@ public class Container extends DomainObjectABC {
 		setShortDomainId(inContainerId);
 	}
 
-	@JsonIgnore
 	public final IDomainObject getParent() {
 		return parent;
 	}
@@ -113,7 +112,6 @@ public class Container extends DomainObjectABC {
 		}
 	}
 
-	@JsonIgnore
 	public final List<? extends IDomainObject> getChildren() {
 		return getUses();
 	}

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Organization.java,v 1.14 2012/10/16 06:23:21 jeffw Exp $
+ *  $Id: Organization.java,v 1.15 2012/10/21 02:02:17 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -22,10 +22,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
-import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
 
-import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.google.inject.Inject;
@@ -140,7 +138,10 @@ public class Organization extends DomainObjectABC {
 		
 		Facility.DAO.store(facility);
 		
-		// We also need to create a first Dropbox Service entry for this facility.
+		// Create a first Dropbox Service entry for this facility.
 		DropboxService dropboxService = facility.createDropboxService();
+		
+		// Create the generic container kind (for all unspecified containers)
+		facility.createDefaultContainerKind();
 	}
 }

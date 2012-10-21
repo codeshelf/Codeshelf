@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DomainObjectABC.java,v 1.17 2012/10/11 02:42:39 jeffw Exp $
+ *  $Id: DomainObjectABC.java,v 1.18 2012/10/21 02:02:17 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -40,7 +40,7 @@ import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 
 @Entity
 @ToString
-@JsonAutoDetect(getterVisibility=Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE)
 public abstract class DomainObjectABC implements IDomainObject {
 
 	private static final Log	LOGGER	= LogFactory.getLog(DomainObjectABC.class);
@@ -52,20 +52,20 @@ public abstract class DomainObjectABC implements IDomainObject {
 	@Getter
 	@Setter
 	@JsonProperty
-	private Long				persistentId;
+	private Long		persistentId;
 
 	// The domain ID
 	@NonNull
 	@Column(nullable = false)
 	@JsonProperty
-	private String				domainId;
+	private String		domainId;
 
 	// The last sequence used to generate a sequence ID.
 	@NonNull
 	@Column(nullable = false)
 	@Getter
 	@Setter
-	private Integer				lastDefaultSequenceId;
+	private Integer		lastDefaultSequenceId;
 
 	// This is not an application-editable field.
 	// It's for the private use of the ORM transaction system.
@@ -74,7 +74,7 @@ public abstract class DomainObjectABC implements IDomainObject {
 	@Column(nullable = false)
 	@Getter
 	@Setter
-	private Timestamp			version;
+	private Timestamp	version;
 
 	public DomainObjectABC() {
 		lastDefaultSequenceId = 0;
@@ -127,7 +127,7 @@ public abstract class DomainObjectABC implements IDomainObject {
 	protected Integer getIdDigits() {
 		return 2;
 	}
-	
+
 	public boolean includeMeInDomainId() {
 		return true;
 	}
@@ -150,9 +150,9 @@ public abstract class DomainObjectABC implements IDomainObject {
 	 */
 	@JsonProperty
 	public final void setShortDomainId(String inId) {
-		
+
 		inId = inId.toUpperCase();
-		
+
 		IDomainObject parentObject = getParent();
 
 		// All domain objects except Organization, have a parent domain object.

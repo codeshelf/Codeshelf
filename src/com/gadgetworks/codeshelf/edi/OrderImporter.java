@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderImporter.java,v 1.3 2012/10/14 01:05:23 jeffw Exp $
+ *  $Id: OrderImporter.java,v 1.4 2012/10/21 02:02:18 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -19,8 +19,11 @@ import au.com.bytecode.opencsv.bean.CsvToBean;
 import au.com.bytecode.opencsv.bean.HeaderColumnNameMappingStrategy;
 
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
+import com.gadgetworks.codeshelf.model.PickStrategyEnum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.codeshelf.model.domain.Container;
+import com.gadgetworks.codeshelf.model.domain.ContainerKind;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
@@ -40,6 +43,7 @@ public class OrderImporter implements IOrderImporter {
 	private ITypedDao<OrderGroup>	mOrderGroupDao;
 	private ITypedDao<OrderHeader>	mOrderHeaderDao;
 	private ITypedDao<OrderDetail>	mOrderDetailDao;
+	private ITypedDao<Container>	mContainerDao;
 	private ITypedDao<ItemMaster>	mItemMasterDao;
 	private ITypedDao<UomMaster>	mUomMasterDao;
 
@@ -47,12 +51,14 @@ public class OrderImporter implements IOrderImporter {
 	public OrderImporter(final ITypedDao<OrderGroup> inOrderGroupDao,
 		final ITypedDao<OrderHeader> inOrderHeaderDao,
 		final ITypedDao<OrderDetail> inOrderDetailDao,
+		final ITypedDao<Container> inContainerDao,
 		final ITypedDao<ItemMaster> inItemMasterDao,
 		final ITypedDao<UomMaster> inUomMasterDao) {
 
 		mOrderGroupDao = inOrderGroupDao;
 		mOrderHeaderDao = inOrderHeaderDao;
 		mOrderDetailDao = inOrderDetailDao;
+		mContainerDao = inContainerDao;
 		mItemMasterDao = inItemMasterDao;
 		mUomMasterDao = inUomMasterDao;
 	}
@@ -95,8 +101,10 @@ public class OrderImporter implements IOrderImporter {
 
 		OrderGroup group = ensureOptionalOrderGroup(inCsvImportBean, inFacility);
 		OrderHeader order = ensureOrderHeader(inCsvImportBean, inFacility, group);
-		ItemMaster itemMaster = ensureItemMaster(inCsvImportBean, inFacility);
-		OrderDetail orderDetail = ensureOrderDetail(inCsvImportBean, order, itemMaster);
+		Container container = ensureContainer(inCsvImportBean, inFacility, order);
+		UomMaster uomMaster = ensureUomMaster(inCsvImportBean, inFacility);
+		ItemMaster itemMaster = ensureItemMaster(inCsvImportBean, inFacility, uomMaster);
+		OrderDetail orderDetail = ensureOrderDetail(inCsvImportBean, inFacility, order, uomMaster, itemMaster);
 	}
 
 	// --------------------------------------------------------------------------
@@ -129,6 +137,35 @@ public class OrderImporter implements IOrderImporter {
 	/**
 	 * @param inCsvImportBean
 	 * @param inFacility
+	 * @param inOrder
+	 * @return
+	 */
+	private Container ensureContainer(final CsvOrderImportBean inCsvImportBean, final Facility inFacility, final OrderHeader inOrder) {
+		Container result = null;
+
+		if ((inCsvImportBean.getPreAssignedContainerId() != null) && (inCsvImportBean.getPreAssignedContainerId().length() > 0)) {
+			result = inFacility.getContainer(inCsvImportBean.getPreAssignedContainerId());
+
+			if (result == null) {
+				result = new Container();
+				result.setParentFacility(inFacility);
+				result.setContainerId(inCsvImportBean.getPreAssignedContainerId());
+				result.setKind(inFacility.getContainerKind(ContainerKind.DEFAULT_CONTAINER_KIND));
+				try {
+					mContainerDao.store(result);
+				} catch (DaoException e) {
+					LOGGER.error("", e);
+				}
+			}
+		}
+
+		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inCsvImportBean
+	 * @param inFacility
 	 * @param inOrderGroup
 	 * @return
 	 */
@@ -142,6 +179,13 @@ public class OrderImporter implements IOrderImporter {
 			result.setParentFacility(inFacility);
 			result.setShortDomainId(inCsvImportBean.getOrderId());
 			result.setStatusEnum(OrderStatusEnum.CREATED);
+
+			PickStrategyEnum pickStrategy = PickStrategyEnum.SERIAL;
+			String pickStrategyEnumId = inCsvImportBean.getPickStrategy();
+			if ((pickStrategyEnumId != null) && (pickStrategyEnumId.length() > 0)) {
+				pickStrategy = PickStrategyEnum.valueOf(pickStrategyEnumId);
+			}
+			result.setPickStrategyEnum(pickStrategy);
 			inFacility.addOrderHeader(result);
 			if (inOrderGroup != null) {
 				inOrderGroup.addOrderHeader(result);
@@ -163,28 +207,16 @@ public class OrderImporter implements IOrderImporter {
 	 * @param inFacility
 	 * @return
 	 */
-	private ItemMaster ensureItemMaster(final CsvOrderImportBean inCsvImportBean, final Facility inFacility) {
+	private ItemMaster ensureItemMaster(final CsvOrderImportBean inCsvImportBean, final Facility inFacility, final UomMaster inUomMaster) {
 		ItemMaster result = null;
 
 		result = mItemMasterDao.findByDomainId(inFacility, inCsvImportBean.getItemId());
 		if (result == null) {
 
-			UomMaster uomMaster = mUomMasterDao.findByDomainId(inFacility, inCsvImportBean.getUomId());
-			if (uomMaster == null) {
-				uomMaster = new UomMaster();
-				uomMaster.setParentFacility(inFacility);
-				uomMaster.setUomMasterId(inCsvImportBean.getUomId());
-				inFacility.addUomMaster(uomMaster);
-				try {
-					mUomMasterDao.store(uomMaster);
-				} catch (DaoException e) {
-					LOGGER.error("", e);
-				}
-			}
 			result = new ItemMaster();
 			result.setParentFacility(inFacility);
 			result.setItemMasterId(inCsvImportBean.getItemId());
-			result.setStandardUoM(uomMaster);
+			result.setStandardUoM(inUomMaster);
 			inFacility.addItemMaster(result);
 			try {
 				mItemMasterDao.store(result);
@@ -199,11 +231,37 @@ public class OrderImporter implements IOrderImporter {
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inCsvImportBean
+	 * @param inFacility
+	 * @return
+	 */
+	private UomMaster ensureUomMaster(final CsvOrderImportBean inCsvImportBean, final Facility inFacility) {
+		UomMaster result = null;
+
+		String uomId = inCsvImportBean.getUomId();
+		result = inFacility.getUomMaster(uomId);
+
+		if (result == null) {
+			result = new UomMaster();
+			result.setParentFacility(inFacility);
+			result.setUomMasterId(uomId);
+			inFacility.addUomMaster(uomId, result);
+		}
+
+		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inCsvImportBean
 	 * @param inOrder
 	 * @param inItemMaster
 	 * @return
 	 */
-	private OrderDetail ensureOrderDetail(final CsvOrderImportBean inCsvImportBean, final OrderHeader inOrder, final ItemMaster inItemMaster) {
+	private OrderDetail ensureOrderDetail(final CsvOrderImportBean inCsvImportBean,
+		final Facility inFacility,
+		final OrderHeader inOrder,
+		final UomMaster inUomMaster,
+		final ItemMaster inItemMaster) {
 		OrderDetail result = null;
 
 		result = inOrder.findOrderDetail(inCsvImportBean.getOrderDetailId());
@@ -219,7 +277,7 @@ public class OrderImporter implements IOrderImporter {
 		result.setItemMaster(inItemMaster);
 		result.setDescription(inCsvImportBean.getDescription());
 		result.setQuantity(Integer.valueOf(inCsvImportBean.getQuantity()));
-		result.setUomId(inCsvImportBean.getUomId());
+		result.setUomMaster(inUomMaster);
 		result.setOrderDate(Timestamp.valueOf(inCsvImportBean.getOrderDate()));
 
 		try {

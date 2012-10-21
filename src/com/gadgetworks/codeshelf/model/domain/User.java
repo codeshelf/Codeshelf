@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: User.java,v 1.8 2012/09/23 03:05:42 jeffw Exp $
+ *  $Id: User.java,v 1.9 2012/10/21 02:02:17 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -20,7 +20,9 @@ import lombok.Setter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonAutoDetect;
+import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
+import org.codehaus.jackson.annotate.JsonProperty;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
@@ -40,6 +42,7 @@ import com.google.inject.Singleton;
 @Entity
 @Table(name = "USER")
 @CacheStrategy
+@JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class User extends DomainObjectABC {
 
 	@Inject
@@ -56,40 +59,44 @@ public class User extends DomainObjectABC {
 
 	private static final long	serialVersionUID	= 3001609308065821464L;
 
+	// The owning facility.
+	@Column(name = "parentOrganization", nullable = false)
+	@ManyToOne(optional = false)
+	private Organization		parent;
+
 	// The hashed password
 	// A User with a null hashed password is a promo user (with limited abilities).
+	@Column(nullable = true)
 	@Getter
 	@Setter
-	@Column(nullable = true)
-	private String					hashedPassword;
+	@JsonProperty
+	private String				hashedPassword;
 
 	// Email.
+	@Column(nullable = false)
 	@Getter
 	@Setter
-	@Column(nullable = false)
-	private String					email;
+	@JsonProperty
+	private String				email;
 
 	// Create date.
+	@Column(nullable = false)
 	@Getter
 	@Setter
-	@Column(nullable = false)
-	private Timestamp				created;
+	@JsonProperty
+	private Timestamp			created;
 
 	// Is it active.
+	@Column(nullable = false)
 	@Getter
 	@Setter
-	@Column(nullable = false)
-	private Boolean					active;
+	@JsonProperty
+	private Boolean				active;
 
 	// For a network this is a list of all of the control groups that belong in the set.
 	@OneToMany(mappedBy = "parent")
 	@Getter
-	private List<UserSession>		userSessions	= new ArrayList<UserSession>();
-
-	// The owning facility.
-	@Column(name = "parentOrganization", nullable = false)
-	@ManyToOne(optional = false)
-	private Organization			parent;
+	private List<UserSession>	userSessions		= new ArrayList<UserSession>();
 
 	public User() {
 		email = "";
@@ -97,7 +104,6 @@ public class User extends DomainObjectABC {
 		active = true;
 	}
 
-	@JsonIgnore
 	public final ITypedDao<User> getDao() {
 		return DAO;
 	}
@@ -124,7 +130,6 @@ public class User extends DomainObjectABC {
 		}
 	}
 
-	@JsonIgnore
 	public final List<? extends IDomainObject> getChildren() {
 		return getUserSessions();
 	}

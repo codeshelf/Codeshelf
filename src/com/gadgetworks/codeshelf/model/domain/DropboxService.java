@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DropboxService.java,v 1.22 2012/10/14 05:34:45 jeffw Exp $
+ *  $Id: DropboxService.java,v 1.23 2012/10/21 02:02:17 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -24,7 +24,10 @@ import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.JsonProcessingException;
+import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
+import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ObjectNode;
@@ -63,6 +66,7 @@ import com.google.inject.Singleton;
 @Table(name = "EDISERVICE")
 @DiscriminatorValue("DROPBOX")
 @CacheStrategy
+@JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class DropboxService extends EdiServiceABC {
 
 	@Inject
@@ -86,16 +90,16 @@ public class DropboxService extends EdiServiceABC {
 	private static final String		IMPORT_PATH				= "/import";
 	private static final String		EXPORT_PATH				= "/export";
 
-	@Column(nullable = true, name="CURSOR")
+	@Column(nullable = true, name = "CURSOR")
 	@Getter(value = AccessLevel.PRIVATE)
 	@Setter(value = AccessLevel.PRIVATE)
+	@JsonProperty
 	private String					dbCursor;
 
 	public DropboxService() {
 
 	}
 
-	@JsonIgnore
 	public final ITypedDao<DropboxService> getDao() {
 		return DAO;
 	}
@@ -382,111 +386,111 @@ public class DropboxService extends EdiServiceABC {
 		return result;
 	}
 
-		// --------------------------------------------------------------------------
-		/**
-		 * @param inClientSession
-		 * @param inPage
-		 */
-		private void processDeltas(DropboxAPI<Session> inClientSession, DeltaPage<Entry> inPage, IOrderImporter inOrderImporter) {
-			if ((inPage != null) && (inPage.cursor != null) && (!inPage.cursor.equals(dbCursor))) {
-				iteratePage(inClientSession, inPage, inOrderImporter);
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inClientSession
+	 * @param inPage
+	 */
+	private void processDeltas(DropboxAPI<Session> inClientSession, DeltaPage<Entry> inPage, IOrderImporter inOrderImporter) {
+		if ((inPage != null) && (inPage.cursor != null) && (!inPage.cursor.equals(dbCursor))) {
+			iteratePage(inClientSession, inPage, inOrderImporter);
 
-				dbCursor = inPage.cursor;
-				try {
-					DropboxService.DAO.store(this);
-				} catch (DaoException e) {
-					LOGGER.error("", e);
-				}
-			}
-		}
-
-		// --------------------------------------------------------------------------
-		/**
-		 * @param inClientSession
-		 * @param inPage
-		 */
-		private void iteratePage(DropboxAPI<Session> inClientSession, DeltaPage<Entry> inPage, IOrderImporter inOrderImporter) {
-			for (DeltaEntry<Entry> entry : inPage.entries) {
-				LOGGER.info(entry.lcPath);
-
-				if (entry.metadata != null) {
-					// Add, or modify.
-					processEntry(inClientSession, entry, inOrderImporter);
-				} else {
-					removeEntry(inClientSession, entry);
-				}
-			}
-		}
-
-		// --------------------------------------------------------------------------
-		/**
-		 * @param inEntry
-		 */
-		private void processEntry(DropboxAPI<Session> inClientSession, DeltaEntry<Entry> inEntry, IOrderImporter inOrderImporter) {
-
-			boolean shouldUpdateEntry = false;
-
-			if (inEntry.metadata.path.startsWith(this.getImportPath())) {
-				if (!inEntry.metadata.isDir) {
-					handleImport(inClientSession, inEntry, inOrderImporter);
-					shouldUpdateEntry = true;
-				}
-			} else if (inEntry.metadata.path.startsWith(this.getExportPath())) {
-				if (!inEntry.metadata.isDir) {
-					//handleExport();
-					shouldUpdateEntry = true;
-				}
-			}
-
-			if (shouldUpdateEntry) {
-				EdiDocumentLocator locator = EdiDocumentLocator.DAO.findByDomainId(this, inEntry.lcPath);
-				if (locator == null) {
-					locator = new EdiDocumentLocator();
-					locator.setParentEdiService(this);
-					locator.setReceived(new Timestamp(System.currentTimeMillis()));
-					locator.setDocumentStateEnum(EdiDocumentStatusEnum.NEW);
-					locator.setShortDomainId(inEntry.lcPath);
-					locator.setDocumentPath(inEntry.metadata.parentPath());
-					locator.setDocumentName(inEntry.metadata.fileName());
-
-					this.addEdiDocumentLocator(locator);
-					try {
-						EdiDocumentLocator.DAO.store(locator);
-					} catch (DaoException e) {
-						LOGGER.error("", e);
-					}
-				}
-			}
-		}
-
-		// --------------------------------------------------------------------------
-		/**
-		 */
-		private void handleImport(DropboxAPI<Session> inClientSession, DeltaEntry<Entry> inEntry, IOrderImporter inOrderImporter) {
-
+			dbCursor = inPage.cursor;
 			try {
-
-				DropboxInputStream stream = inClientSession.getFileStream(inEntry.lcPath, null);
-				InputStreamReader reader = new InputStreamReader(stream);
-				inOrderImporter.importerFromCsvStream(reader, this.getParentFacility());
-				
-			} catch (DropboxException e) {
+				DropboxService.DAO.store(this);
+			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}
 		}
+	}
 
-		// --------------------------------------------------------------------------
-		/**
-		 * @param inEntry
-		 */
-		private void removeEntry(DropboxAPI<Session> inClientSession, DeltaEntry<Entry> inEntry) {
-			EdiDocumentLocator locator = this.getDocumentLocatorByPath(inEntry.lcPath);
-			if (locator != null) {
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inClientSession
+	 * @param inPage
+	 */
+	private void iteratePage(DropboxAPI<Session> inClientSession, DeltaPage<Entry> inPage, IOrderImporter inOrderImporter) {
+		for (DeltaEntry<Entry> entry : inPage.entries) {
+			LOGGER.info(entry.lcPath);
+
+			if (entry.metadata != null) {
+				// Add, or modify.
+				processEntry(inClientSession, entry, inOrderImporter);
+			} else {
+				removeEntry(inClientSession, entry);
+			}
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inEntry
+	 */
+	private void processEntry(DropboxAPI<Session> inClientSession, DeltaEntry<Entry> inEntry, IOrderImporter inOrderImporter) {
+
+		boolean shouldUpdateEntry = false;
+
+		if (inEntry.metadata.path.startsWith(this.getImportPath())) {
+			if (!inEntry.metadata.isDir) {
+				handleImport(inClientSession, inEntry, inOrderImporter);
+				shouldUpdateEntry = true;
+			}
+		} else if (inEntry.metadata.path.startsWith(this.getExportPath())) {
+			if (!inEntry.metadata.isDir) {
+				//handleExport();
+				shouldUpdateEntry = true;
+			}
+		}
+
+		if (shouldUpdateEntry) {
+			EdiDocumentLocator locator = EdiDocumentLocator.DAO.findByDomainId(this, inEntry.lcPath);
+			if (locator == null) {
+				locator = new EdiDocumentLocator();
+				locator.setParentEdiService(this);
+				locator.setReceived(new Timestamp(System.currentTimeMillis()));
+				locator.setDocumentStateEnum(EdiDocumentStatusEnum.NEW);
+				locator.setShortDomainId(inEntry.lcPath);
+				locator.setDocumentPath(inEntry.metadata.parentPath());
+				locator.setDocumentName(inEntry.metadata.fileName());
+
+				this.addEdiDocumentLocator(locator);
 				try {
-					EdiDocumentLocator.DAO.delete(locator);
+					EdiDocumentLocator.DAO.store(locator);
 				} catch (DaoException e) {
 					LOGGER.error("", e);
 				}
 			}
 		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 */
+	private void handleImport(DropboxAPI<Session> inClientSession, DeltaEntry<Entry> inEntry, IOrderImporter inOrderImporter) {
+
+		try {
+
+			DropboxInputStream stream = inClientSession.getFileStream(inEntry.lcPath, null);
+			InputStreamReader reader = new InputStreamReader(stream);
+			inOrderImporter.importerFromCsvStream(reader, this.getParentFacility());
+
+		} catch (DropboxException e) {
+			LOGGER.error("", e);
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inEntry
+	 */
+	private void removeEntry(DropboxAPI<Session> inClientSession, DeltaEntry<Entry> inEntry) {
+		EdiDocumentLocator locator = this.getDocumentLocatorByPath(inEntry.lcPath);
+		if (locator != null) {
+			try {
+				EdiDocumentLocator.DAO.delete(locator);
+			} catch (DaoException e) {
+				LOGGER.error("", e);
+			}
+		}
+	}
 }

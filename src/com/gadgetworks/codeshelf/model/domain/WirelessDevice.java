@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WirelessDevice.java,v 1.9 2012/10/13 22:14:24 jeffw Exp $
+ *  $Id: WirelessDevice.java,v 1.10 2012/10/21 02:02:17 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -26,7 +26,9 @@ import lombok.Setter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonAutoDetect;
+import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
+import org.codehaus.jackson.annotate.JsonProperty;
 
 import com.gadgetworks.codeshelf.command.CommandControlABC;
 import com.gadgetworks.codeshelf.controller.IDeviceMaintainer;
@@ -35,7 +37,6 @@ import com.gadgetworks.codeshelf.controller.NetAddress;
 import com.gadgetworks.codeshelf.controller.NetMacAddress;
 import com.gadgetworks.codeshelf.controller.NetworkDeviceStateEnum;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.model.dao.WirelessDeviceDao;
 import com.google.inject.Inject;
 
 // --------------------------------------------------------------------------
@@ -53,6 +54,7 @@ import com.google.inject.Inject;
 @DiscriminatorColumn(name = "DTYPE", discriminatorType = DiscriminatorType.STRING)
 //@Table(name = "WIRELESSDEVICE")
 //@DiscriminatorValue("ABC")
+@JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class WirelessDevice extends DomainObjectABC implements INetworkDevice {
 
 	@Inject
@@ -68,9 +70,6 @@ public class WirelessDevice extends DomainObjectABC implements INetworkDevice {
 
 	}
 
-	//	@Inject
-	//	public static IWirelessDeviceDao	DAO;
-
 	public static final int			MAC_ADDR_BYTES		= 8;
 	public static final int			PUBLIC_KEY_BYTES	= 8;
 
@@ -78,25 +77,44 @@ public class WirelessDevice extends DomainObjectABC implements INetworkDevice {
 
 	@Column(nullable = false)
 	private byte[]					macAddress;
+
 	@Column(nullable = false)
-	private String					publicKey;
-	// The description.
-	@Column
-	private String					description;
-	// The network address last assigned to this wireless device.
-	@Column
 	@Getter
 	@Setter
+	@JsonProperty
+	private String					publicKey;
+
+	// The description.
+	@Column(nullable = false)
+	@Getter
+	@Setter
+	@JsonProperty
+	private String					description;
+
+	// The network address last assigned to this wireless device.
+	@Column(nullable = false)
+	@JsonProperty
 	private byte[]					networkAddress;
+
 	// The last seen battery level.
-	@Column
+	@Column(nullable = false)
+	@Getter
+	@Setter
+	@JsonProperty
 	private short					lastBatteryLevel;
+
 	//@Transient
+	@Column(nullable = false)
 	@Enumerated(value = EnumType.STRING)
-	@Column
+	@Getter
+	@Setter
+	@JsonProperty
 	private NetworkDeviceStateEnum	networkDeviceStatus;
+
 	//@Transient
-	@Column
+	@Column(nullable = false)
+	@Setter
+	@JsonProperty
 	private Long					lastContactTime;
 
 	// The owning network.
@@ -105,12 +123,21 @@ public class WirelessDevice extends DomainObjectABC implements INetworkDevice {
 	private ControlGroup			parent;
 
 	@Transient
+	@Getter
+	@Setter
+	@JsonProperty
 	private short					expectedEndpointCount;
 
 	@Transient
+	@Getter
+	@Setter
+	@JsonProperty
 	private Map<String, String>		kvpMap;
 
 	@Transient
+	@Getter
+	@Setter
+	@JsonProperty
 	private short					expectedKvpCount;
 
 	//	@Transient
@@ -126,7 +153,6 @@ public class WirelessDevice extends DomainObjectABC implements INetworkDevice {
 		kvpMap = new HashMap<String, String>();
 	}
 
-	@JsonIgnore
 	public final ITypedDao<WirelessDevice> getDao() {
 		return DAO;
 	}
@@ -153,7 +179,6 @@ public class WirelessDevice extends DomainObjectABC implements INetworkDevice {
 		}
 	}
 
-	@JsonIgnore
 	public final List<IDomainObject> getChildren() {
 		return new ArrayList<IDomainObject>();
 	}
@@ -166,26 +191,11 @@ public class WirelessDevice extends DomainObjectABC implements INetworkDevice {
 		macAddress = inMacAddress.getParamValueAsByteArray();
 	}
 
-	public final String getPublicKey() {
-		return publicKey;
-	}
-
-	public final void setPublicKey(String inPublicKey) {
-		publicKey = inPublicKey;
-	}
-
-	public final String getDescription() {
-		return description;
-	}
-
-	public final void setDescription(String inDescription) {
-		description = inDescription;
-	}
-
 	public final void setNetAddress(NetAddress inNetworkAddress) {
 		networkAddress = inNetworkAddress.getParamValueAsByteArray();
 	}
 
+	@JsonProperty
 	public final NetAddress getNetAddress() {
 		return new NetAddress(networkAddress);
 	}
@@ -201,18 +211,6 @@ public class WirelessDevice extends DomainObjectABC implements INetworkDevice {
 			result = longVal.longValue();
 		}
 		return result;
-	}
-
-	public final void setLastContactTime(long inContactTime) {
-		lastContactTime = inContactTime;
-	}
-
-	public final short getLastBatteryLevel() {
-		return lastBatteryLevel;
-	}
-
-	public final void setLastBatteryLevel(short inLastBatteryLevel) {
-		lastBatteryLevel = inLastBatteryLevel;
 	}
 
 	public final NetworkDeviceStateEnum getNetworkDeviceState() {
@@ -255,33 +253,17 @@ public class WirelessDevice extends DomainObjectABC implements INetworkDevice {
 
 	/* --------------------------------------------------------------------------
 	 * (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.controller.INetworkDevice#getExpectedKVPCount()
-	 */
-	public final short getExpectedKVPCount() {
-		return expectedKvpCount;
-	}
-
-	/* --------------------------------------------------------------------------
-	 * (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.controller.INetworkDevice#getStoredKVPCount()
 	 */
-	public final short getStoredKVPCount() {
+	public final short getStoredKvpCount() {
 		return (short) kvpMap.size();
 	}
-
-	/* --------------------------------------------------------------------------
-	 * (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.controller.INetworkDevice#setKVPCount(short)
-	 */
-	public final void setKVPCount(short inKVPCount) {
-		expectedKvpCount = inKVPCount;
-	}
-
+ 
 	/* --------------------------------------------------------------------------
 	 * (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.controller.INetworkDevice#getHWDesc()
 	 */
-	public final String getHWDesc() {
+	public final String getHwDesc() {
 		String result;
 		result = kvpMap.get(INetworkDevice.HW_VERSION_KEY);
 		if (result == null) {
@@ -294,7 +276,7 @@ public class WirelessDevice extends DomainObjectABC implements INetworkDevice {
 	 * (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.controller.INetworkDevice#getSWRevision()
 	 */
-	public final String getSWRevision() {
+	public final String getSwRevision() {
 		String result;
 		result = kvpMap.get(INetworkDevice.SW_VERSION_KEY);
 		if (result == null) {

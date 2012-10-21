@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ItemMaster.java,v 1.6 2012/10/13 22:14:24 jeffw Exp $
+ *  $Id: ItemMaster.java,v 1.7 2012/10/21 02:02:17 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -10,6 +10,8 @@ import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
@@ -19,9 +21,12 @@ import lombok.Setter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonAutoDetect;
+import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
+import org.codehaus.jackson.annotate.JsonProperty;
 
 import com.avaje.ebean.annotation.CacheStrategy;
+import com.gadgetworks.codeshelf.model.LotHandlingEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.google.inject.Inject;
@@ -39,6 +44,7 @@ import com.google.inject.Singleton;
 @Entity
 @Table(name = "ITEMMASTER")
 @CacheStrategy
+@JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class ItemMaster extends DomainObjectABC {
 
 	@Inject
@@ -56,26 +62,32 @@ public class ItemMaster extends DomainObjectABC {
 	// The parent facility.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	@JsonIgnore
 	private Facility			parent;
 
 	// The description.
+	@Column(nullable = true)
 	@Getter
 	@Setter
-	@Column(nullable = true)
+	@JsonProperty
 	private String				description;
+
+	// The lot handling method for this item.
+	@Column(nullable = false)
+	@Enumerated(value = EnumType.STRING)
+	@Getter
+	@Setter
+	@JsonProperty
+	private LotHandlingEnum		lotHandlingEnum;
 
 	// The standard UoM.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	@JsonIgnore
 	@Getter
 	@Setter
 	private UomMaster			standardUoM;
 
 	// For a network this is a list of all of the users that belong in the set.
 	@OneToMany(mappedBy = "parent")
-	@JsonIgnore
 	@Getter
 	private List<Item>			items	= new ArrayList<Item>();
 
@@ -83,7 +95,6 @@ public class ItemMaster extends DomainObjectABC {
 
 	}
 
-	@JsonIgnore
 	public final ITypedDao<ItemMaster> getDao() {
 		return DAO;
 	}
@@ -92,7 +103,6 @@ public class ItemMaster extends DomainObjectABC {
 		return "IM";
 	}
 
-	@JsonIgnore
 	public final Facility getParentFacility() {
 		return parent;
 	}
@@ -101,7 +111,6 @@ public class ItemMaster extends DomainObjectABC {
 		parent = inFacility;
 	}
 
-	@JsonIgnore
 	public final IDomainObject getParent() {
 		return parent;
 	}
@@ -112,7 +121,6 @@ public class ItemMaster extends DomainObjectABC {
 		}
 	}
 
-	@JsonIgnore
 	public final List<? extends IDomainObject> getChildren() {
 		return getItems();
 	}
@@ -127,7 +135,6 @@ public class ItemMaster extends DomainObjectABC {
 		items.remove(inItem);
 	}
 
-	@JsonIgnore
 	public final String getItemMasterId() {
 		return getShortDomainId();
 	}

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ContainerUse.java,v 1.3 2012/10/13 22:14:24 jeffw Exp $
+ *  $Id: ContainerUse.java,v 1.4 2012/10/21 02:02:17 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -19,7 +19,9 @@ import lombok.Setter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
@@ -39,6 +41,7 @@ import com.google.inject.Singleton;
 @Entity
 @Table(name = "CONTAINERUSE")
 @CacheStrategy
+@JsonAutoDetect(getterVisibility=Visibility.NONE)
 public class ContainerUse extends DomainObjectABC {
 
 	@Inject
@@ -53,22 +56,21 @@ public class ContainerUse extends DomainObjectABC {
 
 	private static final Log	LOGGER	= LogFactory.getLog(ContainerUse.class);
 
-	// Use date.
-	@Column(nullable = false)
-	@ManyToOne(optional = false)
-	@JsonIgnore
-	private Timestamp			useTimeStamp;
-
 	// The container used.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	@JsonIgnore
 	private Container			parent;
+
+	// Use date.
+	@Column(nullable = false)
+	@Getter
+	@Setter
+	@JsonIgnore
+	private Timestamp			useTimeStamp;
 
 	public ContainerUse() {
 	}
 
-	@JsonIgnore
 	public final ITypedDao<ContainerUse> getDao() {
 		return DAO;
 	}
@@ -95,7 +97,6 @@ public class ContainerUse extends DomainObjectABC {
 		}
 	}
 
-	@JsonIgnore
 	public final List<IDomainObject> getChildren() {
 		return new ArrayList<IDomainObject>();
 	}

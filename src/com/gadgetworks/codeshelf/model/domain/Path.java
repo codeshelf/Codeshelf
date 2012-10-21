@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Path.java,v 1.8 2012/09/23 03:05:42 jeffw Exp $
+ *  $Id: Path.java,v 1.9 2012/10/21 02:02:17 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -18,7 +18,9 @@ import lombok.Setter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonAutoDetect;
+import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
+import org.codehaus.jackson.annotate.JsonProperty;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
@@ -38,6 +40,7 @@ import com.google.inject.Singleton;
 @Entity
 @Table(name = "PATH")
 @CacheStrategy
+@JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class Path extends DomainObjectABC {
 
 	@Inject
@@ -57,14 +60,14 @@ public class Path extends DomainObjectABC {
 	private Facility			parent;
 
 	// The path description.
+	@Column(nullable = false)
 	@Getter
 	@Setter
-	@Column(nullable = false)
+	@JsonProperty
 	private String				description;
 
 	// For a network this is a list of all of the users that belong in the set.
 	@OneToMany(mappedBy = "parent")
-	@JsonIgnore
 	@Getter
 	private List<PathSegment>	segments	= new ArrayList<PathSegment>();
 
@@ -72,7 +75,6 @@ public class Path extends DomainObjectABC {
 		description = "";
 	}
 
-	@JsonIgnore
 	public final ITypedDao<Path> getDao() {
 		return DAO;
 	}
@@ -99,7 +101,6 @@ public class Path extends DomainObjectABC {
 		}
 	}
 
-	@JsonIgnore
 	public final List<? extends IDomainObject> getChildren() {
 		return getSegments();
 	}

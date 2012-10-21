@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ControlGroup.java,v 1.8 2012/10/02 03:17:58 jeffw Exp $
+ *  $Id: ControlGroup.java,v 1.9 2012/10/21 02:02:17 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -10,6 +10,8 @@ import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
@@ -18,7 +20,9 @@ import javax.persistence.Transient;
 import lombok.Getter;
 import lombok.Setter;
 
-import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonAutoDetect;
+import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
+import org.codehaus.jackson.annotate.JsonProperty;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.controller.NetGroup;
@@ -39,6 +43,7 @@ import com.google.inject.Singleton;
 @Entity
 @Table(name = "CONTROLGROUP")
 @CacheStrategy
+@JsonAutoDetect(getterVisibility=Visibility.NONE)
 public class ControlGroup extends DomainObjectABC {
 
 	@Inject
@@ -51,39 +56,45 @@ public class ControlGroup extends DomainObjectABC {
 		}
 	}
 
+	// The owning CodeShelf network.
+	@Column(nullable = false)
+	@ManyToOne(optional = false)
+	private CodeShelfNetwork				parent;
+	
 	// The control group ID
 	@Column(nullable = false)
-
+	@Getter
+	@JsonProperty
 	private byte[]							serializedId;
 	
 	// The control group description.
 	@Column(nullable = false)
 	@Getter
 	@Setter
+	@JsonProperty
 	private String							description;
 	
 	// Interface port number
 	@Column(nullable = false)
 	@Getter
 	@Setter
+	@JsonProperty
 	private short							interfacePortNum;
 	
 	// Active/Inactive rule
 	@Column(nullable = false)
 	@Getter
 	@Setter
+	@JsonProperty
 	private boolean							active;
 	
 	// Active/Inactive rule
 	@Column(nullable = false)
+	@Enumerated(value = EnumType.STRING)
 	@Getter
 	@Setter
+	@JsonProperty
 	private TagProtocolEnum					tagProtocolEnum;
-	
-	// The owning CodeShelf network.
-	@Column(nullable = false)
-	@ManyToOne(optional = false)
-	private CodeShelfNetwork				parent;
 	
 	// For a control group this is a list of all of the pick tags that belong in the set.
 	@OneToMany(mappedBy = "parent")
@@ -126,7 +137,6 @@ public class ControlGroup extends DomainObjectABC {
 		}
 	}
 
-	@JsonIgnore
 	public final List<? extends IDomainObject> getChildren() {
 		return getWirelessDevices();
 	}

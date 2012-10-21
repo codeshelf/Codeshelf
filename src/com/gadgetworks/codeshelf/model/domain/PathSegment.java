@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: PathSegment.java,v 1.10 2012/10/05 21:01:40 jeffw Exp $
+ *  $Id: PathSegment.java,v 1.11 2012/10/21 02:02:18 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -15,7 +15,8 @@ import javax.persistence.Table;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonAutoDetect;
+import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
@@ -35,6 +36,7 @@ import com.google.inject.Singleton;
 @Entity
 @Table(name = "PATHSEGMENT")
 @CacheStrategy
+@JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class PathSegment extends DomainObjectABC {
 
 	@Inject
@@ -52,13 +54,11 @@ public class PathSegment extends DomainObjectABC {
 	// The owning organization.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	@JsonIgnore
 	private Path				parent;
 
 	public PathSegment() {
 	}
 
-	@JsonIgnore
 	public final ITypedDao<PathSegment> getDao() {
 		return DAO;
 	}
@@ -85,7 +85,6 @@ public class PathSegment extends DomainObjectABC {
 		}
 	}
 
-	@JsonIgnore
 	public final List<IDomainObject> getChildren() {
 		return new ArrayList<IDomainObject>();
 	}

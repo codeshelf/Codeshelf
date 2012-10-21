@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CsvOrderImportBean.java,v 1.2 2012/09/28 23:04:46 jeffw Exp $
+ *  $Id: CsvOrderImportBean.java,v 1.3 2012/10/21 02:02:18 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -58,4 +58,12 @@ public class CsvOrderImportBean {
 	@Getter
 	@Setter
 	private String	destinationId;
+	
+	@Getter
+	@Setter
+	private String	pickStrategy;
+	
+	@Getter
+	@Setter
+	private String	preAssignedContainerId;
 }

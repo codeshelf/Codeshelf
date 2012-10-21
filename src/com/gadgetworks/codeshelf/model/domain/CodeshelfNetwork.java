@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeshelfNetwork.java,v 1.8 2012/10/02 03:17:58 jeffw Exp $
+ *  $Id: CodeshelfNetwork.java,v 1.9 2012/10/21 02:02:17 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -20,7 +20,9 @@ import lombok.Setter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonAutoDetect;
+import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
+import org.codehaus.jackson.annotate.JsonProperty;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.controller.IWirelessInterface;
@@ -44,6 +46,7 @@ import com.google.inject.Singleton;
 @Entity
 @Table(name = "CODESHELFNETWORK")
 @CacheStrategy
+@JsonAutoDetect(getterVisibility=Visibility.NONE)
 public class CodeShelfNetwork extends DomainObjectABC {
 
 	@Inject
@@ -60,33 +63,41 @@ public class CodeShelfNetwork extends DomainObjectABC {
 
 	// The network ID.
 	@Column(nullable = false)
+	@Getter
+	@Setter
+	@JsonProperty
 	private byte[]				serializedId;
 
 	// The network description.
 	@Column(nullable = false)
 	@Getter
 	@Setter
+	@JsonProperty
 	private String				description;
 
 	// Active/Inactive network
 	@Column(nullable = false)
 	@Getter
 	@Setter
+	@JsonProperty
 	private boolean				active;
 
 	// The network ID.
 	@Column(nullable = false)
+	@JsonProperty
 	private byte[]				gatewayAddr;
 
 	// The gateway URL.
 	@Column(nullable = false)
 	@Getter
 	@Setter
+	@JsonProperty
 	private String				gatewayUrl;
 
 	@Transient
 	@Getter
 	@Setter
+	@JsonProperty
 	private boolean				connected;
 
 	@Transient
@@ -140,11 +151,11 @@ public class CodeShelfNetwork extends DomainObjectABC {
 		}
 	}
 
-	@JsonIgnore
 	public final List<? extends IDomainObject> getChildren() {
 		return getControlGroups();
 	}
 
+	@JsonProperty
 	public final NetworkId getNetworkId() {
 		return new NetworkId(serializedId);
 	}
@@ -153,6 +164,7 @@ public class CodeShelfNetwork extends DomainObjectABC {
 		serializedId = inNetworkId.getParamValueAsByteArray();
 	}
 
+	@JsonProperty
 	public final NetAddress getGatewayAddr() {
 		return new NetAddress(gatewayAddr);
 	}

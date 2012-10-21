@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: UserSession.java,v 1.8 2012/09/23 03:05:42 jeffw Exp $
+ *  $Id: UserSession.java,v 1.9 2012/10/21 02:02:17 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -19,7 +19,9 @@ import lombok.Setter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonAutoDetect;
+import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
+import org.codehaus.jackson.annotate.JsonProperty;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
@@ -39,6 +41,7 @@ import com.google.inject.Singleton;
 @Entity
 @Table(name = "USERSESSION")
 @CacheStrategy
+@JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class UserSession extends DomainObjectABC {
 
 	@Inject
@@ -50,7 +53,7 @@ public class UserSession extends DomainObjectABC {
 			return UserSession.class;
 		}
 	}
-	
+
 	private static final Log	LOGGER				= LogFactory.getLog(UserSession.class);
 
 	private static final long	serialVersionUID	= 3001609308065821464L;
@@ -58,25 +61,26 @@ public class UserSession extends DomainObjectABC {
 	// The owning CodeShelf network.
 	@Column(name = "parentUser", nullable = false)
 	@ManyToOne(optional = false)
-	private User							parent;
+	private User				parent;
 
 	// Create date.
+	@Column(nullable = false)
 	@Getter
 	@Setter
-	@Column(nullable = false)
-	private Timestamp						created;
+	@JsonProperty
+	private Timestamp			created;
 
 	// Activity note.
+	@Column(nullable = false)
 	@Getter
 	@Setter
-	@Column(nullable = false)
-	private String							note;
+	@JsonProperty
+	private String				note;
 
 	public UserSession() {
 		created = new Timestamp(System.currentTimeMillis());
 	}
 
-	@JsonIgnore
 	public final ITypedDao<UserSession> getDao() {
 		return DAO;
 	}
@@ -103,7 +107,6 @@ public class UserSession extends DomainObjectABC {
 		}
 	}
 
-	@JsonIgnore
 	public final List<IDomainObject> getChildren() {
 		return new ArrayList<IDomainObject>();
 	}

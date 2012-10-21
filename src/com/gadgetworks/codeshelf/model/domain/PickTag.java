@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: PickTag.java,v 1.4 2012/09/23 03:05:42 jeffw Exp $
+ *  $Id: PickTag.java,v 1.5 2012/10/21 02:02:17 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -15,6 +15,9 @@ import lombok.Setter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.codehaus.jackson.annotate.JsonAutoDetect;
+import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
+import org.codehaus.jackson.annotate.JsonProperty;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.command.CommandControlABC;
@@ -32,15 +35,17 @@ import com.gadgetworks.codeshelf.command.CommandControlABC;
 @Table(name = "WIRELESSDEVICE")
 @DiscriminatorValue("PICKTAG")
 @CacheStrategy
+@JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class PickTag extends WirelessDevice {
 
-	private static final Log	LOGGER				= LogFactory.getLog(PickTag.class);
+	private static final Log	LOGGER	= LogFactory.getLog(PickTag.class);
 
+	@Column(nullable = false)
 	@Getter
 	@Setter
-	@Column(nullable = false)
+	@JsonProperty
 	private short				serialBusPosition;
-	
+
 	public PickTag() {
 	}
 

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Vertex.java,v 1.12 2012/10/05 21:01:40 jeffw Exp $
+ *  $Id: Vertex.java,v 1.13 2012/10/21 02:02:18 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -10,7 +10,8 @@ import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
@@ -19,7 +20,9 @@ import lombok.Setter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonAutoDetect;
+import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
+import org.codehaus.jackson.annotate.JsonProperty;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
@@ -41,6 +44,7 @@ import com.google.inject.Singleton;
 @Entity
 @Table(name = "VERTEX")
 @CacheStrategy
+@JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class Vertex extends DomainObjectABC {
 
 	@Inject
@@ -55,39 +59,42 @@ public class Vertex extends DomainObjectABC {
 
 	private static final Log	LOGGER	= LogFactory.getLog(Vertex.class);
 
+	// The owning location.
+	@Column(nullable = false)
+	@ManyToOne(optional = false)
+	private LocationABC			parent;
+
 	// The position type (GPS, METERS, etc.).
 	@Column(nullable = false)
+	@Enumerated(value = EnumType.STRING)
 	@Getter
 	@Setter
-	private PositionTypeEnum		posType;
+	@JsonProperty
+	private PositionTypeEnum	posType;
 
 	// The X position.
 	@Column(nullable = false)
 	@Getter
 	@Setter
-	private Double					posX;
+	@JsonProperty
+	private Double				posX;
 
 	// The Y position.
 	@Column(nullable = false)
 	@Getter
 	@Setter
-	private Double					posY;
+	@JsonProperty
+	private Double				posY;
 
 	// The vertex order/position (zero-based).
 	@Column(nullable = false)
-	@ManyToOne(optional = false)
 	@Setter
 	@Getter
-	private Integer					drawOrder;
+	@JsonProperty
+	private Integer				drawOrder;
 
-	// The owning location.
-	@Column(nullable = false)
-	@ManyToOne(optional = false)
-	@JsonIgnore
-	private LocationABC				parent;
-	
 	public Vertex() {
-		
+
 	}
 
 	public Vertex(final LocationABC inParentLocation, final PositionTypeEnum inPosType, final int inDrawOrder, final Double inPosX, final Double inPosY) {
@@ -99,7 +106,6 @@ public class Vertex extends DomainObjectABC {
 		setShortDomainId(computeDefaultDomainId());
 	}
 
-	@JsonIgnore
 	public final ITypedDao<Vertex> getDao() {
 		return DAO;
 	}
@@ -108,16 +114,14 @@ public class Vertex extends DomainObjectABC {
 		return "V";
 	}
 
-	@JsonIgnore
 	public final LocationABC getParentLocation() {
 		return parent;
 	}
-	
+
 	public final void setParentLocation(final LocationABC inParentLocation) {
 		parent = inParentLocation;
 	}
 
-	@JsonIgnore
 	public final IDomainObject getParent() {
 		return getParentLocation();
 	}
@@ -128,7 +132,6 @@ public class Vertex extends DomainObjectABC {
 		}
 	}
 
-	@JsonIgnore
 	public final List<IDomainObject> getChildren() {
 		return new ArrayList<IDomainObject>();
 	}

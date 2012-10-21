@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderHeader.java,v 1.10 2012/10/16 06:23:21 jeffw Exp $
+ *  $Id: OrderHeader.java,v 1.11 2012/10/21 02:02:18 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -10,6 +10,8 @@ import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
@@ -19,10 +21,13 @@ import lombok.Setter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonAutoDetect;
+import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
+import org.codehaus.jackson.annotate.JsonProperty;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
+import com.gadgetworks.codeshelf.model.PickStrategyEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.google.inject.Inject;
@@ -40,6 +45,7 @@ import com.google.inject.Singleton;
 @Entity
 @Table(name = "ORDERHEADER")
 @CacheStrategy
+@JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class OrderHeader extends DomainObjectABC {
 
 	@Inject
@@ -54,17 +60,30 @@ public class OrderHeader extends DomainObjectABC {
 
 	private static final Log	LOGGER			= LogFactory.getLog(OrderHeader.class);
 
+	// The parent facility.
+	@Column(nullable = false)
+	@ManyToOne(optional = false)
+	private Facility			parent;
+
 	// The collective order status.
 	@Column(nullable = false)
-	@JsonIgnore
+	@Enumerated(value = EnumType.STRING)
 	@Getter
 	@Setter
+	@JsonProperty
 	private OrderStatusEnum		statusEnum;
+
+	// The pick strategy.
+	@Column(nullable = false)
+	@Enumerated(value = EnumType.STRING)
+	@Getter
+	@Setter
+	@JsonProperty
+	private PickStrategyEnum	pickStrategyEnum;
 
 	// The parent order group.
 	@Column(nullable = true)
 	@ManyToOne(optional = true)
-	@JsonIgnore
 	@Getter
 	@Setter
 	private OrderGroup			orderGroup;
@@ -73,28 +92,21 @@ public class OrderHeader extends DomainObjectABC {
 	// This is a sort of the actively working order groups in a facility.
 	// Lower numbers work first.
 	@Column(nullable = true)
-	@JsonIgnore
 	@Getter
 	@Setter
+	@JsonProperty
 	private Integer				workSequence;
-
-	// The parent facility.
-	@Column(nullable = false)
-	@ManyToOne(optional = false)
-	@JsonIgnore
-	private Facility			parent;
 
 	// For a network this is a list of all of the users that belong in the set.
 	@OneToMany(mappedBy = "parent")
-	@JsonIgnore
 	@Getter
 	private List<OrderDetail>	orderDetails	= new ArrayList<OrderDetail>();
 
 	public OrderHeader() {
 		statusEnum = OrderStatusEnum.CREATED;
+		pickStrategyEnum = PickStrategyEnum.SERIAL;
 	}
 
-	@JsonIgnore
 	public final ITypedDao<OrderHeader> getDao() {
 		return DAO;
 	}
@@ -103,7 +115,6 @@ public class OrderHeader extends DomainObjectABC {
 		return "P";
 	}
 
-	@JsonIgnore
 	public final Facility getParentFacility() {
 		return parent;
 	}
@@ -112,7 +123,6 @@ public class OrderHeader extends DomainObjectABC {
 		parent = inFacility;
 	}
 
-	@JsonIgnore
 	public final IDomainObject getParent() {
 		return parent;
 	}
@@ -123,7 +133,6 @@ public class OrderHeader extends DomainObjectABC {
 		}
 	}
 
-	@JsonIgnore
 	public String getOrderId() {
 		return getShortDomainId();
 	}
@@ -132,12 +141,10 @@ public class OrderHeader extends DomainObjectABC {
 		setShortDomainId(inOrderId);
 	}
 
-	@JsonIgnore
 	public final List<? extends IDomainObject> getChildren() {
 		return getOrderDetails();
 	}
 
-	@JsonIgnore
 	public final OrderDetail findOrderDetail(String inOrderDetailId) {
 		OrderDetail result = null;
 

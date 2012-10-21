@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: PersistentProperty.java,v 1.9 2012/10/06 07:09:33 jeffw Exp $
+ *  $Id: PersistentProperty.java,v 1.10 2012/10/21 02:02:17 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -16,7 +16,9 @@ import javax.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 
-import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonAutoDetect;
+import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
+import org.codehaus.jackson.annotate.JsonProperty;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
@@ -36,6 +38,7 @@ import com.google.inject.Singleton;
 @Entity
 @Table(name = "PERSISTENTPROPERTY")
 @CacheStrategy
+@JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class PersistentProperty<T extends DomainObjectABC> extends DomainObjectABC {
 
 	@Inject
@@ -61,20 +64,22 @@ public class PersistentProperty<T extends DomainObjectABC> extends DomainObjectA
 
 	private static final long	serialVersionUID		= -7735810092352246641L;
 
-	@Column(nullable = false)
-	@Getter
-	@Setter
-	private String				defaultValueStr;
-	@Column(nullable = false)
-	@Getter
-	@Setter
-	private String				currentValueStr;
-
 	// The owning organization.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	@JsonIgnore
 	private Organization		parent;
+
+	@Column(nullable = false)
+	@Getter
+	@Setter
+	@JsonProperty
+	private String				defaultValueStr;
+	
+	@Column(nullable = false)
+	@Getter
+	@Setter
+	@JsonProperty
+	private String				currentValueStr;
 
 	public PersistentProperty() {
 		defaultValueStr = "";
@@ -111,7 +116,6 @@ public class PersistentProperty<T extends DomainObjectABC> extends DomainObjectA
 		}
 	}
 
-	@JsonIgnore
 	public final List<IDomainObject> getChildren() {
 		return new ArrayList<IDomainObject>();
 	}
@@ -153,14 +157,14 @@ public class PersistentProperty<T extends DomainObjectABC> extends DomainObjectA
 		return Long.parseLong(defaultValueStr);
 	}
 
-	public final void setDefaultValueAsFloat(float inFloat) {
-		defaultValueStr = Float.toString(inFloat);
-	}
-
-	public final float getDefaultValueAsFloat() {
-		return Float.parseFloat(defaultValueStr);
-	}
-
+//	public final void setDefaultValueAsFloat(float inFloat) {
+//		defaultValueStr = Float.toString(inFloat);
+//	}
+//
+//	public final float getDefaultValueAsFloat() {
+//		return Float.parseFloat(defaultValueStr);
+//	}
+//
 	public final void setDefaultValueAsDouble(double inDouble) {
 		defaultValueStr = Double.toString(inDouble);
 	}

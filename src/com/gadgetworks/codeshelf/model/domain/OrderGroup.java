@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderGroup.java,v 1.8 2012/10/16 06:23:21 jeffw Exp $
+ *  $Id: OrderGroup.java,v 1.9 2012/10/21 02:02:17 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -10,6 +10,8 @@ import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
@@ -19,7 +21,9 @@ import lombok.Setter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonAutoDetect;
+import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
+import org.codehaus.jackson.annotate.JsonProperty;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
@@ -40,6 +44,7 @@ import com.google.inject.Singleton;
 @Entity
 @Table(name = "ORDERGROUP")
 @CacheStrategy
+@JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class OrderGroup extends DomainObjectABC {
 
 	@Inject
@@ -54,36 +59,37 @@ public class OrderGroup extends DomainObjectABC {
 
 	private static final Log	LOGGER			= LogFactory.getLog(OrderGroup.class);
 
+	// The parent facility.
+	@Column(nullable = false)
+	@ManyToOne(optional = false)
+	private Facility			parent;
+
 	// The collective order status.
 	@Column(nullable = false)
-	@JsonIgnore
+	@Enumerated(value = EnumType.STRING)
 	@Getter
 	@Setter
+	@JsonProperty
 	private OrderStatusEnum		statusEnum;
 
 	// The description.
 	@Column(nullable = true)
-	@JsonIgnore
+	@Getter
+	@Setter
+	@JsonProperty
 	private String				description;
 
 	// The work sequence.
 	// This is a sort of the actively working order groups in a facility.
 	// Lower numbers work first.
 	@Column(nullable = true)
-	@JsonIgnore
 	@Getter
 	@Setter
+	@JsonProperty
 	private Integer				workSequence;
-
-	// The parent facility.
-	@Column(nullable = false)
-	@ManyToOne(optional = false)
-	@JsonIgnore
-	private Facility			parent;
 
 	// For a network this is a list of all of the users that belong in the set.
 	@OneToMany(mappedBy = "parent")
-	@JsonIgnore
 	@Getter
 	private List<OrderHeader>	orderHeaders	= new ArrayList<OrderHeader>();
 
@@ -91,7 +97,6 @@ public class OrderGroup extends DomainObjectABC {
 		statusEnum = OrderStatusEnum.CREATED;
 	}
 
-	@JsonIgnore
 	public final ITypedDao<OrderGroup> getDao() {
 		return DAO;
 	}
@@ -100,7 +105,6 @@ public class OrderGroup extends DomainObjectABC {
 		return "P";
 	}
 
-	@JsonIgnore
 	public final Facility getParentFacility() {
 		return parent;
 	}
@@ -109,7 +113,6 @@ public class OrderGroup extends DomainObjectABC {
 		parent = inFacility;
 	}
 
-	@JsonIgnore
 	public final IDomainObject getParent() {
 		return parent;
 	}
@@ -120,7 +123,6 @@ public class OrderGroup extends DomainObjectABC {
 		}
 	}
 
-	@JsonIgnore
 	public String getOrderGroupId() {
 		return getShortDomainId();
 	}
@@ -129,7 +131,6 @@ public class OrderGroup extends DomainObjectABC {
 		setShortDomainId(inOrderGroupId);
 	}
 
-	@JsonIgnore
 	public final List<? extends IDomainObject> getChildren() {
 		return getOrderHeaders();
 	}

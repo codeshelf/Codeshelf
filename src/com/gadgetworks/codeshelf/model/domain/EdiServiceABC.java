@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiServiceABC.java,v 1.11 2012/10/11 02:42:39 jeffw Exp $
+ *  $Id: EdiServiceABC.java,v 1.12 2012/10/21 02:02:17 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -13,6 +13,8 @@ import javax.persistence.DiscriminatorColumn;
 import javax.persistence.DiscriminatorType;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 import javax.persistence.ManyToOne;
@@ -26,7 +28,10 @@ import lombok.ToString;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
+import org.codehaus.jackson.annotate.JsonProperty;
 
 import com.gadgetworks.codeshelf.model.EdiProviderEnum;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
@@ -47,6 +52,7 @@ import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 @DiscriminatorColumn(name = "DTYPE", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorValue("ABC")
 @ToString
+@JsonAutoDetect(getterVisibility = Visibility.NONE)
 public abstract class EdiServiceABC extends DomainObjectABC implements IEdiService {
 
 	private static final Log			LOGGER				= LogFactory.getLog(EdiServiceABC.class);
@@ -54,30 +60,33 @@ public abstract class EdiServiceABC extends DomainObjectABC implements IEdiServi
 	// The owning Facility.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	@JsonIgnore
 	private Facility					parent;
 
 	// The provider.
 	@Column(nullable = false)
+	@Enumerated(value = EnumType.STRING)
 	@Getter
 	@Setter
+	@JsonProperty
 	private EdiProviderEnum				providerEnum;
 
 	// Service state.
 	@Column(nullable = false)
+	@Enumerated(value = EnumType.STRING)
 	@Getter
 	@Setter
+	@JsonProperty
 	private EdiServiceStateEnum			serviceStateEnum;
 
 	// The credentials (encoded toekns or obfuscated keys only).
 	@Column(nullable = true)
 	@Getter
 	@Setter
+	@JsonProperty
 	private String						providerCredentials;
 
 	// For a network this is a list of all of the control groups that belong in the set.
 	@OneToMany(mappedBy = "parent")
-	@JsonIgnore
 	@Getter
 	private List<EdiDocumentLocator>	documentLocators	= new ArrayList<EdiDocumentLocator>();
 
@@ -103,7 +112,6 @@ public abstract class EdiServiceABC extends DomainObjectABC implements IEdiServi
 		}
 	}
 
-	@JsonIgnore
 	public final List<? extends IDomainObject> getChildren() {
 		return null; //getEdiDocuments();
 	}

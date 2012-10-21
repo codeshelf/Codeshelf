@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WorkArea.java,v 1.3 2012/10/13 22:14:24 jeffw Exp $
+ *  $Id: WorkArea.java,v 1.4 2012/10/21 02:02:17 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -19,7 +19,9 @@ import lombok.Setter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonAutoDetect;
+import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
+import org.codehaus.jackson.annotate.JsonProperty;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
@@ -39,6 +41,7 @@ import com.google.inject.Singleton;
 @Entity
 @Table(name = "WORKAREA")
 @CacheStrategy
+@JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class WorkArea extends DomainObjectABC {
 
 	@Inject
@@ -56,36 +59,34 @@ public class WorkArea extends DomainObjectABC {
 	// The parent facility.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	@JsonIgnore
 	private Facility				parent;
 
 	// The work area ID.
+	@Column(nullable = false)
 	@Getter
 	@Setter
-	@Column(nullable = false)
+	@JsonProperty
 	private String					workAreaId;
 
 	// The work description.
+	@Column(nullable = false)
 	@Getter
 	@Setter
-	@Column(nullable = false)
+	@JsonProperty
 	private String					description;
 
 	// A work area is a collection of locations.
 	@OneToMany(mappedBy = "parent")
-	@JsonIgnore
 	@Getter
 	private List<LocationABC>		locations			= new ArrayList<LocationABC>();
 
 	// A work area will contain a set of active users (workers).
 	@OneToMany(mappedBy = "parent")
-	@JsonIgnore
 	@Getter
 	private List<User>				users				= new ArrayList<User>();
 
 	// A work area will contain a set of active users (workers).
 	@OneToMany(mappedBy = "parent")
-	@JsonIgnore
 	@Getter
 	private List<WorkInstruction>	workInstructions	= new ArrayList<WorkInstruction>();
 
@@ -93,7 +94,6 @@ public class WorkArea extends DomainObjectABC {
 		workAreaId = "";
 	}
 
-	@JsonIgnore
 	public final ITypedDao<WorkArea> getDao() {
 		return DAO;
 	}
@@ -102,7 +102,6 @@ public class WorkArea extends DomainObjectABC {
 		return "P";
 	}
 
-	@JsonIgnore
 	public final Facility getParentFacility() {
 		return parent;
 	}
@@ -111,7 +110,6 @@ public class WorkArea extends DomainObjectABC {
 		parent = inFacility;
 	}
 
-	@JsonIgnore
 	public final IDomainObject getParent() {
 		return parent;
 	}
@@ -122,7 +120,6 @@ public class WorkArea extends DomainObjectABC {
 		}
 	}
 
-	@JsonIgnore
 	public final List<? extends IDomainObject> getChildren() {
 		return getLocations();
 	}

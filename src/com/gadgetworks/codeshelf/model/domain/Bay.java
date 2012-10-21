@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Bay.java,v 1.10 2012/10/13 22:14:24 jeffw Exp $
+ *  $Id: Bay.java,v 1.11 2012/10/21 02:02:17 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -11,7 +11,8 @@ import javax.persistence.Table;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonAutoDetect;
+import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
@@ -33,6 +34,7 @@ import com.google.inject.Singleton;
 @Table(name = "LOCATION")
 @DiscriminatorValue("BAY")
 @CacheStrategy
+@JsonAutoDetect(getterVisibility=Visibility.NONE)
 public class Bay extends LocationABC {
 
 	@Inject
@@ -53,7 +55,6 @@ public class Bay extends LocationABC {
 		setShortDomainId(computeDefaultDomainId());
 	}
 
-	@JsonIgnore
 	public final IDomainObject getParent() {
 		return parent;
 	}
@@ -64,7 +65,6 @@ public class Bay extends LocationABC {
 		}
 	}
 
-	@JsonIgnore
 	public final ITypedDao<Bay> getDao() {
 		return DAO;
 	}

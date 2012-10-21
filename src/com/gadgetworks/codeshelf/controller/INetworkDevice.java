@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  OmniBox
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: INetworkDevice.java,v 1.4 2012/09/08 03:03:23 jeffw Exp $
+ *  $Id: INetworkDevice.java,v 1.5 2012/10/21 02:02:18 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.controller;
 
@@ -76,7 +76,7 @@ public interface INetworkDevice {
 	 *  Set the time that we last heard from this device during this session.
 	 *  @param inContactTime	The last contact time.
 	 */
-	void setLastContactTime(long inContactTime);
+	void setLastContactTime(Long inContactTime);
 
 	// --------------------------------------------------------------------------
 	/**
@@ -121,14 +121,14 @@ public interface INetworkDevice {
 	 *  Return a string that represents the hardware type associated with this device.
 	 *  @return
 	 */
-	String getHWDesc();
+	String getHwDesc();
 
 	// --------------------------------------------------------------------------
 	/**
 	 *  Return a string that represents the software version associated with this device.
 	 *  @return
 	 */
-	String getSWRevision();
+	String getSwRevision();
 
 	// --------------------------------------------------------------------------
 	/**
@@ -143,14 +143,14 @@ public interface INetworkDevice {
 	 *  The actor descriptor query-response tells us how many KVPs the actor has.
 	 *  @return	The number of KVPs the actor said it had when it responsed to the actor descriptor query.
 	 */
-	short getExpectedKVPCount();
+	short getExpectedKvpCount();
 
 	// --------------------------------------------------------------------------
 	/**
 	 *  We keep track of how many unique actor descriptors we've received from the remote actor.
 	 *  @return	The number of KVPs stored on the actor.
 	 */
-	short getStoredKVPCount();
+	short getStoredKvpCount();
 
 	// --------------------------------------------------------------------------
 	/**
@@ -168,6 +168,6 @@ public interface INetworkDevice {
 	/**
 	 *  @param inKVPCount
 	 */
-	void setKVPCount(short inKVPCount);
+	void setExpectedKvpCount(short inKvpCount);
 
 }

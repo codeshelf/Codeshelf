@@ -1,12 +1,14 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.24 2012/10/16 06:23:21 jeffw Exp $
+ *  $Id: Facility.java,v 1.25 2012/10/21 02:02:17 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
@@ -16,14 +18,12 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
-import lombok.Delegate;
 import lombok.Getter;
 import lombok.ToString;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.annotate.JsonAutoDetect;
-import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 
 import com.avaje.ebean.annotation.CacheStrategy;
@@ -50,7 +50,7 @@ import com.google.inject.Singleton;
 @DiscriminatorValue("FACILITY")
 @CacheStrategy
 @ToString
-@JsonAutoDetect(getterVisibility=Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class Facility extends LocationABC {
 
 	@Inject
@@ -63,54 +63,58 @@ public class Facility extends LocationABC {
 		}
 	}
 
-	private static final Log		LOGGER			= LogFactory.getLog(Facility.class);
+	private static final Log			LOGGER			= LogFactory.getLog(Facility.class);
 
 	// The owning organization.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	private Organization			parentOrganization;
+	private Organization				parentOrganization;
 
-	// These are all the uom masters for this facility.
 	@OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
 	@Getter
-	private List<UomMaster>			uomMasters		= new ArrayList<UomMaster>();
+	private Map<String, UomMaster>		uomMasters		= new HashMap<String, UomMaster>();
 
-	// These are all the item masters for this facility.
 	@OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
 	@Getter
-	private List<ItemMaster>		itemMasters		= new ArrayList<ItemMaster>();
+	private List<ItemMaster>			itemMasters		= new ArrayList<ItemMaster>();
 
-	// These are all the order groups for this facility.
 	@OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
 	@Getter
-	private List<OrderGroup>		orderGroups		= new ArrayList<OrderGroup>();
+	private List<OrderGroup>			orderGroups		= new ArrayList<OrderGroup>();
 
-	// These are all the order headers for this facility.
 	@OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
 	@Getter
-	private List<OrderHeader>		orderHeaders	= new ArrayList<OrderHeader>();
+	private List<OrderHeader>			orderHeaders	= new ArrayList<OrderHeader>();
 
-	// For a network this is a list of all of the control groups that belong in the set.
 	@OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
 	@Getter
-	private List<Aisle>				aisles			= new ArrayList<Aisle>();
+	private List<Aisle>					aisles			= new ArrayList<Aisle>();
 
-	// For a network this is a list of all of the control groups that belong in the set.
 	@OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
 	@Getter
-	private List<CodeShelfNetwork>	networks		= new ArrayList<CodeShelfNetwork>();
+	private List<CodeShelfNetwork>		networks		= new ArrayList<CodeShelfNetwork>();
 
-	// For a network this is a list of all of the control groups that belong in the set.
 	@OneToMany(mappedBy = "parent", fetch = FetchType.LAZY, targetEntity = DropboxService.class)
 	@Getter
-	private List<IEdiService>		ediServices		= new ArrayList<IEdiService>();
+	private List<IEdiService>			ediServices		= new ArrayList<IEdiService>();
+
+	@OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
+	@Getter
+	private Map<String, ContainerKind>	containerKinds	= new HashMap<String, ContainerKind>();
+
+	// For a network this is a list of all of the control groups that belong in the set.
+	@OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
+	@Getter
+	private Map<String, Container>		containers		= new HashMap<String, Container>();
 
 	public Facility() {
 		// Facilities have no parent location, but we don't want to allow ANY location to not have a parent.
 		// So in this case we make the facility its own parent.  It's also a way to know when we've topped-out in the location tree.
 		parent = this;
 		orderHeaders = new ArrayList<OrderHeader>();
-		uomMasters = new ArrayList<UomMaster>();
+		uomMasters = new HashMap<String, UomMaster>();
+		containerKinds = new HashMap<String, ContainerKind>();
+		containers = new HashMap<String, Container>();
 	}
 
 	public Facility(final Double inPosX, final Double inPosY) {
@@ -159,64 +163,80 @@ public class Facility extends LocationABC {
 		setShortDomainId(inFacilityId);
 	}
 
-	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void addAisle(Aisle inAisle) {
 		aisles.add(inAisle);
 	}
 
-	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void removeAisle(Aisle inAisle) {
 		aisles.remove(inAisle);
 	}
 
-	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
+	public final void addContainerKind(String inContainerKindId, ContainerKind inContainerKind) {
+		containerKinds.put(inContainerKindId, inContainerKind);
+	}
+
+	public final ContainerKind getContainerKind(String inContainerKindId) {
+		return containerKinds.get(inContainerKindId);
+	}
+
+	public final void removeContainerKind(String inContainerKindId) {
+		containerKinds.remove(inContainerKindId);
+	}
+
+	public final void addContainer(String inContainerId, Container inContainer) {
+		containers.put(inContainerId, inContainer);
+	}
+
+	public final Container getContainer(String inContainerId) {
+		return containers.get(inContainerId);
+	}
+
+	public final void removeContainer(String inContainerId) {
+		containers.remove(inContainerId);
+	}
+
 	public final void addEdiService(IEdiService inEdiService) {
 		ediServices.add(inEdiService);
 	}
 
-	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void removeEdiService(IEdiService inEdiService) {
 		ediServices.remove(inEdiService);
 	}
 
-	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void addOrderHeader(OrderHeader inOrderHeader) {
 		orderHeaders.add(inOrderHeader);
 	}
 
-	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void removeOrderHeader(OrderHeader inOrderHeaders) {
 		orderHeaders.remove(inOrderHeaders);
 	}
 
-	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void addOrderGroup(OrderGroup inOrderGroup) {
 		orderGroups.add(inOrderGroup);
 	}
 
-	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void removeOrderGroup(OrderGroup inOrderGroups) {
 		orderGroups.remove(inOrderGroups);
 	}
 
-	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void addItemMaster(ItemMaster inItemMaster) {
 		itemMasters.add(inItemMaster);
 	}
 
-	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void removeItemMaster(ItemMaster inItemMasters) {
 		itemMasters.remove(inItemMasters);
 	}
 
-	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
-	public final void addUomMaster(UomMaster inUomMaster) {
-		uomMasters.add(inUomMaster);
+	public final void addUomMaster(String inUomMasterId, UomMaster inUomMaster) {
+		uomMasters.put(inUomMasterId, inUomMaster);
 	}
 
-	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
-	public final void removeUomMaster(UomMaster inUomMasters) {
-		uomMasters.remove(inUomMasters);
+	public final UomMaster getUomMaster(String inUomMasterId) {
+		return uomMasters.get(inUomMasterId);
+	}
+
+	public final void removeUomMaster(String inUomMasterId) {
+		uomMasters.remove(inUomMasterId);
 	}
 
 	// --------------------------------------------------------------------------
@@ -381,6 +401,37 @@ public class Facility extends LocationABC {
 			}
 			break;
 		}
+		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 */
+	public final void createDefaultContainerKind() {
+		ContainerKind containerKind = createContainerKind(ContainerKind.DEFAULT_CONTAINER_KIND, 0.0, 0.0, 0.0);
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 */
+	public final ContainerKind createContainerKind(String inShortDomainId, Double inLengthMeters, Double inWidthMeters, Double inHeightMeters) {
+
+		ContainerKind result = null;
+
+		result = new ContainerKind();
+		result.setParentFacility(this);
+		result.setShortDomainId(inShortDomainId);
+		result.setLengthMeters(inLengthMeters);
+		result.setWidthMeters(inWidthMeters);
+		result.setHeightMeters(inHeightMeters);
+
+		this.addContainerKind(inShortDomainId, result);
+		try {
+			ContainerKind.DAO.store(result);
+		} catch (DaoException e) {
+			LOGGER.error("", e);
+		}
+
 		return result;
 	}
 

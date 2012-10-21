@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfController.java,v 1.10 2012/10/13 22:14:24 jeffw Exp $
+ *  $Id: CodeShelfController.java,v 1.11 2012/10/21 02:02:18 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.controller;
@@ -167,7 +167,7 @@ public final class CodeShelfController extends ControllerABC {
 
 		inNetworkDevice.setDeviceType(inActorDescResp.getDeviceType());
 		inNetworkDevice.setDesc(inActorDescResp.getDescStr());
-		inNetworkDevice.setKVPCount(inActorDescResp.getKVPCount());
+		inNetworkDevice.setExpectedKvpCount(inActorDescResp.getKVPCount());
 
 		// Now send a query for the actor's KVPs.
 		for (byte i = 0; i < inActorDescResp.getKVPCount(); i++) {
@@ -194,7 +194,7 @@ public final class CodeShelfController extends ControllerABC {
 		inNetworkDevice.addKeyValuePair(inActorKVPResp.getKeyStr(), inActorKVPResp.getValueStr());
 
 		// Check to see if we've completed the acquisition of actor KVPs.
-		if (inNetworkDevice.getStoredKVPCount() == inNetworkDevice.getExpectedKVPCount()) {
+		if (inNetworkDevice.getStoredKvpCount() == inNetworkDevice.getExpectedKvpCount()) {
 		}
 
 	}

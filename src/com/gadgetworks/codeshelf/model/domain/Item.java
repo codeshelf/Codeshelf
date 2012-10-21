@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Item.java,v 1.3 2012/10/13 22:14:24 jeffw Exp $
+ *  $Id: Item.java,v 1.4 2012/10/21 02:02:17 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -18,7 +18,9 @@ import lombok.Setter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonAutoDetect;
+import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
+import org.codehaus.jackson.annotate.JsonProperty;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
@@ -38,6 +40,7 @@ import com.google.inject.Singleton;
 @Entity
 @Table(name = "ITEM")
 @CacheStrategy
+@JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class Item extends DomainObjectABC {
 
 	@Inject
@@ -52,28 +55,26 @@ public class Item extends DomainObjectABC {
 
 	private static final Log	LOGGER	= LogFactory.getLog(Item.class);
 
+	// The owning item master.
+	@Column(nullable = false)
+	@ManyToOne(optional = false)
+	private ItemMaster			parent;
+
 	// Quantity.
+	@Column(nullable = false)
 	@Getter
 	@Setter
-	@Column(nullable = false)
-	private Float				quantity;
+	@JsonProperty
+	private Double				quantity;
 
 	// The actual UoM.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	@JsonIgnore
 	private UomMaster			uom;
-
-	// The owning item master.
-	@Column(nullable = false)
-	@ManyToOne(optional = false)
-	@JsonIgnore
-	private ItemMaster			parent;
 
 	public Item() {
 	}
 
-	@JsonIgnore
 	public final ITypedDao<Item> getDao() {
 		return DAO;
 	}
@@ -100,7 +101,6 @@ public class Item extends DomainObjectABC {
 		}
 	}
 
-	@JsonIgnore
 	public final List<IDomainObject> getChildren() {
 		return new ArrayList<IDomainObject>();
 	}

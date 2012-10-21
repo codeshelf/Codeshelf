@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: H2SchemaManager.java,v 1.48 2012/10/16 06:23:21 jeffw Exp $
+ *  $Id: H2SchemaManager.java,v 1.49 2012/10/21 02:02:18 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -498,6 +498,7 @@ public final class H2SchemaManager implements ISchemaManager {
 		// OrderHeader
 		result &= createTable("ORDERHEADER", //
 			"STATUSENUM VARCHAR(16) NOT NULL, " //
+					+ "PICKSTRATEGYENUM VARCHAR(16) NOT NULL, " //
 					+ "ORDERGROUP_PERSISTENTID LONG, " //
 					+ "WORKSEQUENCE LONG, " //
 					+ "PARENT_PERSISTENTID LONG NOT NULL " //
@@ -529,7 +530,9 @@ public final class H2SchemaManager implements ISchemaManager {
 		// ItemMaster
 		result &= createTable("ITEMMASTER", //
 			"DESCRIPTION VARCHAR(256), " //
+					+ "LOTHANDLINGENUM VARCHAR(16) NOT NULL, " //
 					+ "STANDARDUOM_PERSISTENTID LONG NOT NULL, " //
+					+ "PICKSTRATEGYENUM VARCHAR(16) NOT NULL, " //
 					+ "PARENT_PERSISTENTID LONG NOT NULL " //
 		);
 

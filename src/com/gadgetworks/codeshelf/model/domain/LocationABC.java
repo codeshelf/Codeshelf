@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: LocationABC.java,v 1.7 2012/10/16 06:23:21 jeffw Exp $
+ *  $Id: LocationABC.java,v 1.8 2012/10/21 02:02:17 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -13,6 +13,8 @@ import javax.persistence.DiscriminatorColumn;
 import javax.persistence.DiscriminatorType;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 import javax.persistence.ManyToOne;
@@ -46,45 +48,46 @@ import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 @Table(name = "LOCATION")
 @DiscriminatorColumn(name = "DTYPE", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorValue("ABC")
-@JsonAutoDetect(getterVisibility=Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE)
 public abstract class LocationABC extends DomainObjectABC implements ILocation {
 
 	private static final Log	LOGGER		= LogFactory.getLog(LocationABC.class);
 
 	// The position type (GPS, METERS, etc.).
 	@Column(nullable = false)
-	@JsonProperty
+	@Enumerated(value = EnumType.STRING)
 	@Getter
 	@Setter
+	@JsonProperty
 	private PositionTypeEnum	posType;
 
 	// The X anchor position.
 	@Column(nullable = false)
-	@JsonProperty
 	@Getter
 	@Setter
+	@JsonProperty
 	private Double				posX;
 
 	// The Y anchor position.
 	@Column(nullable = false)
-	@JsonProperty
 	@Getter
 	@Setter
+	@JsonProperty
 	private Double				posY;
 
 	// The Z anchor position.
 	@Column(nullable = true)
-	@JsonProperty
 	@Getter
 	@Setter
+	@JsonProperty
 	// Null means it's at the same nominal z coord as the parent.
 	private Double				posZ;
 
 	// The location description.
 	@Column(nullable = true)
-	@JsonProperty
 	@Getter
 	@Setter
+	@JsonProperty
 	private String				description;
 
 	// The owning location.

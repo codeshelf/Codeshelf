@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderDetail.java,v 1.7 2012/10/13 22:14:24 jeffw Exp $
+ *  $Id: OrderDetail.java,v 1.8 2012/10/21 02:02:17 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -11,7 +11,10 @@ import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 import lombok.Getter;
@@ -19,7 +22,9 @@ import lombok.Setter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonAutoDetect;
+import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
+import org.codehaus.jackson.annotate.JsonProperty;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
@@ -40,6 +45,7 @@ import com.google.inject.Singleton;
 @Entity
 @Table(name = "ORDERDETAIL")
 @CacheStrategy
+@JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class OrderDetail extends DomainObjectABC {
 
 	@Inject
@@ -56,9 +62,10 @@ public class OrderDetail extends DomainObjectABC {
 
 	// The collective order status.
 	@Column(nullable = false)
-	@JsonIgnore
+	@Enumerated(value = EnumType.STRING)
 	@Getter
 	@Setter
+	@JsonProperty
 	private OrderStatusEnum		statusEnum;
 
 	// The item master.
@@ -69,39 +76,41 @@ public class OrderDetail extends DomainObjectABC {
 	private ItemMaster			itemMaster;
 
 	// The description.
+	@Column(nullable = false)
 	@Getter
 	@Setter
-	@Column(nullable = false)
+	@JsonProperty
 	private String				description;
 
 	// The quantity.
+	@Column(nullable = false)
 	@Getter
 	@Setter
-	@Column(nullable = false)
+	@JsonProperty
 	private Integer				quantity;
 
 	// The UoM.
+	@Column(nullable = false)
+	@OneToOne
 	@Getter
 	@Setter
-	@Column(nullable = false)
-	private String				uomId;
+	private UomMaster			uomMaster;
 
 	// Order date.
+	@Column(nullable = false)
 	@Getter
 	@Setter
-	@Column(nullable = false)
+	@JsonProperty
 	private Timestamp			orderDate;
 
 	// The owning order header.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	@JsonIgnore
 	private OrderHeader			parent;
 
 	public OrderDetail() {
 	}
 
-	@JsonIgnore
 	public final ITypedDao<OrderDetail> getDao() {
 		return DAO;
 	}
@@ -118,7 +127,6 @@ public class OrderDetail extends DomainObjectABC {
 		parent = inOrder;
 	}
 
-	@JsonIgnore
 	public String getOrderDetailId() {
 		return getShortDomainId();
 	}
@@ -137,7 +145,6 @@ public class OrderDetail extends DomainObjectABC {
 		}
 	}
 
-	@JsonIgnore
 	public final List<IDomainObject> getChildren() {
 		return new ArrayList<IDomainObject>();
 	}

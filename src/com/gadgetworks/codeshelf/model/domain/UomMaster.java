@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: UomMaster.java,v 1.5 2012/10/13 22:14:24 jeffw Exp $
+ *  $Id: UomMaster.java,v 1.6 2012/10/21 02:02:18 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -13,12 +13,10 @@ import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
-import lombok.Getter;
-import lombok.Setter;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonAutoDetect;
+import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
@@ -38,6 +36,7 @@ import com.google.inject.Singleton;
 @Entity
 @Table(name = "UOMMASTER")
 @CacheStrategy
+@JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class UomMaster extends DomainObjectABC {
 
 	@Inject
@@ -55,14 +54,12 @@ public class UomMaster extends DomainObjectABC {
 	// The parent facility.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	@JsonIgnore
 	private Facility			parent;
 
 	public UomMaster() {
 
 	}
 
-	@JsonIgnore
 	public final ITypedDao<UomMaster> getDao() {
 		return DAO;
 	}
@@ -71,7 +68,6 @@ public class UomMaster extends DomainObjectABC {
 		return "UOM";
 	}
 
-	@JsonIgnore
 	public final Facility getParentFacility() {
 		return parent;
 	}
@@ -80,7 +76,6 @@ public class UomMaster extends DomainObjectABC {
 		parent = inFacility;
 	}
 
-	@JsonIgnore
 	public final IDomainObject getParent() {
 		return parent;
 	}
@@ -91,12 +86,10 @@ public class UomMaster extends DomainObjectABC {
 		}
 	}
 
-	@JsonIgnore
 	public final List<? extends IDomainObject> getChildren() {
 		return new ArrayList<IDomainObject>();
 	}
 
-	@JsonIgnore
 	public final String getUomMasterId() {
 		return getShortDomainId();
 	}

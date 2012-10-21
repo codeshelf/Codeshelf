@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeshelfApplicationTest.java,v 1.3 2012/10/14 01:05:23 jeffw Exp $
+ *  $Id: CodeshelfApplicationTest.java,v 1.4 2012/10/21 02:02:18 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.application;
 
@@ -28,6 +28,7 @@ import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.dao.MockDao;
 import com.gadgetworks.codeshelf.model.dao.MockWirelessDeviceDao;
 import com.gadgetworks.codeshelf.model.dao.Result;
+import com.gadgetworks.codeshelf.model.domain.Container;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
@@ -213,6 +214,7 @@ public class CodeshelfApplicationTest {
 		ITypedDao<Facility> facilityDao = new MockDao<Facility>();
 		ITypedDao<OrderGroup> orderGroupDao = new MockDao<OrderGroup>();
 		ITypedDao<OrderHeader> orderHeaderDao = new MockDao<OrderHeader>();
+		ITypedDao<Container> containerDao = new MockDao<Container>();
 		ITypedDao<OrderDetail> orderDetailDao = new MockDao<OrderDetail>();
 		ITypedDao<ItemMaster> itemMasterDao = new MockDao<ItemMaster>();
 		ITypedDao<UomMaster> uomMasterDao = new MockDao<UomMaster>();
@@ -225,7 +227,7 @@ public class CodeshelfApplicationTest {
 		IWebSocketListener webSocketListener = new WebSocketListener(webSessionManager);
 		IHttpServer httpServer = new HttpServer();
 
-		IOrderImporter importer = new OrderImporter(orderGroupDao, orderHeaderDao, orderDetailDao, itemMasterDao, uomMasterDao);
+		IOrderImporter importer = new OrderImporter(orderGroupDao, orderHeaderDao, orderDetailDao, containerDao, itemMasterDao, uomMasterDao);
 		IEdiProcessor ediProcessor = new EdiProcessor(importer, facilityDao);
 		IUtil util = new MockUtil();
 		ISchemaManager schemaManager = new H2SchemaManager(util);
