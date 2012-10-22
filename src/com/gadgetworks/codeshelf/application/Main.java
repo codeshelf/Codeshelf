@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Main.java,v 1.31 2012/10/13 22:14:24 jeffw Exp $
+ *  $Id: Main.java,v 1.32 2012/10/22 07:38:08 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -9,10 +9,10 @@ package com.gadgetworks.codeshelf.application;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.gadgetworks.codeshelf.edi.CsvImporter;
 import com.gadgetworks.codeshelf.edi.EdiProcessor;
+import com.gadgetworks.codeshelf.edi.ICsvImporter;
 import com.gadgetworks.codeshelf.edi.IEdiProcessor;
-import com.gadgetworks.codeshelf.edi.IOrderImporter;
-import com.gadgetworks.codeshelf.edi.OrderImporter;
 import com.gadgetworks.codeshelf.model.dao.DaoProvider;
 import com.gadgetworks.codeshelf.model.dao.Database;
 import com.gadgetworks.codeshelf.model.dao.H2SchemaManager;
@@ -45,6 +45,8 @@ import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.Item.ItemDao;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster.ItemMasterDao;
+import com.gadgetworks.codeshelf.model.domain.LocationABC;
+import com.gadgetworks.codeshelf.model.domain.LocationABC.LocationDao;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail.OrderDetailDao;
 import com.gadgetworks.codeshelf.model.domain.OrderGroup;
@@ -149,7 +151,7 @@ public final class Main {
 				bind(IDaoProvider.class).to(DaoProvider.class);
 				bind(IHttpServer.class).to(HttpServer.class);
 				bind(IEdiProcessor.class).to(EdiProcessor.class);
-				bind(IOrderImporter.class).to(OrderImporter.class);
+				bind(ICsvImporter.class).to(CsvImporter.class);
 								
 				requestStaticInjection(Aisle.class);
 				bind(new TypeLiteral<ITypedDao<Aisle>>() {
@@ -198,6 +200,10 @@ public final class Main {
 				requestStaticInjection(ItemMaster.class);
 				bind(new TypeLiteral<ITypedDao<ItemMaster>>() {
 				}).to(ItemMasterDao.class);
+
+				requestStaticInjection(LocationABC.class);
+				bind(new TypeLiteral<ITypedDao<LocationABC>>() {
+				}).to(LocationDao.class);
 
 				requestStaticInjection(OrderDetail.class);
 				bind(new TypeLiteral<ITypedDao<OrderDetail>>() {

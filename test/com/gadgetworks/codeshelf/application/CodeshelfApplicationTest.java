@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeshelfApplicationTest.java,v 1.4 2012/10/21 02:02:18 jeffw Exp $
+ *  $Id: CodeshelfApplicationTest.java,v 1.5 2012/10/22 07:38:08 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.application;
 
@@ -14,10 +14,10 @@ import junit.framework.Assert;
 
 import org.junit.Test;
 
+import com.gadgetworks.codeshelf.edi.CsvImporter;
 import com.gadgetworks.codeshelf.edi.EdiProcessor;
+import com.gadgetworks.codeshelf.edi.ICsvImporter;
 import com.gadgetworks.codeshelf.edi.IEdiProcessor;
-import com.gadgetworks.codeshelf.edi.IOrderImporter;
-import com.gadgetworks.codeshelf.edi.OrderImporter;
 import com.gadgetworks.codeshelf.model.dao.DaoProvider;
 import com.gadgetworks.codeshelf.model.dao.Database;
 import com.gadgetworks.codeshelf.model.dao.H2SchemaManager;
@@ -30,6 +30,7 @@ import com.gadgetworks.codeshelf.model.dao.MockWirelessDeviceDao;
 import com.gadgetworks.codeshelf.model.dao.Result;
 import com.gadgetworks.codeshelf.model.domain.Container;
 import com.gadgetworks.codeshelf.model.domain.Facility;
+import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderGroup;
@@ -217,6 +218,7 @@ public class CodeshelfApplicationTest {
 		ITypedDao<Container> containerDao = new MockDao<Container>();
 		ITypedDao<OrderDetail> orderDetailDao = new MockDao<OrderDetail>();
 		ITypedDao<ItemMaster> itemMasterDao = new MockDao<ItemMaster>();
+		ITypedDao<Item> itemDao = new MockDao<Item>();
 		ITypedDao<UomMaster> uomMasterDao = new MockDao<UomMaster>();
 		IWirelessDeviceDao wirelessDeviceDao = new MockWirelessDeviceDao();
 
@@ -227,7 +229,7 @@ public class CodeshelfApplicationTest {
 		IWebSocketListener webSocketListener = new WebSocketListener(webSessionManager);
 		IHttpServer httpServer = new HttpServer();
 
-		IOrderImporter importer = new OrderImporter(orderGroupDao, orderHeaderDao, orderDetailDao, containerDao, itemMasterDao, uomMasterDao);
+		ICsvImporter importer = new CsvImporter(orderGroupDao, orderHeaderDao, orderDetailDao, containerDao, itemMasterDao, itemDao);
 		IEdiProcessor ediProcessor = new EdiProcessor(importer, facilityDao);
 		IUtil util = new MockUtil();
 		ISchemaManager schemaManager = new H2SchemaManager(util);

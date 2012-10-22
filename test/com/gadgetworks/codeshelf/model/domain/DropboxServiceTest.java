@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DropboxServiceTest.java,v 1.1 2012/10/14 05:34:46 jeffw Exp $
+ *  $Id: DropboxServiceTest.java,v 1.2 2012/10/22 07:38:08 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -11,7 +11,7 @@ import junit.framework.Assert;
 
 import org.junit.Test;
 
-import com.gadgetworks.codeshelf.edi.IOrderImporter;
+import com.gadgetworks.codeshelf.edi.ICsvImporter;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.dao.MockDao;
 import com.gadgetworks.codeshelf.model.dao.Result;
@@ -53,9 +53,11 @@ public class DropboxServiceTest {
 
 		final Result checkImport = new Result();
 
-		dropboxService.checkForOrderUpdates(new IOrderImporter() {
-			public void importerFromCsvStream(InputStreamReader inStreamReader, Facility inFacility) {
+		dropboxService.checkForCsvUpdates(new ICsvImporter() {
+			public void importOrdersFromCsvStream(InputStreamReader inStreamReader, Facility inFacility) {
 				checkImport.result = true;
+			}
+			public void importInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
 			}
 		});
 		

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ItemMaster.java,v 1.7 2012/10/21 02:02:17 jeffw Exp $
+ *  $Id: ItemMaster.java,v 1.8 2012/10/22 07:38:08 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -101,6 +101,10 @@ public class ItemMaster extends DomainObjectABC {
 
 	public final String getDefaultDomainIdPrefix() {
 		return "IM";
+	}
+
+	public final boolean includeMeInDomainId() {
+		return false;
 	}
 
 	public final Facility getParentFacility() {

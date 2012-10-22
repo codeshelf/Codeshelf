@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderImporter.java,v 1.4 2012/10/21 02:02:18 jeffw Exp $
+ *  $Id: CsvImporter.java,v 1.1 2012/10/22 07:38:07 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -25,6 +25,8 @@ import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Container;
 import com.gadgetworks.codeshelf.model.domain.ContainerKind;
 import com.gadgetworks.codeshelf.model.domain.Facility;
+import com.gadgetworks.codeshelf.model.domain.ILocation;
+import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderGroup;
@@ -36,7 +38,7 @@ import com.google.inject.Inject;
  * @author jeffw
  *
  */
-public class OrderImporter implements IOrderImporter {
+public class CsvImporter implements ICsvImporter {
 
 	private static final Log		LOGGER	= LogFactory.getLog(EdiProcessor.class);
 
@@ -45,32 +47,32 @@ public class OrderImporter implements IOrderImporter {
 	private ITypedDao<OrderDetail>	mOrderDetailDao;
 	private ITypedDao<Container>	mContainerDao;
 	private ITypedDao<ItemMaster>	mItemMasterDao;
-	private ITypedDao<UomMaster>	mUomMasterDao;
+	private ITypedDao<Item>			mItemDao;
 
 	@Inject
-	public OrderImporter(final ITypedDao<OrderGroup> inOrderGroupDao,
+	public CsvImporter(final ITypedDao<OrderGroup> inOrderGroupDao,
 		final ITypedDao<OrderHeader> inOrderHeaderDao,
 		final ITypedDao<OrderDetail> inOrderDetailDao,
 		final ITypedDao<Container> inContainerDao,
 		final ITypedDao<ItemMaster> inItemMasterDao,
-		final ITypedDao<UomMaster> inUomMasterDao) {
+		final ITypedDao<Item> inItemDao) {
 
 		mOrderGroupDao = inOrderGroupDao;
 		mOrderHeaderDao = inOrderHeaderDao;
 		mOrderDetailDao = inOrderDetailDao;
 		mContainerDao = inContainerDao;
 		mItemMasterDao = inItemMasterDao;
-		mUomMasterDao = inUomMasterDao;
+		mItemDao = inItemDao;
 	}
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.edi.IOrderImporter#importerFromCsvStream(java.io.InputStreamReader, com.gadgetworks.codeshelf.model.domain.Facility)
+	 * @see com.gadgetworks.codeshelf.edi.ICsvImporter#importOrdersFromCsvStream(java.io.InputStreamReader, com.gadgetworks.codeshelf.model.domain.Facility)
 	 */
-	public final void importerFromCsvStream(final InputStreamReader inStreamReader, final Facility inFacility) {
+	public final void importOrdersFromCsvStream(final InputStreamReader inCsvStreamReader, final Facility inFacility) {
 		try {
 
-			CSVReader csvReader = new CSVReader(inStreamReader);
+			CSVReader csvReader = new CSVReader(inCsvStreamReader);
 
 			HeaderColumnNameMappingStrategy<CsvOrderImportBean> strategy = new HeaderColumnNameMappingStrategy<CsvOrderImportBean>();
 			strategy.setType(CsvOrderImportBean.class);
@@ -79,7 +81,34 @@ public class OrderImporter implements IOrderImporter {
 			List<CsvOrderImportBean> list = csv.parse(strategy, csvReader);
 
 			for (CsvOrderImportBean importBean : list) {
-				importCsvBean(importBean, inFacility);
+				importCsvOrderBean(importBean, inFacility);
+			}
+
+			csvReader.close();
+		} catch (FileNotFoundException e) {
+			LOGGER.error("", e);
+		} catch (IOException e) {
+			LOGGER.error("", e);
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.edi.ICsvImporter#importInventoryFromCsvStream(java.io.InputStreamReader, com.gadgetworks.codeshelf.model.domain.Facility)
+	 */
+	public final void importInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
+		try {
+
+			CSVReader csvReader = new CSVReader(inCsvStreamReader);
+
+			HeaderColumnNameMappingStrategy<CsvInventoryImportBean> strategy = new HeaderColumnNameMappingStrategy<CsvInventoryImportBean>();
+			strategy.setType(CsvInventoryImportBean.class);
+
+			CsvToBean<CsvInventoryImportBean> csv = new CsvToBean<CsvInventoryImportBean>();
+			List<CsvInventoryImportBean> list = csv.parse(strategy, csvReader);
+
+			for (CsvInventoryImportBean importBean : list) {
+				importCsvInventoryBean(importBean, inFacility);
 			}
 
 			csvReader.close();
@@ -95,16 +124,30 @@ public class OrderImporter implements IOrderImporter {
 	 * @param inCsvImportBean
 	 * @param inFacility
 	 */
-	private void importCsvBean(final CsvOrderImportBean inCsvImportBean, final Facility inFacility) {
+	private void importCsvOrderBean(final CsvOrderImportBean inCsvImportBean, final Facility inFacility) {
 
 		LOGGER.info(inCsvImportBean);
 
 		OrderGroup group = ensureOptionalOrderGroup(inCsvImportBean, inFacility);
 		OrderHeader order = ensureOrderHeader(inCsvImportBean, inFacility, group);
 		Container container = ensureContainer(inCsvImportBean, inFacility, order);
-		UomMaster uomMaster = ensureUomMaster(inCsvImportBean, inFacility);
-		ItemMaster itemMaster = ensureItemMaster(inCsvImportBean, inFacility, uomMaster);
+		UomMaster uomMaster = ensureUomMaster(inCsvImportBean.getUomId(), inFacility);
+		ItemMaster itemMaster = ensureItemMaster(inCsvImportBean.getItemId(), inFacility, uomMaster);
 		OrderDetail orderDetail = ensureOrderDetail(inCsvImportBean, inFacility, order, uomMaster, itemMaster);
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inCsvImportBean
+	 * @param inFacility
+	 */
+	private void importCsvInventoryBean(final CsvInventoryImportBean inCsvImportBean, final Facility inFacility) {
+
+		LOGGER.info(inCsvImportBean);
+
+		UomMaster uomMaster = ensureUomMaster(inCsvImportBean.getUomId(), inFacility);
+		ItemMaster itemMaster = ensureItemMaster(inCsvImportBean.getItemId(), inFacility, uomMaster);
+		Item item = ensureItem(inCsvImportBean, inFacility, itemMaster);
 	}
 
 	// --------------------------------------------------------------------------
@@ -207,15 +250,15 @@ public class OrderImporter implements IOrderImporter {
 	 * @param inFacility
 	 * @return
 	 */
-	private ItemMaster ensureItemMaster(final CsvOrderImportBean inCsvImportBean, final Facility inFacility, final UomMaster inUomMaster) {
+	private ItemMaster ensureItemMaster(final String inItemMasterId, final Facility inFacility, final UomMaster inUomMaster) {
 		ItemMaster result = null;
 
-		result = mItemMasterDao.findByDomainId(inFacility, inCsvImportBean.getItemId());
+		result = mItemMasterDao.findByDomainId(inFacility, inItemMasterId);
 		if (result == null) {
 
 			result = new ItemMaster();
 			result.setParentFacility(inFacility);
-			result.setItemMasterId(inCsvImportBean.getItemId());
+			result.setItemMasterId(inItemMasterId);
 			result.setStandardUoM(inUomMaster);
 			inFacility.addItemMaster(result);
 			try {
@@ -234,17 +277,16 @@ public class OrderImporter implements IOrderImporter {
 	 * @param inFacility
 	 * @return
 	 */
-	private UomMaster ensureUomMaster(final CsvOrderImportBean inCsvImportBean, final Facility inFacility) {
+	private UomMaster ensureUomMaster(final String inUomId, final Facility inFacility) {
 		UomMaster result = null;
 
-		String uomId = inCsvImportBean.getUomId();
-		result = inFacility.getUomMaster(uomId);
+		result = inFacility.getUomMaster(inUomId);
 
 		if (result == null) {
 			result = new UomMaster();
 			result.setParentFacility(inFacility);
-			result.setUomMasterId(uomId);
-			inFacility.addUomMaster(uomId, result);
+			result.setUomMasterId(inUomId);
+			inFacility.addUomMaster(inUomId, result);
 		}
 
 		return result;
@@ -287,4 +329,39 @@ public class OrderImporter implements IOrderImporter {
 		}
 		return result;
 	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inCsvImportBean
+	 * @param inFacility
+	 * @return
+	 */
+	private Item ensureItem(final CsvInventoryImportBean inCsvImportBean, final Facility inFacility, final ItemMaster inItemMaster) {
+		Item result = null;
+
+		ILocation location = inFacility.getLocationByFullId(inCsvImportBean.getLocationId());
+		
+		// We couldn't find the location, so assign the inventory to the facility itself (which is a location);
+		if (location == null) {
+			location = inFacility;
+		}
+
+		result = location.getItem(inCsvImportBean.getItemId());
+		if ((result == null) && (inCsvImportBean.getItemId() != null) && (inCsvImportBean.getItemId().length() > 0)) {
+			result = new Item();
+			result.setParentItemMaster(inItemMaster);
+			result.setItemId(inCsvImportBean.getItemId());
+			result.setQuantity(Double.valueOf(inCsvImportBean.getQuantity()));
+			inItemMaster.addItem(result);
+			location.addItem(inCsvImportBean.getItemId(), result);
+			try {
+				mItemDao.store(result);
+			} catch (DaoException e) {
+				LOGGER.error("", e);
+			}
+		}
+
+		return result;
+	}
+
 }

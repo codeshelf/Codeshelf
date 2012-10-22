@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.25 2012/10/21 02:02:17 jeffw Exp $
+ *  $Id: Facility.java,v 1.26 2012/10/22 07:38:07 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -17,6 +17,7 @@ import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
+import javax.xml.stream.Location;
 
 import lombok.Getter;
 import lombok.ToString;
@@ -470,6 +471,19 @@ public class Facility extends LocationABC {
 		if (dropboxService != null) {
 			result = dropboxService.link();
 		}
+
+		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inFullId
+	 * @return
+	 */
+	public final ILocation getLocationByFullId(final String inFullId) {
+		ILocation result = null;
+		
+		result = LocationABC.DAO.findByDomainId(this, inFullId);
 
 		return result;
 	}

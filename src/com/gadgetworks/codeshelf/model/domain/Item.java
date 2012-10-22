@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Item.java,v 1.4 2012/10/21 02:02:17 jeffw Exp $
+ *  $Id: Item.java,v 1.5 2012/10/22 07:38:08 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -60,6 +60,11 @@ public class Item extends DomainObjectABC {
 	@ManyToOne(optional = false)
 	private ItemMaster			parent;
 
+	// The stored location.
+	@Column(nullable = false)
+	@ManyToOne(optional = false)
+	private LocationABC			location;
+
 	// Quantity.
 	@Column(nullable = false)
 	@Getter
@@ -80,11 +85,19 @@ public class Item extends DomainObjectABC {
 	}
 
 	public final String getDefaultDomainIdPrefix() {
-		return "PS";
+		return "IT";
 	}
 
 	public final ItemMaster getParentItemMaster() {
 		return parent;
+	}
+
+	public final String getItemsId() {
+		return getShortDomainId();
+	}
+
+	public final void setItemId(final String inItemId) {
+		setShortDomainId(inItemId);
 	}
 
 	public final void setParentItemMaster(final ItemMaster inItemMaster) {

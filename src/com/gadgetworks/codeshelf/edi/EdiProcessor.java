@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiProcessor.java,v 1.12 2012/10/11 02:42:39 jeffw Exp $
+ *  $Id: EdiProcessor.java,v 1.13 2012/10/22 07:38:07 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -28,13 +28,13 @@ public final class EdiProcessor implements IEdiProcessor {
 	private boolean				mShouldRun;
 	private Thread				mProcessorThread;
 
-	private IOrderImporter		mOrderImporter;
+	private ICsvImporter		mCsvImporter;
 	private ITypedDao<Facility>	mFacilityDao;
 
 	@Inject
-	public EdiProcessor(final IOrderImporter inOrderImporter, final ITypedDao<Facility> inFacilityDao) {
+	public EdiProcessor(final ICsvImporter inCsvImporter, final ITypedDao<Facility> inFacilityDao) {
 
-		mOrderImporter = inOrderImporter;
+		mCsvImporter = inCsvImporter;
 		mFacilityDao = inFacilityDao;
 
 		mShouldRun = false;
@@ -117,7 +117,7 @@ public final class EdiProcessor implements IEdiProcessor {
 		for (Facility facility : mFacilityDao.getAll()) {
 			for (IEdiService ediService : facility.getEdiServices()) {
 				if (ediService.getServiceStateEnum().equals(EdiServiceStateEnum.LINKED)) {
-					ediService.checkForOrderUpdates(mOrderImporter);
+					ediService.checkForCsvUpdates(mCsvImporter);
 				}
 			}
 		}

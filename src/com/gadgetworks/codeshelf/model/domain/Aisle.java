@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Aisle.java,v 1.11 2012/10/21 02:02:17 jeffw Exp $
+ *  $Id: Aisle.java,v 1.12 2012/10/22 07:38:08 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -34,7 +34,7 @@ import com.google.inject.Singleton;
 @Table(name = "LOCATION")
 @DiscriminatorValue("AISLE")
 @CacheStrategy
-@JsonAutoDetect(getterVisibility=Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class Aisle extends LocationABC {
 
 	@Inject
@@ -63,6 +63,10 @@ public class Aisle extends LocationABC {
 		if (inParent instanceof Facility) {
 			parent = (Facility) inParent;
 		}
+	}
+
+	public final void setParentFacility(final Facility inParentFacility) {
+		setParent(inParentFacility);
 	}
 
 	public final ITypedDao<Aisle> getDao() {

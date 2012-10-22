@@ -1,11 +1,10 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ILocation.java,v 1.1 2012/09/23 03:05:42 jeffw Exp $
+ *  $Id: ILocation.java,v 1.2 2012/10/22 07:38:08 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
-import org.codehaus.jackson.annotate.JsonIgnore;
 
 /**
  * @author jeffw
@@ -13,9 +12,10 @@ import org.codehaus.jackson.annotate.JsonIgnore;
  */
 public interface ILocation {
 	
-//	@JsonIgnore
-//	LocationABC getParentLocation();
-//	
-//	void setParentLocation(LocationABC inParentLocation);
+	void addItem(final String inItemId, Item inItem);
+	
+	Item getItem(final String inItemId);
+	
+	void removeItem(final String inItemId);
 	
 }

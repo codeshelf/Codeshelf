@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiProcessorTest.java,v 1.3 2012/10/14 01:05:22 jeffw Exp $
+ *  $Id: EdiProcessorTest.java,v 1.4 2012/10/22 07:38:07 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -13,7 +13,6 @@ import org.junit.Test;
 
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.dao.MockDao;
-import com.gadgetworks.codeshelf.model.domain.DropboxService;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.IEdiService;
 import com.gadgetworks.codeshelf.model.domain.Organization;
@@ -28,15 +27,15 @@ public class EdiProcessorTest {
 	public void ediProcessThreadTest() {
 
 		MockDao<Facility> facilityDao = new MockDao<Facility>();
-		IOrderImporter orderImporter = new IOrderImporter() {
+		ICsvImporter csvImporter = new ICsvImporter() {
+			public void importOrdersFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
+			}
 
-			@Override
-			public void importerFromCsvStream(InputStreamReader inStreamReader, Facility inFacility) {
-				// TODO Auto-generated method stub
+			public void importInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
 			}
 		};
 
-		IEdiProcessor ediProcessor = new EdiProcessor(orderImporter, facilityDao);
+		IEdiProcessor ediProcessor = new EdiProcessor(csvImporter, facilityDao);
 		ediProcessor.startProcessor();
 
 		Thread foundThread = null;
@@ -78,14 +77,14 @@ public class EdiProcessorTest {
 
 	@Test
 	public void ediProcessorTest() {
-		
+
 		final class Result {
-			public boolean processed = false;
+			public boolean	processed	= false;
 		}
 
 		final Result linkedResult = new Result();
 		final Result unlinkedResult = new Result();
-		
+
 		MockDao<Facility> facilityDao = new MockDao<Facility>();
 
 		IEdiService ediServiceLinked = new IEdiService() {
@@ -94,7 +93,7 @@ public class EdiProcessorTest {
 				return EdiServiceStateEnum.LINKED;
 			}
 
-			public void checkForOrderUpdates(IOrderImporter inOrderImporter) {
+			public void checkForCsvUpdates(ICsvImporter inCsvImporter) {
 				linkedResult.processed = true;
 			}
 		};
@@ -105,14 +104,14 @@ public class EdiProcessorTest {
 				return EdiServiceStateEnum.UNLINKED;
 			}
 
-			public void checkForOrderUpdates(IOrderImporter inOrderImporter) {
+			public void checkForCsvUpdates(ICsvImporter inCsvImporter) {
 				unlinkedResult.processed = true;
 			}
 		};
 
 		Organization organization = new Organization();
 		organization.setOrganizationId("O1");
-		
+
 		Facility facility = new Facility();
 		facility.setParentOrganization(organization);
 		facility.setFacilityId("F1");
@@ -120,14 +119,17 @@ public class EdiProcessorTest {
 		facility.addEdiService(ediServiceUnlinked);
 		facilityDao.store(facility);
 
-		IOrderImporter orderImporter = new IOrderImporter() {
-			public void importerFromCsvStream(InputStreamReader inStreamReader, Facility inFacility) {
+		ICsvImporter csvImporter = new ICsvImporter() {
+			public void importOrdersFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
+			}
+
+			public void importInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
 			}
 		};
 
-		IEdiProcessor ediProcessor = new EdiProcessor(orderImporter, facilityDao);
+		IEdiProcessor ediProcessor = new EdiProcessor(csvImporter, facilityDao);
 		ediProcessor.startProcessor();
-		
+
 		try {
 			// Sleep will switch us to the EdiProcessor thread.
 			Thread.sleep(2000);

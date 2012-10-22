@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Bay.java,v 1.12 2012/10/22 07:38:08 jeffw Exp $
+ *  $Id: Slot.java,v 1.1 2012/10/22 07:38:07 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -23,36 +23,34 @@ import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
- * Bay
+ * Slot
  * 
- * The object that models a storage bay in an aisle (pallet bay, etc.)
+ * The object that models a slit within a tier.
  * 
  * @author jeffw
  */
 
 @Entity
 @Table(name = "LOCATION")
-@DiscriminatorValue("BAY")
+@DiscriminatorValue("SLOT")
 @CacheStrategy
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
-public class Bay extends LocationABC {
+public class Slot extends LocationABC {
 
 	@Inject
-	public static ITypedDao<Bay>	DAO;
+	public static ITypedDao<Slot>	DAO;
 
 	@Singleton
-	public static class BayDao extends GenericDaoABC<Bay> implements ITypedDao<Bay> {
-		public final Class<Bay> getDaoClass() {
-			return Bay.class;
+	public static class SlotDao extends GenericDaoABC<Slot> implements ITypedDao<Slot> {
+		public final Class<Slot> getDaoClass() {
+			return Slot.class;
 		}
 	}
 
-	private static final Log	LOGGER	= LogFactory.getLog(Bay.class);
+	private static final Log	LOGGER	= LogFactory.getLog(Slot.class);
 
-	public Bay(final Aisle inAisle, final Double inPosX, final double inPosY, final double inPosZ) {
-		super(PositionTypeEnum.METERS_FROM_PARENT, inPosX, inPosY, inPosZ);
-		setParent(inAisle);
-		setShortDomainId(computeDefaultDomainId());
+	public Slot(final Double inPosX, final double inPosY) {
+		super(PositionTypeEnum.METERS_FROM_PARENT, inPosX, inPosY);
 	}
 
 	public final IDomainObject getParent() {
@@ -60,20 +58,20 @@ public class Bay extends LocationABC {
 	}
 
 	public final void setParent(final IDomainObject inParent) {
-		if (inParent instanceof Aisle) {
-			parent = (Aisle) inParent;
+		if (inParent instanceof Bay) {
+			parent = (Bay) inParent;
 		}
 	}
-
-	public final void setParentAisle(final Aisle inParentAisle) {
-		setParent(inParentAisle);
+	
+	public final void setParentTier(final Tier inParentTier) {
+		setParent(inParentTier);
 	}
 
-	public final ITypedDao<Bay> getDao() {
+	public final ITypedDao<Slot> getDao() {
 		return DAO;
 	}
 
 	public final String getDefaultDomainIdPrefix() {
-		return "B";
+		return "T";
 	}
 }

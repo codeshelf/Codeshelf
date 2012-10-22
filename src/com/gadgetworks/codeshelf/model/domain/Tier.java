@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Tier.java,v 1.9 2012/10/21 02:02:17 jeffw Exp $
+ *  $Id: Tier.java,v 1.10 2012/10/22 07:38:08 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -63,6 +63,10 @@ public class Tier extends LocationABC {
 		}
 	}
 
+	public final void setParentBay(final Bay inParentBay) {
+		setParent(inParentBay);
+	}
+	
 	public final ITypedDao<Tier> getDao() {
 		return DAO;
 	}

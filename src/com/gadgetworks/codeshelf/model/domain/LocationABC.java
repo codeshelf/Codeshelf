@@ -1,12 +1,14 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: LocationABC.java,v 1.8 2012/10/21 02:02:17 jeffw Exp $
+ *  $Id: LocationABC.java,v 1.9 2012/10/22 07:38:07 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorColumn;
@@ -32,6 +34,10 @@ import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.annotate.JsonProperty;
 
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
+import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
+import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
@@ -50,6 +56,16 @@ import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 @DiscriminatorValue("ABC")
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 public abstract class LocationABC extends DomainObjectABC implements ILocation {
+
+	@Inject
+	public static ITypedDao<LocationABC>	DAO;
+
+	@Singleton
+	public static class LocationDao extends GenericDaoABC<LocationABC> implements ITypedDao<LocationABC> {
+		public final Class<LocationABC> getDaoClass() {
+			return LocationABC.class;
+		}
+	}
 
 	private static final Log	LOGGER		= LogFactory.getLog(LocationABC.class);
 
@@ -105,6 +121,11 @@ public abstract class LocationABC extends DomainObjectABC implements ILocation {
 	@Getter
 	private List<LocationABC>	locations	= new ArrayList<LocationABC>();
 
+	// The items stored in this location.
+	@OneToMany(mappedBy = "location")
+	@Getter
+	private Map<String, Item>	items		= new HashMap<String, Item>();
+
 	public LocationABC() {
 
 	}
@@ -138,5 +159,17 @@ public abstract class LocationABC extends DomainObjectABC implements ILocation {
 
 	public final void removeVertex(Vertex inVertex) {
 		vertices.remove(inVertex);
+	}
+
+	public final void addItem(final String inItemId, Item inItem) {
+		items.put(inItemId, inItem);
+	}
+
+	public final Item getItem(final String inItemId) {
+		return items.get(inItemId);
+	}
+
+	public final void removeItem(final String inItemId) {
+		items.remove(inItemId);
 	}
 }

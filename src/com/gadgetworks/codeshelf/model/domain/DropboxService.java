@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DropboxService.java,v 1.23 2012/10/21 02:02:17 jeffw Exp $
+ *  $Id: DropboxService.java,v 1.24 2012/10/22 07:38:07 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -25,7 +25,6 @@ import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.JsonProcessingException;
 import org.codehaus.jackson.annotate.JsonAutoDetect;
-import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.map.JsonMappingException;
@@ -44,7 +43,7 @@ import com.dropbox.client2.session.AccessTokenPair;
 import com.dropbox.client2.session.AppKeyPair;
 import com.dropbox.client2.session.Session;
 import com.dropbox.client2.session.WebAuthSession;
-import com.gadgetworks.codeshelf.edi.IOrderImporter;
+import com.gadgetworks.codeshelf.edi.ICsvImporter;
 import com.gadgetworks.codeshelf.model.EdiDocumentStatusEnum;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
@@ -104,17 +103,40 @@ public class DropboxService extends EdiServiceABC {
 		return DAO;
 	}
 
-	public final void checkForOrderUpdates(IOrderImporter inOrderImporter) {
+	public final void checkForCsvUpdates(ICsvImporter inCsvImporter) {
 		// Make sure we believe that we're properly registered with the service before we try to contact it.
 		if (this.getServiceStateEnum().equals(EdiServiceStateEnum.LINKED)) {
 
 			DropboxAPI<Session> clientSession = getClientSession();
 			if (clientSession != null) {
-				documentCheck(clientSession, inOrderImporter);
+				documentCheck(clientSession, inCsvImporter);
 			}
 		}
 	}
 
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inClientSession
+	 */
+	private void documentCheck(DropboxAPI<Session> inClientSession, ICsvImporter inCsvImporter) {
+		if (ensureBaseDirectories(inClientSession)) {
+			try {
+				DeltaPage<Entry> page = null;
+				while ((page == null) || (page.hasMore)) {
+					page = inClientSession.delta(dbCursor);
+					processDeltas(inClientSession, page, inCsvImporter);
+				}
+			} catch (DropboxException e) {
+				LOGGER.error("Dropbox session error", e);
+			}
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inPath
+	 * @return
+	 */
 	public final EdiDocumentLocator getDocumentLocatorByPath(String inPath) {
 		EdiDocumentLocator result = null;
 
@@ -182,24 +204,6 @@ public class DropboxService extends EdiServiceABC {
 	 */
 	public final String getExportPath() {
 		return getFacilityPath() + EXPORT_PATH;
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * @param inClientSession
-	 */
-	private void documentCheck(DropboxAPI<Session> inClientSession, IOrderImporter inOrderImporter) {
-		if (ensureBaseDirectories(inClientSession)) {
-			try {
-				DeltaPage<Entry> page = null;
-				while ((page == null) || (page.hasMore)) {
-					page = inClientSession.delta(dbCursor);
-					processDeltas(inClientSession, page, inOrderImporter);
-				}
-			} catch (DropboxException e) {
-				LOGGER.error("Dropbox session error", e);
-			}
-		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -391,9 +395,9 @@ public class DropboxService extends EdiServiceABC {
 	 * @param inClientSession
 	 * @param inPage
 	 */
-	private void processDeltas(DropboxAPI<Session> inClientSession, DeltaPage<Entry> inPage, IOrderImporter inOrderImporter) {
+	private void processDeltas(DropboxAPI<Session> inClientSession, DeltaPage<Entry> inPage, ICsvImporter inCsvImporter) {
 		if ((inPage != null) && (inPage.cursor != null) && (!inPage.cursor.equals(dbCursor))) {
-			iteratePage(inClientSession, inPage, inOrderImporter);
+			iteratePage(inClientSession, inPage, inCsvImporter);
 
 			dbCursor = inPage.cursor;
 			try {
@@ -409,13 +413,13 @@ public class DropboxService extends EdiServiceABC {
 	 * @param inClientSession
 	 * @param inPage
 	 */
-	private void iteratePage(DropboxAPI<Session> inClientSession, DeltaPage<Entry> inPage, IOrderImporter inOrderImporter) {
+	private void iteratePage(DropboxAPI<Session> inClientSession, DeltaPage<Entry> inPage, ICsvImporter inCsvImporter) {
 		for (DeltaEntry<Entry> entry : inPage.entries) {
 			LOGGER.info(entry.lcPath);
 
 			if (entry.metadata != null) {
 				// Add, or modify.
-				processEntry(inClientSession, entry, inOrderImporter);
+				processEntry(inClientSession, entry, inCsvImporter);
 			} else {
 				removeEntry(inClientSession, entry);
 			}
@@ -426,13 +430,13 @@ public class DropboxService extends EdiServiceABC {
 	/**
 	 * @param inEntry
 	 */
-	private void processEntry(DropboxAPI<Session> inClientSession, DeltaEntry<Entry> inEntry, IOrderImporter inOrderImporter) {
+	private void processEntry(DropboxAPI<Session> inClientSession, DeltaEntry<Entry> inEntry, ICsvImporter inCsvImporter) {
 
 		boolean shouldUpdateEntry = false;
 
 		if (inEntry.metadata.path.startsWith(this.getImportPath())) {
 			if (!inEntry.metadata.isDir) {
-				handleImport(inClientSession, inEntry, inOrderImporter);
+				handleImport(inClientSession, inEntry, inCsvImporter);
 				shouldUpdateEntry = true;
 			}
 		} else if (inEntry.metadata.path.startsWith(this.getExportPath())) {
@@ -466,13 +470,17 @@ public class DropboxService extends EdiServiceABC {
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	private void handleImport(DropboxAPI<Session> inClientSession, DeltaEntry<Entry> inEntry, IOrderImporter inOrderImporter) {
+	private void handleImport(DropboxAPI<Session> inClientSession, DeltaEntry<Entry> inEntry, ICsvImporter inCsvImporter) {
 
 		try {
 
 			DropboxInputStream stream = inClientSession.getFileStream(inEntry.lcPath, null);
 			InputStreamReader reader = new InputStreamReader(stream);
-			inOrderImporter.importerFromCsvStream(reader, this.getParentFacility());
+			if (inEntry.lcPath.contains("orders")) {
+				inCsvImporter.importOrdersFromCsvStream(reader, this.getParentFacility());
+			} else if (inEntry.lcPath.contains("inventory")) {
+				inCsvImporter.importInventoryFromCsvStream(reader, this.getParentFacility());
+			}
 
 		} catch (DropboxException e) {
 			LOGGER.error("", e);
