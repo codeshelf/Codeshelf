@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Item.java,v 1.6 2012/10/24 01:00:59 jeffw Exp $
+ *  $Id: Item.java,v 1.7 2012/10/24 07:12:11 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -63,6 +63,8 @@ public class Item extends DomainObjectABC {
 	// The stored location.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
+	@Getter
+	@Setter
 	private LocationABC			location;
 
 	// Quantity.
@@ -75,6 +77,8 @@ public class Item extends DomainObjectABC {
 	// The actual UoM.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
+	@Getter
+	@Setter
 	private UomMaster			uomMaster;
 
 	public Item() {

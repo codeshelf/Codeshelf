@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: H2SchemaManager.java,v 1.50 2012/10/24 01:00:59 jeffw Exp $
+ *  $Id: H2SchemaManager.java,v 1.51 2012/10/24 07:12:11 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -540,6 +540,7 @@ public final class H2SchemaManager implements ISchemaManager {
 		// Item
 		result &= createTable("ITEM", //
 			"QUANTITY DECIMAL NOT NULL, " //
+					+ "LOCATION_PERSISTENTID LONG NOT NULL, " //
 					+ "UOMMASTER_PERSISTENTID LONG NOT NULL, " //
 					+ "PARENT_PERSISTENTID LONG NOT NULL " //
 		);

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CsvImporter.java,v 1.2 2012/10/24 01:00:59 jeffw Exp $
+ *  $Id: CsvImporter.java,v 1.3 2012/10/24 07:12:11 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -25,9 +25,9 @@ import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Container;
 import com.gadgetworks.codeshelf.model.domain.ContainerKind;
 import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.ILocation;
 import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster;
+import com.gadgetworks.codeshelf.model.domain.LocationABC;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderGroup;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
@@ -150,7 +150,7 @@ public class CsvImporter implements ICsvImporter {
 
 		UomMaster uomMaster = ensureUomMaster(inCsvImportBean.getUomId(), inFacility);
 		ItemMaster itemMaster = ensureItemMaster(inCsvImportBean.getItemId(), inFacility, uomMaster);
-		Item item = ensureItem(inCsvImportBean, inFacility, itemMaster);
+		Item item = ensureItem(inCsvImportBean, inFacility, itemMaster, uomMaster);
 	}
 
 	// --------------------------------------------------------------------------
@@ -346,10 +346,10 @@ public class CsvImporter implements ICsvImporter {
 	 * @param inFacility
 	 * @return
 	 */
-	private Item ensureItem(final CsvInventoryImportBean inCsvImportBean, final Facility inFacility, final ItemMaster inItemMaster) {
+	private Item ensureItem(final CsvInventoryImportBean inCsvImportBean, final Facility inFacility, final ItemMaster inItemMaster, final UomMaster inUomMaster) {
 		Item result = null;
 
-		ILocation location = inFacility.getLocationByFullId(inCsvImportBean.getLocationId());
+		LocationABC location = inFacility.getLocationByFullId(inCsvImportBean.getLocationId());
 
 		// We couldn't find the location, so assign the inventory to the facility itself (which is a location);
 		if (location == null) {
@@ -361,8 +361,10 @@ public class CsvImporter implements ICsvImporter {
 			result = new Item();
 			result.setParentItemMaster(inItemMaster);
 			result.setItemId(inCsvImportBean.getItemId());
+			result.setUomMaster(inUomMaster);
 			result.setQuantity(Double.valueOf(inCsvImportBean.getQuantity()));
 			inItemMaster.addItem(result);
+			result.setLocation(location);
 			location.addItem(inCsvImportBean.getItemId(), result);
 			try {
 				mItemDao.store(result);

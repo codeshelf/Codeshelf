@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.28 2012/10/24 03:00:09 jeffw Exp $
+ *  $Id: Facility.java,v 1.29 2012/10/24 07:12:11 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -256,6 +256,18 @@ public class Facility extends LocationABC {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * @param inFullId
+	 * @return
+	 */
+	public final LocationABC getLocationByFullId(final String inFullId) {
+		LocationABC result = null;
+
+		result = LocationABC.DAO.findByDomainId(this, inFullId);
+
+		return result;
+	}
+	// --------------------------------------------------------------------------
+	/**
 	 * @param inOrderID
 	 * @return
 	 */
@@ -485,19 +497,6 @@ public class Facility extends LocationABC {
 		if (dropboxService != null) {
 			result = dropboxService.link();
 		}
-
-		return result;
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * @param inFullId
-	 * @return
-	 */
-	public final ILocation getLocationByFullId(final String inFullId) {
-		ILocation result = null;
-
-		result = LocationABC.DAO.findByDomainId(this, inFullId);
 
 		return result;
 	}
