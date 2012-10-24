@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderImporterTest.java,v 1.3 2012/10/22 07:38:07 jeffw Exp $
+ *  $Id: OrderImporterTest.java,v 1.4 2012/10/24 01:00:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -13,6 +13,7 @@ import junit.framework.Assert;
 import org.junit.Test;
 
 import com.gadgetworks.codeshelf.model.PickStrategyEnum;
+import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.dao.MockDao;
 import com.gadgetworks.codeshelf.model.domain.Container;
 import com.gadgetworks.codeshelf.model.domain.Facility;
@@ -21,6 +22,7 @@ import com.gadgetworks.codeshelf.model.domain.ItemMaster;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderGroup;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
+import com.gadgetworks.codeshelf.model.domain.UomMaster;
 
 /**
  * @author jeffw
@@ -58,8 +60,9 @@ public class OrderImporterTest {
 		MockDao<Container> containerDao = new MockDao<Container>();
 		MockDao<ItemMaster> itemMasterDao = new MockDao<ItemMaster>();
 		MockDao<Item> itemDao = new MockDao<Item>();
+		ITypedDao<UomMaster> uomMasterDao = new MockDao<UomMaster>();
 
-		CsvImporter importer = new CsvImporter(orderGroupDao, orderHeaderDao, orderDetailDao, containerDao, itemMasterDao, itemDao);
+		CsvImporter importer = new CsvImporter(orderGroupDao, orderHeaderDao, orderDetailDao, containerDao, itemMasterDao, itemDao, uomMasterDao);
 		importer.importOrdersFromCsvStream(reader, facility);
 
 		OrderHeader order = facility.findOrder("123");
@@ -97,8 +100,9 @@ public class OrderImporterTest {
 		MockDao<Container> containerDao = new MockDao<Container>();
 		MockDao<ItemMaster> itemMasterDao = new MockDao<ItemMaster>();
 		MockDao<Item> itemDao = new MockDao<Item>();
+		ITypedDao<UomMaster> uomMasterDao = new MockDao<UomMaster>();
 
-		CsvImporter importer = new CsvImporter(orderGroupDao, orderHeaderDao, orderDetailDao, containerDao, itemMasterDao, itemDao);
+		CsvImporter importer = new CsvImporter(orderGroupDao, orderHeaderDao, orderDetailDao, containerDao, itemMasterDao, itemDao, uomMasterDao);
 		importer.importOrdersFromCsvStream(reader, facility);
 
 		OrderHeader order = facility.findOrder("123");
@@ -141,8 +145,9 @@ public class OrderImporterTest {
 		MockDao<Container> containerDao = new MockDao<Container>();
 		MockDao<ItemMaster> itemMasterDao = new MockDao<ItemMaster>();
 		MockDao<Item> itemDao = new MockDao<Item>();
+		ITypedDao<UomMaster> uomMasterDao = new MockDao<UomMaster>();
 
-		CsvImporter importer = new CsvImporter(orderGroupDao, orderHeaderDao, orderDetailDao, containerDao, itemMasterDao, itemDao);
+		CsvImporter importer = new CsvImporter(orderGroupDao, orderHeaderDao, orderDetailDao, containerDao, itemMasterDao, itemDao, uomMasterDao);
 		importer.importOrdersFromCsvStream(reader, facility);
 
 		OrderHeader order = facility.findOrder("789");

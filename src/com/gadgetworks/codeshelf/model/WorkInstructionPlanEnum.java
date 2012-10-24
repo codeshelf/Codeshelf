@@ -1,20 +1,22 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WorkInstructionPlanEnum.java,v 1.2 2012/10/02 15:12:22 jeffw Exp $
+ *  $Id: WorkInstructionPlanEnum.java,v 1.3 2012/10/24 01:00:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model;
 
-import com.avaje.ebean.annotation.EnumMapping;
+import com.avaje.ebean.annotation.EnumValue;
 
 // --------------------------------------------------------------------------
 /**
  *  @author jeffw
  */
-@EnumMapping(nameValuePairs = "INVALID=INVALID, PLANNED=PLANNED, ACTUAL=ACTUAL")
 public enum WorkInstructionPlanEnum {
+	@EnumValue("INVALID")
 	INVALID(WorkInstructionPlanNum.INVALID, "INVALID"),
+	@EnumValue("PLANNED")
 	PLANNED(WorkInstructionPlanNum.PLANNED, "PLANNED"),
+	@EnumValue("ACTUAL")
 	ACTUAL(WorkInstructionPlanNum.ACTUAL, "ACTUAL");
 
 	private int		mValue;

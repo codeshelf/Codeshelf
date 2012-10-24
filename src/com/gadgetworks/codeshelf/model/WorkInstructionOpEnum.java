@@ -1,20 +1,22 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WorkInstructionOpEnum.java,v 1.2 2012/10/02 15:12:22 jeffw Exp $
+ *  $Id: WorkInstructionOpEnum.java,v 1.3 2012/10/24 01:00:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model;
 
-import com.avaje.ebean.annotation.EnumMapping;
+import com.avaje.ebean.annotation.EnumValue;
 
 // --------------------------------------------------------------------------
 /**
  *  @author jeffw
  */
-@EnumMapping(nameValuePairs = "INVALID=INVALID, CONTAINER_MOVE=CONTAINER_MOVE, ITEM_MOVE=ITEM_MOVE")
 public enum WorkInstructionOpEnum {
+	@EnumValue("INVALID")
 	INVALID(WorkInstructionOpNum.INVALID, "INVALID"),
+	@EnumValue("CONTAINER_MOVE")
 	CONTAINER_MOVE(WorkInstructionOpNum.CONTAINER_MOVE, "CONTAINER_MOVE"),
+	@EnumValue("ITEM_MOVE")
 	ITEM_MOVE(WorkInstructionOpNum.ITEM_MOVE, "ITEM_MOVE");
 
 	private int		mValue;

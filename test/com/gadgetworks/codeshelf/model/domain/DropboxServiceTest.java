@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DropboxServiceTest.java,v 1.2 2012/10/22 07:38:08 jeffw Exp $
+ *  $Id: DropboxServiceTest.java,v 1.3 2012/10/24 01:00:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -40,7 +40,7 @@ public class DropboxServiceTest {
 		organization.setOrganizationId("O1");
 		Facility facility = new Facility();
 		facility.setParentOrganization(organization);
-		facility.setFacilityId("F1");
+		facility.setFacilityId("TEST1");
 		
 		facility.createDropboxService();
 		

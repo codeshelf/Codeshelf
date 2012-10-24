@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeshelfApplicationTest.java,v 1.5 2012/10/22 07:38:08 jeffw Exp $
+ *  $Id: CodeshelfApplicationTest.java,v 1.6 2012/10/24 01:00:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.application;
 
@@ -229,7 +229,7 @@ public class CodeshelfApplicationTest {
 		IWebSocketListener webSocketListener = new WebSocketListener(webSessionManager);
 		IHttpServer httpServer = new HttpServer();
 
-		ICsvImporter importer = new CsvImporter(orderGroupDao, orderHeaderDao, orderDetailDao, containerDao, itemMasterDao, itemDao);
+		ICsvImporter importer = new CsvImporter(orderGroupDao, orderHeaderDao, orderDetailDao, containerDao, itemMasterDao, itemDao, uomMasterDao);
 		IEdiProcessor ediProcessor = new EdiProcessor(importer, facilityDao);
 		IUtil util = new MockUtil();
 		ISchemaManager schemaManager = new H2SchemaManager(util);

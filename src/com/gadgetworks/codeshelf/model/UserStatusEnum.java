@@ -1,23 +1,28 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: UserStatusEnum.java,v 1.4 2012/09/08 03:03:22 jeffw Exp $
+ *  $Id: UserStatusEnum.java,v 1.5 2012/10/24 01:00:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model;
 
-import com.avaje.ebean.annotation.EnumMapping;
+import com.avaje.ebean.annotation.EnumValue;
 
 // --------------------------------------------------------------------------
 /**
  *  @author jeffw
  */
-@EnumMapping(nameValuePairs = "INVALID=INVALID, AVAILABLE=AVAILABLE, AWAY=AWAY, CHAT=CHAT, DND=DND, XA=XA")
 public enum UserStatusEnum {
+	@EnumValue("INVALID")
 	INVALID(UserStatusNum.INVALID, "INVALID"),
+	@EnumValue("AVAILABLE")
 	AVAILABLE(UserStatusNum.AVAILABLE, "AVAILABLE"),
+	@EnumValue("AWAY")
 	AWAY(UserStatusNum.AWAY, "AWAY"),
+	@EnumValue("CHAT")
 	CHAT(UserStatusNum.CHAT, "CHAT"),
+	@EnumValue("DND")
 	DND(UserStatusNum.DND, "DND"),
+	@EnumValue("XA")
 	XA(UserStatusNum.XA, "XA");
 
 	private int		mValue;

@@ -1,22 +1,23 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ControlProtocolEnum.java,v 1.2 2012/09/08 03:03:23 jeffw Exp $
+ *  $Id: ControlProtocolEnum.java,v 1.3 2012/10/24 01:00:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model;
 
-import com.avaje.ebean.annotation.EnumMapping;
+import com.avaje.ebean.annotation.EnumValue;
 
 // --------------------------------------------------------------------------
 /**
  *  @author jeffw
  */
-@EnumMapping(nameValuePairs = "INVALID=INVALID, INDUSTRO=INDUSTRO, ATOP=ATOP")
 public enum ControlProtocolEnum {
+	@EnumValue("INVALID")
 	INVALID(ControlProtocolNum.INVALID, "INVALID"),
-	INDUSTRO(ControlProtocolNum.INDUSTRO, "INDUSTRO"),
-	ATOP(ControlProtocolNum.ATOP, "ATOP"),
-	RTS(ControlProtocolNum.RTS, "RTS");
+	@EnumValue("CODESHELF")
+	CODESHELF(ControlProtocolNum.CODESHELF, "CODESHELF"),
+	@EnumValue("ATOP")
+	ATOP(ControlProtocolNum.ATOP, "ATOP");
 
 	private int		mValue;
 	private String	mName;
@@ -30,16 +31,12 @@ public enum ControlProtocolEnum {
 		ControlProtocolEnum result;
 
 		switch (inProtocolNum) {
-			case ControlProtocolNum.INDUSTRO:
-				result = ControlProtocolEnum.INDUSTRO;
+			case ControlProtocolNum.CODESHELF:
+				result = ControlProtocolEnum.CODESHELF;
 				break;
 
 			case ControlProtocolNum.ATOP:
 				result = ControlProtocolEnum.ATOP;
-				break;
-
-			case ControlProtocolNum.RTS:
-				result = ControlProtocolEnum.RTS;
 				break;
 
 			default:
@@ -62,9 +59,8 @@ public enum ControlProtocolEnum {
 	final static class ControlProtocolNum {
 
 		static final byte	INVALID		= 0;
-		static final byte	INDUSTRO	= 1;
+		static final byte	CODESHELF	= 1;
 		static final byte	ATOP		= 2;
-		static final byte	RTS			= 3;
 
 		private ControlProtocolNum() {
 		};

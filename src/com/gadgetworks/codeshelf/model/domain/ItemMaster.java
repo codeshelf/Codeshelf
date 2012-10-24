@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ItemMaster.java,v 1.8 2012/10/22 07:38:08 jeffw Exp $
+ *  $Id: ItemMaster.java,v 1.9 2012/10/24 01:00:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -84,7 +84,7 @@ public class ItemMaster extends DomainObjectABC {
 	@ManyToOne(optional = false)
 	@Getter
 	@Setter
-	private UomMaster			standardUoM;
+	private UomMaster			standardUom;
 
 	// For a network this is a list of all of the users that belong in the set.
 	@OneToMany(mappedBy = "parent")
@@ -92,7 +92,7 @@ public class ItemMaster extends DomainObjectABC {
 	private List<Item>			items	= new ArrayList<Item>();
 
 	public ItemMaster() {
-
+		lotHandlingEnum = LotHandlingEnum.FIFO;
 	}
 
 	public final ITypedDao<ItemMaster> getDao() {

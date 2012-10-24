@@ -1,21 +1,24 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: LotHandlingEnum.java,v 1.1 2012/10/21 02:02:18 jeffw Exp $
+ *  $Id: LotHandlingEnum.java,v 1.2 2012/10/24 01:00:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model;
 
-import com.avaje.ebean.annotation.EnumMapping;
+import com.avaje.ebean.annotation.EnumValue;
 
 // --------------------------------------------------------------------------
 /**
  *  @author jeffw
  */
-@EnumMapping(nameValuePairs = "INVALID=INVALID, NONE=NONE, FIFO=FIFO, REQUIRED=REQUIRED")
 public enum LotHandlingEnum {
+	@EnumValue("INVALID")
 	INVALID(OrderStatusNum.INVALID, "INVALID"),
+	@EnumValue("NONE")
 	NONE(OrderStatusNum.NONE, "NONE"),
+	@EnumValue("FIFO")
 	FIFO(OrderStatusNum.FIFO, "FIFO"),
+	@EnumValue("REQUIRED")
 	REQUIRED(OrderStatusNum.REQUIRED, "REQUIRED");
 
 	private int		mValue;

@@ -1,19 +1,20 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: SourceProtocolEnum.java,v 1.3 2012/09/08 03:03:22 jeffw Exp $
+ *  $Id: SourceProtocolEnum.java,v 1.4 2012/10/24 01:00:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model;
 
-import com.avaje.ebean.annotation.EnumMapping;
+import com.avaje.ebean.annotation.EnumValue;
 
 // --------------------------------------------------------------------------
 /**
  *  @author jeffw
  */
-@EnumMapping(nameValuePairs = "INVALID=INVALID, JMS=JMS")
 public enum SourceProtocolEnum {
+	@EnumValue("INVALID")
 	INVALID(SourceProtocolNum.INVALID, "INVALID"),
+	@EnumValue("JMS")
 	JMS(SourceProtocolNum.JMS, "JMS");
 
 	private int		mValue;

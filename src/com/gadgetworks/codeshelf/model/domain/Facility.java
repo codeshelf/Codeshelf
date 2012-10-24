@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.26 2012/10/22 07:38:07 jeffw Exp $
+ *  $Id: Facility.java,v 1.27 2012/10/24 01:00:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -15,9 +15,9 @@ import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
+import javax.persistence.MapKey;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
-import javax.xml.stream.Location;
 
 import lombok.Getter;
 import lombok.ToString;
@@ -73,7 +73,21 @@ public class Facility extends LocationABC {
 
 	@OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
 	@Getter
-	private Map<String, UomMaster>		uomMasters		= new HashMap<String, UomMaster>();
+	private List<Aisle>					aisles			= new ArrayList<Aisle>();
+
+	// For a network this is a list of all of the control groups that belong in the set.
+	@OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
+	@Getter
+	private Map<String, Container>		containers		= new HashMap<String, Container>();
+
+	@OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
+	@MapKey(name = "domainId")
+	@Getter
+	private Map<String, ContainerKind>	containerKinds	= new HashMap<String, ContainerKind>();
+
+	@OneToMany(mappedBy = "parent", fetch = FetchType.LAZY, targetEntity = DropboxService.class)
+	@Getter
+	private List<IEdiService>			ediServices		= new ArrayList<IEdiService>();
 
 	@OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
 	@Getter
@@ -89,31 +103,18 @@ public class Facility extends LocationABC {
 
 	@OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
 	@Getter
-	private List<Aisle>					aisles			= new ArrayList<Aisle>();
-
-	@OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
-	@Getter
 	private List<CodeShelfNetwork>		networks		= new ArrayList<CodeShelfNetwork>();
 
-	@OneToMany(mappedBy = "parent", fetch = FetchType.LAZY, targetEntity = DropboxService.class)
-	@Getter
-	private List<IEdiService>			ediServices		= new ArrayList<IEdiService>();
-
 	@OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
+	@MapKey(name = "domainId")
 	@Getter
-	private Map<String, ContainerKind>	containerKinds	= new HashMap<String, ContainerKind>();
-
-	// For a network this is a list of all of the control groups that belong in the set.
-	@OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
-	@Getter
-	private Map<String, Container>		containers		= new HashMap<String, Container>();
+	private Map<String, UomMaster>		uomMasters		= new HashMap<String, UomMaster>();
 
 	public Facility() {
 		// Facilities have no parent location, but we don't want to allow ANY location to not have a parent.
 		// So in this case we make the facility its own parent.  It's also a way to know when we've topped-out in the location tree.
 		parent = this;
 		orderHeaders = new ArrayList<OrderHeader>();
-		uomMasters = new HashMap<String, UomMaster>();
 		containerKinds = new HashMap<String, ContainerKind>();
 		containers = new HashMap<String, Container>();
 	}
@@ -177,19 +178,23 @@ public class Facility extends LocationABC {
 	}
 
 	public final ContainerKind getContainerKind(String inContainerKindId) {
-		return containerKinds.get(inContainerKindId);
+		String inKey = inContainerKindId.toUpperCase();
+		if (!(inKey.startsWith(this.getFullDomainId()))) {
+			inKey = this.getFullDomainId() + "." + inKey;
+		}
+		return containerKinds.get(inKey);
 	}
 
 	public final void removeContainerKind(String inContainerKindId) {
 		containerKinds.remove(inContainerKindId);
 	}
 
-	public final void addContainer(String inContainerId, Container inContainer) {
-		containers.put(inContainerId, inContainer);
+	public final void addContainer(Container inContainer) {
+		containers.put(inContainer.getShortDomainId(), inContainer);
 	}
 
 	public final Container getContainer(String inContainerId) {
-		return containers.get(inContainerId);
+		return containers.get(inContainerId.toUpperCase());
 	}
 
 	public final void removeContainer(String inContainerId) {
@@ -228,12 +233,16 @@ public class Facility extends LocationABC {
 		itemMasters.remove(inItemMasters);
 	}
 
-	public final void addUomMaster(String inUomMasterId, UomMaster inUomMaster) {
-		uomMasters.put(inUomMasterId, inUomMaster);
+	public final void addUomMaster(UomMaster inUomMaster) {
+		uomMasters.put(inUomMaster.getFullDomainId(), inUomMaster);
 	}
 
 	public final UomMaster getUomMaster(String inUomMasterId) {
-		return uomMasters.get(inUomMasterId);
+		String inKey = inUomMasterId.toUpperCase();
+		if (!(inKey.startsWith(this.getFullDomainId()))) {
+			inKey = this.getFullDomainId() + "." + inKey;
+		}
+		return uomMasters.get(inKey);
 	}
 
 	public final void removeUomMaster(String inUomMasterId) {
@@ -482,7 +491,7 @@ public class Facility extends LocationABC {
 	 */
 	public final ILocation getLocationByFullId(final String inFullId) {
 		ILocation result = null;
-		
+
 		result = LocationABC.DAO.findByDomainId(this, inFullId);
 
 		return result;

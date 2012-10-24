@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: H2SchemaManager.java,v 1.49 2012/10/21 02:02:18 jeffw Exp $
+ *  $Id: H2SchemaManager.java,v 1.50 2012/10/24 01:00:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -512,7 +512,7 @@ public final class H2SchemaManager implements ISchemaManager {
 					+ "ITEMMASTER_PERSISTENTID LONG NOT NULL, " //
 					+ "DESCRIPTION VARCHAR(256) NOT NULL, " //
 					+ "QUANTITY INTEGER NOT NULL, " //
-					+ "UOMID VARCHAR(16) NOT NULL, " //
+					+ "UOMMASTER_PERSISTENTID LONG NOT NULL, " //
 					+ "ORDERDATE TIMESTAMP, " //
 					+ "PARENT_PERSISTENTID LONG NOT NULL " //
 		);
@@ -532,7 +532,6 @@ public final class H2SchemaManager implements ISchemaManager {
 			"DESCRIPTION VARCHAR(256), " //
 					+ "LOTHANDLINGENUM VARCHAR(16) NOT NULL, " //
 					+ "STANDARDUOM_PERSISTENTID LONG NOT NULL, " //
-					+ "PICKSTRATEGYENUM VARCHAR(16) NOT NULL, " //
 					+ "PARENT_PERSISTENTID LONG NOT NULL " //
 		);
 
@@ -541,7 +540,7 @@ public final class H2SchemaManager implements ISchemaManager {
 		// Item
 		result &= createTable("ITEM", //
 			"QUANTITY DECIMAL NOT NULL, " //
-					+ "UOM_PERSISTENTID LONG NOT NULL, " //
+					+ "UOMMASTER_PERSISTENTID LONG NOT NULL, " //
 					+ "PARENT_PERSISTENTID LONG NOT NULL " //
 		);
 

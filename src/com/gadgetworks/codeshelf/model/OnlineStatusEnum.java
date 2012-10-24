@@ -1,22 +1,26 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OnlineStatusEnum.java,v 1.3 2012/09/08 03:03:23 jeffw Exp $
+ *  $Id: OnlineStatusEnum.java,v 1.4 2012/10/24 01:00:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model;
 
-import com.avaje.ebean.annotation.EnumMapping;
+import com.avaje.ebean.annotation.EnumValue;
 
 // --------------------------------------------------------------------------
 /**
  *  @author jeffw
  */
-@EnumMapping(nameValuePairs = "INVALID=INVALID, OFFLINE=OFFLINE, CONNECTING=CONNECTING, FAILED=FAILED, ONLINE=ONLINE")
 public enum OnlineStatusEnum {
+	@EnumValue("INVALID")
 	INVALID(OnlineStatusNum.INVALID, "INVALID"),
+	@EnumValue("OFFLINE")
 	OFFLINE(OnlineStatusNum.OFFLINE, "OFFLINE"),
+	@EnumValue("CONNECTING")
 	CONNECTING(OnlineStatusNum.CONNECTING, "CONNECTING"),
+	@EnumValue("FAILED")
 	FAILED(OnlineStatusNum.FAILED, "FAILED"),
+	@EnumValue("ONLINE")
 	ONLINE(OnlineStatusNum.ONLINE, "ONLINE");
 
 	private int		mValue;

@@ -1,20 +1,22 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: PickStrategyEnum.java,v 1.1 2012/10/21 02:02:18 jeffw Exp $
+ *  $Id: PickStrategyEnum.java,v 1.2 2012/10/24 01:00:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model;
 
-import com.avaje.ebean.annotation.EnumMapping;
+import com.avaje.ebean.annotation.EnumValue;
 
 // --------------------------------------------------------------------------
 /**
  *  @author jeffw
  */
-@EnumMapping(nameValuePairs = "INVALID=INVALID, SERIAL=SERIAL, PARALLEL=PARALLEL")
 public enum PickStrategyEnum {
+	@EnumValue("INVALID")
 	INVALID(OrderStatusNum.INVALID, "INVALID"),
+	@EnumValue("SERIAL")
 	SERIAL(OrderStatusNum.SERIAL, "SERIAL"),
+	@EnumValue("PARALLEL")
 	PARALLEL(OrderStatusNum.PARALLEL, "PARALLEL");
 
 	private int		mValue;

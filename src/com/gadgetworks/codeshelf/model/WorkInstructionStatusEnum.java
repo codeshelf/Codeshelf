@@ -1,22 +1,26 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WorkInstructionStatusEnum.java,v 1.2 2012/10/02 15:12:22 jeffw Exp $
+ *  $Id: WorkInstructionStatusEnum.java,v 1.3 2012/10/24 01:00:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model;
 
-import com.avaje.ebean.annotation.EnumMapping;
+import com.avaje.ebean.annotation.EnumValue;
 
 // --------------------------------------------------------------------------
 /**
  *  @author jeffw
  */
-@EnumMapping(nameValuePairs = "INVALID=INVALID, NEW=NEW, INPROGRESS=INPROGRESS, COMPLETE=COMPLETE, REVERTED=REVERTED")
 public enum WorkInstructionStatusEnum {
+	@EnumValue("INVALID")
 	INVALID(WorkInstructionStatusNum.INVALID, "INVALID"),
+	@EnumValue("NEW")
 	NEW(WorkInstructionStatusNum.NEW, "NEW"),
+	@EnumValue("INPROGRESS")
 	INPROGRESS(WorkInstructionStatusNum.INPROGRESS, "INPROGRESS"),
+	@EnumValue("COMPLETE")
 	COMPLETE(WorkInstructionStatusNum.COMPLETE, "COMPLETE"),
+	@EnumValue("REVERTED")
 	REVERTED(WorkInstructionStatusNum.REVERTED, "REVERTED");
 
 	private int		mValue;

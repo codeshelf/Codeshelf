@@ -1,22 +1,26 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderStatusEnum.java,v 1.3 2012/10/14 01:05:22 jeffw Exp $
+ *  $Id: OrderStatusEnum.java,v 1.4 2012/10/24 01:00:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model;
 
-import com.avaje.ebean.annotation.EnumMapping;
+import com.avaje.ebean.annotation.EnumValue;
 
 // --------------------------------------------------------------------------
 /**
  *  @author jeffw
  */
-@EnumMapping(nameValuePairs = "INVALID=INVALID, CREATED=CREATED, RELEASED=RELEASED, INPROGRESS=INPROGRESS, COMPLETE=COMPLETE")
 public enum OrderStatusEnum {
+	@EnumValue("INVALID")
 	INVALID(OrderStatusNum.INVALID, "INVALID"),
+	@EnumValue("CREATED")
 	CREATED(OrderStatusNum.CREATED, "CREATED"),
+	@EnumValue("RELEASED")
 	RELEASED(OrderStatusNum.RELEASED, "RELEASED"),
+	@EnumValue("INPROGRESS")
 	INPROGRESS(OrderStatusNum.INPROGRESS, "INPROGRESS"),
+	@EnumValue("COMPLETE")
 	COMPLETE(OrderStatusNum.COMPLETE, "COMPLETE");
 
 	private int		mValue;

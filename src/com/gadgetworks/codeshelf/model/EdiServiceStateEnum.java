@@ -1,22 +1,26 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiServiceStateEnum.java,v 1.3 2012/09/18 14:47:57 jeffw Exp $
+ *  $Id: EdiServiceStateEnum.java,v 1.4 2012/10/24 01:00:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model;
 
-import com.avaje.ebean.annotation.EnumMapping;
+import com.avaje.ebean.annotation.EnumValue;
 
 // --------------------------------------------------------------------------
 /**
  *  @author jeffw
  */
-@EnumMapping(nameValuePairs = "INVALID=INVALID, UNLINKED=UNLINKED, LINKING=LINKING, LINKED=LINKED, LINK_FAILED=LINK_FAILED")
 public enum EdiServiceStateEnum {
+	@EnumValue("INVALID")
 	INVALID(EdiServiceStateType.INVALID, "INVALID"),
+	@EnumValue("UNLINKED")
 	UNLINKED(EdiServiceStateType.UNLINKED, "UNLINKED"),
+	@EnumValue("LINKING")
 	LINKING(EdiServiceStateType.LINKING, "LINKING"),
+	@EnumValue("LINKED")
 	LINKED(EdiServiceStateType.LINKED, "LINKED"),
+	@EnumValue("LINK_FAILED")
 	LINK_FAILED(EdiServiceStateType.LINK_FAILED, "LINK_FAILED");
 
 	private int		mValue;

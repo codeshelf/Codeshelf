@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DomainObjectABC.java,v 1.18 2012/10/21 02:02:17 jeffw Exp $
+ *  $Id: DomainObjectABC.java,v 1.19 2012/10/24 01:00:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -27,6 +27,7 @@ import org.codehaus.jackson.annotate.JsonProperty;
 
 import com.avaje.ebean.Ebean;
 import com.avaje.ebean.Query;
+import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 
@@ -39,6 +40,7 @@ import com.gadgetworks.codeshelf.model.dao.ITypedDao;
  */
 
 @Entity
+@CacheStrategy
 @ToString
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 public abstract class DomainObjectABC implements IDomainObject {

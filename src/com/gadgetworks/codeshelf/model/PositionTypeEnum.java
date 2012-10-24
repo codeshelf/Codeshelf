@@ -1,21 +1,24 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: PositionTypeEnum.java,v 1.3 2012/09/08 03:03:23 jeffw Exp $
+ *  $Id: PositionTypeEnum.java,v 1.4 2012/10/24 01:00:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model;
 
-import com.avaje.ebean.annotation.EnumMapping;
+import com.avaje.ebean.annotation.EnumValue;
 
 // --------------------------------------------------------------------------
 /**
  *  @author jeffw
  */
-@EnumMapping(nameValuePairs = "INVALID=INVALID, GPS=GPS, METERS_FROM_PARENT=METERS_FROM_PARENT, METERS_FROM_DATUM=METERS_FROM_DATA")
 public enum PositionTypeEnum {
+	@EnumValue("INVALID")
 	INVALID(PositionTypeNum.INVALID, "INVALID"),
+	@EnumValue("GPS")
 	GPS(PositionTypeNum.GPS, "GPS"),
+	@EnumValue("METERS_PARENT")
 	METERS_FROM_PARENT(PositionTypeNum.METERS_FROM_PARENT, "METERS_FROM_PARENT"),
+	@EnumValue("METERS_DATUM")
 	METERS_FROM_DATUM(PositionTypeNum.METERS_FROM_DATUM, "METERS_FROM_DATUM");
 
 	private int		mValue;

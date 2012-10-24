@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Organization.java,v 1.15 2012/10/21 02:02:17 jeffw Exp $
+ *  $Id: Organization.java,v 1.16 2012/10/24 01:00:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -10,6 +10,7 @@ import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
@@ -24,6 +25,7 @@ import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.annotate.JsonProperty;
 
+import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.google.inject.Inject;
@@ -44,8 +46,9 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "ORGANIZATION")
+@CacheStrategy
 @ToString
-@JsonAutoDetect(getterVisibility=Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class Organization extends DomainObjectABC {
 
 	@Inject
@@ -73,9 +76,9 @@ public class Organization extends DomainObjectABC {
 	@Getter
 	private List<User>			users		= new ArrayList<User>();
 
-	// For a network this is a list of all of the facilities that belong in the set.
-	@OneToMany(mappedBy = "parentOrganization")
-	@Getter
+	// For an organization this is a list of all of the facilities.
+	@OneToMany(mappedBy = "parentOrganization", fetch = FetchType.EAGER)
+	@Getter(lazy = false)
 	private List<Facility>		facilities	= new ArrayList<Facility>();
 
 	public Organization() {
@@ -124,9 +127,9 @@ public class Organization extends DomainObjectABC {
 	public final void removeFacility(Facility inFacility) {
 		facilities.remove(inFacility);
 	}
-	
+
 	public final void createFacility(final String inShortDomainId, final String inDescription, final String inPosTypeByStr, final Double inPosx, final Double inPosY) {
-		
+
 		Facility facility = new Facility();
 		facility.setParentOrganization(this);
 		facility.setShortDomainId(inShortDomainId);
@@ -135,12 +138,12 @@ public class Organization extends DomainObjectABC {
 		facility.setPosX(inPosx);
 		facility.setPosY(inPosY);
 		this.addFacility(facility);
-		
+
 		Facility.DAO.store(facility);
-		
+
 		// Create a first Dropbox Service entry for this facility.
 		DropboxService dropboxService = facility.createDropboxService();
-		
+
 		// Create the generic container kind (for all unspecified containers)
 		facility.createDefaultContainerKind();
 	}
