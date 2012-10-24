@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DomainObjectABC.java,v 1.19 2012/10/24 01:00:59 jeffw Exp $
+ *  $Id: DomainObjectABC.java,v 1.20 2012/10/24 03:00:09 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -24,6 +24,7 @@ import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.annotate.JsonProperty;
+import org.codehaus.jackson.annotate.JsonPropertyOrder;
 
 import com.avaje.ebean.Ebean;
 import com.avaje.ebean.Query;
@@ -43,6 +44,7 @@ import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 @CacheStrategy
 @ToString
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
+@JsonPropertyOrder({ "shortDomainId", "fullDomainId" })
 public abstract class DomainObjectABC implements IDomainObject {
 
 	private static final Log	LOGGER	= LogFactory.getLog(DomainObjectABC.class);
@@ -54,20 +56,20 @@ public abstract class DomainObjectABC implements IDomainObject {
 	@Getter
 	@Setter
 	@JsonProperty
-	private Long		persistentId;
+	private Long				persistentId;
 
 	// The domain ID
 	@NonNull
 	@Column(nullable = false)
 	@JsonProperty
-	private String		domainId;
+	private String				domainId;
 
 	// The last sequence used to generate a sequence ID.
 	@NonNull
 	@Column(nullable = false)
 	@Getter
 	@Setter
-	private Integer		lastDefaultSequenceId;
+	private Integer				lastDefaultSequenceId;
 
 	// This is not an application-editable field.
 	// It's for the private use of the ORM transaction system.
@@ -76,7 +78,7 @@ public abstract class DomainObjectABC implements IDomainObject {
 	@Column(nullable = false)
 	@Getter
 	@Setter
-	private Timestamp	version;
+	private Timestamp			version;
 
 	public DomainObjectABC() {
 		lastDefaultSequenceId = 0;

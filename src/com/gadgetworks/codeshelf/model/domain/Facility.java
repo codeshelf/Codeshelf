@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.27 2012/10/24 01:00:59 jeffw Exp $
+ *  $Id: Facility.java,v 1.28 2012/10/24 03:00:09 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -77,6 +77,7 @@ public class Facility extends LocationABC {
 
 	// For a network this is a list of all of the control groups that belong in the set.
 	@OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
+	@MapKey(name = "domainId")
 	@Getter
 	private Map<String, Container>		containers		= new HashMap<String, Container>();
 
@@ -194,7 +195,11 @@ public class Facility extends LocationABC {
 	}
 
 	public final Container getContainer(String inContainerId) {
-		return containers.get(inContainerId.toUpperCase());
+		String inKey = inContainerId.toUpperCase();
+		if (!(inKey.startsWith(this.getFullDomainId()))) {
+			inKey = this.getFullDomainId() + "." + inKey;
+		}
+		return containers.get(inKey);
 	}
 
 	public final void removeContainer(String inContainerId) {
