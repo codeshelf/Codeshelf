@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.29 2012/10/24 07:12:11 jeffw Exp $
+ *  $Id: Facility.java,v 1.30 2012/10/25 08:32:37 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -195,11 +195,11 @@ public class Facility extends LocationABC {
 	}
 
 	public final Container getContainer(String inContainerId) {
-		String inKey = inContainerId.toUpperCase();
-		if (!(inKey.startsWith(this.getFullDomainId()))) {
-			inKey = this.getFullDomainId() + "." + inKey;
-		}
-		return containers.get(inKey);
+//		String inKey = inContainerId.toUpperCase();
+//		if (!(inKey.startsWith(this.getFullDomainId()))) {
+//			inKey = this.getFullDomainId() + "." + inKey;
+//		}
+		return containers.get(normalizeChildDomainId(inContainerId));
 	}
 
 	public final void removeContainer(String inContainerId) {
@@ -243,11 +243,11 @@ public class Facility extends LocationABC {
 	}
 
 	public final UomMaster getUomMaster(String inUomMasterId) {
-		String inKey = inUomMasterId.toUpperCase();
-		if (!(inKey.startsWith(this.getFullDomainId()))) {
-			inKey = this.getFullDomainId() + "." + inKey;
-		}
-		return uomMasters.get(inKey);
+//		String inKey = inUomMasterId.toUpperCase();
+//		if (!(inKey.startsWith(this.getFullDomainId()))) {
+//			inKey = this.getFullDomainId() + "." + inKey;
+//		}
+		return uomMasters.get(normalizeChildDomainId(inUomMasterId));
 	}
 
 	public final void removeUomMaster(String inUomMasterId) {

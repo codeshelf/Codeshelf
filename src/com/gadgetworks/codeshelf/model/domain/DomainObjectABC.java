@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DomainObjectABC.java,v 1.20 2012/10/24 03:00:09 jeffw Exp $
+ *  $Id: DomainObjectABC.java,v 1.21 2012/10/25 08:32:37 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -79,7 +79,7 @@ public abstract class DomainObjectABC implements IDomainObject {
 	@Getter
 	@Setter
 	private Timestamp			version;
-
+	
 	public DomainObjectABC() {
 		lastDefaultSequenceId = 0;
 	}
@@ -121,6 +121,19 @@ public abstract class DomainObjectABC implements IDomainObject {
 			} while ((!foundId) && (maxTries > 0));
 		}
 
+		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inDomainId
+	 * @return
+	 */
+	public final String normalizeChildDomainId(final String inDomainId) {
+		String result = inDomainId.toUpperCase();
+		if (!(result.startsWith(this.getFullDomainId()))) {
+			result = this.getFullDomainId() + "." + result;
+		}
 		return result;
 	}
 

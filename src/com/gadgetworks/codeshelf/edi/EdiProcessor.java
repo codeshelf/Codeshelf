@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiProcessor.java,v 1.13 2012/10/22 07:38:07 jeffw Exp $
+ *  $Id: EdiProcessor.java,v 1.14 2012/10/25 08:32:37 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -47,6 +47,10 @@ public final class EdiProcessor implements IEdiProcessor {
 	 */
 	public void startProcessor() {
 		mShouldRun = true;
+		try {
+			Thread.sleep(5000);
+		} catch (InterruptedException e) {
+		}
 		mProcessorThread = new Thread(new Runnable() {
 			public void run() {
 				process();
