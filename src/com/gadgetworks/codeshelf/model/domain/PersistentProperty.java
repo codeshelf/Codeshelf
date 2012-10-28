@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: PersistentProperty.java,v 1.10 2012/10/21 02:02:17 jeffw Exp $
+ *  $Id: PersistentProperty.java,v 1.11 2012/10/28 01:30:56 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -92,10 +92,6 @@ public class PersistentProperty<T extends DomainObjectABC> extends DomainObjectA
 
 	public final String getDefaultDomainIdPrefix() {
 		return "";
-	}
-
-	public final boolean includeMeInDomainId() {
-		return false;
 	}
 
 	public final Organization getParentOrganization() {

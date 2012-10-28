@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CsvImporter.java,v 1.3 2012/10/24 07:12:11 jeffw Exp $
+ *  $Id: CsvImporter.java,v 1.4 2012/10/28 01:30:57 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -349,7 +349,7 @@ public class CsvImporter implements ICsvImporter {
 	private Item ensureItem(final CsvInventoryImportBean inCsvImportBean, final Facility inFacility, final ItemMaster inItemMaster, final UomMaster inUomMaster) {
 		Item result = null;
 
-		LocationABC location = inFacility.getLocationByFullId(inCsvImportBean.getLocationId());
+		LocationABC location = inFacility.getLocation(inCsvImportBean.getLocationId());
 
 		// We couldn't find the location, so assign the inventory to the facility itself (which is a location);
 		if (location == null) {

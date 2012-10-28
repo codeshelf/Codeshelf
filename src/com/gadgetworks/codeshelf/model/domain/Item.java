@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Item.java,v 1.7 2012/10/24 07:12:11 jeffw Exp $
+ *  $Id: Item.java,v 1.8 2012/10/28 01:30:57 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -101,6 +101,7 @@ public class Item extends DomainObjectABC {
 	}
 
 	public final void setItemId(final String inItemId) {
+//		String uniqueItemId = location.getShortDomainId() + "." + inItemId;
 		setShortDomainId(inItemId);
 	}
 

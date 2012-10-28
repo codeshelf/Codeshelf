@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: GenericDaoABC.java,v 1.8 2012/10/11 09:04:36 jeffw Exp $
+ *  $Id: GenericDaoABC.java,v 1.9 2012/10/28 01:30:57 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -125,7 +125,7 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 		T result = null;
 
 		String effectiveId;
-		if ((inParentObject != null) && (inParentObject.includeMeInDomainId())) {
+		if ((inParentObject != null)) {
 			// Only include the parent in the domain ID if requested for this class.
 			// (Organization is the main one we don't include.)
 			effectiveId = inParentObject.getFullDomainId() + "." + inId.toUpperCase();

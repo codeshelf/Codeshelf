@@ -80,7 +80,7 @@
 	<property name="osx.dmg.volume" value="CodeShelf-${version.major}.${version.minor}.${version.revision}" />
 	<property name="pack200.excludes" value="jingle.jar,mail.jar,activation.jar,dom4j.jar,startup.jar,base.jar,i4jruntime.jar" />
 
-	<property name="javac.compile.using.version" value="1.6" />
+	<property name="javac.compile.using.version" value="1.7" />
 
 	<property name="jws.build.dir" value="${target}/jws-codeshelf" />
 	<property name="appjar.build.dir" value="${target}/appjar-codeshelf" />
@@ -107,8 +107,8 @@
 		<fileset dir="${target.lib}" includes="smackx-jingle.jar" />
 		<fileset dir="${target.lib}" includes="*.jar" />
 		<fileset dir="${libs.win32.dir}" includes="*.jar" />
-		<fileset dir="${libs.osx.dir}" includes="*.jar" />
-		<fileset dir="${libs.linux.dir}" includes="*.jar" />
+		<!--fileset dir="${libs.osx.dir}" includes="*.jar" /-->
+		<!--fileset dir="${libs.linux.dir}" includes="*.jar" /-->
 		<fileset dir="${libs.merge.dir}" includes="FlyWeightController.jar" />
 	</path>
 
@@ -135,13 +135,12 @@
 		<condition property="java.not.ok" value="true">
 			<not>
 				<or>
-					<contains string="${ant.java.version}" substring="1.6" />
 					<contains string="${ant.java.version}" substring="1.7" />
 				</or>
 			</not>
 		</condition>
 		<fail if="ant.not.ok" message="Must use Ant 1.6.x, 1.7.x, or 1.8.x to build CodeShelf" />
-		<fail if="java.not.ok" message="Must use JDK 1.5.x or higher to build CodeShelf" />
+		<fail if="java.not.ok" message="Must use JDK 1.7.x or higher to build CodeShelf" />
 
 		<!-- Platform-specific initializations -->
 		<condition property="windows">
@@ -206,7 +205,7 @@
 				<include name="**/*.*" />
 			</fileset>
 		</copy>
-		<copy todir="${target.lib}/linux-gtk">
+		<!--copy todir="${target.lib}/linux-gtk">
 			<fileset dir="${libs.linux.dir}">
 				<include name="**/*.*" />
 			</fileset>
@@ -215,7 +214,7 @@
 			<fileset dir="${libs.osx.dir}">
 				<include name="**/*.*" />
 			</fileset>
-		</copy>
+		</copy-->
 		<copy todir="${target.lib}">
 			<fileset dir="${libs.dist.dir}">
 				<include name="**/*.*" />
@@ -231,7 +230,7 @@
 		<echo message="${toString:compile-libs}" />
 
 		<!--Compiles the java code from ${src} directory into ${target.compiled.classes} directory-->
-		<javac destdir="${target.compiled.classes}" sourcepath="" source="${javac.compile.using.version}" target="${javac.compile.using.version}" verbose="false" compiler="modern" debug="true" debuglevel="lines, vars, source">
+		<javac destdir="${target.compiled.classes}" sourcepath="" source="${javac.compile.using.version}" target="${javac.compile.using.version}" verbose="false" compiler="modern" debug="true">
 			<classpath>
 				<!--pathelement location="${orm-classes.dir}" /-->
 				<path refid="compile-libs" />
@@ -389,7 +388,7 @@
 		<taskdef resource="proguard/ant/task.properties" classpath="${basedir}/build/lib/proguard.jar" />
 
 		<proguard>
-			-target 1.6
+			-target 1.7
 			-injars      "${target.compiled.classes}"
 			-outjars     "${target.obfuscated.classes}"
 			-printmapping "${target}/codeshelf-obfs.map"
@@ -559,7 +558,7 @@
 
 		<mkdir dir="${osx.app.dir}" />
 
-		<jarbundler verbose="true" dir="${osx.app.dir}" name="CodeShelf" mainclass="com.gadgetworks.codeshelf.application.Main" icon="${target}/build/resources/images/codeshelf.icns" version="${version}" infostring="CodeShelf ${version}, (c) Gadgetworks, LLC" aboutmenuname="CodeShelf" bundleid="com.gadgetworks.CodeShelfBundle" developmentregion="English" jvmversion="1.5+" smalltabs="true" antialiasedgraphics="true" antialiasedtext="true" liveresize="true" growbox="true" growboxintrudes="true" screenmenu="true" vmoptions="-Xmx64m -Debean.props.file=conf/ebean.properties -Dappdir=$APP_PACKAGE/Contents/Resources -Dswing.aatext=true -Duser.language=en -Duser.country=US -Dlog4j.configuration=file:conf/log4j.properties" workingdirectory="$APP_PACKAGE/Contents/Resources/" extraclasspath="/System/Library/Java:$APP_PACKAGE/Contents/Resources/ $APP_PACKAGE/Contents/Resources/conf/" stubfile="CodeShelf" startonmainthread="true">
+		<jarbundler verbose="true" dir="${osx.app.dir}" name="CodeShelf" mainclass="com.gadgetworks.codeshelf.application.Main" icon="${target}/build/resources/images/codeshelf.icns" version="${version}" infostring="CodeShelf ${version}, (c) Gadgetworks, LLC" aboutmenuname="CodeShelf" bundleid="com.gadgetworks.CodeShelfBundle" developmentregion="English" jvmversion="1.7+" smalltabs="true" antialiasedgraphics="true" antialiasedtext="true" liveresize="true" growbox="true" growboxintrudes="true" screenmenu="true" vmoptions="-Xmx64m -Debean.props.file=conf/ebean.properties -Dappdir=$APP_PACKAGE/Contents/Resources -Dswing.aatext=true -Duser.language=en -Duser.country=US -Dlog4j.configuration=file:conf/log4j.properties" workingdirectory="$APP_PACKAGE/Contents/Resources/" extraclasspath="/System/Library/Java:$APP_PACKAGE/Contents/Resources/ $APP_PACKAGE/Contents/Resources/conf/" stubfile="CodeShelf" startonmainthread="true">
 
 			<jarfileset dir="${target.lib}">
 				<include name="**/osx/*.jar" />

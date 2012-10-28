@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: LocationABC.java,v 1.10 2012/10/24 01:00:59 jeffw Exp $
+ *  $Id: LocationABC.java,v 1.11 2012/10/28 01:30:56 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -20,6 +20,7 @@ import javax.persistence.Enumerated;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 import javax.persistence.ManyToOne;
+import javax.persistence.MapKey;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
@@ -69,7 +70,7 @@ public abstract class LocationABC extends DomainObjectABC implements ILocation {
 		}
 	}
 
-	private static final Log	LOGGER		= LogFactory.getLog(LocationABC.class);
+	private static final Log			LOGGER		= LogFactory.getLog(LocationABC.class);
 
 	// The position type (GPS, METERS, etc.).
 	@Column(nullable = false)
@@ -77,21 +78,21 @@ public abstract class LocationABC extends DomainObjectABC implements ILocation {
 	@Getter
 	@Setter
 	@JsonProperty
-	private PositionTypeEnum	posType;
+	private PositionTypeEnum			posType;
 
 	// The X anchor position.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private Double				posX;
+	private Double						posX;
 
 	// The Y anchor position.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private Double				posY;
+	private Double						posY;
 
 	// The Z anchor position.
 	@Column(nullable = true)
@@ -99,34 +100,35 @@ public abstract class LocationABC extends DomainObjectABC implements ILocation {
 	@Setter
 	@JsonProperty
 	// Null means it's at the same nominal z coord as the parent.
-	private Double				posZ;
+	private Double						posZ;
 
 	// The location description.
 	@Column(nullable = true)
 	@Getter
 	@Setter
 	@JsonProperty
-	private String				description;
+	private String						description;
 
 	// The owning location.
 	@Column(nullable = false)
 	@ManyToOne(optional = true)
-	protected LocationABC		parent;
+	protected LocationABC				parent;
 
 	// All of the vertices that define the location's footprint.
 	@OneToMany(mappedBy = "parent")
 	@Getter
-	private List<Vertex>		vertices	= new ArrayList<Vertex>();
+	private List<Vertex>				vertices	= new ArrayList<Vertex>();
 
 	// The child locations.
 	@OneToMany(mappedBy = "parent")
+	@MapKey(name = "domainId")
 	@Getter
-	private List<LocationABC>	locations	= new ArrayList<LocationABC>();
+	private Map<String, LocationABC>	locations	= new HashMap<String, LocationABC>();
 
 	// The items stored in this location.
 	@OneToMany(mappedBy = "location")
 	@Getter
-	private Map<String, Item>	items		= new HashMap<String, Item>();
+	private Map<String, Item>			items		= new HashMap<String, Item>();
 
 	public LocationABC() {
 
@@ -147,8 +149,20 @@ public abstract class LocationABC extends DomainObjectABC implements ILocation {
 		posZ = inPosZ;
 	}
 
-	public final List<? extends IDomainObject> getChildren() {
-		return getLocations();
+	public final void addLocation(LocationABC inLocation) {
+		locations.put(inLocation.getFullDomainId(), inLocation);
+	}
+
+	public final List<LocationABC> getChildren() {
+		return new ArrayList<LocationABC>(locations.values());
+	}
+
+	public final LocationABC getLocation(String inLocationId) {
+		return locations.get(normalizeChildDomainId(inLocationId));
+	}
+
+	public final void removeLocation(String inLocationId) {
+		locations.remove(inLocationId);
 	}
 
 	public final void setPosTypeByStr(String inPosTypeStr) {

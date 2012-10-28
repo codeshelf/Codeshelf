@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: IDomainObject.java,v 1.12 2012/10/14 01:05:22 jeffw Exp $
+ *  $Id: IDomainObject.java,v 1.13 2012/10/28 01:30:57 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -32,12 +32,6 @@ public interface IDomainObject {
 	 */
 	String getDefaultDomainIdPrefix();
 	
-	// --------------------------------------------------------------------------
-	/**
-	 * @return
-	 */
-	boolean includeMeInDomainId();
-
 	// --------------------------------------------------------------------------
 	/**
 	 * Return the short domain ID for this object (that is unique among all of the objects under this parent).

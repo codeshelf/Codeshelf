@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.30 2012/10/25 08:32:37 jeffw Exp $
+ *  $Id: Facility.java,v 1.31 2012/10/28 01:30:57 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -155,9 +155,9 @@ public class Facility extends LocationABC {
 
 	public final String getParentOrganizationID() {
 		String result = "";
-		Organization parentOrganization = getParentOrganization();
-		if (parentOrganization != null) {
-			result = parentOrganization.getShortDomainId();
+		Organization organization = getParentOrganization();
+		if (organization != null) {
+			result = organization.getShortDomainId();
 		}
 		return result;
 	}
@@ -174,36 +174,28 @@ public class Facility extends LocationABC {
 		aisles.remove(inAisle);
 	}
 
-	public final void addContainerKind(String inContainerKindId, ContainerKind inContainerKind) {
-		containerKinds.put(inContainerKindId, inContainerKind);
-	}
-
-	public final ContainerKind getContainerKind(String inContainerKindId) {
-		String inKey = inContainerKindId.toUpperCase();
-		if (!(inKey.startsWith(this.getFullDomainId()))) {
-			inKey = this.getFullDomainId() + "." + inKey;
-		}
-		return containerKinds.get(inKey);
-	}
-
-	public final void removeContainerKind(String inContainerKindId) {
-		containerKinds.remove(inContainerKindId);
-	}
-
 	public final void addContainer(Container inContainer) {
-		containers.put(inContainer.getShortDomainId(), inContainer);
+		containers.put(inContainer.getFullDomainId(), inContainer);
 	}
 
 	public final Container getContainer(String inContainerId) {
-//		String inKey = inContainerId.toUpperCase();
-//		if (!(inKey.startsWith(this.getFullDomainId()))) {
-//			inKey = this.getFullDomainId() + "." + inKey;
-//		}
 		return containers.get(normalizeChildDomainId(inContainerId));
 	}
 
 	public final void removeContainer(String inContainerId) {
 		containers.remove(inContainerId);
+	}
+
+	public final void addContainerKind(ContainerKind inContainerKind) {
+		containerKinds.put(inContainerKind.getFullDomainId(), inContainerKind);
+	}
+
+	public final ContainerKind getContainerKind(String inContainerKindId) {
+		return containerKinds.get(normalizeChildDomainId(inContainerKindId));
+	}
+
+	public final void removeContainerKind(String inContainerKindId) {
+		containerKinds.remove(inContainerKindId);
 	}
 
 	public final void addEdiService(IEdiService inEdiService) {
@@ -243,10 +235,6 @@ public class Facility extends LocationABC {
 	}
 
 	public final UomMaster getUomMaster(String inUomMasterId) {
-//		String inKey = inUomMasterId.toUpperCase();
-//		if (!(inKey.startsWith(this.getFullDomainId()))) {
-//			inKey = this.getFullDomainId() + "." + inKey;
-//		}
 		return uomMasters.get(normalizeChildDomainId(inUomMasterId));
 	}
 
@@ -254,18 +242,6 @@ public class Facility extends LocationABC {
 		uomMasters.remove(inUomMasterId);
 	}
 
-	// --------------------------------------------------------------------------
-	/**
-	 * @param inFullId
-	 * @return
-	 */
-	public final LocationABC getLocationByFullId(final String inFullId) {
-		LocationABC result = null;
-
-		result = LocationABC.DAO.findByDomainId(this, inFullId);
-
-		return result;
-	}
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inOrderID
@@ -452,7 +428,7 @@ public class Facility extends LocationABC {
 		result.setWidthMeters(inWidthMeters);
 		result.setHeightMeters(inHeightMeters);
 
-		this.addContainerKind(inShortDomainId, result);
+		this.addContainerKind(result);
 		try {
 			ContainerKind.DAO.store(result);
 		} catch (DaoException e) {
