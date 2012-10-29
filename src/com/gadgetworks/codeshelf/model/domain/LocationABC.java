@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: LocationABC.java,v 1.11 2012/10/28 01:30:56 jeffw Exp $
+ *  $Id: LocationABC.java,v 1.12 2012/10/29 02:59:26 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -13,7 +13,6 @@ import java.util.Map;
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorColumn;
 import javax.persistence.DiscriminatorType;
-import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
@@ -56,9 +55,8 @@ import com.google.inject.Singleton;
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @Table(name = "LOCATION")
 @DiscriminatorColumn(name = "DTYPE", discriminatorType = DiscriminatorType.STRING)
-@DiscriminatorValue("ABC")
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
-public abstract class LocationABC extends DomainObjectABC implements ILocation {
+public abstract class LocationABC extends DomainObjectABC {
 
 	@Inject
 	public static ITypedDao<LocationABC>	DAO;
@@ -149,12 +147,12 @@ public abstract class LocationABC extends DomainObjectABC implements ILocation {
 		posZ = inPosZ;
 	}
 
-	public final void addLocation(LocationABC inLocation) {
-		locations.put(inLocation.getFullDomainId(), inLocation);
-	}
-
 	public final List<LocationABC> getChildren() {
 		return new ArrayList<LocationABC>(locations.values());
+	}
+
+	public final void addLocation(LocationABC inLocation) {
+		locations.put(inLocation.getFullDomainId(), inLocation);
 	}
 
 	public final LocationABC getLocation(String inLocationId) {
@@ -163,6 +161,19 @@ public abstract class LocationABC extends DomainObjectABC implements ILocation {
 
 	public final void removeLocation(String inLocationId) {
 		locations.remove(inLocationId);
+	}
+	
+	public final LocationABC getLocationById(final String inLocationId) {
+		LocationABC result = null;
+		
+		Map<String, Object> filterParams = new HashMap<String, Object>();
+		filterParams.put("theId", normalizeChildDomainId(inLocationId));
+		List<LocationABC> foundLocations = getDao().findByFilterAndClass("domainId = :theId", filterParams, LocationABC.class);
+		if ((foundLocations.size() > 0) && (foundLocations.get(0) instanceof LocationABC)){
+			result = (LocationABC) foundLocations.get(0);
+		}
+		
+		return result;
 	}
 
 	public final void setPosTypeByStr(String inPosTypeStr) {

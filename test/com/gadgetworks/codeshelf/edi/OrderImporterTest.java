@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderImporterTest.java,v 1.4 2012/10/24 01:00:59 jeffw Exp $
+ *  $Id: OrderImporterTest.java,v 1.5 2012/10/29 02:59:26 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -22,6 +22,7 @@ import com.gadgetworks.codeshelf.model.domain.ItemMaster;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderGroup;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
+import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.UomMaster;
 
 /**
@@ -51,8 +52,14 @@ public class OrderImporterTest {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		MockDao<Facility> facilityDao = new MockDao<Facility>();
+		MockDao<Organization> organizationDao = new MockDao<Organization>();
+		Organization organization = new Organization();
+		organization.setShortDomainId("O1");
+
+		Facility.DAO = new MockDao<Facility>();
 		Facility facility = new Facility();
+		facility.setParentOrganization(organization);
+		facility.setShortDomainId("F1");
 
 		MockDao<OrderGroup> orderGroupDao = new MockDao<OrderGroup>();
 		MockDao<OrderHeader> orderHeaderDao = new MockDao<OrderHeader>();
@@ -91,8 +98,14 @@ public class OrderImporterTest {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		MockDao<Facility> facilityDao = new MockDao<Facility>();
+		MockDao<Organization> organizationDao = new MockDao<Organization>();
+		Organization organization = new Organization();
+		organization.setShortDomainId("O1");
+
+		Facility.DAO = new MockDao<Facility>();
 		Facility facility = new Facility();
+		facility.setParentOrganization(organization);
+		facility.setShortDomainId("F1");
 
 		MockDao<OrderGroup> orderGroupDao = new MockDao<OrderGroup>();
 		MockDao<OrderHeader> orderHeaderDao = new MockDao<OrderHeader>();
@@ -136,8 +149,14 @@ public class OrderImporterTest {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
+		MockDao<Organization> organizationDao = new MockDao<Organization>();
+		Organization organization = new Organization();
+		organization.setShortDomainId("O1");
+
 		MockDao<Facility> facilityDao = new MockDao<Facility>();
 		Facility facility = new Facility();
+		facility.setParentOrganization(organization);
+		facility.setShortDomainId("F!");
 
 		MockDao<OrderGroup> orderGroupDao = new MockDao<OrderGroup>();
 		MockDao<OrderHeader> orderHeaderDao = new MockDao<OrderHeader>();

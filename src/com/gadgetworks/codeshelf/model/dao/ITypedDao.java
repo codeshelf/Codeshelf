@@ -1,15 +1,13 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ITypedDao.java,v 1.8 2012/10/11 09:04:36 jeffw Exp $
+ *  $Id: ITypedDao.java,v 1.9 2012/10/29 02:59:27 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
-import com.avaje.ebean.Query;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 
 /**
@@ -29,6 +27,8 @@ public interface ITypedDao<T> extends IDao {
 	List<T> findByPersistentIdList(List<Long> inPersistentIdList);
 
 	List<T> findByFilter(String inFilter, Map<String, Object> inFilterParams);
+
+	<L> List<L> findByFilterAndClass(String inFilter, Map<String, Object> inFilterParams, Class<L> inClass);
 
 	void store(T inDomainObject) throws DaoException;
 

@@ -333,7 +333,7 @@
 			</zipfileset-->
 
 			<manifest>
-				<attribute name="Class-Path" value="${codeshelf.app.jar.name} . libjd2xx.so lib/swt.jar ${jarpaths}" />
+				<attribute name="Class-Path" value="${codeshelf.app.jar.name} . libjd2xx.so ${jarpaths}" />
 				<attribute name="Main-Class" value="${main.class}" />
 				<attribute name="Built-By" value="Gadgetworks, LLC (www.gadgetworks.com)" />
 			</manifest>
@@ -534,9 +534,9 @@
 		<mkdir dir="${appjar.build.dir}/lib" />
 
 		<property name="osdir" value="osx" />
-		<property name="obfuscate.core.classes" value="${java.home}/../Classes/classes.jar" />
-		<property name="obfuscate.crypto.classes" value="${java.home}/../Classes/jce.jar" />
-		<property name="obfuscate.jsse.classes" value="${java.home}/../Classes/jsse.jar" />
+		<property name="obfuscate.core.classes" value="${java.home}/../jre/lib/rt.jar" />
+		<property name="obfuscate.crypto.classes" value="${java.home}/../jre/lib/jce.jar" />
+		<property name="obfuscate.jsse.classes" value="${java.home}/../jre/lib/jsse.jar" />
 		<property name="keep.main.classes" value="		
 			-keep 
             public class com.gadgetworks.codeshelf.application.Main {

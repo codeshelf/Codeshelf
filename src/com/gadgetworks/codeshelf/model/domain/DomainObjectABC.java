@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DomainObjectABC.java,v 1.22 2012/10/28 01:30:57 jeffw Exp $
+ *  $Id: DomainObjectABC.java,v 1.23 2012/10/29 02:59:26 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -62,6 +62,7 @@ public abstract class DomainObjectABC implements IDomainObject {
 	@NonNull
 	@Column(nullable = false)
 	@JsonProperty
+	@Getter
 	private String				domainId;
 
 	// The last sequence used to generate a sequence ID.

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: MockWirelessDeviceDao.java,v 1.1 2012/10/13 22:14:24 jeffw Exp $
+ *  $Id: MockWirelessDeviceDao.java,v 1.2 2012/10/29 02:59:26 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -118,4 +118,11 @@ public class MockWirelessDeviceDao implements IWirelessDeviceDao {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
+	@Override
+	public <L> List<L> findByFilterAndClass(String inFilter, Map<String, Object> inFilterParams, Class<L> inClass) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

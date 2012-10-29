@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: GenericDaoABC.java,v 1.9 2012/10/28 01:30:57 jeffw Exp $
+ *  $Id: GenericDaoABC.java,v 1.10 2012/10/29 02:59:27 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -171,6 +171,25 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 		} else {
 			// Otherwise get everything.
 			return getAll();
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#findByIdList(java.util.List)
+	 */
+	public final <L> List<L> findByFilterAndClass(String inFilter, Map<String, Object> inFilterParams, Class<L> inClass) {
+		if ((inFilter != null) && (inFilter.length() > 0)) {
+			// If we have a valid filter then get the filtered objects.
+			Query<L> query = Ebean.find(inClass);
+			query = query.where(inFilter);
+			for (Entry<String, Object> param : inFilterParams.entrySet()) {
+				query.setParameter(param.getKey(), param.getValue());
+			}
+			List<L> methodResultsList = query.findList();
+			return methodResultsList;
+		} else {
+			return new ArrayList<L>();
 		}
 	}
 

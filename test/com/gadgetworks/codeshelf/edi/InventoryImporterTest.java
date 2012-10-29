@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: InventoryImporterTest.java,v 1.2 2012/10/24 01:00:59 jeffw Exp $
+ *  $Id: InventoryImporterTest.java,v 1.3 2012/10/29 02:59:26 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -18,10 +18,10 @@ import com.gadgetworks.codeshelf.model.domain.Container;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster;
-import com.gadgetworks.codeshelf.model.domain.LocationABC;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderGroup;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
+import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.UomMaster;
 
 /**
@@ -45,10 +45,16 @@ public class InventoryImporterTest {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		MockDao<Facility> facilityDao = new MockDao<Facility>();
-		Facility facility = new Facility();
+		MockDao<Organization> organizationDao = new MockDao<Organization>();
+		Organization organization = new Organization();
+		organization.setShortDomainId("O1");
 
-		LocationABC.DAO = new MockDao<LocationABC>();
+		Facility.DAO = new MockDao<Facility>();
+		Facility facility = new Facility();
+		facility.setParentOrganization(organization);
+		facility.setShortDomainId("F1");
+
+//		LocationABC.DAO = new MockDao<LocationABC>();
 
 		MockDao<OrderGroup> orderGroupDao = new MockDao<OrderGroup>();
 		MockDao<OrderHeader> orderHeaderDao = new MockDao<OrderHeader>();
