@@ -98,7 +98,7 @@ public class GenericDaoTest {
 		OrganizationDao dao = new OrganizationDao();
 
 		Organization organization = new Organization();
-		organization.setShortDomainId("NON-PERSIST");
+		organization.setDomainId("NON-PERSIST");
 		organization.setDescription("NON-PERSIST");
 		
 		final Result checkUpdate = new Result();
@@ -133,12 +133,12 @@ public class GenericDaoTest {
 		List<Long> persistentIdList = new ArrayList<Long>();
 
 		Organization organization = new Organization();
-		organization.setShortDomainId("LOADBYFILTERTEST1");
+		organization.setDomainId("LOADBYFILTERTEST1");
 		organization.setDescription("LOADBYFILTER");
 		dao.store(organization);
 
 		organization = new Organization();
-		organization.setShortDomainId("LOADBYFILTERTEST2");
+		organization.setDomainId("LOADBYFILTERTEST2");
 		organization.setDescription("LOADBYFILTER");
 		dao.store(organization);
 		
@@ -155,7 +155,7 @@ public class GenericDaoTest {
 		OrganizationDao dao = new OrganizationDao();
 
 		Organization organization = new Organization();
-		organization.setShortDomainId("LOADBY-TEST");
+		organization.setDomainId("LOADBY-TEST");
 		organization.setDescription("LOADBY-TEST");
 		dao.store(organization);
 
@@ -171,14 +171,14 @@ public class GenericDaoTest {
 		List<Long> persistentIdList = new ArrayList<Long>();
 
 		Organization organization = new Organization();
-		organization.setShortDomainId("LOADBYLIST-TEST1");
+		organization.setDomainId("LOADBYLIST-TEST1");
 		organization.setDescription("LOADBYLIST-TEST1");
 		dao.store(organization);
 
 		persistentIdList.add(organization.getPersistentId());
 
 		organization = new Organization();
-		organization.setShortDomainId("LOADBYLIST-TEST2");
+		organization.setDomainId("LOADBYLIST-TEST2");
 		organization.setDescription("LOADBYLIST-TEST2");
 		dao.store(organization);
 
@@ -199,13 +199,13 @@ public class GenericDaoTest {
 		FacilityDao faciltyDao = new FacilityDao();
 
 		Organization organization1 = new Organization();
-		organization1.setShortDomainId(ORGANIZATION_ID);
+		organization1.setDomainId(ORGANIZATION_ID);
 		organization1.setDescription(ORGANIZATION_ID);
 		organizationDao.store(organization1);
 
 		Facility facility = new Facility(0.0, 0.0);
 		facility.setParentOrganization(organization1);
-		facility.setShortDomainId(FACILITY_ID);
+		facility.setDomainId(FACILITY_ID);
 		facility.setDescription(FACILITY_ID);
 		faciltyDao.store(facility);
 
@@ -228,18 +228,18 @@ public class GenericDaoTest {
 		AisleDao aisleDao = new AisleDao();
 
 		Organization organization1 = new Organization();
-		organization1.setShortDomainId(ORGANIZATION_ID);
+		organization1.setDomainId(ORGANIZATION_ID);
 		organization1.setDescription(ORGANIZATION_ID);
 		organizationDao.store(organization1);
 
 		Facility facility = new Facility(0.0, 0.0);
 		facility.setParentOrganization(organization1);
-		facility.setShortDomainId(FACILITY_ID);
+		facility.setDomainId(FACILITY_ID);
 		facility.setDescription(FACILITY_ID);
 		faciltyDao.store(facility);
 
-		Aisle aisle1 = new Aisle(facility, 0.0, 0.0);
-		aisle1.setShortDomainId(AISLE_ID);
+		Aisle aisle1 = new Aisle(facility, AISLE_ID, 0.0, 0.0);
+		aisle1.setDomainId(AISLE_ID);
 		aisleDao.store(aisle1);
 
 		Aisle foundAisle = aisleDao.findByDomainId(facility, AISLE_ID);
@@ -254,7 +254,7 @@ public class GenericDaoTest {
 		OrganizationDao dao = new OrganizationDao();
 
 		Organization organization1 = new Organization();
-		organization1.setShortDomainId("STORE-TEST-NEW");
+		organization1.setDomainId("STORE-TEST-NEW");
 		organization1.setDescription("STORE-TEST-NEW");
 		dao.store(organization1);
 
@@ -284,7 +284,7 @@ public class GenericDaoTest {
 		OrganizationDao dao = new OrganizationDao();
 
 		Organization organization2 = new Organization();
-		organization2.setShortDomainId("STORE-TEST-UPDATE");
+		organization2.setDomainId("STORE-TEST-UPDATE");
 		organization2.setDescription("STORE-TEST-UPDATE");
 		dao.store(organization2);
 		organization2.setDescription("STORE-TEST-UPDATED");
@@ -317,7 +317,7 @@ public class GenericDaoTest {
 		OrganizationDao dao = new OrganizationDao();
 
 		Organization organization2 = new Organization();
-		organization2.setShortDomainId("DELETE-TEST");
+		organization2.setDomainId("DELETE-TEST");
 		organization2.setDescription("DELETE-TEST");
 		dao.store(organization2);
 
@@ -349,12 +349,12 @@ public class GenericDaoTest {
 		OrganizationDao dao = new OrganizationDao();
 
 		Organization organization = new Organization();
-		organization.setShortDomainId("GETALL-TEST1");
+		organization.setDomainId("GETALL-TEST1");
 		organization.setDescription("GETALL-TEST1");
 		dao.store(organization);
 
 		organization = new Organization();
-		organization.setShortDomainId("GETALL-TEST2");
+		organization.setDomainId("GETALL-TEST2");
 		organization.setDescription("GETALL-TEST2");
 		dao.store(organization);
 
@@ -362,7 +362,7 @@ public class GenericDaoTest {
 		// There's no way to know how many items getAll() will return, so we just look for the ones we put in.
 		int totalFound = 0;
 		for (Organization organiation : dao.getAll()) {
-			if (organiation.getShortDomainId().startsWith("GETALL-TEST")) {
+			if (organiation.getDomainId().startsWith("GETALL-TEST")) {
 				totalFound++;
 			}
 		}

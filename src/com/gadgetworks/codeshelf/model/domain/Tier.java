@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Tier.java,v 1.10 2012/10/22 07:38:08 jeffw Exp $
+ *  $Id: Tier.java,v 1.11 2012/10/30 15:21:34 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -35,7 +35,7 @@ import com.google.inject.Singleton;
 @DiscriminatorValue("TIER")
 @CacheStrategy
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
-public class Tier extends LocationABC {
+public class Tier extends LocationABC<Bay> {
 
 	@Inject
 	public static ITypedDao<Tier>	DAO;
@@ -51,16 +51,6 @@ public class Tier extends LocationABC {
 
 	public Tier(final Double inPosX, final double inPosY) {
 		super(PositionTypeEnum.METERS_FROM_PARENT, inPosX, inPosY);
-	}
-
-	public final IDomainObject getParent() {
-		return parent;
-	}
-
-	public final void setParent(final IDomainObject inParent) {
-		if (inParent instanceof Bay) {
-			parent = (Bay) inParent;
-		}
 	}
 
 	public final void setParentBay(final Bay inParentBay) {

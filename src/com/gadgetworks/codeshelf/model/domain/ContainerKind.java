@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ContainerKind.java,v 1.4 2012/10/21 02:02:18 jeffw Exp $
+ *  $Id: ContainerKind.java,v 1.5 2012/10/30 15:21:34 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -9,7 +9,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.persistence.Column;
+import javax.persistence.DiscriminatorColumn;
+import javax.persistence.DiscriminatorType;
+import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
+import javax.persistence.Inheritance;
+import javax.persistence.InheritanceType;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
@@ -38,9 +43,12 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-@Table(name = "CONTAINERKIND")
 @CacheStrategy
-@JsonAutoDetect(getterVisibility=Visibility.NONE)
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@Table(name = "CONTAINERKIND")
+@DiscriminatorColumn(name = "DTYPE", discriminatorType = DiscriminatorType.STRING)
+@DiscriminatorValue("FACILITY")
+@JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class ContainerKind extends DomainObjectABC {
 
 	@Inject

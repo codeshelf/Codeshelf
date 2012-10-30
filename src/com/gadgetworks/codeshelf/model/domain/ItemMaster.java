@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ItemMaster.java,v 1.10 2012/10/28 01:30:57 jeffw Exp $
+ *  $Id: ItemMaster.java,v 1.11 2012/10/30 15:21:34 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -136,10 +136,10 @@ public class ItemMaster extends DomainObjectABC {
 	}
 
 	public final String getItemMasterId() {
-		return getShortDomainId();
+		return getDomainId();
 	}
 
 	public final void setItemMasterId(String inItemMasterId) {
-		setShortDomainId(inItemMasterId);
+		setDomainId(inItemMasterId);
 	}
 }

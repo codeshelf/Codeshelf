@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Slot.java,v 1.1 2012/10/22 07:38:07 jeffw Exp $
+ *  $Id: Slot.java,v 1.2 2012/10/30 15:21:34 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -35,7 +35,7 @@ import com.google.inject.Singleton;
 @DiscriminatorValue("SLOT")
 @CacheStrategy
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
-public class Slot extends LocationABC {
+public class Slot extends LocationABC<Tier> {
 
 	@Inject
 	public static ITypedDao<Slot>	DAO;
@@ -53,16 +53,6 @@ public class Slot extends LocationABC {
 		super(PositionTypeEnum.METERS_FROM_PARENT, inPosX, inPosY);
 	}
 
-	public final IDomainObject getParent() {
-		return parent;
-	}
-
-	public final void setParent(final IDomainObject inParent) {
-		if (inParent instanceof Bay) {
-			parent = (Bay) inParent;
-		}
-	}
-	
 	public final void setParentTier(final Tier inParentTier) {
 		setParent(inParentTier);
 	}

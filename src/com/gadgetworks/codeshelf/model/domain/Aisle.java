@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Aisle.java,v 1.12 2012/10/22 07:38:08 jeffw Exp $
+ *  $Id: Aisle.java,v 1.13 2012/10/30 15:21:34 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -35,7 +35,7 @@ import com.google.inject.Singleton;
 @DiscriminatorValue("AISLE")
 @CacheStrategy
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
-public class Aisle extends LocationABC {
+public class Aisle extends LocationABC<Facility> {
 
 	@Inject
 	public static ITypedDao<Aisle>	DAO;
@@ -49,20 +49,10 @@ public class Aisle extends LocationABC {
 
 	private static final Log	LOGGER	= LogFactory.getLog(Aisle.class);
 
-	public Aisle(final Facility inParentFacility, final Double inPosX, final double inPosY) {
+	public Aisle(final Facility inParentFacility, final String inAisleId, final Double inPosX, final double inPosY) {
 		super(PositionTypeEnum.METERS_FROM_PARENT, inPosX, inPosY);
 		setParent(inParentFacility);
-		setShortDomainId(computeDefaultDomainId());
-	}
-
-	public final IDomainObject getParent() {
-		return parent;
-	}
-
-	public final void setParent(final IDomainObject inParent) {
-		if (inParent instanceof Facility) {
-			parent = (Facility) inParent;
-		}
+		setDomainId(inAisleId);
 	}
 
 	public final void setParentFacility(final Facility inParentFacility) {

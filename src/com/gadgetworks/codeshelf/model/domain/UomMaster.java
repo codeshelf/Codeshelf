@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: UomMaster.java,v 1.6 2012/10/21 02:02:18 jeffw Exp $
+ *  $Id: UomMaster.java,v 1.7 2012/10/30 15:21:34 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -91,10 +91,10 @@ public class UomMaster extends DomainObjectABC {
 	}
 
 	public final String getUomMasterId() {
-		return getShortDomainId();
+		return getDomainId();
 	}
 
 	public final void setUomMasterId(String inUomMasterId) {
-		setShortDomainId(inUomMasterId);
+		setDomainId(inUomMasterId);
 	}
 }

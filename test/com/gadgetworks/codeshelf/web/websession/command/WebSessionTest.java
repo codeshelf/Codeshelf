@@ -42,7 +42,7 @@ public class WebSessionTest {
 
 		Organization organization = new Organization();
 		organization.setPersistentId(1L);
-		organization.setShortDomainId("O1");
+		organization.setDomainId("O1");
 		organization.setDescription("TEST");
 		organizationDao.store(organization);
 
@@ -52,7 +52,7 @@ public class WebSessionTest {
 		String inMessage = "{\"id\":\"cid_5\",\"type\":\"LAUNCH_CODE_RQ\",\"data\":{\"launchCode\":\"O1\"}}";
 		IWebSessionRespCmd respCommand = webSession.processMessage(inMessage);
 
-		Assert.assertEquals("{\"id\":\"cid_5\",\"type\":\"LAUNCH_CODE_RS\",\"data\":{\"LAUNCH_CODE_RS\":\"SUCCEED\",\"organization\":{\"description\":\"TEST\",\"shortDomainId\":\"O1\",\"persistentId\":"
+		Assert.assertEquals("{\"id\":\"cid_5\",\"type\":\"LAUNCH_CODE_RS\",\"data\":{\"LAUNCH_CODE_RS\":\"SUCCEED\",\"organization\":{\"description\":\"TEST\",\"domainId\":\"O1\",\"persistentId\":"
 				+ organization.getPersistentId() + ",\"className\":\"Organization\"}}}",
 			respCommand.getResponseMsg());
 	}
@@ -64,7 +64,7 @@ public class WebSessionTest {
 
 		Organization organization = new Organization();
 		organization.setPersistentId(1L);
-		organization.setShortDomainId("O1");
+		organization.setDomainId("O1");
 		organization.setDescription("TEST");
 		organizationDao.store(organization);
 

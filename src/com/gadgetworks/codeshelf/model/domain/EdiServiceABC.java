@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiServiceABC.java,v 1.13 2012/10/22 07:38:08 jeffw Exp $
+ *  $Id: EdiServiceABC.java,v 1.14 2012/10/30 15:21:34 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -52,7 +52,7 @@ import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 @DiscriminatorValue("ABC")
 @ToString
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
-public abstract class EdiServiceABC extends DomainObjectABC implements IEdiService {
+public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implements IEdiService {
 
 	private static final Log			LOGGER				= LogFactory.getLog(EdiServiceABC.class);
 
@@ -93,23 +93,27 @@ public abstract class EdiServiceABC extends DomainObjectABC implements IEdiServi
 
 	}
 
-	public final Facility getParentFacility() {
+	public final Facility getParent() {
 		return parent;
 	}
 
-	public final void setParentFacility(final Facility inFacility) {
-		parent = inFacility;
+	public final void setParent(Facility inParent) {
+		parent = inParent;
+		
 	}
 
-	public final IDomainObject getParent() {
-		return getParentFacility();
-	}
-
-	public final void setParent(IDomainObject inParent) {
-		if (inParent instanceof Facility) {
-			setParentFacility((Facility) inParent);
-		}
-	}
+//	public final Facility getParentFacility() {
+//		IDomainObject theParent = getParent();
+//		if (theParent instanceof Facility) {
+//			return (Facility) theParent;
+//		} else {
+//			return null;
+//		}
+//	}
+//
+//	public final void setParentFacility(final Facility inFacility) {
+//		setParent(inFacility);
+//	}
 
 	public final List<? extends IDomainObject> getChildren() {
 		return null; //getEdiDocuments();

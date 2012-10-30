@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Container.java,v 1.7 2012/10/21 02:02:18 jeffw Exp $
+ *  $Id: Container.java,v 1.8 2012/10/30 15:21:34 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -95,11 +95,11 @@ public class Container extends DomainObjectABC {
 	}
 
 	public final String getContainerId() {
-		return getShortDomainId();
+		return getDomainId();
 	}
 
 	public final void setContainerId(String inContainerId) {
-		setShortDomainId(inContainerId);
+		setDomainId(inContainerId);
 	}
 
 	public final IDomainObject getParent() {

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: InventoryImporterTest.java,v 1.3 2012/10/29 02:59:26 jeffw Exp $
+ *  $Id: InventoryImporterTest.java,v 1.4 2012/10/30 15:21:34 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -47,12 +47,12 @@ public class InventoryImporterTest {
 
 		MockDao<Organization> organizationDao = new MockDao<Organization>();
 		Organization organization = new Organization();
-		organization.setShortDomainId("O1");
+		organization.setDomainId("O1");
 
 		Facility.DAO = new MockDao<Facility>();
 		Facility facility = new Facility();
 		facility.setParentOrganization(organization);
-		facility.setShortDomainId("F1");
+		facility.setDomainId("F1");
 
 //		LocationABC.DAO = new MockDao<LocationABC>();
 
@@ -70,7 +70,7 @@ public class InventoryImporterTest {
 		Item item = facility.getItem("3001");
 		Assert.assertNotNull(item);
 
-		ItemMaster itemMaster = item.getParentItemMaster();
+		ItemMaster itemMaster = item.getItemMaster();
 		Assert.assertNotNull(itemMaster);
 
 	}

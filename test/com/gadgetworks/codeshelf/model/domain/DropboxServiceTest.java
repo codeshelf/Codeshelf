@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DropboxServiceTest.java,v 1.3 2012/10/24 01:00:59 jeffw Exp $
+ *  $Id: DropboxServiceTest.java,v 1.4 2012/10/30 15:21:34 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -46,8 +46,8 @@ public class DropboxServiceTest {
 		
 		DropboxService dropboxService = facility.getDropboxService();
 		
-		dropboxService.setParentFacility(facility);
-		dropboxService.setShortDomainId("DB");
+		dropboxService.setParent(facility);
+		dropboxService.setDomainId("DB");
 		dropboxService.setProviderCredentials(TEST_CREDENTIALS);
 		dropboxService.setServiceStateEnum(EdiServiceStateEnum.LINKED);
 

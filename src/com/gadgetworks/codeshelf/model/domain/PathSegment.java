@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: PathSegment.java,v 1.11 2012/10/21 02:02:18 jeffw Exp $
+ *  $Id: PathSegment.java,v 1.12 2012/10/30 15:21:34 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -90,7 +90,7 @@ public class PathSegment extends DomainObjectABC {
 	}
 
 	public final String getParentPathID() {
-		return getParentPath().getShortDomainId();
+		return getParentPath().getDomainId();
 	}
 
 }

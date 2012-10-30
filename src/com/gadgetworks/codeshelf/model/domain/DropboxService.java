@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DropboxService.java,v 1.24 2012/10/22 07:38:07 jeffw Exp $
+ *  $Id: DropboxService.java,v 1.25 2012/10/30 15:21:34 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -187,7 +187,7 @@ public class DropboxService extends EdiServiceABC {
 	 * @return
 	 */
 	public final String getFacilityPath() {
-		return FACILITY_FOLDER_PATH + getParent().getShortDomainId();
+		return FACILITY_FOLDER_PATH + getParent().getDomainId();
 	}
 
 	// --------------------------------------------------------------------------
@@ -213,7 +213,7 @@ public class DropboxService extends EdiServiceABC {
 	private boolean ensureBaseDirectories(DropboxAPI<Session> inClientSession) {
 		boolean result = false;
 
-		String facilityPath = FACILITY_FOLDER_PATH + getParent().getShortDomainId();
+		String facilityPath = FACILITY_FOLDER_PATH + getParent().getDomainId();
 		String importPath = facilityPath + IMPORT_PATH;
 		String exportPath = facilityPath + EXPORT_PATH;
 
@@ -453,7 +453,7 @@ public class DropboxService extends EdiServiceABC {
 				locator.setParentEdiService(this);
 				locator.setReceived(new Timestamp(System.currentTimeMillis()));
 				locator.setDocumentStateEnum(EdiDocumentStatusEnum.NEW);
-				locator.setShortDomainId(inEntry.lcPath);
+				locator.setDomainId(inEntry.lcPath);
 				locator.setDocumentPath(inEntry.metadata.parentPath());
 				locator.setDocumentName(inEntry.metadata.fileName());
 
@@ -477,9 +477,9 @@ public class DropboxService extends EdiServiceABC {
 			DropboxInputStream stream = inClientSession.getFileStream(inEntry.lcPath, null);
 			InputStreamReader reader = new InputStreamReader(stream);
 			if (inEntry.lcPath.contains("orders")) {
-				inCsvImporter.importOrdersFromCsvStream(reader, this.getParentFacility());
+				inCsvImporter.importOrdersFromCsvStream(reader, this.getParent());
 			} else if (inEntry.lcPath.contains("inventory")) {
-				inCsvImporter.importInventoryFromCsvStream(reader, this.getParentFacility());
+				inCsvImporter.importInventoryFromCsvStream(reader, this.getParent());
 			}
 
 		} catch (DropboxException e) {

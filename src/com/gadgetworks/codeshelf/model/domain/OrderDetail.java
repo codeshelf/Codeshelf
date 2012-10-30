@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderDetail.java,v 1.9 2012/10/24 01:00:59 jeffw Exp $
+ *  $Id: OrderDetail.java,v 1.10 2012/10/30 15:21:34 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -128,11 +128,11 @@ public class OrderDetail extends DomainObjectABC {
 	}
 
 	public String getOrderDetailId() {
-		return getShortDomainId();
+		return getDomainId();
 	}
 
 	public final void setOrderDetailId(String inOrderDetailId) {
-		setShortDomainId(inOrderDetailId);
+		setDomainId(inOrderDetailId);
 	}
 
 	public final IDomainObject getParent() {
@@ -150,15 +150,15 @@ public class OrderDetail extends DomainObjectABC {
 	}
 
 	public final String getParentOrderID() {
-		return getParentOrderHeader().getShortDomainId();
+		return getParentOrderHeader().getDomainId();
 	}
 	
 	public final String getUomMasterId() {
-		return getUomMaster().getShortDomainId();
+		return getUomMaster().getDomainId();
 	}
 	
 	public final String getItemMasterId() {
-		return getItemMaster().getShortDomainId();
+		return getItemMaster().getDomainId();
 	}
 
 }

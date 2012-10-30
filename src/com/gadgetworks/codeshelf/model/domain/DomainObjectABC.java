@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DomainObjectABC.java,v 1.23 2012/10/29 02:59:26 jeffw Exp $
+ *  $Id: DomainObjectABC.java,v 1.24 2012/10/30 15:21:34 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -29,7 +29,6 @@ import org.codehaus.jackson.annotate.JsonPropertyOrder;
 import com.avaje.ebean.Ebean;
 import com.avaje.ebean.Query;
 import com.avaje.ebean.annotation.CacheStrategy;
-import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 
 // --------------------------------------------------------------------------
@@ -45,7 +44,7 @@ import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 @ToString
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 @JsonPropertyOrder({ "shortDomainId", "fullDomainId" })
-public abstract class DomainObjectABC implements IDomainObject {
+public class DomainObjectABC implements IDomainObject {
 
 	private static final Log	LOGGER	= LogFactory.getLog(DomainObjectABC.class);
 
@@ -63,14 +62,15 @@ public abstract class DomainObjectABC implements IDomainObject {
 	@Column(nullable = false)
 	@JsonProperty
 	@Getter
+	@Setter
 	private String				domainId;
 
-	// The last sequence used to generate a sequence ID.
-	@NonNull
-	@Column(nullable = false)
-	@Getter
-	@Setter
-	private Integer				lastDefaultSequenceId;
+//	// The last sequence used to generate a sequence ID.
+//	@NonNull
+//	@Column(nullable = false)
+//	@Getter
+//	@Setter
+//	private Integer				lastDefaultSequenceId;
 
 	// This is not an application-editable field.
 	// It's for the private use of the ORM transaction system.
@@ -80,64 +80,11 @@ public abstract class DomainObjectABC implements IDomainObject {
 	@Getter
 	@Setter
 	private Timestamp			version;
-	
+
 	public DomainObjectABC() {
-		lastDefaultSequenceId = 0;
+//		lastDefaultSequenceId = 0;
 	}
-
-	// --------------------------------------------------------------------------
-	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.IDomainObject#getDefaultDomainId()
-	 */
-	public final String computeDefaultDomainId() {
-
-		// The default value in case we can't compute one.
-		String result = getDefaultDomainIdPrefix() + String.valueOf(System.currentTimeMillis());
-
-		ITypedDao<IDomainObject> dao = getDao();
-
-		IDomainObject parentObject = this.getParent();
-		if ((parentObject != null) && (dao != null)) {
-
-			String newID = null;
-
-			boolean foundId = false;
-			int maxTries = 100;
-
-			do {
-				Integer nextSeq = parentObject.getLastDefaultSequenceId() + 1;
-				String testId = getDefaultDomainIdPrefix() + String.format("%0" + Integer.toString(getIdDigits()) + "d", nextSeq);
-				IDomainObject testIdObject = dao.findByDomainId(parentObject, testId);
-
-				if (testIdObject == null) {
-					foundId = true;
-					result = testId;
-					parentObject.setLastDefaultSequenceId(nextSeq);
-					try {
-						parentObject.getDao().store(parentObject);
-					} catch (DaoException e) {
-						LOGGER.error("", e);
-					}
-				}
-			} while ((!foundId) && (maxTries > 0));
-		}
-
-		return result;
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * @param inDomainId
-	 * @return
-	 */
-	public final String normalizeChildDomainId(final String inDomainId) {
-		String result = inDomainId.toUpperCase();
-		if (!(result.startsWith(this.getFullDomainId()))) {
-			result = this.getFullDomainId() + "." + result;
-		}
-		return result;
-	}
-
+	
 	// --------------------------------------------------------------------------
 	/**
 	 * @return
@@ -153,88 +100,6 @@ public abstract class DomainObjectABC implements IDomainObject {
 	@JsonProperty
 	public final String getClassName() {
 		return this.getClass().getSimpleName();
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * To make sure the the domain object IDs are unique, we name them according to the parent object's get ID.
-	 * This will result in a hierarchical ID naming scheme to guarantee that objects have a unique name.
-	 * @param inParentObject
-	 * @param inId
-	 */
-	@JsonProperty
-	public final void setShortDomainId(String inId) {
-
-		inId = inId.toUpperCase();
-
-		IDomainObject parentObject = getParent();
-
-		// All domain objects except Organization, have a parent domain object.
-		if ((parentObject == null) && (!(this instanceof Organization))) {
-			throw new DaoException("Domain object must have a parent");
-		} else if ((parentObject != null)) {
-			domainId = parentObject.getFullDomainId() + "." + inId;
-		} else {
-			domainId = inId;
-		}
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * Return the short domain ID for this object (that is unique among all of the objects under this parent).
-	 * @return
-	 */
-	@JsonProperty
-	public final String getShortDomainId() {
-		String result = "";
-
-		if (domainId != null) {
-			int lastPeriodPos = domainId.lastIndexOf('.');
-			if (lastPeriodPos == -1) {
-				result = domainId;
-			} else {
-				result = domainId.substring(lastPeriodPos + 1);
-			}
-		}
-		return result.toUpperCase();
-	}
-
-	// --------------------------------------------------------------------------
-	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.IDomainObject#getFullDomainId()
-	 */
-	@JsonProperty
-	public final String getFullDomainId() {
-		return domainId;
-	}
-
-	// --------------------------------------------------------------------------
-	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.IDomainObject#getFullParentDomainId()
-	 */
-	@JsonProperty
-	public final String getParentFullDomainId() {
-		String result = "";
-
-		IDomainObject parent = getParent();
-		if (parent != null) {
-			result = parent.getFullDomainId();
-		}
-		return result;
-	}
-
-	// --------------------------------------------------------------------------
-	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.IDomainObject#getParentPersistentId()
-	 */
-	@JsonProperty
-	public final Long getParentPersistentId() {
-		Long result = null;
-		IDomainObject domainObject = getParent();
-		if (domainObject != null) {
-			result = domainObject.getPersistentId();
-		}
-		return result;
 	}
 
 	/* --------------------------------------------------------------------------
@@ -291,6 +156,17 @@ public abstract class DomainObjectABC implements IDomainObject {
 		Query<T> query = Ebean.createQuery(inClass);
 		//query = query.setUseCache(true);
 		return query.findList();
+	}
+
+	@Override
+	public String getDefaultDomainIdPrefix() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public <T extends IDomainObject> ITypedDao<T> getDao() {
+		return null;
 	}
 
 }

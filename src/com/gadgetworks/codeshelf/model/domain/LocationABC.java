@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: LocationABC.java,v 1.12 2012/10/29 02:59:26 jeffw Exp $
+ *  $Id: LocationABC.java,v 1.13 2012/10/30 15:21:34 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -56,7 +56,7 @@ import com.google.inject.Singleton;
 @Table(name = "LOCATION")
 @DiscriminatorColumn(name = "DTYPE", discriminatorType = DiscriminatorType.STRING)
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
-public abstract class LocationABC extends DomainObjectABC {
+public abstract class LocationABC<P extends IDomainObject> extends DomainObjectTreeABC<P> {
 
 	@Inject
 	public static ITypedDao<LocationABC>	DAO;
@@ -110,7 +110,7 @@ public abstract class LocationABC extends DomainObjectABC {
 	// The owning location.
 	@Column(nullable = false)
 	@ManyToOne(optional = true)
-	protected LocationABC				parent;
+	private LocationABC<P>				parent;
 
 	// All of the vertices that define the location's footprint.
 	@OneToMany(mappedBy = "parent")
@@ -124,7 +124,7 @@ public abstract class LocationABC extends DomainObjectABC {
 	private Map<String, LocationABC>	locations	= new HashMap<String, LocationABC>();
 
 	// The items stored in this location.
-	@OneToMany(mappedBy = "location")
+	@OneToMany(mappedBy = "parent")
 	@Getter
 	private Map<String, Item>			items		= new HashMap<String, Item>();
 
@@ -147,32 +147,42 @@ public abstract class LocationABC extends DomainObjectABC {
 		posZ = inPosZ;
 	}
 
+	public final P getParent() {
+		return (P) parent;
+	}
+
+	public final void setParent(IDomainObject inParent) {
+		if (inParent instanceof LocationABC) {
+			parent = (LocationABC) inParent;
+		}
+	}
+
 	public final List<LocationABC> getChildren() {
 		return new ArrayList<LocationABC>(locations.values());
 	}
 
 	public final void addLocation(LocationABC inLocation) {
-		locations.put(inLocation.getFullDomainId(), inLocation);
+		locations.put(inLocation.getDomainId(), inLocation);
 	}
 
 	public final LocationABC getLocation(String inLocationId) {
-		return locations.get(normalizeChildDomainId(inLocationId));
+		return locations.get(inLocationId);
 	}
 
 	public final void removeLocation(String inLocationId) {
 		locations.remove(inLocationId);
 	}
-	
+
 	public final LocationABC getLocationById(final String inLocationId) {
 		LocationABC result = null;
-		
+
 		Map<String, Object> filterParams = new HashMap<String, Object>();
-		filterParams.put("theId", normalizeChildDomainId(inLocationId));
+		filterParams.put("theId", inLocationId);
 		List<LocationABC> foundLocations = getDao().findByFilterAndClass("domainId = :theId", filterParams, LocationABC.class);
-		if ((foundLocations.size() > 0) && (foundLocations.get(0) instanceof LocationABC)){
+		if ((foundLocations != null) && (foundLocations.size() > 0) && (foundLocations.get(0) instanceof LocationABC)) {
 			result = (LocationABC) foundLocations.get(0);
 		}
-		
+
 		return result;
 	}
 

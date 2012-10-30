@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CsvImporter.java,v 1.5 2012/10/29 02:59:26 jeffw Exp $
+ *  $Id: CsvImporter.java,v 1.6 2012/10/30 15:21:34 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -225,7 +225,7 @@ public class CsvImporter implements ICsvImporter {
 		if (result == null) {
 			result = new OrderHeader();
 			result.setParentFacility(inFacility);
-			result.setShortDomainId(inCsvImportBean.getOrderId());
+			result.setDomainId(inCsvImportBean.getOrderId());
 			result.setStatusEnum(OrderStatusEnum.CREATED);
 
 			PickStrategyEnum pickStrategy = PickStrategyEnum.SERIAL;
@@ -321,7 +321,7 @@ public class CsvImporter implements ICsvImporter {
 		if (result == null) {
 			result = new OrderDetail();
 			result.setParentOrderHeader(inOrder);
-			result.setShortDomainId(inCsvImportBean.getOrderDetailId());
+			result.setDomainId(inCsvImportBean.getOrderDetailId());
 			result.setStatusEnum(OrderStatusEnum.CREATED);
 
 			inOrder.addOrderDetail(result);
@@ -360,12 +360,12 @@ public class CsvImporter implements ICsvImporter {
 		result = location.getItem(inCsvImportBean.getItemId());
 		if ((result == null) && (inCsvImportBean.getItemId() != null) && (inCsvImportBean.getItemId().length() > 0)) {
 			result = new Item();
-			result.setParentItemMaster(inItemMaster);
+			result.setParentLocation(location);
+			result.setItemMaster(inItemMaster);
 			result.setItemId(inCsvImportBean.getItemId());
 			result.setUomMaster(inUomMaster);
 			result.setQuantity(Double.valueOf(inCsvImportBean.getQuantity()));
 			inItemMaster.addItem(result);
-			result.setLocation(location);
 			location.addItem(inCsvImportBean.getItemId(), result);
 			try {
 				mItemDao.store(result);

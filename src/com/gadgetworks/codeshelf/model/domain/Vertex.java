@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Vertex.java,v 1.13 2012/10/21 02:02:18 jeffw Exp $
+ *  $Id: Vertex.java,v 1.14 2012/10/30 15:21:34 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -45,7 +45,7 @@ import com.google.inject.Singleton;
 @Table(name = "VERTEX")
 @CacheStrategy
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
-public class Vertex extends DomainObjectABC {
+public class Vertex extends DomainObjectTreeABC<LocationABC> {
 
 	@Inject
 	public static ITypedDao<Vertex>	DAO;
@@ -97,13 +97,13 @@ public class Vertex extends DomainObjectABC {
 
 	}
 
-	public Vertex(final LocationABC inParentLocation, final PositionTypeEnum inPosType, final int inDrawOrder, final Double inPosX, final Double inPosY) {
+	public Vertex(final LocationABC inParentLocation, final String inLocationId, final PositionTypeEnum inPosType, final int inDrawOrder, final Double inPosX, final Double inPosY) {
 		setParentLocation(inParentLocation);
 		setPosType(inPosType);
 		setDrawOrder(inDrawOrder);
 		setPosX(inPosX);
 		setPosY(inPosY);
-		setShortDomainId(computeDefaultDomainId());
+		setDomainId(inLocationId);
 	}
 
 	public final ITypedDao<Vertex> getDao() {
@@ -114,22 +114,26 @@ public class Vertex extends DomainObjectABC {
 		return "V";
 	}
 
-	public final LocationABC getParentLocation() {
+	public LocationABC getParent() {
 		return parent;
 	}
 
-	public final void setParentLocation(final LocationABC inParentLocation) {
-		parent = inParentLocation;
+	@Override
+	public void setParent(LocationABC inParent) {
+		parent = inParent;
 	}
 
-	public final IDomainObject getParent() {
-		return getParentLocation();
-	}
-
-	public final void setParent(IDomainObject inParent) {
-		if (inParent instanceof LocationABC) {
-			setParentLocation((LocationABC) inParent);
+	public final LocationABC getParentLocation() {
+		IDomainObject theParent = getParent();
+		if (theParent instanceof LocationABC) {
+			return (LocationABC) theParent;
+		} else {
+			return null;
 		}
+	}
+
+	public final void setParentLocation(final LocationABC inLocation) {
+		setParent(inLocation);
 	}
 
 	public final List<IDomainObject> getChildren() {
@@ -139,4 +143,5 @@ public class Vertex extends DomainObjectABC {
 	public final void setPosTypeByStr(String inPosTypeStr) {
 		setPosType(PositionTypeEnum.valueOf(inPosTypeStr));
 	}
+
 }

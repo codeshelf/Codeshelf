@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.32 2012/10/29 02:59:26 jeffw Exp $
+ *  $Id: Facility.java,v 1.33 2012/10/30 15:21:34 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -17,7 +17,6 @@ import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import javax.persistence.MapKey;
 import javax.persistence.OneToMany;
-import javax.persistence.Table;
 
 import lombok.Getter;
 import lombok.ToString;
@@ -51,7 +50,7 @@ import com.google.inject.Singleton;
 @CacheStrategy
 @ToString
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
-public class Facility extends LocationABC {
+public class Facility extends LocationABC<Organization> {
 
 	@Inject
 	public static ITypedDao<Facility>	DAO;
@@ -113,7 +112,7 @@ public class Facility extends LocationABC {
 	public Facility() {
 		// Facilities have no parent location, but we don't want to allow ANY location to not have a parent.
 		// So in this case we make the facility its own parent.  It's also a way to know when we've topped-out in the location tree.
-		parent = this;
+		setParent(this);
 		orderHeaders = new ArrayList<OrderHeader>();
 		containerKinds = new HashMap<String, ContainerKind>();
 		containers = new HashMap<String, Container>();
@@ -123,7 +122,7 @@ public class Facility extends LocationABC {
 		super(PositionTypeEnum.GPS, inPosX, inPosY);
 		// Facilities have no parent location, but we don't want to allow ANY location to not have a parent.
 		// So in this case we make the facility its own parent.  It's also a way to know when we've topped-out in the location tree.
-		parent = this;
+		setParent(this);
 	}
 
 	public final String getDefaultDomainIdPrefix() {
@@ -138,16 +137,6 @@ public class Facility extends LocationABC {
 		return parentOrganization;
 	}
 
-	public final IDomainObject getParent() {
-		return parentOrganization;
-	}
-
-	public final void setParent(final IDomainObject inParent) {
-		if (inParent instanceof Organization) {
-			parentOrganization = (Organization) inParent;
-		}
-	}
-
 	public final void setParentOrganization(final Organization inOrganization) {
 		parentOrganization = inOrganization;
 	}
@@ -156,13 +145,13 @@ public class Facility extends LocationABC {
 		String result = "";
 		Organization organization = getParentOrganization();
 		if (organization != null) {
-			result = organization.getShortDomainId();
+			result = organization.getDomainId();
 		}
 		return result;
 	}
 
 	public final void setFacilityId(String inFacilityId) {
-		setShortDomainId(inFacilityId);
+		setDomainId(inFacilityId);
 	}
 
 	public final void addAisle(Aisle inAisle) {
@@ -174,11 +163,11 @@ public class Facility extends LocationABC {
 	}
 
 	public final void addContainer(Container inContainer) {
-		containers.put(inContainer.getFullDomainId(), inContainer);
+		containers.put(inContainer.getDomainId(), inContainer);
 	}
 
 	public final Container getContainer(String inContainerId) {
-		return containers.get(normalizeChildDomainId(inContainerId));
+		return containers.get(inContainerId);
 	}
 
 	public final void removeContainer(String inContainerId) {
@@ -186,11 +175,11 @@ public class Facility extends LocationABC {
 	}
 
 	public final void addContainerKind(ContainerKind inContainerKind) {
-		containerKinds.put(inContainerKind.getFullDomainId(), inContainerKind);
+		containerKinds.put(inContainerKind.getDomainId(), inContainerKind);
 	}
 
 	public final ContainerKind getContainerKind(String inContainerKindId) {
-		return containerKinds.get(normalizeChildDomainId(inContainerKindId));
+		return containerKinds.get(inContainerKindId);
 	}
 
 	public final void removeContainerKind(String inContainerKindId) {
@@ -230,11 +219,11 @@ public class Facility extends LocationABC {
 	}
 
 	public final void addUomMaster(UomMaster inUomMaster) {
-		uomMasters.put(inUomMaster.getFullDomainId(), inUomMaster);
+		uomMasters.put(inUomMaster.getDomainId(), inUomMaster);
 	}
 
 	public final UomMaster getUomMaster(String inUomMasterId) {
-		return uomMasters.get(normalizeChildDomainId(inUomMasterId));
+		return uomMasters.get(inUomMasterId);
 	}
 
 	public final void removeUomMaster(String inUomMasterId) {
@@ -250,7 +239,7 @@ public class Facility extends LocationABC {
 		OrderGroup result = null;
 
 		for (OrderGroup orderGroup : getOrderGroups()) {
-			if (orderGroup.getShortDomainId().equals(inOrderGroupID)) {
+			if (orderGroup.getDomainId().equals(inOrderGroupID)) {
 				result = orderGroup;
 				break;
 			}
@@ -268,7 +257,7 @@ public class Facility extends LocationABC {
 		OrderHeader result = null;
 
 		for (OrderHeader order : getOrderHeaders()) {
-			if (order.getShortDomainId().equals(inOrderID)) {
+			if (order.getDomainId().equals(inOrderID)) {
 				result = order;
 				break;
 			}
@@ -288,7 +277,8 @@ public class Facility extends LocationABC {
 	 * @param inBaysHigh
 	 * @param inBaysLong
 	 */
-	public final void createAisle(final Double inPosXMeters,
+	public final void createAisle(final String inAisleId,
+		final Double inPosXMeters,
 		final Double inPosYMeters,
 		final Double inProtoBayXDimMeters,
 		final Double inProtoBayYDimMeters,
@@ -297,7 +287,7 @@ public class Facility extends LocationABC {
 		final Integer inBaysLong,
 		final Boolean inRunInXDir,
 		final Boolean inCreateBackToBack) {
-		Aisle aisle = new Aisle(this, inPosXMeters, inPosYMeters);
+		Aisle aisle = new Aisle(this, inAisleId, inPosXMeters, inPosYMeters);
 		try {
 			Aisle.DAO.store(aisle);
 		} catch (DaoException e) {
@@ -309,10 +299,12 @@ public class Facility extends LocationABC {
 		Double aisleBoundaryX = 0.0;
 		Double aisleBoundaryY = 0.0;
 
+		int bayNum = 0;
 		for (int bayLongNum = 0; bayLongNum < inBaysLong; bayLongNum++) {
 			Double anchorPosZ = 0.0;
 			for (int bayHighNum = 0; bayHighNum < inBaysHigh; bayHighNum++) {
-				Bay protoBay = new Bay(aisle, anchorPosX, anchorPosY, anchorPosZ);
+				String bayId = String.format("%0" + Integer.toString(getIdDigits()) + "d", bayNum++);
+				Bay protoBay = new Bay(aisle, bayId, anchorPosX, anchorPosY, anchorPosZ);
 				try {
 					Bay.DAO.store(protoBay);
 				} catch (DaoException e) {
@@ -347,17 +339,17 @@ public class Facility extends LocationABC {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * @param inShortDomainId
+	 * @param inDomainId
 	 * @param inPosTypeByStr
 	 * @param inPosX
 	 * @param inPosY
 	 * @param inDrawOrder
 	 */
-	public final void createVertex(final String inShortDomainId, final String inPosTypeByStr, final Double inPosX, final Double inPosY, final Integer inDrawOrder) {
+	public final void createVertex(final String inDomainId, final String inPosTypeByStr, final Double inPosX, final Double inPosY, final Integer inDrawOrder) {
 
 		Vertex vertex = new Vertex();
 		vertex.setParentLocation(this);
-		vertex.setShortDomainId(inShortDomainId);
+		vertex.setDomainId(inDomainId);
 		vertex.setPosTypeByStr(inPosTypeByStr);
 		vertex.setPosX(inPosX);
 		vertex.setPosY(inPosY);
@@ -376,13 +368,13 @@ public class Facility extends LocationABC {
 	private void createVertices(LocationABC inLocation, Double inXDimMeters, Double inYDimMeters) {
 		try {
 			// Create four simple vertices around the aisle.
-			Vertex vertex1 = new Vertex(inLocation, PositionTypeEnum.METERS_FROM_PARENT, 0, 0.0, 0.0);
+			Vertex vertex1 = new Vertex(inLocation, "V01", PositionTypeEnum.METERS_FROM_PARENT, 0, 0.0, 0.0);
 			Vertex.DAO.store(vertex1);
-			Vertex vertex2 = new Vertex(inLocation, PositionTypeEnum.METERS_FROM_PARENT, 1, inXDimMeters, 0.0);
+			Vertex vertex2 = new Vertex(inLocation, "V02", PositionTypeEnum.METERS_FROM_PARENT, 1, inXDimMeters, 0.0);
 			Vertex.DAO.store(vertex2);
-			Vertex vertex4 = new Vertex(inLocation, PositionTypeEnum.METERS_FROM_PARENT, 2, inXDimMeters, inYDimMeters);
+			Vertex vertex4 = new Vertex(inLocation, "V03", PositionTypeEnum.METERS_FROM_PARENT, 2, inXDimMeters, inYDimMeters);
 			Vertex.DAO.store(vertex4);
-			Vertex vertex3 = new Vertex(inLocation, PositionTypeEnum.METERS_FROM_PARENT, 3, 0.0, inYDimMeters);
+			Vertex vertex3 = new Vertex(inLocation, "V04", PositionTypeEnum.METERS_FROM_PARENT, 3, 0.0, inYDimMeters);
 			Vertex.DAO.store(vertex3);
 		} catch (DaoException e) {
 			LOGGER.error("", e);
@@ -416,13 +408,13 @@ public class Facility extends LocationABC {
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	public final ContainerKind createContainerKind(String inShortDomainId, Double inLengthMeters, Double inWidthMeters, Double inHeightMeters) {
+	public final ContainerKind createContainerKind(String inDomainId, Double inLengthMeters, Double inWidthMeters, Double inHeightMeters) {
 
 		ContainerKind result = null;
 
 		result = new ContainerKind();
 		result.setParentFacility(this);
-		result.setShortDomainId(inShortDomainId);
+		result.setDomainId(inDomainId);
 		result.setLengthMeters(inLengthMeters);
 		result.setWidthMeters(inWidthMeters);
 		result.setHeightMeters(inHeightMeters);
@@ -445,8 +437,8 @@ public class Facility extends LocationABC {
 		DropboxService result = null;
 
 		result = new DropboxService();
-		result.setParentFacility(this);
-		result.setShortDomainId(result.computeDefaultDomainId());
+		result.setParent(this);
+		result.setDomainId("DROPBOX");
 		result.setProviderEnum(EdiProviderEnum.DROPBOX);
 		result.setServiceStateEnum(EdiServiceStateEnum.UNLINKED);
 

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiDocumentLocator.java,v 1.11 2012/10/21 02:02:18 jeffw Exp $
+ *  $Id: EdiDocumentLocator.java,v 1.12 2012/10/30 15:21:34 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -141,6 +141,6 @@ public class EdiDocumentLocator extends DomainObjectABC {
 	}
 
 	public final String getParentEdiServiceID() {
-		return getParentEdiService().getShortDomainId();
+		return getParentEdiService().getDomainId();
 	}
 }

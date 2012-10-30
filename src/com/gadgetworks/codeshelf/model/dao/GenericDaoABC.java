@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: GenericDaoABC.java,v 1.10 2012/10/29 02:59:27 jeffw Exp $
+ *  $Id: GenericDaoABC.java,v 1.11 2012/10/30 15:21:34 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -21,7 +21,7 @@ import com.avaje.ebean.Ebean;
 import com.avaje.ebean.Query;
 import com.avaje.ebean.bean.EntityBean;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
-import com.gadgetworks.codeshelf.model.domain.Organization;
+import com.gadgetworks.codeshelf.model.domain.IDomainObjectTree;
 
 /**
  * @author jeffw
@@ -124,18 +124,14 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	public final T findByDomainId(final IDomainObject inParentObject, final String inId) {
 		T result = null;
 
-		String effectiveId;
-		if ((inParentObject != null)) {
-			// Only include the parent in the domain ID if requested for this class.
-			// (Organization is the main one we don't include.)
-			effectiveId = inParentObject.getFullDomainId() + "." + inId.toUpperCase();
-		} else {
-			effectiveId = inId.toUpperCase();
-		}
-
+		String effectiveId = inId.toUpperCase();
 		try {
 			Query<T> query = Ebean.createQuery(getDaoClass());
-			query.where().eq(IDomainObject.ID_COLUMN_NAME, effectiveId);
+			if (inParentObject != null) {
+				query.where().eq(IDomainObject.ID_COLUMN_NAME, effectiveId).eq(IDomainObjectTree.PARENT_ID_COLUMN_NAME, inParentObject.getPersistentId());
+			} else {
+				query.where().eq(IDomainObject.ID_COLUMN_NAME, effectiveId);
+			}
 			//query = query.setUseCache(true);
 			result = query.findUnique();
 		} catch (PersistenceException e) {

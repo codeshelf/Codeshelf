@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionRespCmdLaunchCode.java,v 1.5 2012/10/11 02:42:39 jeffw Exp $
+ *  $Id: WebSessionRespCmdLaunchCode.java,v 1.6 2012/10/30 15:21:34 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.resp;
 
@@ -59,7 +59,7 @@ public class WebSessionRespCmdLaunchCode extends WebSessionRespCmdABC {
 			Map<String, Object> propertiesMap = new HashMap<String, Object>();
 			propertiesMap.put(IWebSessionReqCmd.CLASSNAME, mOrganization.getClassName());
 			propertiesMap.put(IWebSessionReqCmd.PERSISTENT_ID, mOrganization.getPersistentId());
-			propertiesMap.put(IWebSessionReqCmd.SHORT_DOMAIN_ID, mOrganization.getFullDomainId());
+			propertiesMap.put(IWebSessionReqCmd.SHORT_DOMAIN_ID, mOrganization.getDomainId());
 			propertiesMap.put(IWebSessionReqCmd.DESC, mOrganization.getDescription());
 			
 //			List<Map<String, Object>> resultsList = new ArrayList<Map<String, Object>>();

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Item.java,v 1.8 2012/10/28 01:30:57 jeffw Exp $
+ *  $Id: Item.java,v 1.9 2012/10/30 15:21:34 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -23,6 +23,7 @@ import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.annotate.JsonProperty;
 
 import com.avaje.ebean.annotation.CacheStrategy;
+import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.google.inject.Inject;
@@ -55,17 +56,17 @@ public class Item extends DomainObjectABC {
 
 	private static final Log	LOGGER	= LogFactory.getLog(Item.class);
 
-	// The owning item master.
+	// The owning location.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	private ItemMaster			parent;
+	private LocationABC			parent;
 
-	// The stored location.
+	// The item master.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	@Getter
 	@Setter
-	private LocationABC			location;
+	private ItemMaster			itemMaster;
 
 	// Quantity.
 	@Column(nullable = false)
@@ -92,30 +93,29 @@ public class Item extends DomainObjectABC {
 		return "IT";
 	}
 
-	public final ItemMaster getParentItemMaster() {
+	public final LocationABC getParentLocation() {
 		return parent;
 	}
 
 	public final String getItemsId() {
-		return getShortDomainId();
+		return getDomainId();
 	}
 
 	public final void setItemId(final String inItemId) {
-//		String uniqueItemId = location.getShortDomainId() + "." + inItemId;
-		setShortDomainId(inItemId);
+		setDomainId(inItemId);
 	}
 
-	public final void setParentItemMaster(final ItemMaster inItemMaster) {
-		parent = inItemMaster;
+	public final void setParentLocation(final LocationABC inLocation) {
+		parent = inLocation;
 	}
 
 	public final IDomainObject getParent() {
-		return getParentItemMaster();
+		return getParentLocation();
 	}
 
 	public final void setParent(IDomainObject inParent) {
-		if (inParent instanceof ItemMaster) {
-			setParentItemMaster((ItemMaster) inParent);
+		if (inParent instanceof LocationABC) {
+			setParentLocation((LocationABC) inParent);
 		}
 	}
 

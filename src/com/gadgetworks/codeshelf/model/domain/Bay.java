@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Bay.java,v 1.12 2012/10/22 07:38:08 jeffw Exp $
+ *  $Id: Bay.java,v 1.13 2012/10/30 15:21:34 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -35,7 +35,7 @@ import com.google.inject.Singleton;
 @DiscriminatorValue("BAY")
 @CacheStrategy
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
-public class Bay extends LocationABC {
+public class Bay extends LocationABC<Bay> {
 
 	@Inject
 	public static ITypedDao<Bay>	DAO;
@@ -49,20 +49,10 @@ public class Bay extends LocationABC {
 
 	private static final Log	LOGGER	= LogFactory.getLog(Bay.class);
 
-	public Bay(final Aisle inAisle, final Double inPosX, final double inPosY, final double inPosZ) {
+	public Bay(final Aisle inAisle, final String inBayId, final Double inPosX, final double inPosY, final double inPosZ) {
 		super(PositionTypeEnum.METERS_FROM_PARENT, inPosX, inPosY, inPosZ);
 		setParent(inAisle);
-		setShortDomainId(computeDefaultDomainId());
-	}
-
-	public final IDomainObject getParent() {
-		return parent;
-	}
-
-	public final void setParent(final IDomainObject inParent) {
-		if (inParent instanceof Aisle) {
-			parent = (Aisle) inParent;
-		}
+		setDomainId(inBayId);
 	}
 
 	public final void setParentAisle(final Aisle inParentAisle) {

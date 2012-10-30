@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Organization.java,v 1.17 2012/10/28 01:30:56 jeffw Exp $
+ *  $Id: Organization.java,v 1.18 2012/10/30 15:21:34 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -9,8 +9,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.persistence.Column;
+import javax.persistence.DiscriminatorColumn;
+import javax.persistence.DiscriminatorType;
+import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
+import javax.persistence.Inheritance;
+import javax.persistence.InheritanceType;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
@@ -45,10 +50,13 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-@Table(name = "ORGANIZATION")
 @CacheStrategy
-@ToString
+@Table(name = "ORGANIZATION")
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name = "DTYPE", discriminatorType = DiscriminatorType.STRING)
+@DiscriminatorValue("ORG")
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
+@ToString
 public class Organization extends DomainObjectABC {
 
 	@Inject
@@ -82,6 +90,7 @@ public class Organization extends DomainObjectABC {
 	private List<Facility>		facilities	= new ArrayList<Facility>();
 
 	public Organization() {
+		setParent(this);
 		description = "";
 	}
 
@@ -94,7 +103,7 @@ public class Organization extends DomainObjectABC {
 	}
 
 	public final void setOrganizationId(String inOrganizationId) {
-		setShortDomainId(inOrganizationId);
+		setDomainId(inOrganizationId);
 	}
 
 	// --------------------------------------------------------------------------
@@ -124,11 +133,11 @@ public class Organization extends DomainObjectABC {
 		facilities.remove(inFacility);
 	}
 
-	public final void createFacility(final String inShortDomainId, final String inDescription, final String inPosTypeByStr, final Double inPosx, final Double inPosY) {
+	public final void createFacility(final String inDomainId, final String inDescription, final String inPosTypeByStr, final Double inPosx, final Double inPosY) {
 
 		Facility facility = new Facility();
 		facility.setParentOrganization(this);
-		facility.setShortDomainId(inShortDomainId);
+		facility.setDomainId(inDomainId);
 		facility.setDescription(inDescription);
 		facility.setPosTypeByStr(inPosTypeByStr);
 		facility.setPosX(inPosx);

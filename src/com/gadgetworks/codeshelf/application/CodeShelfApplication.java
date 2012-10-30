@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfApplication.java,v 1.47 2012/10/13 22:14:24 jeffw Exp $
+ *  $Id: CodeShelfApplication.java,v 1.48 2012/10/30 15:21:34 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -235,7 +235,7 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 		if (property == null) {
 			property = new PersistentProperty();
 			property.setParentOrganization(inOrganization);
-			property.setShortDomainId(inPropertyID);
+			property.setDomainId(inPropertyID);
 			property.setCurrentValueAsStr(inDefaultValue);
 			property.setDefaultValueAsStr(inDefaultValue);
 			shouldUpdate = true;
@@ -264,9 +264,9 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 	private void initializeApplicationData() {
 
 		// Create two dummy users for testing.
-		createOrganzation("O1", "F1", "New Facility");
-		createOrganzation("O2", "F2", "New Facility");
-		createOrganzation("O3", "F3", "New Facility");
+		createOrganzation("O1");
+		createOrganzation("O2");
+		createOrganzation("O3");
 
 		// Some radio device fields have no meaning from the last invocation of the application.
 		for (WirelessDevice wirelessDevice : mWirelessDeviceDao.getAll()) {
@@ -285,11 +285,11 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 	 * @param inOrganizationId
 	 * @param inPassword
 	 */
-	private void createOrganzation(String inOrganizationId, String inFacilityId, String inFacilityName) {
+	private void createOrganzation(String inOrganizationId) {
 		Organization organization = mOrganizationDao.findByDomainId(null, inOrganizationId);
 		if (organization == null) {
 			organization = new Organization();
-			organization.setShortDomainId(inOrganizationId);
+			organization.setDomainId(inOrganizationId);
 			try {
 				mOrganizationDao.store(organization);
 			} catch (DaoException e) {
