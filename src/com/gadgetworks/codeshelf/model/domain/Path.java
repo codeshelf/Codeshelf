@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Path.java,v 1.10 2012/10/31 09:23:59 jeffw Exp $
+ *  $Id: Path.java,v 1.11 2012/10/31 16:55:08 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -41,7 +41,7 @@ import com.google.inject.Singleton;
 @Table(name = "PATH")
 @CacheStrategy
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
-public class Path extends DomainObjectABC {
+public class Path extends DomainObjectTreeABC<Facility> {
 
 	@Inject
 	public static ITypedDao<Path>	DAO;

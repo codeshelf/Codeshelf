@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Item.java,v 1.10 2012/10/31 09:23:59 jeffw Exp $
+ *  $Id: Item.java,v 1.11 2012/10/31 16:55:08 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -23,7 +23,6 @@ import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.annotate.JsonProperty;
 
 import com.avaje.ebean.annotation.CacheStrategy;
-import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.google.inject.Inject;
@@ -42,7 +41,7 @@ import com.google.inject.Singleton;
 @Table(name = "ITEM")
 @CacheStrategy
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
-public class Item extends DomainObjectABC {
+public class Item extends DomainObjectTreeABC<LocationABC> {
 
 	@Inject
 	public static ITypedDao<Item>	DAO;

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: PersistentProperty.java,v 1.13 2012/10/31 09:23:59 jeffw Exp $
+ *  $Id: PersistentProperty.java,v 1.14 2012/10/31 16:55:08 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -44,9 +44,6 @@ import com.google.inject.Singleton;
 @Entity
 @CacheStrategy
 @Table(name = "PERSISTENTPROPERTY")
-@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@DiscriminatorColumn(name = "DTYPE", discriminatorType = DiscriminatorType.STRING)
-@DiscriminatorValue("PROP")
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 @ToString
 public class PersistentProperty extends DomainObjectTreeABC<Organization> {

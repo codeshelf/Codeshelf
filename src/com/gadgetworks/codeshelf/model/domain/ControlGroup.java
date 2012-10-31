@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ControlGroup.java,v 1.10 2012/10/31 09:23:59 jeffw Exp $
+ *  $Id: ControlGroup.java,v 1.11 2012/10/31 16:55:08 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -43,8 +43,8 @@ import com.google.inject.Singleton;
 @Entity
 @Table(name = "CONTROLGROUP")
 @CacheStrategy
-@JsonAutoDetect(getterVisibility=Visibility.NONE)
-public class ControlGroup extends DomainObjectABC {
+@JsonAutoDetect(getterVisibility = Visibility.NONE)
+public class ControlGroup extends DomainObjectTreeABC<CodeShelfNetwork> {
 
 	@Inject
 	public static ITypedDao<ControlGroup>	DAO;
@@ -59,50 +59,50 @@ public class ControlGroup extends DomainObjectABC {
 	// The owning CodeShelf network.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	private CodeShelfNetwork				parent;
-	
+	private CodeShelfNetwork		parent;
+
 	// The control group ID
 	@Column(nullable = false)
 	@Getter
 	@JsonProperty
-	private byte[]							serializedId;
-	
+	private byte[]					serializedId;
+
 	// The control group description.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private String							description;
-	
+	private String					description;
+
 	// Interface port number
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private short							interfacePortNum;
-	
+	private short					interfacePortNum;
+
 	// Active/Inactive rule
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private boolean							active;
-	
+	private boolean					active;
+
 	// Active/Inactive rule
 	@Column(nullable = false)
 	@Enumerated(value = EnumType.STRING)
 	@Getter
 	@Setter
 	@JsonProperty
-	private TagProtocolEnum					tagProtocolEnum;
-	
+	private TagProtocolEnum			tagProtocolEnum;
+
 	// For a control group this is a list of all of the pick tags that belong in the set.
 	@OneToMany(mappedBy = "parent")
 	@Getter
-	private List<WirelessDevice>			wirelessDevices		= new ArrayList<WirelessDevice>();
+	private List<WirelessDevice>	wirelessDevices	= new ArrayList<WirelessDevice>();
 
 	@Transient
-	private IControllerConnection			controllerConnection;
+	private IControllerConnection	controllerConnection;
 
 	public ControlGroup() {
 		serializedId = new byte[NetGroup.NET_GROUP_BYTES];
@@ -124,7 +124,7 @@ public class ControlGroup extends DomainObjectABC {
 	}
 
 	public final void setParent(CodeShelfNetwork inParent) {
-			parent = inParent;
+		parent = inParent;
 	}
 
 	public final List<? extends IDomainObject> getChildren() {

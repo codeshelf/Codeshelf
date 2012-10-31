@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: H2SchemaManager.java,v 1.52 2012/10/30 15:21:34 jeffw Exp $
+ *  $Id: H2SchemaManager.java,v 1.53 2012/10/31 16:55:08 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -292,7 +292,6 @@ public final class H2SchemaManager implements ISchemaManager {
 
 		result &= execOneSQLCommand("CREATE SEQUENCE CODESHELF.ORGANIZATION_SEQ");
 		result &= execOneSQLCommand("CREATE TABLE CODESHELF.ORGANIZATION (" //
-				+ "DTYPE VARCHAR(16) NOT NULL, " //
 				+ "PERSISTENTID BIGINT NOT NULL, " //
 				+ "DOMAINID VARCHAR(64) NOT NULL, " //
 //				+ "LASTDEFAULTSEQUENCEID INT NOT NULL, " //
@@ -317,7 +316,6 @@ public final class H2SchemaManager implements ISchemaManager {
 
 		result &= execOneSQLCommand("CREATE SEQUENCE CODESHELF." + inTableName + "_SEQ");
 		result &= execOneSQLCommand("CREATE TABLE CODESHELF." + inTableName + " (" //
-				+ "DTYPE VARCHAR(16) NOT NULL, " //
 				+ "PERSISTENTID BIGINT NOT NULL, " //
 				+ "PARENT_PERSISTENTID BIGINT NOT NULL, " //
 				+ "DOMAINID VARCHAR(64) NOT NULL, " //
@@ -384,7 +382,8 @@ public final class H2SchemaManager implements ISchemaManager {
 
 		// Location
 		result &= createTable("LOCATION", //
-			"POSTYPE VARCHAR(64) NOT NULL, " //
+			"DTYPE VARCHAR(64) NOT NULL, " //
+					+ "POSTYPE VARCHAR(64) NOT NULL, " //
 					+ "POSX DOUBLE NOT NULL, " //
 					+ "POSY DOUBLE NOT NULL, " //
 					+ "POSZ DOUBLE, " // NOT NULL, " //
@@ -461,7 +460,8 @@ public final class H2SchemaManager implements ISchemaManager {
 
 		// WirelessDevice (includes the subclass variants in one table)
 		result &= createTable("WIRELESSDEVICE", //
-			"MACADDRESS BINARY(8) DEFAULT 0 NOT NULL, " //
+			"DTYPE VARCHAR(64) NOT NULL, " //
+					+ "MACADDRESS BINARY(8) DEFAULT 0 NOT NULL, " //
 					+ "PUBLICKEY VARCHAR(16) NOT NULL, " //
 					+ "DESCRIPTION VARCHAR(64), " //
 					+ "LASTBATTERYLEVEL SMALLINT DEFAULT 0 NOT NULL, " //
@@ -478,7 +478,8 @@ public final class H2SchemaManager implements ISchemaManager {
 
 		// EdiService
 		result &= createTable("EDISERVICE", //
-			"PROVIDERENUM VARCHAR(16) NOT NULL, " //
+			"DTYPE VARCHAR(64) NOT NULL, " //
+					+ "PROVIDERENUM VARCHAR(16) NOT NULL, " //
 					+ "SERVICESTATEENUM VARCHAR(16) NOT NULL, " //
 					+ "PROVIDERCREDENTIALS VARCHAR(256), " //
 					+ "CURSOR VARCHAR(256) " //

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Organization.java,v 1.19 2012/10/31 09:23:59 jeffw Exp $
+ *  $Id: Organization.java,v 1.20 2012/10/31 16:55:08 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -52,9 +52,6 @@ import com.google.inject.Singleton;
 @Entity
 @CacheStrategy
 @Table(name = "ORGANIZATION")
-@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@DiscriminatorColumn(name = "DTYPE", discriminatorType = DiscriminatorType.STRING)
-@DiscriminatorValue("ORG")
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 @ToString
 public class Organization extends DomainObjectABC {

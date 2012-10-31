@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderGroup.java,v 1.11 2012/10/31 09:23:59 jeffw Exp $
+ *  $Id: OrderGroup.java,v 1.12 2012/10/31 16:55:08 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -45,7 +45,7 @@ import com.google.inject.Singleton;
 @Table(name = "ORDERGROUP")
 @CacheStrategy
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
-public class OrderGroup extends DomainObjectABC {
+public class OrderGroup extends DomainObjectTreeABC<Facility> {
 
 	@Inject
 	public static ITypedDao<OrderGroup>	DAO;

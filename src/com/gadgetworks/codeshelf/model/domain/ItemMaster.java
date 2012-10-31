@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ItemMaster.java,v 1.12 2012/10/31 09:23:59 jeffw Exp $
+ *  $Id: ItemMaster.java,v 1.13 2012/10/31 16:55:08 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -45,7 +45,7 @@ import com.google.inject.Singleton;
 @Table(name = "ITEMMASTER")
 @CacheStrategy
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
-public class ItemMaster extends DomainObjectABC {
+public class ItemMaster extends DomainObjectTreeABC<Facility> {
 
 	@Inject
 	public static ITypedDao<ItemMaster>	DAO;
@@ -103,7 +103,7 @@ public class ItemMaster extends DomainObjectABC {
 		return "IM";
 	}
 
-	public final IDomainObject getParent() {
+	public final Facility getParent() {
 		return parent;
 	}
 
