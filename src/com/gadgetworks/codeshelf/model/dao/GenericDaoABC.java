@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: GenericDaoABC.java,v 1.12 2012/10/31 09:23:59 jeffw Exp $
+ *  $Id: GenericDaoABC.java,v 1.13 2012/10/31 09:30:56 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -130,7 +130,9 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 		try {
 			Query<T> query = Ebean.createQuery(getDaoClass());
 			if (inParentObject != null) {
-				if (getClass().equals(Facility.class)) {
+				if (getDaoClass().equals(Facility.class)) {
+					// This is a bit odd: the Facility is the top-level Location object, but Ebean doesn't allow us to have a parent field that points to another table.
+					// (It *should* be able to do this since Ebean knows the class type at runtime, but it just doesn't.)
 					query.where().eq(IDomainObject.ID_PROPERTY, effectiveId).eq(IDomainObjectTree.PARENT_ORG_PROPERTY, inParentObject.getPersistentId());
 				} else {
 					query.where().eq(IDomainObject.ID_PROPERTY, effectiveId).eq(IDomainObjectTree.PARENT_PROPERTY, inParentObject.getPersistentId());
