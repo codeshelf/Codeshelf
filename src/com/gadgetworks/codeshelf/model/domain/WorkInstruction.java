@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WorkInstruction.java,v 1.4 2012/10/21 02:02:17 jeffw Exp $
+ *  $Id: WorkInstruction.java,v 1.5 2012/10/31 09:23:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -143,22 +143,12 @@ public abstract class WorkInstruction extends DomainObjectABC {
 		return "WI";
 	}
 
-	public final Facility getParentFacility() {
+	public final Facility getParent() {
 		return parent;
 	}
 
-	public final void setParentFacility(final Facility inFacility) {
-		parent = inFacility;
-	}
-
-	public final IDomainObject getParent() {
-		return parent;
-	}
-
-	public final void setParent(IDomainObject inParent) {
-		if (inParent instanceof Facility) {
-			setParentFacility((Facility) inParent);
-		}
+	public final void setParent(Facility inParent) {
+		parent = inParent;
 	}
 
 	public final List<? extends IDomainObject> getChildren() {

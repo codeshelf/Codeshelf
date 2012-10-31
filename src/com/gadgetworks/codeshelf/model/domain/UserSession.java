@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: UserSession.java,v 1.9 2012/10/21 02:02:17 jeffw Exp $
+ *  $Id: UserSession.java,v 1.10 2012/10/31 09:23:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -89,22 +89,12 @@ public class UserSession extends DomainObjectABC {
 		return "US";
 	}
 
-	public final User getParentUser() {
+	public final User getParent() {
 		return parent;
 	}
 
-	public final void setParentUser(final User inUser) {
-		parent = inUser;
-	}
-
-	public final IDomainObject getParent() {
-		return getParentUser();
-	}
-
-	public final void setParent(IDomainObject inParent) {
-		if (inParent instanceof User) {
-			setParentUser((User) inParent);
-		}
+	public final void setParent(User inParent) {
+		parent = inParent;
 	}
 
 	public final List<IDomainObject> getChildren() {

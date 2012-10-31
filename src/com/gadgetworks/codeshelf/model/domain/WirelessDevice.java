@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WirelessDevice.java,v 1.10 2012/10/21 02:02:17 jeffw Exp $
+ *  $Id: WirelessDevice.java,v 1.11 2012/10/31 09:23:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -161,22 +161,12 @@ public class WirelessDevice extends DomainObjectABC implements INetworkDevice {
 		return "W";
 	}
 
-	public final ControlGroup getParentControlGroup() {
+	public final ControlGroup getParent() {
 		return parent;
 	}
 
-	public final void setParentControlGroup(final ControlGroup inControlGroup) {
-		parent = inControlGroup;
-	}
-
-	public final IDomainObject getParent() {
-		return getParentControlGroup();
-	}
-
-	public final void setParent(IDomainObject inParent) {
-		if (inParent instanceof ControlGroup) {
-			setParentControlGroup((ControlGroup) inParent);
-		}
+	public final void setParent(ControlGroup inParent) {
+		parent = inParent;
 	}
 
 	public final List<IDomainObject> getChildren() {
@@ -258,7 +248,7 @@ public class WirelessDevice extends DomainObjectABC implements INetworkDevice {
 	public final short getStoredKvpCount() {
 		return (short) kvpMap.size();
 	}
- 
+
 	/* --------------------------------------------------------------------------
 	 * (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.controller.INetworkDevice#getHWDesc()

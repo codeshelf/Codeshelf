@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: AtopStreamProcessor.java,v 1.7 2012/09/08 03:03:23 jeffw Exp $
+ *  $Id: AtopStreamProcessor.java,v 1.8 2012/10/31 09:23:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.server.tags;
 
@@ -194,7 +194,7 @@ public final class AtopStreamProcessor {
 
 		PickTag pickTag = inCsCommand.getPickTag();
 		if (pickTag != null) {
-			ControlGroup controlGroup = pickTag.getParentControlGroup();
+			ControlGroup controlGroup = pickTag.getParent();
 			IControllerConnection connection = controlGroup.getControllerConnection();
 
 			if (connection != null) {

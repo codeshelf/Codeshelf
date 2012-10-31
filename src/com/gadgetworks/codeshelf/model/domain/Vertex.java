@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Vertex.java,v 1.14 2012/10/30 15:21:34 jeffw Exp $
+ *  $Id: Vertex.java,v 1.15 2012/10/31 09:23:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -98,12 +98,12 @@ public class Vertex extends DomainObjectTreeABC<LocationABC> {
 	}
 
 	public Vertex(final LocationABC inParentLocation, final String inLocationId, final PositionTypeEnum inPosType, final int inDrawOrder, final Double inPosX, final Double inPosY) {
-		setParentLocation(inParentLocation);
-		setPosType(inPosType);
-		setDrawOrder(inDrawOrder);
-		setPosX(inPosX);
-		setPosY(inPosY);
+		parent = inParentLocation;
 		setDomainId(inLocationId);
+		posType = inPosType;
+		drawOrder = inDrawOrder;
+		posX = inPosX;
+		posY = inPosY;
 	}
 
 	public final ITypedDao<Vertex> getDao() {
@@ -114,26 +114,12 @@ public class Vertex extends DomainObjectTreeABC<LocationABC> {
 		return "V";
 	}
 
-	public LocationABC getParent() {
+	public final LocationABC getParent() {
 		return parent;
 	}
 
-	@Override
-	public void setParent(LocationABC inParent) {
+	public final void setParent(LocationABC inParent) {
 		parent = inParent;
-	}
-
-	public final LocationABC getParentLocation() {
-		IDomainObject theParent = getParent();
-		if (theParent instanceof LocationABC) {
-			return (LocationABC) theParent;
-		} else {
-			return null;
-		}
-	}
-
-	public final void setParentLocation(final LocationABC inLocation) {
-		setParent(inLocation);
 	}
 
 	public final List<IDomainObject> getChildren() {

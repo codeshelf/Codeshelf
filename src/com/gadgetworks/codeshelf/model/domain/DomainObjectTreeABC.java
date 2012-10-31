@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DomainObjectTreeABC.java,v 1.1 2012/10/30 15:21:34 jeffw Exp $
+ *  $Id: DomainObjectTreeABC.java,v 1.2 2012/10/31 09:23:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -30,36 +30,12 @@ public abstract class DomainObjectTreeABC<P extends IDomainObject> extends Domai
 
 	private static final Log	LOGGER	= LogFactory.getLog(DomainObjectTreeABC.class);
 
-//	@NonNull
-//	@ManyToOne(optional = false)
-//	@Column(nullable = false)
-//	@JsonProperty
-	//	@Getter
-	//	@Setter
-//	private P					parent;
-
-	// --------------------------------------------------------------------------
-	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.IDomainObjectTree#getParent()
-	 */
-//	public final P getParent() {
-//		return parent;
-//	}
-
-	// --------------------------------------------------------------------------
-	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.IDomainObjectTree#setParent(com.gadgetworks.codeshelf.model.domain.IDomainObjectTree)
-	 */
-//	public final void setParent(P inParent) {
-//		parent = inParent;
-//	}
-
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.IDomainObject#getFullDomainId()
 	 */
 	@JsonProperty
-	public final String getFullDomainId() {
+	public String getFullDomainId() {
 		return getParentFullDomainId() + "." + getDomainId();
 	}
 
@@ -73,10 +49,10 @@ public abstract class DomainObjectTreeABC<P extends IDomainObject> extends Domai
 
 		IDomainObject theParent = getParent();
 		if (theParent != null) {
-			if (theParent instanceof IDomainObject) {
-				result = theParent.getDomainId();
-			} else if (theParent instanceof IDomainObjectTree) {
+			if (theParent instanceof IDomainObjectTree) {
 				result = ((IDomainObjectTree) theParent).getFullDomainId();
+			} else if (theParent instanceof IDomainObject) {
+				result = theParent.getDomainId();
 			}
 		}
 		return result;

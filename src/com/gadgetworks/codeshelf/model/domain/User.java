@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: User.java,v 1.9 2012/10/21 02:02:17 jeffw Exp $
+ *  $Id: User.java,v 1.10 2012/10/31 09:23:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -112,22 +112,12 @@ public class User extends DomainObjectABC {
 		return "U";
 	}
 
-	public final Organization getParentOrganization() {
+	public final Organization getParent() {
 		return parent;
 	}
 
-	public final void setParentOrganization(final Organization inOrganization) {
-		parent = inOrganization;
-	}
-
-	public final IDomainObject getParent() {
-		return getParentOrganization();
-	}
-
-	public final void setParent(IDomainObject inParent) {
-		if (inParent instanceof Organization) {
-			setParentOrganization((Organization) inParent);
-		}
+	public final void setParent(Organization inParent) {
+		parent = inParent;
 	}
 
 	public final List<? extends IDomainObject> getChildren() {

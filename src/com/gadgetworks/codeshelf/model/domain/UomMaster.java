@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: UomMaster.java,v 1.7 2012/10/30 15:21:34 jeffw Exp $
+ *  $Id: UomMaster.java,v 1.8 2012/10/31 09:23:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -68,22 +68,12 @@ public class UomMaster extends DomainObjectABC {
 		return "UOM";
 	}
 
-	public final Facility getParentFacility() {
+	public final Facility getParent() {
 		return parent;
 	}
 
-	public final void setParentFacility(final Facility inFacility) {
-		parent = inFacility;
-	}
-
-	public final IDomainObject getParent() {
-		return parent;
-	}
-
-	public final void setParent(IDomainObject inParent) {
-		if (inParent instanceof Facility) {
-			setParentFacility((Facility) inParent);
-		}
+	public final void setParent(Facility inParent) {
+		parent = inParent;
 	}
 
 	public final List<? extends IDomainObject> getChildren() {

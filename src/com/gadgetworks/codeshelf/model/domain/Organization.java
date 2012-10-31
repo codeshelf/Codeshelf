@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Organization.java,v 1.18 2012/10/30 15:21:34 jeffw Exp $
+ *  $Id: Organization.java,v 1.19 2012/10/31 09:23:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -136,7 +136,7 @@ public class Organization extends DomainObjectABC {
 	public final void createFacility(final String inDomainId, final String inDescription, final String inPosTypeByStr, final Double inPosx, final Double inPosY) {
 
 		Facility facility = new Facility();
-		facility.setParentOrganization(this);
+		facility.setParent(this);
 		facility.setDomainId(inDomainId);
 		facility.setDescription(inDescription);
 		facility.setPosTypeByStr(inPosTypeByStr);

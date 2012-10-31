@@ -204,7 +204,7 @@ public class GenericDaoTest {
 		organizationDao.store(organization1);
 
 		Facility facility = new Facility(0.0, 0.0);
-		facility.setParentOrganization(organization1);
+		facility.setParent(organization1);
 		facility.setDomainId(FACILITY_ID);
 		facility.setDescription(FACILITY_ID);
 		faciltyDao.store(facility);
@@ -219,9 +219,10 @@ public class GenericDaoTest {
 	@Test
 	public void testFindByDomainIdIncludeParentDomainId() {
 
-		String ORGANIZATION_ID = "FIND-BY-DOMAINID-INC";
-		String FACILITY_ID = "FIND-BY-DOMAINID-INC";
-		String AISLE_ID = "FIND-BY-DOMAINID-INC";
+		String ORGANIZATION_ID = "ORG-FIND-BY-DOMAINID-INC";
+		String FACILITY_ID = "FAC-FIND-BY-DOMAINID-INC";
+		String FACILITY2_ID = "FAC2-FIND-BY-DOMAINID-INC";
+		String AISLE_ID = "AISLE-FIND-BY-DOMAINID-INC";
 
 		OrganizationDao organizationDao = new OrganizationDao();
 		FacilityDao faciltyDao = new FacilityDao();
@@ -233,7 +234,7 @@ public class GenericDaoTest {
 		organizationDao.store(organization1);
 
 		Facility facility = new Facility(0.0, 0.0);
-		facility.setParentOrganization(organization1);
+		facility.setParent(organization1);
 		facility.setDomainId(FACILITY_ID);
 		facility.setDescription(FACILITY_ID);
 		faciltyDao.store(facility);
@@ -245,7 +246,13 @@ public class GenericDaoTest {
 		Aisle foundAisle = aisleDao.findByDomainId(facility, AISLE_ID);
 		Assert.assertNotNull(foundAisle);
 
-		foundAisle = aisleDao.findByDomainId(null, AISLE_ID);
+		facility = new Facility(0.0, 0.0);
+		facility.setParent(organization1);
+		facility.setDomainId(FACILITY2_ID);
+		facility.setDescription(FACILITY2_ID);
+		faciltyDao.store(facility);
+
+		foundAisle = aisleDao.findByDomainId(facility, AISLE_ID);
 		Assert.assertNull(foundAisle);
 	}
 

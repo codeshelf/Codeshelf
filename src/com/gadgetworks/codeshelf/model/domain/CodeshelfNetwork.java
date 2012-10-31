@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeshelfNetwork.java,v 1.9 2012/10/21 02:02:17 jeffw Exp $
+ *  $Id: CodeshelfNetwork.java,v 1.10 2012/10/31 09:23:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -46,7 +46,7 @@ import com.google.inject.Singleton;
 @Entity
 @Table(name = "CODESHELFNETWORK")
 @CacheStrategy
-@JsonAutoDetect(getterVisibility=Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class CodeShelfNetwork extends DomainObjectABC {
 
 	@Inject
@@ -133,22 +133,12 @@ public class CodeShelfNetwork extends DomainObjectABC {
 		return "NET";
 	}
 
-	public final Facility getParentFacility() {
+	public final IDomainObject getParent() {
 		return parent;
 	}
 
-	public final void setParentFacility(Facility inParentFacility) {
-		parent = inParentFacility;
-	}
-
-	public final IDomainObject getParent() {
-		return getParentFacility();
-	}
-
-	public final void setParent(IDomainObject inParent) {
-		if (inParent instanceof Facility) {
-			setParentFacility((Facility) inParent);
-		}
+	public final void setParent(Facility inParent) {
+		parent = inParent;
 	}
 
 	public final List<? extends IDomainObject> getChildren() {

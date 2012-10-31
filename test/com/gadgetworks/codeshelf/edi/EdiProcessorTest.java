@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiProcessorTest.java,v 1.4 2012/10/22 07:38:07 jeffw Exp $
+ *  $Id: EdiProcessorTest.java,v 1.5 2012/10/31 09:23:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -113,7 +113,7 @@ public class EdiProcessorTest {
 		organization.setOrganizationId("O1");
 
 		Facility facility = new Facility();
-		facility.setParentOrganization(organization);
+		facility.setParent(organization);
 		facility.setFacilityId("F1");
 		facility.addEdiService(ediServiceLinked);
 		facility.addEdiService(ediServiceUnlinked);

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: IWebSessionReqCmd.java,v 1.13 2012/10/11 02:42:39 jeffw Exp $
+ *  $Id: IWebSessionReqCmd.java,v 1.14 2012/10/31 09:23:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -27,7 +27,7 @@ public interface IWebSessionReqCmd extends IWebSessionCmd {
 
 	String	PERSISTENT_ID		= "persistentId";
 	String	CLASSNAME			= "className";
-	String	SHORT_DOMAIN_ID		= "shortDomainId";
+	String	SHORT_DOMAIN_ID		= "domainId";
 	String	DESC				= "description";
 	String	METHODNAME			= "methodName";
 	String	METHODARGS			= "methodArgs";

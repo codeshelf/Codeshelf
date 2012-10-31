@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiDocumentLocator.java,v 1.12 2012/10/30 15:21:34 jeffw Exp $
+ *  $Id: EdiDocumentLocator.java,v 1.13 2012/10/31 09:23:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -60,6 +60,7 @@ public class EdiDocumentLocator extends DomainObjectABC {
 	private static final Log		LOGGER	= LogFactory.getLog(EdiDocumentLocator.class);
 
 	// The owning EdiService.
+	// We prefer to use the abstract class here, but it's not currently possible with Ebean.
 	@Column(nullable = false)
 	@ManyToOne(optional = false, fetch = FetchType.LAZY)
 	private DropboxService			parent;
@@ -118,22 +119,12 @@ public class EdiDocumentLocator extends DomainObjectABC {
 		return DAO;
 	}
 
-	public final EdiServiceABC getParentEdiService() {
+	public final IDomainObject getParent() {
 		return parent;
 	}
 
-	public final void setParentEdiService(final DropboxService inEdiService) {
-		parent = inEdiService;
-	}
-
-	public final IDomainObject getParent() {
-		return getParentEdiService();
-	}
-
-	public final void setParent(IDomainObject inParent) {
-		if (inParent instanceof DropboxService) {
-			setParentEdiService((DropboxService) inParent);
-		}
+	public final void setParent(DropboxService inParent) {
+		parent = inParent;
 	}
 
 	public final List<? extends IDomainObject> getChildren() {
@@ -141,6 +132,6 @@ public class EdiDocumentLocator extends DomainObjectABC {
 	}
 
 	public final String getParentEdiServiceID() {
-		return getParentEdiService().getDomainId();
+		return parent.getDomainId();
 	}
 }

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: LocationABC.java,v 1.13 2012/10/30 15:21:34 jeffw Exp $
+ *  $Id: LocationABC.java,v 1.14 2012/10/31 09:23:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -110,7 +110,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	// The owning location.
 	@Column(nullable = false)
 	@ManyToOne(optional = true)
-	private LocationABC<P>				parent;
+	private Organization				parentOrganization;
 
 	// All of the vertices that define the location's footprint.
 	@OneToMany(mappedBy = "parent")
@@ -121,7 +121,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	@Getter
-	private Map<String, LocationABC>	locations	= new HashMap<String, LocationABC>();
+	private Map<String, SubLocationABC>	locations	= new HashMap<String, SubLocationABC>();
 
 	// The items stored in this location.
 	@OneToMany(mappedBy = "parent")
@@ -147,25 +147,15 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		posZ = inPosZ;
 	}
 
-	public final P getParent() {
-		return (P) parent;
+	public final List<SubLocationABC> getChildren() {
+		return new ArrayList<SubLocationABC>(locations.values());
 	}
 
-	public final void setParent(IDomainObject inParent) {
-		if (inParent instanceof LocationABC) {
-			parent = (LocationABC) inParent;
-		}
-	}
-
-	public final List<LocationABC> getChildren() {
-		return new ArrayList<LocationABC>(locations.values());
-	}
-
-	public final void addLocation(LocationABC inLocation) {
+	public final void addLocation(SubLocationABC inLocation) {
 		locations.put(inLocation.getDomainId(), inLocation);
 	}
 
-	public final LocationABC getLocation(String inLocationId) {
+	public final SubLocationABC getLocation(String inLocationId) {
 		return locations.get(inLocationId);
 	}
 

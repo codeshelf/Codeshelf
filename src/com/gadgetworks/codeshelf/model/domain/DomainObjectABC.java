@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DomainObjectABC.java,v 1.24 2012/10/30 15:21:34 jeffw Exp $
+ *  $Id: DomainObjectABC.java,v 1.25 2012/10/31 09:23:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -29,7 +29,6 @@ import org.codehaus.jackson.annotate.JsonPropertyOrder;
 import com.avaje.ebean.Ebean;
 import com.avaje.ebean.Query;
 import com.avaje.ebean.annotation.CacheStrategy;
-import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 
 // --------------------------------------------------------------------------
 /**
@@ -43,8 +42,8 @@ import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 @CacheStrategy
 @ToString
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
-@JsonPropertyOrder({ "shortDomainId", "fullDomainId" })
-public class DomainObjectABC implements IDomainObject {
+@JsonPropertyOrder({ "domainId", "fullDomainId" })
+public abstract class DomainObjectABC implements IDomainObject {
 
 	private static final Log	LOGGER	= LogFactory.getLog(DomainObjectABC.class);
 
@@ -64,13 +63,6 @@ public class DomainObjectABC implements IDomainObject {
 	@Getter
 	@Setter
 	private String				domainId;
-
-//	// The last sequence used to generate a sequence ID.
-//	@NonNull
-//	@Column(nullable = false)
-//	@Getter
-//	@Setter
-//	private Integer				lastDefaultSequenceId;
 
 	// This is not an application-editable field.
 	// It's for the private use of the ORM transaction system.
@@ -157,16 +149,4 @@ public class DomainObjectABC implements IDomainObject {
 		//query = query.setUseCache(true);
 		return query.findList();
 	}
-
-	@Override
-	public String getDefaultDomainIdPrefix() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public <T extends IDomainObject> ITypedDao<T> getDao() {
-		return null;
-	}
-
 }

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderImporterTest.java,v 1.6 2012/10/30 15:21:34 jeffw Exp $
+ *  $Id: OrderImporterTest.java,v 1.7 2012/10/31 09:23:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -58,7 +58,7 @@ public class OrderImporterTest {
 
 		Facility.DAO = new MockDao<Facility>();
 		Facility facility = new Facility();
-		facility.setParentOrganization(organization);
+		facility.setParent(organization);
 		facility.setDomainId("F1");
 
 		MockDao<OrderGroup> orderGroupDao = new MockDao<OrderGroup>();
@@ -104,7 +104,7 @@ public class OrderImporterTest {
 
 		Facility.DAO = new MockDao<Facility>();
 		Facility facility = new Facility();
-		facility.setParentOrganization(organization);
+		facility.setParent(organization);
 		facility.setDomainId("F1");
 
 		MockDao<OrderGroup> orderGroupDao = new MockDao<OrderGroup>();
@@ -155,8 +155,8 @@ public class OrderImporterTest {
 
 		MockDao<Facility> facilityDao = new MockDao<Facility>();
 		Facility facility = new Facility();
-		facility.setParentOrganization(organization);
-		facility.setDomainId("F!");
+		facility.setParent(organization);
+		facility.setDomainId("F1");
 
 		MockDao<OrderGroup> orderGroupDao = new MockDao<OrderGroup>();
 		MockDao<OrderHeader> orderHeaderDao = new MockDao<OrderHeader>();

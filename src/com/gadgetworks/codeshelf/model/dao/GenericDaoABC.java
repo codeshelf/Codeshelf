@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: GenericDaoABC.java,v 1.11 2012/10/30 15:21:34 jeffw Exp $
+ *  $Id: GenericDaoABC.java,v 1.12 2012/10/31 09:23:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -20,8 +20,10 @@ import org.apache.commons.logging.LogFactory;
 import com.avaje.ebean.Ebean;
 import com.avaje.ebean.Query;
 import com.avaje.ebean.bean.EntityBean;
+import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.model.domain.IDomainObjectTree;
+import com.gadgetworks.codeshelf.model.domain.Organization;
 
 /**
  * @author jeffw
@@ -128,9 +130,13 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 		try {
 			Query<T> query = Ebean.createQuery(getDaoClass());
 			if (inParentObject != null) {
-				query.where().eq(IDomainObject.ID_COLUMN_NAME, effectiveId).eq(IDomainObjectTree.PARENT_ID_COLUMN_NAME, inParentObject.getPersistentId());
+				if (getClass().equals(Facility.class)) {
+					query.where().eq(IDomainObject.ID_PROPERTY, effectiveId).eq(IDomainObjectTree.PARENT_ORG_PROPERTY, inParentObject.getPersistentId());
+				} else {
+					query.where().eq(IDomainObject.ID_PROPERTY, effectiveId).eq(IDomainObjectTree.PARENT_PROPERTY, inParentObject.getPersistentId());
+				}
 			} else {
-				query.where().eq(IDomainObject.ID_COLUMN_NAME, effectiveId);
+				query.where().eq(IDomainObject.ID_PROPERTY, effectiveId);
 			}
 			//query = query.setUseCache(true);
 			result = query.findUnique();

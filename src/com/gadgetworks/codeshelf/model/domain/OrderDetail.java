@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderDetail.java,v 1.10 2012/10/30 15:21:34 jeffw Exp $
+ *  $Id: OrderDetail.java,v 1.11 2012/10/31 09:23:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -119,15 +119,7 @@ public class OrderDetail extends DomainObjectABC {
 		return "PS";
 	}
 
-	public final OrderHeader getParentOrderHeader() {
-		return parent;
-	}
-
-	public final void setParentOrderHeader(final OrderHeader inOrder) {
-		parent = inOrder;
-	}
-
-	public String getOrderDetailId() {
+	public final String getOrderDetailId() {
 		return getDomainId();
 	}
 
@@ -136,13 +128,11 @@ public class OrderDetail extends DomainObjectABC {
 	}
 
 	public final IDomainObject getParent() {
-		return getParentOrderHeader();
+		return parent;
 	}
 
-	public final void setParent(IDomainObject inParent) {
-		if (inParent instanceof OrderHeader) {
-			setParentOrderHeader((OrderHeader) inParent);
-		}
+	public final void setParent(OrderHeader inParent) {
+		parent = inParent;
 	}
 
 	public final List<IDomainObject> getChildren() {
@@ -150,13 +140,13 @@ public class OrderDetail extends DomainObjectABC {
 	}
 
 	public final String getParentOrderID() {
-		return getParentOrderHeader().getDomainId();
+		return parent.getDomainId();
 	}
-	
+
 	public final String getUomMasterId() {
 		return getUomMaster().getDomainId();
 	}
-	
+
 	public final String getItemMasterId() {
 		return getItemMaster().getDomainId();
 	}

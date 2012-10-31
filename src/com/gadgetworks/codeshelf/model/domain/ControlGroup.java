@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ControlGroup.java,v 1.9 2012/10/21 02:02:17 jeffw Exp $
+ *  $Id: ControlGroup.java,v 1.10 2012/10/31 09:23:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -119,22 +119,12 @@ public class ControlGroup extends DomainObjectABC {
 		return "CG";
 	}
 
-	public final CodeShelfNetwork getParentCodeShelfNetwork() {
+	public final CodeShelfNetwork getParent() {
 		return parent;
 	}
-	
-	public final void setParentCodeShelfNetwork(CodeShelfNetwork inParentCodeShelfNetwork) {
-		parent = inParentCodeShelfNetwork;
-	}
 
-	public final IDomainObject getParent() {
-		return getParentCodeShelfNetwork();
-	}
-
-	public final void setParent(IDomainObject inParent) {
-		if (inParent instanceof CodeShelfNetwork) {
-			setParentCodeShelfNetwork((CodeShelfNetwork) inParent);
-		}
+	public final void setParent(CodeShelfNetwork inParent) {
+			parent = inParent;
 	}
 
 	public final List<? extends IDomainObject> getChildren() {

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: AtopControllerConnection.java,v 1.11 2012/10/30 15:21:34 jeffw Exp $
+ *  $Id: AtopControllerConnection.java,v 1.12 2012/10/31 09:23:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.server.tags;
 
@@ -131,7 +131,7 @@ public final class AtopControllerConnection implements IControllerConnection {
 					} else {
 						// Unicast the command to a single tag.
 						// Map to a set of commands for the CodeShelf network.
-						CodeShelfNetwork network = mControlGroup.getParentCodeShelfNetwork();
+						CodeShelfNetwork network = mControlGroup.getParent();
 						IWirelessInterface wirelessInterface = network.getWirelessInterface();
 						csCommand.setDstAddr(tag.getNetAddress());
 						wirelessInterface.sendCommand(csCommand);

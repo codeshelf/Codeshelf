@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: InventoryImporterTest.java,v 1.4 2012/10/30 15:21:34 jeffw Exp $
+ *  $Id: InventoryImporterTest.java,v 1.5 2012/10/31 09:23:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -51,7 +51,7 @@ public class InventoryImporterTest {
 
 		Facility.DAO = new MockDao<Facility>();
 		Facility facility = new Facility();
-		facility.setParentOrganization(organization);
+		facility.setParent(organization);
 		facility.setDomainId("F1");
 
 //		LocationABC.DAO = new MockDao<LocationABC>();

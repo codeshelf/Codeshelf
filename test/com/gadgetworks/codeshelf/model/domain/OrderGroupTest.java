@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderGroupTest.java,v 1.1 2012/10/14 01:05:22 jeffw Exp $
+ *  $Id: OrderGroupTest.java,v 1.2 2012/10/31 09:23:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -27,16 +27,16 @@ public class OrderGroupTest {
 		organization.setOrganizationId("O1");
 		
 		Facility facility = new Facility();
-		facility.setParentOrganization(organization);
+		facility.setParent(organization);
 		facility.setFacilityId("F1");
 		
 		OrderGroup orderGroup = new OrderGroup();
-		orderGroup.setParentFacility(facility);
+		orderGroup.setParent(facility);
 		orderGroup.setOrderGroupId("OG1");
 		orderGroup.DAO.store(orderGroup);
 		
 		OrderHeader order1 = new OrderHeader();
-		order1.setParentFacility(facility);
+		order1.setParent(facility);
 		order1.setOrderId("1");
 		OrderHeader.DAO.store(order1);
 		
@@ -54,7 +54,7 @@ public class OrderGroupTest {
 		orderGroup.release();
 		
 		OrderHeader order2 = new OrderHeader();
-		order2.setParentFacility(facility);
+		order2.setParent(facility);
 		order2.setOrderId("2");
 		OrderHeader.DAO.store(order2);
 		
@@ -77,15 +77,15 @@ public class OrderGroupTest {
 		organization.setOrganizationId("O1");
 		
 		Facility facility = new Facility();
-		facility.setParentOrganization(organization);
+		facility.setParent(organization);
 		facility.setFacilityId("F1");
 		
 		OrderGroup orderGroup = new OrderGroup();
-		orderGroup.setParentFacility(facility);
+		orderGroup.setParent(facility);
 		orderGroup.setOrderGroupId("OG1");
 		
 		OrderHeader order1 = new OrderHeader();
-		order1.setParentFacility(facility);
+		order1.setParent(facility);
 		order1.setOrderId("1");
 		
 		orderGroup.addOrderHeader(order1);

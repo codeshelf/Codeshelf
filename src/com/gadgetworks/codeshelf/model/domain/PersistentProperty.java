@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: PersistentProperty.java,v 1.12 2012/10/30 15:21:34 jeffw Exp $
+ *  $Id: PersistentProperty.java,v 1.13 2012/10/31 09:23:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -49,7 +49,7 @@ import com.google.inject.Singleton;
 @DiscriminatorValue("PROP")
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 @ToString
-public class PersistentProperty<T extends DomainObjectABC> extends DomainObjectTreeABC<Organization> {
+public class PersistentProperty extends DomainObjectTreeABC<Organization> {
 
 	@Inject
 	public static ITypedDao<PersistentProperty>	DAO;
@@ -110,19 +110,6 @@ public class PersistentProperty<T extends DomainObjectABC> extends DomainObjectT
 
 	public final void setParent(Organization inParent) {
 		parent = inParent;
-	}
-
-	public final Organization getParentOrganization() {
-		IDomainObject theParent = getParent();
-		if (theParent instanceof Organization) {
-			return (Organization) theParent;
-		} else {
-			return null;
-		}
-	}
-
-	public final void setParentOrganization(final Organization inOrganization) {
-		setParent(inOrganization);
 	}
 
 	public final List<IDomainObject> getChildren() {

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ControllerABC.java,v 1.16 2012/10/13 22:14:24 jeffw Exp $
+ *  $Id: ControllerABC.java,v 1.17 2012/10/31 09:23:59 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.controller;
@@ -249,7 +249,7 @@ public abstract class ControllerABC implements IController {
 	 */
 	public final byte getPreferredChannel() {
 		byte result = 0;
-		PersistentProperty preferredChannelProp = PersistentProperty.DAO.findByDomainId(mFacility.getParentOrganization(), PersistentProperty.FORCE_CHANNEL);
+		PersistentProperty preferredChannelProp = PersistentProperty.DAO.findByDomainId(mFacility.getParent(), PersistentProperty.FORCE_CHANNEL);
 		if (preferredChannelProp != null) {
 			if (ControllerABC.NO_PREFERRED_CHANNEL_TEXT.equals(preferredChannelProp.getCurrentValueAsStr())) {
 				result = ControllerABC.NO_PREFERRED_CHANNEL;

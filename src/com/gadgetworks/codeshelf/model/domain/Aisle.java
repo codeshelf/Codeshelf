@@ -1,13 +1,15 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Aisle.java,v 1.13 2012/10/30 15:21:34 jeffw Exp $
+ *  $Id: Aisle.java,v 1.14 2012/10/31 09:23:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.Table;
+
+import lombok.ToString;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -35,7 +37,8 @@ import com.google.inject.Singleton;
 @DiscriminatorValue("AISLE")
 @CacheStrategy
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
-public class Aisle extends LocationABC<Facility> {
+@ToString
+public class Aisle extends SubLocationABC<Facility> {
 
 	@Inject
 	public static ITypedDao<Aisle>	DAO;
@@ -53,10 +56,6 @@ public class Aisle extends LocationABC<Facility> {
 		super(PositionTypeEnum.METERS_FROM_PARENT, inPosX, inPosY);
 		setParent(inParentFacility);
 		setDomainId(inAisleId);
-	}
-
-	public final void setParentFacility(final Facility inParentFacility) {
-		setParent(inParentFacility);
 	}
 
 	public final ITypedDao<Aisle> getDao() {

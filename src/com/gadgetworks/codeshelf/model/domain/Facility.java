@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.33 2012/10/30 15:21:34 jeffw Exp $
+ *  $Id: Facility.java,v 1.34 2012/10/31 09:23:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -69,6 +69,10 @@ public class Facility extends LocationABC<Organization> {
 	@ManyToOne(optional = false)
 	private Organization				parentOrganization;
 
+	@Column(nullable = false)
+	@ManyToOne(optional = false)
+	private Facility					parent;
+
 	@OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
 	@Getter
 	private List<Aisle>					aisles			= new ArrayList<Aisle>();
@@ -110,9 +114,6 @@ public class Facility extends LocationABC<Organization> {
 	private Map<String, UomMaster>		uomMasters		= new HashMap<String, UomMaster>();
 
 	public Facility() {
-		// Facilities have no parent location, but we don't want to allow ANY location to not have a parent.
-		// So in this case we make the facility its own parent.  It's also a way to know when we've topped-out in the location tree.
-		setParent(this);
 		orderHeaders = new ArrayList<OrderHeader>();
 		containerKinds = new HashMap<String, ContainerKind>();
 		containers = new HashMap<String, Container>();
@@ -120,9 +121,6 @@ public class Facility extends LocationABC<Organization> {
 
 	public Facility(final Double inPosX, final Double inPosY) {
 		super(PositionTypeEnum.GPS, inPosX, inPosY);
-		// Facilities have no parent location, but we don't want to allow ANY location to not have a parent.
-		// So in this case we make the facility its own parent.  It's also a way to know when we've topped-out in the location tree.
-		setParent(this);
 	}
 
 	public final String getDefaultDomainIdPrefix() {
@@ -133,19 +131,26 @@ public class Facility extends LocationABC<Organization> {
 		return DAO;
 	}
 
-	public final Organization getParentOrganization() {
+	@Override
+	public final String getFullDomainId() {
+		return parentOrganization.getDomainId() + "." + getDomainId();
+	}
+
+	public final Organization getParent() {
 		return parentOrganization;
 	}
 
-	public final void setParentOrganization(final Organization inOrganization) {
-		parentOrganization = inOrganization;
+	public final void setParent(Organization inParentOrganization) {
+		parentOrganization = inParentOrganization;
+		// There's no way in Ebean to enforce non-nullability and foreign key constraints in a tree of like-class objects.
+		// So the top-level location has to be its own parent.  (Otherwise we have forego the constraints.)
+		parent = this;
 	}
 
 	public final String getParentOrganizationID() {
 		String result = "";
-		Organization organization = getParentOrganization();
-		if (organization != null) {
-			result = organization.getDomainId();
+		if (parentOrganization != null) {
+			result = parentOrganization.getDomainId();
 		}
 		return result;
 	}
@@ -348,7 +353,7 @@ public class Facility extends LocationABC<Organization> {
 	public final void createVertex(final String inDomainId, final String inPosTypeByStr, final Double inPosX, final Double inPosY, final Integer inDrawOrder) {
 
 		Vertex vertex = new Vertex();
-		vertex.setParentLocation(this);
+		vertex.setParent(this);
 		vertex.setDomainId(inDomainId);
 		vertex.setPosTypeByStr(inPosTypeByStr);
 		vertex.setPosX(inPosX);
@@ -413,7 +418,7 @@ public class Facility extends LocationABC<Organization> {
 		ContainerKind result = null;
 
 		result = new ContainerKind();
-		result.setParentFacility(this);
+		result.setParent(this);
 		result.setDomainId(inDomainId);
 		result.setLengthMeters(inLengthMeters);
 		result.setWidthMeters(inWidthMeters);
@@ -467,4 +472,5 @@ public class Facility extends LocationABC<Organization> {
 
 		return result;
 	}
+
 }

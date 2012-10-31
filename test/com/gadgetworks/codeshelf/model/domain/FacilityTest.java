@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: FacilityTest.java,v 1.3 2012/10/30 15:21:34 jeffw Exp $
+ *  $Id: FacilityTest.java,v 1.4 2012/10/31 09:23:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -31,7 +31,7 @@ public class FacilityTest {
 		Organization.DAO.store(organization);
 
 		Facility facility = new Facility();
-		facility.setParentOrganization(organization);
+		facility.setParent(organization);
 		facility.setFacilityId("F1");
 		facility.createAisle("TEST", 1.0, 1.0, 2.0, 2.0, 2.0, 2, 5, true, true);
 		Facility.DAO.store(facility);

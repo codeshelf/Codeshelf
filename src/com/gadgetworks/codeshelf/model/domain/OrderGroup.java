@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderGroup.java,v 1.10 2012/10/30 15:21:34 jeffw Exp $
+ *  $Id: OrderGroup.java,v 1.11 2012/10/31 09:23:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -105,25 +105,15 @@ public class OrderGroup extends DomainObjectABC {
 		return "P";
 	}
 
-	public final Facility getParentFacility() {
+	public final Facility getParent() {
 		return parent;
 	}
 
-	public final void setParentFacility(final Facility inFacility) {
-		parent = inFacility;
+	public final void setParent(Facility inParent) {
+		parent = inParent;
 	}
 
-	public final IDomainObject getParent() {
-		return parent;
-	}
-
-	public final void setParent(IDomainObject inParent) {
-		if (inParent instanceof Facility) {
-			setParentFacility((Facility) inParent);
-		}
-	}
-
-	public String getOrderGroupId() {
+	public final String getOrderGroupId() {
 		return getDomainId();
 	}
 

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CsvImporter.java,v 1.6 2012/10/30 15:21:34 jeffw Exp $
+ *  $Id: CsvImporter.java,v 1.7 2012/10/31 09:23:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -166,7 +166,7 @@ public class CsvImporter implements ICsvImporter {
 		result = inFacility.findOrderGroup(inCsvImportBean.getOrderGroupId());
 		if ((result == null) && (inCsvImportBean.getOrderGroupId() != null) && (inCsvImportBean.getOrderGroupId().length() > 0)) {
 			result = new OrderGroup();
-			result.setParentFacility(inFacility);
+			result.setParent(inFacility);
 			result.setOrderGroupId(inCsvImportBean.getOrderGroupId());
 			result.setStatusEnum(OrderStatusEnum.CREATED);
 			inFacility.addOrderGroup(result);
@@ -195,7 +195,7 @@ public class CsvImporter implements ICsvImporter {
 
 			if (result == null) {
 				result = new Container();
-				result.setParentFacility(inFacility);
+				result.setParent(inFacility);
 				result.setContainerId(inCsvImportBean.getPreAssignedContainerId());
 				result.setKind(inFacility.getContainerKind(ContainerKind.DEFAULT_CONTAINER_KIND));
 				inFacility.addContainer(result);
@@ -224,7 +224,7 @@ public class CsvImporter implements ICsvImporter {
 
 		if (result == null) {
 			result = new OrderHeader();
-			result.setParentFacility(inFacility);
+			result.setParent(inFacility);
 			result.setDomainId(inCsvImportBean.getOrderId());
 			result.setStatusEnum(OrderStatusEnum.CREATED);
 
@@ -262,7 +262,7 @@ public class CsvImporter implements ICsvImporter {
 		if (result == null) {
 
 			result = new ItemMaster();
-			result.setParentFacility(inFacility);
+			result.setParent(inFacility);
 			result.setItemMasterId(inItemMasterId);
 			result.setStandardUom(inUomMaster);
 			inFacility.addItemMaster(result);
@@ -289,7 +289,7 @@ public class CsvImporter implements ICsvImporter {
 
 		if (result == null) {
 			result = new UomMaster();
-			result.setParentFacility(inFacility);
+			result.setParent(inFacility);
 			result.setUomMasterId(inUomId);
 			inFacility.addUomMaster(result);
 
@@ -320,7 +320,7 @@ public class CsvImporter implements ICsvImporter {
 		result = inOrder.findOrderDetail(inCsvImportBean.getOrderDetailId());
 		if (result == null) {
 			result = new OrderDetail();
-			result.setParentOrderHeader(inOrder);
+			result.setParent(inOrder);
 			result.setDomainId(inCsvImportBean.getOrderDetailId());
 			result.setStatusEnum(OrderStatusEnum.CREATED);
 
@@ -360,7 +360,7 @@ public class CsvImporter implements ICsvImporter {
 		result = location.getItem(inCsvImportBean.getItemId());
 		if ((result == null) && (inCsvImportBean.getItemId() != null) && (inCsvImportBean.getItemId().length() > 0)) {
 			result = new Item();
-			result.setParentLocation(location);
+			result.setParent(location);
 			result.setItemMaster(inItemMaster);
 			result.setItemId(inCsvImportBean.getItemId());
 			result.setUomMaster(inUomMaster);

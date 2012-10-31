@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ContainerKind.java,v 1.5 2012/10/30 15:21:34 jeffw Exp $
+ *  $Id: ContainerKind.java,v 1.6 2012/10/31 09:23:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -110,22 +110,12 @@ public class ContainerKind extends DomainObjectABC {
 		return "P";
 	}
 
-	public final Facility getParentFacility() {
-		return parent;
-	}
-
-	public final void setParentFacility(final Facility inFacility) {
-		parent = inFacility;
-	}
-
 	public final IDomainObject getParent() {
 		return parent;
 	}
 
-	public final void setParent(IDomainObject inParent) {
-		if (inParent instanceof Facility) {
-			setParentFacility((Facility) inParent);
-		}
+	public final void setParent(Facility inParent) {
+		parent = inParent;
 	}
 
 	public final List<IDomainObject> getChildren() {

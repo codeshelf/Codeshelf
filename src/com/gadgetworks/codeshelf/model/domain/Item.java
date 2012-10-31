@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Item.java,v 1.9 2012/10/30 15:21:34 jeffw Exp $
+ *  $Id: Item.java,v 1.10 2012/10/31 09:23:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -93,10 +93,6 @@ public class Item extends DomainObjectABC {
 		return "IT";
 	}
 
-	public final LocationABC getParentLocation() {
-		return parent;
-	}
-
 	public final String getItemsId() {
 		return getDomainId();
 	}
@@ -105,18 +101,12 @@ public class Item extends DomainObjectABC {
 		setDomainId(inItemId);
 	}
 
-	public final void setParentLocation(final LocationABC inLocation) {
-		parent = inLocation;
+	public final LocationABC getParent() {
+		return parent;
 	}
 
-	public final IDomainObject getParent() {
-		return getParentLocation();
-	}
-
-	public final void setParent(IDomainObject inParent) {
-		if (inParent instanceof LocationABC) {
-			setParentLocation((LocationABC) inParent);
-		}
+	public final void setParent(LocationABC inParent) {
+		parent = inParent;
 	}
 
 	public final List<IDomainObject> getChildren() {
