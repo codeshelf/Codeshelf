@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: LocationABC.java,v 1.15 2012/11/02 03:00:30 jeffw Exp $
+ *  $Id: LocationABC.java,v 1.16 2012/11/02 20:57:13 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -117,6 +117,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	// All of the vertices that define the location's footprint.
 	@OneToMany(mappedBy = "parent")
 	@Getter
+	@Setter
 	private List<Vertex>				vertices	= new ArrayList<Vertex>();
 
 	// The child locations.

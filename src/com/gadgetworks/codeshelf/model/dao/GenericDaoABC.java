@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: GenericDaoABC.java,v 1.13 2012/10/31 09:30:56 jeffw Exp $
+ *  $Id: GenericDaoABC.java,v 1.14 2012/11/02 20:57:13 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -213,8 +213,10 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 				privateBroadcastUpdate(inDomainObject, changedProps);
 			}
 		} catch (OptimisticLockException e) {
+			Ebean.refresh(inDomainObject);
+			store(inDomainObject);
 			LOGGER.error("", e);
-			throw new DaoException(e.getMessage());
+			//throw new DaoException(e.getMessage());
 		}
 	}
 

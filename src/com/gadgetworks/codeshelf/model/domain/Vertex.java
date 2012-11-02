@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Vertex.java,v 1.16 2012/11/02 03:00:30 jeffw Exp $
+ *  $Id: Vertex.java,v 1.17 2012/11/02 20:57:13 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -15,6 +15,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.Setter;
 
 import org.apache.commons.logging.Log;
@@ -63,12 +64,20 @@ public class Vertex extends DomainObjectTreeABC<LocationABC> {
 	@ManyToOne(optional = false)
 	private LocationABC			parent;
 
-	// The Y position.
-	@Embedded
+	@NonNull
 	@Getter
 	@Setter
-	@JsonProperty
-	private Point				point;
+	private PositionTypeEnum	posTypeEnum;
+
+	@NonNull
+	@Getter
+	@Setter
+	private Double				posX;
+
+	@NonNull
+	@Getter
+	@Setter
+	private Double				posY;
 
 	// The vertex order/position (zero-based).
 	@Column(nullable = false)
@@ -84,7 +93,7 @@ public class Vertex extends DomainObjectTreeABC<LocationABC> {
 	public Vertex(final LocationABC inParentLocation, final String inLocationId, final int inDrawOrder, final Point inPoint) {
 		parent = inParentLocation;
 		setDomainId(inLocationId);
-		point = inPoint;
+		posTypeEnum = inPoint.getPosTypeEnum();
 		drawOrder = inDrawOrder;
 	}
 
@@ -108,27 +117,9 @@ public class Vertex extends DomainObjectTreeABC<LocationABC> {
 		return new ArrayList<IDomainObject>();
 	}
 
-	public final PositionTypeEnum getPosType() {
-		return point.getPosTypeEnum();
-	}
-
-	public final void setPosType(final PositionTypeEnum inPosType) {
-		point.setPosTypeEnum(inPosType);
-	}
-
-	public final Double getPosX() {
-		return point.getX();
-	}
-
-	public final void setPosX(final Double inPosX) {
-		point.setX(inPosX);
-	}
-
-	public final Double getPosY() {
-		return point.getY();
-	}
-
-	public final void setPosY(final Double inPosY) {
-		point.setY(inPosY);
+	public final void setPoint(final Point inPoint) {
+		posTypeEnum = inPoint.getPosTypeEnum();
+		posX = inPoint.getX();
+		posY = inPoint.getY();
 	}
 }

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: H2SchemaManager.java,v 1.54 2012/11/02 03:00:30 jeffw Exp $
+ *  $Id: H2SchemaManager.java,v 1.55 2012/11/02 20:57:13 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -541,12 +541,12 @@ public final class H2SchemaManager implements ISchemaManager {
 		result &= createTable("PATHSEGMENT", //
 			"DESCRIPTION VARCHAR(64) NOT NULL, " //
 					+ "ASSOCIATEDLOCATION_PERSISTENTID BIGINT NOT NULL, " //
-					+ "HEAD_POSTYPEENUM VARCHAR(16) NOT NULL, " //
-					+ "HEAD_X DOUBLE NOT NULL, " //
-					+ "HEAD_Y DOUBLE NOT NULL, " //
-					+ "TAIL_POSTYPEENUM VARCHAR(16) NOT NULL, " //
-					+ "TAIL_X DOUBLE NOT NULL, " //
-					+ "TAIL_Y DOUBLE NOT NULL " //
+					+ "HEADPOSTYPEENUM VARCHAR(16) NOT NULL, " //
+					+ "HEADPOSX DOUBLE NOT NULL, " //
+					+ "HEADPOSY DOUBLE NOT NULL, " //
+					+ "TAILPOSTYPEENUM VARCHAR(16) NOT NULL, " //
+					+ "TAILPOSX DOUBLE NOT NULL, " //
+					+ "TAILPOSY DOUBLE NOT NULL " //
 		);
 
 		// PersistentProperty
@@ -577,8 +577,8 @@ public final class H2SchemaManager implements ISchemaManager {
 		// Vertex
 		result &= createTable("VERTEX", //
 			"POSTYPEENUM VARCHAR(16) NOT NULL, " //
-					+ "X DOUBLE NOT NULL, " //
-					+ "Y DOUBLE NOT NULL, " //
+					+ "POSX DOUBLE NOT NULL, " //
+					+ "POSY DOUBLE NOT NULL, " //
 					+ "DRAWORDER INT NOT NULL " //
 		);
 

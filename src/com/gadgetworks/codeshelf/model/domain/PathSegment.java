@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: PathSegment.java,v 1.15 2012/11/02 03:00:30 jeffw Exp $
+ *  $Id: PathSegment.java,v 1.16 2012/11/02 20:57:13 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -75,24 +75,36 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 	private LocationABC			associatedLocation;
 
 	// The head's X position.
-	@Embedded
 	@NonNull
 	@Getter
 	@Setter
-	@JsonProperty
-	@AttributeOverrides({ @AttributeOverride(name = "posTypeEnum", column = @Column(name = "HEAD_POSTYPEENUM")), @AttributeOverride(name = "x", column = @Column(name = "HEAD_X")),
-			@AttributeOverride(name = "y", column = @Column(name = "HEAD_Y")) })
-	private Point				head;
+	private PositionTypeEnum	headPosTypeEnum;
+
+	@NonNull
+	@Getter
+	@Setter
+	private Double				headPosX;
+
+	@NonNull
+	@Getter
+	@Setter
+	private Double				headPosY;
 
 	// The tail's Y position.
-	@Embedded
 	@NonNull
 	@Getter
 	@Setter
-	@JsonProperty
-	@AttributeOverrides({ @AttributeOverride(name = "posTypeEnum", column = @Column(name = "TAIL_POSTYPEENUM")), @AttributeOverride(name = "x", column = @Column(name = "TAIL_X")),
-			@AttributeOverride(name = "y", column = @Column(name = "TAIL_Y")) })
-	private Point				tail;
+	private PositionTypeEnum	tailPosTypeEnum;
+
+	@NonNull
+	@Getter
+	@Setter
+	private Double				tailPosX;
+
+	@NonNull
+	@Getter
+	@Setter
+	private Double				tailPosY;
 
 	public PathSegment() {
 
@@ -101,8 +113,12 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 	public PathSegment(final Path inParentPath, final LocationABC<Facility> inLocation, final PositionTypeEnum inPosType, final Point inHead, final Point inTail) {
 
 		associatedLocation = inLocation;
-		head = inHead;
-		tail = inTail;
+		headPosTypeEnum = inHead.getPosTypeEnum();
+		headPosX = inHead.getX();
+		headPosY = inHead.getY();
+		tailPosTypeEnum = inTail.getPosTypeEnum();
+		tailPosX = inTail.getX();
+		tailPosY = inTail.getY();
 	}
 
 	public final ITypedDao<PathSegment> getDao() {
@@ -127,6 +143,18 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 
 	public final String getParentPathID() {
 		return parent.getDomainId();
+	}
+	
+	public final void setHeadPoint(final Point inPoint) {
+		headPosTypeEnum = inPoint.getPosTypeEnum();
+		headPosX = inPoint.getX();
+		headPosY = inPoint.getY();
+	}
+
+	public final void setTailPoint(final Point inPoint) {
+		tailPosTypeEnum = inPoint.getPosTypeEnum();
+		tailPosX = inPoint.getX();
+		tailPosY = inPoint.getY();
 	}
 
 }

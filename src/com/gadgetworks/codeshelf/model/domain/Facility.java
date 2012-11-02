@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.35 2012/11/02 03:00:30 jeffw Exp $
+ *  $Id: Facility.java,v 1.36 2012/11/02 20:57:13 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -413,8 +413,8 @@ public class Facility extends LocationABC<Organization> {
 		PathSegment pathSegment = new PathSegment();
 		pathSegment.setParent(inPath);
 		pathSegment.setDomainId(getDefaultDomainIdPrefix() + "1");
-		pathSegment.setHead(inHead);
-		pathSegment.setTail(inTail);
+		pathSegment.setHeadPoint(inHead);
+		pathSegment.setTailPoint(inTail);
 		try {
 			PathSegment.DAO.store(pathSegment);
 		} catch (DaoException e) {
