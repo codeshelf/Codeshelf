@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Vertex.java,v 1.15 2012/10/31 09:23:59 jeffw Exp $
+ *  $Id: Vertex.java,v 1.16 2012/11/02 03:00:30 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -9,9 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.persistence.Column;
+import javax.persistence.Embedded;
 import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
@@ -64,27 +63,12 @@ public class Vertex extends DomainObjectTreeABC<LocationABC> {
 	@ManyToOne(optional = false)
 	private LocationABC			parent;
 
-	// The position type (GPS, METERS, etc.).
-	@Column(nullable = false)
-	@Enumerated(value = EnumType.STRING)
-	@Getter
-	@Setter
-	@JsonProperty
-	private PositionTypeEnum	posType;
-
-	// The X position.
-	@Column(nullable = false)
-	@Getter
-	@Setter
-	@JsonProperty
-	private Double				posX;
-
 	// The Y position.
-	@Column(nullable = false)
+	@Embedded
 	@Getter
 	@Setter
 	@JsonProperty
-	private Double				posY;
+	private Point				point;
 
 	// The vertex order/position (zero-based).
 	@Column(nullable = false)
@@ -97,13 +81,11 @@ public class Vertex extends DomainObjectTreeABC<LocationABC> {
 
 	}
 
-	public Vertex(final LocationABC inParentLocation, final String inLocationId, final PositionTypeEnum inPosType, final int inDrawOrder, final Double inPosX, final Double inPosY) {
+	public Vertex(final LocationABC inParentLocation, final String inLocationId, final int inDrawOrder, final Point inPoint) {
 		parent = inParentLocation;
 		setDomainId(inLocationId);
-		posType = inPosType;
+		point = inPoint;
 		drawOrder = inDrawOrder;
-		posX = inPosX;
-		posY = inPosY;
 	}
 
 	public final ITypedDao<Vertex> getDao() {
@@ -126,8 +108,27 @@ public class Vertex extends DomainObjectTreeABC<LocationABC> {
 		return new ArrayList<IDomainObject>();
 	}
 
-	public final void setPosTypeByStr(String inPosTypeStr) {
-		setPosType(PositionTypeEnum.valueOf(inPosTypeStr));
+	public final PositionTypeEnum getPosType() {
+		return point.getPosTypeEnum();
 	}
 
+	public final void setPosType(final PositionTypeEnum inPosType) {
+		point.setPosTypeEnum(inPosType);
+	}
+
+	public final Double getPosX() {
+		return point.getX();
+	}
+
+	public final void setPosX(final Double inPosX) {
+		point.setX(inPosX);
+	}
+
+	public final Double getPosY() {
+		return point.getY();
+	}
+
+	public final void setPosY(final Double inPosY) {
+		point.setY(inPosY);
+	}
 }

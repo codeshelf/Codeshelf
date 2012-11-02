@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: LocationABC.java,v 1.14 2012/10/31 09:23:59 jeffw Exp $
+ *  $Id: LocationABC.java,v 1.15 2012/11/02 03:00:30 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -110,6 +110,8 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	// The owning location.
 	@Column(nullable = false)
 	@ManyToOne(optional = true)
+	@Getter
+	@Setter
 	private Organization				parentOrganization;
 
 	// All of the vertices that define the location's footprint.

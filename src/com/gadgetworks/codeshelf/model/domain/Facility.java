@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.34 2012/10/31 09:23:59 jeffw Exp $
+ *  $Id: Facility.java,v 1.35 2012/11/02 03:00:30 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -64,10 +64,11 @@ public class Facility extends LocationABC<Organization> {
 
 	private static final Log			LOGGER			= LogFactory.getLog(Facility.class);
 
-	// The owning organization.
-	@Column(nullable = false)
-	@ManyToOne(optional = false)
-	private Organization				parentOrganization;
+//	// The owning organization.
+//	@Column(nullable = false)
+//	@ManyToOne(optional = false)
+//	@Getter
+//	private Organization				parentOrganization;
 
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
@@ -133,15 +134,15 @@ public class Facility extends LocationABC<Organization> {
 
 	@Override
 	public final String getFullDomainId() {
-		return parentOrganization.getDomainId() + "." + getDomainId();
+		return getParentOrganization().getDomainId() + "." + getDomainId();
 	}
 
 	public final Organization getParent() {
-		return parentOrganization;
+		return getParentOrganization();
 	}
 
 	public final void setParent(Organization inParentOrganization) {
-		parentOrganization = inParentOrganization;
+		setParentOrganization(inParentOrganization);
 		// There's no way in Ebean to enforce non-nullability and foreign key constraints in a tree of like-class objects.
 		// So the top-level location has to be its own parent.  (Otherwise we have forego the constraints.)
 		parent = this;
@@ -149,8 +150,8 @@ public class Facility extends LocationABC<Organization> {
 
 	public final String getParentOrganizationID() {
 		String result = "";
-		if (parentOrganization != null) {
-			result = parentOrganization.getDomainId();
+		if (getParentOrganization() != null) {
+			result = getParentOrganization().getDomainId();
 		}
 		return result;
 	}
@@ -340,6 +341,9 @@ public class Facility extends LocationABC<Organization> {
 
 		// Create the aisle's boundary vertices.
 		createVertices(aisle, aisleBoundaryX, aisleBoundaryY);
+
+		// Create the paths related to this aisle.
+		createAislePaths(aisle, aisleBoundaryX, aisleBoundaryY);
 	}
 
 	// --------------------------------------------------------------------------
@@ -355,9 +359,7 @@ public class Facility extends LocationABC<Organization> {
 		Vertex vertex = new Vertex();
 		vertex.setParent(this);
 		vertex.setDomainId(inDomainId);
-		vertex.setPosTypeByStr(inPosTypeByStr);
-		vertex.setPosX(inPosX);
-		vertex.setPosY(inPosY);
+		vertex.setPoint(new Point(PositionTypeEnum.valueOf(inPosTypeByStr), inPosX, inPosY));
 		vertex.setDrawOrder(inDrawOrder);
 		this.addVertex(vertex);
 
@@ -373,17 +375,52 @@ public class Facility extends LocationABC<Organization> {
 	private void createVertices(LocationABC inLocation, Double inXDimMeters, Double inYDimMeters) {
 		try {
 			// Create four simple vertices around the aisle.
-			Vertex vertex1 = new Vertex(inLocation, "V01", PositionTypeEnum.METERS_FROM_PARENT, 0, 0.0, 0.0);
+			Vertex vertex1 = new Vertex(inLocation, "V01", 0, new Point(PositionTypeEnum.METERS_FROM_PARENT, 0.0, 0.0));
 			Vertex.DAO.store(vertex1);
-			Vertex vertex2 = new Vertex(inLocation, "V02", PositionTypeEnum.METERS_FROM_PARENT, 1, inXDimMeters, 0.0);
+			Vertex vertex2 = new Vertex(inLocation, "V02", 1, new Point(PositionTypeEnum.METERS_FROM_PARENT, inXDimMeters, 0.0));
 			Vertex.DAO.store(vertex2);
-			Vertex vertex4 = new Vertex(inLocation, "V03", PositionTypeEnum.METERS_FROM_PARENT, 2, inXDimMeters, inYDimMeters);
+			Vertex vertex4 = new Vertex(inLocation, "V03", 2, new Point(PositionTypeEnum.METERS_FROM_PARENT, inXDimMeters, inYDimMeters));
 			Vertex.DAO.store(vertex4);
-			Vertex vertex3 = new Vertex(inLocation, "V04", PositionTypeEnum.METERS_FROM_PARENT, 3, 0.0, inYDimMeters);
+			Vertex vertex3 = new Vertex(inLocation, "V04", 3, new Point(PositionTypeEnum.METERS_FROM_PARENT, 0.0, inYDimMeters));
 			Vertex.DAO.store(vertex3);
 		} catch (DaoException e) {
 			LOGGER.error("", e);
 		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inLocation
+	 * @param inXDimMeters
+	 * @param inYDimMeters
+	 */
+	private void createAislePaths(LocationABC inLocation, Double inXDimMeters, Double inYDimMeters) {
+		
+		Path path1 = new Path();
+		path1.setParent(this);
+		path1.setDomainId(getDefaultDomainIdPrefix() + inLocation.getDomainId());
+		try {
+			Path.DAO.store(path1);
+		} catch (DaoException e) {
+			LOGGER.error("", e);
+		}
+		
+	}
+	
+	private void createPathSegment(final Path inPath, final Point inHead, final Point inTail) {
+		
+		// The path segment goes along the longest segment of the aisle.
+		PathSegment pathSegment = new PathSegment();
+		pathSegment.setParent(inPath);
+		pathSegment.setDomainId(getDefaultDomainIdPrefix() + "1");
+		pathSegment.setHead(inHead);
+		pathSegment.setTail(inTail);
+		try {
+			PathSegment.DAO.store(pathSegment);
+		} catch (DaoException e) {
+			LOGGER.error("", e);
+		}
+		
 	}
 
 	// --------------------------------------------------------------------------
