@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.37 2012/11/03 03:24:35 jeffw Exp $
+ *  $Id: Facility.java,v 1.38 2012/11/03 07:21:34 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -405,27 +405,27 @@ public class Facility extends LocationABC<Organization> {
 			LOGGER.error("", e);
 		}
 		
-		if (inXDimMeters > inYDimMeters) {
+		if (inXDimMeters < inYDimMeters) {
 			// Create the "A" side path.
-			Double xA = inLocation.getPosX() - inXDimMeters / 2.0;
+			Double xA = inLocation.getPosX() - inXDimMeters;
 			Point headA = new Point(PositionTypeEnum.METERS_FROM_PARENT, xA, inLocation.getPosY(), null);
 			Point tailA = new Point(PositionTypeEnum.METERS_FROM_PARENT, xA, inLocation.getPosY() + inYDimMeters, null);
 			createPathSegment("A", inLocation, path1, headA, tailA);
 
 			// Create the "B" side path.
-			Double xB = inLocation.getPosX() + inXDimMeters * 1.5;
+			Double xB = inLocation.getPosX() + inXDimMeters * 2.0;
 			Point headB = new Point(PositionTypeEnum.METERS_FROM_PARENT, xB, inLocation.getPosY(), null);
 			Point tailB = new Point(PositionTypeEnum.METERS_FROM_PARENT, xB, inLocation.getPosY() + inYDimMeters, null);
 			createPathSegment("B", inLocation, path1, headB, tailB);
 		} else {
 			// Create the "A" side path.
-			Double yA = inLocation.getPosX() - inXDimMeters / 2.0;
+			Double yA = inLocation.getPosY() - inYDimMeters;
 			Point headA = new Point(PositionTypeEnum.METERS_FROM_PARENT, inLocation.getPosX(), yA, null);
 			Point tailA = new Point(PositionTypeEnum.METERS_FROM_PARENT, inLocation.getPosX() + inYDimMeters, yA, null);
 			createPathSegment("A", inLocation, path1, headA, tailA);
 
 			// Create the "B" side path.
-			Double yB = inLocation.getPosX() + inXDimMeters * 1.5;
+			Double yB = inLocation.getPosY() + inYDimMeters * 2.0;
 			Point headB = new Point(PositionTypeEnum.METERS_FROM_PARENT, inLocation.getPosX(), yB, null);
 			Point tailB = new Point(PositionTypeEnum.METERS_FROM_PARENT, inLocation.getPosX() + inYDimMeters, yB, null);
 			createPathSegment("B", inLocation, path1, headB, tailB);
