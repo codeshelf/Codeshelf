@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.38 2012/11/03 07:21:34 jeffw Exp $
+ *  $Id: Facility.java,v 1.39 2012/11/03 23:57:04 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -29,6 +29,7 @@ import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.EdiProviderEnum;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
+import com.gadgetworks.codeshelf.model.PathDirectionEnum;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
@@ -64,11 +65,11 @@ public class Facility extends LocationABC<Organization> {
 
 	private static final Log			LOGGER			= LogFactory.getLog(Facility.class);
 
-//	// The owning organization.
-//	@Column(nullable = false)
-//	@ManyToOne(optional = false)
-//	@Getter
-//	private Organization				parentOrganization;
+	//	// The owning organization.
+	//	@Column(nullable = false)
+	//	@ManyToOne(optional = false)
+	//	@Getter
+	//	private Organization				parentOrganization;
 
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
@@ -395,7 +396,7 @@ public class Facility extends LocationABC<Organization> {
 	 * @param inYDimMeters
 	 */
 	private void createAislePaths(LocationABC inLocation, Double inXDimMeters, Double inYDimMeters) {
-		
+
 		Path path1 = new Path();
 		path1.setParent(this);
 		path1.setDomainId(getDefaultDomainIdPrefix() + inLocation.getDomainId());
@@ -404,47 +405,48 @@ public class Facility extends LocationABC<Organization> {
 		} catch (DaoException e) {
 			LOGGER.error("", e);
 		}
-		
+
 		if (inXDimMeters < inYDimMeters) {
 			// Create the "A" side path.
 			Double xA = inLocation.getPosX() - inXDimMeters;
 			Point headA = new Point(PositionTypeEnum.METERS_FROM_PARENT, xA, inLocation.getPosY(), null);
 			Point tailA = new Point(PositionTypeEnum.METERS_FROM_PARENT, xA, inLocation.getPosY() + inYDimMeters, null);
-			createPathSegment("A", inLocation, path1, headA, tailA);
+			createPathSegment("A", inLocation, PathDirectionEnum.HEAD, path1, headA, tailA);
 
 			// Create the "B" side path.
 			Double xB = inLocation.getPosX() + inXDimMeters * 2.0;
 			Point headB = new Point(PositionTypeEnum.METERS_FROM_PARENT, xB, inLocation.getPosY(), null);
 			Point tailB = new Point(PositionTypeEnum.METERS_FROM_PARENT, xB, inLocation.getPosY() + inYDimMeters, null);
-			createPathSegment("B", inLocation, path1, headB, tailB);
+			createPathSegment("B", inLocation, PathDirectionEnum.TAIL, path1, headB, tailB);
 		} else {
 			// Create the "A" side path.
 			Double yA = inLocation.getPosY() - inYDimMeters;
 			Point headA = new Point(PositionTypeEnum.METERS_FROM_PARENT, inLocation.getPosX(), yA, null);
 			Point tailA = new Point(PositionTypeEnum.METERS_FROM_PARENT, inLocation.getPosX() + inYDimMeters, yA, null);
-			createPathSegment("A", inLocation, path1, headA, tailA);
+			createPathSegment("A", inLocation, PathDirectionEnum.HEAD, path1, headA, tailA);
 
 			// Create the "B" side path.
 			Double yB = inLocation.getPosY() + inYDimMeters * 2.0;
 			Point headB = new Point(PositionTypeEnum.METERS_FROM_PARENT, inLocation.getPosX(), yB, null);
 			Point tailB = new Point(PositionTypeEnum.METERS_FROM_PARENT, inLocation.getPosX() + inYDimMeters, yB, null);
-			createPathSegment("B", inLocation, path1, headB, tailB);
+			createPathSegment("B", inLocation, PathDirectionEnum.TAIL, path1, headB, tailB);
 		}
-		
+
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inPath
 	 * @param inHead
 	 * @param inTail
 	 */
-	private void createPathSegment(final String inSegmentId, final LocationABC inAssociatedLoc, final Path inPath, final Point inHead, final Point inTail) {
-		
+	private void createPathSegment(final String inSegmentId, final LocationABC inAssociatedLoc, final PathDirectionEnum inDirection, final Path inPath, final Point inHead, final Point inTail) {
+
 		// The path segment goes along the longest segment of the aisle.
 		PathSegment pathSegment = new PathSegment();
 		pathSegment.setParent(inPath);
 		pathSegment.setAssociatedLocation(inAssociatedLoc);
+		pathSegment.setDirectionEnum(inDirection);
 		pathSegment.setDomainId(inAssociatedLoc.getDomainId() + "." + pathSegment.getDefaultDomainIdPrefix() + inSegmentId);
 		pathSegment.setHeadPoint(inHead);
 		pathSegment.setTailPoint(inTail);
@@ -452,7 +454,7 @@ public class Facility extends LocationABC<Organization> {
 			PathSegment.DAO.store(pathSegment);
 		} catch (DaoException e) {
 			LOGGER.error("", e);
-		}		
+		}
 	}
 
 	// --------------------------------------------------------------------------

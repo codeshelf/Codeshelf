@@ -1,20 +1,15 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: PathSegment.java,v 1.18 2012/11/03 07:21:34 jeffw Exp $
+ *  $Id: PathSegment.java,v 1.19 2012/11/03 23:57:04 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.persistence.AttributeOverride;
-import javax.persistence.AttributeOverrides;
 import javax.persistence.Column;
-import javax.persistence.Embedded;
 import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
@@ -29,6 +24,7 @@ import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.annotate.JsonProperty;
 
 import com.avaje.ebean.annotation.CacheStrategy;
+import com.gadgetworks.codeshelf.model.PathDirectionEnum;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
@@ -75,7 +71,12 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 	@JsonProperty
 	private LocationABC			associatedLocation;
 
-	// The head's X position.
+	@NonNull
+	@Getter
+	@Setter
+	private PathDirectionEnum	directionEnum;
+
+	// The head position.
 	@NonNull
 	@Getter
 	@Setter
@@ -91,7 +92,7 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 	@Setter
 	private Double				headPosY;
 
-	// The tail's Y position.
+	// The tail position.
 	@NonNull
 	@Getter
 	@Setter
@@ -111,9 +112,15 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 
 	}
 
-	public PathSegment(final Path inParentPath, final LocationABC<Facility> inLocation, final PositionTypeEnum inPosType, final Point inHead, final Point inTail) {
+	public PathSegment(final Path inParentPath,
+		final LocationABC<Facility> inLocation,
+		final PathDirectionEnum inDirectionEnum,
+		final PositionTypeEnum inPosType,
+		final Point inHead,
+		final Point inTail) {
 
 		associatedLocation = inLocation;
+		directionEnum = inDirectionEnum;
 		headPosTypeEnum = inHead.getPosTypeEnum();
 		headPosX = inHead.getX();
 		headPosY = inHead.getY();
@@ -145,7 +152,7 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 	public final String getParentPathID() {
 		return parent.getDomainId();
 	}
-	
+
 	public final void setHeadPoint(final Point inPoint) {
 		headPosTypeEnum = inPoint.getPosTypeEnum();
 		headPosX = inPoint.getX();
