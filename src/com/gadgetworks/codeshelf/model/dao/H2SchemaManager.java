@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: H2SchemaManager.java,v 1.55 2012/11/02 20:57:13 jeffw Exp $
+ *  $Id: H2SchemaManager.java,v 1.56 2012/11/03 03:24:35 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -357,7 +357,7 @@ public final class H2SchemaManager implements ISchemaManager {
 
 	private boolean createIndicies() {
 		boolean result = true;
-		
+
 		result &= linkToParentTable("CODESHELFNETWORK", "PARENT", "LOCATION");
 
 		result &= linkToParentTable("CONTAINER", "PARENT", "CONTAINERKIND");
@@ -409,7 +409,7 @@ public final class H2SchemaManager implements ISchemaManager {
 
 		return result;
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * Create the initial structures for the DB as of DATABASE_VERSION_CUR.
@@ -539,8 +539,7 @@ public final class H2SchemaManager implements ISchemaManager {
 
 		// PathSegment
 		result &= createTable("PATHSEGMENT", //
-			"DESCRIPTION VARCHAR(64) NOT NULL, " //
-					+ "ASSOCIATEDLOCATION_PERSISTENTID BIGINT NOT NULL, " //
+			"ASSOCIATEDLOCATION_PERSISTENTID BIGINT NOT NULL, " //
 					+ "HEADPOSTYPEENUM VARCHAR(16) NOT NULL, " //
 					+ "HEADPOSX DOUBLE NOT NULL, " //
 					+ "HEADPOSY DOUBLE NOT NULL, " //
@@ -579,6 +578,7 @@ public final class H2SchemaManager implements ISchemaManager {
 			"POSTYPEENUM VARCHAR(16) NOT NULL, " //
 					+ "POSX DOUBLE NOT NULL, " //
 					+ "POSY DOUBLE NOT NULL, " //
+					+ "POSZ DOUBLE, " //
 					+ "DRAWORDER INT NOT NULL " //
 		);
 

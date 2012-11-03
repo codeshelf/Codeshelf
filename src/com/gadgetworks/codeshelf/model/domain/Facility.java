@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.36 2012/11/02 20:57:13 jeffw Exp $
+ *  $Id: Facility.java,v 1.37 2012/11/03 03:24:35 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -359,7 +359,7 @@ public class Facility extends LocationABC<Organization> {
 		Vertex vertex = new Vertex();
 		vertex.setParent(this);
 		vertex.setDomainId(inDomainId);
-		vertex.setPoint(new Point(PositionTypeEnum.valueOf(inPosTypeByStr), inPosX, inPosY));
+		vertex.setPoint(new Point(PositionTypeEnum.valueOf(inPosTypeByStr), inPosX, inPosY, null));
 		vertex.setDrawOrder(inDrawOrder);
 		this.addVertex(vertex);
 
@@ -375,13 +375,13 @@ public class Facility extends LocationABC<Organization> {
 	private void createVertices(LocationABC inLocation, Double inXDimMeters, Double inYDimMeters) {
 		try {
 			// Create four simple vertices around the aisle.
-			Vertex vertex1 = new Vertex(inLocation, "V01", 0, new Point(PositionTypeEnum.METERS_FROM_PARENT, 0.0, 0.0));
+			Vertex vertex1 = new Vertex(inLocation, "V01", 0, new Point(PositionTypeEnum.METERS_FROM_PARENT, 0.0, 0.0, null));
 			Vertex.DAO.store(vertex1);
-			Vertex vertex2 = new Vertex(inLocation, "V02", 1, new Point(PositionTypeEnum.METERS_FROM_PARENT, inXDimMeters, 0.0));
+			Vertex vertex2 = new Vertex(inLocation, "V02", 1, new Point(PositionTypeEnum.METERS_FROM_PARENT, inXDimMeters, 0.0, null));
 			Vertex.DAO.store(vertex2);
-			Vertex vertex4 = new Vertex(inLocation, "V03", 2, new Point(PositionTypeEnum.METERS_FROM_PARENT, inXDimMeters, inYDimMeters));
+			Vertex vertex4 = new Vertex(inLocation, "V03", 2, new Point(PositionTypeEnum.METERS_FROM_PARENT, inXDimMeters, inYDimMeters, null));
 			Vertex.DAO.store(vertex4);
-			Vertex vertex3 = new Vertex(inLocation, "V04", 3, new Point(PositionTypeEnum.METERS_FROM_PARENT, 0.0, inYDimMeters));
+			Vertex vertex3 = new Vertex(inLocation, "V04", 3, new Point(PositionTypeEnum.METERS_FROM_PARENT, 0.0, inYDimMeters, null));
 			Vertex.DAO.store(vertex3);
 		} catch (DaoException e) {
 			LOGGER.error("", e);
@@ -405,22 +405,54 @@ public class Facility extends LocationABC<Organization> {
 			LOGGER.error("", e);
 		}
 		
+		if (inXDimMeters > inYDimMeters) {
+			// Create the "A" side path.
+			Double xA = inLocation.getPosX() - inXDimMeters / 2.0;
+			Point headA = new Point(PositionTypeEnum.METERS_FROM_PARENT, xA, inLocation.getPosY(), null);
+			Point tailA = new Point(PositionTypeEnum.METERS_FROM_PARENT, xA, inLocation.getPosY() + inYDimMeters, null);
+			createPathSegment("A", inLocation, path1, headA, tailA);
+
+			// Create the "B" side path.
+			Double xB = inLocation.getPosX() + inXDimMeters * 1.5;
+			Point headB = new Point(PositionTypeEnum.METERS_FROM_PARENT, xB, inLocation.getPosY(), null);
+			Point tailB = new Point(PositionTypeEnum.METERS_FROM_PARENT, xB, inLocation.getPosY() + inYDimMeters, null);
+			createPathSegment("B", inLocation, path1, headB, tailB);
+		} else {
+			// Create the "A" side path.
+			Double yA = inLocation.getPosX() - inXDimMeters / 2.0;
+			Point headA = new Point(PositionTypeEnum.METERS_FROM_PARENT, inLocation.getPosX(), yA, null);
+			Point tailA = new Point(PositionTypeEnum.METERS_FROM_PARENT, inLocation.getPosX() + inYDimMeters, yA, null);
+			createPathSegment("A", inLocation, path1, headA, tailA);
+
+			// Create the "B" side path.
+			Double yB = inLocation.getPosX() + inXDimMeters * 1.5;
+			Point headB = new Point(PositionTypeEnum.METERS_FROM_PARENT, inLocation.getPosX(), yB, null);
+			Point tailB = new Point(PositionTypeEnum.METERS_FROM_PARENT, inLocation.getPosX() + inYDimMeters, yB, null);
+			createPathSegment("B", inLocation, path1, headB, tailB);
+		}
+		
 	}
 	
-	private void createPathSegment(final Path inPath, final Point inHead, final Point inTail) {
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inPath
+	 * @param inHead
+	 * @param inTail
+	 */
+	private void createPathSegment(final String inSegmentId, final LocationABC inAssociatedLoc, final Path inPath, final Point inHead, final Point inTail) {
 		
 		// The path segment goes along the longest segment of the aisle.
 		PathSegment pathSegment = new PathSegment();
 		pathSegment.setParent(inPath);
-		pathSegment.setDomainId(getDefaultDomainIdPrefix() + "1");
+		pathSegment.setAssociatedLocation(inAssociatedLoc);
+		pathSegment.setDomainId(inAssociatedLoc.getDomainId() + "." + pathSegment.getDefaultDomainIdPrefix() + inSegmentId);
 		pathSegment.setHeadPoint(inHead);
 		pathSegment.setTailPoint(inTail);
 		try {
 			PathSegment.DAO.store(pathSegment);
 		} catch (DaoException e) {
 			LOGGER.error("", e);
-		}
-		
+		}		
 	}
 
 	// --------------------------------------------------------------------------

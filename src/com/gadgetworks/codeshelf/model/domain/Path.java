@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Path.java,v 1.11 2012/10/31 16:55:08 jeffw Exp $
+ *  $Id: Path.java,v 1.12 2012/11/03 03:24:35 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -10,6 +10,7 @@ import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
@@ -57,6 +58,9 @@ public class Path extends DomainObjectTreeABC<Facility> {
 
 	// The parent facility.
 	@Column(nullable = false)
+	@ManyToOne(optional = false)
+	@Getter
+	@Setter
 	private Facility			parent;
 
 	// The path description.
@@ -81,14 +85,6 @@ public class Path extends DomainObjectTreeABC<Facility> {
 
 	public final String getDefaultDomainIdPrefix() {
 		return "P";
-	}
-
-	public final Facility getParent() {
-		return parent;
-	}
-
-	public final void setParent(Facility inParent) {
-		parent = inParent;
 	}
 
 	public final List<? extends IDomainObject> getChildren() {

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Vertex.java,v 1.17 2012/11/02 20:57:13 jeffw Exp $
+ *  $Id: Vertex.java,v 1.18 2012/11/03 03:24:35 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -79,6 +79,10 @@ public class Vertex extends DomainObjectTreeABC<LocationABC> {
 	@Setter
 	private Double				posY;
 
+	@Getter
+	@Setter
+	private Double				posZ;
+
 	// The vertex order/position (zero-based).
 	@Column(nullable = false)
 	@Setter
@@ -94,6 +98,9 @@ public class Vertex extends DomainObjectTreeABC<LocationABC> {
 		parent = inParentLocation;
 		setDomainId(inLocationId);
 		posTypeEnum = inPoint.getPosTypeEnum();
+		posX = inPoint.getX();
+		posY = inPoint.getY();
+		posZ = inPoint.getZ();
 		drawOrder = inDrawOrder;
 	}
 
@@ -121,5 +128,6 @@ public class Vertex extends DomainObjectTreeABC<LocationABC> {
 		posTypeEnum = inPoint.getPosTypeEnum();
 		posX = inPoint.getX();
 		posY = inPoint.getY();
+		posZ = inPoint.getZ();
 	}
 }
