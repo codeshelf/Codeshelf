@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.39 2012/11/03 23:57:04 jeffw Exp $
+ *  $Id: Facility.java,v 1.40 2012/11/05 06:55:25 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -75,42 +75,46 @@ public class Facility extends LocationABC<Organization> {
 	@ManyToOne(optional = false)
 	private Facility					parent;
 
-	@OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
+	@OneToMany(mappedBy = "parent")
 	@Getter
 	private List<Aisle>					aisles			= new ArrayList<Aisle>();
 
-	// For a network this is a list of all of the control groups that belong in the set.
-	@OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
+	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	@Getter
 	private Map<String, Container>		containers		= new HashMap<String, Container>();
 
-	@OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
+	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	@Getter
 	private Map<String, ContainerKind>	containerKinds	= new HashMap<String, ContainerKind>();
 
-	@OneToMany(mappedBy = "parent", fetch = FetchType.LAZY, targetEntity = DropboxService.class)
+	@OneToMany(mappedBy = "parent", targetEntity = DropboxService.class)
 	@Getter
 	private List<IEdiService>			ediServices		= new ArrayList<IEdiService>();
 
-	@OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
+	@OneToMany(mappedBy = "parent")
 	@Getter
 	private List<ItemMaster>			itemMasters		= new ArrayList<ItemMaster>();
 
-	@OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
-	@Getter
-	private List<OrderGroup>			orderGroups		= new ArrayList<OrderGroup>();
-
-	@OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
-	@Getter
-	private List<OrderHeader>			orderHeaders	= new ArrayList<OrderHeader>();
-
-	@OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
+	@OneToMany(mappedBy = "parent")
 	@Getter
 	private List<CodeShelfNetwork>		networks		= new ArrayList<CodeShelfNetwork>();
 
-	@OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
+	@OneToMany(mappedBy = "parent")
+	@Getter
+	private List<OrderGroup>			orderGroups		= new ArrayList<OrderGroup>();
+
+	@OneToMany(mappedBy = "parent")
+	@Getter
+	private List<OrderHeader>			orderHeaders	= new ArrayList<OrderHeader>();
+
+	@OneToMany(mappedBy = "parent")
+	@MapKey(name = "domainId")
+	@Getter
+	private Map<String, Path>			paths			= new HashMap<String, Path>();
+
+	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	@Getter
 	private Map<String, UomMaster>		uomMasters		= new HashMap<String, UomMaster>();
@@ -167,6 +171,18 @@ public class Facility extends LocationABC<Organization> {
 
 	public final void removeAisle(Aisle inAisle) {
 		aisles.remove(inAisle);
+	}
+
+	public final void addPath(Path inPath) {
+		paths.put(inPath.getDomainId(), inPath);
+	}
+
+	public final Path getPath(String inPathId) {
+		return paths.get(inPathId);
+	}
+
+	public final void removePath(String inPathId) {
+		paths.remove(inPathId);
 	}
 
 	public final void addContainer(Container inContainer) {
@@ -395,42 +411,62 @@ public class Facility extends LocationABC<Organization> {
 	 * @param inXDimMeters
 	 * @param inYDimMeters
 	 */
-	private void createAislePaths(LocationABC inLocation, Double inXDimMeters, Double inYDimMeters) {
+	private void createAislePaths(LocationABC<Facility> inLocation, Double inXDimMeters, Double inYDimMeters) {
 
-		Path path1 = new Path();
-		path1.setParent(this);
-		path1.setDomainId(getDefaultDomainIdPrefix() + inLocation.getDomainId());
-		try {
-			Path.DAO.store(path1);
-		} catch (DaoException e) {
-			LOGGER.error("", e);
+		Path path = paths.get(Path.DEFAULT_FACILITY_PATH_ID);
+		if (path == null) {
+			path = new Path();
+			path.setParent(this);
+			path.setDomainId(Path.DEFAULT_FACILITY_PATH_ID);
+			try {
+				Path.DAO.store(path);
+			} catch (DaoException e) {
+				LOGGER.error("", e);
+			}
 		}
 
+		// If there are already path segments then create a connecting path to the new ones.
+		Integer segmentOrder = 0;
+		PathSegment lastSegment = null;
+		if (path.getSegments().size() > 0) {
+			lastSegment = path.getPathSegment(path.getSegments().size() - 1);
+			if (lastSegment != null) {
+				segmentOrder = lastSegment.getSegmentOrder() + 1;
+			}
+		}
+
+		Point headA = null;
+		Point tailA = null;
+		Point headB = null;
+		Point tailB = null;
 		if (inXDimMeters < inYDimMeters) {
-			// Create the "A" side path.
 			Double xA = inLocation.getPosX() - inXDimMeters;
-			Point headA = new Point(PositionTypeEnum.METERS_FROM_PARENT, xA, inLocation.getPosY(), null);
-			Point tailA = new Point(PositionTypeEnum.METERS_FROM_PARENT, xA, inLocation.getPosY() + inYDimMeters, null);
-			createPathSegment("A", inLocation, PathDirectionEnum.HEAD, path1, headA, tailA);
+			tailA = new Point(PositionTypeEnum.METERS_FROM_PARENT, xA, inLocation.getPosY(), null);
+			headA = new Point(PositionTypeEnum.METERS_FROM_PARENT, xA, inLocation.getPosY() + inYDimMeters, null);
 
-			// Create the "B" side path.
 			Double xB = inLocation.getPosX() + inXDimMeters * 2.0;
-			Point headB = new Point(PositionTypeEnum.METERS_FROM_PARENT, xB, inLocation.getPosY(), null);
-			Point tailB = new Point(PositionTypeEnum.METERS_FROM_PARENT, xB, inLocation.getPosY() + inYDimMeters, null);
-			createPathSegment("B", inLocation, PathDirectionEnum.TAIL, path1, headB, tailB);
+			headB = new Point(PositionTypeEnum.METERS_FROM_PARENT, xB, inLocation.getPosY(), null);
+			tailB = new Point(PositionTypeEnum.METERS_FROM_PARENT, xB, inLocation.getPosY() + inYDimMeters, null);
 		} else {
-			// Create the "A" side path.
 			Double yA = inLocation.getPosY() - inYDimMeters;
-			Point headA = new Point(PositionTypeEnum.METERS_FROM_PARENT, inLocation.getPosX(), yA, null);
-			Point tailA = new Point(PositionTypeEnum.METERS_FROM_PARENT, inLocation.getPosX() + inYDimMeters, yA, null);
-			createPathSegment("A", inLocation, PathDirectionEnum.HEAD, path1, headA, tailA);
+			tailA = new Point(PositionTypeEnum.METERS_FROM_PARENT, inLocation.getPosX(), yA, null);
+			headA = new Point(PositionTypeEnum.METERS_FROM_PARENT, inLocation.getPosX() + inYDimMeters, yA, null);
 
-			// Create the "B" side path.
 			Double yB = inLocation.getPosY() + inYDimMeters * 2.0;
-			Point headB = new Point(PositionTypeEnum.METERS_FROM_PARENT, inLocation.getPosX(), yB, null);
-			Point tailB = new Point(PositionTypeEnum.METERS_FROM_PARENT, inLocation.getPosX() + inYDimMeters, yB, null);
-			createPathSegment("B", inLocation, PathDirectionEnum.TAIL, path1, headB, tailB);
+			headB = new Point(PositionTypeEnum.METERS_FROM_PARENT, inLocation.getPosX(), yB, null);
+			tailB = new Point(PositionTypeEnum.METERS_FROM_PARENT, inLocation.getPosX() + inYDimMeters, yB, null);
 		}
+
+		// Now connect it to the last aisle's path segments.
+		if (lastSegment != null) {
+			createPathSegment("D", inLocation, PathDirectionEnum.HEAD, path, segmentOrder++, tailA, lastSegment.getHead());
+		}
+		// Create the "A" side path.
+		createPathSegment("A", inLocation, PathDirectionEnum.HEAD, path, segmentOrder++, headA, tailA);
+		// Create a connector path.
+		createPathSegment("C", inLocation, PathDirectionEnum.HEAD, path, segmentOrder++, tailB, headA);
+		// Create the "B" side path.
+		createPathSegment("B", inLocation, PathDirectionEnum.HEAD, path, segmentOrder++, headB, tailB);
 
 	}
 
@@ -440,11 +476,18 @@ public class Facility extends LocationABC<Organization> {
 	 * @param inHead
 	 * @param inTail
 	 */
-	private void createPathSegment(final String inSegmentId, final LocationABC inAssociatedLoc, final PathDirectionEnum inDirection, final Path inPath, final Point inHead, final Point inTail) {
+	private void createPathSegment(final String inSegmentId,
+		final LocationABC<Facility> inAssociatedLoc,
+		final PathDirectionEnum inDirection,
+		final Path inPath,
+		final Integer inSegmentOrder,
+		final Point inHead,
+		final Point inTail) {
 
 		// The path segment goes along the longest segment of the aisle.
 		PathSegment pathSegment = new PathSegment();
 		pathSegment.setParent(inPath);
+		pathSegment.setSegmentOrder(inSegmentOrder);
 		pathSegment.setAssociatedLocation(inAssociatedLoc);
 		pathSegment.setDirectionEnum(inDirection);
 		pathSegment.setDomainId(inAssociatedLoc.getDomainId() + "." + pathSegment.getDefaultDomainIdPrefix() + inSegmentId);
@@ -455,6 +498,7 @@ public class Facility extends LocationABC<Organization> {
 		} catch (DaoException e) {
 			LOGGER.error("", e);
 		}
+		inPath.addPathSegment(pathSegment);
 	}
 
 	// --------------------------------------------------------------------------

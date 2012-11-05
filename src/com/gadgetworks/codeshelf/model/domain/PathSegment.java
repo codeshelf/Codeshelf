@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: PathSegment.java,v 1.19 2012/11/03 23:57:04 jeffw Exp $
+ *  $Id: PathSegment.java,v 1.20 2012/11/05 06:55:25 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -70,6 +70,11 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 	@Setter
 	@JsonProperty
 	private LocationABC			associatedLocation;
+
+	@NonNull
+	@Getter
+	@Setter
+	private Integer				segmentOrder;
 
 	@NonNull
 	@Getter
@@ -165,4 +170,11 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 		tailPosY = inPoint.getY();
 	}
 
+	public final Point getHead() {
+		return new Point(headPosTypeEnum, headPosX, headPosY, null);
+	}
+
+	public final Point getTail() {
+		return new Point(tailPosTypeEnum, tailPosX, tailPosY, null);
+	}
 }

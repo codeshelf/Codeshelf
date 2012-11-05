@@ -1,16 +1,19 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Path.java,v 1.12 2012/11/03 03:24:35 jeffw Exp $
+ *  $Id: Path.java,v 1.13 2012/11/05 06:55:25 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
+import javax.persistence.MapKey;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
@@ -54,26 +57,29 @@ public class Path extends DomainObjectTreeABC<Facility> {
 		}
 	}
 
-	private static final Log	LOGGER		= LogFactory.getLog(Path.class);
+	public static final String			DEFAULT_FACILITY_PATH_ID	= "DEFAULT";
+
+	private static final Log			LOGGER						= LogFactory.getLog(Path.class);
 
 	// The parent facility.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	@Getter
 	@Setter
-	private Facility			parent;
+	private Facility					parent;
 
 	// The path description.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private String				description;
+	private String						description;
 
 	// For a network this is a list of all of the users that belong in the set.
 	@OneToMany(mappedBy = "parent")
+	@MapKey(name = "segmentOrder")
 	@Getter
-	private List<PathSegment>	segments	= new ArrayList<PathSegment>();
+	private Map<Integer, PathSegment>	segments					= new HashMap<Integer, PathSegment>();
 
 	public Path() {
 		description = "";
@@ -88,16 +94,18 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	}
 
 	public final List<? extends IDomainObject> getChildren() {
-		return getSegments();
+		return new ArrayList<PathSegment>(getSegments().values());
 	}
 
-	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void addPathSegment(PathSegment inPathSegment) {
-		segments.add(inPathSegment);
+		segments.put(inPathSegment.getSegmentOrder(), inPathSegment);
 	}
 
-	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
-	public final void removePathSegment(PathSegment inPathSegment) {
-		segments.remove(inPathSegment);
+	public final PathSegment getPathSegment(Integer inOrder) {
+		return segments.get(inOrder);
+	}
+
+	public final void removePathSegment(Integer inOrder) {
+		segments.remove(inOrder);
 	}
 }

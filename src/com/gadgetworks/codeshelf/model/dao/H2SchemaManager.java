@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: H2SchemaManager.java,v 1.57 2012/11/03 23:57:04 jeffw Exp $
+ *  $Id: H2SchemaManager.java,v 1.58 2012/11/05 06:55:25 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -540,7 +540,8 @@ public final class H2SchemaManager implements ISchemaManager {
 		// PathSegment
 		result &= createTable("PATHSEGMENT", //
 			"ASSOCIATEDLOCATION_PERSISTENTID BIGINT NOT NULL, " //
-					+ "DIRECTIONENUM VARCHAR(16) NOT NULL, " //
+			+ "DIRECTIONENUM VARCHAR(16) NOT NULL, " //
+					+ "SEGMENTORDER INTEGER NOT NULL, " //
 					+ "HEADPOSTYPEENUM VARCHAR(16) NOT NULL, " //
 					+ "HEADPOSX DOUBLE NOT NULL, " //
 					+ "HEADPOSY DOUBLE NOT NULL, " //
