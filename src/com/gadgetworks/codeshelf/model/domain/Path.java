@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Path.java,v 1.13 2012/11/05 06:55:25 jeffw Exp $
+ *  $Id: Path.java,v 1.14 2012/11/08 03:37:27 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -58,6 +58,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	}
 
 	public static final String			DEFAULT_FACILITY_PATH_ID	= "DEFAULT";
+	public static final String			DOMAIN_PREFIX = "P";
 
 	private static final Log			LOGGER						= LogFactory.getLog(Path.class);
 
@@ -90,7 +91,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	}
 
 	public final String getDefaultDomainIdPrefix() {
-		return "P";
+		return DOMAIN_PREFIX;
 	}
 
 	public final List<? extends IDomainObject> getChildren() {

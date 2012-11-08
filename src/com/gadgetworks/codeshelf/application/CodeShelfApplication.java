@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfApplication.java,v 1.49 2012/10/31 09:23:59 jeffw Exp $
+ *  $Id: CodeShelfApplication.java,v 1.50 2012/11/08 03:37:27 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -158,6 +158,7 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 		if (organization != null) {
 			Facility facility = mFacilityDao.findByDomainId(organization, "F1");
 			if (facility != null) {
+				facility.logLocationDistances();
 			}
 		}
 

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: PathSegment.java,v 1.20 2012/11/05 06:55:25 jeffw Exp $
+ *  $Id: PathSegment.java,v 1.21 2012/11/08 03:37:27 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -56,7 +56,9 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 		}
 	}
 
-	private static final Log	LOGGER	= LogFactory.getLog(PathSegment.class);
+	public static final String	DOMAIN_PREFIX	= "SEG";
+
+	private static final Log	LOGGER			= LogFactory.getLog(PathSegment.class);
 
 	// The owning organization.
 	@Column(nullable = false)
@@ -64,8 +66,8 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 	private Path				parent;
 
 	// The path description.
-	@Column(nullable = false)
-	@ManyToOne(optional = false)
+	@Column(nullable = true)
+	@ManyToOne(optional = true)
 	@Getter
 	@Setter
 	@JsonProperty
@@ -139,7 +141,7 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 	}
 
 	public final String getDefaultDomainIdPrefix() {
-		return "SEG";
+		return DOMAIN_PREFIX;
 	}
 
 	public final Path getParent() {
@@ -176,5 +178,9 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 
 	public final Point getTail() {
 		return new Point(tailPosTypeEnum, tailPosX, tailPosY, null);
+	}
+
+	public final Double getLength() {
+		return Math.sqrt(Math.pow(headPosX - tailPosX, 2) + Math.pow(headPosY - tailPosY, 2));
 	}
 }

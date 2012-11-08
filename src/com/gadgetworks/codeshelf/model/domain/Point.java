@@ -1,15 +1,14 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Point.java,v 1.3 2012/11/03 03:24:35 jeffw Exp $
+ *  $Id: Point.java,v 1.4 2012/11/08 03:37:27 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
-
-import javax.persistence.Embeddable;
 
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
+import lombok.ToString;
 
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
@@ -23,6 +22,7 @@ import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 
 //@Embeddable
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
+@ToString
 public class Point {
 
 	@NonNull

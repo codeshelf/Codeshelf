@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.40 2012/11/05 06:55:25 jeffw Exp $
+ *  $Id: Facility.java,v 1.41 2012/11/08 03:37:27 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -361,6 +361,46 @@ public class Facility extends LocationABC<Organization> {
 
 		// Create the paths related to this aisle.
 		createAislePaths(aisle, aisleBoundaryX, aisleBoundaryY);
+
+	}
+
+	public void logLocationDistances() {
+		// List out Bays by distance from initiation point.
+		Path path = paths.get(Path.DEFAULT_FACILITY_PATH_ID);
+		if (path != null) {
+			int distFromInitiationPoint = 0;
+			for (PathSegment segment : path.getSegments().values()) {
+				LocationABC<Facility> location = segment.getAssociatedLocation();
+				if (location != null) {
+					if (location instanceof Aisle) {
+						Aisle theAisle = (Aisle) location;
+						for (Bay bay : location.<Bay> getChildrenKind(Bay.class)) {
+							// Figure out the distance of this bay from the path.
+							Point bayPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, theAisle.getPosX() + bay.getPosX(), theAisle.getPosY() + bay.getPosY(), null);
+							Double distance = distFromInitiationPoint + computeDistanceOfPointFromLine(segment.getTail(), segment.getHead(), bayPoint);
+
+							String distanceStr = String.format("%4.4f", distance);
+							LOGGER.info("Location: " + bay.getFullDomainId() + " is " + distanceStr + " meters from the initiation point.");
+						}
+					}
+				}
+				distFromInitiationPoint += segment.getLength();
+			}
+		}
+	}
+
+	private Double computeDistanceOfPointFromLine(final Point inLinePointA, final Point inLinePointB, final Point inFromPoint) {
+		Double result = 0.0;
+
+		Double k = ((inLinePointB.getY() - inLinePointA.getY()) * (inFromPoint.getX() - inLinePointA.getX()) - (inLinePointB.getX() - inLinePointA.getX())
+				* (inFromPoint.getY() - inLinePointA.getY()))
+				/ (Math.pow(inLinePointB.getY() - inLinePointA.getY(), 2) + Math.pow(inLinePointB.getX() - inLinePointA.getX(), 2));
+		Double x4 = inFromPoint.getX() - k * (inLinePointB.getY() - inLinePointA.getY());
+		Double y4 = inFromPoint.getY() + k * (inLinePointB.getX() - inLinePointA.getX());
+
+		result = Math.sqrt(Math.pow(inLinePointA.getX() - x4, 2) + Math.pow(inLinePointA.getY() - y4, 2));
+
+		return result;
 	}
 
 	// --------------------------------------------------------------------------
@@ -457,16 +497,17 @@ public class Facility extends LocationABC<Organization> {
 			tailB = new Point(PositionTypeEnum.METERS_FROM_PARENT, inLocation.getPosX() + inYDimMeters, yB, null);
 		}
 
+		String baseSegmentId = inLocation.getDomainId() + "." + PathSegment.DOMAIN_PREFIX;
 		// Now connect it to the last aisle's path segments.
 		if (lastSegment != null) {
-			createPathSegment("D", inLocation, PathDirectionEnum.HEAD, path, segmentOrder++, tailA, lastSegment.getHead());
+			createPathSegment(baseSegmentId + "D", null, PathDirectionEnum.HEAD, path, segmentOrder++, tailA, lastSegment.getHead());
 		}
 		// Create the "A" side path.
-		createPathSegment("A", inLocation, PathDirectionEnum.HEAD, path, segmentOrder++, headA, tailA);
+		createPathSegment(baseSegmentId + "A", inLocation, PathDirectionEnum.HEAD, path, segmentOrder++, headA, tailA);
 		// Create a connector path.
-		createPathSegment("C", inLocation, PathDirectionEnum.HEAD, path, segmentOrder++, tailB, headA);
+		createPathSegment(baseSegmentId + "C", null, PathDirectionEnum.HEAD, path, segmentOrder++, tailB, headA);
 		// Create the "B" side path.
-		createPathSegment("B", inLocation, PathDirectionEnum.HEAD, path, segmentOrder++, headB, tailB);
+		createPathSegment(baseSegmentId + "B", inLocation, PathDirectionEnum.HEAD, path, segmentOrder++, headB, tailB);
 
 	}
 
@@ -490,7 +531,7 @@ public class Facility extends LocationABC<Organization> {
 		pathSegment.setSegmentOrder(inSegmentOrder);
 		pathSegment.setAssociatedLocation(inAssociatedLoc);
 		pathSegment.setDirectionEnum(inDirection);
-		pathSegment.setDomainId(inAssociatedLoc.getDomainId() + "." + pathSegment.getDefaultDomainIdPrefix() + inSegmentId);
+		pathSegment.setDomainId(inSegmentId);
 		pathSegment.setHeadPoint(inHead);
 		pathSegment.setTailPoint(inTail);
 		try {

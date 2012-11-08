@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: LocationABC.java,v 1.16 2012/11/02 20:57:13 jeffw Exp $
+ *  $Id: LocationABC.java,v 1.17 2012/11/08 03:37:27 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -26,6 +26,7 @@ import javax.persistence.Table;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -56,6 +57,7 @@ import com.google.inject.Singleton;
 @Table(name = "LOCATION")
 @DiscriminatorColumn(name = "DTYPE", discriminatorType = DiscriminatorType.STRING)
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
+@ToString
 public abstract class LocationABC<P extends IDomainObject> extends DomainObjectTreeABC<P> {
 
 	@Inject
@@ -124,6 +126,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	@Getter
+	@Setter
 	private Map<String, SubLocationABC>	locations	= new HashMap<String, SubLocationABC>();
 
 	// The items stored in this location.
@@ -152,6 +155,18 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 	public final List<SubLocationABC> getChildren() {
 		return new ArrayList<SubLocationABC>(locations.values());
+	}
+
+	public final <T extends SubLocationABC> List<T> getChildrenKind(Class<? extends SubLocationABC> inClassWanted) {
+		List<T> result = new ArrayList<T>();
+
+		for (LocationABC child : getChildren()) {
+			if (child.getClass().equals(inClassWanted)) {
+				result.add((T) child);
+			}
+		}
+
+		return result;
 	}
 
 	public final void addLocation(SubLocationABC inLocation) {

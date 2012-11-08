@@ -1,13 +1,15 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Bay.java,v 1.14 2012/10/31 09:23:59 jeffw Exp $
+ *  $Id: Bay.java,v 1.15 2012/11/08 03:37:27 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.Table;
+
+import lombok.ToString;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -35,6 +37,7 @@ import com.google.inject.Singleton;
 @DiscriminatorValue("BAY")
 @CacheStrategy
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
+@ToString
 public class Bay extends SubLocationABC<Aisle> {
 
 	@Inject
