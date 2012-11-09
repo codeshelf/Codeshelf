@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdEnum.java,v 1.7 2012/10/16 06:23:21 jeffw Exp $
+ *  $Id: WebSessionReqCmdEnum.java,v 1.8 2012/11/09 08:53:08 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -11,7 +11,7 @@ package com.gadgetworks.codeshelf.web.websession.command.req;
  */
 public enum WebSessionReqCmdEnum {
 	INVALID(WebSessionReqCmdNum.INVALID, "INVALID"),
-	LAUNCH_CODE_CHECK(WebSessionReqCmdNum.LAUNCH_CODE_CHECK, "LAUNCH_CODE_RQ"),
+	LOGIN_REQ(WebSessionReqCmdNum.LOGIN_REQ, "LOGIN_RQ"),
 	OBJECT_GETTER_REQ(WebSessionReqCmdNum.OBJECT_GETTER_REQ, "OBJ_GET_RQ"),
 	OBJECT_UPDATE_REQ(WebSessionReqCmdNum.OBJECT_UPDATE_REQ, "OBJ_UPD_RQ"),
 	OBJECT_DELETE_REQ(WebSessionReqCmdNum.OBJECT_DELETE_REQ, "OBJ_DEL_RQ"),
@@ -36,8 +36,8 @@ public enum WebSessionReqCmdEnum {
 				result = WebSessionReqCmdEnum.INVALID;
 				break;
 
-			case WebSessionReqCmdNum.LAUNCH_CODE_CHECK:
-				result = WebSessionReqCmdEnum.LAUNCH_CODE_CHECK;
+			case WebSessionReqCmdNum.LOGIN_REQ:
+				result = WebSessionReqCmdEnum.LOGIN_REQ;
 				break;
 
 			case WebSessionReqCmdNum.OBJECT_GETTER_REQ:
@@ -102,7 +102,7 @@ public enum WebSessionReqCmdEnum {
 
 	final static class WebSessionReqCmdNum {
 		static final byte	INVALID					= 0;
-		static final byte	LAUNCH_CODE_CHECK		= 1;
+		static final byte	LOGIN_REQ				= 1;
 		static final byte	OBJECT_GETTER_REQ		= 2;
 		static final byte	OBJECT_GETBYID_REQ		= 3;
 		static final byte	OBJECT_UPDATE_REQ		= 4;

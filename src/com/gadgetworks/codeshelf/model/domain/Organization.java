@@ -1,21 +1,19 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Organization.java,v 1.20 2012/10/31 16:55:08 jeffw Exp $
+ *  $Id: Organization.java,v 1.21 2012/11/09 08:53:08 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.persistence.Column;
-import javax.persistence.DiscriminatorColumn;
-import javax.persistence.DiscriminatorType;
-import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
-import javax.persistence.Inheritance;
-import javax.persistence.InheritanceType;
+import javax.persistence.MapKey;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
@@ -78,8 +76,9 @@ public class Organization extends DomainObjectABC {
 
 	// For a network this is a list of all of the users that belong in the set.
 	@OneToMany(mappedBy = "parent")
+	@MapKey(name="domainId")
 	@Getter
-	private List<User>			users		= new ArrayList<User>();
+	private Map<String, User>			users		= new HashMap<String, User>();
 
 	// For an organization this is a list of all of the facilities.
 	@OneToMany(mappedBy = "parentOrganization", fetch = FetchType.EAGER)
@@ -89,6 +88,18 @@ public class Organization extends DomainObjectABC {
 	public Organization() {
 		setParent(this);
 		description = "";
+	}
+
+	public final void addUser(User inUser) {
+		users.put(inUser.getDomainId(), inUser);
+	}
+
+	public final User getUser(String inUserId) {
+		return users.get(inUserId);
+	}
+
+	public final void removeUser(String inUserId) {
+		users.remove(inUserId);
 	}
 
 	public final ITypedDao<Organization> getDao() {

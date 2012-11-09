@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeshelfApplicationTest.java,v 1.6 2012/10/24 01:00:59 jeffw Exp $
+ *  $Id: CodeshelfApplicationTest.java,v 1.7 2012/11/09 08:53:08 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.application;
 
@@ -38,6 +38,7 @@ import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
 import com.gadgetworks.codeshelf.model.domain.UomMaster;
+import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.model.domain.WirelessDevice.IWirelessDeviceDao;
 import com.gadgetworks.codeshelf.web.websession.IWebSessionManager;
 import com.gadgetworks.codeshelf.web.websession.WebSessionManager;
@@ -212,6 +213,7 @@ public class CodeshelfApplicationTest {
 
 		ITypedDao<PersistentProperty> persistentPropertyDao = new MockDao<PersistentProperty>();
 		ITypedDao<Organization> organizationDao = new MockDao<Organization>();
+		ITypedDao<User> userDao = new MockDao<User>();
 		ITypedDao<Facility> facilityDao = new MockDao<Facility>();
 		ITypedDao<OrderGroup> orderGroupDao = new MockDao<OrderGroup>();
 		ITypedDao<OrderHeader> orderHeaderDao = new MockDao<OrderHeader>();
@@ -244,7 +246,8 @@ public class CodeshelfApplicationTest {
 			persistentPropertyDao,
 			organizationDao,
 			facilityDao,
-			wirelessDeviceDao);
+			wirelessDeviceDao,
+			userDao);
 
 		final Result checkAppRunning = new Result();
 

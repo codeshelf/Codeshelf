@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionRespCmdLaunchCode.java,v 1.6 2012/10/30 15:21:34 jeffw Exp $
+ *  $Id: WebSessionRespCmdLaunchCode.java,v 1.7 2012/11/09 08:53:08 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.resp;
 
@@ -24,7 +24,7 @@ import com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmd;
  */
 public class WebSessionRespCmdLaunchCode extends WebSessionRespCmdABC {
 
-	private static final String	LAUNCH_CODE_RESP	= "LAUNCH_CODE_RS";
+	private static final String	LOGIN_RESPONSE	= "LOGIN_RS";
 
 	private String				mResponseValue;
 	private Organization		mOrganization;
@@ -51,7 +51,7 @@ public class WebSessionRespCmdLaunchCode extends WebSessionRespCmdABC {
 	protected final void doPrepareDataNode(ObjectNode inOutDataNode) {
 
 		// Insert the response code.
-		inOutDataNode.put(LAUNCH_CODE_RESP, mResponseValue);
+		inOutDataNode.put(LOGIN_RESPONSE, mResponseValue);
 
 		// For valid response codes, also return the organization object;
 		if (mOrganization != null) {

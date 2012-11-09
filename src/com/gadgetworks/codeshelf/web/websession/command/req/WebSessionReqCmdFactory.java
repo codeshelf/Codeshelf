@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdFactory.java,v 1.15 2012/10/16 06:23:21 jeffw Exp $
+ *  $Id: WebSessionReqCmdFactory.java,v 1.16 2012/11/09 08:53:08 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -46,8 +46,8 @@ public final class WebSessionReqCmdFactory implements IWebSessionReqCmdFactory {
 		JsonNode dataNode = inCommandAsJson.get(IWebSessionCmd.DATA_ELEMENT);
 
 		switch (commandEnum) {
-			case LAUNCH_CODE_CHECK:
-				result = new WebSessionReqCmdLaunchCode(commandId, dataNode, mOrganizationDao);
+			case LOGIN_REQ:
+				result = new WebSessionReqCmdLogin(commandId, dataNode, mOrganizationDao);
 				break;
 
 			case OBJECT_GETTER_REQ:

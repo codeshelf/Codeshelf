@@ -1,14 +1,24 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdLaunchCode.java,v 1.11 2012/09/08 03:03:23 jeffw Exp $
+ *  $Id: WebSessionReqCmdLogin.java,v 1.1 2012/11/09 08:53:08 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
+
+import java.math.BigInteger;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.KeySpec;
+
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
 
 import org.codehaus.jackson.JsonNode;
 
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Organization;
+import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.web.websession.command.resp.IWebSessionRespCmd;
 import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdLaunchCode;
 
@@ -27,17 +37,17 @@ import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdLa
  * @author jeffw
  *
  */
-public class WebSessionReqCmdLaunchCode extends WebSessionReqCmdABC {
+public class WebSessionReqCmdLogin extends WebSessionReqCmdABC {
 
 	private ITypedDao<Organization>	mOrganizationDao;
 
-	public WebSessionReqCmdLaunchCode(final String inCommandId, final JsonNode inDataNodeAsJson, final ITypedDao<Organization> inOrganizationDao) {
+	public WebSessionReqCmdLogin(final String inCommandId, final JsonNode inDataNodeAsJson, final ITypedDao<Organization> inOrganizationDao) {
 		super(inCommandId, inDataNodeAsJson);
 		mOrganizationDao = inOrganizationDao;
 	}
 
 	public final WebSessionReqCmdEnum getCommandEnum() {
-		return WebSessionReqCmdEnum.LAUNCH_CODE_CHECK;
+		return WebSessionReqCmdEnum.LOGIN_REQ;
 	}
 
 	protected final IWebSessionRespCmd doExec() {
@@ -47,19 +57,27 @@ public class WebSessionReqCmdLaunchCode extends WebSessionReqCmdABC {
 
 		// Search for a user with the specified ID (that has no password).
 
-		JsonNode launchNode = getDataJsonNode().get("launchCode");
-		String launchCode = launchNode.getTextValue();
-		Organization organization = mOrganizationDao.findByDomainId(null, launchCode);
+		JsonNode organizationIdNode = getDataJsonNode().get("organization");
+		String organizationId = organizationIdNode.getTextValue();
+		Organization organization = mOrganizationDao.findByDomainId(null, organizationId);
 
 		// CRITICAL SECURITY CONCEPT.
 		// LaunchCodes are anonymous users that we create WITHOUT passwords or final userIDs.
 		// If a user has a NULL hashed password then this is a launch code (promo) user.
 		// A user with a launch code can elect to become a real user and change their userId (and created a password).
 		if (organization != null) {
-			// If there are any users associated with this organization then the launch code is no good,
-			// and the user must login.
-			if (organization.getUsers().size() == 0) {
-				authenticateResult = SUCCEED;
+			// Find the user.
+
+			JsonNode userIdNode = getDataJsonNode().get("userId");
+			String userId = userIdNode.getTextValue();
+			User user = organization.getUser(userId);
+			if (user != null) {
+				JsonNode passwordNode = getDataJsonNode().get("hashedPw");
+				String password = passwordNode.getTextValue();
+				if (user.isPasswordValid(password)) {
+					authenticateResult = SUCCEED;
+					
+				}
 			}
 		}
 

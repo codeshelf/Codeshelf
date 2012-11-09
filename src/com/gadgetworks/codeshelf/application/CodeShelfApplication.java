@@ -1,15 +1,23 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfApplication.java,v 1.50 2012/11/08 03:37:27 jeffw Exp $
+ *  $Id: CodeShelfApplication.java,v 1.51 2012/11/09 08:53:08 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
 
 import java.lang.management.ManagementFactory;
+import java.math.BigInteger;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.KeySpec;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
 
 import org.apache.log4j.Level;
 import org.slf4j.Logger;
@@ -30,6 +38,7 @@ import com.gadgetworks.codeshelf.model.domain.CodeShelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
+import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.model.domain.WirelessDevice;
 import com.gadgetworks.codeshelf.model.domain.WirelessDevice.IWirelessDeviceDao;
 import com.gadgetworks.codeshelf.web.websocket.IWebSocketListener;
@@ -55,6 +64,7 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 	private ITypedDao<Organization>			mOrganizationDao;
 	private ITypedDao<Facility>				mFacilityDao;
 	private IWirelessDeviceDao				mWirelessDeviceDao;
+	private ITypedDao<User>					mUserDao;
 
 	@Inject
 	public CodeShelfApplication(final IWebSocketListener inWebSocketManager,
@@ -66,7 +76,8 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 		final ITypedDao<PersistentProperty> inPersistentPropertyDao,
 		final ITypedDao<Organization> inOrganizationDao,
 		final ITypedDao<Facility> inFacilityDao,
-		final IWirelessDeviceDao inWirelessDeviceDao) {
+		final IWirelessDeviceDao inWirelessDeviceDao,
+		final ITypedDao<User> inUserDao) {
 		mWebSocketListener = inWebSocketManager;
 		mDaoProvider = inDaoProvider;
 		mHttpServer = inHttpServer;
@@ -77,6 +88,7 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 		mOrganizationDao = inOrganizationDao;
 		mFacilityDao = inFacilityDao;
 		mWirelessDeviceDao = inWirelessDeviceDao;
+		mUserDao = inUserDao;
 		mControllerList = new ArrayList<IController>();
 	}
 
@@ -156,6 +168,12 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 
 		Organization organization = mOrganizationDao.findByDomainId(null, "O1");
 		if (organization != null) {
+			User user = organization.getUser("jeffw@gadgetworks.com");
+			if (user != null) {
+				if (user.isPasswordValid("blahdeeblah")) {
+					LOGGER.info("Password is valid");
+				}
+			}
 			Facility facility = mFacilityDao.findByDomainId(organization, "F1");
 			if (facility != null) {
 				facility.logLocationDistances();
@@ -293,6 +311,20 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 			organization.setDomainId(inOrganizationId);
 			try {
 				mOrganizationDao.store(organization);
+			} catch (DaoException e) {
+				e.printStackTrace();
+			}
+
+			// Create a use for the organization.
+			User user = new User();
+			user.setParent(organization);
+			user.setDomainId("jeffw@gadgetworks.com");
+			user.setEmail("jeffw@gadgetworks.com");
+			user.setPassword("blahdeeblah");
+			user.setActive(true);
+
+			try {
+				mUserDao.store(user);
 			} catch (DaoException e) {
 				e.printStackTrace();
 			}
