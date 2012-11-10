@@ -1,23 +1,16 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfApplication.java,v 1.51 2012/11/09 08:53:08 jeffw Exp $
+ *  $Id: CodeShelfApplication.java,v 1.52 2012/11/10 03:20:02 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
 
+import java.io.IOException;
 import java.lang.management.ManagementFactory;
-import java.math.BigInteger;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.KeySpec;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.PBEKeySpec;
 
 import org.apache.log4j.Level;
 import org.slf4j.Logger;
@@ -41,7 +34,7 @@ import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
 import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.model.domain.WirelessDevice;
 import com.gadgetworks.codeshelf.model.domain.WirelessDevice.IWirelessDeviceDao;
-import com.gadgetworks.codeshelf.web.websocket.IWebSocketListener;
+import com.gadgetworks.codeshelf.web.websocket.ICodeshelfWebSocketServer;
 import com.google.inject.Inject;
 
 public final class CodeShelfApplication implements ICodeShelfApplication {
@@ -52,7 +45,7 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 	private List<IController>				mControllerList;
 	private IEdiProcessor					mEdiProcessor;
 	private WirelessDeviceEventHandler		mWirelessDeviceEventHandler;
-	private IWebSocketListener				mWebSocketListener;
+	private ICodeshelfWebSocketServer		mWebSocketServer;
 	private IDaoProvider					mDaoProvider;
 	private IHttpServer						mHttpServer;
 	private IDatabase						mDatabase;
@@ -67,7 +60,7 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 	private ITypedDao<User>					mUserDao;
 
 	@Inject
-	public CodeShelfApplication(final IWebSocketListener inWebSocketManager,
+	public CodeShelfApplication(final ICodeshelfWebSocketServer inWebSocketManager,
 		final IDaoProvider inDaoProvider,
 		final IHttpServer inHttpServer,
 		final IEdiProcessor inEdiProcessor,
@@ -78,7 +71,7 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 		final ITypedDao<Facility> inFacilityDao,
 		final IWirelessDeviceDao inWirelessDeviceDao,
 		final ITypedDao<User> inUserDao) {
-		mWebSocketListener = inWebSocketManager;
+		mWebSocketServer = inWebSocketManager;
 		mDaoProvider = inDaoProvider;
 		mHttpServer = inHttpServer;
 		mEdiProcessor = inEdiProcessor;
@@ -149,7 +142,7 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 		mWirelessDeviceEventHandler = new WirelessDeviceEventHandler(mControllerList, mWirelessDeviceDao);
 
 		// Start the WebSocket UX handler
-		mWebSocketListener.start();
+		mWebSocketServer.start();
 
 		// Start the ActiveMQ test server if required.
 		//		property = mPersistentPropertyDao.findById(PersistentProperty.ACTIVEMQ_RUN);
@@ -212,7 +205,11 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 		//		}
 
 		// Stop the web socket manager.
-		mWebSocketListener.stop();
+		try {
+			mWebSocketServer.stop();
+		} catch (IOException | InterruptedException e) {
+			LOGGER.error("", e);
+		}
 
 		// Shutdown the controllers
 		for (IController controller : mControllerList) {

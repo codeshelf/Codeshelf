@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSession.java,v 1.22 2012/10/10 22:15:19 jeffw Exp $
+ *  $Id: WebSession.java,v 1.23 2012/11/10 03:20:01 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession;
 
@@ -15,6 +15,7 @@ import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.JsonProcessingException;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.java_websocket.IWebSocket;
 
 import com.gadgetworks.codeshelf.model.dao.IDaoListener;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
@@ -22,7 +23,6 @@ import com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionPersisten
 import com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmd;
 import com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmdFactory;
 import com.gadgetworks.codeshelf.web.websession.command.resp.IWebSessionRespCmd;
-import com.gadgetworks.codeshelf.web.websocket.IWebSocket;
 
 /**
  * @author jeffw
@@ -45,7 +45,7 @@ public class WebSession implements IWebSession, IDaoListener {
 	}
 
 	public final IWebSessionRespCmd processMessage(String inMessage) {
-		
+
 		IWebSessionRespCmd result = null;
 
 		try {
@@ -74,7 +74,7 @@ public class WebSession implements IWebSession, IDaoListener {
 		} catch (IOException e) {
 			LOGGER.debug("", e);
 		}
-		
+
 		return result;
 	}
 
@@ -90,13 +90,9 @@ public class WebSession implements IWebSession, IDaoListener {
 	 * @param inCommand
 	 */
 	public final void sendCommand(IWebSessionRespCmd inCommand) {
-		try {
-			String message = inCommand.getResponseMsg();
-			LOGGER.info("Sent Command: " + inCommand.getCommandId() + " Data: " + message);
-			mWebSocket.send(message);
-		} catch (InterruptedException e) {
-			LOGGER.error("Can't send response", e);
-		}
+		String message = inCommand.getResponseMsg();
+		LOGGER.info("Sent Command: " + inCommand.getCommandId() + " Data: " + message);
+		mWebSocket.send(message);
 	}
 
 	public final void objectAdded(IDomainObject inDomainObject) {

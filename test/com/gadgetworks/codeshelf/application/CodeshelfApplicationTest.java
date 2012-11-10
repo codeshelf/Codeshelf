@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeshelfApplicationTest.java,v 1.7 2012/11/09 08:53:08 jeffw Exp $
+ *  $Id: CodeshelfApplicationTest.java,v 1.8 2012/11/10 03:20:01 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.application;
 
@@ -44,8 +44,8 @@ import com.gadgetworks.codeshelf.web.websession.IWebSessionManager;
 import com.gadgetworks.codeshelf.web.websession.WebSessionManager;
 import com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmdFactory;
 import com.gadgetworks.codeshelf.web.websession.command.req.WebSessionReqCmdFactory;
-import com.gadgetworks.codeshelf.web.websocket.IWebSocketListener;
-import com.gadgetworks.codeshelf.web.websocket.WebSocketListener;
+import com.gadgetworks.codeshelf.web.websocket.CodeshelfWebSocketServer;
+import com.gadgetworks.codeshelf.web.websocket.ICodeshelfWebSocketServer;
 import com.google.inject.Binding;
 import com.google.inject.Injector;
 import com.google.inject.Key;
@@ -228,7 +228,7 @@ public class CodeshelfApplicationTest {
 		IDaoProvider daoProvider = new DaoProvider(injector);
 		IWebSessionReqCmdFactory webSessionReqCmdFactory = new WebSessionReqCmdFactory(organizationDao, daoProvider);
 		IWebSessionManager webSessionManager = new WebSessionManager(webSessionReqCmdFactory);
-		IWebSocketListener webSocketListener = new WebSocketListener(webSessionManager);
+		ICodeshelfWebSocketServer webSocketListener = new CodeshelfWebSocketServer(CodeshelfWebSocketServer.WEBSOCKET_ADDRESS, CodeshelfWebSocketServer.WEBSOCKET_PORT, webSessionManager);
 		IHttpServer httpServer = new HttpServer();
 
 		ICsvImporter importer = new CsvImporter(orderGroupDao, orderHeaderDao, orderDetailDao, containerDao, itemMasterDao, itemDao, uomMasterDao);

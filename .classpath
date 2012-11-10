@@ -46,5 +46,6 @@
 	<classpathentry kind="lib" path="lib/dist/jetty-servlet-9.0.0.M0.jar"/>
 	<classpathentry kind="lib" path="lib/dist/jetty-servlets-9.0.0.M0.jar"/>
 	<classpathentry kind="lib" path="lib/dist/servlet-api-3.0.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/Java-WebSocket"/>
 	<classpathentry kind="output" path="eclipse-bin"/>
 </classpath>

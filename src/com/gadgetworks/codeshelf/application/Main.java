@@ -1,7 +1,7 @@
 /*******************************************************************************
- *  CodeShelf
+CodeshelfWebSocketServer *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Main.java,v 1.32 2012/10/22 07:38:08 jeffw Exp $
+ *  $Id: Main.java,v 1.33 2012/11/10 03:20:02 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -79,12 +79,13 @@ import com.gadgetworks.codeshelf.web.websession.IWebSessionManager;
 import com.gadgetworks.codeshelf.web.websession.WebSessionManager;
 import com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmdFactory;
 import com.gadgetworks.codeshelf.web.websession.command.req.WebSessionReqCmdFactory;
-import com.gadgetworks.codeshelf.web.websocket.IWebSocketListener;
-import com.gadgetworks.codeshelf.web.websocket.WebSocketListener;
+import com.gadgetworks.codeshelf.web.websocket.CodeshelfWebSocketServer;
+import com.gadgetworks.codeshelf.web.websocket.ICodeshelfWebSocketServer;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.TypeLiteral;
+import com.google.inject.name.Names;
 
 // --------------------------------------------------------------------------
 /**
@@ -141,18 +142,21 @@ public final class Main {
 		Injector injector = Guice.createInjector(new AbstractModule() {
 			@Override
 			protected void configure() {
+				bindConstant().annotatedWith(Names.named("WEBSOCKET_ADDRESS")).to(CodeshelfWebSocketServer.WEBSOCKET_ADDRESS);
+				bindConstant().annotatedWith(Names.named("WEBSOCKET_PORT")).to(CodeshelfWebSocketServer.WEBSOCKET_PORT);
+
 				bind(IUtil.class).to(Util.class);
 				bind(ISchemaManager.class).to(H2SchemaManager.class);
 				bind(IDatabase.class).to(Database.class);
 				bind(ICodeShelfApplication.class).to(CodeShelfApplication.class);
-				bind(IWebSocketListener.class).to(WebSocketListener.class);
+				bind(ICodeshelfWebSocketServer.class).to(CodeshelfWebSocketServer.class);
 				bind(IWebSessionManager.class).to(WebSessionManager.class);
 				bind(IWebSessionReqCmdFactory.class).to(WebSessionReqCmdFactory.class);
 				bind(IDaoProvider.class).to(DaoProvider.class);
 				bind(IHttpServer.class).to(HttpServer.class);
 				bind(IEdiProcessor.class).to(EdiProcessor.class);
 				bind(ICsvImporter.class).to(CsvImporter.class);
-								
+
 				requestStaticInjection(Aisle.class);
 				bind(new TypeLiteral<ITypedDao<Aisle>>() {
 				}).to(AisleDao.class);
@@ -184,11 +188,11 @@ public final class Main {
 				requestStaticInjection(EdiDocumentLocator.class);
 				bind(new TypeLiteral<ITypedDao<EdiDocumentLocator>>() {
 				}).to(EdiDocumentLocatorDao.class);
-				
+
 				requestStaticInjection(DropboxService.class);
 				bind(new TypeLiteral<ITypedDao<DropboxService>>() {
 				}).to(DropboxServiceDao.class);
-				
+
 				requestStaticInjection(Facility.class);
 				bind(new TypeLiteral<ITypedDao<Facility>>() {
 				}).to(FacilityDao.class);
@@ -248,7 +252,7 @@ public final class Main {
 				requestStaticInjection(Vertex.class);
 				bind(new TypeLiteral<ITypedDao<Vertex>>() {
 				}).to(VertexDao.class);
-				
+
 				requestStaticInjection(WirelessDevice.class);
 				bind(new TypeLiteral<IWirelessDeviceDao>() {
 				}).to(WirelessDeviceDao.class);
@@ -260,9 +264,9 @@ public final class Main {
 				requestStaticInjection(WorkInstruction.class);
 				bind(new TypeLiteral<ITypedDao<WorkInstruction>>() {
 				}).to(WorkInstructionDao.class);
-				
-//				requestStaticInjection(WirelessDevice.class);
-//				bind(IWirelessDeviceDao.class).to(WirelessDeviceDao.class);
+
+				//				requestStaticInjection(WirelessDevice.class);
+				//				bind(IWirelessDeviceDao.class).to(WirelessDeviceDao.class);
 			}
 		});
 

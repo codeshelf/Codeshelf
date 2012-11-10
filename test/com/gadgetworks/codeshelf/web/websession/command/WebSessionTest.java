@@ -1,26 +1,26 @@
 package com.gadgetworks.codeshelf.web.websession.command;
 
-import java.util.List;
-import java.util.Map;
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.NotYetConnectedException;
 
 import junit.framework.Assert;
 import lombok.Getter;
 
+import org.java_websocket.IWebSocket;
+import org.java_websocket.drafts.Draft;
+import org.java_websocket.exceptions.InvalidHandshakeException;
+import org.java_websocket.framing.Framedata;
+import org.java_websocket.handshake.ClientHandshakeBuilder;
 import org.junit.Test;
 
-import com.avaje.ebean.Query;
-import com.gadgetworks.codeshelf.model.dao.DaoException;
-import com.gadgetworks.codeshelf.model.dao.IDaoListener;
-import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.dao.MockDao;
-import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.web.websession.IWebSession;
 import com.gadgetworks.codeshelf.web.websession.WebSession;
 import com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmdFactory;
 import com.gadgetworks.codeshelf.web.websession.command.req.WebSessionReqCmdFactory;
 import com.gadgetworks.codeshelf.web.websession.command.resp.IWebSessionRespCmd;
-import com.gadgetworks.codeshelf.web.websocket.IWebSocket;
 
 public class WebSessionTest {
 
@@ -30,9 +30,78 @@ public class WebSessionTest {
 		private String	sendString;
 
 		@Override
-		public void send(String inSendString) throws InterruptedException {
-			sendString = inSendString;
+		public void close(int code, String message) {
 		}
+
+		@Override
+		public void close(int code) {
+		}
+
+		@Override
+		public void send(String text) throws NotYetConnectedException {
+		}
+
+		@Override
+		public void send(ByteBuffer bytes) throws IllegalArgumentException, NotYetConnectedException {
+		}
+
+		@Override
+		public void send(byte[] bytes) throws IllegalArgumentException, NotYetConnectedException {
+		}
+
+		@Override
+		public void sendFrame(Framedata framedata) {
+		}
+
+		@Override
+		public boolean hasBufferedData() {
+			return false;
+		}
+
+		@Override
+		public void startHandshake(ClientHandshakeBuilder handshakedata) throws InvalidHandshakeException {
+		}
+
+		@Override
+		public InetSocketAddress getRemoteSocketAddress() {
+			return null;
+		}
+
+		@Override
+		public InetSocketAddress getLocalSocketAddress() {
+			return null;
+		}
+
+		@Override
+		public boolean isConnecting() {
+			return false;
+		}
+
+		@Override
+		public boolean isOpen() {
+			return false;
+		}
+
+		@Override
+		public boolean isClosing() {
+			return false;
+		}
+
+		@Override
+		public boolean isClosed() {
+			return false;
+		}
+
+		@Override
+		public Draft getDraft() {
+			return null;
+		}
+
+		@Override
+		public int getReadyState() {
+			return 0;
+		}
+
 	}
 
 	@Test

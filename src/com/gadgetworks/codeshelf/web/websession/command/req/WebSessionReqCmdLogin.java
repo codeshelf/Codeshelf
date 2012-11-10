@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdLogin.java,v 1.1 2012/11/09 08:53:08 jeffw Exp $
+ *  $Id: WebSessionReqCmdLogin.java,v 1.2 2012/11/10 03:20:01 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -57,7 +57,7 @@ public class WebSessionReqCmdLogin extends WebSessionReqCmdABC {
 
 		// Search for a user with the specified ID (that has no password).
 
-		JsonNode organizationIdNode = getDataJsonNode().get("organization");
+		JsonNode organizationIdNode = getDataJsonNode().get("organizationId");
 		String organizationId = organizationIdNode.getTextValue();
 		Organization organization = mOrganizationDao.findByDomainId(null, organizationId);
 
@@ -72,7 +72,7 @@ public class WebSessionReqCmdLogin extends WebSessionReqCmdABC {
 			String userId = userIdNode.getTextValue();
 			User user = organization.getUser(userId);
 			if (user != null) {
-				JsonNode passwordNode = getDataJsonNode().get("hashedPw");
+				JsonNode passwordNode = getDataJsonNode().get("password");
 				String password = passwordNode.getTextValue();
 				if (user.isPasswordValid(password)) {
 					authenticateResult = SUCCEED;
