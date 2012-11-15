@@ -1,7 +1,7 @@
 /*******************************************************************************
 CodeshelfWebSocketServer *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Main.java,v 1.33 2012/11/10 03:20:02 jeffw Exp $
+ *  $Id: Main.java,v 1.34 2012/11/15 07:55:33 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -81,6 +81,8 @@ import com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmdFac
 import com.gadgetworks.codeshelf.web.websession.command.req.WebSessionReqCmdFactory;
 import com.gadgetworks.codeshelf.web.websocket.CodeshelfWebSocketServer;
 import com.gadgetworks.codeshelf.web.websocket.ICodeshelfWebSocketServer;
+import com.gadgetworks.codeshelf.web.websocket.IWebSocketSslContextGenerator;
+import com.gadgetworks.codeshelf.web.websocket.WebSocketSslContextGenerator;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -156,6 +158,7 @@ public final class Main {
 				bind(IHttpServer.class).to(HttpServer.class);
 				bind(IEdiProcessor.class).to(EdiProcessor.class);
 				bind(ICsvImporter.class).to(CsvImporter.class);
+				bind(IWebSocketSslContextGenerator.class).to(WebSocketSslContextGenerator.class);
 
 				requestStaticInjection(Aisle.class);
 				bind(new TypeLiteral<ITypedDao<Aisle>>() {

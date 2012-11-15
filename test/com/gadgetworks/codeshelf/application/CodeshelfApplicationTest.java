@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeshelfApplicationTest.java,v 1.8 2012/11/10 03:20:01 jeffw Exp $
+ *  $Id: CodeshelfApplicationTest.java,v 1.9 2012/11/15 07:55:33 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.application;
 
@@ -46,6 +46,8 @@ import com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmdFac
 import com.gadgetworks.codeshelf.web.websession.command.req.WebSessionReqCmdFactory;
 import com.gadgetworks.codeshelf.web.websocket.CodeshelfWebSocketServer;
 import com.gadgetworks.codeshelf.web.websocket.ICodeshelfWebSocketServer;
+import com.gadgetworks.codeshelf.web.websocket.IWebSocketSslContextGenerator;
+import com.gadgetworks.codeshelf.web.websocket.WebSocketSslContextGenerator;
 import com.google.inject.Binding;
 import com.google.inject.Injector;
 import com.google.inject.Key;
@@ -228,7 +230,11 @@ public class CodeshelfApplicationTest {
 		IDaoProvider daoProvider = new DaoProvider(injector);
 		IWebSessionReqCmdFactory webSessionReqCmdFactory = new WebSessionReqCmdFactory(organizationDao, daoProvider);
 		IWebSessionManager webSessionManager = new WebSessionManager(webSessionReqCmdFactory);
-		ICodeshelfWebSocketServer webSocketListener = new CodeshelfWebSocketServer(CodeshelfWebSocketServer.WEBSOCKET_ADDRESS, CodeshelfWebSocketServer.WEBSOCKET_PORT, webSessionManager);
+		IWebSocketSslContextGenerator webSocketContextGenerator = new WebSocketSslContextGenerator();
+		ICodeshelfWebSocketServer webSocketListener = new CodeshelfWebSocketServer(CodeshelfWebSocketServer.WEBSOCKET_ADDRESS,
+			CodeshelfWebSocketServer.WEBSOCKET_PORT,
+			webSessionManager,
+			webSocketContextGenerator);
 		IHttpServer httpServer = new HttpServer();
 
 		ICsvImporter importer = new CsvImporter(orderGroupDao, orderHeaderDao, orderDetailDao, containerDao, itemMasterDao, itemDao, uomMasterDao);
