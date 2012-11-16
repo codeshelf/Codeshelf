@@ -1,10 +1,11 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSocketSslContextGenerator.java,v 1.1 2012/11/15 07:55:33 jeffw Exp $
+ *  $Id: WebSocketSslContextGenerator.java,v 1.2 2012/11/16 08:05:56 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websocket;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.security.KeyManagementException;
@@ -46,7 +47,9 @@ public class WebSocketSslContextGenerator implements IWebSocketSslContextGenerat
 
 			try {
 				KeyStore ks = KeyStore.getInstance(STORETYPE);
-				URL url = ClassLoader.getSystemClassLoader().getResource("conf/" + KEYSTORE);
+				String keystorePath = System.getProperty(KEYSTORE);
+				File file=new File(keystorePath);
+				URL url = file.toURL();
 				ks.load(url.openStream(), STOREPASSWORD.toCharArray());
 
 				KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");

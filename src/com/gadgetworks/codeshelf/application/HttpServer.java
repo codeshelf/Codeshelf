@@ -1,10 +1,11 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: HttpServer.java,v 1.5 2012/11/15 07:55:33 jeffw Exp $
+ *  $Id: HttpServer.java,v 1.6 2012/11/16 08:05:56 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.application;
 
+import java.io.File;
 import java.net.Socket;
 import java.net.URL;
 import java.nio.ByteBuffer;
@@ -60,7 +61,9 @@ public class HttpServer implements IHttpServer {
 			mServer = new Server();
 
 			SslContextFactory sslContextFactory = new SslContextFactory();
-			URL url = ClassLoader.getSystemClassLoader().getResource("conf/" + KEYSTORE);
+			String keystorePath = System.getProperty(KEYSTORE);
+			File file=new File(keystorePath);
+			URL url = file.toURL();
 			Resource keyStoreResource = Resource.newResource(url);
 			sslContextFactory.setKeyStoreResource(keyStoreResource);
 			sslContextFactory.setKeyStorePassword(STOREPASSWORD);
