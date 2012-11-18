@@ -1,7 +1,7 @@
 /*******************************************************************************
 CodeshelfWebSocketServer *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Main.java,v 1.34 2012/11/15 07:55:33 jeffw Exp $
+ *  $Id: Main.java,v 1.35 2012/11/18 06:04:30 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -144,8 +144,16 @@ public final class Main {
 		Injector injector = Guice.createInjector(new AbstractModule() {
 			@Override
 			protected void configure() {
-				bindConstant().annotatedWith(Names.named("WEBSOCKET_ADDRESS")).to(CodeshelfWebSocketServer.WEBSOCKET_ADDRESS);
-				bindConstant().annotatedWith(Names.named("WEBSOCKET_PORT")).to(CodeshelfWebSocketServer.WEBSOCKET_PORT);
+				bind(String.class).annotatedWith(Names.named("WEBSOCKET_HOSTNAME")).toInstance(System.getProperty("web.hostname"));
+				bind(Integer.class).annotatedWith(Names.named("WEBSOCKET_PORTNUM")).toInstance(ICodeshelfWebSocketServer.WEBSOCKET_DEFAULT_PORTNUM);
+
+				bind(String.class).annotatedWith(Names.named(IHttpServer.WEBSITE_CONTENT_PATH)).toInstance(System.getProperty("website.content.path"));
+				bind(String.class).annotatedWith(Names.named(IHttpServer.WEBSITE_HOSTNAME)).toInstance(System.getProperty("web.hostname"));
+				bind(Integer.class).annotatedWith(Names.named(IHttpServer.WEBSITE_PORTNUM)).toInstance(IHttpServer.WEBSITE_DEFAULT_PORTNUM);
+
+				bind(String.class).annotatedWith(Names.named(IHttpServer.WEBAPP_CONTENT_PATH)).toInstance(System.getProperty("webapp.content.path"));
+				bind(String.class).annotatedWith(Names.named(IHttpServer.WEBAPP_HOSTNAME)).toInstance(System.getProperty("web.hostname"));
+				bind(Integer.class).annotatedWith(Names.named(IHttpServer.WEBAPP_PORTNUM)).toInstance(IHttpServer.WEBAPP_DEFAULT_PORTNUM);
 
 				bind(IUtil.class).to(Util.class);
 				bind(ISchemaManager.class).to(H2SchemaManager.class);

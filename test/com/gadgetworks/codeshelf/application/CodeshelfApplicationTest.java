@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeshelfApplicationTest.java,v 1.9 2012/11/15 07:55:33 jeffw Exp $
+ *  $Id: CodeshelfApplicationTest.java,v 1.10 2012/11/18 06:04:30 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.application;
 
@@ -231,11 +231,11 @@ public class CodeshelfApplicationTest {
 		IWebSessionReqCmdFactory webSessionReqCmdFactory = new WebSessionReqCmdFactory(organizationDao, daoProvider);
 		IWebSessionManager webSessionManager = new WebSessionManager(webSessionReqCmdFactory);
 		IWebSocketSslContextGenerator webSocketContextGenerator = new WebSocketSslContextGenerator();
-		ICodeshelfWebSocketServer webSocketListener = new CodeshelfWebSocketServer(CodeshelfWebSocketServer.WEBSOCKET_ADDRESS,
-			CodeshelfWebSocketServer.WEBSOCKET_PORT,
+		ICodeshelfWebSocketServer webSocketListener = new CodeshelfWebSocketServer(ICodeshelfWebSocketServer.WEBSOCKET_DEFAULT_HOSTNAME,
+			CodeshelfWebSocketServer.WEBSOCKET_DEFAULT_PORTNUM,
 			webSessionManager,
 			webSocketContextGenerator);
-		IHttpServer httpServer = new HttpServer();
+		IHttpServer httpServer = new HttpServer("./", "localhost", 8000, "./", "localhost", 8443);
 
 		ICsvImporter importer = new CsvImporter(orderGroupDao, orderHeaderDao, orderDetailDao, containerDao, itemMasterDao, itemDao, uomMasterDao);
 		IEdiProcessor ediProcessor = new EdiProcessor(importer, facilityDao);

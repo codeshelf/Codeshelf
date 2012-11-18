@@ -42,16 +42,22 @@
 	<property name="libs.dir" location="${basedir}/lib" />
 	<property name="libs.dist.dir" location="${basedir}/lib/dist" />
 	<property name="libs.merge.dir" location="${basedir}/lib/merge" />
-	<property name="libs.win32.dir" location="${libs.dir}/win32" />
-	<property name="libs.linux.dir" location="${libs.dir}/linux-gtk" />
-	<property name="libs.osx.dir" location="${libs.dir}/osx" />
-	<!--property name="orm-classes.dir" location="${basedir}/build" /-->
 	<property name="keystore" location="${basedir}/build/keystore" />
 	<property name="target" location="${basedir}/target" />
 	<property name="target.build" location="${target}/build" />
-	<property name="target.compiled.classes" location="${target.build}/compiled-classes" />
+	<property name="should.obfuscate" value="false" />
 	<property name="target.obfuscated.classes" location="${target.build}/obfuscated-classes" />
-	<property name="target.enhanced.classes" location="${target.build}/obfuscated-classes" />
+	<property name="target.compiled.classes" location="${target.build}/compiled-classes" />
+	<if>
+		<equals arg1="${should.obfuscate}" arg2="true" />
+		<then>
+			<property name="target.classes" location="${target.obfuscated.classes}" />
+		</then>
+		<else>
+			<property name="target.classes" location="${target.compiled.classes}" />
+		</else>
+	</if>
+	<property name="target.enhanced.classes" location="${target.build}/enhanced-classes" />
 	<property name="target.resources" location="${target.build}/resources" />
 	<property name="target.lib" location="${target.build}/lib" />
 	<property name="target.docs" location="${target.build}/docs" />
@@ -91,31 +97,18 @@
 
 	<property name="ebean.build.dir" value="${basedir}/build" />
 	<property name="ebean.lib.dir" value="${ebean.build.dir}/lib" />
-	<property name="ebean.enhance.dir" value="${target.lib}/codeshelf-unobfs.jar" />
 
 	<!-- Define the compile set -->
 	<path id="compile-libs">
-		<!-- smackx-jingle.jar has to go first, or the system won't compile. -->
-		<!--fileset dir="${libs.dist.dir}" includes="smackx-jingle.jar" />
-		<fileset dir="${libs.dist.dir}" includes="*.jar" />
-		<fileset dir="${libs.merge.dir}" includes="*.jar" />
-		<fileset dir="${libs.osx.dir}" includes="*.jar" />
-		<fileset dir="${libs.linux.dir}" includes="*.jar" />
-		<fileset dir="${libs.win32.dir}" includes="*.jar" /-->
-		<!--<fileset dir="${orm-classes.dir}" includes="**/*.class" /-->
-		<!--fileset dir="${orm-classes.dir}" includes="**/*.jar" /-->
 		<fileset dir="${target.lib}" includes="smackx-jingle.jar" />
 		<fileset dir="${target.lib}" includes="*.jar" />
-		<fileset dir="${libs.win32.dir}" includes="*.jar" />
-		<!--fileset dir="${libs.osx.dir}" includes="*.jar" /-->
-		<!--fileset dir="${libs.linux.dir}" includes="*.jar" /-->
 		<fileset dir="${libs.merge.dir}" includes="FlyWeightController.jar" />
 	</path>
 
 	<!-- clean =================================================================================== -->
 	<target name="clean" description="Deletes files generated during the build.">
 		<!--Delete created directory trees-->
-		<delete includeemptydirs="true" failonerror="false" verbose="true" includes="*.* .*">
+		<delete includeemptydirs="true" failonerror="false" verbose="false" includes="*.* .*">
 			<fileset dir="${target}" followsymlinks="false" />
 		</delete>
 	</target>
@@ -200,21 +193,6 @@
 	<!-- build =================================================================================== -->
 	<target name="build" depends="init, resources">
 
-		<copy todir="${target.lib}/win32">
-			<fileset dir="${libs.win32.dir}">
-				<include name="**/*.*" />
-			</fileset>
-		</copy>
-		<!--copy todir="${target.lib}/linux-gtk">
-			<fileset dir="${libs.linux.dir}">
-				<include name="**/*.*" />
-			</fileset>
-		</copy>
-		<copy todir="${target.lib}/osx">
-			<fileset dir="${libs.osx.dir}">
-				<include name="**/*.*" />
-			</fileset>
-		</copy-->
 		<copy todir="${target.lib}">
 			<fileset dir="${libs.dist.dir}">
 				<include name="**/*.*" />
@@ -257,7 +235,7 @@
 		<jar duplicate="fail" jarfile="${target.lib}/codeshelf-unobfs.jar">
 			<!-- codeshelf classes (exclude any org.xxx classes) -->
 			<fileset dir="${target.compiled.classes}">
-				<include name="org/**/*.class" />
+				<exclude name="org/**/*.class" />
 			</fileset>
 		</jar>
 	</target>
@@ -274,92 +252,15 @@
 			<classpath>
 				<!--pathelement location="${orm-classes.dir}" /-->
 				<pathelement location="${ebean.lib.dir}/ebean-2.7.7-agent.jar" />
-				<pathelement location="${target.obfuscated.classes}" />
+				<pathelement location="${target.classes}" />
 				<path refid="compile-libs" />
 			</classpath>
 		</taskdef>
 
 		<!-- enhance -->
-		<ebeanEnhance packages="com.gadgetworks.codeshelf.model.domain" classdestination="${target.enhanced.classes}" classsource="${target.obfuscated.classes}" transformargs="debug=1" classpath="${target.lib}/*.jar" />
+		<echo>"${target.enhanced.classes}"</echo>
+		<ebeanEnhance packages="com.gadgetworks.codeshelf.model.domain" classDestination="${target.enhanced.classes}" classSource="${target.classes}" transformargs="debug=5" classpath="${target.lib}/*.jar" />
 
-	</target>
-
-	<!-- jar-final =================================================================================== -->
-	<target name="jar-final" depends="">
-
-		<mkdir dir="${target.lib}/${osdir}" />
-
-		<copy todir="${appjar.build.dir}/lib">
-			<fileset dir="${target.lib}/${osdir}">
-				<include name="**/*.jar" />
-			</fileset>
-		</copy>
-
-		<copy todir="${appjar.build.dir}/lib">
-			<fileset dir="${target.lib}">
-				<include name="**/*.jar" />
-				<exclude name="**/codeshelf-unobfs.jar" />
-				<exclude name="**/datamodels.jar" />
-				<exclude name="**/osx/*" />
-				<exclude name="**/win32/*" />
-				<exclude name="**/linux-gtk/*" />
-			</fileset>
-		</copy>
-
-		<antcall target="obfuscate" />
-		<antcall target="ebean-enhance" />
-
-		<!-- Prep the CLASSPATH variable for the manifest. -->
-		<fileset id="jardir" dir="${target.lib}">
-			<include name="**/*.jar" />
-			<exclude name="**\osx\**" />
-			<exclude name="**\win32\**" />
-			<exclude name="**\linux-gtk\**" />
-		</fileset>
-		<pathconvert pathsep=" " property="jarpaths" refid="jardir">
-			<map from="${target.lib}" to="lib" />
-		</pathconvert>
-
-		<!-- Create the final application JAR file. -->
-		<jar duplicate="fail" jarfile="${appjar.build.dir}/${codeshelf.app.jar.name}">
-			<!--zipfileset src="${target.lib}/datamodels.jar">
-				<include name="**/*.class" />
-			</zipfileset-->
-			<!--zipfileset src="${target.lib}/codeshelf-obfs.jar" />-->
-			<zipfileset dir="${target.enhanced.classes}" />
-			<zipfileset dir="${target.resources}" />
-			<!--zipfileset dir="${target.lib}/">
-				<include name="${osdir}/**.*" />
-			</zipfileset-->
-
-			<manifest>
-				<attribute name="Class-Path" value="${codeshelf.app.jar.name} . libjd2xx.so ${jarpaths}" />
-				<attribute name="Main-Class" value="${main.class}" />
-				<attribute name="Built-By" value="Gadgetworks, LLC (www.gadgetworks.com)" />
-			</manifest>
-		</jar>
-
-		<copy todir="${appjar.build.dir}">
-			<fileset dir="${target.lib}">
-				<include name="${codeshelf.app.jar.name}" />
-			</fileset>
-			<fileset dir="${target.lib}/${osdir}/">
-				<include name="**/*.dll" />
-				<include name="**/*.so" />
-				<include name="**/*.jnilib" />
-			</fileset>
-			<!--fileset dir="${resources.dir}/images">
-				<include name="**/codeshelf.ico" />
-			</fileset-->
-		</copy>
-	</target>
-
-	<!-- sign-jars-osx =================================================================================== -->
-	<target name="sign-jars-osx">
-		<echo level="info">Signing JARS...</echo>
-		<!--<signjar jar="${target.lib}/base.jar" keystore="${keystore}" alias="myself" storepass="password" />-->
-		<!--signjar jar="${target.lib}/startup.jar" keystore="${keystore}" alias="myself" storepass="password" />
-		<signjar jar="${target.lib}/${codeshelf.app.jar.name}" keystore="${keystore}" alias="myself" storepass="password" /-->
 	</target>
 
 	<!-- sign-jars-dist =================================================================================== -->
@@ -368,15 +269,6 @@
 		<!--<signjar jar="${target.lib}/base.jar" keystore="${keystore}" alias="myself" storepass="password" />-->
 		<signjar keystore="${keystore}" alias="myself" storepass="password">
 			<fileset dir="${libs.dist.dir}">
-				<include name="**/*.jar" />
-			</fileset>
-			<fileset dir="${libs.win32.dir}">
-				<include name="**/*.jar" />
-			</fileset>
-			<fileset dir="${libs.osx.dir}">
-				<include name="**/*.jar" />
-			</fileset>
-			<fileset dir="${libs.linux.dir}">
 				<include name="**/*.jar" />
 			</fileset>
 		</signjar>
@@ -509,7 +401,6 @@
 			    @com.google.inject.Inject &lt;init&gt;(...);
 			}
 		</proguard>
-		<!--delete file="${target.lib}/codeshelf-unobfs.jar" /-->
 	</target>
 
 	<!-- javadocs =================================================================================== -->
@@ -537,7 +428,6 @@
 		<mkdir dir="${appjar.build.dir}" />
 		<mkdir dir="${appjar.build.dir}/lib" />
 
-		<property name="osdir" value="osx" />
 		<property name="obfuscate.core.classes" value="${java.home}/../jre/lib/rt.jar" />
 		<property name="obfuscate.crypto.classes" value="${java.home}/../jre/lib/jce.jar" />
 		<property name="obfuscate.jsse.classes" value="${java.home}/../jre/lib/jsse.jar" />
@@ -548,8 +438,56 @@
                 static int actionProc(int, int, int);
             }" />
 
-		<antcall target="jar-final" />
-		<!--antcall target="sign-jars-osx" /-->
+		<copy todir="${appjar.build.dir}/lib">
+			<fileset dir="${target.lib}">
+				<include name="**/*.jar" />
+				<exclude name="**/codeshelf-unobfs.jar" />
+				<exclude name="**/datamodels.jar" />
+			</fileset>
+		</copy>
+
+		<!-- Obfuscate if requested -->
+		<if>
+			<equals arg1="${should.obfuscate}" arg2="true" />
+			<then>
+				<antcall target="obfuscate" />
+			</then>
+		</if>
+
+		<antcall target="ebean-enhance" />
+
+		<!-- Prep the CLASSPATH variable for the manifest. -->
+		<fileset id="jardir" dir="${target.lib}">
+			<include name="**/*.jar" />
+		</fileset>
+		<pathconvert pathsep=" " property="jarpaths" refid="jardir">
+			<map from="${target.lib}" to="lib" />
+		</pathconvert>
+
+		<!-- Create the final application JAR file. -->
+		<jar duplicate="fail" jarfile="${appjar.build.dir}/${codeshelf.app.jar.name}">
+			<!--zipfileset src="${target.lib}/datamodels.jar">
+				<include name="**/*.class" />
+			</zipfileset-->
+			<!--zipfileset src="${target.lib}/codeshelf-obfs.jar" />-->
+			<zipfileset dir="${target.enhanced.classes}" />
+			<zipfileset dir="${target.resources}" />
+			<zipfileset dir="${target.classes}/">
+				<exclude name="com.gadgetworks.codeshelf.model.domain/**.*" />
+			</zipfileset>
+
+			<manifest>
+				<attribute name="Class-Path" value="${codeshelf.app.jar.name} . libjd2xx.so ${jarpaths}" />
+				<attribute name="Main-Class" value="${main.class}" />
+				<attribute name="Built-By" value="Gadgetworks, LLC (www.gadgetworks.com)" />
+			</manifest>
+		</jar>
+
+		<copy todir="${appjar.build.dir}">
+			<fileset dir="${target.lib}">
+				<include name="${codeshelf.app.jar.name}" />
+			</fileset>
+		</copy>
 	</target>
 
 </project>

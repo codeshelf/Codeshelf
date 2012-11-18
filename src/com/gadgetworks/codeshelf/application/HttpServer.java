@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: HttpServer.java,v 1.6 2012/11/16 08:05:56 jeffw Exp $
+ *  $Id: HttpServer.java,v 1.7 2012/11/18 06:04:30 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.application;
 
@@ -15,13 +15,14 @@ import org.apache.commons.logging.LogFactory;
 import org.eclipse.jetty.io.NetworkTrafficListener;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.handler.DefaultHandler;
 import org.eclipse.jetty.server.handler.HandlerList;
 import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.eclipse.jetty.server.nio.NetworkTrafficSelectChannelConnector;
 import org.eclipse.jetty.util.resource.Resource;
-import org.eclipse.jetty.util.resource.URLResource;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
+
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 
 /**
  * @author jeffw
@@ -29,17 +30,42 @@ import org.eclipse.jetty.util.ssl.SslContextFactory;
  */
 public class HttpServer implements IHttpServer {
 
-	private static final Log		LOGGER					= LogFactory.getLog(HttpServer.class);
+	private static final Log	LOGGER						= LogFactory.getLog(HttpServer.class);
 
-	private static final String		HTTP_SERVER_THREADNAME	= "HTTP Server";
-	private static final String		HTTP_SERVER_HOSTNAME	= "localhost";
-	private static final Integer	HTTP_SERVER_PORTNUM		= 8443;
+	private static final String	WEBAPP_SERVER_THREADNAME	= "Webapp Server";
+	private static final String	WEBSITE_SERVER_THREADNAME	= "Website Server";
 
-	private static final String		KEYSTORE				= "codeshelf.keystore";
-	private static final String		STOREPASSWORD			= "x2HPbC2avltYQR";
-	private static final String		KEYPASSWORD				= "x2HPbC2avltYQR";
+	private static final String	KEYSTORE					= "codeshelf.keystore";
+	private static final String	STOREPASSWORD				= "x2HPbC2avltYQR";
+	private static final String	KEYPASSWORD					= "x2HPbC2avltYQR";
 
-	private Server					mServer;
+	private String				mWebSiteContentPath;
+	private String				mWebSiteHostname;
+	private int					mWebSitePortNum;
+
+	private String				mWebAppContentPath;
+	private String				mWebAppHostname;
+	private int					mWebAppPortNum;
+
+	private Server				mWebappServer;
+	private Server				mWebsiteServer;
+
+	@Inject
+	public HttpServer(@Named(IHttpServer.WEBSITE_CONTENT_PATH) final String inWebSiteContentPath,
+		@Named(IHttpServer.WEBSITE_HOSTNAME) final String inWebSiteHostname,
+		@Named(IHttpServer.WEBSITE_PORTNUM) final int inWebSitePortNum,
+		@Named(IHttpServer.WEBAPP_CONTENT_PATH) final String inWebAppContentPath,
+		@Named(IHttpServer.WEBAPP_HOSTNAME) final String inWebAppHostname,
+		@Named(IHttpServer.WEBAPP_PORTNUM) final int inWebAppPortNum) {
+
+		mWebSiteContentPath = inWebSiteContentPath;
+		mWebSiteHostname = inWebSiteHostname;
+		mWebSitePortNum = inWebSitePortNum;
+
+		mWebAppContentPath = inWebAppContentPath;
+		mWebAppHostname = inWebAppHostname;
+		mWebAppPortNum = inWebAppPortNum;
+	}
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
@@ -47,31 +73,47 @@ public class HttpServer implements IHttpServer {
 	 */
 	public final void startServer() {
 
-		Thread httpThread = new Thread(new Runnable() {
-			public void run() {
-				doStartServer();
-			}
-		}, HTTP_SERVER_THREADNAME);
-		httpThread.start();
+		if ((mWebSiteContentPath != null) && (mWebSiteContentPath.length() > 0)) {
+			Thread websiteServerThread = new Thread(new Runnable() {
+				public void run() {
+					mWebsiteServer = doStartServer("home.html", mWebSiteContentPath, mWebSiteHostname, mWebSitePortNum);
+				}
+			}, WEBSITE_SERVER_THREADNAME);
+			websiteServerThread.start();
+		}
+
+		if ((mWebAppContentPath != null) && (mWebAppContentPath.length() > 0)) {
+			Thread webappServerThread = new Thread(new Runnable() {
+				public void run() {
+					mWebappServer = doStartServer("codeshelf.html", mWebAppContentPath, mWebAppHostname, mWebAppPortNum);
+				}
+			}, WEBAPP_SERVER_THREADNAME);
+			webappServerThread.start();
+		}
 	}
 
-	private void doStartServer() {
+	// --------------------------------------------------------------------------
+	/**
+	 */
+	private Server doStartServer(final String inDefaultPage, final String inContentPath, final String inHostname, final int inPortNum) {
+
+		Server result = null;
 
 		try {
-			mServer = new Server();
+			result = new Server();
 
 			SslContextFactory sslContextFactory = new SslContextFactory();
 			String keystorePath = System.getProperty(KEYSTORE);
-			File file=new File(keystorePath);
+			File file = new File(keystorePath);
 			URL url = file.toURL();
 			Resource keyStoreResource = Resource.newResource(url);
 			sslContextFactory.setKeyStoreResource(keyStoreResource);
 			sslContextFactory.setKeyStorePassword(STOREPASSWORD);
 			sslContextFactory.setKeyManagerPassword(KEYPASSWORD);
 
-			NetworkTrafficSelectChannelConnector connector = new NetworkTrafficSelectChannelConnector(mServer, sslContextFactory);
-			connector.setHost(HTTP_SERVER_HOSTNAME);
-			connector.setPort(HTTP_SERVER_PORTNUM);
+			NetworkTrafficSelectChannelConnector connector = new NetworkTrafficSelectChannelConnector(result, sslContextFactory);
+			connector.setHost(inHostname);
+			connector.setPort(inPortNum);
 			connector.addNetworkTrafficListener(new NetworkTrafficListener() {
 				public void outgoing(Socket inSocket, ByteBuffer inByteBuffer) {
 				}
@@ -87,27 +129,28 @@ public class HttpServer implements IHttpServer {
 				}
 			});
 
-			mServer.addConnector(connector);
+			result.addConnector(connector);
 
-			ResourceHandler resourceHandler = new ResourceHandler();
-			resourceHandler.setDirectoriesListed(false);
-			resourceHandler.setWelcomeFiles(new String[] { "codeshelf.dev.html" });
-			resourceHandler.setResourceBase("../CodeshelfUX/");
-
-			//		ContextHandler contextHandler = new ContextHandler();
-			//		contextHandler.
+			// Website.
+			ResourceHandler websiteResourceHandler = new ResourceHandler();
+			websiteResourceHandler.setDirectoriesListed(false);
+			websiteResourceHandler.setWelcomeFiles(new String[] { inDefaultPage });
+			websiteResourceHandler.setResourceBase(inContentPath);
 
 			HandlerList handlers = new HandlerList();
-			handlers.setHandlers(new Handler[] { resourceHandler, new DefaultHandler() });
-			mServer.setHandler(handlers);
+			//			handlers.setHandlers(new Handler[] { webappResourceHandler, new DefaultHandler() });
+			handlers.setHandlers(new Handler[] { websiteResourceHandler });
+			result.setHandler(handlers);
 
-			mServer.start();
-			mServer.join();
+			result.start();
+			result.join();
 		} catch (InterruptedException e) {
 			LOGGER.error("", e);
 		} catch (Exception e) {
 			LOGGER.error("", e);
 		}
+
+		return result;
 	}
 
 	// --------------------------------------------------------------------------
@@ -115,8 +158,11 @@ public class HttpServer implements IHttpServer {
 	 * @see com.gadgetworks.codeshelf.application.IHttpServer#stopServer()
 	 */
 	public final void stopServer() {
-		if (mServer != null) {
-			mServer.setStopAtShutdown(true);
+		if (mWebsiteServer != null) {
+			mWebsiteServer.setStopAtShutdown(true);
+		}
+		if (mWebappServer != null) {
+			mWebappServer.setStopAtShutdown(true);
 		}
 	}
 }

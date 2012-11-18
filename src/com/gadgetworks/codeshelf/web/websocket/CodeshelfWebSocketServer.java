@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeshelfWebSocketServer.java,v 1.2 2012/11/15 07:55:33 jeffw Exp $
+ *  $Id: CodeshelfWebSocketServer.java,v 1.3 2012/11/18 06:04:30 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websocket;
 
@@ -22,17 +22,14 @@ import com.google.inject.name.Named;
 
 public class CodeshelfWebSocketServer extends WebSocketServer implements ICodeshelfWebSocketServer {
 
-	public static final String				WEBSOCKET_ADDRESS	= "localhost";
-	public static final int					WEBSOCKET_PORT		= 8444;
-
 	private static final Log				LOGGER				= LogFactory.getLog(CodeshelfWebSocketServer.class);
 
 	private IWebSessionManager				mWebSessionManager;
 	private CopyOnWriteArraySet<IWebSocket>	mWebSockets;
 
 	@Inject
-	public CodeshelfWebSocketServer(@Named("WEBSOCKET_ADDRESS") final String inAddr,
-		@Named("WEBSOCKET_PORT") final int inPort,
+	public CodeshelfWebSocketServer(@Named("WEBSOCKET_HOSTNAME") final String inAddr,
+		@Named("WEBSOCKET_PORTNUM") final int inPort,
 		final IWebSessionManager inWebSessionManager,
 		final IWebSocketSslContextGenerator inWebSocketSslContextManager) {
 		super(new InetSocketAddress(inAddr, inPort));

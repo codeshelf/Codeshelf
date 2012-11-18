@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ICodeshelfWebSocketServer.java,v 1.1 2012/11/10 03:20:01 jeffw Exp $
+ *  $Id: ICodeshelfWebSocketServer.java,v 1.2 2012/11/18 06:04:30 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websocket;
 
@@ -11,6 +11,9 @@ import org.java_websocket.IWebSocket;
 import org.java_websocket.handshake.ClientHandshake;
 
 public interface ICodeshelfWebSocketServer {
+
+	String	WEBSOCKET_DEFAULT_HOSTNAME	= "localhost";
+	int		WEBSOCKET_DEFAULT_PORTNUM	= 8444;
 
 	void start();
 
