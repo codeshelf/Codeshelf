@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: PersistentProperty.java,v 1.14 2012/10/31 16:55:08 jeffw Exp $
+ *  $Id: PersistentProperty.java,v 1.15 2012/11/19 10:48:25 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -43,7 +43,7 @@ import com.google.inject.Singleton;
 
 @Entity
 @CacheStrategy
-@Table(name = "PERSISTENTPROPERTY")
+@Table(name = "PERSISTENTPROPERTY", schema = "CODESHELF")
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 @ToString
 public class PersistentProperty extends DomainObjectTreeABC<Organization> {

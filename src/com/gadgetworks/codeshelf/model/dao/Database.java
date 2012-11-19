@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Database.java,v 1.3 2012/11/03 07:21:34 jeffw Exp $
+ *  $Id: Database.java,v 1.4 2012/11/19 10:48:25 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -53,7 +53,7 @@ public class Database implements IDatabase {
 
 		String appDataDir = mUtil.getApplicationDataDirPath();
 		System.setProperty("app.data.dir", appDataDir);
-		System.setProperty("app.database.url", mUtil.getApplicationDatabaseURL());
+		System.setProperty("app.database.url", mSchemaManager.getApplicationDatabaseURL());
 		System.setProperty("ebean.props.file", "conf/ebean.properties");
 		System.setProperty("java.util.logging.config.file", "conf/logging.properties");
 
@@ -82,16 +82,16 @@ public class Database implements IDatabase {
 		DataSourceConfig dataSourceConfig = new DataSourceConfig();
 		dataSourceConfig.setUsername("codeshelf");
 		dataSourceConfig.setPassword("codeshelf");
-		dataSourceConfig.setUrl(mUtil.getApplicationDatabaseURL());
-		dataSourceConfig.setDriver("org.h2.Driver");
+		dataSourceConfig.setUrl(mSchemaManager.getApplicationDatabaseURL());
+		dataSourceConfig.setDriver(mSchemaManager.getDriverName());
 		dataSourceConfig.setMinConnections(1);
 		dataSourceConfig.setMaxConnections(25);
 		dataSourceConfig.setIsolationLevel(Transaction.READ_COMMITTED);
-		dataSourceConfig.setHeartbeatSql("select count(*) from dual");
+//		dataSourceConfig.setHeartbeatSql("select count(*) from dual");
 
 		// Setup the EBean server configuration.
 		ServerConfig config = new ServerConfig();
-		config.setName("h2");
+		config.setName("codeshelf.primary");
 		//		config.loadFromProperties();
 		config.setDataSourceConfig(dataSourceConfig);
 		config.setNamingConvention(new GWEbeanNamingConvention());

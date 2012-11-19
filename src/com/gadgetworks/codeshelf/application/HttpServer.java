@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: HttpServer.java,v 1.7 2012/11/18 06:04:30 jeffw Exp $
+ *  $Id: HttpServer.java,v 1.8 2012/11/19 10:48:25 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.application;
 
@@ -9,13 +9,16 @@ import java.io.File;
 import java.net.Socket;
 import java.net.URL;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.eclipse.jetty.io.NetworkTrafficListener;
 import org.eclipse.jetty.server.Handler;
+import org.eclipse.jetty.server.NCSARequestLog;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.HandlerList;
+import org.eclipse.jetty.server.handler.RequestLogHandler;
 import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.eclipse.jetty.server.nio.NetworkTrafficSelectChannelConnector;
 import org.eclipse.jetty.util.resource.Resource;
@@ -35,10 +38,6 @@ public class HttpServer implements IHttpServer {
 	private static final String	WEBAPP_SERVER_THREADNAME	= "Webapp Server";
 	private static final String	WEBSITE_SERVER_THREADNAME	= "Website Server";
 
-	private static final String	KEYSTORE					= "codeshelf.keystore";
-	private static final String	STOREPASSWORD				= "x2HPbC2avltYQR";
-	private static final String	KEYPASSWORD					= "x2HPbC2avltYQR";
-
 	private String				mWebSiteContentPath;
 	private String				mWebSiteHostname;
 	private int					mWebSitePortNum;
@@ -47,16 +46,23 @@ public class HttpServer implements IHttpServer {
 	private String				mWebAppHostname;
 	private int					mWebAppPortNum;
 
+	private String				mKeystorePath;
+	private String				mKeystoreStorePassword;
+	private String				mKeystoreKeyPassword;
+
 	private Server				mWebappServer;
 	private Server				mWebsiteServer;
 
 	@Inject
-	public HttpServer(@Named(IHttpServer.WEBSITE_CONTENT_PATH) final String inWebSiteContentPath,
-		@Named(IHttpServer.WEBSITE_HOSTNAME) final String inWebSiteHostname,
-		@Named(IHttpServer.WEBSITE_PORTNUM) final int inWebSitePortNum,
-		@Named(IHttpServer.WEBAPP_CONTENT_PATH) final String inWebAppContentPath,
-		@Named(IHttpServer.WEBAPP_HOSTNAME) final String inWebAppHostname,
-		@Named(IHttpServer.WEBAPP_PORTNUM) final int inWebAppPortNum) {
+	public HttpServer(@Named(IHttpServer.WEBSITE_CONTENT_PATH_PROPERTY) final String inWebSiteContentPath,
+		@Named(IHttpServer.WEBSITE_HOSTNAME_PROPERTY) final String inWebSiteHostname,
+		@Named(IHttpServer.WEBSITE_PORTNUM_PROPERTY) final int inWebSitePortNum,
+		@Named(IHttpServer.WEBAPP_CONTENT_PATH_PROPERTY) final String inWebAppContentPath,
+		@Named(IHttpServer.WEBAPP_HOSTNAME_PROPERTY) final String inWebAppHostname,
+		@Named(IHttpServer.WEBAPP_PORTNUM_PROPERTY) final int inWebAppPortNum,
+		@Named(KEYSTORE_PATH_PROPERTY) final String inKeystorePath,
+		@Named(KEYSTORE_STORE_PASSWORD_PROPERTY) final String inKeystoreStorePassword,
+		@Named(KEYSTORE_KEY_PASSWORD_PROPERTY) final String inKeystoreKeyPassword) {
 
 		mWebSiteContentPath = inWebSiteContentPath;
 		mWebSiteHostname = inWebSiteHostname;
@@ -65,6 +71,10 @@ public class HttpServer implements IHttpServer {
 		mWebAppContentPath = inWebAppContentPath;
 		mWebAppHostname = inWebAppHostname;
 		mWebAppPortNum = inWebAppPortNum;
+
+		mKeystorePath = inKeystorePath;
+		mKeystoreStorePassword = inKeystoreStorePassword;
+		mKeystoreKeyPassword = inKeystoreKeyPassword;
 	}
 
 	// --------------------------------------------------------------------------
@@ -103,13 +113,12 @@ public class HttpServer implements IHttpServer {
 			result = new Server();
 
 			SslContextFactory sslContextFactory = new SslContextFactory();
-			String keystorePath = System.getProperty(KEYSTORE);
-			File file = new File(keystorePath);
+			File file = new File(mKeystorePath);
 			URL url = file.toURL();
 			Resource keyStoreResource = Resource.newResource(url);
 			sslContextFactory.setKeyStoreResource(keyStoreResource);
-			sslContextFactory.setKeyStorePassword(STOREPASSWORD);
-			sslContextFactory.setKeyManagerPassword(KEYPASSWORD);
+			sslContextFactory.setKeyStorePassword(mKeystoreStorePassword);
+			sslContextFactory.setKeyManagerPassword(mKeystoreKeyPassword);
 
 			NetworkTrafficSelectChannelConnector connector = new NetworkTrafficSelectChannelConnector(result, sslContextFactory);
 			connector.setHost(inHostname);
@@ -132,14 +141,24 @@ public class HttpServer implements IHttpServer {
 			result.addConnector(connector);
 
 			// Website.
-			ResourceHandler websiteResourceHandler = new ResourceHandler();
-			websiteResourceHandler.setDirectoriesListed(false);
-			websiteResourceHandler.setWelcomeFiles(new String[] { inDefaultPage });
-			websiteResourceHandler.setResourceBase(inContentPath);
+			ResourceHandler resourceHandler = new ResourceHandler();
+			resourceHandler.setDirectoriesListed(false);
+			resourceHandler.setWelcomeFiles(new String[] { inDefaultPage });
+			resourceHandler.setResourceBase(inContentPath);
 
+			RequestLogHandler requestLogHandler = new RequestLogHandler();
+
+	        NCSARequestLog requestLog = new NCSARequestLog();
+	        requestLog.setRetainDays(90);
+	        requestLog.setAppend(true);
+	        requestLog.setExtended(false);
+	        requestLog.setLogTimeZone("GMT");
+	        requestLog.setLogCookies(false);
+	        requestLogHandler.setRequestLog(requestLog);
+	        
 			HandlerList handlers = new HandlerList();
 			//			handlers.setHandlers(new Handler[] { webappResourceHandler, new DefaultHandler() });
-			handlers.setHandlers(new Handler[] { websiteResourceHandler });
+			handlers.setHandlers(new Handler[] { resourceHandler, requestLogHandler });
 			result.setHandler(handlers);
 
 			result.start();

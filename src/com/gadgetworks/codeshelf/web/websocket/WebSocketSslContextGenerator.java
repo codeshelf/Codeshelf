@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSocketSslContextGenerator.java,v 1.2 2012/11/16 08:05:56 jeffw Exp $
+ *  $Id: WebSocketSslContextGenerator.java,v 1.3 2012/11/19 10:48:25 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websocket;
 
@@ -23,6 +23,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 
 /**
  * @author jeffw
@@ -30,38 +31,43 @@ import com.google.inject.Inject;
  */
 public class WebSocketSslContextGenerator implements IWebSocketSslContextGenerator {
 
-	private static final String	STORETYPE		= "JKS";
-	private static final String	KEYSTORE		= "codeshelf.keystore";
-	private static final String	STOREPASSWORD	= "x2HPbC2avltYQR";
-	private static final String	KEYPASSWORD		= "x2HPbC2avltYQR";
-
 	private static final Log	LOGGER			= LogFactory.getLog(WebSocketSslContextGenerator.class);
 
-	@Inject
-	public WebSocketSslContextGenerator() {
+	private String				mKeystorePath;
+	private String				mKeystoreType;
+	private String				mKeystoreStorePassword;
+	private String				mKeystoreKeyPassword;
 
+	@Inject
+	public WebSocketSslContextGenerator(@Named(KEYSTORE_PATH_PROPERTY) final String inKeystorePath,
+		@Named(KEYSTORE_TYPE_PROPERTY) final String inKeystoreType,
+		@Named(KEYSTORE_STORE_PASSWORD_PROPERTY) final String inKeystoreStorePassword,
+		@Named(KEYSTORE_KEY_PASSWORD_PROPERTY) final String inKeystoreKeyPassword) {
+		mKeystorePath = inKeystorePath;
+		mKeystoreType = inKeystoreType;
+		mKeystoreStorePassword = inKeystoreStorePassword;
+		mKeystoreKeyPassword = inKeystoreKeyPassword;
 	}
 
 	public final SSLContext getSslContext() {
 		SSLContext result = null;
 
-			try {
-				KeyStore ks = KeyStore.getInstance(STORETYPE);
-				String keystorePath = System.getProperty(KEYSTORE);
-				File file=new File(keystorePath);
-				URL url = file.toURL();
-				ks.load(url.openStream(), STOREPASSWORD.toCharArray());
+		try {
+			KeyStore ks = KeyStore.getInstance(mKeystoreType);
+			File file = new File(mKeystorePath);
+			URL url = file.toURL();
+			ks.load(url.openStream(), mKeystoreStorePassword.toCharArray());
 
-				KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
-				kmf.init(ks, KEYPASSWORD.toCharArray());
-				TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
-				tmf.init(ks);
+			KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
+			kmf.init(ks, mKeystoreKeyPassword.toCharArray());
+			TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
+			tmf.init(ks);
 
-				result = SSLContext.getInstance("TLSv1.2");
-				result.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
-			} catch (UnrecoverableKeyException | KeyManagementException | KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException e) {
-				LOGGER.error("", e);
-			}
+			result = SSLContext.getInstance("TLSv1.2");
+			result.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
+		} catch (UnrecoverableKeyException | KeyManagementException | KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException e) {
+			LOGGER.error("", e);
+		}
 
 		return result;
 	}

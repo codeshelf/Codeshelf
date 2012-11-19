@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiDocumentLocator.java,v 1.14 2012/10/31 16:55:08 jeffw Exp $
+ *  $Id: EdiDocumentLocator.java,v 1.15 2012/11/19 10:48:25 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -42,7 +42,7 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-@Table(name = "EDIDOCUMENTLOCATOR")
+@Table(name = "EDIDOCUMENTLOCATOR", schema = "CODESHELF")
 @CacheStrategy
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class EdiDocumentLocator extends DomainObjectTreeABC<DropboxService> {

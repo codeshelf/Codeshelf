@@ -89,7 +89,7 @@
 	<property name="javac.compile.using.version" value="1.7" />
 
 	<property name="jws.build.dir" value="${target}/jws-codeshelf" />
-	<property name="appjar.build.dir" value="${target}/appjar-codeshelf" />
+	<property name="appjar.build.dir" value="${target}/appjar" />
 	<property name="launch4j.dir" location="{$target}" />
 	<property name="debian.installer.dir" value="${target}/debian-installer" />
 
@@ -466,10 +466,6 @@
 
 		<!-- Create the final application JAR file. -->
 		<jar duplicate="fail" jarfile="${appjar.build.dir}/${codeshelf.app.jar.name}">
-			<!--zipfileset src="${target.lib}/datamodels.jar">
-				<include name="**/*.class" />
-			</zipfileset-->
-			<!--zipfileset src="${target.lib}/codeshelf-obfs.jar" />-->
 			<zipfileset dir="${target.enhanced.classes}" />
 			<zipfileset dir="${target.resources}" />
 			<zipfileset dir="${target.classes}/">
@@ -477,7 +473,7 @@
 			</zipfileset>
 
 			<manifest>
-				<attribute name="Class-Path" value="${codeshelf.app.jar.name} . libjd2xx.so ${jarpaths}" />
+				<attribute name="Class-Path" value="${codeshelf.app.jar.name} . ${jarpaths}" />
 				<attribute name="Main-Class" value="${main.class}" />
 				<attribute name="Built-By" value="Gadgetworks, LLC (www.gadgetworks.com)" />
 			</manifest>

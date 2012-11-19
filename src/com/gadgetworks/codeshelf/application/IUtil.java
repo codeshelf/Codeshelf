@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: IUtil.java,v 1.1 2012/10/11 09:04:36 jeffw Exp $
+ *  $Id: IUtil.java,v 1.2 2012/11/19 10:48:25 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.application;
 
@@ -17,11 +17,7 @@ public interface IUtil {
 	
 	String getVersionString();
 	
-	String getApplicationInitDatabaseURL();
-	
 	String getApplicationDataDirPath();
-	
-	String getApplicationDatabaseURL();
 	
 	String getApplicationLogDirPath();
 	

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Path.java,v 1.14 2012/11/08 03:37:27 jeffw Exp $
+ *  $Id: Path.java,v 1.15 2012/11/19 10:48:25 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -42,7 +42,7 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-@Table(name = "PATH")
+@Table(name = "PATH", schema = "CODESHELF")
 @CacheStrategy
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class Path extends DomainObjectTreeABC<Facility> {

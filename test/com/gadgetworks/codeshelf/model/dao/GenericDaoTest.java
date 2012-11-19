@@ -45,7 +45,7 @@ public class GenericDaoTest {
 			return Aisle.class;
 		}
 	}
-	
+
 	private static IUtil			mUtil;
 	private static ISchemaManager	mSchemaManager;
 	private static IDatabase		mDatabase;
@@ -85,7 +85,7 @@ public class GenericDaoTest {
 			};
 
 			Class.forName("org.h2.Driver");
-			mSchemaManager = new H2SchemaManager(mUtil);
+			mSchemaManager = new H2SchemaManager(mUtil, "codeshelf", "codeshelf", "codeshelf", "codeshelf", "localhost", "");
 			mDatabase = new Database(mSchemaManager, mUtil);
 
 			mDatabase.start();
@@ -100,22 +100,22 @@ public class GenericDaoTest {
 		Organization organization = new Organization();
 		organization.setDomainId("NON-PERSIST");
 		organization.setDescription("NON-PERSIST");
-		
+
 		final Result checkUpdate = new Result();
-		
-		IDaoListener listener = new IDaoListener() {	
+
+		IDaoListener listener = new IDaoListener() {
 			public void objectUpdated(IDomainObject inObject, Set<String> inChangedProperties) {
 				checkUpdate.result = true;
 			}
-			
+
 			public void objectDeleted(IDomainObject inObject) {
 			}
-			
+
 			public void objectAdded(IDomainObject inObject) {
 			}
 		};
-		
-		dao.registerDAOListener(listener);	
+
+		dao.registerDAOListener(listener);
 		dao.pushNonPersistentUpdates(organization);
 		Assert.assertTrue(checkUpdate.result);
 
@@ -123,7 +123,7 @@ public class GenericDaoTest {
 		checkUpdate.result = false;
 		dao.pushNonPersistentUpdates(organization);
 		Assert.assertFalse(checkUpdate.result);
-		
+
 	}
 
 	@Test
@@ -141,7 +141,7 @@ public class GenericDaoTest {
 		organization.setDomainId("LOADBYFILTERTEST2");
 		organization.setDescription("LOADBYFILTER");
 		dao.store(organization);
-		
+
 		Map<String, Object> filterParams = new HashMap<String, Object>();
 		filterParams.put("theId", "LOADBYFILTERTEST1");
 
@@ -271,7 +271,7 @@ public class GenericDaoTest {
 
 			// Try to switch to the proper schema.
 			Statement stmt = connection.createStatement();
-			ResultSet resultSet = stmt.executeQuery("SELECT * FROM " + ISchemaManager.DATABASE_SCHEMA_NAME + ".ORGANIZATION WHERE DOMAINID = 'STORE-TEST-NEW'");
+			ResultSet resultSet = stmt.executeQuery("SELECT * FROM " + System.getProperty("db.schema.name") + ".ORGANIZATION WHERE DOMAINID = 'STORE-TEST-NEW'");
 
 			if (!resultSet.next()) {
 				Assert.fail();
@@ -303,7 +303,7 @@ public class GenericDaoTest {
 
 			// Try to switch to the proper schema.
 			Statement stmt = connection.createStatement();
-			ResultSet resultSet = stmt.executeQuery("SELECT * FROM " + ISchemaManager.DATABASE_SCHEMA_NAME + ".ORGANIZATION WHERE DOMAINID = 'STORE-TEST-UPDATE'");
+			ResultSet resultSet = stmt.executeQuery("SELECT * FROM " + System.getProperty("db.schema.name") + ".ORGANIZATION WHERE DOMAINID = 'STORE-TEST-UPDATE'");
 
 			if (!resultSet.next()) {
 				Assert.fail();
@@ -336,7 +336,7 @@ public class GenericDaoTest {
 
 			// Try to switch to the proper schema.
 			Statement stmt = connection.createStatement();
-			ResultSet resultSet = stmt.executeQuery("SELECT * FROM " + ISchemaManager.DATABASE_SCHEMA_NAME + ".ORGANIZATION WHERE DOMAINID = 'DELETE-TEST'");
+			ResultSet resultSet = stmt.executeQuery("SELECT * FROM " + System.getProperty("db.schema.name") + ".ORGANIZATION WHERE DOMAINID = 'DELETE-TEST'");
 
 			if (!resultSet.next()) {
 				// This is the pass condition.

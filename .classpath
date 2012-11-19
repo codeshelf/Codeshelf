@@ -39,14 +39,15 @@
 	<classpathentry kind="lib" path="lib/dist/jetty-continuation-9.0.0.M0.jar"/>
 	<classpathentry kind="lib" path="lib/dist/java_websocket.jar" sourcepath="/Java-WebSocket/src/main/java"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
-	<classpathentry kind="lib" path="lib/dist/ebean-2.8.2-SNAPSHOT.jar"/>
+	<classpathentry kind="lib" path="lib/dist/ebean-2.8.2-SNAPSHOT.jar" sourcepath="/ebean/src/main/java"/>
 	<classpathentry kind="lib" path="lib/dist/servlet-api-3.0.jar"/>
 	<classpathentry kind="lib" path="lib/dist/jetty-continuation-9.0.0.M2.jar"/>
 	<classpathentry kind="lib" path="lib/dist/jetty-http-9.0.0.M2.jar"/>
 	<classpathentry kind="lib" path="lib/dist/jetty-io-9.0.0.M2.jar"/>
-	<classpathentry kind="lib" path="lib/dist/jetty-server-9.0.0.M2.jar"/>
+	<classpathentry kind="lib" path="lib/dist/jetty-server-9.0.0.M2.jar" sourcepath="/Users/jeffw/.m2/repository/org/eclipse/jetty/jetty-server/9.0.0.M2/jetty-server-9.0.0.M2-sources.jar"/>
 	<classpathentry kind="lib" path="lib/dist/jetty-servlet-9.0.0.M2.jar"/>
 	<classpathentry kind="lib" path="lib/dist/jetty-servlets-9.0.0.M2.jar"/>
 	<classpathentry kind="lib" path="lib/dist/jetty-util-9.0.0.M2.jar"/>
+	<classpathentry kind="lib" path="lib/dist/postgresql-9.2-1002.jdbc4.jar"/>
 	<classpathentry kind="output" path="eclipse-bin"/>
 </classpath>

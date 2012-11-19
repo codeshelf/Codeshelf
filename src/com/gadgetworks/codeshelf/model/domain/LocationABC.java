@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: LocationABC.java,v 1.17 2012/11/08 03:37:27 jeffw Exp $
+ *  $Id: LocationABC.java,v 1.18 2012/11/19 10:48:25 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -54,7 +54,7 @@ import com.google.inject.Singleton;
 @MappedSuperclass
 @CacheStrategy
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@Table(name = "LOCATION")
+@Table(name = "LOCATION", schema = "CODESHELF")
 @DiscriminatorColumn(name = "DTYPE", discriminatorType = DiscriminatorType.STRING)
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 @ToString

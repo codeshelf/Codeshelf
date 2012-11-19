@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Util.java,v 1.19 2012/10/11 09:04:36 jeffw Exp $
+ *  $Id: Util.java,v 1.20 2012/11/19 10:48:25 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -48,7 +48,7 @@ public final class Util implements IUtil {
 	// be part of pre-main static initialization.  Since it uses methods from Util we moved it
 	// here before Util tries to use the LogFactory.
 	static {
-		
+
 		Util util = new Util();
 		String appLogPath = util.getApplicationLogDirPath();
 		System.setProperty("codeshelf.logfile", appLogPath + System.getProperty("file.separator") + "codeshelf.log");
@@ -151,45 +151,19 @@ public final class Util implements IUtil {
 	public String getApplicationDataDirPath() {
 		String result = "";
 
-		  // Setup the data directory for this application.
+		// Setup the data directory for this application.
 		result = System.getProperty("user.home");
 		String platform = System.getProperty("os.name");
 		if (platform.toLowerCase().indexOf("mac") > -1) {
 			result += "/Library/Application Support/CodeShelf";
 		} else if (platform.toLowerCase().indexOf("windows") > -1) {
 			result += System.getProperty("file.separator") + "Application Data" + System.getProperty("file.separator") + "CodeShelf";
-		} else if (platform.toLowerCase().indexOf("linux") > -1){
+		} else if (platform.toLowerCase().indexOf("linux") > -1) {
 			result += System.getProperty("file.separator") + ".CodeShelf";
 		} else {
 			// It's an OS we don't support (yet).
 			exitSystem();
 		}
-
-		return result;
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 *  @return
-	 */
-	public String getApplicationInitDatabaseURL() {
-		String result = "";
-
-		// Setup the data directory for this application.
-		result = "jdbc:h2:" + getApplicationDataDirPath() + System.getProperty("file.separator") + "db" + System.getProperty("file.separator") + "database" + ";TRACE_LEVEL_FILE=0;AUTO_SERVER=TRUE";
-
-		return result;
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 *  @return
-	 */
-	public String getApplicationDatabaseURL() {
-		String result = "";
-
-		// Setup the data directory for this application.
-		result = "jdbc:h2:" + getApplicationDataDirPath() + System.getProperty("file.separator") + "db" + System.getProperty("file.separator") + "database" + ";SCHEMA=CODESHELF;TRACE_LEVEL_FILE=0;AUTO_SERVER=TRUE";
 
 		return result;
 	}

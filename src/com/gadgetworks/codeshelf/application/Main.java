@@ -1,10 +1,14 @@
 /*******************************************************************************
 CodeshelfWebSocketServer *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Main.java,v 1.35 2012/11/18 06:04:30 jeffw Exp $
+ *  $Id: Main.java,v 1.36 2012/11/19 10:48:25 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
+
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.Properties;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -15,11 +19,11 @@ import com.gadgetworks.codeshelf.edi.ICsvImporter;
 import com.gadgetworks.codeshelf.edi.IEdiProcessor;
 import com.gadgetworks.codeshelf.model.dao.DaoProvider;
 import com.gadgetworks.codeshelf.model.dao.Database;
-import com.gadgetworks.codeshelf.model.dao.H2SchemaManager;
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.IDatabase;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.codeshelf.model.dao.PostgresSchemaManager;
 import com.gadgetworks.codeshelf.model.dao.WirelessDeviceDao;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Aisle.AisleDao;
@@ -113,6 +117,17 @@ public final class Main {
 	 */
 	public static void main(String[] inArgs) {
 
+		Properties properties = new Properties();
+		try {
+			properties.load(new FileInputStream(System.getProperty("config.properties")));
+			for (String name : properties.stringPropertyNames()) {
+				String value = properties.getProperty(name);
+				System.setProperty(name, value);
+			}
+		} catch (IOException e) {
+			System.err.println();
+		}
+
 		// Guice (injector) will invoke log4j, so we need to set some log dir parameters before we call it.
 		Util util = new Util();
 		String appDataDir = util.getApplicationDataDirPath();
@@ -144,19 +159,31 @@ public final class Main {
 		Injector injector = Guice.createInjector(new AbstractModule() {
 			@Override
 			protected void configure() {
-				bind(String.class).annotatedWith(Names.named("WEBSOCKET_HOSTNAME")).toInstance(System.getProperty("web.hostname"));
-				bind(Integer.class).annotatedWith(Names.named("WEBSOCKET_PORTNUM")).toInstance(ICodeshelfWebSocketServer.WEBSOCKET_DEFAULT_PORTNUM);
+				bind(String.class).annotatedWith(Names.named(ISchemaManager.DATABASE_NAME_PROPERTY)).toInstance(System.getProperty("db.name"));
+				bind(String.class).annotatedWith(Names.named(ISchemaManager.DATABASE_SCHEMANAME_PROPERTY)).toInstance(System.getProperty("db.schemaname"));
+				bind(String.class).annotatedWith(Names.named(ISchemaManager.DATABASE_USERID_PROPERTY)).toInstance(System.getProperty("db.userid"));
+				bind(String.class).annotatedWith(Names.named(ISchemaManager.DATABASE_PASSWORD_PROPERTY)).toInstance(System.getProperty("db.password"));
+				bind(String.class).annotatedWith(Names.named(ISchemaManager.DATABASE_ADDRESS_PROPERTY)).toInstance(System.getProperty("db.address"));
+				bind(String.class).annotatedWith(Names.named(ISchemaManager.DATABASE_PORTNUM_PROPERTY)).toInstance(System.getProperty("db.portnum"));
 
-				bind(String.class).annotatedWith(Names.named(IHttpServer.WEBSITE_CONTENT_PATH)).toInstance(System.getProperty("website.content.path"));
-				bind(String.class).annotatedWith(Names.named(IHttpServer.WEBSITE_HOSTNAME)).toInstance(System.getProperty("web.hostname"));
-				bind(Integer.class).annotatedWith(Names.named(IHttpServer.WEBSITE_PORTNUM)).toInstance(IHttpServer.WEBSITE_DEFAULT_PORTNUM);
+				bind(String.class).annotatedWith(Names.named(IWebSocketSslContextGenerator.KEYSTORE_PATH_PROPERTY)).toInstance(System.getProperty("keystore.path"));
+				bind(String.class).annotatedWith(Names.named(IWebSocketSslContextGenerator.KEYSTORE_TYPE_PROPERTY)).toInstance(System.getProperty("keystore.type"));
+				bind(String.class).annotatedWith(Names.named(IWebSocketSslContextGenerator.KEYSTORE_STORE_PASSWORD_PROPERTY)).toInstance(System.getProperty("keystore.store.password"));
+				bind(String.class).annotatedWith(Names.named(IWebSocketSslContextGenerator.KEYSTORE_KEY_PASSWORD_PROPERTY)).toInstance(System.getProperty("keystore.key.password"));
 
-				bind(String.class).annotatedWith(Names.named(IHttpServer.WEBAPP_CONTENT_PATH)).toInstance(System.getProperty("webapp.content.path"));
-				bind(String.class).annotatedWith(Names.named(IHttpServer.WEBAPP_HOSTNAME)).toInstance(System.getProperty("web.hostname"));
-				bind(Integer.class).annotatedWith(Names.named(IHttpServer.WEBAPP_PORTNUM)).toInstance(IHttpServer.WEBAPP_DEFAULT_PORTNUM);
+				bind(String.class).annotatedWith(Names.named(ICodeshelfWebSocketServer.WEBSOCKET_HOSTNAME_PROPERTY)).toInstance(System.getProperty("websocket.hostname"));
+				bind(Integer.class).annotatedWith(Names.named(ICodeshelfWebSocketServer.WEBSOCKET_PORTNUM_PROPERTY)).toInstance(Integer.valueOf(System.getProperty("websocket.portnum")));
+
+				bind(String.class).annotatedWith(Names.named(IHttpServer.WEBSITE_CONTENT_PATH_PROPERTY)).toInstance(System.getProperty("website.content.path"));
+				bind(String.class).annotatedWith(Names.named(IHttpServer.WEBSITE_HOSTNAME_PROPERTY)).toInstance(System.getProperty("website.hostname"));
+				bind(Integer.class).annotatedWith(Names.named(IHttpServer.WEBSITE_PORTNUM_PROPERTY)).toInstance(Integer.valueOf(System.getProperty("website.portnum")));
+
+				bind(String.class).annotatedWith(Names.named(IHttpServer.WEBAPP_CONTENT_PATH_PROPERTY)).toInstance(System.getProperty("webapp.content.path"));
+				bind(String.class).annotatedWith(Names.named(IHttpServer.WEBAPP_HOSTNAME_PROPERTY)).toInstance(System.getProperty("webapp.hostname"));
+				bind(Integer.class).annotatedWith(Names.named(IHttpServer.WEBAPP_PORTNUM_PROPERTY)).toInstance(Integer.valueOf(System.getProperty("webapp.portnum")));
 
 				bind(IUtil.class).to(Util.class);
-				bind(ISchemaManager.class).to(H2SchemaManager.class);
+				bind(ISchemaManager.class).to(PostgresSchemaManager.class);
 				bind(IDatabase.class).to(Database.class);
 				bind(ICodeShelfApplication.class).to(CodeShelfApplication.class);
 				bind(ICodeshelfWebSocketServer.class).to(CodeshelfWebSocketServer.class);

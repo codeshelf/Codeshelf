@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeshelfApplicationTest.java,v 1.10 2012/11/18 06:04:30 jeffw Exp $
+ *  $Id: CodeshelfApplicationTest.java,v 1.11 2012/11/19 10:48:25 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.application;
 
@@ -230,17 +230,17 @@ public class CodeshelfApplicationTest {
 		IDaoProvider daoProvider = new DaoProvider(injector);
 		IWebSessionReqCmdFactory webSessionReqCmdFactory = new WebSessionReqCmdFactory(organizationDao, daoProvider);
 		IWebSessionManager webSessionManager = new WebSessionManager(webSessionReqCmdFactory);
-		IWebSocketSslContextGenerator webSocketContextGenerator = new WebSocketSslContextGenerator();
+		IWebSocketSslContextGenerator webSocketContextGenerator = new WebSocketSslContextGenerator("./conf/codeshelf.keystore", "JKS", "x2HPbC2avltYQR", "x2HPbC2avltYQR");
 		ICodeshelfWebSocketServer webSocketListener = new CodeshelfWebSocketServer(ICodeshelfWebSocketServer.WEBSOCKET_DEFAULT_HOSTNAME,
 			CodeshelfWebSocketServer.WEBSOCKET_DEFAULT_PORTNUM,
 			webSessionManager,
 			webSocketContextGenerator);
-		IHttpServer httpServer = new HttpServer("./", "localhost", 8000, "./", "localhost", 8443);
+		IHttpServer httpServer = new HttpServer("./", "localhost", 8000, "./", "localhost", 8443, "./conf/codeshelf.keystore", "x2HPbC2avltYQR", "x2HPbC2avltYQR");
 
 		ICsvImporter importer = new CsvImporter(orderGroupDao, orderHeaderDao, orderDetailDao, containerDao, itemMasterDao, itemDao, uomMasterDao);
 		IEdiProcessor ediProcessor = new EdiProcessor(importer, facilityDao);
 		IUtil util = new MockUtil();
-		ISchemaManager schemaManager = new H2SchemaManager(util);
+		ISchemaManager schemaManager = new H2SchemaManager(util, "codeshelf", "codeshelf", "codeshelf", "codeshelf", "localhost", "");
 		IDatabase database = new Database(schemaManager, util);
 
 		final CodeShelfApplication application = new CodeShelfApplication(webSocketListener,
