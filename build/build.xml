@@ -486,6 +486,20 @@
 		</copy>
 	</target>
 
+	<target name="deploy" depends="build.jar">
+		<input message="SCP password:" addproperty="scp.password">
+			<!--handler classname="org.apache.tools.ant.input.SecureInputHandler" /-->
+		</input>
+
+		<scp todir="codeshelf:${scp.password}@198.101.238.245:/opt/codeshelf/engine" verbose="true">
+			<fileset dir="${appjar.build.dir}">
+				<include name="**/*" />
+				<modified>
+					<param name="cache.cachefile" value="${basedir}/build/engine.scp.cache"/>
+				</modified>
+			</fileset>
+		</scp>
+	</target>
 </project>
 
 

@@ -1,12 +1,14 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: H2SchemaManager.java,v 1.61 2012/11/19 10:48:25 jeffw Exp $
+ *  $Id: H2SchemaManager.java,v 1.62 2012/11/20 04:10:56 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
 import java.io.File;
+import java.util.Collection;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -31,6 +33,19 @@ public final class H2SchemaManager extends SchemaManagerABC {
 		@Named(DATABASE_ADDRESS_PROPERTY) final String inDbAddress,
 		@Named(DATABASE_PORTNUM_PROPERTY) final String inDbPortnum) {
 		super(inUtil, inDbUserId, inDbPassword, inDbName, inDbSchemaName, inDbAddress, inDbPortnum);
+		
+		// The H2 database has a serious problem with deleting temp files for LOBs.  We have to do it ourselves, or it will grow without bound.
+		String[] extensions = { "temp.lob.db" };
+		boolean recursive = true;
+
+		File dbDir = new File(inUtil.getApplicationDataDirPath());
+		@SuppressWarnings("unchecked")
+		Collection<File> files = FileUtils.listFiles(dbDir, extensions, recursive);
+		for (File file : files) {
+			if (file.delete()) {
+				LOGGER.debug("Deleted temporary LOB file = " + file.getPath());
+			}
+		}
 	}
 
 	// --------------------------------------------------------------------------

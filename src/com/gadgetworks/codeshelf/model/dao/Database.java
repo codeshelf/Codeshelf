@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Database.java,v 1.4 2012/11/19 10:48:25 jeffw Exp $
+ *  $Id: Database.java,v 1.5 2012/11/20 04:10:56 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -80,8 +80,8 @@ public class Database implements IDatabase {
 		mSchemaManager.verifySchema();
 
 		DataSourceConfig dataSourceConfig = new DataSourceConfig();
-		dataSourceConfig.setUsername("codeshelf");
-		dataSourceConfig.setPassword("codeshelf");
+		dataSourceConfig.setUsername(mSchemaManager.getDbUserId());
+		dataSourceConfig.setPassword(mSchemaManager.getDbPassword());
 		dataSourceConfig.setUrl(mSchemaManager.getApplicationDatabaseURL());
 		dataSourceConfig.setDriver(mSchemaManager.getDriverName());
 		dataSourceConfig.setMinConnections(1);
@@ -99,7 +99,7 @@ public class Database implements IDatabase {
 		config.setResourceDirectory(mUtil.getApplicationDataDirPath());
 		config.setDebugLazyLoad(true);
 		config.setDebugSql(false);
-		config.setLoggingLevel(LogLevel.SUMMARY);
+		config.setLoggingLevel(LogLevel.SQL);
 		config.setLoggingToJavaLogger(true);
 		config.setPackages(new ArrayList<String>(Arrays.asList("com.gadgetworks.codeshelf.model.domain")));
 		config.setJars(new ArrayList<String>(Arrays.asList("codeshelf.jar")));
@@ -113,19 +113,6 @@ public class Database implements IDatabase {
 		}
 
 		result = true;
-
-		// The H2 database has a serious problem with deleting temp files for LOBs.  We have to do it ourselves, or it will grow without bound.
-		String[] extensions = { "temp.lob.db" };
-		boolean recursive = true;
-
-		File dbDir = new File(mUtil.getApplicationDataDirPath());
-		@SuppressWarnings("unchecked")
-		Collection<File> files = FileUtils.listFiles(dbDir, extensions, recursive);
-		for (File file : files) {
-			if (file.delete()) {
-				LOGGER.debug("Deleted temporary LOB file = " + file.getPath());
-			}
-		}
 
 		LOGGER.info("Database started");
 

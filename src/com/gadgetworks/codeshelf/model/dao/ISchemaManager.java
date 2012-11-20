@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ISchemaManager.java,v 1.10 2012/11/19 10:48:25 jeffw Exp $
+ *  $Id: ISchemaManager.java,v 1.11 2012/11/20 04:10:56 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -24,6 +24,18 @@ public interface ISchemaManager {
 
 	int		DATABASE_VERSION_CUR			= DATABASE_VERSION_1;
 
+	String getDbAddress();
+	
+	String getDbName();
+	
+	String getDbPassword();
+	
+	String getDbPortnum();
+	
+	String getDbSchemaName();
+	
+	String getDbUserId();
+	
 	boolean verifySchema();
 
 	String getDriverName();

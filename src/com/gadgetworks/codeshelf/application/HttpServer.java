@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: HttpServer.java,v 1.8 2012/11/19 10:48:25 jeffw Exp $
+ *  $Id: HttpServer.java,v 1.9 2012/11/20 04:10:56 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.application;
 
@@ -148,13 +148,13 @@ public class HttpServer implements IHttpServer {
 
 			RequestLogHandler requestLogHandler = new RequestLogHandler();
 
-	        NCSARequestLog requestLog = new NCSARequestLog();
-	        requestLog.setRetainDays(90);
-	        requestLog.setAppend(true);
-	        requestLog.setExtended(false);
-	        requestLog.setLogTimeZone("GMT");
-	        requestLog.setLogCookies(false);
-	        requestLogHandler.setRequestLog(requestLog);
+//	        NCSARequestLog requestLog = new NCSARequestLog();
+//	        requestLog.setRetainDays(90);
+//	        requestLog.setAppend(true);
+//	        requestLog.setExtended(false);
+//	        requestLog.setLogTimeZone("GMT");
+//	        requestLog.setLogCookies(false);
+//	        requestLogHandler.setRequestLog(requestLog);
 	        
 			HandlerList handlers = new HandlerList();
 			//			handlers.setHandlers(new Handler[] { webappResourceHandler, new DefaultHandler() });

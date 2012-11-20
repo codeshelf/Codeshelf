@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WirelessDevice.java,v 1.12 2012/10/31 16:55:08 jeffw Exp $
+ *  $Id: WirelessDevice.java,v 1.13 2012/11/20 04:10:56 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -19,6 +19,7 @@ import javax.persistence.Enumerated;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 import javax.persistence.ManyToOne;
+import javax.persistence.Table;
 import javax.persistence.Transient;
 
 import lombok.Getter;
@@ -52,7 +53,7 @@ import com.google.inject.Inject;
 @Entity
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "DTYPE", discriminatorType = DiscriminatorType.STRING)
-//@Table(name = "WIRELESSDEVICE")
+@Table(name = "WIRELESSDEVICE", schema="CODESHELF")
 //@DiscriminatorValue("ABC")
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class WirelessDevice extends DomainObjectTreeABC<ControlGroup> implements INetworkDevice {
