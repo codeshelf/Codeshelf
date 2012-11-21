@@ -1,24 +1,20 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: HttpServer.java,v 1.9 2012/11/20 04:10:56 jeffw Exp $
+ *  $Id: HttpServer.java,v 1.10 2012/11/21 19:19:51 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.application;
 
 import java.io.File;
-import java.net.Socket;
 import java.net.URL;
-import java.nio.ByteBuffer;
-import java.util.Arrays;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.eclipse.jetty.io.NetworkTrafficListener;
+import org.eclipse.jetty.rewrite.handler.ForwardedSchemeHeaderRule;
+import org.eclipse.jetty.rewrite.handler.RewriteHandler;
 import org.eclipse.jetty.server.Handler;
-import org.eclipse.jetty.server.NCSARequestLog;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.HandlerList;
-import org.eclipse.jetty.server.handler.RequestLogHandler;
 import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.eclipse.jetty.server.nio.NetworkTrafficSelectChannelConnector;
 import org.eclipse.jetty.util.resource.Resource;
@@ -86,7 +82,7 @@ public class HttpServer implements IHttpServer {
 		if ((mWebSiteContentPath != null) && (mWebSiteContentPath.length() > 0)) {
 			Thread websiteServerThread = new Thread(new Runnable() {
 				public void run() {
-					mWebsiteServer = doStartServer("home.html", mWebSiteContentPath, mWebSiteHostname, mWebSitePortNum);
+					mWebsiteServer = doStartServer("home.html", mWebSiteContentPath, mWebSiteHostname, mWebSitePortNum, false);
 				}
 			}, WEBSITE_SERVER_THREADNAME);
 			websiteServerThread.start();
@@ -95,7 +91,7 @@ public class HttpServer implements IHttpServer {
 		if ((mWebAppContentPath != null) && (mWebAppContentPath.length() > 0)) {
 			Thread webappServerThread = new Thread(new Runnable() {
 				public void run() {
-					mWebappServer = doStartServer("codeshelf.html", mWebAppContentPath, mWebAppHostname, mWebAppPortNum);
+					mWebappServer = doStartServer("codeshelf.html", mWebAppContentPath, mWebAppHostname, mWebAppPortNum, true);
 				}
 			}, WEBAPP_SERVER_THREADNAME);
 			webappServerThread.start();
@@ -105,12 +101,17 @@ public class HttpServer implements IHttpServer {
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	private Server doStartServer(final String inDefaultPage, final String inContentPath, final String inHostname, final int inPortNum) {
+	private Server doStartServer(final String inDefaultPage, final String inContentPath, final String inHostname, final int inPortNum, final boolean inNeedsSsl) {
 
 		Server result = null;
 
 		try {
 			result = new Server();
+
+			ResourceHandler resourceHandler = new ResourceHandler();
+			resourceHandler.setDirectoriesListed(false);
+			resourceHandler.setWelcomeFiles(new String[] { inDefaultPage });
+			resourceHandler.setResourceBase(inContentPath);
 
 			SslContextFactory sslContextFactory = new SslContextFactory();
 			File file = new File(mKeystorePath);
@@ -120,46 +121,59 @@ public class HttpServer implements IHttpServer {
 			sslContextFactory.setKeyStorePassword(mKeystoreStorePassword);
 			sslContextFactory.setKeyManagerPassword(mKeystoreKeyPassword);
 
-			NetworkTrafficSelectChannelConnector connector = new NetworkTrafficSelectChannelConnector(result, sslContextFactory);
+			NetworkTrafficSelectChannelConnector connector = null;
+
+			if (inNeedsSsl) {
+				connector = new NetworkTrafficSelectChannelConnector(result, sslContextFactory);
+
+				HandlerList handlers = new HandlerList();
+				handlers.setHandlers(new Handler[] { resourceHandler });
+				result.setHandler(handlers);
+			} else {
+				connector = new NetworkTrafficSelectChannelConnector(result);
+
+//				RewriteHandler rewrite = new RewriteHandler();
+//				rewrite.setRewriteRequestURI(true);
+//				rewrite.setRewritePathInfo(true);
+//				rewrite.setOriginalPathAttribute("requestedPath");
+
+				//				RedirectRegexRule redirect = new RedirectRegexRule();
+				//				redirect.setRegex("/(.+)");
+				//				redirect.setReplacement("https://codeshelf.unionrocket.com/$1");
+				//				rewrite.addRule(redirect);
+
+//				ForwardedSchemeHeaderRule forwardedScheme = new ForwardedSchemeHeaderRule();
+//				forwardedScheme.setHeader("X-Forwarded-Scheme");
+//				forwardedScheme.setHeaderValue("https");
+//				forwardedScheme.setScheme("https");
+//				rewrite.addRule(forwardedScheme);
+//
+//				rewrite.setHandler(resourceHandler);
+
+				HandlerList handlers = new HandlerList();
+				handlers.setHandlers(new Handler[] { resourceHandler });//, rewrite });
+				result.setHandler(handlers);
+			}
+
 			connector.setHost(inHostname);
 			connector.setPort(inPortNum);
-			connector.addNetworkTrafficListener(new NetworkTrafficListener() {
-				public void outgoing(Socket inSocket, ByteBuffer inByteBuffer) {
-				}
 
-				public void opened(Socket inSocket) {
-					LOGGER.info("HTTP CONNECTION OPENED: " + inSocket.getInetAddress());
-				}
-
-				public void incoming(Socket inSocket, ByteBuffer inByteBuffer) {
-				}
-
-				public void closed(Socket inSocket) {
-				}
-			});
+			//			connector.addNetworkTrafficListener(new NetworkTrafficListener() {
+			//				public void outgoing(Socket inSocket, ByteBuffer inByteBuffer) {
+			//				}
+			//
+			//				public void opened(Socket inSocket) {
+			//					LOGGER.info("HTTP CONNECTION OPENED: " + inSocket.getInetAddress());
+			//				}
+			//
+			//				public void incoming(Socket inSocket, ByteBuffer inByteBuffer) {
+			//				}
+			//
+			//				public void closed(Socket inSocket) {
+			//				}
+			//			});
 
 			result.addConnector(connector);
-
-			// Website.
-			ResourceHandler resourceHandler = new ResourceHandler();
-			resourceHandler.setDirectoriesListed(false);
-			resourceHandler.setWelcomeFiles(new String[] { inDefaultPage });
-			resourceHandler.setResourceBase(inContentPath);
-
-			RequestLogHandler requestLogHandler = new RequestLogHandler();
-
-//	        NCSARequestLog requestLog = new NCSARequestLog();
-//	        requestLog.setRetainDays(90);
-//	        requestLog.setAppend(true);
-//	        requestLog.setExtended(false);
-//	        requestLog.setLogTimeZone("GMT");
-//	        requestLog.setLogCookies(false);
-//	        requestLogHandler.setRequestLog(requestLog);
-	        
-			HandlerList handlers = new HandlerList();
-			//			handlers.setHandlers(new Handler[] { webappResourceHandler, new DefaultHandler() });
-			handlers.setHandlers(new Handler[] { resourceHandler, requestLogHandler });
-			result.setHandler(handlers);
 
 			result.start();
 			result.join();

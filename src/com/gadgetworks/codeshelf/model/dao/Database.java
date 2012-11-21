@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Database.java,v 1.5 2012/11/20 04:10:56 jeffw Exp $
+ *  $Id: Database.java,v 1.6 2012/11/21 19:19:51 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -99,7 +99,7 @@ public class Database implements IDatabase {
 		config.setResourceDirectory(mUtil.getApplicationDataDirPath());
 		config.setDebugLazyLoad(true);
 		config.setDebugSql(false);
-		config.setLoggingLevel(LogLevel.SQL);
+		config.setLoggingLevel(LogLevel.SUMMARY);
 		config.setLoggingToJavaLogger(true);
 		config.setPackages(new ArrayList<String>(Arrays.asList("com.gadgetworks.codeshelf.model.domain")));
 		config.setJars(new ArrayList<String>(Arrays.asList("codeshelf.jar")));

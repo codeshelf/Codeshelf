@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeshelfWebSocketServer.java,v 1.4 2012/11/19 10:48:25 jeffw Exp $
+ *  $Id: CodeshelfWebSocketServer.java,v 1.5 2012/11/21 19:19:51 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websocket;
 
@@ -42,7 +42,7 @@ public class CodeshelfWebSocketServer extends WebSocketServer implements ICodesh
 
 	@Override
 	public final void start() {
-		WebSocket.DEBUG = false;
+		WebSocket.DEBUG = true;
 		super.start();
 	}
 
