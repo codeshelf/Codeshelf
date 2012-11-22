@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: User.java,v 1.14 2012/11/19 10:48:25 jeffw Exp $
+ *  $Id: User.java,v 1.15 2012/11/22 05:31:20 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -48,7 +48,7 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-@Table(name = "USER", schema="CODESHELF")
+@Table(name = "USER", schema = "CODESHELF")
 @CacheStrategy
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class User extends DomainObjectTreeABC<Organization> {
@@ -175,14 +175,14 @@ public class User extends DomainObjectTreeABC<Organization> {
 		random.nextBytes(salt);
 		setHashSalt(toHex(salt));
 
-			try {
-				// Hash the password
-				byte[] hash = pbkdf2(inPassword.toCharArray(), salt, PBKDF2_ITERATIONS, HASH_BYTES);
-				hashedPassword = toHex(hash);
-				hashIterations = PBKDF2_ITERATIONS;
-			} catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
-				LOGGER.error("", e);
-			}
+		try {
+			// Hash the password
+			byte[] hash = pbkdf2(inPassword.toCharArray(), salt, PBKDF2_ITERATIONS, HASH_BYTES);
+			hashedPassword = toHex(hash);
+			hashIterations = PBKDF2_ITERATIONS;
+		} catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+			LOGGER.error("", e);
+		}
 	}
 
 	/**
@@ -195,16 +195,14 @@ public class User extends DomainObjectTreeABC<Organization> {
 	public final boolean isPasswordValid(final String inPassword) {
 		boolean result = false;
 
-			try {
-				// Compute the hash of the provided password, using the same salt,
-				// iteration count, and hash length
-				byte[] testHash = pbkdf2(inPassword.toCharArray(), fromHex(hashSalt), hashIterations, fromHex(hashedPassword).length);
-				// Compare the hashes in constant time. The password is correct if
-				// both hashes match.
-				result = slowEquals(fromHex(hashedPassword), testHash);
-			} catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
-				LOGGER.error("", e);
-			}
+		try {
+			// Compute the hash of the provided password, using the same salt, iteration count, and hash length
+			byte[] testHash = pbkdf2(inPassword.toCharArray(), fromHex(hashSalt), hashIterations, fromHex(hashedPassword).length);
+			// Compare the hashes in constant time. The password is correct if both hashes match.
+			result = slowEquals(fromHex(hashedPassword), testHash);
+		} catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+			LOGGER.error("", e);
+		}
 
 		return result;
 	}

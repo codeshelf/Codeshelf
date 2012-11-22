@@ -1,18 +1,9 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdLogin.java,v 1.2 2012/11/10 03:20:01 jeffw Exp $
+ *  $Id: WebSessionReqCmdLogin.java,v 1.3 2012/11/22 05:31:20 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
-
-import java.math.BigInteger;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.KeySpec;
-
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.PBEKeySpec;
 
 import org.codehaus.jackson.JsonNode;
 
@@ -20,7 +11,7 @@ import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.web.websession.command.resp.IWebSessionRespCmd;
-import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdLaunchCode;
+import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdLogin;
 
 /**
  * 
@@ -76,12 +67,19 @@ public class WebSessionReqCmdLogin extends WebSessionReqCmdABC {
 				String password = passwordNode.getTextValue();
 				if (user.isPasswordValid(password)) {
 					authenticateResult = SUCCEED;
-					
 				}
 			}
 		}
 
-		result = new WebSessionRespCmdLaunchCode(authenticateResult, organization);
+		// Sleep for two seconds to slow down brute-force attacks.
+		if (!authenticateResult.equals(SUCCEED)) {
+			try {
+				Thread.sleep(2000);
+			} catch (InterruptedException e) {
+			}
+		}
+
+		result = new WebSessionRespCmdLogin(authenticateResult, organization);
 
 		return result;
 	}

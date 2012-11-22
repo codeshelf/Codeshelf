@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionRespCmdLaunchCode.java,v 1.7 2012/11/09 08:53:08 jeffw Exp $
+ *  $Id: WebSessionRespCmdLogin.java,v 1.1 2012/11/22 05:31:20 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.resp;
 
@@ -22,7 +22,7 @@ import com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmd;
  * @author jeffw
  *
  */
-public class WebSessionRespCmdLaunchCode extends WebSessionRespCmdABC {
+public class WebSessionRespCmdLogin extends WebSessionRespCmdABC {
 
 	private static final String	LOGIN_RESPONSE	= "LOGIN_RS";
 
@@ -32,7 +32,7 @@ public class WebSessionRespCmdLaunchCode extends WebSessionRespCmdABC {
 	/**
 	 * 
 	 */
-	public WebSessionRespCmdLaunchCode(final String inResponseValue, final Organization inOrganization) {
+	public WebSessionRespCmdLogin(final String inResponseValue, final Organization inOrganization) {
 		super();
 		mResponseValue = inResponseValue;
 		mOrganization = inOrganization;
