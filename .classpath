@@ -37,7 +37,6 @@
 	<classpathentry kind="lib" path="lib/dist/lombok-0.11.4.jar" sourcepath="/Users/jeffw/.m2/repository/org/projectlombok/lombok/0.11.4/lombok-0.11.4-sources.jar"/>
 	<classpathentry kind="lib" path="lib/dist/opencsv-2.3.jar" sourcepath="APIs/opencsv-2.3.-src..zip"/>
 	<classpathentry kind="lib" path="lib/dist/jetty-continuation-9.0.0.M0.jar"/>
-	<classpathentry kind="lib" path="lib/dist/java_websocket.jar" sourcepath="/Java-WebSocket/src/main/java"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
 	<classpathentry kind="lib" path="lib/dist/ebean-2.8.2-SNAPSHOT.jar" sourcepath="/ebean/src/main/java"/>
 	<classpathentry kind="lib" path="lib/dist/servlet-api-3.0.jar"/>
@@ -50,5 +49,6 @@
 	<classpathentry kind="lib" path="lib/dist/jetty-util-9.0.0.M2.jar" sourcepath="/Users/jeffw/.m2/repository/org/eclipse/jetty/jetty-util/9.0.0.M2/jetty-util-9.0.0.M2-sources.jar"/>
 	<classpathentry kind="lib" path="lib/dist/postgresql-9.2-1002.jdbc4.jar"/>
 	<classpathentry kind="lib" path="lib/dist/jetty-rewrite-9.0.0.M2.jar" sourcepath="/Users/jeffw/.m2/repository/org/eclipse/jetty/jetty-rewrite/9.0.0.M2/jetty-rewrite-9.0.0.M2-sources.jar"/>
+	<classpathentry kind="lib" path="lib/dist/WebSocket-1.0.0-SNAPSHOT.jar" sourcepath="/Java-WebSocket/src/main/java"/>
 	<classpathentry kind="output" path="eclipse-bin"/>
 </classpath>

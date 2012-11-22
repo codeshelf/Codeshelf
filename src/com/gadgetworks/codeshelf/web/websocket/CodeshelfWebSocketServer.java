@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeshelfWebSocketServer.java,v 1.5 2012/11/21 19:19:51 jeffw Exp $
+ *  $Id: CodeshelfWebSocketServer.java,v 1.6 2012/11/22 20:27:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websocket;
 
@@ -32,7 +32,7 @@ public class CodeshelfWebSocketServer extends WebSocketServer implements ICodesh
 		@Named(WEBSOCKET_PORTNUM_PROPERTY) final int inPort,
 		final IWebSessionManager inWebSessionManager,
 		final IWebSocketSslContextGenerator inWebSocketSslContextManager) {
-		super(new InetSocketAddress(inAddr, inPort));
+		super(new InetSocketAddress(inAddr, inPort), 4);
 		//, new ArrayList<Draft>((Collection<Draft>) new Draft_17()));
 
 		this.setWebSocketFactory(new DefaultSSLWebSocketServerFactory(inWebSocketSslContextManager.getSslContext()));
