@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionRespCmdLogin.java,v 1.1 2012/11/22 05:31:20 jeffw Exp $
+ *  $Id: WebSessionRespCmdLogin.java,v 1.2 2012/11/24 04:23:54 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.resp;
 
@@ -24,8 +24,6 @@ import com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmd;
  */
 public class WebSessionRespCmdLogin extends WebSessionRespCmdABC {
 
-	private static final String	LOGIN_RESPONSE	= "LOGIN_RS";
-
 	private String				mResponseValue;
 	private Organization		mOrganization;
 
@@ -39,7 +37,7 @@ public class WebSessionRespCmdLogin extends WebSessionRespCmdABC {
 	}
 
 	public final WebSessionRespCmdEnum getCommandEnum() {
-		return WebSessionRespCmdEnum.LAUNCH_CODE_RESP;
+		return WebSessionRespCmdEnum.LOGIN_RESP;
 	}
 
 	protected final IWebSessionCmd doExec() {
@@ -51,7 +49,7 @@ public class WebSessionRespCmdLogin extends WebSessionRespCmdABC {
 	protected final void doPrepareDataNode(ObjectNode inOutDataNode) {
 
 		// Insert the response code.
-		inOutDataNode.put(LOGIN_RESPONSE, mResponseValue);
+		inOutDataNode.put(WebSessionRespCmdEnum.LOGIN_RESP.toString(), mResponseValue);
 
 		// For valid response codes, also return the organization object;
 		if (mOrganization != null) {

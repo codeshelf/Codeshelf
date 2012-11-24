@@ -14,8 +14,10 @@ import org.java_websocket.framing.Framedata;
 import org.java_websocket.handshake.ClientHandshakeBuilder;
 import org.junit.Test;
 
+import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.MockDao;
 import com.gadgetworks.codeshelf.model.domain.Organization;
+import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.web.websession.IWebSession;
 import com.gadgetworks.codeshelf.web.websession.WebSession;
 import com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmdFactory;
@@ -105,9 +107,10 @@ public class WebSessionTest {
 	}
 
 	@Test
-	public final void testLaunchCodeCheckSucceed() {
+	public final void testLoginSucceed() {
 
 		MockDao<Organization> organizationDao = new MockDao<Organization>();
+		MockDao<User> userDao = new MockDao<User>();
 
 		Organization organization = new Organization();
 		organization.setPersistentId(1L);
@@ -115,21 +118,32 @@ public class WebSessionTest {
 		organization.setDescription("TEST");
 		organizationDao.store(organization);
 
+		// Create a user for the organization.
+		User user = new User();
+		user.setParent(organization);
+		user.setDomainId("user@example.com");
+		user.setEmail("user@example.com");
+		user.setPassword("password");
+		user.setActive(true);
+		userDao.store(user);
+		organization.addUser(user);
+		
 		TestWebSocket testWebSocket = new TestWebSocket();
 		IWebSessionReqCmdFactory factory = new WebSessionReqCmdFactory(organizationDao, null);
 		IWebSession webSession = new WebSession(testWebSocket, factory);
-		String inMessage = "{\"id\":\"cid_5\",\"type\":\"LAUNCH_CODE_RQ\",\"data\":{\"launchCode\":\"O1\"}}";
+		String inMessage = "{\"id\":\"cid_5\",\"type\":\"LOGIN_RQ\",\"data\":{\"organizationId\":\"O1\", \"userId\":\"user@example.com\", \"password\":\"password\"}}";
 		IWebSessionRespCmd respCommand = webSession.processMessage(inMessage);
 
-		Assert.assertEquals("{\"id\":\"cid_5\",\"type\":\"LAUNCH_CODE_RS\",\"data\":{\"LAUNCH_CODE_RS\":\"SUCCEED\",\"organization\":{\"description\":\"TEST\",\"domainId\":\"O1\",\"persistentId\":"
+		Assert.assertEquals("{\"id\":\"cid_5\",\"type\":\"LOGIN_RS\",\"data\":{\"LOGIN_RS\":\"SUCCEED\",\"organization\":{\"description\":\"TEST\",\"domainId\":\"O1\",\"persistentId\":"
 				+ organization.getPersistentId() + ",\"className\":\"Organization\"}}}",
 			respCommand.getResponseMsg());
 	}
 
 	@Test
-	public final void testLaunchCodeCheckFail() {
+	public final void testUserIdFail() {
 
 		MockDao<Organization> organizationDao = new MockDao<Organization>();
+		MockDao<User> userDao = new MockDao<User>();
 
 		Organization organization = new Organization();
 		organization.setPersistentId(1L);
@@ -137,12 +151,53 @@ public class WebSessionTest {
 		organization.setDescription("TEST");
 		organizationDao.store(organization);
 
+		// Create a user for the organization.
+		User user = new User();
+		user.setParent(organization);
+		user.setDomainId("user@example.com");
+		user.setEmail("user@example.com");
+		user.setPassword("password");
+		user.setActive(true);
+		userDao.store(user);
+		organization.addUser(user);
+
 		TestWebSocket testWebSocket = new TestWebSocket();
 		IWebSessionReqCmdFactory factory = new WebSessionReqCmdFactory(organizationDao, null);
 		IWebSession webSession = new WebSession(testWebSocket, factory);
-		String inMessage = "{\"id\":\"cid_5\",\"type\":\"LAUNCH_CODE_RQ\",\"data\":{\"launchCode\":\"XXX\"}}";
+		String inMessage = "{\"id\":\"cid_5\",\"type\":\"LOGIN_RQ\",\"data\":{\"organizationId\":\"O1\", \"userId\":\"XXXXX\", \"password\":\"password\"}}";
 		IWebSessionRespCmd respCommand = webSession.processMessage(inMessage);
 
-		Assert.assertEquals("{\"id\":\"cid_5\",\"type\":\"LAUNCH_CODE_RS\",\"data\":{\"LAUNCH_CODE_RS\":\"FAIL\"}}", respCommand.getResponseMsg());
+		Assert.assertEquals("{\"id\":\"cid_5\",\"type\":\"LOGIN_RS\",\"data\":{\"LOGIN_RS\":\"FAIL\"}}", respCommand.getResponseMsg());
+	}
+
+	@Test
+	public final void testPasswordFail() {
+
+		MockDao<Organization> organizationDao = new MockDao<Organization>();
+		MockDao<User> userDao = new MockDao<User>();
+
+		Organization organization = new Organization();
+		organization.setPersistentId(1L);
+		organization.setDomainId("O1");
+		organization.setDescription("TEST");
+		organizationDao.store(organization);
+
+		// Create a user for the organization.
+		User user = new User();
+		user.setParent(organization);
+		user.setDomainId("user@example.com");
+		user.setEmail("user@example.com");
+		user.setPassword("password");
+		user.setActive(true);
+		userDao.store(user);
+		organization.addUser(user);
+
+		TestWebSocket testWebSocket = new TestWebSocket();
+		IWebSessionReqCmdFactory factory = new WebSessionReqCmdFactory(organizationDao, null);
+		IWebSession webSession = new WebSession(testWebSocket, factory);
+		String inMessage = "{\"id\":\"cid_5\",\"type\":\"LOGIN_RQ\",\"data\":{\"organizationId\":\"O1\", \"userId\":\"user@example.com\", \"password\":\"XXXX\"}}";
+		IWebSessionRespCmd respCommand = webSession.processMessage(inMessage);
+
+		Assert.assertEquals("{\"id\":\"cid_5\",\"type\":\"LOGIN_RS\",\"data\":{\"LOGIN_RS\":\"FAIL\"}}", respCommand.getResponseMsg());
 	}
 }

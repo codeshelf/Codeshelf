@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeshelfWebSocketServer.java,v 1.6 2012/11/22 20:27:59 jeffw Exp $
+ *  $Id: CodeshelfWebSocketServer.java,v 1.7 2012/11/24 04:23:54 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websocket;
 
@@ -13,7 +13,6 @@ import org.apache.commons.logging.LogFactory;
 import org.java_websocket.IWebSocket;
 import org.java_websocket.WebSocket;
 import org.java_websocket.handshake.ClientHandshake;
-import org.java_websocket.server.DefaultSSLWebSocketServerFactory;
 import org.java_websocket.server.WebSocketServer;
 
 import com.gadgetworks.codeshelf.web.websession.IWebSessionManager;
@@ -31,11 +30,11 @@ public class CodeshelfWebSocketServer extends WebSocketServer implements ICodesh
 	public CodeshelfWebSocketServer(@Named(WEBSOCKET_HOSTNAME_PROPERTY) final String inAddr,
 		@Named(WEBSOCKET_PORTNUM_PROPERTY) final int inPort,
 		final IWebSessionManager inWebSessionManager,
-		final IWebSocketSslContextGenerator inWebSocketSslContextManager) {
+		final WebSocketServer.WebSocketServerFactory inWebSocketServerFactory) {
 		super(new InetSocketAddress(inAddr, inPort), 4);
-		//, new ArrayList<Draft>((Collection<Draft>) new Draft_17()));
 
-		this.setWebSocketFactory(new DefaultSSLWebSocketServerFactory(inWebSocketSslContextManager.getSslContext()));
+		setWebSocketFactory(inWebSocketServerFactory);
+
 		mWebSessionManager = inWebSessionManager;
 		mWebSockets = new CopyOnWriteArraySet<IWebSocket>();
 	}

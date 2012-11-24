@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionRespCmdEnum.java,v 1.7 2012/10/16 06:23:21 jeffw Exp $
+ *  $Id: WebSessionRespCmdEnum.java,v 1.8 2012/11/24 04:23:54 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.resp;
 
@@ -11,7 +11,7 @@ package com.gadgetworks.codeshelf.web.websession.command.resp;
  */
 public enum WebSessionRespCmdEnum {
 	INVALID(WebSessionRespCmdNum.INVALID, "INVALID"),
-	LAUNCH_CODE_RESP(WebSessionRespCmdNum.LAUNCH_CODE_RESP, "LAUNCH_CODE_RS"),
+	LOGIN_RESP(WebSessionRespCmdNum.LOGIN_RESP, "LOGIN_RS"),
 	OBJECT_GETTER_RESP(WebSessionRespCmdNum.OBJECT_GETTER_RESP, "OBJ_GET_RS"),
 	OBJECT_UPDATE_RESP(WebSessionRespCmdNum.OBJECT_UPDATE_RESP, "OBJ_UPD_RS"),
 	OBJECT_DELETE_RESP(WebSessionRespCmdNum.OBJECT_DELETE_RESP, "OBJ_DEL_RS"),
@@ -36,8 +36,8 @@ public enum WebSessionRespCmdEnum {
 				result = WebSessionRespCmdEnum.INVALID;
 				break;
 
-			case WebSessionRespCmdNum.LAUNCH_CODE_RESP:
-				result = WebSessionRespCmdEnum.LAUNCH_CODE_RESP;
+			case WebSessionRespCmdNum.LOGIN_RESP:
+				result = WebSessionRespCmdEnum.LOGIN_RESP;
 				break;
 
 			case WebSessionRespCmdNum.OBJECT_GETTER_RESP:
@@ -91,7 +91,7 @@ public enum WebSessionRespCmdEnum {
 
 	final static class WebSessionRespCmdNum {
 		static final byte	INVALID					= 0;
-		static final byte	LAUNCH_CODE_RESP		= 1;
+		static final byte	LOGIN_RESP				= 1;
 		static final byte	OBJECT_GETTER_RESP		= 2;
 		static final byte	OBJECT_GETBYID_RESP		= 3;
 		static final byte	OBJECT_UPDATE_RESP		= 4;

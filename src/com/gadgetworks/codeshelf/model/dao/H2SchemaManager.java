@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: H2SchemaManager.java,v 1.62 2012/11/20 04:10:56 jeffw Exp $
+ *  $Id: H2SchemaManager.java,v 1.63 2012/11/24 04:23:54 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -22,7 +22,10 @@ import com.google.inject.name.Named;
  */
 public final class H2SchemaManager extends SchemaManagerABC {
 
-	private static final Log	LOGGER	= LogFactory.getLog(H2SchemaManager.class);
+	private static final String	DB_INIT_URL	= "jdbc:h2:mem:database;DB_CLOSE_DELAY=-1";
+	private static final String	DB_URL		= "jdbc:h2:mem:database;SCHEMA=CODESHELF;DB_CLOSE_DELAY=-1";
+
+	private static final Log	LOGGER		= LogFactory.getLog(H2SchemaManager.class);
 
 	@Inject
 	public H2SchemaManager(final IUtil inUtil,
@@ -33,7 +36,7 @@ public final class H2SchemaManager extends SchemaManagerABC {
 		@Named(DATABASE_ADDRESS_PROPERTY) final String inDbAddress,
 		@Named(DATABASE_PORTNUM_PROPERTY) final String inDbPortnum) {
 		super(inUtil, inDbUserId, inDbPassword, inDbName, inDbSchemaName, inDbAddress, inDbPortnum);
-		
+
 		// The H2 database has a serious problem with deleting temp files for LOBs.  We have to do it ourselves, or it will grow without bound.
 		String[] extensions = { "temp.lob.db" };
 		boolean recursive = true;
@@ -61,11 +64,12 @@ public final class H2SchemaManager extends SchemaManagerABC {
 	 *  @return
 	 */
 	public String getApplicationInitDatabaseURL() {
-		String result = "";
+		String result = DB_INIT_URL;
 
 		// Setup the data directory for this application.
-		result = "jdbc:h2:" + getUtil().getApplicationDataDirPath() + System.getProperty("file.separator") + "db" + System.getProperty("file.separator") + "database"
-				+ ";TRACE_LEVEL_FILE=0;AUTO_SERVER=TRUE";
+		// We switched H2 to in-memory instances only.		
+		//		result = "jdbc:h2:" + getUtil().getApplicationDataDirPath() + System.getProperty("file.separator") + "db" + System.getProperty("file.separator") + "database"
+		//				+ ";TRACE_LEVEL_FILE=0;AUTO_SERVER=TRUE";
 
 		return result;
 	}
@@ -75,11 +79,12 @@ public final class H2SchemaManager extends SchemaManagerABC {
 	 *  @return
 	 */
 	public String getApplicationDatabaseURL() {
-		String result = "";
+		String result = DB_URL;
 
 		// Setup the data directory for this application.
-		result = "jdbc:h2:" + getUtil().getApplicationDataDirPath() + System.getProperty("file.separator") + "db" + System.getProperty("file.separator") + "database"
-				+ ";SCHEMA=CODESHELF;TRACE_LEVEL_FILE=0;AUTO_SERVER=TRUE";
+		// We switched H2 to in-memory instances only.
+		//		result = "jdbc:h2:" + getUtil().getApplicationDataDirPath() + System.getProperty("file.separator") + "db" + System.getProperty("file.separator") + "database"
+		//				+ ";SCHEMA=CODESHELF;TRACE_LEVEL_FILE=0;AUTO_SERVER=TRUE";
 
 		return result;
 	}
@@ -110,4 +115,11 @@ public final class H2SchemaManager extends SchemaManagerABC {
 		return false;
 	}
 
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.dao.SchemaManagerABC#getSchemaSetterString()
+	 */
+	protected String getSchemaSetterString() {
+		return "SET SCHEMA " + getDbSchemaName();
+	}
 }

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: SchemaManagerABC.java,v 1.1 2012/11/19 10:48:25 jeffw Exp $
+ *  $Id: SchemaManagerABC.java,v 1.2 2012/11/24 04:23:54 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -64,6 +64,8 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	protected abstract boolean doUpgradeSchema();
 
 	protected abstract boolean doDowngradeSchema();
+	
+	protected abstract String getSchemaSetterString();
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
@@ -141,7 +143,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 			// Try to switch to the proper schema.
 			Statement stmt = connection.createStatement();
-			stmt.executeUpdate("SET SCHEMA '" + getDbSchemaName() + "'");
+			stmt.executeUpdate(getSchemaSetterString());
 			stmt.close();
 			// If we get here then we were able to switch to the schema and it exists.
 			result = true;
@@ -227,7 +229,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 			// Try to switch to the proper schema.
 			stmt = connection.createStatement();
-			stmt.executeUpdate("set SCHEMA '" + getDbSchemaName() + "'");
+			stmt.executeUpdate(getSchemaSetterString());
 			stmt.close();
 
 			// If we get here then we were able to switch to the schema and it exists.

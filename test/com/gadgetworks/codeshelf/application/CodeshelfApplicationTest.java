@@ -1,17 +1,25 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeshelfApplicationTest.java,v 1.11 2012/11/19 10:48:25 jeffw Exp $
+ *  $Id: CodeshelfApplicationTest.java,v 1.12 2012/11/24 04:23:54 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.application;
 
+import java.io.IOException;
 import java.lang.annotation.Annotation;
+import java.net.Socket;
+import java.nio.channels.ByteChannel;
+import java.nio.channels.SelectionKey;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import junit.framework.Assert;
 
+import org.java_websocket.WebSocketAdapter;
+import org.java_websocket.WebSocketImpl;
+import org.java_websocket.drafts.Draft;
+import org.java_websocket.server.WebSocketServer;
 import org.junit.Test;
 
 import com.gadgetworks.codeshelf.edi.CsvImporter;
@@ -44,10 +52,9 @@ import com.gadgetworks.codeshelf.web.websession.IWebSessionManager;
 import com.gadgetworks.codeshelf.web.websession.WebSessionManager;
 import com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmdFactory;
 import com.gadgetworks.codeshelf.web.websession.command.req.WebSessionReqCmdFactory;
+import com.gadgetworks.codeshelf.web.websocket.CodeshelfSSLWebSocketServerFactory;
 import com.gadgetworks.codeshelf.web.websocket.CodeshelfWebSocketServer;
 import com.gadgetworks.codeshelf.web.websocket.ICodeshelfWebSocketServer;
-import com.gadgetworks.codeshelf.web.websocket.IWebSocketSslContextGenerator;
-import com.gadgetworks.codeshelf.web.websocket.WebSocketSslContextGenerator;
 import com.google.inject.Binding;
 import com.google.inject.Injector;
 import com.google.inject.Key;
@@ -230,11 +237,12 @@ public class CodeshelfApplicationTest {
 		IDaoProvider daoProvider = new DaoProvider(injector);
 		IWebSessionReqCmdFactory webSessionReqCmdFactory = new WebSessionReqCmdFactory(organizationDao, daoProvider);
 		IWebSessionManager webSessionManager = new WebSessionManager(webSessionReqCmdFactory);
-		IWebSocketSslContextGenerator webSocketContextGenerator = new WebSocketSslContextGenerator("./conf/codeshelf.keystore", "JKS", "x2HPbC2avltYQR", "x2HPbC2avltYQR");
+		CodeshelfSSLWebSocketServerFactory webSocketFactory = new CodeshelfSSLWebSocketServerFactory("./conf/codeshelf.keystore", "JKS", "x2HPbC2avltYQR", "x2HPbC2avltYQR");
+		
 		ICodeshelfWebSocketServer webSocketListener = new CodeshelfWebSocketServer(ICodeshelfWebSocketServer.WEBSOCKET_DEFAULT_HOSTNAME,
 			CodeshelfWebSocketServer.WEBSOCKET_DEFAULT_PORTNUM,
 			webSessionManager,
-			webSocketContextGenerator);
+			webSocketFactory);
 		IHttpServer httpServer = new HttpServer("./", "localhost", 8000, "./", "localhost", 8443, "./conf/codeshelf.keystore", "x2HPbC2avltYQR", "x2HPbC2avltYQR");
 
 		ICsvImporter importer = new CsvImporter(orderGroupDao, orderHeaderDao, orderDetailDao, containerDao, itemMasterDao, itemDao, uomMasterDao);

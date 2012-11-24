@@ -25,9 +25,6 @@ import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
 
 public class GenericDaoTest {
 
-	private static final String	DB_INIT_URL	= "jdbc:h2:mem:database;DB_CLOSE_DELAY=-1";
-	private static final String	DB_URL		= "jdbc:h2:mem:database;SCHEMA=CODESHELF;DB_CLOSE_DELAY=-1";
-
 	public class OrganizationDao extends GenericDaoABC<Organization> {
 		public final Class<Organization> getDaoClass() {
 			return Organization.class;
@@ -67,14 +64,6 @@ public class GenericDaoTest {
 					return ".";
 				}
 
-				public String getApplicationInitDatabaseURL() {
-					return DB_INIT_URL;
-				}
-
-				public String getApplicationDatabaseURL() {
-					return DB_URL;
-				}
-
 				public String getApplicationDataDirPath() {
 					return ".";
 				}
@@ -85,7 +74,7 @@ public class GenericDaoTest {
 			};
 
 			Class.forName("org.h2.Driver");
-			mSchemaManager = new H2SchemaManager(mUtil, "codeshelf", "codeshelf", "codeshelf", "codeshelf", "localhost", "");
+			mSchemaManager = new H2SchemaManager(mUtil, "codeshelf", "codeshelf", "codeshelf", "CODESHELF", "localhost", "");
 			mDatabase = new Database(mSchemaManager, mUtil);
 
 			mDatabase.start();
@@ -267,11 +256,11 @@ public class GenericDaoTest {
 
 		try {
 			Class.forName("org.h2.Driver");
-			Connection connection = DriverManager.getConnection(DB_URL, "codeshelf", "codeshelf");
+			Connection connection = DriverManager.getConnection(mSchemaManager.getApplicationDatabaseURL(), "codeshelf", "codeshelf");
 
 			// Try to switch to the proper schema.
 			Statement stmt = connection.createStatement();
-			ResultSet resultSet = stmt.executeQuery("SELECT * FROM " + System.getProperty("db.schema.name") + ".ORGANIZATION WHERE DOMAINID = 'STORE-TEST-NEW'");
+			ResultSet resultSet = stmt.executeQuery("SELECT * FROM " + mSchemaManager.getDbSchemaName() + ".ORGANIZATION WHERE DOMAINID = 'STORE-TEST-NEW'");
 
 			if (!resultSet.next()) {
 				Assert.fail();
@@ -299,11 +288,11 @@ public class GenericDaoTest {
 
 		try {
 			Class.forName("org.h2.Driver");
-			Connection connection = DriverManager.getConnection(DB_URL, "codeshelf", "codeshelf");
+			Connection connection = DriverManager.getConnection(mSchemaManager.getApplicationDatabaseURL(), "codeshelf", "codeshelf");
 
 			// Try to switch to the proper schema.
 			Statement stmt = connection.createStatement();
-			ResultSet resultSet = stmt.executeQuery("SELECT * FROM " + System.getProperty("db.schema.name") + ".ORGANIZATION WHERE DOMAINID = 'STORE-TEST-UPDATE'");
+			ResultSet resultSet = stmt.executeQuery("SELECT * FROM " + mSchemaManager.getDbSchemaName() + ".ORGANIZATION WHERE DOMAINID = 'STORE-TEST-UPDATE'");
 
 			if (!resultSet.next()) {
 				Assert.fail();
@@ -332,11 +321,11 @@ public class GenericDaoTest {
 
 		try {
 			Class.forName("org.h2.Driver");
-			Connection connection = DriverManager.getConnection(DB_URL, "codeshelf", "codeshelf");
+			Connection connection = DriverManager.getConnection(mSchemaManager.getApplicationDatabaseURL(), "codeshelf", "codeshelf");
 
 			// Try to switch to the proper schema.
 			Statement stmt = connection.createStatement();
-			ResultSet resultSet = stmt.executeQuery("SELECT * FROM " + System.getProperty("db.schema.name") + ".ORGANIZATION WHERE DOMAINID = 'DELETE-TEST'");
+			ResultSet resultSet = stmt.executeQuery("SELECT * FROM " + mSchemaManager.getDbSchemaName() + ".ORGANIZATION WHERE DOMAINID = 'DELETE-TEST'");
 
 			if (!resultSet.next()) {
 				// This is the pass condition.

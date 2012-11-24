@@ -1,7 +1,7 @@
 /*******************************************************************************
 CodeshelfWebSocketServer *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Main.java,v 1.36 2012/11/19 10:48:25 jeffw Exp $
+ *  $Id: Main.java,v 1.37 2012/11/24 04:23:54 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -12,6 +12,7 @@ import java.util.Properties;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.java_websocket.server.WebSocketServer;
 
 import com.gadgetworks.codeshelf.edi.CsvImporter;
 import com.gadgetworks.codeshelf.edi.EdiProcessor;
@@ -83,10 +84,10 @@ import com.gadgetworks.codeshelf.web.websession.IWebSessionManager;
 import com.gadgetworks.codeshelf.web.websession.WebSessionManager;
 import com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmdFactory;
 import com.gadgetworks.codeshelf.web.websession.command.req.WebSessionReqCmdFactory;
+import com.gadgetworks.codeshelf.web.websocket.CodeshelfSSLWebSocketServerFactory;
 import com.gadgetworks.codeshelf.web.websocket.CodeshelfWebSocketServer;
 import com.gadgetworks.codeshelf.web.websocket.ICodeshelfWebSocketServer;
 import com.gadgetworks.codeshelf.web.websocket.IWebSocketSslContextGenerator;
-import com.gadgetworks.codeshelf.web.websocket.WebSocketSslContextGenerator;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -193,8 +194,8 @@ public final class Main {
 				bind(IHttpServer.class).to(HttpServer.class);
 				bind(IEdiProcessor.class).to(EdiProcessor.class);
 				bind(ICsvImporter.class).to(CsvImporter.class);
-				bind(IWebSocketSslContextGenerator.class).to(WebSocketSslContextGenerator.class);
-
+				bind(WebSocketServer.WebSocketServerFactory.class).to(CodeshelfSSLWebSocketServerFactory.class);
+		
 				requestStaticInjection(Aisle.class);
 				bind(new TypeLiteral<ITypedDao<Aisle>>() {
 				}).to(AisleDao.class);

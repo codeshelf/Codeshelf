@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: PostgresSchemaManager.java,v 1.1 2012/11/19 10:48:25 jeffw Exp $
+ *  $Id: PostgresSchemaManager.java,v 1.2 2012/11/24 04:23:54 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -35,20 +35,43 @@ public final class PostgresSchemaManager extends SchemaManagerABC {
 		return "org.postgresql.Driver";
 	}
 
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.dao.SchemaManagerABC#doUpgradeSchema()
+	 */
 	protected boolean doUpgradeSchema() {
 		return true;
 	}
 
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.dao.SchemaManagerABC#doDowngradeSchema()
+	 */
 	protected boolean doDowngradeSchema() {
 		return false;
 	}
 
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.dao.ISchemaManager#getApplicationInitDatabaseURL()
+	 */
 	public String getApplicationInitDatabaseURL() {
 		return "jdbc:postgresql://" + getDbAddress() + ":" + getDbPortnum() + "/" + getDbName();
 	}
 
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.dao.ISchemaManager#getApplicationDatabaseURL()
+	 */
 	public String getApplicationDatabaseURL() {
 		return "jdbc:postgresql://" + getDbAddress() + ":" + getDbPortnum() + "/" + getDbName();
 	}
 
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.dao.SchemaManagerABC#getSchemaSetterString()
+	 */
+	protected String getSchemaSetterString() {
+		return "SET SCHEMA '" + getDbSchemaName() + "'";
+	}
 }

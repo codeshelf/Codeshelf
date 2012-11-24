@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdLogin.java,v 1.3 2012/11/22 05:31:20 jeffw Exp $
+ *  $Id: WebSessionReqCmdLogin.java,v 1.4 2012/11/24 04:23:54 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -19,9 +19,10 @@ import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdLo
  * 
  * command {
  * 	id: <cmd_id>,
- * 	type: LAUNCH_CODE_CHECK,
+ * 	type: LOGIN_REQ,
  * 	data {
- * 		launchCode: <launch_code>
+ * 		userid: <userid>
+ * 		password: <password>
  * 	}
  * }
  * 
@@ -73,6 +74,7 @@ public class WebSessionReqCmdLogin extends WebSessionReqCmdABC {
 
 		// Sleep for two seconds to slow down brute-force attacks.
 		if (!authenticateResult.equals(SUCCEED)) {
+			organization = null;
 			try {
 				Thread.sleep(2000);
 			} catch (InterruptedException e) {

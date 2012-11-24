@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfApplication.java,v 1.52 2012/11/10 03:20:02 jeffw Exp $
+ *  $Id: CodeShelfApplication.java,v 1.53 2012/11/24 04:23:54 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -312,7 +312,7 @@ public final class CodeShelfApplication implements ICodeShelfApplication {
 				e.printStackTrace();
 			}
 
-			// Create a use for the organization.
+			// Create a user for the organization.
 			User user = new User();
 			user.setParent(organization);
 			user.setDomainId("jeffw@gadgetworks.com");
