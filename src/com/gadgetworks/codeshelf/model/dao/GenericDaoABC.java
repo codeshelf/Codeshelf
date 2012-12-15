@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: GenericDaoABC.java,v 1.14 2012/11/02 20:57:13 jeffw Exp $
+ *  $Id: GenericDaoABC.java,v 1.15 2012/12/15 02:25:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -126,7 +126,7 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	public final T findByDomainId(final IDomainObject inParentObject, final String inId) {
 		T result = null;
 
-		String effectiveId = inId.toUpperCase();
+		String effectiveId = inId;//.toUpperCase();
 		try {
 			Query<T> query = Ebean.createQuery(getDaoClass());
 			if (inParentObject != null) {

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderImporterTest.java,v 1.7 2012/10/31 09:23:59 jeffw Exp $
+ *  $Id: OrderImporterTest.java,v 1.8 2012/12/15 02:25:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -34,18 +34,18 @@ public class OrderImporterTest {
 	@Test
 	public void testOrderImporterFromCsvStream() {
 
-		String csvString = "orderGroupId,orderId,orderDetailId,itemId,description,quantity,uomId,orderDate\r\n" //
-				+ "1,123,1,3001,Widget,100,each,2012-09-26 11:31:01\r\n" //
-				+ "1,123,2,4550,Gadget,450,case,2012-09-26 11:31:01\r\n" //
-				+ "1,123,3,3007,Dealybob,300,case,2012-09-26 11:31:02\r\n" //
-				+ "1,123,4,2150,Thingamajig,220,case,2012-09-26 11:31:03\r\n" //
-				+ "1,456,1,3001,Widget,230,each,2012-09-26 11:31:01\r\n" //
-				+ "1,456,2,4550,Gadget,70,case,2012-09-26 11:31:01\r\n" //
-				+ "1,456,3,3007,Dealybob,90,case,2012-09-26 11:31:02\r\n" //
-				+ "1,456,4,2150,Thingamajig,140,case,2012-09-26 11:31:03\r\n" //
-				+ "1,456,5,2170,Doodad,125,each,2012-09-26 11:31:03\r\n" //
-				+ "1,789,1,2150,Thingamajig,125,each,2012-09-26 11:31:03\r\n" //
-				+ "1,789,2,2170,Doodad,125,each,2012-09-26 11:31:03";
+		String csvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uomId,orderDate\r\n" //
+				+ "1,USF314,COSTCO,,123,1,10700589,Napa Valley Bistro - Jalapeno Stuffed Olives,100,each,2012-09-26 11:31:01\r\n" //
+				+ "1,USF314,COSTCO,,123,2,10706952,Italian Homemade Style Basil Pesto,450,case,2012-09-26 11:31:01\r\n" //
+				+ "1,USF314,COSTCO,,123,3,10706962,Authentic Pizza Sauces,300,case,2012-09-26 11:31:02\r\n" //
+				+ "1,USF314,COSTCO,,123,4,10100250,Organic Fire-Roasted Red Bell Peppers,220,case,2012-09-26 11:31:03\r\n" //
+				+ "1,USF314,COSTCO,,456,1,10700589,Napa Valley Bistro - Jalapeno Stuffed Olives,230,each,2012-09-26 11:31:01\r\n" //
+				+ "1,USF314,COSTCO,,456,2,10706952,Italian Homemade Style Basil Pesto,70,case,2012-09-26 11:31:01\r\n" //
+				+ "1,USF314,COSTCO,,456,3,10706962,Authentic Pizza Sauces,90,case,2012-09-26 11:31:02\r\n" //
+				+ "1,USF314,COSTCO,,456,4,10100250,Organic Fire-Roasted Red Bell Peppers,140,case,2012-09-26 11:31:03\r\n" //
+				+ "1,USF314,COSTCO,,456,5,10706961,Sun Ripened Dried Tomato Pesto,125,each,2012-09-26 11:31:03\r\n" //
+				+ "1,USF314,COSTCO,CONTAINER1,789,1,10100250,Organic Fire-Roasted Red Bell Peppers,125,each,2012-09-26 11:31:03\r\n" //
+				+ "1,USF314,COSTCO,CONTAINER1,789,2,10706961,Sun Ripened Dried Tomato Pesto,125,each,2012-09-26 11:31:04";
 
 		byte csvArray[] = csvString.getBytes();
 

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: SchemaManagerABC.java,v 1.2 2012/11/24 04:23:54 jeffw Exp $
+ *  $Id: SchemaManagerABC.java,v 1.3 2012/12/15 02:25:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -64,7 +64,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	protected abstract boolean doUpgradeSchema();
 
 	protected abstract boolean doDowngradeSchema();
-	
+
 	protected abstract String getSchemaSetterString();
 
 	// --------------------------------------------------------------------------
@@ -259,8 +259,8 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		// IMPORTANT:
 		// Apply these upgrades in version order.
-		if (inOldVersion < ISchemaManager.DATABASE_VERSION_1) {
-			result &= doUpdate1();
+		if (inOldVersion < ISchemaManager.DATABASE_VERSION_2) {
+			result &= doUpdate2();
 		}
 
 		result &= updateSchemaVersion(ISchemaManager.DATABASE_VERSION_CUR);
@@ -272,8 +272,13 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	/**
 	 * @return
 	 */
-	private boolean doUpdate1() {
+	private boolean doUpdate2() {
 		boolean result = true;
+
+		result = execOneSQLCommand("ALTER TABLE CODESHELF.ORDERHEADER " //
+				+ "ADD CUSTOMERID VARCHAR(64), " //
+				+ "ADD SHIPMENTID VARCHAR(64) " //
+				+ ";");
 
 		return result;
 	}
@@ -352,7 +357,6 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 				+ "PERSISTENTID BIGINT NOT NULL, " //
 				+ "PARENT_PERSISTENTID BIGINT NOT NULL, " //
 				+ "DOMAINID VARCHAR(64) NOT NULL, " //
-				//				+ "LASTDEFAULTSEQUENCEID INT NOT NULL, " //
 				+ "VERSION TIMESTAMP, " //
 				+ inColumns //
 				+ ", PRIMARY KEY (PERSISTENTID));");
@@ -556,7 +560,9 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 			"STATUSENUM VARCHAR(16) NOT NULL, " //
 					+ "PICKSTRATEGYENUM VARCHAR(16) NOT NULL, " //
 					+ "ORDERGROUP_PERSISTENTID BIGINT, " //
-					+ "WORKSEQUENCE BIGINT " //
+					+ "WORKSEQUENCE BIGINT, " //
+					+ "SHIPMENTID VARCHAR(64), " //
+					+ "CUSTOMERID VARCHAR(64) " //
 		);
 
 		// Organization - this is the top-level object that owns all other objects.

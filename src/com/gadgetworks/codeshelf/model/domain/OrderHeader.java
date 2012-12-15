@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderHeader.java,v 1.15 2012/11/19 10:48:25 jeffw Exp $
+ *  $Id: OrderHeader.java,v 1.16 2012/12/15 02:25:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -87,6 +87,22 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	@Getter
 	@Setter
 	private OrderGroup			orderGroup;
+
+	// The customerID for this order.
+	// Lower numbers work first.
+	@Column(nullable = true)
+	@Getter
+	@Setter
+	@JsonProperty
+	private String				customerId;
+
+	// Reference to the shipment for this order.
+	// Lower numbers work first.
+	@Column(nullable = true)
+	@Getter
+	@Setter
+	@JsonProperty
+	private String				shipmentId;
 
 	// The work sequence.
 	// This is a sort of the actively working order groups in a facility.

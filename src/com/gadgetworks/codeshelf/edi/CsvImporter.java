@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CsvImporter.java,v 1.7 2012/10/31 09:23:59 jeffw Exp $
+ *  $Id: CsvImporter.java,v 1.8 2012/12/15 02:25:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -227,6 +227,8 @@ public class CsvImporter implements ICsvImporter {
 			result.setParent(inFacility);
 			result.setDomainId(inCsvImportBean.getOrderId());
 			result.setStatusEnum(OrderStatusEnum.CREATED);
+			result.setCustomerId(inCsvImportBean.getCustomerId());
+			result.setShipmentId(inCsvImportBean.getShipmentId());
 
 			PickStrategyEnum pickStrategy = PickStrategyEnum.SERIAL;
 			String pickStrategyEnumId = inCsvImportBean.getPickStrategy();
