@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: MockDao.java,v 1.7 2012/10/31 09:23:59 jeffw Exp $
+ *  $Id: MockDao.java,v 1.8 2012/12/22 09:36:38 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -102,6 +102,12 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 
 	@Override
 	public final <L> List<L> findByFilterAndClass(String inFilter, Map<String, Object> inFilterParams, Class<L> inClass) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Object getNextId(Class<?> beanType) {
 		// TODO Auto-generated method stub
 		return null;
 	}

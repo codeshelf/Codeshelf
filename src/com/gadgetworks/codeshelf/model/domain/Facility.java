@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.42 2012/11/10 03:20:01 jeffw Exp $
+ *  $Id: Facility.java,v 1.43 2012/12/22 09:36:38 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -452,6 +452,7 @@ public class Facility extends LocationABC<Organization> {
 	 */
 	private void createAislePaths(LocationABC<Facility> inLocation, Double inXDimMeters, Double inYDimMeters) {
 
+		// Create the default path for this aisle.
 		Path path = paths.get(Path.DEFAULT_FACILITY_PATH_ID);
 		if (path == null) {
 			path = new Path();
@@ -462,6 +463,7 @@ public class Facility extends LocationABC<Organization> {
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}
+			path.createDefaultWorkArea();
 		}
 
 		// If there are already path segments then create a connecting path to the new ones.

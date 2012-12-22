@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ITypedDao.java,v 1.9 2012/10/29 02:59:27 jeffw Exp $
+ *  $Id: ITypedDao.java,v 1.10 2012/12/22 09:36:38 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -39,4 +39,7 @@ public interface ITypedDao<T> extends IDao {
 	void pushNonPersistentUpdates(T inDomainObject);
 
 	Class<T> getDaoClass();
+	
+	Object getNextId(final Class<?> beanType);
+	
 }

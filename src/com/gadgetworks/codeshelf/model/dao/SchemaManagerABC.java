@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: SchemaManagerABC.java,v 1.3 2012/12/15 02:25:42 jeffw Exp $
+ *  $Id: SchemaManagerABC.java,v 1.4 2012/12/22 09:36:38 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -260,7 +260,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		// IMPORTANT:
 		// Apply these upgrades in version order.
 		if (inOldVersion < ISchemaManager.DATABASE_VERSION_2) {
-			result &= doUpdate2();
+			result &= doUpgrade2();
 		}
 
 		result &= updateSchemaVersion(ISchemaManager.DATABASE_VERSION_CUR);
@@ -272,13 +272,11 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	/**
 	 * @return
 	 */
-	private boolean doUpdate2() {
+	private boolean doUpgrade2() {
 		boolean result = true;
 
-		result = execOneSQLCommand("ALTER TABLE CODESHELF.ORDERHEADER " //
-				+ "ADD CUSTOMERID VARCHAR(64), " //
-				+ "ADD SHIPMENTID VARCHAR(64) " //
-				+ ";");
+		result &= safeAddColumn("ORDERHEADER", "CUSTOMERID VARCHAR(64)");
+		result &= safeAddColumn("ORDERHEADER", "SHIPMENTID VARCHAR(64)");
 
 		return result;
 	}
@@ -332,7 +330,6 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		result &= execOneSQLCommand("CREATE TABLE CODESHELF.ORGANIZATION (" //
 				+ "PERSISTENTID BIGINT NOT NULL, " //
 				+ "DOMAINID VARCHAR(64) NOT NULL, " //
-				//				+ "LASTDEFAULTSEQUENCEID INT NOT NULL, " //
 				+ "VERSION TIMESTAMP, " //
 				+ inColumns //
 				+ ", PRIMARY KEY (PERSISTENTID));");
@@ -391,6 +388,22 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 	}
 
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inTableName
+	 * @param inColumnName
+	 * @return
+	 */
+	private boolean safeAddColumn(final String inTableName, final String inColumnName) {
+		boolean result = false;
+
+		result &= execOneSQLCommand("ALTER TABLE CODESHELF." + inTableName //
+				+ " ADD " + inColumnName //
+				+ ";");
+
+		return result;
+	}
+
 	private boolean createIndicies() {
 		boolean result = true;
 
@@ -439,7 +452,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		// One extra wireless device index: to ensure uniqueness of the MAC addresses, and to find them fast by that address.
 		execOneSQLCommand("CREATE UNIQUE INDEX WIRELESSDEVICE_MACADDRESS_INDEX ON CODESHELF.WIRELESSDEVICE (MACADDRESS)");
 
-		result &= linkToParentTable("WORKAREA", "PARENT", "LOCATION");
+		result &= linkToParentTable("WORKAREA", "PARENT", "PATH");
 
 		result &= linkToParentTable("WORKINSTRUCTION", "PARENT", "LOCATION");
 

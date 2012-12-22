@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Path.java,v 1.15 2012/11/19 10:48:25 jeffw Exp $
+ *  $Id: Path.java,v 1.16 2012/12/22 09:36:38 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -15,6 +15,7 @@ import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
 import javax.persistence.MapKey;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 import lombok.Getter;
@@ -27,6 +28,7 @@ import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.annotate.JsonProperty;
 
 import com.avaje.ebean.annotation.CacheStrategy;
+import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.google.inject.Inject;
@@ -58,7 +60,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	}
 
 	public static final String			DEFAULT_FACILITY_PATH_ID	= "DEFAULT";
-	public static final String			DOMAIN_PREFIX = "P";
+	public static final String			DOMAIN_PREFIX				= "P";
 
 	private static final Log			LOGGER						= LogFactory.getLog(Path.class);
 
@@ -76,7 +78,14 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	@JsonProperty
 	private String						description;
 
-	// For a network this is a list of all of the users that belong in the set.
+	// The work area that goes with this path.
+	// It shouldn't be null, but there is no way to create a parent-child relation when neither can be null.
+	@OneToOne(mappedBy = "parent")
+	@Getter
+	@Setter
+	private WorkArea					workArea;
+
+	// All of the path segments that belong to this path.
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "segmentOrder")
 	@Getter
@@ -108,5 +117,24 @@ public class Path extends DomainObjectTreeABC<Facility> {
 
 	public final void removePathSegment(Integer inOrder) {
 		segments.remove(inOrder);
+	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 *  Create the default work area for this path.
+	 */
+	public final void createDefaultWorkArea() {
+		WorkArea tempWorkArea = this.getWorkArea();
+		if (tempWorkArea == null) {
+			tempWorkArea = new WorkArea();
+			tempWorkArea.setParent(this);
+			tempWorkArea.setDomainId(this.getDomainId());
+			tempWorkArea.setDescription("Default work area");
+			try {
+				WorkArea.DAO.store(tempWorkArea);
+			} catch (DaoException e) {
+				LOGGER.error("", e);
+			}
+		}
 	}
 }

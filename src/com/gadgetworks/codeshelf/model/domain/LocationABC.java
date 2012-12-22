@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: LocationABC.java,v 1.18 2012/11/19 10:48:25 jeffw Exp $
+ *  $Id: LocationABC.java,v 1.19 2012/12/22 09:36:38 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -131,6 +131,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 	// The items stored in this location.
 	@OneToMany(mappedBy = "parent")
+	@MapKey(name = "domainId")
 	@Getter
 	private Map<String, Item>			items		= new HashMap<String, Item>();
 

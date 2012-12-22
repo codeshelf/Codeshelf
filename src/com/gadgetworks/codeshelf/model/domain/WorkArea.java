@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WorkArea.java,v 1.7 2012/11/19 10:48:25 jeffw Exp $
+ *  $Id: WorkArea.java,v 1.8 2012/12/22 09:36:38 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -10,8 +10,8 @@ import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 import lombok.Getter;
@@ -42,7 +42,7 @@ import com.google.inject.Singleton;
 @Table(name = "WORKAREA", schema = "CODESHELF")
 @CacheStrategy
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
-public class WorkArea extends DomainObjectTreeABC<Facility> {
+public class WorkArea extends DomainObjectTreeABC<Path> {
 
 	@Inject
 	public static ITypedDao<WorkArea>	DAO;
@@ -58,8 +58,8 @@ public class WorkArea extends DomainObjectTreeABC<Facility> {
 
 	// The parent facility.
 	@Column(nullable = false)
-	@ManyToOne(optional = false)
-	private Facility				parent;
+	@OneToOne(optional = false)
+	private Path					parent;
 
 	// The work area ID.
 	@Column(nullable = false)
@@ -78,7 +78,7 @@ public class WorkArea extends DomainObjectTreeABC<Facility> {
 	// A work area is a collection of locations.
 	@OneToMany(mappedBy = "parent")
 	@Getter
-	private List<SubLocationABC>		locations			= new ArrayList<SubLocationABC>();
+	private List<SubLocationABC>	locations			= new ArrayList<SubLocationABC>();
 
 	// A work area will contain a set of active users (workers).
 	@OneToMany(mappedBy = "parent")
@@ -102,11 +102,11 @@ public class WorkArea extends DomainObjectTreeABC<Facility> {
 		return "P";
 	}
 
-	public final Facility getParent() {
+	public final Path getParent() {
 		return parent;
 	}
 
-	public final void setParent(Facility inParent) {
+	public final void setParent(Path inParent) {
 		parent = inParent;
 	}
 
