@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeshelfSSLWebSocketServerFactory.java,v 1.1 2012/11/24 04:23:54 jeffw Exp $
+ *  $Id: CodeshelfSSLWebSocketServerFactory.java,v 1.2 2012/12/23 09:39:26 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websocket;
 
@@ -71,9 +71,9 @@ public class CodeshelfSSLWebSocketServerFactory implements WebSocketServer.WebSo
 
 	@Override
 	public final ByteChannel wrapChannel(SelectionKey inSelectionKey) throws IOException {
-		SSLEngine e = getSslContext().createSSLEngine();
-		e.setUseClientMode(false);
-		return new SSLSocketChannel2(inSelectionKey, e, mExec);
+		SSLEngine sslEngine = getSslContext().createSSLEngine();
+		sslEngine.setUseClientMode(false);
+		return new SSLSocketChannel2(inSelectionKey, sslEngine, mExec);
 	}
 
 	@Override
