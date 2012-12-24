@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderGroup.java,v 1.13 2012/11/19 10:48:25 jeffw Exp $
+ *  $Id: OrderGroup.java,v 1.14 2012/12/24 08:17:29 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -56,6 +56,8 @@ public class OrderGroup extends DomainObjectTreeABC<Facility> {
 			return OrderGroup.class;
 		}
 	}
+	
+	public final static String DEFAULT_ORDER_GROUP_DESC_PREFIX = "Order group - ";
 
 	private static final Log	LOGGER			= LogFactory.getLog(OrderGroup.class);
 
@@ -63,6 +65,13 @@ public class OrderGroup extends DomainObjectTreeABC<Facility> {
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	private Facility			parent;
+
+	// The work area.
+	@Column(nullable = false)
+	@ManyToOne(optional = true)
+	@Getter
+	@Setter
+	private WorkArea			parentWorkArea;
 
 	// The collective order status.
 	@Column(nullable = false)

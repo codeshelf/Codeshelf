@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CsvImporter.java,v 1.8 2012/12/15 02:25:42 jeffw Exp $
+ *  $Id: CsvImporter.java,v 1.9 2012/12/24 08:17:29 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -168,6 +168,7 @@ public class CsvImporter implements ICsvImporter {
 			result = new OrderGroup();
 			result.setParent(inFacility);
 			result.setOrderGroupId(inCsvImportBean.getOrderGroupId());
+			result.setDescription(OrderGroup.DEFAULT_ORDER_GROUP_DESC_PREFIX  + inCsvImportBean.getOrderGroupId());
 			result.setStatusEnum(OrderStatusEnum.CREATED);
 			inFacility.addOrderGroup(result);
 			try {

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: SchemaManagerABC.java,v 1.4 2012/12/22 09:36:38 jeffw Exp $
+ *  $Id: SchemaManagerABC.java,v 1.5 2012/12/24 08:17:29 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -431,6 +431,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		result &= linkToParentTable("ORDERDETAIL", "PARENT", "ORDERHEADER");
 
 		result &= linkToParentTable("ORDERGROUP", "PARENT", "LOCATION");
+		result &= linkToParentTable("ORDERGROUP", "PARENTWORKAREA", "WORKAREA");
 
 		result &= linkToParentTable("ORDERHEADER", "PARENT", "LOCATION");
 
@@ -565,7 +566,8 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		result &= createTable("ORDERGROUP", //
 			"STATUSENUM VARCHAR(16) NOT NULL, " //
 					+ "WORKSEQUENCE BIGINT, " //
-					+ "DESCRIPTION VARCHAR(256) " //
+					+ "DESCRIPTION VARCHAR(256), " //
+					+ "PARENTWORKAREA_PERSISTENTID BIGINT "// NOT NULL, " //
 		);
 
 		// OrderHeader

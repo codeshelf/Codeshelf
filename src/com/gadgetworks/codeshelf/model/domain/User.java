@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: User.java,v 1.15 2012/11/22 05:31:20 jeffw Exp $
+ *  $Id: User.java,v 1.16 2012/12/24 08:17:29 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -76,7 +76,7 @@ public class User extends DomainObjectTreeABC<Organization> {
 	public static final int		SALT_INDEX			= 1;
 	public static final int		PBKDF2_INDEX		= 2;
 
-	// The owning facility.
+	// The owning organization.
 	@Column(name = "parentOrganization", nullable = false)
 	@ManyToOne(optional = false)
 	private Organization		parent;
