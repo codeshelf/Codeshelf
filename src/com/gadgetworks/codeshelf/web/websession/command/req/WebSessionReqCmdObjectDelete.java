@@ -1,9 +1,11 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectDelete.java,v 1.5 2012/09/08 03:03:23 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectDelete.java,v 1.6 2012/12/25 10:48:14 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
+
+import java.util.UUID;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -14,7 +16,6 @@ import org.codehaus.jackson.node.ObjectNode;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.model.domain.DomainObjectABC;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.web.websession.command.resp.IWebSessionRespCmd;
 import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdObjectDelete;
@@ -69,7 +70,7 @@ public class WebSessionReqCmdObjectDelete extends WebSessionReqCmdABC {
 				className = "com.gadgetworks.codeshelf.model.domain." + className;
 			}
 			JsonNode objectIdNode = dataJsonNode.get(PERSISTENT_ID);
-			long objectIdId = objectIdNode.getLongValue();
+			UUID objectIdId = UUID.fromString(objectIdNode.getTextValue());
 
 			// First we find the parent object (by it's ID).
 			Class<?> classObject = Class.forName(className);

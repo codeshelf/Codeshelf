@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: MockDao.java,v 1.8 2012/12/22 09:36:38 jeffw Exp $
+ *  $Id: MockDao.java,v 1.9 2012/12/25 10:48:14 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -9,8 +9,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import com.avaje.ebean.Query;
+import com.eaio.uuid.UUIDGen;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.model.domain.IDomainObjectTree;
 
@@ -55,7 +57,7 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 		return null;
 	}
 
-	public final T findByPersistentId(Long inPersistentId) {
+	public final T findByPersistentId(UUID inPersistentId) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -70,7 +72,7 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 		return mStorage.get(domainId);
 	}
 
-	public final List<T> findByPersistentIdList(List<Long> inPersistentIdList) {
+	public final List<T> findByPersistentIdList(List<UUID> inPersistentIdList) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -82,7 +84,7 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 
 	public final void store(T inDomainObject) {
 		mStorage.put(getFullDomainId(inDomainObject), inDomainObject);
-		inDomainObject.setPersistentId((long) getFullDomainId(inDomainObject).hashCode());
+		inDomainObject.setPersistentId(new UUID(UUIDGen.newTime(), UUIDGen.getClockSeqAndNode()));
 	}
 
 	public final void delete(T inDomainObject) {

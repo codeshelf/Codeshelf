@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderGroup.java,v 1.14 2012/12/24 08:17:29 jeffw Exp $
+ *  $Id: OrderGroup.java,v 1.15 2012/12/25 10:48:13 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -65,13 +65,6 @@ public class OrderGroup extends DomainObjectTreeABC<Facility> {
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	private Facility			parent;
-
-	// The work area.
-	@Column(nullable = false)
-	@ManyToOne(optional = true)
-	@Getter
-	@Setter
-	private WorkArea			parentWorkArea;
 
 	// The collective order status.
 	@Column(nullable = false)

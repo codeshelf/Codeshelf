@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectMethod.java,v 1.6 2012/10/16 06:23:21 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectMethod.java,v 1.7 2012/12/25 10:48:13 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -12,6 +12,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import lombok.libs.org.objectweb.asm.tree.ClassNode;
 import lombok.libs.org.objectweb.asm.tree.LocalVariableNode;
@@ -34,7 +35,6 @@ import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.web.websession.command.resp.IWebSessionRespCmd;
 import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdObjectMethod;
-import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdObjectUpdate;
 
 /**
  * 
@@ -108,7 +108,7 @@ public class WebSessionReqCmdObjectMethod extends WebSessionReqCmdABC {
 				className = "com.gadgetworks.codeshelf.model.domain." + className;
 			}
 			JsonNode idNode = dataJsonNode.get(PERSISTENT_ID);
-			long objectId = idNode.getLongValue();
+			UUID objectId = UUID.fromString(idNode.getTextValue());
 
 			JsonNode methodNameNode = dataJsonNode.get(METHODNAME);
 			String methodName = methodNameNode.getTextValue();

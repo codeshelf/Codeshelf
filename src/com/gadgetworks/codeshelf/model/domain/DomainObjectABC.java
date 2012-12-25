@@ -1,15 +1,18 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DomainObjectABC.java,v 1.26 2012/12/15 02:25:42 jeffw Exp $
+ *  $Id: DomainObjectABC.java,v 1.27 2012/12/25 10:48:13 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.UUID;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.PersistenceException;
 import javax.persistence.Version;
@@ -49,12 +52,13 @@ public abstract class DomainObjectABC implements IDomainObject {
 
 	// This is the internal GUID for the object.
 	@Id
+	@GeneratedValue(strategy = GenerationType.AUTO, generator = "com.gadgetworks.codeshelf.model.dao.UuidGenGw")
 	@NonNull
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private Long				persistentId;
+	private UUID				persistentId;
 
 	// The domain ID
 	@NonNull
@@ -74,9 +78,9 @@ public abstract class DomainObjectABC implements IDomainObject {
 	private Timestamp			version;
 
 	public DomainObjectABC() {
-//		lastDefaultSequenceId = 0;
+		//		lastDefaultSequenceId = 0;
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * @return
@@ -149,4 +153,4 @@ public abstract class DomainObjectABC implements IDomainObject {
 		//query = query.setUseCache(true);
 		return query.findList();
 	}
-	}
+}

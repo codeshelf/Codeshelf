@@ -1,9 +1,11 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DomainObjectTreeABC.java,v 1.2 2012/10/31 09:23:59 jeffw Exp $
+ *  $Id: DomainObjectTreeABC.java,v 1.3 2012/12/25 10:48:13 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
+
+import java.util.UUID;
 
 import javax.persistence.Entity;
 
@@ -63,8 +65,8 @@ public abstract class DomainObjectTreeABC<P extends IDomainObject> extends Domai
 	 * @see com.gadgetworks.codeshelf.model.domain.IDomainObject#getParentPersistentId()
 	 */
 	@JsonProperty
-	public final Long getParentPersistentId() {
-		Long result = null;
+	public final UUID getParentPersistentId() {
+		UUID result = null;
 		IDomainObject domainObject = getParent();
 		if (domainObject != null) {
 			result = domainObject.getPersistentId();

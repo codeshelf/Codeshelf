@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import junit.framework.Assert;
 
@@ -157,7 +158,7 @@ public class GenericDaoTest {
 	public void testLoadByPersistentIdList() {
 		OrganizationDao dao = new OrganizationDao();
 
-		List<Long> persistentIdList = new ArrayList<Long>();
+		List<UUID> persistentIdList = new ArrayList<UUID>();
 
 		Organization organization = new Organization();
 		organization.setDomainId("LOADBYLIST-TEST1");

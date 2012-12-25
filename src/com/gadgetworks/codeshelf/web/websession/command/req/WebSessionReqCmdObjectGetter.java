@@ -1,11 +1,12 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectGetter.java,v 1.13 2012/09/08 03:03:23 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectGetter.java,v 1.14 2012/12/25 10:48:14 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.UUID;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -73,7 +74,7 @@ public class WebSessionReqCmdObjectGetter extends WebSessionReqCmdABC {
 				parentClassName = "com.gadgetworks.codeshelf.model.domain." + parentClassName;
 			}
 			JsonNode parentIdNode = dataJsonNode.get(PERSISTENT_ID);
-			long parentId = parentIdNode.getLongValue();
+			UUID parentId = UUID.fromString(parentIdNode.getTextValue());
 			JsonNode getMethodNode = dataJsonNode.get(GETTER_METHOD);
 			String getterMethodName = getMethodNode.getTextValue();
 

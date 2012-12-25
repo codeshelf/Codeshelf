@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WorkInstruction.java,v 1.7 2012/11/19 10:48:25 jeffw Exp $
+ *  $Id: WorkInstruction.java,v 1.8 2012/12/25 10:48:13 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -46,7 +46,7 @@ import com.google.inject.Singleton;
 @Table(name = "WORKINSTRUCTION", schema = "CODESHELF")
 @CacheStrategy
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
-public abstract class WorkInstruction extends DomainObjectTreeABC<Facility> {
+public abstract class WorkInstruction extends DomainObjectTreeABC<WorkArea> {
 
 	@Inject
 	public static ITypedDao<WorkInstruction>	DAO;
@@ -63,7 +63,7 @@ public abstract class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	// The parent facility.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	private Facility					parent;
+	private WorkArea					parent;
 
 	// Operation.
 	@Column(nullable = false)
@@ -143,11 +143,11 @@ public abstract class WorkInstruction extends DomainObjectTreeABC<Facility> {
 		return "WI";
 	}
 
-	public final Facility getParent() {
+	public final WorkArea getParent() {
 		return parent;
 	}
 
-	public final void setParent(Facility inParent) {
+	public final void setParent(WorkArea inParent) {
 		parent = inParent;
 	}
 

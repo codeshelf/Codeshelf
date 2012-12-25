@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectUpdate.java,v 1.16 2012/09/23 03:05:43 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectUpdate.java,v 1.17 2012/12/25 10:48:13 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.UUID;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -96,7 +97,7 @@ public class WebSessionReqCmdObjectUpdate extends WebSessionReqCmdABC {
 				className = "com.gadgetworks.codeshelf.model.domain." + className;
 			}
 			JsonNode idNode = dataJsonNode.get(PERSISTENT_ID);
-			long objectId = idNode.getLongValue();
+			UUID objectId = UUID.fromString(idNode.getTextValue());
 
 			ObjectMapper mapper = new ObjectMapper();
 			JsonNode propertiesNode = dataJsonNode.get(PROPERTIES);

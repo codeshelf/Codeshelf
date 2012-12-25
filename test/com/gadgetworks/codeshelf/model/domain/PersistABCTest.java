@@ -4,13 +4,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import java.util.List;
+import java.util.UUID;
 
 import org.junit.Test;
 
+import com.eaio.uuid.UUIDGen;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.model.domain.DomainObjectABC;
-import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 
 public class PersistABCTest {
 	
@@ -100,7 +99,7 @@ public class PersistABCTest {
 	public void testHashCode() {
 		PersistABCStub persist = new PersistABCStub();
 		assertEquals(persist.hashCode(), 0);
-		Long testId = 9999L;
+		UUID testId = new UUID(UUIDGen.newTime(), UUIDGen.getClockSeqAndNode());
 		persist.setPersistentId(testId);
 		assertEquals(persist.hashCode(), testId.hashCode());
 	}
@@ -108,11 +107,11 @@ public class PersistABCTest {
 	@Test
 	public void testEquals() {
 		PersistABCStub persist1 = new PersistABCStub();
-		persist1.setPersistentId(1L);
+		persist1.setPersistentId(new UUID(UUIDGen.newTime(), UUIDGen.getClockSeqAndNode()));
 		PersistABCStub persist2 = new PersistABCStub();
-		persist2.setPersistentId(2L);
+		persist2.setPersistentId(new UUID(UUIDGen.newTime(), UUIDGen.getClockSeqAndNode()));
 		PersistABCOtherStub persist3 = new PersistABCOtherStub();
-		persist3.setPersistentId(3L);
+		persist3.setPersistentId(new UUID(UUIDGen.newTime(), UUIDGen.getClockSeqAndNode()));
 		assertTrue(persist1.equals(persist1));
 		assertFalse(persist1.equals(persist2));
 		assertFalse(persist1.equals(persist3));

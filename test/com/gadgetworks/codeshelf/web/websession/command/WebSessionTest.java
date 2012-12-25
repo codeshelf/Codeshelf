@@ -3,6 +3,7 @@ package com.gadgetworks.codeshelf.web.websession.command;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.NotYetConnectedException;
+import java.util.UUID;
 
 import junit.framework.Assert;
 import lombok.Getter;
@@ -14,7 +15,7 @@ import org.java_websocket.framing.Framedata;
 import org.java_websocket.handshake.ClientHandshakeBuilder;
 import org.junit.Test;
 
-import com.gadgetworks.codeshelf.model.dao.DaoException;
+import com.eaio.uuid.UUIDGen;
 import com.gadgetworks.codeshelf.model.dao.MockDao;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.User;
@@ -113,7 +114,7 @@ public class WebSessionTest {
 		MockDao<User> userDao = new MockDao<User>();
 
 		Organization organization = new Organization();
-		organization.setPersistentId(1L);
+		organization.setPersistentId(new UUID(UUIDGen.newTime(), UUIDGen.getClockSeqAndNode()));
 		organization.setDomainId("O1");
 		organization.setDescription("TEST");
 		organizationDao.store(organization);
@@ -146,7 +147,7 @@ public class WebSessionTest {
 		MockDao<User> userDao = new MockDao<User>();
 
 		Organization organization = new Organization();
-		organization.setPersistentId(1L);
+		organization.setPersistentId(new UUID(UUIDGen.newTime(), UUIDGen.getClockSeqAndNode()));
 		organization.setDomainId("O1");
 		organization.setDescription("TEST");
 		organizationDao.store(organization);
@@ -177,7 +178,7 @@ public class WebSessionTest {
 		MockDao<User> userDao = new MockDao<User>();
 
 		Organization organization = new Organization();
-		organization.setPersistentId(1L);
+		organization.setPersistentId(new UUID(UUIDGen.newTime(), UUIDGen.getClockSeqAndNode()));
 		organization.setDomainId("O1");
 		organization.setDescription("TEST");
 		organizationDao.store(organization);

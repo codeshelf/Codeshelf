@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: SchemaManagerABC.java,v 1.5 2012/12/24 08:17:29 jeffw Exp $
+ *  $Id: SchemaManagerABC.java,v 1.6 2012/12/25 10:48:14 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -27,7 +27,9 @@ import com.google.inject.Inject;
  */
 public abstract class SchemaManagerABC implements ISchemaManager {
 
-	private static final Log	LOGGER	= LogFactory.getLog(SchemaManagerABC.class);
+	private static final Log	LOGGER		= LogFactory.getLog(SchemaManagerABC.class);
+
+	private static final String	UUID_TYPE	= "CHAR(36)";
 
 	@Getter(value = AccessLevel.PROTECTED)
 	private IUtil				util;
@@ -328,7 +330,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		result &= execOneSQLCommand("CREATE SEQUENCE CODESHELF.ORGANIZATION_SEQ");
 		result &= execOneSQLCommand("CREATE TABLE CODESHELF.ORGANIZATION (" //
-				+ "PERSISTENTID BIGINT NOT NULL, " //
+				+ "PERSISTENTID " + UUID_TYPE + " NOT NULL, " //
 				+ "DOMAINID VARCHAR(64) NOT NULL, " //
 				+ "VERSION TIMESTAMP, " //
 				+ inColumns //
@@ -351,8 +353,8 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		result &= execOneSQLCommand("CREATE SEQUENCE CODESHELF." + inTableName + "_SEQ");
 		result &= execOneSQLCommand("CREATE TABLE CODESHELF." + inTableName + " (" //
-				+ "PERSISTENTID BIGINT NOT NULL, " //
-				+ "PARENT_PERSISTENTID BIGINT NOT NULL, " //
+				+ "PERSISTENTID " + UUID_TYPE + " NOT NULL, " //
+				+ "PARENT_PERSISTENTID " + UUID_TYPE + " NOT NULL, " //
 				+ "DOMAINID VARCHAR(64) NOT NULL, " //
 				+ "VERSION TIMESTAMP, " //
 				+ inColumns //
@@ -409,7 +411,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		result &= linkToParentTable("CODESHELFNETWORK", "PARENT", "LOCATION");
 
-		result &= linkToParentTable("CONTAINER", "PARENT", "CONTAINERKIND");
+		result &= linkToParentTable("CONTAINER", "PARENT", "LOCATION");
 
 		result &= linkToParentTable("CONTAINERKIND", "PARENT", "LOCATION");
 
@@ -421,7 +423,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		result &= linkToParentTable("EDISERVICE", "PARENT", "LOCATION");
 
-		result &= linkToParentTable("ITEM", "PARENT", "ITEMMASTER");
+		result &= linkToParentTable("ITEM", "PARENT", "LOCATION");
 
 		result &= linkToParentTable("ITEMMASTER", "PARENT", "LOCATION");
 
@@ -431,7 +433,6 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		result &= linkToParentTable("ORDERDETAIL", "PARENT", "ORDERHEADER");
 
 		result &= linkToParentTable("ORDERGROUP", "PARENT", "LOCATION");
-		result &= linkToParentTable("ORDERGROUP", "PARENTWORKAREA", "WORKAREA");
 
 		result &= linkToParentTable("ORDERHEADER", "PARENT", "LOCATION");
 
@@ -455,7 +456,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		result &= linkToParentTable("WORKAREA", "PARENT", "PATH");
 
-		result &= linkToParentTable("WORKINSTRUCTION", "PARENT", "LOCATION");
+		result &= linkToParentTable("WORKINSTRUCTION", "PARENT", "WORKAREA");
 
 		return result;
 	}
@@ -479,7 +480,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		// Container
 		result &= createTable("CONTAINER", //
-			"KIND_PERSISTENTID BIGINT NOT NULL " //
+			"KIND_PERSISTENTID " + UUID_TYPE + " NOT NULL " //
 		);
 
 		// ContainerKind
@@ -530,15 +531,15 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		// Item
 		result &= createTable("ITEM", //
 			"QUANTITY DECIMAL NOT NULL, " //
-					+ "ITEMMASTER_PERSISTENTID BIGINT NOT NULL, " //
-					+ "UOMMASTER_PERSISTENTID BIGINT NOT NULL " //
+					+ "ITEMMASTER_PERSISTENTID " + UUID_TYPE + " NOT NULL, " //
+					+ "UOMMASTER_PERSISTENTID " + UUID_TYPE + " NOT NULL " //
 		);
 
 		// ItemMaster
 		result &= createTable("ITEMMASTER", //
 			"DESCRIPTION VARCHAR(256), " //
 					+ "LOTHANDLINGENUM VARCHAR(16) NOT NULL, " //
-					+ "STANDARDUOM_PERSISTENTID BIGINT NOT NULL " //
+					+ "STANDARDUOM_PERSISTENTID " + UUID_TYPE + " NOT NULL " //
 		);
 
 		// Location
@@ -549,33 +550,32 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 					+ "POSY DOUBLE PRECISION NOT NULL, " //
 					+ "POSZ DOUBLE PRECISION, " // NOT NULL, " //
 					+ "DESCRIPTION VARCHAR(64), "// NOT NULL, " //
-					+ "PARENTORGANIZATION_PERSISTENTID BIGINT "// NOT NULL, " //
+					+ "PARENTORGANIZATION_PERSISTENTID " + UUID_TYPE + " "// NOT NULL, " //
 		);
 
 		// OrderDetail
 		result &= createTable("ORDERDETAIL", //
 			"STATUSENUM VARCHAR(16) NOT NULL, " //
-					+ "ITEMMASTER_PERSISTENTID BIGINT NOT NULL, " //
+					+ "ITEMMASTER_PERSISTENTID " + UUID_TYPE + " NOT NULL, " //
 					+ "DESCRIPTION VARCHAR(256) NOT NULL, " //
 					+ "QUANTITY INTEGER NOT NULL, " //
-					+ "UOMMASTER_PERSISTENTID BIGINT NOT NULL, " //
+					+ "UOMMASTER_PERSISTENTID " + UUID_TYPE + " NOT NULL, " //
 					+ "ORDERDATE TIMESTAMP " //
 		);
 
 		// OrderGroup
 		result &= createTable("ORDERGROUP", //
 			"STATUSENUM VARCHAR(16) NOT NULL, " //
-					+ "WORKSEQUENCE BIGINT, " //
-					+ "DESCRIPTION VARCHAR(256), " //
-					+ "PARENTWORKAREA_PERSISTENTID BIGINT "// NOT NULL, " //
+					+ "WORKSEQUENCE " + UUID_TYPE + ", " //
+					+ "DESCRIPTION VARCHAR(256) " //
 		);
 
 		// OrderHeader
 		result &= createTable("ORDERHEADER", //
 			"STATUSENUM VARCHAR(16) NOT NULL, " //
 					+ "PICKSTRATEGYENUM VARCHAR(16) NOT NULL, " //
-					+ "ORDERGROUP_PERSISTENTID BIGINT, " //
-					+ "WORKSEQUENCE BIGINT, " //
+					+ "ORDERGROUP_PERSISTENTID " + UUID_TYPE + ", " //
+					+ "WORKSEQUENCE " + UUID_TYPE + ", " //
 					+ "SHIPMENTID VARCHAR(64), " //
 					+ "CUSTOMERID VARCHAR(64) " //
 		);
@@ -592,7 +592,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		// PathSegment
 		result &= createTable("PATHSEGMENT", //
-			"ASSOCIATEDLOCATION_PERSISTENTID BIGINT, " //
+			"ASSOCIATEDLOCATION_PERSISTENTID " + UUID_TYPE + ", " //
 					+ "DIRECTIONENUM VARCHAR(16) NOT NULL, " //
 					+ "SEGMENTORDER INTEGER NOT NULL, " //
 					+ "HEADPOSTYPEENUM VARCHAR(16) NOT NULL, " //
@@ -663,12 +663,12 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 			"OPENUM VARCHAR(16) NOT NULL, " //
 					+ "PLANENUM VARCHAR(16) NOT NULL, " //
 					+ "STATUSENUM VARCHAR(16) NOT NULL, " //
-					+ "SUBJECTCONTAINER_PERSISTENTID BIGINT NOT NULL, " //
-					+ "SUBJECTITEM_PERSISTENTID BIGINT NOT NULL, " //
-					+ "FROMLOCATION_PERSISTENTID BIGINT NOT NULL, " //
-					+ "TOLOCATION_PERSISTENTID BIGINT NOT NULL, " //
-					+ "FROMCONTAINER_PERSISTENTID BIGINT NOT NULL, " //
-					+ "TOCONTAIENR_PERSISTENTID BIGINT NOT NULL " //
+					+ "SUBJECTCONTAINER_PERSISTENTID " + UUID_TYPE + " NOT NULL, " //
+					+ "SUBJECTITEM_PERSISTENTID " + UUID_TYPE + " NOT NULL, " //
+					+ "FROMLOCATION_PERSISTENTID " + UUID_TYPE + " NOT NULL, " //
+					+ "TOLOCATION_PERSISTENTID " + UUID_TYPE + " NOT NULL, " //
+					+ "FROMCONTAINER_PERSISTENTID " + UUID_TYPE + " NOT NULL, " //
+					+ "TOCONTAIENR_PERSISTENTID " + UUID_TYPE + " NOT NULL " //
 		);
 
 		return result;

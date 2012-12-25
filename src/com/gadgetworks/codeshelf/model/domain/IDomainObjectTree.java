@@ -1,9 +1,11 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: IDomainObjectTree.java,v 1.2 2012/10/31 09:23:59 jeffw Exp $
+ *  $Id: IDomainObjectTree.java,v 1.3 2012/12/25 10:48:13 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
+
+import java.util.UUID;
 
 /**
  * @author jeffw
@@ -27,7 +29,7 @@ public interface IDomainObjectTree<P extends IDomainObject> extends IDomainObjec
 	/**
 	 * @return
 	 */
-	Long getParentPersistentId();
+	UUID getParentPersistentId();
 
 	// --------------------------------------------------------------------------
 	/**

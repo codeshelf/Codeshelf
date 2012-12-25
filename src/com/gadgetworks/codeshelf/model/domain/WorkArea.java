@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WorkArea.java,v 1.9 2012/12/24 08:17:29 jeffw Exp $
+ *  $Id: WorkArea.java,v 1.10 2012/12/25 10:48:13 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -89,11 +89,6 @@ public class WorkArea extends DomainObjectTreeABC<Path> {
 	@OneToMany(mappedBy = "parent")
 	@Getter
 	private List<WorkInstruction>	workInstructions	= new ArrayList<WorkInstruction>();
-
-	// A work area will contain a set of active users (workers).
-	@OneToMany(mappedBy = "parentWorkArea")
-	@Getter
-	private List<OrderGroup>		orderGroupss		= new ArrayList<OrderGroup>();
 
 	public WorkArea() {
 		workAreaId = "";

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: GenericDaoABC.java,v 1.16 2012/12/22 09:36:38 jeffw Exp $
+ *  $Id: GenericDaoABC.java,v 1.17 2012/12/25 10:48:14 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.UUID;
 
 import javax.persistence.OptimisticLockException;
 import javax.persistence.PersistenceException;
@@ -23,7 +24,6 @@ import com.avaje.ebean.bean.EntityBean;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.model.domain.IDomainObjectTree;
-import com.gadgetworks.codeshelf.model.domain.Organization;
 
 /**
  * @author jeffw
@@ -109,7 +109,7 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#loadByPersistentId(java.lang.Integer)
 	 */
-	public final T findByPersistentId(Long inPersistentId) {
+	public final T findByPersistentId(UUID inPersistentId) {
 		T result = null;
 		try {
 			result = Ebean.find(getDaoClass(), inPersistentId);
@@ -152,7 +152,7 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#findByIdList(java.util.List)
 	 */
-	public final List<T> findByPersistentIdList(List<Long> inIdList) {
+	public final List<T> findByPersistentIdList(List<UUID> inIdList) {
 		Query<T> query = Ebean.find(getDaoClass());
 		List<T> methodResultsList = query.where().in("persistentId", inIdList).findList();
 		return methodResultsList;

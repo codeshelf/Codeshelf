@@ -1,11 +1,11 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: IDomainObject.java,v 1.15 2012/10/31 09:23:59 jeffw Exp $
+ *  $Id: IDomainObject.java,v 1.16 2012/12/25 10:48:13 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
-import java.util.List;
+import java.util.UUID;
 
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 
@@ -55,13 +55,13 @@ public interface IDomainObject {
 	/**
 	 * @return
 	 */
-	Long getPersistentId();
+	UUID getPersistentId();
 
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inPersistentId
 	 */
-	void setPersistentId(Long inPersistentId);
+	void setPersistentId(UUID inPersistentId);
 
 	// --------------------------------------------------------------------------
 	/**

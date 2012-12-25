@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectListener.java,v 1.16 2012/09/23 03:05:43 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectListener.java,v 1.17 2012/12/25 10:48:14 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -48,7 +49,7 @@ public class WebSessionReqCmdObjectListener extends WebSessionReqCmdABC implemen
 
 	private Class<IDomainObject>			mPersistenceClass;
 	private List<IDomainObject>				mObjectMatchList;
-	private List<Long>						mObjectIdList;
+	private List<UUID>						mObjectIdList;
 	private List<String>					mPropertyNames;
 	private IDaoProvider					mDaoProvider;
 	private List<ITypedDao<IDomainObject>>	mDaoList;
@@ -85,7 +86,7 @@ public class WebSessionReqCmdObjectListener extends WebSessionReqCmdABC implemen
 			}
 			JsonNode objectIdListNode = dataJsonNode.get(OBJECT_ID_LIST);
 			ObjectMapper mapper = new ObjectMapper();
-			mObjectIdList = mapper.readValue(objectIdListNode, new TypeReference<List<Long>>() {
+			mObjectIdList = mapper.readValue(objectIdListNode, new TypeReference<List<UUID>>() {
 			});
 			JsonNode propertyNamesNode = dataJsonNode.get(PROPERTY_NAME_LIST);
 			mPropertyNames = mapper.readValue(propertyNamesNode, new TypeReference<List<String>>() {
