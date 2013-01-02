@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderHeader.java,v 1.16 2012/12/15 02:25:42 jeffw Exp $
+ *  $Id: OrderHeader.java,v 1.17 2013/01/02 08:40:35 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -69,7 +69,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	@Column(nullable = false)
 	@Enumerated(value = EnumType.STRING)
 	@Getter
-	@Setter
+	@Setter()
 	@JsonProperty
 	private OrderStatusEnum		statusEnum;
 
@@ -172,5 +172,13 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void removeOrderDetail(OrderDetail inOrderDetail) {
 		orderDetails.remove(inOrderDetail);
+	}
+	
+	// Set the status from the websocket by a string.
+	public final void setStatusEnumStr(final String inStatus) {
+		OrderStatusEnum status = OrderStatusEnum.valueOf(inStatus);	
+		if (status != null) {
+			statusEnum = status;
+		}
 	}
 }

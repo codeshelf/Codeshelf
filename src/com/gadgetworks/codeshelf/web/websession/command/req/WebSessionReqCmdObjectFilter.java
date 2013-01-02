@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectFilter.java,v 1.14 2012/09/23 03:05:43 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectFilter.java,v 1.15 2013/01/02 08:40:35 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -200,6 +200,7 @@ public class WebSessionReqCmdObjectFilter extends WebSessionReqCmdABC implements
 		for (String propertyName : mPropertyNames) {
 			if ((inChangedProperties != null) && (inChangedProperties.contains(propertyName))) {
 				matchedChangedProperty = true;
+				break;
 			}
 		}
 
@@ -207,10 +208,12 @@ public class WebSessionReqCmdObjectFilter extends WebSessionReqCmdABC implements
 			ITypedDao<IDomainObject> dao = mDaoProvider.getDaoInstance((Class<IDomainObject>) mPersistenceClass);
 			mObjectMatchList = dao.findByFilter(mFilterClause, mFilterParams);
 			List<IDomainObject> domainObjectList = new ArrayList<IDomainObject>();
+			domainObjectList.add(inDomainObject);
 			if (mObjectMatchList.contains(inDomainObject)) {
-				domainObjectList.add(inDomainObject);
+				return getProperties(domainObjectList, OP_TYPE_UPDATE);
+			} else {
+				return getProperties(domainObjectList, OP_TYPE_DELETE);
 			}
-			return getProperties(domainObjectList, OP_TYPE_UPDATE);
 		} else {
 			return null;
 		}
