@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectListener.java,v 1.17 2012/12/25 10:48:14 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectListener.java,v 1.18 2013/01/03 07:23:12 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -25,6 +25,7 @@ import org.codehaus.jackson.type.TypeReference;
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
+import com.gadgetworks.codeshelf.model.domain.IDomainObjectTree;
 import com.gadgetworks.codeshelf.web.websession.IWebSession;
 import com.gadgetworks.codeshelf.web.websession.command.resp.IWebSessionRespCmd;
 import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdObjectListener;
@@ -130,6 +131,10 @@ public class WebSessionReqCmdObjectListener extends WebSessionReqCmdABC implemen
 				propertiesMap.put(CLASSNAME, matchedObject.getClassName());
 				propertiesMap.put(OP_TYPE, inOperationType);
 				propertiesMap.put(PERSISTENT_ID, matchedObject.getPersistentId());
+				// If this is a tree object then get the parent ID as well.
+				if (matchedObject instanceof IDomainObjectTree<?>) {
+					propertiesMap.put(PARENT_ID, ((IDomainObjectTree<?>)matchedObject).getParent().getPersistentId());
+				}
 				for (String propertyName : mPropertyNames) {
 					// Execute the "get" method against the parents to return the children.
 					// (The method *must* start with "get" to ensure other methods don't get called.)

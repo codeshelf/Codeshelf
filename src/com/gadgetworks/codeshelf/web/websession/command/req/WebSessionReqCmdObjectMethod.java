@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectMethod.java,v 1.7 2012/12/25 10:48:13 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectMethod.java,v 1.8 2013/01/03 07:23:12 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -145,7 +145,7 @@ public class WebSessionReqCmdObjectMethod extends WebSessionReqCmdABC {
 
 				if (targetObject != null) {
 
-					// Loop over all the properties, setting each one.
+					// Loop over all the arguments, setting each one.
 					List<Class<?>> signatureClasses = new ArrayList<Class<?>>();
 					List<Object> cookedArguments = new ArrayList<Object>();
 					for (ArgsClass arg : mMethodArguments) {

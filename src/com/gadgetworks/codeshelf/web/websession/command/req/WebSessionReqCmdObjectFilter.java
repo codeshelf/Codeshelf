@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectFilter.java,v 1.15 2013/01/02 08:40:35 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectFilter.java,v 1.16 2013/01/03 07:23:12 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -26,6 +26,7 @@ import org.codehaus.jackson.type.TypeReference;
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
+import com.gadgetworks.codeshelf.model.domain.IDomainObjectTree;
 import com.gadgetworks.codeshelf.web.websession.IWebSession;
 import com.gadgetworks.codeshelf.web.websession.command.resp.IWebSessionRespCmd;
 import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdObjectFilter;
@@ -141,10 +142,14 @@ public class WebSessionReqCmdObjectFilter extends WebSessionReqCmdABC implements
 			List<Map<String, Object>> resultsList = new ArrayList<Map<String, Object>>();
 			for (IDomainObject matchedObject : inDomainObjectList) {
 				Map<String, Object> propertiesMap = new HashMap<String, Object>();
-				// Always include the class naem and persistent ID in the results.
+				// Always include the class name and persistent ID in the results.
 				propertiesMap.put(CLASSNAME, matchedObject.getClassName());
 				propertiesMap.put(OP_TYPE, inOperationType);
 				propertiesMap.put(PERSISTENT_ID, matchedObject.getPersistentId());
+				// If this is a tree object then get the parent ID as well.
+				if (matchedObject instanceof IDomainObjectTree<?>) {
+					propertiesMap.put(PARENT_ID, ((IDomainObjectTree<?>)matchedObject).getParent().getPersistentId());
+				}
 				for (String propertyName : mPropertyNames) {
 					// Execute the "get" method against the parents to return the children.
 					// (The method *must* start with "get" to ensure other methods don't get called.)

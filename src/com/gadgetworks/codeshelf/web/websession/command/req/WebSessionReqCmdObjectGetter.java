@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectGetter.java,v 1.14 2012/12/25 10:48:14 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectGetter.java,v 1.15 2013/01/03 07:23:12 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -85,7 +85,7 @@ public class WebSessionReqCmdObjectGetter extends WebSessionReqCmdABC {
 				ITypedDao<IDomainObject> dao = mDaoProvider.getDaoInstance((Class<IDomainObject>) classObject);
 				IDomainObject parentObject = dao.findByPersistentId(parentId);
 
-				// Execute the "get" method against the parents to return the children.
+				// Execute the "get" method against the parent to return the children.
 				// (The method *must* start with "get" to ensure other methods don't get called.)
 				if (getterMethodName.startsWith("get")) {
 					Object resultObject = null;
@@ -96,7 +96,7 @@ public class WebSessionReqCmdObjectGetter extends WebSessionReqCmdABC {
 						LOGGER.error("Method not found", e);
 					}
 
-					// Convert the list of ojects into a JSon object.
+					// Convert the list of objects into a JSon object.
 					ObjectMapper mapper = new ObjectMapper();
 					ObjectNode dataNode = mapper.createObjectNode();
 					ArrayNode searchListNode = mapper.valueToTree(resultObject);

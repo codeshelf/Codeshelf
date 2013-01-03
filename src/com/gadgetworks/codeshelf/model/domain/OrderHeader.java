@@ -1,12 +1,13 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderHeader.java,v 1.17 2013/01/02 08:40:35 jeffw Exp $
+ *  $Id: OrderHeader.java,v 1.18 2013/01/03 07:23:12 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -180,5 +181,18 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		if (status != null) {
 			statusEnum = status;
 		}
+	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * Return the order group persistent ID as a property.
+	 * @return
+	 */
+	public final UUID getOrderGroupPersistentId() {
+		UUID result = null;
+		if (orderGroup != null) {
+			result = orderGroup.getPersistentId();
+		}
+		return result;
 	}
 }
