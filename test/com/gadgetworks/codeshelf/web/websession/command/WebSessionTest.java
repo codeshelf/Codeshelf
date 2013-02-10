@@ -10,6 +10,7 @@ import lombok.Getter;
 
 import org.java_websocket.IWebSocket;
 import org.java_websocket.drafts.Draft;
+import org.java_websocket.exceptions.InvalidDataException;
 import org.java_websocket.exceptions.InvalidHandshakeException;
 import org.java_websocket.framing.Framedata;
 import org.java_websocket.handshake.ClientHandshakeBuilder;
@@ -101,10 +102,22 @@ public class WebSessionTest {
 		}
 
 		@Override
-		public int getReadyState() {
-			return 0;
+		public void close(InvalidDataException arg0) {
+			// TODO Auto-generated method stub
+			
 		}
 
+		@Override
+		public void closeConnection(int arg0, String arg1) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public READYSTATE getReadyState() {
+			// TODO Auto-generated method stub
+			return null;
+		}
 	}
 
 	@Test

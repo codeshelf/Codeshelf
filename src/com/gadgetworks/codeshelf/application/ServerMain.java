@@ -1,7 +1,7 @@
 /*******************************************************************************
 CodeshelfWebSocketServer *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Main.java,v 1.37 2012/11/24 04:23:54 jeffw Exp $
+ *  $Id: ServerMain.java,v 1.1 2013/02/10 01:11:41 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -98,19 +98,19 @@ import com.google.inject.name.Names;
 /**
  *  @author jeffw
  */
-public final class Main {
+public final class ServerMain {
 
 	// See the top of Util to understand why we do the following:
 	static {
 		Util.initLogging();
 	}
 
-	private static final Log	LOGGER	= LogFactory.getLog(Main.class);
+	private static final Log	LOGGER	= LogFactory.getLog(ServerMain.class);
 
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	private Main() {
+	private ServerMain() {
 	}
 
 	// --------------------------------------------------------------------------
@@ -143,7 +143,7 @@ public final class Main {
 
 		// Create and start the application.
 		Injector injector = setupInjector();
-		ICodeShelfApplication application = injector.getInstance(CodeShelfApplication.class);
+		ICodeShelfApplication application = injector.getInstance(ServerCodeshelfApplication.class);
 		application.startApplication();
 
 		// Handle events until the application exits.
@@ -186,7 +186,7 @@ public final class Main {
 				bind(IUtil.class).to(Util.class);
 				bind(ISchemaManager.class).to(PostgresSchemaManager.class);
 				bind(IDatabase.class).to(Database.class);
-				bind(ICodeShelfApplication.class).to(CodeShelfApplication.class);
+				bind(ICodeShelfApplication.class).to(ServerCodeshelfApplication.class);
 				bind(ICodeshelfWebSocketServer.class).to(CodeshelfWebSocketServer.class);
 				bind(IWebSessionManager.class).to(WebSessionManager.class);
 				bind(IWebSessionReqCmdFactory.class).to(WebSessionReqCmdFactory.class);

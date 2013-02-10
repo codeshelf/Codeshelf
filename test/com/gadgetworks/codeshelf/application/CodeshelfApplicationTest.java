@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeshelfApplicationTest.java,v 1.12 2012/11/24 04:23:54 jeffw Exp $
+ *  $Id: CodeshelfApplicationTest.java,v 1.13 2013/02/10 01:11:41 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.application;
 
@@ -215,7 +215,7 @@ public class CodeshelfApplicationTest {
 	}
 
 	/**
-	 * Test method for {@link com.gadgetworks.codeshelf.application.CodeShelfApplication#startApplication()}.
+	 * Test method for {@link com.gadgetworks.codeshelf.application.ServerCodeshelfApplication#startApplication()}.
 	 */
 	@Test
 	public void testStartStopApplication() {
@@ -251,7 +251,7 @@ public class CodeshelfApplicationTest {
 		ISchemaManager schemaManager = new H2SchemaManager(util, "codeshelf", "codeshelf", "codeshelf", "codeshelf", "localhost", "");
 		IDatabase database = new Database(schemaManager, util);
 
-		final CodeShelfApplication application = new CodeShelfApplication(webSocketListener,
+		final ServerCodeshelfApplication application = new ServerCodeshelfApplication(webSocketListener,
 			daoProvider,
 			httpServer,
 			ediProcessor,

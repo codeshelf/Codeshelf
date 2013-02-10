@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderDetail.java,v 1.13 2012/11/19 10:48:25 jeffw Exp $
+ *  $Id: OrderDetail.java,v 1.14 2013/02/10 01:11:41 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -149,6 +149,10 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 
 	public final String getItemMasterId() {
 		return getItemMaster().getDomainId();
+	}
+	
+	public final String getOrderId() {
+		return parent.getOrderId();
 	}
 
 }

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: GenericDaoABC.java,v 1.17 2012/12/25 10:48:14 jeffw Exp $
+ *  $Id: GenericDaoABC.java,v 1.18 2013/02/10 01:11:41 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -92,15 +92,6 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	//		if ((state != null) && (!state.isNew())) {
 	//			result = true;
 	//		}
-	//
-	//		return result;
-	//	}
-
-	//	public final Query<T> query() {
-	//
-	//		Query<T> result = null;
-	//
-	//		result = Ebean.find(getDaoClass());
 	//
 	//		return result;
 	//	}
