@@ -1,7 +1,7 @@
 /*******************************************************************************
 CodeshelfWebSocketServer *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ServerMain.java,v 1.1 2013/02/10 01:11:41 jeffw Exp $
+ *  $Id: ServerMain.java,v 1.2 2013/02/10 08:23:07 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -84,10 +84,10 @@ import com.gadgetworks.codeshelf.web.websession.IWebSessionManager;
 import com.gadgetworks.codeshelf.web.websession.WebSessionManager;
 import com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmdFactory;
 import com.gadgetworks.codeshelf.web.websession.command.req.WebSessionReqCmdFactory;
-import com.gadgetworks.codeshelf.web.websocket.CodeshelfSSLWebSocketServerFactory;
-import com.gadgetworks.codeshelf.web.websocket.CodeshelfWebSocketServer;
-import com.gadgetworks.codeshelf.web.websocket.ICodeshelfWebSocketServer;
+import com.gadgetworks.codeshelf.web.websocket.CsWebSocketServer;
+import com.gadgetworks.codeshelf.web.websocket.IWebSocketServer;
 import com.gadgetworks.codeshelf.web.websocket.IWebSocketSslContextGenerator;
+import com.gadgetworks.codeshelf.web.websocket.SSLWebSocketServerFactory;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -172,8 +172,8 @@ public final class ServerMain {
 				bind(String.class).annotatedWith(Names.named(IWebSocketSslContextGenerator.KEYSTORE_STORE_PASSWORD_PROPERTY)).toInstance(System.getProperty("keystore.store.password"));
 				bind(String.class).annotatedWith(Names.named(IWebSocketSslContextGenerator.KEYSTORE_KEY_PASSWORD_PROPERTY)).toInstance(System.getProperty("keystore.key.password"));
 
-				bind(String.class).annotatedWith(Names.named(ICodeshelfWebSocketServer.WEBSOCKET_HOSTNAME_PROPERTY)).toInstance(System.getProperty("websocket.hostname"));
-				bind(Integer.class).annotatedWith(Names.named(ICodeshelfWebSocketServer.WEBSOCKET_PORTNUM_PROPERTY)).toInstance(Integer.valueOf(System.getProperty("websocket.portnum")));
+				bind(String.class).annotatedWith(Names.named(IWebSocketServer.WEBSOCKET_HOSTNAME_PROPERTY)).toInstance(System.getProperty("websocket.hostname"));
+				bind(Integer.class).annotatedWith(Names.named(IWebSocketServer.WEBSOCKET_PORTNUM_PROPERTY)).toInstance(Integer.valueOf(System.getProperty("websocket.portnum")));
 
 				bind(String.class).annotatedWith(Names.named(IHttpServer.WEBSITE_CONTENT_PATH_PROPERTY)).toInstance(System.getProperty("website.content.path"));
 				bind(String.class).annotatedWith(Names.named(IHttpServer.WEBSITE_HOSTNAME_PROPERTY)).toInstance(System.getProperty("website.hostname"));
@@ -187,14 +187,14 @@ public final class ServerMain {
 				bind(ISchemaManager.class).to(PostgresSchemaManager.class);
 				bind(IDatabase.class).to(Database.class);
 				bind(ICodeShelfApplication.class).to(ServerCodeshelfApplication.class);
-				bind(ICodeshelfWebSocketServer.class).to(CodeshelfWebSocketServer.class);
+				bind(IWebSocketServer.class).to(CsWebSocketServer.class);
 				bind(IWebSessionManager.class).to(WebSessionManager.class);
 				bind(IWebSessionReqCmdFactory.class).to(WebSessionReqCmdFactory.class);
 				bind(IDaoProvider.class).to(DaoProvider.class);
 				bind(IHttpServer.class).to(HttpServer.class);
 				bind(IEdiProcessor.class).to(EdiProcessor.class);
 				bind(ICsvImporter.class).to(CsvImporter.class);
-				bind(WebSocketServer.WebSocketServerFactory.class).to(CodeshelfSSLWebSocketServerFactory.class);
+				bind(WebSocketServer.WebSocketServerFactory.class).to(SSLWebSocketServerFactory.class);
 		
 				requestStaticInjection(Aisle.class);
 				bind(new TypeLiteral<ITypedDao<Aisle>>() {

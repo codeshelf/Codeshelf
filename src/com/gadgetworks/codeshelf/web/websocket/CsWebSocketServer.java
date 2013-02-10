@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeshelfWebSocketServer.java,v 1.7 2012/11/24 04:23:54 jeffw Exp $
+ *  $Id: CsWebSocketServer.java,v 1.1 2013/02/10 08:23:07 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websocket;
 
@@ -19,15 +19,15 @@ import com.gadgetworks.codeshelf.web.websession.IWebSessionManager;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
-public class CodeshelfWebSocketServer extends WebSocketServer implements ICodeshelfWebSocketServer {
+public class CsWebSocketServer extends WebSocketServer implements IWebSocketServer {
 
-	private static final Log				LOGGER	= LogFactory.getLog(CodeshelfWebSocketServer.class);
+	private static final Log				LOGGER	= LogFactory.getLog(CsWebSocketServer.class);
 
 	private IWebSessionManager				mWebSessionManager;
 	private CopyOnWriteArraySet<IWebSocket>	mWebSockets;
 
 	@Inject
-	public CodeshelfWebSocketServer(@Named(WEBSOCKET_HOSTNAME_PROPERTY) final String inAddr,
+	public CsWebSocketServer(@Named(WEBSOCKET_HOSTNAME_PROPERTY) final String inAddr,
 		@Named(WEBSOCKET_PORTNUM_PROPERTY) final int inPort,
 		final IWebSessionManager inWebSessionManager,
 		final WebSocketServer.WebSocketServerFactory inWebSocketServerFactory) {

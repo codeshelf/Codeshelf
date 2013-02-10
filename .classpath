@@ -50,7 +50,7 @@
 	<classpathentry kind="lib" path="lib/dist/jetty-rewrite-9.0.0.M2.jar" sourcepath="/Users/jeffw/.m2/repository/org/eclipse/jetty/jetty-rewrite/9.0.0.M2/jetty-rewrite-9.0.0.M2-sources.jar"/>
 	<classpathentry kind="lib" path="lib/dist/uuid-3.3.jar" sourcepath="APIs/uuid-3.3-sources.jar"/>
 	<classpathentry kind="lib" path="lib/dist/dropbox-android-sdk-1.5.3.jar"/>
-	<classpathentry kind="lib" path="lib/dist/Java-WebSocket-1.0.0-SNAPSHOT.jar"/>
+	<classpathentry kind="lib" path="lib/dist/Java-WebSocket-1.0.0-SNAPSHOT.jar" sourcepath="/Java-WebSocket-GW/src/main/java"/>
 	<classpathentry kind="lib" path="lib/dist/websocket-core-9.0.0.M2.jar" sourcepath="/Users/jeffw/.m2/repository/org/eclipse/jetty/websocket/websocket-core/9.0.0.M2/websocket-core-9.0.0.M2-sources.jar"/>
 	<classpathentry kind="lib" path="lib/dist/websocket-server-9.0.0.M2.jar" sourcepath="/Users/jeffw/.m2/repository/org/eclipse/jetty/websocket/websocket-server/9.0.0.M2/websocket-server-9.0.0.M2-sources.jar"/>
 	<classpathentry kind="output" path="eclipse-bin"/>

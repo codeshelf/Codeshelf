@@ -1,7 +1,7 @@
 /*******************************************************************************
 CodeshelfWebSocketServer *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: RemoteMain.java,v 1.1 2013/02/10 01:11:41 jeffw Exp $
+ *  $Id: RemoteMain.java,v 1.2 2013/02/10 08:23:07 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -12,19 +12,15 @@ import java.util.Properties;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.java_websocket.server.WebSocketServer;
+import org.java_websocket.client.WebSocketClient;
 
-import com.gadgetworks.codeshelf.edi.CsvImporter;
-import com.gadgetworks.codeshelf.edi.EdiProcessor;
-import com.gadgetworks.codeshelf.edi.ICsvImporter;
-import com.gadgetworks.codeshelf.edi.IEdiProcessor;
 import com.gadgetworks.codeshelf.model.dao.DaoProvider;
 import com.gadgetworks.codeshelf.model.dao.Database;
+import com.gadgetworks.codeshelf.model.dao.H2SchemaManager;
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.IDatabase;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.model.dao.H2SchemaManager;
 import com.gadgetworks.codeshelf.model.dao.WirelessDeviceDao;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Aisle.AisleDao;
@@ -80,13 +76,10 @@ import com.gadgetworks.codeshelf.model.domain.WorkArea;
 import com.gadgetworks.codeshelf.model.domain.WorkArea.WorkAreaDao;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction.WorkInstructionDao;
-import com.gadgetworks.codeshelf.web.websession.IWebSessionManager;
-import com.gadgetworks.codeshelf.web.websession.WebSessionManager;
-import com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmdFactory;
-import com.gadgetworks.codeshelf.web.websession.command.req.WebSessionReqCmdFactory;
-import com.gadgetworks.codeshelf.web.websocket.CodeshelfSSLWebSocketServerFactory;
-import com.gadgetworks.codeshelf.web.websocket.CodeshelfWebSocketServer;
-import com.gadgetworks.codeshelf.web.websocket.ICodeshelfWebSocketServer;
+import com.gadgetworks.codeshelf.web.websocket.CsWebSocketClient;
+import com.gadgetworks.codeshelf.web.websocket.IWebSocketClient;
+import com.gadgetworks.codeshelf.web.websocket.IWebSocketSslContextGenerator;
+import com.gadgetworks.codeshelf.web.websocket.SSLWebSocketClientFactory;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -166,11 +159,20 @@ public final class RemoteMain {
 				bind(String.class).annotatedWith(Names.named(ISchemaManager.DATABASE_ADDRESS_PROPERTY)).toInstance(System.getProperty("db.address"));
 				bind(String.class).annotatedWith(Names.named(ISchemaManager.DATABASE_PORTNUM_PROPERTY)).toInstance(System.getProperty("db.portnum"));
 
+				bind(String.class).annotatedWith(Names.named(IWebSocketClient.WEBSOCKET_URI_PROPERTY)).toInstance(System.getProperty("websocket.uri"));
+
+				bind(String.class).annotatedWith(Names.named(IWebSocketSslContextGenerator.KEYSTORE_PATH_PROPERTY)).toInstance(System.getProperty("keystore.path"));
+				bind(String.class).annotatedWith(Names.named(IWebSocketSslContextGenerator.KEYSTORE_TYPE_PROPERTY)).toInstance(System.getProperty("keystore.type"));
+				bind(String.class).annotatedWith(Names.named(IWebSocketSslContextGenerator.KEYSTORE_STORE_PASSWORD_PROPERTY)).toInstance(System.getProperty("keystore.store.password"));
+				bind(String.class).annotatedWith(Names.named(IWebSocketSslContextGenerator.KEYSTORE_KEY_PASSWORD_PROPERTY)).toInstance(System.getProperty("keystore.key.password"));
+
 				bind(IUtil.class).to(Util.class);
 				bind(ISchemaManager.class).to(H2SchemaManager.class);
 				bind(IDatabase.class).to(Database.class);
 				bind(ICodeShelfApplication.class).to(RemoteCodeshelfApplication.class);
+				bind(IWebSocketClient.class).to(CsWebSocketClient.class);
 				bind(IDaoProvider.class).to(DaoProvider.class);
+				bind(WebSocketClient.WebSocketClientFactory.class).to(SSLWebSocketClientFactory.class);
 		
 				requestStaticInjection(Aisle.class);
 				bind(new TypeLiteral<ITypedDao<Aisle>>() {

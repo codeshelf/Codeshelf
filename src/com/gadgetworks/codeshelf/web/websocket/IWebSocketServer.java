@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ICodeshelfWebSocketServer.java,v 1.3 2012/11/19 10:48:25 jeffw Exp $
+ *  $Id: IWebSocketServer.java,v 1.1 2013/02/10 08:23:07 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websocket;
 
@@ -10,7 +10,7 @@ import java.io.IOException;
 import org.java_websocket.IWebSocket;
 import org.java_websocket.handshake.ClientHandshake;
 
-public interface ICodeshelfWebSocketServer {
+public interface IWebSocketServer {
 
 	String	WEBSOCKET_HOSTNAME_PROPERTY	= "WEBSOCKET_HOSTNAME_PROPERTY";
 	String	WEBSOCKET_PORTNUM_PROPERTY	= "WEBSOCKET_PORTNUM_PROPERTY";

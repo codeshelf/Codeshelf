@@ -1,11 +1,12 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: RemoteCodeshelfApplication.java,v 1.1 2013/02/10 01:11:41 jeffw Exp $
+ *  $Id: RemoteCodeshelfApplication.java,v 1.2 2013/02/10 08:23:07 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
 
+import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -22,7 +23,6 @@ import com.gadgetworks.codeshelf.controller.IWirelessInterface;
 import com.gadgetworks.codeshelf.controller.NetworkDeviceStateEnum;
 import com.gadgetworks.codeshelf.controller.SnapInterface;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
-import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.IDatabase;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.CodeShelfNetwork;
@@ -32,6 +32,8 @@ import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
 import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.model.domain.WirelessDevice;
 import com.gadgetworks.codeshelf.model.domain.WirelessDevice.IWirelessDeviceDao;
+import com.gadgetworks.codeshelf.web.websocket.IWebSocketClient;
+import com.gadgetworks.codeshelf.web.websocket.IWebSocketServer;
 import com.google.inject.Inject;
 
 public final class RemoteCodeshelfApplication implements ICodeShelfApplication {
@@ -40,6 +42,7 @@ public final class RemoteCodeshelfApplication implements ICodeShelfApplication {
 
 	private boolean							mIsRunning	= true;
 	private List<IController>				mControllerList;
+	private IWebSocketClient		mWebSocketClient;
 	private WirelessDeviceEventHandler		mWirelessDeviceEventHandler;
 	private IDatabase						mDatabase;
 	private IUtil							mUtil;
@@ -53,13 +56,15 @@ public final class RemoteCodeshelfApplication implements ICodeShelfApplication {
 	private ITypedDao<User>					mUserDao;
 
 	@Inject
-	public RemoteCodeshelfApplication(final IDatabase inDatabase,
+	public RemoteCodeshelfApplication(final IWebSocketClient inWebSocketClient,
+		final IDatabase inDatabase,
 		final IUtil inUtil,
 		final ITypedDao<PersistentProperty> inPersistentPropertyDao,
 		final ITypedDao<Organization> inOrganizationDao,
 		final ITypedDao<Facility> inFacilityDao,
 		final IWirelessDeviceDao inWirelessDeviceDao,
 		final ITypedDao<User> inUserDao) {
+		mWebSocketClient = inWebSocketClient;
 		mDatabase = inDatabase;
 		mUtil = inUtil;
 		mPersistentPropertyDao = inPersistentPropertyDao;
@@ -105,6 +110,9 @@ public final class RemoteCodeshelfApplication implements ICodeShelfApplication {
 
 		// Some persistent objects need some of their fields set to a base/start state when the system restarts.
 		initializeApplicationData();
+
+		// Start the WebSocket UX handler
+		mWebSocketClient.start();
 
 		Collection<Organization> organizations = mOrganizationDao.getAll();
 		for (Organization organization : organizations) {
@@ -157,6 +165,13 @@ public final class RemoteCodeshelfApplication implements ICodeShelfApplication {
 		// Shutdown the controllers
 		for (IController controller : mControllerList) {
 			controller.stopController();
+		}
+
+		// Stop the web socket manager.
+		try {
+			mWebSocketClient.stop();
+		} catch (IOException | InterruptedException e) {
+			LOGGER.error("", e);
 		}
 
 		mDatabase.stop();

@@ -1,40 +1,32 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ServerCodeshelfApplication.java,v 1.1 2013/02/10 01:11:41 jeffw Exp $
+ *  $Id: ServerCodeshelfApplication.java,v 1.2 2013/02/10 08:23:07 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
 
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 
 import org.apache.log4j.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.controller.CodeShelfController;
 import com.gadgetworks.codeshelf.controller.ControllerABC;
-import com.gadgetworks.codeshelf.controller.IController;
-import com.gadgetworks.codeshelf.controller.IWirelessInterface;
 import com.gadgetworks.codeshelf.controller.NetworkDeviceStateEnum;
-import com.gadgetworks.codeshelf.controller.SnapInterface;
 import com.gadgetworks.codeshelf.edi.IEdiProcessor;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.IDatabase;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.model.domain.CodeShelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
 import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.model.domain.WirelessDevice;
 import com.gadgetworks.codeshelf.model.domain.WirelessDevice.IWirelessDeviceDao;
-import com.gadgetworks.codeshelf.web.websocket.ICodeshelfWebSocketServer;
+import com.gadgetworks.codeshelf.web.websocket.IWebSocketServer;
 import com.google.inject.Inject;
 
 public final class ServerCodeshelfApplication implements ICodeShelfApplication {
@@ -44,7 +36,7 @@ public final class ServerCodeshelfApplication implements ICodeShelfApplication {
 	private boolean							mIsRunning	= true;
 	private IEdiProcessor					mEdiProcessor;
 	private WirelessDeviceEventHandler		mWirelessDeviceEventHandler;
-	private ICodeshelfWebSocketServer		mWebSocketServer;
+	private IWebSocketServer		mWebSocketServer;
 	private IDaoProvider					mDaoProvider;
 	private IHttpServer						mHttpServer;
 	private IDatabase						mDatabase;
@@ -59,7 +51,7 @@ public final class ServerCodeshelfApplication implements ICodeShelfApplication {
 	private ITypedDao<User>					mUserDao;
 
 	@Inject
-	public ServerCodeshelfApplication(final ICodeshelfWebSocketServer inWebSocketManager,
+	public ServerCodeshelfApplication(final IWebSocketServer inWebSocketServer,
 		final IDaoProvider inDaoProvider,
 		final IHttpServer inHttpServer,
 		final IEdiProcessor inEdiProcessor,
@@ -70,7 +62,7 @@ public final class ServerCodeshelfApplication implements ICodeShelfApplication {
 		final ITypedDao<Facility> inFacilityDao,
 		final IWirelessDeviceDao inWirelessDeviceDao,
 		final ITypedDao<User> inUserDao) {
-		mWebSocketServer = inWebSocketManager;
+		mWebSocketServer = inWebSocketServer;
 		mDaoProvider = inDaoProvider;
 		mHttpServer = inHttpServer;
 		mEdiProcessor = inEdiProcessor;

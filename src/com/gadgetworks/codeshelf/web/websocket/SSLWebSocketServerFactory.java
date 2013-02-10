@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeshelfSSLWebSocketServerFactory.java,v 1.2 2012/12/23 09:39:26 jeffw Exp $
+ *  $Id: SSLWebSocketServerFactory.java,v 1.1 2013/02/10 08:23:07 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websocket;
 
@@ -41,7 +41,7 @@ import com.google.inject.name.Named;
  * @author jeffw
  *
  */
-public class CodeshelfSSLWebSocketServerFactory implements WebSocketServer.WebSocketServerFactory {
+public class SSLWebSocketServerFactory implements WebSocketServer.WebSocketServerFactory {
 
 	private static final Log	LOGGER								= LogFactory.getLog(WebSocketSslContextGenerator.class);
 
@@ -57,7 +57,7 @@ public class CodeshelfSSLWebSocketServerFactory implements WebSocketServer.WebSo
 	private ExecutorService		mExec;
 
 	@Inject
-	public CodeshelfSSLWebSocketServerFactory(@Named(KEYSTORE_PATH_PROPERTY) final String inKeystorePath,
+	public SSLWebSocketServerFactory(@Named(KEYSTORE_PATH_PROPERTY) final String inKeystorePath,
 		@Named(KEYSTORE_TYPE_PROPERTY) final String inKeystoreType,
 		@Named(KEYSTORE_STORE_PASSWORD_PROPERTY) final String inKeystoreStorePassword,
 		@Named(KEYSTORE_KEY_PASSWORD_PROPERTY) final String inKeystoreKeyPassword) {
