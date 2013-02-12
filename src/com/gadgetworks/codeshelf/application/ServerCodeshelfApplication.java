@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ServerCodeshelfApplication.java,v 1.2 2013/02/10 08:23:07 jeffw Exp $
+ *  $Id: ServerCodeshelfApplication.java,v 1.3 2013/02/12 19:19:42 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -29,7 +29,7 @@ import com.gadgetworks.codeshelf.model.domain.WirelessDevice.IWirelessDeviceDao;
 import com.gadgetworks.codeshelf.web.websocket.IWebSocketServer;
 import com.google.inject.Inject;
 
-public final class ServerCodeshelfApplication implements ICodeShelfApplication {
+public final class ServerCodeshelfApplication implements ICodeshelfApplication {
 
 	private static final Logger				LOGGER		= LoggerFactory.getLogger(ServerCodeshelfApplication.class);
 

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WorkArea.java,v 1.10 2012/12/25 10:48:13 jeffw Exp $
+ *  $Id: WorkArea.java,v 1.11 2013/02/12 19:19:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -86,9 +86,9 @@ public class WorkArea extends DomainObjectTreeABC<Path> {
 	private List<User>				users				= new ArrayList<User>();
 
 	// A work area will contain a set of active users (workers).
-	@OneToMany(mappedBy = "parent")
+	@OneToMany(mappedBy = "currentWorkArea")
 	@Getter
-	private List<WorkInstruction>	workInstructions	= new ArrayList<WorkInstruction>();
+	private List<Che>				activeChes			= new ArrayList<Che>();
 
 	public WorkArea() {
 		workAreaId = "";
@@ -122,16 +122,6 @@ public class WorkArea extends DomainObjectTreeABC<Path> {
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void removeLocation(SubLocationABC inLocation) {
 		locations.remove(inLocation);
-	}
-
-	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
-	public final void addWorkInstruction(WorkInstruction inWorkInstruction) {
-		workInstructions.add(inWorkInstruction);
-	}
-
-	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
-	public final void removeWorkInstruction(WorkInstruction inWorkInstruction) {
-		workInstructions.remove(inWorkInstruction);
 	}
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderDetail.java,v 1.14 2013/02/10 01:11:41 jeffw Exp $
+ *  $Id: OrderDetail.java,v 1.15 2013/02/12 19:19:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -14,6 +14,7 @@ import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
@@ -60,6 +61,11 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 
 	private static final Log	LOGGER	= LogFactory.getLog(OrderDetail.class);
 
+	// The owning order header.
+	@Column(nullable = false)
+	@ManyToOne(optional = false)
+	private OrderHeader			parent;
+
 	// The collective order status.
 	@Column(nullable = false)
 	@Enumerated(value = EnumType.STRING)
@@ -103,10 +109,10 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	@JsonProperty
 	private Timestamp			orderDate;
 
-	// The owning order header.
-	@Column(nullable = false)
-	@ManyToOne(optional = false)
-	private OrderHeader			parent;
+	// A work area will contain a set of active users (workers).
+	@OneToMany(mappedBy = "parent")
+	@Getter
+	private List<WorkInstruction>	workInstructions	= new ArrayList<WorkInstruction>();
 
 	public OrderDetail() {
 	}
@@ -137,6 +143,16 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 
 	public final List<IDomainObject> getChildren() {
 		return new ArrayList<IDomainObject>();
+	}
+
+	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
+	public final void addWorkInstruction(WorkInstruction inWorkInstruction) {
+		workInstructions.add(inWorkInstruction);
+	}
+
+	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
+	public final void removeWorkInstruction(WorkInstruction inWorkInstruction) {
+		workInstructions.remove(inWorkInstruction);
 	}
 
 	public final String getParentOrderID() {

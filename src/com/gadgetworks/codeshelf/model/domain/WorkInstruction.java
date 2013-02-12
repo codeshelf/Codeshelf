@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WorkInstruction.java,v 1.8 2012/12/25 10:48:13 jeffw Exp $
+ *  $Id: WorkInstruction.java,v 1.9 2013/02/12 19:19:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -46,7 +46,7 @@ import com.google.inject.Singleton;
 @Table(name = "WORKINSTRUCTION", schema = "CODESHELF")
 @CacheStrategy
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
-public abstract class WorkInstruction extends DomainObjectTreeABC<WorkArea> {
+public abstract class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 
 	@Inject
 	public static ITypedDao<WorkInstruction>	DAO;
@@ -63,7 +63,7 @@ public abstract class WorkInstruction extends DomainObjectTreeABC<WorkArea> {
 	// The parent facility.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	private WorkArea					parent;
+	private OrderDetail					parent;
 
 	// Operation.
 	@Column(nullable = false)
@@ -93,42 +93,36 @@ public abstract class WorkInstruction extends DomainObjectTreeABC<WorkArea> {
 	@Column(nullable = false)
 	@Getter
 	@Setter
-	@JsonProperty
 	private Container					subjectContainer;
 
 	// The subject item.
 	@Column(nullable = false)
 	@Getter
 	@Setter
-	@JsonProperty
 	private Item						subjectItem;
 
 	// fromLoc.
 	@Column(nullable = false)
 	@Getter
 	@Setter
-	@JsonProperty
 	private LocationABC					fromLocation;
 
 	// toLoc.
 	@Column(nullable = false)
 	@Getter
 	@Setter
-	@JsonProperty
 	private LocationABC					toLocation;
 
 	// fromContainer.
 	@Column(nullable = false)
 	@Getter
 	@Setter
-	@JsonProperty
 	private LocationABC					fromContainer;
 
 	// toContainer.
 	@Column(nullable = false)
 	@Getter
 	@Setter
-	@JsonProperty
 	private LocationABC					toContainer;
 
 	public WorkInstruction() {
@@ -143,11 +137,11 @@ public abstract class WorkInstruction extends DomainObjectTreeABC<WorkArea> {
 		return "WI";
 	}
 
-	public final WorkArea getParent() {
+	public final OrderDetail getParent() {
 		return parent;
 	}
 
-	public final void setParent(WorkArea inParent) {
+	public final void setParent(OrderDetail inParent) {
 		parent = inParent;
 	}
 

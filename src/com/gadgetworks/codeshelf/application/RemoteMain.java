@@ -1,7 +1,7 @@
 /*******************************************************************************
 CodeshelfWebSocketServer *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: RemoteMain.java,v 1.2 2013/02/10 08:23:07 jeffw Exp $
+ *  $Id: RemoteMain.java,v 1.3 2013/02/12 19:19:42 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -26,16 +26,14 @@ import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Aisle.AisleDao;
 import com.gadgetworks.codeshelf.model.domain.Bay;
 import com.gadgetworks.codeshelf.model.domain.Bay.BayDao;
-import com.gadgetworks.codeshelf.model.domain.CodeShelfNetwork;
-import com.gadgetworks.codeshelf.model.domain.CodeShelfNetwork.CodeShelfNetworkDao;
+import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
+import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork.CodeshelfNetworkDao;
 import com.gadgetworks.codeshelf.model.domain.Container;
 import com.gadgetworks.codeshelf.model.domain.Container.ContainerDao;
 import com.gadgetworks.codeshelf.model.domain.ContainerKind;
 import com.gadgetworks.codeshelf.model.domain.ContainerKind.ContainerKindDao;
 import com.gadgetworks.codeshelf.model.domain.ContainerUse;
 import com.gadgetworks.codeshelf.model.domain.ContainerUse.ContainerUseDao;
-import com.gadgetworks.codeshelf.model.domain.ControlGroup;
-import com.gadgetworks.codeshelf.model.domain.ControlGroup.ControlGroupDao;
 import com.gadgetworks.codeshelf.model.domain.DropboxService;
 import com.gadgetworks.codeshelf.model.domain.DropboxService.DropboxServiceDao;
 import com.gadgetworks.codeshelf.model.domain.EdiDocumentLocator;
@@ -135,7 +133,7 @@ public final class RemoteMain {
 
 		// Create and start the application.
 		Injector injector = setupInjector();
-		ICodeShelfApplication application = injector.getInstance(RemoteCodeshelfApplication.class);
+		ICodeshelfApplication application = injector.getInstance(RemoteCodeshelfApplication.class);
 		application.startApplication();
 
 		// Handle events until the application exits.
@@ -169,7 +167,7 @@ public final class RemoteMain {
 				bind(IUtil.class).to(Util.class);
 				bind(ISchemaManager.class).to(H2SchemaManager.class);
 				bind(IDatabase.class).to(Database.class);
-				bind(ICodeShelfApplication.class).to(RemoteCodeshelfApplication.class);
+				bind(ICodeshelfApplication.class).to(RemoteCodeshelfApplication.class);
 				bind(IWebSocketClient.class).to(CsWebSocketClient.class);
 				bind(IDaoProvider.class).to(DaoProvider.class);
 				bind(WebSocketClient.WebSocketClientFactory.class).to(SSLWebSocketClientFactory.class);
@@ -182,9 +180,9 @@ public final class RemoteMain {
 				bind(new TypeLiteral<ITypedDao<Bay>>() {
 				}).to(BayDao.class);
 
-				requestStaticInjection(CodeShelfNetwork.class);
-				bind(new TypeLiteral<ITypedDao<CodeShelfNetwork>>() {
-				}).to(CodeShelfNetworkDao.class);
+				requestStaticInjection(CodeshelfNetwork.class);
+				bind(new TypeLiteral<ITypedDao<CodeshelfNetwork>>() {
+				}).to(CodeshelfNetworkDao.class);
 
 				requestStaticInjection(Container.class);
 				bind(new TypeLiteral<ITypedDao<Container>>() {
@@ -197,10 +195,6 @@ public final class RemoteMain {
 				requestStaticInjection(ContainerUse.class);
 				bind(new TypeLiteral<ITypedDao<ContainerUse>>() {
 				}).to(ContainerUseDao.class);
-
-				requestStaticInjection(ControlGroup.class);
-				bind(new TypeLiteral<ITypedDao<ControlGroup>>() {
-				}).to(ControlGroupDao.class);
 
 				requestStaticInjection(EdiDocumentLocator.class);
 				bind(new TypeLiteral<ITypedDao<EdiDocumentLocator>>() {

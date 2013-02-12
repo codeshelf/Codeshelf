@@ -1,59 +1,40 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: RemoteCodeshelfApplication.java,v 1.2 2013/02/10 08:23:07 jeffw Exp $
+ *  $Id: RemoteCodeshelfApplication.java,v 1.3 2013/02/12 19:19:42 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
 
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 
 import org.apache.log4j.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.controller.CodeShelfController;
 import com.gadgetworks.codeshelf.controller.ControllerABC;
-import com.gadgetworks.codeshelf.controller.IController;
-import com.gadgetworks.codeshelf.controller.IWirelessInterface;
-import com.gadgetworks.codeshelf.controller.NetworkDeviceStateEnum;
-import com.gadgetworks.codeshelf.controller.SnapInterface;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.IDatabase;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.model.domain.CodeShelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
-import com.gadgetworks.codeshelf.model.domain.User;
-import com.gadgetworks.codeshelf.model.domain.WirelessDevice;
-import com.gadgetworks.codeshelf.model.domain.WirelessDevice.IWirelessDeviceDao;
 import com.gadgetworks.codeshelf.web.websocket.IWebSocketClient;
-import com.gadgetworks.codeshelf.web.websocket.IWebSocketServer;
 import com.google.inject.Inject;
 
-public final class RemoteCodeshelfApplication implements ICodeShelfApplication {
+public final class RemoteCodeshelfApplication implements ICodeshelfApplication {
 
 	private static final Logger				LOGGER		= LoggerFactory.getLogger(RemoteCodeshelfApplication.class);
 
 	private boolean							mIsRunning	= true;
-	private List<IController>				mControllerList;
-	private IWebSocketClient		mWebSocketClient;
-	private WirelessDeviceEventHandler		mWirelessDeviceEventHandler;
+	private IWebSocketClient				mWebSocketClient;
 	private IDatabase						mDatabase;
 	private IUtil							mUtil;
 	private Thread							mShutdownHookThread;
 	private Runnable						mShutdownRunnable;
 
 	private ITypedDao<PersistentProperty>	mPersistentPropertyDao;
-	private ITypedDao<Organization>			mOrganizationDao;
-	private ITypedDao<Facility>				mFacilityDao;
-	private IWirelessDeviceDao				mWirelessDeviceDao;
-	private ITypedDao<User>					mUserDao;
 
 	@Inject
 	public RemoteCodeshelfApplication(final IWebSocketClient inWebSocketClient,
@@ -61,18 +42,11 @@ public final class RemoteCodeshelfApplication implements ICodeShelfApplication {
 		final IUtil inUtil,
 		final ITypedDao<PersistentProperty> inPersistentPropertyDao,
 		final ITypedDao<Organization> inOrganizationDao,
-		final ITypedDao<Facility> inFacilityDao,
-		final IWirelessDeviceDao inWirelessDeviceDao,
-		final ITypedDao<User> inUserDao) {
+		final ITypedDao<Facility> inFacilityDao) {
 		mWebSocketClient = inWebSocketClient;
 		mDatabase = inDatabase;
 		mUtil = inUtil;
 		mPersistentPropertyDao = inPersistentPropertyDao;
-		mOrganizationDao = inOrganizationDao;
-		mFacilityDao = inFacilityDao;
-		mWirelessDeviceDao = inWirelessDeviceDao;
-		mUserDao = inUserDao;
-		mControllerList = new ArrayList<IController>();
 	}
 
 	// --------------------------------------------------------------------------
@@ -114,45 +88,6 @@ public final class RemoteCodeshelfApplication implements ICodeShelfApplication {
 		// Start the WebSocket UX handler
 		mWebSocketClient.start();
 
-		Collection<Organization> organizations = mOrganizationDao.getAll();
-		for (Organization organization : organizations) {
-			initPreferencesStore(organization);
-			mUtil.setLoggingLevelsFromPrefs(organization, mPersistentPropertyDao);
-			for (Facility facility : organization.getFacilities()) {
-
-				List<IWirelessInterface> interfaceList = new ArrayList<IWirelessInterface>();
-				// Create a CodeShelf interface for each CodeShelf network we have.
-				for (CodeShelfNetwork network : facility.getNetworks()) {
-					SnapInterface snapInterface = new SnapInterface(network, mWirelessDeviceDao);
-					network.setWirelessInterface(snapInterface);
-					interfaceList.add(snapInterface);
-				}
-
-				mControllerList.add(new CodeShelfController(interfaceList, facility, mWirelessDeviceDao));
-			}
-		}
-
-		mWirelessDeviceEventHandler = new WirelessDeviceEventHandler(mControllerList, mWirelessDeviceDao);
-
-		// Start the controllers.
-		LOGGER.info("Starting controllers");
-		for (IController controller : mControllerList) {
-			controller.startController();
-		}
-
-		Organization organization = mOrganizationDao.findByDomainId(null, "O1");
-		if (organization != null) {
-			User user = organization.getUser("jeffw@gadgetworks.com");
-			if (user != null) {
-				if (user.isPasswordValid("blahdeeblah")) {
-					LOGGER.info("Password is valid");
-				}
-			}
-			Facility facility = mFacilityDao.findByDomainId(organization, "F1");
-			if (facility != null) {
-				facility.logLocationDistances();
-			}
-		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -161,11 +96,6 @@ public final class RemoteCodeshelfApplication implements ICodeShelfApplication {
 	public void stopApplication() {
 
 		LOGGER.info("Stopping application");
-
-		// Shutdown the controllers
-		for (IController controller : mControllerList) {
-			controller.stopController();
-		}
 
 		// Stop the web socket manager.
 		try {
@@ -232,53 +162,6 @@ public final class RemoteCodeshelfApplication implements ICodeShelfApplication {
 	 */
 	private void initializeApplicationData() {
 
-		// Create two dummy users for testing.
-		createOrganzation("O1");
-		createOrganzation("O2");
-		createOrganzation("O3");
-
-		// Some radio device fields have no meaning from the last invocation of the application.
-		for (WirelessDevice wirelessDevice : mWirelessDeviceDao.getAll()) {
-			LOGGER.debug("Init data for wireless device id: " + wirelessDevice.getMacAddress());
-			wirelessDevice.setNetworkDeviceState(NetworkDeviceStateEnum.INVALID);
-			try {
-				mWirelessDeviceDao.store(wirelessDevice);
-			} catch (DaoException e) {
-				LOGGER.error("", e);
-			}
-		}
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * @param inOrganizationId
-	 * @param inPassword
-	 */
-	private void createOrganzation(String inOrganizationId) {
-		Organization organization = mOrganizationDao.findByDomainId(null, inOrganizationId);
-		if (organization == null) {
-			organization = new Organization();
-			organization.setDomainId(inOrganizationId);
-			try {
-				mOrganizationDao.store(organization);
-			} catch (DaoException e) {
-				e.printStackTrace();
-			}
-
-			// Create a user for the organization.
-			User user = new User();
-			user.setParent(organization);
-			user.setDomainId("jeffw@gadgetworks.com");
-			user.setEmail("jeffw@gadgetworks.com");
-			user.setPassword("blahdeeblah");
-			user.setActive(true);
-
-			try {
-				mUserDao.store(user);
-			} catch (DaoException e) {
-				e.printStackTrace();
-			}
-		}
 	}
 
 	/* --------------------------------------------------------------------------

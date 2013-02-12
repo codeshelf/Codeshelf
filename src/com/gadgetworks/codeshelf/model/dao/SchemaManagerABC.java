@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: SchemaManagerABC.java,v 1.6 2012/12/25 10:48:14 jeffw Exp $
+ *  $Id: SchemaManagerABC.java,v 1.7 2013/02/12 19:19:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -409,6 +409,12 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	private boolean createIndicies() {
 		boolean result = true;
 
+		result &= linkToParentTable("CHE", "PARENT", "LOCATION");
+		result &= linkToParentTable("CHE", "CURRENTWORKAREA", "WORKAREA");
+		result &= linkToParentTable("CHE", "CURRENTUSER", "USER");
+
+		result &= linkToParentTable("CHECONTROLLER", "PARENT", "CHE");
+
 		result &= linkToParentTable("CODESHELFNETWORK", "PARENT", "LOCATION");
 
 		result &= linkToParentTable("CONTAINER", "PARENT", "LOCATION");
@@ -416,8 +422,8 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		result &= linkToParentTable("CONTAINERKIND", "PARENT", "LOCATION");
 
 		result &= linkToParentTable("CONTAINERUSE", "PARENT", "CONTAINER");
-
-		result &= linkToParentTable("CONTROLGROUP", "PARENT", "CODESHELFNETWORK");
+		result &= linkToParentTable("CONTAINERUSE", "ORDERHEADER", "ORDERHEADER");
+		result &= linkToParentTable("CONTAINERUSE", "CURRENTCHE", "CHE");
 
 		result &= linkToParentTable("EDIDOCUMENTLOCATOR", "PARENT", "EDISERVICE");
 
@@ -429,6 +435,8 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		result &= linkToParentTable("LOCATION", "PARENTORGANIZATION", "ORGANIZATION");
 		result &= linkToParentTable("LOCATION", "PARENT", "LOCATION");
+
+		result &= linkToParentTable("LOCATIONCONTROLLER", "PARENT", "LOCATION");
 
 		result &= linkToParentTable("ORDERDETAIL", "PARENT", "ORDERHEADER");
 
@@ -450,13 +458,13 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		result &= linkToParentTable("VERTEX", "PARENT", "LOCATION");
 
-		result &= linkToParentTable("WIRELESSDEVICE", "PARENT", "CONTROLGROUP");
+		result &= linkToParentTable("WIRELESSDEVICE", "PARENT", "CODESHELFNETWORK");
 		// One extra wireless device index: to ensure uniqueness of the MAC addresses, and to find them fast by that address.
 		execOneSQLCommand("CREATE UNIQUE INDEX WIRELESSDEVICE_MACADDRESS_INDEX ON CODESHELF.WIRELESSDEVICE (MACADDRESS)");
 
 		result &= linkToParentTable("WORKAREA", "PARENT", "PATH");
 
-		result &= linkToParentTable("WORKINSTRUCTION", "PARENT", "WORKAREA");
+		result &= linkToParentTable("WORKINSTRUCTION", "PARENT", "ORDERDETAIL");
 
 		return result;
 	}
@@ -468,6 +476,17 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	private boolean createTables() {
 
 		boolean result = true;
+
+		// Che
+		result &= createTable("CHE", //
+			"CURRENTUSER_PERSISTENTID " + UUID_TYPE + " NOT NULL, " //
+			+ "CURRENTWORKAREA_PERSISTENTID " + UUID_TYPE + " NOT NULL " //
+		);
+
+		// CheController
+		result &= createTable("CHECONTROLLER", //
+			"DESCRIPTION VARCHAR(64) NOT NULL " //
+		);
 
 		// CodeShelfNetwork
 		result &= createTable("CODESHELFNETWORK", //
@@ -493,16 +512,9 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		// ContainerUse
 		result &= createTable("CONTAINERUSE", //
-			"USETIMESTAMP TIMESTAMP NOT NULL " //
-		);
-
-		// ControlGroup
-		result &= createTable("CONTROLGROUP", //
-			"SERIALIZEDID BYTEA DEFAULT '' NOT NULL, " //
-					+ "DESCRIPTION VARCHAR(64) NOT NULL, " //
-					+ "INTERFACEPORTNUM INT NOT NULL, " //
-					+ "ACTIVE BOOLEAN DEFAULT TRUE NOT NULL, " //
-					+ "TAGPROTOCOLENUM VARCHAR(16) NOT NULL " //
+			"USETIMESTAMP TIMESTAMP NOT NULL, " //
+			+ "ORDERHEADER_PERSISTENTID " + UUID_TYPE + " NOT NULL, " //
+			+ "CURRENTCHE_PERSISTENTID " + UUID_TYPE //
 		);
 
 		// DBProperty
@@ -551,6 +563,11 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 					+ "POSZ DOUBLE PRECISION, " // NOT NULL, " //
 					+ "DESCRIPTION VARCHAR(64), "// NOT NULL, " //
 					+ "PARENTORGANIZATION_PERSISTENTID " + UUID_TYPE + " "// NOT NULL, " //
+		);
+
+		// LocationController
+		result &= createTable("LOCATIONCONTROLLER", //
+			"DESCRIPTION VARCHAR(64) NOT NULL " //
 		);
 
 		// OrderDetail

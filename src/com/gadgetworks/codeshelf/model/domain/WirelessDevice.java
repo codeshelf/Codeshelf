@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WirelessDevice.java,v 1.13 2012/11/20 04:10:56 jeffw Exp $
+ *  $Id: WirelessDevice.java,v 1.14 2013/02/12 19:19:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -53,10 +53,10 @@ import com.google.inject.Inject;
 @Entity
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "DTYPE", discriminatorType = DiscriminatorType.STRING)
-@Table(name = "WIRELESSDEVICE", schema="CODESHELF")
+@Table(name = "WIRELESSDEVICE", schema = "CODESHELF")
 //@DiscriminatorValue("ABC")
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
-public class WirelessDevice extends DomainObjectTreeABC<ControlGroup> implements INetworkDevice {
+public class WirelessDevice extends DomainObjectTreeABC<CodeshelfNetwork> implements INetworkDevice {
 
 	@Inject
 	private static IWirelessDeviceDao	DAO;
@@ -75,6 +75,11 @@ public class WirelessDevice extends DomainObjectTreeABC<ControlGroup> implements
 	public static final int			PUBLIC_KEY_BYTES	= 8;
 
 	private static final Log		LOGGER				= LogFactory.getLog(WirelessDevice.class);
+
+	// The owning network.
+	@Column(nullable = false)
+	@ManyToOne(optional = false)
+	private CodeshelfNetwork		parent;
 
 	@Column(nullable = false)
 	private byte[]					macAddress;
@@ -118,11 +123,6 @@ public class WirelessDevice extends DomainObjectTreeABC<ControlGroup> implements
 	@JsonProperty
 	private Long					lastContactTime;
 
-	// The owning network.
-	@Column(nullable = false)
-	@ManyToOne(optional = false)
-	private ControlGroup			parent;
-
 	@Transient
 	@Getter
 	@Setter
@@ -162,11 +162,11 @@ public class WirelessDevice extends DomainObjectTreeABC<ControlGroup> implements
 		return "W";
 	}
 
-	public final ControlGroup getParent() {
+	public final CodeshelfNetwork getParent() {
 		return parent;
 	}
 
-	public final void setParent(ControlGroup inParent) {
+	public final void setParent(CodeshelfNetwork inParent) {
 		parent = inParent;
 	}
 

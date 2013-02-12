@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderHeader.java,v 1.18 2013/01/03 07:23:12 jeffw Exp $
+ *  $Id: OrderHeader.java,v 1.19 2013/02/12 19:19:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -15,6 +15,7 @@ import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 import lombok.Getter;
@@ -24,6 +25,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
+import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
 
 import com.avaje.ebean.annotation.CacheStrategy;
@@ -114,6 +116,13 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	@JsonProperty
 	private Integer				workSequence;
 
+	// The container use for this order.
+	@Column(nullable = false)
+	@OneToOne(optional = true)
+	@Getter
+	@Setter
+	private ContainerUse		containerUse;
+
 	// For a network this is a list of all of the users that belong in the set.
 	@OneToMany(mappedBy = "parent")
 	@Getter
@@ -174,15 +183,15 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	public final void removeOrderDetail(OrderDetail inOrderDetail) {
 		orderDetails.remove(inOrderDetail);
 	}
-	
+
 	// Set the status from the websocket by a string.
 	public final void setStatusEnumStr(final String inStatus) {
-		OrderStatusEnum status = OrderStatusEnum.valueOf(inStatus);	
+		OrderStatusEnum status = OrderStatusEnum.valueOf(inStatus);
 		if (status != null) {
 			statusEnum = status;
 		}
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * Return the order group persistent ID as a property.

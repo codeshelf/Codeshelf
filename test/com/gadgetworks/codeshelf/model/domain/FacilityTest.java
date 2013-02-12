@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: FacilityTest.java,v 1.5 2012/11/03 03:24:35 jeffw Exp $
+ *  $Id: FacilityTest.java,v 1.6 2013/02/12 19:19:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -27,6 +27,7 @@ public class FacilityTest {
 		Vertex.DAO = new MockDao<Vertex>();
 		Path.DAO = new MockDao<Path>();
 		PathSegment.DAO = new MockDao<PathSegment>();
+		WorkArea.DAO = new MockDao<WorkArea>();
 
 		Organization organization = new Organization();
 		organization.setOrganizationId("O1");

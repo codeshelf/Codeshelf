@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Organization.java,v 1.22 2012/11/19 10:48:25 jeffw Exp $
+ *  $Id: Organization.java,v 1.23 2013/02/12 19:19:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -156,6 +156,9 @@ public class Organization extends DomainObjectABC {
 
 		// Create a first Dropbox Service entry for this facility.
 		DropboxService dropboxService = facility.createDropboxService();
+		
+		// Create the default network for the facility.
+		CodeshelfNetwork network = facility.createNetwork("DEFAULT");
 
 		// Create the generic container kind (for all unspecified containers)
 		facility.createDefaultContainerKind();

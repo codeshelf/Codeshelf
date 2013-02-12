@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.43 2012/12/22 09:36:38 jeffw Exp $
+ *  $Id: Facility.java,v 1.44 2013/02/12 19:19:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -98,7 +98,7 @@ public class Facility extends LocationABC<Organization> {
 
 	@OneToMany(mappedBy = "parent")
 	@Getter
-	private List<CodeShelfNetwork>		networks		= new ArrayList<CodeShelfNetwork>();
+	private List<CodeshelfNetwork>		networks		= new ArrayList<CodeshelfNetwork>();
 
 	@OneToMany(mappedBy = "parent")
 	@Getter
@@ -607,6 +607,27 @@ public class Facility extends LocationABC<Organization> {
 		this.addEdiService(result);
 		try {
 			DropboxService.DAO.store(result);
+		} catch (DaoException e) {
+			LOGGER.error("", e);
+		}
+
+		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 */
+	public final CodeshelfNetwork createNetwork(final String inNetworkName) {
+
+		CodeshelfNetwork result = null;
+
+		result = new CodeshelfNetwork();
+		result.setParent(this);
+		result.setDomainId(inNetworkName);
+		result.setActive(true);
+
+		try {
+			CodeshelfNetwork.DAO.store(result);
 		} catch (DaoException e) {
 			LOGGER.error("", e);
 		}

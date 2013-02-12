@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeShelfController.java,v 1.11 2012/10/21 02:02:18 jeffw Exp $
+ *  $Id: CodeShelfController.java,v 1.12 2013/02/12 19:19:41 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.controller;
@@ -15,7 +15,6 @@ import com.gadgetworks.codeshelf.command.CommandControlABC;
 import com.gadgetworks.codeshelf.command.CommandControlButton;
 import com.gadgetworks.codeshelf.command.CommandCsABC;
 import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.WirelessDevice;
 import com.gadgetworks.codeshelf.model.domain.WirelessDevice.IWirelessDeviceDao;
 import com.gadgetworks.codeshelf.query.IQuery;
 import com.gadgetworks.codeshelf.query.IResponse;
@@ -24,7 +23,6 @@ import com.gadgetworks.codeshelf.query.QueryActorKVP;
 import com.gadgetworks.codeshelf.query.ResponseActorDescriptor;
 import com.gadgetworks.codeshelf.query.ResponseActorKVP;
 import com.gadgetworks.codeshelf.query.ResponseTypeEnum;
-import com.gadgetworks.codeshelf.server.tags.AtopStreamProcessor;
 
 public final class CodeShelfController extends ControllerABC {
 
@@ -222,7 +220,7 @@ public final class CodeShelfController extends ControllerABC {
 	 *  @param inCommand    The association command that we want to process.  (The one just received.)
 	 */
 	protected void doProcessCodeShelfCmd(CommandCsABC inCommand) {
-		AtopStreamProcessor.sendCsCommandToAtopConnection(inCommand);
+
 	}
 
 	// --------------------------------------------------------------------------

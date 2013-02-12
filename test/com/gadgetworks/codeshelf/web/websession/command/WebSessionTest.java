@@ -148,8 +148,8 @@ public class WebSessionTest {
 		String inMessage = "{\"id\":\"cid_5\",\"type\":\"LOGIN_RQ\",\"data\":{\"organizationId\":\"O1\", \"userId\":\"user@example.com\", \"password\":\"password\"}}";
 		IWebSessionRespCmd respCommand = webSession.processMessage(inMessage);
 
-		Assert.assertEquals("{\"id\":\"cid_5\",\"type\":\"LOGIN_RS\",\"data\":{\"LOGIN_RS\":\"SUCCEED\",\"organization\":{\"description\":\"TEST\",\"domainId\":\"O1\",\"persistentId\":"
-				+ organization.getPersistentId() + ",\"className\":\"Organization\"}}}",
+		Assert.assertEquals("{\"id\":\"cid_5\",\"type\":\"LOGIN_RS\",\"data\":{\"LOGIN_RS\":\"SUCCEED\",\"organization\":{\"description\":\"TEST\",\"domainId\":\"O1\",\"persistentId\":\""
+				+ organization.getPersistentId() + "\",\"className\":\"Organization\"}}}",
 			respCommand.getResponseMsg());
 	}
 

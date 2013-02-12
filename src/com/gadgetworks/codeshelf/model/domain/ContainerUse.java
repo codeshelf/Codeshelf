@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ContainerUse.java,v 1.7 2012/11/19 10:48:25 jeffw Exp $
+ *  $Id: ContainerUse.java,v 1.8 2013/02/12 19:19:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -12,6 +12,7 @@ import java.util.List;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 import lombok.Getter;
@@ -20,8 +21,9 @@ import lombok.Setter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.annotate.JsonAutoDetect;
-import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
+import org.codehaus.jackson.annotate.JsonIgnore;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
@@ -65,8 +67,22 @@ public class ContainerUse extends DomainObjectTreeABC<Container> {
 	@Column(nullable = false)
 	@Getter
 	@Setter
-	@JsonIgnore
+	@JsonProperty
 	private Timestamp			useTimeStamp;
+
+	// The order where we used this container.
+	@Column(nullable = false)
+	@OneToOne(optional = true)
+	@Getter
+	@Setter
+	private OrderHeader			orderHeader;
+
+	// The che where we're using this container.
+	@Column(nullable = true)
+	@ManyToOne(optional = true)
+	@Getter
+	@Setter
+	private Che					currentChe;
 
 	public ContainerUse() {
 	}
@@ -79,7 +95,7 @@ public class ContainerUse extends DomainObjectTreeABC<Container> {
 		return "USE";
 	}
 
-	public final Container getParentOrderHeader() {
+	public final Container getParentContainer() {
 		return parent;
 	}
 
@@ -88,7 +104,7 @@ public class ContainerUse extends DomainObjectTreeABC<Container> {
 	}
 
 	public final Container getParent() {
-		return getParentOrderHeader();
+		return getParentContainer();
 	}
 
 	public final void setParent(Container inParent) {
