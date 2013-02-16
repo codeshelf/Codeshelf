@@ -1,7 +1,7 @@
 /*******************************************************************************
 CodeshelfWebSocketServer *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: RemoteMain.java,v 1.3 2013/02/12 19:19:42 jeffw Exp $
+ *  $Id: RemoteMain.java,v 1.4 2013/02/16 20:02:58 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -165,8 +165,8 @@ public final class RemoteMain {
 				bind(String.class).annotatedWith(Names.named(IWebSocketSslContextGenerator.KEYSTORE_KEY_PASSWORD_PROPERTY)).toInstance(System.getProperty("keystore.key.password"));
 
 				bind(IUtil.class).to(Util.class);
-				bind(ISchemaManager.class).to(H2SchemaManager.class);
-				bind(IDatabase.class).to(Database.class);
+//				bind(ISchemaManager.class).to(H2SchemaManager.class);
+//				bind(IDatabase.class).to(Database.class);
 				bind(ICodeshelfApplication.class).to(RemoteCodeshelfApplication.class);
 				bind(IWebSocketClient.class).to(CsWebSocketClient.class);
 				bind(IDaoProvider.class).to(DaoProvider.class);

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: RemoteCodeshelfApplication.java,v 1.3 2013/02/12 19:19:42 jeffw Exp $
+ *  $Id: RemoteCodeshelfApplication.java,v 1.4 2013/02/16 20:02:58 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -29,7 +29,7 @@ public final class RemoteCodeshelfApplication implements ICodeshelfApplication {
 
 	private boolean							mIsRunning	= true;
 	private IWebSocketClient				mWebSocketClient;
-	private IDatabase						mDatabase;
+//	private IDatabase						mDatabase;
 	private IUtil							mUtil;
 	private Thread							mShutdownHookThread;
 	private Runnable						mShutdownRunnable;
@@ -38,13 +38,13 @@ public final class RemoteCodeshelfApplication implements ICodeshelfApplication {
 
 	@Inject
 	public RemoteCodeshelfApplication(final IWebSocketClient inWebSocketClient,
-		final IDatabase inDatabase,
+//		final IDatabase inDatabase,
 		final IUtil inUtil,
 		final ITypedDao<PersistentProperty> inPersistentPropertyDao,
 		final ITypedDao<Organization> inOrganizationDao,
 		final ITypedDao<Facility> inFacilityDao) {
 		mWebSocketClient = inWebSocketClient;
-		mDatabase = inDatabase;
+//		mDatabase = inDatabase;
 		mUtil = inUtil;
 		mPersistentPropertyDao = inPersistentPropertyDao;
 	}
@@ -78,9 +78,9 @@ public final class RemoteCodeshelfApplication implements ICodeshelfApplication {
 
 		installShutdownHook();
 
-		LOGGER.info("Starting database");
-		mDatabase.start();
-		LOGGER.info("Database started");
+//		LOGGER.info("Starting database");
+//		mDatabase.start();
+//		LOGGER.info("Database started");
 
 		// Some persistent objects need some of their fields set to a base/start state when the system restarts.
 		initializeApplicationData();
@@ -104,7 +104,7 @@ public final class RemoteCodeshelfApplication implements ICodeshelfApplication {
 			LOGGER.error("", e);
 		}
 
-		mDatabase.stop();
+//		mDatabase.stop();
 
 		mIsRunning = false;
 
