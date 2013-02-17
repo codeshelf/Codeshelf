@@ -53,5 +53,8 @@
 	<classpathentry kind="lib" path="lib/dist/Java-WebSocket-1.0.0-SNAPSHOT.jar" sourcepath="/Java-WebSocket-GW/src/main/java"/>
 	<classpathentry kind="lib" path="lib/dist/websocket-core-9.0.0.M2.jar" sourcepath="/Users/jeffw/.m2/repository/org/eclipse/jetty/websocket/websocket-core/9.0.0.M2/websocket-core-9.0.0.M2-sources.jar"/>
 	<classpathentry kind="lib" path="lib/dist/websocket-server-9.0.0.M2.jar" sourcepath="/Users/jeffw/.m2/repository/org/eclipse/jetty/websocket/websocket-server/9.0.0.M2/websocket-server-9.0.0.M2-sources.jar"/>
+	<classpathentry kind="lib" path="lib/dist/shiro-core-1.2.1.jar" sourcepath="/Users/jeffw/.m2/repository/org/apache/shiro/shiro-core/1.2.1/shiro-core-1.2.1-sources.jar"/>
+	<classpathentry kind="lib" path="lib/dist/shiro-guice-1.2.1.jar"/>
+	<classpathentry kind="lib" path="lib/dist/guice-assistedinject-3.0.jar"/>
 	<classpathentry kind="output" path="eclipse-bin"/>
 </classpath>

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Organization.java,v 1.23 2013/02/12 19:19:42 jeffw Exp $
+ *  $Id: Organization.java,v 1.24 2013/02/17 04:22:20 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -82,8 +82,9 @@ public class Organization extends DomainObjectABC {
 
 	// For an organization this is a list of all of the facilities.
 	@OneToMany(mappedBy = "parentOrganization", fetch = FetchType.EAGER)
-	@Getter(lazy = false)
-	private List<Facility>		facilities	= new ArrayList<Facility>();
+	@MapKey(name = "domainId")
+//	@Getter(lazy = false)
+	private Map<String, Facility>		facilities		= new HashMap<String, Facility>();
 
 	public Organization() {
 		setParent(this);
@@ -128,12 +129,12 @@ public class Organization extends DomainObjectABC {
 	}
 
 	public final List<? extends IDomainObject> getChildren() {
-		return getFacilities();
+		return new ArrayList<Facility>(facilities.values());
 	}
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void addFacility(Facility inFacility) {
-		facilities.add(inFacility);
+		facilities.put(inFacility.getDomainId(), inFacility);
 	}
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
@@ -141,6 +142,14 @@ public class Organization extends DomainObjectABC {
 		facilities.remove(inFacility);
 	}
 
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inDomainId
+	 * @param inDescription
+	 * @param inPosTypeByStr
+	 * @param inPosx
+	 * @param inPosY
+	 */
 	public final void createFacility(final String inDomainId, final String inDescription, final String inPosTypeByStr, final Double inPosx, final Double inPosY) {
 
 		Facility facility = new Facility();
@@ -162,5 +171,17 @@ public class Organization extends DomainObjectABC {
 
 		// Create the generic container kind (for all unspecified containers)
 		facility.createDefaultContainerKind();
+	}
+	
+	public final Facility getFacility(final String inFacilityDomainId) {
+		Facility result = null;
+		
+		result = facilities.get(inFacilityDomainId);
+		
+		return result;
+	}
+	
+	public final List<Facility> getFacilities() {
+		return new ArrayList<Facility>(facilities.values());
 	}
 }

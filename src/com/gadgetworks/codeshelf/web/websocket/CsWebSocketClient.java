@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CsWebSocketClient.java,v 1.2 2013/02/12 19:19:42 jeffw Exp $
+ *  $Id: CsWebSocketClient.java,v 1.3 2013/02/17 04:22:21 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websocket;
 
@@ -31,6 +31,7 @@ import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.model.domain.WirelessDevice.IWirelessDeviceDao;
+import com.gadgetworks.codeshelf.web.websession.command.resp.IWebSessionRespCmd;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
@@ -74,6 +75,9 @@ public class CsWebSocketClient extends WebSocketClient implements IWebSocketClie
 		try {
 			connectBlocking();
 
+			String inMessage = "{\"id\":\"cid_5\",\"type\":\"NET_ATTACH_RQ\",\"data\":{\"organizationId\":\"O1\", \"facilityId\":\"F1\", \"networkId\":\"DEFAULT\", \"credential\":\"0.8602643131103789\"}}";
+			sendMessage(inMessage);
+
 			BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 			while (true) {
 				try {
@@ -91,6 +95,16 @@ public class CsWebSocketClient extends WebSocketClient implements IWebSocketClie
 			LOGGER.error("", e);
 		}
 	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * Send and log messages over the websocket.
+	 * @param inMessage
+	 */
+	private void sendMessage(final String inMessage) {
+		LOGGER.info("sent: " + inMessage);
+		send(inMessage);
+	}
 
 	private void initControllers() {
 		Collection<Organization> organizations = mOrganizationDao.getAll();
@@ -100,9 +114,9 @@ public class CsWebSocketClient extends WebSocketClient implements IWebSocketClie
 				List<IWirelessInterface> interfaceList = new ArrayList<IWirelessInterface>();
 				// Create a CodeShelf interface for each CodeShelf network we have.
 				for (CodeshelfNetwork network : facility.getNetworks()) {
-//					SnapInterface snapInterface = new SnapInterface(network, mWirelessDeviceDao);
-//					network.setWirelessInterface(snapInterface);
-//					interfaceList.add(snapInterface);
+					//					SnapInterface snapInterface = new SnapInterface(network, mWirelessDeviceDao);
+					//					network.setWirelessInterface(snapInterface);
+					//					interfaceList.add(snapInterface);
 				}
 
 				mControllerList.add(new CodeShelfController(interfaceList, facility, mWirelessDeviceDao));

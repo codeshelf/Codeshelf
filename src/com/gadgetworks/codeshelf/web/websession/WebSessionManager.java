@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionManager.java,v 1.12 2012/11/10 03:20:01 jeffw Exp $
+ *  $Id: WebSessionManager.java,v 1.13 2013/02/17 04:22:21 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession;
 
@@ -24,15 +24,17 @@ import com.google.inject.Singleton;
 @Singleton
 public class WebSessionManager implements IWebSessionManager {
 
-	private static final Log			LOGGER	= LogFactory.getLog(WebSessionManager.class);
+	private static final Log				LOGGER	= LogFactory.getLog(WebSessionManager.class);
 
 	private Map<IWebSocket, IWebSession>	mWebSessions;
-	private IWebSessionReqCmdFactory	mWebSessionReqCmdFactory;
+	private IWebSessionReqCmdFactory		mWebSessionReqCmdFactory;
+	private IWebSessionFactory				mWebSessionFactory;
 
 	@Inject
-	public WebSessionManager(final IWebSessionReqCmdFactory inWebSessionReqCmdFactory) {
+	public WebSessionManager(final IWebSessionReqCmdFactory inWebSessionReqCmdFactory, final IWebSessionFactory inWebSessionFactory) {
 		mWebSessions = new HashMap<IWebSocket, IWebSession>();
 		mWebSessionReqCmdFactory = inWebSessionReqCmdFactory;
+		mWebSessionFactory = inWebSessionFactory;
 	}
 
 	public final void handleSessionOpen(IWebSocket inWebSocket) {
@@ -41,7 +43,7 @@ public class WebSessionManager implements IWebSessionManager {
 			LOGGER.error("Opening new web socket for session that exists!");
 			// Don't remove it, because it could be a security risk (someone else may be trying to masquerade).
 		} else {
-			IWebSession webSession = new WebSession(inWebSocket, mWebSessionReqCmdFactory);
+			IWebSession webSession = mWebSessionFactory.create(inWebSocket, mWebSessionReqCmdFactory);
 			mWebSessions.put(inWebSocket, webSession);
 		}
 	}

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdEnum.java,v 1.8 2012/11/09 08:53:08 jeffw Exp $
+ *  $Id: WebSessionReqCmdEnum.java,v 1.9 2013/02/17 04:22:21 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -18,7 +18,8 @@ public enum WebSessionReqCmdEnum {
 	OBJECT_LISTENER_REQ(WebSessionReqCmdNum.OBJECT_LISTENER_REQ, "OBJ_LSN_RQ"),
 	OBJECT_FILTER_REQ(WebSessionReqCmdNum.OBJECT_FILTER_REQ, "OBJ_FLT_RQ"),
 	OBJECT_METHOD_REQ(WebSessionReqCmdNum.OBJECT_METHOD_REQ, "OBJ_METH_RQ"),
-	REGISTER_EDI_SERVICE(WebSessionReqCmdNum.REGISTER_EDI_SERVICE, "REGISTER_EDI_SERVICE");
+	REGISTER_EDI_SERVICE_REQ(WebSessionReqCmdNum.REGISTER_EDI_SERVICE_REQ, "REGISTER_EDI_SERVICE_RS"),
+	NET_ATTACH_REQ(WebSessionReqCmdNum.NET_ATTACH_REQ, "NET_ATTACH_RQ");
 
 	private int		mValue;
 	private String	mName;
@@ -68,8 +69,12 @@ public enum WebSessionReqCmdEnum {
 				result = WebSessionReqCmdEnum.OBJECT_METHOD_REQ;
 				break;
 
-			case WebSessionReqCmdNum.REGISTER_EDI_SERVICE:
-				result = WebSessionReqCmdEnum.REGISTER_EDI_SERVICE;
+			case WebSessionReqCmdNum.REGISTER_EDI_SERVICE_REQ:
+				result = WebSessionReqCmdEnum.REGISTER_EDI_SERVICE_REQ;
+				break;
+
+			case WebSessionReqCmdNum.NET_ATTACH_REQ:
+				result = WebSessionReqCmdEnum.NET_ATTACH_REQ;
 				break;
 
 			default:
@@ -101,16 +106,17 @@ public enum WebSessionReqCmdEnum {
 	}
 
 	final static class WebSessionReqCmdNum {
-		static final byte	INVALID					= 0;
-		static final byte	LOGIN_REQ				= 1;
-		static final byte	OBJECT_GETTER_REQ		= 2;
-		static final byte	OBJECT_GETBYID_REQ		= 3;
-		static final byte	OBJECT_UPDATE_REQ		= 4;
-		static final byte	OBJECT_DELETE_REQ		= 5;
-		static final byte	OBJECT_LISTENER_REQ		= 6;
-		static final byte	OBJECT_FILTER_REQ		= 7;
-		static final byte	OBJECT_METHOD_REQ		= 8;
-		static final byte	REGISTER_EDI_SERVICE	= 9;
+		static final byte	INVALID						= 0;
+		static final byte	LOGIN_REQ					= 1;
+		static final byte	OBJECT_GETTER_REQ			= 2;
+		static final byte	OBJECT_GETBYID_REQ			= 3;
+		static final byte	OBJECT_UPDATE_REQ			= 4;
+		static final byte	OBJECT_DELETE_REQ			= 5;
+		static final byte	OBJECT_LISTENER_REQ			= 6;
+		static final byte	OBJECT_FILTER_REQ			= 7;
+		static final byte	OBJECT_METHOD_REQ			= 8;
+		static final byte	REGISTER_EDI_SERVICE_REQ	= 9;
+		static final byte	NET_ATTACH_REQ				= 10;
 
 		private WebSessionReqCmdNum() {
 

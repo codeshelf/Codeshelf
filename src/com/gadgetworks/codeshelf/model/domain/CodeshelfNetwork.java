@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeshelfNetwork.java,v 1.14 2013/02/12 19:19:42 jeffw Exp $
+ *  $Id: CodeshelfNetwork.java,v 1.15 2013/02/17 04:22:20 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -59,56 +59,63 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 		}
 	}
 
-	private static final Log	LOGGER			= LogFactory.getLog(CodeshelfNetwork.class);
+	private static final Log		LOGGER			= LogFactory.getLog(CodeshelfNetwork.class);
 
 	// The network ID.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private byte[]				serializedId;
+	private byte[]					serializedId;
 
 	// The network description.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private String				description;
+	private String					description;
+
+	// Attachment credential.
+	@Column(nullable = false)
+	@Getter
+	@Setter
+	@JsonProperty
+	private String					credential;
 
 	// Active/Inactive network
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private boolean				active;
+	private boolean					active;
 
 	// The network ID.
 	@Column(nullable = false)
 	@JsonProperty
-	private byte[]				gatewayAddr;
+	private byte[]					gatewayAddr;
 
 	// The gateway URL.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private String				gatewayUrl;
+	private String					gatewayUrl;
 
 	@Transient
 	@Getter
 	@Setter
 	@JsonProperty
-	private boolean				connected;
+	private boolean					connected;
 
 	@Transient
 	@Getter
 	@Setter
-	private IWirelessInterface	wirelessInterface;
+	private IWirelessInterface		wirelessInterface;
 
 	// The owning facility.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	private Facility			parent;
+	private Facility				parent;
 
 	// For a network this is a list of all of the devices that belong to this network.
 	@Column(nullable = false)
@@ -171,5 +178,14 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void removeControlGroup(WirelessDevice inWirelessDevice) {
 		controlGroups.remove(inWirelessDevice);
+	}
+
+	public final boolean isCredentialValid(final String inCredential) {
+		boolean result = false;
+
+		if (inCredential != null) {
+			result = credential.equals(inCredential);
+		}
+		return result;
 	}
 }

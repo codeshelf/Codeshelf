@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdFactory.java,v 1.16 2012/11/09 08:53:08 jeffw Exp $
+ *  $Id: WebSessionReqCmdFactory.java,v 1.17 2013/02/17 04:22:20 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -72,6 +72,10 @@ public final class WebSessionReqCmdFactory implements IWebSessionReqCmdFactory {
 
 			case OBJECT_METHOD_REQ:
 				result = new WebSessionReqCmdObjectMethod(commandId, dataNode, mDaoProvider);
+				break;
+
+			case NET_ATTACH_REQ:
+				result = new WebSessionReqCmdNetAttach(commandId, dataNode, mOrganizationDao);
 				break;
 
 			default:

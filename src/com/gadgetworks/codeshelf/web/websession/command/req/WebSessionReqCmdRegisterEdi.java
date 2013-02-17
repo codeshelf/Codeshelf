@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdRegisterEdi.java,v 1.1 2012/09/12 23:30:36 jeffw Exp $
+ *  $Id: WebSessionReqCmdRegisterEdi.java,v 1.2 2013/02/17 04:22:20 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -41,7 +41,7 @@ public class WebSessionReqCmdRegisterEdi extends WebSessionReqCmdABC {
 	}
 
 	public final WebSessionReqCmdEnum getCommandEnum() {
-		return WebSessionReqCmdEnum.REGISTER_EDI_SERVICE;
+		return WebSessionReqCmdEnum.REGISTER_EDI_SERVICE_REQ;
 	}
 
 	protected final IWebSessionRespCmd doExec() {

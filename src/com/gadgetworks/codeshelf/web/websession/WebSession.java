@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSession.java,v 1.23 2012/11/10 03:20:01 jeffw Exp $
+ *  $Id: WebSession.java,v 1.24 2013/02/17 04:22:21 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession;
 
@@ -12,6 +12,7 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.shiro.realm.Realm;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.JsonProcessingException;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -23,6 +24,8 @@ import com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionPersisten
 import com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmd;
 import com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmdFactory;
 import com.gadgetworks.codeshelf.web.websession.command.resp.IWebSessionRespCmd;
+import com.google.inject.Inject;
+import com.google.inject.assistedinject.Assisted;
 
 /**
  * @author jeffw
@@ -33,13 +36,16 @@ public class WebSession implements IWebSession, IDaoListener {
 	private static final Log							LOGGER	= LogFactory.getLog(WebSession.class);
 
 	private WebSessionStateEnum							mState;
+	private Realm										mSecurityRealm;
 	private IWebSocket									mWebSocket;
 	private IWebSessionReqCmdFactory					mWebSessionReqCmdFactory;
 	private Map<String, IWebSessionPersistentReqCmd>	mPersistentCommands;
 
-	public WebSession(final IWebSocket inWebSocket, final IWebSessionReqCmdFactory inWebSessionReqCmdFactory) {
+	@Inject
+	public WebSession(@Assisted final IWebSocket inWebSocket, @Assisted final IWebSessionReqCmdFactory inWebSessionReqCmdFactory, final Realm inRealm) {
 		mWebSocket = inWebSocket;
 		mWebSessionReqCmdFactory = inWebSessionReqCmdFactory;
+		mSecurityRealm = inRealm;
 		mState = WebSessionStateEnum.INVALID;
 		mPersistentCommands = new HashMap<String, IWebSessionPersistentReqCmd>();
 	}

@@ -1,7 +1,7 @@
 /*******************************************************************************
 CodeshelfWebSocketServer *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ServerMain.java,v 1.3 2013/02/12 19:19:42 jeffw Exp $
+ *  $Id: ServerMain.java,v 1.4 2013/02/17 04:22:21 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -12,6 +12,10 @@ import java.util.Properties;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.shiro.authc.credential.CredentialsMatcher;
+import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
+import org.apache.shiro.crypto.hash.Md5Hash;
+import org.apache.shiro.realm.Realm;
 import org.java_websocket.server.WebSocketServer;
 
 import com.gadgetworks.codeshelf.edi.CsvImporter;
@@ -78,7 +82,11 @@ import com.gadgetworks.codeshelf.model.domain.WorkArea;
 import com.gadgetworks.codeshelf.model.domain.WorkArea.WorkAreaDao;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction.WorkInstructionDao;
+import com.gadgetworks.codeshelf.security.CodeshelfRealm;
+import com.gadgetworks.codeshelf.web.websession.IWebSession;
 import com.gadgetworks.codeshelf.web.websession.IWebSessionManager;
+import com.gadgetworks.codeshelf.web.websession.WebSession;
+import com.gadgetworks.codeshelf.web.websession.IWebSessionFactory;
 import com.gadgetworks.codeshelf.web.websession.WebSessionManager;
 import com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmdFactory;
 import com.gadgetworks.codeshelf.web.websession.command.req.WebSessionReqCmdFactory;
@@ -90,6 +98,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.TypeLiteral;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Names;
 
 // --------------------------------------------------------------------------
@@ -185,15 +194,24 @@ public final class ServerMain {
 				bind(ISchemaManager.class).to(PostgresSchemaManager.class);
 				bind(IDatabase.class).to(Database.class);
 				bind(ICodeshelfApplication.class).to(ServerCodeshelfApplication.class);
-				bind(IWebSocketServer.class).to(CsWebSocketServer.class);
-				bind(IWebSessionManager.class).to(WebSessionManager.class);
-				bind(IWebSessionReqCmdFactory.class).to(WebSessionReqCmdFactory.class);
 				bind(IDaoProvider.class).to(DaoProvider.class);
 				bind(IHttpServer.class).to(HttpServer.class);
 				bind(IEdiProcessor.class).to(EdiProcessor.class);
 				bind(ICsvImporter.class).to(CsvImporter.class);
+
+				// Websocket/WebSession
+				bind(IWebSocketServer.class).to(CsWebSocketServer.class);
+				bind(IWebSessionManager.class).to(WebSessionManager.class);
+				bind(IWebSessionReqCmdFactory.class).to(WebSessionReqCmdFactory.class);
 				bind(WebSocketServer.WebSocketServerFactory.class).to(SSLWebSocketServerFactory.class);
-		
+				install(new FactoryModuleBuilder().implement(IWebSession.class, WebSession.class).build(IWebSessionFactory.class));
+
+				// Shiro modules
+				bind(Realm.class).to(CodeshelfRealm.class);
+				bind(CredentialsMatcher.class).to(HashedCredentialsMatcher.class);
+				bind(HashedCredentialsMatcher.class);
+				bindConstant().annotatedWith(Names.named("shiro.hashAlgorithmName")).to(Md5Hash.ALGORITHM_NAME);
+
 				requestStaticInjection(Aisle.class);
 				bind(new TypeLiteral<ITypedDao<Aisle>>() {
 				}).to(AisleDao.class);

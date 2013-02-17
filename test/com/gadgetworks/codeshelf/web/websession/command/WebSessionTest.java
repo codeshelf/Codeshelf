@@ -8,6 +8,7 @@ import java.util.UUID;
 import junit.framework.Assert;
 import lombok.Getter;
 
+import org.apache.shiro.realm.Realm;
 import org.java_websocket.IWebSocket;
 import org.java_websocket.drafts.Draft;
 import org.java_websocket.exceptions.InvalidDataException;
@@ -20,6 +21,7 @@ import com.eaio.uuid.UUIDGen;
 import com.gadgetworks.codeshelf.model.dao.MockDao;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.User;
+import com.gadgetworks.codeshelf.security.CodeshelfRealm;
 import com.gadgetworks.codeshelf.web.websession.IWebSession;
 import com.gadgetworks.codeshelf.web.websession.WebSession;
 import com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmdFactory;
@@ -27,7 +29,7 @@ import com.gadgetworks.codeshelf.web.websession.command.req.WebSessionReqCmdFact
 import com.gadgetworks.codeshelf.web.websession.command.resp.IWebSessionRespCmd;
 
 public class WebSessionTest {
-
+	
 	private class TestWebSocket implements IWebSocket {
 
 		@Getter
@@ -144,7 +146,8 @@ public class WebSessionTest {
 		
 		TestWebSocket testWebSocket = new TestWebSocket();
 		IWebSessionReqCmdFactory factory = new WebSessionReqCmdFactory(organizationDao, null);
-		IWebSession webSession = new WebSession(testWebSocket, factory);
+		Realm realm = new CodeshelfRealm();
+		IWebSession webSession = new WebSession(testWebSocket, factory, realm);
 		String inMessage = "{\"id\":\"cid_5\",\"type\":\"LOGIN_RQ\",\"data\":{\"organizationId\":\"O1\", \"userId\":\"user@example.com\", \"password\":\"password\"}}";
 		IWebSessionRespCmd respCommand = webSession.processMessage(inMessage);
 
@@ -177,7 +180,8 @@ public class WebSessionTest {
 
 		TestWebSocket testWebSocket = new TestWebSocket();
 		IWebSessionReqCmdFactory factory = new WebSessionReqCmdFactory(organizationDao, null);
-		IWebSession webSession = new WebSession(testWebSocket, factory);
+		Realm realm = new CodeshelfRealm();
+		IWebSession webSession = new WebSession(testWebSocket, factory, realm);
 		String inMessage = "{\"id\":\"cid_5\",\"type\":\"LOGIN_RQ\",\"data\":{\"organizationId\":\"O1\", \"userId\":\"XXXXX\", \"password\":\"password\"}}";
 		IWebSessionRespCmd respCommand = webSession.processMessage(inMessage);
 
@@ -208,7 +212,8 @@ public class WebSessionTest {
 
 		TestWebSocket testWebSocket = new TestWebSocket();
 		IWebSessionReqCmdFactory factory = new WebSessionReqCmdFactory(organizationDao, null);
-		IWebSession webSession = new WebSession(testWebSocket, factory);
+		Realm realm = new CodeshelfRealm();
+		IWebSession webSession = new WebSession(testWebSocket, factory, realm);
 		String inMessage = "{\"id\":\"cid_5\",\"type\":\"LOGIN_RQ\",\"data\":{\"organizationId\":\"O1\", \"userId\":\"user@example.com\", \"password\":\"XXXX\"}}";
 		IWebSessionRespCmd respCommand = webSession.processMessage(inMessage);
 

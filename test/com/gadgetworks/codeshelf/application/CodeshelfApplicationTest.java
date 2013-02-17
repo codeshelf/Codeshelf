@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeshelfApplicationTest.java,v 1.14 2013/02/10 08:23:07 jeffw Exp $
+ *  $Id: CodeshelfApplicationTest.java,v 1.15 2013/02/17 04:22:21 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.application;
 
@@ -12,6 +12,8 @@ import java.util.Set;
 
 import junit.framework.Assert;
 
+import org.apache.shiro.realm.Realm;
+import org.java_websocket.IWebSocket;
 import org.junit.Test;
 
 import com.gadgetworks.codeshelf.edi.CsvImporter;
@@ -40,13 +42,16 @@ import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
 import com.gadgetworks.codeshelf.model.domain.UomMaster;
 import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.model.domain.WirelessDevice.IWirelessDeviceDao;
+import com.gadgetworks.codeshelf.security.CodeshelfRealm;
+import com.gadgetworks.codeshelf.web.websession.IWebSessionFactory;
 import com.gadgetworks.codeshelf.web.websession.IWebSessionManager;
+import com.gadgetworks.codeshelf.web.websession.WebSession;
 import com.gadgetworks.codeshelf.web.websession.WebSessionManager;
 import com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmdFactory;
 import com.gadgetworks.codeshelf.web.websession.command.req.WebSessionReqCmdFactory;
+import com.gadgetworks.codeshelf.web.websocket.CsWebSocketServer;
 import com.gadgetworks.codeshelf.web.websocket.IWebSocketServer;
 import com.gadgetworks.codeshelf.web.websocket.SSLWebSocketServerFactory;
-import com.gadgetworks.codeshelf.web.websocket.CsWebSocketServer;
 import com.google.inject.Binding;
 import com.google.inject.Injector;
 import com.google.inject.Key;
@@ -205,6 +210,15 @@ public class CodeshelfApplicationTest {
 			return null;
 		}
 	}
+	
+	private class WebSessionFactory implements IWebSessionFactory {
+
+		@Override
+		public WebSession create(IWebSocket inWebSocket, IWebSessionReqCmdFactory inWebSessionReqCmdFactory) {
+			Realm realm = new CodeshelfRealm();
+			return new WebSession(inWebSocket, inWebSessionReqCmdFactory, realm);
+		}
+	}
 
 	/**
 	 * Test method for {@link com.gadgetworks.codeshelf.application.ServerCodeshelfApplication#startApplication()}.
@@ -228,7 +242,8 @@ public class CodeshelfApplicationTest {
 		Injector injector = new MockInjector();
 		IDaoProvider daoProvider = new DaoProvider(injector);
 		IWebSessionReqCmdFactory webSessionReqCmdFactory = new WebSessionReqCmdFactory(organizationDao, daoProvider);
-		IWebSessionManager webSessionManager = new WebSessionManager(webSessionReqCmdFactory);
+		IWebSessionFactory webSessionFactory = new WebSessionFactory();
+		IWebSessionManager webSessionManager = new WebSessionManager(webSessionReqCmdFactory, webSessionFactory);
 		SSLWebSocketServerFactory webSocketFactory = new SSLWebSocketServerFactory("./conf/codeshelf.keystore", "JKS", "x2HPbC2avltYQR", "x2HPbC2avltYQR");
 		
 		IWebSocketServer webSocketListener = new CsWebSocketServer(IWebSocketServer.WEBSOCKET_DEFAULT_HOSTNAME,

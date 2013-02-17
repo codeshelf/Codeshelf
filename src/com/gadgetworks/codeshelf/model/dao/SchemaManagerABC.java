@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: SchemaManagerABC.java,v 1.7 2013/02/12 19:19:42 jeffw Exp $
+ *  $Id: SchemaManagerABC.java,v 1.8 2013/02/17 04:22:21 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -480,7 +480,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		// Che
 		result &= createTable("CHE", //
 			"CURRENTUSER_PERSISTENTID " + UUID_TYPE + " NOT NULL, " //
-			+ "CURRENTWORKAREA_PERSISTENTID " + UUID_TYPE + " NOT NULL " //
+					+ "CURRENTWORKAREA_PERSISTENTID " + UUID_TYPE + " NOT NULL " //
 		);
 
 		// CheController
@@ -492,6 +492,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		result &= createTable("CODESHELFNETWORK", //
 			"SERIALIZEDID BYTEA DEFAULT '' NOT NULL, " //
 					+ "DESCRIPTION VARCHAR(64) NOT NULL, " //
+					+ "CREDENTIAL VARCHAR(64) NOT NULL, " //
 					+ "GATEWAYADDR BYTEA DEFAULT '' NOT NULL, " //
 					+ "GATEWAYURL VARCHAR(64) NOT NULL, " //
 					+ "ACTIVE BOOLEAN DEFAULT TRUE NOT NULL " //
@@ -513,8 +514,8 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		// ContainerUse
 		result &= createTable("CONTAINERUSE", //
 			"USETIMESTAMP TIMESTAMP NOT NULL, " //
-			+ "ORDERHEADER_PERSISTENTID " + UUID_TYPE + " NOT NULL, " //
-			+ "CURRENTCHE_PERSISTENTID " + UUID_TYPE //
+					+ "ORDERHEADER_PERSISTENTID " + UUID_TYPE + " NOT NULL, " //
+					+ "CURRENTCHE_PERSISTENTID " + UUID_TYPE //
 		);
 
 		// DBProperty

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.44 2013/02/12 19:19:42 jeffw Exp $
+ *  $Id: Facility.java,v 1.45 2013/02/17 04:22:20 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -62,7 +62,7 @@ public class Facility extends LocationABC<Organization> {
 		}
 	}
 
-	private static final Log			LOGGER			= LogFactory.getLog(Facility.class);
+	private static final Log				LOGGER			= LogFactory.getLog(Facility.class);
 
 	//	// The owning organization.
 	//	@Column(nullable = false)
@@ -72,51 +72,51 @@ public class Facility extends LocationABC<Organization> {
 
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	private Facility					parent;
+	private Facility						parent;
 
 	@OneToMany(mappedBy = "parent")
 	@Getter
-	private List<Aisle>					aisles			= new ArrayList<Aisle>();
-
-	@OneToMany(mappedBy = "parent")
-	@MapKey(name = "domainId")
-	@Getter
-	private Map<String, Container>		containers		= new HashMap<String, Container>();
+	private List<Aisle>						aisles			= new ArrayList<Aisle>();
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	@Getter
-	private Map<String, ContainerKind>	containerKinds	= new HashMap<String, ContainerKind>();
+	private Map<String, Container>			containers		= new HashMap<String, Container>();
+
+	@OneToMany(mappedBy = "parent")
+	@MapKey(name = "domainId")
+	@Getter
+	private Map<String, ContainerKind>		containerKinds	= new HashMap<String, ContainerKind>();
 
 	@OneToMany(mappedBy = "parent", targetEntity = DropboxService.class)
 	@Getter
-	private List<IEdiService>			ediServices		= new ArrayList<IEdiService>();
+	private List<IEdiService>				ediServices		= new ArrayList<IEdiService>();
 
 	@OneToMany(mappedBy = "parent")
 	@Getter
-	private List<ItemMaster>			itemMasters		= new ArrayList<ItemMaster>();
+	private List<ItemMaster>				itemMasters		= new ArrayList<ItemMaster>();
+
+	@OneToMany(mappedBy = "parent")
+	@MapKey(name = "domainId")
+	private Map<String, CodeshelfNetwork>	networks		= new HashMap<String, CodeshelfNetwork>();
 
 	@OneToMany(mappedBy = "parent")
 	@Getter
-	private List<CodeshelfNetwork>		networks		= new ArrayList<CodeshelfNetwork>();
+	private List<OrderGroup>				orderGroups		= new ArrayList<OrderGroup>();
 
 	@OneToMany(mappedBy = "parent")
 	@Getter
-	private List<OrderGroup>			orderGroups		= new ArrayList<OrderGroup>();
-
-	@OneToMany(mappedBy = "parent")
-	@Getter
-	private List<OrderHeader>			orderHeaders	= new ArrayList<OrderHeader>();
+	private List<OrderHeader>				orderHeaders	= new ArrayList<OrderHeader>();
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	@Getter
-	private Map<String, Path>			paths			= new HashMap<String, Path>();
+	private Map<String, Path>				paths			= new HashMap<String, Path>();
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	@Getter
-	private Map<String, UomMaster>		uomMasters		= new HashMap<String, UomMaster>();
+	private Map<String, UomMaster>			uomMasters		= new HashMap<String, UomMaster>();
 
 	public Facility() {
 		orderHeaders = new ArrayList<OrderHeader>();
@@ -250,6 +250,22 @@ public class Facility extends LocationABC<Organization> {
 
 	public final void removeUomMaster(String inUomMasterId) {
 		uomMasters.remove(inUomMasterId);
+	}
+
+	public final void addNetwork(CodeshelfNetwork inNetwork) {
+		networks.put(inNetwork.getDomainId(), inNetwork);
+	}
+
+	public final CodeshelfNetwork getNetwork(String inNetworkId) {
+		return networks.get(inNetworkId);
+	}
+
+	public final void removeNetwork(String inNetworkId) {
+		networks.remove(inNetworkId);
+	}
+
+	public final List<CodeshelfNetwork> getNetworks() {
+		return new ArrayList<CodeshelfNetwork>(networks.values());
 	}
 
 	// --------------------------------------------------------------------------
@@ -625,6 +641,7 @@ public class Facility extends LocationABC<Organization> {
 		result.setParent(this);
 		result.setDomainId(inNetworkName);
 		result.setActive(true);
+		result.setCredential(Double.toString(Math.random()));
 
 		try {
 			CodeshelfNetwork.DAO.store(result);
