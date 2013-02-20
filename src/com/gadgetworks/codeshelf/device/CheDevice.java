@@ -1,17 +1,23 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CheDevice.java,v 1.1 2013/02/20 08:28:26 jeffw Exp $
+ *  $Id: CheDevice.java,v 1.2 2013/02/20 20:39:00 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.gadgetworks.flyweight.command.CommandAssocABC;
+import com.gadgetworks.flyweight.command.CommandAssocAck;
+import com.gadgetworks.flyweight.command.CommandAssocCheck;
 import com.gadgetworks.flyweight.command.CommandAssocReq;
+import com.gadgetworks.flyweight.command.CommandAssocResp;
+import com.gadgetworks.flyweight.command.CommandControlStandard;
 import com.gadgetworks.flyweight.command.ICommand;
 import com.gadgetworks.flyweight.command.IPacket;
 import com.gadgetworks.flyweight.command.NetAddress;
+import com.gadgetworks.flyweight.command.NetEndpoint;
 import com.gadgetworks.flyweight.command.NetworkId;
 import com.gadgetworks.flyweight.command.Packet;
 import com.gadgetworks.flyweight.controller.DeviceController;
@@ -118,9 +124,7 @@ public class CheDevice implements IDevice {
 					break;
 
 				case ASSOC:
-					//					if (mChannelSelected) {
-					//						processAssocCmd((CommandAssocABC) inCommand, inNetworkType, inSrcAddr);
-					//					}
+					processAssocCmd((CommandAssocABC) inCommand, inSrcAddr);
 					break;
 
 				case CONTROL:
@@ -132,6 +136,41 @@ public class CheDevice implements IDevice {
 					break;
 			}
 		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 *  Handle the request of a remote device that wants to associate to our controller.
+	 *  @param inCommand    The association command that we want to process.  (The one just received.)
+	 */
+	private void processAssocCmd(CommandAssocABC inCommand, NetAddress inSrcAddr) {
+
+		// Figure out what kind of associate sub-command we have.
+
+		switch (inCommand.getExtendedCommandID().getValue()) {
+			case CommandAssocABC.ASSOC_RESP_COMMAND:
+				processAssocRespCommand((CommandAssocResp) inCommand, inSrcAddr);
+				break;
+
+			case CommandAssocABC.ASSOC_ACK_COMMAND:
+				processAssocAckCommand((CommandAssocAck) inCommand, inSrcAddr);
+				break;
+
+			default:
+		}
+	}
+
+	private void processAssocRespCommand(CommandAssocResp inCommand, NetAddress inSrcAddr) {
+		
+		ICommand command = new CommandControlStandard(NetEndpoint.PRIMARY_ENDPOINT, "LOGIN"); 
+		IPacket packet = new Packet(command, IPacket.BROADCAST_NETWORK_ID, IPacket.BROADCAST_ADDRESS, IPacket.GATEWAY_ADDRESS, false);
+		command.setPacket(packet);
+		sendPacket(packet);
+		
+	}
+
+	private void processAssocAckCommand(CommandAssocAck inCommand, NetAddress inSrcAddr) {
+		// The controller doesn't need to process these sub-commands.
 	}
 
 	// --------------------------------------------------------------------------

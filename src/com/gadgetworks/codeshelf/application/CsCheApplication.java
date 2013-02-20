@@ -1,12 +1,11 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CsCheApplication.java,v 1.1 2013/02/20 08:28:23 jeffw Exp $
+ *  $Id: CsCheApplication.java,v 1.2 2013/02/20 20:39:00 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
 
-import java.io.IOException;
 import java.lang.management.ManagementFactory;
 
 import org.slf4j.Logger;

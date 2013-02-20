@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: TcpServerInterface.java,v 1.1 2013/02/20 08:28:25 jeffw Exp $
+ *  $Id: TcpServerInterface.java,v 1.2 2013/02/20 20:39:00 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.flyweight.controller;
 
@@ -80,8 +80,8 @@ public class TcpServerInterface extends SerialInterfaceABC {
 						remote.clientSocket = clientSocket;
 						remote.inputStream = clientSocket.getInputStream();
 						remote.outputStream = clientSocket.getOutputStream();
-						byte[] putInCharMode = { (byte) 255, (byte) 251, (byte) 1, (byte) 255, (byte) 251, (byte) 3, (byte) 255, (byte) 252, (byte) 34 };
-						remote.outputStream.write(putInCharMode);
+//						byte[] putInCharMode = { (byte) 255, (byte) 251, (byte) 1, (byte) 255, (byte) 251, (byte) 3, (byte) 255, (byte) 252, (byte) 34 };
+//						remote.outputStream.write(putInCharMode);
 						mRemotes.add(remote);
 					} catch (IOException e) {
 						System.err.println("Accept failed.");
