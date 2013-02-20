@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeshelfNetwork.java,v 1.15 2013/02/17 04:22:20 jeffw Exp $
+ *  $Id: CodeshelfNetwork.java,v 1.16 2013/02/20 08:28:23 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -25,9 +25,6 @@ import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.annotate.JsonProperty;
 
 import com.avaje.ebean.annotation.CacheStrategy;
-import com.gadgetworks.codeshelf.controller.IWirelessInterface;
-import com.gadgetworks.codeshelf.controller.NetAddress;
-import com.gadgetworks.codeshelf.controller.NetworkId;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.google.inject.Inject;
@@ -61,13 +58,6 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 
 	private static final Log		LOGGER			= LogFactory.getLog(CodeshelfNetwork.class);
 
-	// The network ID.
-	@Column(nullable = false)
-	@Getter
-	@Setter
-	@JsonProperty
-	private byte[]					serializedId;
-
 	// The network description.
 	@Column(nullable = false)
 	@Getter
@@ -89,28 +79,11 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 	@JsonProperty
 	private boolean					active;
 
-	// The network ID.
-	@Column(nullable = false)
-	@JsonProperty
-	private byte[]					gatewayAddr;
-
-	// The gateway URL.
-	@Column(nullable = false)
-	@Getter
-	@Setter
-	@JsonProperty
-	private String					gatewayUrl;
-
 	@Transient
 	@Getter
 	@Setter
 	@JsonProperty
 	private boolean					connected;
-
-	@Transient
-	@Getter
-	@Setter
-	private IWirelessInterface		wirelessInterface;
 
 	// The owning facility.
 	@Column(nullable = false)
@@ -124,10 +97,7 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 	private List<WirelessDevice>	controlGroups	= new ArrayList<WirelessDevice>();
 
 	public CodeshelfNetwork() {
-		serializedId = new byte[NetworkId.NETWORK_ID_BYTES];
 		description = "";
-		gatewayAddr = new byte[NetAddress.NET_ADDRESS_BYTES];
-		gatewayUrl = "";
 		active = true;
 		connected = false;
 	}
@@ -150,24 +120,6 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 
 	public final List<? extends IDomainObject> getChildren() {
 		return getControlGroups();
-	}
-
-	@JsonProperty
-	public final NetworkId getNetworkId() {
-		return new NetworkId(serializedId);
-	}
-
-	public final void setNetworkId(NetworkId inNetworkId) {
-		serializedId = inNetworkId.getParamValueAsByteArray();
-	}
-
-	@JsonProperty
-	public final NetAddress getGatewayAddr() {
-		return new NetAddress(gatewayAddr);
-	}
-
-	public final void setGatewayAddr(NetAddress inNetAddress) {
-		gatewayAddr = inNetAddress.getParamValueAsByteArray();
 	}
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.

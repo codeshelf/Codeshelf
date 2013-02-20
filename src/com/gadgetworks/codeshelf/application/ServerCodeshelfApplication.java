@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ServerCodeshelfApplication.java,v 1.3 2013/02/12 19:19:42 jeffw Exp $
+ *  $Id: ServerCodeshelfApplication.java,v 1.4 2013/02/20 08:28:23 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -13,8 +13,6 @@ import org.apache.log4j.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.controller.ControllerABC;
-import com.gadgetworks.codeshelf.controller.NetworkDeviceStateEnum;
 import com.gadgetworks.codeshelf.edi.IEdiProcessor;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
@@ -27,6 +25,9 @@ import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.model.domain.WirelessDevice;
 import com.gadgetworks.codeshelf.model.domain.WirelessDevice.IWirelessDeviceDao;
 import com.gadgetworks.codeshelf.web.websocket.IWebSocketServer;
+import com.gadgetworks.flyweight.controller.DeviceController;
+import com.gadgetworks.flyweight.controller.NetworkDeviceStateEnum;
+import com.gadgetworks.flyweight.controller.WirelessDeviceEventHandler;
 import com.google.inject.Inject;
 
 public final class ServerCodeshelfApplication implements ICodeshelfApplication {
@@ -184,7 +185,7 @@ public final class ServerCodeshelfApplication implements ICodeshelfApplication {
 	}
 
 	private void initPreferencesStore(Organization inOrganization) {
-		initPreference(inOrganization, PersistentProperty.FORCE_CHANNEL, "Preferred wireless channel", ControllerABC.NO_PREFERRED_CHANNEL_TEXT);
+		initPreference(inOrganization, PersistentProperty.FORCE_CHANNEL, "Preferred wireless channel", DeviceController.NO_PREFERRED_CHANNEL_TEXT);
 		initPreference(inOrganization, PersistentProperty.GENERAL_INTF_LOG_LEVEL, "Preferred general log level", Level.INFO.toString());
 		initPreference(inOrganization, PersistentProperty.GATEWAY_INTF_LOG_LEVEL, "Preferred gateway log level", Level.INFO.toString());
 		//		initPreference(PersistentProperty.ACTIVEMQ_RUN, "Run ActiveMQ", String.valueOf(false));

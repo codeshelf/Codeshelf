@@ -1,14 +1,12 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WirelessDevice.java,v 1.14 2013/02/12 19:19:42 jeffw Exp $
+ *  $Id: WirelessDevice.java,v 1.15 2013/02/20 08:28:23 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorColumn;
@@ -31,13 +29,11 @@ import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.annotate.JsonProperty;
 
-import com.gadgetworks.codeshelf.command.CommandControlABC;
-import com.gadgetworks.codeshelf.controller.IDeviceMaintainer;
-import com.gadgetworks.codeshelf.controller.INetworkDevice;
-import com.gadgetworks.codeshelf.controller.NetAddress;
-import com.gadgetworks.codeshelf.controller.NetMacAddress;
-import com.gadgetworks.codeshelf.controller.NetworkDeviceStateEnum;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.flyweight.command.NetAddress;
+import com.gadgetworks.flyweight.command.NetMacAddress;
+import com.gadgetworks.flyweight.controller.INetworkDevice;
+import com.gadgetworks.flyweight.controller.NetworkDeviceStateEnum;
 import com.google.inject.Inject;
 
 // --------------------------------------------------------------------------
@@ -61,7 +57,7 @@ public class WirelessDevice extends DomainObjectTreeABC<CodeshelfNetwork> implem
 	@Inject
 	private static IWirelessDeviceDao	DAO;
 
-	public interface IWirelessDeviceDao extends ITypedDao<WirelessDevice>, IDeviceMaintainer {
+	public interface IWirelessDeviceDao extends ITypedDao<WirelessDevice> {
 
 		WirelessDevice findWirelessDeviceByMacAddr(NetMacAddress inMacAddr);
 
@@ -97,11 +93,6 @@ public class WirelessDevice extends DomainObjectTreeABC<CodeshelfNetwork> implem
 	@JsonProperty
 	private String					description;
 
-	// The network address last assigned to this wireless device.
-	@Column(nullable = false)
-	@JsonProperty
-	private byte[]					networkAddress;
-
 	// The last seen battery level.
 	@Column(nullable = false)
 	@Getter
@@ -123,35 +114,17 @@ public class WirelessDevice extends DomainObjectTreeABC<CodeshelfNetwork> implem
 	@JsonProperty
 	private Long					lastContactTime;
 
+	// The network address last assigned to this wireless device.
 	@Transient
-	@Getter
-	@Setter
+	@Column(nullable = false)
 	@JsonProperty
-	private short					expectedEndpointCount;
-
-	@Transient
-	@Getter
-	@Setter
-	@JsonProperty
-	private Map<String, String>		kvpMap;
-
-	@Transient
-	@Getter
-	@Setter
-	@JsonProperty
-	private short					expectedKvpCount;
-
-	//	@Transient
-	//	private String						mDeviceDesc;
-	//	@Transient
-	//	private short						mDeviceType;
+	private byte					networkAddress;
 
 	public WirelessDevice() {
 		macAddress = new byte[NetMacAddress.NET_MACADDR_BYTES];
 		publicKey = "";
 		description = "";
 		lastBatteryLevel = 0;
-		kvpMap = new HashMap<String, String>();
 	}
 
 	public final ITypedDao<WirelessDevice> getDao() {
@@ -183,7 +156,7 @@ public class WirelessDevice extends DomainObjectTreeABC<CodeshelfNetwork> implem
 	}
 
 	public final void setNetAddress(NetAddress inNetworkAddress) {
-		networkAddress = inNetworkAddress.getParamValueAsByteArray();
+		networkAddress = (byte) inNetworkAddress.getValue();
 	}
 
 	@JsonProperty
@@ -226,54 +199,8 @@ public class WirelessDevice extends DomainObjectTreeABC<CodeshelfNetwork> implem
 	 * 
 	 */
 
-	public void buttonCommandReceived(byte inButtonNumberPressed, byte inButtonFunction) {
+	public void commandReceived(final String inCommandStr) {
 		// See above note.
-	}
-
-	public void controlCommandReceived(CommandControlABC inCommandControl) {
-		// See above note.
-	}
-
-	/* --------------------------------------------------------------------------
-	 * (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.controller.INetworkDevice#addKeyValuePair(java.lang.String, java.lang.String)
-	 */
-	public final void addKeyValuePair(String inKey, String inValue) {
-		kvpMap.put(inKey, inValue);
-	}
-
-	/* --------------------------------------------------------------------------
-	 * (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.controller.INetworkDevice#getStoredKVPCount()
-	 */
-	public final short getStoredKvpCount() {
-		return (short) kvpMap.size();
-	}
-
-	/* --------------------------------------------------------------------------
-	 * (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.controller.INetworkDevice#getHWDesc()
-	 */
-	public final String getHwDesc() {
-		String result;
-		result = kvpMap.get(INetworkDevice.HW_VERSION_KEY);
-		if (result == null) {
-			result = "unknown";
-		}
-		return result;
-	}
-
-	/* --------------------------------------------------------------------------
-	 * (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.controller.INetworkDevice#getSWRevision()
-	 */
-	public final String getSwRevision() {
-		String result;
-		result = kvpMap.get(INetworkDevice.SW_VERSION_KEY);
-		if (result == null) {
-			result = "unknown";
-		}
-		return result;
 	}
 
 	/* --------------------------------------------------------------------------

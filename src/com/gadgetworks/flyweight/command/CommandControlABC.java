@@ -1,0 +1,83 @@
+/*******************************************************************************
+ *  FlyWeightController
+ *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
+ *  $Id: CommandControlABC.java,v 1.1 2013/02/20 08:28:23 jeffw Exp $
+ *******************************************************************************/
+
+package com.gadgetworks.flyweight.command;
+
+import com.gadgetworks.flyweight.bitfields.BitFieldInputStream;
+import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
+
+// --------------------------------------------------------------------------
+/**
+ *  The control command is the primary means by which the remotes are controlled by the controller.
+ *  There are sub-commands for sending audio, motor control, etc.  There are also sub-commands for receiving inputs from the remote.
+ *  
+ *  Format of the control command is:
+ *  
+ *  1B - the command ID.
+ *  1B - the command ACK ID.  (If non-zero, then the command requires ACK.)
+ *  nB - the control command data.
+ *  
+ *  @author jeffw
+ *  
+ */
+public abstract class CommandControlABC extends ExtendedCommandABC {
+
+	public static final int		COMMAND_CONTROL_HDR_BYTES	= 1;
+	public static final int		MAX_CONTROL_BYTES			= ICommand.MAX_COMMAND_BYTES - COMMAND_CONTROL_HDR_BYTES;
+
+	public static final byte	STANDARD					= 1;
+
+	// --------------------------------------------------------------------------
+	/**
+	 *  This is the constructor to use to create a control command to send to the network.
+	 *  @param inEndpoint	The end point to send the command.
+	 *  @param inControlBytes	The data to send in the command.
+	 */
+	public CommandControlABC(final NetEndpoint inEndpoint, final NetCommandId inExtendedCommandID) {
+		super(inEndpoint, inExtendedCommandID);
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 *  This is the constructor to use to create a data command that's read off of the network input stream.
+	 */
+	public CommandControlABC(final NetCommandId inExtendedCommandID) {
+		super(inExtendedCommandID);
+	}
+
+	/* --------------------------------------------------------------------------
+	 * (non-Javadoc)
+	 * @see com.gadgetworks.command.ICommand#getCommandTypeEnum()
+	 */
+	public final CommandGroupEnum getCommandTypeEnum() {
+		return CommandGroupEnum.CONTROL;
+	}
+
+	/* --------------------------------------------------------------------------
+	 * (non-Javadoc)
+	 * @see com.gadgetworks.controller.CommandABC#localDecode(com.gadgetworks.bitfields.BitFieldOutputStream, int)
+	 */
+	protected void doToStream(BitFieldOutputStream inOutputStream) {
+		super.doToStream(inOutputStream);
+	}
+
+	/* --------------------------------------------------------------------------
+	 * (non-Javadoc)
+	 * @see com.gadgetworks.controller.CommandABC#localEncode(com.gadgetworks.bitfields.BitFieldInputStream)
+	 */
+	protected void doFromStream(BitFieldInputStream inInputStream, int inCommandByteCount) {
+		super.doFromStream(inInputStream, inCommandByteCount);
+	}
+
+	/* --------------------------------------------------------------------------
+	 * (non-Javadoc)
+	 * @see com.gadgetworks.controller.CommandABC#doComputeCommandSize()
+	 */
+	protected int doComputeCommandSize() {
+		return super.doComputeCommandSize() + COMMAND_CONTROL_HDR_BYTES;
+	}
+
+}

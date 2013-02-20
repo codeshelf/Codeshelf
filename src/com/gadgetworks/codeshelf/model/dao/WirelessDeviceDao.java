@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WirelessDeviceDao.java,v 1.6 2012/09/08 03:03:24 jeffw Exp $
+ *  $Id: WirelessDeviceDao.java,v 1.7 2013/02/20 08:28:26 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -14,12 +14,11 @@ import org.apache.commons.logging.LogFactory;
 
 import com.avaje.ebean.Ebean;
 import com.avaje.ebean.Query;
-import com.gadgetworks.codeshelf.controller.IDeviceMaintainer;
-import com.gadgetworks.codeshelf.controller.INetworkDevice;
-import com.gadgetworks.codeshelf.controller.NetAddress;
-import com.gadgetworks.codeshelf.controller.NetMacAddress;
 import com.gadgetworks.codeshelf.model.domain.WirelessDevice;
 import com.gadgetworks.codeshelf.model.domain.WirelessDevice.IWirelessDeviceDao;
+import com.gadgetworks.flyweight.command.NetAddress;
+import com.gadgetworks.flyweight.command.NetMacAddress;
+import com.gadgetworks.flyweight.controller.INetworkDevice;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -28,7 +27,7 @@ import com.google.inject.Singleton;
  *
  */
 @Singleton
-public final class WirelessDeviceDao extends GenericDaoABC<WirelessDevice> implements IWirelessDeviceDao, IDeviceMaintainer {
+public final class WirelessDeviceDao extends GenericDaoABC<WirelessDevice> implements IWirelessDeviceDao {
 
 	private static final Log				LOGGER	= LogFactory.getLog(WirelessDeviceDao.class);
 
@@ -79,9 +78,9 @@ public final class WirelessDeviceDao extends GenericDaoABC<WirelessDevice> imple
 		}
 	}
 
-	/* --------------------------------------------------------------------------
-	 * (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.dao.ISystemDAO#findWirelessDeviceByMacAddr(java.lang.String)
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.domain.WirelessDevice.IWirelessDeviceDao#findWirelessDeviceByMacAddr(com.gadgetworks.flyweight.command.NetMacAddress)
 	 */
 	public WirelessDevice findWirelessDeviceByMacAddr(NetMacAddress inMacAddr) {
 		//		if (!USE_DAO_CACHE) {

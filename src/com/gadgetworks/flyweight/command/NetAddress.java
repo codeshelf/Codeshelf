@@ -1,0 +1,28 @@
+/*******************************************************************************
+ *  FlyWeightController
+ *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
+ *  $Id: NetAddress.java,v 1.1 2013/02/20 08:28:23 jeffw Exp $
+ *******************************************************************************/
+
+package com.gadgetworks.flyweight.command;
+
+import com.gadgetworks.flyweight.bitfields.NBitInteger;
+
+
+public final class NetAddress extends NBitInteger {
+
+	/** 
+	 *  --------------------------------------------------------------------------
+	 *  Create an n-bit integer that represents a network address.
+	 *  @param inNewValue
+	 *  @throws OutOfRangeException
+	 */
+
+	public NetAddress(final byte inNewValue) {
+		super(IPacket.ADDRESS_BITS, inNewValue);
+	}
+	
+	public String toString() {
+		return Integer.toHexString(getValue());
+	}
+}

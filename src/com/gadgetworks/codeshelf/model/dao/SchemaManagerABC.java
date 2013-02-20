@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: SchemaManagerABC.java,v 1.8 2013/02/17 04:22:21 jeffw Exp $
+ *  $Id: SchemaManagerABC.java,v 1.9 2013/02/20 08:28:26 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -409,11 +409,11 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	private boolean createIndicies() {
 		boolean result = true;
 
+		//		result &= linkToParentTable("AISLECONTROLLER", "PARENT", "LOCATION");
+
 		result &= linkToParentTable("CHE", "PARENT", "LOCATION");
 		result &= linkToParentTable("CHE", "CURRENTWORKAREA", "WORKAREA");
 		result &= linkToParentTable("CHE", "CURRENTUSER", "USER");
-
-		result &= linkToParentTable("CHECONTROLLER", "PARENT", "CHE");
 
 		result &= linkToParentTable("CODESHELFNETWORK", "PARENT", "LOCATION");
 
@@ -477,24 +477,21 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		boolean result = true;
 
+		//		// AisleController
+		//		result &= createTable("AISLECONTROLLER", //
+		//			"DESCRIPTION VARCHAR(64) NOT NULL " //
+		//		);
+
 		// Che
 		result &= createTable("CHE", //
-			"CURRENTUSER_PERSISTENTID " + UUID_TYPE + " NOT NULL, " //
-					+ "CURRENTWORKAREA_PERSISTENTID " + UUID_TYPE + " NOT NULL " //
-		);
-
-		// CheController
-		result &= createTable("CHECONTROLLER", //
-			"DESCRIPTION VARCHAR(64) NOT NULL " //
+			"CURRENTUSER_PERSISTENTID " + UUID_TYPE + ", " //
+					+ "CURRENTWORKAREA_PERSISTENTID " + UUID_TYPE + " " //
 		);
 
 		// CodeShelfNetwork
 		result &= createTable("CODESHELFNETWORK", //
-			"SERIALIZEDID BYTEA DEFAULT '' NOT NULL, " //
-					+ "DESCRIPTION VARCHAR(64) NOT NULL, " //
+			"DESCRIPTION VARCHAR(64) NOT NULL, " //
 					+ "CREDENTIAL VARCHAR(64) NOT NULL, " //
-					+ "GATEWAYADDR BYTEA DEFAULT '' NOT NULL, " //
-					+ "GATEWAYURL VARCHAR(64) NOT NULL, " //
 					+ "ACTIVE BOOLEAN DEFAULT TRUE NOT NULL " //
 		);
 
@@ -664,7 +661,6 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 					+ "PUBLICKEY VARCHAR(16) NOT NULL, " //
 					+ "DESCRIPTION VARCHAR(64), " //
 					+ "LASTBATTERYLEVEL SMALLINT DEFAULT 0 NOT NULL, " //
-					+ "NETWORKADDRESS BYTEA DEFAULT '' NOT NULL, " //
 					+ "NETWORKDEVICESTATUS VARCHAR(16) DEFAULT 'INVALID', " //
 					+ "SERIALBUSPOSITION INT DEFAULT 0, " //
 					+ "LASTCONTACTTIME BIGINT DEFAULT 0 " //

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Che.java,v 1.1 2013/02/12 19:19:42 jeffw Exp $
+ *  $Id: Che.java,v 1.2 2013/02/20 08:28:23 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -41,7 +41,7 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-@Table(name = "AISLECONTROLLER", schema = "CODESHELF")
+@Table(name = "CHE", schema = "CODESHELF")
 @CacheStrategy
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class Che extends DomainObjectTreeABC<Facility> {

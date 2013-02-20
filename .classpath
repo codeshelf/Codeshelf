@@ -56,5 +56,10 @@
 	<classpathentry kind="lib" path="lib/dist/shiro-core-1.2.1.jar" sourcepath="/Users/jeffw/.m2/repository/org/apache/shiro/shiro-core/1.2.1/shiro-core-1.2.1-sources.jar"/>
 	<classpathentry kind="lib" path="lib/dist/shiro-guice-1.2.1.jar"/>
 	<classpathentry kind="lib" path="lib/dist/guice-assistedinject-3.0.jar"/>
+	<classpathentry kind="lib" path="lib/dist/JD2XX.jar">
+		<attributes>
+			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="CodeShelf/lib/native/osx"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="output" path="eclipse-bin"/>
 </classpath>

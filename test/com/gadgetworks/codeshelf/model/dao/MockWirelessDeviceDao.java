@@ -1,19 +1,18 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: MockWirelessDeviceDao.java,v 1.3 2012/10/30 15:21:34 jeffw Exp $
+ *  $Id: MockWirelessDeviceDao.java,v 1.4 2013/02/20 08:28:26 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-import com.gadgetworks.codeshelf.controller.INetworkDevice;
-import com.gadgetworks.codeshelf.controller.NetAddress;
-import com.gadgetworks.codeshelf.controller.NetMacAddress;
 import com.gadgetworks.codeshelf.model.domain.WirelessDevice;
 import com.gadgetworks.codeshelf.model.domain.WirelessDevice.IWirelessDeviceDao;
+import com.gadgetworks.flyweight.command.NetAddress;
+import com.gadgetworks.flyweight.command.NetMacAddress;
+import com.gadgetworks.flyweight.controller.INetworkDevice;
 
 /**
  * @author jeffw
@@ -28,31 +27,19 @@ public class MockWirelessDeviceDao extends MockDao<WirelessDevice> implements IW
 	}
 
 	@Override
-	public List<INetworkDevice> getNetworkDevices() {
+	public final WirelessDevice findWirelessDeviceByMacAddr(NetMacAddress inMacAddr) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public void deviceUpdated(INetworkDevice inNetworkDevice, boolean inPersistentDataChanged) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public WirelessDevice findWirelessDeviceByMacAddr(NetMacAddress inMacAddr) {
+	public final INetworkDevice findNetworkDeviceByMacAddr(NetMacAddress inMacAddr) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public INetworkDevice findNetworkDeviceByMacAddr(NetMacAddress inMacAddr) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public INetworkDevice getNetworkDevice(NetAddress inAddress) {
+	public final INetworkDevice getNetworkDevice(NetAddress inAddress) {
 		// TODO Auto-generated method stub
 		return null;
 	}

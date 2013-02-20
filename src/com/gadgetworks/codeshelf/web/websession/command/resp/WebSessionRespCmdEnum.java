@@ -1,9 +1,11 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionRespCmdEnum.java,v 1.9 2013/02/17 04:22:21 jeffw Exp $
+ *  $Id: WebSessionRespCmdEnum.java,v 1.10 2013/02/20 08:28:26 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.resp;
+
+import com.gadgetworks.codeshelf.web.websession.command.req.WebSessionReqCmdEnum;
 
 /**
  * @author jeffw
@@ -92,6 +94,17 @@ public enum WebSessionRespCmdEnum {
 
 	public String toString() {
 		return getName();
+	}
+
+	public static WebSessionRespCmdEnum fromString(String inEnumNameStr) {
+		if (inEnumNameStr != null) {
+			for (WebSessionRespCmdEnum enumEntry : WebSessionRespCmdEnum.values()) {
+				if (inEnumNameStr.equalsIgnoreCase(enumEntry.getName())) {
+					return enumEntry;
+				}
+			}
+		}
+		return null;
 	}
 
 	final static class WebSessionRespCmdNum {

@@ -1,7 +1,7 @@
 /*******************************************************************************
 CodeshelfWebSocketServer *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ServerMain.java,v 1.4 2013/02/17 04:22:21 jeffw Exp $
+ *  $Id: ServerMain.java,v 1.5 2013/02/20 08:28:23 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -34,6 +34,8 @@ import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Aisle.AisleDao;
 import com.gadgetworks.codeshelf.model.domain.Bay;
 import com.gadgetworks.codeshelf.model.domain.Bay.BayDao;
+import com.gadgetworks.codeshelf.model.domain.Che;
+import com.gadgetworks.codeshelf.model.domain.Che.CheDao;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork.CodeshelfNetworkDao;
 import com.gadgetworks.codeshelf.model.domain.Container;
@@ -84,9 +86,9 @@ import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction.WorkInstructionDao;
 import com.gadgetworks.codeshelf.security.CodeshelfRealm;
 import com.gadgetworks.codeshelf.web.websession.IWebSession;
+import com.gadgetworks.codeshelf.web.websession.IWebSessionFactory;
 import com.gadgetworks.codeshelf.web.websession.IWebSessionManager;
 import com.gadgetworks.codeshelf.web.websession.WebSession;
-import com.gadgetworks.codeshelf.web.websession.IWebSessionFactory;
 import com.gadgetworks.codeshelf.web.websession.WebSessionManager;
 import com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmdFactory;
 import com.gadgetworks.codeshelf.web.websession.command.req.WebSessionReqCmdFactory;
@@ -219,6 +221,10 @@ public final class ServerMain {
 				requestStaticInjection(Bay.class);
 				bind(new TypeLiteral<ITypedDao<Bay>>() {
 				}).to(BayDao.class);
+
+				requestStaticInjection(Che.class);
+				bind(new TypeLiteral<ITypedDao<Che>>() {
+				}).to(CheDao.class);
 
 				requestStaticInjection(CodeshelfNetwork.class);
 				bind(new TypeLiteral<ITypedDao<CodeshelfNetwork>>() {
