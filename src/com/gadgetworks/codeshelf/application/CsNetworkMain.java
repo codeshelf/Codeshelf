@@ -1,7 +1,7 @@
 /*******************************************************************************
 CodeshelfWebSocketServer *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CsNetworkMain.java,v 1.1 2013/02/20 08:28:23 jeffw Exp $
+ *  $Id: CsNetworkMain.java,v 1.2 2013/02/23 05:42:09 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -14,11 +14,13 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.java_websocket.client.WebSocketClient;
 
+import com.gadgetworks.codeshelf.device.CsNetworkController;
 import com.gadgetworks.codeshelf.model.dao.DaoProvider;
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.web.websocket.CsWebSocketClient;
-import com.gadgetworks.codeshelf.web.websocket.IWebSocketClient;
+import com.gadgetworks.codeshelf.web.websocket.ICsWebSocketClient;
+import com.gadgetworks.codeshelf.web.websocket.ICsWebsocketClientMsgHandler;
 import com.gadgetworks.codeshelf.web.websocket.IWebSocketSslContextGenerator;
 import com.gadgetworks.codeshelf.web.websocket.SSLWebSocketClientFactory;
 import com.google.inject.AbstractModule;
@@ -99,7 +101,7 @@ public final class CsNetworkMain {
 				bind(String.class).annotatedWith(Names.named(ISchemaManager.DATABASE_ADDRESS_PROPERTY)).toInstance(System.getProperty("db.address"));
 				bind(String.class).annotatedWith(Names.named(ISchemaManager.DATABASE_PORTNUM_PROPERTY)).toInstance(System.getProperty("db.portnum"));
 
-				bind(String.class).annotatedWith(Names.named(IWebSocketClient.WEBSOCKET_URI_PROPERTY)).toInstance(System.getProperty("websocket.uri"));
+				bind(String.class).annotatedWith(Names.named(CsWebSocketClient.WEBSOCKET_URI_PROPERTY)).toInstance(System.getProperty("websocket.uri"));
 
 				bind(String.class).annotatedWith(Names.named(IWebSocketSslContextGenerator.KEYSTORE_PATH_PROPERTY)).toInstance(System.getProperty("keystore.path"));
 				bind(String.class).annotatedWith(Names.named(IWebSocketSslContextGenerator.KEYSTORE_TYPE_PROPERTY)).toInstance(System.getProperty("keystore.type"));
@@ -108,7 +110,8 @@ public final class CsNetworkMain {
 
 				bind(IUtil.class).to(Util.class);
 				bind(ICodeshelfApplication.class).to(CsNetworkApplication.class);
-				bind(IWebSocketClient.class).to(CsWebSocketClient.class);
+				bind(ICsWebSocketClient.class).to(CsWebSocketClient.class);
+				bind(ICsWebsocketClientMsgHandler.class).to(CsNetworkController.class);
 				bind(IDaoProvider.class).to(DaoProvider.class);
 				bind(WebSocketClient.WebSocketClientFactory.class).to(SSLWebSocketClientFactory.class);
 

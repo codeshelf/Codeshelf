@@ -1,19 +1,26 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CheDevice.java,v 1.2 2013/02/20 20:39:00 jeffw Exp $
+ *  $Id: CheDevice.java,v 1.3 2013/02/23 05:42:09 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.gadgetworks.flyweight.command.CommandAssocABC;
 import com.gadgetworks.flyweight.command.CommandAssocAck;
-import com.gadgetworks.flyweight.command.CommandAssocCheck;
 import com.gadgetworks.flyweight.command.CommandAssocReq;
 import com.gadgetworks.flyweight.command.CommandAssocResp;
-import com.gadgetworks.flyweight.command.CommandControlStandard;
+import com.gadgetworks.flyweight.command.CommandControl;
+import com.gadgetworks.flyweight.command.CommandNetMgmtABC;
+import com.gadgetworks.flyweight.command.CommandNetMgmtCheck;
+import com.gadgetworks.flyweight.command.CommandNetMgmtIntfTest;
+import com.gadgetworks.flyweight.command.CommandNetMgmtSetup;
 import com.gadgetworks.flyweight.command.ICommand;
 import com.gadgetworks.flyweight.command.IPacket;
 import com.gadgetworks.flyweight.command.NetAddress;
@@ -35,10 +42,15 @@ public class CheDevice implements IDevice {
 	private static final String	RECEIVER_THREAD_NAME	= "Packet Receiver";
 
 	private static final long	CTRL_START_DELAY_MILLIS	= 200;
+	private static final byte	DEVICE_VERSION			= 0x01;
+	private static final byte	RESET_REASON_POWERON	= 0x00;
 
 	private IGatewayInterface	mGatewayInterface;
 	private NetworkId			mNetworkId;
 	private boolean				mShouldRun;
+	private NetAddress			mNetAddress;
+
+	private String				mGUID					= "00000001";
 
 	public CheDevice() {
 		mNetworkId = IPacket.DEFAULT_NETWORK_ID;
@@ -48,19 +60,40 @@ public class CheDevice implements IDevice {
 	public final void start() {
 		mGatewayInterface = new TcpClientInterface();
 		mShouldRun = true;
-		mGatewayInterface.startInterface();
 		startPacketReceivers();
-
-		ICommand command = new CommandAssocReq((byte) 0x01, (byte) 0x00, "00000001");
-		IPacket packet = new Packet(command, IPacket.BROADCAST_NETWORK_ID, IPacket.BROADCAST_ADDRESS, IPacket.GATEWAY_ADDRESS, false);
-		command.setPacket(packet);
-		sendPacket(packet);
+		processScans();
 	}
 
 	@Override
 	public final void stop() {
 		mShouldRun = false;
 		mGatewayInterface.stopInterface();
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 */
+	private void processScans() {
+		Thread eventThread = new Thread(new Runnable() {
+			public void run() {
+				BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+				while (true) {
+					try {
+						if (reader.ready()) {
+							String scanValue = reader.readLine();
+
+							ICommand command = new CommandControl(NetEndpoint.PRIMARY_ENDPOINT, scanValue);
+							IPacket packet = new Packet(command, IPacket.BROADCAST_NETWORK_ID, IPacket.BROADCAST_ADDRESS, IPacket.GATEWAY_ADDRESS, false);
+							command.setPacket(packet);
+							sendPacket(packet);
+						}
+					} catch (IOException e) {
+						LOGGER.error("", e);
+					}
+				}
+			}
+		});
+		eventThread.start();
 	}
 
 	// --------------------------------------------------------------------------
@@ -73,7 +106,21 @@ public class CheDevice implements IDevice {
 			public void run() {
 				while (mShouldRun) {
 					try {
-						if (mGatewayInterface.isStarted()) {
+						if (!mGatewayInterface.isStarted()) {
+							mGatewayInterface.startInterface();
+							if (mGatewayInterface.isStarted()) {
+								ICommand command = new CommandAssocReq(DEVICE_VERSION, RESET_REASON_POWERON, mGUID);
+								IPacket packet = new Packet(command, IPacket.BROADCAST_NETWORK_ID, IPacket.BROADCAST_ADDRESS, IPacket.GATEWAY_ADDRESS, false);
+								command.setPacket(packet);
+								sendPacket(packet);
+							} else {
+								try {
+									Thread.sleep(CTRL_START_DELAY_MILLIS);
+								} catch (InterruptedException e) {
+									LOGGER.error("", e);
+								}
+							}
+						} else {
 							IPacket packet = mGatewayInterface.receivePacket(mNetworkId);
 							if (packet != null) {
 								//putPacketInRcvQueue(packet);
@@ -83,18 +130,6 @@ public class CheDevice implements IDevice {
 								} else {
 									receiveCommand(packet.getCommand(), packet.getSrcAddr());
 								}
-							} else {
-								//									try {
-								//										Thread.sleep(0, 5000);
-								//									} catch (InterruptedException e) {
-								//										LOGGER.error("", e);
-								//									}
-							}
-						} else {
-							try {
-								Thread.sleep(CTRL_START_DELAY_MILLIS);
-							} catch (InterruptedException e) {
-								LOGGER.error("", e);
 							}
 						}
 					} catch (RuntimeException e) {
@@ -120,7 +155,7 @@ public class CheDevice implements IDevice {
 			switch (inCommand.getCommandTypeEnum()) {
 
 				case NETMGMT:
-					//					processNetworkMgmtCmd((CommandNetMgmtABC) inCommand, inNetworkType, inSrcAddr);
+					//processNetworkMgmtCmd((CommandNetMgmtABC) inCommand, inSrcAddr);
 					break;
 
 				case ASSOC:
@@ -161,12 +196,9 @@ public class CheDevice implements IDevice {
 	}
 
 	private void processAssocRespCommand(CommandAssocResp inCommand, NetAddress inSrcAddr) {
-		
-		ICommand command = new CommandControlStandard(NetEndpoint.PRIMARY_ENDPOINT, "LOGIN"); 
-		IPacket packet = new Packet(command, IPacket.BROADCAST_NETWORK_ID, IPacket.BROADCAST_ADDRESS, IPacket.GATEWAY_ADDRESS, false);
-		command.setPacket(packet);
-		sendPacket(packet);
-		
+
+		mNetAddress = inCommand.getNetAdress();
+
 	}
 
 	private void processAssocAckCommand(CommandAssocAck inCommand, NetAddress inSrcAddr) {

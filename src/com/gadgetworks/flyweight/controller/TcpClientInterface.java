@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: TcpClientInterface.java,v 1.1 2013/02/20 08:28:25 jeffw Exp $
+ *  $Id: TcpClientInterface.java,v 1.2 2013/02/23 05:42:09 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.flyweight.controller;
 
@@ -109,14 +109,20 @@ public class TcpClientInterface extends SerialInterfaceABC {
 	 */
 	@Override
 	protected final byte readByte() {
+		byte result = -1;
 		if (mSocket.isConnected()) {
 			try {
-				return (byte) mInputStream.read();
+				int readByte = mInputStream.read();
+				if (readByte == -1) {
+					stopInterface();
+				} else {
+					result = (byte) readByte;
+				}
 			} catch (IOException e) {
 				LOGGER.error("", e);
 			}
 		}
-		return 0;
+		return result;
 	}
 
 	// --------------------------------------------------------------------------
@@ -155,7 +161,7 @@ public class TcpClientInterface extends SerialInterfaceABC {
 	 * @see com.gadgetworks.flyweight.controller.SerialInterfaceABC#writeBytes(byte[], int)
 	 */
 	@Override
-	 protected final void writeBytes(byte[] inBytes, int inLength) {
+	protected final void writeBytes(byte[] inBytes, int inLength) {
 		if (mSocket.isConnected()) {
 			try {
 				mOutputStream.write(inBytes, 0, inLength);

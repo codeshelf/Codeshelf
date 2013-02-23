@@ -1,12 +1,16 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandControlStandard.java,v 1.1 2013/02/20 08:28:23 jeffw Exp $
+ *  $Id: CommandControl.java,v 1.1 2013/02/23 05:42:09 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.flyweight.command;
 
 import java.io.IOException;
+
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -16,18 +20,17 @@ import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
 
 // --------------------------------------------------------------------------
 /**
- *  The button control sub-command allows the remote to indicate that the user pressed a button.
- *  
- *  The data of the command is a single, 8-bit integer representing the button number pressed.
+ *  A string command from the remote.
  *  
  *  @author jeffw
  */
-public final class CommandControlStandard extends CommandControlABC {
+public final class CommandControl extends CommandControlABC {
 
-	public static final int		BUTTON_COMMAND_BYTES	= 2;
+	private static final Log	LOGGER					= LogFactory.getLog(CommandControl.class);
 
-	private static final Log	LOGGER					= LogFactory.getLog(CommandControlStandard.class);
-
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
 	private String				mCommandString;
 
 	// --------------------------------------------------------------------------
@@ -35,7 +38,7 @@ public final class CommandControlStandard extends CommandControlABC {
 	 *  This is the constructor to use to create a data command to send to the network.
 	 *  @param inEndpoint	The end point to send the command.
 	 */
-	public CommandControlStandard(final NetEndpoint inEndpoint, final String inCommandString) {
+	public CommandControl(final NetEndpoint inEndpoint, final String inCommandString) {
 		super(inEndpoint, new NetCommandId(CommandControlABC.STANDARD));
 
 		mCommandString = inCommandString;
@@ -45,7 +48,7 @@ public final class CommandControlStandard extends CommandControlABC {
 	/**
 	 *  This is the constructor to use to create a data command that's read off of the network input stream.
 	 */
-	public CommandControlStandard() {
+	public CommandControl() {
 		super(new NetCommandId(CommandControlABC.STANDARD));
 	}
 
@@ -93,7 +96,7 @@ public final class CommandControlStandard extends CommandControlABC {
 	 */
 	@Override
 	protected int doComputeCommandSize() {
-		return super.doComputeCommandSize() + BUTTON_COMMAND_BYTES;
+		return super.doComputeCommandSize() + mCommandString.length();
 	}
 
 }

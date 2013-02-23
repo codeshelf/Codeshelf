@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: SchemaManagerABC.java,v 1.9 2013/02/20 08:28:26 jeffw Exp $
+ *  $Id: SchemaManagerABC.java,v 1.10 2013/02/23 05:42:09 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -592,6 +592,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 					+ "ORDERGROUP_PERSISTENTID " + UUID_TYPE + ", " //
 					+ "WORKSEQUENCE " + UUID_TYPE + ", " //
 					+ "SHIPMENTID VARCHAR(64), " //
+					+ "CONTAINERUSE_PERSISTENTID " + UUID_TYPE + ", " //
 					+ "CUSTOMERID VARCHAR(64) " //
 		);
 

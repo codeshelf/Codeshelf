@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: DeviceController.java,v 1.1 2013/02/20 08:28:25 jeffw Exp $
+ *  $Id: DeviceController.java,v 1.2 2013/02/23 05:42:09 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.flyweight.controller;
@@ -24,6 +24,7 @@ import com.gadgetworks.flyweight.command.CommandAssocCheck;
 import com.gadgetworks.flyweight.command.CommandAssocReq;
 import com.gadgetworks.flyweight.command.CommandAssocResp;
 import com.gadgetworks.flyweight.command.CommandControlABC;
+import com.gadgetworks.flyweight.command.CommandControl;
 import com.gadgetworks.flyweight.command.CommandNetMgmtABC;
 import com.gadgetworks.flyweight.command.CommandNetMgmtCheck;
 import com.gadgetworks.flyweight.command.CommandNetMgmtIntfTest;
@@ -76,7 +77,8 @@ public class DeviceController implements IController {
 	private static final int									MAX_NETWORK_TEST_NUM				= 64;
 
 	private Boolean												mShouldRun							= true;
-	private Map<NetMacAddress, INetworkDevice>					mDeviceMap;
+	private Map<NetMacAddress, INetworkDevice>					mDeviceMacAddrMap;
+	private Map<NetAddress, INetworkDevice>						mDeviceNetAddrMap;
 	private IGatewayInterface									mGatewayInterface;
 	private NetAddress											mServerAddress;
 	private NetAddress											mBroadcastAddress;
@@ -121,7 +123,8 @@ public class DeviceController implements IController {
 		mRadioChannel = 0;
 
 		mPendingAcksMap = new HashMap<NetAddress, BlockingQueue<IPacket>>();
-		mDeviceMap = new HashMap<NetMacAddress, INetworkDevice>();
+		mDeviceMacAddrMap = new HashMap<NetMacAddress, INetworkDevice>();
+		mDeviceNetAddrMap = new HashMap<NetAddress, INetworkDevice>();
 		mNextAddress = 1;
 	}
 
@@ -269,7 +272,10 @@ public class DeviceController implements IController {
 			mChannelSelected = true;
 			mRadioChannel = inChannel;
 			CommandNetMgmtSetup netSetupCmd = new CommandNetMgmtSetup(mNetworkId, mRadioChannel);
-			sendCommand(netSetupCmd, mBroadcastAddress, false);
+			if (mGatewayInterface instanceof FTDIInterface) {
+				// Net mgmt commands only get sent to the FTDI-controlled radio network.
+				sendCommand(netSetupCmd, mBroadcastAddress, false);
+			}
 			LOGGER.info("Channel " + inChannel);
 		}
 	}
@@ -438,7 +444,7 @@ public class DeviceController implements IController {
 
 				case CONTROL:
 					if (mChannelSelected) {
-						processControlCmd((CommandControlABC) inCommand);
+						processControlCmd((CommandControlABC) inCommand, inSrcAddr);
 					}
 					break;
 				default:
@@ -709,7 +715,7 @@ public class DeviceController implements IController {
 
 		if (canAssociate) {
 
-			INetworkDevice foundDevice = mDeviceMap.get(new NetMacAddress(uid.getBytes()));
+			INetworkDevice foundDevice = mDeviceMacAddrMap.get(new NetMacAddress(uid.getBytes()));
 
 			if (foundDevice != null) {
 				foundDevice.setNetworkDeviceState(NetworkDeviceStateEnum.SETUP);
@@ -775,7 +781,7 @@ public class DeviceController implements IController {
 		// First get the unique ID from the command.
 		String uid = inCommand.getGUID();
 
-		INetworkDevice foundDevice = mDeviceMap.get(new NetMacAddress(uid.getBytes()));
+		INetworkDevice foundDevice = mDeviceMacAddrMap.get(new NetMacAddress(uid.getBytes()));
 
 		if (foundDevice != null) {
 			CommandAssocAck ackCmd;
@@ -958,10 +964,15 @@ public class DeviceController implements IController {
 	 *  @param inCommand
 	 *  @param inSrcAddr
 	 */
-	private void processControlCmd(CommandControlABC inCommand) {
+	private void processControlCmd(CommandControlABC inCommand, NetAddress inSrcAddr) {
 
 		switch (inCommand.getExtendedCommandID().getValue()) {
 			case CommandControlABC.STANDARD:
+				INetworkDevice device = mDeviceNetAddrMap.get(inSrcAddr);
+				if (device != null) {
+					CommandControl command = (CommandControl) inCommand;
+					LOGGER.info("Remote command: " + command.getCommandString());
+				}
 				break;
 
 			default:
@@ -975,7 +986,8 @@ public class DeviceController implements IController {
 	 */
 	@Override
 	public final void addNetworkDevice(final INetworkDevice inNetworkDevice) {
-		mDeviceMap.put(inNetworkDevice.getMacAddress(), inNetworkDevice);
+		mDeviceMacAddrMap.put(inNetworkDevice.getMacAddress(), inNetworkDevice);
+		mDeviceNetAddrMap.put(inNetworkDevice.getNetAddress(), inNetworkDevice);
 	}
 
 	// --------------------------------------------------------------------------
@@ -984,6 +996,7 @@ public class DeviceController implements IController {
 	 */
 	@Override
 	public final void removeNetworkDevice(INetworkDevice inNetworkDevice) {
-		mDeviceMap.remove(inNetworkDevice.getMacAddress());
+		mDeviceMacAddrMap.remove(inNetworkDevice.getMacAddress());
+		mDeviceNetAddrMap.remove(inNetworkDevice.getNetAddress());
 	}
 }

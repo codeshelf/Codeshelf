@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CsNetworkApplication.java,v 1.1 2013/02/20 08:28:23 jeffw Exp $
+ *  $Id: CsNetworkApplication.java,v 1.2 2013/02/23 05:42:09 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -12,11 +12,7 @@ import java.lang.management.ManagementFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.Organization;
-import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
-import com.gadgetworks.codeshelf.web.websocket.IWebSocketClient;
+import com.gadgetworks.codeshelf.web.websocket.ICsWebSocketClient;
 import com.google.inject.Inject;
 
 public final class CsNetworkApplication implements ICodeshelfApplication {
@@ -24,13 +20,13 @@ public final class CsNetworkApplication implements ICodeshelfApplication {
 	private static final Logger	LOGGER		= LoggerFactory.getLogger(CsNetworkApplication.class);
 
 	private boolean				mIsRunning	= true;
-	private IWebSocketClient	mWebSocketClient;
+	private ICsWebSocketClient	mWebSocketClient;
 	private IUtil				mUtil;
 	private Thread				mShutdownHookThread;
 	private Runnable			mShutdownRunnable;
 
 	@Inject
-	public CsNetworkApplication(final IWebSocketClient inWebSocketClient, final IUtil inUtil) {
+	public CsNetworkApplication(final ICsWebSocketClient inWebSocketClient, final IUtil inUtil) {
 		mWebSocketClient = inWebSocketClient;
 		mUtil = inUtil;
 	}
@@ -78,12 +74,8 @@ public final class CsNetworkApplication implements ICodeshelfApplication {
 
 		LOGGER.info("Stopping application");
 
-		// Stop the web socket manager.
-		try {
-			mWebSocketClient.stop();
-		} catch (IOException | InterruptedException e) {
-			LOGGER.error("", e);
-		}
+		// Stop the web socket.
+		mWebSocketClient.stop();
 
 		mIsRunning = false;
 

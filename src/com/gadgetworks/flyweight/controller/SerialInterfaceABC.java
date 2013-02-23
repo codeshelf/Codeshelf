@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: SerialInterfaceABC.java,v 1.1 2013/02/20 08:28:26 jeffw Exp $
+ *  $Id: SerialInterfaceABC.java,v 1.2 2013/02/23 05:42:09 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.flyweight.controller;
@@ -184,9 +184,7 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 			packet = new Packet();
 			packet.fromStream(inputStream, nextFrameArray.length);
 
-			if ((packet.getNetworkId().equals(inMyNetworkId))
-					|| (packet.getNetworkId().equals(IPacket.ZERO_NETWORK_ID))
-					|| (packet.getNetworkId().equals(IPacket.BROADCAST_NETWORK_ID))) {
+			if ((packet.getNetworkId().equals(inMyNetworkId)) || (packet.getNetworkId().equals(IPacket.ZERO_NETWORK_ID)) || (packet.getNetworkId().equals(IPacket.BROADCAST_NETWORK_ID))) {
 				result = packet;
 
 				if (LOGGER.isInfoEnabled()) {
@@ -323,7 +321,7 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 			if (shouldRun()) {
 				switch (nextByte) {
 
-					// if it's an END character then we're done with the packet.
+				// if it's an END character then we're done with the packet.
 					case END:
 						if (bytesReceived > 0) {
 							break loop;
@@ -356,8 +354,8 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 								break;
 						}
 
-						// here we fall into the default handler and let it store the character for us.
 					default:
+						// here we fall into the default handler and let it store the character for us.
 						try {
 							frameBuffer[bytesReceived++] = (byte) nextByte;
 						} catch (ArrayIndexOutOfBoundsException e) {
@@ -407,7 +405,7 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 		//			mSerialOutputStream.write(IGatewayInterface.END);
 		//			mSerialOutputStream.flush();
 		buffer[bufPos++] = IGatewayInterface.END;
-		buffer[bufPos+1] = IGatewayInterface.END;
+		buffer[bufPos + 1] = IGatewayInterface.END;
 
 		clrRTS();
 		writeBytes(buffer, bufPos);
@@ -446,7 +444,7 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 			}
 			text += String.format("%02x", inByteArray[pos]);
 		}
-		if (pos !=0) {
+		if (pos != 0) {
 			LOGGER.debug(text);
 		}
 	}
