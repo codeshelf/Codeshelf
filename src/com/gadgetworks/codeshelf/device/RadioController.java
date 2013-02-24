@@ -1,10 +1,10 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: DeviceController.java,v 1.2 2013/02/23 05:42:09 jeffw Exp $
+ *  $Id: RadioController.java,v 1.1 2013/02/24 22:54:25 jeffw Exp $
  *******************************************************************************/
 
-package com.gadgetworks.flyweight.controller;
+package com.gadgetworks.codeshelf.device;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -36,13 +36,19 @@ import com.gadgetworks.flyweight.command.NetChannelValue;
 import com.gadgetworks.flyweight.command.NetMacAddress;
 import com.gadgetworks.flyweight.command.NetworkId;
 import com.gadgetworks.flyweight.command.Packet;
+import com.gadgetworks.flyweight.controller.FTDIInterface;
+import com.gadgetworks.flyweight.controller.IController;
+import com.gadgetworks.flyweight.controller.IControllerEventListener;
+import com.gadgetworks.flyweight.controller.IGatewayInterface;
+import com.gadgetworks.flyweight.controller.INetworkDevice;
+import com.gadgetworks.flyweight.controller.NetworkDeviceStateEnum;
 
 // --------------------------------------------------------------------------
 /**
  *  @author jeffw
  */
 
-public class DeviceController implements IController {
+public class RadioController implements IController {
 
 	// Right now, the devices are not sending back their network ID.
 	public static final String									PRIVATE_GUID						= "00000000";
@@ -55,7 +61,7 @@ public class DeviceController implements IController {
 	public static final byte									NO_PREFERRED_CHANNEL				= (byte) 255;
 	public static final String									NO_PREFERRED_CHANNEL_TEXT			= "None";
 
-	private static final Log									LOGGER								= LogFactory.getLog(DeviceController.class);
+	private static final Log									LOGGER								= LogFactory.getLog(RadioController.class);
 
 	private static final String									BACKGROUND_THREAD_NAME				= "Controller Background";
 	private static final String									RECEIVER_THREAD_NAME				= "Packet Receiver";
@@ -105,7 +111,7 @@ public class DeviceController implements IController {
 	/**
 	 *  @param inSessionManager   The session manager for this controller.
 	 */
-	public DeviceController(final IGatewayInterface inGatewayInterface) {
+	public RadioController(final IGatewayInterface inGatewayInterface) {
 
 		mGatewayInterface = inGatewayInterface;
 		mServerAddress = IPacket.GATEWAY_ADDRESS;

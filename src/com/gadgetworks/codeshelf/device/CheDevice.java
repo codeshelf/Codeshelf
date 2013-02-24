@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CheDevice.java,v 1.3 2013/02/23 05:42:09 jeffw Exp $
+ *  $Id: CheDevice.java,v 1.4 2013/02/24 22:54:25 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -27,7 +27,6 @@ import com.gadgetworks.flyweight.command.NetAddress;
 import com.gadgetworks.flyweight.command.NetEndpoint;
 import com.gadgetworks.flyweight.command.NetworkId;
 import com.gadgetworks.flyweight.command.Packet;
-import com.gadgetworks.flyweight.controller.DeviceController;
 import com.gadgetworks.flyweight.controller.IGatewayInterface;
 import com.gadgetworks.flyweight.controller.TcpClientInterface;
 
@@ -37,7 +36,7 @@ import com.gadgetworks.flyweight.controller.TcpClientInterface;
  */
 public class CheDevice implements IDevice {
 
-	private static final Log	LOGGER					= LogFactory.getLog(DeviceController.class);
+	private static final Log	LOGGER					= LogFactory.getLog(RadioController.class);
 
 	private static final String	RECEIVER_THREAD_NAME	= "Packet Receiver";
 

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandFactory.java,v 1.2 2013/02/23 05:42:09 jeffw Exp $
+ *  $Id: CommandFactory.java,v 1.3 2013/02/24 22:54:25 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.flyweight.command;
 
@@ -10,9 +10,9 @@ import java.io.IOException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.gadgetworks.codeshelf.device.RadioController;
 import com.gadgetworks.flyweight.bitfields.BitFieldInputStream;
 import com.gadgetworks.flyweight.bitfields.NBitInteger;
-import com.gadgetworks.flyweight.controller.DeviceController;
 
 // --------------------------------------------------------------------------
 /**
@@ -20,7 +20,7 @@ import com.gadgetworks.flyweight.controller.DeviceController;
  */
 public final class CommandFactory {
 
-	private static final Log	LOGGER	= LogFactory.getLog(DeviceController.class);
+	private static final Log	LOGGER	= LogFactory.getLog(RadioController.class);
 
 	private CommandFactory() {
 

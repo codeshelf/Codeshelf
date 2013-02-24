@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CsNetworkController.java,v 1.1 2013/02/23 05:42:09 jeffw Exp $
+ *  $Id: WebSocketController.java,v 1.1 2013/02/24 22:54:25 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -28,7 +28,6 @@ import com.gadgetworks.codeshelf.web.websession.command.req.WebSessionReqCmdNetA
 import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdEnum;
 import com.gadgetworks.codeshelf.web.websocket.ICsWebsocketClientMsgHandler;
 import com.gadgetworks.flyweight.command.NetMacAddress;
-import com.gadgetworks.flyweight.controller.DeviceController;
 import com.gadgetworks.flyweight.controller.IController;
 import com.gadgetworks.flyweight.controller.IControllerEventListener;
 import com.gadgetworks.flyweight.controller.IGatewayInterface;
@@ -40,9 +39,9 @@ import com.gadgetworks.flyweight.controller.WirelessDeviceEventHandler;
  * @author jeffw
  *
  */
-public class CsNetworkController implements ICsWebsocketClientMsgHandler, IControllerEventListener {
+public class WebSocketController implements ICsWebsocketClientMsgHandler, IControllerEventListener {
 
-	private static final Logger			LOGGER		= LoggerFactory.getLogger(CsNetworkController.class);
+	private static final Logger			LOGGER		= LoggerFactory.getLogger(WebSocketController.class);
 
 	private Map<UUID, Che>				mCheMap;
 	private IController					mRadioController;
@@ -55,7 +54,7 @@ public class CsNetworkController implements ICsWebsocketClientMsgHandler, IContr
 	private String						mNetworkId;
 	private String						mNetworkCredential;
 
-	public CsNetworkController() {
+	public WebSocketController() {
 		mCheMap = new HashMap<UUID, Che>();
 
 		mOrganizationId = System.getProperty("organizationId");
@@ -68,7 +67,7 @@ public class CsNetworkController implements ICsWebsocketClientMsgHandler, IContr
 	public final void start(IWebSocketClient inWebSocketClient) {
 		mWebSocketClient = inWebSocketClient;
 		mGatewaytInterface = new TcpServerInterface();
-		mRadioController = new DeviceController(mGatewaytInterface);
+		mRadioController = new RadioController(mGatewaytInterface);
 		mRadioController.addControllerEventListener(this);
 
 		// Start the background startup and wait until it's finished.
