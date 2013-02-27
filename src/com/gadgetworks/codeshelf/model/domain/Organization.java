@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Organization.java,v 1.27 2013/02/27 07:29:53 jeffw Exp $
+ *  $Id: Organization.java,v 1.28 2013/02/27 22:06:27 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -31,7 +31,7 @@ import org.codehaus.jackson.annotate.JsonProperty;
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.flyweight.command.NetMacAddress;
+import com.gadgetworks.flyweight.command.NetGuid;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -170,8 +170,8 @@ public class Organization extends DomainObjectABC {
 		// Create the default network for the facility.
 		CodeshelfNetwork network = facility.createNetwork("DEFAULT");
 		
-		Che che1 = network.createChe("CHE1", new NetMacAddress("0x00000001"));
-		Che che2 = network.createChe("CHE2", new NetMacAddress("0x00000002"));
+		Che che1 = network.createChe("CHE1", new NetGuid("0x00000001"));
+		Che che2 = network.createChe("CHE2", new NetGuid("0x00000002"));
 
 		// Create the generic container kind (for all unspecified containers)
 		facility.createDefaultContainerKind();

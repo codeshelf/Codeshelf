@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CheDevice.java,v 1.5 2013/02/27 01:17:02 jeffw Exp $
+ *  $Id: CheDevice.java,v 1.6 2013/02/27 22:06:27 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -13,7 +13,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import com.gadgetworks.flyweight.command.NetAddress;
-import com.gadgetworks.flyweight.command.NetMacAddress;
+import com.gadgetworks.flyweight.command.NetGuid;
 import com.gadgetworks.flyweight.controller.INetworkDevice;
 import com.gadgetworks.flyweight.controller.NetworkDeviceStateEnum;
 
@@ -28,13 +28,13 @@ public class CheDevice implements INetworkDevice {
 	// MAC address.
 	@Accessors(prefix = "m")
 	@Getter
-	private NetMacAddress			mMacAddress;
+	private NetGuid					mGuid;
 
 	// The CHE's net address.
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
-	private NetAddress				mNetAddress;
+	private NetAddress				mAddress;
 
 	// The network device state.
 	@Accessors(prefix = "m")
@@ -60,14 +60,14 @@ public class CheDevice implements INetworkDevice {
 	@Setter
 	private long					mLastContactTime;
 
-	public CheDevice(final NetMacAddress inMacAddress) {
-		mMacAddress = inMacAddress;
+	public CheDevice(final NetGuid inGuid) {
+		mGuid = inGuid;
 		mCheStateEnum = CheStateEnum.IDLE;
 	}
 
 	@Override
-	public final boolean doesMatch(NetMacAddress inMacAddress) {
-		return ((mMacAddress != null) && (mMacAddress.equals(inMacAddress)));
+	public final boolean doesMatch(NetGuid inGuid) {
+		return ((mGuid != null) && (mGuid.equals(inGuid)));
 	}
 
 	@Override

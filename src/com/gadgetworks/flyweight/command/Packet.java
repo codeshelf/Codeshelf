@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: Packet.java,v 1.1 2013/02/20 08:28:23 jeffw Exp $
+ *  $Id: Packet.java,v 1.2 2013/02/27 22:06:27 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.flyweight.command;
@@ -80,11 +80,7 @@ public final class Packet implements IPacket {
 	 *  @param inDstAddr
 	 *  @throws NullPointerException
 	 */
-	public Packet(final ICommand inCommand,
-		final NetworkId inNetworkId,
-		final NetAddress inSrcAddr,
-		final NetAddress inDstAddr,
-		final boolean inAckRequested) {
+	public Packet(final ICommand inCommand, final NetworkId inNetworkId, final NetAddress inSrcAddr, final NetAddress inDstAddr, final boolean inAckRequested) {
 
 		mNetworkId = inNetworkId;
 		mPacketType = new NBitInteger(IPacket.ACK_REQUIRED_BITS, STD_PACKET);
@@ -116,9 +112,9 @@ public final class Packet implements IPacket {
 
 		mPacketVersion = new PacketVersion(IPacket.PACKET_VERSION_0);
 		mReservedHeaderBits = new NBitInteger(IPacket.RESERVED_HEADER_BITS, NBitInteger.INIT_VALUE);
-		mNetworkId = IPacket.BROADCAST_NETWORK_ID;
-		mSrcAddr = IPacket.BROADCAST_ADDRESS;
-		mDstAddr = IPacket.BROADCAST_ADDRESS;
+		mNetworkId = new NetworkId(IPacket.BROADCAST_NETWORK_ID);
+		mSrcAddr = new NetAddress(IPacket.BROADCAST_ADDRESS);
+		mDstAddr = new NetAddress(IPacket.BROADCAST_ADDRESS);
 		mPacketType = new NBitInteger(IPacket.ACK_REQUIRED_BITS, STD_PACKET);
 	}
 
@@ -133,8 +129,7 @@ public final class Packet implements IPacket {
 		if (mCommand != null) {
 			cmdString = mCommand.toString();
 		}
-		resultStr = "net:" + mNetworkId.toString() + " src:" + mSrcAddr.toString() + " dst:" + mDstAddr.toString() + " "
-				+ cmdString;
+		resultStr = "net:" + mNetworkId.toString() + " src:" + mSrcAddr.toString() + " dst:" + mDstAddr.toString() + " " + cmdString;
 		if (mPacketType.getValue() == IPacket.ACK_PACKET) {
 			resultStr += " ackid:" + getAckId() + " ackState:" + getAckState() + " sendcnt:" + getSendCount();
 		}

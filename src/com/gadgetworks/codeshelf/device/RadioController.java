@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: RadioController.java,v 1.3 2013/02/27 07:29:53 jeffw Exp $
+ *  $Id: RadioController.java,v 1.4 2013/02/27 22:06:27 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.device;
@@ -33,7 +33,7 @@ import com.gadgetworks.flyweight.command.ICommand;
 import com.gadgetworks.flyweight.command.IPacket;
 import com.gadgetworks.flyweight.command.NetAddress;
 import com.gadgetworks.flyweight.command.NetChannelValue;
-import com.gadgetworks.flyweight.command.NetMacAddress;
+import com.gadgetworks.flyweight.command.NetGuid;
 import com.gadgetworks.flyweight.command.NetworkId;
 import com.gadgetworks.flyweight.command.Packet;
 import com.gadgetworks.flyweight.controller.FTDIInterface;
@@ -83,7 +83,7 @@ public class RadioController implements IController {
 	private static final int									MAX_NETWORK_TEST_NUM				= 64;
 
 	private Boolean												mShouldRun							= true;
-	private Map<NetMacAddress, INetworkDevice>					mDeviceMacAddrMap;
+	private Map<NetGuid, INetworkDevice>						mDeviceGuidMap;
 	private Map<NetAddress, INetworkDevice>						mDeviceNetAddrMap;
 	private IGatewayInterface									mGatewayInterface;
 	private NetAddress											mServerAddress;
@@ -114,22 +114,22 @@ public class RadioController implements IController {
 	public RadioController(final IGatewayInterface inGatewayInterface) {
 
 		mGatewayInterface = inGatewayInterface;
-		mServerAddress = IPacket.GATEWAY_ADDRESS;
-		mBroadcastAddress = IPacket.BROADCAST_ADDRESS;
-		mBroadcastNetworkId = IPacket.BROADCAST_NETWORK_ID;
+		mServerAddress = new NetAddress(IPacket.GATEWAY_ADDRESS);
+		mBroadcastAddress = new NetAddress(IPacket.BROADCAST_ADDRESS);
+		mBroadcastNetworkId = new NetworkId(IPacket.BROADCAST_NETWORK_ID);
 		mEventListeners = new ArrayList<IControllerEventListener>();
 
 		//Random random = new Random(System.currentTimeMillis());
 		//		int randNetworkNum = random.nextInt(NetworkId.MAX_NETWORK_ID - 1) + 1;
 		String networkIdStr = "0x01";// + Integer.toString(randNetworkNum, 10);
-		mNetworkId = IPacket.DEFAULT_NETWORK_ID;
+		mNetworkId = new NetworkId(IPacket.DEFAULT_NETWORK_ID);
 
 		mChannelSelected = false;
 		mChannelInfo = new ChannelInfo[MAX_CHANNELS];
 		mRadioChannel = 0;
 
 		mPendingAcksMap = new HashMap<NetAddress, BlockingQueue<IPacket>>();
-		mDeviceMacAddrMap = new HashMap<NetMacAddress, INetworkDevice>();
+		mDeviceGuidMap = new HashMap<NetGuid, INetworkDevice>();
 		mDeviceNetAddrMap = new HashMap<NetAddress, INetworkDevice>();
 		mNextAddress = 1;
 	}
@@ -704,7 +704,7 @@ public class RadioController implements IController {
 	private void processAssocReqCommand(CommandAssocReq inCommand, NetAddress inSrcAddr) {
 
 		// First get the unique ID from the command.
-		String uid = "0x" + inCommand.getGUID();
+		String uid = inCommand.getGUID();
 
 		LOGGER.info("AssocReq rcvd: " + inCommand.toString());
 
@@ -714,14 +714,14 @@ public class RadioController implements IController {
 		// Indicate to listeners that there is a new actor.
 		boolean canAssociate = false;
 		for (IControllerEventListener listener : mEventListeners) {
-			if (listener.canNetworkDeviceAssociate(new NetMacAddress(uid))) {
+			if (listener.canNetworkDeviceAssociate(new NetGuid("0x" + uid))) {
 				canAssociate = true;
 			}
 		}
 
 		if (canAssociate) {
 
-			INetworkDevice foundDevice = mDeviceMacAddrMap.get(new NetMacAddress(uid.getBytes()));
+			INetworkDevice foundDevice = mDeviceGuidMap.get(new NetGuid("0x" + uid));
 
 			if (foundDevice != null) {
 				foundDevice.setDeviceStateEnum(NetworkDeviceStateEnum.SETUP);
@@ -748,13 +748,8 @@ public class RadioController implements IController {
 				}
 				LOGGER.info("----------------------------------------------------");
 
-				// If the device has no address then assign one.
-				if ((foundDevice.getNetAddress() == null) || (foundDevice.getNetAddress().equals(mServerAddress))) {
-					foundDevice.setNetAddress(new NetAddress(mNextAddress++));
-				}
-
 				// Create and send an assign command to the remote that just woke up.
-				CommandAssocResp assignCmd = new CommandAssocResp(uid, mNetworkId, foundDevice.getNetAddress());
+				CommandAssocResp assignCmd = new CommandAssocResp(uid, mNetworkId, foundDevice.getAddress());
 				this.sendCommand(assignCmd, mBroadcastNetworkId, mBroadcastAddress, false);
 				foundDevice.setDeviceStateEnum(NetworkDeviceStateEnum.ASSIGN_SENT);
 
@@ -787,7 +782,7 @@ public class RadioController implements IController {
 		// First get the unique ID from the command.
 		String uid = inCommand.getGUID();
 
-		INetworkDevice foundDevice = mDeviceMacAddrMap.get(new NetMacAddress(uid.getBytes()));
+		INetworkDevice foundDevice = mDeviceGuidMap.get(new NetGuid(uid.getBytes()));
 
 		if (foundDevice != null) {
 			CommandAssocAck ackCmd;
@@ -809,8 +804,8 @@ public class RadioController implements IController {
 			// If the found device has the wrong GUID then we have the wrong device.
 			// (This could be two matching network IDs on the same channel.  
 			// This could be a serious flaw in the network protocol.)
-			if (!foundDevice.getMacAddress().toString().equals(uid)) {
-				LOGGER.info("AssocCheck - NOT ASSOC: GUID mismatch: " + foundDevice.getMacAddress() + " and " + uid);
+			if (!foundDevice.getGuid().toString().equals(uid)) {
+				LOGGER.info("AssocCheck - NOT ASSOC: GUID mismatch: " + foundDevice.getGuid() + " and " + uid);
 				status = CommandAssocAck.IS_NOT_ASSOCIATED;
 			}
 
@@ -992,8 +987,14 @@ public class RadioController implements IController {
 	 */
 	@Override
 	public final void addNetworkDevice(final INetworkDevice inNetworkDevice) {
-		mDeviceMacAddrMap.put(inNetworkDevice.getMacAddress(), inNetworkDevice);
-		mDeviceNetAddrMap.put(inNetworkDevice.getNetAddress(), inNetworkDevice);
+		
+		// If the device has no address then assign one.
+		if ((inNetworkDevice.getAddress() == null) || (inNetworkDevice.getAddress().equals(mServerAddress))) {
+			inNetworkDevice.setAddress(new NetAddress(mNextAddress++));
+		}
+
+		mDeviceGuidMap.put(inNetworkDevice.getGuid(), inNetworkDevice);
+		mDeviceNetAddrMap.put(inNetworkDevice.getAddress(), inNetworkDevice);
 	}
 
 	// --------------------------------------------------------------------------
@@ -1002,7 +1003,7 @@ public class RadioController implements IController {
 	 */
 	@Override
 	public final void removeNetworkDevice(INetworkDevice inNetworkDevice) {
-		mDeviceMacAddrMap.remove(inNetworkDevice.getMacAddress());
-		mDeviceNetAddrMap.remove(inNetworkDevice.getNetAddress());
+		mDeviceGuidMap.remove(inNetworkDevice.getGuid());
+		mDeviceNetAddrMap.remove(inNetworkDevice.getAddress());
 	}
 }

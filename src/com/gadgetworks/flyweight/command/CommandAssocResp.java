@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandAssocResp.java,v 1.1 2013/02/20 08:28:23 jeffw Exp $
+ *  $Id: CommandAssocResp.java,v 1.2 2013/02/27 22:06:27 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.flyweight.command;
@@ -63,9 +63,9 @@ public final class CommandAssocResp extends CommandAssocABC {
 	public CommandAssocResp() {
 		super(new NetCommandId(ASSOC_RESP_COMMAND));
 		mAddressSpacing = new NBitInteger((byte) IPacket.ADDRESS_SPACING_BITS, NBitInteger.INIT_VALUE);
-		mAddressAssigned = IPacket.BROADCAST_ADDRESS;
+		mAddressAssigned = new NetAddress(IPacket.BROADCAST_ADDRESS);
 		mNetworkSpacing = new NBitInteger((byte) IPacket.NETWORK_NUM_SPACING_BITS, NBitInteger.INIT_VALUE);
-		mNetworkId = IPacket.BROADCAST_NETWORK_ID;
+		mNetworkId = new NetworkId(IPacket.BROADCAST_NETWORK_ID);
 	}
 
 	/* --------------------------------------------------------------------------

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CheDeviceEmbedded.java,v 1.1 2013/02/27 01:17:02 jeffw Exp $
+ *  $Id: CheDeviceEmbedded.java,v 1.2 2013/02/27 22:06:27 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -50,7 +50,7 @@ public class CheDeviceEmbedded implements IDevice {
 	private String				mGUID					= "00000001";
 
 	public CheDeviceEmbedded() {
-		mNetworkId = IPacket.DEFAULT_NETWORK_ID;
+		mNetworkId = new NetworkId(IPacket.DEFAULT_NETWORK_ID);
 	}
 
 	@Override
@@ -80,7 +80,11 @@ public class CheDeviceEmbedded implements IDevice {
 							String scanValue = reader.readLine();
 
 							ICommand command = new CommandControl(NetEndpoint.PRIMARY_ENDPOINT, scanValue);
-							IPacket packet = new Packet(command, IPacket.BROADCAST_NETWORK_ID, IPacket.BROADCAST_ADDRESS, IPacket.GATEWAY_ADDRESS, false);
+							IPacket packet = new Packet(command,
+								new NetworkId(IPacket.BROADCAST_NETWORK_ID),
+								new NetAddress(IPacket.BROADCAST_ADDRESS),
+								new NetAddress(IPacket.GATEWAY_ADDRESS),
+								false);
 							command.setPacket(packet);
 							sendPacket(packet);
 						}
@@ -107,7 +111,11 @@ public class CheDeviceEmbedded implements IDevice {
 							mGatewayInterface.startInterface();
 							if (mGatewayInterface.isStarted()) {
 								ICommand command = new CommandAssocReq(DEVICE_VERSION, RESET_REASON_POWERON, mGUID);
-								IPacket packet = new Packet(command, IPacket.BROADCAST_NETWORK_ID, IPacket.BROADCAST_ADDRESS, IPacket.GATEWAY_ADDRESS, false);
+								IPacket packet = new Packet(command,
+									new NetworkId(IPacket.BROADCAST_NETWORK_ID),
+									new NetAddress(IPacket.BROADCAST_ADDRESS),
+									new NetAddress(IPacket.GATEWAY_ADDRESS),
+									false);
 								command.setPacket(packet);
 								sendPacket(packet);
 							} else {

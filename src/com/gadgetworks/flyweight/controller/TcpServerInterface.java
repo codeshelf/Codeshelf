@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: TcpServerInterface.java,v 1.2 2013/02/20 20:39:00 jeffw Exp $
+ *  $Id: TcpServerInterface.java,v 1.3 2013/02/27 22:06:27 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.flyweight.controller;
 
@@ -80,13 +80,13 @@ public class TcpServerInterface extends SerialInterfaceABC {
 						remote.clientSocket = clientSocket;
 						remote.inputStream = clientSocket.getInputStream();
 						remote.outputStream = clientSocket.getOutputStream();
-//						byte[] putInCharMode = { (byte) 255, (byte) 251, (byte) 1, (byte) 255, (byte) 251, (byte) 3, (byte) 255, (byte) 252, (byte) 34 };
-//						remote.outputStream.write(putInCharMode);
+						//						byte[] putInCharMode = { (byte) 255, (byte) 251, (byte) 1, (byte) 255, (byte) 251, (byte) 3, (byte) 255, (byte) 252, (byte) 34 };
+						//						remote.outputStream.write(putInCharMode);
 						mRemotes.add(remote);
 					} catch (IOException e) {
 						System.err.println("Accept failed.");
 						System.err.println(e);
-						System.exit(1);
+						//System.exit(1);
 					}
 				}
 			}
@@ -99,7 +99,13 @@ public class TcpServerInterface extends SerialInterfaceABC {
 	 * @see com.gadgetworks.flyweight.controller.SerialInterfaceABC#doResetInterface()
 	 */
 	@Override
-	protected void doResetInterface() {
+	protected final void doResetInterface() {
+		try {
+			mServerSocket.close();
+			doSetupConnection();
+		} catch (IOException e1) {
+			LOGGER.error("", e1);
+		}
 		for (Remote remote : mRemotes) {
 			try {
 				remote.clientSocket.close();
@@ -180,6 +186,7 @@ public class TcpServerInterface extends SerialInterfaceABC {
 					}
 				} catch (IOException e) {
 					LOGGER.error("", e);
+					doResetInterface();
 				}
 			}
 		}
@@ -198,6 +205,7 @@ public class TcpServerInterface extends SerialInterfaceABC {
 					remote.outputStream.write(inByte);
 				} catch (IOException e) {
 					LOGGER.error("", e);
+					doResetInterface();
 				}
 			}
 		}
@@ -215,6 +223,7 @@ public class TcpServerInterface extends SerialInterfaceABC {
 					remote.outputStream.write(inBytes, 0, inLength);
 				} catch (IOException e) {
 					LOGGER.error("", e);
+					doResetInterface();
 				}
 			}
 		}

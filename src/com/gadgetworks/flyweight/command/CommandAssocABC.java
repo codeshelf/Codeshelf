@@ -1,15 +1,15 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandAssocABC.java,v 1.1 2013/02/20 08:28:23 jeffw Exp $
+ *  $Id: CommandAssocABC.java,v 1.2 2013/02/27 22:06:27 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.flyweight.command;
 
 import java.io.IOException;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.flyweight.bitfields.BitFieldInputStream;
 import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
@@ -38,7 +38,7 @@ public abstract class CommandAssocABC extends ExtendedCommandABC {
 	public static final byte	ASSOC_CHECK_COMMAND	= 3;
 	public static final byte	ASSOC_ACK_COMMAND	= 4;
 
-	private static final Log	LOGGER				= LogFactory.getLog(CommandAssocABC.class);
+	private static final Logger	LOGGER				= LoggerFactory.getLogger(CommandAssocABC.class);
 
 	private String				mGUID;
 
@@ -52,7 +52,7 @@ public abstract class CommandAssocABC extends ExtendedCommandABC {
 		super(NetEndpoint.MGMT_ENDPOINT, inExtendedCommandID);
 
 		try {
-			if (inRemoteGUID.length() != INetworkDevice.UNIQUEID_BYTES)
+			if (inRemoteGUID.length() != NetGuid.NET_GUID_HEX_CHARS)
 				throw new OutOfRangeException("Unique ID is the wrong size");
 		} catch (OutOfRangeException e) {
 			LOGGER.error("", e);
@@ -113,8 +113,8 @@ public abstract class CommandAssocABC extends ExtendedCommandABC {
 		super.doFromStream(inInputStream, inCommandByteCount);
 		try {
 			// Read the unique ID.
-			byte[] temp = new byte[INetworkDevice.UNIQUEID_BYTES];
-			inInputStream.readBytes(temp, INetworkDevice.UNIQUEID_BYTES);
+			byte[] temp = new byte[NetGuid.NET_GUID_HEX_CHARS];
+			inInputStream.readBytes(temp, NetGuid.NET_GUID_HEX_CHARS);
 			mGUID = new String(temp);
 
 		} catch (IOException e) {
@@ -127,14 +127,14 @@ public abstract class CommandAssocABC extends ExtendedCommandABC {
 	 * @see com.gadgetworks.controller.CommandABC#doComputeCommandSize()
 	 */
 	protected int doComputeCommandSize() {
-		return INetworkDevice.UNIQUEID_BYTES + 1;
+		return NetGuid.NET_GUID_BYTES + 1;
 	}
 
 	// --------------------------------------------------------------------------
 	/**
 	 *  @return
 	 */
-	public String getGUID() {
+	public final String getGUID() {
 		return mGUID;
 	}
 }

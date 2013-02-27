@@ -1,12 +1,12 @@
 /*******************************************************************************
  *  OmniBox
  *  Copyright (c) 2005-2007, Jeffrey B. Williams, All rights reserved
- *  $Id: INetworkDevice.java,v 1.2 2013/02/27 01:17:02 jeffw Exp $
+ *  $Id: INetworkDevice.java,v 1.3 2013/02/27 22:06:27 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.flyweight.controller;
 
 import com.gadgetworks.flyweight.command.NetAddress;
-import com.gadgetworks.flyweight.command.NetMacAddress;
+import com.gadgetworks.flyweight.command.NetGuid;
 
 // --------------------------------------------------------------------------
 /**
@@ -18,36 +18,35 @@ public interface INetworkDevice {
 	String	SW_VERSION_KEY		= "sw_version";
 
 	byte	PROTOCOL_VERSION_1	= 1;
-	int		UNIQUEID_BYTES		= 8;
 
 	// --------------------------------------------------------------------------
 	/**
 	 *  Every device has a globally unique ID.
-	 *  @return	The MacAddr for this device.
+	 *  @return	The GUID for this device.
 	 */
-	NetMacAddress getMacAddress();
+	NetGuid getGuid();
 	
 	// --------------------------------------------------------------------------
 	/**
-	 * Set the MAC address for this device.
-	 * @param inMacAddress
+	 * Set the GUID for this device.
+	 * @param inGuid
 	 */
 	// You can't set this - it's immutable for the object, so set it at construction.
-	// void setMacAddress(NetMacAddress inMacAddress);
+	// void setGuid(NetGuid inGuid);
 
 	// --------------------------------------------------------------------------
 	/**
 	 *  Get the network address assigned to this device's session.
 	 *  @return	The network address
 	 */
-	NetAddress getNetAddress();
+	NetAddress getAddress();
 
 	// --------------------------------------------------------------------------
 	/**
 	 *  Set the network address for this device.
 	 *  @param inNetAddr	The network address
 	 */
-	void setNetAddress(NetAddress inNetAddr);
+	void setAddress(NetAddress inNetAddr);
 
 	// --------------------------------------------------------------------------
 	/**
@@ -65,11 +64,11 @@ public interface INetworkDevice {
 
 	// --------------------------------------------------------------------------
 	/**
-	 *  Determine if this device's session matches a device MacAddr.
-	 *  @param inMacAddress	The MacAddr
+	 *  Determine if this device's session matches a device GUID.
+	 *  @param inGuid	The GUID
 	 *  @return	True if there is a match.
 	 */
-	boolean doesMatch(NetMacAddress inMacAddress);
+	boolean doesMatch(NetGuid inGuid);
 
 	// --------------------------------------------------------------------------
 	/**

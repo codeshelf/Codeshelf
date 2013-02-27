@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WirelessDeviceABC.java,v 1.2 2013/02/27 07:29:53 jeffw Exp $
+ *  $Id: WirelessDeviceABC.java,v 1.3 2013/02/27 22:06:27 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -11,8 +11,6 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import javax.persistence.Inheritance;
-import javax.persistence.InheritanceType;
 import javax.persistence.ManyToOne;
 import javax.persistence.Transient;
 
@@ -30,7 +28,7 @@ import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.flyweight.command.NetAddress;
-import com.gadgetworks.flyweight.command.NetMacAddress;
+import com.gadgetworks.flyweight.command.NetGuid;
 import com.gadgetworks.flyweight.controller.NetworkDeviceStateEnum;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -72,7 +70,7 @@ public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNet
 	private CodeshelfNetwork		parent;
 
 	@Column(nullable = false)
-	private byte[]					macAddress;
+	private byte[]					deviceGuid;
 
 	@Column(nullable = false)
 	@Getter
@@ -115,7 +113,7 @@ public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNet
 	private byte					networkAddress;
 
 	public WirelessDeviceABC() {
-		macAddress = new byte[NetMacAddress.NET_MACADDR_BYTES];
+		deviceGuid = new byte[NetGuid.NET_GUID_BYTES];
 		publicKey = "";
 		description = "";
 		lastBatteryLevel = 0;
@@ -129,17 +127,17 @@ public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNet
 		parent = inParent;
 	}
 
-	public final NetMacAddress getMacAddress() {
-		return new NetMacAddress(macAddress);
+	public final NetGuid getDeviceGuid() {
+		return new NetGuid(deviceGuid);
 	}
 
 	@JsonProperty
-	public final String getMacAddressStr() {
-		return new NetMacAddress(macAddress).toString();
+	public final String getDeviceGuidStr() {
+		return new NetGuid(deviceGuid).toString();
 	}
 
-	public final void setMacAddress(NetMacAddress inMacAddress) {
-		macAddress = inMacAddress.getParamValueAsByteArray();
+	public final void setDeviceGuid(NetGuid inGuid) {
+		deviceGuid = inGuid.getParamValueAsByteArray();
 	}
 
 	public final void setNetAddress(NetAddress inNetworkAddress) {
@@ -150,8 +148,8 @@ public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNet
 		return new NetAddress(networkAddress);
 	}
 
-	public final boolean doesMatch(NetMacAddress inMacAddr) {
-		return Arrays.equals(macAddress, inMacAddr.getParamValueAsByteArray());
+	public final boolean doesMatch(NetGuid inGuid) {
+		return Arrays.equals(deviceGuid, inGuid.getParamValueAsByteArray());
 	}
 
 	public final long getLastContactTime() {
@@ -172,7 +170,7 @@ public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNet
 	}
 
 	public final void setNetworkDeviceState(NetworkDeviceStateEnum inState) {
-		LOGGER.debug(Arrays.toString(macAddress) + " state changed: " + networkDeviceStatus + "->" + inState);
+		LOGGER.debug(Arrays.toString(deviceGuid) + " state changed: " + networkDeviceStatus + "->" + inState);
 		networkDeviceStatus = inState;
 	}
 

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandNetMgmtCheck.java,v 1.1 2013/02/20 08:28:23 jeffw Exp $
+ *  $Id: CommandNetMgmtCheck.java,v 1.2 2013/02/27 22:06:27 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.flyweight.command;
@@ -172,8 +172,8 @@ public final class CommandNetMgmtCheck extends CommandNetMgmtABC {
 			// Read the network ID selected.
 			mNetworkId = new NetworkId((byte) 0x00);
 			inInputStream.readNBitInteger(mNetworkId);
-			byte[] temp = new byte[INetworkDevice.UNIQUEID_BYTES];
-			inInputStream.readBytes(temp, INetworkDevice.UNIQUEID_BYTES);
+			byte[] temp = new byte[NetGuid.NET_GUID_HEX_CHARS];
+			inInputStream.readBytes(temp, NetGuid.NET_GUID_HEX_CHARS);
 			mGUID = new String(temp);
 			mChannel = inInputStream.readByte();
 			// Yowsa!  No support for unsigned bytes in Java.  Gotta convert to short.
