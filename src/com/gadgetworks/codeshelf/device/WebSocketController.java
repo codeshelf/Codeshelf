@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSocketController.java,v 1.1 2013/02/24 22:54:25 jeffw Exp $
+ *  $Id: WebSocketController.java,v 1.2 2013/02/27 01:17:02 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -20,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.model.domain.Che;
-import com.gadgetworks.codeshelf.model.domain.WirelessDevice;
 import com.gadgetworks.codeshelf.web.websession.command.IWebSessionCmd;
 import com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmd;
 import com.gadgetworks.codeshelf.web.websession.command.req.WebSessionReqCmdEnum;
@@ -33,7 +32,6 @@ import com.gadgetworks.flyweight.controller.IControllerEventListener;
 import com.gadgetworks.flyweight.controller.IGatewayInterface;
 import com.gadgetworks.flyweight.controller.INetworkDevice;
 import com.gadgetworks.flyweight.controller.TcpServerInterface;
-import com.gadgetworks.flyweight.controller.WirelessDeviceEventHandler;
 
 /**
  * @author jeffw
@@ -47,7 +45,6 @@ public class WebSocketController implements ICsWebsocketClientMsgHandler, IContr
 	private IController					mRadioController;
 	private IGatewayInterface			mGatewaytInterface;
 	private IWebSocketClient			mWebSocketClient;
-	private WirelessDeviceEventHandler	mWirelessDeviceEventHandler;
 	private int							mNextMsgNum	= 1;
 	private String						mOrganizationId;
 	private String						mFacilityId;
@@ -235,8 +232,7 @@ public class WebSocketController implements ICsWebsocketClientMsgHandler, IContr
 					}
 					che.setPersistentId(uuid);
 					che.setDomainId(cheUpdateNode.get(IWebSessionReqCmd.SHORT_DOMAIN_ID).asText());
-					WirelessDevice device = new WirelessDevice();
-					device.setMacAddress(new NetMacAddress(che.getDomainId().getBytes()));
+					INetworkDevice device = new CheDevice(new NetMacAddress(che.getDomainId().getBytes()));
 					mRadioController.addNetworkDevice(device);
 					LOGGER.info("Updated che: " + che.getDomainId());
 					break;
@@ -254,24 +250,14 @@ public class WebSocketController implements ICsWebsocketClientMsgHandler, IContr
 	}
 
 	@Override
-	public final boolean canNetworkDeviceAssociate(final String inGUID) {
+	public final boolean canNetworkDeviceAssociate(final NetMacAddress inMacAddress) {
 		boolean result = false;
 		for (Che che : mCheMap.values()) {
-			if (che.getDomainId().equals(inGUID)) {
+			if (che.getDomainId().equals(inMacAddress.toString())) {
 				result = true;
 			}
 		}
 		return result;
-	}
-
-	@Override
-	public void deviceAdded(INetworkDevice inNetworkDevice) {
-
-	}
-
-	@Override
-	public void deviceRemoved(INetworkDevice inNetworkDevice) {
-
 	}
 
 	@Override

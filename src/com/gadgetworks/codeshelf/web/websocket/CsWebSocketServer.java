@@ -1,19 +1,19 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CsWebSocketServer.java,v 1.1 2013/02/10 08:23:07 jeffw Exp $
+ *  $Id: CsWebSocketServer.java,v 1.2 2013/02/27 01:17:02 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websocket;
 
 import java.net.InetSocketAddress;
 import java.util.concurrent.CopyOnWriteArraySet;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.java_websocket.IWebSocket;
 import org.java_websocket.WebSocket;
 import org.java_websocket.handshake.ClientHandshake;
 import org.java_websocket.server.WebSocketServer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.web.websession.IWebSessionManager;
 import com.google.inject.Inject;
@@ -21,7 +21,7 @@ import com.google.inject.name.Named;
 
 public class CsWebSocketServer extends WebSocketServer implements IWebSocketServer {
 
-	private static final Log				LOGGER	= LogFactory.getLog(CsWebSocketServer.class);
+	private static final Logger				LOGGER	= LoggerFactory.getLogger(CsWebSocketServer.class);
 
 	private IWebSessionManager				mWebSessionManager;
 	private CopyOnWriteArraySet<IWebSocket>	mWebSockets;

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: GenericDaoABC.java,v 1.18 2013/02/10 01:11:41 jeffw Exp $
+ *  $Id: GenericDaoABC.java,v 1.19 2013/02/27 01:17:03 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -15,8 +15,8 @@ import java.util.UUID;
 import javax.persistence.OptimisticLockException;
 import javax.persistence.PersistenceException;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.Ebean;
 import com.avaje.ebean.Query;
@@ -31,7 +31,7 @@ import com.gadgetworks.codeshelf.model.domain.IDomainObjectTree;
  */
 public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDao<T> {
 
-	private static final Log	LOGGER		= LogFactory.getLog(GenericDaoABC.class);
+	private static final Logger	LOGGER		= LoggerFactory.getLogger(GenericDaoABC.class);
 
 	private List<IDaoListener>	mListeners	= new ArrayList<IDaoListener>();
 

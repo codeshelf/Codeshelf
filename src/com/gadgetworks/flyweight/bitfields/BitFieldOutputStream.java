@@ -1,18 +1,16 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: BitFieldOutputStream.java,v 1.1 2013/02/20 08:28:23 jeffw Exp $
+ *  $Id: BitFieldOutputStream.java,v 1.2 2013/02/27 01:17:03 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.flyweight.bitfields;
 
 import java.io.IOException;
 import java.io.OutputStream;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.flyweight.command.NetAddress;
-import com.gadgetworks.flyweight.command.NetworkId;
 import com.gadgetworks.flyweight.controller.IGatewayInterface;
 
 // --------------------------------------------------------------------------
@@ -25,7 +23,7 @@ import com.gadgetworks.flyweight.controller.IGatewayInterface;
  */
 public final class BitFieldOutputStream {
 
-	private static final Log	LOGGER			= LogFactory.getLog(BitFieldOutputStream.class);
+	private static final Logger	LOGGER			= LoggerFactory.getLogger(BitFieldOutputStream.class);
 
 	public static final int		BITS_PER_BYTE	= 8;
 
@@ -255,7 +253,7 @@ public final class BitFieldOutputStream {
 		this.writeByte((byte) len);
 		this.localWrite(inString.getBytes(), len);
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * Insert a raw END character into the stream (frame end).

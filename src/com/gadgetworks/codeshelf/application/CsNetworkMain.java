@@ -1,7 +1,7 @@
 /*******************************************************************************
 CodeshelfWebSocketServer *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CsNetworkMain.java,v 1.3 2013/02/24 22:54:25 jeffw Exp $
+ *  $Id: CsNetworkMain.java,v 1.4 2013/02/27 01:17:03 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -10,9 +10,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Properties;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.java_websocket.client.WebSocketClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.device.WebSocketController;
 import com.gadgetworks.codeshelf.model.dao.DaoProvider;
@@ -39,7 +39,7 @@ public final class CsNetworkMain {
 		Util.initLogging();
 	}
 
-	private static final Log	LOGGER	= LogFactory.getLog(CsNetworkMain.class);
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(CsNetworkMain.class);
 
 	// --------------------------------------------------------------------------
 	/**

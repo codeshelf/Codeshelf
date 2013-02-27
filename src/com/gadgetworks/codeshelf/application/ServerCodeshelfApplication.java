@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ServerCodeshelfApplication.java,v 1.5 2013/02/24 22:54:25 jeffw Exp $
+ *  $Id: ServerCodeshelfApplication.java,v 1.6 2013/02/27 01:17:03 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -23,11 +23,7 @@ import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
 import com.gadgetworks.codeshelf.model.domain.User;
-import com.gadgetworks.codeshelf.model.domain.WirelessDevice;
-import com.gadgetworks.codeshelf.model.domain.WirelessDevice.IWirelessDeviceDao;
 import com.gadgetworks.codeshelf.web.websocket.IWebSocketServer;
-import com.gadgetworks.flyweight.controller.NetworkDeviceStateEnum;
-import com.gadgetworks.flyweight.controller.WirelessDeviceEventHandler;
 import com.google.inject.Inject;
 
 public final class ServerCodeshelfApplication implements ICodeshelfApplication {
@@ -36,8 +32,7 @@ public final class ServerCodeshelfApplication implements ICodeshelfApplication {
 
 	private boolean							mIsRunning	= true;
 	private IEdiProcessor					mEdiProcessor;
-	private WirelessDeviceEventHandler		mWirelessDeviceEventHandler;
-	private IWebSocketServer		mWebSocketServer;
+	private IWebSocketServer				mWebSocketServer;
 	private IDaoProvider					mDaoProvider;
 	private IHttpServer						mHttpServer;
 	private IDatabase						mDatabase;
@@ -48,7 +43,6 @@ public final class ServerCodeshelfApplication implements ICodeshelfApplication {
 	private ITypedDao<PersistentProperty>	mPersistentPropertyDao;
 	private ITypedDao<Organization>			mOrganizationDao;
 	private ITypedDao<Facility>				mFacilityDao;
-	private IWirelessDeviceDao				mWirelessDeviceDao;
 	private ITypedDao<User>					mUserDao;
 
 	@Inject
@@ -61,7 +55,6 @@ public final class ServerCodeshelfApplication implements ICodeshelfApplication {
 		final ITypedDao<PersistentProperty> inPersistentPropertyDao,
 		final ITypedDao<Organization> inOrganizationDao,
 		final ITypedDao<Facility> inFacilityDao,
-		final IWirelessDeviceDao inWirelessDeviceDao,
 		final ITypedDao<User> inUserDao) {
 		mWebSocketServer = inWebSocketServer;
 		mDaoProvider = inDaoProvider;
@@ -72,7 +65,6 @@ public final class ServerCodeshelfApplication implements ICodeshelfApplication {
 		mPersistentPropertyDao = inPersistentPropertyDao;
 		mOrganizationDao = inOrganizationDao;
 		mFacilityDao = inFacilityDao;
-		mWirelessDeviceDao = inWirelessDeviceDao;
 		mUserDao = inUserDao;
 	}
 
@@ -239,21 +231,10 @@ public final class ServerCodeshelfApplication implements ICodeshelfApplication {
 	 */
 	private void initializeApplicationData() {
 
-		// Create two dummy users for testing.
+		// Create some demo organizations.
 		createOrganzation("O1");
 		createOrganzation("O2");
 		createOrganzation("O3");
-
-		// Some radio device fields have no meaning from the last invocation of the application.
-		for (WirelessDevice wirelessDevice : mWirelessDeviceDao.getAll()) {
-			LOGGER.debug("Init data for wireless device id: " + wirelessDevice.getMacAddress());
-			wirelessDevice.setNetworkDeviceState(NetworkDeviceStateEnum.INVALID);
-			try {
-				mWirelessDeviceDao.store(wirelessDevice);
-			} catch (DaoException e) {
-				LOGGER.error("", e);
-			}
-		}
 	}
 
 	// --------------------------------------------------------------------------

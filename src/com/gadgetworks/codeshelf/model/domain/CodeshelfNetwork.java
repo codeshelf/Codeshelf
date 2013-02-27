@@ -1,16 +1,19 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeshelfNetwork.java,v 1.16 2013/02/20 08:28:23 jeffw Exp $
+ *  $Id: CodeshelfNetwork.java,v 1.17 2013/02/27 01:17:02 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
+import javax.persistence.MapKey;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.Transient;
@@ -25,6 +28,7 @@ import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.annotate.JsonProperty;
 
 import com.avaje.ebean.annotation.CacheStrategy;
+import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.google.inject.Inject;
@@ -90,16 +94,22 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 	@ManyToOne(optional = false)
 	private Facility				parent;
 
+	@OneToMany(mappedBy = "parent")
+	@MapKey(name = "domainId")
+	@Getter
+	private Map<String, Che>				ches			= new HashMap<String, Che>();
+
 	// For a network this is a list of all of the devices that belong to this network.
 	@Column(nullable = false)
 	@Getter
 	@OneToMany(mappedBy = "parent")
-	private List<WirelessDevice>	controlGroups	= new ArrayList<WirelessDevice>();
+	private List<WirelessDeviceABC>	devices	= new ArrayList<WirelessDeviceABC>();
 
 	public CodeshelfNetwork() {
 		description = "";
 		active = true;
 		connected = false;
+		ches = new HashMap<String, Che>();
 	}
 
 	public final ITypedDao<CodeshelfNetwork> getDao() {
@@ -119,17 +129,29 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 	}
 
 	public final List<? extends IDomainObject> getChildren() {
-		return getControlGroups();
+		return getDevices();
 	}
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
-	public final void addControlGroup(WirelessDevice inWirelessDevice) {
-		controlGroups.add(inWirelessDevice);
+	public final void addDevice(WirelessDeviceABC inWirelessDevice) {
+		devices.add(inWirelessDevice);
 	}
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
-	public final void removeControlGroup(WirelessDevice inWirelessDevice) {
-		controlGroups.remove(inWirelessDevice);
+	public final void removeDevice(WirelessDeviceABC inWirelessDevice) {
+		devices.remove(inWirelessDevice);
+	}
+
+	public final void addChe(Che inChe) {
+		ches.put(inChe.getDomainId(), inChe);
+	}
+
+	public final Che getChe(String inCheId) {
+		return ches.get(inCheId);
+	}
+
+	public final void removeChe(String inCheId) {
+		ches.remove(inCheId);
 	}
 
 	public final boolean isCredentialValid(final String inCredential) {
@@ -138,6 +160,27 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 		if (inCredential != null) {
 			result = credential.equals(inCredential);
 		}
+		return result;
+	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 */
+	public final Che createChe(String inDomainId) {
+
+		Che result = null;
+
+		result = new Che();
+		result.setParent(this);
+		result.setDomainId(inDomainId);
+
+		this.addChe(result);
+		try {
+			Che.DAO.store(result);
+		} catch (DaoException e) {
+			LOGGER.error("", e);
+		}
+
 		return result;
 	}
 }

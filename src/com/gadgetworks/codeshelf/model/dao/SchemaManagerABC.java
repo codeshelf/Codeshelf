@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: SchemaManagerABC.java,v 1.10 2013/02/23 05:42:09 jeffw Exp $
+ *  $Id: SchemaManagerABC.java,v 1.11 2013/02/27 01:17:02 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -15,8 +15,8 @@ import java.sql.Timestamp;
 import lombok.AccessLevel;
 import lombok.Getter;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.application.IUtil;
 import com.google.inject.Inject;
@@ -27,7 +27,7 @@ import com.google.inject.Inject;
  */
 public abstract class SchemaManagerABC implements ISchemaManager {
 
-	private static final Log	LOGGER		= LogFactory.getLog(SchemaManagerABC.class);
+	private static final Logger	LOGGER		= LoggerFactory.getLogger(SchemaManagerABC.class);
 
 	private static final String	UUID_TYPE	= "CHAR(36)";
 

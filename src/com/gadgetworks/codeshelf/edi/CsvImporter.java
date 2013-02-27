@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CsvImporter.java,v 1.9 2012/12/24 08:17:29 jeffw Exp $
+ *  $Id: CsvImporter.java,v 1.10 2013/02/27 01:17:02 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -11,8 +11,8 @@ import java.io.InputStreamReader;
 import java.sql.Timestamp;
 import java.util.List;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import au.com.bytecode.opencsv.CSVReader;
 import au.com.bytecode.opencsv.bean.CsvToBean;
@@ -25,7 +25,6 @@ import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Container;
 import com.gadgetworks.codeshelf.model.domain.ContainerKind;
 import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster;
 import com.gadgetworks.codeshelf.model.domain.LocationABC;
@@ -41,7 +40,7 @@ import com.google.inject.Inject;
  */
 public class CsvImporter implements ICsvImporter {
 
-	private static final Log		LOGGER	= LogFactory.getLog(EdiProcessor.class);
+	private static final Logger		LOGGER	= LoggerFactory.getLogger(EdiProcessor.class);
 
 	private ITypedDao<OrderGroup>	mOrderGroupDao;
 	private ITypedDao<OrderHeader>	mOrderHeaderDao;
@@ -130,7 +129,7 @@ public class CsvImporter implements ICsvImporter {
 	 */
 	private void importCsvOrderBean(final CsvOrderImportBean inCsvImportBean, final Facility inFacility) {
 
-		LOGGER.info(inCsvImportBean);
+		LOGGER.info(inCsvImportBean.toString());
 
 		OrderGroup group = ensureOptionalOrderGroup(inCsvImportBean, inFacility);
 		OrderHeader order = ensureOrderHeader(inCsvImportBean, inFacility, group);
@@ -147,7 +146,7 @@ public class CsvImporter implements ICsvImporter {
 	 */
 	private void importCsvInventoryBean(final CsvInventoryImportBean inCsvImportBean, final Facility inFacility) {
 
-		LOGGER.info(inCsvImportBean);
+		LOGGER.info(inCsvImportBean.toString());
 
 		UomMaster uomMaster = ensureUomMaster(inCsvImportBean.getUomId(), inFacility);
 		ItemMaster itemMaster = ensureItemMaster(inCsvImportBean.getItemId(), inFacility, uomMaster);
@@ -168,7 +167,7 @@ public class CsvImporter implements ICsvImporter {
 			result = new OrderGroup();
 			result.setParent(inFacility);
 			result.setOrderGroupId(inCsvImportBean.getOrderGroupId());
-			result.setDescription(OrderGroup.DEFAULT_ORDER_GROUP_DESC_PREFIX  + inCsvImportBean.getOrderGroupId());
+			result.setDescription(OrderGroup.DEFAULT_ORDER_GROUP_DESC_PREFIX + inCsvImportBean.getOrderGroupId());
 			result.setStatusEnum(OrderStatusEnum.CREATED);
 			inFacility.addOrderGroup(result);
 			try {

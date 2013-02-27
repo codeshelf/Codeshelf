@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Che.java,v 1.2 2013/02/20 08:28:23 jeffw Exp $
+ *  $Id: Che.java,v 1.3 2013/02/27 01:17:02 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -12,7 +12,6 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
-import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 import lombok.Getter;
@@ -21,8 +20,6 @@ import lombok.Setter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.annotate.JsonAutoDetect;
-import org.codehaus.jackson.annotate.JsonIgnore;
-import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 
 import com.avaje.ebean.annotation.CacheStrategy;
@@ -44,7 +41,7 @@ import com.google.inject.Singleton;
 @Table(name = "CHE", schema = "CODESHELF")
 @CacheStrategy
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
-public class Che extends DomainObjectTreeABC<Facility> {
+public class Che extends WirelessDeviceABC<CodeshelfNetwork> {
 
 	@Inject
 	public static ITypedDao<Che>	DAO;
@@ -61,7 +58,7 @@ public class Che extends DomainObjectTreeABC<Facility> {
 	// The parent facility.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	private Facility			parent;
+	private CodeshelfNetwork	parent;
 
 	// The current work area.
 	@Column(nullable = true)
@@ -102,11 +99,11 @@ public class Che extends DomainObjectTreeABC<Facility> {
 		setDomainId(inContainerId);
 	}
 
-	public final Facility getParent() {
+	public final CodeshelfNetwork getParent() {
 		return parent;
 	}
 
-	public final void setParent(Facility inParent) {
+	public final void setParent(CodeshelfNetwork inParent) {
 		parent = inParent;
 	}
 

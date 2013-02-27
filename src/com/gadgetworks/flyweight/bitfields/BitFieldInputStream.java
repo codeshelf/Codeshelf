@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: BitFieldInputStream.java,v 1.1 2013/02/20 08:28:23 jeffw Exp $
+ *  $Id: BitFieldInputStream.java,v 1.2 2013/02/27 01:17:03 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.flyweight.bitfields;
 
@@ -9,11 +9,8 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import com.gadgetworks.flyweight.command.NetAddress;
-import com.gadgetworks.flyweight.command.NetworkId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 // --------------------------------------------------------------------------
 /**
@@ -21,10 +18,10 @@ import com.gadgetworks.flyweight.command.NetworkId;
  */
 public final class BitFieldInputStream {
 
-	private static final Log	LOGGER	= LogFactory.getLog(BitFieldInputStream.class);
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(BitFieldInputStream.class);
 
 	private InputStream			mBaseInputStream;
-	private int				mByteBuffer;
+	private int					mByteBuffer;
 	private int					mCurrentBit;
 
 	// --------------------------------------------------------------------------
@@ -114,11 +111,11 @@ public final class BitFieldInputStream {
 	 *  @throws IOException
 	 */
 	public short readShort() throws IOException {
-        int ch1 = localRead();
-        int ch2 = localRead();
-        if ((ch1 | ch2) < 0)
-            throw new EOFException();
-        return (short)((ch1 << 8) + (ch2 << 0));
+		int ch1 = localRead();
+		int ch2 = localRead();
+		if ((ch1 | ch2) < 0)
+			throw new EOFException();
+		return (short) ((ch1 << 8) + (ch2 << 0));
 	}
 
 	// --------------------------------------------------------------------------
@@ -128,12 +125,12 @@ public final class BitFieldInputStream {
 	 */
 	public int readInt() throws IOException {
 		int ch1 = localRead();
-        int ch2 = localRead();
-        int ch3 = localRead();
-        int ch4 = localRead();
-        if ((ch1 | ch2 | ch3 | ch4) < 0)
-            throw new EOFException();
-        return ((ch1 << 24) + (ch2 << 16) + (ch3 << 8) + (ch4 << 0));
+		int ch2 = localRead();
+		int ch3 = localRead();
+		int ch4 = localRead();
+		if ((ch1 | ch2 | ch3 | ch4) < 0)
+			throw new EOFException();
+		return ((ch1 << 24) + (ch2 << 16) + (ch3 << 8) + (ch4 << 0));
 	}
 
 	// --------------------------------------------------------------------------
@@ -231,7 +228,7 @@ public final class BitFieldInputStream {
 	public void mark() {
 		mBaseInputStream.mark(2);
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 */

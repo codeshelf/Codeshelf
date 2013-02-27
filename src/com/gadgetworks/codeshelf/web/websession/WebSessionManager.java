@@ -1,16 +1,16 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionManager.java,v 1.13 2013/02/17 04:22:21 jeffw Exp $
+ *  $Id: WebSessionManager.java,v 1.14 2013/02/27 01:17:02 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.java_websocket.IWebSocket;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmdFactory;
 import com.gadgetworks.codeshelf.web.websession.command.resp.IWebSessionRespCmd;
@@ -24,7 +24,7 @@ import com.google.inject.Singleton;
 @Singleton
 public class WebSessionManager implements IWebSessionManager {
 
-	private static final Log				LOGGER	= LogFactory.getLog(WebSessionManager.class);
+	private static final Logger				LOGGER	= LoggerFactory.getLogger(WebSessionManager.class);
 
 	private Map<IWebSocket, IWebSession>	mWebSessions;
 	private IWebSessionReqCmdFactory		mWebSessionReqCmdFactory;

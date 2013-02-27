@@ -1,7 +1,7 @@
 /*******************************************************************************
 CodeshelfWebSocketServer *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CsCheMain.java,v 1.1 2013/02/20 08:28:23 jeffw Exp $
+ *  $Id: CsCheMain.java,v 1.2 2013/02/27 01:17:03 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -10,10 +10,10 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Properties;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.device.CheDevice;
+import com.gadgetworks.codeshelf.device.CheDeviceEmbedded;
 import com.gadgetworks.codeshelf.device.IDevice;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -30,7 +30,7 @@ public final class CsCheMain {
 		Util.initLogging();
 	}
 
-	private static final Log	LOGGER	= LogFactory.getLog(CsCheMain.class);
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(CsCheMain.class);
 
 	// --------------------------------------------------------------------------
 	/**
@@ -86,7 +86,7 @@ public final class CsCheMain {
 			@Override
 			protected void configure() {
 				bind(IUtil.class).to(Util.class);
-				bind(IDevice.class).to(CheDevice.class);
+				bind(IDevice.class).to(CheDeviceEmbedded.class);
 			}
 		});
 

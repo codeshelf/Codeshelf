@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSession.java,v 1.24 2013/02/17 04:22:21 jeffw Exp $
+ *  $Id: WebSession.java,v 1.25 2013/02/27 01:17:02 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession;
 
@@ -10,13 +10,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.shiro.realm.Realm;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.JsonProcessingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.java_websocket.IWebSocket;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.model.dao.IDaoListener;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
@@ -33,7 +33,7 @@ import com.google.inject.assistedinject.Assisted;
  */
 public class WebSession implements IWebSession, IDaoListener {
 
-	private static final Log							LOGGER	= LogFactory.getLog(WebSession.class);
+	private static final Logger							LOGGER	= LoggerFactory.getLogger(WebSession.class);
 
 	private WebSessionStateEnum							mState;
 	private Realm										mSecurityRealm;
@@ -58,7 +58,7 @@ public class WebSession implements IWebSession, IDaoListener {
 			ObjectMapper mapper = new ObjectMapper();
 			JsonNode rootNode = mapper.readTree(inMessage);
 			IWebSessionReqCmd command = mWebSessionReqCmdFactory.createWebSessionCommand(rootNode);
-			LOGGER.debug(command);
+			LOGGER.debug(command.toString());
 
 			result = command.exec();
 

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.46 2013/02/20 08:28:23 jeffw Exp $
+ *  $Id: Facility.java,v 1.47 2013/02/27 01:17:02 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -81,11 +81,6 @@ public class Facility extends LocationABC<Organization> {
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	@Getter
-	private Map<String, Che>				ches			= new HashMap<String, Che>();
-
-	@OneToMany(mappedBy = "parent")
-	@MapKey(name = "domainId")
-	@Getter
 	private Map<String, Container>			containers		= new HashMap<String, Container>();
 
 	@OneToMany(mappedBy = "parent")
@@ -125,7 +120,6 @@ public class Facility extends LocationABC<Organization> {
 
 	public Facility() {
 		orderHeaders = new ArrayList<OrderHeader>();
-		ches = new HashMap<String, Che>();
 		containerKinds = new HashMap<String, ContainerKind>();
 		containers = new HashMap<String, Container>();
 	}
@@ -188,18 +182,6 @@ public class Facility extends LocationABC<Organization> {
 
 	public final void removePath(String inPathId) {
 		paths.remove(inPathId);
-	}
-
-	public final void addChe(Che inChe) {
-		ches.put(inChe.getDomainId(), inChe);
-	}
-
-	public final Che getChe(String inCheId) {
-		return ches.get(inCheId);
-	}
-
-	public final void removeChe(String inCheId) {
-		ches.remove(inCheId);
 	}
 
 	public final void addContainer(Container inContainer) {
@@ -599,27 +581,6 @@ public class Facility extends LocationABC<Organization> {
 	 */
 	public final void createDefaultContainerKind() {
 		ContainerKind containerKind = createContainerKind(ContainerKind.DEFAULT_CONTAINER_KIND, 0.0, 0.0, 0.0);
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 */
-	public final Che createChe(String inDomainId) {
-
-		Che result = null;
-
-		result = new Che();
-		result.setParent(this);
-		result.setDomainId(inDomainId);
-
-		this.addChe(result);
-		try {
-			Che.DAO.store(result);
-		} catch (DaoException e) {
-			LOGGER.error("", e);
-		}
-
-		return result;
 	}
 
 	// --------------------------------------------------------------------------

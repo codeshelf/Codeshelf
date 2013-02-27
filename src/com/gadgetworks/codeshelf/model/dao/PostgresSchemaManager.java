@@ -1,12 +1,12 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: PostgresSchemaManager.java,v 1.2 2012/11/24 04:23:54 jeffw Exp $
+ *  $Id: PostgresSchemaManager.java,v 1.3 2013/02/27 01:17:03 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.application.IUtil;
 import com.google.inject.Inject;
@@ -18,7 +18,7 @@ import com.google.inject.name.Named;
  */
 public final class PostgresSchemaManager extends SchemaManagerABC {
 
-	private static final Log	LOGGER	= LogFactory.getLog(PostgresSchemaManager.class);
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(PostgresSchemaManager.class);
 
 	@Inject
 	public PostgresSchemaManager(final IUtil inUtil,

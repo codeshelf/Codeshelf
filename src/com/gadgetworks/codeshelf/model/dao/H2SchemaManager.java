@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: H2SchemaManager.java,v 1.63 2012/11/24 04:23:54 jeffw Exp $
+ *  $Id: H2SchemaManager.java,v 1.64 2013/02/27 01:17:03 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -9,8 +9,8 @@ import java.io.File;
 import java.util.Collection;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.application.IUtil;
 import com.google.inject.Inject;
@@ -25,7 +25,7 @@ public final class H2SchemaManager extends SchemaManagerABC {
 	private static final String	DB_INIT_URL	= "jdbc:h2:mem:database;DB_CLOSE_DELAY=-1";
 	private static final String	DB_URL		= "jdbc:h2:mem:database;SCHEMA=CODESHELF;DB_CLOSE_DELAY=-1";
 
-	private static final Log	LOGGER		= LogFactory.getLog(H2SchemaManager.class);
+	private static final Logger	LOGGER		= LoggerFactory.getLogger(H2SchemaManager.class);
 
 	@Inject
 	public H2SchemaManager(final IUtil inUtil,

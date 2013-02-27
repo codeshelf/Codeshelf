@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: RadioController.java,v 1.1 2013/02/24 22:54:25 jeffw Exp $
+ *  $Id: RadioController.java,v 1.2 2013/02/27 01:17:02 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.device;
@@ -13,8 +13,8 @@ import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.flyweight.bitfields.NBitInteger;
 import com.gadgetworks.flyweight.command.AckStateEnum;
@@ -23,8 +23,8 @@ import com.gadgetworks.flyweight.command.CommandAssocAck;
 import com.gadgetworks.flyweight.command.CommandAssocCheck;
 import com.gadgetworks.flyweight.command.CommandAssocReq;
 import com.gadgetworks.flyweight.command.CommandAssocResp;
-import com.gadgetworks.flyweight.command.CommandControlABC;
 import com.gadgetworks.flyweight.command.CommandControl;
+import com.gadgetworks.flyweight.command.CommandControlABC;
 import com.gadgetworks.flyweight.command.CommandNetMgmtABC;
 import com.gadgetworks.flyweight.command.CommandNetMgmtCheck;
 import com.gadgetworks.flyweight.command.CommandNetMgmtIntfTest;
@@ -61,7 +61,7 @@ public class RadioController implements IController {
 	public static final byte									NO_PREFERRED_CHANNEL				= (byte) 255;
 	public static final String									NO_PREFERRED_CHANNEL_TEXT			= "None";
 
-	private static final Log									LOGGER								= LogFactory.getLog(RadioController.class);
+	private static final Logger									LOGGER								= LoggerFactory.getLogger(RadioController.class);
 
 	private static final String									BACKGROUND_THREAD_NAME				= "Controller Background";
 	private static final String									RECEIVER_THREAD_NAME				= "Packet Receiver";
@@ -714,7 +714,7 @@ public class RadioController implements IController {
 		// Indicate to listeners that there is a new actor.
 		boolean canAssociate = false;
 		for (IControllerEventListener listener : mEventListeners) {
-			if (listener.canNetworkDeviceAssociate(uid)) {
+			if (listener.canNetworkDeviceAssociate(new NetMacAddress(uid))) {
 				canAssociate = true;
 			}
 		}
@@ -724,7 +724,7 @@ public class RadioController implements IController {
 			INetworkDevice foundDevice = mDeviceMacAddrMap.get(new NetMacAddress(uid.getBytes()));
 
 			if (foundDevice != null) {
-				foundDevice.setNetworkDeviceState(NetworkDeviceStateEnum.SETUP);
+				foundDevice.setDeviceStateEnum(NetworkDeviceStateEnum.SETUP);
 
 				LOGGER.info("----------------------------------------------------");
 				LOGGER.info("Device associated: " + foundDevice.toString());
@@ -756,7 +756,7 @@ public class RadioController implements IController {
 				// Create and send an assign command to the remote that just woke up.
 				CommandAssocResp assignCmd = new CommandAssocResp(uid, mNetworkId, foundDevice.getNetAddress());
 				this.sendCommand(assignCmd, mBroadcastNetworkId, mBroadcastAddress, false);
-				foundDevice.setNetworkDeviceState(NetworkDeviceStateEnum.ASSIGN_SENT);
+				foundDevice.setDeviceStateEnum(NetworkDeviceStateEnum.ASSIGN_SENT);
 
 				// We should wait a bit for the remote to prepare to accept commands.
 				try {
@@ -801,9 +801,9 @@ public class RadioController implements IController {
 			byte status = CommandAssocAck.IS_ASSOCIATED;
 
 			// If the found device isn't in the STARTED state then it's not associated with us.
-			if (!(foundDevice.getNetworkDeviceState().equals(NetworkDeviceStateEnum.STARTED))) {
+			if (!(foundDevice.getDeviceStateEnum().equals(NetworkDeviceStateEnum.STARTED))) {
 				status = CommandAssocAck.IS_NOT_ASSOCIATED;
-				LOGGER.info("AssocCheck - NOT ASSOC: state was: " + foundDevice.getNetworkDeviceState());
+				LOGGER.info("AssocCheck - NOT ASSOC: state was: " + foundDevice.getDeviceStateEnum());
 			}
 
 			// If the found device has the wrong GUID then we have the wrong device.
@@ -961,7 +961,7 @@ public class RadioController implements IController {
 	 *  @param inSession	The device that just became active.
 	 */
 	private void networkDeviceBecameActive(INetworkDevice inNetworkDevice) {
-		inNetworkDevice.setNetworkDeviceState(NetworkDeviceStateEnum.SETUP);
+		inNetworkDevice.setDeviceStateEnum(NetworkDeviceStateEnum.SETUP);
 	}
 
 	// --------------------------------------------------------------------------
@@ -977,7 +977,7 @@ public class RadioController implements IController {
 				INetworkDevice device = mDeviceNetAddrMap.get(inSrcAddr);
 				if (device != null) {
 					CommandControl command = (CommandControl) inCommand;
-					LOGGER.info("Remote command: " + command.getCommandString());
+					device.commandReceived(command.getCommandString());
 				}
 				break;
 

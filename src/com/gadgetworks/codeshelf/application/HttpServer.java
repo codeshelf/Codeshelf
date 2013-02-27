@@ -1,17 +1,13 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: HttpServer.java,v 1.10 2012/11/21 19:19:51 jeffw Exp $
+ *  $Id: HttpServer.java,v 1.11 2013/02/27 01:17:03 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.application;
 
 import java.io.File;
 import java.net.URL;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.eclipse.jetty.rewrite.handler.ForwardedSchemeHeaderRule;
-import org.eclipse.jetty.rewrite.handler.RewriteHandler;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.HandlerList;
@@ -19,6 +15,8 @@ import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.eclipse.jetty.server.nio.NetworkTrafficSelectChannelConnector;
 import org.eclipse.jetty.util.resource.Resource;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -29,7 +27,7 @@ import com.google.inject.name.Named;
  */
 public class HttpServer implements IHttpServer {
 
-	private static final Log	LOGGER						= LogFactory.getLog(HttpServer.class);
+	private static final Logger	LOGGER						= LoggerFactory.getLogger(HttpServer.class);
 
 	private static final String	WEBAPP_SERVER_THREADNAME	= "Webapp Server";
 	private static final String	WEBSITE_SERVER_THREADNAME	= "Website Server";
@@ -132,23 +130,23 @@ public class HttpServer implements IHttpServer {
 			} else {
 				connector = new NetworkTrafficSelectChannelConnector(result);
 
-//				RewriteHandler rewrite = new RewriteHandler();
-//				rewrite.setRewriteRequestURI(true);
-//				rewrite.setRewritePathInfo(true);
-//				rewrite.setOriginalPathAttribute("requestedPath");
+				//				RewriteHandler rewrite = new RewriteHandler();
+				//				rewrite.setRewriteRequestURI(true);
+				//				rewrite.setRewritePathInfo(true);
+				//				rewrite.setOriginalPathAttribute("requestedPath");
 
 				//				RedirectRegexRule redirect = new RedirectRegexRule();
 				//				redirect.setRegex("/(.+)");
 				//				redirect.setReplacement("https://codeshelf.unionrocket.com/$1");
 				//				rewrite.addRule(redirect);
 
-//				ForwardedSchemeHeaderRule forwardedScheme = new ForwardedSchemeHeaderRule();
-//				forwardedScheme.setHeader("X-Forwarded-Scheme");
-//				forwardedScheme.setHeaderValue("https");
-//				forwardedScheme.setScheme("https");
-//				rewrite.addRule(forwardedScheme);
-//
-//				rewrite.setHandler(resourceHandler);
+				//				ForwardedSchemeHeaderRule forwardedScheme = new ForwardedSchemeHeaderRule();
+				//				forwardedScheme.setHeader("X-Forwarded-Scheme");
+				//				forwardedScheme.setHeaderValue("https");
+				//				forwardedScheme.setScheme("https");
+				//				rewrite.addRule(forwardedScheme);
+				//
+				//				rewrite.setHandler(resourceHandler);
 
 				HandlerList handlers = new HandlerList();
 				handlers.setHandlers(new Handler[] { resourceHandler });//, rewrite });

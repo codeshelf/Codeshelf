@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Util.java,v 1.20 2012/11/19 10:48:25 jeffw Exp $
+ *  $Id: Util.java,v 1.21 2013/02/27 01:17:03 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -23,11 +23,9 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.PBEParameterSpec;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Organization;
@@ -80,7 +78,7 @@ public final class Util implements IUtil {
 		}
 	}
 
-	private static final Log	LOGGER		= LogFactory.getLog(Util.class);
+	private static final Logger	LOGGER		= LoggerFactory.getLogger(Util.class);
 
 	/**
 	 * 
@@ -187,15 +185,21 @@ public final class Util implements IUtil {
 	 */
 	public void setLoggingLevelsFromPrefs(Organization inOrganization, ITypedDao<PersistentProperty> inPersistentPropertyDao) {
 
-		PersistentProperty gwLogLvlProp = inPersistentPropertyDao.findByDomainId(inOrganization, PersistentProperty.GENERAL_INTF_LOG_LEVEL);
-		Level level = Level.toLevel(gwLogLvlProp.getCurrentValueAsStr());
-		Logger.getRootLogger().setLevel(level);
-		Logger.getLogger("com.gadgetworks").setLevel(level);
-
-		gwLogLvlProp = inPersistentPropertyDao.findByDomainId(inOrganization, PersistentProperty.GATEWAY_INTF_LOG_LEVEL);
-		level = Level.toLevel(gwLogLvlProp.getCurrentValueAsStr());
-		//Logger.getRootLogger().setLevel(level);
-		//Logger.getLogger("com.gadgetworks.codeshelf.controller").setLevel(level);
+//		PersistentProperty gwLogLvlProp = inPersistentPropertyDao.findByDomainId(inOrganization, PersistentProperty.GENERAL_INTF_LOG_LEVEL);
+//		Level level = Level.toLevel(gwLogLvlProp.getCurrentValueAsStr());
+//
+//		// Set the root logger level.
+//		Logger logger = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+//		logger.setLevel(level);
+//
+//		// Set the GW logger level.
+//		logger = (Logger) LoggerFactory.getLogger("com.gadgetworks");
+//		logger.setLevel(level);
+//
+//		gwLogLvlProp = inPersistentPropertyDao.findByDomainId(inOrganization, PersistentProperty.GATEWAY_INTF_LOG_LEVEL);
+//		level = Level.toLevel(gwLogLvlProp.getCurrentValueAsStr());
+//		//Logger.getRootLogger().setLevel(level);
+//		//Logger.getLogger("com.gadgetworks.codeshelf.controller").setLevel(level);
 	}
 
 	// --------------------------------------------------------------------------

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectMethod.java,v 1.8 2013/01/03 07:23:12 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectMethod.java,v 1.9 2013/02/27 01:17:02 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -18,14 +18,14 @@ import lombok.libs.org.objectweb.asm.tree.ClassNode;
 import lombok.libs.org.objectweb.asm.tree.LocalVariableNode;
 import lombok.libs.org.objectweb.asm.tree.MethodNode;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ObjectNode;
 import org.codehaus.jackson.type.TypeReference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.enhance.asm.ClassReader;
 import com.avaje.ebean.enhance.asm.ClassVisitor;
@@ -71,7 +71,7 @@ import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdOb
  */
 public class WebSessionReqCmdObjectMethod extends WebSessionReqCmdABC {
 
-	private static final Log	LOGGER	= LogFactory.getLog(WebSessionReqCmdObjectUpdate.class);
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(WebSessionReqCmdObjectUpdate.class);
 
 	private IDaoProvider		mDaoProvider;
 	private List<ArgsClass>		mMethodArguments;
@@ -159,7 +159,7 @@ public class WebSessionReqCmdObjectMethod extends WebSessionReqCmdABC {
 						try {
 							Constructor<?> ctor = classType.getConstructor(String.class);
 							if (argumentValue == null) {
-								typedArg =  null;
+								typedArg = null;
 							} else {
 								typedArg = ctor.newInstance(new Object[] { argumentValue.toString() });
 							}

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSocketSslContextGenerator.java,v 1.3 2012/11/19 10:48:25 jeffw Exp $
+ *  $Id: WebSocketSslContextGenerator.java,v 1.4 2013/02/27 01:17:02 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websocket;
 
@@ -19,8 +19,8 @@ import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -31,7 +31,7 @@ import com.google.inject.name.Named;
  */
 public class WebSocketSslContextGenerator implements IWebSocketSslContextGenerator {
 
-	private static final Log	LOGGER			= LogFactory.getLog(WebSocketSslContextGenerator.class);
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(WebSocketSslContextGenerator.class);
 
 	private String				mKeystorePath;
 	private String				mKeystoreType;

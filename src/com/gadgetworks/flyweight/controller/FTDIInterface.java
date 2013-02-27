@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: FTDIInterface.java,v 1.1 2013/02/20 08:28:25 jeffw Exp $
+ *  $Id: FTDIInterface.java,v 1.2 2013/02/27 01:17:02 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.flyweight.controller;
@@ -11,8 +11,8 @@ import java.io.IOException;
 import jd2xx.JD2XX;
 import jd2xx.JD2XX.DeviceInfo;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.flyweight.command.Packet;
 import com.gadgetworks.flyweight.util.Util;
@@ -27,7 +27,7 @@ import com.gadgetworks.flyweight.util.Util;
 
 public final class FTDIInterface extends SerialInterfaceABC {
 
-	private static final Log	LOGGER				= LogFactory.getLog(FTDIInterface.class);
+	private static final Logger	LOGGER				= LoggerFactory.getLogger(FTDIInterface.class);
 
 	//	private static final int	TX_TIMEOUT_MILLIS	= 100;
 	//	private static final int	RX_TIMEOUT_MILLIS	= 100;
@@ -201,7 +201,7 @@ public final class FTDIInterface extends SerialInterfaceABC {
 				//				} catch (IOException e) {
 				//					LOGGER.error("", e);
 				//				}
-				
+
 				DeviceInfo devInfo = mJD2XXInterface.getDeviceInfoDetail(deviceToOpen);
 				LOGGER.info("Device started: " + devInfo.toString());
 			}
@@ -240,55 +240,55 @@ public final class FTDIInterface extends SerialInterfaceABC {
 				LOGGER.error("", e);
 			}
 
-//			try {
-//				int status = mJD2XXInterface.getEventStatus();
-//				LOGGER.error("Event status: " + status);
-//				status = mJD2XXInterface.getModemStatus();
-//				LOGGER.error("Modem status: " + status);
-//				status = mJD2XXInterface.getQueueStatus();
-//				LOGGER.error("Queue status: " + status);
-//				int[] statuses = mJD2XXInterface.getStatus();
-//				LOGGER.error("Data status: " + statuses[0] + " " + statuses[1] + " " + statuses[2]);
-//			} catch (IOException e1) {
-//				// TODO Auto-generated catch block
-//				e1.printStackTrace();
-//			}
-//			// mJD2XXInterface.purge(JD2XX.PURGE_RX | JD2XX.PURGE_TX);
-//
-//			try {
-//				mJD2XXInterface.stopInTask();
-//			} catch (IOException e) {
-//				LOGGER.error("", e);
-//			}
-//			try {
-//				mJD2XXInterface.restartInTask();
-//			} catch (IOException e) {
-//				LOGGER.error("", e);
-//			}
-//
-//			try {
-//				mJD2XXInterface.clrDtr();
-//			} catch (IOException e) {
-//				LOGGER.error("", e);
-//			}
-//
-//			try {
-//				mJD2XXInterface.clrRts();
-//			} catch (IOException e) {
-//				LOGGER.error("", e);
-//			}
-//
-//			try {
-//				mJD2XXInterface.setDtr();
-//			} catch (IOException e) {
-//				LOGGER.error("", e);
-//			}
-//
-//			try {
-//				mJD2XXInterface.setRts();
-//			} catch (IOException e) {
-//				LOGGER.error("", e);
-//			}
+			//			try {
+			//				int status = mJD2XXInterface.getEventStatus();
+			//				LOGGER.error("Event status: " + status);
+			//				status = mJD2XXInterface.getModemStatus();
+			//				LOGGER.error("Modem status: " + status);
+			//				status = mJD2XXInterface.getQueueStatus();
+			//				LOGGER.error("Queue status: " + status);
+			//				int[] statuses = mJD2XXInterface.getStatus();
+			//				LOGGER.error("Data status: " + statuses[0] + " " + statuses[1] + " " + statuses[2]);
+			//			} catch (IOException e1) {
+			//				// TODO Auto-generated catch block
+			//				e1.printStackTrace();
+			//			}
+			//			// mJD2XXInterface.purge(JD2XX.PURGE_RX | JD2XX.PURGE_TX);
+			//
+			//			try {
+			//				mJD2XXInterface.stopInTask();
+			//			} catch (IOException e) {
+			//				LOGGER.error("", e);
+			//			}
+			//			try {
+			//				mJD2XXInterface.restartInTask();
+			//			} catch (IOException e) {
+			//				LOGGER.error("", e);
+			//			}
+			//
+			//			try {
+			//				mJD2XXInterface.clrDtr();
+			//			} catch (IOException e) {
+			//				LOGGER.error("", e);
+			//			}
+			//
+			//			try {
+			//				mJD2XXInterface.clrRts();
+			//			} catch (IOException e) {
+			//				LOGGER.error("", e);
+			//			}
+			//
+			//			try {
+			//				mJD2XXInterface.setDtr();
+			//			} catch (IOException e) {
+			//				LOGGER.error("", e);
+			//			}
+			//
+			//			try {
+			//				mJD2XXInterface.setRts();
+			//			} catch (IOException e) {
+			//				LOGGER.error("", e);
+			//			}
 
 			if (Util.isWindows()) {
 				try {
@@ -387,11 +387,11 @@ public final class FTDIInterface extends SerialInterfaceABC {
 				byteRead = true;
 				result = mReadBuffer[mReadBufferPos++];
 			} else {
-//				try {
-//					Thread.sleep(READ_SLEEP_MILLIS);
-//				} catch (InterruptedException e) {
-//					LOGGER.error("", e);
-//				}
+				//				try {
+				//					Thread.sleep(READ_SLEEP_MILLIS);
+				//				} catch (InterruptedException e) {
+				//					LOGGER.error("", e);
+				//				}
 			}
 
 		}

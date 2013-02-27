@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Sound.java,v 1.3 2012/09/08 03:03:24 jeffw Exp $
+ *  $Id: Sound.java,v 1.4 2013/02/27 01:17:03 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.application;
 
@@ -17,8 +17,8 @@ import javax.sound.sampled.Mixer;
 import javax.sound.sampled.SourceDataLine;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 // --------------------------------------------------------------------------
 /**
@@ -26,7 +26,7 @@ import org.apache.commons.logging.LogFactory;
  */
 public final class Sound {
 
-	private static final Log	LOGGER							= LogFactory.getLog(Sound.class);
+	private static final Logger	LOGGER							= LoggerFactory.getLogger(Sound.class);
 
 	private static final int	DEFAULT_EXTERNAL_BUFFER_SIZE	= 128000;
 	private static final int	STD_SAMPLE_SIZE					= 16;
@@ -90,7 +90,7 @@ public final class Sound {
 				 */
 				line.close();
 			}
-			
+
 		} catch (UnsupportedAudioFileException e1) {
 			LOGGER.error("", e1);
 		} catch (IOException e1) {

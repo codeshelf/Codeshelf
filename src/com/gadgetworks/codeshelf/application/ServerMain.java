@@ -1,7 +1,7 @@
 /*******************************************************************************
 CodeshelfWebSocketServer *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ServerMain.java,v 1.5 2013/02/20 08:28:23 jeffw Exp $
+ *  $Id: ServerMain.java,v 1.6 2013/02/27 01:17:03 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -10,13 +10,13 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Properties;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.shiro.authc.credential.CredentialsMatcher;
 import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
 import org.apache.shiro.crypto.hash.Md5Hash;
 import org.apache.shiro.realm.Realm;
 import org.java_websocket.server.WebSocketServer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.edi.CsvImporter;
 import com.gadgetworks.codeshelf.edi.EdiProcessor;
@@ -29,7 +29,6 @@ import com.gadgetworks.codeshelf.model.dao.IDatabase;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.dao.PostgresSchemaManager;
-import com.gadgetworks.codeshelf.model.dao.WirelessDeviceDao;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Aisle.AisleDao;
 import com.gadgetworks.codeshelf.model.domain.Bay;
@@ -78,8 +77,8 @@ import com.gadgetworks.codeshelf.model.domain.UserSession;
 import com.gadgetworks.codeshelf.model.domain.UserSession.UserSessionDao;
 import com.gadgetworks.codeshelf.model.domain.Vertex;
 import com.gadgetworks.codeshelf.model.domain.Vertex.VertexDao;
-import com.gadgetworks.codeshelf.model.domain.WirelessDevice;
-import com.gadgetworks.codeshelf.model.domain.WirelessDevice.IWirelessDeviceDao;
+import com.gadgetworks.codeshelf.model.domain.WirelessDeviceABC;
+import com.gadgetworks.codeshelf.model.domain.WirelessDeviceABC.WirelessDeviceDao;
 import com.gadgetworks.codeshelf.model.domain.WorkArea;
 import com.gadgetworks.codeshelf.model.domain.WorkArea.WorkAreaDao;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
@@ -114,7 +113,7 @@ public final class ServerMain {
 		Util.initLogging();
 	}
 
-	private static final Log	LOGGER	= LogFactory.getLog(ServerMain.class);
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(ServerMain.class);
 
 	// --------------------------------------------------------------------------
 	/**
@@ -310,8 +309,8 @@ public final class ServerMain {
 				bind(new TypeLiteral<ITypedDao<Vertex>>() {
 				}).to(VertexDao.class);
 
-				requestStaticInjection(WirelessDevice.class);
-				bind(new TypeLiteral<IWirelessDeviceDao>() {
+				requestStaticInjection(WirelessDeviceABC.class);
+				bind(new TypeLiteral<ITypedDao<WirelessDeviceABC>>() {
 				}).to(WirelessDeviceDao.class);
 
 				requestStaticInjection(WorkArea.class);

@@ -1,12 +1,12 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiProcessor.java,v 1.14 2012/10/25 08:32:37 jeffw Exp $
+ *  $Id: EdiProcessor.java,v 1.15 2013/02/27 01:17:02 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
@@ -22,7 +22,7 @@ public final class EdiProcessor implements IEdiProcessor {
 
 	public static final long	PROCESS_INTERVAL_MILLIS	= 1 * 10 * 1000;
 
-	private static final Log	LOGGER					= LogFactory.getLog(EdiProcessor.class);
+	private static final Logger	LOGGER					= LoggerFactory.getLogger(EdiProcessor.class);
 
 	private long				mLastProcessMillis;
 	private boolean				mShouldRun;

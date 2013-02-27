@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: SerialInterfaceABC.java,v 1.2 2013/02/23 05:42:09 jeffw Exp $
+ *  $Id: SerialInterfaceABC.java,v 1.3 2013/02/27 01:17:02 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.flyweight.controller;
@@ -9,8 +9,8 @@ package com.gadgetworks.flyweight.controller;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.flyweight.bitfields.BitFieldInputStream;
 import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
@@ -35,7 +35,7 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 	public static final int			READ_RECOVER_MILLIS		= 5000;
 	public static final int			WAIT_INTERFACE_MILLIS	= 10;
 
-	private static final Log		LOGGER					= LogFactory.getLog(SerialInterfaceABC.class);
+	private static final Logger		LOGGER					= LoggerFactory.getLogger(SerialInterfaceABC.class);
 
 	private boolean					mIsStarted;
 	private Boolean					mShouldRun				= true;

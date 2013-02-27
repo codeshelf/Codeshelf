@@ -1,19 +1,19 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectGetter.java,v 1.15 2013/01/03 07:23:12 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectGetter.java,v 1.16 2013/02/27 01:17:02 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.UUID;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
@@ -39,7 +39,7 @@ import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdOb
  */
 public class WebSessionReqCmdObjectGetter extends WebSessionReqCmdABC {
 
-	private static final Log	LOGGER	= LogFactory.getLog(WebSessionReqCmdObjectGetter.class);
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(WebSessionReqCmdObjectGetter.class);
 
 	private IDaoProvider		mDaoProvider;
 

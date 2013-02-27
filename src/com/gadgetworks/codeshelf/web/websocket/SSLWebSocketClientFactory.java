@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: SSLWebSocketClientFactory.java,v 1.1 2013/02/10 08:23:07 jeffw Exp $
+ *  $Id: SSLWebSocketClientFactory.java,v 1.2 2013/02/27 01:17:02 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websocket;
 
@@ -26,13 +26,13 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.TrustManagerFactory;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.java_websocket.SSLSocketChannel2;
 import org.java_websocket.WebSocketAdapter;
 import org.java_websocket.WebSocketImpl;
-import org.java_websocket.drafts.Draft;
 import org.java_websocket.client.WebSocketClient;
+import org.java_websocket.drafts.Draft;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -43,7 +43,7 @@ import com.google.inject.name.Named;
  */
 public class SSLWebSocketClientFactory implements WebSocketClient.WebSocketClientFactory {
 
-	private static final Log	LOGGER								= LogFactory.getLog(WebSocketSslContextGenerator.class);
+	private static final Logger	LOGGER								= LoggerFactory.getLogger(WebSocketSslContextGenerator.class);
 
 	private static final String	KEYSTORE_TYPE_PROPERTY				= "KEYSTORE_TYPE_PROPERTY";
 	private static final String	KEYSTORE_PATH_PROPERTY				= "KEYSTORE_PATH_PROPERTY";

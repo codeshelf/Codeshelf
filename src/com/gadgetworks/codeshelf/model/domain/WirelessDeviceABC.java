@@ -1,12 +1,11 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WirelessDevice.java,v 1.15 2013/02/20 08:28:23 jeffw Exp $
+ *  $Id: WirelessDeviceABC.java,v 1.1 2013/02/27 01:17:02 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
 
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorColumn;
@@ -16,12 +15,13 @@ import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
-import javax.persistence.ManyToOne;
+import javax.persistence.MappedSuperclass;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -29,12 +29,14 @@ import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.annotate.JsonProperty;
 
+import com.avaje.ebean.annotation.CacheStrategy;
+import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.flyweight.command.NetAddress;
 import com.gadgetworks.flyweight.command.NetMacAddress;
-import com.gadgetworks.flyweight.controller.INetworkDevice;
 import com.gadgetworks.flyweight.controller.NetworkDeviceStateEnum;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
@@ -47,35 +49,36 @@ import com.google.inject.Inject;
  */
 
 @Entity
+@MappedSuperclass
+@CacheStrategy
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@DiscriminatorColumn(name = "DTYPE", discriminatorType = DiscriminatorType.STRING)
 @Table(name = "WIRELESSDEVICE", schema = "CODESHELF")
-//@DiscriminatorValue("ABC")
+@DiscriminatorColumn(name = "DTYPE", discriminatorType = DiscriminatorType.STRING)
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
-public class WirelessDevice extends DomainObjectTreeABC<CodeshelfNetwork> implements INetworkDevice {
+@ToString
+//public abstract class LocationABC<P extends IDomainObject> extends DomainObjectTreeABC<P> {
 
-	@Inject
-	private static IWirelessDeviceDao	DAO;
-
-	public interface IWirelessDeviceDao extends ITypedDao<WirelessDevice> {
-
-		WirelessDevice findWirelessDeviceByMacAddr(NetMacAddress inMacAddr);
-
-		INetworkDevice findNetworkDeviceByMacAddr(NetMacAddress inMacAddr);
-
-		INetworkDevice getNetworkDevice(NetAddress inAddress);
-
-	}
+public abstract class WirelessDeviceABC<P extends IDomainObject> extends DomainObjectTreeABC<P> {
 
 	public static final int			MAC_ADDR_BYTES		= 8;
 	public static final int			PUBLIC_KEY_BYTES	= 8;
 
-	private static final Log		LOGGER				= LogFactory.getLog(WirelessDevice.class);
+	@Inject
+	private static ITypedDao<WirelessDeviceABC>	DAO;
 
-	// The owning network.
-	@Column(nullable = false)
-	@ManyToOne(optional = false)
-	private CodeshelfNetwork		parent;
+	@Singleton
+	public static class WirelessDeviceDao extends GenericDaoABC<WirelessDeviceABC> implements ITypedDao<WirelessDeviceABC> {
+		public final Class<WirelessDeviceABC> getDaoClass() {
+			return WirelessDeviceABC.class;
+		}
+	}
+
+	private static final Log		LOGGER				= LogFactory.getLog(WirelessDeviceABC.class);
+
+//	// The owning network.
+//	@Column(nullable = false)
+//	@ManyToOne(optional = false)
+//	private CodeshelfNetwork		parent;
 
 	@Column(nullable = false)
 	private byte[]					macAddress;
@@ -120,31 +123,11 @@ public class WirelessDevice extends DomainObjectTreeABC<CodeshelfNetwork> implem
 	@JsonProperty
 	private byte					networkAddress;
 
-	public WirelessDevice() {
+	public WirelessDeviceABC() {
 		macAddress = new byte[NetMacAddress.NET_MACADDR_BYTES];
 		publicKey = "";
 		description = "";
 		lastBatteryLevel = 0;
-	}
-
-	public final ITypedDao<WirelessDevice> getDao() {
-		return DAO;
-	}
-
-	public final String getDefaultDomainIdPrefix() {
-		return "W";
-	}
-
-	public final CodeshelfNetwork getParent() {
-		return parent;
-	}
-
-	public final void setParent(CodeshelfNetwork inParent) {
-		parent = inParent;
-	}
-
-	public final List<IDomainObject> getChildren() {
-		return new ArrayList<IDomainObject>();
 	}
 
 	public final NetMacAddress getMacAddress() {
@@ -164,8 +147,8 @@ public class WirelessDevice extends DomainObjectTreeABC<CodeshelfNetwork> implem
 		return new NetAddress(networkAddress);
 	}
 
-	public final boolean doesMatch(String inMacAddr) {
-		return macAddress.equals(inMacAddr);
+	public final boolean doesMatch(NetMacAddress inMacAddr) {
+		return Arrays.equals(macAddress, inMacAddr.getParamValueAsByteArray());
 	}
 
 	public final long getLastContactTime() {
@@ -186,7 +169,7 @@ public class WirelessDevice extends DomainObjectTreeABC<CodeshelfNetwork> implem
 	}
 
 	public final void setNetworkDeviceState(NetworkDeviceStateEnum inState) {
-		LOGGER.debug(macAddress + " state changed: " + networkDeviceStatus + "->" + inState);
+		LOGGER.debug(Arrays.toString(macAddress) + " state changed: " + networkDeviceStatus + "->" + inState);
 		networkDeviceStatus = inState;
 	}
 

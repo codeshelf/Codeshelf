@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  OmniBox
  *  Copyright (c) 2005-2007, Jeffrey B. Williams, All rights reserved
- *  $Id: INetworkDevice.java,v 1.1 2013/02/20 08:28:25 jeffw Exp $
+ *  $Id: INetworkDevice.java,v 1.2 2013/02/27 01:17:02 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.flyweight.controller;
 
@@ -26,6 +26,14 @@ public interface INetworkDevice {
 	 *  @return	The MacAddr for this device.
 	 */
 	NetMacAddress getMacAddress();
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * Set the MAC address for this device.
+	 * @param inMacAddress
+	 */
+	// You can't set this - it's immutable for the object, so set it at construction.
+	// void setMacAddress(NetMacAddress inMacAddress);
 
 	// --------------------------------------------------------------------------
 	/**
@@ -46,22 +54,22 @@ public interface INetworkDevice {
 	 *  Set the state for this device.
 	 *  @param inSessionState	The device's session state.
 	 */
-	void setNetworkDeviceState(NetworkDeviceStateEnum inStatus);
+	void setDeviceStateEnum(NetworkDeviceStateEnum inStatus);
 
 	// --------------------------------------------------------------------------
 	/**
 	 *  Get the network state for this device.
 	 *  @return	The device's network status.
 	 */
-	NetworkDeviceStateEnum getNetworkDeviceState();
+	NetworkDeviceStateEnum getDeviceStateEnum();
 
 	// --------------------------------------------------------------------------
 	/**
 	 *  Determine if this device's session matches a device MacAddr.
-	 *  @param inMacAddrStr	The MacAddr
+	 *  @param inMacAddress	The MacAddr
 	 *  @return	True if there is a match.
 	 */
-	boolean doesMatch(String inMacAddrStr);
+	boolean doesMatch(NetMacAddress inMacAddress);
 
 	// --------------------------------------------------------------------------
 	/**
@@ -75,7 +83,7 @@ public interface INetworkDevice {
 	 *  Set the time that we last heard from this device during this session.
 	 *  @param inContactTime	The last contact time.
 	 */
-	void setLastContactTime(Long inContactTime);
+	void setLastContactTime(long inContactTime);
 
 	// --------------------------------------------------------------------------
 	/**
@@ -97,16 +105,4 @@ public interface INetworkDevice {
 	 *  @param inButtonNumberPressed
 	 */
 	void commandReceived(String inCommandStr);
-
-	// --------------------------------------------------------------------------
-	/**
-	 *  @param inDeviceType
-	 */
-	void setDeviceType(short inDeviceType);
-
-	// --------------------------------------------------------------------------
-	/**
-	 *  @param inDeviceDescription
-	 */
-	void setDesc(String inDeviceDescription);
 }

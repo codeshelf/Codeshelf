@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectFilter.java,v 1.16 2013/01/03 07:23:12 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectFilter.java,v 1.17 2013/02/27 01:17:02 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -13,8 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
@@ -22,6 +20,8 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
 import org.codehaus.jackson.type.TypeReference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
@@ -46,7 +46,8 @@ import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdOb
  *
  */
 public class WebSessionReqCmdObjectFilter extends WebSessionReqCmdABC implements IWebSessionPersistentReqCmd {
-	private static final Log				LOGGER	= LogFactory.getLog(WebSessionReqCmdObjectListener.class);
+
+	private static final Logger				LOGGER	= LoggerFactory.getLogger(WebSessionReqCmdObjectListener.class);
 
 	private Class<IDomainObject>			mPersistenceClass;
 	private List<IDomainObject>				mObjectMatchList;
@@ -148,7 +149,7 @@ public class WebSessionReqCmdObjectFilter extends WebSessionReqCmdABC implements
 				propertiesMap.put(PERSISTENT_ID, matchedObject.getPersistentId());
 				// If this is a tree object then get the parent ID as well.
 				if (matchedObject instanceof IDomainObjectTree<?>) {
-					propertiesMap.put(PARENT_ID, ((IDomainObjectTree<?>)matchedObject).getParent().getPersistentId());
+					propertiesMap.put(PARENT_ID, ((IDomainObjectTree<?>) matchedObject).getParent().getPersistentId());
 				}
 				for (String propertyName : mPropertyNames) {
 					// Execute the "get" method against the parents to return the children.

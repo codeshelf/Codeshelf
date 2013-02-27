@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdObjectUpdate.java,v 1.17 2012/12/25 10:48:13 jeffw Exp $
+ *  $Id: WebSessionReqCmdObjectUpdate.java,v 1.18 2013/02/27 01:17:02 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -13,14 +13,14 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ObjectNode;
 import org.codehaus.jackson.type.TypeReference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
@@ -60,7 +60,7 @@ import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdOb
  */
 public class WebSessionReqCmdObjectUpdate extends WebSessionReqCmdABC {
 
-	private static final Log	LOGGER	= LogFactory.getLog(WebSessionReqCmdObjectUpdate.class);
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(WebSessionReqCmdObjectUpdate.class);
 
 	private IDaoProvider		mDaoProvider;
 	private Map<String, Object>	mUpdateProperties;
