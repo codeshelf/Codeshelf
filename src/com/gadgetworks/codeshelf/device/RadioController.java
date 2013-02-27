@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: RadioController.java,v 1.2 2013/02/27 01:17:02 jeffw Exp $
+ *  $Id: RadioController.java,v 1.3 2013/02/27 07:29:53 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.device;
@@ -704,7 +704,7 @@ public class RadioController implements IController {
 	private void processAssocReqCommand(CommandAssocReq inCommand, NetAddress inSrcAddr) {
 
 		// First get the unique ID from the command.
-		String uid = inCommand.getGUID();
+		String uid = "0x" + inCommand.getGUID();
 
 		LOGGER.info("AssocReq rcvd: " + inCommand.toString());
 

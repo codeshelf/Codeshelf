@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSocketController.java,v 1.2 2013/02/27 01:17:02 jeffw Exp $
+ *  $Id: WebSocketController.java,v 1.3 2013/02/27 07:29:53 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -39,20 +39,20 @@ import com.gadgetworks.flyweight.controller.TcpServerInterface;
  */
 public class WebSocketController implements ICsWebsocketClientMsgHandler, IControllerEventListener {
 
-	private static final Logger			LOGGER		= LoggerFactory.getLogger(WebSocketController.class);
+	private static final Logger				LOGGER		= LoggerFactory.getLogger(WebSocketController.class);
 
-	private Map<UUID, Che>				mCheMap;
-	private IController					mRadioController;
-	private IGatewayInterface			mGatewaytInterface;
-	private IWebSocketClient			mWebSocketClient;
-	private int							mNextMsgNum	= 1;
-	private String						mOrganizationId;
-	private String						mFacilityId;
-	private String						mNetworkId;
-	private String						mNetworkCredential;
+	private Map<NetMacAddress, CheDevice>	mCheMap;
+	private IController						mRadioController;
+	private IGatewayInterface				mGatewaytInterface;
+	private IWebSocketClient				mWebSocketClient;
+	private int								mNextMsgNum	= 1;
+	private String							mOrganizationId;
+	private String							mFacilityId;
+	private String							mNetworkId;
+	private String							mNetworkCredential;
 
 	public WebSocketController() {
-		mCheMap = new HashMap<UUID, Che>();
+		mCheMap = new HashMap<NetMacAddress, CheDevice>();
 
 		mOrganizationId = System.getProperty("organizationId");
 		mFacilityId = System.getProperty("facilityId");
@@ -128,7 +128,7 @@ public class WebSocketController implements ICsWebsocketClientMsgHandler, IContr
 
 			switch (commandEnum) {
 				case NET_ATTACH_RESP:
-					processNetAttach(dataNode);
+					processNetAttachResp(dataNode);
 					break;
 
 				case OBJECT_FILTER_RESP: {
@@ -149,13 +149,13 @@ public class WebSocketController implements ICsWebsocketClientMsgHandler, IContr
 	/**
 	 * @param inDataNode
 	 */
-	private void processNetAttach(final JsonNode inDataNode) {
+	private void processNetAttachResp(final JsonNode inDataNode) {
 		JsonNode responseNode = inDataNode.get(WebSessionRespCmdEnum.NET_ATTACH_RESP.toString());
 
 		if ((responseNode != null) && (responseNode.getTextValue().equals(WebSessionReqCmdNetAttach.SUCCEED))) {
-			JsonNode facilityNode = inDataNode.get("facility");
-			JsonNode facilityPersistentIdNode = facilityNode.get("persistentId");
-			String persistentId = facilityPersistentIdNode.getTextValue();
+			JsonNode networkNode = inDataNode.get("codeshelfNetwork");
+			JsonNode networkPersistentIdNode = networkNode.get("persistentId");
+			String persistentId = networkPersistentIdNode.getTextValue();
 
 			// Build the response Json object.
 			ObjectMapper mapper = new ObjectMapper();
@@ -166,7 +166,8 @@ public class WebSocketController implements ICsWebsocketClientMsgHandler, IContr
 			filterParamsArray.add(theIdNode);
 
 			ArrayNode propertiesArray = mapper.createArrayNode();
-			propertiesArray.add("domainId");
+			propertiesArray.add(IWebSessionReqCmd.SHORT_DOMAIN_ID);
+			propertiesArray.add(IWebSessionReqCmd.MACADDRESS);
 
 			Map<String, Object> propertiesMap = new HashMap<String, Object>();
 			propertiesMap.put(IWebSessionReqCmd.CLASSNAME, Che.class.getSimpleName());
@@ -200,47 +201,39 @@ public class WebSocketController implements ICsWebsocketClientMsgHandler, IContr
 
 	// --------------------------------------------------------------------------
 	/**
-	 * @param cheUpdateNode
+	 * @param inCheUpdateNode
 	 */
-	private void processCheUpdate(final JsonNode cheUpdateNode) {
-		JsonNode updateTypeNode = cheUpdateNode.get(IWebSessionReqCmd.OP_TYPE);
-		UUID uuid = null;
-		Che che = null;
+	private void processCheUpdate(final JsonNode inCheUpdateNode) {
+		JsonNode updateTypeNode = inCheUpdateNode.get(IWebSessionReqCmd.OP_TYPE);
+		CheDevice cheDevice = null;
+		NetMacAddress macAddress = new NetMacAddress(inCheUpdateNode.get(IWebSessionReqCmd.MACADDRESS).asText());
 		if (updateTypeNode != null) {
 			switch (updateTypeNode.getTextValue()) {
 				case IWebSessionReqCmd.OP_TYPE_CREATE:
-					che = new Che();
-					uuid = UUID.fromString(cheUpdateNode.get(IWebSessionReqCmd.PERSISTENT_ID).asText());
-					che.setPersistentId(uuid);
-					che.setDomainId(cheUpdateNode.get(IWebSessionReqCmd.SHORT_DOMAIN_ID).asText());
+					cheDevice = new CheDevice(macAddress);
 
 					// Check to see if the Che is already in our map.
-					if (!mCheMap.containsValue(che)) {
-						mCheMap.put(uuid, che);
+					if (!mCheMap.containsValue(cheDevice)) {
+						mCheMap.put(macAddress, cheDevice);
 					}
 
-					LOGGER.info("Created che: " + che.getDomainId());
+					LOGGER.info("Created che: " + cheDevice.getMacAddress());
 					break;
 
 				case IWebSessionReqCmd.OP_TYPE_UPDATE:
-					uuid = UUID.fromString(cheUpdateNode.get(IWebSessionReqCmd.PERSISTENT_ID).asText());
-					che = mCheMap.get(uuid);
+					cheDevice = mCheMap.get(macAddress);
 
-					if (che == null) {
-						che = new Che();
-						mCheMap.put(uuid, che);
+					if (cheDevice == null) {
+						cheDevice = new CheDevice(macAddress);
+						mCheMap.put(macAddress, cheDevice);
 					}
-					che.setPersistentId(uuid);
-					che.setDomainId(cheUpdateNode.get(IWebSessionReqCmd.SHORT_DOMAIN_ID).asText());
-					INetworkDevice device = new CheDevice(new NetMacAddress(che.getDomainId().getBytes()));
-					mRadioController.addNetworkDevice(device);
-					LOGGER.info("Updated che: " + che.getDomainId());
+					mRadioController.addNetworkDevice(cheDevice);
+					LOGGER.info("Updated che: " + cheDevice.getMacAddress());
 					break;
 
 				case IWebSessionReqCmd.OP_TYPE_DELETE:
-					uuid = UUID.fromString(cheUpdateNode.get(IWebSessionReqCmd.PERSISTENT_ID).asText());
-					che = mCheMap.remove(uuid);
-					LOGGER.info("Deleted che: " + che.getDomainId());
+					cheDevice = mCheMap.remove(macAddress);
+					LOGGER.info("Deleted che: " + cheDevice.getMacAddress());
 					break;
 
 				default:
@@ -252,8 +245,8 @@ public class WebSocketController implements ICsWebsocketClientMsgHandler, IContr
 	@Override
 	public final boolean canNetworkDeviceAssociate(final NetMacAddress inMacAddress) {
 		boolean result = false;
-		for (Che che : mCheMap.values()) {
-			if (che.getDomainId().equals(inMacAddress.toString())) {
+		for (CheDevice cheDevice : mCheMap.values()) {
+			if (cheDevice.getMacAddress().equals(inMacAddress)) {
 				result = true;
 			}
 		}

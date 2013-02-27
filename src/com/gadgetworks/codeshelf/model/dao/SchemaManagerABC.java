@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: SchemaManagerABC.java,v 1.11 2013/02/27 01:17:02 jeffw Exp $
+ *  $Id: SchemaManagerABC.java,v 1.12 2013/02/27 07:29:53 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -409,11 +409,15 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	private boolean createIndicies() {
 		boolean result = true;
 
-		//		result &= linkToParentTable("AISLECONTROLLER", "PARENT", "LOCATION");
+		result &= linkToParentTable("AISLECONTROLLER", "PARENT", "CODESHELFNETWORK");
+		// One extra index: to ensure uniqueness of the MAC addresses, and to find them fast by that address.
+		execOneSQLCommand("CREATE UNIQUE INDEX AISLECONTROLLER_MACADDRESS_INDEX ON CODESHELF.AISLECONTROLLER (MACADDRESS)");
 
-		result &= linkToParentTable("CHE", "PARENT", "LOCATION");
+		result &= linkToParentTable("CHE", "PARENT", "CODESHELFNETWORK");
 		result &= linkToParentTable("CHE", "CURRENTWORKAREA", "WORKAREA");
 		result &= linkToParentTable("CHE", "CURRENTUSER", "USER");
+		// One extra index: to ensure uniqueness of the MAC addresses, and to find them fast by that address.
+		execOneSQLCommand("CREATE UNIQUE INDEX CHE_MACADDRESS_INDEX ON CODESHELF.CHE (MACADDRESS)");
 
 		result &= linkToParentTable("CODESHELFNETWORK", "PARENT", "LOCATION");
 
@@ -458,10 +462,6 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		result &= linkToParentTable("VERTEX", "PARENT", "LOCATION");
 
-		result &= linkToParentTable("WIRELESSDEVICE", "PARENT", "CODESHELFNETWORK");
-		// One extra wireless device index: to ensure uniqueness of the MAC addresses, and to find them fast by that address.
-		execOneSQLCommand("CREATE UNIQUE INDEX WIRELESSDEVICE_MACADDRESS_INDEX ON CODESHELF.WIRELESSDEVICE (MACADDRESS)");
-
 		result &= linkToParentTable("WORKAREA", "PARENT", "PATH");
 
 		result &= linkToParentTable("WORKINSTRUCTION", "PARENT", "ORDERDETAIL");
@@ -477,15 +477,24 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		boolean result = true;
 
-		//		// AisleController
-		//		result &= createTable("AISLECONTROLLER", //
-		//			"DESCRIPTION VARCHAR(64) NOT NULL " //
-		//		);
+		// AisleController
+		result &= createTable("AISLECONTROLLER", //
+			"DESCRIPTION VARCHAR(64), " //
+					+ "MACADDRESS BYTEA DEFAULT '' NOT NULL, " //
+					+ "PUBLICKEY VARCHAR(16) NOT NULL, " //
+					+ "LASTBATTERYLEVEL SMALLINT DEFAULT 0 NOT NULL, " //
+					+ "SERIALBUSPOSITION INT DEFAULT 0 " //
+		);
 
 		// Che
 		result &= createTable("CHE", //
-			"CURRENTUSER_PERSISTENTID " + UUID_TYPE + ", " //
-					+ "CURRENTWORKAREA_PERSISTENTID " + UUID_TYPE + " " //
+			"DESCRIPTION VARCHAR(64), " //
+					+ "MACADDRESS BYTEA DEFAULT '' NOT NULL, " //
+					+ "PUBLICKEY VARCHAR(16) NOT NULL, " //
+					+ "LASTBATTERYLEVEL SMALLINT DEFAULT 0 NOT NULL, " //
+					+ "SERIALBUSPOSITION INT DEFAULT 0, " //
+					+ "CURRENTUSER_PERSISTENTID " + UUID_TYPE + ", " //
+					+ "CURRENTWORKAREA_PERSISTENTID " + UUID_TYPE //
 		);
 
 		// CodeShelfNetwork
@@ -653,18 +662,6 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 					+ "POSY DOUBLE PRECISION NOT NULL, " //
 					+ "POSZ DOUBLE PRECISION, " //
 					+ "DRAWORDER INT NOT NULL " //
-		);
-
-		// WirelessDevice (includes the subclass variants in one table)
-		result &= createTable("WIRELESSDEVICE", //
-			"DTYPE VARCHAR(64) NOT NULL, " //
-					+ "MACADDRESS BYTEA DEFAULT '' NOT NULL, " //
-					+ "PUBLICKEY VARCHAR(16) NOT NULL, " //
-					+ "DESCRIPTION VARCHAR(64), " //
-					+ "LASTBATTERYLEVEL SMALLINT DEFAULT 0 NOT NULL, " //
-					+ "NETWORKDEVICESTATUS VARCHAR(16) DEFAULT 'INVALID', " //
-					+ "SERIALBUSPOSITION INT DEFAULT 0, " //
-					+ "LASTCONTACTTIME BIGINT DEFAULT 0 " //
 		);
 
 		// WorkArea

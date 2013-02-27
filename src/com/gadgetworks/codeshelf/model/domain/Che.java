@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Che.java,v 1.3 2013/02/27 01:17:02 jeffw Exp $
+ *  $Id: Che.java,v 1.4 2013/02/27 07:29:53 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -10,12 +10,15 @@ import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.Inheritance;
+import javax.persistence.InheritanceType;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -37,11 +40,13 @@ import com.google.inject.Singleton;
  * @author jeffw
  */
 
+
 @Entity
-@Table(name = "CHE", schema = "CODESHELF")
 @CacheStrategy
+@Table(name = "CHE", schema = "CODESHELF")
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
-public class Che extends WirelessDeviceABC<CodeshelfNetwork> {
+@ToString
+public class Che extends WirelessDeviceABC {
 
 	@Inject
 	public static ITypedDao<Che>	DAO;
@@ -54,11 +59,6 @@ public class Che extends WirelessDeviceABC<CodeshelfNetwork> {
 	}
 
 	private static final Log	LOGGER	= LogFactory.getLog(Che.class);
-
-	// The parent facility.
-	@Column(nullable = false)
-	@ManyToOne(optional = false)
-	private CodeshelfNetwork	parent;
 
 	// The current work area.
 	@Column(nullable = true)
@@ -89,22 +89,6 @@ public class Che extends WirelessDeviceABC<CodeshelfNetwork> {
 
 	public final String getDefaultDomainIdPrefix() {
 		return "CHE";
-	}
-
-	public final String getContainerId() {
-		return getDomainId();
-	}
-
-	public final void setContainerId(String inContainerId) {
-		setDomainId(inContainerId);
-	}
-
-	public final CodeshelfNetwork getParent() {
-		return parent;
-	}
-
-	public final void setParent(CodeshelfNetwork inParent) {
-		parent = inParent;
 	}
 
 	public final List<? extends IDomainObject> getChildren() {

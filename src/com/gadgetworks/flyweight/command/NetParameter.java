@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: NetParameter.java,v 1.1 2013/02/20 08:28:23 jeffw Exp $
+ *  $Id: NetParameter.java,v 1.2 2013/02/27 07:29:53 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.flyweight.command;
@@ -12,7 +12,6 @@ import java.util.Arrays;
 public class NetParameter {
 
 	private int			mParamByteCount;
-	//private byte[]		mParamBytes;
 	private ByteBuffer	mParamBytes;
 
 	public NetParameter(final String inHexParamValueString, final int inParamByteCount) {
@@ -33,7 +32,7 @@ public class NetParameter {
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */
-	public String toString() {
+	public final String toString() {
 		return getByteArrayAsString(mParamBytes.array());
 	}
 

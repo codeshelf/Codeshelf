@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeshelfNetwork.java,v 1.17 2013/02/27 01:17:02 jeffw Exp $
+ *  $Id: CodeshelfNetwork.java,v 1.18 2013/02/27 07:29:53 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -31,6 +31,7 @@ import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.flyweight.command.NetMacAddress;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -166,13 +167,14 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	public final Che createChe(String inDomainId) {
+	public final Che createChe(String inDomainId, NetMacAddress inMacAddress) {
 
 		Che result = null;
 
 		result = new Che();
 		result.setParent(this);
 		result.setDomainId(inDomainId);
+		result.setMacAddress(inMacAddress);
 
 		this.addChe(result);
 		try {

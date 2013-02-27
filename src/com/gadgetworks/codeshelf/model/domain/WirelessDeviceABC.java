@@ -1,22 +1,19 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WirelessDeviceABC.java,v 1.1 2013/02/27 01:17:02 jeffw Exp $
+ *  $Id: WirelessDeviceABC.java,v 1.2 2013/02/27 07:29:53 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
 import java.util.Arrays;
 
 import javax.persistence.Column;
-import javax.persistence.DiscriminatorColumn;
-import javax.persistence.DiscriminatorType;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
-import javax.persistence.MappedSuperclass;
-import javax.persistence.Table;
+import javax.persistence.ManyToOne;
 import javax.persistence.Transient;
 
 import lombok.Getter;
@@ -49,19 +46,13 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-@MappedSuperclass
 @CacheStrategy
-@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@Table(name = "WIRELESSDEVICE", schema = "CODESHELF")
-@DiscriminatorColumn(name = "DTYPE", discriminatorType = DiscriminatorType.STRING)
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 @ToString
-//public abstract class LocationABC<P extends IDomainObject> extends DomainObjectTreeABC<P> {
+public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNetwork> {
 
-public abstract class WirelessDeviceABC<P extends IDomainObject> extends DomainObjectTreeABC<P> {
-
-	public static final int			MAC_ADDR_BYTES		= 8;
-	public static final int			PUBLIC_KEY_BYTES	= 8;
+	public static final int						MAC_ADDR_BYTES		= 8;
+	public static final int						PUBLIC_KEY_BYTES	= 8;
 
 	@Inject
 	private static ITypedDao<WirelessDeviceABC>	DAO;
@@ -73,12 +64,12 @@ public abstract class WirelessDeviceABC<P extends IDomainObject> extends DomainO
 		}
 	}
 
-	private static final Log		LOGGER				= LogFactory.getLog(WirelessDeviceABC.class);
+	private static final Log		LOGGER	= LogFactory.getLog(WirelessDeviceABC.class);
 
-//	// The owning network.
-//	@Column(nullable = false)
-//	@ManyToOne(optional = false)
-//	private CodeshelfNetwork		parent;
+	// The owning network.
+	@Column(nullable = false)
+	@ManyToOne(optional = false)
+	private CodeshelfNetwork		parent;
 
 	@Column(nullable = false)
 	private byte[]					macAddress;
@@ -103,23 +94,23 @@ public abstract class WirelessDeviceABC<P extends IDomainObject> extends DomainO
 	@JsonProperty
 	private short					lastBatteryLevel;
 
-	//@Transient
-	@Column(nullable = false)
+	@Transient
+	@Column(nullable = true)
 	@Enumerated(value = EnumType.STRING)
 	@Getter
 	@Setter
 	@JsonProperty
 	private NetworkDeviceStateEnum	networkDeviceStatus;
 
-	//@Transient
-	@Column(nullable = false)
+	@Transient
+	@Column(nullable = true)
 	@Setter
 	@JsonProperty
 	private Long					lastContactTime;
 
 	// The network address last assigned to this wireless device.
 	@Transient
-	@Column(nullable = false)
+	@Column(nullable = true)
 	@JsonProperty
 	private byte					networkAddress;
 
@@ -130,8 +121,21 @@ public abstract class WirelessDeviceABC<P extends IDomainObject> extends DomainO
 		lastBatteryLevel = 0;
 	}
 
+	public final CodeshelfNetwork getParent() {
+		return parent;
+	}
+
+	public final void setParent(CodeshelfNetwork inParent) {
+		parent = inParent;
+	}
+
 	public final NetMacAddress getMacAddress() {
 		return new NetMacAddress(macAddress);
+	}
+
+	@JsonProperty
+	public final String getMacAddressStr() {
+		return new NetMacAddress(macAddress).toString();
 	}
 
 	public final void setMacAddress(NetMacAddress inMacAddress) {
@@ -142,7 +146,6 @@ public abstract class WirelessDeviceABC<P extends IDomainObject> extends DomainO
 		networkAddress = (byte) inNetworkAddress.getValue();
 	}
 
-	@JsonProperty
 	public final NetAddress getNetAddress() {
 		return new NetAddress(networkAddress);
 	}

@@ -1,20 +1,18 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: AisleController.java,v 1.1 2013/02/20 08:28:23 jeffw Exp $
+ *  $Id: AisleController.java,v 1.2 2013/02/27 07:29:53 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.Inheritance;
+import javax.persistence.InheritanceType;
 import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
-import lombok.Getter;
+import lombok.ToString;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -37,10 +35,11 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-@Table(name = "AISLECONTROLLER", schema = "CODESHELF")
 @CacheStrategy
+@Table(name = "AISLECONTROLLER", schema = "CODESHELF")
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
-public class AisleController extends DomainObjectTreeABC<Aisle> {
+@ToString
+public class AisleController extends WirelessDeviceABC {
 
 	@Inject
 	public static ITypedDao<AisleController>	DAO;
@@ -57,7 +56,7 @@ public class AisleController extends DomainObjectTreeABC<Aisle> {
 	// The parent facility.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	private Aisle				parent;
+	private Aisle				parentAisle;
 
 	public AisleController() {
 
@@ -79,11 +78,11 @@ public class AisleController extends DomainObjectTreeABC<Aisle> {
 		setDomainId(inContainerId);
 	}
 
-	public final Aisle getParent() {
-		return parent;
+	public final Aisle getParentAisle() {
+		return parentAisle;
 	}
 
-	public final void setParent(Aisle inParent) {
-		parent = inParent;
+	public final void setParentAisle(Aisle inParentAisle) {
+		parentAisle = inParentAisle;
 	}
 }

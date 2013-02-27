@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.47 2013/02/27 01:17:02 jeffw Exp $
+ *  $Id: Facility.java,v 1.48 2013/02/27 07:29:53 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -641,7 +641,8 @@ public class Facility extends LocationABC<Organization> {
 		result.setParent(this);
 		result.setDomainId(inNetworkName);
 		result.setActive(true);
-		result.setCredential(Double.toString(Math.random()));
+		//result.setCredential(Double.toString(Math.random()));
+		result.setCredential("0.6910096026612129");
 
 		try {
 			CodeshelfNetwork.DAO.store(result);

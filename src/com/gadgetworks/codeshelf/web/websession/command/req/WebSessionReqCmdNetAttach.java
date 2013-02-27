@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdNetAttach.java,v 1.1 2013/02/17 04:22:21 jeffw Exp $
+ *  $Id: WebSessionReqCmdNetAttach.java,v 1.2 2013/02/27 07:29:53 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -80,7 +80,7 @@ public class WebSessionReqCmdNetAttach extends WebSessionReqCmdABC {
 					} catch (InterruptedException e) {
 					}
 				}
-				result = new WebSessionRespCmdNetAttach(authenticateResult, facility);
+				result = new WebSessionRespCmdNetAttach(authenticateResult, network);
 			}
 		}
 		return result;
