@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: RadioController.java,v 1.4 2013/02/27 22:06:27 jeffw Exp $
+ *  $Id: RadioController.java,v 1.5 2013/02/28 06:24:52 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.device;
@@ -23,7 +23,7 @@ import com.gadgetworks.flyweight.command.CommandAssocAck;
 import com.gadgetworks.flyweight.command.CommandAssocCheck;
 import com.gadgetworks.flyweight.command.CommandAssocReq;
 import com.gadgetworks.flyweight.command.CommandAssocResp;
-import com.gadgetworks.flyweight.command.CommandControl;
+import com.gadgetworks.flyweight.command.CommandControlScan;
 import com.gadgetworks.flyweight.command.CommandControlABC;
 import com.gadgetworks.flyweight.command.CommandNetMgmtABC;
 import com.gadgetworks.flyweight.command.CommandNetMgmtCheck;
@@ -727,7 +727,7 @@ public class RadioController implements IController {
 				foundDevice.setDeviceStateEnum(NetworkDeviceStateEnum.SETUP);
 
 				LOGGER.info("----------------------------------------------------");
-				LOGGER.info("Device associated: " + foundDevice.toString());
+				LOGGER.info("Device associated: " + foundDevice.getGuid().toString());
 				if ((inCommand.getSystemStatus() & 0x02) > 0) {
 					LOGGER.info(" Status: LVD");
 				}
@@ -968,10 +968,10 @@ public class RadioController implements IController {
 	private void processControlCmd(CommandControlABC inCommand, NetAddress inSrcAddr) {
 
 		switch (inCommand.getExtendedCommandID().getValue()) {
-			case CommandControlABC.STANDARD:
+			case CommandControlABC.SCAN:
 				INetworkDevice device = mDeviceNetAddrMap.get(inSrcAddr);
 				if (device != null) {
-					CommandControl command = (CommandControl) inCommand;
+					CommandControlScan command = (CommandControlScan) inCommand;
 					device.commandReceived(command.getCommandString());
 				}
 				break;
@@ -993,6 +993,7 @@ public class RadioController implements IController {
 			inNetworkDevice.setAddress(new NetAddress(mNextAddress++));
 		}
 
+		inNetworkDevice.setController(this);
 		mDeviceGuidMap.put(inNetworkDevice.getGuid(), inNetworkDevice);
 		mDeviceNetAddrMap.put(inNetworkDevice.getAddress(), inNetworkDevice);
 	}

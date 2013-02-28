@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: SerialInterfaceABC.java,v 1.3 2013/02/27 01:17:02 jeffw Exp $
+ *  $Id: SerialInterfaceABC.java,v 1.4 2013/02/28 06:24:52 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.flyweight.controller;
@@ -184,7 +184,8 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 			packet = new Packet();
 			packet.fromStream(inputStream, nextFrameArray.length);
 
-			if ((packet.getNetworkId().equals(inMyNetworkId)) || (packet.getNetworkId().equals(IPacket.ZERO_NETWORK_ID)) || (packet.getNetworkId().equals(IPacket.BROADCAST_NETWORK_ID))) {
+			if ((packet.getNetworkId().equals(inMyNetworkId)) || (packet.getNetworkId().equals(new NetworkId(IPacket.ZERO_NETWORK_ID)))
+					|| (packet.getNetworkId().equals(new NetworkId(IPacket.BROADCAST_NETWORK_ID)))) {
 				result = packet;
 
 				if (LOGGER.isInfoEnabled()) {

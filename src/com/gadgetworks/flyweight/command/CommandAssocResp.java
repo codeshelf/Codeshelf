@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandAssocResp.java,v 1.2 2013/02/27 22:06:27 jeffw Exp $
+ *  $Id: CommandAssocResp.java,v 1.3 2013/02/28 06:24:52 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.flyweight.command;
@@ -84,6 +84,14 @@ public final class CommandAssocResp extends CommandAssocABC {
 	 */
 	public NetAddress getNetAdress() {
 		return mAddressAssigned;
+	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * @return
+	 */
+	public NetworkId getNetworkId() {
+		return mNetworkId;
 	}
 
 	/* --------------------------------------------------------------------------

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandFactory.java,v 1.3 2013/02/24 22:54:25 jeffw Exp $
+ *  $Id: CommandFactory.java,v 1.4 2013/02/28 06:24:52 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.flyweight.command;
 
@@ -168,8 +168,12 @@ public final class CommandFactory {
 		inInputStream.readNBitInteger(extCmdID);
 
 		switch (extCmdID.getValue()) {
-			case CommandControlABC.STANDARD:
-				result = new CommandControl();
+			case CommandControlABC.SCAN:
+				result = new CommandControlScan();
+				break;
+
+			case CommandControlABC.MESSAGE:
+				result = new CommandControlMessage();
 				break;
 
 			default:

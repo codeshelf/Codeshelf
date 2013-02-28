@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandControl.java,v 1.1 2013/02/23 05:42:09 jeffw Exp $
+ *  $Id: CommandControlScan.java,v 1.1 2013/02/28 06:24:52 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.flyweight.command;
@@ -24,9 +24,9 @@ import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
  *  
  *  @author jeffw
  */
-public final class CommandControl extends CommandControlABC {
+public final class CommandControlScan extends CommandControlABC {
 
-	private static final Log	LOGGER					= LogFactory.getLog(CommandControl.class);
+	private static final Log	LOGGER					= LogFactory.getLog(CommandControlScan.class);
 
 	@Accessors(prefix = "m")
 	@Getter
@@ -38,8 +38,8 @@ public final class CommandControl extends CommandControlABC {
 	 *  This is the constructor to use to create a data command to send to the network.
 	 *  @param inEndpoint	The end point to send the command.
 	 */
-	public CommandControl(final NetEndpoint inEndpoint, final String inCommandString) {
-		super(inEndpoint, new NetCommandId(CommandControlABC.STANDARD));
+	public CommandControlScan(final NetEndpoint inEndpoint, final String inCommandString) {
+		super(inEndpoint, new NetCommandId(CommandControlABC.SCAN));
 
 		mCommandString = inCommandString;
 	}
@@ -48,8 +48,8 @@ public final class CommandControl extends CommandControlABC {
 	/**
 	 *  This is the constructor to use to create a data command that's read off of the network input stream.
 	 */
-	public CommandControl() {
-		super(new NetCommandId(CommandControlABC.STANDARD));
+	public CommandControlScan() {
+		super(new NetCommandId(CommandControlABC.SCAN));
 	}
 
 	/* --------------------------------------------------------------------------

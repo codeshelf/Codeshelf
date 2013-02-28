@@ -1,60 +1,63 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandControlABC.java,v 1.2 2013/02/28 06:24:52 jeffw Exp $
+ *  $Id: CommandControlMessage.java,v 1.1 2013/02/28 06:24:52 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.flyweight.command;
+
+import java.io.IOException;
+
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import com.gadgetworks.flyweight.bitfields.BitFieldInputStream;
 import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
 
 // --------------------------------------------------------------------------
 /**
- *  The control command is the primary means by which the remotes are controlled by the controller.
- *  There are sub-commands for sending audio, motor control, etc.  There are also sub-commands for receiving inputs from the remote.
- *  
- *  Format of the control command is:
- *  
- *  1B - the command ID.
- *  1B - the command ACK ID.  (If non-zero, then the command requires ACK.)
- *  nB - the control command data.
+ *  A string command from the remote.
  *  
  *  @author jeffw
- *  
  */
-public abstract class CommandControlABC extends ExtendedCommandABC {
+public final class CommandControlMessage extends CommandControlABC {
 
-	public static final int		COMMAND_CONTROL_HDR_BYTES	= 1;
-	public static final int		MAX_CONTROL_BYTES			= ICommand.MAX_COMMAND_BYTES - COMMAND_CONTROL_HDR_BYTES;
+	private static final Log	LOGGER					= LogFactory.getLog(CommandControlMessage.class);
 
-	public static final byte	SCAN						= 1;
-	public static final byte	MESSAGE						= 2;
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	private String				mMessageString;
 
 	// --------------------------------------------------------------------------
 	/**
-	 *  This is the constructor to use to create a control command to send to the network.
+	 *  This is the constructor to use to create a data command to send to the network.
 	 *  @param inEndpoint	The end point to send the command.
-	 *  @param inControlBytes	The data to send in the command.
 	 */
-	public CommandControlABC(final NetEndpoint inEndpoint, final NetCommandId inExtendedCommandID) {
-		super(inEndpoint, inExtendedCommandID);
+	public CommandControlMessage(final NetEndpoint inEndpoint, final String inCommandString) {
+		super(inEndpoint, new NetCommandId(CommandControlABC.MESSAGE));
+
+		mMessageString = inCommandString;
 	}
 
 	// --------------------------------------------------------------------------
 	/**
 	 *  This is the constructor to use to create a data command that's read off of the network input stream.
 	 */
-	public CommandControlABC(final NetCommandId inExtendedCommandID) {
-		super(inExtendedCommandID);
+	public CommandControlMessage() {
+		super(new NetCommandId(CommandControlABC.MESSAGE));
 	}
 
 	/* --------------------------------------------------------------------------
 	 * (non-Javadoc)
-	 * @see com.gadgetworks.command.ICommand#getCommandTypeEnum()
+	 * @see com.gadgetworks.controller.CommandABC#doToString()
 	 */
-	public final CommandGroupEnum getCommandTypeEnum() {
-		return CommandGroupEnum.CONTROL;
+	public String doToString() {
+		return "Contents: " + mMessageString;
 	}
 
 	/* --------------------------------------------------------------------------
@@ -63,6 +66,13 @@ public abstract class CommandControlABC extends ExtendedCommandABC {
 	 */
 	protected void doToStream(BitFieldOutputStream inOutputStream) {
 		super.doToStream(inOutputStream);
+
+		try {
+			inOutputStream.writePString(mMessageString);
+		} catch (IOException e) {
+			LOGGER.error("", e);
+		}
+
 	}
 
 	/* --------------------------------------------------------------------------
@@ -71,14 +81,22 @@ public abstract class CommandControlABC extends ExtendedCommandABC {
 	 */
 	protected void doFromStream(BitFieldInputStream inInputStream, int inCommandByteCount) {
 		super.doFromStream(inInputStream, inCommandByteCount);
+
+		try {
+			mMessageString = inInputStream.readPString();
+		} catch (IOException e) {
+			LOGGER.error("", e);
+		}
+
 	}
 
 	/* --------------------------------------------------------------------------
 	 * (non-Javadoc)
-	 * @see com.gadgetworks.controller.CommandABC#doComputeCommandSize()
+	 * @see com.gadgetworks.command.CommandABC#doComputeCommandSize()
 	 */
+	@Override
 	protected int doComputeCommandSize() {
-		return super.doComputeCommandSize() + COMMAND_CONTROL_HDR_BYTES;
+		return super.doComputeCommandSize() + mMessageString.length();
 	}
 
 }

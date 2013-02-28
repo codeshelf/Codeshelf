@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CheDeviceEmbedded.java,v 1.2 2013/02/27 22:06:27 jeffw Exp $
+ *  $Id: CheDeviceEmbedded.java,v 1.3 2013/02/28 06:24:52 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -16,7 +16,9 @@ import com.gadgetworks.flyweight.command.CommandAssocABC;
 import com.gadgetworks.flyweight.command.CommandAssocAck;
 import com.gadgetworks.flyweight.command.CommandAssocReq;
 import com.gadgetworks.flyweight.command.CommandAssocResp;
-import com.gadgetworks.flyweight.command.CommandControl;
+import com.gadgetworks.flyweight.command.CommandControlABC;
+import com.gadgetworks.flyweight.command.CommandControlMessage;
+import com.gadgetworks.flyweight.command.CommandControlScan;
 import com.gadgetworks.flyweight.command.ICommand;
 import com.gadgetworks.flyweight.command.IPacket;
 import com.gadgetworks.flyweight.command.NetAddress;
@@ -79,12 +81,8 @@ public class CheDeviceEmbedded implements IDevice {
 						if (reader.ready()) {
 							String scanValue = reader.readLine();
 
-							ICommand command = new CommandControl(NetEndpoint.PRIMARY_ENDPOINT, scanValue);
-							IPacket packet = new Packet(command,
-								new NetworkId(IPacket.BROADCAST_NETWORK_ID),
-								new NetAddress(IPacket.BROADCAST_ADDRESS),
-								new NetAddress(IPacket.GATEWAY_ADDRESS),
-								false);
+							ICommand command = new CommandControlScan(NetEndpoint.PRIMARY_ENDPOINT, scanValue);
+							IPacket packet = new Packet(command, mNetworkId, mNetAddress, new NetAddress(IPacket.GATEWAY_ADDRESS), false);
 							command.setPacket(packet);
 							sendPacket(packet);
 						}
@@ -168,9 +166,7 @@ public class CheDeviceEmbedded implements IDevice {
 					break;
 
 				case CONTROL:
-					//					if (mChannelSelected) {
-					//						processControlCmd((CommandControlABC) inCommand);
-					//					}
+					processControlCmd((CommandControlABC) inCommand);
 					break;
 				default:
 					break;
@@ -203,11 +199,38 @@ public class CheDeviceEmbedded implements IDevice {
 	private void processAssocRespCommand(CommandAssocResp inCommand, NetAddress inSrcAddr) {
 
 		mNetAddress = inCommand.getNetAdress();
-
+		mNetworkId = inCommand.getNetworkId();
 	}
 
 	private void processAssocAckCommand(CommandAssocAck inCommand, NetAddress inSrcAddr) {
 		// The controller doesn't need to process these sub-commands.
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 *  The radio controller sent this CHE a command.
+	 *  @param inCommand    The control command that we want to process.  (The one just received.)
+	 */
+	private void processControlCmd(CommandControlABC inCommand) {
+
+		// Figure out what kind of control sub-command we have.
+
+		switch (inCommand.getExtendedCommandID().getValue()) {
+			case CommandControlABC.MESSAGE:
+				processControlMessageCommand((CommandControlMessage) inCommand);
+				break;
+
+			case CommandControlABC.SCAN:
+				//processControlAckCommand((CommandControlScan) inCommand, inSrcAddr);
+				break;
+
+			default:
+		}
+	}
+
+	private void processControlMessageCommand(CommandControlMessage inCommand) {
+
+		LOGGER.info("Display message: " + inCommand.getMessageString());
 	}
 
 	// --------------------------------------------------------------------------

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  OmniBox
  *  Copyright (c) 2005-2007, Jeffrey B. Williams, All rights reserved
- *  $Id: INetworkDevice.java,v 1.3 2013/02/27 22:06:27 jeffw Exp $
+ *  $Id: INetworkDevice.java,v 1.4 2013/02/28 06:24:52 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.flyweight.controller;
 
@@ -104,4 +104,11 @@ public interface INetworkDevice {
 	 *  @param inButtonNumberPressed
 	 */
 	void commandReceived(String inCommandStr);
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * Set the radio controller for this device.
+	 * @param inController
+	 */
+	void setController(IController inController);
 }

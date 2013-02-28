@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: BitFieldInputStream.java,v 1.2 2013/02/27 01:17:03 jeffw Exp $
+ *  $Id: BitFieldInputStream.java,v 1.3 2013/02/28 06:24:52 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.flyweight.bitfields;
 
@@ -165,27 +165,30 @@ public final class BitFieldInputStream {
 		// Since we build the buffer from the MSB we need to know the largest (leftmost) bit position with which to start given the largest NBit integer possible.
 		//final int maskStarter = 0x01 << (inNBitInt.getBitLen() - 1);
 
-		// Read a byte from the stream.
-		if (mCurrentBit == 0)
-			localRead();
+		if (inNBitInt.getBitLen() > 0) {
+			// Read a byte from the stream.
+			if (mCurrentBit == 0)
+				localRead();
 
-		// Cycle through the bits in the byte buffer and place them into the new value variable.
-		for (int i = 0; i <= inNBitInt.getBitLen() - 1; i++) {
+			// Cycle through the bits in the byte buffer and place them into the new value variable.
+			for (int i = 0; i <= inNBitInt.getBitLen() - 1; i++) {
 
-			// If we've gone past the end of the byte buffer then refresh it.
-			if (mCurrentBit > 7) {
-				readTheByteBuffer();
-				mCurrentBit = 0;
+				// If we've gone past the end of the byte buffer then refresh it.
+				if (mCurrentBit > 7) {
+					readTheByteBuffer();
+					mCurrentBit = 0;
+				}
+
+				if ((mByteBuffer & (0x80 >> (mCurrentBit))) > 0)
+					newValue |= 0x01 << (inNBitInt.getBitLen() - i - 1);
+				mCurrentBit++;
 			}
 
-			if ((mByteBuffer & (0x80 >> (mCurrentBit))) > 0)
-				newValue |= 0x01 << (inNBitInt.getBitLen() - i - 1);
-			mCurrentBit++;
+			if (mCurrentBit > 7) {
+				mCurrentBit = 0;
+			}
 		}
-
-		if (mCurrentBit > 7)
-			mCurrentBit = 0;
-
+		
 		try {
 			inNBitInt.setValue(newValue);
 		} catch (OutOfRangeException e) {
