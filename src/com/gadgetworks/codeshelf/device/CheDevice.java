@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CheDevice.java,v 1.7 2013/02/28 06:24:52 jeffw Exp $
+ *  $Id: CheDevice.java,v 1.8 2013/03/01 21:23:25 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -32,9 +32,18 @@ public class CheDevice implements INetworkDevice {
 	private static final String		BARCODE_DELIMITER			= "%";
 	private static final String		COMMAND_BARCODE_PREFIX		= "X%";
 	private static final String		USER_BARCODE_PREFIX			= "U%";
-	private static final String		CONTAINER_BARCODE_PREFIX	= "C%";
+	private static final String		CONTAINER_BARCODE_PREFIX	= "O%";
 	private static final String		LOCATION_BARCODE_PREFIX		= "L%";
 	private static final String		ITEMID_BARCODE_PREFIX		= "I%";
+
+	// These are the message strings we send to the remote CHE.
+	// Currently, these cannot be longer than 10 characters.
+	private static final String		LOGIN						= "LOGIN";
+	private static final String		SCAN_USERID					= "SCAN BADGE";
+	private static final String		SCAN_LOCATION				= "SCAN LOC";
+	private static final String		SCAN_CONTAINER				= "SCAN CNTR";
+
+	private static final String		LOGOUT_COMMAND				= "LOGOUT";
 
 	// MAC address.
 	@Accessors(prefix = "m")
@@ -88,6 +97,17 @@ public class CheDevice implements INetworkDevice {
 	}
 
 	// --------------------------------------------------------------------------
+	/**
+	 * Send a display message to the CHE's embedded control device.
+	 * @param inMessage
+	 */
+	private void sendDisplayCommand(final String inMessage) {
+		ICommand command = new CommandControlMessage(NetEndpoint.PRIMARY_ENDPOINT, inMessage);
+		mController.sendCommand(command, mAddress, false);
+
+	}
+
+	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.flyweight.controller.INetworkDevice#commandReceived(java.lang.String)
 	 */
@@ -103,38 +123,46 @@ public class CheDevice implements INetworkDevice {
 			scanStr = inCommandStr.substring(prefixCharPos + 1);
 		}
 
-		if (inCommandStr.equals(COMMAND_BARCODE_PREFIX + "LOGOUT")) {
-			processLogout();
+		// A command scan is always an option at any state.
+		if (inCommandStr.startsWith(COMMAND_BARCODE_PREFIX)) {
+			processCommandScan(scanStr);
 		} else {
 			switch (mCheStateEnum) {
 				case IDLE:
 					idleStateScan(scanPrefixStr, scanStr);
 					break;
 
+				case LOCATION_SETUP:
+					locationScan(scanPrefixStr, scanStr);
+
 				default:
 					break;
 			}
 		}
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
-	 * Send a display message to the CHE's embedded control device.
-	 * @param inMessage
 	 */
-	private void sendDisplayCommand(final String inMessage) {
-		ICommand command = new CommandControlMessage(NetEndpoint.PRIMARY_ENDPOINT, inMessage);
-		mController.sendCommand(command, mAddress, false);
+	private void processCommandScan(final String inScanStr) {
 
+		switch (inScanStr) {
+			case LOGOUT_COMMAND:
+				logout();
+				break;
+
+			default:
+				break;
+		}
 	}
 
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	private void processLogout() {
+	private void logout() {
 		LOGGER.info("User logut");
 		mCheStateEnum = CheStateEnum.IDLE;
-		sendDisplayCommand("SCAN USERID");
+		sendDisplayCommand(SCAN_USERID);
 	}
 
 	// --------------------------------------------------------------------------
@@ -147,7 +175,23 @@ public class CheDevice implements INetworkDevice {
 		if (USER_BARCODE_PREFIX.equals(inScanPrefixStr)) {
 			mCheStateEnum = CheStateEnum.LOCATION_SETUP;
 			LOGGER.info("User login: " + inScanStr);
-			sendDisplayCommand("SCAN LOCATION");
+			sendDisplayCommand(SCAN_LOCATION);
+		} else {
+			LOGGER.info("Not a user ID: " + inScanStr);
+			sendDisplayCommand(SCAN_USERID);
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param insScanPrefixStr
+	 * @param inScanStr
+	 */
+	private void locationScan(final String inScanPrefixStr, String inScanStr) {
+		if (LOCATION_BARCODE_PREFIX.equals(inScanPrefixStr)) {
+			mCheStateEnum = CheStateEnum.CONTAINER_SELECT;
+			LOGGER.info("Location: " + inScanStr);
+			sendDisplayCommand(SCAN_CONTAINER);
 		}
 	}
 }
