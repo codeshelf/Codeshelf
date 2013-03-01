@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: TcpClientInterface.java,v 1.2 2013/02/23 05:42:09 jeffw Exp $
+ *  $Id: TcpClientInterface.java,v 1.3 2013/03/01 21:24:43 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.flyweight.controller;
 
@@ -26,9 +26,10 @@ public class TcpClientInterface extends SerialInterfaceABC {
 	private Socket				mSocket;
 	private InputStream			mInputStream;
 	private OutputStream		mOutputStream;
+	private String				mHostname;
 
-	public TcpClientInterface() {
-
+	public TcpClientInterface(final String inHostname) {
+		mHostname = inHostname;
 	}
 
 	// --------------------------------------------------------------------------
@@ -40,7 +41,7 @@ public class TcpClientInterface extends SerialInterfaceABC {
 		boolean result = true;
 
 		try {
-			mSocket = new Socket("localhost", TcpServerInterface.PORT_NUM);
+			mSocket = new Socket(mHostname, TcpServerInterface.PORT_NUM);
 			mInputStream = mSocket.getInputStream();
 			mOutputStream = mSocket.getOutputStream();
 		} catch (IOException e) {

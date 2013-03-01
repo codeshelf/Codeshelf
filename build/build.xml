@@ -41,7 +41,6 @@
 	<property name="src" location="${basedir}/src" />
 	<property name="libs.dir" location="${basedir}/lib" />
 	<property name="libs.dist.dir" location="${basedir}/lib/dist" />
-	<property name="libs.merge.dir" location="${basedir}/lib/merge" />
 	<property name="keystore" location="${basedir}/build/keystore" />
 	<property name="target" location="${basedir}/target" />
 	<property name="target.build" location="${target}/build" />
@@ -102,7 +101,6 @@
 	<path id="compile-libs">
 		<fileset dir="${target.lib}" includes="smackx-jingle.jar" />
 		<fileset dir="${target.lib}" includes="*.jar" />
-		<fileset dir="${libs.merge.dir}" includes="FlyWeightController.jar" />
 	</path>
 
 	<!-- clean =================================================================================== -->
@@ -222,14 +220,11 @@
 		</javac>
 
 		<!-- Put the FlyweightController classes into the compiled classes folder, so that we can obfuscate and enhance them. -->
-		<unjar dest="${target.compiled.classes}">
+		<!--unjar dest="${target.compiled.classes}">
 			<patternset>
 				<include name="com/gadgetworks/**/*.class" />
 			</patternset>
-			<fileset dir="${libs.merge.dir}">
-				<include name="**/FlyWeightController.jar" />
-			</fileset>
-		</unjar>
+		</unjar-->
 
 		<!-- Put the main application classes in one JAR. -->
 		<jar duplicate="fail" jarfile="${target.lib}/codeshelf-unobfs.jar">

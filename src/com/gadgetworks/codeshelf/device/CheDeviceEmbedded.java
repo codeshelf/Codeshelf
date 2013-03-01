@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CheDeviceEmbedded.java,v 1.3 2013/02/28 06:24:52 jeffw Exp $
+ *  $Id: CheDeviceEmbedded.java,v 1.4 2013/03/01 21:24:43 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -57,7 +57,7 @@ public class CheDeviceEmbedded implements IDevice {
 
 	@Override
 	public final void start() {
-		mGatewayInterface = new TcpClientInterface();
+		mGatewayInterface = new TcpClientInterface("10.47.47.49");
 		mShouldRun = true;
 		startPacketReceivers();
 		processScans();
