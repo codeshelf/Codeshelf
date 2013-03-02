@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  OmniBox
  *  Copyright (c) 2005-2007, Jeffrey B. Williams, All rights reserved
- *  $Id: INetworkDevice.java,v 1.4 2013/02/28 06:24:52 jeffw Exp $
+ *  $Id: INetworkDevice.java,v 1.5 2013/03/02 02:22:30 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.flyweight.controller;
 
@@ -100,15 +100,22 @@ public interface INetworkDevice {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * Set the radio controller for this device.
+	 * @param inController
+	 */
+	void setController(IController inController);
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * We get this message when the device first starts on the network.
+	 */
+	void start();
+
+	// --------------------------------------------------------------------------
+	/**
 	 *  The user pressed a button on the remote.
 	 *  @param inButtonNumberPressed
 	 */
 	void commandReceived(String inCommandStr);
 	
-	// --------------------------------------------------------------------------
-	/**
-	 * Set the radio controller for this device.
-	 * @param inController
-	 */
-	void setController(IController inController);
 }

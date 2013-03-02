@@ -1,9 +1,12 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CheDevice.java,v 1.8 2013/03/01 21:23:25 jeffw Exp $
+ *  $Id: CheDevice.java,v 1.9 2013/03/02 02:22:30 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -38,10 +41,12 @@ public class CheDevice implements INetworkDevice {
 
 	// These are the message strings we send to the remote CHE.
 	// Currently, these cannot be longer than 10 characters.
-	private static final String		LOGIN						= "LOGIN";
-	private static final String		SCAN_USERID					= "SCAN BADGE";
-	private static final String		SCAN_LOCATION				= "SCAN LOC";
-	private static final String		SCAN_CONTAINER				= "SCAN CNTR";
+	private static final String		EMPTY_MSG					= "";
+	private static final String		ERROR_MSG					= "ERROR";
+	private static final String		SCAN_USERID_MSG				= "SCAN BADGE";
+	private static final String		SCAN_LOCATION_MSG			= "SCAN LOC";
+	private static final String		SCAN_CONTAINER_MSG			= "SCAN CNTR";
+	private static final String		SELECT_POSITION_MSG			= "SELECT POS";
 
 	private static final String		LOGOUT_COMMAND				= "LOGOUT";
 
@@ -86,9 +91,20 @@ public class CheDevice implements INetworkDevice {
 	@Setter
 	private IController				mController;
 
+	// The CHE's current location.
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	private String					mLocation;
+
+	// The CHE's current location.
+	@Accessors(prefix = "m")
+	private List<String>			mContainerIds;
+
 	public CheDevice(final NetGuid inGuid) {
 		mGuid = inGuid;
 		mCheStateEnum = CheStateEnum.IDLE;
+		mContainerIds = new ArrayList<String>();
 	}
 
 	@Override
@@ -99,12 +115,23 @@ public class CheDevice implements INetworkDevice {
 	// --------------------------------------------------------------------------
 	/**
 	 * Send a display message to the CHE's embedded control device.
-	 * @param inMessage
+	 * @param inLine1Message
 	 */
-	private void sendDisplayCommand(final String inMessage) {
-		ICommand command = new CommandControlMessage(NetEndpoint.PRIMARY_ENDPOINT, inMessage);
+	private void sendDisplayCommand(final String inLine1Message, final String inLine2Message) {
+		LOGGER.info("Display message: " + inLine1Message);
+		ICommand command = new CommandControlMessage(NetEndpoint.PRIMARY_ENDPOINT, inLine1Message, inLine2Message);
 		mController.sendCommand(command, mAddress, false);
 
+	}
+
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.flyweight.controller.INetworkDevice#start()
+	 */
+	@Override
+	public final void start() {
+		mCheStateEnum = CheStateEnum.IDLE;
+		sendDisplayCommand(SCAN_USERID_MSG, EMPTY_MSG);
 	}
 
 	// --------------------------------------------------------------------------
@@ -135,6 +162,10 @@ public class CheDevice implements INetworkDevice {
 				case LOCATION_SETUP:
 					locationScan(scanPrefixStr, scanStr);
 
+				case CONTAINER_SELECT:
+					containerSelectScan(scanPrefixStr, scanStr);
+					break;
+
 				default:
 					break;
 			}
@@ -161,8 +192,65 @@ public class CheDevice implements INetworkDevice {
 	 */
 	private void logout() {
 		LOGGER.info("User logut");
-		mCheStateEnum = CheStateEnum.IDLE;
-		sendDisplayCommand(SCAN_USERID);
+		// Clear all of the container IDs we were tracking.
+		mContainerIds.clear();
+		setState(CheStateEnum.IDLE);
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 */
+	private void setState(final CheStateEnum inCheState) {
+		mCheStateEnum = inCheState;
+
+		switch (inCheState) {
+			case IDLE:
+				sendDisplayCommand(SCAN_USERID_MSG, EMPTY_MSG);
+				break;
+
+			case LOCATION_SETUP:
+				sendDisplayCommand(SCAN_LOCATION_MSG, EMPTY_MSG);
+				break;
+
+			case CONTAINER_SELECT:
+				sendDisplayCommand(SCAN_CONTAINER_MSG, EMPTY_MSG);
+				break;
+
+			case CONTAINER_POSITION:
+				sendDisplayCommand(SELECT_POSITION_MSG, EMPTY_MSG);
+				break;
+
+			default:
+				break;
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 */
+	private void setStateError(final CheStateEnum inCheState) {
+		mCheStateEnum = inCheState;
+
+		switch (inCheState) {
+			case IDLE:
+				sendDisplayCommand(SCAN_USERID_MSG, ERROR_MSG);
+				break;
+
+			case LOCATION_SETUP:
+				sendDisplayCommand(SCAN_LOCATION_MSG, ERROR_MSG);
+				break;
+
+			case CONTAINER_SELECT:
+				sendDisplayCommand(SCAN_CONTAINER_MSG, ERROR_MSG);
+				break;
+
+			case CONTAINER_POSITION:
+				sendDisplayCommand(SELECT_POSITION_MSG, ERROR_MSG);
+				break;
+
+			default:
+				break;
+		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -173,12 +261,10 @@ public class CheDevice implements INetworkDevice {
 	private void idleStateScan(final String inScanPrefixStr, final String inScanStr) {
 
 		if (USER_BARCODE_PREFIX.equals(inScanPrefixStr)) {
-			mCheStateEnum = CheStateEnum.LOCATION_SETUP;
-			LOGGER.info("User login: " + inScanStr);
-			sendDisplayCommand(SCAN_LOCATION);
+			setState(CheStateEnum.LOCATION_SETUP);
 		} else {
 			LOGGER.info("Not a user ID: " + inScanStr);
-			sendDisplayCommand(SCAN_USERID);
+			setStateError(CheStateEnum.IDLE);
 		}
 	}
 
@@ -189,9 +275,26 @@ public class CheDevice implements INetworkDevice {
 	 */
 	private void locationScan(final String inScanPrefixStr, String inScanStr) {
 		if (LOCATION_BARCODE_PREFIX.equals(inScanPrefixStr)) {
-			mCheStateEnum = CheStateEnum.CONTAINER_SELECT;
-			LOGGER.info("Location: " + inScanStr);
-			sendDisplayCommand(SCAN_CONTAINER);
+			setLocation(inScanStr);
+			setState(CheStateEnum.CONTAINER_SELECT);
+		} else {
+			LOGGER.info("Not a location ID: " + inScanStr);
+			setStateError(CheStateEnum.LOCATION_SETUP);
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param insScanPrefixStr
+	 * @param inScanStr
+	 */
+	private void containerSelectScan(final String inScanPrefixStr, String inScanStr) {
+		if (CONTAINER_BARCODE_PREFIX.equals(inScanPrefixStr)) {
+			mContainerIds.add(inScanStr);
+			setState(CheStateEnum.CONTAINER_POSITION);
+		} else {
+			LOGGER.info("Not a container ID: " + inScanStr);
+			setStateError(CheStateEnum.CONTAINER_SELECT);
 		}
 	}
 }

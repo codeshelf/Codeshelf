@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandControlMessage.java,v 1.1 2013/02/28 06:24:52 jeffw Exp $
+ *  $Id: CommandControlMessage.java,v 1.2 2013/03/02 02:22:30 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.flyweight.command;
@@ -31,17 +31,23 @@ public final class CommandControlMessage extends CommandControlABC {
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
-	private String				mMessageString;
+	private String				mLine1MessageStr;
+	
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter	
+	private String				mLine2MessageStr;
 
 	// --------------------------------------------------------------------------
 	/**
 	 *  This is the constructor to use to create a data command to send to the network.
 	 *  @param inEndpoint	The end point to send the command.
 	 */
-	public CommandControlMessage(final NetEndpoint inEndpoint, final String inCommandString) {
+	public CommandControlMessage(final NetEndpoint inEndpoint, final String inLine1MessageStr, final String inLine2MessageStr) {
 		super(inEndpoint, new NetCommandId(CommandControlABC.MESSAGE));
 
-		mMessageString = inCommandString;
+		mLine1MessageStr = inLine1MessageStr;
+		mLine2MessageStr = inLine2MessageStr;
 	}
 
 	// --------------------------------------------------------------------------
@@ -57,7 +63,7 @@ public final class CommandControlMessage extends CommandControlABC {
 	 * @see com.gadgetworks.controller.CommandABC#doToString()
 	 */
 	public String doToString() {
-		return "Contents: " + mMessageString;
+		return "Message: " + mLine1MessageStr + " (line1) " + mLine2MessageStr + " (line2)";
 	}
 
 	/* --------------------------------------------------------------------------
@@ -68,7 +74,8 @@ public final class CommandControlMessage extends CommandControlABC {
 		super.doToStream(inOutputStream);
 
 		try {
-			inOutputStream.writePString(mMessageString);
+			inOutputStream.writePString(mLine1MessageStr);
+			inOutputStream.writePString(mLine2MessageStr);
 		} catch (IOException e) {
 			LOGGER.error("", e);
 		}
@@ -83,7 +90,8 @@ public final class CommandControlMessage extends CommandControlABC {
 		super.doFromStream(inInputStream, inCommandByteCount);
 
 		try {
-			mMessageString = inInputStream.readPString();
+			mLine1MessageStr = inInputStream.readPString();
+			mLine2MessageStr = inInputStream.readPString();
 		} catch (IOException e) {
 			LOGGER.error("", e);
 		}
@@ -96,7 +104,7 @@ public final class CommandControlMessage extends CommandControlABC {
 	 */
 	@Override
 	protected int doComputeCommandSize() {
-		return super.doComputeCommandSize() + mMessageString.length();
+		return super.doComputeCommandSize() + mLine1MessageStr.length();
 	}
 
 }

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: RadioController.java,v 1.5 2013/02/28 06:24:52 jeffw Exp $
+ *  $Id: RadioController.java,v 1.6 2013/03/02 02:22:30 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.device;
@@ -957,6 +957,7 @@ public class RadioController implements IController {
 	 */
 	private void networkDeviceBecameActive(INetworkDevice inNetworkDevice) {
 		inNetworkDevice.setDeviceStateEnum(NetworkDeviceStateEnum.SETUP);
+		inNetworkDevice.start();
 	}
 
 	// --------------------------------------------------------------------------

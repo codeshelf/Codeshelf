@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CheDeviceEmbedded.java,v 1.5 2013/03/02 02:22:30 jeffw Exp $
+ *  $Id: CheDeviceEmbedded.java,v 1.6 2013/03/02 02:26:27 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -233,7 +233,7 @@ public class CheDeviceEmbedded implements IDevice {
 	 * @param inCommand
 	 */
 	private void processControlMessageCommand(CommandControlMessage inCommand) {
-		LOGGER.info("Display message: " + inCommand.getLine1MessageStr() + " (line 1) " + inCommand.getLine2MessageStr() + " (line 2)");
+		LOGGER.info("Display message: '" + inCommand.getLine1MessageStr() + "' (line 1) '" + inCommand.getLine2MessageStr() + "' (line 2)");
 	}
 
 	// --------------------------------------------------------------------------
