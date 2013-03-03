@@ -1,7 +1,7 @@
 /*******************************************************************************
 CodeshelfWebSocketServer *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CsCheMain.java,v 1.3 2013/03/03 23:27:21 jeffw Exp $
+ *  $Id: CsAisleMain.java,v 1.1 2013/03/03 23:27:21 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -13,7 +13,7 @@ import java.util.Properties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.device.CheDeviceEmbedded;
+import com.gadgetworks.codeshelf.device.AisleDeviceEmbedded;
 import com.gadgetworks.codeshelf.device.IEmbeddedDevice;
 import com.gadgetworks.flyweight.command.IPacket;
 import com.google.inject.AbstractModule;
@@ -25,19 +25,19 @@ import com.google.inject.name.Names;
 /**
  *  @author jeffw
  */
-public final class CsCheMain {
+public final class CsAisleMain {
 
 	// See the top of Util to understand why we do the following:
 	static {
 		Util.initLogging();
 	}
 
-	private static final Logger	LOGGER	= LoggerFactory.getLogger(CsCheMain.class);
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(CsAisleMain.class);
 
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	private CsCheMain() {
+	private CsAisleMain() {
 	}
 
 	// --------------------------------------------------------------------------
@@ -61,6 +61,7 @@ public final class CsCheMain {
 		} catch (IOException e) {
 			System.err.println();
 		}
+
 		// Guice (injector) will invoke log4j, so we need to set some log dir parameters before we call it.
 		Util util = new Util();
 		String appDataDir = util.getApplicationDataDirPath();
@@ -75,7 +76,7 @@ public final class CsCheMain {
 
 		// Create and start the application.
 		Injector injector = setupInjector();
-		ICodeshelfApplication application = injector.getInstance(CsCheApplication.class);
+		ICodeshelfApplication application = injector.getInstance(CsAisleApplication.class);
 		application.startApplication();
 
 		// Handle events until the application exits.
@@ -95,7 +96,7 @@ public final class CsCheMain {
 				bind(Byte.class).annotatedWith(Names.named(IPacket.NETWORK_NUM_PROPERTY)).toInstance(Byte.valueOf(System.getProperty("codeshelf.networknum")));
 
 				bind(IUtil.class).to(Util.class);
-				bind(IEmbeddedDevice.class).to(CheDeviceEmbedded.class);
+				bind(IEmbeddedDevice.class).to(AisleDeviceEmbedded.class);
 			}
 		});
 

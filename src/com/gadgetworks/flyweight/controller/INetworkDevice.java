@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  OmniBox
  *  Copyright (c) 2005-2007, Jeffrey B. Williams, All rights reserved
- *  $Id: INetworkDevice.java,v 1.6 2013/03/03 02:52:51 jeffw Exp $
+ *  $Id: INetworkDevice.java,v 1.7 2013/03/03 23:27:21 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.flyweight.controller;
 
@@ -98,13 +98,6 @@ public interface INetworkDevice {
 	 */
 	void setLastBatteryLevel(short inLastBatteryLevel);
 
-	// --------------------------------------------------------------------------
-	/**
-	 * Set the radio controller for this device.
-	 * @param inController
-	 */
-	void setRadioController(IRadioController inController);
-	
 	// --------------------------------------------------------------------------
 	/**
 	 * We get this message when the device first starts on the network.

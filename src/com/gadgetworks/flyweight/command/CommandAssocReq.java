@@ -1,15 +1,15 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandAssocReq.java,v 1.1 2013/02/20 08:28:23 jeffw Exp $
+ *  $Id: CommandAssocReq.java,v 1.2 2013/03/03 23:27:20 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.flyweight.command;
 
 import java.io.IOException;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.flyweight.bitfields.BitFieldInputStream;
 import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
@@ -25,7 +25,7 @@ public final class CommandAssocReq extends CommandAssocABC {
 
 	public static final int		ASSOC_REQ_BYTES	= 2;
 
-	private static final Log	LOGGER			= LogFactory.getLog(CommandAssocReq.class);
+	private static final Logger	LOGGER			= LoggerFactory.getLogger(CommandAssocReq.class);
 	private byte				mDeviceVersion;
 	private byte				mSystemStatus;
 
@@ -109,7 +109,7 @@ public final class CommandAssocReq extends CommandAssocABC {
 	public byte getDeviceVersion() {
 		return mDeviceVersion;
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 *  @return

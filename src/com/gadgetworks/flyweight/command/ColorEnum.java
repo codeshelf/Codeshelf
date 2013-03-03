@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: MotorControlEnum.java,v 1.1 2013/02/20 08:28:23 jeffw Exp $
+ *  $Id: ColorEnum.java,v 1.1 2013/03/03 23:27:20 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.flyweight.command;
 
@@ -14,13 +14,16 @@ package com.gadgetworks.flyweight.command;
 /**
  *  @author jeffw
  */
-public enum MotorControlEnum {
+public enum ColorEnum {
 
-	INVALID(MotorCommandNum.INVALID, "INVALID"),
-	RUN_FORWARD(MotorCommandNum.RUN_FORWARD, "RUN_FORWARD"),
-	RUN_BACKWARD(MotorCommandNum.RUN_BACKWARD, "RUN_BACKWARD"),
-	FREEWHEEL(MotorCommandNum.FREEWHEEL, "FREEWHEEL"),
-	BRAKE(MotorCommandNum.BRAKE, "BRAKE");
+	INVALID(ColorNum.INVALID, "INVALID"),
+	RED(ColorNum.RED, "RED"),
+	GREEN(ColorNum.GREEN, "GREEN"),
+	BLUE(ColorNum.BLUE, "BLUE"),
+	PURPLE(ColorNum.PURPLE, "PURPLE"),
+	PINK(ColorNum.PINK, "PINK"),
+	ORANGE(ColorNum.ORANGE, "ORANGE"),
+	WHITE(ColorNum.WHITE, "WHITE");
 
 	private int		mValue;
 	private String	mName;
@@ -30,7 +33,7 @@ public enum MotorControlEnum {
 	 *  @param inCmdValue
 	 *  @param inName
 	 */
-	MotorControlEnum(final int inCmdValue, final String inName) {
+	ColorEnum(final int inCmdValue, final String inName) {
 		mValue = inCmdValue;
 		mName = inName;
 	}
@@ -40,21 +43,30 @@ public enum MotorControlEnum {
 	 *  @param inMotorControlCommandID
 	 *  @return
 	 */
-	public static MotorControlEnum getCommandEnum(int inMotorControlCommandID) {
-		MotorControlEnum result = MotorControlEnum.INVALID;
+	public static ColorEnum getColorEnum(int inMotorControlCommandID) {
+		ColorEnum result = ColorEnum.INVALID;
 
 		switch (inMotorControlCommandID) {
-			case MotorCommandNum.RUN_FORWARD:
-				result = MotorControlEnum.RUN_FORWARD;
+			case ColorNum.RED:
+				result = ColorEnum.RED;
 				break;
-			case MotorCommandNum.RUN_BACKWARD:
-				result = MotorControlEnum.RUN_BACKWARD;
+			case ColorNum.GREEN:
+				result = ColorEnum.GREEN;
 				break;
-			case MotorCommandNum.FREEWHEEL:
-				result = MotorControlEnum.FREEWHEEL;
+			case ColorNum.BLUE:
+				result = ColorEnum.BLUE;
 				break;
-			case MotorCommandNum.BRAKE:
-				result = MotorControlEnum.BRAKE;
+			case ColorNum.PURPLE:
+				result = ColorEnum.PURPLE;
+				break;
+			case ColorNum.PINK:
+				result = ColorEnum.PINK;
+				break;
+			case ColorNum.ORANGE:
+				result = ColorEnum.ORANGE;
+				break;
+			case ColorNum.WHITE:
+				result = ColorEnum.WHITE;
 				break;
 			default:
 				break;
@@ -78,16 +90,19 @@ public enum MotorControlEnum {
 	public String getName() {
 		return mName;
 	}
-	
-	final static class MotorCommandNum {
-		static final int	INVALID			= 0;
-		static final int	FREEWHEEL		= 0;
-		static final int	RUN_FORWARD		= 1;
-		static final int	RUN_BACKWARD	= 2;
-		static final int	BRAKE			= 3;
-		
-		private MotorCommandNum() {
-			
+
+	final static class ColorNum {
+		static final int	INVALID	= 0;
+		static final int	BLUE	= 1;
+		static final int	RED		= 2;
+		static final int	GREEN	= 3;
+		static final int	PURPLE	= 4;
+		static final int	PINK	= 5;
+		static final int	ORANGE	= 6;
+		static final int	WHITE	= 7;
+
+		private ColorNum() {
+
 		};
 	}
 }

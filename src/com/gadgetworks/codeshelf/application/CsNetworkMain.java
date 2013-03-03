@@ -1,7 +1,7 @@
 /*******************************************************************************
 CodeshelfWebSocketServer *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CsNetworkMain.java,v 1.5 2013/03/03 02:52:51 jeffw Exp $
+ *  $Id: CsNetworkMain.java,v 1.6 2013/03/03 23:27:21 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -25,6 +25,7 @@ import com.gadgetworks.codeshelf.web.websocket.ICsWebSocketClient;
 import com.gadgetworks.codeshelf.web.websocket.ICsWebsocketClientMsgHandler;
 import com.gadgetworks.codeshelf.web.websocket.IWebSocketSslContextGenerator;
 import com.gadgetworks.codeshelf.web.websocket.SSLWebSocketClientFactory;
+import com.gadgetworks.flyweight.command.IPacket;
 import com.gadgetworks.flyweight.controller.IGatewayInterface;
 import com.gadgetworks.flyweight.controller.IRadioController;
 import com.gadgetworks.flyweight.controller.TcpServerInterface;
@@ -59,10 +60,16 @@ public final class CsNetworkMain {
 
 		Properties properties = new Properties();
 		try {
-			properties.load(new FileInputStream(System.getProperty("config.properties")));
-			for (String name : properties.stringPropertyNames()) {
-				String value = properties.getProperty(name);
-				System.setProperty(name, value);
+			String configFileName = System.getProperty("config.properties");
+			if (configFileName != null) {
+				FileInputStream configFileStream = new FileInputStream(configFileName);
+				if (configFileStream != null) {
+					properties.load(configFileStream);
+					for (String name : properties.stringPropertyNames()) {
+						String value = properties.getProperty(name);
+						System.setProperty(name, value);
+					}
+				}
 			}
 		} catch (IOException e) {
 			System.err.println();
@@ -112,6 +119,8 @@ public final class CsNetworkMain {
 				bind(String.class).annotatedWith(Names.named(IWebSocketSslContextGenerator.KEYSTORE_TYPE_PROPERTY)).toInstance(System.getProperty("keystore.type"));
 				bind(String.class).annotatedWith(Names.named(IWebSocketSslContextGenerator.KEYSTORE_STORE_PASSWORD_PROPERTY)).toInstance(System.getProperty("keystore.store.password"));
 				bind(String.class).annotatedWith(Names.named(IWebSocketSslContextGenerator.KEYSTORE_KEY_PASSWORD_PROPERTY)).toInstance(System.getProperty("keystore.key.password"));
+
+				bind(Byte.class).annotatedWith(Names.named(IPacket.NETWORK_NUM_PROPERTY)).toInstance(Byte.valueOf(System.getProperty("codeshelf.networknum")));
 
 				bind(IUtil.class).to(Util.class);
 				bind(ICodeshelfApplication.class).to(CsNetworkApplication.class);

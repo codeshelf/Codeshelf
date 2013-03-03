@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: NetParameter.java,v 1.2 2013/02/27 07:29:53 jeffw Exp $
+ *  $Id: NetParameter.java,v 1.3 2013/03/03 23:27:20 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.flyweight.command;
@@ -33,6 +33,24 @@ public class NetParameter {
 	 * @see java.lang.Object#toString()
 	 */
 	public final String toString() {
+		return getHexStringWithPrefix();
+	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * Return the parameter as a hex string with a "0x" prefix.
+	 * @return
+	 */
+	public final String getHexStringWithPrefix() {
+		return "0x" + getByteArrayAsString(mParamBytes.array());
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Return the parameter as a hex string with no "0x" prefix.
+	 * @return
+	 */
+	public final String getHexStringNoPrefix() {
 		return getByteArrayAsString(mParamBytes.array());
 	}
 
@@ -71,7 +89,7 @@ public class NetParameter {
 	 * @return
 	 */
 	private String getByteArrayAsString(byte[] inByteArray) {
-		StringBuffer result = new StringBuffer("0x");
+		StringBuffer result = new StringBuffer("");
 
 		byte[] bytes = mParamBytes.array();
 		for (int i = 0; i < bytes.length; i++) {

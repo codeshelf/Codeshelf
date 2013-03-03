@@ -1,15 +1,15 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandAssocResp.java,v 1.3 2013/02/28 06:24:52 jeffw Exp $
+ *  $Id: CommandAssocResp.java,v 1.4 2013/03/03 23:27:20 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.flyweight.command;
 
 import java.io.IOException;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.flyweight.bitfields.BitFieldInputStream;
 import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
@@ -33,9 +33,7 @@ import com.gadgetworks.flyweight.bitfields.NBitInteger;
  */
 public final class CommandAssocResp extends CommandAssocABC {
 
-	public static final String	BEAN_ID					= "CommandAssocResp";
-
-	private static final Log	LOGGER					= LogFactory.getLog(CommandAssocResp.class);
+	private static final Logger	LOGGER					= LoggerFactory.getLogger(CommandAssocResp.class);
 	private static final int	ADDRESS_ASSIGNED_BYTES	= 1;
 
 	private NBitInteger			mAddressSpacing;
@@ -73,8 +71,7 @@ public final class CommandAssocResp extends CommandAssocABC {
 	 * @see com.gadgetworks.controller.CommandABC#doToString()
 	 */
 	public String doToString() {
-		return Integer.toHexString(ASSOC_RESP_COMMAND) + " RESP" + super.doToString() + " net:" + mNetworkId.toString() + " addr="
-				+ mAddressAssigned.toString();
+		return Integer.toHexString(ASSOC_RESP_COMMAND) + " RESP" + super.doToString() + " net:" + mNetworkId.toString() + " addr=" + mAddressAssigned.toString();
 	}
 
 	// --------------------------------------------------------------------------
@@ -85,7 +82,7 @@ public final class CommandAssocResp extends CommandAssocABC {
 	public NetAddress getNetAdress() {
 		return mAddressAssigned;
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * @return
@@ -103,9 +100,9 @@ public final class CommandAssocResp extends CommandAssocABC {
 
 		// First write the unique ID.
 		try {
-			inOutputStream.writeNBitInteger(mAddressSpacing); 
+			inOutputStream.writeNBitInteger(mAddressSpacing);
 			inOutputStream.writeNBitInteger(mAddressAssigned);
-			inOutputStream.writeNBitInteger(mNetworkSpacing); 
+			inOutputStream.writeNBitInteger(mNetworkSpacing);
 			inOutputStream.writeNBitInteger(mNetworkId);
 			inOutputStream.roundOutByte();
 		} catch (IOException e) {

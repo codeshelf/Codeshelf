@@ -1,7 +1,7 @@
 /*******************************************************************************
 CodeshelfWebSocketServer *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ServerMain.java,v 1.6 2013/02/27 01:17:03 jeffw Exp $
+ *  $Id: ServerMain.java,v 1.7 2013/03/03 23:27:21 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -128,10 +128,16 @@ public final class ServerMain {
 
 		Properties properties = new Properties();
 		try {
-			properties.load(new FileInputStream(System.getProperty("config.properties")));
-			for (String name : properties.stringPropertyNames()) {
-				String value = properties.getProperty(name);
-				System.setProperty(name, value);
+			String configFileName = System.getProperty("config.properties");
+			if (configFileName != null) {
+				FileInputStream configFileStream = new FileInputStream(configFileName);
+				if (configFileStream != null) {
+					properties.load(configFileStream);
+					for (String name : properties.stringPropertyNames()) {
+						String value = properties.getProperty(name);
+						System.setProperty(name, value);
+					}
+				}
 			}
 		} catch (IOException e) {
 			System.err.println();

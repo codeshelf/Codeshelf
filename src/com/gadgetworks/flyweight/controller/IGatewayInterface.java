@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: IGatewayInterface.java,v 1.1 2013/02/20 08:28:25 jeffw Exp $
+ *  $Id: IGatewayInterface.java,v 1.2 2013/03/03 23:27:21 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.flyweight.controller;
 
@@ -13,8 +13,6 @@ import com.gadgetworks.flyweight.command.NetworkId;
  *  @author jeffw
  */
 public interface IGatewayInterface {
-
-	String	BEAN_ID			= "SerialInterface";
 
 	// From RFC 1055 SLIP framing protocol.
 	byte	END				= (byte) 0xC0;						//0300; /* indicates end of packet */

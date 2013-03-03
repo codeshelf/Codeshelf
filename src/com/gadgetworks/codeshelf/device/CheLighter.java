@@ -1,12 +1,14 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CheDevice.java,v 1.10 2013/03/03 02:52:51 jeffw Exp $
+ *  $Id: CheLighter.java,v 1.1 2013/03/03 23:27:21 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -19,20 +21,17 @@ import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.flyweight.command.CommandControlMessage;
 import com.gadgetworks.flyweight.command.ICommand;
-import com.gadgetworks.flyweight.command.NetAddress;
 import com.gadgetworks.flyweight.command.NetEndpoint;
 import com.gadgetworks.flyweight.command.NetGuid;
 import com.gadgetworks.flyweight.controller.IRadioController;
-import com.gadgetworks.flyweight.controller.INetworkDevice;
-import com.gadgetworks.flyweight.controller.NetworkDeviceStateEnum;
 
 /**
  * @author jeffw
  *
  */
-public class CheDevice implements INetworkDevice {
+public class CheLighter extends LighterDeviceABC {
 
-	private static final Logger		LOGGER						= LoggerFactory.getLogger(CheDevice.class);
+	private static final Logger		LOGGER						= LoggerFactory.getLogger(CheLighter.class);
 
 	private static final String		BARCODE_DELIMITER			= "%";
 	private static final String		COMMAND_BARCODE_PREFIX		= "X%";
@@ -53,46 +52,11 @@ public class CheDevice implements INetworkDevice {
 
 	private static final String		LOGOUT_COMMAND				= "LOGOUT";
 
-	// MAC address.
-	@Accessors(prefix = "m")
-	@Getter
-	private NetGuid					mGuid;
-
-	// The CHE's net address.
-	@Accessors(prefix = "m")
-	@Getter
-	@Setter
-	private NetAddress				mAddress;
-
-	// The network device state.
-	@Accessors(prefix = "m")
-	@Getter
-	@Setter
-	private NetworkDeviceStateEnum	mDeviceStateEnum;
-
 	// The CHE's current state.
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
 	private CheStateEnum			mCheStateEnum;
-
-	// The last known battery level.
-	@Accessors(prefix = "m")
-	@Getter
-	@Setter
-	private short					mLastBatteryLevel;
-
-	// The last time we had contact.
-	@Accessors(prefix = "m")
-	@Getter
-	@Setter
-	private long					mLastContactTime;
-
-	// The controller for this device..
-	@Accessors(prefix = "m")
-	@Getter
-	@Setter
-	private IRadioController		mRadioController;
 
 	// The CHE's current location.
 	@Accessors(prefix = "m")
@@ -101,22 +65,20 @@ public class CheDevice implements INetworkDevice {
 	private String					mLocation;
 
 	// The CHE's container map.
-	@Accessors(prefix = "m")
 	private String					mContainerInSetup;
 
 	// The CHE's container map.
-	@Accessors(prefix = "m")
 	private Map<String, String>		mContainersMap;
 
-	public CheDevice(final NetGuid inGuid) {
-		mGuid = inGuid;
+	// The work the CHE has to do.
+	List<DeployedWorkInstruction>	mWorkItemList;
+
+	public CheLighter(final NetGuid inGuid, final ICsDeviceManager inDeviceManager, final IRadioController inRadioController) {
+		super(inGuid, inDeviceManager, inRadioController);
+		
 		mCheStateEnum = CheStateEnum.IDLE;
 		mContainersMap = new HashMap<String, String>();
-	}
-
-	@Override
-	public final boolean doesMatch(NetGuid inGuid) {
-		return ((mGuid != null) && (mGuid.equals(inGuid)));
+		mWorkItemList = new ArrayList<DeployedWorkInstruction>();
 	}
 
 	// --------------------------------------------------------------------------
@@ -127,8 +89,7 @@ public class CheDevice implements INetworkDevice {
 	private void sendDisplayCommand(final String inLine1Message, final String inLine2Message) {
 		LOGGER.info("Display message: " + inLine1Message);
 		ICommand command = new CommandControlMessage(NetEndpoint.PRIMARY_ENDPOINT, inLine1Message, inLine2Message);
-		mRadioController.sendCommand(command, mAddress, false);
-
+		mRadioController.sendCommand(command, getAddress(), false);
 	}
 
 	// --------------------------------------------------------------------------
@@ -139,6 +100,19 @@ public class CheDevice implements INetworkDevice {
 	public final void start() {
 		mCheStateEnum = CheStateEnum.IDLE;
 		sendDisplayCommand(SCAN_USERID_MSG, EMPTY_MSG);
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Give the CHE the work it needs to do for a container.
+	 * This is recomputed at the server for ALL containers on the CHE and returned in work-order.
+	 * Whatever the CHE thought it needed to do before is now invalid and is replaced by what we send here.
+	 * @param inContainerId
+	 * @param inWorkItemList
+	 */
+	public final void assignWork(final List<DeployedWorkInstruction> inWorkItemList) {
+		mWorkItemList.clear();
+		mWorkItemList.addAll(inWorkItemList);
 	}
 
 	// --------------------------------------------------------------------------
@@ -163,39 +137,24 @@ public class CheDevice implements INetworkDevice {
 		} else {
 			switch (mCheStateEnum) {
 				case IDLE:
-					idleStateScan(scanPrefixStr, scanStr);
+					processIdleStateScan(scanPrefixStr, scanStr);
 					break;
 
 				case LOCATION_SETUP:
-					locationScan(scanPrefixStr, scanStr);
+					processLocationScan(scanPrefixStr, scanStr);
 					break;
 
 				case CONTAINER_SELECT:
-					containerSelectScan(scanPrefixStr, scanStr);
+					processContainerSelectScan(scanPrefixStr, scanStr);
 					break;
 
 				case CONTAINER_POSITION:
-					containerPositionScan(scanPrefixStr, scanStr);
+					processContainerPosScan(scanPrefixStr, scanStr);
 					break;
 
 				default:
 					break;
 			}
-		}
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 */
-	private void processCommandScan(final String inScanStr) {
-
-		switch (inScanStr) {
-			case LOGOUT_COMMAND:
-				logout();
-				break;
-
-			default:
-				break;
 		}
 	}
 
@@ -268,10 +227,25 @@ public class CheDevice implements INetworkDevice {
 
 	// --------------------------------------------------------------------------
 	/**
+	 */
+	private void processCommandScan(final String inScanStr) {
+
+		switch (inScanStr) {
+			case LOGOUT_COMMAND:
+				logout();
+				break;
+
+			default:
+				break;
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
 	 * @param inPrefixScanStr
 	 * @param inScanStr
 	 */
-	private void idleStateScan(final String inScanPrefixStr, final String inScanStr) {
+	private void processIdleStateScan(final String inScanPrefixStr, final String inScanStr) {
 
 		if (USER_BARCODE_PREFIX.equals(inScanPrefixStr)) {
 			setState(CheStateEnum.LOCATION_SETUP);
@@ -286,7 +260,7 @@ public class CheDevice implements INetworkDevice {
 	 * @param insScanPrefixStr
 	 * @param inScanStr
 	 */
-	private void locationScan(final String inScanPrefixStr, String inScanStr) {
+	private void processLocationScan(final String inScanPrefixStr, String inScanStr) {
 		if (LOCATION_BARCODE_PREFIX.equals(inScanPrefixStr)) {
 			setLocation(inScanStr);
 			setState(CheStateEnum.CONTAINER_SELECT);
@@ -301,7 +275,7 @@ public class CheDevice implements INetworkDevice {
 	 * @param insScanPrefixStr
 	 * @param inScanStr
 	 */
-	private void containerSelectScan(final String inScanPrefixStr, String inScanStr) {
+	private void processContainerSelectScan(final String inScanPrefixStr, String inScanStr) {
 		if (CONTAINER_BARCODE_PREFIX.equals(inScanPrefixStr)) {
 
 			mContainerInSetup = inScanStr;
@@ -316,6 +290,7 @@ public class CheDevice implements INetworkDevice {
 				}
 			}
 			setState(CheStateEnum.CONTAINER_POSITION);
+			mDeviceManager.requestCheWork(this.getGuid().getHexStringNoPrefix(), mContainerInSetup, mLocation);
 		} else {
 			LOGGER.info("Not a container ID: " + inScanStr);
 			setStateError(CheStateEnum.CONTAINER_SELECT);
@@ -326,7 +301,7 @@ public class CheDevice implements INetworkDevice {
 	/**
 	 * @param inButtonStr
 	 */
-	private void containerPositionScan(final String inScanPrefixStr, String inScanStr) {
+	private void processContainerPosScan(final String inScanPrefixStr, String inScanStr) {
 		if (POSITION_BARCODE_PREFIX.equals(inScanPrefixStr)) {
 			setState(CheStateEnum.CONTAINER_SELECT);
 			if (mContainersMap.get(inScanStr) == null) {

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandControlMessage.java,v 1.3 2013/03/03 23:27:20 jeffw Exp $
+ *  $Id: CommandControlLight.java,v 1.1 2013/03/03 23:27:20 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.flyweight.command;
@@ -24,37 +24,63 @@ import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
  *  
  *  @author jeffw
  */
-public final class CommandControlMessage extends CommandControlABC {
+public final class CommandControlLight extends CommandControlABC {
 
-	private static final Logger	LOGGER	= LoggerFactory.getLogger(CommandControlMessage.class);
+	public static final Short	POSITION_ALL		= 1;
+	public static final Short	CHANNEL_ALL			= 0;
+	public static final Short	CHANNEL1			= 1;
+	public static final Short	CHANNEL2			= 2;
+	public static final Short	CHANNEL3			= 3;
+	public static final Short	CHANNEL4			= 4;
+
+	public static final String	EFFECT_SOLID		= "SOLID";
+	public static final String	EFFECT_FLASH		= "FLASH";
+	public static final String	EFFECT_DIRECT		= "DIRECT";
+
+	private static final Logger	LOGGER				= LoggerFactory.getLogger(CommandControlLight.class);
+
+	private static final int	NUMBER_OF_SHORTS	= 2;
+	private static final int	BITS_PER_BYTE		= 8;
 
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
-	private String				mLine1MessageStr;
+	private Short				mChannel;
 
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
-	private String				mLine2MessageStr;
+	private Short				mPosition;
+
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	private ColorEnum			mColor;
+
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	private String				mEffect;
 
 	// --------------------------------------------------------------------------
 	/**
 	 *  This is the constructor to use to create a data command to send to the network.
 	 *  @param inEndpoint	The end point to send the command.
 	 */
-	public CommandControlMessage(final NetEndpoint inEndpoint, final String inLine1MessageStr, final String inLine2MessageStr) {
+	public CommandControlLight(final NetEndpoint inEndpoint, final Short inChannel, final Short inPosition, final ColorEnum inColor, final String inEffect) {
 		super(inEndpoint, new NetCommandId(CommandControlABC.MESSAGE));
 
-		mLine1MessageStr = inLine1MessageStr;
-		mLine2MessageStr = inLine2MessageStr;
+		mChannel = inChannel;
+		mPosition = inPosition;
+		mColor = inColor;
+		mEffect = inEffect;
 	}
 
 	// --------------------------------------------------------------------------
 	/**
 	 *  This is the constructor to use to create a data command that's read off of the network input stream.
 	 */
-	public CommandControlMessage() {
+	public CommandControlLight() {
 		super(new NetCommandId(CommandControlABC.MESSAGE));
 	}
 
@@ -63,7 +89,7 @@ public final class CommandControlMessage extends CommandControlABC {
 	 * @see com.gadgetworks.controller.CommandABC#doToString()
 	 */
 	public String doToString() {
-		return "Message: " + mLine1MessageStr + " (line1) " + mLine2MessageStr + " (line2)";
+		return "Light: " + mChannel + " pos: " + mPosition;
 	}
 
 	/* --------------------------------------------------------------------------
@@ -74,8 +100,10 @@ public final class CommandControlMessage extends CommandControlABC {
 		super.doToStream(inOutputStream);
 
 		try {
-			inOutputStream.writePString(mLine1MessageStr);
-			inOutputStream.writePString(mLine2MessageStr);
+			inOutputStream.writeShort(mChannel);
+			inOutputStream.writeShort(mPosition);
+			inOutputStream.writePString(mColor.getName());
+			inOutputStream.writePString(mEffect);
 		} catch (IOException e) {
 			LOGGER.error("", e);
 		}
@@ -90,8 +118,10 @@ public final class CommandControlMessage extends CommandControlABC {
 		super.doFromStream(inInputStream, inCommandByteCount);
 
 		try {
-			mLine1MessageStr = inInputStream.readPString();
-			mLine2MessageStr = inInputStream.readPString();
+			mChannel = inInputStream.readShort();
+			mPosition = inInputStream.readShort();
+			mColor = ColorEnum.valueOf(inInputStream.readPString());
+			mEffect = inInputStream.readPString();
 		} catch (IOException e) {
 			LOGGER.error("", e);
 		}
@@ -104,7 +134,7 @@ public final class CommandControlMessage extends CommandControlABC {
 	 */
 	@Override
 	protected int doComputeCommandSize() {
-		return super.doComputeCommandSize() + mLine1MessageStr.length();
+		return super.doComputeCommandSize() + mColor.getName().length() + mEffect.length() + (NUMBER_OF_SHORTS * (Short.SIZE / BITS_PER_BYTE));
 	}
 
 }

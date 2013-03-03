@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandNetMgmtABC.java,v 1.1 2013/02/20 08:28:23 jeffw Exp $
+ *  $Id: CommandNetMgmtABC.java,v 1.2 2013/03/03 23:27:21 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.flyweight.command;
@@ -33,7 +33,7 @@ public abstract class CommandNetMgmtABC extends ExtendedCommandABC {
 	public static final byte	NETCHECK_COMMAND		= 2;
 	public static final byte	NETINTFTEST_COMMAND		= 3;
 
-//	private static final Log	LOGGER					= LogFactory.getLog(CommandNetMgmtABC.class);
+//	private static final Logger	LOGGER					= LoggerFactory.getLogger(CommandNetMgmtABC.class);
 
 	private static final byte	NETMGMT_HEADER_BYTES	= 0;
 

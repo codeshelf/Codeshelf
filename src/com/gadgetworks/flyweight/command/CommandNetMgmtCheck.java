@@ -1,20 +1,19 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandNetMgmtCheck.java,v 1.2 2013/02/27 22:06:27 jeffw Exp $
+ *  $Id: CommandNetMgmtCheck.java,v 1.3 2013/03/03 23:27:20 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.flyweight.command;
 
 import java.io.IOException;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.flyweight.bitfields.BitFieldInputStream;
 import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
 import com.gadgetworks.flyweight.bitfields.NBitInteger;
-import com.gadgetworks.flyweight.controller.INetworkDevice;
 
 // --------------------------------------------------------------------------
 /**
@@ -59,12 +58,10 @@ import com.gadgetworks.flyweight.controller.INetworkDevice;
  */
 public final class CommandNetMgmtCheck extends CommandNetMgmtABC {
 
-	public static final String	BEAN_ID					= "CommandNetCheck";
-
 	public static final byte	NETCHECK_REQ			= 1;
 	public static final byte	NETCHECK_RESP			= 2;
 
-	private static final Log	LOGGER					= LogFactory.getLog(CommandNetMgmtCheck.class);
+	private static final Logger	LOGGER					= LoggerFactory.getLogger(CommandNetMgmtCheck.class);
 	/*
 	 * 
 	 * Command size:
@@ -134,8 +131,7 @@ public final class CommandNetMgmtCheck extends CommandNetMgmtABC {
 			default:
 		}
 
-		resultStr = "NetCheck type=" + checkType + " GUID=" + mGUID + " chan=" + mChannel + " ED=" + mChannelEnergy + " link="
-				+ mLastRcvdLinkQuality + " netID=" + mNetworkId;
+		resultStr = "NetCheck type=" + checkType + " GUID=" + mGUID + " chan=" + mChannel + " ED=" + mChannelEnergy + " link=" + mLastRcvdLinkQuality + " netID=" + mNetworkId;
 
 		return resultStr;
 	}

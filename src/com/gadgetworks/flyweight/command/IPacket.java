@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: IPacket.java,v 1.2 2013/02/27 22:06:27 jeffw Exp $
+ *  $Id: IPacket.java,v 1.3 2013/03/03 23:27:20 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.flyweight.command;
 
@@ -13,6 +13,8 @@ import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
  *  @author jeffw
  */
 public interface IPacket {
+
+	String	NETWORK_NUM_PROPERTY		= "NETWORK_NUM";
 
 	byte	PACKET_VERSION_0			= 0;
 

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Util.java,v 1.21 2013/02/27 01:17:03 jeffw Exp $
+ *  $Id: Util.java,v 1.22 2013/03/03 23:27:21 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -37,8 +37,6 @@ import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
  */
 
 public final class Util implements IUtil {
-
-	public static final String	DAO_BEAN_ID	= "systemDAO";
 
 	// This is a slightly weird case.
 	// log4j needs to find a system property for one of its file appenders (in log4j.properties, but

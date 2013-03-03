@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandControlScan.java,v 1.1 2013/02/28 06:24:52 jeffw Exp $
+ *  $Id: CommandControlScan.java,v 1.2 2013/03/03 23:27:21 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.flyweight.command;
@@ -12,8 +12,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.flyweight.bitfields.BitFieldInputStream;
 import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
@@ -26,7 +26,7 @@ import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
  */
 public final class CommandControlScan extends CommandControlABC {
 
-	private static final Log	LOGGER					= LogFactory.getLog(CommandControlScan.class);
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(CommandControlScan.class);
 
 	@Accessors(prefix = "m")
 	@Getter

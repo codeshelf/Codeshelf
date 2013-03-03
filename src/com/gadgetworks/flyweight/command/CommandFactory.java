@@ -1,14 +1,14 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandFactory.java,v 1.4 2013/02/28 06:24:52 jeffw Exp $
+ *  $Id: CommandFactory.java,v 1.5 2013/03/03 23:27:21 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.flyweight.command;
 
 import java.io.IOException;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.device.RadioController;
 import com.gadgetworks.flyweight.bitfields.BitFieldInputStream;
@@ -20,7 +20,7 @@ import com.gadgetworks.flyweight.bitfields.NBitInteger;
  */
 public final class CommandFactory {
 
-	private static final Log	LOGGER	= LogFactory.getLog(RadioController.class);
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(RadioController.class);
 
 	private CommandFactory() {
 
@@ -90,22 +90,18 @@ public final class CommandFactory {
 
 		switch (extCmdID.getValue()) {
 			case CommandAssocABC.ASSOC_REQ_COMMAND:
-				//result = (ICommand) FlyWeightBeanFactory.getBean(CommandAssocReq.BEAN_ID);
 				result = new CommandAssocReq();
 				break;
 
 			case CommandAssocABC.ASSOC_RESP_COMMAND:
-				//result = (ICommand) FlyWeightBeanFactory.getBean(CommandAssocResp.BEAN_ID);
 				result = new CommandAssocResp();
 				break;
 
 			case CommandAssocABC.ASSOC_CHECK_COMMAND:
-				//result = (ICommand) FlyWeightBeanFactory.getBean(CommandAssocCheck.BEAN_ID);
 				result = new CommandAssocCheck();
 				break;
 
 			case CommandAssocABC.ASSOC_ACK_COMMAND:
-				//result = (ICommand) FlyWeightBeanFactory.getBean(CommandAssocAck.BEAN_ID);
 				result = new CommandAssocAck();
 				break;
 
@@ -132,17 +128,14 @@ public final class CommandFactory {
 
 		switch (extCmdID.getValue()) {
 			case CommandNetMgmtABC.NETSETUP_COMMAND:
-				//result = (ICommand) FlyWeightBeanFactory.getBean(CommandNetMgmtSetup.BEAN_ID);
 				result = new CommandNetMgmtSetup();
 				break;
 
 			case CommandNetMgmtABC.NETCHECK_COMMAND:
-				//result = (ICommand) FlyWeightBeanFactory.getBean(CommandNetMgmtCheck.BEAN_ID);
 				result = new CommandNetMgmtCheck();
 				break;
 
 			case CommandNetMgmtABC.NETINTFTEST_COMMAND:
-				//result = (ICommand) FlyWeightBeanFactory.getBean(CommandNetMgmtIntfTest.BEAN_ID);
 				result = new CommandNetMgmtIntfTest();
 				break;
 

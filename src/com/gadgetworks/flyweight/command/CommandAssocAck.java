@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandAssocAck.java,v 1.1 2013/02/20 08:28:23 jeffw Exp $
+ *  $Id: CommandAssocAck.java,v 1.2 2013/03/03 23:27:21 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.flyweight.command;
@@ -10,8 +10,8 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.GregorianCalendar;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.flyweight.bitfields.BitFieldInputStream;
 import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
@@ -31,14 +31,12 @@ import com.gadgetworks.flyweight.bitfields.NBitInteger;
  */
 public final class CommandAssocAck extends CommandAssocABC {
 
-	public static final String	BEAN_ID					= "CommandAssocAck";
-
 	public static final byte	IS_ASSOCIATED			= 0;
 	public static final byte	IS_NOT_ASSOCIATED		= 1;
 
 	public static final byte	ASSOCIATE_STATE_BITS	= 8;
 
-	private static final Log	LOGGER					= LogFactory.getLog(CommandAssocAck.class);
+	private static final Logger	LOGGER					= LoggerFactory.getLogger(CommandAssocAck.class);
 	private NBitInteger			mAssociatedState		= new NBitInteger(ASSOCIATE_STATE_BITS, IS_NOT_ASSOCIATED);
 	private int					mUnixTime;
 
@@ -69,8 +67,7 @@ public final class CommandAssocAck extends CommandAssocABC {
 	 * @see com.gadgetworks.controller.CommandABC#doToString()
 	 */
 	public String doToString() {
-		return Integer.toHexString(ASSOC_RESP_COMMAND) + " ACK" + super.doToString() + " state=" + mAssociatedState + " unix time="
-				+ new Date((long) mUnixTime * 1000);
+		return Integer.toHexString(ASSOC_RESP_COMMAND) + " ACK" + super.doToString() + " state=" + mAssociatedState + " unix time=" + new Date((long) mUnixTime * 1000);
 	}
 
 	/* --------------------------------------------------------------------------

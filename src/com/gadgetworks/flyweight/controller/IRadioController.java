@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: IRadioController.java,v 1.1 2013/03/03 02:52:51 jeffw Exp $
+ *  $Id: IRadioController.java,v 1.2 2013/03/03 23:27:21 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.flyweight.controller;
 
@@ -68,7 +68,7 @@ public interface IRadioController extends Runnable {
 	/**
 	 *	Add an event listener to the controller.
 	 */
-	void addControllerEventListener(IControllerEventListener inControllerEventListener);
+	void addControllerEventListener(IRadioControllerEventListener inControllerEventListener);
 	
 	// --------------------------------------------------------------------------
 	/**

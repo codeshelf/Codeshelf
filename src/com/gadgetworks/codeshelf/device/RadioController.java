@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: RadioController.java,v 1.7 2013/03/03 02:52:51 jeffw Exp $
+ *  $Id: RadioController.java,v 1.8 2013/03/03 23:27:21 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.device;
@@ -16,6 +16,7 @@ import java.util.concurrent.BlockingQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.gadgetworks.codeshelf.application.IHttpServer;
 import com.gadgetworks.flyweight.bitfields.NBitInteger;
 import com.gadgetworks.flyweight.command.AckStateEnum;
 import com.gadgetworks.flyweight.command.CommandAssocABC;
@@ -37,12 +38,13 @@ import com.gadgetworks.flyweight.command.NetGuid;
 import com.gadgetworks.flyweight.command.NetworkId;
 import com.gadgetworks.flyweight.command.Packet;
 import com.gadgetworks.flyweight.controller.FTDIInterface;
-import com.gadgetworks.flyweight.controller.IControllerEventListener;
+import com.gadgetworks.flyweight.controller.IRadioControllerEventListener;
 import com.gadgetworks.flyweight.controller.IGatewayInterface;
 import com.gadgetworks.flyweight.controller.INetworkDevice;
 import com.gadgetworks.flyweight.controller.IRadioController;
 import com.gadgetworks.flyweight.controller.NetworkDeviceStateEnum;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 
 // --------------------------------------------------------------------------
 /**
@@ -81,7 +83,6 @@ public class RadioController implements IRadioController {
 	private static final long									INTERFACE_CHECK_MILLIS				= 5 * 1000;
 	private static final long									CONTROLLER_SLEEP_MILLIS				= 10;
 	private static final int									MAX_CHANNEL_VALUE					= 255;
-	private static final int									MAX_NETWORK_TEST_NUM				= 64;
 
 	private Boolean												mShouldRun							= true;
 	private Map<NetGuid, INetworkDevice>						mDeviceGuidMap;
@@ -91,7 +92,7 @@ public class RadioController implements IRadioController {
 	private NetAddress											mBroadcastAddress;
 	private NetworkId											mBroadcastNetworkId;
 	private NetworkId											mNetworkId;
-	private List<IControllerEventListener>						mEventListeners;
+	private List<IRadioControllerEventListener>					mEventListeners;
 	private long												mLastIntfCheckMillis;
 	private boolean												mIntfCheckPending;
 	private byte												mNextCommandID;
@@ -113,18 +114,15 @@ public class RadioController implements IRadioController {
 	 *  @param inSessionManager   The session manager for this controller.
 	 */
 	@Inject
-	public RadioController(final IGatewayInterface inGatewayInterface) {
+	public RadioController(@Named(IPacket.NETWORK_NUM_PROPERTY)final byte inNetworkId, final IGatewayInterface inGatewayInterface) {
 
 		mGatewayInterface = inGatewayInterface;
 		mServerAddress = new NetAddress(IPacket.GATEWAY_ADDRESS);
 		mBroadcastAddress = new NetAddress(IPacket.BROADCAST_ADDRESS);
 		mBroadcastNetworkId = new NetworkId(IPacket.BROADCAST_NETWORK_ID);
-		mEventListeners = new ArrayList<IControllerEventListener>();
+		mEventListeners = new ArrayList<IRadioControllerEventListener>();
 
-		//Random random = new Random(System.currentTimeMillis());
-		//		int randNetworkNum = random.nextInt(NetworkId.MAX_NETWORK_ID - 1) + 1;
-		String networkIdStr = "0x01";// + Integer.toString(randNetworkNum, 10);
-		mNetworkId = new NetworkId(IPacket.DEFAULT_NETWORK_ID);
+		mNetworkId = new NetworkId(inNetworkId);
 
 		mChannelSelected = false;
 		mChannelInfo = new ChannelInfo[MAX_CHANNELS];
@@ -144,7 +142,9 @@ public class RadioController implements IRadioController {
 
 		mPreferredChannel = inPreferredChannel;
 
-		LOGGER.info("Starting radio controller");
+		LOGGER.info("--------------------------------------------");
+		LOGGER.info("Starting radio controller on network: " + mNetworkId);
+		LOGGER.info("--------------------------------------------");
 		mControllerThread = new Thread(this, CONTROLLER_THREAD_NAME);
 		mControllerThread.start();
 	}
@@ -522,7 +522,7 @@ public class RadioController implements IRadioController {
 	 * (non-Javadoc)
 	 * @see com.gadgetworks.controller.IController#addControllerListener(com.gadgetworks.controller.IControllerListener)
 	 */
-	public final void addControllerEventListener(final IControllerEventListener inControllerEventListener) {
+	public final void addControllerEventListener(final IRadioControllerEventListener inControllerEventListener) {
 		mEventListeners.add(inControllerEventListener);
 	}
 
@@ -715,7 +715,7 @@ public class RadioController implements IRadioController {
 		// First let's make sure that this is a request from an actor that we are managing.
 		// Indicate to listeners that there is a new actor.
 		boolean canAssociate = false;
-		for (IControllerEventListener listener : mEventListeners) {
+		for (IRadioControllerEventListener listener : mEventListeners) {
 			if (listener.canNetworkDeviceAssociate(new NetGuid("0x" + uid))) {
 				canAssociate = true;
 			}
@@ -729,7 +729,7 @@ public class RadioController implements IRadioController {
 				foundDevice.setDeviceStateEnum(NetworkDeviceStateEnum.SETUP);
 
 				LOGGER.info("----------------------------------------------------");
-				LOGGER.info("Device associated: " + foundDevice.getGuid().toString());
+				LOGGER.info("Device associated: " + foundDevice.getGuid().getHexStringNoPrefix());
 				if ((inCommand.getSystemStatus() & 0x02) > 0) {
 					LOGGER.info(" Status: LVD");
 				}
@@ -990,13 +990,12 @@ public class RadioController implements IRadioController {
 	 */
 	@Override
 	public final void addNetworkDevice(final INetworkDevice inNetworkDevice) {
-		
+
 		// If the device has no address then assign one.
 		if ((inNetworkDevice.getAddress() == null) || (inNetworkDevice.getAddress().equals(mServerAddress))) {
 			inNetworkDevice.setAddress(new NetAddress(mNextAddress++));
 		}
 
-		inNetworkDevice.setRadioController(this);
 		mDeviceGuidMap.put(inNetworkDevice.getGuid(), inNetworkDevice);
 		mDeviceNetAddrMap.put(inNetworkDevice.getAddress(), inNetworkDevice);
 	}

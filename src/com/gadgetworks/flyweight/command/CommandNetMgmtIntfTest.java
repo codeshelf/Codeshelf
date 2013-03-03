@@ -1,15 +1,15 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandNetMgmtIntfTest.java,v 1.1 2013/02/20 08:28:23 jeffw Exp $
+ *  $Id: CommandNetMgmtIntfTest.java,v 1.2 2013/03/03 23:27:20 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.flyweight.command;
 
 import java.io.IOException;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.flyweight.bitfields.BitFieldInputStream;
 import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
@@ -23,8 +23,7 @@ import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
  */
 public final class CommandNetMgmtIntfTest extends CommandNetMgmtABC {
 
-	public static final String	BEAN_ID				= "CommandNetMgmtIntfTest";
-	private static final Log	LOGGER				= LogFactory.getLog(CommandNetMgmtIntfTest.class);
+	private static final Logger	LOGGER				= LoggerFactory.getLogger(CommandNetMgmtIntfTest.class);
 
 	private static final byte	TEST_COMMAND_BYTES	= 1;
 

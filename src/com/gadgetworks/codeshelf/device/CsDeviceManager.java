@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CsDeviceManager.java,v 1.1 2013/03/03 02:52:51 jeffw Exp $
+ *  $Id: CsDeviceManager.java,v 1.2 2013/03/03 23:27:21 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -14,7 +14,6 @@ import org.codehaus.jackson.JsonProcessingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
-import org.java_websocket.client.IWebSocketClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,33 +26,33 @@ import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdEn
 import com.gadgetworks.codeshelf.web.websocket.ICsWebSocketClient;
 import com.gadgetworks.codeshelf.web.websocket.ICsWebsocketClientMsgHandler;
 import com.gadgetworks.flyweight.command.NetGuid;
-import com.gadgetworks.flyweight.controller.IControllerEventListener;
 import com.gadgetworks.flyweight.controller.INetworkDevice;
 import com.gadgetworks.flyweight.controller.IRadioController;
+import com.gadgetworks.flyweight.controller.IRadioControllerEventListener;
 import com.google.inject.Inject;
 
 /**
  * @author jeffw
  *
  */
-public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgHandler, IControllerEventListener {
+public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgHandler, IRadioControllerEventListener {
 
-	private static final Logger		LOGGER		= LoggerFactory.getLogger(CsDeviceManager.class);
+	private static final Logger			LOGGER		= LoggerFactory.getLogger(CsDeviceManager.class);
 
-	private Map<NetGuid, CheDevice>	mCheMap;
-	private IRadioController		mRadioController;
-	private ICsWebSocketClient		mWebSocketClient;
-	private int						mNextMsgNum	= 1;
-	private String					mOrganizationId;
-	private String					mFacilityId;
-	private String					mNetworkId;
-	private String					mNetworkCredential;
+	private Map<NetGuid, CheLighter>	mCheMap;
+	private IRadioController			mRadioController;
+	private ICsWebSocketClient			mWebSocketClient;
+	private int							mNextMsgNum	= 1;
+	private String						mOrganizationId;
+	private String						mFacilityId;
+	private String						mNetworkId;
+	private String						mNetworkCredential;
 
 	@Inject
 	public CsDeviceManager(final ICsWebSocketClient inWebSocketClient, final IRadioController inRadioController) {
 		mWebSocketClient = inWebSocketClient;
 		mRadioController = inRadioController;
-		mCheMap = new HashMap<NetGuid, CheDevice>();
+		mCheMap = new HashMap<NetGuid, CheLighter>();
 
 		mOrganizationId = System.getProperty("organizationId");
 		mFacilityId = System.getProperty("facilityId");
@@ -203,13 +202,13 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 	 */
 	private void processCheUpdate(final JsonNode inCheUpdateNode) {
 		JsonNode updateTypeNode = inCheUpdateNode.get(IWebSessionReqCmd.OP_TYPE);
-		CheDevice cheDevice = null;
+		CheLighter cheDevice = null;
 		NetGuid deviceGuid = new NetGuid(inCheUpdateNode.get(IWebSessionReqCmd.DEVICE_GUID).asText());
 		if (updateTypeNode != null) {
 			switch (updateTypeNode.getTextValue()) {
 				case IWebSessionReqCmd.OP_TYPE_CREATE:
 					// Create the CHE.
-					cheDevice = new CheDevice(deviceGuid);
+					cheDevice = new CheLighter(deviceGuid, this, mRadioController);
 
 					// Check to see if the Che is already in our map.
 					if (!mCheMap.containsValue(cheDevice)) {
@@ -225,7 +224,7 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 					cheDevice = mCheMap.get(deviceGuid);
 
 					if (cheDevice == null) {
-						cheDevice = new CheDevice(deviceGuid);
+						cheDevice = new CheLighter(deviceGuid, this, mRadioController);
 						mCheMap.put(deviceGuid, cheDevice);
 						mRadioController.addNetworkDevice(cheDevice);
 					}
@@ -248,7 +247,7 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 	@Override
 	public final boolean canNetworkDeviceAssociate(final NetGuid inGuid) {
 		boolean result = false;
-		for (CheDevice cheDevice : mCheMap.values()) {
+		for (INetworkDevice cheDevice : mCheMap.values()) {
 			if (cheDevice.getGuid().equals(inGuid)) {
 				result = true;
 			}
@@ -270,5 +269,10 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 		}
 
 		return result;
+	}
+
+	@Override
+	public final void requestCheWork(String inCheId, String inContainerId, String inLocationId) {
+		LOGGER.info("Request for work: Che: " + inCheId + " Container: " + inContainerId + " Loc: " + inLocationId);
 	}
 }

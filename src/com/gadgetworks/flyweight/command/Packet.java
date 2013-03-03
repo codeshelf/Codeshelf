@@ -1,15 +1,15 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: Packet.java,v 1.2 2013/02/27 22:06:27 jeffw Exp $
+ *  $Id: Packet.java,v 1.3 2013/03/03 23:27:21 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.flyweight.command;
 
 import java.io.IOException;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.flyweight.bitfields.BitFieldInputStream;
 import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
@@ -57,7 +57,7 @@ import com.gadgetworks.flyweight.bitfields.NBitInteger;
 
 public final class Packet implements IPacket {
 
-	private static final Log	LOGGER			= LogFactory.getLog(Packet.class);
+	private static final Logger	LOGGER			= LoggerFactory.getLogger(Packet.class);
 
 	private PacketVersion		mPacketVersion	= new PacketVersion(IPacket.PACKET_VERSION_0);
 	private NBitInteger			mPacketType;

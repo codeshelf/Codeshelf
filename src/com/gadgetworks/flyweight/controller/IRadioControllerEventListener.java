@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: IControllerEventListener.java,v 1.3 2013/02/27 22:06:27 jeffw Exp $
+ *  $Id: IRadioControllerEventListener.java,v 1.1 2013/03/03 23:27:21 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.flyweight.controller;
 
@@ -12,10 +12,8 @@ import com.gadgetworks.flyweight.command.NetGuid;
 /**
  *  @author jeffw
  */
-public interface IControllerEventListener {
+public interface IRadioControllerEventListener {
 
-	String	BEAN_ID				= "ControllerEventListener";
-	
 	// --------------------------------------------------------------------------
 	/**
 	 *  Called when the controller gets an association request from a network device

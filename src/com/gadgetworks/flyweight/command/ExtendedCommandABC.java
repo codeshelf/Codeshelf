@@ -1,14 +1,14 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: ExtendedCommandABC.java,v 1.1 2013/02/20 08:28:23 jeffw Exp $
+ *  $Id: ExtendedCommandABC.java,v 1.2 2013/03/03 23:27:20 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.flyweight.command;
 
 import java.io.IOException;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.flyweight.bitfields.BitFieldInputStream;
 import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
@@ -20,7 +20,7 @@ import com.gadgetworks.flyweight.bitfields.NBitInteger;
  */
 public abstract class ExtendedCommandABC extends CommandABC {
 
-	private static final Log	LOGGER						= LogFactory.getLog(ExtendedCommandABC.class);
+	private static final Logger	LOGGER						= LoggerFactory.getLogger(ExtendedCommandABC.class);
 
 	private static final int	EXTENDED_COMMAND_HDR_BYTES	= 1;
 
