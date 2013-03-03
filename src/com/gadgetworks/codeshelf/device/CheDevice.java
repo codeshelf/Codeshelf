@@ -1,12 +1,14 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CheDevice.java,v 1.9 2013/03/02 02:22:30 jeffw Exp $
+ *  $Id: CheDevice.java,v 1.10 2013/03/03 02:52:51 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -20,7 +22,7 @@ import com.gadgetworks.flyweight.command.ICommand;
 import com.gadgetworks.flyweight.command.NetAddress;
 import com.gadgetworks.flyweight.command.NetEndpoint;
 import com.gadgetworks.flyweight.command.NetGuid;
-import com.gadgetworks.flyweight.controller.IController;
+import com.gadgetworks.flyweight.controller.IRadioController;
 import com.gadgetworks.flyweight.controller.INetworkDevice;
 import com.gadgetworks.flyweight.controller.NetworkDeviceStateEnum;
 
@@ -38,6 +40,7 @@ public class CheDevice implements INetworkDevice {
 	private static final String		CONTAINER_BARCODE_PREFIX	= "O%";
 	private static final String		LOCATION_BARCODE_PREFIX		= "L%";
 	private static final String		ITEMID_BARCODE_PREFIX		= "I%";
+	private static final String		POSITION_BARCODE_PREFIX		= " B%";
 
 	// These are the message strings we send to the remote CHE.
 	// Currently, these cannot be longer than 10 characters.
@@ -89,7 +92,7 @@ public class CheDevice implements INetworkDevice {
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
-	private IController				mController;
+	private IRadioController		mRadioController;
 
 	// The CHE's current location.
 	@Accessors(prefix = "m")
@@ -97,14 +100,18 @@ public class CheDevice implements INetworkDevice {
 	@Setter
 	private String					mLocation;
 
-	// The CHE's current location.
+	// The CHE's container map.
 	@Accessors(prefix = "m")
-	private List<String>			mContainerIds;
+	private String					mContainerInSetup;
+
+	// The CHE's container map.
+	@Accessors(prefix = "m")
+	private Map<String, String>		mContainersMap;
 
 	public CheDevice(final NetGuid inGuid) {
 		mGuid = inGuid;
 		mCheStateEnum = CheStateEnum.IDLE;
-		mContainerIds = new ArrayList<String>();
+		mContainersMap = new HashMap<String, String>();
 	}
 
 	@Override
@@ -120,7 +127,7 @@ public class CheDevice implements INetworkDevice {
 	private void sendDisplayCommand(final String inLine1Message, final String inLine2Message) {
 		LOGGER.info("Display message: " + inLine1Message);
 		ICommand command = new CommandControlMessage(NetEndpoint.PRIMARY_ENDPOINT, inLine1Message, inLine2Message);
-		mController.sendCommand(command, mAddress, false);
+		mRadioController.sendCommand(command, mAddress, false);
 
 	}
 
@@ -161,9 +168,14 @@ public class CheDevice implements INetworkDevice {
 
 				case LOCATION_SETUP:
 					locationScan(scanPrefixStr, scanStr);
+					break;
 
 				case CONTAINER_SELECT:
 					containerSelectScan(scanPrefixStr, scanStr);
+					break;
+
+				case CONTAINER_POSITION:
+					containerPositionScan(scanPrefixStr, scanStr);
 					break;
 
 				default:
@@ -193,7 +205,8 @@ public class CheDevice implements INetworkDevice {
 	private void logout() {
 		LOGGER.info("User logut");
 		// Clear all of the container IDs we were tracking.
-		mContainerIds.clear();
+		mContainersMap.clear();
+		mContainerInSetup = "";
 		setState(CheStateEnum.IDLE);
 	}
 
@@ -290,11 +303,42 @@ public class CheDevice implements INetworkDevice {
 	 */
 	private void containerSelectScan(final String inScanPrefixStr, String inScanStr) {
 		if (CONTAINER_BARCODE_PREFIX.equals(inScanPrefixStr)) {
-			mContainerIds.add(inScanStr);
+
+			mContainerInSetup = inScanStr;
+
+			// Check to see if this container is already setup in a position.
+			Iterator<Entry<String, String>> setIterator = mContainersMap.entrySet().iterator();
+			while (setIterator.hasNext()) {
+				Entry<String, String> entry = setIterator.next();
+				if (entry.getValue().equals(mContainerInSetup)) {
+					setIterator.remove();
+					break;
+				}
+			}
 			setState(CheStateEnum.CONTAINER_POSITION);
 		} else {
 			LOGGER.info("Not a container ID: " + inScanStr);
 			setStateError(CheStateEnum.CONTAINER_SELECT);
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inButtonStr
+	 */
+	private void containerPositionScan(final String inScanPrefixStr, String inScanStr) {
+		if (POSITION_BARCODE_PREFIX.equals(inScanPrefixStr)) {
+			setState(CheStateEnum.CONTAINER_SELECT);
+			if (mContainersMap.get(inScanStr) == null) {
+				mContainersMap.put(inScanStr, mContainerInSetup);
+				mContainerInSetup = "";
+			} else {
+				LOGGER.info("Position in use: " + inScanStr);
+				setStateError(CheStateEnum.CONTAINER_POSITION);
+			}
+		} else {
+			LOGGER.info("Invalid button: " + inScanStr);
+			setStateError(CheStateEnum.CONTAINER_POSITION);
 		}
 	}
 }

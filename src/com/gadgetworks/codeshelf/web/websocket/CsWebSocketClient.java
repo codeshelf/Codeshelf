@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CsWebSocketClient.java,v 1.5 2013/02/23 05:42:09 jeffw Exp $
+ *  $Id: CsWebSocketClient.java,v 1.6 2013/03/03 02:52:51 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websocket;
 
@@ -41,14 +41,13 @@ public class CsWebSocketClient extends WebSocketClient implements ICsWebSocketCl
 
 	public final void start() {
 		WebSocket.DEBUG = true;
-		LOGGER.debug("Websocket start");
+		LOGGER.debug("Starting websocket client");
 
 		try {
 			connectBlocking();
 		} catch (InterruptedException e) {
 			LOGGER.error("", e);
 		}
-		mMessageHandler.start(this);
 	}
 
 	public final void stop() {
@@ -65,7 +64,7 @@ public class CsWebSocketClient extends WebSocketClient implements ICsWebSocketCl
 
 	public final void onMessage(final String inMessage) {
 		LOGGER.debug(inMessage);
-		mMessageHandler.handleMessage(inMessage);
+		mMessageHandler.handleWebSocketMessage(inMessage);
 	}
 
 	public final void onError(final Exception inException) {

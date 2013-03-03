@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: RadioController.java,v 1.6 2013/03/02 02:22:30 jeffw Exp $
+ *  $Id: RadioController.java,v 1.7 2013/03/03 02:52:51 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.device;
@@ -23,8 +23,8 @@ import com.gadgetworks.flyweight.command.CommandAssocAck;
 import com.gadgetworks.flyweight.command.CommandAssocCheck;
 import com.gadgetworks.flyweight.command.CommandAssocReq;
 import com.gadgetworks.flyweight.command.CommandAssocResp;
-import com.gadgetworks.flyweight.command.CommandControlScan;
 import com.gadgetworks.flyweight.command.CommandControlABC;
+import com.gadgetworks.flyweight.command.CommandControlScan;
 import com.gadgetworks.flyweight.command.CommandNetMgmtABC;
 import com.gadgetworks.flyweight.command.CommandNetMgmtCheck;
 import com.gadgetworks.flyweight.command.CommandNetMgmtIntfTest;
@@ -37,18 +37,19 @@ import com.gadgetworks.flyweight.command.NetGuid;
 import com.gadgetworks.flyweight.command.NetworkId;
 import com.gadgetworks.flyweight.command.Packet;
 import com.gadgetworks.flyweight.controller.FTDIInterface;
-import com.gadgetworks.flyweight.controller.IController;
 import com.gadgetworks.flyweight.controller.IControllerEventListener;
 import com.gadgetworks.flyweight.controller.IGatewayInterface;
 import com.gadgetworks.flyweight.controller.INetworkDevice;
+import com.gadgetworks.flyweight.controller.IRadioController;
 import com.gadgetworks.flyweight.controller.NetworkDeviceStateEnum;
+import com.google.inject.Inject;
 
 // --------------------------------------------------------------------------
 /**
  *  @author jeffw
  */
 
-public class RadioController implements IController {
+public class RadioController implements IRadioController {
 
 	// Right now, the devices are not sending back their network ID.
 	public static final String									PRIVATE_GUID						= "00000000";
@@ -111,6 +112,7 @@ public class RadioController implements IController {
 	/**
 	 *  @param inSessionManager   The session manager for this controller.
 	 */
+	@Inject
 	public RadioController(final IGatewayInterface inGatewayInterface) {
 
 		mGatewayInterface = inGatewayInterface;
@@ -142,7 +144,7 @@ public class RadioController implements IController {
 
 		mPreferredChannel = inPreferredChannel;
 
-		LOGGER.info("Starting controller");
+		LOGGER.info("Starting radio controller");
 		mControllerThread = new Thread(this, CONTROLLER_THREAD_NAME);
 		mControllerThread.start();
 	}
@@ -994,7 +996,7 @@ public class RadioController implements IController {
 			inNetworkDevice.setAddress(new NetAddress(mNextAddress++));
 		}
 
-		inNetworkDevice.setController(this);
+		inNetworkDevice.setRadioController(this);
 		mDeviceGuidMap.put(inNetworkDevice.getGuid(), inNetworkDevice);
 		mDeviceNetAddrMap.put(inNetworkDevice.getAddress(), inNetworkDevice);
 	}

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSocketController.java,v 1.4 2013/02/27 22:06:27 jeffw Exp $
+ *  $Id: CsDeviceManager.java,v 1.1 2013/03/03 02:52:51 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -24,33 +24,35 @@ import com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmd;
 import com.gadgetworks.codeshelf.web.websession.command.req.WebSessionReqCmdEnum;
 import com.gadgetworks.codeshelf.web.websession.command.req.WebSessionReqCmdNetAttach;
 import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdEnum;
+import com.gadgetworks.codeshelf.web.websocket.ICsWebSocketClient;
 import com.gadgetworks.codeshelf.web.websocket.ICsWebsocketClientMsgHandler;
 import com.gadgetworks.flyweight.command.NetGuid;
-import com.gadgetworks.flyweight.controller.IController;
 import com.gadgetworks.flyweight.controller.IControllerEventListener;
-import com.gadgetworks.flyweight.controller.IGatewayInterface;
 import com.gadgetworks.flyweight.controller.INetworkDevice;
-import com.gadgetworks.flyweight.controller.TcpServerInterface;
+import com.gadgetworks.flyweight.controller.IRadioController;
+import com.google.inject.Inject;
 
 /**
  * @author jeffw
  *
  */
-public class WebSocketController implements ICsWebsocketClientMsgHandler, IControllerEventListener {
+public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgHandler, IControllerEventListener {
 
-	private static final Logger				LOGGER		= LoggerFactory.getLogger(WebSocketController.class);
+	private static final Logger		LOGGER		= LoggerFactory.getLogger(CsDeviceManager.class);
 
 	private Map<NetGuid, CheDevice>	mCheMap;
-	private IController						mRadioController;
-	private IGatewayInterface				mGatewaytInterface;
-	private IWebSocketClient				mWebSocketClient;
-	private int								mNextMsgNum	= 1;
-	private String							mOrganizationId;
-	private String							mFacilityId;
-	private String							mNetworkId;
-	private String							mNetworkCredential;
+	private IRadioController		mRadioController;
+	private ICsWebSocketClient		mWebSocketClient;
+	private int						mNextMsgNum	= 1;
+	private String					mOrganizationId;
+	private String					mFacilityId;
+	private String					mNetworkId;
+	private String					mNetworkCredential;
 
-	public WebSocketController() {
+	@Inject
+	public CsDeviceManager(final ICsWebSocketClient inWebSocketClient, final IRadioController inRadioController) {
+		mWebSocketClient = inWebSocketClient;
+		mRadioController = inRadioController;
 		mCheMap = new HashMap<NetGuid, CheDevice>();
 
 		mOrganizationId = System.getProperty("organizationId");
@@ -60,15 +62,12 @@ public class WebSocketController implements ICsWebsocketClientMsgHandler, IContr
 
 	}
 
-	public final void start(IWebSocketClient inWebSocketClient) {
-		mWebSocketClient = inWebSocketClient;
-		mGatewaytInterface = new TcpServerInterface();
-		mRadioController = new RadioController(mGatewaytInterface);
-		mRadioController.addControllerEventListener(this);
+	public final void start() {
+		mWebSocketClient.start();
 
 		// Start the background startup and wait until it's finished.
-		LOGGER.info("Starting controller");
 		mRadioController.startController((byte) 0x01);
+		mRadioController.addControllerEventListener(this);
 
 		ObjectMapper mapper = new ObjectMapper();
 		Map<String, Object> propertiesMap = new HashMap<String, Object>();
@@ -78,7 +77,7 @@ public class WebSocketController implements ICsWebsocketClientMsgHandler, IContr
 		propertiesMap.put("credential", mNetworkCredential);
 		ObjectNode dataNode = mapper.valueToTree(propertiesMap);
 
-		sendMessageNode(WebSessionReqCmdEnum.NET_ATTACH_REQ, dataNode);
+		sendWebSocketMessageNode(WebSessionReqCmdEnum.NET_ATTACH_REQ, dataNode);
 	}
 
 	public final void stop() {
@@ -90,7 +89,7 @@ public class WebSocketController implements ICsWebsocketClientMsgHandler, IContr
 	 * Send and log messages over the websocket.
 	 * @param inMessage
 	 */
-	private void sendMessage(final String inMessage) {
+	private void sendWebSocketMessage(final String inMessage) {
 		LOGGER.info("sent: " + inMessage);
 		mWebSocketClient.send(inMessage);
 	}
@@ -101,7 +100,7 @@ public class WebSocketController implements ICsWebsocketClientMsgHandler, IContr
 	 * @param inDataNode
 	 * @return
 	 */
-	private void sendMessageNode(final WebSessionReqCmdEnum inReqCmd, ObjectNode inDataNode) {
+	private void sendWebSocketMessageNode(final WebSessionReqCmdEnum inReqCmd, ObjectNode inDataNode) {
 		ObjectNode msgNode = null;
 
 		ObjectMapper treeMapper = new ObjectMapper();
@@ -111,11 +110,11 @@ public class WebSocketController implements ICsWebsocketClientMsgHandler, IContr
 
 		msgNode.put("data", inDataNode);
 
-		sendMessage(msgNode.toString());
+		sendWebSocketMessage(msgNode.toString());
 	}
 
 	@Override
-	public final void handleMessage(String inMessage) {
+	public final void handleWebSocketMessage(String inMessage) {
 
 		try {
 			ObjectMapper mapper = new ObjectMapper();
@@ -175,7 +174,7 @@ public class WebSocketController implements ICsWebsocketClientMsgHandler, IContr
 			propertiesMap.put(IWebSessionReqCmd.PROPERTY_NAME_LIST, propertiesArray);
 			ObjectNode dataNode = mapper.valueToTree(propertiesMap);
 
-			sendMessageNode(WebSessionReqCmdEnum.OBJECT_FILTER_REQ, dataNode);
+			sendWebSocketMessageNode(WebSessionReqCmdEnum.OBJECT_FILTER_REQ, dataNode);
 		}
 
 	}
@@ -209,29 +208,34 @@ public class WebSocketController implements ICsWebsocketClientMsgHandler, IContr
 		if (updateTypeNode != null) {
 			switch (updateTypeNode.getTextValue()) {
 				case IWebSessionReqCmd.OP_TYPE_CREATE:
+					// Create the CHE.
 					cheDevice = new CheDevice(deviceGuid);
 
 					// Check to see if the Che is already in our map.
 					if (!mCheMap.containsValue(cheDevice)) {
 						mCheMap.put(deviceGuid, cheDevice);
+						mRadioController.addNetworkDevice(cheDevice);
 					}
 
 					LOGGER.info("Created che: " + cheDevice.getGuid());
 					break;
 
 				case IWebSessionReqCmd.OP_TYPE_UPDATE:
+					// Update the CHE.
 					cheDevice = mCheMap.get(deviceGuid);
 
 					if (cheDevice == null) {
 						cheDevice = new CheDevice(deviceGuid);
 						mCheMap.put(deviceGuid, cheDevice);
+						mRadioController.addNetworkDevice(cheDevice);
 					}
-					mRadioController.addNetworkDevice(cheDevice);
 					LOGGER.info("Updated che: " + cheDevice.getGuid());
 					break;
 
 				case IWebSessionReqCmd.OP_TYPE_DELETE:
+					// Delete the CHE.
 					cheDevice = mCheMap.remove(deviceGuid);
+					mRadioController.removeNetworkDevice(cheDevice);
 					LOGGER.info("Deleted che: " + cheDevice.getGuid());
 					break;
 

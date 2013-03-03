@@ -1,18 +1,17 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CsNetworkApplication.java,v 1.2 2013/02/23 05:42:09 jeffw Exp $
+ *  $Id: CsNetworkApplication.java,v 1.3 2013/03/03 02:52:51 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
 
-import java.io.IOException;
 import java.lang.management.ManagementFactory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.web.websocket.ICsWebSocketClient;
+import com.gadgetworks.codeshelf.device.ICsDeviceManager;
 import com.google.inject.Inject;
 
 public final class CsNetworkApplication implements ICodeshelfApplication {
@@ -20,14 +19,14 @@ public final class CsNetworkApplication implements ICodeshelfApplication {
 	private static final Logger	LOGGER		= LoggerFactory.getLogger(CsNetworkApplication.class);
 
 	private boolean				mIsRunning	= true;
-	private ICsWebSocketClient	mWebSocketClient;
+	private ICsDeviceManager	mDeviceManager;
 	private IUtil				mUtil;
 	private Thread				mShutdownHookThread;
 	private Runnable			mShutdownRunnable;
 
 	@Inject
-	public CsNetworkApplication(final ICsWebSocketClient inWebSocketClient, final IUtil inUtil) {
-		mWebSocketClient = inWebSocketClient;
+	public CsNetworkApplication(final ICsDeviceManager inDeviceManager, final IUtil inUtil) {
+		mDeviceManager = inDeviceManager;
 		mUtil = inUtil;
 	}
 
@@ -62,8 +61,8 @@ public final class CsNetworkApplication implements ICodeshelfApplication {
 		// Some persistent objects need some of their fields set to a base/start state when the system restarts.
 		initializeApplicationData();
 
-		// Start the WebSocket UX handler
-		mWebSocketClient.start();
+		// Start the device manager.
+		mDeviceManager.start();
 
 	}
 
@@ -75,7 +74,7 @@ public final class CsNetworkApplication implements ICodeshelfApplication {
 		LOGGER.info("Stopping application");
 
 		// Stop the web socket.
-		mWebSocketClient.stop();
+		mDeviceManager.stop();
 
 		mIsRunning = false;
 

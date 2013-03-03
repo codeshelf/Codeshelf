@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: IController.java,v 1.1 2013/02/20 08:28:25 jeffw Exp $
+ *  $Id: IRadioController.java,v 1.1 2013/03/03 02:52:51 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.flyweight.controller;
 
@@ -13,7 +13,7 @@ import com.gadgetworks.flyweight.command.NetworkId;
 /**
  *  @author jeffw
  */
-public interface IController extends Runnable {
+public interface IRadioController extends Runnable {
 
 	// --------------------------------------------------------------------------
 	/**

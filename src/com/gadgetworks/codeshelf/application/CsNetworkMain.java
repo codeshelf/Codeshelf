@@ -1,7 +1,7 @@
 /*******************************************************************************
 CodeshelfWebSocketServer *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CsNetworkMain.java,v 1.4 2013/02/27 01:17:03 jeffw Exp $
+ *  $Id: CsNetworkMain.java,v 1.5 2013/03/03 02:52:51 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -14,7 +14,9 @@ import org.java_websocket.client.WebSocketClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.device.WebSocketController;
+import com.gadgetworks.codeshelf.device.CsDeviceManager;
+import com.gadgetworks.codeshelf.device.ICsDeviceManager;
+import com.gadgetworks.codeshelf.device.RadioController;
 import com.gadgetworks.codeshelf.model.dao.DaoProvider;
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
@@ -23,6 +25,9 @@ import com.gadgetworks.codeshelf.web.websocket.ICsWebSocketClient;
 import com.gadgetworks.codeshelf.web.websocket.ICsWebsocketClientMsgHandler;
 import com.gadgetworks.codeshelf.web.websocket.IWebSocketSslContextGenerator;
 import com.gadgetworks.codeshelf.web.websocket.SSLWebSocketClientFactory;
+import com.gadgetworks.flyweight.controller.IGatewayInterface;
+import com.gadgetworks.flyweight.controller.IRadioController;
+import com.gadgetworks.flyweight.controller.TcpServerInterface;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -111,7 +116,10 @@ public final class CsNetworkMain {
 				bind(IUtil.class).to(Util.class);
 				bind(ICodeshelfApplication.class).to(CsNetworkApplication.class);
 				bind(ICsWebSocketClient.class).to(CsWebSocketClient.class);
-				bind(ICsWebsocketClientMsgHandler.class).to(WebSocketController.class);
+				bind(IRadioController.class).to(RadioController.class);
+				bind(IGatewayInterface.class).to(TcpServerInterface.class);
+				bind(ICsDeviceManager.class).to(CsDeviceManager.class);
+				bind(ICsWebsocketClientMsgHandler.class).to(CsDeviceManager.class);
 				bind(IDaoProvider.class).to(DaoProvider.class);
 				bind(WebSocketClient.WebSocketClientFactory.class).to(SSLWebSocketClientFactory.class);
 

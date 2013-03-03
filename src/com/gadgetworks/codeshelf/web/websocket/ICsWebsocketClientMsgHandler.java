@@ -1,11 +1,10 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: ICsWebsocketClientMsgHandler.java,v 1.1 2013/02/23 05:42:09 jeffw Exp $
+ *  $Id: ICsWebsocketClientMsgHandler.java,v 1.2 2013/03/03 02:52:51 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websocket;
 
-import org.java_websocket.client.IWebSocketClient;
 
 
 /**
@@ -14,9 +13,5 @@ import org.java_websocket.client.IWebSocketClient;
  */
 public interface ICsWebsocketClientMsgHandler {
 	
-	void start(IWebSocketClient inWebSocketClient);
-	
-	void stop();
-	
-	void handleMessage(final String inMessage);
+	void handleWebSocketMessage(final String inMessage);
 }
