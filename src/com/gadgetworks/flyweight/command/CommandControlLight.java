@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandControlLight.java,v 1.2 2013/03/04 05:13:48 jeffw Exp $
+ *  $Id: CommandControlLight.java,v 1.3 2013/03/04 05:17:45 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.flyweight.command;
@@ -81,7 +81,7 @@ public final class CommandControlLight extends CommandControlABC {
 	 *  This is the constructor to use to create a data command that's read off of the network input stream.
 	 */
 	public CommandControlLight() {
-		super(new NetCommandId(CommandControlABC.MESSAGE));
+		super(new NetCommandId(CommandControlABC.LIGHT));
 	}
 
 	/* --------------------------------------------------------------------------

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: FTDIInterface.java,v 1.2 2013/02/27 01:17:02 jeffw Exp $
+ *  $Id: FTDIInterface.java,v 1.3 2013/03/04 05:13:48 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.flyweight.controller;
@@ -15,7 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.flyweight.command.Packet;
-import com.gadgetworks.flyweight.util.Util;
 
 /**
  * --------------------------------------------------------------------------
@@ -112,18 +111,18 @@ public final class FTDIInterface extends SerialInterfaceABC {
 		boolean result = false;
 
 		// First try to use the GW gateway device
-		if (!Util.isWindows()) {
+		//if (!Util.isWindows()) {
 			// On windows FTDI don't support PID/VID narrowing.
 			mJD2XXInterface.setVIDPID(VID, GW_PID);
-		}
+		//}
 		result = trySetupConnection(GW_VID_PID);
 
 		// Next try to use a generic FTDI device.
 		if (!result) {
-			if (!Util.isWindows()) {
+			//if (!Util.isWindows()) {
 				// On windows FTDI don't support PID/VID narrowing.
 				mJD2XXInterface.setVIDPID(VID, FTDI_PID);
-			}
+			//}
 			result = trySetupConnection(FTDI_VID_PID);
 		}
 
@@ -238,84 +237,6 @@ public final class FTDIInterface extends SerialInterfaceABC {
 				mJD2XXInterface.close();
 			} catch (IOException e) {
 				LOGGER.error("", e);
-			}
-
-			//			try {
-			//				int status = mJD2XXInterface.getEventStatus();
-			//				LOGGER.error("Event status: " + status);
-			//				status = mJD2XXInterface.getModemStatus();
-			//				LOGGER.error("Modem status: " + status);
-			//				status = mJD2XXInterface.getQueueStatus();
-			//				LOGGER.error("Queue status: " + status);
-			//				int[] statuses = mJD2XXInterface.getStatus();
-			//				LOGGER.error("Data status: " + statuses[0] + " " + statuses[1] + " " + statuses[2]);
-			//			} catch (IOException e1) {
-			//				// TODO Auto-generated catch block
-			//				e1.printStackTrace();
-			//			}
-			//			// mJD2XXInterface.purge(JD2XX.PURGE_RX | JD2XX.PURGE_TX);
-			//
-			//			try {
-			//				mJD2XXInterface.stopInTask();
-			//			} catch (IOException e) {
-			//				LOGGER.error("", e);
-			//			}
-			//			try {
-			//				mJD2XXInterface.restartInTask();
-			//			} catch (IOException e) {
-			//				LOGGER.error("", e);
-			//			}
-			//
-			//			try {
-			//				mJD2XXInterface.clrDtr();
-			//			} catch (IOException e) {
-			//				LOGGER.error("", e);
-			//			}
-			//
-			//			try {
-			//				mJD2XXInterface.clrRts();
-			//			} catch (IOException e) {
-			//				LOGGER.error("", e);
-			//			}
-			//
-			//			try {
-			//				mJD2XXInterface.setDtr();
-			//			} catch (IOException e) {
-			//				LOGGER.error("", e);
-			//			}
-			//
-			//			try {
-			//				mJD2XXInterface.setRts();
-			//			} catch (IOException e) {
-			//				LOGGER.error("", e);
-			//			}
-
-			if (Util.isWindows()) {
-				try {
-					mJD2XXInterface.cyclePort();
-				} catch (IOException e) {
-					LOGGER.error("", e);
-				}
-
-				try {
-					mJD2XXInterface.reload(VID, GW_PID);
-				} catch (IOException e) {
-					// JD2XX needs to be fixed to show that it throws IOException here.
-					LOGGER.error("", e);
-				}
-
-				try {
-					mJD2XXInterface.reload(VID, FTDI_PID);
-				} catch (IOException e) {
-					// JD2XX needs to be fixed to show that it throws IOException here.
-					LOGGER.error("", e);
-				}
-
-				try {
-					mJD2XXInterface.resetPort();
-				} catch (IOException e) {
-					LOGGER.error("", e);
-				}
 			}
 
 			try {

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CsDeviceManager.java,v 1.3 2013/03/04 04:47:27 jeffw Exp $
+ *  $Id: CsDeviceManager.java,v 1.4 2013/03/04 05:13:48 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -152,7 +152,7 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 	 * @see com.gadgetworks.codeshelf.web.websocket.ICsWebsocketClientMsgHandler#handleWoebSocketClosed()
 	 */
 	@Override
-	public final void handleWoebSocketClosed() {
+	public final void handleWebSocketClosed() {
 		// This will attempt to start the websocket again (and will block).
 		start();
 	}
@@ -169,8 +169,8 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 			JsonNode networkPersistentIdNode = networkNode.get("persistentId");
 			String persistentId = networkPersistentIdNode.getTextValue();
 
-			requestChes(persistentId);
-			requestAisleControllers(persistentId);
+			requestCheLighters(persistentId);
+			requestAisleLighters(persistentId);
 		}
 
 	}
@@ -180,16 +180,16 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 	 * Ask the server to keep us informed of CHEs (and any changes to them).
 	 * @param inPersistentId
 	 */
-	private void requestChes(final String inPersistentId) {
+	private void requestCheLighters(final String inPersistentId) {
 		requestDeviceUpdates(inPersistentId, Che.class.getSimpleName());
 	}
 
 	// --------------------------------------------------------------------------
 	/**
-	 * Ask the server to keep us informed of aisle controllers (and any changes to them).
+	 * Ask the server to keep us informed of aisle lighters (and any changes to them).
 	 * @param inPersistentId
 	 */
-	private void requestAisleControllers(final String inPersistentId) {
+	private void requestAisleLighters(final String inPersistentId) {
 		requestDeviceUpdates(inPersistentId, AisleController.class.getSimpleName());
 	}
 
@@ -304,35 +304,35 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 		if (updateTypeNode != null) {
 			switch (updateTypeNode.getTextValue()) {
 				case IWebSessionReqCmd.OP_TYPE_CREATE:
-					// Create the CHE.
+					// Create the aisle lighter.
 					aisleDevice = new AisleLighter(deviceGuid, this, mRadioController);
 
-					// Check to see if the Che is already in our map.
+					// Check to see if the aisle lighter is already in our map.
 					if (!mCheMap.containsValue(aisleDevice)) {
 						mCheMap.put(deviceGuid, aisleDevice);
 						mRadioController.addNetworkDevice(aisleDevice);
 					}
 
-					LOGGER.info("Created che: " + aisleDevice.getGuid());
+					LOGGER.info("Created aisle lighter: " + aisleDevice.getGuid());
 					break;
 
 				case IWebSessionReqCmd.OP_TYPE_UPDATE:
-					// Update the CHE.
+					// Update the aisle lighter.
 					aisleDevice = mCheMap.get(deviceGuid);
 
 					if (aisleDevice == null) {
-						aisleDevice = new CheLighter(deviceGuid, this, mRadioController);
+						aisleDevice = new AisleLighter(deviceGuid, this, mRadioController);
 						mCheMap.put(deviceGuid, aisleDevice);
 						mRadioController.addNetworkDevice(aisleDevice);
 					}
-					LOGGER.info("Updated che: " + aisleDevice.getGuid());
+					LOGGER.info("Updated aisle lighter: " + aisleDevice.getGuid());
 					break;
 
 				case IWebSessionReqCmd.OP_TYPE_DELETE:
-					// Delete the CHE.
+					// Delete the aisle lighter.
 					aisleDevice = mCheMap.remove(deviceGuid);
 					mRadioController.removeNetworkDevice(aisleDevice);
-					LOGGER.info("Deleted che: " + aisleDevice.getGuid());
+					LOGGER.info("Deleted aisle lighter: " + aisleDevice.getGuid());
 					break;
 
 				default:
