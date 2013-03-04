@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandControlLight.java,v 1.1 2013/03/03 23:27:20 jeffw Exp $
+ *  $Id: CommandControlLight.java,v 1.2 2013/03/04 05:13:48 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.flyweight.command;
@@ -68,7 +68,7 @@ public final class CommandControlLight extends CommandControlABC {
 	 *  @param inEndpoint	The end point to send the command.
 	 */
 	public CommandControlLight(final NetEndpoint inEndpoint, final Short inChannel, final Short inPosition, final ColorEnum inColor, final String inEffect) {
-		super(inEndpoint, new NetCommandId(CommandControlABC.MESSAGE));
+		super(inEndpoint, new NetCommandId(CommandControlABC.LIGHT));
 
 		mChannel = inChannel;
 		mPosition = inPosition;
