@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: DeviceEmbeddedABC.java,v 1.1 2013/03/03 23:27:21 jeffw Exp $
+ *  $Id: DeviceEmbeddedABC.java,v 1.2 2013/03/04 05:40:39 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -57,7 +57,7 @@ public abstract class DeviceEmbeddedABC implements IEmbeddedDevice {
 		mServerName = inServerName;
 		mNetworkId = new NetworkId(IPacket.DEFAULT_NETWORK_ID);
 	}
-	
+
 	abstract void processControlCmd(CommandControlABC inCommand);
 
 	// --------------------------------------------------------------------------
@@ -138,7 +138,7 @@ public abstract class DeviceEmbeddedABC implements IEmbeddedDevice {
 							}
 						} else {
 							IPacket packet = mGatewayInterface.receivePacket(mNetworkId);
-							if (packet != null) {
+							if ((packet != null) && ((packet.getDstAddr().equals(new NetAddress(IPacket.BROADCAST_ADDRESS)) || (packet.getDstAddr().equals(mNetAddress))))) {
 								//putPacketInRcvQueue(packet);
 								if (packet.getPacketType() == IPacket.ACK_PACKET) {
 									LOGGER.info("Packet acked RECEIVED: " + packet.toString());
@@ -210,9 +210,11 @@ public abstract class DeviceEmbeddedABC implements IEmbeddedDevice {
 	}
 
 	private void processAssocRespCommand(CommandAssocResp inCommand, NetAddress inSrcAddr) {
-
-		mNetAddress = inCommand.getNetAdress();
-		mNetworkId = inCommand.getNetworkId();
+		// If this is our assoc request then set our assigned address and network.
+		if (inCommand.getGUID().equals(mGUID)) {
+			mNetAddress = inCommand.getNetAdress();
+			mNetworkId = inCommand.getNetworkId();
+		}
 	}
 
 	private void processAssocAckCommand(CommandAssocAck inCommand, NetAddress inSrcAddr) {
