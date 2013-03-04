@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CsDeviceManager.java,v 1.4 2013/03/04 05:13:48 jeffw Exp $
+ *  $Id: CsDeviceManager.java,v 1.5 2013/03/04 18:10:25 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -14,9 +14,11 @@ import org.codehaus.jackson.JsonProcessingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
+import org.java_websocket.client.WebSocketClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.gadgetworks.codeshelf.application.IUtil;
 import com.gadgetworks.codeshelf.model.domain.AisleController;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.web.websession.command.IWebSessionCmd;
@@ -24,6 +26,7 @@ import com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmd;
 import com.gadgetworks.codeshelf.web.websession.command.req.WebSessionReqCmdEnum;
 import com.gadgetworks.codeshelf.web.websession.command.req.WebSessionReqCmdNetAttach;
 import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdEnum;
+import com.gadgetworks.codeshelf.web.websocket.CsWebSocketClient;
 import com.gadgetworks.codeshelf.web.websocket.ICsWebSocketClient;
 import com.gadgetworks.codeshelf.web.websocket.ICsWebsocketClientMsgHandler;
 import com.gadgetworks.flyweight.command.NetGuid;
@@ -31,6 +34,7 @@ import com.gadgetworks.flyweight.controller.INetworkDevice;
 import com.gadgetworks.flyweight.controller.IRadioController;
 import com.gadgetworks.flyweight.controller.IRadioControllerEventListener;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 
 /**
  * @author jeffw
@@ -38,22 +42,41 @@ import com.google.inject.Inject;
  */
 public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgHandler, IRadioControllerEventListener {
 
-	private static final Logger				LOGGER		= LoggerFactory.getLogger(CsDeviceManager.class);
+	private static final Logger						LOGGER						= LoggerFactory.getLogger(CsDeviceManager.class);
 
-	private Map<NetGuid, INetworkDevice>	mCheMap;
-	private IRadioController				mRadioController;
-	private ICsWebSocketClient				mWebSocketClient;
-	private int								mNextMsgNum	= 1;
-	private String							mOrganizationId;
-	private String							mFacilityId;
-	private String							mNetworkId;
-	private String							mNetworkCredential;
+	private static final String						WEBSOCKET_CHECK				= "Websocket Checker";
+	private static final Integer					WEBSOCKET_OPEN_RETRY_MILLIS	= 5000;
+
+	private Map<NetGuid, INetworkDevice>			mCheMap;
+	private IRadioController						mRadioController;
+	private ICsWebSocketClient						mWebSocketClient;
+	private int										mNextMsgNum					= 1;
+	private String									mOrganizationId;
+	private String									mFacilityId;
+	private String									mNetworkId;
+	private String									mNetworkCredential;
+
+	private String									mUri;
+	private IUtil									mUtil;
+	private ICsWebsocketClientMsgHandler			mMessageHandler;
+	private WebSocketClient.WebSocketClientFactory	mWebSocketClientFactory;
 
 	@Inject
-	public CsDeviceManager(final ICsWebSocketClient inWebSocketClient, final IRadioController inRadioController) {
-		mWebSocketClient = inWebSocketClient;
+	public CsDeviceManager(@Named(CsWebSocketClient.WEBSOCKET_URI_PROPERTY) final String inUriStr,
+		final IUtil inUtil,
+		final ICsWebsocketClientMsgHandler inMessageHandler,
+		final WebSocketClient.WebSocketClientFactory inWebSocketClientFactory,
+		//final ICsWebSocketClient inWebSocketClient,
+		final IRadioController inRadioController) {
+
+		//mWebSocketClient = inWebSocketClient;
 		mRadioController = inRadioController;
 		mCheMap = new HashMap<NetGuid, INetworkDevice>();
+
+		mUri = inUriStr;
+		mUtil = inUtil;
+		mMessageHandler = inMessageHandler;
+		mWebSocketClientFactory = inWebSocketClientFactory;
 
 		mOrganizationId = System.getProperty("organizationId");
 		mFacilityId = System.getProperty("facilityId");
@@ -63,21 +86,60 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 	}
 
 	public final void start() {
-		mWebSocketClient.start();
+		// We used to inject this, but the Java_WebSocket is not re-entrant so we have to create new sockets at runtime if the server connection breaks.
+		//mWebSocketClient = new CsWebSocketClient(mUri, mUtil, mMessageHandler, mWebSocketClientFactory);
+		//mWebSocketClient.start();
+		startWebSocket();
 
 		// Start the background startup and wait until it's finished.
 		mRadioController.startController((byte) 0x01);
 		mRadioController.addControllerEventListener(this);
 
-		ObjectMapper mapper = new ObjectMapper();
-		Map<String, Object> propertiesMap = new HashMap<String, Object>();
-		propertiesMap.put("organizationId", mOrganizationId);
-		propertiesMap.put("facilityId", mFacilityId);
-		propertiesMap.put("networkId", mNetworkId);
-		propertiesMap.put("credential", mNetworkCredential);
-		ObjectNode dataNode = mapper.valueToTree(propertiesMap);
+	}
 
-		sendWebSocketMessageNode(WebSessionReqCmdEnum.NET_ATTACH_REQ, dataNode);
+	public final void startWebSocket() {
+
+		// Man, the Java_Websocket is good except that the client doesn't auto-reconnect or pause if the server is down.
+		// This thread checks the state of the websocket connection and reopens it if it's not open.
+		// It would be good to work with the Java_Websockets guys to change the client behavior.
+		// THIS IS NOT PRETTY - BUT IT MUST WORK.  IF THE SERVER DROPS THE DEVICE MANAGER MUST AUTO-RECONNECT.
+
+		Thread websocketCheckThread = new Thread(new Runnable() {
+			public void run() {
+				while (true) {
+					if ((mWebSocketClient == null) || (!mWebSocketClient.isStarted())) {
+						// We used to inject this, but the Java_WebSocket is not re-entrant so we have to create new sockets at runtime if the server connection breaks.
+						mWebSocketClient = new CsWebSocketClient(mUri, mUtil, mMessageHandler, mWebSocketClientFactory);
+						mWebSocketClient.start();
+
+						if (mWebSocketClient.isStarted()) {
+							ObjectMapper mapper = new ObjectMapper();
+							Map<String, Object> propertiesMap = new HashMap<String, Object>();
+							propertiesMap.put("organizationId", mOrganizationId);
+							propertiesMap.put("facilityId", mFacilityId);
+							propertiesMap.put("networkId", mNetworkId);
+							propertiesMap.put("credential", mNetworkCredential);
+							ObjectNode dataNode = mapper.valueToTree(propertiesMap);
+
+							sendWebSocketMessageNode(WebSessionReqCmdEnum.NET_ATTACH_REQ, dataNode);
+						} else {
+							try {
+								Thread.sleep(WEBSOCKET_OPEN_RETRY_MILLIS);
+							} catch (InterruptedException e) {
+								LOGGER.error("", e);
+							}
+						}
+					} else {
+						try {
+							Thread.sleep(WEBSOCKET_OPEN_RETRY_MILLIS);
+						} catch (InterruptedException e) {
+							LOGGER.error("", e);
+						}
+					}
+				}
+			}
+		}, WEBSOCKET_CHECK);
+		websocketCheckThread.start();
 	}
 
 	public final void stop() {
@@ -154,7 +216,8 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 	@Override
 	public final void handleWebSocketClosed() {
 		// This will attempt to start the websocket again (and will block).
-		start();
+		//mWebSocketClient.stop();
+		//startWebSocket();
 	}
 
 	// --------------------------------------------------------------------------
@@ -169,8 +232,8 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 			JsonNode networkPersistentIdNode = networkNode.get("persistentId");
 			String persistentId = networkPersistentIdNode.getTextValue();
 
-			requestCheLighters(persistentId);
-			requestAisleLighters(persistentId);
+			requestCheDevices(persistentId);
+			requestAisleDevices(persistentId);
 		}
 
 	}
@@ -180,16 +243,16 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 	 * Ask the server to keep us informed of CHEs (and any changes to them).
 	 * @param inPersistentId
 	 */
-	private void requestCheLighters(final String inPersistentId) {
+	private void requestCheDevices(final String inPersistentId) {
 		requestDeviceUpdates(inPersistentId, Che.class.getSimpleName());
 	}
 
 	// --------------------------------------------------------------------------
 	/**
-	 * Ask the server to keep us informed of aisle lighters (and any changes to them).
+	 * Ask the server to keep us informed of aisle devices (and any changes to them).
 	 * @param inPersistentId
 	 */
-	private void requestAisleLighters(final String inPersistentId) {
+	private void requestAisleDevices(final String inPersistentId) {
 		requestDeviceUpdates(inPersistentId, AisleController.class.getSimpleName());
 	}
 
@@ -257,7 +320,7 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 			switch (updateTypeNode.getTextValue()) {
 				case IWebSessionReqCmd.OP_TYPE_CREATE:
 					// Create the CHE.
-					cheDevice = new CheLighter(deviceGuid, this, mRadioController);
+					cheDevice = new CheDevice(deviceGuid, this, mRadioController);
 
 					// Check to see if the Che is already in our map.
 					if (!mCheMap.containsValue(cheDevice)) {
@@ -273,7 +336,7 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 					cheDevice = mCheMap.get(deviceGuid);
 
 					if (cheDevice == null) {
-						cheDevice = new CheLighter(deviceGuid, this, mRadioController);
+						cheDevice = new CheDevice(deviceGuid, this, mRadioController);
 						mCheMap.put(deviceGuid, cheDevice);
 						mRadioController.addNetworkDevice(cheDevice);
 					}
@@ -304,35 +367,35 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 		if (updateTypeNode != null) {
 			switch (updateTypeNode.getTextValue()) {
 				case IWebSessionReqCmd.OP_TYPE_CREATE:
-					// Create the aisle lighter.
-					aisleDevice = new AisleLighter(deviceGuid, this, mRadioController);
+					// Create the aisle device.
+					aisleDevice = new AisleDevice(deviceGuid, this, mRadioController);
 
-					// Check to see if the aisle lighter is already in our map.
+					// Check to see if the aisle device is already in our map.
 					if (!mCheMap.containsValue(aisleDevice)) {
 						mCheMap.put(deviceGuid, aisleDevice);
 						mRadioController.addNetworkDevice(aisleDevice);
 					}
 
-					LOGGER.info("Created aisle lighter: " + aisleDevice.getGuid());
+					LOGGER.info("Created aisle device: " + aisleDevice.getGuid());
 					break;
 
 				case IWebSessionReqCmd.OP_TYPE_UPDATE:
-					// Update the aisle lighter.
+					// Update the aisle device.
 					aisleDevice = mCheMap.get(deviceGuid);
 
 					if (aisleDevice == null) {
-						aisleDevice = new AisleLighter(deviceGuid, this, mRadioController);
+						aisleDevice = new AisleDevice(deviceGuid, this, mRadioController);
 						mCheMap.put(deviceGuid, aisleDevice);
 						mRadioController.addNetworkDevice(aisleDevice);
 					}
-					LOGGER.info("Updated aisle lighter: " + aisleDevice.getGuid());
+					LOGGER.info("Updated aisle device: " + aisleDevice.getGuid());
 					break;
 
 				case IWebSessionReqCmd.OP_TYPE_DELETE:
-					// Delete the aisle lighter.
+					// Delete the aisle device.
 					aisleDevice = mCheMap.remove(deviceGuid);
 					mRadioController.removeNetworkDevice(aisleDevice);
-					LOGGER.info("Deleted aisle lighter: " + aisleDevice.getGuid());
+					LOGGER.info("Deleted aisle device: " + aisleDevice.getGuid());
 					break;
 
 				default:

@@ -1,12 +1,13 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CsWebSocketClient.java,v 1.8 2013/03/04 05:13:48 jeffw Exp $
+ *  $Id: CsWebSocketClient.java,v 1.9 2013/03/04 18:10:25 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websocket;
 
 import java.net.URI;
 
+import org.java_websocket.IWebSocket;
 import org.java_websocket.WebSocket;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
@@ -14,7 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.application.IUtil;
-import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
 public class CsWebSocketClient extends WebSocketClient implements ICsWebSocketClient {
@@ -27,7 +27,10 @@ public class CsWebSocketClient extends WebSocketClient implements ICsWebSocketCl
 
 	private ICsWebsocketClientMsgHandler	mMessageHandler;
 
-	@Inject
+	//@Inject
+	// Can't really inject - the Java_WebSocket libs are not really built for re-use or re-entrance.  BLerg.
+	// If the server connection breaks we can't reuse the websocket and have to create a new one are runtime.
+	// See CsDeviceManager where we cache these values on inject and reuse them to create new sockets.
 	public CsWebSocketClient(@Named(WEBSOCKET_URI_PROPERTY) final String inUriStr,
 		final IUtil inUtil,
 		final ICsWebsocketClientMsgHandler inMessageHandler,
@@ -51,7 +54,18 @@ public class CsWebSocketClient extends WebSocketClient implements ICsWebSocketCl
 	}
 
 	public final void stop() {
-		close();
+		if (isStarted()) {
+			close();
+		}
+	}
+
+	public final boolean isStarted() {
+		boolean result = false;
+		IWebSocket socket = getConnection();
+		if (socket != null) {
+			result = socket.isOpen();
+		}
+		return result;
 	}
 
 	public final void onOpen(final ServerHandshake inHandshake) {
@@ -60,6 +74,7 @@ public class CsWebSocketClient extends WebSocketClient implements ICsWebSocketCl
 
 	public final void onClose(final int inCode, final String inReason, final boolean inRemote) {
 		LOGGER.debug("Websocket close");
+		mMessageHandler.handleWebSocketClosed();
 	}
 
 	public final void onMessage(final String inMessage) {
@@ -68,6 +83,6 @@ public class CsWebSocketClient extends WebSocketClient implements ICsWebSocketCl
 	}
 
 	public final void onError(final Exception inException) {
-		mMessageHandler.handleWebSocketClosed();
+		LOGGER.debug("Websocket error");
 	}
 }

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: LighterDeviceABC.java,v 1.1 2013/03/03 23:27:21 jeffw Exp $
+ *  $Id: DeviceABC.java,v 1.1 2013/03/04 18:10:25 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -19,7 +19,7 @@ import com.gadgetworks.flyweight.controller.NetworkDeviceStateEnum;
  * @author jeffw
  *
  */
-public abstract class LighterDeviceABC implements INetworkDevice {
+public abstract class DeviceABC implements INetworkDevice {
 
 	// MAC address.
 	@Accessors(prefix = "m")
@@ -56,7 +56,7 @@ public abstract class LighterDeviceABC implements INetworkDevice {
 	// The device manager.
 	protected ICsDeviceManager		mDeviceManager;
 
-	public LighterDeviceABC(final NetGuid inGuid, final ICsDeviceManager inDeviceManager, final IRadioController inRadioController) {
+	public DeviceABC(final NetGuid inGuid, final ICsDeviceManager inDeviceManager, final IRadioController inRadioController) {
 		mGuid = inGuid;
 		mDeviceManager = inDeviceManager;
 		mRadioController = inRadioController;

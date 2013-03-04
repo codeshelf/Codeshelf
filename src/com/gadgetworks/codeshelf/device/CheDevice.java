@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CheLighter.java,v 1.2 2013/03/04 04:47:27 jeffw Exp $
+ *  $Id: CheDevice.java,v 1.12 2013/03/04 18:10:25 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -29,9 +29,9 @@ import com.gadgetworks.flyweight.controller.IRadioController;
  * @author jeffw
  *
  */
-public class CheLighter extends LighterDeviceABC {
+public class CheDevice extends DeviceABC {
 
-	private static final Logger		LOGGER						= LoggerFactory.getLogger(CheLighter.class);
+	private static final Logger		LOGGER						= LoggerFactory.getLogger(CheDevice.class);
 
 	private static final String		BARCODE_DELIMITER			= "%";
 	private static final String		COMMAND_BARCODE_PREFIX		= "X%";
@@ -44,7 +44,7 @@ public class CheLighter extends LighterDeviceABC {
 	// These are the message strings we send to the remote CHE.
 	// Currently, these cannot be longer than 10 characters.
 	private static final String		EMPTY_MSG					= "";
-	private static final String		ERROR_MSG					= "ERROR";
+	private static final String		INVALID_SCAN_MSG					= "INVALID";
 	private static final String		SCAN_USERID_MSG				= "SCAN BADGE";
 	private static final String		SCAN_LOCATION_MSG			= "SCAN LOC";
 	private static final String		SCAN_CONTAINER_MSG			= "SCAN CNTR";
@@ -73,7 +73,7 @@ public class CheLighter extends LighterDeviceABC {
 	// The work the CHE has to do.
 	List<DeployedWorkInstruction>	mWorkItemList;
 
-	public CheLighter(final NetGuid inGuid, final ICsDeviceManager inDeviceManager, final IRadioController inRadioController) {
+	public CheDevice(final NetGuid inGuid, final ICsDeviceManager inDeviceManager, final IRadioController inRadioController) {
 		super(inGuid, inDeviceManager, inRadioController);
 		
 		mCheStateEnum = CheStateEnum.IDLE;
@@ -205,19 +205,19 @@ public class CheLighter extends LighterDeviceABC {
 
 		switch (inCheState) {
 			case IDLE:
-				sendDisplayCommand(SCAN_USERID_MSG, ERROR_MSG);
+				sendDisplayCommand(SCAN_USERID_MSG, INVALID_SCAN_MSG);
 				break;
 
 			case LOCATION_SETUP:
-				sendDisplayCommand(SCAN_LOCATION_MSG, ERROR_MSG);
+				sendDisplayCommand(SCAN_LOCATION_MSG, INVALID_SCAN_MSG);
 				break;
 
 			case CONTAINER_SELECT:
-				sendDisplayCommand(SCAN_CONTAINER_MSG, ERROR_MSG);
+				sendDisplayCommand(SCAN_CONTAINER_MSG, INVALID_SCAN_MSG);
 				break;
 
 			case CONTAINER_POSITION:
-				sendDisplayCommand(SELECT_POSITION_MSG, ERROR_MSG);
+				sendDisplayCommand(SELECT_POSITION_MSG, INVALID_SCAN_MSG);
 				break;
 
 			default:

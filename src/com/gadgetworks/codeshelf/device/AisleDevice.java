@@ -10,11 +10,11 @@ import com.gadgetworks.flyweight.command.NetEndpoint;
 import com.gadgetworks.flyweight.command.NetGuid;
 import com.gadgetworks.flyweight.controller.IRadioController;
 
-public class AisleLighter extends LighterDeviceABC {
+public class AisleDevice extends DeviceABC {
 
-	private static final Logger	LOGGER	= LoggerFactory.getLogger(AisleLighter.class);
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(AisleDevice.class);
 
-	public AisleLighter(final NetGuid inGuid, final ICsDeviceManager inDeviceManager, final IRadioController inRadioController) {
+	public AisleDevice(final NetGuid inGuid, final ICsDeviceManager inDeviceManager, final IRadioController inRadioController) {
 		super(inGuid, inDeviceManager, inRadioController);
 
 	}
@@ -28,7 +28,7 @@ public class AisleLighter extends LighterDeviceABC {
 
 	@Override
 	public final void commandReceived(String inCommandStr) {
-		// The aisle lighter never returns commands.
+		// The aisle device never returns commands.
 	}
 
 	// --------------------------------------------------------------------------

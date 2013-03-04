@@ -1,7 +1,7 @@
 /*******************************************************************************
 CodeshelfWebSocketServer *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CsNetworkMain.java,v 1.6 2013/03/03 23:27:21 jeffw Exp $
+ *  $Id: CsNetworkMain.java,v 1.7 2013/03/04 18:10:25 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -124,7 +124,8 @@ public final class CsNetworkMain {
 
 				bind(IUtil.class).to(Util.class);
 				bind(ICodeshelfApplication.class).to(CsNetworkApplication.class);
-				bind(ICsWebSocketClient.class).to(CsWebSocketClient.class);
+				// Can't inject Java_Websocket classes.  See CsWebSocketClient.java for explanation.
+				//bind(ICsWebSocketClient.class).to(CsWebSocketClient.class);
 				bind(IRadioController.class).to(RadioController.class);
 				bind(IGatewayInterface.class).to(TcpServerInterface.class);
 				bind(ICsDeviceManager.class).to(CsDeviceManager.class);
