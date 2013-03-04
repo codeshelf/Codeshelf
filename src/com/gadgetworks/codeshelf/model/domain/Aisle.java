@@ -1,20 +1,19 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Aisle.java,v 1.15 2012/11/19 10:48:25 jeffw Exp $
+ *  $Id: Aisle.java,v 1.16 2013/03/04 04:47:27 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
-import javax.persistence.Table;
 
 import lombok.ToString;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
@@ -49,7 +48,7 @@ public class Aisle extends SubLocationABC<Facility> {
 		}
 	}
 
-	private static final Log	LOGGER	= LogFactory.getLog(Aisle.class);
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(Aisle.class);
 
 	public Aisle(final Facility inParentFacility, final String inAisleId, final Double inPosX, final double inPosY) {
 		super(PositionTypeEnum.METERS_FROM_PARENT, inPosX, inPosY);

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WirelessDeviceABC.java,v 1.3 2013/02/27 22:06:27 jeffw Exp $
+ *  $Id: WirelessDeviceABC.java,v 1.4 2013/03/04 04:47:28 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -18,11 +18,11 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.annotate.JsonProperty;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
@@ -62,7 +62,7 @@ public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNet
 		}
 	}
 
-	private static final Log		LOGGER	= LogFactory.getLog(WirelessDeviceABC.class);
+	private static final Logger		LOGGER	= LoggerFactory.getLogger(WirelessDeviceABC.class);
 
 	// The owning network.
 	@Column(nullable = false)

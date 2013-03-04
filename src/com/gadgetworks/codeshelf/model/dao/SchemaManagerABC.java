@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: SchemaManagerABC.java,v 1.13 2013/02/27 22:06:27 jeffw Exp $
+ *  $Id: SchemaManagerABC.java,v 1.14 2013/03/04 04:47:29 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -410,6 +410,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		boolean result = true;
 
 		result &= linkToParentTable("AISLECONTROLLER", "PARENT", "CODESHELFNETWORK");
+		result &= linkToParentTable("AISLECONTROLLER", "PARENTAISLE", "LOCATION");
 		// One extra index: to ensure uniqueness of the MAC addresses, and to find them fast by that address.
 		execOneSQLCommand("CREATE UNIQUE INDEX AISLECONTROLLER_DEVICEGUID_INDEX ON CODESHELF.AISLECONTROLLER (DEVICEGUID)");
 
@@ -483,7 +484,8 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 					+ "DEVICEGUID BYTEA DEFAULT '' NOT NULL, " //
 					+ "PUBLICKEY VARCHAR(16) NOT NULL, " //
 					+ "LASTBATTERYLEVEL SMALLINT DEFAULT 0 NOT NULL, " //
-					+ "SERIALBUSPOSITION INT DEFAULT 0 " //
+					+ "SERIALBUSPOSITION INT DEFAULT 0, " //
+					+ "PARENTAISLE_PERSISTENTID " + UUID_TYPE + " "// NOT NULL, " //
 		);
 
 		// Che

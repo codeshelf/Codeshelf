@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: RadioController.java,v 1.8 2013/03/03 23:27:21 jeffw Exp $
+ *  $Id: RadioController.java,v 1.9 2013/03/04 04:47:27 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.device;
@@ -16,7 +16,6 @@ import java.util.concurrent.BlockingQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.application.IHttpServer;
 import com.gadgetworks.flyweight.bitfields.NBitInteger;
 import com.gadgetworks.flyweight.command.AckStateEnum;
 import com.gadgetworks.flyweight.command.CommandAssocABC;
@@ -38,10 +37,10 @@ import com.gadgetworks.flyweight.command.NetGuid;
 import com.gadgetworks.flyweight.command.NetworkId;
 import com.gadgetworks.flyweight.command.Packet;
 import com.gadgetworks.flyweight.controller.FTDIInterface;
-import com.gadgetworks.flyweight.controller.IRadioControllerEventListener;
 import com.gadgetworks.flyweight.controller.IGatewayInterface;
 import com.gadgetworks.flyweight.controller.INetworkDevice;
 import com.gadgetworks.flyweight.controller.IRadioController;
+import com.gadgetworks.flyweight.controller.IRadioControllerEventListener;
 import com.gadgetworks.flyweight.controller.NetworkDeviceStateEnum;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -57,8 +56,6 @@ public class RadioController implements IRadioController {
 	public static final String									PRIVATE_GUID						= "00000000";
 	public static final String									VIRTUAL_GUID						= "%%%%%%%%";
 
-	public static final String									CONTROLLER_THREAD_NAME				= "Controller";
-
 	// Artificially limit us to channels 0-3 to make testing faster.
 	public static final byte									MAX_CHANNELS						= 16;
 	public static final byte									NO_PREFERRED_CHANNEL				= (byte) 255;
@@ -66,7 +63,8 @@ public class RadioController implements IRadioController {
 
 	private static final Logger									LOGGER								= LoggerFactory.getLogger(RadioController.class);
 
-	private static final String									BACKGROUND_THREAD_NAME				= "Controller Background";
+	private static final String									CONTROLLER_THREAD_NAME				= "Radio Controller";
+	private static final String									BACKGROUND_THREAD_NAME				= "Radio Controller Background";
 	private static final String									RECEIVER_THREAD_NAME				= "Packet Receiver";
 	private static final String									INTERFACESTARTER_THREAD_NAME		= "Intferface Starter";
 
@@ -114,7 +112,7 @@ public class RadioController implements IRadioController {
 	 *  @param inSessionManager   The session manager for this controller.
 	 */
 	@Inject
-	public RadioController(@Named(IPacket.NETWORK_NUM_PROPERTY)final byte inNetworkId, final IGatewayInterface inGatewayInterface) {
+	public RadioController(@Named(IPacket.NETWORK_NUM_PROPERTY) final byte inNetworkId, final IGatewayInterface inGatewayInterface) {
 
 		mGatewayInterface = inGatewayInterface;
 		mServerAddress = new NetAddress(IPacket.GATEWAY_ADDRESS);
@@ -216,9 +214,10 @@ public class RadioController implements IRadioController {
 				} catch (InterruptedException e) {
 					LOGGER.error("", e);
 				}
-				LOGGER.info("Interfaces not started");
+				LOGGER.info("Waiting for interface to start");
 			}
 		} while (!started && mShouldRun);
+		LOGGER.info("Interface started");
 
 		selectChannel();
 
@@ -284,7 +283,7 @@ public class RadioController implements IRadioController {
 				// Net mgmt commands only get sent to the FTDI-controlled radio network.
 				sendCommand(netSetupCmd, mBroadcastAddress, false);
 			}
-			LOGGER.info("Channel " + inChannel);
+			LOGGER.info("Radio channel " + inChannel);
 		}
 	}
 
@@ -721,8 +720,9 @@ public class RadioController implements IRadioController {
 			}
 		}
 
-		if (canAssociate) {
-
+		if (!canAssociate) {
+			LOGGER.info("Device not allowed: " + uid);
+		} else {
 			INetworkDevice foundDevice = mDeviceGuidMap.get(new NetGuid("0x" + uid));
 
 			if (foundDevice != null) {

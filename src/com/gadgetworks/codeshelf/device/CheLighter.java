@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CheLighter.java,v 1.1 2013/03/03 23:27:21 jeffw Exp $
+ *  $Id: CheLighter.java,v 1.2 2013/03/04 04:47:27 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -39,7 +39,7 @@ public class CheLighter extends LighterDeviceABC {
 	private static final String		CONTAINER_BARCODE_PREFIX	= "O%";
 	private static final String		LOCATION_BARCODE_PREFIX		= "L%";
 	private static final String		ITEMID_BARCODE_PREFIX		= "I%";
-	private static final String		POSITION_BARCODE_PREFIX		= " B%";
+	private static final String		POSITION_BARCODE_PREFIX		= "B%";
 
 	// These are the message strings we send to the remote CHE.
 	// Currently, these cannot be longer than 10 characters.

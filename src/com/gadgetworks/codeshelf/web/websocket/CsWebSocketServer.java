@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CsWebSocketServer.java,v 1.2 2013/02/27 01:17:02 jeffw Exp $
+ *  $Id: CsWebSocketServer.java,v 1.3 2013/03/04 04:47:29 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websocket;
 
@@ -41,7 +41,7 @@ public class CsWebSocketServer extends WebSocketServer implements IWebSocketServ
 
 	@Override
 	public final void start() {
-		WebSocket.DEBUG = true;
+		WebSocket.DEBUG = false;
 		super.start();
 	}
 

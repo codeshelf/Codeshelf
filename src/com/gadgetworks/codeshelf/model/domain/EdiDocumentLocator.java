@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiDocumentLocator.java,v 1.15 2012/11/19 10:48:25 jeffw Exp $
+ *  $Id: EdiDocumentLocator.java,v 1.16 2013/03/04 04:47:28 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -19,11 +19,11 @@ import javax.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.annotate.JsonProperty;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.EdiDocumentStatusEnum;
@@ -57,7 +57,7 @@ public class EdiDocumentLocator extends DomainObjectTreeABC<DropboxService> {
 		}
 	}
 
-	private static final Log		LOGGER	= LogFactory.getLog(EdiDocumentLocator.class);
+	private static final Logger		LOGGER	= LoggerFactory.getLogger(EdiDocumentLocator.class);
 
 	// The owning EdiService.
 	// We prefer to use the abstract class here, but it's not currently possible with Ebean.

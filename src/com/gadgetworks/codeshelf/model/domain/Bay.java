@@ -1,20 +1,19 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Bay.java,v 1.16 2012/11/19 10:48:25 jeffw Exp $
+ *  $Id: Bay.java,v 1.17 2013/03/04 04:47:28 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
-import javax.persistence.Table;
 
 import lombok.ToString;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
@@ -49,7 +48,7 @@ public class Bay extends SubLocationABC<Aisle> {
 		}
 	}
 
-	private static final Log	LOGGER	= LogFactory.getLog(Bay.class);
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(Bay.class);
 
 	public Bay(final Aisle inAisle, final String inBayId, final Double inPosX, final double inPosY, final double inPosZ) {
 		super(PositionTypeEnum.METERS_FROM_PARENT, inPosX, inPosY, inPosZ);

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Path.java,v 1.16 2012/12/22 09:36:38 jeffw Exp $
+ *  $Id: Path.java,v 1.17 2013/03/04 04:47:27 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -21,11 +21,11 @@ import javax.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.annotate.JsonProperty;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
@@ -62,7 +62,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	public static final String			DEFAULT_FACILITY_PATH_ID	= "DEFAULT";
 	public static final String			DOMAIN_PREFIX				= "P";
 
-	private static final Log			LOGGER						= LogFactory.getLog(Path.class);
+	private static final Logger			LOGGER						= LoggerFactory.getLogger(Path.class);
 
 	// The parent facility.
 	@Column(nullable = false)
@@ -118,7 +118,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	public final void removePathSegment(Integer inOrder) {
 		segments.remove(inOrder);
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 *  Create the default work area for this path.

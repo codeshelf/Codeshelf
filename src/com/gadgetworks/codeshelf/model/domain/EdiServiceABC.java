@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiServiceABC.java,v 1.15 2012/11/19 10:48:25 jeffw Exp $
+ *  $Id: EdiServiceABC.java,v 1.16 2013/03/04 04:47:27 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -26,11 +26,11 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.annotate.JsonProperty;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.model.EdiProviderEnum;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
@@ -54,7 +54,7 @@ import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implements IEdiService {
 
-	private static final Log			LOGGER				= LogFactory.getLog(EdiServiceABC.class);
+	private static final Logger			LOGGER				= LoggerFactory.getLogger(EdiServiceABC.class);
 
 	// The owning Facility.
 	@Column(nullable = false)

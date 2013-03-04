@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Che.java,v 1.5 2013/02/27 22:06:27 jeffw Exp $
+ *  $Id: Che.java,v 1.6 2013/03/04 04:47:27 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -18,10 +18,10 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
@@ -55,7 +55,7 @@ public class Che extends WirelessDeviceABC {
 		}
 	}
 
-	private static final Log	LOGGER	= LogFactory.getLog(Che.class);
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(Che.class);
 
 	// The current work area.
 	@Column(nullable = true)

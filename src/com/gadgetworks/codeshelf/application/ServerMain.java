@@ -1,7 +1,7 @@
 /*******************************************************************************
 CodeshelfWebSocketServer *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ServerMain.java,v 1.7 2013/03/03 23:27:21 jeffw Exp $
+ *  $Id: ServerMain.java,v 1.8 2013/03/04 04:47:28 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -31,6 +31,8 @@ import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.dao.PostgresSchemaManager;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Aisle.AisleDao;
+import com.gadgetworks.codeshelf.model.domain.AisleController;
+import com.gadgetworks.codeshelf.model.domain.AisleController.AisleControllerDao;
 import com.gadgetworks.codeshelf.model.domain.Bay;
 import com.gadgetworks.codeshelf.model.domain.Bay.BayDao;
 import com.gadgetworks.codeshelf.model.domain.Che;
@@ -219,9 +221,14 @@ public final class ServerMain {
 				bind(HashedCredentialsMatcher.class);
 				bindConstant().annotatedWith(Names.named("shiro.hashAlgorithmName")).to(Md5Hash.ALGORITHM_NAME);
 
+				// Register the DAOs (statically as a singleton).
 				requestStaticInjection(Aisle.class);
 				bind(new TypeLiteral<ITypedDao<Aisle>>() {
 				}).to(AisleDao.class);
+
+				requestStaticInjection(AisleController.class);
+				bind(new TypeLiteral<ITypedDao<AisleController>>() {
+				}).to(AisleControllerDao.class);
 
 				requestStaticInjection(Bay.class);
 				bind(new TypeLiteral<ITypedDao<Bay>>() {

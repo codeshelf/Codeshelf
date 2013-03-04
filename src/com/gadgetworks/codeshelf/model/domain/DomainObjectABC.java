@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DomainObjectABC.java,v 1.27 2012/12/25 10:48:13 jeffw Exp $
+ *  $Id: DomainObjectABC.java,v 1.28 2013/03/04 04:47:27 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -22,12 +22,12 @@ import lombok.NonNull;
 import lombok.Setter;
 import lombok.ToString;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.annotate.JsonPropertyOrder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.Ebean;
 import com.avaje.ebean.Query;
@@ -48,7 +48,7 @@ import com.avaje.ebean.annotation.CacheStrategy;
 @JsonPropertyOrder({ "domainId", "fullDomainId" })
 public abstract class DomainObjectABC implements IDomainObject {
 
-	private static final Log	LOGGER	= LogFactory.getLog(DomainObjectABC.class);
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(DomainObjectABC.class);
 
 	// This is the internal GUID for the object.
 	@Id

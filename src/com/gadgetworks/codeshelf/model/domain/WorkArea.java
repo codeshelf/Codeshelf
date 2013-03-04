@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WorkArea.java,v 1.11 2013/02/12 19:19:42 jeffw Exp $
+ *  $Id: WorkArea.java,v 1.12 2013/03/04 04:47:27 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -17,11 +17,11 @@ import javax.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.annotate.JsonProperty;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
@@ -54,7 +54,7 @@ public class WorkArea extends DomainObjectTreeABC<Path> {
 		}
 	}
 
-	private static final Log		LOGGER				= LogFactory.getLog(WorkArea.class);
+	private static final Logger		LOGGER		= LoggerFactory.getLogger(WorkArea.class);
 
 	// The parent facility.
 	@Column(nullable = false)
@@ -78,17 +78,17 @@ public class WorkArea extends DomainObjectTreeABC<Path> {
 	// A work area is a collection of locations.
 	@OneToMany(mappedBy = "parent")
 	@Getter
-	private List<SubLocationABC>	locations			= new ArrayList<SubLocationABC>();
+	private List<SubLocationABC>	locations	= new ArrayList<SubLocationABC>();
 
 	// A work area will contain a set of active users (workers).
 	@OneToMany(mappedBy = "parent")
 	@Getter
-	private List<User>				users				= new ArrayList<User>();
+	private List<User>				users		= new ArrayList<User>();
 
 	// A work area will contain a set of active users (workers).
 	@OneToMany(mappedBy = "currentWorkArea")
 	@Getter
-	private List<Che>				activeChes			= new ArrayList<Che>();
+	private List<Che>				activeChes	= new ArrayList<Che>();
 
 	public WorkArea() {
 		workAreaId = "";

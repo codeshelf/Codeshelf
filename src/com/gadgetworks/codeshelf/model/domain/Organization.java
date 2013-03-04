@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Organization.java,v 1.28 2013/02/27 22:06:27 jeffw Exp $
+ *  $Id: Organization.java,v 1.29 2013/03/04 04:47:27 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -22,11 +22,11 @@ import lombok.NonNull;
 import lombok.Setter;
 import lombok.ToString;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.annotate.JsonProperty;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
@@ -65,7 +65,7 @@ public class Organization extends DomainObjectABC {
 		}
 	}
 
-	private static final Log	LOGGER		= LogFactory.getLog(Organization.class);
+	private static final Logger		LOGGER		= LoggerFactory.getLogger(Organization.class);
 
 	// The facility description.
 	@NonNull
@@ -73,19 +73,19 @@ public class Organization extends DomainObjectABC {
 	@Getter
 	@Setter
 	@JsonProperty
-	private String				description;
+	private String					description;
 
 	// For a network this is a list of all of the users that belong in the set.
 	@OneToMany(mappedBy = "parent")
-	@MapKey(name="domainId")
+	@MapKey(name = "domainId")
 	@Getter
-	private Map<String, User>			users		= new HashMap<String, User>();
+	private Map<String, User>		users		= new HashMap<String, User>();
 
 	// For an organization this is a list of all of the facilities.
 	@OneToMany(mappedBy = "parentOrganization", fetch = FetchType.EAGER)
 	@MapKey(name = "domainId")
-//	@Getter(lazy = false)
-	private Map<String, Facility>		facilities		= new HashMap<String, Facility>();
+	//	@Getter(lazy = false)
+	private Map<String, Facility>	facilities	= new HashMap<String, Facility>();
 
 	public Organization() {
 		setParent(this);
@@ -166,25 +166,25 @@ public class Organization extends DomainObjectABC {
 
 		// Create a first Dropbox Service entry for this facility.
 		DropboxService dropboxService = facility.createDropboxService();
-		
+
 		// Create the default network for the facility.
 		CodeshelfNetwork network = facility.createNetwork("DEFAULT");
-		
+
 		Che che1 = network.createChe("CHE1", new NetGuid("0x00000001"));
 		Che che2 = network.createChe("CHE2", new NetGuid("0x00000002"));
 
 		// Create the generic container kind (for all unspecified containers)
 		facility.createDefaultContainerKind();
 	}
-	
+
 	public final Facility getFacility(final String inFacilityDomainId) {
 		Facility result = null;
-		
+
 		result = facilities.get(inFacilityDomainId);
-		
+
 		return result;
 	}
-	
+
 	public final List<Facility> getFacilities() {
 		return new ArrayList<Facility>(facilities.values());
 	}

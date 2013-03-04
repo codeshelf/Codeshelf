@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: UserSession.java,v 1.12 2012/11/19 10:48:25 jeffw Exp $
+ *  $Id: UserSession.java,v 1.13 2013/03/04 04:47:27 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -17,11 +17,11 @@ import javax.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.annotate.JsonProperty;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
@@ -54,7 +54,7 @@ public class UserSession extends DomainObjectTreeABC<User> {
 		}
 	}
 
-	private static final Log	LOGGER				= LogFactory.getLog(UserSession.class);
+	private static final Logger	LOGGER				= LoggerFactory.getLogger(UserSession.class);
 
 	private static final long	serialVersionUID	= 3001609308065821464L;
 

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.48 2013/02/27 07:29:53 jeffw Exp $
+ *  $Id: Facility.java,v 1.49 2013/03/04 04:47:27 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -20,10 +20,10 @@ import javax.persistence.OneToMany;
 import lombok.Getter;
 import lombok.ToString;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.EdiProviderEnum;
@@ -33,6 +33,7 @@ import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.flyweight.command.NetGuid;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -62,7 +63,7 @@ public class Facility extends LocationABC<Organization> {
 		}
 	}
 
-	private static final Log				LOGGER			= LogFactory.getLog(Facility.class);
+	private static final Logger				LOGGER			= LoggerFactory.getLogger(Facility.class);
 
 	//	// The owning organization.
 	//	@Column(nullable = false)
@@ -377,6 +378,9 @@ public class Facility extends LocationABC<Organization> {
 		// Create the paths related to this aisle.
 		createAislePaths(aisle, aisleBoundaryX, aisleBoundaryY);
 
+		// Create at least one aisle controller.
+		createAisleController(aisle, "0x00000000");
+
 	}
 
 	public void logLocationDistances() {
@@ -526,6 +530,29 @@ public class Facility extends LocationABC<Organization> {
 		// Create the "B" side path.
 		createPathSegment(baseSegmentId + "B", inLocation, PathDirectionEnum.HEAD, path, segmentOrder++, headB, tailB);
 
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inAisle
+	 */
+	private void createAisleController(final Aisle inAisle, final String inGUID) {
+
+		// Get the first network in the list of networks.
+		if (networks.values().size() > 0) {
+			CodeshelfNetwork defaultNetwork = networks.values().iterator().next();
+			AisleController controller = new AisleController();
+			controller.setParent(defaultNetwork);
+			controller.setDomainId(inGUID);
+			controller.setDesc("Default controller for " + inAisle.getDomainId());
+			controller.setDeviceGuid(new NetGuid(inGUID));
+			controller.setParentAisle(inAisle);
+			try {
+				AisleController.DAO.store(controller);
+			} catch (DaoException e) {
+				LOGGER.error("", e);
+			}
+		}
 	}
 
 	// --------------------------------------------------------------------------

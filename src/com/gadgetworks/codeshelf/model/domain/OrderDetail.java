@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderDetail.java,v 1.15 2013/02/12 19:19:42 jeffw Exp $
+ *  $Id: OrderDetail.java,v 1.16 2013/03/04 04:47:27 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -21,11 +21,11 @@ import javax.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.annotate.JsonProperty;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
@@ -59,12 +59,12 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 		}
 	}
 
-	private static final Log	LOGGER	= LogFactory.getLog(OrderDetail.class);
+	private static final Logger		LOGGER				= LoggerFactory.getLogger(OrderDetail.class);
 
 	// The owning order header.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	private OrderHeader			parent;
+	private OrderHeader				parent;
 
 	// The collective order status.
 	@Column(nullable = false)
@@ -72,42 +72,42 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	@Getter
 	@Setter
 	@JsonProperty
-	private OrderStatusEnum		statusEnum;
+	private OrderStatusEnum			statusEnum;
 
 	// The item master.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	@Getter
 	@Setter
-	private ItemMaster			itemMaster;
+	private ItemMaster				itemMaster;
 
 	// The description.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private String				description;
+	private String					description;
 
 	// The quantity.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private Integer				quantity;
+	private Integer					quantity;
 
 	// The UoM.
 	@Column(nullable = false)
 	@OneToOne
 	@Getter
 	@Setter
-	private UomMaster			uomMaster;
+	private UomMaster				uomMaster;
 
 	// Order date.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private Timestamp			orderDate;
+	private Timestamp				orderDate;
 
 	// A work area will contain a set of active users (workers).
 	@OneToMany(mappedBy = "parent")
@@ -166,7 +166,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	public final String getItemMasterId() {
 		return getItemMaster().getDomainId();
 	}
-	
+
 	public final String getOrderId() {
 		return parent.getOrderId();
 	}

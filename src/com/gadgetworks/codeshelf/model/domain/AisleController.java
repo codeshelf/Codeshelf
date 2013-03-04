@@ -1,23 +1,21 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: AisleController.java,v 1.2 2013/02/27 07:29:53 jeffw Exp $
+ *  $Id: AisleController.java,v 1.3 2013/03/04 04:47:27 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.Inheritance;
-import javax.persistence.InheritanceType;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 import lombok.ToString;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
@@ -51,9 +49,9 @@ public class AisleController extends WirelessDeviceABC {
 		}
 	}
 
-	private static final Log	LOGGER	= LogFactory.getLog(AisleController.class);
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(AisleController.class);
 
-	// The parent facility.
+	// The parent aisle.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	private Aisle				parentAisle;
@@ -67,7 +65,7 @@ public class AisleController extends WirelessDeviceABC {
 	}
 
 	public final String getDefaultDomainIdPrefix() {
-		return "CC";
+		return "AC";
 	}
 
 	public final String getContainerId() {

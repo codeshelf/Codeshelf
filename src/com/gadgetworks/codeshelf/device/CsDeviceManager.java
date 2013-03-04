@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CsDeviceManager.java,v 1.2 2013/03/03 23:27:21 jeffw Exp $
+ *  $Id: CsDeviceManager.java,v 1.3 2013/03/04 04:47:27 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -17,6 +17,7 @@ import org.codehaus.jackson.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.gadgetworks.codeshelf.model.domain.AisleController;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.web.websession.command.IWebSessionCmd;
 import com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmd;
@@ -37,22 +38,22 @@ import com.google.inject.Inject;
  */
 public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgHandler, IRadioControllerEventListener {
 
-	private static final Logger			LOGGER		= LoggerFactory.getLogger(CsDeviceManager.class);
+	private static final Logger				LOGGER		= LoggerFactory.getLogger(CsDeviceManager.class);
 
-	private Map<NetGuid, CheLighter>	mCheMap;
-	private IRadioController			mRadioController;
-	private ICsWebSocketClient			mWebSocketClient;
-	private int							mNextMsgNum	= 1;
-	private String						mOrganizationId;
-	private String						mFacilityId;
-	private String						mNetworkId;
-	private String						mNetworkCredential;
+	private Map<NetGuid, INetworkDevice>	mCheMap;
+	private IRadioController				mRadioController;
+	private ICsWebSocketClient				mWebSocketClient;
+	private int								mNextMsgNum	= 1;
+	private String							mOrganizationId;
+	private String							mFacilityId;
+	private String							mNetworkId;
+	private String							mNetworkCredential;
 
 	@Inject
 	public CsDeviceManager(final ICsWebSocketClient inWebSocketClient, final IRadioController inRadioController) {
 		mWebSocketClient = inWebSocketClient;
 		mRadioController = inRadioController;
-		mCheMap = new HashMap<NetGuid, CheLighter>();
+		mCheMap = new HashMap<NetGuid, INetworkDevice>();
 
 		mOrganizationId = System.getProperty("organizationId");
 		mFacilityId = System.getProperty("facilityId");
@@ -112,6 +113,10 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 		sendWebSocketMessage(msgNode.toString());
 	}
 
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.web.websocket.ICsWebsocketClientMsgHandler#handleWebSocketMessage(java.lang.String)
+	 */
 	@Override
 	public final void handleWebSocketMessage(String inMessage) {
 
@@ -143,6 +148,16 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 	}
 
 	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.web.websocket.ICsWebsocketClientMsgHandler#handleWoebSocketClosed()
+	 */
+	@Override
+	public final void handleWoebSocketClosed() {
+		// This will attempt to start the websocket again (and will block).
+		start();
+	}
+
+	// --------------------------------------------------------------------------
 	/**
 	 * @param inDataNode
 	 */
@@ -154,28 +169,58 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 			JsonNode networkPersistentIdNode = networkNode.get("persistentId");
 			String persistentId = networkPersistentIdNode.getTextValue();
 
-			// Build the response Json object.
-			ObjectMapper mapper = new ObjectMapper();
-			ArrayNode filterParamsArray = mapper.createArrayNode();
-			ObjectNode theIdNode = mapper.createObjectNode();
-			theIdNode.put("name", "theId");
-			theIdNode.put("value", persistentId);
-			filterParamsArray.add(theIdNode);
-
-			ArrayNode propertiesArray = mapper.createArrayNode();
-			propertiesArray.add(IWebSessionReqCmd.SHORT_DOMAIN_ID);
-			propertiesArray.add(IWebSessionReqCmd.DEVICE_GUID);
-
-			Map<String, Object> propertiesMap = new HashMap<String, Object>();
-			propertiesMap.put(IWebSessionReqCmd.CLASSNAME, Che.class.getSimpleName());
-			propertiesMap.put(IWebSessionReqCmd.FILTER_CLAUSE, "parent.persistentId = :theId");
-			propertiesMap.put(IWebSessionReqCmd.FILTER_PARAMS, filterParamsArray);
-			propertiesMap.put(IWebSessionReqCmd.PROPERTY_NAME_LIST, propertiesArray);
-			ObjectNode dataNode = mapper.valueToTree(propertiesMap);
-
-			sendWebSocketMessageNode(WebSessionReqCmdEnum.OBJECT_FILTER_REQ, dataNode);
+			requestChes(persistentId);
+			requestAisleControllers(persistentId);
 		}
 
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Ask the server to keep us informed of CHEs (and any changes to them).
+	 * @param inPersistentId
+	 */
+	private void requestChes(final String inPersistentId) {
+		requestDeviceUpdates(inPersistentId, Che.class.getSimpleName());
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Ask the server to keep us informed of aisle controllers (and any changes to them).
+	 * @param inPersistentId
+	 */
+	private void requestAisleControllers(final String inPersistentId) {
+		requestDeviceUpdates(inPersistentId, AisleController.class.getSimpleName());
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Request updates to device classes that include a GUID.
+	 * It's a filter, so the server will send us any creates, updates and deletes.
+	 * @param inPersistentId
+	 * @param inClassName
+	 */
+	private void requestDeviceUpdates(final String inPersistentId, final String inClassName) {
+		// Build the response Json object.
+		ObjectMapper mapper = new ObjectMapper();
+		ArrayNode filterParamsArray = mapper.createArrayNode();
+		ObjectNode theIdNode = mapper.createObjectNode();
+		theIdNode.put("name", "theId");
+		theIdNode.put("value", inPersistentId);
+		filterParamsArray.add(theIdNode);
+
+		ArrayNode propertiesArray = mapper.createArrayNode();
+		propertiesArray.add(IWebSessionReqCmd.SHORT_DOMAIN_ID);
+		propertiesArray.add(IWebSessionReqCmd.DEVICE_GUID);
+
+		Map<String, Object> propertiesMap = new HashMap<String, Object>();
+		propertiesMap.put(IWebSessionReqCmd.CLASSNAME, inClassName);
+		propertiesMap.put(IWebSessionReqCmd.FILTER_CLAUSE, "parent.persistentId = :theId");
+		propertiesMap.put(IWebSessionReqCmd.FILTER_PARAMS, filterParamsArray);
+		propertiesMap.put(IWebSessionReqCmd.PROPERTY_NAME_LIST, propertiesArray);
+		ObjectNode dataNode = mapper.valueToTree(propertiesMap);
+
+		sendWebSocketMessageNode(WebSessionReqCmdEnum.OBJECT_FILTER_REQ, dataNode);
 	}
 
 	// --------------------------------------------------------------------------
@@ -189,8 +234,12 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 
 			for (JsonNode objectNode : resultsNode) {
 				JsonNode classNode = objectNode.get(IWebSessionReqCmd.CLASSNAME);
-				if ((classNode != null) && (classNode.asText().equals(Che.class.getSimpleName()))) {
-					processCheUpdate(objectNode);
+				if (classNode != null) {
+					if (classNode.asText().equals(Che.class.getSimpleName())) {
+						processCheUpdate(objectNode);
+					} else if (classNode.asText().equals(AisleController.class.getSimpleName())) {
+						processAisleControllerUpdate(objectNode);
+					}
 				}
 			}
 		}
@@ -202,7 +251,7 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 	 */
 	private void processCheUpdate(final JsonNode inCheUpdateNode) {
 		JsonNode updateTypeNode = inCheUpdateNode.get(IWebSessionReqCmd.OP_TYPE);
-		CheLighter cheDevice = null;
+		INetworkDevice cheDevice = null;
 		NetGuid deviceGuid = new NetGuid(inCheUpdateNode.get(IWebSessionReqCmd.DEVICE_GUID).asText());
 		if (updateTypeNode != null) {
 			switch (updateTypeNode.getTextValue()) {
@@ -236,6 +285,54 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 					cheDevice = mCheMap.remove(deviceGuid);
 					mRadioController.removeNetworkDevice(cheDevice);
 					LOGGER.info("Deleted che: " + cheDevice.getGuid());
+					break;
+
+				default:
+					break;
+			}
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inAisleControllerUpdateNode
+	 */
+	private void processAisleControllerUpdate(final JsonNode inAisleControllerUpdateNode) {
+		JsonNode updateTypeNode = inAisleControllerUpdateNode.get(IWebSessionReqCmd.OP_TYPE);
+		INetworkDevice aisleDevice = null;
+		NetGuid deviceGuid = new NetGuid(inAisleControllerUpdateNode.get(IWebSessionReqCmd.DEVICE_GUID).asText());
+		if (updateTypeNode != null) {
+			switch (updateTypeNode.getTextValue()) {
+				case IWebSessionReqCmd.OP_TYPE_CREATE:
+					// Create the CHE.
+					aisleDevice = new AisleLighter(deviceGuid, this, mRadioController);
+
+					// Check to see if the Che is already in our map.
+					if (!mCheMap.containsValue(aisleDevice)) {
+						mCheMap.put(deviceGuid, aisleDevice);
+						mRadioController.addNetworkDevice(aisleDevice);
+					}
+
+					LOGGER.info("Created che: " + aisleDevice.getGuid());
+					break;
+
+				case IWebSessionReqCmd.OP_TYPE_UPDATE:
+					// Update the CHE.
+					aisleDevice = mCheMap.get(deviceGuid);
+
+					if (aisleDevice == null) {
+						aisleDevice = new CheLighter(deviceGuid, this, mRadioController);
+						mCheMap.put(deviceGuid, aisleDevice);
+						mRadioController.addNetworkDevice(aisleDevice);
+					}
+					LOGGER.info("Updated che: " + aisleDevice.getGuid());
+					break;
+
+				case IWebSessionReqCmd.OP_TYPE_DELETE:
+					// Delete the CHE.
+					aisleDevice = mCheMap.remove(deviceGuid);
+					mRadioController.removeNetworkDevice(aisleDevice);
+					LOGGER.info("Deleted che: " + aisleDevice.getGuid());
 					break;
 
 				default:

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: PathSegment.java,v 1.22 2012/11/19 10:48:25 jeffw Exp $
+ *  $Id: PathSegment.java,v 1.23 2013/03/04 04:47:28 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -17,11 +17,11 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.annotate.JsonProperty;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.PathDirectionEnum;
@@ -58,7 +58,7 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 
 	public static final String	DOMAIN_PREFIX	= "SEG";
 
-	private static final Log	LOGGER			= LogFactory.getLog(PathSegment.class);
+	private static final Logger	LOGGER			= LoggerFactory.getLogger(PathSegment.class);
 
 	// The owning organization.
 	@Column(nullable = false)

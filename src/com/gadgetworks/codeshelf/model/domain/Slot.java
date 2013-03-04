@@ -1,18 +1,17 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Slot.java,v 1.4 2012/11/19 10:48:25 jeffw Exp $
+ *  $Id: Slot.java,v 1.5 2013/03/04 04:47:27 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
-import javax.persistence.Table;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
@@ -46,7 +45,7 @@ public class Slot extends SubLocationABC<Tier> {
 		}
 	}
 
-	private static final Log	LOGGER	= LogFactory.getLog(Slot.class);
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(Slot.class);
 
 	public Slot(final Double inPosX, final double inPosY) {
 		super(PositionTypeEnum.METERS_FROM_PARENT, inPosX, inPosY);

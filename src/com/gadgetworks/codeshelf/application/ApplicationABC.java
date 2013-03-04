@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ApplicationABC.java,v 1.1 2013/03/03 23:27:21 jeffw Exp $
+ *  $Id: ApplicationABC.java,v 1.2 2013/03/04 04:47:28 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -26,11 +26,11 @@ public abstract class ApplicationABC implements ICodeshelfApplication {
 	public ApplicationABC(final IUtil inUtil) {
 		mUtil = inUtil;
 	}
-	
+
 	protected abstract void doStartup();
-	
+
 	protected abstract void doShutdown();
-	
+
 	protected abstract void doInitializeApplicationData();
 
 	// --------------------------------------------------------------------------
@@ -61,10 +61,10 @@ public abstract class ApplicationABC implements ICodeshelfApplication {
 
 		installShutdownHook();
 
-		// Some persistent objects need some of their fields set to a base/start state when the system restarts.
-		initializeApplicationData();
-
 		doStartup();
+
+		// Some persistent objects need some of their fields set to a base/start state when the system restarts.
+		doInitializeApplicationData();
 	}
 
 	// --------------------------------------------------------------------------
@@ -79,14 +79,6 @@ public abstract class ApplicationABC implements ICodeshelfApplication {
 		mIsRunning = false;
 
 		LOGGER.info("Application terminated normally");
-
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 *	Reset some of the persistent object fields to a base state at start-up.
-	 */
-	private void initializeApplicationData() {
 
 	}
 

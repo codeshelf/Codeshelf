@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DomainObjectTreeABC.java,v 1.3 2012/12/25 10:48:13 jeffw Exp $
+ *  $Id: DomainObjectTreeABC.java,v 1.4 2013/03/04 04:47:28 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -11,11 +11,11 @@ import javax.persistence.Entity;
 
 import lombok.ToString;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.annotate.JsonProperty;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 
@@ -30,7 +30,7 @@ import com.avaje.ebean.annotation.CacheStrategy;
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 public abstract class DomainObjectTreeABC<P extends IDomainObject> extends DomainObjectABC implements IDomainObjectTree<P> {
 
-	private static final Log	LOGGER	= LogFactory.getLog(DomainObjectTreeABC.class);
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(DomainObjectTreeABC.class);
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)

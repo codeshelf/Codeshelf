@@ -1,13 +1,15 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: NetParameter.java,v 1.3 2013/03/03 23:27:20 jeffw Exp $
+ *  $Id: NetParameter.java,v 1.4 2013/03/04 04:47:29 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.flyweight.command;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+
+import com.gadgetworks.flyweight.bitfields.OutOfRangeException;
 
 public class NetParameter {
 

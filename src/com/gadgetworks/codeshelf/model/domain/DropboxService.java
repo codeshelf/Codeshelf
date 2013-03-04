@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DropboxService.java,v 1.27 2012/11/19 10:48:25 jeffw Exp $
+ *  $Id: DropboxService.java,v 1.28 2013/03/04 04:47:27 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -19,8 +19,6 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.JsonProcessingException;
@@ -30,6 +28,8 @@ import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ObjectNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.dropbox.client2.DropboxAPI;
@@ -78,7 +78,7 @@ public class DropboxService extends EdiServiceABC {
 		}
 	}
 
-	private static final Log		LOGGER					= LogFactory.getLog(DropboxService.class);
+	private static final Logger		LOGGER					= LoggerFactory.getLogger(DropboxService.class);
 
 	private static final String		APPKEY					= "feh3ontnajdmmin";
 	private static final String		APPSECRET				= "4jm05vbugwnq9pe";
@@ -376,7 +376,7 @@ public class DropboxService extends EdiServiceABC {
 			try {
 				inAuthSession.retrieveWebAccessToken(inAuthInfo.requestTokenPair);
 				result = inAuthSession.getAccessTokenPair();
-				LOGGER.info(result);
+				LOGGER.info(result.toString());
 			} catch (DropboxException e) {
 				LOGGER.error("", e);
 				retries++;

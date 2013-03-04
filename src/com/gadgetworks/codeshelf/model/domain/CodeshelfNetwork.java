@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeshelfNetwork.java,v 1.19 2013/02/27 22:06:27 jeffw Exp $
+ *  $Id: CodeshelfNetwork.java,v 1.20 2013/03/04 04:47:27 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -21,11 +21,11 @@ import javax.persistence.Transient;
 import lombok.Getter;
 import lombok.Setter;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.annotate.JsonProperty;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
@@ -61,7 +61,7 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 		}
 	}
 
-	private static final Log		LOGGER			= LogFactory.getLog(CodeshelfNetwork.class);
+	private static final Logger		LOGGER			= LoggerFactory.getLogger(CodeshelfNetwork.class);
 
 	// The network description.
 	@Column(nullable = false)

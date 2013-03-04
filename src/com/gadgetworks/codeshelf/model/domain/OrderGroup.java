@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderGroup.java,v 1.15 2012/12/25 10:48:13 jeffw Exp $
+ *  $Id: OrderGroup.java,v 1.16 2013/03/04 04:47:27 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -19,11 +19,11 @@ import javax.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.annotate.JsonProperty;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
@@ -56,10 +56,10 @@ public class OrderGroup extends DomainObjectTreeABC<Facility> {
 			return OrderGroup.class;
 		}
 	}
-	
-	public final static String DEFAULT_ORDER_GROUP_DESC_PREFIX = "Order group - ";
 
-	private static final Log	LOGGER			= LogFactory.getLog(OrderGroup.class);
+	public final static String	DEFAULT_ORDER_GROUP_DESC_PREFIX	= "Order group - ";
+
+	private static final Logger	LOGGER							= LoggerFactory.getLogger(OrderGroup.class);
 
 	// The parent facility.
 	@Column(nullable = false)
@@ -93,7 +93,7 @@ public class OrderGroup extends DomainObjectTreeABC<Facility> {
 	// For a network this is a list of all of the users that belong in the set.
 	@OneToMany(mappedBy = "parent")
 	@Getter
-	private List<OrderHeader>	orderHeaders	= new ArrayList<OrderHeader>();
+	private List<OrderHeader>	orderHeaders					= new ArrayList<OrderHeader>();
 
 	public OrderGroup() {
 		statusEnum = OrderStatusEnum.CREATED;

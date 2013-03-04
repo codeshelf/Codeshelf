@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: LocationController.java,v 1.1 2013/02/12 19:19:42 jeffw Exp $
+ *  $Id: LocationController.java,v 1.2 2013/03/04 04:47:27 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -11,15 +11,12 @@ import java.util.List;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
-import lombok.Getter;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
@@ -52,7 +49,7 @@ public class LocationController extends DomainObjectTreeABC<LocationABC> {
 		}
 	}
 
-	private static final Log	LOGGER	= LogFactory.getLog(LocationController.class);
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(LocationController.class);
 
 	// The parent facility.
 	@Column(nullable = false)
