@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CheDeviceEmbedded.java,v 1.7 2013/03/03 23:27:21 jeffw Exp $
+ *  $Id: CheDeviceEmbedded.java,v 1.8 2013/03/04 05:15:37 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -22,7 +22,7 @@ public class CheDeviceEmbedded extends DeviceEmbeddedABC {
 	private static final Logger	LOGGER					= LoggerFactory.getLogger(DeviceEmbeddedABC.class);
 
 	public CheDeviceEmbedded() {
-		super("00000003", "10.47.47.49");
+		super("00000002", "10.47.47.49");
 	}
 	
 	// --------------------------------------------------------------------------
