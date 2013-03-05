@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CsDeviceManager.java,v 1.6 2013/03/05 00:05:01 jeffw Exp $
+ *  $Id: CsDeviceManager.java,v 1.7 2013/03/05 07:47:56 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -151,16 +151,6 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 
 	// --------------------------------------------------------------------------
 	/**
-	 * Send and log messages over the websocket.
-	 * @param inMessage
-	 */
-	private void sendWebSocketMessage(final String inMessage) {
-		LOGGER.info("sent: " + inMessage);
-		mWebSocketClient.send(inMessage);
-	}
-
-	// --------------------------------------------------------------------------
-	/**
 	 * @param inReqCmd
 	 * @param inDataNode
 	 * @return
@@ -175,7 +165,8 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 
 		msgNode.put("data", inDataNode);
 
-		sendWebSocketMessage(msgNode.toString());
+		mWebSocketClient.send(msgNode.toString());
+
 	}
 
 	// --------------------------------------------------------------------------
@@ -455,26 +446,40 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 	public final void requestCheWork(final String inCheId, final String inLocationId, final List<String> inContainerIdList) {
 		LOGGER.info("Request for work: Che: " + inCheId + " Container: " + inContainerIdList.toString() + " Loc: " + inLocationId);
 
-		INetworkDevice device = mCheMap.get(new NetGuid("0x" + inCheId));
-		if (device instanceof CheDevice) {
-			CheDevice cheDevice = (CheDevice) device;
-			if (device != null) {
-				List<DeployedWorkInstruction> wiList = new ArrayList<DeployedWorkInstruction>();
-				for (String containerId : inContainerIdList) {
-					wiList.add(createWi("A01.01", containerId, "ITEM1", 1));
-				}
-				for (String containerId : inContainerIdList) {
-					wiList.add(createWi("A01.02", containerId, "ITEM2", 1));
-				}
-				for (String containerId : inContainerIdList) {
-					wiList.add(createWi("A01.03", containerId, "ITEM3", 1));
-				}
-				for (String containerId : inContainerIdList) {
-					wiList.add(createWi("A01.04", containerId, "ITEM4", 1));
-				}
-				cheDevice.assignWork(wiList);
-			}
+		// Build the response Json object.
+		ObjectMapper mapper = new ObjectMapper();
+		ObjectNode dataNode = mapper.createObjectNode();
+		dataNode.put("cheId", inCheId);
+		dataNode.put("locationId", inLocationId);
+
+		ArrayNode propertiesArray = mapper.createArrayNode();
+		for (String containerId : inContainerIdList) {
+			propertiesArray.add(containerId);
 		}
+		dataNode.put("containerIds", propertiesArray);
+		sendWebSocketMessageNode(WebSessionReqCmdEnum.CHE_WORK_REQ, dataNode);
+
+		
+//		INetworkDevice device = mCheMap.get(new NetGuid("0x" + inCheId));
+//		if (device instanceof CheDevice) {
+//			CheDevice cheDevice = (CheDevice) device;
+//			if (device != null) {
+//				List<DeployedWorkInstruction> wiList = new ArrayList<DeployedWorkInstruction>();
+//				for (String containerId : inContainerIdList) {
+//					wiList.add(createWi("A01.01", containerId, "ITEM1", 1));
+//				}
+//				for (String containerId : inContainerIdList) {
+//					wiList.add(createWi("A01.02", containerId, "ITEM2", 1));
+//				}
+//				for (String containerId : inContainerIdList) {
+//					wiList.add(createWi("A01.03", containerId, "ITEM3", 1));
+//				}
+//				for (String containerId : inContainerIdList) {
+//					wiList.add(createWi("A01.04", containerId, "ITEM4", 1));
+//				}
+//				cheDevice.assignWork(wiList);
+//			}
+//		}
 	}
 
 	private DeployedWorkInstruction createWi(final String inLocation, final String inContainerId, final String inSkuId, final Integer inQuantity) {

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdFactory.java,v 1.19 2013/02/27 01:17:02 jeffw Exp $
+ *  $Id: WebSessionReqCmdFactory.java,v 1.20 2013/03/05 07:47:56 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.web.websession.command.IWebSessionCmd;
 import com.google.inject.Inject;
@@ -24,11 +25,13 @@ public final class WebSessionReqCmdFactory implements IWebSessionReqCmdFactory {
 	private static final Logger		LOGGER	= LoggerFactory.getLogger(WebSessionReqCmdFactory.class);
 
 	private ITypedDao<Organization>	mOrganizationDao;
+	private ITypedDao<Che>			mCheDao;
 	private IDaoProvider			mDaoProvider;
 
 	@Inject
-	public WebSessionReqCmdFactory(final ITypedDao<Organization> inOrganizationDao, final IDaoProvider inDaoPovider) {
+	public WebSessionReqCmdFactory(final ITypedDao<Organization> inOrganizationDao, final ITypedDao<Che> inCheDao, final IDaoProvider inDaoPovider) {
 		mOrganizationDao = inOrganizationDao;
+		mCheDao = inCheDao;
 		mDaoProvider = inDaoPovider;
 	}
 
@@ -76,6 +79,10 @@ public final class WebSessionReqCmdFactory implements IWebSessionReqCmdFactory {
 
 			case NET_ATTACH_REQ:
 				result = new WebSessionReqCmdNetAttach(commandId, dataNode, mOrganizationDao);
+				break;
+
+			case CHE_WORK_REQ:
+				result = new WebSessionReqCmdCheWork(commandId, dataNode, mCheDao);
 				break;
 
 			default:

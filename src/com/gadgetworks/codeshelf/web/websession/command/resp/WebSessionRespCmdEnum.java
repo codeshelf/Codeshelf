@@ -1,11 +1,10 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionRespCmdEnum.java,v 1.10 2013/02/20 08:28:26 jeffw Exp $
+ *  $Id: WebSessionRespCmdEnum.java,v 1.11 2013/03/05 07:47:56 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.resp;
 
-import com.gadgetworks.codeshelf.web.websession.command.req.WebSessionReqCmdEnum;
 
 /**
  * @author jeffw
@@ -21,7 +20,8 @@ public enum WebSessionRespCmdEnum {
 	OBJECT_FILTER_RESP(WebSessionRespCmdNum.OBJECT_FILTER_RESP, "OBJ_FLT_RS"),
 	OBJECT_METHOD_RESP(WebSessionRespCmdNum.OBJECT_METHOD_RESP, "OBJ_METH_RS"),
 	REGISTER_EDI_RESP(WebSessionRespCmdNum.REGISTER_EDI_RESP, "REGISTER_EDI_RS"),
-	NET_ATTACH_RESP(WebSessionRespCmdNum.NET_ATTACH_RESP, "ATTACH_RS");
+	NET_ATTACH_RESP(WebSessionRespCmdNum.NET_ATTACH_RESP, "ATTACH_RS"),
+	CHE_WORK_RESP(WebSessionRespCmdNum.CHE_WORK_RESP, "CHE_WORK_RS");
 
 	private int		mValue;
 	private String	mName;
@@ -119,6 +119,7 @@ public enum WebSessionRespCmdEnum {
 		static final byte	OBJECT_METHOD_RESP		= 8;
 		static final byte	REGISTER_EDI_RESP		= 9;
 		static final byte	NET_ATTACH_RESP			= 10;
+		static final byte	CHE_WORK_RESP			= 11;
 
 		private WebSessionRespCmdNum() {
 

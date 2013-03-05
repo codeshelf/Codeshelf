@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CheDevice.java,v 1.13 2013/03/05 00:05:01 jeffw Exp $
+ *  $Id: CheDevice.java,v 1.14 2013/03/05 07:47:56 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -33,28 +33,33 @@ import com.gadgetworks.flyweight.controller.IRadioController;
  */
 public class CheDevice extends DeviceABC {
 
-	private static final Logger				LOGGER						= LoggerFactory.getLogger(CheDevice.class);
+	private static final Logger				LOGGER				= LoggerFactory.getLogger(CheDevice.class);
 
-	private static final String				BARCODE_DELIMITER			= "%";
-	private static final String				COMMAND_BARCODE_PREFIX		= "X%";
-	private static final String				USER_BARCODE_PREFIX			= "U%";
-	private static final String				CONTAINER_BARCODE_PREFIX	= "O%";
-	private static final String				LOCATION_BARCODE_PREFIX		= "L%";
-	private static final String				ITEMID_BARCODE_PREFIX		= "I%";
-	private static final String				POSITION_BARCODE_PREFIX		= "B%";
+	private static final String				BARCODE_DELIMITER	= "%";
+	private static final String				COMMAND_PREFIX		= "X%";
+	private static final String				USER_PREFIX			= "U%";
+	private static final String				CONTAINER_PREFIX	= "O%";
+	private static final String				LOCATION_PREFIX		= "L%";
+	private static final String				ITEMID_PREFIX		= "I%";
+	private static final String				POSITION_PREFIX		= "B%";
 
 	// These are the message strings we send to the remote CHE.
 	// Currently, these cannot be longer than 10 characters.
-	private static final String				EMPTY_MSG					= "";
-	private static final String				INVALID_SCAN_MSG			= "INVALID";
-	private static final String				SCAN_USERID_MSG				= "SCAN BADGE";
-	private static final String				SCAN_LOCATION_MSG			= "SCAN LOC";
-	private static final String				SCAN_CONTAINER_MSG			= "SCAN CNTR";
-	private static final String				SELECT_POSITION_MSG			= "SELECT POS";
-	private static final String				PICK_COMPLETE_MSG			= "PICK CMPLT";
+	private static final String				EMPTY_MSG			= "";
+	private static final String				INVALID_SCAN_MSG	= "INVALID";
+	private static final String				SCAN_USERID_MSG		= "SCAN BADGE";
+	private static final String				SCAN_LOCATION_MSG	= "SCAN LOC";
+	private static final String				SCAN_CONTAINER_MSG	= "SCAN CNTR";
+	private static final String				SELECT_POSITION_MSG	= "SELECT POS";
+	private static final String				PICK_COMPLETE_MSG	= "PICK CMPLT";
 
-	private static final String				LOGOUT_COMMAND				= "LOGOUT";
-	private static final String				STARTWORK_COMMAND			= "START";
+	private static final String				STARTWORK_COMMAND	= "START";
+	private static final String				SETUP_COMMAND		= "SETUP";
+	private static final String				SHORT_COMMAND		= "SHORT";
+	private static final String				LOGOUT_COMMAND		= "LOGOUT";
+	private static final String				RESUME_COMMAND		= "RESUME";
+	private static final String				YES_COMMAND			= "YES";
+	private static final String				NO_COMMAND			= "NO";
 
 	// The CHE's current state.
 	@Accessors(prefix = "m")
@@ -154,9 +159,9 @@ public class CheDevice extends DeviceABC {
 		}
 
 		// A command scan is always an option at any state.
-		if (inCommandStr.startsWith(COMMAND_BARCODE_PREFIX)) {
+		if (inCommandStr.startsWith(COMMAND_PREFIX)) {
 			processCommandScan(scanStr);
-		} else if (inCommandStr.startsWith(POSITION_BARCODE_PREFIX)) {
+		} else if (inCommandStr.startsWith(POSITION_PREFIX)) {
 			processButtonScan(scanStr);
 		} else {
 			switch (mCheStateEnum) {
@@ -174,7 +179,7 @@ public class CheDevice extends DeviceABC {
 
 				case CONTAINER_POSITION:
 					// The only thing that makes sense in this mode is a button press (or a logout covered above).
-					setStateError(mCheStateEnum);
+					setStateWithInvalid(mCheStateEnum);
 					break;
 
 				default:
@@ -218,7 +223,7 @@ public class CheDevice extends DeviceABC {
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	private void setStateError(final CheStateEnum inCheState) {
+	private void setStateWithInvalid(final CheStateEnum inCheState) {
 		mCheStateEnum = inCheState;
 
 		switch (inCheState) {
@@ -241,7 +246,7 @@ public class CheDevice extends DeviceABC {
 			default:
 				break;
 		}
-		
+
 		sendLightCommand(CommandControlLight.POSITION_ALL, ColorEnum.RED);
 	}
 
@@ -257,6 +262,10 @@ public class CheDevice extends DeviceABC {
 
 			case STARTWORK_COMMAND:
 				startWork();
+				break;
+
+			case SETUP_COMMAND:
+				setupWork();
 				break;
 
 			default:
@@ -277,6 +286,23 @@ public class CheDevice extends DeviceABC {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * The user scanned the SETUP command to start a new batch of containers for the CHE.
+	 */
+	private void setupWork() {
+		LOGGER.info("Setup work");
+
+		if (mCheStateEnum.equals(CheStateEnum.PICK_COMPLETE)) {
+			mContainersMap.clear();
+			mContainerInSetup = "";
+			setState(CheStateEnum.LOCATION_SETUP);
+		} else {
+			// Stay in the same state - the scan made no sense.
+			setStateWithInvalid(mCheStateEnum);
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
 	 * The user scanned the START command to start work on the WIs for this CHE.
 	 */
 	private void startWork() {
@@ -288,7 +314,7 @@ public class CheDevice extends DeviceABC {
 			doNextPick();
 		} else {
 			// Stay in the same state - the scan made no sense.
-			setStateError(mCheStateEnum);
+			setStateWithInvalid(mCheStateEnum);
 		}
 	}
 
@@ -347,11 +373,11 @@ public class CheDevice extends DeviceABC {
 	 */
 	private void processIdleStateScan(final String inScanPrefixStr, final String inScanStr) {
 
-		if (USER_BARCODE_PREFIX.equals(inScanPrefixStr)) {
+		if (USER_PREFIX.equals(inScanPrefixStr)) {
 			setState(CheStateEnum.LOCATION_SETUP);
 		} else {
 			LOGGER.info("Not a user ID: " + inScanStr);
-			setStateError(CheStateEnum.IDLE);
+			setStateWithInvalid(CheStateEnum.IDLE);
 		}
 	}
 
@@ -361,12 +387,12 @@ public class CheDevice extends DeviceABC {
 	 * @param inScanStr
 	 */
 	private void processLocationScan(final String inScanPrefixStr, String inScanStr) {
-		if (LOCATION_BARCODE_PREFIX.equals(inScanPrefixStr)) {
+		if (LOCATION_PREFIX.equals(inScanPrefixStr)) {
 			setLocation(inScanStr);
 			setState(CheStateEnum.CONTAINER_SELECT);
 		} else {
 			LOGGER.info("Not a location ID: " + inScanStr);
-			setStateError(CheStateEnum.LOCATION_SETUP);
+			setStateWithInvalid(CheStateEnum.LOCATION_SETUP);
 		}
 	}
 
@@ -376,7 +402,7 @@ public class CheDevice extends DeviceABC {
 	 * @param inScanStr
 	 */
 	private void processContainerSelectScan(final String inScanPrefixStr, String inScanStr) {
-		if (CONTAINER_BARCODE_PREFIX.equals(inScanPrefixStr)) {
+		if (CONTAINER_PREFIX.equals(inScanPrefixStr)) {
 
 			mContainerInSetup = inScanStr;
 
@@ -392,7 +418,7 @@ public class CheDevice extends DeviceABC {
 			setState(CheStateEnum.CONTAINER_POSITION);
 		} else {
 			LOGGER.info("Not a container ID: " + inScanStr);
-			setStateError(CheStateEnum.CONTAINER_SELECT);
+			setStateWithInvalid(CheStateEnum.CONTAINER_SELECT);
 		}
 	}
 
@@ -410,7 +436,7 @@ public class CheDevice extends DeviceABC {
 				mDeviceManager.requestCheWork(this.getGuid().getHexStringNoPrefix(), mLocation, containerIdList);
 			} else {
 				LOGGER.info("Position in use: " + inScanStr);
-				setStateError(CheStateEnum.CONTAINER_POSITION);
+				setStateWithInvalid(CheStateEnum.CONTAINER_POSITION);
 			}
 		} else if (mCheStateEnum.equals(CheStateEnum.DO_PICK)) {
 			// Complete the active WI at the selected position.
@@ -424,14 +450,21 @@ public class CheDevice extends DeviceABC {
 						wiIter.remove();
 					}
 				}
-				showActivePicks();
+
+				if (mActivePickWiList.size() > 0) {
+					// If there's more active picks then show them.
+					showActivePicks();
+				} else {
+					// There's no more active picks, so move to the next set.
+					doNextPick();
+				}
 			} else {
-				setStateError(mCheStateEnum);
+				setStateWithInvalid(mCheStateEnum);
 			}
 		} else {
 			// Random button press - leave the state alone.
 			LOGGER.info("Random button press: " + inScanStr);
-			setStateError(mCheStateEnum);
+			setStateWithInvalid(mCheStateEnum);
 		}
 	}
 }

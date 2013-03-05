@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdEnum.java,v 1.9 2013/02/17 04:22:21 jeffw Exp $
+ *  $Id: WebSessionReqCmdEnum.java,v 1.10 2013/03/05 07:47:56 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -19,7 +19,8 @@ public enum WebSessionReqCmdEnum {
 	OBJECT_FILTER_REQ(WebSessionReqCmdNum.OBJECT_FILTER_REQ, "OBJ_FLT_RQ"),
 	OBJECT_METHOD_REQ(WebSessionReqCmdNum.OBJECT_METHOD_REQ, "OBJ_METH_RQ"),
 	REGISTER_EDI_SERVICE_REQ(WebSessionReqCmdNum.REGISTER_EDI_SERVICE_REQ, "REGISTER_EDI_SERVICE_RS"),
-	NET_ATTACH_REQ(WebSessionReqCmdNum.NET_ATTACH_REQ, "NET_ATTACH_RQ");
+	NET_ATTACH_REQ(WebSessionReqCmdNum.NET_ATTACH_REQ, "NET_ATTACH_RQ"),
+	CHE_WORK_REQ(WebSessionReqCmdNum.CHE_WORK_REQ, "CHE_WORK_RQ");
 
 	private int		mValue;
 	private String	mName;
@@ -44,10 +45,6 @@ public enum WebSessionReqCmdEnum {
 			case WebSessionReqCmdNum.OBJECT_GETTER_REQ:
 				result = WebSessionReqCmdEnum.OBJECT_GETTER_REQ;
 				break;
-
-			//			case WebSessionReqCmdNum.OBJECT_GETBYID_REQ:
-			//				result = WebSessionReqCmdEnum.OBJECT_GETBYID_REQ;
-			//				break;
 
 			case WebSessionReqCmdNum.OBJECT_UPDATE_REQ:
 				result = WebSessionReqCmdEnum.OBJECT_UPDATE_REQ;
@@ -75,6 +72,10 @@ public enum WebSessionReqCmdEnum {
 
 			case WebSessionReqCmdNum.NET_ATTACH_REQ:
 				result = WebSessionReqCmdEnum.NET_ATTACH_REQ;
+				break;
+
+			case WebSessionReqCmdNum.CHE_WORK_REQ:
+				result = WebSessionReqCmdEnum.CHE_WORK_REQ;
 				break;
 
 			default:
@@ -117,6 +118,7 @@ public enum WebSessionReqCmdEnum {
 		static final byte	OBJECT_METHOD_REQ			= 8;
 		static final byte	REGISTER_EDI_SERVICE_REQ	= 9;
 		static final byte	NET_ATTACH_REQ				= 10;
+		static final byte	CHE_WORK_REQ				= 11;
 
 		private WebSessionReqCmdNum() {
 
