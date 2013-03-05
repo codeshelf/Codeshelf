@@ -1,18 +1,17 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdCheWork.java,v 1.1 2013/03/05 07:47:56 jeffw Exp $
+ *  $Id: WebSessionReqCmdCheWork.java,v 1.2 2013/03/05 20:45:12 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
-import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.JsonParseException;
-import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.type.TypeReference;
+import org.codehaus.jackson.node.ArrayNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,8 +28,9 @@ import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdCh
  * 	id: <cmd_id>,
  * 	type: CHE_WORK_REQ,
  * 	data {
- * 		cheId: <cheId>,
- * 		locationId: <locationId>,
+ * 		cheId: 			<cheId>,
+ * 		persistentId: 	<persistentId>,
+ * 		locationId: 	<locationId>,
  * 		containerIds: [
  * 			{
  * 				containerId: <containerId>
@@ -64,33 +64,27 @@ public class WebSessionReqCmdCheWork extends WebSessionReqCmdABC {
 	protected final IWebSessionRespCmd doExec() {
 		IWebSessionRespCmd result = null;
 
-		String authenticateResult = FAIL;
-
 		JsonNode chedIdNode = getDataJsonNode().get("cheId");
 		String cheId = chedIdNode.getTextValue();
-		Che che = mCheDao.findByDomainId(null, cheId);
+
+		JsonNode persistentIdNode = getDataJsonNode().get("persistentId");
+		String persistentId = persistentIdNode.getTextValue();
+		Che che = mCheDao.findByPersistentId(UUID.fromString(persistentId));
 
 		if (che != null) {
-			JsonNode locationIdNode = getDataJsonNode().get("facilityId");
+			JsonNode locationIdNode = getDataJsonNode().get("locationId");
 			String locationId = locationIdNode.getTextValue();
 
 			JsonNode containerIdsNode = getDataJsonNode().get("containerIds");
-			ObjectMapper mapper = new ObjectMapper();
-			try {
-				List<String> containerIdList = mapper.readValue(containerIdsNode, new TypeReference<List<List>>() {
-				});
-				for (String containerId : containerIdList) {
-					LOGGER.debug("Container ID: " + containerId);
+			List<String> containerIdList = new ArrayList<String>();
+			if (containerIdsNode.isArray()) {
+				ArrayNode array = (ArrayNode) containerIdsNode;
+				for (int i = 0; i < array.size(); i++) {
+					JsonNode node = array.get(i);
+					containerIdList.add(node.asText());
 				}
-			} catch (JsonParseException e) {
-				LOGGER.error("", e);
-			} catch (JsonMappingException e) {
-				LOGGER.error("", e);
-			} catch (IOException e) {
-				LOGGER.error("", e);
 			}
-
-			result = new WebSessionRespCmdCheWork();
+			result = new WebSessionRespCmdCheWork(cheId, containerIdList);
 		}
 		return result;
 	}

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CsDeviceManager.java,v 1.7 2013/03/05 07:47:56 jeffw Exp $
+ *  $Id: CsDeviceManager.java,v 1.8 2013/03/05 20:45:11 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.JsonProcessingException;
@@ -189,9 +190,13 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 					processNetAttachResp(dataNode);
 					break;
 
-				case OBJECT_FILTER_RESP: {
+				case OBJECT_FILTER_RESP:
 					processFilterResp(dataNode);
-				}
+					break;
+
+				case CHE_WORK_RESP:
+					processCheWorkResp(dataNode);
+					break;
 
 				default:
 					break;
@@ -304,17 +309,50 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 
 	// --------------------------------------------------------------------------
 	/**
+	 * @param inDataNode
+	 */
+	private void processCheWorkResp(final JsonNode inDataNode) {
+		JsonNode resultsNode = inDataNode.get(IWebSessionReqCmd.RESULTS);
+		
+		NetGuid cheId = new NetGuid("0x" + inDataNode.get("cheId").asText());
+
+		CheDevice cheDevice = (CheDevice) mCheMap.get(cheId);
+
+		if (cheDevice != null) {
+			if (resultsNode != null) {
+				List<DeployedWorkInstruction> wiList = new ArrayList<DeployedWorkInstruction>();
+				for (JsonNode objectNode : resultsNode) {
+					DeployedWorkInstruction wi = new DeployedWorkInstruction();
+					wi.setAisleController(objectNode.get("acId").asText());
+					wi.setAisleControllerCmd(objectNode.get("acCmd").asText());
+					wi.setContainerId(objectNode.get("cntrId").asText());
+					wi.setLocation(objectNode.get("loc").asText());
+					wi.setQuantity(objectNode.get("qty").asInt());
+					wi.setSkuId(objectNode.get("sku").asText());
+					wi.setColor(ColorEnum.valueOf(objectNode.get("color").asText()));
+					wiList.add(wi);
+				}
+				if (wiList.size() > 0) {
+					cheDevice.assignWork(wiList);
+				}
+			}
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
 	 * @param inCheUpdateNode
 	 */
 	private void processCheUpdate(final JsonNode inCheUpdateNode) {
 		JsonNode updateTypeNode = inCheUpdateNode.get(IWebSessionReqCmd.OP_TYPE);
 		INetworkDevice cheDevice = null;
 		NetGuid deviceGuid = new NetGuid(inCheUpdateNode.get(IWebSessionReqCmd.DEVICE_GUID).asText());
+		UUID persistentId = UUID.fromString(inCheUpdateNode.get(IWebSessionReqCmd.PERSISTENT_ID).asText());
 		if (updateTypeNode != null) {
 			switch (updateTypeNode.getTextValue()) {
 				case IWebSessionReqCmd.OP_TYPE_CREATE:
 					// Create the CHE.
-					cheDevice = new CheDevice(deviceGuid, this, mRadioController);
+					cheDevice = new CheDevice(persistentId, deviceGuid, this, mRadioController);
 
 					// Check to see if the Che is already in our map.
 					if (!mCheMap.containsValue(cheDevice)) {
@@ -330,7 +368,7 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 					cheDevice = mCheMap.get(deviceGuid);
 
 					if (cheDevice == null) {
-						cheDevice = new CheDevice(deviceGuid, this, mRadioController);
+						cheDevice = new CheDevice(persistentId, deviceGuid, this, mRadioController);
 						mCheMap.put(deviceGuid, cheDevice);
 						mRadioController.addNetworkDevice(cheDevice);
 					}
@@ -358,11 +396,12 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 		JsonNode updateTypeNode = inAisleControllerUpdateNode.get(IWebSessionReqCmd.OP_TYPE);
 		INetworkDevice aisleDevice = null;
 		NetGuid deviceGuid = new NetGuid(inAisleControllerUpdateNode.get(IWebSessionReqCmd.DEVICE_GUID).asText());
+		UUID persistentId = UUID.fromString(inAisleControllerUpdateNode.get(IWebSessionReqCmd.PERSISTENT_ID).asText());
 		if (updateTypeNode != null) {
 			switch (updateTypeNode.getTextValue()) {
 				case IWebSessionReqCmd.OP_TYPE_CREATE:
 					// Create the aisle device.
-					aisleDevice = new AisleDevice(deviceGuid, this, mRadioController);
+					aisleDevice = new AisleDevice(persistentId, deviceGuid, this, mRadioController);
 
 					// Check to see if the aisle device is already in our map.
 					if (!mCheMap.containsValue(aisleDevice)) {
@@ -378,7 +417,7 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 					aisleDevice = mCheMap.get(deviceGuid);
 
 					if (aisleDevice == null) {
-						aisleDevice = new AisleDevice(deviceGuid, this, mRadioController);
+						aisleDevice = new AisleDevice(persistentId, deviceGuid, this, mRadioController);
 						mCheMap.put(deviceGuid, aisleDevice);
 						mRadioController.addNetworkDevice(aisleDevice);
 					}
@@ -443,13 +482,14 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 	 * @see com.gadgetworks.codeshelf.device.ICsDeviceManager#requestCheWork(java.lang.String, java.lang.String, java.lang.String)
 	 */
 	@Override
-	public final void requestCheWork(final String inCheId, final String inLocationId, final List<String> inContainerIdList) {
+	public final void requestCheWork(final String inCheId, final UUID inPersistentId, final String inLocationId, final List<String> inContainerIdList) {
 		LOGGER.info("Request for work: Che: " + inCheId + " Container: " + inContainerIdList.toString() + " Loc: " + inLocationId);
 
 		// Build the response Json object.
 		ObjectMapper mapper = new ObjectMapper();
 		ObjectNode dataNode = mapper.createObjectNode();
 		dataNode.put("cheId", inCheId);
+		dataNode.put("persistentId", inPersistentId.toString());
 		dataNode.put("locationId", inLocationId);
 
 		ArrayNode propertiesArray = mapper.createArrayNode();
@@ -458,41 +498,5 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 		}
 		dataNode.put("containerIds", propertiesArray);
 		sendWebSocketMessageNode(WebSessionReqCmdEnum.CHE_WORK_REQ, dataNode);
-
-		
-//		INetworkDevice device = mCheMap.get(new NetGuid("0x" + inCheId));
-//		if (device instanceof CheDevice) {
-//			CheDevice cheDevice = (CheDevice) device;
-//			if (device != null) {
-//				List<DeployedWorkInstruction> wiList = new ArrayList<DeployedWorkInstruction>();
-//				for (String containerId : inContainerIdList) {
-//					wiList.add(createWi("A01.01", containerId, "ITEM1", 1));
-//				}
-//				for (String containerId : inContainerIdList) {
-//					wiList.add(createWi("A01.02", containerId, "ITEM2", 1));
-//				}
-//				for (String containerId : inContainerIdList) {
-//					wiList.add(createWi("A01.03", containerId, "ITEM3", 1));
-//				}
-//				for (String containerId : inContainerIdList) {
-//					wiList.add(createWi("A01.04", containerId, "ITEM4", 1));
-//				}
-//				cheDevice.assignWork(wiList);
-//			}
-//		}
-	}
-
-	private DeployedWorkInstruction createWi(final String inLocation, final String inContainerId, final String inSkuId, final Integer inQuantity) {
-		DeployedWorkInstruction result = null;
-
-		result = new DeployedWorkInstruction();
-		result.setAisleController("00000003");
-		result.setAisleControllerCmd("");
-		result.setContainerId(inContainerId);
-		result.setQuantity(inQuantity);
-		result.setSkuId(inSkuId);
-		result.setLocation(inLocation);
-		result.setColor(ColorEnum.BLUE);
-		return result;
 	}
 }

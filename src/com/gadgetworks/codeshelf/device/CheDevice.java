@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CheDevice.java,v 1.14 2013/03/05 07:47:56 jeffw Exp $
+ *  $Id: CheDevice.java,v 1.15 2013/03/05 20:45:11 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -11,6 +11,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.UUID;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -85,8 +86,8 @@ public class CheDevice extends DeviceABC {
 	// The active pick WIs.
 	private List<DeployedWorkInstruction>	mActivePickWiList;
 
-	public CheDevice(final NetGuid inGuid, final ICsDeviceManager inDeviceManager, final IRadioController inRadioController) {
-		super(inGuid, inDeviceManager, inRadioController);
+	public CheDevice(final UUID inPersistentId, final NetGuid inGuid, final ICsDeviceManager inDeviceManager, final IRadioController inRadioController) {
+		super(inPersistentId, inGuid, inDeviceManager, inRadioController);
 
 		mCheStateEnum = CheStateEnum.IDLE;
 		mContainersMap = new HashMap<String, String>();
@@ -281,6 +282,8 @@ public class CheDevice extends DeviceABC {
 		// Clear all of the container IDs we were tracking.
 		mContainersMap.clear();
 		mContainerInSetup = "";
+		mActivePickWiList.clear();
+		mAllPicksWiList.clear();
 		setState(CheStateEnum.IDLE);
 	}
 
@@ -433,7 +436,7 @@ public class CheDevice extends DeviceABC {
 				mContainersMap.put(inScanStr, mContainerInSetup);
 				mContainerInSetup = "";
 				List<String> containerIdList = new ArrayList<String>(mContainersMap.values());
-				mDeviceManager.requestCheWork(this.getGuid().getHexStringNoPrefix(), mLocation, containerIdList);
+				mDeviceManager.requestCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), mLocation, containerIdList);
 			} else {
 				LOGGER.info("Position in use: " + inScanStr);
 				setStateWithInvalid(CheStateEnum.CONTAINER_POSITION);

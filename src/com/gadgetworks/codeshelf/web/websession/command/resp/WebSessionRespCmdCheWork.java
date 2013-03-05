@@ -1,31 +1,57 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionRespCmdCheWork.java,v 1.1 2013/03/05 07:47:56 jeffw Exp $
+ *  $Id: WebSessionRespCmdCheWork.java,v 1.2 2013/03/05 20:45:11 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.resp;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
 
-import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.web.websession.command.IWebSessionCmd;
 import com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmd;
 
 /**
+ * 
+ * The format of the command is:
+ * 
+ * command {
+ * 	id: <cmd_id>,
+ * 	type: CHE_WORK_RS,
+ * 	data {
+ * 		cheId: <cheId>,
+ * 		wis: [
+ * 			{
+ * 				acId: <aisleControllerId>,
+ * 				acCmd: <cmd>,
+ * 				cntrId: <containerId>,
+ * 				qty: <quantity>,
+ * 				sku: <skuId>,
+ * 				loc: <locId>,
+ * 				color: <colorName>
+ * 			}
+ * 		]
+ * 	}
+ * }
+ * 
  * @author jeffw
  *
  */
 public class WebSessionRespCmdCheWork extends WebSessionRespCmdABC {
 
+	private String			mCheId;
+	private List<String>	mContainersIds;
+
 	/**
 	 * 
 	 */
-	public WebSessionRespCmdCheWork() {
+	public WebSessionRespCmdCheWork(final String inCheId, final List<String> inContainerIds) {
 		super();
+		mCheId = inCheId;
+		mContainersIds = inContainerIds;
 	}
 
 	public final WebSessionRespCmdEnum getCommandEnum() {
@@ -40,22 +66,37 @@ public class WebSessionRespCmdCheWork extends WebSessionRespCmdABC {
 
 	protected final void doPrepareDataNode(ObjectNode inOutDataNode) {
 
-//		// Insert the response code.
-//		inOutDataNode.put(WebSessionRespCmdEnum.CHE_WORK_RESP.toString(), mResponseValue);
-//
-//		// For valid response codes, also return the facility object;
-//		if (mCodeshelfNetwork != null) {
-//			ObjectMapper mapper = new ObjectMapper();
-//			Map<String, Object> propertiesMap = new HashMap<String, Object>();
-//			propertiesMap.put(IWebSessionReqCmd.CLASSNAME, mCodeshelfNetwork.getClassName());
-//			propertiesMap.put(IWebSessionReqCmd.PERSISTENT_ID, mCodeshelfNetwork.getPersistentId());
-//			propertiesMap.put(IWebSessionReqCmd.SHORT_DOMAIN_ID, mCodeshelfNetwork.getDomainId());
-//			propertiesMap.put(IWebSessionReqCmd.DESC, mCodeshelfNetwork.getDescription());
-//
-//			//			List<Map<String, Object>> resultsList = new ArrayList<Map<String, Object>>();
-//			//			resultsList.add(propertiesMap);
-//			ObjectNode searchListNode = mapper.valueToTree(propertiesMap);
-//			inOutDataNode.put("codeshelfNetwork", searchListNode);
-//		}
+		// Insert the response code.
+		inOutDataNode.put("cheId", mCheId);
+
+		ObjectMapper mapper = new ObjectMapper();
+		ArrayNode wiArray = mapper.createArrayNode();
+		for (String containerId : mContainersIds) {
+			createWi(wiArray, "A01.01", containerId, "ITEM1", 1, "BLUE");
+		}
+		for (String containerId : mContainersIds) {
+			createWi(wiArray, "A01.02", containerId, "ITEM2", 1, "BLUE");
+		}
+		for (String containerId : mContainersIds) {
+			createWi(wiArray, "A01.03", containerId, "ITEM3", 1, "BLUE");
+		}
+		for (String containerId : mContainersIds) {
+			createWi(wiArray, "A01.04", containerId, "ITEM4", 1, "BLUE");
+		}
+		inOutDataNode.put(IWebSessionReqCmd.RESULTS, wiArray);
+	}
+
+	private void createWi(final ArrayNode inWiArrayNode, final String inLocation, final String inContainerId, final String inSku, final Integer inQuantity, final String inColorName) {
+		ObjectMapper mapper = new ObjectMapper();
+		ObjectNode wiNode = mapper.createObjectNode();
+		wiNode.put("acId", "0x00000003");
+		wiNode.put("acCmd", "cmd");
+		wiNode.put("cntrId", inContainerId);
+		wiNode.put("qty", 1);
+		wiNode.put("sku", inSku);
+		wiNode.put("loc", inLocation);
+		wiNode.put("color", inColorName);
+		inWiArrayNode.add(wiNode);
+
 	}
 }

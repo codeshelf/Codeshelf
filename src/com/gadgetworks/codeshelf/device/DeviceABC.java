@@ -1,9 +1,11 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: DeviceABC.java,v 1.1 2013/03/04 18:10:25 jeffw Exp $
+ *  $Id: DeviceABC.java,v 1.2 2013/03/05 20:45:11 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
+
+import java.util.UUID;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -20,6 +22,11 @@ import com.gadgetworks.flyweight.controller.NetworkDeviceStateEnum;
  *
  */
 public abstract class DeviceABC implements INetworkDevice {
+
+	// PersistentId
+	@Accessors(prefix = "m")
+	@Getter
+	private UUID					mPersistentId;
 
 	// MAC address.
 	@Accessors(prefix = "m")
@@ -56,12 +63,13 @@ public abstract class DeviceABC implements INetworkDevice {
 	// The device manager.
 	protected ICsDeviceManager		mDeviceManager;
 
-	public DeviceABC(final NetGuid inGuid, final ICsDeviceManager inDeviceManager, final IRadioController inRadioController) {
+	public DeviceABC(final UUID inPersistentId, final NetGuid inGuid, final ICsDeviceManager inDeviceManager, final IRadioController inRadioController) {
+		mPersistentId = inPersistentId;
 		mGuid = inGuid;
 		mDeviceManager = inDeviceManager;
 		mRadioController = inRadioController;
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.flyweight.controller.INetworkDevice#doesMatch(com.gadgetworks.flyweight.command.NetGuid)

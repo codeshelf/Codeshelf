@@ -1,5 +1,7 @@
 package com.gadgetworks.codeshelf.device;
 
+import java.util.UUID;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,8 +16,8 @@ public class AisleDevice extends DeviceABC {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(AisleDevice.class);
 
-	public AisleDevice(final NetGuid inGuid, final ICsDeviceManager inDeviceManager, final IRadioController inRadioController) {
-		super(inGuid, inDeviceManager, inRadioController);
+	public AisleDevice(final UUID inPersistentId, final NetGuid inGuid, final ICsDeviceManager inDeviceManager, final IRadioController inRadioController) {
+		super(inPersistentId, inGuid, inDeviceManager, inRadioController);
 
 	}
 
