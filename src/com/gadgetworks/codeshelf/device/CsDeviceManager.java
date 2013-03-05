@@ -1,12 +1,14 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CsDeviceManager.java,v 1.5 2013/03/04 18:10:25 jeffw Exp $
+ *  $Id: CsDeviceManager.java,v 1.6 2013/03/05 00:05:01 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.codehaus.jackson.JsonNode;
@@ -29,6 +31,7 @@ import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdEn
 import com.gadgetworks.codeshelf.web.websocket.CsWebSocketClient;
 import com.gadgetworks.codeshelf.web.websocket.ICsWebSocketClient;
 import com.gadgetworks.codeshelf.web.websocket.ICsWebsocketClientMsgHandler;
+import com.gadgetworks.flyweight.command.ColorEnum;
 import com.gadgetworks.flyweight.command.NetGuid;
 import com.gadgetworks.flyweight.controller.INetworkDevice;
 import com.gadgetworks.flyweight.controller.IRadioController;
@@ -404,6 +407,10 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 		}
 	}
 
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.flyweight.controller.IRadioControllerEventListener#canNetworkDeviceAssociate(com.gadgetworks.flyweight.command.NetGuid)
+	 */
 	@Override
 	public final boolean canNetworkDeviceAssociate(final NetGuid inGuid) {
 		boolean result = false;
@@ -415,11 +422,20 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 		return result;
 	}
 
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.flyweight.controller.IRadioControllerEventListener#deviceLost(com.gadgetworks.flyweight.controller.INetworkDevice)
+	 */
 	@Override
 	public void deviceLost(INetworkDevice inNetworkDevice) {
 
 	}
 
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inCommandAsJson
+	 * @return
+	 */
 	private WebSessionRespCmdEnum getCommandTypeEnum(JsonNode inCommandAsJson) {
 		WebSessionRespCmdEnum result = WebSessionRespCmdEnum.INVALID;
 
@@ -431,8 +447,47 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 		return result;
 	}
 
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.device.ICsDeviceManager#requestCheWork(java.lang.String, java.lang.String, java.lang.String)
+	 */
 	@Override
-	public final void requestCheWork(String inCheId, String inContainerId, String inLocationId) {
-		LOGGER.info("Request for work: Che: " + inCheId + " Container: " + inContainerId + " Loc: " + inLocationId);
+	public final void requestCheWork(final String inCheId, final String inLocationId, final List<String> inContainerIdList) {
+		LOGGER.info("Request for work: Che: " + inCheId + " Container: " + inContainerIdList.toString() + " Loc: " + inLocationId);
+
+		INetworkDevice device = mCheMap.get(new NetGuid("0x" + inCheId));
+		if (device instanceof CheDevice) {
+			CheDevice cheDevice = (CheDevice) device;
+			if (device != null) {
+				List<DeployedWorkInstruction> wiList = new ArrayList<DeployedWorkInstruction>();
+				for (String containerId : inContainerIdList) {
+					wiList.add(createWi("A01.01", containerId, "ITEM1", 1));
+				}
+				for (String containerId : inContainerIdList) {
+					wiList.add(createWi("A01.02", containerId, "ITEM2", 1));
+				}
+				for (String containerId : inContainerIdList) {
+					wiList.add(createWi("A01.03", containerId, "ITEM3", 1));
+				}
+				for (String containerId : inContainerIdList) {
+					wiList.add(createWi("A01.04", containerId, "ITEM4", 1));
+				}
+				cheDevice.assignWork(wiList);
+			}
+		}
+	}
+
+	private DeployedWorkInstruction createWi(final String inLocation, final String inContainerId, final String inSkuId, final Integer inQuantity) {
+		DeployedWorkInstruction result = null;
+
+		result = new DeployedWorkInstruction();
+		result.setAisleController("00000003");
+		result.setAisleControllerCmd("");
+		result.setContainerId(inContainerId);
+		result.setQuantity(inQuantity);
+		result.setSkuId(inSkuId);
+		result.setLocation(inLocation);
+		result.setColor(ColorEnum.BLUE);
+		return result;
 	}
 }

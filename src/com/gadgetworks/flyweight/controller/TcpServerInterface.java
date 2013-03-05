@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: TcpServerInterface.java,v 1.3 2013/02/27 22:06:27 jeffw Exp $
+ *  $Id: TcpServerInterface.java,v 1.4 2013/03/05 00:05:01 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.flyweight.controller;
 
@@ -24,12 +24,13 @@ import com.gadgetworks.codeshelf.web.websocket.CsWebSocketClient;
  */
 public class TcpServerInterface extends SerialInterfaceABC {
 
-	public static final int		PORT_NUM	= 45000;
+	public static final int		PORT_NUM			= 45000;
+	public static final int		READ_WAIT_MILLIS	= 10;
 
-	private static final Logger	LOGGER		= LoggerFactory.getLogger(CsWebSocketClient.class);
+	private static final Logger	LOGGER				= LoggerFactory.getLogger(CsWebSocketClient.class);
 
 	private ServerSocket		mServerSocket;
-	private List<Remote>		mRemotes	= new ArrayList<Remote>();
+	private List<Remote>		mRemotes			= new ArrayList<Remote>();
 
 	private class Remote {
 		public Socket		clientSocket;
@@ -165,7 +166,7 @@ public class TcpServerInterface extends SerialInterfaceABC {
 				}
 			}
 			try {
-				Thread.sleep(READ_SLEEP_MILLIS);
+				Thread.sleep(READ_WAIT_MILLIS);
 			} catch (InterruptedException e) {
 				LOGGER.error("", e);
 			}

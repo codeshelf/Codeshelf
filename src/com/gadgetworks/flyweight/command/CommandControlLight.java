@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandControlLight.java,v 1.3 2013/03/04 05:17:45 jeffw Exp $
+ *  $Id: CommandControlLight.java,v 1.4 2013/03/05 00:05:01 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.flyweight.command;
@@ -26,7 +26,7 @@ import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
  */
 public final class CommandControlLight extends CommandControlABC {
 
-	public static final Short	POSITION_ALL		= 1;
+	public static final Short	POSITION_ALL		= 0;
 	public static final Short	CHANNEL_ALL			= 0;
 	public static final Short	CHANNEL1			= 1;
 	public static final Short	CHANNEL2			= 2;
@@ -89,7 +89,7 @@ public final class CommandControlLight extends CommandControlABC {
 	 * @see com.gadgetworks.controller.CommandABC#doToString()
 	 */
 	public String doToString() {
-		return "Light: " + mChannel + " pos: " + mPosition;
+		return "Light: channel:" + mChannel + " pos: " + mPosition + " color: " + mColor;
 	}
 
 	/* --------------------------------------------------------------------------

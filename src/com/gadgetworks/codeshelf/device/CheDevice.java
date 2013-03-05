@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CheDevice.java,v 1.12 2013/03/04 18:10:25 jeffw Exp $
+ *  $Id: CheDevice.java,v 1.13 2013/03/05 00:05:01 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -19,6 +19,8 @@ import lombok.experimental.Accessors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.gadgetworks.flyweight.command.ColorEnum;
+import com.gadgetworks.flyweight.command.CommandControlLight;
 import com.gadgetworks.flyweight.command.CommandControlMessage;
 import com.gadgetworks.flyweight.command.ICommand;
 import com.gadgetworks.flyweight.command.NetEndpoint;
@@ -31,54 +33,60 @@ import com.gadgetworks.flyweight.controller.IRadioController;
  */
 public class CheDevice extends DeviceABC {
 
-	private static final Logger		LOGGER						= LoggerFactory.getLogger(CheDevice.class);
+	private static final Logger				LOGGER						= LoggerFactory.getLogger(CheDevice.class);
 
-	private static final String		BARCODE_DELIMITER			= "%";
-	private static final String		COMMAND_BARCODE_PREFIX		= "X%";
-	private static final String		USER_BARCODE_PREFIX			= "U%";
-	private static final String		CONTAINER_BARCODE_PREFIX	= "O%";
-	private static final String		LOCATION_BARCODE_PREFIX		= "L%";
-	private static final String		ITEMID_BARCODE_PREFIX		= "I%";
-	private static final String		POSITION_BARCODE_PREFIX		= "B%";
+	private static final String				BARCODE_DELIMITER			= "%";
+	private static final String				COMMAND_BARCODE_PREFIX		= "X%";
+	private static final String				USER_BARCODE_PREFIX			= "U%";
+	private static final String				CONTAINER_BARCODE_PREFIX	= "O%";
+	private static final String				LOCATION_BARCODE_PREFIX		= "L%";
+	private static final String				ITEMID_BARCODE_PREFIX		= "I%";
+	private static final String				POSITION_BARCODE_PREFIX		= "B%";
 
 	// These are the message strings we send to the remote CHE.
 	// Currently, these cannot be longer than 10 characters.
-	private static final String		EMPTY_MSG					= "";
-	private static final String		INVALID_SCAN_MSG					= "INVALID";
-	private static final String		SCAN_USERID_MSG				= "SCAN BADGE";
-	private static final String		SCAN_LOCATION_MSG			= "SCAN LOC";
-	private static final String		SCAN_CONTAINER_MSG			= "SCAN CNTR";
-	private static final String		SELECT_POSITION_MSG			= "SELECT POS";
+	private static final String				EMPTY_MSG					= "";
+	private static final String				INVALID_SCAN_MSG			= "INVALID";
+	private static final String				SCAN_USERID_MSG				= "SCAN BADGE";
+	private static final String				SCAN_LOCATION_MSG			= "SCAN LOC";
+	private static final String				SCAN_CONTAINER_MSG			= "SCAN CNTR";
+	private static final String				SELECT_POSITION_MSG			= "SELECT POS";
+	private static final String				PICK_COMPLETE_MSG			= "PICK CMPLT";
 
-	private static final String		LOGOUT_COMMAND				= "LOGOUT";
+	private static final String				LOGOUT_COMMAND				= "LOGOUT";
+	private static final String				STARTWORK_COMMAND			= "START";
 
 	// The CHE's current state.
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
-	private CheStateEnum			mCheStateEnum;
+	private CheStateEnum					mCheStateEnum;
 
 	// The CHE's current location.
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
-	private String					mLocation;
+	private String							mLocation;
 
 	// The CHE's container map.
-	private String					mContainerInSetup;
+	private String							mContainerInSetup;
 
 	// The CHE's container map.
-	private Map<String, String>		mContainersMap;
+	private Map<String, String>				mContainersMap;
 
-	// The work the CHE has to do.
-	List<DeployedWorkInstruction>	mWorkItemList;
+	// All WIs for all containers on the CHE.
+	private List<DeployedWorkInstruction>	mAllPicksWiList;
+
+	// The active pick WIs.
+	private List<DeployedWorkInstruction>	mActivePickWiList;
 
 	public CheDevice(final NetGuid inGuid, final ICsDeviceManager inDeviceManager, final IRadioController inRadioController) {
 		super(inGuid, inDeviceManager, inRadioController);
-		
+
 		mCheStateEnum = CheStateEnum.IDLE;
 		mContainersMap = new HashMap<String, String>();
-		mWorkItemList = new ArrayList<DeployedWorkInstruction>();
+		mAllPicksWiList = new ArrayList<DeployedWorkInstruction>();
+		mActivePickWiList = new ArrayList<DeployedWorkInstruction>();
 	}
 
 	// --------------------------------------------------------------------------
@@ -89,6 +97,17 @@ public class CheDevice extends DeviceABC {
 	private void sendDisplayCommand(final String inLine1Message, final String inLine2Message) {
 		LOGGER.info("Display message: " + inLine1Message);
 		ICommand command = new CommandControlMessage(NetEndpoint.PRIMARY_ENDPOINT, inLine1Message, inLine2Message);
+		mRadioController.sendCommand(command, getAddress(), false);
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Send a light command to the CHE to light a position
+	 * @param inPosition
+	 */
+	private void sendLightCommand(final Short inPosition, final ColorEnum inColor) {
+		LOGGER.info("Light position: " + inPosition);
+		ICommand command = new CommandControlLight(NetEndpoint.PRIMARY_ENDPOINT, CommandControlLight.CHANNEL1, inPosition, inColor, CommandControlLight.EFFECT_FLASH);
 		mRadioController.sendCommand(command, getAddress(), false);
 	}
 
@@ -111,8 +130,11 @@ public class CheDevice extends DeviceABC {
 	 * @param inWorkItemList
 	 */
 	public final void assignWork(final List<DeployedWorkInstruction> inWorkItemList) {
-		mWorkItemList.clear();
-		mWorkItemList.addAll(inWorkItemList);
+		mAllPicksWiList.clear();
+		mAllPicksWiList.addAll(inWorkItemList);
+		for (DeployedWorkInstruction wi : inWorkItemList) {
+			LOGGER.info("WI: Loc: " + wi.getLocation() + " SKU: " + wi.getSkuId() + " cmd: " + wi.getAisleControllerCmd());
+		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -134,6 +156,8 @@ public class CheDevice extends DeviceABC {
 		// A command scan is always an option at any state.
 		if (inCommandStr.startsWith(COMMAND_BARCODE_PREFIX)) {
 			processCommandScan(scanStr);
+		} else if (inCommandStr.startsWith(POSITION_BARCODE_PREFIX)) {
+			processButtonScan(scanStr);
 		} else {
 			switch (mCheStateEnum) {
 				case IDLE:
@@ -149,24 +173,14 @@ public class CheDevice extends DeviceABC {
 					break;
 
 				case CONTAINER_POSITION:
-					processContainerPosScan(scanPrefixStr, scanStr);
+					// The only thing that makes sense in this mode is a button press (or a logout covered above).
+					setStateError(mCheStateEnum);
 					break;
 
 				default:
 					break;
 			}
 		}
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 */
-	private void logout() {
-		LOGGER.info("User logut");
-		// Clear all of the container IDs we were tracking.
-		mContainersMap.clear();
-		mContainerInSetup = "";
-		setState(CheStateEnum.IDLE);
 	}
 
 	// --------------------------------------------------------------------------
@@ -190,6 +204,10 @@ public class CheDevice extends DeviceABC {
 
 			case CONTAINER_POSITION:
 				sendDisplayCommand(SELECT_POSITION_MSG, EMPTY_MSG);
+				break;
+
+			case PICK_COMPLETE:
+				sendDisplayCommand(PICK_COMPLETE_MSG, EMPTY_MSG);
 				break;
 
 			default:
@@ -223,6 +241,8 @@ public class CheDevice extends DeviceABC {
 			default:
 				break;
 		}
+		
+		sendLightCommand(CommandControlLight.POSITION_ALL, ColorEnum.RED);
 	}
 
 	// --------------------------------------------------------------------------
@@ -235,8 +255,88 @@ public class CheDevice extends DeviceABC {
 				logout();
 				break;
 
+			case STARTWORK_COMMAND:
+				startWork();
+				break;
+
 			default:
 				break;
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 */
+	private void logout() {
+		LOGGER.info("User logut");
+		// Clear all of the container IDs we were tracking.
+		mContainersMap.clear();
+		mContainerInSetup = "";
+		setState(CheStateEnum.IDLE);
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * The user scanned the START command to start work on the WIs for this CHE.
+	 */
+	private void startWork() {
+		LOGGER.info("Start work");
+
+		if ((mContainersMap.values().size() > 0) && (mCheStateEnum.equals(CheStateEnum.CONTAINER_SELECT))) {
+			mContainerInSetup = "";
+			setState(CheStateEnum.DO_PICK);
+			doNextPick();
+		} else {
+			// Stay in the same state - the scan made no sense.
+			setStateError(mCheStateEnum);
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 */
+	private void doNextPick() {
+		LOGGER.info("Next pick");
+
+		if (mActivePickWiList.size() > 0) {
+			// There are still picks in the active list.
+			showActivePicks();
+		} else if (mAllPicksWiList.size() == 0) {
+			// There are no more WIs, so the pick is complete.
+			setState(CheStateEnum.PICK_COMPLETE);
+		} else {
+			// Loop through each container to see if there is a WI for that container at the next location.
+			// The "next location" is the first location we find for the next pick.
+			String firstLocation = null;
+			for (String containerId : mContainersMap.values()) {
+				Iterator<DeployedWorkInstruction> wiIter = mAllPicksWiList.iterator();
+				while (wiIter.hasNext()) {
+					DeployedWorkInstruction wi = wiIter.next();
+					if (((firstLocation == null) || (firstLocation.equals(wi.getLocation()))) && (wi.getContainerId().equals(containerId))) {
+						firstLocation = wi.getLocation();
+						mActivePickWiList.add(wi);
+						wiIter.remove();
+					} else {
+						break;
+					}
+				}
+			}
+			showActivePicks();
+		}
+	}
+
+	private void showActivePicks() {
+		// The first WI has the SKU and location info.
+		DeployedWorkInstruction firstWi = mActivePickWiList.get(0);
+
+		// Now create a light instruction for each position.
+		sendDisplayCommand(firstWi.getLocation(), firstWi.getSkuId());
+		for (DeployedWorkInstruction wi : mActivePickWiList) {
+			for (Entry<String, String> mapEntry : mContainersMap.entrySet()) {
+				if (mapEntry.getValue().equals(wi.getContainerId())) {
+					sendLightCommand(Short.valueOf(mapEntry.getKey()), wi.getColor());
+				}
+			}
 		}
 	}
 
@@ -290,7 +390,6 @@ public class CheDevice extends DeviceABC {
 				}
 			}
 			setState(CheStateEnum.CONTAINER_POSITION);
-			mDeviceManager.requestCheWork(this.getGuid().getHexStringNoPrefix(), mContainerInSetup, mLocation);
 		} else {
 			LOGGER.info("Not a container ID: " + inScanStr);
 			setStateError(CheStateEnum.CONTAINER_SELECT);
@@ -301,19 +400,38 @@ public class CheDevice extends DeviceABC {
 	/**
 	 * @param inButtonStr
 	 */
-	private void processContainerPosScan(final String inScanPrefixStr, String inScanStr) {
-		if (POSITION_BARCODE_PREFIX.equals(inScanPrefixStr)) {
+	private void processButtonScan(String inScanStr) {
+		if (mCheStateEnum.equals(CheStateEnum.CONTAINER_POSITION)) {
 			setState(CheStateEnum.CONTAINER_SELECT);
 			if (mContainersMap.get(inScanStr) == null) {
 				mContainersMap.put(inScanStr, mContainerInSetup);
 				mContainerInSetup = "";
+				List<String> containerIdList = new ArrayList<String>(mContainersMap.values());
+				mDeviceManager.requestCheWork(this.getGuid().getHexStringNoPrefix(), mLocation, containerIdList);
 			} else {
 				LOGGER.info("Position in use: " + inScanStr);
 				setStateError(CheStateEnum.CONTAINER_POSITION);
 			}
+		} else if (mCheStateEnum.equals(CheStateEnum.DO_PICK)) {
+			// Complete the active WI at the selected position.
+			String containerId = mContainersMap.get(inScanStr);
+			if (containerId != null) {
+				Iterator<DeployedWorkInstruction> wiIter = mActivePickWiList.iterator();
+				while (wiIter.hasNext()) {
+					DeployedWorkInstruction wi = wiIter.next();
+					if (wi.getContainerId().equals(containerId)) {
+						LOGGER.info("Pick completed: " + wi);
+						wiIter.remove();
+					}
+				}
+				showActivePicks();
+			} else {
+				setStateError(mCheStateEnum);
+			}
 		} else {
-			LOGGER.info("Invalid button: " + inScanStr);
-			setStateError(CheStateEnum.CONTAINER_POSITION);
+			// Random button press - leave the state alone.
+			LOGGER.info("Random button press: " + inScanStr);
+			setStateError(mCheStateEnum);
 		}
 	}
 }
