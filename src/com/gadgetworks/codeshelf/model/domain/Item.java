@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Item.java,v 1.14 2013/03/07 05:23:32 jeffw Exp $
+ *  $Id: Item.java,v 1.15 2013/03/07 12:28:11 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -58,6 +58,8 @@ public class Item extends DomainObjectTreeABC<LocationABC> {
 	// The owning location.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
+	@Getter
+	@Setter
 	private LocationABC			parent;
 
 	// The item master.
@@ -98,14 +100,6 @@ public class Item extends DomainObjectTreeABC<LocationABC> {
 
 	public final void setItemId(final String inItemId) {
 		setDomainId(inItemId);
-	}
-
-	public final LocationABC getParent() {
-		return parent;
-	}
-
-	public final void setParent(LocationABC inParent) {
-		parent = inParent;
 	}
 
 	public final List<IDomainObject> getChildren() {

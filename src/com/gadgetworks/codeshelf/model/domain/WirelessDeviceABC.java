@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WirelessDeviceABC.java,v 1.4 2013/03/04 04:47:28 jeffw Exp $
+ *  $Id: WirelessDeviceABC.java,v 1.5 2013/03/07 12:28:10 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -70,6 +70,8 @@ public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNet
 	private CodeshelfNetwork		parent;
 
 	@Column(nullable = false)
+	@Getter
+	@Setter
 	private byte[]					deviceGuid;
 
 	@Column(nullable = false)
@@ -127,17 +129,17 @@ public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNet
 		parent = inParent;
 	}
 
-	public final NetGuid getDeviceGuid() {
+	public final NetGuid getDeviceNetGuid() {
 		return new NetGuid(deviceGuid);
+	}
+
+	public final void setDeviceNetGuid(NetGuid inGuid) {
+		deviceGuid = inGuid.getParamValueAsByteArray();
 	}
 
 	@JsonProperty
 	public final String getDeviceGuidStr() {
 		return new NetGuid(deviceGuid).toString();
-	}
-
-	public final void setDeviceGuid(NetGuid inGuid) {
-		deviceGuid = inGuid.getParamValueAsByteArray();
 	}
 
 	public final void setNetAddress(NetAddress inNetworkAddress) {

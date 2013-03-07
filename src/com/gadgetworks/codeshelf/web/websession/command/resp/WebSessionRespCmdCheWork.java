@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionRespCmdCheWork.java,v 1.3 2013/03/07 05:23:32 jeffw Exp $
+ *  $Id: WebSessionRespCmdCheWork.java,v 1.4 2013/03/07 12:28:10 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.resp;
 
@@ -84,7 +84,7 @@ public class WebSessionRespCmdCheWork extends WebSessionRespCmdABC {
 	protected final void doPrepareDataNode(ObjectNode inOutDataNode) {
 
 		// Insert the response code.
-		inOutDataNode.put("cheId", mChe.getDeviceGuid().getHexStringNoPrefix());
+		inOutDataNode.put("cheId", mChe.getDeviceNetGuid().getHexStringNoPrefix());
 
 		// Figure out the CHE's work area by its scanned location.
 		Facility facility = mChe.getParent().getParent();

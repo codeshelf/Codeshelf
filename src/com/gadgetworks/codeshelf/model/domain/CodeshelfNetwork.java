@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeshelfNetwork.java,v 1.20 2013/03/04 04:47:27 jeffw Exp $
+ *  $Id: CodeshelfNetwork.java,v 1.21 2013/03/07 12:28:10 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -174,7 +174,7 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 		result = new Che();
 		result.setParent(this);
 		result.setDomainId(inDomainId);
-		result.setDeviceGuid(inGuid);
+		result.setDeviceNetGuid(inGuid);
 
 		this.addChe(result);
 		try {

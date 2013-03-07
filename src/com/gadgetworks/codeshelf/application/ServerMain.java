@@ -1,7 +1,7 @@
 /*******************************************************************************
 CodeshelfWebSocketServer *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ServerMain.java,v 1.8 2013/03/04 04:47:28 jeffw Exp $
+ *  $Id: ServerMain.java,v 1.9 2013/03/07 12:28:11 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -71,6 +71,8 @@ import com.gadgetworks.codeshelf.model.domain.PathSegment;
 import com.gadgetworks.codeshelf.model.domain.PathSegment.PathSegmentDao;
 import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
 import com.gadgetworks.codeshelf.model.domain.PersistentProperty.PersistentPropertyDao;
+import com.gadgetworks.codeshelf.model.domain.SubLocationABC;
+import com.gadgetworks.codeshelf.model.domain.SubLocationABC.SubLocationDao;
 import com.gadgetworks.codeshelf.model.domain.UomMaster;
 import com.gadgetworks.codeshelf.model.domain.UomMaster.UomMasterDao;
 import com.gadgetworks.codeshelf.model.domain.User;
@@ -305,6 +307,10 @@ public final class ServerMain {
 				requestStaticInjection(PersistentProperty.class);
 				bind(new TypeLiteral<ITypedDao<PersistentProperty>>() {
 				}).to(PersistentPropertyDao.class);
+
+				requestStaticInjection(SubLocationABC.class);
+				bind(new TypeLiteral<ITypedDao<SubLocationABC>>() {
+				}).to(SubLocationDao.class);
 
 				requestStaticInjection(UomMaster.class);
 				bind(new TypeLiteral<ITypedDao<UomMaster>>() {

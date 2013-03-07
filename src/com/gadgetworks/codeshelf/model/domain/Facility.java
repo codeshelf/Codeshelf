@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.50 2013/03/07 05:23:32 jeffw Exp $
+ *  $Id: Facility.java,v 1.51 2013/03/07 12:28:10 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -547,7 +547,7 @@ public class Facility extends LocationABC<Organization> {
 			controller.setParent(defaultNetwork);
 			controller.setDomainId(inGUID);
 			controller.setDesc("Default controller for " + inAisle.getDomainId());
-			controller.setDeviceGuid(new NetGuid(inGUID));
+			controller.setDeviceNetGuid(new NetGuid(inGUID));
 			controller.setParentAisle(inAisle);
 			try {
 				AisleController.DAO.store(controller);

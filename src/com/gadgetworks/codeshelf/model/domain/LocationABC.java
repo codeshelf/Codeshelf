@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: LocationABC.java,v 1.21 2013/03/07 05:23:32 jeffw Exp $
+ *  $Id: LocationABC.java,v 1.22 2013/03/07 12:28:10 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -141,6 +141,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	@Getter
+	@Setter
 	private Map<String, Item>			items		= new HashMap<String, Item>();
 
 	public LocationABC() {
@@ -178,11 +179,11 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	 * @param inClassWanted
 	 * @return
 	 */
-	public final <T extends LocationABC> List<T> getChildrenAtLevel(Class<? extends LocationABC> inClassWanted) {
+	public final <T extends SubLocationABC> List<T> getChildrenAtLevel(Class<? extends SubLocationABC> inClassWanted) {
 		List<T> result = new ArrayList<T>();
 
 		// Loop through all of the children.
-		for (LocationABC<P> child : getChildren()) {
+		for (LocationABC child : getChildren()) {
 			if (child.getClass().equals(inClassWanted)) {
 				// If the child is the kind we want then add it to the list.
 				result.add((T) child);
@@ -209,7 +210,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	public final <T extends LocationABC> T getParentAtLevel(Class<? extends LocationABC> inClassWanted) {
 		T result = null;
 
-		LocationABC<P> parent = (LocationABC) getParent();
+		LocationABC parent = (LocationABC) getParent();
 
 		if (parent.getClass().equals(inClassWanted)) {
 			// This is the parent we want. (We can cast safely since we checked the class.)
@@ -220,7 +221,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 				result = null;
 			} else {
 				// The current parent is not the class we want so recurse up the hierarchy.
-				result = parent.getParentAtLevel(inClassWanted);
+				result = (T) parent.getParentAtLevel(inClassWanted);
 			}
 		}
 
@@ -239,8 +240,27 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		locations.put(inLocation.getDomainId(), inLocation);
 	}
 
-	public final SubLocationABC<P> getLocation(String inLocationId) {
-		return locations.get(inLocationId);
+	// --------------------------------------------------------------------------
+	/**
+	 * Get a sub location by its location ID.
+	 * @param inLocationId
+	 * @return
+	 */
+	public final SubLocationABC getLocation(String inLocationId) {
+		// There's some ebean weirdness around Map caches, so we have to use a different strategy to resolve this request.
+		//return locations.get(inLocationId);
+		SubLocationABC result = null;
+		
+		ITypedDao<SubLocationABC> dao = SubLocationABC.DAO;
+		Map<String, Object> filterParams = new HashMap<String, Object>();
+		filterParams.put("persistentId", this.getPersistentId().toString());
+		filterParams.put("domainId", inLocationId);
+		List<SubLocationABC> resultSet = dao.findByFilter("parent.persistentId = :persistentId and domainId = :domainId", filterParams);
+		if (resultSet.size() > 0) {
+			result = resultSet.get(0);
+		}
+		
+		return result;
 	}
 
 	public final void removeLocation(String inLocationId) {
@@ -254,8 +274,8 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	 * @param inLocationId
 	 * @return
 	 */
-	public final LocationABC<P> getSubLocationById(final String inLocationId) {
-		LocationABC<P> result = null;
+	public final LocationABC getSubLocationById(final String inLocationId) {
+		LocationABC result = null;
 
 		Integer firstDotPos = inLocationId.indexOf(".");
 		if (firstDotPos < 0) {
@@ -265,7 +285,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 			// There is a dot, so find the sublocation based on the first part and recursively ask it for the location from the second part.
 			String firstPart = inLocationId.substring(0, firstDotPos);
 			String secondPart = inLocationId.substring(firstDotPos + 1);
-			LocationABC<P> subLocation = this.getLocation(firstPart);
+			LocationABC subLocation = this.getLocation(firstPart);
 			if (subLocation != null) {
 				result = subLocation.getSubLocationById(secondPart);
 			}
