@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: PathSegment.java,v 1.23 2013/03/04 04:47:28 jeffw Exp $
+ *  $Id: PathSegment.java,v 1.24 2013/03/07 05:23:32 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -11,6 +11,7 @@ import java.util.List;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 import lombok.Getter;
@@ -67,7 +68,7 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 
 	// The path description.
 	@Column(nullable = true)
-	@ManyToOne(optional = true)
+	@OneToOne(optional = true)
 	@Getter
 	@Setter
 	@JsonProperty
@@ -120,13 +121,13 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 	}
 
 	public PathSegment(final Path inParentPath,
-		final LocationABC<Facility> inLocation,
+		final LocationABC inAssociatedLocation,
 		final PathDirectionEnum inDirectionEnum,
 		final PositionTypeEnum inPosType,
 		final Point inHead,
 		final Point inTail) {
 
-		associatedLocation = inLocation;
+		associatedLocation = inAssociatedLocation;
 		directionEnum = inDirectionEnum;
 		headPosTypeEnum = inHead.getPosTypeEnum();
 		headPosX = inHead.getX();

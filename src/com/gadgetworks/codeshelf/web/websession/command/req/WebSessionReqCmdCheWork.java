@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionReqCmdCheWork.java,v 1.2 2013/03/05 20:45:12 jeffw Exp $
+ *  $Id: WebSessionReqCmdCheWork.java,v 1.3 2013/03/07 05:23:32 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.req;
 
@@ -84,7 +84,7 @@ public class WebSessionReqCmdCheWork extends WebSessionReqCmdABC {
 					containerIdList.add(node.asText());
 				}
 			}
-			result = new WebSessionRespCmdCheWork(cheId, containerIdList);
+			result = new WebSessionRespCmdCheWork(che, locationId, containerIdList);
 		}
 		return result;
 	}

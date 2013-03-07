@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CsDeviceManager.java,v 1.8 2013/03/05 20:45:11 jeffw Exp $
+ *  $Id: CsDeviceManager.java,v 1.9 2013/03/07 05:23:32 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -13,10 +13,13 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.JsonProcessingException;
+import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
+import org.codehaus.jackson.type.TypeReference;
 import org.java_websocket.client.WebSocketClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import com.gadgetworks.codeshelf.application.IUtil;
 import com.gadgetworks.codeshelf.model.domain.AisleController;
 import com.gadgetworks.codeshelf.model.domain.Che;
+import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.web.websession.command.IWebSessionCmd;
 import com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmd;
 import com.gadgetworks.codeshelf.web.websession.command.req.WebSessionReqCmdEnum;
@@ -32,7 +36,6 @@ import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdEn
 import com.gadgetworks.codeshelf.web.websocket.CsWebSocketClient;
 import com.gadgetworks.codeshelf.web.websocket.ICsWebSocketClient;
 import com.gadgetworks.codeshelf.web.websocket.ICsWebsocketClientMsgHandler;
-import com.gadgetworks.flyweight.command.ColorEnum;
 import com.gadgetworks.flyweight.command.NetGuid;
 import com.gadgetworks.flyweight.controller.INetworkDevice;
 import com.gadgetworks.flyweight.controller.IRadioController;
@@ -313,27 +316,38 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 	 */
 	private void processCheWorkResp(final JsonNode inDataNode) {
 		JsonNode resultsNode = inDataNode.get(IWebSessionReqCmd.RESULTS);
-		
+
 		NetGuid cheId = new NetGuid("0x" + inDataNode.get("cheId").asText());
 
 		CheDevice cheDevice = (CheDevice) mCheMap.get(cheId);
 
 		if (cheDevice != null) {
 			if (resultsNode != null) {
-				List<DeployedWorkInstruction> wiList = new ArrayList<DeployedWorkInstruction>();
-				for (JsonNode objectNode : resultsNode) {
-					DeployedWorkInstruction wi = new DeployedWorkInstruction();
-					wi.setAisleController(objectNode.get("acId").asText());
-					wi.setAisleControllerCmd(objectNode.get("acCmd").asText());
-					wi.setContainerId(objectNode.get("cntrId").asText());
-					wi.setLocation(objectNode.get("loc").asText());
-					wi.setQuantity(objectNode.get("qty").asInt());
-					wi.setSkuId(objectNode.get("sku").asText());
-					wi.setColor(ColorEnum.valueOf(objectNode.get("color").asText()));
-					wiList.add(wi);
-				}
-				if (wiList.size() > 0) {
-					cheDevice.assignWork(wiList);
+				try {
+					ObjectMapper mapper = new ObjectMapper();
+					List<WorkInstruction> wiList = mapper.readValue(resultsNode, new TypeReference<List<WorkInstruction>>() {
+					});
+					//				
+					//				for (JsonNode objectNode : resultsNode) {
+					//					DeployedWorkInstruction wi = new DeployedWorkInstruction();
+					//					wi.setAisleController(objectNode.get("acId").asText());
+					//					wi.setAisleControllerCmd(objectNode.get("acCmd").asText());
+					//					wi.setContainerId(objectNode.get("cntrId").asText());
+					//					wi.setLocation(objectNode.get("loc").asText());
+					//					wi.setQuantity(objectNode.get("qty").asInt());
+					//					wi.setSkuId(objectNode.get("sku").asText());
+					//					wi.setColor(ColorEnum.valueOf(objectNode.get("color").asText()));
+					//					wiList.add(wi);
+					//				}
+					if (wiList.size() > 0) {
+						cheDevice.assignWork(wiList);
+					}
+				} catch (JsonParseException e) {
+					LOGGER.error("", e);
+				} catch (JsonMappingException e) {
+					LOGGER.error("", e);
+				} catch (IOException e) {
+					LOGGER.error("", e);
 				}
 			}
 		}

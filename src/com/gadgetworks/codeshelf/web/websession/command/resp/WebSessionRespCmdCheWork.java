@@ -1,18 +1,33 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionRespCmdCheWork.java,v 1.2 2013/03/05 20:45:11 jeffw Exp $
+ *  $Id: WebSessionRespCmdCheWork.java,v 1.3 2013/03/07 05:23:32 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.resp;
 
+import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
 
+import com.gadgetworks.codeshelf.model.domain.Aisle;
+import com.gadgetworks.codeshelf.model.domain.Che;
+import com.gadgetworks.codeshelf.model.domain.Container;
+import com.gadgetworks.codeshelf.model.domain.ContainerUse;
+import com.gadgetworks.codeshelf.model.domain.Facility;
+import com.gadgetworks.codeshelf.model.domain.LocationABC;
+import com.gadgetworks.codeshelf.model.domain.OrderDetail;
+import com.gadgetworks.codeshelf.model.domain.OrderHeader;
+import com.gadgetworks.codeshelf.model.domain.Path;
+import com.gadgetworks.codeshelf.model.domain.PathSegment;
+import com.gadgetworks.codeshelf.model.domain.WorkArea;
+import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.web.websession.command.IWebSessionCmd;
 import com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmd;
+import com.gadgetworks.flyweight.command.ColorEnum;
 
 /**
  * 
@@ -42,15 +57,17 @@ import com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmd;
  */
 public class WebSessionRespCmdCheWork extends WebSessionRespCmdABC {
 
-	private String			mCheId;
+	private Che				mChe;
+	private String			mCheLocation;
 	private List<String>	mContainersIds;
 
 	/**
 	 * 
 	 */
-	public WebSessionRespCmdCheWork(final String inCheId, final List<String> inContainerIds) {
+	public WebSessionRespCmdCheWork(final Che inChe, final String inCheLocation, final List<String> inContainerIds) {
 		super();
-		mCheId = inCheId;
+		mChe = inChe;
+		mCheLocation = inCheLocation;
 		mContainersIds = inContainerIds;
 	}
 
@@ -67,36 +84,41 @@ public class WebSessionRespCmdCheWork extends WebSessionRespCmdABC {
 	protected final void doPrepareDataNode(ObjectNode inOutDataNode) {
 
 		// Insert the response code.
-		inOutDataNode.put("cheId", mCheId);
+		inOutDataNode.put("cheId", mChe.getDeviceGuid().getHexStringNoPrefix());
+
+		// Figure out the CHE's work area by its scanned location.
+		Facility facility = mChe.getParent().getParent();
+		List<WorkInstruction> wiList = facility.getWorkInstructions(mChe, mCheLocation, mContainersIds);
+		
+		// Figure out from the location and containers what items we have to pick.
+//		List<WorkInstruction> wiList = new ArrayList<WorkInstruction>();
+//		for (String containerId : mContainersIds) {
+//			wiList.add(createWi("A01.01", containerId, "ITEM1", 1, ColorEnum.BLUE));
+//		}
+//		for (String containerId : mContainersIds) {
+//			wiList.add(createWi("A01.02", containerId, "ITEM2", 1, ColorEnum.BLUE));
+//		}
+//		for (String containerId : mContainersIds) {
+//			wiList.add(createWi("A01.03", containerId, "ITEM3", 1, ColorEnum.BLUE));
+//		}
+//		for (String containerId : mContainersIds) {
+//			wiList.add(createWi("A01.04", containerId, "ITEM4", 1, ColorEnum.BLUE));
+//		}
 
 		ObjectMapper mapper = new ObjectMapper();
-		ArrayNode wiArray = mapper.createArrayNode();
-		for (String containerId : mContainersIds) {
-			createWi(wiArray, "A01.01", containerId, "ITEM1", 1, "BLUE");
-		}
-		for (String containerId : mContainersIds) {
-			createWi(wiArray, "A01.02", containerId, "ITEM2", 1, "BLUE");
-		}
-		for (String containerId : mContainersIds) {
-			createWi(wiArray, "A01.03", containerId, "ITEM3", 1, "BLUE");
-		}
-		for (String containerId : mContainersIds) {
-			createWi(wiArray, "A01.04", containerId, "ITEM4", 1, "BLUE");
-		}
-		inOutDataNode.put(IWebSessionReqCmd.RESULTS, wiArray);
+		ArrayNode wiListNode = mapper.valueToTree(wiList);
+		inOutDataNode.put(IWebSessionReqCmd.RESULTS, wiListNode);
 	}
 
-	private void createWi(final ArrayNode inWiArrayNode, final String inLocation, final String inContainerId, final String inSku, final Integer inQuantity, final String inColorName) {
-		ObjectMapper mapper = new ObjectMapper();
-		ObjectNode wiNode = mapper.createObjectNode();
-		wiNode.put("acId", "0x00000003");
-		wiNode.put("acCmd", "cmd");
-		wiNode.put("cntrId", inContainerId);
-		wiNode.put("qty", 1);
-		wiNode.put("sku", inSku);
-		wiNode.put("loc", inLocation);
-		wiNode.put("color", inColorName);
-		inWiArrayNode.add(wiNode);
-
-	}
+//	private WorkInstruction createWi(final String inLocationId, final String inContainerId, final String inItemId, final Integer inQuantity, final ColorEnum inColor) {
+//		WorkInstruction result = new WorkInstruction();
+//		result.setAisleControllerId("0x00000003");
+//		result.setAisleControllerCommand("cmd");
+//		result.setContainerId(inContainerId);
+//		result.setQuantity(1);
+//		result.setItemId(inItemId);
+//		result.setLocationId(inLocationId);
+//		result.setColor(inColor);
+//		return result;
+//	}
 }

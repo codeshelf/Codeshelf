@@ -1,13 +1,16 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Aisle.java,v 1.16 2013/03/04 04:47:27 jeffw Exp $
+ *  $Id: Aisle.java,v 1.17 2013/03/07 05:23:32 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
+import javax.persistence.OneToOne;
 
+import lombok.Getter;
+import lombok.Setter;
 import lombok.ToString;
 
 import org.codehaus.jackson.annotate.JsonAutoDetect;

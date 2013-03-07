@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CheDevice.java,v 1.15 2013/03/05 20:45:11 jeffw Exp $
+ *  $Id: CheDevice.java,v 1.16 2013/03/07 05:23:32 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -20,6 +20,7 @@ import lombok.experimental.Accessors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.flyweight.command.ColorEnum;
 import com.gadgetworks.flyweight.command.CommandControlLight;
 import com.gadgetworks.flyweight.command.CommandControlMessage;
@@ -81,18 +82,18 @@ public class CheDevice extends DeviceABC {
 	private Map<String, String>				mContainersMap;
 
 	// All WIs for all containers on the CHE.
-	private List<DeployedWorkInstruction>	mAllPicksWiList;
+	private List<WorkInstruction>	mAllPicksWiList;
 
 	// The active pick WIs.
-	private List<DeployedWorkInstruction>	mActivePickWiList;
+	private List<WorkInstruction>	mActivePickWiList;
 
 	public CheDevice(final UUID inPersistentId, final NetGuid inGuid, final ICsDeviceManager inDeviceManager, final IRadioController inRadioController) {
 		super(inPersistentId, inGuid, inDeviceManager, inRadioController);
 
 		mCheStateEnum = CheStateEnum.IDLE;
 		mContainersMap = new HashMap<String, String>();
-		mAllPicksWiList = new ArrayList<DeployedWorkInstruction>();
-		mActivePickWiList = new ArrayList<DeployedWorkInstruction>();
+		mAllPicksWiList = new ArrayList<WorkInstruction>();
+		mActivePickWiList = new ArrayList<WorkInstruction>();
 	}
 
 	// --------------------------------------------------------------------------
@@ -135,11 +136,11 @@ public class CheDevice extends DeviceABC {
 	 * @param inContainerId
 	 * @param inWorkItemList
 	 */
-	public final void assignWork(final List<DeployedWorkInstruction> inWorkItemList) {
+	public final void assignWork(final List<WorkInstruction> inWorkItemList) {
 		mAllPicksWiList.clear();
 		mAllPicksWiList.addAll(inWorkItemList);
-		for (DeployedWorkInstruction wi : inWorkItemList) {
-			LOGGER.info("WI: Loc: " + wi.getLocation() + " SKU: " + wi.getSkuId() + " cmd: " + wi.getAisleControllerCmd());
+		for (WorkInstruction wi : inWorkItemList) {
+			LOGGER.info("WI: Loc: " + wi.getLocationId() + " SKU: " + wi.getItemId() + " cmd: " + wi.getAisleControllerCommand());
 		}
 	}
 
@@ -338,11 +339,11 @@ public class CheDevice extends DeviceABC {
 			// The "next location" is the first location we find for the next pick.
 			String firstLocation = null;
 			for (String containerId : mContainersMap.values()) {
-				Iterator<DeployedWorkInstruction> wiIter = mAllPicksWiList.iterator();
+				Iterator<WorkInstruction> wiIter = mAllPicksWiList.iterator();
 				while (wiIter.hasNext()) {
-					DeployedWorkInstruction wi = wiIter.next();
-					if (((firstLocation == null) || (firstLocation.equals(wi.getLocation()))) && (wi.getContainerId().equals(containerId))) {
-						firstLocation = wi.getLocation();
+					WorkInstruction wi = wiIter.next();
+					if (((firstLocation == null) || (firstLocation.equals(wi.getLocationId()))) && (wi.getContainerId().equals(containerId))) {
+						firstLocation = wi.getLocationId();
 						mActivePickWiList.add(wi);
 						wiIter.remove();
 					} else {
@@ -356,14 +357,14 @@ public class CheDevice extends DeviceABC {
 
 	private void showActivePicks() {
 		// The first WI has the SKU and location info.
-		DeployedWorkInstruction firstWi = mActivePickWiList.get(0);
+		WorkInstruction firstWi = mActivePickWiList.get(0);
 
 		// Now create a light instruction for each position.
-		sendDisplayCommand(firstWi.getLocation(), firstWi.getSkuId());
-		for (DeployedWorkInstruction wi : mActivePickWiList) {
+		sendDisplayCommand(firstWi.getLocationId(), firstWi.getItemId());
+		for (WorkInstruction wi : mActivePickWiList) {
 			for (Entry<String, String> mapEntry : mContainersMap.entrySet()) {
 				if (mapEntry.getValue().equals(wi.getContainerId())) {
-					sendLightCommand(Short.valueOf(mapEntry.getKey()), wi.getColor());
+					sendLightCommand(Short.valueOf(mapEntry.getKey()), wi.getColorEnum());
 				}
 			}
 		}
@@ -445,9 +446,9 @@ public class CheDevice extends DeviceABC {
 			// Complete the active WI at the selected position.
 			String containerId = mContainersMap.get(inScanStr);
 			if (containerId != null) {
-				Iterator<DeployedWorkInstruction> wiIter = mActivePickWiList.iterator();
+				Iterator<WorkInstruction> wiIter = mActivePickWiList.iterator();
 				while (wiIter.hasNext()) {
-					DeployedWorkInstruction wi = wiIter.next();
+					WorkInstruction wi = wiIter.next();
 					if (wi.getContainerId().equals(containerId)) {
 						LOGGER.info("Pick completed: " + wi);
 						wiIter.remove();

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WorkInstruction.java,v 1.10 2013/03/04 04:47:27 jeffw Exp $
+ *  $Id: WorkInstruction.java,v 1.11 2013/03/07 05:23:32 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -14,22 +14,24 @@ import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 
 import lombok.Getter;
 import lombok.Setter;
 
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
-import com.gadgetworks.codeshelf.model.WorkInstructionOpEnum;
-import com.gadgetworks.codeshelf.model.WorkInstructionPlanEnum;
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
+import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.flyweight.command.ColorEnum;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -37,7 +39,13 @@ import com.google.inject.Singleton;
 /**
  * WorkInstruction
  * 
- * A unit of work to move an item to/from a container, or a container to/from a location
+ * A planned or actual request for work.
+ * 
+ * We anticipate that some day this object will split from a pure item->container instruction object 
+ * to a item/container to container, or container to/from location
+ * 
+ * The references are stored as Strings because we mostly serialize this object (in JSON) to send back-and-forth
+ * over the wire to the remote radio/network controllers.
  * 
  * @author jeffw
  */
@@ -46,7 +54,8 @@ import com.google.inject.Singleton;
 @Table(name = "WORKINSTRUCTION", schema = "CODESHELF")
 @CacheStrategy
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
-public abstract class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
+@JsonIgnoreProperties({ "fullDomainId", "parentFullDomainId", "parentPersistentId", "className" })
+public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 
 	@Inject
 	public static ITypedDao<WorkInstruction>	DAO;
@@ -60,26 +69,18 @@ public abstract class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 
 	private static final Logger			LOGGER	= LoggerFactory.getLogger(WorkInstruction.class);
 
-	// The parent facility.
+	// The parent order detail item.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	private OrderDetail					parent;
 
-	// Operation.
+	// Type.
 	@Column(nullable = false)
 	@Enumerated(value = EnumType.STRING)
 	@Getter
 	@Setter
 	@JsonProperty
-	private WorkInstructionOpEnum		opEnum;
-
-	// Kind.
-	@Column(nullable = false)
-	@Enumerated(value = EnumType.STRING)
-	@Getter
-	@Setter
-	@JsonProperty
-	private WorkInstructionPlanEnum		planEnum;
+	private WorkInstructionTypeEnum		typeEnum;
 
 	// Status.
 	@Column(nullable = false)
@@ -89,41 +90,64 @@ public abstract class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 	@JsonProperty
 	private WorkInstructionStatusEnum	statusEnum;
 
-	// The subject container.
+	// The container.
 	@Column(nullable = false)
 	@Getter
 	@Setter
-	private Container					subjectContainer;
+	@JsonProperty
+	private String						containerId;
 
-	// The subject item.
+	// The item.
 	@Column(nullable = false)
 	@Getter
 	@Setter
-	private Item						subjectItem;
+	@JsonProperty
+	private String						itemId;
 
-	// fromLoc.
+	// The pick quantity.
 	@Column(nullable = false)
 	@Getter
 	@Setter
-	private LocationABC					fromLocation;
+	@JsonProperty
+	private Integer						quantity;
 
-	// toLoc.
+	// From location.
 	@Column(nullable = false)
 	@Getter
 	@Setter
-	private LocationABC					toLocation;
+	@JsonProperty
+	private String						locationId;
 
-	// fromContainer.
-	@Column(nullable = false)
+	// Picker ID.
+	@Column(nullable = true)
 	@Getter
 	@Setter
-	private LocationABC					fromContainer;
+	@JsonProperty
+	private String						pickerId;
 
-	// toContainer.
-	@Column(nullable = false)
+	// Everything below this is transient (not persisted) and only has value when passed around at production time.
+
+	// Aisle controller ID.
+	@Column(nullable = true)
 	@Getter
 	@Setter
-	private LocationABC					toContainer;
+	@JsonProperty
+	private String						aisleControllerId;
+
+	// Aisle controller command.
+	@Column(nullable = true)
+	@Getter
+	@Setter
+	@JsonProperty
+	private String						aisleControllerCommand;
+
+	// Color used for picking.
+	@Column(nullable = true)
+	@Enumerated(value = EnumType.STRING)
+	@Getter
+	@Setter
+	@JsonProperty
+	private ColorEnum					colorEnum;
 
 	public WorkInstruction() {
 

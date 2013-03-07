@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Item.java,v 1.13 2013/03/04 04:47:28 jeffw Exp $
+ *  $Id: Item.java,v 1.14 2013/03/07 05:23:32 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -92,7 +92,7 @@ public class Item extends DomainObjectTreeABC<LocationABC> {
 		return "IT";
 	}
 
-	public final String getItemsId() {
+	public final String getItemId() {
 		return getDomainId();
 	}
 

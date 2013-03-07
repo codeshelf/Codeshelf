@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeshelfApplicationTest.java,v 1.17 2013/03/05 07:47:56 jeffw Exp $
+ *  $Id: CodeshelfApplicationTest.java,v 1.18 2013/03/07 05:23:32 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.application;
 
@@ -31,6 +31,7 @@ import com.gadgetworks.codeshelf.model.dao.MockDao;
 import com.gadgetworks.codeshelf.model.dao.Result;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.Container;
+import com.gadgetworks.codeshelf.model.domain.ContainerUse;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster;
@@ -232,6 +233,7 @@ public class CodeshelfApplicationTest {
 		ITypedDao<OrderGroup> orderGroupDao = new MockDao<OrderGroup>();
 		ITypedDao<OrderHeader> orderHeaderDao = new MockDao<OrderHeader>();
 		ITypedDao<Container> containerDao = new MockDao<Container>();
+		ITypedDao<ContainerUse> containerUseDao = new MockDao<ContainerUse>();
 		ITypedDao<OrderDetail> orderDetailDao = new MockDao<OrderDetail>();
 		ITypedDao<ItemMaster> itemMasterDao = new MockDao<ItemMaster>();
 		ITypedDao<Item> itemDao = new MockDao<Item>();
@@ -251,7 +253,7 @@ public class CodeshelfApplicationTest {
 			webSocketFactory);
 		IHttpServer httpServer = new HttpServer("./", "localhost", 8000, "./", "localhost", 8443, "./conf/codeshelf.keystore", "x2HPbC2avltYQR", "x2HPbC2avltYQR");
 
-		ICsvImporter importer = new CsvImporter(orderGroupDao, orderHeaderDao, orderDetailDao, containerDao, itemMasterDao, itemDao, uomMasterDao);
+		ICsvImporter importer = new CsvImporter(orderGroupDao, orderHeaderDao, orderDetailDao, containerDao, containerUseDao, itemMasterDao, itemDao, uomMasterDao);
 		IEdiProcessor ediProcessor = new EdiProcessor(importer, facilityDao);
 		IUtil util = new MockUtil();
 		ISchemaManager schemaManager = new H2SchemaManager(util, "codeshelf", "codeshelf", "codeshelf", "codeshelf", "localhost", "");

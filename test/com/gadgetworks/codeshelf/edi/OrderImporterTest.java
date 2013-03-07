@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderImporterTest.java,v 1.8 2012/12/15 02:25:42 jeffw Exp $
+ *  $Id: OrderImporterTest.java,v 1.9 2013/03/07 05:23:31 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -16,6 +16,7 @@ import com.gadgetworks.codeshelf.model.PickStrategyEnum;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.dao.MockDao;
 import com.gadgetworks.codeshelf.model.domain.Container;
+import com.gadgetworks.codeshelf.model.domain.ContainerUse;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster;
@@ -52,7 +53,7 @@ public class OrderImporterTest {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		MockDao<Organization> organizationDao = new MockDao<Organization>();
+		ITypedDao<Organization> organizationDao = new MockDao<Organization>();
 		Organization organization = new Organization();
 		organization.setDomainId("O1");
 
@@ -61,15 +62,16 @@ public class OrderImporterTest {
 		facility.setParent(organization);
 		facility.setDomainId("F1");
 
-		MockDao<OrderGroup> orderGroupDao = new MockDao<OrderGroup>();
-		MockDao<OrderHeader> orderHeaderDao = new MockDao<OrderHeader>();
-		MockDao<OrderDetail> orderDetailDao = new MockDao<OrderDetail>();
-		MockDao<Container> containerDao = new MockDao<Container>();
-		MockDao<ItemMaster> itemMasterDao = new MockDao<ItemMaster>();
-		MockDao<Item> itemDao = new MockDao<Item>();
+		ITypedDao<OrderGroup> orderGroupDao = new MockDao<OrderGroup>();
+		ITypedDao<OrderHeader> orderHeaderDao = new MockDao<OrderHeader>();
+		ITypedDao<OrderDetail> orderDetailDao = new MockDao<OrderDetail>();
+		ITypedDao<Container> containerDao = new MockDao<Container>();
+		ITypedDao<ContainerUse> containerUseDao = new MockDao<ContainerUse>();
+		ITypedDao<ItemMaster> itemMasterDao = new MockDao<ItemMaster>();
+		ITypedDao<Item> itemDao = new MockDao<Item>();
 		ITypedDao<UomMaster> uomMasterDao = new MockDao<UomMaster>();
 
-		CsvImporter importer = new CsvImporter(orderGroupDao, orderHeaderDao, orderDetailDao, containerDao, itemMasterDao, itemDao, uomMasterDao);
+		CsvImporter importer = new CsvImporter(orderGroupDao, orderHeaderDao, orderDetailDao, containerDao, containerUseDao, itemMasterDao, itemDao, uomMasterDao);
 		importer.importOrdersFromCsvStream(reader, facility);
 
 		OrderHeader order = facility.findOrder("123");
@@ -98,7 +100,7 @@ public class OrderImporterTest {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		MockDao<Organization> organizationDao = new MockDao<Organization>();
+		ITypedDao<Organization> organizationDao = new MockDao<Organization>();
 		Organization organization = new Organization();
 		organization.setDomainId("O1");
 
@@ -107,15 +109,16 @@ public class OrderImporterTest {
 		facility.setParent(organization);
 		facility.setDomainId("F1");
 
-		MockDao<OrderGroup> orderGroupDao = new MockDao<OrderGroup>();
-		MockDao<OrderHeader> orderHeaderDao = new MockDao<OrderHeader>();
-		MockDao<OrderDetail> orderDetailDao = new MockDao<OrderDetail>();
-		MockDao<Container> containerDao = new MockDao<Container>();
-		MockDao<ItemMaster> itemMasterDao = new MockDao<ItemMaster>();
-		MockDao<Item> itemDao = new MockDao<Item>();
+		ITypedDao<OrderGroup> orderGroupDao = new MockDao<OrderGroup>();
+		ITypedDao<OrderHeader> orderHeaderDao = new MockDao<OrderHeader>();
+		ITypedDao<OrderDetail> orderDetailDao = new MockDao<OrderDetail>();
+		ITypedDao<Container> containerDao = new MockDao<Container>();
+		ITypedDao<ContainerUse> containerUseDao = new MockDao<ContainerUse>();
+		ITypedDao<ItemMaster> itemMasterDao = new MockDao<ItemMaster>();
+		ITypedDao<Item> itemDao = new MockDao<Item>();
 		ITypedDao<UomMaster> uomMasterDao = new MockDao<UomMaster>();
 
-		CsvImporter importer = new CsvImporter(orderGroupDao, orderHeaderDao, orderDetailDao, containerDao, itemMasterDao, itemDao, uomMasterDao);
+		CsvImporter importer = new CsvImporter(orderGroupDao, orderHeaderDao, orderDetailDao, containerDao, containerUseDao, itemMasterDao, itemDao, uomMasterDao);
 		importer.importOrdersFromCsvStream(reader, facility);
 
 		OrderHeader order = facility.findOrder("123");
@@ -149,24 +152,25 @@ public class OrderImporterTest {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		MockDao<Organization> organizationDao = new MockDao<Organization>();
+		ITypedDao<Organization> organizationDao = new MockDao<Organization>();
 		Organization organization = new Organization();
 		organization.setDomainId("O1");
 
-		MockDao<Facility> facilityDao = new MockDao<Facility>();
+		ITypedDao<Facility> facilityDao = new MockDao<Facility>();
 		Facility facility = new Facility();
 		facility.setParent(organization);
 		facility.setDomainId("F1");
 
-		MockDao<OrderGroup> orderGroupDao = new MockDao<OrderGroup>();
-		MockDao<OrderHeader> orderHeaderDao = new MockDao<OrderHeader>();
-		MockDao<OrderDetail> orderDetailDao = new MockDao<OrderDetail>();
-		MockDao<Container> containerDao = new MockDao<Container>();
-		MockDao<ItemMaster> itemMasterDao = new MockDao<ItemMaster>();
-		MockDao<Item> itemDao = new MockDao<Item>();
+		ITypedDao<OrderGroup> orderGroupDao = new MockDao<OrderGroup>();
+		ITypedDao<OrderHeader> orderHeaderDao = new MockDao<OrderHeader>();
+		ITypedDao<OrderDetail> orderDetailDao = new MockDao<OrderDetail>();
+		ITypedDao<Container> containerDao = new MockDao<Container>();
+		ITypedDao<ContainerUse> containerUseDao = new MockDao<ContainerUse>();
+		ITypedDao<ItemMaster> itemMasterDao = new MockDao<ItemMaster>();
+		ITypedDao<Item> itemDao = new MockDao<Item>();
 		ITypedDao<UomMaster> uomMasterDao = new MockDao<UomMaster>();
 
-		CsvImporter importer = new CsvImporter(orderGroupDao, orderHeaderDao, orderDetailDao, containerDao, itemMasterDao, itemDao, uomMasterDao);
+		CsvImporter importer = new CsvImporter(orderGroupDao, orderHeaderDao, orderDetailDao, containerDao, containerUseDao, itemMasterDao, itemDao, uomMasterDao);
 		importer.importOrdersFromCsvStream(reader, facility);
 
 		OrderHeader order = facility.findOrder("789");

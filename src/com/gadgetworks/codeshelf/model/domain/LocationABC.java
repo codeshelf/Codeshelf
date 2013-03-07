@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: LocationABC.java,v 1.20 2013/03/04 04:47:27 jeffw Exp $
+ *  $Id: LocationABC.java,v 1.21 2013/03/07 05:23:32 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -22,6 +22,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.MapKey;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 import lombok.Getter;
@@ -109,6 +110,13 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	@JsonProperty
 	private String						description;
 
+	// Associated path segment (optional)
+	@Column(nullable = true)
+	@OneToOne(optional = true)
+	@Getter
+	@Setter
+	private PathSegment					pathSegment;
+
 	// The owning location.
 	@Column(nullable = false)
 	@ManyToOne(optional = true)
@@ -158,23 +166,80 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		return new ArrayList<SubLocationABC>(locations.values());
 	}
 
-	public final <T extends SubLocationABC> List<T> getChildrenKind(Class<? extends SubLocationABC> inClassWanted) {
+	// --------------------------------------------------------------------------
+	/**
+	 * Get all of the children of this type (no matter how far down the hierarchy).
+	 * 
+	 * To get it to strongly type the return for you then use this unusual Java construct at the caller:
+	 * 
+	 * Aisle aisle = facility.<Aisle> getChildrenAtLevel(Aisle.class)
+	 * (If calling this method from a generic location type then you need to define it as LocationABC<?> location.)
+	 * 
+	 * @param inClassWanted
+	 * @return
+	 */
+	public final <T extends LocationABC> List<T> getChildrenAtLevel(Class<? extends LocationABC> inClassWanted) {
 		List<T> result = new ArrayList<T>();
 
-		for (LocationABC child : getChildren()) {
+		// Loop through all of the children.
+		for (LocationABC<P> child : getChildren()) {
 			if (child.getClass().equals(inClassWanted)) {
+				// If the child is the kind we want then add it to the list.
 				result.add((T) child);
+			} else {
+				// If the child is not the kind we want the recurse.
+				result.addAll((List<T>) getChildrenAtLevel(inClassWanted));
+			}
+		}
+		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Get the parent of this location at the class level specified.
+	 * 
+	 * To get it to strongly type the return for you then use this unusual Java construct at the caller:
+	 * 
+	 * Aisle aisle = bay.<Aisle> getParentAtLevel(Aisle.class)
+	 * (If calling this method from a generic location type then you need to define it as LocationABC<?> location.)
+	 * 
+	 * @param inClassWanted
+	 * @return
+	 */
+	public final <T extends LocationABC> T getParentAtLevel(Class<? extends LocationABC> inClassWanted) {
+		T result = null;
+
+		LocationABC<P> parent = (LocationABC) getParent();
+
+		if (parent.getClass().equals(inClassWanted)) {
+			// This is the parent we want. (We can cast safely since we checked the class.)
+			result = (T) parent;
+		} else {
+			if (parent.getClass().equals(Facility.class)) {
+				// We cannot go higher than the Facility as a parent, so there is no such parent with the requested class.
+				result = null;
+			} else {
+				// The current parent is not the class we want so recurse up the hierarchy.
+				result = parent.getParentAtLevel(inClassWanted);
 			}
 		}
 
 		return result;
 	}
 
+	public final String getLocationId() {
+		return getDomainId();
+	}
+
+	public final void setLocationId(final String inLocationId) {
+		setDomainId(inLocationId);
+	}
+
 	public final void addLocation(SubLocationABC inLocation) {
 		locations.put(inLocation.getDomainId(), inLocation);
 	}
 
-	public final SubLocationABC getLocation(String inLocationId) {
+	public final SubLocationABC<P> getLocation(String inLocationId) {
 		return locations.get(inLocationId);
 	}
 
@@ -182,16 +247,29 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		locations.remove(inLocationId);
 	}
 
-	public final LocationABC getLocationById(final String inLocationId) {
-		LocationABC result = null;
+	// --------------------------------------------------------------------------
+	/**
+	 * Look for any sub-location by it's ID.
+	 * The location ID needs to be a dotted notation where the first octet is a child location of "this" location.
+	 * @param inLocationId
+	 * @return
+	 */
+	public final LocationABC<P> getSubLocationById(final String inLocationId) {
+		LocationABC<P> result = null;
 
-		Map<String, Object> filterParams = new HashMap<String, Object>();
-		filterParams.put("theId", inLocationId);
-		List<LocationABC> foundLocations = getDao().findByFilterAndClass("domainId = :theId", filterParams, LocationABC.class);
-		if ((foundLocations != null) && (foundLocations.size() > 0) && (foundLocations.get(0) instanceof LocationABC)) {
-			result = (LocationABC) foundLocations.get(0);
+		Integer firstDotPos = inLocationId.indexOf(".");
+		if (firstDotPos < 0) {
+			// There's no "dot" so look for the sublocation at this level.
+			result = this.getLocation(inLocationId);
+		} else {
+			// There is a dot, so find the sublocation based on the first part and recursively ask it for the location from the second part.
+			String firstPart = inLocationId.substring(0, firstDotPos);
+			String secondPart = inLocationId.substring(firstDotPos + 1);
+			LocationABC<P> subLocation = this.getLocation(firstPart);
+			if (subLocation != null) {
+				result = subLocation.getSubLocationById(secondPart);
+			}
 		}
-
 		return result;
 	}
 

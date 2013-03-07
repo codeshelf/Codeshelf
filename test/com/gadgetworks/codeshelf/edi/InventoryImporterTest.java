@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: InventoryImporterTest.java,v 1.5 2012/10/31 09:23:59 jeffw Exp $
+ *  $Id: InventoryImporterTest.java,v 1.6 2013/03/07 05:23:32 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -15,6 +15,7 @@ import org.junit.Test;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.dao.MockDao;
 import com.gadgetworks.codeshelf.model.domain.Container;
+import com.gadgetworks.codeshelf.model.domain.ContainerUse;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster;
@@ -60,11 +61,12 @@ public class InventoryImporterTest {
 		MockDao<OrderHeader> orderHeaderDao = new MockDao<OrderHeader>();
 		MockDao<OrderDetail> orderDetailDao = new MockDao<OrderDetail>();
 		MockDao<Container> containerDao = new MockDao<Container>();
+		ITypedDao<ContainerUse> containerUseDao = new MockDao<ContainerUse>();
 		MockDao<ItemMaster> itemMasterDao = new MockDao<ItemMaster>();
 		MockDao<Item> itemDao = new MockDao<Item>();
 		ITypedDao<UomMaster> uomMasterDao = new MockDao<UomMaster>();
 
-		CsvImporter importer = new CsvImporter(orderGroupDao, orderHeaderDao, orderDetailDao, containerDao, itemMasterDao, itemDao, uomMasterDao);
+		CsvImporter importer = new CsvImporter(orderGroupDao, orderHeaderDao, orderDetailDao, containerDao, containerUseDao, itemMasterDao, itemDao, uomMasterDao);
 		importer.importInventoryFromCsvStream(reader, facility);
 
 		Item item = facility.getItem("3001");

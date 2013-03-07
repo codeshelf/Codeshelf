@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: SchemaManagerABC.java,v 1.14 2013/03/04 04:47:29 jeffw Exp $
+ *  $Id: SchemaManagerABC.java,v 1.15 2013/03/07 05:23:32 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -438,8 +438,9 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		result &= linkToParentTable("ITEMMASTER", "PARENT", "LOCATION");
 
-		result &= linkToParentTable("LOCATION", "PARENTORGANIZATION", "ORGANIZATION");
 		result &= linkToParentTable("LOCATION", "PARENT", "LOCATION");
+		result &= linkToParentTable("LOCATION", "PATHSEGMENT", "PATHSEGMENT");
+		result &= linkToParentTable("LOCATION", "PARENTORGANIZATION", "ORGANIZATION");
 
 		result &= linkToParentTable("LOCATIONCONTROLLER", "PARENT", "LOCATION");
 
@@ -452,6 +453,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		result &= linkToParentTable("PATH", "PARENT", "LOCATION");
 
 		result &= linkToParentTable("PATHSEGMENT", "PARENT", "PATH");
+		result &= linkToParentTable("PATHSEGMENT", "ASSOCIATEDLOCATION", "LOCATION");
 
 		result &= linkToParentTable("PERSISTENTPROPERTY", "PARENT", "ORGANIZATION");
 
@@ -558,7 +560,8 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		// ItemMaster
 		result &= createTable("ITEMMASTER", //
-			"DESCRIPTION VARCHAR(256), " //
+			"ITEMID VARCHAR(64) NOT NULL, " //
+					+ "DESCRIPTION VARCHAR(256), " //
 					+ "LOTHANDLINGENUM VARCHAR(16) NOT NULL, " //
 					+ "STANDARDUOM_PERSISTENTID " + UUID_TYPE + " NOT NULL " //
 		);
@@ -571,6 +574,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 					+ "POSY DOUBLE PRECISION NOT NULL, " //
 					+ "POSZ DOUBLE PRECISION, " // NOT NULL, " //
 					+ "DESCRIPTION VARCHAR(64), "// NOT NULL, " //
+					+ "PATHSEGMENT_PERSISTENTID " + UUID_TYPE + ", " //
 					+ "PARENTORGANIZATION_PERSISTENTID " + UUID_TYPE + " "// NOT NULL, " //
 		);
 
@@ -674,15 +678,16 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		// WorkInstruction
 		result &= createTable("WORKINSTRUCTION", //
-			"OPENUM VARCHAR(16) NOT NULL, " //
-					+ "PLANENUM VARCHAR(16) NOT NULL, " //
+			"TYPEENUM VARCHAR(16) NOT NULL, " //
 					+ "STATUSENUM VARCHAR(16) NOT NULL, " //
-					+ "SUBJECTCONTAINER_PERSISTENTID " + UUID_TYPE + " NOT NULL, " //
-					+ "SUBJECTITEM_PERSISTENTID " + UUID_TYPE + " NOT NULL, " //
-					+ "FROMLOCATION_PERSISTENTID " + UUID_TYPE + " NOT NULL, " //
-					+ "TOLOCATION_PERSISTENTID " + UUID_TYPE + " NOT NULL, " //
-					+ "FROMCONTAINER_PERSISTENTID " + UUID_TYPE + " NOT NULL, " //
-					+ "TOCONTAIENR_PERSISTENTID " + UUID_TYPE + " NOT NULL " //
+					+ "CONTAINERID VARCHAR(64) NOT NULL, " //
+					+ "ITEMID VARCHAR(64) NOT NULL, " //
+					+ "QUANTITY INTEGER NOT NULL, " //
+					+ "LOCATIONID VARCHAR(64) NOT NULL, " //
+					+ "PICKERID VARCHAR(64), " //
+					+ "AISLECONTROLLERID VARCHAR(16), " //
+					+ "AISLECONTROLLERCOMMAND VARCHAR(64), " //
+					+ "COLORENUM VARCHAR(16) " //
 		);
 
 		return result;

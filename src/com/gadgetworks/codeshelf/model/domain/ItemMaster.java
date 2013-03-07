@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ItemMaster.java,v 1.15 2013/03/04 04:47:28 jeffw Exp $
+ *  $Id: ItemMaster.java,v 1.16 2013/03/07 05:23:32 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -12,6 +12,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
@@ -64,6 +65,13 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	@ManyToOne(optional = false)
 	private Facility			parent;
 
+	// The item Id.
+	@Column(nullable = true)
+	@Getter
+	@Setter
+	@JsonProperty
+	private String				itemId;
+
 	// The description.
 	@Column(nullable = true)
 	@Getter
@@ -87,7 +95,7 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	private UomMaster			standardUom;
 
 	// For a network this is a list of all of the users that belong in the set.
-	@OneToMany(mappedBy = "parent")
+	@OneToMany(mappedBy = "itemMaster")
 	@Getter
 	private List<Item>			items	= new ArrayList<Item>();
 
@@ -123,13 +131,5 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void removeItem(Item inItem) {
 		items.remove(inItem);
-	}
-
-	public final String getItemMasterId() {
-		return getDomainId();
-	}
-
-	public final void setItemMasterId(String inItemMasterId) {
-		setDomainId(inItemMasterId);
 	}
 }

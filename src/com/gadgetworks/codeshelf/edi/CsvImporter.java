@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CsvImporter.java,v 1.10 2013/02/27 01:17:02 jeffw Exp $
+ *  $Id: CsvImporter.java,v 1.11 2013/03/07 05:23:32 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -24,6 +24,7 @@ import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Container;
 import com.gadgetworks.codeshelf.model.domain.ContainerKind;
+import com.gadgetworks.codeshelf.model.domain.ContainerUse;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster;
@@ -46,6 +47,7 @@ public class CsvImporter implements ICsvImporter {
 	private ITypedDao<OrderHeader>	mOrderHeaderDao;
 	private ITypedDao<OrderDetail>	mOrderDetailDao;
 	private ITypedDao<Container>	mContainerDao;
+	private ITypedDao<ContainerUse>	mContainerUseDao;
 	private ITypedDao<ItemMaster>	mItemMasterDao;
 	private ITypedDao<Item>			mItemDao;
 	private ITypedDao<UomMaster>	mUomMasterDao;
@@ -55,6 +57,7 @@ public class CsvImporter implements ICsvImporter {
 		final ITypedDao<OrderHeader> inOrderHeaderDao,
 		final ITypedDao<OrderDetail> inOrderDetailDao,
 		final ITypedDao<Container> inContainerDao,
+		final ITypedDao<ContainerUse> inContainerUseDao,
 		final ITypedDao<ItemMaster> inItemMasterDao,
 		final ITypedDao<Item> inItemDao,
 		final ITypedDao<UomMaster> inUomMaster) {
@@ -63,6 +66,7 @@ public class CsvImporter implements ICsvImporter {
 		mOrderHeaderDao = inOrderHeaderDao;
 		mOrderDetailDao = inOrderDetailDao;
 		mContainerDao = inContainerDao;
+		mContainerUseDao = inContainerUseDao;
 		mItemMasterDao = inItemMasterDao;
 		mItemDao = inItemDao;
 		mUomMasterDao = inUomMaster;
@@ -205,6 +209,23 @@ public class CsvImporter implements ICsvImporter {
 					LOGGER.error("", e);
 				}
 			}
+
+			ContainerUse use = result.getContainerUse(inOrder);
+			if (use == null) {
+				// Now create the container use for this.
+				Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+				use = new ContainerUse();
+				use.setDomainId(timestamp.toString());
+				use.setOrderHeader(inOrder);
+				use.setParent(result);
+				use.setUseTimeStamp(timestamp);
+				try {
+					mContainerUseDao.store(use);
+				} catch (DaoException e) {
+					LOGGER.error("", e);
+				}
+				result.addContainerUse(use);
+			}
 		}
 
 		return result;
@@ -257,15 +278,16 @@ public class CsvImporter implements ICsvImporter {
 	 * @param inFacility
 	 * @return
 	 */
-	private ItemMaster ensureItemMaster(final String inItemMasterId, final Facility inFacility, final UomMaster inUomMaster) {
+	private ItemMaster ensureItemMaster(final String inItemId, final Facility inFacility, final UomMaster inUomMaster) {
 		ItemMaster result = null;
 
-		result = mItemMasterDao.findByDomainId(inFacility, inItemMasterId);
+		result = mItemMasterDao.findByDomainId(inFacility, inItemId);
 		if (result == null) {
 
 			result = new ItemMaster();
 			result.setParent(inFacility);
-			result.setItemMasterId(inItemMasterId);
+			result.setDomainId(inItemId);
+			result.setItemId(inItemId);
 			result.setStandardUom(inUomMaster);
 			inFacility.addItemMaster(result);
 			try {
@@ -352,7 +374,7 @@ public class CsvImporter implements ICsvImporter {
 	private Item ensureItem(final CsvInventoryImportBean inCsvImportBean, final Facility inFacility, final ItemMaster inItemMaster, final UomMaster inUomMaster) {
 		Item result = null;
 
-		LocationABC location = inFacility.getLocationById(inCsvImportBean.getLocationId());
+		LocationABC location = inFacility.getSubLocationById(inCsvImportBean.getLocationId());
 
 		// We couldn't find the location, so assign the inventory to the facility itself (which is a location);
 		if (location == null) {

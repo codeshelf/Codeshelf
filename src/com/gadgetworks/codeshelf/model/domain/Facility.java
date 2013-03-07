@@ -1,10 +1,11 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.49 2013/03/04 04:47:27 jeffw Exp $
+ *  $Id: Facility.java,v 1.50 2013/03/07 05:23:32 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -30,9 +31,12 @@ import com.gadgetworks.codeshelf.model.EdiProviderEnum;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.PathDirectionEnum;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
+import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
+import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.flyweight.command.ColorEnum;
 import com.gadgetworks.flyweight.command.NetGuid;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -389,18 +393,16 @@ public class Facility extends LocationABC<Organization> {
 		if (path != null) {
 			int distFromInitiationPoint = 0;
 			for (PathSegment segment : path.getSegments().values()) {
-				LocationABC<Facility> location = segment.getAssociatedLocation();
-				if (location != null) {
-					if (location instanceof Aisle) {
-						Aisle theAisle = (Aisle) location;
-						for (Bay bay : location.<Bay> getChildrenKind(Bay.class)) {
-							// Figure out the distance of this bay from the path.
-							Point bayPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, theAisle.getPosX() + bay.getPosX(), theAisle.getPosY() + bay.getPosY(), null);
-							Double distance = distFromInitiationPoint + computeDistanceOfPointFromLine(segment.getTail(), segment.getHead(), bayPoint);
+				LocationABC location = segment.getAssociatedLocation();
+				if ((location != null) && (location instanceof Aisle)) {
+					Aisle aisle = (Aisle) location;
+					for (Bay bay : aisle.<Bay> getChildrenAtLevel(Bay.class)) {
+						// Figure out the distance of this bay from the path.
+						Point bayPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, aisle.getPosX() + bay.getPosX(), aisle.getPosY() + bay.getPosY(), null);
+						Double distance = distFromInitiationPoint + computeDistanceOfPointFromLine(segment.getTail(), segment.getHead(), bayPoint);
 
-							String distanceStr = String.format("%4.4f", distance);
-							LOGGER.info("Location: " + bay.getFullDomainId() + " is " + distanceStr + " meters from the initiation point.");
-						}
+						String distanceStr = String.format("%4.4f", distance);
+						LOGGER.info("Location: " + bay.getFullDomainId() + " is " + distanceStr + " meters from the initiation point.");
 					}
 				}
 				distFromInitiationPoint += segment.getLength();
@@ -470,7 +472,7 @@ public class Facility extends LocationABC<Organization> {
 	 * @param inXDimMeters
 	 * @param inYDimMeters
 	 */
-	private void createAislePaths(LocationABC<Facility> inLocation, Double inXDimMeters, Double inYDimMeters) {
+	private void createAislePaths(Aisle inAssociatedAisle, Double inXDimMeters, Double inYDimMeters) {
 
 		// Create the default path for this aisle.
 		Path path = paths.get(Path.DEFAULT_FACILITY_PATH_ID);
@@ -501,34 +503,34 @@ public class Facility extends LocationABC<Organization> {
 		Point headB = null;
 		Point tailB = null;
 		if (inXDimMeters < inYDimMeters) {
-			Double xA = inLocation.getPosX() - inXDimMeters;
-			tailA = new Point(PositionTypeEnum.METERS_FROM_PARENT, xA, inLocation.getPosY(), null);
-			headA = new Point(PositionTypeEnum.METERS_FROM_PARENT, xA, inLocation.getPosY() + inYDimMeters, null);
+			Double xA = inAssociatedAisle.getPosX() - inXDimMeters;
+			tailA = new Point(PositionTypeEnum.METERS_FROM_PARENT, xA, inAssociatedAisle.getPosY(), null);
+			headA = new Point(PositionTypeEnum.METERS_FROM_PARENT, xA, inAssociatedAisle.getPosY() + inYDimMeters, null);
 
-			Double xB = inLocation.getPosX() + inXDimMeters * 2.0;
-			headB = new Point(PositionTypeEnum.METERS_FROM_PARENT, xB, inLocation.getPosY(), null);
-			tailB = new Point(PositionTypeEnum.METERS_FROM_PARENT, xB, inLocation.getPosY() + inYDimMeters, null);
+			Double xB = inAssociatedAisle.getPosX() + inXDimMeters * 2.0;
+			headB = new Point(PositionTypeEnum.METERS_FROM_PARENT, xB, inAssociatedAisle.getPosY(), null);
+			tailB = new Point(PositionTypeEnum.METERS_FROM_PARENT, xB, inAssociatedAisle.getPosY() + inYDimMeters, null);
 		} else {
-			Double yA = inLocation.getPosY() - inYDimMeters;
-			tailA = new Point(PositionTypeEnum.METERS_FROM_PARENT, inLocation.getPosX(), yA, null);
-			headA = new Point(PositionTypeEnum.METERS_FROM_PARENT, inLocation.getPosX() + inYDimMeters, yA, null);
+			Double yA = inAssociatedAisle.getPosY() - inYDimMeters;
+			tailA = new Point(PositionTypeEnum.METERS_FROM_PARENT, inAssociatedAisle.getPosX(), yA, null);
+			headA = new Point(PositionTypeEnum.METERS_FROM_PARENT, inAssociatedAisle.getPosX() + inYDimMeters, yA, null);
 
-			Double yB = inLocation.getPosY() + inYDimMeters * 2.0;
-			headB = new Point(PositionTypeEnum.METERS_FROM_PARENT, inLocation.getPosX(), yB, null);
-			tailB = new Point(PositionTypeEnum.METERS_FROM_PARENT, inLocation.getPosX() + inYDimMeters, yB, null);
+			Double yB = inAssociatedAisle.getPosY() + inYDimMeters * 2.0;
+			headB = new Point(PositionTypeEnum.METERS_FROM_PARENT, inAssociatedAisle.getPosX(), yB, null);
+			tailB = new Point(PositionTypeEnum.METERS_FROM_PARENT, inAssociatedAisle.getPosX() + inYDimMeters, yB, null);
 		}
 
-		String baseSegmentId = inLocation.getDomainId() + "." + PathSegment.DOMAIN_PREFIX;
+		String baseSegmentId = inAssociatedAisle.getDomainId() + "." + PathSegment.DOMAIN_PREFIX;
 		// Now connect it to the last aisle's path segments.
 		if (lastSegment != null) {
 			createPathSegment(baseSegmentId + "D", null, PathDirectionEnum.HEAD, path, segmentOrder++, tailA, lastSegment.getHead());
 		}
 		// Create the "A" side path.
-		createPathSegment(baseSegmentId + "A", inLocation, PathDirectionEnum.HEAD, path, segmentOrder++, headA, tailA);
+		createPathSegment(baseSegmentId + "A", inAssociatedAisle, PathDirectionEnum.HEAD, path, segmentOrder++, headA, tailA);
 		// Create a connector path.
 		createPathSegment(baseSegmentId + "C", null, PathDirectionEnum.HEAD, path, segmentOrder++, tailB, headA);
 		// Create the "B" side path.
-		createPathSegment(baseSegmentId + "B", inLocation, PathDirectionEnum.HEAD, path, segmentOrder++, headB, tailB);
+		createPathSegment(baseSegmentId + "B", inAssociatedAisle, PathDirectionEnum.HEAD, path, segmentOrder++, headB, tailB);
 
 	}
 
@@ -557,12 +559,18 @@ public class Facility extends LocationABC<Organization> {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * Create a path segment for the aisle.
+	 * PathSegments can associate with any location, but we limit it to aisles for now.
+	 * @param inSegmentId
+	 * @param inAssociatedAisle
+	 * @param inDirection
 	 * @param inPath
+	 * @param inSegmentOrder
 	 * @param inHead
 	 * @param inTail
 	 */
 	private void createPathSegment(final String inSegmentId,
-		final LocationABC<Facility> inAssociatedLoc,
+		final Aisle inAssociatedAisle,
 		final PathDirectionEnum inDirection,
 		final Path inPath,
 		final Integer inSegmentOrder,
@@ -573,7 +581,7 @@ public class Facility extends LocationABC<Organization> {
 		PathSegment pathSegment = new PathSegment();
 		pathSegment.setParent(inPath);
 		pathSegment.setSegmentOrder(inSegmentOrder);
-		pathSegment.setAssociatedLocation(inAssociatedLoc);
+		pathSegment.setAssociatedLocation(inAssociatedAisle);
 		pathSegment.setDirectionEnum(inDirection);
 		pathSegment.setDomainId(inSegmentId);
 		pathSegment.setHeadPoint(inHead);
@@ -584,6 +592,16 @@ public class Facility extends LocationABC<Organization> {
 			LOGGER.error("", e);
 		}
 		inPath.addPathSegment(pathSegment);
+
+		// Link the path on the aisle as well.
+		if (inAssociatedAisle != null) {
+			inAssociatedAisle.setPathSegment(pathSegment);
+			try {
+				Aisle.DAO.store(inAssociatedAisle);
+			} catch (DaoException e) {
+				LOGGER.error("", e);
+			}
+		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -696,4 +714,91 @@ public class Facility extends LocationABC<Organization> {
 		return result;
 	}
 
+	// --------------------------------------------------------------------------
+	/**
+	 * Get/assign work instructions for a CHE that's at the listed location with the listed container IDs.
+	 * @param inChe
+	 * @param inLocationId
+	 * @param inContainerIdList
+	 * @return
+	 */
+	public final List<WorkInstruction> getWorkInstructions(final Che inChe, final String inLocationId, final List<String> inContainerIdList) {
+		List<WorkInstruction> result = new ArrayList<WorkInstruction>();
+
+		LocationABC<?> cheLocation = getSubLocationById(inLocationId);
+		Aisle aisle = cheLocation.<Aisle> getParentAtLevel(Aisle.class);
+		PathSegment pathSegment = aisle.getPathSegment();
+		Path path = pathSegment.getParent();
+		WorkArea workArea = path.getWorkArea();
+
+		// Now figure out the orders that go with these containers.
+		for (String containerId : inContainerIdList) {
+			Container container = getContainer(containerId);
+			if (container != null) {
+				// Find the container use with the latest timestamp - that's the active one.
+				Timestamp timestamp = null;
+				ContainerUse foundUse = null;
+				for (ContainerUse use : container.getUses()) {
+					if ((timestamp == null) || (use.getUseTimeStamp().after(timestamp))) {
+						timestamp = use.getUseTimeStamp();
+						foundUse = use;
+					}
+				}
+				if (foundUse != null) {
+					OrderHeader order = foundUse.getOrderHeader();
+					if (order != null) {
+						for (OrderDetail detail : order.getOrderDetails()) {
+							// Figure out if this item is on the current path.
+							Boolean onPath = false;
+							LocationABC<IDomainObject> foundLocation = null;
+							ItemMaster itemMaster = detail.getItemMaster();
+							for (Item item : itemMaster.getItems()) {
+								if (item.getItemId().equals(itemMaster.getItemId())) {
+									LocationABC location = item.getParent();
+									if (location != null) {
+										onPath = true;
+										foundLocation = location;
+									}
+								}
+							}
+
+							// The item is on the CHE's path, so add it.
+							if (onPath) {
+								WorkInstruction plannedWi = null;
+								for (WorkInstruction wi : detail.getWorkInstructions()) {
+									if (wi.getTypeEnum().equals(WorkInstructionTypeEnum.PLANNED)) {
+										plannedWi = wi;
+									}
+								}
+
+								// If there is no planned WI then create one.
+								if (plannedWi == null) {
+									plannedWi = new WorkInstruction();
+									plannedWi.setParent(detail);
+									plannedWi.setDomainId(order.getOrderId() + "." + detail.getOrderDetailId());
+									plannedWi.setTypeEnum(WorkInstructionTypeEnum.PLANNED);
+									plannedWi.setStatusEnum(WorkInstructionStatusEnum.NEW);
+									plannedWi.setAisleControllerCommand("");
+									plannedWi.setAisleControllerId("0x00000003");
+									plannedWi.setColorEnum(ColorEnum.BLUE);
+									plannedWi.setItemId(itemMaster.getItemId());
+									plannedWi.setLocationId(foundLocation.getLocationId());
+									plannedWi.setContainerId(containerId);
+									plannedWi.setQuantity(detail.getQuantity());
+									try {
+										WorkInstruction.DAO.store(plannedWi);
+									} catch (DaoException e) {
+										LOGGER.error("", e);
+									}
+								}
+								result.add(plannedWi);
+							}
+						}
+					}
+				}
+			}
+		}
+
+		return result;
+	}
 }

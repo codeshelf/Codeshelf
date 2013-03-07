@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Container.java,v 1.11 2013/03/04 04:47:27 jeffw Exp $
+ *  $Id: Container.java,v 1.12 2013/03/07 05:23:32 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -114,5 +114,17 @@ public class Container extends DomainObjectTreeABC<Facility> {
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void removeContainerUse(ContainerUse inContainerUse) {
 		uses.remove(inContainerUse);
+	}
+	
+	public final ContainerUse getContainerUse(final OrderHeader inOrderHeader) {
+		ContainerUse result = null;
+		
+		for (ContainerUse use : getUses()) {
+			if (inOrderHeader.getOrderId().equals(use.getOrderHeader().getOrderId())) {
+				result = use;
+			}
+		}
+		
+		return result;
 	}
 }
