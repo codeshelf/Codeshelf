@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeshelfNetwork.java,v 1.21 2013/03/07 12:28:10 jeffw Exp $
+ *  $Id: CodeshelfNetwork.java,v 1.22 2013/03/10 08:58:43 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -61,50 +61,50 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 		}
 	}
 
-	private static final Logger		LOGGER			= LoggerFactory.getLogger(CodeshelfNetwork.class);
+	private static final Logger			LOGGER	= LoggerFactory.getLogger(CodeshelfNetwork.class);
 
 	// The network description.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private String					description;
+	protected String					description;
 
 	// Attachment credential.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private String					credential;
+	protected String					credential;
 
 	// Active/Inactive network
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private boolean					active;
+	protected boolean					active;
 
 	@Transient
 	@Getter
 	@Setter
 	@JsonProperty
-	private boolean					connected;
+	protected boolean					connected;
 
 	// The owning facility.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	private Facility				parent;
+	protected Facility					parent;
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	@Getter
-	private Map<String, Che>				ches			= new HashMap<String, Che>();
+	protected Map<String, Che>			ches	= new HashMap<String, Che>();
 
 	// For a network this is a list of all of the devices that belong to this network.
 	@Column(nullable = false)
 	@Getter
 	@OneToMany(mappedBy = "parent")
-	private List<WirelessDeviceABC>	devices	= new ArrayList<WirelessDeviceABC>();
+	protected List<WirelessDeviceABC>	devices	= new ArrayList<WirelessDeviceABC>();
 
 	public CodeshelfNetwork() {
 		description = "";
@@ -163,7 +163,7 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 		}
 		return result;
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 */

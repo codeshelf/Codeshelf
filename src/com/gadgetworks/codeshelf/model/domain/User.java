@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: User.java,v 1.18 2013/03/04 04:47:28 jeffw Exp $
+ *  $Id: User.java,v 1.19 2013/03/10 08:58:43 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -78,7 +78,7 @@ public class User extends DomainObjectTreeABC<Organization> {
 	// The owning organization.
 	@Column(name = "parentOrganization", nullable = false)
 	@ManyToOne(optional = false)
-	private Organization		parent;
+	protected Organization		parent;
 
 	// The hash salt.
 	@Column(nullable = false)
@@ -86,7 +86,7 @@ public class User extends DomainObjectTreeABC<Organization> {
 	@Getter
 	@Setter
 	@JsonProperty
-	private String				hashSalt;
+	protected String				hashSalt;
 
 	// The hash iterations.
 	@Column(nullable = false)
@@ -94,7 +94,7 @@ public class User extends DomainObjectTreeABC<Organization> {
 	@Getter
 	@Setter
 	@JsonProperty
-	private Integer				hashIterations;
+	protected Integer				hashIterations;
 
 	// The hashed password.
 	@Column(nullable = false)
@@ -103,33 +103,33 @@ public class User extends DomainObjectTreeABC<Organization> {
 	//	@Getter
 	//	@Setter
 	@JsonProperty
-	private String				hashedPassword;
+	protected String				hashedPassword;
 
 	// Email.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private String				email;
+	protected String				email;
 
 	// Create date.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private Timestamp			created;
+	protected Timestamp			created;
 
 	// Is it active.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private Boolean				active;
+	protected Boolean				active;
 
 	// For a network this is a list of all of the control groups that belong in the set.
 	@OneToMany(mappedBy = "parent")
 	@Getter
-	private List<UserSession>	userSessions		= new ArrayList<UserSession>();
+	protected List<UserSession>	userSessions		= new ArrayList<UserSession>();
 
 	public User() {
 		email = "";

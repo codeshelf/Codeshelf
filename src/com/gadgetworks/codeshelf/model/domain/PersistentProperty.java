@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: PersistentProperty.java,v 1.15 2012/11/19 10:48:25 jeffw Exp $
+ *  $Id: PersistentProperty.java,v 1.16 2013/03/10 08:58:43 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -9,12 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.persistence.Column;
-import javax.persistence.DiscriminatorColumn;
-import javax.persistence.DiscriminatorType;
-import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
-import javax.persistence.Inheritance;
-import javax.persistence.InheritanceType;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
@@ -74,19 +69,19 @@ public class PersistentProperty extends DomainObjectTreeABC<Organization> {
 	// The owning organization.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	private Organization		parent;
+	protected Organization		parent;
 
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private String				defaultValueStr;
+	protected String			defaultValueStr;
 
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private String				currentValueStr;
+	protected String			currentValueStr;
 
 	public PersistentProperty() {
 		defaultValueStr = "";

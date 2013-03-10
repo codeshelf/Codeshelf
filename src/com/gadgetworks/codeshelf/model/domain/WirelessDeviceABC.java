@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WirelessDeviceABC.java,v 1.5 2013/03/07 12:28:10 jeffw Exp $
+ *  $Id: WirelessDeviceABC.java,v 1.6 2013/03/10 08:58:43 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -62,37 +62,37 @@ public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNet
 		}
 	}
 
-	private static final Logger		LOGGER	= LoggerFactory.getLogger(WirelessDeviceABC.class);
+	private static final Logger			LOGGER	= LoggerFactory.getLogger(WirelessDeviceABC.class);
 
 	// The owning network.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	private CodeshelfNetwork		parent;
+	protected CodeshelfNetwork			parent;
 
 	@Column(nullable = false)
 	@Getter
 	@Setter
-	private byte[]					deviceGuid;
+	protected byte[]					deviceGuid;
 
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private String					publicKey;
+	protected String					publicKey;
 
 	// The description.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private String					description;
+	protected String					description;
 
 	// The last seen battery level.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private short					lastBatteryLevel;
+	protected short						lastBatteryLevel;
 
 	@Transient
 	@Column(nullable = true)
@@ -100,19 +100,19 @@ public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNet
 	@Getter
 	@Setter
 	@JsonProperty
-	private NetworkDeviceStateEnum	networkDeviceStatus;
+	protected NetworkDeviceStateEnum	networkDeviceStatus;
 
 	@Transient
 	@Column(nullable = true)
 	@Setter
 	@JsonProperty
-	private Long					lastContactTime;
+	protected Long						lastContactTime;
 
 	// The network address last assigned to this wireless device.
 	@Transient
 	@Column(nullable = true)
 	@JsonProperty
-	private byte					networkAddress;
+	protected byte						networkAddress;
 
 	public WirelessDeviceABC() {
 		deviceGuid = new byte[NetGuid.NET_GUID_BYTES];

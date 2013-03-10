@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: PathSegment.java,v 1.24 2013/03/07 05:23:32 jeffw Exp $
+ *  $Id: PathSegment.java,v 1.25 2013/03/10 08:58:43 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -64,7 +64,7 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 	// The owning organization.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	private Path				parent;
+	protected Path				parent;
 
 	// The path description.
 	@Column(nullable = true)
@@ -72,49 +72,49 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 	@Getter
 	@Setter
 	@JsonProperty
-	private LocationABC			associatedLocation;
+	protected LocationABC		associatedLocation;
 
 	@NonNull
 	@Getter
 	@Setter
-	private Integer				segmentOrder;
+	protected Integer			segmentOrder;
 
 	@NonNull
 	@Getter
 	@Setter
-	private PathDirectionEnum	directionEnum;
+	protected PathDirectionEnum	directionEnum;
 
 	// The head position.
 	@NonNull
 	@Getter
 	@Setter
-	private PositionTypeEnum	headPosTypeEnum;
+	protected PositionTypeEnum	headPosTypeEnum;
 
 	@NonNull
 	@Getter
 	@Setter
-	private Double				headPosX;
+	protected Double			headPosX;
 
 	@NonNull
 	@Getter
 	@Setter
-	private Double				headPosY;
+	protected Double			headPosY;
 
 	// The tail position.
 	@NonNull
 	@Getter
 	@Setter
-	private PositionTypeEnum	tailPosTypeEnum;
+	protected PositionTypeEnum	tailPosTypeEnum;
 
 	@NonNull
 	@Getter
 	@Setter
-	private Double				tailPosX;
+	protected Double			tailPosX;
 
 	@NonNull
 	@Getter
 	@Setter
-	private Double				tailPosY;
+	protected Double			tailPosY;
 
 	public PathSegment() {
 

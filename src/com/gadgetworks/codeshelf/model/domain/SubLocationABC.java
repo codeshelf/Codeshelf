@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: SubLocationABC.java,v 1.2 2013/03/07 12:28:11 jeffw Exp $
+ *  $Id: SubLocationABC.java,v 1.3 2013/03/10 08:58:43 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -39,7 +39,7 @@ public abstract class SubLocationABC<P extends IDomainObject> extends LocationAB
 	// The owning location.
 	@Column(nullable = false)
 	@ManyToOne(optional = true)
-	private LocationABC	parent;
+	protected LocationABC	parent;
 
 	public SubLocationABC(final PositionTypeEnum inPosType, final Double inPosX, final double inPosY) {
 		super(inPosType, inPosX, inPosY);

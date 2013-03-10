@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Vertex.java,v 1.20 2013/03/04 04:47:27 jeffw Exp $
+ *  $Id: Vertex.java,v 1.21 2013/03/10 08:58:43 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -61,33 +61,33 @@ public class Vertex extends DomainObjectTreeABC<LocationABC> {
 	// The owning location.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	private LocationABC			parent;
+	protected LocationABC		parent;
 
 	@NonNull
 	@Getter
 	@Setter
-	private PositionTypeEnum	posTypeEnum;
+	protected PositionTypeEnum	posTypeEnum;
 
 	@NonNull
 	@Getter
 	@Setter
-	private Double				posX;
+	protected Double			posX;
 
 	@NonNull
 	@Getter
 	@Setter
-	private Double				posY;
+	protected Double			posY;
 
 	@Getter
 	@Setter
-	private Double				posZ;
+	protected Double			posZ;
 
 	// The vertex order/position (zero-based).
 	@Column(nullable = false)
 	@Setter
 	@Getter
 	@JsonProperty
-	private Integer				drawOrder;
+	protected Integer			drawOrder;
 
 	public Vertex() {
 

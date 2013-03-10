@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WorkArea.java,v 1.12 2013/03/04 04:47:27 jeffw Exp $
+ *  $Id: WorkArea.java,v 1.13 2013/03/10 08:58:43 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -59,36 +59,36 @@ public class WorkArea extends DomainObjectTreeABC<Path> {
 	// The parent facility.
 	@Column(nullable = false)
 	@OneToOne(optional = false)
-	private Path					parent;
+	protected Path					parent;
 
 	// The work area ID.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private String					workAreaId;
+	protected String				workAreaId;
 
 	// The work description.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private String					description;
+	protected String				description;
 
 	// A work area is a collection of locations.
 	@OneToMany(mappedBy = "parent")
 	@Getter
-	private List<SubLocationABC>	locations	= new ArrayList<SubLocationABC>();
+	protected List<SubLocationABC>	locations	= new ArrayList<SubLocationABC>();
 
 	// A work area will contain a set of active users (workers).
 	@OneToMany(mappedBy = "parent")
 	@Getter
-	private List<User>				users		= new ArrayList<User>();
+	protected List<User>			users		= new ArrayList<User>();
 
 	// A work area will contain a set of active users (workers).
 	@OneToMany(mappedBy = "currentWorkArea")
 	@Getter
-	private List<Che>				activeChes	= new ArrayList<Che>();
+	protected List<Che>				activeChes	= new ArrayList<Che>();
 
 	public WorkArea() {
 		workAreaId = "";

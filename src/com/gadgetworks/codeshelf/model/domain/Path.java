@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Path.java,v 1.17 2013/03/04 04:47:27 jeffw Exp $
+ *  $Id: Path.java,v 1.18 2013/03/10 08:58:43 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -69,27 +69,27 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	@ManyToOne(optional = false)
 	@Getter
 	@Setter
-	private Facility					parent;
+	protected Facility					parent;
 
 	// The path description.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private String						description;
+	protected String					description;
 
 	// The work area that goes with this path.
 	// It shouldn't be null, but there is no way to create a parent-child relation when neither can be null.
 	@OneToOne(mappedBy = "parent")
 	@Getter
 	@Setter
-	private WorkArea					workArea;
+	protected WorkArea					workArea;
 
 	// All of the path segments that belong to this path.
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "segmentOrder")
 	@Getter
-	private Map<Integer, PathSegment>	segments					= new HashMap<Integer, PathSegment>();
+	protected Map<Integer, PathSegment>	segments					= new HashMap<Integer, PathSegment>();
 
 	public Path() {
 		description = "";

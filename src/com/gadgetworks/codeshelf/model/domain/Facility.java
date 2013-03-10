@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.51 2013/03/07 12:28:10 jeffw Exp $
+ *  $Id: Facility.java,v 1.52 2013/03/10 08:58:43 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
+import com.avaje.ebean.annotation.Transactional;
 import com.gadgetworks.codeshelf.model.EdiProviderEnum;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.PathDirectionEnum;
@@ -77,51 +78,51 @@ public class Facility extends LocationABC<Organization> {
 
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	private Facility						parent;
+	protected Facility						parent;
 
 	@OneToMany(mappedBy = "parent")
 	@Getter
-	private List<Aisle>						aisles			= new ArrayList<Aisle>();
-
-	@OneToMany(mappedBy = "parent")
-	@MapKey(name = "domainId")
-	@Getter
-	private Map<String, Container>			containers		= new HashMap<String, Container>();
+	protected List<Aisle>					aisles			= new ArrayList<Aisle>();
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	@Getter
-	private Map<String, ContainerKind>		containerKinds	= new HashMap<String, ContainerKind>();
+	protected Map<String, Container>		containers		= new HashMap<String, Container>();
+
+	@OneToMany(mappedBy = "parent")
+	@MapKey(name = "domainId")
+	@Getter
+	protected Map<String, ContainerKind>	containerKinds	= new HashMap<String, ContainerKind>();
 
 	@OneToMany(mappedBy = "parent", targetEntity = DropboxService.class)
 	@Getter
-	private List<IEdiService>				ediServices		= new ArrayList<IEdiService>();
+	protected List<IEdiService>				ediServices		= new ArrayList<IEdiService>();
 
 	@OneToMany(mappedBy = "parent")
 	@Getter
-	private List<ItemMaster>				itemMasters		= new ArrayList<ItemMaster>();
+	protected List<ItemMaster>				itemMasters		= new ArrayList<ItemMaster>();
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
-	private Map<String, CodeshelfNetwork>	networks		= new HashMap<String, CodeshelfNetwork>();
+	protected Map<String, CodeshelfNetwork>	networks		= new HashMap<String, CodeshelfNetwork>();
 
 	@OneToMany(mappedBy = "parent")
 	@Getter
-	private List<OrderGroup>				orderGroups		= new ArrayList<OrderGroup>();
+	protected List<OrderGroup>				orderGroups		= new ArrayList<OrderGroup>();
 
 	@OneToMany(mappedBy = "parent")
 	@Getter
-	private List<OrderHeader>				orderHeaders	= new ArrayList<OrderHeader>();
-
-	@OneToMany(mappedBy = "parent")
-	@MapKey(name = "domainId")
-	@Getter
-	private Map<String, Path>				paths			= new HashMap<String, Path>();
+	protected List<OrderHeader>				orderHeaders	= new ArrayList<OrderHeader>();
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	@Getter
-	private Map<String, UomMaster>			uomMasters		= new HashMap<String, UomMaster>();
+	protected Map<String, Path>				paths			= new HashMap<String, Path>();
+
+	@OneToMany(mappedBy = "parent")
+	@MapKey(name = "domainId")
+	@Getter
+	protected Map<String, UomMaster>		uomMasters		= new HashMap<String, UomMaster>();
 
 	public Facility() {
 		orderHeaders = new ArrayList<OrderHeader>();
@@ -320,6 +321,7 @@ public class Facility extends LocationABC<Organization> {
 	 * @param inBaysHigh
 	 * @param inBaysLong
 	 */
+	@Transactional
 	public final void createAisle(final String inAisleId,
 		final Double inPosXMeters,
 		final Double inPosYMeters,
@@ -624,6 +626,7 @@ public class Facility extends LocationABC<Organization> {
 	// --------------------------------------------------------------------------
 	/**
 	 */
+	@Transactional
 	public final void createDefaultContainerKind() {
 		ContainerKind containerKind = createContainerKind(ContainerKind.DEFAULT_CONTAINER_KIND, 0.0, 0.0, 0.0);
 	}
@@ -631,6 +634,7 @@ public class Facility extends LocationABC<Organization> {
 	// --------------------------------------------------------------------------
 	/**
 	 */
+	@Transactional
 	public final ContainerKind createContainerKind(String inDomainId, Double inLengthMeters, Double inWidthMeters, Double inHeightMeters) {
 
 		ContainerKind result = null;
@@ -655,6 +659,7 @@ public class Facility extends LocationABC<Organization> {
 	// --------------------------------------------------------------------------
 	/**
 	 */
+	@Transactional
 	public final DropboxService createDropboxService() {
 
 		DropboxService result = null;
@@ -678,6 +683,7 @@ public class Facility extends LocationABC<Organization> {
 	// --------------------------------------------------------------------------
 	/**
 	 */
+	@Transactional
 	public final CodeshelfNetwork createNetwork(final String inNetworkName) {
 
 		CodeshelfNetwork result = null;
@@ -722,6 +728,7 @@ public class Facility extends LocationABC<Organization> {
 	 * @param inContainerIdList
 	 * @return
 	 */
+	@Transactional
 	public final List<WorkInstruction> getWorkInstructions(final Che inChe, final String inLocationId, final List<String> inContainerIdList) {
 		List<WorkInstruction> result = new ArrayList<WorkInstruction>();
 

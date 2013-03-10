@@ -1,10 +1,13 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DomainObjectABC.java,v 1.28 2013/03/04 04:47:27 jeffw Exp $
+ *  $Id: DomainObjectABC.java,v 1.29 2013/03/10 08:58:43 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.UUID;
@@ -22,6 +25,7 @@ import lombok.NonNull;
 import lombok.Setter;
 import lombok.ToString;
 
+import org.apache.commons.lang.WordUtils;
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.annotate.JsonProperty;
@@ -58,7 +62,7 @@ public abstract class DomainObjectABC implements IDomainObject {
 	@Getter
 	@Setter
 	@JsonProperty
-	private UUID				persistentId;
+	protected UUID				persistentId;
 
 	// The domain ID
 	@NonNull
@@ -66,7 +70,7 @@ public abstract class DomainObjectABC implements IDomainObject {
 	@JsonProperty
 	@Getter
 	@Setter
-	private String				domainId;
+	protected String			domainId;
 
 	// This is not an application-editable field.
 	// It's for the private use of the ORM transaction system.
@@ -75,7 +79,7 @@ public abstract class DomainObjectABC implements IDomainObject {
 	@Column(nullable = false)
 	@Getter
 	@Setter
-	private Timestamp			version;
+	protected Timestamp			version;
 
 	public DomainObjectABC() {
 		//		lastDefaultSequenceId = 0;
@@ -152,5 +156,41 @@ public abstract class DomainObjectABC implements IDomainObject {
 		Query<T> query = Ebean.createQuery(inClass);
 		//query = query.setUseCache(true);
 		return query.findList();
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * This allows us to get a domain object field value from the DAO in a way that goes around Ebean getter/setter decoration.
+	 * DO NOT CALL THIS METHOD OUTSIDE OF DAO STORE().
+	 * @param inFieldName
+	 * @return
+	 */
+	public final Object getFieldValueByName(final String inFieldName) {
+		Object result = null;
+
+		try {
+			Field field = getClass().getDeclaredField(inFieldName);
+			result = field.get(this);
+		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
+			LOGGER.error("", e);
+		}
+
+		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * This allows us to set a domain object field value from the DAO in a way that goes around Ebean getter/setter decoration.
+	 * DO NOT CALL THIS METHOD OUTSIDE OF DAO STORE().
+	 * @param inFieldName
+	 * @param inFieldValue
+	 */
+	public final void setFieldValueByName(final String inFieldName, final Object inFieldValue) {
+		try {
+			Method method = getClass().getDeclaredMethod("set" + WordUtils.capitalize(inFieldName), inFieldValue.getClass());
+			method.invoke(this, inFieldValue);
+		} catch (InvocationTargetException | NoSuchMethodException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
+			LOGGER.error("", e);
+		}
 	}
 }

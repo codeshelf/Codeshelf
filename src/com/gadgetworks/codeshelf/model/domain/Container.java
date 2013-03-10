@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Container.java,v 1.12 2013/03/07 05:23:32 jeffw Exp $
+ *  $Id: Container.java,v 1.13 2013/03/10 08:58:43 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -54,7 +54,7 @@ public class Container extends DomainObjectTreeABC<Facility> {
 		}
 	}
 
-	private static final Logger	LOGGER	= LoggerFactory.getLogger(Container.class);
+	private static final Logger		LOGGER	= LoggerFactory.getLogger(Container.class);
 
 	// The container kind.
 	@Column(nullable = false)
@@ -62,17 +62,17 @@ public class Container extends DomainObjectTreeABC<Facility> {
 	@Getter
 	@Setter
 	@JsonProperty
-	private ContainerKind		kind;
+	protected ContainerKind			kind;
 
 	// The parent facility.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	private Facility			parent;
+	protected Facility				parent;
 
 	// For a network this is a list of all of the users that belong in the set.
 	@OneToMany(mappedBy = "parent")
 	@Getter
-	private List<ContainerUse>	uses	= new ArrayList<ContainerUse>();
+	protected List<ContainerUse>	uses	= new ArrayList<ContainerUse>();
 
 	public Container() {
 
@@ -115,16 +115,16 @@ public class Container extends DomainObjectTreeABC<Facility> {
 	public final void removeContainerUse(ContainerUse inContainerUse) {
 		uses.remove(inContainerUse);
 	}
-	
+
 	public final ContainerUse getContainerUse(final OrderHeader inOrderHeader) {
 		ContainerUse result = null;
-		
+
 		for (ContainerUse use : getUses()) {
 			if (inOrderHeader.getOrderId().equals(use.getOrderHeader().getOrderId())) {
 				result = use;
 			}
 		}
-		
+
 		return result;
 	}
 }

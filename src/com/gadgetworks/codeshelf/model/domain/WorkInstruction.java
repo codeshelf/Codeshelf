@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WorkInstruction.java,v 1.11 2013/03/07 05:23:32 jeffw Exp $
+ *  $Id: WorkInstruction.java,v 1.12 2013/03/10 08:58:43 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -14,7 +14,6 @@ import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
-import javax.persistence.Transient;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -72,7 +71,7 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 	// The parent order detail item.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	private OrderDetail					parent;
+	protected OrderDetail				parent;
 
 	// Type.
 	@Column(nullable = false)
@@ -80,7 +79,7 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 	@Getter
 	@Setter
 	@JsonProperty
-	private WorkInstructionTypeEnum		typeEnum;
+	protected WorkInstructionTypeEnum	typeEnum;
 
 	// Status.
 	@Column(nullable = false)
@@ -88,42 +87,42 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 	@Getter
 	@Setter
 	@JsonProperty
-	private WorkInstructionStatusEnum	statusEnum;
+	protected WorkInstructionStatusEnum	statusEnum;
 
 	// The container.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private String						containerId;
+	protected String					containerId;
 
 	// The item.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private String						itemId;
+	protected String					itemId;
 
 	// The pick quantity.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private Integer						quantity;
+	protected Integer					quantity;
 
 	// From location.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private String						locationId;
+	protected String					locationId;
 
 	// Picker ID.
 	@Column(nullable = true)
 	@Getter
 	@Setter
 	@JsonProperty
-	private String						pickerId;
+	protected String					pickerId;
 
 	// Everything below this is transient (not persisted) and only has value when passed around at production time.
 
@@ -132,14 +131,14 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 	@Getter
 	@Setter
 	@JsonProperty
-	private String						aisleControllerId;
+	protected String					aisleControllerId;
 
 	// Aisle controller command.
 	@Column(nullable = true)
 	@Getter
 	@Setter
 	@JsonProperty
-	private String						aisleControllerCommand;
+	protected String					aisleControllerCommand;
 
 	// Color used for picking.
 	@Column(nullable = true)
@@ -147,7 +146,7 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 	@Getter
 	@Setter
 	@JsonProperty
-	private ColorEnum					colorEnum;
+	protected ColorEnum					colorEnum;
 
 	public WorkInstruction() {
 

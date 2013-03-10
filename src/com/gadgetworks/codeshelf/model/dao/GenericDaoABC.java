@@ -1,11 +1,12 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: GenericDaoABC.java,v 1.19 2013/02/27 01:17:03 jeffw Exp $
+ *  $Id: GenericDaoABC.java,v 1.20 2013/03/10 08:58:44 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -193,21 +194,39 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#store(java.lang.Object)
 	 */
 	public final void store(final T inDomainObject) throws DaoException {
+		EntityBean bean = (EntityBean) inDomainObject;
+		Set<String> changedProps = bean._ebean_getIntercept().getChangedProps();
+		Map<String, Object> changedValues = new HashMap<String, Object>();
 		try {
 			if (inDomainObject.getPersistentId() == null) {
 				Ebean.save(inDomainObject);
 				privateBroadcastAdd(inDomainObject);
 			} else {
-				EntityBean bean = (EntityBean) inDomainObject;
-				Set<String> changedProps = bean._ebean_getIntercept().getChangedProps();
+				for (String propName : changedProps) {
+					if (!propName.equals("version")) {
+						changedValues.put(propName, inDomainObject.getFieldValueByName(propName));
+					}
+				}
 				Ebean.save(inDomainObject);
 				privateBroadcastUpdate(inDomainObject, changedProps);
 			}
 		} catch (OptimisticLockException e) {
+			// We tried to save the object, but the DB version was later than ours.
+			// We saved the old, changed values above, so refresh this object, restore the values and try to save again.
 			Ebean.refresh(inDomainObject);
-			store(inDomainObject);
-			LOGGER.error("", e);
-			//throw new DaoException(e.getMessage());
+			// Restore the changed props into the saved object and re-save it.
+			for (Entry<String, Object> entry : changedValues.entrySet()) {
+				inDomainObject.setFieldValueByName(entry.getKey(), entry.getValue());
+			}
+			try {
+				// Now cause the object to seem dirty/stale, so that it gets saved.
+				//inDomainObject.setVersion(inDomainObject.getVersion());
+				Ebean.save(inDomainObject);
+			} catch (OptimisticLockException e1) {
+				// If there is another error, well, that will just go up to the application to deal with it.
+				LOGGER.error("", e1);
+				throw new DaoException("Couldn't recover from optimistic lock exception.");
+			}
 		}
 	}
 

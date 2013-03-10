@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiServiceABC.java,v 1.16 2013/03/04 04:47:27 jeffw Exp $
+ *  $Id: EdiServiceABC.java,v 1.17 2013/03/10 08:58:43 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -59,7 +59,7 @@ public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implem
 	// The owning Facility.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	private Facility					parent;
+	protected Facility					parent;
 
 	// The provider.
 	@Column(nullable = false)
@@ -67,7 +67,7 @@ public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implem
 	@Getter
 	@Setter
 	@JsonProperty
-	private EdiProviderEnum				providerEnum;
+	protected EdiProviderEnum			providerEnum;
 
 	// Service state.
 	@Column(nullable = false)
@@ -75,19 +75,19 @@ public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implem
 	@Getter
 	@Setter
 	@JsonProperty
-	private EdiServiceStateEnum			serviceStateEnum;
+	protected EdiServiceStateEnum		serviceStateEnum;
 
 	// The credentials (encoded toekns or obfuscated keys only).
 	@Column(nullable = true)
 	@Getter
 	@Setter
 	@JsonProperty
-	private String						providerCredentials;
+	protected String					providerCredentials;
 
 	// For a network this is a list of all of the control groups that belong in the set.
 	@OneToMany(mappedBy = "parent")
 	@Getter
-	private List<EdiDocumentLocator>	documentLocators	= new ArrayList<EdiDocumentLocator>();
+	protected List<EdiDocumentLocator>	documentLocators	= new ArrayList<EdiDocumentLocator>();
 
 	public EdiServiceABC() {
 
@@ -99,21 +99,21 @@ public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implem
 
 	public final void setParent(Facility inParent) {
 		parent = inParent;
-		
+
 	}
 
-//	public final Facility getParentFacility() {
-//		IDomainObject theParent = getParent();
-//		if (theParent instanceof Facility) {
-//			return (Facility) theParent;
-//		} else {
-//			return null;
-//		}
-//	}
-//
-//	public final void setParentFacility(final Facility inFacility) {
-//		setParent(inFacility);
-//	}
+	//	public final Facility getParentFacility() {
+	//		IDomainObject theParent = getParent();
+	//		if (theParent instanceof Facility) {
+	//			return (Facility) theParent;
+	//		} else {
+	//			return null;
+	//		}
+	//	}
+	//
+	//	public final void setParentFacility(final Facility inFacility) {
+	//		setParent(inFacility);
+	//	}
 
 	public final List<? extends IDomainObject> getChildren() {
 		return null; //getEdiDocuments();

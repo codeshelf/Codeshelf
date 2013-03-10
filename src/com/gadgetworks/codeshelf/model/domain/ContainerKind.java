@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ContainerKind.java,v 1.9 2013/03/04 04:47:27 jeffw Exp $
+ *  $Id: ContainerKind.java,v 1.10 2013/03/10 08:58:43 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -60,35 +60,35 @@ public class ContainerKind extends DomainObjectTreeABC<Facility> {
 	// The parent facility.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	private Facility			parent;
+	protected Facility			parent;
 
 	// The container class ID.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private String				classId;
+	protected String			classId;
 
 	// Length.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private Double				lengthMeters;
+	protected Double			lengthMeters;
 
 	// Width.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private Double				widthMeters;
+	protected Double			widthMeters;
 
 	// Height.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private Double				heightMeters;
+	protected Double			heightMeters;
 
 	public ContainerKind() {
 		classId = "";

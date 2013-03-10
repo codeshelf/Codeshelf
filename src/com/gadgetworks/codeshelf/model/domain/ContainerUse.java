@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ContainerUse.java,v 1.9 2013/03/04 04:47:28 jeffw Exp $
+ *  $Id: ContainerUse.java,v 1.10 2013/03/10 08:58:43 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -60,28 +60,28 @@ public class ContainerUse extends DomainObjectTreeABC<Container> {
 	// The container used.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	private Container			parent;
+	protected Container			parent;
 
 	// Use date.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private Timestamp			useTimeStamp;
+	protected Timestamp			useTimeStamp;
 
 	// The order where we used this container.
 	@Column(nullable = false)
 	@OneToOne(optional = true)
 	@Getter
 	@Setter
-	private OrderHeader			orderHeader;
+	protected OrderHeader		orderHeader;
 
 	// The che where we're using this container.
 	@Column(nullable = true)
 	@ManyToOne(optional = true)
 	@Getter
 	@Setter
-	private Che					currentChe;
+	protected Che				currentChe;
 
 	public ContainerUse() {
 	}

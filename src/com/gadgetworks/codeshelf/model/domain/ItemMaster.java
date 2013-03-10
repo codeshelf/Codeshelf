@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ItemMaster.java,v 1.16 2013/03/07 05:23:32 jeffw Exp $
+ *  $Id: ItemMaster.java,v 1.17 2013/03/10 08:58:43 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -12,7 +12,6 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
@@ -63,21 +62,21 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	// The parent facility.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	private Facility			parent;
+	protected Facility			parent;
 
 	// The item Id.
 	@Column(nullable = true)
 	@Getter
 	@Setter
 	@JsonProperty
-	private String				itemId;
+	protected String				itemId;
 
 	// The description.
 	@Column(nullable = true)
 	@Getter
 	@Setter
 	@JsonProperty
-	private String				description;
+	protected String				description;
 
 	// The lot handling method for this item.
 	@Column(nullable = false)
@@ -85,19 +84,19 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	@Getter
 	@Setter
 	@JsonProperty
-	private LotHandlingEnum		lotHandlingEnum;
+	protected LotHandlingEnum		lotHandlingEnum;
 
 	// The standard UoM.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	@Getter
 	@Setter
-	private UomMaster			standardUom;
+	protected UomMaster			standardUom;
 
 	// For a network this is a list of all of the users that belong in the set.
 	@OneToMany(mappedBy = "itemMaster")
 	@Getter
-	private List<Item>			items	= new ArrayList<Item>();
+	protected List<Item>			items	= new ArrayList<Item>();
 
 	public ItemMaster() {
 		lotHandlingEnum = LotHandlingEnum.FIFO;

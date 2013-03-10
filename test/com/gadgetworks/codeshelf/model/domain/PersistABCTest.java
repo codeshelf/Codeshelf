@@ -26,18 +26,6 @@ public class PersistABCTest {
 			
 		}
 
-//		@Override
-//		public void setParent(IDomainObject inParent) {
-//			// TODO Auto-generated method stub
-//			
-//		}
-
-//		@Override
-//		public List<IDomainObject> getChildren() {
-//			// TODO Auto-generated method stub
-//			return null;
-//		}
-
 		@Override
 		public String getDefaultDomainIdPrefix() {
 			// TODO Auto-generated method stub
@@ -63,18 +51,6 @@ public class PersistABCTest {
 		public void setParent(DomainObjectABC inParent) {
 
 		}
-
-//		@Override
-//		public void setParent(IDomainObject inParent) {
-//			// TODO Auto-generated method stub
-//			
-//		}
-
-//		@Override
-//		public List<IDomainObject> getChildren() {
-//			// TODO Auto-generated method stub
-//			return null;
-//		}
 
 		@Override
 		public String getDefaultDomainIdPrefix() {

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Item.java,v 1.15 2013/03/07 12:28:11 jeffw Exp $
+ *  $Id: Item.java,v 1.16 2013/03/10 08:58:43 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -60,28 +60,28 @@ public class Item extends DomainObjectTreeABC<LocationABC> {
 	@ManyToOne(optional = false)
 	@Getter
 	@Setter
-	private LocationABC			parent;
+	protected LocationABC		parent;
 
 	// The item master.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	@Getter
 	@Setter
-	private ItemMaster			itemMaster;
+	protected ItemMaster		itemMaster;
 
 	// Quantity.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private Double				quantity;
+	protected Double			quantity;
 
 	// The actual UoM.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	@Getter
 	@Setter
-	private UomMaster			uomMaster;
+	protected UomMaster			uomMaster;
 
 	public Item() {
 	}

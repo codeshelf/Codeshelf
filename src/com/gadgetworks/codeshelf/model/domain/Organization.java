@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Organization.java,v 1.29 2013/03/04 04:47:27 jeffw Exp $
+ *  $Id: Organization.java,v 1.30 2013/03/10 08:58:43 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
+import com.avaje.ebean.annotation.Transactional;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.flyweight.command.NetGuid;
@@ -73,19 +74,19 @@ public class Organization extends DomainObjectABC {
 	@Getter
 	@Setter
 	@JsonProperty
-	private String					description;
+	protected String					description;
 
 	// For a network this is a list of all of the users that belong in the set.
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	@Getter
-	private Map<String, User>		users		= new HashMap<String, User>();
+	protected Map<String, User>		users		= new HashMap<String, User>();
 
 	// For an organization this is a list of all of the facilities.
 	@OneToMany(mappedBy = "parentOrganization", fetch = FetchType.EAGER)
 	@MapKey(name = "domainId")
 	//	@Getter(lazy = false)
-	private Map<String, Facility>	facilities	= new HashMap<String, Facility>();
+	protected Map<String, Facility>	facilities	= new HashMap<String, Facility>();
 
 	public Organization() {
 		setParent(this);
@@ -151,6 +152,7 @@ public class Organization extends DomainObjectABC {
 	 * @param inPosx
 	 * @param inPosY
 	 */
+	@Transactional
 	public final void createFacility(final String inDomainId, final String inDescription, final String inPosTypeByStr, final Double inPosx, final Double inPosY) {
 
 		Facility facility = new Facility();

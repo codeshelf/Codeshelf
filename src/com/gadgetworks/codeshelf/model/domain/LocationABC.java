@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: LocationABC.java,v 1.22 2013/03/07 12:28:10 jeffw Exp $
+ *  $Id: LocationABC.java,v 1.23 2013/03/10 08:58:43 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -79,21 +79,21 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	@Getter
 	@Setter
 	@JsonProperty
-	private PositionTypeEnum			posType;
+	protected PositionTypeEnum			posType;
 
 	// The X anchor position.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private Double						posX;
+	protected Double						posX;
 
 	// The Y anchor position.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private Double						posY;
+	protected Double						posY;
 
 	// The Z anchor position.
 	@Column(nullable = true)
@@ -101,48 +101,48 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	@Setter
 	@JsonProperty
 	// Null means it's at the same nominal z coord as the parent.
-	private Double						posZ;
+	protected Double						posZ;
 
 	// The location description.
 	@Column(nullable = true)
 	@Getter
 	@Setter
 	@JsonProperty
-	private String						description;
+	protected String						description;
 
 	// Associated path segment (optional)
 	@Column(nullable = true)
 	@OneToOne(optional = true)
 	@Getter
 	@Setter
-	private PathSegment					pathSegment;
+	protected PathSegment					pathSegment;
 
 	// The owning location.
 	@Column(nullable = false)
 	@ManyToOne(optional = true)
 	@Getter
 	@Setter
-	private Organization				parentOrganization;
+	protected Organization				parentOrganization;
 
 	// All of the vertices that define the location's footprint.
 	@OneToMany(mappedBy = "parent")
 	@Getter
 	@Setter
-	private List<Vertex>				vertices	= new ArrayList<Vertex>();
+	protected List<Vertex>				vertices	= new ArrayList<Vertex>();
 
 	// The child locations.
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	@Getter
 	@Setter
-	private Map<String, SubLocationABC>	locations	= new HashMap<String, SubLocationABC>();
+	protected Map<String, SubLocationABC>	locations	= new HashMap<String, SubLocationABC>();
 
 	// The items stored in this location.
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	@Getter
 	@Setter
-	private Map<String, Item>			items		= new HashMap<String, Item>();
+	protected Map<String, Item>			items		= new HashMap<String, Item>();
 
 	public LocationABC() {
 

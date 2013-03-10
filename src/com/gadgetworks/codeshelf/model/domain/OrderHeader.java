@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderHeader.java,v 1.20 2013/03/04 04:47:27 jeffw Exp $
+ *  $Id: OrderHeader.java,v 1.21 2013/03/10 08:58:43 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -65,7 +65,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	// The parent facility.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	private Facility			parent;
+	protected Facility			parent;
 
 	// The collective order status.
 	@Column(nullable = false)
@@ -73,7 +73,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	@Getter
 	@Setter()
 	@JsonProperty
-	private OrderStatusEnum		statusEnum;
+	protected OrderStatusEnum	statusEnum;
 
 	// The pick strategy.
 	@Column(nullable = false)
@@ -81,14 +81,14 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	@Getter
 	@Setter
 	@JsonProperty
-	private PickStrategyEnum	pickStrategyEnum;
+	protected PickStrategyEnum	pickStrategyEnum;
 
 	// The parent order group.
 	@Column(nullable = true)
 	@ManyToOne(optional = true)
 	@Getter
 	@Setter
-	private OrderGroup			orderGroup;
+	protected OrderGroup			orderGroup;
 
 	// The customerID for this order.
 	// Lower numbers work first.
@@ -96,7 +96,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	@Getter
 	@Setter
 	@JsonProperty
-	private String				customerId;
+	protected String				customerId;
 
 	// Reference to the shipment for this order.
 	// Lower numbers work first.
@@ -104,7 +104,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	@Getter
 	@Setter
 	@JsonProperty
-	private String				shipmentId;
+	protected String				shipmentId;
 
 	// The work sequence.
 	// This is a sort of the actively working order groups in a facility.
@@ -113,19 +113,19 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	@Getter
 	@Setter
 	@JsonProperty
-	private Integer				workSequence;
+	protected Integer				workSequence;
 
 	// The container use for this order.
-	@Column(nullable = false)
+	@Column(nullable = true)
 	@OneToOne(optional = true)
 	@Getter
 	@Setter
-	private ContainerUse		containerUse;
+	protected ContainerUse		containerUse;
 
 	// For a network this is a list of all of the users that belong in the set.
 	@OneToMany(mappedBy = "parent")
 	@Getter
-	private List<OrderDetail>	orderDetails	= new ArrayList<OrderDetail>();
+	protected List<OrderDetail>	orderDetails	= new ArrayList<OrderDetail>();
 
 	public OrderHeader() {
 		statusEnum = OrderStatusEnum.CREATED;

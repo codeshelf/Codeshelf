@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderGroup.java,v 1.16 2013/03/04 04:47:27 jeffw Exp $
+ *  $Id: OrderGroup.java,v 1.17 2013/03/10 08:58:43 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -64,7 +64,7 @@ public class OrderGroup extends DomainObjectTreeABC<Facility> {
 	// The parent facility.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	private Facility			parent;
+	protected Facility			parent;
 
 	// The collective order status.
 	@Column(nullable = false)
@@ -72,14 +72,14 @@ public class OrderGroup extends DomainObjectTreeABC<Facility> {
 	@Getter
 	@Setter
 	@JsonProperty
-	private OrderStatusEnum		statusEnum;
+	protected OrderStatusEnum	statusEnum;
 
 	// The description.
 	@Column(nullable = true)
 	@Getter
 	@Setter
 	@JsonProperty
-	private String				description;
+	protected String			description;
 
 	// The work sequence.
 	// This is a sort of the actively working order groups in a facility.
@@ -88,12 +88,12 @@ public class OrderGroup extends DomainObjectTreeABC<Facility> {
 	@Getter
 	@Setter
 	@JsonProperty
-	private Integer				workSequence;
+	protected Integer			workSequence;
 
 	// For a network this is a list of all of the users that belong in the set.
 	@OneToMany(mappedBy = "parent")
 	@Getter
-	private List<OrderHeader>	orderHeaders					= new ArrayList<OrderHeader>();
+	protected List<OrderHeader>	orderHeaders					= new ArrayList<OrderHeader>();
 
 	public OrderGroup() {
 		statusEnum = OrderStatusEnum.CREATED;

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Point.java,v 1.4 2012/11/08 03:37:27 jeffw Exp $
+ *  $Id: Point.java,v 1.5 2013/03/10 08:58:43 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -28,21 +28,21 @@ public class Point {
 	@NonNull
 	@Getter
 	@Setter
-	private PositionTypeEnum	posTypeEnum;
+	protected PositionTypeEnum	posTypeEnum;
 
 	@NonNull
 	@Getter
 	@Setter
-	private Double				x;
+	protected Double			x;
 
 	@NonNull
 	@Getter
 	@Setter
-	private Double				y;
+	protected Double			y;
 
 	@Getter
 	@Setter
-	private Double				z;
+	protected Double			z;
 
 	public Point(final PositionTypeEnum inPosType, final Double inX, final Double inY, final Double inZ) {
 		posTypeEnum = inPosType;

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: AisleController.java,v 1.3 2013/03/04 04:47:27 jeffw Exp $
+ *  $Id: AisleController.java,v 1.4 2013/03/10 08:58:43 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -54,7 +54,7 @@ public class AisleController extends WirelessDeviceABC {
 	// The parent aisle.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	private Aisle				parentAisle;
+	protected Aisle				parentAisle;
 
 	public AisleController() {
 
