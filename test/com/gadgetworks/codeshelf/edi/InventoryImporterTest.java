@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: InventoryImporterTest.java,v 1.6 2013/03/07 05:23:32 jeffw Exp $
+ *  $Id: InventoryImporterTest.java,v 1.7 2013/03/10 20:12:11 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -10,19 +10,31 @@ import java.io.InputStreamReader;
 
 import junit.framework.Assert;
 
+import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.gadgetworks.codeshelf.application.IUtil;
+import com.gadgetworks.codeshelf.model.PositionTypeEnum;
+import com.gadgetworks.codeshelf.model.dao.Database;
+import com.gadgetworks.codeshelf.model.dao.H2SchemaManager;
+import com.gadgetworks.codeshelf.model.dao.IDatabase;
+import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.dao.MockDao;
 import com.gadgetworks.codeshelf.model.domain.Container;
 import com.gadgetworks.codeshelf.model.domain.ContainerUse;
 import com.gadgetworks.codeshelf.model.domain.Facility;
+import com.gadgetworks.codeshelf.model.domain.Facility.FacilityDao;
 import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderGroup;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.Organization;
+import com.gadgetworks.codeshelf.model.domain.Organization.OrganizationDao;
+import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
+import com.gadgetworks.codeshelf.model.domain.SubLocationABC;
+import com.gadgetworks.codeshelf.model.domain.SubLocationABC.SubLocationDao;
 import com.gadgetworks.codeshelf.model.domain.UomMaster;
 
 /**
@@ -30,6 +42,45 @@ import com.gadgetworks.codeshelf.model.domain.UomMaster;
  *
  */
 public class InventoryImporterTest {
+
+	private static IUtil			mUtil;
+	private static ISchemaManager	mSchemaManager;
+	private static IDatabase		mDatabase;
+
+	@BeforeClass
+	public final static void setup() {
+
+		try {
+			mUtil = new IUtil() {
+
+				public void setLoggingLevelsFromPrefs(Organization inOrganization, ITypedDao<PersistentProperty> inPersistentPropertyDao) {
+				}
+
+				public String getVersionString() {
+					return "";
+				}
+
+				public String getApplicationLogDirPath() {
+					return ".";
+				}
+
+				public String getApplicationDataDirPath() {
+					return ".";
+				}
+
+				public void exitSystem() {
+					System.exit(-1);
+				}
+			};
+
+			Class.forName("org.h2.Driver");
+			mSchemaManager = new H2SchemaManager(mUtil, "codeshelf", "codeshelf", "codeshelf", "CODESHELF", "localhost", "");
+			mDatabase = new Database(mSchemaManager, mUtil);
+
+			mDatabase.start();
+		} catch (ClassNotFoundException e) {
+		}
+	}
 
 	@Test
 	public void testInventoryImporterFromCsvStream() {
@@ -46,16 +97,21 @@ public class InventoryImporterTest {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		MockDao<Organization> organizationDao = new MockDao<Organization>();
+		Organization.DAO = new OrganizationDao();
 		Organization organization = new Organization();
 		organization.setDomainId("O1");
+		Organization.DAO.store(organization);
 
-		Facility.DAO = new MockDao<Facility>();
+		Facility.DAO = new FacilityDao();
 		Facility facility = new Facility();
 		facility.setParent(organization);
 		facility.setDomainId("F1");
+		facility.setPosType(PositionTypeEnum.METERS_FROM_PARENT);
+		facility.setPosX(0.0);
+		facility.setPosY(0.0);
+		Facility.DAO.store(facility);
 
-//		LocationABC.DAO = new MockDao<LocationABC>();
+		SubLocationABC.DAO = new SubLocationDao();
 
 		MockDao<OrderGroup> orderGroupDao = new MockDao<OrderGroup>();
 		MockDao<OrderHeader> orderHeaderDao = new MockDao<OrderHeader>();

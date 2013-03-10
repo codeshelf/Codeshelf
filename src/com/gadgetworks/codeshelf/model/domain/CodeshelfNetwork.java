@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeshelfNetwork.java,v 1.22 2013/03/10 08:58:43 jeffw Exp $
+ *  $Id: CodeshelfNetwork.java,v 1.23 2013/03/10 20:12:11 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -169,20 +169,21 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 	 */
 	public final Che createChe(String inDomainId, NetGuid inGuid) {
 
-		Che result = null;
+		Che result = Che.DAO.findByDomainId(this, inGuid.getHexStringNoPrefix());
 
-		result = new Che();
-		result.setParent(this);
-		result.setDomainId(inDomainId);
-		result.setDeviceNetGuid(inGuid);
+		if (result != null) {
+			result = new Che();
+			result.setParent(this);
+			result.setDomainId(inDomainId);
+			result.setDeviceNetGuid(inGuid);
 
-		this.addChe(result);
-		try {
-			Che.DAO.store(result);
-		} catch (DaoException e) {
-			LOGGER.error("", e);
+			this.addChe(result);
+			try {
+				Che.DAO.store(result);
+			} catch (DaoException e) {
+				LOGGER.error("", e);
+			}
 		}
-
 		return result;
 	}
 }

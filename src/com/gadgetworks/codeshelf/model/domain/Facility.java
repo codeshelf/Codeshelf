@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.52 2013/03/10 08:58:43 jeffw Exp $
+ *  $Id: Facility.java,v 1.53 2013/03/10 20:12:11 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -542,19 +542,22 @@ public class Facility extends LocationABC<Organization> {
 	 */
 	private void createAisleController(final Aisle inAisle, final String inGUID) {
 
-		// Get the first network in the list of networks.
-		if (networks.values().size() > 0) {
-			CodeshelfNetwork defaultNetwork = networks.values().iterator().next();
-			AisleController controller = new AisleController();
-			controller.setParent(defaultNetwork);
-			controller.setDomainId(inGUID);
-			controller.setDesc("Default controller for " + inAisle.getDomainId());
-			controller.setDeviceNetGuid(new NetGuid(inGUID));
-			controller.setParentAisle(inAisle);
-			try {
-				AisleController.DAO.store(controller);
-			} catch (DaoException e) {
-				LOGGER.error("", e);
+		CodeshelfNetwork defaultNetwork = networks.values().iterator().next();
+		AisleController controller = AisleController.DAO.findByDomainId(defaultNetwork, inGUID);
+		if (controller == null) {
+			// Get the first network in the list of networks.
+			if (networks.values().size() > 0) {
+				controller = new AisleController();
+				controller.setParent(defaultNetwork);
+				controller.setDomainId(inGUID);
+				controller.setDesc("Default controller for " + inAisle.getDomainId());
+				controller.setDeviceNetGuid(new NetGuid(inGUID));
+				controller.setParentAisle(inAisle);
+				try {
+					AisleController.DAO.store(controller);
+				} catch (DaoException e) {
+					LOGGER.error("", e);
+				}
 			}
 		}
 	}

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSession.java,v 1.25 2013/02/27 01:17:02 jeffw Exp $
+ *  $Id: WebSession.java,v 1.26 2013/03/10 20:12:11 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession;
 
@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.shiro.realm.Realm;
 import org.codehaus.jackson.JsonNode;
@@ -47,7 +48,7 @@ public class WebSession implements IWebSession, IDaoListener {
 		mWebSessionReqCmdFactory = inWebSessionReqCmdFactory;
 		mSecurityRealm = inRealm;
 		mState = WebSessionStateEnum.INVALID;
-		mPersistentCommands = new HashMap<String, IWebSessionPersistentReqCmd>();
+		mPersistentCommands = new ConcurrentHashMap<String, IWebSessionPersistentReqCmd>();
 	}
 
 	public final IWebSessionRespCmd processMessage(String inMessage) {

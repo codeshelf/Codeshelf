@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: GenericDaoABC.java,v 1.20 2013/03/10 08:58:44 jeffw Exp $
+ *  $Id: GenericDaoABC.java,v 1.21 2013/03/10 20:12:11 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.persistence.OptimisticLockException;
 import javax.persistence.PersistenceException;
@@ -34,7 +35,7 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 
 	private static final Logger	LOGGER		= LoggerFactory.getLogger(GenericDaoABC.class);
 
-	private List<IDaoListener>	mListeners	= new ArrayList<IDaoListener>();
+	private LinkedBlockingQueue<IDaoListener>	mListeners	= new LinkedBlockingQueue<IDaoListener>();
 
 	public GenericDaoABC() {
 	}
@@ -202,9 +203,11 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 				Ebean.save(inDomainObject);
 				privateBroadcastAdd(inDomainObject);
 			} else {
-				for (String propName : changedProps) {
-					if (!propName.equals("version")) {
-						changedValues.put(propName, inDomainObject.getFieldValueByName(propName));
+				if (changedProps != null) {
+					for (String propName : changedProps) {
+						if (!propName.equals("version")) {
+							changedValues.put(propName, inDomainObject.getFieldValueByName(propName));
+						}
 					}
 				}
 				Ebean.save(inDomainObject);
@@ -215,17 +218,19 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 			// We saved the old, changed values above, so refresh this object, restore the values and try to save again.
 			Ebean.refresh(inDomainObject);
 			// Restore the changed props into the saved object and re-save it.
-			for (Entry<String, Object> entry : changedValues.entrySet()) {
-				inDomainObject.setFieldValueByName(entry.getKey(), entry.getValue());
-			}
-			try {
-				// Now cause the object to seem dirty/stale, so that it gets saved.
-				//inDomainObject.setVersion(inDomainObject.getVersion());
-				Ebean.save(inDomainObject);
-			} catch (OptimisticLockException e1) {
-				// If there is another error, well, that will just go up to the application to deal with it.
-				LOGGER.error("", e1);
-				throw new DaoException("Couldn't recover from optimistic lock exception.");
+			if (changedValues.size() > 0) {
+				for (Entry<String, Object> entry : changedValues.entrySet()) {
+					inDomainObject.setFieldValueByName(entry.getKey(), entry.getValue());
+				}
+				try {
+					// Now cause the object to seem dirty/stale, so that it gets saved.
+					//inDomainObject.setVersion(inDomainObject.getVersion());
+					Ebean.save(inDomainObject);
+				} catch (OptimisticLockException e1) {
+					// If there is another error, well, that will just go up to the application to deal with it.
+					LOGGER.error("", e1);
+					throw new DaoException("Couldn't recover from optimistic lock exception.");
+				}
 			}
 		}
 	}
