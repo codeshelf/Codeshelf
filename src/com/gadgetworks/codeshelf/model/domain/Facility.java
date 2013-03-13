@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.53 2013/03/10 20:12:11 jeffw Exp $
+ *  $Id: Facility.java,v 1.54 2013/03/13 03:52:50 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -53,7 +53,7 @@ import com.google.inject.Singleton;
 
 @Entity
 @DiscriminatorValue("FACILITY")
-@CacheStrategy
+@CacheStrategy(useBeanCache = true)
 @ToString
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class Facility extends LocationABC<Organization> {
@@ -332,61 +332,66 @@ public class Facility extends LocationABC<Organization> {
 		final Integer inBaysLong,
 		final Boolean inRunInXDir,
 		final Boolean inCreateBackToBack) {
-		Aisle aisle = new Aisle(this, inAisleId, inPosXMeters, inPosYMeters);
-		try {
-			Aisle.DAO.store(aisle);
-		} catch (DaoException e) {
-			LOGGER.error("", e);
-		}
 
-		Double anchorPosX = 0.0;
-		Double anchorPosY = 0.0;
-		Double aisleBoundaryX = 0.0;
-		Double aisleBoundaryY = 0.0;
+		// Create the aisle if it doesn't already exist.
+		Aisle aisle = Aisle.DAO.findByDomainId(this, inAisleId);
+		if (aisle == null) {
+			aisle = new Aisle(this, inAisleId, inPosXMeters, inPosYMeters);
+			try {
+				Aisle.DAO.store(aisle);
+			} catch (DaoException e) {
+				LOGGER.error("", e);
+			}
 
-		int bayNum = 0;
-		for (int bayLongNum = 0; bayLongNum < inBaysLong; bayLongNum++) {
-			Double anchorPosZ = 0.0;
-			for (int bayHighNum = 0; bayHighNum < inBaysHigh; bayHighNum++) {
-				String bayId = String.format("%0" + Integer.toString(getIdDigits()) + "d", bayNum++);
-				Bay protoBay = new Bay(aisle, bayId, anchorPosX, anchorPosY, anchorPosZ);
-				try {
-					Bay.DAO.store(protoBay);
-				} catch (DaoException e) {
-					LOGGER.error("", e);
+			Double anchorPosX = 0.0;
+			Double anchorPosY = 0.0;
+			Double aisleBoundaryX = 0.0;
+			Double aisleBoundaryY = 0.0;
+
+			int bayNum = 0;
+			for (int bayLongNum = 0; bayLongNum < inBaysLong; bayLongNum++) {
+				Double anchorPosZ = 0.0;
+				for (int bayHighNum = 0; bayHighNum < inBaysHigh; bayHighNum++) {
+					String bayId = String.format("%0" + Integer.toString(getIdDigits()) + "d", bayNum++);
+					Bay protoBay = new Bay(aisle, bayId, anchorPosX, anchorPosY, anchorPosZ);
+					try {
+						Bay.DAO.store(protoBay);
+					} catch (DaoException e) {
+						LOGGER.error("", e);
+					}
+
+					// Create the bay's boundary vertices.
+					createVertices(protoBay, inProtoBayXDimMeters, inProtoBayYDimMeters);
+
+					anchorPosZ += inProtoBayZDimMeters;
 				}
 
-				// Create the bay's boundary vertices.
-				createVertices(protoBay, inProtoBayXDimMeters, inProtoBayYDimMeters);
+				if ((anchorPosX + inProtoBayXDimMeters) > aisleBoundaryX) {
+					aisleBoundaryX = anchorPosX + inProtoBayXDimMeters;
+				}
 
-				anchorPosZ += inProtoBayZDimMeters;
+				if ((anchorPosY + inProtoBayYDimMeters) > aisleBoundaryY) {
+					aisleBoundaryY = anchorPosY + inProtoBayYDimMeters;
+				}
+
+				// Prepare the anchor point for the next bay.
+				if (inRunInXDir) {
+					anchorPosX += inProtoBayXDimMeters;
+				} else {
+					anchorPosY += inProtoBayYDimMeters;
+				}
 			}
 
-			if ((anchorPosX + inProtoBayXDimMeters) > aisleBoundaryX) {
-				aisleBoundaryX = anchorPosX + inProtoBayXDimMeters;
-			}
+			// Create the aisle's boundary vertices.
+			createVertices(aisle, aisleBoundaryX, aisleBoundaryY);
 
-			if ((anchorPosY + inProtoBayYDimMeters) > aisleBoundaryY) {
-				aisleBoundaryY = anchorPosY + inProtoBayYDimMeters;
-			}
+			// Create the paths related to this aisle.
+			createAislePaths(aisle, aisleBoundaryX, aisleBoundaryY);
 
-			// Prepare the anchor point for the next bay.
-			if (inRunInXDir) {
-				anchorPosX += inProtoBayXDimMeters;
-			} else {
-				anchorPosY += inProtoBayYDimMeters;
-			}
+			// Create at least one aisle controller.
+			createAisleController(aisle, "0x00000000");
+
 		}
-
-		// Create the aisle's boundary vertices.
-		createVertices(aisle, aisleBoundaryX, aisleBoundaryY);
-
-		// Create the paths related to this aisle.
-		createAislePaths(aisle, aisleBoundaryX, aisleBoundaryY);
-
-		// Create at least one aisle controller.
-		createAisleController(aisle, "0x00000000");
-
 	}
 
 	public void logLocationDistances() {

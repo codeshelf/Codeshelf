@@ -419,7 +419,7 @@
 	<!-- Jar builder =================================================================================== -->
 	<target name="build.jar" depends="clean, build" description="Build the app as a launchable jar">
 
-		<property name="main.class" value="com.gadgetworks.codeshelf.application.Main" />
+		<property name="main.class" value="com.gadgetworks.codeshelf.application.ServerMain" />
 		<mkdir dir="${appjar.build.dir}" />
 		<mkdir dir="${appjar.build.dir}/lib" />
 
@@ -428,7 +428,7 @@
 		<property name="obfuscate.jsse.classes" value="${java.home}/../jre/lib/jsse.jar" />
 		<property name="keep.main.classes" value="		
 			-keep 
-            public class com.gadgetworks.codeshelf.application.Main {
+            public class com.gadgetworks.codeshelf.application.ServerMain {
                 public static void main(java.lang.String[]);
                 static int actionProc(int, int, int);
             }" />

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionRespCmdCheWork.java,v 1.4 2013/03/07 12:28:10 jeffw Exp $
+ *  $Id: WebSessionRespCmdCheWork.java,v 1.5 2013/03/13 03:52:50 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.web.websession.command.resp;
 
@@ -89,36 +89,9 @@ public class WebSessionRespCmdCheWork extends WebSessionRespCmdABC {
 		// Figure out the CHE's work area by its scanned location.
 		Facility facility = mChe.getParent().getParent();
 		List<WorkInstruction> wiList = facility.getWorkInstructions(mChe, mCheLocation, mContainersIds);
-		
-		// Figure out from the location and containers what items we have to pick.
-//		List<WorkInstruction> wiList = new ArrayList<WorkInstruction>();
-//		for (String containerId : mContainersIds) {
-//			wiList.add(createWi("A01.01", containerId, "ITEM1", 1, ColorEnum.BLUE));
-//		}
-//		for (String containerId : mContainersIds) {
-//			wiList.add(createWi("A01.02", containerId, "ITEM2", 1, ColorEnum.BLUE));
-//		}
-//		for (String containerId : mContainersIds) {
-//			wiList.add(createWi("A01.03", containerId, "ITEM3", 1, ColorEnum.BLUE));
-//		}
-//		for (String containerId : mContainersIds) {
-//			wiList.add(createWi("A01.04", containerId, "ITEM4", 1, ColorEnum.BLUE));
-//		}
 
 		ObjectMapper mapper = new ObjectMapper();
 		ArrayNode wiListNode = mapper.valueToTree(wiList);
 		inOutDataNode.put(IWebSessionReqCmd.RESULTS, wiListNode);
 	}
-
-//	private WorkInstruction createWi(final String inLocationId, final String inContainerId, final String inItemId, final Integer inQuantity, final ColorEnum inColor) {
-//		WorkInstruction result = new WorkInstruction();
-//		result.setAisleControllerId("0x00000003");
-//		result.setAisleControllerCommand("cmd");
-//		result.setContainerId(inContainerId);
-//		result.setQuantity(1);
-//		result.setItemId(inItemId);
-//		result.setLocationId(inLocationId);
-//		result.setColor(inColor);
-//		return result;
-//	}
 }

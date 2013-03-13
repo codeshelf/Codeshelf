@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: TcpServerInterface.java,v 1.4 2013/03/05 00:05:01 jeffw Exp $
+ *  $Id: TcpServerInterface.java,v 1.5 2013/03/13 03:52:51 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.flyweight.controller;
 
@@ -10,8 +10,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,13 +24,13 @@ import com.gadgetworks.codeshelf.web.websocket.CsWebSocketClient;
  */
 public class TcpServerInterface extends SerialInterfaceABC {
 
-	public static final int		PORT_NUM			= 45000;
-	public static final int		READ_WAIT_MILLIS	= 10;
+	public static final int				PORT_NUM			= 45000;
+	public static final int				READ_WAIT_MILLIS	= 10;
 
-	private static final Logger	LOGGER				= LoggerFactory.getLogger(CsWebSocketClient.class);
+	private static final Logger			LOGGER				= LoggerFactory.getLogger(CsWebSocketClient.class);
 
-	private ServerSocket		mServerSocket;
-	private List<Remote>		mRemotes			= new ArrayList<Remote>();
+	private ServerSocket				mServerSocket;
+	private LinkedBlockingQueue<Remote>	mRemotes			= new LinkedBlockingQueue<Remote>();
 
 	private class Remote {
 		public Socket		clientSocket;

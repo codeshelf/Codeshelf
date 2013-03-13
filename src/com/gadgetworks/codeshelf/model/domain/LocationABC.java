@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: LocationABC.java,v 1.23 2013/03/10 08:58:43 jeffw Exp $
+ *  $Id: LocationABC.java,v 1.24 2013/03/13 03:52:50 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -53,7 +53,7 @@ import com.google.inject.Singleton;
 
 @Entity
 @MappedSuperclass
-@CacheStrategy
+@CacheStrategy(useBeanCache = true)
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @Table(name = "LOCATION", schema = "CODESHELF")
 @DiscriminatorColumn(name = "DTYPE", discriminatorType = DiscriminatorType.STRING)
@@ -71,7 +71,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		}
 	}
 
-	private static final Logger			LOGGER		= LoggerFactory.getLogger(LocationABC.class);
+	private static final Logger				LOGGER		= LoggerFactory.getLogger(LocationABC.class);
 
 	// The position type (GPS, METERS, etc.).
 	@Column(nullable = false)
@@ -79,7 +79,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	@Getter
 	@Setter
 	@JsonProperty
-	protected PositionTypeEnum			posType;
+	protected PositionTypeEnum				posType;
 
 	// The X anchor position.
 	@Column(nullable = false)
@@ -122,13 +122,13 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	@ManyToOne(optional = true)
 	@Getter
 	@Setter
-	protected Organization				parentOrganization;
+	protected Organization					parentOrganization;
 
 	// All of the vertices that define the location's footprint.
 	@OneToMany(mappedBy = "parent")
 	@Getter
 	@Setter
-	protected List<Vertex>				vertices	= new ArrayList<Vertex>();
+	protected List<Vertex>					vertices	= new ArrayList<Vertex>();
 
 	// The child locations.
 	@OneToMany(mappedBy = "parent")
@@ -142,7 +142,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	@MapKey(name = "domainId")
 	@Getter
 	@Setter
-	protected Map<String, Item>			items		= new HashMap<String, Item>();
+	protected Map<String, Item>				items		= new HashMap<String, Item>();
 
 	public LocationABC() {
 
@@ -250,7 +250,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		// There's some ebean weirdness around Map caches, so we have to use a different strategy to resolve this request.
 		//return locations.get(inLocationId);
 		SubLocationABC result = null;
-		
+
 		ITypedDao<SubLocationABC> dao = SubLocationABC.DAO;
 		Map<String, Object> filterParams = new HashMap<String, Object>();
 		filterParams.put("persistentId", this.getPersistentId().toString());
@@ -259,7 +259,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		if (resultSet.size() > 0) {
 			result = resultSet.get(0);
 		}
-		
+
 		return result;
 	}
 
