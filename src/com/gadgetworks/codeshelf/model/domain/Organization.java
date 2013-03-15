@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Organization.java,v 1.30 2013/03/10 08:58:43 jeffw Exp $
+ *  $Id: Organization.java,v 1.31 2013/03/15 14:57:13 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.avaje.ebean.annotation.Transactional;
+import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.flyweight.command.NetGuid;
@@ -53,7 +54,7 @@ import com.google.inject.Singleton;
 @CacheStrategy
 @Table(name = "ORGANIZATION", schema = "CODESHELF")
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
-@ToString
+@ToString(doNotUseGetters = true)
 public class Organization extends DomainObjectABC {
 
 	@Inject
@@ -74,19 +75,19 @@ public class Organization extends DomainObjectABC {
 	@Getter
 	@Setter
 	@JsonProperty
-	protected String					description;
+	private String					description;
 
 	// For a network this is a list of all of the users that belong in the set.
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	@Getter
-	protected Map<String, User>		users		= new HashMap<String, User>();
+	private Map<String, User>		users		= new HashMap<String, User>();
 
 	// For an organization this is a list of all of the facilities.
 	@OneToMany(mappedBy = "parentOrganization", fetch = FetchType.EAGER)
 	@MapKey(name = "domainId")
 	//	@Getter(lazy = false)
-	protected Map<String, Facility>	facilities	= new HashMap<String, Facility>();
+	private Map<String, Facility>	facilities	= new HashMap<String, Facility>();
 
 	public Organization() {
 		setParent(this);
@@ -146,6 +147,27 @@ public class Organization extends DomainObjectABC {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * @param inFacilityDomainId
+	 * @return
+	 */
+	public final Facility getFacility(final String inFacilityDomainId) {
+		Facility result = null;
+
+		result = facilities.get(inFacilityDomainId);
+
+		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @return
+	 */
+	public final List<Facility> getFacilities() {
+		return new ArrayList<Facility>(facilities.values());
+	}
+
+	// --------------------------------------------------------------------------
+	/**
 	 * @param inDomainId
 	 * @param inDescription
 	 * @param inPosTypeByStr
@@ -170,7 +192,7 @@ public class Organization extends DomainObjectABC {
 		DropboxService dropboxService = facility.createDropboxService();
 
 		// Create the default network for the facility.
-		CodeshelfNetwork network = facility.createNetwork("DEFAULT");
+		CodeshelfNetwork network = facility.createNetwork(CodeshelfNetwork.DEFAULT_NETWORK_ID);
 
 		Che che1 = network.createChe("CHE1", new NetGuid("0x00000001"));
 		Che che2 = network.createChe("CHE2", new NetGuid("0x00000002"));
@@ -179,15 +201,30 @@ public class Organization extends DomainObjectABC {
 		facility.createDefaultContainerKind();
 	}
 
-	public final Facility getFacility(final String inFacilityDomainId) {
-		Facility result = null;
+	// --------------------------------------------------------------------------
+	/**
+	 * Create a user for this organization.
+	 * @return
+	 */
+	@Transactional
+	public final User createUser(final String inEmailAddr, final String inPassword) {
+		User result = null;
 
-		result = facilities.get(inFacilityDomainId);
+		// Create a user for the organization.
+		User user = new User();
+		user.setParent(this);
+		user.setDomainId(inEmailAddr);
+		user.setEmail(inEmailAddr);
+		user.setPassword(inPassword);
+		user.setActive(true);
+
+		try {
+			User.DAO.store(user);
+			result = user;
+		} catch (DaoException e) {
+			e.printStackTrace();
+		}
 
 		return result;
-	}
-
-	public final List<Facility> getFacilities() {
-		return new ArrayList<Facility>(facilities.values());
 	}
 }

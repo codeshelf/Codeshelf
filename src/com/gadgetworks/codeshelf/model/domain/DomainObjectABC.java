@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DomainObjectABC.java,v 1.29 2013/03/10 08:58:43 jeffw Exp $
+ *  $Id: DomainObjectABC.java,v 1.30 2013/03/15 14:57:13 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -9,6 +9,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.Timestamp;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -36,6 +38,7 @@ import org.slf4j.LoggerFactory;
 import com.avaje.ebean.Ebean;
 import com.avaje.ebean.Query;
 import com.avaje.ebean.annotation.CacheStrategy;
+import com.avaje.ebean.bean.EntityBean;
 
 // --------------------------------------------------------------------------
 /**
@@ -47,9 +50,9 @@ import com.avaje.ebean.annotation.CacheStrategy;
 
 @Entity
 @CacheStrategy
-@ToString
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 @JsonPropertyOrder({ "domainId", "fullDomainId" })
+@ToString(doNotUseGetters = true)
 public abstract class DomainObjectABC implements IDomainObject {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(DomainObjectABC.class);
@@ -62,7 +65,7 @@ public abstract class DomainObjectABC implements IDomainObject {
 	@Getter
 	@Setter
 	@JsonProperty
-	protected UUID				persistentId;
+	private UUID				persistentId;
 
 	// The domain ID
 	@NonNull
@@ -70,7 +73,7 @@ public abstract class DomainObjectABC implements IDomainObject {
 	@JsonProperty
 	@Getter
 	@Setter
-	protected String			domainId;
+	private String				domainId;
 
 	// This is not an application-editable field.
 	// It's for the private use of the ORM transaction system.
@@ -79,7 +82,7 @@ public abstract class DomainObjectABC implements IDomainObject {
 	@Column(nullable = false)
 	@Getter
 	@Setter
-	protected Timestamp			version;
+	private Timestamp			version;
 
 	public DomainObjectABC() {
 		//		lastDefaultSequenceId = 0;
@@ -160,6 +163,20 @@ public abstract class DomainObjectABC implements IDomainObject {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * Get all of the fields up the tree.
+	 * @param inClass
+	 * @param inFields
+	 */
+	private void addDeclaredAndInheritedFields(Class<?> inClass, Collection<Field> inFields) {
+		inFields.addAll(Arrays.asList(inClass.getDeclaredFields()));
+		Class<?> superClass = inClass.getSuperclass();
+		if (superClass != null) {
+			addDeclaredAndInheritedFields(superClass, inFields);
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
 	 * This allows us to get a domain object field value from the DAO in a way that goes around Ebean getter/setter decoration.
 	 * DO NOT CALL THIS METHOD OUTSIDE OF DAO STORE().
 	 * @param inFieldName
@@ -168,12 +185,26 @@ public abstract class DomainObjectABC implements IDomainObject {
 	public final Object getFieldValueByName(final String inFieldName) {
 		Object result = null;
 
+		((EntityBean) this)._ebean_getIntercept().setIntercepting(false);
 		try {
-			Field field = getClass().getDeclaredField(inFieldName);
-			result = field.get(this);
-		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
+			Method method = getClass().getMethod("get" + WordUtils.capitalize(inFieldName), (Class<?>[]) null);
+			result = method.invoke(this, (Object[]) null);
+		} catch (InvocationTargetException | IllegalAccessException | NoSuchMethodException | SecurityException e) {
 			LOGGER.error("", e);
 		}
+		((EntityBean) this)._ebean_getIntercept().setIntercepting(true);
+
+		//		try {
+		//			Collection<Field> fields = new ArrayList<Field>();
+		//			addDeclaredAndInheritedFields(getClass(), fields);
+		//			for (Field field : fields) {
+		//				if (field.getName().equals(inFieldName)) {
+		//					result = field.get(this);
+		//				}	
+		//			}
+		//		} catch (SecurityException | IllegalArgumentException | IllegalAccessException e) {
+		//			LOGGER.error("", e);
+		//		}
 
 		return result;
 	}

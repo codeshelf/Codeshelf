@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: LocationABC.java,v 1.24 2013/03/13 03:52:50 jeffw Exp $
+ *  $Id: LocationABC.java,v 1.25 2013/03/15 14:57:13 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -22,7 +22,6 @@ import javax.persistence.ManyToOne;
 import javax.persistence.MapKey;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.OneToMany;
-import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 import lombok.Getter;
@@ -37,6 +36,8 @@ import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
+import com.gadgetworks.codeshelf.model.TravelDirectionEnum;
+import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.google.inject.Inject;
@@ -58,7 +59,7 @@ import com.google.inject.Singleton;
 @Table(name = "LOCATION", schema = "CODESHELF")
 @DiscriminatorColumn(name = "DTYPE", discriminatorType = DiscriminatorType.STRING)
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
-@ToString
+@ToString(doNotUseGetters = true)
 public abstract class LocationABC<P extends IDomainObject> extends DomainObjectTreeABC<P> {
 
 	@Inject
@@ -71,7 +72,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		}
 	}
 
-	private static final Logger				LOGGER		= LoggerFactory.getLogger(LocationABC.class);
+	private static final Logger			LOGGER		= LoggerFactory.getLogger(LocationABC.class);
 
 	// The position type (GPS, METERS, etc.).
 	@Column(nullable = false)
@@ -79,21 +80,21 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	@Getter
 	@Setter
 	@JsonProperty
-	protected PositionTypeEnum				posType;
+	private PositionTypeEnum			posType;
 
 	// The X anchor position.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	protected Double						posX;
+	private Double						posX;
 
 	// The Y anchor position.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	protected Double						posY;
+	private Double						posY;
 
 	// The Z anchor position.
 	@Column(nullable = true)
@@ -101,48 +102,54 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	@Setter
 	@JsonProperty
 	// Null means it's at the same nominal z coord as the parent.
-	protected Double						posZ;
+	private Double						posZ;
 
 	// The location description.
 	@Column(nullable = true)
 	@Getter
 	@Setter
 	@JsonProperty
-	protected String						description;
+	private String						description;
 
 	// Associated path segment (optional)
 	@Column(nullable = true)
-	@OneToOne(optional = true)
+	@ManyToOne(optional = true)
+	@Getter
+	//	@Setter
+	private PathSegment					pathSegment;
+
+	// How far this location is from the path's origin.
+	@Column(nullable = true)
 	@Getter
 	@Setter
-	protected PathSegment					pathSegment;
+	private Double						pathDistance;
 
-	// The owning location.
+	// The owning organization.
 	@Column(nullable = false)
 	@ManyToOne(optional = true)
 	@Getter
 	@Setter
-	protected Organization					parentOrganization;
+	private Organization				parentOrganization;
 
 	// All of the vertices that define the location's footprint.
 	@OneToMany(mappedBy = "parent")
 	@Getter
 	@Setter
-	protected List<Vertex>					vertices	= new ArrayList<Vertex>();
+	private List<Vertex>				vertices	= new ArrayList<Vertex>();
 
 	// The child locations.
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	@Getter
 	@Setter
-	protected Map<String, SubLocationABC>	locations	= new HashMap<String, SubLocationABC>();
+	private Map<String, SubLocationABC>	locations	= new HashMap<String, SubLocationABC>();
 
 	// The items stored in this location.
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	@Getter
 	@Setter
-	protected Map<String, Item>				items		= new HashMap<String, Item>();
+	private Map<String, Item>			items		= new HashMap<String, Item>();
 
 	public LocationABC() {
 
@@ -291,6 +298,54 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 			}
 		}
 		return result;
+	}
+
+	public final void setPathSegment(final PathSegment inPathSegment) {
+		
+		// Set the path segment recursively for all of the child locations as well.
+		for (LocationABC location : getChildren()) {
+			location.setPathSegment(inPathSegment);
+		}
+		
+		pathSegment = inPathSegment;		
+		try {
+			LocationABC.DAO.store(this);
+		} catch (DaoException e) {
+			LOGGER.error("", e);
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Recompute the path distance of this location (and recursively for all of its child locations).
+	 */
+	public final void computePathDistance() {
+
+		// Also force a recompute for all of the child locations.
+		for (LocationABC location : getChildren()) {
+			location.computePathDistance();
+		}
+
+		// Now compute the distance for this location.
+		Double distance = 0.0;
+		PathSegment segment = this.getPathSegment();
+		if (segment != null) {
+			LocationABC anchorLocation = segment.getAnchorLocation();
+			if (segment.getParent().getTravelDirEnum().equals(TravelDirectionEnum.FORWARD)) {
+				Point locationPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, anchorLocation.getPosX() + this.getPosX(), anchorLocation.getPosY() + this.getPosY(), null);
+				distance = segment.getPathDistance() + segment.computeDistanceOfPointFromLine(segment.getStartPoint(), segment.getEndPoint(), locationPoint);
+			} else {
+				Point locationPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, anchorLocation.getPosX() + this.getPosX(), anchorLocation.getPosY() + this.getPosY(), null);
+				distance = segment.getPathDistance() + segment.computeDistanceOfPointFromLine(segment.getEndPoint(), segment.getStartPoint(), locationPoint);
+			}
+		}
+		pathDistance = distance;
+
+		try {
+			LocationABC.DAO.store(this);
+		} catch (DaoException e) {
+			LOGGER.error("", e);
+		}
 	}
 
 	public final void setPosTypeByStr(String inPosTypeStr) {

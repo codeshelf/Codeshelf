@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DomainObjectTreeABC.java,v 1.4 2013/03/04 04:47:28 jeffw Exp $
+ *  $Id: DomainObjectTreeABC.java,v 1.5 2013/03/15 14:57:13 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -26,8 +26,8 @@ import com.avaje.ebean.annotation.CacheStrategy;
 
 @Entity
 @CacheStrategy
-@ToString
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
+@ToString(doNotUseGetters = true)
 public abstract class DomainObjectTreeABC<P extends IDomainObject> extends DomainObjectABC implements IDomainObjectTree<P> {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(DomainObjectTreeABC.class);

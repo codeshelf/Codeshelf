@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ItemMaster.java,v 1.17 2013/03/10 08:58:43 jeffw Exp $
+ *  $Id: ItemMaster.java,v 1.18 2013/03/15 14:57:13 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -62,21 +62,21 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	// The parent facility.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	protected Facility			parent;
+	private Facility			parent;
 
 	// The item Id.
 	@Column(nullable = true)
 	@Getter
 	@Setter
 	@JsonProperty
-	protected String				itemId;
+	private String				itemId;
 
 	// The description.
 	@Column(nullable = true)
 	@Getter
 	@Setter
 	@JsonProperty
-	protected String				description;
+	private String				description;
 
 	// The lot handling method for this item.
 	@Column(nullable = false)
@@ -84,19 +84,19 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	@Getter
 	@Setter
 	@JsonProperty
-	protected LotHandlingEnum		lotHandlingEnum;
+	private LotHandlingEnum		lotHandlingEnum;
 
 	// The standard UoM.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	@Getter
 	@Setter
-	protected UomMaster			standardUom;
+	private UomMaster			standardUom;
 
 	// For a network this is a list of all of the users that belong in the set.
 	@OneToMany(mappedBy = "itemMaster")
 	@Getter
-	protected List<Item>			items	= new ArrayList<Item>();
+	private List<Item>			items	= new ArrayList<Item>();
 
 	public ItemMaster() {
 		lotHandlingEnum = LotHandlingEnum.FIFO;

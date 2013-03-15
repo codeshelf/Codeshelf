@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: LocationController.java,v 1.3 2013/03/10 08:58:43 jeffw Exp $
+ *  $Id: LocationController.java,v 1.4 2013/03/15 14:57:13 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -54,7 +54,7 @@ public class LocationController extends DomainObjectTreeABC<LocationABC> {
 	// The parent facility.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	protected LocationABC			parent;
+	private LocationABC			parent;
 
 	public LocationController() {
 

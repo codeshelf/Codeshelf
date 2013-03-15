@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiServiceABC.java,v 1.17 2013/03/10 08:58:43 jeffw Exp $
+ *  $Id: EdiServiceABC.java,v 1.18 2013/03/15 14:57:13 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -50,7 +50,7 @@ import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 @Table(name = "EDISERVICE", schema = "CODESHELF")
 @DiscriminatorColumn(name = "DTYPE", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorValue("ABC")
-@ToString
+@ToString(doNotUseGetters = true)
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implements IEdiService {
 
@@ -59,7 +59,7 @@ public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implem
 	// The owning Facility.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	protected Facility					parent;
+	private Facility					parent;
 
 	// The provider.
 	@Column(nullable = false)
@@ -67,7 +67,7 @@ public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implem
 	@Getter
 	@Setter
 	@JsonProperty
-	protected EdiProviderEnum			providerEnum;
+	private EdiProviderEnum				providerEnum;
 
 	// Service state.
 	@Column(nullable = false)
@@ -75,19 +75,19 @@ public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implem
 	@Getter
 	@Setter
 	@JsonProperty
-	protected EdiServiceStateEnum		serviceStateEnum;
+	private EdiServiceStateEnum			serviceStateEnum;
 
 	// The credentials (encoded toekns or obfuscated keys only).
 	@Column(nullable = true)
 	@Getter
 	@Setter
 	@JsonProperty
-	protected String					providerCredentials;
+	private String						providerCredentials;
 
 	// For a network this is a list of all of the control groups that belong in the set.
 	@OneToMany(mappedBy = "parent")
 	@Getter
-	protected List<EdiDocumentLocator>	documentLocators	= new ArrayList<EdiDocumentLocator>();
+	private List<EdiDocumentLocator>	documentLocators	= new ArrayList<EdiDocumentLocator>();
 
 	public EdiServiceABC() {
 

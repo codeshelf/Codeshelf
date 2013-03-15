@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DropboxService.java,v 1.29 2013/03/10 08:58:43 jeffw Exp $
+ *  $Id: DropboxService.java,v 1.30 2013/03/15 14:57:13 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -94,7 +94,7 @@ public class DropboxService extends EdiServiceABC {
 	@Getter(value = AccessLevel.PRIVATE)
 	@Setter(value = AccessLevel.PRIVATE)
 	@JsonProperty
-	protected String				dbCursor;
+	private String					dbCursor;
 
 	public DropboxService() {
 

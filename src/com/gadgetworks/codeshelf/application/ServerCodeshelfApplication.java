@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ServerCodeshelfApplication.java,v 1.7 2013/03/03 23:27:21 jeffw Exp $
+ *  $Id: ServerCodeshelfApplication.java,v 1.8 2013/03/15 14:57:13 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -80,23 +80,8 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		// Start the WebSocket UX handler
 		mWebSocketServer.start();
 
-		// Start the ActiveMQ test server if required.
-		//		property = mPersistentPropertyDao.findById(PersistentProperty.ACTIVEMQ_RUN);
-		//		if ((property != null) && (property.getCurrentValueAsBoolean())) {
-		//			ActiveMqManager.startBrokerService();
-		//		}
-		//
-		//		// Start the JMS message handler.
-		//		JmsHandler.startJmsHandler();
-
 		Organization organization = mOrganizationDao.findByDomainId(null, "O1");
 		if (organization != null) {
-			User user = organization.getUser("jeffw@gadgetworks.com");
-			if (user != null) {
-				if (user.isPasswordValid("blahdeeblah")) {
-					LOGGER.info("Password is valid");
-				}
-			}
 			Facility facility = mFacilityDao.findByDomainId(organization, "F1");
 			if (facility != null) {
 				facility.logLocationDistances();
@@ -106,15 +91,6 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		mEdiProcessor.startProcessor();
 
 		mHttpServer.startServer();
-
-		// Initialize the TTS system.
-		// (Do it on a thread, so we don't pause the start of the application.)
-		//		Runnable runner = new Runnable() {
-		//			public void run() {
-		//				//TextToAudioFreeTTS.initVoiceSystem();
-		//			}
-		//		};
-		//		new Thread(runner).start();
 	}
 
 	// --------------------------------------------------------------------------
@@ -127,12 +103,6 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		mHttpServer.stopServer();
 
 		mEdiProcessor.stopProcessor();
-
-		//		ActiveMqManager.stopBrokerService();
-
-		//		for (ITypedDao<IDomainObject> dao : mDaoProvider.getAllDaos()) {
-		//			dao.removeDAOListeners();
-		//		}
 
 		// Stop the web socket manager.
 		try {
@@ -215,23 +185,11 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 			organization.setDomainId(inOrganizationId);
 			try {
 				mOrganizationDao.store(organization);
+				organization.createUser("jeffw@gadgetworks.com", "blahdeeblah");
 			} catch (DaoException e) {
 				e.printStackTrace();
 			}
 
-			// Create a user for the organization.
-			User user = new User();
-			user.setParent(organization);
-			user.setDomainId("jeffw@gadgetworks.com");
-			user.setEmail("jeffw@gadgetworks.com");
-			user.setPassword("blahdeeblah");
-			user.setActive(true);
-
-			try {
-				mUserDao.store(user);
-			} catch (DaoException e) {
-				e.printStackTrace();
-			}
 		}
 	}
 }

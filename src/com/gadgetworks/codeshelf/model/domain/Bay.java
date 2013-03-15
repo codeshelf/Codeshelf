@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Bay.java,v 1.17 2013/03/04 04:47:28 jeffw Exp $
+ *  $Id: Bay.java,v 1.18 2013/03/15 14:57:13 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -35,7 +35,7 @@ import com.google.inject.Singleton;
 @DiscriminatorValue("BAY")
 @CacheStrategy
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
-@ToString
+@ToString(doNotUseGetters = true)
 public class Bay extends SubLocationABC<Aisle> {
 
 	@Inject

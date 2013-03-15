@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Point.java,v 1.5 2013/03/10 08:58:43 jeffw Exp $
+ *  $Id: Point.java,v 1.6 2013/03/15 14:57:13 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -22,27 +22,27 @@ import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 
 //@Embeddable
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
-@ToString
+@ToString(doNotUseGetters = true)
 public class Point {
 
 	@NonNull
 	@Getter
 	@Setter
-	protected PositionTypeEnum	posTypeEnum;
+	private PositionTypeEnum	posTypeEnum;
 
 	@NonNull
 	@Getter
 	@Setter
-	protected Double			x;
+	private Double				x;
 
 	@NonNull
 	@Getter
 	@Setter
-	protected Double			y;
+	private Double				y;
 
 	@Getter
 	@Setter
-	protected Double			z;
+	private Double				z;
 
 	public Point(final PositionTypeEnum inPosType, final Double inX, final Double inY, final Double inZ) {
 		posTypeEnum = inPosType;

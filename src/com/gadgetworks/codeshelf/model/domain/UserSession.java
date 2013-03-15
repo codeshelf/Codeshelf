@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: UserSession.java,v 1.14 2013/03/10 08:58:43 jeffw Exp $
+ *  $Id: UserSession.java,v 1.15 2013/03/15 14:57:13 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -61,21 +61,21 @@ public class UserSession extends DomainObjectTreeABC<User> {
 	// The owning CodeShelf network.
 	@Column(name = "parentUser", nullable = false)
 	@ManyToOne(optional = false)
-	protected User				parent;
+	private User				parent;
 
 	// Create date.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	protected Timestamp			created;
+	private Timestamp			created;
 
 	// Activity note.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	protected String			note;
+	private String				note;
 
 	public UserSession() {
 		created = new Timestamp(System.currentTimeMillis());

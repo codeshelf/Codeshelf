@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Che.java,v 1.7 2013/03/10 08:58:43 jeffw Exp $
+ *  $Id: Che.java,v 1.8 2013/03/15 14:57:13 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -42,7 +42,7 @@ import com.google.inject.Singleton;
 @CacheStrategy
 @Table(name = "CHE", schema = "CODESHELF")
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
-@ToString
+@ToString(doNotUseGetters = true)
 public class Che extends WirelessDeviceABC {
 
 	@Inject
@@ -55,26 +55,26 @@ public class Che extends WirelessDeviceABC {
 		}
 	}
 
-	private static final Logger		LOGGER	= LoggerFactory.getLogger(Che.class);
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(Che.class);
 
 	// The current work area.
 	@Column(nullable = true)
 	@ManyToOne(optional = true)
 	@Getter
 	@Setter
-	protected WorkArea				currentWorkArea;
+	private WorkArea			currentWorkArea;
 
 	// The current user.
 	@Column(nullable = true)
 	@ManyToOne(optional = true)
 	@Getter
 	@Setter
-	protected User					currentUser;
+	private User				currentUser;
 
 	// For a network this is a list of all of the users that belong in the set.
 	@OneToMany(mappedBy = "currentChe")
 	@Getter
-	protected List<ContainerUse>	uses	= new ArrayList<ContainerUse>();
+	private List<ContainerUse>	uses	= new ArrayList<ContainerUse>();
 
 	public Che() {
 

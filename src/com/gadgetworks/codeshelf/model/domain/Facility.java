@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.54 2013/03/13 03:52:50 jeffw Exp $
+ *  $Id: Facility.java,v 1.55 2013/03/15 14:57:13 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -30,7 +30,7 @@ import com.avaje.ebean.annotation.CacheStrategy;
 import com.avaje.ebean.annotation.Transactional;
 import com.gadgetworks.codeshelf.model.EdiProviderEnum;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
-import com.gadgetworks.codeshelf.model.PathDirectionEnum;
+import com.gadgetworks.codeshelf.model.TravelDirectionEnum;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
@@ -54,7 +54,7 @@ import com.google.inject.Singleton;
 @Entity
 @DiscriminatorValue("FACILITY")
 @CacheStrategy(useBeanCache = true)
-@ToString
+@ToString(doNotUseGetters = true, exclude = { "parent" })
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class Facility extends LocationABC<Organization> {
 
@@ -78,51 +78,51 @@ public class Facility extends LocationABC<Organization> {
 
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	protected Facility						parent;
+	private Facility						parent;
 
 	@OneToMany(mappedBy = "parent")
 	@Getter
-	protected List<Aisle>					aisles			= new ArrayList<Aisle>();
-
-	@OneToMany(mappedBy = "parent")
-	@MapKey(name = "domainId")
-	@Getter
-	protected Map<String, Container>		containers		= new HashMap<String, Container>();
+	private List<Aisle>						aisles			= new ArrayList<Aisle>();
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	@Getter
-	protected Map<String, ContainerKind>	containerKinds	= new HashMap<String, ContainerKind>();
+	private Map<String, Container>			containers		= new HashMap<String, Container>();
+
+	@OneToMany(mappedBy = "parent")
+	@MapKey(name = "domainId")
+	@Getter
+	private Map<String, ContainerKind>		containerKinds	= new HashMap<String, ContainerKind>();
 
 	@OneToMany(mappedBy = "parent", targetEntity = DropboxService.class)
 	@Getter
-	protected List<IEdiService>				ediServices		= new ArrayList<IEdiService>();
+	private List<IEdiService>				ediServices		= new ArrayList<IEdiService>();
 
 	@OneToMany(mappedBy = "parent")
 	@Getter
-	protected List<ItemMaster>				itemMasters		= new ArrayList<ItemMaster>();
+	private List<ItemMaster>				itemMasters		= new ArrayList<ItemMaster>();
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
-	protected Map<String, CodeshelfNetwork>	networks		= new HashMap<String, CodeshelfNetwork>();
+	private Map<String, CodeshelfNetwork>	networks		= new HashMap<String, CodeshelfNetwork>();
 
 	@OneToMany(mappedBy = "parent")
 	@Getter
-	protected List<OrderGroup>				orderGroups		= new ArrayList<OrderGroup>();
+	private List<OrderGroup>				orderGroups		= new ArrayList<OrderGroup>();
 
 	@OneToMany(mappedBy = "parent")
 	@Getter
-	protected List<OrderHeader>				orderHeaders	= new ArrayList<OrderHeader>();
-
-	@OneToMany(mappedBy = "parent")
-	@MapKey(name = "domainId")
-	@Getter
-	protected Map<String, Path>				paths			= new HashMap<String, Path>();
+	private List<OrderHeader>				orderHeaders	= new ArrayList<OrderHeader>();
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	@Getter
-	protected Map<String, UomMaster>		uomMasters		= new HashMap<String, UomMaster>();
+	private Map<String, Path>				paths			= new HashMap<String, Path>();
+
+	@OneToMany(mappedBy = "parent")
+	@MapKey(name = "domainId")
+	@Getter
+	private Map<String, UomMaster>			uomMasters		= new HashMap<String, UomMaster>();
 
 	public Facility() {
 		orderHeaders = new ArrayList<OrderHeader>();
@@ -353,15 +353,16 @@ public class Facility extends LocationABC<Organization> {
 				Double anchorPosZ = 0.0;
 				for (int bayHighNum = 0; bayHighNum < inBaysHigh; bayHighNum++) {
 					String bayId = String.format("%0" + Integer.toString(getIdDigits()) + "d", bayNum++);
-					Bay protoBay = new Bay(aisle, bayId, anchorPosX, anchorPosY, anchorPosZ);
+					Bay bay = new Bay(aisle, bayId, anchorPosX, anchorPosY, anchorPosZ);
 					try {
-						Bay.DAO.store(protoBay);
+						Bay.DAO.store(bay);
 					} catch (DaoException e) {
 						LOGGER.error("", e);
 					}
+					aisle.addLocation(bay);
 
 					// Create the bay's boundary vertices.
-					createVertices(protoBay, inProtoBayXDimMeters, inProtoBayYDimMeters);
+					createVertices(bay, inProtoBayXDimMeters, inProtoBayYDimMeters);
 
 					anchorPosZ += inProtoBayZDimMeters;
 				}
@@ -386,49 +387,47 @@ public class Facility extends LocationABC<Organization> {
 			createVertices(aisle, aisleBoundaryX, aisleBoundaryY);
 
 			// Create the paths related to this aisle.
-			createAislePaths(aisle, aisleBoundaryX, aisleBoundaryY);
+			aisle.createPaths(aisleBoundaryX, aisleBoundaryY, TravelDirectionEnum.FORWARD);
 
 			// Create at least one aisle controller.
-			createAisleController(aisle, "0x00000000");
-
-		}
-	}
-
-	public void logLocationDistances() {
-		// List out Bays by distance from initiation point.
-		Path path = paths.get(Path.DEFAULT_FACILITY_PATH_ID);
-		if (path != null) {
-			int distFromInitiationPoint = 0;
-			for (PathSegment segment : path.getSegments().values()) {
-				LocationABC location = segment.getAssociatedLocation();
-				if ((location != null) && (location instanceof Aisle)) {
-					Aisle aisle = (Aisle) location;
-					for (Bay bay : aisle.<Bay> getChildrenAtLevel(Bay.class)) {
-						// Figure out the distance of this bay from the path.
-						Point bayPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, aisle.getPosX() + bay.getPosX(), aisle.getPosY() + bay.getPosY(), null);
-						Double distance = distFromInitiationPoint + computeDistanceOfPointFromLine(segment.getTail(), segment.getHead(), bayPoint);
-
-						String distanceStr = String.format("%4.4f", distance);
-						LOGGER.info("Location: " + bay.getFullDomainId() + " is " + distanceStr + " meters from the initiation point.");
-					}
-				}
-				distFromInitiationPoint += segment.getLength();
+			CodeshelfNetwork network = networks.get(CodeshelfNetwork.DEFAULT_NETWORK_ID);
+			if (network != null) {
+				aisle.createController(network, "0x00000000");
 			}
 		}
 	}
 
-	private Double computeDistanceOfPointFromLine(final Point inLinePointA, final Point inLinePointB, final Point inFromPoint) {
-		Double result = 0.0;
+	// --------------------------------------------------------------------------
+	/**
+	 * A sample routine to show the distance of locations along a path.
+	 */
+	public final void logLocationDistances() {
+		// List out Bays by distance from initiation point.
+		Path path = paths.get(Path.DEFAULT_FACILITY_PATH_ID);
+		if (path != null) {
+//			int distFromInitiationPoint = 0;
+			for (PathSegment segment : path.getSegments()) {
+				segment.computePathDistance();
+				for (LocationABC location : segment.getLocations()) {
+					if (location instanceof Aisle) {
+						Aisle aisle = (Aisle) location;
+						aisle.computePathDistance();
+						for (Bay bay : aisle.<Bay> getChildrenAtLevel(Bay.class)) {
+							//							// Figure out the distance of this bay from the path.
+							//							Point bayPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, aisle.getPosX() + bay.getPosX(), aisle.getPosY() + bay.getPosY(), null);
+							//							Double distance = distFromInitiationPoint + segment.computeDistanceOfPointFromLine(segment.getEndPoint(), segment.getStartPoint(), bayPoint);
+							//
+							//							String distanceStr = String.format("%4.4f", distance);
+							//							LOGGER.info("Location: " + bay.getFullDomainId() + " is " + distanceStr + " meters from the initiation point.");
 
-		Double k = ((inLinePointB.getY() - inLinePointA.getY()) * (inFromPoint.getX() - inLinePointA.getX()) - (inLinePointB.getX() - inLinePointA.getX())
-				* (inFromPoint.getY() - inLinePointA.getY()))
-				/ (Math.pow(inLinePointB.getY() - inLinePointA.getY(), 2) + Math.pow(inLinePointB.getX() - inLinePointA.getX(), 2));
-		Double x4 = inFromPoint.getX() - k * (inLinePointB.getY() - inLinePointA.getY());
-		Double y4 = inFromPoint.getY() + k * (inLinePointB.getX() - inLinePointA.getX());
-
-		result = Math.sqrt(Math.pow(inLinePointA.getX() - x4, 2) + Math.pow(inLinePointA.getY() - y4, 2));
-
-		return result;
+							bay.computePathDistance();
+							LOGGER.info("Location: " + bay.getFullDomainId() + " is " + bay.getPathDistance() + " meters from the initiation point.");
+						}
+					}
+				}
+//				distFromInitiationPoint += segment.getLength();
+			}
+		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -470,147 +469,6 @@ public class Facility extends LocationABC<Organization> {
 			Vertex.DAO.store(vertex3);
 		} catch (DaoException e) {
 			LOGGER.error("", e);
-		}
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * @param inLocation
-	 * @param inXDimMeters
-	 * @param inYDimMeters
-	 */
-	private void createAislePaths(Aisle inAssociatedAisle, Double inXDimMeters, Double inYDimMeters) {
-
-		// Create the default path for this aisle.
-		Path path = paths.get(Path.DEFAULT_FACILITY_PATH_ID);
-		if (path == null) {
-			path = new Path();
-			path.setParent(this);
-			path.setDomainId(Path.DEFAULT_FACILITY_PATH_ID);
-			try {
-				Path.DAO.store(path);
-			} catch (DaoException e) {
-				LOGGER.error("", e);
-			}
-			path.createDefaultWorkArea();
-		}
-
-		// If there are already path segments then create a connecting path to the new ones.
-		Integer segmentOrder = 0;
-		PathSegment lastSegment = null;
-		if (path.getSegments().size() > 0) {
-			lastSegment = path.getPathSegment(path.getSegments().size() - 1);
-			if (lastSegment != null) {
-				segmentOrder = lastSegment.getSegmentOrder() + 1;
-			}
-		}
-
-		Point headA = null;
-		Point tailA = null;
-		Point headB = null;
-		Point tailB = null;
-		if (inXDimMeters < inYDimMeters) {
-			Double xA = inAssociatedAisle.getPosX() - inXDimMeters;
-			tailA = new Point(PositionTypeEnum.METERS_FROM_PARENT, xA, inAssociatedAisle.getPosY(), null);
-			headA = new Point(PositionTypeEnum.METERS_FROM_PARENT, xA, inAssociatedAisle.getPosY() + inYDimMeters, null);
-
-			Double xB = inAssociatedAisle.getPosX() + inXDimMeters * 2.0;
-			headB = new Point(PositionTypeEnum.METERS_FROM_PARENT, xB, inAssociatedAisle.getPosY(), null);
-			tailB = new Point(PositionTypeEnum.METERS_FROM_PARENT, xB, inAssociatedAisle.getPosY() + inYDimMeters, null);
-		} else {
-			Double yA = inAssociatedAisle.getPosY() - inYDimMeters;
-			tailA = new Point(PositionTypeEnum.METERS_FROM_PARENT, inAssociatedAisle.getPosX(), yA, null);
-			headA = new Point(PositionTypeEnum.METERS_FROM_PARENT, inAssociatedAisle.getPosX() + inYDimMeters, yA, null);
-
-			Double yB = inAssociatedAisle.getPosY() + inYDimMeters * 2.0;
-			headB = new Point(PositionTypeEnum.METERS_FROM_PARENT, inAssociatedAisle.getPosX(), yB, null);
-			tailB = new Point(PositionTypeEnum.METERS_FROM_PARENT, inAssociatedAisle.getPosX() + inYDimMeters, yB, null);
-		}
-
-		String baseSegmentId = inAssociatedAisle.getDomainId() + "." + PathSegment.DOMAIN_PREFIX;
-		// Now connect it to the last aisle's path segments.
-		if (lastSegment != null) {
-			createPathSegment(baseSegmentId + "D", null, PathDirectionEnum.HEAD, path, segmentOrder++, tailA, lastSegment.getHead());
-		}
-		// Create the "A" side path.
-		createPathSegment(baseSegmentId + "A", inAssociatedAisle, PathDirectionEnum.HEAD, path, segmentOrder++, headA, tailA);
-		// Create a connector path.
-		createPathSegment(baseSegmentId + "C", null, PathDirectionEnum.HEAD, path, segmentOrder++, tailB, headA);
-		// Create the "B" side path.
-		createPathSegment(baseSegmentId + "B", inAssociatedAisle, PathDirectionEnum.HEAD, path, segmentOrder++, headB, tailB);
-
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * @param inAisle
-	 */
-	private void createAisleController(final Aisle inAisle, final String inGUID) {
-
-		CodeshelfNetwork defaultNetwork = networks.values().iterator().next();
-		AisleController controller = AisleController.DAO.findByDomainId(defaultNetwork, inGUID);
-		if (controller == null) {
-			// Get the first network in the list of networks.
-			if (networks.values().size() > 0) {
-				controller = new AisleController();
-				controller.setParent(defaultNetwork);
-				controller.setDomainId(inGUID);
-				controller.setDesc("Default controller for " + inAisle.getDomainId());
-				controller.setDeviceNetGuid(new NetGuid(inGUID));
-				controller.setParentAisle(inAisle);
-				try {
-					AisleController.DAO.store(controller);
-				} catch (DaoException e) {
-					LOGGER.error("", e);
-				}
-			}
-		}
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * Create a path segment for the aisle.
-	 * PathSegments can associate with any location, but we limit it to aisles for now.
-	 * @param inSegmentId
-	 * @param inAssociatedAisle
-	 * @param inDirection
-	 * @param inPath
-	 * @param inSegmentOrder
-	 * @param inHead
-	 * @param inTail
-	 */
-	private void createPathSegment(final String inSegmentId,
-		final Aisle inAssociatedAisle,
-		final PathDirectionEnum inDirection,
-		final Path inPath,
-		final Integer inSegmentOrder,
-		final Point inHead,
-		final Point inTail) {
-
-		// The path segment goes along the longest segment of the aisle.
-		PathSegment pathSegment = new PathSegment();
-		pathSegment.setParent(inPath);
-		pathSegment.setSegmentOrder(inSegmentOrder);
-		pathSegment.setAssociatedLocation(inAssociatedAisle);
-		pathSegment.setDirectionEnum(inDirection);
-		pathSegment.setDomainId(inSegmentId);
-		pathSegment.setHeadPoint(inHead);
-		pathSegment.setTailPoint(inTail);
-		try {
-			PathSegment.DAO.store(pathSegment);
-		} catch (DaoException e) {
-			LOGGER.error("", e);
-		}
-		inPath.addPathSegment(pathSegment);
-
-		// Link the path on the aisle as well.
-		if (inAssociatedAisle != null) {
-			inAssociatedAisle.setPathSegment(pathSegment);
-			try {
-				Aisle.DAO.store(inAssociatedAisle);
-			} catch (DaoException e) {
-				LOGGER.error("", e);
-			}
 		}
 	}
 
@@ -746,74 +604,82 @@ public class Facility extends LocationABC<Organization> {
 		Path path = pathSegment.getParent();
 		WorkArea workArea = path.getWorkArea();
 
-		// Now figure out the orders that go with these containers.
-		for (String containerId : inContainerIdList) {
-			Container container = getContainer(containerId);
-			if (container != null) {
-				// Find the container use with the latest timestamp - that's the active one.
-				Timestamp timestamp = null;
-				ContainerUse foundUse = null;
-				for (ContainerUse use : container.getUses()) {
-					if ((timestamp == null) || (use.getUseTimeStamp().after(timestamp))) {
-						timestamp = use.getUseTimeStamp();
-						foundUse = use;
+		if (path != null) {
+			// Now figure out the orders that go with these containers.
+			for (String containerId : inContainerIdList) {
+				Container container = getContainer(containerId);
+				if (container != null) {
+					// Find the container use with the latest timestamp - that's the active one.
+					Timestamp timestamp = null;
+					ContainerUse foundUse = null;
+					for (ContainerUse use : container.getUses()) {
+						if ((timestamp == null) || (use.getUseTimeStamp().after(timestamp))) {
+							timestamp = use.getUseTimeStamp();
+							foundUse = use;
+						}
 					}
-				}
-				if (foundUse != null) {
-					OrderHeader order = foundUse.getOrderHeader();
-					if (order != null) {
-						for (OrderDetail detail : order.getOrderDetails()) {
-							// Figure out if this item is on the current path.
-							Boolean onPath = false;
-							LocationABC<IDomainObject> foundLocation = null;
-							ItemMaster itemMaster = detail.getItemMaster();
-							for (Item item : itemMaster.getItems()) {
-								if (item.getItemId().equals(itemMaster.getItemId())) {
-									LocationABC location = item.getParent();
-									if (location != null) {
-										onPath = true;
-										foundLocation = location;
-									}
-								}
-							}
+					if (foundUse != null) {
+						OrderHeader order = foundUse.getOrderHeader();
+						if (order != null) {
+							for (OrderDetail detail : order.getOrderDetails()) {
+								LocationABC<IDomainObject> foundLocation = null;
+								ItemMaster itemMaster = detail.getItemMaster();
 
-							// The item is on the CHE's path, so add it.
-							if (onPath) {
-								WorkInstruction plannedWi = null;
-								for (WorkInstruction wi : detail.getWorkInstructions()) {
-									if (wi.getTypeEnum().equals(WorkInstructionTypeEnum.PLANNED)) {
-										plannedWi = wi;
+								// Figure out if there are any items are on the current path.
+								// (We just take the first one we find, because items slotted on the same path should be close together.)
+								for (Item item : itemMaster.getItems()) {
+									if (item.getItemId().equals(itemMaster.getItemId())) {
+										LocationABC location = item.getParent();
+										if (path.isLocationOnPath(location)) {
+											foundLocation = location;
+											break;
+										}
 									}
 								}
 
-								// If there is no planned WI then create one.
-								if (plannedWi == null) {
-									plannedWi = new WorkInstruction();
-									plannedWi.setParent(detail);
-									plannedWi.setDomainId(order.getOrderId() + "." + detail.getOrderDetailId());
-									plannedWi.setTypeEnum(WorkInstructionTypeEnum.PLANNED);
-									plannedWi.setStatusEnum(WorkInstructionStatusEnum.NEW);
-									plannedWi.setAisleControllerCommand("");
-									plannedWi.setAisleControllerId("0x00000003");
-									plannedWi.setColorEnum(ColorEnum.BLUE);
-									plannedWi.setItemId(itemMaster.getItemId());
-									plannedWi.setLocationId(foundLocation.getLocationId());
-									plannedWi.setContainerId(containerId);
-									plannedWi.setQuantity(detail.getQuantity());
-									try {
-										WorkInstruction.DAO.store(plannedWi);
-									} catch (DaoException e) {
-										LOGGER.error("", e);
+								// The item is on the CHE's path, so add it.
+								if (foundLocation != null) {
+									WorkInstruction plannedWi = null;
+									for (WorkInstruction wi : detail.getWorkInstructions()) {
+										if (wi.getTypeEnum().equals(WorkInstructionTypeEnum.PLANNED)) {
+											plannedWi = wi;
+											break;
+										}
 									}
+
+									// If there is no planned WI then create one.
+									if (plannedWi == null) {
+										plannedWi = new WorkInstruction();
+										plannedWi.setParent(detail);
+										plannedWi.setDomainId(order.getOrderId() + "." + detail.getOrderDetailId());
+										plannedWi.setTypeEnum(WorkInstructionTypeEnum.PLANNED);
+										plannedWi.setStatusEnum(WorkInstructionStatusEnum.NEW);
+										plannedWi.setAisleControllerCommand("");
+										plannedWi.setAisleControllerId("0x00000003");
+										plannedWi.setColorEnum(ColorEnum.BLUE);
+										plannedWi.setItemId(itemMaster.getItemId());
+										plannedWi.setLocationId(foundLocation.getLocationId());
+										plannedWi.setContainerId(containerId);
+										plannedWi.setQuantity(detail.getQuantity());
+										try {
+											WorkInstruction.DAO.store(plannedWi);
+										} catch (DaoException e) {
+											LOGGER.error("", e);
+										}
+									}
+									result.add(plannedWi);
 								}
-								result.add(plannedWi);
 							}
 						}
 					}
 				}
 			}
-		}
 
+			// If we found WIs then sort them by they distance from the named location (closest first).
+			if (result.size() > 0) {
+				path.sortWisByDistance(result);
+			}
+		}
 		return result;
 	}
 }

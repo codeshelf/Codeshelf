@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderDetail.java,v 1.17 2013/03/10 08:58:43 jeffw Exp $
+ *  $Id: OrderDetail.java,v 1.18 2013/03/15 14:57:13 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -64,7 +64,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	// The owning order header.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	protected OrderHeader			parent;
+	private OrderHeader				parent;
 
 	// The collective order status.
 	@Column(nullable = false)
@@ -72,47 +72,47 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	@Getter
 	@Setter
 	@JsonProperty
-	protected OrderStatusEnum		statusEnum;
+	private OrderStatusEnum			statusEnum;
 
 	// The item master.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	@Getter
 	@Setter
-	protected ItemMaster			itemMaster;
+	private ItemMaster				itemMaster;
 
 	// The description.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	protected String				description;
+	private String					description;
 
 	// The quantity.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	protected Integer				quantity;
+	private Integer					quantity;
 
 	// The UoM.
 	@Column(nullable = false)
 	@OneToOne
 	@Getter
 	@Setter
-	protected UomMaster				uomMaster;
+	private UomMaster				uomMaster;
 
 	// Order date.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	protected Timestamp				orderDate;
+	private Timestamp				orderDate;
 
 	// A work area will contain a set of active users (workers).
 	@OneToMany(mappedBy = "parent")
 	@Getter
-	protected List<WorkInstruction>	workInstructions	= new ArrayList<WorkInstruction>();
+	private List<WorkInstruction>	workInstructions	= new ArrayList<WorkInstruction>();
 
 	public OrderDetail() {
 	}

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeshelfNetwork.java,v 1.24 2013/03/13 03:52:50 jeffw Exp $
+ *  $Id: CodeshelfNetwork.java,v 1.25 2013/03/15 14:57:13 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -61,50 +61,52 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 		}
 	}
 
-	private static final Logger			LOGGER	= LoggerFactory.getLogger(CodeshelfNetwork.class);
+	public static final String		DEFAULT_NETWORK_ID	= "DEFAULT";
+
+	private static final Logger		LOGGER				= LoggerFactory.getLogger(CodeshelfNetwork.class);
 
 	// The network description.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	protected String					description;
+	private String					description;
 
 	// Attachment credential.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	protected String					credential;
+	private String					credential;
 
 	// Active/Inactive network
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	protected boolean					active;
+	private boolean					active;
 
 	@Transient
 	@Getter
 	@Setter
 	@JsonProperty
-	protected boolean					connected;
+	private boolean					connected;
 
 	// The owning facility.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	protected Facility					parent;
+	private Facility				parent;
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	@Getter
-	protected Map<String, Che>			ches	= new HashMap<String, Che>();
+	private Map<String, Che>		ches				= new HashMap<String, Che>();
 
 	// For a network this is a list of all of the devices that belong to this network.
 	@Column(nullable = false)
 	@Getter
 	@OneToMany(mappedBy = "parent")
-	protected List<WirelessDeviceABC>	devices	= new ArrayList<WirelessDeviceABC>();
+	private List<WirelessDeviceABC>	devices				= new ArrayList<WirelessDeviceABC>();
 
 	public CodeshelfNetwork() {
 		description = "";

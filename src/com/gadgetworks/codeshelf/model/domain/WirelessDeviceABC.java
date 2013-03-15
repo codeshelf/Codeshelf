@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WirelessDeviceABC.java,v 1.6 2013/03/10 08:58:43 jeffw Exp $
+ *  $Id: WirelessDeviceABC.java,v 1.7 2013/03/15 14:57:13 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -46,7 +46,7 @@ import com.google.inject.Singleton;
 @Entity
 @CacheStrategy
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
-@ToString
+@ToString(doNotUseGetters = true)
 public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNetwork> {
 
 	public static final int						MAC_ADDR_BYTES		= 8;
@@ -62,37 +62,37 @@ public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNet
 		}
 	}
 
-	private static final Logger			LOGGER	= LoggerFactory.getLogger(WirelessDeviceABC.class);
+	private static final Logger		LOGGER	= LoggerFactory.getLogger(WirelessDeviceABC.class);
 
 	// The owning network.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	protected CodeshelfNetwork			parent;
+	private CodeshelfNetwork		parent;
 
 	@Column(nullable = false)
 	@Getter
 	@Setter
-	protected byte[]					deviceGuid;
+	private byte[]					deviceGuid;
 
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	protected String					publicKey;
+	private String					publicKey;
 
 	// The description.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	protected String					description;
+	private String					description;
 
 	// The last seen battery level.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	protected short						lastBatteryLevel;
+	private short					lastBatteryLevel;
 
 	@Transient
 	@Column(nullable = true)
@@ -100,19 +100,19 @@ public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNet
 	@Getter
 	@Setter
 	@JsonProperty
-	protected NetworkDeviceStateEnum	networkDeviceStatus;
+	private NetworkDeviceStateEnum	networkDeviceStatus;
 
 	@Transient
 	@Column(nullable = true)
 	@Setter
 	@JsonProperty
-	protected Long						lastContactTime;
+	private Long					lastContactTime;
 
 	// The network address last assigned to this wireless device.
 	@Transient
 	@Column(nullable = true)
 	@JsonProperty
-	protected byte						networkAddress;
+	private byte					networkAddress;
 
 	public WirelessDeviceABC() {
 		deviceGuid = new byte[NetGuid.NET_GUID_BYTES];

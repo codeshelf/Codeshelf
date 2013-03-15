@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Container.java,v 1.13 2013/03/10 08:58:43 jeffw Exp $
+ *  $Id: Container.java,v 1.14 2013/03/15 14:57:13 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -54,7 +54,7 @@ public class Container extends DomainObjectTreeABC<Facility> {
 		}
 	}
 
-	private static final Logger		LOGGER	= LoggerFactory.getLogger(Container.class);
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(Container.class);
 
 	// The container kind.
 	@Column(nullable = false)
@@ -62,17 +62,17 @@ public class Container extends DomainObjectTreeABC<Facility> {
 	@Getter
 	@Setter
 	@JsonProperty
-	protected ContainerKind			kind;
+	private ContainerKind		kind;
 
 	// The parent facility.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	protected Facility				parent;
+	private Facility			parent;
 
 	// For a network this is a list of all of the users that belong in the set.
 	@OneToMany(mappedBy = "parent")
 	@Getter
-	protected List<ContainerUse>	uses	= new ArrayList<ContainerUse>();
+	private List<ContainerUse>	uses	= new ArrayList<ContainerUse>();
 
 	public Container() {
 

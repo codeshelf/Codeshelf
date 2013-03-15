@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: SubLocationABC.java,v 1.3 2013/03/10 08:58:43 jeffw Exp $
+ *  $Id: SubLocationABC.java,v 1.4 2013/03/15 14:57:13 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -9,6 +9,8 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
 import javax.persistence.MappedSuperclass;
+
+import lombok.ToString;
 
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
@@ -24,6 +26,7 @@ import com.google.inject.Singleton;
 @MappedSuperclass
 @CacheStrategy
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
+@ToString(doNotUseGetters = true)
 public abstract class SubLocationABC<P extends IDomainObject> extends LocationABC<P> {
 
 	@Inject
@@ -39,7 +42,7 @@ public abstract class SubLocationABC<P extends IDomainObject> extends LocationAB
 	// The owning location.
 	@Column(nullable = false)
 	@ManyToOne(optional = true)
-	protected LocationABC	parent;
+	private LocationABC	parent;
 
 	public SubLocationABC(final PositionTypeEnum inPosType, final Double inPosX, final double inPosY) {
 		super(inPosType, inPosX, inPosY);

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiDocumentLocator.java,v 1.17 2013/03/10 08:58:43 jeffw Exp $
+ *  $Id: EdiDocumentLocator.java,v 1.18 2013/03/15 14:57:13 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -63,7 +63,7 @@ public class EdiDocumentLocator extends DomainObjectTreeABC<DropboxService> {
 	// We prefer to use the abstract class here, but it's not currently possible with Ebean.
 	@Column(nullable = false)
 	@ManyToOne(optional = false, fetch = FetchType.LAZY)
-	protected DropboxService		parent;
+	private DropboxService			parent;
 
 	// Document Path
 	@Column(nullable = false)
@@ -71,7 +71,7 @@ public class EdiDocumentLocator extends DomainObjectTreeABC<DropboxService> {
 	@Getter
 	@Setter
 	@JsonProperty
-	protected String				documentPath;
+	private String					documentPath;
 
 	// Document Name
 	@Column(nullable = true)
@@ -79,21 +79,21 @@ public class EdiDocumentLocator extends DomainObjectTreeABC<DropboxService> {
 	@Getter
 	@Setter
 	@JsonProperty
-	protected String				documentName;
+	private String					documentName;
 
 	// Received date.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	protected Timestamp				received;
+	private Timestamp				received;
 
 	// Process date.
 	@Column(nullable = true)
 	@Getter
 	@Setter
 	@JsonProperty
-	protected Timestamp				processed;
+	private Timestamp				processed;
 
 	// Document state.
 	@Column(nullable = false)
@@ -101,7 +101,7 @@ public class EdiDocumentLocator extends DomainObjectTreeABC<DropboxService> {
 	@Getter
 	@Setter
 	@JsonProperty
-	protected EdiDocumentStatusEnum	documentStateEnum;
+	private EdiDocumentStatusEnum	documentStateEnum;
 
 	public EdiDocumentLocator() {
 

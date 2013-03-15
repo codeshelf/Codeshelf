@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: SchemaManagerABC.java,v 1.15 2013/03/07 05:23:32 jeffw Exp $
+ *  $Id: SchemaManagerABC.java,v 1.16 2013/03/15 14:57:13 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -453,7 +453,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		result &= linkToParentTable("PATH", "PARENT", "LOCATION");
 
 		result &= linkToParentTable("PATHSEGMENT", "PARENT", "PATH");
-		result &= linkToParentTable("PATHSEGMENT", "ASSOCIATEDLOCATION", "LOCATION");
+		result &= linkToParentTable("PATHSEGMENT", "ANCHORLOCATION", "LOCATION");
 
 		result &= linkToParentTable("PERSISTENTPROPERTY", "PARENT", "ORGANIZATION");
 
@@ -487,7 +487,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 					+ "PUBLICKEY VARCHAR(16) NOT NULL, " //
 					+ "LASTBATTERYLEVEL SMALLINT DEFAULT 0 NOT NULL, " //
 					+ "SERIALBUSPOSITION INT DEFAULT 0, " //
-					+ "PARENTAISLE_PERSISTENTID " + UUID_TYPE + " "// NOT NULL, " //
+					+ "PARENTAISLE_PERSISTENTID " + UUID_TYPE + " "//
 		);
 
 		// Che
@@ -572,10 +572,10 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 					+ "POSTYPE VARCHAR(64) NOT NULL, " //
 					+ "POSX DOUBLE PRECISION NOT NULL, " //
 					+ "POSY DOUBLE PRECISION NOT NULL, " //
-					+ "POSZ DOUBLE PRECISION, " // NOT NULL, " //
-					+ "DESCRIPTION VARCHAR(64), "// NOT NULL, " //
+					+ "POSZ DOUBLE PRECISION, " + "DESCRIPTION VARCHAR(64), "//
 					+ "PATHSEGMENT_PERSISTENTID " + UUID_TYPE + ", " //
-					+ "PARENTORGANIZATION_PERSISTENTID " + UUID_TYPE + " "// NOT NULL, " //
+					+ "PATHDISTANCE DOUBLE PRECISION, " //
+					+ "PARENTORGANIZATION_PERSISTENTID " + UUID_TYPE + " "//
 		);
 
 		// LocationController
@@ -612,26 +612,25 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		);
 
 		// Organization - this is the top-level object that owns all other objects.
-		result &= createOrganizationTable( //
-		"DESCRIPTION VARCHAR(64) NOT NULL " //
+		result &= createOrganizationTable("DESCRIPTION VARCHAR(64) NOT NULL " //
 		);
 
 		// Path
 		result &= createTable("PATH", //
-			"DESCRIPTION VARCHAR(64) NOT NULL " //
-		);
+			"DESCRIPTION VARCHAR(64) NOT NULL, " //
+					+ "TRAVELDIRENUM VARCHAR(16) NOT NULL, " //
+					+ "LENGTH DOUBLE PRECISION ");
 
 		// PathSegment
 		result &= createTable("PATHSEGMENT", //
-			"ASSOCIATEDLOCATION_PERSISTENTID " + UUID_TYPE + ", " //
-					+ "DIRECTIONENUM VARCHAR(16) NOT NULL, " //
-					+ "SEGMENTORDER INTEGER NOT NULL, " //
-					+ "HEADPOSTYPEENUM VARCHAR(16) NOT NULL, " //
-					+ "HEADPOSX DOUBLE PRECISION NOT NULL, " //
-					+ "HEADPOSY DOUBLE PRECISION NOT NULL, " //
-					+ "TAILPOSTYPEENUM VARCHAR(16) NOT NULL, " //
-					+ "TAILPOSX DOUBLE PRECISION NOT NULL, " //
-					+ "TAILPOSY DOUBLE PRECISION NOT NULL " //
+			"SEGMENTORDER INTEGER NOT NULL, " //
+					+ "POSTYPEENUM VARCHAR(16) NOT NULL, " //
+					+ "STARTPOSX DOUBLE PRECISION NOT NULL, " //
+					+ "STARTPOSY DOUBLE PRECISION NOT NULL, " //
+					+ "ENDPOSX DOUBLE PRECISION NOT NULL, " //
+					+ "ENDPOSY DOUBLE PRECISION NOT NULL, " //
+					+ "PATHDISTANCE DOUBLE PRECISION, " //
+					+ "ANCHORLOCATION_PERSISTENTID " + UUID_TYPE //
 		);
 
 		// PersistentProperty

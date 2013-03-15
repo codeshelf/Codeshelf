@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: IDomainObject.java,v 1.17 2013/03/10 08:58:43 jeffw Exp $
+ *  $Id: IDomainObject.java,v 1.18 2013/03/15 14:57:13 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -63,13 +63,13 @@ public interface IDomainObject {
 	 * @param inPersistentId
 	 */
 	void setPersistentId(UUID inPersistentId);
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * @return
 	 */
 	Timestamp getVersion();
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inVersion
@@ -82,7 +82,7 @@ public interface IDomainObject {
 	 * @return
 	 */
 	<T extends IDomainObject> ITypedDao<T> getDao();
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * This allows us to get a domain object field value from the DAO in a way that goes around Ebean getter/setter decoration.

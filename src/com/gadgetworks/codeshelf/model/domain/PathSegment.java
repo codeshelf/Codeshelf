@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: PathSegment.java,v 1.26 2013/03/13 03:52:50 jeffw Exp $
+ *  $Id: PathSegment.java,v 1.27 2013/03/15 14:57:13 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -11,22 +11,23 @@ import java.util.List;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
-import javax.persistence.OneToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
+import lombok.ToString;
 
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
-import org.codehaus.jackson.annotate.JsonProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
-import com.gadgetworks.codeshelf.model.PathDirectionEnum;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
+import com.gadgetworks.codeshelf.model.TravelDirectionEnum;
+import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.google.inject.Inject;
@@ -45,6 +46,7 @@ import com.google.inject.Singleton;
 @Table(name = "PATHSEGMENT", schema = "CODESHELF")
 @CacheStrategy(useBeanCache = true)
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
+@ToString(doNotUseGetters = true, exclude = { "parent" })
 public class PathSegment extends DomainObjectTreeABC<Path> {
 
 	@Inject
@@ -64,77 +66,67 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 	// The owning organization.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	protected Path				parent;
+	private Path				parent;
 
-	// The path description.
+	// The order of this path segment in the path (from the tail/origin).
+	@NonNull
+	@Getter
+	@Setter
+	private Integer				segmentOrder;
+
+	// The positioning type.
+	@NonNull
+	@Getter
+	@Setter
+	private PositionTypeEnum	posTypeEnum;
+
+	@NonNull
+	@Getter
+	@Setter
+	private Double				startPosX;
+
+	@NonNull
+	@Getter
+	@Setter
+	private Double				startPosY;
+
+	@NonNull
+	@Getter
+	@Setter
+	private Double				endPosX;
+
+	@NonNull
+	@Getter
+	@Setter
+	private Double				endPosY;
+
+	@Setter
+	@Getter
+	private Double				pathDistance;
+
+	@Column(nullable = false)
+	@ManyToOne(optional = false)
+	@NonNull
+	@Getter
+	@Setter
+	private LocationABC			anchorLocation;
+
 	@Column(nullable = true)
-	@OneToOne(optional = true)
+	@OneToMany(mappedBy = "pathSegment")
 	@Getter
-	@Setter
-	@JsonProperty
-	protected LocationABC		associatedLocation;
-
-	@NonNull
-	@Getter
-	@Setter
-	protected Integer			segmentOrder;
-
-	@NonNull
-	@Getter
-	@Setter
-	protected PathDirectionEnum	directionEnum;
-
-	// The head position.
-	@NonNull
-	@Getter
-	@Setter
-	protected PositionTypeEnum	headPosTypeEnum;
-
-	@NonNull
-	@Getter
-	@Setter
-	protected Double			headPosX;
-
-	@NonNull
-	@Getter
-	@Setter
-	protected Double			headPosY;
-
-	// The tail position.
-	@NonNull
-	@Getter
-	@Setter
-	protected PositionTypeEnum	tailPosTypeEnum;
-
-	@NonNull
-	@Getter
-	@Setter
-	protected Double			tailPosX;
-
-	@NonNull
-	@Getter
-	@Setter
-	protected Double			tailPosY;
+	private List<LocationABC>	locations		= new ArrayList<LocationABC>();
 
 	public PathSegment() {
 
 	}
 
-	public PathSegment(final Path inParentPath,
-		final LocationABC inAssociatedLocation,
-		final PathDirectionEnum inDirectionEnum,
-		final PositionTypeEnum inPosType,
-		final Point inHead,
-		final Point inTail) {
+	public PathSegment(final Path inParentPath, final TravelDirectionEnum inTravelDirectionEnum, final PositionTypeEnum inPosType, final Point inBeginPoint, final Point inEndPoint) {
 
-		associatedLocation = inAssociatedLocation;
-		directionEnum = inDirectionEnum;
-		headPosTypeEnum = inHead.getPosTypeEnum();
-		headPosX = inHead.getX();
-		headPosY = inHead.getY();
-		tailPosTypeEnum = inTail.getPosTypeEnum();
-		tailPosX = inTail.getX();
-		tailPosY = inTail.getY();
+		posTypeEnum = inBeginPoint.getPosTypeEnum();
+		startPosX = inBeginPoint.getX();
+		startPosY = inBeginPoint.getY();
+		endPosX = inEndPoint.getX();
+		endPosY = inEndPoint.getY();
 	}
 
 	public final ITypedDao<PathSegment> getDao() {
@@ -153,6 +145,14 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 		parent = inParent;
 	}
 
+	public final void addLocation(LocationABC inLocation) {
+		locations.add(inLocation);
+	}
+
+	public final void removeLocation(LocationABC inLocation) {
+		locations.remove(inLocation);
+	}
+
 	public final List<IDomainObject> getChildren() {
 		return new ArrayList<IDomainObject>();
 	}
@@ -161,27 +161,86 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 		return parent.getDomainId();
 	}
 
-	public final void setHeadPoint(final Point inPoint) {
-		headPosTypeEnum = inPoint.getPosTypeEnum();
-		headPosX = inPoint.getX();
-		headPosY = inPoint.getY();
+	public final void setStartPoint(final Point inPoint) {
+		posTypeEnum = inPoint.getPosTypeEnum();
+		startPosX = inPoint.getX();
+		startPosY = inPoint.getY();
 	}
 
-	public final void setTailPoint(final Point inPoint) {
-		tailPosTypeEnum = inPoint.getPosTypeEnum();
-		tailPosX = inPoint.getX();
-		tailPosY = inPoint.getY();
+	public final void setEndPoint(final Point inPoint) {
+		posTypeEnum = inPoint.getPosTypeEnum();
+		endPosX = inPoint.getX();
+		endPosY = inPoint.getY();
 	}
 
-	public final Point getHead() {
-		return new Point(headPosTypeEnum, headPosX, headPosY, null);
+	public final Point getStartPoint() {
+		return new Point(posTypeEnum, startPosX, startPosY, null);
 	}
 
-	public final Point getTail() {
-		return new Point(tailPosTypeEnum, tailPosX, tailPosY, null);
+	public final Point getEndPoint() {
+		return new Point(posTypeEnum, endPosX, endPosY, null);
 	}
 
 	public final Double getLength() {
-		return Math.sqrt(Math.pow(headPosX - tailPosX, 2) + Math.pow(headPosY - tailPosY, 2));
+		return Math.sqrt(Math.pow(startPosX - endPosX, 2) + Math.pow(startPosY - endPosY, 2));
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * The distance of this path segment from the path origin.
+	 * The first time we get this value we have to compute it.
+	 * @return
+	 */
+	public final void computePathDistance() {
+		Double distance = 0.0;
+		Path path = getParent();
+		for (PathSegment segment : path.getSegments()) {
+			if (segment.equals(this)) {
+				break;
+			}
+			distance += segment.computeLineLength(segment.getStartPoint(), segment.getEndPoint());
+		}
+		pathDistance = distance;
+
+		try {
+			PathSegment.DAO.store(this);
+		} catch (DaoException e) {
+			LOGGER.error("", e);
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Compute the length of a line.
+	 * @param inPointA
+	 * @param inPointB
+	 * @return
+	 */
+	public final Double computeLineLength(final Point inPointA, final Point inPointB) {
+		Double result = 0.0;
+
+		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Compute the distance of a point from a line that it's next to.
+	 * @param inLinePointA
+	 * @param inLinePointB
+	 * @param inFromPoint
+	 * @return
+	 */
+	public final Double computeDistanceOfPointFromLine(final Point inLinePointA, final Point inLinePointB, final Point inFromPoint) {
+		Double result = 0.0;
+
+		Double k = ((inLinePointB.getY() - inLinePointA.getY()) * (inFromPoint.getX() - inLinePointA.getX()) - (inLinePointB.getX() - inLinePointA.getX())
+				* (inFromPoint.getY() - inLinePointA.getY()))
+				/ (Math.pow(inLinePointB.getY() - inLinePointA.getY(), 2) + Math.pow(inLinePointB.getX() - inLinePointA.getX(), 2));
+		Double x4 = inFromPoint.getX() - k * (inLinePointB.getY() - inLinePointA.getY());
+		Double y4 = inFromPoint.getY() + k * (inLinePointB.getX() - inLinePointA.getX());
+
+		result = Math.sqrt(Math.pow(inLinePointA.getX() - x4, 2) + Math.pow(inLinePointA.getY() - y4, 2));
+
+		return result;
 	}
 }
