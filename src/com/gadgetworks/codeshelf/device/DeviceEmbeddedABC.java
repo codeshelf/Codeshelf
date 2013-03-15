@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: DeviceEmbeddedABC.java,v 1.2 2013/03/04 05:40:39 jeffw Exp $
+ *  $Id: DeviceEmbeddedABC.java,v 1.3 2013/03/15 23:56:13 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -91,14 +91,12 @@ public abstract class DeviceEmbeddedABC implements IEmbeddedDevice {
 				BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 				while (true) {
 					try {
-						if (reader.ready()) {
-							String scanValue = reader.readLine();
+						String scanValue = reader.readLine();
 
-							ICommand command = new CommandControlScan(NetEndpoint.PRIMARY_ENDPOINT, scanValue);
-							IPacket packet = new Packet(command, mNetworkId, mNetAddress, new NetAddress(IPacket.GATEWAY_ADDRESS), false);
-							command.setPacket(packet);
-							sendPacket(packet);
-						}
+						ICommand command = new CommandControlScan(NetEndpoint.PRIMARY_ENDPOINT, scanValue);
+						IPacket packet = new Packet(command, mNetworkId, mNetAddress, new NetAddress(IPacket.GATEWAY_ADDRESS), false);
+						command.setPacket(packet);
+						sendPacket(packet);
 					} catch (IOException e) {
 						LOGGER.error("", e);
 					}
