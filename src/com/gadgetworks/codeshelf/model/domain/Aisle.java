@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Aisle.java,v 1.18 2013/03/15 14:57:13 jeffw Exp $
+ *  $Id: Aisle.java,v 1.19 2013/03/15 23:52:49 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -74,7 +74,7 @@ public class Aisle extends SubLocationABC<Facility> {
 	 * @param inYDimMeters
 	 * @param inTravelDirection
 	 */
-	public final void createPaths(final Double inXDimMeters, final Double inYDimMeters, final TravelDirectionEnum inTravelDirection) {
+	public final void createPaths(final Double inXDimMeters, final Double inYDimMeters, final TravelDirectionEnum inTravelDirection, boolean inOpensLowSide) {
 
 		// Create the default path for this aisle.
 		Path path = Path.DAO.findByDomainId(getParent(), Path.DEFAULT_FACILITY_PATH_ID);
@@ -91,7 +91,7 @@ public class Aisle extends SubLocationABC<Facility> {
 			}
 		}
 		path.createDefaultWorkArea();
-		path.createPathSegments(this, inXDimMeters, inYDimMeters);
+		path.createPathSegments(this, inXDimMeters, inYDimMeters, inOpensLowSide);
 
 		// Now loop through every location in the aisle and recompute its distance from the path.
 		for (LocationABC location : getChildren()) {

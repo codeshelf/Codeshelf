@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DropboxService.java,v 1.30 2013/03/15 14:57:13 jeffw Exp $
+ *  $Id: DropboxService.java,v 1.31 2013/03/15 23:52:49 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -91,8 +91,8 @@ public class DropboxService extends EdiServiceABC {
 	private static final String		EXPORT_PATH				= "/export";
 
 	@Column(nullable = true, name = "CURSOR")
-	@Getter(value = AccessLevel.PRIVATE)
-	@Setter(value = AccessLevel.PRIVATE)
+	@Getter
+	@Setter
 	@JsonProperty
 	private String					dbCursor;
 
@@ -110,7 +110,7 @@ public class DropboxService extends EdiServiceABC {
 
 			DropboxAPI<Session> clientSession = getClientSession();
 			if (clientSession != null) {
-				documentCheck(clientSession, inCsvImporter);
+				checkForChangedDocuments(clientSession, inCsvImporter);
 			}
 		}
 	}
@@ -119,18 +119,42 @@ public class DropboxService extends EdiServiceABC {
 	/**
 	 * @param inClientSession
 	 */
-	private void documentCheck(DropboxAPI<Session> inClientSession, ICsvImporter inCsvImporter) {
+	private void checkForChangedDocuments(DropboxAPI<Session> inClientSession, ICsvImporter inCsvImporter) {
 		if (ensureBaseDirectories(inClientSession)) {
-			try {
-				DeltaPage<Entry> page = null;
-				while ((page == null) || (page.hasMore)) {
-					page = inClientSession.delta(dbCursor);
-					processDeltas(inClientSession, page, inCsvImporter);
+			DeltaPage<Entry> page = getNextPage(inClientSession);
+			while ((page != null) && (page.entries.size() > 0)) {
+				iteratePage(inClientSession, page, inCsvImporter);
+				if (page.hasMore) {
+					page = getNextPage(inClientSession);
+				} else {
+					page = null;
 				}
-			} catch (DropboxException e) {
-				LOGGER.error("Dropbox session error", e);
 			}
 		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Get the next delta/page and persist the dbCursor that comes back from DropBox.
+	 * @param inClientSession
+	 * @return
+	 */
+	private DeltaPage<Entry> getNextPage(DropboxAPI<Session> inClientSession) {
+		DeltaPage<Entry> result = null;
+		try {
+			result = inClientSession.delta(dbCursor);
+			if (result != null) {
+				dbCursor = result.cursor;
+				try {
+					DropboxService.DAO.store(this);
+				} catch (DaoException e) {
+					LOGGER.error("", e);
+				}
+			}
+		} catch (DropboxException e) {
+			LOGGER.error("Dropbox session error", e);
+		}
+		return result;
 	}
 
 	// --------------------------------------------------------------------------
@@ -389,24 +413,6 @@ public class DropboxService extends EdiServiceABC {
 			}
 		}
 		return result;
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * @param inClientSession
-	 * @param inPage
-	 */
-	private void processDeltas(DropboxAPI<Session> inClientSession, DeltaPage<Entry> inPage, ICsvImporter inCsvImporter) {
-		if ((inPage != null) && (inPage.cursor != null) && (!inPage.cursor.equals(dbCursor))) {
-			iteratePage(inClientSession, inPage, inCsvImporter);
-
-			dbCursor = inPage.cursor;
-			try {
-				DropboxService.DAO.store(this);
-			} catch (DaoException e) {
-				LOGGER.error("", e);
-			}
-		}
 	}
 
 	// --------------------------------------------------------------------------

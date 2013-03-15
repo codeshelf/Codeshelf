@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: PathSegment.java,v 1.27 2013/03/15 14:57:13 jeffw Exp $
+ *  $Id: PathSegment.java,v 1.28 2013/03/15 23:52:49 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -198,7 +198,7 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 			if (segment.equals(this)) {
 				break;
 			}
-			distance += segment.computeLineLength(segment.getStartPoint(), segment.getEndPoint());
+			distance += Path.computeLineLength(segment.getStartPoint(), segment.getEndPoint());
 		}
 		pathDistance = distance;
 
@@ -207,19 +207,6 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 		} catch (DaoException e) {
 			LOGGER.error("", e);
 		}
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * Compute the length of a line.
-	 * @param inPointA
-	 * @param inPointB
-	 * @return
-	 */
-	public final Double computeLineLength(final Point inPointA, final Point inPointB) {
-		Double result = 0.0;
-
-		return result;
 	}
 
 	// --------------------------------------------------------------------------

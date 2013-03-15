@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CsvImporter.java,v 1.11 2013/03/07 05:23:32 jeffw Exp $
+ *  $Id: CsvImporter.java,v 1.12 2013/03/15 23:52:49 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -112,10 +112,20 @@ public class CsvImporter implements ICsvImporter {
 			strategy.setType(CsvInventoryImportBean.class);
 
 			CsvToBean<CsvInventoryImportBean> csv = new CsvToBean<CsvInventoryImportBean>();
-			List<CsvInventoryImportBean> list = csv.parse(strategy, csvReader);
+			List<CsvInventoryImportBean> inventoryImportBeanList = csv.parse(strategy, csvReader);
 
-			for (CsvInventoryImportBean importBean : list) {
-				importCsvInventoryBean(importBean, inFacility);
+			if (inventoryImportBeanList.size() > 0) {
+				// Delete the entire inventory and replace it with what's in the import.
+				for (ItemMaster itemMaster : inFacility.getItemMasters()) {
+					for (Item item : itemMaster.getItems()) {
+						Item.DAO.delete(item);
+					}
+				}
+				
+				// Iterate over the inventory import beans.
+				for (CsvInventoryImportBean importBean : inventoryImportBeanList) {
+					importCsvInventoryBean(importBean, inFacility);
+				}
 			}
 
 			csvReader.close();
@@ -381,12 +391,17 @@ public class CsvImporter implements ICsvImporter {
 			location = inFacility;
 		}
 
+		// Get or create the item at the specified location.
 		result = location.getItem(inCsvImportBean.getItemId());
 		if ((result == null) && (inCsvImportBean.getItemId() != null) && (inCsvImportBean.getItemId().length() > 0)) {
 			result = new Item();
-			result.setParent(location);
 			result.setItemMaster(inItemMaster);
 			result.setItemId(inCsvImportBean.getItemId());
+		}
+
+		// If we were able to get/create an item then update it.
+		if (result != null) {
+			result.setParent(location);
 			result.setUomMaster(inUomMaster);
 			result.setQuantity(Double.valueOf(inCsvImportBean.getQuantity()));
 			inItemMaster.addItem(result);

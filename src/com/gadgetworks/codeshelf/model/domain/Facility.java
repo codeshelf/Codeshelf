@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.55 2013/03/15 14:57:13 jeffw Exp $
+ *  $Id: Facility.java,v 1.56 2013/03/15 23:52:49 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -54,8 +54,8 @@ import com.google.inject.Singleton;
 @Entity
 @DiscriminatorValue("FACILITY")
 @CacheStrategy(useBeanCache = true)
-@ToString(doNotUseGetters = true, exclude = { "parent" })
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
+//@ToString
 public class Facility extends LocationABC<Organization> {
 
 	@Inject
@@ -331,7 +331,7 @@ public class Facility extends LocationABC<Organization> {
 		final Integer inBaysHigh,
 		final Integer inBaysLong,
 		final Boolean inRunInXDir,
-		final Boolean inCreateBackToBack) {
+		final Boolean inOpensLowSide) {
 
 		// Create the aisle if it doesn't already exist.
 		Aisle aisle = Aisle.DAO.findByDomainId(this, inAisleId);
@@ -387,7 +387,7 @@ public class Facility extends LocationABC<Organization> {
 			createVertices(aisle, aisleBoundaryX, aisleBoundaryY);
 
 			// Create the paths related to this aisle.
-			aisle.createPaths(aisleBoundaryX, aisleBoundaryY, TravelDirectionEnum.FORWARD);
+			aisle.createPaths(aisleBoundaryX, aisleBoundaryY, TravelDirectionEnum.FORWARD, inOpensLowSide);
 
 			// Create at least one aisle controller.
 			CodeshelfNetwork network = networks.get(CodeshelfNetwork.DEFAULT_NETWORK_ID);

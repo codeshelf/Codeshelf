@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiProcessor.java,v 1.15 2013/02/27 01:17:02 jeffw Exp $
+ *  $Id: EdiProcessor.java,v 1.16 2013/03/15 23:52:49 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -20,7 +20,7 @@ import com.google.inject.Inject;
  */
 public final class EdiProcessor implements IEdiProcessor {
 
-	public static final long	PROCESS_INTERVAL_MILLIS	= 1 * 10 * 1000;
+	public static final long	PROCESS_INTERVAL_MILLIS	= 1 * 30 * 1000;
 
 	private static final Logger	LOGGER					= LoggerFactory.getLogger(EdiProcessor.class);
 

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: LocationABC.java,v 1.25 2013/03/15 14:57:13 jeffw Exp $
+ *  $Id: LocationABC.java,v 1.26 2013/03/15 23:52:49 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -59,7 +59,7 @@ import com.google.inject.Singleton;
 @Table(name = "LOCATION", schema = "CODESHELF")
 @DiscriminatorColumn(name = "DTYPE", discriminatorType = DiscriminatorType.STRING)
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
-@ToString(doNotUseGetters = true)
+//@ToString(doNotUseGetters = true)
 public abstract class LocationABC<P extends IDomainObject> extends DomainObjectTreeABC<P> {
 
 	@Inject

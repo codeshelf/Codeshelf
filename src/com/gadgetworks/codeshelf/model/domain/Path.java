@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Path.java,v 1.20 2013/03/15 14:57:13 jeffw Exp $
+ *  $Id: Path.java,v 1.21 2013/03/15 23:52:49 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -215,12 +215,23 @@ public class Path extends DomainObjectTreeABC<Facility> {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * Compute the length of a line.
+	 * @param inPointA
+	 * @param inPointB
+	 * @return
+	 */
+	public static Double computeLineLength(final Point inPointA, final Point inPointB) {
+		return Math.abs(Math.sqrt((inPointB.getX() - inPointA.getX()) * (inPointB.getX() - inPointA.getX()) + (inPointB.getY() - inPointA.getY()) * (inPointB.getY() - inPointA.getY())));
+	}
+
+	// --------------------------------------------------------------------------
+	/**
 	 * Create the path segments for the aisle.
 	 * @param inAssociatedAisle
 	 * @param inXDimMeters
 	 * @param inYDimMeters
 	 */
-	public final void createPathSegments(final Aisle inAssociatedAisle, final Double inXDimMeters, final Double inYDimMeters) {
+	public final void createPathSegments(final Aisle inAssociatedAisle, final Double inXDimMeters, final Double inYDimMeters, final boolean inOpensLowSide) {
 		// If there are already path segments then create a connecting path to the new ones.
 		Integer segmentOrder = 0;
 		PathSegment lastSegment = null;
@@ -231,41 +242,39 @@ public class Path extends DomainObjectTreeABC<Facility> {
 			}
 		}
 
-		Point headA = null;
-		Point tailA = null;
-		Point headB = null;
-		Point tailB = null;
+		Point endA = null;
+		Point startA = null;
 		if (inXDimMeters < inYDimMeters) {
-			Double xA = inAssociatedAisle.getPosX() - inXDimMeters;
-			tailA = new Point(PositionTypeEnum.METERS_FROM_PARENT, xA, inAssociatedAisle.getPosY(), null);
-			headA = new Point(PositionTypeEnum.METERS_FROM_PARENT, xA, inAssociatedAisle.getPosY() + inYDimMeters, null);
-
-			Double xB = inAssociatedAisle.getPosX() + inXDimMeters * 2.0;
-			headB = new Point(PositionTypeEnum.METERS_FROM_PARENT, xB, inAssociatedAisle.getPosY(), null);
-			tailB = new Point(PositionTypeEnum.METERS_FROM_PARENT, xB, inAssociatedAisle.getPosY() + inYDimMeters, null);
+			Double xA = inAssociatedAisle.getPosX() + 2 * inXDimMeters;
+			if (inOpensLowSide) {
+				xA = inAssociatedAisle.getPosX() - inXDimMeters;
+			}
+			startA = new Point(PositionTypeEnum.METERS_FROM_PARENT, xA, inAssociatedAisle.getPosY(), null);
+			endA = new Point(PositionTypeEnum.METERS_FROM_PARENT, xA, inAssociatedAisle.getPosY() + inYDimMeters, null);
 		} else {
-			Double yA = inAssociatedAisle.getPosY() - inYDimMeters;
-			tailA = new Point(PositionTypeEnum.METERS_FROM_PARENT, inAssociatedAisle.getPosX(), yA, null);
-			headA = new Point(PositionTypeEnum.METERS_FROM_PARENT, inAssociatedAisle.getPosX() + inXDimMeters, yA, null);
-
-			Double yB = inAssociatedAisle.getPosY() + inYDimMeters * 2.0;
-			headB = new Point(PositionTypeEnum.METERS_FROM_PARENT, inAssociatedAisle.getPosX(), yB, null);
-			tailB = new Point(PositionTypeEnum.METERS_FROM_PARENT, inAssociatedAisle.getPosX() + inXDimMeters, yB, null);
+			Double yA = inAssociatedAisle.getPosY() + 2 * inYDimMeters;
+			if (inOpensLowSide) {
+				yA = inAssociatedAisle.getPosY() - inYDimMeters;
+			}
+			startA = new Point(PositionTypeEnum.METERS_FROM_PARENT, inAssociatedAisle.getPosX(), yA, null);
+			endA = new Point(PositionTypeEnum.METERS_FROM_PARENT, inAssociatedAisle.getPosX() + inXDimMeters, yA, null);
 		}
 
 		String baseSegmentId = inAssociatedAisle.getDomainId() + "." + PathSegment.DOMAIN_PREFIX;
 		// Now connect it to the last aisle's path segments.
 		if (lastSegment != null) {
-			this.createPathSegment(baseSegmentId + "D", this.getParent(), this, segmentOrder++, tailA, lastSegment.getStartPoint());
+			// Figure out which point is closer to the end of the last path.
+			if (Path.computeLineLength(startA, lastSegment.getEndPoint()) > Path.computeLineLength(endA, lastSegment.getEndPoint())) {
+				Point temp = startA;
+				startA = endA;
+				endA = temp;
+			}
+			this.createPathSegment(baseSegmentId + "D", this.getParent(), this, segmentOrder++, lastSegment.getEndPoint(), startA);
 		}
-		// Create the "A" side path.
-		PathSegment segmentA = createPathSegment(baseSegmentId + "A", inAssociatedAisle, this, segmentOrder++, headA, tailA);
-		// Create a connector path.
-		createPathSegment(baseSegmentId + "C", this.getParent(), this, segmentOrder++, tailB, headA);
-		// Create the "B" side path.
-		createPathSegment(baseSegmentId + "B", inAssociatedAisle, this, segmentOrder++, headB, tailB);
+		// Create the path segment.
+		PathSegment segmentA = createPathSegment(baseSegmentId + "A", inAssociatedAisle, this, segmentOrder++, startA, endA);
 
-		// Link the "A" path segment as the primary path for the aisle and all of its child locations (recursively).
+		// Link the path segment as the primary path for the aisle and all of its child locations (recursively).
 		inAssociatedAisle.setPathSegment(segmentA);
 	}
 
