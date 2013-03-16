@@ -60,6 +60,6 @@
 			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="CodeShelf/lib/native/osx"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry combineaccessrules="false" kind="src" path="/ebean"/>
+	<classpathentry kind="lib" path="lib/dist/ebean-2.8.2-SNAPSHOT.jar"/>
 	<classpathentry kind="output" path="eclipse-bin"/>
 </classpath>
