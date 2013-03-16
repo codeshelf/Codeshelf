@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Path.java,v 1.21 2013/03/15 23:52:49 jeffw Exp $
+ *  $Id: Path.java,v 1.22 2013/03/16 08:03:08 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -52,7 +52,7 @@ import com.google.inject.Singleton;
 @Table(name = "PATH", schema = "CODESHELF")
 @CacheStrategy(useBeanCache = true)
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
-@ToString(doNotUseGetters = true, exclude = { "parent" })
+//@ToString(doNotUseGetters = true, exclude = { "parent" })
 public class Path extends DomainObjectTreeABC<Facility> {
 
 	@Inject
@@ -333,7 +333,12 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	public final Boolean isLocationOnPath(final LocationABC<?> inLocation) {
 		boolean result = false;
 
-		Aisle aisle = inLocation.<Aisle> getParentAtLevel(Aisle.class);
+		// There's some weirdness around Ebean CQuery.request.graphContext.beanMap
+		// that makes it impossible to search down the graph and then back up for nested classes.
+		SubLocationABC<?> parentLocation = (SubLocationABC<?>) inLocation.getParent();
+		SubLocationABC<?> location = parentLocation.getLocation(inLocation.getLocationId());
+		
+		Aisle aisle = location.<Aisle> getParentAtLevel(Aisle.class);
 		if (aisle != null) {
 			PathSegment pathSegment = aisle.getPathSegment();
 			if (pathSegment != null) {
@@ -361,9 +366,9 @@ public class Path extends DomainObjectTreeABC<Facility> {
 				inWi2.setDistanceAlongPath(wiLocation.getPathDistance());
 			}
 
-			if (inWi1.getDistanceAlongPath() > inWi2.getDistanceAlongPath()) {
+			if (inWi1.getDistanceAlongPath() < inWi2.getDistanceAlongPath()) {
 				return -1;
-			} else if (inWi1.getDistanceAlongPath() < inWi2.getDistanceAlongPath()) {
+			} else if (inWi1.getDistanceAlongPath() > inWi2.getDistanceAlongPath()) {
 				return 1;
 			} else {
 				return 0;

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.56 2013/03/15 23:52:49 jeffw Exp $
+ *  $Id: Facility.java,v 1.57 2013/03/16 08:03:08 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -405,7 +405,7 @@ public class Facility extends LocationABC<Organization> {
 		// List out Bays by distance from initiation point.
 		Path path = paths.get(Path.DEFAULT_FACILITY_PATH_ID);
 		if (path != null) {
-//			int distFromInitiationPoint = 0;
+			//			int distFromInitiationPoint = 0;
 			for (PathSegment segment : path.getSegments()) {
 				segment.computePathDistance();
 				for (LocationABC location : segment.getLocations()) {
@@ -425,7 +425,7 @@ public class Facility extends LocationABC<Organization> {
 						}
 					}
 				}
-//				distFromInitiationPoint += segment.getLength();
+				//				distFromInitiationPoint += segment.getLength();
 			}
 		}
 	}
@@ -623,17 +623,22 @@ public class Facility extends LocationABC<Organization> {
 						if (order != null) {
 							for (OrderDetail detail : order.getOrderDetails()) {
 								LocationABC<IDomainObject> foundLocation = null;
+								String parentLocationId = "";
 								ItemMaster itemMaster = detail.getItemMaster();
 
 								// Figure out if there are any items are on the current path.
 								// (We just take the first one we find, because items slotted on the same path should be close together.)
 								for (Item item : itemMaster.getItems()) {
-									if (item.getItemId().equals(itemMaster.getItemId())) {
-										LocationABC location = item.getParent();
-										if (path.isLocationOnPath(location)) {
-											foundLocation = location;
-											break;
-										}
+									LocationABC location = item.getParent();
+									if (path.isLocationOnPath(location)) {
+										foundLocation = location;
+
+										// There's some weirdness around Ebean CQuery.request.graphContext.beanMap
+										// that makes it impossible to search down the graph and then back up for nested classes.
+										SubLocationABC<?> parentLocation = (SubLocationABC<?>) foundLocation.getParent();
+										SubLocationABC<?> fixedLocation = parentLocation.getLocation(foundLocation.getLocationId());
+										parentLocationId = ((SubLocationABC<?>) fixedLocation.getParent()).getLocationId();
+										break;
 									}
 								}
 
@@ -651,22 +656,25 @@ public class Facility extends LocationABC<Organization> {
 									if (plannedWi == null) {
 										plannedWi = new WorkInstruction();
 										plannedWi.setParent(detail);
-										plannedWi.setDomainId(order.getOrderId() + "." + detail.getOrderDetailId());
-										plannedWi.setTypeEnum(WorkInstructionTypeEnum.PLANNED);
-										plannedWi.setStatusEnum(WorkInstructionStatusEnum.NEW);
-										plannedWi.setAisleControllerCommand("");
-										plannedWi.setAisleControllerId("0x00000003");
-										plannedWi.setColorEnum(ColorEnum.BLUE);
-										plannedWi.setItemId(itemMaster.getItemId());
-										plannedWi.setLocationId(foundLocation.getLocationId());
-										plannedWi.setContainerId(containerId);
-										plannedWi.setQuantity(detail.getQuantity());
-										try {
-											WorkInstruction.DAO.store(plannedWi);
-										} catch (DaoException e) {
-											LOGGER.error("", e);
-										}
 									}
+
+									// Update the WI
+									plannedWi.setDomainId(order.getOrderId() + "." + detail.getOrderDetailId());
+									plannedWi.setTypeEnum(WorkInstructionTypeEnum.PLANNED);
+									plannedWi.setStatusEnum(WorkInstructionStatusEnum.NEW);
+									plannedWi.setAisleControllerCommand("");
+									plannedWi.setAisleControllerId("0x00000003");
+									plannedWi.setColorEnum(ColorEnum.BLUE);
+									plannedWi.setItemId(itemMaster.getItemId());
+									plannedWi.setLocationId(parentLocationId + "." + foundLocation.getLocationId());
+									plannedWi.setContainerId(containerId);
+									plannedWi.setQuantity(detail.getQuantity());
+									try {
+										WorkInstruction.DAO.store(plannedWi);
+									} catch (DaoException e) {
+										LOGGER.error("", e);
+									}
+
 									result.add(plannedWi);
 								}
 							}

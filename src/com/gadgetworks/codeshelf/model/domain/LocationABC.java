@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: LocationABC.java,v 1.26 2013/03/15 23:52:49 jeffw Exp $
+ *  $Id: LocationABC.java,v 1.27 2013/03/16 08:03:08 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -111,18 +111,19 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	@JsonProperty
 	private String						description;
 
+	// How far this location is from the path's origin.
+	@Column(nullable = true)
+	@Getter
+	@Setter
+	@JsonProperty
+	private Double						pathDistance;
+
 	// Associated path segment (optional)
 	@Column(nullable = true)
 	@ManyToOne(optional = true)
 	@Getter
 	//	@Setter
 	private PathSegment					pathSegment;
-
-	// How far this location is from the path's origin.
-	@Column(nullable = true)
-	@Getter
-	@Setter
-	private Double						pathDistance;
 
 	// The owning organization.
 	@Column(nullable = false)

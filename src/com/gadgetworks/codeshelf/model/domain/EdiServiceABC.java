@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiServiceABC.java,v 1.18 2013/03/15 14:57:13 jeffw Exp $
+ *  $Id: EdiServiceABC.java,v 1.19 2013/03/16 08:03:08 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -50,7 +50,7 @@ import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 @Table(name = "EDISERVICE", schema = "CODESHELF")
 @DiscriminatorColumn(name = "DTYPE", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorValue("ABC")
-@ToString(doNotUseGetters = true)
+//@ToString(doNotUseGetters = true)
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implements IEdiService {
 

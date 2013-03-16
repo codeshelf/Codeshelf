@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DomainObjectABC.java,v 1.30 2013/03/15 14:57:13 jeffw Exp $
+ *  $Id: DomainObjectABC.java,v 1.31 2013/03/16 08:03:08 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -52,7 +52,7 @@ import com.avaje.ebean.bean.EntityBean;
 @CacheStrategy
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 @JsonPropertyOrder({ "domainId", "fullDomainId" })
-@ToString(doNotUseGetters = true)
+//@ToString(doNotUseGetters = true)
 public abstract class DomainObjectABC implements IDomainObject {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(DomainObjectABC.class);
@@ -70,9 +70,9 @@ public abstract class DomainObjectABC implements IDomainObject {
 	// The domain ID
 	@NonNull
 	@Column(nullable = false)
-	@JsonProperty
 	@Getter
 	@Setter
+	@JsonProperty
 	private String				domainId;
 
 	// This is not an application-editable field.
@@ -82,6 +82,7 @@ public abstract class DomainObjectABC implements IDomainObject {
 	@Column(nullable = false)
 	@Getter
 	@Setter
+	@JsonProperty
 	private Timestamp			version;
 
 	public DomainObjectABC() {
@@ -185,6 +186,7 @@ public abstract class DomainObjectABC implements IDomainObject {
 	public final Object getFieldValueByName(final String inFieldName) {
 		Object result = null;
 
+		boolean interceptingWas = ((EntityBean) this)._ebean_getIntercept().isIntercepting();
 		((EntityBean) this)._ebean_getIntercept().setIntercepting(false);
 		try {
 			Method method = getClass().getMethod("get" + WordUtils.capitalize(inFieldName), (Class<?>[]) null);
@@ -192,7 +194,7 @@ public abstract class DomainObjectABC implements IDomainObject {
 		} catch (InvocationTargetException | IllegalAccessException | NoSuchMethodException | SecurityException e) {
 			LOGGER.error("", e);
 		}
-		((EntityBean) this)._ebean_getIntercept().setIntercepting(true);
+		((EntityBean) this)._ebean_getIntercept().setIntercepting(interceptingWas);
 
 		//		try {
 		//			Collection<Field> fields = new ArrayList<Field>();

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WirelessDeviceABC.java,v 1.7 2013/03/15 14:57:13 jeffw Exp $
+ *  $Id: WirelessDeviceABC.java,v 1.8 2013/03/16 08:03:08 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -46,7 +46,7 @@ import com.google.inject.Singleton;
 @Entity
 @CacheStrategy
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
-@ToString(doNotUseGetters = true)
+//@ToString(doNotUseGetters = true)
 public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNetwork> {
 
 	public static final int						MAC_ADDR_BYTES		= 8;

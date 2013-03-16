@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: PathSegment.java,v 1.28 2013/03/15 23:52:49 jeffw Exp $
+ *  $Id: PathSegment.java,v 1.29 2013/03/16 08:03:08 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -46,7 +46,7 @@ import com.google.inject.Singleton;
 @Table(name = "PATHSEGMENT", schema = "CODESHELF")
 @CacheStrategy(useBeanCache = true)
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
-@ToString(doNotUseGetters = true, exclude = { "parent" })
+//@ToString(doNotUseGetters = true, exclude = { "parent" })
 public class PathSegment extends DomainObjectTreeABC<Path> {
 
 	@Inject

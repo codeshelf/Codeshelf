@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Aisle.java,v 1.19 2013/03/15 23:52:49 jeffw Exp $
+ *  $Id: Aisle.java,v 1.20 2013/03/16 08:03:08 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -38,7 +38,7 @@ import com.google.inject.Singleton;
 @DiscriminatorValue("AISLE")
 @CacheStrategy
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
-@ToString(doNotUseGetters = true)
+//@ToString(doNotUseGetters = true)
 public class Aisle extends SubLocationABC<Facility> {
 
 	@Inject

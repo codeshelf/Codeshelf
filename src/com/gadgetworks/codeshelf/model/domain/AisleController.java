@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: AisleController.java,v 1.5 2013/03/15 14:57:13 jeffw Exp $
+ *  $Id: AisleController.java,v 1.6 2013/03/16 08:03:08 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -36,7 +36,7 @@ import com.google.inject.Singleton;
 @CacheStrategy
 @Table(name = "AISLECONTROLLER", schema = "CODESHELF")
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
-@ToString(doNotUseGetters = true)
+//@ToString(doNotUseGetters = true)
 public class AisleController extends WirelessDeviceABC {
 
 	@Inject
