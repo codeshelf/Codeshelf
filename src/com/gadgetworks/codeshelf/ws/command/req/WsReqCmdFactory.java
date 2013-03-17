@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WsReqCmdFactory.java,v 1.1 2013/03/17 19:19:12 jeffw Exp $
+ *  $Id: WsReqCmdFactory.java,v 1.2 2013/03/17 23:10:45 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.ws.command.req;
 
@@ -12,6 +12,8 @@ import org.slf4j.LoggerFactory;
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Che;
+import com.gadgetworks.codeshelf.model.domain.OrderDetail;
+import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.ws.command.IWebSessionCmd;
@@ -28,16 +30,22 @@ public final class WsReqCmdFactory implements IWsReqCmdFactory {
 	private ITypedDao<Organization>		mOrganizationDao;
 	private ITypedDao<Che>				mCheDao;
 	private ITypedDao<WorkInstruction>	mWorkInstructionDao;
+	private ITypedDao<OrderHeader>		mOrderHeaderDao;
+	private ITypedDao<OrderDetail>		mOrderDetailDao;
 	private IDaoProvider				mDaoProvider;
 
 	@Inject
 	public WsReqCmdFactory(final ITypedDao<Organization> inOrganizationDao,
 		final ITypedDao<Che> inCheDao,
 		final ITypedDao<WorkInstruction> inWorkInstructionDao,
+		final ITypedDao<OrderHeader> inOrderHeaderDao,
+		final ITypedDao<OrderDetail> inOrderDetailDao,
 		final IDaoProvider inDaoPovider) {
 		mOrganizationDao = inOrganizationDao;
 		mCheDao = inCheDao;
 		mWorkInstructionDao = inWorkInstructionDao;
+		mOrderHeaderDao = inOrderHeaderDao;
+		mOrderDetailDao = inOrderDetailDao;
 		mDaoProvider = inDaoPovider;
 	}
 
@@ -92,7 +100,7 @@ public final class WsReqCmdFactory implements IWsReqCmdFactory {
 				break;
 
 			case CHE_WICOMPLETE_REQ:
-				result = new CompleteWorkInstructionWsReqCmd(commandId, dataNode, mCheDao, mWorkInstructionDao);
+				result = new CompleteWorkInstructionWsReqCmd(commandId, dataNode, mCheDao, mWorkInstructionDao, mOrderHeaderDao, mOrderDetailDao);
 				break;
 
 			default:

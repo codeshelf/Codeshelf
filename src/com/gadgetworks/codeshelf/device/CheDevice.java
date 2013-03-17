@@ -1,10 +1,11 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CheDevice.java,v 1.17 2013/03/17 19:19:12 jeffw Exp $
+ *  $Id: CheDevice.java,v 1.18 2013/03/17 23:10:45 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -74,6 +75,12 @@ public class CheDevice extends DeviceABC {
 	@Getter
 	@Setter
 	private String							mLocation;
+
+	// The CHE's current user.
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	private String							mUserId;
 
 	// The CHE's container map.
 	private String							mContainerInSetup;
@@ -344,6 +351,7 @@ public class CheDevice extends DeviceABC {
 					WorkInstruction wi = wiIter.next();
 					if (((firstLocation == null) || (firstLocation.equals(wi.getLocationId()))) && (wi.getContainerId().equals(containerId))) {
 						firstLocation = wi.getLocationId();
+						wi.setStarted(new Timestamp(System.currentTimeMillis()));
 						mActivePickWiList.add(wi);
 						wiIter.remove();
 					} else {
@@ -378,6 +386,7 @@ public class CheDevice extends DeviceABC {
 	private void processIdleStateScan(final String inScanPrefixStr, final String inScanStr) {
 
 		if (USER_PREFIX.equals(inScanPrefixStr)) {
+			mUserId = inScanStr;
 			setState(CheStateEnum.LOCATION_SETUP);
 		} else {
 			LOGGER.info("Not a user ID: " + inScanStr);
@@ -455,6 +464,8 @@ public class CheDevice extends DeviceABC {
 						// StitchFix is the first client and they only pick one item - ever.
 						// When we have h/w that picks more than one item we'll address this.
 						wi.setActualQuantity(1);
+						wi.setPickerId(mUserId);
+						wi.setCompleted(new Timestamp(System.currentTimeMillis()));
 						
 						mDeviceManager.completeWi(getGuid().getHexStringNoPrefix(), getPersistentId(), wi);
 						LOGGER.info("Pick completed: " + wi);

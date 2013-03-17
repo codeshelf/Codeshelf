@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.58 2013/03/17 19:19:13 jeffw Exp $
+ *  $Id: Facility.java,v 1.59 2013/03/17 23:10:45 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -30,6 +30,7 @@ import com.avaje.ebean.annotation.CacheStrategy;
 import com.avaje.ebean.annotation.Transactional;
 import com.gadgetworks.codeshelf.model.EdiProviderEnum;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
+import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.TravelDirectionEnum;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
@@ -642,7 +643,7 @@ public class Facility extends LocationABC<Organization> {
 									Integer quantityToPick = detail.getQuantity();
 									WorkInstruction plannedWi = null;
 									for (WorkInstruction wi : detail.getWorkInstructions()) {
-										if (wi.getTypeEnum().equals(WorkInstructionTypeEnum.PLANNED)) {
+										if (wi.getTypeEnum().equals(WorkInstructionTypeEnum.PLAN)) {
 											plannedWi = wi;
 										} else if (wi.getTypeEnum().equals(WorkInstructionTypeEnum.ACTUAL)) {
 											// Deduct any WIs alreadty completed for this line item.
@@ -656,11 +657,12 @@ public class Facility extends LocationABC<Organization> {
 										if (plannedWi == null) {
 											plannedWi = new WorkInstruction();
 											plannedWi.setParent(detail);
+											plannedWi.setCreated(new Timestamp(System.currentTimeMillis()));
 										}
 
 										// Update the WI
 										plannedWi.setDomainId(order.getOrderId() + "." + detail.getOrderDetailId());
-										plannedWi.setTypeEnum(WorkInstructionTypeEnum.PLANNED);
+										plannedWi.setTypeEnum(WorkInstructionTypeEnum.PLAN);
 										plannedWi.setStatusEnum(WorkInstructionStatusEnum.NEW);
 										plannedWi.setAisleControllerCommand("");
 										plannedWi.setAisleControllerId("0x00000003");
@@ -669,6 +671,7 @@ public class Facility extends LocationABC<Organization> {
 										plannedWi.setLocationId(parentLocationId + "." + foundLocation.getLocationId());
 										plannedWi.setContainerId(containerId);
 										plannedWi.setPlanQuantity(quantityToPick);
+										plannedWi.setAssigned(new Timestamp(System.currentTimeMillis()));
 										try {
 											WorkInstruction.DAO.store(plannedWi);
 										} catch (DaoException e) {
@@ -676,6 +679,20 @@ public class Facility extends LocationABC<Organization> {
 										}
 
 										result.add(plannedWi);
+										
+										detail.setStatusEnum(OrderStatusEnum.INPROGRESS);
+										try {
+											OrderDetail.DAO.store(detail);
+										} catch (DaoException e) {
+											LOGGER.error("", e);
+										}
+										
+										order.setStatusEnum(OrderStatusEnum.INPROGRESS);
+										try {
+											OrderHeader.DAO.store(order);
+										} catch (DaoException e) {
+											LOGGER.error("", e);
+										}
 									}
 								}
 							}

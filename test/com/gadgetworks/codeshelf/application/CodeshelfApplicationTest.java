@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeshelfApplicationTest.java,v 1.19 2013/03/17 19:19:13 jeffw Exp $
+ *  $Id: CodeshelfApplicationTest.java,v 1.20 2013/03/17 23:10:45 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.application;
 
@@ -211,7 +211,7 @@ public class CodeshelfApplicationTest {
 			return null;
 		}
 	}
-	
+
 	private class WebSessionFactory implements IWebSessionFactory {
 
 		@Override
@@ -233,9 +233,9 @@ public class CodeshelfApplicationTest {
 		ITypedDao<Facility> facilityDao = new MockDao<Facility>();
 		ITypedDao<OrderGroup> orderGroupDao = new MockDao<OrderGroup>();
 		ITypedDao<OrderHeader> orderHeaderDao = new MockDao<OrderHeader>();
+		ITypedDao<OrderDetail> orderDetailDao = new MockDao<OrderDetail>();
 		ITypedDao<Container> containerDao = new MockDao<Container>();
 		ITypedDao<ContainerUse> containerUseDao = new MockDao<ContainerUse>();
-		ITypedDao<OrderDetail> orderDetailDao = new MockDao<OrderDetail>();
 		ITypedDao<ItemMaster> itemMasterDao = new MockDao<ItemMaster>();
 		ITypedDao<Item> itemDao = new MockDao<Item>();
 		ITypedDao<UomMaster> uomMasterDao = new MockDao<UomMaster>();
@@ -244,11 +244,11 @@ public class CodeshelfApplicationTest {
 
 		Injector injector = new MockInjector();
 		IDaoProvider daoProvider = new DaoProvider(injector);
-		IWsReqCmdFactory webSessionReqCmdFactory = new WsReqCmdFactory(organizationDao, cheDao, workInstructionDao, daoProvider);
+		IWsReqCmdFactory webSessionReqCmdFactory = new WsReqCmdFactory(organizationDao, cheDao, workInstructionDao, orderHeaderDao, orderDetailDao, daoProvider);
 		IWebSessionFactory webSessionFactory = new WebSessionFactory();
 		IWebSessionManager webSessionManager = new WebSessionManager(webSessionReqCmdFactory, webSessionFactory);
 		SSLWebSocketServerFactory webSocketFactory = new SSLWebSocketServerFactory("./conf/codeshelf.keystore", "JKS", "x2HPbC2avltYQR", "x2HPbC2avltYQR");
-		
+
 		IWebSocketServer webSocketListener = new CsWebSocketServer(IWebSocketServer.WEBSOCKET_DEFAULT_HOSTNAME,
 			CsWebSocketServer.WEBSOCKET_DEFAULT_PORTNUM,
 			webSessionManager,

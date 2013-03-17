@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WorkInstructionTypeEnum.java,v 1.1 2013/03/07 05:23:32 jeffw Exp $
+ *  $Id: WorkInstructionTypeEnum.java,v 1.2 2013/03/17 23:10:45 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model;
 
@@ -14,8 +14,8 @@ import com.avaje.ebean.annotation.EnumValue;
 public enum WorkInstructionTypeEnum {
 	@EnumValue("INVALID")
 	INVALID(WorkInstructionTypeNum.INVALID, "INVALID"),
-	@EnumValue("PLANNED")
-	PLANNED(WorkInstructionTypeNum.PLANNED, "PLANNED"),
+	@EnumValue("PLAN")
+	PLAN(WorkInstructionTypeNum.PLAN, "PLAN"),
 	@EnumValue("ACTUAL")
 	ACTUAL(WorkInstructionTypeNum.ACTUAL, "ACTUAL");
 
@@ -31,8 +31,8 @@ public enum WorkInstructionTypeEnum {
 		WorkInstructionTypeEnum result;
 
 		switch (inOnlineStatusID) {
-			case WorkInstructionTypeNum.PLANNED:
-				result = WorkInstructionTypeEnum.PLANNED;
+			case WorkInstructionTypeNum.PLAN:
+				result = WorkInstructionTypeEnum.PLAN;
 				break;
 
 			case WorkInstructionTypeNum.ACTUAL:
@@ -59,7 +59,7 @@ public enum WorkInstructionTypeEnum {
 	static final class WorkInstructionTypeNum {
 
 		static final byte	INVALID	= 0;
-		static final byte	PLANNED	= 1;
+		static final byte	PLAN	= 1;
 		static final byte	ACTUAL	= 2;
 
 		private WorkInstructionTypeNum() {

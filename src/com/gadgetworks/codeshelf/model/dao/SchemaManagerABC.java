@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: SchemaManagerABC.java,v 1.17 2013/03/17 19:19:13 jeffw Exp $
+ *  $Id: SchemaManagerABC.java,v 1.18 2013/03/17 23:10:45 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -687,7 +687,11 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 					+ "PICKERID VARCHAR(64), " //
 					+ "AISLECONTROLLERID VARCHAR(16), " //
 					+ "AISLECONTROLLERCOMMAND VARCHAR(64), " //
-					+ "COLORENUM VARCHAR(16) " //
+					+ "COLORENUM VARCHAR(16), " //
+					+ "CREATED TIMESTAMP, " //
+					+ "ASSIGNED TIMESTAMP, " //
+					+ "STARTED TIMESTAMP, " //
+					+ "COMPLETED TIMESTAMP " //
 		);
 
 		return result;

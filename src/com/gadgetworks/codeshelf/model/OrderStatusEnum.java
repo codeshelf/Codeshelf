@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderStatusEnum.java,v 1.4 2012/10/24 01:00:59 jeffw Exp $
+ *  $Id: OrderStatusEnum.java,v 1.5 2013/03/17 23:10:45 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model;
 
@@ -16,12 +16,14 @@ public enum OrderStatusEnum {
 	INVALID(OrderStatusNum.INVALID, "INVALID"),
 	@EnumValue("CREATED")
 	CREATED(OrderStatusNum.CREATED, "CREATED"),
-	@EnumValue("RELEASED")
-	RELEASED(OrderStatusNum.RELEASED, "RELEASED"),
+	@EnumValue("RELEASE")
+	RELEASE(OrderStatusNum.RELEASE, "RELEASE"),
 	@EnumValue("INPROGRESS")
 	INPROGRESS(OrderStatusNum.INPROGRESS, "INPROGRESS"),
 	@EnumValue("COMPLETE")
-	COMPLETE(OrderStatusNum.COMPLETE, "COMPLETE");
+	COMPLETE(OrderStatusNum.COMPLETE, "COMPLETE"),
+	@EnumValue("SHORT")
+	SHORT(OrderStatusNum.SHORT, "SHORT");
 
 	private int		mValue;
 	private String	mName;
@@ -39,8 +41,8 @@ public enum OrderStatusEnum {
 				result = OrderStatusEnum.CREATED;
 				break;
 
-			case OrderStatusNum.RELEASED:
-				result = OrderStatusEnum.RELEASED;
+			case OrderStatusNum.RELEASE:
+				result = OrderStatusEnum.RELEASE;
 				break;
 
 			case OrderStatusNum.INPROGRESS:
@@ -49,6 +51,10 @@ public enum OrderStatusEnum {
 
 			case OrderStatusNum.COMPLETE:
 				result = OrderStatusEnum.COMPLETE;
+				break;
+
+			case OrderStatusNum.SHORT:
+				result = OrderStatusEnum.SHORT;
 				break;
 
 			default:
@@ -71,10 +77,11 @@ public enum OrderStatusEnum {
 	static final class OrderStatusNum {
 
 		static final byte	INVALID		= 0;
-		static final byte	CREATED			= 1;
-		static final byte	RELEASED	= 2;
+		static final byte	CREATED		= 1;
+		static final byte	RELEASE		= 2;
 		static final byte	INPROGRESS	= 3;
 		static final byte	COMPLETE	= 4;
+		static final byte	SHORT		= 5;
 
 		private OrderStatusNum() {
 		};

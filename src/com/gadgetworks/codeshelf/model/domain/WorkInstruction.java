@@ -1,10 +1,11 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WorkInstruction.java,v 1.14 2013/03/17 19:19:13 jeffw Exp $
+ *  $Id: WorkInstruction.java,v 1.15 2013/03/17 23:10:45 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -161,6 +162,30 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 	@Setter
 	@JsonProperty
 	private Double						distanceAlongPath;
+
+	@Column(nullable = true)
+	@Getter
+	@Setter
+	@JsonProperty
+	private Timestamp					created;
+
+	@Column(nullable = true)
+	@Getter
+	@Setter
+	@JsonProperty
+	private Timestamp					assigned;
+
+	@Column(nullable = true)
+	@Getter
+	@Setter
+	@JsonProperty
+	private Timestamp					started;
+
+	@Column(nullable = true)
+	@Getter
+	@Setter
+	@JsonProperty
+	private Timestamp					completed;
 
 	public WorkInstruction() {
 

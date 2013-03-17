@@ -21,6 +21,8 @@ import com.eaio.uuid.UUIDGen;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.dao.MockDao;
 import com.gadgetworks.codeshelf.model.domain.Che;
+import com.gadgetworks.codeshelf.model.domain.OrderDetail;
+import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
@@ -132,6 +134,8 @@ public class WebSessionTest {
 		ITypedDao<User> userDao = new MockDao<User>();
 		ITypedDao<Che> cheDao = new MockDao<Che>();
 		ITypedDao<WorkInstruction> workInstructionDao = new MockDao<WorkInstruction>();
+		ITypedDao<OrderHeader> orderHeaderDao = new MockDao<OrderHeader>();
+		ITypedDao<OrderDetail> orderDetailDao = new MockDao<OrderDetail>();
 
 		Organization organization = new Organization();
 		organization.setPersistentId(new UUID(UUIDGen.newTime(), UUIDGen.getClockSeqAndNode()));
@@ -150,7 +154,7 @@ public class WebSessionTest {
 		organization.addUser(user);
 
 		TestWebSocket testWebSocket = new TestWebSocket();
-		IWsReqCmdFactory factory = new WsReqCmdFactory(organizationDao, cheDao, workInstructionDao, null);
+		IWsReqCmdFactory factory = new WsReqCmdFactory(organizationDao, cheDao, workInstructionDao, orderHeaderDao, orderDetailDao, null);
 		Realm realm = new CodeshelfRealm();
 		IWebSession webSession = new WebSession(testWebSocket, factory, realm);
 		String inMessage = "{\"id\":\"cid_5\",\"type\":\"LOGIN_RQ\",\"data\":{\"organizationId\":\"O1\", \"userId\":\"user@example.com\", \"password\":\"password\"}}";
@@ -167,6 +171,8 @@ public class WebSessionTest {
 		ITypedDao<User> userDao = new MockDao<User>();
 		ITypedDao<Che> cheDao = new MockDao<Che>();
 		ITypedDao<WorkInstruction> workInstructionDao = new MockDao<WorkInstruction>();
+		ITypedDao<OrderHeader> orderHeaderDao = new MockDao<OrderHeader>();
+		ITypedDao<OrderDetail> orderDetailDao = new MockDao<OrderDetail>();
 
 		Organization organization = new Organization();
 		organization.setPersistentId(new UUID(UUIDGen.newTime(), UUIDGen.getClockSeqAndNode()));
@@ -185,7 +191,7 @@ public class WebSessionTest {
 		organization.addUser(user);
 
 		TestWebSocket testWebSocket = new TestWebSocket();
-		IWsReqCmdFactory factory = new WsReqCmdFactory(organizationDao, cheDao, workInstructionDao, null);
+		IWsReqCmdFactory factory = new WsReqCmdFactory(organizationDao, cheDao, workInstructionDao, orderHeaderDao, orderDetailDao, null);
 		Realm realm = new CodeshelfRealm();
 		IWebSession webSession = new WebSession(testWebSocket, factory, realm);
 		String inMessage = "{\"id\":\"cid_5\",\"type\":\"LOGIN_RQ\",\"data\":{\"organizationId\":\"O1\", \"userId\":\"XXXXX\", \"password\":\"password\"}}";
@@ -201,6 +207,8 @@ public class WebSessionTest {
 		ITypedDao<User> userDao = new MockDao<User>();
 		ITypedDao<Che> cheDao = new MockDao<Che>();
 		ITypedDao<WorkInstruction> workInstructionDao = new MockDao<WorkInstruction>();
+		ITypedDao<OrderHeader> orderHeaderDao = new MockDao<OrderHeader>();
+		ITypedDao<OrderDetail> orderDetailDao = new MockDao<OrderDetail>();
 
 		Organization organization = new Organization();
 		organization.setPersistentId(new UUID(UUIDGen.newTime(), UUIDGen.getClockSeqAndNode()));
@@ -219,7 +227,7 @@ public class WebSessionTest {
 		organization.addUser(user);
 
 		TestWebSocket testWebSocket = new TestWebSocket();
-		IWsReqCmdFactory factory = new WsReqCmdFactory(organizationDao, cheDao, workInstructionDao, null);
+		IWsReqCmdFactory factory = new WsReqCmdFactory(organizationDao, cheDao, workInstructionDao, orderHeaderDao, orderDetailDao, null);
 		Realm realm = new CodeshelfRealm();
 		IWebSession webSession = new WebSession(testWebSocket, factory, realm);
 		String inMessage = "{\"id\":\"cid_5\",\"type\":\"LOGIN_RQ\",\"data\":{\"organizationId\":\"O1\", \"userId\":\"user@example.com\", \"password\":\"XXXX\"}}";
