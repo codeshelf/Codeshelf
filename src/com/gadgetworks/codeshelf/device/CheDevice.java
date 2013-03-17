@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CheDevice.java,v 1.16 2013/03/07 05:23:32 jeffw Exp $
+ *  $Id: CheDevice.java,v 1.17 2013/03/17 19:19:12 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -450,6 +450,13 @@ public class CheDevice extends DeviceABC {
 				while (wiIter.hasNext()) {
 					WorkInstruction wi = wiIter.next();
 					if (wi.getContainerId().equals(containerId)) {
+						
+						// HACK HACK HACK
+						// StitchFix is the first client and they only pick one item - ever.
+						// When we have h/w that picks more than one item we'll address this.
+						wi.setActualQuantity(1);
+						
+						mDeviceManager.completeWi(getGuid().getHexStringNoPrefix(), getPersistentId(), wi);
 						LOGGER.info("Pick completed: " + wi);
 						wiIter.remove();
 					}

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.57 2013/03/16 08:03:08 jeffw Exp $
+ *  $Id: Facility.java,v 1.58 2013/03/17 19:19:13 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -632,50 +632,51 @@ public class Facility extends LocationABC<Organization> {
 									LocationABC location = item.getParent();
 									if (path.isLocationOnPath(location)) {
 										foundLocation = location;
-
-										// There's some weirdness around Ebean CQuery.request.graphContext.beanMap
-										// that makes it impossible to search down the graph and then back up for nested classes.
-										SubLocationABC<?> parentLocation = (SubLocationABC<?>) foundLocation.getParent();
-										SubLocationABC<?> fixedLocation = parentLocation.getLocation(foundLocation.getLocationId());
-										parentLocationId = ((SubLocationABC<?>) fixedLocation.getParent()).getLocationId();
+										parentLocationId = ((SubLocationABC<?>) foundLocation.getParent()).getLocationId();
 										break;
 									}
 								}
 
 								// The item is on the CHE's path, so add it.
 								if (foundLocation != null) {
+									Integer quantityToPick = detail.getQuantity();
 									WorkInstruction plannedWi = null;
 									for (WorkInstruction wi : detail.getWorkInstructions()) {
 										if (wi.getTypeEnum().equals(WorkInstructionTypeEnum.PLANNED)) {
 											plannedWi = wi;
-											break;
+										} else if (wi.getTypeEnum().equals(WorkInstructionTypeEnum.ACTUAL)) {
+											// Deduct any WIs alreadty completed for this line item.
+											quantityToPick -= wi.getPlanQuantity();
 										}
 									}
 
-									// If there is no planned WI then create one.
-									if (plannedWi == null) {
-										plannedWi = new WorkInstruction();
-										plannedWi.setParent(detail);
-									}
+									// If there is anything to pick on this item then create a WI for it.
+									if (quantityToPick > 0) {
+										// If there is no planned WI then create one.
+										if (plannedWi == null) {
+											plannedWi = new WorkInstruction();
+											plannedWi.setParent(detail);
+										}
 
-									// Update the WI
-									plannedWi.setDomainId(order.getOrderId() + "." + detail.getOrderDetailId());
-									plannedWi.setTypeEnum(WorkInstructionTypeEnum.PLANNED);
-									plannedWi.setStatusEnum(WorkInstructionStatusEnum.NEW);
-									plannedWi.setAisleControllerCommand("");
-									plannedWi.setAisleControllerId("0x00000003");
-									plannedWi.setColorEnum(ColorEnum.BLUE);
-									plannedWi.setItemId(itemMaster.getItemId());
-									plannedWi.setLocationId(parentLocationId + "." + foundLocation.getLocationId());
-									plannedWi.setContainerId(containerId);
-									plannedWi.setQuantity(detail.getQuantity());
-									try {
-										WorkInstruction.DAO.store(plannedWi);
-									} catch (DaoException e) {
-										LOGGER.error("", e);
-									}
+										// Update the WI
+										plannedWi.setDomainId(order.getOrderId() + "." + detail.getOrderDetailId());
+										plannedWi.setTypeEnum(WorkInstructionTypeEnum.PLANNED);
+										plannedWi.setStatusEnum(WorkInstructionStatusEnum.NEW);
+										plannedWi.setAisleControllerCommand("");
+										plannedWi.setAisleControllerId("0x00000003");
+										plannedWi.setColorEnum(ColorEnum.BLUE);
+										plannedWi.setItemId(itemMaster.getItemId());
+										plannedWi.setLocationId(parentLocationId + "." + foundLocation.getLocationId());
+										plannedWi.setContainerId(containerId);
+										plannedWi.setPlanQuantity(quantityToPick);
+										try {
+											WorkInstruction.DAO.store(plannedWi);
+										} catch (DaoException e) {
+											LOGGER.error("", e);
+										}
 
-									result.add(plannedWi);
+										result.add(plannedWi);
+									}
 								}
 							}
 						}

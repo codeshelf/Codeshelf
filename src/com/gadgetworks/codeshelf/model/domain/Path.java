@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Path.java,v 1.22 2013/03/16 08:03:08 jeffw Exp $
+ *  $Id: Path.java,v 1.23 2013/03/17 19:19:13 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -335,10 +335,10 @@ public class Path extends DomainObjectTreeABC<Facility> {
 
 		// There's some weirdness around Ebean CQuery.request.graphContext.beanMap
 		// that makes it impossible to search down the graph and then back up for nested classes.
-		SubLocationABC<?> parentLocation = (SubLocationABC<?>) inLocation.getParent();
-		SubLocationABC<?> location = parentLocation.getLocation(inLocation.getLocationId());
+//		SubLocationABC<?> parentLocation = (SubLocationABC<?>) inLocation.getParent();
+//		SubLocationABC<?> location = parentLocation.getLocation(inLocation.getLocationId());
 		
-		Aisle aisle = location.<Aisle> getParentAtLevel(Aisle.class);
+		Aisle aisle = inLocation.<Aisle> getParentAtLevel(Aisle.class);
 		if (aisle != null) {
 			PathSegment pathSegment = aisle.getPathSegment();
 			if (pathSegment != null) {

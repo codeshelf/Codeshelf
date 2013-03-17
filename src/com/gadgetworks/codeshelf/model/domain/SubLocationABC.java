@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: SubLocationABC.java,v 1.5 2013/03/16 08:03:08 jeffw Exp $
+ *  $Id: SubLocationABC.java,v 1.6 2013/03/17 19:19:13 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -15,6 +15,7 @@ import lombok.ToString;
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 
+import com.avaje.ebean.Ebean;
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
@@ -53,7 +54,10 @@ public abstract class SubLocationABC<P extends IDomainObject> extends LocationAB
 	}
 
 	public final P getParent() {
-		return (P) parent;
+		// There's some weirdness with Ebean and navigating a recursive hierarchy. (You can't go down and then back up to a different class.)
+		// This fixes that problem, but it's not pretty.
+//		return (P) parent;
+		return (P) Ebean.find(parent.getClass(), parent.getPersistentId());
 	}
 
 	public final void setParent(P inParent) {

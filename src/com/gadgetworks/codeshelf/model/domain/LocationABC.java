@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: LocationABC.java,v 1.27 2013/03/16 08:03:08 jeffw Exp $
+ *  $Id: LocationABC.java,v 1.28 2013/03/17 19:19:13 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -34,6 +34,7 @@ import org.codehaus.jackson.annotate.JsonProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.avaje.ebean.Ebean;
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.TravelDirectionEnum;
@@ -219,6 +220,10 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		T result = null;
 
 		LocationABC parent = (LocationABC) getParent();
+		
+		// There's some weirdness with Ebean and navigating a recursive hierarchy. (You can't go down and then back up to a different class.)
+		// This fixes that problem, but it's not pretty.
+		parent = Ebean.find(parent.getClass(), parent.getPersistentId());
 
 		if (parent.getClass().equals(inClassWanted)) {
 			// This is the parent we want. (We can cast safely since we checked the class.)

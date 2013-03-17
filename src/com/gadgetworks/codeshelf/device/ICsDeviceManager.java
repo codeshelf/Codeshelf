@@ -1,12 +1,14 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: ICsDeviceManager.java,v 1.4 2013/03/05 20:45:11 jeffw Exp $
+ *  $Id: ICsDeviceManager.java,v 1.5 2013/03/17 19:19:12 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
 import java.util.List;
 import java.util.UUID;
+
+import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 
 /**
  * @author jeffw
@@ -27,5 +29,13 @@ public interface ICsDeviceManager {
 	 * @param inContainerIdList	The containers on the CHE when it requested the work.
 	 */
 	void requestCheWork(String inCheId, final UUID inPersistentId, String inStartLocationId, List<String> inContainerIdList);
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inCheId
+	 * @param inPersistentId
+	 * @param inWorkInstruction
+	 */
+	void completeWi(String inCheId, final UUID inPersistentId, final WorkInstruction inWorkInstruction);
 
 }

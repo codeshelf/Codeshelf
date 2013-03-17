@@ -1,7 +1,7 @@
 /*******************************************************************************
 CodeshelfWebSocketServer *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ServerMain.java,v 1.9 2013/03/07 12:28:11 jeffw Exp $
+ *  $Id: ServerMain.java,v 1.10 2013/03/17 19:19:13 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -88,17 +88,17 @@ import com.gadgetworks.codeshelf.model.domain.WorkArea.WorkAreaDao;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction.WorkInstructionDao;
 import com.gadgetworks.codeshelf.security.CodeshelfRealm;
-import com.gadgetworks.codeshelf.web.websession.IWebSession;
-import com.gadgetworks.codeshelf.web.websession.IWebSessionFactory;
-import com.gadgetworks.codeshelf.web.websession.IWebSessionManager;
-import com.gadgetworks.codeshelf.web.websession.WebSession;
-import com.gadgetworks.codeshelf.web.websession.WebSessionManager;
-import com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmdFactory;
-import com.gadgetworks.codeshelf.web.websession.command.req.WebSessionReqCmdFactory;
-import com.gadgetworks.codeshelf.web.websocket.CsWebSocketServer;
-import com.gadgetworks.codeshelf.web.websocket.IWebSocketServer;
-import com.gadgetworks.codeshelf.web.websocket.IWebSocketSslContextGenerator;
-import com.gadgetworks.codeshelf.web.websocket.SSLWebSocketServerFactory;
+import com.gadgetworks.codeshelf.ws.IWebSession;
+import com.gadgetworks.codeshelf.ws.IWebSessionFactory;
+import com.gadgetworks.codeshelf.ws.IWebSessionManager;
+import com.gadgetworks.codeshelf.ws.WebSession;
+import com.gadgetworks.codeshelf.ws.WebSessionManager;
+import com.gadgetworks.codeshelf.ws.command.req.IWsReqCmdFactory;
+import com.gadgetworks.codeshelf.ws.command.req.WsReqCmdFactory;
+import com.gadgetworks.codeshelf.ws.websocket.CsWebSocketServer;
+import com.gadgetworks.codeshelf.ws.websocket.IWebSocketServer;
+import com.gadgetworks.codeshelf.ws.websocket.IWebSocketSslContextGenerator;
+import com.gadgetworks.codeshelf.ws.websocket.SSLWebSocketServerFactory;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -213,7 +213,7 @@ public final class ServerMain {
 				// Websocket/WebSession
 				bind(IWebSocketServer.class).to(CsWebSocketServer.class);
 				bind(IWebSessionManager.class).to(WebSessionManager.class);
-				bind(IWebSessionReqCmdFactory.class).to(WebSessionReqCmdFactory.class);
+				bind(IWsReqCmdFactory.class).to(WsReqCmdFactory.class);
 				bind(WebSocketServer.WebSocketServerFactory.class).to(SSLWebSocketServerFactory.class);
 				install(new FactoryModuleBuilder().implement(IWebSession.class, WebSession.class).build(IWebSessionFactory.class));
 

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WorkInstruction.java,v 1.13 2013/03/15 14:57:13 jeffw Exp $
+ *  $Id: WorkInstruction.java,v 1.14 2013/03/17 19:19:13 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -109,7 +109,14 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 	@Getter
 	@Setter
 	@JsonProperty
-	private Integer						quantity;
+	private Integer						planQuantity;
+
+	// The pick quantity.
+	@Column(nullable = true)
+	@Getter
+	@Setter
+	@JsonProperty
+	private Integer						actualQuantity;
 
 	// From location.
 	@Column(nullable = false)

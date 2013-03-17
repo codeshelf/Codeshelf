@@ -1,12 +1,11 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CsDeviceManager.java,v 1.9 2013/03/07 05:23:32 jeffw Exp $
+ *  $Id: CsDeviceManager.java,v 1.10 2013/03/17 19:19:12 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,17 +24,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.application.IUtil;
+import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.domain.AisleController;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
-import com.gadgetworks.codeshelf.web.websession.command.IWebSessionCmd;
-import com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmd;
-import com.gadgetworks.codeshelf.web.websession.command.req.WebSessionReqCmdEnum;
-import com.gadgetworks.codeshelf.web.websession.command.req.WebSessionReqCmdNetAttach;
-import com.gadgetworks.codeshelf.web.websession.command.resp.WebSessionRespCmdEnum;
-import com.gadgetworks.codeshelf.web.websocket.CsWebSocketClient;
-import com.gadgetworks.codeshelf.web.websocket.ICsWebSocketClient;
-import com.gadgetworks.codeshelf.web.websocket.ICsWebsocketClientMsgHandler;
+import com.gadgetworks.codeshelf.ws.command.IWebSessionCmd;
+import com.gadgetworks.codeshelf.ws.command.req.IWsReqCmd;
+import com.gadgetworks.codeshelf.ws.command.req.NetAttachWsReqCmd;
+import com.gadgetworks.codeshelf.ws.command.req.WsReqCmdEnum;
+import com.gadgetworks.codeshelf.ws.command.resp.WsRespCmdEnum;
+import com.gadgetworks.codeshelf.ws.websocket.CsWebSocketClient;
+import com.gadgetworks.codeshelf.ws.websocket.ICsWebSocketClient;
+import com.gadgetworks.codeshelf.ws.websocket.ICsWebsocketClientMsgHandler;
 import com.gadgetworks.flyweight.command.NetGuid;
 import com.gadgetworks.flyweight.controller.INetworkDevice;
 import com.gadgetworks.flyweight.controller.IRadioController;
@@ -128,7 +128,7 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 							propertiesMap.put("credential", mNetworkCredential);
 							ObjectNode dataNode = mapper.valueToTree(propertiesMap);
 
-							sendWebSocketMessageNode(WebSessionReqCmdEnum.NET_ATTACH_REQ, dataNode);
+							sendWebSocketMessageNode(WsReqCmdEnum.NET_ATTACH_REQ, dataNode);
 						} else {
 							try {
 								Thread.sleep(WEBSOCKET_OPEN_RETRY_MILLIS);
@@ -159,7 +159,7 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 	 * @param inDataNode
 	 * @return
 	 */
-	private void sendWebSocketMessageNode(final WebSessionReqCmdEnum inReqCmd, ObjectNode inDataNode) {
+	private void sendWebSocketMessageNode(final WsReqCmdEnum inReqCmd, ObjectNode inDataNode) {
 		ObjectNode msgNode = null;
 
 		ObjectMapper treeMapper = new ObjectMapper();
@@ -184,7 +184,7 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 			ObjectMapper mapper = new ObjectMapper();
 			JsonNode rootNode = mapper.readTree(inMessage);
 
-			WebSessionRespCmdEnum commandEnum = getCommandTypeEnum(rootNode);
+			WsRespCmdEnum commandEnum = getCommandTypeEnum(rootNode);
 			String commandId = rootNode.get(IWebSessionCmd.COMMAND_ID_ELEMENT).getTextValue();
 			JsonNode dataNode = rootNode.get(IWebSessionCmd.DATA_ELEMENT);
 
@@ -227,9 +227,9 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 	 * @param inDataNode
 	 */
 	private void processNetAttachResp(final JsonNode inDataNode) {
-		JsonNode responseNode = inDataNode.get(WebSessionRespCmdEnum.NET_ATTACH_RESP.toString());
+		JsonNode responseNode = inDataNode.get(WsRespCmdEnum.NET_ATTACH_RESP.toString());
 
-		if ((responseNode != null) && (responseNode.getTextValue().equals(WebSessionReqCmdNetAttach.SUCCEED))) {
+		if ((responseNode != null) && (responseNode.getTextValue().equals(NetAttachWsReqCmd.SUCCEED))) {
 			JsonNode networkNode = inDataNode.get("codeshelfNetwork");
 			JsonNode networkPersistentIdNode = networkNode.get("persistentId");
 			String persistentId = networkPersistentIdNode.getTextValue();
@@ -275,17 +275,17 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 		filterParamsArray.add(theIdNode);
 
 		ArrayNode propertiesArray = mapper.createArrayNode();
-		propertiesArray.add(IWebSessionReqCmd.SHORT_DOMAIN_ID);
-		propertiesArray.add(IWebSessionReqCmd.DEVICE_GUID);
+		propertiesArray.add(IWsReqCmd.SHORT_DOMAIN_ID);
+		propertiesArray.add(IWsReqCmd.DEVICE_GUID);
 
 		Map<String, Object> propertiesMap = new HashMap<String, Object>();
-		propertiesMap.put(IWebSessionReqCmd.CLASSNAME, inClassName);
-		propertiesMap.put(IWebSessionReqCmd.FILTER_CLAUSE, "parent.persistentId = :theId");
-		propertiesMap.put(IWebSessionReqCmd.FILTER_PARAMS, filterParamsArray);
-		propertiesMap.put(IWebSessionReqCmd.PROPERTY_NAME_LIST, propertiesArray);
+		propertiesMap.put(IWsReqCmd.CLASSNAME, inClassName);
+		propertiesMap.put(IWsReqCmd.FILTER_CLAUSE, "parent.persistentId = :theId");
+		propertiesMap.put(IWsReqCmd.FILTER_PARAMS, filterParamsArray);
+		propertiesMap.put(IWsReqCmd.PROPERTY_NAME_LIST, propertiesArray);
 		ObjectNode dataNode = mapper.valueToTree(propertiesMap);
 
-		sendWebSocketMessageNode(WebSessionReqCmdEnum.OBJECT_FILTER_REQ, dataNode);
+		sendWebSocketMessageNode(WsReqCmdEnum.OBJECT_FILTER_REQ, dataNode);
 	}
 
 	// --------------------------------------------------------------------------
@@ -293,12 +293,12 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 	 * @param inDataNode
 	 */
 	private void processFilterResp(final JsonNode inDataNode) {
-		JsonNode resultsNode = inDataNode.get(IWebSessionReqCmd.RESULTS);
+		JsonNode resultsNode = inDataNode.get(IWsReqCmd.RESULTS);
 
 		if (resultsNode != null) {
 
 			for (JsonNode objectNode : resultsNode) {
-				JsonNode classNode = objectNode.get(IWebSessionReqCmd.CLASSNAME);
+				JsonNode classNode = objectNode.get(IWsReqCmd.CLASSNAME);
 				if (classNode != null) {
 					if (classNode.asText().equals(Che.class.getSimpleName())) {
 						processCheUpdate(objectNode);
@@ -315,7 +315,7 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 	 * @param inDataNode
 	 */
 	private void processCheWorkResp(final JsonNode inDataNode) {
-		JsonNode resultsNode = inDataNode.get(IWebSessionReqCmd.RESULTS);
+		JsonNode resultsNode = inDataNode.get(IWsReqCmd.RESULTS);
 
 		NetGuid cheId = new NetGuid("0x" + inDataNode.get("cheId").asText());
 
@@ -358,13 +358,13 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 	 * @param inCheUpdateNode
 	 */
 	private void processCheUpdate(final JsonNode inCheUpdateNode) {
-		JsonNode updateTypeNode = inCheUpdateNode.get(IWebSessionReqCmd.OP_TYPE);
+		JsonNode updateTypeNode = inCheUpdateNode.get(IWsReqCmd.OP_TYPE);
 		INetworkDevice cheDevice = null;
-		NetGuid deviceGuid = new NetGuid(inCheUpdateNode.get(IWebSessionReqCmd.DEVICE_GUID).asText());
-		UUID persistentId = UUID.fromString(inCheUpdateNode.get(IWebSessionReqCmd.PERSISTENT_ID).asText());
+		NetGuid deviceGuid = new NetGuid(inCheUpdateNode.get(IWsReqCmd.DEVICE_GUID).asText());
+		UUID persistentId = UUID.fromString(inCheUpdateNode.get(IWsReqCmd.PERSISTENT_ID).asText());
 		if (updateTypeNode != null) {
 			switch (updateTypeNode.getTextValue()) {
-				case IWebSessionReqCmd.OP_TYPE_CREATE:
+				case IWsReqCmd.OP_TYPE_CREATE:
 					// Create the CHE.
 					cheDevice = new CheDevice(persistentId, deviceGuid, this, mRadioController);
 
@@ -377,7 +377,7 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 					LOGGER.info("Created che: " + cheDevice.getGuid());
 					break;
 
-				case IWebSessionReqCmd.OP_TYPE_UPDATE:
+				case IWsReqCmd.OP_TYPE_UPDATE:
 					// Update the CHE.
 					cheDevice = mCheMap.get(deviceGuid);
 
@@ -389,7 +389,7 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 					LOGGER.info("Updated che: " + cheDevice.getGuid());
 					break;
 
-				case IWebSessionReqCmd.OP_TYPE_DELETE:
+				case IWsReqCmd.OP_TYPE_DELETE:
 					// Delete the CHE.
 					cheDevice = mCheMap.remove(deviceGuid);
 					mRadioController.removeNetworkDevice(cheDevice);
@@ -407,13 +407,13 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 	 * @param inAisleControllerUpdateNode
 	 */
 	private void processAisleControllerUpdate(final JsonNode inAisleControllerUpdateNode) {
-		JsonNode updateTypeNode = inAisleControllerUpdateNode.get(IWebSessionReqCmd.OP_TYPE);
+		JsonNode updateTypeNode = inAisleControllerUpdateNode.get(IWsReqCmd.OP_TYPE);
 		INetworkDevice aisleDevice = null;
-		NetGuid deviceGuid = new NetGuid(inAisleControllerUpdateNode.get(IWebSessionReqCmd.DEVICE_GUID).asText());
-		UUID persistentId = UUID.fromString(inAisleControllerUpdateNode.get(IWebSessionReqCmd.PERSISTENT_ID).asText());
+		NetGuid deviceGuid = new NetGuid(inAisleControllerUpdateNode.get(IWsReqCmd.DEVICE_GUID).asText());
+		UUID persistentId = UUID.fromString(inAisleControllerUpdateNode.get(IWsReqCmd.PERSISTENT_ID).asText());
 		if (updateTypeNode != null) {
 			switch (updateTypeNode.getTextValue()) {
-				case IWebSessionReqCmd.OP_TYPE_CREATE:
+				case IWsReqCmd.OP_TYPE_CREATE:
 					// Create the aisle device.
 					aisleDevice = new AisleDevice(persistentId, deviceGuid, this, mRadioController);
 
@@ -426,7 +426,7 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 					LOGGER.info("Created aisle device: " + aisleDevice.getGuid());
 					break;
 
-				case IWebSessionReqCmd.OP_TYPE_UPDATE:
+				case IWsReqCmd.OP_TYPE_UPDATE:
 					// Update the aisle device.
 					aisleDevice = mCheMap.get(deviceGuid);
 
@@ -438,7 +438,7 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 					LOGGER.info("Updated aisle device: " + aisleDevice.getGuid());
 					break;
 
-				case IWebSessionReqCmd.OP_TYPE_DELETE:
+				case IWsReqCmd.OP_TYPE_DELETE:
 					// Delete the aisle device.
 					aisleDevice = mCheMap.remove(deviceGuid);
 					mRadioController.removeNetworkDevice(aisleDevice);
@@ -480,12 +480,12 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 	 * @param inCommandAsJson
 	 * @return
 	 */
-	private WebSessionRespCmdEnum getCommandTypeEnum(JsonNode inCommandAsJson) {
-		WebSessionRespCmdEnum result = WebSessionRespCmdEnum.INVALID;
+	private WsRespCmdEnum getCommandTypeEnum(JsonNode inCommandAsJson) {
+		WsRespCmdEnum result = WsRespCmdEnum.INVALID;
 
 		JsonNode commandTypeNode = inCommandAsJson.get(IWebSessionCmd.COMMAND_TYPE_ELEMENT);
 		if (commandTypeNode != null) {
-			result = WebSessionRespCmdEnum.fromString(commandTypeNode.getTextValue());
+			result = WsRespCmdEnum.fromString(commandTypeNode.getTextValue());
 		}
 
 		return result;
@@ -502,7 +502,6 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 		// Build the response Json object.
 		ObjectMapper mapper = new ObjectMapper();
 		ObjectNode dataNode = mapper.createObjectNode();
-		dataNode.put("cheId", inCheId);
 		dataNode.put("persistentId", inPersistentId.toString());
 		dataNode.put("locationId", inLocationId);
 
@@ -511,6 +510,25 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 			propertiesArray.add(containerId);
 		}
 		dataNode.put("containerIds", propertiesArray);
-		sendWebSocketMessageNode(WebSessionReqCmdEnum.CHE_WORK_REQ, dataNode);
+		sendWebSocketMessageNode(WsReqCmdEnum.CHE_WORK_REQ, dataNode);
+	}
+
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.device.ICsDeviceManager#completeWi(java.lang.String, java.util.UUID, com.gadgetworks.codeshelf.model.domain.WorkInstruction)
+	 */
+	@Override
+	public final void completeWi(final String inCheId, final UUID inPersistentId, final WorkInstruction inWorkInstruction) {
+		LOGGER.info("Complete: Che: " + inCheId + " WI: " + inWorkInstruction.toString());
+
+		inWorkInstruction.setStatusEnum(WorkInstructionStatusEnum.COMPLETE);
+		
+		// Build the response Json object.
+		ObjectMapper mapper = new ObjectMapper();
+		ObjectNode dataNode = mapper.createObjectNode();
+		dataNode.put("persistentId", inPersistentId.toString());
+		dataNode.put("wi", mapper.valueToTree(inWorkInstruction));
+
+		sendWebSocketMessageNode(WsReqCmdEnum.CHE_WICOMPLETE_REQ, dataNode);
 	}
 }

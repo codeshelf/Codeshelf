@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: TcpClientInterface.java,v 1.3 2013/03/01 21:24:43 jeffw Exp $
+ *  $Id: TcpClientInterface.java,v 1.4 2013/03/17 19:19:13 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.flyweight.controller;
 
@@ -13,7 +13,7 @@ import java.net.Socket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.web.websocket.CsWebSocketClient;
+import com.gadgetworks.codeshelf.ws.websocket.CsWebSocketClient;
 
 /**
  * @author jeffw

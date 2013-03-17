@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeshelfApplicationTest.java,v 1.18 2013/03/07 05:23:32 jeffw Exp $
+ *  $Id: CodeshelfApplicationTest.java,v 1.19 2013/03/17 19:19:13 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.application;
 
@@ -42,16 +42,17 @@ import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
 import com.gadgetworks.codeshelf.model.domain.UomMaster;
 import com.gadgetworks.codeshelf.model.domain.User;
+import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.security.CodeshelfRealm;
-import com.gadgetworks.codeshelf.web.websession.IWebSessionFactory;
-import com.gadgetworks.codeshelf.web.websession.IWebSessionManager;
-import com.gadgetworks.codeshelf.web.websession.WebSession;
-import com.gadgetworks.codeshelf.web.websession.WebSessionManager;
-import com.gadgetworks.codeshelf.web.websession.command.req.IWebSessionReqCmdFactory;
-import com.gadgetworks.codeshelf.web.websession.command.req.WebSessionReqCmdFactory;
-import com.gadgetworks.codeshelf.web.websocket.CsWebSocketServer;
-import com.gadgetworks.codeshelf.web.websocket.IWebSocketServer;
-import com.gadgetworks.codeshelf.web.websocket.SSLWebSocketServerFactory;
+import com.gadgetworks.codeshelf.ws.IWebSessionFactory;
+import com.gadgetworks.codeshelf.ws.IWebSessionManager;
+import com.gadgetworks.codeshelf.ws.WebSession;
+import com.gadgetworks.codeshelf.ws.WebSessionManager;
+import com.gadgetworks.codeshelf.ws.command.req.IWsReqCmdFactory;
+import com.gadgetworks.codeshelf.ws.command.req.WsReqCmdFactory;
+import com.gadgetworks.codeshelf.ws.websocket.CsWebSocketServer;
+import com.gadgetworks.codeshelf.ws.websocket.IWebSocketServer;
+import com.gadgetworks.codeshelf.ws.websocket.SSLWebSocketServerFactory;
 import com.google.inject.Binding;
 import com.google.inject.Injector;
 import com.google.inject.Key;
@@ -214,7 +215,7 @@ public class CodeshelfApplicationTest {
 	private class WebSessionFactory implements IWebSessionFactory {
 
 		@Override
-		public WebSession create(IWebSocket inWebSocket, IWebSessionReqCmdFactory inWebSessionReqCmdFactory) {
+		public WebSession create(IWebSocket inWebSocket, IWsReqCmdFactory inWebSessionReqCmdFactory) {
 			Realm realm = new CodeshelfRealm();
 			return new WebSession(inWebSocket, inWebSessionReqCmdFactory, realm);
 		}
@@ -239,10 +240,11 @@ public class CodeshelfApplicationTest {
 		ITypedDao<Item> itemDao = new MockDao<Item>();
 		ITypedDao<UomMaster> uomMasterDao = new MockDao<UomMaster>();
 		ITypedDao<Che> cheDao = new MockDao<Che>();
+		ITypedDao<WorkInstruction> workInstructionDao = new MockDao<WorkInstruction>();
 
 		Injector injector = new MockInjector();
 		IDaoProvider daoProvider = new DaoProvider(injector);
-		IWebSessionReqCmdFactory webSessionReqCmdFactory = new WebSessionReqCmdFactory(organizationDao, cheDao, daoProvider);
+		IWsReqCmdFactory webSessionReqCmdFactory = new WsReqCmdFactory(organizationDao, cheDao, workInstructionDao, daoProvider);
 		IWebSessionFactory webSessionFactory = new WebSessionFactory();
 		IWebSessionManager webSessionManager = new WebSessionManager(webSessionReqCmdFactory, webSessionFactory);
 		SSLWebSocketServerFactory webSocketFactory = new SSLWebSocketServerFactory("./conf/codeshelf.keystore", "JKS", "x2HPbC2avltYQR", "x2HPbC2avltYQR");

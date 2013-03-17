@@ -1,7 +1,7 @@
 /*******************************************************************************
 CodeshelfWebSocketServer *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CsNetworkMain.java,v 1.7 2013/03/04 18:10:25 jeffw Exp $
+ *  $Id: CsNetworkMain.java,v 1.8 2013/03/17 19:19:13 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -20,11 +20,11 @@ import com.gadgetworks.codeshelf.device.RadioController;
 import com.gadgetworks.codeshelf.model.dao.DaoProvider;
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
-import com.gadgetworks.codeshelf.web.websocket.CsWebSocketClient;
-import com.gadgetworks.codeshelf.web.websocket.ICsWebSocketClient;
-import com.gadgetworks.codeshelf.web.websocket.ICsWebsocketClientMsgHandler;
-import com.gadgetworks.codeshelf.web.websocket.IWebSocketSslContextGenerator;
-import com.gadgetworks.codeshelf.web.websocket.SSLWebSocketClientFactory;
+import com.gadgetworks.codeshelf.ws.websocket.CsWebSocketClient;
+import com.gadgetworks.codeshelf.ws.websocket.ICsWebSocketClient;
+import com.gadgetworks.codeshelf.ws.websocket.ICsWebsocketClientMsgHandler;
+import com.gadgetworks.codeshelf.ws.websocket.IWebSocketSslContextGenerator;
+import com.gadgetworks.codeshelf.ws.websocket.SSLWebSocketClientFactory;
 import com.gadgetworks.flyweight.command.IPacket;
 import com.gadgetworks.flyweight.controller.IGatewayInterface;
 import com.gadgetworks.flyweight.controller.IRadioController;
