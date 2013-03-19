@@ -1,13 +1,15 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ServerCodeshelfApplication.java,v 1.9 2013/03/17 19:19:13 jeffw Exp $
+ *  $Id: ServerCodeshelfApplication.java,v 1.10 2013/03/19 01:19:59 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
 
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 
 import org.apache.log4j.Level;
 import org.slf4j.Logger;
@@ -23,17 +25,18 @@ import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
 import com.gadgetworks.codeshelf.model.domain.User;
+import com.gadgetworks.codeshelf.report.IPickDocumentGenerator;
 import com.gadgetworks.codeshelf.ws.websocket.IWebSocketServer;
 import com.google.inject.Inject;
 
 public final class ServerCodeshelfApplication extends ApplicationABC {
 
-	private static final Logger				LOGGER		= LoggerFactory.getLogger(ServerCodeshelfApplication.class);
+	private static final Logger				LOGGER	= LoggerFactory.getLogger(ServerCodeshelfApplication.class);
 
 	private IEdiProcessor					mEdiProcessor;
 	private IWebSocketServer				mWebSocketServer;
-	private IDaoProvider					mDaoProvider;
 	private IHttpServer						mHttpServer;
+	private IPickDocumentGenerator			mPickDocumentGenerator;
 	private IDatabase						mDatabase;
 
 	private ITypedDao<PersistentProperty>	mPersistentPropertyDao;
@@ -41,11 +44,13 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 	private ITypedDao<Facility>				mFacilityDao;
 	private ITypedDao<User>					mUserDao;
 
+	private BlockingQueue<String>			mEdiProcessSignalQueue;
+
 	@Inject
 	public ServerCodeshelfApplication(final IWebSocketServer inWebSocketServer,
-		final IDaoProvider inDaoProvider,
 		final IHttpServer inHttpServer,
 		final IEdiProcessor inEdiProcessor,
+		final IPickDocumentGenerator inPickDocumentGenerator,
 		final IDatabase inDatabase,
 		final IUtil inUtil,
 		final ITypedDao<PersistentProperty> inPersistentPropertyDao,
@@ -54,10 +59,10 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		final ITypedDao<User> inUserDao) {
 		super(inUtil);
 		mWebSocketServer = inWebSocketServer;
-		mDaoProvider = inDaoProvider;
 		mHttpServer = inHttpServer;
 		mEdiProcessor = inEdiProcessor;
 		mDatabase = inDatabase;
+		mPickDocumentGenerator = inPickDocumentGenerator;
 		mPersistentPropertyDao = inPersistentPropertyDao;
 		mOrganizationDao = inOrganizationDao;
 		mFacilityDao = inFacilityDao;
@@ -88,7 +93,12 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 			}
 		}
 
-		mEdiProcessor.startProcessor();
+		// Start the EDI process.
+		mEdiProcessSignalQueue = new ArrayBlockingQueue<>(100);
+		mEdiProcessor.startProcessor(mEdiProcessSignalQueue);
+		
+		// Start the pick document generator process;
+		mPickDocumentGenerator.startProcessor(mEdiProcessSignalQueue);
 
 		mHttpServer.startServer();
 	}
@@ -103,6 +113,7 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		mHttpServer.stopServer();
 
 		mEdiProcessor.stopProcessor();
+		mPickDocumentGenerator.stopProcessor();
 
 		// Stop the web socket manager.
 		try {

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.59 2013/03/17 23:10:45 jeffw Exp $
+ *  $Id: Facility.java,v 1.60 2013/03/19 01:19:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -679,14 +679,14 @@ public class Facility extends LocationABC<Organization> {
 										}
 
 										result.add(plannedWi);
-										
+
 										detail.setStatusEnum(OrderStatusEnum.INPROGRESS);
 										try {
 											OrderDetail.DAO.store(detail);
 										} catch (DaoException e) {
 											LOGGER.error("", e);
 										}
-										
+
 										order.setStatusEnum(OrderStatusEnum.INPROGRESS);
 										try {
 											OrderHeader.DAO.store(order);

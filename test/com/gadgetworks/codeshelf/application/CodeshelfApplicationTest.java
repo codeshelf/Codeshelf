@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeshelfApplicationTest.java,v 1.20 2013/03/17 23:10:45 jeffw Exp $
+ *  $Id: CodeshelfApplicationTest.java,v 1.21 2013/03/19 01:19:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.application;
 
@@ -43,6 +43,8 @@ import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
 import com.gadgetworks.codeshelf.model.domain.UomMaster;
 import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
+import com.gadgetworks.codeshelf.report.IPickDocumentGenerator;
+import com.gadgetworks.codeshelf.report.PickDocumentGenerator;
 import com.gadgetworks.codeshelf.security.CodeshelfRealm;
 import com.gadgetworks.codeshelf.ws.IWebSessionFactory;
 import com.gadgetworks.codeshelf.ws.IWebSessionManager;
@@ -228,9 +230,9 @@ public class CodeshelfApplicationTest {
 	public void testStartStopApplication() {
 
 		ITypedDao<PersistentProperty> persistentPropertyDao = new MockDao<PersistentProperty>();
-		ITypedDao<Organization> organizationDao = new MockDao<Organization>();
-		ITypedDao<User> userDao = new MockDao<User>();
-		ITypedDao<Facility> facilityDao = new MockDao<Facility>();
+		ITypedDao<Organization> organizationDao = Organization.DAO = new MockDao<Organization>();
+		ITypedDao<User> userDao = User.DAO = new MockDao<User>();
+		ITypedDao<Facility> facilityDao = Facility.DAO = new MockDao<Facility>();
 		ITypedDao<OrderGroup> orderGroupDao = new MockDao<OrderGroup>();
 		ITypedDao<OrderHeader> orderHeaderDao = new MockDao<OrderHeader>();
 		ITypedDao<OrderDetail> orderDetailDao = new MockDao<OrderDetail>();
@@ -257,14 +259,15 @@ public class CodeshelfApplicationTest {
 
 		ICsvImporter importer = new CsvImporter(orderGroupDao, orderHeaderDao, orderDetailDao, containerDao, containerUseDao, itemMasterDao, itemDao, uomMasterDao);
 		IEdiProcessor ediProcessor = new EdiProcessor(importer, facilityDao);
+		IPickDocumentGenerator pickDocumentGenerator = new PickDocumentGenerator();
 		IUtil util = new MockUtil();
 		ISchemaManager schemaManager = new H2SchemaManager(util, "codeshelf", "codeshelf", "codeshelf", "codeshelf", "localhost", "");
 		IDatabase database = new Database(schemaManager, util);
 
 		final ServerCodeshelfApplication application = new ServerCodeshelfApplication(webSocketListener,
-			daoProvider,
 			httpServer,
 			ediProcessor,
+			pickDocumentGenerator,
 			database,
 			util,
 			persistentPropertyDao,

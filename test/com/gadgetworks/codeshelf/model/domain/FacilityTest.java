@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: FacilityTest.java,v 1.6 2013/02/12 19:19:42 jeffw Exp $
+ *  $Id: FacilityTest.java,v 1.7 2013/03/19 01:19:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -21,6 +21,7 @@ public class FacilityTest {
 	public final void createAisleTest() {
 
 		Organization.DAO = new MockDao<Organization>();
+		LocationABC.DAO = new MockDao<LocationABC>();
 		Facility.DAO = new MockDao<Facility>();
 		Aisle.DAO = new MockDao<Aisle>();
 		Bay.DAO = new MockDao<Bay>();
@@ -36,8 +37,9 @@ public class FacilityTest {
 		Facility facility = new Facility();
 		facility.setParent(organization);
 		facility.setFacilityId("F1");
-		facility.createAisle("TEST", 1.0, 1.0, 2.0, 2.0, 2.0, 2, 5, true, true);
 		Facility.DAO.store(facility);
+
+		facility.createAisle("TEST", 1.0, 1.0, 2.0, 2.0, 2.0, 2, 5, true, true);
 
 		Facility foundFacility = Facility.DAO.findByDomainId(organization, "F1");
 

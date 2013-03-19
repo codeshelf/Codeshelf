@@ -1,9 +1,11 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: IEdiProcessor.java,v 1.2 2012/10/11 02:42:39 jeffw Exp $
+ *  $Id: IEdiProcessor.java,v 1.3 2013/03/19 01:19:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
+
+import java.util.concurrent.BlockingQueue;
 
 /**
  * @author jeffw
@@ -13,9 +15,7 @@ public interface IEdiProcessor {
 
 	String	EDIPROCESSOR_THREAD_NAME	= "EDI Processor";
 
-	void startProcessor();
-
-	void restartProcessor();
+	void startProcessor(BlockingQueue<String> inEdiSignalQueue);
 
 	void stopProcessor();
 

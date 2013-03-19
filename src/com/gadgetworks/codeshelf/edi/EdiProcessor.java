@@ -1,9 +1,11 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiProcessor.java,v 1.18 2013/03/17 23:10:45 jeffw Exp $
+ *  $Id: EdiProcessor.java,v 1.19 2013/03/19 01:19:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
+
+import java.util.concurrent.BlockingQueue;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,7 +47,7 @@ public final class EdiProcessor implements IEdiProcessor {
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	public void startProcessor() {
+	public void startProcessor(final BlockingQueue<String> inEdiSignalQueue) {
 		mShouldRun = true;
 		try {
 			Thread.sleep(5000);
@@ -53,30 +55,12 @@ public final class EdiProcessor implements IEdiProcessor {
 		}
 		mProcessorThread = new Thread(new Runnable() {
 			public void run() {
-				process();
+				process(inEdiSignalQueue);
 			}
 		}, EDIPROCESSOR_THREAD_NAME);
 		mProcessorThread.setDaemon(true);
 		mProcessorThread.setPriority(Thread.MIN_PRIORITY);
 		mProcessorThread.start();
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 */
-	public void restartProcessor() {
-		mLastProcessMillis = 0;
-
-		stopProcessor();
-		// Loop until the existing threads stop.
-		while (mProcessorThread.isAlive()) {
-			try {
-				Thread.sleep(100);
-			} catch (InterruptedException e) {
-				LOGGER.error("", e);
-			}
-		}
-		startProcessor();
 	}
 
 	// --------------------------------------------------------------------------
@@ -89,12 +73,12 @@ public final class EdiProcessor implements IEdiProcessor {
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	private void process() {
+	private void process(final BlockingQueue<String> inEdiSignalQueue) {
 		while (mShouldRun) {
 			try {
 				if (System.currentTimeMillis() > (mLastProcessMillis + PROCESS_INTERVAL_MILLIS)) {
 					// Time to harvest events.
-					checkEdiServices();
+					checkEdiServices(inEdiSignalQueue);
 					mLastProcessMillis = System.currentTimeMillis();
 				}
 
@@ -113,7 +97,7 @@ public final class EdiProcessor implements IEdiProcessor {
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	private void checkEdiServices() {
+	private void checkEdiServices(BlockingQueue<String> inEdiSignalQueue) {
 
 		LOGGER.debug("Begin EDI harvest cycle.");
 
@@ -121,7 +105,14 @@ public final class EdiProcessor implements IEdiProcessor {
 		for (Facility facility : mFacilityDao.getAll()) {
 			for (IEdiService ediService : facility.getEdiServices()) {
 				if (ediService.getServiceStateEnum().equals(EdiServiceStateEnum.LINKED)) {
-					ediService.checkForCsvUpdates(mCsvImporter);
+					if (ediService.checkForCsvUpdates(mCsvImporter)) {
+						// Signal other threads that we've just processed new EDI.
+						try {
+							inEdiSignalQueue.put(ediService.getServiceName());
+						} catch (InterruptedException e) {
+							LOGGER.error("", e);
+						}
+					}
 				}
 			}
 		}

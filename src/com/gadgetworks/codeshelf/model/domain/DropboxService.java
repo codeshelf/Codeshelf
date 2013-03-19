@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DropboxService.java,v 1.31 2013/03/15 23:52:49 jeffw Exp $
+ *  $Id: DropboxService.java,v 1.32 2013/03/19 01:19:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -15,7 +15,6 @@ import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -79,6 +78,8 @@ public class DropboxService extends EdiServiceABC {
 		}
 	}
 
+	public static final String		DROPBOX_SERVICE_NAME	= "DROPBOX";
+
 	private static final Logger		LOGGER					= LoggerFactory.getLogger(DropboxService.class);
 
 	private static final String		APPKEY					= "feh3ontnajdmmin";
@@ -100,29 +101,40 @@ public class DropboxService extends EdiServiceABC {
 
 	}
 
+	public final String getServiceName() {
+		return DROPBOX_SERVICE_NAME;
+	}
+
 	public final ITypedDao<DropboxService> getDao() {
 		return DAO;
 	}
 
-	public final void checkForCsvUpdates(ICsvImporter inCsvImporter) {
+	public final Boolean checkForCsvUpdates(ICsvImporter inCsvImporter) {
+		Boolean result = false;
+
 		// Make sure we believe that we're properly registered with the service before we try to contact it.
 		if (this.getServiceStateEnum().equals(EdiServiceStateEnum.LINKED)) {
 
 			DropboxAPI<Session> clientSession = getClientSession();
 			if (clientSession != null) {
-				checkForChangedDocuments(clientSession, inCsvImporter);
+				result = checkForChangedDocuments(clientSession, inCsvImporter);
 			}
 		}
+
+		return result;
 	}
 
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inClientSession
 	 */
-	private void checkForChangedDocuments(DropboxAPI<Session> inClientSession, ICsvImporter inCsvImporter) {
+	private Boolean checkForChangedDocuments(DropboxAPI<Session> inClientSession, ICsvImporter inCsvImporter) {
+		Boolean result = false;
+
 		if (ensureBaseDirectories(inClientSession)) {
 			DeltaPage<Entry> page = getNextPage(inClientSession);
 			while ((page != null) && (page.entries.size() > 0)) {
+				result = true;
 				iteratePage(inClientSession, page, inCsvImporter);
 				if (page.hasMore) {
 					page = getNextPage(inClientSession);
@@ -131,6 +143,7 @@ public class DropboxService extends EdiServiceABC {
 				}
 			}
 		}
+		return result;
 	}
 
 	// --------------------------------------------------------------------------

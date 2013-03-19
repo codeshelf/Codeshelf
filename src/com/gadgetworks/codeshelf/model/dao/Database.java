@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Database.java,v 1.7 2013/03/16 08:03:09 jeffw Exp $
+ *  $Id: Database.java,v 1.8 2013/03/19 01:19:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -91,22 +91,25 @@ public class Database implements IDatabase {
 
 		// Setup the EBean server configuration.
 		ServerConfig config = new ServerConfig();
+
+		// Give the properties file a chance to override some of the above choices.
+		config.loadFromProperties();
+
 		config.setName("codeshelf.primary");
-		//		config.loadFromProperties();
 		config.setDataSourceConfig(dataSourceConfig);
 		config.setNamingConvention(new GWEbeanNamingConvention());
 		config.setDefaultServer(true);
 		config.setResourceDirectory(mUtil.getApplicationDataDirPath());
-		config.setDebugLazyLoad(true);
-		config.setDebugSql(true);
-		config.setLoggingLevel(LogLevel.SQL);
+		config.setDebugLazyLoad(false);
+//		config.setDebugSql(false);
+//		config.setLoggingLevel(LogLevel.NONE);
 		config.setLoggingToJavaLogger(true);
 		config.setPackages(new ArrayList<String>(Arrays.asList("com.gadgetworks.codeshelf.model.domain")));
 		config.setJars(new ArrayList<String>(Arrays.asList("codeshelf.jar")));
 		config.setUpdateChangesOnly(true);
 		config.setDdlGenerate(false);
 		config.setDdlRun(false);
-
+		
 		EbeanServer server = EbeanServerFactory.create(config);
 		if (server == null) {
 			mUtil.exitSystem();

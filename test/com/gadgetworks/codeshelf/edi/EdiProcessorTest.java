@@ -1,11 +1,13 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiProcessorTest.java,v 1.5 2012/10/31 09:23:59 jeffw Exp $
+ *  $Id: EdiProcessorTest.java,v 1.6 2013/03/19 01:19:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
 import java.io.InputStreamReader;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 
 import junit.framework.Assert;
 
@@ -36,20 +38,10 @@ public class EdiProcessorTest {
 		};
 
 		IEdiProcessor ediProcessor = new EdiProcessor(csvImporter, facilityDao);
-		ediProcessor.startProcessor();
+		BlockingQueue<String> testBlockingQueue = new ArrayBlockingQueue<>(100);
+		ediProcessor.startProcessor(testBlockingQueue);
 
 		Thread foundThread = null;
-		for (Thread thread : Thread.getAllStackTraces().keySet()) {
-			if (thread.getName().equals(IEdiProcessor.EDIPROCESSOR_THREAD_NAME)) {
-				foundThread = thread;
-			}
-		}
-
-		Assert.assertNotNull(foundThread);
-
-		ediProcessor.restartProcessor();
-
-		foundThread = null;
 		for (Thread thread : Thread.getAllStackTraces().keySet()) {
 			if (thread.getName().equals(IEdiProcessor.EDIPROCESSOR_THREAD_NAME)) {
 				foundThread = thread;
@@ -89,23 +81,33 @@ public class EdiProcessorTest {
 
 		IEdiService ediServiceLinked = new IEdiService() {
 
+			public String getServiceName() {
+				return "TEST";
+			}
+
 			public EdiServiceStateEnum getServiceStateEnum() {
 				return EdiServiceStateEnum.LINKED;
 			}
 
-			public void checkForCsvUpdates(ICsvImporter inCsvImporter) {
+			public Boolean checkForCsvUpdates(ICsvImporter inCsvImporter) {
 				linkedResult.processed = true;
+				return true;
 			}
 		};
 
 		IEdiService ediServiceUnlinked = new IEdiService() {
 
+			public String getServiceName() {
+				return "TEST";
+			}
+
 			public EdiServiceStateEnum getServiceStateEnum() {
 				return EdiServiceStateEnum.UNLINKED;
 			}
 
-			public void checkForCsvUpdates(ICsvImporter inCsvImporter) {
+			public Boolean checkForCsvUpdates(ICsvImporter inCsvImporter) {
 				unlinkedResult.processed = true;
+				return true;
 			}
 		};
 
@@ -128,7 +130,8 @@ public class EdiProcessorTest {
 		};
 
 		IEdiProcessor ediProcessor = new EdiProcessor(csvImporter, facilityDao);
-		ediProcessor.startProcessor();
+		BlockingQueue<String> testBlockingQueue = new ArrayBlockingQueue<>(100);
+		ediProcessor.startProcessor(testBlockingQueue);
 
 		try {
 			// Sleep will switch us to the EdiProcessor thread.

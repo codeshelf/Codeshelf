@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: SubLocationABC.java,v 1.6 2013/03/17 19:19:13 jeffw Exp $
+ *  $Id: SubLocationABC.java,v 1.7 2013/03/19 01:19:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -56,8 +56,12 @@ public abstract class SubLocationABC<P extends IDomainObject> extends LocationAB
 	public final P getParent() {
 		// There's some weirdness with Ebean and navigating a recursive hierarchy. (You can't go down and then back up to a different class.)
 		// This fixes that problem, but it's not pretty.
-//		return (P) parent;
-		return (P) Ebean.find(parent.getClass(), parent.getPersistentId());
+		//		return (P) parent;
+		if (parent == null) {
+			return (P) parent;
+		} else {
+			return (P) Ebean.find(parent.getClass(), parent.getPersistentId());
+		}
 	}
 
 	public final void setParent(P inParent) {

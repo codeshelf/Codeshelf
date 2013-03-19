@@ -1,7 +1,7 @@
 /*******************************************************************************
 CodeshelfWebSocketServer *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ServerMain.java,v 1.10 2013/03/17 19:19:13 jeffw Exp $
+ *  $Id: ServerMain.java,v 1.11 2013/03/19 01:19:59 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -87,6 +87,8 @@ import com.gadgetworks.codeshelf.model.domain.WorkArea;
 import com.gadgetworks.codeshelf.model.domain.WorkArea.WorkAreaDao;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction.WorkInstructionDao;
+import com.gadgetworks.codeshelf.report.IPickDocumentGenerator;
+import com.gadgetworks.codeshelf.report.PickDocumentGenerator;
 import com.gadgetworks.codeshelf.security.CodeshelfRealm;
 import com.gadgetworks.codeshelf.ws.IWebSession;
 import com.gadgetworks.codeshelf.ws.IWebSessionFactory;
@@ -208,6 +210,7 @@ public final class ServerMain {
 				bind(IDaoProvider.class).to(DaoProvider.class);
 				bind(IHttpServer.class).to(HttpServer.class);
 				bind(IEdiProcessor.class).to(EdiProcessor.class);
+				bind(IPickDocumentGenerator.class).to(PickDocumentGenerator.class);
 				bind(ICsvImporter.class).to(CsvImporter.class);
 
 				// Websocket/WebSession
