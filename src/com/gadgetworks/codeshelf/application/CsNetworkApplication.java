@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CsNetworkApplication.java,v 1.4 2013/03/03 23:27:21 jeffw Exp $
+ *  $Id: CsNetworkApplication.java,v 1.5 2013/04/01 23:42:40 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -17,6 +17,16 @@ public final class CsNetworkApplication extends ApplicationABC {
 	public CsNetworkApplication(final ICsDeviceManager inDeviceManager, final IUtil inUtil) {
 		super(inUtil);
 		mDeviceManager = inDeviceManager;
+	}
+
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.application.ApplicationABC#doLoadLibraries()
+	 */
+	@Override
+	protected void doLoadLibraries() {
+		//System.loadLibrary("jd2xx");
+		//System.loadLibrary("libjSSC-0.9_x86_64");
 	}
 
 	// --------------------------------------------------------------------------

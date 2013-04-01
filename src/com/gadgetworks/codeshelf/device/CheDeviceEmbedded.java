@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CheDeviceEmbedded.java,v 1.10 2013/03/13 03:52:50 jeffw Exp $
+ *  $Id: CheDeviceEmbedded.java,v 1.11 2013/04/01 23:42:40 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -23,6 +23,10 @@ public class CheDeviceEmbedded extends DeviceEmbeddedABC {
 
 	public CheDeviceEmbedded() {
 		super("00000002", "localhost");
+	}
+	
+	public void doStart() {
+		
 	}
 	
 	// --------------------------------------------------------------------------

@@ -1,3 +1,8 @@
+/*******************************************************************************
+ *  CodeShelf
+ *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
+ *  $Id: AisleDevice.java,v 1.3 2013/04/01 23:42:40 jeffw Exp $
+ *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
 import java.util.UUID;
@@ -14,18 +19,16 @@ import com.gadgetworks.flyweight.controller.IRadioController;
 
 public class AisleDevice extends DeviceABC {
 
-	private static final Logger	LOGGER	= LoggerFactory.getLogger(AisleDevice.class);
+	private static final Logger	LOGGER						= LoggerFactory.getLogger(AisleDevice.class);
 
 	public AisleDevice(final UUID inPersistentId, final NetGuid inGuid, final ICsDeviceManager inDeviceManager, final IRadioController inRadioController) {
 		super(inPersistentId, inGuid, inDeviceManager, inRadioController);
-
 	}
 
 	@Override
-	public final void start() {
+	public void start() {
 		short position = 1;
 		sendLightCommand(CommandControlLight.CHANNEL1, position, ColorEnum.BLUE, CommandControlLight.EFFECT_SOLID);
-
 	}
 
 	@Override
@@ -42,5 +45,6 @@ public class AisleDevice extends DeviceABC {
 		ICommand command = new CommandControlLight(NetEndpoint.PRIMARY_ENDPOINT, inChannel, inPosition, inColor, inEffect);
 		mRadioController.sendCommand(command, getAddress(), false);
 	}
+
 
 }

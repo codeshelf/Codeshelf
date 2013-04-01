@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CsCheApplication.java,v 1.4 2013/03/25 10:37:44 jeffw Exp $
+ *  $Id: CsCheApplication.java,v 1.5 2013/04/01 23:42:40 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -25,6 +25,16 @@ public final class CsCheApplication extends ApplicationABC {
 	public CsCheApplication(final IEmbeddedDevice inCheDevice, final IUtil inUtil) {
 		super(inUtil);
 		mCheDevice = inCheDevice;
+	}
+
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.application.ApplicationABC#doLoadLibraries()
+	 */
+	@Override
+	protected void doLoadLibraries() {
+		//System.loadLibrary("jd2xx");
+		//System.loadLibrary("libjSSC-0.9_x86_64");
 	}
 
 	// --------------------------------------------------------------------------

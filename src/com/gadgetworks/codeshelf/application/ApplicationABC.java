@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ApplicationABC.java,v 1.3 2013/03/25 10:37:44 jeffw Exp $
+ *  $Id: ApplicationABC.java,v 1.4 2013/04/01 23:42:40 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -30,6 +30,8 @@ public abstract class ApplicationABC implements ICodeshelfApplication {
 	protected abstract void doStartup();
 
 	protected abstract void doShutdown();
+	
+	protected abstract void doLoadLibraries();
 
 	protected abstract void doInitializeApplicationData();
 
@@ -45,8 +47,8 @@ public abstract class ApplicationABC implements ICodeshelfApplication {
 
 		// Set a class loader that can access the classpath when searching for resources.
 		Thread.currentThread().setContextClassLoader(ClassLoader.getSystemClassLoader());
-		//System.loadLibrary("jd2xx");
-		//System.loadLibrary("libjSSC-0.9_x86_64");
+		// The applications load the native libraries they need from the classpath.
+		doLoadLibraries();
 	}
 
 	// --------------------------------------------------------------------------

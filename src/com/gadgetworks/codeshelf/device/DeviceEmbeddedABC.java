@@ -1,13 +1,18 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: DeviceEmbeddedABC.java,v 1.3 2013/03/15 23:56:13 jeffw Exp $
+ *  $Id: DeviceEmbeddedABC.java,v 1.4 2013/04/01 23:42:40 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,7 +22,6 @@ import com.gadgetworks.flyweight.command.CommandAssocAck;
 import com.gadgetworks.flyweight.command.CommandAssocReq;
 import com.gadgetworks.flyweight.command.CommandAssocResp;
 import com.gadgetworks.flyweight.command.CommandControlABC;
-import com.gadgetworks.flyweight.command.CommandControlMessage;
 import com.gadgetworks.flyweight.command.CommandControlScan;
 import com.gadgetworks.flyweight.command.ICommand;
 import com.gadgetworks.flyweight.command.IPacket;
@@ -34,6 +38,7 @@ import com.gadgetworks.flyweight.controller.TcpClientInterface;
  * @author jeffw
  *
  */
+@Accessors(prefix = "m")
 public abstract class DeviceEmbeddedABC implements IEmbeddedDevice {
 
 	private static final Logger	LOGGER					= LoggerFactory.getLogger(DeviceEmbeddedABC.class);
@@ -46,6 +51,8 @@ public abstract class DeviceEmbeddedABC implements IEmbeddedDevice {
 
 	private IGatewayInterface	mGatewayInterface;
 	private NetworkId			mNetworkId;
+	@Getter(value = AccessLevel.PROTECTED)
+	@Setter(value = AccessLevel.PROTECTED)
 	private boolean				mShouldRun;
 	private NetAddress			mNetAddress;
 
@@ -59,6 +66,8 @@ public abstract class DeviceEmbeddedABC implements IEmbeddedDevice {
 	}
 
 	abstract void processControlCmd(CommandControlABC inCommand);
+	
+	abstract void doStart();
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
@@ -68,6 +77,9 @@ public abstract class DeviceEmbeddedABC implements IEmbeddedDevice {
 	public final void start() {
 		mGatewayInterface = new TcpClientInterface(mServerName);
 		mShouldRun = true;
+		
+		doStart();
+		
 		startPacketReceivers();
 		processScans();
 	}
