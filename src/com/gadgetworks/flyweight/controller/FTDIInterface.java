@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: FTDIInterface.java,v 1.3 2013/03/04 05:13:48 jeffw Exp $
+ *  $Id: FTDIInterface.java,v 1.4 2013/04/02 04:29:02 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.flyweight.controller;
@@ -113,7 +113,7 @@ public final class FTDIInterface extends SerialInterfaceABC {
 		// First try to use the GW gateway device
 		//if (!Util.isWindows()) {
 			// On windows FTDI don't support PID/VID narrowing.
-			mJD2XXInterface.setVIDPID(VID, GW_PID);
+//			mJD2XXInterface.setVIDPID(VID, GW_PID);
 		//}
 		result = trySetupConnection(GW_VID_PID);
 
@@ -121,7 +121,7 @@ public final class FTDIInterface extends SerialInterfaceABC {
 		if (!result) {
 			//if (!Util.isWindows()) {
 				// On windows FTDI don't support PID/VID narrowing.
-				mJD2XXInterface.setVIDPID(VID, FTDI_PID);
+//				mJD2XXInterface.setVIDPID(VID, FTDI_PID);
 			//}
 			result = trySetupConnection(FTDI_VID_PID);
 		}

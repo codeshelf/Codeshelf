@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: LedPos.java,v 1.1 2013/04/01 23:42:40 jeffw Exp $
+ *  $Id: LedPos.java,v 1.2 2013/04/02 04:29:02 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -24,11 +24,12 @@ public class LedPos {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(LedPos.class);
 
-	private Integer				mPosNum;
-	private Integer				mCycleNum;
+	private Integer				mPosNum = 0;
+	private Integer				mCycleNum = 0;
 	private List<LedValue>		mValues;
 
-	public LedPos() {
+	public LedPos(final Integer inPosNum) {
+		mPosNum = inPosNum;
 		mValues = new ArrayList<LedValue>();
 	}
 
@@ -36,7 +37,7 @@ public class LedPos {
 	/**
 	 * @param inLedValue
 	 */
-	public void addSample(final LedValue inLedValue) {
+	public final void addSample(final LedValue inLedValue) {
 		mValues.add(inLedValue);
 	}
 
@@ -44,7 +45,7 @@ public class LedPos {
 	/**
 	 * @return
 	 */
-	public LedValue getNextSample() {
+	public final LedValue getNextSample() {
 		LedValue result = mValues.get(mCycleNum++);
 		if (mCycleNum >= mValues.size()) {
 			mCycleNum = 0;
