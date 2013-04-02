@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: AisleDeviceEmbedded.java,v 1.3 2013/04/02 04:29:02 jeffw Exp $
+ *  $Id: AisleDeviceEmbedded.java,v 1.4 2013/04/02 19:23:59 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -32,7 +32,8 @@ public class AisleDeviceEmbedded extends DeviceEmbeddedABC {
 	//	private static final int	BAUD_625000		= 625000;
 	private static final int	BAUD_1250000				= 1250000;
 	private static final long	FTDI_VID_PID				= 0x04036001;
-	private static final long	PROCESS_INTERVAL_MILLIS		= 250;
+	private static final long	COLOR_INTERVAL_MILLIS		= 250;
+	private static final long	BLANKING_INTERVAL_MILLIS	= 500;
 	private static final int	MAX_POSITIONS				= 200;
 
 	private static final String	LEDPROCESSOR_THREAD_NAME	= "LED_PROCESSOR";
@@ -42,7 +43,7 @@ public class AisleDeviceEmbedded extends DeviceEmbeddedABC {
 	private JD2XX				mJD2XXInterface;
 	private Integer				mTotalPositions				= 32;
 	private List<LedPos>		mStoredPositions;
-	private Boolean				mIsBlanking = false;
+	private Boolean				mIsBlanking					= false;
 	private byte[]				mAllChannelsOutput;
 
 	private long				mLastProcessMillis;
@@ -56,12 +57,17 @@ public class AisleDeviceEmbedded extends DeviceEmbeddedABC {
 
 		LedPos ledPos = new LedPos(5);
 		ledPos.addSample(new LedValue(LedValue.LED_GREEN));
-		ledPos.addSample(new LedValue(LedValue.LED_BLUE));
+		ledPos.addSample(new LedValue(LedValue.LED_CYAN));
 		mStoredPositions.add(ledPos);
 
 		ledPos = new LedPos(7);
 		ledPos.addSample(new LedValue(LedValue.LED_ORANGE));
-		ledPos.addSample(new LedValue(LedValue.LED_CYAN));
+		ledPos.addSample(new LedValue(LedValue.LED_MAGENTA));
+		ledPos.addSample(new LedValue(LedValue.LED_WHITE));
+		mStoredPositions.add(ledPos);
+
+		ledPos = new LedPos(19);
+		ledPos.addSample(new LedValue(LedValue.LED_BLUE));
 		mStoredPositions.add(ledPos);
 	}
 
@@ -95,10 +101,20 @@ public class AisleDeviceEmbedded extends DeviceEmbeddedABC {
 	private void process() {
 		while (isShouldRun()) {
 			try {
-				if (System.currentTimeMillis() > (mLastProcessMillis + PROCESS_INTERVAL_MILLIS)) {
-					// Time to harvest events.
-					refreshLedChannels();
-					mLastProcessMillis = System.currentTimeMillis();
+				if (mIsBlanking) {
+					if (System.currentTimeMillis() > (mLastProcessMillis + COLOR_INTERVAL_MILLIS)) {
+
+						// Time to harvest events.
+						refreshLedChannels();
+						mLastProcessMillis = System.currentTimeMillis();
+					}
+				} else {
+					if (System.currentTimeMillis() > (mLastProcessMillis + BLANKING_INTERVAL_MILLIS)) {
+
+						// Time to harvest events.
+						refreshLedChannels();
+						mLastProcessMillis = System.currentTimeMillis();
+					}
 				}
 
 				try {
@@ -138,7 +154,7 @@ public class AisleDeviceEmbedded extends DeviceEmbeddedABC {
 			}
 		}
 		mIsBlanking = !mIsBlanking;
-		//LOGGER.debug(Arrays.toString(mAllChannelsOutput));
+//		LOGGER.debug(Arrays.toString(mAllChannelsOutput));
 		try {
 			mJD2XXInterface.write(mAllChannelsOutput);
 		} catch (IOException e) {
@@ -152,23 +168,23 @@ public class AisleDeviceEmbedded extends DeviceEmbeddedABC {
 	 */
 	private void sendLedValue(final Integer inPos, LedValue inLedValue) {
 
-		Byte red = inLedValue.getRed();
-		for (int bit = 0; bit < 8; bit++) {
-			if ((red & ((byte) (1 << bit))) != 0) {
-				mAllChannelsOutput[inPos * 24 + bit] |= 1;
-			}
-		}
-
 		Byte blue = inLedValue.getBlue();
 		for (int bit = 0; bit < 8; bit++) {
 			if ((blue & ((byte) (1 << bit))) != 0) {
-				mAllChannelsOutput[inPos * 24 + 8 + bit] |= 1;
+				mAllChannelsOutput[inPos * 24 + bit] |= 1;
 			}
 		}
 
 		Byte green = inLedValue.getGreen();
 		for (int bit = 0; bit < 8; bit++) {
 			if ((green & ((byte) (1 << bit))) != 0) {
+				mAllChannelsOutput[inPos * 24 + 8 + bit] |= 1;
+			}
+		}
+
+		Byte red = inLedValue.getRed();
+		for (int bit = 0; bit < 8; bit++) {
+			if ((red & ((byte) (1 << bit))) != 0) {
 				mAllChannelsOutput[inPos * 24 + 16 + bit] |= 1;
 			}
 		}
@@ -188,7 +204,8 @@ public class AisleDeviceEmbedded extends DeviceEmbeddedABC {
 			for (int devNum = 0; devNum < numDevices; devNum++) {
 				DeviceInfo devInfo = mJD2XXInterface.getDeviceInfoDetail(devNum);
 				LOGGER.info("Gateway device: " + devInfo.toString());
-				if (devInfo.id == inVidPid) {
+				//if (devInfo.id == inVidPid) {
+				if (devInfo != null) {
 					deviceToOpen = devNum;
 					//selectedHandle = devInfo.handle;
 				}
