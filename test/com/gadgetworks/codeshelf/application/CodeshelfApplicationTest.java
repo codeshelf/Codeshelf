@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeshelfApplicationTest.java,v 1.21 2013/03/19 01:19:59 jeffw Exp $
+ *  $Id: CodeshelfApplicationTest.java,v 1.22 2013/04/04 19:05:08 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.application;
 
@@ -43,6 +43,8 @@ import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
 import com.gadgetworks.codeshelf.model.domain.UomMaster;
 import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
+import com.gadgetworks.codeshelf.monitor.IMonitor;
+import com.gadgetworks.codeshelf.monitor.Monitor;
 import com.gadgetworks.codeshelf.report.IPickDocumentGenerator;
 import com.gadgetworks.codeshelf.report.PickDocumentGenerator;
 import com.gadgetworks.codeshelf.security.CodeshelfRealm;
@@ -243,6 +245,7 @@ public class CodeshelfApplicationTest {
 		ITypedDao<UomMaster> uomMasterDao = new MockDao<UomMaster>();
 		ITypedDao<Che> cheDao = new MockDao<Che>();
 		ITypedDao<WorkInstruction> workInstructionDao = new MockDao<WorkInstruction>();
+		IMonitor monitor = new Monitor();
 
 		Injector injector = new MockInjector();
 		IDaoProvider daoProvider = new DaoProvider(injector);
@@ -265,6 +268,7 @@ public class CodeshelfApplicationTest {
 		IDatabase database = new Database(schemaManager, util);
 
 		final ServerCodeshelfApplication application = new ServerCodeshelfApplication(webSocketListener,
+			monitor,
 			httpServer,
 			ediProcessor,
 			pickDocumentGenerator,

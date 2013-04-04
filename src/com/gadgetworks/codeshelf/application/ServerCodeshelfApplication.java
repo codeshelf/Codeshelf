@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ServerCodeshelfApplication.java,v 1.11 2013/04/01 23:42:40 jeffw Exp $
+ *  $Id: ServerCodeshelfApplication.java,v 1.12 2013/04/04 19:05:08 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -18,13 +18,14 @@ import org.slf4j.LoggerFactory;
 import com.gadgetworks.codeshelf.device.RadioController;
 import com.gadgetworks.codeshelf.edi.IEdiProcessor;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
-import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.IDatabase;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
 import com.gadgetworks.codeshelf.model.domain.User;
+import com.gadgetworks.codeshelf.monitor.IMonitor;
+import com.gadgetworks.codeshelf.monitor.Monitor;
 import com.gadgetworks.codeshelf.report.IPickDocumentGenerator;
 import com.gadgetworks.codeshelf.ws.websocket.IWebSocketServer;
 import com.google.inject.Inject;
@@ -43,11 +44,14 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 	private ITypedDao<Organization>			mOrganizationDao;
 	private ITypedDao<Facility>				mFacilityDao;
 	private ITypedDao<User>					mUserDao;
+	
+	private IMonitor						mMonitor;
 
 	private BlockingQueue<String>			mEdiProcessSignalQueue;
 
 	@Inject
 	public ServerCodeshelfApplication(final IWebSocketServer inWebSocketServer,
+		final IMonitor inMonitor,
 		final IHttpServer inHttpServer,
 		final IEdiProcessor inEdiProcessor,
 		final IPickDocumentGenerator inPickDocumentGenerator,
@@ -58,6 +62,7 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		final ITypedDao<Facility> inFacilityDao,
 		final ITypedDao<User> inUserDao) {
 		super(inUtil);
+		mMonitor = inMonitor;
 		mWebSocketServer = inWebSocketServer;
 		mHttpServer = inHttpServer;
 		mEdiProcessor = inEdiProcessor;
@@ -87,6 +92,8 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		String processName = ManagementFactory.getRuntimeMXBean().getName();
 		LOGGER.info("------------------------------------------------------------");
 		LOGGER.info("Process info: " + processName);
+		
+//		mMonitor.logToCentralAdmin("Startup: codeshelf server " + processName);
 
 		LOGGER.info("Starting database");
 		mDatabase.start();
@@ -117,6 +124,9 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 	/**
 	 */
 	protected void doShutdown() {
+
+		String processName = ManagementFactory.getRuntimeMXBean().getName();
+		mMonitor.logToCentralAdmin("Shutodwn: codeshelf server " + processName);
 
 		LOGGER.info("Stopping application");
 

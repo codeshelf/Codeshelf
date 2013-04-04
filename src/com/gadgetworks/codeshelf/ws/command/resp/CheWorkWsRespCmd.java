@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CheWorkWsRespCmd.java,v 1.1 2013/03/17 19:19:12 jeffw Exp $
+ *  $Id: CheWorkWsRespCmd.java,v 1.2 2013/04/04 19:05:08 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.ws.command.resp;
 
@@ -28,7 +28,7 @@ import com.gadgetworks.codeshelf.ws.command.req.IWsReqCmd;
  * 		cheId: <cheId>,
  * 		wis: [
  * 			{
- * 				acId: <aisleControllerId>,
+ * 				acId: <ledControllerId>,
  * 				acCmd: <cmd>,
  * 				cntrId: <containerId>,
  * 				qty: <quantity>,

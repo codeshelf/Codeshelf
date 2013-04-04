@@ -1,7 +1,7 @@
 /*******************************************************************************
 CodeshelfWebSocketServer *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ServerMain.java,v 1.11 2013/03/19 01:19:59 jeffw Exp $
+ *  $Id: ServerMain.java,v 1.12 2013/04/04 19:05:08 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -31,8 +31,8 @@ import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.dao.PostgresSchemaManager;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Aisle.AisleDao;
-import com.gadgetworks.codeshelf.model.domain.AisleController;
-import com.gadgetworks.codeshelf.model.domain.AisleController.AisleControllerDao;
+import com.gadgetworks.codeshelf.model.domain.LedController;
+import com.gadgetworks.codeshelf.model.domain.LedController.LedControllerDao;
 import com.gadgetworks.codeshelf.model.domain.Bay;
 import com.gadgetworks.codeshelf.model.domain.Bay.BayDao;
 import com.gadgetworks.codeshelf.model.domain.Che;
@@ -87,6 +87,8 @@ import com.gadgetworks.codeshelf.model.domain.WorkArea;
 import com.gadgetworks.codeshelf.model.domain.WorkArea.WorkAreaDao;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction.WorkInstructionDao;
+import com.gadgetworks.codeshelf.monitor.IMonitor;
+import com.gadgetworks.codeshelf.monitor.Monitor;
 import com.gadgetworks.codeshelf.report.IPickDocumentGenerator;
 import com.gadgetworks.codeshelf.report.PickDocumentGenerator;
 import com.gadgetworks.codeshelf.security.CodeshelfRealm;
@@ -204,6 +206,7 @@ public final class ServerMain {
 				bind(Integer.class).annotatedWith(Names.named(IHttpServer.WEBAPP_PORTNUM_PROPERTY)).toInstance(Integer.valueOf(System.getProperty("webapp.portnum")));
 
 				bind(IUtil.class).to(Util.class);
+				bind(IMonitor.class).to(Monitor.class);
 				bind(ISchemaManager.class).to(PostgresSchemaManager.class);
 				bind(IDatabase.class).to(Database.class);
 				bind(ICodeshelfApplication.class).to(ServerCodeshelfApplication.class);
@@ -231,9 +234,9 @@ public final class ServerMain {
 				bind(new TypeLiteral<ITypedDao<Aisle>>() {
 				}).to(AisleDao.class);
 
-				requestStaticInjection(AisleController.class);
-				bind(new TypeLiteral<ITypedDao<AisleController>>() {
-				}).to(AisleControllerDao.class);
+				requestStaticInjection(LedController.class);
+				bind(new TypeLiteral<ITypedDao<LedController>>() {
+				}).to(LedControllerDao.class);
 
 				requestStaticInjection(Bay.class);
 				bind(new TypeLiteral<ITypedDao<Bay>>() {

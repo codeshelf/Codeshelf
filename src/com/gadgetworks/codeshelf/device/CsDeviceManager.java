@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CsDeviceManager.java,v 1.10 2013/03/17 19:19:12 jeffw Exp $
+ *  $Id: CsDeviceManager.java,v 1.11 2013/04/04 19:05:08 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.application.IUtil;
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
-import com.gadgetworks.codeshelf.model.domain.AisleController;
+import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.ws.command.IWebSessionCmd;
@@ -255,7 +255,7 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 	 * @param inPersistentId
 	 */
 	private void requestAisleDevices(final String inPersistentId) {
-		requestDeviceUpdates(inPersistentId, AisleController.class.getSimpleName());
+		requestDeviceUpdates(inPersistentId, LedController.class.getSimpleName());
 	}
 
 	// --------------------------------------------------------------------------
@@ -302,8 +302,8 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 				if (classNode != null) {
 					if (classNode.asText().equals(Che.class.getSimpleName())) {
 						processCheUpdate(objectNode);
-					} else if (classNode.asText().equals(AisleController.class.getSimpleName())) {
-						processAisleControllerUpdate(objectNode);
+					} else if (classNode.asText().equals(LedController.class.getSimpleName())) {
+						processLedControllerUpdate(objectNode);
 					}
 				}
 			}
@@ -330,8 +330,8 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 					//				
 					//				for (JsonNode objectNode : resultsNode) {
 					//					DeployedWorkInstruction wi = new DeployedWorkInstruction();
-					//					wi.setAisleController(objectNode.get("acId").asText());
-					//					wi.setAisleControllerCmd(objectNode.get("acCmd").asText());
+					//					wi.setLedController(objectNode.get("acId").asText());
+					//					wi.setLedControllerCmd(objectNode.get("acCmd").asText());
 					//					wi.setContainerId(objectNode.get("cntrId").asText());
 					//					wi.setLocation(objectNode.get("loc").asText());
 					//					wi.setQuantity(objectNode.get("qty").asInt());
@@ -404,13 +404,13 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 
 	// --------------------------------------------------------------------------
 	/**
-	 * @param inAisleControllerUpdateNode
+	 * @param inLedControllerUpdateNode
 	 */
-	private void processAisleControllerUpdate(final JsonNode inAisleControllerUpdateNode) {
-		JsonNode updateTypeNode = inAisleControllerUpdateNode.get(IWsReqCmd.OP_TYPE);
+	private void processLedControllerUpdate(final JsonNode inLedControllerUpdateNode) {
+		JsonNode updateTypeNode = inLedControllerUpdateNode.get(IWsReqCmd.OP_TYPE);
 		INetworkDevice aisleDevice = null;
-		NetGuid deviceGuid = new NetGuid(inAisleControllerUpdateNode.get(IWsReqCmd.DEVICE_GUID).asText());
-		UUID persistentId = UUID.fromString(inAisleControllerUpdateNode.get(IWsReqCmd.PERSISTENT_ID).asText());
+		NetGuid deviceGuid = new NetGuid(inLedControllerUpdateNode.get(IWsReqCmd.DEVICE_GUID).asText());
+		UUID persistentId = UUID.fromString(inLedControllerUpdateNode.get(IWsReqCmd.PERSISTENT_ID).asText());
 		if (updateTypeNode != null) {
 			switch (updateTypeNode.getTextValue()) {
 				case IWsReqCmd.OP_TYPE_CREATE:

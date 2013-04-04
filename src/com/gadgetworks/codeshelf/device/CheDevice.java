@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CheDevice.java,v 1.18 2013/03/17 23:10:45 jeffw Exp $
+ *  $Id: CheDevice.java,v 1.19 2013/04/04 19:05:08 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -147,7 +147,7 @@ public class CheDevice extends DeviceABC {
 		mAllPicksWiList.clear();
 		mAllPicksWiList.addAll(inWorkItemList);
 		for (WorkInstruction wi : inWorkItemList) {
-			LOGGER.info("WI: Loc: " + wi.getLocationId() + " SKU: " + wi.getItemId() + " cmd: " + wi.getAisleControllerCommand());
+			LOGGER.info("WI: Loc: " + wi.getLocationId() + " SKU: " + wi.getItemId() + " cmd: " + wi.getLedControllerCommand());
 		}
 	}
 

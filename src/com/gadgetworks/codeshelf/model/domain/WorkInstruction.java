@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WorkInstruction.java,v 1.15 2013/03/17 23:10:45 jeffw Exp $
+ *  $Id: WorkInstruction.java,v 1.16 2013/04/04 19:05:08 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -140,14 +140,14 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 	@Getter
 	@Setter
 	@JsonProperty
-	private String						aisleControllerId;
+	private String						ledControllerId;
 
 	// Aisle controller command.
 	@Column(nullable = true)
 	@Getter
 	@Setter
 	@JsonProperty
-	private String						aisleControllerCommand;
+	private String						ledControllerCommand;
 
 	// Color used for picking.
 	@Column(nullable = true)

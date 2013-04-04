@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeshelfNetwork.java,v 1.25 2013/03/15 14:57:13 jeffw Exp $
+ *  $Id: CodeshelfNetwork.java,v 1.26 2013/04/04 19:05:08 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -187,5 +187,29 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 			}
 		}
 		return result;
+	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * Create the aisle's controller.
+	 * @param inCodeshelfNetwork
+	 * @param inGUID
+	 */
+	public final void createLedController(final String inGUID) {
+
+		LedController controller = LedController.DAO.findByDomainId(this, inGUID);
+		if (controller == null) {
+			// Get the first network in the list of networks.
+			controller = new LedController();
+			controller.setParent(this);
+			controller.setDomainId(inGUID);
+			controller.setDesc("Default controller for " + this.getDomainId());
+			controller.setDeviceNetGuid(new NetGuid(inGUID));
+			try {
+				LedController.DAO.store(controller);
+			} catch (DaoException e) {
+				LOGGER.error("", e);
+			}
+		}
 	}
 }

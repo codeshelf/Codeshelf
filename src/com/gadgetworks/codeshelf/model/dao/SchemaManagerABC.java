@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: SchemaManagerABC.java,v 1.18 2013/03/17 23:10:45 jeffw Exp $
+ *  $Id: SchemaManagerABC.java,v 1.19 2013/04/04 19:05:08 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -409,11 +409,6 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	private boolean createIndicies() {
 		boolean result = true;
 
-		result &= linkToParentTable("AISLECONTROLLER", "PARENT", "CODESHELFNETWORK");
-		result &= linkToParentTable("AISLECONTROLLER", "PARENTAISLE", "LOCATION");
-		// One extra index: to ensure uniqueness of the MAC addresses, and to find them fast by that address.
-		execOneSQLCommand("CREATE UNIQUE INDEX AISLECONTROLLER_DEVICEGUID_INDEX ON CODESHELF.AISLECONTROLLER (DEVICEGUID)");
-
 		result &= linkToParentTable("CHE", "PARENT", "CODESHELFNETWORK");
 		result &= linkToParentTable("CHE", "CURRENTWORKAREA", "WORKAREA");
 		result &= linkToParentTable("CHE", "CURRENTUSER", "USER");
@@ -438,11 +433,13 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		result &= linkToParentTable("ITEMMASTER", "PARENT", "LOCATION");
 
+		result &= linkToParentTable("LEDCONTROLLER", "PARENT", "CODESHELFNETWORK");
+		// One extra index: to ensure uniqueness of the MAC addresses, and to find them fast by that address.
+		execOneSQLCommand("CREATE UNIQUE INDEX LEDCONTROLLER_DEVICEGUID_INDEX ON CODESHELF.LEDCONTROLLER (DEVICEGUID)");
+
 		result &= linkToParentTable("LOCATION", "PARENT", "LOCATION");
 		result &= linkToParentTable("LOCATION", "PATHSEGMENT", "PATHSEGMENT");
 		result &= linkToParentTable("LOCATION", "PARENTORGANIZATION", "ORGANIZATION");
-
-		result &= linkToParentTable("LOCATIONCONTROLLER", "PARENT", "LOCATION");
 
 		result &= linkToParentTable("ORDERDETAIL", "PARENT", "ORDERHEADER");
 
@@ -479,16 +476,6 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	private boolean createTables() {
 
 		boolean result = true;
-
-		// AisleController
-		result &= createTable("AISLECONTROLLER", //
-			"DESCRIPTION VARCHAR(64), " //
-					+ "DEVICEGUID BYTEA DEFAULT '' NOT NULL, " //
-					+ "PUBLICKEY VARCHAR(16) NOT NULL, " //
-					+ "LASTBATTERYLEVEL SMALLINT DEFAULT 0 NOT NULL, " //
-					+ "SERIALBUSPOSITION INT DEFAULT 0, " //
-					+ "PARENTAISLE_PERSISTENTID " + UUID_TYPE + " "//
-		);
 
 		// Che
 		result &= createTable("CHE", //
@@ -566,6 +553,15 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 					+ "STANDARDUOM_PERSISTENTID " + UUID_TYPE + " NOT NULL " //
 		);
 
+		// LedController
+		result &= createTable("LEDCONTROLLER", //
+			"DESCRIPTION VARCHAR(64), " //
+					+ "DEVICEGUID BYTEA DEFAULT '' NOT NULL, " //
+					+ "PUBLICKEY VARCHAR(16) NOT NULL, " //
+					+ "LASTBATTERYLEVEL SMALLINT DEFAULT 0 NOT NULL, " //
+					+ "SERIALBUSPOSITION INT DEFAULT 0 " //
+		);
+
 		// Location
 		result &= createTable("LOCATION", //
 			"DTYPE VARCHAR(64) NOT NULL, " //
@@ -575,12 +571,10 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 					+ "POSZ DOUBLE PRECISION, " + "DESCRIPTION VARCHAR(64), "//
 					+ "PATHSEGMENT_PERSISTENTID " + UUID_TYPE + ", " //
 					+ "PATHDISTANCE DOUBLE PRECISION, " //
+					+ "LEDCONTROLLER_PERSISTENTID " + UUID_TYPE + ", "//
+					+ "CONTROLLERCHANNEL INTEGER, " //
+					+ "CONTROLLERPOS INTEGER, " //
 					+ "PARENTORGANIZATION_PERSISTENTID " + UUID_TYPE + " "//
-		);
-
-		// LocationController
-		result &= createTable("LOCATIONCONTROLLER", //
-			"DESCRIPTION VARCHAR(64) NOT NULL " //
 		);
 
 		// OrderDetail
@@ -685,8 +679,8 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 					+ "ACTUALQUANTITY INTEGER NOT NULL, " //
 					+ "LOCATIONID VARCHAR(64) NOT NULL, " //
 					+ "PICKERID VARCHAR(64), " //
-					+ "AISLECONTROLLERID VARCHAR(16), " //
-					+ "AISLECONTROLLERCOMMAND VARCHAR(64), " //
+					+ "LEDCONTROLLERID VARCHAR(16), " //
+					+ "LEDCONTROLLERCOMMAND VARCHAR(64), " //
 					+ "COLORENUM VARCHAR(16), " //
 					+ "CREATED TIMESTAMP, " //
 					+ "ASSIGNED TIMESTAMP, " //

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: LocationABC.java,v 1.28 2013/03/17 19:19:13 jeffw Exp $
+ *  $Id: LocationABC.java,v 1.29 2013/04/04 19:05:08 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -128,10 +128,29 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 	// The owning organization.
 	@Column(nullable = false)
-	@ManyToOne(optional = true)
+	@ManyToOne(optional = false)
 	@Getter
 	@Setter
 	private Organization				parentOrganization;
+
+	// The LED controller.
+	@Column(nullable = true)
+	@ManyToOne(optional = true)
+	@Getter
+	@Setter
+	private LedController				ledController;
+
+	// The LED controller's channel that lights this location.
+	@Column(nullable = true)
+	@Getter
+	@Setter
+	private Integer						controllerChannel;
+
+	// The LED controller's position on the channel.
+	@Column(nullable = true)
+	@Getter
+	@Setter
+	private Integer						controllerPos;
 
 	// All of the vertices that define the location's footprint.
 	@OneToMany(mappedBy = "parent")
@@ -220,7 +239,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		T result = null;
 
 		LocationABC parent = (LocationABC) getParent();
-		
+
 		// There's some weirdness with Ebean and navigating a recursive hierarchy. (You can't go down and then back up to a different class.)
 		// This fixes that problem, but it's not pretty.
 		parent = Ebean.find(parent.getClass(), parent.getPersistentId());
@@ -307,13 +326,13 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	}
 
 	public final void setPathSegment(final PathSegment inPathSegment) {
-		
+
 		// Set the path segment recursively for all of the child locations as well.
 		for (LocationABC location : getChildren()) {
 			location.setPathSegment(inPathSegment);
 		}
-		
-		pathSegment = inPathSegment;		
+
+		pathSegment = inPathSegment;
 		try {
 			LocationABC.DAO.store(this);
 		} catch (DaoException e) {

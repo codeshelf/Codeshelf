@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Aisle.java,v 1.21 2013/03/19 01:19:59 jeffw Exp $
+ *  $Id: Aisle.java,v 1.22 2013/04/04 19:05:08 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -96,30 +96,4 @@ public class Aisle extends SubLocationABC<Facility> {
 			location.computePathDistance();
 		}
 	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * Create the aisle's controller.
-	 * @param inCodeshelfNetwork
-	 * @param inGUID
-	 */
-	public final void createController(final CodeshelfNetwork inCodeshelfNetwork, final String inGUID) {
-
-		AisleController controller = AisleController.DAO.findByDomainId(inCodeshelfNetwork, inGUID);
-		if (controller == null) {
-			// Get the first network in the list of networks.
-			controller = new AisleController();
-			controller.setParent(inCodeshelfNetwork);
-			controller.setDomainId(inGUID);
-			controller.setDesc("Default controller for " + this.getDomainId());
-			controller.setDeviceNetGuid(new NetGuid(inGUID));
-			controller.setParentAisle(this);
-			try {
-				AisleController.DAO.store(controller);
-			} catch (DaoException e) {
-				LOGGER.error("", e);
-			}
-		}
-	}
-
 }

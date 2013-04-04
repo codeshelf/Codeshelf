@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.60 2013/03/19 01:19:59 jeffw Exp $
+ *  $Id: Facility.java,v 1.61 2013/04/04 19:05:08 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -393,7 +393,7 @@ public class Facility extends LocationABC<Organization> {
 			// Create at least one aisle controller.
 			CodeshelfNetwork network = networks.get(CodeshelfNetwork.DEFAULT_NETWORK_ID);
 			if (network != null) {
-				aisle.createController(network, "0x00000000");
+				network.createLedController("0x00000000");
 			}
 		}
 	}
@@ -664,8 +664,8 @@ public class Facility extends LocationABC<Organization> {
 										plannedWi.setDomainId(order.getOrderId() + "." + detail.getOrderDetailId());
 										plannedWi.setTypeEnum(WorkInstructionTypeEnum.PLAN);
 										plannedWi.setStatusEnum(WorkInstructionStatusEnum.NEW);
-										plannedWi.setAisleControllerCommand("");
-										plannedWi.setAisleControllerId("0x00000003");
+										plannedWi.setLedControllerCommand("");
+										plannedWi.setLedControllerId("0x00000003");
 										plannedWi.setColorEnum(ColorEnum.BLUE);
 										plannedWi.setItemId(itemMaster.getItemId());
 										plannedWi.setLocationId(parentLocationId + "." + foundLocation.getLocationId());
