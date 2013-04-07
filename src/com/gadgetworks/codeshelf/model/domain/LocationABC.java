@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: LocationABC.java,v 1.29 2013/04/04 19:05:08 jeffw Exp $
+ *  $Id: LocationABC.java,v 1.30 2013/04/07 07:14:45 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -81,7 +81,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	@Getter
 	@Setter
 	@JsonProperty
-	private PositionTypeEnum			posType;
+	private PositionTypeEnum			posTypeEnum;
 
 	// The X anchor position.
 	@Column(nullable = false)
@@ -177,7 +177,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	}
 
 	public LocationABC(final PositionTypeEnum inPosType, final Double inPosX, final double inPosY) {
-		posType = inPosType;
+		posTypeEnum = inPosType;
 		posX = inPosX;
 		posY = inPosY;
 		// Z pos is non-null so that it doesn't need to be explicitly set.
@@ -185,7 +185,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	}
 
 	public LocationABC(final PositionTypeEnum inPosType, final Double inPosX, final double inPosY, final double inPosZ) {
-		posType = inPosType;
+		posTypeEnum = inPosType;
 		posX = inPosX;
 		posY = inPosY;
 		posZ = inPosZ;
@@ -374,7 +374,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	}
 
 	public final void setPosTypeByStr(String inPosTypeStr) {
-		setPosType(PositionTypeEnum.valueOf(inPosTypeStr));
+		setPosTypeEnum(PositionTypeEnum.valueOf(inPosTypeStr));
 	}
 
 	public final void addVertex(Vertex inVertex) {

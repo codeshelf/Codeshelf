@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Database.java,v 1.9 2013/03/25 10:37:44 jeffw Exp $
+ *  $Id: Database.java,v 1.10 2013/04/07 07:14:45 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import com.avaje.ebean.EbeanServer;
 import com.avaje.ebean.EbeanServerFactory;
 import com.avaje.ebean.Transaction;
+import com.avaje.ebean.config.AutofetchConfig;
 import com.avaje.ebean.config.DataSourceConfig;
 import com.avaje.ebean.config.ServerConfig;
 import com.avaje.ebeaninternal.server.lib.ShutdownManager;
@@ -76,7 +77,28 @@ public class Database implements IDatabase {
 
 		mSchemaManager.verifySchema();
 
-		DataSourceConfig dataSourceConfig = new DataSourceConfig();
+		ServerConfig serverConfig = new ServerConfig();
+		serverConfig.setName("codeshelf.primary");
+
+		// Give the properties file a chance to setup values.
+		serverConfig.loadFromProperties();
+		
+		// Now set values we never want changed by properties file.
+		serverConfig.setNamingConvention(new GWEbeanNamingConvention());
+		serverConfig.setDefaultServer(true);
+		serverConfig.setResourceDirectory(mUtil.getApplicationDataDirPath());
+		//		serverConfig.setDebugLazyLoad(false);
+		//		serverConfig.setDebugSql(false);
+		//		serverConfig.setLoggingLevel(LogLevel.NONE);
+		serverConfig.setLoggingToJavaLogger(true);
+		serverConfig.setLoggingDirectory(mUtil.getApplicationLogDirPath());
+		serverConfig.setPackages(new ArrayList<String>(Arrays.asList("com.gadgetworks.codeshelf.model.domain")));
+		serverConfig.setJars(new ArrayList<String>(Arrays.asList("codeshelf.jar")));
+		serverConfig.setUpdateChangesOnly(true);
+		serverConfig.setDdlGenerate(false);
+		serverConfig.setDdlRun(false);
+
+		DataSourceConfig dataSourceConfig = serverConfig.getDataSourceConfig();
 		dataSourceConfig.setUsername(mSchemaManager.getDbUserId());
 		dataSourceConfig.setPassword(mSchemaManager.getDbPassword());
 		dataSourceConfig.setUrl(mSchemaManager.getApplicationDatabaseURL());
@@ -84,30 +106,13 @@ public class Database implements IDatabase {
 		dataSourceConfig.setMinConnections(1);
 		dataSourceConfig.setMaxConnections(25);
 		dataSourceConfig.setIsolationLevel(Transaction.READ_COMMITTED);
-//		dataSourceConfig.setHeartbeatSql("select count(*) from dual");
+		//		dataSourceConfig.setHeartbeatSql("select count(*) from dual");
 
-		// Setup the EBean server configuration.
-		ServerConfig config = new ServerConfig();
-
-		// Give the properties file a chance to override some of the above choices.
-		config.loadFromProperties();
-
-		config.setName("codeshelf.primary");
-		config.setDataSourceConfig(dataSourceConfig);
-		config.setNamingConvention(new GWEbeanNamingConvention());
-		config.setDefaultServer(true);
-		config.setResourceDirectory(mUtil.getApplicationDataDirPath());
-		config.setDebugLazyLoad(false);
-//		config.setDebugSql(false);
-//		config.setLoggingLevel(LogLevel.NONE);
-		config.setLoggingToJavaLogger(true);
-		config.setPackages(new ArrayList<String>(Arrays.asList("com.gadgetworks.codeshelf.model.domain")));
-		config.setJars(new ArrayList<String>(Arrays.asList("codeshelf.jar")));
-		config.setUpdateChangesOnly(true);
-		config.setDdlGenerate(false);
-		config.setDdlRun(false);
+		AutofetchConfig autofetchConfig = serverConfig.getAutofetchConfig();
+		autofetchConfig.setLogDirectory(mUtil.getApplicationLogDirPath());
+		autofetchConfig.setUseFileLogging(true);
 		
-		EbeanServer server = EbeanServerFactory.create(config);
+		EbeanServer server = EbeanServerFactory.create(serverConfig);
 		if (server == null) {
 			mUtil.exitSystem();
 		}

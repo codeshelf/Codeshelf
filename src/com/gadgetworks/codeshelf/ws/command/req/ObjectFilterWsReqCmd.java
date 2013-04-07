@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ObjectFilterWsReqCmd.java,v 1.1 2013/03/17 19:19:12 jeffw Exp $
+ *  $Id: ObjectFilterWsReqCmd.java,v 1.2 2013/04/07 07:14:45 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.ws.command.req;
 
@@ -154,16 +154,15 @@ public class ObjectFilterWsReqCmd extends WsReqCmdABC implements IWsPersistentRe
 				for (String propertyName : mPropertyNames) {
 					// Execute the "get" method against the parents to return the children.
 					// (The method *must* start with "get" to ensure other methods don't get called.)
+					// Capitalize the property name to invoke the getter for it.
+					String getterName = "get" + Character.toUpperCase(propertyName.charAt(0)) + propertyName.substring(1);
 					try {
-						// Capitalize the property name to invoke the getter for it.
-						String getterName = "get" + Character.toUpperCase(propertyName.charAt(0)) + propertyName.substring(1);
-						//String getterName = "get" + propertyName;
 						java.lang.reflect.Method method = matchedObject.getClass().getMethod(getterName, (Class<?>[]) null);
 						Class<?> methodReturnType = method.getReturnType();
 						Object resultObject = method.invoke(matchedObject, (Object[]) null);
 						propertiesMap.put(propertyName, resultObject);
 					} catch (NoSuchMethodException e) {
-						LOGGER.error("Method not found", e);
+						LOGGER.error("Method " + getterName + " not found", e);
 					}
 				}
 				resultsList.add(propertiesMap);

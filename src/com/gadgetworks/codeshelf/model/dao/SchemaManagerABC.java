@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: SchemaManagerABC.java,v 1.19 2013/04/04 19:05:08 jeffw Exp $
+ *  $Id: SchemaManagerABC.java,v 1.20 2013/04/07 07:14:45 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -565,7 +565,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		// Location
 		result &= createTable("LOCATION", //
 			"DTYPE VARCHAR(64) NOT NULL, " //
-					+ "POSTYPE VARCHAR(64) NOT NULL, " //
+					+ "POSTYPEENUM VARCHAR(64) NOT NULL, " //
 					+ "POSX DOUBLE PRECISION NOT NULL, " //
 					+ "POSY DOUBLE PRECISION NOT NULL, " //
 					+ "POSZ DOUBLE PRECISION, " + "DESCRIPTION VARCHAR(64), "//
