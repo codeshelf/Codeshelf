@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CsvImporter.java,v 1.13 2013/03/19 01:19:59 jeffw Exp $
+ *  $Id: CsvImporter.java,v 1.14 2013/04/07 21:34:46 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -121,7 +121,7 @@ public class CsvImporter implements ICsvImporter {
 						mItemDao.delete(item);
 					}
 				}
-				
+
 				// Iterate over the inventory import beans.
 				for (CsvInventoryImportBean importBean : inventoryImportBeanList) {
 					importCsvInventoryBean(importBean, inFacility);
@@ -257,26 +257,42 @@ public class CsvImporter implements ICsvImporter {
 			result = new OrderHeader();
 			result.setParent(inFacility);
 			result.setDomainId(inCsvImportBean.getOrderId());
-			result.setStatusEnum(OrderStatusEnum.CREATED);
-			result.setCustomerId(inCsvImportBean.getCustomerId());
-			result.setShipmentId(inCsvImportBean.getShipmentId());
+		}
 
-			PickStrategyEnum pickStrategy = PickStrategyEnum.SERIAL;
-			String pickStrategyEnumId = inCsvImportBean.getPickStrategy();
-			if ((pickStrategyEnumId != null) && (pickStrategyEnumId.length() > 0)) {
-				pickStrategy = PickStrategyEnum.valueOf(pickStrategyEnumId);
-			}
-			result.setPickStrategyEnum(pickStrategy);
-			inFacility.addOrderHeader(result);
-			if (inOrderGroup != null) {
-				inOrderGroup.addOrderHeader(result);
-				result.setOrderGroup(inOrderGroup);
-			}
+		result.setStatusEnum(OrderStatusEnum.CREATED);
+		result.setCustomerId(inCsvImportBean.getCustomerId());
+		result.setShipmentId(inCsvImportBean.getShipmentId());
+		result.setWorkSequence(Integer.valueOf(inCsvImportBean.getWorkSequence()));
+		if (inCsvImportBean.getOrderDate() != null) {
 			try {
-				mOrderHeaderDao.store(result);
-			} catch (DaoException e) {
+				result.setOrderDate(Timestamp.valueOf(inCsvImportBean.getOrderDate()));
+			} catch (IllegalArgumentException e) {
 				LOGGER.error("", e);
 			}
+		}
+		if (inCsvImportBean.getDueDate() != null) {
+			try {
+				result.setDueDate(Timestamp.valueOf(inCsvImportBean.getDueDate()));
+			} catch (IllegalArgumentException e) {
+				LOGGER.error("", e);
+			}
+		}
+
+		PickStrategyEnum pickStrategy = PickStrategyEnum.SERIAL;
+		String pickStrategyEnumId = inCsvImportBean.getPickStrategy();
+		if ((pickStrategyEnumId != null) && (pickStrategyEnumId.length() > 0)) {
+			pickStrategy = PickStrategyEnum.valueOf(pickStrategyEnumId);
+		}
+		result.setPickStrategyEnum(pickStrategy);
+		inFacility.addOrderHeader(result);
+		if (inOrderGroup != null) {
+			inOrderGroup.addOrderHeader(result);
+			result.setOrderGroup(inOrderGroup);
+		}
+		try {
+			mOrderHeaderDao.store(result);
+		} catch (DaoException e) {
+			LOGGER.error("", e);
 		}
 
 		return result;
@@ -365,7 +381,6 @@ public class CsvImporter implements ICsvImporter {
 		result.setDescription(inCsvImportBean.getDescription());
 		result.setQuantity(Integer.valueOf(inCsvImportBean.getQuantity()));
 		result.setUomMaster(inUomMaster);
-		result.setOrderDate(Timestamp.valueOf(inCsvImportBean.getOrderDate()));
 
 		try {
 			mOrderDetailDao.store(result);

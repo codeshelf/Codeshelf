@@ -1,10 +1,11 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderHeader.java,v 1.22 2013/03/15 14:57:13 jeffw Exp $
+ *  $Id: OrderHeader.java,v 1.23 2013/04/07 21:34:46 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -115,6 +116,20 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	@JsonProperty
 	private Integer				workSequence;
 
+	// Order date.
+	@Column(nullable = false)
+	@Getter
+	@Setter
+	@JsonProperty
+	private Timestamp			orderDate;
+
+	// Due date.
+	@Column(nullable = false)
+	@Getter
+	@Setter
+	@JsonProperty
+	private Timestamp			dueDate;
+
 	// The container use for this order.
 	@Column(nullable = true)
 	@OneToOne(optional = true)
@@ -202,5 +217,35 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 			result = orderGroup.getPersistentId();
 		}
 		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @return
+	 */
+	public final String getContainerId() {
+		String result = "";
+
+		if (containerUse != null) {
+			result = containerUse.getParentContainer().getContainerId();
+		}
+
+		return result;
+	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * @return
+	 */
+	public final String getReadableDueDate() {
+		return new java.text.SimpleDateFormat("ddMMMyy HH:mm").format(getDueDate()).toUpperCase();
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @return
+	 */
+	public final String getReadableOrderDate() {
+		return new java.text.SimpleDateFormat("ddMMMyy HH:mm").format(getOrderDate()).toUpperCase();
 	}
 }

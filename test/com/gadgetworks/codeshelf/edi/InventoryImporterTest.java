@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: InventoryImporterTest.java,v 1.7 2013/03/10 20:12:11 jeffw Exp $
+ *  $Id: InventoryImporterTest.java,v 1.8 2013/04/07 21:34:46 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -106,7 +106,7 @@ public class InventoryImporterTest {
 		Facility facility = new Facility();
 		facility.setParent(organization);
 		facility.setDomainId("F1");
-		facility.setPosType(PositionTypeEnum.METERS_FROM_PARENT);
+		facility.setPosTypeEnum(PositionTypeEnum.METERS_FROM_PARENT);
 		facility.setPosX(0.0);
 		facility.setPosY(0.0);
 		Facility.DAO.store(facility);

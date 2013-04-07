@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: SchemaManagerABC.java,v 1.20 2013/04/07 07:14:45 jeffw Exp $
+ *  $Id: SchemaManagerABC.java,v 1.21 2013/04/07 21:34:46 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -583,8 +583,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 					+ "ITEMMASTER_PERSISTENTID " + UUID_TYPE + " NOT NULL, " //
 					+ "DESCRIPTION VARCHAR(256) NOT NULL, " //
 					+ "QUANTITY INTEGER NOT NULL, " //
-					+ "UOMMASTER_PERSISTENTID " + UUID_TYPE + " NOT NULL, " //
-					+ "ORDERDATE TIMESTAMP " //
+					+ "UOMMASTER_PERSISTENTID " + UUID_TYPE + " NOT NULL " //
 		);
 
 		// OrderGroup
@@ -600,6 +599,8 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 					+ "PICKSTRATEGYENUM VARCHAR(16) NOT NULL, " //
 					+ "ORDERGROUP_PERSISTENTID " + UUID_TYPE + ", " //
 					+ "WORKSEQUENCE " + UUID_TYPE + ", " //
+					+ "ORDERDATE TIMESTAMP NOT NULL, " //
+					+ "DUEDATE TIMESTAMP NOT NULL, " //
 					+ "SHIPMENTID VARCHAR(64), " //
 					+ "CONTAINERUSE_PERSISTENTID " + UUID_TYPE + ", " //
 					+ "CUSTOMERID VARCHAR(64) " //

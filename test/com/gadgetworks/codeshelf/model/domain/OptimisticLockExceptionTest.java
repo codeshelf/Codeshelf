@@ -83,7 +83,7 @@ public class OptimisticLockExceptionTest {
 		Facility facility = new Facility();
 		facility.setParent(organization);
 		facility.setFacilityId("OPTIMISTIC-F1");
-		facility.setPosType(PositionTypeEnum.METERS_FROM_DATUM);
+		facility.setPosTypeEnum(PositionTypeEnum.METERS_FROM_DATUM);
 		facility.setPosX(0.0);
 		facility.setPosY(0.0);
 		Facility.DAO.store(facility);
