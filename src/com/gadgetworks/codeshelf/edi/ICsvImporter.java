@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ICsvImporter.java,v 1.1 2012/10/22 07:38:07 jeffw Exp $
+ *  $Id: ICsvImporter.java,v 1.2 2013/04/09 07:58:20 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -17,6 +17,8 @@ public interface ICsvImporter {
 
 	void importOrdersFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility);
 
-	void importInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility);
+	void importSlottedInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility);
+
+	void importDdcInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility);
 
 }

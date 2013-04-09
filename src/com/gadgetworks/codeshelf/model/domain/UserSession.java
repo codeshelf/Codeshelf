@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: UserSession.java,v 1.15 2013/03/15 14:57:13 jeffw Exp $
+ *  $Id: UserSession.java,v 1.16 2013/04/09 07:58:20 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -39,7 +39,7 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-@Table(name = "USERSESSION", schema = "CODESHELF")
+@Table(name = "user_session", schema = "codeshelf")
 @CacheStrategy
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class UserSession extends DomainObjectTreeABC<User> {
@@ -69,6 +69,13 @@ public class UserSession extends DomainObjectTreeABC<User> {
 	@Setter
 	@JsonProperty
 	private Timestamp			created;
+
+	// Create date.
+	@Column(nullable = true)
+	@Getter
+	@Setter
+	@JsonProperty
+	private Timestamp			ended;
 
 	// Activity note.
 	@Column(nullable = false)

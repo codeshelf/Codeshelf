@@ -1,15 +1,22 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: MockDao.java,v 1.9 2012/12/25 10:48:14 jeffw Exp $
+ *  $Id: MockDao.java,v 1.10 2013/04/09 07:58:21 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
+import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import javax.persistence.Column;
 
 import com.avaje.ebean.Query;
 import com.eaio.uuid.UUIDGen;
@@ -39,16 +46,16 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 	public final void removeDAOListeners() {
 
 	}
-	
+
 	private String getFullDomainId(IDomainObject inDomainObject) {
 		String result = "";
-		
-		if (inDomainObject instanceof IDomainObjectTree ) {
+
+		if (inDomainObject instanceof IDomainObjectTree) {
 			result = ((IDomainObjectTree) inDomainObject).getFullDomainId();
 		} else {
 			result = inDomainObject.getDomainId();
 		}
-		
+
 		return result;
 	}
 
@@ -83,10 +90,40 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 	}
 
 	public final void store(T inDomainObject) {
-		mStorage.put(getFullDomainId(inDomainObject), inDomainObject);
 		inDomainObject.setPersistentId(new UUID(UUIDGen.newTime(), UUIDGen.getClockSeqAndNode()));
+		inDomainObject.setVersion(new Timestamp(System.currentTimeMillis()));
+
+		// Walk through all of the fields to see if any of them are null but should not be.
+		try {
+			Collection<Field> fields = new ArrayList<Field>();
+			addDeclaredAndInheritedFields(inDomainObject.getClass(), fields);
+			for (Field field : fields) {
+				for (Annotation annotation : field.getAnnotations()) {
+					if (annotation.annotationType().equals(Column.class)) {
+						Column column = (Column) annotation;
+						field.setAccessible(true);
+						if ((!column.nullable()) && (field.get(inDomainObject) == null)) {
+							throw new NullPointerException("Field: " + field.getName() + " is null and shouldn't be according to @Column.");
+						}
+					}
+				}
+			}
+		} catch (SecurityException | IllegalArgumentException | IllegalAccessException e) {
+			System.err.println("");
+			e.printStackTrace();
+		}
+
+		mStorage.put(getFullDomainId(inDomainObject), inDomainObject);
 	}
 
+	private static void addDeclaredAndInheritedFields(Class<?> c, Collection<Field> fields) {
+	    fields.addAll(Arrays.asList(c.getDeclaredFields())); 
+	    Class<?> superClass = c.getSuperclass(); 
+	    if (superClass != null) { 
+	        addDeclaredAndInheritedFields(superClass, fields); 
+	    }       
+	}
+	
 	public final void delete(T inDomainObject) {
 		mStorage.remove(inDomainObject);
 	}

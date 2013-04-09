@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DropboxServiceTest.java,v 1.5 2012/10/31 09:23:59 jeffw Exp $
+ *  $Id: DropboxServiceTest.java,v 1.6 2013/04/09 07:58:20 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -57,7 +57,10 @@ public class DropboxServiceTest {
 			public void importOrdersFromCsvStream(InputStreamReader inStreamReader, Facility inFacility) {
 				checkImport.result = true;
 			}
-			public void importInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
+			public void importSlottedInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
+			}
+			public void importDdcInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
+				
 			}
 		});
 		

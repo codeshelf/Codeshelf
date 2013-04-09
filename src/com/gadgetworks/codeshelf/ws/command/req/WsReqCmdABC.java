@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WsReqCmdABC.java,v 1.1 2013/03/17 19:19:12 jeffw Exp $
+ *  $Id: WsReqCmdABC.java,v 1.2 2013/04/09 07:58:21 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.ws.command.req;
 
@@ -40,7 +40,7 @@ public abstract class WsReqCmdABC implements IWsReqCmd {
 		mDataJsonNode = inDataAsJson;
 	}
 
-	// The subclasses execute the command and return a command data reesponse.
+	// The subclasses execute the command and return a command data response.
 	protected abstract IWsRespCmd doExec();
 
 	public final String getCommandId() {

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ItemMaster.java,v 1.18 2013/03/15 14:57:13 jeffw Exp $
+ *  $Id: ItemMaster.java,v 1.19 2013/04/09 07:58:20 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -42,7 +42,7 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-@Table(name = "ITEMMASTER", schema = "CODESHELF")
+@Table(name = "item_master", schema = "codeshelf")
 @CacheStrategy
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class ItemMaster extends DomainObjectTreeABC<Facility> {
@@ -85,6 +85,20 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	@Setter
 	@JsonProperty
 	private LotHandlingEnum		lotHandlingEnum;
+
+	// Ddc Id
+	@Column(nullable = true)
+	@Getter
+	@Setter
+	@JsonProperty
+	private String				ddcId;
+	
+	// Ddc pack depth
+	@Column(nullable = true)
+	@Getter
+	@Setter
+	@JsonProperty
+	private Integer				ddcPackDepth;
 
 	// The standard UoM.
 	@Column(nullable = false)
@@ -130,5 +144,9 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void removeItem(Item inItem) {
 		items.remove(inItem);
+	}
+	
+	public Boolean isDdcItem() {
+		return (ddcId != null);
 	}
 }

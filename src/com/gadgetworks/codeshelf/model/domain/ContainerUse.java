@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ContainerUse.java,v 1.11 2013/03/15 14:57:13 jeffw Exp $
+ *  $Id: ContainerUse.java,v 1.12 2013/04/09 07:58:20 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -40,7 +40,7 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-@Table(name = "CONTAINERUSE", schema = "CODESHELF")
+@Table(name = "container_use", schema = "codeshelf")
 @CacheStrategy
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class ContainerUse extends DomainObjectTreeABC<Container> {
@@ -67,7 +67,7 @@ public class ContainerUse extends DomainObjectTreeABC<Container> {
 	@Getter
 	@Setter
 	@JsonProperty
-	private Timestamp			useTimeStamp;
+	private Timestamp			usedOn;
 
 	// The order where we used this container.
 	@Column(nullable = false)

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: LedController.java,v 1.1 2013/04/04 19:05:08 jeffw Exp $
+ *  $Id: LedController.java,v 1.2 2013/04/09 07:58:20 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -38,7 +38,7 @@ import com.google.inject.Singleton;
 
 @Entity
 @CacheStrategy
-@Table(name = "LEDCONTROLLER", schema = "CODESHELF")
+@Table(name = "led_controller", schema = "codeshelf")
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 //@ToString(doNotUseGetters = true)
 public class LedController extends WirelessDeviceABC {
@@ -73,12 +73,14 @@ public class LedController extends WirelessDeviceABC {
 	}
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
-	public final void addContainerUse(SubLocationABC inSubLocation) {
-		locations.add(inSubLocation);
+	public final void addLocation(ISubLocation inSubLocation) {
+		// Ebean can't deal with interfaces.
+		SubLocationABC subLocation = (SubLocationABC) inSubLocation;
+		locations.add(subLocation);
 	}
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
-	public final void removeContainerUse(SubLocationABC inSubLocation) {
+	public final void removeLocation(ISubLocation inSubLocation) {
 		locations.remove(inSubLocation);
 	}
 }

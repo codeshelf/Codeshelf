@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: LocationABC.java,v 1.30 2013/04/07 07:14:45 jeffw Exp $
+ *  $Id: LocationABC.java,v 1.31 2013/04/09 07:58:20 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -26,7 +26,6 @@ import javax.persistence.Table;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
@@ -57,11 +56,11 @@ import com.google.inject.Singleton;
 @MappedSuperclass
 @CacheStrategy(useBeanCache = true)
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@Table(name = "LOCATION", schema = "CODESHELF")
-@DiscriminatorColumn(name = "DTYPE", discriminatorType = DiscriminatorType.STRING)
+@Table(name = "location", schema = "codeshelf")
+@DiscriminatorColumn(name = "dtype", discriminatorType = DiscriminatorType.STRING)
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 //@ToString(doNotUseGetters = true)
-public abstract class LocationABC<P extends IDomainObject> extends DomainObjectTreeABC<P> {
+public abstract class LocationABC<P extends IDomainObject> extends DomainObjectTreeABC<P> implements ILocation<P> {
 
 	@Inject
 	public static ITypedDao<LocationABC>	DAO;
@@ -127,8 +126,8 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	private PathSegment					pathSegment;
 
 	// The owning organization.
-	@Column(nullable = false)
-	@ManyToOne(optional = false)
+	@Column(nullable = true)
+	@ManyToOne(optional = true)
 	@Getter
 	@Setter
 	private Organization				parentOrganization;
@@ -144,13 +143,19 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	@Column(nullable = true)
 	@Getter
 	@Setter
-	private Integer						controllerChannel;
+	private Integer						ledChannel;
 
-	// The LED controller's position on the channel.
+	// The bay's first LED position on the channel.
 	@Column(nullable = true)
 	@Getter
 	@Setter
-	private Integer						controllerPos;
+	private Integer						firstLedPos;
+
+	// The number of LED positions in the bay.
+	@Column(nullable = true)
+	@Getter
+	@Setter
+	private Integer						lastLedPos;
 
 	// All of the vertices that define the location's footprint.
 	@OneToMany(mappedBy = "parent")
@@ -191,27 +196,25 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		posZ = inPosZ;
 	}
 
-	public final List<SubLocationABC> getChildren() {
-		return new ArrayList<SubLocationABC>(locations.values());
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.domain.ILocation#getChildren()
+	 */
+	@Override
+	public final List<ISubLocation> getChildren() {
+		return new ArrayList<ISubLocation>(locations.values());
 	}
 
 	// --------------------------------------------------------------------------
-	/**
-	 * Get all of the children of this type (no matter how far down the hierarchy).
-	 * 
-	 * To get it to strongly type the return for you then use this unusual Java construct at the caller:
-	 * 
-	 * Aisle aisle = facility.<Aisle> getChildrenAtLevel(Aisle.class)
-	 * (If calling this method from a generic location type then you need to define it as LocationABC<?> location.)
-	 * 
-	 * @param inClassWanted
-	 * @return
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.domain.ILocation#getChildrenAtLevel(java.lang.Class)
 	 */
-	public final <T extends SubLocationABC> List<T> getChildrenAtLevel(Class<? extends SubLocationABC> inClassWanted) {
+	@Override
+	public final <T extends ISubLocation> List<T> getChildrenAtLevel(Class<? extends ISubLocation> inClassWanted) {
 		List<T> result = new ArrayList<T>();
 
 		// Loop through all of the children.
-		for (LocationABC child : getChildren()) {
+		for (ILocation<P> child : getChildren()) {
 			if (child.getClass().equals(inClassWanted)) {
 				// If the child is the kind we want then add it to the list.
 				result.add((T) child);
@@ -224,21 +227,14 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	}
 
 	// --------------------------------------------------------------------------
-	/**
-	 * Get the parent of this location at the class level specified.
-	 * 
-	 * To get it to strongly type the return for you then use this unusual Java construct at the caller:
-	 * 
-	 * Aisle aisle = bay.<Aisle> getParentAtLevel(Aisle.class)
-	 * (If calling this method from a generic location type then you need to define it as LocationABC<?> location.)
-	 * 
-	 * @param inClassWanted
-	 * @return
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.domain.ILocation#getParentAtLevel(java.lang.Class)
 	 */
-	public final <T extends LocationABC> T getParentAtLevel(Class<? extends LocationABC> inClassWanted) {
+	@Override
+	public final <T extends ILocation> T getParentAtLevel(Class<? extends ILocation> inClassWanted) {
 		T result = null;
 
-		LocationABC parent = (LocationABC) getParent();
+		ILocation<P> parent = (ILocation<P>) getParent();
 
 		// There's some weirdness with Ebean and navigating a recursive hierarchy. (You can't go down and then back up to a different class.)
 		// This fixes that problem, but it's not pretty.
@@ -260,54 +256,73 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		return result;
 	}
 
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.domain.ILocation#getLocationId()
+	 */
+	@Override
 	public final String getLocationId() {
 		return getDomainId();
 	}
 
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.domain.ILocation#setLocationId(java.lang.String)
+	 */
+	@Override
 	public final void setLocationId(final String inLocationId) {
 		setDomainId(inLocationId);
 	}
 
-	public final void addLocation(SubLocationABC inLocation) {
-		locations.put(inLocation.getDomainId(), inLocation);
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.domain.ILocation#addLocation(com.gadgetworks.codeshelf.model.domain.ISubLocation)
+	 */
+	@Override
+	public final void addLocation(ISubLocation inLocation) {
+		// Ebean can't deal with interfaces.
+		SubLocationABC<P> subLocation = (SubLocationABC<P>) inLocation;
+		locations.put(inLocation.getDomainId(), subLocation);
 	}
 
 	// --------------------------------------------------------------------------
-	/**
-	 * Get a sub location by its location ID.
-	 * @param inLocationId
-	 * @return
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.domain.ILocation#getLocation(java.lang.String)
 	 */
-	public final SubLocationABC getLocation(String inLocationId) {
+	@Override
+	public final ISubLocation getLocation(String inLocationId) {
 		// There's some ebean weirdness around Map caches, so we have to use a different strategy to resolve this request.
 		//return locations.get(inLocationId);
-		SubLocationABC result = null;
+		ISubLocation result = null;
 
 		ITypedDao<SubLocationABC> dao = SubLocationABC.DAO;
 		Map<String, Object> filterParams = new HashMap<String, Object>();
 		filterParams.put("persistentId", this.getPersistentId().toString());
 		filterParams.put("domainId", inLocationId);
 		List<SubLocationABC> resultSet = dao.findByFilter("parent.persistentId = :persistentId and domainId = :domainId", filterParams);
-		if (resultSet.size() > 0) {
+		if ((resultSet != null) && (resultSet.size() > 0)) {
 			result = resultSet.get(0);
 		}
 
 		return result;
 	}
 
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.domain.ILocation#removeLocation(java.lang.String)
+	 */
+	@Override
 	public final void removeLocation(String inLocationId) {
 		locations.remove(inLocationId);
 	}
 
 	// --------------------------------------------------------------------------
-	/**
-	 * Look for any sub-location by it's ID.
-	 * The location ID needs to be a dotted notation where the first octet is a child location of "this" location.
-	 * @param inLocationId
-	 * @return
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.domain.ILocation#getSubLocationById(java.lang.String)
 	 */
-	public final LocationABC getSubLocationById(final String inLocationId) {
-		LocationABC result = null;
+	@Override
+	public final ILocation<P> getSubLocationById(final String inLocationId) {
+		ILocation<P> result = null;
 
 		Integer firstDotPos = inLocationId.indexOf(".");
 		if (firstDotPos < 0) {
@@ -317,7 +332,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 			// There is a dot, so find the sublocation based on the first part and recursively ask it for the location from the second part.
 			String firstPart = inLocationId.substring(0, firstDotPos);
 			String secondPart = inLocationId.substring(firstDotPos + 1);
-			LocationABC subLocation = this.getLocation(firstPart);
+			ILocation<P> subLocation = this.getLocation(firstPart);
 			if (subLocation != null) {
 				result = subLocation.getSubLocationById(secondPart);
 			}
@@ -325,10 +340,15 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		return result;
 	}
 
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.domain.ILocation#setPathSegment(com.gadgetworks.codeshelf.model.domain.PathSegment)
+	 */
+	@Override
 	public final void setPathSegment(final PathSegment inPathSegment) {
 
 		// Set the path segment recursively for all of the child locations as well.
-		for (LocationABC location : getChildren()) {
+		for (ILocation<P> location : getChildren()) {
 			location.setPathSegment(inPathSegment);
 		}
 
@@ -341,13 +361,14 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	}
 
 	// --------------------------------------------------------------------------
-	/**
-	 * Recompute the path distance of this location (and recursively for all of its child locations).
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.domain.ILocation#computePathDistance()
 	 */
+	@Override
 	public final void computePathDistance() {
 
 		// Also force a recompute for all of the child locations.
-		for (LocationABC location : getChildren()) {
+		for (ILocation<P> location : getChildren()) {
 			location.computePathDistance();
 		}
 
@@ -355,7 +376,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		Double distance = 0.0;
 		PathSegment segment = this.getPathSegment();
 		if (segment != null) {
-			LocationABC anchorLocation = segment.getAnchorLocation();
+			ILocation<P> anchorLocation = segment.getAnchorLocation();
 			if (segment.getParent().getTravelDirEnum().equals(TravelDirectionEnum.FORWARD)) {
 				Point locationPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, anchorLocation.getPosX() + this.getPosX(), anchorLocation.getPosY() + this.getPosY(), null);
 				distance = segment.getPathDistance() + segment.computeDistanceOfPointFromLine(segment.getStartPoint(), segment.getEndPoint(), locationPoint);
@@ -373,26 +394,56 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		}
 	}
 
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.domain.ILocation#setPosTypeByStr(java.lang.String)
+	 */
+	@Override
 	public final void setPosTypeByStr(String inPosTypeStr) {
 		setPosTypeEnum(PositionTypeEnum.valueOf(inPosTypeStr));
 	}
 
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.domain.ILocation#addVertex(com.gadgetworks.codeshelf.model.domain.Vertex)
+	 */
+	@Override
 	public final void addVertex(Vertex inVertex) {
 		vertices.add(inVertex);
 	}
 
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.domain.ILocation#removeVertex(com.gadgetworks.codeshelf.model.domain.Vertex)
+	 */
+	@Override
 	public final void removeVertex(Vertex inVertex) {
 		vertices.remove(inVertex);
 	}
 
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.domain.ILocation#addItem(java.lang.String, com.gadgetworks.codeshelf.model.domain.Item)
+	 */
+	@Override
 	public final void addItem(final String inItemId, Item inItem) {
 		items.put(inItemId, inItem);
 	}
 
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.domain.ILocation#getItem(java.lang.String)
+	 */
+	@Override
 	public final Item getItem(final String inItemId) {
 		return items.get(inItemId);
 	}
 
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.domain.ILocation#removeItem(java.lang.String)
+	 */
+	@Override
 	public final void removeItem(final String inItemId) {
 		items.remove(inItemId);
 	}

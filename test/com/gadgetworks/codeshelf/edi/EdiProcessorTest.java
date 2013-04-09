@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiProcessorTest.java,v 1.6 2013/03/19 01:19:59 jeffw Exp $
+ *  $Id: EdiProcessorTest.java,v 1.7 2013/04/09 07:58:20 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -14,6 +14,7 @@ import junit.framework.Assert;
 import org.junit.Test;
 
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
+import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.MockDao;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.IEdiService;
@@ -33,7 +34,11 @@ public class EdiProcessorTest {
 			public void importOrdersFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
 			}
 
-			public void importInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
+			public void importSlottedInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
+			}
+
+			public void importDdcInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
+				
 			}
 		};
 
@@ -114,7 +119,7 @@ public class EdiProcessorTest {
 		Organization organization = new Organization();
 		organization.setOrganizationId("O1");
 
-		Facility facility = new Facility();
+		Facility facility = new Facility(0.0, 0.0);
 		facility.setParent(organization);
 		facility.setFacilityId("F1");
 		facility.addEdiService(ediServiceLinked);
@@ -125,7 +130,11 @@ public class EdiProcessorTest {
 			public void importOrdersFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
 			}
 
-			public void importInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
+			public void importSlottedInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
+			}
+
+			public void importDdcInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
+				
 			}
 		};
 

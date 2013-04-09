@@ -1,12 +1,11 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CsvInventoryImportBean.java,v 1.1 2012/10/22 07:38:07 jeffw Exp $
+ *  $Id: DdcInventoryCsvImportBean.java,v 1.1 2013/04/09 07:58:20 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 import lombok.ToString;
 
 /**
@@ -14,32 +13,9 @@ import lombok.ToString;
  *
  */
 @ToString
-public class CsvInventoryImportBean {
-	@Getter
-	@Setter
+@Data
+public class DdcInventoryCsvImportBean {
 	private String	itemId;
-
-	@Getter
-	@Setter
-	private String	description;
-
-	@Getter
-	@Setter
 	private String	quantity;
-
-	@Getter
-	@Setter
 	private String	uomId;
-
-	@Getter
-	@Setter
-	private String	inventoryDate;
-	
-	@Getter
-	@Setter
-	private String	lotId;
-	
-	@Getter
-	@Setter
-	private String	locationId;
 }

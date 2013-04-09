@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Organization.java,v 1.33 2013/03/19 01:19:59 jeffw Exp $
+ *  $Id: Organization.java,v 1.34 2013/04/09 07:58:20 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -51,7 +51,7 @@ import com.google.inject.Singleton;
 
 @Entity
 @CacheStrategy
-@Table(name = "ORGANIZATION", schema = "CODESHELF")
+@Table(name = "organization", schema = "codeshelf")
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 //@ToString(doNotUseGetters = true)
 public class Organization extends DomainObjectABC {

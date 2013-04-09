@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: SchemaManagerABC.java,v 1.21 2013/04/07 21:34:46 jeffw Exp $
+ *  $Id: SchemaManagerABC.java,v 1.22 2013/04/09 07:58:20 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -89,13 +89,13 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 				// Try to switch to the proper schema.
 				Statement stmt = connection.createStatement();
-				ResultSet resultSet = stmt.executeQuery("SELECT VERSION FROM " + getDbSchemaName() + ".DBPROPERTY");
+				ResultSet resultSet = stmt.executeQuery("SELECT version FROM " + getDbSchemaName() + ".db_property");
 
 				if (!resultSet.next()) {
 					LOGGER.error("Cannot create DB schema");
 					util.exitSystem();
 				} else {
-					Integer schemaVersion = resultSet.getInt("VERSION");
+					Integer schemaVersion = resultSet.getInt("version");
 					if (schemaVersion < ISchemaManager.DATABASE_VERSION_CUR) {
 						result = upgradeSchema(schemaVersion, ISchemaManager.DATABASE_VERSION_CUR);
 					} else {
@@ -171,7 +171,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 			// Try to switch to the proper schema.
 			Statement stmt = connection.createStatement();
-			stmt.executeUpdate("INSERT INTO " + getDbSchemaName() + ".DBPROPERTY (VERSION, MODTIME) VALUES (" + inVersion + ",'" + new Timestamp(System.currentTimeMillis()) + "')");
+			stmt.executeUpdate("INSERT INTO " + getDbSchemaName() + ".db_property (version, modified) VALUES (" + inVersion + ",'" + new Timestamp(System.currentTimeMillis()) + "')");
 			stmt.close();
 			connection.close();
 
@@ -200,7 +200,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 			// Try to switch to the proper schema.
 			Statement stmt = connection.createStatement();
-			stmt.executeUpdate("UPDATE " + getDbSchemaName() + ".DBPROPERTY SET VERSION = " + inVersion + ", MODTIME = '" + new Timestamp(System.currentTimeMillis()) + "'");
+			stmt.executeUpdate("UPDATE " + getDbSchemaName() + ".db_property SET version = " + inVersion + ", modified = '" + new Timestamp(System.currentTimeMillis()) + "'");
 			stmt.close();
 			connection.close();
 
@@ -277,8 +277,8 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	private boolean doUpgrade2() {
 		boolean result = true;
 
-		result &= safeAddColumn("ORDERHEADER", "CUSTOMERID VARCHAR(64)");
-		result &= safeAddColumn("ORDERHEADER", "SHIPMENTID VARCHAR(64)");
+		result &= safeAddColumn("order_header", "custoemr_id VARCHAR(64)");
+		result &= safeAddColumn("order_header", "shipment_id VARCHAR(64)");
 
 		return result;
 	}
@@ -328,15 +328,15 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		boolean result = true;
 
-		result &= execOneSQLCommand("CREATE SEQUENCE CODESHELF.ORGANIZATION_SEQ");
-		result &= execOneSQLCommand("CREATE TABLE CODESHELF.ORGANIZATION (" //
-				+ "PERSISTENTID " + UUID_TYPE + " NOT NULL, " //
-				+ "DOMAINID VARCHAR(64) NOT NULL, " //
-				+ "VERSION TIMESTAMP, " //
+		result &= execOneSQLCommand("CREATE SEQUENCE codeshelf.organization_seq");
+		result &= execOneSQLCommand("CREATE TABLE codeshelf.organization (" //
+				+ "persistentid " + UUID_TYPE + " NOT NULL, " //
+				+ "domainid VARCHAR(64) NOT NULL, " //
+				+ "version TIMESTAMP, " //
 				+ inColumns //
-				+ ", PRIMARY KEY (PERSISTENTID));");
+				+ ", PRIMARY KEY (persistentid));");
 
-		result &= execOneSQLCommand("CREATE UNIQUE INDEX ORGANIZATION_DOMAINID_INDEX ON CODESHELF.ORGANIZATION (DOMAINID)");
+		result &= execOneSQLCommand("CREATE UNIQUE INDEX organization_domainid_index ON codeshelf.organization (domainid)");
 
 		return result;
 	}
@@ -351,16 +351,16 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		boolean result = true;
 
-		result &= execOneSQLCommand("CREATE SEQUENCE CODESHELF." + inTableName + "_SEQ");
-		result &= execOneSQLCommand("CREATE TABLE CODESHELF." + inTableName + " (" //
-				+ "PERSISTENTID " + UUID_TYPE + " NOT NULL, " //
-				+ "PARENT_PERSISTENTID " + UUID_TYPE + " NOT NULL, " //
-				+ "DOMAINID VARCHAR(64) NOT NULL, " //
-				+ "VERSION TIMESTAMP, " //
+		result &= execOneSQLCommand("CREATE SEQUENCE codeshelf." + inTableName + "_seq");
+		result &= execOneSQLCommand("CREATE TABLE codeshelf." + inTableName + " (" //
+				+ "persistentid " + UUID_TYPE + " NOT NULL, " //
+				+ "parent_persistentid " + UUID_TYPE + " NOT NULL, " //
+				+ "domainid VARCHAR(64) NOT NULL, " //
+				+ "version TIMESTAMP, " //
 				+ inColumns //
-				+ ", PRIMARY KEY (PERSISTENTID));");
+				+ ", PRIMARY KEY (persistentid));");
 
-		result &= execOneSQLCommand("CREATE UNIQUE INDEX " + inTableName + "_DOMAINID_INDEX ON CODESHELF." + inTableName + " (PARENT_PERSISTENTID, DOMAINID)");
+		result &= execOneSQLCommand("CREATE UNIQUE INDEX " + inTableName + "_domainid_index ON codeshelf." + inTableName + " (parent_persistentid, domainid)");
 
 		return result;
 	}
@@ -376,15 +376,15 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		boolean result = true;
 
 		// Add the foreign key constraint.
-		result &= execOneSQLCommand("ALTER TABLE CODESHELF." + inChildTableName //
-				+ " ADD FOREIGN KEY (" + inForeignKeyColumnName + "_PERSISTENTID)" //
-				+ " REFERENCES DATABASE.CODESHELF." + inParentTableName + " (PERSISTENTID)" //
+		result &= execOneSQLCommand("ALTER TABLE codeshelf." + inChildTableName //
+				+ " ADD FOREIGN KEY (" + inForeignKeyColumnName + "_persistentid)" //
+				+ " REFERENCES DATABASE.codeshelf." + inParentTableName + " (persistentid)" //
 				+ " ON DELETE RESTRICT ON UPDATE RESTRICT;");
 
 		// Add the index that makes it efficient to find the child objects from the parent.
 		result &= execOneSQLCommand("CREATE INDEX " //
 				+ inChildTableName + "_" + inForeignKeyColumnName + "_" + inParentTableName //
-				+ " ON CODESHELF." + inChildTableName + " (" + inForeignKeyColumnName + "_PERSISTENTID)");
+				+ " ON codeshelf." + inChildTableName + " (" + inForeignKeyColumnName + "_persistentid)");
 
 		return result;
 
@@ -399,7 +399,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	private boolean safeAddColumn(final String inTableName, final String inColumnName) {
 		boolean result = false;
 
-		result &= execOneSQLCommand("ALTER TABLE CODESHELF." + inTableName //
+		result &= execOneSQLCommand("ALTER TABLE codeshelf." + inTableName //
 				+ " ADD " + inColumnName //
 				+ ";");
 
@@ -409,62 +409,62 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	private boolean createIndicies() {
 		boolean result = true;
 
-		result &= linkToParentTable("CHE", "PARENT", "CODESHELFNETWORK");
-		result &= linkToParentTable("CHE", "CURRENTWORKAREA", "WORKAREA");
-		result &= linkToParentTable("CHE", "CURRENTUSER", "USER");
+		result &= linkToParentTable("che", "parent", "codeshelf_network");
+		result &= linkToParentTable("che", "current_work_area", "work_area");
+		result &= linkToParentTable("che", "current_user", "user");
 		// One extra index: to ensure uniqueness of the MAC addresses, and to find them fast by that address.
-		execOneSQLCommand("CREATE UNIQUE INDEX CHE_DEVICEGUID_INDEX ON CODESHELF.CHE (DEVICEGUID)");
+		execOneSQLCommand("CREATE UNIQUE INDEX che_deviceguid_index ON codeshelf.CHE (device_guid)");
 
-		result &= linkToParentTable("CODESHELFNETWORK", "PARENT", "LOCATION");
+		result &= linkToParentTable("codeshelf_network", "parent", "location");
 
-		result &= linkToParentTable("CONTAINER", "PARENT", "LOCATION");
+		result &= linkToParentTable("container", "parent", "location");
 
-		result &= linkToParentTable("CONTAINERKIND", "PARENT", "LOCATION");
+		result &= linkToParentTable("container_kind", "parent", "location");
 
-		result &= linkToParentTable("CONTAINERUSE", "PARENT", "CONTAINER");
-		result &= linkToParentTable("CONTAINERUSE", "ORDERHEADER", "ORDERHEADER");
-		result &= linkToParentTable("CONTAINERUSE", "CURRENTCHE", "CHE");
+		result &= linkToParentTable("container_use", "parent", "container");
+		result &= linkToParentTable("container_use", "order_header", "order_header");
+		result &= linkToParentTable("container_use", "current_che", "che");
 
-		result &= linkToParentTable("EDIDOCUMENTLOCATOR", "PARENT", "EDISERVICE");
+		result &= linkToParentTable("edi_document_locator", "parent", "edi_service");
 
-		result &= linkToParentTable("EDISERVICE", "PARENT", "LOCATION");
+		result &= linkToParentTable("edi_service", "parent", "location");
 
-		result &= linkToParentTable("ITEM", "PARENT", "LOCATION");
+		result &= linkToParentTable("item", "parent", "location");
 
-		result &= linkToParentTable("ITEMMASTER", "PARENT", "LOCATION");
+		result &= linkToParentTable("item_master", "parent", "location");
 
-		result &= linkToParentTable("LEDCONTROLLER", "PARENT", "CODESHELFNETWORK");
+		result &= linkToParentTable("led_controller", "parent", "codeshelf_network");
 		// One extra index: to ensure uniqueness of the MAC addresses, and to find them fast by that address.
-		execOneSQLCommand("CREATE UNIQUE INDEX LEDCONTROLLER_DEVICEGUID_INDEX ON CODESHELF.LEDCONTROLLER (DEVICEGUID)");
+		execOneSQLCommand("CREATE UNIQUE INDEX led_controller_deviceguid_index ON codeshelf.led_controller (device_guid)");
 
-		result &= linkToParentTable("LOCATION", "PARENT", "LOCATION");
-		result &= linkToParentTable("LOCATION", "PATHSEGMENT", "PATHSEGMENT");
-		result &= linkToParentTable("LOCATION", "PARENTORGANIZATION", "ORGANIZATION");
+		result &= linkToParentTable("location", "parent", "location");
+		result &= linkToParentTable("location", "path_segment", "path_segment");
+		result &= linkToParentTable("location", "parent_organization", "organization");
 
-		result &= linkToParentTable("ORDERDETAIL", "PARENT", "ORDERHEADER");
+		result &= linkToParentTable("order_detail", "parent", "order_header");
 
-		result &= linkToParentTable("ORDERGROUP", "PARENT", "LOCATION");
+		result &= linkToParentTable("order_group", "parent", "location");
 
-		result &= linkToParentTable("ORDERHEADER", "PARENT", "LOCATION");
+		result &= linkToParentTable("order_header", "parent", "location");
 
-		result &= linkToParentTable("PATH", "PARENT", "LOCATION");
+		result &= linkToParentTable("path", "parent", "location");
 
-		result &= linkToParentTable("PATHSEGMENT", "PARENT", "PATH");
-		result &= linkToParentTable("PATHSEGMENT", "ANCHORLOCATION", "LOCATION");
+		result &= linkToParentTable("path_segment", "parent", "path");
+		result &= linkToParentTable("path_segment", "anchor_location", "location");
 
-		result &= linkToParentTable("PERSISTENTPROPERTY", "PARENT", "ORGANIZATION");
+		result &= linkToParentTable("persistent_property", "parent", "organization");
 
-		result &= linkToParentTable("UOMMASTER", "PARENT", "LOCATION");
+		result &= linkToParentTable("uom_master", "parent", "location");
 
-		result &= linkToParentTable("USER", "PARENT", "ORGANIZATION");
+		result &= linkToParentTable("user", "parent", "organization");
 
-		result &= linkToParentTable("USERSESSION", "PARENT", "USER");
+		result &= linkToParentTable("user_session", "parent", "USER");
 
-		result &= linkToParentTable("VERTEX", "PARENT", "LOCATION");
+		result &= linkToParentTable("vertex", "parent", "location");
 
-		result &= linkToParentTable("WORKAREA", "PARENT", "PATH");
+		result &= linkToParentTable("work_area", "parent", "PATH");
 
-		result &= linkToParentTable("WORKINSTRUCTION", "PARENT", "ORDERDETAIL");
+		result &= linkToParentTable("work_instruction", "parent", "order_detail");
 
 		return result;
 	}
@@ -478,215 +478,220 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		boolean result = true;
 
 		// Che
-		result &= createTable("CHE", //
-			"DESCRIPTION VARCHAR(64), " //
-					+ "DEVICEGUID BYTEA DEFAULT '' NOT NULL, " //
-					+ "PUBLICKEY VARCHAR(16) NOT NULL, " //
-					+ "LASTBATTERYLEVEL SMALLINT DEFAULT 0 NOT NULL, " //
-					+ "SERIALBUSPOSITION INT DEFAULT 0, " //
-					+ "CURRENTUSER_PERSISTENTID " + UUID_TYPE + ", " //
-					+ "CURRENTWORKAREA_PERSISTENTID " + UUID_TYPE //
+		result &= createTable("che", //
+			"description VARCHAR(64), " //
+					+ "device_guid BYTEA DEFAULT '' NOT NULL, " //
+					+ "public_key VARCHAR(16) NOT NULL, " //
+					+ "last_battery_level SMALLINT DEFAULT 0 NOT NULL, " //
+					+ "serial_bus_position INT DEFAULT 0, " //
+					+ "current_user_persistentid " + UUID_TYPE + ", " //
+					+ "current_work_area_persistentid " + UUID_TYPE //
 		);
 
 		// CodeShelfNetwork
-		result &= createTable("CODESHELFNETWORK", //
-			"DESCRIPTION VARCHAR(64) NOT NULL, " //
-					+ "CREDENTIAL VARCHAR(64) NOT NULL, " //
-					+ "ACTIVE BOOLEAN DEFAULT TRUE NOT NULL " //
+		result &= createTable("codeshelf_network", //
+			"description VARCHAR(64) NOT NULL, " //
+					+ "credential VARCHAR(64) NOT NULL, " //
+					+ "active BOOLEAN DEFAULT TRUE NOT NULL " //
 		);
 
 		// Container
-		result &= createTable("CONTAINER", //
-			"KIND_PERSISTENTID " + UUID_TYPE + " NOT NULL " //
+		result &= createTable("container", //
+			"kind_persistentid " + UUID_TYPE + " NOT NULL " //
 		);
 
 		// ContainerKind
-		result &= createTable("CONTAINERKIND", //
-			"CLASSID VARCHAR(64) NOT NULL, " //
-					+ "LENGTHMETERS DECIMAL NOT NULL, " //
-					+ "HEIGHTMETERS DECIMAL NOT NULL, " //
-					+ "WIDTHMETERS DECIMAL NOT NULL " //
+		result &= createTable("container_kind", //
+			"class_id VARCHAR(64) NOT NULL, " //
+					+ "length_meters DECIMAL NOT NULL, " //
+					+ "height_meters DECIMAL NOT NULL, " //
+					+ "width_meters DECIMAL NOT NULL " //
 		);
 
 		// ContainerUse
-		result &= createTable("CONTAINERUSE", //
-			"USETIMESTAMP TIMESTAMP NOT NULL, " //
-					+ "ORDERHEADER_PERSISTENTID " + UUID_TYPE + " NOT NULL, " //
-					+ "CURRENTCHE_PERSISTENTID " + UUID_TYPE //
+		result &= createTable("container_use", //
+			"used_on TIMESTAMP NOT NULL, " //
+					+ "order_header_persistentid " + UUID_TYPE + " NOT NULL, " //
+					+ "current_che_persistentid " + UUID_TYPE //
 		);
 
 		// DBProperty
-		result &= execOneSQLCommand("CREATE TABLE CODESHELF.DBPROPERTY (" //
-				+ "VERSION INTEGER, " //
-				+ "MODTIME TIMESTAMP);");
+		result &= execOneSQLCommand("CREATE TABLE codeshelf.db_property (" //
+				+ "version INTEGER, " //
+				+ "modified TIMESTAMP);");
 
 		// EdiDocumentLocator
-		result &= createTable("EDIDOCUMENTLOCATOR", //
-			"DOCUMENTPATH VARCHAR(256) NOT NULL, " //
-					+ "DOCUMENTNAME VARCHAR(256) NOT NULL, " //
-					+ "DOCUMENTSTATEENUM VARCHAR(16) NOT NULL, " //
-					+ "RECEIVED TIMESTAMP, " //
-					+ "PROCESSED TIMESTAMP " //
+		result &= createTable("edi_document_locator", //
+			"document_path VARCHAR(256) NOT NULL, " //
+					+ "document_name VARCHAR(256) NOT NULL, " //
+					+ "document_state_enum VARCHAR(16) NOT NULL, " //
+					+ "received TIMESTAMP, " //
+					+ "processed TIMESTAMP " //
 		);
 
 		// EdiService
-		result &= createTable("EDISERVICE", //
-			"DTYPE VARCHAR(64) NOT NULL, " //
-					+ "PROVIDERENUM VARCHAR(16) NOT NULL, " //
-					+ "SERVICESTATEENUM VARCHAR(16) NOT NULL, " //
-					+ "PROVIDERCREDENTIALS VARCHAR(256), " //
-					+ "CURSOR VARCHAR(256) " //
+		result &= createTable("edi_service", //
+			"dtype VARCHAR(64) NOT NULL, " //
+					+ "provider_enum VARCHAR(16) NOT NULL, " //
+					+ "service_state_enum VARCHAR(16) NOT NULL, " //
+					+ "provider_credentials VARCHAR(256), " //
+					+ "cursor VARCHAR(256) " //
 		);
 
 		// Item
-		result &= createTable("ITEM", //
-			"QUANTITY DECIMAL NOT NULL, " //
-					+ "ITEMMASTER_PERSISTENTID " + UUID_TYPE + " NOT NULL, " //
-					+ "UOMMASTER_PERSISTENTID " + UUID_TYPE + " NOT NULL " //
+		result &= createTable("item", //
+			"quantity DECIMAL NOT NULL, " //
+					+ "ddc_position DOUBLE PRECISION, " //
+					+ "item_master_persistentid " + UUID_TYPE + " NOT NULL, " //
+					+ "uom_master_persistentid " + UUID_TYPE + " NOT NULL " //
 		);
 
 		// ItemMaster
-		result &= createTable("ITEMMASTER", //
-			"ITEMID VARCHAR(64) NOT NULL, " //
-					+ "DESCRIPTION VARCHAR(256), " //
-					+ "LOTHANDLINGENUM VARCHAR(16) NOT NULL, " //
-					+ "STANDARDUOM_PERSISTENTID " + UUID_TYPE + " NOT NULL " //
+		result &= createTable("item_master", //
+			"item_id VARCHAR(64) NOT NULL, " //
+					+ "description VARCHAR(256), " //
+					+ "lot_handling_enum VARCHAR(16) NOT NULL, " //
+					+ "ddc_id VARCHAR(64), " //
+					+ "ddc_pack_depth INTEGER, " //
+					+ "standard_uom_persistentid " + UUID_TYPE + " NOT NULL " //
 		);
 
 		// LedController
-		result &= createTable("LEDCONTROLLER", //
-			"DESCRIPTION VARCHAR(64), " //
-					+ "DEVICEGUID BYTEA DEFAULT '' NOT NULL, " //
-					+ "PUBLICKEY VARCHAR(16) NOT NULL, " //
-					+ "LASTBATTERYLEVEL SMALLINT DEFAULT 0 NOT NULL, " //
-					+ "SERIALBUSPOSITION INT DEFAULT 0 " //
+		result &= createTable("led_controller", //
+			"description VARCHAR(64), " //
+					+ "device_guid BYTEA DEFAULT '' NOT NULL, " //
+					+ "public_key VARCHAR(16) NOT NULL, " //
+					+ "last_battery_level SMALLINT DEFAULT 0 NOT NULL, " //
+					+ "serial_bus_position INT DEFAULT 0 " //
 		);
 
 		// Location
-		result &= createTable("LOCATION", //
-			"DTYPE VARCHAR(64) NOT NULL, " //
-					+ "POSTYPEENUM VARCHAR(64) NOT NULL, " //
-					+ "POSX DOUBLE PRECISION NOT NULL, " //
-					+ "POSY DOUBLE PRECISION NOT NULL, " //
-					+ "POSZ DOUBLE PRECISION, " + "DESCRIPTION VARCHAR(64), "//
-					+ "PATHSEGMENT_PERSISTENTID " + UUID_TYPE + ", " //
-					+ "PATHDISTANCE DOUBLE PRECISION, " //
-					+ "LEDCONTROLLER_PERSISTENTID " + UUID_TYPE + ", "//
-					+ "CONTROLLERCHANNEL INTEGER, " //
-					+ "CONTROLLERPOS INTEGER, " //
-					+ "PARENTORGANIZATION_PERSISTENTID " + UUID_TYPE + " "//
+		result &= createTable("location", //
+			"dtype VARCHAR(64) NOT NULL, " //
+					+ "pos_type_enum VARCHAR(64) NOT NULL, " //
+					+ "pos_x DOUBLE PRECISION NOT NULL, " //
+					+ "pos_y DOUBLE PRECISION NOT NULL, " //
+					+ "pos_z DOUBLE PRECISION, " + "description VARCHAR(64), "//
+					+ "path_segment_persistentid " + UUID_TYPE + ", " //
+					+ "path_distance DOUBLE PRECISION, " //
+					+ "led_controller_persistentid " + UUID_TYPE + ", "//
+					+ "led_channel INTEGER, " //
+					+ "first_led_pos INTEGER, " //
+					+ "last_led_pos INTEGER, " //
+					+ "parent_organization_persistentid " + UUID_TYPE + " "//
 		);
 
 		// OrderDetail
-		result &= createTable("ORDERDETAIL", //
-			"STATUSENUM VARCHAR(16) NOT NULL, " //
-					+ "ITEMMASTER_PERSISTENTID " + UUID_TYPE + " NOT NULL, " //
-					+ "DESCRIPTION VARCHAR(256) NOT NULL, " //
-					+ "QUANTITY INTEGER NOT NULL, " //
-					+ "UOMMASTER_PERSISTENTID " + UUID_TYPE + " NOT NULL " //
+		result &= createTable("order_detail", //
+			"status_enum VARCHAR(16) NOT NULL, " //
+					+ "item_master_persistentid " + UUID_TYPE + " NOT NULL, " //
+					+ "description VARCHAR(256) NOT NULL, " //
+					+ "quantity INTEGER NOT NULL, " //
+					+ "uom_master_persistentid " + UUID_TYPE + " NOT NULL " //
 		);
 
 		// OrderGroup
-		result &= createTable("ORDERGROUP", //
-			"STATUSENUM VARCHAR(16) NOT NULL, " //
-					+ "WORKSEQUENCE " + UUID_TYPE + ", " //
-					+ "DESCRIPTION VARCHAR(256) " //
+		result &= createTable("order_group", //
+			"status_enum VARCHAR(16) NOT NULL, " //
+					+ "work_sequence " + UUID_TYPE + ", " //
+					+ "description VARCHAR(256) " //
 		);
 
 		// OrderHeader
-		result &= createTable("ORDERHEADER", //
-			"STATUSENUM VARCHAR(16) NOT NULL, " //
-					+ "PICKSTRATEGYENUM VARCHAR(16) NOT NULL, " //
-					+ "ORDERGROUP_PERSISTENTID " + UUID_TYPE + ", " //
-					+ "WORKSEQUENCE " + UUID_TYPE + ", " //
-					+ "ORDERDATE TIMESTAMP NOT NULL, " //
-					+ "DUEDATE TIMESTAMP NOT NULL, " //
-					+ "SHIPMENTID VARCHAR(64), " //
-					+ "CONTAINERUSE_PERSISTENTID " + UUID_TYPE + ", " //
-					+ "CUSTOMERID VARCHAR(64) " //
+		result &= createTable("order_header", //
+			"status_enum VARCHAR(16) NOT NULL, " //
+					+ "pick_strategy_enum VARCHAR(16) NOT NULL, " //
+					+ "order_group_persistentid " + UUID_TYPE + ", " //
+					+ "work_sequence " + UUID_TYPE + ", " //
+					+ "order_date TIMESTAMP NOT NULL, " //
+					+ "due_date TIMESTAMP NOT NULL, " //
+					+ "shipment_id VARCHAR(64), " //
+					+ "container_use_persistentid " + UUID_TYPE + ", " //
+					+ "customer_id VARCHAR(64) " //
 		);
 
 		// Organization - this is the top-level object that owns all other objects.
-		result &= createOrganizationTable("DESCRIPTION VARCHAR(64) NOT NULL " //
+		result &= createOrganizationTable("description VARCHAR(64) NOT NULL " //
 		);
 
 		// Path
-		result &= createTable("PATH", //
-			"DESCRIPTION VARCHAR(64) NOT NULL, " //
-					+ "TRAVELDIRENUM VARCHAR(16) NOT NULL, " //
-					+ "LENGTH DOUBLE PRECISION ");
+		result &= createTable("path", //
+			"description VARCHAR(64) NOT NULL, " //
+					+ "travel_dir_enum VARCHAR(16) NOT NULL, " //
+					+ "length DOUBLE PRECISION ");
 
 		// PathSegment
-		result &= createTable("PATHSEGMENT", //
-			"SEGMENTORDER INTEGER NOT NULL, " //
-					+ "POSTYPEENUM VARCHAR(16) NOT NULL, " //
-					+ "STARTPOSX DOUBLE PRECISION NOT NULL, " //
-					+ "STARTPOSY DOUBLE PRECISION NOT NULL, " //
-					+ "ENDPOSX DOUBLE PRECISION NOT NULL, " //
-					+ "ENDPOSY DOUBLE PRECISION NOT NULL, " //
-					+ "PATHDISTANCE DOUBLE PRECISION, " //
-					+ "ANCHORLOCATION_PERSISTENTID " + UUID_TYPE //
+		result &= createTable("path_segment", //
+			"segment_order INTEGER NOT NULL, " //
+					+ "pos_type_enum VARCHAR(16) NOT NULL, " //
+					+ "start_pos_x DOUBLE PRECISION NOT NULL, " //
+					+ "start_pos_y DOUBLE PRECISION NOT NULL, " //
+					+ "end_pos_x DOUBLE PRECISION NOT NULL, " //
+					+ "end_pos_y DOUBLE PRECISION NOT NULL, " //
+					+ "path_distance DOUBLE PRECISION, " //
+					+ "anchor_location_persistentid " + UUID_TYPE //
 		);
 
 		// PersistentProperty
-		result &= createTable("PERSISTENTPROPERTY", //
-			"CURRENTVALUESTR VARCHAR(256), " //
-					+ "DEFAULTVALUESTR VARCHAR(256) " //
+		result &= createTable("persistent_property", //
+			"current_value_str VARCHAR(256), " //
+					+ "default_value_str VARCHAR(256) " //
 		);
 
 		// UomMaster
-		result &= createTable("UOMMASTER", //
-			"DESCRIPTION VARCHAR(256) " //
+		result &= createTable("uom_master", //
+			"description VARCHAR(256) " //
 		);
 
 		// User
-		result &= createTable("USER", //
-			"HASHSALT VARCHAR(64), " //
-					+ "HASHEDPASSWORD VARCHAR(64), " //
-					+ "HASHITERATIONS INTEGER, " //
-					+ "EMAIL VARCHAR(64), " //
-					+ "CREATED TIMESTAMP, " //
-					+ "ACTIVE BOOLEAN DEFAULT TRUE NOT NULL " //
+		result &= createTable("user", //
+			"hash_salt VARCHAR(64), " //
+					+ "hashed_password VARCHAR(64), " //
+					+ "hash_iterations INTEGER, " //
+					+ "email VARCHAR(64), " //
+					+ "created TIMESTAMP, " //
+					+ "active BOOLEAN DEFAULT TRUE NOT NULL " //
 		);
 
 		// UserSession
-		result &= createTable("USERSESSION", //
-			"ACTIVITY VARCHAR(64) NOT NULL, " //
-					+ "CREATED TIMESTAMP NOT NULL " //
+		result &= createTable("user_session", //
+			"activity VARCHAR(64) NOT NULL, " //
+			+ "created TIMESTAMP NOT NULL, " //
+			+ "ended TIMESTAMP " //
 		);
 
 		// Vertex
-		result &= createTable("VERTEX", //
-			"POSTYPEENUM VARCHAR(16) NOT NULL, " //
-					+ "POSX DOUBLE PRECISION NOT NULL, " //
-					+ "POSY DOUBLE PRECISION NOT NULL, " //
-					+ "POSZ DOUBLE PRECISION, " //
-					+ "DRAWORDER INT NOT NULL " //
+		result &= createTable("vertex", //
+			"pos_type_enum VARCHAR(16) NOT NULL, " //
+					+ "pos_x DOUBLE PRECISION NOT NULL, " //
+					+ "pos_y DOUBLE PRECISION NOT NULL, " //
+					+ "pos_z DOUBLE PRECISION, " //
+					+ "draw_order INT NOT NULL " //
 		);
 
 		// WorkArea
-		result &= createTable("WORKAREA", //
-			"WORKAREAID VARCHAR(64) NOT NULL, " //
-					+ "DESCRIPTION VARCHAR(256) NOT NULL " //
+		result &= createTable("work_area", //
+			"work_area_id VARCHAR(64) NOT NULL, " //
+					+ "description VARCHAR(256) NOT NULL " //
 		);
 
 		// WorkInstruction
-		result &= createTable("WORKINSTRUCTION", //
-			"TYPEENUM VARCHAR(16) NOT NULL, " //
-					+ "STATUSENUM VARCHAR(16) NOT NULL, " //
-					+ "CONTAINERID VARCHAR(64) NOT NULL, " //
-					+ "ITEMID VARCHAR(64) NOT NULL, " //
-					+ "PLANQUANTITY INTEGER NOT NULL, " //
-					+ "ACTUALQUANTITY INTEGER NOT NULL, " //
-					+ "LOCATIONID VARCHAR(64) NOT NULL, " //
-					+ "PICKERID VARCHAR(64), " //
-					+ "LEDCONTROLLERID VARCHAR(16), " //
-					+ "LEDCONTROLLERCOMMAND VARCHAR(64), " //
-					+ "COLORENUM VARCHAR(16), " //
-					+ "CREATED TIMESTAMP, " //
-					+ "ASSIGNED TIMESTAMP, " //
-					+ "STARTED TIMESTAMP, " //
-					+ "COMPLETED TIMESTAMP " //
+		result &= createTable("work_instruction", //
+			"type_enum VARCHAR(16) NOT NULL, " //
+					+ "status_enum VARCHAR(16) NOT NULL, " //
+					+ "container_id VARCHAR(64) NOT NULL, " //
+					+ "item_id VARCHAR(64) NOT NULL, " //
+					+ "plan_quantity INTEGER NOT NULL, " //
+					+ "actual_quantity INTEGER NOT NULL, " //
+					+ "location_id VARCHAR(64) NOT NULL, " //
+					+ "picker_id VARCHAR(64), " //
+					+ "led_controller_id VARCHAR(16), " //
+					+ "led_controller_command VARCHAR(64), " //
+					+ "color_enum VARCHAR(16), " //
+					+ "created TIMESTAMP, " //
+					+ "assigned TIMESTAMP, " //
+					+ "started TIMESTAMP, " //
+					+ "completed TIMESTAMP " //
 		);
 
 		return result;

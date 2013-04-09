@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderGroup.java,v 1.19 2013/03/17 23:10:45 jeffw Exp $
+ *  $Id: OrderGroup.java,v 1.20 2013/04/09 07:58:20 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -42,7 +42,7 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-@Table(name = "ORDERGROUP", schema = "CODESHELF")
+@Table(name = "order_group", schema = "codeshelf")
 @CacheStrategy
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class OrderGroup extends DomainObjectTreeABC<Facility> {

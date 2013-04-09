@@ -1,15 +1,30 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: FacilityTest.java,v 1.7 2013/03/19 01:19:59 jeffw Exp $
+ *  $Id: FacilityTest.java,v 1.8 2013/04/09 07:58:20 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
 import junit.framework.Assert;
 
+import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.gadgetworks.codeshelf.model.dao.MockDao;
+import com.gadgetworks.codeshelf.application.IUtil;
+import com.gadgetworks.codeshelf.model.dao.Database;
+import com.gadgetworks.codeshelf.model.dao.H2SchemaManager;
+import com.gadgetworks.codeshelf.model.dao.IDatabase;
+import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
+import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.codeshelf.model.domain.Aisle.AisleDao;
+import com.gadgetworks.codeshelf.model.domain.Bay.BayDao;
+import com.gadgetworks.codeshelf.model.domain.Facility.FacilityDao;
+import com.gadgetworks.codeshelf.model.domain.LocationABC.LocationDao;
+import com.gadgetworks.codeshelf.model.domain.Organization.OrganizationDao;
+import com.gadgetworks.codeshelf.model.domain.Path.PathDao;
+import com.gadgetworks.codeshelf.model.domain.PathSegment.PathSegmentDao;
+import com.gadgetworks.codeshelf.model.domain.Vertex.VertexDao;
+import com.gadgetworks.codeshelf.model.domain.WorkArea.WorkAreaDao;
 
 /**
  * @author jeffw
@@ -17,31 +32,70 @@ import com.gadgetworks.codeshelf.model.dao.MockDao;
  */
 public class FacilityTest {
 
+	private static IUtil			mUtil;
+	private static ISchemaManager	mSchemaManager;
+	private static IDatabase		mDatabase;
+
+	@BeforeClass
+	public final static void setup() {
+
+		try {
+			mUtil = new IUtil() {
+
+				public void setLoggingLevelsFromPrefs(Organization inOrganization, ITypedDao<PersistentProperty> inPersistentPropertyDao) {
+				}
+
+				public String getVersionString() {
+					return "";
+				}
+
+				public String getApplicationLogDirPath() {
+					return ".";
+				}
+
+				public String getApplicationDataDirPath() {
+					return ".";
+				}
+
+				public void exitSystem() {
+					System.exit(-1);
+				}
+			};
+
+			Class.forName("org.h2.Driver");
+			mSchemaManager = new H2SchemaManager(mUtil, "codeshelf", "codeshelf", "codeshelf", "codeshelf", "localhost", "");
+			mDatabase = new Database(mSchemaManager, mUtil);
+
+			mDatabase.start();
+		} catch (ClassNotFoundException e) {
+		}
+	}
+
 	@Test
 	public final void createAisleTest() {
 
-		Organization.DAO = new MockDao<Organization>();
-		LocationABC.DAO = new MockDao<LocationABC>();
-		Facility.DAO = new MockDao<Facility>();
-		Aisle.DAO = new MockDao<Aisle>();
-		Bay.DAO = new MockDao<Bay>();
-		Vertex.DAO = new MockDao<Vertex>();
-		Path.DAO = new MockDao<Path>();
-		PathSegment.DAO = new MockDao<PathSegment>();
-		WorkArea.DAO = new MockDao<WorkArea>();
+		Organization.DAO = new OrganizationDao();
+		LocationABC.DAO = new LocationDao();
+		Facility.DAO = new FacilityDao();
+		Aisle.DAO = new AisleDao();
+		Bay.DAO = new BayDao();
+		Vertex.DAO = new VertexDao();
+		Path.DAO = new PathDao();
+		PathSegment.DAO = new PathSegmentDao();
+		WorkArea.DAO = new WorkAreaDao();
 
 		Organization organization = new Organization();
-		organization.setOrganizationId("O1");
+		organization.setOrganizationId("FTEST.O1");
 		Organization.DAO.store(organization);
 
-		Facility facility = new Facility();
+		Facility facility = new Facility(0.0, 0.0);
 		facility.setParent(organization);
-		facility.setFacilityId("F1");
+		facility.setFacilityId("FTEST.F1");
 		Facility.DAO.store(facility);
 
-		facility.createAisle("TEST", 1.0, 1.0, 2.0, 2.0, 2.0, 2, 5, true, true);
+		facility.createAisle("FTEST.A1", 1.0, 1.0, 2.0, 2.0, 2.0, 2, 5, true, true);
 
-		Facility foundFacility = Facility.DAO.findByDomainId(organization, "F1");
+		Facility foundFacility = Facility.DAO.findByDomainId(organization, "FTEST.F1");
 
 		Assert.assertNotNull(foundFacility);
 	}

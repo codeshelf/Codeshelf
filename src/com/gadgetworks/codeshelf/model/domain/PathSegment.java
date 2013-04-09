@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: PathSegment.java,v 1.29 2013/03/16 08:03:08 jeffw Exp $
+ *  $Id: PathSegment.java,v 1.30 2013/04/09 07:58:20 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -17,7 +17,6 @@ import javax.persistence.Table;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
-import lombok.ToString;
 
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
@@ -43,7 +42,7 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-@Table(name = "PATHSEGMENT", schema = "CODESHELF")
+@Table(name = "path_segment", schema = "codeshelf")
 @CacheStrategy(useBeanCache = true)
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 //@ToString(doNotUseGetters = true, exclude = { "parent" })
@@ -108,13 +107,13 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 	@ManyToOne(optional = false)
 	@NonNull
 	@Getter
-	@Setter
+//	@Setter
 	private LocationABC			anchorLocation;
 
 	@Column(nullable = true)
 	@OneToMany(mappedBy = "pathSegment")
 	@Getter
-	private List<LocationABC>	locations		= new ArrayList<LocationABC>();
+	private List<LocationABC>		locations		= new ArrayList<LocationABC>();
 
 	public PathSegment() {
 
@@ -145,11 +144,13 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 		parent = inParent;
 	}
 
-	public final void addLocation(LocationABC inLocation) {
-		locations.add(inLocation);
+	public final void addLocation(ILocation inSubLocation) {
+		// Ebean can't deal with interfaces.
+		LocationABC subLocation = (LocationABC) inSubLocation;
+		locations.add(subLocation);
 	}
 
-	public final void removeLocation(LocationABC inLocation) {
+	public final void removeLocation(ILocation inLocation) {
 		locations.remove(inLocation);
 	}
 
@@ -183,6 +184,10 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 
 	public final Double getLength() {
 		return Math.sqrt(Math.pow(startPosX - endPosX, 2) + Math.pow(startPosY - endPosY, 2));
+	}
+	
+	public final void setAnchorLocation(ILocation inAnchorLocation) {
+		anchorLocation = (LocationABC) inAnchorLocation;
 	}
 
 	// --------------------------------------------------------------------------

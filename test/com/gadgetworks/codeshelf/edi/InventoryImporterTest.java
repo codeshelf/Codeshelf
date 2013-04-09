@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: InventoryImporterTest.java,v 1.8 2013/04/07 21:34:46 jeffw Exp $
+ *  $Id: InventoryImporterTest.java,v 1.9 2013/04/09 07:58:20 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -74,7 +74,7 @@ public class InventoryImporterTest {
 			};
 
 			Class.forName("org.h2.Driver");
-			mSchemaManager = new H2SchemaManager(mUtil, "codeshelf", "codeshelf", "codeshelf", "CODESHELF", "localhost", "");
+			mSchemaManager = new H2SchemaManager(mUtil, "codeshelf", "codeshelf", "codeshelf", "codeshelf", "localhost", "");
 			mDatabase = new Database(mSchemaManager, mUtil);
 
 			mDatabase.start();
@@ -123,7 +123,7 @@ public class InventoryImporterTest {
 		ITypedDao<UomMaster> uomMasterDao = new MockDao<UomMaster>();
 
 		CsvImporter importer = new CsvImporter(orderGroupDao, orderHeaderDao, orderDetailDao, containerDao, containerUseDao, itemMasterDao, itemDao, uomMasterDao);
-		importer.importInventoryFromCsvStream(reader, facility);
+		importer.importSlottedInventoryFromCsvStream(reader, facility);
 
 		Item item = facility.getItem("3001");
 		Assert.assertNotNull(item);

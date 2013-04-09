@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DropboxService.java,v 1.32 2013/03/19 01:19:59 jeffw Exp $
+ *  $Id: DropboxService.java,v 1.33 2013/04/09 07:58:20 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -62,7 +62,7 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-@Table(name = "EDISERVICE", schema = "CODESHELF")
+@Table(name = "edi_service", schema = "codeshelf")
 @DiscriminatorValue("DROPBOX")
 @CacheStrategy
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
@@ -490,17 +490,20 @@ public class DropboxService extends EdiServiceABC {
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	@Transactional
 	private void handleImport(DropboxAPI<Session> inClientSession, DeltaEntry<Entry> inEntry, ICsvImporter inCsvImporter) {
 
 		try {
 
 			DropboxInputStream stream = inClientSession.getFileStream(inEntry.lcPath, null);
 			InputStreamReader reader = new InputStreamReader(stream);
-			if (inEntry.lcPath.contains("orders")) {
-				inCsvImporter.importOrdersFromCsvStream(reader, this.getParent());
-			} else if (inEntry.lcPath.contains("inventory")) {
-				inCsvImporter.importInventoryFromCsvStream(reader, this.getParent());
+			if (inEntry.lcPath.toLowerCase().endsWith(".csv")) {
+				if (inEntry.lcPath.contains("orders")) {
+					inCsvImporter.importOrdersFromCsvStream(reader, this.getParent());
+				} else if (inEntry.lcPath.contains("inventory-slotted")) {
+					inCsvImporter.importSlottedInventoryFromCsvStream(reader, this.getParent());
+				} else if (inEntry.lcPath.contains("inventory-ddc")) {
+					inCsvImporter.importDdcInventoryFromCsvStream(reader, this.getParent());
+				}
 			}
 
 		} catch (DropboxException e) {

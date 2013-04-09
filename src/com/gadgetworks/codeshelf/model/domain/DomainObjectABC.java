@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DomainObjectABC.java,v 1.31 2013/03/16 08:03:08 jeffw Exp $
+ *  $Id: DomainObjectABC.java,v 1.32 2013/04/09 07:58:20 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -61,7 +61,7 @@ public abstract class DomainObjectABC implements IDomainObject {
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO, generator = "com.gadgetworks.codeshelf.model.dao.UuidGenGw")
 	@NonNull
-	@Column(nullable = false)
+	@Column(name = "persistentid", nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
@@ -69,7 +69,7 @@ public abstract class DomainObjectABC implements IDomainObject {
 
 	// The domain ID
 	@NonNull
-	@Column(nullable = false)
+	@Column(name = "domainid", nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty

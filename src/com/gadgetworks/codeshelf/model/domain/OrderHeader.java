@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderHeader.java,v 1.23 2013/04/07 21:34:46 jeffw Exp $
+ *  $Id: OrderHeader.java,v 1.24 2013/04/09 07:58:20 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -46,7 +46,7 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-@Table(name = "ORDERHEADER", schema = "CODESHELF")
+@Table(name = "order_header", schema = "codeshelf")
 @CacheStrategy
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class OrderHeader extends DomainObjectTreeABC<Facility> {

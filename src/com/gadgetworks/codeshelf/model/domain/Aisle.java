@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Aisle.java,v 1.22 2013/04/04 19:05:08 jeffw Exp $
+ *  $Id: Aisle.java,v 1.23 2013/04/09 07:58:20 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -92,7 +92,7 @@ public class Aisle extends SubLocationABC<Facility> {
 		path.createPathSegments(this, inXDimMeters, inYDimMeters, inOpensLowSide);
 
 		// Now loop through every location in the aisle and recompute its distance from the path.
-		for (LocationABC location : getChildren()) {
+		for (ISubLocation location : getChildren()) {
 			location.computePathDistance();
 		}
 	}

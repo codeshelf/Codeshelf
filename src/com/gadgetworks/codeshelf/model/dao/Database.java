@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Database.java,v 1.10 2013/04/07 07:14:45 jeffw Exp $
+ *  $Id: Database.java,v 1.11 2013/04/09 07:58:20 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -18,6 +18,7 @@ import com.avaje.ebean.Transaction;
 import com.avaje.ebean.config.AutofetchConfig;
 import com.avaje.ebean.config.DataSourceConfig;
 import com.avaje.ebean.config.ServerConfig;
+import com.avaje.ebean.config.UnderscoreNamingConvention;
 import com.avaje.ebeaninternal.server.lib.ShutdownManager;
 import com.gadgetworks.codeshelf.application.IUtil;
 import com.google.inject.Inject;
@@ -84,7 +85,6 @@ public class Database implements IDatabase {
 		serverConfig.loadFromProperties();
 		
 		// Now set values we never want changed by properties file.
-		serverConfig.setNamingConvention(new GWEbeanNamingConvention());
 		serverConfig.setDefaultServer(true);
 		serverConfig.setResourceDirectory(mUtil.getApplicationDataDirPath());
 		//		serverConfig.setDebugLazyLoad(false);
@@ -97,7 +97,9 @@ public class Database implements IDatabase {
 		serverConfig.setUpdateChangesOnly(true);
 		serverConfig.setDdlGenerate(false);
 		serverConfig.setDdlRun(false);
-
+		//serverConfig.setNamingConvention(new GWEbeanNamingConvention());
+		serverConfig.setNamingConvention(new UnderscoreNamingConvention());
+		
 		DataSourceConfig dataSourceConfig = serverConfig.getDataSourceConfig();
 		dataSourceConfig.setUsername(mSchemaManager.getDbUserId());
 		dataSourceConfig.setPassword(mSchemaManager.getDbPassword());

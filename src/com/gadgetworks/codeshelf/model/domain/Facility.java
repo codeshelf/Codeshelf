@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.61 2013/04/04 19:05:08 jeffw Exp $
+ *  $Id: Facility.java,v 1.62 2013/04/09 07:58:20 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -19,7 +19,6 @@ import javax.persistence.MapKey;
 import javax.persistence.OneToMany;
 
 import lombok.Getter;
-import lombok.ToString;
 
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
@@ -31,15 +30,14 @@ import com.avaje.ebean.annotation.Transactional;
 import com.gadgetworks.codeshelf.model.EdiProviderEnum;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
-import com.gadgetworks.codeshelf.model.TravelDirectionEnum;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
+import com.gadgetworks.codeshelf.model.TravelDirectionEnum;
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.flyweight.command.ColorEnum;
-import com.gadgetworks.flyweight.command.NetGuid;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -409,7 +407,7 @@ public class Facility extends LocationABC<Organization> {
 			//			int distFromInitiationPoint = 0;
 			for (PathSegment segment : path.getSegments()) {
 				segment.computePathDistance();
-				for (LocationABC location : segment.getLocations()) {
+				for (ILocation location : segment.getLocations()) {
 					if (location instanceof Aisle) {
 						Aisle aisle = (Aisle) location;
 						aisle.computePathDistance();
@@ -457,7 +455,7 @@ public class Facility extends LocationABC<Organization> {
 	 * @param inXDimMeters
 	 * @param inYDimMeters
 	 */
-	private void createVertices(LocationABC inLocation, Double inXDimMeters, Double inYDimMeters) {
+	private void createVertices(ILocation inLocation, Double inXDimMeters, Double inYDimMeters) {
 		try {
 			// Create four simple vertices around the aisle.
 			Vertex vertex1 = new Vertex(inLocation, "V01", 0, new Point(PositionTypeEnum.METERS_FROM_PARENT, 0.0, 0.0, null));
@@ -599,7 +597,7 @@ public class Facility extends LocationABC<Organization> {
 	public final List<WorkInstruction> getWorkInstructions(final Che inChe, final String inLocationId, final List<String> inContainerIdList) {
 		List<WorkInstruction> result = new ArrayList<WorkInstruction>();
 
-		LocationABC<?> cheLocation = getSubLocationById(inLocationId);
+		ILocation<?> cheLocation = getSubLocationById(inLocationId);
 		Aisle aisle = cheLocation.<Aisle> getParentAtLevel(Aisle.class);
 		PathSegment pathSegment = aisle.getPathSegment();
 		Path path = pathSegment.getParent();
@@ -614,8 +612,8 @@ public class Facility extends LocationABC<Organization> {
 					Timestamp timestamp = null;
 					ContainerUse foundUse = null;
 					for (ContainerUse use : container.getUses()) {
-						if ((timestamp == null) || (use.getUseTimeStamp().after(timestamp))) {
-							timestamp = use.getUseTimeStamp();
+						if ((timestamp == null) || (use.getUsedOn().after(timestamp))) {
+							timestamp = use.getUsedOn();
 							foundUse = use;
 						}
 					}
@@ -623,17 +621,17 @@ public class Facility extends LocationABC<Organization> {
 						OrderHeader order = foundUse.getOrderHeader();
 						if (order != null) {
 							for (OrderDetail detail : order.getOrderDetails()) {
-								LocationABC<IDomainObject> foundLocation = null;
+								ISubLocation<IDomainObject> foundLocation = null;
 								String parentLocationId = "";
 								ItemMaster itemMaster = detail.getItemMaster();
 
 								// Figure out if there are any items are on the current path.
 								// (We just take the first one we find, because items slotted on the same path should be close together.)
 								for (Item item : itemMaster.getItems()) {
-									LocationABC location = item.getParent();
+									ISubLocation location = (ISubLocation) item.getParent();
 									if (path.isLocationOnPath(location)) {
 										foundLocation = location;
-										parentLocationId = ((SubLocationABC<?>) foundLocation.getParent()).getLocationId();
+										parentLocationId = ((ISubLocation<?>) foundLocation.getParent()).getLocationId();
 										break;
 									}
 								}
@@ -707,5 +705,15 @@ public class Facility extends LocationABC<Organization> {
 			}
 		}
 		return result;
+	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * After a change in DDC items we call this routine to recompute the positions of the items.
+	 * 
+	 */
+	public void recomputeDdcItems() {
+		
+		
 	}
 }

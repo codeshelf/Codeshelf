@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: SubLocationABC.java,v 1.7 2013/03/19 01:19:59 jeffw Exp $
+ *  $Id: SubLocationABC.java,v 1.8 2013/04/09 07:58:20 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -9,8 +9,6 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
 import javax.persistence.MappedSuperclass;
-
-import lombok.ToString;
 
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
@@ -28,7 +26,7 @@ import com.google.inject.Singleton;
 @CacheStrategy
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 //@ToString(doNotUseGetters = true)
-public abstract class SubLocationABC<P extends IDomainObject> extends LocationABC<P> {
+public abstract class SubLocationABC<P extends IDomainObject> extends LocationABC<P> implements ISubLocation<P> {
 
 	@Inject
 	public static ITypedDao<SubLocationABC>	DAO;
@@ -53,6 +51,11 @@ public abstract class SubLocationABC<P extends IDomainObject> extends LocationAB
 		super(inPosType, inPosX, inPosY, inPosZ);
 	}
 
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.domain.ISubLocation#getParent()
+	 */
+	@Override
 	public final P getParent() {
 		// There's some weirdness with Ebean and navigating a recursive hierarchy. (You can't go down and then back up to a different class.)
 		// This fixes that problem, but it's not pretty.
@@ -64,6 +67,11 @@ public abstract class SubLocationABC<P extends IDomainObject> extends LocationAB
 		}
 	}
 
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.domain.ISubLocation#setParent(P)
+	 */
+	@Override
 	public final void setParent(P inParent) {
 		parent = (LocationABC) inParent;
 	}

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WorkArea.java,v 1.14 2013/03/15 14:57:13 jeffw Exp $
+ *  $Id: WorkArea.java,v 1.15 2013/04/09 07:58:20 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -39,7 +39,7 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-@Table(name = "WORKAREA", schema = "CODESHELF")
+@Table(name = "work_area", schema = "codeshelf")
 @CacheStrategy
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class WorkArea extends DomainObjectTreeABC<Path> {
@@ -54,26 +54,26 @@ public class WorkArea extends DomainObjectTreeABC<Path> {
 		}
 	}
 
-	private static final Logger		LOGGER		= LoggerFactory.getLogger(WorkArea.class);
+	private static final Logger	LOGGER		= LoggerFactory.getLogger(WorkArea.class);
 
 	// The parent facility.
 	@Column(nullable = false)
 	@OneToOne(optional = false)
-	private Path					parent;
+	private Path				parent;
 
 	// The work area ID.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private String					workAreaId;
+	private String				workAreaId;
 
 	// The work description.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private String					description;
+	private String				description;
 
 	// A work area is a collection of locations.
 	@OneToMany(mappedBy = "parent")
@@ -83,12 +83,12 @@ public class WorkArea extends DomainObjectTreeABC<Path> {
 	// A work area will contain a set of active users (workers).
 	@OneToMany(mappedBy = "parent")
 	@Getter
-	private List<User>				users		= new ArrayList<User>();
+	private List<User>			users		= new ArrayList<User>();
 
 	// A work area will contain a set of active users (workers).
 	@OneToMany(mappedBy = "currentWorkArea")
 	@Getter
-	private List<Che>				activeChes	= new ArrayList<Che>();
+	private List<Che>			activeChes	= new ArrayList<Che>();
 
 	public WorkArea() {
 		workAreaId = "";
@@ -115,12 +115,14 @@ public class WorkArea extends DomainObjectTreeABC<Path> {
 	}
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
-	public final void addLocation(SubLocationABC inLocation) {
-		locations.add(inLocation);
+	public final void addLocation(ISubLocation inSubLocation) {
+		// Ebean can't deal with interfaces.
+		SubLocationABC subLocation = (SubLocationABC) inSubLocation;
+		locations.add(subLocation);
 	}
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
-	public final void removeLocation(SubLocationABC inLocation) {
+	public final void removeLocation(ISubLocation inLocation) {
 		locations.remove(inLocation);
 	}
 

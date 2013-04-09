@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Path.java,v 1.23 2013/03/17 19:19:13 jeffw Exp $
+ *  $Id: Path.java,v 1.24 2013/04/09 07:58:20 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -22,7 +22,6 @@ import javax.persistence.Table;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
@@ -49,7 +48,7 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-@Table(name = "PATH", schema = "CODESHELF")
+@Table(name = "path", schema = "codeshelf")
 @CacheStrategy(useBeanCache = true)
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 //@ToString(doNotUseGetters = true, exclude = { "parent" })
@@ -290,7 +289,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	 * @param inTail
 	 */
 	public final PathSegment createPathSegment(final String inSegmentId,
-		final LocationABC inAssociatedLocation,
+		final ILocation inAssociatedLocation,
 		final Path inPath,
 		final Integer inSegmentOrder,
 		final Point inHead,
@@ -330,14 +329,14 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	 * Is the passed in location on this path?
 	 * @return
 	 */
-	public final Boolean isLocationOnPath(final LocationABC<?> inLocation) {
+	public final Boolean isLocationOnPath(final ILocation<?> inLocation) {
 		boolean result = false;
 
 		// There's some weirdness around Ebean CQuery.request.graphContext.beanMap
 		// that makes it impossible to search down the graph and then back up for nested classes.
-//		SubLocationABC<?> parentLocation = (SubLocationABC<?>) inLocation.getParent();
-//		SubLocationABC<?> location = parentLocation.getLocation(inLocation.getLocationId());
-		
+		//		ISubLocation<?> parentLocation = (ISubLocation<?>) inLocation.getParent();
+		//		ISubLocation<?> location = parentLocation.getLocation(inLocation.getLocationId());
+
 		Aisle aisle = inLocation.<Aisle> getParentAtLevel(Aisle.class);
 		if (aisle != null) {
 			PathSegment pathSegment = aisle.getPathSegment();
@@ -357,12 +356,12 @@ public class Path extends DomainObjectTreeABC<Facility> {
 		public int compare(WorkInstruction inWi1, WorkInstruction inWi2) {
 
 			if (inWi1.getDistanceAlongPath() == null) {
-				LocationABC wiLocation = getParent().getSubLocationById(inWi1.getLocationId());
+				ILocation wiLocation = getParent().getSubLocationById(inWi1.getLocationId());
 				inWi1.setDistanceAlongPath(wiLocation.getPathDistance());
 			}
 
 			if (inWi2.getDistanceAlongPath() == null) {
-				LocationABC wiLocation = getParent().getSubLocationById(inWi2.getLocationId());
+				ILocation wiLocation = getParent().getSubLocationById(inWi2.getLocationId());
 				inWi2.setDistanceAlongPath(wiLocation.getPathDistance());
 			}
 

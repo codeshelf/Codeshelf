@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ServerCodeshelfApplication.java,v 1.12 2013/04/04 19:05:08 jeffw Exp $
+ *  $Id: ServerCodeshelfApplication.java,v 1.13 2013/04/09 07:58:21 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -95,9 +95,7 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		
 //		mMonitor.logToCentralAdmin("Startup: codeshelf server " + processName);
 
-		LOGGER.info("Starting database");
 		mDatabase.start();
-		LOGGER.info("Database started");
 
 		// Start the WebSocket UX handler
 		mWebSocketServer.start();
