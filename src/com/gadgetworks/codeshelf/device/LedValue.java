@@ -8,7 +8,7 @@ import lombok.experimental.Accessors;
 public class LedValue {
 
 	private static final byte	OFF			= (byte) 0x00;
-	private static final byte	ON_			= (byte) 0xff;
+	private static final byte	ON_			= (byte) 0x2f;
 
 	public static final byte[]	LED_RED		= { ON_, OFF, OFF };
 	public static final byte[]	LED_GREEN	= { OFF, ON_, OFF };

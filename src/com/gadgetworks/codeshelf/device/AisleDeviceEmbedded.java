@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: AisleDeviceEmbedded.java,v 1.4 2013/04/02 19:23:59 jeffw Exp $
+ *  $Id: AisleDeviceEmbedded.java,v 1.5 2013/04/10 03:35:46 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -159,6 +159,8 @@ public class AisleDeviceEmbedded extends DeviceEmbeddedABC {
 			mJD2XXInterface.write(mAllChannelsOutput);
 		} catch (IOException e) {
 			LOGGER.error("", e);
+			resetInterface();
+			setupConnection(FTDI_VID_PID);
 		}
 	}
 
@@ -232,6 +234,15 @@ public class AisleDeviceEmbedded extends DeviceEmbeddedABC {
 		}
 
 		return result;
+	}
+	
+	private void resetInterface() {
+		try {
+			mJD2XXInterface.close();
+			mJD2XXInterface.resetDevice();
+		} catch (IOException e) {
+			LOGGER.error("", e);
+		}
 	}
 
 	// --------------------------------------------------------------------------
