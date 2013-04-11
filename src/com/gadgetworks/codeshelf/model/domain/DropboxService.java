@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DropboxService.java,v 1.33 2013/04/09 07:58:20 jeffw Exp $
+ *  $Id: DropboxService.java,v 1.34 2013/04/11 07:42:45 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -48,6 +48,7 @@ import com.gadgetworks.codeshelf.model.EdiDocumentStatusEnum;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
+import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -73,6 +74,11 @@ public class DropboxService extends EdiServiceABC {
 
 	@Singleton
 	public static class DropboxServiceDao extends GenericDaoABC<DropboxService> implements ITypedDao<DropboxService> {
+		@Inject
+		public DropboxServiceDao(final ISchemaManager inSchemaManager) {
+			super(inSchemaManager);
+		}
+		
 		public final Class<DropboxService> getDaoClass() {
 			return DropboxService.class;
 		}

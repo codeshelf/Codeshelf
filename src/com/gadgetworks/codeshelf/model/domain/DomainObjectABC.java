@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DomainObjectABC.java,v 1.32 2013/04/09 07:58:20 jeffw Exp $
+ *  $Id: DomainObjectABC.java,v 1.33 2013/04/11 07:42:45 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -134,32 +134,6 @@ public abstract class DomainObjectABC implements IDomainObject {
 		} else {
 			return 0;
 		}
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * @param inPersistentId
-	 * @param inClass
-	 * @return
-	 */
-	public static <T extends DomainObjectABC> T findByPersistentId(Long inPersistentId, Class<T> inClass) {
-		T result = null;
-		try {
-			result = Ebean.find(inClass, inPersistentId);
-		} catch (PersistenceException e) {
-			LOGGER.error("", e);
-		}
-		return result;
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * @return
-	 */
-	public static <T extends DomainObjectABC> List<T> getAll(Class<T> inClass) {
-		Query<T> query = Ebean.createQuery(inClass);
-		//query = query.setUseCache(true);
-		return query.findList();
 	}
 
 	// --------------------------------------------------------------------------

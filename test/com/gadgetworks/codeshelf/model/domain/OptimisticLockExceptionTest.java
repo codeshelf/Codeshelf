@@ -4,7 +4,7 @@ import java.sql.Timestamp;
 
 import junit.framework.Assert;
 
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
 
 import com.avaje.ebean.Ebean;
@@ -25,12 +25,12 @@ import com.gadgetworks.codeshelf.model.domain.Organization.OrganizationDao;
 
 public class OptimisticLockExceptionTest {
 	
-	private static IUtil			mUtil;
-	private static ISchemaManager	mSchemaManager;
-	private static IDatabase		mDatabase;
+	private IUtil			mUtil;
+	private ISchemaManager	mSchemaManager;
+	private IDatabase		mDatabase;
 
-	@BeforeClass
-	public final static void setup() {
+	@Before
+	public final void setup() {
 
 		try {
 			mUtil = new IUtil() {
@@ -69,17 +69,17 @@ public class OptimisticLockExceptionTest {
 
 		EbeanServer defaultServer = Ebean.getServer(null);
 		
-		OrderHeader.DAO = new OrderHeaderDao();
-		OrderDetail.DAO = new OrderDetailDao();
-		Organization.DAO = new OrganizationDao();
-		Facility.DAO = new FacilityDao();
+		OrderHeader.DAO = new OrderHeaderDao(mSchemaManager);
+		OrderDetail.DAO = new OrderDetailDao(mSchemaManager);
+		Organization.DAO = new OrganizationDao(mSchemaManager);
+		Facility.DAO = new FacilityDao(mSchemaManager);
 
-		Organization.DAO = new OrganizationDao();
+		Organization.DAO = new OrganizationDao(mSchemaManager);
 		Organization organization = new Organization();
 		organization.setOrganizationId("OPTIMISTIC-O1");
 		Organization.DAO.store(organization);
 
-		Facility.DAO = new FacilityDao();
+		Facility.DAO = new FacilityDao(mSchemaManager);
 		Facility facility = new Facility();
 		facility.setParent(organization);
 		facility.setFacilityId("OPTIMISTIC-F1");

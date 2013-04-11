@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Che.java,v 1.10 2013/04/09 07:58:20 jeffw Exp $
+ *  $Id: Che.java,v 1.11 2013/04/11 07:42:45 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
+import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -50,6 +51,11 @@ public class Che extends WirelessDeviceABC {
 
 	@Singleton
 	public static class CheDao extends GenericDaoABC<Che> implements ITypedDao<Che> {
+		@Inject
+		public CheDao(final ISchemaManager inSchemaManager) {
+			super(inSchemaManager);
+		}
+		
 		public final Class<Che> getDaoClass() {
 			return Che.class;
 		}

@@ -14,7 +14,7 @@ import java.util.UUID;
 
 import junit.framework.Assert;
 
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
 
 import com.gadgetworks.codeshelf.application.IUtil;
@@ -23,33 +23,49 @@ import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
+import com.google.inject.Inject;
 
 public class GenericDaoTest {
 
 	public class OrganizationDao extends GenericDaoABC<Organization> {
+		@Inject
+		public OrganizationDao(final ISchemaManager inSchemaManager) {
+			super(inSchemaManager);
+		}
+
 		public final Class<Organization> getDaoClass() {
 			return Organization.class;
 		}
 	}
 
 	public class FacilityDao extends GenericDaoABC<Facility> {
+		@Inject
+		public FacilityDao(final ISchemaManager inSchemaManager) {
+			super(inSchemaManager);
+		}
+
 		public final Class<Facility> getDaoClass() {
 			return Facility.class;
 		}
 	}
 
 	public class AisleDao extends GenericDaoABC<Aisle> {
+		@Inject
+		public AisleDao(final ISchemaManager inSchemaManager) {
+			super(inSchemaManager);
+		}
+
 		public final Class<Aisle> getDaoClass() {
 			return Aisle.class;
 		}
 	}
 
-	private static IUtil			mUtil;
-	private static ISchemaManager	mSchemaManager;
-	private static IDatabase		mDatabase;
+	private IUtil			mUtil;
+	private ISchemaManager	mSchemaManager;
+	private IDatabase		mDatabase;
 
-	@BeforeClass
-	public final static void setup() {
+	@Before
+	public final void setup() {
 
 		try {
 			mUtil = new IUtil() {
@@ -84,8 +100,8 @@ public class GenericDaoTest {
 	}
 
 	@Test
-	public void testPushNonPersistentUpdates() {
-		OrganizationDao dao = new OrganizationDao();
+	public final void testPushNonPersistentUpdates() {
+		OrganizationDao dao = new OrganizationDao(mSchemaManager);
 
 		Organization organization = new Organization();
 		organization.setDomainId("NON-PERSIST");
@@ -117,8 +133,8 @@ public class GenericDaoTest {
 	}
 
 	@Test
-	public void testFindByFilter() {
-		OrganizationDao dao = new OrganizationDao();
+	public final void testFindByFilter() {
+		OrganizationDao dao = new OrganizationDao(mSchemaManager);
 
 		List<Long> persistentIdList = new ArrayList<Long>();
 
@@ -141,8 +157,8 @@ public class GenericDaoTest {
 	}
 
 	@Test
-	public void testLoadByPersistentId() {
-		OrganizationDao dao = new OrganizationDao();
+	public final void testLoadByPersistentId() {
+		OrganizationDao dao = new OrganizationDao(mSchemaManager);
 
 		Organization organization = new Organization();
 		organization.setDomainId("LOADBY-TEST");
@@ -155,8 +171,8 @@ public class GenericDaoTest {
 	}
 
 	@Test
-	public void testLoadByPersistentIdList() {
-		OrganizationDao dao = new OrganizationDao();
+	public final void testLoadByPersistentIdList() {
+		OrganizationDao dao = new OrganizationDao(mSchemaManager);
 
 		List<UUID> persistentIdList = new ArrayList<UUID>();
 
@@ -180,13 +196,13 @@ public class GenericDaoTest {
 	}
 
 	@Test
-	public void testFindByDomainIdDontIncludeParentDomainId() {
+	public final void testFindByDomainIdDontIncludeParentDomainId() {
 
 		String ORGANIZATION_ID = "FIND-BY-DOMAINID";
 		String FACILITY_ID = "FIND-BY-DOMAINID";
 
-		OrganizationDao organizationDao = new OrganizationDao();
-		FacilityDao faciltyDao = new FacilityDao();
+		OrganizationDao organizationDao = new OrganizationDao(mSchemaManager);
+		FacilityDao faciltyDao = new FacilityDao(mSchemaManager);
 
 		Organization organization1 = new Organization();
 		organization1.setDomainId(ORGANIZATION_ID);
@@ -207,16 +223,16 @@ public class GenericDaoTest {
 	}
 
 	@Test
-	public void testFindByDomainIdIncludeParentDomainId() {
+	public final void testFindByDomainIdIncludeParentDomainId() {
 
 		String ORGANIZATION_ID = "ORG-FIND-BY-DOMAINID-INC";
 		String FACILITY_ID = "FAC-FIND-BY-DOMAINID-INC";
 		String FACILITY2_ID = "FAC2-FIND-BY-DOMAINID-INC";
 		String AISLE_ID = "AISLE-FIND-BY-DOMAINID-INC";
 
-		OrganizationDao organizationDao = new OrganizationDao();
-		FacilityDao faciltyDao = new FacilityDao();
-		AisleDao aisleDao = new AisleDao();
+		OrganizationDao organizationDao = new OrganizationDao(mSchemaManager);
+		FacilityDao faciltyDao = new FacilityDao(mSchemaManager);
+		AisleDao aisleDao = new AisleDao(mSchemaManager);
 
 		Organization organization1 = new Organization();
 		organization1.setDomainId(ORGANIZATION_ID);
@@ -247,8 +263,8 @@ public class GenericDaoTest {
 	}
 
 	@Test
-	public void testStoreNew() {
-		OrganizationDao dao = new OrganizationDao();
+	public final void testStoreNew() {
+		OrganizationDao dao = new OrganizationDao(mSchemaManager);
 
 		Organization organization1 = new Organization();
 		organization1.setDomainId("STORE-TEST-NEW");
@@ -277,8 +293,8 @@ public class GenericDaoTest {
 	}
 
 	@Test
-	public void testStoreUpdate() {
-		OrganizationDao dao = new OrganizationDao();
+	public final void testStoreUpdate() {
+		OrganizationDao dao = new OrganizationDao(mSchemaManager);
 
 		Organization organization2 = new Organization();
 		organization2.setDomainId("STORE-TEST-UPDATE");
@@ -310,8 +326,8 @@ public class GenericDaoTest {
 	}
 
 	@Test
-	public void testDelete() {
-		OrganizationDao dao = new OrganizationDao();
+	public final void testDelete() {
+		OrganizationDao dao = new OrganizationDao(mSchemaManager);
 
 		Organization organization2 = new Organization();
 		organization2.setDomainId("DELETE-TEST");
@@ -342,8 +358,8 @@ public class GenericDaoTest {
 	}
 
 	@Test
-	public void testGetAll() {
-		OrganizationDao dao = new OrganizationDao();
+	public final void testGetAll() {
+		OrganizationDao dao = new OrganizationDao(mSchemaManager);
 
 		Organization organization = new Organization();
 		organization.setDomainId("GETALL-TEST1");

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: UomMaster.java,v 1.14 2013/04/09 07:58:20 jeffw Exp $
+ *  $Id: UomMaster.java,v 1.15 2013/04/11 07:42:45 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
+import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -44,6 +45,11 @@ public class UomMaster extends DomainObjectTreeABC<Facility> {
 
 	@Singleton
 	public static class UomMasterDao extends GenericDaoABC<UomMaster> implements ITypedDao<UomMaster> {
+		@Inject
+		public UomMasterDao(final ISchemaManager inSchemaManager) {
+			super(inSchemaManager);
+		}
+		
 		public final Class<UomMaster> getDaoClass() {
 			return UomMaster.class;
 		}

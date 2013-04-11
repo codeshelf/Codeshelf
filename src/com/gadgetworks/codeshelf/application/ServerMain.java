@@ -1,7 +1,7 @@
 /*******************************************************************************
 CodeshelfWebSocketServer *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ServerMain.java,v 1.12 2013/04/04 19:05:08 jeffw Exp $
+ *  $Id: ServerMain.java,v 1.13 2013/04/11 07:42:45 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -164,8 +164,8 @@ public final class ServerMain {
 		//		SLF4JBridgeHandler.install();
 
 		// Create and start the application.
-		Injector injector = setupInjector();
-		ICodeshelfApplication application = injector.getInstance(ServerCodeshelfApplication.class);
+		Injector dynamicInjector = setupInjector();
+		ICodeshelfApplication application = dynamicInjector.getInstance(ServerCodeshelfApplication.class);
 		application.startApplication();
 
 		// Handle events until the application exits.
@@ -230,6 +230,7 @@ public final class ServerMain {
 				bindConstant().annotatedWith(Names.named("shiro.hashAlgorithmName")).to(Md5Hash.ALGORITHM_NAME);
 
 				// Register the DAOs (statically as a singleton).
+
 				requestStaticInjection(Aisle.class);
 				bind(new TypeLiteral<ITypedDao<Aisle>>() {
 				}).to(AisleDao.class);
@@ -345,9 +346,6 @@ public final class ServerMain {
 				requestStaticInjection(WorkInstruction.class);
 				bind(new TypeLiteral<ITypedDao<WorkInstruction>>() {
 				}).to(WorkInstructionDao.class);
-
-				//				requestStaticInjection(WirelessDevice.class);
-				//				bind(IWirelessDeviceDao.class).to(WirelessDeviceDao.class);
 			}
 		});
 

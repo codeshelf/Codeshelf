@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WorkInstruction.java,v 1.17 2013/04/09 07:58:20 jeffw Exp $
+ *  $Id: WorkInstruction.java,v 1.18 2013/04/11 07:42:45 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -31,6 +31,7 @@ import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
+import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.flyweight.command.ColorEnum;
 import com.google.inject.Inject;
@@ -63,6 +64,11 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 
 	@Singleton
 	public static class WorkInstructionDao extends GenericDaoABC<WorkInstruction> implements ITypedDao<WorkInstruction> {
+		@Inject
+		public WorkInstructionDao(final ISchemaManager inSchemaManager) {
+			super(inSchemaManager);
+		}
+		
 		public final Class<WorkInstruction> getDaoClass() {
 			return WorkInstruction.class;
 		}

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WirelessDeviceABC.java,v 1.8 2013/03/16 08:03:08 jeffw Exp $
+ *  $Id: WirelessDeviceABC.java,v 1.9 2013/04/11 07:42:45 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
+import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.flyweight.command.NetAddress;
 import com.gadgetworks.flyweight.command.NetGuid;
@@ -57,6 +58,11 @@ public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNet
 
 	@Singleton
 	public static class WirelessDeviceDao extends GenericDaoABC<WirelessDeviceABC> implements ITypedDao<WirelessDeviceABC> {
+		@Inject
+		public WirelessDeviceDao(final ISchemaManager inSchemaManager) {
+			super(inSchemaManager);
+		}
+		
 		public final Class<WirelessDeviceABC> getDaoClass() {
 			return WirelessDeviceABC.class;
 		}

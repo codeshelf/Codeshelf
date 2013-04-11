@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ItemMaster.java,v 1.19 2013/04/09 07:58:20 jeffw Exp $
+ *  $Id: ItemMaster.java,v 1.20 2013/04/11 07:42:45 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.LotHandlingEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
+import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -52,6 +53,11 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 
 	@Singleton
 	public static class ItemMasterDao extends GenericDaoABC<ItemMaster> implements ITypedDao<ItemMaster> {
+		@Inject
+		public ItemMasterDao(final ISchemaManager inSchemaManager) {
+			super(inSchemaManager);
+		}
+		
 		public final Class<ItemMaster> getDaoClass() {
 			return ItemMaster.class;
 		}

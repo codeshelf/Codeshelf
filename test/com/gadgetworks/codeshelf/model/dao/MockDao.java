@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: MockDao.java,v 1.10 2013/04/09 07:58:21 jeffw Exp $
+ *  $Id: MockDao.java,v 1.11 2013/04/11 07:42:45 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -65,8 +65,12 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 	}
 
 	public final T findByPersistentId(UUID inPersistentId) {
-		// TODO Auto-generated method stub
-		return null;
+		return mStorage.get(inPersistentId);
+	}
+
+	@Override
+	public <P extends IDomainObject> P findByPersistentId(Class<P> inClass, UUID inPersistentId) {
+		return (P) mStorage.get(inPersistentId);
 	}
 
 	public final T findByDomainId(IDomainObject inParentObject, String inDomainId) {
@@ -149,5 +153,15 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 	public Object getNextId(Class<?> beanType) {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public void beginTransaction() {
+
+	}
+
+	@Override
+	public void endTransaction() {
+
 	}
 }

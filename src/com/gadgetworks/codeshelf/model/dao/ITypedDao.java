@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ITypedDao.java,v 1.11 2012/12/25 10:48:14 jeffw Exp $
+ *  $Id: ITypedDao.java,v 1.12 2013/04/11 07:42:45 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -19,9 +19,9 @@ public interface ITypedDao<T> extends IDao {
 
 	//	boolean isObjectPersisted(T inDomainObject);
 
-	//	Query<T> query();
-
 	T findByPersistentId(UUID inPersistentId);
+
+	<P extends IDomainObject> P findByPersistentId(Class<P> inClass, UUID inPersistentId);
 
 	T findByDomainId(IDomainObject inParentObject, String inDomainId);
 
@@ -42,5 +42,9 @@ public interface ITypedDao<T> extends IDao {
 	Class<T> getDaoClass();
 	
 	Object getNextId(final Class<?> beanType);
+	
+	void beginTransaction();
+	
+	void endTransaction();
 	
 }

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CsvImporter.java,v 1.15 2013/04/09 07:58:20 jeffw Exp $
+ *  $Id: CsvImporter.java,v 1.16 2013/04/11 07:42:45 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -27,9 +27,9 @@ import com.gadgetworks.codeshelf.model.domain.Container;
 import com.gadgetworks.codeshelf.model.domain.ContainerKind;
 import com.gadgetworks.codeshelf.model.domain.ContainerUse;
 import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.ILocation;
 import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster;
+import com.gadgetworks.codeshelf.model.domain.LocationABC;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderGroup;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
@@ -89,7 +89,7 @@ public class CsvImporter implements ICsvImporter {
 			List<OrderCsvImportBean> list = csv.parse(strategy, csvReader);
 
 			for (OrderCsvImportBean importBean : list) {
-				importOrderCsvBean(importBean, inFacility);
+				orderCsvBeanImport(importBean, inFacility);
 			}
 
 			csvReader.close();
@@ -116,6 +116,9 @@ public class CsvImporter implements ICsvImporter {
 			List<DdcInventoryCsvImportBean> inventoryImportBeanList = csv.parse(strategy, csvReader);
 
 			if (inventoryImportBeanList.size() > 0) {
+				
+				LOGGER.debug("Clear existing inventory");
+				
 				// Delete the entire DDC inventory and replace it with what's in the import.
 				for (ItemMaster itemMaster : inFacility.getItemMasters()) {
 					if (itemMaster.isDdcItem()) {
@@ -125,10 +128,14 @@ public class CsvImporter implements ICsvImporter {
 					}
 				}
 
+				LOGGER.debug("Begin DDC inventory import.");
+				
 				// Iterate over the inventory import beans.
 				for (DdcInventoryCsvImportBean importBean : inventoryImportBeanList) {
-					importDdcInventoryCsvBean(importBean, inFacility);
+					ddcInventoryCsvBeanImport(importBean, inFacility);
 				}
+
+				LOGGER.debug("End DDC inventory import.");
 
 				inFacility.recomputeDdcItems();
 			}
@@ -168,7 +175,7 @@ public class CsvImporter implements ICsvImporter {
 
 				// Iterate over the inventory import beans.
 				for (SlottedInventoryCsvImportBean importBean : inventoryImportBeanList) {
-					importSlottedInventoryCsvBean(importBean, inFacility);
+					slottedInventoryCsvBeanImport(importBean, inFacility);
 				}
 			}
 
@@ -186,7 +193,7 @@ public class CsvImporter implements ICsvImporter {
 	 * @param inFacility
 	 */
 	@Transactional
-	private void importOrderCsvBean(final OrderCsvImportBean inCsvImportBean, final Facility inFacility) {
+	private void orderCsvBeanImport(final OrderCsvImportBean inCsvImportBean, final Facility inFacility) {
 
 		LOGGER.info(inCsvImportBean.toString());
 
@@ -194,7 +201,7 @@ public class CsvImporter implements ICsvImporter {
 			OrderGroup group = updateOptionalOrderGroup(inCsvImportBean, inFacility);
 			OrderHeader order = updateOrderHeader(inCsvImportBean, inFacility, group);
 			Container container = updateContainer(inCsvImportBean, inFacility, order);
-			UomMaster uomMaster = updateUomMaster(inCsvImportBean.getUomId(), inFacility);
+			UomMaster uomMaster = updateUomMaster(inCsvImportBean.getUom(), inFacility);
 			ItemMaster itemMaster = updateItemMaster(inCsvImportBean.getItemId(), inFacility, uomMaster);
 			OrderDetail orderDetail = updateOrderDetail(inCsvImportBean, inFacility, order, uomMaster, itemMaster);
 		} catch (Exception e) {
@@ -207,12 +214,21 @@ public class CsvImporter implements ICsvImporter {
 	 * @param inCsvImportBean
 	 * @param inFacility
 	 */
-	private void importDdcInventoryCsvBean(final DdcInventoryCsvImportBean inCsvImportBean, final Facility inFacility) {
+	private void ddcInventoryCsvBeanImport(final DdcInventoryCsvImportBean inCsvImportBean, final Facility inFacility) {
 
 		LOGGER.info(inCsvImportBean.toString());
 
-		UomMaster uomMaster = updateUomMaster(inCsvImportBean.getUomId(), inFacility);
+		UomMaster uomMaster = updateUomMaster(inCsvImportBean.getUom(), inFacility);
+		
+		// Create or update the DDC item master, and then set the DDC ID for it.
 		ItemMaster itemMaster = updateItemMaster(inCsvImportBean.getItemId(), inFacility, uomMaster);
+		itemMaster.setDdcId(inCsvImportBean.getDdcId());
+		try {
+			mItemMasterDao.store(itemMaster);
+		} catch (DaoException e) {
+			LOGGER.error("", e);
+		}
+		
 		Item item = updateDdcItem(inCsvImportBean, inFacility, itemMaster, uomMaster);
 	}
 
@@ -221,11 +237,11 @@ public class CsvImporter implements ICsvImporter {
 	 * @param inCsvImportBean
 	 * @param inFacility
 	 */
-	private void importSlottedInventoryCsvBean(final SlottedInventoryCsvImportBean inCsvImportBean, final Facility inFacility) {
+	private void slottedInventoryCsvBeanImport(final SlottedInventoryCsvImportBean inCsvImportBean, final Facility inFacility) {
 
 		LOGGER.info(inCsvImportBean.toString());
 
-		UomMaster uomMaster = updateUomMaster(inCsvImportBean.getUomId(), inFacility);
+		UomMaster uomMaster = updateUomMaster(inCsvImportBean.getUom(), inFacility);
 		ItemMaster itemMaster = updateItemMaster(inCsvImportBean.getItemId(), inFacility, uomMaster);
 		Item item = updateSlottedItem(inCsvImportBean, inFacility, itemMaster, uomMaster);
 	}
@@ -502,7 +518,7 @@ public class CsvImporter implements ICsvImporter {
 	private Item updateSlottedItem(final SlottedInventoryCsvImportBean inCsvImportBean, final Facility inFacility, final ItemMaster inItemMaster, final UomMaster inUomMaster) {
 		Item result = null;
 
-		ILocation location = inFacility.getSubLocationById(inCsvImportBean.getLocationId());
+		LocationABC location = (LocationABC) inFacility.getSubLocationById(inCsvImportBean.getLocationId());
 
 		// We couldn't find the location, so assign the inventory to the facility itself (which is a location);
 		if (location == null) {

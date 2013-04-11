@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: LocationABC.java,v 1.31 2013/04/09 07:58:20 jeffw Exp $
+ *  $Id: LocationABC.java,v 1.32 2013/04/11 07:42:44 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -33,15 +33,15 @@ import org.codehaus.jackson.annotate.JsonProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.avaje.ebean.Ebean;
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.TravelDirectionEnum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
+import com.gadgetworks.codeshelf.model.dao.IDatabase;
+import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
@@ -65,8 +65,13 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	@Inject
 	public static ITypedDao<LocationABC>	DAO;
 
-	@Singleton
+//	@Singleton
 	public static class LocationDao extends GenericDaoABC<LocationABC> implements ITypedDao<LocationABC> {
+		@Inject
+		public LocationDao(final ISchemaManager inSchemaManager, final IDatabase inDatabase) {
+			super(inSchemaManager);
+		}
+		
 		public final Class<LocationABC> getDaoClass() {
 			return LocationABC.class;
 		}
@@ -238,7 +243,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 		// There's some weirdness with Ebean and navigating a recursive hierarchy. (You can't go down and then back up to a different class.)
 		// This fixes that problem, but it's not pretty.
-		parent = Ebean.find(parent.getClass(), parent.getPersistentId());
+		parent = DAO.findByPersistentId(parent.getClass(), parent.getPersistentId());
 
 		if (parent.getClass().equals(inClassWanted)) {
 			// This is the parent we want. (We can cast safely since we checked the class.)

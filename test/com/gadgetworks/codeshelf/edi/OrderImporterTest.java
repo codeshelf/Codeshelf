@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderImporterTest.java,v 1.10 2013/04/09 07:58:20 jeffw Exp $
+ *  $Id: OrderImporterTest.java,v 1.11 2013/04/11 07:42:45 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -13,30 +13,31 @@ import junit.framework.Assert;
 import org.junit.Test;
 
 import com.gadgetworks.codeshelf.model.PickStrategyEnum;
-import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.model.dao.MockDao;
+import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.domain.Container;
-import com.gadgetworks.codeshelf.model.domain.ContainerKind;
-import com.gadgetworks.codeshelf.model.domain.ContainerUse;
 import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.Item;
-import com.gadgetworks.codeshelf.model.domain.ItemMaster;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
-import com.gadgetworks.codeshelf.model.domain.OrderGroup;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.Organization;
-import com.gadgetworks.codeshelf.model.domain.UomMaster;
 
 /**
  * @author jeffw
+ * 
+ * Yes, these aren't exactly unit tests, but when they were unit tested they missed a lot of important business behaviors.
+ * Sure, the coupling shouldn't be so tight, but Ebean doesn't make it easy to test it's granular behaviors.
+ * 
+ * While not ideal, we are testing, known, expected business behaiors against the full machinery in a memory-mapped DB
+ * that runs at the speed of a unit test (and runs with the units tests).
+ * 
+ * There are other unit tests of EDI behaviors.
  *
  */
-public class OrderImporterTest {
+public class OrderImporterTest extends EdiTestABC {
 
 	@Test
-	public void testOrderImporterFromCsvStream() {
+	public final void testOrderImporterFromCsvStream() {
 
-		String csvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uomId,orderDate,dueDate,workSequence"
+		String csvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,123,123,1,10700589,Napa Valley Bistro - Jalapeño Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,123,123,2,10706952,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,123,123,3,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -54,32 +55,14 @@ public class OrderImporterTest {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		ITypedDao<Organization> organizationDao = new MockDao<Organization>();
-		ITypedDao<OrderGroup> orderGroupDao = new MockDao<OrderGroup>();
-		ITypedDao<OrderHeader> orderHeaderDao = new MockDao<OrderHeader>();
-		ITypedDao<OrderDetail> orderDetailDao = new MockDao<OrderDetail>();
-		ITypedDao<Container> containerDao = new MockDao<Container>();
-		ITypedDao<ContainerUse> containerUseDao = new MockDao<ContainerUse>();
-		ITypedDao<ItemMaster> itemMasterDao = new MockDao<ItemMaster>();
-		ITypedDao<Item> itemDao = new MockDao<Item>();
-		ITypedDao<UomMaster> uomMasterDao = new MockDao<UomMaster>();
-
-		ContainerKind.DAO = new MockDao<ContainerKind>();
-
 		Organization organization = new Organization();
-		organization.setDomainId("O1");
+		organization.setDomainId("O-ORD1.1");
+		mOrganizationDao.store(organization);
 
-		Facility.DAO = new MockDao<Facility>();
-		Facility facility = new Facility();
-		facility.setParent(organization);
-		facility.setDomainId("F1");
-		facility.createDefaultContainerKind();
-		
-		ContainerKind kind = new ContainerKind();
-		kind.setParent(facility);
-		kind.setDomainId(ContainerKind.DEFAULT_CONTAINER_KIND);
+		organization.createFacility("F-ORD1.1", "TEST", PositionTypeEnum.METERS_FROM_PARENT.getName(), 0.0, 0.0);
+		Facility facility = organization.getFacility("F-ORD1.1");
 
-		CsvImporter importer = new CsvImporter(orderGroupDao, orderHeaderDao, orderDetailDao, containerDao, containerUseDao, itemMasterDao, itemDao, uomMasterDao);
+		CsvImporter importer = new CsvImporter(mOrderGroupDao, mOrderHeaderDao, mOrderDetailDao, mContainerDao, mContainerUseDao, mItemMasterDao, mItemDao, mUomMasterDao);
 		importer.importOrdersFromCsvStream(reader, facility);
 
 		OrderHeader order = facility.findOrder("123");
@@ -88,9 +71,9 @@ public class OrderImporterTest {
 	}
 
 	@Test
-	public void testOrderImporterWithPickStrategyFromCsvStream() {
+	public final void testOrderImporterWithPickStrategyFromCsvStream() {
 
-		String csvString = "orderGroupId,pickStrategy,orderId,orderDetailId,itemId,description,quantity,uomId,orderDate, dueDate\r\n" //
+		String csvString = "orderGroupId,pickStrategy,orderId,orderDetailId,itemId,description,quantity,uom,orderDate, dueDate\r\n" //
 				+ "1,,123,1,3001,Widget,100,each,2012-09-26 11:31:01,2012-09-26 11:31:01\r\n" //
 				+ "1,,123,2,4550,Gadget,450,case,2012-09-26 11:31:01,2012-09-26 11:31:01\r\n" //
 				+ "1,,123,3,3007,Dealybob,300,case,2012-09-26 11:31:02,2012-09-26 11:31:01\r\n" //
@@ -108,28 +91,14 @@ public class OrderImporterTest {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		ITypedDao<Organization> organizationDao = new MockDao<Organization>();
-		ITypedDao<OrderGroup> orderGroupDao = new MockDao<OrderGroup>();
-		ITypedDao<OrderHeader> orderHeaderDao = new MockDao<OrderHeader>();
-		ITypedDao<OrderDetail> orderDetailDao = new MockDao<OrderDetail>();
-		ITypedDao<Container> containerDao = new MockDao<Container>();
-		ITypedDao<ContainerUse> containerUseDao = new MockDao<ContainerUse>();
-		ITypedDao<ItemMaster> itemMasterDao = new MockDao<ItemMaster>();
-		ITypedDao<Item> itemDao = new MockDao<Item>();
-		ITypedDao<UomMaster> uomMasterDao = new MockDao<UomMaster>();
-
-		ContainerKind.DAO = new MockDao<ContainerKind>();
-
 		Organization organization = new Organization();
-		organization.setDomainId("O1");
+		organization.setDomainId("O-ORD1.2");
+		mOrganizationDao.store(organization);
 
-		Facility.DAO = new MockDao<Facility>();
-		Facility facility = new Facility();
-		facility.setParent(organization);
-		facility.setDomainId("F1");
-		facility.createDefaultContainerKind();
+		organization.createFacility("F-ORD1.2", "TEST", PositionTypeEnum.METERS_FROM_PARENT.getName(), 0.0, 0.0);
+		Facility facility = organization.getFacility("F-ORD1.2");
 
-		CsvImporter importer = new CsvImporter(orderGroupDao, orderHeaderDao, orderDetailDao, containerDao, containerUseDao, itemMasterDao, itemDao, uomMasterDao);
+		CsvImporter importer = new CsvImporter(mOrderGroupDao, mOrderHeaderDao, mOrderDetailDao, mContainerDao, mContainerUseDao, mItemMasterDao, mItemDao, mUomMasterDao);
 		importer.importOrdersFromCsvStream(reader, facility);
 
 		OrderHeader order = facility.findOrder("123");
@@ -143,9 +112,9 @@ public class OrderImporterTest {
 	}
 
 	@Test
-	public void testOrderImporterWithPreassignedContainerIdFromCsvStream() {
+	public final void testOrderImporterWithPreassignedContainerIdFromCsvStream() {
 
-		String csvString = "orderGroupId,preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uomId,orderDate, dueDate\r\n" //
+		String csvString = "orderGroupId,preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate, dueDate\r\n" //
 				+ "1,,123,1,3001,Widget,100,each,2012-09-26 11:31:01,2012-09-26 11:31:01\r\n" //
 				+ "1,,123,2,4550,Gadget,450,case,2012-09-26 11:31:01,2012-09-26 11:31:01\r\n" //
 				+ "1,,123,3,3007,Dealybob,300,case,2012-09-26 11:31:02,2012-09-26 11:31:01\r\n" //
@@ -163,34 +132,20 @@ public class OrderImporterTest {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		ITypedDao<Organization> organizationDao = new MockDao<Organization>();
-		ITypedDao<OrderGroup> orderGroupDao = new MockDao<OrderGroup>();
-		ITypedDao<OrderHeader> orderHeaderDao = new MockDao<OrderHeader>();
-		ITypedDao<OrderDetail> orderDetailDao = new MockDao<OrderDetail>();
-		ITypedDao<Container> containerDao = new MockDao<Container>();
-		ITypedDao<ContainerUse> containerUseDao = new MockDao<ContainerUse>();
-		ITypedDao<ItemMaster> itemMasterDao = new MockDao<ItemMaster>();
-		ITypedDao<Item> itemDao = new MockDao<Item>();
-		ITypedDao<UomMaster> uomMasterDao = new MockDao<UomMaster>();
-
-		ContainerKind.DAO = new MockDao<ContainerKind>();
-
 		Organization organization = new Organization();
-		organization.setDomainId("O1");
+		organization.setDomainId("O-ORD1.3");
+		mOrganizationDao.store(organization);
 
-		ITypedDao<Facility> facilityDao = new MockDao<Facility>();
-		Facility facility = new Facility();
-		facility.setParent(organization);
-		facility.setDomainId("F1");
-		facility.createDefaultContainerKind();
+		organization.createFacility("F-ORD1.3", "TEST", PositionTypeEnum.METERS_FROM_PARENT.getName(), 0.0, 0.0);
+		Facility facility = organization.getFacility("F-ORD1.3");
 
-		CsvImporter importer = new CsvImporter(orderGroupDao, orderHeaderDao, orderDetailDao, containerDao, containerUseDao, itemMasterDao, itemDao, uomMasterDao);
+		CsvImporter importer = new CsvImporter(mOrderGroupDao, mOrderHeaderDao, mOrderDetailDao, mContainerDao, mContainerUseDao, mItemMasterDao, mItemDao, mUomMasterDao);
 		importer.importOrdersFromCsvStream(reader, facility);
 
 		OrderHeader order = facility.findOrder("789");
 		Assert.assertNotNull(order);
 
-		Container container = containerDao.findByDomainId(facility, "CONTAINER1");
+		Container container = mContainerDao.findByDomainId(facility, "CONTAINER1");
 		Assert.assertNotNull(container);
 	}
 
@@ -198,7 +153,7 @@ public class OrderImporterTest {
 	public void testFailOrderImporterFromCsvStream() {
 
 		// There's no order due date on 123.1, so it should assert/fail to import.
-		String csvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uomId,orderDate,dueDate,workSequence"
+		String csvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,123,123,1,10700589,Napa Valley Bistro - Jalapeño Stuffed Olives,1,each,2012-09-26 11:31:01,,0"
 				+ "\r\n1,USF314,COSTCO,123,123,2,10706952,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,123,123,3,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -216,28 +171,14 @@ public class OrderImporterTest {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		ITypedDao<Organization> organizationDao = new MockDao<Organization>();
-		ITypedDao<OrderGroup> orderGroupDao = new MockDao<OrderGroup>();
-		ITypedDao<OrderHeader> orderHeaderDao = new MockDao<OrderHeader>();
-		ITypedDao<OrderDetail> orderDetailDao = new MockDao<OrderDetail>();
-		ITypedDao<Container> containerDao = new MockDao<Container>();
-		ITypedDao<ContainerUse> containerUseDao = new MockDao<ContainerUse>();
-		ITypedDao<ItemMaster> itemMasterDao = new MockDao<ItemMaster>();
-		ITypedDao<Item> itemDao = new MockDao<Item>();
-		ITypedDao<UomMaster> uomMasterDao = new MockDao<UomMaster>();
-
-		ContainerKind.DAO = new MockDao<ContainerKind>();
-
 		Organization organization = new Organization();
-		organization.setDomainId("O1");
+		organization.setDomainId("O-ORD1.4");
+		mOrganizationDao.store(organization);
 
-		Facility.DAO = new MockDao<Facility>();
-		Facility facility = new Facility();
-		facility.setParent(organization);
-		facility.setDomainId("F1");
-		facility.createDefaultContainerKind();
+		organization.createFacility("F-ORD1.4", "TEST", PositionTypeEnum.METERS_FROM_PARENT.getName(), 0.0, 0.0);
+		Facility facility = organization.getFacility("F-ORD1.4");
 
-		CsvImporter importer = new CsvImporter(orderGroupDao, orderHeaderDao, orderDetailDao, containerDao, containerUseDao, itemMasterDao, itemDao, uomMasterDao);
+		CsvImporter importer = new CsvImporter(mOrderGroupDao, mOrderHeaderDao, mOrderDetailDao, mContainerDao, mContainerUseDao, mItemMasterDao, mItemDao, mUomMasterDao);
 		importer.importOrdersFromCsvStream(reader, facility);
 
 		// We should find order 123

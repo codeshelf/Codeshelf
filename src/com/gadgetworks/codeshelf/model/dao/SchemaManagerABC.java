@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: SchemaManagerABC.java,v 1.22 2013/04/09 07:58:20 jeffw Exp $
+ *  $Id: SchemaManagerABC.java,v 1.23 2013/04/11 07:42:45 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -328,15 +328,15 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		boolean result = true;
 
-		result &= execOneSQLCommand("CREATE SEQUENCE codeshelf.organization_seq");
-		result &= execOneSQLCommand("CREATE TABLE codeshelf.organization (" //
+		result &= execOneSQLCommand("CREATE SEQUENCE " + getDbSchemaName() + ".organization_seq");
+		result &= execOneSQLCommand("CREATE TABLE " + getDbSchemaName() + ".organization (" //
 				+ "persistentid " + UUID_TYPE + " NOT NULL, " //
 				+ "domainid VARCHAR(64) NOT NULL, " //
 				+ "version TIMESTAMP, " //
 				+ inColumns //
 				+ ", PRIMARY KEY (persistentid));");
 
-		result &= execOneSQLCommand("CREATE UNIQUE INDEX organization_domainid_index ON codeshelf.organization (domainid)");
+		result &= execOneSQLCommand("CREATE UNIQUE INDEX organization_domainid_index ON " + getDbSchemaName() + ".organization (domainid)");
 
 		return result;
 	}
@@ -351,8 +351,8 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		boolean result = true;
 
-		result &= execOneSQLCommand("CREATE SEQUENCE codeshelf." + inTableName + "_seq");
-		result &= execOneSQLCommand("CREATE TABLE codeshelf." + inTableName + " (" //
+		result &= execOneSQLCommand("CREATE SEQUENCE " + getDbSchemaName() + "." + inTableName + "_seq");
+		result &= execOneSQLCommand("CREATE TABLE " + getDbSchemaName() + "." + inTableName + " (" //
 				+ "persistentid " + UUID_TYPE + " NOT NULL, " //
 				+ "parent_persistentid " + UUID_TYPE + " NOT NULL, " //
 				+ "domainid VARCHAR(64) NOT NULL, " //
@@ -360,7 +360,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 				+ inColumns //
 				+ ", PRIMARY KEY (persistentid));");
 
-		result &= execOneSQLCommand("CREATE UNIQUE INDEX " + inTableName + "_domainid_index ON codeshelf." + inTableName + " (parent_persistentid, domainid)");
+		result &= execOneSQLCommand("CREATE UNIQUE INDEX " + inTableName + "_domainid_index ON " + getDbSchemaName() + "." + inTableName + " (parent_persistentid, domainid)");
 
 		return result;
 	}
@@ -376,15 +376,15 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		boolean result = true;
 
 		// Add the foreign key constraint.
-		result &= execOneSQLCommand("ALTER TABLE codeshelf." + inChildTableName //
+		result &= execOneSQLCommand("ALTER TABLE " + getDbSchemaName() + "." + inChildTableName //
 				+ " ADD FOREIGN KEY (" + inForeignKeyColumnName + "_persistentid)" //
-				+ " REFERENCES DATABASE.codeshelf." + inParentTableName + " (persistentid)" //
+				+ " REFERENCES DATABASE." + getDbSchemaName() + "." + inParentTableName + " (persistentid)" //
 				+ " ON DELETE RESTRICT ON UPDATE RESTRICT;");
 
 		// Add the index that makes it efficient to find the child objects from the parent.
 		result &= execOneSQLCommand("CREATE INDEX " //
 				+ inChildTableName + "_" + inForeignKeyColumnName + "_" + inParentTableName //
-				+ " ON codeshelf." + inChildTableName + " (" + inForeignKeyColumnName + "_persistentid)");
+				+ " ON " + getDbSchemaName() + "." + inChildTableName + " (" + inForeignKeyColumnName + "_persistentid)");
 
 		return result;
 
@@ -399,7 +399,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	private boolean safeAddColumn(final String inTableName, final String inColumnName) {
 		boolean result = false;
 
-		result &= execOneSQLCommand("ALTER TABLE codeshelf." + inTableName //
+		result &= execOneSQLCommand("ALTER TABLE " + getDbSchemaName() + "." + inTableName //
 				+ " ADD " + inColumnName //
 				+ ";");
 
@@ -413,7 +413,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		result &= linkToParentTable("che", "current_work_area", "work_area");
 		result &= linkToParentTable("che", "current_user", "user");
 		// One extra index: to ensure uniqueness of the MAC addresses, and to find them fast by that address.
-		execOneSQLCommand("CREATE UNIQUE INDEX che_deviceguid_index ON codeshelf.CHE (device_guid)");
+		execOneSQLCommand("CREATE UNIQUE INDEX che_deviceguid_index ON " + getDbSchemaName() + ".CHE (device_guid)");
 
 		result &= linkToParentTable("codeshelf_network", "parent", "location");
 
@@ -435,7 +435,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		result &= linkToParentTable("led_controller", "parent", "codeshelf_network");
 		// One extra index: to ensure uniqueness of the MAC addresses, and to find them fast by that address.
-		execOneSQLCommand("CREATE UNIQUE INDEX led_controller_deviceguid_index ON codeshelf.led_controller (device_guid)");
+		execOneSQLCommand("CREATE UNIQUE INDEX led_controller_deviceguid_index ON " + getDbSchemaName() + ".led_controller (device_guid)");
 
 		result &= linkToParentTable("location", "parent", "location");
 		result &= linkToParentTable("location", "path_segment", "path_segment");
@@ -516,7 +516,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		);
 
 		// DBProperty
-		result &= execOneSQLCommand("CREATE TABLE codeshelf.db_property (" //
+		result &= execOneSQLCommand("CREATE TABLE " + getDbSchemaName() + ".db_property (" //
 				+ "version INTEGER, " //
 				+ "modified TIMESTAMP);");
 

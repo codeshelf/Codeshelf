@@ -1,13 +1,13 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: FacilityTest.java,v 1.8 2013/04/09 07:58:20 jeffw Exp $
+ *  $Id: FacilityTest.java,v 1.9 2013/04/11 07:42:45 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
 import junit.framework.Assert;
 
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
 
 import com.gadgetworks.codeshelf.application.IUtil;
@@ -32,12 +32,12 @@ import com.gadgetworks.codeshelf.model.domain.WorkArea.WorkAreaDao;
  */
 public class FacilityTest {
 
-	private static IUtil			mUtil;
-	private static ISchemaManager	mSchemaManager;
-	private static IDatabase		mDatabase;
+	private IUtil			mUtil;
+	private ISchemaManager	mSchemaManager;
+	private IDatabase		mDatabase;
 
-	@BeforeClass
-	public final static void setup() {
+	@Before
+	public final void setup() {
 
 		try {
 			mUtil = new IUtil() {
@@ -74,15 +74,15 @@ public class FacilityTest {
 	@Test
 	public final void createAisleTest() {
 
-		Organization.DAO = new OrganizationDao();
-		LocationABC.DAO = new LocationDao();
-		Facility.DAO = new FacilityDao();
-		Aisle.DAO = new AisleDao();
-		Bay.DAO = new BayDao();
-		Vertex.DAO = new VertexDao();
-		Path.DAO = new PathDao();
-		PathSegment.DAO = new PathSegmentDao();
-		WorkArea.DAO = new WorkAreaDao();
+		Organization.DAO = new OrganizationDao(mSchemaManager);
+		LocationABC.DAO = new LocationDao(mSchemaManager, mDatabase);
+		Facility.DAO = new FacilityDao(mSchemaManager);
+		Aisle.DAO = new AisleDao(mSchemaManager);
+		Bay.DAO = new BayDao(mSchemaManager);
+		Vertex.DAO = new VertexDao(mSchemaManager);
+		Path.DAO = new PathDao(mSchemaManager);
+		PathSegment.DAO = new PathSegmentDao(mSchemaManager);
+		WorkArea.DAO = new WorkAreaDao(mSchemaManager);
 
 		Organization organization = new Organization();
 		organization.setOrganizationId("FTEST.O1");

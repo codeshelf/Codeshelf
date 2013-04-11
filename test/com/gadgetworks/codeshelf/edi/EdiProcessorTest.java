@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiProcessorTest.java,v 1.7 2013/04/09 07:58:20 jeffw Exp $
+ *  $Id: EdiProcessorTest.java,v 1.8 2013/04/11 07:42:45 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -15,7 +15,6 @@ import org.junit.Test;
 
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
-import com.gadgetworks.codeshelf.model.dao.MockDao;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.IEdiService;
 import com.gadgetworks.codeshelf.model.domain.Organization;
@@ -24,12 +23,11 @@ import com.gadgetworks.codeshelf.model.domain.Organization;
  * @author jeffw
  *
  */
-public class EdiProcessorTest {
+public class EdiProcessorTest extends EdiTestABC {
 
 	@Test
-	public void ediProcessThreadTest() {
+	public final void ediProcessThreadTest() {
 
-		MockDao<Facility> facilityDao = new MockDao<Facility>();
 		ICsvImporter csvImporter = new ICsvImporter() {
 			public void importOrdersFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
 			}
@@ -38,11 +36,11 @@ public class EdiProcessorTest {
 			}
 
 			public void importDdcInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
-				
+
 			}
 		};
 
-		IEdiProcessor ediProcessor = new EdiProcessor(csvImporter, facilityDao);
+		IEdiProcessor ediProcessor = new EdiProcessor(csvImporter, Facility.DAO);
 		BlockingQueue<String> testBlockingQueue = new ArrayBlockingQueue<>(100);
 		ediProcessor.startProcessor(testBlockingQueue);
 
@@ -73,7 +71,7 @@ public class EdiProcessorTest {
 	}
 
 	@Test
-	public void ediProcessorTest() {
+	public final void ediProcessorTest() {
 
 		final class Result {
 			public boolean	processed	= false;
@@ -81,8 +79,6 @@ public class EdiProcessorTest {
 
 		final Result linkedResult = new Result();
 		final Result unlinkedResult = new Result();
-
-		MockDao<Facility> facilityDao = new MockDao<Facility>();
 
 		IEdiService ediServiceLinked = new IEdiService() {
 
@@ -117,14 +113,11 @@ public class EdiProcessorTest {
 		};
 
 		Organization organization = new Organization();
-		organization.setOrganizationId("O1");
+		organization.setDomainId("O-EDI.1");
+		mOrganizationDao.store(organization);
 
-		Facility facility = new Facility(0.0, 0.0);
-		facility.setParent(organization);
-		facility.setFacilityId("F1");
-		facility.addEdiService(ediServiceLinked);
-		facility.addEdiService(ediServiceUnlinked);
-		facilityDao.store(facility);
+		organization.createFacility("F-EDI.1", "TEST", PositionTypeEnum.METERS_FROM_PARENT.getName(), 0.0, 0.0);
+		Facility facility = organization.getFacility("F-EDI.1");
 
 		ICsvImporter csvImporter = new ICsvImporter() {
 			public void importOrdersFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
@@ -134,11 +127,11 @@ public class EdiProcessorTest {
 			}
 
 			public void importDdcInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
-				
+
 			}
 		};
 
-		IEdiProcessor ediProcessor = new EdiProcessor(csvImporter, facilityDao);
+		IEdiProcessor ediProcessor = new EdiProcessor(csvImporter, mFacilityDao);
 		BlockingQueue<String> testBlockingQueue = new ArrayBlockingQueue<>(100);
 		ediProcessor.startProcessor(testBlockingQueue);
 

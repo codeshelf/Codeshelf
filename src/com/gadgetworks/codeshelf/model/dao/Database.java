@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Database.java,v 1.11 2013/04/09 07:58:20 jeffw Exp $
+ *  $Id: Database.java,v 1.12 2013/04/11 07:42:45 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -22,11 +22,13 @@ import com.avaje.ebean.config.UnderscoreNamingConvention;
 import com.avaje.ebeaninternal.server.lib.ShutdownManager;
 import com.gadgetworks.codeshelf.application.IUtil;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
 /**
  * @author jeffw
  *
  */
+@Singleton
 public class Database implements IDatabase {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(Database.class);
@@ -38,14 +40,6 @@ public class Database implements IDatabase {
 	public Database(final ISchemaManager inSchemaManager, final IUtil inUtil) {
 		mSchemaManager = inSchemaManager;
 		mUtil = inUtil;
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 */
-	public final boolean start() {
-
-		boolean result = false;
 
 		// Set our class loader to the system classloader, so ebean can find the enhanced classes.
 		Thread.currentThread().setContextClassLoader(ClassLoader.getSystemClassLoader());
@@ -79,13 +73,13 @@ public class Database implements IDatabase {
 		mSchemaManager.verifySchema();
 
 		ServerConfig serverConfig = new ServerConfig();
-		serverConfig.setName("codeshelf.primary");
+		serverConfig.setName(mSchemaManager.getDbSchemaName());
 
 		// Give the properties file a chance to setup values.
 		serverConfig.loadFromProperties();
-		
+
 		// Now set values we never want changed by properties file.
-		serverConfig.setDefaultServer(true);
+		serverConfig.setDefaultServer(false);
 		serverConfig.setResourceDirectory(mUtil.getApplicationDataDirPath());
 		//		serverConfig.setDebugLazyLoad(false);
 		//		serverConfig.setDebugSql(false);
@@ -99,13 +93,13 @@ public class Database implements IDatabase {
 		serverConfig.setDdlRun(false);
 		//serverConfig.setNamingConvention(new GWEbeanNamingConvention());
 		serverConfig.setNamingConvention(new UnderscoreNamingConvention());
-		
+
 		DataSourceConfig dataSourceConfig = serverConfig.getDataSourceConfig();
 		dataSourceConfig.setUsername(mSchemaManager.getDbUserId());
 		dataSourceConfig.setPassword(mSchemaManager.getDbPassword());
 		dataSourceConfig.setUrl(mSchemaManager.getApplicationDatabaseURL());
 		dataSourceConfig.setDriver(mSchemaManager.getDriverName());
-		dataSourceConfig.setMinConnections(1);
+		dataSourceConfig.setMinConnections(5);
 		dataSourceConfig.setMaxConnections(25);
 		dataSourceConfig.setIsolationLevel(Transaction.READ_COMMITTED);
 		//		dataSourceConfig.setHeartbeatSql("select count(*) from dual");
@@ -113,11 +107,20 @@ public class Database implements IDatabase {
 		AutofetchConfig autofetchConfig = serverConfig.getAutofetchConfig();
 		autofetchConfig.setLogDirectory(mUtil.getApplicationLogDirPath());
 		autofetchConfig.setUseFileLogging(true);
-		
+
 		EbeanServer server = EbeanServerFactory.create(serverConfig);
 		if (server == null) {
 			mUtil.exitSystem();
 		}
+
+}
+
+	// --------------------------------------------------------------------------
+	/**
+	 */
+	public final boolean start() {
+
+		boolean result = false;
 
 		result = true;
 

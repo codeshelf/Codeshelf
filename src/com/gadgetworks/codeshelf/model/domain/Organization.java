@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Organization.java,v 1.34 2013/04/09 07:58:20 jeffw Exp $
+ *  $Id: Organization.java,v 1.35 2013/04/11 07:42:45 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -31,6 +31,7 @@ import com.avaje.ebean.annotation.CacheStrategy;
 import com.avaje.ebean.annotation.Transactional;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
+import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.flyweight.command.NetGuid;
 import com.google.inject.Inject;
@@ -61,6 +62,11 @@ public class Organization extends DomainObjectABC {
 
 	@Singleton
 	public static class OrganizationDao extends GenericDaoABC<Organization> implements ITypedDao<Organization> {
+		@Inject
+		public OrganizationDao(final ISchemaManager inSchemaManager) {
+			super(inSchemaManager);
+		}
+		
 		public final Class<Organization> getDaoClass() {
 			return Organization.class;
 		}
@@ -193,8 +199,8 @@ public class Organization extends DomainObjectABC {
 		// Create the default network for the facility.
 		CodeshelfNetwork network = facility.createNetwork(CodeshelfNetwork.DEFAULT_NETWORK_ID);
 
-		Che che1 = network.createChe("CHE1", new NetGuid("0x00000001"));
-		Che che2 = network.createChe("CHE2", new NetGuid("0x00000002"));
+//		Che che1 = network.createChe("CHE1", new NetGuid("0x00000001"));
+//		Che che2 = network.createChe("CHE2", new NetGuid("0x00000002"));
 
 		// Create the generic container kind (for all unspecified containers)
 		facility.createDefaultContainerKind();
