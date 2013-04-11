@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ItemMaster.java,v 1.22 2013/04/11 20:26:44 jeffw Exp $
+ *  $Id: ItemMaster.java,v 1.23 2013/04/11 22:47:12 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -101,12 +101,6 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	@JsonProperty
 	private Integer				ddcPackDepth;
 
-	@Column(nullable = true)
-	@Getter
-	@Setter
-	@JsonProperty
-	private Timestamp			updated;
-
 	// The standard UoM.
 	@Column(nullable = false)
 	@ManyToOne(optional = false, fetch = FetchType.LAZY)
@@ -115,6 +109,18 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	private UomMaster			standardUom;
 
 	// For a network this is a list of all of the users that belong in the set.
+	@Column(nullable = false)
+	@Getter
+	@Setter
+	@JsonProperty
+	private Boolean				active;
+
+	@Column(nullable = false)
+	@Getter
+	@Setter
+	@JsonProperty
+	private Timestamp			updated;
+
 	@OneToMany(mappedBy = "itemMaster")
 	@Getter
 	private List<Item>			items	= new ArrayList<Item>();

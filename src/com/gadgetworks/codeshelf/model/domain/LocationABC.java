@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: LocationABC.java,v 1.33 2013/04/11 18:11:12 jeffw Exp $
+ *  $Id: LocationABC.java,v 1.34 2013/04/11 22:47:12 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -42,6 +42,7 @@ import com.gadgetworks.codeshelf.model.dao.IDatabase;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
@@ -65,7 +66,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	@Inject
 	public static ITypedDao<LocationABC>	DAO;
 
-//	@Singleton
+	@Singleton
 	public static class LocationDao extends GenericDaoABC<LocationABC> implements ITypedDao<LocationABC> {
 		@Inject
 		public LocationDao(final ISchemaManager inSchemaManager, final IDatabase inDatabase) {

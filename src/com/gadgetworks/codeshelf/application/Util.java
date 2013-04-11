@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Util.java,v 1.22 2013/03/03 23:27:21 jeffw Exp $
+ *  $Id: Util.java,v 1.23 2013/04/11 22:47:12 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -30,12 +30,14 @@ import org.slf4j.LoggerFactory;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
+import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
  *  @author jeffw
  */
 
+@Singleton
 public final class Util implements IUtil {
 
 	// This is a slightly weird case.

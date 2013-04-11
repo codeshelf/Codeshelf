@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Item.java,v 1.22 2013/04/11 20:26:44 jeffw Exp $
+ *  $Id: Item.java,v 1.23 2013/04/11 22:47:12 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -98,7 +98,13 @@ public class Item extends DomainObjectTreeABC<LocationABC> {
 	@Setter
 	private Double				ddcPosition;
 
-	@Column(nullable = true)
+	@Column(nullable = false)
+	@Getter
+	@Setter
+	@JsonProperty
+	private Boolean				active;
+
+	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty

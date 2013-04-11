@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Database.java,v 1.13 2013/04/11 18:11:12 jeffw Exp $
+ *  $Id: Database.java,v 1.14 2013/04/11 22:47:12 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -31,10 +31,10 @@ import com.google.inject.Singleton;
 @Singleton
 public class Database implements IDatabase {
 
-	private static final Logger	LOGGER	= LoggerFactory.getLogger(Database.class);
+	private static final Logger		LOGGER	= LoggerFactory.getLogger(Database.class);
 
-	private ISchemaManager		mSchemaManager;
-	private IUtil				mUtil;
+	private final ISchemaManager	mSchemaManager;
+	private final IUtil				mUtil;
 
 	@Inject
 	public Database(final ISchemaManager inSchemaManager, final IUtil inUtil) {

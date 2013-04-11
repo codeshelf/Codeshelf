@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderHeader.java,v 1.25 2013/04/11 07:42:45 jeffw Exp $
+ *  $Id: OrderHeader.java,v 1.26 2013/04/11 22:47:12 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -142,6 +142,18 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	@Getter
 	@Setter
 	private ContainerUse		containerUse;
+
+	@Column(nullable = false)
+	@Getter
+	@Setter
+	@JsonProperty
+	private Boolean				active;
+
+	@Column(nullable = false)
+	@Getter
+	@Setter
+	@JsonProperty
+	private Timestamp			updated;
 
 	// For a network this is a list of all of the users that belong in the set.
 	@OneToMany(mappedBy = "parent")

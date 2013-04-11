@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderDetail.java,v 1.22 2013/04/11 18:11:12 jeffw Exp $
+ *  $Id: OrderDetail.java,v 1.23 2013/04/11 22:47:12 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -108,6 +108,18 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	@Getter
 	@Setter
 	private UomMaster				uomMaster;
+
+	@Column(nullable = false)
+	@Getter
+	@Setter
+	@JsonProperty
+	private Boolean				active;
+
+	@Column(nullable = false)
+	@Getter
+	@Setter
+	@JsonProperty
+	private Timestamp			updated;
 
 	// A work area will contain a set of active users (workers).
 	@OneToMany(mappedBy = "parent")

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: SchemaManagerABC.java,v 1.25 2013/04/11 20:26:44 jeffw Exp $
+ *  $Id: SchemaManagerABC.java,v 1.26 2013/04/11 22:47:12 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -20,11 +20,13 @@ import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.application.IUtil;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
  *  @author jeffw
  */
+@Singleton
 public abstract class SchemaManagerABC implements ISchemaManager {
 
 	private static final Logger	LOGGER		= LoggerFactory.getLogger(SchemaManagerABC.class);
@@ -32,19 +34,19 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	private static final String	UUID_TYPE	= "CHAR(36)";
 
 	@Getter(value = AccessLevel.PROTECTED)
-	private IUtil				util;
+	private final IUtil			util;
 	@Getter
-	private String				dbUserId;
+	private final String		dbUserId;
 	@Getter
-	private String				dbPassword;
+	private final String		dbPassword;
 	@Getter
-	private String				dbName;
+	private final String		dbName;
 	@Getter
-	private String				dbSchemaName;
+	private final String		dbSchemaName;
 	@Getter
-	private String				dbAddress;
+	private final String		dbAddress;
 	@Getter
-	private String				dbPortnum;
+	private final String		dbPortnum;
 
 	@Inject
 	public SchemaManagerABC(final IUtil inUtil,
@@ -171,7 +173,8 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 			// Try to switch to the proper schema.
 			Statement stmt = connection.createStatement();
-			stmt.executeUpdate("INSERT INTO " + getDbSchemaName() + ".db_property (version, modified) VALUES (" + inVersion + ",'" + new Timestamp(System.currentTimeMillis()) + "')");
+			stmt.executeUpdate("INSERT INTO " + getDbSchemaName() + ".db_property (version, modified) VALUES (" + inVersion + ",'" + new Timestamp(System.currentTimeMillis())
+					+ "')");
 			stmt.close();
 			connection.close();
 
@@ -511,6 +514,8 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		// ContainerUse
 		result &= createTable("container_use", //
 			"used_on TIMESTAMP NOT NULL, " //
+					+ "active BOOLEAN DEFAULT TRUE NOT NULL, " //
+					+ "updated TIMESTAMP NOT NULL, " //
 					+ "order_header_persistentid " + UUID_TYPE + " NOT NULL, " //
 					+ "current_che_persistentid " + UUID_TYPE //
 		);
@@ -542,7 +547,8 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		result &= createTable("item", //
 			"quantity DECIMAL NOT NULL, " //
 					+ "ddc_position DOUBLE PRECISION, " //
-					+ "updated TIMESTAMP, " //
+					+ "active BOOLEAN DEFAULT TRUE NOT NULL, " //
+					+ "updated TIMESTAMP NOT NULL, " //
 					+ "item_master_persistentid " + UUID_TYPE + " NOT NULL, " //
 					+ "uom_master_persistentid " + UUID_TYPE + " NOT NULL " //
 		);
@@ -553,7 +559,8 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 					+ "lot_handling_enum VARCHAR(16) NOT NULL, " //
 					+ "ddc_id VARCHAR(64), " //
 					+ "ddc_pack_depth INTEGER, " //
-					+ "updated TIMESTAMP, " //
+					+ "active BOOLEAN DEFAULT TRUE NOT NULL, " //
+					+ "updated TIMESTAMP NOT NULL, " //
 					+ "standard_uom_persistentid " + UUID_TYPE + " NOT NULL " //
 		);
 
@@ -588,6 +595,8 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 					+ "item_master_persistentid " + UUID_TYPE + " NOT NULL, " //
 					+ "description VARCHAR(256) NOT NULL, " //
 					+ "quantity INTEGER NOT NULL, " //
+					+ "active BOOLEAN DEFAULT TRUE NOT NULL, " //
+					+ "updated TIMESTAMP NOT NULL, " //
 					+ "uom_master_persistentid " + UUID_TYPE + " NOT NULL " //
 		);
 
@@ -595,6 +604,8 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		result &= createTable("order_group", //
 			"status_enum VARCHAR(16) NOT NULL, " //
 					+ "work_sequence " + UUID_TYPE + ", " //
+					+ "active BOOLEAN DEFAULT TRUE NOT NULL, " //
+					+ "updated TIMESTAMP NOT NULL, " //
 					+ "description VARCHAR(256) " //
 		);
 
@@ -608,6 +619,8 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 					+ "due_date TIMESTAMP NOT NULL, " //
 					+ "shipment_id VARCHAR(64), " //
 					+ "container_use_persistentid " + UUID_TYPE + ", " //
+					+ "active BOOLEAN DEFAULT TRUE NOT NULL, " //
+					+ "updated TIMESTAMP NOT NULL, " //
 					+ "customer_id VARCHAR(64) " //
 		);
 

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ContainerUse.java,v 1.13 2013/04/11 07:42:45 jeffw Exp $
+ *  $Id: ContainerUse.java,v 1.14 2013/04/11 22:47:12 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -88,6 +88,18 @@ public class ContainerUse extends DomainObjectTreeABC<Container> {
 	@Getter
 	@Setter
 	private Che					currentChe;
+
+	@Column(nullable = false)
+	@Getter
+	@Setter
+	@JsonProperty
+	private Boolean				active;
+
+	@Column(nullable = false)
+	@Getter
+	@Setter
+	@JsonProperty
+	private Timestamp			updated;
 
 	public ContainerUse() {
 	}
