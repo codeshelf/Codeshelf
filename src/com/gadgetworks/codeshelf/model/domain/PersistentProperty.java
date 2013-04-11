@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: PersistentProperty.java,v 1.21 2013/04/11 18:11:12 jeffw Exp $
+ *  $Id: PersistentProperty.java,v 1.22 2013/04/11 20:26:44 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -62,7 +62,6 @@ public class PersistentProperty extends DomainObjectTreeABC<Organization> {
 	public static final String	FORCE_CHANNEL			= "PREFCHAN";
 	public static final String	GENERAL_INTF_LOG_LEVEL	= "GENLLOGL";
 	public static final String	GATEWAY_INTF_LOG_LEVEL	= "GATELOGL";
-	public static final String	LAST_DDC_IMPORT_TIME	= "EDIDDCTM";
 
 	private static final long	serialVersionUID		= -7735810092352246641L;
 

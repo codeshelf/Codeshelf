@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: GenericDaoABC.java,v 1.23 2013/04/11 18:11:12 jeffw Exp $
+ *  $Id: GenericDaoABC.java,v 1.24 2013/04/11 20:26:44 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -20,11 +20,11 @@ import javax.persistence.PersistenceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.avaje.ebean.BeanState;
 import com.avaje.ebean.Ebean;
 import com.avaje.ebean.EbeanServer;
 import com.avaje.ebean.Query;
 import com.avaje.ebean.bean.EntityBean;
-import com.gadgetworks.codeshelf.application.IUtil;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.model.domain.IDomainObjectTree;
@@ -349,5 +349,21 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	 */
 	public final void endTransaction() {
 		mServer.endTransaction();
+	}
+	
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.dao.ITypedDao#isNewOrDirty(com.gadgetworks.codeshelf.model.domain.IDomainObject)
+	 */
+	public Boolean isNewOrDirty(IDomainObject inDomainObject) {
+		Boolean result = false;
+		
+		BeanState beanState = mServer.getBeanState(inDomainObject);
+		
+		if (beanState != null) {
+			result = beanState.isNewOrDirty();
+		}
+		
+		return result;
 	}
 }

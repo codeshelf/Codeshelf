@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: SchemaManagerABC.java,v 1.24 2013/04/11 18:11:12 jeffw Exp $
+ *  $Id: SchemaManagerABC.java,v 1.25 2013/04/11 20:26:44 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -542,6 +542,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		result &= createTable("item", //
 			"quantity DECIMAL NOT NULL, " //
 					+ "ddc_position DOUBLE PRECISION, " //
+					+ "updated TIMESTAMP, " //
 					+ "item_master_persistentid " + UUID_TYPE + " NOT NULL, " //
 					+ "uom_master_persistentid " + UUID_TYPE + " NOT NULL " //
 		);
@@ -552,6 +553,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 					+ "lot_handling_enum VARCHAR(16) NOT NULL, " //
 					+ "ddc_id VARCHAR(64), " //
 					+ "ddc_pack_depth INTEGER, " //
+					+ "updated TIMESTAMP, " //
 					+ "standard_uom_persistentid " + UUID_TYPE + " NOT NULL " //
 		);
 

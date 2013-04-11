@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Organization.java,v 1.35 2013/04/11 07:42:45 jeffw Exp $
+ *  $Id: Organization.java,v 1.36 2013/04/11 20:26:44 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -33,7 +33,6 @@ import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.flyweight.command.NetGuid;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -82,13 +81,16 @@ public class Organization extends DomainObjectABC {
 	@JsonProperty
 	private String					description;
 
-	// For a network this is a list of all of the users that belong in the set.
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	@Getter
 	private Map<String, User>		users		= new HashMap<String, User>();
 
-	// For an organization this is a list of all of the facilities.
+	@OneToMany(mappedBy = "parent")
+	@MapKey(name = "domainId")
+	@Getter
+	private Map<String, PersistentProperty>		persistentProperties		= new HashMap<String, PersistentProperty>();
+
 	@OneToMany(mappedBy = "parentOrganization", fetch = FetchType.EAGER)
 	@MapKey(name = "domainId")
 	//	@Getter(lazy = false)
@@ -109,6 +111,18 @@ public class Organization extends DomainObjectABC {
 
 	public final void removeUser(String inUserId) {
 		users.remove(inUserId);
+	}
+
+	public final void addPersistentProperty(PersistentProperty inPersistentProperty) {
+		persistentProperties.put(inPersistentProperty.getDomainId(), inPersistentProperty);
+	}
+
+	public final PersistentProperty getPersistentProperty(String inPersistentPropertyId) {
+		return persistentProperties.get(inPersistentPropertyId);
+	}
+
+	public final void removePersistentProperty(String inPersistentPropertyId) {
+		persistentProperties.remove(inPersistentPropertyId);
 	}
 
 	public final ITypedDao<Organization> getDao() {

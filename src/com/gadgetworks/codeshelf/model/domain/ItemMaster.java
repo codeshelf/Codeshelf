@@ -1,10 +1,11 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ItemMaster.java,v 1.21 2013/04/11 18:11:12 jeffw Exp $
+ *  $Id: ItemMaster.java,v 1.22 2013/04/11 20:26:44 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -99,6 +100,12 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	@Setter
 	@JsonProperty
 	private Integer				ddcPackDepth;
+
+	@Column(nullable = true)
+	@Getter
+	@Setter
+	@JsonProperty
+	private Timestamp			updated;
 
 	// The standard UoM.
 	@Column(nullable = false)

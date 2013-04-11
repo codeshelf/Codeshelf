@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CsvImporter.java,v 1.17 2013/04/11 18:11:12 jeffw Exp $
+ *  $Id: CsvImporter.java,v 1.18 2013/04/11 20:26:44 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -33,6 +33,7 @@ import com.gadgetworks.codeshelf.model.domain.LocationABC;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderGroup;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
+import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
 import com.gadgetworks.codeshelf.model.domain.UomMaster;
 import com.google.inject.Inject;
 
@@ -117,29 +118,32 @@ public class CsvImporter implements ICsvImporter {
 
 			if (inventoryImportBeanList.size() > 0) {
 
-				LOGGER.debug("Clear existing inventory");
-
-				// Delete the entire DDC inventory and replace it with what's in the import.
-				try {
-					mItemDao.beginTransaction();
-					for (ItemMaster itemMaster : inFacility.getItemMasters()) {
-						if (itemMaster.isDdcItem()) {
-							for (Item item : itemMaster.getItems()) {
-								mItemDao.delete(item);
-							}
-							mItemMasterDao.delete(itemMaster);
-						}
-					}
-					mItemDao.commitTransaction();
-				} finally {
-					mItemDao.endTransaction();
-				}
+				Timestamp processTime = new Timestamp(System.currentTimeMillis());
 
 				LOGGER.debug("Begin DDC inventory import.");
 
 				// Iterate over the inventory import beans.
 				for (DdcInventoryCsvImportBean importBean : inventoryImportBeanList) {
-					ddcInventoryCsvBeanImport(importBean, inFacility);
+					ddcInventoryCsvBeanImport(importBean, inFacility, processTime);
+				}
+
+				LOGGER.debug("Clear unreferenced item data");
+
+				// Delete the DDC item that don't match the import timestamp.
+				try {
+					mItemDao.beginTransaction();
+					for (ItemMaster itemMaster : inFacility.getItemMasters()) {
+						if ((itemMaster.isDdcItem() && (!itemMaster.getUpdated().equals(processTime)))) {
+							LOGGER.debug("Remove old item: " + itemMaster.getItemId());
+							for (Item item : itemMaster.getItems()) {
+								//mItemDao.delete(item);
+							}
+							//mItemMasterDao.delete(itemMaster);
+						}
+					}
+					mItemDao.commitTransaction();
+				} finally {
+					mItemDao.endTransaction();
 				}
 
 				LOGGER.debug("End DDC inventory import.");
@@ -221,9 +225,7 @@ public class CsvImporter implements ICsvImporter {
 	 * @param inCsvImportBean
 	 * @param inFacility
 	 */
-	private void ddcInventoryCsvBeanImport(final DdcInventoryCsvImportBean inCsvImportBean, final Facility inFacility) {
-
-		LOGGER.info(inCsvImportBean.toString());
+	private void ddcInventoryCsvBeanImport(final DdcInventoryCsvImportBean inCsvImportBean, final Facility inFacility, final Timestamp inEdiProcessTime) {
 
 		try {
 			mItemDao.beginTransaction();
@@ -233,13 +235,16 @@ public class CsvImporter implements ICsvImporter {
 			// Create or update the DDC item master, and then set the DDC ID for it.
 			ItemMaster itemMaster = updateItemMaster(inCsvImportBean.getItemId(), inFacility, uomMaster);
 			itemMaster.setDdcId(inCsvImportBean.getDdcId());
+
+			LOGGER.info("Update item: " + inCsvImportBean);
+			itemMaster.setUpdated(inEdiProcessTime);
 			try {
 				mItemMasterDao.store(itemMaster);
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}
 
-			Item item = updateDdcItem(inCsvImportBean, inFacility, itemMaster, uomMaster);
+			Item item = updateDdcItem(inCsvImportBean, inFacility, inEdiProcessTime, itemMaster, uomMaster);
 
 			mItemDao.commitTransaction();
 
@@ -495,7 +500,11 @@ public class CsvImporter implements ICsvImporter {
 	 * @param inUomMaster
 	 * @return
 	 */
-	private Item updateDdcItem(final DdcInventoryCsvImportBean inCsvImportBean, final Facility inFacility, final ItemMaster inItemMaster, final UomMaster inUomMaster) {
+	private Item updateDdcItem(final DdcInventoryCsvImportBean inCsvImportBean,
+		final Facility inFacility,
+		final Timestamp inEdiProcessTime,
+		final ItemMaster inItemMaster,
+		final UomMaster inUomMaster) {
 		Item result = null;
 
 		// Get or create the item at the specified location.
@@ -511,6 +520,7 @@ public class CsvImporter implements ICsvImporter {
 			result.setParent(inFacility);
 			result.setUomMaster(inUomMaster);
 			result.setQuantity(Double.valueOf(inCsvImportBean.getQuantity()));
+			result.setUpdated(inEdiProcessTime);
 			inItemMaster.addItem(result);
 			inFacility.addItem(inCsvImportBean.getItemId(), result);
 			try {

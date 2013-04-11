@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: MockDao.java,v 1.12 2013/04/11 18:11:12 jeffw Exp $
+ *  $Id: MockDao.java,v 1.13 2013/04/11 20:26:44 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -168,5 +168,11 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 	@Override
 	public void commitTransaction() {
 		
+	}
+
+	@Override
+	public Boolean isNewOrDirty(IDomainObject inDomainObject) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }
