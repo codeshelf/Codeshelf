@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: LocationABC.java,v 1.32 2013/04/11 07:42:44 jeffw Exp $
+ *  $Id: LocationABC.java,v 1.33 2013/04/11 18:11:12 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -54,7 +54,7 @@ import com.google.inject.Inject;
 
 @Entity
 @MappedSuperclass
-@CacheStrategy(useBeanCache = true)
+@CacheStrategy(useBeanCache = false)
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @Table(name = "location", schema = "codeshelf")
 @DiscriminatorColumn(name = "dtype", discriminatorType = DiscriminatorType.STRING)
@@ -203,18 +203,16 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.ILocation#getChildren()
+	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#getChildren()
 	 */
-	@Override
 	public final List<ISubLocation> getChildren() {
 		return new ArrayList<ISubLocation>(locations.values());
 	}
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.ILocation#getChildrenAtLevel(java.lang.Class)
+	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#getChildrenAtLevel(java.lang.Class)
 	 */
-	@Override
 	public final <T extends ISubLocation> List<T> getChildrenAtLevel(Class<? extends ISubLocation> inClassWanted) {
 		List<T> result = new ArrayList<T>();
 
@@ -233,9 +231,8 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.ILocation#getParentAtLevel(java.lang.Class)
+	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#getParentAtLevel(java.lang.Class)
 	 */
-	@Override
 	public final <T extends ILocation> T getParentAtLevel(Class<? extends ILocation> inClassWanted) {
 		T result = null;
 
@@ -263,27 +260,24 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.ILocation#getLocationId()
+	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#getLocationId()
 	 */
-	@Override
 	public final String getLocationId() {
 		return getDomainId();
 	}
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.ILocation#setLocationId(java.lang.String)
+	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#setLocationId(java.lang.String)
 	 */
-	@Override
 	public final void setLocationId(final String inLocationId) {
 		setDomainId(inLocationId);
 	}
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.ILocation#addLocation(com.gadgetworks.codeshelf.model.domain.ISubLocation)
+	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#addLocation(com.gadgetworks.codeshelf.model.domain.SubLocationABC)
 	 */
-	@Override
 	public final void addLocation(ISubLocation inLocation) {
 		// Ebean can't deal with interfaces.
 		SubLocationABC<P> subLocation = (SubLocationABC<P>) inLocation;
@@ -292,9 +286,8 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.ILocation#getLocation(java.lang.String)
+	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#getLocation(java.lang.String)
 	 */
-	@Override
 	public final ISubLocation getLocation(String inLocationId) {
 		// There's some ebean weirdness around Map caches, so we have to use a different strategy to resolve this request.
 		//return locations.get(inLocationId);
@@ -314,18 +307,16 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.ILocation#removeLocation(java.lang.String)
+	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#removeLocation(java.lang.String)
 	 */
-	@Override
 	public final void removeLocation(String inLocationId) {
 		locations.remove(inLocationId);
 	}
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.ILocation#getSubLocationById(java.lang.String)
+	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#getSubLocationById(java.lang.String)
 	 */
-	@Override
 	public final ILocation<P> getSubLocationById(final String inLocationId) {
 		ILocation<P> result = null;
 
@@ -347,9 +338,8 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.ILocation#setPathSegment(com.gadgetworks.codeshelf.model.domain.PathSegment)
+	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#setPathSegment(com.gadgetworks.codeshelf.model.domain.PathSegment)
 	 */
-	@Override
 	public final void setPathSegment(final PathSegment inPathSegment) {
 
 		// Set the path segment recursively for all of the child locations as well.
@@ -367,9 +357,8 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.ILocation#computePathDistance()
+	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#computePathDistance()
 	 */
-	@Override
 	public final void computePathDistance() {
 
 		// Also force a recompute for all of the child locations.
@@ -401,54 +390,48 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.ILocation#setPosTypeByStr(java.lang.String)
+	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#setPosTypeByStr(java.lang.String)
 	 */
-	@Override
 	public final void setPosTypeByStr(String inPosTypeStr) {
 		setPosTypeEnum(PositionTypeEnum.valueOf(inPosTypeStr));
 	}
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.ILocation#addVertex(com.gadgetworks.codeshelf.model.domain.Vertex)
+	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#addVertex(com.gadgetworks.codeshelf.model.domain.Vertex)
 	 */
-	@Override
 	public final void addVertex(Vertex inVertex) {
 		vertices.add(inVertex);
 	}
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.ILocation#removeVertex(com.gadgetworks.codeshelf.model.domain.Vertex)
+	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#removeVertex(com.gadgetworks.codeshelf.model.domain.Vertex)
 	 */
-	@Override
 	public final void removeVertex(Vertex inVertex) {
 		vertices.remove(inVertex);
 	}
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.ILocation#addItem(java.lang.String, com.gadgetworks.codeshelf.model.domain.Item)
+	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#addItem(java.lang.String, com.gadgetworks.codeshelf.model.domain.Item)
 	 */
-	@Override
 	public final void addItem(final String inItemId, Item inItem) {
 		items.put(inItemId, inItem);
 	}
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.ILocation#getItem(java.lang.String)
+	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#getItem(java.lang.String)
 	 */
-	@Override
 	public final Item getItem(final String inItemId) {
 		return items.get(inItemId);
 	}
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.ILocation#removeItem(java.lang.String)
+	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#removeItem(java.lang.String)
 	 */
-	@Override
 	public final void removeItem(final String inItemId) {
 		items.remove(inItemId);
 	}

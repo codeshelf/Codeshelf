@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: PersistentProperty.java,v 1.20 2013/04/11 07:42:44 jeffw Exp $
+ *  $Id: PersistentProperty.java,v 1.21 2013/04/11 18:11:12 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -53,22 +53,16 @@ public class PersistentProperty extends DomainObjectTreeABC<Organization> {
 		public PersistentPropertyDao(final ISchemaManager inSchemaManager) {
 			super(inSchemaManager);
 		}
-		
+
 		public final Class<PersistentProperty> getDaoClass() {
 			return PersistentProperty.class;
 		}
 	}
 
-	//	public static final String	SHOW_CONSOLE_PREF			= "SHOWCONS";
-	//	public static final String	SHOW_CONNECTION_DEBUG_PREF	= "CONNDBUG";
 	public static final String	FORCE_CHANNEL			= "PREFCHAN";
 	public static final String	GENERAL_INTF_LOG_LEVEL	= "GENLLOGL";
 	public static final String	GATEWAY_INTF_LOG_LEVEL	= "GATELOGL";
-	//	public static final String	ACTIVEMQ_RUN				= "ACTMQRUN";
-	//	public static final String	ACTIVEMQ_USERID				= "ACTMQUID";
-	//	public static final String	ACTIVEMQ_PASSWORD			= "ACTMQPWD";
-	//	public static final String	ACTIVEMQ_JMS_PORTNUM		= "ACTMQJMS";
-	//	public static final String	ACTIVEMQ_STOMP_PORTNUM		= "ACTMQSTM";
+	public static final String	LAST_DDC_IMPORT_TIME	= "EDIDDCTM";
 
 	private static final long	serialVersionUID		= -7735810092352246641L;
 

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: GenericDaoABC.java,v 1.22 2013/04/11 07:42:45 jeffw Exp $
+ *  $Id: GenericDaoABC.java,v 1.23 2013/04/11 18:11:12 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -24,6 +24,7 @@ import com.avaje.ebean.Ebean;
 import com.avaje.ebean.EbeanServer;
 import com.avaje.ebean.Query;
 import com.avaje.ebean.bean.EntityBean;
+import com.gadgetworks.codeshelf.application.IUtil;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.model.domain.IDomainObjectTree;
@@ -334,6 +335,14 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 		mServer.beginTransaction();
 	}
 
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.dao.ITypedDao#commitTransaction()
+	 */
+	public final void commitTransaction() {
+		mServer.commitTransaction();
+	}
+	
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.dao.ITypedDao#endTransaction()

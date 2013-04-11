@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CsvImporter.java,v 1.16 2013/04/11 07:42:45 jeffw Exp $
+ *  $Id: CsvImporter.java,v 1.17 2013/04/11 18:11:12 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -116,20 +116,27 @@ public class CsvImporter implements ICsvImporter {
 			List<DdcInventoryCsvImportBean> inventoryImportBeanList = csv.parse(strategy, csvReader);
 
 			if (inventoryImportBeanList.size() > 0) {
-				
+
 				LOGGER.debug("Clear existing inventory");
-				
+
 				// Delete the entire DDC inventory and replace it with what's in the import.
-				for (ItemMaster itemMaster : inFacility.getItemMasters()) {
-					if (itemMaster.isDdcItem()) {
-						for (Item item : itemMaster.getItems()) {
-							mItemDao.delete(item);
+				try {
+					mItemDao.beginTransaction();
+					for (ItemMaster itemMaster : inFacility.getItemMasters()) {
+						if (itemMaster.isDdcItem()) {
+							for (Item item : itemMaster.getItems()) {
+								mItemDao.delete(item);
+							}
+							mItemMasterDao.delete(itemMaster);
 						}
 					}
+					mItemDao.commitTransaction();
+				} finally {
+					mItemDao.endTransaction();
 				}
 
 				LOGGER.debug("Begin DDC inventory import.");
-				
+
 				// Iterate over the inventory import beans.
 				for (DdcInventoryCsvImportBean importBean : inventoryImportBeanList) {
 					ddcInventoryCsvBeanImport(importBean, inFacility);
@@ -218,18 +225,27 @@ public class CsvImporter implements ICsvImporter {
 
 		LOGGER.info(inCsvImportBean.toString());
 
-		UomMaster uomMaster = updateUomMaster(inCsvImportBean.getUom(), inFacility);
-		
-		// Create or update the DDC item master, and then set the DDC ID for it.
-		ItemMaster itemMaster = updateItemMaster(inCsvImportBean.getItemId(), inFacility, uomMaster);
-		itemMaster.setDdcId(inCsvImportBean.getDdcId());
 		try {
-			mItemMasterDao.store(itemMaster);
-		} catch (DaoException e) {
-			LOGGER.error("", e);
+			mItemDao.beginTransaction();
+
+			UomMaster uomMaster = updateUomMaster(inCsvImportBean.getUom(), inFacility);
+
+			// Create or update the DDC item master, and then set the DDC ID for it.
+			ItemMaster itemMaster = updateItemMaster(inCsvImportBean.getItemId(), inFacility, uomMaster);
+			itemMaster.setDdcId(inCsvImportBean.getDdcId());
+			try {
+				mItemMasterDao.store(itemMaster);
+			} catch (DaoException e) {
+				LOGGER.error("", e);
+			}
+
+			Item item = updateDdcItem(inCsvImportBean, inFacility, itemMaster, uomMaster);
+
+			mItemDao.commitTransaction();
+
+		} finally {
+			mItemDao.endTransaction();
 		}
-		
-		Item item = updateDdcItem(inCsvImportBean, inFacility, itemMaster, uomMaster);
 	}
 
 	// --------------------------------------------------------------------------

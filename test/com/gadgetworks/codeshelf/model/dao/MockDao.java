@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: MockDao.java,v 1.11 2013/04/11 07:42:45 jeffw Exp $
+ *  $Id: MockDao.java,v 1.12 2013/04/11 18:11:12 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -163,5 +163,10 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 	@Override
 	public void endTransaction() {
 
+	}
+
+	@Override
+	public void commitTransaction() {
+		
 	}
 }

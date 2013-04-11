@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DropboxService.java,v 1.34 2013/04/11 07:42:45 jeffw Exp $
+ *  $Id: DropboxService.java,v 1.35 2013/04/11 18:11:12 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -31,7 +31,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
-import com.avaje.ebean.annotation.Transactional;
 import com.dropbox.client2.DropboxAPI;
 import com.dropbox.client2.DropboxAPI.DeltaEntry;
 import com.dropbox.client2.DropboxAPI.DeltaPage;
@@ -78,7 +77,7 @@ public class DropboxService extends EdiServiceABC {
 		public DropboxServiceDao(final ISchemaManager inSchemaManager) {
 			super(inSchemaManager);
 		}
-		
+
 		public final Class<DropboxService> getDaoClass() {
 			return DropboxService.class;
 		}
@@ -140,12 +139,21 @@ public class DropboxService extends EdiServiceABC {
 		if (ensureBaseDirectories(inClientSession)) {
 			DeltaPage<Entry> page = getNextPage(inClientSession);
 			while ((page != null) && (page.entries.size() > 0)) {
+				// Signal that we got some deltas
 				result = true;
-				iteratePage(inClientSession, page, inCsvImporter);
-				if (page.hasMore) {
-					page = getNextPage(inClientSession);
-				} else {
-					page = null;
+				if (iteratePage(inClientSession, page, inCsvImporter)) {
+					// If we've processed everything from the page correctly then save the current dbCursor, and get the next page
+					try {
+						DropboxService.DAO.store(this);
+					} catch (DaoException e) {
+						LOGGER.error("", e);
+					}
+
+					if (page.hasMore) {
+						page = getNextPage(inClientSession);
+					} else {
+						page = null;
+					}
 				}
 			}
 		}
@@ -164,11 +172,6 @@ public class DropboxService extends EdiServiceABC {
 			result = inClientSession.delta(dbCursor);
 			if (result != null) {
 				dbCursor = result.cursor;
-				try {
-					DropboxService.DAO.store(this);
-				} catch (DaoException e) {
-					LOGGER.error("", e);
-				}
 			}
 		} catch (DropboxException e) {
 			LOGGER.error("Dropbox session error", e);
@@ -439,26 +442,38 @@ public class DropboxService extends EdiServiceABC {
 	 * @param inClientSession
 	 * @param inPage
 	 */
-	private void iteratePage(DropboxAPI<Session> inClientSession, DeltaPage<Entry> inPage, ICsvImporter inCsvImporter) {
+	private Boolean iteratePage(DropboxAPI<Session> inClientSession, DeltaPage<Entry> inPage, ICsvImporter inCsvImporter) {
+		Boolean result = true;
+
 		for (DeltaEntry<Entry> entry : inPage.entries) {
 			LOGGER.info(entry.lcPath);
-
-			if (entry.metadata != null) {
-				// Add, or modify.
-				processEntry(inClientSession, entry, inCsvImporter);
-			} else {
-				removeEntry(inClientSession, entry);
+			try {
+				if (entry.metadata != null) {
+					// Add, or modify.
+					result &= processEntry(inClientSession, entry, inCsvImporter);
+				} else {
+					result &= removeEntry(inClientSession, entry);
+				}
+			} catch (RuntimeException e) {
+				LOGGER.error("", e);
+				// Should any weird, uncaught errors in EDI process should fail this deltas page?
+				// No - it could end up in a permanent loop.
+				// We need out-of-band notification here.
+				// result = false;
 			}
 		}
+
+		return result;
 	}
 
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inEntry
 	 */
-	private void processEntry(DropboxAPI<Session> inClientSession, DeltaEntry<Entry> inEntry, ICsvImporter inCsvImporter) {
+	private Boolean processEntry(DropboxAPI<Session> inClientSession, DeltaEntry<Entry> inEntry, ICsvImporter inCsvImporter) {
+		Boolean result = true;
 
-		boolean shouldUpdateEntry = false;
+		Boolean shouldUpdateEntry = false;
 
 		if (inEntry.metadata.path.startsWith(this.getImportPath())) {
 			if (!inEntry.metadata.isDir) {
@@ -488,9 +503,12 @@ public class DropboxService extends EdiServiceABC {
 					EdiDocumentLocator.DAO.store(locator);
 				} catch (DaoException e) {
 					LOGGER.error("", e);
+					result = false;
 				}
 			}
 		}
+
+		return result;
 	}
 
 	// --------------------------------------------------------------------------
@@ -521,14 +539,19 @@ public class DropboxService extends EdiServiceABC {
 	/**
 	 * @param inEntry
 	 */
-	private void removeEntry(DropboxAPI<Session> inClientSession, DeltaEntry<Entry> inEntry) {
+	private Boolean removeEntry(DropboxAPI<Session> inClientSession, DeltaEntry<Entry> inEntry) {
+		Boolean result = true;
+
 		EdiDocumentLocator locator = this.getDocumentLocatorByPath(inEntry.lcPath);
 		if (locator != null) {
 			try {
 				EdiDocumentLocator.DAO.delete(locator);
 			} catch (DaoException e) {
 				LOGGER.error("", e);
+				result = false;
 			}
 		}
+
+		return result;
 	}
 }

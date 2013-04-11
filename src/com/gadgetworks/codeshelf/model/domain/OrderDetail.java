@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderDetail.java,v 1.21 2013/04/11 07:42:45 jeffw Exp $
+ *  $Id: OrderDetail.java,v 1.22 2013/04/11 18:11:12 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -13,6 +13,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
@@ -103,7 +104,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 
 	// The UoM.
 	@Column(nullable = false)
-	@OneToOne
+	@OneToOne(fetch = FetchType.LAZY)
 	@Getter
 	@Setter
 	private UomMaster				uomMaster;

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: SubLocationABC.java,v 1.9 2013/04/11 07:42:45 jeffw Exp $
+ *  $Id: SubLocationABC.java,v 1.10 2013/04/11 18:11:12 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -58,7 +58,7 @@ public abstract class SubLocationABC<P extends IDomainObject> extends LocationAB
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.ISubLocation#getParent()
+	 * @see com.gadgetworks.codeshelf.model.domain.SubLocationABC#getParent()
 	 */
 	@Override
 	public final P getParent() {
@@ -74,7 +74,7 @@ public abstract class SubLocationABC<P extends IDomainObject> extends LocationAB
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.ISubLocation#setParent(P)
+	 * @see com.gadgetworks.codeshelf.model.domain.SubLocationABC#setParent(P)
 	 */
 	@Override
 	public final void setParent(P inParent) {

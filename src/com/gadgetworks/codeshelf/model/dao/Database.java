@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Database.java,v 1.12 2013/04/11 07:42:45 jeffw Exp $
+ *  $Id: Database.java,v 1.13 2013/04/11 18:11:12 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -112,8 +112,7 @@ public class Database implements IDatabase {
 		if (server == null) {
 			mUtil.exitSystem();
 		}
-
-}
+	}
 
 	// --------------------------------------------------------------------------
 	/**

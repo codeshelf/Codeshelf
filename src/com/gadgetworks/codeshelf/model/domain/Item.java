@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Item.java,v 1.20 2013/04/11 07:42:45 jeffw Exp $
+ *  $Id: Item.java,v 1.21 2013/04/11 18:11:12 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -10,6 +10,7 @@ import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
@@ -40,7 +41,7 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "item", schema = "codeshelf")
-@CacheStrategy(useBeanCache = true)
+@CacheStrategy(useBeanCache = false)
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class Item extends DomainObjectTreeABC<LocationABC> {
 
@@ -53,7 +54,7 @@ public class Item extends DomainObjectTreeABC<LocationABC> {
 		public ItemDao(final ISchemaManager inSchemaManager) {
 			super(inSchemaManager);
 		}
-		
+
 		public final Class<Item> getDaoClass() {
 			return Item.class;
 		}
@@ -65,7 +66,7 @@ public class Item extends DomainObjectTreeABC<LocationABC> {
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	@Getter
-//	@Setter
+	//	@Setter
 	private LocationABC			parent;
 
 	// The item master.
@@ -84,7 +85,7 @@ public class Item extends DomainObjectTreeABC<LocationABC> {
 
 	// The actual UoM.
 	@Column(nullable = false)
-	@ManyToOne(optional = false)
+	@ManyToOne(optional = false, fetch = FetchType.LAZY)
 	@Getter
 	@Setter
 	private UomMaster			uomMaster;
@@ -118,7 +119,7 @@ public class Item extends DomainObjectTreeABC<LocationABC> {
 	public final List<IDomainObject> getChildren() {
 		return new ArrayList<IDomainObject>();
 	}
-	
+
 	public final void setParent(LocationABC inParent) {
 		parent = inParent;
 	}

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: UomMaster.java,v 1.15 2013/04/11 07:42:45 jeffw Exp $
+ *  $Id: UomMaster.java,v 1.16 2013/04/11 18:11:12 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -10,6 +10,7 @@ import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
@@ -36,7 +37,7 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "uom_master", schema = "codeshelf")
-@CacheStrategy
+@CacheStrategy(useBeanCache = false)
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class UomMaster extends DomainObjectTreeABC<Facility> {
 
@@ -49,7 +50,7 @@ public class UomMaster extends DomainObjectTreeABC<Facility> {
 		public UomMasterDao(final ISchemaManager inSchemaManager) {
 			super(inSchemaManager);
 		}
-		
+
 		public final Class<UomMaster> getDaoClass() {
 			return UomMaster.class;
 		}
@@ -59,7 +60,7 @@ public class UomMaster extends DomainObjectTreeABC<Facility> {
 
 	// The parent facility.
 	@Column(nullable = false)
-	@ManyToOne(optional = false)
+	@ManyToOne(optional = false, fetch = FetchType.EAGER)
 	private Facility			parent;
 
 	public UomMaster() {

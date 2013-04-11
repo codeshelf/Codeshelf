@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiProcessor.java,v 1.19 2013/03/19 01:19:59 jeffw Exp $
+ *  $Id: EdiProcessor.java,v 1.20 2013/04/11 18:11:12 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -77,7 +77,7 @@ public final class EdiProcessor implements IEdiProcessor {
 		while (mShouldRun) {
 			try {
 				if (System.currentTimeMillis() > (mLastProcessMillis + PROCESS_INTERVAL_MILLIS)) {
-					// Time to harvest events.
+					// Time to check EDI.
 					checkEdiServices(inEdiSignalQueue);
 					mLastProcessMillis = System.currentTimeMillis();
 				}
@@ -99,7 +99,7 @@ public final class EdiProcessor implements IEdiProcessor {
 	 */
 	private void checkEdiServices(BlockingQueue<String> inEdiSignalQueue) {
 
-		LOGGER.debug("Begin EDI harvest cycle.");
+		LOGGER.debug("Begin EDI process.");
 
 		// Loop through each facility to make sure that it's EDI service processes any queued EDI.
 		for (Facility facility : mFacilityDao.getAll()) {
@@ -117,6 +117,6 @@ public final class EdiProcessor implements IEdiProcessor {
 			}
 		}
 
-		LOGGER.debug("End EDI harvest cycle.");
+		LOGGER.debug("End EDI process.");
 	}
 }

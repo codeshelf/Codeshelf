@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: SchemaManagerABC.java,v 1.23 2013/04/11 07:42:45 jeffw Exp $
+ *  $Id: SchemaManagerABC.java,v 1.24 2013/04/11 18:11:12 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -548,8 +548,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		// ItemMaster
 		result &= createTable("item_master", //
-			"item_id VARCHAR(64) NOT NULL, " //
-					+ "description VARCHAR(256), " //
+			"description VARCHAR(256), " //
 					+ "lot_handling_enum VARCHAR(16) NOT NULL, " //
 					+ "ddc_id VARCHAR(64), " //
 					+ "ddc_pack_depth INTEGER, " //
@@ -656,8 +655,8 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		// UserSession
 		result &= createTable("user_session", //
 			"activity VARCHAR(64) NOT NULL, " //
-			+ "created TIMESTAMP NOT NULL, " //
-			+ "ended TIMESTAMP " //
+					+ "created TIMESTAMP NOT NULL, " //
+					+ "ended TIMESTAMP " //
 		);
 
 		// Vertex

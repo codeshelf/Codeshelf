@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ItemMaster.java,v 1.20 2013/04/11 07:42:45 jeffw Exp $
+ *  $Id: ItemMaster.java,v 1.21 2013/04/11 18:11:12 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -12,6 +12,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
@@ -44,7 +45,7 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "item_master", schema = "codeshelf")
-@CacheStrategy
+@CacheStrategy(useBeanCache = false)
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class ItemMaster extends DomainObjectTreeABC<Facility> {
 
@@ -57,7 +58,7 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 		public ItemMasterDao(final ISchemaManager inSchemaManager) {
 			super(inSchemaManager);
 		}
-		
+
 		public final Class<ItemMaster> getDaoClass() {
 			return ItemMaster.class;
 		}
@@ -69,13 +70,6 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	private Facility			parent;
-
-	// The item Id.
-	@Column(nullable = true)
-	@Getter
-	@Setter
-	@JsonProperty
-	private String				itemId;
 
 	// The description.
 	@Column(nullable = true)
@@ -98,7 +92,7 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	@Setter
 	@JsonProperty
 	private String				ddcId;
-	
+
 	// Ddc pack depth
 	@Column(nullable = true)
 	@Getter
@@ -108,7 +102,7 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 
 	// The standard UoM.
 	@Column(nullable = false)
-	@ManyToOne(optional = false)
+	@ManyToOne(optional = false, fetch = FetchType.LAZY)
 	@Getter
 	@Setter
 	private UomMaster			standardUom;
@@ -141,6 +135,14 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	public final List<? extends IDomainObject> getChildren() {
 		return getItems();
 	}
+	
+	public final void setItemId(final String inItemId) {
+		setDomainId(inItemId);
+	}
+	
+	public final String getItemId() {
+		return getDomainId();
+	}
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void addItem(Item inItem) {
@@ -151,7 +153,7 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	public final void removeItem(Item inItem) {
 		items.remove(inItem);
 	}
-	
+
 	public Boolean isDdcItem() {
 		return (ddcId != null);
 	}

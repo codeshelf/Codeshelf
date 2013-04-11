@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.63 2013/04/11 07:42:45 jeffw Exp $
+ *  $Id: Facility.java,v 1.64 2013/04/11 18:11:12 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -14,6 +14,7 @@ import java.util.Map;
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import javax.persistence.MapKey;
 import javax.persistence.OneToMany;
@@ -53,7 +54,7 @@ import com.google.inject.Singleton;
 
 @Entity
 @DiscriminatorValue("FACILITY")
-@CacheStrategy(useBeanCache = true)
+@CacheStrategy(useBeanCache = false)
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 //@ToString
 public class Facility extends LocationABC<Organization> {
@@ -124,15 +125,13 @@ public class Facility extends LocationABC<Organization> {
 	@Getter
 	private Map<String, Path>				paths			= new HashMap<String, Path>();
 
-	@OneToMany(mappedBy = "parent")
+	@OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
 	@MapKey(name = "domainId")
 	@Getter
 	private Map<String, UomMaster>			uomMasters		= new HashMap<String, UomMaster>();
 
 	public Facility() {
-		orderHeaders = new ArrayList<OrderHeader>();
-		containerKinds = new HashMap<String, ContainerKind>();
-		containers = new HashMap<String, Container>();
+
 	}
 
 	public Facility(final Double inPosX, final Double inPosY) {
