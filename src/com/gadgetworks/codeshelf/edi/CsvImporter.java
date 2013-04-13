@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CsvImporter.java,v 1.19 2013/04/11 22:47:12 jeffw Exp $
+ *  $Id: CsvImporter.java,v 1.20 2013/04/13 02:26:29 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -167,7 +167,7 @@ public class CsvImporter implements ICsvImporter {
 
 				LOGGER.debug("End DDC inventory import.");
 
-				inFacility.recomputeDdcItems();
+				inFacility.recomputeDdcPositions();
 			}
 
 			csvReader.close();

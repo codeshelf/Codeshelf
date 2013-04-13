@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ServerCodeshelfApplication.java,v 1.13 2013/04/09 07:58:21 jeffw Exp $
+ *  $Id: ServerCodeshelfApplication.java,v 1.14 2013/04/13 02:26:29 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -105,6 +105,7 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 			Facility facility = mFacilityDao.findByDomainId(organization, "F1");
 			if (facility != null) {
 				facility.logLocationDistances();
+				facility.recomputeDdcPositions();
 			}
 		}
 

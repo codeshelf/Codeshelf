@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ItemMaster.java,v 1.23 2013/04/11 22:47:12 jeffw Exp $
+ *  $Id: ItemMaster.java,v 1.24 2013/04/13 02:26:29 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -46,7 +46,7 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "item_master", schema = "codeshelf")
-@CacheStrategy(useBeanCache = false)
+@CacheStrategy(useBeanCache = true)
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class ItemMaster extends DomainObjectTreeABC<Facility> {
 

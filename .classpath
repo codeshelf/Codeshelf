@@ -9,7 +9,6 @@
 	<classpathentry kind="lib" path="lib/dist/avaje-juli-1.0.0.jar" sourcepath="APIs/ebean-2.6.1-sources.jar"/>
 	<classpathentry kind="lib" path="lib/dist/jcommon-1.0.16.jar"/>
 	<classpathentry kind="lib" path="lib/dist/json-1.0.jar"/>
-	<classpathentry kind="con" path="SWT_CONTAINER"/>
 	<classpathentry kind="lib" path="lib/dist/commons-lang-2.2.jar"/>
 	<classpathentry kind="lib" path="lib/dist/commons-io-1.4.jar" sourcepath="APIs/commons-io-1.4-sources.jar"/>
 	<classpathentry kind="lib" path="lib/dist/commons-codec-1.4.jar"/>
@@ -32,7 +31,6 @@
 	<classpathentry kind="lib" path="lib/dist/httpcore-4.0.1.jar"/>
 	<classpathentry kind="lib" path="lib/dist/httpmime-4.0.3.jar"/>
 	<classpathentry kind="lib" path="lib/dist/json_simple-1.1.jar"/>
-	<classpathentry kind="lib" path="lib/dist/lombok-0.11.4.jar" sourcepath="/Users/jeffw/.m2/repository/org/projectlombok/lombok/0.11.4/lombok-0.11.4-sources.jar"/>
 	<classpathentry kind="lib" path="lib/dist/opencsv-2.3.jar" sourcepath="APIs/opencsv-2.3.-src..zip"/>
 	<classpathentry kind="lib" path="lib/dist/jetty-continuation-9.0.0.M0.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
@@ -55,7 +53,6 @@
 	<classpathentry kind="lib" path="lib/dist/shiro-guice-1.2.1.jar"/>
 	<classpathentry kind="lib" path="lib/dist/guice-assistedinject-3.0.jar"/>
 	<classpathentry kind="lib" path="lib/dist/jasperreports-5.0.0.jar"/>
-	<classpathentry kind="lib" path="lib/dist/ebean-2.8.2-SNAPSHOT.jar" sourcepath="/ebean/src/main/java"/>
 	<classpathentry kind="lib" path="lib/dist/commons-digester-1.7.jar"/>
 	<classpathentry kind="lib" path="lib/dist/commons-collections-3.2.1.jar"/>
 	<classpathentry kind="lib" path="lib/dist/commons-beanutils-1.8.3.jar"/>
@@ -69,5 +66,7 @@
 			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="CodeShelf/lib/native/linux"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry kind="lib" path="lib/dist/lombok-0.11.6.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/ebean"/>
 	<classpathentry kind="output" path="eclipse-bin"/>
 </classpath>

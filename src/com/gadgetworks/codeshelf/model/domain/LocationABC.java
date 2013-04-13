@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: LocationABC.java,v 1.34 2013/04/11 22:47:12 jeffw Exp $
+ *  $Id: LocationABC.java,v 1.35 2013/04/13 02:26:29 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -55,7 +55,7 @@ import com.google.inject.Singleton;
 
 @Entity
 @MappedSuperclass
-@CacheStrategy(useBeanCache = false)
+@CacheStrategy(useBeanCache = true)
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @Table(name = "location", schema = "codeshelf")
 @DiscriminatorColumn(name = "dtype", discriminatorType = DiscriminatorType.STRING)
@@ -162,6 +162,20 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	@Getter
 	@Setter
 	private Integer						lastLedPos;
+	
+	// The first DDC ID for this location (if it has one).
+	@Column(nullable = true)
+	@Getter
+	@Setter
+	@JsonProperty
+	private String						firstDdcId;
+
+	// The last DDC ID for this location (if it has one).
+	@Column(nullable = true)
+	@Getter
+	@Setter
+	@JsonProperty
+	private String						lastDdcId;
 
 	// All of the vertices that define the location's footprint.
 	@OneToMany(mappedBy = "parent")

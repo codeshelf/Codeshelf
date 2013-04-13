@@ -1,12 +1,14 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.64 2013/04/11 18:11:12 jeffw Exp $
+ *  $Id: Facility.java,v 1.65 2013/04/13 02:26:29 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,7 +56,7 @@ import com.google.inject.Singleton;
 
 @Entity
 @DiscriminatorValue("FACILITY")
-@CacheStrategy(useBeanCache = false)
+@CacheStrategy(useBeanCache = true)
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 //@ToString
 public class Facility extends LocationABC<Organization> {
@@ -68,7 +70,7 @@ public class Facility extends LocationABC<Organization> {
 		public FacilityDao(final ISchemaManager inSchemaManager) {
 			super(inSchemaManager);
 		}
-		
+
 		public final Class<Facility> getDaoClass() {
 			return Facility.class;
 		}
@@ -425,7 +427,8 @@ public class Facility extends LocationABC<Organization> {
 							//							LOGGER.info("Location: " + bay.getFullDomainId() + " is " + distanceStr + " meters from the initiation point.");
 
 							bay.computePathDistance();
-							LOGGER.info("Location: " + bay.getFullDomainId() + " is " + bay.getPathDistance() + " meters from the initiation point.");
+							LOGGER.info("Location: " + bay.getFullDomainId() + " is " + bay.getPathDistance()
+									+ " meters from the initiation point.");
 						}
 					}
 				}
@@ -442,7 +445,11 @@ public class Facility extends LocationABC<Organization> {
 	 * @param inPosY
 	 * @param inDrawOrder
 	 */
-	public final void createVertex(final String inDomainId, final String inPosTypeByStr, final Double inPosX, final Double inPosY, final Integer inDrawOrder) {
+	public final void createVertex(final String inDomainId,
+		final String inPosTypeByStr,
+		final Double inPosX,
+		final Double inPosY,
+		final Integer inDrawOrder) {
 
 		Vertex vertex = new Vertex();
 		vertex.setParent(this);
@@ -465,11 +472,20 @@ public class Facility extends LocationABC<Organization> {
 			// Create four simple vertices around the aisle.
 			Vertex vertex1 = new Vertex(inLocation, "V01", 0, new Point(PositionTypeEnum.METERS_FROM_PARENT, 0.0, 0.0, null));
 			Vertex.DAO.store(vertex1);
-			Vertex vertex2 = new Vertex(inLocation, "V02", 1, new Point(PositionTypeEnum.METERS_FROM_PARENT, inXDimMeters, 0.0, null));
+			Vertex vertex2 = new Vertex(inLocation, "V02", 1, new Point(PositionTypeEnum.METERS_FROM_PARENT,
+				inXDimMeters,
+				0.0,
+				null));
 			Vertex.DAO.store(vertex2);
-			Vertex vertex4 = new Vertex(inLocation, "V03", 2, new Point(PositionTypeEnum.METERS_FROM_PARENT, inXDimMeters, inYDimMeters, null));
+			Vertex vertex4 = new Vertex(inLocation, "V03", 2, new Point(PositionTypeEnum.METERS_FROM_PARENT,
+				inXDimMeters,
+				inYDimMeters,
+				null));
 			Vertex.DAO.store(vertex4);
-			Vertex vertex3 = new Vertex(inLocation, "V04", 3, new Point(PositionTypeEnum.METERS_FROM_PARENT, 0.0, inYDimMeters, null));
+			Vertex vertex3 = new Vertex(inLocation, "V04", 3, new Point(PositionTypeEnum.METERS_FROM_PARENT,
+				0.0,
+				inYDimMeters,
+				null));
 			Vertex.DAO.store(vertex3);
 		} catch (DaoException e) {
 			LOGGER.error("", e);
@@ -505,7 +521,10 @@ public class Facility extends LocationABC<Organization> {
 	/**
 	 */
 	@Transactional
-	public final ContainerKind createContainerKind(String inDomainId, Double inLengthMeters, Double inWidthMeters, Double inHeightMeters) {
+	public final ContainerKind createContainerKind(String inDomainId,
+		Double inLengthMeters,
+		Double inWidthMeters,
+		Double inHeightMeters) {
 
 		ContainerKind result = null;
 
@@ -599,7 +618,9 @@ public class Facility extends LocationABC<Organization> {
 	 * @return
 	 */
 	@Transactional
-	public final List<WorkInstruction> getWorkInstructions(final Che inChe, final String inLocationId, final List<String> inContainerIdList) {
+	public final List<WorkInstruction> getWorkInstructions(final Che inChe,
+		final String inLocationId,
+		final List<String> inContainerIdList) {
 		List<WorkInstruction> result = new ArrayList<WorkInstruction>();
 
 		ILocation<?> cheLocation = getSubLocationById(inLocationId);
@@ -711,14 +732,72 @@ public class Facility extends LocationABC<Organization> {
 		}
 		return result;
 	}
-	
+
+	/**
+	 * Class to compare items by their DDC.
+	 *
+	 */
+	private class DdcComparator implements Comparator<ItemMaster> {
+
+		public int compare(ItemMaster inItemMaster1, ItemMaster inItemMaster2) {
+			return inItemMaster1.getDdcId().compareTo(inItemMaster2.getDdcId());
+		}
+	};
+
 	// --------------------------------------------------------------------------
 	/**
 	 * After a change in DDC items we call this routine to recompute the positions of the items.
 	 * 
 	 */
-	public void recomputeDdcItems() {
-		
-		
+	public final void recomputeDdcPositions() {
+
+		LOGGER.debug("Begin DDC position recompute");
+
+		// Make a list of all locations that have a DDC start/end.
+		LOGGER.debug("DDC get locations");
+		List<ILocation> ddcLocations = new ArrayList<ILocation>();
+		for (Aisle aisle : getAisles()) {
+			for (ILocation location : aisle.getChildren()) {
+				if (location.getFirstDdcId() != null) {
+					ddcLocations.add(location);
+				}
+			}
+		}
+
+		// Loop through all of the DDC items in the facility.
+		LOGGER.debug("DDC get items");
+		List<ItemMaster> ddcItemMasters = new ArrayList<ItemMaster>();
+		for (ItemMaster itemMaster : getItemMasters()) {
+			if ((itemMaster.getDdcId() != null) && (itemMaster.getActive())) {
+				ddcItemMasters.add(itemMaster);
+			}
+		}
+
+		// Sort the DDC items in lex/DDC order.
+		LOGGER.debug("DDC sort items");
+		Collections.sort(ddcItemMasters, new DdcComparator());
+
+		// Get the items that belong to each DDC location.
+		LOGGER.debug("DDC list items");
+		for (ILocation location : ddcLocations) {
+			LOGGER.debug("DDC location check: " + location.getFullDomainId() + " " + location.getPersistentId());
+			for (ItemMaster itemMaster : ddcItemMasters) {
+				if ((itemMaster.getDdcId().compareTo(location.getFirstDdcId()) >= 0)
+						&& (itemMaster.getDdcId().compareTo(location.getLastDdcId()) <= 0)) {
+					for (Item item : itemMaster.getItems()) {
+						LOGGER.debug("DDC assign item: " + item.getItemId() + " Ddc: " + item.getItemMaster().getDdcId());
+						item.setParent(location);
+						try {
+							item.DAO.store(item);
+						} catch (DaoException e) {
+							LOGGER.error("", e);
+						}
+					}
+				}
+			}
+		}
+
+		LOGGER.debug("End DDC position recompute");
+
 	}
 }

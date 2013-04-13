@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ILocation.java,v 1.4 2013/04/09 07:58:20 jeffw Exp $
+ *  $Id: ILocation.java,v 1.5 2013/04/13 02:26:29 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -57,6 +57,14 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 	 Integer getLastLedPos();
 
 	 void setLastLedPos(Integer inLastLedPos);
+
+	 String getFirstDdcId();
+
+	 void setFirstDdcId(String inFirstDdcId);
+
+	 String getLastDdcId();
+
+	 void setLastDdcId(String inLastDdcId);
 
 	 List<Vertex> getVertices();
 

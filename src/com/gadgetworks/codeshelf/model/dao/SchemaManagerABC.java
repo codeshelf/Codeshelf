@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: SchemaManagerABC.java,v 1.26 2013/04/11 22:47:12 jeffw Exp $
+ *  $Id: SchemaManagerABC.java,v 1.27 2013/04/13 02:26:30 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -29,9 +29,13 @@ import com.google.inject.Singleton;
 @Singleton
 public abstract class SchemaManagerABC implements ISchemaManager {
 
-	private static final Logger	LOGGER		= LoggerFactory.getLogger(SchemaManagerABC.class);
+	private static final Logger	LOGGER			= LoggerFactory.getLogger(SchemaManagerABC.class);
 
-	private static final String	UUID_TYPE	= "CHAR(36)";
+	// CHAR36 is the official byte size of a UUID.
+	private static final String	UUID_TYPE		= "CHAR(36)";
+	// CHAR for a key (which domain ID is) is 20% faster than VARCHAR, but it has tons of ramifications for string compares.
+	// Might be worth a change later, but it could be painful to maintain it on-going.
+	private static final String	DOMAINID_TYPE	= "VARCHAR(255)";
 
 	@Getter(value = AccessLevel.PROTECTED)
 	private final IUtil			util;
@@ -280,8 +284,8 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	private boolean doUpgrade2() {
 		boolean result = true;
 
-		result &= safeAddColumn("order_header", "custoemr_id VARCHAR(64)");
-		result &= safeAddColumn("order_header", "shipment_id VARCHAR(64)");
+		result &= safeAddColumn("order_header", "custoemr_id VARCHAR(255)");
+		result &= safeAddColumn("order_header", "shipment_id VARCHAR(255)");
 
 		return result;
 	}
@@ -334,7 +338,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		result &= execOneSQLCommand("CREATE SEQUENCE " + getDbSchemaName() + ".organization_seq");
 		result &= execOneSQLCommand("CREATE TABLE " + getDbSchemaName() + ".organization (" //
 				+ "persistentid " + UUID_TYPE + " NOT NULL, " //
-				+ "domainid VARCHAR(64) NOT NULL, " //
+				+ "domainid VARCHAR(255) NOT NULL, " //
 				+ "version TIMESTAMP, " //
 				+ inColumns //
 				+ ", PRIMARY KEY (persistentid));");
@@ -354,11 +358,11 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		boolean result = true;
 
-		result &= execOneSQLCommand("CREATE SEQUENCE " + getDbSchemaName() + "." + inTableName + "_seq");
+		//result &= execOneSQLCommand("CREATE SEQUENCE " + getDbSchemaName() + "." + inTableName + "_seq");
 		result &= execOneSQLCommand("CREATE TABLE " + getDbSchemaName() + "." + inTableName + " (" //
 				+ "persistentid " + UUID_TYPE + " NOT NULL, " //
 				+ "parent_persistentid " + UUID_TYPE + " NOT NULL, " //
-				+ "domainid VARCHAR(64) NOT NULL, " //
+				+ "domainid " + DOMAINID_TYPE + " NOT NULL, " //
 				+ "version TIMESTAMP, " //
 				+ inColumns //
 				+ ", PRIMARY KEY (persistentid));");
@@ -416,7 +420,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		result &= linkToParentTable("che", "current_work_area", "work_area");
 		result &= linkToParentTable("che", "current_user", "user");
 		// One extra index: to ensure uniqueness of the MAC addresses, and to find them fast by that address.
-		execOneSQLCommand("CREATE UNIQUE INDEX che_deviceguid_index ON " + getDbSchemaName() + ".CHE (device_guid)");
+		execOneSQLCommand("CREATE UNIQUE INDEX che_deviceguid_index ON " + getDbSchemaName() + ".che (device_guid)");
 
 		result &= linkToParentTable("codeshelf_network", "parent", "location");
 
@@ -433,6 +437,8 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		result &= linkToParentTable("edi_service", "parent", "location");
 
 		result &= linkToParentTable("item", "parent", "location");
+		// One extra index: to ensure uniqueness of the MAC addresses, and to find them fast by that address.
+		execOneSQLCommand("CREATE INDEX item_item_master_persistentid_index ON " + getDbSchemaName() + ".item (item_master_persistentid)");
 
 		result &= linkToParentTable("item_master", "parent", "location");
 
@@ -482,9 +488,9 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		// Che
 		result &= createTable("che", //
-			"description VARCHAR(64), " //
+			"description VARCHAR(255), " //
 					+ "device_guid BYTEA DEFAULT '' NOT NULL, " //
-					+ "public_key VARCHAR(16) NOT NULL, " //
+					+ "public_key VARCHAR(255) NOT NULL, " //
 					+ "last_battery_level SMALLINT DEFAULT 0 NOT NULL, " //
 					+ "serial_bus_position INT DEFAULT 0, " //
 					+ "current_user_persistentid " + UUID_TYPE + ", " //
@@ -493,8 +499,8 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		// CodeShelfNetwork
 		result &= createTable("codeshelf_network", //
-			"description VARCHAR(64) NOT NULL, " //
-					+ "credential VARCHAR(64) NOT NULL, " //
+			"description VARCHAR(255) NOT NULL, " //
+					+ "credential VARCHAR(255) NOT NULL, " //
 					+ "active BOOLEAN DEFAULT TRUE NOT NULL " //
 		);
 
@@ -505,7 +511,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		// ContainerKind
 		result &= createTable("container_kind", //
-			"class_id VARCHAR(64) NOT NULL, " //
+			"class_id VARCHAR(255) NOT NULL, " //
 					+ "length_meters DECIMAL NOT NULL, " //
 					+ "height_meters DECIMAL NOT NULL, " //
 					+ "width_meters DECIMAL NOT NULL " //
@@ -527,20 +533,20 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		// EdiDocumentLocator
 		result &= createTable("edi_document_locator", //
-			"document_path VARCHAR(256) NOT NULL, " //
-					+ "document_name VARCHAR(256) NOT NULL, " //
-					+ "document_state_enum VARCHAR(16) NOT NULL, " //
+			"document_path VARCHAR(255) NOT NULL, " //
+					+ "document_name VARCHAR(255) NOT NULL, " //
+					+ "document_state_enum VARCHAR(255) NOT NULL, " //
 					+ "received TIMESTAMP, " //
 					+ "processed TIMESTAMP " //
 		);
 
 		// EdiService
 		result &= createTable("edi_service", //
-			"dtype VARCHAR(64) NOT NULL, " //
-					+ "provider_enum VARCHAR(16) NOT NULL, " //
-					+ "service_state_enum VARCHAR(16) NOT NULL, " //
-					+ "provider_credentials VARCHAR(256), " //
-					+ "cursor VARCHAR(256) " //
+			"dtype VARCHAR(255) NOT NULL, " //
+					+ "provider_enum VARCHAR(255) NOT NULL, " //
+					+ "service_state_enum VARCHAR(255) NOT NULL, " //
+					+ "provider_credentials VARCHAR(255), " //
+					+ "cursor VARCHAR(255) " //
 		);
 
 		// Item
@@ -555,9 +561,9 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		// ItemMaster
 		result &= createTable("item_master", //
-			"description VARCHAR(256), " //
-					+ "lot_handling_enum VARCHAR(16) NOT NULL, " //
-					+ "ddc_id VARCHAR(64), " //
+			"description VARCHAR(255), " //
+					+ "lot_handling_enum VARCHAR(255) NOT NULL, " //
+					+ "ddc_id VARCHAR(255), " //
 					+ "ddc_pack_depth INTEGER, " //
 					+ "active BOOLEAN DEFAULT TRUE NOT NULL, " //
 					+ "updated TIMESTAMP NOT NULL, " //
@@ -566,34 +572,36 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		// LedController
 		result &= createTable("led_controller", //
-			"description VARCHAR(64), " //
+			"description VARCHAR(255), " //
 					+ "device_guid BYTEA DEFAULT '' NOT NULL, " //
-					+ "public_key VARCHAR(16) NOT NULL, " //
+					+ "public_key VARCHAR(255) NOT NULL, " //
 					+ "last_battery_level SMALLINT DEFAULT 0 NOT NULL, " //
 					+ "serial_bus_position INT DEFAULT 0 " //
 		);
 
 		// Location
 		result &= createTable("location", //
-			"dtype VARCHAR(64) NOT NULL, " //
-					+ "pos_type_enum VARCHAR(64) NOT NULL, " //
+			"dtype VARCHAR(255) NOT NULL, " //
+					+ "pos_type_enum VARCHAR(255) NOT NULL, " //
 					+ "pos_x DOUBLE PRECISION NOT NULL, " //
 					+ "pos_y DOUBLE PRECISION NOT NULL, " //
-					+ "pos_z DOUBLE PRECISION, " + "description VARCHAR(64), "//
+					+ "pos_z DOUBLE PRECISION, " + "description VARCHAR(255), "//
 					+ "path_segment_persistentid " + UUID_TYPE + ", " //
 					+ "path_distance DOUBLE PRECISION, " //
 					+ "led_controller_persistentid " + UUID_TYPE + ", "//
 					+ "led_channel INTEGER, " //
 					+ "first_led_pos INTEGER, " //
 					+ "last_led_pos INTEGER, " //
+					+ "first_ddc_id VARCHAR(255), " //
+					+ "last_ddc_id VARCHAR(255), " //
 					+ "parent_organization_persistentid " + UUID_TYPE + " "//
 		);
 
 		// OrderDetail
 		result &= createTable("order_detail", //
-			"status_enum VARCHAR(16) NOT NULL, " //
+			"status_enum VARCHAR(255) NOT NULL, " //
 					+ "item_master_persistentid " + UUID_TYPE + " NOT NULL, " //
-					+ "description VARCHAR(256) NOT NULL, " //
+					+ "description VARCHAR(255) NOT NULL, " //
 					+ "quantity INTEGER NOT NULL, " //
 					+ "active BOOLEAN DEFAULT TRUE NOT NULL, " //
 					+ "updated TIMESTAMP NOT NULL, " //
@@ -602,42 +610,42 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		// OrderGroup
 		result &= createTable("order_group", //
-			"status_enum VARCHAR(16) NOT NULL, " //
+			"status_enum VARCHAR(255) NOT NULL, " //
 					+ "work_sequence " + UUID_TYPE + ", " //
 					+ "active BOOLEAN DEFAULT TRUE NOT NULL, " //
 					+ "updated TIMESTAMP NOT NULL, " //
-					+ "description VARCHAR(256) " //
+					+ "description VARCHAR(255) " //
 		);
 
 		// OrderHeader
 		result &= createTable("order_header", //
-			"status_enum VARCHAR(16) NOT NULL, " //
-					+ "pick_strategy_enum VARCHAR(16) NOT NULL, " //
+			"status_enum VARCHAR(255) NOT NULL, " //
+					+ "pick_strategy_enum VARCHAR(255) NOT NULL, " //
 					+ "order_group_persistentid " + UUID_TYPE + ", " //
 					+ "work_sequence " + UUID_TYPE + ", " //
 					+ "order_date TIMESTAMP NOT NULL, " //
 					+ "due_date TIMESTAMP NOT NULL, " //
-					+ "shipment_id VARCHAR(64), " //
+					+ "shipment_id VARCHAR(255), " //
 					+ "container_use_persistentid " + UUID_TYPE + ", " //
 					+ "active BOOLEAN DEFAULT TRUE NOT NULL, " //
 					+ "updated TIMESTAMP NOT NULL, " //
-					+ "customer_id VARCHAR(64) " //
+					+ "customer_id VARCHAR(255) " //
 		);
 
 		// Organization - this is the top-level object that owns all other objects.
-		result &= createOrganizationTable("description VARCHAR(64) NOT NULL " //
+		result &= createOrganizationTable("description VARCHAR(255) NOT NULL " //
 		);
 
 		// Path
 		result &= createTable("path", //
-			"description VARCHAR(64) NOT NULL, " //
-					+ "travel_dir_enum VARCHAR(16) NOT NULL, " //
+			"description VARCHAR(255) NOT NULL, " //
+					+ "travel_dir_enum VARCHAR(255) NOT NULL, " //
 					+ "length DOUBLE PRECISION ");
 
 		// PathSegment
 		result &= createTable("path_segment", //
 			"segment_order INTEGER NOT NULL, " //
-					+ "pos_type_enum VARCHAR(16) NOT NULL, " //
+					+ "pos_type_enum VARCHAR(255) NOT NULL, " //
 					+ "start_pos_x DOUBLE PRECISION NOT NULL, " //
 					+ "start_pos_y DOUBLE PRECISION NOT NULL, " //
 					+ "end_pos_x DOUBLE PRECISION NOT NULL, " //
@@ -648,35 +656,35 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		// PersistentProperty
 		result &= createTable("persistent_property", //
-			"current_value_str VARCHAR(256), " //
-					+ "default_value_str VARCHAR(256) " //
+			"current_value_str VARCHAR(255), " //
+					+ "default_value_str VARCHAR(255) " //
 		);
 
 		// UomMaster
 		result &= createTable("uom_master", //
-			"description VARCHAR(256) " //
+			"description VARCHAR(255) " //
 		);
 
 		// User
 		result &= createTable("user", //
-			"hash_salt VARCHAR(64), " //
-					+ "hashed_password VARCHAR(64), " //
+			"hash_salt VARCHAR(255), " //
+					+ "hashed_password VARCHAR(255), " //
 					+ "hash_iterations INTEGER, " //
-					+ "email VARCHAR(64), " //
+					+ "email VARCHAR(255), " //
 					+ "created TIMESTAMP, " //
 					+ "active BOOLEAN DEFAULT TRUE NOT NULL " //
 		);
 
 		// UserSession
 		result &= createTable("user_session", //
-			"activity VARCHAR(64) NOT NULL, " //
+			"activity VARCHAR(255) NOT NULL, " //
 					+ "created TIMESTAMP NOT NULL, " //
 					+ "ended TIMESTAMP " //
 		);
 
 		// Vertex
 		result &= createTable("vertex", //
-			"pos_type_enum VARCHAR(16) NOT NULL, " //
+			"pos_type_enum VARCHAR(255) NOT NULL, " //
 					+ "pos_x DOUBLE PRECISION NOT NULL, " //
 					+ "pos_y DOUBLE PRECISION NOT NULL, " //
 					+ "pos_z DOUBLE PRECISION, " //
@@ -685,23 +693,23 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		// WorkArea
 		result &= createTable("work_area", //
-			"work_area_id VARCHAR(64) NOT NULL, " //
-					+ "description VARCHAR(256) NOT NULL " //
+			"work_area_id VARCHAR(255) NOT NULL, " //
+					+ "description VARCHAR(255) NOT NULL " //
 		);
 
 		// WorkInstruction
 		result &= createTable("work_instruction", //
-			"type_enum VARCHAR(16) NOT NULL, " //
-					+ "status_enum VARCHAR(16) NOT NULL, " //
-					+ "container_id VARCHAR(64) NOT NULL, " //
-					+ "item_id VARCHAR(64) NOT NULL, " //
+			"type_enum VARCHAR(255) NOT NULL, " //
+					+ "status_enum VARCHAR(255) NOT NULL, " //
+					+ "container_id VARCHAR(255) NOT NULL, " //
+					+ "item_id VARCHAR(255) NOT NULL, " //
 					+ "plan_quantity INTEGER NOT NULL, " //
 					+ "actual_quantity INTEGER NOT NULL, " //
-					+ "location_id VARCHAR(64) NOT NULL, " //
-					+ "picker_id VARCHAR(64), " //
-					+ "led_controller_id VARCHAR(16), " //
-					+ "led_controller_command VARCHAR(64), " //
-					+ "color_enum VARCHAR(16), " //
+					+ "location_id VARCHAR(255) NOT NULL, " //
+					+ "picker_id VARCHAR(255), " //
+					+ "led_controller_id VARCHAR(255), " //
+					+ "led_controller_command VARCHAR(255), " //
+					+ "color_enum VARCHAR(255), " //
 					+ "created TIMESTAMP, " //
 					+ "assigned TIMESTAMP, " //
 					+ "started TIMESTAMP, " //
