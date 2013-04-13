@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: InventoryImporterTest.java,v 1.10 2013/04/11 07:42:45 jeffw Exp $
+ *  $Id: InventoryImporterTest.java,v 1.11 2013/04/13 07:21:32 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -52,7 +52,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		Item item = facility.getItem("3001");
 		Assert.assertNotNull(item);
 
-		ItemMaster itemMaster = item.getItemMaster();
+		ItemMaster itemMaster = item.getParent();
 		Assert.assertNotNull(itemMaster);
 
 	}

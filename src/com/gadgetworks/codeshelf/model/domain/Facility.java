@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.65 2013/04/13 02:26:29 jeffw Exp $
+ *  $Id: Facility.java,v 1.66 2013/04/13 07:21:32 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -733,11 +733,14 @@ public class Facility extends LocationABC<Organization> {
 		return result;
 	}
 
-	/**
-	 * Class to compare items by their DDC.
-	 *
-	 */
-	private class DdcComparator implements Comparator<ItemMaster> {
+	private class DdcItemComparator implements Comparator<Item> {
+
+		public int compare(Item inItem1, Item inItem2) {
+			return inItem1.getParent().getDdcId().compareTo(inItem2.getParent().getDdcId());
+		}
+	};
+
+	private class DdcItemMasterComparator implements Comparator<ItemMaster> {
 
 		public int compare(ItemMaster inItemMaster1, ItemMaster inItemMaster2) {
 			return inItemMaster1.getDdcId().compareTo(inItemMaster2.getDdcId());
@@ -775,24 +778,55 @@ public class Facility extends LocationABC<Organization> {
 
 		// Sort the DDC items in lex/DDC order.
 		LOGGER.debug("DDC sort items");
-		Collections.sort(ddcItemMasters, new DdcComparator());
+		Collections.sort(ddcItemMasters, new DdcItemMasterComparator());
 
 		// Get the items that belong to each DDC location.
 		LOGGER.debug("DDC list items");
+		List<Item> locationItems = new ArrayList<Item>();
+		Double locationItemCount;
 		for (ILocation location : ddcLocations) {
 			LOGGER.debug("DDC location check: " + location.getFullDomainId() + " " + location.getPersistentId());
+			locationItems.clear();
+			locationItemCount = 0.0;
 			for (ItemMaster itemMaster : ddcItemMasters) {
 				if ((itemMaster.getDdcId().compareTo(location.getFirstDdcId()) >= 0)
 						&& (itemMaster.getDdcId().compareTo(location.getLastDdcId()) <= 0)) {
 					for (Item item : itemMaster.getItems()) {
-						LOGGER.debug("DDC assign item: " + item.getItemId() + " Ddc: " + item.getItemMaster().getDdcId());
-						item.setParent(location);
-						try {
-							item.DAO.store(item);
-						} catch (DaoException e) {
-							LOGGER.error("", e);
-						}
+						LOGGER.debug("DDC assign item: " + item.getItemId() + " Ddc: " + item.getParent().getDdcId());
+						item.setStoredLocation(location);
+						locationItems.add(item);
+						locationItemCount += item.getQuantity();
 					}
+				}
+			}
+			
+			// Compute the length of the location's face.
+			Collections.sort(locationItems, new DdcItemComparator());
+			Double locationLen = 0.0;
+			Vertex lastVertex = null;
+			List<Vertex> list = location.getVertices();
+			for (Vertex vertex : list) {
+				if (lastVertex != null) {
+					if (Math.abs(vertex.getPosX() - lastVertex.getPosX()) > locationLen) {
+						locationLen = Math.abs(vertex.getPosX() - lastVertex.getPosX());
+					}
+					if (Math.abs(vertex.getPosY() - lastVertex.getPosY()) > locationLen) {
+						locationLen = Math.abs(vertex.getPosY() - lastVertex.getPosY());
+					}
+				}
+				lastVertex = vertex;
+			}
+			
+			// Walk through all of the items in this location in DDC order and position them.
+			Double ddcPos = 0.0;
+			Double distPerItem = locationLen / locationItemCount;
+			for (Item item : locationItems) {
+				ddcPos += distPerItem * item.getQuantity();
+				item.setDdcPosition(ddcPos);
+				try {
+					item.DAO.store(item);
+				} catch (DaoException e) {
+					LOGGER.error("", e);
 				}
 			}
 		}

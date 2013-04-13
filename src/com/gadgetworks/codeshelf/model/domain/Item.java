@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Item.java,v 1.24 2013/04/13 02:26:29 jeffw Exp $
+ *  $Id: Item.java,v 1.25 2013/04/13 07:21:32 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -44,7 +44,7 @@ import com.google.inject.Singleton;
 @Table(name = "item", schema = "codeshelf")
 @CacheStrategy(useBeanCache = true)
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
-public class Item extends DomainObjectTreeABC<ILocation> {
+public class Item extends DomainObjectTreeABC<ItemMaster> {
 
 	@Inject
 	public static ITypedDao<Item>	DAO;
@@ -67,15 +67,15 @@ public class Item extends DomainObjectTreeABC<ILocation> {
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	@Getter
-	//	@Setter
-	private LocationABC			parent;
+	@Setter
+	private ItemMaster			parent;
 
 	// The item master.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	@Getter
-	@Setter
-	private ItemMaster			itemMaster;
+	//	@Setter
+	private LocationABC			storedLocation;
 
 	// Quantity.
 	@Column(nullable = false)
@@ -129,11 +129,11 @@ public class Item extends DomainObjectTreeABC<ILocation> {
 		setDomainId(inItemId);
 	}
 
-	public final List<IDomainObject> getChildren() {
-		return new ArrayList<IDomainObject>();
+	public final void setStoredLocation(final ILocation inStoredLocation) {
+		storedLocation = (LocationABC) inStoredLocation;
 	}
 
-	public final void setParent(ILocation inParent) {
-		parent = (LocationABC) inParent;
+	public final List<IDomainObject> getChildren() {
+		return new ArrayList<IDomainObject>();
 	}
 }

@@ -1,13 +1,15 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ItemMaster.java,v 1.24 2013/04/13 02:26:29 jeffw Exp $
+ *  $Id: ItemMaster.java,v 1.25 2013/04/13 07:21:32 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -15,6 +17,7 @@ import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
+import javax.persistence.MapKey;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
@@ -121,9 +124,9 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	@JsonProperty
 	private Timestamp			updated;
 
-	@OneToMany(mappedBy = "itemMaster")
-	@Getter
-	private List<Item>			items	= new ArrayList<Item>();
+	@OneToMany(mappedBy = "parent")
+	@MapKey(name = "domainId")
+	private Map<String, Item>	items		= new HashMap<String, Item>();
 
 	public ItemMaster() {
 		lotHandlingEnum = LotHandlingEnum.FIFO;
@@ -149,22 +152,28 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 		return getItems();
 	}
 	
+	public final void addItem(Item inItem) {
+		items.put(inItem.getDomainId(), inItem);
+	}
+
+	public final Item getItem(String inItemId) {
+		return items.get(inItemId);
+	}
+
+	public final void removeNetwork(String inNetworkId) {
+		items.remove(inNetworkId);
+	}
+
+	public final List<Item> getItems() {
+		return new ArrayList<Item>(items.values());
+	}
+
 	public final void setItemId(final String inItemId) {
 		setDomainId(inItemId);
 	}
 	
 	public final String getItemId() {
 		return getDomainId();
-	}
-
-	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
-	public final void addItem(Item inItem) {
-		items.add(inItem);
-	}
-
-	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
-	public final void removeItem(Item inItem) {
-		items.remove(inItem);
 	}
 
 	public Boolean isDdcItem() {

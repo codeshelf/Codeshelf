@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: SchemaManagerABC.java,v 1.27 2013/04/13 02:26:30 jeffw Exp $
+ *  $Id: SchemaManagerABC.java,v 1.28 2013/04/13 07:21:32 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -436,9 +436,9 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		result &= linkToParentTable("edi_service", "parent", "location");
 
-		result &= linkToParentTable("item", "parent", "location");
+		result &= linkToParentTable("item", "parent", "item_master");
 		// One extra index: to ensure uniqueness of the MAC addresses, and to find them fast by that address.
-		execOneSQLCommand("CREATE INDEX item_item_master_persistentid_index ON " + getDbSchemaName() + ".item (item_master_persistentid)");
+		execOneSQLCommand("CREATE INDEX item_stored_location_persistentid_index ON " + getDbSchemaName() + ".item (stored_location_persistentid)");
 
 		result &= linkToParentTable("item_master", "parent", "location");
 
@@ -555,7 +555,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 					+ "ddc_position DOUBLE PRECISION, " //
 					+ "active BOOLEAN DEFAULT TRUE NOT NULL, " //
 					+ "updated TIMESTAMP NOT NULL, " //
-					+ "item_master_persistentid " + UUID_TYPE + " NOT NULL, " //
+					+ "stored_location_persistentid " + UUID_TYPE + " NOT NULL, " //
 					+ "uom_master_persistentid " + UUID_TYPE + " NOT NULL " //
 		);
 

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CsvImporter.java,v 1.20 2013/04/13 02:26:29 jeffw Exp $
+ *  $Id: CsvImporter.java,v 1.21 2013/04/13 07:21:32 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -565,16 +565,16 @@ public class CsvImporter implements ICsvImporter {
 		Item result = null;
 
 		// Get or create the item at the specified location.
-		result = inFacility.getItem(inCsvImportBean.getItemId());
+		result = inItemMaster.getItem(inCsvImportBean.getItemId());
 		if ((result == null) && (inCsvImportBean.getItemId() != null) && (inCsvImportBean.getItemId().length() > 0)) {
 			result = new Item();
-			result.setItemMaster(inItemMaster);
+			result.setParent(inItemMaster);
 			result.setItemId(inCsvImportBean.getItemId());
 		}
 
 		// If we were able to get/create an item then update it.
 		if (result != null) {
-			result.setParent(inFacility);
+			result.setStoredLocation(inFacility);
 			result.setUomMaster(inUomMaster);
 			result.setQuantity(Double.valueOf(inCsvImportBean.getQuantity()));
 			result.setUpdated(inEdiProcessTime);
@@ -614,13 +614,13 @@ public class CsvImporter implements ICsvImporter {
 		result = location.getItem(inCsvImportBean.getItemId());
 		if ((result == null) && (inCsvImportBean.getItemId() != null) && (inCsvImportBean.getItemId().length() > 0)) {
 			result = new Item();
-			result.setItemMaster(inItemMaster);
+			result.setParent(inItemMaster);
 			result.setItemId(inCsvImportBean.getItemId());
 		}
 
 		// If we were able to get/create an item then update it.
 		if (result != null) {
-			result.setParent(location);
+			result.setStoredLocation(location);
 			result.setUomMaster(inUomMaster);
 			result.setQuantity(Double.valueOf(inCsvImportBean.getQuantity()));
 			inItemMaster.addItem(result);
