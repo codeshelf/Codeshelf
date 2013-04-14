@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Item.java,v 1.26 2013/04/14 02:39:39 jeffw Exp $
+ *  $Id: Item.java,v 1.27 2013/04/14 17:51:29 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -11,12 +11,12 @@ import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
@@ -44,6 +44,7 @@ import com.google.inject.Singleton;
 @Table(name = "item", schema = "codeshelf")
 @CacheStrategy(useBeanCache = true)
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
+@ToString
 public class Item extends DomainObjectTreeABC<ItemMaster> {
 
 	@Inject
@@ -123,6 +124,10 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 
 	public final String getItemDetailId() {
 		return getDomainId();
+	}
+	
+	public final String getItemId() {
+		return parent.getItemId();
 	}
 
 	public final void setItemDetailId(final String inItemId) {

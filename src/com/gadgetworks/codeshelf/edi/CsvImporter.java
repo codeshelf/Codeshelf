@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CsvImporter.java,v 1.23 2013/04/14 16:47:38 jeffw Exp $
+ *  $Id: CsvImporter.java,v 1.24 2013/04/14 17:51:29 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -643,7 +643,7 @@ public class CsvImporter implements ICsvImporter {
 			result.setQuantity(Double.valueOf(inCsvImportBean.getQuantity()));
 			result.setUpdated(inEdiProcessTime);
 			inItemMaster.addItem(result);
-			inFacility.addItem(inCsvImportBean.getItemDetailId(), result);
+			inFacility.addItem(result);
 			try {
 				result.setActive(true);
 				result.setUpdated(inEdiProcessTime);
@@ -691,7 +691,7 @@ public class CsvImporter implements ICsvImporter {
 			result.setUomMaster(inUomMaster);
 			result.setQuantity(Double.valueOf(inCsvImportBean.getQuantity()));
 			inItemMaster.addItem(result);
-			location.addItem(inCsvImportBean.getItemId(), result);
+			location.addItem(result);
 			try {
 				mItemDao.store(result);
 			} catch (DaoException e) {

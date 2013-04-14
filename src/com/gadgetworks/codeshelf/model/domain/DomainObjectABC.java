@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DomainObjectABC.java,v 1.33 2013/04/11 07:42:45 jeffw Exp $
+ *  $Id: DomainObjectABC.java,v 1.34 2013/04/14 17:51:29 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -11,7 +11,6 @@ import java.lang.reflect.Method;
 import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 import java.util.UUID;
 
 import javax.persistence.Column;
@@ -19,7 +18,6 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.PersistenceException;
 import javax.persistence.Version;
 
 import lombok.Getter;
@@ -35,8 +33,6 @@ import org.codehaus.jackson.annotate.JsonPropertyOrder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.avaje.ebean.Ebean;
-import com.avaje.ebean.Query;
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.avaje.ebean.bean.EntityBean;
 
@@ -52,7 +48,7 @@ import com.avaje.ebean.bean.EntityBean;
 @CacheStrategy
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 @JsonPropertyOrder({ "domainId", "fullDomainId" })
-//@ToString(doNotUseGetters = true)
+@ToString(of = { "domainId" })
 public abstract class DomainObjectABC implements IDomainObject {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(DomainObjectABC.class);
@@ -196,7 +192,8 @@ public abstract class DomainObjectABC implements IDomainObject {
 		try {
 			Method method = getClass().getDeclaredMethod("set" + WordUtils.capitalize(inFieldName), inFieldValue.getClass());
 			method.invoke(this, inFieldValue);
-		} catch (InvocationTargetException | NoSuchMethodException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
+		} catch (InvocationTargetException | NoSuchMethodException | SecurityException | IllegalArgumentException
+				| IllegalAccessException e) {
 			LOGGER.error("", e);
 		}
 	}

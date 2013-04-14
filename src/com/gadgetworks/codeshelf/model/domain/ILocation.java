@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ILocation.java,v 1.5 2013/04/13 02:26:29 jeffw Exp $
+ *  $Id: ILocation.java,v 1.6 2013/04/14 17:51:29 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -147,7 +147,7 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 
 	 void removeVertex(Vertex inVertex);
 
-	 void addItem(String inItemId, Item inItem);
+	 void addItem(Item inItem);
 
 	 Item getItem(String inItemId);
 

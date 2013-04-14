@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.68 2013/04/14 05:58:42 jeffw Exp $
+ *  $Id: Facility.java,v 1.69 2013/04/14 17:51:29 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -58,7 +58,6 @@ import com.google.inject.Singleton;
 @DiscriminatorValue("FACILITY")
 @CacheStrategy(useBeanCache = true)
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
-//@ToString
 public class Facility extends LocationABC<Organization> {
 
 	@Inject
@@ -793,14 +792,16 @@ public class Facility extends LocationABC<Organization> {
 				if ((itemMaster.getDdcId().compareTo(location.getFirstDdcId()) >= 0)
 						&& (itemMaster.getDdcId().compareTo(location.getLastDdcId()) <= 0)) {
 					for (Item item : itemMaster.getItems()) {
-						LOGGER.debug("DDC assign item: " + itemMaster.getItemId() + " Ddc: " + item.getParent().getDdcId());
+						LOGGER.debug("DDC assign item: " + "loc: " + location.getFullDomainId() + " itemId: "
+								+ itemMaster.getItemId() + " Ddc: " + item.getParent().getDdcId());
 						item.setStoredLocation(location);
+						location.addItem(item);
 						locationItems.add(item);
 						locationItemCount += item.getQuantity();
 					}
 				}
 			}
-			
+
 			// Compute the length of the location's face.
 			Collections.sort(locationItems, new DdcItemComparator());
 			Double locationLen = 0.0;
@@ -817,7 +818,7 @@ public class Facility extends LocationABC<Organization> {
 				}
 				lastVertex = vertex;
 			}
-			
+
 			// Walk through all of the items in this location in DDC order and position them.
 			Double ddcPos = 0.0;
 			Double distPerItem = locationLen / locationItemCount;

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Path.java,v 1.28 2013/04/14 16:47:38 jeffw Exp $
+ *  $Id: Path.java,v 1.29 2013/04/14 17:51:29 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -373,7 +373,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 
 			if (inWi1.getDistanceAlongPath() == null) {
 				ILocation location = getParent().getSubLocationById(inWi1.getLocationId());
-				Item item = location.getItem(inWi2.getItemId());
+				Item item = location.getItem(inWi1.getItemId());
 				// If it's not a Ddc item this distance will be zero (slotted)
 				inWi1.setDistanceAlongPath(location.getPathDistance() + item.getDdcPosition());
 			}

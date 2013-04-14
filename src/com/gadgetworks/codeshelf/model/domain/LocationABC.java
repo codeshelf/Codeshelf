@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: LocationABC.java,v 1.36 2013/04/14 05:58:42 jeffw Exp $
+ *  $Id: LocationABC.java,v 1.37 2013/04/14 17:51:29 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -26,6 +26,7 @@ import javax.persistence.Table;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
@@ -191,7 +192,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	private Map<String, SubLocationABC>	locations	= new HashMap<String, SubLocationABC>();
 
 	// The items stored in this location.
-	@OneToMany(mappedBy = "parent")
+	@OneToMany(mappedBy = "storedLocation")
 	@MapKey(name = "domainId")
 	@Getter
 	@Setter
@@ -431,8 +432,8 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#addItem(java.lang.String, com.gadgetworks.codeshelf.model.domain.Item)
 	 */
-	public final void addItem(final String inItemId, Item inItem) {
-		items.put(inItemId, inItem);
+	public final void addItem(Item inItem) {
+		items.put(inItem.getItemId(), inItem);
 	}
 
 	// --------------------------------------------------------------------------
