@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CsvImporter.java,v 1.21 2013/04/13 07:21:32 jeffw Exp $
+ *  $Id: CsvImporter.java,v 1.22 2013/04/14 02:39:39 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -98,6 +98,49 @@ public class CsvImporter implements ICsvImporter {
 				orderCsvBeanImport(importBean, inFacility, processTime);
 			}
 
+			LOGGER.debug("Archive unreferenced item data");
+
+			// Inactivate the orders that don't match the import timestamp.
+			try {
+				mOrderHeaderDao.beginTransaction();
+				for (OrderHeader order : inFacility.getOrderHeaders()) {
+					Boolean hasActive = false;
+					for (OrderDetail orderDetail : order.getOrderDetails()) {
+						if (orderDetail.getUpdated().equals(processTime)) {
+							hasActive = true;
+						} else {
+							orderDetail.setActive(false);
+							mOrderDetailDao.store(orderDetail);
+						}
+					}
+					
+					if ((!order.getActive()) && (!hasActive)) {
+						LOGGER.debug("Archive old order header: " + order.getOrderId());
+						order.setActive(false);
+						mOrderHeaderDao.store(order);
+					}
+				}
+				
+				for (OrderGroup group : inFacility.getOrderGroups()) {
+					Boolean hasActive = false;
+					for (OrderHeader order : group.getOrderHeaders()) {
+						if (order.getActive()) {
+							hasActive = true;
+						}
+					}
+					
+					if ((!group.getActive()) && (!hasActive)) {
+						LOGGER.debug("Archive old order group: " + group.getOrderGroupId());
+						group.setActive(false);
+						mOrderGroupDao.store(group);
+					}
+				}
+				
+				mOrderHeaderDao.commitTransaction();
+			} finally {
+				mOrderHeaderDao.endTransaction();
+			}
+
 			LOGGER.debug("End order import.");
 
 			csvReader.close();
@@ -151,12 +194,11 @@ public class CsvImporter implements ICsvImporter {
 									mItemDao.store(item);
 								}
 							}
-							if (hasActive) {
-								itemMaster.setActive(true);
-								itemMaster.setUpdated(processTime);
-								mItemMasterDao.store(itemMaster);
-							} else {
+							
+							if ((!itemMaster.getActive()) && (!hasActive)) {
 								LOGGER.debug("Archive old item master: " + itemMaster.getItemId());
+								itemMaster.setActive(false);
+								mItemMasterDao.store(itemMaster);
 							}
 						}
 					}
@@ -230,7 +272,9 @@ public class CsvImporter implements ICsvImporter {
 	 * @param inFacility
 	 */
 	@Transactional
-	private void orderCsvBeanImport(final OrderCsvImportBean inCsvImportBean, final Facility inFacility, final Timestamp inEdiProcessTime) {
+	private void orderCsvBeanImport(final OrderCsvImportBean inCsvImportBean,
+		final Facility inFacility,
+		final Timestamp inEdiProcessTime) {
 
 		LOGGER.info(inCsvImportBean.toString());
 
@@ -243,7 +287,12 @@ public class CsvImporter implements ICsvImporter {
 				Container container = updateContainer(inCsvImportBean, inFacility, inEdiProcessTime, order);
 				UomMaster uomMaster = updateUomMaster(inCsvImportBean.getUom(), inFacility);
 				ItemMaster itemMaster = updateItemMaster(inCsvImportBean.getItemId(), inFacility, inEdiProcessTime, uomMaster);
-				OrderDetail orderDetail = updateOrderDetail(inCsvImportBean, inFacility, inEdiProcessTime, order, uomMaster, itemMaster);
+				OrderDetail orderDetail = updateOrderDetail(inCsvImportBean,
+					inFacility,
+					inEdiProcessTime,
+					order,
+					uomMaster,
+					itemMaster);
 			} catch (Exception e) {
 				LOGGER.error("", e);
 			}
@@ -260,11 +309,13 @@ public class CsvImporter implements ICsvImporter {
 	 * @param inCsvImportBean
 	 * @param inFacility
 	 */
-	private void ddcInventoryCsvBeanImport(final DdcInventoryCsvImportBean inCsvImportBean, final Facility inFacility, final Timestamp inEdiProcessTime) {
+	private void ddcInventoryCsvBeanImport(final DdcInventoryCsvImportBean inCsvImportBean,
+		final Facility inFacility,
+		final Timestamp inEdiProcessTime) {
 
 		try {
 			mItemDao.beginTransaction();
-			
+
 			LOGGER.debug("Import ddc item: " + inCsvImportBean.toString());
 
 			UomMaster uomMaster = updateUomMaster(inCsvImportBean.getUom(), inFacility);
@@ -293,7 +344,9 @@ public class CsvImporter implements ICsvImporter {
 	 * @param inCsvImportBean
 	 * @param inFacility
 	 */
-	private void slottedInventoryCsvBeanImport(final SlottedInventoryCsvImportBean inCsvImportBean, final Facility inFacility, final Timestamp inEdiProcessTime) {
+	private void slottedInventoryCsvBeanImport(final SlottedInventoryCsvImportBean inCsvImportBean,
+		final Facility inFacility,
+		final Timestamp inEdiProcessTime) {
 
 		try {
 			mItemDao.beginTransaction();
@@ -317,7 +370,9 @@ public class CsvImporter implements ICsvImporter {
 	 * @param inFacility
 	 * @return
 	 */
-	private OrderGroup updateOptionalOrderGroup(final OrderCsvImportBean inCsvImportBean, final Facility inFacility, final Timestamp inEdiProcessTime) {
+	private OrderGroup updateOptionalOrderGroup(final OrderCsvImportBean inCsvImportBean,
+		final Facility inFacility,
+		final Timestamp inEdiProcessTime) {
 		OrderGroup result = null;
 
 		result = inFacility.findOrderGroup(inCsvImportBean.getOrderGroupId());
@@ -347,7 +402,10 @@ public class CsvImporter implements ICsvImporter {
 	 * @param inOrder
 	 * @return
 	 */
-	private Container updateContainer(final OrderCsvImportBean inCsvImportBean, final Facility inFacility, final Timestamp inEdiProcessTime, final OrderHeader inOrder) {
+	private Container updateContainer(final OrderCsvImportBean inCsvImportBean,
+		final Facility inFacility,
+		final Timestamp inEdiProcessTime,
+		final OrderHeader inOrder) {
 		Container result = null;
 
 		if ((inCsvImportBean.getPreAssignedContainerId() != null) && (inCsvImportBean.getPreAssignedContainerId().length() > 0)) {
@@ -396,7 +454,10 @@ public class CsvImporter implements ICsvImporter {
 	 * @param inOrderGroup
 	 * @return
 	 */
-	private OrderHeader updateOrderHeader(final OrderCsvImportBean inCsvImportBean, final Facility inFacility, final Timestamp inEdiProcessTime, final OrderGroup inOrderGroup) {
+	private OrderHeader updateOrderHeader(final OrderCsvImportBean inCsvImportBean,
+		final Facility inFacility,
+		final Timestamp inEdiProcessTime,
+		final OrderGroup inOrderGroup) {
 		OrderHeader result = null;
 
 		result = inFacility.findOrder(inCsvImportBean.getOrderId());
@@ -458,7 +519,10 @@ public class CsvImporter implements ICsvImporter {
 	 * @param inUomMaster
 	 * @return
 	 */
-	private ItemMaster updateItemMaster(final String inItemId, final Facility inFacility, final Timestamp inEdiProcessTime, final UomMaster inUomMaster) {
+	private ItemMaster updateItemMaster(final String inItemId,
+		final Facility inFacility,
+		final Timestamp inEdiProcessTime,
+		final UomMaster inUomMaster) {
 		ItemMaster result = null;
 
 		result = mItemMasterDao.findByDomainId(inFacility, inItemId);
@@ -565,11 +629,11 @@ public class CsvImporter implements ICsvImporter {
 		Item result = null;
 
 		// Get or create the item at the specified location.
-		result = inItemMaster.getItem(inCsvImportBean.getItemId());
-		if ((result == null) && (inCsvImportBean.getItemId() != null) && (inCsvImportBean.getItemId().length() > 0)) {
+		result = inItemMaster.getItem(inCsvImportBean.getItemDetailId());
+		if ((result == null) && (inCsvImportBean.getItemDetailId() != null) && (inCsvImportBean.getItemDetailId().length() > 0)) {
 			result = new Item();
 			result.setParent(inItemMaster);
-			result.setItemId(inCsvImportBean.getItemId());
+			result.setItemDetailId(inCsvImportBean.getItemDetailId());
 		}
 
 		// If we were able to get/create an item then update it.
@@ -579,7 +643,7 @@ public class CsvImporter implements ICsvImporter {
 			result.setQuantity(Double.valueOf(inCsvImportBean.getQuantity()));
 			result.setUpdated(inEdiProcessTime);
 			inItemMaster.addItem(result);
-			inFacility.addItem(inCsvImportBean.getItemId(), result);
+			inFacility.addItem(inCsvImportBean.getItemDetailId(), result);
 			try {
 				result.setActive(true);
 				result.setUpdated(inEdiProcessTime);
@@ -600,7 +664,10 @@ public class CsvImporter implements ICsvImporter {
 	 * @param inUomMaster
 	 * @return
 	 */
-	private Item updateSlottedItem(final SlottedInventoryCsvImportBean inCsvImportBean, final Facility inFacility, final ItemMaster inItemMaster, final UomMaster inUomMaster) {
+	private Item updateSlottedItem(final SlottedInventoryCsvImportBean inCsvImportBean,
+		final Facility inFacility,
+		final ItemMaster inItemMaster,
+		final UomMaster inUomMaster) {
 		Item result = null;
 
 		LocationABC location = (LocationABC) inFacility.getSubLocationById(inCsvImportBean.getLocationId());
@@ -615,7 +682,7 @@ public class CsvImporter implements ICsvImporter {
 		if ((result == null) && (inCsvImportBean.getItemId() != null) && (inCsvImportBean.getItemId().length() > 0)) {
 			result = new Item();
 			result.setParent(inItemMaster);
-			result.setItemId(inCsvImportBean.getItemId());
+			result.setItemDetailId(inCsvImportBean.getItemId());
 		}
 
 		// If we were able to get/create an item then update it.

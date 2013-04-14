@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CsDeviceManager.java,v 1.12 2013/04/09 07:58:20 jeffw Exp $
+ *  $Id: CsDeviceManager.java,v 1.13 2013/04/14 02:39:39 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -230,7 +230,7 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 		JsonNode responseNode = inDataNode.get(WsRespCmdEnum.NET_ATTACH_RESP.toString());
 
 		if ((responseNode != null) && (responseNode.getTextValue().equals(NetAttachWsReqCmd.SUCCEED))) {
-			JsonNode networkNode = inDataNode.get("codeshelf_network");
+			JsonNode networkNode = inDataNode.get("codeshelfNetwork");
 			JsonNode networkPersistentIdNode = networkNode.get("persistentId");
 			String persistentId = networkPersistentIdNode.getTextValue();
 

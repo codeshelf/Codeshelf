@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderDetail.java,v 1.23 2013/04/11 22:47:12 jeffw Exp $
+ *  $Id: OrderDetail.java,v 1.24 2013/04/14 02:39:39 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -89,7 +89,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	private ItemMaster				itemMaster;
 
 	// The description.
-	@Column(nullable = false)
+	@Column(nullable = true)
 	@Getter
 	@Setter
 	@JsonProperty

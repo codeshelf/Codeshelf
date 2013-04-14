@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ItemMaster.java,v 1.25 2013/04/13 07:21:32 jeffw Exp $
+ *  $Id: ItemMaster.java,v 1.26 2013/04/14 02:39:39 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -106,7 +106,7 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 
 	// The standard UoM.
 	@Column(nullable = false)
-	@ManyToOne(optional = false, fetch = FetchType.LAZY)
+	@ManyToOne(optional = false)
 	@Getter
 	@Setter
 	private UomMaster			standardUom;

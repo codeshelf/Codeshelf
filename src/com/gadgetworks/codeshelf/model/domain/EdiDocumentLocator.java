@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiDocumentLocator.java,v 1.20 2013/04/11 07:42:45 jeffw Exp $
+ *  $Id: EdiDocumentLocator.java,v 1.21 2013/04/14 02:39:39 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -68,7 +68,7 @@ public class EdiDocumentLocator extends DomainObjectTreeABC<DropboxService> {
 	// The owning EdiService.
 	// We prefer to use the abstract class here, but it's not currently possible with Ebean.
 	@Column(nullable = false)
-	@ManyToOne(optional = false, fetch = FetchType.LAZY)
+	@ManyToOne(optional = false)
 	private DropboxService			parent;
 
 	// Document Path

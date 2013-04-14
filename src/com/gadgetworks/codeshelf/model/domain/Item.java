@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Item.java,v 1.25 2013/04/13 07:21:32 jeffw Exp $
+ *  $Id: Item.java,v 1.26 2013/04/14 02:39:39 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -86,7 +86,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 
 	// The actual UoM.
 	@Column(nullable = false)
-	@ManyToOne(optional = false, fetch = FetchType.LAZY)
+	@ManyToOne(optional = false)
 	@Getter
 	@Setter
 	private UomMaster			uomMaster;
@@ -121,11 +121,11 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		return "IT";
 	}
 
-	public final String getItemId() {
+	public final String getItemDetailId() {
 		return getDomainId();
 	}
 
-	public final void setItemId(final String inItemId) {
+	public final void setItemDetailId(final String inItemId) {
 		setDomainId(inItemId);
 	}
 

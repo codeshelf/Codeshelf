@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.66 2013/04/13 07:21:32 jeffw Exp $
+ *  $Id: Facility.java,v 1.67 2013/04/14 02:39:39 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -97,7 +97,7 @@ public class Facility extends LocationABC<Organization> {
 	@Getter
 	private Map<String, Container>			containers		= new HashMap<String, Container>();
 
-	@OneToMany(mappedBy = "parent")
+	@OneToMany(mappedBy = "parent", fetch = FetchType.EAGER)
 	@MapKey(name = "domainId")
 	@Getter
 	private Map<String, ContainerKind>		containerKinds	= new HashMap<String, ContainerKind>();
@@ -127,7 +127,7 @@ public class Facility extends LocationABC<Organization> {
 	@Getter
 	private Map<String, Path>				paths			= new HashMap<String, Path>();
 
-	@OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
+	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	@Getter
 	private Map<String, UomMaster>			uomMasters		= new HashMap<String, UomMaster>();
@@ -792,7 +792,7 @@ public class Facility extends LocationABC<Organization> {
 				if ((itemMaster.getDdcId().compareTo(location.getFirstDdcId()) >= 0)
 						&& (itemMaster.getDdcId().compareTo(location.getLastDdcId()) <= 0)) {
 					for (Item item : itemMaster.getItems()) {
-						LOGGER.debug("DDC assign item: " + item.getItemId() + " Ddc: " + item.getParent().getDdcId());
+						LOGGER.debug("DDC assign item: " + itemMaster.getItemId() + " Ddc: " + item.getParent().getDdcId());
 						item.setStoredLocation(location);
 						locationItems.add(item);
 						locationItemCount += item.getQuantity();

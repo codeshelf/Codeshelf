@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Organization.java,v 1.36 2013/04/11 20:26:44 jeffw Exp $
+ *  $Id: Organization.java,v 1.37 2013/04/14 02:39:39 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -91,7 +91,7 @@ public class Organization extends DomainObjectABC {
 	@Getter
 	private Map<String, PersistentProperty>		persistentProperties		= new HashMap<String, PersistentProperty>();
 
-	@OneToMany(mappedBy = "parentOrganization", fetch = FetchType.EAGER)
+	@OneToMany(mappedBy = "parentOrganization")
 	@MapKey(name = "domainId")
 	//	@Getter(lazy = false)
 	private Map<String, Facility>	facilities	= new HashMap<String, Facility>();
