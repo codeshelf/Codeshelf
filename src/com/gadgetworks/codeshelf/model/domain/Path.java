@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Path.java,v 1.27 2013/04/14 05:58:42 jeffw Exp $
+ *  $Id: Path.java,v 1.28 2013/04/14 16:47:38 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -372,13 +372,18 @@ public class Path extends DomainObjectTreeABC<Facility> {
 		public int compare(WorkInstruction inWi1, WorkInstruction inWi2) {
 
 			if (inWi1.getDistanceAlongPath() == null) {
-				ILocation wiLocation = getParent().getSubLocationById(inWi1.getLocationId());
-				inWi1.setDistanceAlongPath(wiLocation.getPathDistance());
+				ILocation location = getParent().getSubLocationById(inWi1.getLocationId());
+				Item item = location.getItem(inWi2.getItemId());
+				// If it's not a Ddc item this distance will be zero (slotted)
+				inWi1.setDistanceAlongPath(location.getPathDistance() + item.getDdcPosition());
 			}
 
 			if (inWi2.getDistanceAlongPath() == null) {
-				ILocation wiLocation = getParent().getSubLocationById(inWi2.getLocationId());
-				inWi2.setDistanceAlongPath(wiLocation.getPathDistance());
+				ILocation location = getParent().getSubLocationById(inWi2.getLocationId());
+				Item item = location.getItem(inWi2.getItemId());
+				// If it's not a Ddc item this distance will be zero (slotted)
+				item.getDdcPosition();
+				inWi2.setDistanceAlongPath(location.getPathDistance() + item.getDdcPosition());
 			}
 
 			if (inWi1.getDistanceAlongPath() < inWi2.getDistanceAlongPath()) {

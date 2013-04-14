@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CsvImporter.java,v 1.22 2013/04/14 02:39:39 jeffw Exp $
+ *  $Id: CsvImporter.java,v 1.23 2013/04/14 16:47:38 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -678,7 +678,7 @@ public class CsvImporter implements ICsvImporter {
 		}
 
 		// Get or create the item at the specified location.
-		result = location.getItem(inCsvImportBean.getItemId());
+		result = location.getItem(inCsvImportBean.getItemDetailId());
 		if ((result == null) && (inCsvImportBean.getItemId() != null) && (inCsvImportBean.getItemId().length() > 0)) {
 			result = new Item();
 			result.setParent(inItemMaster);

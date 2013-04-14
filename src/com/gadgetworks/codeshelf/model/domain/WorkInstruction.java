@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WorkInstruction.java,v 1.18 2013/04/11 07:42:45 jeffw Exp $
+ *  $Id: WorkInstruction.java,v 1.19 2013/04/14 16:47:38 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -104,7 +104,7 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 	@JsonProperty
 	private String						containerId;
 
-	// The item.
+	// The item id.
 	@Column(nullable = false)
 	@Getter
 	@Setter

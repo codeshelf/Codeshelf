@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: SlottedInventoryCsvImportBean.java,v 1.2 2013/04/11 07:42:45 jeffw Exp $
+ *  $Id: SlottedInventoryCsvImportBean.java,v 1.3 2013/04/14 16:47:38 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -18,6 +18,7 @@ import lombok.ToString;
 @ToString
 public class SlottedInventoryCsvImportBean {
 	private String	itemId;
+	private String	itemDetailId;
 	private String	description;
 	private String	quantity;
 	private String	uom;
