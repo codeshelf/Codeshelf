@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CsCheApplication.java,v 1.5 2013/04/01 23:42:40 jeffw Exp $
+ *  $Id: CsCheApplication.java,v 1.6 2013/04/14 05:47:55 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -46,14 +46,15 @@ public final class CsCheApplication extends ApplicationABC {
 
 		Thread thread = new Thread(new Runnable() {
 			public void run() {
-				SerialPort serialPort = new SerialPort("/dev/tty.usbmodem1421");
+				SerialPort serialPort = new SerialPort("/dev/ttyACM0");
 				try {
 					serialPort.openPort();
 					serialPort.setParams(38400, 8, 1, 0);
 
+					serialPort.writeString("^CHE`CONNECT~");
+
 					while (true) {
-						serialPort.writeString("^HELLO`WORLD~");
-						LOGGER.debug(serialPort.readString());
+						//LOGGER.debug(serialPort.readString());
 						try {
 							Thread.sleep(2000);
 						} catch (InterruptedException e) {
