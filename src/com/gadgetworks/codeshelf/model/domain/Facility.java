@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.69 2013/04/14 17:51:29 jeffw Exp $
+ *  $Id: Facility.java,v 1.70 2013/04/14 23:35:26 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -395,10 +395,10 @@ public class Facility extends LocationABC<Organization> {
 			aisle.createPaths(aisleBoundaryX, aisleBoundaryY, TravelDirectionEnum.FORWARD, inOpensLowSide);
 
 			// Create at least one aisle controller.
-			CodeshelfNetwork network = networks.get(CodeshelfNetwork.DEFAULT_NETWORK_ID);
-			if (network != null) {
-				network.createLedController("0x00000000");
-			}
+//			CodeshelfNetwork network = networks.get(CodeshelfNetwork.DEFAULT_NETWORK_ID);
+//			if (network != null) {
+//				network.createLedController("0x00000000");
+//			}
 		}
 	}
 

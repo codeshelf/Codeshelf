@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ServerCodeshelfApplication.java,v 1.15 2013/04/14 05:58:42 jeffw Exp $
+ *  $Id: ServerCodeshelfApplication.java,v 1.16 2013/04/14 23:35:26 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -23,6 +23,7 @@ import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
+import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
 import com.gadgetworks.codeshelf.model.domain.User;
@@ -118,6 +119,10 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 					Che che2 = network.getChe("CHE2");
 					if (che2 == null) {
 						che2 = network.createChe("CHE2", new NetGuid("0x00000002"));
+					}
+					LedController ledController1 = network.getLedController("LED1");
+					if (ledController1 == null) {
+						ledController1 = network.createLedController("LED1", new NetGuid("0x00000003"));
 					}
 				}
 

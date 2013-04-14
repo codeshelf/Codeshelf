@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeshelfNetwork.java,v 1.28 2013/04/11 07:42:44 jeffw Exp $
+ *  $Id: CodeshelfNetwork.java,v 1.29 2013/04/14 23:35:26 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -61,64 +61,68 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 		public CodeshelfNetworkDao(final ISchemaManager inSchemaManager) {
 			super(inSchemaManager);
 		}
-		
+
 		public final Class<CodeshelfNetwork> getDaoClass() {
 			return CodeshelfNetwork.class;
 		}
 	}
 
-	public static final String		DEFAULT_NETWORK_ID	= "DEFAULT";
+	public static final String			DEFAULT_NETWORK_ID	= "DEFAULT";
 
-	private static final Logger		LOGGER				= LoggerFactory.getLogger(CodeshelfNetwork.class);
+	private static final Logger			LOGGER				= LoggerFactory.getLogger(CodeshelfNetwork.class);
 
 	// The network description.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private String					description;
+	private String						description;
 
 	// Attachment credential.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private String					credential;
+	private String						credential;
 
 	// Active/Inactive network
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private boolean					active;
+	private boolean						active;
 
 	@Transient
 	@Getter
 	@Setter
 	@JsonProperty
-	private boolean					connected;
+	private boolean						connected;
 
 	// The owning facility.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	private Facility				parent;
+	private Facility					parent;
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	@Getter
-	private Map<String, Che>		ches				= new HashMap<String, Che>();
+	private Map<String, Che>			ches				= new HashMap<String, Che>();
+
+	@OneToMany(mappedBy = "parent")
+	@MapKey(name = "domainId")
+	@Getter
+	private Map<String, LedController>	ledControllers		= new HashMap<String, LedController>();
 
 	// For a network this is a list of all of the devices that belong to this network.
 	@Column(nullable = false)
 	@Getter
 	@OneToMany(mappedBy = "parent")
-	private List<WirelessDeviceABC>	devices				= new ArrayList<WirelessDeviceABC>();
+	private List<WirelessDeviceABC>		devices				= new ArrayList<WirelessDeviceABC>();
 
 	public CodeshelfNetwork() {
 		description = "";
 		active = true;
 		connected = false;
-		ches = new HashMap<String, Che>();
 	}
 
 	public final ITypedDao<CodeshelfNetwork> getDao() {
@@ -163,6 +167,18 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 		ches.remove(inCheId);
 	}
 
+	public final void addLedController(LedController inLedController) {
+		ledControllers.put(inLedController.getDomainId(), inLedController);
+	}
+
+	public final LedController getLedController(String inLedControllerId) {
+		return ledControllers.get(inLedControllerId);
+	}
+
+	public final void removeLedController(String inLedControllerId) {
+		ledControllers.remove(inLedControllerId);
+	}
+
 	public final boolean isCredentialValid(final String inCredential) {
 		boolean result = false;
 
@@ -194,28 +210,29 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 		}
 		return result;
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * Create the aisle's controller.
 	 * @param inCodeshelfNetwork
 	 * @param inGUID
 	 */
-	public final void createLedController(final String inGUID) {
+	public final LedController createLedController(String inDomainId, NetGuid inGuid) {
 
-		LedController controller = LedController.DAO.findByDomainId(this, inGUID);
-		if (controller == null) {
+		LedController result = LedController.DAO.findByDomainId(this, inDomainId);
+		if (result == null) {
 			// Get the first network in the list of networks.
-			controller = new LedController();
-			controller.setParent(this);
-			controller.setDomainId(inGUID);
-			controller.setDesc("Default controller for " + this.getDomainId());
-			controller.setDeviceNetGuid(new NetGuid(inGUID));
+			result = new LedController();
+			result.setParent(this);
+			result.setDomainId(inDomainId);
+			result.setDesc("LED controller for " + this.getDomainId());
+			result.setDeviceNetGuid(inGuid);
 			try {
-				LedController.DAO.store(controller);
+				LedController.DAO.store(result);
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}
 		}
+		return result;
 	}
 }

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: AisleDevice.java,v 1.3 2013/04/01 23:42:40 jeffw Exp $
+ *  $Id: AisleDevice.java,v 1.4 2013/04/14 23:35:26 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -26,9 +26,9 @@ public class AisleDevice extends DeviceABC {
 	}
 
 	@Override
-	public void start() {
-		short position = 1;
-		sendLightCommand(CommandControlLight.CHANNEL1, position, ColorEnum.BLUE, CommandControlLight.EFFECT_SOLID);
+	public final void start() {
+//		short position = 1;
+//		sendLightCommand(CommandControlLight.CHANNEL1, position, ColorEnum.BLUE, CommandControlLight.EFFECT_SOLID);
 	}
 
 	@Override

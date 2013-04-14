@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CheDevice.java,v 1.20 2013/04/14 05:58:42 jeffw Exp $
+ *  $Id: CheDevice.java,v 1.21 2013/04/14 23:35:26 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -26,6 +26,7 @@ import com.gadgetworks.flyweight.command.ColorEnum;
 import com.gadgetworks.flyweight.command.CommandControlLight;
 import com.gadgetworks.flyweight.command.CommandControlMessage;
 import com.gadgetworks.flyweight.command.ICommand;
+import com.gadgetworks.flyweight.command.NetAddress;
 import com.gadgetworks.flyweight.command.NetEndpoint;
 import com.gadgetworks.flyweight.command.NetGuid;
 import com.gadgetworks.flyweight.controller.IRadioController;
@@ -122,7 +123,7 @@ public class CheDevice extends DeviceABC {
 	 * Send a light command to the CHE to light a position
 	 * @param inPosition
 	 */
-	private void sendLightCommand(final Short inPosition, final ColorEnum inColor) {
+	private void sendCheLightCommand(final Short inPosition, final ColorEnum inColor) {
 		LOGGER.info("Light position: " + inPosition);
 		ICommand command = new CommandControlLight(NetEndpoint.PRIMARY_ENDPOINT,
 			CommandControlLight.CHANNEL1,
@@ -130,6 +131,21 @@ public class CheDevice extends DeviceABC {
 			inColor,
 			CommandControlLight.EFFECT_FLASH);
 		mRadioController.sendCommand(command, getAddress(), false);
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Send a light command to the CHE to light a position
+	 * @param inPosition
+	 */
+	private void sendLocationLightCommand(final NetAddress inDstAddr, final Short inPosition, final ColorEnum inColor) {
+		LOGGER.info("Light position: " + inPosition);
+		ICommand command = new CommandControlLight(NetEndpoint.PRIMARY_ENDPOINT,
+			CommandControlLight.CHANNEL1,
+			inPosition,
+			inColor,
+			CommandControlLight.EFFECT_FLASH);
+		mRadioController.sendCommand(command, inDstAddr, false);
 	}
 
 	// --------------------------------------------------------------------------
@@ -263,7 +279,7 @@ public class CheDevice extends DeviceABC {
 				break;
 		}
 
-		sendLightCommand(CommandControlLight.POSITION_ALL, ColorEnum.RED);
+		sendCheLightCommand(CommandControlLight.POSITION_ALL, ColorEnum.RED);
 	}
 
 	// --------------------------------------------------------------------------
@@ -380,12 +396,20 @@ public class CheDevice extends DeviceABC {
 		// The first WI has the SKU and location info.
 		WorkInstruction firstWi = mActivePickWiList.get(0);
 
-		// Now create a light instruction for each position.
+		// Send the CHE a display command (any of the WIs has the info we need).
 		sendDisplayCommand(firstWi.getLocationId(), firstWi.getItemId());
+		
+//		Short position = firstWi.getPosition();
+//		
+//		// Send the location display command.
+//		firstWi.getLedControllerCommand();
+//		sendLocationLightCommand(, position, firstWi.getColorEnum());
+		
+		// Now create a light instruction for each position.
 		for (WorkInstruction wi : mActivePickWiList) {
 			for (Entry<String, String> mapEntry : mContainersMap.entrySet()) {
 				if (mapEntry.getValue().equals(wi.getContainerId())) {
-					sendLightCommand(Short.valueOf(mapEntry.getKey()), wi.getColorEnum());
+					sendCheLightCommand(Short.valueOf(mapEntry.getKey()), wi.getColorEnum());
 				}
 			}
 		}
