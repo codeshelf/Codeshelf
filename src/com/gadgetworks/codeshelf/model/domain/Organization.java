@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Organization.java,v 1.37 2013/04/14 02:39:39 jeffw Exp $
+ *  $Id: Organization.java,v 1.38 2013/04/14 05:58:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -212,9 +212,6 @@ public class Organization extends DomainObjectABC {
 
 		// Create the default network for the facility.
 		CodeshelfNetwork network = facility.createNetwork(CodeshelfNetwork.DEFAULT_NETWORK_ID);
-
-//		Che che1 = network.createChe("CHE1", new NetGuid("0x00000001"));
-//		Che che2 = network.createChe("CHE2", new NetGuid("0x00000002"));
 
 		// Create the generic container kind (for all unspecified containers)
 		facility.createDefaultContainerKind();

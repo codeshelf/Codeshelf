@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.67 2013/04/14 02:39:39 jeffw Exp $
+ *  $Id: Facility.java,v 1.68 2013/04/14 05:58:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -654,7 +654,7 @@ public class Facility extends LocationABC<Organization> {
 								// Figure out if there are any items are on the current path.
 								// (We just take the first one we find, because items slotted on the same path should be close together.)
 								for (Item item : itemMaster.getItems()) {
-									ISubLocation location = (ISubLocation) item.getParent();
+									ISubLocation location = (ISubLocation) item.getStoredLocation();
 									if (path.isLocationOnPath(location)) {
 										foundLocation = location;
 										parentLocationId = ((ISubLocation<?>) foundLocation.getParent()).getLocationId();
@@ -695,6 +695,7 @@ public class Facility extends LocationABC<Organization> {
 										plannedWi.setLocationId(parentLocationId + "." + foundLocation.getLocationId());
 										plannedWi.setContainerId(containerId);
 										plannedWi.setPlanQuantity(quantityToPick);
+										plannedWi.setActualQuantity(0);
 										plannedWi.setAssigned(new Timestamp(System.currentTimeMillis()));
 										try {
 											WorkInstruction.DAO.store(plannedWi);

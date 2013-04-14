@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Path.java,v 1.26 2013/04/14 02:39:39 jeffw Exp $
+ *  $Id: Path.java,v 1.27 2013/04/14 05:58:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -65,7 +65,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 		public PathDao(final ISchemaManager inSchemaManager) {
 			super(inSchemaManager);
 		}
-		
+
 		public final Class<Path> getDaoClass() {
 			return Path.class;
 		}
@@ -227,7 +227,8 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	 * @return
 	 */
 	public static Double computeLineLength(final Point inPointA, final Point inPointB) {
-		return Math.abs(Math.sqrt((inPointB.getX() - inPointA.getX()) * (inPointB.getX() - inPointA.getX()) + (inPointB.getY() - inPointA.getY()) * (inPointB.getY() - inPointA.getY())));
+		return Math.abs(Math.sqrt((inPointB.getX() - inPointA.getX()) * (inPointB.getX() - inPointA.getX())
+				+ (inPointB.getY() - inPointA.getY()) * (inPointB.getY() - inPointA.getY())));
 	}
 
 	// --------------------------------------------------------------------------
@@ -237,7 +238,10 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	 * @param inXDimMeters
 	 * @param inYDimMeters
 	 */
-	public final void createPathSegments(final Aisle inAssociatedAisle, final Double inXDimMeters, final Double inYDimMeters, final boolean inOpensLowSide) {
+	public final void createPathSegments(final Aisle inAssociatedAisle,
+		final Double inXDimMeters,
+		final Double inYDimMeters,
+		final boolean inOpensLowSide) {
 		// If there are already path segments then create a connecting path to the new ones.
 		Integer segmentOrder = 0;
 		PathSegment lastSegment = null;
@@ -282,6 +286,11 @@ public class Path extends DomainObjectTreeABC<Facility> {
 
 		// Link the path segment as the primary path for the aisle and all of its child locations (recursively).
 		inAssociatedAisle.setPathSegment(segmentA);
+		try {
+			LocationABC.DAO.store(inAssociatedAisle);
+		} catch (DaoException e) {
+			LOGGER.error("", e);
+		}
 	}
 
 	// --------------------------------------------------------------------------

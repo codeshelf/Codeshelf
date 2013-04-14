@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: LocationABC.java,v 1.35 2013/04/13 02:26:29 jeffw Exp $
+ *  $Id: LocationABC.java,v 1.36 2013/04/14 05:58:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -55,7 +55,7 @@ import com.google.inject.Singleton;
 
 @Entity
 @MappedSuperclass
-@CacheStrategy(useBeanCache = true)
+@CacheStrategy(useBeanCache = false)
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @Table(name = "location", schema = "codeshelf")
 @DiscriminatorColumn(name = "dtype", discriminatorType = DiscriminatorType.STRING)
@@ -251,22 +251,22 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	public final <T extends ILocation> T getParentAtLevel(Class<? extends ILocation> inClassWanted) {
 		T result = null;
 
-		ILocation<P> parent = (ILocation<P>) getParent();
+		ILocation<P> checkParent = (ILocation<P>) getParent();
 
 		// There's some weirdness with Ebean and navigating a recursive hierarchy. (You can't go down and then back up to a different class.)
 		// This fixes that problem, but it's not pretty.
-		parent = DAO.findByPersistentId(parent.getClass(), parent.getPersistentId());
+		checkParent = DAO.findByPersistentId(checkParent.getClass(), checkParent.getPersistentId());
 
-		if (parent.getClass().equals(inClassWanted)) {
+		if (checkParent.getClass().equals(inClassWanted)) {
 			// This is the parent we want. (We can cast safely since we checked the class.)
-			result = (T) parent;
+			result = (T) checkParent;
 		} else {
-			if (parent.getClass().equals(Facility.class)) {
+			if (checkParent.getClass().equals(Facility.class)) {
 				// We cannot go higher than the Facility as a parent, so there is no such parent with the requested class.
 				result = null;
 			} else {
 				// The current parent is not the class we want so recurse up the hierarchy.
-				result = (T) parent.getParentAtLevel(inClassWanted);
+				result = (T) checkParent.getParentAtLevel(inClassWanted);
 			}
 		}
 
@@ -363,11 +363,11 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		}
 
 		pathSegment = inPathSegment;
-		try {
-			LocationABC.DAO.store(this);
-		} catch (DaoException e) {
-			LOGGER.error("", e);
-		}
+//		try {
+//			LocationABC.DAO.store(this);
+//		} catch (DaoException e) {
+//			LOGGER.error("", e);
+//		}
 	}
 
 	// --------------------------------------------------------------------------

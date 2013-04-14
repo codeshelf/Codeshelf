@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CheDevice.java,v 1.19 2013/04/04 19:05:08 jeffw Exp $
+ *  $Id: CheDevice.java,v 1.20 2013/04/14 05:58:42 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -36,57 +36,57 @@ import com.gadgetworks.flyweight.controller.IRadioController;
  */
 public class CheDevice extends DeviceABC {
 
-	private static final Logger				LOGGER				= LoggerFactory.getLogger(CheDevice.class);
+	private static final Logger		LOGGER				= LoggerFactory.getLogger(CheDevice.class);
 
-	private static final String				BARCODE_DELIMITER	= "%";
-	private static final String				COMMAND_PREFIX		= "X%";
-	private static final String				USER_PREFIX			= "U%";
-	private static final String				CONTAINER_PREFIX	= "O%";
-	private static final String				LOCATION_PREFIX		= "L%";
-	private static final String				ITEMID_PREFIX		= "I%";
-	private static final String				POSITION_PREFIX		= "B%";
+	private static final String		BARCODE_DELIMITER	= "%";
+	private static final String		COMMAND_PREFIX		= "X%";
+	private static final String		USER_PREFIX			= "U%";
+	private static final String		CONTAINER_PREFIX	= "O%";
+	private static final String		LOCATION_PREFIX		= "L%";
+	private static final String		ITEMID_PREFIX		= "I%";
+	private static final String		POSITION_PREFIX		= "B%";
 
 	// These are the message strings we send to the remote CHE.
 	// Currently, these cannot be longer than 10 characters.
-	private static final String				EMPTY_MSG			= "";
-	private static final String				INVALID_SCAN_MSG	= "INVALID";
-	private static final String				SCAN_USERID_MSG		= "SCAN BADGE";
-	private static final String				SCAN_LOCATION_MSG	= "SCAN LOC";
-	private static final String				SCAN_CONTAINER_MSG	= "SCAN CNTR";
-	private static final String				SELECT_POSITION_MSG	= "SELECT POS";
-	private static final String				PICK_COMPLETE_MSG	= "PICK CMPLT";
+	private static final String		EMPTY_MSG			= "";
+	private static final String		INVALID_SCAN_MSG	= "INVALID";
+	private static final String		SCAN_USERID_MSG		= "SCAN BADGE";
+	private static final String		SCAN_LOCATION_MSG	= "SCAN LOC";
+	private static final String		SCAN_CONTAINER_MSG	= "SCAN CNTR";
+	private static final String		SELECT_POSITION_MSG	= "SELECT POS";
+	private static final String		PICK_COMPLETE_MSG	= "PICK CMPLT";
 
-	private static final String				STARTWORK_COMMAND	= "START";
-	private static final String				SETUP_COMMAND		= "SETUP";
-	private static final String				SHORT_COMMAND		= "SHORT";
-	private static final String				LOGOUT_COMMAND		= "LOGOUT";
-	private static final String				RESUME_COMMAND		= "RESUME";
-	private static final String				YES_COMMAND			= "YES";
-	private static final String				NO_COMMAND			= "NO";
+	private static final String		STARTWORK_COMMAND	= "START";
+	private static final String		SETUP_COMMAND		= "SETUP";
+	private static final String		SHORT_COMMAND		= "SHORT";
+	private static final String		LOGOUT_COMMAND		= "LOGOUT";
+	private static final String		RESUME_COMMAND		= "RESUME";
+	private static final String		YES_COMMAND			= "YES";
+	private static final String		NO_COMMAND			= "NO";
 
 	// The CHE's current state.
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
-	private CheStateEnum					mCheStateEnum;
+	private CheStateEnum			mCheStateEnum;
 
 	// The CHE's current location.
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
-	private String							mLocation;
+	private String					mLocation;
 
 	// The CHE's current user.
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
-	private String							mUserId;
+	private String					mUserId;
 
 	// The CHE's container map.
-	private String							mContainerInSetup;
+	private String					mContainerInSetup;
 
 	// The CHE's container map.
-	private Map<String, String>				mContainersMap;
+	private Map<String, String>		mContainersMap;
 
 	// All WIs for all containers on the CHE.
 	private List<WorkInstruction>	mAllPicksWiList;
@@ -94,7 +94,10 @@ public class CheDevice extends DeviceABC {
 	// The active pick WIs.
 	private List<WorkInstruction>	mActivePickWiList;
 
-	public CheDevice(final UUID inPersistentId, final NetGuid inGuid, final ICsDeviceManager inDeviceManager, final IRadioController inRadioController) {
+	public CheDevice(final UUID inPersistentId,
+		final NetGuid inGuid,
+		final ICsDeviceManager inDeviceManager,
+		final IRadioController inRadioController) {
 		super(inPersistentId, inGuid, inDeviceManager, inRadioController);
 
 		mCheStateEnum = CheStateEnum.IDLE;
@@ -121,7 +124,11 @@ public class CheDevice extends DeviceABC {
 	 */
 	private void sendLightCommand(final Short inPosition, final ColorEnum inColor) {
 		LOGGER.info("Light position: " + inPosition);
-		ICommand command = new CommandControlLight(NetEndpoint.PRIMARY_ENDPOINT, CommandControlLight.CHANNEL1, inPosition, inColor, CommandControlLight.EFFECT_FLASH);
+		ICommand command = new CommandControlLight(NetEndpoint.PRIMARY_ENDPOINT,
+			CommandControlLight.CHANNEL1,
+			inPosition,
+			inColor,
+			CommandControlLight.EFFECT_FLASH);
 		mRadioController.sendCommand(command, getAddress(), false);
 	}
 
@@ -345,15 +352,21 @@ public class CheDevice extends DeviceABC {
 			// Loop through each container to see if there is a WI for that container at the next location.
 			// The "next location" is the first location we find for the next pick.
 			String firstLocation = null;
+			String firstItemId = null;
 			for (String containerId : mContainersMap.values()) {
 				Iterator<WorkInstruction> wiIter = mAllPicksWiList.iterator();
 				while (wiIter.hasNext()) {
 					WorkInstruction wi = wiIter.next();
-					if (((firstLocation == null) || (firstLocation.equals(wi.getLocationId()))) && (wi.getContainerId().equals(containerId))) {
-						firstLocation = wi.getLocationId();
-						wi.setStarted(new Timestamp(System.currentTimeMillis()));
-						mActivePickWiList.add(wi);
-						wiIter.remove();
+					if (wi.getContainerId().equals(containerId)) {
+						if ((firstLocation == null) || (firstLocation.equals(wi.getLocationId()))) {
+							if ((firstItemId == null) || (firstItemId.equals(wi.getItemId()))) {
+								firstLocation = wi.getLocationId();
+								firstItemId = wi.getItemId();
+								wi.setStarted(new Timestamp(System.currentTimeMillis()));
+								mActivePickWiList.add(wi);
+								wiIter.remove();
+							}
+						}
 					} else {
 						break;
 					}
@@ -459,14 +472,14 @@ public class CheDevice extends DeviceABC {
 				while (wiIter.hasNext()) {
 					WorkInstruction wi = wiIter.next();
 					if (wi.getContainerId().equals(containerId)) {
-						
+
 						// HACK HACK HACK
 						// StitchFix is the first client and they only pick one item - ever.
 						// When we have h/w that picks more than one item we'll address this.
 						wi.setActualQuantity(1);
 						wi.setPickerId(mUserId);
 						wi.setCompleted(new Timestamp(System.currentTimeMillis()));
-						
+
 						mDeviceManager.completeWi(getGuid().getHexStringNoPrefix(), getPersistentId(), wi);
 						LOGGER.info("Pick completed: " + wi);
 						wiIter.remove();

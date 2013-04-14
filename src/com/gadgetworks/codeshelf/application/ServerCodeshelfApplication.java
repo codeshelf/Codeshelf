@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ServerCodeshelfApplication.java,v 1.14 2013/04/13 02:26:29 jeffw Exp $
+ *  $Id: ServerCodeshelfApplication.java,v 1.15 2013/04/14 05:58:42 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -20,14 +20,16 @@ import com.gadgetworks.codeshelf.edi.IEdiProcessor;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.IDatabase;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.codeshelf.model.domain.Che;
+import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
 import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.monitor.IMonitor;
-import com.gadgetworks.codeshelf.monitor.Monitor;
 import com.gadgetworks.codeshelf.report.IPickDocumentGenerator;
 import com.gadgetworks.codeshelf.ws.websocket.IWebSocketServer;
+import com.gadgetworks.flyweight.command.NetGuid;
 import com.google.inject.Inject;
 
 public final class ServerCodeshelfApplication extends ApplicationABC {
@@ -44,7 +46,7 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 	private ITypedDao<Organization>			mOrganizationDao;
 	private ITypedDao<Facility>				mFacilityDao;
 	private ITypedDao<User>					mUserDao;
-	
+
 	private IMonitor						mMonitor;
 
 	private BlockingQueue<String>			mEdiProcessSignalQueue;
@@ -73,7 +75,7 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		mFacilityDao = inFacilityDao;
 		mUserDao = inUserDao;
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.application.ApplicationABC#doLoadLibraries()
@@ -92,8 +94,8 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		String processName = ManagementFactory.getRuntimeMXBean().getName();
 		LOGGER.info("------------------------------------------------------------");
 		LOGGER.info("Process info: " + processName);
-		
-//		mMonitor.logToCentralAdmin("Startup: codeshelf server " + processName);
+
+		//		mMonitor.logToCentralAdmin("Startup: codeshelf server " + processName);
 
 		mDatabase.start();
 
@@ -106,13 +108,26 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 			if (facility != null) {
 				facility.logLocationDistances();
 				facility.recomputeDdcPositions();
+
+				CodeshelfNetwork network = facility.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_ID);
+				if (network != null) {
+					Che che1 = network.getChe("CHE1");
+					if (che1 == null) {
+						che1 = network.createChe("CHE1", new NetGuid("0x00000001"));
+					}
+					Che che2 = network.getChe("CHE2");
+					if (che2 == null) {
+						che2 = network.createChe("CHE2", new NetGuid("0x00000002"));
+					}
+				}
+
 			}
 		}
 
 		// Start the EDI process.
 		mEdiProcessSignalQueue = new ArrayBlockingQueue<>(100);
 		mEdiProcessor.startProcessor(mEdiProcessSignalQueue);
-		
+
 		// Start the pick document generator process;
 		mPickDocumentGenerator.startProcessor(mEdiProcessSignalQueue);
 
@@ -148,9 +163,18 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 	}
 
 	private void initPreferencesStore(Organization inOrganization) {
-		initPreference(inOrganization, PersistentProperty.FORCE_CHANNEL, "Preferred wireless channel", RadioController.NO_PREFERRED_CHANNEL_TEXT);
-		initPreference(inOrganization, PersistentProperty.GENERAL_INTF_LOG_LEVEL, "Preferred general log level", Level.INFO.toString());
-		initPreference(inOrganization, PersistentProperty.GATEWAY_INTF_LOG_LEVEL, "Preferred gateway log level", Level.INFO.toString());
+		initPreference(inOrganization,
+			PersistentProperty.FORCE_CHANNEL,
+			"Preferred wireless channel",
+			RadioController.NO_PREFERRED_CHANNEL_TEXT);
+		initPreference(inOrganization,
+			PersistentProperty.GENERAL_INTF_LOG_LEVEL,
+			"Preferred general log level",
+			Level.INFO.toString());
+		initPreference(inOrganization,
+			PersistentProperty.GATEWAY_INTF_LOG_LEVEL,
+			"Preferred gateway log level",
+			Level.INFO.toString());
 	}
 
 	// --------------------------------------------------------------------------
