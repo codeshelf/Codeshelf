@@ -3,3 +3,7 @@ SYSFS{idProduct}==”ada8”, SYSFS{idVendor}==”0403”, RUN+=”/sbin/modprob
 
 # A rule to remove VCP (FTDI-SIO)
 ATTRS{idProduct}=="6001", ATTRS{idVendor}=="0403", MODE="0666", GROUP="jeffw", RUN+="/sbin/rmmod -v ftdi-sio"
+
+# A rule to enable LUFA on the Eink display driver
+ATTRS{idProduct}=="0007", ATTRS{idVendor}=="1b4f", MODE="0666", GROUP="jeffw"
+

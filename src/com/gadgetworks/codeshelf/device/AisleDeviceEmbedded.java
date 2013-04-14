@@ -1,13 +1,12 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: AisleDeviceEmbedded.java,v 1.5 2013/04/10 03:35:46 jeffw Exp $
+ *  $Id: AisleDeviceEmbedded.java,v 1.6 2013/04/14 23:33:18 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import jd2xx.JD2XX;
@@ -16,6 +15,7 @@ import jd2xx.JD2XX.DeviceInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.gadgetworks.flyweight.command.ColorEnum;
 import com.gadgetworks.flyweight.command.CommandControlABC;
 import com.gadgetworks.flyweight.command.CommandControlLight;
 
@@ -55,20 +55,20 @@ public class AisleDeviceEmbedded extends DeviceEmbeddedABC {
 		mJD2XXInterface = new JD2XX();
 		mStoredPositions = new ArrayList<LedPos>();
 
-		LedPos ledPos = new LedPos(5);
-		ledPos.addSample(new LedValue(LedValue.LED_GREEN));
-		ledPos.addSample(new LedValue(LedValue.LED_CYAN));
-		mStoredPositions.add(ledPos);
-
-		ledPos = new LedPos(7);
-		ledPos.addSample(new LedValue(LedValue.LED_ORANGE));
-		ledPos.addSample(new LedValue(LedValue.LED_MAGENTA));
-		ledPos.addSample(new LedValue(LedValue.LED_WHITE));
-		mStoredPositions.add(ledPos);
-
-		ledPos = new LedPos(19);
-		ledPos.addSample(new LedValue(LedValue.LED_BLUE));
-		mStoredPositions.add(ledPos);
+		//		LedPos ledPos = new LedPos(5);
+		//		ledPos.addSample(new LedValue(LedValue.LED_GREEN));
+		//		ledPos.addSample(new LedValue(LedValue.LED_CYAN));
+		//		mStoredPositions.add(ledPos);
+		//
+		//		ledPos = new LedPos(7);
+		//		ledPos.addSample(new LedValue(LedValue.LED_ORANGE));
+		//		ledPos.addSample(new LedValue(LedValue.LED_MAGENTA));
+		//		ledPos.addSample(new LedValue(LedValue.LED_WHITE));
+		//		mStoredPositions.add(ledPos);
+		//
+		//		ledPos = new LedPos(19);
+		//		ledPos.addSample(new LedValue(LedValue.LED_BLUE));
+		//		mStoredPositions.add(ledPos);
 	}
 
 	// --------------------------------------------------------------------------
@@ -154,7 +154,7 @@ public class AisleDeviceEmbedded extends DeviceEmbeddedABC {
 			}
 		}
 		mIsBlanking = !mIsBlanking;
-//		LOGGER.debug(Arrays.toString(mAllChannelsOutput));
+		//		LOGGER.debug(Arrays.toString(mAllChannelsOutput));
 		try {
 			mJD2XXInterface.write(mAllChannelsOutput);
 		} catch (IOException e) {
@@ -215,6 +215,11 @@ public class AisleDeviceEmbedded extends DeviceEmbeddedABC {
 
 			if (deviceToOpen == -1) {
 				LOGGER.info("No gateway found!");
+				try {
+					Thread.sleep(2000);
+				} catch (InterruptedException e) {
+					LOGGER.error("", e);
+				}
 			} else {
 				result = true;
 
@@ -235,7 +240,7 @@ public class AisleDeviceEmbedded extends DeviceEmbeddedABC {
 
 		return result;
 	}
-	
+
 	private void resetInterface() {
 		try {
 			mJD2XXInterface.close();
@@ -269,11 +274,54 @@ public class AisleDeviceEmbedded extends DeviceEmbeddedABC {
 		}
 	}
 
+	private LedValue mapColorEnumToLedValue(final ColorEnum inColorEnum) {
+		LedValue result = null;
+
+		switch (inColorEnum) {
+			case RED:
+				result = new LedValue(LedValue.LED_RED);
+				break;
+
+			case GREEN:
+				result = new LedValue(LedValue.LED_GREEN);
+				break;
+
+			case BLUE:
+				result = new LedValue(LedValue.LED_BLUE);
+				break;
+
+			case CYAN:
+				result = new LedValue(LedValue.LED_CYAN);
+				break;
+
+			case MAGENTA:
+				result = new LedValue(LedValue.LED_MAGENTA);
+				break;
+
+			case ORANGE:
+				result = new LedValue(LedValue.LED_ORANGE);
+				break;
+
+			case WHITE:
+				result = new LedValue(LedValue.LED_WHITE);
+				break;
+
+			default:
+				result = new LedValue(LedValue.LED_RED);
+		}
+
+		return result;
+	}
+
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inCommand
 	 */
 	private void processControlListCommand(CommandControlLight inCommand) {
 		LOGGER.info("Light message: " + inCommand.toString());
+
+		LedPos ledPos = new LedPos(inCommand.getPosition());
+		ledPos.addSample(mapColorEnumToLedValue(inCommand.getColor()));
+		mStoredPositions.add(ledPos);
 	}
 }

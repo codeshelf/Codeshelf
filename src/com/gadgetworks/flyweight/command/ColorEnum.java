@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: ColorEnum.java,v 1.1 2013/03/03 23:27:20 jeffw Exp $
+ *  $Id: ColorEnum.java,v 1.2 2013/04/14 23:33:18 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.flyweight.command;
 
@@ -20,8 +20,8 @@ public enum ColorEnum {
 	RED(ColorNum.RED, "RED"),
 	GREEN(ColorNum.GREEN, "GREEN"),
 	BLUE(ColorNum.BLUE, "BLUE"),
-	PURPLE(ColorNum.PURPLE, "PURPLE"),
-	PINK(ColorNum.PINK, "PINK"),
+	MAGENTA(ColorNum.MAGENTA, "MAGENTA"),
+	CYAN(ColorNum.CYAN, "CYAN"),
 	ORANGE(ColorNum.ORANGE, "ORANGE"),
 	WHITE(ColorNum.WHITE, "WHITE");
 
@@ -56,11 +56,11 @@ public enum ColorEnum {
 			case ColorNum.BLUE:
 				result = ColorEnum.BLUE;
 				break;
-			case ColorNum.PURPLE:
-				result = ColorEnum.PURPLE;
+			case ColorNum.MAGENTA:
+				result = ColorEnum.MAGENTA;
 				break;
-			case ColorNum.PINK:
-				result = ColorEnum.PINK;
+			case ColorNum.CYAN:
+				result = ColorEnum.CYAN;
 				break;
 			case ColorNum.ORANGE:
 				result = ColorEnum.ORANGE;
@@ -96,8 +96,8 @@ public enum ColorEnum {
 		static final int	BLUE	= 1;
 		static final int	RED		= 2;
 		static final int	GREEN	= 3;
-		static final int	PURPLE	= 4;
-		static final int	PINK	= 5;
+		static final int	MAGENTA	= 4;
+		static final int	CYAN	= 5;
 		static final int	ORANGE	= 6;
 		static final int	WHITE	= 7;
 
