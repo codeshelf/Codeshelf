@@ -18,6 +18,7 @@ public class LedValue {
 	public static final byte[]	LED_CYAN	= { OFF, ON_, ON_ };
 	public static final byte[]	LED_MAGENTA	= { ON_, OFF, ON_ };
 
+	public static final byte[]	LED_BLACK	= { OFF, OFF, OFF };
 	public static final byte[]	LED_WHITE	= { ON_, ON_, ON_ };
 
 	public Byte					mRed;

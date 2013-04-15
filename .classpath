@@ -67,6 +67,6 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="lib" path="lib/dist/lombok-0.11.6.jar"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/ebean"/>
+	<classpathentry kind="lib" path="lib/dist/ebean-2.8.2-SNAPSHOT.jar"/>
 	<classpathentry kind="output" path="eclipse-bin"/>
 </classpath>
