@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CheDevice.java,v 1.21 2013/04/14 23:35:26 jeffw Exp $
+ *  $Id: CheDevice.java,v 1.22 2013/04/15 04:01:37 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -29,6 +29,7 @@ import com.gadgetworks.flyweight.command.ICommand;
 import com.gadgetworks.flyweight.command.NetAddress;
 import com.gadgetworks.flyweight.command.NetEndpoint;
 import com.gadgetworks.flyweight.command.NetGuid;
+import com.gadgetworks.flyweight.controller.INetworkDevice;
 import com.gadgetworks.flyweight.controller.IRadioController;
 
 /**
@@ -95,6 +96,8 @@ public class CheDevice extends DeviceABC {
 	// The active pick WIs.
 	private List<WorkInstruction>	mActivePickWiList;
 
+	private NetAddress				mLastLedControllerAddr;
+
 	public CheDevice(final UUID inPersistentId,
 		final NetGuid inGuid,
 		final ICsDeviceManager inDeviceManager,
@@ -138,13 +141,16 @@ public class CheDevice extends DeviceABC {
 	 * Send a light command to the CHE to light a position
 	 * @param inPosition
 	 */
-	private void sendLocationLightCommand(final NetAddress inDstAddr, final Short inPosition, final ColorEnum inColor) {
+	private void sendLocationLightCommand(final NetAddress inDstAddr,
+		final Short inPosition,
+		final ColorEnum inColor,
+		final String inEffect) {
 		LOGGER.info("Light position: " + inPosition);
 		ICommand command = new CommandControlLight(NetEndpoint.PRIMARY_ENDPOINT,
 			CommandControlLight.CHANNEL1,
 			inPosition,
 			inColor,
-			CommandControlLight.EFFECT_FLASH);
+			inEffect);
 		mRadioController.sendCommand(command, inDstAddr, false);
 	}
 
@@ -363,6 +369,11 @@ public class CheDevice extends DeviceABC {
 			showActivePicks();
 		} else if (mAllPicksWiList.size() == 0) {
 			// There are no more WIs, so the pick is complete.
+			
+			if (mLastLedControllerAddr != null) {
+				sendLocationLightCommand(mLastLedControllerAddr, CommandControlLight.POSITION_NONE, ColorEnum.BLACK, CommandControlLight.EFFECT_SOLID);
+			}
+
 			setState(CheStateEnum.PICK_COMPLETE);
 		} else {
 			// Loop through each container to see if there is a WI for that container at the next location.
@@ -398,13 +409,21 @@ public class CheDevice extends DeviceABC {
 
 		// Send the CHE a display command (any of the WIs has the info we need).
 		sendDisplayCommand(firstWi.getLocationId(), firstWi.getItemId());
-		
-//		Short position = firstWi.getPosition();
-//		
-//		// Send the location display command.
-//		firstWi.getLedControllerCommand();
-//		sendLocationLightCommand(, position, firstWi.getColorEnum());
-		
+
+		INetworkDevice ledController = mRadioController.getNetworkDevice(new NetGuid(firstWi.getLedControllerId()));
+		if (ledController != null) {
+			Short position = (short) ((Math.random() * 32) + 1);
+			//firstWi.getPosition();
+			
+			if (mLastLedControllerAddr != null) {
+				sendLocationLightCommand(mLastLedControllerAddr, CommandControlLight.POSITION_NONE, ColorEnum.BLACK, CommandControlLight.EFFECT_SOLID);
+			}
+
+			// Send the location display command.
+			sendLocationLightCommand(ledController.getAddress(), position, firstWi.getColorEnum(), CommandControlLight.EFFECT_FLASH);
+			mLastLedControllerAddr = ledController.getAddress();
+		}
+
 		// Now create a light instruction for each position.
 		for (WorkInstruction wi : mActivePickWiList) {
 			for (Entry<String, String> mapEntry : mContainersMap.entrySet()) {

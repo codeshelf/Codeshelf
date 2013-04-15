@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: ColorEnum.java,v 1.2 2013/04/14 23:33:18 jeffw Exp $
+ *  $Id: ColorEnum.java,v 1.3 2013/04/15 04:01:37 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.flyweight.command;
 
@@ -23,6 +23,7 @@ public enum ColorEnum {
 	MAGENTA(ColorNum.MAGENTA, "MAGENTA"),
 	CYAN(ColorNum.CYAN, "CYAN"),
 	ORANGE(ColorNum.ORANGE, "ORANGE"),
+	BLACK(ColorNum.BLACK, "BLACK"),
 	WHITE(ColorNum.WHITE, "WHITE");
 
 	private int		mValue;
@@ -65,6 +66,9 @@ public enum ColorEnum {
 			case ColorNum.ORANGE:
 				result = ColorEnum.ORANGE;
 				break;
+			case ColorNum.BLACK:
+				result = ColorEnum.BLACK;
+				break;
 			case ColorNum.WHITE:
 				result = ColorEnum.WHITE;
 				break;
@@ -99,7 +103,8 @@ public enum ColorEnum {
 		static final int	MAGENTA	= 4;
 		static final int	CYAN	= 5;
 		static final int	ORANGE	= 6;
-		static final int	WHITE	= 7;
+		static final int	BLACK	= 7;
+		static final int	WHITE	= 8;
 
 		private ColorNum() {
 

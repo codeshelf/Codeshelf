@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandControlLight.java,v 1.4 2013/03/05 00:05:01 jeffw Exp $
+ *  $Id: CommandControlLight.java,v 1.5 2013/04/15 04:01:37 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.flyweight.command;
@@ -26,6 +26,7 @@ import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
  */
 public final class CommandControlLight extends CommandControlABC {
 
+	public static final Short	POSITION_NONE		= -1;
 	public static final Short	POSITION_ALL		= 0;
 	public static final Short	CHANNEL_ALL			= 0;
 	public static final Short	CHANNEL1			= 1;

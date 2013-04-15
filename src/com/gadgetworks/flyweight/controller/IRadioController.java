@@ -1,12 +1,13 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: IRadioController.java,v 1.2 2013/03/03 23:27:21 jeffw Exp $
+ *  $Id: IRadioController.java,v 1.3 2013/04/15 04:01:37 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.flyweight.controller;
 
 import com.gadgetworks.flyweight.command.ICommand;
 import com.gadgetworks.flyweight.command.NetAddress;
+import com.gadgetworks.flyweight.command.NetGuid;
 import com.gadgetworks.flyweight.command.NetworkId;
 
 // --------------------------------------------------------------------------
@@ -81,5 +82,12 @@ public interface IRadioController extends Runnable {
 	 * @param inNetworkDevice
 	 */
 	void removeNetworkDevice(INetworkDevice inNetworkDevice);
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inGuid
+	 * @return
+	 */
+	INetworkDevice getNetworkDevice(NetGuid inGuid);
 	
 }

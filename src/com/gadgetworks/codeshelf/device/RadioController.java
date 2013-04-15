@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: RadioController.java,v 1.9 2013/03/04 04:47:27 jeffw Exp $
+ *  $Id: RadioController.java,v 1.10 2013/04/15 04:01:37 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.device;
@@ -1008,5 +1008,14 @@ public class RadioController implements IRadioController {
 	public final void removeNetworkDevice(INetworkDevice inNetworkDevice) {
 		mDeviceGuidMap.remove(inNetworkDevice.getGuid());
 		mDeviceNetAddrMap.remove(inNetworkDevice.getAddress());
+	}
+
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.flyweight.controller.IRadioController#getNetworkDevice(com.gadgetworks.flyweight.command.NetGuid)
+	 */
+	@Override
+	public final INetworkDevice getNetworkDevice(NetGuid inGuid) {
+		return mDeviceGuidMap.get(inGuid);
 	}
 }
