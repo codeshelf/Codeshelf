@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CsDeviceManager.java,v 1.13 2013/04/14 02:39:39 jeffw Exp $
+ *  $Id: CsDeviceManager.java,v 1.14 2013/04/15 21:27:05 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -54,7 +54,7 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 	private static final String						WEBSOCKET_CHECK				= "Websocket Checker";
 	private static final Integer					WEBSOCKET_OPEN_RETRY_MILLIS	= 5000;
 
-	private Map<NetGuid, INetworkDevice>			mCheMap;
+	private Map<NetGuid, INetworkDevice>			mDeviceMap;
 	private IRadioController						mRadioController;
 	private ICsWebSocketClient						mWebSocketClient;
 	private int										mNextMsgNum					= 1;
@@ -78,7 +78,7 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 
 		//mWebSocketClient = inWebSocketClient;
 		mRadioController = inRadioController;
-		mCheMap = new HashMap<NetGuid, INetworkDevice>();
+		mDeviceMap = new HashMap<NetGuid, INetworkDevice>();
 
 		mUri = inUriStr;
 		mUtil = inUtil;
@@ -151,6 +151,15 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 
 	public final void stop() {
 
+	}
+
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.device.ICsDeviceManager#getDeviceByGuid(com.gadgetworks.flyweight.command.NetGuid)
+	 */
+	@Override
+	public final INetworkDevice getDeviceByGuid(NetGuid inGuid) {
+		return mDeviceMap.get(inGuid);
 	}
 
 	// --------------------------------------------------------------------------
@@ -319,7 +328,7 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 
 		NetGuid cheId = new NetGuid("0x" + inDataNode.get("cheId").asText());
 
-		CheDevice cheDevice = (CheDevice) mCheMap.get(cheId);
+		CheDevice cheDevice = (CheDevice) mDeviceMap.get(cheId);
 
 		if (cheDevice != null) {
 			if (resultsNode != null) {
@@ -369,8 +378,8 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 					cheDevice = new CheDevice(persistentId, deviceGuid, this, mRadioController);
 
 					// Check to see if the Che is already in our map.
-					if (!mCheMap.containsValue(cheDevice)) {
-						mCheMap.put(deviceGuid, cheDevice);
+					if (!mDeviceMap.containsValue(cheDevice)) {
+						mDeviceMap.put(deviceGuid, cheDevice);
 						mRadioController.addNetworkDevice(cheDevice);
 					}
 
@@ -379,11 +388,11 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 
 				case IWsReqCmd.OP_TYPE_UPDATE:
 					// Update the CHE.
-					cheDevice = mCheMap.get(deviceGuid);
+					cheDevice = mDeviceMap.get(deviceGuid);
 
 					if (cheDevice == null) {
 						cheDevice = new CheDevice(persistentId, deviceGuid, this, mRadioController);
-						mCheMap.put(deviceGuid, cheDevice);
+						mDeviceMap.put(deviceGuid, cheDevice);
 						mRadioController.addNetworkDevice(cheDevice);
 					}
 					LOGGER.info("Updated che: " + cheDevice.getGuid());
@@ -391,7 +400,7 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 
 				case IWsReqCmd.OP_TYPE_DELETE:
 					// Delete the CHE.
-					cheDevice = mCheMap.remove(deviceGuid);
+					cheDevice = mDeviceMap.remove(deviceGuid);
 					mRadioController.removeNetworkDevice(cheDevice);
 					LOGGER.info("Deleted che: " + cheDevice.getGuid());
 					break;
@@ -418,8 +427,8 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 					aisleDevice = new AisleDevice(persistentId, deviceGuid, this, mRadioController);
 
 					// Check to see if the aisle device is already in our map.
-					if (!mCheMap.containsValue(aisleDevice)) {
-						mCheMap.put(deviceGuid, aisleDevice);
+					if (!mDeviceMap.containsValue(aisleDevice)) {
+						mDeviceMap.put(deviceGuid, aisleDevice);
 						mRadioController.addNetworkDevice(aisleDevice);
 					}
 
@@ -428,11 +437,11 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 
 				case IWsReqCmd.OP_TYPE_UPDATE:
 					// Update the aisle device.
-					aisleDevice = mCheMap.get(deviceGuid);
+					aisleDevice = mDeviceMap.get(deviceGuid);
 
 					if (aisleDevice == null) {
 						aisleDevice = new AisleDevice(persistentId, deviceGuid, this, mRadioController);
-						mCheMap.put(deviceGuid, aisleDevice);
+						mDeviceMap.put(deviceGuid, aisleDevice);
 						mRadioController.addNetworkDevice(aisleDevice);
 					}
 					LOGGER.info("Updated aisle device: " + aisleDevice.getGuid());
@@ -440,7 +449,7 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 
 				case IWsReqCmd.OP_TYPE_DELETE:
 					// Delete the aisle device.
-					aisleDevice = mCheMap.remove(deviceGuid);
+					aisleDevice = mDeviceMap.remove(deviceGuid);
 					mRadioController.removeNetworkDevice(aisleDevice);
 					LOGGER.info("Deleted aisle device: " + aisleDevice.getGuid());
 					break;
@@ -458,7 +467,7 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 	@Override
 	public final boolean canNetworkDeviceAssociate(final NetGuid inGuid) {
 		boolean result = false;
-		for (INetworkDevice cheDevice : mCheMap.values()) {
+		for (INetworkDevice cheDevice : mDeviceMap.values()) {
 			if (cheDevice.getGuid().equals(inGuid)) {
 				result = true;
 			}

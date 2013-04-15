@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CheDevice.java,v 1.22 2013/04/15 04:01:37 jeffw Exp $
+ *  $Id: CheDevice.java,v 1.23 2013/04/15 21:27:05 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -96,7 +96,7 @@ public class CheDevice extends DeviceABC {
 	// The active pick WIs.
 	private List<WorkInstruction>	mActivePickWiList;
 
-	private NetAddress				mLastLedControllerAddr;
+	private NetGuid					mLastLedControllerGuid;
 
 	public CheDevice(final UUID inPersistentId,
 		final NetGuid inGuid,
@@ -138,20 +138,33 @@ public class CheDevice extends DeviceABC {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * Send a light command to the CHE to light a position
+	 * Send a light command for this CHE on the specified LED controller.
 	 * @param inPosition
 	 */
-	private void sendLocationLightCommand(final NetAddress inDstAddr,
+	private void ledControllerSetLed(final NetGuid inControllerGuid,
 		final Short inPosition,
 		final ColorEnum inColor,
 		final String inEffect) {
 		LOGGER.info("Light position: " + inPosition);
-		ICommand command = new CommandControlLight(NetEndpoint.PRIMARY_ENDPOINT,
-			CommandControlLight.CHANNEL1,
-			inPosition,
-			inColor,
-			inEffect);
-		mRadioController.sendCommand(command, inDstAddr, false);
+		INetworkDevice device = mDeviceManager.getDeviceByGuid(inControllerGuid);
+		if (device instanceof AisleDevice) {
+			AisleDevice aisleDevice = (AisleDevice) device;
+			aisleDevice.addLedCmdFor(getGuid(), inPosition, inColor, CommandControlLight.EFFECT_DIRECT);
+		}
+		mLastLedControllerGuid = inControllerGuid;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Clear the LEDs for this CHE on this specified LED controller.
+	 * @param inGuid
+	 */
+	private void ledControllerClearLeds(final NetGuid inControllerGuid) {
+		INetworkDevice device = mDeviceManager.getDeviceByGuid(inControllerGuid);
+		if (device instanceof AisleDevice) {
+			AisleDevice aisleDevice = (AisleDevice) device;
+			aisleDevice.clearLedCmdFor(getGuid());
+		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -369,9 +382,9 @@ public class CheDevice extends DeviceABC {
 			showActivePicks();
 		} else if (mAllPicksWiList.size() == 0) {
 			// There are no more WIs, so the pick is complete.
-			
-			if (mLastLedControllerAddr != null) {
-				sendLocationLightCommand(mLastLedControllerAddr, CommandControlLight.POSITION_NONE, ColorEnum.BLACK, CommandControlLight.EFFECT_SOLID);
+
+			if (mLastLedControllerGuid != null) {
+				ledControllerClearLeds(mLastLedControllerGuid);
 			}
 
 			setState(CheStateEnum.PICK_COMPLETE);
@@ -412,16 +425,19 @@ public class CheDevice extends DeviceABC {
 
 		INetworkDevice ledController = mRadioController.getNetworkDevice(new NetGuid(firstWi.getLedControllerId()));
 		if (ledController != null) {
-			Short position = (short) ((Math.random() * 32) + 1);
+			Short startPosition = (short) ((Math.random() * 16) + 1);
+			Short endPosition = (short) ((Math.random() * 16) + 16);
 			//firstWi.getPosition();
-			
-			if (mLastLedControllerAddr != null) {
-				sendLocationLightCommand(mLastLedControllerAddr, CommandControlLight.POSITION_NONE, ColorEnum.BLACK, CommandControlLight.EFFECT_SOLID);
+
+			// Clear the last LED if there was one.
+			if (mLastLedControllerGuid != null) {
+				ledControllerClearLeds(mLastLedControllerGuid);
 			}
 
 			// Send the location display command.
-			sendLocationLightCommand(ledController.getAddress(), position, firstWi.getColorEnum(), CommandControlLight.EFFECT_FLASH);
-			mLastLedControllerAddr = ledController.getAddress();
+			for (short position = startPosition; position < endPosition; position++) {
+				ledControllerSetLed(ledController.getGuid(), position, firstWi.getColorEnum(), CommandControlLight.EFFECT_FLASH);				
+			}
 		}
 
 		// Now create a light instruction for each position.
