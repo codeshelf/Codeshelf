@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.70 2013/04/14 23:35:26 jeffw Exp $
+ *  $Id: Facility.java,v 1.71 2013/04/15 04:34:43 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -395,10 +395,10 @@ public class Facility extends LocationABC<Organization> {
 			aisle.createPaths(aisleBoundaryX, aisleBoundaryY, TravelDirectionEnum.FORWARD, inOpensLowSide);
 
 			// Create at least one aisle controller.
-//			CodeshelfNetwork network = networks.get(CodeshelfNetwork.DEFAULT_NETWORK_ID);
-//			if (network != null) {
-//				network.createLedController("0x00000000");
-//			}
+			//			CodeshelfNetwork network = networks.get(CodeshelfNetwork.DEFAULT_NETWORK_ID);
+			//			if (network != null) {
+			//				network.createLedController("0x00000000");
+			//			}
 		}
 	}
 
@@ -653,11 +653,13 @@ public class Facility extends LocationABC<Organization> {
 								// Figure out if there are any items are on the current path.
 								// (We just take the first one we find, because items slotted on the same path should be close together.)
 								for (Item item : itemMaster.getItems()) {
-									ISubLocation location = (ISubLocation) item.getStoredLocation();
-									if (path.isLocationOnPath(location)) {
-										foundLocation = location;
-										parentLocationId = ((ISubLocation<?>) foundLocation.getParent()).getLocationId();
-										break;
+									if (item.getStoredLocation() instanceof ISubLocation) {
+										ISubLocation location = (ISubLocation) item.getStoredLocation();
+										if (path.isLocationOnPath(location)) {
+											foundLocation = location;
+											parentLocationId = ((ISubLocation<?>) foundLocation.getParent()).getLocationId();
+											break;
+										}
 									}
 								}
 
