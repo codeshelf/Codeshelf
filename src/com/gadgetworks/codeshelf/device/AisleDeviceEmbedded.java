@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: AisleDeviceEmbedded.java,v 1.8 2013/04/15 21:27:05 jeffw Exp $
+ *  $Id: AisleDeviceEmbedded.java,v 1.9 2013/04/16 21:25:49 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -324,9 +324,9 @@ public class AisleDeviceEmbedded extends DeviceEmbeddedABC {
 	private void processControlListCommand(CommandControlLight inCommand) {
 		LOGGER.info("Light message: " + inCommand.toString());
 
-		mStoredPositions.clear();
-
-		if (inCommand.getPosition() != CommandControlLight.POSITION_NONE) {
+		if (inCommand.getPosition() == CommandControlLight.POSITION_NONE) {
+			mStoredPositions.clear();
+		} else {
 			LedPos ledPos = new LedPos(inCommand.getPosition());
 			ledPos.addSample(mapColorEnumToLedValue(inCommand.getColor()));
 			mStoredPositions.add(ledPos);
