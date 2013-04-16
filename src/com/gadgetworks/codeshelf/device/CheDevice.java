@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CheDevice.java,v 1.23 2013/04/15 21:27:05 jeffw Exp $
+ *  $Id: CheDevice.java,v 1.24 2013/04/16 05:48:05 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -159,8 +159,8 @@ public class CheDevice extends DeviceABC {
 	 * Clear the LEDs for this CHE on this specified LED controller.
 	 * @param inGuid
 	 */
-	private void ledControllerClearLeds(final NetGuid inControllerGuid) {
-		INetworkDevice device = mDeviceManager.getDeviceByGuid(inControllerGuid);
+	private void ledControllerClearLeds() {
+		INetworkDevice device = mDeviceManager.getDeviceByGuid(mLastLedControllerGuid);
 		if (device instanceof AisleDevice) {
 			AisleDevice aisleDevice = (AisleDevice) device;
 			aisleDevice.clearLedCmdFor(getGuid());
@@ -335,6 +335,8 @@ public class CheDevice extends DeviceABC {
 		mActivePickWiList.clear();
 		mAllPicksWiList.clear();
 		setState(CheStateEnum.IDLE);
+		
+		ledControllerClearLeds();
 	}
 
 	// --------------------------------------------------------------------------
@@ -384,7 +386,7 @@ public class CheDevice extends DeviceABC {
 			// There are no more WIs, so the pick is complete.
 
 			if (mLastLedControllerGuid != null) {
-				ledControllerClearLeds(mLastLedControllerGuid);
+				ledControllerClearLeds();
 			}
 
 			setState(CheStateEnum.PICK_COMPLETE);
@@ -425,13 +427,13 @@ public class CheDevice extends DeviceABC {
 
 		INetworkDevice ledController = mRadioController.getNetworkDevice(new NetGuid(firstWi.getLedControllerId()));
 		if (ledController != null) {
-			Short startPosition = (short) ((Math.random() * 16) + 1);
-			Short endPosition = (short) ((Math.random() * 16) + 16);
+			Short startPosition = (short) ((Math.random() * 6) + 10);
+			Short endPosition = (short) ((Math.random() * 6) + 16);
 			//firstWi.getPosition();
 
 			// Clear the last LED if there was one.
 			if (mLastLedControllerGuid != null) {
-				ledControllerClearLeds(mLastLedControllerGuid);
+				ledControllerClearLeds();
 			}
 
 			// Send the location display command.

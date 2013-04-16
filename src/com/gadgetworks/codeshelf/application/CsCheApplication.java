@@ -1,13 +1,10 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CsCheApplication.java,v 1.7 2013/04/14 23:33:18 jeffw Exp $
+ *  $Id: CsCheApplication.java,v 1.8 2013/04/16 05:48:05 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
-
-import jssc.SerialPort;
-import jssc.SerialPortException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

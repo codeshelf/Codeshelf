@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CsDeviceManager.java,v 1.14 2013/04/15 21:27:05 jeffw Exp $
+ *  $Id: CsDeviceManager.java,v 1.15 2013/04/16 05:48:04 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -470,6 +470,14 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 		for (INetworkDevice cheDevice : mDeviceMap.values()) {
 			if (cheDevice.getGuid().equals(inGuid)) {
 				result = true;
+
+				// Now blank the aisles that might have commands.
+				for (INetworkDevice device : mDeviceMap.values()) {
+					if (device instanceof AisleDevice) {
+						AisleDevice aisleDevice = (AisleDevice) device;
+						aisleDevice.clearLedCmdFor(inGuid);
+					}
+				}
 			}
 		}
 		return result;
@@ -505,7 +513,10 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 	 * @see com.gadgetworks.codeshelf.device.ICsDeviceManager#requestCheWork(java.lang.String, java.lang.String, java.lang.String)
 	 */
 	@Override
-	public final void requestCheWork(final String inCheId, final UUID inPersistentId, final String inLocationId, final List<String> inContainerIdList) {
+	public final void requestCheWork(final String inCheId,
+		final UUID inPersistentId,
+		final String inLocationId,
+		final List<String> inContainerIdList) {
 		LOGGER.info("Request for work: Che: " + inCheId + " Container: " + inContainerIdList.toString() + " Loc: " + inLocationId);
 
 		// Build the response Json object.
@@ -531,7 +542,7 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 		LOGGER.info("Complete: Che: " + inCheId + " WI: " + inWorkInstruction.toString());
 
 		inWorkInstruction.setStatusEnum(WorkInstructionStatusEnum.COMPLETE);
-		
+
 		// Build the response Json object.
 		ObjectMapper mapper = new ObjectMapper();
 		ObjectNode dataNode = mapper.createObjectNode();

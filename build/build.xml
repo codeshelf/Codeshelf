@@ -41,6 +41,7 @@
 	<property name="src" location="${basedir}/src" />
 	<property name="libs.dir" location="${basedir}/lib" />
 	<property name="libs.dist.dir" location="${basedir}/lib/dist" />
+	<property name="libs.native.dir" location="${basedir}/lib/native" />
 	<property name="keystore" location="${basedir}/build/keystore" />
 	<property name="target" location="${basedir}/target" />
 	<property name="target.build" location="${target}/build" />
@@ -59,6 +60,7 @@
 	<property name="target.enhanced.classes" location="${target.build}/enhanced-classes" />
 	<property name="target.resources" location="${target.build}/resources" />
 	<property name="target.lib" location="${target.build}/lib" />
+	<property name="target.native.dir" location="${target.lib}/native" />
 	<property name="target.docs" location="${target.build}/docs" />
 	<property name="target.docsapi" location="${target.docs}/api" />
 	<property name="bin" location="${target.build}/bin" />
@@ -158,6 +160,7 @@
 		<mkdir dir="${target.build}" />
 		<mkdir dir="${target.resources}" />
 		<mkdir dir="${target.lib}" />
+		<mkdir dir="${target.native.dir}" />
 		<mkdir dir="${target.docs}" />
 
 	</target>
@@ -195,6 +198,11 @@
 			<fileset dir="${libs.dist.dir}">
 				<include name="**/*.*" />
 				<exclude name="**/FlyWeightController.jar*" />
+			</fileset>
+		</copy>
+		<copy todir="${target.native.dir}">
+			<fileset dir="${libs.native.dir}">
+				<include name="*/**.*" />
 			</fileset>
 		</copy>
 		<copy todir="${target.lib}">
@@ -419,7 +427,7 @@
 	<!-- Jar builder =================================================================================== -->
 	<target name="build.jar" depends="clean, build" description="Build the app as a launchable jar">
 
-		<property name="main.class" value="com.gadgetworks.codeshelf.application.ServerMain" />
+		<property name="main.class" value="com.gadgetworks.codeshelf.application.CsCheMain" />
 		<mkdir dir="${appjar.build.dir}" />
 		<mkdir dir="${appjar.build.dir}/lib" />
 
@@ -439,6 +447,10 @@
 				<exclude name="**/codeshelf-unobfs.jar" />
 				<exclude name="**/datamodels.jar" />
 			</fileset>
+			<fileset dir="${target.lib}/native"/>
+		</copy>
+		<copy todir="${appjar.build.dir}/lib/native">
+			<fileset dir="${target.lib}/native"/>
 		</copy>
 
 		<!-- Obfuscate if requested -->
@@ -462,7 +474,13 @@
 		<!-- Create the final application JAR file. -->
 		<jar duplicate="fail" jarfile="${appjar.build.dir}/${codeshelf.app.jar.name}">
 			<zipfileset dir="${target.enhanced.classes}" />
-			<zipfileset dir="${target.resources}" />
+			<zipfileset dir="${target.resources}/">
+				<exclude name="**/server.config.properties" />
+				<exclude name="**/netcontroller.config.properties" />
+			</zipfileset>
+			<!--zipfileset dir="${target.build}/">
+				<include name="lib/**" />
+			</zipfileset-->
 			<zipfileset dir="${target.classes}/">
 				<exclude name="com.gadgetworks.codeshelf.model.domain/**.*" />
 			</zipfileset>
@@ -490,7 +508,7 @@
 			<fileset dir="${appjar.build.dir}">
 				<include name="**/*" />
 				<modified>
-					<param name="cache.cachefile" value="${basedir}/build/engine.scp.cache"/>
+					<param name="cache.cachefile" value="${basedir}/build/engine.scp.cache" />
 				</modified>
 			</fileset>
 		</scp>
