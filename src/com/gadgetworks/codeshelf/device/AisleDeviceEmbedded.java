@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: AisleDeviceEmbedded.java,v 1.10 2013/04/17 17:02:03 jeffw Exp $
+ *  $Id: AisleDeviceEmbedded.java,v 1.11 2013/04/17 19:54:49 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -186,21 +186,21 @@ public class AisleDeviceEmbedded extends DeviceEmbeddedABC {
 		Byte blue = inLedValue.getBlue();
 		for (int bit = 0; bit < 8; bit++) {
 			if ((blue & ((byte) (1 << bit))) != 0) {
-				mAllChannelsOutput[inPos * 24 + bit] |= 1;
+				mAllChannelsOutput[(inPos - 1) * 24 + bit] |= 1;
 			}
 		}
 
 		Byte green = inLedValue.getGreen();
 		for (int bit = 0; bit < 8; bit++) {
 			if ((green & ((byte) (1 << bit))) != 0) {
-				mAllChannelsOutput[inPos * 24 + 8 + bit] |= 1;
+				mAllChannelsOutput[(inPos - 1) * 24 + 8 + bit] |= 1;
 			}
 		}
 
 		Byte red = inLedValue.getRed();
 		for (int bit = 0; bit < 8; bit++) {
 			if ((red & ((byte) (1 << bit))) != 0) {
-				mAllChannelsOutput[inPos * 24 + 16 + bit] |= 1;
+				mAllChannelsOutput[(inPos - 1) * 24 + 16 + bit] |= 1;
 			}
 		}
 	}

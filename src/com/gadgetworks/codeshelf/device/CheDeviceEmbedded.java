@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CheDeviceEmbedded.java,v 1.15 2013/04/17 17:02:03 jeffw Exp $
+ *  $Id: CheDeviceEmbedded.java,v 1.16 2013/04/17 19:54:49 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -37,6 +37,8 @@ public class CheDeviceEmbedded extends AisleDeviceEmbedded {
 
 	@Override
 	public final void doStart() {
+		super.doStart();
+		
 		try {
 			mSerialPort = new SerialPort("/dev/ttyACM0");
 			mSerialPort.openPort();
