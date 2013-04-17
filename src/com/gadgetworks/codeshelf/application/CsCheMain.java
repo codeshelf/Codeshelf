@@ -1,7 +1,7 @@
 /*******************************************************************************
 CodeshelfWebSocketServer *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CsCheMain.java,v 1.3 2013/03/03 23:27:21 jeffw Exp $
+ *  $Id: CsCheMain.java,v 1.4 2013/04/17 17:02:03 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -92,7 +92,10 @@ public final class CsCheMain {
 		Injector injector = Guice.createInjector(new AbstractModule() {
 			@Override
 			protected void configure() {
-				bind(Byte.class).annotatedWith(Names.named(IPacket.NETWORK_NUM_PROPERTY)).toInstance(Byte.valueOf(System.getProperty("codeshelf.networknum")));
+				bind(Byte.class).annotatedWith(Names.named(IPacket.NETWORK_NUM_PROPERTY)).toInstance(Byte.valueOf(System.getProperty("networknum")));
+
+				bind(String.class).annotatedWith(Names.named(IEmbeddedDevice.CONTROLLER_IPADDR_PROPERTY)).toInstance(System.getProperty("controller.ipaddr"));
+				bind(String.class).annotatedWith(Names.named(IEmbeddedDevice.GUID_PROPERTY)).toInstance(System.getProperty("guid"));
 
 				bind(IUtil.class).to(Util.class);
 				bind(IEmbeddedDevice.class).to(CheDeviceEmbedded.class);

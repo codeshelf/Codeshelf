@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: AisleDeviceEmbedded.java,v 1.9 2013/04/16 21:25:49 jeffw Exp $
+ *  $Id: AisleDeviceEmbedded.java,v 1.10 2013/04/17 17:02:03 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -18,6 +18,8 @@ import org.slf4j.LoggerFactory;
 import com.gadgetworks.flyweight.command.ColorEnum;
 import com.gadgetworks.flyweight.command.CommandControlABC;
 import com.gadgetworks.flyweight.command.CommandControlLight;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 
 /**
  * This is the CHE code that runs on the device itself.
@@ -49,26 +51,13 @@ public class AisleDeviceEmbedded extends DeviceEmbeddedABC {
 	private long				mLastProcessMillis;
 	private Thread				mProcessorThread;
 
-	public AisleDeviceEmbedded() {
-		super("00000003", "10.47.47.49");
+	@Inject
+	public AisleDeviceEmbedded(@Named(IEmbeddedDevice.GUID_PROPERTY) final String inGuidStr,
+		@Named(IEmbeddedDevice.CONTROLLER_IPADDR_PROPERTY) final String inIpAddrStr) {
+		super(inGuidStr, inIpAddrStr);
 
 		mJD2XXInterface = new JD2XX();
 		mStoredPositions = new ArrayList<LedPos>();
-
-		//		LedPos ledPos = new LedPos(5);
-		//		ledPos.addSample(new LedValue(LedValue.LED_GREEN));
-		//		ledPos.addSample(new LedValue(LedValue.LED_CYAN));
-		//		mStoredPositions.add(ledPos);
-		//
-		//		ledPos = new LedPos(7);
-		//		ledPos.addSample(new LedValue(LedValue.LED_ORANGE));
-		//		ledPos.addSample(new LedValue(LedValue.LED_MAGENTA));
-		//		ledPos.addSample(new LedValue(LedValue.LED_WHITE));
-		//		mStoredPositions.add(ledPos);
-		//
-		//		ledPos = new LedPos(19);
-		//		ledPos.addSample(new LedValue(LedValue.LED_BLUE));
-		//		mStoredPositions.add(ledPos);
 	}
 
 	// --------------------------------------------------------------------------
@@ -76,7 +65,7 @@ public class AisleDeviceEmbedded extends DeviceEmbeddedABC {
 	 * @see com.gadgetworks.flyweight.controller.INetworkDevice#start()
 	 */
 	@Override
-	public final void doStart() {
+	public void doStart() {
 
 		// Setup the FTDI D2XX interface.
 		setupConnection(FTDI_VID_PID);
@@ -126,6 +115,30 @@ public class AisleDeviceEmbedded extends DeviceEmbeddedABC {
 				// We don't want the thread to exit on some weird, uncaught errors in the processor.
 				LOGGER.error("", e);
 			}
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 *  The radio controller sent this CHE a command.
+	 *  @param inCommand    The control command that we want to process.  (The one just received.)
+	 */
+	protected void processControlCmd(CommandControlABC inCommand) {
+
+		// Figure out what kind of control sub-command we have.
+
+		switch (inCommand.getExtendedCommandID().getValue()) {
+			case CommandControlABC.MESSAGE:
+				break;
+
+			case CommandControlABC.SCAN:
+				break;
+
+			case CommandControlABC.LIGHT:
+				processControlLightCommand((CommandControlLight) inCommand);
+				break;
+
+			default:
 		}
 	}
 
@@ -250,30 +263,6 @@ public class AisleDeviceEmbedded extends DeviceEmbeddedABC {
 		}
 	}
 
-	// --------------------------------------------------------------------------
-	/**
-	 *  The radio controller sent this CHE a command.
-	 *  @param inCommand    The control command that we want to process.  (The one just received.)
-	 */
-	protected final void processControlCmd(CommandControlABC inCommand) {
-
-		// Figure out what kind of control sub-command we have.
-
-		switch (inCommand.getExtendedCommandID().getValue()) {
-			case CommandControlABC.MESSAGE:
-				break;
-
-			case CommandControlABC.SCAN:
-				break;
-
-			case CommandControlABC.LIGHT:
-				processControlListCommand((CommandControlLight) inCommand);
-				break;
-
-			default:
-		}
-	}
-
 	private LedValue mapColorEnumToLedValue(final ColorEnum inColorEnum) {
 		LedValue result = null;
 
@@ -321,7 +310,7 @@ public class AisleDeviceEmbedded extends DeviceEmbeddedABC {
 	/**
 	 * @param inCommand
 	 */
-	private void processControlListCommand(CommandControlLight inCommand) {
+	protected void processControlLightCommand(CommandControlLight inCommand) {
 		LOGGER.info("Light message: " + inCommand.toString());
 
 		if (inCommand.getPosition() == CommandControlLight.POSITION_NONE) {

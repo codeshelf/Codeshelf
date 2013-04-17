@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CheDeviceEmbedded.java,v 1.14 2013/04/16 05:48:04 jeffw Exp $
+ *  $Id: CheDeviceEmbedded.java,v 1.15 2013/04/17 17:02:03 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -12,7 +12,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.flyweight.command.CommandControlABC;
+import com.gadgetworks.flyweight.command.CommandControlLight;
 import com.gadgetworks.flyweight.command.CommandControlMessage;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 
 /**
  * This is the CHE code that runs on the device itself.
@@ -20,16 +23,19 @@ import com.gadgetworks.flyweight.command.CommandControlMessage;
  * @author jeffw
  *
  */
-public class CheDeviceEmbedded extends DeviceEmbeddedABC {
+public class CheDeviceEmbedded extends AisleDeviceEmbedded {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(DeviceEmbeddedABC.class);
 
 	private SerialPort			mSerialPort;
 
-	public CheDeviceEmbedded() {
-		super("00000002", "10.47.47.49");
+	@Inject
+	public CheDeviceEmbedded(@Named(IEmbeddedDevice.GUID_PROPERTY) final String inGuidStr,
+		@Named(IEmbeddedDevice.CONTROLLER_IPADDR_PROPERTY) final String inIpAddrStr) {
+		super(inGuidStr, inIpAddrStr);
 	}
 
+	@Override
 	public final void doStart() {
 		try {
 			mSerialPort = new SerialPort("/dev/ttyACM0");
@@ -53,6 +59,10 @@ public class CheDeviceEmbedded extends DeviceEmbeddedABC {
 		switch (inCommand.getExtendedCommandID().getValue()) {
 			case CommandControlABC.MESSAGE:
 				processControlMessageCommand((CommandControlMessage) inCommand);
+				break;
+
+			case CommandControlABC.LIGHT:
+				processControlLightCommand((CommandControlLight) inCommand);
 				break;
 
 			case CommandControlABC.SCAN:

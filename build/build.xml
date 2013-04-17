@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project name="CodeShelf" default="build.jar" basedir="..">
+<project name="CodeShelf" default="build.all" basedir="..">
 
 	<description>
 		CodeShelf build script.
@@ -93,8 +93,6 @@
 	<property name="appjar.build.dir" value="${target}/appjar" />
 	<property name="launch4j.dir" location="{$target}" />
 	<property name="debian.installer.dir" value="${target}/debian-installer" />
-
-	<property name="codeshelf.app.jar.name" value="codeshelf.jar" />
 
 	<property name="ebean.build.dir" value="${basedir}/build" />
 	<property name="ebean.lib.dir" value="${ebean.build.dir}/lib" />
@@ -192,7 +190,7 @@
 	</target>
 
 	<!-- build =================================================================================== -->
-	<target name="build" depends="init, resources">
+	<target name="compile" depends="init, resources">
 
 		<copy todir="${target.lib}">
 			<fileset dir="${libs.dist.dir}">
@@ -425,9 +423,8 @@
 	</target>
 
 	<!-- Jar builder =================================================================================== -->
-	<target name="build.jar" depends="clean, build" description="Build the app as a launchable jar">
+	<target name="prep.jar" depends="clean, compile">
 
-		<property name="main.class" value="com.gadgetworks.codeshelf.application.CsCheMain" />
 		<mkdir dir="${appjar.build.dir}" />
 		<mkdir dir="${appjar.build.dir}/lib" />
 
@@ -447,10 +444,10 @@
 				<exclude name="**/codeshelf-unobfs.jar" />
 				<exclude name="**/datamodels.jar" />
 			</fileset>
-			<fileset dir="${target.lib}/native"/>
+			<fileset dir="${target.lib}/native" />
 		</copy>
 		<copy todir="${appjar.build.dir}/lib/native">
-			<fileset dir="${target.lib}/native"/>
+			<fileset dir="${target.lib}/native" />
 		</copy>
 
 		<!-- Obfuscate if requested -->
@@ -470,6 +467,9 @@
 		<pathconvert pathsep=" " property="jarpaths" refid="jardir">
 			<map from="${target.lib}" to="lib" />
 		</pathconvert>
+	</target>
+
+	<target name="jar.it">
 
 		<!-- Create the final application JAR file. -->
 		<jar duplicate="fail" jarfile="${appjar.build.dir}/${codeshelf.app.jar.name}">
@@ -478,9 +478,6 @@
 				<exclude name="**/server.config.properties" />
 				<exclude name="**/netcontroller.config.properties" />
 			</zipfileset>
-			<!--zipfileset dir="${target.build}/">
-				<include name="lib/**" />
-			</zipfileset-->
 			<zipfileset dir="${target.classes}/">
 				<exclude name="com.gadgetworks.codeshelf.model.domain/**.*" />
 			</zipfileset>
@@ -491,7 +488,6 @@
 				<attribute name="Built-By" value="Gadgetworks, LLC (www.gadgetworks.com)" />
 			</manifest>
 		</jar>
-
 		<copy todir="${appjar.build.dir}">
 			<fileset dir="${target.lib}">
 				<include name="${codeshelf.app.jar.name}" />
@@ -499,7 +495,38 @@
 		</copy>
 	</target>
 
-	<target name="deploy" depends="build.jar">
+	<target name="jar.server">
+		<property name="codeshelf.app.jar.name" value="server.codeshelf.jar" />
+		<property name="main.class" value="com.gadgetworks.codeshelf.application.ServerMain" />
+		<antcall target="jar.it" />
+	</target>
+
+	<target name="jar.network">
+		<property name="codeshelf.app.jar.name" value="network.codeshelf.jar" />
+		<property name="main.class" value="com.gadgetworks.codeshelf.application.CsNetworkMain" />
+		<antcall target="jar.it" />
+	</target>
+
+	<target name="jar.che">
+		<property name="codeshelf.app.jar.name" value="che.codeshelf.jar" />
+		<property name="main.class" value="com.gadgetworks.codeshelf.application.CsCheMain" />
+		<antcall target="jar.it" />
+	</target>
+
+	<target name="jar.aisle">
+		<property name="codeshelf.app.jar.name" value="aisle.codeshelf.jar" />
+		<property name="main.class" value="com.gadgetworks.codeshelf.application.CsAisleMain" />
+		<antcall target="jar.it" />
+	</target>
+
+	<target name="build.all" depends="prep.jar" description="Build the server app as a launchable jar">
+		<antcall target="jar.server" />
+		<antcall target="jar.network" />
+		<antcall target="jar.che" />
+		<antcall target="jar.aisle" />
+	</target>
+
+	<target name="deploy" depends="jar.server">
 		<input message="SCP password:" addproperty="scp.password">
 			<!--handler classname="org.apache.tools.ant.input.SecureInputHandler" /-->
 		</input>
@@ -507,6 +534,9 @@
 		<scp todir="codeshelf:${scp.password}@198.101.238.245:/opt/codeshelf/engine" verbose="true">
 			<fileset dir="${appjar.build.dir}">
 				<include name="**/*" />
+				<exclude name="*network*.jar" />
+				<exclude name="che*.jar" />
+				<exclude name="*aisle*.jar" />
 				<modified>
 					<param name="cache.cachefile" value="${basedir}/build/engine.scp.cache" />
 				</modified>
