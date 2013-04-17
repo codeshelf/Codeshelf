@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: AisleDeviceEmbedded.java,v 1.11 2013/04/17 19:54:49 jeffw Exp $
+ *  $Id: AisleDeviceEmbedded.java,v 1.12 2013/04/17 20:27:10 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -150,7 +150,7 @@ public class AisleDeviceEmbedded extends DeviceEmbeddedABC {
 		Integer nextLedPosNum = 0;
 		LedPos ledPos = null;
 		//LOGGER.debug("\nFlash");
-		for (int pos = 0; pos < mTotalPositions; pos++) {
+		for (int pos = 1; pos < mTotalPositions; pos++) {
 			if (mIsBlanking) {
 				break;
 			} else {
