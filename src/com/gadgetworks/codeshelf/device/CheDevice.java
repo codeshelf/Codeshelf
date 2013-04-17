@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CheDevice.java,v 1.24 2013/04/16 05:48:05 jeffw Exp $
+ *  $Id: CheDevice.java,v 1.25 2013/04/17 20:30:57 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -36,7 +36,7 @@ import com.gadgetworks.flyweight.controller.IRadioController;
  * @author jeffw
  *
  */
-public class CheDevice extends DeviceABC {
+public class CheDevice extends AisleDevice {
 
 	private static final Logger		LOGGER				= LoggerFactory.getLogger(CheDevice.class);
 
@@ -160,6 +160,10 @@ public class CheDevice extends DeviceABC {
 	 * @param inGuid
 	 */
 	private void ledControllerClearLeds() {
+		// Clear the CHE's own LEDs.
+		clearLedCmdFor(getGuid());
+
+		// Clear the LEDs for the last location the CHE worked.
 		INetworkDevice device = mDeviceManager.getDeviceByGuid(mLastLedControllerGuid);
 		if (device instanceof AisleDevice) {
 			AisleDevice aisleDevice = (AisleDevice) device;

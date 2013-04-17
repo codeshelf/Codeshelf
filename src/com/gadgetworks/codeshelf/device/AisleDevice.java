@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: AisleDevice.java,v 1.5 2013/04/15 21:27:05 jeffw Exp $
+ *  $Id: AisleDevice.java,v 1.6 2013/04/17 20:30:57 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -52,7 +52,7 @@ public class AisleDevice extends DeviceABC {
 	}
 
 	@Override
-	public final void start() {
+	public void start() {
 		//		short position = 1;
 		//		sendLightCommand(CommandControlLight.CHANNEL1, position, ColorEnum.BLUE, CommandControlLight.EFFECT_SOLID);
 	}
@@ -87,7 +87,7 @@ public class AisleDevice extends DeviceABC {
 	}
 
 	@Override
-	public final void commandReceived(String inCommandStr) {
+	public void commandReceived(String inCommandStr) {
 		// The aisle device never returns commands.
 	}
 
