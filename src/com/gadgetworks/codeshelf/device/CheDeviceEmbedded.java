@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CheDeviceEmbedded.java,v 1.17 2013/04/19 17:26:40 jeffw Exp $
+ *  $Id: CheDeviceEmbedded.java,v 1.18 2013/04/19 23:23:25 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -40,8 +40,7 @@ public class CheDeviceEmbedded extends AisleDeviceEmbedded {
 	private SerialPort			mSerialPort;
 
 	@Inject
-	public CheDeviceEmbedded(@Named(IEmbeddedDevice.GUID_PROPERTY) final String inGuidStr,
-		@Named(IEmbeddedDevice.CONTROLLER_IPADDR_PROPERTY) final String inIpAddrStr) {
+	public CheDeviceEmbedded(@Named(IEmbeddedDevice.GUID_PROPERTY) final String inGuidStr, @Named(IEmbeddedDevice.CONTROLLER_IPADDR_PROPERTY) final String inIpAddrStr) {
 		super(inGuidStr, inIpAddrStr);
 	}
 
@@ -115,8 +114,7 @@ public class CheDeviceEmbedded extends AisleDeviceEmbedded {
 	 * @param inCommand
 	 */
 	private void processControlMessageCommand(CommandControlMessage inCommand) {
-		LOGGER.info("Display message: Line1:'" + inCommand.getLine1MessageStr() + "' Line2:'" + inCommand.getLine2MessageStr()
-				+ "'");
+		LOGGER.info("Display message: Line1:'" + inCommand.getLine1MessageStr() + "' Line2:'" + inCommand.getLine2MessageStr() + "'");
 		try {
 			mSerialPort.writeString("^" + inCommand.getLine1MessageStr() + "`" + inCommand.getLine2MessageStr() + "~");
 		} catch (SerialPortException e) {

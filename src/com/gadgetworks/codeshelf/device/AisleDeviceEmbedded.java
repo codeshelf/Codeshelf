@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: AisleDeviceEmbedded.java,v 1.12 2013/04/17 20:27:10 jeffw Exp $
+ *  $Id: AisleDeviceEmbedded.java,v 1.13 2013/04/19 23:23:25 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -82,6 +82,18 @@ public class AisleDeviceEmbedded extends DeviceEmbeddedABC {
 		mProcessorThread.setDaemon(true);
 		mProcessorThread.setPriority(Thread.MIN_PRIORITY);
 		mProcessorThread.start();
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 */
+	private void resetInterface() {
+		try {
+			mJD2XXInterface.close();
+			mJD2XXInterface.resetDevice();
+		} catch (IOException e) {
+			LOGGER.error("", e);
+		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -218,18 +230,18 @@ public class AisleDeviceEmbedded extends DeviceEmbeddedABC {
 			int numDevices = mJD2XXInterface.createDeviceInfoList();
 			for (int devNum = 0; devNum < numDevices; devNum++) {
 				DeviceInfo devInfo = mJD2XXInterface.getDeviceInfoDetail(devNum);
-				LOGGER.info("Gateway device: " + devInfo.toString());
 				//if (devInfo.id == inVidPid) {
 				if (devInfo != null) {
 					deviceToOpen = devNum;
+					LOGGER.info("Gateway device: " + devInfo.toString());
 					//selectedHandle = devInfo.handle;
 				}
 			}
 
 			if (deviceToOpen == -1) {
-				LOGGER.info("No gateway found!");
+				LOGGER.info("No LED controller found!");
 				try {
-					Thread.sleep(2000);
+					Thread.sleep(5000);
 				} catch (InterruptedException e) {
 					LOGGER.error("", e);
 				}
@@ -252,15 +264,6 @@ public class AisleDeviceEmbedded extends DeviceEmbeddedABC {
 		}
 
 		return result;
-	}
-
-	private void resetInterface() {
-		try {
-			mJD2XXInterface.close();
-			mJD2XXInterface.resetDevice();
-		} catch (IOException e) {
-			LOGGER.error("", e);
-		}
 	}
 
 	private LedValue mapColorEnumToLedValue(final ColorEnum inColorEnum) {
