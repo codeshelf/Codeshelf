@@ -1,9 +1,13 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CheDeviceEmbedded.java,v 1.16 2013/04/17 19:54:49 jeffw Exp $
+ *  $Id: CheDeviceEmbedded.java,v 1.17 2013/04/19 17:26:40 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 
 import jssc.SerialPort;
 import jssc.SerialPortException;
@@ -14,6 +18,12 @@ import org.slf4j.LoggerFactory;
 import com.gadgetworks.flyweight.command.CommandControlABC;
 import com.gadgetworks.flyweight.command.CommandControlLight;
 import com.gadgetworks.flyweight.command.CommandControlMessage;
+import com.gadgetworks.flyweight.command.CommandControlScan;
+import com.gadgetworks.flyweight.command.ICommand;
+import com.gadgetworks.flyweight.command.IPacket;
+import com.gadgetworks.flyweight.command.NetAddress;
+import com.gadgetworks.flyweight.command.NetEndpoint;
+import com.gadgetworks.flyweight.command.Packet;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
@@ -38,7 +48,7 @@ public class CheDeviceEmbedded extends AisleDeviceEmbedded {
 	@Override
 	public final void doStart() {
 		super.doStart();
-		
+
 		try {
 			mSerialPort = new SerialPort("/dev/ttyACM0");
 			mSerialPort.openPort();
@@ -47,6 +57,32 @@ public class CheDeviceEmbedded extends AisleDeviceEmbedded {
 		} catch (SerialPortException e) {
 			LOGGER.error("", e);
 		}
+
+		processScans();
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 */
+	private void processScans() {
+		Thread eventThread = new Thread(new Runnable() {
+			public void run() {
+				BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+				while (true) {
+					try {
+						String scanValue = reader.readLine();
+
+						ICommand command = new CommandControlScan(NetEndpoint.PRIMARY_ENDPOINT, scanValue);
+						IPacket packet = new Packet(command, getNetworkId(), getNetAddress(), new NetAddress(IPacket.GATEWAY_ADDRESS), false);
+						command.setPacket(packet);
+						sendPacket(packet);
+					} catch (IOException e) {
+						LOGGER.error("", e);
+					}
+				}
+			}
+		});
+		eventThread.start();
 	}
 
 	// --------------------------------------------------------------------------

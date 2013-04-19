@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: DeviceEmbeddedABC.java,v 1.4 2013/04/01 23:42:40 jeffw Exp $
+ *  $Id: DeviceEmbeddedABC.java,v 1.5 2013/04/19 17:26:40 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -50,11 +50,13 @@ public abstract class DeviceEmbeddedABC implements IEmbeddedDevice {
 	private static final byte	RESET_REASON_POWERON	= 0x00;
 
 	private IGatewayInterface	mGatewayInterface;
+	@Getter(value = AccessLevel.PROTECTED)
 	private NetworkId			mNetworkId;
 	@Getter(value = AccessLevel.PROTECTED)
-	@Setter(value = AccessLevel.PROTECTED)
-	private boolean				mShouldRun;
 	private NetAddress			mNetAddress;
+	@Getter(value = AccessLevel.PROTECTED)
+//	@Setter(value = AccessLevel.PROTECTED)
+	private boolean				mShouldRun;
 
 	private String				mGUID;
 	private String				mServerName;
@@ -81,7 +83,6 @@ public abstract class DeviceEmbeddedABC implements IEmbeddedDevice {
 		doStart();
 		
 		startPacketReceivers();
-		processScans();
 	}
 
 	// --------------------------------------------------------------------------
@@ -92,30 +93,6 @@ public abstract class DeviceEmbeddedABC implements IEmbeddedDevice {
 	public final void stop() {
 		mShouldRun = false;
 		mGatewayInterface.stopInterface();
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 */
-	private void processScans() {
-		Thread eventThread = new Thread(new Runnable() {
-			public void run() {
-				BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-				while (true) {
-					try {
-						String scanValue = reader.readLine();
-
-						ICommand command = new CommandControlScan(NetEndpoint.PRIMARY_ENDPOINT, scanValue);
-						IPacket packet = new Packet(command, mNetworkId, mNetAddress, new NetAddress(IPacket.GATEWAY_ADDRESS), false);
-						command.setPacket(packet);
-						sendPacket(packet);
-					} catch (IOException e) {
-						LOGGER.error("", e);
-					}
-				}
-			}
-		});
-		eventThread.start();
 	}
 
 	// --------------------------------------------------------------------------
@@ -235,7 +212,7 @@ public abstract class DeviceEmbeddedABC implements IEmbeddedDevice {
 	/**
 	 * @param inPacket
 	 */
-	private void sendPacket(IPacket inPacket) {
+	protected void sendPacket(IPacket inPacket) {
 		if (mGatewayInterface.isStarted()) {
 			inPacket.setSentTimeMillis(System.currentTimeMillis());
 			mGatewayInterface.sendPacket(inPacket);
