@@ -39,6 +39,7 @@
 	<description>CodeShelf Build</description>
 	<!--set global properties for this build-->
 	<property name="src" location="${basedir}/src" />
+	<property name="installer.dir" location="${basedir}/installer" />
 	<property name="libs.dir" location="${basedir}/lib" />
 	<property name="libs.dist.dir" location="${basedir}/lib/dist" />
 	<property name="libs.native.dir" location="${basedir}/lib/native" />
@@ -446,6 +447,13 @@
 			</fileset>
 			<fileset dir="${target.lib}/native" />
 		</copy>
+		
+		<copy todir="${appjar.build.dir}">
+			<fileset dir="${installer.dir}/linux">
+				<include name="start.*.sh" />
+			</fileset>
+		</copy>
+		
 		<copy todir="${appjar.build.dir}/lib/native">
 			<fileset dir="${target.lib}/native" />
 		</copy>
