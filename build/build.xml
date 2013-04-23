@@ -447,13 +447,7 @@
 			</fileset>
 			<fileset dir="${target.lib}/native" />
 		</copy>
-		
-		<copy todir="${appjar.build.dir}">
-			<fileset dir="${installer.dir}/linux">
-				<include name="start.*.sh" />
-			</fileset>
-		</copy>
-		
+
 		<copy todir="${appjar.build.dir}/lib/native">
 			<fileset dir="${target.lib}/native" />
 		</copy>
@@ -519,12 +513,42 @@
 		<property name="codeshelf.app.jar.name" value="che.codeshelf.jar" />
 		<property name="main.class" value="com.gadgetworks.codeshelf.application.CsCheMain" />
 		<antcall target="jar.it" />
+
+		<copy todir="${appjar.build.dir}">
+			<fileset dir="${installer.dir}/linux">
+				<include name="start.codeshelf.che.sh" />
+			</fileset>
+			<fileset dir="${conf.dir}">
+				<include name="che.config.properties" />
+			</fileset>
+		</copy>
+
+		<chmod perm="ug+rx">
+			<fileset dir="${appjar.build.dir}">
+				<include name="start.codeshelf.che.sh" />
+			</fileset>
+		</chmod>
 	</target>
 
 	<target name="jar.aisle">
 		<property name="codeshelf.app.jar.name" value="aisle.codeshelf.jar" />
 		<property name="main.class" value="com.gadgetworks.codeshelf.application.CsAisleMain" />
 		<antcall target="jar.it" />
+		
+		<copy todir="${appjar.build.dir}">
+			<fileset dir="${installer.dir}/linux">
+				<include name="start.codeshelf.aisle.sh" />
+			</fileset>
+			<fileset dir="${conf.dir}">
+				<include name="aisle.config.properties" />
+			</fileset>
+		</copy>
+
+		<chmod perm="ug+rx">
+			<fileset dir="${appjar.build.dir}">
+				<include name="start.codeshelf.aisle.sh" />
+			</fileset>
+		</chmod>
 	</target>
 
 	<target name="build.all" depends="prep.jar" description="Build the server app as a launchable jar">

@@ -21,6 +21,6 @@
 <stringAttribute key="org.eclipse.jdt.launching.JRE_CONTAINER" value="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="com.gadgetworks.codeshelf.application.CsCheMain"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="CodeShelf"/>
-<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Dnetworknum=1 -Dguid=00000002 -Dcontroller.ipaddr=10.47.47.49"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Dconfig.properties=./conf/che.config.properties"/>
 <stringAttribute key="yk-options" value="&#10;alloc-size-limit-enabled=true&#10;alloc-record-each=1&#10;additional-options=&#10;alloc-size-limit=1048576&#10;snapshots-dir=&#10;alloc-record-each-enabled=true&#10;startup=2&#10;"/>
 </launchConfiguration>
