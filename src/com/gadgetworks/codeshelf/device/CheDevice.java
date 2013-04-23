@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CheDevice.java,v 1.25 2013/04/17 20:30:57 jeffw Exp $
+ *  $Id: CheDevice.java,v 1.26 2013/04/23 05:45:48 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -152,6 +152,19 @@ public class CheDevice extends AisleDevice {
 			aisleDevice.addLedCmdFor(getGuid(), inPosition, inColor, CommandControlLight.EFFECT_DIRECT);
 		}
 		mLastLedControllerGuid = inControllerGuid;
+	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * After we've set all of the LEDs, tell the controller to broadcast them updates.
+	 * @param inControllerGuid
+	 */
+	private void ledControllerShowLeds(final NetGuid inControllerGuid) {
+		INetworkDevice device = mDeviceManager.getDeviceByGuid(inControllerGuid);
+		if (device instanceof AisleDevice) {
+			AisleDevice aisleDevice = (AisleDevice) device;
+			aisleDevice.updateLeds();
+		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -444,6 +457,7 @@ public class CheDevice extends AisleDevice {
 			for (short position = startPosition; position < endPosition; position++) {
 				ledControllerSetLed(ledController.getGuid(), position, firstWi.getColorEnum(), CommandControlLight.EFFECT_FLASH);				
 			}
+			ledControllerShowLeds(ledController.getGuid());
 		}
 
 		// Now create a light instruction for each position.

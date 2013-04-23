@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: AisleDevice.java,v 1.6 2013/04/17 20:30:57 jeffw Exp $
+ *  $Id: AisleDevice.java,v 1.7 2013/04/23 05:45:48 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -63,6 +63,14 @@ public class AisleDevice extends DeviceABC {
 	 * @param inNetGuid
 	 */
 	public final void clearLedCmdFor(final NetGuid inNetGuid) {
+		// First send a blanking command.
+		ICommand command = new CommandControlLight(NetEndpoint.PRIMARY_ENDPOINT,
+			CommandControlLight.CHANNEL1,
+			CommandControlLight.POSITION_NONE,
+			ColorEnum.BLACK,
+			CommandControlLight.EFFECT_SOLID);
+		mRadioController.sendCommand(command, getAddress(), false);
+
 		mDeviceLedPosMap.remove(inNetGuid);
 		updateLeds();
 	}
@@ -83,7 +91,6 @@ public class AisleDevice extends DeviceABC {
 		}
 		LedCmd ledCmd = new LedCmd(inPosition, inColor, inEffect);
 		ledCmds.add(ledCmd);
-		updateLeds();
 	}
 
 	@Override
@@ -95,25 +102,17 @@ public class AisleDevice extends DeviceABC {
 	/**
 	 * Light all of the LEDs required.
 	 */
-	private void updateLeds() {
-		
+	public final void updateLeds() {
+
 		LOGGER.info("CLear LEDs");
 
-		// First send a blanking command.
-		ICommand command = new CommandControlLight(NetEndpoint.PRIMARY_ENDPOINT,
-			CommandControlLight.CHANNEL1,
-			CommandControlLight.POSITION_NONE,
-			ColorEnum.BLACK,
-			CommandControlLight.EFFECT_SOLID);
-		mRadioController.sendCommand(command, getAddress(), false);
-		
 		// Now send the commands needed for each CHE.
 		for (Map.Entry<NetGuid, List<LedCmd>> entry : mDeviceLedPosMap.entrySet()) {
 
 			for (LedCmd ledCmd : entry.getValue()) {
 
 				LOGGER.info("Light position: " + ledCmd.mPosition);
-				command = new CommandControlLight(NetEndpoint.PRIMARY_ENDPOINT,
+				ICommand command = new CommandControlLight(NetEndpoint.PRIMARY_ENDPOINT,
 					CommandControlLight.CHANNEL1,
 					ledCmd.mPosition,
 					ledCmd.mColor,

@@ -1,3 +1,8 @@
+/*******************************************************************************
+ *  CodeShelf
+ *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
+ *  $Id: LedValue.java,v 1.5 2013/04/23 05:45:48 jeffw Exp $
+ *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
 import lombok.Data;
@@ -7,8 +12,8 @@ import lombok.experimental.Accessors;
 @Accessors(prefix = "m")
 public class LedValue {
 
-	private static final byte	OFF			= (byte) 0x00;
-	private static final byte	ON_			= (byte) 0x2f;
+	public static final byte	OFF			= (byte) 0x00;
+	public static final byte	ON_			= (byte) 0x2f;
 
 	public static final byte[]	LED_RED		= { ON_, OFF, OFF };
 	public static final byte[]	LED_GREEN	= { OFF, ON_, OFF };
@@ -21,9 +26,9 @@ public class LedValue {
 	public static final byte[]	LED_BLACK	= { OFF, OFF, OFF };
 	public static final byte[]	LED_WHITE	= { ON_, ON_, ON_ };
 
-	public Byte					mRed;
-	public Byte					mGreen;
-	public Byte					mBlue;
+	private Byte				mRed;
+	private Byte				mGreen;
+	private Byte				mBlue;
 
 	public LedValue(final byte[] inRgbBytes) {
 		mRed = inRgbBytes[0];
