@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: PathSegment.java,v 1.31 2013/04/11 07:42:45 jeffw Exp $
+ *  $Id: PathSegment.java,v 1.32 2013/04/26 03:26:04 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -107,7 +107,7 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 
 	@Setter
 	@Getter
-	private Double				pathDistance;
+	private Double				startPosAlongPath;
 
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
@@ -211,7 +211,7 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 			}
 			distance += Path.computeLineLength(segment.getStartPoint(), segment.getEndPoint());
 		}
-		pathDistance = distance;
+		startPosAlongPath = distance;
 
 		try {
 			PathSegment.DAO.store(this);

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DropboxService.java,v 1.35 2013/04/11 18:11:12 jeffw Exp $
+ *  $Id: DropboxService.java,v 1.36 2013/04/26 03:26:04 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -169,13 +169,42 @@ public class DropboxService extends EdiServiceABC {
 	private DeltaPage<Entry> getNextPage(DropboxAPI<Session> inClientSession) {
 		DeltaPage<Entry> result = null;
 		try {
-			result = inClientSession.delta(dbCursor);
+			result = inClientSession.delta(getDbCursor());
 			if (result != null) {
-				dbCursor = result.cursor;
+				setDbCursor(result.cursor);
 			}
 		} catch (DropboxException e) {
 			LOGGER.error("Dropbox session error", e);
 		}
+		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inClientSession
+	 * @param inPage
+	 */
+	private Boolean iteratePage(DropboxAPI<Session> inClientSession, DeltaPage<Entry> inPage, ICsvImporter inCsvImporter) {
+		Boolean result = true;
+
+		for (DeltaEntry<Entry> entry : inPage.entries) {
+			LOGGER.info(entry.lcPath);
+			try {
+				if (entry.metadata != null) {
+					// Add, or modify.
+					result &= processEntry(inClientSession, entry, inCsvImporter);
+				} else {
+					result &= removeEntry(inClientSession, entry);
+				}
+			} catch (RuntimeException e) {
+				LOGGER.error("", e);
+				// Should any weird, uncaught errors in EDI process should fail this deltas page?
+				// No - it could end up in a permanent loop.
+				// We need out-of-band notification here.
+				// result = false;
+			}
+		}
+
 		return result;
 	}
 
@@ -434,35 +463,6 @@ public class DropboxService extends EdiServiceABC {
 				}
 			}
 		}
-		return result;
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * @param inClientSession
-	 * @param inPage
-	 */
-	private Boolean iteratePage(DropboxAPI<Session> inClientSession, DeltaPage<Entry> inPage, ICsvImporter inCsvImporter) {
-		Boolean result = true;
-
-		for (DeltaEntry<Entry> entry : inPage.entries) {
-			LOGGER.info(entry.lcPath);
-			try {
-				if (entry.metadata != null) {
-					// Add, or modify.
-					result &= processEntry(inClientSession, entry, inCsvImporter);
-				} else {
-					result &= removeEntry(inClientSession, entry);
-				}
-			} catch (RuntimeException e) {
-				LOGGER.error("", e);
-				// Should any weird, uncaught errors in EDI process should fail this deltas page?
-				// No - it could end up in a permanent loop.
-				// We need out-of-band notification here.
-				// result = false;
-			}
-		}
-
 		return result;
 	}
 

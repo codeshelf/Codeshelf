@@ -1,7 +1,7 @@
 /*******************************************************************************
 CodeshelfWebSocketServer *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ServerMain.java,v 1.13 2013/04/11 07:42:45 jeffw Exp $
+ *  $Id: ServerMain.java,v 1.14 2013/04/26 03:26:04 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -31,8 +31,6 @@ import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.dao.PostgresSchemaManager;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Aisle.AisleDao;
-import com.gadgetworks.codeshelf.model.domain.LedController;
-import com.gadgetworks.codeshelf.model.domain.LedController.LedControllerDao;
 import com.gadgetworks.codeshelf.model.domain.Bay;
 import com.gadgetworks.codeshelf.model.domain.Bay.BayDao;
 import com.gadgetworks.codeshelf.model.domain.Che;
@@ -53,8 +51,12 @@ import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Facility.FacilityDao;
 import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.Item.ItemDao;
+import com.gadgetworks.codeshelf.model.domain.ItemDdcGroup;
+import com.gadgetworks.codeshelf.model.domain.ItemDdcGroup.ItemDdcGroupDao;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster.ItemMasterDao;
+import com.gadgetworks.codeshelf.model.domain.LedController;
+import com.gadgetworks.codeshelf.model.domain.LedController.LedControllerDao;
 import com.gadgetworks.codeshelf.model.domain.LocationABC;
 import com.gadgetworks.codeshelf.model.domain.LocationABC.LocationDao;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
@@ -282,6 +284,10 @@ public final class ServerMain {
 				requestStaticInjection(ItemMaster.class);
 				bind(new TypeLiteral<ITypedDao<ItemMaster>>() {
 				}).to(ItemMasterDao.class);
+
+				requestStaticInjection(ItemDdcGroup.class);
+				bind(new TypeLiteral<ITypedDao<ItemDdcGroup>>() {
+				}).to(ItemDdcGroupDao.class);
 
 				requestStaticInjection(LocationABC.class);
 				bind(new TypeLiteral<ITypedDao<LocationABC>>() {

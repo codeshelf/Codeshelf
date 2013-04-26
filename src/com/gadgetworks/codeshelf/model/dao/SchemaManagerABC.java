@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: SchemaManagerABC.java,v 1.29 2013/04/14 02:39:39 jeffw Exp $
+ *  $Id: SchemaManagerABC.java,v 1.30 2013/04/26 03:26:04 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -177,8 +177,8 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 			// Try to switch to the proper schema.
 			Statement stmt = connection.createStatement();
-			stmt.executeUpdate("INSERT INTO " + getDbSchemaName() + ".db_property (version, modified) VALUES (" + inVersion + ",'" + new Timestamp(System.currentTimeMillis())
-					+ "')");
+			stmt.executeUpdate("INSERT INTO " + getDbSchemaName() + ".db_property (version, modified) VALUES (" + inVersion + ",'"
+					+ new Timestamp(System.currentTimeMillis()) + "')");
 			stmt.close();
 			connection.close();
 
@@ -207,7 +207,8 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 			// Try to switch to the proper schema.
 			Statement stmt = connection.createStatement();
-			stmt.executeUpdate("UPDATE " + getDbSchemaName() + ".db_property SET version = " + inVersion + ", modified = '" + new Timestamp(System.currentTimeMillis()) + "'");
+			stmt.executeUpdate("UPDATE " + getDbSchemaName() + ".db_property SET version = " + inVersion + ", modified = '"
+					+ new Timestamp(System.currentTimeMillis()) + "'");
 			stmt.close();
 			connection.close();
 
@@ -343,7 +344,8 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 				+ inColumns //
 				+ ", PRIMARY KEY (persistentid));");
 
-		result &= execOneSQLCommand("CREATE UNIQUE INDEX organization_domainid_index ON " + getDbSchemaName() + ".organization (domainid)");
+		result &= execOneSQLCommand("CREATE UNIQUE INDEX organization_domainid_index ON " + getDbSchemaName()
+				+ ".organization (domainid)");
 
 		return result;
 	}
@@ -367,7 +369,8 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 				+ inColumns //
 				+ ", PRIMARY KEY (persistentid));");
 
-		result &= execOneSQLCommand("CREATE UNIQUE INDEX " + inTableName + "_domainid_index ON " + getDbSchemaName() + "." + inTableName + " (parent_persistentid, domainid)");
+		result &= execOneSQLCommand("CREATE UNIQUE INDEX " + inTableName + "_domainid_index ON " + getDbSchemaName() + "."
+				+ inTableName + " (parent_persistentid, domainid)");
 
 		return result;
 	}
@@ -378,7 +381,9 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	 * @param inForeignKeyColumnName
 	 * @param inParentTableName
 	 */
-	private boolean linkToParentTable(final String inChildTableName, final String inForeignKeyColumnName, final String inParentTableName) {
+	private boolean linkToParentTable(final String inChildTableName,
+		final String inForeignKeyColumnName,
+		final String inParentTableName) {
 
 		boolean result = true;
 
@@ -438,13 +443,17 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		result &= linkToParentTable("item", "parent", "item_master");
 		// One extra index: to ensure uniqueness of the MAC addresses, and to find them fast by that address.
-		execOneSQLCommand("CREATE INDEX item_stored_location_persistentid_index ON " + getDbSchemaName() + ".item (stored_location_persistentid)");
+		execOneSQLCommand("CREATE INDEX item_stored_location_persistentid_index ON " + getDbSchemaName()
+				+ ".item (stored_location_persistentid)");
+
+		result &= linkToParentTable("item_ddc_group", "parent", "location");
 
 		result &= linkToParentTable("item_master", "parent", "location");
 
 		result &= linkToParentTable("led_controller", "parent", "codeshelf_network");
 		// One extra index: to ensure uniqueness of the MAC addresses, and to find them fast by that address.
-		execOneSQLCommand("CREATE UNIQUE INDEX led_controller_deviceguid_index ON " + getDbSchemaName() + ".led_controller (device_guid)");
+		execOneSQLCommand("CREATE UNIQUE INDEX led_controller_deviceguid_index ON " + getDbSchemaName()
+				+ ".led_controller (device_guid)");
 
 		result &= linkToParentTable("location", "parent", "location");
 		result &= linkToParentTable("location", "path_segment", "path_segment");
@@ -552,11 +561,17 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		// Item
 		result &= createTable("item", //
 			"quantity DECIMAL NOT NULL, " //
-					+ "ddc_position DOUBLE PRECISION, " //
+					+ "ddc_pos_along_path DOUBLE PRECISION, " //
 					+ "active BOOLEAN DEFAULT TRUE NOT NULL, " //
 					+ "updated TIMESTAMP NOT NULL, " //
 					+ "stored_location_persistentid " + UUID_TYPE + " NOT NULL, " //
 					+ "uom_master_persistentid " + UUID_TYPE + " NOT NULL " //
+		);
+
+		// ItemDdcGroup
+		result &= createTable("item_ddc_group", //
+			"start_pos_along_path DECIMAL NOT NULL," //
+					+ "end_pos_along_path DECIMAL NOT NULL" //
 		);
 
 		// ItemMaster
@@ -587,11 +602,11 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 					+ "pos_y DOUBLE PRECISION NOT NULL, " //
 					+ "pos_z DOUBLE PRECISION, " + "description VARCHAR(255), "//
 					+ "path_segment_persistentid " + UUID_TYPE + ", " //
-					+ "path_distance DOUBLE PRECISION, " //
+					+ "pos_along_path DOUBLE PRECISION, " //
 					+ "led_controller_persistentid " + UUID_TYPE + ", "//
 					+ "led_channel INTEGER, " //
-					+ "first_led_pos INTEGER, " //
-					+ "last_led_pos INTEGER, " //
+					+ "first_led_num_along_path INTEGER, " //
+					+ "last_led_num_along_path INTEGER, " //
 					+ "first_ddc_id VARCHAR(255), " //
 					+ "last_ddc_id VARCHAR(255), " //
 					+ "parent_organization_persistentid " + UUID_TYPE + " "//
@@ -650,7 +665,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 					+ "start_pos_y DOUBLE PRECISION NOT NULL, " //
 					+ "end_pos_x DOUBLE PRECISION NOT NULL, " //
 					+ "end_pos_y DOUBLE PRECISION NOT NULL, " //
-					+ "path_distance DOUBLE PRECISION, " //
+					+ "start_pos_along_path DOUBLE PRECISION, " //
 					+ "anchor_location_persistentid " + UUID_TYPE //
 		);
 
@@ -706,10 +721,13 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 					+ "plan_quantity INTEGER NOT NULL, " //
 					+ "actual_quantity INTEGER NOT NULL, " //
 					+ "location_id VARCHAR(255) NOT NULL, " //
+					+ "pos_along_path DOUBLE PRECISION, " //
 					+ "picker_id VARCHAR(255), " //
 					+ "led_controller_id VARCHAR(255), " //
-					+ "led_controller_command VARCHAR(255), " //
-					+ "color_enum VARCHAR(255), " //
+					+ "led_channel INTEGER, " //
+					+ "led_first_pos INTEGER, " //
+					+ "led_last_pos INTEGER, " //
+					+ "led_color_enum VARCHAR(255), " //
 					+ "created TIMESTAMP, " //
 					+ "assigned TIMESTAMP, " //
 					+ "started TIMESTAMP, " //

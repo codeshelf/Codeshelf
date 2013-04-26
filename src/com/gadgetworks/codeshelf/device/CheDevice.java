@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CheDevice.java,v 1.26 2013/04/23 05:45:48 jeffw Exp $
+ *  $Id: CheDevice.java,v 1.27 2013/04/26 03:26:04 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -21,12 +21,13 @@ import lombok.experimental.Accessors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.gadgetworks.codeshelf.model.domain.Facility;
+import com.gadgetworks.codeshelf.model.domain.ILocation;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.flyweight.command.ColorEnum;
 import com.gadgetworks.flyweight.command.CommandControlLight;
 import com.gadgetworks.flyweight.command.CommandControlMessage;
 import com.gadgetworks.flyweight.command.ICommand;
-import com.gadgetworks.flyweight.command.NetAddress;
 import com.gadgetworks.flyweight.command.NetEndpoint;
 import com.gadgetworks.flyweight.command.NetGuid;
 import com.gadgetworks.flyweight.controller.INetworkDevice;
@@ -76,7 +77,7 @@ public class CheDevice extends AisleDevice {
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
-	private String					mLocation;
+	private String					mLocationId;
 
 	// The CHE's current user.
 	@Accessors(prefix = "m")
@@ -126,10 +127,10 @@ public class CheDevice extends AisleDevice {
 	 * Send a light command to the CHE to light a position
 	 * @param inPosition
 	 */
-	private void sendCheLightCommand(final Short inPosition, final ColorEnum inColor) {
+	private void sendCheLightCommand(final Short inChanel, final Short inPosition, final ColorEnum inColor) {
 		LOGGER.info("Light position: " + inPosition);
 		ICommand command = new CommandControlLight(NetEndpoint.PRIMARY_ENDPOINT,
-			CommandControlLight.CHANNEL1,
+			inChanel,
 			inPosition,
 			inColor,
 			CommandControlLight.EFFECT_FLASH);
@@ -142,6 +143,7 @@ public class CheDevice extends AisleDevice {
 	 * @param inPosition
 	 */
 	private void ledControllerSetLed(final NetGuid inControllerGuid,
+		final Short inChannel,
 		final Short inPosition,
 		final ColorEnum inColor,
 		final String inEffect) {
@@ -149,11 +151,11 @@ public class CheDevice extends AisleDevice {
 		INetworkDevice device = mDeviceManager.getDeviceByGuid(inControllerGuid);
 		if (device instanceof AisleDevice) {
 			AisleDevice aisleDevice = (AisleDevice) device;
-			aisleDevice.addLedCmdFor(getGuid(), inPosition, inColor, CommandControlLight.EFFECT_DIRECT);
+			aisleDevice.addLedCmdFor(getGuid(), inChannel, inPosition, inColor, CommandControlLight.EFFECT_DIRECT);
 		}
 		mLastLedControllerGuid = inControllerGuid;
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * After we've set all of the LEDs, tell the controller to broadcast them updates.
@@ -206,7 +208,7 @@ public class CheDevice extends AisleDevice {
 		mAllPicksWiList.clear();
 		mAllPicksWiList.addAll(inWorkItemList);
 		for (WorkInstruction wi : inWorkItemList) {
-			LOGGER.info("WI: Loc: " + wi.getLocationId() + " SKU: " + wi.getItemId() + " cmd: " + wi.getLedControllerCommand());
+			LOGGER.info("WI: Loc: " + wi.getLocationId() + " SKU: " + wi.getItemId());
 		}
 	}
 
@@ -315,7 +317,7 @@ public class CheDevice extends AisleDevice {
 				break;
 		}
 
-		sendCheLightCommand(CommandControlLight.POSITION_ALL, ColorEnum.RED);
+		sendCheLightCommand(CommandControlLight.CHANNEL_ALL, CommandControlLight.POSITION_ALL, ColorEnum.RED);
 	}
 
 	// --------------------------------------------------------------------------
@@ -352,7 +354,7 @@ public class CheDevice extends AisleDevice {
 		mActivePickWiList.clear();
 		mAllPicksWiList.clear();
 		setState(CheStateEnum.IDLE);
-		
+
 		ledControllerClearLeds();
 	}
 
@@ -410,16 +412,16 @@ public class CheDevice extends AisleDevice {
 		} else {
 			// Loop through each container to see if there is a WI for that container at the next location.
 			// The "next location" is the first location we find for the next pick.
-			String firstLocation = null;
+			String firstLocationId = null;
 			String firstItemId = null;
 			for (String containerId : mContainersMap.values()) {
 				Iterator<WorkInstruction> wiIter = mAllPicksWiList.iterator();
 				while (wiIter.hasNext()) {
 					WorkInstruction wi = wiIter.next();
 					if (wi.getContainerId().equals(containerId)) {
-						if ((firstLocation == null) || (firstLocation.equals(wi.getLocationId()))) {
+						if ((firstLocationId == null) || (firstLocationId.equals(wi.getLocationId()))) {
 							if ((firstItemId == null) || (firstItemId.equals(wi.getItemId()))) {
-								firstLocation = wi.getLocationId();
+								firstLocationId = wi.getLocationId();
 								firstItemId = wi.getItemId();
 								wi.setStarted(new Timestamp(System.currentTimeMillis()));
 								mActivePickWiList.add(wi);
@@ -435,6 +437,10 @@ public class CheDevice extends AisleDevice {
 		}
 	}
 
+	// --------------------------------------------------------------------------
+	/**
+	 * Send to the LED controller the active picks for the work instruction that's active on the CHE now.
+	 */
 	private void showActivePicks() {
 		// The first WI has the SKU and location info.
 		WorkInstruction firstWi = mActivePickWiList.get(0);
@@ -444,9 +450,9 @@ public class CheDevice extends AisleDevice {
 
 		INetworkDevice ledController = mRadioController.getNetworkDevice(new NetGuid(firstWi.getLedControllerId()));
 		if (ledController != null) {
-			Short startPosition = (short) ((Math.random() * 6) + 10);
-			Short endPosition = (short) ((Math.random() * 6) + 16);
-			//firstWi.getPosition();
+
+			Short startLedNum = firstWi.getLedFirstPos();
+			Short endLedNum = firstWi.getLedLastPos();
 
 			// Clear the last LED if there was one.
 			if (mLastLedControllerGuid != null) {
@@ -454,8 +460,8 @@ public class CheDevice extends AisleDevice {
 			}
 
 			// Send the location display command.
-			for (short position = startPosition; position < endPosition; position++) {
-				ledControllerSetLed(ledController.getGuid(), position, firstWi.getColorEnum(), CommandControlLight.EFFECT_FLASH);				
+			for (short position = startLedNum; position < endLedNum; position++) {
+				ledControllerSetLed(ledController.getGuid(), firstWi.getLedChannel(), position, firstWi.getLedColorEnum(), CommandControlLight.EFFECT_FLASH);
 			}
 			ledControllerShowLeds(ledController.getGuid());
 		}
@@ -464,7 +470,7 @@ public class CheDevice extends AisleDevice {
 		for (WorkInstruction wi : mActivePickWiList) {
 			for (Entry<String, String> mapEntry : mContainersMap.entrySet()) {
 				if (mapEntry.getValue().equals(wi.getContainerId())) {
-					sendCheLightCommand(Short.valueOf(mapEntry.getKey()), wi.getColorEnum());
+					sendCheLightCommand(wi.getLedChannel(), Short.valueOf(mapEntry.getKey()), wi.getLedColorEnum());
 				}
 			}
 		}
@@ -493,7 +499,7 @@ public class CheDevice extends AisleDevice {
 	 */
 	private void processLocationScan(final String inScanPrefixStr, String inScanStr) {
 		if (LOCATION_PREFIX.equals(inScanPrefixStr)) {
-			setLocation(inScanStr);
+			setLocationId(inScanStr);
 			setState(CheStateEnum.CONTAINER_SELECT);
 		} else {
 			LOGGER.info("Not a location ID: " + inScanStr);
@@ -538,7 +544,7 @@ public class CheDevice extends AisleDevice {
 				mContainersMap.put(inScanStr, mContainerInSetup);
 				mContainerInSetup = "";
 				List<String> containerIdList = new ArrayList<String>(mContainersMap.values());
-				mDeviceManager.requestCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), mLocation, containerIdList);
+				mDeviceManager.requestCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), mLocationId, containerIdList);
 			} else {
 				LOGGER.info("Position in use: " + inScanStr);
 				setStateWithInvalid(CheStateEnum.CONTAINER_POSITION);

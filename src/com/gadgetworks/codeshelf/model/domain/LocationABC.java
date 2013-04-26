@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: LocationABC.java,v 1.37 2013/04/14 17:51:29 jeffw Exp $
+ *  $Id: LocationABC.java,v 1.38 2013/04/26 03:26:04 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -73,13 +73,15 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		public LocationDao(final ISchemaManager inSchemaManager, final IDatabase inDatabase) {
 			super(inSchemaManager);
 		}
-		
+
 		public final Class<LocationABC> getDaoClass() {
 			return LocationABC.class;
 		}
 	}
 
-	private static final Logger			LOGGER		= LoggerFactory.getLogger(LocationABC.class);
+	private static final Logger			LOGGER				= LoggerFactory.getLogger(LocationABC.class);
+
+	private static final Double			METERS_PER_LED_POS	= 0.03125;
 
 	// The position type (GPS, METERS, etc.).
 	@Column(nullable = false)
@@ -123,7 +125,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	@Getter
 	@Setter
 	@JsonProperty
-	private Double						pathDistance;
+	private Double						posAlongPath;
 
 	// Associated path segment (optional)
 	@Column(nullable = true)
@@ -150,20 +152,20 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	@Column(nullable = true)
 	@Getter
 	@Setter
-	private Integer						ledChannel;
+	private Short						ledChannel;
 
 	// The bay's first LED position on the channel.
 	@Column(nullable = true)
 	@Getter
 	@Setter
-	private Integer						firstLedPos;
+	private Short						firstLedNumAlongPath;
 
 	// The number of LED positions in the bay.
 	@Column(nullable = true)
 	@Getter
 	@Setter
-	private Integer						lastLedPos;
-	
+	private Short						lastLedNumAlongPath;
+
 	// The first DDC ID for this location (if it has one).
 	@Column(nullable = true)
 	@Getter
@@ -182,21 +184,28 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	@OneToMany(mappedBy = "parent")
 	@Getter
 	@Setter
-	private List<Vertex>				vertices	= new ArrayList<Vertex>();
+	private List<Vertex>				vertices			= new ArrayList<Vertex>();
 
 	// The child locations.
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	@Getter
 	@Setter
-	private Map<String, SubLocationABC>	locations	= new HashMap<String, SubLocationABC>();
+	private Map<String, SubLocationABC>	locations			= new HashMap<String, SubLocationABC>();
 
 	// The items stored in this location.
 	@OneToMany(mappedBy = "storedLocation")
 	@MapKey(name = "domainId")
 	@Getter
 	@Setter
-	private Map<String, Item>			items		= new HashMap<String, Item>();
+	private Map<String, Item>			items				= new HashMap<String, Item>();
+
+	// The DDC groups stored in this location.
+	@OneToMany(mappedBy = "parent")
+	@MapKey(name = "domainId")
+	@Getter
+	@Setter
+	private Map<String, ItemDdcGroup>	itemDdcGroups		= new HashMap<String, ItemDdcGroup>();
 
 	public LocationABC() {
 
@@ -313,7 +322,8 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		Map<String, Object> filterParams = new HashMap<String, Object>();
 		filterParams.put("persistentId", this.getPersistentId().toString());
 		filterParams.put("domainId", inLocationId);
-		List<SubLocationABC> resultSet = dao.findByFilter("parent.persistentId = :persistentId and domainId = :domainId", filterParams);
+		List<SubLocationABC> resultSet = dao.findByFilter("parent.persistentId = :persistentId and domainId = :domainId",
+			filterParams);
 		if ((resultSet != null) && (resultSet.size() > 0)) {
 			result = resultSet.get(0);
 		}
@@ -364,11 +374,11 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		}
 
 		pathSegment = inPathSegment;
-//		try {
-//			LocationABC.DAO.store(this);
-//		} catch (DaoException e) {
-//			LOGGER.error("", e);
-//		}
+		//		try {
+		//			LocationABC.DAO.store(this);
+		//		} catch (DaoException e) {
+		//			LOGGER.error("", e);
+		//		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -382,20 +392,28 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 			location.computePathDistance();
 		}
 
-		// Now compute the distance for this location.
-		Double distance = 0.0;
+		// Now compute the path position for this location.
+		Double pathPosition = 0.0;
 		PathSegment segment = this.getPathSegment();
 		if (segment != null) {
 			ILocation<P> anchorLocation = segment.getAnchorLocation();
 			if (segment.getParent().getTravelDirEnum().equals(TravelDirectionEnum.FORWARD)) {
-				Point locationPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, anchorLocation.getPosX() + this.getPosX(), anchorLocation.getPosY() + this.getPosY(), null);
-				distance = segment.getPathDistance() + segment.computeDistanceOfPointFromLine(segment.getStartPoint(), segment.getEndPoint(), locationPoint);
+				Point locationPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT,
+					anchorLocation.getPosX() + this.getPosX(),
+					anchorLocation.getPosY() + this.getPosY(),
+					null);
+				pathPosition = segment.getStartPosAlongPath()
+						+ segment.computeDistanceOfPointFromLine(segment.getStartPoint(), segment.getEndPoint(), locationPoint);
 			} else {
-				Point locationPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, anchorLocation.getPosX() + this.getPosX(), anchorLocation.getPosY() + this.getPosY(), null);
-				distance = segment.getPathDistance() + segment.computeDistanceOfPointFromLine(segment.getEndPoint(), segment.getStartPoint(), locationPoint);
+				Point locationPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT,
+					anchorLocation.getPosX() + this.getPosX(),
+					anchorLocation.getPosY() + this.getPosY(),
+					null);
+				pathPosition = segment.getStartPosAlongPath()
+						+ segment.computeDistanceOfPointFromLine(segment.getEndPoint(), segment.getStartPoint(), locationPoint);
 			}
 		}
-		pathDistance = distance;
+		posAlongPath = pathPosition;
 
 		try {
 			LocationABC.DAO.store(this);
@@ -404,51 +422,96 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		}
 	}
 
-	// --------------------------------------------------------------------------
-	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#setPosTypeByStr(java.lang.String)
-	 */
 	public final void setPosTypeByStr(String inPosTypeStr) {
 		setPosTypeEnum(PositionTypeEnum.valueOf(inPosTypeStr));
 	}
 
-	// --------------------------------------------------------------------------
-	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#addVertex(com.gadgetworks.codeshelf.model.domain.Vertex)
-	 */
 	public final void addVertex(Vertex inVertex) {
 		vertices.add(inVertex);
 	}
 
-	// --------------------------------------------------------------------------
-	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#removeVertex(com.gadgetworks.codeshelf.model.domain.Vertex)
-	 */
 	public final void removeVertex(Vertex inVertex) {
 		vertices.remove(inVertex);
 	}
 
-	// --------------------------------------------------------------------------
-	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#addItem(java.lang.String, com.gadgetworks.codeshelf.model.domain.Item)
-	 */
 	public final void addItem(Item inItem) {
 		items.put(inItem.getItemId(), inItem);
 	}
 
-	// --------------------------------------------------------------------------
-	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#getItem(java.lang.String)
-	 */
 	public final Item getItem(final String inItemId) {
 		return items.get(inItemId);
 	}
 
-	// --------------------------------------------------------------------------
-	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#removeItem(java.lang.String)
-	 */
 	public final void removeItem(final String inItemId) {
 		items.remove(inItemId);
 	}
+
+	public final void addItemDdcGroup(ItemDdcGroup inItemDdcGroup) {
+		itemDdcGroups.put(inItemDdcGroup.getDdcGroupId(), inItemDdcGroup);
+	}
+
+	public final ItemDdcGroup getItemDdcGroup(final String inItemDdcGroupId) {
+		return itemDdcGroups.get(inItemDdcGroupId);
+	}
+
+	public final void removeItemDdcGroup(final String inItemDdcGroupId) {
+		itemDdcGroups.remove(inItemDdcGroupId);
+	}
+
+	public final List<ItemDdcGroup> getDdcGroups() {
+		return new ArrayList<ItemDdcGroup>(itemDdcGroups.values());
+	}
+
+	public final Short getFirstLedPosForItemId(final String inItemId) {
+		Short result = 0;
+
+		Item item = this.getItem(inItemId);
+		if (item != null) {
+			ItemDdcGroup ddcGroup = getItemDdcGroup(item.getParent().getDdcId());
+			if (ddcGroup != null) {
+				result = getLedNumberFromPosAlongPath(ddcGroup.getStartPosAlongPath());
+			}
+		}
+
+		return result;
+	}
+
+	public final Short getLastLedPosForItemId(final String inItemId) {
+		Short result = 0;
+
+		Item item = this.getItem(inItemId);
+		if (item != null) {
+			ItemDdcGroup ddcGroup = getItemDdcGroup(item.getParent().getDdcId());
+			if (ddcGroup != null) {
+				result = getLedNumberFromPosAlongPath(ddcGroup.getEndPosAlongPath());
+			}
+		}
+
+		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Given a position along the path (that should be within this location) return the LED closest to the position.
+	 * @param inPosAlongPath
+	 * @return
+	 */
+	private Short getLedNumberFromPosAlongPath(Double inPosAlongPath) {
+		Short result = 0;
+
+		// Right now the LEDs are a fixed 3.125cm per position (for now).
+		// In the future we'll need to know what kind of device is mounted onto the location.
+
+		Double diffToPosition = inPosAlongPath - getPosAlongPath();
+		Short ledCountFromEdge = (short) Math.round(diffToPosition / METERS_PER_LED_POS);
+
+		if (getFirstLedNumAlongPath() < getLastLedNumAlongPath()) {
+			result = (short) (getFirstLedNumAlongPath() + ledCountFromEdge);
+		} else {
+			result = (short) (getFirstLedNumAlongPath() - ledCountFromEdge);
+		}
+
+		return result;
+	}
+
 }

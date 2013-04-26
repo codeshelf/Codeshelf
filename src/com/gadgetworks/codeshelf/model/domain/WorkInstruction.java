@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WorkInstruction.java,v 1.19 2013/04/14 16:47:38 jeffw Exp $
+ *  $Id: WorkInstruction.java,v 1.20 2013/04/26 03:26:04 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -139,8 +139,6 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 	@JsonProperty
 	private String						pickerId;
 
-	// Everything below this is transient (not persisted) and only has value when passed around at production time.
-
 	// Aisle controller ID.
 	@Column(nullable = true)
 	@Getter
@@ -148,12 +146,26 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 	@JsonProperty
 	private String						ledControllerId;
 
-	// Aisle controller command.
+	// LED channel
 	@Column(nullable = true)
 	@Getter
 	@Setter
 	@JsonProperty
-	private String						ledControllerCommand;
+	private Short						ledChannel;
+
+	// First LED position
+	@Column(nullable = true)
+	@Getter
+	@Setter
+	@JsonProperty
+	private Short						ledFirstPos;
+
+	// Last LED position
+	@Column(nullable = true)
+	@Getter
+	@Setter
+	@JsonProperty
+	private Short						ledLastPos;
 
 	// Color used for picking.
 	@Column(nullable = true)
@@ -161,13 +173,12 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 	@Getter
 	@Setter
 	@JsonProperty
-	private ColorEnum					colorEnum;
+	private ColorEnum					ledColorEnum;
 
-	@Transient
 	@Getter
 	@Setter
 	@JsonProperty
-	private Double						distanceAlongPath;
+	private Double						posAlongPath;
 
 	@Column(nullable = true)
 	@Getter

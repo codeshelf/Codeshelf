@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.71 2013/04/15 04:34:43 jeffw Exp $
+ *  $Id: Facility.java,v 1.72 2013/04/26 03:26:04 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -330,9 +330,9 @@ public class Facility extends LocationABC<Organization> {
 	public final void createAisle(final String inAisleId,
 		final Double inPosXMeters,
 		final Double inPosYMeters,
-		final Double inProtoBayXDimMeters,
-		final Double inProtoBayYDimMeters,
-		final Double inProtoBayZDimMeters,
+		final Double inProtoBayWidthMeters,
+		final Double inProtoBayDepthMeters,
+		final Double inProtoBayHeightMeters,
 		final Integer inBaysHigh,
 		final Integer inBaysLong,
 		final Boolean inRunInXDir,
@@ -367,24 +367,36 @@ public class Facility extends LocationABC<Organization> {
 					aisle.addLocation(bay);
 
 					// Create the bay's boundary vertices.
-					createVertices(bay, inProtoBayXDimMeters, inProtoBayYDimMeters);
+					if (inRunInXDir) {
+						createVertices(bay, inProtoBayWidthMeters, inProtoBayDepthMeters);
+					} else {
+						createVertices(bay, inProtoBayDepthMeters, inProtoBayWidthMeters);
+					}
 
-					anchorPosZ += inProtoBayZDimMeters;
-				}
-
-				if ((anchorPosX + inProtoBayXDimMeters) > aisleBoundaryX) {
-					aisleBoundaryX = anchorPosX + inProtoBayXDimMeters;
-				}
-
-				if ((anchorPosY + inProtoBayYDimMeters) > aisleBoundaryY) {
-					aisleBoundaryY = anchorPosY + inProtoBayYDimMeters;
+					anchorPosZ += inProtoBayHeightMeters;
 				}
 
 				// Prepare the anchor point for the next bay.
 				if (inRunInXDir) {
-					anchorPosX += inProtoBayXDimMeters;
+					if ((anchorPosX + inProtoBayWidthMeters) > aisleBoundaryX) {
+						aisleBoundaryX = anchorPosX + inProtoBayWidthMeters;
+					}
+
+					if ((anchorPosY + inProtoBayDepthMeters) > aisleBoundaryY) {
+						aisleBoundaryY = anchorPosY + inProtoBayDepthMeters;
+					}
+
+					anchorPosX += inProtoBayWidthMeters;
 				} else {
-					anchorPosY += inProtoBayYDimMeters;
+					if ((anchorPosX + inProtoBayDepthMeters) > aisleBoundaryX) {
+						aisleBoundaryX = anchorPosX + inProtoBayDepthMeters;
+					}
+
+					if ((anchorPosY + inProtoBayWidthMeters) > aisleBoundaryY) {
+						aisleBoundaryY = anchorPosY + inProtoBayWidthMeters;
+					}
+
+					anchorPosY += inProtoBayDepthMeters;
 				}
 			}
 
@@ -426,7 +438,7 @@ public class Facility extends LocationABC<Organization> {
 							//							LOGGER.info("Location: " + bay.getFullDomainId() + " is " + distanceStr + " meters from the initiation point.");
 
 							bay.computePathDistance();
-							LOGGER.info("Location: " + bay.getFullDomainId() + " is " + bay.getPathDistance()
+							LOGGER.info("Location: " + bay.getFullDomainId() + " is " + bay.getPosAlongPath()
 									+ " meters from the initiation point.");
 						}
 					}
@@ -652,11 +664,13 @@ public class Facility extends LocationABC<Organization> {
 
 								// Figure out if there are any items are on the current path.
 								// (We just take the first one we find, because items slotted on the same path should be close together.)
+								Item selectedItem = null;
 								for (Item item : itemMaster.getItems()) {
 									if (item.getStoredLocation() instanceof ISubLocation) {
 										ISubLocation location = (ISubLocation) item.getStoredLocation();
 										if (path.isLocationOnPath(location)) {
 											foundLocation = location;
+											selectedItem = item;
 											parentLocationId = ((ISubLocation<?>) foundLocation.getParent()).getLocationId();
 											break;
 										}
@@ -689,10 +703,13 @@ public class Facility extends LocationABC<Organization> {
 										plannedWi.setDomainId(order.getOrderId() + "." + detail.getOrderDetailId());
 										plannedWi.setTypeEnum(WorkInstructionTypeEnum.PLAN);
 										plannedWi.setStatusEnum(WorkInstructionStatusEnum.NEW);
-										plannedWi.setLedControllerCommand("");
 										plannedWi.setLedControllerId("0x00000003");
-										plannedWi.setColorEnum(ColorEnum.BLUE);
+										plannedWi.setLedChannel(foundLocation.getLedChannel());
+										plannedWi.setLedFirstPos(foundLocation.getFirstLedPosForItemId(itemMaster.getItemId()));
+										plannedWi.setLedLastPos(foundLocation.getLastLedPosForItemId(itemMaster.getItemId()));
+										plannedWi.setLedColorEnum(ColorEnum.BLUE);
 										plannedWi.setItemId(itemMaster.getItemId());
+										plannedWi.setPosAlongPath(selectedItem.getDdcPosAlongPath());
 										plannedWi.setLocationId(parentLocationId + "." + foundLocation.getLocationId());
 										plannedWi.setContainerId(containerId);
 										plannedWi.setPlanQuantity(quantityToPick);
@@ -751,7 +768,7 @@ public class Facility extends LocationABC<Organization> {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * After a change in DDC items we call this routine to recompute the positions of the items.
+	 * After a change in DDC items we call this routine to recompute the path-relative positions of the items.
 	 * 
 	 */
 	public final void recomputeDdcPositions() {
@@ -786,7 +803,13 @@ public class Facility extends LocationABC<Organization> {
 		LOGGER.debug("DDC list items");
 		List<Item> locationItems = new ArrayList<Item>();
 		Double locationItemCount;
-		for (ILocation location : ddcLocations) {
+		for (ILocation<?> location : ddcLocations) {
+			// Delete all of the old DDC groups from this location.
+			for (ItemDdcGroup ddcGroup : location.getDdcGroups()) {
+				ItemDdcGroup.DAO.delete(ddcGroup);
+			}
+
+			// Build a list of all items in this DDC-based location.
 			LOGGER.debug("DDC location check: " + location.getFullDomainId() + " " + location.getPersistentId());
 			locationItems.clear();
 			locationItemCount = 0.0;
@@ -805,7 +828,6 @@ public class Facility extends LocationABC<Organization> {
 			}
 
 			// Compute the length of the location's face.
-			Collections.sort(locationItems, new DdcItemComparator());
 			Double locationLen = 0.0;
 			Vertex lastVertex = null;
 			List<Vertex> list = location.getVertices();
@@ -822,16 +844,38 @@ public class Facility extends LocationABC<Organization> {
 			}
 
 			// Walk through all of the items in this location in DDC order and position them.
-			Double ddcPos = 0.0;
+			Double ddcPos = location.getPosAlongPath();
 			Double distPerItem = locationLen / locationItemCount;
+			ItemDdcGroup lastDdcGroup = null;
+			Collections.sort(locationItems, new DdcItemComparator());
 			for (Item item : locationItems) {
 				ddcPos += distPerItem * item.getQuantity();
-				item.setDdcPosition(ddcPos);
+				item.setDdcPosAlongPath(ddcPos);
 				try {
 					item.DAO.store(item);
 				} catch (DaoException e) {
 					LOGGER.error("", e);
 				}
+
+				// Figure out if we've changed DDC group codes and start a new group.
+				if ((lastDdcGroup == null) || (!lastDdcGroup.getDdcGroupId().equals(item.getParent().getDdcId()))) {
+
+					// Finish the end position of the last DDC group and store it.
+					if (lastDdcGroup != null) {
+						ItemDdcGroup.DAO.store(lastDdcGroup);
+					}
+
+					// Start the next DDC group.
+					lastDdcGroup = new ItemDdcGroup();
+					lastDdcGroup.setDdcGroupId(item.getParent().getDdcId());
+					lastDdcGroup.setParent(item.getStoredLocation());
+					lastDdcGroup.setStartPosAlongPath(item.getDdcPosAlongPath());
+				}
+				lastDdcGroup.setEndPosAlongPath(item.getDdcPosAlongPath());
+			}
+			// Store the last DDC 
+			if (lastDdcGroup != null) {
+				ItemDdcGroup.DAO.store(lastDdcGroup);
 			}
 		}
 

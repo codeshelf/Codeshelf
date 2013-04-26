@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CsDeviceManager.java,v 1.15 2013/04/16 05:48:04 jeffw Exp $
+ *  $Id: CsDeviceManager.java,v 1.16 2013/04/26 03:26:04 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -25,8 +25,11 @@ import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.application.IUtil;
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
-import com.gadgetworks.codeshelf.model.domain.LedController;
+import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Che;
+import com.gadgetworks.codeshelf.model.domain.Facility;
+import com.gadgetworks.codeshelf.model.domain.LedController;
+import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.ws.command.IWebSessionCmd;
 import com.gadgetworks.codeshelf.ws.command.req.IWsReqCmd;

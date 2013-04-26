@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ILocation.java,v 1.6 2013/04/14 17:51:29 jeffw Exp $
+ *  $Id: ILocation.java,v 1.7 2013/04/26 03:26:04 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -12,73 +12,161 @@ import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 
 public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P> {
 
-	 PositionTypeEnum getPosTypeEnum();
+	PositionTypeEnum getPosTypeEnum();
 
-	 void setPosTypeEnum(PositionTypeEnum inPosTypeEnum);
+	void setPosTypeEnum(PositionTypeEnum inPosTypeEnum);
 
-	 Double getPosX();
+	Double getPosX();
 
-	 void setPosX(Double inPosX);
+	void setPosX(Double inPosX);
 
-	 Double getPosY();
+	Double getPosY();
 
-	 void setPosY(Double inPosY);
+	void setPosY(Double inPosY);
 
-	 Double getPosZ();
+	Double getPosZ();
 
-	 void setPosZ(Double inPosZ);
+	void setPosZ(Double inPosZ);
 
-	 String getDescription();
+	String getDescription();
 
-	 void setDescription(String inDescription);
+	void setDescription(String inDescription);
 
-	 Double getPathDistance();
+	// --------------------------------------------------------------------------
+	/**
+	 * Get this location's starting position along its path.
+	 * @return
+	 */
+	Double getPosAlongPath();
 
-	 void setPathDistance(Double inPathDistance);
+	// --------------------------------------------------------------------------
+	/**
+	 * Set this location's starting position along its path.
+	 * @param inPoseAlongPath
+	 */
+	void setPosAlongPath(Double inPoseAlongPath);
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * Return the path segment for this location.
+	 * @return
+	 */
+	PathSegment getPathSegment();
 
-	 PathSegment getPathSegment();
+	Organization getParentOrganization();
 
-	 Organization getParentOrganization();
+	void setParentOrganization(Organization inParentOrganization);
 
-	 void setParentOrganization(Organization inParentOrganization);
+	LedController getLedController();
 
-	 LedController getLedController();
+	void setLedController(LedController inLedController);
 
-	 void setLedController(LedController inLedController);
+	Short getLedChannel();
 
-	 Integer getLedChannel();
+	void setLedChannel(Short inLedChannel);
 
-	 void setLedChannel(Integer inLedChannel);
+	Short getFirstLedNumAlongPath();
 
-	 Integer getFirstLedPos();
+	void setFirstLedNumAlongPath(Short inFirstLedNum);
 
-	 void setFirstLedPos(Integer inFirstLedPos);
+	Short getLastLedNumAlongPath();
 
-	 Integer getLastLedPos();
+	void setLastLedNumAlongPath(Short inLastLedNum);
 
-	 void setLastLedPos(Integer inLastLedPos);
+	// --------------------------------------------------------------------------
+	/**
+	 * Compute the first LED position for the item in this location.
+	 * @param inItemId
+	 * @return
+	 */
+	Short getFirstLedPosForItemId(final String inItemId);
 
-	 String getFirstDdcId();
+	// --------------------------------------------------------------------------
+	/**
+	 * Compute the first LED position for the item in this location.
+	 * @param inItemId
+	 * @return
+	 */
+	Short getLastLedPosForItemId(final String inItemId);
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * If this is a DDC location then return the first DDC ID for the location.
+	 * @return
+	 */
+	String getFirstDdcId();
 
-	 void setFirstDdcId(String inFirstDdcId);
+	// --------------------------------------------------------------------------
+	/**
+	 * If this is a DDC location then set the first DDC ID for the location.
+	 * @param inFirstDdcId
+	 */
+	void setFirstDdcId(String inFirstDdcId);
 
-	 String getLastDdcId();
+	// --------------------------------------------------------------------------
+	/**
+	 * If this is a DDC location then return the last DDC ID for the location.
+	 * @return
+	 */
+	String getLastDdcId();
 
-	 void setLastDdcId(String inLastDdcId);
+	// --------------------------------------------------------------------------
+	/**
+	 * If this is a DDC location then set the last DDC ID for the location.
+	 * @param inFirstDdcId
+	 */
+	void setLastDdcId(String inLastDdcId);
 
-	 List<Vertex> getVertices();
+	// --------------------------------------------------------------------------
+	/**
+	 * Get the vertices that make up this location's outline.  
+	 * (Today the vertices always make a rectangle, but you should not assume this will always be true.)
+	 * @return
+	 */
+	List<Vertex> getVertices();
 
-	 void setVertices(List<Vertex> inVertices);
+	void setVertices(List<Vertex> inVertices);
 
-//	 Map<String, ISubLocation> getLocations();
-//
-//	 void setLocations(Map<String, ISubLocation> inLocations);
+	void setPosTypeByStr(String inPosTypeStr);
 
-	 Map<String, Item> getItems();
+	void addVertex(Vertex inVertex);
 
-	 void setItems(Map<String, Item> inItems);
+	void removeVertex(Vertex inVertex);
 
-	 List<ISubLocation> getChildren();
+	// --------------------------------------------------------------------------
+	/**
+	 * Get all of the items contained in this location.
+	 * @return
+	 */
+	Map<String, Item> getItems();
+
+	void setItems(Map<String, Item> inItems);
+
+	void addItem(Item inItem);
+
+	Item getItem(String inItemId);
+
+	void removeItem(String inItemId);
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Get all of the DDC item groups in this location (if it is a DDC location and has any DDC groups).
+	 * @return
+	 */
+	List<ItemDdcGroup> getDdcGroups();
+
+	void addItemDdcGroup(ItemDdcGroup inItemDdcGroup);
+
+	ItemDdcGroup getItemDdcGroup(final String inItemDdcGroupId);
+
+	void removeItemDdcGroup(final String inItemDdcGroupId);
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Get all of the child locations for this location.
+	 * @return
+	 */
+	List<ISubLocation> getChildren();
 
 	// --------------------------------------------------------------------------
 	/**
@@ -92,7 +180,7 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 	 * @param inClassWanted
 	 * @return
 	 */
-	 <T extends ISubLocation> List<T> getChildrenAtLevel(Class<? extends ISubLocation> inClassWanted);
+	<T extends ISubLocation> List<T> getChildrenAtLevel(Class<? extends ISubLocation> inClassWanted);
 
 	// --------------------------------------------------------------------------
 	/**
@@ -106,13 +194,13 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 	 * @param inClassWanted
 	 * @return
 	 */
-	 <T extends ILocation> T getParentAtLevel(Class<? extends ILocation> inClassWanted);
+	<T extends ILocation> T getParentAtLevel(Class<? extends ILocation> inClassWanted);
 
-	 String getLocationId();
+	String getLocationId();
 
-	 void setLocationId(String inLocationId);
+	void setLocationId(String inLocationId);
 
-	 void addLocation(ISubLocation inLocation);
+	void addLocation(ISubLocation inLocation);
 
 	// --------------------------------------------------------------------------
 	/**
@@ -120,9 +208,9 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 	 * @param inLocationId
 	 * @return
 	 */
-	 ISubLocation getLocation(String inLocationId);
+	ISubLocation getLocation(String inLocationId);
 
-	 void removeLocation(String inLocationId);
+	void removeLocation(String inLocationId);
 
 	// --------------------------------------------------------------------------
 	/**
@@ -131,26 +219,14 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 	 * @param inLocationId
 	 * @return
 	 */
-	 ILocation getSubLocationById(String inLocationId);
+	ILocation getSubLocationById(String inLocationId);
 
-	 void setPathSegment(PathSegment inPathSegment);
+	void setPathSegment(PathSegment inPathSegment);
 
 	// --------------------------------------------------------------------------
 	/**
 	 * Recompute the path distance of this location (and recursively for all of its child locations).
 	 */
-	 void computePathDistance();
-
-	 void setPosTypeByStr(String inPosTypeStr);
-
-	 void addVertex(Vertex inVertex);
-
-	 void removeVertex(Vertex inVertex);
-
-	 void addItem(Item inItem);
-
-	 Item getItem(String inItemId);
-
-	 void removeItem(String inItemId);
+	void computePathDistance();
 
 }

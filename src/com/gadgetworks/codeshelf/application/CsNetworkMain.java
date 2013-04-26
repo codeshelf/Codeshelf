@@ -1,7 +1,7 @@
 /*******************************************************************************
 CodeshelfWebSocketServer *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CsNetworkMain.java,v 1.8 2013/03/17 19:19:13 jeffw Exp $
+ *  $Id: CsNetworkMain.java,v 1.9 2013/04/26 03:26:04 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -21,7 +21,6 @@ import com.gadgetworks.codeshelf.model.dao.DaoProvider;
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.ws.websocket.CsWebSocketClient;
-import com.gadgetworks.codeshelf.ws.websocket.ICsWebSocketClient;
 import com.gadgetworks.codeshelf.ws.websocket.ICsWebsocketClientMsgHandler;
 import com.gadgetworks.codeshelf.ws.websocket.IWebSocketSslContextGenerator;
 import com.gadgetworks.codeshelf.ws.websocket.SSLWebSocketClientFactory;

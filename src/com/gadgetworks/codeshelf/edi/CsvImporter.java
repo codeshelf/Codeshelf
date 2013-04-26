@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CsvImporter.java,v 1.24 2013/04/14 17:51:29 jeffw Exp $
+ *  $Id: CsvImporter.java,v 1.25 2013/04/26 03:26:04 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -114,7 +114,7 @@ public class CsvImporter implements ICsvImporter {
 						}
 					}
 					
-					if ((!order.getActive()) && (!hasActive)) {
+					if ((order.getActive()) && (!hasActive)) {
 						LOGGER.debug("Archive old order header: " + order.getOrderId());
 						order.setActive(false);
 						mOrderHeaderDao.store(order);

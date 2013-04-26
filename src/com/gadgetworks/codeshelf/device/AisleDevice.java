@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: AisleDevice.java,v 1.7 2013/04/23 05:45:48 jeffw Exp $
+ *  $Id: AisleDevice.java,v 1.8 2013/04/26 03:26:04 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -29,13 +29,16 @@ public class AisleDevice extends DeviceABC {
 
 	private class LedCmd {
 		@Getter
+		private Short		mChannel;
+		@Getter
 		private Short		mPosition;
 		@Getter
 		private ColorEnum	mColor;
 		@Getter
 		private String		mEffect;
 
-		public LedCmd(final Short inPosition, final ColorEnum inColor, final String inEffect) {
+		public LedCmd(final Short inChannel, final Short inPosition, final ColorEnum inColor, final String inEffect) {
+			mChannel = inChannel;
 			mPosition = inPosition;
 			mColor = inColor;
 			mEffect = inEffect;
@@ -63,14 +66,15 @@ public class AisleDevice extends DeviceABC {
 	 * @param inNetGuid
 	 */
 	public final void clearLedCmdFor(final NetGuid inNetGuid) {
-		// First send a blanking command.
-		ICommand command = new CommandControlLight(NetEndpoint.PRIMARY_ENDPOINT,
-			CommandControlLight.CHANNEL1,
-			CommandControlLight.POSITION_NONE,
-			ColorEnum.BLACK,
-			CommandControlLight.EFFECT_SOLID);
-		mRadioController.sendCommand(command, getAddress(), false);
-
+		// First send a blanking command on each channel.
+		for (short channel = 0; channel < 2; channel++) {
+			ICommand command = new CommandControlLight(NetEndpoint.PRIMARY_ENDPOINT,
+				channel,
+				CommandControlLight.POSITION_NONE,
+				ColorEnum.BLACK,
+				CommandControlLight.EFFECT_SOLID);
+			mRadioController.sendCommand(command, getAddress(), false);
+		}
 		mDeviceLedPosMap.remove(inNetGuid);
 		updateLeds();
 	}
@@ -83,13 +87,17 @@ public class AisleDevice extends DeviceABC {
 	 * @param inColor
 	 * @param inEffect
 	 */
-	public final void addLedCmdFor(final NetGuid inNetGuid, final Short inPosition, final ColorEnum inColor, final String inEffect) {
+	public final void addLedCmdFor(final NetGuid inNetGuid,
+		final Short inChannel,
+		final Short inPosition,
+		final ColorEnum inColor,
+		final String inEffect) {
 		List<LedCmd> ledCmds = mDeviceLedPosMap.get(inNetGuid);
 		if (ledCmds == null) {
 			ledCmds = new ArrayList<LedCmd>();
 			mDeviceLedPosMap.put(inNetGuid, ledCmds);
 		}
-		LedCmd ledCmd = new LedCmd(inPosition, inColor, inEffect);
+		LedCmd ledCmd = new LedCmd(inChannel, inPosition, inColor, inEffect);
 		ledCmds.add(ledCmd);
 	}
 
@@ -113,7 +121,7 @@ public class AisleDevice extends DeviceABC {
 
 				LOGGER.info("Light position: " + ledCmd.mPosition);
 				ICommand command = new CommandControlLight(NetEndpoint.PRIMARY_ENDPOINT,
-					CommandControlLight.CHANNEL1,
+					ledCmd.mChannel,
 					ledCmd.mPosition,
 					ledCmd.mColor,
 					ledCmd.mEffect);
