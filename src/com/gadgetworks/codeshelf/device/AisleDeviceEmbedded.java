@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: AisleDeviceEmbedded.java,v 1.13 2013/04/19 23:23:25 jeffw Exp $
+ *  $Id: AisleDeviceEmbedded.java,v 1.14 2013/04/27 18:37:34 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -43,7 +43,7 @@ public class AisleDeviceEmbedded extends DeviceEmbeddedABC {
 	private static final Logger	LOGGER						= LoggerFactory.getLogger(DeviceEmbeddedABC.class);
 
 	private JD2XX				mJD2XXInterface;
-	private Integer				mTotalPositions				= 32;
+	private Integer				mTotalPositions				= 48;
 	private List<LedPos>		mStoredPositions;
 	private Boolean				mIsBlanking					= false;
 	private byte[]				mAllChannelsOutput;
@@ -195,13 +195,13 @@ public class AisleDeviceEmbedded extends DeviceEmbeddedABC {
 	 */
 	private void sendLedValue(final Integer inPos, LedValue inLedValue) {
 
-		Byte blue = inLedValue.getBlue();
+		Byte red = inLedValue.getRed();
 		for (int bit = 0; bit < 8; bit++) {
-			if ((blue & ((byte) (1 << bit))) != 0) {
+			if ((red & ((byte) (1 << bit))) != 0) {
 				mAllChannelsOutput[(inPos - 1) * 24 + bit] |= 1;
 			}
 		}
-
+		
 		Byte green = inLedValue.getGreen();
 		for (int bit = 0; bit < 8; bit++) {
 			if ((green & ((byte) (1 << bit))) != 0) {
@@ -209,9 +209,9 @@ public class AisleDeviceEmbedded extends DeviceEmbeddedABC {
 			}
 		}
 
-		Byte red = inLedValue.getRed();
+		Byte blue = inLedValue.getBlue();
 		for (int bit = 0; bit < 8; bit++) {
-			if ((red & ((byte) (1 << bit))) != 0) {
+			if ((blue & ((byte) (1 << bit))) != 0) {
 				mAllChannelsOutput[(inPos - 1) * 24 + 16 + bit] |= 1;
 			}
 		}
@@ -321,6 +321,9 @@ public class AisleDeviceEmbedded extends DeviceEmbeddedABC {
 		} else {
 			LedPos ledPos = new LedPos(inCommand.getPosition());
 			ledPos.addSample(mapColorEnumToLedValue(inCommand.getColor()));
+			if (ledPos.getPosition() > mTotalPositions) {
+				mTotalPositions = (int) ledPos.getPosition();
+			}
 			mStoredPositions.add(ledPos);
 		}
 	}
