@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: AisleDeviceEmbedded.java,v 1.15 2013/04/28 02:51:24 jeffw Exp $
+ *  $Id: AisleDeviceEmbedded.java,v 1.16 2013/04/28 05:03:44 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -80,7 +80,7 @@ public class AisleDeviceEmbedded extends DeviceEmbeddedABC {
 			}
 		}, LEDPROCESSOR_THREAD_NAME);
 		mProcessorThread.setDaemon(true);
-		mProcessorThread.setPriority(Thread.MIN_PRIORITY);
+		mProcessorThread.setPriority(Thread.MAX_PRIORITY);
 		mProcessorThread.start();
 	}
 
@@ -159,27 +159,30 @@ public class AisleDeviceEmbedded extends DeviceEmbeddedABC {
 	 */
 	private void refreshLedChannels() {
 		mAllChannelsOutput = new byte[mTotalPositions * 24];
-		Short nextLedPosNum = 0;
-		LedPos ledPos = null;
-		//LOGGER.debug("\nFlash");
-		for (int pos = 1; pos < mTotalPositions; pos++) {
-			if (mIsBlanking) {
-				break;
-			} else {
-				if ((ledPos == null) && (nextLedPosNum < mStoredPositions.size())) {
-					ledPos = mStoredPositions.get(nextLedPosNum++);
-				}
-
-				if ((ledPos != null) && (ledPos.getPosition() == pos)) {
-					sendLedValue(ledPos.getChannel(), ledPos.getPosition(), ledPos.getNextSample());
-					ledPos = null;
-				} else {
-					//sendLedOff(pos);
-				}
+//		Short nextLedPosNum = 0;
+//		LedPos ledPos = null;
+//
+//		for (int pos = 1; pos < mTotalPositions; pos++) {
+//			if (mIsBlanking) {
+//				break;
+//			} else {
+//				if ((ledPos == null) && (nextLedPosNum < mStoredPositions.size())) {
+//					ledPos = mStoredPositions.get(nextLedPosNum++);
+//				}
+//
+//				if ((ledPos != null) && (ledPos.getPosition() == pos)) {
+//					sendLedValue(ledPos.getChannel(), ledPos.getPosition(), ledPos.getNextSample());
+//					ledPos = null;
+//				}
+//			}
+//		}
+		if (!mIsBlanking) {
+			for (LedPos ledPos : mStoredPositions) {
+				sendLedValue(ledPos.getChannel(), ledPos.getPosition(), ledPos.getNextSample());
 			}
 		}
 		mIsBlanking = !mIsBlanking;
-		//		LOGGER.debug(Arrays.toString(mAllChannelsOutput));
+
 		try {
 			mJD2XXInterface.write(mAllChannelsOutput);
 		} catch (IOException e) {
