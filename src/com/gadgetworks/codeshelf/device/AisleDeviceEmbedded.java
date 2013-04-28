@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: AisleDeviceEmbedded.java,v 1.14 2013/04/27 18:37:34 jeffw Exp $
+ *  $Id: AisleDeviceEmbedded.java,v 1.15 2013/04/28 02:51:24 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -159,7 +159,7 @@ public class AisleDeviceEmbedded extends DeviceEmbeddedABC {
 	 */
 	private void refreshLedChannels() {
 		mAllChannelsOutput = new byte[mTotalPositions * 24];
-		Integer nextLedPosNum = 0;
+		Short nextLedPosNum = 0;
 		LedPos ledPos = null;
 		//LOGGER.debug("\nFlash");
 		for (int pos = 1; pos < mTotalPositions; pos++) {
@@ -171,7 +171,7 @@ public class AisleDeviceEmbedded extends DeviceEmbeddedABC {
 				}
 
 				if ((ledPos != null) && (ledPos.getPosition() == pos)) {
-					sendLedValue(pos, ledPos.getNextSample());
+					sendLedValue(ledPos.getChannel(), ledPos.getPosition(), ledPos.getNextSample());
 					ledPos = null;
 				} else {
 					//sendLedOff(pos);
@@ -193,26 +193,26 @@ public class AisleDeviceEmbedded extends DeviceEmbeddedABC {
 	/**
 	 * @param inLedValues
 	 */
-	private void sendLedValue(final Integer inPos, LedValue inLedValue) {
+	private void sendLedValue(final Short inChannel, final Short inPosition, LedValue inLedValue) {
 
 		Byte red = inLedValue.getRed();
 		for (int bit = 0; bit < 8; bit++) {
 			if ((red & ((byte) (1 << bit))) != 0) {
-				mAllChannelsOutput[(inPos - 1) * 24 + bit] |= 1;
+				mAllChannelsOutput[(inPosition - 1) * 24 + bit] |= (1 << (inChannel - 1));
 			}
 		}
 		
 		Byte green = inLedValue.getGreen();
 		for (int bit = 0; bit < 8; bit++) {
 			if ((green & ((byte) (1 << bit))) != 0) {
-				mAllChannelsOutput[(inPos - 1) * 24 + 8 + bit] |= 1;
+				mAllChannelsOutput[(inPosition - 1) * 24 + 8 + bit] |= (1 << (inChannel - 1));
 			}
 		}
 
 		Byte blue = inLedValue.getBlue();
 		for (int bit = 0; bit < 8; bit++) {
 			if ((blue & ((byte) (1 << bit))) != 0) {
-				mAllChannelsOutput[(inPos - 1) * 24 + 16 + bit] |= 1;
+				mAllChannelsOutput[(inPosition - 1) * 24 + 16 + bit] |= (1 << (inChannel - 1));
 			}
 		}
 	}
@@ -313,13 +313,13 @@ public class AisleDeviceEmbedded extends DeviceEmbeddedABC {
 	/**
 	 * @param inCommand
 	 */
-	protected void processControlLightCommand(CommandControlLight inCommand) {
+	protected final void processControlLightCommand(CommandControlLight inCommand) {
 		LOGGER.info("Light message: " + inCommand.toString());
 
 		if (inCommand.getPosition() == CommandControlLight.POSITION_NONE) {
 			mStoredPositions.clear();
 		} else {
-			LedPos ledPos = new LedPos(inCommand.getPosition());
+			LedPos ledPos = new LedPos(inCommand.getChannel(), inCommand.getPosition());
 			ledPos.addSample(mapColorEnumToLedValue(inCommand.getColor()));
 			if (ledPos.getPosition() > mTotalPositions) {
 				mTotalPositions = (int) ledPos.getPosition();

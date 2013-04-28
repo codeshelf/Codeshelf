@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CheDevice.java,v 1.27 2013/04/26 03:26:04 jeffw Exp $
+ *  $Id: CheDevice.java,v 1.28 2013/04/28 02:51:24 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -453,6 +453,14 @@ public class CheDevice extends AisleDevice {
 
 			Short startLedNum = firstWi.getLedFirstPos();
 			Short endLedNum = firstWi.getLedLastPos();
+			
+			// Put them into increasing order rather than order along the path.
+			// (It might be reversed because the travel direction is opposite the LED strip direction.)
+			if (startLedNum > endLedNum) {
+				Short temp = endLedNum;
+				endLedNum = startLedNum;
+				startLedNum = temp;
+			}
 
 			// Clear the last LED if there was one.
 			if (mLastLedControllerGuid != null) {
