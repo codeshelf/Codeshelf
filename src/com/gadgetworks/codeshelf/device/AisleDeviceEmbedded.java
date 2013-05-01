@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: AisleDeviceEmbedded.java,v 1.16 2013/04/28 05:03:44 jeffw Exp $
+ *  $Id: AisleDeviceEmbedded.java,v 1.17 2013/05/01 04:42:51 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -31,7 +31,7 @@ public class AisleDeviceEmbedded extends DeviceEmbeddedABC {
 
 	//	private static final int	BAUD_312500		= 312500;
 	//	private static final int	BAUD_416667		= 416667;
-	//	private static final int	BAUD_625000		= 625000;
+	private static final int	BAUD_625000					= 625000;
 	private static final int	BAUD_1250000				= 1250000;
 	private static final long	FTDI_VID_PID				= 0x04036001;
 	private static final long	COLOR_INTERVAL_MILLIS		= 250;
@@ -159,23 +159,23 @@ public class AisleDeviceEmbedded extends DeviceEmbeddedABC {
 	 */
 	private void refreshLedChannels() {
 		mAllChannelsOutput = new byte[mTotalPositions * 24];
-//		Short nextLedPosNum = 0;
-//		LedPos ledPos = null;
-//
-//		for (int pos = 1; pos < mTotalPositions; pos++) {
-//			if (mIsBlanking) {
-//				break;
-//			} else {
-//				if ((ledPos == null) && (nextLedPosNum < mStoredPositions.size())) {
-//					ledPos = mStoredPositions.get(nextLedPosNum++);
-//				}
-//
-//				if ((ledPos != null) && (ledPos.getPosition() == pos)) {
-//					sendLedValue(ledPos.getChannel(), ledPos.getPosition(), ledPos.getNextSample());
-//					ledPos = null;
-//				}
-//			}
-//		}
+		//		Short nextLedPosNum = 0;
+		//		LedPos ledPos = null;
+		//
+		//		for (int pos = 1; pos < mTotalPositions; pos++) {
+		//			if (mIsBlanking) {
+		//				break;
+		//			} else {
+		//				if ((ledPos == null) && (nextLedPosNum < mStoredPositions.size())) {
+		//					ledPos = mStoredPositions.get(nextLedPosNum++);
+		//				}
+		//
+		//				if ((ledPos != null) && (ledPos.getPosition() == pos)) {
+		//					sendLedValue(ledPos.getChannel(), ledPos.getPosition(), ledPos.getNextSample());
+		//					ledPos = null;
+		//				}
+		//			}
+		//		}
 		if (!mIsBlanking) {
 			for (LedPos ledPos : mStoredPositions) {
 				sendLedValue(ledPos.getChannel(), ledPos.getPosition(), ledPos.getNextSample());
@@ -184,7 +184,8 @@ public class AisleDeviceEmbedded extends DeviceEmbeddedABC {
 		mIsBlanking = !mIsBlanking;
 
 		try {
-			mJD2XXInterface.write(mAllChannelsOutput);
+			int bytesWritten = mJD2XXInterface.write(mAllChannelsOutput);
+			//			LOGGER.debug("Bytes written: " + bytesWritten);
 		} catch (IOException e) {
 			LOGGER.error("", e);
 			resetInterface();
@@ -204,7 +205,7 @@ public class AisleDeviceEmbedded extends DeviceEmbeddedABC {
 				mAllChannelsOutput[(inPosition - 1) * 24 + bit] |= (1 << (inChannel - 1));
 			}
 		}
-		
+
 		Byte green = inLedValue.getGreen();
 		for (int bit = 0; bit < 8; bit++) {
 			if ((green & ((byte) (1 << bit))) != 0) {
@@ -254,8 +255,8 @@ public class AisleDeviceEmbedded extends DeviceEmbeddedABC {
 				mJD2XXInterface.open(deviceToOpen);
 				mJD2XXInterface.resetDevice();
 				// Async bitbang mode with all pins as outputs.
-				mJD2XXInterface.setBitMode(0xf, 0x1);
-				mJD2XXInterface.setBaudRate(BAUD_1250000);
+				mJD2XXInterface.setBitMode(0xff, 0x1);
+				mJD2XXInterface.setBaudRate(9600);
 
 				DeviceInfo devInfo = mJD2XXInterface.getDeviceInfoDetail(deviceToOpen);
 				LOGGER.info("Device started: " + devInfo.toString());
