@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WorkInstructionStatusEnum.java,v 1.4 2013/03/17 23:10:45 jeffw Exp $
+ *  $Id: WorkInstructionStatusEnum.java,v 1.5 2013/05/03 19:45:43 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model;
 
@@ -18,6 +18,8 @@ public enum WorkInstructionStatusEnum {
 	NEW(WorkInstructionStatusNum.NEW, "NEW"),
 	@EnumValue("INPROGRESS")
 	INPROGRESS(WorkInstructionStatusNum.INPROGRESS, "INPROGRESS"),
+	@EnumValue("SHORT")
+	SHORT(WorkInstructionStatusNum.SHORT, "SHORT"),
 	@EnumValue("COMPLETE")
 	COMPLETE(WorkInstructionStatusNum.COMPLETE, "COMPLETE"),
 	@EnumValue("REVERT")
@@ -41,6 +43,10 @@ public enum WorkInstructionStatusEnum {
 
 			case WorkInstructionStatusNum.INPROGRESS:
 				result = WorkInstructionStatusEnum.INPROGRESS;
+				break;
+
+			case WorkInstructionStatusNum.SHORT:
+				result = WorkInstructionStatusEnum.SHORT;
 				break;
 
 			case WorkInstructionStatusNum.COMPLETE:
@@ -73,8 +79,9 @@ public enum WorkInstructionStatusEnum {
 		static final byte	INVALID		= 0;
 		static final byte	NEW			= 1;
 		static final byte	INPROGRESS	= 2;
-		static final byte	COMPLETE	= 3;
-		static final byte	REVERT		= 4;
+		static final byte	SHORT		= 3;
+		static final byte	COMPLETE	= 4;
+		static final byte	REVERT		= 5;
 
 		private WorkInstructionStatusNum() {
 		};

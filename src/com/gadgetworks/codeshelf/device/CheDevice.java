@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CheDevice.java,v 1.29 2013/05/03 05:22:16 jeffw Exp $
+ *  $Id: CheDevice.java,v 1.30 2013/05/03 19:45:44 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -21,6 +21,7 @@ import lombok.experimental.Accessors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.ILocation;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
@@ -39,33 +40,35 @@ import com.gadgetworks.flyweight.controller.IRadioController;
  */
 public class CheDevice extends AisleDevice {
 
-	private static final Logger		LOGGER				= LoggerFactory.getLogger(CheDevice.class);
+	private static final Logger		LOGGER					= LoggerFactory.getLogger(CheDevice.class);
 
-	private static final String		BARCODE_DELIMITER	= "%";
-	private static final String		COMMAND_PREFIX		= "X%";
-	private static final String		USER_PREFIX			= "U%";
-	private static final String		CONTAINER_PREFIX	= "O%";
-	private static final String		LOCATION_PREFIX		= "L%";
-	private static final String		ITEMID_PREFIX		= "I%";
-	private static final String		POSITION_PREFIX		= "B%";
+	private static final String		BARCODE_DELIMITER		= "%";
+	private static final String		COMMAND_PREFIX			= "X%";
+	private static final String		USER_PREFIX				= "U%";
+	private static final String		CONTAINER_PREFIX		= "O%";
+	private static final String		LOCATION_PREFIX			= "L%";
+	private static final String		ITEMID_PREFIX			= "I%";
+	private static final String		POSITION_PREFIX			= "B%";
 
 	// These are the message strings we send to the remote CHE.
 	// Currently, these cannot be longer than 10 characters.
-	private static final String		EMPTY_MSG			= "";
-	private static final String		INVALID_SCAN_MSG	= "INVALID";
-	private static final String		SCAN_USERID_MSG		= "SCAN BADGE";
-	private static final String		SCAN_LOCATION_MSG	= "SCAN LOC";
-	private static final String		SCAN_CONTAINER_MSG	= "SCAN CNTR";
-	private static final String		SELECT_POSITION_MSG	= "SELECT POS";
-	private static final String		PICK_COMPLETE_MSG	= "PICK CMPLT";
+	private static final String		EMPTY_MSG				= "          ";
+	private static final String		INVALID_SCAN_MSG		= "INVALID";
+	private static final String		SCAN_USERID_MSG			= "SCAN BADGE";
+	private static final String		SCAN_LOCATION_MSG		= "SCAN LOC";
+	private static final String		SCAN_CONTAINER_MSG		= "SCAN CNTR";
+	private static final String		SELECT_POSITION_MSG		= "SELECT POS";
+	private static final String		SHORT_PICK_CONFIRM_MSG	= "CONF SHORT";
+	private static final String		PICK_COMPLETE_MSG		= "PICK CMPLT";
+	private static final String		YES_NO_MSG				= "YES OR NO";
 
-	private static final String		STARTWORK_COMMAND	= "START";
-	private static final String		SETUP_COMMAND		= "SETUP";
-	private static final String		SHORT_COMMAND		= "SHORT";
-	private static final String		LOGOUT_COMMAND		= "LOGOUT";
-	private static final String		RESUME_COMMAND		= "RESUME";
-	private static final String		YES_COMMAND			= "YES";
-	private static final String		NO_COMMAND			= "NO";
+	private static final String		STARTWORK_COMMAND		= "START";
+	private static final String		SETUP_COMMAND			= "SETUP";
+	private static final String		SHORT_COMMAND			= "SHORT";
+	private static final String		LOGOUT_COMMAND			= "LOGOUT";
+	private static final String		RESUME_COMMAND			= "RESUME";
+	private static final String		YES_COMMAND				= "YES";
+	private static final String		NO_COMMAND				= "NO";
 
 	// The CHE's current state.
 	@Accessors(prefix = "m")
@@ -281,6 +284,10 @@ public class CheDevice extends AisleDevice {
 				sendDisplayCommand(SELECT_POSITION_MSG, EMPTY_MSG);
 				break;
 
+			case SHORT_PICK_CONFIRM:
+				sendDisplayCommand(SHORT_PICK_CONFIRM_MSG, EMPTY_MSG);
+				break;
+
 			case PICK_COMPLETE:
 				sendDisplayCommand(PICK_COMPLETE_MSG, EMPTY_MSG);
 				break;
@@ -330,12 +337,21 @@ public class CheDevice extends AisleDevice {
 				logout();
 				break;
 
+			case SETUP_COMMAND:
+				setupWork();
+				break;
+
 			case STARTWORK_COMMAND:
 				startWork();
 				break;
 
-			case SETUP_COMMAND:
-				setupWork();
+			case SHORT_COMMAND:
+				shortPick();
+				break;
+
+			case YES_COMMAND:
+			case NO_COMMAND:
+				processYesOrNoCommand(inScanStr);
 				break;
 
 			default:
@@ -389,6 +405,71 @@ public class CheDevice extends AisleDevice {
 		} else {
 			// Stay in the same state - the scan made no sense.
 			setStateWithInvalid(mCheStateEnum);
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * The user scanned the SHORT_PICK command to tell us there is no product to pick.
+	 */
+	private void shortPick() {
+		if (mActivePickWiList.size() > 0) {
+			setState(CheStateEnum.SHORT_PICK_CONFIRM);
+		} else {
+			// Stay in the same state - the scan made no sense.
+			setStateWithInvalid(mCheStateEnum);
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * The user scanned YES or NO.
+	 * @param inScanStr
+	 */
+	private void processYesOrNoCommand(final String inScanStr) {
+		switch (mCheStateEnum) {
+			case SHORT_PICK_CONFIRM:
+				confirmShortPick(inScanStr);
+				break;
+
+			default:
+				// Stay in the same state - the scan made no sense.
+				setStateWithInvalid(mCheStateEnum);
+				break;
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * YES or NO confirm the short pick.
+	 * @param inScanStr
+	 */
+	private void confirmShortPick(final String inScanStr) {
+		if (inScanStr.equals(YES_COMMAND)) {
+			// HACK HACK HACK
+			// StitchFix is the first client and they only pick one item at a time - ever.
+			// When we have h/w that picks more than one item we'll address this.
+			WorkInstruction wi = mActivePickWiList.remove(0);
+			if (wi != null) {
+				wi.setActualQuantity(0);
+				wi.setPickerId(mUserId);
+				wi.setCompleted(new Timestamp(System.currentTimeMillis()));
+				wi.setStatusEnum(WorkInstructionStatusEnum.SHORT);
+
+				mDeviceManager.completeWi(getGuid().getHexStringNoPrefix(), getPersistentId(), wi);
+				LOGGER.info("Pick shorted: " + wi);
+				
+				if (mActivePickWiList.size() > 0) {
+					// If there's more active picks then show them.
+					showActivePicks();
+				} else {
+					// There's no more active picks, so move to the next set.
+					doNextPick();
+				}
+			}
+		} else {
+			// Just return to showing the active picks.
+			showActivePicks();
 		}
 	}
 
@@ -453,7 +534,7 @@ public class CheDevice extends AisleDevice {
 
 			Short startLedNum = firstWi.getLedFirstPos();
 			Short endLedNum = firstWi.getLedLastPos();
-			
+
 			// Put them into increasing order rather than order along the path.
 			// (It might be reversed because the travel direction is opposite the LED strip direction.)
 			if (startLedNum > endLedNum) {
@@ -469,7 +550,11 @@ public class CheDevice extends AisleDevice {
 
 			// Send the location display command.
 			for (short position = startLedNum; position <= endLedNum; position++) {
-				ledControllerSetLed(ledController.getGuid(), firstWi.getLedChannel(), position, firstWi.getLedColorEnum(), CommandControlLight.EFFECT_FLASH);
+				ledControllerSetLed(ledController.getGuid(),
+					firstWi.getLedChannel(),
+					position,
+					firstWi.getLedColorEnum(),
+					CommandControlLight.EFFECT_FLASH);
 			}
 			ledControllerShowLeds(ledController.getGuid());
 		}
@@ -572,6 +657,7 @@ public class CheDevice extends AisleDevice {
 						wi.setActualQuantity(1);
 						wi.setPickerId(mUserId);
 						wi.setCompleted(new Timestamp(System.currentTimeMillis()));
+						wi.setStatusEnum(WorkInstructionStatusEnum.COMPLETE);
 
 						mDeviceManager.completeWi(getGuid().getHexStringNoPrefix(), getPersistentId(), wi);
 						LOGGER.info("Pick completed: " + wi);

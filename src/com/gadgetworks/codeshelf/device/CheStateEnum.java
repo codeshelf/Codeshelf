@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CheStateEnum.java,v 1.1 2013/02/24 22:54:25 jeffw Exp $
+ *  $Id: CheStateEnum.java,v 1.2 2013/05/03 19:45:44 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -24,6 +24,8 @@ public enum CheStateEnum {
 	CONTAINER_POSITION(CheStateNum.CONTAINER_POSITION, "CONTAINER_POSITION"),
 	@EnumValue("DO_PICK")
 	DO_PICK(CheStateNum.DO_PICK, "DO_PICK"),
+	@EnumValue("SHORT_PICK")
+	SHORT_PICK_CONFIRM(CheStateNum.SHORT_PICK, "SHORT_PICK"),
 	@EnumValue("PICK_COMPLETE")
 	PICK_COMPLETE(CheStateNum.PICK_COMPLETE, "PICK_COMPLETE");
 
@@ -59,6 +61,10 @@ public enum CheStateEnum {
 				result = CheStateEnum.DO_PICK;
 				break;
 
+			case CheStateNum.SHORT_PICK:
+				result = CheStateEnum.SHORT_PICK_CONFIRM;
+				break;
+
 			case CheStateNum.PICK_COMPLETE:
 				result = CheStateEnum.PICK_COMPLETE;
 				break;
@@ -88,7 +94,8 @@ public enum CheStateEnum {
 		static final byte	CONTAINER_SELECT	= 3;
 		static final byte	CONTAINER_POSITION	= 4;
 		static final byte	DO_PICK				= 5;
-		static final byte	PICK_COMPLETE			= 6;
+		static final byte	SHORT_PICK			= 6;
+		static final byte	PICK_COMPLETE		= 7;
 
 		private CheStateNum() {
 		};

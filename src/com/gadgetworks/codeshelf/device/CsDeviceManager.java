@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CsDeviceManager.java,v 1.16 2013/04/26 03:26:04 jeffw Exp $
+ *  $Id: CsDeviceManager.java,v 1.17 2013/05/03 19:45:44 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -544,7 +544,7 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 	public final void completeWi(final String inCheId, final UUID inPersistentId, final WorkInstruction inWorkInstruction) {
 		LOGGER.info("Complete: Che: " + inCheId + " WI: " + inWorkInstruction.toString());
 
-		inWorkInstruction.setStatusEnum(WorkInstructionStatusEnum.COMPLETE);
+		//inWorkInstruction.setStatusEnum(WorkInstructionStatusEnum.COMPLETE);
 
 		// Build the response Json object.
 		ObjectMapper mapper = new ObjectMapper();
@@ -554,4 +554,5 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 
 		sendWebSocketMessageNode(WsReqCmdEnum.CHE_WICOMPLETE_REQ, dataNode);
 	}
+
 }
