@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CheDevice.java,v 1.28 2013/04/28 02:51:24 jeffw Exp $
+ *  $Id: CheDevice.java,v 1.29 2013/05/03 05:22:16 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -468,7 +468,7 @@ public class CheDevice extends AisleDevice {
 			}
 
 			// Send the location display command.
-			for (short position = startLedNum; position < endLedNum; position++) {
+			for (short position = startLedNum; position <= endLedNum; position++) {
 				ledControllerSetLed(ledController.getGuid(), firstWi.getLedChannel(), position, firstWi.getLedColorEnum(), CommandControlLight.EFFECT_FLASH);
 			}
 			ledControllerShowLeds(ledController.getGuid());
