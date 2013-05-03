@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: AisleDeviceEmbedded.java,v 1.17 2013/05/01 04:42:51 jeffw Exp $
+ *  $Id: AisleDeviceEmbedded.java,v 1.18 2013/05/03 05:12:03 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -178,7 +178,9 @@ public class AisleDeviceEmbedded extends DeviceEmbeddedABC {
 		//		}
 		if (!mIsBlanking) {
 			for (LedPos ledPos : mStoredPositions) {
-				sendLedValue(ledPos.getChannel(), ledPos.getPosition(), ledPos.getNextSample());
+				if (ledPos.getPosition() > 0) {
+					sendLedValue(ledPos.getChannel(), ledPos.getPosition(), ledPos.getNextSample());
+				}
 			}
 		}
 		mIsBlanking = !mIsBlanking;

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: DeviceEmbeddedABC.java,v 1.5 2013/04/19 17:26:40 jeffw Exp $
+ *  $Id: DeviceEmbeddedABC.java,v 1.6 2013/05/03 05:12:03 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -141,6 +141,7 @@ public abstract class DeviceEmbeddedABC implements IEmbeddedDevice {
 				}
 			}
 		}, RECEIVER_THREAD_NAME + ": " + mGatewayInterface.getClass().getSimpleName());
+		gwThread.setPriority(Thread.MIN_PRIORITY);
 		gwThread.start();
 	}
 
