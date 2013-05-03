@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: AisleDeviceEmbedded.java,v 1.18 2013/05/03 05:12:03 jeffw Exp $
+ *  $Id: AisleDeviceEmbedded.java,v 1.19 2013/05/03 18:27:35 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -266,6 +266,11 @@ public class AisleDeviceEmbedded extends DeviceEmbeddedABC {
 
 		} catch (IOException e) {
 			LOGGER.error("", e);
+			try {
+				Thread.sleep(5000);
+			} catch (InterruptedException e1) {
+				LOGGER.error("", e1);
+			}
 			//resetInterface();
 		}
 

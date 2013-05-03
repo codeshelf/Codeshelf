@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CheDeviceEmbedded.java,v 1.18 2013/04/19 23:23:25 jeffw Exp $
+ *  $Id: CheDeviceEmbedded.java,v 1.19 2013/05/03 18:27:35 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -47,7 +47,21 @@ public class CheDeviceEmbedded extends AisleDeviceEmbedded {
 	@Override
 	public final void doStart() {
 		super.doStart();
+		
+		while (!openDisplayPort()) {
+			try {
+				Thread.sleep(2000);
+			} catch (InterruptedException e) {
+				LOGGER.error("", e);
+			}
+		}
 
+		processScans();
+	}
+	
+	private boolean openDisplayPort() {
+		boolean result = true;
+		
 		try {
 			mSerialPort = new SerialPort("/dev/ttyACM0");
 			mSerialPort.openPort();
@@ -55,9 +69,10 @@ public class CheDeviceEmbedded extends AisleDeviceEmbedded {
 			mSerialPort.writeString("^CHE`CONNECT~");
 		} catch (SerialPortException e) {
 			LOGGER.error("", e);
+			result = false;
 		}
-
-		processScans();
+		
+		return result;
 	}
 
 	// --------------------------------------------------------------------------
@@ -119,6 +134,8 @@ public class CheDeviceEmbedded extends AisleDeviceEmbedded {
 			mSerialPort.writeString("^" + inCommand.getLine1MessageStr() + "`" + inCommand.getLine2MessageStr() + "~");
 		} catch (SerialPortException e) {
 			LOGGER.error("", e);
+			// Try to open it again.
+			openDisplayPort();
 		}
 	}
 }
