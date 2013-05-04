@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WorkInstruction.java,v 1.21 2013/05/03 05:22:16 jeffw Exp $
+ *  $Id: WorkInstruction.java,v 1.22 2013/05/04 03:00:06 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -109,6 +109,13 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 	@Setter
 	@JsonProperty
 	private String						itemId;
+
+	// The pick instruction (cooked item ID to pick).
+	@Column(nullable = false)
+	@Getter
+	@Setter
+	@JsonProperty
+	private String						pickInstruction;
 
 	// The pick quantity.
 	@Column(nullable = false)

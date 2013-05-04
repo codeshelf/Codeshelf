@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CheDeviceLogic.java,v 1.1 2013/05/04 00:30:01 jeffw Exp $
+ *  $Id: CheDeviceLogic.java,v 1.2 2013/05/04 03:00:06 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -560,7 +560,7 @@ public class CheDeviceLogic extends AisleDeviceLogic {
 
 		// Send the CHE a display command (any of the WIs has the info we need).
 		setState(CheStateEnum.DO_PICK);
-		sendDisplayCommand(firstWi.getLocationId(), firstWi.getItemId());
+		sendDisplayCommand(firstWi.getPickInstruction(), firstWi.getItemId());
 
 		INetworkDevice ledController = mRadioController.getNetworkDevice(new NetGuid(firstWi.getLedControllerId()));
 		if (ledController != null) {

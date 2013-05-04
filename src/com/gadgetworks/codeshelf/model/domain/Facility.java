@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.73 2013/05/04 00:30:01 jeffw Exp $
+ *  $Id: Facility.java,v 1.74 2013/05/04 03:00:06 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -710,6 +710,7 @@ public class Facility extends LocationABC<Organization> {
 										plannedWi.setLedLastPos(foundLocation.getLastLedPosForItemId(itemMaster.getItemId()));
 										plannedWi.setLedColorEnum(ColorEnum.BLUE);
 										plannedWi.setItemId(itemMaster.getItemId());
+										plannedWi.setPickInstruction(itemMaster.getDdcId());
 										plannedWi.setPosAlongPath(selectedItem.getDdcPosAlongPath());
 										plannedWi.setLocationId(parentLocationId + "." + foundLocation.getLocationId());
 										plannedWi.setContainerId(containerId);

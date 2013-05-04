@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CsvImporter.java,v 1.25 2013/04/26 03:26:04 jeffw Exp $
+ *  $Id: CsvImporter.java,v 1.26 2013/05/04 03:00:06 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -323,6 +323,7 @@ public class CsvImporter implements ICsvImporter {
 			// Create or update the DDC item master, and then set the DDC ID for it.
 			ItemMaster itemMaster = updateItemMaster(inCsvImportBean.getItemId(), inFacility, inEdiProcessTime, uomMaster);
 			itemMaster.setDdcId(inCsvImportBean.getDdcId());
+			itemMaster.setDescription(inCsvImportBean.getDescription());
 
 			try {
 				mItemMasterDao.store(itemMaster);
