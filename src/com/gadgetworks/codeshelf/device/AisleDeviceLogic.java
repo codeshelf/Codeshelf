@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: AisleDevice.java,v 1.8 2013/04/26 03:26:04 jeffw Exp $
+ *  $Id: AisleDeviceLogic.java,v 1.1 2013/05/04 00:30:01 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import lombok.Getter;
+import lombok.experimental.Accessors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,11 +24,12 @@ import com.gadgetworks.flyweight.command.NetEndpoint;
 import com.gadgetworks.flyweight.command.NetGuid;
 import com.gadgetworks.flyweight.controller.IRadioController;
 
-public class AisleDevice extends DeviceABC {
+public class AisleDeviceLogic extends DeviceLogicABC {
 
-	private static final Logger	LOGGER	= LoggerFactory.getLogger(AisleDevice.class);
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(AisleDeviceLogic.class);
 
-	private class LedCmd {
+	@Accessors(prefix = "m")
+	protected class LedCmd {
 		@Getter
 		private Short		mChannel;
 		@Getter
@@ -47,7 +49,7 @@ public class AisleDevice extends DeviceABC {
 
 	private Map<NetGuid, List<LedCmd>>	mDeviceLedPosMap	= new HashMap<NetGuid, List<LedCmd>>();
 
-	public AisleDevice(final UUID inPersistentId,
+	public AisleDeviceLogic(final UUID inPersistentId,
 		final NetGuid inGuid,
 		final ICsDeviceManager inDeviceManager,
 		final IRadioController inRadioController) {
@@ -101,6 +103,29 @@ public class AisleDevice extends DeviceABC {
 		ledCmds.add(ledCmd);
 	}
 
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inNetGuid
+	 * @param inChannel
+	 * @param inPosition
+	 * @return
+	 */
+	public final LedCmd getLedCmdFor(final NetGuid inNetGuid, final Short inChannel, final Short inPosition) {
+		LedCmd result = null;
+
+		List<LedCmd> ledCmds = mDeviceLedPosMap.get(inNetGuid);
+		if (ledCmds != null) {
+			for (LedCmd ledCmd : ledCmds) {
+				if (ledCmd.getChannel().equals(inChannel) && ledCmd.getPosition().equals(inPosition)) {
+					result = ledCmd;
+					break;
+				}
+			}
+		}
+
+		return result;
+	}
+
 	@Override
 	public void commandReceived(String inCommandStr) {
 		// The aisle device never returns commands.
@@ -121,10 +146,10 @@ public class AisleDevice extends DeviceABC {
 
 				LOGGER.info("Light position: " + ledCmd.mPosition);
 				ICommand command = new CommandControlLight(NetEndpoint.PRIMARY_ENDPOINT,
-					ledCmd.mChannel,
-					ledCmd.mPosition,
-					ledCmd.mColor,
-					ledCmd.mEffect);
+					ledCmd.getChannel(),
+					ledCmd.getPosition(),
+					ledCmd.getColor(),
+					ledCmd.getEffect());
 				mRadioController.sendCommand(command, getAddress(), false);
 			}
 		}

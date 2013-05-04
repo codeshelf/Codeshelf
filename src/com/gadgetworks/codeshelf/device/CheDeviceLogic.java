@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CheDevice.java,v 1.30 2013/05/03 19:45:44 jeffw Exp $
+ *  $Id: CheDeviceLogic.java,v 1.1 2013/05/04 00:30:01 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -22,8 +22,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
-import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.ILocation;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.flyweight.command.ColorEnum;
 import com.gadgetworks.flyweight.command.CommandControlLight;
@@ -38,9 +36,9 @@ import com.gadgetworks.flyweight.controller.IRadioController;
  * @author jeffw
  *
  */
-public class CheDevice extends AisleDevice {
+public class CheDeviceLogic extends AisleDeviceLogic {
 
-	private static final Logger		LOGGER					= LoggerFactory.getLogger(CheDevice.class);
+	private static final Logger		LOGGER					= LoggerFactory.getLogger(CheDeviceLogic.class);
 
 	private static final String		BARCODE_DELIMITER		= "%";
 	private static final String		COMMAND_PREFIX			= "X%";
@@ -100,9 +98,12 @@ public class CheDevice extends AisleDevice {
 	// The active pick WIs.
 	private List<WorkInstruction>	mActivePickWiList;
 
+	// The completed  WIs.
+	private List<WorkInstruction>	mCompletedWiList;
+
 	private NetGuid					mLastLedControllerGuid;
 
-	public CheDevice(final UUID inPersistentId,
+	public CheDeviceLogic(final UUID inPersistentId,
 		final NetGuid inGuid,
 		final ICsDeviceManager inDeviceManager,
 		final IRadioController inRadioController) {
@@ -112,6 +113,7 @@ public class CheDevice extends AisleDevice {
 		mContainersMap = new HashMap<String, String>();
 		mAllPicksWiList = new ArrayList<WorkInstruction>();
 		mActivePickWiList = new ArrayList<WorkInstruction>();
+		mCompletedWiList = new ArrayList<WorkInstruction>();
 	}
 
 	// --------------------------------------------------------------------------
@@ -152,9 +154,12 @@ public class CheDevice extends AisleDevice {
 		final String inEffect) {
 		LOGGER.info("Light position: " + inPosition);
 		INetworkDevice device = mDeviceManager.getDeviceByGuid(inControllerGuid);
-		if (device instanceof AisleDevice) {
-			AisleDevice aisleDevice = (AisleDevice) device;
-			aisleDevice.addLedCmdFor(getGuid(), inChannel, inPosition, inColor, CommandControlLight.EFFECT_DIRECT);
+		if (device instanceof AisleDeviceLogic) {
+			AisleDeviceLogic aisleDevice = (AisleDeviceLogic) device;
+			LedCmd cmd = aisleDevice.getLedCmdFor(getGuid(), inChannel, inPosition);
+			if (cmd == null) {
+				aisleDevice.addLedCmdFor(getGuid(), inChannel, inPosition, inColor, CommandControlLight.EFFECT_DIRECT);
+			}
 		}
 		mLastLedControllerGuid = inControllerGuid;
 	}
@@ -166,8 +171,8 @@ public class CheDevice extends AisleDevice {
 	 */
 	private void ledControllerShowLeds(final NetGuid inControllerGuid) {
 		INetworkDevice device = mDeviceManager.getDeviceByGuid(inControllerGuid);
-		if (device instanceof AisleDevice) {
-			AisleDevice aisleDevice = (AisleDevice) device;
+		if (device instanceof AisleDeviceLogic) {
+			AisleDeviceLogic aisleDevice = (AisleDeviceLogic) device;
 			aisleDevice.updateLeds();
 		}
 	}
@@ -183,8 +188,8 @@ public class CheDevice extends AisleDevice {
 
 		// Clear the LEDs for the last location the CHE worked.
 		INetworkDevice device = mDeviceManager.getDeviceByGuid(mLastLedControllerGuid);
-		if (device instanceof AisleDevice) {
-			AisleDevice aisleDevice = (AisleDevice) device;
+		if (device instanceof AisleDeviceLogic) {
+			AisleDeviceLogic aisleDevice = (AisleDeviceLogic) device;
 			aisleDevice.clearLedCmdFor(getGuid());
 		}
 	}
@@ -193,10 +198,8 @@ public class CheDevice extends AisleDevice {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.flyweight.controller.INetworkDevice#start()
 	 */
-	@Override
 	public final void start() {
-		mCheStateEnum = CheStateEnum.IDLE;
-		sendDisplayCommand(SCAN_USERID_MSG, EMPTY_MSG);
+		setState(CheStateEnum.IDLE);
 	}
 
 	// --------------------------------------------------------------------------
@@ -285,7 +288,7 @@ public class CheDevice extends AisleDevice {
 				break;
 
 			case SHORT_PICK_CONFIRM:
-				sendDisplayCommand(SHORT_PICK_CONFIRM_MSG, EMPTY_MSG);
+				sendDisplayCommand(SHORT_PICK_CONFIRM_MSG, YES_NO_MSG);
 				break;
 
 			case PICK_COMPLETE:
@@ -451,6 +454,9 @@ public class CheDevice extends AisleDevice {
 			// When we have h/w that picks more than one item we'll address this.
 			WorkInstruction wi = mActivePickWiList.remove(0);
 			if (wi != null) {
+				// Add it to the list of completed WIs.
+				mCompletedWiList.add(wi);
+
 				wi.setActualQuantity(0);
 				wi.setPickerId(mUserId);
 				wi.setCompleted(new Timestamp(System.currentTimeMillis()));
@@ -458,7 +464,7 @@ public class CheDevice extends AisleDevice {
 
 				mDeviceManager.completeWi(getGuid().getHexStringNoPrefix(), getPersistentId(), wi);
 				LOGGER.info("Pick shorted: " + wi);
-				
+
 				if (mActivePickWiList.size() > 0) {
 					// If there's more active picks then show them.
 					showActivePicks();
@@ -485,9 +491,35 @@ public class CheDevice extends AisleDevice {
 		} else if (mAllPicksWiList.size() == 0) {
 			// There are no more WIs, so the pick is complete.
 
+			// Clear the existing LEDs.
 			if (mLastLedControllerGuid != null) {
 				ledControllerClearLeds();
 			}
+
+			// Blink the complete and incomplete containers.
+			for (WorkInstruction wi : mCompletedWiList) {
+				Short position = 0;
+				for (Entry<String, String> mapEntry : mContainersMap.entrySet()) {
+					if (mapEntry.getValue().equals(wi.getContainerId())) {
+						position = Short.valueOf(mapEntry.getKey());
+					}
+				}
+
+				if (!wi.getStatusEnum().equals(WorkInstructionStatusEnum.COMPLETE)) {
+					ledControllerSetLed(getGuid(),
+						CommandControlLight.CHANNEL1,
+						position,
+						ColorEnum.RED,
+						CommandControlLight.EFFECT_FLASH);
+				} else {
+					ledControllerSetLed(getGuid(),
+						CommandControlLight.CHANNEL1,
+						position,
+						wi.getLedColorEnum(),
+						CommandControlLight.EFFECT_FLASH);
+				}
+			}
+			ledControllerShowLeds(getGuid());
 
 			setState(CheStateEnum.PICK_COMPLETE);
 		} else {
@@ -527,6 +559,7 @@ public class CheDevice extends AisleDevice {
 		WorkInstruction firstWi = mActivePickWiList.get(0);
 
 		// Send the CHE a display command (any of the WIs has the info we need).
+		setState(CheStateEnum.DO_PICK);
 		sendDisplayCommand(firstWi.getLocationId(), firstWi.getItemId());
 
 		INetworkDevice ledController = mRadioController.getNetworkDevice(new NetGuid(firstWi.getLedControllerId()));
@@ -563,10 +596,15 @@ public class CheDevice extends AisleDevice {
 		for (WorkInstruction wi : mActivePickWiList) {
 			for (Entry<String, String> mapEntry : mContainersMap.entrySet()) {
 				if (mapEntry.getValue().equals(wi.getContainerId())) {
-					sendCheLightCommand(wi.getLedChannel(), Short.valueOf(mapEntry.getKey()), wi.getLedColorEnum());
+					ledControllerSetLed(getGuid(),
+						CommandControlLight.CHANNEL1,
+						Short.valueOf(mapEntry.getKey()),
+						wi.getLedColorEnum(),
+						CommandControlLight.EFFECT_FLASH);
 				}
 			}
 		}
+		ledControllerShowLeds(getGuid());
 	}
 
 	// --------------------------------------------------------------------------
@@ -650,6 +688,9 @@ public class CheDevice extends AisleDevice {
 				while (wiIter.hasNext()) {
 					WorkInstruction wi = wiIter.next();
 					if (wi.getContainerId().equals(containerId)) {
+
+						// Add it to the list of completed WIs.
+						mCompletedWiList.add(wi);
 
 						// HACK HACK HACK
 						// StitchFix is the first client and they only pick one item - ever.

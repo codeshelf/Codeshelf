@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.72 2013/04/26 03:26:04 jeffw Exp $
+ *  $Id: Facility.java,v 1.73 2013/05/04 00:30:01 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -684,9 +684,10 @@ public class Facility extends LocationABC<Organization> {
 									for (WorkInstruction wi : detail.getWorkInstructions()) {
 										if (wi.getTypeEnum().equals(WorkInstructionTypeEnum.PLAN)) {
 											plannedWi = wi;
+											break;
 										} else if (wi.getTypeEnum().equals(WorkInstructionTypeEnum.ACTUAL)) {
-											// Deduct any WIs alreadty completed for this line item.
-											quantityToPick -= wi.getPlanQuantity();
+											// Deduct any WIs already completed for this line item.
+											quantityToPick -= wi.getActualQuantity();
 										}
 									}
 
@@ -700,7 +701,7 @@ public class Facility extends LocationABC<Organization> {
 										}
 
 										// Update the WI
-										plannedWi.setDomainId(order.getOrderId() + "." + detail.getOrderDetailId());
+										plannedWi.setDomainId(Long.toString(System.currentTimeMillis()));
 										plannedWi.setTypeEnum(WorkInstructionTypeEnum.PLAN);
 										plannedWi.setStatusEnum(WorkInstructionStatusEnum.NEW);
 										plannedWi.setLedControllerId("0x00000003");

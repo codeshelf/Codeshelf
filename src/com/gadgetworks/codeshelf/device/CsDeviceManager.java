@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CsDeviceManager.java,v 1.17 2013/05/03 19:45:44 jeffw Exp $
+ *  $Id: CsDeviceManager.java,v 1.18 2013/05/04 00:30:01 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -331,7 +331,7 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 
 		NetGuid cheId = new NetGuid("0x" + inDataNode.get("cheId").asText());
 
-		CheDevice cheDevice = (CheDevice) mDeviceMap.get(cheId);
+		CheDeviceLogic cheDevice = (CheDeviceLogic) mDeviceMap.get(cheId);
 
 		if (cheDevice != null) {
 			if (resultsNode != null) {
@@ -378,7 +378,7 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 			switch (updateTypeNode.getTextValue()) {
 				case IWsReqCmd.OP_TYPE_CREATE:
 					// Create the CHE.
-					cheDevice = new CheDevice(persistentId, deviceGuid, this, mRadioController);
+					cheDevice = new CheDeviceLogic(persistentId, deviceGuid, this, mRadioController);
 
 					// Check to see if the Che is already in our map.
 					if (!mDeviceMap.containsValue(cheDevice)) {
@@ -394,7 +394,7 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 					cheDevice = mDeviceMap.get(deviceGuid);
 
 					if (cheDevice == null) {
-						cheDevice = new CheDevice(persistentId, deviceGuid, this, mRadioController);
+						cheDevice = new CheDeviceLogic(persistentId, deviceGuid, this, mRadioController);
 						mDeviceMap.put(deviceGuid, cheDevice);
 						mRadioController.addNetworkDevice(cheDevice);
 					}
@@ -427,7 +427,7 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 			switch (updateTypeNode.getTextValue()) {
 				case IWsReqCmd.OP_TYPE_CREATE:
 					// Create the aisle device.
-					aisleDevice = new AisleDevice(persistentId, deviceGuid, this, mRadioController);
+					aisleDevice = new AisleDeviceLogic(persistentId, deviceGuid, this, mRadioController);
 
 					// Check to see if the aisle device is already in our map.
 					if (!mDeviceMap.containsValue(aisleDevice)) {
@@ -443,7 +443,7 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 					aisleDevice = mDeviceMap.get(deviceGuid);
 
 					if (aisleDevice == null) {
-						aisleDevice = new AisleDevice(persistentId, deviceGuid, this, mRadioController);
+						aisleDevice = new AisleDeviceLogic(persistentId, deviceGuid, this, mRadioController);
 						mDeviceMap.put(deviceGuid, aisleDevice);
 						mRadioController.addNetworkDevice(aisleDevice);
 					}
@@ -476,8 +476,8 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 
 				// Now blank the aisles that might have commands.
 				for (INetworkDevice device : mDeviceMap.values()) {
-					if (device instanceof AisleDevice) {
-						AisleDevice aisleDevice = (AisleDevice) device;
+					if (device instanceof AisleDeviceLogic) {
+						AisleDeviceLogic aisleDevice = (AisleDeviceLogic) device;
 						aisleDevice.clearLedCmdFor(inGuid);
 					}
 				}

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: DeviceABC.java,v 1.2 2013/03/05 20:45:11 jeffw Exp $
+ *  $Id: DeviceLogicABC.java,v 1.1 2013/05/04 00:30:01 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -21,7 +21,7 @@ import com.gadgetworks.flyweight.controller.NetworkDeviceStateEnum;
  * @author jeffw
  *
  */
-public abstract class DeviceABC implements INetworkDevice {
+public abstract class DeviceLogicABC implements INetworkDevice {
 
 	// PersistentId
 	@Accessors(prefix = "m")
@@ -63,7 +63,7 @@ public abstract class DeviceABC implements INetworkDevice {
 	// The device manager.
 	protected ICsDeviceManager		mDeviceManager;
 
-	public DeviceABC(final UUID inPersistentId, final NetGuid inGuid, final ICsDeviceManager inDeviceManager, final IRadioController inRadioController) {
+	public DeviceLogicABC(final UUID inPersistentId, final NetGuid inGuid, final ICsDeviceManager inDeviceManager, final IRadioController inRadioController) {
 		mPersistentId = inPersistentId;
 		mGuid = inGuid;
 		mDeviceManager = inDeviceManager;
