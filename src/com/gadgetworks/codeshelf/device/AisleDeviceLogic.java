@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: AisleDeviceLogic.java,v 1.1 2013/05/04 00:30:01 jeffw Exp $
+ *  $Id: AisleDeviceLogic.java,v 1.2 2013/05/10 16:55:18 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -69,7 +69,7 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 	 */
 	public final void clearLedCmdFor(final NetGuid inNetGuid) {
 		// First send a blanking command on each channel.
-		for (short channel = 0; channel < 2; channel++) {
+		for (short channel = 1; channel <= 2; channel++) {
 			ICommand command = new CommandControlLight(NetEndpoint.PRIMARY_ENDPOINT,
 				channel,
 				CommandControlLight.POSITION_NONE,

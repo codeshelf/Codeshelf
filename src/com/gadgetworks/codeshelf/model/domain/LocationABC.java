@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: LocationABC.java,v 1.38 2013/04/26 03:26:04 jeffw Exp $
+ *  $Id: LocationABC.java,v 1.39 2013/05/10 16:55:18 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -26,7 +26,6 @@ import javax.persistence.Table;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
@@ -81,7 +80,9 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 	private static final Logger			LOGGER				= LoggerFactory.getLogger(LocationABC.class);
 
-	private static final Double			METERS_PER_LED_POS	= 0.03125;
+	// This really should somehow include the space between the bay if there are gaps in a long row with certain kinds of LED strips.
+	// For example, the current strips are spaced exactly 3.125cm apart.
+	private static final Double			METERS_PER_LED_POS	= 0.03333;
 
 	// The position type (GPS, METERS, etc.).
 	@Column(nullable = false)

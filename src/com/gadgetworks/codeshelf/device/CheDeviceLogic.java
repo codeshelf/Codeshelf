@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CheDeviceLogic.java,v 1.2 2013/05/04 03:00:06 jeffw Exp $
+ *  $Id: CheDeviceLogic.java,v 1.3 2013/05/10 16:55:18 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -161,7 +161,11 @@ public class CheDeviceLogic extends AisleDeviceLogic {
 				aisleDevice.addLedCmdFor(getGuid(), inChannel, inPosition, inColor, CommandControlLight.EFFECT_DIRECT);
 			}
 		}
-		mLastLedControllerGuid = inControllerGuid;
+
+		// Remember the last non-CHE LED controller we used.
+		if (!(device instanceof CheDeviceLogic)) {
+			mLastLedControllerGuid = inControllerGuid;
+		}
 	}
 
 	// --------------------------------------------------------------------------

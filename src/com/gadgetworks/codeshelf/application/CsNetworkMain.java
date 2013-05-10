@@ -1,7 +1,7 @@
 /*******************************************************************************
 CodeshelfWebSocketServer *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CsNetworkMain.java,v 1.9 2013/04/26 03:26:04 jeffw Exp $
+ *  $Id: CsNetworkMain.java,v 1.10 2013/05/10 16:55:19 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -25,9 +25,9 @@ import com.gadgetworks.codeshelf.ws.websocket.ICsWebsocketClientMsgHandler;
 import com.gadgetworks.codeshelf.ws.websocket.IWebSocketSslContextGenerator;
 import com.gadgetworks.codeshelf.ws.websocket.SSLWebSocketClientFactory;
 import com.gadgetworks.flyweight.command.IPacket;
+import com.gadgetworks.flyweight.controller.FTDIInterface;
 import com.gadgetworks.flyweight.controller.IGatewayInterface;
 import com.gadgetworks.flyweight.controller.IRadioController;
-import com.gadgetworks.flyweight.controller.TcpServerInterface;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -126,7 +126,7 @@ public final class CsNetworkMain {
 				// Can't inject Java_Websocket classes.  See CsWebSocketClient.java for explanation.
 				//bind(ICsWebSocketClient.class).to(CsWebSocketClient.class);
 				bind(IRadioController.class).to(RadioController.class);
-				bind(IGatewayInterface.class).to(TcpServerInterface.class);
+				bind(IGatewayInterface.class).to(FTDIInterface.class);
 				bind(ICsDeviceManager.class).to(CsDeviceManager.class);
 				bind(ICsWebsocketClientMsgHandler.class).to(CsDeviceManager.class);
 				bind(IDaoProvider.class).to(DaoProvider.class);
