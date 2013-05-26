@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandAssocABC.java,v 1.2 2013/02/27 22:06:27 jeffw Exp $
+ *  $Id: CommandAssocABC.java,v 1.3 2013/05/26 21:50:39 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.flyweight.command;
@@ -33,10 +33,10 @@ import com.gadgetworks.flyweight.controller.INetworkDevice;
  */
 public abstract class CommandAssocABC extends ExtendedCommandABC {
 
-	public static final byte	ASSOC_REQ_COMMAND	= 1;
-	public static final byte	ASSOC_RESP_COMMAND	= 2;
-	public static final byte	ASSOC_CHECK_COMMAND	= 3;
-	public static final byte	ASSOC_ACK_COMMAND	= 4;
+	public static final byte	ASSOC_REQ_COMMAND	= 0;
+	public static final byte	ASSOC_RESP_COMMAND	= 1;
+	public static final byte	ASSOC_CHECK_COMMAND	= 2;
+	public static final byte	ASSOC_ACK_COMMAND	= 3;
 
 	private static final Logger	LOGGER				= LoggerFactory.getLogger(CommandAssocABC.class);
 
@@ -52,7 +52,7 @@ public abstract class CommandAssocABC extends ExtendedCommandABC {
 		super(NetEndpoint.MGMT_ENDPOINT, inExtendedCommandID);
 
 		try {
-			if (inRemoteGUID.length() != NetGuid.NET_GUID_HEX_CHARS)
+			if (inRemoteGUID.replace("0x", "").length() != NetGuid.NET_GUID_HEX_CHARS)
 				throw new OutOfRangeException("Unique ID is the wrong size");
 		} catch (OutOfRangeException e) {
 			LOGGER.error("", e);

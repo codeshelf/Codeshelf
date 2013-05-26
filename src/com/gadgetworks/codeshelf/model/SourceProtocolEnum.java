@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: SourceProtocolEnum.java,v 1.4 2012/10/24 01:00:59 jeffw Exp $
+ *  $Id: SourceProtocolEnum.java,v 1.5 2013/05/26 21:50:39 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model;
 
@@ -52,8 +52,8 @@ public enum SourceProtocolEnum {
 
 	final static class SourceProtocolNum {
 
-		static final byte	INVALID		= 0;
-		static final byte	JMS			= 1;
+		static final byte	INVALID		= -1;
+		static final byte	JMS			= 0;
 
 		private SourceProtocolNum() {
 		};

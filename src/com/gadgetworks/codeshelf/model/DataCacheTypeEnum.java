@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DataCacheTypeEnum.java,v 1.4 2012/10/24 01:00:59 jeffw Exp $
+ *  $Id: DataCacheTypeEnum.java,v 1.5 2013/05/26 21:50:39 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model;
 
@@ -52,8 +52,8 @@ public enum DataCacheTypeEnum {
 
 	static final class DataCacheTypeNum {
 
-		static final byte	INVALID	= 0;
-		static final byte	JPEG	= 1;
+		static final byte	INVALID	= -1;
+		static final byte	JPEG	= 0;
 
 		private DataCacheTypeNum() {
 		};

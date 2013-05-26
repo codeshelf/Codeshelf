@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: NetworkDeviceStateEnum.java,v 1.1 2013/02/20 08:28:25 jeffw Exp $
+ *  $Id: NetworkDeviceStateEnum.java,v 1.2 2013/05/26 21:50:40 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.flyweight.controller;
 
@@ -82,15 +82,15 @@ public enum NetworkDeviceStateEnum {
 	}
 
 	final static class NetworkDeviceStateNum {
-		static final byte	INVALID			= 0;
-		static final byte	WAKE_RCVD		= 1;
-		static final byte	ASSIGN_SENT		= 2;
-		static final byte	ASSIGNACK_RCVD	= 3;
-		static final byte	SETUP			= 4;
-		static final byte	STARTED			= 5;
-		static final byte	LOST			= 6;
-		static final byte	STOPPED			= 7;
-		static final byte	TERMINATED		= 8;
+		static final byte	INVALID			= -1;
+		static final byte	WAKE_RCVD		= 0;
+		static final byte	ASSIGN_SENT		= 1;
+		static final byte	ASSIGNACK_RCVD	= 2;
+		static final byte	SETUP			= 3;
+		static final byte	STARTED			= 4;
+		static final byte	LOST			= 5;
+		static final byte	STOPPED			= 6;
+		static final byte	TERMINATED		= 7;
 
 		private NetworkDeviceStateNum() {
 

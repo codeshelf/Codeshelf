@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  OmniBox
  *  Copyright (c) 2005-2007, Jeffrey B. Williams, All rights reserved
- *  $Id: AckStateEnum.java,v 1.1 2013/02/20 08:28:23 jeffw Exp $
+ *  $Id: AckStateEnum.java,v 1.2 2013/05/26 21:50:39 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.flyweight.command;
 
@@ -70,10 +70,10 @@ public enum AckStateEnum {
 	}
 
 	static final class AckStateNum {
-		static final int	INVALID		= 0;
-		static final int	PENDING		= 1;
-		static final int	SUCCEEDED	= 2;
-		static final int	NO_RESPONSE	= 3;
+		static final int	INVALID		= -1;
+		static final int	PENDING		= 0;
+		static final int	SUCCEEDED	= 1;
+		static final int	NO_RESPONSE	= 2;
 
 		private AckStateNum() {
 

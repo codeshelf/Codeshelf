@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WebSessionStateEnum.java,v 1.1 2013/03/17 19:19:13 jeffw Exp $
+ *  $Id: WebSessionStateEnum.java,v 1.2 2013/05/26 21:50:40 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.ws;
 
@@ -61,10 +61,10 @@ public enum WebSessionStateEnum {
 	}
 
 	final static class WebSessionStateNum {
-		static final byte	INVALID			= 0;
-		static final byte	ANONYMOUS		= 1;
-		static final byte	AUTHENTICATED	= 2;
-		static final byte	TERMINATED		= 3;
+		static final byte	INVALID			= -1;
+		static final byte	ANONYMOUS		= 0;
+		static final byte	AUTHENTICATED	= 1;
+		static final byte	TERMINATED		= 2;
 
 		private WebSessionStateNum() {
 

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: NBitInteger.java,v 1.1 2013/02/20 08:28:23 jeffw Exp $
+ *  $Id: NBitInteger.java,v 1.2 2013/05/26 21:50:40 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.flyweight.bitfields;
@@ -56,11 +56,13 @@ public class NBitInteger implements Serializable {
 	// --------------------------------------------------------------------------
 	/**
 	 *  Make sure that the value we're assigning is within the range that the n-bit integer can hold.
+	 *  We now allow -1 to mean "invalid" - this allows us to create uninitialized enums that we can read from the 
+	 *  network stream.
 	 *  @param inNewValue	The new value we're trying to store.
 	 *  @return	True if it is within range.
 	 */
 	private boolean isInRange(short inNewValue) {
-		return ((inNewValue >= 0) && (inNewValue < Math.pow(2, mBitCount)));
+		return (((inNewValue >= 0) && (inNewValue < Math.pow(2, mBitCount))) || (inNewValue == 255));
 	}
 
 	/**

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OnlineStatusEnum.java,v 1.4 2012/10/24 01:00:59 jeffw Exp $
+ *  $Id: OnlineStatusEnum.java,v 1.5 2013/05/26 21:50:40 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model;
 
@@ -70,11 +70,11 @@ public enum OnlineStatusEnum {
 
 	static final class OnlineStatusNum {
 
-		static final byte	INVALID		= 0;
-		static final byte	OFFLINE		= 1;
-		static final byte	CONNECTING	= 2;
-		static final byte	FAILED		= 3;
-		static final byte	ONLINE		= 4;
+		static final byte	INVALID		= -1;
+		static final byte	OFFLINE		= 0;
+		static final byte	CONNECTING	= 1;
+		static final byte	FAILED		= 2;
+		static final byte	ONLINE		= 3;
 
 		private OnlineStatusNum() {
 		};

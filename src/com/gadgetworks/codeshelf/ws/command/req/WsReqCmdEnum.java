@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WsReqCmdEnum.java,v 1.1 2013/03/17 19:19:12 jeffw Exp $
+ *  $Id: WsReqCmdEnum.java,v 1.2 2013/05/26 21:50:40 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.ws.command.req;
 
@@ -112,19 +112,19 @@ public enum WsReqCmdEnum {
 	}
 
 	final static class WebSessionReqCmdNum {
-		static final byte	INVALID						= 0;
-		static final byte	LOGIN_REQ					= 1;
-		static final byte	OBJECT_GETTER_REQ			= 2;
-		static final byte	OBJECT_GETBYID_REQ			= 3;
-		static final byte	OBJECT_UPDATE_REQ			= 4;
-		static final byte	OBJECT_DELETE_REQ			= 5;
-		static final byte	OBJECT_LISTENER_REQ			= 6;
-		static final byte	OBJECT_FILTER_REQ			= 7;
-		static final byte	OBJECT_METHOD_REQ			= 8;
-		static final byte	REGISTER_EDI_SERVICE_REQ	= 9;
-		static final byte	NET_ATTACH_REQ				= 10;
-		static final byte	CHE_WORK_REQ				= 11;
-		static final byte	CHE_WICOMPLETE_REQ			= 12;
+		static final byte	INVALID						= -1;
+		static final byte	LOGIN_REQ					= 2;
+		static final byte	OBJECT_GETTER_REQ			= 1;
+		static final byte	OBJECT_GETBYID_REQ			= 2;
+		static final byte	OBJECT_UPDATE_REQ			= 3;
+		static final byte	OBJECT_DELETE_REQ			= 4;
+		static final byte	OBJECT_LISTENER_REQ			= 5;
+		static final byte	OBJECT_FILTER_REQ			= 6;
+		static final byte	OBJECT_METHOD_REQ			= 7;
+		static final byte	REGISTER_EDI_SERVICE_REQ	= 8;
+		static final byte	NET_ATTACH_REQ				= 9;
+		static final byte	CHE_WORK_REQ				= 10;
+		static final byte	CHE_WICOMPLETE_REQ			= 11;
 
 		private WebSessionReqCmdNum() {
 

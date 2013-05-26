@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: RadioController.java,v 1.10 2013/04/15 04:01:37 jeffw Exp $
+ *  $Id: RadioController.java,v 1.11 2013/05/26 21:50:39 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.device;
@@ -784,7 +784,7 @@ public class RadioController implements IRadioController {
 		// First get the unique ID from the command.
 		String uid = inCommand.getGUID();
 
-		INetworkDevice foundDevice = mDeviceGuidMap.get(new NetGuid(uid.getBytes()));
+		INetworkDevice foundDevice = mDeviceGuidMap.get(new NetGuid("0x" + uid));
 
 		if (foundDevice != null) {
 			CommandAssocAck ackCmd;
@@ -806,7 +806,7 @@ public class RadioController implements IRadioController {
 			// If the found device has the wrong GUID then we have the wrong device.
 			// (This could be two matching network IDs on the same channel.  
 			// This could be a serious flaw in the network protocol.)
-			if (!foundDevice.getGuid().toString().equals(uid)) {
+			if (!foundDevice.getGuid().toString().equals("0x" + uid)) {
 				LOGGER.info("AssocCheck - NOT ASSOC: GUID mismatch: " + foundDevice.getGuid() + " and " + uid);
 				status = CommandAssocAck.IS_NOT_ASSOCIATED;
 			}
@@ -958,7 +958,7 @@ public class RadioController implements IRadioController {
 	 *  @param inSession	The device that just became active.
 	 */
 	private void networkDeviceBecameActive(INetworkDevice inNetworkDevice) {
-		inNetworkDevice.setDeviceStateEnum(NetworkDeviceStateEnum.SETUP);
+		inNetworkDevice.setDeviceStateEnum(NetworkDeviceStateEnum.STARTED);
 		inNetworkDevice.start();
 	}
 

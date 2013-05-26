@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: ColorEnum.java,v 1.3 2013/04/15 04:01:37 jeffw Exp $
+ *  $Id: ColorEnum.java,v 1.4 2013/05/26 21:50:39 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.flyweight.command;
 
@@ -44,10 +44,10 @@ public enum ColorEnum {
 	 *  @param inMotorControlCommandID
 	 *  @return
 	 */
-	public static ColorEnum getColorEnum(int inMotorControlCommandID) {
+	public static ColorEnum getColorEnum(int inColorNum) {
 		ColorEnum result = ColorEnum.INVALID;
 
-		switch (inMotorControlCommandID) {
+		switch (inColorNum) {
 			case ColorNum.RED:
 				result = ColorEnum.RED;
 				break;
@@ -96,15 +96,15 @@ public enum ColorEnum {
 	}
 
 	final static class ColorNum {
-		static final int	INVALID	= 0;
-		static final int	BLUE	= 1;
-		static final int	RED		= 2;
-		static final int	GREEN	= 3;
-		static final int	MAGENTA	= 4;
-		static final int	CYAN	= 5;
-		static final int	ORANGE	= 6;
-		static final int	BLACK	= 7;
-		static final int	WHITE	= 8;
+		static final int	INVALID	= -1;
+		static final int	BLUE	= 0;
+		static final int	RED		= 1;
+		static final int	GREEN	= 2;
+		static final int	MAGENTA	= 3;
+		static final int	CYAN	= 4;
+		static final int	ORANGE	= 5;
+		static final int	BLACK	= 6;
+		static final int	WHITE	= 7;
 
 		private ColorNum() {
 

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WorkInstructionStatusEnum.java,v 1.5 2013/05/03 19:45:43 jeffw Exp $
+ *  $Id: WorkInstructionStatusEnum.java,v 1.6 2013/05/26 21:50:39 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model;
 
@@ -76,12 +76,12 @@ public enum WorkInstructionStatusEnum {
 
 	static final class WorkInstructionStatusNum {
 
-		static final byte	INVALID		= 0;
-		static final byte	NEW			= 1;
-		static final byte	INPROGRESS	= 2;
-		static final byte	SHORT		= 3;
-		static final byte	COMPLETE	= 4;
-		static final byte	REVERT		= 5;
+		static final byte	INVALID		= -1;
+		static final byte	NEW			= 0;
+		static final byte	INPROGRESS	= 1;
+		static final byte	SHORT		= 2;
+		static final byte	COMPLETE	= 3;
+		static final byte	REVERT		= 4;
 
 		private WorkInstructionStatusNum() {
 		};

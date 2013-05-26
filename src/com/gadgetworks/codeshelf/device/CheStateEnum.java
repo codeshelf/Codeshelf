@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CheStateEnum.java,v 1.2 2013/05/03 19:45:44 jeffw Exp $
+ *  $Id: CheStateEnum.java,v 1.3 2013/05/26 21:50:39 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -88,14 +88,14 @@ public enum CheStateEnum {
 
 	final static class CheStateNum {
 
-		static final byte	INVALID				= 0;
-		static final byte	IDLE				= 1;
-		static final byte	LOCATION_SETUP		= 2;
-		static final byte	CONTAINER_SELECT	= 3;
-		static final byte	CONTAINER_POSITION	= 4;
-		static final byte	DO_PICK				= 5;
-		static final byte	SHORT_PICK			= 6;
-		static final byte	PICK_COMPLETE		= 7;
+		static final byte	INVALID				= -1;
+		static final byte	IDLE				= 0;
+		static final byte	LOCATION_SETUP		= 1;
+		static final byte	CONTAINER_SELECT	= 2;
+		static final byte	CONTAINER_POSITION	= 3;
+		static final byte	DO_PICK				= 4;
+		static final byte	SHORT_PICK			= 5;
+		static final byte	PICK_COMPLETE		= 6;
 
 		private CheStateNum() {
 		};

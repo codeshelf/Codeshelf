@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: PickStrategyEnum.java,v 1.2 2012/10/24 01:00:59 jeffw Exp $
+ *  $Id: PickStrategyEnum.java,v 1.3 2013/05/26 21:50:40 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model;
 
@@ -58,9 +58,9 @@ public enum PickStrategyEnum {
 
 	static final class OrderStatusNum {
 
-		static final byte	INVALID		= 0;
-		static final byte	SERIAL		= 1;
-		static final byte	PARALLEL	= 2;
+		static final byte	INVALID		= -1;
+		static final byte	SERIAL		= 0;
+		static final byte	PARALLEL	= 1;
 
 		private OrderStatusNum() {
 		};

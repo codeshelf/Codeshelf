@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandNetMgmtABC.java,v 1.2 2013/03/03 23:27:21 jeffw Exp $
+ *  $Id: CommandNetMgmtABC.java,v 1.3 2013/05/26 21:50:39 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.flyweight.command;
@@ -29,9 +29,9 @@ import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
  */
 public abstract class CommandNetMgmtABC extends ExtendedCommandABC {
 
-	public static final byte	NETSETUP_COMMAND		= 1;
-	public static final byte	NETCHECK_COMMAND		= 2;
-	public static final byte	NETINTFTEST_COMMAND		= 3;
+	public static final byte	NETSETUP_COMMAND		= 0;
+	public static final byte	NETCHECK_COMMAND		= 1;
+	public static final byte	NETINTFTEST_COMMAND		= 2;
 
 //	private static final Logger	LOGGER					= LoggerFactory.getLogger(CommandNetMgmtABC.class);
 
@@ -47,13 +47,6 @@ public abstract class CommandNetMgmtABC extends ExtendedCommandABC {
 		super(NetEndpoint.MGMT_ENDPOINT, inExtendedCommandID);
 	}
 
-	// --------------------------------------------------------------------------
-	/**
-	 *  This is the constructor used to create a wake command received from the network.
-	 */
-	//	public CommandNetMgmtABC() {
-	//		super();
-	//	}
 	/* --------------------------------------------------------------------------
 	 * (non-Javadoc)
 	 * @see com.gadgetworks.command.CommandABC#getCommandTypeEnum()

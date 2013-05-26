@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CheDeviceLogic.java,v 1.3 2013/05/10 16:55:18 jeffw Exp $
+ *  $Id: CheDeviceLogic.java,v 1.4 2013/05/26 21:50:39 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -26,6 +26,7 @@ import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.flyweight.command.ColorEnum;
 import com.gadgetworks.flyweight.command.CommandControlLight;
 import com.gadgetworks.flyweight.command.CommandControlMessage;
+import com.gadgetworks.flyweight.command.EffectEnum;
 import com.gadgetworks.flyweight.command.ICommand;
 import com.gadgetworks.flyweight.command.NetEndpoint;
 import com.gadgetworks.flyweight.command.NetGuid;
@@ -132,13 +133,8 @@ public class CheDeviceLogic extends AisleDeviceLogic {
 	 * Send a light command to the CHE to light a position
 	 * @param inPosition
 	 */
-	private void sendCheLightCommand(final Short inChanel, final Short inPosition, final ColorEnum inColor) {
-		LOGGER.info("Light position: " + inPosition);
-		ICommand command = new CommandControlLight(NetEndpoint.PRIMARY_ENDPOINT,
-			inChanel,
-			inPosition,
-			inColor,
-			CommandControlLight.EFFECT_FLASH);
+	private void sendCheLightCommand(final Short inChanel, final EffectEnum inEffect, final List<LedSample> inLedSamples) {
+		ICommand command = new CommandControlLight(NetEndpoint.PRIMARY_ENDPOINT, inChanel, inEffect, inLedSamples);
 		mRadioController.sendCommand(command, getAddress(), false);
 	}
 
@@ -151,14 +147,15 @@ public class CheDeviceLogic extends AisleDeviceLogic {
 		final Short inChannel,
 		final Short inPosition,
 		final ColorEnum inColor,
-		final String inEffect) {
+		final EffectEnum inEffect) {
+		
 		LOGGER.info("Light position: " + inPosition);
 		INetworkDevice device = mDeviceManager.getDeviceByGuid(inControllerGuid);
 		if (device instanceof AisleDeviceLogic) {
 			AisleDeviceLogic aisleDevice = (AisleDeviceLogic) device;
 			LedCmd cmd = aisleDevice.getLedCmdFor(getGuid(), inChannel, inPosition);
 			if (cmd == null) {
-				aisleDevice.addLedCmdFor(getGuid(), inChannel, inPosition, inColor, CommandControlLight.EFFECT_DIRECT);
+				aisleDevice.addLedCmdFor(getGuid(), inChannel, inPosition, inColor, inEffect);
 			}
 		}
 
@@ -331,7 +328,10 @@ public class CheDeviceLogic extends AisleDeviceLogic {
 				break;
 		}
 
-		sendCheLightCommand(CommandControlLight.CHANNEL_ALL, CommandControlLight.POSITION_ALL, ColorEnum.RED);
+		List<LedSample> sampleList = new ArrayList<LedSample>();
+		LedSample sample = new LedSample(CommandControlLight.POSITION_ALL, ColorEnum.RED);
+		sampleList.add(sample);
+		sendCheLightCommand(CommandControlLight.CHANNEL_ALL, EffectEnum.ERROR, sampleList);
 	}
 
 	// --------------------------------------------------------------------------
@@ -510,17 +510,9 @@ public class CheDeviceLogic extends AisleDeviceLogic {
 				}
 
 				if (!wi.getStatusEnum().equals(WorkInstructionStatusEnum.COMPLETE)) {
-					ledControllerSetLed(getGuid(),
-						CommandControlLight.CHANNEL1,
-						position,
-						ColorEnum.RED,
-						CommandControlLight.EFFECT_FLASH);
+					ledControllerSetLed(getGuid(), CommandControlLight.CHANNEL1, position, ColorEnum.RED, EffectEnum.FLASH);
 				} else {
-					ledControllerSetLed(getGuid(),
-						CommandControlLight.CHANNEL1,
-						position,
-						wi.getLedColorEnum(),
-						CommandControlLight.EFFECT_FLASH);
+					ledControllerSetLed(getGuid(), CommandControlLight.CHANNEL1, position, wi.getLedColorEnum(), EffectEnum.FLASH);
 				}
 			}
 			ledControllerShowLeds(getGuid());
@@ -591,7 +583,7 @@ public class CheDeviceLogic extends AisleDeviceLogic {
 					firstWi.getLedChannel(),
 					position,
 					firstWi.getLedColorEnum(),
-					CommandControlLight.EFFECT_FLASH);
+					EffectEnum.FLASH);
 			}
 			ledControllerShowLeds(ledController.getGuid());
 		}
@@ -604,7 +596,7 @@ public class CheDeviceLogic extends AisleDeviceLogic {
 						CommandControlLight.CHANNEL1,
 						Short.valueOf(mapEntry.getKey()),
 						wi.getLedColorEnum(),
-						CommandControlLight.EFFECT_FLASH);
+						EffectEnum.FLASH);
 				}
 			}
 		}

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: AisleDeviceEmbedded.java,v 1.19 2013/05/03 18:27:35 jeffw Exp $
+ *  $Id: AisleDeviceEmbedded.java,v 1.20 2013/05/26 21:50:39 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -20,6 +20,9 @@ import com.gadgetworks.flyweight.command.CommandControlABC;
 import com.gadgetworks.flyweight.command.CommandControlLight;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+
+
+// DEPRECATED - DELETE SOON AFTER CHE TESTING ON THE OLD NETWORK.
 
 /**
  * This is the CHE code that runs on the device itself.
@@ -199,28 +202,28 @@ public class AisleDeviceEmbedded extends DeviceEmbeddedABC {
 	/**
 	 * @param inLedValues
 	 */
-	private void sendLedValue(final Short inChannel, final Short inPosition, LedValue inLedValue) {
+	private void sendLedValue(final Short inChannel, final Short inPosition, LedSample inLedValue) {
 
-		Byte red = inLedValue.getRed();
-		for (int bit = 0; bit < 8; bit++) {
-			if ((red & ((byte) (1 << bit))) != 0) {
-				mAllChannelsOutput[(inPosition - 1) * 24 + bit] |= (1 << (inChannel - 1));
-			}
-		}
-
-		Byte green = inLedValue.getGreen();
-		for (int bit = 0; bit < 8; bit++) {
-			if ((green & ((byte) (1 << bit))) != 0) {
-				mAllChannelsOutput[(inPosition - 1) * 24 + 8 + bit] |= (1 << (inChannel - 1));
-			}
-		}
-
-		Byte blue = inLedValue.getBlue();
-		for (int bit = 0; bit < 8; bit++) {
-			if ((blue & ((byte) (1 << bit))) != 0) {
-				mAllChannelsOutput[(inPosition - 1) * 24 + 16 + bit] |= (1 << (inChannel - 1));
-			}
-		}
+//		Byte red = inLedValue.getRed();
+//		for (int bit = 0; bit < 8; bit++) {
+//			if ((red & ((byte) (1 << bit))) != 0) {
+//				mAllChannelsOutput[(inPosition - 1) * 24 + bit] |= (1 << (inChannel - 1));
+//			}
+//		}
+//
+//		Byte green = inLedValue.getGreen();
+//		for (int bit = 0; bit < 8; bit++) {
+//			if ((green & ((byte) (1 << bit))) != 0) {
+//				mAllChannelsOutput[(inPosition - 1) * 24 + 8 + bit] |= (1 << (inChannel - 1));
+//			}
+//		}
+//
+//		Byte blue = inLedValue.getBlue();
+//		for (int bit = 0; bit < 8; bit++) {
+//			if ((blue & ((byte) (1 << bit))) != 0) {
+//				mAllChannelsOutput[(inPosition - 1) * 24 + 16 + bit] |= (1 << (inChannel - 1));
+//			}
+//		}
 	}
 
 	/* --------------------------------------------------------------------------
@@ -277,49 +280,6 @@ public class AisleDeviceEmbedded extends DeviceEmbeddedABC {
 		return result;
 	}
 
-	private LedValue mapColorEnumToLedValue(final ColorEnum inColorEnum) {
-		LedValue result = null;
-
-		switch (inColorEnum) {
-			case RED:
-				result = new LedValue(LedValue.LED_RED);
-				break;
-
-			case GREEN:
-				result = new LedValue(LedValue.LED_GREEN);
-				break;
-
-			case BLUE:
-				result = new LedValue(LedValue.LED_BLUE);
-				break;
-
-			case CYAN:
-				result = new LedValue(LedValue.LED_CYAN);
-				break;
-
-			case MAGENTA:
-				result = new LedValue(LedValue.LED_MAGENTA);
-				break;
-
-			case ORANGE:
-				result = new LedValue(LedValue.LED_ORANGE);
-				break;
-
-			case BLACK:
-				result = new LedValue(LedValue.LED_BLACK);
-				break;
-
-			case WHITE:
-				result = new LedValue(LedValue.LED_WHITE);
-				break;
-
-			default:
-				result = new LedValue(LedValue.LED_RED);
-		}
-
-		return result;
-	}
-
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inCommand
@@ -327,15 +287,15 @@ public class AisleDeviceEmbedded extends DeviceEmbeddedABC {
 	protected final void processControlLightCommand(CommandControlLight inCommand) {
 		LOGGER.info("Light message: " + inCommand.toString());
 
-		if (inCommand.getPosition() == CommandControlLight.POSITION_NONE) {
-			mStoredPositions.clear();
-		} else {
-			LedPos ledPos = new LedPos(inCommand.getChannel(), inCommand.getPosition());
-			ledPos.addSample(mapColorEnumToLedValue(inCommand.getColor()));
-			if (ledPos.getPosition() > mTotalPositions) {
-				mTotalPositions = (int) ledPos.getPosition();
-			}
-			mStoredPositions.add(ledPos);
-		}
+//		if (inCommand.getPosition() == CommandControlLight.POSITION_NONE) {
+//			mStoredPositions.clear();
+//		} else {
+//			LedPos ledPos = new LedPos(inCommand.getChannel(), inCommand.getPosition());
+//			ledPos.addSample(mapColorEnumToLedValue(inCommand.getColor()));
+//			if (ledPos.getPosition() > mTotalPositions) {
+//				mTotalPositions = (int) ledPos.getPosition();
+//			}
+//			mStoredPositions.add(ledPos);
+//		}
 	}
 }

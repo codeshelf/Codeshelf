@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: H2SchemaManager.java,v 1.64 2013/02/27 01:17:03 jeffw Exp $
+ *  $Id: H2SchemaManager.java,v 1.65 2013/05/26 21:50:40 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -113,6 +113,14 @@ public final class H2SchemaManager extends SchemaManagerABC {
 	 */
 	protected boolean doDowngradeSchema() {
 		return false;
+	}
+
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.dao.SchemaManagerABC#getSchemaCheckerString()
+	 */
+	protected String getSchemaCheckerString() {
+		return "SET SCHEMA " + getDbSchemaName();
 	}
 
 	// --------------------------------------------------------------------------

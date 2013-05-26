@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: AisleDeviceLogic.java,v 1.2 2013/05/10 16:55:18 jeffw Exp $
+ *  $Id: AisleDeviceLogic.java,v 1.3 2013/05/26 21:50:39 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.flyweight.command.ColorEnum;
 import com.gadgetworks.flyweight.command.CommandControlLight;
+import com.gadgetworks.flyweight.command.EffectEnum;
 import com.gadgetworks.flyweight.command.ICommand;
 import com.gadgetworks.flyweight.command.NetEndpoint;
 import com.gadgetworks.flyweight.command.NetGuid;
@@ -37,9 +38,9 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 		@Getter
 		private ColorEnum	mColor;
 		@Getter
-		private String		mEffect;
+		private EffectEnum	mEffect;
 
-		public LedCmd(final Short inChannel, final Short inPosition, final ColorEnum inColor, final String inEffect) {
+		public LedCmd(final Short inChannel, final Short inPosition, final ColorEnum inColor, final EffectEnum inEffect) {
 			mChannel = inChannel;
 			mPosition = inPosition;
 			mColor = inColor;
@@ -69,12 +70,11 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 	 */
 	public final void clearLedCmdFor(final NetGuid inNetGuid) {
 		// First send a blanking command on each channel.
+		List<LedSample> sampleList = new ArrayList<LedSample>();
+		LedSample sample = new LedSample(CommandControlLight.POSITION_NONE, ColorEnum.BLACK);
+		sampleList.add(sample);
 		for (short channel = 1; channel <= 2; channel++) {
-			ICommand command = new CommandControlLight(NetEndpoint.PRIMARY_ENDPOINT,
-				channel,
-				CommandControlLight.POSITION_NONE,
-				ColorEnum.BLACK,
-				CommandControlLight.EFFECT_SOLID);
+			ICommand command = new CommandControlLight(NetEndpoint.PRIMARY_ENDPOINT, channel, EffectEnum.SOLID, sampleList);
 			mRadioController.sendCommand(command, getAddress(), false);
 		}
 		mDeviceLedPosMap.remove(inNetGuid);
@@ -93,7 +93,7 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 		final Short inChannel,
 		final Short inPosition,
 		final ColorEnum inColor,
-		final String inEffect) {
+		final EffectEnum inEffect) {
 		List<LedCmd> ledCmds = mDeviceLedPosMap.get(inNetGuid);
 		if (ledCmds == null) {
 			ledCmds = new ArrayList<LedCmd>();
@@ -142,16 +142,19 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 		// Now send the commands needed for each CHE.
 		for (Map.Entry<NetGuid, List<LedCmd>> entry : mDeviceLedPosMap.entrySet()) {
 
+			List<LedSample> samples = new ArrayList<LedSample>();
+			Short channel = -1;
+			EffectEnum effect = EffectEnum.SOLID;
 			for (LedCmd ledCmd : entry.getValue()) {
+				channel = ledCmd.getChannel();
+				effect = ledCmd.getEffect();
+				LedSample sample = new LedSample(ledCmd.getPosition(), ledCmd.getColor());
+				samples.add(sample);
 
 				LOGGER.info("Light position: " + ledCmd.mPosition);
-				ICommand command = new CommandControlLight(NetEndpoint.PRIMARY_ENDPOINT,
-					ledCmd.getChannel(),
-					ledCmd.getPosition(),
-					ledCmd.getColor(),
-					ledCmd.getEffect());
-				mRadioController.sendCommand(command, getAddress(), false);
 			}
+			ICommand command = new CommandControlLight(NetEndpoint.PRIMARY_ENDPOINT, channel, effect, samples);
+			mRadioController.sendCommand(command, getAddress(), false);
 		}
 	}
 }

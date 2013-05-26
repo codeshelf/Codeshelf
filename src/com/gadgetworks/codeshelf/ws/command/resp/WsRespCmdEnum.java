@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WsRespCmdEnum.java,v 1.1 2013/03/17 19:19:12 jeffw Exp $
+ *  $Id: WsRespCmdEnum.java,v 1.2 2013/05/26 21:50:39 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.ws.command.resp;
 
@@ -107,18 +107,18 @@ public enum WsRespCmdEnum {
 	}
 
 	final static class WebSessionRespCmdNum {
-		static final byte	INVALID					= 0;
-		static final byte	LOGIN_RESP				= 1;
-		static final byte	OBJECT_GETTER_RESP		= 2;
-		static final byte	OBJECT_GETBYID_RESP		= 3;
-		static final byte	OBJECT_UPDATE_RESP		= 4;
-		static final byte	OBJECT_DELETE_RESP		= 5;
-		static final byte	OBJECT_LISTENER_RESP	= 6;
-		static final byte	OBJECT_FILTER_RESP		= 7;
-		static final byte	OBJECT_METHOD_RESP		= 8;
-		static final byte	REGISTER_EDI_RESP		= 9;
-		static final byte	NET_ATTACH_RESP			= 10;
-		static final byte	CHE_WORK_RESP			= 11;
+		static final byte	INVALID					= -1;
+		static final byte	LOGIN_RESP				= 0;
+		static final byte	OBJECT_GETTER_RESP		= 1;
+		static final byte	OBJECT_GETBYID_RESP		= 2;
+		static final byte	OBJECT_UPDATE_RESP		= 3;
+		static final byte	OBJECT_DELETE_RESP		= 4;
+		static final byte	OBJECT_LISTENER_RESP	= 5;
+		static final byte	OBJECT_FILTER_RESP		= 6;
+		static final byte	OBJECT_METHOD_RESP		= 7;
+		static final byte	REGISTER_EDI_RESP		= 8;
+		static final byte	NET_ATTACH_RESP			= 9;
+		static final byte	CHE_WORK_RESP			= 10;
 
 		private WebSessionRespCmdNum() {
 

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: PostgresSchemaManager.java,v 1.3 2013/02/27 01:17:03 jeffw Exp $
+ *  $Id: PostgresSchemaManager.java,v 1.4 2013/05/26 21:50:40 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -65,6 +65,14 @@ public final class PostgresSchemaManager extends SchemaManagerABC {
 	 */
 	public String getApplicationDatabaseURL() {
 		return "jdbc:postgresql://" + getDbAddress() + ":" + getDbPortnum() + "/" + getDbName();
+	}
+	
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.dao.SchemaManagerABC#getSchemaCheckerString()
+	 */
+	protected String getSchemaCheckerString() {
+		return "select exists (select * from pg_catalog.pg_namespace where nspname = '" + getDbSchemaName() + "');"; 
 	}
 
 	// --------------------------------------------------------------------------

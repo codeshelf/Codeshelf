@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  OmniBox
  *  Copyright (c) 2005-2007, Jeffrey B. Williams, All rights reserved
- *  $Id: NetDataSampleUnitsEnum.java,v 1.1 2013/02/20 08:28:23 jeffw Exp $
+ *  $Id: NetDataSampleUnitsEnum.java,v 1.2 2013/05/26 21:50:39 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.flyweight.command;
 
@@ -129,13 +129,13 @@ public enum NetDataSampleUnitsEnum {
 	}
 
 	final static class NetDataSampleUnitsNum {
-		static final int	INVALID		= 0;
-		static final int	RAW			= 1;
-		static final int	BINARY		= 2;
-		static final int	GRAMS		= 3;
-		static final int	METERS		= 4;
-		static final int	CENTIGRADE	= 5;
-		static final int	NEWTONS		= 6;
+		static final int	INVALID		= -1;
+		static final int	RAW			= 0;
+		static final int	BINARY		= 1;
+		static final int	GRAMS		= 2;
+		static final int	METERS		= 3;
+		static final int	CENTIGRADE	= 4;
+		static final int	NEWTONS		= 5;
 
 		public NetDataSampleUnitsNum() {
 

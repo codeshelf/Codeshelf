@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: TravelDirectionEnum.java,v 1.1 2013/03/15 14:57:13 jeffw Exp $
+ *  $Id: TravelDirectionEnum.java,v 1.2 2013/05/26 21:50:39 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model;
 
@@ -70,11 +70,11 @@ public enum TravelDirectionEnum {
 
 	static final class OrderStatusNum {
 
-		static final byte	INVALID	= 0;
-		static final byte	NONE	= 1;
-		static final byte	FORWARD	= 2;
-		static final byte	REVERSE	= 3;
-		static final byte	BOTH	= 4;
+		static final byte	INVALID	= 1;
+		static final byte	NONE	= 0;
+		static final byte	FORWARD	= 1;
+		static final byte	REVERSE	= 2;
+		static final byte	BOTH	= 3;
 
 		private OrderStatusNum() {
 		};

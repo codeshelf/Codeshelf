@@ -1,12 +1,13 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandControlLight.java,v 1.5 2013/04/15 04:01:37 jeffw Exp $
+ *  $Id: CommandControlLight.java,v 1.6 2013/05/26 21:50:39 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.flyweight.command;
 
 import java.io.IOException;
+import java.util.List;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -15,12 +16,17 @@ import lombok.experimental.Accessors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.gadgetworks.codeshelf.device.LedSample;
 import com.gadgetworks.flyweight.bitfields.BitFieldInputStream;
 import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
 
 // --------------------------------------------------------------------------
 /**
  *  A string command from the remote.
+ *  
+ *  1B - effect
+ *  1B - sample count
+ *  nB - samples (1B each: Channel, Red, Green, Blue)
  *  
  *  @author jeffw
  */
@@ -34,14 +40,12 @@ public final class CommandControlLight extends CommandControlABC {
 	public static final Short	CHANNEL3			= 3;
 	public static final Short	CHANNEL4			= 4;
 
-	public static final String	EFFECT_SOLID		= "SOLID";
-	public static final String	EFFECT_FLASH		= "FLASH";
-	public static final String	EFFECT_DIRECT		= "DIRECT";
-
 	private static final Logger	LOGGER				= LoggerFactory.getLogger(CommandControlLight.class);
 
-	private static final int	NUMBER_OF_SHORTS	= 2;
-	private static final int	BITS_PER_BYTE		= 8;
+	private static final int	CHANNEL_BYTES		= 1;
+	private static final int	EFFECT_BYTES		= 1;
+	private static final int	SAMPLE_COUNT_BYTES	= 1;
+	private static final int	ONE_SAMPLE_BYTES	= 4;
 
 	@Accessors(prefix = "m")
 	@Getter
@@ -51,30 +55,27 @@ public final class CommandControlLight extends CommandControlABC {
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
-	private Short				mPosition;
+	private EffectEnum			mEffect;
 
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
-	private ColorEnum			mColor;
-
-	@Accessors(prefix = "m")
-	@Getter
-	@Setter
-	private String				mEffect;
+	private List<LedSample>		mSamples;
 
 	// --------------------------------------------------------------------------
 	/**
 	 *  This is the constructor to use to create a data command to send to the network.
 	 *  @param inEndpoint	The end point to send the command.
 	 */
-	public CommandControlLight(final NetEndpoint inEndpoint, final Short inChannel, final Short inPosition, final ColorEnum inColor, final String inEffect) {
+	public CommandControlLight(final NetEndpoint inEndpoint,
+		final Short inChannel,
+		final EffectEnum inEffect,
+		final List<LedSample> inSampleList) {
 		super(inEndpoint, new NetCommandId(CommandControlABC.LIGHT));
 
 		mChannel = inChannel;
-		mPosition = inPosition;
-		mColor = inColor;
 		mEffect = inEffect;
+		mSamples = inSampleList;
 	}
 
 	// --------------------------------------------------------------------------
@@ -90,7 +91,13 @@ public final class CommandControlLight extends CommandControlABC {
 	 * @see com.gadgetworks.controller.CommandABC#doToString()
 	 */
 	public String doToString() {
-		return "Light: channel:" + mChannel + " pos: " + mPosition + " color: " + mColor;
+		String result = "Light: channel:" + mChannel + " effect:" + mEffect;
+
+		for (LedSample sample : mSamples) {
+			result += " pos:" + sample.getPosition() + " color: " + sample.getColor();
+		}
+
+		return result;
 	}
 
 	/* --------------------------------------------------------------------------
@@ -102,9 +109,11 @@ public final class CommandControlLight extends CommandControlABC {
 
 		try {
 			inOutputStream.writeShort(mChannel);
-			inOutputStream.writeShort(mPosition);
-			inOutputStream.writePString(mColor.getName());
-			inOutputStream.writePString(mEffect);
+			inOutputStream.writeShort(mEffect.getValue());
+			inOutputStream.writeShort(mSamples.size());
+			for (LedSample sample : mSamples) {
+				inOutputStream.writeBytes(LedSample.convertColorToBytes(sample.getColor()));
+			}
 		} catch (IOException e) {
 			LOGGER.error("", e);
 		}
@@ -120,9 +129,15 @@ public final class CommandControlLight extends CommandControlABC {
 
 		try {
 			mChannel = inInputStream.readShort();
-			mPosition = inInputStream.readShort();
-			mColor = ColorEnum.valueOf(inInputStream.readPString());
-			mEffect = inInputStream.readPString();
+			mEffect = EffectEnum.getEffectEnum(inInputStream.readShort());
+			short sampleCount = inInputStream.readShort();
+			for (int sampleNum = 0; sampleNum < sampleCount; sampleNum++) {
+				short position = inInputStream.readShort();
+				byte[] colorBytes = new byte[3];
+				inInputStream.readBytes(colorBytes, 3);
+				LedSample sample = new LedSample(position, LedSample.convertBytesToColor(colorBytes));
+				mSamples.add(sample);
+			}
 		} catch (IOException e) {
 			LOGGER.error("", e);
 		}
@@ -135,7 +150,7 @@ public final class CommandControlLight extends CommandControlABC {
 	 */
 	@Override
 	protected int doComputeCommandSize() {
-		return super.doComputeCommandSize() + mColor.getName().length() + mEffect.length() + (NUMBER_OF_SHORTS * (Short.SIZE / BITS_PER_BYTE));
+		return super.doComputeCommandSize() + CHANNEL_BYTES + EFFECT_BYTES + SAMPLE_COUNT_BYTES
+				+ (mSamples.size() * ONE_SAMPLE_BYTES);
 	}
-
 }
