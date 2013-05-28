@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandControlABC.java,v 1.3 2013/03/03 23:27:20 jeffw Exp $
+ *  $Id: CommandControlABC.java,v 1.4 2013/05/28 05:14:45 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.flyweight.command;
@@ -28,9 +28,9 @@ public abstract class CommandControlABC extends ExtendedCommandABC {
 	public static final int		COMMAND_CONTROL_HDR_BYTES	= 1;
 	public static final int		MAX_CONTROL_BYTES			= ICommand.MAX_COMMAND_BYTES - COMMAND_CONTROL_HDR_BYTES;
 
-	public static final byte	SCAN						= 1;
-	public static final byte	MESSAGE						= 2;
-	public static final byte	LIGHT						= 3;
+	public static final byte	SCAN						= 0;
+	public static final byte	MESSAGE						= 1;
+	public static final byte	LIGHT						= 2;
 
 	// --------------------------------------------------------------------------
 	/**

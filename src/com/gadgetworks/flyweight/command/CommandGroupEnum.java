@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandGroupEnum.java,v 1.2 2013/05/26 21:50:39 jeffw Exp $
+ *  $Id: CommandGroupEnum.java,v 1.3 2013/05/28 05:14:45 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.flyweight.command;
 
@@ -14,6 +14,7 @@ public enum CommandGroupEnum {
 	INVALID(CommandGroupNum.INVALID, "INVALID"),
 	NETMGMT(CommandGroupNum.NETMGMT, "NETMGMT"),
 	ASSOC(CommandGroupNum.ASSOC, "ASSOC"),
+	INFO(CommandGroupNum.INFO, "INFO"),
 	CONTROL(CommandGroupNum.CONTROL, "CONTROL");
 
 	private byte	mValue;
@@ -43,6 +44,9 @@ public enum CommandGroupEnum {
 				break;
 			case CommandGroupNum.ASSOC:
 				result = CommandGroupEnum.ASSOC;
+				break;
+			case CommandGroupNum.INFO:
+				result = CommandGroupEnum.INFO;
 				break;
 			case CommandGroupNum.CONTROL:
 				result = CommandGroupEnum.CONTROL;
@@ -74,7 +78,8 @@ public enum CommandGroupEnum {
 		static final byte	INVALID	= -1;
 		static final byte	NETMGMT	= 0;
 		static final byte	ASSOC	= 1;
-		static final byte	CONTROL	= 2;
+		static final byte	INFO	= 2;
+		static final byte	CONTROL	= 3;
 
 		public CommandGroupNum() {
 

@@ -1,11 +1,13 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: AisleDeviceLogic.java,v 1.3 2013/05/26 21:50:39 jeffw Exp $
+ *  $Id: AisleDeviceLogic.java,v 1.4 2013/05/28 05:14:45 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -61,6 +63,7 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 	public void start() {
 		//		short position = 1;
 		//		sendLightCommand(CommandControlLight.CHANNEL1, position, ColorEnum.BLUE, CommandControlLight.EFFECT_SOLID);
+		updateLeds();
 	}
 
 	// --------------------------------------------------------------------------
@@ -74,11 +77,11 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 		LedSample sample = new LedSample(CommandControlLight.POSITION_NONE, ColorEnum.BLACK);
 		sampleList.add(sample);
 		for (short channel = 1; channel <= 2; channel++) {
-			ICommand command = new CommandControlLight(NetEndpoint.PRIMARY_ENDPOINT, channel, EffectEnum.SOLID, sampleList);
+			ICommand command = new CommandControlLight(NetEndpoint.PRIMARY_ENDPOINT, channel, EffectEnum.FLASH, sampleList);
 			mRadioController.sendCommand(command, getAddress(), false);
 		}
 		mDeviceLedPosMap.remove(inNetGuid);
-		updateLeds();
+		//updateLeds();
 	}
 
 	// --------------------------------------------------------------------------
@@ -131,30 +134,53 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 		// The aisle device never returns commands.
 	}
 
+	/**
+	 * Sort LedSamples by their position.
+	 */
+	private class LedPositionComparator implements Comparator<LedSample> {
+
+		public int compare(LedSample inSample1, LedSample inSample2) {
+			if (inSample1.getPosition() < inSample2.getPosition()) {
+				return -1;
+			} else if (inSample1.getPosition() > inSample2.getPosition()) {
+				return 1;
+			} else {
+				return 0;
+			}
+		}
+	};
+
 	// --------------------------------------------------------------------------
 	/**
 	 * Light all of the LEDs required.
 	 */
 	public final void updateLeds() {
 
-		LOGGER.info("CLear LEDs");
+		Short channel = 1;
+		EffectEnum effect = EffectEnum.FLASH;
+
+		List<LedSample> samples = new ArrayList<LedSample>();
+
+		// Add one sample to clear the flashers for the CHE.
+		LedSample sample = new LedSample((short) -1, ColorEnum.BLACK);
+		samples.add(sample);
 
 		// Now send the commands needed for each CHE.
 		for (Map.Entry<NetGuid, List<LedCmd>> entry : mDeviceLedPosMap.entrySet()) {
-
-			List<LedSample> samples = new ArrayList<LedSample>();
-			Short channel = -1;
-			EffectEnum effect = EffectEnum.SOLID;
 			for (LedCmd ledCmd : entry.getValue()) {
 				channel = ledCmd.getChannel();
 				effect = ledCmd.getEffect();
-				LedSample sample = new LedSample(ledCmd.getPosition(), ledCmd.getColor());
+				sample = new LedSample(ledCmd.getPosition(), ledCmd.getColor());
 				samples.add(sample);
 
 				LOGGER.info("Light position: " + ledCmd.mPosition);
 			}
-			ICommand command = new CommandControlLight(NetEndpoint.PRIMARY_ENDPOINT, channel, effect, samples);
-			mRadioController.sendCommand(command, getAddress(), false);
 		}
+		
+		// Now we have to sort the samples in position order.
+		Collections.sort(samples, new LedPositionComparator());
+		
+		ICommand command = new CommandControlLight(NetEndpoint.PRIMARY_ENDPOINT, channel, effect, samples);
+		mRadioController.sendCommand(command, getAddress(), false);
 	}
 }

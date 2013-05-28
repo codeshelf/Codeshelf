@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: RadioController.java,v 1.11 2013/05/26 21:50:39 jeffw Exp $
+ *  $Id: RadioController.java,v 1.12 2013/05/28 05:14:45 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.device;
@@ -42,6 +42,7 @@ import com.gadgetworks.flyweight.controller.INetworkDevice;
 import com.gadgetworks.flyweight.controller.IRadioController;
 import com.gadgetworks.flyweight.controller.IRadioControllerEventListener;
 import com.gadgetworks.flyweight.controller.NetworkDeviceStateEnum;
+import com.gadgetworks.flyweight.controller.TcpServerInterface;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
@@ -86,6 +87,7 @@ public class RadioController implements IRadioController {
 	private Map<NetGuid, INetworkDevice>						mDeviceGuidMap;
 	private Map<NetAddress, INetworkDevice>						mDeviceNetAddrMap;
 	private IGatewayInterface									mGatewayInterface;
+	private IGatewayInterface									mGatewayInterface2;
 	private NetAddress											mServerAddress;
 	private NetAddress											mBroadcastAddress;
 	private NetworkId											mBroadcastNetworkId;
@@ -115,6 +117,7 @@ public class RadioController implements IRadioController {
 	public RadioController(@Named(IPacket.NETWORK_NUM_PROPERTY) final byte inNetworkId, final IGatewayInterface inGatewayInterface) {
 
 		mGatewayInterface = inGatewayInterface;
+		mGatewayInterface2 = new TcpServerInterface();
 		mServerAddress = new NetAddress(IPacket.GATEWAY_ADDRESS);
 		mBroadcastAddress = new NetAddress(IPacket.BROADCAST_ADDRESS);
 		mBroadcastNetworkId = new NetworkId(IPacket.BROADCAST_NETWORK_ID);
@@ -155,6 +158,7 @@ public class RadioController implements IRadioController {
 
 		// Stop all of the interfaces.
 		mGatewayInterface.stopInterface();
+		mGatewayInterface2.stopInterface();		
 
 		// Signal that we want to stop.
 		mShouldRun = false;
@@ -196,6 +200,7 @@ public class RadioController implements IRadioController {
 		Thread interfaceStarterThread = new Thread(new Runnable() {
 			public void run() {
 				mGatewayInterface.startInterface();
+				mGatewayInterface2.startInterface();
 			}
 		}, INTERFACESTARTER_THREAD_NAME);
 		interfaceStarterThread.setPriority(INTERFACESTARTER_THREAD_PRIORITY);
@@ -882,7 +887,44 @@ public class RadioController implements IRadioController {
 		}, RECEIVER_THREAD_NAME + ": " + mGatewayInterface.getClass().getSimpleName());
 		gwThread.setPriority(RECEIVER_THREAD_PRIORITY);
 		gwThread.start();
-	}
+
+		Thread gwThread2 = new Thread(new Runnable() {
+			public void run() {
+				while (mShouldRun) {
+					try {
+						if (mGatewayInterface2.isStarted()) {
+							IPacket packet = mGatewayInterface2.receivePacket(mNetworkId);
+							if (packet != null) {
+								//putPacketInRcvQueue(packet);
+								if (packet.getPacketType() == IPacket.ACK_PACKET) {
+									LOGGER.info("Packet acked RECEIVED: " + packet.toString());
+									processAckPacket(packet);
+								} else {
+									receiveCommand(packet.getCommand(), packet.getSrcAddr());
+								}
+							} else {
+								//									try {
+								//										Thread.sleep(0, 5000);
+								//									} catch (InterruptedException e) {
+								//										LOGGER.error("", e);
+								//									}
+							}
+						} else {
+							try {
+								Thread.sleep(CTRL_START_DELAY_MILLIS);
+							} catch (InterruptedException e) {
+								LOGGER.error("", e);
+							}
+						}
+					} catch (RuntimeException e) {
+						LOGGER.error("", e);
+					}
+				}
+			}
+		}, RECEIVER_THREAD_NAME + ": " + mGatewayInterface2.getClass().getSimpleName());
+		gwThread2.setPriority(RECEIVER_THREAD_PRIORITY);
+		gwThread2.start();
+}
 
 	// --------------------------------------------------------------------------
 	/**
@@ -892,6 +934,7 @@ public class RadioController implements IRadioController {
 		if (mGatewayInterface.isStarted()) {
 			inPacket.setSentTimeMillis(System.currentTimeMillis());
 			mGatewayInterface.sendPacket(inPacket);
+			mGatewayInterface2.sendPacket(inPacket);
 		} else {
 			try {
 				Thread.sleep(CTRL_START_DELAY_MILLIS);

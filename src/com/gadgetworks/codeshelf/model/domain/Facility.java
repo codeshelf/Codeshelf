@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.74 2013/05/04 03:00:06 jeffw Exp $
+ *  $Id: Facility.java,v 1.75 2013/05/28 05:14:45 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -635,7 +635,12 @@ public class Facility extends LocationABC<Organization> {
 		List<WorkInstruction> result = new ArrayList<WorkInstruction>();
 
 		ILocation<?> cheLocation = getSubLocationById(inLocationId);
-		Aisle aisle = cheLocation.<Aisle> getParentAtLevel(Aisle.class);
+		Aisle aisle = null;
+		if (cheLocation instanceof Aisle) {
+			aisle = (Aisle) cheLocation;
+		} else {
+			aisle = cheLocation.<Aisle> getParentAtLevel(Aisle.class);
+		}
 		PathSegment pathSegment = aisle.getPathSegment();
 		Path path = pathSegment.getParent();
 		WorkArea workArea = path.getWorkArea();

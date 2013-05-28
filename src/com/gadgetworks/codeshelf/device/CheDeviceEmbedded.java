@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CheDeviceEmbedded.java,v 1.19 2013/05/03 18:27:35 jeffw Exp $
+ *  $Id: CheDeviceEmbedded.java,v 1.20 2013/05/28 05:14:45 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -63,7 +63,7 @@ public class CheDeviceEmbedded extends AisleDeviceEmbedded {
 		boolean result = true;
 		
 		try {
-			mSerialPort = new SerialPort("/dev/ttyACM0");
+			mSerialPort = new SerialPort("/dev/tty.usbmodem1d1121");
 			mSerialPort.openPort();
 			mSerialPort.setParams(38400, 8, 1, 0);
 			mSerialPort.writeString("^CHE`CONNECT~");

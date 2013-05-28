@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: EffectEnum.java,v 1.1 2013/05/26 21:50:39 jeffw Exp $
+ *  $Id: EffectEnum.java,v 1.2 2013/05/28 05:14:45 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.flyweight.command;
 
@@ -22,7 +22,7 @@ public enum EffectEnum {
 	ERROR(EffectNum.ERROR, "ERROR"),
 	MOTEL(EffectNum.MOTEL, "MOTEL");
 
-	private int		mValue;
+	private byte	mValue;
 	private String	mName;
 
 	// --------------------------------------------------------------------------
@@ -30,7 +30,7 @@ public enum EffectEnum {
 	 *  @param inCmdValue
 	 *  @param inName
 	 */
-	EffectEnum(final int inCmdValue, final String inName) {
+	EffectEnum(final byte inCmdValue, final String inName) {
 		mValue = inCmdValue;
 		mName = inName;
 	}
@@ -67,7 +67,7 @@ public enum EffectEnum {
 	/**
 	 *  @return
 	 */
-	public int getValue() {
+	public byte getValue() {
 		return mValue;
 	}
 
@@ -80,11 +80,11 @@ public enum EffectEnum {
 	}
 
 	final static class EffectNum {
-		static final int	INVALID	= -1;
-		static final int	SOLID	= 0;
-		static final int	FLASH	= 1;
-		static final int	ERROR	= 2;
-		static final int	MOTEL	= 3;
+		static final byte	INVALID	= -1;
+		static final byte	SOLID	= 0;
+		static final byte	FLASH	= 1;
+		static final byte	ERROR	= 2;
+		static final byte	MOTEL	= 3;
 
 		private EffectNum() {
 

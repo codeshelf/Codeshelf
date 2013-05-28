@@ -1,12 +1,13 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandControlLight.java,v 1.6 2013/05/26 21:50:39 jeffw Exp $
+ *  $Id: CommandControlLight.java,v 1.7 2013/05/28 05:14:45 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.flyweight.command;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import lombok.Getter;
@@ -108,10 +109,11 @@ public final class CommandControlLight extends CommandControlABC {
 		super.doToStream(inOutputStream);
 
 		try {
-			inOutputStream.writeShort(mChannel);
-			inOutputStream.writeShort(mEffect.getValue());
-			inOutputStream.writeShort(mSamples.size());
+			inOutputStream.writeByte(mChannel.byteValue());
+			inOutputStream.writeByte(mEffect.getValue());
+			inOutputStream.writeByte((byte) mSamples.size());
 			for (LedSample sample : mSamples) {
+				inOutputStream.writeShort(sample.getPosition());
 				inOutputStream.writeBytes(LedSample.convertColorToBytes(sample.getColor()));
 			}
 		} catch (IOException e) {
@@ -128,9 +130,10 @@ public final class CommandControlLight extends CommandControlABC {
 		super.doFromStream(inInputStream, inCommandByteCount);
 
 		try {
-			mChannel = inInputStream.readShort();
-			mEffect = EffectEnum.getEffectEnum(inInputStream.readShort());
-			short sampleCount = inInputStream.readShort();
+			mChannel = (short) inInputStream.readByte();
+			mEffect = EffectEnum.getEffectEnum(inInputStream.readByte());
+			short sampleCount = inInputStream.readByte();
+			mSamples = new ArrayList<LedSample>();
 			for (int sampleNum = 0; sampleNum < sampleCount; sampleNum++) {
 				short position = inInputStream.readShort();
 				byte[] colorBytes = new byte[3];
