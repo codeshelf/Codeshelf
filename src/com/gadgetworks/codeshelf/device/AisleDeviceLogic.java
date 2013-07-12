@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: AisleDeviceLogic.java,v 1.4 2013/05/28 05:14:45 jeffw Exp $
+ *  $Id: AisleDeviceLogic.java,v 1.5 2013/07/12 21:44:38 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -16,6 +16,7 @@ import java.util.UUID;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 
+import org.codehaus.jackson.map.ObjectMapper.DefaultTyping;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,6 +27,7 @@ import com.gadgetworks.flyweight.command.ICommand;
 import com.gadgetworks.flyweight.command.NetEndpoint;
 import com.gadgetworks.flyweight.command.NetGuid;
 import com.gadgetworks.flyweight.controller.IRadioController;
+import com.gadgetworks.flyweight.controller.NetworkDeviceStateEnum;
 
 public class AisleDeviceLogic extends DeviceLogicABC {
 
@@ -72,13 +74,16 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 	 * @param inNetGuid
 	 */
 	public final void clearLedCmdFor(final NetGuid inNetGuid) {
-		// First send a blanking command on each channel.
-		List<LedSample> sampleList = new ArrayList<LedSample>();
-		LedSample sample = new LedSample(CommandControlLight.POSITION_NONE, ColorEnum.BLACK);
-		sampleList.add(sample);
-		for (short channel = 1; channel <= 2; channel++) {
-			ICommand command = new CommandControlLight(NetEndpoint.PRIMARY_ENDPOINT, channel, EffectEnum.FLASH, sampleList);
-			mRadioController.sendCommand(command, getAddress(), false);
+		// Only send the command if the device is known acrtive.
+		if ((getDeviceStateEnum() != null) && (getDeviceStateEnum() == NetworkDeviceStateEnum.STARTED)) {
+			// First send a blanking command on each channel.
+			List<LedSample> sampleList = new ArrayList<LedSample>();
+			LedSample sample = new LedSample(CommandControlLight.POSITION_NONE, ColorEnum.BLACK);
+			sampleList.add(sample);
+			for (short channel = 1; channel <= 2; channel++) {
+				ICommand command = new CommandControlLight(NetEndpoint.PRIMARY_ENDPOINT, channel, EffectEnum.FLASH, sampleList);
+				mRadioController.sendCommand(command, getAddress(), true);
+			}
 		}
 		mDeviceLedPosMap.remove(inNetGuid);
 		//updateLeds();
@@ -173,14 +178,15 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 				sample = new LedSample(ledCmd.getPosition(), ledCmd.getColor());
 				samples.add(sample);
 
-				LOGGER.info("Light position: " + ledCmd.mPosition);
+				LOGGER.info("Light position: " + ledCmd.mPosition + " color: " + ledCmd.getColor() + " effect: "
+						+ ledCmd.getEffect());
 			}
 		}
-		
+
 		// Now we have to sort the samples in position order.
 		Collections.sort(samples, new LedPositionComparator());
-		
+
 		ICommand command = new CommandControlLight(NetEndpoint.PRIMARY_ENDPOINT, channel, effect, samples);
-		mRadioController.sendCommand(command, getAddress(), false);
+		mRadioController.sendCommand(command, getAddress(), true);
 	}
 }

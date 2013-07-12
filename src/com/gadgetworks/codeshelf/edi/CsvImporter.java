@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CsvImporter.java,v 1.26 2013/05/04 03:00:06 jeffw Exp $
+ *  $Id: CsvImporter.java,v 1.27 2013/07/12 21:44:38 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -9,6 +9,9 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.Timestamp;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -113,14 +116,14 @@ public class CsvImporter implements ICsvImporter {
 							mOrderDetailDao.store(orderDetail);
 						}
 					}
-					
+
 					if ((order.getActive()) && (!hasActive)) {
 						LOGGER.debug("Archive old order header: " + order.getOrderId());
 						order.setActive(false);
 						mOrderHeaderDao.store(order);
 					}
 				}
-				
+
 				for (OrderGroup group : inFacility.getOrderGroups()) {
 					Boolean hasActive = false;
 					for (OrderHeader order : group.getOrderHeaders()) {
@@ -128,14 +131,14 @@ public class CsvImporter implements ICsvImporter {
 							hasActive = true;
 						}
 					}
-					
+
 					if ((!group.getActive()) && (!hasActive)) {
 						LOGGER.debug("Archive old order group: " + group.getOrderGroupId());
 						group.setActive(false);
 						mOrderGroupDao.store(group);
 					}
 				}
-				
+
 				mOrderHeaderDao.commitTransaction();
 			} finally {
 				mOrderHeaderDao.endTransaction();
@@ -194,7 +197,7 @@ public class CsvImporter implements ICsvImporter {
 									mItemDao.store(item);
 								}
 							}
-							
+
 							if ((!itemMaster.getActive()) && (!hasActive)) {
 								LOGGER.debug("Archive old item master: " + itemMaster.getItemId());
 								itemMaster.setActive(false);
@@ -477,15 +480,19 @@ public class CsvImporter implements ICsvImporter {
 		}
 		if (inCsvImportBean.getOrderDate() != null) {
 			try {
-				result.setOrderDate(Timestamp.valueOf(inCsvImportBean.getOrderDate()));
-			} catch (IllegalArgumentException e) {
+				SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+				Date date = dateFormat.parse(inCsvImportBean.getOrderDate());
+				result.setOrderDate(new Timestamp(date.getTime()));
+			} catch (IllegalArgumentException | ParseException e) {
 				LOGGER.error("", e);
 			}
 		}
 		if (inCsvImportBean.getDueDate() != null) {
 			try {
-				result.setDueDate(Timestamp.valueOf(inCsvImportBean.getDueDate()));
-			} catch (IllegalArgumentException e) {
+				SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+				Date date = dateFormat.parse(inCsvImportBean.getDueDate());
+				result.setDueDate(new Timestamp(date.getTime()));
+			} catch (IllegalArgumentException | ParseException e) {
 				LOGGER.error("", e);
 			}
 		}

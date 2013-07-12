@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ServerCodeshelfApplication.java,v 1.16 2013/04/14 23:35:26 jeffw Exp $
+ *  $Id: ServerCodeshelfApplication.java,v 1.17 2013/07/12 21:44:38 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.application;
@@ -123,6 +123,10 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 					LedController ledController1 = network.getLedController("LED1");
 					if (ledController1 == null) {
 						ledController1 = network.createLedController("LED1", new NetGuid("0x00000003"));
+					}
+					ledController1 = network.getLedController("LED2");
+					if (ledController1 == null) {
+						ledController1 = network.createLedController("LED2", new NetGuid("0x00000004"));
 					}
 				}
 

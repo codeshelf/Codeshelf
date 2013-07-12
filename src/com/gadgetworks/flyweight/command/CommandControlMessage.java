@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandControlMessage.java,v 1.3 2013/03/03 23:27:20 jeffw Exp $
+ *  $Id: CommandControlMessage.java,v 1.4 2013/07/12 21:44:38 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.flyweight.command;
@@ -20,8 +20,13 @@ import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
 
 // --------------------------------------------------------------------------
 /**
- *  A string command from the remote.
+ *  A display message command from the remote.
  *  
+ *  pS - line 1 message
+ *  pS - line 2 message
+ *
+ *	}
+
  *  @author jeffw
  */
 public final class CommandControlMessage extends CommandControlABC {

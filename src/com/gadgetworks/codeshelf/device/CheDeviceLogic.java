@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CheDeviceLogic.java,v 1.4 2013/05/26 21:50:39 jeffw Exp $
+ *  $Id: CheDeviceLogic.java,v 1.5 2013/07/12 21:44:38 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -32,6 +32,7 @@ import com.gadgetworks.flyweight.command.NetEndpoint;
 import com.gadgetworks.flyweight.command.NetGuid;
 import com.gadgetworks.flyweight.controller.INetworkDevice;
 import com.gadgetworks.flyweight.controller.IRadioController;
+import com.gadgetworks.flyweight.controller.NetworkDeviceStateEnum;
 
 /**
  * @author jeffw
@@ -51,15 +52,15 @@ public class CheDeviceLogic extends AisleDeviceLogic {
 
 	// These are the message strings we send to the remote CHE.
 	// Currently, these cannot be longer than 10 characters.
-	private static final String		EMPTY_MSG				= "          ";
-	private static final String		INVALID_SCAN_MSG		= "INVALID";
-	private static final String		SCAN_USERID_MSG			= "SCAN BADGE";
-	private static final String		SCAN_LOCATION_MSG		= "SCAN LOC";
-	private static final String		SCAN_CONTAINER_MSG		= "SCAN CNTR";
-	private static final String		SELECT_POSITION_MSG		= "SELECT POS";
-	private static final String		SHORT_PICK_CONFIRM_MSG	= "CONF SHORT";
-	private static final String		PICK_COMPLETE_MSG		= "PICK CMPLT";
-	private static final String		YES_NO_MSG				= "YES OR NO";
+	private static final String		EMPTY_MSG				= "                ";
+	private static final String		INVALID_SCAN_MSG		= "INVALID         ";
+	private static final String		SCAN_USERID_MSG			= "SCAN BADGE      ";
+	private static final String		SCAN_LOCATION_MSG		= "SCAN LOCATION   ";
+	private static final String		SCAN_CONTAINER_MSG		= "SCAN CONTAINER  ";
+	private static final String		SELECT_POSITION_MSG		= "SELECT POSITION ";
+	private static final String		SHORT_PICK_CONFIRM_MSG	= "CONFIRM SHORT   ";
+	private static final String		PICK_COMPLETE_MSG		= "PICK COMPLETE   ";
+	private static final String		YES_NO_MSG				= "YES OR NO       ";
 
 	private static final String		STARTWORK_COMMAND		= "START";
 	private static final String		SETUP_COMMAND			= "SETUP";
@@ -123,9 +124,11 @@ public class CheDeviceLogic extends AisleDeviceLogic {
 	 * @param inLine1Message
 	 */
 	private void sendDisplayCommand(final String inLine1Message, final String inLine2Message) {
-		LOGGER.info("Display message: " + inLine1Message);
-		ICommand command = new CommandControlMessage(NetEndpoint.PRIMARY_ENDPOINT, inLine1Message, inLine2Message);
-		mRadioController.sendCommand(command, getAddress(), false);
+		String msg1 = String.format("%-16s", inLine1Message);
+		String msg2 = String.format("%-16s", inLine2Message);
+		LOGGER.info("Display message: " + msg1 + " -- " + msg2);
+		ICommand command = new CommandControlMessage(NetEndpoint.PRIMARY_ENDPOINT, msg1, msg2);
+		mRadioController.sendCommand(command, getAddress(), true);
 	}
 
 	// --------------------------------------------------------------------------
@@ -135,7 +138,7 @@ public class CheDeviceLogic extends AisleDeviceLogic {
 	 */
 	private void sendCheLightCommand(final Short inChanel, final EffectEnum inEffect, final List<LedSample> inLedSamples) {
 		ICommand command = new CommandControlLight(NetEndpoint.PRIMARY_ENDPOINT, inChanel, inEffect, inLedSamples);
-		mRadioController.sendCommand(command, getAddress(), false);
+		mRadioController.sendCommand(command, getAddress(), true);
 	}
 
 	// --------------------------------------------------------------------------
@@ -148,8 +151,8 @@ public class CheDeviceLogic extends AisleDeviceLogic {
 		final Short inPosition,
 		final ColorEnum inColor,
 		final EffectEnum inEffect) {
-		
-		LOGGER.info("Light position: " + inPosition);
+
+		LOGGER.info("Light position: " + inPosition + " color: " + inColor);
 		INetworkDevice device = mDeviceManager.getDeviceByGuid(inControllerGuid);
 		if (device instanceof AisleDeviceLogic) {
 			AisleDeviceLogic aisleDevice = (AisleDeviceLogic) device;
@@ -200,7 +203,8 @@ public class CheDeviceLogic extends AisleDeviceLogic {
 	 * @see com.gadgetworks.flyweight.controller.INetworkDevice#start()
 	 */
 	public final void start() {
-		setState(CheStateEnum.IDLE);
+		//setState(CheStateEnum.IDLE);
+		setState(mCheStateEnum);
 	}
 
 	// --------------------------------------------------------------------------
@@ -269,6 +273,7 @@ public class CheDeviceLogic extends AisleDeviceLogic {
 	/**
 	 */
 	private void setState(final CheStateEnum inCheState) {
+		boolean wasSameState = inCheState == mCheStateEnum;
 		mCheStateEnum = inCheState;
 
 		switch (inCheState) {
@@ -292,6 +297,12 @@ public class CheDeviceLogic extends AisleDeviceLogic {
 				sendDisplayCommand(SHORT_PICK_CONFIRM_MSG, YES_NO_MSG);
 				break;
 
+			case DO_PICK:
+				if (wasSameState) {
+					showActivePicks();
+				}
+				break;
+
 			case PICK_COMPLETE:
 				sendDisplayCommand(PICK_COMPLETE_MSG, EMPTY_MSG);
 				break;
@@ -303,6 +314,9 @@ public class CheDeviceLogic extends AisleDeviceLogic {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * Stay in the same state, but make the status invalid.
+	 * Send the LED error status as well (color: red effect: error channel: 0).
+	 * 
 	 */
 	private void setStateWithInvalid(final CheStateEnum inCheState) {
 		mCheStateEnum = inCheState;
@@ -407,7 +421,9 @@ public class CheDeviceLogic extends AisleDeviceLogic {
 
 		if ((mContainersMap.values().size() > 0) && (mCheStateEnum.equals(CheStateEnum.CONTAINER_SELECT))) {
 			mContainerInSetup = "";
-			setState(CheStateEnum.DO_PICK);
+			if (getCheStateEnum() != CheStateEnum.DO_PICK) {
+				setState(CheStateEnum.DO_PICK);
+			}
 			doNextPick();
 		} else {
 			// Stay in the same state - the scan made no sense.
@@ -505,7 +521,8 @@ public class CheDeviceLogic extends AisleDeviceLogic {
 				Short position = 0;
 				for (Entry<String, String> mapEntry : mContainersMap.entrySet()) {
 					if (mapEntry.getValue().equals(wi.getContainerId())) {
-						position = Short.valueOf(mapEntry.getKey());
+						// The actual position is zero-based.
+						position = (short) (Short.valueOf(mapEntry.getKey()) - 1);
 					}
 				}
 
@@ -555,7 +572,9 @@ public class CheDeviceLogic extends AisleDeviceLogic {
 		WorkInstruction firstWi = mActivePickWiList.get(0);
 
 		// Send the CHE a display command (any of the WIs has the info we need).
-		setState(CheStateEnum.DO_PICK);
+		if (getCheStateEnum() != CheStateEnum.DO_PICK) {
+			setState(CheStateEnum.DO_PICK);
+		}
 		sendDisplayCommand(firstWi.getPickInstruction(), firstWi.getItemId());
 
 		INetworkDevice ledController = mRadioController.getNetworkDevice(new NetGuid(firstWi.getLedControllerId()));
@@ -585,16 +604,19 @@ public class CheDeviceLogic extends AisleDeviceLogic {
 					firstWi.getLedColorEnum(),
 					EffectEnum.FLASH);
 			}
-			ledControllerShowLeds(ledController.getGuid());
+			if ((ledController.getDeviceStateEnum() != null)
+					&& (ledController.getDeviceStateEnum() == NetworkDeviceStateEnum.STARTED)) {
+				ledControllerShowLeds(ledController.getGuid());
+			}
 		}
 
 		// Now create a light instruction for each position.
 		for (WorkInstruction wi : mActivePickWiList) {
 			for (Entry<String, String> mapEntry : mContainersMap.entrySet()) {
 				if (mapEntry.getValue().equals(wi.getContainerId())) {
-					ledControllerSetLed(getGuid(),
-						CommandControlLight.CHANNEL1,
-						Short.valueOf(mapEntry.getKey()),
+					ledControllerSetLed(getGuid(), CommandControlLight.CHANNEL1,
+					// The LED positions are zero-based.
+						(short) (Short.valueOf(mapEntry.getKey()) - 1),
 						wi.getLedColorEnum(),
 						EffectEnum.FLASH);
 				}

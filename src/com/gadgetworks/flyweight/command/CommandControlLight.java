@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandControlLight.java,v 1.7 2013/05/28 05:14:45 jeffw Exp $
+ *  $Id: CommandControlLight.java,v 1.8 2013/07/12 21:44:38 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.flyweight.command;
@@ -23,11 +23,17 @@ import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
 
 // --------------------------------------------------------------------------
 /**
- *  A string command from the remote.
+ *  An LED command from the remote.
  *  
  *  1B - effect
+ * 	1B - Channel
  *  1B - sample count
- *  nB - samples (1B each: Channel, Red, Green, Blue)
+ *  nB - samples {
+ *		2B - position
+ *		1B - red
+ *		1B - green 
+ *		1B - blue
+ *	}
  *  
  *  @author jeffw
  */

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: RadioController.java,v 1.12 2013/05/28 05:14:45 jeffw Exp $
+ *  $Id: RadioController.java,v 1.13 2013/07/12 21:44:38 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.device;
@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -82,6 +83,8 @@ public class RadioController implements IRadioController {
 	private static final long									INTERFACE_CHECK_MILLIS				= 5 * 1000;
 	private static final long									CONTROLLER_SLEEP_MILLIS				= 10;
 	private static final int									MAX_CHANNEL_VALUE					= 255;
+	
+	private static final int									ACK_QUEUE_SIZE						= 25;
 
 	private Boolean												mShouldRun							= true;
 	private Map<NetGuid, INetworkDevice>						mDeviceGuidMap;
@@ -129,7 +132,7 @@ public class RadioController implements IRadioController {
 		mChannelInfo = new ChannelInfo[MAX_CHANNELS];
 		mRadioChannel = 0;
 
-		mPendingAcksMap = new HashMap<NetAddress, BlockingQueue<IPacket>>();
+		mPendingAcksMap = new ConcurrentHashMap<NetAddress, BlockingQueue<IPacket>>();
 		mDeviceGuidMap = new HashMap<NetGuid, INetworkDevice>();
 		mDeviceNetAddrMap = new HashMap<NetAddress, INetworkDevice>();
 		mNextAddress = 1;
@@ -477,6 +480,10 @@ public class RadioController implements IRadioController {
 	/* (non-Javadoc)
 	 * 
 	 */
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.flyweight.controller.IRadioController#sendCommand(com.gadgetworks.flyweight.command.ICommand, com.gadgetworks.flyweight.command.NetworkId, com.gadgetworks.flyweight.command.NetAddress, boolean)
+	 */
 	public final void sendCommand(ICommand inCommand, NetworkId inNetworkId, NetAddress inDstAddr, boolean inAckRequested) {
 
 		IPacket packet = new Packet(inCommand, inNetworkId, mServerAddress, inDstAddr, inAckRequested);
@@ -512,10 +519,17 @@ public class RadioController implements IRadioController {
 			// Add the command to the pending ACKs map, and increment the command ID counter.
 			BlockingQueue<IPacket> queue = mPendingAcksMap.get(inDstAddr);
 			if (queue == null) {
-				queue = new ArrayBlockingQueue<IPacket>(10);
+				queue = new ArrayBlockingQueue<IPacket>(ACK_QUEUE_SIZE);
 				mPendingAcksMap.put(inDstAddr, queue);
 			}
 			sendPacket(packet);
+			while (queue.size() >= ACK_QUEUE_SIZE) {
+				try {
+					Thread.sleep(5);
+				} catch (InterruptedException e) {
+					LOGGER.error("", e);
+				}
+			}
 			queue.add(packet);
 		} else {
 			sendPacket(packet);
@@ -803,7 +817,7 @@ public class RadioController implements IRadioController {
 			byte status = CommandAssocAck.IS_ASSOCIATED;
 
 			// If the found device isn't in the STARTED state then it's not associated with us.
-			if (!(foundDevice.getDeviceStateEnum().equals(NetworkDeviceStateEnum.STARTED))) {
+			if ((foundDevice.getDeviceStateEnum() == null) || !(foundDevice.getDeviceStateEnum().equals(NetworkDeviceStateEnum.STARTED))) {
 				status = CommandAssocAck.IS_NOT_ASSOCIATED;
 				LOGGER.info("AssocCheck - NOT ASSOC: state was: " + foundDevice.getDeviceStateEnum());
 			}
