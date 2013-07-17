@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.75 2013/05/28 05:14:45 jeffw Exp $
+ *  $Id: Facility.java,v 1.76 2013/07/17 05:48:13 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -662,86 +662,67 @@ public class Facility extends LocationABC<Organization> {
 					if (foundUse != null) {
 						OrderHeader order = foundUse.getOrderHeader();
 						if (order != null) {
-							for (OrderDetail detail : order.getOrderDetails()) {
+							for (OrderDetail orderDetail : order.getOrderDetails()) {
 								ISubLocation<IDomainObject> foundLocation = null;
-								String parentLocationId = "";
-								ItemMaster itemMaster = detail.getItemMaster();
+								ItemMaster itemMaster = orderDetail.getItemMaster();
 
 								// Figure out if there are any items are on the current path.
 								// (We just take the first one we find, because items slotted on the same path should be close together.)
 								Item selectedItem = null;
-								for (Item item : itemMaster.getItems()) {
-									if (item.getStoredLocation() instanceof ISubLocation) {
-										ISubLocation location = (ISubLocation) item.getStoredLocation();
-										if (path.isLocationOnPath(location)) {
-											foundLocation = location;
-											selectedItem = item;
-											parentLocationId = ((ISubLocation<?>) foundLocation.getParent()).getLocationId();
-											break;
-										}
-									}
-								}
 
-								// The item is on the CHE's path, so add it.
-								if (foundLocation != null) {
-									Integer quantityToPick = detail.getQuantity();
-									WorkInstruction plannedWi = null;
-									for (WorkInstruction wi : detail.getWorkInstructions()) {
-										if (wi.getTypeEnum().equals(WorkInstructionTypeEnum.PLAN)) {
-											plannedWi = wi;
-											break;
-										} else if (wi.getTypeEnum().equals(WorkInstructionTypeEnum.ACTUAL)) {
-											// Deduct any WIs already completed for this line item.
-											quantityToPick -= wi.getActualQuantity();
-										}
-									}
-
-									// If there is anything to pick on this item then create a WI for it.
-									if (quantityToPick > 0) {
-										// If there is no planned WI then create one.
-										if (plannedWi == null) {
-											plannedWi = new WorkInstruction();
-											plannedWi.setParent(detail);
-											plannedWi.setCreated(new Timestamp(System.currentTimeMillis()));
-										}
-
-										// Update the WI
-										plannedWi.setDomainId(Long.toString(System.currentTimeMillis()));
-										plannedWi.setTypeEnum(WorkInstructionTypeEnum.PLAN);
-										plannedWi.setStatusEnum(WorkInstructionStatusEnum.NEW);
-										plannedWi.setLedControllerId("0x00000003");
-										plannedWi.setLedChannel(foundLocation.getLedChannel());
-										plannedWi.setLedFirstPos(foundLocation.getFirstLedPosForItemId(itemMaster.getItemId()));
-										plannedWi.setLedLastPos(foundLocation.getLastLedPosForItemId(itemMaster.getItemId()));
-										plannedWi.setLedColorEnum(ColorEnum.BLUE);
-										plannedWi.setItemId(itemMaster.getItemId());
-										plannedWi.setPickInstruction(itemMaster.getDdcId());
-										plannedWi.setPosAlongPath(selectedItem.getDdcPosAlongPath());
-										plannedWi.setLocationId(parentLocationId + "." + foundLocation.getLocationId());
-										plannedWi.setContainerId(containerId);
-										plannedWi.setPlanQuantity(quantityToPick);
-										plannedWi.setActualQuantity(0);
-										plannedWi.setAssigned(new Timestamp(System.currentTimeMillis()));
-										try {
-											WorkInstruction.DAO.store(plannedWi);
-										} catch (DaoException e) {
-											LOGGER.error("", e);
-										}
-
+								if (itemMaster.getItems().size() == 0) {
+									// If tehre is no item in inventory then create a PLANEED, SHORT WI for this order detail.
+									WorkInstruction plannedWi = createWorkInstruction(WorkInstructionStatusEnum.SHORT,
+										orderDetail,
+										0,
+										container,
+										foundLocation,
+										selectedItem.getDdcPosAlongPath());
+									if (plannedWi != null) {
 										result.add(plannedWi);
-
-										detail.setStatusEnum(OrderStatusEnum.INPROGRESS);
-										try {
-											OrderDetail.DAO.store(detail);
-										} catch (DaoException e) {
-											LOGGER.error("", e);
+									}
+								} else {
+									// Search through the items to see if any are on the CHE's pick path.
+									for (Item item : itemMaster.getItems()) {
+										if (item.getStoredLocation() instanceof ISubLocation) {
+											ISubLocation location = (ISubLocation) item.getStoredLocation();
+											if (path.isLocationOnPath(location)) {
+												foundLocation = location;
+												selectedItem = item;
+												break;
+											}
 										}
+									}
 
-										order.setStatusEnum(OrderStatusEnum.INPROGRESS);
-										try {
-											OrderHeader.DAO.store(order);
-										} catch (DaoException e) {
-											LOGGER.error("", e);
+									// The item is on the CHE's path, so add it.
+									if (foundLocation != null) {
+										Integer quantityToPick = orderDetail.getQuantity();
+
+										// If there is anything to pick on this item then create a WI for it.
+										if (quantityToPick > 0) {
+											WorkInstruction plannedWi = createWorkInstruction(WorkInstructionStatusEnum.NEW,
+												orderDetail,
+												quantityToPick,
+												container,
+												foundLocation,
+												selectedItem.getDdcPosAlongPath());
+											if (plannedWi != null) {
+												result.add(plannedWi);
+											}
+
+											orderDetail.setStatusEnum(OrderStatusEnum.INPROGRESS);
+											try {
+												OrderDetail.DAO.store(orderDetail);
+											} catch (DaoException e) {
+												LOGGER.error("", e);
+											}
+
+											order.setStatusEnum(OrderStatusEnum.INPROGRESS);
+											try {
+												OrderHeader.DAO.store(order);
+											} catch (DaoException e) {
+												LOGGER.error("", e);
+											}
 										}
 									}
 								}
@@ -756,6 +737,70 @@ public class Facility extends LocationABC<Organization> {
 				path.sortWisByDistance(result);
 			}
 		}
+		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Create a work instruction for and order item quantity picked into a container at a location.
+	 * @param inStatus
+	 * @param inOrderDetail
+	 * @param inQuantityToPick
+	 * @param inContainer
+	 * @param inLocation
+	 * @param inPosALongPath
+	 * @return
+	 */
+	private WorkInstruction createWorkInstruction(WorkInstructionStatusEnum inStatus,
+		OrderDetail inOrderDetail,
+		Integer inQuantityToPick,
+		Container inContainer,
+		ISubLocation<IDomainObject> inLocation,
+		Double inPosALongPath) {
+		WorkInstruction result = null;
+
+		WorkInstruction plannedWi = null;
+		for (WorkInstruction wi : inOrderDetail.getWorkInstructions()) {
+			if (wi.getTypeEnum().equals(WorkInstructionTypeEnum.PLAN)) {
+				plannedWi = wi;
+				break;
+			} else if (wi.getTypeEnum().equals(WorkInstructionTypeEnum.ACTUAL)) {
+				// Deduct any WIs already completed for this line item.
+				inQuantityToPick -= wi.getActualQuantity();
+			}
+		}
+
+		// If there is no planned WI then create one.
+		if (plannedWi == null) {
+			plannedWi = new WorkInstruction();
+			plannedWi.setParent(inOrderDetail);
+			plannedWi.setCreated(new Timestamp(System.currentTimeMillis()));
+		}
+
+		// Update the WI
+		plannedWi.setDomainId(Long.toString(System.currentTimeMillis()));
+		plannedWi.setTypeEnum(WorkInstructionTypeEnum.PLAN);
+		plannedWi.setStatusEnum(inStatus);
+		plannedWi.setLedControllerId("0x00000003");
+		plannedWi.setLedChannel(inLocation.getLedChannel());
+		plannedWi.setLedFirstPos(inLocation.getFirstLedPosForItemId(inOrderDetail.getItemMaster().getItemId()));
+		plannedWi.setLedLastPos(inLocation.getLastLedPosForItemId(inOrderDetail.getItemMaster().getItemId()));
+		plannedWi.setLedColorEnum(ColorEnum.BLUE);
+		plannedWi.setItemId(inOrderDetail.getItemMaster().getItemId());
+		plannedWi.setDescription(inOrderDetail.getItemMaster().getDescription());
+		plannedWi.setPickInstruction(inOrderDetail.getItemMaster().getDdcId());
+		plannedWi.setPosAlongPath(inPosALongPath);
+		plannedWi.setLocationId(((ISubLocation<?>) inLocation.getParent()).getLocationId() + "." + inLocation.getLocationId());
+		plannedWi.setContainerId(inContainer.getContainerId());
+		plannedWi.setPlanQuantity(inQuantityToPick);
+		plannedWi.setActualQuantity(0);
+		plannedWi.setAssigned(new Timestamp(System.currentTimeMillis()));
+		try {
+			WorkInstruction.DAO.store(plannedWi);
+		} catch (DaoException e) {
+			LOGGER.error("", e);
+		}
+
 		return result;
 	}
 

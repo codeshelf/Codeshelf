@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: SchemaManagerABC.java,v 1.32 2013/05/26 21:50:40 jeffw Exp $
+ *  $Id: SchemaManagerABC.java,v 1.33 2013/07/17 05:48:13 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -721,6 +721,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 					+ "status_enum VARCHAR(255) NOT NULL, " //
 					+ "container_id VARCHAR(255) NOT NULL, " //
 					+ "item_id VARCHAR(255) NOT NULL, " //
+					+ "description VARCHAR(255) NOT NULL, " //
 					+ "pick_instruction VARCHAR(255), " //
 					+ "plan_quantity INTEGER NOT NULL, " //
 					+ "actual_quantity INTEGER NOT NULL, " //

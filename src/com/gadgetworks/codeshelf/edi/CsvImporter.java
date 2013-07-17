@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CsvImporter.java,v 1.27 2013/07/12 21:44:38 jeffw Exp $
+ *  $Id: CsvImporter.java,v 1.28 2013/07/17 05:48:13 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -177,7 +177,12 @@ public class CsvImporter implements ICsvImporter {
 
 				// Iterate over the inventory import beans.
 				for (DdcInventoryCsvImportBean importBean : inventoryImportBeanList) {
-					ddcInventoryCsvBeanImport(importBean, inFacility, processTime);
+					String errorMsg = importBean.validateBean();
+					if (errorMsg != null) {
+						LOGGER.error("Import errors: " + errorMsg);
+					} else {
+						ddcInventoryCsvBeanImport(importBean, inFacility, processTime);
+					}
 				}
 
 				LOGGER.debug("Archive unreferenced item data");
@@ -198,7 +203,7 @@ public class CsvImporter implements ICsvImporter {
 								}
 							}
 
-							if ((!itemMaster.getActive()) && (!hasActive)) {
+							if (!hasActive) {
 								LOGGER.debug("Archive old item master: " + itemMaster.getItemId());
 								itemMaster.setActive(false);
 								mItemMasterDao.store(itemMaster);
@@ -289,7 +294,11 @@ public class CsvImporter implements ICsvImporter {
 				OrderHeader order = updateOrderHeader(inCsvImportBean, inFacility, inEdiProcessTime, group);
 				Container container = updateContainer(inCsvImportBean, inFacility, inEdiProcessTime, order);
 				UomMaster uomMaster = updateUomMaster(inCsvImportBean.getUom(), inFacility);
-				ItemMaster itemMaster = updateItemMaster(inCsvImportBean.getItemId(), inFacility, inEdiProcessTime, uomMaster);
+				ItemMaster itemMaster = updateItemMaster(inCsvImportBean.getItemId(),
+					inCsvImportBean.getDescription(),
+					inFacility,
+					inEdiProcessTime,
+					uomMaster);
 				OrderDetail orderDetail = updateOrderDetail(inCsvImportBean,
 					inFacility,
 					inEdiProcessTime,
@@ -324,7 +333,11 @@ public class CsvImporter implements ICsvImporter {
 			UomMaster uomMaster = updateUomMaster(inCsvImportBean.getUom(), inFacility);
 
 			// Create or update the DDC item master, and then set the DDC ID for it.
-			ItemMaster itemMaster = updateItemMaster(inCsvImportBean.getItemId(), inFacility, inEdiProcessTime, uomMaster);
+			ItemMaster itemMaster = updateItemMaster(inCsvImportBean.getItemId(),
+				inCsvImportBean.getDescription(),
+				inFacility,
+				inEdiProcessTime,
+				uomMaster);
 			itemMaster.setDdcId(inCsvImportBean.getDdcId());
 			itemMaster.setDescription(inCsvImportBean.getDescription());
 
@@ -358,8 +371,12 @@ public class CsvImporter implements ICsvImporter {
 			LOGGER.info(inCsvImportBean.toString());
 
 			UomMaster uomMaster = updateUomMaster(inCsvImportBean.getUom(), inFacility);
-			ItemMaster itemMaster = updateItemMaster(inCsvImportBean.getItemId(), inFacility, inEdiProcessTime, uomMaster);
-			Item item = updateSlottedItem(inCsvImportBean, inFacility, itemMaster, uomMaster);
+			ItemMaster itemMaster = updateItemMaster(inCsvImportBean.getItemId(),
+				inCsvImportBean.getDescription(),
+				inFacility,
+				inEdiProcessTime,
+				uomMaster);
+			Item item = updateSlottedItem(inCsvImportBean, inFacility, inEdiProcessTime, itemMaster, uomMaster);
 
 			mItemDao.commitTransaction();
 
@@ -478,22 +495,38 @@ public class CsvImporter implements ICsvImporter {
 		if (inCsvImportBean.getWorkSequence() != null) {
 			result.setWorkSequence(Integer.valueOf(inCsvImportBean.getWorkSequence()));
 		}
+
 		if (inCsvImportBean.getOrderDate() != null) {
 			try {
-				SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-				Date date = dateFormat.parse(inCsvImportBean.getOrderDate());
-				result.setOrderDate(new Timestamp(date.getTime()));
-			} catch (IllegalArgumentException | ParseException e) {
-				LOGGER.error("", e);
+				// First try to parse it as a SQL timestamp.
+				result.setOrderDate(Timestamp.valueOf(inCsvImportBean.getOrderDate()));
+			} catch (IllegalArgumentException e) {
+				// Then try to parse it as just a SQL date.
+				try {
+					SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+					dateFormat.setLenient(true);
+					Date date = dateFormat.parse(inCsvImportBean.getOrderDate());
+					result.setOrderDate(new Timestamp(date.getTime()));
+				} catch (IllegalArgumentException | ParseException e1) {
+					LOGGER.error("", e1);
+				}
 			}
 		}
+
 		if (inCsvImportBean.getDueDate() != null) {
 			try {
-				SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-				Date date = dateFormat.parse(inCsvImportBean.getDueDate());
-				result.setDueDate(new Timestamp(date.getTime()));
-			} catch (IllegalArgumentException | ParseException e) {
-				LOGGER.error("", e);
+				// First try to parse it as a SQL timestamp.
+				result.setDueDate(Timestamp.valueOf(inCsvImportBean.getDueDate()));
+			} catch (IllegalArgumentException e) {
+				// Then try to parse it as just a SQL date.
+				try {
+					SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+					dateFormat.setLenient(true);
+					Date date = dateFormat.parse(inCsvImportBean.getDueDate());
+					result.setDueDate(new Timestamp(date.getTime()));
+				} catch (IllegalArgumentException | ParseException e1) {
+					LOGGER.error("", e1);
+				}
 			}
 		}
 
@@ -528,6 +561,7 @@ public class CsvImporter implements ICsvImporter {
 	 * @return
 	 */
 	private ItemMaster updateItemMaster(final String inItemId,
+		final String inDescription,
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime,
 		final UomMaster inUomMaster) {
@@ -535,13 +569,17 @@ public class CsvImporter implements ICsvImporter {
 
 		result = mItemMasterDao.findByDomainId(inFacility, inItemId);
 		if (result == null) {
-
 			result = new ItemMaster();
 			result.setParent(inFacility);
 			result.setDomainId(inItemId);
 			result.setItemId(inItemId);
-			result.setStandardUom(inUomMaster);
 			inFacility.addItemMaster(result);
+		}
+
+		// If we were able to get/create an item master then update it.
+		if (result != null) {
+			result.setDescription(inDescription);
+			result.setStandardUom(inUomMaster);
 			try {
 				result.setActive(true);
 				result.setUpdated(inEdiProcessTime);
@@ -550,7 +588,6 @@ public class CsvImporter implements ICsvImporter {
 				LOGGER.error("", e);
 			}
 		}
-
 		return result;
 	}
 
@@ -649,7 +686,6 @@ public class CsvImporter implements ICsvImporter {
 			result.setStoredLocation(inFacility);
 			result.setUomMaster(inUomMaster);
 			result.setQuantity(Double.valueOf(inCsvImportBean.getQuantity()));
-			result.setUpdated(inEdiProcessTime);
 			inItemMaster.addItem(result);
 			inFacility.addItem(result);
 			try {
@@ -674,6 +710,7 @@ public class CsvImporter implements ICsvImporter {
 	 */
 	private Item updateSlottedItem(final SlottedInventoryCsvImportBean inCsvImportBean,
 		final Facility inFacility,
+		final Timestamp inEdiProcessTime,
 		final ItemMaster inItemMaster,
 		final UomMaster inUomMaster) {
 		Item result = null;
@@ -701,6 +738,8 @@ public class CsvImporter implements ICsvImporter {
 			inItemMaster.addItem(result);
 			location.addItem(result);
 			try {
+				result.setActive(true);
+				result.setUpdated(inEdiProcessTime);
 				mItemDao.store(result);
 			} catch (DaoException e) {
 				LOGGER.error("", e);
