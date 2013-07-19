@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: Packet.java,v 1.3 2013/03/03 23:27:21 jeffw Exp $
+ *  $Id: Packet.java,v 1.4 2013/07/19 02:40:09 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.flyweight.command;
@@ -125,13 +125,14 @@ public final class Packet implements IPacket {
 	public String toString() {
 		String resultStr;
 
-		String cmdString = "No command!";
-		if (mCommand != null) {
-			cmdString = mCommand.toString();
-		}
-		resultStr = "net:" + mNetworkId.toString() + " src:" + mSrcAddr.toString() + " dst:" + mDstAddr.toString() + " " + cmdString;
-		if (mPacketType.getValue() == IPacket.ACK_PACKET) {
+		resultStr = "net:" + mNetworkId.toString() + " src:" + mSrcAddr.toString() + " dst:" + mDstAddr.toString();
+
+		if (mAckState != AckStateEnum.INVALID) {
 			resultStr += " ackid:" + getAckId() + " ackState:" + getAckState() + " sendcnt:" + getSendCount();
+		}
+
+		if (mCommand != null) {
+			resultStr += " command:" + mCommand.toString();
 		}
 
 		return resultStr;

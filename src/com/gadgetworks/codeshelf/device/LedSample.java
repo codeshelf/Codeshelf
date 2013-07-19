@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: LedSample.java,v 1.2 2013/07/12 21:44:38 jeffw Exp $
+ *  $Id: LedSample.java,v 1.3 2013/07/19 02:40:09 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -17,7 +17,7 @@ import lombok.experimental.Accessors;
 public class LedSample {
 
 	public static final byte	OFF			= (byte) 0x00;
-	public static final byte	ON_			= (byte) 0xff;
+	public static final byte	ON_			= (byte) 0xfe;
 
 	public static final byte[]	LED_RED		= { ON_, OFF, OFF };
 	public static final byte[]	LED_GREEN	= { OFF, ON_, OFF };

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: RadioController.java,v 1.13 2013/07/12 21:44:38 jeffw Exp $
+ *  $Id: RadioController.java,v 1.14 2013/07/19 02:40:09 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.device;
@@ -505,7 +505,7 @@ public class RadioController implements IRadioController {
 		 * - If a packet queue does exist for the destination then just put the packet in it.
 		 */
 
-		if ((inAckRequested) && (!inNetworkId.equals(IPacket.BROADCAST_NETWORK_ID)) && (!inDstAddr.equals(IPacket.BROADCAST_ADDRESS))) {
+		if ((inAckRequested) && (inNetworkId.getValue() != (IPacket.BROADCAST_NETWORK_ID)) && (inDstAddr.getValue() != (IPacket.BROADCAST_ADDRESS))) {
 
 			// Set the command ID.
 			// To the network protocol a command ID of zero means we don't want a command ACK.
@@ -522,7 +522,8 @@ public class RadioController implements IRadioController {
 				queue = new ArrayBlockingQueue<IPacket>(ACK_QUEUE_SIZE);
 				mPendingAcksMap.put(inDstAddr, queue);
 			}
-			sendPacket(packet);
+			// Don't send the packet the first time - this will cause the ACK-requesting packets to get sent in proper order until they're acked or not.
+			//sendPacket(packet);
 			while (queue.size() >= ACK_QUEUE_SIZE) {
 				try {
 					Thread.sleep(5);

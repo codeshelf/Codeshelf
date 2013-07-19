@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CheDeviceLogic.java,v 1.6 2013/07/17 05:48:13 jeffw Exp $
+ *  $Id: CheDeviceLogic.java,v 1.7 2013/07/19 02:40:09 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -217,6 +217,7 @@ public class CheDeviceLogic extends AisleDeviceLogic {
 	 */
 	public final void assignWork(final List<WorkInstruction> inWorkItemList) {
 		mAllPicksWiList.clear();
+		mCompletedWiList.clear();
 		mAllPicksWiList.addAll(inWorkItemList);
 		for (WorkInstruction wi : inWorkItemList) {
 			LOGGER.info("WI: Loc: " + wi.getLocationId() + " SKU: " + wi.getItemId());
@@ -516,6 +517,9 @@ public class CheDeviceLogic extends AisleDeviceLogic {
 				ledControllerClearLeds();
 			}
 
+			// Map all of the positions that had a short pick.
+			Map<Short, WorkInstructionStatusEnum> statusMap = new HashMap<Short, WorkInstructionStatusEnum>();
+
 			// Blink the complete and incomplete containers.
 			for (WorkInstruction wi : mCompletedWiList) {
 				Short position = 0;
@@ -523,17 +527,28 @@ public class CheDeviceLogic extends AisleDeviceLogic {
 					if (mapEntry.getValue().equals(wi.getContainerId())) {
 						// The actual position is zero-based.
 						position = (short) (Short.valueOf(mapEntry.getKey()) - 1);
+						break;
 					}
 				}
 
-				if (!wi.getStatusEnum().equals(WorkInstructionStatusEnum.COMPLETE)) {
-					ledControllerSetLed(getGuid(), CommandControlLight.CHANNEL1, position, ColorEnum.RED, EffectEnum.FLASH);
+				if (wi.getStatusEnum().equals(WorkInstructionStatusEnum.COMPLETE)) {
+					// Only set the status if we;ve never set it before.
+					if (statusMap.get(position) == null) {
+						ledControllerSetLed(getGuid(),
+							CommandControlLight.CHANNEL1,
+							position,
+							wi.getLedColorEnum(),
+							EffectEnum.FLASH);
+					}
 				} else {
-					ledControllerSetLed(getGuid(), CommandControlLight.CHANNEL1, position, wi.getLedColorEnum(), EffectEnum.FLASH);
+					// Always set the status if it's an error.
+					ledControllerSetLed(getGuid(), CommandControlLight.CHANNEL1, position, ColorEnum.RED, EffectEnum.FLASH);
 				}
+				statusMap.put(position, wi.getStatusEnum());
 			}
 			ledControllerShowLeds(getGuid());
 
+			mCompletedWiList.clear();
 			setState(CheStateEnum.PICK_COMPLETE);
 		} else {
 			// Loop through each container to see if there is a WI for that container at the next location.
