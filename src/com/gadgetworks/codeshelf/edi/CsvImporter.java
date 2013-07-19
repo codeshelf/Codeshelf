@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CsvImporter.java,v 1.28 2013/07/17 05:48:13 jeffw Exp $
+ *  $Id: CsvImporter.java,v 1.29 2013/07/19 23:24:29 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -101,52 +101,15 @@ public class CsvImporter implements ICsvImporter {
 				orderCsvBeanImport(importBean, inFacility, processTime);
 			}
 
-			LOGGER.debug("Archive unreferenced item data");
-
-			// Inactivate the orders that don't match the import timestamp.
-			try {
-				mOrderHeaderDao.beginTransaction();
-				for (OrderHeader order : inFacility.getOrderHeaders()) {
-					Boolean hasActive = false;
-					for (OrderDetail orderDetail : order.getOrderDetails()) {
-						if (orderDetail.getUpdated().equals(processTime)) {
-							hasActive = true;
-						} else {
-							orderDetail.setActive(false);
-							mOrderDetailDao.store(orderDetail);
-						}
-					}
-
-					if ((order.getActive()) && (!hasActive)) {
-						LOGGER.debug("Archive old order header: " + order.getOrderId());
-						order.setActive(false);
-						mOrderHeaderDao.store(order);
-					}
-				}
-
-				for (OrderGroup group : inFacility.getOrderGroups()) {
-					Boolean hasActive = false;
-					for (OrderHeader order : group.getOrderHeaders()) {
-						if (order.getActive()) {
-							hasActive = true;
-						}
-					}
-
-					if ((!group.getActive()) && (!hasActive)) {
-						LOGGER.debug("Archive old order group: " + group.getOrderGroupId());
-						group.setActive(false);
-						mOrderGroupDao.store(group);
-					}
-				}
-
-				mOrderHeaderDao.commitTransaction();
-			} finally {
-				mOrderHeaderDao.endTransaction();
-			}
+			updateOrderArchiveStatuses(inFacility, processTime);
+			updateConntainerArchiveStatuses(inFacility, processTime);
 
 			LOGGER.debug("End order import.");
 
 			csvReader.close();
+
+			cleanupOldOrders();
+
 		} catch (FileNotFoundException e) {
 			LOGGER.error("", e);
 		} catch (IOException e) {
@@ -185,35 +148,7 @@ public class CsvImporter implements ICsvImporter {
 					}
 				}
 
-				LOGGER.debug("Archive unreferenced item data");
-
-				// Inactivate the DDC item that don't match the import timestamp.
-				try {
-					mItemDao.beginTransaction();
-					for (ItemMaster itemMaster : inFacility.getItemMasters()) {
-						if (itemMaster.isDdcItem()) {
-							Boolean hasActive = false;
-							for (Item item : itemMaster.getItems()) {
-								if (item.getUpdated().equals(processTime)) {
-									hasActive = true;
-								} else {
-									LOGGER.debug("Archive old item: " + itemMaster.getItemId());
-									item.setActive(false);
-									mItemDao.store(item);
-								}
-							}
-
-							if (!hasActive) {
-								LOGGER.debug("Archive old item master: " + itemMaster.getItemId());
-								itemMaster.setActive(false);
-								mItemMasterDao.store(itemMaster);
-							}
-						}
-					}
-					mItemDao.commitTransaction();
-				} finally {
-					mItemDao.endTransaction();
-				}
+				updateItemArchiveStatuses(inFacility, processTime);
 
 				LOGGER.debug("End DDC inventory import.");
 
@@ -249,19 +184,12 @@ public class CsvImporter implements ICsvImporter {
 
 				LOGGER.debug("Begin slotted inventory import.");
 
-				// Delete the entire slotted inventory and replace it with what's in the import.
-				for (ItemMaster itemMaster : inFacility.getItemMasters()) {
-					if (!itemMaster.isDdcItem()) {
-						for (Item item : itemMaster.getItems()) {
-							mItemDao.delete(item);
-						}
-					}
-				}
-
 				// Iterate over the inventory import beans.
 				for (SlottedInventoryCsvImportBean importBean : inventoryImportBeanList) {
 					slottedInventoryCsvBeanImport(importBean, inFacility, processTime);
 				}
+
+				updateItemArchiveStatuses(inFacility, processTime);
 
 				LOGGER.debug("End slotted inventory import.");
 			}
@@ -272,6 +200,145 @@ public class CsvImporter implements ICsvImporter {
 		} catch (IOException e) {
 			LOGGER.error("", e);
 		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inFacility
+	 * @param inProcessTime
+	 */
+	private void updateItemArchiveStatuses(final Facility inFacility, final Timestamp inProcessTime) {
+		LOGGER.debug("Archive unreferenced item data");
+
+		// Inactivate the DDC item that don't match the import timestamp.
+		try {
+			mItemMasterDao.beginTransaction();
+			for (ItemMaster itemMaster : inFacility.getItemMasters()) {
+				Boolean itemMasterIsActive = false;
+				for (Item item : itemMaster.getItems()) {
+					if (item.getUpdated().equals(inProcessTime)) {
+						itemMasterIsActive = true;
+					} else {
+						LOGGER.debug("Archive old item: " + itemMaster.getItemId());
+						item.setActive(false);
+						mItemDao.store(item);
+					}
+				}
+
+				if (!itemMasterIsActive) {
+					LOGGER.debug("Archive old item master: " + itemMaster.getItemId());
+					itemMaster.setActive(false);
+					mItemMasterDao.store(itemMaster);
+				}
+			}
+			mItemMasterDao.commitTransaction();
+		} finally {
+			mItemMasterDao.endTransaction();
+		}
+
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inFacility
+	 * @param inProcessTime
+	 */
+	private void updateOrderArchiveStatuses(final Facility inFacility, final Timestamp inProcessTime) {
+		LOGGER.debug("Archive unreferenced order data");
+
+		// Inactivate the orders that don't match the import timestamp.
+		// All orders and related items get marked with the same timestamp when imported from the same interchange.
+		try {
+			mOrderGroupDao.beginTransaction();
+
+			// Iterate all of the order groups to see if they're still active.
+			for (OrderGroup group : inFacility.getOrderGroups()) {
+
+				if (!group.getUpdated().equals(inProcessTime)) {
+					LOGGER.debug("Archive old order group: " + group.getOrderGroupId());
+					group.setActive(false);
+					mOrderGroupDao.store(group);
+				}
+			}
+			
+			// Iterate all of the order headers in this order group to see if they're still active.
+			for (OrderHeader order : inFacility.getOrderHeaders()) {
+				Boolean orderHeaderIsActive = false;
+
+				// Iterate all of the order details in this order header to see if they're still active.
+				for (OrderDetail orderDetail : order.getOrderDetails()) {
+					if (orderDetail.getUpdated().equals(inProcessTime)) {
+						orderHeaderIsActive = true;
+					} else {
+						LOGGER.debug("Archive old order detail: " + orderDetail.getOrderDetailId());
+						orderDetail.setActive(false);
+						mOrderDetailDao.store(orderDetail);
+					}
+				}
+
+				if (!orderHeaderIsActive) {
+					LOGGER.debug("Archive old order header: " + order.getOrderId());
+					order.setActive(false);
+					mOrderHeaderDao.store(order);
+				}
+			}
+
+			mOrderGroupDao.commitTransaction();
+		} finally {
+			mOrderGroupDao.endTransaction();
+		}
+
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inFacility
+	 * @param inProcessTime
+	 */
+	private void updateConntainerArchiveStatuses(final Facility inFacility, final Timestamp inProcessTime) {
+		LOGGER.debug("Archive unreferenced container data");
+
+		// Inactivate the orders that don't match the import timestamp.
+		// All orders and related items get marked with the same timestamp when imported from the same interchange.
+		try {
+			mContainerDao.beginTransaction();
+
+			// Iterate all of the containers to see if they're still active.
+			for (Container container : inFacility.getContainers()) {
+				Boolean containerIsActive = false;
+
+				for (ContainerUse containerUse : container.getUses()) {
+					if (containerUse.getUpdated().equals(inProcessTime)) {
+						containerIsActive = true;
+					} else {
+						containerUse.setActive(false);
+						mContainerUseDao.store(containerUse);
+					}
+				}
+
+				if (!containerIsActive) {
+					container.setActive(false);
+					mContainerDao.store(container);
+				}
+			}
+
+			mContainerDao.commitTransaction();
+		} finally {
+			mContainerDao.endTransaction();
+		}
+
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 */
+	private void cleanupOldOrders() {
+		// ContainerUse
+		// Container
+		// WorkInstructions
+		// OrderDetail
+		// OrderHeader
+
 	}
 
 	// --------------------------------------------------------------------------
@@ -402,8 +469,11 @@ public class CsvImporter implements ICsvImporter {
 			result.setParent(inFacility);
 			result.setOrderGroupId(inCsvImportBean.getOrderGroupId());
 			result.setDescription(OrderGroup.DEFAULT_ORDER_GROUP_DESC_PREFIX + inCsvImportBean.getOrderGroupId());
-			result.setStatusEnum(OrderStatusEnum.CREATED);
 			inFacility.addOrderGroup(result);
+		}
+
+		if (result != null) {
+			result.setStatusEnum(OrderStatusEnum.CREATED);
 			try {
 				result.setActive(true);
 				result.setUpdated(inEdiProcessTime);
@@ -438,31 +508,35 @@ public class CsvImporter implements ICsvImporter {
 				result.setContainerId(inCsvImportBean.getPreAssignedContainerId());
 				result.setKind(inFacility.getContainerKind(ContainerKind.DEFAULT_CONTAINER_KIND));
 				inFacility.addContainer(result);
-				try {
-					mContainerDao.store(result);
-				} catch (DaoException e) {
-					LOGGER.error("", e);
-				}
 			}
 
+			result.setUpdated(inEdiProcessTime);
+			try {
+				mContainerDao.store(result);
+			} catch (DaoException e) {
+				LOGGER.error("", e);
+			}
+
+			// Now create the container use for this.
 			ContainerUse use = result.getContainerUse(inOrder);
 			if (use == null) {
-				// Now create the container use for this.
-				Timestamp timestamp = new Timestamp(System.currentTimeMillis());
 				use = new ContainerUse();
-				use.setDomainId(timestamp.toString());
+				use.setDomainId(inOrder.getOrderId());
 				use.setOrderHeader(inOrder);
 				use.setParent(result);
-				use.setUsedOn(timestamp);
-				try {
-					use.setActive(true);
-					use.setUpdated(timestamp);
-					mContainerUseDao.store(use);
-				} catch (DaoException e) {
-					LOGGER.error("", e);
-				}
-				result.addContainerUse(use);
 			}
+			Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+			use.setUsedOn(timestamp);
+			use.setActive(true);
+			use.setUpdated(inEdiProcessTime);
+
+			try {
+				mContainerUseDao.store(use);
+			} catch (DaoException e) {
+				LOGGER.error("", e);
+			}
+			result.addContainerUse(use);
+
 		}
 
 		return result;

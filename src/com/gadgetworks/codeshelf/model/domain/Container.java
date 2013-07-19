@@ -1,10 +1,11 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Container.java,v 1.16 2013/04/11 07:42:45 jeffw Exp $
+ *  $Id: Container.java,v 1.17 2013/07/19 23:24:28 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -69,6 +70,18 @@ public class Container extends DomainObjectTreeABC<Facility> {
 	@Setter
 	@JsonProperty
 	private ContainerKind		kind;
+
+	@Column(nullable = false)
+	@Getter
+	@Setter
+	@JsonProperty
+	private Boolean				active;
+
+	@Column(nullable = false)
+	@Getter
+	@Setter
+	@JsonProperty
+	private Timestamp			updated;
 
 	// The parent facility.
 	@Column(nullable = false)

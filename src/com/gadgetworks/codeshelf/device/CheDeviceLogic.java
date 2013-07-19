@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CheDeviceLogic.java,v 1.7 2013/07/19 02:40:09 jeffw Exp $
+ *  $Id: CheDeviceLogic.java,v 1.8 2013/07/19 23:24:29 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -509,73 +509,92 @@ public class CheDeviceLogic extends AisleDeviceLogic {
 		if (mActivePickWiList.size() > 0) {
 			// There are still picks in the active list.
 			showActivePicks();
-		} else if (mAllPicksWiList.size() == 0) {
-			// There are no more WIs, so the pick is complete.
-
-			// Clear the existing LEDs.
-			if (mLastLedControllerGuid != null) {
-				ledControllerClearLeds();
-			}
-
-			// Map all of the positions that had a short pick.
-			Map<Short, WorkInstructionStatusEnum> statusMap = new HashMap<Short, WorkInstructionStatusEnum>();
-
-			// Blink the complete and incomplete containers.
-			for (WorkInstruction wi : mCompletedWiList) {
-				Short position = 0;
-				for (Entry<String, String> mapEntry : mContainersMap.entrySet()) {
-					if (mapEntry.getValue().equals(wi.getContainerId())) {
-						// The actual position is zero-based.
-						position = (short) (Short.valueOf(mapEntry.getKey()) - 1);
-						break;
-					}
-				}
-
-				if (wi.getStatusEnum().equals(WorkInstructionStatusEnum.COMPLETE)) {
-					// Only set the status if we;ve never set it before.
-					if (statusMap.get(position) == null) {
-						ledControllerSetLed(getGuid(),
-							CommandControlLight.CHANNEL1,
-							position,
-							wi.getLedColorEnum(),
-							EffectEnum.FLASH);
-					}
-				} else {
-					// Always set the status if it's an error.
-					ledControllerSetLed(getGuid(), CommandControlLight.CHANNEL1, position, ColorEnum.RED, EffectEnum.FLASH);
-				}
-				statusMap.put(position, wi.getStatusEnum());
-			}
-			ledControllerShowLeds(getGuid());
-
-			mCompletedWiList.clear();
-			setState(CheStateEnum.PICK_COMPLETE);
 		} else {
-			// Loop through each container to see if there is a WI for that container at the next location.
-			// The "next location" is the first location we find for the next pick.
-			String firstLocationId = null;
-			String firstItemId = null;
-			for (String containerId : mContainersMap.values()) {
-				Iterator<WorkInstruction> wiIter = mAllPicksWiList.iterator();
-				while (wiIter.hasNext()) {
-					WorkInstruction wi = wiIter.next();
-					if (wi.getContainerId().equals(containerId)) {
+			if (selectNextActivePicks()) {
+				showActivePicks();
+			} else {
+				processPickComplete();
+			}
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 */
+	private boolean selectNextActivePicks() {
+		boolean result = false;
+		
+		// Loop through each container to see if there is a WI for that container at the next location.
+		// The "next location" is the first location we find for the next pick.
+		String firstLocationId = null;
+		String firstItemId = null;
+		for (String containerId : mContainersMap.values()) {
+			Iterator<WorkInstruction> wiIter = mAllPicksWiList.iterator();
+			while (wiIter.hasNext()) {
+				WorkInstruction wi = wiIter.next();
+				// If the WI is for this container then consider it.
+				if (wi.getContainerId().equals(containerId)) {
+					// If the WI is INPROGRESS or NEW then consider it.
+					if ((wi.getStatusEnum().equals(WorkInstructionStatusEnum.NEW))
+							|| (wi.getStatusEnum().equals(WorkInstructionStatusEnum.INPROGRESS))) {
 						if ((firstLocationId == null) || (firstLocationId.equals(wi.getLocationId()))) {
 							if ((firstItemId == null) || (firstItemId.equals(wi.getItemId()))) {
 								firstLocationId = wi.getLocationId();
 								firstItemId = wi.getItemId();
 								wi.setStarted(new Timestamp(System.currentTimeMillis()));
 								mActivePickWiList.add(wi);
-								wiIter.remove();
+								result = true;
+								//wiIter.remove();
 							}
 						}
-					} else {
-						break;
 					}
 				}
 			}
-			showActivePicks();
 		}
+		
+		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 */
+	private void processPickComplete() {
+		// There are no more WIs, so the pick is complete.
+
+		// Clear the existing LEDs.
+		if (mLastLedControllerGuid != null) {
+			ledControllerClearLeds();
+		}
+
+		// Map all of the positions that had a short pick.
+		Map<Short, WorkInstructionStatusEnum> statusMap = new HashMap<Short, WorkInstructionStatusEnum>();
+
+		// Blink the complete and incomplete containers.
+		for (WorkInstruction wi : mAllPicksWiList) {
+			Short position = 0;
+			for (Entry<String, String> mapEntry : mContainersMap.entrySet()) {
+				if (mapEntry.getValue().equals(wi.getContainerId())) {
+					// The actual position is zero-based.
+					position = (short) (Short.valueOf(mapEntry.getKey()) - 1);
+					break;
+				}
+			}
+
+			if (wi.getStatusEnum().equals(WorkInstructionStatusEnum.COMPLETE)) {
+				// Only set the status if we;ve never set it before.
+				if (statusMap.get(position) == null) {
+					ledControllerSetLed(getGuid(), CommandControlLight.CHANNEL1, position, wi.getLedColorEnum(), EffectEnum.FLASH);
+				}
+			} else {
+				// Always set the status if it's an error.
+				ledControllerSetLed(getGuid(), CommandControlLight.CHANNEL1, position, ColorEnum.RED, EffectEnum.FLASH);
+			}
+			statusMap.put(position, wi.getStatusEnum());
+		}
+		ledControllerShowLeds(getGuid());
+
+		mCompletedWiList.clear();
+		setState(CheStateEnum.PICK_COMPLETE);
 	}
 
 	// --------------------------------------------------------------------------

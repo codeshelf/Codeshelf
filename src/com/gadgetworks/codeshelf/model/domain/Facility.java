@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.77 2013/07/19 02:40:09 jeffw Exp $
+ *  $Id: Facility.java,v 1.78 2013/07/19 23:24:28 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -201,6 +201,10 @@ public class Facility extends LocationABC<Organization> {
 
 	public final Container getContainer(String inContainerId) {
 		return containers.get(inContainerId);
+	}
+	
+	public final List<Container> getContainers() {
+		return new ArrayList<Container>(containers.values());
 	}
 
 	public final void removeContainer(String inContainerId) {
@@ -671,7 +675,6 @@ public class Facility extends LocationABC<Organization> {
 						OrderHeader order = foundUse.getOrderHeader();
 						if (order != null) {
 							for (OrderDetail orderDetail : order.getOrderDetails()) {
-								ISubLocation<IDomainObject> foundLocation = null;
 								ItemMaster itemMaster = orderDetail.getItemMaster();
 
 								// Figure out if there are any items are on the current path.
@@ -679,18 +682,20 @@ public class Facility extends LocationABC<Organization> {
 								Item selectedItem = null;
 
 								if (itemMaster.getItems().size() == 0) {
-									// If tehre is no item in inventory then create a PLANEED, SHORT WI for this order detail.
+									// If there is no item in inventory (AT ALL) then create a PLANEED, SHORT WI for this order detail.
 									WorkInstruction plannedWi = createWorkInstruction(WorkInstructionStatusEnum.SHORT,
+										WorkInstructionTypeEnum.ACTUAL,
 										orderDetail,
 										0,
 										container,
-										foundLocation,
-										selectedItem.getDdcPosAlongPath());
+										(ISubLocation<IDomainObject>) cheLocation,
+										0.0);
 									if (plannedWi != null) {
 										result.add(plannedWi);
 									}
 								} else {
 									// Search through the items to see if any are on the CHE's pick path.
+									ISubLocation<IDomainObject> foundLocation = null;
 									for (Item item : itemMaster.getItems()) {
 										if (item.getStoredLocation() instanceof ISubLocation) {
 											ISubLocation location = (ISubLocation) item.getStoredLocation();
@@ -709,6 +714,7 @@ public class Facility extends LocationABC<Organization> {
 										// If there is anything to pick on this item then create a WI for it.
 										if (quantityToPick > 0) {
 											WorkInstruction plannedWi = createWorkInstruction(WorkInstructionStatusEnum.NEW,
+												WorkInstructionTypeEnum.PLAN,
 												orderDetail,
 												quantityToPick,
 												container,
@@ -760,6 +766,7 @@ public class Facility extends LocationABC<Organization> {
 	 * @return
 	 */
 	private WorkInstruction createWorkInstruction(WorkInstructionStatusEnum inStatus,
+		WorkInstructionTypeEnum inType,
 		OrderDetail inOrderDetail,
 		Integer inQuantityToPick,
 		Container inContainer,
@@ -786,18 +793,18 @@ public class Facility extends LocationABC<Organization> {
 
 		// Update the WI
 		result.setDomainId(Long.toString(System.currentTimeMillis()));
-		result.setTypeEnum(WorkInstructionTypeEnum.PLAN);
+		result.setTypeEnum(inType);
 		result.setStatusEnum(inStatus);
 		result.setLedControllerId("0x00000003");
 		result.setLedChannel(inLocation.getLedChannel());
 		result.setLedFirstPos(inLocation.getFirstLedPosForItemId(inOrderDetail.getItemMaster().getItemId()));
 		result.setLedLastPos(inLocation.getLastLedPosForItemId(inOrderDetail.getItemMaster().getItemId()));
+		result.setLocationId(((ISubLocation<?>) inLocation.getParent()).getLocationId() + "." + inLocation.getLocationId());
 		result.setLedColorEnum(ColorEnum.BLUE);
 		result.setItemId(inOrderDetail.getItemMaster().getItemId());
 		result.setDescription(inOrderDetail.getItemMaster().getDescription());
 		result.setPickInstruction(inOrderDetail.getItemMaster().getDdcId());
 		result.setPosAlongPath(inPosALongPath);
-		result.setLocationId(((ISubLocation<?>) inLocation.getParent()).getLocationId() + "." + inLocation.getLocationId());
 		result.setContainerId(inContainer.getContainerId());
 		result.setPlanQuantity(inQuantityToPick);
 		result.setActualQuantity(0);

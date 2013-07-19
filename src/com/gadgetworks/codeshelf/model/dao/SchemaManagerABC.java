@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: SchemaManagerABC.java,v 1.33 2013/07/17 05:48:13 jeffw Exp $
+ *  $Id: SchemaManagerABC.java,v 1.34 2013/07/19 23:24:28 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -72,7 +72,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	protected abstract boolean doUpgradeSchema();
 
 	protected abstract boolean doDowngradeSchema();
-	
+
 	protected abstract String getSchemaCheckerString();
 
 	protected abstract String getSchemaSetterString();
@@ -518,7 +518,9 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		// Container
 		result &= createTable("container", //
-			"kind_persistentid " + UUID_TYPE + " NOT NULL " //
+			"kind_persistentid " + UUID_TYPE + " NOT NULL, " //
+					+ "active BOOLEAN DEFAULT TRUE NOT NULL, " //
+					+ "updated TIMESTAMP NOT NULL " //
 		);
 
 		// ContainerKind
