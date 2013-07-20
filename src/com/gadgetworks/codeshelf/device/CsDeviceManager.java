@@ -1,11 +1,12 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CsDeviceManager.java,v 1.18 2013/05/04 00:30:01 jeffw Exp $
+ *  $Id: CsDeviceManager.java,v 1.19 2013/07/20 00:54:49 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,12 +25,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.application.IUtil;
-import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
-import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Che;
-import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.LedController;
-import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.ws.command.IWebSessionCmd;
 import com.gadgetworks.codeshelf.ws.command.req.IWsReqCmd;
@@ -121,6 +118,14 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 						// We used to inject this, but the Java_WebSocket is not re-entrant so we have to create new sockets at runtime if the server connection breaks.
 						mWebSocketClient = new CsWebSocketClient(mUri, mUtil, mMessageHandler, mWebSocketClientFactory);
 						mWebSocketClient.start();
+
+						for (INetworkDevice device : new ArrayList<INetworkDevice>(mDeviceMap.values())) {
+							if (device instanceof CheDeviceLogic) {
+								CheDeviceLogic che = (CheDeviceLogic) device;
+								
+								che.signalNetworkUp();
+							}
+						}
 
 						if (mWebSocketClient.isStarted()) {
 							ObjectMapper mapper = new ObjectMapper();
@@ -232,6 +237,13 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 		// This will attempt to start the websocket again (and will block).
 		//mWebSocketClient.stop();
 		//startWebSocket();
+		for (INetworkDevice device : new ArrayList<INetworkDevice>(mDeviceMap.values())) {
+			if (device instanceof CheDeviceLogic) {
+				CheDeviceLogic che = (CheDeviceLogic) device;
+				
+				che.signalNetworkDown();
+			}
+		}
 	}
 
 	// --------------------------------------------------------------------------

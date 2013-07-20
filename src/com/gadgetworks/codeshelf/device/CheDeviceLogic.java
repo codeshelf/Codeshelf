@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CheDeviceLogic.java,v 1.8 2013/07/19 23:24:29 jeffw Exp $
+ *  $Id: CheDeviceLogic.java,v 1.9 2013/07/20 00:54:49 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -42,10 +42,9 @@ public class CheDeviceLogic extends AisleDeviceLogic {
 
 	private static final Logger		LOGGER					= LoggerFactory.getLogger(CheDeviceLogic.class);
 
-	private static final String		BARCODE_DELIMITER		= "%";
 	private static final String		COMMAND_PREFIX			= "X%";
 	private static final String		USER_PREFIX				= "U%";
-	private static final String		CONTAINER_PREFIX		= "O%";
+	private static final String		CONTAINER_PREFIX		= "SH";
 	private static final String		LOCATION_PREFIX			= "L%";
 	private static final String		ITEMID_PREFIX			= "I%";
 	private static final String		POSITION_PREFIX			= "B%";
@@ -225,6 +224,20 @@ public class CheDeviceLogic extends AisleDeviceLogic {
 	}
 
 	// --------------------------------------------------------------------------
+	/**
+	 */
+	public final void signalNetworkDown() {
+		//sendDisplayCommand("NETWORK DOWN", "");
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 */
+	public final void signalNetworkUp() {
+		//sendDisplayCommand("NETWORK UP", "");
+	}
+
+	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.flyweight.controller.INetworkDevice#commandReceived(java.lang.String)
 	 */
@@ -232,13 +245,8 @@ public class CheDeviceLogic extends AisleDeviceLogic {
 	public final void commandReceived(String inCommandStr) {
 		LOGGER.info("Remote command: " + inCommandStr);
 
-		String scanPrefixStr = "";
-		String scanStr = inCommandStr;
-		int prefixCharPos = inCommandStr.indexOf(BARCODE_DELIMITER);
-		if (prefixCharPos > 0) {
-			scanPrefixStr = inCommandStr.substring(0, prefixCharPos + 1);
-			scanStr = inCommandStr.substring(prefixCharPos + 1);
-		}
+		String scanPrefixStr = getScanPrefix(inCommandStr);
+		String scanStr = getScanContents(inCommandStr, scanPrefixStr);
 
 		// A command scan is always an option at any state.
 		if (inCommandStr.startsWith(COMMAND_PREFIX)) {
@@ -261,13 +269,49 @@ public class CheDeviceLogic extends AisleDeviceLogic {
 
 				case CONTAINER_POSITION:
 					// The only thing that makes sense in this mode is a button press (or a logout covered above).
-					setStateWithInvalid(mCheStateEnum);
+					setStateWithErrorMsg(mCheStateEnum);
 					break;
 
 				default:
 					break;
 			}
 		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inScanStr
+	 * @return
+	 */
+	private String getScanPrefix(String inScanStr) {
+		
+		String result = "";
+	
+		if (inScanStr.startsWith(COMMAND_PREFIX)) {
+			result = COMMAND_PREFIX;
+		} else if (inScanStr.startsWith(USER_PREFIX)) {
+			result = USER_PREFIX;
+		} else if (inScanStr.startsWith(CONTAINER_PREFIX)) {
+			result = CONTAINER_PREFIX;
+		} else if (inScanStr.startsWith(LOCATION_PREFIX)) {
+			result = LOCATION_PREFIX;
+		} else if (inScanStr.startsWith(ITEMID_PREFIX)) {
+			result = ITEMID_PREFIX;
+		} else if (inScanStr.startsWith(POSITION_PREFIX)) {
+			result = POSITION_PREFIX;
+		}
+		
+		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inScanStr
+	 * @param inPrefix
+	 * @return
+	 */
+	private String getScanContents(String inScanStr, String inPrefix) {
+		return inScanStr.substring(inPrefix.length());
 	}
 
 	// --------------------------------------------------------------------------
@@ -319,7 +363,7 @@ public class CheDeviceLogic extends AisleDeviceLogic {
 	 * Send the LED error status as well (color: red effect: error channel: 0).
 	 * 
 	 */
-	private void setStateWithInvalid(final CheStateEnum inCheState) {
+	private void setStateWithErrorMsg(final CheStateEnum inCheState) {
 		mCheStateEnum = inCheState;
 
 		switch (inCheState) {
@@ -409,7 +453,7 @@ public class CheDeviceLogic extends AisleDeviceLogic {
 			setState(CheStateEnum.LOCATION_SETUP);
 		} else {
 			// Stay in the same state - the scan made no sense.
-			setStateWithInvalid(mCheStateEnum);
+			setStateWithErrorMsg(mCheStateEnum);
 		}
 	}
 
@@ -428,7 +472,7 @@ public class CheDeviceLogic extends AisleDeviceLogic {
 			doNextPick();
 		} else {
 			// Stay in the same state - the scan made no sense.
-			setStateWithInvalid(mCheStateEnum);
+			setStateWithErrorMsg(mCheStateEnum);
 		}
 	}
 
@@ -441,7 +485,7 @@ public class CheDeviceLogic extends AisleDeviceLogic {
 			setState(CheStateEnum.SHORT_PICK_CONFIRM);
 		} else {
 			// Stay in the same state - the scan made no sense.
-			setStateWithInvalid(mCheStateEnum);
+			setStateWithErrorMsg(mCheStateEnum);
 		}
 	}
 
@@ -458,7 +502,7 @@ public class CheDeviceLogic extends AisleDeviceLogic {
 
 			default:
 				// Stay in the same state - the scan made no sense.
-				setStateWithInvalid(mCheStateEnum);
+				setStateWithErrorMsg(mCheStateEnum);
 				break;
 		}
 	}
@@ -523,7 +567,7 @@ public class CheDeviceLogic extends AisleDeviceLogic {
 	 */
 	private boolean selectNextActivePicks() {
 		boolean result = false;
-		
+
 		// Loop through each container to see if there is a WI for that container at the next location.
 		// The "next location" is the first location we find for the next pick.
 		String firstLocationId = null;
@@ -551,7 +595,7 @@ public class CheDeviceLogic extends AisleDeviceLogic {
 				}
 			}
 		}
-		
+
 		return result;
 	}
 
@@ -671,7 +715,7 @@ public class CheDeviceLogic extends AisleDeviceLogic {
 			setState(CheStateEnum.LOCATION_SETUP);
 		} else {
 			LOGGER.info("Not a user ID: " + inScanStr);
-			setStateWithInvalid(CheStateEnum.IDLE);
+			setStateWithErrorMsg(CheStateEnum.IDLE);
 		}
 	}
 
@@ -686,7 +730,7 @@ public class CheDeviceLogic extends AisleDeviceLogic {
 			setState(CheStateEnum.CONTAINER_SELECT);
 		} else {
 			LOGGER.info("Not a location ID: " + inScanStr);
-			setStateWithInvalid(CheStateEnum.LOCATION_SETUP);
+			setStateWithErrorMsg(CheStateEnum.LOCATION_SETUP);
 		}
 	}
 
@@ -712,7 +756,7 @@ public class CheDeviceLogic extends AisleDeviceLogic {
 			setState(CheStateEnum.CONTAINER_POSITION);
 		} else {
 			LOGGER.info("Not a container ID: " + inScanStr);
-			setStateWithInvalid(CheStateEnum.CONTAINER_SELECT);
+			setStateWithErrorMsg(CheStateEnum.CONTAINER_SELECT);
 		}
 	}
 
@@ -730,7 +774,7 @@ public class CheDeviceLogic extends AisleDeviceLogic {
 				mDeviceManager.requestCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), mLocationId, containerIdList);
 			} else {
 				LOGGER.info("Position in use: " + inScanStr);
-				setStateWithInvalid(CheStateEnum.CONTAINER_POSITION);
+				setStateWithErrorMsg(CheStateEnum.CONTAINER_POSITION);
 			}
 		} else if (mCheStateEnum.equals(CheStateEnum.DO_PICK)) {
 			// Complete the active WI at the selected position.
@@ -766,12 +810,12 @@ public class CheDeviceLogic extends AisleDeviceLogic {
 					doNextPick();
 				}
 			} else {
-				setStateWithInvalid(mCheStateEnum);
+				setStateWithErrorMsg(mCheStateEnum);
 			}
 		} else {
 			// Random button press - leave the state alone.
 			LOGGER.info("Random button press: " + inScanStr);
-			setStateWithInvalid(mCheStateEnum);
+			setStateWithErrorMsg(mCheStateEnum);
 		}
 	}
 }
