@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandAssocResp.java,v 1.4 2013/03/03 23:27:20 jeffw Exp $
+ *  $Id: CommandAssocResp.java,v 1.5 2013/07/22 04:30:18 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.flyweight.command;
@@ -49,9 +49,9 @@ public final class CommandAssocResp extends CommandAssocABC {
 	 */
 	public CommandAssocResp(final String inUniqueID, final NetworkId inNetworkId, final NetAddress inAddressToAssign) {
 		super(new NetCommandId(ASSOC_RESP_COMMAND), inUniqueID);
-		mAddressSpacing = new NBitInteger((byte) IPacket.ADDRESS_SPACING_BITS, NBitInteger.INIT_VALUE);
+		mAddressSpacing = new NBitInteger((byte) IPacket.ADDRESS_SPACING_BITS, (byte) 0);
 		mAddressAssigned = inAddressToAssign;
-		mNetworkSpacing = new NBitInteger((byte) IPacket.NETWORK_NUM_SPACING_BITS, NBitInteger.INIT_VALUE);
+		mNetworkSpacing = new NBitInteger((byte) IPacket.NETWORK_NUM_SPACING_BITS, (byte) 0);
 		mNetworkId = inNetworkId;
 	}
 
@@ -60,9 +60,9 @@ public final class CommandAssocResp extends CommandAssocABC {
 	 */
 	public CommandAssocResp() {
 		super(new NetCommandId(ASSOC_RESP_COMMAND));
-		mAddressSpacing = new NBitInteger((byte) IPacket.ADDRESS_SPACING_BITS, NBitInteger.INIT_VALUE);
+		mAddressSpacing = new NBitInteger((byte) IPacket.ADDRESS_SPACING_BITS);
 		mAddressAssigned = new NetAddress(IPacket.BROADCAST_ADDRESS);
-		mNetworkSpacing = new NBitInteger((byte) IPacket.NETWORK_NUM_SPACING_BITS, NBitInteger.INIT_VALUE);
+		mNetworkSpacing = new NBitInteger((byte) IPacket.NETWORK_NUM_SPACING_BITS);
 		mNetworkId = new NetworkId(IPacket.BROADCAST_NETWORK_ID);
 	}
 

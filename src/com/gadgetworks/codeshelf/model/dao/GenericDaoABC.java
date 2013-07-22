@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: GenericDaoABC.java,v 1.24 2013/04/11 20:26:44 jeffw Exp $
+ *  $Id: GenericDaoABC.java,v 1.25 2013/07/22 04:30:37 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -277,7 +277,7 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#getAll()
 	 */
-	public final List<T> getAll() {
+	public List<T> getAll() {
 		Query<T> query = mServer.createQuery(getDaoClass());
 		//query = query.setUseCache(true);
 		return query.findList();

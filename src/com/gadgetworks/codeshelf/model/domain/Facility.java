@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.78 2013/07/19 23:24:28 jeffw Exp $
+ *  $Id: Facility.java,v 1.79 2013/07/22 04:30:36 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -202,7 +202,7 @@ public class Facility extends LocationABC<Organization> {
 	public final Container getContainer(String inContainerId) {
 		return containers.get(inContainerId);
 	}
-	
+
 	public final List<Container> getContainers() {
 		return new ArrayList<Container>(containers.values());
 	}
@@ -784,37 +784,40 @@ public class Facility extends LocationABC<Organization> {
 			}
 		}
 
-		// If there is no planned WI then create one.
-		if (result == null) {
-			result = new WorkInstruction();
-			result.setParent(inOrderDetail);
-			result.setCreated(new Timestamp(System.currentTimeMillis()));
-		}
+		// Check if there is any left to pick.
+		if (inQuantityToPick > 0) {
 
-		// Update the WI
-		result.setDomainId(Long.toString(System.currentTimeMillis()));
-		result.setTypeEnum(inType);
-		result.setStatusEnum(inStatus);
-		result.setLedControllerId("0x00000003");
-		result.setLedChannel(inLocation.getLedChannel());
-		result.setLedFirstPos(inLocation.getFirstLedPosForItemId(inOrderDetail.getItemMaster().getItemId()));
-		result.setLedLastPos(inLocation.getLastLedPosForItemId(inOrderDetail.getItemMaster().getItemId()));
-		result.setLocationId(((ISubLocation<?>) inLocation.getParent()).getLocationId() + "." + inLocation.getLocationId());
-		result.setLedColorEnum(ColorEnum.BLUE);
-		result.setItemId(inOrderDetail.getItemMaster().getItemId());
-		result.setDescription(inOrderDetail.getItemMaster().getDescription());
-		result.setPickInstruction(inOrderDetail.getItemMaster().getDdcId());
-		result.setPosAlongPath(inPosALongPath);
-		result.setContainerId(inContainer.getContainerId());
-		result.setPlanQuantity(inQuantityToPick);
-		result.setActualQuantity(0);
-		result.setAssigned(new Timestamp(System.currentTimeMillis()));
-		try {
-			WorkInstruction.DAO.store(result);
-		} catch (DaoException e) {
-			LOGGER.error("", e);
-		}
+			// If there is no planned WI then create one.
+			if (result == null) {
+				result = new WorkInstruction();
+				result.setParent(inOrderDetail);
+				result.setCreated(new Timestamp(System.currentTimeMillis()));
+			}
 
+			// Update the WI
+			result.setDomainId(Long.toString(System.currentTimeMillis()));
+			result.setTypeEnum(inType);
+			result.setStatusEnum(inStatus);
+			result.setLedControllerId("0x00000003");
+			result.setLedChannel(inLocation.getLedChannel());
+			result.setLedFirstPos(inLocation.getFirstLedPosForItemId(inOrderDetail.getItemMaster().getItemId()));
+			result.setLedLastPos(inLocation.getLastLedPosForItemId(inOrderDetail.getItemMaster().getItemId()));
+			result.setLocationId(((ISubLocation<?>) inLocation.getParent()).getLocationId() + "." + inLocation.getLocationId());
+			result.setLedColorEnum(ColorEnum.BLUE);
+			result.setItemId(inOrderDetail.getItemMaster().getItemId());
+			result.setDescription(inOrderDetail.getItemMaster().getDescription());
+			result.setPickInstruction(inOrderDetail.getItemMaster().getDdcId());
+			result.setPosAlongPath(inPosALongPath);
+			result.setContainerId(inContainer.getContainerId());
+			result.setPlanQuantity(inQuantityToPick);
+			result.setActualQuantity(0);
+			result.setAssigned(new Timestamp(System.currentTimeMillis()));
+			try {
+				WorkInstruction.DAO.store(result);
+			} catch (DaoException e) {
+				LOGGER.error("", e);
+			}
+		}
 		return result;
 	}
 

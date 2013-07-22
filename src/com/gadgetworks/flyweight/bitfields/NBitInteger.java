@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: NBitInteger.java,v 1.2 2013/05/26 21:50:40 jeffw Exp $
+ *  $Id: NBitInteger.java,v 1.3 2013/07/22 04:30:36 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.flyweight.bitfields;
@@ -22,7 +22,6 @@ import java.io.Serializable;
 
 public class NBitInteger implements Serializable {
 
-	public static final byte	INIT_VALUE			= 0;
 	private static final byte	MAXBITWIDTH			= 8;
 	private static final short	MASKING_BITS		= 0x00ff;
 
@@ -30,6 +29,28 @@ public class NBitInteger implements Serializable {
 
 	private short				mValue;
 	private byte				mBitCount;
+
+	// --------------------------------------------------------------------------
+	/**
+	 *  Creates an n-bit integer that has an invalid value.
+	 *  This allows us to create an NBitInteger and then later set its value from the bitstream.
+	 *  If you try to use it before setting the value you will get an OutOfRangeException();
+	 * 
+	 *  @param inBitWidth
+	 *  @throws IllegalBoundsException - this is a checked exception.  Creating a class that you can't fit is a big problem, 
+	 *										and the programmer should discover this.
+	 *  @throws OutOfRangeException - this is an unchecked exception.  If this were a checked exception it would propogate tons 
+	 *										of try..catch blocks all over the code that really aren't able to deal with this kind 
+	 *										of exception.  It seems better to find this in unit testing instead.
+	 */
+	public NBitInteger(final byte inBitWidth) {
+		if ((inBitWidth < 0) || (inBitWidth > MAXBITWIDTH)) {
+			throw new IllegalBoundsException("Incorrect bit width.");
+		} else {
+			mBitCount = inBitWidth;
+			mValue = -1;
+		}
+	}
 
 	// --------------------------------------------------------------------------
 	/**
@@ -56,13 +77,11 @@ public class NBitInteger implements Serializable {
 	// --------------------------------------------------------------------------
 	/**
 	 *  Make sure that the value we're assigning is within the range that the n-bit integer can hold.
-	 *  We now allow -1 to mean "invalid" - this allows us to create uninitialized enums that we can read from the 
-	 *  network stream.
 	 *  @param inNewValue	The new value we're trying to store.
 	 *  @return	True if it is within range.
 	 */
 	private boolean isInRange(short inNewValue) {
-		return (((inNewValue >= 0) && (inNewValue < Math.pow(2, mBitCount))) || (inNewValue == 255));
+		return ((inNewValue >= 0) && (inNewValue < Math.pow(2, mBitCount)));
 	}
 
 	/**
@@ -84,7 +103,11 @@ public class NBitInteger implements Serializable {
 	 * @return The current value.
 	 */
 	public final short getValue() {
-		return mValue;
+		if (mValue == -1) {
+			throw new OutOfRangeException("Value is out of range.");
+		} else {
+			return mValue;
+		}
 	}
 
 	public final byte getBitLen() {

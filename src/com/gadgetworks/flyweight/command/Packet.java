@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: Packet.java,v 1.4 2013/07/19 02:40:09 jeffw Exp $
+ *  $Id: Packet.java,v 1.5 2013/07/22 04:30:18 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.flyweight.command;
@@ -84,7 +84,7 @@ public final class Packet implements IPacket {
 
 		mNetworkId = inNetworkId;
 		mPacketType = new NBitInteger(IPacket.ACK_REQUIRED_BITS, STD_PACKET);
-		mReservedHeaderBits = new NBitInteger(IPacket.RESERVED_HEADER_BITS, NBitInteger.INIT_VALUE);
+		mReservedHeaderBits = new NBitInteger(IPacket.RESERVED_HEADER_BITS, (byte) 0);
 
 		if (inCommand == null)
 			throw new NullPointerException("inCommand is null");
@@ -111,7 +111,7 @@ public final class Packet implements IPacket {
 	public Packet() {
 
 		mPacketVersion = new PacketVersion(IPacket.PACKET_VERSION_0);
-		mReservedHeaderBits = new NBitInteger(IPacket.RESERVED_HEADER_BITS, NBitInteger.INIT_VALUE);
+		mReservedHeaderBits = new NBitInteger(IPacket.RESERVED_HEADER_BITS, (byte) 0);
 		mNetworkId = new NetworkId(IPacket.BROADCAST_NETWORK_ID);
 		mSrcAddr = new NetAddress(IPacket.BROADCAST_ADDRESS);
 		mDstAddr = new NetAddress(IPacket.BROADCAST_ADDRESS);

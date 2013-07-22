@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderGroupTest.java,v 1.3 2013/04/09 07:58:20 jeffw Exp $
+ *  $Id: OrderGroupTest.java,v 1.4 2013/07/22 04:30:36 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -35,6 +35,8 @@ public class OrderGroupTest {
 		OrderGroup orderGroup = new OrderGroup();
 		orderGroup.setParent(facility);
 		orderGroup.setOrderGroupId("OG1");
+		orderGroup.setActive(true);
+		orderGroup.setUpdated(new Timestamp(System.currentTimeMillis()));
 		orderGroup.DAO.store(orderGroup);
 		
 		OrderHeader order1 = new OrderHeader();
@@ -42,6 +44,8 @@ public class OrderGroupTest {
 		order1.setOrderId("1");
 		order1.setOrderDate(new Timestamp(System.currentTimeMillis()));
 		order1.setDueDate(new Timestamp(System.currentTimeMillis()));
+		order1.setActive(true);
+		order1.setUpdated(new Timestamp(System.currentTimeMillis()));
 		OrderHeader.DAO.store(order1);
 		
 		// Check if we can add this order.
@@ -62,6 +66,8 @@ public class OrderGroupTest {
 		order2.setOrderId("2");
 		order2.setOrderDate(new Timestamp(System.currentTimeMillis()));
 		order2.setDueDate(new Timestamp(System.currentTimeMillis()));
+		order2.setActive(true);
+		order2.setUpdated(new Timestamp(System.currentTimeMillis()));
 		OrderHeader.DAO.store(order2);
 		
 		// Verify that we cannot add the new group.
@@ -89,6 +95,8 @@ public class OrderGroupTest {
 		OrderGroup orderGroup = new OrderGroup();
 		orderGroup.setParent(facility);
 		orderGroup.setOrderGroupId("OG1");
+		orderGroup.setActive(true);
+		orderGroup.setUpdated(new Timestamp(System.currentTimeMillis()));
 		orderGroup.DAO.store(orderGroup);
 		
 		OrderHeader order1 = new OrderHeader();
@@ -96,6 +104,8 @@ public class OrderGroupTest {
 		order1.setOrderId("1");
 		order1.setOrderDate(new Timestamp(System.currentTimeMillis()));
 		order1.setDueDate(new Timestamp(System.currentTimeMillis()));
+		order1.setActive(true);
+		order1.setUpdated(new Timestamp(System.currentTimeMillis()));
 		OrderHeader.DAO.store(order1);
 		
 		orderGroup.addOrderHeader(order1);

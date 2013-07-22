@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CsvImporter.java,v 1.29 2013/07/19 23:24:29 jeffw Exp $
+ *  $Id: CsvImporter.java,v 1.30 2013/07/22 04:30:36 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -101,14 +101,14 @@ public class CsvImporter implements ICsvImporter {
 				orderCsvBeanImport(importBean, inFacility, processTime);
 			}
 
-			updateOrderArchiveStatuses(inFacility, processTime);
-			updateConntainerArchiveStatuses(inFacility, processTime);
+			archiveOrderStatuses(inFacility, processTime);
+			archiveContainerStatuses(inFacility, processTime);
 
 			LOGGER.debug("End order import.");
 
 			csvReader.close();
 
-			cleanupOldOrders();
+			cleanupArchivedOrders();
 
 		} catch (FileNotFoundException e) {
 			LOGGER.error("", e);
@@ -148,7 +148,7 @@ public class CsvImporter implements ICsvImporter {
 					}
 				}
 
-				updateItemArchiveStatuses(inFacility, processTime);
+				archiveItemStatuses(inFacility, processTime);
 
 				LOGGER.debug("End DDC inventory import.");
 
@@ -189,7 +189,7 @@ public class CsvImporter implements ICsvImporter {
 					slottedInventoryCsvBeanImport(importBean, inFacility, processTime);
 				}
 
-				updateItemArchiveStatuses(inFacility, processTime);
+				archiveItemStatuses(inFacility, processTime);
 
 				LOGGER.debug("End slotted inventory import.");
 			}
@@ -207,7 +207,7 @@ public class CsvImporter implements ICsvImporter {
 	 * @param inFacility
 	 * @param inProcessTime
 	 */
-	private void updateItemArchiveStatuses(final Facility inFacility, final Timestamp inProcessTime) {
+	private void archiveItemStatuses(final Facility inFacility, final Timestamp inProcessTime) {
 		LOGGER.debug("Archive unreferenced item data");
 
 		// Inactivate the DDC item that don't match the import timestamp.
@@ -243,7 +243,7 @@ public class CsvImporter implements ICsvImporter {
 	 * @param inFacility
 	 * @param inProcessTime
 	 */
-	private void updateOrderArchiveStatuses(final Facility inFacility, final Timestamp inProcessTime) {
+	private void archiveOrderStatuses(final Facility inFacility, final Timestamp inProcessTime) {
 		LOGGER.debug("Archive unreferenced order data");
 
 		// Inactivate the orders that don't match the import timestamp.
@@ -295,7 +295,7 @@ public class CsvImporter implements ICsvImporter {
 	 * @param inFacility
 	 * @param inProcessTime
 	 */
-	private void updateConntainerArchiveStatuses(final Facility inFacility, final Timestamp inProcessTime) {
+	private void archiveContainerStatuses(final Facility inFacility, final Timestamp inProcessTime) {
 		LOGGER.debug("Archive unreferenced container data");
 
 		// Inactivate the orders that don't match the import timestamp.
@@ -332,7 +332,7 @@ public class CsvImporter implements ICsvImporter {
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	private void cleanupOldOrders() {
+	private void cleanupArchivedOrders() {
 		// ContainerUse
 		// Container
 		// WorkInstructions
@@ -511,6 +511,7 @@ public class CsvImporter implements ICsvImporter {
 			}
 
 			result.setUpdated(inEdiProcessTime);
+			result.setActive(true);
 			try {
 				mContainerDao.store(result);
 			} catch (DaoException e) {

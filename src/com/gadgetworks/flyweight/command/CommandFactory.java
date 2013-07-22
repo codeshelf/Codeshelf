@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandFactory.java,v 1.6 2013/03/04 05:40:39 jeffw Exp $
+ *  $Id: CommandFactory.java,v 1.7 2013/07/22 04:30:18 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.flyweight.command;
 
@@ -40,7 +40,7 @@ public final class CommandFactory {
 		NetCommandGroup cmdGroupID;
 
 		// Read the command group ID and endpoint from the input stream, and create the command for it.
-		cmdGroupID = new NetCommandGroup(CommandGroupEnum.INVALID);
+		cmdGroupID = new NetCommandGroup();
 		inInputStream.readNBitInteger(cmdGroupID);
 
 		NetEndpoint endpoint = new NetEndpoint(NetEndpoint.MGMT_ENDPOINT_NUM);
@@ -85,7 +85,7 @@ public final class CommandFactory {
 	private static ICommand createAssocCommand(BitFieldInputStream inInputStream) throws IOException {
 		ICommand result = null;
 
-		NetCommandId extCmdID = new NetCommandId(NBitInteger.INIT_VALUE);
+		NetCommandId extCmdID = new NetCommandId();
 		inInputStream.readNBitInteger(extCmdID);
 
 		switch (extCmdID.getValue()) {
@@ -123,7 +123,7 @@ public final class CommandFactory {
 	private static ICommand createNetMgmtCommand(BitFieldInputStream inInputStream) throws IOException {
 		ICommand result = null;
 
-		NetCommandId extCmdID = new NetCommandId(NBitInteger.INIT_VALUE);
+		NetCommandId extCmdID = new NetCommandId();
 		inInputStream.readNBitInteger(extCmdID);
 
 		switch (extCmdID.getValue()) {
@@ -157,7 +157,7 @@ public final class CommandFactory {
 	private static ICommand createControlCommand(BitFieldInputStream inInputStream) throws IOException {
 		ICommand result = null;
 
-		NetCommandId extCmdID = new NetCommandId(NBitInteger.INIT_VALUE);
+		NetCommandId extCmdID = new NetCommandId();
 		inInputStream.readNBitInteger(extCmdID);
 
 		switch (extCmdID.getValue()) {

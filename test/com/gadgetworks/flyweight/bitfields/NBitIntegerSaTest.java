@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005, 2006, Jeffrey B. Williams, All rights reserved
- *  $Id: NBitIntegerSaTest.java,v 1.1 2013/03/04 04:47:29 jeffw Exp $
+ *  $Id: NBitIntegerSaTest.java,v 1.2 2013/07/22 04:30:36 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.flyweight.bitfields;
@@ -98,13 +98,6 @@ public class NBitIntegerSaTest extends TestCase {
 			}
 
 			try {
-				testInt.setValue((byte) 9);
-				fail();
-			} catch (OutOfRangeException e) {
-				// Expected condition.
-			}
-
-			try {
 				testInt.setValue((byte) -1);
 				fail();
 			} catch (OutOfRangeException e) {
@@ -141,7 +134,31 @@ public class NBitIntegerSaTest extends TestCase {
 		} catch (OutOfRangeException e) {
 			fail();
 		}
+	}
 
+	/*
+	 * Test method for 'com.gadgetworks.bitfields.NBitInteger.getValue()' for an uninitialized value.
+	 */
+	public final void testUnitialized() {
+
+		try {
+			NBitInteger testInt = new NBitInteger((byte) 3);
+
+			try {
+				short value = testInt.getValue();
+				fail();
+			} catch (OutOfRangeException e) {
+				// Expected condition.
+			}
+
+			testInt.setValue((byte) 1);
+			assertEquals(1, testInt.getValue());
+
+		} catch (IllegalBoundsException e) {
+			fail();
+		} catch (OutOfRangeException e) {
+			fail();
+		}
 	}
 
 	/*

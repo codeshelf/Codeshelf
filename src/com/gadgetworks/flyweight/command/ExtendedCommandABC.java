@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: ExtendedCommandABC.java,v 1.2 2013/03/03 23:27:20 jeffw Exp $
+ *  $Id: ExtendedCommandABC.java,v 1.3 2013/07/22 04:30:18 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.flyweight.command;
 
@@ -55,7 +55,7 @@ public abstract class ExtendedCommandABC extends CommandABC {
 	public ExtendedCommandABC() {
 		super();
 
-		mExtendedCommandID = new NetCommandId(NBitInteger.INIT_VALUE);
+		mExtendedCommandID = new NetCommandId();
 	}
 
 	// --------------------------------------------------------------------------

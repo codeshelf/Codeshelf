@@ -1,11 +1,13 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiProcessorTest.java,v 1.8 2013/04/11 07:42:45 jeffw Exp $
+ *  $Id: EdiProcessorTest.java,v 1.9 2013/07/22 04:30:36 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
@@ -15,9 +17,13 @@ import org.junit.Test;
 
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
+import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
+import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
+import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.IEdiService;
 import com.gadgetworks.codeshelf.model.domain.Organization;
+import com.google.inject.Inject;
 
 /**
  * @author jeffw
@@ -70,6 +76,26 @@ public class EdiProcessorTest extends EdiTestABC {
 		Assert.assertNotNull(foundThread);
 	}
 
+	public final class TestFacilityDao extends GenericDaoABC<Facility> implements ITypedDao<Facility> {
+		private Facility mFacility;
+		
+		@Inject
+		public TestFacilityDao(final ISchemaManager inSchemaManager, final Facility inFacility) {
+			super(inSchemaManager);
+			mFacility = inFacility;
+		}
+
+		public final Class<Facility> getDaoClass() {
+			return Facility.class;
+		}
+		
+		public final List<Facility> getAll() {
+			List<Facility> list = new ArrayList<Facility>();
+			list.add(mFacility);
+			return list;
+		}
+	}
+
 	@Test
 	public final void ediProcessorTest() {
 
@@ -79,17 +105,28 @@ public class EdiProcessorTest extends EdiTestABC {
 
 		final Result linkedResult = new Result();
 		final Result unlinkedResult = new Result();
+		
+		Organization organization = new Organization();
+		organization.setDomainId("O-EDI.1");
+		mOrganizationDao.store(organization);
+
+		organization.createFacility("F-EDI.1", "TEST", PositionTypeEnum.METERS_FROM_PARENT.getName(), 0.0, 0.0);
+		Facility facility = organization.getFacility("F-EDI.1");
+		facility.setParent(organization);
+		
+		TestFacilityDao facilityDao = new TestFacilityDao(mSchemaManager, facility);
+		facilityDao.store(facility);
 
 		IEdiService ediServiceLinked = new IEdiService() {
-
-			public String getServiceName() {
-				return "TEST";
-			}
-
+			
 			public EdiServiceStateEnum getServiceStateEnum() {
 				return EdiServiceStateEnum.LINKED;
 			}
-
+			
+			public String getServiceName() {
+				return "LINKED";
+			}
+			
 			public Boolean checkForCsvUpdates(ICsvImporter inCsvImporter) {
 				linkedResult.processed = true;
 				return true;
@@ -98,26 +135,22 @@ public class EdiProcessorTest extends EdiTestABC {
 
 		IEdiService ediServiceUnlinked = new IEdiService() {
 
-			public String getServiceName() {
-				return "TEST";
-			}
-
 			public EdiServiceStateEnum getServiceStateEnum() {
 				return EdiServiceStateEnum.UNLINKED;
 			}
-
+			
+			public String getServiceName() {
+				return "UNLINKED";
+			}
+			
 			public Boolean checkForCsvUpdates(ICsvImporter inCsvImporter) {
 				unlinkedResult.processed = true;
 				return true;
 			}
 		};
-
-		Organization organization = new Organization();
-		organization.setDomainId("O-EDI.1");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-EDI.1", "TEST", PositionTypeEnum.METERS_FROM_PARENT.getName(), 0.0, 0.0);
-		Facility facility = organization.getFacility("F-EDI.1");
+		
+		facility.addEdiService(ediServiceUnlinked);
+		facility.addEdiService(ediServiceLinked);
 
 		ICsvImporter csvImporter = new ICsvImporter() {
 			public void importOrdersFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
@@ -131,7 +164,7 @@ public class EdiProcessorTest extends EdiTestABC {
 			}
 		};
 
-		IEdiProcessor ediProcessor = new EdiProcessor(csvImporter, mFacilityDao);
+		IEdiProcessor ediProcessor = new EdiProcessor(csvImporter, facilityDao);
 		BlockingQueue<String> testBlockingQueue = new ArrayBlockingQueue<>(100);
 		ediProcessor.startProcessor(testBlockingQueue);
 

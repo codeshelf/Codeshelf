@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandNetMgmtCheck.java,v 1.3 2013/03/03 23:27:20 jeffw Exp $
+ *  $Id: CommandNetMgmtCheck.java,v 1.4 2013/07/22 04:30:17 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.flyweight.command;
@@ -173,9 +173,9 @@ public final class CommandNetMgmtCheck extends CommandNetMgmtABC {
 			mGUID = new String(temp);
 			mChannel = inInputStream.readByte();
 			// Yowsa!  No support for unsigned bytes in Java.  Gotta convert to short.
-			mChannelEnergy = new NetChannelValue(NBitInteger.INIT_VALUE);
+			mChannelEnergy = new NetChannelValue();
 			inInputStream.readNBitInteger(mChannelEnergy);
-			mLastRcvdLinkQuality = new NetChannelValue(NBitInteger.INIT_VALUE);
+			mLastRcvdLinkQuality = new NetChannelValue();
 			inInputStream.readNBitInteger(mLastRcvdLinkQuality);
 
 		} catch (IOException e) {

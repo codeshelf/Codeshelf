@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiTestABC.java,v 1.1 2013/04/11 07:42:45 jeffw Exp $
+ *  $Id: EdiTestABC.java,v 1.2 2013/07/22 04:30:36 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -64,7 +64,7 @@ public abstract class EdiTestABC {
 	protected SubLocationDao		mSubLocationDao;
 
 	private IUtil					mUtil;
-	private ISchemaManager			mSchemaManager;
+	protected ISchemaManager		mSchemaManager;
 	private IDatabase				mDatabase;
 
 	public EdiTestABC() {
@@ -77,7 +77,8 @@ public abstract class EdiTestABC {
 		try {
 			mUtil = new IUtil() {
 
-				public void setLoggingLevelsFromPrefs(Organization inOrganization, ITypedDao<PersistentProperty> inPersistentPropertyDao) {
+				public void setLoggingLevelsFromPrefs(Organization inOrganization,
+					ITypedDao<PersistentProperty> inPersistentPropertyDao) {
 				}
 
 				public String getVersionString() {

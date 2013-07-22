@@ -95,6 +95,8 @@ public class OptimisticLockExceptionTest {
 		order1.setPickStrategyEnum(PickStrategyEnum.SERIAL);
 		order1.setOrderDate(new Timestamp(System.currentTimeMillis()));
 		order1.setDueDate(new Timestamp(System.currentTimeMillis()));
+		order1.setActive(true);
+		order1.setUpdated(new Timestamp(System.currentTimeMillis()));
 		OrderHeader.DAO.store(order1);
 
 		OrderHeader foundOrder = OrderHeader.DAO.findByDomainId(facility, "OPTIMISTIC-123");

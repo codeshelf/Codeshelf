@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: NetChannelValue.java,v 1.1 2013/02/20 08:28:23 jeffw Exp $
+ *  $Id: NetChannelValue.java,v 1.2 2013/07/22 04:30:18 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.flyweight.command;
@@ -17,6 +17,10 @@ import com.gadgetworks.flyweight.bitfields.NBitInteger;
 public class NetChannelValue extends NBitInteger {
 
 	public static final byte	CHANNEL_ENERGY_BITS	= 8;
+
+	public NetChannelValue() {
+		super(CHANNEL_ENERGY_BITS);
+	}
 
 	public NetChannelValue(final byte inNewValue) {
 		super(CHANNEL_ENERGY_BITS, inNewValue);

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: RadioController.java,v 1.14 2013/07/19 02:40:09 jeffw Exp $
+ *  $Id: RadioController.java,v 1.15 2013/07/22 04:30:36 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.device;
@@ -386,7 +386,7 @@ public class RadioController implements IRadioController {
 						mChannelInfo[channel] = new ChannelInfo();
 						mChannelInfo[channel].setChannelEnergy((short) MAX_CHANNEL_VALUE);
 					} else {
-						mChannelInfo[channel].setControllerCount(NBitInteger.INIT_VALUE);
+						mChannelInfo[channel].setControllerCount(0);
 						mChannelInfo[channel].setChannelEnergy((short) MAX_CHANNEL_VALUE);
 					}
 
@@ -394,8 +394,8 @@ public class RadioController implements IRadioController {
 						mBroadcastNetworkId,
 						PRIVATE_GUID,
 						channel,
-						new NetChannelValue(NBitInteger.INIT_VALUE),
-						new NetChannelValue(NBitInteger.INIT_VALUE));
+						new NetChannelValue((byte) 0),
+						new NetChannelValue((byte) 0));
 					sendCommand(netCheck, mBroadcastAddress, false);
 
 					// Wait NETCHECK delay millis before sending the next net-check.
@@ -624,13 +624,13 @@ public class RadioController implements IRadioController {
 					inCommand.getNetworkId(),
 					responseGUID,
 					inCommand.getChannel(),
-					new NetChannelValue(NBitInteger.INIT_VALUE),
-					new NetChannelValue(NBitInteger.INIT_VALUE));
+					new NetChannelValue((byte) 0),
+					new NetChannelValue((byte) 0));
 				this.sendCommand(netCheck, mBroadcastAddress, false);
 			}
 		} else {
 			// This is a net-check response.
-			if (networkId.equals(IPacket.BROADCAST_NETWORK_ID)) {
+			if (networkId.getValue() == IPacket.BROADCAST_NETWORK_ID) {
 
 				// If this is a all-network net-check broadcast response then book keep the values.
 

@@ -1,12 +1,14 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CheDeviceLogic.java,v 1.9 2013/07/20 00:54:49 jeffw Exp $
+ *  $Id: CheDeviceLogic.java,v 1.10 2013/07/22 04:30:36 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -284,9 +286,9 @@ public class CheDeviceLogic extends AisleDeviceLogic {
 	 * @return
 	 */
 	private String getScanPrefix(String inScanStr) {
-		
+
 		String result = "";
-	
+
 		if (inScanStr.startsWith(COMMAND_PREFIX)) {
 			result = COMMAND_PREFIX;
 		} else if (inScanStr.startsWith(USER_PREFIX)) {
@@ -300,7 +302,7 @@ public class CheDeviceLogic extends AisleDeviceLogic {
 		} else if (inScanStr.startsWith(POSITION_PREFIX)) {
 			result = POSITION_PREFIX;
 		}
-		
+
 		return result;
 	}
 
@@ -564,6 +566,17 @@ public class CheDeviceLogic extends AisleDeviceLogic {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * Sort the WIs by their distance along the path.
+	 */
+	private class WiDistanceComparator implements Comparator<WorkInstruction> {
+
+		public int compare(WorkInstruction inWorkInstruction1, WorkInstruction inWorkInstruction2) {
+			return inWorkInstruction1.getPosAlongPath().compareTo(inWorkInstruction2.getPosAlongPath());
+		}
+	};
+
+	// --------------------------------------------------------------------------
+	/**
 	 */
 	private boolean selectNextActivePicks() {
 		boolean result = false;
@@ -572,10 +585,9 @@ public class CheDeviceLogic extends AisleDeviceLogic {
 		// The "next location" is the first location we find for the next pick.
 		String firstLocationId = null;
 		String firstItemId = null;
-		for (String containerId : mContainersMap.values()) {
-			Iterator<WorkInstruction> wiIter = mAllPicksWiList.iterator();
-			while (wiIter.hasNext()) {
-				WorkInstruction wi = wiIter.next();
+		Collections.sort(mAllPicksWiList, new WiDistanceComparator());
+		for (WorkInstruction wi : mAllPicksWiList) {
+			for (String containerId : mContainersMap.values()) {
 				// If the WI is for this container then consider it.
 				if (wi.getContainerId().equals(containerId)) {
 					// If the WI is INPROGRESS or NEW then consider it.
@@ -588,7 +600,6 @@ public class CheDeviceLogic extends AisleDeviceLogic {
 								wi.setStarted(new Timestamp(System.currentTimeMillis()));
 								mActivePickWiList.add(wi);
 								result = true;
-								//wiIter.remove();
 							}
 						}
 					}
