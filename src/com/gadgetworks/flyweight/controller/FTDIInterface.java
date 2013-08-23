@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: FTDIInterface.java,v 1.4 2013/04/02 04:29:02 jeffw Exp $
+ *  $Id: FTDIInterface.java,v 1.5 2013/08/23 21:28:08 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.flyweight.controller;
@@ -133,6 +133,11 @@ public final class FTDIInterface extends SerialInterfaceABC {
 	 * (non-Javadoc)
 	 * @see com.gadgetworks.controller.SerialInterfaceABC#doSetupConnection()
 	 */
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inVidPid
+	 * @return
+	 */
 	private boolean trySetupConnection(long inVidPid) {
 
 		boolean result = false;
@@ -155,6 +160,7 @@ public final class FTDIInterface extends SerialInterfaceABC {
 				LOGGER.info("No Flyweight dongle found!");
 			} else {
 				result = true;
+				//mJD2XXInterface.close();
 				mJD2XXInterface.open(deviceToOpen);
 				mJD2XXInterface.purge(JD2XX.PURGE_RX);
 				mJD2XXInterface.purge(JD2XX.PURGE_TX);
@@ -208,6 +214,7 @@ public final class FTDIInterface extends SerialInterfaceABC {
 		} catch (IOException e) {
 			LOGGER.error("", e);
 			//resetInterface();
+			mJD2XXInterface = new JD2XX();
 		}
 
 		return result;

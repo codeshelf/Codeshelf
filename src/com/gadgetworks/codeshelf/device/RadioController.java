@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: RadioController.java,v 1.15 2013/07/22 04:30:36 jeffw Exp $
+ *  $Id: RadioController.java,v 1.16 2013/08/23 21:28:07 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.device;
@@ -78,7 +78,7 @@ public class RadioController implements IRadioController {
 	private static final long									NETCHECK_DELAY_MILLIS				= 250;
 
 	private static final long									ACK_TIMEOUT_MILLIS					= 50;
-	private static final int									ACK_SEND_RETRY_COUNT				= 5;
+	private static final int									ACK_SEND_RETRY_COUNT				= 10;
 	private static final long									EVENT_SLEEP_MILLIS					= 50;
 	private static final long									INTERFACE_CHECK_MILLIS				= 5 * 1000;
 	private static final long									CONTROLLER_SLEEP_MILLIS				= 10;
