@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.79 2013/07/22 04:30:36 jeffw Exp $
+ *  $Id: Facility.java,v 1.80 2013/08/26 02:14:10 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -93,7 +93,7 @@ public class Facility extends LocationABC<Organization> {
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
-	@Getter
+	//@Getter
 	private Map<String, Container>			containers		= new HashMap<String, Container>();
 
 	@OneToMany(mappedBy = "parent", fetch = FetchType.EAGER)

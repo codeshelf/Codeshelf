@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ItemMaster.java,v 1.27 2013/04/26 03:26:04 jeffw Exp $
+ *  $Id: ItemMaster.java,v 1.28 2013/08/26 02:14:10 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -95,6 +95,13 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	@Setter
 	@JsonProperty
 	private String				ddcId;
+
+	// SlotFlex Id
+	@Column(nullable = true)
+	@Getter
+	@Setter
+	@JsonProperty
+	private String				slotFlexId;
 
 	// Ddc pack depth
 	@Column(nullable = true)

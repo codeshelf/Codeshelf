@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ISchemaManager.java,v 1.12 2012/12/15 02:25:42 jeffw Exp $
+ *  $Id: ISchemaManager.java,v 1.13 2013/08/26 02:14:10 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -22,8 +22,9 @@ public interface ISchemaManager {
 	// Database schema version increases monotonically as there are incompatible changes to the DB schema.	
 	int		DATABASE_VERSION_1				= 1;								// Original DB
 	int		DATABASE_VERSION_2				= 2;								// Add order fields
+	int		DATABASE_VERSION_3				= 3;								// Add Slot Flex tag ID to item master.
 
-	int		DATABASE_VERSION_CUR			= DATABASE_VERSION_2;
+	int		DATABASE_VERSION_CUR			= DATABASE_VERSION_3;
 
 	String getDbAddress();
 	

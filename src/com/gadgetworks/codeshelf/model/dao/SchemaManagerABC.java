@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: SchemaManagerABC.java,v 1.34 2013/07/19 23:24:28 jeffw Exp $
+ *  $Id: SchemaManagerABC.java,v 1.35 2013/08/26 02:14:10 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -276,6 +276,10 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 			result &= doUpgrade2();
 		}
 
+		if (inOldVersion < ISchemaManager.DATABASE_VERSION_3) {
+			result &= doUpgrade3();
+		}
+
 		result &= updateSchemaVersion(ISchemaManager.DATABASE_VERSION_CUR);
 
 		return result;
@@ -290,6 +294,18 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		result &= safeAddColumn("order_header", "custoemr_id VARCHAR(255)");
 		result &= safeAddColumn("order_header", "shipment_id VARCHAR(255)");
+
+		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @return
+	 */
+	private boolean doUpgrade3() {
+		boolean result = true;
+
+		result &= safeAddColumn("item_master", "slot_flex_id VARCHAR(255)");
 
 		return result;
 	}
@@ -584,6 +600,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 			"description VARCHAR(255), " //
 					+ "lot_handling_enum VARCHAR(255) NOT NULL, " //
 					+ "ddc_id VARCHAR(255), " //
+					+ "slot_flex_id VARCHAR(255), " //
 					+ "ddc_pack_depth INTEGER, " //
 					+ "active BOOLEAN DEFAULT TRUE NOT NULL, " //
 					+ "updated TIMESTAMP NOT NULL, " //
