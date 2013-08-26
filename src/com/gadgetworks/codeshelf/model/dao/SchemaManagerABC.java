@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: SchemaManagerABC.java,v 1.35 2013/08/26 02:14:10 jeffw Exp $
+ *  $Id: SchemaManagerABC.java,v 1.36 2013/08/26 03:52:35 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -582,7 +582,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		// Item
 		result &= createTable("item", //
 			"quantity DECIMAL NOT NULL, " //
-					+ "ddc_pos_along_path DOUBLE PRECISION, " //
+					+ "pos_along_path DOUBLE PRECISION, " //
 					+ "active BOOLEAN DEFAULT TRUE NOT NULL, " //
 					+ "updated TIMESTAMP NOT NULL, " //
 					+ "stored_location_persistentid " + UUID_TYPE + " NOT NULL, " //

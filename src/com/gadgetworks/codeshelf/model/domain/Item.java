@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Item.java,v 1.28 2013/04/26 03:26:04 jeffw Exp $
+ *  $Id: Item.java,v 1.29 2013/08/26 03:52:35 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -97,7 +97,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	@ManyToOne(optional = true)
 	@Getter
 	@Setter
-	private Double				ddcPosAlongPath;
+	private Double				posAlongPath;
 
 	@Column(nullable = false)
 	@Getter

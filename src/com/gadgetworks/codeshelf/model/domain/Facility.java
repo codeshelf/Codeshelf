@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.80 2013/08/26 02:14:10 jeffw Exp $
+ *  $Id: Facility.java,v 1.81 2013/08/26 03:52:34 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -719,7 +719,7 @@ public class Facility extends LocationABC<Organization> {
 												quantityToPick,
 												container,
 												foundLocation,
-												selectedItem.getDdcPosAlongPath());
+												selectedItem.getPosAlongPath());
 											if (plannedWi != null) {
 												result.add(plannedWi);
 											}
@@ -919,7 +919,7 @@ public class Facility extends LocationABC<Organization> {
 			Collections.sort(locationItems, new DdcItemComparator());
 			for (Item item : locationItems) {
 				ddcPos += distPerItem * item.getQuantity();
-				item.setDdcPosAlongPath(ddcPos);
+				item.setPosAlongPath(ddcPos);
 				try {
 					item.DAO.store(item);
 				} catch (DaoException e) {
@@ -938,9 +938,9 @@ public class Facility extends LocationABC<Organization> {
 					lastDdcGroup = new ItemDdcGroup();
 					lastDdcGroup.setDdcGroupId(item.getParent().getDdcId());
 					lastDdcGroup.setParent(item.getStoredLocation());
-					lastDdcGroup.setStartPosAlongPath(item.getDdcPosAlongPath());
+					lastDdcGroup.setStartPosAlongPath(item.getPosAlongPath());
 				}
-				lastDdcGroup.setEndPosAlongPath(item.getDdcPosAlongPath());
+				lastDdcGroup.setEndPosAlongPath(item.getPosAlongPath());
 			}
 			// Store the last DDC 
 			if (lastDdcGroup != null) {
