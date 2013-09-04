@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: H2SchemaManager.java,v 1.65 2013/05/26 21:50:40 jeffw Exp $
+ *  $Id: H2SchemaManager.java,v 1.66 2013/09/04 20:30:06 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -79,7 +79,7 @@ public final class H2SchemaManager extends SchemaManagerABC {
 	 *  @return
 	 */
 	public String getApplicationDatabaseURL() {
-		String result = DB_URL;
+		String result = DB_INIT_URL;
 
 		// Setup the data directory for this application.
 		// We switched H2 to in-memory instances only.

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CheDeviceLogic.java,v 1.10 2013/07/22 04:30:36 jeffw Exp $
+ *  $Id: CheDeviceLogic.java,v 1.11 2013/09/04 20:30:05 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -23,11 +23,12 @@ import lombok.experimental.Accessors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.gadgetworks.codeshelf.device.AisleDeviceLogic.LedCmd;
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.flyweight.command.ColorEnum;
-import com.gadgetworks.flyweight.command.CommandControlLight;
 import com.gadgetworks.flyweight.command.CommandControlMessage;
+import com.gadgetworks.flyweight.command.CommandControlRequest;
 import com.gadgetworks.flyweight.command.EffectEnum;
 import com.gadgetworks.flyweight.command.ICommand;
 import com.gadgetworks.flyweight.command.NetEndpoint;
@@ -40,7 +41,7 @@ import com.gadgetworks.flyweight.controller.NetworkDeviceStateEnum;
  * @author jeffw
  *
  */
-public class CheDeviceLogic extends AisleDeviceLogic {
+public class CheDeviceLogic extends DeviceLogicABC {
 
 	private static final Logger		LOGGER					= LoggerFactory.getLogger(CheDeviceLogic.class);
 
@@ -60,7 +61,7 @@ public class CheDeviceLogic extends AisleDeviceLogic {
 	private static final String		SCAN_CONTAINER_MSG		= "SCAN CONTAINER  ";
 	private static final String		SELECT_POSITION_MSG		= "SELECT POSITION ";
 	private static final String		SHORT_PICK_CONFIRM_MSG	= "CONFIRM SHORT   ";
-	private static final String		PICK_COMPLETE_MSG		= "PICK COMPLETE   ";
+	private static final String		PICK_COMPLETE_MSG		= "REQUEST COMPLETE   ";
 	private static final String		YES_NO_MSG				= "YES OR NO       ";
 
 	private static final String		STARTWORK_COMMAND		= "START";
@@ -134,11 +135,14 @@ public class CheDeviceLogic extends AisleDeviceLogic {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * Send a light command to the CHE to light a position
-	 * @param inPosition
+	 * Send a pick request command to the CHE to light a position
+	 * @param inPos
+	 * @param inReqQty
+	 * @param inMinQty
+	 * @param inMaxQty
 	 */
-	private void sendCheLightCommand(final Short inChanel, final EffectEnum inEffect, final List<LedSample> inLedSamples) {
-		ICommand command = new CommandControlLight(NetEndpoint.PRIMARY_ENDPOINT, inChanel, inEffect, inLedSamples);
+	private void sendPickRequestCommand(final int inPos, final int inReqQty, final int inMinQty, final int inMaxQty) {
+		ICommand command = new CommandControlRequest(NetEndpoint.PRIMARY_ENDPOINT, (byte) inPos, (byte) inReqQty, (byte) inMinQty, (byte) inMaxQty);
 		mRadioController.sendCommand(command, getAddress(), true);
 	}
 
@@ -188,9 +192,6 @@ public class CheDeviceLogic extends AisleDeviceLogic {
 	 * @param inGuid
 	 */
 	private void ledControllerClearLeds() {
-		// Clear the CHE's own LEDs.
-		clearLedCmdFor(getGuid());
-
 		// Clear the LEDs for the last location the CHE worked.
 		INetworkDevice device = mDeviceManager.getDeviceByGuid(mLastLedControllerGuid);
 		if (device instanceof AisleDeviceLogic) {
@@ -389,10 +390,7 @@ public class CheDeviceLogic extends AisleDeviceLogic {
 				break;
 		}
 
-		List<LedSample> sampleList = new ArrayList<LedSample>();
-		LedSample sample = new LedSample(CommandControlLight.POSITION_ALL, ColorEnum.RED);
-		sampleList.add(sample);
-		sendCheLightCommand(CommandControlLight.CHANNEL_ALL, EffectEnum.ERROR, sampleList);
+		sendPickRequestCommand(CommandControlRequest.POSITION_ALL, (byte) 0, (byte) 0, (byte) 0);
 	}
 
 	// --------------------------------------------------------------------------
@@ -621,31 +619,34 @@ public class CheDeviceLogic extends AisleDeviceLogic {
 			ledControllerClearLeds();
 		}
 
-		// Map all of the positions that had a short pick.
-		Map<Short, WorkInstructionStatusEnum> statusMap = new HashMap<Short, WorkInstructionStatusEnum>();
-
-		// Blink the complete and incomplete containers.
-		for (WorkInstruction wi : mAllPicksWiList) {
-			Short position = 0;
-			for (Entry<String, String> mapEntry : mContainersMap.entrySet()) {
-				if (mapEntry.getValue().equals(wi.getContainerId())) {
-					// The actual position is zero-based.
-					position = (short) (Short.valueOf(mapEntry.getKey()) - 1);
-					break;
-				}
-			}
-
-			if (wi.getStatusEnum().equals(WorkInstructionStatusEnum.COMPLETE)) {
-				// Only set the status if we;ve never set it before.
-				if (statusMap.get(position) == null) {
-					ledControllerSetLed(getGuid(), CommandControlLight.CHANNEL1, position, wi.getLedColorEnum(), EffectEnum.FLASH);
-				}
-			} else {
-				// Always set the status if it's an error.
-				ledControllerSetLed(getGuid(), CommandControlLight.CHANNEL1, position, ColorEnum.RED, EffectEnum.FLASH);
-			}
-			statusMap.put(position, wi.getStatusEnum());
-		}
+//		// Map all of the positions that had a short pick.
+//		Map<Short, WorkInstructionStatusEnum> statusMap = new HashMap<Short, WorkInstructionStatusEnum>();
+//
+//		// Blink the complete and incomplete containers.
+//		for (WorkInstruction wi : mAllPicksWiList) {
+//			Short position = 0;
+//			for (Entry<String, String> mapEntry : mContainersMap.entrySet()) {
+//				if (mapEntry.getValue().equals(wi.getContainerId())) {
+//					// The actual position is zero-based.
+//					position = (short) (Short.valueOf(mapEntry.getKey()) - 1);
+//					break;
+//				}
+//			}
+//
+//			if (wi.getStatusEnum().equals(WorkInstructionStatusEnum.COMPLETE)) {
+//				// Only set the status if we've never set it before.
+//				if (statusMap.get(position) == null) {
+//					//ledControllerSetLed(getGuid(), CommandControlLight.CHANNEL1, position, wi.getLedColorEnum(), EffectEnum.FLASH);
+//					sendPickRequestCommand(position, 0, 0, 0);
+//				}
+//			} else {
+//				// Always set the status if it's an error.
+//				//ledControllerSetLed(getGuid(), CommandControlLight.CHANNEL1, position, ColorEnum.RED, EffectEnum.FLASH);
+//				sendPickRequestCommand(position, 0, 0, 0);
+//			}
+//			statusMap.put(position, wi.getStatusEnum());
+//		}
+		
 		ledControllerShowLeds(getGuid());
 
 		mCompletedWiList.clear();
@@ -703,11 +704,12 @@ public class CheDeviceLogic extends AisleDeviceLogic {
 		for (WorkInstruction wi : mActivePickWiList) {
 			for (Entry<String, String> mapEntry : mContainersMap.entrySet()) {
 				if (mapEntry.getValue().equals(wi.getContainerId())) {
-					ledControllerSetLed(getGuid(), CommandControlLight.CHANNEL1,
-					// The LED positions are zero-based.
-						(short) (Short.valueOf(mapEntry.getKey()) - 1),
-						wi.getLedColorEnum(),
-						EffectEnum.FLASH);
+//					ledControllerSetLed(getGuid(), CommandControlLight.CHANNEL1,
+//					// The LED positions are zero-based.
+//						(short) (Short.valueOf(mapEntry.getKey()) - 1),
+//						wi.getLedColorEnum(),
+//						EffectEnum.FLASH);
+					sendPickRequestCommand((Short.valueOf(mapEntry.getKey()) - 1), firstWi.getActualQuantity(), 0, firstWi.getActualQuantity());
 				}
 			}
 		}

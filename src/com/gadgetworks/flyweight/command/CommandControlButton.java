@@ -1,63 +1,76 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandControlABC.java,v 1.5 2013/09/04 20:30:05 jeffw Exp $
+ *  $Id: CommandControlButton.java,v 1.1 2013/09/04 20:30:05 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.flyweight.command;
+
+import java.io.IOException;
+
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.flyweight.bitfields.BitFieldInputStream;
 import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
 
 // --------------------------------------------------------------------------
 /**
- *  The control command is the primary means by which the remotes are controlled by the controller.
- *  There are sub-commands for sending audio, motor control, etc.  There are also sub-commands for receiving inputs from the remote.
+ *  A pick request.
  *  
- *  Format of the control command is:
- *  
- *  1B - the command ID.
- *  1B - the command ACK ID.  (If non-zero, then the command requires ACK.)
- *  nB - the control command data.
- *  
+ *  1B - Position Number
+ *  1B - Value
+ *
+ *	}
+
  *  @author jeffw
- *  
  */
-public abstract class CommandControlABC extends ExtendedCommandABC {
+public final class CommandControlButton extends CommandControlABC {
 
-	public static final int		COMMAND_CONTROL_HDR_BYTES	= 1;
-	public static final int		MAX_CONTROL_BYTES			= ICommand.MAX_COMMAND_BYTES - COMMAND_CONTROL_HDR_BYTES;
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(CommandControlButton.class);
+	
+	private static final Integer	BUTTON_COMMAND_BYTES	= 2;
 
-	public static final byte	SCAN						= 0;
-	public static final byte	MESSAGE						= 1;
-	public static final byte	LIGHT						= 2;
-	public static final byte	REQUEST						= 3;
-	public static final byte	BUTTON						= 4;
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	private Byte				mPosNum;
+
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	private Byte				mValue;
 
 	// --------------------------------------------------------------------------
 	/**
-	 *  This is the constructor to use to create a control command to send to the network.
+	 *  This is the constructor to use to create a data command to send to the network.
 	 *  @param inEndpoint	The end point to send the command.
-	 *  @param inControlBytes	The data to send in the command.
 	 */
-	public CommandControlABC(final NetEndpoint inEndpoint, final NetCommandId inExtendedCommandID) {
-		super(inEndpoint, inExtendedCommandID);
+	public CommandControlButton(final NetEndpoint inEndpoint, final Byte inPosNum, final Byte inValue) {
+		super(inEndpoint, new NetCommandId(CommandControlABC.BUTTON));
+
+		mPosNum = inPosNum;
+		mValue = inValue;
 	}
 
 	// --------------------------------------------------------------------------
 	/**
 	 *  This is the constructor to use to create a data command that's read off of the network input stream.
 	 */
-	public CommandControlABC(final NetCommandId inExtendedCommandID) {
-		super(inExtendedCommandID);
+	public CommandControlButton() {
+		super(new NetCommandId(CommandControlABC.BUTTON));
 	}
 
 	/* --------------------------------------------------------------------------
 	 * (non-Javadoc)
-	 * @see com.gadgetworks.command.ICommand#getCommandTypeEnum()
+	 * @see com.gadgetworks.controller.CommandABC#doToString()
 	 */
-	public final CommandGroupEnum getCommandTypeEnum() {
-		return CommandGroupEnum.CONTROL;
+	public String doToString() {
+		return "Button: pos: " + mPosNum + " qty:" + mValue;
 	}
 
 	/* --------------------------------------------------------------------------
@@ -66,6 +79,14 @@ public abstract class CommandControlABC extends ExtendedCommandABC {
 	 */
 	protected void doToStream(BitFieldOutputStream inOutputStream) {
 		super.doToStream(inOutputStream);
+
+		try {
+			inOutputStream.writeByte(mPosNum);
+			inOutputStream.writeByte(mValue);
+		} catch (IOException e) {
+			LOGGER.error("", e);
+		}
+
 	}
 
 	/* --------------------------------------------------------------------------
@@ -74,14 +95,23 @@ public abstract class CommandControlABC extends ExtendedCommandABC {
 	 */
 	protected void doFromStream(BitFieldInputStream inInputStream, int inCommandByteCount) {
 		super.doFromStream(inInputStream, inCommandByteCount);
+
+		try {
+			mPosNum = inInputStream.readByte();
+			mValue = inInputStream.readByte();
+		} catch (IOException e) {
+			LOGGER.error("", e);
+		}
+
 	}
 
 	/* --------------------------------------------------------------------------
 	 * (non-Javadoc)
-	 * @see com.gadgetworks.controller.CommandABC#doComputeCommandSize()
+	 * @see com.gadgetworks.command.CommandABC#doComputeCommandSize()
 	 */
+	@Override
 	protected int doComputeCommandSize() {
-		return super.doComputeCommandSize() + COMMAND_CONTROL_HDR_BYTES;
+		return super.doComputeCommandSize() + BUTTON_COMMAND_BYTES;
 	}
 
 }
