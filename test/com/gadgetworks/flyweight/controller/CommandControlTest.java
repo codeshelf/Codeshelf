@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005, 2006, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandControlTest.java,v 1.2 2013/09/04 20:30:05 jeffw Exp $
+ *  $Id: CommandControlTest.java,v 1.3 2013/09/05 03:26:03 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.flyweight.controller;
@@ -16,7 +16,7 @@ import com.gadgetworks.flyweight.bitfields.BitFieldInputStream;
 import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
 import com.gadgetworks.flyweight.command.CommandControlButton;
 import com.gadgetworks.flyweight.command.CommandControlMessage;
-import com.gadgetworks.flyweight.command.CommandControlRequest;
+import com.gadgetworks.flyweight.command.CommandControlRequestQty;
 import com.gadgetworks.flyweight.command.ICommand;
 import com.gadgetworks.flyweight.command.IPacket;
 import com.gadgetworks.flyweight.command.NetAddress;
@@ -62,22 +62,22 @@ public final class CommandControlTest extends CommandABCTest {
 		ICommand command = packet.getCommand();
 
 		// If it is not the datagram command then something went wrong.
-		if (!(command instanceof CommandControlRequest))
-			fail("Not a CommandControlRequest command");
+		if (!(command instanceof CommandControlRequestQty))
+			fail("Not a CommandControlRequestQty command");
 
-		Byte posNum = ((CommandControlRequest) command).getPosNum();
+		Byte posNum = ((CommandControlRequestQty) command).getPosNum();
 		if (!POS_NUM.equals(posNum))
 			fail("Command data is not correct");
 
-		Byte req = ((CommandControlRequest) command).getReqValue();
+		Byte req = ((CommandControlRequestQty) command).getReqValue();
 		if (!REQ_VALUE.equals(req))
 			fail("Command data is not correct");
 
-		Byte min = ((CommandControlRequest) command).getMinValue();
+		Byte min = ((CommandControlRequestQty) command).getMinValue();
 		if (!MIN_VALUE.equals(min))
 			fail("Command data is not correct");
 
-		Byte max = ((CommandControlRequest) command).getMaxValue();
+		Byte max = ((CommandControlRequestQty) command).getMaxValue();
 		if (!MAX_VALUE.equals(max))
 			fail("Command data is not correct");
 
@@ -90,7 +90,7 @@ public final class CommandControlTest extends CommandABCTest {
 		BitFieldOutputStream outputStream = new BitFieldOutputStream(byteArray);
 
 		// Create a new command.
-		ICommand command = new CommandControlRequest(NetEndpoint.PRIMARY_ENDPOINT, POS_NUM, REQ_VALUE, MIN_VALUE, MAX_VALUE);
+		ICommand command = new CommandControlRequestQty(NetEndpoint.PRIMARY_ENDPOINT, POS_NUM, REQ_VALUE, MIN_VALUE, MAX_VALUE);
 
 		// Create the network ID
 		NetworkId networkId = new NetworkId((byte) 1);
@@ -128,7 +128,7 @@ public final class CommandControlTest extends CommandABCTest {
 
 		// If it is not the datagram command then something went wrong.
 		if (!(command instanceof CommandControlButton))
-			fail("Not a CommandControlRequest command");
+			fail("Not a CommandControlRequestQty command");
 
 		Byte posNum = ((CommandControlButton) command).getPosNum();
 		if (!POS_NUM.equals(posNum))

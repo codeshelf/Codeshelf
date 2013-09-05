@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandControlRequest.java,v 1.1 2013/09/04 20:30:05 jeffw Exp $
+ *  $Id: CommandControlRequestQty.java,v 1.1 2013/09/05 03:26:03 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.flyweight.command;
@@ -31,11 +31,11 @@ import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
 
  *  @author jeffw
  */
-public final class CommandControlRequest extends CommandControlABC {
+public final class CommandControlRequestQty extends CommandControlABC {
 
 	public static final Byte		POSITION_ALL			= 0;
 
-	private static final Logger		LOGGER					= LoggerFactory.getLogger(CommandControlRequest.class);
+	private static final Logger		LOGGER					= LoggerFactory.getLogger(CommandControlRequestQty.class);
 
 	private static final Integer	REQUEST_COMMAND_BYTES	= 4;
 
@@ -64,12 +64,12 @@ public final class CommandControlRequest extends CommandControlABC {
 	 *  This is the constructor to use to create a data command to send to the network.
 	 *  @param inEndpoint	The end point to send the command.
 	 */
-	public CommandControlRequest(final NetEndpoint inEndpoint,
+	public CommandControlRequestQty(final NetEndpoint inEndpoint,
 		final Byte inPosNum,
 		final Byte inReqValue,
 		final Byte inMinValue,
 		final Byte inMaxValue) {
-		super(inEndpoint, new NetCommandId(CommandControlABC.REQUEST));
+		super(inEndpoint, new NetCommandId(CommandControlABC.REQUEST_QTY));
 
 		mPosNum = inPosNum;
 		mReqValue = inReqValue;
@@ -81,8 +81,8 @@ public final class CommandControlRequest extends CommandControlABC {
 	/**
 	 *  This is the constructor to use to create a data command that's read off of the network input stream.
 	 */
-	public CommandControlRequest() {
-		super(new NetCommandId(CommandControlABC.REQUEST));
+	public CommandControlRequestQty() {
+		super(new NetCommandId(CommandControlABC.REQUEST_QTY));
 	}
 
 	/* --------------------------------------------------------------------------

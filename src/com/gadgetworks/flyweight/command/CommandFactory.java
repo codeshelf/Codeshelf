@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandFactory.java,v 1.8 2013/09/04 20:30:05 jeffw Exp $
+ *  $Id: CommandFactory.java,v 1.9 2013/09/05 03:26:03 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.flyweight.command;
 
@@ -173,8 +173,8 @@ public final class CommandFactory {
 				result = new CommandControlLight();
 				break;
 
-			case CommandControlABC.REQUEST:
-				result = new CommandControlRequest();
+			case CommandControlABC.REQUEST_QTY:
+				result = new CommandControlRequestQty();
 				break;
 
 			case CommandControlABC.BUTTON:

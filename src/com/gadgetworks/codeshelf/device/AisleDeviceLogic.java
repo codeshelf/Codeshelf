@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: AisleDeviceLogic.java,v 1.5 2013/07/12 21:44:38 jeffw Exp $
+ *  $Id: AisleDeviceLogic.java,v 1.6 2013/09/05 03:26:03 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.flyweight.command.ColorEnum;
+import com.gadgetworks.flyweight.command.CommandControlButton;
 import com.gadgetworks.flyweight.command.CommandControlLight;
 import com.gadgetworks.flyweight.command.EffectEnum;
 import com.gadgetworks.flyweight.command.ICommand;
@@ -134,9 +135,23 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 		return result;
 	}
 
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.flyweight.controller.INetworkDevice#scanCommandReceived(java.lang.String)
+	 */
 	@Override
-	public void commandReceived(String inCommandStr) {
+	public void scanCommandReceived(String inCommandStr) {
 		// The aisle device never returns commands.
+	}
+	
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.flyweight.controller.INetworkDevice#buttonCommandReceived(com.gadgetworks.flyweight.command.CommandControlButton)
+	 */
+	@Override
+	public void buttonCommandReceived(CommandControlButton inButtonCommand) {
+		// TODO Auto-generated method stub
+		
 	}
 
 	/**

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: CheDeviceLogic.java,v 1.11 2013/09/04 20:30:05 jeffw Exp $
+ *  $Id: CheDeviceLogic.java,v 1.12 2013/09/05 03:26:03 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
@@ -27,8 +27,9 @@ import com.gadgetworks.codeshelf.device.AisleDeviceLogic.LedCmd;
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.flyweight.command.ColorEnum;
+import com.gadgetworks.flyweight.command.CommandControlButton;
 import com.gadgetworks.flyweight.command.CommandControlMessage;
-import com.gadgetworks.flyweight.command.CommandControlRequest;
+import com.gadgetworks.flyweight.command.CommandControlRequestQty;
 import com.gadgetworks.flyweight.command.EffectEnum;
 import com.gadgetworks.flyweight.command.ICommand;
 import com.gadgetworks.flyweight.command.NetEndpoint;
@@ -61,7 +62,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private static final String		SCAN_CONTAINER_MSG		= "SCAN CONTAINER  ";
 	private static final String		SELECT_POSITION_MSG		= "SELECT POSITION ";
 	private static final String		SHORT_PICK_CONFIRM_MSG	= "CONFIRM SHORT   ";
-	private static final String		PICK_COMPLETE_MSG		= "REQUEST COMPLETE   ";
+	private static final String		PICK_COMPLETE_MSG		= "REQUEST_QTY COMPLETE   ";
 	private static final String		YES_NO_MSG				= "YES OR NO       ";
 
 	private static final String		STARTWORK_COMMAND		= "START";
@@ -142,7 +143,11 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 * @param inMaxQty
 	 */
 	private void sendPickRequestCommand(final int inPos, final int inReqQty, final int inMinQty, final int inMaxQty) {
-		ICommand command = new CommandControlRequest(NetEndpoint.PRIMARY_ENDPOINT, (byte) inPos, (byte) inReqQty, (byte) inMinQty, (byte) inMaxQty);
+		ICommand command = new CommandControlRequestQty(NetEndpoint.PRIMARY_ENDPOINT,
+			(byte) inPos,
+			(byte) inReqQty,
+			(byte) inMinQty,
+			(byte) inMaxQty);
 		mRadioController.sendCommand(command, getAddress(), true);
 	}
 
@@ -245,7 +250,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 * @see com.gadgetworks.flyweight.controller.INetworkDevice#commandReceived(java.lang.String)
 	 */
 	@Override
-	public final void commandReceived(String inCommandStr) {
+	public final void scanCommandReceived(String inCommandStr) {
 		LOGGER.info("Remote command: " + inCommandStr);
 
 		String scanPrefixStr = getScanPrefix(inCommandStr);
@@ -254,8 +259,6 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		// A command scan is always an option at any state.
 		if (inCommandStr.startsWith(COMMAND_PREFIX)) {
 			processCommandScan(scanStr);
-		} else if (inCommandStr.startsWith(POSITION_PREFIX)) {
-			processButtonScan(scanStr);
 		} else {
 			switch (mCheStateEnum) {
 				case IDLE:
@@ -272,13 +275,22 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 				case CONTAINER_POSITION:
 					// The only thing that makes sense in this mode is a button press (or a logout covered above).
-					setStateWithErrorMsg(mCheStateEnum);
+					processContainerPosition(scanPrefixStr, scanStr);
 					break;
 
 				default:
 					break;
 			}
 		}
+	}
+
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.flyweight.controller.INetworkDevice#buttonCommandReceived(com.gadgetworks.flyweight.command.CommandControlButton)
+	 */
+	@Override
+	public void buttonCommandReceived(CommandControlButton inButtonCommand) {
+		processButtonPress((int) inButtonCommand.getPosNum(), (int) inButtonCommand.getValue());
 	}
 
 	// --------------------------------------------------------------------------
@@ -390,7 +402,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				break;
 		}
 
-		sendPickRequestCommand(CommandControlRequest.POSITION_ALL, (byte) 0, (byte) 0, (byte) 0);
+		sendPickRequestCommand(CommandControlRequestQty.POSITION_ALL, (byte) 0, (byte) 0, (byte) 0);
 	}
 
 	// --------------------------------------------------------------------------
@@ -619,34 +631,34 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			ledControllerClearLeds();
 		}
 
-//		// Map all of the positions that had a short pick.
-//		Map<Short, WorkInstructionStatusEnum> statusMap = new HashMap<Short, WorkInstructionStatusEnum>();
-//
-//		// Blink the complete and incomplete containers.
-//		for (WorkInstruction wi : mAllPicksWiList) {
-//			Short position = 0;
-//			for (Entry<String, String> mapEntry : mContainersMap.entrySet()) {
-//				if (mapEntry.getValue().equals(wi.getContainerId())) {
-//					// The actual position is zero-based.
-//					position = (short) (Short.valueOf(mapEntry.getKey()) - 1);
-//					break;
-//				}
-//			}
-//
-//			if (wi.getStatusEnum().equals(WorkInstructionStatusEnum.COMPLETE)) {
-//				// Only set the status if we've never set it before.
-//				if (statusMap.get(position) == null) {
-//					//ledControllerSetLed(getGuid(), CommandControlLight.CHANNEL1, position, wi.getLedColorEnum(), EffectEnum.FLASH);
-//					sendPickRequestCommand(position, 0, 0, 0);
-//				}
-//			} else {
-//				// Always set the status if it's an error.
-//				//ledControllerSetLed(getGuid(), CommandControlLight.CHANNEL1, position, ColorEnum.RED, EffectEnum.FLASH);
-//				sendPickRequestCommand(position, 0, 0, 0);
-//			}
-//			statusMap.put(position, wi.getStatusEnum());
-//		}
-		
+		//		// Map all of the positions that had a short pick.
+		//		Map<Short, WorkInstructionStatusEnum> statusMap = new HashMap<Short, WorkInstructionStatusEnum>();
+		//
+		//		// Blink the complete and incomplete containers.
+		//		for (WorkInstruction wi : mAllPicksWiList) {
+		//			Short position = 0;
+		//			for (Entry<String, String> mapEntry : mContainersMap.entrySet()) {
+		//				if (mapEntry.getValue().equals(wi.getContainerId())) {
+		//					// The actual position is zero-based.
+		//					position = (short) (Short.valueOf(mapEntry.getKey()) - 1);
+		//					break;
+		//				}
+		//			}
+		//
+		//			if (wi.getStatusEnum().equals(WorkInstructionStatusEnum.COMPLETE)) {
+		//				// Only set the status if we've never set it before.
+		//				if (statusMap.get(position) == null) {
+		//					//ledControllerSetLed(getGuid(), CommandControlLight.CHANNEL1, position, wi.getLedColorEnum(), EffectEnum.FLASH);
+		//					sendPickRequestCommand(position, 0, 0, 0);
+		//				}
+		//			} else {
+		//				// Always set the status if it's an error.
+		//				//ledControllerSetLed(getGuid(), CommandControlLight.CHANNEL1, position, ColorEnum.RED, EffectEnum.FLASH);
+		//				sendPickRequestCommand(position, 0, 0, 0);
+		//			}
+		//			statusMap.put(position, wi.getStatusEnum());
+		//		}
+
 		ledControllerShowLeds(getGuid());
 
 		mCompletedWiList.clear();
@@ -704,12 +716,15 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		for (WorkInstruction wi : mActivePickWiList) {
 			for (Entry<String, String> mapEntry : mContainersMap.entrySet()) {
 				if (mapEntry.getValue().equals(wi.getContainerId())) {
-//					ledControllerSetLed(getGuid(), CommandControlLight.CHANNEL1,
-//					// The LED positions are zero-based.
-//						(short) (Short.valueOf(mapEntry.getKey()) - 1),
-//						wi.getLedColorEnum(),
-//						EffectEnum.FLASH);
-					sendPickRequestCommand((Short.valueOf(mapEntry.getKey()) - 1), firstWi.getActualQuantity(), 0, firstWi.getActualQuantity());
+					//					ledControllerSetLed(getGuid(), CommandControlLight.CHANNEL1,
+					//					// The LED positions are zero-based.
+					//						(short) (Short.valueOf(mapEntry.getKey()) - 1),
+					//						wi.getLedColorEnum(),
+					//						EffectEnum.FLASH);
+					sendPickRequestCommand(Short.valueOf(mapEntry.getKey()),
+						firstWi.getPlanQuantity(),
+						0,
+						firstWi.getPlanQuantity());
 				}
 			}
 		}
@@ -775,59 +790,60 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * @param inScanPrefixStr
+	 * @param inScanStr
+	 */
+	private void processContainerPosition(final String inScanPrefixStr, String inScanStr) {
+		setState(CheStateEnum.CONTAINER_SELECT);
+		if (mContainersMap.get(inScanStr) == null) {
+			mContainersMap.put(inScanStr, mContainerInSetup);
+			mContainerInSetup = "";
+			List<String> containerIdList = new ArrayList<String>(mContainersMap.values());
+			mDeviceManager.requestCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), mLocationId, containerIdList);
+		} else {
+			LOGGER.info("Position in use: " + inScanStr);
+			setStateWithErrorMsg(CheStateEnum.CONTAINER_POSITION);
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
 	 * @param inButtonStr
 	 */
-	private void processButtonScan(String inScanStr) {
-		if (mCheStateEnum.equals(CheStateEnum.CONTAINER_POSITION)) {
-			setState(CheStateEnum.CONTAINER_SELECT);
-			if (mContainersMap.get(inScanStr) == null) {
-				mContainersMap.put(inScanStr, mContainerInSetup);
-				mContainerInSetup = "";
-				List<String> containerIdList = new ArrayList<String>(mContainersMap.values());
-				mDeviceManager.requestCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), mLocationId, containerIdList);
-			} else {
-				LOGGER.info("Position in use: " + inScanStr);
-				setStateWithErrorMsg(CheStateEnum.CONTAINER_POSITION);
+	private void processButtonPress(Integer inButtonNum, Integer inQuantity) {
+		// Complete the active WI at the selected position.
+		String containerId = mContainersMap.get(Integer.toString(inButtonNum));
+		if (containerId != null) {
+			Iterator<WorkInstruction> wiIter = mActivePickWiList.iterator();
+			while (wiIter.hasNext()) {
+				WorkInstruction wi = wiIter.next();
+				if (wi.getContainerId().equals(containerId)) {
+
+					// Add it to the list of completed WIs.
+					mCompletedWiList.add(wi);
+
+					// HACK HACK HACK
+					// StitchFix is the first client and they only pick one item - ever.
+					// When we have h/w that picks more than one item we'll address this.
+					wi.setActualQuantity(inQuantity);
+					wi.setPickerId(mUserId);
+					wi.setCompleted(new Timestamp(System.currentTimeMillis()));
+					wi.setStatusEnum(WorkInstructionStatusEnum.COMPLETE);
+
+					mDeviceManager.completeWi(getGuid().getHexStringNoPrefix(), getPersistentId(), wi);
+					LOGGER.info("Pick completed: " + wi);
+					wiIter.remove();
+				}
 			}
-		} else if (mCheStateEnum.equals(CheStateEnum.DO_PICK)) {
-			// Complete the active WI at the selected position.
-			String containerId = mContainersMap.get(inScanStr);
-			if (containerId != null) {
-				Iterator<WorkInstruction> wiIter = mActivePickWiList.iterator();
-				while (wiIter.hasNext()) {
-					WorkInstruction wi = wiIter.next();
-					if (wi.getContainerId().equals(containerId)) {
 
-						// Add it to the list of completed WIs.
-						mCompletedWiList.add(wi);
-
-						// HACK HACK HACK
-						// StitchFix is the first client and they only pick one item - ever.
-						// When we have h/w that picks more than one item we'll address this.
-						wi.setActualQuantity(1);
-						wi.setPickerId(mUserId);
-						wi.setCompleted(new Timestamp(System.currentTimeMillis()));
-						wi.setStatusEnum(WorkInstructionStatusEnum.COMPLETE);
-
-						mDeviceManager.completeWi(getGuid().getHexStringNoPrefix(), getPersistentId(), wi);
-						LOGGER.info("Pick completed: " + wi);
-						wiIter.remove();
-					}
-				}
-
-				if (mActivePickWiList.size() > 0) {
-					// If there's more active picks then show them.
-					showActivePicks();
-				} else {
-					// There's no more active picks, so move to the next set.
-					doNextPick();
-				}
+			if (mActivePickWiList.size() > 0) {
+				// If there's more active picks then show them.
+				showActivePicks();
 			} else {
-				setStateWithErrorMsg(mCheStateEnum);
+				// There's no more active picks, so move to the next set.
+				doNextPick();
 			}
 		} else {
-			// Random button press - leave the state alone.
-			LOGGER.info("Random button press: " + inScanStr);
 			setStateWithErrorMsg(mCheStateEnum);
 		}
 	}

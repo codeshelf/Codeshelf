@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: RadioController.java,v 1.16 2013/08/23 21:28:07 jeffw Exp $
+ *  $Id: RadioController.java,v 1.17 2013/09/05 03:26:03 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.codeshelf.device;
@@ -25,6 +25,7 @@ import com.gadgetworks.flyweight.command.CommandAssocCheck;
 import com.gadgetworks.flyweight.command.CommandAssocReq;
 import com.gadgetworks.flyweight.command.CommandAssocResp;
 import com.gadgetworks.flyweight.command.CommandControlABC;
+import com.gadgetworks.flyweight.command.CommandControlButton;
 import com.gadgetworks.flyweight.command.CommandControlScan;
 import com.gadgetworks.flyweight.command.CommandNetMgmtABC;
 import com.gadgetworks.flyweight.command.CommandNetMgmtCheck;
@@ -83,7 +84,7 @@ public class RadioController implements IRadioController {
 	private static final long									INTERFACE_CHECK_MILLIS				= 5 * 1000;
 	private static final long									CONTROLLER_SLEEP_MILLIS				= 10;
 	private static final int									MAX_CHANNEL_VALUE					= 255;
-	
+
 	private static final int									ACK_QUEUE_SIZE						= 25;
 
 	private Boolean												mShouldRun							= true;
@@ -161,7 +162,7 @@ public class RadioController implements IRadioController {
 
 		// Stop all of the interfaces.
 		mGatewayInterface.stopInterface();
-		mGatewayInterface2.stopInterface();		
+		mGatewayInterface2.stopInterface();
 
 		// Signal that we want to stop.
 		mShouldRun = false;
@@ -505,7 +506,8 @@ public class RadioController implements IRadioController {
 		 * - If a packet queue does exist for the destination then just put the packet in it.
 		 */
 
-		if ((inAckRequested) && (inNetworkId.getValue() != (IPacket.BROADCAST_NETWORK_ID)) && (inDstAddr.getValue() != (IPacket.BROADCAST_ADDRESS))) {
+		if ((inAckRequested) && (inNetworkId.getValue() != (IPacket.BROADCAST_NETWORK_ID))
+				&& (inDstAddr.getValue() != (IPacket.BROADCAST_ADDRESS))) {
 
 			// Set the command ID.
 			// To the network protocol a command ID of zero means we don't want a command ACK.
@@ -818,7 +820,8 @@ public class RadioController implements IRadioController {
 			byte status = CommandAssocAck.IS_ASSOCIATED;
 
 			// If the found device isn't in the STARTED state then it's not associated with us.
-			if ((foundDevice.getDeviceStateEnum() == null) || !(foundDevice.getDeviceStateEnum().equals(NetworkDeviceStateEnum.STARTED))) {
+			if ((foundDevice.getDeviceStateEnum() == null)
+					|| !(foundDevice.getDeviceStateEnum().equals(NetworkDeviceStateEnum.STARTED))) {
 				status = CommandAssocAck.IS_NOT_ASSOCIATED;
 				LOGGER.info("AssocCheck - NOT ASSOC: state was: " + foundDevice.getDeviceStateEnum());
 			}
@@ -939,7 +942,7 @@ public class RadioController implements IRadioController {
 		}, RECEIVER_THREAD_NAME + ": " + mGatewayInterface2.getClass().getSimpleName());
 		gwThread2.setPriority(RECEIVER_THREAD_PRIORITY);
 		gwThread2.start();
-}
+	}
 
 	// --------------------------------------------------------------------------
 	/**
@@ -1028,18 +1031,25 @@ public class RadioController implements IRadioController {
 	 */
 	private void processControlCmd(CommandControlABC inCommand, NetAddress inSrcAddr) {
 
-		switch (inCommand.getExtendedCommandID().getValue()) {
-			case CommandControlABC.SCAN:
-				INetworkDevice device = mDeviceNetAddrMap.get(inSrcAddr);
-				if (device != null) {
-					CommandControlScan command = (CommandControlScan) inCommand;
-					device.commandReceived(command.getCommandString());
-				}
-				break;
+		INetworkDevice device = mDeviceNetAddrMap.get(inSrcAddr);
+		if (device != null) {
 
-			default:
-				break;
+			switch (inCommand.getExtendedCommandID().getValue()) {
+				case CommandControlABC.SCAN:
+					CommandControlScan scanCommand = (CommandControlScan) inCommand;
+					device.scanCommandReceived(scanCommand.getCommandString());
+					break;
+
+				case CommandControlABC.BUTTON:
+					CommandControlButton buttonCommand = (CommandControlButton) inCommand;
+					device.buttonCommandReceived(buttonCommand);
+					break;
+
+				default:
+					break;
+			}
 		}
+
 	}
 
 	// --------------------------------------------------------------------------

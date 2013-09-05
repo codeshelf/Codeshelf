@@ -1,10 +1,11 @@
 /*******************************************************************************
  *  OmniBox
  *  Copyright (c) 2005-2007, Jeffrey B. Williams, All rights reserved
- *  $Id: INetworkDevice.java,v 1.7 2013/03/03 23:27:21 jeffw Exp $
+ *  $Id: INetworkDevice.java,v 1.8 2013/09/05 03:26:03 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.flyweight.controller;
 
+import com.gadgetworks.flyweight.command.CommandControlButton;
 import com.gadgetworks.flyweight.command.NetAddress;
 import com.gadgetworks.flyweight.command.NetGuid;
 
@@ -106,9 +107,16 @@ public interface INetworkDevice {
 
 	// --------------------------------------------------------------------------
 	/**
-	 *  The user pressed a button on the remote.
+	 *  The user scanned a command on the remote.
 	 *  @param inButtonNumberPressed
 	 */
-	void commandReceived(String inCommandStr);
+	void scanCommandReceived(String inCommandStr);
+	
+	// --------------------------------------------------------------------------
+	/**
+	 *  The userpressed a button on the remote.
+	 *  @param inButtonNumberPressed
+	 */
+	void buttonCommandReceived(CommandControlButton inButtonCommand);
 	
 }

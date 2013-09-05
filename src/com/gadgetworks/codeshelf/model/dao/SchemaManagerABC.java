@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: SchemaManagerABC.java,v 1.37 2013/09/04 20:30:06 jeffw Exp $
+ *  $Id: SchemaManagerABC.java,v 1.38 2013/09/05 03:26:03 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -154,7 +154,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 			// Try to switch to the proper schema.
 			// If the SQL command doesn't cause an exception then the schema exists.
 			Statement stmt = connection.createStatement();
-			if (stmt.executeUpdate(getSchemaCheckerString()) > 0) {
+			if (stmt.execute(getSchemaCheckerString())) {
 //				ResultSet resultSet = stmt.getResultSet();
 //				resultSet.next();
 //				// If we get here then we were able to switch to the schema and it exists.

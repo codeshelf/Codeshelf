@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  FlyWeightController
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandControlABC.java,v 1.5 2013/09/04 20:30:05 jeffw Exp $
+ *  $Id: CommandControlABC.java,v 1.6 2013/09/05 03:26:03 jeffw Exp $
  *******************************************************************************/
 
 package com.gadgetworks.flyweight.command;
@@ -31,7 +31,7 @@ public abstract class CommandControlABC extends ExtendedCommandABC {
 	public static final byte	SCAN						= 0;
 	public static final byte	MESSAGE						= 1;
 	public static final byte	LIGHT						= 2;
-	public static final byte	REQUEST						= 3;
+	public static final byte	REQUEST_QTY					= 3;
 	public static final byte	BUTTON						= 4;
 
 	// --------------------------------------------------------------------------
