@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WorkInstruction.java,v 1.23 2013/07/17 05:48:13 jeffw Exp $
+ *  $Id: WorkInstruction.java,v 1.24 2013/09/18 00:40:09 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -52,7 +52,7 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-@Table(name = "work_instruction", schema = "codeshelf")
+@Table(name = "work_instruction")
 @CacheStrategy
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 @JsonIgnoreProperties({ "fullDomainId", "parentFullDomainId", "parentPersistentId", "className" })

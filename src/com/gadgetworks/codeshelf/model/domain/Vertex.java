@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Vertex.java,v 1.24 2013/04/11 07:42:45 jeffw Exp $
+ *  $Id: Vertex.java,v 1.25 2013/09/18 00:40:09 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -42,7 +42,7 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-@Table(name = "vertex", schema = "codeshelf")
+@Table(name = "vertex")
 @CacheStrategy
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class Vertex extends DomainObjectTreeABC<ILocation> {

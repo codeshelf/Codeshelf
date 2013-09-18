@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: UomMaster.java,v 1.17 2013/04/13 02:26:29 jeffw Exp $
+ *  $Id: UomMaster.java,v 1.18 2013/09/18 00:40:09 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -36,7 +36,7 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-@Table(name = "uom_master", schema = "codeshelf")
+@Table(name = "uom_master")
 @CacheStrategy(useBeanCache = true)
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class UomMaster extends DomainObjectTreeABC<Facility> {

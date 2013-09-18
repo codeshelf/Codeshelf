@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: SchemaManagerABC.java,v 1.38 2013/09/05 03:26:03 jeffw Exp $
+ *  $Id: SchemaManagerABC.java,v 1.39 2013/09/18 00:40:10 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -97,6 +97,11 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 				// Try to switch to the proper schema.
 				Statement stmt = connection.createStatement();
+				stmt.executeUpdate(getSchemaSetterString());
+				stmt.close();
+
+				// Get the schema version.
+				stmt = connection.createStatement();
 				ResultSet resultSet = stmt.executeQuery("SELECT version FROM " + getDbSchemaName() + ".db_property");
 
 				if (!resultSet.next()) {
@@ -155,19 +160,19 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 			// If the SQL command doesn't cause an exception then the schema exists.
 			Statement stmt = connection.createStatement();
 			if (stmt.execute(getSchemaCheckerString())) {
-//				ResultSet resultSet = stmt.getResultSet();
-//				resultSet.next();
-//				// If we get here then we were able to switch to the schema and it exists.
-//				result = resultSet.getBoolean(1);
-//			} else {
-//				int num = stmt.getUpdateCount();
-//				LOGGER.debug("Num: " + num);
+				ResultSet resultSet = stmt.getResultSet();
+				resultSet.next();
+				// If we get here then we were able to switch to the schema and it exists.
+				result = resultSet.getBoolean(1);
+			} else {
+				int num = stmt.getUpdateCount();
+				LOGGER.debug("Num: " + num);
+
+				// If we get here then we were able to switch to the schema and it exists.
+				result = true;
 			}
 			stmt.close();
 
-			// If we get here then we were able to switch to the schema and it exists.
-			result = true;
-			
 			connection.close();
 		} catch (SQLException e) {
 			LOGGER.error("", e);

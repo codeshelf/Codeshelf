@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: WorkArea.java,v 1.16 2013/04/11 07:42:45 jeffw Exp $
+ *  $Id: WorkArea.java,v 1.17 2013/09/18 00:40:08 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -40,7 +40,7 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-@Table(name = "work_area", schema = "codeshelf")
+@Table(name = "work_area")
 @CacheStrategy
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class WorkArea extends DomainObjectTreeABC<Path> {

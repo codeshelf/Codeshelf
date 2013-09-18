@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: PathSegment.java,v 1.32 2013/04/26 03:26:04 jeffw Exp $
+ *  $Id: PathSegment.java,v 1.33 2013/09/18 00:40:09 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -43,7 +43,7 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-@Table(name = "path_segment", schema = "codeshelf")
+@Table(name = "path_segment")
 @CacheStrategy(useBeanCache = true)
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 //@ToString(doNotUseGetters = true, exclude = { "parent" })

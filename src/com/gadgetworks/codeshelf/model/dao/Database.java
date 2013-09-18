@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Database.java,v 1.15 2013/08/26 02:14:10 jeffw Exp $
+ *  $Id: Database.java,v 1.16 2013/09/18 00:40:10 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -17,6 +17,7 @@ import com.avaje.ebean.EbeanServerFactory;
 import com.avaje.ebean.Transaction;
 import com.avaje.ebean.config.AutofetchConfig;
 import com.avaje.ebean.config.DataSourceConfig;
+import com.avaje.ebean.config.NamingConvention;
 import com.avaje.ebean.config.ServerConfig;
 import com.avaje.ebean.config.UnderscoreNamingConvention;
 import com.avaje.ebeaninternal.server.lib.ShutdownManager;
@@ -92,7 +93,9 @@ public class Database implements IDatabase {
 		serverConfig.setDdlGenerate(false);
 		serverConfig.setDdlRun(false);
 		//serverConfig.setNamingConvention(new GWEbeanNamingConvention());
-		serverConfig.setNamingConvention(new UnderscoreNamingConvention());
+		UnderscoreNamingConvention namingConvetion = new UnderscoreNamingConvention();
+		namingConvetion.setSchema(mSchemaManager.getDbSchemaName());
+		serverConfig.setNamingConvention(namingConvetion);
 
 		DataSourceConfig dataSourceConfig = serverConfig.getDataSourceConfig();
 		dataSourceConfig.setUsername(mSchemaManager.getDbUserId());

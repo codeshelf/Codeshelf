@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ItemDdcGroup.java,v 1.1 2013/04/26 03:26:04 jeffw Exp $
+ *  $Id: ItemDdcGroup.java,v 1.2 2013/09/18 00:40:09 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -36,7 +36,7 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-@Table(name = "item_ddc_group", schema = "codeshelf")
+@Table(name = "item_ddc_group")
 @CacheStrategy(useBeanCache = true)
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class ItemDdcGroup extends DomainObjectTreeABC<ILocation> {

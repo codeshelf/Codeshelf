@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ContainerUse.java,v 1.14 2013/04/11 22:47:12 jeffw Exp $
+ *  $Id: ContainerUse.java,v 1.15 2013/09/18 00:40:09 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -41,7 +41,7 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-@Table(name = "container_use", schema = "codeshelf")
+@Table(name = "container_use")
 @CacheStrategy
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class ContainerUse extends DomainObjectTreeABC<Container> {

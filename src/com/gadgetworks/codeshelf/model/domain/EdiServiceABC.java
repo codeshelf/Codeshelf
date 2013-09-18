@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiServiceABC.java,v 1.20 2013/04/09 07:58:20 jeffw Exp $
+ *  $Id: EdiServiceABC.java,v 1.21 2013/09/18 00:40:08 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -47,7 +47,7 @@ import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 @Entity
 @MappedSuperclass
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@Table(name = "edi_service", schema = "codeshelf")
+@Table(name = "edi_service")
 @DiscriminatorColumn(name = "dtype", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorValue("ABC")
 //@ToString(doNotUseGetters = true)

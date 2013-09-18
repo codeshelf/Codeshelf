@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Item.java,v 1.29 2013/08/26 03:52:35 jeffw Exp $
+ *  $Id: Item.java,v 1.30 2013/09/18 00:40:08 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -41,7 +41,7 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-@Table(name = "item", schema = "codeshelf")
+@Table(name = "item")
 @CacheStrategy(useBeanCache = true)
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 @ToString

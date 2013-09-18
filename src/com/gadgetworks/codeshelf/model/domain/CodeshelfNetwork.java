@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeshelfNetwork.java,v 1.29 2013/04/14 23:35:26 jeffw Exp $
+ *  $Id: CodeshelfNetwork.java,v 1.30 2013/09/18 00:40:08 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -47,7 +47,7 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-@Table(name = "codeshelf_network", schema = "codeshelf")
+@Table(name = "codeshelf_network")
 @CacheStrategy
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
