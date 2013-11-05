@@ -1,12 +1,13 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: FacilityTest.java,v 1.9 2013/04/11 07:42:45 jeffw Exp $
+ *  $Id: FacilityTest.java,v 1.10 2013/11/05 06:14:55 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
-import junit.framework.Assert;
+import java.util.List;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -99,5 +100,37 @@ public class FacilityTest {
 
 		Assert.assertNotNull(foundFacility);
 	}
+	
+	@Test
+	public final void createWorkInstructionTest() {
+		
+		List<WorkInstruction> wiList;
+		
+		Organization.DAO = new OrganizationDao(mSchemaManager);
+		LocationABC.DAO = new LocationDao(mSchemaManager, mDatabase);
+		Facility.DAO = new FacilityDao(mSchemaManager);
+		Aisle.DAO = new AisleDao(mSchemaManager);
+		Bay.DAO = new BayDao(mSchemaManager);
+		Vertex.DAO = new VertexDao(mSchemaManager);
+		Path.DAO = new PathDao(mSchemaManager);
+		PathSegment.DAO = new PathSegmentDao(mSchemaManager);
+		WorkArea.DAO = new WorkAreaDao(mSchemaManager);
 
+		Organization organization = new Organization();
+		organization.setOrganizationId("FTEST.O1");
+		Organization.DAO.store(organization);
+
+		Facility facility = new Facility(0.0, 0.0);
+		facility.setParent(organization);
+		facility.setFacilityId("FTEST.F2");
+		Facility.DAO.store(facility);
+		
+//		wiList = facility.getWorkInstructions(inChe, inLocationId, inContainerIdList);
+//		
+//		Assert.assertNotNull(wiList);
+//		for (WorkInstruction wi : wiList) {
+//			Assert.assertNotNull(wi);
+//			
+//		}
+	}
 }

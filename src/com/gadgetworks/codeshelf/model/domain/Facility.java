@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Facility.java,v 1.81 2013/08/26 03:52:34 jeffw Exp $
+ *  $Id: Facility.java,v 1.82 2013/11/05 06:14:55 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
@@ -798,7 +798,8 @@ public class Facility extends LocationABC<Organization> {
 			result.setDomainId(Long.toString(System.currentTimeMillis()));
 			result.setTypeEnum(inType);
 			result.setStatusEnum(inStatus);
-			result.setLedControllerId("0x00000003");
+			//result.setLedControllerId("0x00000004");  // WTF?  Look this up! 
+			result.setLedControllerId(inLocation.getLedController().getDeviceGuidStr()); 
 			result.setLedChannel(inLocation.getLedChannel());
 			result.setLedFirstPos(inLocation.getFirstLedPosForItemId(inOrderDetail.getItemMaster().getItemId()));
 			result.setLedLastPos(inLocation.getLastLedPosForItemId(inOrderDetail.getItemMaster().getItemId()));
