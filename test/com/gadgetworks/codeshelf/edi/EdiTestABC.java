@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiTestABC.java,v 1.2 2013/07/22 04:30:36 jeffw Exp $
+ *  $Id: EdiTestABC.java,v 1.3 2013/11/11 07:46:30 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -99,7 +99,7 @@ public abstract class EdiTestABC {
 			};
 
 			Class.forName("org.h2.Driver");
-			mSchemaManager = new H2SchemaManager(mUtil, "codeshelf", "codeshelf", "codeshelf", "codeshelf", "localhost", "");
+			mSchemaManager = new H2SchemaManager(mUtil, "codeshelf", "codeshelf", "codeshelf", "codeshelf", "localhost", "", "false");
 			mDatabase = new Database(mSchemaManager, mUtil);
 
 			mDatabase.start();

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: SchemaManagerABC.java,v 1.39 2013/09/18 00:40:10 jeffw Exp $
+ *  $Id: SchemaManagerABC.java,v 1.40 2013/11/11 07:46:30 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -11,6 +11,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.util.Properties;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -51,6 +52,8 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	private final String		dbAddress;
 	@Getter
 	private final String		dbPortnum;
+	@Getter
+	private final String		dbSsl;
 
 	@Inject
 	public SchemaManagerABC(final IUtil inUtil,
@@ -59,7 +62,8 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		final String inDbName,
 		final String inDbSchemaName,
 		final String inDbAddress,
-		final String inDbPortnum) {
+		final String inDbPortnum, 
+		final String inSsl) {
 		util = inUtil;
 		dbUserId = inDbUserId;
 		dbPassword = inDbPassword;
@@ -67,6 +71,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		dbSchemaName = inDbSchemaName;
 		dbAddress = inDbAddress;
 		dbPortnum = inDbPortnum;
+		dbSsl = inSsl;
 	}
 
 	protected abstract boolean doUpgradeSchema();
@@ -138,7 +143,12 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 			if ((getDbUserId() == null) || (getDbUserId().length() == 0)) {
 				result = DriverManager.getConnection(inDbUrl);
 			} else {
-				result = DriverManager.getConnection(inDbUrl, getDbUserId(), getDbPassword());
+				Properties props = new Properties();
+				props.setProperty("user", getDbUserId());
+				props.setProperty("password", getDbPassword());
+				props.setProperty("ssl", "true");
+
+				result = DriverManager.getConnection(inDbUrl, props);
 			}
 		} catch (ClassNotFoundException e) {
 			LOGGER.error("", e);

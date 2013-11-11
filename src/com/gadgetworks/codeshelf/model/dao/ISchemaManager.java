@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: ISchemaManager.java,v 1.13 2013/08/26 02:14:10 jeffw Exp $
+ *  $Id: ISchemaManager.java,v 1.14 2013/11/11 07:46:30 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -18,6 +18,7 @@ public interface ISchemaManager {
 	String	DATABASE_PORTNUM_PROPERTY		= "DATABASE_PORTNUM_PROPERTY";
 	String	DATABASE_USERID_PROPERTY		= "DATABASE_USERID_PROPERTY";
 	String	DATABASE_PASSWORD_PROPERTY		= "DATABASE_PASSWORD_PROPERTY";
+	String	DATABASE_SSL_PROPERTY			= "DATABASE_SSL_PROPERTY";
 
 	// Database schema version increases monotonically as there are incompatible changes to the DB schema.	
 	int		DATABASE_VERSION_1				= 1;								// Original DB
@@ -27,17 +28,19 @@ public interface ISchemaManager {
 	int		DATABASE_VERSION_CUR			= DATABASE_VERSION_3;
 
 	String getDbAddress();
-	
+
 	String getDbName();
-	
+
 	String getDbPassword();
-	
+
 	String getDbPortnum();
-	
+
 	String getDbSchemaName();
-	
+
 	String getDbUserId();
-	
+
+	String getDbSsl();
+
 	boolean verifySchema();
 
 	String getDriverName();

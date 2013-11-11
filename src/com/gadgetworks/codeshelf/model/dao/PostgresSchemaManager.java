@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: PostgresSchemaManager.java,v 1.4 2013/05/26 21:50:40 jeffw Exp $
+ *  $Id: PostgresSchemaManager.java,v 1.5 2013/11/11 07:46:30 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -27,8 +27,9 @@ public final class PostgresSchemaManager extends SchemaManagerABC {
 		@Named(DATABASE_NAME_PROPERTY) final String inDbName,
 		@Named(DATABASE_SCHEMANAME_PROPERTY) final String inDbSchemaName,
 		@Named(DATABASE_ADDRESS_PROPERTY) final String inDbAddress,
-		@Named(DATABASE_PORTNUM_PROPERTY) final String inDbPortnum) {
-		super(inUtil, inDbUserId, inDbPassword, inDbName, inDbSchemaName, inDbAddress, inDbPortnum);
+		@Named(DATABASE_PORTNUM_PROPERTY) final String inDbPortnum, 
+		@Named(DATABASE_SSL_PROPERTY) final String inDbSsl) {
+		super(inUtil, inDbUserId, inDbPassword, inDbName, inDbSchemaName, inDbAddress, inDbPortnum, inDbSsl);
 	}
 
 	public String getDriverName() {
@@ -56,7 +57,7 @@ public final class PostgresSchemaManager extends SchemaManagerABC {
 	 * @see com.gadgetworks.codeshelf.model.dao.ISchemaManager#getApplicationInitDatabaseURL()
 	 */
 	public String getApplicationInitDatabaseURL() {
-		return "jdbc:postgresql://" + getDbAddress() + ":" + getDbPortnum() + "/" + getDbName();
+		return "jdbc:postgresql://" + getDbAddress() + ":" + getDbPortnum() + "/" + getDbName() + "?ssl=" + getDbSsl();
 	}
 
 	// --------------------------------------------------------------------------
@@ -64,7 +65,7 @@ public final class PostgresSchemaManager extends SchemaManagerABC {
 	 * @see com.gadgetworks.codeshelf.model.dao.ISchemaManager#getApplicationDatabaseURL()
 	 */
 	public String getApplicationDatabaseURL() {
-		return "jdbc:postgresql://" + getDbAddress() + ":" + getDbPortnum() + "/" + getDbName();
+		return "jdbc:postgresql://" + getDbAddress() + ":" + getDbPortnum() + "/" + getDbName() + "?ssl=" + getDbSsl();
 	}
 	
 	// --------------------------------------------------------------------------

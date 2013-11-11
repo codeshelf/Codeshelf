@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: CodeshelfApplicationTest.java,v 1.22 2013/04/04 19:05:08 jeffw Exp $
+ *  $Id: CodeshelfApplicationTest.java,v 1.23 2013/11/11 07:46:30 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.application;
 
@@ -264,7 +264,7 @@ public class CodeshelfApplicationTest {
 		IEdiProcessor ediProcessor = new EdiProcessor(importer, facilityDao);
 		IPickDocumentGenerator pickDocumentGenerator = new PickDocumentGenerator();
 		IUtil util = new MockUtil();
-		ISchemaManager schemaManager = new H2SchemaManager(util, "codeshelf", "codeshelf", "codeshelf", "codeshelf", "localhost", "");
+		ISchemaManager schemaManager = new H2SchemaManager(util, "codeshelf", "codeshelf", "codeshelf", "codeshelf", "localhost", "", "false");
 		IDatabase database = new Database(schemaManager, util);
 
 		final ServerCodeshelfApplication application = new ServerCodeshelfApplication(webSocketListener,

@@ -91,7 +91,7 @@ public class GenericDaoTest {
 			};
 
 			Class.forName("org.h2.Driver");
-			mSchemaManager = new H2SchemaManager(mUtil, "codeshelf", "codeshelf", "codeshelf", "CODESHELF", "localhost", "");
+			mSchemaManager = new H2SchemaManager(mUtil, "codeshelf", "codeshelf", "codeshelf", "CODESHELF", "localhost", "", "false");
 			mDatabase = new Database(mSchemaManager, mUtil);
 
 			mDatabase.start();

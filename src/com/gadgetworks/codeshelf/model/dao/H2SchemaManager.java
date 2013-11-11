@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: H2SchemaManager.java,v 1.66 2013/09/04 20:30:06 jeffw Exp $
+ *  $Id: H2SchemaManager.java,v 1.67 2013/11/11 07:46:30 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
@@ -34,8 +34,9 @@ public final class H2SchemaManager extends SchemaManagerABC {
 		@Named(DATABASE_NAME_PROPERTY) final String inDbName,
 		@Named(DATABASE_SCHEMANAME_PROPERTY) final String inDbSchemaName,
 		@Named(DATABASE_ADDRESS_PROPERTY) final String inDbAddress,
-		@Named(DATABASE_PORTNUM_PROPERTY) final String inDbPortnum) {
-		super(inUtil, inDbUserId, inDbPassword, inDbName, inDbSchemaName, inDbAddress, inDbPortnum);
+		@Named(DATABASE_PORTNUM_PROPERTY) final String inDbPortnum,
+		@Named(DATABASE_SSL_PROPERTY) final String inDbSsl) {
+		super(inUtil, inDbUserId, inDbPassword, inDbName, inDbSchemaName, inDbAddress, inDbPortnum, inDbSsl);
 
 		// The H2 database has a serious problem with deleting temp files for LOBs.  We have to do it ourselves, or it will grow without bound.
 		String[] extensions = { "temp.lob.db" };
