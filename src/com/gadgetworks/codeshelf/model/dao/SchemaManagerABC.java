@@ -62,7 +62,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		final String inDbName,
 		final String inDbSchemaName,
 		final String inDbAddress,
-		final String inDbPortnum, 
+		final String inDbPortnum,
 		final String inSsl) {
 		util = inUtil;
 		dbUserId = inDbUserId;
@@ -146,7 +146,9 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 				Properties props = new Properties();
 				props.setProperty("user", getDbUserId());
 				props.setProperty("password", getDbPassword());
-				props.setProperty("ssl", "true");
+				if ((getDbSsl() != null) && (getDbSsl().compareToIgnoreCase("true") == 0)) {
+					props.setProperty("ssl", "true");
+				}
 
 				result = DriverManager.getConnection(inDbUrl, props);
 			}

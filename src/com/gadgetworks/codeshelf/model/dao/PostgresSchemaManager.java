@@ -27,7 +27,7 @@ public final class PostgresSchemaManager extends SchemaManagerABC {
 		@Named(DATABASE_NAME_PROPERTY) final String inDbName,
 		@Named(DATABASE_SCHEMANAME_PROPERTY) final String inDbSchemaName,
 		@Named(DATABASE_ADDRESS_PROPERTY) final String inDbAddress,
-		@Named(DATABASE_PORTNUM_PROPERTY) final String inDbPortnum, 
+		@Named(DATABASE_PORTNUM_PROPERTY) final String inDbPortnum,
 		@Named(DATABASE_SSL_PROPERTY) final String inDbSsl) {
 		super(inUtil, inDbUserId, inDbPassword, inDbName, inDbSchemaName, inDbAddress, inDbPortnum, inDbSsl);
 	}
@@ -57,7 +57,7 @@ public final class PostgresSchemaManager extends SchemaManagerABC {
 	 * @see com.gadgetworks.codeshelf.model.dao.ISchemaManager#getApplicationInitDatabaseURL()
 	 */
 	public String getApplicationInitDatabaseURL() {
-		return "jdbc:postgresql://" + getDbAddress() + ":" + getDbPortnum() + "/" + getDbName() + "?ssl=" + getDbSsl();
+		return "jdbc:postgresql://" + getDbAddress() + ":" + getDbPortnum() + "/" + getDbName();
 	}
 
 	// --------------------------------------------------------------------------
@@ -65,15 +65,15 @@ public final class PostgresSchemaManager extends SchemaManagerABC {
 	 * @see com.gadgetworks.codeshelf.model.dao.ISchemaManager#getApplicationDatabaseURL()
 	 */
 	public String getApplicationDatabaseURL() {
-		return "jdbc:postgresql://" + getDbAddress() + ":" + getDbPortnum() + "/" + getDbName() + "?ssl=" + getDbSsl();
+		return "jdbc:postgresql://" + getDbAddress() + ":" + getDbPortnum() + "/" + getDbName();
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.dao.SchemaManagerABC#getSchemaCheckerString()
 	 */
 	protected String getSchemaCheckerString() {
-		return "select exists (select * from pg_catalog.pg_namespace where nspname = '" + getDbSchemaName() + "');"; 
+		return "select exists (select * from pg_catalog.pg_namespace where nspname = '" + getDbSchemaName() + "');";
 	}
 
 	// --------------------------------------------------------------------------
