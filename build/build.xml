@@ -560,7 +560,7 @@
 		<antcall target="jar.aisle" />
 	</target>
 
-	<target name="deploy" depends="prep.jar, jar.server">
+	<target name="deploy-production" depends="prep.jar, jar.server">
 		<input message="SCP password:" addproperty="scp.password">
 			<!--handler classname="org.apache.tools.ant.input.SecureInputHandler" /-->
 		</input>
