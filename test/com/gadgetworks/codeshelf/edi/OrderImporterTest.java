@@ -8,7 +8,7 @@ package com.gadgetworks.codeshelf.edi;
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import org.junit.Test;
 

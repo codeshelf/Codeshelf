@@ -10,8 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import junit.framework.Assert;
-
+import org.junit.Assert;
 import org.apache.shiro.realm.Realm;
 import org.java_websocket.IWebSocket;
 import org.junit.Test;
@@ -297,8 +296,12 @@ public class CodeshelfApplicationTest {
 			} catch (InterruptedException e) {
 			}
 		}
-
-		application.stopApplication();
+		
+		// This next line causes the whole JUnit system to stop.
+		// Yes, I know it's terrible to have dependent unit tests.
+		// I don't know how to fix this.  WIll consult with someone.
+		
+		//application.stopApplication();
 
 		Assert.assertTrue(true);
 	}

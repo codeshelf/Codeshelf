@@ -5,7 +5,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.NotYetConnectedException;
 import java.util.UUID;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import lombok.Getter;
 
 import org.apache.shiro.realm.Realm;
