@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import org.junit.Before;
 import org.junit.Test;

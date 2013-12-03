@@ -86,17 +86,17 @@ public class FacilityTest {
 		WorkArea.DAO = new WorkAreaDao(mSchemaManager);
 
 		Organization organization = new Organization();
-		organization.setOrganizationId("FTEST.O1");
+		organization.setOrganizationId("FTEST1.O1");
 		Organization.DAO.store(organization);
 
 		Facility facility = new Facility(0.0, 0.0);
 		facility.setParent(organization);
-		facility.setFacilityId("FTEST.F1");
+		facility.setFacilityId("FTEST1.F1");
 		Facility.DAO.store(facility);
 
-		facility.createAisle("FTEST.A1", 1.0, 1.0, 2.0, 2.0, 2.0, 2, 5, true, true);
+		facility.createAisle("FTEST1.A1", 1.0, 1.0, 2.0, 2.0, 2.0, 2, 5, true, true);
 
-		Facility foundFacility = Facility.DAO.findByDomainId(organization, "FTEST.F1");
+		Facility foundFacility = Facility.DAO.findByDomainId(organization, "FTEST1.F1");
 
 		Assert.assertNotNull(foundFacility);
 	}
@@ -117,12 +117,12 @@ public class FacilityTest {
 		WorkArea.DAO = new WorkAreaDao(mSchemaManager);
 
 		Organization organization = new Organization();
-		organization.setOrganizationId("FTEST.O1");
+		organization.setOrganizationId("FTEST2.O1");
 		Organization.DAO.store(organization);
 
 		Facility facility = new Facility(0.0, 0.0);
 		facility.setParent(organization);
-		facility.setFacilityId("FTEST.F2");
+		facility.setFacilityId("FTEST2.F2");
 		Facility.DAO.store(facility);
 		
 //		wiList = facility.getWorkInstructions(inChe, inLocationId, inContainerIdList);

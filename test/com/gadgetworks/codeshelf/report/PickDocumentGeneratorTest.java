@@ -8,7 +8,7 @@ package com.gadgetworks.codeshelf.report;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import org.junit.Test;
 

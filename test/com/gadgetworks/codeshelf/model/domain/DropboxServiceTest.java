@@ -7,7 +7,7 @@ package com.gadgetworks.codeshelf.model.domain;
 
 import java.io.InputStreamReader;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import org.junit.Test;
 
