@@ -257,7 +257,7 @@ public class CodeshelfApplicationTest {
 			CsWebSocketServer.WEBSOCKET_DEFAULT_PORTNUM,
 			webSessionManager,
 			webSocketFactory);
-		IHttpServer httpServer = new HttpServer("./", "localhost", 8000, "./", "localhost", 8443, "./conf/codeshelf.keystore", "x2HPbC2avltYQR", "x2HPbC2avltYQR");
+		IHttpServer httpServer = new HttpServer("./", "localhost", 8443, "./conf/codeshelf.keystore", "x2HPbC2avltYQR", "x2HPbC2avltYQR");
 
 		ICsvImporter importer = new CsvImporter(orderGroupDao, orderHeaderDao, orderDetailDao, containerDao, containerUseDao, itemMasterDao, itemDao, uomMasterDao);
 		IEdiProcessor ediProcessor = new EdiProcessor(importer, facilityDao);

@@ -45,22 +45,14 @@ public class HttpServer implements IHttpServer {
 	private String				mKeystoreKeyPassword;
 
 	private Server				mWebappServer;
-	private Server				mWebsiteServer;
 
 	@Inject
-	public HttpServer(@Named(IHttpServer.WEBSITE_CONTENT_PATH_PROPERTY) final String inWebSiteContentPath,
-		@Named(IHttpServer.WEBSITE_HOSTNAME_PROPERTY) final String inWebSiteHostname,
-		@Named(IHttpServer.WEBSITE_PORTNUM_PROPERTY) final int inWebSitePortNum,
-		@Named(IHttpServer.WEBAPP_CONTENT_PATH_PROPERTY) final String inWebAppContentPath,
+	public HttpServer(@Named(IHttpServer.WEBAPP_CONTENT_PATH_PROPERTY) final String inWebAppContentPath,
 		@Named(IHttpServer.WEBAPP_HOSTNAME_PROPERTY) final String inWebAppHostname,
 		@Named(IHttpServer.WEBAPP_PORTNUM_PROPERTY) final int inWebAppPortNum,
 		@Named(KEYSTORE_PATH_PROPERTY) final String inKeystorePath,
 		@Named(KEYSTORE_STORE_PASSWORD_PROPERTY) final String inKeystoreStorePassword,
 		@Named(KEYSTORE_KEY_PASSWORD_PROPERTY) final String inKeystoreKeyPassword) {
-
-		mWebSiteContentPath = inWebSiteContentPath;
-		mWebSiteHostname = inWebSiteHostname;
-		mWebSitePortNum = inWebSitePortNum;
 
 		mWebAppContentPath = inWebAppContentPath;
 		mWebAppHostname = inWebAppHostname;
@@ -76,15 +68,6 @@ public class HttpServer implements IHttpServer {
 	 * @see com.gadgetworks.codeshelf.application.IHttpServer#startServer()
 	 */
 	public final void startServer() {
-
-		if ((mWebSiteContentPath != null) && (mWebSiteContentPath.length() > 0)) {
-			Thread websiteServerThread = new Thread(new Runnable() {
-				public void run() {
-					mWebsiteServer = doStartServer("home.html", mWebSiteContentPath, mWebSiteHostname, mWebSitePortNum, false);
-				}
-			}, WEBSITE_SERVER_THREADNAME);
-			websiteServerThread.start();
-		}
 
 		if ((mWebAppContentPath != null) && (mWebAppContentPath.length() > 0)) {
 			Thread webappServerThread = new Thread(new Runnable() {
@@ -189,9 +172,6 @@ public class HttpServer implements IHttpServer {
 	 * @see com.gadgetworks.codeshelf.application.IHttpServer#stopServer()
 	 */
 	public final void stopServer() {
-		if (mWebsiteServer != null) {
-			mWebsiteServer.setStopAtShutdown(true);
-		}
 		if (mWebappServer != null) {
 			mWebappServer.setStopAtShutdown(true);
 		}

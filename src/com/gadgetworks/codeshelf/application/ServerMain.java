@@ -200,10 +200,6 @@ public final class ServerMain {
 				bind(String.class).annotatedWith(Names.named(IWebSocketServer.WEBSOCKET_HOSTNAME_PROPERTY)).toInstance(System.getProperty("websocket.hostname"));
 				bind(Integer.class).annotatedWith(Names.named(IWebSocketServer.WEBSOCKET_PORTNUM_PROPERTY)).toInstance(Integer.valueOf(System.getProperty("websocket.portnum")));
 
-				bind(String.class).annotatedWith(Names.named(IHttpServer.WEBSITE_CONTENT_PATH_PROPERTY)).toInstance(System.getProperty("website.content.path"));
-				bind(String.class).annotatedWith(Names.named(IHttpServer.WEBSITE_HOSTNAME_PROPERTY)).toInstance(System.getProperty("website.hostname"));
-				bind(Integer.class).annotatedWith(Names.named(IHttpServer.WEBSITE_PORTNUM_PROPERTY)).toInstance(Integer.valueOf(System.getProperty("website.portnum")));
-
 				bind(String.class).annotatedWith(Names.named(IHttpServer.WEBAPP_CONTENT_PATH_PROPERTY)).toInstance(System.getProperty("webapp.content.path"));
 				bind(String.class).annotatedWith(Names.named(IHttpServer.WEBAPP_HOSTNAME_PROPERTY)).toInstance(System.getProperty("webapp.hostname"));
 				bind(Integer.class).annotatedWith(Names.named(IHttpServer.WEBAPP_PORTNUM_PROPERTY)).toInstance(Integer.valueOf(System.getProperty("webapp.portnum")));
