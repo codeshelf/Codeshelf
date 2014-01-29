@@ -11,6 +11,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -87,7 +88,7 @@ public class ObjectMethodWsReqCmd extends WsReqCmdABC {
 	}
 
 	public final WsReqCmdEnum getCommandEnum() {
-		return WsReqCmdEnum.OBJECT_UPDATE_REQ;
+		return WsReqCmdEnum.OBJECT_METHOD_REQ;
 	}
 
 	public final IWsRespCmd doExec() {
@@ -165,13 +166,17 @@ public class ObjectMethodWsReqCmd extends WsReqCmdABC {
 							}
 							cookedArguments.add(typedArg);
 						} catch (IllegalArgumentException e) {
-							LOGGER.error("", e);
+							ObjectNode errorNode = createErrorResult(e.toString());
+							result = new ObjectMethodWsRespCmd(errorNode);
 						} catch (InstantiationException e) {
-							LOGGER.error("", e);
+							ObjectNode errorNode = createErrorResult(e.toString());
+							result = new ObjectMethodWsRespCmd(errorNode);
 						} catch (IllegalAccessException e) {
-							LOGGER.error("", e);
+							ObjectNode errorNode = createErrorResult(e.toString());
+							result = new ObjectMethodWsRespCmd(errorNode);
 						} catch (InvocationTargetException e) {
-							LOGGER.error("", e);
+							ObjectNode errorNode = createErrorResult(e.toString());
+							result = new ObjectMethodWsRespCmd(errorNode);
 						}
 					}
 
@@ -180,39 +185,72 @@ public class ObjectMethodWsReqCmd extends WsReqCmdABC {
 					if (method != null) {
 						try {
 							methodResult = method.invoke(targetObject, cookedArguments.toArray(new Object[0]));
+							// Create the result JSon object.
+							mapper = new ObjectMapper();
+							ObjectNode dataNode = mapper.createObjectNode();
+							JsonNode searchListNode = mapper.valueToTree(methodResult);
+							dataNode.put(RESULTS, searchListNode);
+
+							result = new ObjectMethodWsRespCmd(dataNode);
 						} catch (IllegalArgumentException e) {
 							LOGGER.error("", e);
+							ObjectNode errorNode = createErrorResult(e.toString());
+							result = new ObjectMethodWsRespCmd(errorNode);
 						} catch (IllegalAccessException e) {
 							LOGGER.error("", e);
+							ObjectNode errorNode = createErrorResult(e.toString());
+							result = new ObjectMethodWsRespCmd(errorNode);
 						} catch (InvocationTargetException e) {
-							LOGGER.error("", e);
+							LOGGER.error("", e.getTargetException());
+							ObjectNode errorNode = createErrorResult(e.getTargetException().toString());
+							result = new ObjectMethodWsRespCmd(errorNode);
 						}
 					}
 
-					// Create the result JSon object.
-					mapper = new ObjectMapper();
-					ObjectNode dataNode = mapper.createObjectNode();
-					JsonNode searchListNode = mapper.valueToTree(methodResult);
-					dataNode.put(RESULTS, searchListNode);
-
-					result = new ObjectMethodWsRespCmd(dataNode);
+				}
+				else {
+					ObjectNode errorNode = createErrorResult("Instance: " + objectId + " not found for type: " + classObject);
+					result = new ObjectMethodWsRespCmd(errorNode);
 				}
 			}
 		} catch (SecurityException e) {
 			LOGGER.error("", e);
+			ObjectNode dataNode = createErrorResult(e.toString());
+			result = new ObjectMethodWsRespCmd(dataNode);
 		} catch (NoSuchMethodException e) {
 			LOGGER.error("", e);
+			ObjectNode dataNode = createErrorResult(e.toString());
+			result = new ObjectMethodWsRespCmd(dataNode);
 		} catch (JsonParseException e) {
 			LOGGER.error("", e);
+			ObjectNode dataNode = createErrorResult(e.toString());
+			result = new ObjectMethodWsRespCmd(dataNode);
 		} catch (JsonMappingException e) {
 			LOGGER.error("", e);
+			ObjectNode dataNode = createErrorResult(e.toString());
+			result = new ObjectMethodWsRespCmd(dataNode);
 		} catch (IOException e) {
 			LOGGER.error("", e);
+			ObjectNode dataNode = createErrorResult(e.toString());
+			result = new ObjectMethodWsRespCmd(dataNode);
 		} catch (ClassNotFoundException e) {
 			LOGGER.error("", e);
+			ObjectNode dataNode = createErrorResult(e.toString());
+			result = new ObjectMethodWsRespCmd(dataNode);
 		}
 
 		return result;
+	}
+
+	private ObjectNode createErrorResult(String... messages) {
+		ObjectMapper mapper = new ObjectMapper();
+		ObjectNode resultNode = mapper.createObjectNode();
+		resultNode.put("messages", mapper.valueToTree(Arrays.asList(messages)));
+
+		ObjectNode dataNode = mapper.createObjectNode();
+		dataNode.put(STATUS_ELEMENT, "ERROR");
+		dataNode.put(RESULTS, resultNode);
+		return dataNode;
 	}
 
 	/**
