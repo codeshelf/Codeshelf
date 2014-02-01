@@ -48,10 +48,10 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 	private static final String		COMMAND_PREFIX			= "X%";
 	private static final String		USER_PREFIX				= "U%";
-	private static final String		CONTAINER_PREFIX		= "SH";
+	private static final String		CONTAINER_PREFIX		= "C%";
 	private static final String		LOCATION_PREFIX			= "L%";
 	private static final String		ITEMID_PREFIX			= "I%";
-	private static final String		POSITION_PREFIX			= "B%";
+	private static final String		POSITION_PREFIX			= "P%";
 
 	// These are the message strings we send to the remote CHE.
 	// Currently, these cannot be longer than 10 characters.
@@ -290,7 +290,10 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 */
 	@Override
 	public void buttonCommandReceived(CommandControlButton inButtonCommand) {
-		processButtonPress((int) inButtonCommand.getPosNum(), (int) inButtonCommand.getValue());
+		// Send a command to clear the position, so the controller knows we've gotten the button press.
+		sendPickRequestCommand((int) inButtonCommand.getPosNum(), (byte) 0, (byte) 0, (byte) 0);
+
+		processButtonPress((int) inButtonCommand.getPosNum(), (int) inButtonCommand.getValue());		
 	}
 
 	// --------------------------------------------------------------------------
