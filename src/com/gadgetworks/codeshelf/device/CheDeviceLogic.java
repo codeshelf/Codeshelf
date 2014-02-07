@@ -26,7 +26,6 @@ import org.slf4j.LoggerFactory;
 import com.gadgetworks.codeshelf.device.AisleDeviceLogic.LedCmd;
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
-import com.gadgetworks.flyweight.command.ColorEnum;
 import com.gadgetworks.flyweight.command.CommandControlButton;
 import com.gadgetworks.flyweight.command.CommandControlMessage;
 import com.gadgetworks.flyweight.command.CommandControlRequestQty;
@@ -158,17 +157,16 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 */
 	private void ledControllerSetLed(final NetGuid inControllerGuid,
 		final Short inChannel,
-		final Short inPosition,
-		final ColorEnum inColor,
+		final LedSample inLedSample,
 		final EffectEnum inEffect) {
 
-		LOGGER.info("Light position: " + inPosition + " color: " + inColor);
+		LOGGER.info("Light position: " + inLedSample.getPosition() + " color: " + inLedSample.getColor());
 		INetworkDevice device = mDeviceManager.getDeviceByGuid(inControllerGuid);
 		if (device instanceof AisleDeviceLogic) {
 			AisleDeviceLogic aisleDevice = (AisleDeviceLogic) device;
-			LedCmd cmd = aisleDevice.getLedCmdFor(getGuid(), inChannel, inPosition);
+			LedCmd cmd = aisleDevice.getLedCmdFor(getGuid(), inChannel, inLedSample.getPosition());
 			if (cmd == null) {
-				aisleDevice.addLedCmdFor(getGuid(), inChannel, inPosition, inColor, inEffect);
+				aisleDevice.addLedCmdFor(getGuid(), inChannel, inLedSample, inEffect);
 			}
 		}
 
@@ -293,7 +291,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		// Send a command to clear the position, so the controller knows we've gotten the button press.
 		sendPickRequestCommand((int) inButtonCommand.getPosNum(), (byte) 0, (byte) 0, (byte) 0);
 
-		processButtonPress((int) inButtonCommand.getPosNum(), (int) inButtonCommand.getValue());		
+		processButtonPress((int) inButtonCommand.getPosNum(), (int) inButtonCommand.getValue());
 	}
 
 	// --------------------------------------------------------------------------
@@ -651,12 +649,12 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		//			if (wi.getStatusEnum().equals(WorkInstructionStatusEnum.COMPLETE)) {
 		//				// Only set the status if we've never set it before.
 		//				if (statusMap.get(position) == null) {
-		//					//ledControllerSetLed(getGuid(), CommandControlLight.CHANNEL1, position, wi.getLedColorEnum(), EffectEnum.FLASH);
+		//					//ledControllerSetLed(getGuid(), CommandControlLed.CHANNEL1, position, wi.getLedColorEnum(), EffectEnum.FLASH);
 		//					sendPickRequestCommand(position, 0, 0, 0);
 		//				}
 		//			} else {
 		//				// Always set the status if it's an error.
-		//				//ledControllerSetLed(getGuid(), CommandControlLight.CHANNEL1, position, ColorEnum.RED, EffectEnum.FLASH);
+		//				//ledControllerSetLed(getGuid(), CommandControlLed.CHANNEL1, position, ColorEnum.RED, EffectEnum.FLASH);
 		//				sendPickRequestCommand(position, 0, 0, 0);
 		//			}
 		//			statusMap.put(position, wi.getStatusEnum());
@@ -682,36 +680,36 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		}
 		sendDisplayCommand(firstWi.getPickInstruction() + "  " + firstWi.getItemId(), firstWi.getDescription());
 
-		INetworkDevice ledController = mRadioController.getNetworkDevice(new NetGuid(firstWi.getLedControllerId()));
-		if (ledController != null) {
+		List<LedCmdGroup> ledCmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(firstWi.getLedCmdStream());
 
-			Short startLedNum = firstWi.getLedFirstPos();
-			Short endLedNum = firstWi.getLedLastPos();
+		for (Iterator iterator = ledCmdGroups.iterator(); iterator.hasNext();) {
+			LedCmdGroup ledCmdGroup = (LedCmdGroup) iterator.next();
 
-			// Put them into increasing order rather than order along the path.
-			// (It might be reversed because the travel direction is opposite the LED strip direction.)
-			if (startLedNum > endLedNum) {
-				Short temp = endLedNum;
-				endLedNum = startLedNum;
-				startLedNum = temp;
-			}
+			INetworkDevice ledController = mRadioController.getNetworkDevice(new NetGuid(ledCmdGroup.getControllerId()));
+			if (ledController != null) {
 
-			// Clear the last LED if there was one.
-			if (mLastLedControllerGuid != null) {
-				ledControllerClearLeds();
-			}
+				Short startLedNum = ledCmdGroup.getPosNum();
+				Short currLedNum = startLedNum;
 
-			// Send the location display command.
-			for (short position = startLedNum; position <= endLedNum; position++) {
-				ledControllerSetLed(ledController.getGuid(),
-					firstWi.getLedChannel(),
-					position,
-					firstWi.getLedColorEnum(),
-					EffectEnum.FLASH);
-			}
-			if ((ledController.getDeviceStateEnum() != null)
-					&& (ledController.getDeviceStateEnum() == NetworkDeviceStateEnum.STARTED)) {
-				ledControllerShowLeds(ledController.getGuid());
+				// Clear the last LED commands to this controller if there were any.
+				// TODO: this might not work if we have several controllers for one WI now!
+				if (mLastLedControllerGuid != null) {
+					ledControllerClearLeds();
+				}
+
+				for (LedSample ledSample : ledCmdGroup.getLedSampleList()) {
+
+					ledSample.setPosition(currLedNum++);
+
+					// Send the LED display command.
+					ledControllerSetLed(ledController.getGuid(), ledCmdGroup.getChannelNum(), ledSample, EffectEnum.FLASH);
+
+				}
+
+				if ((ledController.getDeviceStateEnum() != null)
+						&& (ledController.getDeviceStateEnum() == NetworkDeviceStateEnum.STARTED)) {
+					ledControllerShowLeds(ledController.getGuid());
+				}
 			}
 		}
 
@@ -719,7 +717,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		for (WorkInstruction wi : mActivePickWiList) {
 			for (Entry<String, String> mapEntry : mContainersMap.entrySet()) {
 				if (mapEntry.getValue().equals(wi.getContainerId())) {
-					//					ledControllerSetLed(getGuid(), CommandControlLight.CHANNEL1,
+					//					ledControllerSetLed(getGuid(), CommandControlLed.CHANNEL1,
 					//					// The LED positions are zero-based.
 					//						(short) (Short.valueOf(mapEntry.getKey()) - 1),
 					//						wi.getLedColorEnum(),

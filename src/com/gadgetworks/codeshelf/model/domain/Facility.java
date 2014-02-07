@@ -30,6 +30,9 @@ import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.avaje.ebean.annotation.Transactional;
+import com.gadgetworks.codeshelf.device.LedCmdGroup;
+import com.gadgetworks.codeshelf.device.LedCmdGroupSerializer;
+import com.gadgetworks.codeshelf.device.LedSample;
 import com.gadgetworks.codeshelf.model.EdiProviderEnum;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
@@ -772,11 +775,11 @@ public class Facility extends LocationABC<Organization> {
 		Container inContainer,
 		ISubLocation<IDomainObject> inLocation,
 		Double inPosALongPath) {
-		WorkInstruction result = null;
+		WorkInstruction resultWi = null;
 
 		for (WorkInstruction wi : inOrderDetail.getWorkInstructions()) {
 			if (wi.getTypeEnum().equals(WorkInstructionTypeEnum.PLAN)) {
-				result = wi;
+				resultWi = wi;
 				break;
 			} else if (wi.getTypeEnum().equals(WorkInstructionTypeEnum.ACTUAL)) {
 				// Deduct any WIs already completed for this line item.
@@ -788,38 +791,61 @@ public class Facility extends LocationABC<Organization> {
 		if (inQuantityToPick > 0) {
 
 			// If there is no planned WI then create one.
-			if (result == null) {
-				result = new WorkInstruction();
-				result.setParent(inOrderDetail);
-				result.setCreated(new Timestamp(System.currentTimeMillis()));
+			if (resultWi == null) {
+				resultWi = new WorkInstruction();
+				resultWi.setParent(inOrderDetail);
+				resultWi.setCreated(new Timestamp(System.currentTimeMillis()));
 			}
 
 			// Update the WI
-			result.setDomainId(Long.toString(System.currentTimeMillis()));
-			result.setTypeEnum(inType);
-			result.setStatusEnum(inStatus);
-			//result.setLedControllerId("0x00000004");  // WTF?  Look this up! 
-			result.setLedControllerId(inLocation.getLedController().getDeviceGuidStr()); 
-			result.setLedChannel(inLocation.getLedChannel());
-			result.setLedFirstPos(inLocation.getFirstLedPosForItemId(inOrderDetail.getItemMaster().getItemId()));
-			result.setLedLastPos(inLocation.getLastLedPosForItemId(inOrderDetail.getItemMaster().getItemId()));
-			result.setLocationId(((ISubLocation<?>) inLocation.getParent()).getLocationId() + "." + inLocation.getLocationId());
-			result.setLedColorEnum(ColorEnum.BLUE);
-			result.setItemId(inOrderDetail.getItemMaster().getItemId());
-			result.setDescription(inOrderDetail.getItemMaster().getDescription());
-			result.setPickInstruction(inOrderDetail.getItemMaster().getDdcId());
-			result.setPosAlongPath(inPosALongPath);
-			result.setContainerId(inContainer.getContainerId());
-			result.setPlanQuantity(inQuantityToPick);
-			result.setActualQuantity(0);
-			result.setAssigned(new Timestamp(System.currentTimeMillis()));
+			resultWi.setDomainId(Long.toString(System.currentTimeMillis()));
+			resultWi.setTypeEnum(inType);
+			resultWi.setStatusEnum(inStatus);
+
+			// The old way of sending LED data to the remote controller.
+			//			resultWi.setLedControllerId(inLocation.getLedController().getDeviceGuidStr());
+			//			resultWi.setLedChannel(inLocation.getLedChannel());
+			//			resultWi.setLedFirstPos(inLocation.getFirstLedPosForItemId(inOrderDetail.getItemMaster().getItemId()));
+			//			resultWi.setLedLastPos(inLocation.getLastLedPosForItemId(inOrderDetail.getItemMaster().getItemId()));
+			//			resultWi.setLedColorEnum(ColorEnum.BLUE);
+
+			// The new way of sending LED data to the remote controller.
+			List<LedSample> ledSamples = new ArrayList<LedSample>();
+			List<LedCmdGroup> ledCmdGroupList = new ArrayList<LedCmdGroup>();
+			LedCmdGroup ledCmdGroup = new LedCmdGroup(inLocation.getLedController().getDeviceGuidStr(),
+				inLocation.getLedChannel(),
+				inLocation.getFirstLedPosForItemId(inOrderDetail.getItemMaster().getItemId()),
+				ledSamples);
+
+			// Add all of the LEDs we have to light to make this work.
+			short firstPos = inLocation.getFirstLedPosForItemId(inOrderDetail.getItemMaster().getItemId());
+			short lastLedPos = inLocation.getLastLedPosForItemId(inOrderDetail.getItemMaster().getItemId());
+			
+			for (short ledPos = firstPos; ledPos < lastLedPos; ledPos++) {
+				LedSample ledSample = new LedSample(ledPos, ColorEnum.BLUE);
+				ledSamples.add(ledSample);				
+			}
+			ledCmdGroup.setLedSampleList(ledSamples);
+
+			ledCmdGroupList.add(ledCmdGroup);
+			resultWi.setLedCmdStream(LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList));
+
+			resultWi.setLocationId(((ISubLocation<?>) inLocation.getParent()).getLocationId() + "." + inLocation.getLocationId());
+			resultWi.setItemId(inOrderDetail.getItemMaster().getItemId());
+			resultWi.setDescription(inOrderDetail.getItemMaster().getDescription());
+			resultWi.setPickInstruction(inOrderDetail.getItemMaster().getDdcId());
+			resultWi.setPosAlongPath(inPosALongPath);
+			resultWi.setContainerId(inContainer.getContainerId());
+			resultWi.setPlanQuantity(inQuantityToPick);
+			resultWi.setActualQuantity(0);
+			resultWi.setAssigned(new Timestamp(System.currentTimeMillis()));
 			try {
-				WorkInstruction.DAO.store(result);
+				WorkInstruction.DAO.store(resultWi);
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}
 		}
-		return result;
+		return resultWi;
 	}
 
 	private class DdcItemComparator implements Comparator<Item> {

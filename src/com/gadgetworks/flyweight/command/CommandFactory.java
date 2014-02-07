@@ -170,7 +170,7 @@ public final class CommandFactory {
 				break;
 
 			case CommandControlABC.LIGHT:
-				result = new CommandControlLight();
+				result = new CommandControlLed();
 				break;
 
 			case CommandControlABC.REQUEST_QTY:

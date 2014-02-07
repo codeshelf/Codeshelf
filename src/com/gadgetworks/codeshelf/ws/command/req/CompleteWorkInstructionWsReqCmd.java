@@ -66,8 +66,8 @@ public class CompleteWorkInstructionWsReqCmd extends WsReqCmdABC {
 	}
 
 	// --------------------------------------------------------------------------
-	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.web.websession.command.req.WebSessionReqCmdABC#doExec()
+	/*
+	 * Deserialize a completed work instruction from the remote gateway controller (from the WebSocket).
 	 */
 	protected final IWsRespCmd doExec() {
 		IWsRespCmd result = null;

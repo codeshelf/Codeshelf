@@ -7,10 +7,14 @@ package com.gadgetworks.codeshelf.device;
 
 import java.util.Arrays;
 
-import com.gadgetworks.flyweight.command.ColorEnum;
-
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.experimental.Accessors;
+
+import com.gadgetworks.flyweight.command.ColorEnum;
+import com.google.gson.annotations.Expose;
+import com.google.gson.annotations.SerializedName;
 
 @Data
 @Accessors(prefix = "m")
@@ -31,11 +35,34 @@ public class LedSample {
 	public static final byte[]	LED_WHITE	= { ON_, ON_, ON_ };
 
 	private Short				mPosition;
-	private ColorEnum			mColor;
+
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	@SerializedName(value = "r")
+	@Expose
+	private byte				mRed;
+
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	@SerializedName(value = "g")
+	@Expose
+	private byte				mGreen;
+
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	@SerializedName(value = "b")
+	@Expose
+	private byte				mBlue;
 
 	public LedSample(final Short inPosition, final ColorEnum inColor) {
 		mPosition = inPosition;
-		mColor = inColor;
+		byte[] rgb = convertColorToBytes(inColor);
+		mRed = rgb[0];
+		mGreen = rgb[1];
+		mBlue = rgb[2];
 	}
 
 	// --------------------------------------------------------------------------
@@ -113,6 +140,16 @@ public class LedSample {
 		}
 
 		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Return the COlorEnum of the RGB value stored in this sample.
+	 * @return
+	 */
+	public final ColorEnum getColor() {
+		byte[] rgb = new byte[] { mRed, mGreen, mBlue };
+		return convertBytesToColor(rgb);
 	}
 
 }

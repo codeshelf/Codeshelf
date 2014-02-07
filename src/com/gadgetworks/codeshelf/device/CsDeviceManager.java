@@ -336,6 +336,8 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 
 	// --------------------------------------------------------------------------
 	/**
+	 * Deserialize work instructions for a CHE from the WebSocket.
+	 * 
 	 * @param inDataNode
 	 */
 	private void processCheWorkResp(final JsonNode inDataNode) {

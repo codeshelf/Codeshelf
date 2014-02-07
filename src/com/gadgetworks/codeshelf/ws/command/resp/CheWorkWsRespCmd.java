@@ -69,6 +69,9 @@ public class CheWorkWsRespCmd extends WsRespCmdABC {
 		return result;
 	}
 
+	/*
+	 * Serialize the work instructions for this CHE and put them on the WebSocket.
+	 */
 	protected final void doPrepareDataNode(ObjectNode inOutDataNode) {
 
 		// Insert the response code.
@@ -76,8 +79,11 @@ public class CheWorkWsRespCmd extends WsRespCmdABC {
 
 		// Figure out the CHE's work area by its scanned location.
 		Facility facility = mChe.getParent().getParent();
+		
+		// Get the work instructions for this CHE at this location for the given containers.
 		List<WorkInstruction> wiList = facility.getWorkInstructions(mChe, mCheLocation, mContainersIds);
 
+		// Serialize the work instructions into the websocket command data.
 		ObjectMapper mapper = new ObjectMapper();
 		ArrayNode wiListNode = mapper.valueToTree(wiList);
 		inOutDataNode.put(IWsReqCmd.RESULTS, wiListNode);

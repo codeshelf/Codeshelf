@@ -363,7 +363,8 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 						} catch (ArrayIndexOutOfBoundsException e) {
 							// Note the error and send the full frame up for handling.
 							LOGGER.error("", e);
-							break;
+							bytesReceived = MAX_FRAME_BYTES;
+							break loop;
 						}
 				}
 			}

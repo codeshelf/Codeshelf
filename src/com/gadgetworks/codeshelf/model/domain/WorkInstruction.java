@@ -48,6 +48,13 @@ import com.google.inject.Singleton;
  * The references are stored as Strings because we mostly serialize this object (in JSON) to send back-and-forth
  * over the wire to the remote radio/network controllers.
  * 
+ * NOTE:
+ * 
+ * WorkInstructions also get sent to the site controller (gateway).  The gateway only knows that it needs to distribute and handle
+ * work instructions at the site, but the gateway has no business logic at all.  ANy cahnges to those work instructions can only
+ * come from the back-end business logic.  We send those changes over the WebSocket to the gateway.  We share this 
+ * WorkInstruction class between the business logic and remote gateway as a simple way to serial the objects over the WebSocket.  
+ * 
  * @author jeffw
  */
 
@@ -152,41 +159,57 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 	@JsonProperty
 	private String						pickerId;
 
-	// Aisle controller ID.
+	// LED command/processing stream.
+	// A formatted stream of LED processing commands that tells the site gateway how to lights LEDs for this WI.
+	// See LedStreamProcessor
 	@Column(nullable = true)
 	@Getter
 	@Setter
 	@JsonProperty
-	private String						ledControllerId;
+	private String						ledCmdStream;
 
-	// LED channel
+	// The remote gateway controller will sort and group by this code, and then only send out one group to the radio network at a time.
 	@Column(nullable = true)
 	@Getter
 	@Setter
 	@JsonProperty
-	private Short						ledChannel;
+	private String						groupAndSortCode;
 
-	// First LED position
-	@Column(nullable = true)
-	@Getter
-	@Setter
-	@JsonProperty
-	private Short						ledFirstPos;
-
-	// Last LED position
-	@Column(nullable = true)
-	@Getter
-	@Setter
-	@JsonProperty
-	private Short						ledLastPos;
-
-	// Color used for picking.
-	@Column(nullable = true)
-	@Enumerated(value = EnumType.STRING)
-	@Getter
-	@Setter
-	@JsonProperty
-	private ColorEnum					ledColorEnum;
+//	// Aisle controller ID.
+//	@Column(nullable = true)
+//	@Getter
+//	@Setter
+//	@JsonProperty
+//	private String						ledControllerId;
+//
+//	// LED channel
+//	@Column(nullable = true)
+//	@Getter
+//	@Setter
+//	@JsonProperty
+//	private Short						ledChannel;
+//
+//	// First LED position
+//	@Column(nullable = true)
+//	@Getter
+//	@Setter
+//	@JsonProperty
+//	private Short						ledFirstPos;
+//
+//	// Last LED position
+//	@Column(nullable = true)
+//	@Getter
+//	@Setter
+//	@JsonProperty
+//	private Short						ledLastPos;
+//
+//	// Color used for picking.
+//	@Column(nullable = true)
+//	@Enumerated(value = EnumType.STRING)
+//	@Getter
+//	@Setter
+//	@JsonProperty
+//	private ColorEnum					ledColorEnum;
 
 	@Getter
 	@Setter

@@ -16,13 +16,12 @@ import java.util.UUID;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 
-import org.codehaus.jackson.map.ObjectMapper.DefaultTyping;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.flyweight.command.ColorEnum;
 import com.gadgetworks.flyweight.command.CommandControlButton;
-import com.gadgetworks.flyweight.command.CommandControlLight;
+import com.gadgetworks.flyweight.command.CommandControlLed;
 import com.gadgetworks.flyweight.command.EffectEnum;
 import com.gadgetworks.flyweight.command.ICommand;
 import com.gadgetworks.flyweight.command.NetEndpoint;
@@ -39,17 +38,19 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 		@Getter
 		private Short		mChannel;
 		@Getter
-		private Short		mPosition;
-		@Getter
-		private ColorEnum	mColor;
-		@Getter
-		private EffectEnum	mEffect;
+		private LedSample	mLedSample;
 
-		public LedCmd(final Short inChannel, final Short inPosition, final ColorEnum inColor, final EffectEnum inEffect) {
+		public LedCmd(final Short inChannel, final LedSample inLedSample, final EffectEnum inEffect) {
 			mChannel = inChannel;
-			mPosition = inPosition;
-			mColor = inColor;
-			mEffect = inEffect;
+			mLedSample = inLedSample;
+		}
+		
+		public Short getPosition() {
+			return mLedSample.getPosition();
+		}
+		
+		public ColorEnum getColor() {
+			return mLedSample.getColor();
 		}
 	}
 
@@ -65,7 +66,7 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 	@Override
 	public void start() {
 		//		short position = 1;
-		//		sendLightCommand(CommandControlLight.CHANNEL1, position, ColorEnum.BLUE, CommandControlLight.EFFECT_SOLID);
+		//		sendLightCommand(CommandControlLed.CHANNEL1, position, ColorEnum.BLUE, CommandControlLed.EFFECT_SOLID);
 		updateLeds();
 	}
 
@@ -79,10 +80,10 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 		if ((getDeviceStateEnum() != null) && (getDeviceStateEnum() == NetworkDeviceStateEnum.STARTED)) {
 			// First send a blanking command on each channel.
 			List<LedSample> sampleList = new ArrayList<LedSample>();
-			LedSample sample = new LedSample(CommandControlLight.POSITION_NONE, ColorEnum.BLACK);
+			LedSample sample = new LedSample(CommandControlLed.POSITION_NONE, ColorEnum.BLACK);
 			sampleList.add(sample);
 			for (short channel = 1; channel <= 2; channel++) {
-				ICommand command = new CommandControlLight(NetEndpoint.PRIMARY_ENDPOINT, channel, EffectEnum.FLASH, sampleList);
+				ICommand command = new CommandControlLed(NetEndpoint.PRIMARY_ENDPOINT, channel, EffectEnum.FLASH, sampleList);
 				mRadioController.sendCommand(command, getAddress(), true);
 			}
 		}
@@ -100,15 +101,14 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 	 */
 	public final void addLedCmdFor(final NetGuid inNetGuid,
 		final Short inChannel,
-		final Short inPosition,
-		final ColorEnum inColor,
+		final LedSample inLedSample,
 		final EffectEnum inEffect) {
 		List<LedCmd> ledCmds = mDeviceLedPosMap.get(inNetGuid);
 		if (ledCmds == null) {
 			ledCmds = new ArrayList<LedCmd>();
 			mDeviceLedPosMap.put(inNetGuid, ledCmds);
 		}
-		LedCmd ledCmd = new LedCmd(inChannel, inPosition, inColor, inEffect);
+		LedCmd ledCmd = new LedCmd(inChannel, inLedSample, inEffect);
 		ledCmds.add(ledCmd);
 	}
 
@@ -173,35 +173,36 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 	// --------------------------------------------------------------------------
 	/**
 	 * Light all of the LEDs required.
+	 * 
+	 * TODO: Right now we just send the FLASH commands.  Those are the LEDs that get lit in the "ON" part of the cycle only.
+	 * What we need to do is sort the samples by effect and send them in "effect groups."  There is no immediate need to 
+	 * support any other effects, so we're skipping it for now.
 	 */
 	public final void updateLeds() {
 
 		Short channel = 1;
-		EffectEnum effect = EffectEnum.FLASH;
 
 		List<LedSample> samples = new ArrayList<LedSample>();
 
 		// Add one sample to clear the flashers for the CHE.
-		LedSample sample = new LedSample((short) -1, ColorEnum.BLACK);
+		LedSample sample = new LedSample(CommandControlLed.POSITION_NONE, ColorEnum.BLACK);
 		samples.add(sample);
 
 		// Now send the commands needed for each CHE.
 		for (Map.Entry<NetGuid, List<LedCmd>> entry : mDeviceLedPosMap.entrySet()) {
 			for (LedCmd ledCmd : entry.getValue()) {
 				channel = ledCmd.getChannel();
-				effect = ledCmd.getEffect();
-				sample = new LedSample(ledCmd.getPosition(), ledCmd.getColor());
-				samples.add(sample);
+				samples.add(ledCmd.getLedSample());
 
-				LOGGER.info("Light position: " + ledCmd.mPosition + " color: " + ledCmd.getColor() + " effect: "
-						+ ledCmd.getEffect());
+				LOGGER.info("Light position: " + ledCmd.getPosition() + " color: " + ledCmd.getColor() + " effect: "
+						+ EffectEnum.FLASH);
 			}
 		}
 
 		// Now we have to sort the samples in position order.
 		Collections.sort(samples, new LedPositionComparator());
 
-		ICommand command = new CommandControlLight(NetEndpoint.PRIMARY_ENDPOINT, channel, effect, samples);
+		ICommand command = new CommandControlLed(NetEndpoint.PRIMARY_ENDPOINT, channel, EffectEnum.FLASH, samples);
 		mRadioController.sendCommand(command, getAddress(), true);
 	}
 }
