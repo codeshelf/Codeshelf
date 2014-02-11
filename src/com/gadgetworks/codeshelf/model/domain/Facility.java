@@ -371,7 +371,7 @@ public class Facility extends LocationABC<Organization> {
 				Double aisleBoundaryY = 0.0;
 
 				int bayNum = 0;
-				Short lastLedPos = 1;
+				Short lastLedPos = 0;
 				Short channelNum = 0;
 				for (int bayLongNum = 0; bayLongNum < inBaysLong; bayLongNum++) {
 					Double anchorPosZ = 0.0;
@@ -386,6 +386,9 @@ public class Facility extends LocationABC<Organization> {
 							channelNum,
 							lastLedPos);
 						aisle.addLocation(bay);
+
+						// Get the last LED position from the bay to setup the next one.
+						lastLedPos = (short) (bay.getLastLedNumAlongPath() + 1);
 
 						// Create the bay's boundary vertices.
 						if (inRunInXDir) {
@@ -445,17 +448,22 @@ public class Facility extends LocationABC<Organization> {
 		final Double inAnchorPosZ,
 		final LedController inLedController,
 		final Short inChannelNum,
-		short inOutLedPosNum) {
+		final Short inFirstLedPosNum) {
 
 		final int DEFAULT_TIER_COUNT = 5;
 		final int DEFAULT_SLOT_COUNT = 4;
 
 		final double DEFAULT_TIER_HEIGHT_CM = 0.5;
-		final double DEFAULT_SLOT_WIDTH_CM = 0.5;
+		final double DEFAULT_SLOT_WIDTH_CM = 0.25;
+		
+		short curLedPosNum = inFirstLedPosNum;
 
 		Bay resultBay = null;
 
 		resultBay = new Bay(inAisle, inBayId, inAnchorPosX, inAnchorPosY, inAnchorPosZ);
+
+		resultBay.setLastLedNumAlongPath(inFirstLedPosNum);
+
 		try {
 			Bay.DAO.store(resultBay);
 		} catch (DaoException e) {
@@ -484,9 +492,10 @@ public class Facility extends LocationABC<Organization> {
 				slot.setDomainId("S" + slotNum);
 				slot.setLedController(inLedController);
 				slot.setLedChannel(inChannelNum);
-				slot.setFirstLedNumAlongPath(inOutLedPosNum);
-				inOutLedPosNum += ((short) Math.round((LocationABC.METERS_PER_LED_POS * DEFAULT_SLOT_COUNT)));
-				slot.setLastLedNumAlongPath(inOutLedPosNum);
+				slot.setFirstLedNumAlongPath((short) (curLedPosNum + 1));
+				curLedPosNum += (short) (8);
+				resultBay.setLastLedNumAlongPath(curLedPosNum);
+				slot.setLastLedNumAlongPath(curLedPosNum);
 				slot.setParent(tier);
 
 				tier.addLocation(slot);
