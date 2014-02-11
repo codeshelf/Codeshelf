@@ -30,11 +30,11 @@ public class HttpServer implements IHttpServer {
 	private static final Logger	LOGGER						= LoggerFactory.getLogger(HttpServer.class);
 
 	private static final String	WEBAPP_SERVER_THREADNAME	= "Webapp Server";
-	private static final String	WEBSITE_SERVER_THREADNAME	= "Website Server";
-
-	private String				mWebSiteContentPath;
-	private String				mWebSiteHostname;
-	private int					mWebSitePortNum;
+//	private static final String	WEBSITE_SERVER_THREADNAME	= "Website Server";
+//
+//	private String				mWebSiteContentPath;
+//	private String				mWebSiteHostname;
+//	private int					mWebSitePortNum;
 
 	private String				mWebAppContentPath;
 	private String				mWebAppHostname;

@@ -45,6 +45,7 @@ import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.flyweight.command.ColorEnum;
+import com.gadgetworks.flyweight.command.NetGuid;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -345,80 +346,165 @@ public class Facility extends LocationABC<Organization> {
 		final Boolean inRunInXDir,
 		final Boolean inOpensLowSide) {
 
-		// Create the aisle if it doesn't already exist.
-		Aisle aisle = Aisle.DAO.findByDomainId(this, inAisleId);
-		if (aisle == null) {
-			aisle = new Aisle(this, inAisleId, inPosXMeters, inPosYMeters);
+		final String inLedControllerId = "0x00000002";
+
+		// Create at least one aisle controller.
+		CodeshelfNetwork network = networks.get(CodeshelfNetwork.DEFAULT_NETWORK_ID);
+		if (network != null) {
+			LedController ledController = network.getLedController("LED1");
+			if (ledController == null) {
+				ledController = network.createLedController(inLedControllerId, new NetGuid(inLedControllerId));
+			}
+			// Create the aisle if it doesn't already exist.
+			Aisle aisle = Aisle.DAO.findByDomainId(this, inAisleId);
+			if (aisle == null) {
+				aisle = new Aisle(this, inAisleId, inPosXMeters, inPosYMeters);
+				try {
+					Aisle.DAO.store(aisle);
+				} catch (DaoException e) {
+					LOGGER.error("", e);
+				}
+
+				Double anchorPosX = 0.0;
+				Double anchorPosY = 0.0;
+				Double aisleBoundaryX = 0.0;
+				Double aisleBoundaryY = 0.0;
+
+				int bayNum = 0;
+				Short lastLedPos = 1;
+				Short channelNum = 0;
+				for (int bayLongNum = 0; bayLongNum < inBaysLong; bayLongNum++) {
+					Double anchorPosZ = 0.0;
+					for (int bayHighNum = 0; bayHighNum < inBaysHigh; bayHighNum++) {
+						String bayId = String.format("%0" + Integer.toString(getIdDigits()) + "d", bayNum++);
+						Bay bay = createZigZagBay(aisle,
+							bayId,
+							anchorPosX,
+							anchorPosY,
+							anchorPosZ,
+							ledController,
+							channelNum,
+							lastLedPos);
+						aisle.addLocation(bay);
+
+						// Create the bay's boundary vertices.
+						if (inRunInXDir) {
+							createVertices(bay, inProtoBayWidthMeters, inProtoBayDepthMeters);
+						} else {
+							createVertices(bay, inProtoBayDepthMeters, inProtoBayWidthMeters);
+						}
+
+						anchorPosZ += inProtoBayHeightMeters;
+					}
+
+					// Prepare the anchor point for the next bay.
+					if (inRunInXDir) {
+						if ((anchorPosX + inProtoBayWidthMeters) > aisleBoundaryX) {
+							aisleBoundaryX = anchorPosX + inProtoBayWidthMeters;
+						}
+
+						if ((anchorPosY + inProtoBayDepthMeters) > aisleBoundaryY) {
+							aisleBoundaryY = anchorPosY + inProtoBayDepthMeters;
+						}
+
+						anchorPosX += inProtoBayWidthMeters;
+					} else {
+						if ((anchorPosX + inProtoBayDepthMeters) > aisleBoundaryX) {
+							aisleBoundaryX = anchorPosX + inProtoBayDepthMeters;
+						}
+
+						if ((anchorPosY + inProtoBayWidthMeters) > aisleBoundaryY) {
+							aisleBoundaryY = anchorPosY + inProtoBayWidthMeters;
+						}
+
+						anchorPosY += inProtoBayDepthMeters;
+					}
+				}
+
+				// Create the aisle's boundary vertices.
+				createVertices(aisle, aisleBoundaryX, aisleBoundaryY);
+
+				// Create the paths related to this aisle.
+				aisle.createPaths(aisleBoundaryX, aisleBoundaryY, TravelDirectionEnum.FORWARD, inOpensLowSide);
+
+			}
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Create the zig-zag LED strip bays that we see with rolling cart bays.
+	 * (E.g. the bays we see at GoodEggs.)
+	 * 
+	 * @return
+	 */
+	private Bay createZigZagBay(final Aisle inAisle,
+		final String inBayId,
+		final Double inAnchorPosX,
+		final Double inAnchorPosY,
+		final Double inAnchorPosZ,
+		final LedController inLedController,
+		final Short inChannelNum,
+		short inOutLedPosNum) {
+
+		final int DEFAULT_TIER_COUNT = 5;
+		final int DEFAULT_SLOT_COUNT = 4;
+
+		final double DEFAULT_TIER_HEIGHT_CM = 0.5;
+		final double DEFAULT_SLOT_WIDTH_CM = 0.5;
+
+		Bay resultBay = null;
+
+		resultBay = new Bay(inAisle, inBayId, inAnchorPosX, inAnchorPosY, inAnchorPosZ);
+		try {
+			Bay.DAO.store(resultBay);
+		} catch (DaoException e) {
+			LOGGER.error("", e);
+		}
+
+		// DEMOWARE - this creates the bays we have in the office for demos.
+		// We need to create the UI to setup these bays properly and get rid of this hard-coding.
+
+		for (int tierNum = 0; tierNum < DEFAULT_TIER_COUNT; tierNum++) {
+
+			Tier tier = new Tier(inAnchorPosX, tierNum * DEFAULT_TIER_HEIGHT_CM);
+			tier.setDomainId("T" + tierNum);
+			tier.setParent(resultBay);
+			resultBay.addLocation(tier);
 			try {
-				Aisle.DAO.store(aisle);
+				Tier.DAO.store(tier);
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}
 
-			Double anchorPosX = 0.0;
-			Double anchorPosY = 0.0;
-			Double aisleBoundaryX = 0.0;
-			Double aisleBoundaryY = 0.0;
+			// Add slots to this tier.
+			for (int slotNum = 0; slotNum < DEFAULT_SLOT_COUNT; slotNum++) {
+				Slot slot = new Slot(tierNum * DEFAULT_SLOT_WIDTH_CM, inAnchorPosY);
 
-			int bayNum = 0;
-			for (int bayLongNum = 0; bayLongNum < inBaysLong; bayLongNum++) {
-				Double anchorPosZ = 0.0;
-				for (int bayHighNum = 0; bayHighNum < inBaysHigh; bayHighNum++) {
-					String bayId = String.format("%0" + Integer.toString(getIdDigits()) + "d", bayNum++);
-					Bay bay = new Bay(aisle, bayId, anchorPosX, anchorPosY, anchorPosZ);
-					try {
-						Bay.DAO.store(bay);
-					} catch (DaoException e) {
-						LOGGER.error("", e);
-					}
-					aisle.addLocation(bay);
+				slot.setDomainId("S" + slotNum);
+				slot.setLedController(inLedController);
+				slot.setLedChannel(inChannelNum);
+				slot.setFirstLedNumAlongPath(inOutLedPosNum);
+				inOutLedPosNum += ((short) Math.round((LocationABC.METERS_PER_LED_POS * DEFAULT_SLOT_COUNT)));
+				slot.setLastLedNumAlongPath(inOutLedPosNum);
+				slot.setParent(tier);
 
-					// Create the bay's boundary vertices.
-					if (inRunInXDir) {
-						createVertices(bay, inProtoBayWidthMeters, inProtoBayDepthMeters);
-					} else {
-						createVertices(bay, inProtoBayDepthMeters, inProtoBayWidthMeters);
-					}
-
-					anchorPosZ += inProtoBayHeightMeters;
-				}
-
-				// Prepare the anchor point for the next bay.
-				if (inRunInXDir) {
-					if ((anchorPosX + inProtoBayWidthMeters) > aisleBoundaryX) {
-						aisleBoundaryX = anchorPosX + inProtoBayWidthMeters;
-					}
-
-					if ((anchorPosY + inProtoBayDepthMeters) > aisleBoundaryY) {
-						aisleBoundaryY = anchorPosY + inProtoBayDepthMeters;
-					}
-
-					anchorPosX += inProtoBayWidthMeters;
-				} else {
-					if ((anchorPosX + inProtoBayDepthMeters) > aisleBoundaryX) {
-						aisleBoundaryX = anchorPosX + inProtoBayDepthMeters;
-					}
-
-					if ((anchorPosY + inProtoBayWidthMeters) > aisleBoundaryY) {
-						aisleBoundaryY = anchorPosY + inProtoBayWidthMeters;
-					}
-
-					anchorPosY += inProtoBayDepthMeters;
+				tier.addLocation(slot);
+				try {
+					Slot.DAO.store(slot);
+				} catch (DaoException e) {
+					LOGGER.error("", e);
 				}
 			}
-
-			// Create the aisle's boundary vertices.
-			createVertices(aisle, aisleBoundaryX, aisleBoundaryY);
-
-			// Create the paths related to this aisle.
-			aisle.createPaths(aisleBoundaryX, aisleBoundaryY, TravelDirectionEnum.FORWARD, inOpensLowSide);
-
-			// Create at least one aisle controller.
-			//			CodeshelfNetwork network = networks.get(CodeshelfNetwork.DEFAULT_NETWORK_ID);
-			//			if (network != null) {
-			//				network.createLedController("0x00000000");
-			//			}
 		}
+
+		try {
+			Bay.DAO.store(resultBay);
+		} catch (DaoException e) {
+			LOGGER.error("", e);
+		}
+
+		return resultBay;
 	}
 
 	// --------------------------------------------------------------------------
@@ -820,10 +906,10 @@ public class Facility extends LocationABC<Organization> {
 			// Add all of the LEDs we have to light to make this work.
 			short firstPos = inLocation.getFirstLedPosForItemId(inOrderDetail.getItemMaster().getItemId());
 			short lastLedPos = inLocation.getLastLedPosForItemId(inOrderDetail.getItemMaster().getItemId());
-			
+
 			for (short ledPos = firstPos; ledPos < lastLedPos; ledPos++) {
 				LedSample ledSample = new LedSample(ledPos, ColorEnum.BLUE);
-				ledSamples.add(ledSample);				
+				ledSamples.add(ledSample);
 			}
 			ledCmdGroup.setLedSampleList(ledSamples);
 

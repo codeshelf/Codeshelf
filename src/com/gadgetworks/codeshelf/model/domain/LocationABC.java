@@ -78,11 +78,11 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		}
 	}
 
-	private static final Logger			LOGGER				= LoggerFactory.getLogger(LocationABC.class);
-
 	// This really should somehow include the space between the bay if there are gaps in a long row with certain kinds of LED strips.
 	// For example, the current strips are spaced exactly 3.125cm apart.
-	private static final Double			METERS_PER_LED_POS	= 0.03333;
+	public static final Double			METERS_PER_LED_POS	= 0.03333;
+
+	private static final Logger			LOGGER				= LoggerFactory.getLogger(LocationABC.class);
 
 	// The position type (GPS, METERS, etc.).
 	@Column(nullable = false)

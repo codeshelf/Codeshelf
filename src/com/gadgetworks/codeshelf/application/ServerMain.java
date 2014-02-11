@@ -73,8 +73,12 @@ import com.gadgetworks.codeshelf.model.domain.PathSegment;
 import com.gadgetworks.codeshelf.model.domain.PathSegment.PathSegmentDao;
 import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
 import com.gadgetworks.codeshelf.model.domain.PersistentProperty.PersistentPropertyDao;
+import com.gadgetworks.codeshelf.model.domain.Slot;
+import com.gadgetworks.codeshelf.model.domain.Slot.SlotDao;
 import com.gadgetworks.codeshelf.model.domain.SubLocationABC;
 import com.gadgetworks.codeshelf.model.domain.SubLocationABC.SubLocationDao;
+import com.gadgetworks.codeshelf.model.domain.Tier;
+import com.gadgetworks.codeshelf.model.domain.Tier.TierDao;
 import com.gadgetworks.codeshelf.model.domain.UomMaster;
 import com.gadgetworks.codeshelf.model.domain.UomMaster.UomMasterDao;
 import com.gadgetworks.codeshelf.model.domain.User;
@@ -318,9 +322,17 @@ public final class ServerMain {
 				bind(new TypeLiteral<ITypedDao<PersistentProperty>>() {
 				}).to(PersistentPropertyDao.class);
 
+				requestStaticInjection(Slot.class);
+				bind(new TypeLiteral<ITypedDao<Slot>>() {
+				}).to(SlotDao.class);
+
 				requestStaticInjection(SubLocationABC.class);
 				bind(new TypeLiteral<ITypedDao<SubLocationABC>>() {
 				}).to(SubLocationDao.class);
+
+				requestStaticInjection(Tier.class);
+				bind(new TypeLiteral<ITypedDao<Tier>>() {
+				}).to(TierDao.class);
 
 				requestStaticInjection(UomMaster.class);
 				bind(new TypeLiteral<ITypedDao<UomMaster>>() {
