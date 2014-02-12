@@ -13,6 +13,7 @@ import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
@@ -30,6 +31,7 @@ import com.google.inject.Singleton;
  */
 
 @Entity
+@CacheStrategy(useBeanCache = true)
 @DiscriminatorValue("BAY")
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 //@ToString(doNotUseGetters = true)

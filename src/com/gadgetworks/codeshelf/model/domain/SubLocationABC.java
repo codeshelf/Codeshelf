@@ -23,7 +23,7 @@ import com.google.inject.Singleton;
 
 @Entity
 @MappedSuperclass
-@CacheStrategy
+@CacheStrategy(useBeanCache = true)
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 //@ToString(doNotUseGetters = true)
 public abstract class SubLocationABC<P extends IDomainObject> extends LocationABC<P> implements ISubLocation<P> {

@@ -810,6 +810,7 @@ public class CsvImporter implements ICsvImporter {
 			result.setStoredLocation(location);
 			result.setUomMaster(inUomMaster);
 			result.setQuantity(Double.valueOf(inCsvImportBean.getQuantity()));
+			result.setPosAlongPath(location.getPosAlongPath());
 			inItemMaster.addItem(result);
 			location.addItem(result);
 			try {

@@ -370,25 +370,29 @@ public class Facility extends LocationABC<Organization> {
 				Double aisleBoundaryX = 0.0;
 				Double aisleBoundaryY = 0.0;
 
-				int bayNum = 0;
-				Short lastLedPos = 0;
-				Short channelNum = 0;
-				for (int bayLongNum = 0; bayLongNum < inBaysLong; bayLongNum++) {
+				Short curLedPosNum = 1;
+				Short channelNum = 1;
+				Boolean tiersTopToBottom = false;
+				for (int bayNum = 1; bayNum <= inBaysLong; bayNum++) {
 					Double anchorPosZ = 0.0;
+					String bayName = "B" + bayNum;
 					for (int bayHighNum = 0; bayHighNum < inBaysHigh; bayHighNum++) {
-						String bayId = String.format("%0" + Integer.toString(getIdDigits()) + "d", bayNum++);
 						Bay bay = createZigZagBay(aisle,
-							bayId,
+							bayName,
+							curLedPosNum,
+							tiersTopToBottom,
 							anchorPosX,
 							anchorPosY,
 							anchorPosZ,
+							inRunInXDir,
 							ledController,
-							channelNum,
-							lastLedPos);
+							channelNum);
 						aisle.addLocation(bay);
 
+						tiersTopToBottom = !tiersTopToBottom;
+
 						// Get the last LED position from the bay to setup the next one.
-						lastLedPos = (short) (bay.getLastLedNumAlongPath() + 1);
+						curLedPosNum = (short) (bay.getLastLedNumAlongPath());
 
 						// Create the bay's boundary vertices.
 						if (inRunInXDir) {
@@ -441,28 +445,23 @@ public class Facility extends LocationABC<Organization> {
 	 * 
 	 * @return
 	 */
-	private Bay createZigZagBay(final Aisle inAisle,
+	private Bay createZigZagBay(final Aisle inParentAisle,
 		final String inBayId,
+		final Short inFirstLedNum,
+		final Boolean inTierTopToBottom,
 		final Double inAnchorPosX,
 		final Double inAnchorPosY,
 		final Double inAnchorPosZ,
+		final Boolean inRunsInXDir,
 		final LedController inLedController,
-		final Short inChannelNum,
-		final Short inFirstLedPosNum) {
-
-		final int DEFAULT_TIER_COUNT = 5;
-		final int DEFAULT_SLOT_COUNT = 4;
-
-		final double DEFAULT_TIER_HEIGHT_CM = 0.5;
-		final double DEFAULT_SLOT_WIDTH_CM = 0.25;
-		
-		short curLedPosNum = inFirstLedPosNum;
+		final short inLedChannelNum) {
 
 		Bay resultBay = null;
 
-		resultBay = new Bay(inAisle, inBayId, inAnchorPosX, inAnchorPosY, inAnchorPosZ);
+		resultBay = new Bay(inParentAisle, inBayId, inAnchorPosX, inAnchorPosY, inAnchorPosZ);
 
-		resultBay.setLastLedNumAlongPath(inFirstLedPosNum);
+		resultBay.setFirstLedNumAlongPath(inFirstLedNum);
+		resultBay.setLastLedNumAlongPath((short) (inFirstLedNum + 160));
 
 		try {
 			Bay.DAO.store(resultBay);
@@ -473,38 +472,19 @@ public class Facility extends LocationABC<Organization> {
 		// DEMOWARE - this creates the bays we have in the office for demos.
 		// We need to create the UI to setup these bays properly and get rid of this hard-coding.
 
-		for (int tierNum = 0; tierNum < DEFAULT_TIER_COUNT; tierNum++) {
-
-			Tier tier = new Tier(inAnchorPosX, tierNum * DEFAULT_TIER_HEIGHT_CM);
-			tier.setDomainId("T" + tierNum);
-			tier.setParent(resultBay);
-			resultBay.addLocation(tier);
-			try {
-				Tier.DAO.store(tier);
-			} catch (DaoException e) {
-				LOGGER.error("", e);
-			}
-
-			// Add slots to this tier.
-			for (int slotNum = 0; slotNum < DEFAULT_SLOT_COUNT; slotNum++) {
-				Slot slot = new Slot(tierNum * DEFAULT_SLOT_WIDTH_CM, inAnchorPosY);
-
-				slot.setDomainId("S" + slotNum);
-				slot.setLedController(inLedController);
-				slot.setLedChannel(inChannelNum);
-				slot.setFirstLedNumAlongPath((short) (curLedPosNum + 1));
-				curLedPosNum += (short) (8);
-				resultBay.setLastLedNumAlongPath(curLedPosNum);
-				slot.setLastLedNumAlongPath(curLedPosNum);
-				slot.setParent(tier);
-
-				tier.addLocation(slot);
-				try {
-					Slot.DAO.store(slot);
-				} catch (DaoException e) {
-					LOGGER.error("", e);
-				}
-			}
+		// Add slots to this tier.
+		if (inTierTopToBottom) {
+			createTier(resultBay, "T1", true, inRunsInXDir, 0.0, 0.0, inLedController, inLedChannelNum, (short) 129, (short) 160);
+			createTier(resultBay, "T2", false, inRunsInXDir, 0.0, 0.25, inLedController, inLedChannelNum, (short) 128, (short) 97);
+			createTier(resultBay, "T3", true, inRunsInXDir, 0.0, 0.5, inLedController, inLedChannelNum, (short) 65, (short) 96);
+			createTier(resultBay, "T4", false, inRunsInXDir, 0.0, 1.0, inLedController, inLedChannelNum, (short) 64, (short) 33);
+			createTier(resultBay, "T5", true, inRunsInXDir, 0.0, 1.25, inLedController, inLedChannelNum, (short) 1, (short) 32);
+		} else {
+			createTier(resultBay, "T1", true, inRunsInXDir, 0.0, 0.0, inLedController, inLedChannelNum, (short) 1, (short) 32);
+			createTier(resultBay, "T2", false, inRunsInXDir, 0.0, 0.25, inLedController, inLedChannelNum, (short) 64, (short) 33);
+			createTier(resultBay, "T3", true, inRunsInXDir, 0.0, 0.5, inLedController, inLedChannelNum, (short) 65, (short) 96);
+			createTier(resultBay, "T4", false, inRunsInXDir, 0.0, 1.0, inLedController, inLedChannelNum, (short) 128, (short) 97);
+			createTier(resultBay, "T5", true, inRunsInXDir, 0.0, 1.25, inLedController, inLedChannelNum, (short) 129, (short) 160);
 		}
 
 		try {
@@ -514,6 +494,110 @@ public class Facility extends LocationABC<Organization> {
 		}
 
 		return resultBay;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inParentBay
+	 * @param inTierId
+	 * @param inSlotLeftToRight
+	 * @param inRunsInXDir
+	 * @param inOffset1
+	 * @param inOffset2
+	 * @param inLedController
+	 * @param inLedChannelNum
+	 */
+	private void createTier(final Bay inParentBay,
+		final String inTierId,
+		final Boolean inSlotLeftToRight,
+		final Boolean inRunsInXDir,
+		final Double inOffset1,
+		final Double inOffset2,
+		final LedController inLedController,
+		final Short inLedChannelNum,
+		final Short inFirstLedPosNum,
+		final Short inLastLedPosNum) {
+
+		Tier tier = null;
+		if (inRunsInXDir) {
+			tier = new Tier(inOffset1, inOffset2);
+		} else {
+			tier = new Tier(inOffset2, inOffset1);
+		}
+
+		tier.setDomainId(inTierId);
+		tier.setLedController(inLedController);
+		tier.setLedChannel(inLedChannelNum);
+		tier.setFirstLedNumAlongPath((short) (inParentBay.getFirstLedNumAlongPath() + inFirstLedPosNum - 1));
+		tier.setLastLedNumAlongPath((short) (inParentBay.getFirstLedNumAlongPath() + inLastLedPosNum - 1));
+		tier.setParent(inParentBay);
+		inParentBay.addLocation(tier);
+		try {
+			Tier.DAO.store(tier);
+		} catch (DaoException e) {
+			LOGGER.error("", e);
+		}
+
+		// Add slots to this tier.
+		if (inSlotLeftToRight) {
+			createSlot(tier, "S1", inRunsInXDir, 0.0, 0.0, inLedController, inLedChannelNum, (short) 2, (short) 9);
+			createSlot(tier, "S2", inRunsInXDir, 0.25, 0.0, inLedController, inLedChannelNum, (short) 11, (short) 18);
+			createSlot(tier, "S3", inRunsInXDir, 0.5, 0.0, inLedController, inLedChannelNum, (short) 20, (short) 26);
+			createSlot(tier, "S4", inRunsInXDir, 1.0, 0.0, inLedController, inLedChannelNum, (short) 28, (short) 32);
+		} else {
+			createSlot(tier, "S1", inRunsInXDir, 0.0, 0.0, inLedController, inLedChannelNum, (short) 31, (short) 24);
+			createSlot(tier, "S2", inRunsInXDir, 0.25, 0.0, inLedController, inLedChannelNum, (short) 22, (short) 15);
+			createSlot(tier, "S3", inRunsInXDir, 0.5, 0.0, inLedController, inLedChannelNum, (short) 13, (short) 6);
+			createSlot(tier, "S4", inRunsInXDir, 1.0, 0.0, inLedController, inLedChannelNum, (short) 4, (short) 1);
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inParentTier
+	 * @param inSlotId
+	 * @param inOffset1
+	 * @param inOffset2
+	 * @param inLedController
+	 * @param inChannelNum
+	 * @param inFirstLedNum
+	 * @param inLastLedNum
+	 */
+	private void createSlot(final Tier inParentTier,
+		final String inSlotId,
+		final Boolean inRunsInXDir,
+		final Double inOffset1,
+		final Double inOffset2,
+		final LedController inLedController,
+		final Short inChannelNum,
+		final Short inFirstLedPosNum,
+		final Short inLastLedPosNum) {
+
+		Slot slot = null;
+		if (inRunsInXDir) {
+			slot = new Slot(inOffset1, inOffset2);
+		} else {
+			slot = new Slot(inOffset2, inOffset1);
+		}
+
+		slot.setDomainId(inSlotId);
+		slot.setLedController(inLedController);
+		slot.setLedChannel(inChannelNum);
+		if (inParentTier.getFirstLedNumAlongPath() < inParentTier.getLastLedNumAlongPath()) {
+			slot.setFirstLedNumAlongPath((short) (inParentTier.getFirstLedNumAlongPath() + inFirstLedPosNum - 1));
+			slot.setLastLedNumAlongPath((short) (inParentTier.getFirstLedNumAlongPath() + inLastLedPosNum - 1));
+		} else {
+			slot.setFirstLedNumAlongPath((short) (inParentTier.getLastLedNumAlongPath() + inFirstLedPosNum - 1));
+			slot.setLastLedNumAlongPath((short) (inParentTier.getLastLedNumAlongPath() + inLastLedPosNum - 1));
+		}
+		slot.setParent(inParentTier);
+
+		inParentTier.addLocation(slot);
+		try {
+			Slot.DAO.store(slot);
+		} catch (DaoException e) {
+			LOGGER.error("", e);
+		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -904,19 +988,26 @@ public class Facility extends LocationABC<Organization> {
 			//			resultWi.setLedLastPos(inLocation.getLastLedPosForItemId(inOrderDetail.getItemMaster().getItemId()));
 			//			resultWi.setLedColorEnum(ColorEnum.BLUE);
 
+			// Add all of the LEDs we have to light to make this work.
+			short firstLedPosNum = inLocation.getFirstLedPosForItemId(inOrderDetail.getItemMaster().getItemId());
+			short lastLedPosNum = inLocation.getLastLedPosForItemId(inOrderDetail.getItemMaster().getItemId());
+
+			// Put the positions into increasing order.
+			if (firstLedPosNum > lastLedPosNum) {
+				Short temp = firstLedPosNum;
+				firstLedPosNum = lastLedPosNum;
+				lastLedPosNum = temp;
+			}
+
 			// The new way of sending LED data to the remote controller.
 			List<LedSample> ledSamples = new ArrayList<LedSample>();
 			List<LedCmdGroup> ledCmdGroupList = new ArrayList<LedCmdGroup>();
 			LedCmdGroup ledCmdGroup = new LedCmdGroup(inLocation.getLedController().getDeviceGuidStr(),
 				inLocation.getLedChannel(),
-				inLocation.getFirstLedPosForItemId(inOrderDetail.getItemMaster().getItemId()),
+				firstLedPosNum,
 				ledSamples);
 
-			// Add all of the LEDs we have to light to make this work.
-			short firstPos = inLocation.getFirstLedPosForItemId(inOrderDetail.getItemMaster().getItemId());
-			short lastLedPos = inLocation.getLastLedPosForItemId(inOrderDetail.getItemMaster().getItemId());
-
-			for (short ledPos = firstPos; ledPos < lastLedPos; ledPos++) {
+			for (short ledPos = firstLedPosNum; ledPos < lastLedPosNum; ledPos++) {
 				LedSample ledSample = new LedSample(ledPos, ColorEnum.BLUE);
 				ledSamples.add(ledSample);
 			}
@@ -925,10 +1016,18 @@ public class Facility extends LocationABC<Organization> {
 			ledCmdGroupList.add(ledCmdGroup);
 			resultWi.setLedCmdStream(LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList));
 
-			resultWi.setLocationId(((ISubLocation<?>) inLocation.getParent()).getLocationId() + "." + inLocation.getLocationId());
+			//resultWi.setLocationId(((ISubLocation<?>) inLocation.getParent()).getLocationId() + "." + inLocation.getLocationId());
+			resultWi.setLocationId(inLocation.getFullDomainId());
 			resultWi.setItemId(inOrderDetail.getItemMaster().getItemId());
 			resultWi.setDescription(inOrderDetail.getItemMaster().getDescription());
-			resultWi.setPickInstruction(inOrderDetail.getItemMaster().getDdcId());
+			if (inOrderDetail.getItemMaster().getDdcId() != null) {
+				resultWi.setPickInstruction(inOrderDetail.getItemMaster().getDdcId());
+			} else {
+				// TODO: create a "getLocationIdToLevel(<Location Class>);"
+				Bay bay = inLocation.getParentAtLevel(Bay.class);
+				Tier tier = inLocation.getParentAtLevel(Tier.class);
+				resultWi.setPickInstruction(bay.getLocationId() + "." + tier.getLocationId() + "." + inLocation.getLocationId());
+			}
 			resultWi.setPosAlongPath(inPosALongPath);
 			resultWi.setContainerId(inContainer.getContainerId());
 			resultWi.setPlanQuantity(inQuantityToPick);
