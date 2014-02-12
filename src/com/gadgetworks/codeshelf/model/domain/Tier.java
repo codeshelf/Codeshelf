@@ -53,8 +53,8 @@ public class Tier extends SubLocationABC<Bay> {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(Tier.class);
 
-	public Tier(final Double inPosX, final Double inPosY) {
-		super(PositionTypeEnum.METERS_FROM_PARENT, inPosX, inPosY);
+	public Tier(final Double inPosX, final Double inPosZ) {
+		super(PositionTypeEnum.METERS_FROM_PARENT, inPosX, 0.0, inPosZ);
 	}
 
 	public final ITypedDao<Tier> getDao() {

@@ -28,6 +28,12 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 
 	void setPosZ(Double inPosZ);
 
+	Double getAbsolutePosX();
+
+	Double getAbsolutePosY();
+
+	Double getAbsolutePosZ();
+
 	String getDescription();
 
 	void setDescription(String inDescription);

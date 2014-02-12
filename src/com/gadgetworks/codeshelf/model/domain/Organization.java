@@ -33,6 +33,7 @@ import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.flyweight.command.NetGuid;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -65,13 +66,13 @@ public class Organization extends DomainObjectABC {
 		public OrganizationDao(final ISchemaManager inSchemaManager) {
 			super(inSchemaManager);
 		}
-		
+
 		public final Class<Organization> getDaoClass() {
 			return Organization.class;
 		}
 	}
 
-	private static final Logger		LOGGER		= LoggerFactory.getLogger(Organization.class);
+	private static final Logger				LOGGER					= LoggerFactory.getLogger(Organization.class);
 
 	// The facility description.
 	@NonNull
@@ -79,22 +80,22 @@ public class Organization extends DomainObjectABC {
 	@Getter
 	@Setter
 	@JsonProperty
-	private String					description;
+	private String							description;
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	@Getter
-	private Map<String, User>		users		= new HashMap<String, User>();
+	private Map<String, User>				users					= new HashMap<String, User>();
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	@Getter
-	private Map<String, PersistentProperty>		persistentProperties		= new HashMap<String, PersistentProperty>();
+	private Map<String, PersistentProperty>	persistentProperties	= new HashMap<String, PersistentProperty>();
 
 	@OneToMany(mappedBy = "parentOrganization")
 	@MapKey(name = "domainId")
 	//	@Getter(lazy = false)
-	private Map<String, Facility>	facilities	= new HashMap<String, Facility>();
+	private Map<String, Facility>			facilities				= new HashMap<String, Facility>();
 
 	public Organization() {
 		setParent(this);
@@ -194,7 +195,11 @@ public class Organization extends DomainObjectABC {
 	 * @param inPosY
 	 */
 	@Transactional
-	public final void createFacility(final String inDomainId, final String inDescription, final String inPosTypeByStr, final Double inPosx, final Double inPosY) {
+	public final void createFacility(final String inDomainId,
+		final String inDescription,
+		final String inPosTypeByStr,
+		final Double inPosx,
+		final Double inPosY) {
 
 		Facility facility = new Facility();
 		facility.setParent(this);
@@ -215,6 +220,30 @@ public class Organization extends DomainObjectABC {
 
 		// Create the generic container kind (for all unspecified containers)
 		facility.createDefaultContainerKind();
+
+		// Create demo info for demo facility "F1" if we see it.
+		// TODO: Remove this once out of demo mode.  Should get created by facility editor
+		facility.logLocationDistances();
+		facility.recomputeDdcPositions();
+
+		if (network != null) {
+			Che che1 = network.getChe("CHE1");
+			if (che1 == null) {
+				che1 = network.createChe("CHE1", new NetGuid("0x00000003"));
+			}
+			Che che2 = network.getChe("CHE2");
+			if (che2 == null) {
+				che2 = network.createChe("CHE2", new NetGuid("0x00000006"));
+			}
+			LedController ledController = network.getLedController("0x00000002");
+			if (ledController == null) {
+				ledController = network.createLedController("0x00000002", new NetGuid("0x00000002"));
+			}
+			ledController = network.getLedController("0x00000001");
+			if (ledController == null) {
+				ledController = network.createLedController("0x00000001", new NetGuid("0x00000001"));
+			}
+		}
 	}
 
 	// --------------------------------------------------------------------------

@@ -114,22 +114,21 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 				if (network != null) {
 					Che che1 = network.getChe("CHE1");
 					if (che1 == null) {
-						che1 = network.createChe("CHE1", new NetGuid("0x00000001"));
+						che1 = network.createChe("CHE1", new NetGuid("0x00000003"));
 					}
 					Che che2 = network.getChe("CHE2");
 					if (che2 == null) {
-						che2 = network.createChe("CHE2", new NetGuid("0x00000002"));
+						che2 = network.createChe("CHE2", new NetGuid("0x00000006"));
 					}
-					LedController ledController1 = network.getLedController("LED1");
+					LedController ledController1 = network.getLedController("0x00000002");
 					if (ledController1 == null) {
-						ledController1 = network.createLedController("LED1", new NetGuid("0x00000003"));
+						ledController1 = network.createLedController("0x00000002", new NetGuid("0x00000002"));
 					}
-					ledController1 = network.getLedController("LED2");
+					ledController1 = network.getLedController("0x00000001");
 					if (ledController1 == null) {
-						ledController1 = network.createLedController("LED2", new NetGuid("0x00000004"));
+						ledController1 = network.createLedController("0x00000001", new NetGuid("0x00000001"));
 					}
 				}
-
 			}
 		}
 

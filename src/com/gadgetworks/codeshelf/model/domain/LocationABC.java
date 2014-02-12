@@ -55,7 +55,7 @@ import com.google.inject.Singleton;
 
 @Entity
 @MappedSuperclass
-@CacheStrategy(useBeanCache = false)
+@CacheStrategy(useBeanCache = true)
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @Table(name = "location")
 @DiscriminatorColumn(name = "dtype", discriminatorType = DiscriminatorType.STRING)
@@ -286,6 +286,69 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.domain.ILocation#getAbsolutePosX()
+	 */
+	public final Double getAbsolutePosX() {
+		Double result = getPosX();
+
+		if (!posTypeEnum.equals(PositionTypeEnum.GPS)) {
+			ILocation<P> parent = (ILocation<P>) getParent();
+
+			// There's some weirdness with Ebean and navigating a recursive hierarchy. (You can't go down and then back up to a different class.)
+			// This fixes that problem, but it's not pretty.
+			parent = DAO.findByPersistentId(parent.getClass(), parent.getPersistentId());
+			if ((parent != null) && (parent.getPosTypeEnum().equals(PositionTypeEnum.METERS_FROM_PARENT))) {
+				result += parent.getAbsolutePosX();
+			}
+		}
+
+		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.domain.ILocation#getAbsolutePosX()
+	 */
+	public final Double getAbsolutePosY() {
+		Double result = getPosY();
+
+		if (!posTypeEnum.equals(PositionTypeEnum.GPS)) {
+			ILocation<P> parent = (ILocation<P>) getParent();
+
+			// There's some weirdness with Ebean and navigating a recursive hierarchy. (You can't go down and then back up to a different class.)
+			// This fixes that problem, but it's not pretty.
+			parent = DAO.findByPersistentId(parent.getClass(), parent.getPersistentId());
+			if ((parent != null) && (parent.getPosTypeEnum().equals(PositionTypeEnum.METERS_FROM_PARENT))) {
+				result += parent.getAbsolutePosY();
+			}
+		}
+
+		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.domain.ILocation#getAbsolutePosX()
+	 */
+	public final Double getAbsolutePosZ() {
+		Double result = getPosZ();
+
+		if (!posTypeEnum.equals(PositionTypeEnum.GPS)) {
+			ILocation<P> parent = (ILocation<P>) getParent();
+
+			// There's some weirdness with Ebean and navigating a recursive hierarchy. (You can't go down and then back up to a different class.)
+			// This fixes that problem, but it's not pretty.
+			parent = DAO.findByPersistentId(parent.getClass(), parent.getPersistentId());
+			if ((parent != null) && (parent.getPosTypeEnum().equals(PositionTypeEnum.METERS_FROM_PARENT))) {
+				result += parent.getAbsolutePosZ();
+			}
+		}
+
+		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#getLocationId()
 	 */
 	public final String getLocationId() {
@@ -398,21 +461,17 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		PathSegment segment = this.getPathSegment();
 		if (segment != null) {
 			ILocation<P> anchorLocation = segment.getAnchorLocation();
+			Point locationPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, Math.abs(anchorLocation.getAbsolutePosX()
+					+ this.getAbsolutePosX()), Math.abs(anchorLocation.getAbsolutePosY() + this.getAbsolutePosY()), null);
 			if (segment.getParent().getTravelDirEnum().equals(TravelDirectionEnum.FORWARD)) {
-				Point locationPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT,
-					anchorLocation.getPosX() + this.getPosX(),
-					anchorLocation.getPosY() + this.getPosY(),
-					null);
 				pathPosition = segment.getStartPosAlongPath()
 						+ segment.computeDistanceOfPointFromLine(segment.getStartPoint(), segment.getEndPoint(), locationPoint);
 			} else {
-				Point locationPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT,
-					anchorLocation.getPosX() + this.getPosX(),
-					anchorLocation.getPosY() + this.getPosY(),
-					null);
 				pathPosition = segment.getStartPosAlongPath()
 						+ segment.computeDistanceOfPointFromLine(segment.getEndPoint(), segment.getStartPoint(), locationPoint);
 			}
+
+			LOGGER.debug(this.getFullDomainId() + "Path pos: " + pathPosition + " Location Point - x: " + locationPoint.getX() + " y: " + locationPoint.getY());
 		}
 		posAlongPath = pathPosition;
 
@@ -471,6 +530,8 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 			ItemDdcGroup ddcGroup = getItemDdcGroup(item.getParent().getDdcId());
 			if (ddcGroup != null) {
 				result = getLedNumberFromPosAlongPath(ddcGroup.getStartPosAlongPath());
+			} else {
+				result = getFirstLedNumAlongPath();
 			}
 		}
 
@@ -485,6 +546,8 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 			ItemDdcGroup ddcGroup = getItemDdcGroup(item.getParent().getDdcId());
 			if (ddcGroup != null) {
 				result = getLedNumberFromPosAlongPath(ddcGroup.getEndPosAlongPath());
+			} else {
+				result = getLastLedNumAlongPath();
 			}
 		}
 

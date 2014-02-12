@@ -13,6 +13,7 @@ import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.TravelDirectionEnum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
@@ -32,6 +33,7 @@ import com.google.inject.Singleton;
  */
 
 @Entity
+@CacheStrategy(useBeanCache = true)
 @DiscriminatorValue("AISLE")
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 //@ToString(doNotUseGetters = true)
