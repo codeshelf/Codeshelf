@@ -14,7 +14,9 @@ public interface IWebSessionCmd {
 	String	COMMAND_ID_ELEMENT		= "id";
 	String	COMMAND_TYPE_ELEMENT	= "type";
 	String	DATA_ELEMENT			= "data";
+	String	STATUS_ELEMENT			= "status";
 
+	
 	String getCommandId();
 
 }
