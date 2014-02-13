@@ -31,6 +31,8 @@ import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.Item.ItemDao;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster.ItemMasterDao;
+import com.gadgetworks.codeshelf.model.domain.LedController;
+import com.gadgetworks.codeshelf.model.domain.LedController.LedControllerDao;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail.OrderDetailDao;
 import com.gadgetworks.codeshelf.model.domain.OrderGroup;
@@ -61,6 +63,7 @@ public abstract class EdiTestABC {
 	protected ItemMasterDao			mItemMasterDao;
 	protected ItemDao				mItemDao;
 	protected UomMasterDao			mUomMasterDao;
+	protected LedControllerDao		mLedControllerDao;
 	protected SubLocationDao		mSubLocationDao;
 
 	private IUtil					mUtil;
@@ -148,6 +151,9 @@ public abstract class EdiTestABC {
 
 			mUomMasterDao = new UomMasterDao(mSchemaManager);
 			UomMaster.DAO = mUomMasterDao;
+
+			mLedControllerDao = new LedControllerDao(mSchemaManager);
+			LedController.DAO = mLedControllerDao;
 
 		} catch (ClassNotFoundException e) {
 		}

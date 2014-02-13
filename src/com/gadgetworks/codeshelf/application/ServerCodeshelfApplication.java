@@ -103,35 +103,6 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		// Start the WebSocket UX handler
 		mWebSocketServer.start();
 
-		Organization organization = mOrganizationDao.findByDomainId(null, "O1");
-		if (organization != null) {
-			Facility facility = mFacilityDao.findByDomainId(organization, "F1");
-			if (facility != null) {
-				facility.logLocationDistances();
-				facility.recomputeDdcPositions();
-
-				CodeshelfNetwork network = facility.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_ID);
-				if (network != null) {
-					Che che1 = network.getChe("CHE1");
-					if (che1 == null) {
-						che1 = network.createChe("CHE1", new NetGuid("0x00000003"));
-					}
-					Che che2 = network.getChe("CHE2");
-					if (che2 == null) {
-						che2 = network.createChe("CHE2", new NetGuid("0x00000006"));
-					}
-					LedController ledController1 = network.getLedController("0x00000002");
-					if (ledController1 == null) {
-						ledController1 = network.createLedController("0x00000002", new NetGuid("0x00000002"));
-					}
-					ledController1 = network.getLedController("0x00000001");
-					if (ledController1 == null) {
-						ledController1 = network.createLedController("0x00000001", new NetGuid("0x00000001"));
-					}
-				}
-			}
-		}
-
 		// Start the EDI process.
 		mEdiProcessSignalQueue = new ArrayBlockingQueue<>(100);
 		mEdiProcessor.startProcessor(mEdiProcessSignalQueue);

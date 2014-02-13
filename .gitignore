@@ -17,3 +17,4 @@ compare-file-1.txt
 *.log
 /autofetch*.csv
 /*.autofetch
+/.DS_Store
