@@ -375,8 +375,8 @@ public class Facility extends LocationABC<Organization> {
 				Boolean tiersTopToBottom = false;
 				for (int bayNum = 1; bayNum <= inBaysLong; bayNum++) {
 					Double anchorPosZ = 0.0;
-					String bayName = "B" + bayNum;
 					for (int bayHighNum = 0; bayHighNum < inBaysHigh; bayHighNum++) {
+						String bayName = "B" + bayNum + "." + bayHighNum;
 						Bay bay = createZigZagBay(aisle,
 							bayName,
 							curLedPosNum,
