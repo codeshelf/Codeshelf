@@ -123,6 +123,7 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 		final Point inBeginPoint,
 		final Point inEndPoint) {
 
+		parent = inParentPath;
 		posTypeEnum = inBeginPoint.getPosTypeEnum();
 		startPosX = inBeginPoint.getX();
 		startPosY = inBeginPoint.getY();

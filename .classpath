@@ -3,6 +3,8 @@
 	<classpathentry kind="lib" path="build" sourcepath="src"/>
 	<classpathentry kind="lib" path="lib/dist/mockito-all-1.9.5.jar"/>
 	<classpathentry excluding="com/gadgetworks/codeshelf/application/CarbonMenuDelegate.java|com/gadgetworks/codeshelf/application/MainCarbon.java|com/gadgetworks/codeshelf/application/MainWin32.java|com/gadgetworks/codeshelf/model/dao/GWDerbyAdapter.java|com/gadgetworks/codeshelf/model/dao/GWH2Adapter.java|com/gadgetworks/codeshelf/p2p/jingle/speex/|com/gadgetworks/codeshelf/server/JmsHandler.java|com/gadgetworks/codeshelf/server/JmsParser.java|com/gadgetworks/codeshelf/server/jms/ActiveMqManager.java|org/datanucleus/springframework/**" kind="src" path="src"/>
+	<classpathentry kind="lib" path="lib/dist/guava-16.0.1.jar"/>
+	<classpathentry kind="lib" path="lib/dist/make-it-easy-3.1.0.jar"/>
 	<classpathentry kind="src" path="test"/>
 	<classpathentry kind="lib" path="resources"/>
 	<classpathentry kind="lib" path="conf"/>

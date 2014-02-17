@@ -5,12 +5,19 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
-import java.util.List;
-
 import org.junit.Assert;
 import org.junit.Test;
 
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
+import com.gadgetworks.codeshelf.model.domain.Aisle.AisleDao;
+import com.gadgetworks.codeshelf.model.domain.Bay.BayDao;
+import com.gadgetworks.codeshelf.model.domain.Facility.FacilityDao;
+import com.gadgetworks.codeshelf.model.domain.LocationABC.LocationDao;
+import com.gadgetworks.codeshelf.model.domain.Organization.OrganizationDao;
+import com.gadgetworks.codeshelf.model.domain.Path.PathDao;
+import com.gadgetworks.codeshelf.model.domain.PathSegment.PathSegmentDao;
+import com.gadgetworks.codeshelf.model.domain.Vertex.VertexDao;
+import com.gadgetworks.codeshelf.model.domain.WorkArea.WorkAreaDao;
 
 /**
  * @author jeffw
@@ -41,6 +48,17 @@ public class FacilityTest extends DomainTestABC {
 	public final void createWorkInstructionTest() {
 
 		List<WorkInstruction> wiList;
+			/*
+		Organization.DAO = new OrganizationDao(mSchemaManager);
+		LocationABC.DAO = new LocationDao(mSchemaManager, mDatabase);
+		Facility.DAO = new FacilityDao(mSchemaManager);
+		Aisle.DAO = new AisleDao(mSchemaManager);
+		Bay.DAO = new BayDao(mSchemaManager);
+		Vertex.DAO = new VertexDao(mSchemaManager);
+		Path.DAO = new PathDao(mSchemaManager);
+		PathSegment.DAO = new PathSegmentDao(mSchemaManager);
+		WorkArea.DAO = new WorkAreaDao(mSchemaManager);
+			*/
 
 		Organization organization = new Organization();
 		organization.setOrganizationId("FTEST2.O1");

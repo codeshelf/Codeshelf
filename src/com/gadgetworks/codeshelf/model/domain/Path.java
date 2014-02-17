@@ -37,6 +37,7 @@ import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -232,6 +233,22 @@ public class Path extends DomainObjectTreeABC<Facility> {
 				+ (inPointB.getY() - inPointA.getY()) * (inPointB.getY() - inPointA.getY())));
 	}
 
+	public final void createPathSegments(List<Point> points) {
+		Preconditions.checkArgument(points.size() >= 2, "the segments are made of two or more points");
+		// Create the path segment.
+		Point previousPoint = null;
+		int segmentOrder = 0;
+		for (Point point : points) {
+			if (previousPoint != null) {
+				String baseSegmentId = this.getParent().getDomainId() + "." + PathSegment.DOMAIN_PREFIX;
+				this.createPathSegment(baseSegmentId + "." + segmentOrder, this.getParent(), this, segmentOrder, previousPoint, point);
+				segmentOrder++;
+			}
+			previousPoint = point;
+		}
+	
+		
+	}
 	// --------------------------------------------------------------------------
 	/**
 	 * Create the path segments for the aisle.
