@@ -21,6 +21,10 @@
 <booleanAttribute key="org.eclipse.jdt.launching.DEFAULT_CLASSPATH" value="false"/>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="com.gadgetworks.codeshelf.application.CsNetworkMain"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="CodeShelf"/>
+<<<<<<< HEAD
 <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Dconfig.properties=./conf/netcontroller.config.properties -Djava.library.path=${workspace_loc:CodeShelf}/lib/native/arm-hf -Dcs.logfile.name=codeshelf.network.log"/>
+=======
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Dconfig.properties=./conf/netcontroller.config.properties -Djava.library.path=${workspace_loc:CodeShelf}/lib/native/osx  -Dcs.logfile.name=codeshelf.network.log"/>
+>>>>>>> branch 'master' of https://github.com/codeshelf/Codeshelf.git
 <stringAttribute key="yk-options" value="&#10;alloc-size-limit-enabled=true&#10;alloc-record-each=1&#10;additional-options=&#10;alloc-size-limit=1048576&#10;snapshots-dir=&#10;alloc-record-each-enabled=true&#10;startup=2&#10;"/>
 </launchConfiguration>
