@@ -49,7 +49,7 @@ public final class Util implements IUtil {
 
 		Util util = new Util();
 		String appLogPath = util.getApplicationLogDirPath();
-		System.setProperty("codeshelf.logfile", appLogPath + System.getProperty("file.separator") + "codeshelf.log");
+		System.setProperty("codeshelf.logfile", appLogPath + System.getProperty("file.separator") + System.getProperty("cs.logfile.name"));
 		File appDir = new File(appLogPath);
 		if (!appDir.exists()) {
 			try {
