@@ -57,7 +57,7 @@ public final class PostgresSchemaManager extends SchemaManagerABC {
 	 * @see com.gadgetworks.codeshelf.model.dao.ISchemaManager#getApplicationInitDatabaseURL()
 	 */
 	public String getApplicationInitDatabaseURL() {
-		return "jdbc:postgresql://" + getDbAddress() + ":" + getDbPortnum() + "/" + getDbName();
+		return getApplicationDatabaseURL();
 	}
 
 	// --------------------------------------------------------------------------
@@ -65,7 +65,13 @@ public final class PostgresSchemaManager extends SchemaManagerABC {
 	 * @see com.gadgetworks.codeshelf.model.dao.ISchemaManager#getApplicationDatabaseURL()
 	 */
 	public String getApplicationDatabaseURL() {
-		return "jdbc:postgresql://" + getDbAddress() + ":" + getDbPortnum() + "/" + getDbName();
+		if ((getDbSsl() != null && (getDbSsl().equalsIgnoreCase("true")))) {
+			return "jdbc:postgresql://" + getDbAddress() + ":" + getDbPortnum() + "/" + getDbName() + "?user=" + getDbUserId()
+					+ "&password=" + getDbPassword() + "&ssl=true";
+		} else {
+			return "jdbc:postgresql://" + getDbAddress() + ":" + getDbPortnum() + "/" + getDbName() + "?user=" + getDbUserId()
+					+ "&password=" + getDbPassword();
+		}
 	}
 
 	// --------------------------------------------------------------------------

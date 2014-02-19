@@ -515,7 +515,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		result &= linkToParentTable("led_controller", "parent", "codeshelf_network");
 		// One extra index: to ensure uniqueness of the MAC addresses, and to find them fast by that address.
 		execOneSQLCommand("CREATE UNIQUE INDEX led_controller_deviceguid_index ON " + getDbSchemaName()
-				+ ".led_controller (device_guid, parent_persistenid)");
+				+ ".led_controller (device_guid, parent_persistentid)");
 
 		result &= linkToParentTable("location", "parent", "location");
 		result &= linkToParentTable("location", "path_segment", "path_segment");
