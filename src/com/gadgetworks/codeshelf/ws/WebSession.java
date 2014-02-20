@@ -14,7 +14,7 @@ import org.apache.shiro.realm.Realm;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.JsonProcessingException;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.java_websocket.IWebSocket;
+import org.java_websocket.WebSocket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,12 +37,12 @@ public class WebSession implements IWebSession, IDaoListener {
 
 	private WebSessionStateEnum					mState;
 	private Realm								mSecurityRealm;
-	private IWebSocket							mWebSocket;
+	private WebSocket							mWebSocket;
 	private IWsReqCmdFactory					mWebSessionReqCmdFactory;
 	private Map<String, IWsPersistentReqCmd>	mPersistentCommands;
 
 	@Inject
-	public WebSession(@Assisted final IWebSocket inWebSocket, @Assisted final IWsReqCmdFactory inWebSessionReqCmdFactory, final Realm inRealm) {
+	public WebSession(@Assisted final WebSocket inWebSocket, @Assisted final IWsReqCmdFactory inWebSessionReqCmdFactory, final Realm inRealm) {
 		mWebSocket = inWebSocket;
 		mWebSessionReqCmdFactory = inWebSessionReqCmdFactory;
 		mSecurityRealm = inRealm;

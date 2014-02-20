@@ -39,7 +39,6 @@
 	<classpathentry kind="lib" path="lib/dist/jetty-util-9.0.0.M2.jar" sourcepath="/Users/jeffw/.m2/repository/org/eclipse/jetty/jetty-util/9.0.0.M2/jetty-util-9.0.0.M2-sources.jar"/>
 	<classpathentry kind="lib" path="lib/dist/jetty-rewrite-9.0.0.M2.jar" sourcepath="/Users/jeffw/.m2/repository/org/eclipse/jetty/jetty-rewrite/9.0.0.M2/jetty-rewrite-9.0.0.M2-sources.jar"/>
 	<classpathentry kind="lib" path="lib/dist/uuid-3.3.jar" sourcepath="APIs/uuid-3.3-sources.jar"/>
-	<classpathentry kind="lib" path="lib/dist/Java-WebSocket-1.0.0-SNAPSHOT.jar" sourcepath="/Java-WebSocket/src/main"/>
 	<classpathentry kind="lib" path="lib/dist/websocket-core-9.0.0.M2.jar" sourcepath="/Users/jeffw/.m2/repository/org/eclipse/jetty/websocket/websocket-core/9.0.0.M2/websocket-core-9.0.0.M2-sources.jar"/>
 	<classpathentry kind="lib" path="lib/dist/websocket-server-9.0.0.M2.jar" sourcepath="/Users/jeffw/.m2/repository/org/eclipse/jetty/websocket/websocket-server/9.0.0.M2/websocket-server-9.0.0.M2-sources.jar"/>
 	<classpathentry kind="lib" path="lib/dist/shiro-core-1.2.1.jar" sourcepath="/Users/jeffw/.m2/repository/org/apache/shiro/shiro-core/1.2.1/shiro-core-1.2.1-sources.jar"/>
@@ -70,5 +69,6 @@
 	<classpathentry kind="lib" path="lib/dist/json-1.0.jar"/>
 	<classpathentry kind="lib" path="lib/dist/postgresql-9.3-1100.jdbc41.jar"/>
 	<classpathentry kind="lib" path="lib/dist/dropbox-android-sdk-1.5.4.jar"/>
+	<classpathentry kind="lib" path="lib/dist/java_websocket.jar"/>
 	<classpathentry kind="output" path="eclipse-bin"/>
 </classpath>

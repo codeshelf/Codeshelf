@@ -5,9 +5,12 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.ws.websocket;
 
+import java.io.IOException;
 import java.net.URI;
 
-import org.java_websocket.IWebSocket;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+
 import org.java_websocket.WebSocket;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
@@ -26,6 +29,7 @@ public class CsWebSocketClient extends WebSocketClient implements ICsWebSocketCl
 	private static final Logger				LOGGER					= LoggerFactory.getLogger(CsWebSocketClient.class);
 
 	private ICsWebsocketClientMsgHandler	mMessageHandler;
+	private IWebSocketSslContextFactory		mWebSocketSslContextFactory;
 
 	//@Inject
 	// Can't really inject - the Java_WebSocket libs are not really built for re-use or re-entrance.  BLerg.
@@ -34,21 +38,26 @@ public class CsWebSocketClient extends WebSocketClient implements ICsWebSocketCl
 	public CsWebSocketClient(@Named(WEBSOCKET_URI_PROPERTY) final String inUriStr,
 		final IUtil inUtil,
 		final ICsWebsocketClientMsgHandler inMessageHandler,
-		final WebSocketClient.WebSocketClientFactory inWebSocketClientFactory) {
+		final IWebSocketSslContextFactory inWebSocketSslContextFactory) {
 
 		super(URI.create(inUriStr));
-		setWebSocketFactory(inWebSocketClientFactory);
 
 		mMessageHandler = inMessageHandler;
+		mWebSocketSslContextFactory = inWebSocketSslContextFactory;
 	}
 
 	public final void start() {
-		WebSocket.DEBUG = false;
 		LOGGER.debug("Starting websocket client");
 
 		try {
+			// Create the SSL context and use that to create the socket.
+			SSLContext sslContext = mWebSocketSslContextFactory.getSslContext();
+			SSLSocketFactory factory = sslContext.getSocketFactory();
+			setSocket(factory.createSocket());
 			connectBlocking();
 		} catch (InterruptedException e) {
+			LOGGER.error("", e);
+		} catch (IOException e) {
 			LOGGER.error("", e);
 		}
 	}
@@ -61,7 +70,7 @@ public class CsWebSocketClient extends WebSocketClient implements ICsWebSocketCl
 
 	public final boolean isStarted() {
 		boolean result = false;
-		IWebSocket socket = getConnection();
+		WebSocket socket = getConnection();
 		if (socket != null) {
 			result = socket.isOpen();
 		}

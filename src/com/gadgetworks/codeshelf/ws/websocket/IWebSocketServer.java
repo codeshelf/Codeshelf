@@ -7,7 +7,7 @@ package com.gadgetworks.codeshelf.ws.websocket;
 
 import java.io.IOException;
 
-import org.java_websocket.IWebSocket;
+import org.java_websocket.WebSocket;
 import org.java_websocket.handshake.ClientHandshake;
 
 public interface IWebSocketServer {
@@ -22,12 +22,12 @@ public interface IWebSocketServer {
 
 	void stop() throws IOException, InterruptedException;
 
-	void onOpen(IWebSocket inWebSocket, ClientHandshake inHandshake);
+	void onOpen(WebSocket inWebSocket, ClientHandshake inHandshake);
 
-	void onClose(IWebSocket inWebSocket, int inCode, String inReason, boolean inRemote);
+	void onClose(WebSocket inWebSocket, int inCode, String inReason, boolean inRemote);
 
-	void onMessage(IWebSocket inWebSocket, String inMessage);
+	void onMessage(WebSocket inWebSocket, String inMessage);
 
-	void onError(IWebSocket inWebSocket, Exception inException);
+	void onError(WebSocket inWebSocket, Exception inException);
 
 }

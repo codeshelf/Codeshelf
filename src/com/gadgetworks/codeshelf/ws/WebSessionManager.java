@@ -8,7 +8,7 @@ package com.gadgetworks.codeshelf.ws;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.java_websocket.IWebSocket;
+import org.java_websocket.WebSocket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,18 +26,18 @@ public class WebSessionManager implements IWebSessionManager {
 
 	private static final Logger				LOGGER	= LoggerFactory.getLogger(WebSessionManager.class);
 
-	private Map<IWebSocket, IWebSession>	mWebSessions;
+	private Map<WebSocket, IWebSession>	mWebSessions;
 	private IWsReqCmdFactory				mWebSessionReqCmdFactory;
 	private IWebSessionFactory				mWebSessionFactory;
 
 	@Inject
 	public WebSessionManager(final IWsReqCmdFactory inWebSessionReqCmdFactory, final IWebSessionFactory inWebSessionFactory) {
-		mWebSessions = new HashMap<IWebSocket, IWebSession>();
+		mWebSessions = new HashMap<WebSocket, IWebSession>();
 		mWebSessionReqCmdFactory = inWebSessionReqCmdFactory;
 		mWebSessionFactory = inWebSessionFactory;
 	}
 
-	public final void handleSessionOpen(IWebSocket inWebSocket) {
+	public final void handleSessionOpen(WebSocket inWebSocket) {
 		// First check to see if we already have this web socket in our session map.
 		if (mWebSessions.containsKey(inWebSocket)) {
 			LOGGER.error("Opening new web socket for session that exists!");
@@ -48,7 +48,7 @@ public class WebSessionManager implements IWebSessionManager {
 		}
 	}
 
-	public final void handleSessionClose(org.java_websocket.IWebSocket inWebSocket) {
+	public final void handleSessionClose(org.java_websocket.WebSocket inWebSocket) {
 		// First check to see if we already have this web socket in our session map.
 		if (!mWebSessions.containsKey(inWebSocket)) {
 			LOGGER.error("Closing web socket for session that doesn't exist!");
@@ -59,7 +59,7 @@ public class WebSessionManager implements IWebSessionManager {
 		}
 	}
 
-	public final void handleSessionMessage(org.java_websocket.IWebSocket inWebSocket, String inMessage) {
+	public final void handleSessionMessage(org.java_websocket.WebSocket inWebSocket, String inMessage) {
 		IWebSession webSession = mWebSessions.get(inWebSocket);
 		if (webSession != null) {
 			IWsRespCmd respCommand = webSession.processMessage(inMessage);

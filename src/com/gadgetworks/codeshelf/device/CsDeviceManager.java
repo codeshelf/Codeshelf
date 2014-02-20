@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import javax.net.ssl.SSLSocketFactory;
+
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.JsonProcessingException;
@@ -20,7 +22,6 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
 import org.codehaus.jackson.type.TypeReference;
-import org.java_websocket.client.WebSocketClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,6 +37,7 @@ import com.gadgetworks.codeshelf.ws.command.resp.WsRespCmdEnum;
 import com.gadgetworks.codeshelf.ws.websocket.CsWebSocketClient;
 import com.gadgetworks.codeshelf.ws.websocket.ICsWebSocketClient;
 import com.gadgetworks.codeshelf.ws.websocket.ICsWebsocketClientMsgHandler;
+import com.gadgetworks.codeshelf.ws.websocket.IWebSocketSslContextFactory;
 import com.gadgetworks.flyweight.command.NetGuid;
 import com.gadgetworks.flyweight.controller.INetworkDevice;
 import com.gadgetworks.flyweight.controller.IRadioController;
@@ -49,31 +51,30 @@ import com.google.inject.name.Named;
  */
 public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgHandler, IRadioControllerEventListener {
 
-	private static final Logger						LOGGER						= LoggerFactory.getLogger(CsDeviceManager.class);
+	private static final Logger				LOGGER						= LoggerFactory.getLogger(CsDeviceManager.class);
 
-	private static final String						WEBSOCKET_CHECK				= "Websocket Checker";
-	private static final Integer					WEBSOCKET_OPEN_RETRY_MILLIS	= 5000;
+	private static final String				WEBSOCKET_CHECK				= "Websocket Checker";
+	private static final Integer			WEBSOCKET_OPEN_RETRY_MILLIS	= 5000;
 
-	private Map<NetGuid, INetworkDevice>			mDeviceMap;
-	private IRadioController						mRadioController;
-	private ICsWebSocketClient						mWebSocketClient;
-	private int										mNextMsgNum					= 1;
-	private String									mOrganizationId;
-	private String									mFacilityId;
-	private String									mNetworkId;
-	private String									mNetworkCredential;
+	private Map<NetGuid, INetworkDevice>	mDeviceMap;
+	private IRadioController				mRadioController;
+	private ICsWebSocketClient				mWebSocketClient;
+	private int								mNextMsgNum					= 1;
+	private String							mOrganizationId;
+	private String							mFacilityId;
+	private String							mNetworkId;
+	private String							mNetworkCredential;
 
-	private String									mUri;
-	private IUtil									mUtil;
-	private ICsWebsocketClientMsgHandler			mMessageHandler;
-	private WebSocketClient.WebSocketClientFactory	mWebSocketClientFactory;
+	private String							mUri;
+	private IUtil							mUtil;
+	private ICsWebsocketClientMsgHandler	mMessageHandler;
+	private IWebSocketSslContextFactory		mWebSocketFactory;
 
 	@Inject
 	public CsDeviceManager(@Named(CsWebSocketClient.WEBSOCKET_URI_PROPERTY) final String inUriStr,
 		final IUtil inUtil,
 		final ICsWebsocketClientMsgHandler inMessageHandler,
-		final WebSocketClient.WebSocketClientFactory inWebSocketClientFactory,
-		//final ICsWebSocketClient inWebSocketClient,
+		final IWebSocketSslContextFactory inWebSocketSslContextFactory,
 		final IRadioController inRadioController) {
 
 		//mWebSocketClient = inWebSocketClient;
@@ -83,7 +84,7 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 		mUri = inUriStr;
 		mUtil = inUtil;
 		mMessageHandler = inMessageHandler;
-		mWebSocketClientFactory = inWebSocketClientFactory;
+		mWebSocketFactory = inWebSocketSslContextFactory;
 
 		mOrganizationId = System.getProperty("organizationId");
 		mFacilityId = System.getProperty("facilityId");
@@ -116,13 +117,13 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 				while (true) {
 					if ((mWebSocketClient == null) || (!mWebSocketClient.isStarted())) {
 						// We used to inject this, but the Java_WebSocket is not re-entrant so we have to create new sockets at runtime if the server connection breaks.
-						mWebSocketClient = new CsWebSocketClient(mUri, mUtil, mMessageHandler, mWebSocketClientFactory);
+						mWebSocketClient = new CsWebSocketClient(mUri, mUtil, mMessageHandler, mWebSocketFactory);
 						mWebSocketClient.start();
 
 						for (INetworkDevice device : new ArrayList<INetworkDevice>(mDeviceMap.values())) {
 							if (device instanceof CheDeviceLogic) {
 								CheDeviceLogic che = (CheDeviceLogic) device;
-								
+
 								che.signalNetworkUp();
 							}
 						}
@@ -240,7 +241,7 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 		for (INetworkDevice device : new ArrayList<INetworkDevice>(mDeviceMap.values())) {
 			if (device instanceof CheDeviceLogic) {
 				CheDeviceLogic che = (CheDeviceLogic) device;
-				
+
 				che.signalNetworkDown();
 			}
 		}

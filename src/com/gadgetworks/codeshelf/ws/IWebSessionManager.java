@@ -5,7 +5,7 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.ws;
 
-import org.java_websocket.IWebSocket;
+import org.java_websocket.WebSocket;
 
 /**
  * @author jeffw
@@ -13,10 +13,10 @@ import org.java_websocket.IWebSocket;
  */
 public interface IWebSessionManager {
 
-	void handleSessionOpen(IWebSocket inWebSocket);
+	void handleSessionOpen(WebSocket inWebSocket);
 
-	void handleSessionClose(IWebSocket inWebSocket);
+	void handleSessionClose(WebSocket inWebSocket);
 
-	void handleSessionMessage(IWebSocket inWebSocket, String inMessage);
+	void handleSessionMessage(WebSocket inWebSocket, String inMessage);
 
 }

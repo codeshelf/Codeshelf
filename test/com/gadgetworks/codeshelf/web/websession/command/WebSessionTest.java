@@ -6,14 +6,16 @@ import java.nio.channels.NotYetConnectedException;
 import java.util.UUID;
 
 import org.junit.Assert;
+
 import lombok.Getter;
 
 import org.apache.shiro.realm.Realm;
-import org.java_websocket.IWebSocket;
+import org.java_websocket.WebSocket;
 import org.java_websocket.drafts.Draft;
 import org.java_websocket.exceptions.InvalidDataException;
 import org.java_websocket.exceptions.InvalidHandshakeException;
 import org.java_websocket.framing.Framedata;
+import org.java_websocket.framing.Framedata.Opcode;
 import org.java_websocket.handshake.ClientHandshakeBuilder;
 import org.junit.Test;
 
@@ -35,7 +37,7 @@ import com.gadgetworks.codeshelf.ws.command.resp.IWsRespCmd;
 
 public class WebSessionTest {
 
-	private class TestWebSocket implements IWebSocket {
+	private class TestWebSocket implements WebSocket {
 
 		@Getter
 		private String	sendString;
@@ -67,10 +69,6 @@ public class WebSessionTest {
 		@Override
 		public boolean hasBufferedData() {
 			return false;
-		}
-
-		@Override
-		public void startHandshake(ClientHandshakeBuilder handshakedata) throws InvalidHandshakeException {
 		}
 
 		@Override
@@ -109,12 +107,6 @@ public class WebSessionTest {
 		}
 
 		@Override
-		public void close(InvalidDataException arg0) {
-			// TODO Auto-generated method stub
-
-		}
-
-		@Override
 		public void closeConnection(int arg0, String arg1) {
 			// TODO Auto-generated method stub
 
@@ -122,6 +114,30 @@ public class WebSessionTest {
 
 		@Override
 		public READYSTATE getReadyState() {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public void close() {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void sendFragmentedFrame(Opcode op, ByteBuffer buffer, boolean fin) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public boolean isFlushAndClose() {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		@Override
+		public String getResourceDescriptor() {
 			// TODO Auto-generated method stub
 			return null;
 		}

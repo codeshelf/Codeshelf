@@ -11,6 +11,7 @@ import java.net.Socket;
 import java.net.URL;
 import java.nio.channels.ByteChannel;
 import java.nio.channels.SelectionKey;
+import java.nio.channels.SocketChannel;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -41,9 +42,9 @@ import com.google.inject.name.Named;
  * @author jeffw
  *
  */
-public class SSLWebSocketClientFactory implements WebSocketClient.WebSocketClientFactory {
+public class WebSocketSslContextFactory implements IWebSocketSslContextFactory {
 
-	private static final Logger	LOGGER								= LoggerFactory.getLogger(WebSocketSslContextGenerator.class);
+	private static final Logger	LOGGER								= LoggerFactory.getLogger(WebSocketSslContextFactory.class);
 
 	private static final String	KEYSTORE_TYPE_PROPERTY				= "KEYSTORE_TYPE_PROPERTY";
 	private static final String	KEYSTORE_PATH_PROPERTY				= "KEYSTORE_PATH_PROPERTY";
@@ -57,7 +58,7 @@ public class SSLWebSocketClientFactory implements WebSocketClient.WebSocketClien
 	private ExecutorService		mExec;
 
 	@Inject
-	public SSLWebSocketClientFactory(@Named(KEYSTORE_PATH_PROPERTY) final String inKeystorePath,
+	public WebSocketSslContextFactory(@Named(KEYSTORE_PATH_PROPERTY) final String inKeystorePath,
 		@Named(KEYSTORE_TYPE_PROPERTY) final String inKeystoreType,
 		@Named(KEYSTORE_STORE_PASSWORD_PROPERTY) final String inKeystoreStorePassword,
 		@Named(KEYSTORE_KEY_PASSWORD_PROPERTY) final String inKeystoreKeyPassword) {
@@ -67,23 +68,6 @@ public class SSLWebSocketClientFactory implements WebSocketClient.WebSocketClien
 		mKeystoreKeyPassword = inKeystoreKeyPassword;
 
 		mExec = Executors.newSingleThreadScheduledExecutor();
-	}
-
-	@Override
-	public final ByteChannel wrapChannel(SelectionKey inSelectionKey, String inHost, int inPort) throws IOException {
-		SSLEngine sslEngine = getSslContext().createSSLEngine();
-		sslEngine.setUseClientMode(true);
-		return new SSLSocketChannel2(inSelectionKey, sslEngine, mExec);
-	}
-
-	@Override
-	public final WebSocketImpl createWebSocket(WebSocketAdapter inAdapter, Draft inDraft, Socket inSocket) {
-		return new WebSocketImpl(inAdapter, inDraft, inSocket);
-	}
-
-	@Override
-	public final WebSocketImpl createWebSocket(WebSocketAdapter inAdapter, List<Draft> inDraftList, Socket inSocket) {
-		return new WebSocketImpl(inAdapter, inDraftList, inSocket);
 	}
 
 	public final SSLContext getSslContext() {

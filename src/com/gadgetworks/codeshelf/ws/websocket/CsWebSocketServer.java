@@ -8,7 +8,6 @@ package com.gadgetworks.codeshelf.ws.websocket;
 import java.net.InetSocketAddress;
 import java.util.concurrent.CopyOnWriteArraySet;
 
-import org.java_websocket.IWebSocket;
 import org.java_websocket.WebSocket;
 import org.java_websocket.handshake.ClientHandshake;
 import org.java_websocket.server.WebSocketServer;
@@ -24,7 +23,7 @@ public class CsWebSocketServer extends WebSocketServer implements IWebSocketServ
 	private static final Logger				LOGGER	= LoggerFactory.getLogger(CsWebSocketServer.class);
 
 	private IWebSessionManager				mWebSessionManager;
-	private CopyOnWriteArraySet<IWebSocket>	mWebSockets;
+	private CopyOnWriteArraySet<WebSocket>	mWebSockets;
 
 	@Inject
 	public CsWebSocketServer(@Named(WEBSOCKET_HOSTNAME_PROPERTY) final String inAddr,
@@ -36,17 +35,16 @@ public class CsWebSocketServer extends WebSocketServer implements IWebSocketServ
 		setWebSocketFactory(inWebSocketServerFactory);
 
 		mWebSessionManager = inWebSessionManager;
-		mWebSockets = new CopyOnWriteArraySet<IWebSocket>();
+		mWebSockets = new CopyOnWriteArraySet<WebSocket>();
 	}
 
 	@Override
 	public final void start() {
-		WebSocket.DEBUG = false;
 		super.start();
 	}
 
 	@Override
-	public final void onOpen(final IWebSocket inWebSocket, final ClientHandshake inHandshake) {
+	public final void onOpen(final WebSocket inWebSocket, final ClientHandshake inHandshake) {
 		if (mWebSockets.add(inWebSocket)) {
 			LOGGER.info("WebSocket open: " + inWebSocket.getRemoteSocketAddress());
 			mWebSessionManager.handleSessionOpen(inWebSocket);
@@ -54,7 +52,7 @@ public class CsWebSocketServer extends WebSocketServer implements IWebSocketServ
 	}
 
 	@Override
-	public final void onClose(final IWebSocket inWebSocket, final int inCode, final String inReason, final boolean inRemote) {
+	public final void onClose(final WebSocket inWebSocket, final int inCode, final String inReason, final boolean inRemote) {
 		if (mWebSockets.remove(inWebSocket)) {
 			LOGGER.info("WebSocket close: " + inWebSocket.getRemoteSocketAddress() + " ( code:" + inCode + " reason:" + inReason + " remote:" + inRemote);
 			mWebSessionManager.handleSessionClose(inWebSocket);
@@ -62,7 +60,7 @@ public class CsWebSocketServer extends WebSocketServer implements IWebSocketServ
 	}
 
 	@Override
-	public final void onMessage(final IWebSocket inWebSocket, final String inMessage) {
+	public final void onMessage(final WebSocket inWebSocket, final String inMessage) {
 		if (mWebSockets.contains(inWebSocket)) {
 			LOGGER.info("WebSocket message from addr: " + inWebSocket.getRemoteSocketAddress() + " msg: " + inMessage);
 			mWebSessionManager.handleSessionMessage(inWebSocket, inMessage);
@@ -70,7 +68,7 @@ public class CsWebSocketServer extends WebSocketServer implements IWebSocketServ
 	}
 
 	@Override
-	public final void onError(final IWebSocket inWebSocket, final Exception inException) {
+	public final void onError(final WebSocket inWebSocket, final Exception inException) {
 		LOGGER.error("Error: " + inWebSocket.toString(), inException);
 	}
 }

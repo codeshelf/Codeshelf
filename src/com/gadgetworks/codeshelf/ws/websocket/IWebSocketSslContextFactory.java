@@ -1,22 +1,18 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: ICsWebSocketClient.java,v 1.1 2013/03/17 19:19:12 jeffw Exp $
+ *  $Id: file.java,v 1.1 2010/09/28 05:41:28 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.ws.websocket;
 
-import org.java_websocket.WebSocket;
+import javax.net.ssl.SSLContext;
 
 /**
  * @author jeffw
  *
  */
-public interface ICsWebSocketClient extends WebSocket {
-
-	void start();
-
-	void stop();
-
-	boolean isStarted();
+public interface IWebSocketSslContextFactory {
+	
+	SSLContext getSslContext();
 
 }

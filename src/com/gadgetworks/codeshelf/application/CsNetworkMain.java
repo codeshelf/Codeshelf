@@ -10,7 +10,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Properties;
 
-import org.java_websocket.client.WebSocketClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,11 +18,11 @@ import com.gadgetworks.codeshelf.device.ICsDeviceManager;
 import com.gadgetworks.codeshelf.device.RadioController;
 import com.gadgetworks.codeshelf.model.dao.DaoProvider;
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
-import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.ws.websocket.CsWebSocketClient;
 import com.gadgetworks.codeshelf.ws.websocket.ICsWebsocketClientMsgHandler;
+import com.gadgetworks.codeshelf.ws.websocket.IWebSocketSslContextFactory;
 import com.gadgetworks.codeshelf.ws.websocket.IWebSocketSslContextGenerator;
-import com.gadgetworks.codeshelf.ws.websocket.SSLWebSocketClientFactory;
+import com.gadgetworks.codeshelf.ws.websocket.WebSocketSslContextFactory;
 import com.gadgetworks.flyweight.command.IPacket;
 import com.gadgetworks.flyweight.controller.FTDIInterface;
 import com.gadgetworks.flyweight.controller.IGatewayInterface;
@@ -105,14 +104,6 @@ public final class CsNetworkMain {
 		Injector injector = Guice.createInjector(new AbstractModule() {
 			@Override
 			protected void configure() {
-				bind(String.class).annotatedWith(Names.named(ISchemaManager.DATABASE_NAME_PROPERTY)).toInstance(System.getProperty("db.name"));
-				bind(String.class).annotatedWith(Names.named(ISchemaManager.DATABASE_SCHEMANAME_PROPERTY)).toInstance(System.getProperty("db.schemaname"));
-				bind(String.class).annotatedWith(Names.named(ISchemaManager.DATABASE_USERID_PROPERTY)).toInstance(System.getProperty("db.userid"));
-				bind(String.class).annotatedWith(Names.named(ISchemaManager.DATABASE_PASSWORD_PROPERTY)).toInstance(System.getProperty("db.password"));
-				bind(String.class).annotatedWith(Names.named(ISchemaManager.DATABASE_ADDRESS_PROPERTY)).toInstance(System.getProperty("db.address"));
-				bind(String.class).annotatedWith(Names.named(ISchemaManager.DATABASE_PORTNUM_PROPERTY)).toInstance(System.getProperty("db.portnum"));
-				bind(String.class).annotatedWith(Names.named(ISchemaManager.DATABASE_SSL_PROPERTY)).toInstance(System.getProperty("db.ssl"));
-
 				bind(String.class).annotatedWith(Names.named(CsWebSocketClient.WEBSOCKET_URI_PROPERTY)).toInstance(System.getProperty("websocket.uri"));
 
 				bind(String.class).annotatedWith(Names.named(IWebSocketSslContextGenerator.KEYSTORE_PATH_PROPERTY)).toInstance(System.getProperty("keystore.path"));
@@ -131,7 +122,7 @@ public final class CsNetworkMain {
 				bind(ICsDeviceManager.class).to(CsDeviceManager.class);
 				bind(ICsWebsocketClientMsgHandler.class).to(CsDeviceManager.class);
 				bind(IDaoProvider.class).to(DaoProvider.class);
-				bind(WebSocketClient.WebSocketClientFactory.class).to(SSLWebSocketClientFactory.class);
+				bind(IWebSocketSslContextFactory.class).to(WebSocketSslContextFactory.class);
 
 				//				requestStaticInjection(WirelessDevice.class);
 				//				bind(IWirelessDeviceDao.class).to(WirelessDeviceDao.class);

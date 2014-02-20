@@ -5,7 +5,7 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.ws;
 
-import org.java_websocket.IWebSocket;
+import org.java_websocket.WebSocket;
 
 import com.gadgetworks.codeshelf.ws.command.req.IWsReqCmdFactory;
 
@@ -14,5 +14,5 @@ import com.gadgetworks.codeshelf.ws.command.req.IWsReqCmdFactory;
  *
  */
 public interface IWebSessionFactory {
-	WebSession create(IWebSocket inWebSocket, IWsReqCmdFactory inWebSessionReqCmdFactory);
+	WebSession create(WebSocket inWebSocket, IWsReqCmdFactory inWebSessionReqCmdFactory);
 }

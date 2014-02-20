@@ -10,9 +10,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.junit.Assert;
 import org.apache.shiro.realm.Realm;
-import org.java_websocket.IWebSocket;
+import org.java_websocket.WebSocket;
+import org.junit.Assert;
 import org.junit.Test;
 
 import com.gadgetworks.codeshelf.edi.CsvImporter;
@@ -218,7 +218,7 @@ public class CodeshelfApplicationTest {
 	private class WebSessionFactory implements IWebSessionFactory {
 
 		@Override
-		public WebSession create(IWebSocket inWebSocket, IWsReqCmdFactory inWebSessionReqCmdFactory) {
+		public WebSession create(WebSocket inWebSocket, IWsReqCmdFactory inWebSessionReqCmdFactory) {
 			Realm realm = new CodeshelfRealm();
 			return new WebSession(inWebSocket, inWebSessionReqCmdFactory, realm);
 		}

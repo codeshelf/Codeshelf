@@ -11,6 +11,7 @@ import java.net.Socket;
 import java.net.URL;
 import java.nio.channels.ByteChannel;
 import java.nio.channels.SelectionKey;
+import java.nio.channels.SocketChannel;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -43,7 +44,7 @@ import com.google.inject.name.Named;
  */
 public class SSLWebSocketServerFactory implements WebSocketServer.WebSocketServerFactory {
 
-	private static final Logger	LOGGER								= LoggerFactory.getLogger(WebSocketSslContextGenerator.class);
+	private static final Logger	LOGGER								= LoggerFactory.getLogger(SSLWebSocketServerFactory.class);
 
 	private static final String	KEYSTORE_TYPE_PROPERTY				= "KEYSTORE_TYPE_PROPERTY";
 	private static final String	KEYSTORE_PATH_PROPERTY				= "KEYSTORE_PATH_PROPERTY";
@@ -70,10 +71,10 @@ public class SSLWebSocketServerFactory implements WebSocketServer.WebSocketServe
 	}
 
 	@Override
-	public final ByteChannel wrapChannel(SelectionKey inSelectionKey) throws IOException {
+	public final ByteChannel wrapChannel(SocketChannel inSocketChannel, SelectionKey inSelectionKey) throws IOException {
 		SSLEngine sslEngine = getSslContext().createSSLEngine();
 		sslEngine.setUseClientMode(false);
-		return new SSLSocketChannel2(inSelectionKey, sslEngine, mExec);
+		return new SSLSocketChannel2(inSocketChannel, sslEngine, mExec, inSelectionKey);
 	}
 
 	@Override
