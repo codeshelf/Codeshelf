@@ -69,6 +69,6 @@
 	<classpathentry kind="lib" path="lib/dist/json-1.0.jar"/>
 	<classpathentry kind="lib" path="lib/dist/postgresql-9.3-1100.jdbc41.jar"/>
 	<classpathentry kind="lib" path="lib/dist/dropbox-android-sdk-1.5.4.jar"/>
-	<classpathentry kind="lib" path="lib/dist/java_websocket.jar"/>
+	<classpathentry kind="lib" path="lib/dist/java_websocket.jar" sourcepath="/Java-WebSocket/src/main/java"/>
 	<classpathentry kind="output" path="eclipse-bin"/>
 </classpath>

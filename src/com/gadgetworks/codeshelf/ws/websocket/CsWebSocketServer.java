@@ -9,6 +9,7 @@ import java.net.InetSocketAddress;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 import org.java_websocket.WebSocket;
+import org.java_websocket.WebSocketImpl;
 import org.java_websocket.handshake.ClientHandshake;
 import org.java_websocket.server.WebSocketServer;
 import org.slf4j.Logger;
@@ -32,6 +33,7 @@ public class CsWebSocketServer extends WebSocketServer implements IWebSocketServ
 		final WebSocketServer.WebSocketServerFactory inWebSocketServerFactory) {
 		super(new InetSocketAddress(inAddr, inPort), 4);
 
+		WebSocketImpl.DEBUG = true;
 		setWebSocketFactory(inWebSocketServerFactory);
 
 		mWebSessionManager = inWebSessionManager;
@@ -54,7 +56,8 @@ public class CsWebSocketServer extends WebSocketServer implements IWebSocketServ
 	@Override
 	public final void onClose(final WebSocket inWebSocket, final int inCode, final String inReason, final boolean inRemote) {
 		if (mWebSockets.remove(inWebSocket)) {
-			LOGGER.info("WebSocket close: " + inWebSocket.getRemoteSocketAddress() + " ( code:" + inCode + " reason:" + inReason + " remote:" + inRemote);
+			LOGGER.info("WebSocket close: " + inWebSocket.getRemoteSocketAddress() + " ( code:" + inCode + " reason:" + inReason
+					+ " remote:" + inRemote);
 			mWebSessionManager.handleSessionClose(inWebSocket);
 		}
 	}
@@ -69,6 +72,10 @@ public class CsWebSocketServer extends WebSocketServer implements IWebSocketServ
 
 	@Override
 	public final void onError(final WebSocket inWebSocket, final Exception inException) {
-		LOGGER.error("Error: " + inWebSocket.toString(), inException);
+		if (inWebSocket != null) {
+			LOGGER.error("Error: " + inWebSocket.toString(), inException);
+		} else {
+			LOGGER.error("Error: (CsWebSocketServer.onError - websocket was null)", inException);
+		}
 	}
 }
