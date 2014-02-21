@@ -10,6 +10,8 @@ import java.util.concurrent.CopyOnWriteArraySet;
 
 import org.java_websocket.WebSocket;
 import org.java_websocket.WebSocketImpl;
+import org.java_websocket.framing.FramedataImpl1;
+import org.java_websocket.framing.Framedata.Opcode;
 import org.java_websocket.handshake.ClientHandshake;
 import org.java_websocket.server.WebSocketServer;
 import org.slf4j.Logger;
@@ -43,6 +45,27 @@ public class CsWebSocketServer extends WebSocketServer implements IWebSocketServ
 	@Override
 	public final void start() {
 		super.start();
+
+		Thread websocketPingThread = new Thread(new Runnable() {
+			public void run() {
+				while (true) {
+					LOGGER.debug("WebSocket ping process start");
+					for (WebSocket websocket : mWebSockets) {
+						LOGGER.debug("WebSocket ping: " + websocket.getRemoteSocketAddress());
+						FramedataImpl1 pingFrame = new FramedataImpl1(Opcode.PING);
+						pingFrame.setFin(true);
+						websocket.sendFrame(pingFrame);
+					}
+					LOGGER.debug("WebSocket ping process end");
+					try {
+						Thread.sleep(20000);
+					} catch (InterruptedException e) {
+						LOGGER.error("", e);
+					}
+				}
+			}
+		}, "WebSocket ping thread");
+		websocketPingThread.start();
 	}
 
 	@Override

@@ -66,24 +66,26 @@ public class SSLWebSocketServerFactory implements WebSocketServer.WebSocketServe
 		mKeystoreType = inKeystoreType;
 		mKeystoreStorePassword = inKeystoreStorePassword;
 		mKeystoreKeyPassword = inKeystoreKeyPassword;
-
-		mExec = Executors.newSingleThreadScheduledExecutor();
 	}
 
 	@Override
 	public final ByteChannel wrapChannel(SocketChannel inSocketChannel, SelectionKey inSelectionKey) throws IOException {
+		LOGGER.debug("WebSocket wrap channel: " + inSocketChannel.getRemoteAddress());
 		SSLEngine sslEngine = getSslContext().createSSLEngine();
 		sslEngine.setUseClientMode(false);
+		mExec = Executors.newSingleThreadScheduledExecutor();
 		return new SSLSocketChannel2(inSocketChannel, sslEngine, mExec, inSelectionKey);
 	}
 
 	@Override
 	public final WebSocketImpl createWebSocket(WebSocketAdapter inAdapter, Draft inDraft, Socket inSocket) {
+		LOGGER.debug("WebSocket create: " + inSocket.getRemoteSocketAddress());
 		return new WebSocketImpl(inAdapter, inDraft, inSocket);
 	}
 
 	@Override
 	public final WebSocketImpl createWebSocket(WebSocketAdapter inAdapter, List<Draft> inDraftList, Socket inSocket) {
+		LOGGER.debug("WebSocket create: " + inSocket.getRemoteSocketAddress());
 		return new WebSocketImpl(inAdapter, inDraftList, inSocket);
 	}
 

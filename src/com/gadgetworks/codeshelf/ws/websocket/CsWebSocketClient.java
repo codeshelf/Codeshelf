@@ -42,6 +42,7 @@ public class CsWebSocketClient extends WebSocketClient implements ICsWebSocketCl
 
 		super(URI.create(inUriStr));
 
+		//WebSocketImpl.DEBUG = true;
 		mMessageHandler = inMessageHandler;
 		mWebSocketSslContextFactory = inWebSocketSslContextFactory;
 	}
