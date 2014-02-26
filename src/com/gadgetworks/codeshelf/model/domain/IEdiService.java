@@ -5,15 +5,19 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
-import com.gadgetworks.codeshelf.edi.ICsvImporter;
+import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
+import com.gadgetworks.codeshelf.edi.ICsvLocationImporter;
+import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 
 public interface IEdiService {
-	
+
 	String getServiceName();
 
 	EdiServiceStateEnum getServiceStateEnum();
 
-	Boolean checkForCsvUpdates(ICsvImporter inCsvImporter);
+	Boolean checkForCsvUpdates(ICsvOrderImporter inCsvOrdersImporter,
+		ICsvInventoryImporter inCsvInventoryImporter,
+		ICsvLocationImporter inCsvLocationsImporter);
 
 }

@@ -6,9 +6,9 @@
 package com.gadgetworks.codeshelf.edi;
 
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
 import lombok.ToString;
+
+import com.avaje.ebean.validation.NotNull;
 
 /**
  * @author jeffw
@@ -16,13 +16,21 @@ import lombok.ToString;
  */
 @Data
 @ToString
-public class SlottedInventoryCsvImportBean {
-	private String	itemId;
-	private String	itemDetailId;
-	private String	description;
-	private String	quantity;
-	private String	uom;
-	private String	inventoryDate;
-	private String	lotId;
-	private String	locationId;
+public class SlottedInventoryCsvImportBean extends CsvImportBeanABC {
+
+	@NotNull
+	protected String	itemId;
+	@NotNull
+	protected String	itemDetailId;
+	@NotNull
+	protected String	description;
+	@NotNull
+	protected String	quantity;
+	@NotNull
+	protected String	uom;
+	@NotNull
+	protected String	inventoryDate;
+	protected String	lotId;
+	@NotNull
+	protected String	locationId;
 }

@@ -13,9 +13,7 @@ import com.gadgetworks.codeshelf.model.domain.Facility;
  * @author jeffw
  *
  */
-public interface ICsvImporter {
-
-	void importOrdersFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility);
+public interface ICsvInventoryImporter {
 
 	void importSlottedInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility);
 

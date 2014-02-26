@@ -1,12 +1,15 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DdcInventoryCsvImportBean.java,v 1.5 2013/07/17 05:48:13 jeffw Exp $
+ *  $Id: OrderCsvImportBean.java,v 1.2 2013/04/11 07:42:45 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
 import lombok.Data;
 import lombok.ToString;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.validation.NotNull;
 
@@ -16,18 +19,13 @@ import com.avaje.ebean.validation.NotNull;
  */
 @ToString
 @Data
-public class DdcInventoryCsvImportBean extends CsvImportBeanABC {
+public class LocationAliasCsvImportBean extends CsvImportBeanABC {
+
+	static final Logger	LOGGER	= LoggerFactory.getLogger(LocationAliasCsvImportBean.class);
 
 	@NotNull
-	protected String	itemId;
+	protected String	locationAlias;
 	@NotNull
-	protected String	itemDetailId;
-	protected String	description;
-	@NotNull
-	protected String	ddcId;
-	@NotNull
-	protected String	quantity;
-	@NotNull
-	protected String	uom;
+	protected String	mappedLocationId;
 
 }

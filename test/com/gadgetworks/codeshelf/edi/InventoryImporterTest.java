@@ -9,7 +9,6 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
 
 import org.junit.Assert;
-
 import org.junit.Test;
 
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
@@ -27,14 +26,14 @@ public class InventoryImporterTest extends EdiTestABC {
 	@Test
 	public final void testInventoryImporterFromCsvStream() {
 
-		String csvString = "itemId,description,quantity,uom,locationId,lotId,inventoryDate\r\n" //
-				+ "3001,Widget,100,each,B1,111,2012-09-26 11:31:01\r\n" //
-				+ "4550,Gadget,450,case,B2,222,2012-09-26 11:31:01\r\n" //
-				+ "3007,Dealybob,300,case,B3,333,2012-09-26 11:31:02\r\n" //
-				+ "2150,Thingamajig,220,case,B4,444,2012-09-26 11:31:03\r\n" //
-				+ "2170,Doodad,125,each,B5,555,2012-09-26 11:31:03";
+		String csvString = "itemId,itemDetailId,description,quantity,uom,locationId,lotId,inventoryDate\r\n" //
+				+ "3001,3001,Widget,100,each,B1,111,2012-09-26 11:31:01\r\n" //
+				+ "4550,4550,Gadget,450,case,B2,222,2012-09-26 11:31:01\r\n" //
+				+ "3007,3007,Dealybob,300,case,B3,333,2012-09-26 11:31:02\r\n" //
+				+ "2150,2150,Thingamajig,220,case,B4,444,2012-09-26 11:31:03\r\n" //
+				+ "2170,2170,Doodad,125,each,B5,555,2012-09-26 11:31:03";
 
-		byte csvArray[] = csvString.getBytes();
+		byte[] csvArray = csvString.getBytes();
 
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
@@ -46,7 +45,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		organization.createFacility("F-INV1.1", "TEST", PositionTypeEnum.METERS_FROM_PARENT.getName(), 0.0, 0.0);
 		Facility facility = organization.getFacility("F-INV1.1");
 
-		CsvImporter importer = new CsvImporter(mOrderGroupDao, mOrderHeaderDao, mOrderDetailDao, mContainerDao, mContainerUseDao, mItemMasterDao, mItemDao, mUomMasterDao);
+		ICsvInventoryImporter importer = new CsvInventoryImporter(mItemMasterDao, mItemDao, mUomMasterDao);
 		importer.importSlottedInventoryFromCsvStream(reader, facility);
 
 		Item item = facility.getItem("3001");

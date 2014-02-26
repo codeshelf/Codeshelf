@@ -12,7 +12,6 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
 import org.junit.Assert;
-
 import org.junit.Test;
 
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
@@ -34,19 +33,32 @@ public class EdiProcessorTest extends EdiTestABC {
 	@Test
 	public final void ediProcessThreadTest() {
 
-		ICsvImporter csvImporter = new ICsvImporter() {
+		ICsvOrderImporter orderImporter = new ICsvOrderImporter() {
+
+			@Override
 			public void importOrdersFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
-			}
-
-			public void importSlottedInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
-			}
-
-			public void importDdcInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
-
 			}
 		};
 
-		IEdiProcessor ediProcessor = new EdiProcessor(csvImporter, Facility.DAO);
+		ICsvInventoryImporter inventoryImporter = new ICsvInventoryImporter() {
+
+			@Override
+			public void importSlottedInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
+			}
+
+			@Override
+			public void importDdcInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
+			}
+		};
+
+		ICsvLocationImporter locationImporter = new ICsvLocationImporter() {
+
+			@Override
+			public void importLocationAliasesFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
+			}
+		};
+
+		IEdiProcessor ediProcessor = new EdiProcessor(orderImporter, inventoryImporter, locationImporter, Facility.DAO);
 		BlockingQueue<String> testBlockingQueue = new ArrayBlockingQueue<>(100);
 		ediProcessor.startProcessor(testBlockingQueue);
 
@@ -77,8 +89,8 @@ public class EdiProcessorTest extends EdiTestABC {
 	}
 
 	public final class TestFacilityDao extends GenericDaoABC<Facility> implements ITypedDao<Facility> {
-		private Facility mFacility;
-		
+		private Facility	mFacility;
+
 		@Inject
 		public TestFacilityDao(final ISchemaManager inSchemaManager, final Facility inFacility) {
 			super(inSchemaManager);
@@ -88,7 +100,7 @@ public class EdiProcessorTest extends EdiTestABC {
 		public final Class<Facility> getDaoClass() {
 			return Facility.class;
 		}
-		
+
 		public final List<Facility> getAll() {
 			List<Facility> list = new ArrayList<Facility>();
 			list.add(mFacility);
@@ -103,9 +115,34 @@ public class EdiProcessorTest extends EdiTestABC {
 			public boolean	processed	= false;
 		}
 
+		ICsvOrderImporter orderImporter = new ICsvOrderImporter() {
+
+			@Override
+			public void importOrdersFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
+			}
+		};
+
+		ICsvInventoryImporter inventoryImporter = new ICsvInventoryImporter() {
+
+			@Override
+			public void importSlottedInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
+			}
+
+			@Override
+			public void importDdcInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
+			}
+		};
+
+		ICsvLocationImporter locationImporter = new ICsvLocationImporter() {
+
+			@Override
+			public void importLocationAliasesFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
+			}
+		};
+
 		final Result linkedResult = new Result();
 		final Result unlinkedResult = new Result();
-		
+
 		Organization organization = new Organization();
 		organization.setDomainId("O-EDI.1");
 		mOrganizationDao.store(organization);
@@ -113,21 +150,23 @@ public class EdiProcessorTest extends EdiTestABC {
 		organization.createFacility("F-EDI.1", "TEST", PositionTypeEnum.METERS_FROM_PARENT.getName(), 0.0, 0.0);
 		Facility facility = organization.getFacility("F-EDI.1");
 		facility.setParent(organization);
-		
+
 		TestFacilityDao facilityDao = new TestFacilityDao(mSchemaManager, facility);
 		facilityDao.store(facility);
 
 		IEdiService ediServiceLinked = new IEdiService() {
-			
+
 			public EdiServiceStateEnum getServiceStateEnum() {
 				return EdiServiceStateEnum.LINKED;
 			}
-			
+
 			public String getServiceName() {
 				return "LINKED";
 			}
-			
-			public Boolean checkForCsvUpdates(ICsvImporter inCsvImporter) {
+
+			public Boolean checkForCsvUpdates(ICsvOrderImporter inCsvOrdersImporter,
+				ICsvInventoryImporter inCsvInventoryImporter,
+				ICsvLocationImporter inCsvLocationsImporter) {
 				linkedResult.processed = true;
 				return true;
 			}
@@ -138,33 +177,23 @@ public class EdiProcessorTest extends EdiTestABC {
 			public EdiServiceStateEnum getServiceStateEnum() {
 				return EdiServiceStateEnum.UNLINKED;
 			}
-			
+
 			public String getServiceName() {
 				return "UNLINKED";
 			}
-			
-			public Boolean checkForCsvUpdates(ICsvImporter inCsvImporter) {
+
+			public Boolean checkForCsvUpdates(ICsvOrderImporter inCsvOrdersImporter,
+				ICsvInventoryImporter inCsvInventoryImporter,
+				ICsvLocationImporter inCsvLocationsImporter) {
 				unlinkedResult.processed = true;
 				return true;
 			}
 		};
-		
+
 		facility.addEdiService(ediServiceUnlinked);
 		facility.addEdiService(ediServiceLinked);
 
-		ICsvImporter csvImporter = new ICsvImporter() {
-			public void importOrdersFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
-			}
-
-			public void importSlottedInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
-			}
-
-			public void importDdcInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
-
-			}
-		};
-
-		IEdiProcessor ediProcessor = new EdiProcessor(csvImporter, facilityDao);
+		IEdiProcessor ediProcessor = new EdiProcessor(orderImporter, inventoryImporter, locationImporter, facilityDao);
 		BlockingQueue<String> testBlockingQueue = new ArrayBlockingQueue<>(100);
 		ediProcessor.startProcessor(testBlockingQueue);
 

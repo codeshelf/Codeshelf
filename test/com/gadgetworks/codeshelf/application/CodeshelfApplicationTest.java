@@ -15,9 +15,13 @@ import org.java_websocket.WebSocket;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.gadgetworks.codeshelf.edi.CsvImporter;
+import com.gadgetworks.codeshelf.edi.CsvInventoryImporter;
+import com.gadgetworks.codeshelf.edi.CsvLocationImporter;
+import com.gadgetworks.codeshelf.edi.CsvOrderImporter;
 import com.gadgetworks.codeshelf.edi.EdiProcessor;
-import com.gadgetworks.codeshelf.edi.ICsvImporter;
+import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
+import com.gadgetworks.codeshelf.edi.ICsvLocationImporter;
+import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
 import com.gadgetworks.codeshelf.edi.IEdiProcessor;
 import com.gadgetworks.codeshelf.model.dao.DaoProvider;
 import com.gadgetworks.codeshelf.model.dao.Database;
@@ -34,6 +38,7 @@ import com.gadgetworks.codeshelf.model.domain.ContainerUse;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster;
+import com.gadgetworks.codeshelf.model.domain.LocationAlias;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderGroup;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
@@ -244,6 +249,7 @@ public class CodeshelfApplicationTest {
 		ITypedDao<UomMaster> uomMasterDao = new MockDao<UomMaster>();
 		ITypedDao<Che> cheDao = new MockDao<Che>();
 		ITypedDao<WorkInstruction> workInstructionDao = new MockDao<WorkInstruction>();
+		ITypedDao<LocationAlias> locationAliasDao = new MockDao<LocationAlias>();
 		IMonitor monitor = new Monitor();
 
 		Injector injector = new MockInjector();
@@ -259,8 +265,10 @@ public class CodeshelfApplicationTest {
 			webSocketFactory);
 		IHttpServer httpServer = new HttpServer("./", "localhost", 8443, "./conf/codeshelf.keystore", "x2HPbC2avltYQR", "x2HPbC2avltYQR");
 
-		ICsvImporter importer = new CsvImporter(orderGroupDao, orderHeaderDao, orderDetailDao, containerDao, containerUseDao, itemMasterDao, itemDao, uomMasterDao);
-		IEdiProcessor ediProcessor = new EdiProcessor(importer, facilityDao);
+		ICsvOrderImporter orderImporter = new CsvOrderImporter(orderGroupDao, orderHeaderDao, orderDetailDao, containerDao, containerUseDao, itemMasterDao, uomMasterDao);
+		ICsvInventoryImporter inventoryImporter = new CsvInventoryImporter(itemMasterDao, itemDao, uomMasterDao);
+		ICsvLocationImporter locationImporter = new CsvLocationImporter(locationAliasDao);
+		IEdiProcessor ediProcessor = new EdiProcessor(orderImporter, inventoryImporter, locationImporter, facilityDao);
 		IPickDocumentGenerator pickDocumentGenerator = new PickDocumentGenerator();
 		IUtil util = new MockUtil();
 		ISchemaManager schemaManager = new H2SchemaManager(util, "codeshelf", "codeshelf", "codeshelf", "codeshelf", "localhost", "", "false");

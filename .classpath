@@ -68,7 +68,7 @@
 	<classpathentry kind="lib" path="lib/dist/json_simple-1.1.jar"/>
 	<classpathentry kind="lib" path="lib/dist/json-1.0.jar"/>
 	<classpathentry kind="lib" path="lib/dist/postgresql-9.3-1100.jdbc41.jar"/>
-	<classpathentry kind="lib" path="lib/dist/dropbox-android-sdk-1.5.4.jar"/>
+	<classpathentry kind="lib" path="lib/dist/dropbox-android-sdk-1.5.4.jar" sourcepath="APIs/dropbox-1.5.4-src.zip"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/Java-WebSocket"/>
 	<classpathentry kind="output" path="eclipse-bin"/>
 </classpath>

@@ -8,26 +8,42 @@ package com.gadgetworks.codeshelf.edi;
 import lombok.Data;
 import lombok.ToString;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.avaje.ebean.validation.NotNull;
+
 /**
  * @author jeffw
  *
  */
 @ToString
 @Data
-public class OrderCsvImportBean {
-	private String	orderId;
-	private String	orderDetailId;
-	private String	itemId;
-	private String	description;
-	private String	quantity;
-	private String	uom;
-	private String	orderDate;
-	private String	dueDate;
-	private String	orderGroupId;
-	private String	destinationId;
-	private String	pickStrategy;
-	private String	preAssignedContainerId;
-	private String	shipmentId;
-	private String	customerId;
-	private String	workSequence;
+public class OrderCsvImportBean extends CsvImportBeanABC {
+
+	static final Logger	LOGGER	= LoggerFactory.getLogger(OrderCsvImportBean.class);
+
+	protected String	orderGroupId;
+	@NotNull
+	protected String	orderId;
+	@NotNull
+	protected String	orderDetailId;
+	@NotNull
+	protected String	itemId;
+	@NotNull
+	protected String	description;
+	@NotNull
+	protected String	quantity;
+	@NotNull
+	protected String	uom;
+	protected String	orderDate;
+	@NotNull
+	protected String	dueDate;
+	protected String	destinationId;
+	protected String	pickStrategy;
+	protected String	preAssignedContainerId;
+	protected String	shipmentId;
+	protected String	customerId;
+	protected String	workSequence;
+
 }

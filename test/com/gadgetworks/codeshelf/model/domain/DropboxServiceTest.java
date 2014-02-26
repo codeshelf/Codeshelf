@@ -8,10 +8,11 @@ package com.gadgetworks.codeshelf.model.domain;
 import java.io.InputStreamReader;
 
 import org.junit.Assert;
-
 import org.junit.Test;
 
-import com.gadgetworks.codeshelf.edi.ICsvImporter;
+import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
+import com.gadgetworks.codeshelf.edi.ICsvLocationImporter;
+import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.dao.MockDao;
 import com.gadgetworks.codeshelf.model.dao.Result;
@@ -51,19 +52,35 @@ public class DropboxServiceTest {
 		dropboxService.setProviderCredentials(TEST_CREDENTIALS);
 		dropboxService.setServiceStateEnum(EdiServiceStateEnum.LINKED);
 
-		final Result checkImport = new Result();
+		final Result checkImportOrders = new Result();
 
-		dropboxService.checkForCsvUpdates(new ICsvImporter() {
-			public void importOrdersFromCsvStream(InputStreamReader inStreamReader, Facility inFacility) {
-				checkImport.result = true;
-			}
+		ICsvOrderImporter orderImporter = new ICsvOrderImporter() {
+			
+			@Override
+			public void importOrdersFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
+				checkImportOrders.result = true;			}
+		};
+		
+		ICsvInventoryImporter inventoryImporter = new ICsvInventoryImporter() {
+			
+			@Override
 			public void importSlottedInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
 			}
+			
+			@Override
 			public void importDdcInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
-				
 			}
-		});
+		};
 		
-		Assert.assertTrue(checkImport.result);
+		ICsvLocationImporter locationImporter = new ICsvLocationImporter() {
+			
+			@Override
+			public void importLocationAliasesFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
+			}
+		};
+		
+		dropboxService.checkForCsvUpdates(orderImporter, inventoryImporter, locationImporter);
+		
+		Assert.assertTrue(checkImportOrders.result);
 	}
 }

@@ -18,9 +18,13 @@ import org.java_websocket.server.WebSocketServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.edi.CsvImporter;
+import com.gadgetworks.codeshelf.edi.CsvInventoryImporter;
+import com.gadgetworks.codeshelf.edi.CsvLocationImporter;
+import com.gadgetworks.codeshelf.edi.CsvOrderImporter;
 import com.gadgetworks.codeshelf.edi.EdiProcessor;
-import com.gadgetworks.codeshelf.edi.ICsvImporter;
+import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
+import com.gadgetworks.codeshelf.edi.ICsvLocationImporter;
+import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
 import com.gadgetworks.codeshelf.edi.IEdiProcessor;
 import com.gadgetworks.codeshelf.model.dao.DaoProvider;
 import com.gadgetworks.codeshelf.model.dao.Database;
@@ -59,6 +63,8 @@ import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.LedController.LedControllerDao;
 import com.gadgetworks.codeshelf.model.domain.LocationABC;
 import com.gadgetworks.codeshelf.model.domain.LocationABC.LocationDao;
+import com.gadgetworks.codeshelf.model.domain.LocationAlias;
+import com.gadgetworks.codeshelf.model.domain.LocationAlias.LocationAliasDao;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail.OrderDetailDao;
 import com.gadgetworks.codeshelf.model.domain.OrderGroup;
@@ -188,25 +194,41 @@ public final class ServerMain {
 		Injector injector = Guice.createInjector(new AbstractModule() {
 			@Override
 			protected void configure() {
-				bind(String.class).annotatedWith(Names.named(ISchemaManager.DATABASE_NAME_PROPERTY)).toInstance(System.getProperty("db.name"));
-				bind(String.class).annotatedWith(Names.named(ISchemaManager.DATABASE_SCHEMANAME_PROPERTY)).toInstance(System.getProperty("db.schemaname"));
-				bind(String.class).annotatedWith(Names.named(ISchemaManager.DATABASE_USERID_PROPERTY)).toInstance(System.getProperty("db.userid"));
-				bind(String.class).annotatedWith(Names.named(ISchemaManager.DATABASE_PASSWORD_PROPERTY)).toInstance(System.getProperty("db.password"));
-				bind(String.class).annotatedWith(Names.named(ISchemaManager.DATABASE_ADDRESS_PROPERTY)).toInstance(System.getProperty("db.address"));
-				bind(String.class).annotatedWith(Names.named(ISchemaManager.DATABASE_PORTNUM_PROPERTY)).toInstance(System.getProperty("db.portnum"));
-				bind(String.class).annotatedWith(Names.named(ISchemaManager.DATABASE_SSL_PROPERTY)).toInstance(System.getProperty("db.ssl"));
+				bind(String.class).annotatedWith(Names.named(ISchemaManager.DATABASE_NAME_PROPERTY))
+					.toInstance(System.getProperty("db.name"));
+				bind(String.class).annotatedWith(Names.named(ISchemaManager.DATABASE_SCHEMANAME_PROPERTY))
+					.toInstance(System.getProperty("db.schemaname"));
+				bind(String.class).annotatedWith(Names.named(ISchemaManager.DATABASE_USERID_PROPERTY))
+					.toInstance(System.getProperty("db.userid"));
+				bind(String.class).annotatedWith(Names.named(ISchemaManager.DATABASE_PASSWORD_PROPERTY))
+					.toInstance(System.getProperty("db.password"));
+				bind(String.class).annotatedWith(Names.named(ISchemaManager.DATABASE_ADDRESS_PROPERTY))
+					.toInstance(System.getProperty("db.address"));
+				bind(String.class).annotatedWith(Names.named(ISchemaManager.DATABASE_PORTNUM_PROPERTY))
+					.toInstance(System.getProperty("db.portnum"));
+				bind(String.class).annotatedWith(Names.named(ISchemaManager.DATABASE_SSL_PROPERTY))
+					.toInstance(System.getProperty("db.ssl"));
 
-				bind(String.class).annotatedWith(Names.named(IWebSocketSslContextGenerator.KEYSTORE_PATH_PROPERTY)).toInstance(System.getProperty("keystore.path"));
-				bind(String.class).annotatedWith(Names.named(IWebSocketSslContextGenerator.KEYSTORE_TYPE_PROPERTY)).toInstance(System.getProperty("keystore.type"));
-				bind(String.class).annotatedWith(Names.named(IWebSocketSslContextGenerator.KEYSTORE_STORE_PASSWORD_PROPERTY)).toInstance(System.getProperty("keystore.store.password"));
-				bind(String.class).annotatedWith(Names.named(IWebSocketSslContextGenerator.KEYSTORE_KEY_PASSWORD_PROPERTY)).toInstance(System.getProperty("keystore.key.password"));
+				bind(String.class).annotatedWith(Names.named(IWebSocketSslContextGenerator.KEYSTORE_PATH_PROPERTY))
+					.toInstance(System.getProperty("keystore.path"));
+				bind(String.class).annotatedWith(Names.named(IWebSocketSslContextGenerator.KEYSTORE_TYPE_PROPERTY))
+					.toInstance(System.getProperty("keystore.type"));
+				bind(String.class).annotatedWith(Names.named(IWebSocketSslContextGenerator.KEYSTORE_STORE_PASSWORD_PROPERTY))
+					.toInstance(System.getProperty("keystore.store.password"));
+				bind(String.class).annotatedWith(Names.named(IWebSocketSslContextGenerator.KEYSTORE_KEY_PASSWORD_PROPERTY))
+					.toInstance(System.getProperty("keystore.key.password"));
 
-				bind(String.class).annotatedWith(Names.named(IWebSocketServer.WEBSOCKET_HOSTNAME_PROPERTY)).toInstance(System.getProperty("websocket.hostname"));
-				bind(Integer.class).annotatedWith(Names.named(IWebSocketServer.WEBSOCKET_PORTNUM_PROPERTY)).toInstance(Integer.valueOf(System.getProperty("websocket.portnum")));
+				bind(String.class).annotatedWith(Names.named(IWebSocketServer.WEBSOCKET_HOSTNAME_PROPERTY))
+					.toInstance(System.getProperty("websocket.hostname"));
+				bind(Integer.class).annotatedWith(Names.named(IWebSocketServer.WEBSOCKET_PORTNUM_PROPERTY))
+					.toInstance(Integer.valueOf(System.getProperty("websocket.portnum")));
 
-				bind(String.class).annotatedWith(Names.named(IHttpServer.WEBAPP_CONTENT_PATH_PROPERTY)).toInstance(System.getProperty("webapp.content.path"));
-				bind(String.class).annotatedWith(Names.named(IHttpServer.WEBAPP_HOSTNAME_PROPERTY)).toInstance(System.getProperty("webapp.hostname"));
-				bind(Integer.class).annotatedWith(Names.named(IHttpServer.WEBAPP_PORTNUM_PROPERTY)).toInstance(Integer.valueOf(System.getProperty("webapp.portnum")));
+				bind(String.class).annotatedWith(Names.named(IHttpServer.WEBAPP_CONTENT_PATH_PROPERTY))
+					.toInstance(System.getProperty("webapp.content.path"));
+				bind(String.class).annotatedWith(Names.named(IHttpServer.WEBAPP_HOSTNAME_PROPERTY))
+					.toInstance(System.getProperty("webapp.hostname"));
+				bind(Integer.class).annotatedWith(Names.named(IHttpServer.WEBAPP_PORTNUM_PROPERTY))
+					.toInstance(Integer.valueOf(System.getProperty("webapp.portnum")));
 
 				bind(IUtil.class).to(Util.class);
 				bind(IMonitor.class).to(Monitor.class);
@@ -217,7 +239,9 @@ public final class ServerMain {
 				bind(IHttpServer.class).to(HttpServer.class);
 				bind(IEdiProcessor.class).to(EdiProcessor.class);
 				bind(IPickDocumentGenerator.class).to(PickDocumentGenerator.class);
-				bind(ICsvImporter.class).to(CsvImporter.class);
+				bind(ICsvOrderImporter.class).to(CsvOrderImporter.class);
+				bind(ICsvInventoryImporter.class).to(CsvInventoryImporter.class);
+				bind(ICsvLocationImporter.class).to(CsvLocationImporter.class);
 
 				// Websocket/WebSession
 				bind(IWebSocketServer.class).to(CsWebSocketServer.class);
@@ -293,6 +317,10 @@ public final class ServerMain {
 				requestStaticInjection(LocationABC.class);
 				bind(new TypeLiteral<ITypedDao<LocationABC>>() {
 				}).to(LocationDao.class);
+
+				requestStaticInjection(LocationAlias.class);
+				bind(new TypeLiteral<ITypedDao<LocationAlias>>() {
+				}).to(LocationAliasDao.class);
 
 				requestStaticInjection(OrderDetail.class);
 				bind(new TypeLiteral<ITypedDao<OrderDetail>>() {

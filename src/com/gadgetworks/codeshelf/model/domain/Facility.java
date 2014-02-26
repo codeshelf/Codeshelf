@@ -135,6 +135,10 @@ public class Facility extends LocationABC<Organization> {
 	@Getter
 	private Map<String, UomMaster>			uomMasters		= new HashMap<String, UomMaster>();
 
+	@OneToMany(mappedBy = "parent")
+	@MapKey(name = "domainId")
+	private Map<String, LocationAlias>		locationAliases	= new HashMap<String, LocationAlias>();
+
 	public Facility() {
 
 	}
@@ -285,6 +289,22 @@ public class Facility extends LocationABC<Organization> {
 
 	public final List<CodeshelfNetwork> getNetworks() {
 		return new ArrayList<CodeshelfNetwork>(networks.values());
+	}
+
+	public final void addLocationAlias(LocationAlias inLocationAlias) {
+		locationAliases.put(inLocationAlias.getDomainId(), inLocationAlias);
+	}
+
+	public final LocationAlias getLocationAlias(String inLocationAliasId) {
+		return locationAliases.get(inLocationAliasId);
+	}
+
+	public final List<LocationAlias> getLocationAliases() {
+		return new ArrayList<LocationAlias>(locationAliases.values());
+	}
+
+	public final void removeLocationAlias(String inLocationAliasId) {
+		locationAliases.remove(inLocationAliasId);
 	}
 
 	// --------------------------------------------------------------------------

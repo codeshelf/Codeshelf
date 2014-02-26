@@ -42,7 +42,9 @@ import com.dropbox.client2.session.AccessTokenPair;
 import com.dropbox.client2.session.AppKeyPair;
 import com.dropbox.client2.session.Session;
 import com.dropbox.client2.session.WebAuthSession;
-import com.gadgetworks.codeshelf.edi.ICsvImporter;
+import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
+import com.gadgetworks.codeshelf.edi.ICsvLocationImporter;
+import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
 import com.gadgetworks.codeshelf.model.EdiDocumentStatusEnum;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
@@ -93,8 +95,14 @@ public class DropboxService extends EdiServiceABC {
 	private static final Integer	RETRY_SECONDS			= 10 * 1000;
 
 	private static final String		FACILITY_FOLDER_PATH	= "/FACILITY_";
-	private static final String		IMPORT_PATH				= "/import";
-	private static final String		EXPORT_PATH				= "/export";
+
+	private static final String		IMPORT_DIR_PATH			= "import/";
+	private static final String		IMPORT_ORDERS_PATH		= "orders/";
+	private static final String		IMPORT_INVENTORY_PATH	= "inventory/";
+	private static final String		IMPORT_LOCATIONS_PATH	= "locations/";
+
+	private static final String		EXPORT_DIR_PATH			= "export/";
+	private static final String		EXPORT_WIS_PATH			= "work/";
 
 	@Column(nullable = true, name = "CURSOR")
 	@Getter
@@ -114,7 +122,9 @@ public class DropboxService extends EdiServiceABC {
 		return DAO;
 	}
 
-	public final Boolean checkForCsvUpdates(ICsvImporter inCsvImporter) {
+	public final Boolean checkForCsvUpdates(ICsvOrderImporter inCsvOrdersImporter,
+		ICsvInventoryImporter inCsvInventoryImporter,
+		ICsvLocationImporter inCsvLocationsImporter) {
 		Boolean result = false;
 
 		// Make sure we believe that we're properly registered with the service before we try to contact it.
@@ -122,7 +132,10 @@ public class DropboxService extends EdiServiceABC {
 
 			DropboxAPI<Session> clientSession = getClientSession();
 			if (clientSession != null) {
-				result = checkForChangedDocuments(clientSession, inCsvImporter);
+				result = checkForChangedDocuments(clientSession,
+					inCsvOrdersImporter,
+					inCsvInventoryImporter,
+					inCsvLocationsImporter);
 			}
 		}
 
@@ -133,7 +146,10 @@ public class DropboxService extends EdiServiceABC {
 	/**
 	 * @param inClientSession
 	 */
-	private Boolean checkForChangedDocuments(DropboxAPI<Session> inClientSession, ICsvImporter inCsvImporter) {
+	private Boolean checkForChangedDocuments(DropboxAPI<Session> inClientSession,
+		ICsvOrderImporter inCsvOrdersImporter,
+		ICsvInventoryImporter inCsvInventoryImporter,
+		ICsvLocationImporter inCsvLocationsImporter) {
 		Boolean result = false;
 
 		if (ensureBaseDirectories(inClientSession)) {
@@ -141,7 +157,7 @@ public class DropboxService extends EdiServiceABC {
 			while ((page != null) && (page.entries.size() > 0)) {
 				// Signal that we got some deltas
 				result = true;
-				if (iteratePage(inClientSession, page, inCsvImporter)) {
+				if (iteratePage(inClientSession, page, inCsvOrdersImporter, inCsvInventoryImporter, inCsvLocationsImporter)) {
 					// If we've processed everything from the page correctly then save the current dbCursor, and get the next page
 					try {
 						DropboxService.DAO.store(this);
@@ -184,7 +200,11 @@ public class DropboxService extends EdiServiceABC {
 	 * @param inClientSession
 	 * @param inPage
 	 */
-	private Boolean iteratePage(DropboxAPI<Session> inClientSession, DeltaPage<Entry> inPage, ICsvImporter inCsvImporter) {
+	private Boolean iteratePage(DropboxAPI<Session> inClientSession,
+		DeltaPage<Entry> inPage,
+		ICsvOrderImporter inCsvOrdersImporter,
+		ICsvInventoryImporter inCsvInventoryImporter,
+		ICsvLocationImporter inCsvLocationsImporter) {
 		Boolean result = true;
 
 		for (DeltaEntry<Entry> entry : inPage.entries) {
@@ -192,7 +212,11 @@ public class DropboxService extends EdiServiceABC {
 			try {
 				if (entry.metadata != null) {
 					// Add, or modify.
-					result &= processEntry(inClientSession, entry, inCsvImporter);
+					result &= processEntry(inClientSession,
+						entry,
+						inCsvOrdersImporter,
+						inCsvInventoryImporter,
+						inCsvLocationsImporter);
 				} else {
 					result &= removeEntry(inClientSession, entry);
 				}
@@ -213,7 +237,7 @@ public class DropboxService extends EdiServiceABC {
 	 * @param inPath
 	 * @return
 	 */
-	public final EdiDocumentLocator getDocumentLocatorByPath(String inPath) {
+	private final EdiDocumentLocator getDocumentLocatorByPath(String inPath) {
 		EdiDocumentLocator result = null;
 
 		for (EdiDocumentLocator locator : getDocumentLocators()) {
@@ -243,7 +267,8 @@ public class DropboxService extends EdiServiceABC {
 				JsonNode accessTokenNode = credentialsNode.get("accessToken");
 
 				AppKeyPair appKey = new AppKeyPair(appKeyNode.get("key").getTextValue(), appKeyNode.get("secret").getTextValue());
-				AccessTokenPair accessToken = new AccessTokenPair(accessTokenNode.get("key").getTextValue(), accessTokenNode.get("secret").getTextValue());
+				AccessTokenPair accessToken = new AccessTokenPair(accessTokenNode.get("key").getTextValue(),
+					accessTokenNode.get("secret").getTextValue());
 
 				WebAuthSession session = new WebAuthSession(appKey, WebAuthSession.AccessType.APP_FOLDER);
 				session.setAccessTokenPair(accessToken);
@@ -262,40 +287,36 @@ public class DropboxService extends EdiServiceABC {
 	/**
 	 * @return
 	 */
-	public final String getFacilityPath() {
-		return FACILITY_FOLDER_PATH + getParent().getDomainId();
+	private String getFacilityPath() {
+		return new String(FACILITY_FOLDER_PATH + getParent().getDomainId() + "/").toLowerCase();
 	}
 
 	// --------------------------------------------------------------------------
 	/**
 	 * @return
 	 */
-	public final String getImportPath() {
-		return getFacilityPath() + IMPORT_PATH;
+	private String getFacilityImportPath() {
+		return new String(FACILITY_FOLDER_PATH + getParent().getDomainId() + "/" + IMPORT_DIR_PATH).toLowerCase();
 	}
 
 	// --------------------------------------------------------------------------
 	/**
-	 * @return
-	 */
-	public final String getExportPath() {
-		return getFacilityPath() + EXPORT_PATH;
-	}
-
-	// --------------------------------------------------------------------------
-	/**
+	 * Make sure all of the directories we need exist for import and export at the facility.
 	 * @return
 	 */
 	private boolean ensureBaseDirectories(DropboxAPI<Session> inClientSession) {
 		boolean result = false;
 
-		String facilityPath = FACILITY_FOLDER_PATH + getParent().getDomainId();
-		String importPath = facilityPath + IMPORT_PATH;
-		String exportPath = facilityPath + EXPORT_PATH;
+		String facilityPath = getFacilityPath();
 
 		result = ensureDirectory(inClientSession, facilityPath);
-		result &= ensureDirectory(inClientSession, importPath);
-		result &= ensureDirectory(inClientSession, exportPath);
+		result &= ensureDirectory(inClientSession, facilityPath + IMPORT_DIR_PATH);
+		result &= ensureDirectory(inClientSession, facilityPath + IMPORT_DIR_PATH + IMPORT_ORDERS_PATH);
+		result &= ensureDirectory(inClientSession, facilityPath + IMPORT_DIR_PATH + IMPORT_INVENTORY_PATH);
+		result &= ensureDirectory(inClientSession, facilityPath + IMPORT_DIR_PATH + IMPORT_LOCATIONS_PATH);
+
+		result &= ensureDirectory(inClientSession, facilityPath + IMPORT_DIR_PATH);
+		result &= ensureDirectory(inClientSession, facilityPath + IMPORT_DIR_PATH + EXPORT_WIS_PATH);
 
 		return result;
 	}
@@ -470,19 +491,18 @@ public class DropboxService extends EdiServiceABC {
 	/**
 	 * @param inEntry
 	 */
-	private Boolean processEntry(DropboxAPI<Session> inClientSession, DeltaEntry<Entry> inEntry, ICsvImporter inCsvImporter) {
+	private Boolean processEntry(DropboxAPI<Session> inClientSession,
+		DeltaEntry<Entry> inEntry,
+		ICsvOrderImporter inCsvOrdersImporter,
+		ICsvInventoryImporter inCsvInventoryImporter,
+		ICsvLocationImporter inCsvLocationsImporter) {
 		Boolean result = true;
 
 		Boolean shouldUpdateEntry = false;
 
-		if (inEntry.metadata.path.startsWith(this.getImportPath())) {
+		if (inEntry.lcPath.startsWith(getFacilityImportPath())) {
 			if (!inEntry.metadata.isDir) {
-				handleImport(inClientSession, inEntry, inCsvImporter);
-				shouldUpdateEntry = true;
-			}
-		} else if (inEntry.metadata.path.startsWith(this.getExportPath())) {
-			if (!inEntry.metadata.isDir) {
-				//handleExport();
+				handleImport(inClientSession, inEntry, inCsvOrdersImporter, inCsvInventoryImporter, inCsvLocationsImporter);
 				shouldUpdateEntry = true;
 			}
 		}
@@ -514,20 +534,27 @@ public class DropboxService extends EdiServiceABC {
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	private void handleImport(DropboxAPI<Session> inClientSession, DeltaEntry<Entry> inEntry, ICsvImporter inCsvImporter) {
+	private void handleImport(DropboxAPI<Session> inClientSession,
+		DeltaEntry<Entry> inEntry,
+		ICsvOrderImporter inCsvOrdersImporter,
+		ICsvInventoryImporter inCsvInventoryImporter,
+		ICsvLocationImporter inCsvLocationsImporter) {
 
 		try {
 
-			DropboxInputStream stream = inClientSession.getFileStream(inEntry.lcPath, null);
+			String filepath = inEntry.lcPath;
+
+			DropboxInputStream stream = inClientSession.getFileStream(filepath, null);
 			InputStreamReader reader = new InputStreamReader(stream);
-			if (inEntry.lcPath.toLowerCase().endsWith(".csv")) {
-				if (inEntry.lcPath.contains("orders")) {
-					inCsvImporter.importOrdersFromCsvStream(reader, this.getParent());
-				} else if (inEntry.lcPath.contains("inventory-slotted")) {
-					inCsvImporter.importSlottedInventoryFromCsvStream(reader, this.getParent());
-				} else if (inEntry.lcPath.contains("inventory-ddc")) {
-					inCsvImporter.importDdcInventoryFromCsvStream(reader, this.getParent());
-				}
+
+			if (filepath.matches(getFacilityImportPath() + IMPORT_ORDERS_PATH + ".*orders.*csv")) {
+				inCsvOrdersImporter.importOrdersFromCsvStream(reader, getParent());
+			} else if (filepath.matches(getFacilityImportPath() + IMPORT_INVENTORY_PATH + ".*inventory-slotted.*csv")) {
+				inCsvInventoryImporter.importSlottedInventoryFromCsvStream(reader, getParent());
+			} else if (filepath.matches(getFacilityImportPath() + IMPORT_INVENTORY_PATH + ".*inventory-ddc.*csv")) {
+				inCsvInventoryImporter.importDdcInventoryFromCsvStream(reader, getParent());
+			} else if (filepath.matches(getFacilityImportPath() + IMPORT_LOCATIONS_PATH + ".*locations.*csv")) {
+				inCsvLocationsImporter.importLocationAliasesFromCsvStream(reader, getParent());
 			}
 
 		} catch (DropboxException e) {

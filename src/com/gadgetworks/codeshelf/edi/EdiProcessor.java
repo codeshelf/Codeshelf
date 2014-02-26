@@ -22,21 +22,28 @@ import com.google.inject.Inject;
  */
 public final class EdiProcessor implements IEdiProcessor {
 
-	public static final long	PROCESS_INTERVAL_MILLIS	= 1 * 30 * 1000;
+	public static final long		PROCESS_INTERVAL_MILLIS	= 1 * 30 * 1000;
 
-	private static final Logger	LOGGER					= LoggerFactory.getLogger(EdiProcessor.class);
+	private static final Logger		LOGGER					= LoggerFactory.getLogger(EdiProcessor.class);
 
-	private long				mLastProcessMillis;
-	private boolean				mShouldRun;
-	private Thread				mProcessorThread;
+	private long					mLastProcessMillis;
+	private boolean					mShouldRun;
+	private Thread					mProcessorThread;
 
-	private ICsvImporter		mCsvImporter;
-	private ITypedDao<Facility>	mFacilityDao;
+	private ICsvOrderImporter		mCsvOrdersImporter;
+	private ICsvInventoryImporter	mCsvInventoryImporter;
+	private ICsvLocationImporter	mCsvLocationsImporter;
+	private ITypedDao<Facility>		mFacilityDao;
 
 	@Inject
-	public EdiProcessor(final ICsvImporter inCsvImporter, final ITypedDao<Facility> inFacilityDao) {
+	public EdiProcessor(final ICsvOrderImporter inCsvOrdersImporter,
+		final ICsvInventoryImporter inCsvInventoryImporter,
+		final ICsvLocationImporter inCsvLocationsImporter,
+		final ITypedDao<Facility> inFacilityDao) {
 
-		mCsvImporter = inCsvImporter;
+		mCsvOrdersImporter = inCsvOrdersImporter;
+		mCsvInventoryImporter = inCsvInventoryImporter;
+		mCsvLocationsImporter = inCsvLocationsImporter;
 		mFacilityDao = inFacilityDao;
 
 		mShouldRun = false;
@@ -105,7 +112,7 @@ public final class EdiProcessor implements IEdiProcessor {
 		for (Facility facility : mFacilityDao.getAll()) {
 			for (IEdiService ediService : facility.getEdiServices()) {
 				if (ediService.getServiceStateEnum().equals(EdiServiceStateEnum.LINKED)) {
-					if (ediService.checkForCsvUpdates(mCsvImporter)) {
+					if (ediService.checkForCsvUpdates(mCsvOrdersImporter, mCsvInventoryImporter, mCsvLocationsImporter)) {
 						// Signal other threads that we've just processed new EDI.
 						try {
 							inEdiSignalQueue.put(ediService.getServiceName());

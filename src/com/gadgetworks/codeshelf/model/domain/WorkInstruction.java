@@ -175,42 +175,6 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 	@JsonProperty
 	private String						groupAndSortCode;
 
-//	// Aisle controller ID.
-//	@Column(nullable = true)
-//	@Getter
-//	@Setter
-//	@JsonProperty
-//	private String						ledControllerId;
-//
-//	// LED channel
-//	@Column(nullable = true)
-//	@Getter
-//	@Setter
-//	@JsonProperty
-//	private Short						ledChannel;
-//
-//	// First LED position
-//	@Column(nullable = true)
-//	@Getter
-//	@Setter
-//	@JsonProperty
-//	private Short						ledFirstPos;
-//
-//	// Last LED position
-//	@Column(nullable = true)
-//	@Getter
-//	@Setter
-//	@JsonProperty
-//	private Short						ledLastPos;
-//
-//	// Color used for picking.
-//	@Column(nullable = true)
-//	@Enumerated(value = EnumType.STRING)
-//	@Getter
-//	@Setter
-//	@JsonProperty
-//	private ColorEnum					ledColorEnum;
-
 	@Getter
 	@Setter
 	@JsonProperty

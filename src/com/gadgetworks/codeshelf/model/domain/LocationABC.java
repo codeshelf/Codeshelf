@@ -377,11 +377,21 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#getLocation(java.lang.String)
 	 */
-	public final ISubLocation getLocation(String inLocationId) {
+	public final ISubLocation getLocationById(String inLocationId) {
 		// There's some ebean weirdness around Map caches, so we have to use a different strategy to resolve this request.
 		//return locations.get(inLocationId);
 		ISubLocation result = null;
+		
+		// If the current location is a facility then first look for an alias 
+		if (this.getClass().equals(Facility.class)) {
+			Facility facility = (Facility) this;
+			LocationAlias alias = facility.getLocationAlias(inLocationId);
+			if (alias != null) {
+				return alias.getMappedLocation();
+			}
+		}
 
+		// We didn't find an alias, so search through DB for the matching location.
 		ITypedDao<SubLocationABC> dao = SubLocationABC.DAO;
 		Map<String, Object> filterParams = new HashMap<String, Object>();
 		filterParams.put("persistentId", this.getPersistentId().toString());
@@ -413,12 +423,12 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		Integer firstDotPos = inLocationId.indexOf(".");
 		if (firstDotPos < 0) {
 			// There's no "dot" so look for the sublocation at this level.
-			result = this.getLocation(inLocationId);
+			result = this.getLocationById(inLocationId);
 		} else {
 			// There is a dot, so find the sublocation based on the first part and recursively ask it for the location from the second part.
 			String firstPart = inLocationId.substring(0, firstDotPos);
 			String secondPart = inLocationId.substring(firstDotPos + 1);
-			ILocation<P> subLocation = this.getLocation(firstPart);
+			ILocation<P> subLocation = this.getLocationById(firstPart);
 			if (subLocation != null) {
 				result = subLocation.getSubLocationById(secondPart);
 			}

@@ -273,7 +273,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 			// If we get here then we were able to switch to the schema and it exists.
 			result = createTables();
-			result &= createIndicies();
+			result &= createIndexes();
 			connection.close();
 
 			result &= setSchemaVersion(ISchemaManager.DATABASE_VERSION_CUR);
@@ -308,6 +308,10 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		if (inOldVersion < ISchemaManager.DATABASE_VERSION_4) {
 			result &= doUpgrade4();
+		}
+
+		if (inOldVersion < ISchemaManager.DATABASE_VERSION_5) {
+			result &= doUpgrade5();
 		}
 
 		result &= updateSchemaVersion(ISchemaManager.DATABASE_VERSION_CUR);
@@ -349,6 +353,25 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		result &= safeAddColumn("work_instruction", "led_cmd_stream TEXT");
 		result &= safeAddColumn("work_instruction", "group_and_sort_code TEXT");
+
+		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @return
+	 */
+	private boolean doUpgrade5() {
+		boolean result = true;
+
+		// LocationAlias
+		result &= createTable("location_alias", //
+			"mapped_location_persistentid " + UUID_TYPE + " NOT NULL, " //
+			+ "active BOOLEAN DEFAULT TRUE NOT NULL, " //
+			+ "updated TIMESTAMP NOT NULL " //
+		);
+
+		result &= linkToParentTable("location_alias", "parent", "location" /* facility */);
 
 		return result;
 	}
@@ -480,14 +503,20 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		return result;
 	}
 
-	private boolean createIndicies() {
+	// --------------------------------------------------------------------------
+	/**
+	 * Create all of the indexes needed to maintain the systems referential integrity and performance.
+	 * @return
+	 */
+	private boolean createIndexes() {
 		boolean result = true;
 
 		result &= linkToParentTable("che", "parent", "codeshelf_network");
 		result &= linkToParentTable("che", "current_work_area", "work_area");
 		result &= linkToParentTable("che", "current_user", "user");
 		// One extra index: to ensure uniqueness of the MAC addresses, and to find them fast by that address.
-		execOneSQLCommand("CREATE UNIQUE INDEX che_deviceguid_index ON " + getDbSchemaName() + ".che (device_guid, parent_persistentid)");
+		execOneSQLCommand("CREATE UNIQUE INDEX che_deviceguid_index ON " + getDbSchemaName()
+				+ ".che (device_guid, parent_persistentid)");
 
 		result &= linkToParentTable("codeshelf_network", "parent", "location");
 
@@ -520,6 +549,8 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		result &= linkToParentTable("location", "parent", "location");
 		result &= linkToParentTable("location", "path_segment", "path_segment");
 		result &= linkToParentTable("location", "parent_organization", "organization");
+
+		result &= linkToParentTable("location_alias", "parent", "location" /* facility */);
 
 		result &= linkToParentTable("order_detail", "parent", "order_header");
 
@@ -675,6 +706,13 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 					+ "first_ddc_id TEXT, " //
 					+ "last_ddc_id TEXT, " //
 					+ "parent_organization_persistentid " + UUID_TYPE + " "//
+		);
+
+		// LocationAlias
+		result &= createTable("location_alias", //
+			"mapped_location_persistentid " + UUID_TYPE + " NOT NULL, " //
+			+ "active BOOLEAN DEFAULT TRUE NOT NULL, " //
+			+ "updated TIMESTAMP NOT NULL " //
 		);
 
 		// OrderDetail

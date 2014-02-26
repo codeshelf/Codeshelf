@@ -210,11 +210,11 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 
 	// --------------------------------------------------------------------------
 	/**
-	 * Get a sub location by its location ID.
+	 * Get a location by its location ID.
 	 * @param inLocationId
 	 * @return
 	 */
-	ISubLocation getLocation(String inLocationId);
+	ISubLocation getLocationById(String inLocationId);
 
 	void removeLocation(String inLocationId);
 
