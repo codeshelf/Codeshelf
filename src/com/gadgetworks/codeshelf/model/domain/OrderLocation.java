@@ -40,7 +40,7 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "order_location")
-@CacheStrategy
+@CacheStrategy(useBeanCache=false)
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class OrderLocation extends DomainObjectTreeABC<OrderHeader> {
 

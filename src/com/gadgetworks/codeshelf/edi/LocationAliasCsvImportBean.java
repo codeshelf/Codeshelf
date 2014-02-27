@@ -8,6 +8,7 @@ package com.gadgetworks.codeshelf.edi;
 import lombok.Data;
 import lombok.ToString;
 
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,4 +29,11 @@ public class LocationAliasCsvImportBean extends CsvImportBeanABC {
 	@NotNull
 	protected String	mappedLocationId;
 
+	public final String getLocationAlias() {
+		return StringUtils.strip(locationAlias);
+	}
+
+	public final String getMappedLocationId() {
+		return StringUtils.strip(mappedLocationId);
+	}
 }

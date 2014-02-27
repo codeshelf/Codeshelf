@@ -8,10 +8,9 @@ package com.gadgetworks.codeshelf.edi;
 import lombok.Data;
 import lombok.ToString;
 
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.avaje.ebean.validation.NotNull;
 
 /**
  * @author jeffw
@@ -23,9 +22,16 @@ public class OrderLocationCsvImportBean extends CsvImportBeanABC {
 
 	static final Logger	LOGGER	= LoggerFactory.getLogger(OrderLocationCsvImportBean.class);
 
-	@NotNull
 	protected String	orderId;
-	@NotNull
+
 	protected String	locationId;
+	
+	public final String getOrderId() {
+		return StringUtils.strip(orderId);
+	}
+	
+	public final String getLocationId() {
+		return StringUtils.strip(locationId);
+	}
 
 }

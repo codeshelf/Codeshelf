@@ -9,6 +9,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.Timestamp;
+import java.util.Iterator;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -130,7 +131,13 @@ public class CsvOrderLocationImporter implements ICsvOrderLocationImporter {
 
 			LOGGER.info(inCsvImportBean.toString());
 
-			OrderLocation orderLocation = updateOrderLocation(inCsvImportBean, inFacility, inEdiProcessTime);
+			if ((inCsvImportBean.getLocationId() == null) || inCsvImportBean.getLocationId().length() == 0) {
+				deleteOrder(inCsvImportBean.getOrderId(), inFacility, inEdiProcessTime);
+			} else if ((inCsvImportBean.getOrderId() == null) || inCsvImportBean.getOrderId().length() == 0) {
+				deleteLocation(inCsvImportBean.getLocationId(), inFacility, inEdiProcessTime);
+			} else {
+				OrderLocation orderLocation = updateOrderLocation(inCsvImportBean, inFacility, inEdiProcessTime);
+			}
 
 			mOrderLocationDao.commitTransaction();
 
@@ -187,4 +194,48 @@ public class CsvOrderLocationImporter implements ICsvOrderLocationImporter {
 		return result;
 	}
 
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inOrderId
+	 * @param inFacility
+	 * @param inEdiProcessTime
+	 */
+	private void deleteOrder(final String inOrderId, final Facility inFacility, final Timestamp inEdiProcessTime) {
+
+		OrderHeader order = inFacility.findOrder(inOrderId);
+		if (order != null) {
+			// For every OrderLocation on this order, set it to inactive.
+			Iterator<OrderLocation> iter = order.getOrderLocations().iterator();
+			while (iter.hasNext()) {
+				OrderLocation orderLocation = iter.next();
+				orderLocation.setParent(null);
+				mOrderLocationDao.delete(orderLocation);
+				iter.remove();
+			}
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inOrderId
+	 * @param inFacility
+	 * @param inEdiProcessTime
+	 */
+	private void deleteLocation(final String inLocationId, final Facility inFacility, final Timestamp inEdiProcessTime) {
+
+		ILocation location = inFacility.findSubLocationById(inLocationId);
+		
+		for (OrderHeader order : inFacility.getOrderHeaders()) {
+			// For every OrderLocation on this order, set it to inactive.
+			Iterator<OrderLocation> iter = order.getOrderLocations().iterator();
+			while (iter.hasNext()) {
+				OrderLocation orderLocation = iter.next();
+				if (orderLocation.getLocation().equals(location)) {
+					orderLocation.setParent(null);
+					mOrderLocationDao.delete(orderLocation);
+					iter.remove();
+				}
+			}
+		}
+	}
 }

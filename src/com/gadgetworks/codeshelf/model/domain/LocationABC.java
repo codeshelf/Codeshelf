@@ -422,7 +422,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		if (this.getClass().equals(Facility.class)) {
 			Facility facility = (Facility) this;
 			LocationAlias alias = facility.getLocationAlias(inLocationId);
-			if (alias != null) {
+			if ((alias != null) && (alias.getActive())) {
 				return alias.getMappedLocation();
 			}
 		}
