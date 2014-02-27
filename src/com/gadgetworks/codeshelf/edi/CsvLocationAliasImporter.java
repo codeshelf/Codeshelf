@@ -31,14 +31,14 @@ import com.google.inject.Singleton;
  *
  */
 @Singleton
-public class CsvLocationImporter implements ICsvLocationImporter {
+public class CsvLocationAliasImporter implements ICsvLocationAliasImporter {
 
 	private static final Logger			LOGGER	= LoggerFactory.getLogger(EdiProcessor.class);
 
 	private ITypedDao<LocationAlias>	mLocationAliasDao;
 
 	@Inject
-	public CsvLocationImporter(final ITypedDao<LocationAlias> inLocationAliasDao) {
+	public CsvLocationAliasImporter(final ITypedDao<LocationAlias> inLocationAliasDao) {
 
 		mLocationAliasDao = inLocationAliasDao;
 	}
@@ -62,7 +62,7 @@ public class CsvLocationImporter implements ICsvLocationImporter {
 
 				Timestamp processTime = new Timestamp(System.currentTimeMillis());
 
-				LOGGER.debug("Begin slotted inventory import.");
+				LOGGER.debug("Begin location alias map import.");
 
 				// Iterate over the inventory import beans.
 				for (LocationAliasCsvImportBean importBean : locationAliasImportBeanList) {
@@ -152,7 +152,7 @@ public class CsvLocationImporter implements ICsvLocationImporter {
 		// Get or create the item at the specified location.
 		String locationAliasId = inCsvImportBean.getLocationAlias().trim();
 		result = inFacility.getLocationAlias(locationAliasId);
-		ILocation mappedLocation = inFacility.getSubLocationById(inCsvImportBean.getMappedLocationId());
+		ILocation mappedLocation = inFacility.findSubLocationById(inCsvImportBean.getMappedLocationId());
 
 		if ((result == null) && (inCsvImportBean.getMappedLocationId() != null) && (mappedLocation != null)) {
 			result = new LocationAlias();

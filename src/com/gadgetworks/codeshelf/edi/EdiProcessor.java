@@ -22,28 +22,31 @@ import com.google.inject.Inject;
  */
 public final class EdiProcessor implements IEdiProcessor {
 
-	public static final long		PROCESS_INTERVAL_MILLIS	= 1 * 30 * 1000;
+	public static final long			PROCESS_INTERVAL_MILLIS	= 1 * 30 * 1000;
 
-	private static final Logger		LOGGER					= LoggerFactory.getLogger(EdiProcessor.class);
+	private static final Logger			LOGGER					= LoggerFactory.getLogger(EdiProcessor.class);
 
-	private long					mLastProcessMillis;
-	private boolean					mShouldRun;
-	private Thread					mProcessorThread;
+	private long						mLastProcessMillis;
+	private boolean						mShouldRun;
+	private Thread						mProcessorThread;
 
-	private ICsvOrderImporter		mCsvOrdersImporter;
-	private ICsvInventoryImporter	mCsvInventoryImporter;
-	private ICsvLocationImporter	mCsvLocationsImporter;
-	private ITypedDao<Facility>		mFacilityDao;
+	private ICsvOrderImporter			mCsvOrdersImporter;
+	private ICsvInventoryImporter		mCsvInventoryImporter;
+	private ICsvLocationAliasImporter	mCsvLocationAliasImporter;
+	private ICsvOrderLocationImporter	mCsvOrderLocationImporter;
+	private ITypedDao<Facility>			mFacilityDao;
 
 	@Inject
 	public EdiProcessor(final ICsvOrderImporter inCsvOrdersImporter,
 		final ICsvInventoryImporter inCsvInventoryImporter,
-		final ICsvLocationImporter inCsvLocationsImporter,
+		final ICsvLocationAliasImporter inCsvLocationsImporter,
+		final ICsvOrderLocationImporter inCsvOrderLocationImporter,
 		final ITypedDao<Facility> inFacilityDao) {
 
 		mCsvOrdersImporter = inCsvOrdersImporter;
 		mCsvInventoryImporter = inCsvInventoryImporter;
-		mCsvLocationsImporter = inCsvLocationsImporter;
+		mCsvLocationAliasImporter = inCsvLocationsImporter;
+		mCsvOrderLocationImporter = inCsvOrderLocationImporter;
 		mFacilityDao = inFacilityDao;
 
 		mShouldRun = false;
@@ -112,7 +115,7 @@ public final class EdiProcessor implements IEdiProcessor {
 		for (Facility facility : mFacilityDao.getAll()) {
 			for (IEdiService ediService : facility.getEdiServices()) {
 				if (ediService.getServiceStateEnum().equals(EdiServiceStateEnum.LINKED)) {
-					if (ediService.checkForCsvUpdates(mCsvOrdersImporter, mCsvInventoryImporter, mCsvLocationsImporter)) {
+					if (ediService.checkForCsvUpdates(mCsvOrdersImporter, mCsvInventoryImporter, mCsvLocationAliasImporter, mCsvOrderLocationImporter)) {
 						// Signal other threads that we've just processed new EDI.
 						try {
 							inEdiSignalQueue.put(ediService.getServiceName());

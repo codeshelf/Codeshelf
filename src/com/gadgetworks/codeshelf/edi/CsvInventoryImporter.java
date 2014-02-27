@@ -369,7 +369,7 @@ public class CsvInventoryImporter implements ICsvInventoryImporter {
 		final UomMaster inUomMaster) {
 		Item result = null;
 
-		LocationABC location = (LocationABC) inFacility.getSubLocationById(inCsvImportBean.getLocationId());
+		LocationABC location = (LocationABC) inFacility.findSubLocationById(inCsvImportBean.getLocationId());
 
 		// We couldn't find the location, so assign the inventory to the facility itself (which is a location);
 		if (location == null) {

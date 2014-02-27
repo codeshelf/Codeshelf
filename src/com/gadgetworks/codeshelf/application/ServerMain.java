@@ -19,11 +19,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.edi.CsvInventoryImporter;
-import com.gadgetworks.codeshelf.edi.CsvLocationImporter;
+import com.gadgetworks.codeshelf.edi.CsvLocationAliasImporter;
 import com.gadgetworks.codeshelf.edi.CsvOrderImporter;
 import com.gadgetworks.codeshelf.edi.EdiProcessor;
 import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
-import com.gadgetworks.codeshelf.edi.ICsvLocationImporter;
+import com.gadgetworks.codeshelf.edi.ICsvLocationAliasImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
 import com.gadgetworks.codeshelf.edi.IEdiProcessor;
 import com.gadgetworks.codeshelf.model.dao.DaoProvider;
@@ -62,7 +62,7 @@ import com.gadgetworks.codeshelf.model.domain.ItemMaster.ItemMasterDao;
 import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.LedController.LedControllerDao;
 import com.gadgetworks.codeshelf.model.domain.LocationABC;
-import com.gadgetworks.codeshelf.model.domain.LocationABC.LocationDao;
+import com.gadgetworks.codeshelf.model.domain.LocationABC.LocationABCDao;
 import com.gadgetworks.codeshelf.model.domain.LocationAlias;
 import com.gadgetworks.codeshelf.model.domain.LocationAlias.LocationAliasDao;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
@@ -241,7 +241,7 @@ public final class ServerMain {
 				bind(IPickDocumentGenerator.class).to(PickDocumentGenerator.class);
 				bind(ICsvOrderImporter.class).to(CsvOrderImporter.class);
 				bind(ICsvInventoryImporter.class).to(CsvInventoryImporter.class);
-				bind(ICsvLocationImporter.class).to(CsvLocationImporter.class);
+				bind(ICsvLocationAliasImporter.class).to(CsvLocationAliasImporter.class);
 
 				// Websocket/WebSession
 				bind(IWebSocketServer.class).to(CsWebSocketServer.class);
@@ -316,7 +316,7 @@ public final class ServerMain {
 
 				requestStaticInjection(LocationABC.class);
 				bind(new TypeLiteral<ITypedDao<LocationABC>>() {
-				}).to(LocationDao.class);
+				}).to(LocationABCDao.class);
 
 				requestStaticInjection(LocationAlias.class);
 				bind(new TypeLiteral<ITypedDao<LocationAlias>>() {

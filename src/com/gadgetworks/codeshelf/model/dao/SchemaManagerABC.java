@@ -314,6 +314,10 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 			result &= doUpgrade5();
 		}
 
+		if (inOldVersion < ISchemaManager.DATABASE_VERSION_6) {
+			result &= doUpgrade6();
+		}
+
 		result &= updateSchemaVersion(ISchemaManager.DATABASE_VERSION_CUR);
 
 		return result;
@@ -372,6 +376,25 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		);
 
 		result &= linkToParentTable("location_alias", "parent", "location" /* facility */);
+
+		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @return
+	 */
+	private boolean doUpgrade6() {
+		boolean result = true;
+
+		// OrderLocation
+		result &= createTable("order_location", //
+			"location_persistentid " + UUID_TYPE + " NOT NULL, " //
+			+ "active BOOLEAN DEFAULT TRUE NOT NULL, " //
+			+ "updated TIMESTAMP NOT NULL " //
+		);
+
+		result &= linkToParentTable("order_location", "parent", "order_header");
 
 		return result;
 	}
@@ -557,6 +580,8 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		result &= linkToParentTable("order_group", "parent", "location");
 
 		result &= linkToParentTable("order_header", "parent", "location");
+
+		result &= linkToParentTable("order_location", "parent", "order_header");
 
 		result &= linkToParentTable("path", "parent", "location");
 
@@ -748,6 +773,13 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 					+ "active BOOLEAN DEFAULT TRUE NOT NULL, " //
 					+ "updated TIMESTAMP NOT NULL, " //
 					+ "customer_id TEXT " //
+		);
+
+		// OrderLocation
+		result &= createTable("order_location", //
+			"location_persistentid " + UUID_TYPE + " NOT NULL, " //
+			+ "active BOOLEAN DEFAULT TRUE NOT NULL, " //
+			+ "updated TIMESTAMP NOT NULL " //
 		);
 
 		// Organization - this is the top-level object that owns all other objects.

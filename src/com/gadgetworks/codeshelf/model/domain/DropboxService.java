@@ -43,8 +43,9 @@ import com.dropbox.client2.session.AppKeyPair;
 import com.dropbox.client2.session.Session;
 import com.dropbox.client2.session.WebAuthSession;
 import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
-import com.gadgetworks.codeshelf.edi.ICsvLocationImporter;
+import com.gadgetworks.codeshelf.edi.ICsvLocationAliasImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
+import com.gadgetworks.codeshelf.edi.ICsvOrderLocationImporter;
 import com.gadgetworks.codeshelf.model.EdiDocumentStatusEnum;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
@@ -124,7 +125,8 @@ public class DropboxService extends EdiServiceABC {
 
 	public final Boolean checkForCsvUpdates(ICsvOrderImporter inCsvOrdersImporter,
 		ICsvInventoryImporter inCsvInventoryImporter,
-		ICsvLocationImporter inCsvLocationsImporter) {
+		ICsvLocationAliasImporter inCsvLocationAliasImporter,
+		ICsvOrderLocationImporter inCsvOrderLocationImporter) {
 		Boolean result = false;
 
 		// Make sure we believe that we're properly registered with the service before we try to contact it.
@@ -135,7 +137,7 @@ public class DropboxService extends EdiServiceABC {
 				result = checkForChangedDocuments(clientSession,
 					inCsvOrdersImporter,
 					inCsvInventoryImporter,
-					inCsvLocationsImporter);
+					inCsvLocationAliasImporter);
 			}
 		}
 
@@ -149,7 +151,7 @@ public class DropboxService extends EdiServiceABC {
 	private Boolean checkForChangedDocuments(DropboxAPI<Session> inClientSession,
 		ICsvOrderImporter inCsvOrdersImporter,
 		ICsvInventoryImporter inCsvInventoryImporter,
-		ICsvLocationImporter inCsvLocationsImporter) {
+		ICsvLocationAliasImporter inCsvLocationAliasImporter) {
 		Boolean result = false;
 
 		if (ensureBaseDirectories(inClientSession)) {
@@ -157,7 +159,7 @@ public class DropboxService extends EdiServiceABC {
 			while ((page != null) && (page.entries.size() > 0)) {
 				// Signal that we got some deltas
 				result = true;
-				if (iteratePage(inClientSession, page, inCsvOrdersImporter, inCsvInventoryImporter, inCsvLocationsImporter)) {
+				if (iteratePage(inClientSession, page, inCsvOrdersImporter, inCsvInventoryImporter, inCsvLocationAliasImporter)) {
 					// If we've processed everything from the page correctly then save the current dbCursor, and get the next page
 					try {
 						DropboxService.DAO.store(this);
@@ -204,7 +206,7 @@ public class DropboxService extends EdiServiceABC {
 		DeltaPage<Entry> inPage,
 		ICsvOrderImporter inCsvOrdersImporter,
 		ICsvInventoryImporter inCsvInventoryImporter,
-		ICsvLocationImporter inCsvLocationsImporter) {
+		ICsvLocationAliasImporter inCsvLocationAliasImporter) {
 		Boolean result = true;
 
 		for (DeltaEntry<Entry> entry : inPage.entries) {
@@ -216,7 +218,7 @@ public class DropboxService extends EdiServiceABC {
 						entry,
 						inCsvOrdersImporter,
 						inCsvInventoryImporter,
-						inCsvLocationsImporter);
+						inCsvLocationAliasImporter);
 				} else {
 					result &= removeEntry(inClientSession, entry);
 				}
@@ -495,14 +497,14 @@ public class DropboxService extends EdiServiceABC {
 		DeltaEntry<Entry> inEntry,
 		ICsvOrderImporter inCsvOrdersImporter,
 		ICsvInventoryImporter inCsvInventoryImporter,
-		ICsvLocationImporter inCsvLocationsImporter) {
+		ICsvLocationAliasImporter inCsvLocationAliasImporter) {
 		Boolean result = true;
 
 		Boolean shouldUpdateEntry = false;
 
 		if (inEntry.lcPath.startsWith(getFacilityImportPath())) {
 			if (!inEntry.metadata.isDir) {
-				handleImport(inClientSession, inEntry, inCsvOrdersImporter, inCsvInventoryImporter, inCsvLocationsImporter);
+				handleImport(inClientSession, inEntry, inCsvOrdersImporter, inCsvInventoryImporter, inCsvLocationAliasImporter);
 				shouldUpdateEntry = true;
 			}
 		}
@@ -538,7 +540,7 @@ public class DropboxService extends EdiServiceABC {
 		DeltaEntry<Entry> inEntry,
 		ICsvOrderImporter inCsvOrdersImporter,
 		ICsvInventoryImporter inCsvInventoryImporter,
-		ICsvLocationImporter inCsvLocationsImporter) {
+		ICsvLocationAliasImporter inCsvLocationAliasImporter) {
 
 		try {
 
@@ -554,7 +556,7 @@ public class DropboxService extends EdiServiceABC {
 			} else if (filepath.matches(getFacilityImportPath() + IMPORT_INVENTORY_PATH + ".*inventory-ddc.*csv")) {
 				inCsvInventoryImporter.importDdcInventoryFromCsvStream(reader, getParent());
 			} else if (filepath.matches(getFacilityImportPath() + IMPORT_LOCATIONS_PATH + ".*locations.*csv")) {
-				inCsvLocationsImporter.importLocationAliasesFromCsvStream(reader, getParent());
+				inCsvLocationAliasImporter.importLocationAliasesFromCsvStream(reader, getParent());
 			}
 
 		} catch (DropboxException e) {

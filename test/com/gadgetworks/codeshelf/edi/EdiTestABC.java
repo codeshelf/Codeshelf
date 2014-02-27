@@ -13,6 +13,10 @@ import com.gadgetworks.codeshelf.model.dao.H2SchemaManager;
 import com.gadgetworks.codeshelf.model.dao.IDatabase;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.codeshelf.model.domain.Aisle;
+import com.gadgetworks.codeshelf.model.domain.Aisle.AisleDao;
+import com.gadgetworks.codeshelf.model.domain.Bay;
+import com.gadgetworks.codeshelf.model.domain.Bay.BayDao;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.Che.CheDao;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
@@ -33,6 +37,8 @@ import com.gadgetworks.codeshelf.model.domain.ItemMaster;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster.ItemMasterDao;
 import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.LedController.LedControllerDao;
+import com.gadgetworks.codeshelf.model.domain.LocationABC;
+import com.gadgetworks.codeshelf.model.domain.LocationABC.LocationABCDao;
 import com.gadgetworks.codeshelf.model.domain.LocationAlias;
 import com.gadgetworks.codeshelf.model.domain.LocationAlias.LocationAliasDao;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
@@ -41,6 +47,8 @@ import com.gadgetworks.codeshelf.model.domain.OrderGroup;
 import com.gadgetworks.codeshelf.model.domain.OrderGroup.OrderGroupDao;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader.OrderHeaderDao;
+import com.gadgetworks.codeshelf.model.domain.OrderLocation;
+import com.gadgetworks.codeshelf.model.domain.OrderLocation.OrderLocationDao;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Organization.OrganizationDao;
 import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
@@ -52,11 +60,16 @@ import com.gadgetworks.codeshelf.model.domain.UomMaster.UomMasterDao;
 public abstract class EdiTestABC {
 
 	protected OrganizationDao		mOrganizationDao;
+	protected LocationABCDao		mLocationDao;
+	protected SubLocationDao		mSubLocationDao;
 	protected FacilityDao			mFacilityDao;
+	protected AisleDao				mAisleDao;
+	protected BayDao				mBayDao;
 	protected DropboxServiceDao		mDropboxServiceDao;
 	protected OrderGroupDao			mOrderGroupDao;
 	protected OrderHeaderDao		mOrderHeaderDao;
 	protected OrderDetailDao		mOrderDetailDao;
+	protected OrderLocationDao		mOrderLocationDao;
 	protected CodeshelfNetworkDao	mCodeshelfNetworkDao;
 	protected CheDao				mCheDao;
 	protected ContainerDao			mContainerDao;
@@ -66,7 +79,6 @@ public abstract class EdiTestABC {
 	protected ItemDao				mItemDao;
 	protected UomMasterDao			mUomMasterDao;
 	protected LedControllerDao		mLedControllerDao;
-	protected SubLocationDao		mSubLocationDao;
 	protected LocationAliasDao		mLocationAliasDao;
 
 	private IUtil					mUtil;
@@ -105,7 +117,14 @@ public abstract class EdiTestABC {
 			};
 
 			Class.forName("org.h2.Driver");
-			mSchemaManager = new H2SchemaManager(mUtil, "codeshelf", "codeshelf", "codeshelf", "codeshelf", "localhost", "", "false");
+			mSchemaManager = new H2SchemaManager(mUtil,
+				"codeshelf",
+				"codeshelf",
+				"codeshelf",
+				"codeshelf",
+				"localhost",
+				"",
+				"false");
 			mDatabase = new Database(mSchemaManager, mUtil);
 
 			mDatabase.start();
@@ -115,6 +134,12 @@ public abstract class EdiTestABC {
 
 			mFacilityDao = new FacilityDao(mSchemaManager);
 			Facility.DAO = mFacilityDao;
+
+			mAisleDao = new AisleDao(mSchemaManager);
+			Aisle.DAO = mAisleDao;
+
+			mBayDao = new BayDao(mSchemaManager);
+			Bay.DAO = mBayDao;
 
 			mDropboxServiceDao = new DropboxServiceDao(mSchemaManager);
 			DropboxService.DAO = mDropboxServiceDao;
@@ -128,6 +153,9 @@ public abstract class EdiTestABC {
 			mSubLocationDao = new SubLocationDao(mSchemaManager);
 			SubLocationABC.DAO = mSubLocationDao;
 
+			mLocationDao = new LocationABCDao(mSchemaManager);
+			LocationABC.DAO = mLocationDao;
+
 			mOrderGroupDao = new OrderGroupDao(mSchemaManager);
 			OrderGroup.DAO = mOrderGroupDao;
 
@@ -136,6 +164,9 @@ public abstract class EdiTestABC {
 
 			mOrderDetailDao = new OrderDetailDao(mSchemaManager);
 			OrderDetail.DAO = mOrderDetailDao;
+
+			mOrderLocationDao = new OrderLocationDao(mSchemaManager);
+			OrderLocation.DAO = mOrderLocationDao;
 
 			mContainerDao = new ContainerDao(mSchemaManager);
 			Container.DAO = mContainerDao;

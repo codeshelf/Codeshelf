@@ -67,9 +67,9 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	public static ITypedDao<LocationABC>	DAO;
 
 	@Singleton
-	public static class LocationDao extends GenericDaoABC<LocationABC> implements ITypedDao<LocationABC> {
+	public static class LocationABCDao extends GenericDaoABC<LocationABC> implements ITypedDao<LocationABC> {
 		@Inject
-		public LocationDao(final ISchemaManager inSchemaManager, final IDatabase inDatabase) {
+		public LocationABCDao(final ISchemaManager inSchemaManager) {
 			super(inSchemaManager);
 		}
 
@@ -257,6 +257,42 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.domain.ILocation#getLocationIdToParentLevel(java.lang.Class)
+	 */
+	public final String getLocationIdToParentLevel(Class<? extends ILocation> inClassWanted) {
+		StringBuilder result = new StringBuilder();
+		
+		// Build up a chain of location dotted notation (FQLN) up to the parent class level.
+		
+		ILocation<P> checkParent = (ILocation<P>) getParent();
+
+		// There's some weirdness with Ebean and navigating a recursive hierarchy. (You can't go down and then back up to a different class.)
+		// This fixes that problem, but it's not pretty.
+		checkParent = DAO.findByPersistentId(checkParent.getClass(), checkParent.getPersistentId());
+
+		if (checkParent.getClass().equals(inClassWanted)) {
+			// This is the parent we want. (We can cast safely since we checked the class.)
+			result.insert(0, ".");
+			result.insert(0, checkParent.getLocationId());
+		} else {
+			if (checkParent.getClass().equals(Facility.class)) {
+				// We cannot go higher than the Facility as a parent, so there is no such parent with the requested class.
+				result = null;
+			} else {
+				// The current parent is not the class we want so recurse up the hierarchy.
+				result.insert(0, ".");
+				result.insert(0, checkParent.getParentAtLevel(inClassWanted));
+			}
+		}
+
+		// Now tack on this location's ID to the end.
+		result.append(getLocationId());
+		
+		return result.toString();
+	}
+	
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#getParentAtLevel(java.lang.Class)
 	 */
 	public final <T extends ILocation> T getParentAtLevel(Class<? extends ILocation> inClassWanted) {
@@ -377,7 +413,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#getLocation(java.lang.String)
 	 */
-	public final ISubLocation getLocationById(String inLocationId) {
+	public final ISubLocation findLocationById(String inLocationId) {
 		// There's some ebean weirdness around Map caches, so we have to use a different strategy to resolve this request.
 		//return locations.get(inLocationId);
 		ISubLocation result = null;
@@ -417,20 +453,20 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#getSubLocationById(java.lang.String)
 	 */
-	public final ILocation<P> getSubLocationById(final String inLocationId) {
+	public final ILocation findSubLocationById(final String inLocationId) {
 		ILocation<P> result = null;
 
 		Integer firstDotPos = inLocationId.indexOf(".");
 		if (firstDotPos < 0) {
 			// There's no "dot" so look for the sublocation at this level.
-			result = this.getLocationById(inLocationId);
+			result = this.findLocationById(inLocationId);
 		} else {
 			// There is a dot, so find the sublocation based on the first part and recursively ask it for the location from the second part.
 			String firstPart = inLocationId.substring(0, firstDotPos);
 			String secondPart = inLocationId.substring(firstDotPos + 1);
-			ILocation<P> subLocation = this.getLocationById(firstPart);
+			ILocation<P> subLocation = this.findLocationById(firstPart);
 			if (subLocation != null) {
-				result = subLocation.getSubLocationById(secondPart);
+				result = subLocation.findSubLocationById(secondPart);
 			}
 		}
 		return result;

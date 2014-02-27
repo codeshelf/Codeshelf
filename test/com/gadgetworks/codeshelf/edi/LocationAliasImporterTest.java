@@ -58,31 +58,31 @@ public class LocationAliasImporterTest extends EdiTestABC {
 		Bay bay2 = new Bay(aisleA2, "B2", 0.0, 0.0, 0.0);
 		mSubLocationDao.store(bay2);
 
-		ICsvLocationImporter importer = new CsvLocationImporter(mLocationAliasDao);
+		ICsvLocationAliasImporter importer = new CsvLocationAliasImporter(mLocationAliasDao);
 		importer.importLocationAliasesFromCsvStream(reader, facility);
 
 		// Make sure we can still look up an aisle by it's FQN.
-		ILocation location = facility.getLocationById("A1");
+		ILocation location = facility.findLocationById("A1");
 		Assert.assertNotNull(location);
 		Assert.assertEquals(location.getDomainId(), "A1");
 
 		// Make sure we can look it up by an alias, and get the mapped location.
-		location = facility.getLocationById("AisleA");
+		location = facility.findLocationById("AisleA");
 		Assert.assertNotNull(location);
 		Assert.assertEquals(location.getDomainId(), "A1");
 		
 		// Make sure we can still look up a bay by it's FQN.
-		location = facility.getSubLocationById("A2.B2");
+		location = facility.findSubLocationById("A2.B2");
 		Assert.assertNotNull(location);
 		Assert.assertEquals(location.getDomainId(), "B2");
 		
 		// Make sure we can look it up by an alias, and get the mapped location.
-		location = facility.getLocationById("B34");
+		location = facility.findLocationById("B34");
 		Assert.assertNotNull(location);
 		Assert.assertEquals(location.getDomainId(), "B2");
 		
 		// Make sure we cannot lookup the bad entry (there is no A3).
-		location = facility.getLocationById("AisleC");
+		location = facility.findLocationById("AisleC");
 		Assert.assertNull(location);
 		
 		

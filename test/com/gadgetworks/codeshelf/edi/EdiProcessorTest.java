@@ -51,14 +51,27 @@ public class EdiProcessorTest extends EdiTestABC {
 			}
 		};
 
-		ICsvLocationImporter locationImporter = new ICsvLocationImporter() {
+		ICsvLocationAliasImporter locationImporter = new ICsvLocationAliasImporter() {
 
 			@Override
 			public void importLocationAliasesFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
 			}
 		};
 
-		IEdiProcessor ediProcessor = new EdiProcessor(orderImporter, inventoryImporter, locationImporter, Facility.DAO);
+		ICsvOrderLocationImporter orderLocationImporter = new ICsvOrderLocationImporter() {
+
+			@Override
+			public void importOrderLocationsFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
+				// TODO Auto-generated method stub
+
+			}
+		};
+
+		IEdiProcessor ediProcessor = new EdiProcessor(orderImporter,
+			inventoryImporter,
+			locationImporter,
+			orderLocationImporter,
+			Facility.DAO);
 		BlockingQueue<String> testBlockingQueue = new ArrayBlockingQueue<>(100);
 		ediProcessor.startProcessor(testBlockingQueue);
 
@@ -133,10 +146,19 @@ public class EdiProcessorTest extends EdiTestABC {
 			}
 		};
 
-		ICsvLocationImporter locationImporter = new ICsvLocationImporter() {
+		ICsvLocationAliasImporter locationImporter = new ICsvLocationAliasImporter() {
 
 			@Override
 			public void importLocationAliasesFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
+			}
+		};
+
+		ICsvOrderLocationImporter orderLocationImporter = new ICsvOrderLocationImporter() {
+
+			@Override
+			public void importOrderLocationsFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
+				// TODO Auto-generated method stub
+
 			}
 		};
 
@@ -166,7 +188,8 @@ public class EdiProcessorTest extends EdiTestABC {
 
 			public Boolean checkForCsvUpdates(ICsvOrderImporter inCsvOrdersImporter,
 				ICsvInventoryImporter inCsvInventoryImporter,
-				ICsvLocationImporter inCsvLocationsImporter) {
+				ICsvLocationAliasImporter inCsvLocationsImporter,
+				ICsvOrderLocationImporter iCsvOrderLocationUnporter) {
 				linkedResult.processed = true;
 				return true;
 			}
@@ -184,7 +207,8 @@ public class EdiProcessorTest extends EdiTestABC {
 
 			public Boolean checkForCsvUpdates(ICsvOrderImporter inCsvOrdersImporter,
 				ICsvInventoryImporter inCsvInventoryImporter,
-				ICsvLocationImporter inCsvLocationsImporter) {
+				ICsvLocationAliasImporter inCsvLocationsImporter,
+				ICsvOrderLocationImporter iCsvOrderLocationUnporter) {
 				unlinkedResult.processed = true;
 				return true;
 			}
@@ -193,7 +217,11 @@ public class EdiProcessorTest extends EdiTestABC {
 		facility.addEdiService(ediServiceUnlinked);
 		facility.addEdiService(ediServiceLinked);
 
-		IEdiProcessor ediProcessor = new EdiProcessor(orderImporter, inventoryImporter, locationImporter, facilityDao);
+		IEdiProcessor ediProcessor = new EdiProcessor(orderImporter,
+			inventoryImporter,
+			locationImporter,
+			orderLocationImporter,
+			facilityDao);
 		BlockingQueue<String> testBlockingQueue = new ArrayBlockingQueue<>(100);
 		ediProcessor.startProcessor(testBlockingQueue);
 

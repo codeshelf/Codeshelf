@@ -20,7 +20,7 @@ import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Aisle.AisleDao;
 import com.gadgetworks.codeshelf.model.domain.Bay.BayDao;
 import com.gadgetworks.codeshelf.model.domain.Facility.FacilityDao;
-import com.gadgetworks.codeshelf.model.domain.LocationABC.LocationDao;
+import com.gadgetworks.codeshelf.model.domain.LocationABC.LocationABCDao;
 import com.gadgetworks.codeshelf.model.domain.Organization.OrganizationDao;
 import com.gadgetworks.codeshelf.model.domain.Path.PathDao;
 import com.gadgetworks.codeshelf.model.domain.PathSegment.PathSegmentDao;
@@ -76,7 +76,7 @@ public class FacilityTest {
 	public final void createAisleTest() {
 
 		Organization.DAO = new OrganizationDao(mSchemaManager);
-		LocationABC.DAO = new LocationDao(mSchemaManager, mDatabase);
+		LocationABC.DAO = new LocationABCDao(mSchemaManager);
 		Facility.DAO = new FacilityDao(mSchemaManager);
 		Aisle.DAO = new AisleDao(mSchemaManager);
 		Bay.DAO = new BayDao(mSchemaManager);
@@ -107,7 +107,7 @@ public class FacilityTest {
 		List<WorkInstruction> wiList;
 		
 		Organization.DAO = new OrganizationDao(mSchemaManager);
-		LocationABC.DAO = new LocationDao(mSchemaManager, mDatabase);
+		LocationABC.DAO = new LocationABCDao(mSchemaManager);
 		Facility.DAO = new FacilityDao(mSchemaManager);
 		Aisle.DAO = new AisleDao(mSchemaManager);
 		Bay.DAO = new BayDao(mSchemaManager);

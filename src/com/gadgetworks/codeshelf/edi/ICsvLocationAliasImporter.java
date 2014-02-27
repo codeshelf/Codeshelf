@@ -13,7 +13,7 @@ import com.gadgetworks.codeshelf.model.domain.Facility;
  * @author jeffw
  *
  */
-public interface ICsvLocationImporter {
+public interface ICsvLocationAliasImporter {
 
 	void importLocationAliasesFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility);
 

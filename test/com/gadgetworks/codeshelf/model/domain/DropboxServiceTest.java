@@ -11,8 +11,9 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
-import com.gadgetworks.codeshelf.edi.ICsvLocationImporter;
+import com.gadgetworks.codeshelf.edi.ICsvLocationAliasImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
+import com.gadgetworks.codeshelf.edi.ICsvOrderLocationImporter;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.dao.MockDao;
 import com.gadgetworks.codeshelf.model.dao.Result;
@@ -72,14 +73,23 @@ public class DropboxServiceTest {
 			}
 		};
 		
-		ICsvLocationImporter locationImporter = new ICsvLocationImporter() {
+		ICsvLocationAliasImporter locationImporter = new ICsvLocationAliasImporter() {
 			
 			@Override
 			public void importLocationAliasesFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
 			}
 		};
 		
-		dropboxService.checkForCsvUpdates(orderImporter, inventoryImporter, locationImporter);
+		ICsvOrderLocationImporter orderLocationImporter = new ICsvOrderLocationImporter() {
+			
+			@Override
+			public void importOrderLocationsFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
+				// TODO Auto-generated method stub
+				
+			}
+		};
+		
+		dropboxService.checkForCsvUpdates(orderImporter, inventoryImporter, locationImporter, orderLocationImporter);
 		
 		Assert.assertTrue(checkImportOrders.result);
 	}

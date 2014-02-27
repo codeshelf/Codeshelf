@@ -25,9 +25,10 @@ public interface ISchemaManager {
 	int		DATABASE_VERSION_2				= 2;								// Add order fields
 	int		DATABASE_VERSION_3				= 3;								// Add Slot Flex tag ID to item master.
 	int		DATABASE_VERSION_4				= 4;								// Add LED command stream processing to WIs.
-	int		DATABASE_VERSION_5				= 5;								// Add location alias.
+	int		DATABASE_VERSION_5				= 5;								// Add location alias table.
+	int		DATABASE_VERSION_6				= 6;								// Add order location table.
 
-	int		DATABASE_VERSION_CUR			= DATABASE_VERSION_5;
+	int		DATABASE_VERSION_CUR			= DATABASE_VERSION_6;
 
 	String getDbAddress();
 

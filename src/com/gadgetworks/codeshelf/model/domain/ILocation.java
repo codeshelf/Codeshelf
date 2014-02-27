@@ -203,6 +203,8 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 	<T extends ILocation> T getParentAtLevel(Class<? extends ILocation> inClassWanted);
 
 	String getLocationId();
+	
+	String getLocationIdToParentLevel(Class<? extends ILocation> inClassWanted);
 
 	void setLocationId(String inLocationId);
 
@@ -214,7 +216,7 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 	 * @param inLocationId
 	 * @return
 	 */
-	ISubLocation getLocationById(String inLocationId);
+	ISubLocation findLocationById(String inLocationId);
 
 	void removeLocation(String inLocationId);
 
@@ -225,7 +227,7 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 	 * @param inLocationId
 	 * @return
 	 */
-	ILocation getSubLocationById(String inLocationId);
+	ILocation findSubLocationById(String inLocationId);
 
 	void setPathSegment(PathSegment inPathSegment);
 

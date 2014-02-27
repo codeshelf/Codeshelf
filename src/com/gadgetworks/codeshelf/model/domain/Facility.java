@@ -848,7 +848,7 @@ public class Facility extends LocationABC<Organization> {
 		final List<String> inContainerIdList) {
 		List<WorkInstruction> result = new ArrayList<WorkInstruction>();
 
-		ILocation<?> cheLocation = getSubLocationById(inLocationId);
+		ILocation<?> cheLocation = findSubLocationById(inLocationId);
 		Aisle aisle = null;
 		if (cheLocation instanceof Aisle) {
 			aisle = (Aisle) cheLocation;

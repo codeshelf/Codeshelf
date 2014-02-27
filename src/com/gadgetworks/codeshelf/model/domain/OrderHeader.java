@@ -14,7 +14,6 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
@@ -62,7 +61,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		public OrderHeaderDao(final ISchemaManager inSchemaManager) {
 			super(inSchemaManager);
 		}
-		
+
 		public final Class<OrderHeader> getDaoClass() {
 			return OrderHeader.class;
 		}
@@ -156,10 +155,13 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	@JsonProperty
 	private Timestamp			updated;
 
-	// For a network this is a list of all of the users that belong in the set.
 	@OneToMany(mappedBy = "parent")
 	@Getter
 	private List<OrderDetail>	orderDetails	= new ArrayList<OrderDetail>();
+
+	@OneToMany(mappedBy = "parent")
+	@Getter
+	private List<OrderLocation>	orderLocations	= new ArrayList<OrderLocation>();
 
 	public OrderHeader() {
 		statusEnum = OrderStatusEnum.CREATED;
@@ -196,14 +198,12 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 
 	public final OrderDetail findOrderDetail(String inOrderDetailId) {
 		OrderDetail result = null;
-
 		for (OrderDetail orderDetail : getOrderDetails()) {
 			if (orderDetail.getDomainId().equals(inOrderDetailId)) {
 				result = orderDetail;
 				break;
 			}
 		}
-
 		return result;
 	}
 
@@ -215,6 +215,16 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void removeOrderDetail(OrderDetail inOrderDetail) {
 		orderDetails.remove(inOrderDetail);
+	}
+
+	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
+	public final void addOrderLocation(OrderLocation inOrderLocation) {
+		orderLocations.add(inOrderLocation);
+	}
+
+	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
+	public final void removeOrderLocation(OrderLocation inOrderLocation) {
+		orderLocations.remove(inOrderLocation);
 	}
 
 	// Set the status from the websocket by a string.
@@ -251,7 +261,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 
 		return result;
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * @return
