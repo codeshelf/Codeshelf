@@ -20,8 +20,6 @@ public class DdcInventoryCsvImportBean extends CsvImportBeanABC {
 
 	@NotNull
 	protected String	itemId;
-	@NotNull
-	protected String	itemDetailId;
 	protected String	description;
 	@NotNull
 	protected String	ddcId;

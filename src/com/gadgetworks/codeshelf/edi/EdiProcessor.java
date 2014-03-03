@@ -34,6 +34,7 @@ public final class EdiProcessor implements IEdiProcessor {
 	private ICsvInventoryImporter		mCsvInventoryImporter;
 	private ICsvLocationAliasImporter	mCsvLocationAliasImporter;
 	private ICsvOrderLocationImporter	mCsvOrderLocationImporter;
+	private ICsvPutBatchImporter	mCsvPutBatchImporter;
 	private ITypedDao<Facility>			mFacilityDao;
 
 	@Inject
@@ -41,12 +42,14 @@ public final class EdiProcessor implements IEdiProcessor {
 		final ICsvInventoryImporter inCsvInventoryImporter,
 		final ICsvLocationAliasImporter inCsvLocationsImporter,
 		final ICsvOrderLocationImporter inCsvOrderLocationImporter,
+		final ICsvPutBatchImporter inCsvPutBatchImporter,
 		final ITypedDao<Facility> inFacilityDao) {
 
 		mCsvOrdersImporter = inCsvOrdersImporter;
 		mCsvInventoryImporter = inCsvInventoryImporter;
 		mCsvLocationAliasImporter = inCsvLocationsImporter;
 		mCsvOrderLocationImporter = inCsvOrderLocationImporter;
+		mCsvPutBatchImporter = inCsvPutBatchImporter;
 		mFacilityDao = inFacilityDao;
 
 		mShouldRun = false;
@@ -115,7 +118,7 @@ public final class EdiProcessor implements IEdiProcessor {
 		for (Facility facility : mFacilityDao.getAll()) {
 			for (IEdiService ediService : facility.getEdiServices()) {
 				if (ediService.getServiceStateEnum().equals(EdiServiceStateEnum.LINKED)) {
-					if (ediService.checkForCsvUpdates(mCsvOrdersImporter, mCsvInventoryImporter, mCsvLocationAliasImporter, mCsvOrderLocationImporter)) {
+					if (ediService.checkForCsvUpdates(mCsvOrdersImporter, mCsvInventoryImporter, mCsvLocationAliasImporter, mCsvOrderLocationImporter, mCsvPutBatchImporter)) {
 						// Signal other threads that we've just processed new EDI.
 						try {
 							inEdiSignalQueue.put(ediService.getServiceName());

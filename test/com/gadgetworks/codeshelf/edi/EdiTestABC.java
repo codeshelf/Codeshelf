@@ -153,7 +153,7 @@ public abstract class EdiTestABC {
 			mSubLocationDao = new SubLocationDao(mSchemaManager);
 			SubLocationABC.DAO = mSubLocationDao;
 
-			mLocationDao = new LocationABCDao(mSchemaManager);
+			mLocationDao = new LocationABCDao(mSchemaManager, mDatabase);
 			LocationABC.DAO = mLocationDao;
 
 			mOrderGroupDao = new OrderGroupDao(mSchemaManager);

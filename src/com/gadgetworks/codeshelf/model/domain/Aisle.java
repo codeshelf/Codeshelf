@@ -60,6 +60,7 @@ public class Aisle extends SubLocationABC<Facility> {
 		super(PositionTypeEnum.METERS_FROM_PARENT, inPosX, inPosY);
 		setParent(inParentFacility);
 		setDomainId(inAisleId);
+		inParentFacility.addAisle(this);
 	}
 
 	public final ITypedDao<Aisle> getDao() {

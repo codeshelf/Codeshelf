@@ -14,6 +14,7 @@ import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
 import com.gadgetworks.codeshelf.edi.ICsvLocationAliasImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderLocationImporter;
+import com.gadgetworks.codeshelf.edi.ICsvPutBatchImporter;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.dao.MockDao;
 import com.gadgetworks.codeshelf.model.dao.Result;
@@ -84,12 +85,17 @@ public class DropboxServiceTest {
 			
 			@Override
 			public void importOrderLocationsFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
-				// TODO Auto-generated method stub
-				
 			}
 		};
 		
-		dropboxService.checkForCsvUpdates(orderImporter, inventoryImporter, locationImporter, orderLocationImporter);
+		ICsvPutBatchImporter putBatchImporter = new ICsvPutBatchImporter() {
+			
+			@Override
+			public void importPutBatchesFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
+			}
+		};
+		
+		dropboxService.checkForCsvUpdates(orderImporter, inventoryImporter, locationImporter, orderLocationImporter, putBatchImporter);
 		
 		Assert.assertTrue(checkImportOrders.result);
 	}

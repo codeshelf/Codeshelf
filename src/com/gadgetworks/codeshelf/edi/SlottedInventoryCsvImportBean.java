@@ -21,8 +21,6 @@ public class SlottedInventoryCsvImportBean extends CsvImportBeanABC {
 	@NotNull
 	protected String	itemId;
 	@NotNull
-	protected String	itemDetailId;
-	@NotNull
 	protected String	description;
 	@NotNull
 	protected String	quantity;

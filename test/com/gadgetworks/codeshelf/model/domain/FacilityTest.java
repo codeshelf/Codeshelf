@@ -76,7 +76,7 @@ public class FacilityTest {
 	public final void createAisleTest() {
 
 		Organization.DAO = new OrganizationDao(mSchemaManager);
-		LocationABC.DAO = new LocationABCDao(mSchemaManager);
+		LocationABC.DAO = new LocationABCDao(mSchemaManager, mDatabase);
 		Facility.DAO = new FacilityDao(mSchemaManager);
 		Aisle.DAO = new AisleDao(mSchemaManager);
 		Bay.DAO = new BayDao(mSchemaManager);
@@ -107,7 +107,7 @@ public class FacilityTest {
 		List<WorkInstruction> wiList;
 		
 		Organization.DAO = new OrganizationDao(mSchemaManager);
-		LocationABC.DAO = new LocationABCDao(mSchemaManager);
+		LocationABC.DAO = new LocationABCDao(mSchemaManager, mDatabase);
 		Facility.DAO = new FacilityDao(mSchemaManager);
 		Aisle.DAO = new AisleDao(mSchemaManager);
 		Bay.DAO = new BayDao(mSchemaManager);

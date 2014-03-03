@@ -9,6 +9,7 @@ import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
 import com.gadgetworks.codeshelf.edi.ICsvLocationAliasImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderLocationImporter;
+import com.gadgetworks.codeshelf.edi.ICsvPutBatchImporter;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 
 public interface IEdiService {
@@ -20,6 +21,7 @@ public interface IEdiService {
 	Boolean checkForCsvUpdates(ICsvOrderImporter inCsvOrdersImporter,
 		ICsvInventoryImporter inCsvInventoryImporter,
 		ICsvLocationAliasImporter inCsvLocationsImporter,
-		ICsvOrderLocationImporter inCsvOrderLocationImporter);
+		ICsvOrderLocationImporter inCsvOrderLocationImporter,
+		ICsvPutBatchImporter inCsvPutBatchImporter);
 
 }

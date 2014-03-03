@@ -328,11 +328,10 @@ public class CsvInventoryImporter implements ICsvInventoryImporter {
 		Item result = null;
 
 		// Get or create the item at the specified location.
-		result = inItemMaster.getItem(inCsvImportBean.getItemDetailId());
-		if ((result == null) && (inCsvImportBean.getItemDetailId() != null) && (inCsvImportBean.getItemDetailId().length() > 0)) {
+		result = inItemMaster.getItem(inCsvImportBean.getItemId());
+		if ((result == null) && (inCsvImportBean.getItemId() != null) && (inCsvImportBean.getItemId().length() > 0)) {
 			result = new Item();
 			result.setParent(inItemMaster);
-			result.setItemDetailId(inCsvImportBean.getItemDetailId());
 		}
 
 		// If we were able to get/create an item then update it.
@@ -377,11 +376,10 @@ public class CsvInventoryImporter implements ICsvInventoryImporter {
 		}
 
 		// Get or create the item at the specified location.
-		result = location.getItem(inCsvImportBean.getItemDetailId());
+		result = location.getItem(inCsvImportBean.getItemId());
 		if ((result == null) && (inCsvImportBean.getItemId() != null) && (inCsvImportBean.getItemId().length() > 0)) {
 			result = new Item();
 			result.setParent(inItemMaster);
-			result.setItemDetailId(inCsvImportBean.getItemId());
 		}
 
 		// If we were able to get/create an item then update it.
@@ -390,8 +388,6 @@ public class CsvInventoryImporter implements ICsvInventoryImporter {
 			result.setUomMaster(inUomMaster);
 			result.setQuantity(Double.valueOf(inCsvImportBean.getQuantity()));
 			result.setPosAlongPath(location.getPosAlongPath());
-			inItemMaster.addItem(result);
-			location.addItem(result);
 			try {
 				result.setActive(true);
 				result.setUpdated(inEdiProcessTime);
@@ -399,6 +395,7 @@ public class CsvInventoryImporter implements ICsvInventoryImporter {
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}
+			inItemMaster.addItem(result);
 		}
 
 		return result;

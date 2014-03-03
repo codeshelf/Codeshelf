@@ -13,6 +13,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -63,6 +64,17 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	}
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(Item.class);
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * This creates a standard domainId that keeps all of the items in different locations unique among a single ItemMaster.
+	 * @param inItemId
+	 * @param inLocationId
+	 * @return
+	 */
+	public static String makeDomainId(final String inItemId, final String inLocationId) {
+		return inItemId + "-" + inLocationId;
+	}
 
 	// The owning location.
 	@Column(nullable = false)
@@ -122,20 +134,20 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		return "IT";
 	}
 
-	public final String getItemDetailId() {
-		return getDomainId();
-	}
-	
+	@ManyToOne
 	public final String getItemId() {
 		return parent.getItemId();
 	}
 
-	public final void setItemDetailId(final String inItemId) {
-		setDomainId(inItemId);
-	}
-
 	public final void setStoredLocation(final ILocation inStoredLocation) {
+		// If it's already in another location then remove it from that location.
+		if (storedLocation != null) {
+			storedLocation.removeItem(getItemId());
+		}
 		storedLocation = (LocationABC) inStoredLocation;
+		// The stored location is part of the domain key for an item's instance.
+		setDomainId(makeDomainId(getItemId(), inStoredLocation.getFullDomainId()));
+		inStoredLocation.addItem(this);
 	}
 
 	public final List<IDomainObject> getChildren() {

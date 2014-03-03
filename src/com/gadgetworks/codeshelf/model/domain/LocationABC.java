@@ -68,8 +68,10 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 	@Singleton
 	public static class LocationABCDao extends GenericDaoABC<LocationABC> implements ITypedDao<LocationABC> {
+		
+		// We include the IDatabase arg to cause Guice to initialize it *before* locations.
 		@Inject
-		public LocationABCDao(final ISchemaManager inSchemaManager) {
+		public LocationABCDao(final ISchemaManager inSchemaManager, final IDatabase inDatabase) {
 			super(inSchemaManager);
 		}
 
@@ -464,9 +466,9 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 			// There is a dot, so find the sublocation based on the first part and recursively ask it for the location from the second part.
 			String firstPart = inLocationId.substring(0, firstDotPos);
 			String secondPart = inLocationId.substring(firstDotPos + 1);
-			ILocation<P> subLocation = this.findLocationById(firstPart);
-			if (subLocation != null) {
-				result = subLocation.findSubLocationById(secondPart);
+			ILocation<P> firstPartLocation = this.findLocationById(firstPart);
+			if (firstPartLocation != null) {
+				result = firstPartLocation.findSubLocationById(secondPart);
 			}
 		}
 		return result;
@@ -541,15 +543,18 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	}
 
 	public final void addItem(Item inItem) {
-		items.put(inItem.getItemId(), inItem);
+		String domainId = Item.makeDomainId(inItem.getItemId(), getFullDomainId());
+		items.put(domainId, inItem);
 	}
 
 	public final Item getItem(final String inItemId) {
-		return items.get(inItemId);
+		String domainId = Item.makeDomainId(inItemId, getFullDomainId());
+		return items.get(domainId);
 	}
 
 	public final void removeItem(final String inItemId) {
-		items.remove(inItemId);
+		String domainId = Item.makeDomainId(inItemId, getFullDomainId());
+		items.remove(domainId);
 	}
 
 	public final void addItemDdcGroup(ItemDdcGroup inItemDdcGroup) {

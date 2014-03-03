@@ -67,10 +67,20 @@ public class EdiProcessorTest extends EdiTestABC {
 			}
 		};
 
+		ICsvPutBatchImporter putBatchImporter = new ICsvPutBatchImporter() {
+
+			@Override
+			public void importPutBatchesFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
+				// TODO Auto-generated method stub
+
+			}
+		};
+
 		IEdiProcessor ediProcessor = new EdiProcessor(orderImporter,
 			inventoryImporter,
 			locationImporter,
 			orderLocationImporter,
+			putBatchImporter,
 			Facility.DAO);
 		BlockingQueue<String> testBlockingQueue = new ArrayBlockingQueue<>(100);
 		ediProcessor.startProcessor(testBlockingQueue);
@@ -162,6 +172,15 @@ public class EdiProcessorTest extends EdiTestABC {
 			}
 		};
 
+		ICsvPutBatchImporter putBatchImporter = new ICsvPutBatchImporter() {
+
+			@Override
+			public void importPutBatchesFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
+				// TODO Auto-generated method stub
+
+			}
+		};
+
 		final Result linkedResult = new Result();
 		final Result unlinkedResult = new Result();
 
@@ -189,7 +208,8 @@ public class EdiProcessorTest extends EdiTestABC {
 			public Boolean checkForCsvUpdates(ICsvOrderImporter inCsvOrdersImporter,
 				ICsvInventoryImporter inCsvInventoryImporter,
 				ICsvLocationAliasImporter inCsvLocationsImporter,
-				ICsvOrderLocationImporter iCsvOrderLocationUnporter) {
+				ICsvOrderLocationImporter iCsvOrderLocationImporter,
+				ICsvPutBatchImporter inCsvPutBatchImporter) {
 				linkedResult.processed = true;
 				return true;
 			}
@@ -208,7 +228,8 @@ public class EdiProcessorTest extends EdiTestABC {
 			public Boolean checkForCsvUpdates(ICsvOrderImporter inCsvOrdersImporter,
 				ICsvInventoryImporter inCsvInventoryImporter,
 				ICsvLocationAliasImporter inCsvLocationsImporter,
-				ICsvOrderLocationImporter iCsvOrderLocationUnporter) {
+				ICsvOrderLocationImporter iCsvOrderLocationImporter,
+				ICsvPutBatchImporter inCsvPutBatchImporter) {
 				unlinkedResult.processed = true;
 				return true;
 			}
@@ -221,6 +242,7 @@ public class EdiProcessorTest extends EdiTestABC {
 			inventoryImporter,
 			locationImporter,
 			orderLocationImporter,
+			putBatchImporter,
 			facilityDao);
 		BlockingQueue<String> testBlockingQueue = new ArrayBlockingQueue<>(100);
 		ediProcessor.startProcessor(testBlockingQueue);

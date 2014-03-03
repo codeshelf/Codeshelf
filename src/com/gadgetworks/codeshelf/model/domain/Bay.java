@@ -58,6 +58,7 @@ public class Bay extends SubLocationABC<Aisle> {
 		super(PositionTypeEnum.METERS_FROM_PARENT, inPosX, inPosY, inPosZ);
 		setParent(inAisle);
 		setDomainId(inBayId);
+		inAisle.addLocation(this);
 	}
 
 	public final ITypedDao<Bay> getDao() {

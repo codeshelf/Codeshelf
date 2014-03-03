@@ -21,10 +21,14 @@ import org.slf4j.LoggerFactory;
 import com.gadgetworks.codeshelf.edi.CsvInventoryImporter;
 import com.gadgetworks.codeshelf.edi.CsvLocationAliasImporter;
 import com.gadgetworks.codeshelf.edi.CsvOrderImporter;
+import com.gadgetworks.codeshelf.edi.CsvOrderLocationImporter;
+import com.gadgetworks.codeshelf.edi.CsvPutBatchImporter;
 import com.gadgetworks.codeshelf.edi.EdiProcessor;
 import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
 import com.gadgetworks.codeshelf.edi.ICsvLocationAliasImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
+import com.gadgetworks.codeshelf.edi.ICsvOrderLocationImporter;
+import com.gadgetworks.codeshelf.edi.ICsvPutBatchImporter;
 import com.gadgetworks.codeshelf.edi.IEdiProcessor;
 import com.gadgetworks.codeshelf.model.dao.DaoProvider;
 import com.gadgetworks.codeshelf.model.dao.Database;
@@ -71,6 +75,8 @@ import com.gadgetworks.codeshelf.model.domain.OrderGroup;
 import com.gadgetworks.codeshelf.model.domain.OrderGroup.OrderGroupDao;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader.OrderHeaderDao;
+import com.gadgetworks.codeshelf.model.domain.OrderLocation;
+import com.gadgetworks.codeshelf.model.domain.OrderLocation.OrderLocationDao;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Organization.OrganizationDao;
 import com.gadgetworks.codeshelf.model.domain.Path;
@@ -242,6 +248,8 @@ public final class ServerMain {
 				bind(ICsvOrderImporter.class).to(CsvOrderImporter.class);
 				bind(ICsvInventoryImporter.class).to(CsvInventoryImporter.class);
 				bind(ICsvLocationAliasImporter.class).to(CsvLocationAliasImporter.class);
+				bind(ICsvOrderLocationImporter.class).to(CsvOrderLocationImporter.class);
+				bind(ICsvPutBatchImporter.class).to(CsvPutBatchImporter.class);
 
 				// Websocket/WebSession
 				bind(IWebSocketServer.class).to(CsWebSocketServer.class);
@@ -333,6 +341,10 @@ public final class ServerMain {
 				requestStaticInjection(OrderGroup.class);
 				bind(new TypeLiteral<ITypedDao<OrderGroup>>() {
 				}).to(OrderGroupDao.class);
+
+				requestStaticInjection(OrderLocation.class);
+				bind(new TypeLiteral<ITypedDao<OrderLocation>>() {
+				}).to(OrderLocationDao.class);
 
 				requestStaticInjection(Organization.class);
 				bind(new TypeLiteral<ITypedDao<Organization>>() {
