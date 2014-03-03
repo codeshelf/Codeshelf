@@ -58,7 +58,7 @@ public class LocationAliasImporterTest extends EdiTestABC {
 		Bay bay2 = new Bay(aisleA2, "B2", 0.0, 0.0, 0.0);
 		mSubLocationDao.store(bay2);
 
-		ICsvLocationAliasImporter importer = new CsvLocationAliasImporter(mLocationAliasDao);
+		ICsvLocationAliasImporter importer = new LocationAliasCsvImporter(mLocationAliasDao);
 		importer.importLocationAliasesFromCsvStream(reader, facility);
 
 		// Make sure we can still look up an aisle by it's FQN.

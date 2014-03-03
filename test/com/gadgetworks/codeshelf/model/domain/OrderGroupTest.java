@@ -8,9 +8,9 @@ package com.gadgetworks.codeshelf.model.domain;
 import java.sql.Timestamp;
 
 import org.junit.Assert;
-
 import org.junit.Test;
 
+import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.MockDao;
 
 /**
@@ -42,6 +42,7 @@ public class OrderGroupTest {
 		OrderHeader order1 = new OrderHeader();
 		order1.setParent(facility);
 		order1.setOrderId("1");
+		order1.setOrderTypeEnum(OrderTypeEnum.PICK);
 		order1.setOrderDate(new Timestamp(System.currentTimeMillis()));
 		order1.setDueDate(new Timestamp(System.currentTimeMillis()));
 		order1.setActive(true);
@@ -64,6 +65,7 @@ public class OrderGroupTest {
 		OrderHeader order2 = new OrderHeader();
 		order2.setParent(facility);
 		order2.setOrderId("2");
+		order2.setOrderTypeEnum(OrderTypeEnum.PICK);
 		order2.setOrderDate(new Timestamp(System.currentTimeMillis()));
 		order2.setDueDate(new Timestamp(System.currentTimeMillis()));
 		order2.setActive(true);
@@ -102,6 +104,8 @@ public class OrderGroupTest {
 		OrderHeader order1 = new OrderHeader();
 		order1.setParent(facility);
 		order1.setOrderId("1");
+		order1.setOrderTypeEnum(OrderTypeEnum.PICK);
+		order1.setOrderTypeEnum(OrderTypeEnum.PICK);
 		order1.setOrderDate(new Timestamp(System.currentTimeMillis()));
 		order1.setDueDate(new Timestamp(System.currentTimeMillis()));
 		order1.setActive(true);

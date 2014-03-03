@@ -3,7 +3,6 @@ package com.gadgetworks.codeshelf.model.domain;
 import java.sql.Timestamp;
 
 import org.junit.Assert;
-
 import org.junit.Before;
 import org.junit.Test;
 
@@ -11,6 +10,7 @@ import com.avaje.ebean.Ebean;
 import com.avaje.ebean.EbeanServer;
 import com.gadgetworks.codeshelf.application.IUtil;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
+import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.PickStrategyEnum;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.Database;
@@ -91,6 +91,7 @@ public class OptimisticLockExceptionTest {
 		OrderHeader order1 = new OrderHeader();
 		order1.setDomainId("OPTIMISTIC-123");
 		order1.setParent(facility);
+		order1.setOrderTypeEnum(OrderTypeEnum.PICK);
 		order1.setStatusEnum(OrderStatusEnum.CREATED);
 		order1.setPickStrategyEnum(PickStrategyEnum.SERIAL);
 		order1.setOrderDate(new Timestamp(System.currentTimeMillis()));

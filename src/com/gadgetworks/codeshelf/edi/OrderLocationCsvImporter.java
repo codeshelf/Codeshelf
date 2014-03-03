@@ -33,14 +33,14 @@ import com.google.inject.Singleton;
  *
  */
 @Singleton
-public class CsvOrderLocationImporter implements ICsvOrderLocationImporter {
+public class OrderLocationCsvImporter implements ICsvOrderLocationImporter {
 
 	private static final Logger			LOGGER	= LoggerFactory.getLogger(EdiProcessor.class);
 
 	private ITypedDao<OrderLocation>	mOrderLocationDao;
 
 	@Inject
-	public CsvOrderLocationImporter(final ITypedDao<OrderLocation> inOrderLocationDao) {
+	public OrderLocationCsvImporter(final ITypedDao<OrderLocation> inOrderLocationDao) {
 
 		mOrderLocationDao = inOrderLocationDao;
 	}
@@ -54,25 +54,25 @@ public class CsvOrderLocationImporter implements ICsvOrderLocationImporter {
 
 			CSVReader csvReader = new CSVReader(inCsvStreamReader);
 
-			HeaderColumnNameMappingStrategy<OrderLocationCsvImportBean> strategy = new HeaderColumnNameMappingStrategy<OrderLocationCsvImportBean>();
-			strategy.setType(OrderLocationCsvImportBean.class);
+			HeaderColumnNameMappingStrategy<OrderLocationCsvBean> strategy = new HeaderColumnNameMappingStrategy<OrderLocationCsvBean>();
+			strategy.setType(OrderLocationCsvBean.class);
 
-			CsvToBean<OrderLocationCsvImportBean> csv = new CsvToBean<OrderLocationCsvImportBean>();
-			List<OrderLocationCsvImportBean> orderLocationImportBeanList = csv.parse(strategy, csvReader);
+			CsvToBean<OrderLocationCsvBean> csv = new CsvToBean<OrderLocationCsvBean>();
+			List<OrderLocationCsvBean> orderLocationBeanList = csv.parse(strategy, csvReader);
 
-			if (orderLocationImportBeanList.size() > 0) {
+			if (orderLocationBeanList.size() > 0) {
 
 				Timestamp processTime = new Timestamp(System.currentTimeMillis());
 
 				LOGGER.debug("Begin order location import.");
 
-				// Iterate over the inventory import beans.
-				for (OrderLocationCsvImportBean importBean : orderLocationImportBeanList) {
-					String errorMsg = importBean.validateBean();
+				// Iterate over the order location map import beans.
+				for (OrderLocationCsvBean orderLocationBean : orderLocationBeanList) {
+					String errorMsg = orderLocationBean.validateBean();
 					if (errorMsg != null) {
 						LOGGER.error("Import errors: " + errorMsg);
 					} else {
-						orderLocationCsvBeanImport(importBean, inFacility, processTime);
+						orderLocationCsvBeanImport(orderLocationBean, inFacility, processTime);
 					}
 				}
 
@@ -95,7 +95,7 @@ public class CsvOrderLocationImporter implements ICsvOrderLocationImporter {
 	 * @param inProcessTime
 	 */
 	private void archiveOrderLocations(final Facility inFacility, final Timestamp inProcessTime) {
-		LOGGER.debug("Archive unreferenced item data");
+		LOGGER.debug("Archive unreferenced order location data");
 
 		// Inactivate the locations aliases that don't match the import timestamp.
 		try {
@@ -118,25 +118,29 @@ public class CsvOrderLocationImporter implements ICsvOrderLocationImporter {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * @param inCsvImportBean
+	 * @param inCsvBean
 	 * @param inFacility
 	 * @param inEdiProcessTime
 	 */
-	private void orderLocationCsvBeanImport(final OrderLocationCsvImportBean inCsvImportBean,
+	private void orderLocationCsvBeanImport(final OrderLocationCsvBean inCsvBean,
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime) {
 
 		try {
 			mOrderLocationDao.beginTransaction();
 
-			LOGGER.info(inCsvImportBean.toString());
+			LOGGER.info(inCsvBean.toString());
 
-			if ((inCsvImportBean.getLocationId() == null) || inCsvImportBean.getLocationId().length() == 0) {
-				deleteOrder(inCsvImportBean.getOrderId(), inFacility, inEdiProcessTime);
-			} else if ((inCsvImportBean.getOrderId() == null) || inCsvImportBean.getOrderId().length() == 0) {
-				deleteLocation(inCsvImportBean.getLocationId(), inFacility, inEdiProcessTime);
-			} else {
-				OrderLocation orderLocation = updateOrderLocation(inCsvImportBean, inFacility, inEdiProcessTime);
+			try {
+				if ((inCsvBean.getLocationId() == null) || inCsvBean.getLocationId().length() == 0) {
+					deleteOrder(inCsvBean.getOrderId(), inFacility, inEdiProcessTime);
+				} else if ((inCsvBean.getOrderId() == null) || inCsvBean.getOrderId().length() == 0) {
+					deleteLocation(inCsvBean.getLocationId(), inFacility, inEdiProcessTime);
+				} else {
+					OrderLocation orderLocation = updateOrderLocation(inCsvBean, inFacility, inEdiProcessTime);
+				}
+			} catch (Exception e) {
+				LOGGER.error("", e);
 			}
 
 			mOrderLocationDao.commitTransaction();
@@ -148,20 +152,20 @@ public class CsvOrderLocationImporter implements ICsvOrderLocationImporter {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * @param inCsvImportBean
+	 * @param inCsvBean
 	 * @param inFacility
 	 * @param inEdiProcessTime
 	 * @return
 	 */
-	private OrderLocation updateOrderLocation(final OrderLocationCsvImportBean inCsvImportBean,
+	private OrderLocation updateOrderLocation(final OrderLocationCsvBean inCsvBean,
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime) {
 
 		OrderLocation result = null;
 
 		// Get or create the item at the specified location.
-		String orderId = inCsvImportBean.getOrderId().trim();
-		String locationId = inCsvImportBean.getLocationId().trim();
+		String orderId = inCsvBean.getOrderId();
+		String locationId = inCsvBean.getLocationId();
 
 		OrderHeader order = inFacility.findOrder(orderId);
 		if (order != null) {
@@ -173,7 +177,7 @@ public class CsvOrderLocationImporter implements ICsvOrderLocationImporter {
 
 			if ((result == null) && (locationId != null)) {
 				result = new OrderLocation();
-				result.setDomainId(inCsvImportBean.getOrderId() + "-" + inCsvImportBean.locationId);
+				result.setDomainId(inCsvBean.getOrderId() + "-" + inCsvBean.locationId);
 				result.setParent(order);
 				order.addOrderLocation(result);
 			}
@@ -224,7 +228,7 @@ public class CsvOrderLocationImporter implements ICsvOrderLocationImporter {
 	private void deleteLocation(final String inLocationId, final Facility inFacility, final Timestamp inEdiProcessTime) {
 
 		ILocation location = inFacility.findSubLocationById(inLocationId);
-		
+
 		for (OrderHeader order : inFacility.getOrderHeaders()) {
 			// For every OrderLocation on this order, set it to inactive.
 			Iterator<OrderLocation> iter = order.getOrderLocations().iterator();

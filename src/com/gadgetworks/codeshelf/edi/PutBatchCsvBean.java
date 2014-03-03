@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderCsvImportBean.java,v 1.2 2013/04/11 07:42:45 jeffw Exp $
+ *  $Id: OrderCsvBean.java,v 1.2 2013/04/11 07:42:45 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
@@ -20,14 +20,14 @@ import com.avaje.ebean.validation.NotNull;
  */
 @ToString
 @Data
-public class PutBatchCsvImportBean extends CsvImportBeanABC {
+public class PutBatchCsvBean extends ImportCsvBeanABC {
 
-	static final Logger	LOGGER	= LoggerFactory.getLogger(PutBatchCsvImportBean.class);
+	static final Logger	LOGGER	= LoggerFactory.getLogger(PutBatchCsvBean.class);
+
+	protected String	orderGroupId;
 
 	@NotNull
 	protected String	itemId;
-
-	protected String	orderBatchId;
 
 	@NotNull
 	protected String	quantity;
@@ -41,19 +41,19 @@ public class PutBatchCsvImportBean extends CsvImportBeanABC {
 	@NotNull
 	protected String	uom;
 
-	public final String getItemId() {
-		return StringUtils.strip(itemId);
+	public final String getOrderGroupId() {
+		return StringUtils.strip(orderGroupId);
 	}
 
-	public final String getOrderBatchId() {
-		return StringUtils.strip(orderBatchId);
+	public final String getItemId() {
+		return StringUtils.strip(itemId);
 	}
 
 	public final String getQuantity() {
 		return StringUtils.strip(quantity);
 	}
 
-	public final String getContainerid() {
+	public final String getContainerId() {
 		return StringUtils.strip(containerId);
 	}
 

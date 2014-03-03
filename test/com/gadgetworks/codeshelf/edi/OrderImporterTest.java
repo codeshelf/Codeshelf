@@ -61,7 +61,7 @@ public class OrderImporterTest extends EdiTestABC {
 		organization.createFacility("F-ORD1.1", "TEST", PositionTypeEnum.METERS_FROM_PARENT.getName(), 0.0, 0.0);
 		Facility facility = organization.getFacility("F-ORD1.1");
 
-		ICsvOrderImporter importer = new CsvOrderImporter(mOrderGroupDao, mOrderHeaderDao, mOrderDetailDao, mContainerDao, mContainerUseDao, mItemMasterDao, mUomMasterDao);
+		ICsvOrderImporter importer = new OrderCsvImporter(mOrderGroupDao, mOrderHeaderDao, mOrderDetailDao, mContainerDao, mContainerUseDao, mItemMasterDao, mUomMasterDao);
 		importer.importOrdersFromCsvStream(reader, facility);
 
 		OrderHeader order = facility.findOrder("123");
@@ -97,7 +97,7 @@ public class OrderImporterTest extends EdiTestABC {
 		organization.createFacility("F-ORD1.2", "TEST", PositionTypeEnum.METERS_FROM_PARENT.getName(), 0.0, 0.0);
 		Facility facility = organization.getFacility("F-ORD1.2");
 
-		ICsvOrderImporter importer = new CsvOrderImporter(mOrderGroupDao, mOrderHeaderDao, mOrderDetailDao, mContainerDao, mContainerUseDao, mItemMasterDao, mUomMasterDao);
+		ICsvOrderImporter importer = new OrderCsvImporter(mOrderGroupDao, mOrderHeaderDao, mOrderDetailDao, mContainerDao, mContainerUseDao, mItemMasterDao, mUomMasterDao);
 		importer.importOrdersFromCsvStream(reader, facility);
 
 		OrderHeader order = facility.findOrder("123");
@@ -138,7 +138,7 @@ public class OrderImporterTest extends EdiTestABC {
 		organization.createFacility("F-ORD1.3", "TEST", PositionTypeEnum.METERS_FROM_PARENT.getName(), 0.0, 0.0);
 		Facility facility = organization.getFacility("F-ORD1.3");
 
-		ICsvOrderImporter importer = new CsvOrderImporter(mOrderGroupDao, mOrderHeaderDao, mOrderDetailDao, mContainerDao, mContainerUseDao, mItemMasterDao, mUomMasterDao);
+		ICsvOrderImporter importer = new OrderCsvImporter(mOrderGroupDao, mOrderHeaderDao, mOrderDetailDao, mContainerDao, mContainerUseDao, mItemMasterDao, mUomMasterDao);
 		importer.importOrdersFromCsvStream(reader, facility);
 
 		OrderHeader order = facility.findOrder("789");
@@ -177,7 +177,7 @@ public class OrderImporterTest extends EdiTestABC {
 		organization.createFacility("F-ORD1.4", "TEST", PositionTypeEnum.METERS_FROM_PARENT.getName(), 0.0, 0.0);
 		Facility facility = organization.getFacility("F-ORD1.4");
 
-		ICsvOrderImporter importer = new CsvOrderImporter(mOrderGroupDao, mOrderHeaderDao, mOrderDetailDao, mContainerDao, mContainerUseDao, mItemMasterDao, mUomMasterDao);
+		ICsvOrderImporter importer = new OrderCsvImporter(mOrderGroupDao, mOrderHeaderDao, mOrderDetailDao, mContainerDao, mContainerUseDao, mItemMasterDao, mUomMasterDao);
 		importer.importOrdersFromCsvStream(reader, facility);
 
 		// We should find order 123

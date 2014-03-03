@@ -17,11 +17,11 @@ import com.avaje.ebean.validation.NotNull;
  * @author jeffw
  *
  */
-public abstract class CsvImportBeanABC {
+public abstract class ImportCsvBeanABC {
 
-	private static final Logger	LOGGER	= LoggerFactory.getLogger(CsvImportBeanABC.class);
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(ImportCsvBeanABC.class);
 
-	public CsvImportBeanABC() {
+	public ImportCsvBeanABC() {
 		super();
 	}
 

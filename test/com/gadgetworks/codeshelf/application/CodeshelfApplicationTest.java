@@ -15,11 +15,11 @@ import org.java_websocket.WebSocket;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.gadgetworks.codeshelf.edi.CsvInventoryImporter;
-import com.gadgetworks.codeshelf.edi.CsvLocationAliasImporter;
-import com.gadgetworks.codeshelf.edi.CsvOrderImporter;
-import com.gadgetworks.codeshelf.edi.CsvOrderLocationImporter;
-import com.gadgetworks.codeshelf.edi.CsvPutBatchImporter;
+import com.gadgetworks.codeshelf.edi.InventoryCsvImporter;
+import com.gadgetworks.codeshelf.edi.LocationAliasCsvImporter;
+import com.gadgetworks.codeshelf.edi.OrderCsvImporter;
+import com.gadgetworks.codeshelf.edi.OrderLocationCsvImporter;
+import com.gadgetworks.codeshelf.edi.PutBatchCsvImporter;
 import com.gadgetworks.codeshelf.edi.EdiProcessor;
 import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
 import com.gadgetworks.codeshelf.edi.ICsvLocationAliasImporter;
@@ -260,26 +260,63 @@ public class CodeshelfApplicationTest {
 
 		Injector injector = new MockInjector();
 		IDaoProvider daoProvider = new DaoProvider(injector);
-		IWsReqCmdFactory webSessionReqCmdFactory = new WsReqCmdFactory(organizationDao, cheDao, workInstructionDao, orderHeaderDao, orderDetailDao, daoProvider);
+		IWsReqCmdFactory webSessionReqCmdFactory = new WsReqCmdFactory(organizationDao,
+			cheDao,
+			workInstructionDao,
+			orderHeaderDao,
+			orderDetailDao,
+			daoProvider);
 		IWebSessionFactory webSessionFactory = new WebSessionFactory();
 		IWebSessionManager webSessionManager = new WebSessionManager(webSessionReqCmdFactory, webSessionFactory);
-		SSLWebSocketServerFactory webSocketFactory = new SSLWebSocketServerFactory("./conf/codeshelf.keystore", "JKS", "x2HPbC2avltYQR", "x2HPbC2avltYQR");
+		SSLWebSocketServerFactory webSocketFactory = new SSLWebSocketServerFactory("./conf/codeshelf.keystore",
+			"JKS",
+			"x2HPbC2avltYQR",
+			"x2HPbC2avltYQR");
 
 		IWebSocketServer webSocketListener = new CsWebSocketServer(IWebSocketServer.WEBSOCKET_DEFAULT_HOSTNAME,
 			CsWebSocketServer.WEBSOCKET_DEFAULT_PORTNUM,
 			webSessionManager,
 			webSocketFactory);
-		IHttpServer httpServer = new HttpServer("./", "localhost", 8443, "./conf/codeshelf.keystore", "x2HPbC2avltYQR", "x2HPbC2avltYQR");
+		IHttpServer httpServer = new HttpServer("./",
+			"localhost",
+			8443,
+			"./conf/codeshelf.keystore",
+			"x2HPbC2avltYQR",
+			"x2HPbC2avltYQR");
 
-		ICsvOrderImporter orderImporter = new CsvOrderImporter(orderGroupDao, orderHeaderDao, orderDetailDao, containerDao, containerUseDao, itemMasterDao, uomMasterDao);
-		ICsvInventoryImporter inventoryImporter = new CsvInventoryImporter(itemMasterDao, itemDao, uomMasterDao);
-		ICsvLocationAliasImporter locationAliasImporter = new CsvLocationAliasImporter(locationAliasDao);
-		ICsvOrderLocationImporter orderLocationImporter = new CsvOrderLocationImporter(orderLocationDao);
-		ICsvPutBatchImporter putBatchImporter = new CsvPutBatchImporter(orderLocationDao);
-		IEdiProcessor ediProcessor = new EdiProcessor(orderImporter, inventoryImporter, locationAliasImporter, orderLocationImporter, putBatchImporter, facilityDao);
+		ICsvOrderImporter orderImporter = new OrderCsvImporter(orderGroupDao,
+			orderHeaderDao,
+			orderDetailDao,
+			containerDao,
+			containerUseDao,
+			itemMasterDao,
+			uomMasterDao);
+		ICsvInventoryImporter inventoryImporter = new InventoryCsvImporter(itemMasterDao, itemDao, uomMasterDao);
+		ICsvLocationAliasImporter locationAliasImporter = new LocationAliasCsvImporter(locationAliasDao);
+		ICsvOrderLocationImporter orderLocationImporter = new OrderLocationCsvImporter(orderLocationDao);
+		ICsvPutBatchImporter putBatchImporter = new PutBatchCsvImporter(orderGroupDao,
+			orderHeaderDao,
+			orderDetailDao,
+			containerDao,
+			containerUseDao,
+			itemMasterDao,
+			uomMasterDao);
+		IEdiProcessor ediProcessor = new EdiProcessor(orderImporter,
+			inventoryImporter,
+			locationAliasImporter,
+			orderLocationImporter,
+			putBatchImporter,
+			facilityDao);
 		IPickDocumentGenerator pickDocumentGenerator = new PickDocumentGenerator();
 		IUtil util = new MockUtil();
-		ISchemaManager schemaManager = new H2SchemaManager(util, "codeshelf", "codeshelf", "codeshelf", "codeshelf", "localhost", "", "false");
+		ISchemaManager schemaManager = new H2SchemaManager(util,
+			"codeshelf",
+			"codeshelf",
+			"codeshelf",
+			"codeshelf",
+			"localhost",
+			"",
+			"false");
 		IDatabase database = new Database(schemaManager, util);
 
 		final ServerCodeshelfApplication application = new ServerCodeshelfApplication(webSocketListener,
@@ -312,11 +349,11 @@ public class CodeshelfApplicationTest {
 			} catch (InterruptedException e) {
 			}
 		}
-		
+
 		// This next line causes the whole JUnit system to stop.
 		// Yes, I know it's terrible to have dependent unit tests.
 		// I don't know how to fix this.  WIll consult with someone.
-		
+
 		//application.stopApplication();
 
 		Assert.assertTrue(true);

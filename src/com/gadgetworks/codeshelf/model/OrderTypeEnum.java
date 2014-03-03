@@ -11,36 +11,42 @@ import com.avaje.ebean.annotation.EnumValue;
 /**
  *  @author jeffw
  */
-public enum PickStrategyEnum {
+public enum OrderTypeEnum {
 	@EnumValue("INVALID")
-	INVALID(PickStrategyNum.INVALID, "INVALID"),
-	@EnumValue("SERIAL")
-	SERIAL(PickStrategyNum.SERIAL, "SERIAL"),
-	@EnumValue("PARALLEL")
-	PARALLEL(PickStrategyNum.PARALLEL, "PARALLEL");
+	INVALID(OrderTypeNum.INVALID, "INVALID"),
+	@EnumValue("PICK")
+	PICK(OrderTypeNum.PICK, "PICK"),
+	@EnumValue("PUT")
+	PUT(OrderTypeNum.PUT, "PUT"),
+	@EnumValue("WONDERWALL")
+	WONDERWALL(OrderTypeNum.WONDERWALL, "WONDERWALL");
 
 	private int		mValue;
 	private String	mName;
 
-	PickStrategyEnum(final int inValue, final String inName) {
+	OrderTypeEnum(final int inValue, final String inName) {
 		mValue = inValue;
 		mName = inName;
 	}
 
-	public static PickStrategyEnum getPickStrategyEnum(int inPickStrategy) {
-		PickStrategyEnum result;
+	public static OrderTypeEnum getPickStrategyEnum(int inPickStrategy) {
+		OrderTypeEnum result;
 
 		switch (inPickStrategy) {
-			case PickStrategyNum.SERIAL:
-				result = PickStrategyEnum.SERIAL;
+			case OrderTypeNum.PICK:
+				result = OrderTypeEnum.PICK;
 				break;
 
-			case PickStrategyNum.PARALLEL:
-				result = PickStrategyEnum.PARALLEL;
+			case OrderTypeNum.PUT:
+				result = OrderTypeEnum.PUT;
+				break;
+
+			case OrderTypeNum.WONDERWALL:
+				result = OrderTypeEnum.WONDERWALL;
 				break;
 
 			default:
-				result = PickStrategyEnum.INVALID;
+				result = OrderTypeEnum.INVALID;
 				break;
 
 		}
@@ -56,13 +62,14 @@ public enum PickStrategyEnum {
 		return mName;
 	}
 
-	static final class PickStrategyNum {
+	static final class OrderTypeNum {
 
 		static final byte	INVALID		= -1;
-		static final byte	SERIAL		= 0;
-		static final byte	PARALLEL	= 1;
+		static final byte	PICK		= 0;
+		static final byte	PUT			= 1;
+		static final byte	WONDERWALL	= 2;
 
-		private PickStrategyNum() {
+		private OrderTypeNum() {
 		};
 	}
 }

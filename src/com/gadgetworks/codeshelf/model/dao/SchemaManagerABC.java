@@ -318,6 +318,10 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 			result &= doUpgrade6();
 		}
 
+		if (inOldVersion < ISchemaManager.DATABASE_VERSION_7) {
+			result &= doUpgrade7();
+		}
+
 		result &= updateSchemaVersion(ISchemaManager.DATABASE_VERSION_CUR);
 
 		return result;
@@ -371,8 +375,8 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		// LocationAlias
 		result &= createTable("location_alias", //
 			"mapped_location_persistentid " + UUID_TYPE + " NOT NULL, " //
-			+ "active BOOLEAN DEFAULT TRUE NOT NULL, " //
-			+ "updated TIMESTAMP NOT NULL " //
+					+ "active BOOLEAN DEFAULT TRUE NOT NULL, " //
+					+ "updated TIMESTAMP NOT NULL " //
 		);
 
 		result &= linkToParentTable("location_alias", "parent", "location" /* facility */);
@@ -390,11 +394,23 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		// OrderLocation
 		result &= createTable("order_location", //
 			"location_persistentid " + UUID_TYPE + " NOT NULL, " //
-			+ "active BOOLEAN DEFAULT TRUE NOT NULL, " //
-			+ "updated TIMESTAMP NOT NULL " //
+					+ "active BOOLEAN DEFAULT TRUE NOT NULL, " //
+					+ "updated TIMESTAMP NOT NULL " //
 		);
 
 		result &= linkToParentTable("order_location", "parent", "order_header");
+
+		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @return
+	 */
+	private boolean doUpgrade7() {
+		boolean result = true;
+
+		result &= safeAddColumn("order_header", "order_type_enum TEXT DEFAULT 'PICK' NOT NULL");
 
 		return result;
 	}
@@ -736,8 +752,8 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		// LocationAlias
 		result &= createTable("location_alias", //
 			"mapped_location_persistentid " + UUID_TYPE + " NOT NULL, " //
-			+ "active BOOLEAN DEFAULT TRUE NOT NULL, " //
-			+ "updated TIMESTAMP NOT NULL " //
+					+ "active BOOLEAN DEFAULT TRUE NOT NULL, " //
+					+ "updated TIMESTAMP NOT NULL " //
 		);
 
 		// OrderDetail
@@ -764,6 +780,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		result &= createTable("order_header", //
 			"status_enum TEXT NOT NULL, " //
 					+ "pick_strategy_enum TEXT NOT NULL, " //
+					+ "order_type_enum TEXT DEFAULT 'PICK' NOT NULL, " //
 					+ "order_group_persistentid " + UUID_TYPE + ", " //
 					+ "work_sequence " + UUID_TYPE + ", " //
 					+ "order_date TIMESTAMP NOT NULL, " //
@@ -778,8 +795,8 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		// OrderLocation
 		result &= createTable("order_location", //
 			"location_persistentid " + UUID_TYPE + " NOT NULL, " //
-			+ "active BOOLEAN DEFAULT TRUE NOT NULL, " //
-			+ "updated TIMESTAMP NOT NULL " //
+					+ "active BOOLEAN DEFAULT TRUE NOT NULL, " //
+					+ "updated TIMESTAMP NOT NULL " //
 		);
 
 		// Organization - this is the top-level object that owns all other objects.

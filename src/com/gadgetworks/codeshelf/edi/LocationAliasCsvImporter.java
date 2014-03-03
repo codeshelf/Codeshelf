@@ -31,14 +31,14 @@ import com.google.inject.Singleton;
  *
  */
 @Singleton
-public class CsvLocationAliasImporter implements ICsvLocationAliasImporter {
+public class LocationAliasCsvImporter implements ICsvLocationAliasImporter {
 
 	private static final Logger			LOGGER	= LoggerFactory.getLogger(EdiProcessor.class);
 
 	private ITypedDao<LocationAlias>	mLocationAliasDao;
 
 	@Inject
-	public CsvLocationAliasImporter(final ITypedDao<LocationAlias> inLocationAliasDao) {
+	public LocationAliasCsvImporter(final ITypedDao<LocationAlias> inLocationAliasDao) {
 
 		mLocationAliasDao = inLocationAliasDao;
 	}
@@ -52,25 +52,25 @@ public class CsvLocationAliasImporter implements ICsvLocationAliasImporter {
 
 			CSVReader csvReader = new CSVReader(inCsvStreamReader);
 
-			HeaderColumnNameMappingStrategy<LocationAliasCsvImportBean> strategy = new HeaderColumnNameMappingStrategy<LocationAliasCsvImportBean>();
-			strategy.setType(LocationAliasCsvImportBean.class);
+			HeaderColumnNameMappingStrategy<LocationAliasCsvBean> strategy = new HeaderColumnNameMappingStrategy<LocationAliasCsvBean>();
+			strategy.setType(LocationAliasCsvBean.class);
 
-			CsvToBean<LocationAliasCsvImportBean> csv = new CsvToBean<LocationAliasCsvImportBean>();
-			List<LocationAliasCsvImportBean> locationAliasImportBeanList = csv.parse(strategy, csvReader);
+			CsvToBean<LocationAliasCsvBean> csv = new CsvToBean<LocationAliasCsvBean>();
+			List<LocationAliasCsvBean> locationAliasBeanList = csv.parse(strategy, csvReader);
 
-			if (locationAliasImportBeanList.size() > 0) {
+			if (locationAliasBeanList.size() > 0) {
 
 				Timestamp processTime = new Timestamp(System.currentTimeMillis());
 
 				LOGGER.debug("Begin location alias map import.");
 
-				// Iterate over the inventory import beans.
-				for (LocationAliasCsvImportBean importBean : locationAliasImportBeanList) {
-					String errorMsg = importBean.validateBean();
+				// Iterate over the location alias import beans.
+				for (LocationAliasCsvBean locationAliasBean : locationAliasBeanList) {
+					String errorMsg = locationAliasBean.validateBean();
 					if (errorMsg != null) {
 						LOGGER.error("Import errors: " + errorMsg);
 					} else {
-						locationAliasCsvBeanImport(importBean, inFacility, processTime);
+						locationAliasCsvBeanImport(locationAliasBean, inFacility, processTime);
 					}
 				}
 
@@ -93,7 +93,7 @@ public class CsvLocationAliasImporter implements ICsvLocationAliasImporter {
 	 * @param inProcessTime
 	 */
 	private void archiveLocationAliases(final Facility inFacility, final Timestamp inProcessTime) {
-		LOGGER.debug("Archive unreferenced item data");
+		LOGGER.debug("Archive unreferenced location alias data");
 
 		// Inactivate the locations aliases that don't match the import timestamp.
 		try {
@@ -114,20 +114,24 @@ public class CsvLocationAliasImporter implements ICsvLocationAliasImporter {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * @param inCsvImportBean
+	 * @param inCsvBean
 	 * @param inFacility
 	 * @param inEdiProcessTime
 	 */
-	private void locationAliasCsvBeanImport(final LocationAliasCsvImportBean inCsvImportBean,
+	private void locationAliasCsvBeanImport(final LocationAliasCsvBean inCsvBean,
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime) {
 
 		try {
 			mLocationAliasDao.beginTransaction();
 
-			LOGGER.info(inCsvImportBean.toString());
+			LOGGER.info(inCsvBean.toString());
 
-			LocationAlias locationAlias = updateLocationAlias(inCsvImportBean, inFacility, inEdiProcessTime);
+			try {
+				LocationAlias locationAlias = updateLocationAlias(inCsvBean, inFacility, inEdiProcessTime);
+			} catch (Exception e) {
+				LOGGER.error("", e);
+			}
 
 			mLocationAliasDao.commitTransaction();
 
@@ -138,23 +142,23 @@ public class CsvLocationAliasImporter implements ICsvLocationAliasImporter {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * @param inCsvImportBean
+	 * @param inCsvBean
 	 * @param inFacility
 	 * @param inEdiProcessTime
 	 * @return
 	 */
-	private LocationAlias updateLocationAlias(final LocationAliasCsvImportBean inCsvImportBean,
+	private LocationAlias updateLocationAlias(final LocationAliasCsvBean inCsvBean,
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime) {
 
 		LocationAlias result = null;
 
 		// Get or create the item at the specified location.
-		String locationAliasId = inCsvImportBean.getLocationAlias().trim();
+		String locationAliasId = inCsvBean.getLocationAlias();
 		result = inFacility.getLocationAlias(locationAliasId);
-		ILocation mappedLocation = inFacility.findSubLocationById(inCsvImportBean.getMappedLocationId());
+		ILocation mappedLocation = inFacility.findSubLocationById(inCsvBean.getMappedLocationId());
 
-		if ((result == null) && (inCsvImportBean.getMappedLocationId() != null) && (mappedLocation != null)) {
+		if ((result == null) && (inCsvBean.getMappedLocationId() != null) && (mappedLocation != null)) {
 			result = new LocationAlias();
 			result.setDomainId(locationAliasId);
 			result.setParent(inFacility);

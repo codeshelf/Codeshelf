@@ -12,6 +12,7 @@ import java.sql.Timestamp;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Bay;
@@ -54,6 +55,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		OrderHeader order1111 = new OrderHeader();
 		order1111.setOrderId("O1111");
 		order1111.setParent(facility);
+		order1111.setOrderTypeEnum(OrderTypeEnum.PICK);
 		order1111.setOrderDate(new Timestamp(System.currentTimeMillis()));
 		order1111.setDueDate(new Timestamp(System.currentTimeMillis()));
 		order1111.setActive(true);
@@ -64,6 +66,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		OrderHeader order2222 = new OrderHeader();
 		order2222.setOrderId("O2222");
 		order2222.setParent(facility);
+		order2222.setOrderTypeEnum(OrderTypeEnum.PICK);
 		order2222.setOrderDate(new Timestamp(System.currentTimeMillis()));
 		order2222.setDueDate(new Timestamp(System.currentTimeMillis()));
 		order2222.setActive(true);
@@ -74,6 +77,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		OrderHeader order3333 = new OrderHeader();
 		order3333.setOrderId("O3333");
 		order3333.setParent(facility);
+		order3333.setOrderTypeEnum(OrderTypeEnum.PICK);
 		order3333.setOrderDate(new Timestamp(System.currentTimeMillis()));
 		order3333.setDueDate(new Timestamp(System.currentTimeMillis()));
 		order3333.setActive(true);
@@ -84,6 +88,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		OrderHeader order4444 = new OrderHeader();
 		order4444.setOrderId("O4444");
 		order4444.setParent(facility);
+		order4444.setOrderTypeEnum(OrderTypeEnum.PICK);
 		order4444.setOrderDate(new Timestamp(System.currentTimeMillis()));
 		order4444.setDueDate(new Timestamp(System.currentTimeMillis()));
 		order4444.setActive(true);
@@ -151,7 +156,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		mOrderLocationDao.store(orderLocation4444);
 		order4444.addOrderLocation(orderLocation4444);
 
-		ICsvOrderLocationImporter importer = new CsvOrderLocationImporter(mOrderLocationDao);
+		ICsvOrderLocationImporter importer = new OrderLocationCsvImporter(mOrderLocationDao);
 		importer.importOrderLocationsFromCsvStream(reader, facility);
 
 		// Make sure we can lookup all of the locations for order O1111.

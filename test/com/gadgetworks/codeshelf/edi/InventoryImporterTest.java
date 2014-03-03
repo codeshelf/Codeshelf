@@ -47,7 +47,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		organization.createFacility("F-INV1.1", "TEST", PositionTypeEnum.METERS_FROM_PARENT.getName(), 0.0, 0.0);
 		Facility facility = organization.getFacility("F-INV1.1");
 
-		ICsvInventoryImporter importer = new CsvInventoryImporter(mItemMasterDao, mItemDao, mUomMasterDao);
+		ICsvInventoryImporter importer = new InventoryCsvImporter(mItemMasterDao, mItemDao, mUomMasterDao);
 		importer.importSlottedInventoryFromCsvStream(reader, facility);
 
 		Item item = facility.getItem("3001");
@@ -91,7 +91,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		Bay bay2 = new Bay(aisleA1, "B2", 0.0, 0.0, 0.0);
 		mSubLocationDao.store(bay2);
 
-		ICsvInventoryImporter importer = new CsvInventoryImporter(mItemMasterDao, mItemDao, mUomMasterDao);
+		ICsvInventoryImporter importer = new InventoryCsvImporter(mItemMasterDao, mItemDao, mUomMasterDao);
 		importer.importSlottedInventoryFromCsvStream(reader, facility);
 		
 		bay1 = (Bay) facility.findSubLocationById("A1.B1");
@@ -118,7 +118,7 @@ public class InventoryImporterTest extends EdiTestABC {
 
 		stream = new ByteArrayInputStream(csvArray);
 		reader = new InputStreamReader(stream);
-		importer = new CsvInventoryImporter(mItemMasterDao, mItemDao, mUomMasterDao);
+		importer = new InventoryCsvImporter(mItemMasterDao, mItemDao, mUomMasterDao);
 		importer.importSlottedInventoryFromCsvStream(reader, facility);
 
 		bay1 = (Bay) facility.findSubLocationById("A1.B1");

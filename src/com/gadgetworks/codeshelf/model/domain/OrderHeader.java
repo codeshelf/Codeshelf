@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
+import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.PickStrategyEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
@@ -48,7 +49,7 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "order_header")
-@CacheStrategy(useBeanCache=false)
+@CacheStrategy(useBeanCache = false)
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class OrderHeader extends DomainObjectTreeABC<Facility> {
 
@@ -74,11 +75,19 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	@ManyToOne(optional = false)
 	private Facility			parent;
 
+	// The order type.
+	@Column(nullable = false)
+	@Enumerated(value = EnumType.STRING)
+	@Getter
+	@Setter
+	@JsonProperty
+	private OrderTypeEnum		orderTypeEnum;
+
 	// The collective order status.
 	@Column(nullable = false)
 	@Enumerated(value = EnumType.STRING)
 	@Getter
-	@Setter()
+	@Setter
 	@JsonProperty
 	private OrderStatusEnum		statusEnum;
 

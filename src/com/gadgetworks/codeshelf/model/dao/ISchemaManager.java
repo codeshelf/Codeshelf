@@ -27,8 +27,9 @@ public interface ISchemaManager {
 	int		DATABASE_VERSION_4				= 4;								// Add LED command stream processing to WIs.
 	int		DATABASE_VERSION_5				= 5;								// Add location alias table.
 	int		DATABASE_VERSION_6				= 6;								// Add order location table.
+	int		DATABASE_VERSION_7				= 7;								// Add order type enum.
 
-	int		DATABASE_VERSION_CUR			= DATABASE_VERSION_6;
+	int		DATABASE_VERSION_CUR			= DATABASE_VERSION_7;
 
 	String getDbAddress();
 

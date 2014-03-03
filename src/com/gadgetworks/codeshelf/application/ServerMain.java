@@ -18,11 +18,11 @@ import org.java_websocket.server.WebSocketServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.edi.CsvInventoryImporter;
-import com.gadgetworks.codeshelf.edi.CsvLocationAliasImporter;
-import com.gadgetworks.codeshelf.edi.CsvOrderImporter;
-import com.gadgetworks.codeshelf.edi.CsvOrderLocationImporter;
-import com.gadgetworks.codeshelf.edi.CsvPutBatchImporter;
+import com.gadgetworks.codeshelf.edi.InventoryCsvImporter;
+import com.gadgetworks.codeshelf.edi.LocationAliasCsvImporter;
+import com.gadgetworks.codeshelf.edi.OrderCsvImporter;
+import com.gadgetworks.codeshelf.edi.OrderLocationCsvImporter;
+import com.gadgetworks.codeshelf.edi.PutBatchCsvImporter;
 import com.gadgetworks.codeshelf.edi.EdiProcessor;
 import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
 import com.gadgetworks.codeshelf.edi.ICsvLocationAliasImporter;
@@ -245,11 +245,11 @@ public final class ServerMain {
 				bind(IHttpServer.class).to(HttpServer.class);
 				bind(IEdiProcessor.class).to(EdiProcessor.class);
 				bind(IPickDocumentGenerator.class).to(PickDocumentGenerator.class);
-				bind(ICsvOrderImporter.class).to(CsvOrderImporter.class);
-				bind(ICsvInventoryImporter.class).to(CsvInventoryImporter.class);
-				bind(ICsvLocationAliasImporter.class).to(CsvLocationAliasImporter.class);
-				bind(ICsvOrderLocationImporter.class).to(CsvOrderLocationImporter.class);
-				bind(ICsvPutBatchImporter.class).to(CsvPutBatchImporter.class);
+				bind(ICsvOrderImporter.class).to(OrderCsvImporter.class);
+				bind(ICsvInventoryImporter.class).to(InventoryCsvImporter.class);
+				bind(ICsvLocationAliasImporter.class).to(LocationAliasCsvImporter.class);
+				bind(ICsvOrderLocationImporter.class).to(OrderLocationCsvImporter.class);
+				bind(ICsvPutBatchImporter.class).to(PutBatchCsvImporter.class);
 
 				// Websocket/WebSession
 				bind(IWebSocketServer.class).to(CsWebSocketServer.class);

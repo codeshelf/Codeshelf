@@ -23,6 +23,7 @@ import au.com.bytecode.opencsv.bean.HeaderColumnNameMappingStrategy;
 
 import com.avaje.ebean.annotation.Transactional;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
+import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.PickStrategyEnum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
@@ -43,7 +44,7 @@ import com.google.inject.Singleton;
  *
  */
 @Singleton
-public class CsvOrderImporter implements ICsvOrderImporter {
+public class OrderCsvImporter implements ICsvOrderImporter {
 
 	private static final Logger			LOGGER	= LoggerFactory.getLogger(EdiProcessor.class);
 
@@ -56,7 +57,7 @@ public class CsvOrderImporter implements ICsvOrderImporter {
 	private ITypedDao<UomMaster>		mUomMasterDao;
 
 	@Inject
-	public CsvOrderImporter(final ITypedDao<OrderGroup> inOrderGroupDao,
+	public OrderCsvImporter(final ITypedDao<OrderGroup> inOrderGroupDao,
 		final ITypedDao<OrderHeader> inOrderHeaderDao,
 		final ITypedDao<OrderDetail> inOrderDetailDao,
 		final ITypedDao<Container> inContainerDao,
@@ -82,22 +83,22 @@ public class CsvOrderImporter implements ICsvOrderImporter {
 
 			CSVReader csvReader = new CSVReader(inCsvStreamReader);
 
-			HeaderColumnNameMappingStrategy<OrderCsvImportBean> strategy = new HeaderColumnNameMappingStrategy<OrderCsvImportBean>();
-			strategy.setType(OrderCsvImportBean.class);
+			HeaderColumnNameMappingStrategy<OrderCsvBean> strategy = new HeaderColumnNameMappingStrategy<OrderCsvBean>();
+			strategy.setType(OrderCsvBean.class);
 
-			CsvToBean<OrderCsvImportBean> csv = new CsvToBean<OrderCsvImportBean>();
-			List<OrderCsvImportBean> list = csv.parse(strategy, csvReader);
+			CsvToBean<OrderCsvBean> csv = new CsvToBean<OrderCsvBean>();
+			List<OrderCsvBean> list = csv.parse(strategy, csvReader);
 
 			Timestamp processTime = new Timestamp(System.currentTimeMillis());
 
 			LOGGER.debug("Begin order import.");
 
-			for (OrderCsvImportBean importBean : list) {
-				String errorMsg = importBean.validateBean();
+			for (OrderCsvBean orderBean : list) {
+				String errorMsg = orderBean.validateBean();
 				if (errorMsg != null) {
 					LOGGER.error("Import errors: " + errorMsg);
 				} else {
-					orderCsvBeanImport(importBean, inFacility, processTime);
+					orderCsvBeanImport(orderBean, inFacility, processTime);
 				}
 			}
 
@@ -222,30 +223,30 @@ public class CsvOrderImporter implements ICsvOrderImporter {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * @param inCsvImportBean
+	 * @param inCsvBean
 	 * @param inFacility
 	 */
 	@Transactional
-	private void orderCsvBeanImport(final OrderCsvImportBean inCsvImportBean,
+	private void orderCsvBeanImport(final OrderCsvBean inCsvBean,
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime) {
 
-		LOGGER.info(inCsvImportBean.toString());
+		LOGGER.info(inCsvBean.toString());
 
 		try {
 			mOrderHeaderDao.beginTransaction();
 
 			try {
-				OrderGroup group = updateOptionalOrderGroup(inCsvImportBean, inFacility, inEdiProcessTime);
-				OrderHeader order = updateOrderHeader(inCsvImportBean, inFacility, inEdiProcessTime, group);
-				Container container = updateContainer(inCsvImportBean, inFacility, inEdiProcessTime, order);
-				UomMaster uomMaster = updateUomMaster(inCsvImportBean.getUom(), inFacility);
-				ItemMaster itemMaster = updateItemMaster(inCsvImportBean.getItemId(),
-					inCsvImportBean.getDescription(),
+				OrderGroup group = updateOptionalOrderGroup(inCsvBean, inFacility, inEdiProcessTime);
+				OrderHeader order = updateOrderHeader(inCsvBean, inFacility, inEdiProcessTime, group);
+				Container container = updateContainer(inCsvBean, inFacility, inEdiProcessTime, order);
+				UomMaster uomMaster = updateUomMaster(inCsvBean.getUom(), inFacility);
+				ItemMaster itemMaster = updateItemMaster(inCsvBean.getItemId(),
+					inCsvBean.getDescription(),
 					inFacility,
 					inEdiProcessTime,
 					uomMaster);
-				OrderDetail orderDetail = updateOrderDetail(inCsvImportBean,
+				OrderDetail orderDetail = updateOrderDetail(inCsvBean,
 					inFacility,
 					inEdiProcessTime,
 					order,
@@ -264,21 +265,22 @@ public class CsvOrderImporter implements ICsvOrderImporter {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * @param inCsvImportBean
+	 * @param inCsvBean
 	 * @param inFacility
+	 * @param inEdiProcessTime
 	 * @return
 	 */
-	private OrderGroup updateOptionalOrderGroup(final OrderCsvImportBean inCsvImportBean,
+	private OrderGroup updateOptionalOrderGroup(final OrderCsvBean inCsvBean,
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime) {
 		OrderGroup result = null;
 
-		result = inFacility.findOrderGroup(inCsvImportBean.getOrderGroupId());
-		if ((result == null) && (inCsvImportBean.getOrderGroupId() != null) && (inCsvImportBean.getOrderGroupId().length() > 0)) {
+		result = inFacility.findOrderGroup(inCsvBean.getOrderGroupId());
+		if ((result == null) && (inCsvBean.getOrderGroupId() != null) && (inCsvBean.getOrderGroupId().length() > 0)) {
 			result = new OrderGroup();
 			result.setParent(inFacility);
-			result.setOrderGroupId(inCsvImportBean.getOrderGroupId());
-			result.setDescription(OrderGroup.DEFAULT_ORDER_GROUP_DESC_PREFIX + inCsvImportBean.getOrderGroupId());
+			result.setOrderGroupId(inCsvBean.getOrderGroupId());
+			result.setDescription(OrderGroup.DEFAULT_ORDER_GROUP_DESC_PREFIX + inCsvBean.getOrderGroupId());
 			inFacility.addOrderGroup(result);
 		}
 
@@ -298,24 +300,25 @@ public class CsvOrderImporter implements ICsvOrderImporter {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * @param inCsvImportBean
+	 * @param inCsvBean
 	 * @param inFacility
+	 * @param inEdiProcessTime
 	 * @param inOrder
 	 * @return
 	 */
-	private Container updateContainer(final OrderCsvImportBean inCsvImportBean,
+	private Container updateContainer(final OrderCsvBean inCsvBean,
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime,
 		final OrderHeader inOrder) {
 		Container result = null;
 
-		if ((inCsvImportBean.getPreAssignedContainerId() != null) && (inCsvImportBean.getPreAssignedContainerId().length() > 0)) {
-			result = inFacility.getContainer(inCsvImportBean.getPreAssignedContainerId());
+		if ((inCsvBean.getPreAssignedContainerId() != null) && (inCsvBean.getPreAssignedContainerId().length() > 0)) {
+			result = inFacility.getContainer(inCsvBean.getPreAssignedContainerId());
 
 			if (result == null) {
 				result = new Container();
 				result.setParent(inFacility);
-				result.setContainerId(inCsvImportBean.getPreAssignedContainerId());
+				result.setContainerId(inCsvBean.getPreAssignedContainerId());
 				result.setKind(inFacility.getContainerKind(ContainerKind.DEFAULT_CONTAINER_KIND));
 				inFacility.addContainer(result);
 			}
@@ -355,42 +358,44 @@ public class CsvOrderImporter implements ICsvOrderImporter {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * @param inCsvImportBean
+	 * @param inCsvBean
 	 * @param inFacility
 	 * @param inOrderGroup
 	 * @return
 	 */
-	private OrderHeader updateOrderHeader(final OrderCsvImportBean inCsvImportBean,
+	private OrderHeader updateOrderHeader(final OrderCsvBean inCsvBean,
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime,
 		final OrderGroup inOrderGroup) {
 		OrderHeader result = null;
 
-		result = inFacility.findOrder(inCsvImportBean.getOrderId());
+		result = inFacility.findOrder(inCsvBean.getOrderId());
 
 		if (result == null) {
 			result = new OrderHeader();
 			result.setParent(inFacility);
-			result.setDomainId(inCsvImportBean.getOrderId());
+			result.setDomainId(inCsvBean.getOrderId());
+			inFacility.addOrderHeader(result);
 		}
 
+		result.setOrderTypeEnum(OrderTypeEnum.PICK);
 		result.setStatusEnum(OrderStatusEnum.CREATED);
-		result.setCustomerId(inCsvImportBean.getCustomerId());
-		result.setShipmentId(inCsvImportBean.getShipmentId());
-		if (inCsvImportBean.getWorkSequence() != null) {
-			result.setWorkSequence(Integer.valueOf(inCsvImportBean.getWorkSequence()));
+		result.setCustomerId(inCsvBean.getCustomerId());
+		result.setShipmentId(inCsvBean.getShipmentId());
+		if (inCsvBean.getWorkSequence() != null) {
+			result.setWorkSequence(Integer.valueOf(inCsvBean.getWorkSequence()));
 		}
 
-		if (inCsvImportBean.getOrderDate() != null) {
+		if (inCsvBean.getOrderDate() != null) {
 			try {
 				// First try to parse it as a SQL timestamp.
-				result.setOrderDate(Timestamp.valueOf(inCsvImportBean.getOrderDate()));
+				result.setOrderDate(Timestamp.valueOf(inCsvBean.getOrderDate()));
 			} catch (IllegalArgumentException e) {
 				// Then try to parse it as just a SQL date.
 				try {
 					SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 					dateFormat.setLenient(true);
-					Date date = dateFormat.parse(inCsvImportBean.getOrderDate());
+					Date date = dateFormat.parse(inCsvBean.getOrderDate());
 					result.setOrderDate(new Timestamp(date.getTime()));
 				} catch (IllegalArgumentException | ParseException e1) {
 					LOGGER.error("", e1);
@@ -398,16 +403,16 @@ public class CsvOrderImporter implements ICsvOrderImporter {
 			}
 		}
 
-		if (inCsvImportBean.getDueDate() != null) {
+		if (inCsvBean.getDueDate() != null) {
 			try {
 				// First try to parse it as a SQL timestamp.
-				result.setDueDate(Timestamp.valueOf(inCsvImportBean.getDueDate()));
+				result.setDueDate(Timestamp.valueOf(inCsvBean.getDueDate()));
 			} catch (IllegalArgumentException e) {
 				// Then try to parse it as just a SQL date.
 				try {
 					SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 					dateFormat.setLenient(true);
-					Date date = dateFormat.parse(inCsvImportBean.getDueDate());
+					Date date = dateFormat.parse(inCsvBean.getDueDate());
 					result.setDueDate(new Timestamp(date.getTime()));
 				} catch (IllegalArgumentException | ParseException e1) {
 					LOGGER.error("", e1);
@@ -416,12 +421,11 @@ public class CsvOrderImporter implements ICsvOrderImporter {
 		}
 
 		PickStrategyEnum pickStrategy = PickStrategyEnum.SERIAL;
-		String pickStrategyEnumId = inCsvImportBean.getPickStrategy();
+		String pickStrategyEnumId = inCsvBean.getPickStrategy();
 		if ((pickStrategyEnumId != null) && (pickStrategyEnumId.length() > 0)) {
 			pickStrategy = PickStrategyEnum.valueOf(pickStrategyEnumId);
 		}
 		result.setPickStrategyEnum(pickStrategy);
-		inFacility.addOrderHeader(result);
 		if (inOrderGroup != null) {
 			inOrderGroup.addOrderHeader(result);
 			result.setOrderGroup(inOrderGroup);
@@ -440,6 +444,7 @@ public class CsvOrderImporter implements ICsvOrderImporter {
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inItemId
+	 * @param inDescription
 	 * @param inFacility
 	 * @param inEdiProcessTime
 	 * @param inUomMaster
@@ -478,7 +483,7 @@ public class CsvOrderImporter implements ICsvOrderImporter {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * @param inCsvImportBean
+	 * @param inUomId
 	 * @param inFacility
 	 * @return
 	 */
@@ -505,12 +510,15 @@ public class CsvOrderImporter implements ICsvOrderImporter {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * @param inCsvImportBean
+	 * @param inCsvBean
+	 * @param inFacility
+	 * @param inEdiProcessTime
 	 * @param inOrder
+	 * @param inUomMaster
 	 * @param inItemMaster
 	 * @return
 	 */
-	private OrderDetail updateOrderDetail(final OrderCsvImportBean inCsvImportBean,
+	private OrderDetail updateOrderDetail(final OrderCsvBean inCsvBean,
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime,
 		final OrderHeader inOrder,
@@ -518,19 +526,19 @@ public class CsvOrderImporter implements ICsvOrderImporter {
 		final ItemMaster inItemMaster) {
 		OrderDetail result = null;
 
-		result = inOrder.findOrderDetail(inCsvImportBean.getOrderDetailId());
+		result = inOrder.findOrderDetail(inCsvBean.getOrderDetailId());
 		if (result == null) {
 			result = new OrderDetail();
 			result.setParent(inOrder);
-			result.setDomainId(inCsvImportBean.getOrderDetailId());
+			result.setDomainId(inCsvBean.getOrderDetailId());
 			result.setStatusEnum(OrderStatusEnum.CREATED);
 
 			inOrder.addOrderDetail(result);
 		}
 
 		result.setItemMaster(inItemMaster);
-		result.setDescription(inCsvImportBean.getDescription());
-		result.setQuantity(Integer.valueOf(inCsvImportBean.getQuantity()));
+		result.setDescription(inCsvBean.getDescription());
+		result.setQuantity(Integer.valueOf(inCsvBean.getQuantity()));
 		result.setUomMaster(inUomMaster);
 
 		try {

@@ -33,7 +33,7 @@ import com.google.inject.Singleton;
  *
  */
 @Singleton
-public class CsvInventoryImporter implements ICsvInventoryImporter {
+public class InventoryCsvImporter implements ICsvInventoryImporter {
 
 	private static final Logger		LOGGER	= LoggerFactory.getLogger(EdiProcessor.class);
 
@@ -42,7 +42,7 @@ public class CsvInventoryImporter implements ICsvInventoryImporter {
 	private ITypedDao<UomMaster>	mUomMasterDao;
 
 	@Inject
-	public CsvInventoryImporter(final ITypedDao<ItemMaster> inItemMasterDao,
+	public InventoryCsvImporter(final ITypedDao<ItemMaster> inItemMasterDao,
 		final ITypedDao<Item> inItemDao,
 		final ITypedDao<UomMaster> inUomMaster) {
 
@@ -60,25 +60,25 @@ public class CsvInventoryImporter implements ICsvInventoryImporter {
 
 			CSVReader csvReader = new CSVReader(inCsvStreamReader);
 
-			HeaderColumnNameMappingStrategy<DdcInventoryCsvImportBean> strategy = new HeaderColumnNameMappingStrategy<DdcInventoryCsvImportBean>();
-			strategy.setType(DdcInventoryCsvImportBean.class);
+			HeaderColumnNameMappingStrategy<InventoryDdcCsvBean> strategy = new HeaderColumnNameMappingStrategy<InventoryDdcCsvBean>();
+			strategy.setType(InventoryDdcCsvBean.class);
 
-			CsvToBean<DdcInventoryCsvImportBean> csv = new CsvToBean<DdcInventoryCsvImportBean>();
-			List<DdcInventoryCsvImportBean> inventoryImportBeanList = csv.parse(strategy, csvReader);
+			CsvToBean<InventoryDdcCsvBean> csv = new CsvToBean<InventoryDdcCsvBean>();
+			List<InventoryDdcCsvBean> inventoryBeanList = csv.parse(strategy, csvReader);
 
-			if (inventoryImportBeanList.size() > 0) {
+			if (inventoryBeanList.size() > 0) {
 
 				Timestamp processTime = new Timestamp(System.currentTimeMillis());
 
 				LOGGER.debug("Begin DDC inventory import.");
 
 				// Iterate over the inventory import beans.
-				for (DdcInventoryCsvImportBean importBean : inventoryImportBeanList) {
-					String errorMsg = importBean.validateBean();
+				for (InventoryDdcCsvBean ddcInventoryBean : inventoryBeanList) {
+					String errorMsg = ddcInventoryBean.validateBean();
 					if (errorMsg != null) {
 						LOGGER.error("Import errors: " + errorMsg);
 					} else {
-						ddcInventoryCsvBeanImport(importBean, inFacility, processTime);
+						ddcInventoryCsvBeanImport(ddcInventoryBean, inFacility, processTime);
 					}
 				}
 
@@ -106,25 +106,25 @@ public class CsvInventoryImporter implements ICsvInventoryImporter {
 
 			CSVReader csvReader = new CSVReader(inCsvStreamReader);
 
-			HeaderColumnNameMappingStrategy<SlottedInventoryCsvImportBean> strategy = new HeaderColumnNameMappingStrategy<SlottedInventoryCsvImportBean>();
-			strategy.setType(SlottedInventoryCsvImportBean.class);
+			HeaderColumnNameMappingStrategy<InventorySlottedCsvBean> strategy = new HeaderColumnNameMappingStrategy<InventorySlottedCsvBean>();
+			strategy.setType(InventorySlottedCsvBean.class);
 
-			CsvToBean<SlottedInventoryCsvImportBean> csv = new CsvToBean<SlottedInventoryCsvImportBean>();
-			List<SlottedInventoryCsvImportBean> inventoryImportBeanList = csv.parse(strategy, csvReader);
+			CsvToBean<InventorySlottedCsvBean> csv = new CsvToBean<InventorySlottedCsvBean>();
+			List<InventorySlottedCsvBean> inventoryBeanList = csv.parse(strategy, csvReader);
 
-			if (inventoryImportBeanList.size() > 0) {
+			if (inventoryBeanList.size() > 0) {
 
 				Timestamp processTime = new Timestamp(System.currentTimeMillis());
 
 				LOGGER.debug("Begin slotted inventory import.");
 
 				// Iterate over the inventory import beans.
-				for (SlottedInventoryCsvImportBean importBean : inventoryImportBeanList) {
-					String errorMsg = importBean.validateBean();
+				for (InventorySlottedCsvBean slottedInventoryBean : inventoryBeanList) {
+					String errorMsg = slottedInventoryBean.validateBean();
 					if (errorMsg != null) {
 						LOGGER.error("Import errors: " + errorMsg);
 					} else {
-						slottedInventoryCsvBeanImport(importBean, inFacility, processTime);
+						slottedInventoryCsvBeanImport(slottedInventoryBean, inFacility, processTime);
 					}
 				}
 
@@ -179,37 +179,41 @@ public class CsvInventoryImporter implements ICsvInventoryImporter {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * @param inCsvImportBean
+	 * @param inCsvBean
 	 * @param inFacility
 	 */
-	private void ddcInventoryCsvBeanImport(final DdcInventoryCsvImportBean inCsvImportBean,
+	private void ddcInventoryCsvBeanImport(final InventoryDdcCsvBean inCsvBean,
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime) {
 
 		try {
 			mItemDao.beginTransaction();
 
-			LOGGER.debug("Import ddc item: " + inCsvImportBean.toString());
-
-			UomMaster uomMaster = updateUomMaster(inCsvImportBean.getUom(), inFacility);
-
-			// Create or update the DDC item master, and then set the DDC ID for it.
-			ItemMaster itemMaster = updateItemMaster(inCsvImportBean.getItemId(),
-				inCsvImportBean.getDescription(),
-				inFacility,
-				inEdiProcessTime,
-				uomMaster);
-			itemMaster.setDdcId(inCsvImportBean.getDdcId());
-			itemMaster.setDescription(inCsvImportBean.getDescription());
+			LOGGER.debug("Import ddc item: " + inCsvBean.toString());
 
 			try {
-				mItemMasterDao.store(itemMaster);
-			} catch (DaoException e) {
+				UomMaster uomMaster = updateUomMaster(inCsvBean.getUom(), inFacility);
+
+				// Create or update the DDC item master, and then set the DDC ID for it.
+				ItemMaster itemMaster = updateItemMaster(inCsvBean.getItemId(),
+					inCsvBean.getDescription(),
+					inFacility,
+					inEdiProcessTime,
+					uomMaster);
+				itemMaster.setDdcId(inCsvBean.getDdcId());
+				itemMaster.setDescription(inCsvBean.getDescription());
+
+				try {
+					mItemMasterDao.store(itemMaster);
+				} catch (DaoException e) {
+					LOGGER.error("", e);
+				}
+
+				Item item = updateDdcItem(inCsvBean, inFacility, inEdiProcessTime, itemMaster, uomMaster);
+
+			} catch (Exception e) {
 				LOGGER.error("", e);
 			}
-
-			Item item = updateDdcItem(inCsvImportBean, inFacility, inEdiProcessTime, itemMaster, uomMaster);
-
 			mItemDao.commitTransaction();
 
 		} finally {
@@ -219,25 +223,25 @@ public class CsvInventoryImporter implements ICsvInventoryImporter {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * @param inCsvImportBean
+	 * @param inCsvBean
 	 * @param inFacility
 	 */
-	private void slottedInventoryCsvBeanImport(final SlottedInventoryCsvImportBean inCsvImportBean,
+	private void slottedInventoryCsvBeanImport(final InventorySlottedCsvBean inCsvBean,
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime) {
 
 		try {
 			mItemDao.beginTransaction();
 
-			LOGGER.info(inCsvImportBean.toString());
+			LOGGER.info(inCsvBean.toString());
 
-			UomMaster uomMaster = updateUomMaster(inCsvImportBean.getUom(), inFacility);
-			ItemMaster itemMaster = updateItemMaster(inCsvImportBean.getItemId(),
-				inCsvImportBean.getDescription(),
+			UomMaster uomMaster = updateUomMaster(inCsvBean.getUom(), inFacility);
+			ItemMaster itemMaster = updateItemMaster(inCsvBean.getItemId(),
+				inCsvBean.getDescription(),
 				inFacility,
 				inEdiProcessTime,
 				uomMaster);
-			Item item = updateSlottedItem(inCsvImportBean, inFacility, inEdiProcessTime, itemMaster, uomMaster);
+			Item item = updateSlottedItem(inCsvBean, inFacility, inEdiProcessTime, itemMaster, uomMaster);
 
 			mItemDao.commitTransaction();
 
@@ -287,7 +291,7 @@ public class CsvInventoryImporter implements ICsvInventoryImporter {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * @param inCsvImportBean
+	 * @param inCsvBean
 	 * @param inFacility
 	 * @return
 	 */
@@ -314,13 +318,13 @@ public class CsvInventoryImporter implements ICsvInventoryImporter {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * @param inCsvImportBean
+	 * @param inCsvBean
 	 * @param inFacility
 	 * @param inItemMaster
 	 * @param inUomMaster
 	 * @return
 	 */
-	private Item updateDdcItem(final DdcInventoryCsvImportBean inCsvImportBean,
+	private Item updateDdcItem(final InventoryDdcCsvBean inCsvBean,
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime,
 		final ItemMaster inItemMaster,
@@ -328,8 +332,8 @@ public class CsvInventoryImporter implements ICsvInventoryImporter {
 		Item result = null;
 
 		// Get or create the item at the specified location.
-		result = inItemMaster.getItem(inCsvImportBean.getItemId());
-		if ((result == null) && (inCsvImportBean.getItemId() != null) && (inCsvImportBean.getItemId().length() > 0)) {
+		result = inItemMaster.getItem(inCsvBean.getItemId());
+		if ((result == null) && (inCsvBean.getItemId() != null) && (inCsvBean.getItemId().length() > 0)) {
 			result = new Item();
 			result.setParent(inItemMaster);
 		}
@@ -338,7 +342,7 @@ public class CsvInventoryImporter implements ICsvInventoryImporter {
 		if (result != null) {
 			result.setStoredLocation(inFacility);
 			result.setUomMaster(inUomMaster);
-			result.setQuantity(Double.valueOf(inCsvImportBean.getQuantity()));
+			result.setQuantity(Double.valueOf(inCsvBean.getQuantity()));
 			inItemMaster.addItem(result);
 			inFacility.addItem(result);
 			try {
@@ -355,20 +359,20 @@ public class CsvInventoryImporter implements ICsvInventoryImporter {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * @param inCsvImportBean
+	 * @param inCsvBean
 	 * @param inFacility
 	 * @param inItemMaster
 	 * @param inUomMaster
 	 * @return
 	 */
-	private Item updateSlottedItem(final SlottedInventoryCsvImportBean inCsvImportBean,
+	private Item updateSlottedItem(final InventorySlottedCsvBean inCsvBean,
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime,
 		final ItemMaster inItemMaster,
 		final UomMaster inUomMaster) {
 		Item result = null;
 
-		LocationABC location = (LocationABC) inFacility.findSubLocationById(inCsvImportBean.getLocationId());
+		LocationABC location = (LocationABC) inFacility.findSubLocationById(inCsvBean.getLocationId());
 
 		// We couldn't find the location, so assign the inventory to the facility itself (which is a location);
 		if (location == null) {
@@ -376,8 +380,8 @@ public class CsvInventoryImporter implements ICsvInventoryImporter {
 		}
 
 		// Get or create the item at the specified location.
-		result = location.getItem(inCsvImportBean.getItemId());
-		if ((result == null) && (inCsvImportBean.getItemId() != null) && (inCsvImportBean.getItemId().length() > 0)) {
+		result = location.getItem(inCsvBean.getItemId());
+		if ((result == null) && (inCsvBean.getItemId() != null) && (inCsvBean.getItemId().length() > 0)) {
 			result = new Item();
 			result.setParent(inItemMaster);
 		}
@@ -386,7 +390,7 @@ public class CsvInventoryImporter implements ICsvInventoryImporter {
 		if (result != null) {
 			result.setStoredLocation(location);
 			result.setUomMaster(inUomMaster);
-			result.setQuantity(Double.valueOf(inCsvImportBean.getQuantity()));
+			result.setQuantity(Double.valueOf(inCsvBean.getQuantity()));
 			result.setPosAlongPath(location.getPosAlongPath());
 			try {
 				result.setActive(true);
