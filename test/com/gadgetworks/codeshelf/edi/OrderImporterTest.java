@@ -64,7 +64,7 @@ public class OrderImporterTest extends EdiTestABC {
 		ICsvOrderImporter importer = new OrderCsvImporter(mOrderGroupDao, mOrderHeaderDao, mOrderDetailDao, mContainerDao, mContainerUseDao, mItemMasterDao, mUomMasterDao);
 		importer.importOrdersFromCsvStream(reader, facility);
 
-		OrderHeader order = facility.findOrder("123");
+		OrderHeader order = facility.getOrderHeader("123");
 		Assert.assertNotNull(order);
 
 	}
@@ -100,11 +100,11 @@ public class OrderImporterTest extends EdiTestABC {
 		ICsvOrderImporter importer = new OrderCsvImporter(mOrderGroupDao, mOrderHeaderDao, mOrderDetailDao, mContainerDao, mContainerUseDao, mItemMasterDao, mUomMasterDao);
 		importer.importOrdersFromCsvStream(reader, facility);
 
-		OrderHeader order = facility.findOrder("123");
+		OrderHeader order = facility.getOrderHeader("123");
 		Assert.assertNotNull(order);
 		Assert.assertEquals(order.getPickStrategyEnum(), PickStrategyEnum.SERIAL);
 
-		order = facility.findOrder("789");
+		order = facility.getOrderHeader("789");
 		Assert.assertNotNull(order);
 		Assert.assertEquals(order.getPickStrategyEnum(), PickStrategyEnum.PARALLEL);
 
@@ -141,7 +141,7 @@ public class OrderImporterTest extends EdiTestABC {
 		ICsvOrderImporter importer = new OrderCsvImporter(mOrderGroupDao, mOrderHeaderDao, mOrderDetailDao, mContainerDao, mContainerUseDao, mItemMasterDao, mUomMasterDao);
 		importer.importOrdersFromCsvStream(reader, facility);
 
-		OrderHeader order = facility.findOrder("789");
+		OrderHeader order = facility.getOrderHeader("789");
 		Assert.assertNotNull(order);
 
 		Container container = mContainerDao.findByDomainId(facility, "CONTAINER1");
@@ -181,15 +181,15 @@ public class OrderImporterTest extends EdiTestABC {
 		importer.importOrdersFromCsvStream(reader, facility);
 
 		// We should find order 123
-		OrderHeader order = facility.findOrder("123");
+		OrderHeader order = facility.getOrderHeader("123");
 		Assert.assertNotNull(order);
 
 		// But not order detail item 1
-		OrderDetail orderDetail = order.findOrderDetail("1");
+		OrderDetail orderDetail = order.getOrderDetail("1");
 		Assert.assertNull(orderDetail);
 
 		// But should find order detail item 2
-		orderDetail = order.findOrderDetail("2");
+		orderDetail = order.getOrderDetail("2");
 		Assert.assertNotNull(orderDetail);
 
 	}

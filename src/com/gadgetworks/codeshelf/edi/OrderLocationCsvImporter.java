@@ -167,7 +167,7 @@ public class OrderLocationCsvImporter implements ICsvOrderLocationImporter {
 		String orderId = inCsvBean.getOrderId();
 		String locationId = inCsvBean.getLocationId();
 
-		OrderHeader order = inFacility.findOrder(orderId);
+		OrderHeader order = inFacility.getOrderHeader(orderId);
 		if (order != null) {
 			for (OrderLocation orderLocation : order.getOrderLocations()) {
 				if (orderLocation.getLocation().getLocationId().equals(locationId)) {
@@ -206,7 +206,7 @@ public class OrderLocationCsvImporter implements ICsvOrderLocationImporter {
 	 */
 	private void deleteOrder(final String inOrderId, final Facility inFacility, final Timestamp inEdiProcessTime) {
 
-		OrderHeader order = inFacility.findOrder(inOrderId);
+		OrderHeader order = inFacility.getOrderHeader(inOrderId);
 		if (order != null) {
 			// For every OrderLocation on this order, set it to inactive.
 			Iterator<OrderLocation> iter = order.getOrderLocations().iterator();

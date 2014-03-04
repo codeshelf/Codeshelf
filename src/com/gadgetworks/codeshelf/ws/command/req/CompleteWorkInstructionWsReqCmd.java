@@ -116,7 +116,7 @@ public class CompleteWorkInstructionWsReqCmd extends WsReqCmdABC {
 	private void setOrderDetailStatus(final WorkInstruction inWorkInstruction) {
 		// Find the order item for this WI and mark it.
 		OrderDetail detail = inWorkInstruction.getParent();
-		Integer qtyPicked = 0;
+		Double qtyPicked = 0.0;
 		for (WorkInstruction sumWi : detail.getWorkInstructions()) {
 			qtyPicked += sumWi.getActualQuantity();
 		}

@@ -322,6 +322,10 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 			result &= doUpgrade7();
 		}
 
+		if (inOldVersion < ISchemaManager.DATABASE_VERSION_8) {
+			result &= doUpgrade8();
+		}
+
 		result &= updateSchemaVersion(ISchemaManager.DATABASE_VERSION_CUR);
 
 		return result;
@@ -411,6 +415,20 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		boolean result = true;
 
 		result &= safeAddColumn("order_header", "order_type_enum TEXT DEFAULT 'PICK' NOT NULL");
+
+		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @return
+	 */
+	private boolean doUpgrade8() {
+		boolean result = true;
+
+		result &= safeModifyColumnType("order_detail", "quantity", "INTEGER");
+		result &= safeModifyColumnType("work_instruction", "plan_quantity", "INTEGER");
+		result &= safeModifyColumnType("work_instruction", "actual_quantity", "INTEGER");
 
 		return result;
 	}
@@ -537,6 +555,23 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		result &= execOneSQLCommand("ALTER TABLE " + getDbSchemaName() + "." + inTableName //
 				+ " ADD " + inColumnName //
+				+ ";");
+
+		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inTableName
+	 * @param inColumnName
+	 * @return
+	 */
+	private boolean safeModifyColumnType(final String inTableName, final String inColumnName, final String inNewColumnType) {
+		boolean result = false;
+
+		result &= execOneSQLCommand("ALTER TABLE " + getDbSchemaName() + "." + inTableName //
+				+ " MODIFY " + inColumnName //
+				+ " " + inNewColumnType //
 				+ ";");
 
 		return result;
@@ -696,7 +731,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		// Item
 		result &= createTable("item", //
-			"quantity DECIMAL NOT NULL, " //
+			"quantity INTEGER NOT NULL, " //
 					+ "pos_along_path DOUBLE PRECISION, " //
 					+ "active BOOLEAN DEFAULT TRUE NOT NULL, " //
 					+ "updated TIMESTAMP NOT NULL, " //

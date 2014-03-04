@@ -119,7 +119,7 @@ public class PutBatchCsvImporter implements ICsvPutBatchImporter {
 	 * @param inProcessTime
 	 */
 	private void archivePutBatches(final Facility inFacility, final Timestamp inProcessTime) {
-		LOGGER.debug("Archive unreferenced item data");
+		LOGGER.debug("Archive unreferenced put batch data");
 
 		// Inactivate the WONDERWALL order detail that don't match the import timestamp.
 		try {
@@ -130,6 +130,7 @@ public class PutBatchCsvImporter implements ICsvPutBatchImporter {
 						if (!orderDetail.getUpdated().equals(inProcessTime)) {
 							LOGGER.debug("Archive old wonderwall order detail: " + orderDetail.getDomainId());
 							orderDetail.setActive(false);
+							orderDetail.setQuantity(0);
 							mOrderDetailDao.store(orderDetail);
 						}
 					}
@@ -188,7 +189,7 @@ public class PutBatchCsvImporter implements ICsvPutBatchImporter {
 		final Timestamp inEdiProcessTime) {
 		OrderGroup result = null;
 
-		result = inFacility.findOrderGroup(inCsvBean.getOrderGroupId());
+		result = inFacility.getOrderGroup(inCsvBean.getOrderGroupId());
 		if ((result == null) && (inCsvBean.getOrderGroupId() != null) && (inCsvBean.getOrderGroupId().length() > 0)) {
 			result = new OrderGroup();
 			result.setParent(inFacility);
@@ -224,7 +225,7 @@ public class PutBatchCsvImporter implements ICsvPutBatchImporter {
 		final OrderGroup inOrderGroup) {
 		OrderHeader result = null;
 
-		result = inFacility.findOrder(inCsvBean.getContainerId());
+		result = inFacility.getOrderHeader(inCsvBean.getContainerId());
 
 		if (result == null) {
 			result = new OrderHeader();
@@ -276,7 +277,7 @@ public class PutBatchCsvImporter implements ICsvPutBatchImporter {
 		final ItemMaster inItemMaster) {
 		OrderDetail result = null;
 
-		result = inOrder.findOrderDetail(inCsvBean.getItemId());
+		result = inOrder.getOrderDetail(inCsvBean.getItemId());
 		if (result == null) {
 			result = new OrderDetail();
 			result.setParent(inOrder);
@@ -349,6 +350,8 @@ public class PutBatchCsvImporter implements ICsvPutBatchImporter {
 
 			try {
 				mContainerUseDao.store(use);
+				inOrder.setContainerUse(use);
+				mOrderHeaderDao.store(inOrder);
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}

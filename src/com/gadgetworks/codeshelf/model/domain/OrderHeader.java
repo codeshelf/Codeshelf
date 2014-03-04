@@ -7,7 +7,9 @@ package com.gadgetworks.codeshelf.model.domain;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import javax.persistence.Column;
@@ -15,6 +17,7 @@ import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.ManyToOne;
+import javax.persistence.MapKey;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
@@ -68,12 +71,12 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		}
 	}
 
-	private static final Logger	LOGGER			= LoggerFactory.getLogger(OrderHeader.class);
+	private static final Logger			LOGGER			= LoggerFactory.getLogger(OrderHeader.class);
 
 	// The parent facility.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	private Facility			parent;
+	private Facility					parent;
 
 	// The order type.
 	@Column(nullable = false)
@@ -81,7 +84,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	@Getter
 	@Setter
 	@JsonProperty
-	private OrderTypeEnum		orderTypeEnum;
+	private OrderTypeEnum				orderTypeEnum;
 
 	// The collective order status.
 	@Column(nullable = false)
@@ -89,7 +92,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	@Getter
 	@Setter
 	@JsonProperty
-	private OrderStatusEnum		statusEnum;
+	private OrderStatusEnum				statusEnum;
 
 	// The pick strategy.
 	@Column(nullable = false)
@@ -97,14 +100,14 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	@Getter
 	@Setter
 	@JsonProperty
-	private PickStrategyEnum	pickStrategyEnum;
+	private PickStrategyEnum			pickStrategyEnum;
 
 	// The parent order group.
 	@Column(nullable = true)
 	@ManyToOne(optional = true)
 	@Getter
 	@Setter
-	private OrderGroup			orderGroup;
+	private OrderGroup					orderGroup;
 
 	// The customerID for this order.
 	// Lower numbers work first.
@@ -112,7 +115,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	@Getter
 	@Setter
 	@JsonProperty
-	private String				customerId;
+	private String						customerId;
 
 	// Reference to the shipment for this order.
 	// Lower numbers work first.
@@ -120,7 +123,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	@Getter
 	@Setter
 	@JsonProperty
-	private String				shipmentId;
+	private String						shipmentId;
 
 	// The work sequence.
 	// This is a sort of the actively working order groups in a facility.
@@ -129,48 +132,48 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	@Getter
 	@Setter
 	@JsonProperty
-	private Integer				workSequence;
+	private Integer						workSequence;
 
 	// Order date.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private Timestamp			orderDate;
+	private Timestamp					orderDate;
 
 	// Due date.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private Timestamp			dueDate;
+	private Timestamp					dueDate;
 
 	// The container use for this order.
 	@Column(nullable = true)
 	@OneToOne(optional = true)
 	@Getter
 	@Setter
-	private ContainerUse		containerUse;
+	private ContainerUse				containerUse;
 
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private Boolean				active;
+	private Boolean						active;
 
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private Timestamp			updated;
+	private Timestamp					updated;
+
+	@OneToMany(mappedBy = "parent")
+	@MapKey(name = "domainId")
+	private Map<String, OrderDetail>	orderDetails	= new HashMap<String, OrderDetail>();
 
 	@OneToMany(mappedBy = "parent")
 	@Getter
-	private List<OrderDetail>	orderDetails	= new ArrayList<OrderDetail>();
-
-	@OneToMany(mappedBy = "parent")
-	@Getter
-	private List<OrderLocation>	orderLocations	= new ArrayList<OrderLocation>();
+	private List<OrderLocation>			orderLocations	= new ArrayList<OrderLocation>();
 
 	public OrderHeader() {
 		statusEnum = OrderStatusEnum.CREATED;
@@ -205,25 +208,20 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		return getOrderDetails();
 	}
 
-	public final OrderDetail findOrderDetail(String inOrderDetailId) {
-		OrderDetail result = null;
-		for (OrderDetail orderDetail : getOrderDetails()) {
-			if (orderDetail.getDomainId().equals(inOrderDetailId)) {
-				result = orderDetail;
-				break;
-			}
-		}
-		return result;
-	}
-
-	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void addOrderDetail(OrderDetail inOrderDetail) {
-		orderDetails.add(inOrderDetail);
+		orderDetails.put(inOrderDetail.getDomainId(), inOrderDetail);
 	}
 
-	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
-	public final void removeOrderDetail(OrderDetail inOrderDetail) {
-		orderDetails.remove(inOrderDetail);
+	public final OrderDetail getOrderDetail(String inOrderDetailId) {
+		return orderDetails.get(inOrderDetailId);
+	}
+
+	public final void removeOrderDetail(String inOrderDetailId) {
+		orderDetails.remove(inOrderDetailId);
+	}
+
+	public final List<OrderDetail> getOrderDetails() {
+		return new ArrayList<OrderDetail>(orderDetails.values());
 	}
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.

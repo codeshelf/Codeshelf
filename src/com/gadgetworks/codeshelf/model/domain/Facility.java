@@ -110,20 +110,20 @@ public class Facility extends LocationABC<Organization> {
 	private List<IEdiService>				ediServices		= new ArrayList<IEdiService>();
 
 	@OneToMany(mappedBy = "parent")
-	@Getter
-	private List<ItemMaster>				itemMasters		= new ArrayList<ItemMaster>();
+	@MapKey(name = "domainId")
+	private Map<String, ItemMaster>			itemMasters		= new HashMap<String, ItemMaster>();
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	private Map<String, CodeshelfNetwork>	networks		= new HashMap<String, CodeshelfNetwork>();
 
 	@OneToMany(mappedBy = "parent")
-	@Getter
-	private List<OrderGroup>				orderGroups		= new ArrayList<OrderGroup>();
+	@MapKey(name = "domainId")
+	private Map<String, OrderGroup>			orderGroups		= new HashMap<String, OrderGroup>();
 
 	@OneToMany(mappedBy = "parent")
-	@Getter
-	private List<OrderHeader>				orderHeaders	= new ArrayList<OrderHeader>();
+	@MapKey(name = "domainId")
+	private Map<String, OrderHeader>		orderHeaders	= new HashMap<String, OrderHeader>();
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
@@ -239,28 +239,52 @@ public class Facility extends LocationABC<Organization> {
 		ediServices.remove(inEdiService);
 	}
 
-	public final void addOrderHeader(OrderHeader inOrderHeader) {
-		orderHeaders.add(inOrderHeader);
+	public final void addItemMaster(ItemMaster inItemMaster) {
+		itemMasters.put(inItemMaster.getDomainId(), inItemMaster);
 	}
 
-	public final void removeOrderHeader(OrderHeader inOrderHeaders) {
-		orderHeaders.remove(inOrderHeaders);
+	public final ItemMaster getItemMaster(String inItemMasterId) {
+		return itemMasters.get(inItemMasterId);
+	}
+
+	public final void removeItemMaster(String inItemMasterId) {
+		itemMasters.remove(inItemMasterId);
+	}
+
+	public final List<ItemMaster> getItemMasters() {
+		return new ArrayList<ItemMaster>(itemMasters.values());
 	}
 
 	public final void addOrderGroup(OrderGroup inOrderGroup) {
-		orderGroups.add(inOrderGroup);
+		orderGroups.put(inOrderGroup.getDomainId(), inOrderGroup);
 	}
 
-	public final void removeOrderGroup(OrderGroup inOrderGroups) {
-		orderGroups.remove(inOrderGroups);
+	public final OrderGroup getOrderGroup(String inOrderGroupId) {
+		return orderGroups.get(inOrderGroupId);
 	}
 
-	public final void addItemMaster(ItemMaster inItemMaster) {
-		itemMasters.add(inItemMaster);
+	public final void removeOrderGroup(String inOrderGroupId) {
+		orderGroups.remove(inOrderGroupId);
 	}
 
-	public final void removeItemMaster(ItemMaster inItemMasters) {
-		itemMasters.remove(inItemMasters);
+	public final List<OrderGroup> getOrderGroups() {
+		return new ArrayList<OrderGroup>(orderGroups.values());
+	}
+
+	public final void addOrderHeader(OrderHeader inOrderHeader) {
+		orderHeaders.put(inOrderHeader.getDomainId(), inOrderHeader);
+	}
+
+	public final OrderHeader getOrderHeader(String inOrderHeaderId) {
+		return orderHeaders.get(inOrderHeaderId);
+	}
+
+	public final void removeOrderHeader(String inOrderHeaderId) {
+		orderHeaders.remove(inOrderHeaderId);
+	}
+
+	public final List<OrderHeader> getOrderHeaders() {
+		return new ArrayList<OrderHeader>(orderHeaders.values());
 	}
 
 	public final void addUomMaster(UomMaster inUomMaster) {
@@ -305,42 +329,6 @@ public class Facility extends LocationABC<Organization> {
 
 	public final void removeLocationAlias(String inLocationAliasId) {
 		locationAliases.remove(inLocationAliasId);
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * @param inOrderID
-	 * @return
-	 */
-	public final OrderGroup findOrderGroup(String inOrderGroupID) {
-		OrderGroup result = null;
-
-		for (OrderGroup orderGroup : getOrderGroups()) {
-			if (orderGroup.getDomainId().equals(inOrderGroupID)) {
-				result = orderGroup;
-				break;
-			}
-		}
-
-		return result;
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * @param inOrderID
-	 * @return
-	 */
-	public final OrderHeader findOrder(String inOrderID) {
-		OrderHeader result = null;
-
-		for (OrderHeader order : getOrderHeaders()) {
-			if (order.getDomainId().equals(inOrderID)) {
-				result = order;
-				break;
-			}
-		}
-
-		return result;
 	}
 
 	// --------------------------------------------------------------------------

@@ -60,7 +60,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 		public OrderDetailDao(final ISchemaManager inSchemaManager) {
 			super(inSchemaManager);
 		}
-		
+
 		public final Class<OrderDetail> getDaoClass() {
 			return OrderDetail.class;
 		}
@@ -113,13 +113,13 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	@Getter
 	@Setter
 	@JsonProperty
-	private Boolean				active;
+	private Boolean					active;
 
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private Timestamp			updated;
+	private Timestamp				updated;
 
 	// A work area will contain a set of active users (workers).
 	@OneToMany(mappedBy = "parent")

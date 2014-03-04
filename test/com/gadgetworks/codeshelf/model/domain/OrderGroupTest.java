@@ -50,14 +50,12 @@ public class OrderGroupTest {
 		OrderHeader.DAO.store(order1);
 		
 		// Check if we can add this order.
-		if (!orderGroup.addOrderHeader(order1)) {
-			Assert.fail();
-		}
+		orderGroup.addOrderHeader(order1);
+		Assert.assertNotNull(orderGroup.getOrderHeader(order1.getOrderId()));
 		
 		// Check if we can add this order.
-		if (!orderGroup.removeOrderHeader(order1)) {
-			Assert.fail();
-		}
+		orderGroup.removeOrderHeader(order1.getOrderId());
+		Assert.assertNull(orderGroup.getOrderHeader(order1.getOrderId()));
 		
 		// Release the order group.
 		orderGroup.release();
@@ -72,15 +70,14 @@ public class OrderGroupTest {
 		order2.setUpdated(new Timestamp(System.currentTimeMillis()));
 		OrderHeader.DAO.store(order2);
 		
-		// Verify that we cannot add the new group.
-		if (orderGroup.addOrderHeader(order2)) {
-			Assert.fail();
-		}
+		// Check if we can add this order.
+		orderGroup.addOrderHeader(order2);
+		Assert.assertNotNull(orderGroup.getOrderHeader(order2.getOrderId()));
 		
-		if (orderGroup.removeOrderHeader(order2)) {
-			Assert.fail();
-		}
-		
+		// Check if we can add this order.
+		orderGroup.removeOrderHeader(order2.getOrderId());
+		Assert.assertNull(orderGroup.getOrderHeader(order2.getOrderId()));
+				
 		Assert.assertFalse(orderGroup.release());	
 	}
 

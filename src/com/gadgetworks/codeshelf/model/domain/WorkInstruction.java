@@ -74,7 +74,7 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 		public WorkInstructionDao(final ISchemaManager inSchemaManager) {
 			super(inSchemaManager);
 		}
-		
+
 		public final Class<WorkInstruction> getDaoClass() {
 			return WorkInstruction.class;
 		}

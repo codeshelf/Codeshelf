@@ -7,14 +7,16 @@ package com.gadgetworks.codeshelf.model.domain;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
+import javax.persistence.MapKey;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
@@ -59,20 +61,20 @@ public class OrderGroup extends DomainObjectTreeABC<Facility> {
 		public OrderGroupDao(final ISchemaManager inSchemaManager) {
 			super(inSchemaManager);
 		}
-		
+
 		public final Class<OrderGroup> getDaoClass() {
 			return OrderGroup.class;
 		}
 	}
 
-	public final static String	DEFAULT_ORDER_GROUP_DESC_PREFIX	= "Order group - ";
+	public final static String			DEFAULT_ORDER_GROUP_DESC_PREFIX	= "Order group - ";
 
-	private static final Logger	LOGGER							= LoggerFactory.getLogger(OrderGroup.class);
+	private static final Logger			LOGGER							= LoggerFactory.getLogger(OrderGroup.class);
 
 	// The parent facility.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	private Facility			parent;
+	private Facility					parent;
 
 	// The collective order status.
 	@Column(nullable = false)
@@ -80,14 +82,14 @@ public class OrderGroup extends DomainObjectTreeABC<Facility> {
 	@Getter
 	@Setter
 	@JsonProperty
-	private OrderStatusEnum		statusEnum;
+	private OrderStatusEnum				statusEnum;
 
 	// The description.
 	@Column(nullable = true)
 	@Getter
 	@Setter
 	@JsonProperty
-	private String				description;
+	private String						description;
 
 	// The work sequence.
 	// This is a sort of the actively working order groups in a facility.
@@ -96,24 +98,24 @@ public class OrderGroup extends DomainObjectTreeABC<Facility> {
 	@Getter
 	@Setter
 	@JsonProperty
-	private Integer				workSequence;
+	private Integer						workSequence;
 
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private Boolean				active;
+	private Boolean						active;
 
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private Timestamp			updated;
+	private Timestamp					updated;
 
 	// For a network this is a list of all of the users that belong in the set.
 	@OneToMany(mappedBy = "parent")
-	@Getter
-	private List<OrderHeader>	orderHeaders					= new ArrayList<OrderHeader>();
+	@MapKey(name = "domainId")
+	private Map<String, OrderHeader>	orderHeaders					= new HashMap<String, OrderHeader>();
 
 	public OrderGroup() {
 		statusEnum = OrderStatusEnum.CREATED;
@@ -143,28 +145,24 @@ public class OrderGroup extends DomainObjectTreeABC<Facility> {
 		setDomainId(inOrderGroupId);
 	}
 
+	public final void addOrderHeader(OrderHeader inOrderHeader) {
+		orderHeaders.put(inOrderHeader.getDomainId(), inOrderHeader);
+	}
+
+	public final OrderHeader getOrderHeader(String inOrderid) {
+		return orderHeaders.get(inOrderid);
+	}
+
+	public final void removeOrderHeader(String inOrderId) {
+		orderHeaders.remove(inOrderId);
+	}
+
+	public final List<OrderHeader> getOrderHeaders() {
+		return new ArrayList<OrderHeader>(orderHeaders.values());
+	}
+
 	public final List<? extends IDomainObject> getChildren() {
 		return getOrderHeaders();
-	}
-
-	// We can only add an order to the order group if it is in the CREATED state.
-	public final boolean addOrderHeader(OrderHeader inOrderHeader) {
-		boolean result = false;
-		if (getStatusEnum().equals(OrderStatusEnum.CREATED)) {
-			orderHeaders.add(inOrderHeader);
-			result = true;
-		}
-		return result;
-	}
-
-	// We can only remove an order to the order group if it is in the CREATED state.
-	public final boolean removeOrderHeader(OrderHeader inOrderHeader) {
-		boolean result = false;
-		if (getStatusEnum().equals(OrderStatusEnum.CREATED)) {
-			orderHeaders.remove(inOrderHeader);
-			result = true;
-		}
-		return result;
 	}
 
 	// --------------------------------------------------------------------------

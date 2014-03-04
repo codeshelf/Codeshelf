@@ -275,7 +275,7 @@ public class OrderCsvImporter implements ICsvOrderImporter {
 		final Timestamp inEdiProcessTime) {
 		OrderGroup result = null;
 
-		result = inFacility.findOrderGroup(inCsvBean.getOrderGroupId());
+		result = inFacility.getOrderGroup(inCsvBean.getOrderGroupId());
 		if ((result == null) && (inCsvBean.getOrderGroupId() != null) && (inCsvBean.getOrderGroupId().length() > 0)) {
 			result = new OrderGroup();
 			result.setParent(inFacility);
@@ -346,6 +346,8 @@ public class OrderCsvImporter implements ICsvOrderImporter {
 
 			try {
 				mContainerUseDao.store(use);
+				inOrder.setContainerUse(use);
+				mOrderHeaderDao.store(inOrder);
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}
@@ -369,7 +371,7 @@ public class OrderCsvImporter implements ICsvOrderImporter {
 		final OrderGroup inOrderGroup) {
 		OrderHeader result = null;
 
-		result = inFacility.findOrder(inCsvBean.getOrderId());
+		result = inFacility.getOrderHeader(inCsvBean.getOrderId());
 
 		if (result == null) {
 			result = new OrderHeader();
@@ -526,7 +528,7 @@ public class OrderCsvImporter implements ICsvOrderImporter {
 		final ItemMaster inItemMaster) {
 		OrderDetail result = null;
 
-		result = inOrder.findOrderDetail(inCsvBean.getOrderDetailId());
+		result = inOrder.getOrderDetail(inCsvBean.getOrderDetailId());
 		if (result == null) {
 			result = new OrderDetail();
 			result.setParent(inOrder);
