@@ -46,15 +46,15 @@ import com.google.inject.Singleton;
 @Singleton
 public class OrderCsvImporter implements ICsvOrderImporter {
 
-	private static final Logger			LOGGER	= LoggerFactory.getLogger(EdiProcessor.class);
+	private static final Logger		LOGGER	= LoggerFactory.getLogger(EdiProcessor.class);
 
-	private ITypedDao<OrderGroup>		mOrderGroupDao;
-	private ITypedDao<OrderHeader>		mOrderHeaderDao;
-	private ITypedDao<OrderDetail>		mOrderDetailDao;
-	private ITypedDao<Container>		mContainerDao;
-	private ITypedDao<ContainerUse>		mContainerUseDao;
-	private ITypedDao<ItemMaster>		mItemMasterDao;
-	private ITypedDao<UomMaster>		mUomMasterDao;
+	private ITypedDao<OrderGroup>	mOrderGroupDao;
+	private ITypedDao<OrderHeader>	mOrderHeaderDao;
+	private ITypedDao<OrderDetail>	mOrderDetailDao;
+	private ITypedDao<Container>	mContainerDao;
+	private ITypedDao<ContainerUse>	mContainerUseDao;
+	private ITypedDao<ItemMaster>	mItemMasterDao;
+	private ITypedDao<UomMaster>	mUomMasterDao;
 
 	@Inject
 	public OrderCsvImporter(final ITypedDao<OrderGroup> inOrderGroupDao,
@@ -227,9 +227,7 @@ public class OrderCsvImporter implements ICsvOrderImporter {
 	 * @param inFacility
 	 */
 	@Transactional
-	private void orderCsvBeanImport(final OrderCsvBean inCsvBean,
-		final Facility inFacility,
-		final Timestamp inEdiProcessTime) {
+	private void orderCsvBeanImport(final OrderCsvBean inCsvBean, final Facility inFacility, final Timestamp inEdiProcessTime) {
 
 		LOGGER.info(inCsvBean.toString());
 
@@ -246,12 +244,7 @@ public class OrderCsvImporter implements ICsvOrderImporter {
 					inFacility,
 					inEdiProcessTime,
 					uomMaster);
-				OrderDetail orderDetail = updateOrderDetail(inCsvBean,
-					inFacility,
-					inEdiProcessTime,
-					order,
-					uomMaster,
-					itemMaster);
+				OrderDetail orderDetail = updateOrderDetail(inCsvBean, inFacility, inEdiProcessTime, order, uomMaster, itemMaster);
 			} catch (Exception e) {
 				LOGGER.error("", e);
 			}
@@ -281,15 +274,22 @@ public class OrderCsvImporter implements ICsvOrderImporter {
 			result.setParent(inFacility);
 			result.setOrderGroupId(inCsvBean.getOrderGroupId());
 			result.setDescription(OrderGroup.DEFAULT_ORDER_GROUP_DESC_PREFIX + inCsvBean.getOrderGroupId());
+			result.setStatusEnum(OrderStatusEnum.CREATED);
 			inFacility.addOrderGroup(result);
+			try {
+				mOrderGroupDao.store(result);
+			} catch (DaoException e) {
+				LOGGER.error("", e);
+			}
 		}
 
 		if (result != null) {
-			result.setStatusEnum(OrderStatusEnum.CREATED);
 			try {
 				result.setActive(true);
 				result.setUpdated(inEdiProcessTime);
-				mOrderGroupDao.store(result);
+				if (mOrderGroupDao.isNewOrDirty(result)) {
+					mOrderGroupDao.store(result);
+				}
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}
@@ -475,7 +475,9 @@ public class OrderCsvImporter implements ICsvOrderImporter {
 			try {
 				result.setActive(true);
 				result.setUpdated(inEdiProcessTime);
-				mItemMasterDao.store(result);
+				if (mItemMasterDao.isNewOrDirty(result)) {
+					mItemMasterDao.store(result);
+				}
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}

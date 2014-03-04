@@ -18,10 +18,10 @@ public interface IEdiService {
 
 	EdiServiceStateEnum getServiceStateEnum();
 
-	Boolean checkForCsvUpdates(ICsvOrderImporter inCsvOrdersImporter,
+	Boolean checkForCsvUpdates(ICsvOrderImporter inCsvOrderImporter,
+		ICsvOrderLocationImporter inCsvOrderLocationImporter,
 		ICsvInventoryImporter inCsvInventoryImporter,
 		ICsvLocationAliasImporter inCsvLocationsImporter,
-		ICsvOrderLocationImporter inCsvOrderLocationImporter,
 		ICsvPutBatchImporter inCsvPutBatchImporter);
 
 }

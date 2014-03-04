@@ -125,20 +125,21 @@ public class DropboxService extends EdiServiceABC {
 		return DAO;
 	}
 
-	public final Boolean checkForCsvUpdates(ICsvOrderImporter inCsvOrdersImporter,
+	public final Boolean checkForCsvUpdates(ICsvOrderImporter inCsvOrderImporter,
+		ICsvOrderLocationImporter inCsvOrderLocationImporter,
 		ICsvInventoryImporter inCsvInventoryImporter,
 		ICsvLocationAliasImporter inCsvLocationAliasImporter,
-		ICsvOrderLocationImporter inCsvOrderLocationImporter,
 		ICsvPutBatchImporter inCsvPutBatchImporter) {
 		Boolean result = false;
 
 		// Make sure we believe that we're properly registered with the service before we try to contact it.
-		if (this.getServiceStateEnum().equals(EdiServiceStateEnum.LINKED)) {
+		if (getServiceStateEnum().equals(EdiServiceStateEnum.LINKED)) {
 
 			DropboxAPI<Session> clientSession = getClientSession();
 			if (clientSession != null) {
 				result = checkForChangedDocuments(clientSession,
-					inCsvOrdersImporter,
+					inCsvOrderImporter,
+					inCsvOrderLocationImporter,
 					inCsvInventoryImporter,
 					inCsvLocationAliasImporter,
 					inCsvPutBatchImporter);
@@ -153,7 +154,8 @@ public class DropboxService extends EdiServiceABC {
 	 * @param inClientSession
 	 */
 	private Boolean checkForChangedDocuments(DropboxAPI<Session> inClientSession,
-		ICsvOrderImporter inCsvOrdersImporter,
+		ICsvOrderImporter inCsvOrderImporter,
+		ICsvOrderLocationImporter inCsvOrderLocationImporter,
 		ICsvInventoryImporter inCsvInventoryImporter,
 		ICsvLocationAliasImporter inCsvLocationAliasImporter,
 		ICsvPutBatchImporter inCsvPutBatchImporter) {
@@ -166,7 +168,8 @@ public class DropboxService extends EdiServiceABC {
 				result = true;
 				if (iteratePage(inClientSession,
 					page,
-					inCsvOrdersImporter,
+					inCsvOrderImporter,
+					inCsvOrderLocationImporter,
 					inCsvInventoryImporter,
 					inCsvLocationAliasImporter,
 					inCsvPutBatchImporter)) {
@@ -214,7 +217,8 @@ public class DropboxService extends EdiServiceABC {
 	 */
 	private Boolean iteratePage(DropboxAPI<Session> inClientSession,
 		DeltaPage<Entry> inPage,
-		ICsvOrderImporter inCsvOrdersImporter,
+		ICsvOrderImporter inCsvOrderImporter,
+		ICsvOrderLocationImporter inCsvOrderLocationImporter,
 		ICsvInventoryImporter inCsvInventoryImporter,
 		ICsvLocationAliasImporter inCsvLocationAliasImporter,
 		ICsvPutBatchImporter inCsvPutBatchImporter) {
@@ -227,7 +231,8 @@ public class DropboxService extends EdiServiceABC {
 					// Add, or modify.
 					result &= processEntry(inClientSession,
 						entry,
-						inCsvOrdersImporter,
+						inCsvOrderImporter,
+						inCsvOrderLocationImporter,
 						inCsvInventoryImporter,
 						inCsvLocationAliasImporter,
 						inCsvPutBatchImporter);
@@ -272,7 +277,7 @@ public class DropboxService extends EdiServiceABC {
 
 		DropboxAPI<Session> result = null;
 
-		String credentials = this.getProviderCredentials();
+		String credentials = getProviderCredentials();
 		try {
 			if (credentials != null) {
 				ObjectMapper mapper = new ObjectMapper();
@@ -330,8 +335,8 @@ public class DropboxService extends EdiServiceABC {
 		result &= ensureDirectory(inClientSession, facilityPath + IMPORT_DIR_PATH + IMPORT_INVENTORY_PATH);
 		result &= ensureDirectory(inClientSession, facilityPath + IMPORT_DIR_PATH + IMPORT_LOCATIONS_PATH);
 
-		result &= ensureDirectory(inClientSession, facilityPath + IMPORT_DIR_PATH);
-		result &= ensureDirectory(inClientSession, facilityPath + IMPORT_DIR_PATH + EXPORT_WIS_PATH);
+		result &= ensureDirectory(inClientSession, facilityPath + EXPORT_DIR_PATH);
+		result &= ensureDirectory(inClientSession, facilityPath + EXPORT_DIR_PATH + EXPORT_WIS_PATH);
 
 		return result;
 	}
@@ -392,7 +397,7 @@ public class DropboxService extends EdiServiceABC {
 		String result = "";
 
 		try {
-			this.setServiceStateEnum(EdiServiceStateEnum.LINKING);
+			setServiceStateEnum(EdiServiceStateEnum.LINKING);
 			try {
 				DropboxService.DAO.store(this);
 			} catch (DaoException e) {
@@ -436,7 +441,7 @@ public class DropboxService extends EdiServiceABC {
 
 			// We got an access token.
 			if (accessToken == null) {
-				this.setServiceStateEnum(EdiServiceStateEnum.LINK_FAILED);
+				setServiceStateEnum(EdiServiceStateEnum.LINK_FAILED);
 				try {
 					DropboxService.DAO.store(this);
 				} catch (DaoException e) {
@@ -456,8 +461,9 @@ public class DropboxService extends EdiServiceABC {
 				mapper.writeValue(sw, credentialsNode);
 				credentials = sw.toString();
 
-				this.setProviderCredentials(credentials);
-				this.setServiceStateEnum(EdiServiceStateEnum.LINKED);
+				setProviderCredentials(credentials);
+				setServiceStateEnum(EdiServiceStateEnum.LINKED);
+				setDbCursor("");
 				try {
 					DropboxService.DAO.store(this);
 				} catch (DaoException e) {
@@ -508,7 +514,8 @@ public class DropboxService extends EdiServiceABC {
 	 */
 	private Boolean processEntry(DropboxAPI<Session> inClientSession,
 		DeltaEntry<Entry> inEntry,
-		ICsvOrderImporter inCsvOrdersImporter,
+		ICsvOrderImporter inCsvOrderImporter,
+		ICsvOrderLocationImporter inCsvOrderLocationImporter,
 		ICsvInventoryImporter inCsvInventoryImporter,
 		ICsvLocationAliasImporter inCsvLocationAliasImporter,
 		ICsvPutBatchImporter inCsvPutBatchImporter) {
@@ -518,7 +525,13 @@ public class DropboxService extends EdiServiceABC {
 
 		if (inEntry.lcPath.startsWith(getFacilityImportPath())) {
 			if (!inEntry.metadata.isDir) {
-				handleImport(inClientSession, inEntry, inCsvOrdersImporter, inCsvInventoryImporter, inCsvLocationAliasImporter, inCsvPutBatchImporter);
+				handleImport(inClientSession,
+					inEntry,
+					inCsvOrderImporter,
+					inCsvOrderLocationImporter,
+					inCsvInventoryImporter,
+					inCsvLocationAliasImporter,
+					inCsvPutBatchImporter);
 				shouldUpdateEntry = true;
 			}
 		}
@@ -534,7 +547,7 @@ public class DropboxService extends EdiServiceABC {
 				locator.setDocumentPath(inEntry.metadata.parentPath());
 				locator.setDocumentName(inEntry.metadata.fileName());
 
-				this.addEdiDocumentLocator(locator);
+				addEdiDocumentLocator(locator);
 				try {
 					EdiDocumentLocator.DAO.store(locator);
 				} catch (DaoException e) {
@@ -552,7 +565,8 @@ public class DropboxService extends EdiServiceABC {
 	 */
 	private void handleImport(DropboxAPI<Session> inClientSession,
 		DeltaEntry<Entry> inEntry,
-		ICsvOrderImporter inCsvOrdersImporter,
+		ICsvOrderImporter inCsvOrderImporter,
+		ICsvOrderLocationImporter inCsvOrderLocationImporter,
 		ICsvInventoryImporter inCsvInventoryImporter,
 		ICsvLocationAliasImporter inCsvLocationAliasImporter,
 		ICsvPutBatchImporter inCsvPutBatchImporter) {
@@ -564,15 +578,18 @@ public class DropboxService extends EdiServiceABC {
 			DropboxInputStream stream = inClientSession.getFileStream(filepath, null);
 			InputStreamReader reader = new InputStreamReader(stream);
 
-			if (filepath.matches(getFacilityImportPath() + IMPORT_ORDERS_PATH + ".*orders.*csv")) {
-				inCsvOrdersImporter.importOrdersFromCsvStream(reader, getParent());
+			// orders-slotting needs to come before orders, because orders is a subset of the orders-slotting regex.
+			if (filepath.matches(getFacilityImportPath() + IMPORT_ORDERS_PATH + ".*orders-slotting.*csv")) {
+				inCsvOrderLocationImporter.importOrderLocationsFromCsvStream(reader, getParent());
+			} else if (filepath.matches(getFacilityImportPath() + IMPORT_ORDERS_PATH + ".*orders.*csv")) {
+				inCsvOrderImporter.importOrdersFromCsvStream(reader, getParent());
 			} else if (filepath.matches(getFacilityImportPath() + IMPORT_INVENTORY_PATH + ".*inventory-slotted.*csv")) {
 				inCsvInventoryImporter.importSlottedInventoryFromCsvStream(reader, getParent());
 			} else if (filepath.matches(getFacilityImportPath() + IMPORT_INVENTORY_PATH + ".*inventory-ddc.*csv")) {
 				inCsvInventoryImporter.importDdcInventoryFromCsvStream(reader, getParent());
-			} else if (filepath.matches(getFacilityImportPath() + IMPORT_LOCATIONS_PATH + ".*locations.*csv")) {
+			} else if (filepath.matches(getFacilityImportPath() + IMPORT_LOCATIONS_PATH + ".*location-aliases.*csv")) {
 				inCsvLocationAliasImporter.importLocationAliasesFromCsvStream(reader, getParent());
-			} else if (filepath.matches(getFacilityImportPath() + IMPORT_BATCHES_PATH + ".*batch.*csv")) {
+			} else if (filepath.matches(getFacilityImportPath() + IMPORT_BATCHES_PATH + ".*put-batch.*csv")) {
 				inCsvPutBatchImporter.importPutBatchesFromCsvStream(reader, getParent());
 			}
 
@@ -588,7 +605,7 @@ public class DropboxService extends EdiServiceABC {
 	private Boolean removeEntry(DropboxAPI<Session> inClientSession, DeltaEntry<Entry> inEntry) {
 		Boolean result = true;
 
-		EdiDocumentLocator locator = this.getDocumentLocatorByPath(inEntry.lcPath);
+		EdiDocumentLocator locator = getDocumentLocatorByPath(inEntry.lcPath);
 		if (locator != null) {
 			try {
 				EdiDocumentLocator.DAO.delete(locator);

@@ -206,9 +206,9 @@ public class EdiProcessorTest extends EdiTestABC {
 			}
 
 			public Boolean checkForCsvUpdates(ICsvOrderImporter inCsvOrdersImporter,
+				ICsvOrderLocationImporter iCsvOrderLocationImporter,
 				ICsvInventoryImporter inCsvInventoryImporter,
 				ICsvLocationAliasImporter inCsvLocationsImporter,
-				ICsvOrderLocationImporter iCsvOrderLocationImporter,
 				ICsvPutBatchImporter inCsvPutBatchImporter) {
 				linkedResult.processed = true;
 				return true;
@@ -226,9 +226,9 @@ public class EdiProcessorTest extends EdiTestABC {
 			}
 
 			public Boolean checkForCsvUpdates(ICsvOrderImporter inCsvOrdersImporter,
+				ICsvOrderLocationImporter iCsvOrderLocationImporter,
 				ICsvInventoryImporter inCsvInventoryImporter,
 				ICsvLocationAliasImporter inCsvLocationsImporter,
-				ICsvOrderLocationImporter iCsvOrderLocationImporter,
 				ICsvPutBatchImporter inCsvPutBatchImporter) {
 				unlinkedResult.processed = true;
 				return true;

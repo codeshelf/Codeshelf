@@ -570,8 +570,8 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		boolean result = false;
 
 		result &= execOneSQLCommand("ALTER TABLE " + getDbSchemaName() + "." + inTableName //
-				+ " MODIFY " + inColumnName //
-				+ " " + inNewColumnType //
+				+ " ALTER COLUMN " + inColumnName //
+				+ " TYPE " + inNewColumnType //
 				+ ";");
 
 		return result;

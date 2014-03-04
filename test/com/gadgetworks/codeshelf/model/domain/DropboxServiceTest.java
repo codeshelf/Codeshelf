@@ -95,7 +95,7 @@ public class DropboxServiceTest {
 			}
 		};
 		
-		dropboxService.checkForCsvUpdates(orderImporter, inventoryImporter, locationImporter, orderLocationImporter, putBatchImporter);
+		dropboxService.checkForCsvUpdates(orderImporter, orderLocationImporter, inventoryImporter, locationImporter, putBatchImporter);
 		
 		Assert.assertTrue(checkImportOrders.result);
 	}
