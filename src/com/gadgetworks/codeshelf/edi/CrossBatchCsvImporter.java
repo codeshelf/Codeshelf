@@ -39,7 +39,7 @@ import com.google.inject.Singleton;
  *
  */
 @Singleton
-public class PutBatchCsvImporter implements ICsvPutBatchImporter {
+public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 
 	private static final Logger		LOGGER	= LoggerFactory.getLogger(EdiProcessor.class);
 
@@ -52,7 +52,7 @@ public class PutBatchCsvImporter implements ICsvPutBatchImporter {
 	private ITypedDao<UomMaster>	mUomMasterDao;
 
 	@Inject
-	public PutBatchCsvImporter(final ITypedDao<OrderGroup> inOrderGroupDao,
+	public CrossBatchCsvImporter(final ITypedDao<OrderGroup> inOrderGroupDao,
 		final ITypedDao<OrderHeader> inOrderHeaderDao,
 		final ITypedDao<OrderDetail> inOrderDetailDao,
 		final ITypedDao<Container> inContainerDao,
@@ -73,34 +73,34 @@ public class PutBatchCsvImporter implements ICsvPutBatchImporter {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.edi.ICsvImporter#importInventoryFromCsvStream(java.io.InputStreamReader, com.gadgetworks.codeshelf.model.domain.Facility)
 	 */
-	public final void importPutBatchesFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
+	public final void importCrossBatchesFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
 		try {
 
 			CSVReader csvReader = new CSVReader(inCsvStreamReader);
 
-			HeaderColumnNameMappingStrategy<PutBatchCsvBean> strategy = new HeaderColumnNameMappingStrategy<PutBatchCsvBean>();
-			strategy.setType(PutBatchCsvBean.class);
+			HeaderColumnNameMappingStrategy<CrossBatchCsvBean> strategy = new HeaderColumnNameMappingStrategy<CrossBatchCsvBean>();
+			strategy.setType(CrossBatchCsvBean.class);
 
-			CsvToBean<PutBatchCsvBean> csv = new CsvToBean<PutBatchCsvBean>();
-			List<PutBatchCsvBean> putBatchBeanList = csv.parse(strategy, csvReader);
+			CsvToBean<CrossBatchCsvBean> csv = new CsvToBean<CrossBatchCsvBean>();
+			List<CrossBatchCsvBean> crossBatchBeanList = csv.parse(strategy, csvReader);
 
-			if (putBatchBeanList.size() > 0) {
+			if (crossBatchBeanList.size() > 0) {
 
 				Timestamp processTime = new Timestamp(System.currentTimeMillis());
 
 				LOGGER.debug("Begin order location import.");
 
 				// Iterate over the put batch import beans.
-				for (PutBatchCsvBean putBatchBean : putBatchBeanList) {
-					String errorMsg = putBatchBean.validateBean();
+				for (CrossBatchCsvBean crossBatchBean : crossBatchBeanList) {
+					String errorMsg = crossBatchBean.validateBean();
 					if (errorMsg != null) {
 						LOGGER.error("Import errors: " + errorMsg);
 					} else {
-						putBatchCsvBeanImport(putBatchBean, inFacility, processTime);
+						crossBatchCsvBeanImport(crossBatchBean, inFacility, processTime);
 					}
 				}
 
-				archivePutBatches(inFacility, processTime);
+				archiveCrossBatches(inFacility, processTime);
 
 				LOGGER.debug("End slotted inventory import.");
 			}
@@ -118,14 +118,14 @@ public class PutBatchCsvImporter implements ICsvPutBatchImporter {
 	 * @param inFacility
 	 * @param inProcessTime
 	 */
-	private void archivePutBatches(final Facility inFacility, final Timestamp inProcessTime) {
+	private void archiveCrossBatches(final Facility inFacility, final Timestamp inProcessTime) {
 		LOGGER.debug("Archive unreferenced put batch data");
 
 		// Inactivate the WONDERWALL order detail that don't match the import timestamp.
 		try {
 			mOrderHeaderDao.beginTransaction();
 			for (OrderHeader order : inFacility.getOrderHeaders()) {
-				if (order.getOrderTypeEnum().equals(OrderTypeEnum.WONDERWALL))
+				if (order.getOrderTypeEnum().equals(OrderTypeEnum.CROSS))
 					for (OrderDetail orderDetail : order.getOrderDetails()) {
 						if (!orderDetail.getUpdated().equals(inProcessTime)) {
 							LOGGER.debug("Archive old wonderwall order detail: " + orderDetail.getDomainId());
@@ -148,7 +148,7 @@ public class PutBatchCsvImporter implements ICsvPutBatchImporter {
 	 * @param inFacility
 	 * @param inEdiProcessTime
 	 */
-	private void putBatchCsvBeanImport(final PutBatchCsvBean inCsvBean, final Facility inFacility, final Timestamp inEdiProcessTime) {
+	private void crossBatchCsvBeanImport(final CrossBatchCsvBean inCsvBean, final Facility inFacility, final Timestamp inEdiProcessTime) {
 
 		try {
 			mOrderHeaderDao.beginTransaction();
@@ -184,7 +184,7 @@ public class PutBatchCsvImporter implements ICsvPutBatchImporter {
 	 * @param inEdiProcessTime
 	 * @return
 	 */
-	private OrderGroup updateOptionalOrderGroup(final PutBatchCsvBean inCsvBean,
+	private OrderGroup updateOptionalOrderGroup(final CrossBatchCsvBean inCsvBean,
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime) {
 		OrderGroup result = null;
@@ -219,7 +219,7 @@ public class PutBatchCsvImporter implements ICsvPutBatchImporter {
 	 * @param inOrderGroup
 	 * @return
 	 */
-	private OrderHeader updateOrderHeader(final PutBatchCsvBean inCsvBean,
+	private OrderHeader updateOrderHeader(final CrossBatchCsvBean inCsvBean,
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime,
 		final OrderGroup inOrderGroup) {
@@ -236,7 +236,7 @@ public class PutBatchCsvImporter implements ICsvPutBatchImporter {
 		}
 
 		try {
-			result.setOrderTypeEnum(OrderTypeEnum.WONDERWALL);
+			result.setOrderTypeEnum(OrderTypeEnum.CROSS);
 
 			if (inOrderGroup != null) {
 				inOrderGroup.addOrderHeader(result);
@@ -269,7 +269,7 @@ public class PutBatchCsvImporter implements ICsvPutBatchImporter {
 	 * @param inItemMaster
 	 * @return
 	 */
-	private OrderDetail updateOrderDetail(final PutBatchCsvBean inCsvBean,
+	private OrderDetail updateOrderDetail(final CrossBatchCsvBean inCsvBean,
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime,
 		final OrderHeader inOrder,
@@ -310,7 +310,7 @@ public class PutBatchCsvImporter implements ICsvPutBatchImporter {
 	 * @param inOrder
 	 * @return
 	 */
-	private Container updateContainer(final PutBatchCsvBean inCsvBean,
+	private Container updateContainer(final CrossBatchCsvBean inCsvBean,
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime,
 		final OrderHeader inOrder) {

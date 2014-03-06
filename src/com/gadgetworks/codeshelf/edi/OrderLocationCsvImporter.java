@@ -167,31 +167,35 @@ public class OrderLocationCsvImporter implements ICsvOrderLocationImporter {
 		String orderId = inCsvBean.getOrderId();
 		String locationId = inCsvBean.getLocationId();
 
-		OrderHeader order = inFacility.getOrderHeader(orderId);
-		if (order != null) {
-			for (OrderLocation orderLocation : order.getOrderLocations()) {
-				if (orderLocation.getLocation().getLocationId().equals(locationId)) {
-					result = orderLocation;
+		// Obnly create an OrderLocation mapping if the location is valid.
+		ILocation mappedLocation = inFacility.findSubLocationById(locationId);
+		if (mappedLocation != null) {
+
+			OrderHeader order = inFacility.getOrderHeader(orderId);
+			if (order != null) {
+				for (OrderLocation orderLocation : order.getOrderLocations()) {
+					if (orderLocation.getLocation().getLocationId().equals(locationId)) {
+						result = orderLocation;
+					}
 				}
-			}
 
-			if ((result == null) && (locationId != null)) {
-				result = new OrderLocation();
-				result.setDomainId(inCsvBean.getOrderId() + "-" + inCsvBean.locationId);
-				result.setParent(order);
-				order.addOrderLocation(result);
-			}
+				if ((result == null) && (locationId != null)) {
+					result = new OrderLocation();
+					result.setDomainId(inCsvBean.getOrderId() + "-" + inCsvBean.locationId);
+					result.setParent(order);
+					//order.addOrderLocation(result);
+				}
 
-			// If we were able to get/create an item then update it.
-			if (result != null) {
-				ILocation mappedLocation = inFacility.findSubLocationById(locationId);
-				result.setLocation(mappedLocation);
-				try {
-					result.setActive(true);
-					result.setUpdated(inEdiProcessTime);
-					mOrderLocationDao.store(result);
-				} catch (DaoException e) {
-					LOGGER.error("", e);
+				// If we were able to get/create an item then update it.
+				if (result != null) {
+					result.setLocation(mappedLocation);
+					try {
+						result.setActive(true);
+						result.setUpdated(inEdiProcessTime);
+						mOrderLocationDao.store(result);
+					} catch (DaoException e) {
+						LOGGER.error("", e);
+					}
 				}
 			}
 		}

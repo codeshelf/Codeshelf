@@ -10,11 +10,11 @@ import java.io.InputStreamReader;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.gadgetworks.codeshelf.edi.ICsvCrossBatchImporter;
 import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
 import com.gadgetworks.codeshelf.edi.ICsvLocationAliasImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderLocationImporter;
-import com.gadgetworks.codeshelf.edi.ICsvPutBatchImporter;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.dao.MockDao;
 import com.gadgetworks.codeshelf.model.dao.Result;
@@ -88,14 +88,14 @@ public class DropboxServiceTest {
 			}
 		};
 		
-		ICsvPutBatchImporter putBatchImporter = new ICsvPutBatchImporter() {
+		ICsvCrossBatchImporter crossBatchImporter = new ICsvCrossBatchImporter() {
 			
 			@Override
-			public void importPutBatchesFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
+			public void importCrossBatchesFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
 			}
 		};
 		
-		dropboxService.checkForCsvUpdates(orderImporter, orderLocationImporter, inventoryImporter, locationImporter, putBatchImporter);
+		dropboxService.checkForCsvUpdates(orderImporter, orderLocationImporter, inventoryImporter, locationImporter, crossBatchImporter);
 		
 		Assert.assertTrue(checkImportOrders.result);
 	}

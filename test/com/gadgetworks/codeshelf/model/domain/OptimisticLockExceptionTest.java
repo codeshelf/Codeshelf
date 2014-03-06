@@ -91,7 +91,7 @@ public class OptimisticLockExceptionTest {
 		OrderHeader order1 = new OrderHeader();
 		order1.setDomainId("OPTIMISTIC-123");
 		order1.setParent(facility);
-		order1.setOrderTypeEnum(OrderTypeEnum.PICK);
+		order1.setOrderTypeEnum(OrderTypeEnum.OUTBOUND);
 		order1.setStatusEnum(OrderStatusEnum.CREATED);
 		order1.setPickStrategyEnum(PickStrategyEnum.SERIAL);
 		order1.setOrderDate(new Timestamp(System.currentTimeMillis()));

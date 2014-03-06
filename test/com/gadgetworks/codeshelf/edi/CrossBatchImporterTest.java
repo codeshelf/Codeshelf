@@ -24,10 +24,10 @@ import com.gadgetworks.codeshelf.model.domain.Organization;
  * @author jeffw
  * 
  */
-public class PutBatchImporterTest extends EdiTestABC {
+public class CrossBatchImporterTest extends EdiTestABC {
 
 	@Test
-	public final void testPutBatchImporter() {
+	public final void testCrossBatchImporter() {
 
 		String csvString = "orderGroupId,containerId,itemId,description,quantity,uom\r\n" //
 				+ ",C111,I111.1,Item 111.1 Desc,100,ea\r\n" //
@@ -43,25 +43,25 @@ public class PutBatchImporterTest extends EdiTestABC {
 		InputStreamReader reader = new InputStreamReader(stream);
 
 		Organization organization = new Organization();
-		organization.setDomainId("O-PUT1");
+		organization.setDomainId("O-CROSS1");
 		mOrganizationDao.store(organization);
 
-		organization.createFacility("F-PUT1", "TEST", PositionTypeEnum.METERS_FROM_PARENT.getName(), 0.0, 0.0);
-		Facility facility = organization.getFacility("F-PUT1");
+		organization.createFacility("F-CROSS1", "TEST", PositionTypeEnum.METERS_FROM_PARENT.getName(), 0.0, 0.0);
+		Facility facility = organization.getFacility("F-CROSS1");
 
-		ICsvPutBatchImporter importer = new PutBatchCsvImporter(mOrderGroupDao,
+		ICsvCrossBatchImporter importer = new CrossBatchCsvImporter(mOrderGroupDao,
 			mOrderHeaderDao,
 			mOrderDetailDao,
 			mContainerDao,
 			mContainerUseDao,
 			mItemMasterDao,
 			mUomMasterDao);
-		importer.importPutBatchesFromCsvStream(reader, facility);
+		importer.importCrossBatchesFromCsvStream(reader, facility);
 
 		// Make sure we created an order with the container's ID.
 		OrderHeader order = facility.getOrderHeader("C111");
 		Assert.assertNotNull(order);
-		Assert.assertEquals(order.getOrderTypeEnum(), OrderTypeEnum.WONDERWALL);
+		Assert.assertEquals(order.getOrderTypeEnum(), OrderTypeEnum.CROSS);
 
 		// Make sure there's a contianer use and that its ID matches the order.
 		ContainerUse use = order.getContainerUse();
@@ -74,7 +74,7 @@ public class PutBatchImporterTest extends EdiTestABC {
 	}
 
 	@Test
-	public final void testPutBatchOrderGroups() {
+	public final void testCrossBatchOrderGroups() {
 
 		String csvString = "orderGroupId,containerId,itemId,description,quantity,uom\r\n" //
 				+ "G1,C333,I333.1,Item 333.1 Desc,100,ea\r\n" //
@@ -90,20 +90,20 @@ public class PutBatchImporterTest extends EdiTestABC {
 		InputStreamReader reader = new InputStreamReader(stream);
 
 		Organization organization = new Organization();
-		organization.setDomainId("O-PUT2");
+		organization.setDomainId("O-CROSS2");
 		mOrganizationDao.store(organization);
 
-		organization.createFacility("F-PUT2", "TEST", PositionTypeEnum.METERS_FROM_PARENT.getName(), 0.0, 0.0);
-		Facility facility = organization.getFacility("F-PUT2");
+		organization.createFacility("F-CROSS2", "TEST", PositionTypeEnum.METERS_FROM_PARENT.getName(), 0.0, 0.0);
+		Facility facility = organization.getFacility("F-CROSS2");
 
-		ICsvPutBatchImporter importer = new PutBatchCsvImporter(mOrderGroupDao,
+		ICsvCrossBatchImporter importer = new CrossBatchCsvImporter(mOrderGroupDao,
 			mOrderHeaderDao,
 			mOrderDetailDao,
 			mContainerDao,
 			mContainerUseDao,
 			mItemMasterDao,
 			mUomMasterDao);
-		importer.importPutBatchesFromCsvStream(reader, facility);
+		importer.importCrossBatchesFromCsvStream(reader, facility);
 
 		OrderGroup group = facility.getOrderGroup("G1");
 		Assert.assertNotNull(group);
@@ -114,7 +114,7 @@ public class PutBatchImporterTest extends EdiTestABC {
 	}
 
 	@Test
-	public final void testResendPutBatchRemoveItem() {
+	public final void testResendCrossBatchRemoveItem() {
 
 		String csvString = "orderGroupId,containerId,itemId,description,quantity,uom\r\n" //
 				+ "G1,C555,I555.1,Item 555.1 Desc,100,ea\r\n" //
@@ -130,20 +130,20 @@ public class PutBatchImporterTest extends EdiTestABC {
 		InputStreamReader reader = new InputStreamReader(stream);
 
 		Organization organization = new Organization();
-		organization.setDomainId("O-PUT3");
+		organization.setDomainId("O-CROSS3");
 		mOrganizationDao.store(organization);
 
-		organization.createFacility("F-PUT3", "TEST", PositionTypeEnum.METERS_FROM_PARENT.getName(), 0.0, 0.0);
-		Facility facility = organization.getFacility("F-PUT3");
+		organization.createFacility("F-CROSS3", "TEST", PositionTypeEnum.METERS_FROM_PARENT.getName(), 0.0, 0.0);
+		Facility facility = organization.getFacility("F-CROSS3");
 
-		ICsvPutBatchImporter importer = new PutBatchCsvImporter(mOrderGroupDao,
+		ICsvCrossBatchImporter importer = new CrossBatchCsvImporter(mOrderGroupDao,
 			mOrderHeaderDao,
 			mOrderDetailDao,
 			mContainerDao,
 			mContainerUseDao,
 			mItemMasterDao,
 			mUomMasterDao);
-		importer.importPutBatchesFromCsvStream(reader, facility);
+		importer.importCrossBatchesFromCsvStream(reader, facility);
 
 		// Now re-import the interchange with one order missing a single item.
 		csvString = "orderGroupId,containerId,itemId,description,quantity,uom\r\n" //
@@ -158,14 +158,14 @@ public class PutBatchImporterTest extends EdiTestABC {
 		stream = new ByteArrayInputStream(csvArray);
 		reader = new InputStreamReader(stream);
 
-		importer = new PutBatchCsvImporter(mOrderGroupDao,
+		importer = new CrossBatchCsvImporter(mOrderGroupDao,
 			mOrderHeaderDao,
 			mOrderDetailDao,
 			mContainerDao,
 			mContainerUseDao,
 			mItemMasterDao,
 			mUomMasterDao);
-		importer.importPutBatchesFromCsvStream(reader, facility);
+		importer.importCrossBatchesFromCsvStream(reader, facility);
 
 		// Make sure that order detail item I555.3 still exists, but has quantity 0.
 		OrderHeader order = facility.getOrderHeader("C555");
@@ -177,7 +177,7 @@ public class PutBatchImporterTest extends EdiTestABC {
 	}
 
 	@Test
-	public final void testResendPutBatchAddItem() {
+	public final void testResendCrossBatchAddItem() {
 
 		String csvString = "orderGroupId,containerId,itemId,description,quantity,uom\r\n" //
 				+ "G1,C777,I777.1,Item 777.1 Desc,100,ea\r\n" //
@@ -193,20 +193,20 @@ public class PutBatchImporterTest extends EdiTestABC {
 		InputStreamReader reader = new InputStreamReader(stream);
 
 		Organization organization = new Organization();
-		organization.setDomainId("O-PUT4");
+		organization.setDomainId("O-CROSS4");
 		mOrganizationDao.store(organization);
 
-		organization.createFacility("F-PUT4", "TEST", PositionTypeEnum.METERS_FROM_PARENT.getName(), 0.0, 0.0);
-		Facility facility = organization.getFacility("F-PUT4");
+		organization.createFacility("F-CROSS4", "TEST", PositionTypeEnum.METERS_FROM_PARENT.getName(), 0.0, 0.0);
+		Facility facility = organization.getFacility("F-CROSS4");
 
-		ICsvPutBatchImporter importer = new PutBatchCsvImporter(mOrderGroupDao,
+		ICsvCrossBatchImporter importer = new CrossBatchCsvImporter(mOrderGroupDao,
 			mOrderHeaderDao,
 			mOrderDetailDao,
 			mContainerDao,
 			mContainerUseDao,
 			mItemMasterDao,
 			mUomMasterDao);
-		importer.importPutBatchesFromCsvStream(reader, facility);
+		importer.importCrossBatchesFromCsvStream(reader, facility);
 
 		// Now re-import the interchange with one order missing a single item.
 		csvString = "orderGroupId,containerId,itemId,description,quantity,uom\r\n" //
@@ -223,14 +223,14 @@ public class PutBatchImporterTest extends EdiTestABC {
 		stream = new ByteArrayInputStream(csvArray);
 		reader = new InputStreamReader(stream);
 
-		importer = new PutBatchCsvImporter(mOrderGroupDao,
+		importer = new CrossBatchCsvImporter(mOrderGroupDao,
 			mOrderHeaderDao,
 			mOrderDetailDao,
 			mContainerDao,
 			mContainerUseDao,
 			mItemMasterDao,
 			mUomMasterDao);
-		importer.importPutBatchesFromCsvStream(reader, facility);
+		importer.importCrossBatchesFromCsvStream(reader, facility);
 
 		// Make sure that order detail item I666.3 still exists, but has quantity 0.
 		OrderHeader order = facility.getOrderHeader("C777");
@@ -242,7 +242,7 @@ public class PutBatchImporterTest extends EdiTestABC {
 	}
 	
 	@Test
-	public final void testResendPutBatchAlterItems() {
+	public final void testResendCrossBatchAlterItems() {
 
 		String csvString = "orderGroupId,containerId,itemId,description,quantity,uom\r\n" //
 				+ "G1,C999,I999.1,Item 999.1 Desc,100,ea\r\n" //
@@ -258,20 +258,20 @@ public class PutBatchImporterTest extends EdiTestABC {
 		InputStreamReader reader = new InputStreamReader(stream);
 
 		Organization organization = new Organization();
-		organization.setDomainId("O-PUT5");
+		organization.setDomainId("O-CROSS5");
 		mOrganizationDao.store(organization);
 
-		organization.createFacility("F-PUT5", "TEST", PositionTypeEnum.METERS_FROM_PARENT.getName(), 0.0, 0.0);
-		Facility facility = organization.getFacility("F-PUT5");
+		organization.createFacility("F-CROSS5", "TEST", PositionTypeEnum.METERS_FROM_PARENT.getName(), 0.0, 0.0);
+		Facility facility = organization.getFacility("F-CROSS5");
 
-		ICsvPutBatchImporter importer = new PutBatchCsvImporter(mOrderGroupDao,
+		ICsvCrossBatchImporter importer = new CrossBatchCsvImporter(mOrderGroupDao,
 			mOrderHeaderDao,
 			mOrderDetailDao,
 			mContainerDao,
 			mContainerUseDao,
 			mItemMasterDao,
 			mUomMasterDao);
-		importer.importPutBatchesFromCsvStream(reader, facility);
+		importer.importCrossBatchesFromCsvStream(reader, facility);
 
 		// Now re-import the interchange with one order missing a single item.
 		csvString = "orderGroupId,containerId,itemId,description,quantity,uom\r\n" //
@@ -287,14 +287,14 @@ public class PutBatchImporterTest extends EdiTestABC {
 		stream = new ByteArrayInputStream(csvArray);
 		reader = new InputStreamReader(stream);
 
-		importer = new PutBatchCsvImporter(mOrderGroupDao,
+		importer = new CrossBatchCsvImporter(mOrderGroupDao,
 			mOrderHeaderDao,
 			mOrderDetailDao,
 			mContainerDao,
 			mContainerUseDao,
 			mItemMasterDao,
 			mUomMasterDao);
-		importer.importPutBatchesFromCsvStream(reader, facility);
+		importer.importCrossBatchesFromCsvStream(reader, facility);
 
 		// Make sure that order detail item I999.3 still exists, but has quantity 0.
 		OrderHeader order = facility.getOrderHeader("C999");

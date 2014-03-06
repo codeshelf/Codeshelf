@@ -13,8 +13,8 @@ import com.gadgetworks.codeshelf.model.domain.Facility;
  * @author jeffw
  *
  */
-public interface ICsvPutBatchImporter {
+public interface ICsvCrossBatchImporter {
 
-	void importPutBatchesFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility);
+	void importCrossBatchesFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility);
 
 }

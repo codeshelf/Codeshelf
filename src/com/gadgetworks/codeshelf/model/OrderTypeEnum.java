@@ -14,12 +14,15 @@ import com.avaje.ebean.annotation.EnumValue;
 public enum OrderTypeEnum {
 	@EnumValue("INVALID")
 	INVALID(OrderTypeNum.INVALID, "INVALID"),
-	@EnumValue("PICK")
-	PICK(OrderTypeNum.PICK, "PICK"),
+	// Outbound customer orders picked from inventory.
+	@EnumValue("OUTBOUND")
+	OUTBOUND(OrderTypeNum.OUTBOUND, "OUTBOUND"),
+	// Inbound orders to put material into inventory.
 	@EnumValue("PUT")
-	PUT(OrderTypeNum.PUT, "PUT"),
-	@EnumValue("WONDERWALL")
-	WONDERWALL(OrderTypeNum.WONDERWALL, "WONDERWALL");
+	INBOUND(OrderTypeNum.INBOUND, "INBOUND"),
+	// Orders the cross the facility to fill outbound customer orders on a CrossWall.
+	@EnumValue("CROSS")
+	CROSS(OrderTypeNum.CROSS, "CROSS");
 
 	private int		mValue;
 	private String	mName;
@@ -33,16 +36,16 @@ public enum OrderTypeEnum {
 		OrderTypeEnum result;
 
 		switch (inPickStrategy) {
-			case OrderTypeNum.PICK:
-				result = OrderTypeEnum.PICK;
+			case OrderTypeNum.OUTBOUND:
+				result = OrderTypeEnum.OUTBOUND;
 				break;
 
-			case OrderTypeNum.PUT:
-				result = OrderTypeEnum.PUT;
+			case OrderTypeNum.INBOUND:
+				result = OrderTypeEnum.INBOUND;
 				break;
 
-			case OrderTypeNum.WONDERWALL:
-				result = OrderTypeEnum.WONDERWALL;
+			case OrderTypeNum.CROSS:
+				result = OrderTypeEnum.CROSS;
 				break;
 
 			default:
@@ -65,9 +68,9 @@ public enum OrderTypeEnum {
 	static final class OrderTypeNum {
 
 		static final byte	INVALID		= -1;
-		static final byte	PICK		= 0;
-		static final byte	PUT			= 1;
-		static final byte	WONDERWALL	= 2;
+		static final byte	OUTBOUND	= 0;
+		static final byte	INBOUND		= 1;
+		static final byte	CROSS		= 2;
 
 		private OrderTypeNum() {
 		};

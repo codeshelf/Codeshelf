@@ -15,18 +15,18 @@ import org.java_websocket.WebSocket;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.gadgetworks.codeshelf.edi.InventoryCsvImporter;
-import com.gadgetworks.codeshelf.edi.LocationAliasCsvImporter;
-import com.gadgetworks.codeshelf.edi.OrderCsvImporter;
-import com.gadgetworks.codeshelf.edi.OrderLocationCsvImporter;
-import com.gadgetworks.codeshelf.edi.PutBatchCsvImporter;
+import com.gadgetworks.codeshelf.edi.CrossBatchCsvImporter;
 import com.gadgetworks.codeshelf.edi.EdiProcessor;
+import com.gadgetworks.codeshelf.edi.ICsvCrossBatchImporter;
 import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
 import com.gadgetworks.codeshelf.edi.ICsvLocationAliasImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderLocationImporter;
-import com.gadgetworks.codeshelf.edi.ICsvPutBatchImporter;
 import com.gadgetworks.codeshelf.edi.IEdiProcessor;
+import com.gadgetworks.codeshelf.edi.InventoryCsvImporter;
+import com.gadgetworks.codeshelf.edi.LocationAliasCsvImporter;
+import com.gadgetworks.codeshelf.edi.OrderCsvImporter;
+import com.gadgetworks.codeshelf.edi.OrderLocationCsvImporter;
 import com.gadgetworks.codeshelf.model.dao.DaoProvider;
 import com.gadgetworks.codeshelf.model.dao.Database;
 import com.gadgetworks.codeshelf.model.dao.H2SchemaManager;
@@ -294,7 +294,7 @@ public class CodeshelfApplicationTest {
 		ICsvInventoryImporter inventoryImporter = new InventoryCsvImporter(itemMasterDao, itemDao, uomMasterDao);
 		ICsvLocationAliasImporter locationAliasImporter = new LocationAliasCsvImporter(locationAliasDao);
 		ICsvOrderLocationImporter orderLocationImporter = new OrderLocationCsvImporter(orderLocationDao);
-		ICsvPutBatchImporter putBatchImporter = new PutBatchCsvImporter(orderGroupDao,
+		ICsvCrossBatchImporter crossBatchImporter = new CrossBatchCsvImporter(orderGroupDao,
 			orderHeaderDao,
 			orderDetailDao,
 			containerDao,
@@ -305,7 +305,7 @@ public class CodeshelfApplicationTest {
 			inventoryImporter,
 			locationAliasImporter,
 			orderLocationImporter,
-			putBatchImporter,
+			crossBatchImporter,
 			facilityDao);
 		IPickDocumentGenerator pickDocumentGenerator = new PickDocumentGenerator();
 		IUtil util = new MockUtil();

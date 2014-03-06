@@ -380,7 +380,7 @@ public class OrderCsvImporter implements ICsvOrderImporter {
 			inFacility.addOrderHeader(result);
 		}
 
-		result.setOrderTypeEnum(OrderTypeEnum.PICK);
+		result.setOrderTypeEnum(OrderTypeEnum.OUTBOUND);
 		result.setStatusEnum(OrderStatusEnum.CREATED);
 		result.setCustomerId(inCsvBean.getCustomerId());
 		result.setShipmentId(inCsvBean.getShipmentId());

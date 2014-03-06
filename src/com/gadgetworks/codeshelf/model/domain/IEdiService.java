@@ -9,7 +9,7 @@ import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
 import com.gadgetworks.codeshelf.edi.ICsvLocationAliasImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderLocationImporter;
-import com.gadgetworks.codeshelf.edi.ICsvPutBatchImporter;
+import com.gadgetworks.codeshelf.edi.ICsvCrossBatchImporter;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 
 public interface IEdiService {
@@ -22,6 +22,6 @@ public interface IEdiService {
 		ICsvOrderLocationImporter inCsvOrderLocationImporter,
 		ICsvInventoryImporter inCsvInventoryImporter,
 		ICsvLocationAliasImporter inCsvLocationsImporter,
-		ICsvPutBatchImporter inCsvPutBatchImporter);
+		ICsvCrossBatchImporter inCsvCrossBatchImporter);
 
 }

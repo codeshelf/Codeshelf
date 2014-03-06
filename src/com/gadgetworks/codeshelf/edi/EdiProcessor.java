@@ -34,7 +34,7 @@ public final class EdiProcessor implements IEdiProcessor {
 	private ICsvOrderLocationImporter	mCsvOrderLocationImporter;
 	private ICsvInventoryImporter		mCsvInventoryImporter;
 	private ICsvLocationAliasImporter	mCsvLocationAliasImporter;
-	private ICsvPutBatchImporter		mCsvPutBatchImporter;
+	private ICsvCrossBatchImporter		mCsvCrossBatchImporter;
 	private ITypedDao<Facility>			mFacilityDao;
 
 	@Inject
@@ -42,14 +42,14 @@ public final class EdiProcessor implements IEdiProcessor {
 		final ICsvInventoryImporter inCsvInventoryImporter,
 		final ICsvLocationAliasImporter inCsvLocationsImporter,
 		final ICsvOrderLocationImporter inCsvOrderLocationImporter,
-		final ICsvPutBatchImporter inCsvPutBatchImporter,
+		final ICsvCrossBatchImporter inCsvCrossBatchImporter,
 		final ITypedDao<Facility> inFacilityDao) {
 
 		mCsvOrderImporter = inCsvOrdersImporter;
 		mCsvOrderLocationImporter = inCsvOrderLocationImporter;
 		mCsvInventoryImporter = inCsvInventoryImporter;
 		mCsvLocationAliasImporter = inCsvLocationsImporter;
-		mCsvPutBatchImporter = inCsvPutBatchImporter;
+		mCsvCrossBatchImporter = inCsvCrossBatchImporter;
 		mFacilityDao = inFacilityDao;
 
 		mShouldRun = false;
@@ -122,7 +122,7 @@ public final class EdiProcessor implements IEdiProcessor {
 						mCsvOrderLocationImporter,
 						mCsvInventoryImporter,
 						mCsvLocationAliasImporter,
-						mCsvPutBatchImporter)) {
+						mCsvCrossBatchImporter)) {
 						// Signal other threads that we've just processed new EDI.
 						try {
 							inEdiSignalQueue.put(ediService.getServiceName());

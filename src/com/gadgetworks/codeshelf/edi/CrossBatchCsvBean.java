@@ -20,9 +20,9 @@ import com.avaje.ebean.validation.NotNull;
  */
 @ToString
 @Data
-public class PutBatchCsvBean extends ImportCsvBeanABC {
+public class CrossBatchCsvBean extends ImportCsvBeanABC {
 
-	static final Logger	LOGGER	= LoggerFactory.getLogger(PutBatchCsvBean.class);
+	static final Logger	LOGGER	= LoggerFactory.getLogger(CrossBatchCsvBean.class);
 
 	protected String	orderGroupId;
 

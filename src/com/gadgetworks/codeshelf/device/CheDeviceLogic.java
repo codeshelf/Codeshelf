@@ -54,15 +54,17 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 	// These are the message strings we send to the remote CHE.
 	// Currently, these cannot be longer than 10 characters.
-	private static final String		EMPTY_MSG				= "                ";
-	private static final String		INVALID_SCAN_MSG		= "INVALID         ";
-	private static final String		SCAN_USERID_MSG			= "SCAN BADGE      ";
-	private static final String		SCAN_LOCATION_MSG		= "SCAN LOCATION   ";
-	private static final String		SCAN_CONTAINER_MSG		= "SCAN CONTAINER  ";
-	private static final String		SELECT_POSITION_MSG		= "SELECT POSITION ";
-	private static final String		SHORT_PICK_CONFIRM_MSG	= "CONFIRM SHORT   ";
-	private static final String		PICK_COMPLETE_MSG		= "REQUEST_QTY COMPLETE   ";
-	private static final String		YES_NO_MSG				= "YES OR NO       ";
+	private static final String		EMPTY_MSG				= "                    ";
+	private static final String		INVALID_SCAN_MSG		= "INVALID             ";
+	private static final String		SCAN_USERID_MSG			= "SCAN BADGE          ";
+	private static final String		SCAN_LOCATION_MSG		= "SCAN LOCATION       ";
+	private static final String		SCAN_CONTAINER_MSG		= "SCAN CONTAINER      ";
+	private static final String		SELECT_POSITION_MSG		= "SELECT POSITION     ";
+	private static final String		SHORT_PICK_CONFIRM_MSG	= "CONFIRM SHORT       ";
+	private static final String		PICK_COMPLETE_MSG		= "ALL WORK COMPLETE   ";
+	private static final String		YES_NO_MSG				= "SCAN YES OR NO      ";
+	private static final String		NO_CONTAINERS_SETUP		= "NO SETUP CONTAINERS ";
+	private static final String		FINISH_SETUP			= "PLS SETUP CONTAINERS";
 
 	private static final String		STARTWORK_COMMAND		= "START";
 	private static final String		SETUP_COMMAND			= "SETUP";
@@ -126,8 +128,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 * @param inLine1Message
 	 */
 	private void sendDisplayCommand(final String inLine1Message, final String inLine2Message) {
-		String msg1 = String.format("%-16s", inLine1Message);
-		String msg2 = String.format("%-16s", inLine2Message);
+		String msg1 = String.format("%-20s", inLine1Message);
+		String msg2 = String.format("%-20s", inLine2Message);
 		LOGGER.info("Display message: " + msg1 + " -- " + msg2);
 		ICommand command = new CommandControlMessage(NetEndpoint.PRIMARY_ENDPOINT, msg1, msg2);
 		mRadioController.sendCommand(command, getAddress(), true);
@@ -224,6 +226,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		mAllPicksWiList.clear();
 		mCompletedWiList.clear();
 		mAllPicksWiList.addAll(inWorkItemList);
+		doNextPick();
 		for (WorkInstruction wi : inWorkItemList) {
 			LOGGER.info("WI: Loc: " + wi.getLocationId() + " SKU: " + wi.getItemId());
 		}
@@ -272,8 +275,15 @@ public class CheDeviceLogic extends DeviceLogicABC {
 					break;
 
 				case CONTAINER_POSITION:
-					// The only thing that makes sense in this mode is a button press (or a logout covered above).
+					// The only thing that makes sense in this state is a position assignment (or a logout covered above).
 					processContainerPosition(scanPrefixStr, scanStr);
+					break;
+
+				case DO_PICK:
+					// At any time during the pick we can change locations.
+					if (scanPrefixStr.equals(LOCATION_PREFIX)) {
+						processLocationScan(scanPrefixStr, scanStr);
+					}
 					break;
 
 				default:
@@ -379,7 +389,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 * Send the LED error status as well (color: red effect: error channel: 0).
 	 * 
 	 */
-	private void setStateWithErrorMsg(final CheStateEnum inCheState) {
+	private void invalidScanMsg(final CheStateEnum inCheState) {
 		mCheStateEnum = inCheState;
 
 		switch (inCheState) {
@@ -463,29 +473,39 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		if (mCheStateEnum.equals(CheStateEnum.PICK_COMPLETE)) {
 			mContainersMap.clear();
 			mContainerInSetup = "";
-			setState(CheStateEnum.LOCATION_SETUP);
+			setState(CheStateEnum.CONTAINER_SELECT);
 		} else {
 			// Stay in the same state - the scan made no sense.
-			setStateWithErrorMsg(mCheStateEnum);
+			invalidScanMsg(mCheStateEnum);
 		}
 	}
 
 	// --------------------------------------------------------------------------
 	/**
-	 * The user scanned the START command to start work on the WIs for this CHE.
+	 * The start work command simply tells the user to select a starting location.
+	 * It's a psychological step that makes more sense.
 	 */
 	private void startWork() {
+		setState(CheStateEnum.LOCATION_SETUP);
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * The worker scanned a location, so set the CHE's location and setup the work instructions from this location.
+	 */
+	private void setLocation() {
 		LOGGER.info("Start work");
 
-		if ((mContainersMap.values().size() > 0) && (mCheStateEnum.equals(CheStateEnum.CONTAINER_SELECT))) {
+		if (mContainersMap.values().size() > 0) {
 			mContainerInSetup = "";
 			if (getCheStateEnum() != CheStateEnum.DO_PICK) {
 				setState(CheStateEnum.DO_PICK);
 			}
-			doNextPick();
+			List<String> containerIdList = new ArrayList<String>(mContainersMap.values());
+			mDeviceManager.requestCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), mLocationId, containerIdList);
 		} else {
 			// Stay in the same state - the scan made no sense.
-			setStateWithErrorMsg(mCheStateEnum);
+			sendDisplayCommand(NO_CONTAINERS_SETUP, FINISH_SETUP);
 		}
 	}
 
@@ -498,7 +518,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			setState(CheStateEnum.SHORT_PICK_CONFIRM);
 		} else {
 			// Stay in the same state - the scan made no sense.
-			setStateWithErrorMsg(mCheStateEnum);
+			invalidScanMsg(mCheStateEnum);
 		}
 	}
 
@@ -515,7 +535,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 			default:
 				// Stay in the same state - the scan made no sense.
-				setStateWithErrorMsg(mCheStateEnum);
+				invalidScanMsg(mCheStateEnum);
 				break;
 		}
 	}
@@ -632,34 +652,6 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			ledControllerClearLeds();
 		}
 
-		//		// Map all of the positions that had a short pick.
-		//		Map<Short, WorkInstructionStatusEnum> statusMap = new HashMap<Short, WorkInstructionStatusEnum>();
-		//
-		//		// Blink the complete and incomplete containers.
-		//		for (WorkInstruction wi : mAllPicksWiList) {
-		//			Short position = 0;
-		//			for (Entry<String, String> mapEntry : mContainersMap.entrySet()) {
-		//				if (mapEntry.getValue().equals(wi.getContainerId())) {
-		//					// The actual position is zero-based.
-		//					position = (short) (Short.valueOf(mapEntry.getKey()) - 1);
-		//					break;
-		//				}
-		//			}
-		//
-		//			if (wi.getStatusEnum().equals(WorkInstructionStatusEnum.COMPLETE)) {
-		//				// Only set the status if we've never set it before.
-		//				if (statusMap.get(position) == null) {
-		//					//ledControllerSetLed(getGuid(), CommandControlLed.CHANNEL1, position, wi.getLedColorEnum(), EffectEnum.FLASH);
-		//					sendPickRequestCommand(position, 0, 0, 0);
-		//				}
-		//			} else {
-		//				// Always set the status if it's an error.
-		//				//ledControllerSetLed(getGuid(), CommandControlLed.CHANNEL1, position, ColorEnum.RED, EffectEnum.FLASH);
-		//				sendPickRequestCommand(position, 0, 0, 0);
-		//			}
-		//			statusMap.put(position, wi.getStatusEnum());
-		//		}
-
 		ledControllerShowLeds(getGuid());
 
 		mCompletedWiList.clear();
@@ -734,6 +726,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * The CHE is in the Idle state (not logged in), so if we get a user scan then start the setup process.
 	 * @param inPrefixScanStr
 	 * @param inScanStr
 	 */
@@ -741,10 +734,10 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 		if (USER_PREFIX.equals(inScanPrefixStr)) {
 			mUserId = inScanStr;
-			setState(CheStateEnum.LOCATION_SETUP);
+			setState(CheStateEnum.CONTAINER_SELECT);
 		} else {
 			LOGGER.info("Not a user ID: " + inScanStr);
-			setStateWithErrorMsg(CheStateEnum.IDLE);
+			invalidScanMsg(CheStateEnum.IDLE);
 		}
 	}
 
@@ -756,10 +749,10 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private void processLocationScan(final String inScanPrefixStr, String inScanStr) {
 		if (LOCATION_PREFIX.equals(inScanPrefixStr)) {
 			setLocationId(inScanStr);
-			setState(CheStateEnum.CONTAINER_SELECT);
+			setLocation();
 		} else {
 			LOGGER.info("Not a location ID: " + inScanStr);
-			setStateWithErrorMsg(CheStateEnum.LOCATION_SETUP);
+			invalidScanMsg(mCheStateEnum);
 		}
 	}
 
@@ -785,7 +778,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			setState(CheStateEnum.CONTAINER_POSITION);
 		} else {
 			LOGGER.info("Not a container ID: " + inScanStr);
-			setStateWithErrorMsg(CheStateEnum.CONTAINER_SELECT);
+			invalidScanMsg(CheStateEnum.CONTAINER_SELECT);
 		}
 	}
 
@@ -799,11 +792,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		if (mContainersMap.get(inScanStr) == null) {
 			mContainersMap.put(inScanStr, mContainerInSetup);
 			mContainerInSetup = "";
-			List<String> containerIdList = new ArrayList<String>(mContainersMap.values());
-			mDeviceManager.requestCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), mLocationId, containerIdList);
 		} else {
 			LOGGER.info("Position in use: " + inScanStr);
-			setStateWithErrorMsg(CheStateEnum.CONTAINER_POSITION);
+			invalidScanMsg(CheStateEnum.CONTAINER_POSITION);
 		}
 	}
 
@@ -845,7 +836,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				doNextPick();
 			}
 		} else {
-			setStateWithErrorMsg(mCheStateEnum);
+			invalidScanMsg(mCheStateEnum);
 		}
 	}
 }

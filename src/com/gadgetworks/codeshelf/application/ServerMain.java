@@ -22,13 +22,13 @@ import com.gadgetworks.codeshelf.edi.InventoryCsvImporter;
 import com.gadgetworks.codeshelf.edi.LocationAliasCsvImporter;
 import com.gadgetworks.codeshelf.edi.OrderCsvImporter;
 import com.gadgetworks.codeshelf.edi.OrderLocationCsvImporter;
-import com.gadgetworks.codeshelf.edi.PutBatchCsvImporter;
+import com.gadgetworks.codeshelf.edi.CrossBatchCsvImporter;
 import com.gadgetworks.codeshelf.edi.EdiProcessor;
 import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
 import com.gadgetworks.codeshelf.edi.ICsvLocationAliasImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderLocationImporter;
-import com.gadgetworks.codeshelf.edi.ICsvPutBatchImporter;
+import com.gadgetworks.codeshelf.edi.ICsvCrossBatchImporter;
 import com.gadgetworks.codeshelf.edi.IEdiProcessor;
 import com.gadgetworks.codeshelf.model.dao.DaoProvider;
 import com.gadgetworks.codeshelf.model.dao.Database;
@@ -249,7 +249,7 @@ public final class ServerMain {
 				bind(ICsvInventoryImporter.class).to(InventoryCsvImporter.class);
 				bind(ICsvLocationAliasImporter.class).to(LocationAliasCsvImporter.class);
 				bind(ICsvOrderLocationImporter.class).to(OrderLocationCsvImporter.class);
-				bind(ICsvPutBatchImporter.class).to(PutBatchCsvImporter.class);
+				bind(ICsvCrossBatchImporter.class).to(CrossBatchCsvImporter.class);
 
 				// Websocket/WebSession
 				bind(IWebSocketServer.class).to(CsWebSocketServer.class);

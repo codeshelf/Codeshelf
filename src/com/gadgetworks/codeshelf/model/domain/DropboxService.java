@@ -46,7 +46,7 @@ import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
 import com.gadgetworks.codeshelf.edi.ICsvLocationAliasImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderLocationImporter;
-import com.gadgetworks.codeshelf.edi.ICsvPutBatchImporter;
+import com.gadgetworks.codeshelf.edi.ICsvCrossBatchImporter;
 import com.gadgetworks.codeshelf.model.EdiDocumentStatusEnum;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
@@ -129,7 +129,7 @@ public class DropboxService extends EdiServiceABC {
 		ICsvOrderLocationImporter inCsvOrderLocationImporter,
 		ICsvInventoryImporter inCsvInventoryImporter,
 		ICsvLocationAliasImporter inCsvLocationAliasImporter,
-		ICsvPutBatchImporter inCsvPutBatchImporter) {
+		ICsvCrossBatchImporter inCsvCrossBatchImporter) {
 		Boolean result = false;
 
 		// Make sure we believe that we're properly registered with the service before we try to contact it.
@@ -142,7 +142,7 @@ public class DropboxService extends EdiServiceABC {
 					inCsvOrderLocationImporter,
 					inCsvInventoryImporter,
 					inCsvLocationAliasImporter,
-					inCsvPutBatchImporter);
+					inCsvCrossBatchImporter);
 			}
 		}
 
@@ -158,7 +158,7 @@ public class DropboxService extends EdiServiceABC {
 		ICsvOrderLocationImporter inCsvOrderLocationImporter,
 		ICsvInventoryImporter inCsvInventoryImporter,
 		ICsvLocationAliasImporter inCsvLocationAliasImporter,
-		ICsvPutBatchImporter inCsvPutBatchImporter) {
+		ICsvCrossBatchImporter inCsvCrossBatchImporter) {
 		Boolean result = false;
 
 		if (ensureBaseDirectories(inClientSession)) {
@@ -172,7 +172,7 @@ public class DropboxService extends EdiServiceABC {
 					inCsvOrderLocationImporter,
 					inCsvInventoryImporter,
 					inCsvLocationAliasImporter,
-					inCsvPutBatchImporter)) {
+					inCsvCrossBatchImporter)) {
 					// If we've processed everything from the page correctly then save the current dbCursor, and get the next page
 					try {
 						DropboxService.DAO.store(this);
@@ -221,7 +221,7 @@ public class DropboxService extends EdiServiceABC {
 		ICsvOrderLocationImporter inCsvOrderLocationImporter,
 		ICsvInventoryImporter inCsvInventoryImporter,
 		ICsvLocationAliasImporter inCsvLocationAliasImporter,
-		ICsvPutBatchImporter inCsvPutBatchImporter) {
+		ICsvCrossBatchImporter inCsvCrossBatchImporter) {
 		Boolean result = true;
 
 		for (DeltaEntry<Entry> entry : inPage.entries) {
@@ -235,7 +235,7 @@ public class DropboxService extends EdiServiceABC {
 						inCsvOrderLocationImporter,
 						inCsvInventoryImporter,
 						inCsvLocationAliasImporter,
-						inCsvPutBatchImporter);
+						inCsvCrossBatchImporter);
 				} else {
 					result &= removeEntry(inClientSession, entry);
 				}
@@ -518,7 +518,7 @@ public class DropboxService extends EdiServiceABC {
 		ICsvOrderLocationImporter inCsvOrderLocationImporter,
 		ICsvInventoryImporter inCsvInventoryImporter,
 		ICsvLocationAliasImporter inCsvLocationAliasImporter,
-		ICsvPutBatchImporter inCsvPutBatchImporter) {
+		ICsvCrossBatchImporter inCsvCrossBatchImporter) {
 		Boolean result = true;
 
 		Boolean shouldUpdateEntry = false;
@@ -531,7 +531,7 @@ public class DropboxService extends EdiServiceABC {
 					inCsvOrderLocationImporter,
 					inCsvInventoryImporter,
 					inCsvLocationAliasImporter,
-					inCsvPutBatchImporter);
+					inCsvCrossBatchImporter);
 				shouldUpdateEntry = true;
 			}
 		}
@@ -569,7 +569,7 @@ public class DropboxService extends EdiServiceABC {
 		ICsvOrderLocationImporter inCsvOrderLocationImporter,
 		ICsvInventoryImporter inCsvInventoryImporter,
 		ICsvLocationAliasImporter inCsvLocationAliasImporter,
-		ICsvPutBatchImporter inCsvPutBatchImporter) {
+		ICsvCrossBatchImporter inCsvCrossBatchImporter) {
 
 		try {
 
@@ -579,18 +579,18 @@ public class DropboxService extends EdiServiceABC {
 			InputStreamReader reader = new InputStreamReader(stream);
 
 			// orders-slotting needs to come before orders, because orders is a subset of the orders-slotting regex.
-			if (filepath.matches(getFacilityImportPath() + IMPORT_ORDERS_PATH + ".*orders-slotting.*csv")) {
+			if (filepath.matches(getFacilityImportPath() + IMPORT_ORDERS_PATH + ".*orders-slotting.*\\.csv")) {
 				inCsvOrderLocationImporter.importOrderLocationsFromCsvStream(reader, getParent());
-			} else if (filepath.matches(getFacilityImportPath() + IMPORT_ORDERS_PATH + ".*orders.*csv")) {
+			} else if (filepath.matches(getFacilityImportPath() + IMPORT_ORDERS_PATH + ".*orders.*\\.csv")) {
 				inCsvOrderImporter.importOrdersFromCsvStream(reader, getParent());
-			} else if (filepath.matches(getFacilityImportPath() + IMPORT_INVENTORY_PATH + ".*inventory-slotted.*csv")) {
+			} else if (filepath.matches(getFacilityImportPath() + IMPORT_INVENTORY_PATH + ".*inventory-slotted.*\\.csv")) {
 				inCsvInventoryImporter.importSlottedInventoryFromCsvStream(reader, getParent());
-			} else if (filepath.matches(getFacilityImportPath() + IMPORT_INVENTORY_PATH + ".*inventory-ddc.*csv")) {
+			} else if (filepath.matches(getFacilityImportPath() + IMPORT_INVENTORY_PATH + ".*inventory-ddc.*\\.csv")) {
 				inCsvInventoryImporter.importDdcInventoryFromCsvStream(reader, getParent());
-			} else if (filepath.matches(getFacilityImportPath() + IMPORT_LOCATIONS_PATH + ".*location-aliases.*csv")) {
+			} else if (filepath.matches(getFacilityImportPath() + IMPORT_LOCATIONS_PATH + ".*location-aliases.*\\.csv")) {
 				inCsvLocationAliasImporter.importLocationAliasesFromCsvStream(reader, getParent());
-			} else if (filepath.matches(getFacilityImportPath() + IMPORT_BATCHES_PATH + ".*put-batch.*csv")) {
-				inCsvPutBatchImporter.importPutBatchesFromCsvStream(reader, getParent());
+			} else if (filepath.matches(getFacilityImportPath() + IMPORT_BATCHES_PATH + ".*cross-batch.*\\.csv")) {
+				inCsvCrossBatchImporter.importCrossBatchesFromCsvStream(reader, getParent());
 			}
 
 		} catch (DropboxException e) {
