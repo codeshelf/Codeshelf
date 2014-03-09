@@ -83,6 +83,17 @@ public class OrderLocation extends DomainObjectTreeABC<OrderHeader> {
 	@ManyToOne(optional = false)
 	private OrderHeader			parent;
 
+	// --------------------------------------------------------------------------
+	/**
+	 * This creates a standard domainId that keeps all of the items in different locations unique among a single ItemMaster.
+	 * @param inItemId
+	 * @param inLocationId
+	 * @return
+	 */
+	public static String makeDomainId(final OrderHeader inOrder, final ILocation<?> inLocation) {
+		return inOrder.getOrderId() + "-" + inLocation.getLocationIdToParentLevel(Aisle.class);
+	}
+
 	public OrderLocation() {
 
 	}

@@ -172,8 +172,9 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	private Map<String, OrderDetail>	orderDetails	= new HashMap<String, OrderDetail>();
 
 	@OneToMany(mappedBy = "parent")
+	@MapKey(name = "domainId")
 	@Getter
-	private List<OrderLocation>			orderLocations	= new ArrayList<OrderLocation>();
+	private Map<String, OrderLocation>	orderLocations	= new HashMap<String, OrderLocation>();
 
 	public OrderHeader() {
 		statusEnum = OrderStatusEnum.CREATED;
@@ -224,14 +225,20 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		return new ArrayList<OrderDetail>(orderDetails.values());
 	}
 
-	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void addOrderLocation(OrderLocation inOrderLocation) {
-		orderLocations.add(inOrderLocation);
+		orderLocations.put(inOrderLocation.getDomainId(), inOrderLocation);
 	}
 
-	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
-	public final void removeOrderLocation(OrderLocation inOrderLocation) {
-		orderLocations.remove(inOrderLocation);
+	public final OrderLocation getOrderLocation(String inOrderLocationId) {
+		return orderLocations.get(inOrderLocationId);
+	}
+
+	public final void removeOrderLocation(String inOrderLocationId) {
+		orderLocations.remove(inOrderLocationId);
+	}
+
+	public final List<OrderLocation> getOrderLocations() {
+		return new ArrayList<OrderLocation>(orderLocations.values());
 	}
 
 	// Set the status from the websocket by a string.

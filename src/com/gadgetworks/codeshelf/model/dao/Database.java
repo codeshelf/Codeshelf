@@ -61,16 +61,6 @@ public class Database implements IDatabase {
 			}
 		}
 
-		File dataDir = new File(appDataDir + System.getProperty("file.separator") + "db");
-		if (!dataDir.exists()) {
-			try {
-				dataDir.mkdir();
-			} catch (SecurityException e) {
-				LOGGER.error("", e);
-				mUtil.exitSystem();
-			}
-		}
-
 		mSchemaManager.verifySchema();
 
 		ServerConfig serverConfig = new ServerConfig();

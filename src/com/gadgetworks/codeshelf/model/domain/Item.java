@@ -65,17 +65,6 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(Item.class);
 	
-	// --------------------------------------------------------------------------
-	/**
-	 * This creates a standard domainId that keeps all of the items in different locations unique among a single ItemMaster.
-	 * @param inItemId
-	 * @param inLocationId
-	 * @return
-	 */
-	public static String makeDomainId(final String inItemId, final String inLocationId) {
-		return inItemId + "-" + inLocationId;
-	}
-
 	// The owning location.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
@@ -122,6 +111,17 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	@Setter
 	@JsonProperty
 	private Timestamp			updated;
+
+	// --------------------------------------------------------------------------
+	/**
+	 * This creates a standard domainId that keeps all of the items in different locations unique among a single ItemMaster.
+	 * @param inItemId
+	 * @param inLocationId
+	 * @return
+	 */
+	public static String makeDomainId(final String inItemId, final String inLocationId) {
+		return inItemId + "-" + inLocationId;
+	}
 
 	public Item() {
 	}

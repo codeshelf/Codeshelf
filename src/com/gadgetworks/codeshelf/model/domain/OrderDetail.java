@@ -85,7 +85,6 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	@Getter
-	@Setter
 	private ItemMaster				itemMaster;
 
 	// The description.
@@ -142,7 +141,15 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	}
 
 	public final void setOrderDetailId(String inOrderDetailId) {
-		setDomainId(inOrderDetailId);
+		// We now just use the ItemId - it makes the most sense.
+		if (itemMaster != null) {
+			setDomainId(itemMaster.getItemId());
+		}
+	}
+
+	public void setItemMaster(final ItemMaster inItemMaster) {
+		setOrderDetailId(inItemMaster.getItemId());
+		itemMaster = inItemMaster;
 	}
 
 	public final OrderHeader getParent() {

@@ -28,8 +28,6 @@ public class OrderCsvBean extends ImportCsvBeanABC {
 	@NotNull
 	protected String	orderId;
 	@NotNull
-	protected String	orderDetailId;
-	@NotNull
 	protected String	itemId;
 	@NotNull
 	protected String	description;
@@ -53,10 +51,6 @@ public class OrderCsvBean extends ImportCsvBeanABC {
 
 	public final String getOrderId() {
 		return StringUtils.strip(orderId);
-	}
-
-	public final String getOrderDetailId() {
-		return StringUtils.strip(orderDetailId);
 	}
 
 	public final String getItemId() {

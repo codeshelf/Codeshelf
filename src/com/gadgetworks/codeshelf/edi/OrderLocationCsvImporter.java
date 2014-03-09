@@ -167,23 +167,21 @@ public class OrderLocationCsvImporter implements ICsvOrderLocationImporter {
 		String orderId = inCsvBean.getOrderId();
 		String locationId = inCsvBean.getLocationId();
 
-		// Obnly create an OrderLocation mapping if the location is valid.
+		// Only create an OrderLocation mapping if the location is valid.
 		ILocation mappedLocation = inFacility.findSubLocationById(locationId);
 		if (mappedLocation != null) {
 
 			OrderHeader order = inFacility.getOrderHeader(orderId);
 			if (order != null) {
-				for (OrderLocation orderLocation : order.getOrderLocations()) {
-					if (orderLocation.getLocation().getLocationId().equals(locationId)) {
-						result = orderLocation;
-					}
-				}
+				String orderLocationId = OrderLocation.makeDomainId(order, mappedLocation);
+
+				result = order.getOrderLocation(orderLocationId);
 
 				if ((result == null) && (locationId != null)) {
 					result = new OrderLocation();
-					result.setDomainId(inCsvBean.getOrderId() + "-" + inCsvBean.locationId);
+					result.setDomainId(orderLocationId);
 					result.setParent(order);
-					//order.addOrderLocation(result);
+					order.addOrderLocation(result);
 				}
 
 				// If we were able to get/create an item then update it.
@@ -196,6 +194,8 @@ public class OrderLocationCsvImporter implements ICsvOrderLocationImporter {
 					} catch (DaoException e) {
 						LOGGER.error("", e);
 					}
+				} else {
+					LOGGER.error("OrderLocation incorrectly setup");
 				}
 			}
 		}
@@ -218,7 +218,7 @@ public class OrderLocationCsvImporter implements ICsvOrderLocationImporter {
 				OrderLocation orderLocation = iter.next();
 				orderLocation.setParent(null);
 				mOrderLocationDao.delete(orderLocation);
-				iter.remove();
+				order.removeOrderLocation(orderLocation.getDomainId());
 			}
 		}
 	}
@@ -241,7 +241,7 @@ public class OrderLocationCsvImporter implements ICsvOrderLocationImporter {
 				if (orderLocation.getLocation().equals(location)) {
 					orderLocation.setParent(null);
 					mOrderLocationDao.delete(orderLocation);
-					iter.remove();
+					order.removeOrderLocation(orderLocation.getDomainId());
 				}
 			}
 		}

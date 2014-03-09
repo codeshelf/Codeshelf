@@ -530,11 +530,11 @@ public class OrderCsvImporter implements ICsvOrderImporter {
 		final ItemMaster inItemMaster) {
 		OrderDetail result = null;
 
-		result = inOrder.getOrderDetail(inCsvBean.getOrderDetailId());
+		result = inOrder.getOrderDetail(inItemMaster.getItemId());
 		if (result == null) {
 			result = new OrderDetail();
 			result.setParent(inOrder);
-			result.setDomainId(inCsvBean.getOrderDetailId());
+			result.setDomainId(inItemMaster.getItemId());
 			result.setStatusEnum(OrderStatusEnum.CREATED);
 
 			inOrder.addOrderDetail(result);

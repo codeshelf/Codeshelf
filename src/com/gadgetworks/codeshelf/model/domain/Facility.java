@@ -833,12 +833,12 @@ public class Facility extends LocationABC<Organization> {
 	 */
 	@Transactional
 	public final List<WorkInstruction> getWorkInstructions(final Che inChe,
-		final String inLocationId,
+		final String inScannedLocationId,
 		final List<String> inContainerIdList) {
-		
+
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 
-		ILocation<?> cheLocation = findSubLocationById(inLocationId);
+		ILocation<?> cheLocation = findSubLocationById(inScannedLocationId);
 		if (cheLocation != null) {
 			Aisle aisle = null;
 			if (cheLocation instanceof Aisle) {
@@ -868,9 +868,17 @@ public class Facility extends LocationABC<Organization> {
 							OrderHeader order = foundContainerUse.getOrderHeader();
 							if (order != null) {
 								if (order.getOrderTypeEnum().equals(OrderTypeEnum.OUTBOUND)) {
-									wiResultList.addAll(generateOutboundInstructions(foundContainerUse, order, path, cheLocation));
+									wiResultList.addAll(generateOutboundInstructions(foundContainerUse,
+										order,
+										path,
+										inScannedLocationId,
+										cheLocation));
 								} else if (order.getOrderTypeEnum().equals(OrderTypeEnum.CROSS)) {
-									wiResultList.addAll(generateCrossWallInstructions(foundContainerUse, order, path, cheLocation));
+									wiResultList.addAll(generateCrossWallInstructions(foundContainerUse,
+										order,
+										path,
+										inScannedLocationId,
+										cheLocation));
 								}
 							}
 						}
@@ -897,6 +905,7 @@ public class Facility extends LocationABC<Organization> {
 	private List<WorkInstruction> generateOutboundInstructions(final ContainerUse inContainerUse,
 		final OrderHeader inOrder,
 		final Path inPath,
+		final String inScannedLocationId,
 		final ILocation<?> inCheLocation) {
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 
@@ -914,6 +923,7 @@ public class Facility extends LocationABC<Organization> {
 					orderDetail,
 					0,
 					inContainerUse.getParentContainer(),
+					inScannedLocationId,
 					(ISubLocation<IDomainObject>) inCheLocation,
 					0.0);
 				if (plannedWi != null) {
@@ -944,6 +954,7 @@ public class Facility extends LocationABC<Organization> {
 							orderDetail,
 							quantityToPick,
 							inContainerUse.getParentContainer(),
+							inScannedLocationId,
 							foundLocation,
 							selectedItem.getPosAlongPath());
 						if (plannedWi != null) {
@@ -983,27 +994,39 @@ public class Facility extends LocationABC<Organization> {
 	private List<WorkInstruction> generateCrossWallInstructions(final ContainerUse inContainerUse,
 		final OrderHeader inCrossOrder,
 		final Path inPath,
+		final String inScannedLocationId,
 		final ILocation<?> inCheLocation) {
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 
+		// Iterate through all of the OUTBOUND orders to see if any of them are on the same path as inCrossOrder.
 		for (OrderHeader outboundOrder : getOrderHeaders()) {
 			if (outboundOrder.getOrderTypeEnum().equals(OrderTypeEnum.OUTBOUND)) {
 				// Determine if this OUTBOUND order is on the same path as the CROSS order.
 				for (OrderLocation outboundOrderLocation : outboundOrder.getOrderLocations()) {
 					if (inPath.isLocationOnPath(outboundOrderLocation.getLocation())) {
-						// See if the any of the outbound order details items match the cross order details.
-						for (OrderDetail outboundOrderDetail : outboundOrder.getOrderDetails()) {
-							for (OrderDetail crossOrderDetail : inCrossOrder.getOrderDetails()) {
-								if (outboundOrderDetail.getItemMasterId().equals(crossOrderDetail.getItemMasterId())) {
-									ISubLocation<IDomainObject> foundLocation = (ISubLocation<IDomainObject>) inCheLocation;
-									WorkInstruction wi = createWorkInstruction(WorkInstructionStatusEnum.NEW,
-										WorkInstructionTypeEnum.PLAN,
-										crossOrderDetail,
-										crossOrderDetail.getQuantity(),
-										inContainerUse.getParentContainer(),
-										foundLocation,
-										outboundOrderLocation.getLocation().getPosAlongPath());
-									wiResultList.add(wi);
+
+						// OK, we have an OUTBOUND order on the same path as the CROSS order.
+						// Check to see if any of the CROSS order detail items match OUTBOUND order details.
+						for (OrderDetail crossOrderDetail : inCrossOrder.getOrderDetails()) {
+							OrderDetail outboundOrderDetail = outboundOrder.getOrderDetail(crossOrderDetail.getOrderDetailId());
+							if (outboundOrderDetail != null) {
+
+								// Make sure the UOM matches.
+								if (outboundOrderDetail.getUomMasterId().equals(crossOrderDetail.getUomMasterId())) {
+
+									// Now make sure the outboundOrder is "ahead" of the CHE's position on the path.
+									if (outboundOrderLocation.getLocation().getPosAlongPath() > inCheLocation.getPosAlongPath()) {
+										ISubLocation<IDomainObject> foundLocation = (ISubLocation<IDomainObject>) inCheLocation;
+										WorkInstruction wi = createWorkInstruction(WorkInstructionStatusEnum.NEW,
+											WorkInstructionTypeEnum.PLAN,
+											crossOrderDetail,
+											crossOrderDetail.getQuantity(),
+											inContainerUse.getParentContainer(),
+											inScannedLocationId,
+											foundLocation,
+											outboundOrderLocation.getLocation().getPosAlongPath());
+										wiResultList.add(wi);
+									}
 								}
 							}
 						}
@@ -1031,6 +1054,7 @@ public class Facility extends LocationABC<Organization> {
 		OrderDetail inOrderDetail,
 		Integer inQuantityToPick,
 		Container inContainer,
+		String inScannedLocationId,
 		ISubLocation<IDomainObject> inLocation,
 		Double inPosALongPath) {
 		WorkInstruction resultWi = null;
@@ -1096,7 +1120,7 @@ public class Facility extends LocationABC<Organization> {
 			resultWi.setLedCmdStream(LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList));
 
 			//resultWi.setLocationId(((ISubLocation<?>) inLocation.getParent()).getLocationId() + "." + inLocation.getLocationId());
-			resultWi.setLocationId(inLocation.getFullDomainId());
+			resultWi.setLocationId(inScannedLocationId);
 			resultWi.setItemId(inOrderDetail.getItemMaster().getItemId());
 			resultWi.setDescription(inOrderDetail.getItemMaster().getDescription());
 			if (inOrderDetail.getItemMaster().getDdcId() != null) {
@@ -1105,7 +1129,7 @@ public class Facility extends LocationABC<Organization> {
 				// TODO: create a "getLocationIdToLevel(<Location Class>);"
 				Bay bay = inLocation.getParentAtLevel(Bay.class);
 				Tier tier = inLocation.getParentAtLevel(Tier.class);
-				resultWi.setPickInstruction(bay.getLocationId() + "." + tier.getLocationId() + "." + inLocation.getLocationId());
+				resultWi.setPickInstruction(inScannedLocationId);
 			}
 			resultWi.setPosAlongPath(inPosALongPath);
 			resultWi.setContainerId(inContainer.getContainerId());
