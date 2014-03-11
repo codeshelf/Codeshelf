@@ -45,8 +45,7 @@ import com.avaje.ebean.bean.EntityBean;
  */
 
 @Entity
-@CacheStrategy
-@JsonAutoDetect(getterVisibility = Visibility.NONE)
+@CacheStrategy(useBeanCache = true)@JsonAutoDetect(getterVisibility = Visibility.NONE)
 @JsonPropertyOrder({ "domainId", "fullDomainId" })
 @ToString(of = { "domainId" })
 public abstract class DomainObjectABC implements IDomainObject {

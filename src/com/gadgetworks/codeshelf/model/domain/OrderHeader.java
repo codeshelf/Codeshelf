@@ -52,7 +52,7 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "order_header")
-@CacheStrategy(useBeanCache = false)
+@CacheStrategy(useBeanCache = true)
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class OrderHeader extends DomainObjectTreeABC<Facility> {
 
@@ -173,7 +173,6 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
-	@Getter
 	private Map<String, OrderLocation>	orderLocations	= new HashMap<String, OrderLocation>();
 
 	public OrderHeader() {

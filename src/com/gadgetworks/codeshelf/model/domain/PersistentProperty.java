@@ -38,8 +38,7 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-@CacheStrategy
-@Table(name = "persistent_property")
+@CacheStrategy(useBeanCache = true)@Table(name = "persistent_property")
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 //@ToString(doNotUseGetters = true)
 public class PersistentProperty extends DomainObjectTreeABC<Organization> {

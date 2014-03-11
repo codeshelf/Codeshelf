@@ -147,14 +147,14 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		order4444.addOrderLocation(orderLocation4444);
 
 		// This order location should get blanked out by the import.
-		orderLocation4444 = new OrderLocation();
-		orderLocation4444.setDomainId(OrderLocation.makeDomainId(order4444, bayA3B2));
-		orderLocation4444.setLocation(bayA3B2);
-		orderLocation4444.setActive(true);
-		orderLocation4444.setUpdated(new Timestamp(System.currentTimeMillis()));
-		orderLocation4444.setParent(order4444);
-		mOrderLocationDao.store(orderLocation4444);
-		order4444.addOrderLocation(orderLocation4444);
+		OrderLocation orderLocation5555 = new OrderLocation();
+		orderLocation5555.setDomainId(OrderLocation.makeDomainId(order4444, bayA3B2));
+		orderLocation5555.setLocation(bayA3B2);
+		orderLocation5555.setActive(true);
+		orderLocation5555.setUpdated(new Timestamp(System.currentTimeMillis()));
+		orderLocation5555.setParent(order4444);
+		mOrderLocationDao.store(orderLocation5555);
+		order4444.addOrderLocation(orderLocation5555);
 
 		ICsvOrderLocationImporter importer = new OrderLocationCsvImporter(mOrderLocationDao);
 		importer.importOrderLocationsFromCsvStream(reader, facility);
@@ -181,7 +181,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 
 	}
 
-	//@Test
+	@Test
 	// There was a bug when you tried to import the same interchange twice.
 	public final void testReimportSameData() {
 
@@ -195,9 +195,6 @@ public class OrderLocationImporterTest extends EdiTestABC {
 				+ "O4444, "; //
 
 		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
 
 		Organization organization = new Organization();
 		organization.setDomainId("O-ORDLOC.2");
@@ -301,15 +298,17 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		order4444.addOrderLocation(orderLocation4444);
 
 		// This order location should get blanked out by the import.
-		orderLocation4444 = new OrderLocation();
-		orderLocation4444.setDomainId(OrderLocation.makeDomainId(order4444, bayA3B2));
-		orderLocation4444.setLocation(bayA3B2);
-		orderLocation4444.setActive(true);
-		orderLocation4444.setUpdated(new Timestamp(System.currentTimeMillis()));
-		orderLocation4444.setParent(order4444);
-		mOrderLocationDao.store(orderLocation4444);
-		order4444.addOrderLocation(orderLocation4444);
+		OrderLocation orderLocation5555 = new OrderLocation();
+		orderLocation5555.setDomainId(OrderLocation.makeDomainId(order4444, bayA3B2));
+		orderLocation5555.setLocation(bayA3B2);
+		orderLocation5555.setActive(true);
+		orderLocation5555.setUpdated(new Timestamp(System.currentTimeMillis()));
+		orderLocation5555.setParent(order4444);
+		mOrderLocationDao.store(orderLocation5555);
+		order4444.addOrderLocation(orderLocation5555);
 
+		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
+		InputStreamReader reader = new InputStreamReader(stream);
 		ICsvOrderLocationImporter importer = new OrderLocationCsvImporter(mOrderLocationDao);
 		importer.importOrderLocationsFromCsvStream(reader, facility);
 
@@ -335,6 +334,8 @@ public class OrderLocationImporterTest extends EdiTestABC {
 
 		// --------
 		// Import it again - and rerun all the same tests.
+		stream = new ByteArrayInputStream(csvArray);
+		reader = new InputStreamReader(stream);
 		importer.importOrderLocationsFromCsvStream(reader, facility);
 
 		// Make sure we can lookup all of the locations for order O1111.

@@ -43,8 +43,7 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "vertex")
-@CacheStrategy
-@JsonAutoDetect(getterVisibility = Visibility.NONE)
+@CacheStrategy(useBeanCache = true)@JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class Vertex extends DomainObjectTreeABC<ILocation> {
 
 	@Inject

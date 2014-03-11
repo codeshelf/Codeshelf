@@ -237,7 +237,7 @@
 		<!-- define the task enhancer -->
 		<taskdef name="ebeanEnhance" classname="com.avaje.ebean.enhance.ant.AntEnhanceTask">
 			<classpath>
-				<pathelement location="${ebean.lib.dir}/ebean-2.7.7-agent.jar" />
+				<pathelement location="${ebean.lib.dir}/avaje-ebeanorm-agent-3.2.3-SNAPSHOT.jar" />
 				<pathelement location="${target.classes}" />
 				<path refid="compile-libs" />
 			</classpath>

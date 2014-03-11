@@ -40,8 +40,7 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-@CacheStrategy
-@Table(name = "container_kind")
+@CacheStrategy(useBeanCache = true)@Table(name = "container_kind")
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class ContainerKind extends DomainObjectTreeABC<Facility> {
 

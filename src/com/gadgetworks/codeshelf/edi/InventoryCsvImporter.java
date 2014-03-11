@@ -344,7 +344,7 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 			result.setUomMaster(inUomMaster);
 			result.setQuantity(Double.valueOf(inCsvBean.getQuantity()));
 			inItemMaster.addItem(result);
-			inFacility.addItem(result);
+			inFacility.addStoredItem(result);
 			try {
 				result.setActive(true);
 				result.setUpdated(inEdiProcessTime);
@@ -380,7 +380,7 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 		}
 
 		// Get or create the item at the specified location.
-		result = location.getItem(inCsvBean.getItemId());
+		result = location.getStoredItem(inCsvBean.getItemId());
 		if ((result == null) && (inCsvBean.getItemId() != null) && (inCsvBean.getItemId().length() > 0)) {
 			result = new Item();
 			result.setParent(inItemMaster);

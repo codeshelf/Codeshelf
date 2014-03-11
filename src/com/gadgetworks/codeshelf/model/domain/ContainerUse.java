@@ -42,8 +42,7 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "container_use")
-@CacheStrategy
-@JsonAutoDetect(getterVisibility = Visibility.NONE)
+@CacheStrategy(useBeanCache = true)@JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class ContainerUse extends DomainObjectTreeABC<Container> {
 
 	@Inject

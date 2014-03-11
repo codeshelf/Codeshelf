@@ -45,8 +45,7 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-@CacheStrategy
-@JsonAutoDetect(getterVisibility = Visibility.NONE)
+@CacheStrategy(useBeanCache = true)@JsonAutoDetect(getterVisibility = Visibility.NONE)
 //@ToString(doNotUseGetters = true)
 public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNetwork> {
 

@@ -68,7 +68,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 	@Singleton
 	public static class LocationABCDao extends GenericDaoABC<LocationABC> implements ITypedDao<LocationABC> {
-		
+
 		// We include the IDatabase arg to cause Guice to initialize it *before* locations.
 		@Inject
 		public LocationABCDao(final ISchemaManager inSchemaManager, final IDatabase inDatabase) {
@@ -201,7 +201,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	@MapKey(name = "domainId")
 	@Getter
 	@Setter
-	private Map<String, Item>			items				= new HashMap<String, Item>();
+	private Map<String, Item>			storedItems			= new HashMap<String, Item>();
 
 	// The DDC groups stored in this location.
 	@OneToMany(mappedBy = "parent")
@@ -262,10 +262,8 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	 * @see com.gadgetworks.codeshelf.model.domain.ILocation#getLocationIdToParentLevel(java.lang.Class)
 	 */
 	public final String getLocationIdToParentLevel(Class<? extends ILocation> inClassWanted) {
-		StringBuilder result = new StringBuilder();
-		
-		// Build up a chain of location dotted notation (FQLN) up to the parent class level.
-		
+		String result;
+
 		ILocation<P> checkParent = (ILocation<P>) getParent();
 
 		// There's some weirdness with Ebean and navigating a recursive hierarchy. (You can't go down and then back up to a different class.)
@@ -273,26 +271,22 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		checkParent = DAO.findByPersistentId(checkParent.getClass(), checkParent.getPersistentId());
 
 		if (checkParent.getClass().equals(inClassWanted)) {
-			// This is the parent we want. (We can cast safely since we checked the class.)
-			result.insert(0, ".");
-			result.insert(0, checkParent.getLocationId());
+			// This is the parent we want.
+			result = checkParent.getLocationId() + "." + getLocationId();
 		} else {
 			if (checkParent.getClass().equals(Facility.class)) {
 				// We cannot go higher than the Facility as a parent, so there is no such parent with the requested class.
-				result = null;
+				result = "";
 			} else {
 				// The current parent is not the class we want so recurse up the hierarchy.
-				result.insert(0, ".");
-				result.insert(0, checkParent.getParentAtLevel(inClassWanted));
+				result = checkParent.getLocationIdToParentLevel(inClassWanted);
+				result = result + "." + checkParent.getLocationId();
 			}
 		}
 
-		// Now tack on this location's ID to the end.
-		result.append(getLocationId());
-		
-		return result.toString();
+		return result;
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#getParentAtLevel(java.lang.Class)
@@ -419,7 +413,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		// There's some ebean weirdness around Map caches, so we have to use a different strategy to resolve this request.
 		//return locations.get(inLocationId);
 		ISubLocation result = null;
-		
+
 		// If the current location is a facility then first look for an alias 
 		if (this.getClass().equals(Facility.class)) {
 			Facility facility = (Facility) this;
@@ -519,7 +513,8 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 						+ segment.computeDistanceOfPointFromLine(segment.getEndPoint(), segment.getStartPoint(), locationPoint);
 			}
 
-			LOGGER.debug(this.getFullDomainId() + "Path pos: " + pathPosition + " Location Point - x: " + locationPoint.getX() + " y: " + locationPoint.getY());
+			LOGGER.debug(this.getFullDomainId() + "Path pos: " + pathPosition + " Location Point - x: " + locationPoint.getX()
+					+ " y: " + locationPoint.getY());
 		}
 		posAlongPath = pathPosition;
 
@@ -542,19 +537,19 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		vertices.remove(inVertex);
 	}
 
-	public final void addItem(Item inItem) {
-		String domainId = Item.makeDomainId(inItem.getItemId(), getFullDomainId());
-		items.put(domainId, inItem);
+	public final void addStoredItem(Item inItem) {
+		String domainId = Item.makeDomainId(inItem.getItemId(), this);
+		storedItems.put(domainId, inItem);
 	}
 
-	public final Item getItem(final String inItemId) {
-		String domainId = Item.makeDomainId(inItemId, getFullDomainId());
-		return items.get(domainId);
+	public final Item getStoredItem(final String inItemId) {
+		String domainId = Item.makeDomainId(inItemId, this);
+		return storedItems.get(domainId);
 	}
 
-	public final void removeItem(final String inItemId) {
-		String domainId = Item.makeDomainId(inItemId, getFullDomainId());
-		items.remove(domainId);
+	public final void removeStoredItem(final String inItemId) {
+		String domainId = Item.makeDomainId(inItemId, this);
+		storedItems.remove(domainId);
 	}
 
 	public final void addItemDdcGroup(ItemDdcGroup inItemDdcGroup) {
@@ -576,7 +571,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	public final Short getFirstLedPosForItemId(final String inItemId) {
 		Short result = 0;
 
-		Item item = this.getItem(inItemId);
+		Item item = this.getStoredItem(inItemId);
 		if (item != null) {
 			ItemDdcGroup ddcGroup = getItemDdcGroup(item.getParent().getDdcId());
 			if (ddcGroup != null) {
@@ -592,7 +587,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	public final Short getLastLedPosForItemId(final String inItemId) {
 		Short result = 0;
 
-		Item item = this.getItem(inItemId);
+		Item item = this.getStoredItem(inItemId);
 		if (item != null) {
 			ItemDdcGroup ddcGroup = getItemDdcGroup(item.getParent().getDdcId());
 			if (ddcGroup != null) {

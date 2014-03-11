@@ -16,6 +16,7 @@ import com.avaje.ebean.EbeanServer;
 import com.avaje.ebean.EbeanServerFactory;
 import com.avaje.ebean.Transaction;
 import com.avaje.ebean.config.AutofetchConfig;
+import com.avaje.ebean.config.AutofetchMode;
 import com.avaje.ebean.config.DataSourceConfig;
 import com.avaje.ebean.config.NamingConvention;
 import com.avaje.ebean.config.ServerConfig;
@@ -75,8 +76,8 @@ public class Database implements IDatabase {
 		//		serverConfig.setDebugLazyLoad(false);
 		//		serverConfig.setDebugSql(false);
 		//		serverConfig.setLoggingLevel(LogLevel.NONE);
-		serverConfig.setLoggingToJavaLogger(true);
-		serverConfig.setLoggingDirectory(mUtil.getApplicationLogDirPath());
+//		serverConfig.setLoggingToJavaLogger(true);
+//		serverConfig.setLoggingDirectory(mUtil.getApplicationLogDirPath());
 		serverConfig.setPackages(new ArrayList<String>(Arrays.asList("com.gadgetworks.codeshelf.model.domain")));
 		serverConfig.setJars(new ArrayList<String>(Arrays.asList("server.codeshelf.jar")));
 		serverConfig.setUpdateChangesOnly(true);
@@ -98,8 +99,9 @@ public class Database implements IDatabase {
 		//		dataSourceConfig.setHeartbeatSql("select count(*) from dual");
 
 		AutofetchConfig autofetchConfig = serverConfig.getAutofetchConfig();
+		autofetchConfig.setMode(AutofetchMode.DEFAULT_OFF);
 		autofetchConfig.setLogDirectory(mUtil.getApplicationLogDirPath());
-		autofetchConfig.setUseFileLogging(true);
+//		autofetchConfig.setUseFileLogging(true);
 
 		EbeanServer server = EbeanServerFactory.create(serverConfig);
 		if (server == null) {

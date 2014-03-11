@@ -60,8 +60,7 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "work_instruction")
-@CacheStrategy
-@JsonAutoDetect(getterVisibility = Visibility.NONE)
+@CacheStrategy(useBeanCache = true)@JsonAutoDetect(getterVisibility = Visibility.NONE)
 @JsonIgnoreProperties({ "fullDomainId", "parentFullDomainId", "parentPersistentId", "className" })
 public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 

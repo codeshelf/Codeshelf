@@ -5,19 +5,22 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
-import org.apache.commons.lang.StringUtils;
+import javax.validation.constraints.NotNull;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
-import com.avaje.ebean.validation.NotNull;
+import org.apache.commons.lang.StringUtils;
 
 /**
  * @author jeffw
  *
  */
-@ToString
+
 @Data
+@EqualsAndHashCode(callSuper = false)
+@ToString
 public class InventoryDdcCsvBean extends ImportCsvBeanABC {
 
 	@NotNull

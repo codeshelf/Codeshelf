@@ -50,7 +50,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		ICsvInventoryImporter importer = new InventoryCsvImporter(mItemMasterDao, mItemDao, mUomMasterDao);
 		importer.importSlottedInventoryFromCsvStream(reader, facility);
 
-		Item item = facility.getItem("3001");
+		Item item = facility.getStoredItem("3001");
 		Assert.assertNotNull(item);
 
 		ItemMaster itemMaster = item.getParent();
@@ -97,11 +97,11 @@ public class InventoryImporterTest extends EdiTestABC {
 		bay1 = (Bay) facility.findSubLocationById("A1.B1");
 		bay2 = (Bay) facility.findSubLocationById("A1.B2");
 
-		Item item = bay1.getItem("3001");
+		Item item = bay1.getStoredItem("3001");
 		Assert.assertNotNull(item);
 		Assert.assertEquals(100.0, item.getQuantity().doubleValue(), 0.0);
 
-		item = bay2.getItem("3001");
+		item = bay2.getStoredItem("3001");
 		Assert.assertNotNull(item);
 		Assert.assertEquals(100.0, item.getQuantity().doubleValue(), 0.0);
 
@@ -124,7 +124,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		bay1 = (Bay) facility.findSubLocationById("A1.B1");
 		bay2 = (Bay) facility.findSubLocationById("A1.B2");
 
-		item = bay1.getItem("3001");
+		item = bay1.getStoredItem("3001");
 		Assert.assertNotNull(item);
 		Assert.assertEquals(200.0, item.getQuantity().doubleValue(), 0.0);
 

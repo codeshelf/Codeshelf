@@ -1011,11 +1011,12 @@ public class Facility extends LocationABC<Organization> {
 							OrderDetail outboundOrderDetail = outboundOrder.getOrderDetail(crossOrderDetail.getOrderDetailId());
 							if (outboundOrderDetail != null) {
 
-								// Make sure the UOM matches.
-								if (outboundOrderDetail.getUomMasterId().equals(crossOrderDetail.getUomMasterId())) {
+								// Now make sure the outboundOrder is "ahead" of the CHE's position on the path.
+								if (outboundOrderLocation.getLocation().getPosAlongPath() > inCheLocation.getPosAlongPath()) {
 
-									// Now make sure the outboundOrder is "ahead" of the CHE's position on the path.
-									if (outboundOrderLocation.getLocation().getPosAlongPath() > inCheLocation.getPosAlongPath()) {
+									// Make sure the UOM matches.
+									if (outboundOrderDetail.getUomMasterId().equals(crossOrderDetail.getUomMasterId())) {
+
 										ISubLocation<IDomainObject> foundLocation = (ISubLocation<IDomainObject>) inCheLocation;
 										WorkInstruction wi = createWorkInstruction(WorkInstructionStatusEnum.NEW,
 											WorkInstructionTypeEnum.PLAN,
@@ -1034,6 +1035,8 @@ public class Facility extends LocationABC<Organization> {
 				}
 			}
 		}
+		
+		// Now we need to sort and group the work instructions, so that the CHE can display them in some sensible way.
 
 		return wiResultList;
 	}
@@ -1213,7 +1216,7 @@ public class Facility extends LocationABC<Organization> {
 						LOGGER.debug("DDC assign item: " + "loc: " + location.getFullDomainId() + " itemId: "
 								+ itemMaster.getItemId() + " Ddc: " + item.getParent().getDdcId());
 						item.setStoredLocation(location);
-						location.addItem(item);
+						location.addStoredItem(item);
 						locationItems.add(item);
 						locationItemCount += item.getQuantity();
 					}

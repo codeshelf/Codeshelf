@@ -5,18 +5,21 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
+import javax.validation.constraints.NotNull;
+
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
 import org.apache.commons.lang.StringUtils;
-
-import com.avaje.ebean.validation.NotNull;
 
 /**
  * @author jeffw
  *
  */
+
 @Data
+@EqualsAndHashCode(callSuper = false)
 @ToString
 public class InventorySlottedCsvBean extends ImportCsvBeanABC {
 

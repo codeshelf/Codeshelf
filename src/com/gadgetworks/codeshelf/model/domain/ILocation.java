@@ -144,15 +144,15 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 	 * Get all of the items contained in this location.
 	 * @return
 	 */
-	Map<String, Item> getItems();
+	Map<String, Item> getStoredItems();
 
-	void setItems(Map<String, Item> inItems);
+	void setStoredItems(Map<String, Item> inItems);
 
-	void addItem(Item inItem);
+	void addStoredItem(Item inItem);
 
-	Item getItem(String inItemId);
+	Item getStoredItem(String inItemId);
 
-	void removeItem(String inItemId);
+	void removeStoredItem(String inItemId);
 
 	// --------------------------------------------------------------------------
 	/**
@@ -204,6 +204,13 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 
 	String getLocationId();
 	
+	// --------------------------------------------------------------------------
+	/**
+	 * Build up a chain of location dotted notation (FQLN) up to the parent class level.
+     * E.g. A1.B2.T3.S1
+	 * @param inClassWanted
+	 * @return
+	 */
 	String getLocationIdToParentLevel(Class<? extends ILocation> inClassWanted);
 
 	void setLocationId(String inLocationId);

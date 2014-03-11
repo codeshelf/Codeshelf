@@ -61,7 +61,14 @@ build.xml
 		<echo message="===================================================================" />
 
 		<!-- define the task enhancer -->
-		<taskdef name="ebeanEnhance" classpathref="module.lib.classpath" classname="com.avaje.ebean.enhance.ant.AntEnhanceTask" />
+		<!-- taskdef name="ebeanEnhance" classpathref="module.lib.classpath" classname="com.avaje.ebean.enhance.ant.AntEnhanceTask" /-->
+		<taskdef name="ebeanEnhance" classname="com.avaje.ebean.enhance.ant.AntEnhanceTask">
+			<classpath>
+				<pathelement location="${ebean.lib.dir}/avaje-ebeanorm-agent-3.2.3-SNAPSHOT.jar" />
+				<pathelement location="${target.classes}" />
+				<path refid="module.lib.classpath" />
+			</classpath>
+		</taskdef>
 
 		<!-- enhance -->
 		<ebeanEnhance packages="**" classSource="${modules.enhance.dir}" transformArgs="debug=1" />

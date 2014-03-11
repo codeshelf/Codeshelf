@@ -58,7 +58,7 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 		public PathSegmentDao(final ISchemaManager inSchemaManager) {
 			super(inSchemaManager);
 		}
-		
+
 		public final Class<PathSegment> getDaoClass() {
 			return PathSegment.class;
 		}
@@ -113,19 +113,23 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 	@ManyToOne(optional = false)
 	@NonNull
 	@Getter
-//	@Setter
+	//	@Setter
 	private LocationABC			anchorLocation;
 
 	@Column(nullable = true)
 	@OneToMany(mappedBy = "pathSegment")
 	@Getter
-	private List<LocationABC>		locations		= new ArrayList<LocationABC>();
+	private List<LocationABC>	locations		= new ArrayList<LocationABC>();
 
 	public PathSegment() {
 
 	}
 
-	public PathSegment(final Path inParentPath, final TravelDirectionEnum inTravelDirectionEnum, final PositionTypeEnum inPosType, final Point inBeginPoint, final Point inEndPoint) {
+	public PathSegment(final Path inParentPath,
+		final TravelDirectionEnum inTravelDirectionEnum,
+		final PositionTypeEnum inPosType,
+		final Point inBeginPoint,
+		final Point inEndPoint) {
 
 		posTypeEnum = inBeginPoint.getPosTypeEnum();
 		startPosX = inBeginPoint.getX();
@@ -191,7 +195,7 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 	public final Double getLength() {
 		return Math.sqrt(Math.pow(startPosX - endPosX, 2) + Math.pow(startPosY - endPosY, 2));
 	}
-	
+
 	public final void setAnchorLocation(ILocation inAnchorLocation) {
 		anchorLocation = (LocationABC) inAnchorLocation;
 	}

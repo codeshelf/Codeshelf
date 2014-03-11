@@ -13,7 +13,6 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
-import javax.persistence.Transient;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -119,8 +118,8 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	 * @param inLocationId
 	 * @return
 	 */
-	public static String makeDomainId(final String inItemId, final String inLocationId) {
-		return inItemId + "-" + inLocationId;
+	public static String makeDomainId(final String inItemId, final ILocation<?> inLocation) {
+		return inItemId + "-" + inLocation.getLocationId();
 	}
 
 	public Item() {
@@ -142,12 +141,12 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	public final void setStoredLocation(final ILocation inStoredLocation) {
 		// If it's already in another location then remove it from that location.
 		if (storedLocation != null) {
-			storedLocation.removeItem(getItemId());
+			storedLocation.removeStoredItem(getItemId());
 		}
 		storedLocation = (LocationABC) inStoredLocation;
 		// The stored location is part of the domain key for an item's instance.
-		setDomainId(makeDomainId(getItemId(), inStoredLocation.getFullDomainId()));
-		inStoredLocation.addItem(this);
+		setDomainId(makeDomainId(getItemId(), inStoredLocation));
+		inStoredLocation.addStoredItem(this);
 	}
 
 	public final List<IDomainObject> getChildren() {

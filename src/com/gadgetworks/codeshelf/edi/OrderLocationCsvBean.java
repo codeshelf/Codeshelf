@@ -6,6 +6,7 @@
 package com.gadgetworks.codeshelf.edi;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
 import org.apache.commons.lang.StringUtils;
@@ -16,8 +17,10 @@ import org.slf4j.LoggerFactory;
  * @author jeffw
  *
  */
-@ToString
+
 @Data
+@EqualsAndHashCode(callSuper = false)
+@ToString
 public class OrderLocationCsvBean extends ImportCsvBeanABC {
 
 	static final Logger	LOGGER	= LoggerFactory.getLogger(OrderLocationCsvBean.class);

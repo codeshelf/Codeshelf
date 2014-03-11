@@ -1,4 +1,5 @@
 eclipse.preferences.version=1
 encoding//debug/codeshelf.jnlp=UTF-8
 encoding//src/jssc/SerialNativeInterface.java=UTF-8
+encoding//test/com/gadgetworks/codeshelf/edi/CrossBatchImporterTest.java=UTF-8
 encoding//test/com/gadgetworks/codeshelf/edi/OrderImporterTest.java=UTF-8

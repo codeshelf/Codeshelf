@@ -41,8 +41,7 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "user_session")
-@CacheStrategy
-@JsonAutoDetect(getterVisibility = Visibility.NONE)
+@CacheStrategy(useBeanCache = true)@JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class UserSession extends DomainObjectTreeABC<User> {
 
 	@Inject

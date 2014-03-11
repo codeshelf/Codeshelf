@@ -32,8 +32,7 @@ import com.google.inject.Singleton;
 
 @Entity
 @DiscriminatorValue("TIER")
-@CacheStrategy
-@JsonAutoDetect(getterVisibility = Visibility.NONE)
+@CacheStrategy(useBeanCache = true)@JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class Tier extends SubLocationABC<Bay> {
 
 	@Inject

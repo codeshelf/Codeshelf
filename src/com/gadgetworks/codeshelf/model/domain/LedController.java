@@ -36,8 +36,7 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-@CacheStrategy
-@Table(name = "led_controller")
+@CacheStrategy(useBeanCache = true)@Table(name = "led_controller")
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 //@ToString(doNotUseGetters = true)
 public class LedController extends WirelessDeviceABC {
