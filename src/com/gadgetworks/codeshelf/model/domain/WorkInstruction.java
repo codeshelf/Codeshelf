@@ -18,6 +18,7 @@ import javax.persistence.Table;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
@@ -62,6 +63,7 @@ import com.google.inject.Singleton;
 @Table(name = "work_instruction")
 @CacheStrategy(useBeanCache = true)@JsonAutoDetect(getterVisibility = Visibility.NONE)
 @JsonIgnoreProperties({ "fullDomainId", "parentFullDomainId", "parentPersistentId", "className" })
+@ToString(of = { "typeEnum", "statusEnum", "itemId", "planQuantity", "actualQuantity", "locationId" }, callSuper = true, doNotUseGetters = true)
 public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 
 	@Inject

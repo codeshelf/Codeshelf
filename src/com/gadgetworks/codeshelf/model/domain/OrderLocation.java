@@ -14,6 +14,7 @@ import javax.persistence.Table;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
@@ -42,6 +43,7 @@ import com.google.inject.Singleton;
 @Table(name = "order_location")
 @CacheStrategy(useBeanCache=false)
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
+@ToString(of = { "location", "parent", "active" }, callSuper = true, doNotUseGetters = true)
 public class OrderLocation extends DomainObjectTreeABC<OrderHeader> {
 
 	@Inject

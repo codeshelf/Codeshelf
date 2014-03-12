@@ -35,7 +35,7 @@ public class CsWebSocketServer extends WebSocketServer implements IWebSocketServ
 		final WebSocketServer.WebSocketServerFactory inWebSocketServerFactory) {
 		super(new InetSocketAddress(inAddr, inPort), 4);
 
-		WebSocketImpl.DEBUG = true;
+		WebSocketImpl.DEBUG = Boolean.parseBoolean(System.getProperty("websocket.debug"));
 		setWebSocketFactory(inWebSocketServerFactory);
 
 		mWebSessionManager = inWebSessionManager;

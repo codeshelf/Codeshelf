@@ -39,9 +39,6 @@ public class CrossBatchCsvBean extends ImportCsvBeanABC {
 	protected String	containerId;
 
 	@NotNull
-	protected String	description;
-
-	@NotNull
 	protected String	uom;
 
 	public final String getOrderGroupId() {
@@ -58,10 +55,6 @@ public class CrossBatchCsvBean extends ImportCsvBeanABC {
 
 	public final String getContainerId() {
 		return StringUtils.strip(containerId);
-	}
-
-	public final String getDescription() {
-		return StringUtils.strip(description);
 	}
 
 	public final String getUom() {

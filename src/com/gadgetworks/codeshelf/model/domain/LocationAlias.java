@@ -14,6 +14,7 @@ import javax.persistence.Table;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
@@ -40,6 +41,7 @@ import com.google.inject.Singleton;
 @Entity
 @Table(name = "location_alias")
 @CacheStrategy(useBeanCache = true)@JsonAutoDetect(getterVisibility = Visibility.NONE)
+@ToString(of = { "mappedLocation", "active" }, callSuper = true, doNotUseGetters = true)
 public class LocationAlias extends DomainObjectTreeABC<Facility> {
 
 	@Inject

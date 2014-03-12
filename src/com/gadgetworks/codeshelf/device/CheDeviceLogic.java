@@ -601,8 +601,14 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 */
 	private class WiDistanceComparator implements Comparator<WorkInstruction> {
 
-		public int compare(WorkInstruction inWorkInstruction1, WorkInstruction inWorkInstruction2) {
-			return inWorkInstruction1.getPosAlongPath().compareTo(inWorkInstruction2.getPosAlongPath());
+		public int compare(WorkInstruction inWi1, WorkInstruction inWi2) {
+			if (inWi1 == null) {
+				return -1;
+			} else if (inWi2 == null) {
+				return 1;
+			} else {
+				return inWi1.getPosAlongPath().compareTo(inWi2.getPosAlongPath());
+			}
 		}
 	};
 
@@ -663,61 +669,63 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 * Send to the LED controller the active picks for the work instruction that's active on the CHE now.
 	 */
 	private void showActivePicks() {
-		// The first WI has the SKU and location info.
-		WorkInstruction firstWi = mActivePickWiList.get(0);
+		if (mActivePickWiList.size() > 0) {
+			// The first WI has the SKU and location info.
+			WorkInstruction firstWi = mActivePickWiList.get(0);
 
-		// Send the CHE a display command (any of the WIs has the info we need).
-		if (getCheStateEnum() != CheStateEnum.DO_PICK) {
-			setState(CheStateEnum.DO_PICK);
-		}
-		sendDisplayCommand(firstWi.getPickInstruction() + "  " + firstWi.getItemId(), firstWi.getDescription());
+			// Send the CHE a display command (any of the WIs has the info we need).
+			if (getCheStateEnum() != CheStateEnum.DO_PICK) {
+				setState(CheStateEnum.DO_PICK);
+			}
+			sendDisplayCommand(firstWi.getPickInstruction() + "  " + firstWi.getItemId(), firstWi.getDescription());
 
-		List<LedCmdGroup> ledCmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(firstWi.getLedCmdStream());
+			List<LedCmdGroup> ledCmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(firstWi.getLedCmdStream());
 
-		for (Iterator iterator = ledCmdGroups.iterator(); iterator.hasNext();) {
-			LedCmdGroup ledCmdGroup = (LedCmdGroup) iterator.next();
+			for (Iterator iterator = ledCmdGroups.iterator(); iterator.hasNext();) {
+				LedCmdGroup ledCmdGroup = (LedCmdGroup) iterator.next();
 
-			INetworkDevice ledController = mRadioController.getNetworkDevice(new NetGuid(ledCmdGroup.getControllerId()));
-			if (ledController != null) {
+				INetworkDevice ledController = mRadioController.getNetworkDevice(new NetGuid(ledCmdGroup.getControllerId()));
+				if (ledController != null) {
 
-				Short startLedNum = ledCmdGroup.getPosNum();
-				Short currLedNum = startLedNum;
+					Short startLedNum = ledCmdGroup.getPosNum();
+					Short currLedNum = startLedNum;
 
-				// Clear the last LED commands to this controller if there were any.
-				// TODO: this might not work if we have several controllers for one WI now!
-				if (mLastLedControllerGuid != null) {
-					ledControllerClearLeds();
-				}
+					// Clear the last LED commands to this controller if there were any.
+					// TODO: this might not work if we have several controllers for one WI now!
+					if (mLastLedControllerGuid != null) {
+						ledControllerClearLeds();
+					}
 
-				for (LedSample ledSample : ledCmdGroup.getLedSampleList()) {
+					for (LedSample ledSample : ledCmdGroup.getLedSampleList()) {
 
-					ledSample.setPosition(currLedNum++);
+						ledSample.setPosition(currLedNum++);
 
-					// Send the LED display command.
-					ledControllerSetLed(ledController.getGuid(), ledCmdGroup.getChannelNum(), ledSample, EffectEnum.FLASH);
+						// Send the LED display command.
+						ledControllerSetLed(ledController.getGuid(), ledCmdGroup.getChannelNum(), ledSample, EffectEnum.FLASH);
 
-				}
+					}
 
-				if ((ledController.getDeviceStateEnum() != null)
-						&& (ledController.getDeviceStateEnum() == NetworkDeviceStateEnum.STARTED)) {
-					ledControllerShowLeds(ledController.getGuid());
+					if ((ledController.getDeviceStateEnum() != null)
+							&& (ledController.getDeviceStateEnum() == NetworkDeviceStateEnum.STARTED)) {
+						ledControllerShowLeds(ledController.getGuid());
+					}
 				}
 			}
-		}
 
-		// Now create a light instruction for each position.
-		for (WorkInstruction wi : mActivePickWiList) {
-			for (Entry<String, String> mapEntry : mContainersMap.entrySet()) {
-				if (mapEntry.getValue().equals(wi.getContainerId())) {
-					//					ledControllerSetLed(getGuid(), CommandControlLed.CHANNEL1,
-					//					// The LED positions are zero-based.
-					//						(short) (Short.valueOf(mapEntry.getKey()) - 1),
-					//						wi.getLedColorEnum(),
-					//						EffectEnum.FLASH);
-					sendPickRequestCommand(Short.valueOf(mapEntry.getKey()),
-						firstWi.getPlanQuantity(),
-						0,
-						firstWi.getPlanQuantity());
+			// Now create a light instruction for each position.
+			for (WorkInstruction wi : mActivePickWiList) {
+				for (Entry<String, String> mapEntry : mContainersMap.entrySet()) {
+					if (mapEntry.getValue().equals(wi.getContainerId())) {
+						//					ledControllerSetLed(getGuid(), CommandControlLed.CHANNEL1,
+						//					// The LED positions are zero-based.
+						//						(short) (Short.valueOf(mapEntry.getKey()) - 1),
+						//						wi.getLedColorEnum(),
+						//						EffectEnum.FLASH);
+						sendPickRequestCommand(Short.valueOf(mapEntry.getKey()),
+							firstWi.getPlanQuantity(),
+							0,
+							firstWi.getPlanQuantity());
+					}
 				}
 			}
 		}

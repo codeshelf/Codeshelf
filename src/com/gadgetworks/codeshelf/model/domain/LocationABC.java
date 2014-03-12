@@ -50,12 +50,23 @@ import com.google.inject.Singleton;
  * 
  * The anchor point and vertex collection to define the planar space of a work structure (e.g. facility, bay, shelf, etc.)
  * 
+ * NB: We can't use bean cache for location because SubLocation exists to make it so that a Facility doesn't have to have a parent location.
+ * The problem with that is that cachebeans get stored with properties from their highest class (not all class in the hierarchy), so
+ * the "parent" property is often not available (to the LocationABC root location object).  There are two ways to fix this:
+ * 
+ * 1. Go back and get rid of SubLocationABC and make Facility be its own parent so that we can enfore parent constraint on all location.
+ * 2. Fix ebean caches to be a bit smarter and bring in all properties for a location.
+ * 
+ * There is a possibility that we could make SubLocationABC's parent a SubLocation and then the bean cache would always pull in
+ * the SubLocationClass (instead of LocationABC), but there's some weird thing the causes a ClassCastException when the setParent()
+ * gets called.  If that we fixable it might be a good way to go.
+ * 
  * @author jeffw
  */
 
 @Entity
 @MappedSuperclass
-@CacheStrategy(useBeanCache = true)
+@CacheStrategy(useBeanCache = false)
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @Table(name = "location")
 @DiscriminatorColumn(name = "dtype", discriminatorType = DiscriminatorType.STRING)

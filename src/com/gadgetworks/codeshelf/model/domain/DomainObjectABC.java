@@ -47,7 +47,7 @@ import com.avaje.ebean.bean.EntityBean;
 @Entity
 @CacheStrategy(useBeanCache = true)@JsonAutoDetect(getterVisibility = Visibility.NONE)
 @JsonPropertyOrder({ "domainId", "fullDomainId" })
-@ToString(of = { "domainId" })
+@ToString(doNotUseGetters = true, of = { "domainId" })
 public abstract class DomainObjectABC implements IDomainObject {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(DomainObjectABC.class);

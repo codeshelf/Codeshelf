@@ -33,8 +33,8 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-@CacheStrategy(useBeanCache = true)
 @DiscriminatorValue("AISLE")
+@CacheStrategy(useBeanCache = false)
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 //@ToString(doNotUseGetters = true)
 public class Aisle extends SubLocationABC<Facility> {

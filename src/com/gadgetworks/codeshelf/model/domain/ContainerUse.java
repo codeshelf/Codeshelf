@@ -17,6 +17,7 @@ import javax.persistence.Table;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
@@ -43,6 +44,7 @@ import com.google.inject.Singleton;
 @Entity
 @Table(name = "container_use")
 @CacheStrategy(useBeanCache = true)@JsonAutoDetect(getterVisibility = Visibility.NONE)
+@ToString(callSuper = true, doNotUseGetters = true)
 public class ContainerUse extends DomainObjectTreeABC<Container> {
 
 	@Inject

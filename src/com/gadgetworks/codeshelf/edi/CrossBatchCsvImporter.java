@@ -48,7 +48,6 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 	private ITypedDao<OrderDetail>	mOrderDetailDao;
 	private ITypedDao<Container>	mContainerDao;
 	private ITypedDao<ContainerUse>	mContainerUseDao;
-	private ITypedDao<ItemMaster>	mItemMasterDao;
 	private ITypedDao<UomMaster>	mUomMasterDao;
 
 	@Inject
@@ -57,7 +56,6 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 		final ITypedDao<OrderDetail> inOrderDetailDao,
 		final ITypedDao<Container> inContainerDao,
 		final ITypedDao<ContainerUse> inContainerUseDao,
-		final ITypedDao<ItemMaster> inItemMasterDao,
 		final ITypedDao<UomMaster> inUomMasterDao) {
 
 		mOrderGroupDao = inOrderGroupDao;
@@ -65,7 +63,6 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 		mOrderDetailDao = inOrderDetailDao;
 		mContainerDao = inContainerDao;
 		mContainerUseDao = inContainerUseDao;
-		mItemMasterDao = inItemMasterDao;
 		mUomMasterDao = inUomMasterDao;
 	}
 
@@ -94,7 +91,7 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 				for (CrossBatchCsvBean crossBatchBean : crossBatchBeanList) {
 					String errorMsg = crossBatchBean.validateBean();
 					if (errorMsg != null) {
-						LOGGER.error("Import errors: " + errorMsg);
+						LOGGER.error("Cross-batch: import errors: " + errorMsg);
 					} else {
 						crossBatchCsvBeanImport(crossBatchBean, inFacility, processTime);
 					}
@@ -148,7 +145,9 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 	 * @param inFacility
 	 * @param inEdiProcessTime
 	 */
-	private void crossBatchCsvBeanImport(final CrossBatchCsvBean inCsvBean, final Facility inFacility, final Timestamp inEdiProcessTime) {
+	private void crossBatchCsvBeanImport(final CrossBatchCsvBean inCsvBean,
+		final Facility inFacility,
+		final Timestamp inEdiProcessTime) {
 
 		try {
 			mOrderHeaderDao.beginTransaction();
@@ -156,17 +155,23 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 			LOGGER.info(inCsvBean.toString());
 
 			try {
-				OrderGroup group = updateOptionalOrderGroup(inCsvBean, inFacility, inEdiProcessTime);
-				OrderHeader order = updateOrderHeader(inCsvBean, inFacility, inEdiProcessTime, group);
-				Container container = updateContainer(inCsvBean, inFacility, inEdiProcessTime, order);
-				UomMaster uomMaster = updateUomMaster(inCsvBean.getUom(), inFacility);
-				ItemMaster itemMaster = updateItemMaster(inCsvBean.getItemId(),
-					inCsvBean.getDescription(),
-					inFacility,
-					inEdiProcessTime,
-					uomMaster);
-				OrderDetail orderDetail = updateOrderDetail(inCsvBean, inFacility, inEdiProcessTime, order, uomMaster, itemMaster);
+				ItemMaster itemMaster = inFacility.getItemMaster(inCsvBean.getItemId());
 
+				if (itemMaster == null) {
+					LOGGER.error("Cross-batch import: unknown item master sent.");
+				} else {
+					OrderGroup group = updateOptionalOrderGroup(inCsvBean, inFacility, inEdiProcessTime);
+					OrderHeader order = updateOrderHeader(inCsvBean, inFacility, inEdiProcessTime, group);
+					Container container = updateContainer(inCsvBean, inFacility, inEdiProcessTime, order);
+					UomMaster uomMaster = updateUomMaster(inCsvBean, inFacility);
+					OrderDetail detail = updateOrderDetail(inCsvBean,
+						inFacility,
+						inEdiProcessTime,
+						order,
+						itemMaster,
+						container,
+						uomMaster);
+				}
 			} catch (Exception e) {
 				LOGGER.error("", e);
 			}
@@ -273,8 +278,9 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime,
 		final OrderHeader inOrder,
-		final UomMaster inUomMaster,
-		final ItemMaster inItemMaster) {
+		final ItemMaster inItemMaster,
+		final Container inContainer,
+		final UomMaster inUomMaster) {
 		OrderDetail result = null;
 
 		result = inOrder.getOrderDetail(inCsvBean.getItemId());
@@ -288,7 +294,7 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 		}
 
 		result.setItemMaster(inItemMaster);
-		result.setDescription(inCsvBean.getDescription());
+		result.setDescription(inItemMaster.getDescription());
 		result.setQuantity(Integer.valueOf(inCsvBean.getQuantity()));
 		result.setUomMaster(inUomMaster);
 
@@ -364,59 +370,20 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * @param inItemId
-	 * @param inDescription
-	 * @param inFacility
-	 * @param inEdiProcessTime
-	 * @param inUomMaster
-	 * @return
-	 */
-	private ItemMaster updateItemMaster(final String inItemId,
-		final String inDescription,
-		final Facility inFacility,
-		final Timestamp inEdiProcessTime,
-		final UomMaster inUomMaster) {
-		ItemMaster result = null;
-
-		result = mItemMasterDao.findByDomainId(inFacility, inItemId);
-		if (result == null) {
-			result = new ItemMaster();
-			result.setParent(inFacility);
-			result.setDomainId(inItemId);
-			result.setItemId(inItemId);
-			inFacility.addItemMaster(result);
-		}
-
-		// If we were able to get/create an item master then update it.
-		if (result != null) {
-			result.setDescription(inDescription);
-			result.setStandardUom(inUomMaster);
-			try {
-				result.setActive(true);
-				result.setUpdated(inEdiProcessTime);
-				mItemMasterDao.store(result);
-			} catch (DaoException e) {
-				LOGGER.error("", e);
-			}
-		}
-		return result;
-	}
-
-	// --------------------------------------------------------------------------
-	/**
 	 * @param inUomId
 	 * @param inFacility
 	 * @return
 	 */
-	private UomMaster updateUomMaster(final String inUomId, final Facility inFacility) {
+	private UomMaster updateUomMaster(final CrossBatchCsvBean inCsvBean, final Facility inFacility) {
 		UomMaster result = null;
 
-		result = inFacility.getUomMaster(inUomId);
+		String uomId = inCsvBean.getUom();
+		result = inFacility.getUomMaster(uomId);
 
 		if (result == null) {
 			result = new UomMaster();
 			result.setParent(inFacility);
-			result.setUomMasterId(inUomId);
+			result.setUomMasterId(uomId);
 			inFacility.addUomMaster(result);
 
 			try {
@@ -428,5 +395,4 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 
 		return result;
 	}
-
 }

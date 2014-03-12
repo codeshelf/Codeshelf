@@ -23,7 +23,7 @@ import com.google.inject.Singleton;
 
 @Entity
 @MappedSuperclass
-@CacheStrategy(useBeanCache = true)
+@CacheStrategy(useBeanCache = false)
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 //@ToString(doNotUseGetters = true)
 public abstract class SubLocationABC<P extends IDomainObject> extends LocationABC<P> implements ISubLocation<P> {
@@ -37,7 +37,7 @@ public abstract class SubLocationABC<P extends IDomainObject> extends LocationAB
 		public SubLocationDao(final ISchemaManager inSchemaManager) {
 			super(inSchemaManager);
 		}
-		
+
 		public final Class<SubLocationABC> getDaoClass() {
 			return SubLocationABC.class;
 		}

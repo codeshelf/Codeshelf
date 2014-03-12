@@ -372,9 +372,13 @@ public class Path extends DomainObjectTreeABC<Facility> {
 
 			if ((inWi1 == null) && (inWi2 == null)) {
 				return 0;
-			} else if (((inWi2 == null)) || (inWi1.getPosAlongPath() < inWi2.getPosAlongPath())) {
+			} else if (inWi2 == null) {
 				return -1;
-			} else if (((inWi1 == null)) || (inWi1.getPosAlongPath() > inWi2.getPosAlongPath())) {
+			} else if (inWi1 == null) {
+				return 1;
+			} else if (inWi1.getPosAlongPath() < inWi2.getPosAlongPath()) {
+				return -1;
+			} else if (inWi1.getPosAlongPath() > inWi2.getPosAlongPath()) {
 				return 1;
 			} else {
 				return 0;

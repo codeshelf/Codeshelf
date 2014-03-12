@@ -24,6 +24,7 @@ import javax.persistence.Table;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
@@ -54,6 +55,7 @@ import com.google.inject.Singleton;
 @Table(name = "order_header")
 @CacheStrategy(useBeanCache = true)
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
+@ToString(of = { "orderTypeEnum", "statusEnum", "orderGroup", "active" }, callSuper = true, doNotUseGetters = true)
 public class OrderHeader extends DomainObjectTreeABC<Facility> {
 
 	@Inject

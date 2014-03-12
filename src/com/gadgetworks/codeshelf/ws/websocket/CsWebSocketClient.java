@@ -12,6 +12,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 
 import org.java_websocket.WebSocket;
+import org.java_websocket.WebSocketImpl;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 import org.slf4j.Logger;
@@ -42,7 +43,7 @@ public class CsWebSocketClient extends WebSocketClient implements ICsWebSocketCl
 
 		super(URI.create(inUriStr));
 
-		//WebSocketImpl.DEBUG = true;
+		WebSocketImpl.DEBUG = Boolean.parseBoolean(System.getProperty("websocket.debug"));
 		mMessageHandler = inMessageHandler;
 		mWebSocketSslContextFactory = inWebSocketSslContextFactory;
 	}

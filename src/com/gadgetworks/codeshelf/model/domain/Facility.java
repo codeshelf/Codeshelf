@@ -999,43 +999,47 @@ public class Facility extends LocationABC<Organization> {
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 
 		// Iterate through all of the OUTBOUND orders to see if any of them are on the same path as inCrossOrder.
-		for (OrderHeader outboundOrder : getOrderHeaders()) {
-			if (outboundOrder.getOrderTypeEnum().equals(OrderTypeEnum.OUTBOUND)) {
+		for (OrderHeader outOrder : getOrderHeaders()) {
+			if ((outOrder.getOrderTypeEnum().equals(OrderTypeEnum.OUTBOUND) && (outOrder.getActive()))) {
 				// Determine if this OUTBOUND order is on the same path as the CROSS order.
-				for (OrderLocation outboundOrderLocation : outboundOrder.getOrderLocations()) {
-					if (inPath.isLocationOnPath(outboundOrderLocation.getLocation())) {
+				for (OrderLocation outOrderLoc : outOrder.getOrderLocations()) {
+					if ((inPath.isLocationOnPath(outOrderLoc.getLocation()) && (outOrderLoc.getActive()))) {
 
 						// OK, we have an OUTBOUND order on the same path as the CROSS order.
 						// Check to see if any of the CROSS order detail items match OUTBOUND order details.
 						for (OrderDetail crossOrderDetail : inCrossOrder.getOrderDetails()) {
-							OrderDetail outboundOrderDetail = outboundOrder.getOrderDetail(crossOrderDetail.getOrderDetailId());
-							if (outboundOrderDetail != null) {
+							OrderDetail outOrderDetail = outOrder.getOrderDetail(crossOrderDetail.getOrderDetailId());
+							if ((outOrderDetail != null) && (outOrderDetail.getActive())) {
 
-								// Now make sure the outboundOrder is "ahead" of the CHE's position on the path.
-								if (outboundOrderLocation.getLocation().getPosAlongPath() > inCheLocation.getPosAlongPath()) {
+								// Now make sure
+								// The outboundOrder is "ahead" of the CHE's position on the path.
+								// The UOM matches.
+								if ((outOrderLoc.getLocation().getPosAlongPath() > inCheLocation.getPosAlongPath())
+										&& (outOrderDetail.getUomMasterId().equals(crossOrderDetail.getUomMasterId()))) {
 
-									// Make sure the UOM matches.
-									if (outboundOrderDetail.getUomMasterId().equals(crossOrderDetail.getUomMasterId())) {
-
-										ISubLocation<IDomainObject> foundLocation = (ISubLocation<IDomainObject>) inCheLocation;
-										WorkInstruction wi = createWorkInstruction(WorkInstructionStatusEnum.NEW,
-											WorkInstructionTypeEnum.PLAN,
-											crossOrderDetail,
-											crossOrderDetail.getQuantity(),
-											inContainerUse.getParentContainer(),
-											inScannedLocationId,
-											foundLocation,
-											outboundOrderLocation.getLocation().getPosAlongPath());
+									ISubLocation<IDomainObject> foundLocation = (ISubLocation<IDomainObject>) inCheLocation;
+									WorkInstruction wi = createWorkInstruction(WorkInstructionStatusEnum.NEW,
+										WorkInstructionTypeEnum.PLAN,
+										crossOrderDetail,
+										crossOrderDetail.getQuantity(),
+										inContainerUse.getParentContainer(),
+										inScannedLocationId,
+										foundLocation,
+										outOrderLoc.getLocation().getPosAlongPath());
+									
+									// If we created a WI then add it to the list.
+									if (wi != null) {
 										wiResultList.add(wi);
 									}
 								}
+
 							}
 						}
 					}
 				}
 			}
 		}
-		
+
 		// Now we need to sort and group the work instructions, so that the CHE can display them in some sensible way.
 
 		return wiResultList;
@@ -1155,6 +1159,9 @@ public class Facility extends LocationABC<Organization> {
 		}
 	};
 
+	/**
+	 * Compare ItemMasters by their DDC.
+	 */
 	private class DdcItemMasterComparator implements Comparator<ItemMaster> {
 
 		public int compare(ItemMaster inItemMaster1, ItemMaster inItemMaster2) {

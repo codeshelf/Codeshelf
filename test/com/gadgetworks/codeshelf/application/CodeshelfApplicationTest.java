@@ -299,7 +299,6 @@ public class CodeshelfApplicationTest {
 			orderDetailDao,
 			containerDao,
 			containerUseDao,
-			itemMasterDao,
 			uomMasterDao);
 		IEdiProcessor ediProcessor = new EdiProcessor(orderImporter,
 			inventoryImporter,
