@@ -262,8 +262,14 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 				result.add((T) child);
 			} else {
 				// If the child is not the kind we want the recurse.
-				result.addAll((List<T>) getChildrenAtLevel(inClassWanted));
+				result.addAll((List<T>) child.getChildrenAtLevel(inClassWanted));
 			}
+		}
+		
+		// If this class is also in the class we want then add it.
+		// While it's not technically its own child, we are looking for this type.
+		if (getClass().equals(inClassWanted)) {
+			result.add((T) this);
 		}
 		return result;
 	}

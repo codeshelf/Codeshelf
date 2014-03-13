@@ -11,33 +11,30 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.gadgetworks.codeshelf.model.OrderTypeEnum;
-import com.gadgetworks.codeshelf.model.dao.MockDao;
+import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 
 /**
  * @author jeffw
  *
  */
-public class OrderGroupTest {
+public class OrderGroupTest extends DomainTestABC {
 
 	@Test
 	public final void addRemoveOrderGroupTest() {
 		
-		OrderGroup.DAO = new MockDao<OrderGroup>();
-		OrderHeader.DAO = new MockDao<OrderHeader>();
-		
 		Organization organization = new Organization();
-		organization.setOrganizationId("O1");
+		organization.setOrganizationId("OG.1");
+		mOrganizationDao.store(organization);
 		
-		Facility facility = new Facility();
-		facility.setParent(organization);
-		facility.setFacilityId("F1");
+		organization.createFacility("F1", "test", PositionTypeEnum.METERS_FROM_PARENT.getName(), 0.0, 0.0);
+		Facility facility = organization.getFacility("F1");
 		
 		OrderGroup orderGroup = new OrderGroup();
 		orderGroup.setParent(facility);
-		orderGroup.setOrderGroupId("OG1");
+		orderGroup.setOrderGroupId("OG.2");
 		orderGroup.setActive(true);
 		orderGroup.setUpdated(new Timestamp(System.currentTimeMillis()));
-		orderGroup.DAO.store(orderGroup);
+		mOrderGroupDao.store(orderGroup);
 		
 		OrderHeader order1 = new OrderHeader();
 		order1.setParent(facility);
@@ -47,7 +44,7 @@ public class OrderGroupTest {
 		order1.setDueDate(new Timestamp(System.currentTimeMillis()));
 		order1.setActive(true);
 		order1.setUpdated(new Timestamp(System.currentTimeMillis()));
-		OrderHeader.DAO.store(order1);
+		mOrderHeaderDao.store(order1);
 		
 		// Check if we can add this order.
 		orderGroup.addOrderHeader(order1);
@@ -68,7 +65,7 @@ public class OrderGroupTest {
 		order2.setDueDate(new Timestamp(System.currentTimeMillis()));
 		order2.setActive(true);
 		order2.setUpdated(new Timestamp(System.currentTimeMillis()));
-		OrderHeader.DAO.store(order2);
+		mOrderHeaderDao.store(order2);
 		
 		// Check if we can add this order.
 		orderGroup.addOrderHeader(order2);
@@ -85,18 +82,18 @@ public class OrderGroupTest {
 	public final void releaseOrderGroupTest() {
 		
 		Organization organization = new Organization();
-		organization.setOrganizationId("O1");
+		organization.setOrganizationId("OG.2");
+		mOrganizationDao.store(organization);
 		
-		Facility facility = new Facility();
-		facility.setParent(organization);
-		facility.setFacilityId("F1");
-		
+		organization.createFacility("F1", "test", PositionTypeEnum.METERS_FROM_PARENT.getName(), 0.0, 0.0);
+		Facility facility = organization.getFacility("F1");
+
 		OrderGroup orderGroup = new OrderGroup();
 		orderGroup.setParent(facility);
-		orderGroup.setOrderGroupId("OG1");
+		orderGroup.setOrderGroupId("OG.2");
 		orderGroup.setActive(true);
 		orderGroup.setUpdated(new Timestamp(System.currentTimeMillis()));
-		orderGroup.DAO.store(orderGroup);
+		mOrderGroupDao.store(orderGroup);
 		
 		OrderHeader order1 = new OrderHeader();
 		order1.setParent(facility);
@@ -107,7 +104,7 @@ public class OrderGroupTest {
 		order1.setDueDate(new Timestamp(System.currentTimeMillis()));
 		order1.setActive(true);
 		order1.setUpdated(new Timestamp(System.currentTimeMillis()));
-		OrderHeader.DAO.store(order1);
+		mOrderHeaderDao.store(order1);
 		
 		orderGroup.addOrderHeader(order1);
 		

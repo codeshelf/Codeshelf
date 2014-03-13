@@ -996,7 +996,8 @@ public class Facility extends LocationABC<Organization> {
 		final Path inPath,
 		final String inScannedLocationId,
 		final ILocation<?> inCheLocation) {
-		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
+
+		List<WorkInstruction> wiList = new ArrayList<WorkInstruction>();
 
 		// Iterate through all of the OUTBOUND orders to see if any of them are on the same path as inCrossOrder.
 		for (OrderHeader outOrder : getOrderHeaders()) {
@@ -1026,10 +1027,10 @@ public class Facility extends LocationABC<Organization> {
 										inScannedLocationId,
 										foundLocation,
 										outOrderLoc.getLocation().getPosAlongPath());
-									
+
 									// If we created a WI then add it to the list.
 									if (wi != null) {
-										wiResultList.add(wi);
+										wiList.add(wi);
 									}
 								}
 
@@ -1038,9 +1039,39 @@ public class Facility extends LocationABC<Organization> {
 					}
 				}
 			}
+
 		}
 
 		// Now we need to sort and group the work instructions, so that the CHE can display them in some sensible way.
+		return sortCrosswallInstructions(wiList, inCheLocation, inPath);
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Sort the crosswall WIs for the CHE's work path.
+	 * @param inCrosswallWiList
+	 */
+	private List<WorkInstruction> sortCrosswallInstructions(final List<WorkInstruction> inCrosswallWiList,
+		final ILocation<?> inCheLocation,
+		final Path inPath) {
+
+		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
+
+		// First make a list of all the bays on the CHE's path.
+		List<Bay> bays = new ArrayList<Bay>();
+
+		// Path segments get return in direction order.
+		for (PathSegment pathSegment : inPath.getSegments()) {
+			for (ILocation<?> pathLocation : pathSegment.getLocations()) {
+				if (pathLocation.getClass().equals(Aisle.class)) {
+					for (ILocation<?> aisleChildLocation : pathLocation.getChildren()) {
+						if (aisleChildLocation.getClass().equals(Bay.class)) {
+							bays.add((Bay) aisleChildLocation);
+						}
+					}
+				}
+			}
+		}
 
 		return wiResultList;
 	}

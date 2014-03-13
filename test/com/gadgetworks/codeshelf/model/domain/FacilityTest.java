@@ -31,68 +31,19 @@ import com.gadgetworks.codeshelf.model.domain.WorkArea.WorkAreaDao;
  * @author jeffw
  *
  */
-public class FacilityTest {
-
-	private IUtil			mUtil;
-	private ISchemaManager	mSchemaManager;
-	private IDatabase		mDatabase;
-
-	@Before
-	public final void setup() {
-
-		try {
-			mUtil = new IUtil() {
-
-				public void setLoggingLevelsFromPrefs(Organization inOrganization, ITypedDao<PersistentProperty> inPersistentPropertyDao) {
-				}
-
-				public String getVersionString() {
-					return "";
-				}
-
-				public String getApplicationLogDirPath() {
-					return ".";
-				}
-
-				public String getApplicationDataDirPath() {
-					return ".";
-				}
-
-				public void exitSystem() {
-					System.exit(-1);
-				}
-			};
-
-			Class.forName("org.h2.Driver");
-			mSchemaManager = new H2SchemaManager(mUtil, "codeshelf", "codeshelf", "codeshelf", "codeshelf", "localhost", "", "false");
-			mDatabase = new Database(mSchemaManager, mUtil);
-
-			mDatabase.start();
-		} catch (ClassNotFoundException e) {
-		}
-	}
+public class FacilityTest extends DomainTestABC {
 
 	@Test
 	public final void createAisleTest() {
 
-		Organization.DAO = new OrganizationDao(mSchemaManager);
-		LocationABC.DAO = new LocationABCDao(mSchemaManager, mDatabase);
-		Facility.DAO = new FacilityDao(mSchemaManager);
-		Aisle.DAO = new AisleDao(mSchemaManager);
-		Bay.DAO = new BayDao(mSchemaManager);
-		Vertex.DAO = new VertexDao(mSchemaManager);
-		Path.DAO = new PathDao(mSchemaManager);
-		PathSegment.DAO = new PathSegmentDao(mSchemaManager);
-		WorkArea.DAO = new WorkAreaDao(mSchemaManager);
-
 		Organization organization = new Organization();
 		organization.setOrganizationId("FTEST1.O1");
-		Organization.DAO.store(organization);
+		mOrganizationDao.store(organization);
 
 		Facility facility = new Facility(0.0, 0.0);
 		facility.setParent(organization);
 		facility.setFacilityId("FTEST1.F1");
-		Facility.DAO.store(facility);
+		mFacilityDao.store(facility);
 
 		facility.createAisle("FTEST1.A1", 1.0, 1.0, 2.0, 2.0, 2.0, 2, 5, true, true);
 
@@ -106,24 +57,14 @@ public class FacilityTest {
 		
 		List<WorkInstruction> wiList;
 		
-		Organization.DAO = new OrganizationDao(mSchemaManager);
-		LocationABC.DAO = new LocationABCDao(mSchemaManager, mDatabase);
-		Facility.DAO = new FacilityDao(mSchemaManager);
-		Aisle.DAO = new AisleDao(mSchemaManager);
-		Bay.DAO = new BayDao(mSchemaManager);
-		Vertex.DAO = new VertexDao(mSchemaManager);
-		Path.DAO = new PathDao(mSchemaManager);
-		PathSegment.DAO = new PathSegmentDao(mSchemaManager);
-		WorkArea.DAO = new WorkAreaDao(mSchemaManager);
-
 		Organization organization = new Organization();
 		organization.setOrganizationId("FTEST2.O1");
-		Organization.DAO.store(organization);
+		mOrganizationDao.store(organization);
 
 		Facility facility = new Facility(0.0, 0.0);
 		facility.setParent(organization);
 		facility.setFacilityId("FTEST2.F2");
-		Facility.DAO.store(facility);
+		mFacilityDao.store(facility);
 		
 //		wiList = facility.getWorkInstructions(inChe, inLocationId, inContainerIdList);
 //		

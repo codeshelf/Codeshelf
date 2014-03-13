@@ -52,7 +52,7 @@ import com.google.inject.Singleton;
  * NOTE:
  * 
  * WorkInstructions also get sent to the site controller (gateway).  The gateway only knows that it needs to distribute and handle
- * work instructions at the site, but the gateway has no business logic at all.  ANy cahnges to those work instructions can only
+ * work instructions at the site, but the gateway has no business logic at all.  Any changes to those work instructions can only
  * come from the back-end business logic.  We send those changes over the WebSocket to the gateway.  We share this 
  * WorkInstruction class between the business logic and remote gateway as a simple way to serial the objects over the WebSocket.  
  * 

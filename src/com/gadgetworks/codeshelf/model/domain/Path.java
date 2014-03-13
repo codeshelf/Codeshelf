@@ -6,6 +6,7 @@
 package com.gadgetworks.codeshelf.model.domain;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -170,6 +171,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * Get the path segments sorted in order of the path's travel direction.
 	 * @param inTravelDirection
 	 * @return
 	 */
@@ -393,5 +395,24 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	 */
 	public final void sortWisByDistance(final List<WorkInstruction> inOutWiList) {
 		Collections.sort(inOutWiList, new WiComparable());
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Return all of the locations on this path of the type requested.
+	 * @param inClassLevel
+	 * @return
+	 */
+	public final List<ISubLocation> getLocations(final Class<? extends ISubLocation> inClassWanted) {
+		// First make a list of all the bays on the CHE's path.
+		List<ISubLocation> locations = new ArrayList<ISubLocation>();
+
+		// Path segments get return in direction order.
+		for (PathSegment pathSegment : getSegments()) {
+			for (ILocation<?> pathLocation : pathSegment.getLocations()) {
+				locations.addAll(pathLocation.getChildrenAtLevel(inClassWanted));
+			}
+		}
+		return locations;
 	}
 }
