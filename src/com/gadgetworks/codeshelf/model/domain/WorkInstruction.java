@@ -164,6 +164,7 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 	// Denormalized for serialized WIs at the site controller.
 	@Column(nullable = false)
 	@Getter
+	@Setter
 	@JsonProperty
 	private String						locationId;
 
@@ -262,6 +263,7 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 	// Denormalized for serialized WIs at the site controller.
 	public final void setLocation(ISubLocation<?> inLocation) {
 		location = (SubLocationABC<?>) inLocation;
-		locationId = inLocation.getLocationId();
+		// This string is user-readable format set by application logic.
+		// locationId = inLocation.getLocationId();
 	}
 }

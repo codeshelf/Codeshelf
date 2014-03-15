@@ -420,6 +420,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 			}
 		}
 	}
+
 	// --------------------------------------------------------------------------
 	/**
 	 * Get all locations on this path of the type requested.
@@ -439,7 +440,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 				locations.addAll(pathLocation.<T> getChildrenAtLevel(inClassWanted));
 			}
 		}
-		
+
 		// Now sort them by path working distance.
 		Collections.sort(locations, new LocationsComparable());
 
@@ -467,5 +468,24 @@ public class Path extends DomainObjectTreeABC<Facility> {
 			}
 		}
 		return locations;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Check if the order header is on this path (at least in one OrderLocation).
+	 * @param inOrderDetail
+	 * @return
+	 */
+	public final boolean isOrderOnPath(final OrderHeader inOrderHeader) {
+		boolean result = false;
+
+		for (OrderLocation outOrderLoc : inOrderHeader.getOrderLocations()) {
+			if ((isLocationOnPath(outOrderLoc.getLocation()) && (outOrderLoc.getActive()))) {
+				result = true;
+				break;
+			}
+		}
+		
+		return result;
 	}
 }

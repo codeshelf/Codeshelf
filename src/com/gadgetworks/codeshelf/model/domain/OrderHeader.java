@@ -292,4 +292,22 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	public final String getReadableOrderDate() {
 		return new java.text.SimpleDateFormat("ddMMMyy HH:mm").format(getOrderDate()).toUpperCase();
 	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Return the first order location we find along the path (in path working order).
+	 * @param inPath
+	 * @return
+	 */
+	public final OrderLocation getFirstOrderLocationOnPath(final Path inPath) {
+		OrderLocation result = null;
+		
+		for (OrderLocation orderLoc : getOrderLocations()) {
+			if ((result == null) || (orderLoc.getLocation().getPosAlongPath() < result.getLocation().getPosAlongPath())) {
+				result = orderLoc;
+			}
+		}
+
+		return result;
+	}
 }

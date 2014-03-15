@@ -340,7 +340,7 @@ public class Facility extends LocationABC<Organization> {
 	public final Double getAbsolutePosY() {
 		return 0.0;
 	}
-	
+
 	public final Double getAbsolutePosZ() {
 		return 0.0;
 	}
@@ -972,7 +972,7 @@ public class Facility extends LocationABC<Organization> {
 				}
 			}
 		}
-		
+
 		// If we found WIs then sort them by they distance from the named location (closest first).
 		if (wiResultList.size() > 0) {
 			inPath.sortWisByDistance(wiResultList);
@@ -998,44 +998,40 @@ public class Facility extends LocationABC<Organization> {
 		List<WorkInstruction> wiList = new ArrayList<WorkInstruction>();
 
 		for (Container container : inContainerList) {
-			OrderHeader order = container.getCurrentOrderHeader();
-			if ((order.getActive()) && (order.getOrderTypeEnum().equals(OrderTypeEnum.CROSS))) {
-				OrderHeader crossOrder = order;
-				// Iterate through all of the OUTBOUND orders to see if any of them are on the same path as inCrossOrder.
+			// Iterate over all active CROSS orders on the path.
+			OrderHeader crossOrder = container.getCurrentOrderHeader();
+			if ((crossOrder.getActive()) && (crossOrder.getOrderTypeEnum().equals(OrderTypeEnum.CROSS))) {
+				// Iterate over all active OUTBOUND on the path.
 				for (OrderHeader outOrder : getOrderHeaders()) {
-					if ((outOrder.getOrderTypeEnum().equals(OrderTypeEnum.OUTBOUND) && (outOrder.getActive()))) {
-						// Determine if this OUTBOUND order is on the same path as the CROSS order.
-						for (OrderLocation outOrderLoc : outOrder.getOrderLocations()) {
-							if ((inPath.isLocationOnPath(outOrderLoc.getLocation()) && (outOrderLoc.getActive()))) {
+					if ((outOrder.getOrderTypeEnum().equals(OrderTypeEnum.OUTBOUND) && (outOrder.getActive()))
+							&& (inPath.isOrderOnPath(outOrder))) {
+						// OK, we have an OUTBOUND order on the same path as the CROSS order.
+						// Check to see if any of the active CROSS order detail items match OUTBOUND order details.
+						for (OrderDetail crossOrderDetail : crossOrder.getOrderDetails()) {
+							if (crossOrderDetail.getActive()) {
+								OrderDetail outOrderDetail = outOrder.getOrderDetail(crossOrderDetail.getOrderDetailId());
+								if ((outOrderDetail != null) && (outOrderDetail.getActive())) {
 
-								// OK, we have an OUTBOUND order on the same path as the CROSS order.
-								// Check to see if any of the CROSS order detail items match OUTBOUND order details.
-								for (OrderDetail crossOrderDetail : crossOrder.getOrderDetails()) {
-									OrderDetail outOrderDetail = outOrder.getOrderDetail(crossOrderDetail.getOrderDetailId());
-									if ((outOrderDetail != null) && (outOrderDetail.getActive())) {
+									OrderLocation firstOutOrderLoc = outOrder.getFirstOrderLocationOnPath(inPath);
+									// Now make sure
+									// The outboundOrder is "ahead" of the CHE's position on the path.
+									// The UOM matches.
+									if ((firstOutOrderLoc.getLocation().getPosAlongPath() > inCheLocation.getPosAlongPath())
+											&& (outOrderDetail.getUomMasterId().equals(crossOrderDetail.getUomMasterId()))) {
 
-										// Now make sure
-										// The outboundOrder is "ahead" of the CHE's position on the path.
-										// The UOM matches.
-										if ((outOrderLoc.getLocation().getPosAlongPath() > inCheLocation.getPosAlongPath())
-												&& (outOrderDetail.getUomMasterId().equals(crossOrderDetail.getUomMasterId()))) {
+										WorkInstruction wi = createWorkInstruction(WorkInstructionStatusEnum.NEW,
+											WorkInstructionTypeEnum.PLAN,
+											outOrderDetail,
+											outOrderDetail.getQuantity(),
+											container,
+											inScannedLocationId,
+											firstOutOrderLoc.getLocation(),
+											firstOutOrderLoc.getLocation().getPosAlongPath());
 
-											ISubLocation<IDomainObject> foundLocation = (ISubLocation<IDomainObject>) inCheLocation;
-											WorkInstruction wi = createWorkInstruction(WorkInstructionStatusEnum.NEW,
-												WorkInstructionTypeEnum.PLAN,
-												crossOrderDetail,
-												crossOrderDetail.getQuantity(),
-												container,
-												inScannedLocationId,
-												foundLocation,
-												outOrderLoc.getLocation().getPosAlongPath());
-
-											// If we created a WI then add it to the list.
-											if (wi != null) {
-												wiList.add(wi);
-											}
+										// If we created a WI then add it to the list.
+										if (wi != null) {
+											wiList.add(wi);
 										}
-
 									}
 								}
 							}
@@ -1208,6 +1204,7 @@ public class Facility extends LocationABC<Organization> {
 
 			//resultWi.setLocationId(((ISubLocation<?>) inLocation.getParent()).getLocationId() + "." + inLocation.getLocationId());
 			resultWi.setLocation(inLocation);
+			resultWi.setLocationId(inLocation.getFullDomainId());
 			resultWi.setItemMaster(inOrderDetail.getItemMaster());
 			resultWi.setDescription(inOrderDetail.getItemMaster().getDescription());
 			if (inOrderDetail.getItemMaster().getDdcId() != null) {
