@@ -29,8 +29,9 @@ public interface ISchemaManager {
 	int		DATABASE_VERSION_6				= 6;								// Add order location table.
 	int		DATABASE_VERSION_7				= 7;								// Add order type enum.
 	int		DATABASE_VERSION_8				= 8;								// Homongenize all of the quantities as decimal
+	int		DATABASE_VERSION_9				= 9;								// Add object references back to WorkInstruction
 
-	int		DATABASE_VERSION_CUR			= DATABASE_VERSION_8;
+	int		DATABASE_VERSION_CUR			= DATABASE_VERSION_9;
 
 	String getDbAddress();
 

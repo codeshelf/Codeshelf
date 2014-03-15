@@ -42,7 +42,8 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "container")
-@CacheStrategy(useBeanCache = true)@JsonAutoDetect(getterVisibility = Visibility.NONE)
+@CacheStrategy(useBeanCache = true)
+@JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class Container extends DomainObjectTreeABC<Facility> {
 
 	@Inject
@@ -54,7 +55,7 @@ public class Container extends DomainObjectTreeABC<Facility> {
 		public ContainerDao(final ISchemaManager inSchemaManager) {
 			super(inSchemaManager);
 		}
-		
+
 		public final Class<Container> getDaoClass() {
 			return Container.class;
 		}
@@ -134,6 +135,12 @@ public class Container extends DomainObjectTreeABC<Facility> {
 		uses.remove(inContainerUse);
 	}
 
+	// --------------------------------------------------------------------------
+	/**
+	 * Get the container use associated with this order.
+	 * @param inOrderHeader
+	 * @return
+	 */
 	public final ContainerUse getContainerUse(final OrderHeader inOrderHeader) {
 		ContainerUse result = null;
 
@@ -145,4 +152,26 @@ public class Container extends DomainObjectTreeABC<Facility> {
 
 		return result;
 	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Return the currently working container use for this container.
+	 * @return
+	 */
+	public final OrderHeader getCurrentOrderHeader() {
+		OrderHeader result = null;
+
+		// Find the container use with the latest timestamp - that's the active one.
+		Timestamp timestamp = null;
+		for (ContainerUse containerUse : getUses()) {
+			if ((timestamp == null) || (containerUse.getUsedOn().after(timestamp))) {
+				if (containerUse.getActive()) {
+					timestamp = containerUse.getUsedOn();
+					result = containerUse.getOrderHeader();
+				}
+			}
+		}
+		return result;
+	}
+
 }

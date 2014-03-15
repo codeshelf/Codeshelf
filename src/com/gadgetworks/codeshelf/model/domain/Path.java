@@ -6,10 +6,10 @@
 package com.gadgetworks.codeshelf.model.domain;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -397,20 +397,73 @@ public class Path extends DomainObjectTreeABC<Facility> {
 		Collections.sort(inOutWiList, new WiComparable());
 	}
 
+	/**
+	 * @author jeffw
+	 *
+	 */
+	private class LocationsComparable implements Comparator<ILocation> {
+
+		public int compare(ILocation inLoc1, ILocation inLoc2) {
+
+			if ((inLoc1 == null) && (inLoc2 == null)) {
+				return 0;
+			} else if (inLoc2 == null) {
+				return -1;
+			} else if (inLoc1 == null) {
+				return 1;
+			} else if (inLoc1.getPosAlongPath() < inLoc2.getPosAlongPath()) {
+				return -1;
+			} else if (inLoc1.getPosAlongPath() > inLoc2.getPosAlongPath()) {
+				return 1;
+			} else {
+				return 0;
+			}
+		}
+	}
 	// --------------------------------------------------------------------------
 	/**
-	 * Return all of the locations on this path of the type requested.
-	 * @param inClassLevel
+	 * Get all locations on this path of the type requested.
+	 * @param inCrosswallWiList
+	 * @param inCheLocation
+	 * @param inPath
 	 * @return
 	 */
-	public final List<ISubLocation> getLocations(final Class<? extends ISubLocation> inClassWanted) {
+	public final <T extends ISubLocation> List<T> getLocationsByClass(final Class<? extends ISubLocation> inClassWanted) {
+
 		// First make a list of all the bays on the CHE's path.
-		List<ISubLocation> locations = new ArrayList<ISubLocation>();
+		List<T> locations = new ArrayList<T>();
 
 		// Path segments get return in direction order.
 		for (PathSegment pathSegment : getSegments()) {
 			for (ILocation<?> pathLocation : pathSegment.getLocations()) {
-				locations.addAll(pathLocation.getChildrenAtLevel(inClassWanted));
+				locations.addAll(pathLocation.<T> getChildrenAtLevel(inClassWanted));
+			}
+		}
+		
+		// Now sort them by path working distance.
+		Collections.sort(locations, new LocationsComparable());
+
+		return locations;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Get all locations on this path of the requested that are at (or beyond) the specified location.
+	 * @param inAtOrPastLocation
+	 * @param inClassWanted
+	 * @return
+	 */
+	public final <T extends ISubLocation<?>> List<T> getLocationsByClassAtOrPastLocation(final ILocation<?> inAtOrPastLocation,
+		final Class<? extends ISubLocation<?>> inClassWanted) {
+
+		// First make a list of all the bays on the CHE's path.
+		List<T> locations = getLocationsByClass(inClassWanted);
+
+		Iterator<T> iterator = locations.iterator();
+		while (iterator.hasNext()) {
+			T checkLocation = iterator.next();
+			if (checkLocation.getPosAlongPath() < inAtOrPastLocation.getPosAlongPath()) {
+				locations.remove(checkLocation);
 			}
 		}
 		return locations;

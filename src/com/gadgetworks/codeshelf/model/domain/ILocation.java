@@ -234,7 +234,7 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 	 * @param inLocationId
 	 * @return
 	 */
-	ILocation findSubLocationById(String inLocationId);
+	ISubLocation<?> findSubLocationById(String inLocationId);
 
 	void setPathSegment(PathSegment inPathSegment);
 

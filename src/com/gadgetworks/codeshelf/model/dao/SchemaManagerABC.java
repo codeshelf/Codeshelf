@@ -326,6 +326,10 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 			result &= doUpgrade8();
 		}
 
+		if (inOldVersion < ISchemaManager.DATABASE_VERSION_9) {
+			result &= doUpgrade9();
+		}
+
 		result &= updateSchemaVersion(ISchemaManager.DATABASE_VERSION_CUR);
 
 		return result;
@@ -429,6 +433,24 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		result &= safeModifyColumnType("order_detail", "quantity", "INTEGER");
 		result &= safeModifyColumnType("work_instruction", "plan_quantity", "INTEGER");
 		result &= safeModifyColumnType("work_instruction", "actual_quantity", "INTEGER");
+
+		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @return
+	 */
+	private boolean doUpgrade9() {
+		boolean result = true;
+
+		result &= safeAddColumn("work_instruction", "container_persistentid " + UUID_TYPE + " NOT NULL");
+		result &= safeAddColumn("work_instruction", "item_master_persistentid " + UUID_TYPE + " NOT NULL");
+		result &= safeAddColumn("work_instruction", "location_persistentid " + UUID_TYPE + " NOT NULL");
+
+		result &= linkToParentTable("work_instruction", "item_master", "item_master");
+		result &= linkToParentTable("work_instruction", "container", "container");
+		result &= linkToParentTable("work_instruction", "location", "location");
 
 		return result;
 	}
@@ -566,6 +588,22 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	 * @param inColumnName
 	 * @return
 	 */
+	private boolean safeDropColumn(final String inTableName, final String inColumnName) {
+		boolean result = false;
+
+		result &= execOneSQLCommand("ALTER TABLE " + getDbSchemaName() + "." + inTableName //
+				+ " DROP " + inColumnName //
+				+ ";");
+
+		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inTableName
+	 * @param inColumnName
+	 * @return
+	 */
 	private boolean safeModifyColumnType(final String inTableName, final String inColumnName, final String inNewColumnType) {
 		boolean result = false;
 
@@ -652,6 +690,8 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		result &= linkToParentTable("work_area", "parent", "PATH");
 
 		result &= linkToParentTable("work_instruction", "parent", "order_detail");
+		result &= linkToParentTable("work_instruction", "item_master", "item_master");
+		result &= linkToParentTable("work_instruction", "container", "container");
 
 		return result;
 	}
@@ -903,12 +943,15 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		result &= createTable("work_instruction", //
 			"type_enum TEXT NOT NULL, " //
 					+ "status_enum TEXT NOT NULL, " //
+					+ "container_persistentid " + UUID_TYPE + ", " //
 					+ "container_id TEXT NOT NULL, " //
+					+ "item_master_persistentid " + UUID_TYPE + ", " //
 					+ "item_id TEXT NOT NULL, " //
 					+ "description TEXT NOT NULL, " //
 					+ "pick_instruction TEXT, " //
 					+ "plan_quantity INTEGER NOT NULL, " //
 					+ "actual_quantity INTEGER NOT NULL, " //
+					+ "location_persistentid " + UUID_TYPE + ", " //
 					+ "location_id TEXT NOT NULL, " //
 					+ "pos_along_path DOUBLE PRECISION, " //
 					+ "picker_id TEXT, " //

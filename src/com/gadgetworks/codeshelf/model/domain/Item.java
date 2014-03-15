@@ -71,7 +71,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	@Setter
 	private ItemMaster			parent;
 
-	// The item master.
+	// The stored location.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	@Getter

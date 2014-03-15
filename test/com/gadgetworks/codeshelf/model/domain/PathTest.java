@@ -46,7 +46,7 @@ public class PathTest extends DomainTestABC {
 		mBayDao.store(baya2b2);
 
 		Path path = new Path();
-		path.setDomainId("P1");
+		path.setDomainId(Path.DEFAULT_FACILITY_PATH_ID);
 		path.setParent(facility);
 		path.setTravelDirEnum(TravelDirectionEnum.FORWARD);
 		mPathDao.store(path);
@@ -88,16 +88,18 @@ public class PathTest extends DomainTestABC {
 		aisle1.setPathSegment(pathSegment2);
 		mAisleDao.store(aisle4);
 
+		facility.logLocationDistances();
+		
 		// Check if we can find all four aisles.
-		List<ISubLocation> aisleList = path.getLocations(Aisle.class);
+		List<Aisle> aisleList = path.<Aisle> getLocationsByClass(Aisle.class);
 		Assert.assertEquals(4, aisleList.size());
 
 		// Check if we can find all eight bays.
-		List<ISubLocation> bayList = path.getLocations(Bay.class);
+		List<Bay> bayList = path.<Bay> getLocationsByClass(Bay.class);
 		Assert.assertEquals(8, bayList.size());
 
 		// Make sure we don't find other random locations.
-		List<ISubLocation> tierList = path.getLocations(Tier.class);
+		List<Tier> tierList = path.<Tier> getLocationsByClass(Tier.class);
 		Assert.assertEquals(0, tierList.size());
 
 	}

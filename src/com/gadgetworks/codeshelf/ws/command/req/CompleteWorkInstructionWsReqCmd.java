@@ -80,17 +80,16 @@ public class CompleteWorkInstructionWsReqCmd extends WsReqCmdABC {
 			ObjectMapper mapper = new ObjectMapper();
 			JsonNode wiNode = getDataJsonNode().get("wi");
 			try {
-				WorkInstruction wi = mapper.readValue(wiNode, WorkInstruction.class);
+				WorkInstruction wiBean = mapper.readValue(wiNode, WorkInstruction.class);
 
-				WorkInstruction storedWi = mWorkInstructionDao.findByPersistentId(wi.getPersistentId());
+				WorkInstruction storedWi = mWorkInstructionDao.findByPersistentId(wiBean.getPersistentId());
 				if (storedWi != null) {
-					storedWi.setPickerId(wi.getPickerId());
-					storedWi.setActualQuantity(wi.getActualQuantity());
-					storedWi.setContainerId(wi.getContainerId());
-					storedWi.setStatusEnum(wi.getStatusEnum());
+					storedWi.setPickerId(wiBean.getPickerId());
+					storedWi.setActualQuantity(wiBean.getActualQuantity());
+					storedWi.setStatusEnum(wiBean.getStatusEnum());
 					storedWi.setTypeEnum(WorkInstructionTypeEnum.ACTUAL);
-					storedWi.setStarted(wi.getStarted());
-					storedWi.setCompleted(wi.getCompleted());
+					storedWi.setStarted(wiBean.getStarted());
+					storedWi.setCompleted(wiBean.getCompleted());
 					try {
 						mWorkInstructionDao.store(storedWi);
 					} catch (DaoException e) {

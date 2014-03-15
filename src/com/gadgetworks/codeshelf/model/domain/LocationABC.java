@@ -265,7 +265,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 				result.addAll((List<T>) child.getChildrenAtLevel(inClassWanted));
 			}
 		}
-		
+
 		// If this class is also in the class we want then add it.
 		// While it's not technically its own child, we are looking for this type.
 		if (getClass().equals(inClassWanted)) {
@@ -337,7 +337,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.ILocation#getAbsolutePosX()
 	 */
-	public final Double getAbsolutePosX() {
+	public Double getAbsolutePosX() {
 		Double result = getPosX();
 
 		if (!posTypeEnum.equals(PositionTypeEnum.GPS)) {
@@ -358,7 +358,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.ILocation#getAbsolutePosX()
 	 */
-	public final Double getAbsolutePosY() {
+	public Double getAbsolutePosY() {
 		Double result = getPosY();
 
 		if (!posTypeEnum.equals(PositionTypeEnum.GPS)) {
@@ -379,7 +379,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.ILocation#getAbsolutePosX()
 	 */
-	public final Double getAbsolutePosZ() {
+	public Double getAbsolutePosZ() {
 		Double result = getPosZ();
 
 		if (!posTypeEnum.equals(PositionTypeEnum.GPS)) {
@@ -466,8 +466,8 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#getSubLocationById(java.lang.String)
 	 */
-	public final ILocation findSubLocationById(final String inLocationId) {
-		ILocation<P> result = null;
+	public final ISubLocation<?> findSubLocationById(final String inLocationId) {
+		ISubLocation<?> result = null;
 
 		Integer firstDotPos = inLocationId.indexOf(".");
 		if (firstDotPos < 0) {
@@ -477,7 +477,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 			// There is a dot, so find the sublocation based on the first part and recursively ask it for the location from the second part.
 			String firstPart = inLocationId.substring(0, firstDotPos);
 			String secondPart = inLocationId.substring(firstDotPos + 1);
-			ILocation<P> firstPartLocation = this.findLocationById(firstPart);
+			ISubLocation<?> firstPartLocation = this.findLocationById(firstPart);
 			if (firstPartLocation != null) {
 				result = firstPartLocation.findSubLocationById(secondPart);
 			}

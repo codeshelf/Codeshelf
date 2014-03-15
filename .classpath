@@ -62,7 +62,7 @@
 	<classpathentry kind="lib" path="lib/dist/lombok-1.12.2.jar" sourcepath="/Users/jeffw/.m2/repository/org/projectlombok/lombok/1.12.2/lombok-1.12.2-sources.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
 	<classpathentry kind="lib" path="lib/dist/jackson-core-asl-1.9.13.jar"/>
-	<classpathentry kind="lib" path="lib/dist/jackson-mapper-asl-1.9.13.jar"/>
+	<classpathentry kind="lib" path="lib/dist/jackson-mapper-asl-1.9.13.jar" sourcepath="/Users/jeffw/.m2/repository/org/codehaus/jackson/jackson-mapper-asl/1.9.13/jackson-mapper-asl-1.9.13-sources.jar"/>
 	<classpathentry kind="lib" path="lib/dist/gson-2.2.4.jar" sourcepath="APIs/gson-2.2.4-sources.jar"/>
 	<classpathentry kind="lib" path="lib/dist/json_simple-1.1.jar"/>
 	<classpathentry kind="lib" path="lib/dist/json-1.0.jar"/>
@@ -72,5 +72,6 @@
 	<classpathentry kind="lib" path="build/lib/avaje-ebeanorm-agent-3.2.3-SNAPSHOT.jar"/>
 	<classpathentry kind="lib" path="lib/dist/java_websocket.jar" sourcepath="/Java-WebSocket/src/main/java"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/avaje-ebeanorm"/>
+	<classpathentry kind="lib" path="lib/dist/guava-16.0.1.jar"/>
 	<classpathentry kind="output" path="eclipse-bin"/>
 </classpath>

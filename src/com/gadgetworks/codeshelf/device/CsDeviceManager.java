@@ -12,8 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import javax.net.ssl.SSLSocketFactory;
-
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.JsonProcessingException;

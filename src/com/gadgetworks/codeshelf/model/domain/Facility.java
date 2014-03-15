@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -330,6 +331,18 @@ public class Facility extends LocationABC<Organization> {
 
 	public final void removeLocationAlias(String inLocationAliasId) {
 		locationAliases.remove(inLocationAliasId);
+	}
+
+	public final Double getAbsolutePosX() {
+		return 0.0;
+	}
+
+	public final Double getAbsolutePosY() {
+		return 0.0;
+	}
+	
+	public final Double getAbsolutePosZ() {
+		return 0.0;
 	}
 
 	// --------------------------------------------------------------------------
@@ -838,7 +851,7 @@ public class Facility extends LocationABC<Organization> {
 
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 
-		ILocation<?> cheLocation = findSubLocationById(inScannedLocationId);
+		ISubLocation<?> cheLocation = findSubLocationById(inScannedLocationId);
 		if (cheLocation != null) {
 			Aisle aisle = null;
 			if (cheLocation instanceof Aisle) {
@@ -852,43 +865,20 @@ public class Facility extends LocationABC<Organization> {
 
 			if (path != null) {
 				// Now figure out the orders that go with these containers.
+				List<Container> containerList = new ArrayList<Container>();
 				for (String containerId : inContainerIdList) {
 					Container container = getContainer(containerId);
 					if (container != null) {
-						// Find the container use with the latest timestamp - that's the active one.
-						Timestamp timestamp = null;
-						ContainerUse foundContainerUse = null;
-						for (ContainerUse use : container.getUses()) {
-							if ((timestamp == null) || (use.getUsedOn().after(timestamp))) {
-								timestamp = use.getUsedOn();
-								foundContainerUse = use;
-							}
-						}
-						if (foundContainerUse != null) {
-							OrderHeader order = foundContainerUse.getOrderHeader();
-							if (order != null) {
-								if (order.getOrderTypeEnum().equals(OrderTypeEnum.OUTBOUND)) {
-									wiResultList.addAll(generateOutboundInstructions(foundContainerUse,
-										order,
-										path,
-										inScannedLocationId,
-										cheLocation));
-								} else if (order.getOrderTypeEnum().equals(OrderTypeEnum.CROSS)) {
-									wiResultList.addAll(generateCrossWallInstructions(foundContainerUse,
-										order,
-										path,
-										inScannedLocationId,
-										cheLocation));
-								}
-							}
-						}
+						containerList.add(container);
 					}
 				}
 
-				// If we found WIs then sort them by they distance from the named location (closest first).
-				if (wiResultList.size() > 0) {
-					path.sortWisByDistance(wiResultList);
-				}
+				// Get all of the OUTBOUND work instructions.
+				wiResultList.addAll(generateOutboundInstructions(containerList, path, inScannedLocationId, cheLocation));
+
+				// Get all of the CROSS work instructions.
+				wiResultList.addAll(generateCrossWallInstructions(containerList, path, inScannedLocationId, cheLocation));
+
 			}
 		}
 		return wiResultList;
@@ -902,81 +892,90 @@ public class Facility extends LocationABC<Organization> {
 	 * @param inCheLocation
 	 * @return
 	 */
-	private List<WorkInstruction> generateOutboundInstructions(final ContainerUse inContainerUse,
-		final OrderHeader inOrder,
+	private List<WorkInstruction> generateOutboundInstructions(final List<Container> inContainerList,
 		final Path inPath,
 		final String inScannedLocationId,
-		final ILocation<?> inCheLocation) {
+		final ISubLocation<?> inCheLocation) {
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 
-		for (OrderDetail orderDetail : inOrder.getOrderDetails()) {
-			ItemMaster itemMaster = orderDetail.getItemMaster();
+		for (Container container : inContainerList) {
+			OrderHeader order = container.getCurrentOrderHeader();
+			if (order != null) {
+				for (OrderDetail orderDetail : order.getOrderDetails()) {
+					ItemMaster itemMaster = orderDetail.getItemMaster();
 
-			// Figure out if there are any items are on the current path.
-			// (We just take the first one we find, because items slotted on the same path should be close together.)
-			Item selectedItem = null;
+					// Figure out if there are any items are on the current path.
+					// (We just take the first one we find, because items slotted on the same path should be close together.)
+					Item selectedItem = null;
 
-			if (itemMaster.getItems().size() == 0) {
-				// If there is no item in inventory (AT ALL) then create a PLANEED, SHORT WI for this order detail.
-				WorkInstruction plannedWi = createWorkInstruction(WorkInstructionStatusEnum.SHORT,
-					WorkInstructionTypeEnum.ACTUAL,
-					orderDetail,
-					0,
-					inContainerUse.getParentContainer(),
-					inScannedLocationId,
-					(ISubLocation<IDomainObject>) inCheLocation,
-					0.0);
-				if (plannedWi != null) {
-					wiResultList.add(plannedWi);
-				}
-			} else {
-				// Search through the items to see if any are on the CHE's pick path.
-				ISubLocation<IDomainObject> foundLocation = null;
-				for (Item item : itemMaster.getItems()) {
-					if (item.getStoredLocation() instanceof ISubLocation) {
-						ISubLocation location = (ISubLocation) item.getStoredLocation();
-						if (inPath.isLocationOnPath(location)) {
-							foundLocation = location;
-							selectedItem = item;
-							break;
-						}
-					}
-				}
-
-				// The item is on the CHE's path, so add it.
-				if (foundLocation != null) {
-					Integer quantityToPick = orderDetail.getQuantity();
-
-					// If there is anything to pick on this item then create a WI for it.
-					if (quantityToPick > 0) {
-						WorkInstruction plannedWi = createWorkInstruction(WorkInstructionStatusEnum.NEW,
-							WorkInstructionTypeEnum.PLAN,
+					if (itemMaster.getItems().size() == 0) {
+						// If there is no item in inventory (AT ALL) then create a PLANEED, SHORT WI for this order detail.
+						WorkInstruction plannedWi = createWorkInstruction(WorkInstructionStatusEnum.SHORT,
+							WorkInstructionTypeEnum.ACTUAL,
 							orderDetail,
-							quantityToPick,
-							inContainerUse.getParentContainer(),
+							0,
+							container,
 							inScannedLocationId,
-							foundLocation,
-							selectedItem.getPosAlongPath());
+							inCheLocation,
+							0.0);
 						if (plannedWi != null) {
 							wiResultList.add(plannedWi);
 						}
-
-						orderDetail.setStatusEnum(OrderStatusEnum.INPROGRESS);
-						try {
-							OrderDetail.DAO.store(orderDetail);
-						} catch (DaoException e) {
-							LOGGER.error("", e);
+					} else {
+						// Search through the items to see if any are on the CHE's pick path.
+						ISubLocation<IDomainObject> foundLocation = null;
+						for (Item item : itemMaster.getItems()) {
+							if (item.getStoredLocation() instanceof ISubLocation) {
+								ISubLocation location = (ISubLocation) item.getStoredLocation();
+								if (inPath.isLocationOnPath(location)) {
+									foundLocation = location;
+									selectedItem = item;
+									break;
+								}
+							}
 						}
 
-						inOrder.setStatusEnum(OrderStatusEnum.INPROGRESS);
-						try {
-							OrderHeader.DAO.store(inOrder);
-						} catch (DaoException e) {
-							LOGGER.error("", e);
+						// The item is on the CHE's path, so add it.
+						if (foundLocation != null) {
+							Integer quantityToPick = orderDetail.getQuantity();
+
+							// If there is anything to pick on this item then create a WI for it.
+							if (quantityToPick > 0) {
+								WorkInstruction plannedWi = createWorkInstruction(WorkInstructionStatusEnum.NEW,
+									WorkInstructionTypeEnum.PLAN,
+									orderDetail,
+									quantityToPick,
+									container,
+									inScannedLocationId,
+									foundLocation,
+									selectedItem.getPosAlongPath());
+								if (plannedWi != null) {
+									wiResultList.add(plannedWi);
+								}
+
+								orderDetail.setStatusEnum(OrderStatusEnum.INPROGRESS);
+								try {
+									OrderDetail.DAO.store(orderDetail);
+								} catch (DaoException e) {
+									LOGGER.error("", e);
+								}
+
+								order.setStatusEnum(OrderStatusEnum.INPROGRESS);
+								try {
+									OrderHeader.DAO.store(order);
+								} catch (DaoException e) {
+									LOGGER.error("", e);
+								}
+							}
 						}
 					}
 				}
 			}
+		}
+		
+		// If we found WIs then sort them by they distance from the named location (closest first).
+		if (wiResultList.size() > 0) {
+			inPath.sortWisByDistance(wiResultList);
 		}
 
 		return wiResultList;
@@ -984,91 +983,141 @@ public class Facility extends LocationABC<Organization> {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * Find all of the OUTBOUND orders that need items on this CROSS order.
+	 * Find all of the OUTBOUND orders that need items held in containers holding CROSS orders.
 	 * @param inContainerUse
 	 * @param inOrder
 	 * @param inPath
 	 * @param inCheLocation
 	 * @return
 	 */
-	private List<WorkInstruction> generateCrossWallInstructions(final ContainerUse inContainerUse,
-		final OrderHeader inCrossOrder,
+	private List<WorkInstruction> generateCrossWallInstructions(final List<Container> inContainerList,
 		final Path inPath,
 		final String inScannedLocationId,
 		final ILocation<?> inCheLocation) {
 
 		List<WorkInstruction> wiList = new ArrayList<WorkInstruction>();
 
-		// Iterate through all of the OUTBOUND orders to see if any of them are on the same path as inCrossOrder.
-		for (OrderHeader outOrder : getOrderHeaders()) {
-			if ((outOrder.getOrderTypeEnum().equals(OrderTypeEnum.OUTBOUND) && (outOrder.getActive()))) {
-				// Determine if this OUTBOUND order is on the same path as the CROSS order.
-				for (OrderLocation outOrderLoc : outOrder.getOrderLocations()) {
-					if ((inPath.isLocationOnPath(outOrderLoc.getLocation()) && (outOrderLoc.getActive()))) {
+		for (Container container : inContainerList) {
+			OrderHeader order = container.getCurrentOrderHeader();
+			if ((order.getActive()) && (order.getOrderTypeEnum().equals(OrderTypeEnum.CROSS))) {
+				OrderHeader crossOrder = order;
+				// Iterate through all of the OUTBOUND orders to see if any of them are on the same path as inCrossOrder.
+				for (OrderHeader outOrder : getOrderHeaders()) {
+					if ((outOrder.getOrderTypeEnum().equals(OrderTypeEnum.OUTBOUND) && (outOrder.getActive()))) {
+						// Determine if this OUTBOUND order is on the same path as the CROSS order.
+						for (OrderLocation outOrderLoc : outOrder.getOrderLocations()) {
+							if ((inPath.isLocationOnPath(outOrderLoc.getLocation()) && (outOrderLoc.getActive()))) {
 
-						// OK, we have an OUTBOUND order on the same path as the CROSS order.
-						// Check to see if any of the CROSS order detail items match OUTBOUND order details.
-						for (OrderDetail crossOrderDetail : inCrossOrder.getOrderDetails()) {
-							OrderDetail outOrderDetail = outOrder.getOrderDetail(crossOrderDetail.getOrderDetailId());
-							if ((outOrderDetail != null) && (outOrderDetail.getActive())) {
+								// OK, we have an OUTBOUND order on the same path as the CROSS order.
+								// Check to see if any of the CROSS order detail items match OUTBOUND order details.
+								for (OrderDetail crossOrderDetail : crossOrder.getOrderDetails()) {
+									OrderDetail outOrderDetail = outOrder.getOrderDetail(crossOrderDetail.getOrderDetailId());
+									if ((outOrderDetail != null) && (outOrderDetail.getActive())) {
 
-								// Now make sure
-								// The outboundOrder is "ahead" of the CHE's position on the path.
-								// The UOM matches.
-								if ((outOrderLoc.getLocation().getPosAlongPath() > inCheLocation.getPosAlongPath())
-										&& (outOrderDetail.getUomMasterId().equals(crossOrderDetail.getUomMasterId()))) {
+										// Now make sure
+										// The outboundOrder is "ahead" of the CHE's position on the path.
+										// The UOM matches.
+										if ((outOrderLoc.getLocation().getPosAlongPath() > inCheLocation.getPosAlongPath())
+												&& (outOrderDetail.getUomMasterId().equals(crossOrderDetail.getUomMasterId()))) {
 
-									ISubLocation<IDomainObject> foundLocation = (ISubLocation<IDomainObject>) inCheLocation;
-									WorkInstruction wi = createWorkInstruction(WorkInstructionStatusEnum.NEW,
-										WorkInstructionTypeEnum.PLAN,
-										crossOrderDetail,
-										crossOrderDetail.getQuantity(),
-										inContainerUse.getParentContainer(),
-										inScannedLocationId,
-										foundLocation,
-										outOrderLoc.getLocation().getPosAlongPath());
+											ISubLocation<IDomainObject> foundLocation = (ISubLocation<IDomainObject>) inCheLocation;
+											WorkInstruction wi = createWorkInstruction(WorkInstructionStatusEnum.NEW,
+												WorkInstructionTypeEnum.PLAN,
+												crossOrderDetail,
+												crossOrderDetail.getQuantity(),
+												container,
+												inScannedLocationId,
+												foundLocation,
+												outOrderLoc.getLocation().getPosAlongPath());
 
-									// If we created a WI then add it to the list.
-									if (wi != null) {
-										wiList.add(wi);
+											// If we created a WI then add it to the list.
+											if (wi != null) {
+												wiList.add(wi);
+											}
+										}
+
 									}
 								}
-
 							}
 						}
 					}
 				}
-			}
 
+			}
 		}
 
-		// Now we need to sort and group the work instructions, so that the CHE can display them in some sensible way.
-		return sortCrosswallInstructions(wiList, inCheLocation, inPath);
+		// Now we need to sort and group the work instructions, so that the CHE can display them by working order.
+		List<Bay> bays = inPath.<Bay> getLocationsByClassAtOrPastLocation(inCheLocation, Bay.class);
+		return sortCrosswallInstructions(wiList, inContainerList, bays);
 	}
+
+	/**
+	 * Compare Work Instructions by their ItemIds.
+	 *
+	 */
+	private class WiItemIdComparator implements Comparator<WorkInstruction> {
+
+		public int compare(WorkInstruction inWi1, WorkInstruction inWi2) {
+			return inWi1.getItemMaster().getItemId().compareTo(inWi2.getItemMaster().getItemId());
+		}
+	};
 
 	// --------------------------------------------------------------------------
 	/**
-	 * Sort the crosswall WIs for the CHE's work path.
+	 * Sort a list of work instructions on a path through a CrossWall
 	 * @param inCrosswallWiList
+	 * @param inContainerList
+	 * @param inBays
+	 * @return
 	 */
 	private List<WorkInstruction> sortCrosswallInstructions(final List<WorkInstruction> inCrosswallWiList,
-		final ILocation<?> inCheLocation,
-		final Path inPath) {
+		final List<Container> inContainerList,
+		final List<Bay> inBays) {
 
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 
-		// First make a list of all the bays on the CHE's path.
-		List<Bay> bays = new ArrayList<Bay>();
+		// We want to work all of the WIs out of a single container for each bay.
+		// To do this, we sort the WIs by item ID and then work the list bay-by-bay, container-by-container.
+		Collections.sort(inCrosswallWiList, new WiItemIdComparator());
 
-		// Path segments get return in direction order.
-		for (PathSegment pathSegment : inPath.getSegments()) {
-			for (ILocation<?> pathLocation : pathSegment.getLocations()) {
-				if (pathLocation.getClass().equals(Aisle.class)) {
-					for (ILocation<?> aisleChildLocation : pathLocation.getChildren()) {
-						if (aisleChildLocation.getClass().equals(Bay.class)) {
-							bays.add((Bay) aisleChildLocation);
+		// Cycle over all bays on the path.
+		for (Bay bay : inBays) {
+			// Cycle over all of the containers until we find no more work instructions for this bay.
+			//Iterator<Container> iterator = Iterators.cycle(inContainerList);
+			// Iterate over the container list as many times as there are containers.
+			//Iterator<Container> iterator = Iterables.concat(Collections.nCopies(inContainerList.size(), inContainerList)).iterator();
+			//Container currentContainer;
+			//while (iterator.hasNext()) {
+			boolean wiSelected = false;
+			//	currentContainer = iterator.next();
+			for (Container container : inContainerList) {
+				Iterator<WorkInstruction> wiIterator = inCrosswallWiList.iterator();
+				while (wiIterator.hasNext()) {
+					WorkInstruction wi = wiIterator.next();
+					if (wi.getContainer().getContainerId().equals(container.getContainerId())) {
+						ILocation<?> parentBay = wi.getLocation().getParentAtLevel(Bay.class);
+						if ((parentBay != null) && (parentBay.equals(bay))) {
+							String wantedItemId = wi.getItemMaster().getItemId();
+							wiResultList.add(wi);
+							wiSelected = true;
+							wiIterator.remove();
+							while (wiIterator.hasNext()) {
+								wi = wiIterator.next();
+								if (!wi.getItemMaster().getItemId().equals(wantedItemId)) {
+									break;
+								} else {
+									wiResultList.add(wi);
+									wiIterator.remove();
+								}
+							}
+
 						}
 					}
+				}
+
+				// If we didn't select any WIs then stop looking for items in containers for this bay.
+				if (!wiSelected) {
+					break;
 				}
 			}
 		}
@@ -1093,7 +1142,7 @@ public class Facility extends LocationABC<Organization> {
 		Integer inQuantityToPick,
 		Container inContainer,
 		String inScannedLocationId,
-		ISubLocation<IDomainObject> inLocation,
+		ISubLocation<?> inLocation,
 		Double inPosALongPath) {
 		WorkInstruction resultWi = null;
 
@@ -1158,8 +1207,8 @@ public class Facility extends LocationABC<Organization> {
 			resultWi.setLedCmdStream(LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList));
 
 			//resultWi.setLocationId(((ISubLocation<?>) inLocation.getParent()).getLocationId() + "." + inLocation.getLocationId());
-			resultWi.setLocationId(inScannedLocationId);
-			resultWi.setItemId(inOrderDetail.getItemMaster().getItemId());
+			resultWi.setLocation(inLocation);
+			resultWi.setItemMaster(inOrderDetail.getItemMaster());
 			resultWi.setDescription(inOrderDetail.getItemMaster().getDescription());
 			if (inOrderDetail.getItemMaster().getDdcId() != null) {
 				resultWi.setPickInstruction(inOrderDetail.getItemMaster().getDdcId());
@@ -1170,7 +1219,7 @@ public class Facility extends LocationABC<Organization> {
 				resultWi.setPickInstruction(inScannedLocationId);
 			}
 			resultWi.setPosAlongPath(inPosALongPath);
-			resultWi.setContainerId(inContainer.getContainerId());
+			resultWi.setContainer(inContainer);
 			resultWi.setPlanQuantity(inQuantityToPick);
 			resultWi.setActualQuantity(0);
 			resultWi.setAssigned(new Timestamp(System.currentTimeMillis()));
@@ -1183,6 +1232,10 @@ public class Facility extends LocationABC<Organization> {
 		return resultWi;
 	}
 
+	/**
+	 * Compare Items by their ItemMasterDdc.
+	 *
+	 */
 	private class DdcItemComparator implements Comparator<Item> {
 
 		public int compare(Item inItem1, Item inItem2) {

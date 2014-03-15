@@ -33,7 +33,6 @@ import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.flyweight.command.ColorEnum;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -61,8 +60,9 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "work_instruction")
-@CacheStrategy(useBeanCache = true)@JsonAutoDetect(getterVisibility = Visibility.NONE)
-@JsonIgnoreProperties({ "fullDomainId", "parentFullDomainId", "parentPersistentId", "className" })
+@CacheStrategy(useBeanCache = true)
+@JsonAutoDetect(getterVisibility = Visibility.NONE)
+@JsonIgnoreProperties({ "fullDomainId", "parentFullDomainId", "parentPersistentId", "className", "container", "itemMaster", "location" })
 @ToString(of = { "typeEnum", "statusEnum", "itemId", "planQuantity", "actualQuantity", "locationId" }, callSuper = true, doNotUseGetters = true)
 public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 
@@ -107,14 +107,24 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 	// The container.
 	@Column(nullable = false)
 	@Getter
-	@Setter
+	@ManyToOne(optional = false)
+	private Container					container;
+
+	// Denormalized for serialized WIs at the site controller.
+	@Column(nullable = false)
+	@Getter
 	@JsonProperty
 	private String						containerId;
 
 	// The item id.
 	@Column(nullable = false)
 	@Getter
-	@Setter
+	@ManyToOne(optional = false)
+	private ItemMaster					itemMaster;
+
+	// Denormalized for serialized WIs at the site controller.
+	@Column(nullable = false)
+	@Getter
 	@JsonProperty
 	private String						itemId;
 
@@ -148,8 +158,12 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 
 	// From location.
 	@Column(nullable = false)
+	@ManyToOne(optional = false)
+	private SubLocationABC<?>			location;
+
+	// Denormalized for serialized WIs at the site controller.
+	@Column(nullable = false)
 	@Getter
-	@Setter
 	@JsonProperty
 	private String						locationId;
 
@@ -227,5 +241,27 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 
 	public final List<? extends IDomainObject> getChildren() {
 		return new ArrayList<IDomainObject>();
+	}
+
+	public final ILocation<?> getLocation() {
+		return (ILocation<?>) location;
+	}
+	
+	// Denormalized for serialized WIs at the site controller.
+	public final void setContainer(Container inContainer) {
+		container = inContainer;
+		containerId = inContainer.getContainerId();
+	}
+	
+	// Denormalized for serialized WIs at the site controller.
+	public final void setItemMaster(ItemMaster inItemMaster) {
+		itemMaster = inItemMaster;
+		itemId = inItemMaster.getItemId();
+	}
+
+	// Denormalized for serialized WIs at the site controller.
+	public final void setLocation(ISubLocation<?> inLocation) {
+		location = (SubLocationABC<?>) inLocation;
+		locationId = inLocation.getLocationId();
 	}
 }
