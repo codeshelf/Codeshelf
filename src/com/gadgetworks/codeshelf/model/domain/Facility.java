@@ -1084,40 +1084,50 @@ public class Facility extends LocationABC<Organization> {
 			//Iterator<Container> iterator = Iterables.concat(Collections.nCopies(inContainerList.size(), inContainerList)).iterator();
 			//Container currentContainer;
 			//while (iterator.hasNext()) {
-			boolean wiSelected = false;
-			//	currentContainer = iterator.next();
-			for (Container container : inContainerList) {
-				Iterator<WorkInstruction> wiIterator = inCrosswallWiList.iterator();
-				while (wiIterator.hasNext()) {
-					WorkInstruction wi = wiIterator.next();
-					if (wi.getContainer().getContainerId().equals(container.getContainerId())) {
-						ILocation<?> parentBay = wi.getLocation().getParentAtLevel(Bay.class);
-						if ((parentBay != null) && (parentBay.equals(bay))) {
-							String wantedItemId = wi.getItemMaster().getItemId();
-							wiResultList.add(wi);
-							wiSelected = true;
-							wiIterator.remove();
-							while (wiIterator.hasNext()) {
-								wi = wiIterator.next();
-								if (!wi.getItemMaster().getItemId().equals(wantedItemId)) {
-									break;
-								} else {
-									wiResultList.add(wi);
-									wiIterator.remove();
+			while (true) {
+				boolean wiSelected = false;
+				for (Container container : inContainerList) {
+					Iterator<WorkInstruction> wiIterator = inCrosswallWiList.iterator();
+					while (wiIterator.hasNext()) {
+						WorkInstruction wi = wiIterator.next();
+						if (wi.getContainer().equals(container)) {
+							if (wi.isContainedByLocation(bay)) {
+								String wantedItemId = wi.getItemMaster().getItemId();
+								wiResultList.add(wi);
+								wi.setGroupAndSortCode(String.format("%04d", wiResultList.size()));
+								WorkInstruction.DAO.store(wi);
+								wiSelected = true;
+								wiIterator.remove();
+								// Keep moving through the WI list for more WIs to consider.
+								while (wiIterator.hasNext()) {
+									wi = wiIterator.next();
+									// No more WIs with matching item type, so break.
+									if (!wi.getItemMaster().getItemId().equals(wantedItemId)) {
+										break;
+									} else {
+										// No more WIs in this bay, so break.
+										if (!wi.isContainedByLocation(bay)) {
+											break;
+										} else {
+											// Found another matching WI to add for this bay.
+											wiResultList.add(wi);
+											wiIterator.remove();
+											wi.setGroupAndSortCode(String.format("%04d", wiResultList.size()));
+											WorkInstruction.DAO.store(wi);
+										}
+									}
 								}
-							}
 
+							}
 						}
 					}
 				}
-
 				// If we didn't select any WIs then stop looking for items in containers for this bay.
 				if (!wiSelected) {
 					break;
 				}
 			}
 		}
-
 		return wiResultList;
 	}
 
@@ -1210,10 +1220,12 @@ public class Facility extends LocationABC<Organization> {
 			if (inOrderDetail.getItemMaster().getDdcId() != null) {
 				resultWi.setPickInstruction(inOrderDetail.getItemMaster().getDdcId());
 			} else {
-				// TODO: create a "getLocationIdToLevel(<Location Class>);"
-				Bay bay = inLocation.getParentAtLevel(Bay.class);
-				Tier tier = inLocation.getParentAtLevel(Tier.class);
-				resultWi.setPickInstruction(inScannedLocationId);
+				LocationAlias locAlias = resultWi.getLocation().getPrimaryAlias();
+				if (locAlias != null) {
+					resultWi.setPickInstruction(locAlias.getAlias());
+				} else {
+					resultWi.setPickInstruction(resultWi.getLocationId());
+				}
 			}
 			resultWi.setPosAlongPath(inPosALongPath);
 			resultWi.setContainer(inContainer);

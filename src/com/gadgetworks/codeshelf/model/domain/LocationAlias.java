@@ -108,15 +108,15 @@ public class LocationAlias extends DomainObjectTreeABC<Facility> {
 		setDomainId(inLocationAlias);
 	}
 
-	public final String getLocationAlias() {
+	public final String getAlias() {
 		return getDomainId();
 	}
 
-	public final ISubLocation getMappedLocation() {
-		return (ISubLocation) mappedLocation;
+	public final ISubLocation<?> getMappedLocation() {
+		return (ISubLocation<?>) mappedLocation;
 	}
 
-	public final void setMappedLocation(final ILocation inMappedLocation) {
+	public final void setMappedLocation(final ILocation<?> inMappedLocation) {
 		mappedLocation = (LocationABC) inMappedLocation;
 	}
 

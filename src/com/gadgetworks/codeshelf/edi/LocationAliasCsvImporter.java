@@ -100,7 +100,7 @@ public class LocationAliasCsvImporter implements ICsvLocationAliasImporter {
 			mLocationAliasDao.beginTransaction();
 			for (LocationAlias locationAlias : inFacility.getLocationAliases()) {
 				if (!locationAlias.getUpdated().equals(inProcessTime)) {
-					LOGGER.debug("Archive old locationAlias: " + locationAlias.getLocationAlias());
+					LOGGER.debug("Archive old locationAlias: " + locationAlias.getAlias());
 					locationAlias.setActive(false);
 					mLocationAliasDao.store(locationAlias);
 				}

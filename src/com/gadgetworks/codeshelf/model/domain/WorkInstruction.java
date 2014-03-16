@@ -62,7 +62,8 @@ import com.google.inject.Singleton;
 @Table(name = "work_instruction")
 @CacheStrategy(useBeanCache = true)
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
-@JsonIgnoreProperties({ "fullDomainId", "parentFullDomainId", "parentPersistentId", "className", "container", "itemMaster", "location" })
+@JsonIgnoreProperties({ "fullDomainId", "parentFullDomainId", "parentPersistentId", "className", "container", "itemMaster",
+		"location" })
 @ToString(of = { "typeEnum", "statusEnum", "itemId", "planQuantity", "actualQuantity", "locationId" }, callSuper = true, doNotUseGetters = true)
 public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 
@@ -247,13 +248,13 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 	public final ILocation<?> getLocation() {
 		return (ILocation<?>) location;
 	}
-	
+
 	// Denormalized for serialized WIs at the site controller.
 	public final void setContainer(Container inContainer) {
 		container = inContainer;
 		containerId = inContainer.getContainerId();
 	}
-	
+
 	// Denormalized for serialized WIs at the site controller.
 	public final void setItemMaster(ItemMaster inItemMaster) {
 		itemMaster = inItemMaster;
@@ -265,5 +266,28 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 		location = (SubLocationABC<?>) inLocation;
 		// This string is user-readable format set by application logic.
 		// locationId = inLocation.getLocationId();
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Determine if the location contains this work instruction.
+	 * @param inCheckLocation
+	 * @return
+	 */
+	public final boolean isContainedByLocation(final ILocation<?> inCheckLocation) {
+		boolean result = false;
+
+		if (location.equals(inCheckLocation)) {
+			// The check location directly is the WI location.
+			result = true;
+		} else {
+			// The check location is parent of the WI location, so it contains it.
+			ILocation<?> parentLoc = location.getParentAtLevel(inCheckLocation.getClass());
+			if ((parentLoc != null) && (parentLoc.equals(inCheckLocation))) {
+				result = true;
+			}
+		}
+
+		return result;
 	}
 }

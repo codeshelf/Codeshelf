@@ -133,11 +133,32 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 
 	void setVertices(List<Vertex> inVertices);
 
-	void setPosTypeByStr(String inPosTypeStr);
-
 	void addVertex(Vertex inVertex);
 
 	void removeVertex(Vertex inVertex);
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Get the aliases for this location.
+	 * @return
+	 */
+	List<LocationAlias> getAliases();
+
+	void setAliases(List<LocationAlias> inAliases);
+
+	void addAlias(LocationAlias inAlias);
+
+	void removeAlias(LocationAlias inAlias);
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * Get the first (Primary) alias for this location.
+	 * (It's not clear at all what to do if the customer has multiple aliases for a location - not currently supported.)
+	 * @return
+	 */
+	LocationAlias getPrimaryAlias();
+
+	void setPosTypeByStr(String inPosTypeStr);
 
 	// --------------------------------------------------------------------------
 	/**

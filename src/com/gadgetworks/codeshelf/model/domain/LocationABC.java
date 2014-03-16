@@ -207,6 +207,12 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	@Setter
 	private Map<String, SubLocationABC>	locations			= new HashMap<String, SubLocationABC>();
 
+	// The location aliases for this location.
+	@OneToMany(mappedBy = "mappedLocation")
+	@Getter
+	@Setter
+	private List<LocationAlias>			aliases				= new ArrayList<LocationAlias>();
+
 	// The items stored in this location.
 	@OneToMany(mappedBy = "storedLocation")
 	@MapKey(name = "domainId")
@@ -552,6 +558,27 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 	public final void removeVertex(Vertex inVertex) {
 		vertices.remove(inVertex);
+	}
+
+	public final void addAlias(LocationAlias inAlias) {
+		aliases.add(inAlias);
+	}
+
+	public final void removeAlias(LocationAlias inAlias) {
+		aliases.remove(inAlias);
+	}
+	
+	public final LocationAlias getPrimaryAlias() {
+		LocationAlias result = null;
+		
+		for (LocationAlias alias : aliases) {
+			if (alias.getActive()) {
+				result = alias;
+				break;
+			}
+		}
+		
+		return result;
 	}
 
 	public final void addStoredItem(Item inItem) {
