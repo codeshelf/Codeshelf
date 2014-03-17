@@ -8,24 +8,7 @@ package com.gadgetworks.codeshelf.model.domain;
 import java.util.List;
 
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
-
-import com.gadgetworks.codeshelf.application.IUtil;
-import com.gadgetworks.codeshelf.model.dao.Database;
-import com.gadgetworks.codeshelf.model.dao.H2SchemaManager;
-import com.gadgetworks.codeshelf.model.dao.IDatabase;
-import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
-import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.model.domain.Aisle.AisleDao;
-import com.gadgetworks.codeshelf.model.domain.Bay.BayDao;
-import com.gadgetworks.codeshelf.model.domain.Facility.FacilityDao;
-import com.gadgetworks.codeshelf.model.domain.LocationABC.LocationABCDao;
-import com.gadgetworks.codeshelf.model.domain.Organization.OrganizationDao;
-import com.gadgetworks.codeshelf.model.domain.Path.PathDao;
-import com.gadgetworks.codeshelf.model.domain.PathSegment.PathSegmentDao;
-import com.gadgetworks.codeshelf.model.domain.Vertex.VertexDao;
-import com.gadgetworks.codeshelf.model.domain.WorkArea.WorkAreaDao;
 
 /**
  * @author jeffw

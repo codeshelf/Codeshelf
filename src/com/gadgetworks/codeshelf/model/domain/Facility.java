@@ -912,6 +912,7 @@ public class Facility extends LocationABC<Organization> {
 						// If there is no item in inventory (AT ALL) then create a PLANEED, SHORT WI for this order detail.
 						WorkInstruction plannedWi = createWorkInstruction(WorkInstructionStatusEnum.SHORT,
 							WorkInstructionTypeEnum.ACTUAL,
+							OrderTypeEnum.OUTBOUND,
 							orderDetail,
 							0,
 							container,
@@ -943,6 +944,7 @@ public class Facility extends LocationABC<Organization> {
 							if (quantityToPick > 0) {
 								WorkInstruction plannedWi = createWorkInstruction(WorkInstructionStatusEnum.NEW,
 									WorkInstructionTypeEnum.PLAN,
+									OrderTypeEnum.OUTBOUND,
 									orderDetail,
 									quantityToPick,
 									container,
@@ -1021,6 +1023,7 @@ public class Facility extends LocationABC<Organization> {
 
 										WorkInstruction wi = createWorkInstruction(WorkInstructionStatusEnum.NEW,
 											WorkInstructionTypeEnum.PLAN,
+											OrderTypeEnum.CROSS,
 											outOrderDetail,
 											outOrderDetail.getQuantity(),
 											container,
@@ -1144,6 +1147,7 @@ public class Facility extends LocationABC<Organization> {
 	 */
 	private WorkInstruction createWorkInstruction(WorkInstructionStatusEnum inStatus,
 		WorkInstructionTypeEnum inType,
+		final OrderTypeEnum inOrderType,
 		OrderDetail inOrderDetail,
 		Integer inQuantityToPick,
 		Container inContainer,
@@ -1172,47 +1176,14 @@ public class Facility extends LocationABC<Organization> {
 				resultWi.setCreated(new Timestamp(System.currentTimeMillis()));
 			}
 
+			// Set the LED lighting pattern for this WI.
+			setWorkInstructionLedPattern(resultWi, inOrderType, inOrderDetail.getItemMasterId(), inLocation);
+
 			// Update the WI
 			resultWi.setDomainId(Long.toString(System.currentTimeMillis()));
 			resultWi.setTypeEnum(inType);
 			resultWi.setStatusEnum(inStatus);
 
-			// The old way of sending LED data to the remote controller.
-			//			resultWi.setLedControllerId(inLocation.getLedController().getDeviceGuidStr());
-			//			resultWi.setLedChannel(inLocation.getLedChannel());
-			//			resultWi.setLedFirstPos(inLocation.getFirstLedPosForItemId(inOrderDetail.getItemMaster().getItemId()));
-			//			resultWi.setLedLastPos(inLocation.getLastLedPosForItemId(inOrderDetail.getItemMaster().getItemId()));
-			//			resultWi.setLedColorEnum(ColorEnum.BLUE);
-
-			// Add all of the LEDs we have to light to make this work.
-			short firstLedPosNum = inLocation.getFirstLedPosForItemId(inOrderDetail.getItemMaster().getItemId());
-			short lastLedPosNum = inLocation.getLastLedPosForItemId(inOrderDetail.getItemMaster().getItemId());
-
-			// Put the positions into increasing order.
-			if (firstLedPosNum > lastLedPosNum) {
-				Short temp = firstLedPosNum;
-				firstLedPosNum = lastLedPosNum;
-				lastLedPosNum = temp;
-			}
-
-			// The new way of sending LED data to the remote controller.
-			List<LedSample> ledSamples = new ArrayList<LedSample>();
-			List<LedCmdGroup> ledCmdGroupList = new ArrayList<LedCmdGroup>();
-			LedCmdGroup ledCmdGroup = new LedCmdGroup(inLocation.getLedController().getDeviceGuidStr(),
-				inLocation.getLedChannel(),
-				firstLedPosNum,
-				ledSamples);
-
-			for (short ledPos = firstLedPosNum; ledPos < lastLedPosNum; ledPos++) {
-				LedSample ledSample = new LedSample(ledPos, ColorEnum.BLUE);
-				ledSamples.add(ledSample);
-			}
-			ledCmdGroup.setLedSampleList(ledSamples);
-
-			ledCmdGroupList.add(ledCmdGroup);
-			resultWi.setLedCmdStream(LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList));
-
-			//resultWi.setLocationId(((ISubLocation<?>) inLocation.getParent()).getLocationId() + "." + inLocation.getLocationId());
 			resultWi.setLocation(inLocation);
 			resultWi.setLocationId(inLocation.getFullDomainId());
 			resultWi.setItemMaster(inOrderDetail.getItemMaster());
@@ -1239,6 +1210,56 @@ public class Facility extends LocationABC<Organization> {
 			}
 		}
 		return resultWi;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Create the LED lighting pattern for the WI.
+	 * @param inWi
+	 * @param inOrderType
+	 * @param inItemId
+	 * @param inLocation
+	 */
+	private void setWorkInstructionLedPattern(final WorkInstruction inWi,
+		final OrderTypeEnum inOrderType,
+		final String inItemId,
+		final ISubLocation<?> inLocation) {
+
+		// Determine the first and last LED positions for this instruction.
+		short firstLedPosNum = 0;
+		short lastLedPosNum = 0;
+		if (inOrderType.equals(OrderTypeEnum.OUTBOUND)) {
+			firstLedPosNum = inLocation.getFirstLedPosForItemId(inItemId);
+			lastLedPosNum = inLocation.getLastLedPosForItemId(inItemId);
+		} else if (inOrderType.equals(OrderTypeEnum.CROSS)) {
+			firstLedPosNum = inLocation.getFirstLedNumAlongPath();
+			lastLedPosNum = inLocation.getLastLedNumAlongPath();
+		}
+
+		// Put the positions into increasing order.
+		if (firstLedPosNum > lastLedPosNum) {
+			Short temp = firstLedPosNum;
+			firstLedPosNum = lastLedPosNum;
+			lastLedPosNum = temp;
+		}
+
+		// The new way of sending LED data to the remote controller.
+		List<LedSample> ledSamples = new ArrayList<LedSample>();
+		List<LedCmdGroup> ledCmdGroupList = new ArrayList<LedCmdGroup>();
+		LedCmdGroup ledCmdGroup = new LedCmdGroup(inLocation.getLedController().getDeviceGuidStr(),
+			inLocation.getLedChannel(),
+			firstLedPosNum,
+			ledSamples);
+
+		for (short ledPos = firstLedPosNum; ledPos < lastLedPosNum; ledPos++) {
+			LedSample ledSample = new LedSample(ledPos, ColorEnum.BLUE);
+			ledSamples.add(ledSample);
+		}
+		ledCmdGroup.setLedSampleList(ledSamples);
+
+		ledCmdGroupList.add(ledCmdGroup);
+		inWi.setLedCmdStream(LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList));
+
 	}
 
 	/**

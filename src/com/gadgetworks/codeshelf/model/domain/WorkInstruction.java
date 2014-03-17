@@ -277,7 +277,9 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 	public final boolean isContainedByLocation(final ILocation<?> inCheckLocation) {
 		boolean result = false;
 
-		if (location.equals(inCheckLocation)) {
+		if (inCheckLocation == null) {
+			result = false;
+		} else if (location.equals(inCheckLocation)) {
 			// The check location directly is the WI location.
 			result = true;
 		} else {

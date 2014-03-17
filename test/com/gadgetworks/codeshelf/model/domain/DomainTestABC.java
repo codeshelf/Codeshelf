@@ -36,6 +36,7 @@ import com.gadgetworks.codeshelf.model.domain.Path.PathDao;
 import com.gadgetworks.codeshelf.model.domain.PathSegment.PathSegmentDao;
 import com.gadgetworks.codeshelf.model.domain.SubLocationABC.SubLocationDao;
 import com.gadgetworks.codeshelf.model.domain.UomMaster.UomMasterDao;
+import com.gadgetworks.codeshelf.model.domain.WorkInstruction.WorkInstructionDao;
 
 public abstract class DomainTestABC {
 
@@ -62,6 +63,7 @@ public abstract class DomainTestABC {
 	protected UomMasterDao			mUomMasterDao;
 	protected LedControllerDao		mLedControllerDao;
 	protected LocationAliasDao		mLocationAliasDao;
+	protected WorkInstructionDao	mWorkInstructionDao;
 
 	private IUtil					mUtil;
 	protected ISchemaManager		mSchemaManager;
@@ -179,6 +181,9 @@ public abstract class DomainTestABC {
 
 			mLocationAliasDao = new LocationAliasDao(mSchemaManager);
 			LocationAlias.DAO = mLocationAliasDao;
+
+			mWorkInstructionDao = new WorkInstructionDao(mSchemaManager);
+			WorkInstruction.DAO = mWorkInstructionDao;
 
 		} catch (ClassNotFoundException e) {
 		}
