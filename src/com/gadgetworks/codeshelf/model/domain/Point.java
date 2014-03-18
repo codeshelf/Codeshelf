@@ -61,6 +61,11 @@ public class Point {
 	@JsonProperty
 	private Double				z;
 
+	
+	public Point() {
+		
+	}
+	
 	public Point(final PositionTypeEnum inPosType, final Double inX, final Double inY, final Double inZ) {
 		posTypeEnum = inPosType;
 		x = inX;

@@ -5,6 +5,8 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.ws.command.req;
 
+import org.codehaus.jackson.JsonNode;
+
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -22,7 +24,7 @@ public class ArgsClass {
 	@Getter
 	@Setter
 	@Accessors(prefix = "m")
-	private Object	mValue;
+	private JsonNode	mValue;
 
 	@Getter
 	@Setter
@@ -33,7 +35,7 @@ public class ArgsClass {
 
 	}
 
-	public ArgsClass(final String inName, final Object inValue, final String inClassType) {
+	public ArgsClass(final String inName, final JsonNode inValue, final String inClassType) {
 		mName = inName;
 		mValue = inValue;
 		mClassType = inClassType;

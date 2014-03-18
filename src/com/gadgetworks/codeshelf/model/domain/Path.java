@@ -12,6 +12,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -44,9 +46,9 @@ import com.google.inject.Singleton;
 // --------------------------------------------------------------------------
 /**
  * Path
- * 
+ *
  * A collection of PathSegments that make up a path that a ContainerHandler can travel for work.
- * 
+ *
  * @author jeffw
  */
 
@@ -173,13 +175,12 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	// --------------------------------------------------------------------------
 	/**
 	 * Get the path segments sorted in order of the path's travel direction.
-	 * @param inTravelDirection
 	 * @return
 	 */
-	public final List<PathSegment> getSegments() {
-		List<PathSegment> list = new ArrayList<PathSegment>(segments.values());
-		Collections.sort(list, new PathSegmentComparator(travelDirEnum));
-		return list;
+	public final SortedSet<PathSegment> getSegments() {
+		TreeSet<PathSegment> sorted = new TreeSet<PathSegment>(new PathSegmentComparator(travelDirEnum));
+		sorted.addAll(segments.values());
+		return sorted;
 	}
 
 	// --------------------------------------------------------------------------
@@ -246,8 +247,8 @@ public class Path extends DomainObjectTreeABC<Facility> {
 			}
 			previousPoint = point;
 		}
-	
-		
+
+
 	}
 	// --------------------------------------------------------------------------
 	/**
@@ -260,15 +261,6 @@ public class Path extends DomainObjectTreeABC<Facility> {
 		final Double inXDimMeters,
 		final Double inYDimMeters,
 		final boolean inOpensLowSide) {
-		// If there are already path segments then create a connecting path to the new ones.
-		Integer segmentOrder = 0;
-		PathSegment lastSegment = null;
-		if (this.getSegments().size() > 0) {
-			lastSegment = this.getPathSegment(this.getSegments().size() - 1);
-			if (lastSegment != null) {
-				segmentOrder = lastSegment.getSegmentOrder() + 1;
-			}
-		}
 
 		Point endA = null;
 		Point startA = null;
@@ -294,6 +286,12 @@ public class Path extends DomainObjectTreeABC<Facility> {
 				null);
 		}
 
+		// If there are already path segments then create a connecting path to the new ones.
+		Integer segmentOrder = 0;
+		PathSegment lastSegment = getSegments().last();
+		if (lastSegment != null) {
+			segmentOrder = lastSegment.getSegmentOrder() + 1;
+		}
 		String baseSegmentId = inAssociatedAisle.getDomainId() + "." + PathSegment.DOMAIN_PREFIX;
 		// Now connect it to the last aisle's path segments.
 		if (lastSegment != null) {
@@ -352,7 +350,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 		}
 
 		inPath.addPathSegment(result);
-		
+
 		// TODO: REMOVE THIS AS SOON AS WE HAVE THE NEW PATH CREATION TOOL FROM JR AND PAUL.
 		inAssociatedLocation.setPathSegment(result);
 		try {

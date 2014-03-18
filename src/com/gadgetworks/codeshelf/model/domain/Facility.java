@@ -1,12 +1,13 @@
 /*******************************************************************************
  *  CodeShelf
- *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
+ *  Copyright (c) 2005-2014, Jeffrey B. Williams, All rights reserved
  *  $Id: Facility.java,v 1.82 2013/11/05 06:14:55 jeffw Exp $
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -661,6 +662,25 @@ public class Facility extends LocationABC<Organization> {
 		}
 	}
 
+	// --------------------------------------------------------------------------
+	/**
+	 * Create a path
+	 *
+	 */
+	@Transactional
+	public final void createPath(String domainId, PathSegment[] pathSegments) throws DaoException {
+		Path path = new Path();
+		path.setParent(this);
+		path.setDomainId(domainId);
+		path.setDescription("A Facility Path");
+		path.setTravelDirEnum(TravelDirectionEnum.FORWARD);
+		Path.DAO.store(path);
+		path.createDefaultWorkArea();
+		for (PathSegment pathSegment : pathSegments) {
+			pathSegment.setParent(path);
+			PathSegment.DAO.store(pathSegment);
+		}
+	}
 	// --------------------------------------------------------------------------
 	/**
 	 * A sample routine to show the distance of locations along a path.
