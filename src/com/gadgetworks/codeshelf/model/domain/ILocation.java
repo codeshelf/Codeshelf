@@ -12,51 +12,28 @@ import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 
 public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P> {
 
-	PositionTypeEnum getPosTypeEnum();
+	PositionTypeEnum getAnchorPosTypeEnum();
+	
+	Double getAnchorPosX();
+	
+	Double getAnchorPosY();
+	
+	Double getAnchorPosZ();
+	
+	Point getAnchorPoint();
 
-	void setPosTypeEnum(PositionTypeEnum inPosTypeEnum);
+	void setAnchorPoint(Point inAnchorPoint);
 
-	Double getPosX();
-
-	void setPosX(Double inPosX);
-
-	Double getPosY();
-
-	void setPosY(Double inPosY);
-
-	Double getPosZ();
-
-	void setPosZ(Double inPosZ);
-
-	Double getAbsolutePosX();
-
-	Double getAbsolutePosY();
-
-	Double getAbsolutePosZ();
+	Point getAbsoluteAnchorPoint();
 
 	String getDescription();
 
 	void setDescription(String inDescription);
 
-	// --------------------------------------------------------------------------
-	/**
-	 * Get this location's starting position along its path.
-	 * @return
-	 */
 	Double getPosAlongPath();
 
-	// --------------------------------------------------------------------------
-	/**
-	 * Set this location's starting position along its path.
-	 * @param inPoseAlongPath
-	 */
 	void setPosAlongPath(Double inPoseAlongPath);
 	
-	// --------------------------------------------------------------------------
-	/**
-	 * Return the path segment for this location.
-	 * @return
-	 */
 	PathSegment getPathSegment();
 
 	Organization getParentOrganization();
@@ -79,20 +56,8 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 
 	void setLastLedNumAlongPath(Short inLastLedNum);
 
-	// --------------------------------------------------------------------------
-	/**
-	 * Compute the first LED position for the item in this location.
-	 * @param inItemId
-	 * @return
-	 */
 	Short getFirstLedPosForItemId(final String inItemId);
 
-	// --------------------------------------------------------------------------
-	/**
-	 * Compute the first LED position for the item in this location.
-	 * @param inItemId
-	 * @return
-	 */
 	Short getLastLedPosForItemId(final String inItemId);
 	
 	// --------------------------------------------------------------------------
@@ -157,8 +122,6 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 	 * @return
 	 */
 	LocationAlias getPrimaryAlias();
-
-	void setPosTypeByStr(String inPosTypeStr);
 
 	// --------------------------------------------------------------------------
 	/**

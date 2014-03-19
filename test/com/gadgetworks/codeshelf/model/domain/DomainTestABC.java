@@ -232,20 +232,38 @@ public abstract class DomainTestABC {
 		organization.createFacility("F1", "test", PositionTypeEnum.METERS_FROM_PARENT.getName(), 0.0, 0.0);
 		resultFacility = organization.getFacility("F1");
 
-		Aisle aisle1 = new Aisle(resultFacility, "A1", 0.0, 0.0);
+		Aisle aisle1 = new Aisle(resultFacility,
+			"A1",
+			new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0),
+			new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0));
 		mAisleDao.store(aisle1);
 
-		Bay baya1b1 = new Bay(aisle1, "B1", 0.0, 0.0, 0.0);
+		Bay baya1b1 = new Bay(aisle1, "B1", new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0), new Point(PositionTypeEnum.GPS,
+			0.0,
+			0.0,
+			0.0));
 		mBayDao.store(baya1b1);
-		Bay baya1b2 = new Bay(aisle1, "B2", 0.0, 0.0, 0.0);
+		Bay baya1b2 = new Bay(aisle1, "B2", new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0), new Point(PositionTypeEnum.GPS,
+			0.0,
+			0.0,
+			0.0));
 		mBayDao.store(baya1b2);
 
-		Aisle aisle2 = new Aisle(resultFacility, "A2", 0.0, 0.0);
+		Aisle aisle2 = new Aisle(resultFacility,
+			"A2",
+			new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0),
+			new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0));
 		mAisleDao.store(aisle2);
 
-		Bay baya2b1 = new Bay(aisle2, "B1", 0.0, 0.0, 0.0);
+		Bay baya2b1 = new Bay(aisle2, "B1", new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0), new Point(PositionTypeEnum.GPS,
+			0.0,
+			0.0,
+			0.0));
 		mBayDao.store(baya2b1);
-		Bay baya2b2 = new Bay(aisle2, "B2", 0.0, 0.0, 0.0);
+		Bay baya2b2 = new Bay(aisle2, "B2", new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0), new Point(PositionTypeEnum.GPS,
+			0.0,
+			0.0,
+			0.0));
 		mBayDao.store(baya2b2);
 
 		Path path = new Path();
@@ -265,20 +283,38 @@ public abstract class DomainTestABC {
 		aisle1.setPathSegment(pathSegment1);
 		mAisleDao.store(aisle2);
 
-		Aisle aisle3 = new Aisle(resultFacility, "A3", 0.0, 0.0);
+		Aisle aisle3 = new Aisle(resultFacility,
+			"A3",
+			new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0),
+			new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0));
 		mAisleDao.store(aisle3);
 
-		Bay baya3b1 = new Bay(aisle3, "B1", 0.0, 0.0, 0.0);
+		Bay baya3b1 = new Bay(aisle3, "B1", new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0), new Point(PositionTypeEnum.GPS,
+			0.0,
+			0.0,
+			0.0));
 		mBayDao.store(baya3b1);
-		Bay baya3b2 = new Bay(aisle3, "B2", 0.0, 0.0, 0.0);
+		Bay baya3b2 = new Bay(aisle3, "B2", new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0), new Point(PositionTypeEnum.GPS,
+			0.0,
+			0.0,
+			0.0));
 		mBayDao.store(baya3b2);
 
-		Aisle aisle4 = new Aisle(resultFacility, "A4", 0.0, 0.0);
+		Aisle aisle4 = new Aisle(resultFacility,
+			"A4",
+			new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0),
+			new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0));
 		mAisleDao.store(aisle4);
 
-		Bay baya4b1 = new Bay(aisle4, "B1", 0.0, 0.0, 0.0);
+		Bay baya4b1 = new Bay(aisle4, "B1", new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0), new Point(PositionTypeEnum.GPS,
+			0.0,
+			0.0,
+			0.0));
 		mBayDao.store(baya4b1);
-		Bay baya4b2 = new Bay(aisle4, "B2", 0.0, 0.0, 0.0);
+		Bay baya4b2 = new Bay(aisle4, "B2", new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0), new Point(PositionTypeEnum.GPS,
+			0.0,
+			0.0,
+			0.0));
 		mBayDao.store(baya4b2);
 
 		PathSegment pathSegment2 = path.createPathSegment("PS2", aisle3, path, 1, new Point(PositionTypeEnum.METERS_FROM_PARENT,

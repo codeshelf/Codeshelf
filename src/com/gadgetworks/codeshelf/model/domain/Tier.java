@@ -14,7 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
-import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
@@ -45,7 +44,7 @@ public class Tier extends SubLocationABC<Bay> {
 		public TierDao(final ISchemaManager inSchemaManager) {
 			super(inSchemaManager);
 		}
-		
+
 		public final Class<Tier> getDaoClass() {
 			return Tier.class;
 		}
@@ -53,8 +52,8 @@ public class Tier extends SubLocationABC<Bay> {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(Tier.class);
 
-	public Tier(final Double inPosX, final Double inPosZ) {
-		super(PositionTypeEnum.METERS_FROM_PARENT, inPosX, 0.0, inPosZ);
+	public Tier(final Point inAnchorPoint, final Point inPickFaceEndPoint) {
+		super(inAnchorPoint, inPickFaceEndPoint);
 	}
 
 	public final ITypedDao<Tier> getDao() {

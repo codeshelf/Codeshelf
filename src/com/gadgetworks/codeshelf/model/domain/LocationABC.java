@@ -93,39 +93,44 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 	// This really should somehow include the space between the bay if there are gaps in a long row with certain kinds of LED strips.
 	// For example, the current strips are spaced exactly 3.125cm apart.
-	public static final Double			METERS_PER_LED_POS	= 0.03333;
+	public static final Double			METERS_PER_LED_POS	= 0.03125;
 
 	private static final Logger			LOGGER				= LoggerFactory.getLogger(LocationABC.class);
+
+	//	@Embedded
+	//	@AttributeOverrides({ @AttributeOverride(name = "x", column = @Column(name = "anchor_pos_x")),
+	//		@AttributeOverride(name = "y", column = @Column(name = "anchor_pos_y")),
+	//		@AttributeOverride(name = "z", column = @Column(name = "anchor_pos_z")),
+	//		@AttributeOverride(name = "posTypeEnum", column = @Column(name = "anchor_pos_type_enum")) })
+	//	@Getter
+	//	@Setter
+	//	@JsonProperty
+	//	private Point						anchorPos;
 
 	// The position type (GPS, METERS, etc.).
 	@Column(nullable = false)
 	@Enumerated(value = EnumType.STRING)
-	@Getter
-	@Setter
 	@JsonProperty
-	private PositionTypeEnum			posTypeEnum;
+	@Getter
+	private PositionTypeEnum			anchorPosTypeEnum;
 
 	// The X anchor position.
 	@Column(nullable = false)
-	@Getter
-	@Setter
 	@JsonProperty
-	private Double						posX;
+	@Getter
+	private Double						anchorPosX;
 
 	// The Y anchor position.
 	@Column(nullable = false)
-	@Getter
-	@Setter
 	@JsonProperty
-	private Double						posY;
+	@Getter
+	private Double						anchorPosY;
 
 	// The Z anchor position.
-	@Column(nullable = true)
-	@Getter
-	@Setter
+	@Column(nullable = false)
 	@JsonProperty
-	// Null means it's at the same nominal z coord as the parent.
-	private Double						posZ;
+	@Getter
+	private Double						anchorPosZ;
 
 	// The location description.
 	@Column(nullable = true)
@@ -231,19 +236,19 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 	}
 
-	public LocationABC(final PositionTypeEnum inPosType, final Double inPosX, final double inPosY) {
-		posTypeEnum = inPosType;
-		posX = inPosX;
-		posY = inPosY;
-		// Z pos is non-null so that it doesn't need to be explicitly set.
-		posZ = 0.0;
+	public LocationABC(final Point inAnchorPoint) {
+		setAnchorPoint(inAnchorPoint);
 	}
 
-	public LocationABC(final PositionTypeEnum inPosType, final Double inPosX, final double inPosY, final double inPosZ) {
-		posTypeEnum = inPosType;
-		posX = inPosX;
-		posY = inPosY;
-		posZ = inPosZ;
+	public Point getAnchorPoint() {
+		return new Point(anchorPosTypeEnum, anchorPosX, anchorPosY, anchorPosZ);
+	}
+
+	public void setAnchorPoint(final Point inAnchorPoint) {
+		anchorPosTypeEnum = inAnchorPoint.getPosTypeEnum();
+		anchorPosX = inAnchorPoint.getX();
+		anchorPosY = inAnchorPoint.getY();
+		anchorPosZ = inAnchorPoint.getZ();
 	}
 
 	// --------------------------------------------------------------------------
@@ -343,59 +348,17 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.ILocation#getAbsolutePosX()
 	 */
-	public Double getAbsolutePosX() {
-		Double result = getPosX();
+	public Point getAbsoluteAnchorPoint() {
+		Point result = getAnchorPoint();
 
-		if (!posTypeEnum.equals(PositionTypeEnum.GPS)) {
+		if (!anchorPosTypeEnum.equals(PositionTypeEnum.GPS)) {
 			ILocation<P> parent = (ILocation<P>) getParent();
 
 			// There's some weirdness with Ebean and navigating a recursive hierarchy. (You can't go down and then back up to a different class.)
 			// This fixes that problem, but it's not pretty.
 			parent = DAO.findByPersistentId(parent.getClass(), parent.getPersistentId());
-			if ((parent != null) && (parent.getPosTypeEnum().equals(PositionTypeEnum.METERS_FROM_PARENT))) {
-				result += parent.getAbsolutePosX();
-			}
-		}
-
-		return result;
-	}
-
-	// --------------------------------------------------------------------------
-	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.ILocation#getAbsolutePosX()
-	 */
-	public Double getAbsolutePosY() {
-		Double result = getPosY();
-
-		if (!posTypeEnum.equals(PositionTypeEnum.GPS)) {
-			ILocation<P> parent = (ILocation<P>) getParent();
-
-			// There's some weirdness with Ebean and navigating a recursive hierarchy. (You can't go down and then back up to a different class.)
-			// This fixes that problem, but it's not pretty.
-			parent = DAO.findByPersistentId(parent.getClass(), parent.getPersistentId());
-			if ((parent != null) && (parent.getPosTypeEnum().equals(PositionTypeEnum.METERS_FROM_PARENT))) {
-				result += parent.getAbsolutePosY();
-			}
-		}
-
-		return result;
-	}
-
-	// --------------------------------------------------------------------------
-	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.ILocation#getAbsolutePosX()
-	 */
-	public Double getAbsolutePosZ() {
-		Double result = getPosZ();
-
-		if (!posTypeEnum.equals(PositionTypeEnum.GPS)) {
-			ILocation<P> parent = (ILocation<P>) getParent();
-
-			// There's some weirdness with Ebean and navigating a recursive hierarchy. (You can't go down and then back up to a different class.)
-			// This fixes that problem, but it's not pretty.
-			parent = DAO.findByPersistentId(parent.getClass(), parent.getPersistentId());
-			if ((parent != null) && (parent.getPosTypeEnum().equals(PositionTypeEnum.METERS_FROM_PARENT))) {
-				result += parent.getAbsolutePosZ();
+			if ((parent != null) && (parent.getAnchorPoint().getPosTypeEnum().equals(PositionTypeEnum.METERS_FROM_PARENT))) {
+				result.add(parent.getAbsoluteAnchorPoint());
 			}
 		}
 
@@ -526,8 +489,8 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		PathSegment segment = this.getPathSegment();
 		if (segment != null) {
 			ILocation<P> anchorLocation = segment.getAnchorLocation();
-			Point locationPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, Math.abs(anchorLocation.getAbsolutePosX()
-					+ this.getAbsolutePosX()), Math.abs(anchorLocation.getAbsolutePosY() + this.getAbsolutePosY()), null);
+			Point locationPoint = new Point(anchorLocation.getAnchorPoint());
+			locationPoint.add(getAbsoluteAnchorPoint());
 			if (segment.getParent().getTravelDirEnum().equals(TravelDirectionEnum.FORWARD)) {
 				pathPosition = segment.getStartPosAlongPath()
 						+ segment.computeDistanceOfPointFromLine(segment.getStartPoint(), segment.getEndPoint(), locationPoint);
@@ -548,10 +511,6 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		}
 	}
 
-	public final void setPosTypeByStr(String inPosTypeStr) {
-		setPosTypeEnum(PositionTypeEnum.valueOf(inPosTypeStr));
-	}
-
 	public final void addVertex(Vertex inVertex) {
 		vertices.add(inVertex);
 	}
@@ -567,17 +526,17 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	public final void removeAlias(LocationAlias inAlias) {
 		aliases.remove(inAlias);
 	}
-	
+
 	public final LocationAlias getPrimaryAlias() {
 		LocationAlias result = null;
-		
+
 		for (LocationAlias alias : aliases) {
 			if (alias.getActive()) {
 				result = alias;
 				break;
 			}
 		}
-		
+
 		return result;
 	}
 

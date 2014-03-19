@@ -17,6 +17,7 @@ import com.gadgetworks.codeshelf.model.domain.Bay;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.ILocation;
 import com.gadgetworks.codeshelf.model.domain.Organization;
+import com.gadgetworks.codeshelf.model.domain.Point;
 
 /**
  * @author jeffw
@@ -46,16 +47,28 @@ public class LocationAliasImporterTest extends EdiTestABC {
 		organization.createFacility("F-LOCS.1", "TEST", PositionTypeEnum.METERS_FROM_PARENT.getName(), 0.0, 0.0);
 		Facility facility = organization.getFacility("F-LOCS.1");
 
-		Aisle aisleA1 = new Aisle(facility, "A1", 0.0, 0.0);
+		Aisle aisleA1 = new Aisle(facility, "A1", new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0), new Point(PositionTypeEnum.GPS,
+			0.0,
+			0.0,
+			0.0));
 		mSubLocationDao.store(aisleA1);
 
-		Bay bay1 = new Bay(aisleA1, "B1", 0.0, 0.0, 0.0);
+		Bay bay1 = new Bay(aisleA1, "B1", new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0), new Point(PositionTypeEnum.GPS,
+			0.0,
+			0.0,
+			0.0));
 		mSubLocationDao.store(bay1);
 
-		Aisle aisleA2 = new Aisle(facility, "A2", 0.0, 0.0);
+		Aisle aisleA2 = new Aisle(facility, "A2", new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0), new Point(PositionTypeEnum.GPS,
+			0.0,
+			0.0,
+			0.0));
 		mSubLocationDao.store(aisleA2);
 
-		Bay bay2 = new Bay(aisleA2, "B2", 0.0, 0.0, 0.0);
+		Bay bay2 = new Bay(aisleA2, "B2", new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0), new Point(PositionTypeEnum.GPS,
+			0.0,
+			0.0,
+			0.0));
 		mSubLocationDao.store(bay2);
 
 		ICsvLocationAliasImporter importer = new LocationAliasCsvImporter(mLocationAliasDao);
@@ -70,22 +83,20 @@ public class LocationAliasImporterTest extends EdiTestABC {
 		location = facility.findLocationById("AisleA");
 		Assert.assertNotNull(location);
 		Assert.assertEquals(location.getDomainId(), "A1");
-		
+
 		// Make sure we can still look up a bay by it's FQN.
 		location = facility.findSubLocationById("A2.B2");
 		Assert.assertNotNull(location);
 		Assert.assertEquals(location.getDomainId(), "B2");
-		
+
 		// Make sure we can look it up by an alias, and get the mapped location.
 		location = facility.findLocationById("B34");
 		Assert.assertNotNull(location);
 		Assert.assertEquals(location.getDomainId(), "B2");
-		
+
 		// Make sure we cannot lookup the bad entry (there is no A3).
 		location = facility.findLocationById("AisleC");
 		Assert.assertNull(location);
-		
-		
 
 	}
 }

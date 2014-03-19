@@ -24,7 +24,7 @@ import com.gadgetworks.codeshelf.model.domain.OrderHeader.OrderHeaderDao;
 import com.gadgetworks.codeshelf.model.domain.Organization.OrganizationDao;
 
 public class OptimisticLockExceptionTest {
-	
+
 	private IUtil			mUtil;
 	private ISchemaManager	mSchemaManager;
 	private IDatabase		mDatabase;
@@ -35,7 +35,8 @@ public class OptimisticLockExceptionTest {
 		try {
 			mUtil = new IUtil() {
 
-				public void setLoggingLevelsFromPrefs(Organization inOrganization, ITypedDao<PersistentProperty> inPersistentPropertyDao) {
+				public void setLoggingLevelsFromPrefs(Organization inOrganization,
+					ITypedDao<PersistentProperty> inPersistentPropertyDao) {
 				}
 
 				public String getVersionString() {
@@ -56,7 +57,14 @@ public class OptimisticLockExceptionTest {
 			};
 
 			Class.forName("org.h2.Driver");
-			mSchemaManager = new H2SchemaManager(mUtil, "codeshelf", "codeshelf", "codeshelf", "CODESHELF", "localhost", "", "false");
+			mSchemaManager = new H2SchemaManager(mUtil,
+				"codeshelf",
+				"codeshelf",
+				"codeshelf",
+				"CODESHELF",
+				"localhost",
+				"",
+				"false");
 			mDatabase = new Database(mSchemaManager, mUtil);
 
 			mDatabase.start();
@@ -68,7 +76,7 @@ public class OptimisticLockExceptionTest {
 	public final void optimisticLockExceptionTest() {
 
 		EbeanServer defaultServer = Ebean.getServer(null);
-		
+
 		OrderHeader.DAO = new OrderHeaderDao(mSchemaManager);
 		OrderDetail.DAO = new OrderDetailDao(mSchemaManager);
 		Organization.DAO = new OrganizationDao(mSchemaManager);
@@ -83,11 +91,9 @@ public class OptimisticLockExceptionTest {
 		Facility facility = new Facility();
 		facility.setParent(organization);
 		facility.setFacilityId("OPTIMISTIC-F1");
-		facility.setPosTypeEnum(PositionTypeEnum.METERS_FROM_DATUM);
-		facility.setPosX(0.0);
-		facility.setPosY(0.0);
+		facility.setAnchorPoint(new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0));
 		Facility.DAO.store(facility);
-		
+
 		OrderHeader order1 = new OrderHeader();
 		order1.setDomainId("OPTIMISTIC-123");
 		order1.setParent(facility);
@@ -103,7 +109,7 @@ public class OptimisticLockExceptionTest {
 		OrderHeader foundOrder = OrderHeader.DAO.findByDomainId(facility, "OPTIMISTIC-123");
 		foundOrder.setStatusEnum(OrderStatusEnum.INPROGRESS);
 		OrderHeader.DAO.store(foundOrder);
-		
+
 		order1.setStatusEnum(OrderStatusEnum.COMPLETE);
 		order1.setVersion(new Timestamp(order1.getVersion().getTime() + 1));
 		try {
@@ -112,7 +118,7 @@ public class OptimisticLockExceptionTest {
 			// So we should come here with an optimistic lock exception.
 			Assert.fail("DAO Exception");
 		}
-		
+
 		foundOrder = OrderHeader.DAO.findByDomainId(facility, "OPTIMISTIC-123");
 		Assert.assertEquals(foundOrder.getStatusEnum(), order1.getStatusEnum());
 	}

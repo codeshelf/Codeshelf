@@ -256,19 +256,25 @@ public class Path extends DomainObjectTreeABC<Facility> {
 		Point endA = null;
 		Point startA = null;
 		if (inXDimMeters < inYDimMeters) {
-			Double xA = inAssociatedAisle.getPosX() + 2 * inXDimMeters;
+			Double xA = inAssociatedAisle.getAnchorPoint().getX() + 2 * inXDimMeters;
 			if (inOpensLowSide) {
-				xA = inAssociatedAisle.getPosX() - inXDimMeters;
+				xA = inAssociatedAisle.getAnchorPoint().getX() - inXDimMeters;
 			}
-			startA = new Point(PositionTypeEnum.METERS_FROM_PARENT, xA, inAssociatedAisle.getPosY(), null);
-			endA = new Point(PositionTypeEnum.METERS_FROM_PARENT, xA, inAssociatedAisle.getPosY() + inYDimMeters, null);
+			startA = new Point(PositionTypeEnum.METERS_FROM_PARENT, xA, inAssociatedAisle.getAnchorPoint().getY(), null);
+			endA = new Point(PositionTypeEnum.METERS_FROM_PARENT,
+				xA,
+				inAssociatedAisle.getAnchorPoint().getY() + inYDimMeters,
+				null);
 		} else {
-			Double yA = inAssociatedAisle.getPosY() + 2 * inYDimMeters;
+			Double yA = inAssociatedAisle.getAnchorPoint().getY() + 2 * inYDimMeters;
 			if (inOpensLowSide) {
-				yA = inAssociatedAisle.getPosY() - inYDimMeters;
+				yA = inAssociatedAisle.getAnchorPoint().getY() - inYDimMeters;
 			}
-			startA = new Point(PositionTypeEnum.METERS_FROM_PARENT, inAssociatedAisle.getPosX(), yA, null);
-			endA = new Point(PositionTypeEnum.METERS_FROM_PARENT, inAssociatedAisle.getPosX() + inXDimMeters, yA, null);
+			startA = new Point(PositionTypeEnum.METERS_FROM_PARENT, inAssociatedAisle.getAnchorPoint().getX(), yA, null);
+			endA = new Point(PositionTypeEnum.METERS_FROM_PARENT,
+				inAssociatedAisle.getAnchorPoint().getX() + inXDimMeters,
+				yA,
+				null);
 		}
 
 		String baseSegmentId = inAssociatedAisle.getDomainId() + "." + PathSegment.DOMAIN_PREFIX;
@@ -485,7 +491,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 				break;
 			}
 		}
-		
+
 		return result;
 	}
 }

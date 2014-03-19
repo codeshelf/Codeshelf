@@ -28,3 +28,12 @@ update order_detail set status_enum = 'CREATED';
 delete from work_instruction;
 
 drop schema codeshelf CASCADE
+
+# cleanup all locations except the facility
+delete from vertex where vertex.pos_type_enum = 'METERS_PARENT';
+delete from location where location.dtype = 'SLOT';
+delete from location where location.dtype = 'TIER';
+delete from location where location.dtype = 'BAY';
+update path_segment set anchor_location_persistentid = NULL;
+delete from location where location.dtype = 'AISLE';
+delete from path_segment;

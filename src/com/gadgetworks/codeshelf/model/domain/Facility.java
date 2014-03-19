@@ -141,8 +141,8 @@ public class Facility extends LocationABC<Organization> {
 
 	}
 
-	public Facility(final Double inPosX, final Double inPosY) {
-		super(PositionTypeEnum.GPS, inPosX, inPosY);
+	public Facility(final Point inAnchorPoint) {
+		super(inAnchorPoint);
 	}
 
 	public final String getDefaultDomainIdPrefix() {
@@ -377,14 +377,16 @@ public class Facility extends LocationABC<Organization> {
 			// Create the aisle if it doesn't already exist.
 			Aisle aisle = Aisle.DAO.findByDomainId(this, inAisleId);
 			if (aisle == null) {
-				aisle = new Aisle(this, inAisleId, inPosXMeters, inPosYMeters);
+				Point anchorPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, inPosXMeters, inPosYMeters, 0.0);
+				Point pickFaceEndPoint = computePickFaceEndPoint(anchorPoint, inProtoBayWidthMeters * inBaysLong, inRunInXDir);
+				aisle = new Aisle(this, inAisleId, anchorPoint, pickFaceEndPoint);
 				try {
 					Aisle.DAO.store(aisle);
 				} catch (DaoException e) {
 					LOGGER.error("", e);
 				}
 
-				Point anchorPos = new Point(PositionTypeEnum.METERS_FROM_PARENT, 0.0, 0.0, 0.0);
+				Point bayAnchorPosition = new Point(PositionTypeEnum.METERS_FROM_PARENT, 0.0, 0.0, 0.0);
 				Point aisleBoundary = new Point(PositionTypeEnum.METERS_FROM_PARENT, 0.0, 0.0, 0.0);
 
 				Short curLedPosNum = 1;
@@ -392,12 +394,14 @@ public class Facility extends LocationABC<Organization> {
 				for (int bayNum = 1; bayNum <= inBaysLong; bayNum++) {
 					Double anchorPosZ = 0.0;
 					for (int bayHighNum = 0; bayHighNum < inBaysHigh; bayHighNum++) {
-						String bayName = "B" + bayNum + "." + bayHighNum;
+						String bayName = "B" + bayNum + "-" + bayHighNum;
 						Bay bay = createZigZagBay(aisle,
 							bayName,
 							inLeftHandBay,
 							curLedPosNum,
-							anchorPos,
+							bayAnchorPosition,
+							inProtoBayWidthMeters,
+							inProtoBayHeightMeters,
 							inRunInXDir,
 							ledController,
 							channelNum);
@@ -422,7 +426,11 @@ public class Facility extends LocationABC<Organization> {
 						anchorPosZ += inProtoBayHeightMeters;
 					}
 
-					prepareNextBayAnchorPoint(inProtoBayWidthMeters, inProtoBayDepthMeters, inRunInXDir, anchorPos, aisleBoundary);
+					prepareNextBayAnchorPoint(inProtoBayWidthMeters,
+						inProtoBayDepthMeters,
+						inRunInXDir,
+						bayAnchorPosition,
+						aisleBoundary);
 				}
 
 				// Create the aisle's boundary vertices.
@@ -433,6 +441,23 @@ public class Facility extends LocationABC<Organization> {
 
 			}
 		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inProtoBayWidthMeters
+	 * @param inBaysLong
+	 * @param inRunInXDir
+	 * @return
+	 */
+	private Point computePickFaceEndPoint(final Point inAnchorPoint, final Double inDistanceMeters, final Boolean inRunInXDir) {
+		Point result;
+		if (inRunInXDir) {
+			result = new Point(PositionTypeEnum.METERS_FROM_PARENT, inDistanceMeters, 0.0, 0.0);
+		} else {
+			result = new Point(PositionTypeEnum.METERS_FROM_PARENT, 0.0, inDistanceMeters, 0.0);
+		}
+		return result;
 	}
 
 	// --------------------------------------------------------------------------
@@ -480,16 +505,17 @@ public class Facility extends LocationABC<Organization> {
 	 */
 	private Bay createZigZagBay(final Aisle inParentAisle,
 		final String inBayId,
-		final Boolean inLeftHandBay,
+		final Boolean inIsLeftHandBay,
 		final Short inFirstLedNum,
-		final Point inAnchorPos,
+		final Point inAnchorPoint,
+		final Double inBayWidth,
+		final Double inBayHeight,
 		final Boolean inRunsInXDir,
 		final LedController inLedController,
 		final short inLedChannelNum) {
 
-		Bay resultBay = null;
-
-		resultBay = new Bay(inParentAisle, inBayId, inAnchorPos.getX(), inAnchorPos.getY(), inAnchorPos.getZ());
+		Point pickFaceEndPoint = computePickFaceEndPoint(inAnchorPoint, inBayWidth, inRunsInXDir);
+		Bay resultBay = new Bay(inParentAisle, inBayId, inAnchorPoint, pickFaceEndPoint);
 
 		resultBay.setFirstLedNumAlongPath(inFirstLedNum);
 		resultBay.setLastLedNumAlongPath((short) (inFirstLedNum + 160));
@@ -500,12 +526,26 @@ public class Facility extends LocationABC<Organization> {
 			LOGGER.error("", e);
 		}
 
-		// Add slots to this tier.
-		createTier(resultBay, "T5", inLeftHandBay, inRunsInXDir, 1.25, inLedController, inLedChannelNum, (short) 1, (short) 32);
-		createTier(resultBay, "T4", !inLeftHandBay, inRunsInXDir, 1.0, inLedController, inLedChannelNum, (short) 64, (short) 33);
-		createTier(resultBay, "T3", inLeftHandBay, inRunsInXDir, 0.5, inLedController, inLedChannelNum, (short) 65, (short) 96);
-		createTier(resultBay, "T2", !inLeftHandBay, inRunsInXDir, 0.25, inLedController, inLedChannelNum, (short) 128, (short) 97);
-		createTier(resultBay, "T1", inLeftHandBay, inRunsInXDir, 0.0, inLedController, inLedChannelNum, (short) 129, (short) 160);
+		double tierZPos = 1.25;
+		short tierStartLedNum = 1;
+		short tierLedCount = 32;
+		boolean leftToRight = inIsLeftHandBay;
+		for (int tierNum = 5; tierNum > 0; tierNum--) {
+			createTier(resultBay,
+				"T" + tierNum,
+				leftToRight,
+				inRunsInXDir,
+				inBayWidth,
+				inBayHeight,
+				tierZPos,
+				inLedController,
+				inLedChannelNum,
+				tierStartLedNum,
+				tierLedCount);
+			tierZPos -= 0.25;
+			tierStartLedNum += 32;
+			leftToRight = !leftToRight;
+		}
 
 		try {
 			Bay.DAO.store(resultBay);
@@ -529,26 +569,31 @@ public class Facility extends LocationABC<Organization> {
 	 */
 	private void createTier(final Bay inParentBay,
 		final String inTierId,
-		final Boolean inSlotsRunRight,
+		final Boolean inSlotRunsRight,
 		final Boolean inRunsInXDir,
-		final Double inOffset,
+		final Double inBayWidth,
+		final Double inBayHeight,
+		final Double inTierZOffset,
 		final LedController inLedController,
 		final Short inLedChannelNum,
 		final Short inFirstLedPosNum,
-		final Short inLastLedPosNum) {
+		final Short inTierLedCount) {
 
-		Tier tier = null;
-		if (inRunsInXDir) {
-			tier = new Tier(0.0, inOffset);
-		} else {
-			tier = new Tier(inOffset, 0.0);
-		}
+		Point anchorPoint = new Point(inParentBay.getAnchorPoint());
+		Point pickFaceEndPoint = computePickFaceEndPoint(anchorPoint, inBayWidth, inRunsInXDir);
+		pickFaceEndPoint.translateZ(inTierZOffset);
+		Tier tier = new Tier(anchorPoint, pickFaceEndPoint);
 
 		tier.setDomainId(inTierId);
 		tier.setLedController(inLedController);
 		tier.setLedChannel(inLedChannelNum);
-		tier.setFirstLedNumAlongPath((short) (inParentBay.getFirstLedNumAlongPath() + inFirstLedPosNum - 1));
-		tier.setLastLedNumAlongPath((short) (inParentBay.getFirstLedNumAlongPath() + inLastLedPosNum - 1));
+		if (inSlotRunsRight) {
+			tier.setFirstLedNumAlongPath((short) (inParentBay.getFirstLedNumAlongPath() + inFirstLedPosNum - 1));
+			tier.setLastLedNumAlongPath((short) (inParentBay.getFirstLedNumAlongPath() + inFirstLedPosNum + inTierLedCount - 1));
+		} else {
+			tier.setFirstLedNumAlongPath((short) (inParentBay.getFirstLedNumAlongPath() + inFirstLedPosNum + inTierLedCount - 1));
+			tier.setLastLedNumAlongPath((short) (inParentBay.getFirstLedNumAlongPath() + inFirstLedPosNum - 1));
+		}
 		tier.setParent(inParentBay);
 		inParentBay.addLocation(tier);
 		try {
@@ -558,16 +603,16 @@ public class Facility extends LocationABC<Organization> {
 		}
 
 		// Add slots to this tier.
-		if (inSlotsRunRight) {
-			createSlot(tier, "S1", inRunsInXDir, 0.0, 0.0, inLedController, inLedChannelNum, (short) 2, (short) 9);
-			createSlot(tier, "S2", inRunsInXDir, 0.25, 0.0, inLedController, inLedChannelNum, (short) 11, (short) 18);
-			createSlot(tier, "S3", inRunsInXDir, 0.5, 0.0, inLedController, inLedChannelNum, (short) 20, (short) 26);
-			createSlot(tier, "S4", inRunsInXDir, 1.0, 0.0, inLedController, inLedChannelNum, (short) 28, (short) 32);
+		if (inSlotRunsRight) {
+			createSlot(tier, "S1", inRunsInXDir, 0.0, inLedController, inLedChannelNum, (short) 2, (short) 9);
+			createSlot(tier, "S2", inRunsInXDir, 0.25, inLedController, inLedChannelNum, (short) 11, (short) 18);
+			createSlot(tier, "S3", inRunsInXDir, 0.5, inLedController, inLedChannelNum, (short) 20, (short) 26);
+			createSlot(tier, "S4", inRunsInXDir, 1.0, inLedController, inLedChannelNum, (short) 28, (short) 32);
 		} else {
-			createSlot(tier, "S1", inRunsInXDir, 0.0, 0.0, inLedController, inLedChannelNum, (short) 31, (short) 24);
-			createSlot(tier, "S2", inRunsInXDir, 0.25, 0.0, inLedController, inLedChannelNum, (short) 22, (short) 15);
-			createSlot(tier, "S3", inRunsInXDir, 0.5, 0.0, inLedController, inLedChannelNum, (short) 13, (short) 6);
-			createSlot(tier, "S4", inRunsInXDir, 1.0, 0.0, inLedController, inLedChannelNum, (short) 4, (short) 1);
+			createSlot(tier, "S1", inRunsInXDir, 0.0, inLedController, inLedChannelNum, (short) 31, (short) 24);
+			createSlot(tier, "S2", inRunsInXDir, 0.25, inLedController, inLedChannelNum, (short) 22, (short) 15);
+			createSlot(tier, "S3", inRunsInXDir, 0.5, inLedController, inLedChannelNum, (short) 13, (short) 6);
+			createSlot(tier, "S4", inRunsInXDir, 1.0, inLedController, inLedChannelNum, (short) 4, (short) 1);
 		}
 	}
 
@@ -585,19 +630,16 @@ public class Facility extends LocationABC<Organization> {
 	private void createSlot(final Tier inParentTier,
 		final String inSlotId,
 		final Boolean inRunsInXDir,
-		final Double inOffset1,
-		final Double inOffset2,
+		final Double inOffset,
 		final LedController inLedController,
 		final Short inChannelNum,
 		final Short inFirstLedPosNum,
 		final Short inLastLedPosNum) {
 
-		Slot slot = null;
-		if (inRunsInXDir) {
-			slot = new Slot(inOffset1, inOffset2);
-		} else {
-			slot = new Slot(inOffset2, inOffset1);
-		}
+		Point anchorPoint = inParentTier.getAnchorPoint();
+		Point pickFaceEndPoint = computePickFaceEndPoint(anchorPoint, 0.25, inRunsInXDir);
+		
+		Slot slot =  new Slot(anchorPoint, pickFaceEndPoint);
 
 		slot.setDomainId(inSlotId);
 		slot.setLedController(inLedController);

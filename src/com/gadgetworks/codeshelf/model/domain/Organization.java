@@ -199,14 +199,14 @@ public class Organization extends DomainObjectABC {
 		final String inPosTypeByStr,
 		final Double inPosx,
 		final Double inPosY) {
+		
+		Point anchorPoint = new Point(Point.getPosTypeByStr(inPosTypeByStr), inPosx, inPosY, 0.0);
 
 		Facility facility = new Facility();
 		facility.setParent(this);
 		facility.setDomainId(inDomainId);
 		facility.setDescription(inDescription);
-		facility.setPosTypeByStr(inPosTypeByStr);
-		facility.setPosX(inPosx);
-		facility.setPosY(inPosY);
+		facility.setAnchorPoint(anchorPoint);
 		this.addFacility(facility);
 
 		Facility.DAO.store(facility);

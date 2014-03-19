@@ -56,8 +56,11 @@ public class Aisle extends SubLocationABC<Facility> {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(Aisle.class);
 
-	public Aisle(final Facility inParentFacility, final String inAisleId, final Double inPosX, final double inPosY) {
-		super(PositionTypeEnum.METERS_FROM_PARENT, inPosX, inPosY);
+	public Aisle(final Facility inParentFacility,
+		final String inAisleId,
+		final Point inAnchorPoint,
+		final Point inPickFaceEndPoint) {
+		super(inAnchorPoint, inPickFaceEndPoint);
 		setParent(inParentFacility);
 		setDomainId(inAisleId);
 		inParentFacility.addAisle(this);

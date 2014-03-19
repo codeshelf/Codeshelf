@@ -14,7 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
-import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
@@ -46,7 +45,7 @@ public class Bay extends SubLocationABC<Aisle> {
 		public BayDao(final ISchemaManager inSchemaManager) {
 			super(inSchemaManager);
 		}
-		
+
 		public final Class<Bay> getDaoClass() {
 			return Bay.class;
 		}
@@ -54,8 +53,12 @@ public class Bay extends SubLocationABC<Aisle> {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(Bay.class);
 
-	public Bay(final Aisle inAisle, final String inBayId, final Double inPosX, final double inPosY, final double inPosZ) {
-		super(PositionTypeEnum.METERS_FROM_PARENT, inPosX, inPosY, inPosZ);
+	public Bay(final Aisle inAisle,
+		final String inBayId,
+		final Point inAnchorPoint,
+		final Point inPickFaceEndPoint
+		) {
+		super(inAnchorPoint, inPickFaceEndPoint);
 		setParent(inAisle);
 		setDomainId(inBayId);
 		inAisle.addLocation(this);

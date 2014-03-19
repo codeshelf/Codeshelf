@@ -45,7 +45,7 @@ public class Slot extends SubLocationABC<Tier> {
 		public SlotDao(final ISchemaManager inSchemaManager) {
 			super(inSchemaManager);
 		}
-		
+
 		public final Class<Slot> getDaoClass() {
 			return Slot.class;
 		}
@@ -53,8 +53,8 @@ public class Slot extends SubLocationABC<Tier> {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(Slot.class);
 
-	public Slot(final Double inPosX, final double inPosY) {
-		super(PositionTypeEnum.METERS_FROM_PARENT, inPosX, inPosY);
+	public Slot(final Point inAnchorPoint, final Point inPickFaceEndPoint) {
+		super(inAnchorPoint, inPickFaceEndPoint);
 	}
 
 	public final void setParentTier(final Tier inParentTier) {

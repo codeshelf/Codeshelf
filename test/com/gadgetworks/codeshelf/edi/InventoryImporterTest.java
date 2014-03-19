@@ -18,6 +18,7 @@ import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster;
 import com.gadgetworks.codeshelf.model.domain.Organization;
+import com.gadgetworks.codeshelf.model.domain.Point;
 
 /**
  * @author jeffw
@@ -82,18 +83,27 @@ public class InventoryImporterTest extends EdiTestABC {
 		Facility facility = organization.getFacility("F-INV2.1");
 		mFacilityDao.store(facility);
 
-		Aisle aisleA1 = new Aisle(facility, "A1", 0.0, 0.0);
+		Aisle aisleA1 = new Aisle(facility, "A1", new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0), new Point(PositionTypeEnum.GPS,
+			0.0,
+			0.0,
+			0.0));
 		mSubLocationDao.store(aisleA1);
 
-		Bay bay1 = new Bay(aisleA1, "B1", 0.0, 0.0, 0.0);
+		Bay bay1 = new Bay(aisleA1, "B1", new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0), new Point(PositionTypeEnum.GPS,
+			0.0,
+			0.0,
+			0.0));
 		mSubLocationDao.store(bay1);
 
-		Bay bay2 = new Bay(aisleA1, "B2", 0.0, 0.0, 0.0);
+		Bay bay2 = new Bay(aisleA1, "B2", new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0), new Point(PositionTypeEnum.GPS,
+			0.0,
+			0.0,
+			0.0));
 		mSubLocationDao.store(bay2);
 
 		ICsvInventoryImporter importer = new InventoryCsvImporter(mItemMasterDao, mItemDao, mUomMasterDao);
 		importer.importSlottedInventoryFromCsvStream(reader, facility);
-		
+
 		bay1 = (Bay) facility.findSubLocationById("A1.B1");
 		bay2 = (Bay) facility.findSubLocationById("A1.B2");
 

@@ -10,6 +10,8 @@ import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.gadgetworks.codeshelf.model.PositionTypeEnum;
+
 /**
  * @author jeffw
  *
@@ -23,7 +25,7 @@ public class FacilityTest extends DomainTestABC {
 		organization.setOrganizationId("FTEST1.O1");
 		mOrganizationDao.store(organization);
 
-		Facility facility = new Facility(0.0, 0.0);
+		Facility facility = new Facility(new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0));
 		facility.setParent(organization);
 		facility.setFacilityId("FTEST1.F1");
 		mFacilityDao.store(facility);
@@ -34,27 +36,27 @@ public class FacilityTest extends DomainTestABC {
 
 		Assert.assertNotNull(foundFacility);
 	}
-	
+
 	@Test
 	public final void createWorkInstructionTest() {
-		
+
 		List<WorkInstruction> wiList;
-		
+
 		Organization organization = new Organization();
 		organization.setOrganizationId("FTEST2.O1");
 		mOrganizationDao.store(organization);
 
-		Facility facility = new Facility(0.0, 0.0);
+		Facility facility = new Facility(new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0));
 		facility.setParent(organization);
 		facility.setFacilityId("FTEST2.F2");
 		mFacilityDao.store(facility);
-		
-//		wiList = facility.getWorkInstructions(inChe, inLocationId, inContainerIdList);
-//		
-//		Assert.assertNotNull(wiList);
-//		for (WorkInstruction wi : wiList) {
-//			Assert.assertNotNull(wi);
-//			
-//		}
+
+		//		wiList = facility.getWorkInstructions(inChe, inLocationId, inContainerIdList);
+		//		
+		//		Assert.assertNotNull(wiList);
+		//		for (WorkInstruction wi : wiList) {
+		//			Assert.assertNotNull(wi);
+		//			
+		//		}
 	}
 }

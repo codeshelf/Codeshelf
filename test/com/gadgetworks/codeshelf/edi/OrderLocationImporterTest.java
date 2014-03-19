@@ -21,6 +21,7 @@ import com.gadgetworks.codeshelf.model.domain.ILocation;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.OrderLocation;
 import com.gadgetworks.codeshelf.model.domain.Organization;
+import com.gadgetworks.codeshelf.model.domain.Point;
 
 /**
  * @author jeffw
@@ -96,34 +97,64 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		facility.addOrderHeader(order4444);
 		mOrderHeaderDao.store(order4444);
 
-		Aisle aisleA1 = new Aisle(facility, "A1", 0.0, 0.0);
+		Aisle aisleA1 = new Aisle(facility, "A1", new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0), new Point(PositionTypeEnum.GPS,
+			0.0,
+			0.0,
+			0.0));
 		mSubLocationDao.store(aisleA1);
 
-		Bay bayA1B1 = new Bay(aisleA1, "B1", 0.0, 0.0, 0.0);
+		Bay bayA1B1 = new Bay(aisleA1, "B1", new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0), new Point(PositionTypeEnum.GPS,
+			0.0,
+			0.0,
+			0.0));
 		mSubLocationDao.store(bayA1B1);
 
-		Bay bayA1B2 = new Bay(aisleA1, "B2", 0.0, 0.0, 0.0);
+		Bay bayA1B2 = new Bay(aisleA1, "B2", new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0), new Point(PositionTypeEnum.GPS,
+			0.0,
+			0.0,
+			0.0));
 		mSubLocationDao.store(bayA1B2);
 
-		Bay bayA1B3 = new Bay(aisleA1, "B3", 0.0, 0.0, 0.0);
+		Bay bayA1B3 = new Bay(aisleA1, "B3", new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0), new Point(PositionTypeEnum.GPS,
+			0.0,
+			0.0,
+			0.0));
 		mSubLocationDao.store(bayA1B3);
 
-		Aisle aisleA2 = new Aisle(facility, "A2", 0.0, 0.0);
+		Aisle aisleA2 = new Aisle(facility, "A2", new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0), new Point(PositionTypeEnum.GPS,
+			0.0,
+			0.0,
+			0.0));
 		mSubLocationDao.store(aisleA2);
 
-		Bay bayA2B1 = new Bay(aisleA2, "B1", 0.0, 0.0, 0.0);
+		Bay bayA2B1 = new Bay(aisleA2, "B1", new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0), new Point(PositionTypeEnum.GPS,
+			0.0,
+			0.0,
+			0.0));
 		mSubLocationDao.store(bayA2B1);
 
-		Bay bayA2B2 = new Bay(aisleA2, "B2", 0.0, 0.0, 0.0);
+		Bay bayA2B2 = new Bay(aisleA2, "B2", new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0), new Point(PositionTypeEnum.GPS,
+			0.0,
+			0.0,
+			0.0));
 		mSubLocationDao.store(bayA2B2);
 
-		Aisle aisleA3 = new Aisle(facility, "A3", 0.0, 0.0);
+		Aisle aisleA3 = new Aisle(facility, "A3", new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0), new Point(PositionTypeEnum.GPS,
+			0.0,
+			0.0,
+			0.0));
 		mSubLocationDao.store(aisleA3);
 
-		Bay bayA3B1 = new Bay(aisleA3, "B1", 0.0, 0.0, 0.0);
+		Bay bayA3B1 = new Bay(aisleA3, "B1", new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0), new Point(PositionTypeEnum.GPS,
+			0.0,
+			0.0,
+			0.0));
 		mSubLocationDao.store(bayA3B1);
 
-		Bay bayA3B2 = new Bay(aisleA3, "B2", 0.0, 0.0, 0.0);
+		Bay bayA3B2 = new Bay(aisleA3, "B2", new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0), new Point(PositionTypeEnum.GPS,
+			0.0,
+			0.0,
+			0.0));
 		mSubLocationDao.store(bayA3B2);
 
 		// This order location should get blanked out by the import.
@@ -247,34 +278,64 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		facility.addOrderHeader(order4444);
 		mOrderHeaderDao.store(order4444);
 
-		Aisle aisleA1 = new Aisle(facility, "A1", 0.0, 0.0);
+		Aisle aisleA1 = new Aisle(facility, "A1", new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0), new Point(PositionTypeEnum.GPS,
+			0.0,
+			0.0,
+			0.0));
 		mSubLocationDao.store(aisleA1);
 
-		Bay bayA1B1 = new Bay(aisleA1, "B1", 0.0, 0.0, 0.0);
+		Bay bayA1B1 = new Bay(aisleA1, "B1", new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0), new Point(PositionTypeEnum.GPS,
+			0.0,
+			0.0,
+			0.0));
 		mSubLocationDao.store(bayA1B1);
 
-		Bay bayA1B2 = new Bay(aisleA1, "B2", 0.0, 0.0, 0.0);
+		Bay bayA1B2 = new Bay(aisleA1, "B2", new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0), new Point(PositionTypeEnum.GPS,
+			0.0,
+			0.0,
+			0.0));
 		mSubLocationDao.store(bayA1B2);
 
-		Bay bayA1B3 = new Bay(aisleA1, "B3", 0.0, 0.0, 0.0);
+		Bay bayA1B3 = new Bay(aisleA1, "B3", new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0), new Point(PositionTypeEnum.GPS,
+			0.0,
+			0.0,
+			0.0));
 		mSubLocationDao.store(bayA1B3);
 
-		Aisle aisleA2 = new Aisle(facility, "A2", 0.0, 0.0);
+		Aisle aisleA2 = new Aisle(facility, "A2", new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0), new Point(PositionTypeEnum.GPS,
+			0.0,
+			0.0,
+			0.0));
 		mSubLocationDao.store(aisleA2);
 
-		Bay bayA2B1 = new Bay(aisleA2, "B1", 0.0, 0.0, 0.0);
+		Bay bayA2B1 = new Bay(aisleA2, "B1", new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0), new Point(PositionTypeEnum.GPS,
+			0.0,
+			0.0,
+			0.0));
 		mSubLocationDao.store(bayA2B1);
 
-		Bay bayA2B2 = new Bay(aisleA2, "B2", 0.0, 0.0, 0.0);
+		Bay bayA2B2 = new Bay(aisleA2, "B2", new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0), new Point(PositionTypeEnum.GPS,
+			0.0,
+			0.0,
+			0.0));
 		mSubLocationDao.store(bayA2B2);
 
-		Aisle aisleA3 = new Aisle(facility, "A3", 0.0, 0.0);
+		Aisle aisleA3 = new Aisle(facility, "A3", new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0), new Point(PositionTypeEnum.GPS,
+			0.0,
+			0.0,
+			0.0));
 		mSubLocationDao.store(aisleA3);
 
-		Bay bayA3B1 = new Bay(aisleA3, "B1", 0.0, 0.0, 0.0);
+		Bay bayA3B1 = new Bay(aisleA3, "B1", new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0), new Point(PositionTypeEnum.GPS,
+			0.0,
+			0.0,
+			0.0));
 		mSubLocationDao.store(bayA3B1);
 
-		Bay bayA3B2 = new Bay(aisleA3, "B2", 0.0, 0.0, 0.0);
+		Bay bayA3B2 = new Bay(aisleA3, "B2", new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0), new Point(PositionTypeEnum.GPS,
+			0.0,
+			0.0,
+			0.0));
 		mSubLocationDao.store(bayA3B2);
 
 		// This order location should get blanked out by the import.

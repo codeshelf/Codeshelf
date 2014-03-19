@@ -30,8 +30,10 @@ public interface ISchemaManager {
 	int		DATABASE_VERSION_7				= 7;								// Add order type enum.
 	int		DATABASE_VERSION_8				= 8;								// Homongenize all of the quantities as decimal
 	int		DATABASE_VERSION_9				= 9;								// Add object references back to WorkInstruction
+	int		DATABASE_VERSION_10				= 10;								// Add face width/height to locations.
+	int		DATABASE_VERSION_11				= 11;								// Cleanup anchor and pick face point structures.
 
-	int		DATABASE_VERSION_CUR			= DATABASE_VERSION_9;
+	int		DATABASE_VERSION_CUR			= DATABASE_VERSION_11;
 
 	String getDbAddress();
 
