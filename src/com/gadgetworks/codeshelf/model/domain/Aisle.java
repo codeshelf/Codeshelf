@@ -48,13 +48,13 @@ public class Aisle extends SubLocationABC<Facility> {
 		public AisleDao(final ISchemaManager inSchemaManager) {
 			super(inSchemaManager);
 		}
-		
+
 		public final Class<Aisle> getDaoClass() {
 			return Aisle.class;
 		}
 	}
 
-	private static final Logger			LOGGER	= LoggerFactory.getLogger(Aisle.class);
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(Aisle.class);
 
 	public Aisle(final Facility inParentFacility, final String inAisleId, final Double inPosX, final double inPosY) {
 		super(PositionTypeEnum.METERS_FROM_PARENT, inPosX, inPosY);
@@ -78,7 +78,10 @@ public class Aisle extends SubLocationABC<Facility> {
 	 * @param inYDimMeters
 	 * @param inTravelDirection
 	 */
-	public final void createPaths(final Double inXDimMeters, final Double inYDimMeters, final TravelDirectionEnum inTravelDirection, boolean inOpensLowSide) {
+	public final void createPaths(final Double inXDimMeters,
+		final Double inYDimMeters,
+		final TravelDirectionEnum inTravelDirection,
+		boolean inOpensLowSide) {
 
 		// Create the default path for this aisle.
 		Path path = Path.DAO.findByDomainId(getParent(), Path.DEFAULT_FACILITY_PATH_ID);

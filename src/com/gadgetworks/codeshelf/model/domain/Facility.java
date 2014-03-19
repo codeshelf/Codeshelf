@@ -62,7 +62,7 @@ import com.google.inject.Singleton;
 
 @Entity
 @DiscriminatorValue("FACILITY")
-@CacheStrategy(useBeanCache = true)
+@CacheStrategy(useBeanCache = false)
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class Facility extends LocationABC<Organization> {
 
@@ -99,12 +99,10 @@ public class Facility extends LocationABC<Organization> {
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
-	//@Getter
 	private Map<String, Container>			containers		= new HashMap<String, Container>();
 
 	@OneToMany(mappedBy = "parent", fetch = FetchType.EAGER)
 	@MapKey(name = "domainId")
-	@Getter
 	private Map<String, ContainerKind>		containerKinds	= new HashMap<String, ContainerKind>();
 
 	@OneToMany(mappedBy = "parent", targetEntity = DropboxService.class)
@@ -129,12 +127,10 @@ public class Facility extends LocationABC<Organization> {
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
-	@Getter
 	private Map<String, Path>				paths			= new HashMap<String, Path>();
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
-	@Getter
 	private Map<String, UomMaster>			uomMasters		= new HashMap<String, UomMaster>();
 
 	@OneToMany(mappedBy = "parent")
@@ -325,12 +321,12 @@ public class Facility extends LocationABC<Organization> {
 		return locationAliases.get(inLocationAliasId);
 	}
 
-	public final List<LocationAlias> getLocationAliases() {
-		return new ArrayList<LocationAlias>(locationAliases.values());
-	}
-
 	public final void removeLocationAlias(String inLocationAliasId) {
 		locationAliases.remove(inLocationAliasId);
+	}
+
+	public final List<LocationAlias> getLocationAliases() {
+		return new ArrayList<LocationAlias>(locationAliases.values());
 	}
 
 	public final Double getAbsolutePosX() {
@@ -366,7 +362,8 @@ public class Facility extends LocationABC<Organization> {
 		final Integer inBaysHigh,
 		final Integer inBaysLong,
 		final Boolean inRunInXDir,
-		final Boolean inOpensLowSide) {
+		final Boolean inOpensLowSide,
+		final Boolean inLeftHandBay) {
 
 		final String inLedControllerId = "0x00000002";
 
@@ -387,76 +384,90 @@ public class Facility extends LocationABC<Organization> {
 					LOGGER.error("", e);
 				}
 
-				Double anchorPosX = 0.0;
-				Double anchorPosY = 0.0;
-				Double aisleBoundaryX = 0.0;
-				Double aisleBoundaryY = 0.0;
+				Point anchorPos = new Point(PositionTypeEnum.METERS_FROM_PARENT, 0.0, 0.0, 0.0);
+				Point aisleBoundary = new Point(PositionTypeEnum.METERS_FROM_PARENT, 0.0, 0.0, 0.0);
 
 				Short curLedPosNum = 1;
 				Short channelNum = 1;
-				Boolean tiersTopToBottom = false;
 				for (int bayNum = 1; bayNum <= inBaysLong; bayNum++) {
 					Double anchorPosZ = 0.0;
 					for (int bayHighNum = 0; bayHighNum < inBaysHigh; bayHighNum++) {
 						String bayName = "B" + bayNum + "." + bayHighNum;
 						Bay bay = createZigZagBay(aisle,
 							bayName,
+							inLeftHandBay,
 							curLedPosNum,
-							tiersTopToBottom,
-							anchorPosX,
-							anchorPosY,
-							anchorPosZ,
+							anchorPos,
 							inRunInXDir,
 							ledController,
 							channelNum);
 						aisle.addLocation(bay);
-
-						tiersTopToBottom = !tiersTopToBottom;
 
 						// Get the last LED position from the bay to setup the next one.
 						curLedPosNum = (short) (bay.getLastLedNumAlongPath());
 
 						// Create the bay's boundary vertices.
 						if (inRunInXDir) {
-							createVertices(bay, inProtoBayWidthMeters, inProtoBayDepthMeters);
+							createVertices(bay, new Point(PositionTypeEnum.METERS_FROM_PARENT,
+								inProtoBayWidthMeters,
+								inProtoBayDepthMeters,
+								0.0));
 						} else {
-							createVertices(bay, inProtoBayDepthMeters, inProtoBayWidthMeters);
+							createVertices(bay, new Point(PositionTypeEnum.METERS_FROM_PARENT,
+								inProtoBayDepthMeters,
+								inProtoBayWidthMeters,
+								0.0));
 						}
 
 						anchorPosZ += inProtoBayHeightMeters;
 					}
 
-					// Prepare the anchor point for the next bay.
-					if (inRunInXDir) {
-						if ((anchorPosX + inProtoBayWidthMeters) > aisleBoundaryX) {
-							aisleBoundaryX = anchorPosX + inProtoBayWidthMeters;
-						}
-
-						if ((anchorPosY + inProtoBayDepthMeters) > aisleBoundaryY) {
-							aisleBoundaryY = anchorPosY + inProtoBayDepthMeters;
-						}
-
-						anchorPosX += inProtoBayWidthMeters;
-					} else {
-						if ((anchorPosX + inProtoBayDepthMeters) > aisleBoundaryX) {
-							aisleBoundaryX = anchorPosX + inProtoBayDepthMeters;
-						}
-
-						if ((anchorPosY + inProtoBayWidthMeters) > aisleBoundaryY) {
-							aisleBoundaryY = anchorPosY + inProtoBayWidthMeters;
-						}
-
-						anchorPosY += inProtoBayDepthMeters;
-					}
+					prepareNextBayAnchorPoint(inProtoBayWidthMeters, inProtoBayDepthMeters, inRunInXDir, anchorPos, aisleBoundary);
 				}
 
 				// Create the aisle's boundary vertices.
-				createVertices(aisle, aisleBoundaryX, aisleBoundaryY);
+				createVertices(aisle, aisleBoundary);
 
 				// Create the paths related to this aisle.
-				aisle.createPaths(aisleBoundaryX, aisleBoundaryY, TravelDirectionEnum.FORWARD, inOpensLowSide);
+				aisle.createPaths(aisleBoundary.getX(), aisleBoundary.getY(), TravelDirectionEnum.FORWARD, inOpensLowSide);
 
 			}
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inProtoBayWidthMeters
+	 * @param inProtoBayDepthMeters
+	 * @param inRunInXDir
+	 * @param inAnchorPos
+	 * @param inAisleBoundary
+	 */
+	private void prepareNextBayAnchorPoint(final Double inProtoBayWidthMeters,
+		final Double inProtoBayDepthMeters,
+		final Boolean inRunInXDir,
+		Point inAnchorPos,
+		Point inAisleBoundary) {
+		if (inRunInXDir) {
+			if ((inAnchorPos.getX() + inProtoBayWidthMeters) > inAisleBoundary.getX()) {
+				inAisleBoundary.setX(inAnchorPos.getX() + inProtoBayWidthMeters);
+			}
+
+			if ((inAnchorPos.getY() + inProtoBayDepthMeters) > inAisleBoundary.getY()) {
+				inAisleBoundary.setY(inAnchorPos.getY() + inProtoBayDepthMeters);
+			}
+
+			inAnchorPos.setX(inAnchorPos.getX() + inProtoBayWidthMeters);
+		} else {
+			if ((inAnchorPos.getX() + inProtoBayDepthMeters) > inAisleBoundary.getX()) {
+				inAisleBoundary.setX(inAnchorPos.getX() + inProtoBayDepthMeters);
+			}
+
+			if ((inAnchorPos.getY() + inProtoBayWidthMeters) > inAisleBoundary.getY()) {
+				inAisleBoundary.setY(inAnchorPos.getY() + inProtoBayWidthMeters);
+			}
+
+			inAnchorPos.setY(inAnchorPos.getY() + inProtoBayDepthMeters);
 		}
 	}
 
@@ -469,18 +480,16 @@ public class Facility extends LocationABC<Organization> {
 	 */
 	private Bay createZigZagBay(final Aisle inParentAisle,
 		final String inBayId,
+		final Boolean inLeftHandBay,
 		final Short inFirstLedNum,
-		final Boolean inTierTopToBottom,
-		final Double inAnchorPosX,
-		final Double inAnchorPosY,
-		final Double inAnchorPosZ,
+		final Point inAnchorPos,
 		final Boolean inRunsInXDir,
 		final LedController inLedController,
 		final short inLedChannelNum) {
 
 		Bay resultBay = null;
 
-		resultBay = new Bay(inParentAisle, inBayId, inAnchorPosX, inAnchorPosY, inAnchorPosZ);
+		resultBay = new Bay(inParentAisle, inBayId, inAnchorPos.getX(), inAnchorPos.getY(), inAnchorPos.getZ());
 
 		resultBay.setFirstLedNumAlongPath(inFirstLedNum);
 		resultBay.setLastLedNumAlongPath((short) (inFirstLedNum + 160));
@@ -491,23 +500,12 @@ public class Facility extends LocationABC<Organization> {
 			LOGGER.error("", e);
 		}
 
-		// DEMOWARE - this creates the bays we have in the office for demos.
-		// We need to create the UI to setup these bays properly and get rid of this hard-coding.
-
 		// Add slots to this tier.
-		if (inTierTopToBottom) {
-			createTier(resultBay, "T1", true, inRunsInXDir, 0.0, 0.0, inLedController, inLedChannelNum, (short) 129, (short) 160);
-			createTier(resultBay, "T2", false, inRunsInXDir, 0.0, 0.25, inLedController, inLedChannelNum, (short) 128, (short) 97);
-			createTier(resultBay, "T3", true, inRunsInXDir, 0.0, 0.5, inLedController, inLedChannelNum, (short) 65, (short) 96);
-			createTier(resultBay, "T4", false, inRunsInXDir, 0.0, 1.0, inLedController, inLedChannelNum, (short) 64, (short) 33);
-			createTier(resultBay, "T5", true, inRunsInXDir, 0.0, 1.25, inLedController, inLedChannelNum, (short) 1, (short) 32);
-		} else {
-			createTier(resultBay, "T1", true, inRunsInXDir, 0.0, 0.0, inLedController, inLedChannelNum, (short) 1, (short) 32);
-			createTier(resultBay, "T2", false, inRunsInXDir, 0.0, 0.25, inLedController, inLedChannelNum, (short) 64, (short) 33);
-			createTier(resultBay, "T3", true, inRunsInXDir, 0.0, 0.5, inLedController, inLedChannelNum, (short) 65, (short) 96);
-			createTier(resultBay, "T4", false, inRunsInXDir, 0.0, 1.0, inLedController, inLedChannelNum, (short) 128, (short) 97);
-			createTier(resultBay, "T5", true, inRunsInXDir, 0.0, 1.25, inLedController, inLedChannelNum, (short) 129, (short) 160);
-		}
+		createTier(resultBay, "T5", inLeftHandBay, inRunsInXDir, 1.25, inLedController, inLedChannelNum, (short) 1, (short) 32);
+		createTier(resultBay, "T4", !inLeftHandBay, inRunsInXDir, 1.0, inLedController, inLedChannelNum, (short) 64, (short) 33);
+		createTier(resultBay, "T3", inLeftHandBay, inRunsInXDir, 0.5, inLedController, inLedChannelNum, (short) 65, (short) 96);
+		createTier(resultBay, "T2", !inLeftHandBay, inRunsInXDir, 0.25, inLedController, inLedChannelNum, (short) 128, (short) 97);
+		createTier(resultBay, "T1", inLeftHandBay, inRunsInXDir, 0.0, inLedController, inLedChannelNum, (short) 129, (short) 160);
 
 		try {
 			Bay.DAO.store(resultBay);
@@ -522,7 +520,7 @@ public class Facility extends LocationABC<Organization> {
 	/**
 	 * @param inParentBay
 	 * @param inTierId
-	 * @param inSlotLeftToRight
+	 * @param inSlotsRunRight
 	 * @param inRunsInXDir
 	 * @param inOffset1
 	 * @param inOffset2
@@ -531,10 +529,9 @@ public class Facility extends LocationABC<Organization> {
 	 */
 	private void createTier(final Bay inParentBay,
 		final String inTierId,
-		final Boolean inSlotLeftToRight,
+		final Boolean inSlotsRunRight,
 		final Boolean inRunsInXDir,
-		final Double inOffset1,
-		final Double inOffset2,
+		final Double inOffset,
 		final LedController inLedController,
 		final Short inLedChannelNum,
 		final Short inFirstLedPosNum,
@@ -542,9 +539,9 @@ public class Facility extends LocationABC<Organization> {
 
 		Tier tier = null;
 		if (inRunsInXDir) {
-			tier = new Tier(inOffset1, inOffset2);
+			tier = new Tier(0.0, inOffset);
 		} else {
-			tier = new Tier(inOffset2, inOffset1);
+			tier = new Tier(inOffset, 0.0);
 		}
 
 		tier.setDomainId(inTierId);
@@ -561,7 +558,7 @@ public class Facility extends LocationABC<Organization> {
 		}
 
 		// Add slots to this tier.
-		if (inSlotLeftToRight) {
+		if (inSlotsRunRight) {
 			createSlot(tier, "S1", inRunsInXDir, 0.0, 0.0, inLedController, inLedChannelNum, (short) 2, (short) 9);
 			createSlot(tier, "S2", inRunsInXDir, 0.25, 0.0, inLedController, inLedChannelNum, (short) 11, (short) 18);
 			createSlot(tier, "S3", inRunsInXDir, 0.5, 0.0, inLedController, inLedChannelNum, (short) 20, (short) 26);
@@ -686,24 +683,24 @@ public class Facility extends LocationABC<Organization> {
 	 * @param inXDimMeters
 	 * @param inYDimMeters
 	 */
-	private void createVertices(ILocation inLocation, Double inXDimMeters, Double inYDimMeters) {
+	private void createVertices(ILocation inLocation, Point inDimMeters) {
 		try {
 			// Create four simple vertices around the aisle.
 			Vertex vertex1 = new Vertex(inLocation, "V01", 0, new Point(PositionTypeEnum.METERS_FROM_PARENT, 0.0, 0.0, null));
 			Vertex.DAO.store(vertex1);
 			Vertex vertex2 = new Vertex(inLocation, "V02", 1, new Point(PositionTypeEnum.METERS_FROM_PARENT,
-				inXDimMeters,
+				inDimMeters.getX(),
 				0.0,
 				null));
 			Vertex.DAO.store(vertex2);
 			Vertex vertex4 = new Vertex(inLocation, "V03", 2, new Point(PositionTypeEnum.METERS_FROM_PARENT,
-				inXDimMeters,
-				inYDimMeters,
+				inDimMeters.getX(),
+				inDimMeters.getY(),
 				null));
 			Vertex.DAO.store(vertex4);
 			Vertex vertex3 = new Vertex(inLocation, "V04", 3, new Point(PositionTypeEnum.METERS_FROM_PARENT,
 				0.0,
-				inYDimMeters,
+				inDimMeters.getY(),
 				null));
 			Vertex.DAO.store(vertex3);
 		} catch (DaoException e) {
@@ -1041,7 +1038,6 @@ public class Facility extends LocationABC<Organization> {
 						}
 					}
 				}
-
 			}
 		}
 
@@ -1082,11 +1078,6 @@ public class Facility extends LocationABC<Organization> {
 		// Cycle over all bays on the path.
 		for (Bay bay : inBays) {
 			// Cycle over all of the containers until we find no more work instructions for this bay.
-			//Iterator<Container> iterator = Iterators.cycle(inContainerList);
-			// Iterate over the container list as many times as there are containers.
-			//Iterator<Container> iterator = Iterables.concat(Collections.nCopies(inContainerList.size(), inContainerList)).iterator();
-			//Container currentContainer;
-			//while (iterator.hasNext()) {
 			while (true) {
 				boolean wiSelected = false;
 				for (Container container : inContainerList) {
@@ -1292,25 +1283,8 @@ public class Facility extends LocationABC<Organization> {
 
 		LOGGER.debug("Begin DDC position recompute");
 
-		// Make a list of all locations that have a DDC start/end.
-		LOGGER.debug("DDC get locations");
-		List<ILocation> ddcLocations = new ArrayList<ILocation>();
-		for (Aisle aisle : getAisles()) {
-			for (ILocation location : aisle.getChildren()) {
-				if (location.getFirstDdcId() != null) {
-					ddcLocations.add(location);
-				}
-			}
-		}
-
-		// Loop through all of the DDC items in the facility.
-		LOGGER.debug("DDC get items");
-		List<ItemMaster> ddcItemMasters = new ArrayList<ItemMaster>();
-		for (ItemMaster itemMaster : getItemMasters()) {
-			if ((itemMaster.getDdcId() != null) && (itemMaster.getActive())) {
-				ddcItemMasters.add(itemMaster);
-			}
-		}
+		List<ILocation<?>> ddcLocations = getDdcLocations();
+		List<ItemMaster> ddcItemMasters = getDccItemMasters();
 
 		// Sort the DDC items in lex/DDC order.
 		LOGGER.debug("DDC sort items");
@@ -1319,84 +1293,153 @@ public class Facility extends LocationABC<Organization> {
 		// Get the items that belong to each DDC location.
 		LOGGER.debug("DDC list items");
 		List<Item> locationItems = new ArrayList<Item>();
-		Double locationItemCount;
+		Double locationItemsQuantity;
 		for (ILocation<?> location : ddcLocations) {
 			// Delete all of the old DDC groups from this location.
 			for (ItemDdcGroup ddcGroup : location.getDdcGroups()) {
 				ItemDdcGroup.DAO.delete(ddcGroup);
 			}
 
-			// Build a list of all items in this DDC-based location.
-			LOGGER.debug("DDC location check: " + location.getFullDomainId() + " " + location.getPersistentId());
-			locationItems.clear();
-			locationItemCount = 0.0;
-			for (ItemMaster itemMaster : ddcItemMasters) {
-				if ((itemMaster.getDdcId().compareTo(location.getFirstDdcId()) >= 0)
-						&& (itemMaster.getDdcId().compareTo(location.getLastDdcId()) <= 0)) {
-					for (Item item : itemMaster.getItems()) {
-						LOGGER.debug("DDC assign item: " + "loc: " + location.getFullDomainId() + " itemId: "
-								+ itemMaster.getItemId() + " Ddc: " + item.getParent().getDdcId());
-						item.setStoredLocation(location);
-						location.addStoredItem(item);
-						locationItems.add(item);
-						locationItemCount += item.getQuantity();
-					}
-				}
-			}
+			locationItemsQuantity = getLocationDdcItemsAndTotalQuantity(ddcItemMasters, locationItems, location);
 
-			// Compute the length of the location's face.
-			Double locationLen = 0.0;
-			Vertex lastVertex = null;
-			List<Vertex> list = location.getVertices();
-			for (Vertex vertex : list) {
-				if (lastVertex != null) {
-					if (Math.abs(vertex.getPosX() - lastVertex.getPosX()) > locationLen) {
-						locationLen = Math.abs(vertex.getPosX() - lastVertex.getPosX());
-					}
-					if (Math.abs(vertex.getPosY() - lastVertex.getPosY()) > locationLen) {
-						locationLen = Math.abs(vertex.getPosY() - lastVertex.getPosY());
-					}
-				}
-				lastVertex = vertex;
-			}
+			Double locationLen = computeLengthOfLocationFace(location);
 
-			// Walk through all of the items in this location in DDC order and position them.
-			Double ddcPos = location.getPosAlongPath();
-			Double distPerItem = locationLen / locationItemCount;
-			ItemDdcGroup lastDdcGroup = null;
-			Collections.sort(locationItems, new DdcItemComparator());
-			for (Item item : locationItems) {
-				ddcPos += distPerItem * item.getQuantity();
-				item.setPosAlongPath(ddcPos);
-				try {
-					item.DAO.store(item);
-				} catch (DaoException e) {
-					LOGGER.error("", e);
-				}
-
-				// Figure out if we've changed DDC group codes and start a new group.
-				if ((lastDdcGroup == null) || (!lastDdcGroup.getDdcGroupId().equals(item.getParent().getDdcId()))) {
-
-					// Finish the end position of the last DDC group and store it.
-					if (lastDdcGroup != null) {
-						ItemDdcGroup.DAO.store(lastDdcGroup);
-					}
-
-					// Start the next DDC group.
-					lastDdcGroup = new ItemDdcGroup();
-					lastDdcGroup.setDdcGroupId(item.getParent().getDdcId());
-					lastDdcGroup.setParent(item.getStoredLocation());
-					lastDdcGroup.setStartPosAlongPath(item.getPosAlongPath());
-				}
-				lastDdcGroup.setEndPosAlongPath(item.getPosAlongPath());
-			}
-			// Store the last DDC 
-			if (lastDdcGroup != null) {
-				ItemDdcGroup.DAO.store(lastDdcGroup);
-			}
+			putDdcItemsInPositionOrder(locationItems, locationItemsQuantity, location, locationLen);
 		}
 
 		LOGGER.debug("End DDC position recompute");
 
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inLocationItems
+	 * @param inLocationItemsQuantity
+	 * @param inLocation
+	 * @param inLocationLen
+	 */
+	private void putDdcItemsInPositionOrder(List<Item> inLocationItems,
+		Double inLocationItemsQuantity,
+		ILocation<?> inLocation,
+		Double inLocationLen) {
+
+		Double ddcPos = inLocation.getPosAlongPath();
+		Double distPerItem = inLocationLen / inLocationItemsQuantity;
+		ItemDdcGroup lastDdcGroup = null;
+		Collections.sort(inLocationItems, new DdcItemComparator());
+		for (Item item : inLocationItems) {
+			ddcPos += distPerItem * item.getQuantity();
+			item.setPosAlongPath(ddcPos);
+			try {
+				item.DAO.store(item);
+			} catch (DaoException e) {
+				LOGGER.error("", e);
+			}
+
+			// Figure out if we've changed DDC group codes and start a new group.
+			if ((lastDdcGroup == null) || (!lastDdcGroup.getDdcGroupId().equals(item.getParent().getDdcId()))) {
+
+				// Finish the end position of the last DDC group and store it.
+				if (lastDdcGroup != null) {
+					ItemDdcGroup.DAO.store(lastDdcGroup);
+				}
+
+				// Start the next DDC group.
+				lastDdcGroup = new ItemDdcGroup();
+				lastDdcGroup.setDdcGroupId(item.getParent().getDdcId());
+				lastDdcGroup.setParent(item.getStoredLocation());
+				lastDdcGroup.setStartPosAlongPath(item.getPosAlongPath());
+			}
+			lastDdcGroup.setEndPosAlongPath(item.getPosAlongPath());
+		}
+		// Store the last DDC 
+		if (lastDdcGroup != null) {
+			ItemDdcGroup.DAO.store(lastDdcGroup);
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inDdcItemMasters
+	 * @param inLocationItems
+	 * @param inLocation
+	 * @return
+	 */
+	private Double getLocationDdcItemsAndTotalQuantity(List<ItemMaster> inDdcItemMasters,
+		List<Item> inLocationItems,
+		ILocation<?> inLocation) {
+		Double locationItemCount;
+		LOGGER.debug("DDC location check: " + inLocation.getFullDomainId() + " " + inLocation.getPersistentId());
+		inLocationItems.clear();
+		locationItemCount = 0.0;
+		for (ItemMaster itemMaster : inDdcItemMasters) {
+			if ((itemMaster.getDdcId().compareTo(inLocation.getFirstDdcId()) >= 0)
+					&& (itemMaster.getDdcId().compareTo(inLocation.getLastDdcId()) <= 0)) {
+				for (Item item : itemMaster.getItems()) {
+					LOGGER.debug("DDC assign item: " + "loc: " + inLocation.getFullDomainId() + " itemId: "
+							+ itemMaster.getItemId() + " Ddc: " + item.getParent().getDdcId());
+					item.setStoredLocation(inLocation);
+					inLocation.addStoredItem(item);
+					inLocationItems.add(item);
+					locationItemCount += item.getQuantity();
+				}
+			}
+		}
+		return locationItemCount;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inLocation
+	 * @return
+	 */
+	private Double computeLengthOfLocationFace(ILocation<?> inLocation) {
+		Double locationLen = 0.0;
+		Vertex lastVertex = null;
+		List<Vertex> list = inLocation.getVertices();
+		for (Vertex vertex : list) {
+			if (lastVertex != null) {
+				if (Math.abs(vertex.getPosX() - lastVertex.getPosX()) > locationLen) {
+					locationLen = Math.abs(vertex.getPosX() - lastVertex.getPosX());
+				}
+				if (Math.abs(vertex.getPosY() - lastVertex.getPosY()) > locationLen) {
+					locationLen = Math.abs(vertex.getPosY() - lastVertex.getPosY());
+				}
+			}
+			lastVertex = vertex;
+		}
+		return locationLen;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @return
+	 */
+	private List<ItemMaster> getDccItemMasters() {
+		LOGGER.debug("DDC get items");
+		List<ItemMaster> ddcItemMasters = new ArrayList<ItemMaster>();
+		for (ItemMaster itemMaster : getItemMasters()) {
+			if ((itemMaster.getDdcId() != null) && (itemMaster.getActive())) {
+				ddcItemMasters.add(itemMaster);
+			}
+		}
+		return ddcItemMasters;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @return
+	 */
+	private List<ILocation<?>> getDdcLocations() {
+		LOGGER.debug("DDC get locations");
+		List<ILocation<?>> ddcLocations = new ArrayList<ILocation<?>>();
+		for (Aisle aisle : getAisles()) {
+			for (ILocation<?> location : aisle.getChildren()) {
+				if (location.getFirstDdcId() != null) {
+					ddcLocations.add(location);
+				}
+			}
+		}
+		return ddcLocations;
 	}
 }

@@ -28,7 +28,7 @@ public class FacilityTest extends DomainTestABC {
 		facility.setFacilityId("FTEST1.F1");
 		mFacilityDao.store(facility);
 
-		facility.createAisle("FTEST1.A1", 1.0, 1.0, 2.0, 2.0, 2.0, 2, 5, true, true);
+		facility.createAisle("FTEST1.A1", 1.0, 1.0, 2.0, 2.0, 2.0, 2, 5, true, true, true);
 
 		Facility foundFacility = Facility.DAO.findByDomainId(organization, "FTEST1.F1");
 
