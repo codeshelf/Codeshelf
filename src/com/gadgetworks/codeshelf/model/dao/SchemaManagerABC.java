@@ -342,6 +342,10 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 			result &= doUpgrade012();
 		}
 
+		if (inOldVersion < ISchemaManager.DATABASE_VERSION_13) {
+			result &= doUpgrade013();
+		}
+
 		result &= updateSchemaVersion(ISchemaManager.DATABASE_VERSION_CUR);
 
 		return result;
@@ -354,8 +358,8 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	private boolean doUpgrade002() {
 		boolean result = true;
 
-		result &= safeAddColumn("order_header", "custoemr_id TEXT");
-		result &= safeAddColumn("order_header", "shipment_id TEXT");
+		result &= safeAddColumn("order_header", "custoemr_id", "TEXT");
+		result &= safeAddColumn("order_header", "shipment_id", "TEXT");
 
 		return result;
 	}
@@ -367,7 +371,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	private boolean doUpgrade003() {
 		boolean result = true;
 
-		result &= safeAddColumn("item_master", "slot_flex_id TEXT");
+		result &= safeAddColumn("item_master", "slot_flex_id", "TEXT");
 
 		return result;
 	}
@@ -379,8 +383,8 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	private boolean doUpgrade004() {
 		boolean result = true;
 
-		result &= safeAddColumn("work_instruction", "led_cmd_stream TEXT");
-		result &= safeAddColumn("work_instruction", "group_and_sort_code TEXT");
+		result &= safeAddColumn("work_instruction", "led_cmd_stream", "TEXT");
+		result &= safeAddColumn("work_instruction", "group_and_sort_code", "TEXT");
 
 		return result;
 	}
@@ -430,7 +434,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	private boolean doUpgrade007() {
 		boolean result = true;
 
-		result &= safeAddColumn("order_header", "order_type_enum TEXT DEFAULT 'PICK' NOT NULL");
+		result &= safeAddColumn("order_header", "order_type_enum", "TEXT DEFAULT 'PICK' NOT NULL");
 
 		return result;
 	}
@@ -456,9 +460,9 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	private boolean doUpgrade009() {
 		boolean result = true;
 
-		result &= safeAddColumn("work_instruction", "container_persistentid " + UUID_TYPE + " NOT NULL");
-		result &= safeAddColumn("work_instruction", "item_master_persistentid " + UUID_TYPE + " NOT NULL");
-		result &= safeAddColumn("work_instruction", "location_persistentid " + UUID_TYPE + " NOT NULL");
+		result &= safeAddColumn("work_instruction", "container_persistentid", UUID_TYPE + " NOT NULL");
+		result &= safeAddColumn("work_instruction", "item_master_persistentid", UUID_TYPE + " NOT NULL");
+		result &= safeAddColumn("work_instruction", "location_persistentid", UUID_TYPE + " NOT NULL");
 
 		result &= linkToParentTable("work_instruction", "item_master", "item_master");
 		result &= linkToParentTable("work_instruction", "container", "container");
@@ -474,8 +478,8 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	private boolean doUpgrade010() {
 		boolean result = true;
 
-		result &= safeAddColumn("location", "face_width_meters DOUBLE PRECISION DEFAULT 0 NOT NULL");
-		result &= safeAddColumn("location", "face_height_meters DOUBLE PRECISION DEFAULT 0 NOT NULL");
+		result &= safeAddColumn("location", "face_width_meters", "DOUBLE PRECISION DEFAULT 0 NOT NULL");
+		result &= safeAddColumn("location", "face_height_meters", "DOUBLE PRECISION DEFAULT 0 NOT NULL");
 
 		return result;
 	}
@@ -492,10 +496,10 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		result &= safeRenameColumn("location", "pos_y", "anchor_pos_y");
 		result &= safeRenameColumn("location", "pos_z", "anchor_pos_z");
 
-		result &= safeAddColumn("location", "pick_face_end_pos_type_enum TEXT DEFAULT 'METERS_PARENT'");
-		result &= safeAddColumn("location", "pick_face_end_pos_x DOUBLE PRECISION DEFAULT 0");
-		result &= safeAddColumn("location", "pick_face_end_pos_y DOUBLE PRECISION DEFAULT 0");
-		result &= safeAddColumn("location", "pick_face_end_pos_z DOUBLE PRECISION DEFAULT 0");
+		result &= safeAddColumn("location", "pick_face_end_pos_type_enum", "TEXT DEFAULT 'METERS_PARENT'");
+		result &= safeAddColumn("location", "pick_face_end_pos_x", "DOUBLE PRECISION DEFAULT 0");
+		result &= safeAddColumn("location", "pick_face_end_pos_y", "DOUBLE PRECISION DEFAULT 0");
+		result &= safeAddColumn("location", "pick_face_end_pos_z", "DOUBLE PRECISION DEFAULT 0");
 
 		result &= safeDropColumn("location", "face_width_meters");
 		result &= safeDropColumn("location", "face_height_meters");
@@ -511,6 +515,19 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		boolean result = true;
 
 		result &= safeDropColumn("location", "anchor_location_persistentid");
+
+		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @return
+	 */
+	private boolean doUpgrade013() {
+		boolean result = true;
+
+		result &= safeAddColumn("path_segment", "start_pos_z", "DOUBLE PRECISION DEFAULT 0 NOT NULL");
+		result &= safeAddColumn("path_segment", "end_pos_z", "DOUBLE PRECISION DEFAULT 0 NOT NULL");
 
 		return result;
 	}
@@ -632,11 +649,12 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	 * @param inColumnName
 	 * @return
 	 */
-	private boolean safeAddColumn(final String inTableName, final String inColumnName) {
+	private boolean safeAddColumn(final String inTableName, final String inColumnName, final String inTypeDef) {
 		boolean result = false;
 
 		result &= execOneSQLCommand("ALTER TABLE " + getDbSchemaName() + "." + inTableName //
 				+ " ADD " + inColumnName //
+				+ " " + inTypeDef // 
 				+ ";");
 
 		return result;
@@ -735,9 +753,9 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		execOneSQLCommand("CREATE UNIQUE INDEX led_controller_deviceguid_index ON " + getDbSchemaName()
 				+ ".led_controller (device_guid, parent_persistentid)");
 
-		result &= linkToParentTable("location", "parent", "location");
+//		result &= linkToParentTable("location", "parent", "location");
 		result &= linkToParentTable("location", "path_segment", "path_segment");
-		result &= linkToParentTable("location", "parent_organization", "organization");
+//		result &= linkToParentTable("location", "parent_organization", "organization");
 
 		result &= linkToParentTable("location_alias", "parent", "location" /* facility */);
 
@@ -969,10 +987,12 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		result &= createTable("path_segment", //
 			"segment_order INTEGER NOT NULL, " //
 					+ "pos_type_enum TEXT NOT NULL, " //
-					+ "start_pos_x DOUBLE PRECISION NOT NULL, " //
-					+ "start_pos_y DOUBLE PRECISION NOT NULL, " //
-					+ "end_pos_x DOUBLE PRECISION NOT NULL, " //
-					+ "end_pos_y DOUBLE PRECISION NOT NULL, " //
+					+ "start_pos_x DOUBLE PRECISION DEFAULT 0 NOT NULL, " //
+					+ "start_pos_y DOUBLE PRECISION DEFAULT 0 NOT NULL, " //
+					+ "start_pos_z DOUBLE PRECISION DEFAULT 0 NOT NULL, " //
+					+ "end_pos_x DOUBLE PRECISION DEFAULT 0 NOT NULL, " //
+					+ "end_pos_y DOUBLE PRECISION DEFAULT 0 NOT NULL, " //
+					+ "end_pos_z DOUBLE PRECISION DEFAULT 0 NOT NULL, " //
 					+ "start_pos_along_path DOUBLE PRECISION " //
 		);
 

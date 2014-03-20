@@ -269,21 +269,21 @@ public class Path extends DomainObjectTreeABC<Facility> {
 			if (inOpensLowSide) {
 				xA = inAssociatedAisle.getAnchorPoint().getX() - inXDimMeters;
 			}
-			startA = new Point(PositionTypeEnum.METERS_FROM_PARENT, xA, inAssociatedAisle.getAnchorPoint().getY(), null);
+			startA = new Point(PositionTypeEnum.METERS_FROM_PARENT, xA, inAssociatedAisle.getAnchorPoint().getY(), 0.0);
 			endA = new Point(PositionTypeEnum.METERS_FROM_PARENT,
 				xA,
 				inAssociatedAisle.getAnchorPoint().getY() + inYDimMeters,
-				null);
+				0.0);
 		} else {
 			Double yA = inAssociatedAisle.getAnchorPoint().getY() + 2 * inYDimMeters;
 			if (inOpensLowSide) {
 				yA = inAssociatedAisle.getAnchorPoint().getY() - inYDimMeters;
 			}
-			startA = new Point(PositionTypeEnum.METERS_FROM_PARENT, inAssociatedAisle.getAnchorPoint().getX(), yA, null);
+			startA = new Point(PositionTypeEnum.METERS_FROM_PARENT, inAssociatedAisle.getAnchorPoint().getX(), yA, 0.0);
 			endA = new Point(PositionTypeEnum.METERS_FROM_PARENT,
 				inAssociatedAisle.getAnchorPoint().getX() + inXDimMeters,
 				yA,
-				null);
+				0.0);
 		}
 
 		// If there are already path segments then create a connecting path to the new ones.
@@ -354,7 +354,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 		// TODO: REMOVE THIS AS SOON AS WE HAVE THE NEW PATH CREATION TOOL FROM JR AND PAUL.
 		inAssociatedLocation.setPathSegment(result);
 		try {
-			SubLocationABC.DAO.store((SubLocationABC) inAssociatedLocation);
+			LocationABC.DAO.store((LocationABC) inAssociatedLocation);
 		} catch (DaoException e) {
 			LOGGER.error("", e);
 		}

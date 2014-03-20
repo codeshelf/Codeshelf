@@ -90,8 +90,8 @@ public class DropboxService extends EdiServiceABC {
 
 	private static final Logger		LOGGER					= LoggerFactory.getLogger(DropboxService.class);
 
-	private static final String		APPKEY					= "feh3ontnajdmmin";
-	private static final String		APPSECRET				= "4jm05vbugwnq9pe";
+	private static final String		APPKEY					= "0l3auhytaxn2q50";
+	private static final String		APPSECRET				= "5syhdiyq0bd2oxq";
 	private static final Integer	LINK_RETRIES			= 20;
 	private static final Integer	RETRY_SECONDS			= 10 * 1000;
 
@@ -450,8 +450,8 @@ public class DropboxService extends EdiServiceABC {
 				ObjectMapper mapper = new ObjectMapper();
 				ObjectNode credentialsNode = mapper.createObjectNode();
 				ObjectNode appNode = credentialsNode.putObject("appToken");
-				appNode.put("key", "feh3ontnajdmmin");
-				appNode.put("secret", "4jm05vbugwnq9pe");
+				appNode.put("key", APPKEY);
+				appNode.put("secret", APPSECRET);
 				ObjectNode accessNode = credentialsNode.putObject("accessToken");
 				accessNode.put("key", accessToken.key);
 				accessNode.put("secret", accessToken.secret);
