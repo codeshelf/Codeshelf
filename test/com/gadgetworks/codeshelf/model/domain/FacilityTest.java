@@ -5,19 +5,12 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
+import java.util.List;
+
 import org.junit.Assert;
 import org.junit.Test;
 
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
-import com.gadgetworks.codeshelf.model.domain.Aisle.AisleDao;
-import com.gadgetworks.codeshelf.model.domain.Bay.BayDao;
-import com.gadgetworks.codeshelf.model.domain.Facility.FacilityDao;
-import com.gadgetworks.codeshelf.model.domain.LocationABC.LocationDao;
-import com.gadgetworks.codeshelf.model.domain.Organization.OrganizationDao;
-import com.gadgetworks.codeshelf.model.domain.Path.PathDao;
-import com.gadgetworks.codeshelf.model.domain.PathSegment.PathSegmentDao;
-import com.gadgetworks.codeshelf.model.domain.Vertex.VertexDao;
-import com.gadgetworks.codeshelf.model.domain.WorkArea.WorkAreaDao;
 
 /**
  * @author jeffw

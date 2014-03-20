@@ -6,6 +6,7 @@ import static com.natpryce.makeiteasy.Property.newProperty;
 
 import org.apache.commons.lang.RandomStringUtils;
 
+import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.domain.Facility.FacilityDao;
 import com.gadgetworks.codeshelf.model.domain.Organization.OrganizationDao;
@@ -39,7 +40,7 @@ public class DAOMaker {
 	
 	public final Instantiator<Facility> TestFacility = new Instantiator<Facility>() {
 	    public Facility instantiate(PropertyLookup<Facility> lookup) {
-	        Facility facility = new Facility(0.0, 0.0);
+	        Facility facility = new Facility(new Point(PositionTypeEnum.GPS, 0.0d, 0.0d, 0.0d));
 	        facility.setFacilityId(lookup.valueOf(facilityId, RandomStringUtils.randomAlphanumeric(5)));
 	    	facility.setParent(lookup.valueOf(organization, make(a(TestOrganization))));
 	    	Facility.DAO.store(facility);
