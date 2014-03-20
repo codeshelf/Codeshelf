@@ -153,13 +153,13 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	//	@Setter
 	private PathSegment					pathSegment;
 
-	// The owning organization.
-	@Column(nullable = true)
-	@ManyToOne(optional = true)
-	@Getter
-	@Setter
-	private Organization				parentOrganization;
-
+//	// The owning organization.
+//	@Column(nullable = true)
+//	@ManyToOne(optional = true)
+//	@Getter
+//	@Setter
+//	private Organization				parentOrganization;
+//
 	// The LED controller.
 	@Column(nullable = true)
 	@ManyToOne(optional = true)
@@ -244,17 +244,17 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		return new Point(anchorPosTypeEnum, anchorPosX, anchorPosY, anchorPosZ);
 	}
 
-	public void setAnchorPoint(final Point inAnchorPoint) {
+	public final void setAnchorPoint(final Point inAnchorPoint) {
 		anchorPosTypeEnum = inAnchorPoint.getPosTypeEnum();
 		anchorPosX = inAnchorPoint.getX();
 		anchorPosY = inAnchorPoint.getY();
 		anchorPosZ = inAnchorPoint.getZ();
 	}
+	
+	public final void setAnchorPosTypeByStr(final String inPosType) {
+		anchorPosTypeEnum = PositionTypeEnum.valueOf(inPosType);
+	}
 
-	// --------------------------------------------------------------------------
-	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#getChildren()
-	 */
 	public final List<ISubLocation> getChildren() {
 		return new ArrayList<ISubLocation>(locations.values());
 	}

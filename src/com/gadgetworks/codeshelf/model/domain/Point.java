@@ -63,9 +63,9 @@ public class Point {
 
 	public Point(final PositionTypeEnum inPosType, final Double inX, final Double inY, final Double inZ) {
 		posTypeEnum = inPosType;
-		x = inX;
-		y = inY;
-		z = inZ;
+		x = (inX == null) ? 0.0 : inX;
+		y = (inY == null) ? 0.0 : inY;
+		z = (inZ == null) ? 0.0 : inZ;
 	}
 
 	public Point(final Point inClonePoint) {
@@ -94,7 +94,7 @@ public class Point {
 	public final void translateZ(final Double inOffset) {
 		z += inOffset;
 	}
-	
+
 	// These are legacy from the front-end GUI.
 	// We need to change the GUI to send a Point object to create a location.
 	public final void setAnchorPosX(Double inAnchorPosX) {
@@ -108,6 +108,5 @@ public class Point {
 	public final void setAnchorPosZ(Double inAnchorPosZ) {
 		z = inAnchorPosZ;
 	}
-
 
 }

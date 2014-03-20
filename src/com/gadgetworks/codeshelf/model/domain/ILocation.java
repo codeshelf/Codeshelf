@@ -36,9 +36,9 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 	
 	PathSegment getPathSegment();
 
-	Organization getParentOrganization();
-
-	void setParentOrganization(Organization inParentOrganization);
+//	Organization getParentOrganization();
+//
+//	void setParentOrganization(Organization inParentOrganization);
 
 	LedController getLedController();
 

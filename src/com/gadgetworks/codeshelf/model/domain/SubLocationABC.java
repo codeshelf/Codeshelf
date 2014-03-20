@@ -90,8 +90,8 @@ public abstract class SubLocationABC<P extends IDomainObject> extends LocationAB
 		super(inAnchorPoint);
 		setPickFaceEndPosTypeEnum(inPickFaceEndPoint.getPosTypeEnum());
 		setPickFaceEndPosX(inPickFaceEndPoint.getX());
-		setPickFaceEndPosX(inPickFaceEndPoint.getY());
-		setPickFaceEndPosX(inPickFaceEndPoint.getZ());
+		setPickFaceEndPosY(inPickFaceEndPoint.getY());
+		setPickFaceEndPosZ(inPickFaceEndPoint.getZ());
 	}
 
 	// --------------------------------------------------------------------------

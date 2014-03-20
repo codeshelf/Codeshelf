@@ -75,35 +75,53 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 
 	// The order of this path segment in the path (from the tail/origin).
 	@NonNull
+	@Column(nullable = true)
 	@Getter
 	@Setter
 	private Integer				segmentOrder;
 
 	// The positioning type.
 	@NonNull
+	@Column(nullable = true)
 	@Getter
 	@Setter
 	private PositionTypeEnum	posTypeEnum;
 
 	@NonNull
+	@Column(nullable = true)
 	@Getter
 	@Setter
 	private Double				startPosX;
 
 	@NonNull
+	@Column(nullable = true)
 	@Getter
 	@Setter
 	private Double				startPosY;
 
 	@NonNull
+	@Column(nullable = true)
+	@Getter
+	@Setter
+	private Double				startPosZ;
+
+	@NonNull
+	@Column(nullable = true)
 	@Getter
 	@Setter
 	private Double				endPosX;
 
 	@NonNull
+	@Column(nullable = true)
 	@Getter
 	@Setter
 	private Double				endPosY;
+
+	@NonNull
+	@Column(nullable = true)
+	@Getter
+	@Setter
+	private Double				endPosZ;
 
 	@Setter
 	@Getter
@@ -126,8 +144,10 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 		posTypeEnum = inBeginPoint.getPosTypeEnum();
 		startPosX = inBeginPoint.getX();
 		startPosY = inBeginPoint.getY();
+		startPosZ = inBeginPoint.getZ();
 		endPosX = inEndPoint.getX();
 		endPosY = inEndPoint.getY();
+		endPosZ = inEndPoint.getZ();
 	}
 
 	public final ITypedDao<PathSegment> getDao() {
@@ -168,20 +188,22 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 		posTypeEnum = inPoint.getPosTypeEnum();
 		startPosX = inPoint.getX();
 		startPosY = inPoint.getY();
+		startPosZ = inPoint.getZ();
 	}
 
 	public final void setEndPoint(final Point inPoint) {
 		posTypeEnum = inPoint.getPosTypeEnum();
 		endPosX = inPoint.getX();
 		endPosY = inPoint.getY();
+		endPosZ = inPoint.getZ();
 	}
 
 	public final Point getStartPoint() {
-		return new Point(posTypeEnum, startPosX, startPosY, null);
+		return new Point(posTypeEnum, startPosX, startPosY, startPosZ);
 	}
 
 	public final Point getEndPoint() {
-		return new Point(posTypeEnum, endPosX, endPosY, null);
+		return new Point(posTypeEnum, endPosX, endPosY, endPosZ);
 	}
 
 	public final Double getLength() {

@@ -23,6 +23,7 @@ import javax.persistence.MapKey;
 import javax.persistence.OneToMany;
 
 import lombok.Getter;
+import lombok.Setter;
 
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
@@ -83,15 +84,16 @@ public class Facility extends LocationABC<Organization> {
 
 	private static final Logger				LOGGER			= LoggerFactory.getLogger(Facility.class);
 
-	//	// The owning organization.
-	//	@Column(nullable = false)
-	//	@ManyToOne(optional = false)
-	//	@Getter
-	//	private Organization				parentOrganization;
-
+	// The owning organization.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	private Facility						parent;
+	@Getter
+	@Setter
+	private Organization					parent;
+
+	//	@Column(nullable = true)
+	//	@ManyToOne(optional = true)
+	//	private Facility						parent;
 
 	@OneToMany(mappedBy = "parent")
 	@Getter
@@ -155,24 +157,21 @@ public class Facility extends LocationABC<Organization> {
 
 	@Override
 	public final String getFullDomainId() {
-		return getParentOrganization().getDomainId() + "." + getDomainId();
+		return getParent().getDomainId() + "." + getDomainId();
 	}
 
-	public final Organization getParent() {
-		return getParentOrganization();
-	}
-
-	public final void setParent(Organization inParentOrganization) {
-		setParentOrganization(inParentOrganization);
-		// There's no way in Ebean to enforce non-nullability and foreign key constraints in a tree of like-class objects.
-		// So the top-level location has to be its own parent.  (Otherwise we have forego the constraints.)
-		parent = this;
-	}
+//	public final Organization getParent() {
+//		return getParentOrganization();
+//	}
+//
+//	public final void setParent(Organization inParentOrganization) {
+//		setParentOrganization(inParentOrganization);
+//	}
 
 	public final String getParentOrganizationID() {
 		String result = "";
-		if (getParentOrganization() != null) {
-			result = getParentOrganization().getDomainId();
+		if (getParent() != null) {
+			result = getParent().getDomainId();
 		}
 		return result;
 	}
@@ -638,8 +637,8 @@ public class Facility extends LocationABC<Organization> {
 
 		Point anchorPoint = inParentTier.getAnchorPoint();
 		Point pickFaceEndPoint = computePickFaceEndPoint(anchorPoint, 0.25, inRunsInXDir);
-		
-		Slot slot =  new Slot(anchorPoint, pickFaceEndPoint);
+
+		Slot slot = new Slot(anchorPoint, pickFaceEndPoint);
 
 		slot.setDomainId(inSlotId);
 		slot.setLedController(inLedController);

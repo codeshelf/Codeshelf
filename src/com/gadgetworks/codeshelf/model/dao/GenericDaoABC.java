@@ -143,17 +143,17 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	public final T findByDomainId(final IDomainObject inParentObject, final String inId) {
 		T result = null;
 
-		String effectiveId = inId;//.toUpperCase();
+		String effectiveId = inId;
 		try {
 			Query<T> query = mServer.createQuery(getDaoClass());
 			if (inParentObject != null) {
-				if (getDaoClass().equals(Facility.class)) {
-					// This is a bit odd: the Facility is the top-level Location object, but Ebean doesn't allow us to have a parent field that points to another table.
-					// (It *should* be able to do this since Ebean knows the class type at runtime, but it just doesn't.)
-					query.where().eq(IDomainObject.ID_PROPERTY, effectiveId).eq(IDomainObjectTree.PARENT_ORG_PROPERTY, inParentObject.getPersistentId());
-				} else {
+//				if (getDaoClass().equals(Facility.class)) {
+//					// This is a bit odd: the Facility is the top-level Location object, but Ebean doesn't allow us to have a parent field that points to another table.
+//					// (It *should* be able to do this since Ebean knows the class type at runtime, but it just doesn't.)
+//					query.where().eq(IDomainObject.ID_PROPERTY, effectiveId).eq(IDomainObjectTree.PARENT_ORG_PROPERTY, inParentObject.getPersistentId());
+//				} else {
 					query.where().eq(IDomainObject.ID_PROPERTY, effectiveId).eq(IDomainObjectTree.PARENT_PROPERTY, inParentObject.getPersistentId());
-				}
+//				}
 			} else {
 				query.where().eq(IDomainObject.ID_PROPERTY, effectiveId);
 			}
