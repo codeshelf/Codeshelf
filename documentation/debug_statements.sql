@@ -9,11 +9,9 @@ join order_header on order_header.persistentid = order_detail.parent_persistenti
 join item_master on item_master.persistentid = order_detail.item_master_persistentid
 order by work_instruction.pos_along_path, order_header.domainid
 
-select * from item where item.stored_location_persistentid = '5a1484a0-ad71-11e2-839c-b8f6b111cbaf'
-
 select * FROM container_use WHERE container_use.order_header_persistentid IN (SELECT persistentid FROM order_header WHERE order_header.active = false)
 
-
+# Delete all of the production pick data, but leave the facility setup.
 delete from container_use;
 delete from container;
 delete from work_instruction;
@@ -23,10 +21,12 @@ delete from order_group;
 delete from item;
 delete from item_master;
 
+# reset all of the WIs and orders to rerun a pick operation.
 update order_header set status_enum = 'CREATED';
 update order_detail set status_enum = 'CREATED';
 delete from work_instruction;
 
+# nuke the schema and start over from scratch when the app starts.
 drop schema codeshelf CASCADE
 
 # cleanup all locations except the facility
@@ -37,3 +37,13 @@ delete from location where location.dtype = 'BAY';
 update path_segment set anchor_location_persistentid = NULL;
 delete from location where location.dtype = 'AISLE';
 delete from path_segment;
+
+# Select all of the slots in LED position order to get a sense of the electronics wiring relative to path distance.
+select
+aisle.domainid, bay.domainid, tier.domainid, slot.domainid, slot.first_led_num_along_path, slot.last_led_num_along_path, slot.pos_along_path
+from location as aisle
+join location as bay on aisle.persistentid = bay.parent_persistentid
+join location as tier on bay.persistentid = tier.parent_persistentid
+join location as slot on tier.persistentid = slot.parent_persistentid
+where aisle.domainid like 'A%'
+order by bay.first_led_num_along_path, tier.first_led_num_along_path, slot.first_led_num_along_path;
