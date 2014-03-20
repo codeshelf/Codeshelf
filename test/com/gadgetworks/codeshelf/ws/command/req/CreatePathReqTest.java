@@ -80,7 +80,7 @@ public class CreatePathReqTest extends DAOTestABC {
 
 		ArrayNode segmentArray = mapper.createArrayNode();
 		for (int i = 0; i < numberOfSegments; i++) {
-			segmentArray.add(createPathSegmentNode("P.", i, 1*i,1*i,1*i,1*i));
+			segmentArray.add(createPathSegmentNode("P.", i, 1*i,1*i,1*i,1*i, 1*i, 1*i));
 		}
 		
 		ArrayNode methodArgs = mapper.createArrayNode();
@@ -107,7 +107,7 @@ public class CreatePathReqTest extends DAOTestABC {
 		return objectNode;
 	}
 
-	private ObjectNode createPathSegmentNode(String domainPrefix, int segmentOrder, double startPosX, double startPosY, double endPosX, double endPosY) {
+	private ObjectNode createPathSegmentNode(String domainPrefix, int segmentOrder, double startPosX, double startPosY, double startPosZ, double endPosX, double endPosY, double endPosZ) {
 		
 		
 		ObjectMapper mapper = new ObjectMapper();
@@ -118,14 +118,16 @@ public class CreatePathReqTest extends DAOTestABC {
 		objectNode.put("posTypeEnum", PositionTypeEnum.METERS_FROM_PARENT.toString());
 		objectNode.put("startPosX", startPosX);
 		objectNode.put("startPosY", startPosY);
+		objectNode.put("startPosZ", startPosZ);
 		objectNode.put("endPosX", endPosX);
 		objectNode.put("endPosY", endPosY);	
+		objectNode.put("endPosZ", endPosZ);
 		return objectNode;
 	}
 	
 	
-	private Point point(double x, double y) {
-		Point point = new Point(PositionTypeEnum.METERS_FROM_PARENT, x, y, 0d);
+	private Point point(double x, double y, double z) {
+		Point point = new Point(PositionTypeEnum.METERS_FROM_PARENT, x, y, z);
 		return point;
 	}
 }

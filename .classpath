@@ -72,6 +72,7 @@
 	<classpathentry kind="lib" path="lib/dist/javax.validation_1.1.0.jar"/>
 	<classpathentry kind="lib" path="build/lib/avaje-ebeanorm-agent-3.2.3-SNAPSHOT.jar"/>
 	<classpathentry kind="lib" path="lib/dist/java_websocket.jar" sourcepath="/Java-WebSocket/src/main/java"/>
+	<classpathentry kind="lib" path="lib/dist/guava-16.0.1.jar"/>
 	<classpathentry kind="lib" path="lib/dist/avaje-ebeanorm-3.3.1-RC3-SNAPSHOT.jar" sourcepath="APIs/avaje-ebeanorm-3.3.1-RC3-SNAPSHOT-sources.jar"/>
 	<classpathentry kind="output" path="eclipse-bin"/>
 </classpath>
