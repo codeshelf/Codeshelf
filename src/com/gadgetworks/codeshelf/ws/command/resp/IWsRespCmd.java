@@ -17,6 +17,8 @@ public interface IWsRespCmd extends IWebSessionCmd {
 
 	void setCommandId(String inCommandId);
 
+	boolean isError();
+	
 	// --------------------------------------------------------------------------
 	/**
 	 * Call this method to get the JSON encoded response-message for the command.
@@ -24,4 +26,5 @@ public interface IWsRespCmd extends IWebSessionCmd {
 	 */
 	String getResponseMsg();
 
+	
 }

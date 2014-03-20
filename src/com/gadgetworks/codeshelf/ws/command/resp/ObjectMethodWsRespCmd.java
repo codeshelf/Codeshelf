@@ -15,8 +15,6 @@ import com.gadgetworks.codeshelf.ws.command.IWebSessionCmd;
  */
 public class ObjectMethodWsRespCmd extends WsRespCmdABC {
 
-	private ObjectNode	mResponseNode;
-
 	/**
 	 * 
 	 */

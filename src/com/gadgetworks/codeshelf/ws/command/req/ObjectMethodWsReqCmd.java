@@ -7,11 +7,13 @@ package com.gadgetworks.codeshelf.ws.command.req;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 
@@ -23,6 +25,7 @@ import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
 import org.codehaus.jackson.type.TypeReference;
 import org.slf4j.Logger;
@@ -151,18 +154,32 @@ public class ObjectMethodWsReqCmd extends WsReqCmdABC {
 					List<Object> cookedArguments = new ArrayList<Object>();
 					for (ArgsClass arg : mMethodArguments) {
 						// (The method *must* start with "get" to ensure other methods don't get called.)
-						String argumentName = arg.getName();
-						Object argumentValue = arg.getValue();
+						JsonNode argumentValue = arg.getValue();
 						Class classType = Class.forName(arg.getClassType());
 						signatureClasses.add(classType);
 
 						Object typedArg;
 						try {
-							Constructor<?> ctor = classType.getConstructor(String.class);
-							if (argumentValue == null) {
-								typedArg = null;
-							} else {
-								typedArg = ctor.newInstance(new Object[] { argumentValue.toString() });
+							if (!classType.isArray()) {
+								Constructor<?> ctor = classType.getConstructor(String.class);
+								if (argumentValue == null) {
+									typedArg = null;
+								} else {
+									typedArg = ctor.newInstance(new Object[] { mapper.readValue(argumentValue,  classType) });
+								}
+							}
+							else {
+								argumentValue.toString();
+								
+								ArrayNode arrayNode = mapper.readValue(argumentValue, ArrayNode.class);
+								Class<?> arrayType =  classType.getComponentType();
+								typedArg = Array.newInstance(arrayType, arrayNode.size());
+								int i = 0;
+								for(Iterator<JsonNode> iter = arrayNode.getElements(); iter.hasNext(); ) {
+									JsonNode node = iter.next();
+									Object nodeItem = mapper.readValue(node, arrayType);
+									Array.set(typedArg, i++, nodeItem);
+								}
 							}
 							cookedArguments.add(typedArg);
 						} catch (IllegalArgumentException e) {

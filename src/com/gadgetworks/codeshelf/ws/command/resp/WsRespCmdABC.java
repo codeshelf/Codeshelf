@@ -17,7 +17,7 @@ public abstract class WsRespCmdABC implements IWsRespCmd {
 
 	private String		mCommandId;
 	private JsonNode	mDataJsonNode;
-	private ObjectNode	mResponseNode;
+	protected ObjectNode	mResponseNode;
 
 	public WsRespCmdABC() {
 
@@ -33,6 +33,15 @@ public abstract class WsRespCmdABC implements IWsRespCmd {
 		mDataJsonNode = inDataAsJson;
 	}
 
+	public boolean isError() {
+		if (mResponseNode != null) {
+			return mResponseNode.findPath(STATUS_ELEMENT).asText().equals("ERROR");
+		}
+		else {
+			return false;
+		}
+	}
+	
 	protected abstract void doPrepareDataNode(ObjectNode inOutDataNode);
 
 	public final String getCommandId() {

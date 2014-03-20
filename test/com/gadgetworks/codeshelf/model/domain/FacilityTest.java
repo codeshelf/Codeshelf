@@ -41,6 +41,17 @@ public class FacilityTest extends DomainTestABC {
 	public final void createWorkInstructionTest() {
 
 		List<WorkInstruction> wiList;
+			/*
+		Organization.DAO = new OrganizationDao(mSchemaManager);
+		LocationABC.DAO = new LocationDao(mSchemaManager, mDatabase);
+		Facility.DAO = new FacilityDao(mSchemaManager);
+		Aisle.DAO = new AisleDao(mSchemaManager);
+		Bay.DAO = new BayDao(mSchemaManager);
+		Vertex.DAO = new VertexDao(mSchemaManager);
+		Path.DAO = new PathDao(mSchemaManager);
+		PathSegment.DAO = new PathSegmentDao(mSchemaManager);
+		WorkArea.DAO = new WorkAreaDao(mSchemaManager);
+			*/
 
 		Organization organization = new Organization();
 		organization.setOrganizationId("FTEST2.O1");
