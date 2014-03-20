@@ -669,28 +669,18 @@ public class Facility extends LocationABC<Organization> {
 		// List out Bays by distance from initiation point.
 		Path path = paths.get(Path.DEFAULT_FACILITY_PATH_ID);
 		if (path != null) {
-			//			int distFromInitiationPoint = 0;
 			for (PathSegment segment : path.getSegments()) {
 				segment.computePathDistance();
 				for (ILocation location : segment.getLocations()) {
 					if (location instanceof Aisle) {
 						Aisle aisle = (Aisle) location;
-						aisle.computePathDistance();
+						aisle.computePosAlongPath();
 						for (Bay bay : aisle.<Bay> getChildrenAtLevel(Bay.class)) {
-							//							// Figure out the distance of this bay from the path.
-							//							Point bayPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, aisle.getPosX() + bay.getPosX(), aisle.getPosY() + bay.getPosY(), null);
-							//							Double distance = distFromInitiationPoint + segment.computeDistanceOfPointFromLine(segment.getEndPoint(), segment.getStartPoint(), bayPoint);
-							//
-							//							String distanceStr = String.format("%4.4f", distance);
-							//							LOGGER.info("Location: " + bay.getFullDomainId() + " is " + distanceStr + " meters from the initiation point.");
-
-							bay.computePathDistance();
 							LOGGER.info("Location: " + bay.getFullDomainId() + " is " + bay.getPosAlongPath()
 									+ " meters from the initiation point.");
 						}
 					}
 				}
-				//				distFromInitiationPoint += segment.getLength();
 			}
 		}
 	}

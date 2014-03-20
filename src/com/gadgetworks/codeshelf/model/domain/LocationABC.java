@@ -473,34 +473,29 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		//		}
 	}
 
-	// --------------------------------------------------------------------------
-	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#computePathDistance()
-	 */
-	public final void computePathDistance() {
+	public final void computePosAlongPath() {
 
 		// Also force a recompute for all of the child locations.
 		for (ILocation<P> location : getChildren()) {
-			location.computePathDistance();
+			location.computePosAlongPath();
 		}
 
 		// Now compute the path position for this location.
 		Double pathPosition = 0.0;
 		PathSegment segment = this.getPathSegment();
 		if (segment != null) {
-			ILocation<P> anchorLocation = segment.getAnchorLocation();
-			Point locationPoint = new Point(anchorLocation.getAnchorPoint());
-			locationPoint.add(getAbsoluteAnchorPoint());
+			Point anchorPoint = segment.getStartPoint();
+			anchorPoint.add(getAbsoluteAnchorPoint());
 			if (segment.getParent().getTravelDirEnum().equals(TravelDirectionEnum.FORWARD)) {
 				pathPosition = segment.getStartPosAlongPath()
-						+ segment.computeDistanceOfPointFromLine(segment.getStartPoint(), segment.getEndPoint(), locationPoint);
+						+ segment.computeDistanceOfPointFromLine(segment.getStartPoint(), segment.getEndPoint(), anchorPoint);
 			} else {
 				pathPosition = segment.getStartPosAlongPath()
-						+ segment.computeDistanceOfPointFromLine(segment.getEndPoint(), segment.getStartPoint(), locationPoint);
+						+ segment.computeDistanceOfPointFromLine(segment.getEndPoint(), segment.getStartPoint(), anchorPoint);
 			}
 
-			LOGGER.debug(this.getFullDomainId() + "Path pos: " + pathPosition + " Location Point - x: " + locationPoint.getX()
-					+ " y: " + locationPoint.getY());
+			LOGGER.debug(this.getFullDomainId() + "Path pos: " + pathPosition + " Location Point - x: " + anchorPoint.getX()
+					+ " y: " + anchorPoint.getY());
 		}
 		posAlongPath = pathPosition;
 

@@ -338,6 +338,10 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 			result &= doUpgrade011();
 		}
 
+		if (inOldVersion < ISchemaManager.DATABASE_VERSION_12) {
+			result &= doUpgrade012();
+		}
+
 		result &= updateSchemaVersion(ISchemaManager.DATABASE_VERSION_CUR);
 
 		return result;
@@ -495,6 +499,18 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		result &= safeDropColumn("location", "face_width_meters");
 		result &= safeDropColumn("location", "face_height_meters");
+
+		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @return
+	 */
+	private boolean doUpgrade012() {
+		boolean result = true;
+
+		result &= safeDropColumn("location", "anchor_location_persistentid");
 
 		return result;
 	}
@@ -736,7 +752,6 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		result &= linkToParentTable("path", "parent", "location");
 
 		result &= linkToParentTable("path_segment", "parent", "path");
-		result &= linkToParentTable("path_segment", "anchor_location", "location");
 
 		result &= linkToParentTable("persistent_property", "parent", "organization");
 
@@ -958,8 +973,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 					+ "start_pos_y DOUBLE PRECISION NOT NULL, " //
 					+ "end_pos_x DOUBLE PRECISION NOT NULL, " //
 					+ "end_pos_y DOUBLE PRECISION NOT NULL, " //
-					+ "start_pos_along_path DOUBLE PRECISION, " //
-					+ "anchor_location_persistentid " + UUID_TYPE //
+					+ "start_pos_along_path DOUBLE PRECISION " //
 		);
 
 		// PersistentProperty

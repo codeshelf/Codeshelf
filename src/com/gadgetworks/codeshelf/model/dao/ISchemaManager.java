@@ -32,8 +32,9 @@ public interface ISchemaManager {
 	int		DATABASE_VERSION_9				= 9;								// Add object references back to WorkInstruction
 	int		DATABASE_VERSION_10				= 10;								// Add face width/height to locations.
 	int		DATABASE_VERSION_11				= 11;								// Cleanup anchor and pick face point structures.
+	int		DATABASE_VERSION_12				= 12;								// Remove anchor location from path segement.
 
-	int		DATABASE_VERSION_CUR			= DATABASE_VERSION_11;
+	int		DATABASE_VERSION_CUR			= DATABASE_VERSION_12;
 
 	String getDbAddress();
 

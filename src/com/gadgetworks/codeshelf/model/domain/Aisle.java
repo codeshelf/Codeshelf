@@ -103,9 +103,6 @@ public class Aisle extends SubLocationABC<Facility> {
 		path.createDefaultWorkArea();
 		path.createPathSegments(this, inXDimMeters, inYDimMeters, inOpensLowSide);
 
-		// Now loop through every location in the aisle and recompute its distance from the path.
-		for (ISubLocation location : getChildren()) {
-			location.computePathDistance();
-		}
+		computePosAlongPath();
 	}
 }

@@ -109,13 +109,6 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 	@Getter
 	private Double				startPosAlongPath;
 
-	@Column(nullable = false)
-	@ManyToOne(optional = false)
-	@NonNull
-	@Getter
-	//	@Setter
-	private LocationABC			anchorLocation;
-
 	@Column(nullable = true)
 	@OneToMany(mappedBy = "pathSegment")
 	@Getter
@@ -127,7 +120,6 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 
 	public PathSegment(final Path inParentPath,
 		final TravelDirectionEnum inTravelDirectionEnum,
-		final PositionTypeEnum inPosType,
 		final Point inBeginPoint,
 		final Point inEndPoint) {
 
@@ -194,10 +186,6 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 
 	public final Double getLength() {
 		return Math.sqrt(Math.pow(startPosX - endPosX, 2) + Math.pow(startPosY - endPosY, 2));
-	}
-
-	public final void setAnchorLocation(ILocation inAnchorLocation) {
-		anchorLocation = (LocationABC) inAnchorLocation;
 	}
 
 	// --------------------------------------------------------------------------

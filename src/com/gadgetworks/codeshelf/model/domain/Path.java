@@ -327,11 +327,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 		result.setDomainId(inSegmentId);
 		result.setStartPoint(inHead);
 		result.setEndPoint(inTail);
-		if (inAssociatedLocation != null) {
-			result.setAnchorLocation(inAssociatedLocation);
-		} else {
-			LOGGER.error("No anchor location");
-		}
+		result.addLocation(inAssociatedLocation);
 		try {
 			PathSegment.DAO.store(result);
 		} catch (DaoException e) {
@@ -339,7 +335,14 @@ public class Path extends DomainObjectTreeABC<Facility> {
 		}
 
 		inPath.addPathSegment(result);
-		result.addLocation(inAssociatedLocation);
+		
+		// TODO: REMOVE THIS AS SOON AS WE HAVE THE NEW PATH CREATION TOOL FROM JR AND PAUL.
+		inAssociatedLocation.setPathSegment(result);
+		try {
+			SubLocationABC.DAO.store((SubLocationABC) inAssociatedLocation);
+		} catch (DaoException e) {
+			LOGGER.error("", e);
+		}
 
 		// Force a re-computation of the path distance for this path segment.
 		result.computePathDistance();
