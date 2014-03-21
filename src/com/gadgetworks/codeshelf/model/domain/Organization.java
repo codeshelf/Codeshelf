@@ -190,17 +190,17 @@ public class Organization extends DomainObjectABC {
 	 * @param inDomainId
 	 * @param inDescription
 	 * @param inPosTypeByStr
-	 * @param inPosx
-	 * @param inPosY
+	 * @param inAnchorPosx
+	 * @param inAnchorPosY
 	 */
 	@Transactional
 	public final void createFacility(final String inDomainId,
 		final String inDescription,
 		final String inPosTypeByStr,
-		final Double inPosx,
-		final Double inPosY) {
+		final Double inAnchorPosx,
+		final Double inAnchorPosY) {
 		
-		Point anchorPoint = new Point(Point.getPosTypeByStr(inPosTypeByStr), inPosx, inPosY, 0.0);
+		Point anchorPoint = new Point(Point.getPosTypeByStr(inPosTypeByStr), inAnchorPosx, inAnchorPosY, 0.0);
 
 		Facility facility = new Facility();
 		facility.setParent(this);

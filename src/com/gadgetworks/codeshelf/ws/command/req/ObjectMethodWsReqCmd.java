@@ -165,17 +165,20 @@ public class ObjectMethodWsReqCmd extends WsReqCmdABC {
 								if (argumentValue == null) {
 									typedArg = null;
 								} else {
-									typedArg = ctor.newInstance(new Object[] { mapper.readValue(argumentValue,  classType) });
+									Object object = mapper.readValue(argumentValue, classType);
+									if (!object.getClass().equals(String.class)) {
+										object = object.toString();
+									}
+									typedArg = ctor.newInstance(object.toString());
 								}
-							}
-							else {
+							} else {
 								argumentValue.toString();
-								
+
 								ArrayNode arrayNode = mapper.readValue(argumentValue, ArrayNode.class);
-								Class<?> arrayType =  classType.getComponentType();
+								Class<?> arrayType = classType.getComponentType();
 								typedArg = Array.newInstance(arrayType, arrayNode.size());
 								int i = 0;
-								for(Iterator<JsonNode> iter = arrayNode.getElements(); iter.hasNext(); ) {
+								for (Iterator<JsonNode> iter = arrayNode.getElements(); iter.hasNext();) {
 									JsonNode node = iter.next();
 									Object nodeItem = mapper.readValue(node, arrayType);
 									Array.set(typedArg, i++, nodeItem);
@@ -224,8 +227,7 @@ public class ObjectMethodWsReqCmd extends WsReqCmdABC {
 						}
 					}
 
-				}
-				else {
+				} else {
 					ObjectNode errorNode = createErrorResult("Instance: " + objectId + " not found for type: " + classObject);
 					result = new ObjectMethodWsRespCmd(errorNode);
 				}
@@ -294,7 +296,8 @@ public class ObjectMethodWsReqCmd extends WsReqCmdABC {
 
 		InputStream classFileInputStream = declaringClassLoader.getResourceAsStream(url);
 		if (classFileInputStream == null) {
-			throw new IllegalArgumentException("The constructor's class loader cannot find the bytecode that defined the constructor's class (URL: " + url + ")");
+			throw new IllegalArgumentException("The constructor's class loader cannot find the bytecode that defined the constructor's class (URL: "
+					+ url + ")");
 		}
 
 		ClassNode classNode;
