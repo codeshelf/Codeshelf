@@ -31,10 +31,6 @@ import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 @ToString(doNotUseGetters = true)
 public class Point {
 
-	public static PositionTypeEnum getPosTypeByStr(String inPosTypeStr) {
-		return PositionTypeEnum.valueOf(inPosTypeStr);
-	}
-
 	@Column(nullable = false)
 	@Enumerated(value = EnumType.STRING)
 	@NonNull
@@ -73,11 +69,22 @@ public class Point {
 		z = (inZ == null) ? 0.0 : inZ;
 	}
 
+	public Point(final String inPosTypeStr, final Double inX, final Double inY, final Double inZ) {
+		posTypeEnum = PositionTypeEnum.valueOf(inPosTypeStr);
+		x = (inX == null) ? 0.0 : inX;
+		y = (inY == null) ? 0.0 : inY;
+		z = (inZ == null) ? 0.0 : inZ;
+	}
+
 	public Point(final Point inClonePoint) {
 		posTypeEnum = inClonePoint.getPosTypeEnum();
 		x = inClonePoint.getX();
 		y = inClonePoint.getY();
 		z = inClonePoint.getZ();
+	}
+
+	public static PositionTypeEnum getPosTypeByStr(String inPosTypeStr) {
+		return PositionTypeEnum.valueOf(inPosTypeStr);
 	}
 
 	public final void add(final Point inAddPoint) {

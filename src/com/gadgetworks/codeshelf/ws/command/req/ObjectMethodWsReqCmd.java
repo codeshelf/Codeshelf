@@ -119,25 +119,9 @@ public class ObjectMethodWsReqCmd extends WsReqCmdABC {
 
 			ObjectMapper mapper = new ObjectMapper();
 			JsonNode argumentsNode = dataJsonNode.get(METHODARGS);
-			//			List<Map<String, Object>> objectArray = mapper.readValue(argumentsNode, new TypeReference<List<Map<String, Object>>>() {
-			//			});
-			//			for (Map<String, Object> map : objectArray) {
-			//				String name = (String) map.get("name");
-			//				Object value = map.get("value");
-			//				mMethodArguments.put(name, value);
-			//			}
 
 			mMethodArguments = mapper.readValue(argumentsNode, new TypeReference<List<ArgsClass>>() {
 			});
-
-			//			JsonNode argumentsNode = dataJsonNode.get(ARGUMENTS);
-			//
-			//			ObjectMapper mapper = new ObjectMapper();
-			//			List<Object> list = mapper.readValue(argumentsNode, new TypeReference<List<Object>>() { });
-			//
-			//			if (argumentsNode.isArray()) {
-			//				ArrayNode argumentsArrayNode = (ArrayNode) argumentsNode;
-			//			}
 
 			// First we find the parent object (by it's ID).
 			Class<?> classObject = Class.forName(className);

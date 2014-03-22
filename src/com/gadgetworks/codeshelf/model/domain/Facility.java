@@ -435,10 +435,6 @@ public class Facility extends LocationABC<Organization> {
 
 				// Create the aisle's boundary vertices.
 				createVertices(aisle, aisleBoundary);
-
-				// Create the paths related to this aisle.
-				aisle.createPaths(aisleBoundary.getX(), aisleBoundary.getY(), TravelDirectionEnum.FORWARD, inOpensLowSide);
-
 			}
 		}
 	}
