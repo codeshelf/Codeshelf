@@ -275,6 +275,8 @@ public class OrderCsvImporter implements ICsvOrderImporter {
 			result.setOrderGroupId(inCsvBean.getOrderGroupId());
 			result.setDescription(OrderGroup.DEFAULT_ORDER_GROUP_DESC_PREFIX + inCsvBean.getOrderGroupId());
 			result.setStatusEnum(OrderStatusEnum.CREATED);
+			result.setActive(true);
+			result.setUpdated(inEdiProcessTime);
 			inFacility.addOrderGroup(result);
 			try {
 				mOrderGroupDao.store(result);

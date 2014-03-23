@@ -91,7 +91,7 @@ public class Organization extends DomainObjectABC {
 	@Getter
 	private Map<String, PersistentProperty>	persistentProperties	= new HashMap<String, PersistentProperty>();
 
-	@OneToMany(mappedBy = "parent")
+	@OneToMany(mappedBy = "parentOrganization")
 	@MapKey(name = "domainId")
 	//	@Getter(lazy = false)
 	private Map<String, Facility>			facilities				= new HashMap<String, Facility>();

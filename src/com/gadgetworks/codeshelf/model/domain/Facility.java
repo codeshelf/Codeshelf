@@ -7,7 +7,6 @@ package com.gadgetworks.codeshelf.model.domain;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -88,13 +87,9 @@ public class Facility extends LocationABC<Organization> {
 	// The owning organization.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	@Getter
 	@Setter
-	private Organization					parent;
-
-	//	@Column(nullable = true)
-	//	@ManyToOne(optional = true)
-	//	private Facility						parent;
+	@Getter
+	private Organization					parentOrganization;
 
 	@OneToMany(mappedBy = "parent")
 	@Getter
@@ -161,13 +156,13 @@ public class Facility extends LocationABC<Organization> {
 		return getParent().getDomainId() + "." + getDomainId();
 	}
 
-//	public final Organization getParent() {
-//		return getParentOrganization();
-//	}
-//
-//	public final void setParent(Organization inParentOrganization) {
-//		setParentOrganization(inParentOrganization);
-//	}
+	public final Organization getParent() {
+		return getParentOrganization();
+	}
+
+	public final void setParent(Organization inParentOrganization) {
+		setParentOrganization(inParentOrganization);
+	}
 
 	public final String getParentOrganizationID() {
 		String result = "";
@@ -676,6 +671,7 @@ public class Facility extends LocationABC<Organization> {
 			PathSegment.DAO.store(pathSegment);
 		}
 	}
+
 	// --------------------------------------------------------------------------
 	/**
 	 * A sample routine to show the distance of locations along a path.
