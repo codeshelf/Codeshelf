@@ -175,7 +175,10 @@ public class Facility extends SubLocationABC<Facility> {
 	
 	public final void setParentOrganization(final Organization inParentOrganization) {
 		parentOrganization = inParentOrganization;
-		setParent(this);
+		// for now, facility parent is null, not self.
+		// setParent(this);
+		setParent((Facility)null);
+		
 	}
 
 	public final void setFacilityId(String inFacilityId) {
