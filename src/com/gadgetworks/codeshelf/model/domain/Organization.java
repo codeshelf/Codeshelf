@@ -196,17 +196,13 @@ public class Organization extends DomainObjectABC {
 	@Transactional
 	public final void createFacility(final String inDomainId,
 		final String inDescription,
-		final String inPosTypeByStr,
-		final Double inAnchorPosx,
-		final Double inAnchorPosY) {
+		final Point inAnchorPoint) {
 		
-		Point anchorPoint = new Point(Point.getPosTypeByStr(inPosTypeByStr), inAnchorPosx, inAnchorPosY, 0.0);
-
 		Facility facility = new Facility();
-		facility.setParent(this);
+		facility.setParentOrganization(this);
 		facility.setDomainId(inDomainId);
 		facility.setDescription(inDescription);
-		facility.setAnchorPoint(anchorPoint);
+		facility.setAnchorPoint(inAnchorPoint);
 		this.addFacility(facility);
 
 		Facility.DAO.store(facility);
@@ -219,30 +215,27 @@ public class Organization extends DomainObjectABC {
 
 		// Create the generic container kind (for all unspecified containers)
 		facility.createDefaultContainerKind();
-
-		// Create demo info for demo facility "F1" if we see it.
-		// TODO: Remove this once out of demo mode.  Should get created by facility editor
 		facility.logLocationDistances();
 		facility.recomputeDdcPositions();
 
-		if (network != null) {
-			Che che1 = network.getChe("CHE1");
-			if (che1 == null) {
-				che1 = network.createChe("CHE1", new NetGuid("0x00000003"));
-			}
-			Che che2 = network.getChe("CHE2");
-			if (che2 == null) {
-				che2 = network.createChe("CHE2", new NetGuid("0x00000006"));
-			}
-			LedController ledController = network.getLedController("0x00000002");
-			if (ledController == null) {
-				ledController = network.createLedController("0x00000002", new NetGuid("0x00000002"));
-			}
-			ledController = network.getLedController("0x00000001");
-			if (ledController == null) {
-				ledController = network.createLedController("0x00000001", new NetGuid("0x00000001"));
-			}
-		}
+//		if (network != null) {
+//			Che che1 = network.getChe("CHE1");
+//			if (che1 == null) {
+//				che1 = network.createChe("CHE1", new NetGuid("0x00000003"));
+//			}
+//			Che che2 = network.getChe("CHE2");
+//			if (che2 == null) {
+//				che2 = network.createChe("CHE2", new NetGuid("0x00000006"));
+//			}
+//			LedController ledController = network.getLedController("0x00000002");
+//			if (ledController == null) {
+//				ledController = network.createLedController("0x00000002", new NetGuid("0x00000002"));
+//			}
+//			ledController = network.getLedController("0x00000001");
+//			if (ledController == null) {
+//				ledController = network.createLedController("0x00000001", new NetGuid("0x00000001"));
+//			}
+//		}
 	}
 
 	// --------------------------------------------------------------------------

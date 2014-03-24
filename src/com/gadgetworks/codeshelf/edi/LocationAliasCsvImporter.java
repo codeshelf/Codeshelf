@@ -21,7 +21,7 @@ import au.com.bytecode.opencsv.bean.HeaderColumnNameMappingStrategy;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.ILocation;
+import com.gadgetworks.codeshelf.model.domain.ISubLocation;
 import com.gadgetworks.codeshelf.model.domain.LocationAlias;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -156,7 +156,7 @@ public class LocationAliasCsvImporter implements ICsvLocationAliasImporter {
 		// Get or create the item at the specified location.
 		String locationAliasId = inCsvBean.getLocationAlias();
 		result = inFacility.getLocationAlias(locationAliasId);
-		ILocation mappedLocation = inFacility.findSubLocationById(inCsvBean.getMappedLocationId());
+		ISubLocation<?> mappedLocation = inFacility.findSubLocationById(inCsvBean.getMappedLocationId());
 
 		if ((result == null) && (inCsvBean.getMappedLocationId() != null) && (mappedLocation != null)) {
 			result = new LocationAlias();

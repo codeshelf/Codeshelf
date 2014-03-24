@@ -18,6 +18,7 @@ import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.Organization;
+import com.gadgetworks.codeshelf.model.domain.Point;
 
 /**
  * @author jeffw
@@ -58,7 +59,7 @@ public class OrderImporterTest extends EdiTestABC {
 		organization.setDomainId("O-ORD1.1");
 		mOrganizationDao.store(organization);
 
-		organization.createFacility("F-ORD1.1", "TEST", PositionTypeEnum.METERS_FROM_PARENT.getName(), 0.0, 0.0);
+		organization.createFacility("F-ORD1.1", "TEST", Point.getZeroPoint());
 		Facility facility = organization.getFacility("F-ORD1.1");
 
 		ICsvOrderImporter importer = new OrderCsvImporter(mOrderGroupDao, mOrderHeaderDao, mOrderDetailDao, mContainerDao, mContainerUseDao, mItemMasterDao, mUomMasterDao);
@@ -94,7 +95,7 @@ public class OrderImporterTest extends EdiTestABC {
 		organization.setDomainId("O-ORD1.2");
 		mOrganizationDao.store(organization);
 
-		organization.createFacility("F-ORD1.2", "TEST", PositionTypeEnum.METERS_FROM_PARENT.getName(), 0.0, 0.0);
+		organization.createFacility("F-ORD1.2", "TEST", Point.getZeroPoint());
 		Facility facility = organization.getFacility("F-ORD1.2");
 
 		ICsvOrderImporter importer = new OrderCsvImporter(mOrderGroupDao, mOrderHeaderDao, mOrderDetailDao, mContainerDao, mContainerUseDao, mItemMasterDao, mUomMasterDao);
@@ -135,7 +136,7 @@ public class OrderImporterTest extends EdiTestABC {
 		organization.setDomainId("O-ORD1.3");
 		mOrganizationDao.store(organization);
 
-		organization.createFacility("F-ORD1.3", "TEST", PositionTypeEnum.METERS_FROM_PARENT.getName(), 0.0, 0.0);
+		organization.createFacility("F-ORD1.3", "TEST", Point.getZeroPoint());
 		Facility facility = organization.getFacility("F-ORD1.3");
 
 		ICsvOrderImporter importer = new OrderCsvImporter(mOrderGroupDao, mOrderHeaderDao, mOrderDetailDao, mContainerDao, mContainerUseDao, mItemMasterDao, mUomMasterDao);
@@ -174,7 +175,7 @@ public class OrderImporterTest extends EdiTestABC {
 		organization.setDomainId("O-ORD1.4");
 		mOrganizationDao.store(organization);
 
-		organization.createFacility("F-ORD1.4", "TEST", PositionTypeEnum.METERS_FROM_PARENT.getName(), 0.0, 0.0);
+		organization.createFacility("F-ORD1.4", "TEST", Point.getZeroPoint());
 		Facility facility = organization.getFacility("F-ORD1.4");
 
 		ICsvOrderImporter importer = new OrderCsvImporter(mOrderGroupDao, mOrderHeaderDao, mOrderDetailDao, mContainerDao, mContainerUseDao, mItemMasterDao, mUomMasterDao);

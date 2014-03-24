@@ -22,6 +22,7 @@ import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.IEdiService;
 import com.gadgetworks.codeshelf.model.domain.Organization;
+import com.gadgetworks.codeshelf.model.domain.Point;
 import com.google.inject.Inject;
 
 /**
@@ -188,7 +189,7 @@ public class EdiProcessorTest extends EdiTestABC {
 		organization.setDomainId("O-EDI.1");
 		mOrganizationDao.store(organization);
 
-		organization.createFacility("F-EDI.1", "TEST", PositionTypeEnum.METERS_FROM_PARENT.getName(), 0.0, 0.0);
+		organization.createFacility("F-EDI.1", "TEST", Point.getZeroPoint());
 		Facility facility = organization.getFacility("F-EDI.1");
 		facility.setParent(organization);
 

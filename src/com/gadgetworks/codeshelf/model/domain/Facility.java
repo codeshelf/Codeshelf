@@ -65,7 +65,7 @@ import com.google.inject.Singleton;
 @DiscriminatorValue("FACILITY")
 @CacheStrategy(useBeanCache = false)
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
-public class Facility extends LocationABC<Organization> {
+public class Facility extends SubLocationABC<Facility> {
 
 	@Inject
 	public static ITypedDao<Facility>	DAO;
@@ -87,9 +87,12 @@ public class Facility extends LocationABC<Organization> {
 	// The owning organization.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	@Setter
 	@Getter
 	private Organization					parentOrganization;
+
+//	@Column(nullable = false)
+//	@ManyToOne(optional = false)
+//	private SubLocationABC					parent;
 
 	@OneToMany(mappedBy = "parent")
 	@Getter
@@ -136,11 +139,11 @@ public class Facility extends LocationABC<Organization> {
 	private Map<String, LocationAlias>		locationAliases	= new HashMap<String, LocationAlias>();
 
 	public Facility() {
-
+		super(Point.getZeroPoint(), Point.getZeroPoint());
 	}
 
 	public Facility(final Point inAnchorPoint) {
-		super(inAnchorPoint);
+		super(inAnchorPoint, Point.getZeroPoint());
 	}
 
 	public final String getDefaultDomainIdPrefix() {
@@ -153,23 +156,26 @@ public class Facility extends LocationABC<Organization> {
 
 	@Override
 	public final String getFullDomainId() {
-		return getParent().getDomainId() + "." + getDomainId();
-	}
-
-	public final Organization getParent() {
-		return getParentOrganization();
+		return getParentOrganization().getDomainId() + "." + getDomainId();
 	}
 
 	public final void setParent(Organization inParentOrganization) {
 		setParentOrganization(inParentOrganization);
+		//parent = inParentOrganization;
+		setParent((Facility) null);
 	}
-
+	
 	public final String getParentOrganizationID() {
 		String result = "";
 		if (getParent() != null) {
 			result = getParent().getDomainId();
 		}
 		return result;
+	}
+	
+	public final void setParentOrganization(final Organization inParentOrganization) {
+		parentOrganization = inParentOrganization;
+		setParent(this);
 	}
 
 	public final void setFacilityId(String inFacilityId) {
@@ -324,6 +330,10 @@ public class Facility extends LocationABC<Organization> {
 		return new ArrayList<LocationAlias>(locationAliases.values());
 	}
 
+	public final Point getAbsoluteAnchorPoint() {
+		return Point.getZeroPoint();
+	}
+	
 	public final Double getAbsolutePosX() {
 		return 0.0;
 	}
@@ -349,20 +359,14 @@ public class Facility extends LocationABC<Organization> {
 	 */
 	@Transactional
 	public final void createAisle(final String inAisleId,
-		final Double inPosXMeters,
-		final Double inPosYMeters,
-		final Double inProtoBayWidthMeters,
-		final Double inProtoBayDepthMeters,
-		final Double inProtoBayHeightMeters,
+		final Point inAnchorPoint,
+		final Point inProtoBayPoint,
 		final Integer inBaysHigh,
 		final Integer inBaysLong,
+		final String inLedControllerId,
 		final Boolean inRunInXDir,
-		final Boolean inOpensLowSide,
 		final Boolean inLeftHandBay) {
 
-		final String inLedControllerId = "0x00000002";
-
-		// Create at least one aisle controller.
 		CodeshelfNetwork network = networks.get(CodeshelfNetwork.DEFAULT_NETWORK_ID);
 		if (network != null) {
 			LedController ledController = network.getLedController("LED1");
@@ -372,31 +376,32 @@ public class Facility extends LocationABC<Organization> {
 			// Create the aisle if it doesn't already exist.
 			Aisle aisle = Aisle.DAO.findByDomainId(this, inAisleId);
 			if (aisle == null) {
-				Point anchorPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, inPosXMeters, inPosYMeters, 0.0);
-				Point pickFaceEndPoint = computePickFaceEndPoint(anchorPoint, inProtoBayWidthMeters * inBaysLong, inRunInXDir);
-				aisle = new Aisle(this, inAisleId, anchorPoint, pickFaceEndPoint);
+				Point pickFaceEndPoint = computePickFaceEndPoint(inAnchorPoint, inProtoBayPoint.getX() * inBaysLong, inRunInXDir);
+				aisle = new Aisle(this, inAisleId, inAnchorPoint, pickFaceEndPoint);
 				try {
 					Aisle.DAO.store(aisle);
 				} catch (DaoException e) {
 					LOGGER.error("", e);
 				}
 
-				Point bayAnchorPosition = new Point(PositionTypeEnum.METERS_FROM_PARENT, 0.0, 0.0, 0.0);
-				Point aisleBoundary = new Point(PositionTypeEnum.METERS_FROM_PARENT, 0.0, 0.0, 0.0);
+				Point bayAnchorPoint = Point.getZeroPoint();
+				Point aisleBoundary = Point.getZeroPoint();
 
 				Short curLedPosNum = 1;
 				Short channelNum = 1;
 				for (int bayNum = 1; bayNum <= inBaysLong; bayNum++) {
 					Double anchorPosZ = 0.0;
 					for (int bayHighNum = 0; bayHighNum < inBaysHigh; bayHighNum++) {
-						String bayName = "B" + bayNum + "-" + bayHighNum;
+						String bayName = "B" + bayNum;
+						if (inBaysHigh > 1) {
+							bayName += Integer.toString(bayHighNum);
+						}
 						Bay bay = createZigZagBay(aisle,
 							bayName,
 							inLeftHandBay,
 							curLedPosNum,
-							bayAnchorPosition,
-							inProtoBayWidthMeters,
-							inProtoBayHeightMeters,
+							bayAnchorPoint,
+							inProtoBayPoint,
 							inRunInXDir,
 							ledController,
 							channelNum);
@@ -408,24 +413,20 @@ public class Facility extends LocationABC<Organization> {
 						// Create the bay's boundary vertices.
 						if (inRunInXDir) {
 							createVertices(bay, new Point(PositionTypeEnum.METERS_FROM_PARENT,
-								inProtoBayWidthMeters,
-								inProtoBayDepthMeters,
+								inProtoBayPoint.getX(),
+								inProtoBayPoint.getY(),
 								0.0));
 						} else {
 							createVertices(bay, new Point(PositionTypeEnum.METERS_FROM_PARENT,
-								inProtoBayDepthMeters,
-								inProtoBayWidthMeters,
+								inProtoBayPoint.getY(),
+								inProtoBayPoint.getX(),
 								0.0));
 						}
 
-						anchorPosZ += inProtoBayHeightMeters;
+						anchorPosZ += inProtoBayPoint.getZ();
 					}
 
-					prepareNextBayAnchorPoint(inProtoBayWidthMeters,
-						inProtoBayDepthMeters,
-						inRunInXDir,
-						bayAnchorPosition,
-						aisleBoundary);
+					prepareNextBayAnchorPoint(inProtoBayPoint, inRunInXDir, bayAnchorPoint, aisleBoundary);
 				}
 
 				// Create the aisle's boundary vertices.
@@ -453,37 +454,35 @@ public class Facility extends LocationABC<Organization> {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * @param inProtoBayWidthMeters
-	 * @param inProtoBayDepthMeters
+	 * @param inProtoBayPoint
 	 * @param inRunInXDir
 	 * @param inAnchorPos
 	 * @param inAisleBoundary
 	 */
-	private void prepareNextBayAnchorPoint(final Double inProtoBayWidthMeters,
-		final Double inProtoBayDepthMeters,
+	private void prepareNextBayAnchorPoint(final Point inProtoBayPoint,
 		final Boolean inRunInXDir,
 		Point inAnchorPos,
 		Point inAisleBoundary) {
 		if (inRunInXDir) {
-			if ((inAnchorPos.getX() + inProtoBayWidthMeters) > inAisleBoundary.getX()) {
-				inAisleBoundary.setX(inAnchorPos.getX() + inProtoBayWidthMeters);
+			if ((inAnchorPos.getX() + inProtoBayPoint.getX()) > inAisleBoundary.getX()) {
+				inAisleBoundary.setX(inAnchorPos.getX() + inProtoBayPoint.getX());
 			}
 
-			if ((inAnchorPos.getY() + inProtoBayDepthMeters) > inAisleBoundary.getY()) {
-				inAisleBoundary.setY(inAnchorPos.getY() + inProtoBayDepthMeters);
+			if ((inAnchorPos.getY() + inProtoBayPoint.getY()) > inAisleBoundary.getY()) {
+				inAisleBoundary.setY(inAnchorPos.getY() + inProtoBayPoint.getY());
 			}
 
-			inAnchorPos.setX(inAnchorPos.getX() + inProtoBayWidthMeters);
+			inAnchorPos.setX(inAnchorPos.getX() + inProtoBayPoint.getX());
 		} else {
-			if ((inAnchorPos.getX() + inProtoBayDepthMeters) > inAisleBoundary.getX()) {
-				inAisleBoundary.setX(inAnchorPos.getX() + inProtoBayDepthMeters);
+			if ((inAnchorPos.getX() + inProtoBayPoint.getY()) > inAisleBoundary.getX()) {
+				inAisleBoundary.setX(inAnchorPos.getX() + inProtoBayPoint.getY());
 			}
 
-			if ((inAnchorPos.getY() + inProtoBayWidthMeters) > inAisleBoundary.getY()) {
-				inAisleBoundary.setY(inAnchorPos.getY() + inProtoBayWidthMeters);
+			if ((inAnchorPos.getY() + inProtoBayPoint.getX()) > inAisleBoundary.getY()) {
+				inAisleBoundary.setY(inAnchorPos.getY() + inProtoBayPoint.getX());
 			}
 
-			inAnchorPos.setY(inAnchorPos.getY() + inProtoBayDepthMeters);
+			inAnchorPos.setY(inAnchorPos.getY() + inProtoBayPoint.getY());
 		}
 	}
 
@@ -499,13 +498,12 @@ public class Facility extends LocationABC<Organization> {
 		final Boolean inIsLeftHandBay,
 		final Short inFirstLedNum,
 		final Point inAnchorPoint,
-		final Double inBayWidth,
-		final Double inBayHeight,
+		final Point inProtoBayPoint,
 		final Boolean inRunsInXDir,
 		final LedController inLedController,
 		final short inLedChannelNum) {
 
-		Point pickFaceEndPoint = computePickFaceEndPoint(inAnchorPoint, inBayWidth, inRunsInXDir);
+		Point pickFaceEndPoint = computePickFaceEndPoint(inAnchorPoint, inProtoBayPoint.getX(), inRunsInXDir);
 		Bay resultBay = new Bay(inParentAisle, inBayId, inAnchorPoint, pickFaceEndPoint);
 
 		resultBay.setFirstLedNumAlongPath(inFirstLedNum);
@@ -526,8 +524,8 @@ public class Facility extends LocationABC<Organization> {
 				"T" + tierNum,
 				leftToRight,
 				inRunsInXDir,
-				inBayWidth,
-				inBayHeight,
+				inProtoBayPoint.getY(),
+				inProtoBayPoint.getZ(),
 				tierZPos,
 				inLedController,
 				inLedChannelNum,

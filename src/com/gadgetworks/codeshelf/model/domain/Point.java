@@ -87,6 +87,10 @@ public class Point {
 		return PositionTypeEnum.valueOf(inPosTypeStr);
 	}
 
+	public static Point getZeroPoint() {
+		return new Point(PositionTypeEnum.METERS_FROM_PARENT, 0.0, 0.0, 0.0);
+	}
+	
 	public final void add(final Point inAddPoint) {
 		if (inAddPoint.getPosTypeEnum().equals(posTypeEnum)) {
 			x += inAddPoint.getX();

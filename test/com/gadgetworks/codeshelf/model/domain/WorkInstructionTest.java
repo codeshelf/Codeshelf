@@ -29,41 +29,23 @@ public class WorkInstructionTest extends DomainTestABC {
 		organization.setOrganizationId("OWI.1");
 		mOrganizationDao.store(organization);
 
-		organization.createFacility("F1", "test", PositionTypeEnum.METERS_FROM_PARENT.getName(), 0.0, 0.0);
+		organization.createFacility("F1", "test", Point.getZeroPoint());
 		Facility facility = organization.getFacility("F1");
 
-		Aisle aisle1 = new Aisle(facility, "A1", new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0), new Point(PositionTypeEnum.GPS,
-			0.0,
-			0.0,
-			0.0));
+		Aisle aisle1 = new Aisle(facility, "A1", Point.getZeroPoint(), Point.getZeroPoint());
 		mAisleDao.store(aisle1);
 
-		Bay baya1b1 = new Bay(aisle1, "B1", new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0), new Point(PositionTypeEnum.GPS,
-			0.0,
-			0.0,
-			0.0));
+		Bay baya1b1 = new Bay(aisle1, "B1", Point.getZeroPoint(), Point.getZeroPoint());
 		mBayDao.store(baya1b1);
-		Bay baya1b2 = new Bay(aisle1, "B2", new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0), new Point(PositionTypeEnum.GPS,
-			0.0,
-			0.0,
-			0.0));
+		Bay baya1b2 = new Bay(aisle1, "B2", Point.getZeroPoint(), Point.getZeroPoint());
 		mBayDao.store(baya1b2);
 
-		Aisle aisle2 = new Aisle(facility, "A2", new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0), new Point(PositionTypeEnum.GPS,
-			0.0,
-			0.0,
-			0.0));
+		Aisle aisle2 = new Aisle(facility, "A2", Point.getZeroPoint(), Point.getZeroPoint());
 		mAisleDao.store(aisle2);
 
-		Bay baya2b1 = new Bay(aisle2, "B1", new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0), new Point(PositionTypeEnum.GPS,
-			0.0,
-			0.0,
-			0.0));
+		Bay baya2b1 = new Bay(aisle2, "B1", Point.getZeroPoint(), Point.getZeroPoint());
 		mBayDao.store(baya2b1);
-		Bay baya2b2 = new Bay(aisle2, "B2", new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0), new Point(PositionTypeEnum.GPS,
-			0.0,
-			0.0,
-			0.0));
+		Bay baya2b2 = new Bay(aisle2, "B2", Point.getZeroPoint(), Point.getZeroPoint());
 		mBayDao.store(baya2b2);
 
 		Container container = new Container();

@@ -25,12 +25,14 @@ public class FacilityTest extends DomainTestABC {
 		organization.setOrganizationId("FTEST1.O1");
 		mOrganizationDao.store(organization);
 
-		Facility facility = new Facility(new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0));
+		Facility facility = new Facility(Point.getZeroPoint());
 		facility.setParent(organization);
 		facility.setFacilityId("FTEST1.F1");
 		mFacilityDao.store(facility);
 
-		facility.createAisle("FTEST1.A1", 1.0, 1.0, 2.0, 2.0, 2.0, 2, 5, true, true, true);
+		Point anchorPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, 1.0, 1.0, 1.0);
+		Point protoBayPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, 2.0, 2.0, 2.0);
+		facility.createAisle("FTEST1.A1", anchorPoint, protoBayPoint, 2, 5, "0x00000002", true, true);
 
 		Facility foundFacility = Facility.DAO.findByDomainId(organization, "FTEST1.F1");
 

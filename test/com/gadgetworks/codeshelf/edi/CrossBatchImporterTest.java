@@ -21,6 +21,7 @@ import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderGroup;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.Organization;
+import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.model.domain.UomMaster;
 import com.gadgetworks.codeshelf.model.domain.UomMaster.UomMasterDao;
 
@@ -74,7 +75,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		organization.setDomainId("O-CROSS1");
 		mOrganizationDao.store(organization);
 
-		organization.createFacility("F-CROSS1", "TEST", PositionTypeEnum.METERS_FROM_PARENT.getName(), 0.0, 0.0);
+		organization.createFacility("F-CROSS1", "TEST", Point.getZeroPoint());
 		Facility facility = organization.getFacility("F-CROSS1");
 
 		// We can't import cross batch orders for items not already in inventory or on outbound orders.
@@ -128,7 +129,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		organization.setDomainId("O-CROSS2");
 		mOrganizationDao.store(organization);
 
-		organization.createFacility("F-CROSS2", "TEST", PositionTypeEnum.METERS_FROM_PARENT.getName(), 0.0, 0.0);
+		organization.createFacility("F-CROSS2", "TEST", Point.getZeroPoint());
 		Facility facility = organization.getFacility("F-CROSS2");
 
 		// We can't import cross batch orders for items not already in inventory or on outbound orders.
@@ -175,7 +176,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		organization.setDomainId("O-CROSS3");
 		mOrganizationDao.store(organization);
 
-		organization.createFacility("F-CROSS3", "TEST", PositionTypeEnum.METERS_FROM_PARENT.getName(), 0.0, 0.0);
+		organization.createFacility("F-CROSS3", "TEST", Point.getZeroPoint());
 		Facility facility = organization.getFacility("F-CROSS3");
 
 		// We can't import cross batch orders for items not already in inventory or on outbound orders.
@@ -244,7 +245,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		organization.setDomainId("O-CROSS4");
 		mOrganizationDao.store(organization);
 
-		organization.createFacility("F-CROSS4", "TEST", PositionTypeEnum.METERS_FROM_PARENT.getName(), 0.0, 0.0);
+		organization.createFacility("F-CROSS4", "TEST", Point.getZeroPoint());
 		Facility facility = organization.getFacility("F-CROSS4");
 
 		// We can't import cross batch orders for items not already in inventory or on outbound orders.
@@ -316,7 +317,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		organization.setDomainId("O-CROSS5");
 		mOrganizationDao.store(organization);
 
-		organization.createFacility("F-CROSS5", "TEST", PositionTypeEnum.METERS_FROM_PARENT.getName(), 0.0, 0.0);
+		organization.createFacility("F-CROSS5", "TEST", Point.getZeroPoint());
 		Facility facility = organization.getFacility("F-CROSS5");
 
 		// We can't import cross batch orders for items not already in inventory or on outbound orders.

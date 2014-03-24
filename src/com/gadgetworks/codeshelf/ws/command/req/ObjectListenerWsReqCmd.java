@@ -133,7 +133,10 @@ public class ObjectListenerWsReqCmd extends WsReqCmdABC implements IWsPersistent
 				propertiesMap.put(PERSISTENT_ID, matchedObject.getPersistentId());
 				// If this is a tree object then get the parent ID as well.
 				if (matchedObject instanceof IDomainObjectTree<?>) {
-					propertiesMap.put(PARENT_ID, ((IDomainObjectTree<?>) matchedObject).getParent().getPersistentId());
+					IDomainObject parent = ((IDomainObjectTree<?>) matchedObject).getParent();
+					if (parent != null) {
+						propertiesMap.put(PARENT_ID, parent.getPersistentId());
+					}
 				}
 				for (String propertyName : mPropertyNames) {
 					// Execute the "get" method against the parents to return the children.

@@ -40,7 +40,8 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "location_alias")
-@CacheStrategy(useBeanCache = true)@JsonAutoDetect(getterVisibility = Visibility.NONE)
+@CacheStrategy(useBeanCache = true)
+@JsonAutoDetect(getterVisibility = Visibility.NONE)
 @ToString(of = { "mappedLocation", "active" }, callSuper = true, doNotUseGetters = true)
 public class LocationAlias extends DomainObjectTreeABC<Facility> {
 
@@ -116,8 +117,8 @@ public class LocationAlias extends DomainObjectTreeABC<Facility> {
 		return (ISubLocation<?>) mappedLocation;
 	}
 
-	public final void setMappedLocation(final ILocation<?> inMappedLocation) {
-		mappedLocation = (LocationABC) inMappedLocation;
+	public final void setMappedLocation(final ISubLocation<?> inMappedLocation) {
+		mappedLocation = (SubLocationABC) inMappedLocation;
 	}
 
 }

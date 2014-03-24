@@ -26,7 +26,7 @@ public class OrderGroupTest extends DomainTestABC {
 		organization.setOrganizationId("OG.1");
 		mOrganizationDao.store(organization);
 		
-		organization.createFacility("F1", "test", PositionTypeEnum.METERS_FROM_PARENT.getName(), 0.0, 0.0);
+		organization.createFacility("F1", "test", Point.getZeroPoint());
 		Facility facility = organization.getFacility("F1");
 		
 		OrderGroup orderGroup = new OrderGroup();
@@ -85,7 +85,7 @@ public class OrderGroupTest extends DomainTestABC {
 		organization.setOrganizationId("OG.2");
 		mOrganizationDao.store(organization);
 		
-		organization.createFacility("F1", "test", PositionTypeEnum.METERS_FROM_PARENT.getName(), 0.0, 0.0);
+		organization.createFacility("F1", "test", Point.getZeroPoint());
 		Facility facility = organization.getFacility("F1");
 
 		OrderGroup orderGroup = new OrderGroup();

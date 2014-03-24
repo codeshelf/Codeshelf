@@ -618,6 +618,32 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * Create a standard DomainObject table with all the appropriate boilerplate and then add the stuff for the particular domain class.
+	 * (Except in this case the parent_persistentid can be null.)
+	 * @param inTableName
+	 * @param inColumns
+	 */
+	private boolean createTableOptionalParent(final String inTableName, final String inColumns) {
+
+		boolean result = true;
+
+		//result &= execOneSQLCommand("CREATE SEQUENCE " + getDbSchemaName() + "." + inTableName + "_seq");
+		result &= execOneSQLCommand("CREATE TABLE " + getDbSchemaName() + "." + inTableName + " (" //
+				+ "persistentid " + UUID_TYPE + " NOT NULL, " //
+				+ "parent_persistentid " + UUID_TYPE + " , " //
+				+ "domainid " + DOMAINID_TYPE + " NOT NULL, " //
+				+ "version TIMESTAMP, " //
+				+ inColumns //
+				+ ", PRIMARY KEY (persistentid));");
+
+		result &= execOneSQLCommand("CREATE UNIQUE INDEX " + inTableName + "_domainid_index ON " + getDbSchemaName() + "."
+				+ inTableName + " (parent_persistentid, domainid)");
+
+		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
 	 * @param inChildTableName
 	 * @param inForeignKeyColumnName
 	 * @param inParentTableName
@@ -638,6 +664,45 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		result &= execOneSQLCommand("CREATE INDEX " //
 				+ inChildTableName + "_" + inForeignKeyColumnName + "_" + inParentTableName //
 				+ " ON " + getDbSchemaName() + "." + inChildTableName + " (" + inForeignKeyColumnName + "_persistentid)");
+
+		return result;
+
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inSameTableName
+	 * @param inForeignKeyColumnName
+	 * @param inForeignTableName
+	 */
+	private boolean linkToParentTableRecursive(final String inSameTableName,
+		final String inSameTableColumnName,
+		final String inForeignTableName,
+		final String inForeignTableColumnName) {
+
+		boolean result = true;
+
+//		// Add the foreign key constraint for the recursive table.
+//		result &= execOneSQLCommand("ALTER TABLE " + getDbSchemaName() + "." + inSameTableName //
+//				+ " ADD CONSTRAINT XXX FOREIGN KEY (" + inSameTableColumnName + "_persistentid)" //
+//				+ " REFERENCES DATABASE." + getDbSchemaName() + "." + inSameTableName + " (persistentid);");
+//
+//		// Add the foreign key constraint for the final table.
+//		result &= execOneSQLCommand("ALTER TABLE " + getDbSchemaName() + "." + inSameTableName //
+//				+ " ADD CONSTRAINT YYY FOREIGN KEY (" + inForeignTableColumnName + "_persistentid)" //
+//				+ " REFERENCES DATABASE." + getDbSchemaName() + "." + inForeignTableName + " (persistentid);");
+
+		// Now make sure at least one of them is not null.
+		result &= execOneSQLCommand("ALTER TABLE " + getDbSchemaName() + "."
+				+ inSameTableName //
+				+ " ADD CHECK " //
+				+ " (" + inSameTableName + "." + inSameTableColumnName + "_persistentid IS NOT NULL OR "
+				+ inSameTableName + "." + inForeignTableColumnName + "_persistentid IS NOT NULL )");
+
+		// Add the index that makes it efficient to find the child objects from the parent.
+		result &= execOneSQLCommand("CREATE INDEX " //
+				+ inSameTableName + "_" + inSameTableColumnName + "_" + inSameTableName //
+				+ " ON " + getDbSchemaName() + "." + inSameTableName + " (" + inSameTableColumnName + "_persistentid)");
 
 		return result;
 
@@ -753,9 +818,9 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		execOneSQLCommand("CREATE UNIQUE INDEX led_controller_deviceguid_index ON " + getDbSchemaName()
 				+ ".led_controller (device_guid, parent_persistentid)");
 
-//		result &= linkToParentTable("location", "parent", "location");
+		result &= linkToParentTableRecursive("location", "parent", "organization", "parent_organization");
 		result &= linkToParentTable("location", "path_segment", "path_segment");
-//		result &= linkToParentTable("location", "parent_organization", "organization");
+		result &= linkToParentTable("location", "parent_organization", "organization");
 
 		result &= linkToParentTable("location_alias", "parent", "location" /* facility */);
 
@@ -901,7 +966,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		);
 
 		// Location
-		result &= createTable("location", //
+		result &= createTableOptionalParent("location", //
 			"dtype TEXT NOT NULL, " //
 					+ "anchor_pos_type_enum TEXT NOT NULL, " //
 					+ "anchor_pos_x DOUBLE PRECISION NOT NULL, " //

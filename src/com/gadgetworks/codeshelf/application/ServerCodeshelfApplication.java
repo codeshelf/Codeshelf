@@ -201,9 +201,8 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 	protected void doInitializeApplicationData() {
 
 		// Create some demo organizations.
-		createOrganzation("O1");
-		createOrganzation("O2");
-		createOrganzation("O3");
+		createDemoOrganzation("DEMO1", "a@example.com", "testme");
+		createDemoOrganzation("DEMO2", "b@example.com", "testme");
 	}
 
 	// --------------------------------------------------------------------------
@@ -211,14 +210,14 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 	 * @param inOrganizationId
 	 * @param inPassword
 	 */
-	private void createOrganzation(String inOrganizationId) {
+	private void createDemoOrganzation(String inOrganizationId, String inDefaultUserId, String inDefaultUserPw) {
 		Organization organization = mOrganizationDao.findByDomainId(null, inOrganizationId);
 		if (organization == null) {
 			organization = new Organization();
 			organization.setDomainId(inOrganizationId);
 			try {
 				mOrganizationDao.store(organization);
-				organization.createUser("jeffw@gadgetworks.com", "blahdeeblah");
+				organization.createUser(inDefaultUserId, inDefaultUserPw);
 			} catch (DaoException e) {
 				e.printStackTrace();
 			}

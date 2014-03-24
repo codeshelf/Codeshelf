@@ -44,31 +44,19 @@ public class LocationAliasImporterTest extends EdiTestABC {
 		organization.setDomainId("O-LOCS.1");
 		mOrganizationDao.store(organization);
 
-		organization.createFacility("F-LOCS.1", "TEST", PositionTypeEnum.METERS_FROM_PARENT.getName(), 0.0, 0.0);
+		organization.createFacility("F-LOCS.1", "TEST", Point.getZeroPoint());
 		Facility facility = organization.getFacility("F-LOCS.1");
 
-		Aisle aisleA1 = new Aisle(facility, "A1", new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0), new Point(PositionTypeEnum.GPS,
-			0.0,
-			0.0,
-			0.0));
+		Aisle aisleA1 = new Aisle(facility, "A1", Point.getZeroPoint(), Point.getZeroPoint());
 		mSubLocationDao.store(aisleA1);
 
-		Bay bay1 = new Bay(aisleA1, "B1", new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0), new Point(PositionTypeEnum.GPS,
-			0.0,
-			0.0,
-			0.0));
+		Bay bay1 = new Bay(aisleA1, "B1", Point.getZeroPoint(), Point.getZeroPoint());
 		mSubLocationDao.store(bay1);
 
-		Aisle aisleA2 = new Aisle(facility, "A2", new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0), new Point(PositionTypeEnum.GPS,
-			0.0,
-			0.0,
-			0.0));
+		Aisle aisleA2 = new Aisle(facility, "A2", Point.getZeroPoint(), Point.getZeroPoint());
 		mSubLocationDao.store(aisleA2);
 
-		Bay bay2 = new Bay(aisleA2, "B2", new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0), new Point(PositionTypeEnum.GPS,
-			0.0,
-			0.0,
-			0.0));
+		Bay bay2 = new Bay(aisleA2, "B2", Point.getZeroPoint(), Point.getZeroPoint());
 		mSubLocationDao.store(bay2);
 
 		ICsvLocationAliasImporter importer = new LocationAliasCsvImporter(mLocationAliasDao);

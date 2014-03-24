@@ -54,9 +54,9 @@ public abstract class SubLocationABC<P extends IDomainObject> extends LocationAB
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(SubLocationABC.class);
 
 	// The owning location.
-	@Column(nullable = false)
+	@Column(nullable = true)
 	@ManyToOne(optional = true)
-	private LocationABC			parent;
+	private SubLocationABC		parent;
 
 	@Column(nullable = false)
 	@Enumerated(value = EnumType.STRING)
@@ -116,6 +116,6 @@ public abstract class SubLocationABC<P extends IDomainObject> extends LocationAB
 	 */
 	@Override
 	public final void setParent(P inParent) {
-		parent = (LocationABC) inParent;
+		parent = (SubLocationABC) inParent;
 	}
 }

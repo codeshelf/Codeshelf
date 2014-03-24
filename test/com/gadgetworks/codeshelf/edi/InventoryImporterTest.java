@@ -45,7 +45,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		organization.setDomainId("O-INV1.1");
 		mOrganizationDao.store(organization);
 
-		organization.createFacility("F-INV1.1", "TEST", PositionTypeEnum.METERS_FROM_PARENT.getName(), 0.0, 0.0);
+		organization.createFacility("F-INV1.1", "TEST", Point.getZeroPoint());
 		Facility facility = organization.getFacility("F-INV1.1");
 
 		ICsvInventoryImporter importer = new InventoryCsvImporter(mItemMasterDao, mItemDao, mUomMasterDao);
@@ -79,26 +79,17 @@ public class InventoryImporterTest extends EdiTestABC {
 		organization.setDomainId("O-INV2.1");
 		mOrganizationDao.store(organization);
 
-		organization.createFacility("F-INV2.1", "TEST", PositionTypeEnum.METERS_FROM_PARENT.getName(), 0.0, 0.0);
+		organization.createFacility("F-INV2.1", "TEST", Point.getZeroPoint());
 		Facility facility = organization.getFacility("F-INV2.1");
 		mFacilityDao.store(facility);
 
-		Aisle aisleA1 = new Aisle(facility, "A1", new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0), new Point(PositionTypeEnum.GPS,
-			0.0,
-			0.0,
-			0.0));
+		Aisle aisleA1 = new Aisle(facility, "A1", Point.getZeroPoint(), Point.getZeroPoint());
 		mSubLocationDao.store(aisleA1);
 
-		Bay bay1 = new Bay(aisleA1, "B1", new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0), new Point(PositionTypeEnum.GPS,
-			0.0,
-			0.0,
-			0.0));
+		Bay bay1 = new Bay(aisleA1, "B1", Point.getZeroPoint(), Point.getZeroPoint());
 		mSubLocationDao.store(bay1);
 
-		Bay bay2 = new Bay(aisleA1, "B2", new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0), new Point(PositionTypeEnum.GPS,
-			0.0,
-			0.0,
-			0.0));
+		Bay bay2 = new Bay(aisleA1, "B2", Point.getZeroPoint(), Point.getZeroPoint());
 		mSubLocationDao.store(bay2);
 
 		ICsvInventoryImporter importer = new InventoryCsvImporter(mItemMasterDao, mItemDao, mUomMasterDao);

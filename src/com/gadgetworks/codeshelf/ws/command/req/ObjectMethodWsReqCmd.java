@@ -142,17 +142,14 @@ public class ObjectMethodWsReqCmd extends WsReqCmdABC {
 						Class classType = Class.forName(arg.getClassType());
 						signatureClasses.add(classType);
 
-						Object typedArg;
+						Object typedArg = null;
 						try {
 							if (!classType.isArray()) {
-								Constructor<?> ctor = classType.getConstructor(String.class);
-								if (argumentValue == null) {
-									typedArg = null;
+								Object object = mapper.readValue(argumentValue, classType);
+								if (object.getClass().equals(classType)) {
+									typedArg = object;
 								} else {
-									Object object = mapper.readValue(argumentValue, classType);
-									if (!object.getClass().equals(String.class)) {
-										object = object.toString();
-									}
+									Constructor<?> ctor = classType.getConstructor(String.class);
 									typedArg = ctor.newInstance(object.toString());
 								}
 							} else {
