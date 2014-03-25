@@ -42,7 +42,7 @@ import com.google.inject.Singleton;
 @Entity
 @CacheStrategy(useBeanCache = true)@Table(name = "che")
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
-//@ToString(doNotUseGetters = true)
+@ToString(doNotUseGetters = true, callSuper = true)
 public class Che extends WirelessDeviceABC {
 
 	@Inject

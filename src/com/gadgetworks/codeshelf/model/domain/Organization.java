@@ -51,7 +51,8 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-@CacheStrategy(useBeanCache = true)@Table(name = "organization")
+@CacheStrategy(useBeanCache = true)
+@Table(name = "organization")
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 //@ToString(doNotUseGetters = true)
 public class Organization extends DomainObjectABC {
@@ -194,10 +195,8 @@ public class Organization extends DomainObjectABC {
 	 * @param inAnchorPosY
 	 */
 	@Transactional
-	public final void createFacility(final String inDomainId,
-		final String inDescription,
-		final Point inAnchorPoint) {
-		
+	public final void createFacility(final String inDomainId, final String inDescription, final Point inAnchorPoint) {
+
 		Facility facility = new Facility();
 		facility.setParentOrganization(this);
 		facility.setDomainId(inDomainId);
@@ -218,24 +217,14 @@ public class Organization extends DomainObjectABC {
 		facility.logLocationDistances();
 		facility.recomputeDdcPositions();
 
-//		if (network != null) {
-//			Che che1 = network.getChe("CHE1");
-//			if (che1 == null) {
-//				che1 = network.createChe("CHE1", new NetGuid("0x00000003"));
-//			}
-//			Che che2 = network.getChe("CHE2");
-//			if (che2 == null) {
-//				che2 = network.createChe("CHE2", new NetGuid("0x00000006"));
-//			}
-//			LedController ledController = network.getLedController("0x00000002");
-//			if (ledController == null) {
-//				ledController = network.createLedController("0x00000002", new NetGuid("0x00000002"));
-//			}
-//			ledController = network.getLedController("0x00000001");
-//			if (ledController == null) {
-//				ledController = network.createLedController("0x00000001", new NetGuid("0x00000001"));
-//			}
-//		}
+		// Setup six dummy CHEs
+		for (int cheNum = 1; cheNum <= 6; cheNum++) {
+			String cheName = "CHE" + cheNum;
+			Che che = network.getChe(cheName);
+			if (che == null) {
+				che = network.createChe(cheName, new NetGuid("0x0000999" + cheNum));
+			}
+		}
 	}
 
 	// --------------------------------------------------------------------------

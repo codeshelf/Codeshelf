@@ -23,7 +23,6 @@ import javax.persistence.MapKey;
 import javax.persistence.OneToMany;
 
 import lombok.Getter;
-import lombok.Setter;
 
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
@@ -90,9 +89,9 @@ public class Facility extends SubLocationABC<Facility> {
 	@Getter
 	private Organization					parentOrganization;
 
-//	@Column(nullable = false)
-//	@ManyToOne(optional = false)
-//	private SubLocationABC					parent;
+	//	@Column(nullable = false)
+	//	@ManyToOne(optional = false)
+	//	private SubLocationABC					parent;
 
 	@OneToMany(mappedBy = "parent")
 	@Getter
@@ -164,7 +163,7 @@ public class Facility extends SubLocationABC<Facility> {
 		//parent = inParentOrganization;
 		setParent((Facility) null);
 	}
-	
+
 	public final String getParentOrganizationID() {
 		String result = "";
 		if (getParent() != null) {
@@ -172,13 +171,13 @@ public class Facility extends SubLocationABC<Facility> {
 		}
 		return result;
 	}
-	
+
 	public final void setParentOrganization(final Organization inParentOrganization) {
 		parentOrganization = inParentOrganization;
 		// for now, facility parent is null, not self.
 		// setParent(this);
-		setParent((Facility)null);
-		
+		setParent((Facility) null);
+
 	}
 
 	public final void setFacilityId(String inFacilityId) {
@@ -336,7 +335,7 @@ public class Facility extends SubLocationABC<Facility> {
 	public final Point getAbsoluteAnchorPoint() {
 		return Point.getZeroPoint();
 	}
-	
+
 	public final Double getAbsolutePosX() {
 		return 0.0;
 	}

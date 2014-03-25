@@ -46,7 +46,7 @@ import com.google.inject.Singleton;
 
 @Entity
 @CacheStrategy(useBeanCache = true)@JsonAutoDetect(getterVisibility = Visibility.NONE)
-//@ToString(doNotUseGetters = true)
+@ToString(doNotUseGetters = true, callSuper = true)
 public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNetwork> {
 
 	public static final int						MAC_ADDR_BYTES		= 8;
