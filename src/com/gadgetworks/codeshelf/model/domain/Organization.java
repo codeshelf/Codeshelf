@@ -214,7 +214,6 @@ public class Organization extends DomainObjectABC {
 
 		// Create the generic container kind (for all unspecified containers)
 		facility.createDefaultContainerKind();
-		facility.logLocationDistances();
 		facility.recomputeDdcPositions();
 
 		// Setup six dummy CHEs

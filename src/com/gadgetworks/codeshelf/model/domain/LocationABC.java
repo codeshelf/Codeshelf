@@ -149,17 +149,15 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	// Associated path segment (optional)
 	@Column(nullable = true)
 	@ManyToOne(optional = true)
-	@Getter
-	//	@Setter
 	private PathSegment					pathSegment;
 
-//	// The owning organization.
-//	@Column(nullable = true)
-//	@ManyToOne(optional = true)
-//	@Getter
-//	@Setter
-//	private Organization				parentOrganization;
-//
+	//	// The owning organization.
+	//	@Column(nullable = true)
+	//	@ManyToOne(optional = true)
+	//	@Getter
+	//	@Setter
+	//	private Organization				parentOrganization;
+	//
 	// The LED controller.
 	@Column(nullable = true)
 	@ManyToOne(optional = true)
@@ -250,7 +248,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		anchorPosY = inAnchorPoint.getY();
 		anchorPosZ = inAnchorPoint.getZ();
 	}
-	
+
 	public final void setAnchorPosTypeByStr(final String inPosType) {
 		anchorPosTypeEnum = PositionTypeEnum.valueOf(inPosType);
 	}
@@ -454,10 +452,21 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		return result;
 	}
 
-	// --------------------------------------------------------------------------
-	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#setPathSegment(com.gadgetworks.codeshelf.model.domain.PathSegment)
-	 */
+	public final PathSegment getPathSegment() {
+		PathSegment result = null;
+
+		if (pathSegment == null) {
+			ILocation<?> parent = (ILocation<?>) getParent();
+			if (parent != null) {
+				result = parent.getPathSegment();
+			}
+		} else {
+			result = pathSegment;
+		}
+
+		return result;
+	}
+
 	public final void setPathSegment(final PathSegment inPathSegment) {
 
 		// Set the path segment recursively for all of the child locations as well.

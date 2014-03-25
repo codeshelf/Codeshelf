@@ -106,7 +106,7 @@ public class OrderCsvImporter implements ICsvOrderImporter {
 			archiveContainerStatuses(inFacility, processTime);
 
 			LOGGER.debug("End order import.");
-
+			
 			csvReader.close();
 
 			cleanupArchivedOrders();

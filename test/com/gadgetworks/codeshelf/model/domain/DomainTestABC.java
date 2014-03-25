@@ -288,7 +288,7 @@ public abstract class DomainTestABC {
 		aisle1.setPathSegment(pathSegment2);
 		mAisleDao.store(aisle4);
 
-		resultFacility.logLocationDistances();
+		resultFacility.recomputeLocationPathDistances(path);
 
 		Container container1 = createContainer("C1", resultFacility);
 		Container container2 = createContainer("C2", resultFacility);

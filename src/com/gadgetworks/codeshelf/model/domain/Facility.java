@@ -669,28 +669,24 @@ public class Facility extends SubLocationABC<Facility> {
 		for (PathSegment pathSegment : pathSegments) {
 			pathSegment.setParent(path);
 			PathSegment.DAO.store(pathSegment);
+			path.addPathSegment(pathSegment);
 		}
+
+		// Recompute the distances of the structures.
+		recomputeLocationPathDistances(path);
+
 	}
 
 	// --------------------------------------------------------------------------
 	/**
 	 * A sample routine to show the distance of locations along a path.
 	 */
-	public final void logLocationDistances() {
-		// List out Bays by distance from initiation point.
-		Path path = paths.get(Path.DEFAULT_FACILITY_PATH_ID);
-		if (path != null) {
+	public final void recomputeLocationPathDistances(Path inPath) {
+		for (Path path : paths.values()) {
 			for (PathSegment segment : path.getSegments()) {
 				segment.computePathDistance();
 				for (ILocation location : segment.getLocations()) {
-					if (location instanceof Aisle) {
-						Aisle aisle = (Aisle) location;
-						aisle.computePosAlongPath();
-						for (Bay bay : aisle.<Bay> getChildrenAtLevel(Bay.class)) {
-							LOGGER.info("Location: " + bay.getFullDomainId() + " is " + bay.getPosAlongPath()
-									+ " meters from the initiation point.");
-						}
-					}
+					location.computePosAlongPath();
 				}
 			}
 		}
