@@ -488,7 +488,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 		while (iterator.hasNext()) {
 			T checkLocation = iterator.next();
 			if (checkLocation.getPosAlongPath() < inAtOrPastLocation.getPosAlongPath()) {
-				locations.remove(checkLocation);
+				iterator.remove();
 			}
 		}
 		return locations;

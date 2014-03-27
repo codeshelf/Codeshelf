@@ -20,17 +20,14 @@ import com.gadgetworks.codeshelf.edi.IEdiProcessor;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.IDatabase;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.model.domain.Che;
-import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.Organization;
+import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
 import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.monitor.IMonitor;
 import com.gadgetworks.codeshelf.report.IPickDocumentGenerator;
 import com.gadgetworks.codeshelf.ws.websocket.IWebSocketServer;
-import com.gadgetworks.flyweight.command.NetGuid;
 import com.google.inject.Inject;
 
 public final class ServerCodeshelfApplication extends ApplicationABC {
@@ -203,6 +200,16 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		// Create some demo organizations.
 		createDemoOrganzation("DEMO1", "a@example.com", "testme");
 		createDemoOrganzation("DEMO2", "b@example.com", "testme");
+		
+		// Recompute path positions.
+		// TODO: Remove once we have a tool for linking path segments to locations (aisles usually).
+		for (Organization organization : mOrganizationDao.getAll()) {
+			for (Facility facility : organization.getFacilities()) {
+				for (Path path : facility.getPaths()) {
+					facility.recomputeLocationPathDistances(path);
+				}
+			}
+		}
 	}
 
 	// --------------------------------------------------------------------------

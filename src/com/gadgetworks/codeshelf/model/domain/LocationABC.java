@@ -149,6 +149,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	// Associated path segment (optional)
 	@Column(nullable = true)
 	@ManyToOne(optional = true)
+	@Setter
 	private PathSegment					pathSegment;
 
 	//	// The owning organization.
@@ -467,51 +468,39 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		return result;
 	}
 
-	public final void setPathSegment(final PathSegment inPathSegment) {
-
-		// Set the path segment recursively for all of the child locations as well.
-		for (ILocation<P> location : getChildren()) {
-			location.setPathSegment(inPathSegment);
-		}
-
-		pathSegment = inPathSegment;
-		//		try {
-		//			LocationABC.DAO.store(this);
-		//		} catch (DaoException e) {
-		//			LOGGER.error("", e);
-		//		}
-	}
-
-	public final void computePosAlongPath() {
-
-		// Also force a recompute for all of the child locations.
-		for (ILocation<P> location : getChildren()) {
-			location.computePosAlongPath();
-		}
+	public final void computePosAlongPath(final PathSegment inPathSegment) {
 
 		// Now compute the path position for this location.
 		Double pathPosition = 0.0;
-		PathSegment segment = this.getPathSegment();
-		if (segment != null) {
-			Point anchorPoint = segment.getStartPoint();
-			anchorPoint.add(getAbsoluteAnchorPoint());
-			if (segment.getParent().getTravelDirEnum().equals(TravelDirectionEnum.FORWARD)) {
-				pathPosition = segment.getStartPosAlongPath()
-						+ segment.computeDistanceOfPointFromLine(segment.getStartPoint(), segment.getEndPoint(), anchorPoint);
-			} else {
-				pathPosition = segment.getStartPosAlongPath()
-						+ segment.computeDistanceOfPointFromLine(segment.getEndPoint(), segment.getStartPoint(), anchorPoint);
-			}
-
-			LOGGER.debug(this.getFullDomainId() + "Path pos: " + pathPosition + " Location Point - x: " + anchorPoint.getX()
-					+ " y: " + anchorPoint.getY());
+		Point segmentAnchorPoint = inPathSegment.getStartPoint();
+		Point locationAnchorPoint = getAbsoluteAnchorPoint();
+		//segmentAnchorPoint.add(locationAnchorPoint);
+		if (inPathSegment.getParent().getTravelDirEnum().equals(TravelDirectionEnum.FORWARD)) {
+			pathPosition = inPathSegment.getStartPosAlongPath()
+					+ inPathSegment.computeDistanceOfPointFromLine(inPathSegment.getStartPoint(),
+						inPathSegment.getEndPoint(),
+						locationAnchorPoint);
+		} else {
+			pathPosition = inPathSegment.getStartPosAlongPath()
+					+ inPathSegment.computeDistanceOfPointFromLine(inPathSegment.getEndPoint(),
+						inPathSegment.getStartPoint(),
+						locationAnchorPoint);
 		}
+
+		LOGGER.debug(this.getFullDomainId() + "Path pos: " + pathPosition + " Location Point - x: " + locationAnchorPoint.getX()
+				+ " y: " + locationAnchorPoint.getY());
+
 		posAlongPath = pathPosition;
 
 		try {
 			LocationABC.DAO.store(this);
 		} catch (DaoException e) {
 			LOGGER.error("", e);
+		}
+
+		// Also force a recompute for all of the child locations.
+		for (ILocation<P> location : getChildren()) {
+			location.computePosAlongPath(inPathSegment);
 		}
 	}
 

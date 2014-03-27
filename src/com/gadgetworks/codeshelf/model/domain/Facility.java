@@ -200,6 +200,10 @@ public class Facility extends SubLocationABC<Facility> {
 		return paths.get(inPathId);
 	}
 
+	public final List<Path> getPaths() {
+		return new ArrayList<Path>(paths.values());
+	}
+
 	public final void removePath(String inPathId) {
 		paths.remove(inPathId);
 	}
@@ -398,6 +402,7 @@ public class Facility extends SubLocationABC<Facility> {
 						if (inBaysHigh > 1) {
 							bayName += Integer.toString(bayHighNum);
 						}
+						bayAnchorPoint.setAnchorPosZ(anchorPosZ);
 						Bay bay = createZigZagBay(aisle,
 							bayName,
 							inLeftHandBay,
@@ -505,8 +510,11 @@ public class Facility extends SubLocationABC<Facility> {
 		final LedController inLedController,
 		final short inLedChannelNum) {
 
-		Point pickFaceEndPoint = computePickFaceEndPoint(inAnchorPoint, inProtoBayPoint.getX(), inRunsInXDir);
-		Bay resultBay = new Bay(inParentAisle, inBayId, inAnchorPoint, pickFaceEndPoint);
+		Point bayAnchorPoint = new Point(inAnchorPoint);
+		Point bayPickFacePoint = new Point(inProtoBayPoint);
+		
+		Point pickFaceEndPoint = computePickFaceEndPoint(bayAnchorPoint, bayPickFacePoint.getX(), inRunsInXDir);
+		Bay resultBay = new Bay(inParentAisle, inBayId, bayAnchorPoint, pickFaceEndPoint);
 
 		resultBay.setFirstLedNumAlongPath(inFirstLedNum);
 		resultBay.setLastLedNumAlongPath((short) (inFirstLedNum + 160));
@@ -526,8 +534,8 @@ public class Facility extends SubLocationABC<Facility> {
 				"T" + tierNum,
 				leftToRight,
 				inRunsInXDir,
-				inProtoBayPoint.getY(),
-				inProtoBayPoint.getZ(),
+				bayPickFacePoint.getY(),
+				bayPickFacePoint.getZ(),
 				tierZPos,
 				inLedController,
 				inLedChannelNum,
@@ -570,7 +578,8 @@ public class Facility extends SubLocationABC<Facility> {
 		final Short inFirstLedPosNum,
 		final Short inTierLedCount) {
 
-		Point anchorPoint = new Point(inParentBay.getAnchorPoint());
+		Point anchorPoint = Point.getZeroPoint();
+		anchorPoint.translateZ(inTierZOffset);
 		Point pickFaceEndPoint = computePickFaceEndPoint(anchorPoint, inBayWidth, inRunsInXDir);
 		pickFaceEndPoint.translateZ(inTierZOffset);
 		Tier tier = new Tier(anchorPoint, pickFaceEndPoint);
@@ -595,15 +604,17 @@ public class Facility extends SubLocationABC<Facility> {
 
 		// Add slots to this tier.
 		if (inSlotRunsRight) {
-			createSlot(tier, "S1", inRunsInXDir, 0.0, inLedController, inLedChannelNum, (short) 2, (short) 9);
-			createSlot(tier, "S2", inRunsInXDir, 0.25, inLedController, inLedChannelNum, (short) 11, (short) 18);
-			createSlot(tier, "S3", inRunsInXDir, 0.5, inLedController, inLedChannelNum, (short) 20, (short) 26);
-			createSlot(tier, "S4", inRunsInXDir, 1.0, inLedController, inLedChannelNum, (short) 28, (short) 32);
+			createSlot(tier, "S1", inRunsInXDir, 0.0, inLedController, inLedChannelNum, (short) 2, (short) 7);
+			createSlot(tier, "S2", inRunsInXDir, 0.25, inLedController, inLedChannelNum, (short) 13, (short) 8);
+			createSlot(tier, "S3", inRunsInXDir, 0.5, inLedController, inLedChannelNum, (short) 14, (short) 19);
+			createSlot(tier, "S4", inRunsInXDir, 0.75, inLedController, inLedChannelNum, (short) 25, (short) 20);
+			createSlot(tier, "S5", inRunsInXDir, 1.0, inLedController, inLedChannelNum, (short) 26, (short) 31);
 		} else {
-			createSlot(tier, "S1", inRunsInXDir, 0.0, inLedController, inLedChannelNum, (short) 31, (short) 24);
-			createSlot(tier, "S2", inRunsInXDir, 0.25, inLedController, inLedChannelNum, (short) 22, (short) 15);
-			createSlot(tier, "S3", inRunsInXDir, 0.5, inLedController, inLedChannelNum, (short) 13, (short) 6);
-			createSlot(tier, "S4", inRunsInXDir, 1.0, inLedController, inLedChannelNum, (short) 4, (short) 1);
+			createSlot(tier, "S1", inRunsInXDir, 0.0, inLedController, inLedChannelNum, (short) 31, (short) 26);
+			createSlot(tier, "S2", inRunsInXDir, 0.25, inLedController, inLedChannelNum, (short) 20, (short) 25);
+			createSlot(tier, "S3", inRunsInXDir, 0.5, inLedController, inLedChannelNum, (short) 19, (short) 14);
+			createSlot(tier, "S4", inRunsInXDir, 0.75, inLedController, inLedChannelNum, (short) 13, (short) 8);
+			createSlot(tier, "S5", inRunsInXDir, 1.0, inLedController, inLedChannelNum, (short) 2, (short) 7);
 		}
 	}
 
@@ -627,7 +638,13 @@ public class Facility extends SubLocationABC<Facility> {
 		final Short inFirstLedPosNum,
 		final Short inLastLedPosNum) {
 
-		Point anchorPoint = inParentTier.getAnchorPoint();
+		Point anchorPoint = Point.getZeroPoint();
+		if (inRunsInXDir) {
+			anchorPoint.translateX(inOffset);
+		} else {
+			anchorPoint.translateY(inOffset);
+		}
+		
 		Point pickFaceEndPoint = computePickFaceEndPoint(anchorPoint, 0.25, inRunsInXDir);
 
 		Slot slot = new Slot(anchorPoint, pickFaceEndPoint);
@@ -685,8 +702,8 @@ public class Facility extends SubLocationABC<Facility> {
 		for (Path path : paths.values()) {
 			for (PathSegment segment : path.getSegments()) {
 				segment.computePathDistance();
-				for (ILocation location : segment.getLocations()) {
-					location.computePosAlongPath();
+				for (ILocation<?> location : segment.getLocations()) {
+					location.computePosAlongPath(segment);
 				}
 			}
 		}
@@ -896,25 +913,26 @@ public class Facility extends SubLocationABC<Facility> {
 				aisle = cheLocation.<Aisle> getParentAtLevel(Aisle.class);
 			}
 			PathSegment pathSegment = aisle.getPathSegment();
-			Path path = pathSegment.getParent();
-			WorkArea workArea = path.getWorkArea();
+			if (pathSegment != null) {
+				Path path = pathSegment.getParent();
+				WorkArea workArea = path.getWorkArea();
 
-			if (path != null) {
-				// Now figure out the orders that go with these containers.
-				List<Container> containerList = new ArrayList<Container>();
-				for (String containerId : inContainerIdList) {
-					Container container = getContainer(containerId);
-					if (container != null) {
-						containerList.add(container);
+				if (path != null) {
+					// Now figure out the orders that go with these containers.
+					List<Container> containerList = new ArrayList<Container>();
+					for (String containerId : inContainerIdList) {
+						Container container = getContainer(containerId);
+						if (container != null) {
+							containerList.add(container);
+						}
 					}
+					
+					// Get all of the OUTBOUND work instructions.
+					wiResultList.addAll(generateOutboundInstructions(containerList, path, inScannedLocationId, cheLocation));
+
+					// Get all of the CROSS work instructions.
+					wiResultList.addAll(generateCrossWallInstructions(containerList, path, inScannedLocationId, cheLocation));
 				}
-
-				// Get all of the OUTBOUND work instructions.
-				wiResultList.addAll(generateOutboundInstructions(containerList, path, inScannedLocationId, cheLocation));
-
-				// Get all of the CROSS work instructions.
-				wiResultList.addAll(generateCrossWallInstructions(containerList, path, inScannedLocationId, cheLocation));
-
 			}
 		}
 		return wiResultList;

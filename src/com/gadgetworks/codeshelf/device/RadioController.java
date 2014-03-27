@@ -78,7 +78,7 @@ public class RadioController implements IRadioController {
 	private static final long									CTRL_START_DELAY_MILLIS				= 200;
 	private static final long									NETCHECK_DELAY_MILLIS				= 250;
 
-	private static final long									ACK_TIMEOUT_MILLIS					= 50;
+	private static final long									ACK_TIMEOUT_MILLIS					= 500;
 	private static final int									ACK_SEND_RETRY_COUNT				= 10;
 	private static final long									EVENT_SLEEP_MILLIS					= 50;
 	private static final long									INTERFACE_CHECK_MILLIS				= 5 * 1000;

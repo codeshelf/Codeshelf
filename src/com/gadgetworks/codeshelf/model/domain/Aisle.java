@@ -73,36 +73,4 @@ public class Aisle extends SubLocationABC<Facility> {
 	public final String getDefaultDomainIdPrefix() {
 		return "A";
 	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * Create the aisle's paths.  (Eventually we may support this on all location types.)
-	 * @param inXDimMeters
-	 * @param inYDimMeters
-	 * @param inTravelDirection
-	 */
-	public final void createPaths(final Double inXDimMeters,
-		final Double inYDimMeters,
-		final TravelDirectionEnum inTravelDirection,
-		boolean inOpensLowSide) {
-
-		// Create the default path for this aisle.
-		Path path = Path.DAO.findByDomainId(getParent(), Path.DEFAULT_FACILITY_PATH_ID);
-		if (path == null) {
-			path = new Path();
-			path.setParent(getParent());
-			path.setDomainId(Path.DEFAULT_FACILITY_PATH_ID);
-			path.setDescription("Default Facility Path");
-			path.setTravelDirEnum(inTravelDirection);
-			try {
-				Path.DAO.store(path);
-			} catch (DaoException e) {
-				LOGGER.error("", e);
-			}
-		}
-		path.createDefaultWorkArea();
-		path.createPathSegments(this, inXDimMeters, inYDimMeters, inOpensLowSide);
-
-		computePosAlongPath();
-	}
 }
