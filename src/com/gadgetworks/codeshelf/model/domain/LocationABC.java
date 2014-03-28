@@ -307,7 +307,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 			} else {
 				// The current parent is not the class we want so recurse up the hierarchy.
 				result = checkParent.getLocationIdToParentLevel(inClassWanted);
-				result = result + "." + checkParent.getLocationId();
+				result = result + "." + getLocationId();
 			}
 		}
 

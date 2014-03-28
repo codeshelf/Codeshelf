@@ -614,6 +614,23 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * Sort the WIs by their distance along the path.
+	 */
+	private class WiGroupSortComparator implements Comparator<WorkInstruction> {
+
+		public int compare(WorkInstruction inWi1, WorkInstruction inWi2) {
+			if (inWi1 == null) {
+				return -1;
+			} else if (inWi2 == null) {
+				return 1;
+			} else {
+				return inWi1.getGroupAndSortCode().compareTo(inWi2.getGroupAndSortCode());
+			}
+		}
+	};
+
+	// --------------------------------------------------------------------------
+	/**
 	 */
 	private boolean selectNextActivePicks() {
 		boolean result = false;
@@ -622,7 +639,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		// The "next location" is the first location we find for the next pick.
 		String firstLocationId = null;
 		String firstItemId = null;
-		Collections.sort(mAllPicksWiList, new WiDistanceComparator());
+		Collections.sort(mAllPicksWiList, new WiGroupSortComparator());
 		for (WorkInstruction wi : mAllPicksWiList) {
 			for (String containerId : mContainersMap.values()) {
 				// If the WI is for this container then consider it.
@@ -677,6 +694,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			if (getCheStateEnum() != CheStateEnum.DO_PICK) {
 				setState(CheStateEnum.DO_PICK);
 			}
+			ledControllerClearLeds();
 			sendDisplayCommand(firstWi.getPickInstruction() + "  " + firstWi.getItemId(), firstWi.getDescription());
 
 			List<LedCmdGroup> ledCmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(firstWi.getLedCmdStream());
@@ -690,9 +708,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 					Short startLedNum = ledCmdGroup.getPosNum();
 					Short currLedNum = startLedNum;
 
-					// Clear the last LED commands to this controller if there were any.
-					// TODO: this might not work if we have several controllers for one WI now!
-					if (mLastLedControllerGuid != null) {
+					// Clear the last LED commands to this controller if the last controller was different.
+					if ((mLastLedControllerGuid != null) && (!ledController.getGuid().equals(mLastLedControllerGuid))) {
 						ledControllerClearLeds();
 					}
 

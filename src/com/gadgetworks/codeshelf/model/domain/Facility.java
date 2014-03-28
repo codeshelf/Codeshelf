@@ -512,7 +512,7 @@ public class Facility extends SubLocationABC<Facility> {
 
 		Point bayAnchorPoint = new Point(inAnchorPoint);
 		Point bayPickFacePoint = new Point(inProtoBayPoint);
-		
+
 		Point pickFaceEndPoint = computePickFaceEndPoint(bayAnchorPoint, bayPickFacePoint.getX(), inRunsInXDir);
 		Bay resultBay = new Bay(inParentAisle, inBayId, bayAnchorPoint, pickFaceEndPoint);
 
@@ -644,7 +644,7 @@ public class Facility extends SubLocationABC<Facility> {
 		} else {
 			anchorPoint.translateY(inOffset);
 		}
-		
+
 		Point pickFaceEndPoint = computePickFaceEndPoint(anchorPoint, 0.25, inRunsInXDir);
 
 		Slot slot = new Slot(anchorPoint, pickFaceEndPoint);
@@ -926,7 +926,7 @@ public class Facility extends SubLocationABC<Facility> {
 							containerList.add(container);
 						}
 					}
-					
+
 					// Get all of the OUTBOUND work instructions.
 					wiResultList.addAll(generateOutboundInstructions(containerList, path, inScannedLocationId, cheLocation));
 
@@ -966,7 +966,6 @@ public class Facility extends SubLocationABC<Facility> {
 						// If there is no item in inventory (AT ALL) then create a PLANEED, SHORT WI for this order detail.
 						WorkInstruction plannedWi = createWorkInstruction(WorkInstructionStatusEnum.SHORT,
 							WorkInstructionTypeEnum.ACTUAL,
-							OrderTypeEnum.OUTBOUND,
 							orderDetail,
 							0,
 							container,
@@ -998,7 +997,6 @@ public class Facility extends SubLocationABC<Facility> {
 							if (quantityToPick > 0) {
 								WorkInstruction plannedWi = createWorkInstruction(WorkInstructionStatusEnum.NEW,
 									WorkInstructionTypeEnum.PLAN,
-									OrderTypeEnum.OUTBOUND,
 									orderDetail,
 									quantityToPick,
 									container,
@@ -1077,7 +1075,6 @@ public class Facility extends SubLocationABC<Facility> {
 
 										WorkInstruction wi = createWorkInstruction(WorkInstructionStatusEnum.NEW,
 											WorkInstructionTypeEnum.PLAN,
-											OrderTypeEnum.CROSS,
 											outOrderDetail,
 											outOrderDetail.getQuantity(),
 											container,
@@ -1195,7 +1192,6 @@ public class Facility extends SubLocationABC<Facility> {
 	 */
 	private WorkInstruction createWorkInstruction(WorkInstructionStatusEnum inStatus,
 		WorkInstructionTypeEnum inType,
-		final OrderTypeEnum inOrderType,
 		OrderDetail inOrderDetail,
 		Integer inQuantityToPick,
 		Container inContainer,
@@ -1225,7 +1221,11 @@ public class Facility extends SubLocationABC<Facility> {
 			}
 
 			// Set the LED lighting pattern for this WI.
-			setWorkInstructionLedPattern(resultWi, inOrderType, inOrderDetail.getItemMasterId(), inLocation);
+			if (inOrderDetail.getParent().getOrderTypeEnum().equals(OrderTypeEnum.CROSS)) {
+				setCrossWorkInstructionLedPattern(resultWi, inOrderDetail.getItemMasterId(), inLocation);
+			} else {
+				setOutboundWorkInstructionLedPattern(resultWi, inOrderDetail.getParent());
+			}
 
 			// Update the WI
 			resultWi.setDomainId(Long.toString(System.currentTimeMillis()));
@@ -1262,27 +1262,56 @@ public class Facility extends SubLocationABC<Facility> {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * @param inWi
+	 * @param inOrder
+	 */
+	private void setOutboundWorkInstructionLedPattern(final WorkInstruction inWi, final OrderHeader inOrder) {
+
+		List<LedCmdGroup> ledCmdGroupList = new ArrayList<LedCmdGroup>();
+		for (OrderLocation orderLocation : inOrder.getOrderLocations()) {
+			if (orderLocation.getActive()) {
+				short firstLedPosNum = orderLocation.getLocation().getFirstLedNumAlongPath();
+				short lastLedPosNum = orderLocation.getLocation().getLastLedNumAlongPath();
+
+				// Put the positions into increasing order.
+				if (firstLedPosNum > lastLedPosNum) {
+					Short temp = firstLedPosNum;
+					firstLedPosNum = lastLedPosNum;
+					lastLedPosNum = temp;
+				}
+
+				// The new way of sending LED data to the remote controller.
+				List<LedSample> ledSamples = new ArrayList<LedSample>();
+				LedCmdGroup ledCmdGroup = new LedCmdGroup(orderLocation.getLocation().getLedController().getDeviceGuidStr(),
+					orderLocation.getLocation().getLedChannel(),
+					firstLedPosNum,
+					ledSamples);
+
+				for (short ledPos = firstLedPosNum; ledPos < lastLedPosNum; ledPos++) {
+					LedSample ledSample = new LedSample(ledPos, ColorEnum.BLUE);
+					ledSamples.add(ledSample);
+				}
+				ledCmdGroup.setLedSampleList(ledSamples);
+				ledCmdGroupList.add(ledCmdGroup);
+			}
+		}
+		inWi.setLedCmdStream(LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList));
+	}
+
+	// --------------------------------------------------------------------------
+	/**
 	 * Create the LED lighting pattern for the WI.
 	 * @param inWi
 	 * @param inOrderType
 	 * @param inItemId
 	 * @param inLocation
 	 */
-	private void setWorkInstructionLedPattern(final WorkInstruction inWi,
-		final OrderTypeEnum inOrderType,
+	private void setCrossWorkInstructionLedPattern(final WorkInstruction inWi,
 		final String inItemId,
 		final ISubLocation<?> inLocation) {
 
-		// Determine the first and last LED positions for this instruction.
-		short firstLedPosNum = 0;
-		short lastLedPosNum = 0;
-		if (inOrderType.equals(OrderTypeEnum.OUTBOUND)) {
-			firstLedPosNum = inLocation.getFirstLedPosForItemId(inItemId);
-			lastLedPosNum = inLocation.getLastLedPosForItemId(inItemId);
-		} else if (inOrderType.equals(OrderTypeEnum.CROSS)) {
-			firstLedPosNum = inLocation.getFirstLedNumAlongPath();
-			lastLedPosNum = inLocation.getLastLedNumAlongPath();
-		}
+		short firstLedPosNum = inLocation.getFirstLedPosForItemId(inItemId);
+		short lastLedPosNum = inLocation.getLastLedPosForItemId(inItemId);
 
 		// Put the positions into increasing order.
 		if (firstLedPosNum > lastLedPosNum) {
@@ -1307,7 +1336,6 @@ public class Facility extends SubLocationABC<Facility> {
 
 		ledCmdGroupList.add(ledCmdGroup);
 		inWi.setLedCmdStream(LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList));
-
 	}
 
 	/**
