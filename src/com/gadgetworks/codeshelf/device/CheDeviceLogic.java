@@ -695,7 +695,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				setState(CheStateEnum.DO_PICK);
 			}
 			ledControllerClearLeds();
-			sendDisplayCommand(firstWi.getPickInstruction() + "  " + firstWi.getItemId(), firstWi.getDescription());
+			sendDisplayCommand(firstWi.getPickInstruction(), firstWi.getDescription());
 
 			List<LedCmdGroup> ledCmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(firstWi.getLedCmdStream());
 

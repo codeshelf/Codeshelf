@@ -766,23 +766,6 @@ public class Facility extends SubLocationABC<Facility> {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * @param inFacility
-	 * @return
-	 */
-	public final DropboxService getDropboxService() {
-		DropboxService result = null;
-
-		for (IEdiService ediService : getEdiServices()) {
-			if (ediService instanceof DropboxService) {
-				result = (DropboxService) ediService;
-			}
-			break;
-		}
-		return result;
-	}
-
-	// --------------------------------------------------------------------------
-	/**
 	 */
 	@Transactional
 	public final void createDefaultContainerKind() {
@@ -819,6 +802,23 @@ public class Facility extends SubLocationABC<Facility> {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * @return
+	 */
+	public final DropboxService getDropboxService() {
+		DropboxService result = null;
+
+		for (IEdiService ediService : getEdiServices()) {
+			if (ediService instanceof DropboxService) {
+				result = (DropboxService) ediService;
+			}
+			break;
+		}
+		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @return
 	 */
 	@Transactional
 	public final DropboxService createDropboxService() {
@@ -860,22 +860,6 @@ public class Facility extends SubLocationABC<Facility> {
 			CodeshelfNetwork.DAO.store(result);
 		} catch (DaoException e) {
 			LOGGER.error("", e);
-		}
-
-		return result;
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * @return
-	 */
-	public final String linkDropbox() {
-		String result = "";
-
-		DropboxService dropboxService = this.getDropboxService();
-
-		if (dropboxService != null) {
-			result = dropboxService.link();
 		}
 
 		return result;

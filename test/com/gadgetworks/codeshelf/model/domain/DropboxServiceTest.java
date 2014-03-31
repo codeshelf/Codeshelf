@@ -20,17 +20,17 @@ import com.gadgetworks.codeshelf.model.dao.MockDao;
 import com.gadgetworks.codeshelf.model.dao.Result;
 
 public class DropboxServiceTest {
-	
+
 	/*
 	 * It's pretty easy to test and already connected DB account, but it's impossible to test the link process.
 	 * Dropbox FORCES to use a manual procedure to connect our app to an account.
 	 */
 
-	private final static String	TEST_CREDENTIALS	= "{\"appToken\":{\"key\":\"feh3ontnajdmmin\",\"secret\":\"4jm05vbugwnq9pe\"},\"accessToken\":{\"key\":\"rfoew5gfe5fchjr\",\"secret\":\"7ur0gokvvu0dtlo\"}}";
+	private final static String	TEST_CREDENTIALS	= "_j2uNuj7o0AAAAAAAAAAAQSaC0B6__GxvCqr-GMHyr7V97ci8Qqb80KThe-qdvOB";
 
 	@Test
 	public final void dropboxCheckTest() {
-		
+
 		Organization.DAO = new MockDao<Organization>();
 		Facility.DAO = new MockDao<Facility>();
 		Aisle.DAO = new MockDao<Aisle>();
@@ -38,17 +38,17 @@ public class DropboxServiceTest {
 		Vertex.DAO = new MockDao<Vertex>();
 		DropboxService.DAO = new MockDao<DropboxService>();
 		EdiDocumentLocator.DAO = new MockDao<EdiDocumentLocator>();
-		
+
 		Organization organization = new Organization();
 		organization.setOrganizationId("O1");
 		Facility facility = new Facility();
 		facility.setParent(organization);
 		facility.setFacilityId("TEST1");
-		
+
 		facility.createDropboxService();
-		
+
 		DropboxService dropboxService = facility.getDropboxService();
-		
+
 		dropboxService.setParent(facility);
 		dropboxService.setDomainId("DB");
 		dropboxService.setProviderCredentials(TEST_CREDENTIALS);
@@ -57,46 +57,51 @@ public class DropboxServiceTest {
 		final Result checkImportOrders = new Result();
 
 		ICsvOrderImporter orderImporter = new ICsvOrderImporter() {
-			
+
 			@Override
 			public void importOrdersFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
-				checkImportOrders.result = true;			}
+				checkImportOrders.result = true;
+			}
 		};
-		
+
 		ICsvInventoryImporter inventoryImporter = new ICsvInventoryImporter() {
-			
+
 			@Override
 			public void importSlottedInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
 			}
-			
+
 			@Override
 			public void importDdcInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
 			}
 		};
-		
+
 		ICsvLocationAliasImporter locationImporter = new ICsvLocationAliasImporter() {
-			
+
 			@Override
 			public void importLocationAliasesFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
 			}
 		};
-		
+
 		ICsvOrderLocationImporter orderLocationImporter = new ICsvOrderLocationImporter() {
-			
+
 			@Override
 			public void importOrderLocationsFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
 			}
 		};
-		
+
 		ICsvCrossBatchImporter crossBatchImporter = new ICsvCrossBatchImporter() {
-			
+
 			@Override
 			public void importCrossBatchesFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
 			}
 		};
-		
-		dropboxService.checkForCsvUpdates(orderImporter, orderLocationImporter, inventoryImporter, locationImporter, crossBatchImporter);
-		
+
+		dropboxService.checkForCsvUpdates(orderImporter,
+			orderLocationImporter,
+			inventoryImporter,
+			locationImporter,
+			crossBatchImporter);
+
 		Assert.assertTrue(checkImportOrders.result);
 	}
 }

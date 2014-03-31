@@ -103,6 +103,7 @@ public final class EdiProcessor implements IEdiProcessor {
 			} catch (Exception e) {
 				// We don't want the thread to exit on some weird, uncaught errors in the processor.
 				LOGGER.error("", e);
+				mLastProcessMillis = System.currentTimeMillis();
 			}
 		}
 	}

@@ -5,48 +5,42 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.StringWriter;
 import java.sql.Timestamp;
+import java.util.Locale;
 
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 
 import lombok.Getter;
 import lombok.Setter;
 
-import org.codehaus.jackson.JsonGenerationException;
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.JsonProcessingException;
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.annotate.JsonProperty;
-import org.codehaus.jackson.map.JsonMappingException;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
-import com.dropbox.client2.DropboxAPI;
-import com.dropbox.client2.DropboxAPI.DeltaEntry;
-import com.dropbox.client2.DropboxAPI.DeltaPage;
-import com.dropbox.client2.DropboxAPI.DropboxInputStream;
-import com.dropbox.client2.DropboxAPI.Entry;
-import com.dropbox.client2.exception.DropboxException;
-import com.dropbox.client2.exception.DropboxServerException;
-import com.dropbox.client2.session.AccessTokenPair;
-import com.dropbox.client2.session.AppKeyPair;
-import com.dropbox.client2.session.Session;
-import com.dropbox.client2.session.WebAuthSession;
+import com.dropbox.core.DbxAppInfo;
+import com.dropbox.core.DbxAuthFinish;
+import com.dropbox.core.DbxClient;
+import com.dropbox.core.DbxDelta;
+import com.dropbox.core.DbxEntry;
+import com.dropbox.core.DbxException;
+import com.dropbox.core.DbxRequestConfig;
+import com.dropbox.core.DbxWebAuthNoRedirect;
+import com.gadgetworks.codeshelf.edi.ICsvCrossBatchImporter;
 import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
 import com.gadgetworks.codeshelf.edi.ICsvLocationAliasImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderLocationImporter;
-import com.gadgetworks.codeshelf.edi.ICsvCrossBatchImporter;
 import com.gadgetworks.codeshelf.model.EdiDocumentStatusEnum;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
@@ -68,7 +62,8 @@ import com.google.inject.Singleton;
 @Entity
 @Table(name = "edi_service")
 @DiscriminatorValue("DROPBOX")
-@CacheStrategy(useBeanCache = true)@JsonAutoDetect(getterVisibility = Visibility.NONE)
+@CacheStrategy(useBeanCache = true)
+@JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class DropboxService extends EdiServiceABC {
 
 	@Inject
@@ -95,16 +90,16 @@ public class DropboxService extends EdiServiceABC {
 	private static final Integer	LINK_RETRIES			= 20;
 	private static final Integer	RETRY_SECONDS			= 10 * 1000;
 
-	private static final String		FACILITY_FOLDER_PATH	= "/FACILITY_";
+	private static final String		FACILITY_FOLDER_PATH	= "FACILITY_";
 
-	private static final String		IMPORT_DIR_PATH			= "import/";
-	private static final String		IMPORT_ORDERS_PATH		= "orders/";
-	private static final String		IMPORT_BATCHES_PATH		= "batches/";
-	private static final String		IMPORT_INVENTORY_PATH	= "inventory/";
-	private static final String		IMPORT_LOCATIONS_PATH	= "locations/";
+	private static final String		IMPORT_DIR_PATH			= "import";
+	private static final String		IMPORT_ORDERS_PATH		= "orders";
+	private static final String		IMPORT_BATCHES_PATH		= "batches";
+	private static final String		IMPORT_INVENTORY_PATH	= "inventory";
+	private static final String		IMPORT_LOCATIONS_PATH	= "locations";
 
-	private static final String		EXPORT_DIR_PATH			= "export/";
-	private static final String		EXPORT_WIS_PATH			= "work/";
+	private static final String		EXPORT_DIR_PATH			= "export";
+	private static final String		EXPORT_WIS_PATH			= "work";
 
 	@Column(nullable = true, name = "CURSOR")
 	@Getter
@@ -134,9 +129,9 @@ public class DropboxService extends EdiServiceABC {
 		// Make sure we believe that we're properly registered with the service before we try to contact it.
 		if (getServiceStateEnum().equals(EdiServiceStateEnum.LINKED)) {
 
-			DropboxAPI<Session> clientSession = getClientSession();
-			if (clientSession != null) {
-				result = checkForChangedDocuments(clientSession,
+			DbxClient client = getClient();
+			if (client != null) {
+				result = checkForChangedDocuments(client,
 					inCsvOrderImporter,
 					inCsvOrderLocationImporter,
 					inCsvInventoryImporter,
@@ -152,7 +147,7 @@ public class DropboxService extends EdiServiceABC {
 	/**
 	 * @param inClientSession
 	 */
-	private Boolean checkForChangedDocuments(DropboxAPI<Session> inClientSession,
+	private Boolean checkForChangedDocuments(DbxClient inClient,
 		ICsvOrderImporter inCsvOrderImporter,
 		ICsvOrderLocationImporter inCsvOrderLocationImporter,
 		ICsvInventoryImporter inCsvInventoryImporter,
@@ -160,12 +155,12 @@ public class DropboxService extends EdiServiceABC {
 		ICsvCrossBatchImporter inCsvCrossBatchImporter) {
 		Boolean result = false;
 
-		if (ensureBaseDirectories(inClientSession)) {
-			DeltaPage<Entry> page = getNextPage(inClientSession);
+		if (ensureBaseDirectories(inClient)) {
+			DbxDelta<DbxEntry> page = getNextPage(inClient);
 			while ((page != null) && (page.entries.size() > 0)) {
 				// Signal that we got some deltas
 				result = true;
-				if (iteratePage(inClientSession,
+				if (iteratePage(inClient,
 					page,
 					inCsvOrderImporter,
 					inCsvOrderLocationImporter,
@@ -180,7 +175,7 @@ public class DropboxService extends EdiServiceABC {
 					}
 
 					if (page.hasMore) {
-						page = getNextPage(inClientSession);
+						page = getNextPage(inClient);
 					} else {
 						page = null;
 					}
@@ -196,14 +191,14 @@ public class DropboxService extends EdiServiceABC {
 	 * @param inClientSession
 	 * @return
 	 */
-	private DeltaPage<Entry> getNextPage(DropboxAPI<Session> inClientSession) {
-		DeltaPage<Entry> result = null;
+	private DbxDelta<DbxEntry> getNextPage(DbxClient inClient) {
+		DbxDelta<DbxEntry> result = null;
 		try {
-			result = inClientSession.delta(getDbCursor());
+			result = inClient.getDelta(getDbCursor());
 			if (result != null) {
 				setDbCursor(result.cursor);
 			}
-		} catch (DropboxException e) {
+		} catch (DbxException e) {
 			LOGGER.error("Dropbox session error", e);
 		}
 		return result;
@@ -214,8 +209,8 @@ public class DropboxService extends EdiServiceABC {
 	 * @param inClientSession
 	 * @param inPage
 	 */
-	private Boolean iteratePage(DropboxAPI<Session> inClientSession,
-		DeltaPage<Entry> inPage,
+	private Boolean iteratePage(DbxClient inClient,
+		DbxDelta<DbxEntry> inPage,
 		ICsvOrderImporter inCsvOrderImporter,
 		ICsvOrderLocationImporter inCsvOrderLocationImporter,
 		ICsvInventoryImporter inCsvInventoryImporter,
@@ -223,12 +218,12 @@ public class DropboxService extends EdiServiceABC {
 		ICsvCrossBatchImporter inCsvCrossBatchImporter) {
 		Boolean result = true;
 
-		for (DeltaEntry<Entry> entry : inPage.entries) {
+		for (DbxDelta.Entry<DbxEntry> entry : inPage.entries) {
 			LOGGER.info(entry.lcPath);
 			try {
 				if (entry.metadata != null) {
 					// Add, or modify.
-					result &= processEntry(inClientSession,
+					result &= processEntry(inClient,
 						entry,
 						inCsvOrderImporter,
 						inCsvOrderLocationImporter,
@@ -236,7 +231,7 @@ public class DropboxService extends EdiServiceABC {
 						inCsvLocationAliasImporter,
 						inCsvCrossBatchImporter);
 				} else {
-					result &= removeEntry(inClientSession, entry);
+					result &= removeEntry(inClient, entry);
 				}
 			} catch (RuntimeException e) {
 				LOGGER.error("", e);
@@ -272,49 +267,36 @@ public class DropboxService extends EdiServiceABC {
 	/**
 	 * @return
 	 */
-	private DropboxAPI<Session> getClientSession() {
+	private DbxClient getClient() {
 
-		DropboxAPI<Session> result = null;
+		DbxClient result = null;
 
 		String credentials = getProviderCredentials();
-		try {
-			if (credentials != null) {
-				ObjectMapper mapper = new ObjectMapper();
-				JsonNode credentialsNode = mapper.readTree(credentials);
-				JsonNode appKeyNode = credentialsNode.get("appToken");
-				JsonNode accessTokenNode = credentialsNode.get("accessToken");
-
-				AppKeyPair appKey = new AppKeyPair(appKeyNode.get("key").getTextValue(), appKeyNode.get("secret").getTextValue());
-				AccessTokenPair accessToken = new AccessTokenPair(accessTokenNode.get("key").getTextValue(),
-					accessTokenNode.get("secret").getTextValue());
-
-				WebAuthSession session = new WebAuthSession(appKey, WebAuthSession.AccessType.APP_FOLDER);
-				session.setAccessTokenPair(accessToken);
-				result = new DropboxAPI<Session>(session);
-			}
-		} catch (JsonProcessingException e) {
-			LOGGER.error("Couldn't process JSON credentials for Dropbox", e);
-		} catch (IOException e) {
-			LOGGER.error("Couldn't process JSON credentials for Dropbox", e);
+		if (credentials != null) {
+			DbxRequestConfig config = new DbxRequestConfig("Codeshelf Interface", Locale.getDefault().toString());
+			result = new DbxClient(config, credentials);
 		}
-
 		return result;
 	}
 
-	// --------------------------------------------------------------------------
-	/**
-	 * @return
-	 */
 	private String getFacilityPath() {
-		return new String(FACILITY_FOLDER_PATH + getParent().getDomainId() + "/").toLowerCase();
+		return new String("/" + FACILITY_FOLDER_PATH + getParent().getDomainId()).toLowerCase();
 	}
 
-	// --------------------------------------------------------------------------
-	/**
-	 * @return
-	 */
 	private String getFacilityImportPath() {
-		return new String(FACILITY_FOLDER_PATH + getParent().getDomainId() + "/" + IMPORT_DIR_PATH).toLowerCase();
+		return new String(getFacilityPath() + "/" + IMPORT_DIR_PATH).toLowerCase();
+	}
+
+	private String getFacilityImportSubDirPath(final String inImportSubDirPath) {
+		return new String(getFacilityImportPath() + "/" + inImportSubDirPath).toLowerCase();
+	}
+
+	private String getFacilityExportPath() {
+		return new String(getFacilityPath() + "/" + EXPORT_DIR_PATH).toLowerCase();
+	}
+
+	private String getFacilityExportSubDirPath(final String inExportSubDirPath) {
+		return new String(getFacilityExportPath() + "/" + inExportSubDirPath).toLowerCase();
 	}
 
 	// --------------------------------------------------------------------------
@@ -322,20 +304,20 @@ public class DropboxService extends EdiServiceABC {
 	 * Make sure all of the directories we need exist for import and export at the facility.
 	 * @return
 	 */
-	private boolean ensureBaseDirectories(DropboxAPI<Session> inClientSession) {
+	private boolean ensureBaseDirectories(DbxClient inClient) {
 		boolean result = false;
 
 		String facilityPath = getFacilityPath();
 
-		result = ensureDirectory(inClientSession, facilityPath);
-		result &= ensureDirectory(inClientSession, facilityPath + IMPORT_DIR_PATH);
-		result &= ensureDirectory(inClientSession, facilityPath + IMPORT_DIR_PATH + IMPORT_ORDERS_PATH);
-		result &= ensureDirectory(inClientSession, facilityPath + IMPORT_DIR_PATH + IMPORT_BATCHES_PATH);
-		result &= ensureDirectory(inClientSession, facilityPath + IMPORT_DIR_PATH + IMPORT_INVENTORY_PATH);
-		result &= ensureDirectory(inClientSession, facilityPath + IMPORT_DIR_PATH + IMPORT_LOCATIONS_PATH);
+		result = ensureDirectory(inClient, getFacilityPath());
+		result &= ensureDirectory(inClient, getFacilityImportPath());
+		result &= ensureDirectory(inClient, getFacilityImportSubDirPath(IMPORT_ORDERS_PATH));
+		result &= ensureDirectory(inClient, getFacilityImportSubDirPath(IMPORT_BATCHES_PATH));
+		result &= ensureDirectory(inClient, getFacilityImportSubDirPath(IMPORT_INVENTORY_PATH));
+		result &= ensureDirectory(inClient, getFacilityImportSubDirPath(IMPORT_LOCATIONS_PATH));
 
-		result &= ensureDirectory(inClientSession, facilityPath + EXPORT_DIR_PATH);
-		result &= ensureDirectory(inClientSession, facilityPath + EXPORT_DIR_PATH + EXPORT_WIS_PATH);
+		result &= ensureDirectory(inClient, getFacilityExportPath());
+		result &= ensureDirectory(inClient, getFacilityImportSubDirPath(EXPORT_WIS_PATH));
 
 		return result;
 	}
@@ -346,21 +328,17 @@ public class DropboxService extends EdiServiceABC {
 	 * @param inPath
 	 * @return
 	 */
-	private boolean ensureDirectory(DropboxAPI<Session> inClientSession, String inPath) {
+	private boolean ensureDirectory(DbxClient inClient, String inPath) {
 		boolean result = false;
 
 		try {
-			Entry dirEntry = inClientSession.metadata(inPath, 1, null, false, null);
-			if ((dirEntry == null) || (dirEntry.isDeleted)) {
-				result = createDirectory(inClientSession, inPath);
+			DbxEntry dirEntry = inClient.getMetadata(inPath);
+			if (dirEntry == null) {
+				result = createDirectory(inClient, inPath);
 			} else {
 				result = true;
 			}
-		} catch (DropboxServerException e) {
-			if (e.error == DropboxServerException._404_NOT_FOUND) {
-				result = createDirectory(inClientSession, inPath);
-			}
-		} catch (DropboxException e) {
+		} catch (DbxException e) {
 			LOGGER.error("Dropbox session error", e);
 		}
 
@@ -373,15 +351,15 @@ public class DropboxService extends EdiServiceABC {
 	 * @param inPath
 	 * @return
 	 */
-	private boolean createDirectory(DropboxAPI<Session> inClientSession, String inPath) {
+	private boolean createDirectory(DbxClient inClient, String inPath) {
 		boolean result = false;
 
 		try {
-			Entry dirEntry = inClientSession.createFolder(inPath);
-			if ((dirEntry != null) && (dirEntry.isDir)) {
+			DbxEntry dirEntry = inClient.createFolder(inPath);
+			if ((dirEntry != null) && (dirEntry.isFolder())) {
 				result = true;
 			}
-		} catch (DropboxException e) {
+		} catch (DbxException e) {
 			LOGGER.error("Dropbox session error", e);
 		}
 
@@ -392,118 +370,58 @@ public class DropboxService extends EdiServiceABC {
 	/**
 	 * @return
 	 */
-	public final String link() {
+	public final String startLink() {
 		String result = "";
 
+		setServiceStateEnum(EdiServiceStateEnum.LINKING);
 		try {
-			setServiceStateEnum(EdiServiceStateEnum.LINKING);
+			DropboxService.DAO.store(this);
+		} catch (DaoException e) {
+			LOGGER.error("", e);
+		}
+
+		DbxAppInfo appInfo = new DbxAppInfo(APPKEY, APPSECRET);
+		DbxRequestConfig config = new DbxRequestConfig("Codeshelf Interface", Locale.getDefault().toString());
+		DbxWebAuthNoRedirect webAuth = new DbxWebAuthNoRedirect(config, appInfo);
+		result = webAuth.start();
+
+		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inAuthSession
+	 * @param inAuthInfo
+	 */
+	public final boolean finishLink(final String inDbxCode) {
+
+		boolean result = false;
+
+		try {
+			DbxAppInfo appInfo = new DbxAppInfo(APPKEY, APPSECRET);
+			DbxRequestConfig config = new DbxRequestConfig("Codeshelf Interface", Locale.getDefault().toString());
+			DbxWebAuthNoRedirect webAuth = new DbxWebAuthNoRedirect(config, appInfo);
+			DbxAuthFinish authFinish = webAuth.finish(inDbxCode);
+			String accessToken = authFinish.accessToken;
+
+			// We did get an access token.
+			if (accessToken == null) {
+				setServiceStateEnum(EdiServiceStateEnum.LINK_FAILED);
+			} else {
+				result = true;
+				setProviderCredentials(accessToken);
+				setServiceStateEnum(EdiServiceStateEnum.LINKED);
+				setDbCursor("");
+			}
 			try {
 				DropboxService.DAO.store(this);
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}
-
-			AppKeyPair appKeyPair = new AppKeyPair(APPKEY, APPSECRET);
-			final WebAuthSession authSession = new WebAuthSession(appKeyPair, Session.AccessType.APP_FOLDER);
-
-			// Make the user log in and authorize us.
-			final WebAuthSession.WebAuthInfo authInfo = authSession.getAuthInfo();
-			result = authInfo.url;
-
-			Runnable runnable = new Runnable() {
-				public void run() {
-					tryCredentials(authSession, authInfo);
-				}
-			};
-
-			Thread linkThread = new Thread(runnable);
-			linkThread.start();
-
-		} catch (DropboxException e) {
+		} catch (DbxException e) {
 			LOGGER.error("", e);
 		}
 
-		return result;
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * @param inAuthSession
-	 * @param inAuthInfo
-	 */
-	private void tryCredentials(final WebAuthSession inAuthSession, final WebAuthSession.WebAuthInfo inAuthInfo) {
-
-		String credentials = "";
-
-		try {
-			AccessTokenPair accessToken = getAccessTokens(inAuthSession, inAuthInfo);
-
-			// We got an access token.
-			if (accessToken == null) {
-				setServiceStateEnum(EdiServiceStateEnum.LINK_FAILED);
-				try {
-					DropboxService.DAO.store(this);
-				} catch (DaoException e) {
-					LOGGER.error("", e);
-				}
-			} else {
-				ObjectMapper mapper = new ObjectMapper();
-				ObjectNode credentialsNode = mapper.createObjectNode();
-				ObjectNode appNode = credentialsNode.putObject("appToken");
-				appNode.put("key", APPKEY);
-				appNode.put("secret", APPSECRET);
-				ObjectNode accessNode = credentialsNode.putObject("accessToken");
-				accessNode.put("key", accessToken.key);
-				accessNode.put("secret", accessToken.secret);
-
-				StringWriter sw = new StringWriter();
-				mapper.writeValue(sw, credentialsNode);
-				credentials = sw.toString();
-
-				setProviderCredentials(credentials);
-				setServiceStateEnum(EdiServiceStateEnum.LINKED);
-				setDbCursor("");
-				try {
-					DropboxService.DAO.store(this);
-				} catch (DaoException e) {
-					LOGGER.error("", e);
-				}
-			}
-		} catch (JsonGenerationException e) {
-			LOGGER.error("", e);
-		} catch (JsonMappingException e) {
-			LOGGER.error("", e);
-		} catch (IOException e) {
-			LOGGER.error("", e);
-		}
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * @param inAuthSession
-	 * @param inAuthInfo
-	 * @return
-	 */
-	private AccessTokenPair getAccessTokens(final WebAuthSession inAuthSession, final WebAuthSession.WebAuthInfo inAuthInfo) {
-		AccessTokenPair result = null;
-
-		// Try LINK_RETRIES times for RETRY_SECONDS each and then give up.
-		int retries = 0;
-		while ((result == null) && (retries < LINK_RETRIES)) {
-			try {
-				inAuthSession.retrieveWebAccessToken(inAuthInfo.requestTokenPair);
-				result = inAuthSession.getAccessTokenPair();
-				LOGGER.info(result.toString());
-			} catch (DropboxException e) {
-				LOGGER.error("", e);
-				retries++;
-				try {
-					Thread.sleep(RETRY_SECONDS);
-				} catch (InterruptedException e1) {
-					LOGGER.error("", e);
-				}
-			}
-		}
 		return result;
 	}
 
@@ -511,8 +429,8 @@ public class DropboxService extends EdiServiceABC {
 	/**
 	 * @param inEntry
 	 */
-	private Boolean processEntry(DropboxAPI<Session> inClientSession,
-		DeltaEntry<Entry> inEntry,
+	private Boolean processEntry(DbxClient inClient,
+		DbxDelta.Entry<DbxEntry> inEntry,
 		ICsvOrderImporter inCsvOrderImporter,
 		ICsvOrderLocationImporter inCsvOrderLocationImporter,
 		ICsvInventoryImporter inCsvInventoryImporter,
@@ -523,8 +441,8 @@ public class DropboxService extends EdiServiceABC {
 		Boolean shouldUpdateEntry = false;
 
 		if (inEntry.lcPath.startsWith(getFacilityImportPath())) {
-			if (!inEntry.metadata.isDir) {
-				handleImport(inClientSession,
+			if (inEntry.metadata.isFile()) {
+				handleImport(inClient,
 					inEntry,
 					inCsvOrderImporter,
 					inCsvOrderLocationImporter,
@@ -543,8 +461,8 @@ public class DropboxService extends EdiServiceABC {
 				locator.setReceived(new Timestamp(System.currentTimeMillis()));
 				locator.setDocumentStateEnum(EdiDocumentStatusEnum.NEW);
 				locator.setDomainId(inEntry.lcPath);
-				locator.setDocumentPath(inEntry.metadata.parentPath());
-				locator.setDocumentName(inEntry.metadata.fileName());
+				locator.setDocumentPath(inEntry.metadata.asFile().path);
+				locator.setDocumentName(inEntry.metadata.asFile().name);
 
 				addEdiDocumentLocator(locator);
 				try {
@@ -562,8 +480,8 @@ public class DropboxService extends EdiServiceABC {
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	private void handleImport(DropboxAPI<Session> inClientSession,
-		DeltaEntry<Entry> inEntry,
+	private void handleImport(DbxClient inClient,
+		DbxDelta.Entry<DbxEntry> inEntry,
 		ICsvOrderImporter inCsvOrderImporter,
 		ICsvOrderLocationImporter inCsvOrderLocationImporter,
 		ICsvInventoryImporter inCsvInventoryImporter,
@@ -574,25 +492,27 @@ public class DropboxService extends EdiServiceABC {
 
 			String filepath = inEntry.lcPath;
 
-			DropboxInputStream stream = inClientSession.getFileStream(filepath, null);
-			InputStreamReader reader = new InputStreamReader(stream);
+			//DropboxInputStream stream = inClient.getFileStream(filepath, null);
+			ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+			DbxEntry.File downloadedFile = inClient.getFile(inEntry.lcPath, null, outputStream);
+			InputStreamReader reader = new InputStreamReader(new ByteArrayInputStream(outputStream.toByteArray()));
 
 			// orders-slotting needs to come before orders, because orders is a subset of the orders-slotting regex.
-			if (filepath.matches(getFacilityImportPath() + IMPORT_ORDERS_PATH + ".*orders-slotting.*\\.csv")) {
+			if (filepath.matches(getFacilityImportSubDirPath(IMPORT_ORDERS_PATH) + "/.*orders-slotting.*\\.csv")) {
 				inCsvOrderLocationImporter.importOrderLocationsFromCsvStream(reader, getParent());
-			} else if (filepath.matches(getFacilityImportPath() + IMPORT_ORDERS_PATH + ".*orders.*\\.csv")) {
+			} else if (filepath.matches(getFacilityImportSubDirPath(IMPORT_ORDERS_PATH) + "/.*orders.*\\.csv")) {
 				inCsvOrderImporter.importOrdersFromCsvStream(reader, getParent());
-			} else if (filepath.matches(getFacilityImportPath() + IMPORT_INVENTORY_PATH + ".*inventory-slotted.*\\.csv")) {
+			} else if (filepath.matches(getFacilityImportSubDirPath(IMPORT_INVENTORY_PATH) + "/.*inventory-slotted.*\\.csv")) {
 				inCsvInventoryImporter.importSlottedInventoryFromCsvStream(reader, getParent());
-			} else if (filepath.matches(getFacilityImportPath() + IMPORT_INVENTORY_PATH + ".*inventory-ddc.*\\.csv")) {
+			} else if (filepath.matches(getFacilityImportSubDirPath(IMPORT_INVENTORY_PATH) + "/.*inventory-ddc.*\\.csv")) {
 				inCsvInventoryImporter.importDdcInventoryFromCsvStream(reader, getParent());
-			} else if (filepath.matches(getFacilityImportPath() + IMPORT_LOCATIONS_PATH + ".*location-aliases.*\\.csv")) {
+			} else if (filepath.matches(getFacilityImportSubDirPath(IMPORT_LOCATIONS_PATH) + "/.*location-aliases.*\\.csv")) {
 				inCsvLocationAliasImporter.importLocationAliasesFromCsvStream(reader, getParent());
-			} else if (filepath.matches(getFacilityImportPath() + IMPORT_BATCHES_PATH + ".*cross-batch.*\\.csv")) {
+			} else if (filepath.matches(getFacilityImportSubDirPath(IMPORT_BATCHES_PATH) + "/.*cross-batch.*\\.csv")) {
 				inCsvCrossBatchImporter.importCrossBatchesFromCsvStream(reader, getParent());
 			}
 
-		} catch (DropboxException e) {
+		} catch (DbxException | IOException e) {
 			LOGGER.error("", e);
 		}
 	}
@@ -601,7 +521,7 @@ public class DropboxService extends EdiServiceABC {
 	/**
 	 * @param inEntry
 	 */
-	private Boolean removeEntry(DropboxAPI<Session> inClientSession, DeltaEntry<Entry> inEntry) {
+	private Boolean removeEntry(DbxClient inClient, DbxDelta.Entry<DbxEntry> inEntry) {
 		Boolean result = true;
 
 		EdiDocumentLocator locator = getDocumentLocatorByPath(inEntry.lcPath);
