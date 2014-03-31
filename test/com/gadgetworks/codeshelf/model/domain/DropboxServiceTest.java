@@ -96,7 +96,7 @@ public class DropboxServiceTest {
 			}
 		};
 
-		dropboxService.checkForCsvUpdates(orderImporter,
+		dropboxService.getUpdatesFromHost(orderImporter,
 			orderLocationImporter,
 			inventoryImporter,
 			locationImporter,

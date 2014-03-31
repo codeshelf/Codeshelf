@@ -255,12 +255,18 @@ public abstract class DomainTestABC {
 		mPathDao.store(path);
 		resultFacility.addPath(path);
 
-		PathSegment pathSegment1 = path.createPathSegment("PS1", aisle1, path, 0, Point.getZeroPoint(), Point.getZeroPoint());
+		Point startPoint1 = Point.getZeroPoint();
+		startPoint1.translateX(5.0);
+		PathSegment pathSegment1 = path.createPathSegment("PS1", path, 0, startPoint1, Point.getZeroPoint());
 		mPathSegmentDao.store(pathSegment1);
 
-		pathSegment1.addLocation(aisle2);
 		aisle1.setPathSegment(pathSegment1);
+		mAisleDao.store(aisle1);
+		pathSegment1.addLocation(aisle1);
+
+		aisle2.setPathSegment(pathSegment1);
 		mAisleDao.store(aisle2);
+		pathSegment1.addLocation(aisle2);
 
 		Aisle aisle3 = new Aisle(resultFacility, "A3", Point.getZeroPoint(), Point.getZeroPoint());
 		mAisleDao.store(aisle3);
@@ -278,15 +284,16 @@ public abstract class DomainTestABC {
 		Bay baya4b2 = new Bay(aisle4, "B2", Point.getZeroPoint(), Point.getZeroPoint());
 		mBayDao.store(baya4b2);
 
-		PathSegment pathSegment2 = path.createPathSegment("PS2", aisle3, path, 1, new Point(PositionTypeEnum.METERS_FROM_PARENT,
-			0.0,
-			0.0,
-			0.0), Point.getZeroPoint());
+		PathSegment pathSegment2 = path.createPathSegment("PS2", path, 1, Point.getZeroPoint(), Point.getZeroPoint());
 		mPathSegmentDao.store(pathSegment2);
 
-		pathSegment2.addLocation(aisle4);
-		aisle1.setPathSegment(pathSegment2);
+		aisle3.setPathSegment(pathSegment2);
+		mAisleDao.store(aisle3);
+		pathSegment2.addLocation(aisle3);
+
+		aisle4.setPathSegment(pathSegment2);
 		mAisleDao.store(aisle4);
+		pathSegment2.addLocation(aisle4);
 
 		resultFacility.recomputeLocationPathDistances(path);
 

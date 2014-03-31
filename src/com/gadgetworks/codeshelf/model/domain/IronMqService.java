@@ -61,12 +61,12 @@ public class IronMqService extends EdiServiceABC {
 		return IRONMQ_SERVICE_NAME;
 	}
 
-	public final Boolean checkForCsvUpdates(ICsvOrderImporter inCsvOrderImporter,
+	public final boolean getUpdatesFromHost(ICsvOrderImporter inCsvOrderImporter,
 		ICsvOrderLocationImporter inCsvOrderLocationImporter,
 		ICsvInventoryImporter inCsvInventoryImporter,
 		ICsvLocationAliasImporter inCsvLocationsImporter,
 		ICsvCrossBatchImporter inCsvCrossBatchImporter) {
 
-		return null;
+		return false;
 	}
 }

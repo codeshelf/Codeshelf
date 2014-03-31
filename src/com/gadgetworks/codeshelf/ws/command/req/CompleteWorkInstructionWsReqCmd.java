@@ -18,6 +18,7 @@ import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Che;
+import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
@@ -154,6 +155,13 @@ public class CompleteWorkInstructionWsReqCmd extends WsReqCmdABC {
 			mOrderDao.store(order);
 		} catch (DaoException e) {
 			LOGGER.error("", e);
+		}
+	}
+	
+	private void sendWorkInstructionToHost(WorkInstruction inWorkInstruction) {
+		Facility facility = inWorkInstruction.getParent().getParent().getParent();
+		if (facility != null) {
+			facility.sendWorkInstructionToHost(inWorkInstruction);
 		}
 	}
 }

@@ -675,15 +675,15 @@ public class Facility extends SubLocationABC<Facility> {
 	 *
 	 */
 	@Transactional
-	public final void createPath(String domainId, PathSegment[] pathSegments) throws DaoException {
+	public final void createPath(String inDomainId, PathSegment[] inPathSegments) {
 		Path path = new Path();
 		path.setParent(this);
-		path.setDomainId(domainId);
+		path.setDomainId(inDomainId);
 		path.setDescription("A Facility Path");
 		path.setTravelDirEnum(TravelDirectionEnum.FORWARD);
 		Path.DAO.store(path);
 		path.createDefaultWorkArea();
-		for (PathSegment pathSegment : pathSegments) {
+		for (PathSegment pathSegment : inPathSegments) {
 			pathSegment.setParent(path);
 			PathSegment.DAO.store(pathSegment);
 			path.addPathSegment(pathSegment);
@@ -1510,5 +1510,13 @@ public class Facility extends SubLocationABC<Facility> {
 			}
 		}
 		return ddcLocations;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inWorkInstruction
+	 */
+	public void sendWorkInstructionToHost(final WorkInstruction inWorkInstruction) {
+
 	}
 }

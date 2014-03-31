@@ -119,7 +119,7 @@ public class DropboxService extends EdiServiceABC {
 		return DAO;
 	}
 
-	public final Boolean checkForCsvUpdates(ICsvOrderImporter inCsvOrderImporter,
+	public final boolean getUpdatesFromHost(ICsvOrderImporter inCsvOrderImporter,
 		ICsvOrderLocationImporter inCsvOrderLocationImporter,
 		ICsvInventoryImporter inCsvInventoryImporter,
 		ICsvLocationAliasImporter inCsvLocationAliasImporter,

@@ -5,19 +5,10 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
-import static com.natpryce.makeiteasy.MakeItEasy.a;
-import static com.natpryce.makeiteasy.MakeItEasy.make;
-
-import java.util.Arrays;
 import java.util.List;
 
 import org.junit.Assert;
 import org.junit.Test;
-
-import com.gadgetworks.codeshelf.model.PositionTypeEnum;
-import com.gadgetworks.codeshelf.model.TravelDirectionEnum;
-import com.gadgetworks.codeshelf.model.domain.Path.PathDao;
-import com.gadgetworks.codeshelf.model.domain.PathSegment.PathSegmentDao;
 
 /**
  * @author jeffw
@@ -54,5 +45,22 @@ public class PathTest extends DomainTestABC {
 
 		Assert.assertTrue(path.isOrderOnPath(order));
 
+	}
+	
+	@Test
+	public final void computePosALongPath() {
+		
+		Facility facility = createFacilityWithOutboundOrders("O-PT.3");
+		Path path = facility.getPath(Path.DEFAULT_FACILITY_PATH_ID);
+		for (PathSegment segment : path.getSegments()) {
+			segment.computePathDistance();
+		}
+		
+		PathSegment segment1 = path.getPathSegment(0);
+		Assert.assertEquals(segment1.getStartPosAlongPath().doubleValue(), 0.0, 0.0);
+		
+		PathSegment segment2 = path.getPathSegment(1);
+		Assert.assertEquals(segment2.getStartPosAlongPath().doubleValue(), 5.0, 0.0);
+		
 	}
 }

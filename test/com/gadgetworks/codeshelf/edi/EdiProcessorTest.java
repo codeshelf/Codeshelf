@@ -206,7 +206,7 @@ public class EdiProcessorTest extends EdiTestABC {
 				return "LINKED";
 			}
 
-			public Boolean checkForCsvUpdates(ICsvOrderImporter inCsvOrdersImporter,
+			public boolean getUpdatesFromHost(ICsvOrderImporter inCsvOrdersImporter,
 				ICsvOrderLocationImporter iCsvOrderLocationImporter,
 				ICsvInventoryImporter inCsvInventoryImporter,
 				ICsvLocationAliasImporter inCsvLocationsImporter,
@@ -226,7 +226,7 @@ public class EdiProcessorTest extends EdiTestABC {
 				return "UNLINKED";
 			}
 
-			public Boolean checkForCsvUpdates(ICsvOrderImporter inCsvOrdersImporter,
+			public boolean getUpdatesFromHost(ICsvOrderImporter inCsvOrdersImporter,
 				ICsvOrderLocationImporter iCsvOrderLocationImporter,
 				ICsvInventoryImporter inCsvInventoryImporter,
 				ICsvLocationAliasImporter inCsvLocationsImporter,

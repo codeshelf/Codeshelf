@@ -119,7 +119,7 @@ public final class EdiProcessor implements IEdiProcessor {
 		for (Facility facility : mFacilityDao.getAll()) {
 			for (IEdiService ediService : facility.getEdiServices()) {
 				if (ediService.getServiceStateEnum().equals(EdiServiceStateEnum.LINKED)) {
-					if (ediService.checkForCsvUpdates(mCsvOrderImporter,
+					if (ediService.getUpdatesFromHost(mCsvOrderImporter,
 						mCsvOrderLocationImporter,
 						mCsvInventoryImporter,
 						mCsvLocationAliasImporter,

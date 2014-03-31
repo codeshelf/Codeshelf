@@ -234,87 +234,6 @@ public class Path extends DomainObjectTreeABC<Facility> {
 				+ (inPointB.getY() - inPointA.getY()) * (inPointB.getY() - inPointA.getY())));
 	}
 
-	public final void createPathSegments(List<Point> points) {
-		Preconditions.checkArgument(points.size() >= 2, "the segments are made of two or more points");
-		// Create the path segment.
-		Point previousPoint = null;
-		int segmentOrder = 0;
-		for (Point point : points) {
-			if (previousPoint != null) {
-				String baseSegmentId = this.getParent().getDomainId() + "." + PathSegment.DOMAIN_PREFIX;
-				this.createPathSegment(baseSegmentId + "." + segmentOrder, this.getParent(), this, segmentOrder, previousPoint, point);
-				segmentOrder++;
-			}
-			previousPoint = point;
-		}
-
-
-	}
-	// --------------------------------------------------------------------------
-	/**
-	 * Create the path segments for the aisle.
-	 * @param inAssociatedAisle
-	 * @param inXDimMeters
-	 * @param inYDimMeters
-	 */
-	public final void createPathSegments(final Aisle inAssociatedAisle,
-		final Double inXDimMeters,
-		final Double inYDimMeters,
-		final boolean inOpensLowSide) {
-
-		Point endA = null;
-		Point startA = null;
-		if (inXDimMeters < inYDimMeters) {
-			Double xA = inAssociatedAisle.getAnchorPoint().getX() + 2 * inXDimMeters;
-			if (inOpensLowSide) {
-				xA = inAssociatedAisle.getAnchorPoint().getX() - inXDimMeters;
-			}
-			startA = new Point(PositionTypeEnum.METERS_FROM_PARENT, xA, inAssociatedAisle.getAnchorPoint().getY(), 0.0);
-			endA = new Point(PositionTypeEnum.METERS_FROM_PARENT,
-				xA,
-				inAssociatedAisle.getAnchorPoint().getY() + inYDimMeters,
-				0.0);
-		} else {
-			Double yA = inAssociatedAisle.getAnchorPoint().getY() + 2 * inYDimMeters;
-			if (inOpensLowSide) {
-				yA = inAssociatedAisle.getAnchorPoint().getY() - inYDimMeters;
-			}
-			startA = new Point(PositionTypeEnum.METERS_FROM_PARENT, inAssociatedAisle.getAnchorPoint().getX(), yA, 0.0);
-			endA = new Point(PositionTypeEnum.METERS_FROM_PARENT,
-				inAssociatedAisle.getAnchorPoint().getX() + inXDimMeters,
-				yA,
-				0.0);
-		}
-
-		// If there are already path segments then create a connecting path to the new ones.
-		Integer segmentOrder = 0;
-		PathSegment lastSegment = getSegments().last();
-		if (lastSegment != null) {
-			segmentOrder = lastSegment.getSegmentOrder() + 1;
-		}
-		String baseSegmentId = inAssociatedAisle.getDomainId() + "." + PathSegment.DOMAIN_PREFIX;
-		// Now connect it to the last aisle's path segments.
-		if (lastSegment != null) {
-			// Figure out which point is closer to the end of the last path.
-			if (Path.computeLineLength(startA, lastSegment.getEndPoint()) > Path.computeLineLength(endA, lastSegment.getEndPoint())) {
-				Point temp = startA;
-				startA = endA;
-				endA = temp;
-			}
-			this.createPathSegment(baseSegmentId + "D", this.getParent(), this, segmentOrder++, lastSegment.getEndPoint(), startA);
-		}
-		// Create the path segment.
-		PathSegment segmentA = createPathSegment(baseSegmentId + "A", inAssociatedAisle, this, segmentOrder++, startA, endA);
-
-		// Link the path segment as the primary path for the aisle and all of its child locations (recursively).
-		inAssociatedAisle.setPathSegment(segmentA);
-		try {
-			LocationABC.DAO.store(inAssociatedAisle);
-		} catch (DaoException e) {
-			LOGGER.error("", e);
-		}
-	}
-
 	// --------------------------------------------------------------------------
 	/**
 	 * Create a path segment for the aisle.
@@ -327,7 +246,6 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	 * @param inTail
 	 */
 	public final PathSegment createPathSegment(final String inSegmentId,
-		final ILocation inAssociatedLocation,
 		final Path inPath,
 		final Integer inSegmentOrder,
 		final Point inHead,
@@ -342,7 +260,6 @@ public class Path extends DomainObjectTreeABC<Facility> {
 		result.setDomainId(inSegmentId);
 		result.setStartPoint(inHead);
 		result.setEndPoint(inTail);
-		result.addLocation(inAssociatedLocation);
 		try {
 			PathSegment.DAO.store(result);
 		} catch (DaoException e) {
@@ -350,14 +267,6 @@ public class Path extends DomainObjectTreeABC<Facility> {
 		}
 
 		inPath.addPathSegment(result);
-
-		// TODO: REMOVE THIS AS SOON AS WE HAVE THE NEW PATH CREATION TOOL FROM JR AND PAUL.
-		inAssociatedLocation.setPathSegment(result);
-		try {
-			LocationABC.DAO.store((LocationABC) inAssociatedLocation);
-		} catch (DaoException e) {
-			LOGGER.error("", e);
-		}
 
 		// Force a re-computation of the path distance for this path segment.
 		result.computePathDistance();
