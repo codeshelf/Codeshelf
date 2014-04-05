@@ -1080,8 +1080,8 @@ public class Facility extends SubLocationABC<Facility> {
 		}
 
 		// Now we need to sort and group the work instructions, so that the CHE can display them by working order.
-		List<Bay> bays = inPath.<Bay> getLocationsByClassAtOrPastLocation(inCheLocation, Bay.class);
-		return sortCrosswallInstructions(wiList, inContainerList, bays);
+		List<ISubLocation<?>> bays = inPath.<ISubLocation<?>> getLocationsByClassAtOrPastLocation(inCheLocation, Bay.class);
+		return sortCrosswallInstructionsInLocationOrder(wiList, inContainerList, bays);
 	}
 
 	/**
@@ -1103,7 +1103,7 @@ public class Facility extends SubLocationABC<Facility> {
 	 * @param inBays
 	 * @return
 	 */
-	private List<WorkInstruction> sortCrosswallInstructions(final List<WorkInstruction> inCrosswallWiList,
+	private List<WorkInstruction> sortCrosswallInstructionsByBayByContainer(final List<WorkInstruction> inCrosswallWiList,
 		final List<Container> inContainerList,
 		final List<Bay> inBays) {
 
@@ -1157,6 +1157,39 @@ public class Facility extends SubLocationABC<Facility> {
 				// If we didn't select any WIs then stop looking for items in containers for this bay.
 				if (!wiSelected) {
 					break;
+				}
+			}
+		}
+		return wiResultList;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Sort a list of work instructions on a path through a CrossWall
+	 * @param inCrosswallWiList
+	 * @param inContainerList
+	 * @param inBays
+	 * @return
+	 */
+	private List<WorkInstruction> sortCrosswallInstructionsInLocationOrder(final List<WorkInstruction> inCrosswallWiList,
+		final List<Container> inContainerList,
+		final List<ISubLocation<?>> inSubLocations) {
+
+		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
+
+		// Cycle over all bays on the path.
+		for (ISubLocation<?> subLocation : inSubLocations) {
+			for (ILocation<?> workLocation : subLocation.getSubLocationsInWorkingOrder()) {
+				Iterator<WorkInstruction> wiIterator = inCrosswallWiList.iterator();
+				while (wiIterator.hasNext()) {
+					WorkInstruction wi = wiIterator.next();
+					if (wi.getLocation().equals(workLocation)) {
+						String wantedItemId = wi.getItemMaster().getItemId();
+						wiResultList.add(wi);
+						wi.setGroupAndSortCode(String.format("%04d", wiResultList.size()));
+						WorkInstruction.DAO.store(wi);
+						wiIterator.remove();
+					}
 				}
 			}
 		}

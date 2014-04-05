@@ -280,7 +280,10 @@ public final class FTDIInterface extends SerialInterfaceABC {
 				// The number of waiting bytes is in pos 0 of the status array.
 				if (status[0] > 0) {
 					int bytesToRead = Math.min(mReadBuffer.length, status[0]);
+					LOGGER.debug("---------- Start read from FTDI ---------------------------------------------- ");
 					mReadBufferSize = mJD2XXInterface.read(mReadBuffer, 0, bytesToRead);
+					hexDumpArray(mReadBuffer, mReadBufferSize);
+					LOGGER.debug("------------------------------------------------------------------------ ");
 					mReadBufferPos = 0;
 				} else {
 					// We didn't read a character, so sleep for a little.

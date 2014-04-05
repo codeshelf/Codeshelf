@@ -13,13 +13,13 @@ import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P> {
 
 	PositionTypeEnum getAnchorPosTypeEnum();
-	
+
 	Double getAnchorPosX();
-	
+
 	Double getAnchorPosY();
-	
+
 	Double getAnchorPosZ();
-	
+
 	Point getAnchorPoint();
 
 	void setAnchorPoint(Point inAnchorPoint);
@@ -33,12 +33,8 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 	Double getPosAlongPath();
 
 	void setPosAlongPath(Double inPoseAlongPath);
-	
-	PathSegment getPathSegment();
 
-//	Organization getParentOrganization();
-//
-//	void setParentOrganization(Organization inParentOrganization);
+	PathSegment getPathSegment();
 
 	LedController getLedController();
 
@@ -59,7 +55,7 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 	Short getFirstLedPosForItemId(final String inItemId);
 
 	Short getLastLedPosForItemId(final String inItemId);
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * If this is a DDC location then return the first DDC ID for the location.
@@ -88,6 +84,8 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 	 */
 	void setLastDdcId(String inLastDdcId);
 
+	void setPathSegment(PathSegment inPathSegment);
+
 	// --------------------------------------------------------------------------
 	/**
 	 * Get the vertices that make up this location's outline.  
@@ -114,7 +112,7 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 	void addAlias(LocationAlias inAlias);
 
 	void removeAlias(LocationAlias inAlias);
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * Get the first (Primary) alias for this location.
@@ -187,11 +185,11 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 	<T extends ILocation> T getParentAtLevel(Class<? extends ILocation> inClassWanted);
 
 	String getLocationId();
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * Build up a chain of location dotted notation (FQLN) up to the parent class level.
-     * E.g. A1.B2.T3.S1
+	 * E.g. A1.B2.T3.S1
 	 * @param inClassWanted
 	 * @return
 	 */
@@ -220,7 +218,14 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 	 */
 	ISubLocation<?> findSubLocationById(String inLocationId);
 
-	void setPathSegment(PathSegment inPathSegment);
+	// --------------------------------------------------------------------------
+	/**
+	 * Get all of the sublocations (down the the very tree bottom) of this location, in working order.
+	 * The working order gets applied to each level down from this location.
+	 * Working order is top-to-bottom and then down-path.
+	 * @return
+	 */
+	List<ILocation<?>> getSubLocationsInWorkingOrder();
 
 	// --------------------------------------------------------------------------
 	/**

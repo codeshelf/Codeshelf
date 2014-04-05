@@ -66,6 +66,7 @@ public final class Packet implements IPacket {
 	private NetAddress			mSrcAddr;
 	private NetAddress			mDstAddr;
 	private ICommand			mCommand;
+	private long				mCreateTimeMillis;
 	private long				mSentTimeMillis;
 	private int					mSendCount;
 	private byte				mAckId;
@@ -100,7 +101,8 @@ public final class Packet implements IPacket {
 		mDstAddr = inDstAddr;
 		mAckId = IPacket.EMPTY_ACK_ID;
 		mAckState = AckStateEnum.INVALID;
-		mSendCount = 1;
+		mSendCount = 0;
+		mCreateTimeMillis = System.currentTimeMillis();
 	}
 
 	// --------------------------------------------------------------------------
@@ -244,6 +246,15 @@ public final class Packet implements IPacket {
 	 */
 	public long getSentTimeMillis() {
 		return mSentTimeMillis;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inCreateTimeMillis
+	 * @return
+	 */
+	public long getCreateTimeMillis() {
+		return mCreateTimeMillis;
 	}
 
 	/* --------------------------------------------------------------------------

@@ -56,50 +56,53 @@ import com.google.inject.name.Named;
 public class RadioController implements IRadioController {
 
 	// Right now, the devices are not sending back their network ID.
-	public static final String									PRIVATE_GUID						= "00000000";
-	public static final String									VIRTUAL_GUID						= "%%%%%%%%";
+	public static final String									PRIVATE_GUID				= "00000000";
+	public static final String									VIRTUAL_GUID				= "%%%%%%%%";
 
 	// Artificially limit us to channels 0-3 to make testing faster.
-	public static final byte									MAX_CHANNELS						= 16;
-	public static final byte									NO_PREFERRED_CHANNEL				= (byte) 255;
-	public static final String									NO_PREFERRED_CHANNEL_TEXT			= "None";
+	public static final byte									MAX_CHANNELS				= 16;
+	public static final byte									NO_PREFERRED_CHANNEL		= (byte) 255;
+	public static final String									NO_PREFERRED_CHANNEL_TEXT	= "None";
 
-	private static final Logger									LOGGER								= LoggerFactory.getLogger(RadioController.class);
+	private static final Logger									LOGGER						= LoggerFactory.getLogger(RadioController.class);
 
-	private static final String									CONTROLLER_THREAD_NAME				= "Radio Controller";
-	private static final String									BACKGROUND_THREAD_NAME				= "Radio Controller Background";
-	private static final String									RECEIVER_THREAD_NAME				= "Packet Receiver";
-	private static final String									INTERFACESTARTER_THREAD_NAME		= "Intferface Starter";
+	private static final String									CONTROLLER_THREAD_NAME		= "Radio Controller";
+	private static final String									BACKGROUND_THREAD_NAME		= "Radio Controller Background";
+	private static final String									RECEIVER_THREAD_NAME		= "Packet Receiver";
+	private static final String									STARTER_THREAD_NAME			= "Intferface Starter";
 
-	private static final int									BACKGROUND_THREAD_PRIORITY			= Thread.NORM_PRIORITY - 1;
-	private static final int									RECEIVER_THREAD_PRIORITY			= Thread.MAX_PRIORITY;
-	private static final int									INTERFACESTARTER_THREAD_PRIORITY	= Thread.NORM_PRIORITY;
+	private static final int									BACKGROUND_THREAD_PRIORITY	= Thread.NORM_PRIORITY - 1;
+	private static final int									RECEIVER_THREAD_PRIORITY	= Thread.MAX_PRIORITY;
+	private static final int									STARTER_THREAD_PRIORITY		= Thread.NORM_PRIORITY;
 
-	private static final long									CTRL_START_DELAY_MILLIS				= 200;
-	private static final long									NETCHECK_DELAY_MILLIS				= 250;
+	private static final long									CTRL_START_DELAY_MILLIS		= 5;
+	private static final long									NETCHECK_DELAY_MILLIS		= 250;
 
-	private static final long									ACK_TIMEOUT_MILLIS					= 600;
-	private static final int									ACK_SEND_RETRY_COUNT				= 10;
-	private static final long									EVENT_SLEEP_MILLIS					= 50;
-	private static final long									INTERFACE_CHECK_MILLIS				= 5 * 1000;
-	private static final long									CONTROLLER_SLEEP_MILLIS				= 10;
-	private static final int									MAX_CHANNEL_VALUE					= 255;
+	private static final long									ACK_TIMEOUT_MILLIS			= 20;
+	private static final int									ACK_SEND_RETRY_COUNT		= 20;
+	private static final long									MAX_PACKET_AGE_MILLIS		= 5000;
+	private static final long									EVENT_SLEEP_MILLIS			= 50;
+	private static final long									INTERFACE_CHECK_MILLIS		= 5 * 1000;
+	private static final long									CONTROLLER_SLEEP_MILLIS		= 10;
+	private static final int									MAX_CHANNEL_VALUE			= 255;
 
-	private static final int									ACK_QUEUE_SIZE						= 25;
+	private static final long									PACKET_SPACING_MILLIS		= 1;
 
-	private Boolean												mShouldRun							= true;
+	private static final int									ACK_QUEUE_SIZE				= 200;
+
+	private Boolean												mShouldRun					= true;
 	private Map<NetGuid, INetworkDevice>						mDeviceGuidMap;
 	private Map<NetAddress, INetworkDevice>						mDeviceNetAddrMap;
 	private IGatewayInterface									mGatewayInterface;
-	private IGatewayInterface									mGatewayInterface2;
 	private NetAddress											mServerAddress;
 	private NetAddress											mBroadcastAddress;
 	private NetworkId											mBroadcastNetworkId;
 	private NetworkId											mNetworkId;
 	private List<IRadioControllerEventListener>					mEventListeners;
 	private long												mLastIntfCheckMillis;
+	private long												mLastPacketSentMillis;
 	private boolean												mIntfCheckPending;
-	private byte												mNextCommandID;
+	private byte												mAckId;
 	private volatile Map<NetAddress, BlockingQueue<IPacket>>	mPendingAcksMap;
 
 	private ChannelInfo[]										mChannelInfo;
@@ -121,7 +124,6 @@ public class RadioController implements IRadioController {
 	public RadioController(@Named(IPacket.NETWORK_NUM_PROPERTY) final byte inNetworkId, final IGatewayInterface inGatewayInterface) {
 
 		mGatewayInterface = inGatewayInterface;
-		mGatewayInterface2 = new TcpServerInterface();
 		mServerAddress = new NetAddress(IPacket.GATEWAY_ADDRESS);
 		mBroadcastAddress = new NetAddress(IPacket.BROADCAST_ADDRESS);
 		mBroadcastNetworkId = new NetworkId(IPacket.BROADCAST_NETWORK_ID);
@@ -162,7 +164,6 @@ public class RadioController implements IRadioController {
 
 		// Stop all of the interfaces.
 		mGatewayInterface.stopInterface();
-		mGatewayInterface2.stopInterface();
 
 		// Signal that we want to stop.
 		mShouldRun = false;
@@ -204,10 +205,9 @@ public class RadioController implements IRadioController {
 		Thread interfaceStarterThread = new Thread(new Runnable() {
 			public void run() {
 				mGatewayInterface.startInterface();
-				mGatewayInterface2.startInterface();
 			}
-		}, INTERFACESTARTER_THREAD_NAME);
-		interfaceStarterThread.setPriority(INTERFACESTARTER_THREAD_PRIORITY);
+		}, STARTER_THREAD_NAME);
+		interfaceStarterThread.setPriority(STARTER_THREAD_PRIORITY);
 		interfaceStarterThread.setDaemon(true);
 		interfaceStarterThread.start();
 
@@ -315,11 +315,11 @@ public class RadioController implements IRadioController {
 						IPacket packet = queue.peek();
 						if (packet != null) {
 							// If we've timed out waiting for an ACK then resend the command.
-							if (System.currentTimeMillis() > (packet.getSentTimeMillis() + ACK_TIMEOUT_MILLIS)) {
-								if (packet.getSendCount() < ACK_SEND_RETRY_COUNT) {
+							if (System.currentTimeMillis() > (packet.getSentTimeMillis() + (ACK_TIMEOUT_MILLIS * packet.getSendCount()))) {
+								if ((packet.getSendCount() < ACK_SEND_RETRY_COUNT)
+										&& ((System.currentTimeMillis() - packet.getCreateTimeMillis() < MAX_PACKET_AGE_MILLIS))) {
 									//sendCommand(command, packet.getNetworkType(), packet.getDstAddr());
 									sendPacket(packet);
-									packet.incrementSendCount();
 								} else {
 									// If we've exceeded the retry time then remove the packet.
 									// We should probably mark the device lost and clear the queue.
@@ -509,13 +509,13 @@ public class RadioController implements IRadioController {
 		if ((inAckRequested) && (inNetworkId.getValue() != (IPacket.BROADCAST_NETWORK_ID))
 				&& (inDstAddr.getValue() != (IPacket.BROADCAST_ADDRESS))) {
 
-			// Set the command ID.
-			// To the network protocol a command ID of zero means we don't want a command ACK.
-			mNextCommandID++;
-			if (mNextCommandID == 0) {
-				mNextCommandID = 1;
+			// If we're pending an ACK then assign an ACK ID.
+			mAckId++;
+			if (mAckId == 0) {
+				// To the network protocol a ACK ID of zero means we don't want a command ACK.
+				mAckId = 1;
 			}
-			packet.setAckId(mNextCommandID);
+			packet.setAckId(mAckId);
 			packet.setAckState(AckStateEnum.PENDING);
 
 			// Add the command to the pending ACKs map, and increment the command ID counter.
@@ -528,7 +528,7 @@ public class RadioController implements IRadioController {
 			//sendPacket(packet);
 			while (queue.size() >= ACK_QUEUE_SIZE) {
 				try {
-					Thread.sleep(5);
+					Thread.sleep(1);
 				} catch (InterruptedException e) {
 					LOGGER.error("", e);
 				}
@@ -778,11 +778,11 @@ public class RadioController implements IRadioController {
 				foundDevice.setDeviceStateEnum(NetworkDeviceStateEnum.ASSIGN_SENT);
 
 				// We should wait a bit for the remote to prepare to accept commands.
-				try {
-					Thread.sleep(CTRL_START_DELAY_MILLIS);
-				} catch (InterruptedException e) {
-					LOGGER.error("", e);
-				}
+//				try {
+//					Thread.sleep(CTRL_START_DELAY_MILLIS);
+//				} catch (InterruptedException e) {
+//					LOGGER.error("", e);
+//				}
 
 				networkDeviceBecameActive(foundDevice);
 			}
@@ -905,43 +905,6 @@ public class RadioController implements IRadioController {
 		}, RECEIVER_THREAD_NAME + ": " + mGatewayInterface.getClass().getSimpleName());
 		gwThread.setPriority(RECEIVER_THREAD_PRIORITY);
 		gwThread.start();
-
-		Thread gwThread2 = new Thread(new Runnable() {
-			public void run() {
-				while (mShouldRun) {
-					try {
-						if (mGatewayInterface2.isStarted()) {
-							IPacket packet = mGatewayInterface2.receivePacket(mNetworkId);
-							if (packet != null) {
-								//putPacketInRcvQueue(packet);
-								if (packet.getPacketType() == IPacket.ACK_PACKET) {
-									LOGGER.info("Packet acked RECEIVED: " + packet.toString());
-									processAckPacket(packet);
-								} else {
-									receiveCommand(packet.getCommand(), packet.getSrcAddr());
-								}
-							} else {
-								//									try {
-								//										Thread.sleep(0, 5000);
-								//									} catch (InterruptedException e) {
-								//										LOGGER.error("", e);
-								//									}
-							}
-						} else {
-							try {
-								Thread.sleep(CTRL_START_DELAY_MILLIS);
-							} catch (InterruptedException e) {
-								LOGGER.error("", e);
-							}
-						}
-					} catch (RuntimeException e) {
-						LOGGER.error("", e);
-					}
-				}
-			}
-		}, RECEIVER_THREAD_NAME + ": " + mGatewayInterface2.getClass().getSimpleName());
-		gwThread2.setPriority(RECEIVER_THREAD_PRIORITY);
-		gwThread2.start();
 	}
 
 	// --------------------------------------------------------------------------
@@ -949,16 +912,20 @@ public class RadioController implements IRadioController {
 	 * @param inPacket
 	 */
 	private void sendPacket(IPacket inPacket) {
-		if (mGatewayInterface.isStarted()) {
-			inPacket.setSentTimeMillis(System.currentTimeMillis());
-			mGatewayInterface.sendPacket(inPacket);
-			mGatewayInterface2.sendPacket(inPacket);
-		} else {
-			try {
+		try {
+			if (mGatewayInterface.isStarted()) {
+				while ((System.currentTimeMillis() - mLastPacketSentMillis) < PACKET_SPACING_MILLIS) {
+					Thread.sleep(Math.max(0, PACKET_SPACING_MILLIS - (System.currentTimeMillis() - mLastPacketSentMillis)));
+				}
+				inPacket.setSentTimeMillis(System.currentTimeMillis());
+				inPacket.incrementSendCount();
+				mLastPacketSentMillis = System.currentTimeMillis();
+				mGatewayInterface.sendPacket(inPacket);
+			} else {
 				Thread.sleep(CTRL_START_DELAY_MILLIS);
-			} catch (InterruptedException e) {
-				LOGGER.error("", e);
 			}
+		} catch (InterruptedException e) {
+			LOGGER.error("", e);
 		}
 	}
 

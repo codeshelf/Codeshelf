@@ -96,6 +96,12 @@ public interface IPacket {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * Get the time that the packet was created.
+	 */
+	long getCreateTimeMillis();
+
+	// --------------------------------------------------------------------------
+	/**
 	 * The time that the packet was actually sent (last if resent).
 	 * @return	The actual send time in millis
 	 */

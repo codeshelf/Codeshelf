@@ -64,6 +64,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private static final String		PICK_COMPLETE_MSG		= "ALL WORK COMPLETE   ";
 	private static final String		YES_NO_MSG				= "SCAN YES OR NO      ";
 	private static final String		NO_CONTAINERS_SETUP		= "NO SETUP CONTAINERS ";
+	private static final String		POSITION_IN_USE			= "POSITION IN USE     ";
 	private static final String		FINISH_SETUP			= "PLS SETUP CONTAINERS";
 
 	private static final String		STARTWORK_COMMAND		= "START";
@@ -461,6 +462,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		setState(CheStateEnum.IDLE);
 
 		ledControllerClearLeds();
+		sendPickRequestCommand(CommandControlRequestQty.POSITION_ALL, (byte) 0, (byte) 0, (byte) 0);
 	}
 
 	// --------------------------------------------------------------------------
@@ -813,12 +815,16 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 * @param inScanStr
 	 */
 	private void processContainerPosition(final String inScanPrefixStr, String inScanStr) {
-		setState(CheStateEnum.CONTAINER_SELECT);
-		if (mContainersMap.get(inScanStr) == null) {
-			mContainersMap.put(inScanStr, mContainerInSetup);
-			mContainerInSetup = "";
+		if (POSITION_PREFIX.equals(inScanPrefixStr)) {
+			if (mContainersMap.get(inScanStr) == null) {
+				mContainersMap.put(inScanStr, mContainerInSetup);
+				mContainerInSetup = "";
+				setState(CheStateEnum.CONTAINER_SELECT);
+			} else {
+				sendDisplayCommand(SELECT_POSITION_MSG, POSITION_IN_USE);
+				mCheStateEnum = CheStateEnum.CONTAINER_POSITION;
+			}
 		} else {
-			LOGGER.info("Position in use: " + inScanStr);
 			invalidScanMsg(CheStateEnum.CONTAINER_POSITION);
 		}
 	}

@@ -6,6 +6,8 @@
 package com.gadgetworks.codeshelf.model.domain;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -620,4 +622,35 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		return result;
 	}
 
+	/**
+	 * Compare locations by their position relative to each other.
+	 *
+	 */
+	private class LocationWorkingOrderComparator implements Comparator<ILocation> {
+
+		public int compare(ILocation inLoc1, ILocation inLoc2) {
+			if (inLoc1.getAnchorPosZ() > inLoc2.getAnchorPosZ()) {
+				return -1;
+			} else if (inLoc1.getPosAlongPath() < inLoc2.getPosAlongPath()) {
+				return -1;
+			}
+			return 1;
+		}
+	};
+
+	public final List<ILocation<?>> getSubLocationsInWorkingOrder() {
+
+		List<ILocation<?>> result = new ArrayList<ILocation<?>>();
+
+		result.add(this);
+		List<ISubLocation> childLocations = getChildren();
+
+		Collections.sort(childLocations, new LocationWorkingOrderComparator());
+		
+		for (ILocation<?> childLocation : childLocations) {
+			result.addAll(childLocation.getSubLocationsInWorkingOrder());
+		}
+
+		return result;
+	}
 }

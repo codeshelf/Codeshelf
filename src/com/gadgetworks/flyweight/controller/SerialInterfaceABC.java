@@ -414,12 +414,7 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 		writeBytes(buffer, bufPos);
 		setRTS();
 
-		//ICommand command = inPacket.getCommand();
-		//Log the frame/packet/commands.
-		//if (LOGGER.isInfoEnabled()) {
-		//LOGGER.info("---------------------------------------------------------------------");
 		LOGGER.info("Send packet:    " + inPacket.toString());
-		//}
 		if (LOGGER.isDebugEnabled()) {
 			try {
 				hexDumpArray(mByteArrayStream.toByteArray());
@@ -433,7 +428,7 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 	/**
 	 * @param inByteArray0
 	 */
-	private void hexDumpArray(byte[] inByteArray) {
+	protected void hexDumpArray(byte[] inByteArray) {
 		String text = "";
 		int pos = 0;
 		for (pos = 0; pos < inByteArray.length; pos++) {
@@ -441,7 +436,30 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 				if (text.length() > 0) {
 					LOGGER.debug(text);
 				}
-				text = String.format("%02x: ", pos);
+				text = String.format("\t%02x: ", pos);
+			} else {
+				text += " ";
+			}
+			text += String.format("%02x", inByteArray[pos]);
+		}
+		if (pos != 0) {
+			LOGGER.debug(text);
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inByteArray0
+	 */
+	protected void hexDumpArray(byte[] inByteArray, int inBytesToWrite) {
+		String text = "";
+		int pos = 0;
+		for (pos = 0; pos < inBytesToWrite; pos++) {
+			if (pos % 16 == 0) {
+				if (text.length() > 0) {
+					LOGGER.debug(text);
+				}
+				text = String.format("\t\t%02x: ", pos);
 			} else {
 				text += " ";
 			}
