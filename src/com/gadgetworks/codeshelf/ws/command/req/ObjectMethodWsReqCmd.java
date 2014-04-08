@@ -17,6 +17,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 
+import lombok.libs.org.objectweb.asm.ClassReader;
+import lombok.libs.org.objectweb.asm.Type;
 import lombok.libs.org.objectweb.asm.tree.ClassNode;
 import lombok.libs.org.objectweb.asm.tree.LocalVariableNode;
 import lombok.libs.org.objectweb.asm.tree.MethodNode;
@@ -31,9 +33,6 @@ import org.codehaus.jackson.type.TypeReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.avaje.ebean.enhance.asm.ClassReader;
-import com.avaje.ebean.enhance.asm.ClassVisitor;
-import com.avaje.ebean.enhance.asm.Type;
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
@@ -285,7 +284,7 @@ public class ObjectMethodWsReqCmd extends WsReqCmdABC {
 		try {
 			classNode = new ClassNode();
 			ClassReader classReader = new ClassReader(classFileInputStream);
-			classReader.accept((ClassVisitor) classNode, 0);
+			classReader.accept(classNode, 0);
 		} finally {
 			classFileInputStream.close();
 		}

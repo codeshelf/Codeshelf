@@ -37,8 +37,10 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 
 	private static final Logger		LOGGER					= LoggerFactory.getLogger(SerialInterfaceABC.class);
 
+	private final Object			mLock					= new Object();
+
 	private boolean					mIsStarted;
-	private Boolean					mShouldRun				= true;
+	private boolean					mShouldRun				= true;
 	private boolean					mIsStartingInterface;
 	private ByteArrayOutputStream	mByteArrayStream;
 	private BitFieldOutputStream	mBitFieldOutStream;
@@ -71,7 +73,7 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 
 				// Try to setup the serial I/O.
 				int retryCount = 0;
-				while (mShouldRun && !isSetup) {
+				while ((mShouldRun) && !isSetup) {
 					retryCount++;
 					if (retryCount == 1) {
 						LOGGER.info("Attempting to init serial interface.");
@@ -93,9 +95,11 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 					doStartInterface();
 
 					// Send the END character, so that the receiver has a fresh start on the first frame sent.
-					writeByte(IGatewayInterface.END);
-					writeByte(IGatewayInterface.END);
-					writeByte(IGatewayInterface.END);
+					if (isSetup) {
+						writeByte(IGatewayInterface.END);
+						writeByte(IGatewayInterface.END);
+						writeByte(IGatewayInterface.END);
+					}
 				}
 				mIsStartingInterface = false;
 			}
@@ -114,12 +118,12 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 	 */
 	public final void resetInterface() {
 		// We can only reset an already running interface.
-		synchronized (mShouldRun) {
+		synchronized (mLock) {
 			if (mShouldRun) {
 				stopInterface();
 				// First let's pause 5 seconds to make sure everything settles.
 				try {
-					Thread.sleep(READ_RECOVER_MILLIS);
+					mLock.wait(READ_RECOVER_MILLIS);
 				} catch (InterruptedException e) {
 					LOGGER.error("", e);
 				}
@@ -153,7 +157,7 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 	 *  @return
 	 */
 	protected final boolean shouldRun() {
-		return mShouldRun;
+		return (mShouldRun);
 	}
 
 	// --------------------------------------------------------------------------
@@ -184,13 +188,14 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 			packet = new Packet();
 			packet.fromStream(inputStream, nextFrameArray.length);
 
-			if ((packet.getNetworkId().equals(inMyNetworkId)) || (packet.getNetworkId().equals(new NetworkId(IPacket.ZERO_NETWORK_ID)))
+			if ((packet.getNetworkId().equals(inMyNetworkId))
+					|| (packet.getNetworkId().equals(new NetworkId(IPacket.ZERO_NETWORK_ID)))
 					|| (packet.getNetworkId().equals(new NetworkId(IPacket.BROADCAST_NETWORK_ID)))) {
 				result = packet;
 
-//				if (LOGGER.isInfoEnabled()) {
-//					LOGGER.info("Receive packet: " + result.toString());
-//				}
+				//				if (LOGGER.isInfoEnabled()) {
+				//					LOGGER.info("Receive packet: " + result.toString());
+				//				}
 			}
 			if (LOGGER.isDebugEnabled()) {
 				try {

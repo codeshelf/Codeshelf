@@ -173,6 +173,6 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 	@Override
 	public Boolean isNewOrDirty(IDomainObject inDomainObject) {
 		// TODO Auto-generated method stub
-		return null;
+		return false;
 	}
 }

@@ -483,18 +483,10 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 	@Override
 	public final boolean canNetworkDeviceAssociate(final NetGuid inGuid) {
 		boolean result = false;
-		for (INetworkDevice cheDevice : mDeviceMap.values()) {
-			if (cheDevice.getGuid().equals(inGuid)) {
-				result = true;
 
-				// Now blank the aisles that might have commands.
-				for (INetworkDevice device : mDeviceMap.values()) {
-					if (device instanceof AisleDeviceLogic) {
-						AisleDeviceLogic aisleDevice = (AisleDeviceLogic) device;
-						aisleDevice.clearLedCmdFor(inGuid);
-					}
-				}
-			}
+		INetworkDevice networkDevice = mDeviceMap.get(inGuid);
+		if (networkDevice != null) {
+			result = true;
 		}
 		return result;
 	}

@@ -44,7 +44,6 @@ import com.gadgetworks.flyweight.controller.INetworkDevice;
 import com.gadgetworks.flyweight.controller.IRadioController;
 import com.gadgetworks.flyweight.controller.IRadioControllerEventListener;
 import com.gadgetworks.flyweight.controller.NetworkDeviceStateEnum;
-import com.gadgetworks.flyweight.controller.TcpServerInterface;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
@@ -82,11 +81,12 @@ public class RadioController implements IRadioController {
 	private static final int									ACK_SEND_RETRY_COUNT		= 20;
 	private static final long									MAX_PACKET_AGE_MILLIS		= 5000;
 	private static final long									EVENT_SLEEP_MILLIS			= 50;
-	private static final long									INTERFACE_CHECK_MILLIS		= 5 * 1000;
+	private static final long									INTERFACE_CHECK_MILLIS		= 500;
 	private static final long									CONTROLLER_SLEEP_MILLIS		= 10;
 	private static final int									MAX_CHANNEL_VALUE			= 255;
 
 	private static final long									PACKET_SPACING_MILLIS		= 1;
+	private static final int									MAX_NETWORK_TEST_NUM		= 64;
 
 	private static final int									ACK_QUEUE_SIZE				= 200;
 
@@ -233,36 +233,28 @@ public class RadioController implements IRadioController {
 		mLastIntfCheckMillis = System.currentTimeMillis();
 		while (mShouldRun) {
 			try {
-				// Check to see if we should perform an interface check.
-				// (Only perform this interface check on the radio interface.)
-				//				if (mLastIntfCheckMillis + INTERFACE_CHECK_MILLIS < System.currentTimeMillis()) {
-				//					if (mIntfCheckPending) {
-				//						if (mGatewayInterface.isStarted()) {
-				//							//gwInterface.resetInterface();
-				//						} else {
-				//							try {
-				//								Thread.sleep(CTRL_START_DELAY_MILLIS);
-				//							} catch (Exception e) {
-				//								LOGGER.error("", e);
-				//							}
-				//						}
-				//
-				//						// Now reselect the channel.
-				//						//selectChannel();
-				//
-				//						// Wait for the next check.
-				//						Thread.sleep(INTERFACE_CHECK_MILLIS);
-				//					}
-				//
-				//					if (testNum == MAX_NETWORK_TEST_NUM)
-				//						testNum = 0;
-				//					CommandNetMgmtIntfTest netIntTestCmd = new CommandNetMgmtIntfTest(testNum++);
-				//					sendCommand(netIntTestCmd, mBroadcastAddress, false);
-				//					mIntfCheckPending = true;
-				//
-				//					mLastIntfCheckMillis = System.currentTimeMillis();
-				//				}
-				Thread.sleep(CONTROLLER_SLEEP_MILLIS);
+				if (/*(!mIntfCheckPending) && */(mLastIntfCheckMillis + INTERFACE_CHECK_MILLIS < System.currentTimeMillis())
+						&& (mGatewayInterface.isStarted())) {
+
+					if (testNum == MAX_NETWORK_TEST_NUM)
+						testNum = 0;
+					//					CommandNetMgmtIntfTest netIntTestCmd = new CommandNetMgmtIntfTest(testNum++);
+					//					sendCommand(netIntTestCmd, mBroadcastAddress, false);
+					CommandNetMgmtCheck netCheck = new CommandNetMgmtCheck(CommandNetMgmtCheck.NETCHECK_REQ,
+						mBroadcastNetworkId,
+						PRIVATE_GUID,
+						mPreferredChannel,
+						new NetChannelValue((byte) 0),
+						new NetChannelValue((byte) 0));
+					sendCommand(netCheck, mBroadcastAddress, false);
+					mIntfCheckPending = true;
+
+					mLastIntfCheckMillis = System.currentTimeMillis();
+					// Wait for the next check.
+					Thread.sleep(INTERFACE_CHECK_MILLIS);
+				} else {
+					Thread.sleep(CONTROLLER_SLEEP_MILLIS);
+				}
 			} catch (InterruptedException e) {
 				LOGGER.error("", e);
 			}
@@ -354,11 +346,11 @@ public class RadioController implements IRadioController {
 	/**
 	 *	
 	 */
-	private final void selectChannel() {
+	private void selectChannel() {
 
 		if (mShouldRun) {
 
-			// Pause for a few seconds to let the serial interface come up.
+			// Pause to let the serial interface come up.
 			try {
 				Thread.sleep(CTRL_START_DELAY_MILLIS);
 			} catch (InterruptedException e) {
@@ -524,8 +516,9 @@ public class RadioController implements IRadioController {
 				queue = new ArrayBlockingQueue<IPacket>(ACK_QUEUE_SIZE);
 				mPendingAcksMap.put(inDstAddr, queue);
 			}
-			// Don't send the packet the first time - this will cause the ACK-requesting packets to get sent in proper order until they're acked or not.
-			//sendPacket(packet);
+
+			// If the ACK queue is too full then pause.
+			// (Tho' in practice this starves the system - I raised ACK_QUEUE_SIZE to a crazy-high number until I can figure this out better.)
 			while (queue.size() >= ACK_QUEUE_SIZE) {
 				try {
 					Thread.sleep(1);
@@ -592,7 +585,7 @@ public class RadioController implements IRadioController {
 		 */
 
 		CommandNetMgmtSetup netSetupCmd = new CommandNetMgmtSetup(mNetworkId, mRadioChannel);
-		sendCommand(netSetupCmd, mBroadcastAddress, false);
+		//sendCommand(netSetupCmd, mBroadcastAddress, false);
 	}
 
 	// --------------------------------------------------------------------------
@@ -655,8 +648,8 @@ public class RadioController implements IRadioController {
 
 	// --------------------------------------------------------------------------
 	/**
-	 *  Due to a bug in FTDI's driver software we need to periodically test the serial interface to see if
-	 *  it's still working.  The controller sends a net interface test command to the gateway (dongle) and the
+	 *  Periodically test the serial interface to see if it's still working.  
+	 *  The controller sends a net interface test command to the gateway (dongle) and the
 	 *  gateway (dongle) sends an immediate reply if it's up-and-running.
 	 *  
 	 *  Here we just note that we got a response by indicating that no check is pending.
@@ -776,15 +769,6 @@ public class RadioController implements IRadioController {
 				CommandAssocResp assignCmd = new CommandAssocResp(uid, mNetworkId, foundDevice.getAddress());
 				this.sendCommand(assignCmd, mBroadcastNetworkId, mBroadcastAddress, false);
 				foundDevice.setDeviceStateEnum(NetworkDeviceStateEnum.ASSIGN_SENT);
-
-				// We should wait a bit for the remote to prepare to accept commands.
-//				try {
-//					Thread.sleep(CTRL_START_DELAY_MILLIS);
-//				} catch (InterruptedException e) {
-//					LOGGER.error("", e);
-//				}
-
-				networkDeviceBecameActive(foundDevice);
 			}
 		}
 	}
@@ -812,6 +796,10 @@ public class RadioController implements IRadioController {
 			CommandAssocAck ackCmd;
 			LOGGER.info("Assoc check: " + foundDevice.toString());
 
+			if (foundDevice.getDeviceStateEnum().equals(NetworkDeviceStateEnum.ASSIGN_SENT)) {
+				networkDeviceBecameActive(foundDevice);
+			}
+
 			short level = inCommand.getBatteryLevel();
 			if (foundDevice.getLastBatteryLevel() != level) {
 				foundDevice.setLastBatteryLevel(level);
@@ -825,7 +813,7 @@ public class RadioController implements IRadioController {
 				status = CommandAssocAck.IS_NOT_ASSOCIATED;
 				LOGGER.info("AssocCheck - NOT ASSOC: state was: " + foundDevice.getDeviceStateEnum());
 			}
-
+			
 			// If the found device has the wrong GUID then we have the wrong device.
 			// (This could be two matching network IDs on the same channel.  
 			// This could be a serious flaw in the network protocol.)
@@ -834,24 +822,11 @@ public class RadioController implements IRadioController {
 				status = CommandAssocAck.IS_NOT_ASSOCIATED;
 			}
 
-			// Only send the response to devices whose state is INVALID, STARTED or LOST.
-			//			if ((foundDevice.getNetworkDeviceState().equals(NetworkDeviceStateEnum.INVALID))
-			//					|| (foundDevice.getNetworkDeviceState().equals(NetworkDeviceStateEnum.STARTED))
-			//					|| (foundDevice.getNetworkDeviceState().equals(NetworkDeviceStateEnum.LOST))) {
 			// Create and send an ack command to the remote that we think is in the running state.
 			ackCmd = new CommandAssocAck(uid, new NBitInteger(CommandAssocAck.ASSOCIATE_STATE_BITS, status));
 
 			// Send the command.
 			sendCommand(ackCmd, inSrcAddr, false);
-			//			}
-
-			// We should wait a bit for the remote to prepare to accept commands.
-			try {
-				Thread.sleep(CTRL_START_DELAY_MILLIS);
-			} catch (InterruptedException e) {
-				LOGGER.error("", e);
-			}
-
 		}
 	}
 
@@ -876,19 +851,14 @@ public class RadioController implements IRadioController {
 						if (mGatewayInterface.isStarted()) {
 							IPacket packet = mGatewayInterface.receivePacket(mNetworkId);
 							if (packet != null) {
-								//putPacketInRcvQueue(packet);
+								// Reset the interface check time since we know the interface is OK.
+								mLastIntfCheckMillis = System.currentTimeMillis();
 								if (packet.getPacketType() == IPacket.ACK_PACKET) {
 									LOGGER.info("Packet acked RECEIVED: " + packet.toString());
 									processAckPacket(packet);
 								} else {
 									receiveCommand(packet.getCommand(), packet.getSrcAddr());
 								}
-							} else {
-								//									try {
-								//										Thread.sleep(0, 5000);
-								//									} catch (InterruptedException e) {
-								//										LOGGER.error("", e);
-								//									}
 							}
 						} else {
 							try {
@@ -898,6 +868,7 @@ public class RadioController implements IRadioController {
 							}
 						}
 					} catch (RuntimeException e) {
+						// We catch EVERY exception, because we don't want the thread to abruptly exit on an unchecked exception.
 						LOGGER.error("", e);
 					}
 				}

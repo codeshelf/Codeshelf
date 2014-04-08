@@ -7,6 +7,8 @@
 package com.gadgetworks.flyweight.controller;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import jd2xx.JD2XX;
 import jd2xx.JD2XX.DeviceInfo;
@@ -104,112 +106,110 @@ public final class FTDIInterface extends SerialInterfaceABC {
 	}
 
 	// --------------------------------------------------------------------------
-	/**
-	 *  @return
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.flyweight.controller.SerialInterfaceABC#doSetupConnection()
 	 */
 	protected boolean doSetupConnection() {
 		boolean result = false;
 
-		// First try to use the GW gateway device
-		//if (!Util.isWindows()) {
-			// On windows FTDI don't support PID/VID narrowing.
-//			mJD2XXInterface.setVIDPID(VID, GW_PID);
-		//}
-		result = trySetupConnection(GW_VID_PID);
+		List<Long> vidPidList = new ArrayList<Long>();
+		vidPidList.add(GW_VID_PID);
+		vidPidList.add(FTDI_VID_PID);
 
-		// Next try to use a generic FTDI device.
-		if (!result) {
-			//if (!Util.isWindows()) {
-				// On windows FTDI don't support PID/VID narrowing.
-//				mJD2XXInterface.setVIDPID(VID, FTDI_PID);
-			//}
-			result = trySetupConnection(FTDI_VID_PID);
-		}
+		int deviceToOpen = selectDeviceToOpen(vidPidList);
+
+		result = trySetupConnection(deviceToOpen);
 
 		return result;
 	}
 
-	/* --------------------------------------------------------------------------
-	 * (non-Javadoc)
-	 * @see com.gadgetworks.controller.SerialInterfaceABC#doSetupConnection()
-	 */
 	// --------------------------------------------------------------------------
 	/**
-	 * @param inVidPid
+	 * @param inVidPidList
 	 * @return
 	 */
-	private boolean trySetupConnection(long inVidPid) {
-
-		boolean result = false;
-
+	private int selectDeviceToOpen(List<Long> inVidPidList) {
+		int result = -1;
 		try {
-			int deviceToOpen = -1;
 			//long selectedHandle = -1;
 			//mJD2XXInterface.reload(0x0403, 0x6001);
 			int numDevices = mJD2XXInterface.createDeviceInfoList();
 			for (int devNum = 0; devNum < numDevices; devNum++) {
 				DeviceInfo devInfo = mJD2XXInterface.getDeviceInfoDetail(devNum);
 				LOGGER.info("Gateway device: " + devInfo.toString());
-				if (devInfo.id == inVidPid) {
-					deviceToOpen = devNum;
-					//selectedHandle = devInfo.handle;
+				for (Long vidPid : inVidPidList) {
+					if (devInfo.id == vidPid) {
+						result = devNum;
+						//selectedHandle = devInfo.handle;
+					}
 				}
 			}
+		} catch (IOException e) {
+			LOGGER.error("", e);
+		}
 
-			if (deviceToOpen == -1) {
-				LOGGER.info("No Flyweight dongle found!");
-			} else {
-				result = true;
-				//mJD2XXInterface.close();
-				mJD2XXInterface.open(deviceToOpen);
-				mJD2XXInterface.purge(JD2XX.PURGE_RX);
-				mJD2XXInterface.purge(JD2XX.PURGE_TX);
+		if (result == -1) {
+			LOGGER.info("No Flyweight dongle found!");
+		}
 
-				mJD2XXInterface.resetDevice();
-				//mJD2XXInterface.setLatencyTimer(LATENCY_MILLIS);
+		return result;
+	}
 
-				mJD2XXInterface.setBaudRate(BAUD_1250000);
-				mJD2XXInterface.setDataCharacteristics(JD2XX.BITS_8, JD2XX.STOP_BITS_1, JD2XX.PARITY_NONE);
-				mJD2XXInterface.setFlowControl(JD2XX.FLOW_RTS_CTS, 0, 0);
-				//mJD2XXInterface.setTimeouts(RX_TIMEOUT_MILLIS, TX_TIMEOUT_MILLIS);
+	private boolean trySetupConnection(int inDeviceToOpen) {
 
-				//				synchronized (mDeviceIsRunning) {
-				mDeviceIsRunning = true;
-				//				}
+		boolean result = false;
 
-				//				try {
-				//					mJD2XXInterface.addEventListener(
-				//						new JD2XXEventListener() {
-				//							public void jd2xxEvent(JD2XXEvent inEvent) {
-				//								JD2XX jd2xx = (JD2XX) inEvent.getSource();
-				//								int event = inEvent.getEventType();
-				//								try {
-				//									if ((event & mJD2XXInterface.EVENT_RXCHAR) != 0) {
-				//										int r = jd2xx.getQueueStatus();
-				//										LOGGER.info("RX event: " + new String(jd2xx.read(r)));
-				//									} else if ((event & mJD2XXInterface.EVENT_MODEM_STATUS) != 0) {
-				//										LOGGER.info("Modem status event type: " + event);
-				//									}
-				//								} catch (IOException e) {
-				//									LOGGER.error("", e);
-				//								}
-				//							}
-				//						}
-				//					);
-				//				} catch (TooManyListenersException e) { 
-				//					LOGGER.error("", e);
-				//				}
+		try {
+			result = true;
+			//mJD2XXInterface.close();
+			mJD2XXInterface.open(inDeviceToOpen);
+			mJD2XXInterface.purge(JD2XX.PURGE_RX);
+			mJD2XXInterface.purge(JD2XX.PURGE_TX);
 
-				//				try {
-				//					mJD2XXInterface.notifyOnEvent(JD2XX.EVENT_RXCHAR | JD2XX.EVENT_MODEM_STATUS, true);
-				//					mJD2XXInterface.setEventNotification(JD2XX.EVENT_RXCHAR | JD2XX.EVENT_MODEM_STATUS, selectedHandle);
-				//				} catch (IOException e) {
-				//					LOGGER.error("", e);
-				//				}
+			mJD2XXInterface.resetDevice();
+			//mJD2XXInterface.setLatencyTimer(LATENCY_MILLIS);
 
-				DeviceInfo devInfo = mJD2XXInterface.getDeviceInfoDetail(deviceToOpen);
-				LOGGER.info("Device started: " + devInfo.toString());
-			}
+			mJD2XXInterface.setBaudRate(BAUD_1250000);
+			mJD2XXInterface.setDataCharacteristics(JD2XX.BITS_8, JD2XX.STOP_BITS_1, JD2XX.PARITY_NONE);
+			mJD2XXInterface.setFlowControl(JD2XX.FLOW_RTS_CTS, 0, 0);
+			//mJD2XXInterface.setTimeouts(RX_TIMEOUT_MILLIS, TX_TIMEOUT_MILLIS);
+
+			//				synchronized (mDeviceIsRunning) {
+			mDeviceIsRunning = true;
+			//				}
+
+			//				try {
+			//					mJD2XXInterface.addEventListener(
+			//						new JD2XXEventListener() {
+			//							public void jd2xxEvent(JD2XXEvent inEvent) {
+			//								JD2XX jd2xx = (JD2XX) inEvent.getSource();
+			//								int event = inEvent.getEventType();
+			//								try {
+			//									if ((event & mJD2XXInterface.EVENT_RXCHAR) != 0) {
+			//										int r = jd2xx.getQueueStatus();
+			//										LOGGER.info("RX event: " + new String(jd2xx.read(r)));
+			//									} else if ((event & mJD2XXInterface.EVENT_MODEM_STATUS) != 0) {
+			//										LOGGER.info("Modem status event type: " + event);
+			//									}
+			//								} catch (IOException e) {
+			//									LOGGER.error("", e);
+			//								}
+			//							}
+			//						}
+			//					);
+			//				} catch (TooManyListenersException e) { 
+			//					LOGGER.error("", e);
+			//				}
+
+			//				try {
+			//					mJD2XXInterface.notifyOnEvent(JD2XX.EVENT_RXCHAR | JD2XX.EVENT_MODEM_STATUS, true);
+			//					mJD2XXInterface.setEventNotification(JD2XX.EVENT_RXCHAR | JD2XX.EVENT_MODEM_STATUS, selectedHandle);
+			//				} catch (IOException e) {
+			//					LOGGER.error("", e);
+			//				}
+
+			DeviceInfo devInfo = mJD2XXInterface.getDeviceInfoDetail(inDeviceToOpen);
+			LOGGER.info("Device started: " + devInfo.toString());
 
 		} catch (IOException e) {
 			LOGGER.error("", e);
