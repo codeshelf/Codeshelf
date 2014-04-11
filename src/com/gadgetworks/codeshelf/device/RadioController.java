@@ -79,9 +79,9 @@ public class RadioController implements IRadioController {
 
 	private static final long									ACK_TIMEOUT_MILLIS			= 20;
 	private static final int									ACK_SEND_RETRY_COUNT		= 20;
-	private static final long									MAX_PACKET_AGE_MILLIS		= 5000;
+	private static final long									MAX_PACKET_AGE_MILLIS		= 20000;
 	private static final long									EVENT_SLEEP_MILLIS			= 50;
-	private static final long									INTERFACE_CHECK_MILLIS		= 500;
+	private static final long									INTERFACE_CHECK_MILLIS		= 750;
 	private static final long									CONTROLLER_SLEEP_MILLIS		= 10;
 	private static final int									MAX_CHANNEL_VALUE			= 255;
 
@@ -527,6 +527,7 @@ public class RadioController implements IRadioController {
 				}
 			}
 			queue.add(packet);
+			LOGGER.info("Queue packet:    " + packet.toString());
 		} else {
 			sendPacket(packet);
 		}
@@ -796,10 +797,6 @@ public class RadioController implements IRadioController {
 			CommandAssocAck ackCmd;
 			LOGGER.info("Assoc check: " + foundDevice.toString());
 
-			if (foundDevice.getDeviceStateEnum().equals(NetworkDeviceStateEnum.ASSIGN_SENT)) {
-				networkDeviceBecameActive(foundDevice);
-			}
-
 			short level = inCommand.getBatteryLevel();
 			if (foundDevice.getLastBatteryLevel() != level) {
 				foundDevice.setLastBatteryLevel(level);
@@ -808,12 +805,16 @@ public class RadioController implements IRadioController {
 			byte status = CommandAssocAck.IS_ASSOCIATED;
 
 			// If the found device isn't in the STARTED state then it's not associated with us.
-			if ((foundDevice.getDeviceStateEnum() == null)
-					|| !(foundDevice.getDeviceStateEnum().equals(NetworkDeviceStateEnum.STARTED))) {
+			if (foundDevice.getDeviceStateEnum() == null) {
+				status = CommandAssocAck.IS_NOT_ASSOCIATED;
+				LOGGER.info("AssocCheck - NOT ASSOC: state was: " + foundDevice.getDeviceStateEnum());
+			} else if (foundDevice.getDeviceStateEnum().equals(NetworkDeviceStateEnum.ASSIGN_SENT)) {
+				networkDeviceBecameActive(foundDevice);
+			} else if (!foundDevice.getDeviceStateEnum().equals(NetworkDeviceStateEnum.STARTED)) {
 				status = CommandAssocAck.IS_NOT_ASSOCIATED;
 				LOGGER.info("AssocCheck - NOT ASSOC: state was: " + foundDevice.getDeviceStateEnum());
 			}
-			
+
 			// If the found device has the wrong GUID then we have the wrong device.
 			// (This could be two matching network IDs on the same channel.  
 			// This could be a serious flaw in the network protocol.)
@@ -852,11 +853,17 @@ public class RadioController implements IRadioController {
 							IPacket packet = mGatewayInterface.receivePacket(mNetworkId);
 							if (packet != null) {
 								// Reset the interface check time since we know the interface is OK.
-								mLastIntfCheckMillis = System.currentTimeMillis();
+								//mLastIntfCheckMillis = System.currentTimeMillis();
 								if (packet.getPacketType() == IPacket.ACK_PACKET) {
 									LOGGER.info("Packet acked RECEIVED: " + packet.toString());
 									processAckPacket(packet);
 								} else {
+									// If the inbound packet had an ACK ID then respond with an ACK ID.
+									if (packet.getAckId() != 0) {
+										CommandAssocAck ackCmd = new CommandAssocAck("00000000",
+											new NBitInteger(CommandAssocAck.ASSOCIATE_STATE_BITS, (byte) 0));
+										sendCommand(ackCmd, packet.getNetworkId(), packet.getSrcAddr(), false);
+									}
 									receiveCommand(packet.getCommand(), packet.getSrcAddr());
 								}
 							}

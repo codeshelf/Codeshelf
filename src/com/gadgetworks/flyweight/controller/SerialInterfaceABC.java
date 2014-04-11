@@ -197,7 +197,7 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 				//					LOGGER.info("Receive packet: " + result.toString());
 				//				}
 			}
-			if (LOGGER.isDebugEnabled()) {
+			if ((LOGGER.isDebugEnabled() && (result != null))) {
 				try {
 					LOGGER.info("Receive packet: " + result.toString());
 					hexDumpArray(nextFrameArray);

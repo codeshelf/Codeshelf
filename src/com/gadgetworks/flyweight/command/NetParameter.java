@@ -119,6 +119,9 @@ public class NetParameter {
 		for (int i = 0; i < inString.length() - 1; i += 2) {
 			//grab the hex in pairs
 			String output = inString.substring(i, (i + 2));
+			if (output.length() < 2) {
+				output += "0";
+			}
 			//convert hex to byte
 			result[i / 2] = (byte) (0xff & Short.parseShort(output, 16));
 		}
