@@ -301,7 +301,6 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	public void buttonCommandReceived(CommandControlButton inButtonCommand) {
 		// Send a command to clear the position, so the controller knows we've gotten the button press.
 		sendPickRequestCommand((int) inButtonCommand.getPosNum(), (byte) 0, (byte) 0, (byte) 0);
-
 		processButtonPress((int) inButtonCommand.getPosNum(), (int) inButtonCommand.getValue());
 	}
 
@@ -414,7 +413,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				break;
 		}
 
-		sendPickRequestCommand(CommandControlRequestQty.POSITION_ALL, (byte) 0, (byte) 0, (byte) 0);
+		sendPickRequestCommand(CommandControlRequestQty.POSITION_ALL, CommandControlRequestQty.ERROR_CODE_QTY, (byte) 0, (byte) 0);
 	}
 
 	// --------------------------------------------------------------------------
@@ -488,6 +487,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 * It's a psychological step that makes more sense.
 	 */
 	private void startWork() {
+		sendPickRequestCommand((int) CommandControlRequestQty.POSITION_ALL, (byte) 0, (byte) 0, (byte) 0);
 		setState(CheStateEnum.LOCATION_SETUP);
 	}
 
@@ -819,6 +819,10 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			if (mContainersMap.get(inScanStr) == null) {
 				mContainersMap.put(inScanStr, mContainerInSetup);
 				mContainerInSetup = "";
+				sendPickRequestCommand((int) CommandControlRequestQty.POSITION_ALL, (byte) 0, (byte) 0, (byte) 0);
+				for (String pos : mContainersMap.keySet()) {
+					sendPickRequestCommand(Integer.valueOf(pos), CommandControlRequestQty.POSITION_ASSIGNED_CODE, (byte) 0, (byte) 0);
+				}
 				setState(CheStateEnum.CONTAINER_SELECT);
 			} else {
 				sendDisplayCommand(SELECT_POSITION_MSG, POSITION_IN_USE);

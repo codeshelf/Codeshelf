@@ -34,6 +34,9 @@ import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
 public final class CommandControlRequestQty extends CommandControlABC {
 
 	public static final Byte		POSITION_ALL			= 0;
+	public static final Byte		ERROR_CODE_QTY			= (byte) 255;
+	public static final Byte		BAY_COMPLETE_QTY		= (byte) 254;
+	public static final Byte		POSITION_ASSIGNED_CODE	= (byte) 253;
 
 	private static final Logger		LOGGER					= LoggerFactory.getLogger(CommandControlRequestQty.class);
 

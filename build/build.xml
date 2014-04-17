@@ -12,13 +12,6 @@
 		</classpath>
 	</taskdef>
 
-	<taskdef name="pack200" classname="com.sun.tools.apache.ant.pack200.Pack200Task">
-		<classpath>
-			<pathelement location="${basedir}/build/lib/pack200task.jar" />
-		</classpath>
-	</taskdef>
-
-
 	<!-- Optional add this file to override any of the properties below -->
 	<property file="${basedir}/build/build.properties" />
 	<property file="${basedir}/conf/version.properties" />
@@ -39,7 +32,6 @@
 	<description>CodeShelf Build</description>
 	<!--set global properties for this build-->
 	<property name="src" location="${basedir}/src" />
-	<property name="installer.dir" location="${basedir}/installer" />
 	<property name="libs.dir" location="${basedir}/lib" />
 	<property name="libs.dist.dir" location="${basedir}/lib/dist" />
 	<property name="libs.native.dir" location="${basedir}/lib/native" />
@@ -58,32 +50,9 @@
 	<property name="conf.dir" location="${basedir}/conf" />
 	<property name="resources.dir" location="${basedir}/resources" />
 
-	<!-- Installer Ant Script -->
-
-	<property name="installer.app_name" value="CodeShelf" />
-	<property name="installer.app_short_name" value="CodeShelf" />
-	<property name="installer.product_name" value="CodeShelf" />
-	<property name="installer.publisher" value="Gadgetworks, LLC" />
-	<property name="installer.publisher_url" value="www.gadgetworks.com" />
-	<property name="installer.file_prefix" value="${installer.app_short_name}" />
-	<property name="installer.release_root_path" value="${target.build}" />
-
-	<property name="osx.app.dir" value="${target}/osx-app" />
-	<property name="osx.app.file" value="${osx.app.dir}/CodeShelf.app" />
-	<property name="osx.prefpane.dir" value="${target}/osx-prefPane" />
-	<property name="osx.package.dir" value="${target}/osx-package" />
-	<property name="osx.package.file" value="CodeShelf-${version.major}.${version.minor}.${version.revision}.pkg" />
-	<property name="osx.dmg.dir" value="${target}/osx-dmg" />
-	<property name="osx.dmg.file" value="${osx.dmg.dir}/CodeShelf.dmg" />
-	<property name="osx.dmg.volume" value="CodeShelf-${version.major}.${version.minor}.${version.revision}" />
-	<property name="pack200.excludes" value="jingle.jar,mail.jar,activation.jar,dom4j.jar,startup.jar,base.jar,i4jruntime.jar" />
-
 	<property name="javac.compile.using.version" value="1.7" />
 
-	<property name="jws.build.dir" value="${target}/jws-codeshelf" />
 	<property name="appjar.build.dir" value="${target}/appjar" />
-	<property name="launch4j.dir" location="{$target}" />
-	<property name="debian.installer.dir" value="${target}/debian-installer" />
 
 	<property name="ebean.build.dir" value="${basedir}/build" />
 	<property name="ebean.lib.dir" value="${ebean.build.dir}/lib" />
@@ -164,7 +133,12 @@
 		</copy-->
 		<copy todir="${target.resources}/conf">
 			<fileset dir="${conf.dir}">
-				<include name="*.*" />
+				<include name="commons-logging.properties" />
+				<include name="ebean.properties" />
+				<include name="locale.properties" />
+				<include name="log4j.properties" />
+				<include name="logging.properties" />
+				<include name="version.properties" />
 			</fileset>
 		</copy>
 		<!--copy todir="${target.resources}/images">
@@ -185,7 +159,6 @@
 		<copy todir="${target.lib}">
 			<fileset dir="${libs.dist.dir}">
 				<include name="**/*.*" />
-				<exclude name="**/FlyWeightController.jar*" />
 			</fileset>
 		</copy>
 		<copy todir="${target.native.dir}">
@@ -193,11 +166,11 @@
 				<include name="*/**.*" />
 			</fileset>
 		</copy>
-		<copy todir="${target.lib}">
+		<!--copy todir="${target.lib}">
 			<fileset dir="${basedir}/build/lib">
 				<include name="i4jruntime.jar" />
 			</fileset>
-		</copy>
+		</copy-->
 
 		<echo message="${toString:compile-libs}" />
 
@@ -324,9 +297,9 @@
 			</zipfileset>
 
 			<manifest>
-				<attribute name="Class-Path" value="${codeshelf.app.jar.name} . ${jarpaths}" />
+				<attribute name="Class-Path" value=". ${jarpaths}" />
 				<attribute name="Main-Class" value="${main.class}" />
-				<attribute name="Built-By" value="Gadgetworks, LLC (www.gadgetworks.com)" />
+				<attribute name="Built-By" value="Codeshelf, Inc. (www.codeshelf.com)" />
 			</manifest>
 		</jar>
 		<copy todir="${appjar.build.dir}">
@@ -359,9 +332,9 @@
 		<!--input message="SCP password:" addproperty="scp.password">
 			<!- -handler classname="org.apache.tools.ant.input.SecureInputHandler" /- ->
 		</input-->
-		
+
 		<echo>App dir: ${appjar.build.dir}</echo>
-		
+
 		<!-- Stop the codeshelf service. -->
 		<!--sshexec host="login.codeshelf.io"
 			username="codeshelf"
@@ -378,7 +351,7 @@
 				</modified>
 			</fileset>
 		</scp>
-		
+
 		<!-- Start the codeshelf service. -->
 		<!--sshexec host="login.codeshelf.io"
 			username="codeshelf"

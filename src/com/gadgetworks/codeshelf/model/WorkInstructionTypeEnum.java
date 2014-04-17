@@ -17,7 +17,9 @@ public enum WorkInstructionTypeEnum {
 	@EnumValue("PLAN")
 	PLAN(WorkInstructionTypeNum.PLAN, "PLAN"),
 	@EnumValue("ACTUAL")
-	ACTUAL(WorkInstructionTypeNum.ACTUAL, "ACTUAL");
+	ACTUAL(WorkInstructionTypeNum.ACTUAL, "ACTUAL"),
+	@EnumValue("INDICATOR")
+	INDICATOR(WorkInstructionTypeNum.INDICATOR, "INDICATOR");
 
 	private int		mValue;
 	private String	mName;
@@ -39,6 +41,10 @@ public enum WorkInstructionTypeEnum {
 				result = WorkInstructionTypeEnum.ACTUAL;
 				break;
 
+			case WorkInstructionTypeNum.INDICATOR:
+				result = WorkInstructionTypeEnum.INDICATOR;
+				break;
+
 			default:
 				result = WorkInstructionTypeEnum.INVALID;
 				break;
@@ -58,9 +64,10 @@ public enum WorkInstructionTypeEnum {
 
 	static final class WorkInstructionTypeNum {
 
-		static final byte	INVALID	= -1;
-		static final byte	PLAN	= 0;
-		static final byte	ACTUAL	= 1;
+		static final byte	INVALID		= -1;
+		static final byte	PLAN		= 0;
+		static final byte	ACTUAL		= 1;
+		static final byte	INDICATOR	= 2;
 
 		private WorkInstructionTypeNum() {
 		};
