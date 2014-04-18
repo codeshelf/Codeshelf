@@ -28,7 +28,7 @@ public final class CommandControlTest extends CommandABCTest {
 
 	private static final byte[]	REQUEST_PACKET_IN_DATA	= { 0x01, 0x00, 0x01, 0x00, 0x31, 0x03, 0x05, 0x02, 0x01, 0x03 };
 	private static final byte[]	REQUEST_PACKET_OUT_DATA	= { 0x01, 0x00, 0x08, 0x00, 0x31, 0x03, 0x05, 0x02, 0x01, 0x03 };
-	
+
 	private static final byte[]	BUTTON_PACKET_IN_DATA	= { 0x01, 0x00, 0x01, 0x00, 0x31, 0x04, 0x05, 0x02 };
 
 	private static final String	TEST_MSG1				= "TEST1";
@@ -38,6 +38,8 @@ public final class CommandControlTest extends CommandABCTest {
 	private static final Byte	MIN_VALUE				= 1;
 	private static final Byte	REQ_VALUE				= 2;
 	private static final Byte	MAX_VALUE				= 3;
+	private static final Byte	FREQ_VALUE				= 4;
+	private static final Byte	DUTYCYCLE_VALUE			= 5;
 
 	public CommandControlTest(final String inName) {
 		super(inName);
@@ -90,7 +92,13 @@ public final class CommandControlTest extends CommandABCTest {
 		BitFieldOutputStream outputStream = new BitFieldOutputStream(byteArray);
 
 		// Create a new command.
-		ICommand command = new CommandControlRequestQty(NetEndpoint.PRIMARY_ENDPOINT, POS_NUM, REQ_VALUE, MIN_VALUE, MAX_VALUE);
+		ICommand command = new CommandControlRequestQty(NetEndpoint.PRIMARY_ENDPOINT,
+			POS_NUM,
+			REQ_VALUE,
+			MIN_VALUE,
+			MAX_VALUE,
+			FREQ_VALUE,
+			DUTYCYCLE_VALUE);
 
 		// Create the network ID
 		NetworkId networkId = new NetworkId((byte) 1);
@@ -111,7 +119,8 @@ public final class CommandControlTest extends CommandABCTest {
 		// Check the byte values of the stream to verify that it's right.
 		byte[] resultBytes = byteArray.toByteArray();
 		if (!Arrays.equals(resultBytes, REQUEST_PACKET_OUT_DATA))
-			fail("Command data is not correct");	}
+			fail("Command data is not correct");
+	}
 
 	@Test
 	public void testButtonCommandFromStream() {

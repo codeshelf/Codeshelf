@@ -62,6 +62,16 @@ public final class CommandControlRequestQty extends CommandControlABC {
 	@Setter
 	private Byte					mMaxValue;
 
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	private Byte					mFreq;
+
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	private Byte					mDutyCycle;
+
 	// --------------------------------------------------------------------------
 	/**
 	 *  This is the constructor to use to create a data command to send to the network.
@@ -71,13 +81,17 @@ public final class CommandControlRequestQty extends CommandControlABC {
 		final Byte inPosNum,
 		final Byte inReqValue,
 		final Byte inMinValue,
-		final Byte inMaxValue) {
+		final Byte inMaxValue,
+		final Byte inFreq,
+		final Byte inDutyCycle) {
 		super(inEndpoint, new NetCommandId(CommandControlABC.REQUEST_QTY));
 
 		mPosNum = inPosNum;
 		mReqValue = inReqValue;
 		mMinValue = inMinValue;
 		mMaxValue = inMaxValue;
+		mFreq = inFreq;
+		mDutyCycle = inDutyCycle;
 	}
 
 	// --------------------------------------------------------------------------
@@ -108,6 +122,8 @@ public final class CommandControlRequestQty extends CommandControlABC {
 			inOutputStream.writeByte(mReqValue);
 			inOutputStream.writeByte(mMinValue);
 			inOutputStream.writeByte(mMaxValue);
+			inOutputStream.writeByte(mFreq);
+			inOutputStream.writeByte(mDutyCycle);
 		} catch (IOException e) {
 			LOGGER.error("", e);
 		}
@@ -126,6 +142,8 @@ public final class CommandControlRequestQty extends CommandControlABC {
 			mReqValue = inInputStream.readByte();
 			mMinValue = inInputStream.readByte();
 			mMaxValue = inInputStream.readByte();
+			mFreq = inInputStream.readByte();
+			mDutyCycle = inInputStream.readByte();
 		} catch (IOException e) {
 			LOGGER.error("", e);
 		}

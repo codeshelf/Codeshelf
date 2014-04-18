@@ -56,7 +56,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	// Currently, these cannot be longer than 10 characters.
 	private static final String		EMPTY_MSG				= "                    ";
 	private static final String		INVALID_SCAN_MSG		= "INVALID             ";
-	private static final String		SCAN_USERID_MSG			= "SCAN BADGE          ";
+	private static final String		SCAN_USERID_MSG			= "SCAN BADGE          ";							//new String(new byte[] { 0x7c, 0x03, 0x7c, 0x05 });
 	private static final String		SCAN_LOCATION_MSG		= "SCAN LOCATION       ";
 	private static final String		SCAN_CONTAINER_MSG		= "SCAN CONTAINER      ";
 	private static final String		SELECT_POSITION_MSG		= "SELECT POSITION     ";
@@ -74,6 +74,13 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private static final String		RESUME_COMMAND			= "RESUME";
 	private static final String		YES_COMMAND				= "YES";
 	private static final String		NO_COMMAND				= "NO";
+
+	private static final Byte		BLINK_FREQ				= (byte) 0x15;
+	private static final Byte		BLINK_DUTYCYCLE			= (byte) 0x40;
+	private static final Byte		MED_FREQ				= (byte) 0x00;
+	private static final Byte		MED_DUTYCYCLE			= (byte) 0xF0;
+	private static final Byte		BRIGHT_FREQ				= (byte) 0x00;
+	private static final Byte		BRIGHT_DUTYCYCLE		= (byte) 0x40;
 
 	// The CHE's current state.
 	@Accessors(prefix = "m")
@@ -144,12 +151,19 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 * @param inMinQty
 	 * @param inMaxQty
 	 */
-	private void sendPickRequestCommand(final int inPos, final int inReqQty, final int inMinQty, final int inMaxQty) {
+	private void sendPickRequestCommand(final int inPos,
+		final int inReqQty,
+		final int inMinQty,
+		final int inMaxQty,
+		final byte inFreq,
+		final byte inDutyCycle) {
 		ICommand command = new CommandControlRequestQty(NetEndpoint.PRIMARY_ENDPOINT,
 			(byte) inPos,
 			(byte) inReqQty,
 			(byte) inMinQty,
-			(byte) inMaxQty);
+			(byte) inMaxQty,
+			inFreq,
+			inDutyCycle);
 		mRadioController.sendCommand(command, getAddress(), true);
 	}
 
@@ -258,6 +272,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		String scanPrefixStr = getScanPrefix(inCommandStr);
 		String scanStr = getScanContents(inCommandStr, scanPrefixStr);
 
+		clearPositionControllers();
+
 		// A command scan is always an option at any state.
 		if (inCommandStr.startsWith(COMMAND_PREFIX)) {
 			processCommandScan(scanStr);
@@ -300,7 +316,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	@Override
 	public void buttonCommandReceived(CommandControlButton inButtonCommand) {
 		// Send a command to clear the position, so the controller knows we've gotten the button press.
-		sendPickRequestCommand((int) inButtonCommand.getPosNum(), (byte) 0, (byte) 0, (byte) 0);
+		sendPickRequestCommand((int) inButtonCommand.getPosNum(), (byte) 0, (byte) 0, (byte) 0, BRIGHT_FREQ, BRIGHT_DUTYCYCLE);
 		processButtonPress((int) inButtonCommand.getPosNum(), (int) inButtonCommand.getValue());
 	}
 
@@ -413,7 +429,12 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				break;
 		}
 
-		sendPickRequestCommand(CommandControlRequestQty.POSITION_ALL, CommandControlRequestQty.ERROR_CODE_QTY, (byte) 0, (byte) 0);
+		sendPickRequestCommand(CommandControlRequestQty.POSITION_ALL,
+			CommandControlRequestQty.ERROR_CODE_QTY,
+			(byte) 0,
+			(byte) 0,
+			BLINK_FREQ,
+			BLINK_DUTYCYCLE);
 	}
 
 	// --------------------------------------------------------------------------
@@ -461,7 +482,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		setState(CheStateEnum.IDLE);
 
 		ledControllerClearLeds();
-		sendPickRequestCommand(CommandControlRequestQty.POSITION_ALL, (byte) 0, (byte) 0, (byte) 0);
+		sendPickRequestCommand(CommandControlRequestQty.POSITION_ALL, (byte) 0, (byte) 0, (byte) 0, BRIGHT_FREQ, BRIGHT_DUTYCYCLE);
 	}
 
 	// --------------------------------------------------------------------------
@@ -487,7 +508,6 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 * It's a psychological step that makes more sense.
 	 */
 	private void startWork() {
-		sendPickRequestCommand((int) CommandControlRequestQty.POSITION_ALL, (byte) 0, (byte) 0, (byte) 0);
 		setState(CheStateEnum.LOCATION_SETUP);
 	}
 
@@ -743,7 +763,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 						sendPickRequestCommand(Short.valueOf(mapEntry.getKey()),
 							firstWi.getPlanQuantity(),
 							0,
-							firstWi.getPlanQuantity());
+							firstWi.getPlanQuantity(),
+							BRIGHT_FREQ,
+							BRIGHT_DUTYCYCLE);
 					}
 				}
 			}
@@ -760,7 +782,6 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private void processIdleStateScan(final String inScanPrefixStr, final String inScanStr) {
 
 		if (USER_PREFIX.equals(inScanPrefixStr)) {
-			mUserId = inScanStr;
 			setState(CheStateEnum.CONTAINER_SELECT);
 		} else {
 			LOGGER.info("Not a user ID: " + inScanStr);
@@ -802,6 +823,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 					break;
 				}
 			}
+			showAssignedPositions();
 			setState(CheStateEnum.CONTAINER_POSITION);
 		} else {
 			LOGGER.info("Not a container ID: " + inScanStr);
@@ -819,10 +841,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			if (mContainersMap.get(inScanStr) == null) {
 				mContainersMap.put(inScanStr, mContainerInSetup);
 				mContainerInSetup = "";
-				sendPickRequestCommand((int) CommandControlRequestQty.POSITION_ALL, (byte) 0, (byte) 0, (byte) 0);
-				for (String pos : mContainersMap.keySet()) {
-					sendPickRequestCommand(Integer.valueOf(pos), CommandControlRequestQty.POSITION_ASSIGNED_CODE, (byte) 0, (byte) 0);
-				}
+				showAssignedPositions();
 				setState(CheStateEnum.CONTAINER_SELECT);
 			} else {
 				sendDisplayCommand(SELECT_POSITION_MSG, POSITION_IN_USE);
@@ -873,5 +892,32 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		} else {
 			invalidScanMsg(mCheStateEnum);
 		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 */
+	private void clearPositionControllers() {
+		sendPickRequestCommand((int) CommandControlRequestQty.POSITION_ALL,
+			(byte) 0,
+			(byte) 0,
+			(byte) 0,
+			BRIGHT_FREQ,
+			BRIGHT_DUTYCYCLE);
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 */
+	private void showAssignedPositions() {
+		for (String pos : mContainersMap.keySet()) {
+			sendPickRequestCommand(Integer.valueOf(pos),
+				CommandControlRequestQty.POSITION_ASSIGNED_CODE,
+				(byte) 0,
+				(byte) 0,
+				MED_FREQ,
+				MED_DUTYCYCLE);
+		}
+
 	}
 }
