@@ -95,8 +95,12 @@ public final class WsReqCmdFactory implements IWsReqCmdFactory {
 				result = new NetAttachWsReqCmd(commandId, dataNode, mOrganizationDao);
 				break;
 
-			case CHE_WORK_REQ:
-				result = new CheWorkWsReqCmd(commandId, dataNode, mCheDao);
+			case CHE_COMPUTEWORK_REQ:
+				result = new CheComputeWorkReqCmd(commandId, dataNode, mCheDao);
+				break;
+
+			case CHE_GETWORK_REQ:
+				result = new CheGetWorkReqCmd(commandId, dataNode, mCheDao);
 				break;
 
 			case CHE_WICOMPLETE_REQ:

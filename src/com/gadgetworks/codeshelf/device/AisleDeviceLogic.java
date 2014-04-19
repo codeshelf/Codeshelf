@@ -64,7 +64,7 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 	}
 
 	@Override
-	public void start() {
+	public void startDevice() {
 		//		short position = 1;
 		//		sendLightCommand(CommandControlLed.CHANNEL1, position, ColorEnum.BLUE, CommandControlLed.EFFECT_SOLID);
 		updateLeds();

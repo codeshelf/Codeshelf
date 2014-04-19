@@ -20,7 +20,8 @@ public enum WsRespCmdEnum {
 	OBJECT_METHOD_RESP(WebSessionRespCmdNum.OBJECT_METHOD_RESP, "OBJ_METH_RS"),
 	REGISTER_EDI_RESP(WebSessionRespCmdNum.REGISTER_EDI_RESP, "REGISTER_EDI_RS"),
 	NET_ATTACH_RESP(WebSessionRespCmdNum.NET_ATTACH_RESP, "ATTACH_RS"),
-	CHE_WORK_RESP(WebSessionRespCmdNum.CHE_WORK_RESP, "CHE_WORK_RS");
+	CHE_COMPUTEWORK_RESP(WebSessionRespCmdNum.CHE_COMPUTEWORK_RESP, "CHE_COMPUTEWORK_RS"),
+	CHE_GETWORK_RESP(WebSessionRespCmdNum.CHE_GETWORK_RESP, "CHE_GETWORK_RS");
 
 	private int		mValue;
 	private String	mName;
@@ -46,10 +47,6 @@ public enum WsRespCmdEnum {
 				result = WsRespCmdEnum.OBJECT_GETTER_RESP;
 				break;
 
-			//			case WebSessionRespCmdNum.OBJECT_GETBYID_RESP:
-			//				result = WebSessionRespCmdEnum.OBJECT_GETBYID_RESP;
-			//				break;
-
 			case WebSessionRespCmdNum.OBJECT_UPDATE_RESP:
 				result = WsRespCmdEnum.OBJECT_UPDATE_RESP;
 				break;
@@ -72,6 +69,14 @@ public enum WsRespCmdEnum {
 
 			case WebSessionRespCmdNum.NET_ATTACH_RESP:
 				result = WsRespCmdEnum.NET_ATTACH_RESP;
+				break;
+
+			case WebSessionRespCmdNum.CHE_COMPUTEWORK_RESP:
+				result = WsRespCmdEnum.CHE_COMPUTEWORK_RESP;
+				break;
+
+			case WebSessionRespCmdNum.CHE_GETWORK_RESP:
+				result = WsRespCmdEnum.CHE_GETWORK_RESP;
 				break;
 
 			default:
@@ -118,7 +123,8 @@ public enum WsRespCmdEnum {
 		static final byte	OBJECT_METHOD_RESP		= 7;
 		static final byte	REGISTER_EDI_RESP		= 8;
 		static final byte	NET_ATTACH_RESP			= 9;
-		static final byte	CHE_WORK_RESP			= 10;
+		static final byte	CHE_COMPUTEWORK_RESP	= 10;
+		static final byte	CHE_GETWORK_RESP		= 11;
 
 		private WebSessionRespCmdNum() {
 

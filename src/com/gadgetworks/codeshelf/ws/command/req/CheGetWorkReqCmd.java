@@ -5,18 +5,15 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.ws.command.req;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.node.ArrayNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Che;
-import com.gadgetworks.codeshelf.ws.command.resp.CheWorkWsRespCmd;
+import com.gadgetworks.codeshelf.ws.command.resp.CheGetWorkRespCmd;
 import com.gadgetworks.codeshelf.ws.command.resp.IWsRespCmd;
 
 /**
@@ -25,34 +22,29 @@ import com.gadgetworks.codeshelf.ws.command.resp.IWsRespCmd;
  * 
  * command {
  * 	id: <cmd_id>,
- * 	type: CHE_WORK_REQ,
+ * 	type: CHE_GETWORK_REQ,
  * 	data {
  * 		persistentId: 	<persistentId>,
- * 		locationId: 	<locationId>,
- * 		containerIds: [
- * 			{
- * 				containerId: <containerId>
- * 			}
- * 		]
+ * 		locationId: 	<locationId>
  * 	}
  * }
  * 
  * @author jeffw
  *
  */
-public class CheWorkWsReqCmd extends WsReqCmdABC {
+public class CheGetWorkReqCmd extends WsReqCmdABC {
 
-	private static final Logger	LOGGER	= LoggerFactory.getLogger(CheWorkWsReqCmd.class);
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(CheGetWorkReqCmd.class);
 
 	private ITypedDao<Che>		mCheDao;
 
-	public CheWorkWsReqCmd(final String inCommandId, final JsonNode inDataNodeAsJson, final ITypedDao<Che> inCheDao) {
+	public CheGetWorkReqCmd(final String inCommandId, final JsonNode inDataNodeAsJson, final ITypedDao<Che> inCheDao) {
 		super(inCommandId, inDataNodeAsJson);
 		mCheDao = inCheDao;
 	}
 
 	public final WsReqCmdEnum getCommandEnum() {
-		return WsReqCmdEnum.CHE_WORK_REQ;
+		return WsReqCmdEnum.CHE_GETWORK_REQ;
 	}
 
 	// --------------------------------------------------------------------------
@@ -70,16 +62,7 @@ public class CheWorkWsReqCmd extends WsReqCmdABC {
 			JsonNode locationIdNode = getDataJsonNode().get("locationId");
 			String locationId = locationIdNode.getTextValue();
 
-			JsonNode containerIdsNode = getDataJsonNode().get("containerIds");
-			List<String> containerIdList = new ArrayList<String>();
-			if (containerIdsNode.isArray()) {
-				ArrayNode array = (ArrayNode) containerIdsNode;
-				for (int i = 0; i < array.size(); i++) {
-					JsonNode node = array.get(i);
-					containerIdList.add(node.asText());
-				}
-			}
-			result = new CheWorkWsRespCmd(che, locationId, containerIdList);
+			result = new CheGetWorkRespCmd(che, locationId);
 		}
 		return result;
 	}

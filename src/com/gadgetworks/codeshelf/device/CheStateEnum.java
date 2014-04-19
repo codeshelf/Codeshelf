@@ -16,8 +16,12 @@ public enum CheStateEnum {
 	INVALID(CheStateNum.INVALID, "INVALID"),
 	@EnumValue("IDLE")
 	IDLE(CheStateNum.IDLE, "IDLE"),
-	@EnumValue("LOCATION_SETUP")
-	LOCATION_SETUP(CheStateNum.LOCATION_SETUP, "LOCATION_SETUP"),
+	@EnumValue("COMPUTE_WORK")
+	COMPUTE_WORK(CheStateNum.COMPUTE_WORK, "COMPUTE_WORK"),
+	@EnumValue("GET_WORK")
+	GET_WORK(CheStateNum.GET_WORK, "GET_WORK"),
+	@EnumValue("LOCATION_SELECT")
+	LOCATION_SELECT(CheStateNum.LOCATION_SELECT, "LOCATION_SELECT"),
 	@EnumValue("CONTAINER_SELECT")
 	CONTAINER_SELECT(CheStateNum.CONTAINER_SELECT, "CONTAINER_SELECT"),
 	@EnumValue("CONTAINER_POSITION")
@@ -45,8 +49,16 @@ public enum CheStateEnum {
 				result = CheStateEnum.IDLE;
 				break;
 
-			case CheStateNum.LOCATION_SETUP:
-				result = CheStateEnum.LOCATION_SETUP;
+			case CheStateNum.COMPUTE_WORK:
+				result = CheStateEnum.COMPUTE_WORK;
+				break;
+
+			case CheStateNum.GET_WORK:
+				result = CheStateEnum.GET_WORK;
+				break;
+
+			case CheStateNum.LOCATION_SELECT:
+				result = CheStateEnum.LOCATION_SELECT;
 				break;
 
 			case CheStateNum.CONTAINER_SELECT:
@@ -90,12 +102,14 @@ public enum CheStateEnum {
 
 		static final byte	INVALID				= -1;
 		static final byte	IDLE				= 0;
-		static final byte	LOCATION_SETUP		= 1;
-		static final byte	CONTAINER_SELECT	= 2;
-		static final byte	CONTAINER_POSITION	= 3;
-		static final byte	DO_PICK				= 4;
-		static final byte	SHORT_PICK			= 5;
-		static final byte	PICK_COMPLETE		= 6;
+		static final byte	COMPUTE_WORK		= 1;
+		static final byte	GET_WORK			= 2;
+		static final byte	LOCATION_SELECT		= 3;
+		static final byte	CONTAINER_SELECT	= 4;
+		static final byte	CONTAINER_POSITION	= 5;
+		static final byte	DO_PICK				= 6;
+		static final byte	SHORT_PICK			= 7;
+		static final byte	PICK_COMPLETE		= 8;
 
 		private CheStateNum() {
 		};

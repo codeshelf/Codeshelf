@@ -63,9 +63,11 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private static final String		SHORT_PICK_CONFIRM_MSG	= "CONFIRM SHORT       ";
 	private static final String		PICK_COMPLETE_MSG		= "ALL WORK COMPLETE   ";
 	private static final String		YES_NO_MSG				= "SCAN YES OR NO      ";
-	private static final String		NO_CONTAINERS_SETUP		= "NO SETUP CONTAINERS ";
-	private static final String		POSITION_IN_USE			= "POSITION IN USE     ";
-	private static final String		FINISH_SETUP			= "PLS SETUP CONTAINERS";
+	private static final String		NO_CONTAINERS_SETUP_MSG	= "NO SETUP CONTAINERS ";
+	private static final String		POSITION_IN_USE_MSG		= "POSITION IN USE     ";
+	private static final String		FINISH_SETUP_MSG		= "PLS SETUP CONTAINERS";
+	private static final String		COMPUTE_WORK_MSG		= "COMPUTING WORK      ";
+	private static final String		GET_WORK_MSG			= "GETTING WORK        ";
 
 	private static final String		STARTWORK_COMMAND		= "START";
 	private static final String		SETUP_COMMAND			= "SETUP";
@@ -224,9 +226,17 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.flyweight.controller.INetworkDevice#start()
 	 */
-	public final void start() {
-		//setState(CheStateEnum.IDLE);
+	public final void startDevice() {
 		setState(mCheStateEnum);
+	}
+
+	public final void assignComputedWorkCount(final Integer inWorkInstructionCount) {
+		// The back-end returned the work instruction count.
+		if (inWorkInstructionCount > 0) {
+			setState(CheStateEnum.LOCATION_SELECT);
+		} else {
+			setState(CheStateEnum.PICK_COMPLETE);
+		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -238,12 +248,20 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 * @param inWorkItemList
 	 */
 	public final void assignWork(final List<WorkInstruction> inWorkItemList) {
-		mAllPicksWiList.clear();
-		mCompletedWiList.clear();
-		mAllPicksWiList.addAll(inWorkItemList);
-		doNextPick();
+
 		for (WorkInstruction wi : inWorkItemList) {
 			LOGGER.info("WI: Loc: " + wi.getLocationId() + " SKU: " + wi.getItemId());
+		}
+
+		if (inWorkItemList.size() == 0) {
+			sendDisplayCommand(PICK_COMPLETE_MSG, EMPTY_MSG);
+			setState(CheStateEnum.PICK_COMPLETE);
+		} else {
+			mAllPicksWiList.clear();
+			mCompletedWiList.clear();
+			mAllPicksWiList.addAll(inWorkItemList);
+			doNextPick();
+			setState(CheStateEnum.DO_PICK);
 		}
 	}
 
@@ -283,7 +301,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 					processIdleStateScan(scanPrefixStr, scanStr);
 					break;
 
-				case LOCATION_SETUP:
+				case LOCATION_SELECT:
 					processLocationScan(scanPrefixStr, scanStr);
 					break;
 
@@ -368,7 +386,15 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				sendDisplayCommand(SCAN_USERID_MSG, EMPTY_MSG);
 				break;
 
-			case LOCATION_SETUP:
+			case COMPUTE_WORK:
+				sendDisplayCommand(COMPUTE_WORK_MSG, EMPTY_MSG);
+				break;
+
+			case GET_WORK:
+				sendDisplayCommand(GET_WORK_MSG, EMPTY_MSG);
+				break;
+
+			case LOCATION_SELECT:
 				sendDisplayCommand(SCAN_LOCATION_MSG, EMPTY_MSG);
 				break;
 
@@ -413,7 +439,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				sendDisplayCommand(SCAN_USERID_MSG, INVALID_SCAN_MSG);
 				break;
 
-			case LOCATION_SETUP:
+			case LOCATION_SELECT:
 				sendDisplayCommand(SCAN_LOCATION_MSG, INVALID_SCAN_MSG);
 				break;
 
@@ -448,7 +474,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				break;
 
 			case SETUP_COMMAND:
-				setupWork();
+				setupChe();
 				break;
 
 			case STARTWORK_COMMAND:
@@ -482,14 +508,14 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		setState(CheStateEnum.IDLE);
 
 		ledControllerClearLeds();
-		sendPickRequestCommand(CommandControlRequestQty.POSITION_ALL, (byte) 0, (byte) 0, (byte) 0, BRIGHT_FREQ, BRIGHT_DUTYCYCLE);
+		clearPositionControllers();
 	}
 
 	// --------------------------------------------------------------------------
 	/**
 	 * The user scanned the SETUP command to start a new batch of containers for the CHE.
 	 */
-	private void setupWork() {
+	private void setupChe() {
 		LOGGER.info("Setup work");
 
 		if (mCheStateEnum.equals(CheStateEnum.PICK_COMPLETE)) {
@@ -508,26 +534,18 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 * It's a psychological step that makes more sense.
 	 */
 	private void startWork() {
-		setState(CheStateEnum.LOCATION_SETUP);
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * The worker scanned a location, so set the CHE's location and setup the work instructions from this location.
-	 */
-	private void setLocation() {
-		LOGGER.info("Start work");
-
 		if (mContainersMap.values().size() > 0) {
 			mContainerInSetup = "";
 			if (getCheStateEnum() != CheStateEnum.DO_PICK) {
 				setState(CheStateEnum.DO_PICK);
 			}
 			List<String> containerIdList = new ArrayList<String>(mContainersMap.values());
-			mDeviceManager.requestCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), mLocationId, containerIdList);
+			mDeviceManager.computeCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), containerIdList);
+
+			setState(CheStateEnum.COMPUTE_WORK);
 		} else {
 			// Stay in the same state - the scan made no sense.
-			sendDisplayCommand(NO_CONTAINERS_SETUP, FINISH_SETUP);
+			sendDisplayCommand(NO_CONTAINERS_SETUP_MSG, FINISH_SETUP_MSG);
 		}
 	}
 
@@ -797,7 +815,12 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private void processLocationScan(final String inScanPrefixStr, String inScanStr) {
 		if (LOCATION_PREFIX.equals(inScanPrefixStr)) {
 			setLocationId(inScanStr);
-			setLocation();
+
+			List<String> containerIdList = new ArrayList<String>(mContainersMap.values());
+			mDeviceManager.getCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), inScanStr);
+
+			setState(CheStateEnum.GET_WORK);
+
 		} else {
 			LOGGER.info("Not a location ID: " + inScanStr);
 			invalidScanMsg(mCheStateEnum);
@@ -844,7 +867,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				showAssignedPositions();
 				setState(CheStateEnum.CONTAINER_SELECT);
 			} else {
-				sendDisplayCommand(SELECT_POSITION_MSG, POSITION_IN_USE);
+				sendDisplayCommand(SELECT_POSITION_MSG, POSITION_IN_USE_MSG);
 				mCheStateEnum = CheStateEnum.CONTAINER_POSITION;
 			}
 		} else {

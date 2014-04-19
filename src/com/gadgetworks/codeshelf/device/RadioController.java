@@ -965,7 +965,7 @@ public class RadioController implements IRadioController {
 	 */
 	private void networkDeviceBecameActive(INetworkDevice inNetworkDevice) {
 		inNetworkDevice.setDeviceStateEnum(NetworkDeviceStateEnum.STARTED);
-		inNetworkDevice.start();
+		inNetworkDevice.startDevice();
 	}
 
 	// --------------------------------------------------------------------------

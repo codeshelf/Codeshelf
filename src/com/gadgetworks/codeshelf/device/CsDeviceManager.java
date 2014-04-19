@@ -31,6 +31,7 @@ import com.gadgetworks.codeshelf.ws.command.IWebSessionCmd;
 import com.gadgetworks.codeshelf.ws.command.req.IWsReqCmd;
 import com.gadgetworks.codeshelf.ws.command.req.NetAttachWsReqCmd;
 import com.gadgetworks.codeshelf.ws.command.req.WsReqCmdEnum;
+import com.gadgetworks.codeshelf.ws.command.resp.CheComputeWorkRespCmd;
 import com.gadgetworks.codeshelf.ws.command.resp.WsRespCmdEnum;
 import com.gadgetworks.codeshelf.ws.websocket.CsWebSocketClient;
 import com.gadgetworks.codeshelf.ws.websocket.ICsWebSocketClient;
@@ -213,8 +214,12 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 					processFilterResp(dataNode);
 					break;
 
-				case CHE_WORK_RESP:
-					processCheWorkResp(dataNode);
+				case CHE_COMPUTEWORK_RESP:
+					processCheComputeWorkResp(dataNode);
+					break;
+
+				case CHE_GETWORK_RESP:
+					processCheGetWorkResp(dataNode);
 					break;
 
 				default:
@@ -333,13 +338,28 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 		}
 	}
 
+	private void processCheComputeWorkResp(final JsonNode inDataNode) {
+		JsonNode resultsNode = inDataNode.get(IWsReqCmd.RESULTS);
+
+		NetGuid cheId = new NetGuid("0x" + inDataNode.get("cheId").asText());
+
+		CheDeviceLogic cheDevice = (CheDeviceLogic) mDeviceMap.get(cheId);
+
+		if (cheDevice != null) {
+			if (resultsNode != null) {
+				Integer wiCount = resultsNode.get(CheComputeWorkRespCmd.WI_COUNT).asInt();
+				cheDevice.assignComputedWorkCount(wiCount);
+			}
+		}
+	}
+
 	// --------------------------------------------------------------------------
 	/**
 	 * Deserialize work instructions for a CHE from the WebSocket.
 	 * 
 	 * @param inDataNode
 	 */
-	private void processCheWorkResp(final JsonNode inDataNode) {
+	private void processCheGetWorkResp(final JsonNode inDataNode) {
 		JsonNode resultsNode = inDataNode.get(IWsReqCmd.RESULTS);
 
 		NetGuid cheId = new NetGuid("0x" + inDataNode.get("cheId").asText());
@@ -352,18 +372,6 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 					ObjectMapper mapper = new ObjectMapper();
 					List<WorkInstruction> wiList = mapper.readValue(resultsNode, new TypeReference<List<WorkInstruction>>() {
 					});
-					//				
-					//				for (JsonNode objectNode : resultsNode) {
-					//					DeployedWorkInstruction wi = new DeployedWorkInstruction();
-					//					wi.setLedController(objectNode.get("acId").asText());
-					//					wi.setLedControllerCmd(objectNode.get("acCmd").asText());
-					//					wi.setContainerId(objectNode.get("cntrId").asText());
-					//					wi.setLocation(objectNode.get("loc").asText());
-					//					wi.setQuantity(objectNode.get("qty").asInt());
-					//					wi.setSkuId(objectNode.get("sku").asText());
-					//					wi.setColor(ColorEnum.valueOf(objectNode.get("color").asText()));
-					//					wiList.add(wi);
-					//				}
 					if (wiList.size() > 0) {
 						cheDevice.assignWork(wiList);
 					}
@@ -520,12 +528,32 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.device.ICsDeviceManager#requestCheWork(java.lang.String, java.lang.String, java.lang.String)
 	 */
-	@Override
-	public final void requestCheWork(final String inCheId,
+	public final void computeCheWork(final String inCheId,
 		final UUID inPersistentId,
-		final String inLocationId,
 		final List<String> inContainerIdList) {
-		LOGGER.info("Request for work: Che: " + inCheId + " Container: " + inContainerIdList.toString() + " Loc: " + inLocationId);
+		LOGGER.info("Compute work: Che: " + inCheId + " Container: " + inContainerIdList.toString());
+
+		// Build the response Json object.
+		ObjectMapper mapper = new ObjectMapper();
+		ObjectNode dataNode = mapper.createObjectNode();
+		dataNode.put("persistentId", inPersistentId.toString());
+
+		ArrayNode propertiesArray = mapper.createArrayNode();
+		for (String containerId : inContainerIdList) {
+			propertiesArray.add(containerId);
+		}
+		dataNode.put("containerIds", propertiesArray);
+		sendWebSocketMessageNode(WsReqCmdEnum.CHE_COMPUTEWORK_REQ, dataNode);
+	}
+
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.device.ICsDeviceManager#requestCheWork(java.lang.String, java.lang.String, java.lang.String)
+	 */
+	public final void getCheWork(final String inCheId,
+		final UUID inPersistentId,
+		final String inLocationId) {
+		LOGGER.info("Get work: Che: " + inCheId + " Loc: " + inLocationId);
 
 		// Build the response Json object.
 		ObjectMapper mapper = new ObjectMapper();
@@ -533,12 +561,7 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 		dataNode.put("persistentId", inPersistentId.toString());
 		dataNode.put("locationId", inLocationId);
 
-		ArrayNode propertiesArray = mapper.createArrayNode();
-		for (String containerId : inContainerIdList) {
-			propertiesArray.add(containerId);
-		}
-		dataNode.put("containerIds", propertiesArray);
-		sendWebSocketMessageNode(WsReqCmdEnum.CHE_WORK_REQ, dataNode);
+		sendWebSocketMessageNode(WsReqCmdEnum.CHE_GETWORK_REQ, dataNode);
 	}
 
 	// --------------------------------------------------------------------------

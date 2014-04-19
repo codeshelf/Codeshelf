@@ -29,10 +29,18 @@ public interface ICsDeviceManager {
 	 * A CHE has asked for the work it has waiting at the server end.
 	 * @param inCheId	The CHE's GUID
 	 * @param inPersistentId	The CHE's persistent ID
-	 * @param inStartLocationId	The location where the CHE is when it requested the work.
 	 * @param inContainerIdList	The containers on the CHE when it requested the work.
 	 */
-	void requestCheWork(String inCheId, UUID inPersistentId, String inStartLocationId, List<String> inContainerIdList);
+	void computeCheWork(String inCheId, UUID inPersistentId, List<String> inContainerIdList);
+
+	// --------------------------------------------------------------------------
+	/**
+	 * A CHE has asked for the work it has waiting at the server end.
+	 * @param inCheId	The CHE's GUID
+	 * @param inPersistentId	The CHE's persistent ID
+	 * @param inStartLocationId	The location where the CHE is when it requested the work.
+	 */
+	void getCheWork(String inCheId, UUID inPersistentId, String inStartLocationId);
 
 	// --------------------------------------------------------------------------
 	/**

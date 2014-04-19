@@ -176,6 +176,13 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 	@JsonProperty
 	private String						pickerId;
 
+	// Assigned CHE
+	@Column(nullable = true)
+	@Getter
+	@Setter
+	@ManyToOne(optional = true)
+	private Che							assignedChe;
+
 	// LED command/processing stream.
 	// A formatted stream of LED processing commands that tells the site gateway how to lights LEDs for this WI.
 	// See LedStreamProcessor

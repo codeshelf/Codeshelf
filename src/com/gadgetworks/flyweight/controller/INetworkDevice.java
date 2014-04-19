@@ -103,7 +103,7 @@ public interface INetworkDevice {
 	/**
 	 * We get this message when the device first starts on the network.
 	 */
-	void start();
+	void startDevice();
 
 	// --------------------------------------------------------------------------
 	/**

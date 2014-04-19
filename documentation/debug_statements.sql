@@ -47,3 +47,11 @@ join location as tier on bay.persistentid = tier.parent_persistentid
 join location as slot on tier.persistentid = slot.parent_persistentid
 where aisle.domainid like 'A%'
 order by bay.first_led_num_along_path, tier.first_led_num_along_path, slot.first_led_num_along_path;
+
+# Select work instructions in "group sort code" order and show the location names (to help understand if the order is correct)
+select aisle.domainid, bay.domainid, tier.domainid, slot.domainid from work_instruction
+join location as slot on slot.persistentid = work_instruction.location_persistentid
+join location as tier on tier.persistentid = slot.parent_persistentid
+join location as bay on bay.persistentid = tier.parent_persistentid
+join location as aisle on aisle.persistentid = bay.parent_persistentid
+order by work_instruction.group_and_sort_code;

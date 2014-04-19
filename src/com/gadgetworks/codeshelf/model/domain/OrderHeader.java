@@ -301,10 +301,12 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	 */
 	public final OrderLocation getFirstOrderLocationOnPath(final Path inPath) {
 		OrderLocation result = null;
-		
+
 		for (OrderLocation orderLoc : getOrderLocations()) {
-			if ((result == null) || (orderLoc.getLocation().getPosAlongPath() < result.getLocation().getPosAlongPath())) {
-				result = orderLoc;
+			if (orderLoc.getLocation().getPathSegment().getParent().equals(inPath)) {
+				if ((result == null) || (orderLoc.getLocation().getPosAlongPath() < result.getLocation().getPosAlongPath())) {
+					result = orderLoc;
+				}
 			}
 		}
 

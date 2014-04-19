@@ -20,7 +20,8 @@ public enum WsReqCmdEnum {
 	OBJECT_METHOD_REQ(WebSessionReqCmdNum.OBJECT_METHOD_REQ, "OBJ_METH_RQ"),
 	REGISTER_EDI_SERVICE_REQ(WebSessionReqCmdNum.REGISTER_EDI_SERVICE_REQ, "REGISTER_EDI_SERVICE_RS"),
 	NET_ATTACH_REQ(WebSessionReqCmdNum.NET_ATTACH_REQ, "NET_ATTACH_RQ"),
-	CHE_WORK_REQ(WebSessionReqCmdNum.CHE_WORK_REQ, "CHE_WORK_RQ"),
+	CHE_COMPUTEWORK_REQ(WebSessionReqCmdNum.CHE_COMPUTEWORK_REQ, "CHE_COMPUTEWORK_RQ"),
+	CHE_GETWORK_REQ(WebSessionReqCmdNum.CHE_GETWORK_REQ, "CHE_GETWORK_RQ"),
 	CHE_WICOMPLETE_REQ(WebSessionReqCmdNum.CHE_WICOMPLETE_REQ, "CHE_WICOMP_RQ");
 
 	private int		mValue;
@@ -75,8 +76,12 @@ public enum WsReqCmdEnum {
 				result = WsReqCmdEnum.NET_ATTACH_REQ;
 				break;
 
-			case WebSessionReqCmdNum.CHE_WORK_REQ:
-				result = WsReqCmdEnum.CHE_WORK_REQ;
+			case WebSessionReqCmdNum.CHE_COMPUTEWORK_REQ:
+				result = WsReqCmdEnum.CHE_COMPUTEWORK_REQ;
+				break;
+
+			case WebSessionReqCmdNum.CHE_GETWORK_REQ:
+				result = WsReqCmdEnum.CHE_GETWORK_REQ;
 				break;
 
 			case WebSessionReqCmdNum.CHE_WICOMPLETE_REQ:
@@ -123,8 +128,9 @@ public enum WsReqCmdEnum {
 		static final byte	OBJECT_METHOD_REQ			= 7;
 		static final byte	REGISTER_EDI_SERVICE_REQ	= 8;
 		static final byte	NET_ATTACH_REQ				= 9;
-		static final byte	CHE_WORK_REQ				= 10;
-		static final byte	CHE_WICOMPLETE_REQ			= 11;
+		static final byte	CHE_COMPUTEWORK_REQ			= 10;
+		static final byte	CHE_GETWORK_REQ				= 11;
+		static final byte	CHE_WICOMPLETE_REQ			= 12;
 
 		private WebSessionReqCmdNum() {
 

@@ -23,7 +23,7 @@ import com.gadgetworks.codeshelf.ws.command.req.IWsReqCmd;
  * 
  * command {
  * 	id: <cmd_id>,
- * 	type: CHE_WORK_RS,
+ * 	type: CHE_GETWORK_RS,
  * 	data {
  * 		cheId: <cheId>,
  * 		wis: [
@@ -43,24 +43,22 @@ import com.gadgetworks.codeshelf.ws.command.req.IWsReqCmd;
  * @author jeffw
  *
  */
-public class CheWorkWsRespCmd extends WsRespCmdABC {
+public class CheGetWorkRespCmd extends WsRespCmdABC {
 
 	private Che				mChe;
 	private String			mCheLocation;
-	private List<String>	mContainersIds;
 
 	/**
 	 * 
 	 */
-	public CheWorkWsRespCmd(final Che inChe, final String inCheLocation, final List<String> inContainerIds) {
+	public CheGetWorkRespCmd(final Che inChe, final String inCheLocation) {
 		super();
 		mChe = inChe;
 		mCheLocation = inCheLocation;
-		mContainersIds = inContainerIds;
 	}
 
 	public final WsRespCmdEnum getCommandEnum() {
-		return WsRespCmdEnum.CHE_WORK_RESP;
+		return WsRespCmdEnum.CHE_GETWORK_RESP;
 	}
 
 	protected final IWebSessionCmd doExec() {
@@ -81,7 +79,7 @@ public class CheWorkWsRespCmd extends WsRespCmdABC {
 		Facility facility = mChe.getParent().getParent();
 		
 		// Get the work instructions for this CHE at this location for the given containers.
-		List<WorkInstruction> wiList = facility.getWorkInstructions(mChe, mCheLocation, mContainersIds);
+		List<WorkInstruction> wiList = facility.getWorkInstructions(mChe, mCheLocation);
 
 		// Serialize the work instructions into the websocket command data.
 		ObjectMapper mapper = new ObjectMapper();

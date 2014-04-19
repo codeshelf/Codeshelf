@@ -298,52 +298,56 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		// IMPORTANT:
 		// Apply these upgrades in version order.
-		if (inOldVersion < ISchemaManager.DATABASE_VERSION_2) {
+		if ((result) && (inOldVersion < ISchemaManager.DATABASE_VERSION_2)) {
 			result &= doUpgrade002();
 		}
 
-		if (inOldVersion < ISchemaManager.DATABASE_VERSION_3) {
+		if ((result) && (inOldVersion < ISchemaManager.DATABASE_VERSION_3)) {
 			result &= doUpgrade003();
 		}
 
-		if (inOldVersion < ISchemaManager.DATABASE_VERSION_4) {
+		if ((result) && (inOldVersion < ISchemaManager.DATABASE_VERSION_4)) {
 			result &= doUpgrade004();
 		}
 
-		if (inOldVersion < ISchemaManager.DATABASE_VERSION_5) {
+		if ((result) && (inOldVersion < ISchemaManager.DATABASE_VERSION_5)) {
 			result &= doUpgrade005();
 		}
 
-		if (inOldVersion < ISchemaManager.DATABASE_VERSION_6) {
+		if ((result) && (inOldVersion < ISchemaManager.DATABASE_VERSION_6)) {
 			result &= doUpgrade006();
 		}
 
-		if (inOldVersion < ISchemaManager.DATABASE_VERSION_7) {
+		if ((result) && (inOldVersion < ISchemaManager.DATABASE_VERSION_7)) {
 			result &= doUpgrade007();
 		}
 
-		if (inOldVersion < ISchemaManager.DATABASE_VERSION_8) {
+		if ((result) && (inOldVersion < ISchemaManager.DATABASE_VERSION_8)) {
 			result &= doUpgrade008();
 		}
 
-		if (inOldVersion < ISchemaManager.DATABASE_VERSION_9) {
+		if ((result) && (inOldVersion < ISchemaManager.DATABASE_VERSION_9)) {
 			result &= doUpgrade009();
 		}
 
-		if (inOldVersion < ISchemaManager.DATABASE_VERSION_10) {
+		if ((result) && (inOldVersion < ISchemaManager.DATABASE_VERSION_10)) {
 			result &= doUpgrade010();
 		}
 
-		if (inOldVersion < ISchemaManager.DATABASE_VERSION_11) {
+		if ((result) && (inOldVersion < ISchemaManager.DATABASE_VERSION_11)) {
 			result &= doUpgrade011();
 		}
 
-		if (inOldVersion < ISchemaManager.DATABASE_VERSION_12) {
+		if ((result) && (inOldVersion < ISchemaManager.DATABASE_VERSION_12)) {
 			result &= doUpgrade012();
 		}
 
-		if (inOldVersion < ISchemaManager.DATABASE_VERSION_13) {
+		if ((result) && (inOldVersion < ISchemaManager.DATABASE_VERSION_13)) {
 			result &= doUpgrade013();
+		}
+
+		if ((result) && (inOldVersion < ISchemaManager.DATABASE_VERSION_14)) {
+			result &= doUpgrade014();
 		}
 
 		result &= updateSchemaVersion(ISchemaManager.DATABASE_VERSION_CUR);
@@ -534,6 +538,24 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * @return
+	 */
+	private boolean doUpgrade014() {
+		boolean result = true;
+
+		result &= safeAddColumn("work_instruction", "assigned_che_persistentid", UUID_TYPE);
+
+		result &= execOneSQLCommand("CREATE  INDEX work_instruction_che_index ON " + getDbSchemaName()
+			+ ".work_instruction (assigned_che_persistentid)");
+		
+		result &= execOneSQLCommand("CREATE  INDEX work_instruction_status_index ON " + getDbSchemaName()
+			+ ".work_instruction (type_enum, status_enum)");
+		
+		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
 	 *  @param inFromSchema
 	 *  @param inToSchema
 	 */
@@ -682,22 +704,22 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		boolean result = true;
 
-//		// Add the foreign key constraint for the recursive table.
-//		result &= execOneSQLCommand("ALTER TABLE " + getDbSchemaName() + "." + inSameTableName //
-//				+ " ADD CONSTRAINT XXX FOREIGN KEY (" + inSameTableColumnName + "_persistentid)" //
-//				+ " REFERENCES DATABASE." + getDbSchemaName() + "." + inSameTableName + " (persistentid);");
-//
-//		// Add the foreign key constraint for the final table.
-//		result &= execOneSQLCommand("ALTER TABLE " + getDbSchemaName() + "." + inSameTableName //
-//				+ " ADD CONSTRAINT YYY FOREIGN KEY (" + inForeignTableColumnName + "_persistentid)" //
-//				+ " REFERENCES DATABASE." + getDbSchemaName() + "." + inForeignTableName + " (persistentid);");
+		//		// Add the foreign key constraint for the recursive table.
+		//		result &= execOneSQLCommand("ALTER TABLE " + getDbSchemaName() + "." + inSameTableName //
+		//				+ " ADD CONSTRAINT XXX FOREIGN KEY (" + inSameTableColumnName + "_persistentid)" //
+		//				+ " REFERENCES DATABASE." + getDbSchemaName() + "." + inSameTableName + " (persistentid);");
+		//
+		//		// Add the foreign key constraint for the final table.
+		//		result &= execOneSQLCommand("ALTER TABLE " + getDbSchemaName() + "." + inSameTableName //
+		//				+ " ADD CONSTRAINT YYY FOREIGN KEY (" + inForeignTableColumnName + "_persistentid)" //
+		//				+ " REFERENCES DATABASE." + getDbSchemaName() + "." + inForeignTableName + " (persistentid);");
 
 		// Now make sure at least one of them is not null.
 		result &= execOneSQLCommand("ALTER TABLE " + getDbSchemaName() + "."
 				+ inSameTableName //
 				+ " ADD CHECK " //
-				+ " (" + inSameTableName + "." + inSameTableColumnName + "_persistentid IS NOT NULL OR "
-				+ inSameTableName + "." + inForeignTableColumnName + "_persistentid IS NOT NULL )");
+				+ " (" + inSameTableName + "." + inSameTableColumnName + "_persistentid IS NOT NULL OR " + inSameTableName + "."
+				+ inForeignTableColumnName + "_persistentid IS NOT NULL )");
 
 		// Add the index that makes it efficient to find the child objects from the parent.
 		result &= execOneSQLCommand("CREATE INDEX " //
@@ -851,6 +873,12 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		result &= linkToParentTable("work_instruction", "parent", "order_detail");
 		result &= linkToParentTable("work_instruction", "item_master", "item_master");
 		result &= linkToParentTable("work_instruction", "container", "container");
+		
+		result &= execOneSQLCommand("CREATE  INDEX work_instruction_che_index ON " + getDbSchemaName()
+			+ ".work_instruction (assigned_che_persistentid)");
+		
+		result &= execOneSQLCommand("CREATE  INDEX work_instruction_status_index ON " + getDbSchemaName()
+			+ ".work_instruction (type_enum, status_enum)");
 
 		return result;
 	}
@@ -1119,6 +1147,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 					+ "location_persistentid " + UUID_TYPE + ", " //
 					+ "location_id TEXT NOT NULL, " //
 					+ "pos_along_path DOUBLE PRECISION, " //
+					+ "assigned_che_persistentid " + UUID_TYPE + ", " //
 					+ "picker_id TEXT, " //
 					+ "led_cmd_stream TEXT, " //
 					+ "group_and_sort_code TEXT," //

@@ -867,58 +867,65 @@ public class Facility extends SubLocationABC<Facility> {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * Get/assign work instructions for a CHE that's at the listed location with the listed container IDs.
+	 * Compute work instructions for a CHE that's at the listed location with the listed container IDs.
 	 * 
 	 * Yes, this has high cyclometric complexity, but the creation of a WI in a complex puzzle.  If you decompose this logic into
 	 * fractured routines then there's a chance that they could get called out of order or in the wrong order, etc.  Sometimes in life
 	 * you have a complex process and there's no way to make it simple.
 	 * 
-	 * It's critical that this get covered by good quality unit tests as a hedge against breaking stuff in future versions!
-	 * That is, if you change this for some logic reason then make sure you add a unit test to capture the reason you've changed it.
-	 * 
 	 * @param inChe
-	 * @param inLocationId
 	 * @param inContainerIdList
 	 * @return
 	 */
 	@Transactional
-	public final List<WorkInstruction> getWorkInstructions(final Che inChe,
-		final String inScannedLocationId,
-		final List<String> inContainerIdList) {
+	public final Integer computeWorkInstructions(final Che inChe, final List<String> inContainerIdList) {
+		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
+
+		List<Container> containerList = new ArrayList<Container>();
+		for (String containerId : inContainerIdList) {
+			Container container = getContainer(containerId);
+			if (container != null) {
+				containerList.add(container);
+			}
+		}
+
+		// Delete any planned WIs for this CHE.
+		Map<String, Object> filterParams = new HashMap<String, Object>();
+		filterParams.put("chePersistentId", inChe.getPersistentId().toString());
+		filterParams.put("type", WorkInstructionTypeEnum.PLAN.toString());
+		for (WorkInstruction wi : WorkInstruction.DAO.findByFilter("assignedChe.persistentId = :chePersistentId and typeEnum = :type",
+			filterParams)) {
+			WorkInstruction.DAO.delete(wi);
+		}
+
+		// Get all of the OUTBOUND work instructions.
+		//wiResultList.addAll(generateOutboundInstructions(containerList));
+
+		// Get all of the CROSS work instructions.
+		wiResultList.addAll(generateCrossWallInstructions(inChe, containerList));
+
+		return wiResultList.size();
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inChe
+	 * @param inScannedLocationId
+	 * @return
+	 */
+	@Transactional
+	public final List<WorkInstruction> getWorkInstructions(final Che inChe, final String inScannedLocationId) {
 
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 
-		ISubLocation<?> cheLocation = findSubLocationById(inScannedLocationId);
-		if (cheLocation != null) {
-			Aisle aisle = null;
-			if (cheLocation instanceof Aisle) {
-				aisle = (Aisle) cheLocation;
-			} else {
-				aisle = cheLocation.<Aisle> getParentAtLevel(Aisle.class);
-			}
-			PathSegment pathSegment = aisle.getPathSegment();
-			if (pathSegment != null) {
-				Path path = pathSegment.getParent();
-				WorkArea workArea = path.getWorkArea();
-
-				if (path != null) {
-					// Now figure out the orders that go with these containers.
-					List<Container> containerList = new ArrayList<Container>();
-					for (String containerId : inContainerIdList) {
-						Container container = getContainer(containerId);
-						if (container != null) {
-							containerList.add(container);
-						}
-					}
-
-					// Get all of the OUTBOUND work instructions.
-					wiResultList.addAll(generateOutboundInstructions(containerList, path, inScannedLocationId, cheLocation));
-
-					// Get all of the CROSS work instructions.
-					wiResultList.addAll(generateCrossWallInstructions(containerList, path, inScannedLocationId, cheLocation));
-				}
-			}
+		Map<String, Object> filterParams = new HashMap<String, Object>();
+		filterParams.put("chePersistentId", inChe.getPersistentId().toString());
+		filterParams.put("type", WorkInstructionTypeEnum.PLAN.toString());
+		for (WorkInstruction wi : WorkInstruction.DAO.findByFilter("assignedChe.persistentId = :chePersistentId and typeEnum = :type",
+			filterParams)) {
+			wiResultList.add(wi);
 		}
+
 		return wiResultList;
 	}
 
@@ -930,7 +937,7 @@ public class Facility extends SubLocationABC<Facility> {
 	 * @param inCheLocation
 	 * @return
 	 */
-	private List<WorkInstruction> generateOutboundInstructions(final List<Container> inContainerList,
+	private List<WorkInstruction> generateOutboundInstructions(final Che inChe, final List<Container> inContainerList,
 		final Path inPath,
 		final String inScannedLocationId,
 		final ISubLocation<?> inCheLocation) {
@@ -953,9 +960,8 @@ public class Facility extends SubLocationABC<Facility> {
 							orderDetail,
 							0,
 							container,
-							inScannedLocationId,
-							inCheLocation,
-							0.0);
+							inChe,
+							inCheLocation);
 						if (plannedWi != null) {
 							wiResultList.add(plannedWi);
 						}
@@ -984,9 +990,8 @@ public class Facility extends SubLocationABC<Facility> {
 									orderDetail,
 									quantityToPick,
 									container,
-									inScannedLocationId,
-									foundLocation,
-									selectedItem.getPosAlongPath());
+									inChe,
+									foundLocation);
 								if (plannedWi != null) {
 									wiResultList.add(plannedWi);
 								}
@@ -1028,10 +1033,7 @@ public class Facility extends SubLocationABC<Facility> {
 	 * @param inCheLocation
 	 * @return
 	 */
-	private List<WorkInstruction> generateCrossWallInstructions(final List<Container> inContainerList,
-		final Path inPath,
-		final String inScannedLocationId,
-		final ILocation<?> inCheLocation) {
+	private List<WorkInstruction> generateCrossWallInstructions(final Che inChe, final List<Container> inContainerList) {
 
 		List<WorkInstruction> wiList = new ArrayList<WorkInstruction>();
 
@@ -1041,8 +1043,7 @@ public class Facility extends SubLocationABC<Facility> {
 			if ((crossOrder.getActive()) && (crossOrder.getOrderTypeEnum().equals(OrderTypeEnum.CROSS))) {
 				// Iterate over all active OUTBOUND on the path.
 				for (OrderHeader outOrder : getOrderHeaders()) {
-					if ((outOrder.getOrderTypeEnum().equals(OrderTypeEnum.OUTBOUND) && (outOrder.getActive()))
-							&& (inPath.isOrderOnPath(outOrder))) {
+					if ((outOrder.getOrderTypeEnum().equals(OrderTypeEnum.OUTBOUND)) && (outOrder.getActive())) {
 						// OK, we have an OUTBOUND order on the same path as the CROSS order.
 						// Check to see if any of the active CROSS order detail items match OUTBOUND order details.
 						for (OrderDetail crossOrderDetail : crossOrder.getOrderDetails()) {
@@ -1050,25 +1051,26 @@ public class Facility extends SubLocationABC<Facility> {
 								OrderDetail outOrderDetail = outOrder.getOrderDetail(crossOrderDetail.getOrderDetailId());
 								if ((outOrderDetail != null) && (outOrderDetail.getActive())) {
 
-									OrderLocation firstOutOrderLoc = outOrder.getFirstOrderLocationOnPath(inPath);
-									// Now make sure
-									// The outboundOrder is "ahead" of the CHE's position on the path.
-									// The UOM matches.
-									if ((firstOutOrderLoc.getLocation().getPosAlongPath() > inCheLocation.getPosAlongPath())
-											&& (outOrderDetail.getUomMasterId().equals(crossOrderDetail.getUomMasterId()))) {
+									// Now make sure the UOM matches.
+									if (outOrderDetail.getUomMasterId().equals(crossOrderDetail.getUomMasterId())) {
 
-										WorkInstruction wi = createWorkInstruction(WorkInstructionStatusEnum.NEW,
-											WorkInstructionTypeEnum.PLAN,
-											outOrderDetail,
-											outOrderDetail.getQuantity(),
-											container,
-											inScannedLocationId,
-											firstOutOrderLoc.getLocation(),
-											firstOutOrderLoc.getLocation().getPosAlongPath());
+										for (Path path : getPaths()) {
+											OrderLocation firstOutOrderLoc = outOrder.getFirstOrderLocationOnPath(path);
 
-										// If we created a WI then add it to the list.
-										if (wi != null) {
-											wiList.add(wi);
+											if (firstOutOrderLoc != null) {
+												WorkInstruction wi = createWorkInstruction(WorkInstructionStatusEnum.NEW,
+													WorkInstructionTypeEnum.PLAN,
+													outOrderDetail,
+													outOrderDetail.getQuantity(),
+													container,
+													inChe,
+													firstOutOrderLoc.getLocation());
+
+												// If we created a WI then add it to the list.
+												if (wi != null) {
+													wiList.add(wi);
+												}
+											}
 										}
 									}
 								}
@@ -1080,8 +1082,12 @@ public class Facility extends SubLocationABC<Facility> {
 		}
 
 		// Now we need to sort and group the work instructions, so that the CHE can display them by working order.
-		List<ISubLocation<?>> bays = inPath.<ISubLocation<?>> getLocationsByClassAtOrPastLocation(inCheLocation, Bay.class);
-		return sortCrosswallInstructionsInLocationOrder(wiList, inContainerList, bays);
+		List<ISubLocation<?>> bayList = new ArrayList<ISubLocation<?>>();
+		for (Path path : getPaths()) {
+			//bayList.addAll(path.<ISubLocation<?>> getLocationsByClassAtOrPastLocation(inCheLocation, Bay.class));
+			bayList.addAll(path.<ISubLocation<?>> getLocationsByClass(Bay.class));
+		}
+		return sortCrosswallInstructionsInLocationOrder(wiList, inContainerList, bayList);
 	}
 
 	/**
@@ -1212,9 +1218,8 @@ public class Facility extends SubLocationABC<Facility> {
 		OrderDetail inOrderDetail,
 		Integer inQuantityToPick,
 		Container inContainer,
-		String inScannedLocationId,
-		ISubLocation<?> inLocation,
-		Double inPosALongPath) {
+		Che inChe,
+		ISubLocation<?> inLocation) {
 		WorkInstruction resultWi = null;
 
 		for (WorkInstruction wi : inOrderDetail.getWorkInstructions()) {
@@ -1263,8 +1268,9 @@ public class Facility extends SubLocationABC<Facility> {
 					resultWi.setPickInstruction(resultWi.getLocationId());
 				}
 			}
-			resultWi.setPosAlongPath(inPosALongPath);
+			resultWi.setPosAlongPath(inLocation.getPosAlongPath());
 			resultWi.setContainer(inContainer);
+			resultWi.setAssignedChe(inChe);
 			resultWi.setPlanQuantity(inQuantityToPick);
 			resultWi.setActualQuantity(0);
 			resultWi.setAssigned(new Timestamp(System.currentTimeMillis()));
