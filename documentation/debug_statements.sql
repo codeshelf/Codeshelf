@@ -37,6 +37,7 @@ delete from location where location.dtype = 'TIER';
 delete from location where location.dtype = 'BAY';
 delete from location where location.dtype = 'AISLE';
 delete from path_segment;
+delete from path;
 
 # Select all of the slots in LED position order to get a sense of the electronics wiring relative to path distance.
 select

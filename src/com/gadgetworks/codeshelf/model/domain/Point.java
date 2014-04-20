@@ -57,11 +57,10 @@ public class Point {
 	@JsonProperty
 	private Double				z;
 
-	
 	public Point() {
-		
+
 	}
-	
+
 	public Point(final PositionTypeEnum inPosType, final Double inX, final Double inY, final Double inZ) {
 		posTypeEnum = inPosType;
 		x = (inX == null) ? 0.0 : inX;
@@ -90,7 +89,7 @@ public class Point {
 	public static Point getZeroPoint() {
 		return new Point(PositionTypeEnum.METERS_FROM_PARENT, 0.0, 0.0, 0.0);
 	}
-	
+
 	public final void add(final Point inAddPoint) {
 		if (inAddPoint.getPosTypeEnum().equals(posTypeEnum)) {
 			x += inAddPoint.getX();
@@ -123,6 +122,12 @@ public class Point {
 
 	public final void setAnchorPosZ(Double inAnchorPosZ) {
 		z = inAnchorPosZ;
+	}
+
+	public Double distance(final Point inPoint) {
+		Double xDiff = getX() - inPoint.getX();
+		Double yDiff = getY() - inPoint.getY();
+		return Math.sqrt((xDiff * xDiff) + (yDiff * yDiff));
 	}
 
 }

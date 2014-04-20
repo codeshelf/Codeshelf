@@ -470,42 +470,6 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		return result;
 	}
 
-	public final void computePosAlongPath(final PathSegment inPathSegment) {
-
-		// Now compute the path position for this location.
-		Double pathPosition = 0.0;
-		Point segmentAnchorPoint = inPathSegment.getStartPoint();
-		Point locationAnchorPoint = getAbsoluteAnchorPoint();
-		//segmentAnchorPoint.add(locationAnchorPoint);
-		if (inPathSegment.getParent().getTravelDirEnum().equals(TravelDirectionEnum.FORWARD)) {
-			pathPosition = inPathSegment.getStartPosAlongPath()
-					+ inPathSegment.computeDistanceOfPointFromLine(inPathSegment.getStartPoint(),
-						inPathSegment.getEndPoint(),
-						locationAnchorPoint);
-		} else {
-			pathPosition = inPathSegment.getStartPosAlongPath()
-					+ inPathSegment.computeDistanceOfPointFromLine(inPathSegment.getEndPoint(),
-						inPathSegment.getStartPoint(),
-						locationAnchorPoint);
-		}
-
-		LOGGER.debug(this.getFullDomainId() + "Path pos: " + pathPosition + " Location Point - x: " + locationAnchorPoint.getX()
-				+ " y: " + locationAnchorPoint.getY());
-
-		posAlongPath = pathPosition;
-
-		try {
-			LocationABC.DAO.store(this);
-		} catch (DaoException e) {
-			LOGGER.error("", e);
-		}
-
-		// Also force a recompute for all of the child locations.
-		for (ILocation<P> location : getChildren()) {
-			location.computePosAlongPath(inPathSegment);
-		}
-	}
-
 	public final void addVertex(Vertex inVertex) {
 		vertices.add(inVertex);
 	}
@@ -646,7 +610,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		List<ISubLocation> childLocations = getChildren();
 
 		Collections.sort(childLocations, new LocationWorkingOrderComparator());
-		
+
 		for (ILocation<?> childLocation : childLocations) {
 			result.addAll(childLocation.getSubLocationsInWorkingOrder());
 		}

@@ -7,6 +7,8 @@ package com.gadgetworks.codeshelf.model.domain;
 
 public interface ISubLocation<P extends IDomainObject> extends ILocation<P> {
 
+	Double BAY_ALIGNMENT_FUDGE = 0.25;
+	
 	P getParent();
 
 	void setParent(P inParent);

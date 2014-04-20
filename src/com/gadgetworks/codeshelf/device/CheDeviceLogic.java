@@ -250,13 +250,14 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	public final void assignWork(final List<WorkInstruction> inWorkItemList) {
 
 		for (WorkInstruction wi : inWorkItemList) {
-			LOGGER.info("WI: Loc: " + wi.getLocationId() + " SKU: " + wi.getItemId());
+			LOGGER.info("WI: Loc: " + wi.getLocationId() + " SKU: " + wi.getItemId() + " Instr: " + wi.getPickInstruction());
 		}
 
 		if (inWorkItemList.size() == 0) {
 			sendDisplayCommand(PICK_COMPLETE_MSG, EMPTY_MSG);
 			setState(CheStateEnum.PICK_COMPLETE);
 		} else {
+			mActivePickWiList.clear();
 			mAllPicksWiList.clear();
 			mCompletedWiList.clear();
 			mAllPicksWiList.addAll(inWorkItemList);

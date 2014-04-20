@@ -452,9 +452,9 @@ public class Facility extends SubLocationABC<Facility> {
 	private Point computePickFaceEndPoint(final Point inAnchorPoint, final Double inDistanceMeters, final Boolean inRunInXDir) {
 		Point result;
 		if (inRunInXDir) {
-			result = new Point(PositionTypeEnum.METERS_FROM_PARENT, inDistanceMeters, 0.0, 0.0);
+			result = new Point(PositionTypeEnum.METERS_FROM_PARENT, inAnchorPoint.getX() + inDistanceMeters, 0.0, 0.0);
 		} else {
-			result = new Point(PositionTypeEnum.METERS_FROM_PARENT, 0.0, inDistanceMeters, 0.0);
+			result = new Point(PositionTypeEnum.METERS_FROM_PARENT, 0.0, inAnchorPoint.getY() + inDistanceMeters, 0.0);
 		}
 		return result;
 	}
@@ -881,14 +881,6 @@ public class Facility extends SubLocationABC<Facility> {
 	public final Integer computeWorkInstructions(final Che inChe, final List<String> inContainerIdList) {
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 
-		List<Container> containerList = new ArrayList<Container>();
-		for (String containerId : inContainerIdList) {
-			Container container = getContainer(containerId);
-			if (container != null) {
-				containerList.add(container);
-			}
-		}
-
 		// Delete any planned WIs for this CHE.
 		Map<String, Object> filterParams = new HashMap<String, Object>();
 		filterParams.put("chePersistentId", inChe.getPersistentId().toString());
@@ -896,6 +888,14 @@ public class Facility extends SubLocationABC<Facility> {
 		for (WorkInstruction wi : WorkInstruction.DAO.findByFilter("assignedChe.persistentId = :chePersistentId and typeEnum = :type",
 			filterParams)) {
 			WorkInstruction.DAO.delete(wi);
+		}
+
+		List<Container> containerList = new ArrayList<Container>();
+		for (String containerId : inContainerIdList) {
+			Container container = getContainer(containerId);
+			if (container != null) {
+				containerList.add(container);
+			}
 		}
 
 		// Get all of the OUTBOUND work instructions.
@@ -918,11 +918,28 @@ public class Facility extends SubLocationABC<Facility> {
 
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 
+		ISubLocation<?> cheLocation = findSubLocationById(inScannedLocationId);
+		Path path = cheLocation.getPathSegment().getParent();
+		Bay cheBay = cheLocation.getParentAtLevel(Bay.class);
+		Bay selectedBay = cheBay;
+		for (Bay bay : path.<Bay> getLocationsByClass(Bay.class)) {
+			// Find any bay sooner on the work path that's within 2% of this bay.
+			if ((bay.getPosAlongPath() < cheBay.getPosAlongPath())
+					&& (bay.getPosAlongPath() + ISubLocation.BAY_ALIGNMENT_FUDGE > cheBay.getPosAlongPath())) {
+				selectedBay = bay;
+			}
+		}
+
+		// Figure out the starting path position.
+		Double startingPathPos = selectedBay.getPosAlongPath();
+
+		// Get all of the PLAN WIs assigned to this CHE beyond the specified position.
 		Map<String, Object> filterParams = new HashMap<String, Object>();
 		filterParams.put("chePersistentId", inChe.getPersistentId().toString());
 		filterParams.put("type", WorkInstructionTypeEnum.PLAN.toString());
-		for (WorkInstruction wi : WorkInstruction.DAO.findByFilter("assignedChe.persistentId = :chePersistentId and typeEnum = :type",
-			filterParams)) {
+		filterParams.put("pos", startingPathPos);
+		String filter = "(assignedChe.persistentId = :chePersistentId) and (typeEnum = :type) and (posAlongPath >= :pos)";
+		for (WorkInstruction wi : WorkInstruction.DAO.findByFilter(filter, filterParams)) {
 			wiResultList.add(wi);
 		}
 
@@ -937,7 +954,8 @@ public class Facility extends SubLocationABC<Facility> {
 	 * @param inCheLocation
 	 * @return
 	 */
-	private List<WorkInstruction> generateOutboundInstructions(final Che inChe, final List<Container> inContainerList,
+	private List<WorkInstruction> generateOutboundInstructions(final Che inChe,
+		final List<Container> inContainerList,
 		final Path inPath,
 		final String inScannedLocationId,
 		final ISubLocation<?> inCheLocation) {
@@ -1100,74 +1118,6 @@ public class Facility extends SubLocationABC<Facility> {
 			return inWi1.getItemMaster().getItemId().compareTo(inWi2.getItemMaster().getItemId());
 		}
 	};
-
-	// --------------------------------------------------------------------------
-	/**
-	 * Sort a list of work instructions on a path through a CrossWall
-	 * @param inCrosswallWiList
-	 * @param inContainerList
-	 * @param inBays
-	 * @return
-	 */
-	private List<WorkInstruction> sortCrosswallInstructionsByBayByContainer(final List<WorkInstruction> inCrosswallWiList,
-		final List<Container> inContainerList,
-		final List<Bay> inBays) {
-
-		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
-
-		// We want to work all of the WIs out of a single container for each bay.
-		// To do this, we sort the WIs by item ID and then work the list bay-by-bay, container-by-container.
-		Collections.sort(inCrosswallWiList, new WiItemIdComparator());
-
-		// Cycle over all bays on the path.
-		for (Bay bay : inBays) {
-			// Cycle over all of the containers until we find no more work instructions for this bay.
-			while (true) {
-				boolean wiSelected = false;
-				for (Container container : inContainerList) {
-					Iterator<WorkInstruction> wiIterator = inCrosswallWiList.iterator();
-					while (wiIterator.hasNext()) {
-						WorkInstruction wi = wiIterator.next();
-						if (wi.getContainer().equals(container)) {
-							if (wi.isContainedByLocation(bay)) {
-								String wantedItemId = wi.getItemMaster().getItemId();
-								wiResultList.add(wi);
-								wi.setGroupAndSortCode(String.format("%04d", wiResultList.size()));
-								WorkInstruction.DAO.store(wi);
-								wiSelected = true;
-								wiIterator.remove();
-								// Keep moving through the WI list for more WIs to consider.
-								while (wiIterator.hasNext()) {
-									wi = wiIterator.next();
-									// No more WIs with matching item type, so break.
-									if (!wi.getItemMaster().getItemId().equals(wantedItemId)) {
-										break;
-									} else {
-										// No more WIs in this bay, so break.
-										if (!wi.isContainedByLocation(bay)) {
-											break;
-										} else {
-											// Found another matching WI to add for this bay.
-											wiResultList.add(wi);
-											wiIterator.remove();
-											wi.setGroupAndSortCode(String.format("%04d", wiResultList.size()));
-											WorkInstruction.DAO.store(wi);
-										}
-									}
-								}
-
-							}
-						}
-					}
-				}
-				// If we didn't select any WIs then stop looking for items in containers for this bay.
-				if (!wiSelected) {
-					break;
-				}
-			}
-		}
-		return wiResultList;
-	}
 
 	// --------------------------------------------------------------------------
 	/**
