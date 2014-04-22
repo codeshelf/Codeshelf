@@ -54,6 +54,8 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 
 	private static final String				WEBSOCKET_CHECK				= "Websocket Checker";
 	private static final Integer			WEBSOCKET_OPEN_RETRY_MILLIS	= 5000;
+	private static final String				PREFFERED_CHANNEL_PROP		= "codeshelf.preferred.channel";
+	private static final Byte				DEFAULT_CHANNEL				= 5;
 
 	private Map<NetGuid, INetworkDevice>	mDeviceMap;
 	private IRadioController				mRadioController;
@@ -98,8 +100,19 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 		//mWebSocketClient.start();
 		startWebSocket();
 
+		// Check if there is a default channel.
+		byte preferredChannel = DEFAULT_CHANNEL;
+		String preferredChannelProp = System.getProperty(PREFFERED_CHANNEL_PROP);
+		if (preferredChannelProp != null) {
+			try {
+				preferredChannel = Byte.valueOf(preferredChannelProp);
+			} catch (NumberFormatException e) {
+				LOGGER.error("", e);
+			}
+		}
+
 		// Start the background startup and wait until it's finished.
-		mRadioController.startController((byte) 0x01);
+		mRadioController.startController(preferredChannel);
 		mRadioController.addControllerEventListener(this);
 
 	}
@@ -528,9 +541,7 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.device.ICsDeviceManager#requestCheWork(java.lang.String, java.lang.String, java.lang.String)
 	 */
-	public final void computeCheWork(final String inCheId,
-		final UUID inPersistentId,
-		final List<String> inContainerIdList) {
+	public final void computeCheWork(final String inCheId, final UUID inPersistentId, final List<String> inContainerIdList) {
 		LOGGER.info("Compute work: Che: " + inCheId + " Container: " + inContainerIdList.toString());
 
 		// Build the response Json object.
@@ -550,9 +561,7 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.device.ICsDeviceManager#requestCheWork(java.lang.String, java.lang.String, java.lang.String)
 	 */
-	public final void getCheWork(final String inCheId,
-		final UUID inPersistentId,
-		final String inLocationId) {
+	public final void getCheWork(final String inCheId, final UUID inPersistentId, final String inLocationId) {
 		LOGGER.info("Get work: Che: " + inCheId + " Loc: " + inLocationId);
 
 		// Build the response Json object.

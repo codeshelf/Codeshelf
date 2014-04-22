@@ -85,7 +85,7 @@ public class RadioController implements IRadioController {
 	private static final long									CONTROLLER_SLEEP_MILLIS		= 10;
 	private static final int									MAX_CHANNEL_VALUE			= 255;
 
-	private static final long									PACKET_SPACING_MILLIS		= 1;
+	private static final long									PACKET_SPACING_MILLIS		= 20;
 	private static final int									MAX_NETWORK_TEST_NUM		= 64;
 
 	private static final int									ACK_QUEUE_SIZE				= 200;
