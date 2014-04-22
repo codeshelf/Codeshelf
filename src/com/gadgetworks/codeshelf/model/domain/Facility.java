@@ -519,6 +519,13 @@ public class Facility extends SubLocationABC<Facility> {
 		resultBay.setFirstLedNumAlongPath(inFirstLedNum);
 		resultBay.setLastLedNumAlongPath((short) (inFirstLedNum + 160));
 
+		Double bayWidth = 0.0;
+		if (inRunsInXDir) {
+			bayWidth = inProtoBayPoint.getX();
+		} else {
+			bayWidth = inProtoBayPoint.getY();
+		}
+
 		try {
 			Bay.DAO.store(resultBay);
 		} catch (DaoException e) {
@@ -534,8 +541,8 @@ public class Facility extends SubLocationABC<Facility> {
 				"T" + tierNum,
 				leftToRight,
 				inRunsInXDir,
-				bayPickFacePoint.getY(),
-				bayPickFacePoint.getZ(),
+				bayWidth,
+				inProtoBayPoint.getZ(),
 				tierZPos,
 				inLedController,
 				inLedChannelNum,
@@ -604,17 +611,17 @@ public class Facility extends SubLocationABC<Facility> {
 
 		// Add slots to this tier.
 		if (inSlotRunsRight) {
-			createSlot(tier, "S1", inRunsInXDir, 0.0, inLedController, inLedChannelNum, (short) 2, (short) 7);
-			createSlot(tier, "S2", inRunsInXDir, 0.25, inLedController, inLedChannelNum, (short) 13, (short) 8);
-			createSlot(tier, "S3", inRunsInXDir, 0.5, inLedController, inLedChannelNum, (short) 14, (short) 19);
-			createSlot(tier, "S4", inRunsInXDir, 0.75, inLedController, inLedChannelNum, (short) 25, (short) 20);
-			createSlot(tier, "S5", inRunsInXDir, 1.0, inLedController, inLedChannelNum, (short) 26, (short) 31);
+			createSlot(tier, "S1", inRunsInXDir, 0.0, inLedController, inLedChannelNum, (short) 1, (short) 4);
+			createSlot(tier, "S2", inRunsInXDir, 0.25, inLedController, inLedChannelNum, (short) 11, (short) 8);
+			createSlot(tier, "S3", inRunsInXDir, 0.5, inLedController, inLedChannelNum, (short) 15, (short) 18);
+			createSlot(tier, "S4", inRunsInXDir, 0.75, inLedController, inLedChannelNum, (short) 25, (short) 22);
+			createSlot(tier, "S5", inRunsInXDir, 1.0, inLedController, inLedChannelNum, (short) 29, (short) 32);
 		} else {
-			createSlot(tier, "S1", inRunsInXDir, 0.0, inLedController, inLedChannelNum, (short) 31, (short) 26);
-			createSlot(tier, "S2", inRunsInXDir, 0.25, inLedController, inLedChannelNum, (short) 20, (short) 25);
-			createSlot(tier, "S3", inRunsInXDir, 0.5, inLedController, inLedChannelNum, (short) 19, (short) 14);
-			createSlot(tier, "S4", inRunsInXDir, 0.75, inLedController, inLedChannelNum, (short) 13, (short) 8);
-			createSlot(tier, "S5", inRunsInXDir, 1.0, inLedController, inLedChannelNum, (short) 2, (short) 7);
+			createSlot(tier, "S1", inRunsInXDir, 0.0, inLedController, inLedChannelNum, (short) 32, (short) 29);
+			createSlot(tier, "S2", inRunsInXDir, 0.25, inLedController, inLedChannelNum, (short) 22, (short) 25);
+			createSlot(tier, "S3", inRunsInXDir, 0.5, inLedController, inLedChannelNum, (short) 18, (short) 15);
+			createSlot(tier, "S4", inRunsInXDir, 0.75, inLedController, inLedChannelNum, (short) 8, (short) 11);
+			createSlot(tier, "S5", inRunsInXDir, 1.0, inLedController, inLedChannelNum, (short) 4, (short) 1);
 		}
 	}
 
