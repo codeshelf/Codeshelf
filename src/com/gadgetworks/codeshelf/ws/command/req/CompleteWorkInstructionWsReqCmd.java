@@ -6,6 +6,8 @@
 package com.gadgetworks.codeshelf.ws.command.req;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import org.codehaus.jackson.JsonNode;
@@ -37,6 +39,10 @@ import com.gadgetworks.codeshelf.ws.command.resp.IWsRespCmd;
  * 	}
  * }
  * 
+ * @author jeffw
+ *
+ */
+/**
  * @author jeffw
  *
  */
@@ -98,6 +104,8 @@ public class CompleteWorkInstructionWsReqCmd extends WsReqCmdABC {
 					}
 
 					setOrderDetailStatus(storedWi);
+					
+					sendWorkInstructionToHost(storedWi);
 				}
 			} catch (IOException e) {
 				LOGGER.error("", e);
@@ -158,10 +166,17 @@ public class CompleteWorkInstructionWsReqCmd extends WsReqCmdABC {
 		}
 	}
 	
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inWorkInstruction
+	 */
 	private void sendWorkInstructionToHost(WorkInstruction inWorkInstruction) {
+		List<WorkInstruction> wiList = new ArrayList<WorkInstruction>();
+		wiList.add(inWorkInstruction);
+		
 		Facility facility = inWorkInstruction.getParent().getParent().getParent();
 		if (facility != null) {
-			facility.sendWorkInstructionToHost(inWorkInstruction);
+			facility.sendWorkInstructionsToHost(wiList);
 		}
 	}
 }

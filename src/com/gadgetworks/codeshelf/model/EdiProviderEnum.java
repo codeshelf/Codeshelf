@@ -15,7 +15,9 @@ public enum EdiProviderEnum {
 	@EnumValue("INVALID")
 	INVALID(EdiProviderTypeNum.INVALID, "INVALID"),
 	@EnumValue("DROPBOX")
-	DROPBOX(EdiProviderTypeNum.DROPBOX, "DROPBOX");
+	DROPBOX(EdiProviderTypeNum.DROPBOX, "DROPBOX"),
+	@EnumValue("IRONMQ")
+	IRONMQ(EdiProviderTypeNum.IRONMQ, "IRONMQ");
 
 	private int		mValue;
 	private String	mName;
@@ -31,6 +33,10 @@ public enum EdiProviderEnum {
 		switch (inPositionTypeID) {
 			case EdiProviderTypeNum.DROPBOX:
 				result = EdiProviderEnum.DROPBOX;
+				break;
+
+			case EdiProviderTypeNum.IRONMQ:
+				result = EdiProviderEnum.IRONMQ;
 				break;
 
 			default:
@@ -54,6 +60,7 @@ public enum EdiProviderEnum {
 
 		static final byte	INVALID	= -1;
 		static final byte	DROPBOX	= 0;
+		static final byte	IRONMQ	= 1;
 
 		private EdiProviderTypeNum() {
 		};

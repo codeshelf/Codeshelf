@@ -75,6 +75,6 @@
 	<classpathentry kind="lib" path="lib/dist/avaje-ebeanorm-3.3.1-RC3-SNAPSHOT.jar" sourcepath="APIs/avaje-ebeanorm-3.3.1-RC3-SNAPSHOT-sources.jar"/>
 	<classpathentry kind="lib" path="lib/dist/dropbox-core-sdk-1.7.6.jar" sourcepath="/Users/jeffw/.m2/repository/com/dropbox/core/dropbox-core-sdk/1.7.6/dropbox-core-sdk-1.7.6-sources.jar"/>
 	<classpathentry kind="lib" path="lib/dist/jackson-core-2.2.3.jar"/>
-	<classpathentry kind="lib" path="lib/dist/ironmq-0.0.10.jar"/>
+	<classpathentry kind="lib" path="lib/dist/ironmq-0.0.10.jar" sourcepath="APIs/ironmq-0.0.10.zip"/>
 	<classpathentry kind="output" path="eclipse-bin"/>
 </classpath>

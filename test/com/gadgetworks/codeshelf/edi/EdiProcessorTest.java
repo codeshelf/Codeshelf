@@ -23,6 +23,7 @@ import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.IEdiService;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Point;
+import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.google.inject.Inject;
 
 /**
@@ -214,6 +215,12 @@ public class EdiProcessorTest extends EdiTestABC {
 				linkedResult.processed = true;
 				return true;
 			}
+
+			@Override
+			public void sendWorkInstructionsToHost(List<WorkInstruction> inWiList) {
+				// TODO Auto-generated method stub
+				
+			}
 		};
 
 		IEdiService ediServiceUnlinked = new IEdiService() {
@@ -233,6 +240,12 @@ public class EdiProcessorTest extends EdiTestABC {
 				ICsvCrossBatchImporter inCsvCrossBatchImporter) {
 				unlinkedResult.processed = true;
 				return true;
+			}
+
+			@Override
+			public void sendWorkInstructionsToHost(List<WorkInstruction> inWiList) {
+				// TODO Auto-generated method stub
+				
 			}
 		};
 

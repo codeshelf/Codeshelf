@@ -18,18 +18,18 @@ import org.java_websocket.server.WebSocketServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.edi.InventoryCsvImporter;
-import com.gadgetworks.codeshelf.edi.LocationAliasCsvImporter;
-import com.gadgetworks.codeshelf.edi.OrderCsvImporter;
-import com.gadgetworks.codeshelf.edi.OrderLocationCsvImporter;
 import com.gadgetworks.codeshelf.edi.CrossBatchCsvImporter;
 import com.gadgetworks.codeshelf.edi.EdiProcessor;
+import com.gadgetworks.codeshelf.edi.ICsvCrossBatchImporter;
 import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
 import com.gadgetworks.codeshelf.edi.ICsvLocationAliasImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderLocationImporter;
-import com.gadgetworks.codeshelf.edi.ICsvCrossBatchImporter;
 import com.gadgetworks.codeshelf.edi.IEdiProcessor;
+import com.gadgetworks.codeshelf.edi.InventoryCsvImporter;
+import com.gadgetworks.codeshelf.edi.LocationAliasCsvImporter;
+import com.gadgetworks.codeshelf.edi.OrderCsvImporter;
+import com.gadgetworks.codeshelf.edi.OrderLocationCsvImporter;
 import com.gadgetworks.codeshelf.model.dao.DaoProvider;
 import com.gadgetworks.codeshelf.model.dao.Database;
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
@@ -57,6 +57,8 @@ import com.gadgetworks.codeshelf.model.domain.EdiDocumentLocator;
 import com.gadgetworks.codeshelf.model.domain.EdiDocumentLocator.EdiDocumentLocatorDao;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Facility.FacilityDao;
+import com.gadgetworks.codeshelf.model.domain.IronMqService;
+import com.gadgetworks.codeshelf.model.domain.IronMqService.IronMqServiceDao;
 import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.Item.ItemDao;
 import com.gadgetworks.codeshelf.model.domain.ItemDdcGroup;
@@ -298,13 +300,17 @@ public final class ServerMain {
 				bind(new TypeLiteral<ITypedDao<ContainerUse>>() {
 				}).to(ContainerUseDao.class);
 
+				requestStaticInjection(DropboxService.class);
+				bind(new TypeLiteral<ITypedDao<DropboxService>>() {
+				}).to(DropboxServiceDao.class);
+
 				requestStaticInjection(EdiDocumentLocator.class);
 				bind(new TypeLiteral<ITypedDao<EdiDocumentLocator>>() {
 				}).to(EdiDocumentLocatorDao.class);
 
-				requestStaticInjection(DropboxService.class);
-				bind(new TypeLiteral<ITypedDao<DropboxService>>() {
-				}).to(DropboxServiceDao.class);
+				requestStaticInjection(IronMqService.class);
+				bind(new TypeLiteral<ITypedDao<IronMqService>>() {
+				}).to(IronMqServiceDao.class);
 
 				requestStaticInjection(Facility.class);
 				bind(new TypeLiteral<ITypedDao<Facility>>() {

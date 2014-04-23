@@ -5,11 +5,13 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
+import java.util.List;
+
+import com.gadgetworks.codeshelf.edi.ICsvCrossBatchImporter;
 import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
 import com.gadgetworks.codeshelf.edi.ICsvLocationAliasImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderLocationImporter;
-import com.gadgetworks.codeshelf.edi.ICsvCrossBatchImporter;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 
 public interface IEdiService {
@@ -23,5 +25,7 @@ public interface IEdiService {
 		ICsvInventoryImporter inCsvInventoryImporter,
 		ICsvLocationAliasImporter inCsvLocationsImporter,
 		ICsvCrossBatchImporter inCsvCrossBatchImporter);
+	
+	void sendWorkInstructionsToHost(final List<WorkInstruction> inWiList);
 
 }

@@ -48,6 +48,8 @@ import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.flyweight.command.ColorEnum;
 import com.gadgetworks.flyweight.command.NetGuid;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -811,6 +813,55 @@ public class Facility extends SubLocationABC<Facility> {
 	/**
 	 * @return
 	 */
+	public final IronMqService getIronMqService() {
+		IronMqService result = null;
+
+		for (IEdiService ediService : getEdiServices()) {
+			if (ediService instanceof IronMqService) {
+				result = (IronMqService) ediService;
+			}
+			break;
+		}
+		
+		if (result == null) {
+			return createIronMqService();
+		}
+		
+		return result;
+	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * @return
+	 */
+	public final IronMqService createIronMqService() {
+		IronMqService result = null;
+		
+		result = new IronMqService();
+		result.setParent(this);
+		result.setDomainId("IRONMQ");
+		result.setProviderEnum(EdiProviderEnum.IRONMQ);
+		result.setServiceStateEnum(EdiServiceStateEnum.LINKED);
+		
+		IronMqService.Credentials credentials = result.new Credentials(IronMqService.PROJECT_ID, IronMqService.TOKEN);
+		Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
+		String json = gson.toJson(credentials);
+		result.setProviderCredentials(json);
+
+		this.addEdiService(result);
+		try {
+			IronMqService.DAO.store(result);
+		} catch (DaoException e) {
+			LOGGER.error("", e);
+		}
+
+		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @return
+	 */
 	public final DropboxService getDropboxService() {
 		DropboxService result = null;
 
@@ -1512,7 +1563,11 @@ public class Facility extends SubLocationABC<Facility> {
 	/**
 	 * @param inWorkInstruction
 	 */
-	public void sendWorkInstructionToHost(final WorkInstruction inWorkInstruction) {
-
+	public void sendWorkInstructionsToHost(final List<WorkInstruction> inWiList) {
+		IronMqService ironMqService = getIronMqService();
+		
+		if (ironMqService != null) {
+			ironMqService.sendWorkInstructionsToHost(inWiList);
+		}
 	}
 }

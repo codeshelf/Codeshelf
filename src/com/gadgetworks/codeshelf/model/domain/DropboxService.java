@@ -10,6 +10,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.Timestamp;
+import java.util.List;
 import java.util.Locale;
 
 import javax.persistence.Column;
@@ -535,5 +536,13 @@ public class DropboxService extends EdiServiceABC {
 		}
 
 		return result;
+	}
+	
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.domain.IEdiService#sendCompletedWorkInstructions(java.util.List)
+	 */
+	public void sendWorkInstructionsToHost(final List<WorkInstruction> inWiList) {
+		// Do nothing at DropBox (for now).
 	}
 }
