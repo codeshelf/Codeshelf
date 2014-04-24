@@ -41,11 +41,12 @@ delete from path;
 
 # Select all of the slots in LED position order to get a sense of the electronics wiring relative to path distance.
 select
-aisle.domainid, bay.domainid, tier.domainid, slot.domainid, slot.first_led_num_along_path, slot.last_led_num_along_path, slot.pos_along_path
+aisle.domainid, bay.domainid, tier.domainid, slot.domainid, slot.first_led_num_along_path, slot.last_led_num_along_path, slot.pos_along_path, led_controller.domainid
 from location as aisle
 join location as bay on aisle.persistentid = bay.parent_persistentid
 join location as tier on bay.persistentid = tier.parent_persistentid
 join location as slot on tier.persistentid = slot.parent_persistentid
+join led_controller on led_controller.persistentid = slot.led_controller_persistentid
 where aisle.domainid like 'A%'
 order by bay.first_led_num_along_path, tier.first_led_num_along_path, slot.first_led_num_along_path;
 

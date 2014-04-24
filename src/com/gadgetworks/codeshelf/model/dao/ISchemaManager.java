@@ -35,8 +35,9 @@ public interface ISchemaManager {
 	int		DATABASE_VERSION_12				= 12;								// Remove anchor location from path segement.
 	int		DATABASE_VERSION_13				= 13;								// Add z-point to path segments.
 	int		DATABASE_VERSION_14				= 14;								// Add assigned CHE to work instruction
+	int		DATABASE_VERSION_15				= 15;								// Drop NOT NULL for order_header order_date and due_date
 
-	int		DATABASE_VERSION_CUR			= DATABASE_VERSION_14;
+	int		DATABASE_VERSION_CUR			= DATABASE_VERSION_15;
 
 	String getDbAddress();
 

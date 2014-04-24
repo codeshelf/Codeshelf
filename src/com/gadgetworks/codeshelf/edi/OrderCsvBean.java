@@ -39,7 +39,6 @@ public class OrderCsvBean extends ImportCsvBeanABC {
 	@NotNull
 	protected String	uom;
 	protected String	orderDate;
-	@NotNull
 	protected String	dueDate;
 	protected String	destinationId;
 	protected String	pickStrategy;

@@ -137,14 +137,14 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	private Integer						workSequence;
 
 	// Order date.
-	@Column(nullable = false)
+	@Column(nullable = true)
 	@Getter
 	@Setter
 	@JsonProperty
 	private Timestamp					orderDate;
 
 	// Due date.
-	@Column(nullable = false)
+	@Column(nullable = true)
 	@Getter
 	@Setter
 	@JsonProperty

@@ -98,6 +98,7 @@ public class DropboxService extends EdiServiceABC {
 	private static final String		IMPORT_BATCHES_PATH		= "batches";
 	private static final String		IMPORT_INVENTORY_PATH	= "inventory";
 	private static final String		IMPORT_LOCATIONS_PATH	= "locations";
+	private static final String		IMPORT_SLOTTING_PATH	= "slotting";
 
 	private static final String		EXPORT_DIR_PATH			= "export";
 	private static final String		EXPORT_WIS_PATH			= "work";
@@ -316,6 +317,7 @@ public class DropboxService extends EdiServiceABC {
 		result &= ensureDirectory(inClient, getFacilityImportSubDirPath(IMPORT_BATCHES_PATH));
 		result &= ensureDirectory(inClient, getFacilityImportSubDirPath(IMPORT_INVENTORY_PATH));
 		result &= ensureDirectory(inClient, getFacilityImportSubDirPath(IMPORT_LOCATIONS_PATH));
+		result &= ensureDirectory(inClient, getFacilityImportSubDirPath(IMPORT_SLOTTING_PATH));
 
 		result &= ensureDirectory(inClient, getFacilityExportPath());
 		result &= ensureDirectory(inClient, getFacilityImportSubDirPath(EXPORT_WIS_PATH));
@@ -499,17 +501,17 @@ public class DropboxService extends EdiServiceABC {
 			InputStreamReader reader = new InputStreamReader(new ByteArrayInputStream(outputStream.toByteArray()));
 
 			// orders-slotting needs to come before orders, because orders is a subset of the orders-slotting regex.
-			if (filepath.matches(getFacilityImportSubDirPath(IMPORT_ORDERS_PATH) + "/.*orders-slotting.*\\.csv")) {
+			if (filepath.matches(getFacilityImportSubDirPath(IMPORT_SLOTTING_PATH) + "/.*\\.csv")) {
 				inCsvOrderLocationImporter.importOrderLocationsFromCsvStream(reader, getParent());
-			} else if (filepath.matches(getFacilityImportSubDirPath(IMPORT_ORDERS_PATH) + "/.*orders.*\\.csv")) {
+			} else if (filepath.matches(getFacilityImportSubDirPath(IMPORT_ORDERS_PATH) + "/.*\\.csv")) {
 				inCsvOrderImporter.importOrdersFromCsvStream(reader, getParent());
-			} else if (filepath.matches(getFacilityImportSubDirPath(IMPORT_INVENTORY_PATH) + "/.*inventory-slotted.*\\.csv")) {
+			} else if (filepath.matches(getFacilityImportSubDirPath(IMPORT_INVENTORY_PATH) + "/.*\\.csv")) {
 				inCsvInventoryImporter.importSlottedInventoryFromCsvStream(reader, getParent());
-			} else if (filepath.matches(getFacilityImportSubDirPath(IMPORT_INVENTORY_PATH) + "/.*inventory-ddc.*\\.csv")) {
+			} else if (filepath.matches(getFacilityImportSubDirPath(IMPORT_INVENTORY_PATH) + "/.*\\.csv")) {
 				inCsvInventoryImporter.importDdcInventoryFromCsvStream(reader, getParent());
-			} else if (filepath.matches(getFacilityImportSubDirPath(IMPORT_LOCATIONS_PATH) + "/.*location-aliases.*\\.csv")) {
+			} else if (filepath.matches(getFacilityImportSubDirPath(IMPORT_LOCATIONS_PATH) + "/.*\\.csv")) {
 				inCsvLocationAliasImporter.importLocationAliasesFromCsvStream(reader, getParent());
-			} else if (filepath.matches(getFacilityImportSubDirPath(IMPORT_BATCHES_PATH) + "/.*cross-batch.*\\.csv")) {
+			} else if (filepath.matches(getFacilityImportSubDirPath(IMPORT_BATCHES_PATH) + "/.*\\.csv")) {
 				inCsvCrossBatchImporter.importCrossBatchesFromCsvStream(reader, getParent());
 			}
 
@@ -537,7 +539,7 @@ public class DropboxService extends EdiServiceABC {
 
 		return result;
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.IEdiService#sendCompletedWorkInstructions(java.util.List)

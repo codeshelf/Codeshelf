@@ -350,6 +350,10 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 			result &= doUpgrade014();
 		}
 
+		if ((result) && (inOldVersion < ISchemaManager.DATABASE_VERSION_15)) {
+			result &= doUpgrade015();
+		}
+
 		result &= updateSchemaVersion(ISchemaManager.DATABASE_VERSION_CUR);
 
 		return result;
@@ -546,11 +550,24 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		result &= safeAddColumn("work_instruction", "assigned_che_persistentid", UUID_TYPE);
 
 		result &= execOneSQLCommand("CREATE  INDEX work_instruction_che_index ON " + getDbSchemaName()
-			+ ".work_instruction (assigned_che_persistentid)");
-		
+				+ ".work_instruction (assigned_che_persistentid)");
+
 		result &= execOneSQLCommand("CREATE  INDEX work_instruction_status_index ON " + getDbSchemaName()
-			+ ".work_instruction (type_enum, status_enum)");
-		
+				+ ".work_instruction (type_enum, status_enum)");
+
+		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @return
+	 */
+	private boolean doUpgrade015() {
+		boolean result = true;
+
+		result &= execOneSQLCommand("ALTER TABLE " + getDbSchemaName() + ".order_header ALTER COLUMN order_date DROP NOT NULL");
+		result &= execOneSQLCommand("ALTER TABLE " + getDbSchemaName() + ".order_header ALTER COLUMN due_date DROP NOT NULL");
+
 		return result;
 	}
 
@@ -873,12 +890,12 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		result &= linkToParentTable("work_instruction", "parent", "order_detail");
 		result &= linkToParentTable("work_instruction", "item_master", "item_master");
 		result &= linkToParentTable("work_instruction", "container", "container");
-		
+
 		result &= execOneSQLCommand("CREATE  INDEX work_instruction_che_index ON " + getDbSchemaName()
-			+ ".work_instruction (assigned_che_persistentid)");
-		
+				+ ".work_instruction (assigned_che_persistentid)");
+
 		result &= execOneSQLCommand("CREATE  INDEX work_instruction_status_index ON " + getDbSchemaName()
-			+ ".work_instruction (type_enum, status_enum)");
+				+ ".work_instruction (type_enum, status_enum)");
 
 		return result;
 	}
