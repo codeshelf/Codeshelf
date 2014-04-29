@@ -11,6 +11,7 @@ import java.io.InputStreamReader;
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -44,7 +45,7 @@ import com.google.inject.Singleton;
  *
  */
 @Singleton
-public class OrderCsvImporter implements ICsvOrderImporter {
+public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 
 	private static final Logger		LOGGER	= LoggerFactory.getLogger(EdiProcessor.class);
 
@@ -57,7 +58,7 @@ public class OrderCsvImporter implements ICsvOrderImporter {
 	private ITypedDao<UomMaster>	mUomMasterDao;
 
 	@Inject
-	public OrderCsvImporter(final ITypedDao<OrderGroup> inOrderGroupDao,
+	public OutboundOrderCsvImporter(final ITypedDao<OrderGroup> inOrderGroupDao,
 		final ITypedDao<OrderHeader> inOrderHeaderDao,
 		final ITypedDao<OrderDetail> inOrderDetailDao,
 		final ITypedDao<Container> inContainerDao,
@@ -83,30 +84,41 @@ public class OrderCsvImporter implements ICsvOrderImporter {
 
 			CSVReader csvReader = new CSVReader(inCsvStreamReader);
 
-			HeaderColumnNameMappingStrategy<OrderCsvBean> strategy = new HeaderColumnNameMappingStrategy<OrderCsvBean>();
-			strategy.setType(OrderCsvBean.class);
+			HeaderColumnNameMappingStrategy<OutboundOrderCsvBean> strategy = new HeaderColumnNameMappingStrategy<OutboundOrderCsvBean>();
+			strategy.setType(OutboundOrderCsvBean.class);
 
-			CsvToBean<OrderCsvBean> csv = new CsvToBean<OrderCsvBean>();
-			List<OrderCsvBean> list = csv.parse(strategy, csvReader);
+			CsvToBean<OutboundOrderCsvBean> csv = new CsvToBean<OutboundOrderCsvBean>();
+			List<OutboundOrderCsvBean> list = csv.parse(strategy, csvReader);
 
 			Timestamp processTime = new Timestamp(System.currentTimeMillis());
 
+			List<OrderHeader> orderList = new ArrayList<OrderHeader>();
+
 			LOGGER.debug("Begin order import.");
 
-			for (OrderCsvBean orderBean : list) {
+			for (OutboundOrderCsvBean orderBean : list) {
 				String errorMsg = orderBean.validateBean();
 				if (errorMsg != null) {
 					LOGGER.error("Import errors: " + errorMsg);
 				} else {
-					orderCsvBeanImport(orderBean, inFacility, processTime);
+					OrderHeader order = orderCsvBeanImport(orderBean, inFacility, processTime);
+					if ((order != null) && (!orderList.contains(order))) {
+						orderList.add(order);
+					}
 				}
 			}
 
-			archiveOrderStatuses(inFacility, processTime);
-			archiveContainerStatuses(inFacility, processTime);
+			if (orderList.size() == 1) {
+				// If we've only imported one order then don't change the status of other orders.
+				archiveCheckOneOrder(inFacility, orderList, processTime);
+			} else {
+				// If we've imported more than one order then do a full archive.
+				archiveCheckAllOrders(inFacility, processTime);
+			}
+			archiveCheckAllContainers(inFacility, processTime);
 
 			LOGGER.debug("End order import.");
-			
+
 			csvReader.close();
 
 			cleanupArchivedOrders();
@@ -121,19 +133,37 @@ public class OrderCsvImporter implements ICsvOrderImporter {
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inFacility
+	 * @param inOrderIdList
 	 * @param inProcessTime
 	 */
-	private void archiveOrderStatuses(final Facility inFacility, final Timestamp inProcessTime) {
+	private void archiveCheckOneOrder(final Facility inFacility, final List<OrderHeader> inOrderList, final Timestamp inProcessTime) {
+		for (OrderHeader order : inOrderList) {
+			for (OrderDetail orderDetail : order.getOrderDetails()) {
+				if (!orderDetail.getUpdated().equals(inProcessTime)) {
+					LOGGER.debug("Archive old order detail: " + orderDetail.getOrderDetailId());
+					orderDetail.setActive(false);
+					orderDetail.setQuantity(0);
+					mOrderDetailDao.store(orderDetail);
+				}
+			}
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inFacility
+	 * @param inProcessTime
+	 */
+	private void archiveCheckAllOrders(final Facility inFacility, final Timestamp inProcessTime) {
 		LOGGER.debug("Archive unreferenced order data");
 
-		// Inactivate the orders that don't match the import timestamp.
+		// Inactivate the *order details* that don't match the import timestamp.
 		// All orders and related items get marked with the same timestamp when imported from the same interchange.
 		try {
 			mOrderGroupDao.beginTransaction();
 
 			// Iterate all of the order groups to see if they're still active.
 			for (OrderGroup group : inFacility.getOrderGroups()) {
-
 				if (!group.getUpdated().equals(inProcessTime)) {
 					LOGGER.debug("Archive old order group: " + group.getOrderGroupId());
 					group.setActive(false);
@@ -143,23 +173,26 @@ public class OrderCsvImporter implements ICsvOrderImporter {
 
 			// Iterate all of the order headers in this order group to see if they're still active.
 			for (OrderHeader order : inFacility.getOrderHeaders()) {
-				Boolean orderHeaderIsActive = false;
+				if (order.getOrderTypeEnum().equals(OrderTypeEnum.OUTBOUND)) {
+					Boolean orderHeaderIsActive = false;
 
-				// Iterate all of the order details in this order header to see if they're still active.
-				for (OrderDetail orderDetail : order.getOrderDetails()) {
-					if (orderDetail.getUpdated().equals(inProcessTime)) {
-						orderHeaderIsActive = true;
-					} else {
-						LOGGER.debug("Archive old order detail: " + orderDetail.getOrderDetailId());
-						orderDetail.setActive(false);
-						mOrderDetailDao.store(orderDetail);
+					// Iterate all of the order details in this order header to see if they're still active.
+					for (OrderDetail orderDetail : order.getOrderDetails()) {
+						if (orderDetail.getUpdated().equals(inProcessTime)) {
+							orderHeaderIsActive = true;
+						} else {
+							LOGGER.debug("Archive old order detail: " + orderDetail.getOrderDetailId());
+							orderDetail.setActive(false);
+							orderDetail.setQuantity(0);
+							mOrderDetailDao.store(orderDetail);
+						}
 					}
-				}
 
-				if (!orderHeaderIsActive) {
-					LOGGER.debug("Archive old order header: " + order.getOrderId());
-					order.setActive(false);
-					mOrderHeaderDao.store(order);
+					if (!orderHeaderIsActive) {
+						LOGGER.debug("Archive old order header: " + order.getOrderId());
+						order.setActive(false);
+						mOrderHeaderDao.store(order);
+					}
 				}
 			}
 
@@ -175,28 +208,30 @@ public class OrderCsvImporter implements ICsvOrderImporter {
 	 * @param inFacility
 	 * @param inProcessTime
 	 */
-	private void archiveContainerStatuses(final Facility inFacility, final Timestamp inProcessTime) {
+	private void archiveCheckAllContainers(final Facility inFacility, final Timestamp inProcessTime) {
 		LOGGER.debug("Archive unreferenced container data");
 
-		// Inactivate the orders that don't match the import timestamp.
-		// All orders and related items get marked with the same timestamp when imported from the same interchange.
 		try {
 			mContainerDao.beginTransaction();
 
 			// Iterate all of the containers to see if they're still active.
 			for (Container container : inFacility.getContainers()) {
-				Boolean containerIsActive = false;
+				Boolean shouldInactivateContainer = true;
 
 				for (ContainerUse containerUse : container.getUses()) {
-					if (containerUse.getUpdated().equals(inProcessTime)) {
-						containerIsActive = true;
+					if (!containerUse.getOrderHeader().getOrderTypeEnum().equals(OrderTypeEnum.OUTBOUND)) {
+						shouldInactivateContainer = false;
 					} else {
-						containerUse.setActive(false);
-						mContainerUseDao.store(containerUse);
+						if (containerUse.getUpdated().equals(inProcessTime)) {
+							shouldInactivateContainer = false;
+						} else {
+							containerUse.setActive(false);
+							mContainerUseDao.store(containerUse);
+						}
 					}
 				}
 
-				if (!containerIsActive) {
+				if (shouldInactivateContainer) {
 					container.setActive(false);
 					mContainerDao.store(container);
 				}
@@ -227,7 +262,11 @@ public class OrderCsvImporter implements ICsvOrderImporter {
 	 * @param inFacility
 	 */
 	@Transactional
-	private void orderCsvBeanImport(final OrderCsvBean inCsvBean, final Facility inFacility, final Timestamp inEdiProcessTime) {
+	private OrderHeader orderCsvBeanImport(final OutboundOrderCsvBean inCsvBean,
+		final Facility inFacility,
+		final Timestamp inEdiProcessTime) {
+
+		OrderHeader result = null;
 
 		LOGGER.info(inCsvBean.toString());
 
@@ -237,6 +276,7 @@ public class OrderCsvImporter implements ICsvOrderImporter {
 			try {
 				OrderGroup group = updateOptionalOrderGroup(inCsvBean, inFacility, inEdiProcessTime);
 				OrderHeader order = updateOrderHeader(inCsvBean, inFacility, inEdiProcessTime, group);
+				result = order;
 				Container container = updateContainer(inCsvBean, inFacility, inEdiProcessTime, order);
 				UomMaster uomMaster = updateUomMaster(inCsvBean.getUom(), inFacility);
 				ItemMaster itemMaster = updateItemMaster(inCsvBean.getItemId(),
@@ -254,6 +294,7 @@ public class OrderCsvImporter implements ICsvOrderImporter {
 			mOrderHeaderDao.endTransaction();
 		}
 
+		return result;
 	}
 
 	// --------------------------------------------------------------------------
@@ -263,7 +304,7 @@ public class OrderCsvImporter implements ICsvOrderImporter {
 	 * @param inEdiProcessTime
 	 * @return
 	 */
-	private OrderGroup updateOptionalOrderGroup(final OrderCsvBean inCsvBean,
+	private OrderGroup updateOptionalOrderGroup(final OutboundOrderCsvBean inCsvBean,
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime) {
 		OrderGroup result = null;
@@ -308,7 +349,7 @@ public class OrderCsvImporter implements ICsvOrderImporter {
 	 * @param inOrder
 	 * @return
 	 */
-	private Container updateContainer(final OrderCsvBean inCsvBean,
+	private Container updateContainer(final OutboundOrderCsvBean inCsvBean,
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime,
 		final OrderHeader inOrder) {
@@ -367,7 +408,7 @@ public class OrderCsvImporter implements ICsvOrderImporter {
 	 * @param inOrderGroup
 	 * @return
 	 */
-	private OrderHeader updateOrderHeader(final OrderCsvBean inCsvBean,
+	private OrderHeader updateOrderHeader(final OutboundOrderCsvBean inCsvBean,
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime,
 		final OrderGroup inOrderGroup) {
@@ -524,7 +565,7 @@ public class OrderCsvImporter implements ICsvOrderImporter {
 	 * @param inItemMaster
 	 * @return
 	 */
-	private OrderDetail updateOrderDetail(final OrderCsvBean inCsvBean,
+	private OrderDetail updateOrderDetail(final OutboundOrderCsvBean inCsvBean,
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime,
 		final OrderHeader inOrder,

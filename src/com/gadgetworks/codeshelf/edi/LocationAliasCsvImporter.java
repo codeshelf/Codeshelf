@@ -74,7 +74,7 @@ public class LocationAliasCsvImporter implements ICsvLocationAliasImporter {
 					}
 				}
 
-				archiveLocationAliases(inFacility, processTime);
+				archiveCheckLocationAliases(inFacility, processTime);
 
 				LOGGER.debug("End slotted inventory import.");
 			}
@@ -92,7 +92,7 @@ public class LocationAliasCsvImporter implements ICsvLocationAliasImporter {
 	 * @param inFacility
 	 * @param inProcessTime
 	 */
-	private void archiveLocationAliases(final Facility inFacility, final Timestamp inProcessTime) {
+	private void archiveCheckLocationAliases(final Facility inFacility, final Timestamp inProcessTime) {
 		LOGGER.debug("Archive unreferenced location alias data");
 
 		// Inactivate the locations aliases that don't match the import timestamp.

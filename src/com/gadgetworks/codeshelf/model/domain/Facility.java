@@ -107,7 +107,7 @@ public class Facility extends SubLocationABC<Facility> {
 	@MapKey(name = "domainId")
 	private Map<String, ContainerKind>		containerKinds	= new HashMap<String, ContainerKind>();
 
-	@OneToMany(mappedBy = "parent", targetEntity = DropboxService.class)
+	@OneToMany(mappedBy = "parent", targetEntity = EdiServiceABC.class)
 	@Getter
 	private List<IEdiService>				ediServices		= new ArrayList<IEdiService>();
 
@@ -1116,7 +1116,7 @@ public class Facility extends SubLocationABC<Facility> {
 		for (Container container : inContainerList) {
 			// Iterate over all active CROSS orders on the path.
 			OrderHeader crossOrder = container.getCurrentOrderHeader();
-			if ((crossOrder.getActive()) && (crossOrder.getOrderTypeEnum().equals(OrderTypeEnum.CROSS))) {
+			if ((crossOrder != null) && (crossOrder.getActive()) && (crossOrder.getOrderTypeEnum().equals(OrderTypeEnum.CROSS))) {
 				// Iterate over all active OUTBOUND on the path.
 				for (OrderHeader outOrder : getOrderHeaders()) {
 					if ((outOrder.getOrderTypeEnum().equals(OrderTypeEnum.OUTBOUND)) && (outOrder.getActive())) {
@@ -1563,7 +1563,7 @@ public class Facility extends SubLocationABC<Facility> {
 	/**
 	 * @param inWorkInstruction
 	 */
-	public void sendWorkInstructionsToHost(final List<WorkInstruction> inWiList) {
+	public final void sendWorkInstructionsToHost(final List<WorkInstruction> inWiList) {
 		IronMqService ironMqService = getIronMqService();
 		
 		if (ironMqService != null) {

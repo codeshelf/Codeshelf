@@ -57,3 +57,12 @@ join location as tier on tier.persistentid = slot.parent_persistentid
 join location as bay on bay.persistentid = tier.parent_persistentid
 join location as aisle on aisle.persistentid = bay.parent_persistentid
 order by work_instruction.group_and_sort_code;
+
+# See a cross-batch orders location by the item id
+select order_header.domainid, order_header.active, item_master.description, order_location.domainid, location_alias.domainid from order_header
+join order_detail on order_detail.parent_persistentid = order_header.persistentid
+join item_master on item_master.persistentid = order_detail.item_master_persistentid
+join order_location on order_location.parent_persistentid = order_header.persistentid
+join location on location.persistentid = order_location.location_persistentid
+join location_alias on location_alias.mapped_location_persistentid = location.persistentid
+where item_master.domainid = '500e08946c106c0300000012';

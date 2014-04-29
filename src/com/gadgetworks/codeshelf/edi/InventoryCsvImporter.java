@@ -82,7 +82,7 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 					}
 				}
 
-				archiveItemStatuses(inFacility, processTime);
+				archiveCheckItemStatuses(inFacility, processTime);
 
 				LOGGER.debug("End DDC inventory import.");
 
@@ -128,7 +128,7 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 					}
 				}
 
-				archiveItemStatuses(inFacility, processTime);
+				archiveCheckItemStatuses(inFacility, processTime);
 
 				LOGGER.debug("End slotted inventory import.");
 			}
@@ -146,7 +146,7 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 	 * @param inFacility
 	 * @param inProcessTime
 	 */
-	private void archiveItemStatuses(final Facility inFacility, final Timestamp inProcessTime) {
+	private void archiveCheckItemStatuses(final Facility inFacility, final Timestamp inProcessTime) {
 		LOGGER.debug("Archive unreferenced item data");
 
 		// Inactivate the DDC item that don't match the import timestamp.

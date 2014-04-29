@@ -149,7 +149,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 		}
 	}
 
-	public void setItemMaster(final ItemMaster inItemMaster) {
+	public final void setItemMaster(final ItemMaster inItemMaster) {
 		setOrderDetailId(inItemMaster.getItemId());
 		itemMaster = inItemMaster;
 	}

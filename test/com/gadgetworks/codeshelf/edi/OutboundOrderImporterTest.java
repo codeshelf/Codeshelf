@@ -12,7 +12,6 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.gadgetworks.codeshelf.model.PickStrategyEnum;
-import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.domain.Container;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
@@ -32,7 +31,7 @@ import com.gadgetworks.codeshelf.model.domain.Point;
  * There are other unit tests of EDI behaviors.
  *
  */
-public class OrderImporterTest extends EdiTestABC {
+public class OutboundOrderImporterTest extends EdiTestABC {
 
 	@Test
 	public final void testOrderImporterFromCsvStream() {
@@ -62,7 +61,13 @@ public class OrderImporterTest extends EdiTestABC {
 		organization.createFacility("F-ORD1.1", "TEST", Point.getZeroPoint());
 		Facility facility = organization.getFacility("F-ORD1.1");
 
-		ICsvOrderImporter importer = new OrderCsvImporter(mOrderGroupDao, mOrderHeaderDao, mOrderDetailDao, mContainerDao, mContainerUseDao, mItemMasterDao, mUomMasterDao);
+		ICsvOrderImporter importer = new OutboundOrderCsvImporter(mOrderGroupDao,
+			mOrderHeaderDao,
+			mOrderDetailDao,
+			mContainerDao,
+			mContainerUseDao,
+			mItemMasterDao,
+			mUomMasterDao);
 		importer.importOrdersFromCsvStream(reader, facility);
 
 		OrderHeader order = facility.getOrderHeader("123");
@@ -98,7 +103,13 @@ public class OrderImporterTest extends EdiTestABC {
 		organization.createFacility("F-ORD1.2", "TEST", Point.getZeroPoint());
 		Facility facility = organization.getFacility("F-ORD1.2");
 
-		ICsvOrderImporter importer = new OrderCsvImporter(mOrderGroupDao, mOrderHeaderDao, mOrderDetailDao, mContainerDao, mContainerUseDao, mItemMasterDao, mUomMasterDao);
+		ICsvOrderImporter importer = new OutboundOrderCsvImporter(mOrderGroupDao,
+			mOrderHeaderDao,
+			mOrderDetailDao,
+			mContainerDao,
+			mContainerUseDao,
+			mItemMasterDao,
+			mUomMasterDao);
 		importer.importOrdersFromCsvStream(reader, facility);
 
 		OrderHeader order = facility.getOrderHeader("123");
@@ -139,7 +150,13 @@ public class OrderImporterTest extends EdiTestABC {
 		organization.createFacility("F-ORD1.3", "TEST", Point.getZeroPoint());
 		Facility facility = organization.getFacility("F-ORD1.3");
 
-		ICsvOrderImporter importer = new OrderCsvImporter(mOrderGroupDao, mOrderHeaderDao, mOrderDetailDao, mContainerDao, mContainerUseDao, mItemMasterDao, mUomMasterDao);
+		ICsvOrderImporter importer = new OutboundOrderCsvImporter(mOrderGroupDao,
+			mOrderHeaderDao,
+			mOrderDetailDao,
+			mContainerDao,
+			mContainerUseDao,
+			mItemMasterDao,
+			mUomMasterDao);
 		importer.importOrdersFromCsvStream(reader, facility);
 
 		OrderHeader order = facility.getOrderHeader("789");
@@ -178,7 +195,13 @@ public class OrderImporterTest extends EdiTestABC {
 		organization.createFacility("F-ORD1.4", "TEST", Point.getZeroPoint());
 		Facility facility = organization.getFacility("F-ORD1.4");
 
-		ICsvOrderImporter importer = new OrderCsvImporter(mOrderGroupDao, mOrderHeaderDao, mOrderDetailDao, mContainerDao, mContainerUseDao, mItemMasterDao, mUomMasterDao);
+		ICsvOrderImporter importer = new OutboundOrderCsvImporter(mOrderGroupDao,
+			mOrderHeaderDao,
+			mOrderDetailDao,
+			mContainerDao,
+			mContainerUseDao,
+			mItemMasterDao,
+			mUomMasterDao);
 		importer.importOrdersFromCsvStream(reader, facility);
 
 		// We should find order 123
@@ -193,6 +216,166 @@ public class OrderImporterTest extends EdiTestABC {
 		orderDetail = order.getOrderDetail("10706952");
 		Assert.assertNotNull(orderDetail);
 
+	}
+
+	@Test
+	public void testManyOrderArchive() {
+
+		String firstOrderBatchCsv = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
+				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalapeño Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,123,123,10706952,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,123,123,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,123,123,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,456,456,10711111,Napa Valley Bistro - Jalapeño Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\n1,USF314,COSTCO,456,456,10722222,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\n1,USF314,COSTCO,456,456,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\n1,USF314,COSTCO,456,456,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\n1,USF314,COSTCO,456,456,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\n1,USF314,COSTCO,789,789,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\n1,USF314,COSTCO,789,789,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
+
+		byte csvArray[] = firstOrderBatchCsv.getBytes();
+
+		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
+		InputStreamReader reader = new InputStreamReader(stream);
+
+		Organization organization = new Organization();
+		organization.setDomainId("O-ORD1.5");
+		mOrganizationDao.store(organization);
+
+		organization.createFacility("F-ORD1.5", "TEST", Point.getZeroPoint());
+		Facility facility = organization.getFacility("F-ORD1.5");
+
+		// First import a big list of orders.
+		ICsvOrderImporter importer = new OutboundOrderCsvImporter(mOrderGroupDao,
+			mOrderHeaderDao,
+			mOrderDetailDao,
+			mContainerDao,
+			mContainerUseDao,
+			mItemMasterDao,
+			mUomMasterDao);
+		importer.importOrdersFromCsvStream(reader, facility);
+
+		// Now import a smaller list of orders, but more than one.
+		String secondOrderBatchCsv = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
+				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalapeño Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,123,123,10706952,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,123,123,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,123,123,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,456,456,10711111,Napa Valley Bistro - Jalapeño Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\n1,USF314,COSTCO,456,456,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\n1,USF314,COSTCO,456,456,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\n1,USF314,COSTCO,456,456,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
+
+		byte csv2Array[] = secondOrderBatchCsv.getBytes();
+
+		stream = new ByteArrayInputStream(csv2Array);
+		reader = new InputStreamReader(stream);
+
+		// First import a big list of orders.
+		importer = new OutboundOrderCsvImporter(mOrderGroupDao,
+			mOrderHeaderDao,
+			mOrderDetailDao,
+			mContainerDao,
+			mContainerUseDao,
+			mItemMasterDao,
+			mUomMasterDao);
+		importer.importOrdersFromCsvStream(reader, facility);
+
+		// Order 789 should exist and be inactive.
+		OrderHeader order = facility.getOrderHeader("789");
+		Assert.assertNotNull(order);
+		Assert.assertEquals(false, order.getActive());
+
+		// Line item 10722222 from order 456 should be quantity 0 and inactive.
+		order = facility.getOrderHeader("456");
+		for (OrderDetail detail : order.getOrderDetails()) {
+			if (detail.getOrderDetailId().equals("10722222")) {
+				Assert.assertEquals(false, detail.getActive());
+				Assert.assertEquals(Integer.valueOf(0), detail.getQuantity());	
+			} else {
+				Assert.assertEquals(true, detail.getActive());
+				Assert.assertNotEquals(Integer.valueOf(0), detail.getQuantity());	
+			}
+		}
+	}
+
+	@Test
+	public void testOneOrderArchive() {
+
+		String firstOrderBatchCsv = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
+				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalapeño Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,123,123,10706952,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,123,123,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,123,123,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,456,456,10711111,Napa Valley Bistro - Jalapeño Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\n1,USF314,COSTCO,456,456,10722222,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\n1,USF314,COSTCO,456,456,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\n1,USF314,COSTCO,456,456,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\n1,USF314,COSTCO,456,456,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\n1,USF314,COSTCO,789,789,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\n1,USF314,COSTCO,789,789,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
+
+		byte csvArray[] = firstOrderBatchCsv.getBytes();
+
+		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
+		InputStreamReader reader = new InputStreamReader(stream);
+
+		Organization organization = new Organization();
+		organization.setDomainId("O-ORD1.6");
+		mOrganizationDao.store(organization);
+
+		organization.createFacility("F-ORD1.6", "TEST", Point.getZeroPoint());
+		Facility facility = organization.getFacility("F-ORD1.6");
+
+		// First import a big list of orders.
+		ICsvOrderImporter importer = new OutboundOrderCsvImporter(mOrderGroupDao,
+			mOrderHeaderDao,
+			mOrderDetailDao,
+			mContainerDao,
+			mContainerUseDao,
+			mItemMasterDao,
+			mUomMasterDao);
+		importer.importOrdersFromCsvStream(reader, facility);
+
+		// Now import a smaller list of orders, but more than one.
+		String secondOrderBatchCsv = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
+				+ "\r\n1,USF314,COSTCO,456,456,10711111,Napa Valley Bistro - Jalapeño Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\n1,USF314,COSTCO,456,456,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\n1,USF314,COSTCO,456,456,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\n1,USF314,COSTCO,456,456,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
+
+		byte csv2Array[] = secondOrderBatchCsv.getBytes();
+
+		stream = new ByteArrayInputStream(csv2Array);
+		reader = new InputStreamReader(stream);
+
+		// First import a big list of orders.
+		importer = new OutboundOrderCsvImporter(mOrderGroupDao,
+			mOrderHeaderDao,
+			mOrderDetailDao,
+			mContainerDao,
+			mContainerUseDao,
+			mItemMasterDao,
+			mUomMasterDao);
+		importer.importOrdersFromCsvStream(reader, facility);
+
+		// Order 789 should exist and be active.
+		OrderHeader order = facility.getOrderHeader("789");
+		Assert.assertNotNull(order);
+		Assert.assertEquals(true, order.getActive());
+
+		// Line item 10722222 from order 456 should be quantity 0 and inactive.
+		order = facility.getOrderHeader("456");
+		for (OrderDetail detail : order.getOrderDetails()) {
+			if (detail.getOrderDetailId().equals("10722222")) {
+				Assert.assertEquals(false, detail.getActive());
+				Assert.assertEquals(Integer.valueOf(0), detail.getQuantity());	
+			} else {
+				Assert.assertEquals(true, detail.getActive());
+				Assert.assertNotEquals(Integer.valueOf(0), detail.getQuantity());	
+			}
+		}
 	}
 
 }

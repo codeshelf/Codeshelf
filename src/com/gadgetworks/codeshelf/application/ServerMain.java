@@ -28,7 +28,7 @@ import com.gadgetworks.codeshelf.edi.ICsvOrderLocationImporter;
 import com.gadgetworks.codeshelf.edi.IEdiProcessor;
 import com.gadgetworks.codeshelf.edi.InventoryCsvImporter;
 import com.gadgetworks.codeshelf.edi.LocationAliasCsvImporter;
-import com.gadgetworks.codeshelf.edi.OrderCsvImporter;
+import com.gadgetworks.codeshelf.edi.OutboundOrderCsvImporter;
 import com.gadgetworks.codeshelf.edi.OrderLocationCsvImporter;
 import com.gadgetworks.codeshelf.model.dao.DaoProvider;
 import com.gadgetworks.codeshelf.model.dao.Database;
@@ -247,7 +247,7 @@ public final class ServerMain {
 				bind(IHttpServer.class).to(HttpServer.class);
 				bind(IEdiProcessor.class).to(EdiProcessor.class);
 				bind(IPickDocumentGenerator.class).to(PickDocumentGenerator.class);
-				bind(ICsvOrderImporter.class).to(OrderCsvImporter.class);
+				bind(ICsvOrderImporter.class).to(OutboundOrderCsvImporter.class);
 				bind(ICsvInventoryImporter.class).to(InventoryCsvImporter.class);
 				bind(ICsvLocationAliasImporter.class).to(LocationAliasCsvImporter.class);
 				bind(ICsvOrderLocationImporter.class).to(OrderLocationCsvImporter.class);

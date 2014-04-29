@@ -23,9 +23,9 @@ import org.slf4j.LoggerFactory;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @ToString
-public class OrderCsvBean extends ImportCsvBeanABC {
+public class OutboundOrderCsvBean extends ImportCsvBeanABC {
 
-	static final Logger	LOGGER	= LoggerFactory.getLogger(OrderCsvBean.class);
+	static final Logger	LOGGER	= LoggerFactory.getLogger(OutboundOrderCsvBean.class);
 
 	protected String	orderGroupId;
 	@NotNull

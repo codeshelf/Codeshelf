@@ -97,7 +97,7 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 					}
 				}
 
-				archiveCrossBatches(inFacility, processTime);
+				archiveCheckCrossBatches(inFacility, processTime);
 
 				LOGGER.debug("End slotted inventory import.");
 			}
@@ -115,7 +115,7 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 	 * @param inFacility
 	 * @param inProcessTime
 	 */
-	private void archiveCrossBatches(final Facility inFacility, final Timestamp inProcessTime) {
+	private void archiveCheckCrossBatches(final Facility inFacility, final Timestamp inProcessTime) {
 		LOGGER.debug("Archive unreferenced put batch data");
 
 		// Inactivate the WONDERWALL order detail that don't match the import timestamp.
@@ -230,12 +230,12 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 		final OrderGroup inOrderGroup) {
 		OrderHeader result = null;
 
-		result = inFacility.getOrderHeader(inCsvBean.getContainerId());
+		result = inFacility.getOrderHeader(inCsvBean.getContainerId() + "." + inEdiProcessTime);
 
 		if (result == null) {
 			result = new OrderHeader();
 			result.setParent(inFacility);
-			result.setDomainId(inCsvBean.getContainerId());
+			result.setDomainId(inCsvBean.getContainerId() + "." + inEdiProcessTime);
 			result.setStatusEnum(OrderStatusEnum.CREATED);
 			inFacility.addOrderHeader(result);
 		}

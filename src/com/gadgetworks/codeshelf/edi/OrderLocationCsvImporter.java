@@ -76,7 +76,7 @@ public class OrderLocationCsvImporter implements ICsvOrderLocationImporter {
 					}
 				}
 
-				archiveOrderLocations(inFacility, processTime);
+				archiveCheckOrderLocations(inFacility, processTime);
 
 				LOGGER.debug("End slotted inventory import.");
 			}
@@ -94,7 +94,7 @@ public class OrderLocationCsvImporter implements ICsvOrderLocationImporter {
 	 * @param inFacility
 	 * @param inProcessTime
 	 */
-	private void archiveOrderLocations(final Facility inFacility, final Timestamp inProcessTime) {
+	private void archiveCheckOrderLocations(final Facility inFacility, final Timestamp inProcessTime) {
 		LOGGER.debug("Archive unreferenced order location data");
 
 		// Inactivate the locations aliases that don't match the import timestamp.

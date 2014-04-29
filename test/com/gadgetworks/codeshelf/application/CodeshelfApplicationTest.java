@@ -25,7 +25,7 @@ import com.gadgetworks.codeshelf.edi.ICsvOrderLocationImporter;
 import com.gadgetworks.codeshelf.edi.IEdiProcessor;
 import com.gadgetworks.codeshelf.edi.InventoryCsvImporter;
 import com.gadgetworks.codeshelf.edi.LocationAliasCsvImporter;
-import com.gadgetworks.codeshelf.edi.OrderCsvImporter;
+import com.gadgetworks.codeshelf.edi.OutboundOrderCsvImporter;
 import com.gadgetworks.codeshelf.edi.OrderLocationCsvImporter;
 import com.gadgetworks.codeshelf.model.dao.DaoProvider;
 import com.gadgetworks.codeshelf.model.dao.Database;
@@ -284,7 +284,7 @@ public class CodeshelfApplicationTest {
 			"x2HPbC2avltYQR",
 			"x2HPbC2avltYQR");
 
-		ICsvOrderImporter orderImporter = new OrderCsvImporter(orderGroupDao,
+		ICsvOrderImporter orderImporter = new OutboundOrderCsvImporter(orderGroupDao,
 			orderHeaderDao,
 			orderDetailDao,
 			containerDao,
