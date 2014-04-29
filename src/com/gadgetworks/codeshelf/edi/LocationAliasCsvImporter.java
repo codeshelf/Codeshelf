@@ -47,7 +47,7 @@ public class LocationAliasCsvImporter implements ICsvLocationAliasImporter {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.edi.ICsvImporter#importInventoryFromCsvStream(java.io.InputStreamReader, com.gadgetworks.codeshelf.model.domain.Facility)
 	 */
-	public final void importLocationAliasesFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
+	public final void importLocationAliasesFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime) {
 		try {
 
 			CSVReader csvReader = new CSVReader(inCsvStreamReader);
@@ -60,8 +60,6 @@ public class LocationAliasCsvImporter implements ICsvLocationAliasImporter {
 
 			if (locationAliasBeanList.size() > 0) {
 
-				Timestamp processTime = new Timestamp(System.currentTimeMillis());
-
 				LOGGER.debug("Begin location alias map import.");
 
 				// Iterate over the location alias import beans.
@@ -70,13 +68,13 @@ public class LocationAliasCsvImporter implements ICsvLocationAliasImporter {
 					if (errorMsg != null) {
 						LOGGER.error("Import errors: " + errorMsg);
 					} else {
-						locationAliasCsvBeanImport(locationAliasBean, inFacility, processTime);
+						locationAliasCsvBeanImport(locationAliasBean, inFacility, inProcessTime);
 					}
 				}
 
-				archiveCheckLocationAliases(inFacility, processTime);
+				archiveCheckLocationAliases(inFacility, inProcessTime);
 
-				LOGGER.debug("End slotted inventory import.");
+				LOGGER.debug("End location alias import.");
 			}
 
 			csvReader.close();

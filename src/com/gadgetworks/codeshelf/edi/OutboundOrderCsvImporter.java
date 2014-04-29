@@ -79,7 +79,7 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.edi.ICsvImporter#importOrdersFromCsvStream(java.io.InputStreamReader, com.gadgetworks.codeshelf.model.domain.Facility)
 	 */
-	public final void importOrdersFromCsvStream(final InputStreamReader inCsvStreamReader, final Facility inFacility) {
+	public final void importOrdersFromCsvStream(final InputStreamReader inCsvStreamReader, final Facility inFacility, Timestamp inProcessTime) {
 		try {
 
 			CSVReader csvReader = new CSVReader(inCsvStreamReader);
@@ -90,8 +90,6 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 			CsvToBean<OutboundOrderCsvBean> csv = new CsvToBean<OutboundOrderCsvBean>();
 			List<OutboundOrderCsvBean> list = csv.parse(strategy, csvReader);
 
-			Timestamp processTime = new Timestamp(System.currentTimeMillis());
-
 			List<OrderHeader> orderList = new ArrayList<OrderHeader>();
 
 			LOGGER.debug("Begin order import.");
@@ -101,7 +99,7 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 				if (errorMsg != null) {
 					LOGGER.error("Import errors: " + errorMsg);
 				} else {
-					OrderHeader order = orderCsvBeanImport(orderBean, inFacility, processTime);
+					OrderHeader order = orderCsvBeanImport(orderBean, inFacility, inProcessTime);
 					if ((order != null) && (!orderList.contains(order))) {
 						orderList.add(order);
 					}
@@ -110,12 +108,12 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 
 			if (orderList.size() == 1) {
 				// If we've only imported one order then don't change the status of other orders.
-				archiveCheckOneOrder(inFacility, orderList, processTime);
+				archiveCheckOneOrder(inFacility, orderList, inProcessTime);
 			} else {
 				// If we've imported more than one order then do a full archive.
-				archiveCheckAllOrders(inFacility, processTime);
+				archiveCheckAllOrders(inFacility, inProcessTime);
 			}
-			archiveCheckAllContainers(inFacility, processTime);
+			archiveCheckAllContainers(inFacility, inProcessTime);
 
 			LOGGER.debug("End order import.");
 

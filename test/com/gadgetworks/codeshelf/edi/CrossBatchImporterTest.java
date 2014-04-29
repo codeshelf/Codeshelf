@@ -84,16 +84,17 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		createItemMaster("I222.1", "ea", facility);
 		createItemMaster("I222.2", "ea", facility);
 
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvCrossBatchImporter importer = new CrossBatchCsvImporter(mOrderGroupDao,
 			mOrderHeaderDao,
 			mOrderDetailDao,
 			mContainerDao,
 			mContainerUseDao,
 			mUomMasterDao);
-		importer.importCrossBatchesFromCsvStream(reader, facility);
+		importer.importCrossBatchesFromCsvStream(reader, facility, ediProcessTime);
 
 		// Make sure we created an order with the container's ID.
-		OrderHeader order = facility.getOrderHeader("C111");
+		OrderHeader order = facility.getOrderHeader(OrderHeader.computeCrossOrderId("C111", ediProcessTime));
 		Assert.assertNotNull(order);
 		Assert.assertEquals(order.getOrderTypeEnum(), OrderTypeEnum.CROSS);
 
@@ -138,18 +139,19 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		createItemMaster("I444.1", "ea", facility);
 		createItemMaster("I444.2", "ea", facility);
 
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvCrossBatchImporter importer = new CrossBatchCsvImporter(mOrderGroupDao,
 			mOrderHeaderDao,
 			mOrderDetailDao,
 			mContainerDao,
 			mContainerUseDao,
 			mUomMasterDao);
-		importer.importCrossBatchesFromCsvStream(reader, facility);
+		importer.importCrossBatchesFromCsvStream(reader, facility, ediProcessTime);
 
 		OrderGroup group = facility.getOrderGroup("G1");
 		Assert.assertNotNull(group);
 
-		OrderHeader order = group.getOrderHeader("C333");
+		OrderHeader order = group.getOrderHeader(OrderHeader.computeCrossOrderId("C333", ediProcessTime));
 		Assert.assertNotNull(order);
 
 	}
@@ -185,13 +187,14 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		createItemMaster("I666.1", "ea", facility);
 		createItemMaster("I666.2", "ea", facility);
 
+		Timestamp firstEdiProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvCrossBatchImporter importer = new CrossBatchCsvImporter(mOrderGroupDao,
 			mOrderHeaderDao,
 			mOrderDetailDao,
 			mContainerDao,
 			mContainerUseDao,
 			mUomMasterDao);
-		importer.importCrossBatchesFromCsvStream(reader, facility);
+		importer.importCrossBatchesFromCsvStream(reader, facility, firstEdiProcessTime);
 
 		// Now re-import the interchange with one order missing a single item.
 		csvString = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
@@ -206,20 +209,29 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		stream = new ByteArrayInputStream(csvArray);
 		reader = new InputStreamReader(stream);
 
+		Timestamp secondEdiProcessTime = new Timestamp(System.currentTimeMillis());
 		importer = new CrossBatchCsvImporter(mOrderGroupDao,
 			mOrderHeaderDao,
 			mOrderDetailDao,
 			mContainerDao,
 			mContainerUseDao,
 			mUomMasterDao);
-		importer.importCrossBatchesFromCsvStream(reader, facility);
+		importer.importCrossBatchesFromCsvStream(reader, facility, secondEdiProcessTime);
 
-		// Make sure that order detail item I555.3 still exists, but has quantity 0.
-		OrderHeader order = facility.getOrderHeader("C555");
+		// Make sure that first cross batch order is inactive and contains order detail I555.3 but it's inactive
+		OrderHeader order = facility.getOrderHeader(OrderHeader.computeCrossOrderId("C555", firstEdiProcessTime));
 		Assert.assertNotNull(order);
+		Assert.assertEquals(false, order.getActive());
 		OrderDetail orderDetail = order.getOrderDetail("I555.3");
 		Assert.assertNotNull(orderDetail);
-		Assert.assertEquals(orderDetail.getQuantity().intValue(), 0);
+		Assert.assertEquals(false, orderDetail.getActive());
+
+		// Make sure the second cross batch order is active and doesn't contain I555.3
+		order = facility.getOrderHeader(OrderHeader.computeCrossOrderId("C555", secondEdiProcessTime));
+		Assert.assertNotNull(order);
+		Assert.assertEquals(true, order.getActive());
+		orderDetail = order.getOrderDetail("I555.3");
+		Assert.assertNull(orderDetail);
 
 	}
 
@@ -255,13 +267,14 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		createItemMaster("I888.1", "ea", facility);
 		createItemMaster("I888.2", "ea", facility);
 
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvCrossBatchImporter importer = new CrossBatchCsvImporter(mOrderGroupDao,
 			mOrderHeaderDao,
 			mOrderDetailDao,
 			mContainerDao,
 			mContainerUseDao,
 			mUomMasterDao);
-		importer.importCrossBatchesFromCsvStream(reader, facility);
+		importer.importCrossBatchesFromCsvStream(reader, facility, ediProcessTime);
 
 		// Now re-import the interchange with one order missing a single item.
 		csvString = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
@@ -278,16 +291,17 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		stream = new ByteArrayInputStream(csvArray);
 		reader = new InputStreamReader(stream);
 
+		ediProcessTime = new Timestamp(System.currentTimeMillis());
 		importer = new CrossBatchCsvImporter(mOrderGroupDao,
 			mOrderHeaderDao,
 			mOrderDetailDao,
 			mContainerDao,
 			mContainerUseDao,
 			mUomMasterDao);
-		importer.importCrossBatchesFromCsvStream(reader, facility);
+		importer.importCrossBatchesFromCsvStream(reader, facility, ediProcessTime);
 
 		// Make sure that order detail item I666.3 still exists, but has quantity 0.
-		OrderHeader order = facility.getOrderHeader("C777");
+		OrderHeader order = facility.getOrderHeader(OrderHeader.computeCrossOrderId("C777", ediProcessTime));
 		Assert.assertNotNull(order);
 		OrderDetail orderDetail = order.getOrderDetail("I777.5");
 		Assert.assertNotNull(orderDetail);
@@ -326,13 +340,14 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		createItemMaster("IAAA.1", "ea", facility);
 		createItemMaster("IAAA.2", "ea", facility);
 
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvCrossBatchImporter importer = new CrossBatchCsvImporter(mOrderGroupDao,
 			mOrderHeaderDao,
 			mOrderDetailDao,
 			mContainerDao,
 			mContainerUseDao,
 			mUomMasterDao);
-		importer.importCrossBatchesFromCsvStream(reader, facility);
+		importer.importCrossBatchesFromCsvStream(reader, facility, ediProcessTime);
 
 		// Now re-import the interchange with one order missing a single item.
 		csvString = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
@@ -348,16 +363,17 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		stream = new ByteArrayInputStream(csvArray);
 		reader = new InputStreamReader(stream);
 
+		ediProcessTime = new Timestamp(System.currentTimeMillis());
 		importer = new CrossBatchCsvImporter(mOrderGroupDao,
 			mOrderHeaderDao,
 			mOrderDetailDao,
 			mContainerDao,
 			mContainerUseDao,
 			mUomMasterDao);
-		importer.importCrossBatchesFromCsvStream(reader, facility);
+		importer.importCrossBatchesFromCsvStream(reader, facility, ediProcessTime);
 
 		// Make sure that order detail item I999.3 still exists, but has quantity 0.
-		OrderHeader order = facility.getOrderHeader("C999");
+		OrderHeader order = facility.getOrderHeader(OrderHeader.computeCrossOrderId("C999", ediProcessTime));
 		Assert.assertNotNull(order);
 		OrderDetail orderDetail = order.getOrderDetail("I999.3");
 		Assert.assertNotNull(orderDetail);
@@ -394,13 +410,14 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		createItemMaster("I222.1", "ea", facility);
 		createItemMaster("I222.2", "ea", facility);
 
+		Timestamp crossBatchEdiProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvCrossBatchImporter importer = new CrossBatchCsvImporter(mOrderGroupDao,
 			mOrderHeaderDao,
 			mOrderDetailDao,
 			mContainerDao,
 			mContainerUseDao,
 			mUomMasterDao);
-		importer.importCrossBatchesFromCsvStream(reader, facility);
+		importer.importCrossBatchesFromCsvStream(reader, facility, crossBatchEdiProcessTime);
 
 		String orderCsvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalapeño Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -420,6 +437,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		stream = new ByteArrayInputStream(orderCsvArray);
 		reader = new InputStreamReader(stream);
 
+		Timestamp ordersEdiProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter orderImporter = new OutboundOrderCsvImporter(mOrderGroupDao,
 			mOrderHeaderDao,
 			mOrderDetailDao,
@@ -427,14 +445,14 @@ public class CrossBatchImporterTest extends EdiTestABC {
 			mContainerUseDao,
 			mItemMasterDao,
 			mUomMasterDao);
-		orderImporter.importOrdersFromCsvStream(reader, facility);
+		orderImporter.importOrdersFromCsvStream(reader, facility, ordersEdiProcessTime);
 
 		// Make sure we imported the outbound order.
 		OrderHeader order = facility.getOrderHeader("123");
 		Assert.assertNotNull(order);
 
 		// Now make sure that all of the cross batch orders are still valid.
-		order = facility.getOrderHeader("C111");
+		order = facility.getOrderHeader(OrderHeader.computeCrossOrderId("C111", crossBatchEdiProcessTime));
 		Assert.assertNotNull(order);
 		Assert.assertEquals(order.getOrderTypeEnum(), OrderTypeEnum.CROSS);
 		Assert.assertEquals(true, order.getActive());
@@ -449,7 +467,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		Assert.assertEquals(order.getOrderDetails().size(), 4);
 
 	}
-	
+
 	@Test
 	public final void testCrossBatchImporterArchive() {
 
@@ -481,16 +499,17 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		createItemMaster("I222.1", "ea", facility);
 		createItemMaster("I222.2", "ea", facility);
 
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvCrossBatchImporter importer = new CrossBatchCsvImporter(mOrderGroupDao,
 			mOrderHeaderDao,
 			mOrderDetailDao,
 			mContainerDao,
 			mContainerUseDao,
 			mUomMasterDao);
-		importer.importCrossBatchesFromCsvStream(reader, facility);
+		importer.importCrossBatchesFromCsvStream(reader, facility, ediProcessTime);
 
 		// Make sure we created an order with the container's ID.
-		OrderHeader order = facility.getOrderHeader("C111");
+		OrderHeader order = facility.getOrderHeader(OrderHeader.computeCrossOrderId("C111", ediProcessTime));
 		Assert.assertNotNull(order);
 		Assert.assertEquals(order.getOrderTypeEnum(), OrderTypeEnum.CROSS);
 

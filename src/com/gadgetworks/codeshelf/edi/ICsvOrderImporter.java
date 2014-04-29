@@ -6,6 +6,7 @@
 package com.gadgetworks.codeshelf.edi;
 
 import java.io.InputStreamReader;
+import java.sql.Timestamp;
 
 import com.gadgetworks.codeshelf.model.domain.Facility;
 
@@ -15,6 +16,6 @@ import com.gadgetworks.codeshelf.model.domain.Facility;
  */
 public interface ICsvOrderImporter {
 
-	void importOrdersFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility);
+	void importOrdersFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime);
 
 }

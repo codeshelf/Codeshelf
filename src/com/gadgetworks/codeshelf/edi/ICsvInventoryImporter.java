@@ -6,6 +6,7 @@
 package com.gadgetworks.codeshelf.edi;
 
 import java.io.InputStreamReader;
+import java.sql.Timestamp;
 
 import com.gadgetworks.codeshelf.model.domain.Facility;
 
@@ -15,8 +16,8 @@ import com.gadgetworks.codeshelf.model.domain.Facility;
  */
 public interface ICsvInventoryImporter {
 
-	void importSlottedInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility);
+	void importSlottedInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime);
 
-	void importDdcInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility);
+	void importDdcInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime);
 
 }

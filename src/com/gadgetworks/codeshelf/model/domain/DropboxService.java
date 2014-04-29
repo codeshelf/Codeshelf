@@ -494,6 +494,7 @@ public class DropboxService extends EdiServiceABC {
 		try {
 
 			String filepath = inEntry.lcPath;
+			Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 
 			//DropboxInputStream stream = inClient.getFileStream(filepath, null);
 			ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -502,17 +503,17 @@ public class DropboxService extends EdiServiceABC {
 
 			// orders-slotting needs to come before orders, because orders is a subset of the orders-slotting regex.
 			if (filepath.matches(getFacilityImportSubDirPath(IMPORT_SLOTTING_PATH) + "/.*\\.csv")) {
-				inCsvOrderLocationImporter.importOrderLocationsFromCsvStream(reader, getParent());
+				inCsvOrderLocationImporter.importOrderLocationsFromCsvStream(reader, getParent(), ediProcessTime);
 			} else if (filepath.matches(getFacilityImportSubDirPath(IMPORT_ORDERS_PATH) + "/.*\\.csv")) {
-				inCsvOrderImporter.importOrdersFromCsvStream(reader, getParent());
+				inCsvOrderImporter.importOrdersFromCsvStream(reader, getParent(), ediProcessTime);
 			} else if (filepath.matches(getFacilityImportSubDirPath(IMPORT_INVENTORY_PATH) + "/.*\\.csv")) {
-				inCsvInventoryImporter.importSlottedInventoryFromCsvStream(reader, getParent());
+				inCsvInventoryImporter.importSlottedInventoryFromCsvStream(reader, getParent(), ediProcessTime);
 			} else if (filepath.matches(getFacilityImportSubDirPath(IMPORT_INVENTORY_PATH) + "/.*\\.csv")) {
-				inCsvInventoryImporter.importDdcInventoryFromCsvStream(reader, getParent());
+				inCsvInventoryImporter.importDdcInventoryFromCsvStream(reader, getParent(), ediProcessTime);
 			} else if (filepath.matches(getFacilityImportSubDirPath(IMPORT_LOCATIONS_PATH) + "/.*\\.csv")) {
-				inCsvLocationAliasImporter.importLocationAliasesFromCsvStream(reader, getParent());
+				inCsvLocationAliasImporter.importLocationAliasesFromCsvStream(reader, getParent(), ediProcessTime);
 			} else if (filepath.matches(getFacilityImportSubDirPath(IMPORT_BATCHES_PATH) + "/.*\\.csv")) {
-				inCsvCrossBatchImporter.importCrossBatchesFromCsvStream(reader, getParent());
+				inCsvCrossBatchImporter.importCrossBatchesFromCsvStream(reader, getParent(), ediProcessTime);
 			}
 
 		} catch (DbxException | IOException e) {

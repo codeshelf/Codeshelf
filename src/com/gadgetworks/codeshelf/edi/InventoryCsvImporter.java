@@ -55,7 +55,7 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.edi.ICsvImporter#importInventoryFromCsvStream(java.io.InputStreamReader, com.gadgetworks.codeshelf.model.domain.Facility)
 	 */
-	public final void importDdcInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
+	public final void importDdcInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime) {
 		try {
 
 			CSVReader csvReader = new CSVReader(inCsvStreamReader);
@@ -68,8 +68,6 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 
 			if (inventoryBeanList.size() > 0) {
 
-				Timestamp processTime = new Timestamp(System.currentTimeMillis());
-
 				LOGGER.debug("Begin DDC inventory import.");
 
 				// Iterate over the inventory import beans.
@@ -78,11 +76,11 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 					if (errorMsg != null) {
 						LOGGER.error("Import errors: " + errorMsg);
 					} else {
-						ddcInventoryCsvBeanImport(ddcInventoryBean, inFacility, processTime);
+						ddcInventoryCsvBeanImport(ddcInventoryBean, inFacility, inProcessTime);
 					}
 				}
 
-				archiveCheckItemStatuses(inFacility, processTime);
+				archiveCheckItemStatuses(inFacility, inProcessTime);
 
 				LOGGER.debug("End DDC inventory import.");
 
@@ -101,7 +99,7 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.edi.ICsvImporter#importInventoryFromCsvStream(java.io.InputStreamReader, com.gadgetworks.codeshelf.model.domain.Facility)
 	 */
-	public final void importSlottedInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
+	public final void importSlottedInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime) {
 		try {
 
 			CSVReader csvReader = new CSVReader(inCsvStreamReader);
@@ -114,8 +112,6 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 
 			if (inventoryBeanList.size() > 0) {
 
-				Timestamp processTime = new Timestamp(System.currentTimeMillis());
-
 				LOGGER.debug("Begin slotted inventory import.");
 
 				// Iterate over the inventory import beans.
@@ -124,11 +120,11 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 					if (errorMsg != null) {
 						LOGGER.error("Import errors: " + errorMsg);
 					} else {
-						slottedInventoryCsvBeanImport(slottedInventoryBean, inFacility, processTime);
+						slottedInventoryCsvBeanImport(slottedInventoryBean, inFacility, inProcessTime);
 					}
 				}
 
-				archiveCheckItemStatuses(inFacility, processTime);
+				archiveCheckItemStatuses(inFacility, inProcessTime);
 
 				LOGGER.debug("End slotted inventory import.");
 			}

@@ -6,6 +6,7 @@
 package com.gadgetworks.codeshelf.model.domain;
 
 import java.io.InputStreamReader;
+import java.sql.Timestamp;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -59,7 +60,7 @@ public class DropboxServiceTest {
 		ICsvOrderImporter orderImporter = new ICsvOrderImporter() {
 
 			@Override
-			public void importOrdersFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
+			public void importOrdersFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime) {
 				checkImportOrders.result = true;
 			}
 		};
@@ -67,32 +68,32 @@ public class DropboxServiceTest {
 		ICsvInventoryImporter inventoryImporter = new ICsvInventoryImporter() {
 
 			@Override
-			public void importSlottedInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
+			public void importSlottedInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime) {
 			}
 
 			@Override
-			public void importDdcInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
+			public void importDdcInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime) {
 			}
 		};
 
 		ICsvLocationAliasImporter locationImporter = new ICsvLocationAliasImporter() {
 
 			@Override
-			public void importLocationAliasesFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
+			public void importLocationAliasesFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime) {
 			}
 		};
 
 		ICsvOrderLocationImporter orderLocationImporter = new ICsvOrderLocationImporter() {
 
 			@Override
-			public void importOrderLocationsFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
+			public void importOrderLocationsFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime) {
 			}
 		};
 
 		ICsvCrossBatchImporter crossBatchImporter = new ICsvCrossBatchImporter() {
 
 			@Override
-			public void importCrossBatchesFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
+			public void importCrossBatchesFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime) {
 			}
 		};
 

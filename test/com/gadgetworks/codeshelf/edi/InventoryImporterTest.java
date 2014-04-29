@@ -7,6 +7,7 @@ package com.gadgetworks.codeshelf.edi;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
+import java.sql.Timestamp;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -48,8 +49,9 @@ public class InventoryImporterTest extends EdiTestABC {
 		organization.createFacility("F-INV1.1", "TEST", Point.getZeroPoint());
 		Facility facility = organization.getFacility("F-INV1.1");
 
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvInventoryImporter importer = new InventoryCsvImporter(mItemMasterDao, mItemDao, mUomMasterDao);
-		importer.importSlottedInventoryFromCsvStream(reader, facility);
+		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
 
 		Item item = facility.getStoredItem("3001");
 		Assert.assertNotNull(item);
@@ -92,8 +94,9 @@ public class InventoryImporterTest extends EdiTestABC {
 		Bay bay2 = new Bay(aisleA1, "B2", Point.getZeroPoint(), Point.getZeroPoint());
 		mSubLocationDao.store(bay2);
 
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvInventoryImporter importer = new InventoryCsvImporter(mItemMasterDao, mItemDao, mUomMasterDao);
-		importer.importSlottedInventoryFromCsvStream(reader, facility);
+		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
 
 		bay1 = (Bay) facility.findSubLocationById("A1.B1");
 		bay2 = (Bay) facility.findSubLocationById("A1.B2");
@@ -119,8 +122,10 @@ public class InventoryImporterTest extends EdiTestABC {
 
 		stream = new ByteArrayInputStream(csvArray);
 		reader = new InputStreamReader(stream);
+
+		ediProcessTime = new Timestamp(System.currentTimeMillis());
 		importer = new InventoryCsvImporter(mItemMasterDao, mItemDao, mUomMasterDao);
-		importer.importSlottedInventoryFromCsvStream(reader, facility);
+		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
 
 		bay1 = (Bay) facility.findSubLocationById("A1.B1");
 		bay2 = (Bay) facility.findSubLocationById("A1.B2");

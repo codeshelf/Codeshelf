@@ -157,8 +157,9 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		mOrderLocationDao.store(orderLocation5555);
 		order4444.addOrderLocation(orderLocation5555);
 
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvOrderLocationImporter importer = new OrderLocationCsvImporter(mOrderLocationDao);
-		importer.importOrderLocationsFromCsvStream(reader, facility);
+		importer.importOrderLocationsFromCsvStream(reader, facility, ediProcessTime);
 
 		// Make sure we can lookup all of the locations for order O1111.
 		Assert.assertEquals(3, order1111.getOrderLocations().size());
@@ -310,8 +311,10 @@ public class OrderLocationImporterTest extends EdiTestABC {
 
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvOrderLocationImporter importer = new OrderLocationCsvImporter(mOrderLocationDao);
-		importer.importOrderLocationsFromCsvStream(reader, facility);
+		importer.importOrderLocationsFromCsvStream(reader, facility, ediProcessTime);
 
 		// Make sure we can lookup all of the locations for order O1111.
 		Assert.assertEquals(3, order1111.getOrderLocations().size());
@@ -337,7 +340,9 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		// Import it again - and rerun all the same tests.
 		stream = new ByteArrayInputStream(csvArray);
 		reader = new InputStreamReader(stream);
-		importer.importOrderLocationsFromCsvStream(reader, facility);
+
+		ediProcessTime = new Timestamp(System.currentTimeMillis());
+		importer.importOrderLocationsFromCsvStream(reader, facility, ediProcessTime);
 
 		// Make sure we can lookup all of the locations for order O1111.
 		Assert.assertEquals(3, order1111.getOrderLocations().size());

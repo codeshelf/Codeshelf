@@ -49,7 +49,7 @@ public class OrderLocationCsvImporter implements ICsvOrderLocationImporter {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.edi.ICsvImporter#importInventoryFromCsvStream(java.io.InputStreamReader, com.gadgetworks.codeshelf.model.domain.Facility)
 	 */
-	public final void importOrderLocationsFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
+	public final void importOrderLocationsFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime) {
 		try {
 
 			CSVReader csvReader = new CSVReader(inCsvStreamReader);
@@ -62,8 +62,6 @@ public class OrderLocationCsvImporter implements ICsvOrderLocationImporter {
 
 			if (orderLocationBeanList.size() > 0) {
 
-				Timestamp processTime = new Timestamp(System.currentTimeMillis());
-
 				LOGGER.debug("Begin order location import.");
 
 				// Iterate over the order location map import beans.
@@ -72,13 +70,13 @@ public class OrderLocationCsvImporter implements ICsvOrderLocationImporter {
 					if (errorMsg != null) {
 						LOGGER.error("Import errors: " + errorMsg);
 					} else {
-						orderLocationCsvBeanImport(orderLocationBean, inFacility, processTime);
+						orderLocationCsvBeanImport(orderLocationBean, inFacility, inProcessTime);
 					}
 				}
 
-				archiveCheckOrderLocations(inFacility, processTime);
+				archiveCheckOrderLocations(inFacility, inProcessTime);
 
-				LOGGER.debug("End slotted inventory import.");
+				LOGGER.debug("End order location import.");
 			}
 
 			csvReader.close();

@@ -70,7 +70,7 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.edi.ICsvImporter#importInventoryFromCsvStream(java.io.InputStreamReader, com.gadgetworks.codeshelf.model.domain.Facility)
 	 */
-	public final void importCrossBatchesFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
+	public final void importCrossBatchesFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime) {
 		try {
 
 			CSVReader csvReader = new CSVReader(inCsvStreamReader);
@@ -83,9 +83,7 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 
 			if (crossBatchBeanList.size() > 0) {
 
-				Timestamp processTime = new Timestamp(System.currentTimeMillis());
-
-				LOGGER.debug("Begin order location import.");
+				LOGGER.debug("Begin cross batch import.");
 
 				// Iterate over the put batch import beans.
 				for (CrossBatchCsvBean crossBatchBean : crossBatchBeanList) {
@@ -93,13 +91,13 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 					if (errorMsg != null) {
 						LOGGER.error("Cross-batch: import errors: " + errorMsg);
 					} else {
-						crossBatchCsvBeanImport(crossBatchBean, inFacility, processTime);
+						crossBatchCsvBeanImport(crossBatchBean, inFacility, inProcessTime);
 					}
 				}
 
-				archiveCheckCrossBatches(inFacility, processTime);
+				archiveCheckCrossBatches(inFacility, inProcessTime);
 
-				LOGGER.debug("End slotted inventory import.");
+				LOGGER.debug("End cross batch import.");
 			}
 
 			csvReader.close();
@@ -122,15 +120,30 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 		try {
 			mOrderHeaderDao.beginTransaction();
 			for (OrderHeader order : inFacility.getOrderHeaders()) {
-				if (order.getOrderTypeEnum().equals(OrderTypeEnum.CROSS))
+				if (order.getOrderTypeEnum().equals(OrderTypeEnum.CROSS)) {
+					Boolean shouldArchiveOrder = true;
 					for (OrderDetail orderDetail : order.getOrderDetails()) {
-						if (!orderDetail.getUpdated().equals(inProcessTime)) {
+						if (orderDetail.getUpdated().equals(inProcessTime)) {
+							shouldArchiveOrder = false;
+						} else {
 							LOGGER.debug("Archive old wonderwall order detail: " + orderDetail.getDomainId());
 							orderDetail.setActive(false);
 							orderDetail.setQuantity(0);
 							mOrderDetailDao.store(orderDetail);
 						}
 					}
+					
+					if (shouldArchiveOrder) {
+						order.setActive(false);
+						mOrderHeaderDao.store(order);
+						
+						ContainerUse containerUse = order.getContainerUse();
+						if (containerUse != null) {
+							containerUse.setActive(false);
+							mContainerUseDao.store(containerUse);
+						}
+					}
+				}
 			}
 			mOrderHeaderDao.commitTransaction();
 		} finally {
@@ -230,12 +243,12 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 		final OrderGroup inOrderGroup) {
 		OrderHeader result = null;
 
-		result = inFacility.getOrderHeader(inCsvBean.getContainerId() + "." + inEdiProcessTime);
+		result = inFacility.getOrderHeader(OrderHeader.computeCrossOrderId(inCsvBean.getContainerId(), inEdiProcessTime));
 
 		if (result == null) {
 			result = new OrderHeader();
 			result.setParent(inFacility);
-			result.setDomainId(inCsvBean.getContainerId() + "." + inEdiProcessTime);
+			result.setDomainId(OrderHeader.computeCrossOrderId(inCsvBean.getContainerId(), inEdiProcessTime));
 			result.setStatusEnum(OrderStatusEnum.CREATED);
 			inFacility.addOrderHeader(result);
 		}

@@ -6,6 +6,7 @@
 package com.gadgetworks.codeshelf.edi;
 
 import java.io.InputStreamReader;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -15,7 +16,6 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
-import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
@@ -38,32 +38,40 @@ public class EdiProcessorTest extends EdiTestABC {
 		ICsvOrderImporter orderImporter = new ICsvOrderImporter() {
 
 			@Override
-			public void importOrdersFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
+			public void importOrdersFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime) {
 			}
 		};
 
 		ICsvInventoryImporter inventoryImporter = new ICsvInventoryImporter() {
 
 			@Override
-			public void importSlottedInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
+			public void importSlottedInventoryFromCsvStream(InputStreamReader inCsvStreamReader,
+				Facility inFacility,
+				Timestamp inProcessTime) {
 			}
 
 			@Override
-			public void importDdcInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
+			public void importDdcInventoryFromCsvStream(InputStreamReader inCsvStreamReader,
+				Facility inFacility,
+				Timestamp inProcessTime) {
 			}
 		};
 
 		ICsvLocationAliasImporter locationImporter = new ICsvLocationAliasImporter() {
 
 			@Override
-			public void importLocationAliasesFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
+			public void importLocationAliasesFromCsvStream(InputStreamReader inCsvStreamReader,
+				Facility inFacility,
+				Timestamp inProcessTime) {
 			}
 		};
 
 		ICsvOrderLocationImporter orderLocationImporter = new ICsvOrderLocationImporter() {
 
 			@Override
-			public void importOrderLocationsFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
+			public void importOrderLocationsFromCsvStream(InputStreamReader inCsvStreamReader,
+				Facility inFacility,
+				Timestamp inProcessTime) {
 				// TODO Auto-generated method stub
 
 			}
@@ -72,7 +80,9 @@ public class EdiProcessorTest extends EdiTestABC {
 		ICsvCrossBatchImporter crossBatchImporter = new ICsvCrossBatchImporter() {
 
 			@Override
-			public void importCrossBatchesFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
+			public void importCrossBatchesFromCsvStream(InputStreamReader inCsvStreamReader,
+				Facility inFacility,
+				Timestamp inProcessTime) {
 				// TODO Auto-generated method stub
 
 			}
@@ -143,32 +153,40 @@ public class EdiProcessorTest extends EdiTestABC {
 		ICsvOrderImporter orderImporter = new ICsvOrderImporter() {
 
 			@Override
-			public void importOrdersFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
+			public void importOrdersFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime) {
 			}
 		};
 
 		ICsvInventoryImporter inventoryImporter = new ICsvInventoryImporter() {
 
 			@Override
-			public void importSlottedInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
+			public void importSlottedInventoryFromCsvStream(InputStreamReader inCsvStreamReader,
+				Facility inFacility,
+				Timestamp inProcessTime) {
 			}
 
 			@Override
-			public void importDdcInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
+			public void importDdcInventoryFromCsvStream(InputStreamReader inCsvStreamReader,
+				Facility inFacility,
+				Timestamp inProcessTime) {
 			}
 		};
 
 		ICsvLocationAliasImporter locationImporter = new ICsvLocationAliasImporter() {
 
 			@Override
-			public void importLocationAliasesFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
+			public void importLocationAliasesFromCsvStream(InputStreamReader inCsvStreamReader,
+				Facility inFacility,
+				Timestamp inProcessTime) {
 			}
 		};
 
 		ICsvOrderLocationImporter orderLocationImporter = new ICsvOrderLocationImporter() {
 
 			@Override
-			public void importOrderLocationsFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
+			public void importOrderLocationsFromCsvStream(InputStreamReader inCsvStreamReader,
+				Facility inFacility,
+				Timestamp inProcessTime) {
 				// TODO Auto-generated method stub
 
 			}
@@ -177,7 +195,9 @@ public class EdiProcessorTest extends EdiTestABC {
 		ICsvCrossBatchImporter crossBatchImporter = new ICsvCrossBatchImporter() {
 
 			@Override
-			public void importCrossBatchesFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility) {
+			public void importCrossBatchesFromCsvStream(InputStreamReader inCsvStreamReader,
+				Facility inFacility,
+				Timestamp inProcessTime) {
 				// TODO Auto-generated method stub
 
 			}
@@ -219,7 +239,7 @@ public class EdiProcessorTest extends EdiTestABC {
 			@Override
 			public void sendWorkInstructionsToHost(List<WorkInstruction> inWiList) {
 				// TODO Auto-generated method stub
-				
+
 			}
 		};
 
@@ -245,7 +265,7 @@ public class EdiProcessorTest extends EdiTestABC {
 			@Override
 			public void sendWorkInstructionsToHost(List<WorkInstruction> inWiList) {
 				// TODO Auto-generated method stub
-				
+
 			}
 		};
 

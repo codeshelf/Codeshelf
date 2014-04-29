@@ -7,6 +7,7 @@ package com.gadgetworks.codeshelf.edi;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
+import java.sql.Timestamp;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -61,6 +62,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		organization.createFacility("F-ORD1.1", "TEST", Point.getZeroPoint());
 		Facility facility = organization.getFacility("F-ORD1.1");
 
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter importer = new OutboundOrderCsvImporter(mOrderGroupDao,
 			mOrderHeaderDao,
 			mOrderDetailDao,
@@ -68,7 +70,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 			mContainerUseDao,
 			mItemMasterDao,
 			mUomMasterDao);
-		importer.importOrdersFromCsvStream(reader, facility);
+		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
 
 		OrderHeader order = facility.getOrderHeader("123");
 		Assert.assertNotNull(order);
@@ -103,6 +105,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		organization.createFacility("F-ORD1.2", "TEST", Point.getZeroPoint());
 		Facility facility = organization.getFacility("F-ORD1.2");
 
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter importer = new OutboundOrderCsvImporter(mOrderGroupDao,
 			mOrderHeaderDao,
 			mOrderDetailDao,
@@ -110,7 +113,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 			mContainerUseDao,
 			mItemMasterDao,
 			mUomMasterDao);
-		importer.importOrdersFromCsvStream(reader, facility);
+		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
 
 		OrderHeader order = facility.getOrderHeader("123");
 		Assert.assertNotNull(order);
@@ -150,6 +153,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		organization.createFacility("F-ORD1.3", "TEST", Point.getZeroPoint());
 		Facility facility = organization.getFacility("F-ORD1.3");
 
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter importer = new OutboundOrderCsvImporter(mOrderGroupDao,
 			mOrderHeaderDao,
 			mOrderDetailDao,
@@ -157,7 +161,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 			mContainerUseDao,
 			mItemMasterDao,
 			mUomMasterDao);
-		importer.importOrdersFromCsvStream(reader, facility);
+		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
 
 		OrderHeader order = facility.getOrderHeader("789");
 		Assert.assertNotNull(order);
@@ -195,6 +199,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		organization.createFacility("F-ORD1.4", "TEST", Point.getZeroPoint());
 		Facility facility = organization.getFacility("F-ORD1.4");
 
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter importer = new OutboundOrderCsvImporter(mOrderGroupDao,
 			mOrderHeaderDao,
 			mOrderDetailDao,
@@ -202,7 +207,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 			mContainerUseDao,
 			mItemMasterDao,
 			mUomMasterDao);
-		importer.importOrdersFromCsvStream(reader, facility);
+		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
 
 		// We should find order 123
 		OrderHeader order = facility.getOrderHeader("123");
@@ -247,6 +252,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Facility facility = organization.getFacility("F-ORD1.5");
 
 		// First import a big list of orders.
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter importer = new OutboundOrderCsvImporter(mOrderGroupDao,
 			mOrderHeaderDao,
 			mOrderDetailDao,
@@ -254,7 +260,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 			mContainerUseDao,
 			mItemMasterDao,
 			mUomMasterDao);
-		importer.importOrdersFromCsvStream(reader, facility);
+		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
 
 		// Now import a smaller list of orders, but more than one.
 		String secondOrderBatchCsv = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
@@ -273,6 +279,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		reader = new InputStreamReader(stream);
 
 		// First import a big list of orders.
+		ediProcessTime = new Timestamp(System.currentTimeMillis());
 		importer = new OutboundOrderCsvImporter(mOrderGroupDao,
 			mOrderHeaderDao,
 			mOrderDetailDao,
@@ -280,7 +287,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 			mContainerUseDao,
 			mItemMasterDao,
 			mUomMasterDao);
-		importer.importOrdersFromCsvStream(reader, facility);
+		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
 
 		// Order 789 should exist and be inactive.
 		OrderHeader order = facility.getOrderHeader("789");
@@ -292,10 +299,10 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		for (OrderDetail detail : order.getOrderDetails()) {
 			if (detail.getOrderDetailId().equals("10722222")) {
 				Assert.assertEquals(false, detail.getActive());
-				Assert.assertEquals(Integer.valueOf(0), detail.getQuantity());	
+				Assert.assertEquals(Integer.valueOf(0), detail.getQuantity());
 			} else {
 				Assert.assertEquals(true, detail.getActive());
-				Assert.assertNotEquals(Integer.valueOf(0), detail.getQuantity());	
+				Assert.assertNotEquals(Integer.valueOf(0), detail.getQuantity());
 			}
 		}
 	}
@@ -329,6 +336,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Facility facility = organization.getFacility("F-ORD1.6");
 
 		// First import a big list of orders.
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter importer = new OutboundOrderCsvImporter(mOrderGroupDao,
 			mOrderHeaderDao,
 			mOrderDetailDao,
@@ -336,7 +344,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 			mContainerUseDao,
 			mItemMasterDao,
 			mUomMasterDao);
-		importer.importOrdersFromCsvStream(reader, facility);
+		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
 
 		// Now import a smaller list of orders, but more than one.
 		String secondOrderBatchCsv = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
@@ -351,6 +359,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		reader = new InputStreamReader(stream);
 
 		// First import a big list of orders.
+		ediProcessTime = new Timestamp(System.currentTimeMillis());
 		importer = new OutboundOrderCsvImporter(mOrderGroupDao,
 			mOrderHeaderDao,
 			mOrderDetailDao,
@@ -358,7 +367,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 			mContainerUseDao,
 			mItemMasterDao,
 			mUomMasterDao);
-		importer.importOrdersFromCsvStream(reader, facility);
+		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
 
 		// Order 789 should exist and be active.
 		OrderHeader order = facility.getOrderHeader("789");
@@ -370,10 +379,10 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		for (OrderDetail detail : order.getOrderDetails()) {
 			if (detail.getOrderDetailId().equals("10722222")) {
 				Assert.assertEquals(false, detail.getActive());
-				Assert.assertEquals(Integer.valueOf(0), detail.getQuantity());	
+				Assert.assertEquals(Integer.valueOf(0), detail.getQuantity());
 			} else {
 				Assert.assertEquals(true, detail.getActive());
-				Assert.assertNotEquals(Integer.valueOf(0), detail.getQuantity());	
+				Assert.assertNotEquals(Integer.valueOf(0), detail.getQuantity());
 			}
 		}
 	}

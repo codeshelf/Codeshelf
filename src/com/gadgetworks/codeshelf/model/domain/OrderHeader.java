@@ -72,6 +72,10 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 			return OrderHeader.class;
 		}
 	}
+	
+	public static String computeCrossOrderId(String inContainerId, Timestamp inTimestamp) {
+		return inContainerId + "." + inTimestamp;
+	}
 
 	private static final Logger			LOGGER			= LoggerFactory.getLogger(OrderHeader.class);
 

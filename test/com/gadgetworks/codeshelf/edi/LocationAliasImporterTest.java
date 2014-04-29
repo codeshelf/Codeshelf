@@ -7,6 +7,7 @@ package com.gadgetworks.codeshelf.edi;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
+import java.sql.Timestamp;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -59,8 +60,9 @@ public class LocationAliasImporterTest extends EdiTestABC {
 		Bay bay2 = new Bay(aisleA2, "B2", Point.getZeroPoint(), Point.getZeroPoint());
 		mSubLocationDao.store(bay2);
 
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvLocationAliasImporter importer = new LocationAliasCsvImporter(mLocationAliasDao);
-		importer.importLocationAliasesFromCsvStream(reader, facility);
+		importer.importLocationAliasesFromCsvStream(reader, facility, ediProcessTime);
 
 		// Make sure we can still look up an aisle by it's FQN.
 		ILocation location = facility.findLocationById("A1");
