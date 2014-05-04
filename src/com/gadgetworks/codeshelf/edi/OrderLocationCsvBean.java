@@ -5,11 +5,13 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
-import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,16 +27,19 @@ public class OrderLocationCsvBean extends ImportCsvBeanABC {
 
 	static final Logger	LOGGER	= LoggerFactory.getLogger(OrderLocationCsvBean.class);
 
+	@NotNull
+	@Size(min = 1)
 	protected String	orderId;
-
+	@NotNull
+	@Size(min = 1)
 	protected String	locationId;
 	
 	public final String getOrderId() {
-		return StringUtils.strip(orderId);
+		return strip(orderId);
 	}
 	
 	public final String getLocationId() {
-		return StringUtils.strip(locationId);
+		return strip(locationId);
 	}
 
 }

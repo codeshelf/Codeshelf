@@ -56,9 +56,10 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	// Currently, these cannot be longer than 10 characters.
 	private static final String		EMPTY_MSG				= "                    ";
 	private static final String		INVALID_SCAN_MSG		= "INVALID             ";
-	private static final String		SCAN_USERID_MSG			= "SCAN BADGE          ";							//new String(new byte[] { 0x7c, 0x03, 0x7c, 0x05 });
+	private static final String		SCAN_USERID_MSG			= "SCAN BADGE          ";	// new String(new byte[] { 0x7c, (byte) 0x82 });
 	private static final String		SCAN_LOCATION_MSG		= "SCAN LOCATION       ";
 	private static final String		SCAN_CONTAINER_MSG		= "SCAN CONTAINER      ";
+	private static final String		OR_START_WORK_MSG		= "OR START WORK       ";
 	private static final String		SELECT_POSITION_MSG		= "SELECT POSITION     ";
 	private static final String		SHORT_PICK_CONFIRM_MSG	= "CONFIRM SHORT       ";
 	private static final String		PICK_COMPLETE_MSG		= "ALL WORK COMPLETE   ";
@@ -118,6 +119,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private List<WorkInstruction>	mCompletedWiList;
 
 	private NetGuid					mLastLedControllerGuid;
+
+	private WorkInstruction			mShortPickWi;
+	private Integer					mShortPickQty;
 
 	public CheDeviceLogic(final UUID inPersistentId,
 		final NetGuid inGuid,
@@ -230,6 +234,10 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		setState(mCheStateEnum);
 	}
 
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inWorkInstructionCount
+	 */
 	public final void assignComputedWorkCount(final Integer inWorkInstructionCount) {
 		// The back-end returned the work instruction count.
 		if (inWorkInstructionCount > 0) {
@@ -400,7 +408,11 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				break;
 
 			case CONTAINER_SELECT:
-				sendDisplayCommand(SCAN_CONTAINER_MSG, EMPTY_MSG);
+				if (mContainersMap.size() < 1) {
+					sendDisplayCommand(SCAN_CONTAINER_MSG, EMPTY_MSG);
+				} else {
+					sendDisplayCommand(SCAN_CONTAINER_MSG, OR_START_WORK_MSG);
+				}
 				break;
 
 			case CONTAINER_POSITION:
@@ -591,15 +603,17 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			// HACK HACK HACK
 			// StitchFix is the first client and they only pick one item at a time - ever.
 			// When we have h/w that picks more than one item we'll address this.
-			WorkInstruction wi = mActivePickWiList.remove(0);
+			WorkInstruction wi = mShortPickWi;
+			;
 			if (wi != null) {
 				// Add it to the list of completed WIs.
 				mCompletedWiList.add(wi);
 
-				wi.setActualQuantity(0);
+				wi.setActualQuantity(mShortPickQty);
 				wi.setPickerId(mUserId);
 				wi.setCompleted(new Timestamp(System.currentTimeMillis()));
 				wi.setStatusEnum(WorkInstructionStatusEnum.SHORT);
+				mActivePickWiList.remove(wi);
 
 				mDeviceManager.completeWi(getGuid().getHexStringNoPrefix(), getPersistentId(), wi);
 				LOGGER.info("Pick shorted: " + wi);
@@ -774,11 +788,6 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			for (WorkInstruction wi : mActivePickWiList) {
 				for (Entry<String, String> mapEntry : mContainersMap.entrySet()) {
 					if (mapEntry.getValue().equals(wi.getContainerId())) {
-						//					ledControllerSetLed(getGuid(), CommandControlLed.CHANNEL1,
-						//					// The LED positions are zero-based.
-						//						(short) (Short.valueOf(mapEntry.getKey()) - 1),
-						//						wi.getLedColorEnum(),
-						//						EffectEnum.FLASH);
 						sendPickRequestCommand(Short.valueOf(mapEntry.getKey()),
 							firstWi.getPlanQuantity(),
 							0,
@@ -878,44 +887,94 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * @param inButtonStr
+	 * Complete the active WI at the selected position.
+	 * @param inButtonNum
+	 * @param inQuantity
 	 */
 	private void processButtonPress(Integer inButtonNum, Integer inQuantity) {
-		// Complete the active WI at the selected position.
-		String containerId = mContainersMap.get(Integer.toString(inButtonNum));
-		if (containerId != null) {
-			Iterator<WorkInstruction> wiIter = mActivePickWiList.iterator();
-			while (wiIter.hasNext()) {
-				WorkInstruction wi = wiIter.next();
-				if (wi.getContainerId().equals(containerId)) {
-
-					// Add it to the list of completed WIs.
-					mCompletedWiList.add(wi);
-
-					// HACK HACK HACK
-					// StitchFix is the first client and they only pick one item - ever.
-					// When we have h/w that picks more than one item we'll address this.
-					wi.setActualQuantity(inQuantity);
-					wi.setPickerId(mUserId);
-					wi.setCompleted(new Timestamp(System.currentTimeMillis()));
-					wi.setStatusEnum(WorkInstructionStatusEnum.COMPLETE);
-
-					mDeviceManager.completeWi(getGuid().getHexStringNoPrefix(), getPersistentId(), wi);
-					LOGGER.info("Pick completed: " + wi);
-					wiIter.remove();
+		// 
+		String containerId = getContainerIdFromButtonNum(inButtonNum);
+		if (containerId == null) {
+			invalidScanMsg(mCheStateEnum);
+		} else {
+			WorkInstruction wi = getWorkInstructionForContainerId(containerId);
+			if (wi == null) {
+				invalidScanMsg(mCheStateEnum);
+			} else {
+				if (inQuantity >= wi.getPlanMinQuantity()) {
+					processNormalPick(wi, inQuantity);
+				} else {
+					processShortPick(wi, inQuantity);
 				}
 			}
-
-			if (mActivePickWiList.size() > 0) {
-				// If there's more active picks then show them.
-				showActivePicks();
-			} else {
-				// There's no more active picks, so move to the next set.
-				doNextPick();
-			}
-		} else {
-			invalidScanMsg(mCheStateEnum);
 		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inContainerId
+	 * @return
+	 */
+	private WorkInstruction getWorkInstructionForContainerId(String inContainerId) {
+
+		WorkInstruction result = null;
+		Iterator<WorkInstruction> wiIter = mActivePickWiList.iterator();
+		while (wiIter.hasNext()) {
+			WorkInstruction wi = wiIter.next();
+			if (wi.getContainerId().equals(inContainerId)) {
+				result = wi;
+			}
+		}
+		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inButtonNum
+	 * @return
+	 */
+	private String getContainerIdFromButtonNum(Integer inButtonNum) {
+		return mContainersMap.get(Integer.toString(inButtonNum));
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inWi
+	 * @param inQuantity
+	 */
+	private void processNormalPick(WorkInstruction inWi, Integer inQuantity) {
+
+		// Add it to the list of completed WIs.
+		mCompletedWiList.add(inWi);
+
+		inWi.setActualQuantity(inQuantity);
+		inWi.setPickerId(mUserId);
+		inWi.setCompleted(new Timestamp(System.currentTimeMillis()));
+		inWi.setStatusEnum(WorkInstructionStatusEnum.COMPLETE);
+
+		mDeviceManager.completeWi(getGuid().getHexStringNoPrefix(), getPersistentId(), inWi);
+		LOGGER.info("Pick completed: " + inWi);
+		
+		mActivePickWiList.remove(inWi);
+
+		if (mActivePickWiList.size() > 0) {
+			// If there's more active picks then show them.
+			showActivePicks();
+		} else {
+			// There's no more active picks, so move to the next set.
+			doNextPick();
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inWi
+	 * @param inQuantity
+	 */
+	private void processShortPick(WorkInstruction inWi, Integer inQuantity) {
+		setState(CheStateEnum.SHORT_PICK_CONFIRM);
+		mShortPickWi = inWi;
+		mShortPickQty = inQuantity;
 	}
 
 	// --------------------------------------------------------------------------

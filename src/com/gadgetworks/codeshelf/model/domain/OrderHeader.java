@@ -72,7 +72,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 			return OrderHeader.class;
 		}
 	}
-	
+
 	public static String computeCrossOrderId(String inContainerId, Timestamp inTimestamp) {
 		return inContainerId + "." + inTimestamp;
 	}
@@ -286,7 +286,11 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	 * @return
 	 */
 	public final String getReadableDueDate() {
-		return new java.text.SimpleDateFormat("ddMMMyy HH:mm").format(getDueDate()).toUpperCase();
+		if (getDueDate() != null) {
+			return new java.text.SimpleDateFormat("ddMMMyy HH:mm").format(getDueDate()).toUpperCase();
+		} else {
+			return "";
+		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -294,7 +298,11 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	 * @return
 	 */
 	public final String getReadableOrderDate() {
-		return new java.text.SimpleDateFormat("ddMMMyy HH:mm").format(getOrderDate()).toUpperCase();
+		if (getOrderDate() != null) {
+			return new java.text.SimpleDateFormat("ddMMMyy HH:mm").format(getOrderDate()).toUpperCase();
+		} else {
+			return "";
+		}
 	}
 
 	// --------------------------------------------------------------------------

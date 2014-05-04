@@ -128,7 +128,7 @@ public class CompleteWorkInstructionWsReqCmd extends WsReqCmdABC {
 		for (WorkInstruction sumWi : detail.getWorkInstructions()) {
 			qtyPicked += sumWi.getActualQuantity();
 		}
-		if (qtyPicked >= detail.getQuantity()) {
+		if (qtyPicked >= detail.getMinQuantity()) {
 			detail.setStatusEnum(OrderStatusEnum.COMPLETE);
 		} else {
 			detail.setStatusEnum(OrderStatusEnum.SHORT);

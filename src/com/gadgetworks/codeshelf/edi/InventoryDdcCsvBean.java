@@ -6,6 +6,7 @@
 package com.gadgetworks.codeshelf.edi;
 
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -24,33 +25,37 @@ import org.apache.commons.lang.StringUtils;
 public class InventoryDdcCsvBean extends ImportCsvBeanABC {
 
 	@NotNull
+	@Size(min = 1)
 	protected String	itemId;
 	protected String	description;
 	@NotNull
-	protected String	ddcId;
+	@Size(min = 1)
+	protected String	ddcId;	
 	@NotNull
-	protected String	quantity;
+	@Size(min = 1)
+	protected String	quantity;	
 	@NotNull
+	@Size(min = 1)
 	protected String	uom;
 
 	public final String getItemId() {
-		return StringUtils.strip(itemId);
+		return strip(itemId);
 	}
 
 	public final String getDescription() {
-		return StringUtils.strip(description);
+		return strip(description);
 	}
 
 	public final String getDdcId() {
-		return StringUtils.strip(ddcId);
+		return strip(ddcId);
 	}
 
 	public final String getQuantity() {
-		return StringUtils.strip(quantity);
+		return strip(quantity);
 	}
 
 	public final String getUom() {
-		return StringUtils.strip(uom);
+		return strip(uom);
 	}
 
 }

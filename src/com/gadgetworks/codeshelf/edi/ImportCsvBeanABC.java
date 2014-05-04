@@ -10,6 +10,7 @@ import java.lang.reflect.Field;
 
 import javax.validation.constraints.NotNull;
 
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,6 +50,20 @@ public abstract class ImportCsvBeanABC {
 		}
 
 		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * If it's not null then strip off any leading/trailing spaces.
+	 * @param inValue
+	 * @return
+	 */
+	protected String strip(String inValue) {
+		if (inValue == null) {
+			return null;
+		} else {
+			return StringUtils.strip(inValue);
+		}
 	}
 
 }

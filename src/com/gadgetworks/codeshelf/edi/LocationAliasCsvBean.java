@@ -6,12 +6,12 @@
 package com.gadgetworks.codeshelf.edi;
 
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
-import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,15 +28,17 @@ public class LocationAliasCsvBean extends ImportCsvBeanABC {
 	static final Logger	LOGGER	= LoggerFactory.getLogger(LocationAliasCsvBean.class);
 
 	@NotNull
+	@Size(min = 1)
 	protected String	locationAlias;
 	@NotNull
+	@Size(min = 1)
 	protected String	mappedLocationId;
 
 	public final String getLocationAlias() {
-		return StringUtils.strip(locationAlias);
+		return strip(locationAlias);
 	}
 
 	public final String getMappedLocationId() {
-		return StringUtils.strip(mappedLocationId);
+		return strip(mappedLocationId);
 	}
 }

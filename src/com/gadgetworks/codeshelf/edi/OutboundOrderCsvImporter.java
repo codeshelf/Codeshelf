@@ -79,7 +79,9 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.edi.ICsvImporter#importOrdersFromCsvStream(java.io.InputStreamReader, com.gadgetworks.codeshelf.model.domain.Facility)
 	 */
-	public final void importOrdersFromCsvStream(final InputStreamReader inCsvStreamReader, final Facility inFacility, Timestamp inProcessTime) {
+	public final void importOrdersFromCsvStream(final InputStreamReader inCsvStreamReader,
+		final Facility inFacility,
+		Timestamp inProcessTime) {
 		try {
 
 			CSVReader csvReader = new CSVReader(inCsvStreamReader);
@@ -106,7 +108,9 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 				}
 			}
 
-			if (orderList.size() == 1) {
+			if (orderList.size() == 0) {
+				// Do nothing.
+			} else if (orderList.size() == 1) {
 				// If we've only imported one order then don't change the status of other orders.
 				archiveCheckOneOrder(inFacility, orderList, inProcessTime);
 			} else {
@@ -140,7 +144,9 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 				if (!orderDetail.getUpdated().equals(inProcessTime)) {
 					LOGGER.debug("Archive old order detail: " + orderDetail.getOrderDetailId());
 					orderDetail.setActive(false);
-					orderDetail.setQuantity(0);
+					//orderDetail.setQuantity(0);
+					//orderDetail.setMinQuantity(0);
+					//orderDetail.setMaxQuantity(0);
 					mOrderDetailDao.store(orderDetail);
 				}
 			}
@@ -181,7 +187,9 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 						} else {
 							LOGGER.debug("Archive old order detail: " + orderDetail.getOrderDetailId());
 							orderDetail.setActive(false);
-							orderDetail.setQuantity(0);
+							// orderDetail.setQuantity(0);
+							// orderDetail.setMinQuantity(0);
+							// orderDetail.setMaxQuantity(0);
 							mOrderDetailDao.store(orderDetail);
 						}
 					}
@@ -571,20 +579,43 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 		final ItemMaster inItemMaster) {
 		OrderDetail result = null;
 
-		result = inOrder.getOrderDetail(inItemMaster.getItemId());
+		String detailId = "";
+		if (inCsvBean.getOrderDetailId() != null) {
+			// If we have an order detail ID then use that.
+			detailId = inCsvBean.getOrderDetailId();
+		} else {
+			// Else use the item ID.
+			detailId = inItemMaster.getItemId();
+		}
+
+		result = inOrder.getOrderDetail(detailId);
 		if (result == null) {
 			result = new OrderDetail();
 			result.setParent(inOrder);
-			result.setDomainId(inItemMaster.getItemId());
 			result.setStatusEnum(OrderStatusEnum.CREATED);
-
+			result.setOrderDetailId(detailId);
+			
 			inOrder.addOrderDetail(result);
 		}
 
 		result.setItemMaster(inItemMaster);
 		result.setDescription(inCsvBean.getDescription());
-		result.setQuantity(Integer.valueOf(inCsvBean.getQuantity()));
 		result.setUomMaster(inUomMaster);
+		result.setQuantity(Integer.valueOf(inCsvBean.getQuantity()));
+
+		// Set the min quantity if specified - otherwise make the same as the nominal quantity.
+		if (inCsvBean.getMinQuantity() != null) {
+			result.setMinQuantity(Integer.valueOf(inCsvBean.getMinQuantity()));
+		} else {
+			result.setMinQuantity(Integer.valueOf(inCsvBean.getQuantity()));
+		}
+
+		// Set the max quantity if specified - otherwise make the same as the nominal quantity.
+		if (inCsvBean.getMaxQuantity() != null) {
+			result.setMaxQuantity(Integer.valueOf(inCsvBean.getMaxQuantity()));
+		} else {
+			result.setMaxQuantity(Integer.valueOf(inCsvBean.getQuantity()));
+		}
 
 		try {
 			result.setActive(true);

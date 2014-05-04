@@ -59,10 +59,12 @@ join location as aisle on aisle.persistentid = bay.parent_persistentid
 order by work_instruction.group_and_sort_code;
 
 # See a cross-batch orders location by the item id
-select order_header.domainid, order_header.active, item_master.description, order_location.domainid, location_alias.domainid from order_header
+
+select order_header.order_type_enum, order_header.domainid, order_header.active, item_master.description, order_location.domainid, location_alias.domainid, order_detail.quantity, uom_master.domainid from order_header
 join order_detail on order_detail.parent_persistentid = order_header.persistentid
+join uom_master on uom_master.persistentid = order_detail.uom_master_persistentid
 join item_master on item_master.persistentid = order_detail.item_master_persistentid
-join order_location on order_location.parent_persistentid = order_header.persistentid
-join location on location.persistentid = order_location.location_persistentid
-join location_alias on location_alias.mapped_location_persistentid = location.persistentid
-where item_master.domainid = '500e08946c106c0300000012';
+left outer join order_location on order_location.parent_persistentid = order_header.persistentid
+left outer join location on location.persistentid = order_location.location_persistentid
+left outer join location_alias on location_alias.mapped_location_persistentid = location.persistentid
+where item_master.domainid = '53090120f25d46020000089b' and order_detail.active;

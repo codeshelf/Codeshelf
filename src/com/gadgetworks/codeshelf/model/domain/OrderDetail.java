@@ -87,6 +87,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	@Getter
+	@Setter
 	private ItemMaster				itemMaster;
 
 	// The description.
@@ -96,12 +97,26 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	@JsonProperty
 	private String					description;
 
-	// The quantity.
+	// The actual quantity requested.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
 	private Integer					quantity;
+
+	// The min quantity that we can use.  (Same as quantity in most cases.)
+	@Column(nullable = false)
+	@Getter
+	@Setter
+	@JsonProperty
+	private Integer					minQuantity;
+
+	// The max quantity that we can use. (Same as quantity in most cases.)
+	@Column(nullable = false)
+	@Getter
+	@Setter
+	@JsonProperty
+	private Integer					maxQuantity;
 
 	// The UoM.
 	@Column(nullable = false)
@@ -143,15 +158,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	}
 
 	public final void setOrderDetailId(String inOrderDetailId) {
-		// We now just use the ItemId - it makes the most sense.
-		if (itemMaster != null) {
-			setDomainId(itemMaster.getItemId());
-		}
-	}
-
-	public final void setItemMaster(final ItemMaster inItemMaster) {
-		setOrderDetailId(inItemMaster.getItemId());
-		itemMaster = inItemMaster;
+		setDomainId(inOrderDetailId);
 	}
 
 	public final OrderHeader getParent() {

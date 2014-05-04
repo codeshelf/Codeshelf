@@ -81,7 +81,7 @@ public class IronMqService extends EdiServiceABC {
 
 	private static final Logger		LOGGER				= LoggerFactory.getLogger(IronMqService.class);
 	
-	private static final String     TIME_FORMAT			= "yyyy-MM-dd HH:mm:ss'Z'";
+	private static final String     TIME_FORMAT			= "yyyy-MM-dd'T'HH:mm:ss'Z'";
 
 	private static final Integer	DOMAINID_POS		= 0;
 	private static final Integer	TYPE_POS			= 1;

@@ -354,6 +354,10 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 			result &= doUpgrade015();
 		}
 
+		if ((result) && (inOldVersion < ISchemaManager.DATABASE_VERSION_16)) {
+			result &= doUpgrade016();
+		}
+
 		result &= updateSchemaVersion(ISchemaManager.DATABASE_VERSION_CUR);
 
 		return result;
@@ -567,6 +571,36 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		result &= execOneSQLCommand("ALTER TABLE " + getDbSchemaName() + ".order_header ALTER COLUMN order_date DROP NOT NULL");
 		result &= execOneSQLCommand("ALTER TABLE " + getDbSchemaName() + ".order_header ALTER COLUMN due_date DROP NOT NULL");
+
+		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @return
+	 */
+	private boolean doUpgrade016() {
+		boolean result = true;
+
+		// The schema upgrade is complicated by the fact that we want to add a column that requires a default only at init.
+		result &= execOneSQLCommand("ALTER TABLE " + getDbSchemaName()
+				+ ".order_detail ADD min_quantity INTEGER NOT NULL DEFAULT 0");
+		result &= execOneSQLCommand("ALTER TABLE " + getDbSchemaName()
+				+ ".order_detail ADD max_quantity INTEGER NOT NULL DEFAULT 0");
+		result &= execOneSQLCommand("UPDATE " + getDbSchemaName() + ".order_detail SET min_quantity = quantity");
+		result &= execOneSQLCommand("UPDATE " + getDbSchemaName() + ".order_detail SET max_quantity = quantity");
+		result &= execOneSQLCommand("ALTER TABLE " + getDbSchemaName() + ".order_detail ALTER min_quantity DROP DEFAULT");
+		result &= execOneSQLCommand("ALTER TABLE " + getDbSchemaName() + ".order_detail ALTER max_quantity DROP DEFAULT");
+
+		// The schema upgrade is complicated by the fact that we want to add a column that requires a default only at init.
+		result &= execOneSQLCommand("ALTER TABLE " + getDbSchemaName()
+				+ ".work_instruction ADD plan_min_quantity INTEGER NOT NULL DEFAULT 0");
+		result &= execOneSQLCommand("ALTER TABLE " + getDbSchemaName()
+				+ ".work_instruction ADD plan_max_quantity INTEGER NOT NULL DEFAULT 0");
+		result &= execOneSQLCommand("UPDATE " + getDbSchemaName() + ".work_instruction SET plan_min_quantity = plan_quantity");
+		result &= execOneSQLCommand("UPDATE " + getDbSchemaName() + ".work_instruction SET plan_max_quantity = plan_quantity");
+		result &= execOneSQLCommand("ALTER TABLE " + getDbSchemaName() + ".work_instruction ALTER plan_min_quantity DROP DEFAULT");
+		result &= execOneSQLCommand("ALTER TABLE " + getDbSchemaName() + ".work_instruction ALTER plan_max_quantity DROP DEFAULT");
 
 		return result;
 	}
@@ -919,7 +953,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 					+ "current_work_area_persistentid " + UUID_TYPE //
 		);
 
-		// CodeShelfNetwork
+		// CodeshelfNetwork
 		result &= createTable("codeshelf_network", //
 			"description VARCHAR(255) NOT NULL, " //
 					+ "credential VARCHAR(255) NOT NULL, " //
@@ -1046,6 +1080,8 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 					+ "item_master_persistentid " + UUID_TYPE + " NOT NULL, " //
 					+ "description TEXT, " //
 					+ "quantity INTEGER NOT NULL, " //
+					+ "min_quantity INTEGER NOT NULL, " //
+					+ "max_quantity INTEGER NOT NULL, " //
 					+ "active BOOLEAN DEFAULT TRUE NOT NULL, " //
 					+ "updated TIMESTAMP NOT NULL, " //
 					+ "uom_master_persistentid " + UUID_TYPE + " NOT NULL " //
@@ -1160,6 +1196,8 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 					+ "description TEXT NOT NULL, " //
 					+ "pick_instruction TEXT, " //
 					+ "plan_quantity INTEGER NOT NULL, " //
+					+ "plan_min_quantity INTEGER NOT NULL, " //
+					+ "plan_max_quantity INTEGER NOT NULL, " //
 					+ "actual_quantity INTEGER NOT NULL, " //
 					+ "location_persistentid " + UUID_TYPE + ", " //
 					+ "location_id TEXT NOT NULL, " //

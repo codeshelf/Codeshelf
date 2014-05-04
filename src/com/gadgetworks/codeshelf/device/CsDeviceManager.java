@@ -581,8 +581,6 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 	public final void completeWi(final String inCheId, final UUID inPersistentId, final WorkInstruction inWorkInstruction) {
 		LOGGER.info("Complete: Che: " + inCheId + " WI: " + inWorkInstruction.toString());
 
-		//inWorkInstruction.setStatusEnum(WorkInstructionStatusEnum.COMPLETE);
-
 		// Build the response Json object.
 		ObjectMapper mapper = new ObjectMapper();
 		ObjectNode dataNode = mapper.createObjectNode();

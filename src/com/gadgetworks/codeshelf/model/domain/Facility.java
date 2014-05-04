@@ -822,27 +822,27 @@ public class Facility extends SubLocationABC<Facility> {
 			}
 			break;
 		}
-		
+
 		if (result == null) {
 			return createIronMqService();
 		}
-		
+
 		return result;
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * @return
 	 */
 	public final IronMqService createIronMqService() {
 		IronMqService result = null;
-		
+
 		result = new IronMqService();
 		result.setParent(this);
 		result.setDomainId("IRONMQ");
 		result.setProviderEnum(EdiProviderEnum.IRONMQ);
 		result.setServiceStateEnum(EdiServiceStateEnum.LINKED);
-		
+
 		IronMqService.Credentials credentials = result.new Credentials(IronMqService.PROJECT_ID, IronMqService.TOKEN);
 		Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
 		String json = gson.toJson(credentials);
@@ -1034,11 +1034,18 @@ public class Facility extends SubLocationABC<Facility> {
 						WorkInstruction plannedWi = createWorkInstruction(WorkInstructionStatusEnum.SHORT,
 							WorkInstructionTypeEnum.ACTUAL,
 							orderDetail,
-							0,
 							container,
 							inChe,
 							inCheLocation);
 						if (plannedWi != null) {
+							plannedWi.setPlanQuantity(0);
+							plannedWi.setPlanMinQuantity(0);
+							plannedWi.setPlanMaxQuantity(0);
+							try {
+								WorkInstruction.DAO.store(plannedWi);
+							} catch (DaoException e) {
+								LOGGER.error("", e);
+							}
 							wiResultList.add(plannedWi);
 						}
 					} else {
@@ -1057,14 +1064,11 @@ public class Facility extends SubLocationABC<Facility> {
 
 						// The item is on the CHE's path, so add it.
 						if (foundLocation != null) {
-							Integer quantityToPick = orderDetail.getQuantity();
-
 							// If there is anything to pick on this item then create a WI for it.
-							if (quantityToPick > 0) {
+							if (orderDetail.getQuantity() > 0) {
 								WorkInstruction plannedWi = createWorkInstruction(WorkInstructionStatusEnum.NEW,
 									WorkInstructionTypeEnum.PLAN,
 									orderDetail,
-									quantityToPick,
 									container,
 									inChe,
 									foundLocation);
@@ -1124,27 +1128,26 @@ public class Facility extends SubLocationABC<Facility> {
 						// Check to see if any of the active CROSS order detail items match OUTBOUND order details.
 						for (OrderDetail crossOrderDetail : crossOrder.getOrderDetails()) {
 							if (crossOrderDetail.getActive()) {
-								OrderDetail outOrderDetail = outOrder.getOrderDetail(crossOrderDetail.getOrderDetailId());
-								if ((outOrderDetail != null) && (outOrderDetail.getActive())) {
+								for (OrderDetail outOrderDetail : outOrder.getOrderDetails()) {
+									if ((outOrderDetail.getItemMaster().equals(crossOrderDetail.getItemMaster()))
+											&& (outOrderDetail.getActive())) {
+										// Now make sure the UOM matches.
+										if (outOrderDetail.getUomMasterId().equals(crossOrderDetail.getUomMasterId())) {
+											for (Path path : getPaths()) {
+												OrderLocation firstOutOrderLoc = outOrder.getFirstOrderLocationOnPath(path);
 
-									// Now make sure the UOM matches.
-									if (outOrderDetail.getUomMasterId().equals(crossOrderDetail.getUomMasterId())) {
+												if (firstOutOrderLoc != null) {
+													WorkInstruction wi = createWorkInstruction(WorkInstructionStatusEnum.NEW,
+														WorkInstructionTypeEnum.PLAN,
+														outOrderDetail,
+														container,
+														inChe,
+														firstOutOrderLoc.getLocation());
 
-										for (Path path : getPaths()) {
-											OrderLocation firstOutOrderLoc = outOrder.getFirstOrderLocationOnPath(path);
-
-											if (firstOutOrderLoc != null) {
-												WorkInstruction wi = createWorkInstruction(WorkInstructionStatusEnum.NEW,
-													WorkInstructionTypeEnum.PLAN,
-													outOrderDetail,
-													outOrderDetail.getQuantity(),
-													container,
-													inChe,
-													firstOutOrderLoc.getLocation());
-
-												// If we created a WI then add it to the list.
-												if (wi != null) {
-													wiList.add(wi);
+													// If we created a WI then add it to the list.
+													if (wi != null) {
+														wiList.add(wi);
+													}
 												}
 											}
 										}
@@ -1224,11 +1227,14 @@ public class Facility extends SubLocationABC<Facility> {
 	private WorkInstruction createWorkInstruction(WorkInstructionStatusEnum inStatus,
 		WorkInstructionTypeEnum inType,
 		OrderDetail inOrderDetail,
-		Integer inQuantityToPick,
 		Container inContainer,
 		Che inChe,
 		ISubLocation<?> inLocation) {
 		WorkInstruction resultWi = null;
+
+		Integer qtyToPick = inOrderDetail.getQuantity();
+		Integer minQtyToPick = inOrderDetail.getMinQuantity();
+		Integer maxQtyToPick = inOrderDetail.getMaxQuantity();
 
 		for (WorkInstruction wi : inOrderDetail.getWorkInstructions()) {
 			if (wi.getTypeEnum().equals(WorkInstructionTypeEnum.PLAN)) {
@@ -1236,12 +1242,14 @@ public class Facility extends SubLocationABC<Facility> {
 				break;
 			} else if (wi.getTypeEnum().equals(WorkInstructionTypeEnum.ACTUAL)) {
 				// Deduct any WIs already completed for this line item.
-				inQuantityToPick -= wi.getActualQuantity();
+				qtyToPick -= wi.getActualQuantity();
+				minQtyToPick = Math.max(0, minQtyToPick - wi.getActualQuantity());
+				maxQtyToPick = Math.max(0, maxQtyToPick - wi.getActualQuantity());
 			}
 		}
 
 		// Check if there is any left to pick.
-		if (inQuantityToPick > 0) {
+		if (qtyToPick > 0) {
 
 			// If there is no planned WI then create one.
 			if (resultWi == null) {
@@ -1279,7 +1287,9 @@ public class Facility extends SubLocationABC<Facility> {
 			resultWi.setPosAlongPath(inLocation.getPosAlongPath());
 			resultWi.setContainer(inContainer);
 			resultWi.setAssignedChe(inChe);
-			resultWi.setPlanQuantity(inQuantityToPick);
+			resultWi.setPlanQuantity(qtyToPick);
+			resultWi.setPlanMinQuantity(minQtyToPick);
+			resultWi.setPlanMaxQuantity(maxQtyToPick);
 			resultWi.setActualQuantity(0);
 			resultWi.setAssigned(new Timestamp(System.currentTimeMillis()));
 			try {
@@ -1565,7 +1575,7 @@ public class Facility extends SubLocationABC<Facility> {
 	 */
 	public final void sendWorkInstructionsToHost(final List<WorkInstruction> inWiList) {
 		IronMqService ironMqService = getIronMqService();
-		
+
 		if (ironMqService != null) {
 			ironMqService.sendWorkInstructionsToHost(inWiList);
 		}

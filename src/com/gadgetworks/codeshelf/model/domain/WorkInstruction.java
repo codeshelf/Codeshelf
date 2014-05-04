@@ -143,12 +143,26 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 	@JsonProperty
 	private String						pickInstruction;
 
-	// The pick quantity.
+	// The nominal planned pick quantity.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
 	private Integer						planQuantity;
+
+	// The min planned pick quantity.
+	@Column(nullable = false)
+	@Getter
+	@Setter
+	@JsonProperty
+	private Integer						planMinQuantity;
+
+	// The  max planned pick quantity.
+	@Column(nullable = false)
+	@Getter
+	@Setter
+	@JsonProperty
+	private Integer						planMaxQuantity;
 
 	// The pick quantity.
 	@Column(nullable = true)

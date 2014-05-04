@@ -9,7 +9,6 @@ import org.codehaus.jackson.JsonNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.model.dao.Database;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.User;
@@ -24,6 +23,7 @@ import com.gadgetworks.codeshelf.ws.command.resp.LoginWsRespCmd;
  * 	id: <cmd_id>,
  * 	type: LOGIN_REQ,
  * 	data {
+ * 		organizationid: <ordid>
  * 		userid: <userid>
  * 		password: <password>
  * 	}

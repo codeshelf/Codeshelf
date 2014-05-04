@@ -6,6 +6,7 @@
 package com.gadgetworks.codeshelf.edi;
 
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -24,44 +25,50 @@ import org.apache.commons.lang.StringUtils;
 public class InventorySlottedCsvBean extends ImportCsvBeanABC {
 
 	@NotNull
+	@Size(min = 1)
 	protected String	itemId;
 	@NotNull
+	@Size(min = 1)
 	protected String	description;
 	@NotNull
+	@Size(min = 1)
 	protected String	quantity;
 	@NotNull
+	@Size(min = 1)
 	protected String	uom;
 	@NotNull
+	@Size(min = 1)
 	protected String	inventoryDate;
-	protected String	lotId;
+	protected String	lotId;	
 	@NotNull
+	@Size(min = 1)
 	protected String	locationId;
 
 	public final String getItemId() {
-		return StringUtils.strip(itemId);
+		return strip(itemId);
 	}
 
 	public final String getDescription() {
-		return StringUtils.strip(description);
+		return strip(description);
 	}
 
 	public final String getQuantity() {
-		return StringUtils.strip(quantity);
+		return strip(quantity);
 	}
 
 	public final String getUom() {
-		return StringUtils.strip(uom);
+		return strip(uom);
 	}
 
 	public final String getInventoryDate() {
-		return StringUtils.strip(inventoryDate);
+		return strip(inventoryDate);
 	}
 
 	public final String getLotId() {
-		return StringUtils.strip(lotId);
+		return strip(lotId);
 	}
 
 	public final String getLocationId() {
-		return StringUtils.strip(locationId);
+		return strip(locationId);
 	}
 }

@@ -6,6 +6,7 @@
 package com.gadgetworks.codeshelf.edi;
 
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -30,35 +31,39 @@ public class CrossBatchCsvBean extends ImportCsvBeanABC {
 	protected String	orderGroupId;
 
 	@NotNull
+	@Size(min = 1)
 	protected String	itemId;
 
 	@NotNull
+	@Size(min = 1)
 	protected String	quantity;
 
 	@NotNull
+	@Size(min = 1)
 	protected String	containerId;
 
 	@NotNull
+	@Size(min = 1)
 	protected String	uom;
 
 	public final String getOrderGroupId() {
-		return StringUtils.strip(orderGroupId);
+		return strip(orderGroupId);
 	}
 
 	public final String getItemId() {
-		return StringUtils.strip(itemId);
+		return strip(itemId);
 	}
 
 	public final String getQuantity() {
-		return StringUtils.strip(quantity);
+		return strip(quantity);
 	}
 
 	public final String getContainerId() {
-		return StringUtils.strip(containerId);
+		return strip(containerId);
 	}
 
 	public final String getUom() {
-		return StringUtils.strip(uom);
+		return strip(uom);
 	}
 
 }

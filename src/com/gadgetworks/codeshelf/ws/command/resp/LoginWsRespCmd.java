@@ -16,6 +16,16 @@ import com.gadgetworks.codeshelf.ws.command.IWebSessionCmd;
 import com.gadgetworks.codeshelf.ws.command.req.IWsReqCmd;
 
 /**
+ *  command {
+ * 	id: <cmd_id>,
+ * 	type: LOGIN_RS,
+ * 	data {
+ * 		classname: <class>,
+ * 		persistentId: <persistentId>,
+ * 		domainId: <domainId>,
+ * 		description: <description>
+ * 	}
+ * }
  * @author jeffw
  *
  */

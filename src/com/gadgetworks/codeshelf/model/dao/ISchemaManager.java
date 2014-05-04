@@ -36,8 +36,9 @@ public interface ISchemaManager {
 	int		DATABASE_VERSION_13				= 13;								// Add z-point to path segments.
 	int		DATABASE_VERSION_14				= 14;								// Add assigned CHE to work instruction
 	int		DATABASE_VERSION_15				= 15;								// Drop NOT NULL for order_header order_date and due_date
+	int		DATABASE_VERSION_16				= 16;								// Add min and max quantity to the order detail.
 
-	int		DATABASE_VERSION_CUR			= DATABASE_VERSION_15;
+	int		DATABASE_VERSION_CUR			= DATABASE_VERSION_16;
 
 	String getDbAddress();
 

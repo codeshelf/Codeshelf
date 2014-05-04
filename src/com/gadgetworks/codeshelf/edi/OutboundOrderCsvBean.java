@@ -6,12 +6,12 @@
 package com.gadgetworks.codeshelf.edi;
 
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
-import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,15 +28,24 @@ public class OutboundOrderCsvBean extends ImportCsvBeanABC {
 	static final Logger	LOGGER	= LoggerFactory.getLogger(OutboundOrderCsvBean.class);
 
 	protected String	orderGroupId;
+	
 	@NotNull
+	@Size(min = 1)
 	protected String	orderId;
+	protected String	orderDetailId;
 	@NotNull
+	@Size(min = 1)
 	protected String	itemId;
 	@NotNull
+	@Size(min = 1)
 	protected String	description;
 	@NotNull
+	@Size(min = 1)
 	protected String	quantity;
+	protected String	minQuantity;
+	protected String	maxQuantity;
 	@NotNull
+	@Size(min = 1)
 	protected String	uom;
 	protected String	orderDate;
 	protected String	dueDate;
@@ -48,59 +57,71 @@ public class OutboundOrderCsvBean extends ImportCsvBeanABC {
 	protected String	workSequence;
 
 	public final String getOrderGroupId() {
-		return StringUtils.strip(orderGroupId);
+		return strip(orderGroupId);
 	}
 
 	public final String getOrderId() {
-		return StringUtils.strip(orderId);
+		return strip(orderId);
+	}
+
+	public final String getOrderDetailsId() {
+		return strip(orderDetailId);
 	}
 
 	public final String getItemId() {
-		return StringUtils.strip(itemId);
+		return strip(itemId);
 	}
 
 	public final String getDescription() {
-		return StringUtils.strip(description);
+		return strip(description);
 	}
 
 	public final String getQuantity() {
-		return StringUtils.strip(quantity);
+		return strip(quantity);
+	}
+
+	public final String getMinQuantity() {
+		return strip(minQuantity);
+	}
+
+	public final String getMaxQuantity() {
+		return strip(maxQuantity);
 	}
 
 	public final String getUom() {
-		return StringUtils.strip(uom);
+		return strip(uom);
 	}
 
 	public final String getOrderDate() {
-		return StringUtils.strip(orderDate);
+		return strip(orderDate);
 	}
 
 	public final String getDueDate() {
-		return StringUtils.strip(dueDate);
+		return strip(dueDate);
 	}
 
 	public final String getDestinationId() {
-		return StringUtils.strip(destinationId);
+		return strip(destinationId);
 	}
 
 	public final String getPickStrategy() {
-		return StringUtils.strip(pickStrategy);
+		return strip(pickStrategy);
 	}
 
 	public final String getPreAssignedContainerId() {
-		return StringUtils.strip(preAssignedContainerId);
+		return strip(preAssignedContainerId);
 	}
 
 	public final String getShipmentId() {
-		return StringUtils.strip(shipmentId);
+		return strip(shipmentId);
 	}
 
 	public final String getCustomerId() {
-		return StringUtils.strip(customerId);
+		return strip(customerId);
 	}
 
 	public final String getWorkSequence() {
-		return StringUtils.strip(workSequence);
+		return strip(workSequence);
 	}
 
 }

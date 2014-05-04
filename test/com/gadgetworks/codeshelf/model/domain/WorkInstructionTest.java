@@ -12,7 +12,6 @@ import org.junit.Test;
 
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.OrderTypeEnum;
-import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
 
@@ -85,6 +84,8 @@ public class WorkInstructionTest extends DomainTestABC {
 		orderDetail.setParent(order1);
 		orderDetail.setItemMaster(itemMaster);
 		orderDetail.setQuantity(5);
+		orderDetail.setMinQuantity(5);
+		orderDetail.setMaxQuantity(5);
 		orderDetail.setUomMaster(uomMaster);
 		orderDetail.setStatusEnum(OrderStatusEnum.CREATED);
 		orderDetail.setActive(true);
@@ -111,6 +112,8 @@ public class WorkInstructionTest extends DomainTestABC {
 		wi.setPosAlongPath(0.0);
 		wi.setContainer(container);
 		wi.setPlanQuantity(5);
+		wi.setPlanMinQuantity(5);
+		wi.setPlanMaxQuantity(5);
 		wi.setActualQuantity(0);
 		wi.setAssigned(new Timestamp(System.currentTimeMillis()));
 		mWorkInstructionDao.store(wi);

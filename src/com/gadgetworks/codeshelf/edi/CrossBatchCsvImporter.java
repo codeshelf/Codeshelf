@@ -70,7 +70,9 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.edi.ICsvImporter#importInventoryFromCsvStream(java.io.InputStreamReader, com.gadgetworks.codeshelf.model.domain.Facility)
 	 */
-	public final void importCrossBatchesFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime) {
+	public final void importCrossBatchesFromCsvStream(InputStreamReader inCsvStreamReader,
+		Facility inFacility,
+		Timestamp inProcessTime) {
 		try {
 
 			CSVReader csvReader = new CSVReader(inCsvStreamReader);
@@ -128,15 +130,17 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 						} else {
 							LOGGER.debug("Archive old wonderwall order detail: " + orderDetail.getDomainId());
 							orderDetail.setActive(false);
-							orderDetail.setQuantity(0);
+							// orderDetail.setQuantity(0);
+							// orderDetail.setMinQuantity(0);
+							// orderDetail.setMaxQuantity(0);
 							mOrderDetailDao.store(orderDetail);
 						}
 					}
-					
+
 					if (shouldArchiveOrder) {
 						order.setActive(false);
 						mOrderHeaderDao.store(order);
-						
+
 						ContainerUse containerUse = order.getContainerUse();
 						if (containerUse != null) {
 							containerUse.setActive(false);
@@ -308,12 +312,19 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 
 		result.setItemMaster(inItemMaster);
 		result.setDescription(inItemMaster.getDescription());
+		// In CrossBatch orders the nominal, min and max quantities are always equal on the cross order side.
 		result.setQuantity(Integer.valueOf(inCsvBean.getQuantity()));
+		result.setMinQuantity(Integer.valueOf(inCsvBean.getQuantity()));
+		result.setMaxQuantity(Integer.valueOf(inCsvBean.getQuantity()));
 		result.setUomMaster(inUomMaster);
+		result.setUpdated(inEdiProcessTime);
+		if (result.getQuantity() == 0) {
+			result.setActive(false);
+		} else {
+			result.setActive(true);
+		}
 
 		try {
-			result.setActive(true);
-			result.setUpdated(inEdiProcessTime);
 			mOrderDetailDao.store(result);
 		} catch (DaoException e) {
 			LOGGER.error("", e);
