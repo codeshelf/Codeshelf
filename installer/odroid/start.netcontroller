@@ -1,0 +1,1 @@
+/usr/lib/jvm/jdk1.7.0_51/bin/java -Dconfig.properties=/etc/codeshelf/netcontroller.config.properties -Djava.library.path=/home/odroid/codeshelf/lib/native/arm-hf -Dcs.logfile.name=codeshelf.network.log -Dfile.encoding=UTF-8 -jar /home/odroid/codeshelf/network.codeshelf.jar &

@@ -1,0 +1,9 @@
+# A rule to add VCP
+SYSFS{idProduct}==”ada8”, SYSFS{idVendor}==”0403”, RUN+=”/sbin/modprobe ftdi-sio product=0xada8 vendor=0x0403”
+
+# A rule to remove VCP (FTDI-SIO)
+ATTRS{idProduct}=="6001", ATTRS{idVendor}=="0403", MODE="0666", GROUP="odroid", RUN+="/sbin/rmmod -v ftdi-sio"
+
+# A rule to enable LUFA on the Eink display driver
+ATTRS{idProduct}=="0007", ATTRS{idVendor}=="1b4f", MODE="0666", GROUP="odroid"
+

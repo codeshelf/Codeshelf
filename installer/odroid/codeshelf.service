@@ -1,0 +1,13 @@
+[Unit]
+Description=Codeshelf
+After=syslog.target
+
+[Service]
+Type=forking
+WorkingDirectory=/home/odroid/codeshelf/
+ExecStart=/usr/bin/bash /home/odroid/codeshelf/start.netcontroller
+User=odroid
+Group=odroid
+
+[Install]
+WantedBy=multi-user.target
