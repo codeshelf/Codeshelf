@@ -153,11 +153,11 @@ public final class Util implements IUtil {
 		result = System.getProperty("user.home");
 		String platform = System.getProperty("os.name");
 		if (platform.toLowerCase().indexOf("mac") > -1) {
-			result += "/Library/Application Support/CodeShelf";
+			result += "/Library/Application Support/Codeshelf";
 		} else if (platform.toLowerCase().indexOf("windows") > -1) {
-			result += System.getProperty("file.separator") + "Application Data" + System.getProperty("file.separator") + "CodeShelf";
+			result += System.getProperty("file.separator") + "Application Data" + System.getProperty("file.separator") + "Codeshelf";
 		} else if (platform.toLowerCase().indexOf("linux") > -1) {
-			result += System.getProperty("file.separator") + ".CodeShelf";
+			result += System.getProperty("file.separator") + ".Codeshelf";
 		} else {
 			// It's an OS we don't support (yet).
 			exitSystem();
