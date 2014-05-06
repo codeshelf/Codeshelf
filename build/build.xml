@@ -289,8 +289,8 @@
 		<jar duplicate="fail" jarfile="${appjar.build.dir}/${codeshelf.app.jar.name}">
 			<zipfileset dir="${target.enhanced.classes}" />
 			<zipfileset dir="${target.resources}/">
-				<exclude name="**/server.config.properties" />
-				<exclude name="**/netcontroller.config.properties" />
+				<exclude name="**/server.config.properties*" />
+				<exclude name="**/sitecontroller.config.properties*" />
 			</zipfileset>
 			<zipfileset dir="${target.classes}/">
 				<exclude name="com.gadgetworks.codeshelf.model.domain/**.*" />
@@ -316,16 +316,16 @@
 		<antcall target="jar.it" />
 	</target>
 
-	<!-- JAR the network controller  =================================================================================== -->
-	<target name="jar.network">
-		<property name="codeshelf.app.jar.name" value="network.codeshelf.jar" />
-		<property name="main.class" value="com.gadgetworks.codeshelf.application.CsNetworkMain" />
+	<!-- JAR the site controller  =================================================================================== -->
+	<target name="jar.sitecontroller">
+		<property name="codeshelf.app.jar.name" value="sitecontroller.codeshelf.jar" />
+		<property name="main.class" value="com.gadgetworks.codeshelf.application.CsSiteControllerMain" />
 		<antcall target="jar.it" />
 	</target>
 
 	<target name="build.all" depends="prep.jar" description="Build the server app as a launchable jar">
 		<antcall target="jar.server" />
-		<antcall target="jar.network" />
+		<antcall target="jar.sitecontroller" />
 	</target>
 
 	<target name="deploy-production" depends="prep.jar, jar.server">
@@ -345,7 +345,7 @@
 			<fileset dir="${appjar.build.dir}">
 				<include name="**" />
 				<include name="**/*" />
-				<exclude name="*network*.jar" />
+				<exclude name="*sitecontroller*.jar" />
 				<modified>
 					<param name="cache.cachefile" value="${basedir}/build/engine.scp.cache" />
 				</modified>
