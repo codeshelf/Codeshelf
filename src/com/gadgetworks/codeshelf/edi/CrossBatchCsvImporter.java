@@ -9,6 +9,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -87,17 +88,22 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 
 				LOGGER.debug("Begin cross batch import.");
 
+				List<String> importedIdList = new ArrayList<String>();
+
 				// Iterate over the put batch import beans.
 				for (CrossBatchCsvBean crossBatchBean : crossBatchBeanList) {
 					String errorMsg = crossBatchBean.validateBean();
 					if (errorMsg != null) {
 						LOGGER.error("Cross-batch: import errors: " + errorMsg);
 					} else {
+						if (!importedIdList.contains(crossBatchBean.getContainerId())) {
+							importedIdList.add(crossBatchBean.getContainerId());
+						}
 						crossBatchCsvBeanImport(crossBatchBean, inFacility, inProcessTime);
 					}
 				}
 
-				archiveCheckCrossBatches(inFacility, inProcessTime);
+				archiveCheckCrossBatches(inFacility, inProcessTime, importedIdList);
 
 				LOGGER.debug("End cross batch import.");
 			}
@@ -115,7 +121,9 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 	 * @param inFacility
 	 * @param inProcessTime
 	 */
-	private void archiveCheckCrossBatches(final Facility inFacility, final Timestamp inProcessTime) {
+	private void archiveCheckCrossBatches(final Facility inFacility,
+		final Timestamp inProcessTime,
+		final List<String> inImportedIdList) {
 		LOGGER.debug("Archive unreferenced put batch data");
 
 		// Inactivate the WONDERWALL order detail that don't match the import timestamp.
@@ -124,16 +132,17 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 			for (OrderHeader order : inFacility.getOrderHeaders()) {
 				if (order.getOrderTypeEnum().equals(OrderTypeEnum.CROSS)) {
 					Boolean shouldArchiveOrder = true;
-					for (OrderDetail orderDetail : order.getOrderDetails()) {
-						if (orderDetail.getUpdated().equals(inProcessTime)) {
-							shouldArchiveOrder = false;
-						} else {
-							LOGGER.debug("Archive old wonderwall order detail: " + orderDetail.getDomainId());
-							orderDetail.setActive(false);
-							// orderDetail.setQuantity(0);
-							// orderDetail.setMinQuantity(0);
-							// orderDetail.setMaxQuantity(0);
-							mOrderDetailDao.store(orderDetail);
+					if (!inImportedIdList.contains(order.getContainerId())) {
+						shouldArchiveOrder = false;
+					} else {
+						for (OrderDetail orderDetail : order.getOrderDetails()) {
+							if (orderDetail.getUpdated().equals(inProcessTime)) {
+								shouldArchiveOrder = false;
+							} else {
+								LOGGER.debug("Archive old wonderwall order detail: " + orderDetail.getDomainId());
+								orderDetail.setActive(false);
+								mOrderDetailDao.store(orderDetail);
+							}
 						}
 					}
 
@@ -166,36 +175,39 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime) {
 
-		try {
-			mOrderHeaderDao.beginTransaction();
-
-			LOGGER.info(inCsvBean.toString());
-
+		// Only create the CROSS detail if the quantity is > 0.
+		if (Integer.valueOf(inCsvBean.getQuantity()) > 0) {
 			try {
-				ItemMaster itemMaster = inFacility.getItemMaster(inCsvBean.getItemId());
+				mOrderHeaderDao.beginTransaction();
 
-				if (itemMaster == null) {
-					LOGGER.error("Cross-batch import: unknown item master sent.");
-				} else {
-					OrderGroup group = updateOptionalOrderGroup(inCsvBean, inFacility, inEdiProcessTime);
-					OrderHeader order = updateOrderHeader(inCsvBean, inFacility, inEdiProcessTime, group);
-					Container container = updateContainer(inCsvBean, inFacility, inEdiProcessTime, order);
-					UomMaster uomMaster = updateUomMaster(inCsvBean, inFacility);
-					OrderDetail detail = updateOrderDetail(inCsvBean,
-						inFacility,
-						inEdiProcessTime,
-						order,
-						itemMaster,
-						container,
-						uomMaster);
+				LOGGER.info(inCsvBean.toString());
+
+				try {
+					ItemMaster itemMaster = inFacility.getItemMaster(inCsvBean.getItemId());
+
+					if (itemMaster == null) {
+						LOGGER.error("Cross-batch import: unknown item master sent.");
+					} else {
+						OrderGroup group = updateOptionalOrderGroup(inCsvBean, inFacility, inEdiProcessTime);
+						OrderHeader order = updateOrderHeader(inCsvBean, inFacility, inEdiProcessTime, group);
+						Container container = updateContainer(inCsvBean, inFacility, inEdiProcessTime, order);
+						UomMaster uomMaster = updateUomMaster(inCsvBean, inFacility);
+						OrderDetail detail = updateOrderDetail(inCsvBean,
+							inFacility,
+							inEdiProcessTime,
+							order,
+							itemMaster,
+							container,
+							uomMaster);
+					}
+				} catch (Exception e) {
+					LOGGER.error("", e);
 				}
-			} catch (Exception e) {
-				LOGGER.error("", e);
-			}
-			mOrderHeaderDao.commitTransaction();
+				mOrderHeaderDao.commitTransaction();
 
-		} finally {
-			mOrderHeaderDao.endTransaction();
+			} finally {
+				mOrderHeaderDao.endTransaction();
+			}
 		}
 	}
 

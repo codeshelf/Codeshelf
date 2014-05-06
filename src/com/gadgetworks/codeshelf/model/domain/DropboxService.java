@@ -17,7 +17,6 @@ import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.Table;
-import javax.persistence.Transient;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -221,7 +220,7 @@ public class DropboxService extends EdiServiceABC {
 		Boolean result = true;
 
 		for (DbxDelta.Entry<DbxEntry> entry : inPage.entries) {
-			LOGGER.info(entry.lcPath);
+			LOGGER.info("Dropbox found: " + entry.lcPath);
 			try {
 				if (entry.metadata != null) {
 					// Add, or modify.
@@ -502,18 +501,24 @@ public class DropboxService extends EdiServiceABC {
 			InputStreamReader reader = new InputStreamReader(new ByteArrayInputStream(outputStream.toByteArray()));
 
 			// orders-slotting needs to come before orders, because orders is a subset of the orders-slotting regex.
-			if (filepath.matches(getFacilityImportSubDirPath(IMPORT_SLOTTING_PATH) + "/.*\\.csv")) {
+			if (filepath.matches(getFacilityImportSubDirPath(IMPORT_SLOTTING_PATH) + "/[^/]+\\.csv")) {
 				inCsvOrderLocationImporter.importOrderLocationsFromCsvStream(reader, getParent(), ediProcessTime);
-			} else if (filepath.matches(getFacilityImportSubDirPath(IMPORT_ORDERS_PATH) + "/.*\\.csv")) {
+				LOGGER.info("Dropbox processed: " + filepath);
+			} else if (filepath.matches(getFacilityImportSubDirPath(IMPORT_ORDERS_PATH) + "/[^/]+\\.csv")) {
 				inCsvOrderImporter.importOrdersFromCsvStream(reader, getParent(), ediProcessTime);
-			} else if (filepath.matches(getFacilityImportSubDirPath(IMPORT_INVENTORY_PATH) + "/.*\\.csv")) {
+				LOGGER.info("Dropbox processed: " + filepath);
+			} else if (filepath.matches(getFacilityImportSubDirPath(IMPORT_INVENTORY_PATH) + "/[^/]+\\.csv")) {
 				inCsvInventoryImporter.importSlottedInventoryFromCsvStream(reader, getParent(), ediProcessTime);
-			} else if (filepath.matches(getFacilityImportSubDirPath(IMPORT_INVENTORY_PATH) + "/.*\\.csv")) {
+				LOGGER.info("Dropbox processed: " + filepath);
+			} else if (filepath.matches(getFacilityImportSubDirPath(IMPORT_INVENTORY_PATH) + "/[^/]+\\.csv")) {
 				inCsvInventoryImporter.importDdcInventoryFromCsvStream(reader, getParent(), ediProcessTime);
-			} else if (filepath.matches(getFacilityImportSubDirPath(IMPORT_LOCATIONS_PATH) + "/.*\\.csv")) {
+				LOGGER.info("Dropbox processed: " + filepath);
+			} else if (filepath.matches(getFacilityImportSubDirPath(IMPORT_LOCATIONS_PATH) + "/[^/]+\\.csv")) {
 				inCsvLocationAliasImporter.importLocationAliasesFromCsvStream(reader, getParent(), ediProcessTime);
-			} else if (filepath.matches(getFacilityImportSubDirPath(IMPORT_BATCHES_PATH) + "/.*\\.csv")) {
+				LOGGER.info("Dropbox processed: " + filepath);
+			} else if (filepath.matches(getFacilityImportSubDirPath(IMPORT_BATCHES_PATH) + "/[^/]+\\.csv")) {
 				inCsvCrossBatchImporter.importCrossBatchesFromCsvStream(reader, getParent(), ediProcessTime);
+				LOGGER.info("Dropbox processed: " + filepath);
 			}
 
 		} catch (DbxException | IOException e) {

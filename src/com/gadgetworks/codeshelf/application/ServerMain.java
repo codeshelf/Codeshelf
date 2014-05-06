@@ -156,7 +156,7 @@ public final class ServerMain {
 
 		Properties properties = new Properties();
 		try {
-			String configFileName = System.getProperty("config.properties");
+			String configFileName = System.getProperty("config.properties") + "." + System.getProperty("user.name");
 			if (configFileName != null) {
 				FileInputStream configFileStream = new FileInputStream(configFileName);
 				if (configFileStream != null) {

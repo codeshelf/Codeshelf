@@ -9,12 +9,12 @@ package com.gadgetworks.codeshelf.application;
 import com.gadgetworks.codeshelf.device.ICsDeviceManager;
 import com.google.inject.Inject;
 
-public final class CsNetworkApplication extends ApplicationABC {
+public final class CsSiteControllerApplication extends ApplicationABC {
 
 	private ICsDeviceManager	mDeviceManager;
 
 	@Inject
-	public CsNetworkApplication(final ICsDeviceManager inDeviceManager, final IUtil inUtil) {
+	public CsSiteControllerApplication(final ICsDeviceManager inDeviceManager, final IUtil inUtil) {
 		super(inUtil);
 		mDeviceManager = inDeviceManager;
 	}

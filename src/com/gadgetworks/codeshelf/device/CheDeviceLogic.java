@@ -56,7 +56,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	// Currently, these cannot be longer than 10 characters.
 	private static final String		EMPTY_MSG				= "                    ";
 	private static final String		INVALID_SCAN_MSG		= "INVALID             ";
-	private static final String		SCAN_USERID_MSG			= "SCAN BADGE          ";	// new String(new byte[] { 0x7c, (byte) 0x82 });
+	private static final String		SCAN_USERID_MSG			= "SCAN BADGE          ";							// new String(new byte[] { 0x7c, (byte) 0x82 });
 	private static final String		SCAN_LOCATION_MSG		= "SCAN LOCATION       ";
 	private static final String		SCAN_CONTAINER_MSG		= "SCAN CONTAINER      ";
 	private static final String		OR_START_WORK_MSG		= "OR START WORK       ";
@@ -220,6 +220,20 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private void ledControllerClearLeds() {
 		// Clear the LEDs for the last location the CHE worked.
 		INetworkDevice device = mDeviceManager.getDeviceByGuid(mLastLedControllerGuid);
+		if (device instanceof AisleDeviceLogic) {
+			AisleDeviceLogic aisleDevice = (AisleDeviceLogic) device;
+			aisleDevice.clearLedCmdFor(getGuid());
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Clear the LEDs for this CHE on this specified LED controller.
+	 * @param inGuid
+	 */
+	private void ledControllerClearLeds(final NetGuid inLedControllerId) {
+		// Clear the LEDs for the last location the CHE worked.
+		INetworkDevice device = mDeviceManager.getDeviceByGuid(inLedControllerId);
 		if (device instanceof AisleDeviceLogic) {
 			AisleDeviceLogic aisleDevice = (AisleDeviceLogic) device;
 			aisleDevice.clearLedCmdFor(getGuid());
@@ -618,6 +632,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				mDeviceManager.completeWi(getGuid().getHexStringNoPrefix(), getPersistentId(), wi);
 				LOGGER.info("Pick shorted: " + wi);
 
+				clearLedControllersForWi(wi);
+
 				if (mActivePickWiList.size() > 0) {
 					// If there's more active picks then show them.
 					showActivePicks();
@@ -754,6 +770,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 			List<LedCmdGroup> ledCmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(firstWi.getLedCmdStream());
 
+			INetworkDevice lastLedController = null;
 			for (Iterator iterator = ledCmdGroups.iterator(); iterator.hasNext();) {
 				LedCmdGroup ledCmdGroup = (LedCmdGroup) iterator.next();
 
@@ -764,8 +781,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 					Short currLedNum = startLedNum;
 
 					// Clear the last LED commands to this controller if the last controller was different.
-					if ((mLastLedControllerGuid != null) && (!ledController.getGuid().equals(mLastLedControllerGuid))) {
+					if ((lastLedController != null) && (!ledController.equals(lastLedController))) {
 						ledControllerClearLeds();
+						lastLedController = ledController;
 					}
 
 					for (LedSample ledSample : ledCmdGroup.getLedSampleList()) {
@@ -799,6 +817,24 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			}
 		}
 		ledControllerShowLeds(getGuid());
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inWi
+	 */
+	private void clearLedControllersForWi(final WorkInstruction inWi) {
+
+		List<LedCmdGroup> ledCmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(inWi.getLedCmdStream());
+
+		for (Iterator iterator = ledCmdGroups.iterator(); iterator.hasNext();) {
+			LedCmdGroup ledCmdGroup = (LedCmdGroup) iterator.next();
+
+			INetworkDevice ledController = mRadioController.getNetworkDevice(new NetGuid(ledCmdGroup.getControllerId()));
+			if (ledController != null) {
+				ledControllerClearLeds(ledController.getGuid());
+			}
+		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -954,8 +990,10 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 		mDeviceManager.completeWi(getGuid().getHexStringNoPrefix(), getPersistentId(), inWi);
 		LOGGER.info("Pick completed: " + inWi);
-		
+
 		mActivePickWiList.remove(inWi);
+
+		clearLedControllersForWi(inWi);
 
 		if (mActivePickWiList.size() > 0) {
 			// If there's more active picks then show them.

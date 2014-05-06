@@ -46,6 +46,20 @@ public final class Util implements IUtil {
 	// be part of pre-main static initialization.  Since it uses methods from Util we moved it
 	// here before Util tries to use the LogFactory.
 	static {
+		
+		// If the command line didn't specify a console appender then make the console logger a NullAppender.
+		if (System.getProperty("console.appender") == null) {
+			System.setProperty("console.appender", "org.apache.log4j.varia.NullAppender");
+		}
+
+		// Set safe defaults for remote logging (when it's not needed, such as in developer debug).
+		if (System.getProperty("codeshelf.remotelog.port") == null) {
+			System.setProperty("codeshelf.remotelog.port", "80");
+		}
+		
+		if (System.getProperty("codeshelf.remotelog.ipaddress") == null) {
+			System.setProperty("codeshelf.remotelog.ipaddress", "127.0.0.1");
+		}
 
 		Util util = new Util();
 		String appLogPath = util.getApplicationLogDirPath();

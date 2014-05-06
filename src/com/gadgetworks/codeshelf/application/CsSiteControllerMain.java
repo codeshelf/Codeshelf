@@ -36,19 +36,19 @@ import com.google.inject.name.Names;
 /**
  *  @author jeffw
  */
-public final class CsNetworkMain {
+public final class CsSiteControllerMain {
 
 	// See the top of Util to understand why we do the following:
 	static {
 		Util.initLogging();
 	}
 
-	private static final Logger	LOGGER	= LoggerFactory.getLogger(CsNetworkMain.class);
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(CsSiteControllerMain.class);
 
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	private CsNetworkMain() {
+	private CsSiteControllerMain() {
 	}
 
 	// --------------------------------------------------------------------------
@@ -58,7 +58,7 @@ public final class CsNetworkMain {
 
 		Properties properties = new Properties();
 		try {
-			String configFileName = System.getProperty("config.properties");
+			String configFileName = System.getProperty("config.properties") + "." + System.getProperty("user.name");
 			if (configFileName != null) {
 				FileInputStream configFileStream = new FileInputStream(configFileName);
 				if (configFileStream != null) {
@@ -87,7 +87,7 @@ public final class CsNetworkMain {
 
 		// Create and start the application.
 		Injector injector = setupInjector();
-		ICodeshelfApplication application = injector.getInstance(CsNetworkApplication.class);
+		ICodeshelfApplication application = injector.getInstance(CsSiteControllerApplication.class);
 		application.startApplication();
 
 		// Handle events until the application exits.
@@ -114,7 +114,7 @@ public final class CsNetworkMain {
 				bind(Byte.class).annotatedWith(Names.named(IPacket.NETWORK_NUM_PROPERTY)).toInstance(Byte.valueOf(System.getProperty("codeshelf.networknum")));
 
 				bind(IUtil.class).to(Util.class);
-				bind(ICodeshelfApplication.class).to(CsNetworkApplication.class);
+				bind(ICodeshelfApplication.class).to(CsSiteControllerApplication.class);
 				// Can't inject Java_Websocket classes.  See CsWebSocketClient.java for explanation.
 				//bind(ICsWebSocketClient.class).to(CsWebSocketClient.class);
 				bind(IRadioController.class).to(RadioController.class);
