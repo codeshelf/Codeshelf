@@ -16,8 +16,8 @@ import com.gadgetworks.codeshelf.model.domain.Facility;
  */
 public interface ICsvInventoryImporter {
 
-	void importSlottedInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime);
+	boolean importSlottedInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime);
 
-	void importDdcInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime);
+	boolean importDdcInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime);
 
 }

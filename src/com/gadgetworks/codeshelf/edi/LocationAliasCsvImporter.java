@@ -47,7 +47,10 @@ public class LocationAliasCsvImporter implements ICsvLocationAliasImporter {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.edi.ICsvImporter#importInventoryFromCsvStream(java.io.InputStreamReader, com.gadgetworks.codeshelf.model.domain.Facility)
 	 */
-	public final void importLocationAliasesFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime) {
+	public final boolean importLocationAliasesFromCsvStream(InputStreamReader inCsvStreamReader,
+		Facility inFacility,
+		Timestamp inProcessTime) {
+		boolean result = true;
 		try {
 
 			CSVReader csvReader = new CSVReader(inCsvStreamReader);
@@ -79,10 +82,14 @@ public class LocationAliasCsvImporter implements ICsvLocationAliasImporter {
 
 			csvReader.close();
 		} catch (FileNotFoundException e) {
+			result = false;
 			LOGGER.error("", e);
 		} catch (IOException e) {
+			result = false;
 			LOGGER.error("", e);
 		}
+
+		return result;
 	}
 
 	// --------------------------------------------------------------------------

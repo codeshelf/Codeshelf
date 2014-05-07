@@ -9,6 +9,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Paths;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.Locale;
@@ -98,6 +99,7 @@ public class DropboxService extends EdiServiceABC {
 	private static final String		IMPORT_INVENTORY_PATH	= "inventory";
 	private static final String		IMPORT_LOCATIONS_PATH	= "locations";
 	private static final String		IMPORT_SLOTTING_PATH	= "slotting";
+	private static final String		PROCESSED_PATH			= "processed";
 
 	private static final String		EXPORT_DIR_PATH			= "export";
 	private static final String		EXPORT_WIS_PATH			= "work";
@@ -125,7 +127,7 @@ public class DropboxService extends EdiServiceABC {
 		ICsvInventoryImporter inCsvInventoryImporter,
 		ICsvLocationAliasImporter inCsvLocationAliasImporter,
 		ICsvCrossBatchImporter inCsvCrossBatchImporter) {
-		Boolean result = false;
+		boolean result = false;
 
 		// Make sure we believe that we're properly registered with the service before we try to contact it.
 		if (getServiceStateEnum().equals(EdiServiceStateEnum.LINKED)) {
@@ -148,13 +150,13 @@ public class DropboxService extends EdiServiceABC {
 	/**
 	 * @param inClientSession
 	 */
-	private Boolean checkForChangedDocuments(DbxClient inClient,
+	private boolean checkForChangedDocuments(DbxClient inClient,
 		ICsvOrderImporter inCsvOrderImporter,
 		ICsvOrderLocationImporter inCsvOrderLocationImporter,
 		ICsvInventoryImporter inCsvInventoryImporter,
 		ICsvLocationAliasImporter inCsvLocationAliasImporter,
 		ICsvCrossBatchImporter inCsvCrossBatchImporter) {
-		Boolean result = false;
+		boolean result = false;
 
 		if (ensureBaseDirectories(inClient)) {
 			DbxDelta<DbxEntry> page = getNextPage(inClient);
@@ -210,14 +212,14 @@ public class DropboxService extends EdiServiceABC {
 	 * @param inClientSession
 	 * @param inPage
 	 */
-	private Boolean iteratePage(DbxClient inClient,
+	private boolean iteratePage(DbxClient inClient,
 		DbxDelta<DbxEntry> inPage,
 		ICsvOrderImporter inCsvOrderImporter,
 		ICsvOrderLocationImporter inCsvOrderLocationImporter,
 		ICsvInventoryImporter inCsvInventoryImporter,
 		ICsvLocationAliasImporter inCsvLocationAliasImporter,
 		ICsvCrossBatchImporter inCsvCrossBatchImporter) {
-		Boolean result = true;
+		boolean result = true;
 
 		for (DbxDelta.Entry<DbxEntry> entry : inPage.entries) {
 			LOGGER.info("Dropbox found: " + entry.lcPath);
@@ -281,23 +283,28 @@ public class DropboxService extends EdiServiceABC {
 	}
 
 	private String getFacilityPath() {
-		return new String("/" + FACILITY_FOLDER_PATH + getParent().getDomainId()).toLowerCase();
+		return new String(System.getProperty("file.separator") + FACILITY_FOLDER_PATH + getParent().getDomainId()).toLowerCase();
 	}
 
 	private String getFacilityImportPath() {
-		return new String(getFacilityPath() + "/" + IMPORT_DIR_PATH).toLowerCase();
+		return new String(getFacilityPath() + System.getProperty("file.separator") + IMPORT_DIR_PATH).toLowerCase();
 	}
 
 	private String getFacilityImportSubDirPath(final String inImportSubDirPath) {
-		return new String(getFacilityImportPath() + "/" + inImportSubDirPath).toLowerCase();
+		return new String(getFacilityImportPath() + System.getProperty("file.separator") + inImportSubDirPath).toLowerCase();
+	}
+
+	private String getFacilityImportSubDirProcessedPath(final String inImportSubDirPath) {
+		return new String(getFacilityImportPath() + System.getProperty("file.separator") + inImportSubDirPath
+				+ System.getProperty("file.separator") + PROCESSED_PATH).toLowerCase();
 	}
 
 	private String getFacilityExportPath() {
-		return new String(getFacilityPath() + "/" + EXPORT_DIR_PATH).toLowerCase();
+		return new String(getFacilityPath() + System.getProperty("file.separator") + EXPORT_DIR_PATH).toLowerCase();
 	}
 
 	private String getFacilityExportSubDirPath(final String inExportSubDirPath) {
-		return new String(getFacilityExportPath() + "/" + inExportSubDirPath).toLowerCase();
+		return new String(getFacilityExportPath() + System.getProperty("file.separator") + inExportSubDirPath).toLowerCase();
 	}
 
 	// --------------------------------------------------------------------------
@@ -308,15 +315,18 @@ public class DropboxService extends EdiServiceABC {
 	private boolean ensureBaseDirectories(DbxClient inClient) {
 		boolean result = false;
 
-		String facilityPath = getFacilityPath();
-
 		result = ensureDirectory(inClient, getFacilityPath());
 		result &= ensureDirectory(inClient, getFacilityImportPath());
 		result &= ensureDirectory(inClient, getFacilityImportSubDirPath(IMPORT_ORDERS_PATH));
+		result &= ensureDirectory(inClient, getFacilityImportSubDirProcessedPath(IMPORT_ORDERS_PATH));
 		result &= ensureDirectory(inClient, getFacilityImportSubDirPath(IMPORT_BATCHES_PATH));
+		result &= ensureDirectory(inClient, getFacilityImportSubDirProcessedPath(IMPORT_BATCHES_PATH));
 		result &= ensureDirectory(inClient, getFacilityImportSubDirPath(IMPORT_INVENTORY_PATH));
+		result &= ensureDirectory(inClient, getFacilityImportSubDirProcessedPath(IMPORT_INVENTORY_PATH));
 		result &= ensureDirectory(inClient, getFacilityImportSubDirPath(IMPORT_LOCATIONS_PATH));
+		result &= ensureDirectory(inClient, getFacilityImportSubDirProcessedPath(IMPORT_LOCATIONS_PATH));
 		result &= ensureDirectory(inClient, getFacilityImportSubDirPath(IMPORT_SLOTTING_PATH));
+		result &= ensureDirectory(inClient, getFacilityImportSubDirProcessedPath(IMPORT_SLOTTING_PATH));
 
 		result &= ensureDirectory(inClient, getFacilityExportPath());
 		result &= ensureDirectory(inClient, getFacilityImportSubDirPath(EXPORT_WIS_PATH));
@@ -431,16 +441,16 @@ public class DropboxService extends EdiServiceABC {
 	/**
 	 * @param inEntry
 	 */
-	private Boolean processEntry(DbxClient inClient,
+	private boolean processEntry(DbxClient inClient,
 		DbxDelta.Entry<DbxEntry> inEntry,
 		ICsvOrderImporter inCsvOrderImporter,
 		ICsvOrderLocationImporter inCsvOrderLocationImporter,
 		ICsvInventoryImporter inCsvInventoryImporter,
 		ICsvLocationAliasImporter inCsvLocationAliasImporter,
 		ICsvCrossBatchImporter inCsvCrossBatchImporter) {
-		Boolean result = true;
+		boolean result = true;
 
-		Boolean shouldUpdateEntry = false;
+		boolean shouldUpdateEntry = false;
 
 		if (inEntry.lcPath.startsWith(getFacilityImportPath())) {
 			if (inEntry.metadata.isFile()) {
@@ -500,28 +510,46 @@ public class DropboxService extends EdiServiceABC {
 			DbxEntry.File downloadedFile = inClient.getFile(inEntry.lcPath, null, outputStream);
 			InputStreamReader reader = new InputStreamReader(new ByteArrayInputStream(outputStream.toByteArray()));
 
+			boolean success = false;
+
 			// orders-slotting needs to come before orders, because orders is a subset of the orders-slotting regex.
 			if (filepath.matches(getFacilityImportSubDirPath(IMPORT_SLOTTING_PATH) + "/[^/]+\\.csv")) {
-				inCsvOrderLocationImporter.importOrderLocationsFromCsvStream(reader, getParent(), ediProcessTime);
-				LOGGER.info("Dropbox processed: " + filepath);
+				success = inCsvOrderLocationImporter.importOrderLocationsFromCsvStream(reader, getParent(), ediProcessTime);
 			} else if (filepath.matches(getFacilityImportSubDirPath(IMPORT_ORDERS_PATH) + "/[^/]+\\.csv")) {
-				inCsvOrderImporter.importOrdersFromCsvStream(reader, getParent(), ediProcessTime);
-				LOGGER.info("Dropbox processed: " + filepath);
+				success = inCsvOrderImporter.importOrdersFromCsvStream(reader, getParent(), ediProcessTime);
 			} else if (filepath.matches(getFacilityImportSubDirPath(IMPORT_INVENTORY_PATH) + "/[^/]+\\.csv")) {
-				inCsvInventoryImporter.importSlottedInventoryFromCsvStream(reader, getParent(), ediProcessTime);
-				LOGGER.info("Dropbox processed: " + filepath);
+				success = inCsvInventoryImporter.importSlottedInventoryFromCsvStream(reader, getParent(), ediProcessTime);
 			} else if (filepath.matches(getFacilityImportSubDirPath(IMPORT_INVENTORY_PATH) + "/[^/]+\\.csv")) {
-				inCsvInventoryImporter.importDdcInventoryFromCsvStream(reader, getParent(), ediProcessTime);
-				LOGGER.info("Dropbox processed: " + filepath);
+				success = inCsvInventoryImporter.importDdcInventoryFromCsvStream(reader, getParent(), ediProcessTime);
 			} else if (filepath.matches(getFacilityImportSubDirPath(IMPORT_LOCATIONS_PATH) + "/[^/]+\\.csv")) {
-				inCsvLocationAliasImporter.importLocationAliasesFromCsvStream(reader, getParent(), ediProcessTime);
-				LOGGER.info("Dropbox processed: " + filepath);
+				success = inCsvLocationAliasImporter.importLocationAliasesFromCsvStream(reader, getParent(), ediProcessTime);
 			} else if (filepath.matches(getFacilityImportSubDirPath(IMPORT_BATCHES_PATH) + "/[^/]+\\.csv")) {
-				inCsvCrossBatchImporter.importCrossBatchesFromCsvStream(reader, getParent(), ediProcessTime);
-				LOGGER.info("Dropbox processed: " + filepath);
+				success = inCsvCrossBatchImporter.importCrossBatchesFromCsvStream(reader, getParent(), ediProcessTime);
 			}
 
+			if (success) {
+				moveEntryToProcessed(inClient, inEntry);
+			}
 		} catch (DbxException | IOException e) {
+			LOGGER.error("", e);
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inClient
+	 * @param inEntry
+	 */
+	private void moveEntryToProcessed(DbxClient inClient, DbxDelta.Entry<DbxEntry> inEntry) {
+		// Figure out where to add the "processed" path path.
+		String fromPath = inEntry.lcPath;
+		java.nio.file.Path path = Paths.get(fromPath);
+		String toPath = path.getParent() + System.getProperty("file.separator") + PROCESSED_PATH
+				+ System.getProperty("file.separator") + path.getFileName();
+		try {
+			inClient.move(fromPath, toPath);
+			LOGGER.info("Dropbox processed: " + fromPath);
+		} catch (DbxException e) {
 			LOGGER.error("", e);
 		}
 	}
@@ -530,8 +558,8 @@ public class DropboxService extends EdiServiceABC {
 	/**
 	 * @param inEntry
 	 */
-	private Boolean removeEntry(DbxClient inClient, DbxDelta.Entry<DbxEntry> inEntry) {
-		Boolean result = true;
+	private boolean removeEntry(DbxClient inClient, DbxDelta.Entry<DbxEntry> inEntry) {
+		boolean result = true;
 
 		EdiDocumentLocator locator = getDocumentLocatorByPath(inEntry.lcPath);
 		if (locator != null) {

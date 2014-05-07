@@ -79,9 +79,11 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.edi.ICsvImporter#importOrdersFromCsvStream(java.io.InputStreamReader, com.gadgetworks.codeshelf.model.domain.Facility)
 	 */
-	public final void importOrdersFromCsvStream(final InputStreamReader inCsvStreamReader,
+	public final boolean importOrdersFromCsvStream(final InputStreamReader inCsvStreamReader,
 		final Facility inFacility,
 		Timestamp inProcessTime) {
+
+		boolean result = true;
 		try {
 
 			CSVReader csvReader = new CSVReader(inCsvStreamReader);
@@ -126,10 +128,14 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 			cleanupArchivedOrders();
 
 		} catch (FileNotFoundException e) {
+			result = false;
 			LOGGER.error("", e);
 		} catch (IOException e) {
+			result = false;
 			LOGGER.error("", e);
 		}
+
+		return result;
 	}
 
 	// --------------------------------------------------------------------------
@@ -594,7 +600,7 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 			result.setParent(inOrder);
 			result.setStatusEnum(OrderStatusEnum.CREATED);
 			result.setOrderDetailId(detailId);
-			
+
 			inOrder.addOrderDetail(result);
 		}
 

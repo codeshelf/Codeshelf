@@ -16,6 +16,6 @@ import com.gadgetworks.codeshelf.model.domain.Facility;
  */
 public interface ICsvOrderImporter {
 
-	void importOrdersFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime);
+	boolean importOrdersFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime);
 
 }

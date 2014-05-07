@@ -55,7 +55,10 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.edi.ICsvImporter#importInventoryFromCsvStream(java.io.InputStreamReader, com.gadgetworks.codeshelf.model.domain.Facility)
 	 */
-	public final void importDdcInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime) {
+	public final boolean importDdcInventoryFromCsvStream(InputStreamReader inCsvStreamReader,
+		Facility inFacility,
+		Timestamp inProcessTime) {
+		boolean result = true;
 		try {
 
 			CSVReader csvReader = new CSVReader(inCsvStreamReader);
@@ -89,17 +92,24 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 
 			csvReader.close();
 		} catch (FileNotFoundException e) {
+			result = false;
 			LOGGER.error("", e);
 		} catch (IOException e) {
+			result = false;
 			LOGGER.error("", e);
 		}
+
+		return result;
 	}
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.edi.ICsvImporter#importInventoryFromCsvStream(java.io.InputStreamReader, com.gadgetworks.codeshelf.model.domain.Facility)
 	 */
-	public final void importSlottedInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime) {
+	public final boolean importSlottedInventoryFromCsvStream(InputStreamReader inCsvStreamReader,
+		Facility inFacility,
+		Timestamp inProcessTime) {
+		boolean result = true;
 		try {
 
 			CSVReader csvReader = new CSVReader(inCsvStreamReader);
@@ -131,10 +141,14 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 
 			csvReader.close();
 		} catch (FileNotFoundException e) {
+			result = false;
 			LOGGER.error("", e);
 		} catch (IOException e) {
+			result = false;
 			LOGGER.error("", e);
 		}
+
+		return result;
 	}
 
 	// --------------------------------------------------------------------------

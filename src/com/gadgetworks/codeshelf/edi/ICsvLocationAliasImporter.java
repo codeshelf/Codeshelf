@@ -16,6 +16,6 @@ import com.gadgetworks.codeshelf.model.domain.Facility;
  */
 public interface ICsvLocationAliasImporter {
 
-	void importLocationAliasesFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime);
+	boolean importLocationAliasesFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime);
 
 }

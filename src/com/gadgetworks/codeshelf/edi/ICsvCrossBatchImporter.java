@@ -16,6 +16,6 @@ import com.gadgetworks.codeshelf.model.domain.Facility;
  */
 public interface ICsvCrossBatchImporter {
 
-	void importCrossBatchesFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime);
+	boolean importCrossBatchesFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime);
 
 }

@@ -60,40 +60,58 @@ public class DropboxServiceTest {
 		ICsvOrderImporter orderImporter = new ICsvOrderImporter() {
 
 			@Override
-			public void importOrdersFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime) {
+			public boolean importOrdersFromCsvStream(InputStreamReader inCsvStreamReader,
+				Facility inFacility,
+				Timestamp inProcessTime) {
 				checkImportOrders.result = true;
+				return false;
 			}
 		};
 
 		ICsvInventoryImporter inventoryImporter = new ICsvInventoryImporter() {
 
 			@Override
-			public void importSlottedInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime) {
+			public boolean importSlottedInventoryFromCsvStream(InputStreamReader inCsvStreamReader,
+				Facility inFacility,
+				Timestamp inProcessTime) {
+				return false;
 			}
 
 			@Override
-			public void importDdcInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime) {
+			public boolean importDdcInventoryFromCsvStream(InputStreamReader inCsvStreamReader,
+				Facility inFacility,
+				Timestamp inProcessTime) {
+				return false;
 			}
 		};
 
 		ICsvLocationAliasImporter locationImporter = new ICsvLocationAliasImporter() {
 
 			@Override
-			public void importLocationAliasesFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime) {
+			public boolean importLocationAliasesFromCsvStream(InputStreamReader inCsvStreamReader,
+				Facility inFacility,
+				Timestamp inProcessTime) {
+				return false;
 			}
 		};
 
 		ICsvOrderLocationImporter orderLocationImporter = new ICsvOrderLocationImporter() {
 
 			@Override
-			public void importOrderLocationsFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime) {
+			public boolean importOrderLocationsFromCsvStream(InputStreamReader inCsvStreamReader,
+				Facility inFacility,
+				Timestamp inProcessTime) {
+				return false;
 			}
 		};
 
 		ICsvCrossBatchImporter crossBatchImporter = new ICsvCrossBatchImporter() {
 
 			@Override
-			public void importCrossBatchesFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime) {
+			public boolean importCrossBatchesFromCsvStream(InputStreamReader inCsvStreamReader,
+				Facility inFacility,
+				Timestamp inProcessTime) {
+				return false;
 			}
 		};
 

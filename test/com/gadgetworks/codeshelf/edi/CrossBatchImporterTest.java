@@ -523,4 +523,109 @@ public class CrossBatchImporterTest extends EdiTestABC {
 
 	}
 
+	@Test
+	public final void testCrossBatchDoubleImporter() {
+
+		Organization organization = new Organization();
+		organization.setDomainId("O-CROSS8");
+		mOrganizationDao.store(organization);
+
+		organization.createFacility("F-CROSS8", "TEST", Point.getZeroPoint());
+		Facility facility = organization.getFacility("F-CROSS8");
+
+		// We can't import cross batch orders for items not already in inventory or on outbound orders.
+		createItemMaster("I111.1", "ea", facility);
+		createItemMaster("I111.2", "ea", facility);
+		createItemMaster("I111.3", "ea", facility);
+		createItemMaster("I111.4", "ea", facility);
+		createItemMaster("I222.1", "ea", facility);
+		createItemMaster("I222.2", "ea", facility);
+
+		String firstCsvString = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
+				+ ",C111,I111.1,100,ea\r\n" //
+				+ ",C111,I111.2,200,ea\r\n" //
+				+ ",C111,I111.3,300,ea\r\n" //
+				+ ",C111,I111.4,400,ea\r\n" //
+				+ ",C222,I222.1,100,ea\r\n" //
+				+ ",C222,I222.2,200,ea\r\n";
+
+		byte[] firstCsvArray = firstCsvString.getBytes();
+
+		ByteArrayInputStream stream = new ByteArrayInputStream(firstCsvArray);
+		InputStreamReader reader = new InputStreamReader(stream);
+
+		Timestamp firstEdiProcessTime = new Timestamp(System.currentTimeMillis());
+		ICsvCrossBatchImporter importer = new CrossBatchCsvImporter(mOrderGroupDao,
+			mOrderHeaderDao,
+			mOrderDetailDao,
+			mContainerDao,
+			mContainerUseDao,
+			mUomMasterDao);
+		importer.importCrossBatchesFromCsvStream(reader, facility, firstEdiProcessTime);
+
+		// Make sure we created an order with the container's ID.
+		OrderHeader order = facility.getOrderHeader(OrderHeader.computeCrossOrderId("C111", firstEdiProcessTime));
+		Assert.assertNotNull(order);
+		Assert.assertEquals(order.getOrderTypeEnum(), OrderTypeEnum.CROSS);
+		Assert.assertEquals(true, order.getActive());
+
+		// Make sure there's a contianer use and that its ID matches the order.
+		ContainerUse use = order.getContainerUse();
+		Assert.assertNotNull(use);
+		Assert.assertEquals(use.getParent().getContainerId(), "C111");
+
+		// Make sure there's four order items.
+		Assert.assertEquals(order.getOrderDetails().size(), 4);
+
+		String secondCsvString = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
+				+ ",C333,I111.1,100,ea\r\n" //
+				+ ",C333,I111.2,200,ea\r\n" //
+				+ ",C333,I111.3,300,ea\r\n" //
+				+ ",C333,I111.4,400,ea\r\n" //
+				+ ",C444,I222.1,100,ea\r\n" //
+				+ ",C444,I222.2,200,ea\r\n";
+
+		byte[] secondCsvArray = secondCsvString.getBytes();
+
+		stream = new ByteArrayInputStream(secondCsvArray);
+		reader = new InputStreamReader(stream);
+
+		Timestamp secondEdiProcessTime = new Timestamp(System.currentTimeMillis());
+		importer = new CrossBatchCsvImporter(mOrderGroupDao,
+			mOrderHeaderDao,
+			mOrderDetailDao,
+			mContainerDao,
+			mContainerUseDao,
+			mUomMasterDao);
+		importer.importCrossBatchesFromCsvStream(reader, facility, secondEdiProcessTime);
+
+		// Make sure we created an order with the container's ID.
+		order = facility.getOrderHeader(OrderHeader.computeCrossOrderId("C111", firstEdiProcessTime));
+		Assert.assertNotNull(order);
+		Assert.assertEquals(order.getOrderTypeEnum(), OrderTypeEnum.CROSS);
+		Assert.assertEquals(true, order.getActive());
+
+		// Make sure there's a contianer use and that its ID matches the order.
+		use = order.getContainerUse();
+		Assert.assertNotNull(use);
+		Assert.assertEquals(use.getParent().getContainerId(), "C111");
+
+		// Make sure there's four order items.
+		Assert.assertEquals(order.getOrderDetails().size(), 4);
+
+		// Make sure we created an order with the container's ID.
+		order = facility.getOrderHeader(OrderHeader.computeCrossOrderId("C333", secondEdiProcessTime));
+		Assert.assertNotNull(order);
+		Assert.assertEquals(order.getOrderTypeEnum(), OrderTypeEnum.CROSS);
+		Assert.assertEquals(true, order.getActive());
+
+		// Make sure there's a contianer use and that its ID matches the order.
+		use = order.getContainerUse();
+		Assert.assertNotNull(use);
+		Assert.assertEquals(use.getParent().getContainerId(), "C333");
+
+		// Make sure there's four order items.
+		Assert.assertEquals(order.getOrderDetails().size(), 4);
+
+	}
 }

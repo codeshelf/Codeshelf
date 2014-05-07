@@ -38,53 +38,57 @@ public class EdiProcessorTest extends EdiTestABC {
 		ICsvOrderImporter orderImporter = new ICsvOrderImporter() {
 
 			@Override
-			public void importOrdersFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime) {
+			public boolean importOrdersFromCsvStream(InputStreamReader inCsvStreamReader,
+				Facility inFacility,
+				Timestamp inProcessTime) {
+				return false;
 			}
 		};
 
 		ICsvInventoryImporter inventoryImporter = new ICsvInventoryImporter() {
 
 			@Override
-			public void importSlottedInventoryFromCsvStream(InputStreamReader inCsvStreamReader,
+			public boolean importSlottedInventoryFromCsvStream(InputStreamReader inCsvStreamReader,
 				Facility inFacility,
 				Timestamp inProcessTime) {
+				return false;
 			}
 
 			@Override
-			public void importDdcInventoryFromCsvStream(InputStreamReader inCsvStreamReader,
+			public boolean importDdcInventoryFromCsvStream(InputStreamReader inCsvStreamReader,
 				Facility inFacility,
 				Timestamp inProcessTime) {
+				return false;
 			}
 		};
 
 		ICsvLocationAliasImporter locationImporter = new ICsvLocationAliasImporter() {
 
 			@Override
-			public void importLocationAliasesFromCsvStream(InputStreamReader inCsvStreamReader,
+			public boolean importLocationAliasesFromCsvStream(InputStreamReader inCsvStreamReader,
 				Facility inFacility,
 				Timestamp inProcessTime) {
+				return false;
 			}
 		};
 
 		ICsvOrderLocationImporter orderLocationImporter = new ICsvOrderLocationImporter() {
 
 			@Override
-			public void importOrderLocationsFromCsvStream(InputStreamReader inCsvStreamReader,
+			public boolean importOrderLocationsFromCsvStream(InputStreamReader inCsvStreamReader,
 				Facility inFacility,
 				Timestamp inProcessTime) {
-				// TODO Auto-generated method stub
-
+				return false;
 			}
 		};
 
 		ICsvCrossBatchImporter crossBatchImporter = new ICsvCrossBatchImporter() {
 
 			@Override
-			public void importCrossBatchesFromCsvStream(InputStreamReader inCsvStreamReader,
+			public boolean importCrossBatchesFromCsvStream(InputStreamReader inCsvStreamReader,
 				Facility inFacility,
 				Timestamp inProcessTime) {
-				// TODO Auto-generated method stub
-
+				return false;
 			}
 		};
 
@@ -153,53 +157,57 @@ public class EdiProcessorTest extends EdiTestABC {
 		ICsvOrderImporter orderImporter = new ICsvOrderImporter() {
 
 			@Override
-			public void importOrdersFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime) {
+			public boolean importOrdersFromCsvStream(InputStreamReader inCsvStreamReader,
+				Facility inFacility,
+				Timestamp inProcessTime) {
+				return false;
 			}
 		};
 
 		ICsvInventoryImporter inventoryImporter = new ICsvInventoryImporter() {
 
 			@Override
-			public void importSlottedInventoryFromCsvStream(InputStreamReader inCsvStreamReader,
+			public boolean importSlottedInventoryFromCsvStream(InputStreamReader inCsvStreamReader,
 				Facility inFacility,
 				Timestamp inProcessTime) {
+				return false;
 			}
 
 			@Override
-			public void importDdcInventoryFromCsvStream(InputStreamReader inCsvStreamReader,
+			public boolean importDdcInventoryFromCsvStream(InputStreamReader inCsvStreamReader,
 				Facility inFacility,
 				Timestamp inProcessTime) {
+				return false;
 			}
 		};
 
 		ICsvLocationAliasImporter locationImporter = new ICsvLocationAliasImporter() {
 
 			@Override
-			public void importLocationAliasesFromCsvStream(InputStreamReader inCsvStreamReader,
+			public boolean importLocationAliasesFromCsvStream(InputStreamReader inCsvStreamReader,
 				Facility inFacility,
 				Timestamp inProcessTime) {
+				return false;
 			}
 		};
 
 		ICsvOrderLocationImporter orderLocationImporter = new ICsvOrderLocationImporter() {
 
 			@Override
-			public void importOrderLocationsFromCsvStream(InputStreamReader inCsvStreamReader,
+			public boolean importOrderLocationsFromCsvStream(InputStreamReader inCsvStreamReader,
 				Facility inFacility,
 				Timestamp inProcessTime) {
-				// TODO Auto-generated method stub
-
+				return false;
 			}
 		};
 
 		ICsvCrossBatchImporter crossBatchImporter = new ICsvCrossBatchImporter() {
 
 			@Override
-			public void importCrossBatchesFromCsvStream(InputStreamReader inCsvStreamReader,
+			public boolean importCrossBatchesFromCsvStream(InputStreamReader inCsvStreamReader,
 				Facility inFacility,
 				Timestamp inProcessTime) {
-				// TODO Auto-generated method stub
-
+				return false;
 			}
 		};
 

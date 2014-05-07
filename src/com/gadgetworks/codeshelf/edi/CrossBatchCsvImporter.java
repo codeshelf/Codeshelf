@@ -71,9 +71,12 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.edi.ICsvImporter#importInventoryFromCsvStream(java.io.InputStreamReader, com.gadgetworks.codeshelf.model.domain.Facility)
 	 */
-	public final void importCrossBatchesFromCsvStream(InputStreamReader inCsvStreamReader,
+	public final boolean importCrossBatchesFromCsvStream(InputStreamReader inCsvStreamReader,
 		Facility inFacility,
 		Timestamp inProcessTime) {
+		
+		boolean result = true;
+		
 		try {
 
 			CSVReader csvReader = new CSVReader(inCsvStreamReader);
@@ -111,9 +114,13 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 			csvReader.close();
 		} catch (FileNotFoundException e) {
 			LOGGER.error("", e);
+			result = false;
 		} catch (IOException e) {
 			LOGGER.error("", e);
+			result = false;
 		}
+		
+		return result;
 	}
 
 	// --------------------------------------------------------------------------
