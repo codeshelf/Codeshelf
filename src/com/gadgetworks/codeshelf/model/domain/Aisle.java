@@ -10,6 +10,7 @@ import javax.persistence.Entity;
 
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
+import org.codehaus.jackson.annotate.JsonProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,4 +71,15 @@ public class Aisle extends SubLocationABC<Facility> {
 	public final String getDefaultDomainIdPrefix() {
 		return "A";
 	}
+	
+	public final String getPathSegId() {
+		// to support list view field pathSegId
+		PathSegment pathSegment= getPathSegment();
+
+		if (pathSegment != null) {
+			return pathSegment.getDomainId();
+		}
+		return "";
+	}
+
 }
