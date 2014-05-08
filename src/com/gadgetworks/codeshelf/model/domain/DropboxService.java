@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Paths;
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Locale;
 
@@ -22,6 +23,7 @@ import javax.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 
+import org.apache.commons.io.FilenameUtils;
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.annotate.JsonProperty;
@@ -103,6 +105,8 @@ public class DropboxService extends EdiServiceABC {
 
 	private static final String		EXPORT_DIR_PATH			= "export";
 	private static final String		EXPORT_WIS_PATH			= "work";
+
+	private static final String		TIME_FORMAT				= "HH-mm-ss";
 
 	@Column(nullable = true, name = "CURSOR")
 	@Getter
@@ -546,7 +550,13 @@ public class DropboxService extends EdiServiceABC {
 		java.nio.file.Path path = Paths.get(fromPath);
 		String toPath = path.getParent() + System.getProperty("file.separator") + PROCESSED_PATH
 				+ System.getProperty("file.separator") + path.getFileName();
+
 		try {
+			if (inClient.getMetadata(toPath) != null) {
+				// The to path already exists.  Tack on some extra versioning.
+				toPath = FilenameUtils.removeExtension(toPath) + "." + new SimpleDateFormat(TIME_FORMAT).format(System.currentTimeMillis()) + ".csv";
+			}
+
 			inClient.move(fromPath, toPath);
 			LOGGER.info("Dropbox processed: " + fromPath);
 		} catch (DbxException e) {
