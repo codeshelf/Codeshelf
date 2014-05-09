@@ -83,7 +83,9 @@ public class Facility extends SubLocationABC<Facility> {
 		}
 	}
 
-	private static final Logger				LOGGER			= LoggerFactory.getLogger(Facility.class);
+	private static final Logger				LOGGER				= LoggerFactory.getLogger(Facility.class);
+
+	private static final Integer			MAX_WI_DESC_BYTES	= 60;
 
 	// The owning organization.
 	@Column(nullable = false)
@@ -97,47 +99,47 @@ public class Facility extends SubLocationABC<Facility> {
 
 	@OneToMany(mappedBy = "parent")
 	@Getter
-	private List<Aisle>						aisles			= new ArrayList<Aisle>();
+	private List<Aisle>						aisles				= new ArrayList<Aisle>();
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
-	private Map<String, Container>			containers		= new HashMap<String, Container>();
+	private Map<String, Container>			containers			= new HashMap<String, Container>();
 
 	@OneToMany(mappedBy = "parent", fetch = FetchType.EAGER)
 	@MapKey(name = "domainId")
-	private Map<String, ContainerKind>		containerKinds	= new HashMap<String, ContainerKind>();
+	private Map<String, ContainerKind>		containerKinds		= new HashMap<String, ContainerKind>();
 
 	@OneToMany(mappedBy = "parent", targetEntity = EdiServiceABC.class)
 	@Getter
-	private List<IEdiService>				ediServices		= new ArrayList<IEdiService>();
+	private List<IEdiService>				ediServices			= new ArrayList<IEdiService>();
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
-	private Map<String, ItemMaster>			itemMasters		= new HashMap<String, ItemMaster>();
+	private Map<String, ItemMaster>			itemMasters			= new HashMap<String, ItemMaster>();
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
-	private Map<String, CodeshelfNetwork>	networks		= new HashMap<String, CodeshelfNetwork>();
+	private Map<String, CodeshelfNetwork>	networks			= new HashMap<String, CodeshelfNetwork>();
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
-	private Map<String, OrderGroup>			orderGroups		= new HashMap<String, OrderGroup>();
+	private Map<String, OrderGroup>			orderGroups			= new HashMap<String, OrderGroup>();
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
-	private Map<String, OrderHeader>		orderHeaders	= new HashMap<String, OrderHeader>();
+	private Map<String, OrderHeader>		orderHeaders		= new HashMap<String, OrderHeader>();
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
-	private Map<String, Path>				paths			= new HashMap<String, Path>();
+	private Map<String, Path>				paths				= new HashMap<String, Path>();
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
-	private Map<String, UomMaster>			uomMasters		= new HashMap<String, UomMaster>();
+	private Map<String, UomMaster>			uomMasters			= new HashMap<String, UomMaster>();
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
-	private Map<String, LocationAlias>		locationAliases	= new HashMap<String, LocationAlias>();
+	private Map<String, LocationAlias>		locationAliases		= new HashMap<String, LocationAlias>();
 
 	public Facility() {
 		super(Point.getZeroPoint(), Point.getZeroPoint());
@@ -1273,7 +1275,9 @@ public class Facility extends SubLocationABC<Facility> {
 			resultWi.setLocation(inLocation);
 			resultWi.setLocationId(inLocation.getFullDomainId());
 			resultWi.setItemMaster(inOrderDetail.getItemMaster());
-			resultWi.setDescription(inOrderDetail.getItemMaster().getDescription());
+			String cookedDesc = inOrderDetail.getItemMaster().getDescription();
+			cookedDesc = cookedDesc.substring(0, Math.min(MAX_WI_DESC_BYTES, cookedDesc.length()));
+			resultWi.setDescription(cookedDesc);
 			if (inOrderDetail.getItemMaster().getDdcId() != null) {
 				resultWi.setPickInstruction(inOrderDetail.getItemMaster().getDdcId());
 			} else {

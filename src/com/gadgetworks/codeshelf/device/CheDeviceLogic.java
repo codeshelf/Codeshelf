@@ -928,14 +928,15 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 * @param inQuantity
 	 */
 	private void processButtonPress(Integer inButtonNum, Integer inQuantity) {
-		// 
 		String containerId = getContainerIdFromButtonNum(inButtonNum);
 		if (containerId == null) {
-			invalidScanMsg(mCheStateEnum);
+			// Simply ignore button presses when there is no container.
+			//invalidScanMsg(mCheStateEnum);
 		} else {
 			WorkInstruction wi = getWorkInstructionForContainerId(containerId);
 			if (wi == null) {
-				invalidScanMsg(mCheStateEnum);
+				// Simply ignore button presses when there is no work instruction.
+				//invalidScanMsg(mCheStateEnum);
 			} else {
 				if (inQuantity >= wi.getPlanMinQuantity()) {
 					processNormalPick(wi, inQuantity);
@@ -952,7 +953,6 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 * @return
 	 */
 	private WorkInstruction getWorkInstructionForContainerId(String inContainerId) {
-
 		WorkInstruction result = null;
 		Iterator<WorkInstruction> wiIter = mActivePickWiList.iterator();
 		while (wiIter.hasNext()) {
