@@ -27,8 +27,9 @@ import com.gadgetworks.codeshelf.device.AisleDeviceLogic.LedCmd;
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.flyweight.command.CommandControlButton;
+import com.gadgetworks.flyweight.command.CommandControlClearPosController;
 import com.gadgetworks.flyweight.command.CommandControlMessage;
-import com.gadgetworks.flyweight.command.CommandControlRequestQty;
+import com.gadgetworks.flyweight.command.CommandControlSetPosController;
 import com.gadgetworks.flyweight.command.EffectEnum;
 import com.gadgetworks.flyweight.command.ICommand;
 import com.gadgetworks.flyweight.command.NetEndpoint;
@@ -163,7 +164,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		final int inMaxQty,
 		final byte inFreq,
 		final byte inDutyCycle) {
-		ICommand command = new CommandControlRequestQty(NetEndpoint.PRIMARY_ENDPOINT,
+		ICommand command = new CommandControlSetPosController(NetEndpoint.PRIMARY_ENDPOINT,
 			(byte) inPos,
 			(byte) inReqQty,
 			(byte) inMinQty,
@@ -313,7 +314,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		String scanPrefixStr = getScanPrefix(inCommandStr);
 		String scanStr = getScanContents(inCommandStr, scanPrefixStr);
 
-		clearPositionControllers();
+		clearAllPositionControllers();
 
 		// A command scan is always an option at any state.
 		if (inCommandStr.startsWith(COMMAND_PREFIX)) {
@@ -357,7 +358,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	@Override
 	public void buttonCommandReceived(CommandControlButton inButtonCommand) {
 		// Send a command to clear the position, so the controller knows we've gotten the button press.
-		sendPickRequestCommand((int) inButtonCommand.getPosNum(), (byte) 0, (byte) 0, (byte) 0, BRIGHT_FREQ, BRIGHT_DUTYCYCLE);
+		clearOnePositionController(inButtonCommand.getPosNum());
 		processButtonPress((int) inButtonCommand.getPosNum(), (int) inButtonCommand.getValue());
 	}
 
@@ -482,8 +483,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				break;
 		}
 
-		sendPickRequestCommand(CommandControlRequestQty.POSITION_ALL,
-			CommandControlRequestQty.ERROR_CODE_QTY,
+		sendPickRequestCommand(CommandControlSetPosController.POSITION_ALL,
+			CommandControlSetPosController.ERROR_CODE_QTY,
 			(byte) 0,
 			(byte) 0,
 			BLINK_FREQ,
@@ -535,7 +536,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		setState(CheStateEnum.IDLE);
 
 		ledControllerClearLeds();
-		clearPositionControllers();
+		clearAllPositionControllers();
 	}
 
 	// --------------------------------------------------------------------------
@@ -1014,17 +1015,18 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		mShortPickWi = inWi;
 		mShortPickQty = inQuantity;
 	}
+	
+	private void clearOnePositionController(Byte inPosition) {
+		ICommand command = new CommandControlClearPosController(NetEndpoint.PRIMARY_ENDPOINT,
+			inPosition);
+		mRadioController.sendCommand(command, getAddress(), true);
+	}
 
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	private void clearPositionControllers() {
-		sendPickRequestCommand((int) CommandControlRequestQty.POSITION_ALL,
-			(byte) 0,
-			(byte) 0,
-			(byte) 0,
-			BRIGHT_FREQ,
-			BRIGHT_DUTYCYCLE);
+	private void clearAllPositionControllers() {
+		clearOnePositionController(CommandControlClearPosController.POSITION_ALL);
 	}
 
 	// --------------------------------------------------------------------------
@@ -1033,7 +1035,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private void showAssignedPositions() {
 		for (String pos : mContainersMap.keySet()) {
 			sendPickRequestCommand(Integer.valueOf(pos),
-				CommandControlRequestQty.POSITION_ASSIGNED_CODE,
+				CommandControlSetPosController.POSITION_ASSIGNED_CODE,
 				(byte) 0,
 				(byte) 0,
 				MED_FREQ,

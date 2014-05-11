@@ -598,12 +598,12 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 		if (result == null) {
 			result = new OrderDetail();
 			result.setParent(inOrder);
-			result.setStatusEnum(OrderStatusEnum.CREATED);
 			result.setOrderDetailId(detailId);
 
 			inOrder.addOrderDetail(result);
 		}
 
+		result.setStatusEnum(OrderStatusEnum.CREATED);
 		result.setItemMaster(inItemMaster);
 		result.setDescription(inCsvBean.getDescription());
 		result.setUomMaster(inUomMaster);

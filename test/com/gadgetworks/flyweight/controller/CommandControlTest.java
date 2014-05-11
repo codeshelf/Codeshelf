@@ -16,7 +16,7 @@ import com.gadgetworks.flyweight.bitfields.BitFieldInputStream;
 import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
 import com.gadgetworks.flyweight.command.CommandControlButton;
 import com.gadgetworks.flyweight.command.CommandControlMessage;
-import com.gadgetworks.flyweight.command.CommandControlRequestQty;
+import com.gadgetworks.flyweight.command.CommandControlSetPosController;
 import com.gadgetworks.flyweight.command.ICommand;
 import com.gadgetworks.flyweight.command.IPacket;
 import com.gadgetworks.flyweight.command.NetAddress;
@@ -64,22 +64,22 @@ public final class CommandControlTest extends CommandABCTest {
 		ICommand command = packet.getCommand();
 
 		// If it is not the datagram command then something went wrong.
-		if (!(command instanceof CommandControlRequestQty))
+		if (!(command instanceof CommandControlSetPosController))
 			fail("Not a CommandControlRequestQty command");
 
-		Byte posNum = ((CommandControlRequestQty) command).getPosNum();
+		Byte posNum = ((CommandControlSetPosController) command).getPosNum();
 		if (!POS_NUM.equals(posNum))
 			fail("Command data is not correct");
 
-		Byte req = ((CommandControlRequestQty) command).getReqValue();
+		Byte req = ((CommandControlSetPosController) command).getReqValue();
 		if (!REQ_VALUE.equals(req))
 			fail("Command data is not correct");
 
-		Byte min = ((CommandControlRequestQty) command).getMinValue();
+		Byte min = ((CommandControlSetPosController) command).getMinValue();
 		if (!MIN_VALUE.equals(min))
 			fail("Command data is not correct");
 
-		Byte max = ((CommandControlRequestQty) command).getMaxValue();
+		Byte max = ((CommandControlSetPosController) command).getMaxValue();
 		if (!MAX_VALUE.equals(max))
 			fail("Command data is not correct");
 
@@ -92,7 +92,7 @@ public final class CommandControlTest extends CommandABCTest {
 		BitFieldOutputStream outputStream = new BitFieldOutputStream(byteArray);
 
 		// Create a new command.
-		ICommand command = new CommandControlRequestQty(NetEndpoint.PRIMARY_ENDPOINT,
+		ICommand command = new CommandControlSetPosController(NetEndpoint.PRIMARY_ENDPOINT,
 			POS_NUM,
 			REQ_VALUE,
 			MIN_VALUE,

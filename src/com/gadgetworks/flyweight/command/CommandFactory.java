@@ -173,8 +173,8 @@ public final class CommandFactory {
 				result = new CommandControlLed();
 				break;
 
-			case CommandControlABC.REQUEST_QTY:
-				result = new CommandControlRequestQty();
+			case CommandControlABC.SET_POSCONTROLLER:
+				result = new CommandControlSetPosController();
 				break;
 
 			case CommandControlABC.BUTTON:

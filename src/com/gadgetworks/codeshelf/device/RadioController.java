@@ -133,6 +133,10 @@ public class RadioController implements IRadioController {
 
 		mChannelSelected = false;
 		mChannelInfo = new ChannelInfo[MAX_CHANNELS];
+		for (byte channel = 0; channel < MAX_CHANNELS; channel++) {
+			mChannelInfo[channel] = new ChannelInfo();
+			mChannelInfo[channel].setChannelEnergy((short) MAX_CHANNEL_VALUE);
+		}
 		mRadioChannel = 0;
 
 		mPendingAcksMap = new ConcurrentHashMap<NetAddress, BlockingQueue<IPacket>>();

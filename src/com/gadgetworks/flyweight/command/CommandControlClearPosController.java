@@ -20,86 +20,45 @@ import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
 
 // --------------------------------------------------------------------------
 /**
- *  A pick request.
+ *  Clear position controller.
  *  
  *  1B - Position Number
- *  1B - Requested Value
- *  1B - Min Value
- *  1B - Max Value
  *
  *	}
 
  *  @author jeffw
  */
-public final class CommandControlRequestQty extends CommandControlABC {
+public final class CommandControlClearPosController extends CommandControlABC {
 
 	public static final Byte		POSITION_ALL			= 0;
-	public static final Byte		ERROR_CODE_QTY			= (byte) 255;
-	public static final Byte		BAY_COMPLETE_QTY		= (byte) 254;
-	public static final Byte		POSITION_ASSIGNED_CODE	= (byte) 253;
 
-	private static final Logger		LOGGER					= LoggerFactory.getLogger(CommandControlRequestQty.class);
+	private static final Logger		LOGGER					= LoggerFactory.getLogger(CommandControlClearPosController.class);
 
-	private static final Integer	REQUEST_COMMAND_BYTES	= 4;
+	private static final Integer	REQUEST_COMMAND_BYTES	= 1;
 
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
 	private Byte					mPosNum;
 
-	@Accessors(prefix = "m")
-	@Getter
-	@Setter
-	private Byte					mReqValue;
-
-	@Accessors(prefix = "m")
-	@Getter
-	@Setter
-	private Byte					mMinValue;
-
-	@Accessors(prefix = "m")
-	@Getter
-	@Setter
-	private Byte					mMaxValue;
-
-	@Accessors(prefix = "m")
-	@Getter
-	@Setter
-	private Byte					mFreq;
-
-	@Accessors(prefix = "m")
-	@Getter
-	@Setter
-	private Byte					mDutyCycle;
-
 	// --------------------------------------------------------------------------
 	/**
 	 *  This is the constructor to use to create a data command to send to the network.
 	 *  @param inEndpoint	The end point to send the command.
 	 */
-	public CommandControlRequestQty(final NetEndpoint inEndpoint,
-		final Byte inPosNum,
-		final Byte inReqValue,
-		final Byte inMinValue,
-		final Byte inMaxValue,
-		final Byte inFreq,
-		final Byte inDutyCycle) {
-		super(inEndpoint, new NetCommandId(CommandControlABC.REQUEST_QTY));
+	public CommandControlClearPosController(final NetEndpoint inEndpoint,
+		final Byte inPosNum) {
+		super(inEndpoint, new NetCommandId(CommandControlABC.CLR_POSCONTROLLER));
 
 		mPosNum = inPosNum;
-		mReqValue = inReqValue;
-		mMinValue = inMinValue;
-		mMaxValue = inMaxValue;
-		mFreq = inFreq;
-		mDutyCycle = inDutyCycle;
 	}
 
 	// --------------------------------------------------------------------------
 	/**
 	 *  This is the constructor to use to create a data command that's read off of the network input stream.
 	 */
-	public CommandControlRequestQty() {
-		super(new NetCommandId(CommandControlABC.REQUEST_QTY));
+	public CommandControlClearPosController() {
+		super(new NetCommandId(CommandControlABC.SET_POSCONTROLLER));
 	}
 
 	/* --------------------------------------------------------------------------
@@ -107,7 +66,7 @@ public final class CommandControlRequestQty extends CommandControlABC {
 	 * @see com.gadgetworks.controller.CommandABC#doToString()
 	 */
 	public String doToString() {
-		return "Pick Req: pos: " + mPosNum + " req qty:" + mReqValue + " min: " + mMinValue + " max: " + mMaxValue;
+		return "Clear pos controller: pos: " + mPosNum;
 	}
 
 	/* --------------------------------------------------------------------------
@@ -119,11 +78,6 @@ public final class CommandControlRequestQty extends CommandControlABC {
 
 		try {
 			inOutputStream.writeByte(mPosNum);
-			inOutputStream.writeByte(mReqValue);
-			inOutputStream.writeByte(mMinValue);
-			inOutputStream.writeByte(mMaxValue);
-			inOutputStream.writeByte(mFreq);
-			inOutputStream.writeByte(mDutyCycle);
 		} catch (IOException e) {
 			LOGGER.error("", e);
 		}
@@ -139,11 +93,6 @@ public final class CommandControlRequestQty extends CommandControlABC {
 
 		try {
 			mPosNum = inInputStream.readByte();
-			mReqValue = inInputStream.readByte();
-			mMinValue = inInputStream.readByte();
-			mMaxValue = inInputStream.readByte();
-			mFreq = inInputStream.readByte();
-			mDutyCycle = inInputStream.readByte();
 		} catch (IOException e) {
 			LOGGER.error("", e);
 		}
