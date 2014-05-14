@@ -1148,6 +1148,7 @@ public class Facility extends SubLocationABC<Facility> {
 
 													// If we created a WI then add it to the list.
 													if (wi != null) {
+														setWiPickInstruction(wi, outOrder);
 														wiList.add(wi);
 													}
 												}
@@ -1169,6 +1170,33 @@ public class Facility extends SubLocationABC<Facility> {
 			bayList.addAll(path.<ISubLocation<?>> getLocationsByClass(Bay.class));
 		}
 		return sortCrosswallInstructionsInLocationOrder(wiList, inContainerList, bayList);
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inOrder
+	 * @return
+	 */
+	private void setWiPickInstruction(WorkInstruction inWi, OrderHeader inOrder) {
+		String locationString = "";
+
+		// Generate a location string.
+		for (OrderLocation orderLocation : inOrder.getOrderLocations()) {
+			LocationAlias locAlias = orderLocation.getLocation().getPrimaryAlias();
+			if (locAlias != null) {
+				locationString += locAlias.getAlias() + " ";
+			} else {
+				locationString += orderLocation.getLocation().getLocationId();
+			}
+		}
+		
+		inWi.setPickInstruction(locationString);
+
+		try {
+			WorkInstruction.DAO.store(inWi);
+		} catch (DaoException e) {
+			LOGGER.error("", e);
+		}
 	}
 
 	/**

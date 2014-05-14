@@ -863,10 +863,20 @@ public class RadioController implements IRadioController {
 									processAckPacket(packet);
 								} else {
 									// If the inbound packet had an ACK ID then respond with an ACK ID.
-									if (packet.getAckId() != 0) {
+									byte ackId = packet.getAckId();
+									if (ackId != IPacket.EMPTY_ACK_ID) {
 										CommandAssocAck ackCmd = new CommandAssocAck("00000000",
 											new NBitInteger(CommandAssocAck.ASSOCIATE_STATE_BITS, (byte) 0));
+
 										sendCommand(ackCmd, packet.getNetworkId(), packet.getSrcAddr(), false);
+										IPacket ackPacket = new Packet(ackCmd,
+											packet.getNetworkId(),
+											mServerAddress,
+											packet.getSrcAddr(),
+											false);
+										ackCmd.setPacket(ackPacket);
+										ackPacket.setAckId(ackId);
+										sendPacket(ackPacket);
 									}
 									receiveCommand(packet.getCommand(), packet.getSrcAddr());
 								}
