@@ -10,7 +10,7 @@ import junit.framework.TestCase;
 import org.junit.Test;
 
 import com.gadgetworks.flyweight.command.CommandAssocReq;
-import com.gadgetworks.flyweight.command.CommandControlMessage;
+import com.gadgetworks.flyweight.command.CommandControlDisplayMessage;
 import com.gadgetworks.flyweight.command.ICommand;
 import com.gadgetworks.flyweight.command.NetAddress;
 import com.gadgetworks.flyweight.command.NetEndpoint;
@@ -28,6 +28,8 @@ public abstract class ControllerABCTest extends TestCase {
 
 	private static final String			TEST_MSG1			= "TEST1";
 	private static final String			TEST_MSG2			= "TEST2";
+	private static final String			TEST_MSG3			= "TEST3";
+	private static final String			TEST_MSG4			= "TEST4";
 
 	private IRadioController			mControllerABC;
 
@@ -56,7 +58,7 @@ public abstract class ControllerABCTest extends TestCase {
 		NetAddress srcAddress = new NetAddress((byte) 0x04);
 
 		byte[] cmdBytes = { 0x00, 0x01, 0x02, 0x03, 0x04 };
-		ICommand command = new CommandControlMessage(NetEndpoint.PRIMARY_ENDPOINT, TEST_MSG1, TEST_MSG2);
+		ICommand command = new CommandControlDisplayMessage(NetEndpoint.PRIMARY_ENDPOINT, TEST_MSG1, TEST_MSG2, TEST_MSG3, TEST_MSG4);
 		mControllerABC.receiveCommand(command, srcAddress);
 
 		CommandAssocReq netCmd = new CommandAssocReq(INetworkDevice.PROTOCOL_VERSION_1, SRS_BYTE, TEST_ID);

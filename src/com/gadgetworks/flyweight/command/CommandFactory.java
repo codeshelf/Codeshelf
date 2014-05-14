@@ -166,7 +166,7 @@ public final class CommandFactory {
 				break;
 
 			case CommandControlABC.MESSAGE:
-				result = new CommandControlMessage();
+				result = new CommandControlDisplayMessage();
 				break;
 
 			case CommandControlABC.LIGHT:

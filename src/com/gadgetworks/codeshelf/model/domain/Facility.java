@@ -85,7 +85,7 @@ public class Facility extends SubLocationABC<Facility> {
 
 	private static final Logger				LOGGER				= LoggerFactory.getLogger(Facility.class);
 
-	private static final Integer			MAX_WI_DESC_BYTES	= 60;
+	private static final Integer			MAX_WI_DESC_BYTES	= 80;
 
 	// The owning organization.
 	@Column(nullable = false)

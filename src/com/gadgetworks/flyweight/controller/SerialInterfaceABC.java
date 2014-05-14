@@ -30,20 +30,18 @@ import com.gadgetworks.flyweight.command.Packet;
 
 public abstract class SerialInterfaceABC implements IGatewayInterface {
 
-	public static final int			SERIAL_RESET_TIMEOUT_MS	= 500;
-	public static final int			READ_SLEEP_MILLIS		= 1;
-	public static final int			READ_RECOVER_MILLIS		= 5000;
-	public static final int			WAIT_INTERFACE_MILLIS	= 10;
+	public static final int		SERIAL_RESET_TIMEOUT_MS	= 500;
+	public static final int		READ_SLEEP_MILLIS		= 1;
+	public static final int		READ_RECOVER_MILLIS		= 5000;
+	public static final int		WAIT_INTERFACE_MILLIS	= 10;
 
-	private static final Logger		LOGGER					= LoggerFactory.getLogger(SerialInterfaceABC.class);
+	private static final Logger	LOGGER					= LoggerFactory.getLogger(SerialInterfaceABC.class);
 
-	private final Object			mLock					= new Object();
+	private final Object		mLock					= new Object();
 
-	private boolean					mIsStarted;
-	private boolean					mShouldRun				= true;
-	private boolean					mIsStartingInterface;
-	private ByteArrayOutputStream	mByteArrayStream;
-	private BitFieldOutputStream	mBitFieldOutStream;
+	private boolean				mIsStarted;
+	private boolean				mShouldRun				= true;
+	private boolean				mIsStartingInterface;
 
 	// --------------------------------------------------------------------------
 	/**
@@ -54,8 +52,6 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 		mIsStarted = false;
 		//		mHexDumpEncoder = new HexDumpEncoder();
 
-		mByteArrayStream = new ByteArrayOutputStream();
-		mBitFieldOutStream = new BitFieldOutputStream(mByteArrayStream);
 	}
 
 	/* --------------------------------------------------------------------------
@@ -224,15 +220,16 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 		}
 
 		// Reset the byte array in preparation for the generation of a new frame.
-		mByteArrayStream.reset();
+		ByteArrayOutputStream byteArrayStream = new ByteArrayOutputStream();
+		BitFieldOutputStream bitFieldOutStream = new BitFieldOutputStream(byteArrayStream);
+		byteArrayStream.reset();
 
 		// Spool the packet to the formatted bit stream.
-		inPacket.toStream(mBitFieldOutStream);
+		inPacket.toStream(bitFieldOutStream);
 		//mBitFieldOutStream.writeEND();
 
 		// Write the bytes to the serial interface.
-		//mSerialOutputStream.write(mByteArrayStream.toByteArray());
-		sendFrame(inPacket);
+		sendFrame(inPacket, byteArrayStream);
 
 	}
 
@@ -386,13 +383,18 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 	 *  Frame the packet bytes before putting them onto the serial link.
 	 */
 
-	private void sendFrame(IPacket inPacket) {
+	private void sendFrame(IPacket inPacket, ByteArrayOutputStream inByteArrayStream) {
 
-		byte[] packetBytes = mByteArrayStream.toByteArray();
+		byte[] packetBytes = inByteArrayStream.toByteArray();
 		byte[] buffer = new byte[MAX_FRAME_BYTES];
 		int bufPos = 0;
+		int bytesToSend = Math.min(IPacket.MAX_PACKET_BYTES - 1, packetBytes.length);
 
-		for (int i = 0; i < packetBytes.length; i++) {
+		if (packetBytes.length > bytesToSend) {
+			LOGGER.error("Packet contains more bytes than can fit on radio!");
+		}
+
+		for (int i = 0; i < bytesToSend; i++) {
 			byte nextByte = packetBytes[i];
 
 			if (nextByte == IGatewayInterface.ESC) {
@@ -422,7 +424,7 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 		LOGGER.info("Send packet:    " + inPacket.toString());
 		if (LOGGER.isDebugEnabled()) {
 			try {
-				hexDumpArray(mByteArrayStream.toByteArray());
+				hexDumpArray(packetBytes);
 			} catch (Exception e) {
 				LOGGER.error("", e);
 			}

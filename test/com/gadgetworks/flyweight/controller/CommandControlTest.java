@@ -8,14 +8,18 @@ package com.gadgetworks.flyweight.controller;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
+import org.junit.Assert;
 import org.junit.Test;
 
+import com.gadgetworks.codeshelf.device.PosControllerInstr;
 import com.gadgetworks.flyweight.bitfields.BitFieldInputStream;
 import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
 import com.gadgetworks.flyweight.command.CommandControlButton;
-import com.gadgetworks.flyweight.command.CommandControlMessage;
+import com.gadgetworks.flyweight.command.CommandControlDisplayMessage;
 import com.gadgetworks.flyweight.command.CommandControlSetPosController;
 import com.gadgetworks.flyweight.command.ICommand;
 import com.gadgetworks.flyweight.command.IPacket;
@@ -28,16 +32,20 @@ public final class CommandControlTest extends CommandABCTest {
 
 	private static final String	TEST_MSG1				= "TEST1";
 	private static final String	TEST_MSG2				= "TEST2";
+	private static final String	TEST_MSG3				= "TEST3";
+	private static final String	TEST_MSG4				= "TEST4";
 
 	private static final Byte	POS_NUM					= 5;
 	private static final Byte	MIN_VALUE				= 1;
 	private static final Byte	REQ_VALUE				= 2;
 	private static final Byte	MAX_VALUE				= 3;
-	private static final Byte	FREQ_VALUE				= 4;
-	private static final Byte	DUTYCYCLE_VALUE			= 5;
+	private static final Byte	FREQ					= 4;
+	private static final Byte	DUTYCYCLE				= 5;
 
-	private static final byte[]	REQUEST_PACKET_IN_DATA	= { 0x01, 0x00, 0x01, 0x00, 0x31, 0x03, POS_NUM, REQ_VALUE, MIN_VALUE, MAX_VALUE, FREQ_VALUE, DUTYCYCLE_VALUE };
-	private static final byte[]	REQUEST_PACKET_OUT_DATA	= { 0x01, 0x00, 0x08, 0x00, 0x31, 0x03, POS_NUM, REQ_VALUE, MIN_VALUE, MAX_VALUE, FREQ_VALUE, DUTYCYCLE_VALUE };
+	private static final byte[]	REQUEST_PACKET_IN_DATA	= { 0x01, 0x00, 0x01, 0x00, 0x31, 0x03, POS_NUM, REQ_VALUE, MIN_VALUE,
+			MAX_VALUE, FREQ, DUTYCYCLE					};
+	private static final byte[]	REQUEST_PACKET_OUT_DATA	= { 0x01, 0x00, 0x08, 0x00, 0x31, 0x03, POS_NUM, REQ_VALUE, MIN_VALUE,
+			MAX_VALUE, FREQ, DUTYCYCLE					};
 
 	private static final byte[]	BUTTON_PACKET_IN_DATA	= { 0x01, 0x00, 0x01, 0x00, 0x31, 0x04, 0x05, 0x02 };
 
@@ -47,7 +55,7 @@ public final class CommandControlTest extends CommandABCTest {
 
 	@Override
 	protected ICommand createCommandABC() throws Exception {
-		return new CommandControlMessage(NetEndpoint.PRIMARY_ENDPOINT, TEST_MSG1, TEST_MSG2);
+		return new CommandControlDisplayMessage(NetEndpoint.PRIMARY_ENDPOINT, TEST_MSG1, TEST_MSG2, TEST_MSG3, TEST_MSG4);
 	}
 
 	@Test
@@ -67,22 +75,17 @@ public final class CommandControlTest extends CommandABCTest {
 		if (!(command instanceof CommandControlSetPosController))
 			fail("Not a CommandControlRequestQty command");
 
-		Byte posNum = ((CommandControlSetPosController) command).getPosNum();
-		if (!POS_NUM.equals(posNum))
-			fail("Command data is not correct");
+		List<PosControllerInstr> instructions = ((CommandControlSetPosController) command).getInstructions();
+		Assert.assertEquals(1, instructions.size());
 
-		Byte req = ((CommandControlSetPosController) command).getReqValue();
-		if (!REQ_VALUE.equals(req))
-			fail("Command data is not correct");
+		PosControllerInstr instruction = instructions.get(0);
 
-		Byte min = ((CommandControlSetPosController) command).getMinValue();
-		if (!MIN_VALUE.equals(min))
-			fail("Command data is not correct");
-
-		Byte max = ((CommandControlSetPosController) command).getMaxValue();
-		if (!MAX_VALUE.equals(max))
-			fail("Command data is not correct");
-
+		Assert.assertEquals(POS_NUM, (Byte) instruction.getPosition());
+		Assert.assertEquals(REQ_VALUE, (Byte) instruction.getReqQty());
+		Assert.assertEquals(MIN_VALUE, (Byte) instruction.getMinQty());
+		Assert.assertEquals(MAX_VALUE, (Byte) instruction.getMaxQty());
+		Assert.assertEquals(FREQ, (Byte) instruction.getFreq());
+		Assert.assertEquals(DUTYCYCLE, (Byte) instruction.getDutyCycle());
 	}
 
 	@Test
@@ -92,13 +95,10 @@ public final class CommandControlTest extends CommandABCTest {
 		BitFieldOutputStream outputStream = new BitFieldOutputStream(byteArray);
 
 		// Create a new command.
-		ICommand command = new CommandControlSetPosController(NetEndpoint.PRIMARY_ENDPOINT,
-			POS_NUM,
-			REQ_VALUE,
-			MIN_VALUE,
-			MAX_VALUE,
-			FREQ_VALUE,
-			DUTYCYCLE_VALUE);
+		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
+		PosControllerInstr instruction = new PosControllerInstr(POS_NUM, REQ_VALUE, MIN_VALUE, MAX_VALUE, FREQ, DUTYCYCLE);
+		instructions.add(instruction);
+		ICommand command = new CommandControlSetPosController(NetEndpoint.PRIMARY_ENDPOINT, instructions);
 
 		// Create the network ID
 		NetworkId networkId = new NetworkId((byte) 1);

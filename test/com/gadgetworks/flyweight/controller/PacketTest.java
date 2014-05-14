@@ -14,7 +14,7 @@ import junit.framework.TestCase;
 
 import com.gadgetworks.flyweight.bitfields.BitFieldInputStream;
 import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
-import com.gadgetworks.flyweight.command.CommandControlMessage;
+import com.gadgetworks.flyweight.command.CommandControlDisplayMessage;
 import com.gadgetworks.flyweight.command.ICommand;
 import com.gadgetworks.flyweight.command.IPacket;
 import com.gadgetworks.flyweight.command.NetAddress;
@@ -33,6 +33,8 @@ public final class PacketTest extends TestCase {
 
 	private static final String			TEST_MSG1			= "TEST1";
 	private static final String			TEST_MSG2			= "TEST2";
+	private static final String			TEST_MSG3			= "TEST3";
+	private static final String			TEST_MSG4			= "TEST4";
 
 	/** --------------------------------------------------------------------------
 	 *  Packet constructor.
@@ -52,7 +54,7 @@ public final class PacketTest extends TestCase {
 		IPacket packet;
 
 		NetworkId networkId = new NetworkId((byte) 1);
-		ICommand command = new CommandControlMessage(NetEndpoint.PRIMARY_ENDPOINT, TEST_MSG1, TEST_MSG2);
+		ICommand command = new CommandControlDisplayMessage(NetEndpoint.PRIMARY_ENDPOINT, TEST_MSG1, TEST_MSG2, TEST_MSG3, TEST_MSG4);
 		NetAddress srcAddr = new NetAddress(IPacket.GATEWAY_ADDRESS);
 		NetAddress destAddr = new NetAddress(IPacket.BROADCAST_ADDRESS);
 
@@ -98,14 +100,14 @@ public final class PacketTest extends TestCase {
 		ICommand command = packet.getCommand();
 
 		// If it is not the datagram command then something went wrong.
-		if (!(command instanceof CommandControlMessage))
+		if (!(command instanceof CommandControlDisplayMessage))
 			fail("Not a CommandControlMessage command");
 
-		String message1 = ((CommandControlMessage) command).getLine1MessageStr();
+		String message1 = ((CommandControlDisplayMessage) command).getLine1MessageStr();
 		if (!TEST_MSG1.equals(message1))
 			fail("Command data is not correct");
 
-		String message2 = ((CommandControlMessage) command).getLine2MessageStr();
+		String message2 = ((CommandControlDisplayMessage) command).getLine2MessageStr();
 		if (!TEST_MSG2.equals(message2))
 			fail("Command data is not correct");
 	}
@@ -119,7 +121,7 @@ public final class PacketTest extends TestCase {
 		BitFieldOutputStream outputStream = new BitFieldOutputStream(byteArray);
 
 		// Create a new command.
-		ICommand command = new CommandControlMessage(NetEndpoint.PRIMARY_ENDPOINT, TEST_MSG1, TEST_MSG2);
+		ICommand command = new CommandControlDisplayMessage(NetEndpoint.PRIMARY_ENDPOINT, TEST_MSG1, TEST_MSG2, TEST_MSG3, TEST_MSG4);
 
 		// Create the network ID
 		NetworkId networkId = new NetworkId((byte) 1);

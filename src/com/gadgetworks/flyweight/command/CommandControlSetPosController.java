@@ -7,6 +7,8 @@
 package com.gadgetworks.flyweight.command;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -15,6 +17,7 @@ import lombok.experimental.Accessors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.gadgetworks.codeshelf.device.PosControllerInstr;
 import com.gadgetworks.flyweight.bitfields.BitFieldInputStream;
 import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
 
@@ -22,6 +25,8 @@ import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
 /**
  *  Set position contoller.
  *  
+ *  1B - Instruction count
+ *  repeat:
  *  1B - Position Number
  *  1B - Requested Value
  *  1B - Min Value
@@ -35,65 +40,24 @@ import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
  */
 public final class CommandControlSetPosController extends CommandControlABC {
 
-	public static final Byte		POSITION_ALL			= 0;
-	public static final Byte		ERROR_CODE_QTY			= (byte) 255;
-	public static final Byte		BAY_COMPLETE_QTY		= (byte) 254;
-	public static final Byte		POSITION_ASSIGNED_CODE	= (byte) 253;
+	private static final Logger			LOGGER					= LoggerFactory.getLogger(CommandControlSetPosController.class);
 
-	private static final Logger		LOGGER					= LoggerFactory.getLogger(CommandControlSetPosController.class);
-
-	private static final Integer	REQUEST_COMMAND_BYTES	= 4;
+	private static final int			INSTRUCTION_COUNT_BYTES	= 1;
+	private static final int			ONE_INSTRUCTION_BYTES	= 6;
 
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
-	private Byte					mPosNum;
-
-	@Accessors(prefix = "m")
-	@Getter
-	@Setter
-	private Byte					mReqValue;
-
-	@Accessors(prefix = "m")
-	@Getter
-	@Setter
-	private Byte					mMinValue;
-
-	@Accessors(prefix = "m")
-	@Getter
-	@Setter
-	private Byte					mMaxValue;
-
-	@Accessors(prefix = "m")
-	@Getter
-	@Setter
-	private Byte					mFreq;
-
-	@Accessors(prefix = "m")
-	@Getter
-	@Setter
-	private Byte					mDutyCycle;
+	private List<PosControllerInstr>	mInstructions;
 
 	// --------------------------------------------------------------------------
 	/**
 	 *  This is the constructor to use to create a data command to send to the network.
 	 *  @param inEndpoint	The end point to send the command.
 	 */
-	public CommandControlSetPosController(final NetEndpoint inEndpoint,
-		final Byte inPosNum,
-		final Byte inReqValue,
-		final Byte inMinValue,
-		final Byte inMaxValue,
-		final Byte inFreq,
-		final Byte inDutyCycle) {
+	public CommandControlSetPosController(final NetEndpoint inEndpoint, List<PosControllerInstr> inInstructions) {
 		super(inEndpoint, new NetCommandId(CommandControlABC.SET_POSCONTROLLER));
-
-		mPosNum = inPosNum;
-		mReqValue = inReqValue;
-		mMinValue = inMinValue;
-		mMaxValue = inMaxValue;
-		mFreq = inFreq;
-		mDutyCycle = inDutyCycle;
+		mInstructions = inInstructions;
 	}
 
 	// --------------------------------------------------------------------------
@@ -109,7 +73,15 @@ public final class CommandControlSetPosController extends CommandControlABC {
 	 * @see com.gadgetworks.controller.CommandABC#doToString()
 	 */
 	public String doToString() {
-		return "Pick Req: pos: " + mPosNum + " req qty:" + mReqValue + " min: " + mMinValue + " max: " + mMaxValue;
+		String result = "Pos controller set: ";
+
+		for (PosControllerInstr instruction : mInstructions) {
+			result += " pos:" + instruction.getPosition() + " qty: " + instruction.getReqQty() + " min: " + instruction.getMinQty()
+					+ " max: " + instruction.getMaxQty() + " freq: " + instruction.getFreq() + " duty: "
+					+ instruction.getDutyCycle();
+		}
+
+		return result;
 	}
 
 	/* --------------------------------------------------------------------------
@@ -120,12 +92,15 @@ public final class CommandControlSetPosController extends CommandControlABC {
 		super.doToStream(inOutputStream);
 
 		try {
-			inOutputStream.writeByte(mPosNum);
-			inOutputStream.writeByte(mReqValue);
-			inOutputStream.writeByte(mMinValue);
-			inOutputStream.writeByte(mMaxValue);
-			inOutputStream.writeByte(mFreq);
-			inOutputStream.writeByte(mDutyCycle);
+			inOutputStream.writeByte((byte) mInstructions.size());
+			for (PosControllerInstr instruction : mInstructions) {
+				inOutputStream.writeByte(instruction.getPosition());
+				inOutputStream.writeByte(instruction.getReqQty());
+				inOutputStream.writeByte(instruction.getMinQty());
+				inOutputStream.writeByte(instruction.getMaxQty());
+				inOutputStream.writeByte(instruction.getFreq());
+				inOutputStream.writeByte(instruction.getDutyCycle());
+			}
 		} catch (IOException e) {
 			LOGGER.error("", e);
 		}
@@ -140,12 +115,18 @@ public final class CommandControlSetPosController extends CommandControlABC {
 		super.doFromStream(inInputStream, inCommandByteCount);
 
 		try {
-			mPosNum = inInputStream.readByte();
-			mReqValue = inInputStream.readByte();
-			mMinValue = inInputStream.readByte();
-			mMaxValue = inInputStream.readByte();
-			mFreq = inInputStream.readByte();
-			mDutyCycle = inInputStream.readByte();
+			short instructionCnt = inInputStream.readByte();
+			mInstructions = new ArrayList<PosControllerInstr>();
+			for (int instructionNum = 0; instructionNum < instructionCnt; instructionNum++) {
+				byte position = inInputStream.readByte();
+				byte reqQty = inInputStream.readByte();
+				byte minQty = inInputStream.readByte();
+				byte maxQty = inInputStream.readByte();
+				byte freq = inInputStream.readByte();
+				byte dutyCycle = inInputStream.readByte();
+				PosControllerInstr instruction = new PosControllerInstr(position, reqQty, minQty, maxQty, freq, dutyCycle);
+				mInstructions.add(instruction);
+			}
 		} catch (IOException e) {
 			LOGGER.error("", e);
 		}
@@ -158,7 +139,6 @@ public final class CommandControlSetPosController extends CommandControlABC {
 	 */
 	@Override
 	protected int doComputeCommandSize() {
-		return super.doComputeCommandSize() + REQUEST_COMMAND_BYTES;
+		return super.doComputeCommandSize() + INSTRUCTION_COUNT_BYTES + (mInstructions.size() * ONE_INSTRUCTION_BYTES);
 	}
-
 }

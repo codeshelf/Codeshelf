@@ -147,6 +147,7 @@ public final class CommandNetMgmtCheck extends CommandNetMgmtABC {
 			inOutputStream.writeByte(mNetCheckType);
 			// Write the network ID requested.
 			inOutputStream.writeNBitInteger(mNetworkId);
+			inOutputStream.roundOutByte();
 			inOutputStream.writeBytes(mGUID.getBytes());
 			inOutputStream.writeByte(mChannel);
 			inOutputStream.writeNBitInteger(mChannelEnergy);

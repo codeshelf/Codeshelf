@@ -28,7 +28,7 @@ import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.flyweight.command.CommandControlButton;
 import com.gadgetworks.flyweight.command.CommandControlClearPosController;
-import com.gadgetworks.flyweight.command.CommandControlMessage;
+import com.gadgetworks.flyweight.command.CommandControlDisplayMessage;
 import com.gadgetworks.flyweight.command.CommandControlSetPosController;
 import com.gadgetworks.flyweight.command.EffectEnum;
 import com.gadgetworks.flyweight.command.ICommand;
@@ -57,7 +57,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	// Currently, these cannot be longer than 10 characters.
 	private static final String		EMPTY_MSG				= "                    ";
 	private static final String		INVALID_SCAN_MSG		= "INVALID             ";
-	private static final String		SCAN_USERID_MSG			= "SCAN BADGE          ";							// new String(new byte[] { 0x7c, (byte) 0x82 });
+	private static final String		SCAN_USERID_MSG			= "SCAN BADGE          ";							//		 new String(new byte[] { 0x7c, (byte) 0x05 });
 	private static final String		SCAN_LOCATION_MSG		= "SCAN LOCATION       ";
 	private static final String		SCAN_CONTAINER_MSG		= "SCAN CONTAINER      ";
 	private static final String		OR_START_WORK_MSG		= "OR START WORK       ";
@@ -78,13 +78,6 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private static final String		RESUME_COMMAND			= "RESUME";
 	private static final String		YES_COMMAND				= "YES";
 	private static final String		NO_COMMAND				= "NO";
-
-	private static final Byte		BLINK_FREQ				= (byte) 0x15;
-	private static final Byte		BLINK_DUTYCYCLE			= (byte) 0x40;
-	private static final Byte		MED_FREQ				= (byte) 0x00;
-	private static final Byte		MED_DUTYCYCLE			= (byte) 0xF0;
-	private static final Byte		BRIGHT_FREQ				= (byte) 0x00;
-	private static final Byte		BRIGHT_DUTYCYCLE		= (byte) 0x40;
 
 	// The CHE's current state.
 	@Accessors(prefix = "m")
@@ -141,13 +134,60 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	/**
 	 * Send a display message to the CHE's embedded control device.
 	 * @param inLine1Message
+	 * @param inLine2Message
 	 */
 	private void sendDisplayCommand(final String inLine1Message, final String inLine2Message) {
-		String msg1 = String.format("%-20s", inLine1Message);
-		String msg2 = String.format("%-20s", inLine2Message);
-		LOGGER.info("Display message: " + msg1 + " -- " + msg2);
-		ICommand command = new CommandControlMessage(NetEndpoint.PRIMARY_ENDPOINT, msg1, msg2);
+		sendDisplayCommand(inLine1Message, inLine2Message, "", "");
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inLine1Message
+	 * @param inLine2Message
+	 * @param inLine3Message
+	 * @param inLine4Message
+	 */
+	private void sendDisplayCommand(final String inLine1Message,
+		final String inLine2Message,
+		final String inLine3Message,
+		final String inLine4Message) {
+		LOGGER.info("Display message: line1: " + inLine1Message);
+		LOGGER.info("Display message: line2: " + inLine2Message);
+		LOGGER.info("Display message: line3: " + inLine3Message);
+		LOGGER.info("Display message: line4: " + inLine4Message);
+		ICommand command = new CommandControlDisplayMessage(NetEndpoint.PRIMARY_ENDPOINT,
+			inLine1Message,
+			inLine2Message,
+			inLine3Message,
+			inLine4Message);
 		mRadioController.sendCommand(command, getAddress(), true);
+	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * Breakup the description into three static lines no longer than 20 characters.
+	 * Except the last line can be up to 40 characters (since it scrolls).
+	 * @param inPickInstructions
+	 * @param inDescription
+	 */
+	private void sendDisplayWorkInstruction(final String inPickInstructions, final String inDescription) {
+		String[] descriptionLine = { "", "", ""};
+		int pos = 0;
+		for (int line = 0; line < 3; line++) {
+			if (pos < inDescription.length()) {
+				int toGet = Math.min(20, inDescription.length() - pos);
+				descriptionLine[line] = inDescription.substring(pos, pos + toGet);
+				pos += toGet;
+			}
+		}
+		
+		// Check if there is more description to add to the last line.
+		if (pos < inDescription.length()) {
+			int toGet = Math.min(20, inDescription.length() - pos);
+			descriptionLine[2] += inDescription.substring(pos, pos + toGet);
+		}
+		
+		sendDisplayCommand(inPickInstructions, descriptionLine[0], descriptionLine[1], descriptionLine[2]);
 	}
 
 	// --------------------------------------------------------------------------
@@ -158,19 +198,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 * @param inMinQty
 	 * @param inMaxQty
 	 */
-	private void sendPickRequestCommand(final int inPos,
-		final int inReqQty,
-		final int inMinQty,
-		final int inMaxQty,
-		final byte inFreq,
-		final byte inDutyCycle) {
-		ICommand command = new CommandControlSetPosController(NetEndpoint.PRIMARY_ENDPOINT,
-			(byte) inPos,
-			(byte) inReqQty,
-			(byte) inMinQty,
-			(byte) inMaxQty,
-			inFreq,
-			inDutyCycle);
+	private void sendPickRequestCommand(List<PosControllerInstr> inInstructions) {
+		ICommand command = new CommandControlSetPosController(NetEndpoint.PRIMARY_ENDPOINT, inInstructions);
 		mRadioController.sendCommand(command, getAddress(), true);
 	}
 
@@ -483,12 +512,15 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				break;
 		}
 
-		sendPickRequestCommand(CommandControlSetPosController.POSITION_ALL,
-			CommandControlSetPosController.ERROR_CODE_QTY,
-			(byte) 0,
-			(byte) 0,
-			BLINK_FREQ,
-			BLINK_DUTYCYCLE);
+		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
+		PosControllerInstr instruction = new PosControllerInstr(PosControllerInstr.POSITION_ALL,
+			PosControllerInstr.ERROR_CODE_QTY,
+			PosControllerInstr.ZERO_QTY,
+			PosControllerInstr.ZERO_QTY,
+			PosControllerInstr.BLINK_FREQ,
+			PosControllerInstr.BLINK_DUTYCYCLE);
+		instructions.add(instruction);
+		sendPickRequestCommand(instructions);
 	}
 
 	// --------------------------------------------------------------------------
@@ -767,7 +799,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				setState(CheStateEnum.DO_PICK);
 			}
 			ledControllerClearLeds();
-			sendDisplayCommand(firstWi.getPickInstruction(), firstWi.getDescription());
+			sendDisplayWorkInstruction(firstWi.getPickInstruction(), firstWi.getDescription());
 
 			List<LedCmdGroup> ledCmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(firstWi.getLedCmdStream());
 
@@ -804,18 +836,22 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			}
 
 			// Now create a light instruction for each position.
+			List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
 			for (WorkInstruction wi : mActivePickWiList) {
 				for (Entry<String, String> mapEntry : mContainersMap.entrySet()) {
 					if (mapEntry.getValue().equals(wi.getContainerId())) {
-						sendPickRequestCommand(Short.valueOf(mapEntry.getKey()),
-							firstWi.getPlanQuantity(),
-							0,
-							firstWi.getPlanQuantity(),
-							BRIGHT_FREQ,
-							BRIGHT_DUTYCYCLE);
+						PosControllerInstr instruction = new PosControllerInstr(Byte.valueOf(mapEntry.getKey()),
+							firstWi.getPlanQuantity().byteValue(),
+							firstWi.getPlanMinQuantity().byteValue(),
+							firstWi.getPlanMaxQuantity().byteValue(),
+							PosControllerInstr.BRIGHT_FREQ,
+							PosControllerInstr.BRIGHT_DUTYCYCLE);
+						instructions.add(instruction);
 					}
 				}
 			}
+			sendPickRequestCommand(instructions);
+
 		}
 		ledControllerShowLeds(getGuid());
 	}
@@ -1015,10 +1051,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		mShortPickWi = inWi;
 		mShortPickQty = inQuantity;
 	}
-	
+
 	private void clearOnePositionController(Byte inPosition) {
-		ICommand command = new CommandControlClearPosController(NetEndpoint.PRIMARY_ENDPOINT,
-			inPosition);
+		ICommand command = new CommandControlClearPosController(NetEndpoint.PRIMARY_ENDPOINT, inPosition);
 		mRadioController.sendCommand(command, getAddress(), true);
 	}
 
@@ -1026,21 +1061,23 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	/**
 	 */
 	private void clearAllPositionControllers() {
-		clearOnePositionController(CommandControlClearPosController.POSITION_ALL);
+		clearOnePositionController(PosControllerInstr.POSITION_ALL);
 	}
 
 	// --------------------------------------------------------------------------
 	/**
 	 */
 	private void showAssignedPositions() {
+		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
 		for (String pos : mContainersMap.keySet()) {
-			sendPickRequestCommand(Integer.valueOf(pos),
-				CommandControlSetPosController.POSITION_ASSIGNED_CODE,
-				(byte) 0,
-				(byte) 0,
-				MED_FREQ,
-				MED_DUTYCYCLE);
+			PosControllerInstr instruction = new PosControllerInstr(Byte.valueOf(pos),
+				PosControllerInstr.POSITION_ASSIGNED_CODE,
+				PosControllerInstr.POSITION_ASSIGNED_CODE,
+				PosControllerInstr.POSITION_ASSIGNED_CODE,
+				PosControllerInstr.MED_FREQ,
+				PosControllerInstr.MED_DUTYCYCLE);
+			instructions.add(instruction);
 		}
-
+		sendPickRequestCommand(instructions);
 	}
 }

@@ -30,8 +30,6 @@ import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
  */
 public final class CommandControlClearPosController extends CommandControlABC {
 
-	public static final Byte		POSITION_ALL			= 0;
-
 	private static final Logger		LOGGER					= LoggerFactory.getLogger(CommandControlClearPosController.class);
 
 	private static final Integer	REQUEST_COMMAND_BYTES	= 1;

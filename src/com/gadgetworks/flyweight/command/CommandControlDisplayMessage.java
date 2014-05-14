@@ -24,14 +24,18 @@ import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
  *  
  *  pS - line 1 message
  *  pS - line 2 message
+ *  pS - line 3 message
+ *  pS - line 4 message
  *
  *	}
 
  *  @author jeffw
  */
-public final class CommandControlMessage extends CommandControlABC {
+public final class CommandControlDisplayMessage extends CommandControlABC {
 
-	private static final Logger	LOGGER	= LoggerFactory.getLogger(CommandControlMessage.class);
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(CommandControlDisplayMessage.class);
+	
+	private static final int LENGTH_BYTES = 4;
 
 	@Accessors(prefix = "m")
 	@Getter
@@ -43,23 +47,39 @@ public final class CommandControlMessage extends CommandControlABC {
 	@Setter
 	private String				mLine2MessageStr;
 
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	private String				mLine3MessageStr;
+
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	private String				mLine4MessageStr;
+
 	// --------------------------------------------------------------------------
 	/**
 	 *  This is the constructor to use to create a data command to send to the network.
 	 *  @param inEndpoint	The end point to send the command.
 	 */
-	public CommandControlMessage(final NetEndpoint inEndpoint, final String inLine1MessageStr, final String inLine2MessageStr) {
+	public CommandControlDisplayMessage(final NetEndpoint inEndpoint,
+		final String inLine1MessageStr,
+		final String inLine2MessageStr,
+		final String inLine3MessageStr,
+		final String inLine4MessageStr) {
 		super(inEndpoint, new NetCommandId(CommandControlABC.MESSAGE));
 
 		mLine1MessageStr = inLine1MessageStr;
 		mLine2MessageStr = inLine2MessageStr;
+		mLine3MessageStr = inLine3MessageStr;
+		mLine4MessageStr = inLine4MessageStr;
 	}
 
 	// --------------------------------------------------------------------------
 	/**
 	 *  This is the constructor to use to create a data command that's read off of the network input stream.
 	 */
-	public CommandControlMessage() {
+	public CommandControlDisplayMessage() {
 		super(new NetCommandId(CommandControlABC.MESSAGE));
 	}
 
@@ -68,7 +88,7 @@ public final class CommandControlMessage extends CommandControlABC {
 	 * @see com.gadgetworks.controller.CommandABC#doToString()
 	 */
 	public String doToString() {
-		return "Message: " + mLine1MessageStr + " (line1) " + mLine2MessageStr + " (line2)";
+		return "Message: 1: " + mLine1MessageStr + " 2: " + mLine2MessageStr + " 3: " + mLine3MessageStr + " 4: " + mLine4MessageStr;
 	}
 
 	/* --------------------------------------------------------------------------
@@ -81,6 +101,8 @@ public final class CommandControlMessage extends CommandControlABC {
 		try {
 			inOutputStream.writePString(mLine1MessageStr);
 			inOutputStream.writePString(mLine2MessageStr);
+			inOutputStream.writePString(mLine3MessageStr);
+			inOutputStream.writePString(mLine4MessageStr);
 		} catch (IOException e) {
 			LOGGER.error("", e);
 		}
@@ -97,6 +119,8 @@ public final class CommandControlMessage extends CommandControlABC {
 		try {
 			mLine1MessageStr = inInputStream.readPString();
 			mLine2MessageStr = inInputStream.readPString();
+			mLine3MessageStr = inInputStream.readPString();
+			mLine4MessageStr = inInputStream.readPString();
 		} catch (IOException e) {
 			LOGGER.error("", e);
 		}
@@ -109,7 +133,7 @@ public final class CommandControlMessage extends CommandControlABC {
 	 */
 	@Override
 	protected int doComputeCommandSize() {
-		return super.doComputeCommandSize() + mLine1MessageStr.length();
+		return super.doComputeCommandSize() + LENGTH_BYTES + mLine1MessageStr.length() + mLine2MessageStr.length() + mLine3MessageStr.length() + mLine4MessageStr.length();
 	}
 
 }
