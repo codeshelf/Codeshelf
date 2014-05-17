@@ -341,7 +341,7 @@
 			keyfile="${user.home}/.ssh/codeshelf"
 			command="/sbin/stop codeshelf"/-->
 
-		<scp todir="codeshelf@login.codeshelf.io:/opt/codeshelf/engine" verbose="true" keyfile="${user.home}/.ssh/codeshelf">
+		<scp todir="codeshelf@test.codeshelf.com:/opt/codeshelf/engine" verbose="true" keyfile="${user.home}/.ssh/codeshelf">
 			<fileset dir="${appjar.build.dir}">
 				<include name="**" />
 				<include name="**/*" />
