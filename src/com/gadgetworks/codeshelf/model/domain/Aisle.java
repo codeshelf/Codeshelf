@@ -73,13 +73,27 @@ public class Aisle extends SubLocationABC<Facility> {
 	}
 	
 	public final String getPathSegId() {
-		// to support list view field pathSegId
+		// to support list view meta-field pathSegId
 		PathSegment pathSegment= getPathSegment();
 
 		if (pathSegment != null) {
 			return pathSegment.getDomainId();
 		}
 		return "";
+	}
+	
+	public final void setPathSegId(String inPathSegPersistentID) {
+		// to support setting of list view meta-field pathSegId
+		// This is really "setPathSegmentViaPersistentID", but it must match the method name pattern.
+		// This needs to look of the path segment, then make the association via the object.
+		// That is at the Location level
+
+		PathSegment pathSegment = null;
+
+		if (pathSegment != null) {
+			this.setPathSegment(pathSegment);
+		}
+		return;
 	}
 
 }
