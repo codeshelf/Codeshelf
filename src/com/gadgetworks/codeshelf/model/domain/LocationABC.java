@@ -469,6 +469,26 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 		return result;
 	}
+	
+	public final String getPathSegId() {
+		// to support list view meta-field pathSegId
+		PathSegment aPathSegment = getPathSegment();
+
+		if (aPathSegment != null) {
+			return aPathSegment.getDomainId();
+		}
+		return "";
+	}
+	
+	public final String getLedControllerId() {
+		// to support list view meta-field ledControllerId
+		LedController aLedController = getLedController();
+
+		if (aLedController != null) {
+			return aLedController.getDomainId();
+		}
+		return "";
+	}
 
 	public final void addVertex(Vertex inVertex) {
 		vertices.add(inVertex);

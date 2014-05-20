@@ -63,4 +63,23 @@ public class Tier extends SubLocationABC<Bay> {
 	public final String getDefaultDomainIdPrefix() {
 		return "T";
 	}
+	
+	public final String getTierSortName() {
+		// to support list view meta-field tierSortName
+		String bayName = "";
+		String aisleName = "";
+		String tierName = this.getDomainId();
+		Bay bayLocation = this.getParent();
+		Aisle aisleLocation = null;
+				
+		if (bayLocation != null) {
+			bayName = bayLocation.getDomainId();
+			aisleLocation = bayLocation.getParent();
+		}
+		if (aisleLocation != null) {
+			aisleName = aisleLocation.getDomainId();
+		}
+		return (aisleName + "-" + tierName + "-" + bayName);
+	}
+
 }

@@ -72,16 +72,7 @@ public class Aisle extends SubLocationABC<Facility> {
 		return "A";
 	}
 	
-	public final String getPathSegId() {
-		// to support list view meta-field pathSegId
-		PathSegment pathSegment= getPathSegment();
-
-		if (pathSegment != null) {
-			return pathSegment.getDomainId();
-		}
-		return "";
-	}
-	
+	// getPathSegId() in LocationABC.java
 	public final void setPathSegId(String inPathSegPersistentID) {
 		// to support setting of list view meta-field pathSegId
 		// This is really "setPathSegmentViaPersistentID", but it must match the method name pattern.
