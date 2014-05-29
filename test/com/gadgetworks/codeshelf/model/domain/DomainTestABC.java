@@ -6,15 +6,13 @@
 package com.gadgetworks.codeshelf.model.domain;
 
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.junit.Before;
 
 import com.gadgetworks.codeshelf.application.IUtil;
+import com.gadgetworks.codeshelf.edi.EdiTestABC;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.OrderTypeEnum;
-import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.TravelDirectionEnum;
 import com.gadgetworks.codeshelf.model.dao.Database;
 import com.gadgetworks.codeshelf.model.dao.H2SchemaManager;
@@ -46,7 +44,7 @@ import com.gadgetworks.codeshelf.model.domain.SubLocationABC.SubLocationDao;
 import com.gadgetworks.codeshelf.model.domain.UomMaster.UomMasterDao;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction.WorkInstructionDao;
 
-public abstract class DomainTestABC {
+public abstract class DomainTestABC extends EdiTestABC {
 
 	protected OrganizationDao		mOrganizationDao;
 	protected LocationABCDao		mLocationDao;
