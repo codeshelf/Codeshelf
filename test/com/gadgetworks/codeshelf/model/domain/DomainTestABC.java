@@ -7,45 +7,14 @@ package com.gadgetworks.codeshelf.model.domain;
 
 import java.sql.Timestamp;
 
-import org.junit.Before;
-
-import com.gadgetworks.codeshelf.application.IUtil;
 import com.gadgetworks.codeshelf.edi.EdiTestABC;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.TravelDirectionEnum;
-import com.gadgetworks.codeshelf.model.dao.Database;
-import com.gadgetworks.codeshelf.model.dao.H2SchemaManager;
-import com.gadgetworks.codeshelf.model.dao.IDatabase;
-import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
-import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.model.domain.Aisle.AisleDao;
-import com.gadgetworks.codeshelf.model.domain.Bay.BayDao;
-import com.gadgetworks.codeshelf.model.domain.Che.CheDao;
-import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork.CodeshelfNetworkDao;
-import com.gadgetworks.codeshelf.model.domain.Container.ContainerDao;
-import com.gadgetworks.codeshelf.model.domain.ContainerKind.ContainerKindDao;
-import com.gadgetworks.codeshelf.model.domain.ContainerUse.ContainerUseDao;
-import com.gadgetworks.codeshelf.model.domain.DropboxService.DropboxServiceDao;
-import com.gadgetworks.codeshelf.model.domain.Facility.FacilityDao;
-import com.gadgetworks.codeshelf.model.domain.Item.ItemDao;
-import com.gadgetworks.codeshelf.model.domain.ItemMaster.ItemMasterDao;
-import com.gadgetworks.codeshelf.model.domain.LedController.LedControllerDao;
-import com.gadgetworks.codeshelf.model.domain.LocationABC.LocationABCDao;
-import com.gadgetworks.codeshelf.model.domain.LocationAlias.LocationAliasDao;
-import com.gadgetworks.codeshelf.model.domain.OrderDetail.OrderDetailDao;
-import com.gadgetworks.codeshelf.model.domain.OrderGroup.OrderGroupDao;
-import com.gadgetworks.codeshelf.model.domain.OrderHeader.OrderHeaderDao;
-import com.gadgetworks.codeshelf.model.domain.OrderLocation.OrderLocationDao;
-import com.gadgetworks.codeshelf.model.domain.Organization.OrganizationDao;
-import com.gadgetworks.codeshelf.model.domain.Path.PathDao;
-import com.gadgetworks.codeshelf.model.domain.PathSegment.PathSegmentDao;
-import com.gadgetworks.codeshelf.model.domain.SubLocationABC.SubLocationDao;
-import com.gadgetworks.codeshelf.model.domain.UomMaster.UomMasterDao;
-import com.gadgetworks.codeshelf.model.domain.WorkInstruction.WorkInstructionDao;
 
 public abstract class DomainTestABC extends EdiTestABC {
 
+	/* Now from EdiTestABC
 	protected OrganizationDao		mOrganizationDao;
 	protected LocationABCDao		mLocationDao;
 	protected SubLocationDao		mSubLocationDao;
@@ -74,11 +43,13 @@ public abstract class DomainTestABC extends EdiTestABC {
 	private IUtil					mUtil;
 	protected ISchemaManager		mSchemaManager;
 	private IDatabase				mDatabase;
+	*/
 
 	public DomainTestABC() {
 		super();
 	}
 
+	/* now in EdiTestABC
 	@Before
 	public final void setup() {
 
@@ -194,6 +165,7 @@ public abstract class DomainTestABC extends EdiTestABC {
 		} catch (ClassNotFoundException e) {
 		}
 	}
+	*/
 
 	// --------------------------------------------------------------------------
 	/**

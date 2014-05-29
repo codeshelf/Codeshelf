@@ -1,27 +1,13 @@
 /*******************************************************************************
  *  CodeShelf
- *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: OrderImporterTest.java,v 1.11 2013/04/11 07:42:45 jeffw Exp $
+ *  Copyright (c) 2005-2014, Jeffrey B. Williams, All rights reserved
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
-
-import java.io.ByteArrayInputStream;
-import java.io.InputStreamReader;
-import java.sql.Timestamp;
 
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.gadgetworks.codeshelf.model.OrderTypeEnum;
-import com.gadgetworks.codeshelf.model.domain.ContainerUse;
-import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.ItemMaster;
-import com.gadgetworks.codeshelf.model.domain.OrderDetail;
-import com.gadgetworks.codeshelf.model.domain.OrderGroup;
-import com.gadgetworks.codeshelf.model.domain.OrderHeader;
-import com.gadgetworks.codeshelf.model.domain.Organization;
-import com.gadgetworks.codeshelf.model.domain.Point;
-import com.gadgetworks.codeshelf.model.domain.UomMaster;
+import com.gadgetworks.codeshelf.model.domain.DomainTestABC;
 
 /**
  * @author ranstrom

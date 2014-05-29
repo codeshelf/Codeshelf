@@ -51,18 +51,26 @@ import com.gadgetworks.codeshelf.model.domain.OrderLocation;
 import com.gadgetworks.codeshelf.model.domain.OrderLocation.OrderLocationDao;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Organization.OrganizationDao;
+import com.gadgetworks.codeshelf.model.domain.Path;
+import com.gadgetworks.codeshelf.model.domain.Path.PathDao;
+import com.gadgetworks.codeshelf.model.domain.PathSegment;
+import com.gadgetworks.codeshelf.model.domain.PathSegment.PathSegmentDao;
 import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
 import com.gadgetworks.codeshelf.model.domain.SubLocationABC;
 import com.gadgetworks.codeshelf.model.domain.SubLocationABC.SubLocationDao;
 import com.gadgetworks.codeshelf.model.domain.UomMaster;
 import com.gadgetworks.codeshelf.model.domain.UomMaster.UomMasterDao;
+import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
+import com.gadgetworks.codeshelf.model.domain.WorkInstruction.WorkInstructionDao;
 
 public abstract class EdiTestABC {
-
+	
 	protected OrganizationDao		mOrganizationDao;
 	protected LocationABCDao		mLocationDao;
 	protected SubLocationDao		mSubLocationDao;
 	protected FacilityDao			mFacilityDao;
+	protected PathDao				mPathDao;
+	protected PathSegmentDao		mPathSegmentDao;
 	protected AisleDao				mAisleDao;
 	protected BayDao				mBayDao;
 	protected DropboxServiceDao		mDropboxServiceDao;
@@ -80,6 +88,8 @@ public abstract class EdiTestABC {
 	protected UomMasterDao			mUomMasterDao;
 	protected LedControllerDao		mLedControllerDao;
 	protected LocationAliasDao		mLocationAliasDao;
+	protected WorkInstructionDao	mWorkInstructionDao;
+
 
 	private IUtil					mUtil;
 	protected ISchemaManager		mSchemaManager;
@@ -141,6 +151,12 @@ public abstract class EdiTestABC {
 			mBayDao = new BayDao(mSchemaManager);
 			Bay.DAO = mBayDao;
 
+			mPathDao = new PathDao(mSchemaManager);
+			Path.DAO = mPathDao;
+
+			mPathSegmentDao = new PathSegmentDao(mSchemaManager);
+			PathSegment.DAO = mPathSegmentDao;
+
 			mDropboxServiceDao = new DropboxServiceDao(mSchemaManager);
 			DropboxService.DAO = mDropboxServiceDao;
 
@@ -191,6 +207,9 @@ public abstract class EdiTestABC {
 
 			mLocationAliasDao = new LocationAliasDao(mSchemaManager);
 			LocationAlias.DAO = mLocationAliasDao;
+			
+			mWorkInstructionDao = new WorkInstructionDao(mSchemaManager);
+			WorkInstruction.DAO = mWorkInstructionDao;
 
 		} catch (ClassNotFoundException e) {
 		}
