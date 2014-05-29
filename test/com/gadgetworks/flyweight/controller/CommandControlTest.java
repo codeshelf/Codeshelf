@@ -35,6 +35,7 @@ public final class CommandControlTest extends CommandABCTest {
 	private static final String	TEST_MSG3				= "TEST3";
 	private static final String	TEST_MSG4				= "TEST4";
 
+	private static final Byte	INSTRUCTION_CNT			= 1;
 	private static final Byte	POS_NUM					= 5;
 	private static final Byte	MIN_VALUE				= 1;
 	private static final Byte	REQ_VALUE				= 2;
@@ -42,12 +43,13 @@ public final class CommandControlTest extends CommandABCTest {
 	private static final Byte	FREQ					= 4;
 	private static final Byte	DUTYCYCLE				= 5;
 
-	private static final byte[]	REQUEST_PACKET_IN_DATA	= { 0x01, 0x00, 0x01, 0x00, 0x31, 0x03, POS_NUM, REQ_VALUE, MIN_VALUE,
+	private static final byte[]	REQUEST_PACKET_IN_DATA	= { 0x01, 0x00, 0x01, 0x00, 0x31, CommandControlButton.SET_POSCONTROLLER, INSTRUCTION_CNT, POS_NUM, REQ_VALUE, MIN_VALUE,
 			MAX_VALUE, FREQ, DUTYCYCLE					};
-	private static final byte[]	REQUEST_PACKET_OUT_DATA	= { 0x01, 0x00, 0x08, 0x00, 0x31, 0x03, POS_NUM, REQ_VALUE, MIN_VALUE,
+	private static final byte[]	REQUEST_PACKET_OUT_DATA	= { 0x01, 0x00, 0x08, 0x00, 0x31, CommandControlButton.SET_POSCONTROLLER, INSTRUCTION_CNT, POS_NUM, REQ_VALUE, MIN_VALUE,
 			MAX_VALUE, FREQ, DUTYCYCLE					};
 
-	private static final byte[]	BUTTON_PACKET_IN_DATA	= { 0x01, 0x00, 0x01, 0x00, 0x31, 0x04, 0x05, 0x02 };
+	private static final byte[]	BUTTON_PACKET_IN_DATA	= { 0x01, 0x00, 0x01, 0x00, 0x31, CommandControlButton.BUTTON, POS_NUM, REQ_VALUE, MIN_VALUE,
+		MAX_VALUE, FREQ, DUTYCYCLE };
 
 	public CommandControlTest(final String inName) {
 		super(inName);
