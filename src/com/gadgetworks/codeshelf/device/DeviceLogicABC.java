@@ -7,6 +7,8 @@ package com.gadgetworks.codeshelf.device;
 
 import java.util.UUID;
 
+import javax.persistence.Transient;
+
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -63,7 +65,16 @@ public abstract class DeviceLogicABC implements INetworkDevice {
 	// The device manager.
 	protected ICsDeviceManager		mDeviceManager;
 
-	public DeviceLogicABC(final UUID inPersistentId, final NetGuid inGuid, final ICsDeviceManager inDeviceManager, final IRadioController inRadioController) {
+	@Transient
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	private byte					mLastAckId;
+
+	public DeviceLogicABC(final UUID inPersistentId,
+		final NetGuid inGuid,
+		final ICsDeviceManager inDeviceManager,
+		final IRadioController inRadioController) {
 		mPersistentId = inPersistentId;
 		mGuid = inGuid;
 		mDeviceManager = inDeviceManager;
@@ -77,5 +88,22 @@ public abstract class DeviceLogicABC implements INetworkDevice {
 	@Override
 	public final boolean doesMatch(NetGuid inGuid) {
 		return ((getGuid() != null) && (getGuid().equals(inGuid)));
+	}
+
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.flyweight.controller.INetworkDevice#isAckIdNew(byte)
+	 */
+	@Override
+	public boolean isAckIdNew(byte inAckId) {
+		boolean result = false;
+
+		if (((short) inAckId) > ((short) mLastAckId)) {
+			result = true;
+		} else if (((short) inAckId) == 1) {
+			result = true;
+		}
+
+		return result;
 	}
 }

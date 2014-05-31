@@ -119,4 +119,26 @@ public interface INetworkDevice {
 	 */
 	void buttonCommandReceived(CommandControlButton inButtonCommand);
 	
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * Figure out if the ack ID is new (later) or not.
+	 * @param inAckId
+	 * @return
+	 */
+	boolean isAckIdNew(byte inAckId);
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * Get the last ack ID that we processed.
+	 */
+	byte getLastAckId();
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * Set the last ack ID that we processed.
+	 * @param inAckId
+	 */
+	void setLastAckId(byte inAckId);
+	
 }

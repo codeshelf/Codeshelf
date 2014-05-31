@@ -856,8 +856,6 @@ public class RadioController implements IRadioController {
 						if (mGatewayInterface.isStarted()) {
 							IPacket packet = mGatewayInterface.receivePacket(mNetworkId);
 							if (packet != null) {
-								// Reset the interface check time since we know the interface is OK.
-								//mLastIntfCheckMillis = System.currentTimeMillis();
 								if (packet.getPacketType() == IPacket.ACK_PACKET) {
 									LOGGER.info("Packet acked RECEIVED: " + packet.toString());
 									processAckPacket(packet);
@@ -865,18 +863,7 @@ public class RadioController implements IRadioController {
 									// If the inbound packet had an ACK ID then respond with an ACK ID.
 									byte ackId = packet.getAckId();
 									if (ackId != IPacket.EMPTY_ACK_ID) {
-										CommandAssocAck ackCmd = new CommandAssocAck("00000000",
-											new NBitInteger(CommandAssocAck.ASSOCIATE_STATE_BITS, (byte) 0));
-
-										sendCommand(ackCmd, packet.getNetworkId(), packet.getSrcAddr(), false);
-										IPacket ackPacket = new Packet(ackCmd,
-											packet.getNetworkId(),
-											mServerAddress,
-											packet.getSrcAddr(),
-											false);
-										ackCmd.setPacket(ackPacket);
-										ackPacket.setAckId(ackId);
-										sendPacket(ackPacket);
+										respondToAck(ackId, packet.getNetworkId(), packet.getSrcAddr());
 									}
 									receiveCommand(packet.getCommand(), packet.getSrcAddr());
 								}
@@ -897,6 +884,31 @@ public class RadioController implements IRadioController {
 		}, RECEIVER_THREAD_NAME + ": " + mGatewayInterface.getClass().getSimpleName());
 		gwThread.setPriority(RECEIVER_THREAD_PRIORITY);
 		gwThread.start();
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inAckId
+	 * @param inNetId
+	 * @param inSrcAddr
+	 */
+	private void respondToAck(final byte inAckId, final NetworkId inNetId, final NetAddress inSrcAddr) {
+		INetworkDevice device = mDeviceNetAddrMap.get(inSrcAddr);
+		if (device.isAckIdNew(inAckId)) {
+
+			LOGGER.info("Remote ack request RECEIVED: ack: " + inAckId + " net: " + inNetId + " src: " + inSrcAddr);
+
+			device.setLastAckId(inAckId);
+			CommandAssocAck ackCmd = new CommandAssocAck("00000000",
+				new NBitInteger(CommandAssocAck.ASSOCIATE_STATE_BITS, (byte) 0));
+
+			sendCommand(ackCmd, inNetId, inSrcAddr, false);
+			IPacket ackPacket = new Packet(ackCmd, inNetId, mServerAddress, inSrcAddr, false);
+			ackCmd.setPacket(ackPacket);
+			ackPacket.setAckId(inAckId);
+			sendPacket(ackPacket);
+		}
+
 	}
 
 	// --------------------------------------------------------------------------
