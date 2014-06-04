@@ -13,6 +13,11 @@ import com.gadgetworks.codeshelf.model.dao.ITypedDao;
  */
 public class MockModel implements IDomainObject {
 
+	private String testSetterString;
+	private int testSetterInt;
+	private double testSetterDouble;
+	private boolean testSetterBoolean;
+	
 	@Override
 	public String getDefaultDomainIdPrefix() {
 		// TODO Auto-generated method stub
@@ -81,6 +86,40 @@ public class MockModel implements IDomainObject {
 	
 	public void testMethod(String testParam) throws Exception {
 		
+	}
+	
+	public void setTestSetterString(String value) {
+		this.testSetterString = value;
+	}
+
+	public String getTestSetterString() {
+		return this.testSetterString;
+		
+	}
+
+	
+	public int getTestSetterInt() {
+		return testSetterInt;
+	}
+
+	public void setTestSetterInt(int testSetterInt) {
+		this.testSetterInt = testSetterInt;
+	}
+
+	public double getTestSetterDouble() {
+		return testSetterDouble;
+	}
+
+	public void setTestSetterDouble(double testSetterDouble) {
+		this.testSetterDouble = testSetterDouble;
+	}
+
+	public boolean getTestSetterBoolean() {
+		return testSetterBoolean;
+	}
+
+	public void setTestSetterBoolean(boolean testSetterBoolean) {
+		this.testSetterBoolean = testSetterBoolean;
 	}
 
 }
