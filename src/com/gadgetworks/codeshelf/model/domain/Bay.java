@@ -71,4 +71,17 @@ public class Bay extends SubLocationABC<Aisle> {
 	public final String getDefaultDomainIdPrefix() {
 		return "B";
 	}
+	
+	public final String getBaySortName() {
+		// to support list view meta-field tierSortName
+		String bayName = this.getDomainId();
+		String aisleName = "";
+		Aisle aisleLocation = this.getParent();
+				
+		if (aisleLocation != null) {
+			aisleName = aisleLocation.getDomainId();
+		}
+		return (aisleName + "-" + bayName);
+	}
+
 }
