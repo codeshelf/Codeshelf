@@ -857,7 +857,7 @@ public class RadioController implements IRadioController {
 							IPacket packet = mGatewayInterface.receivePacket(mNetworkId);
 							if (packet != null) {
 								if (packet.getPacketType() == IPacket.ACK_PACKET) {
-									LOGGER.info("Packet acked RECEIVED: " + packet.toString());
+									LOGGER.info("Packet remote ACK req RECEIVED: " + packet.toString());
 									processAckPacket(packet);
 								} else {
 									// If the inbound packet had an ACK ID then respond with an ACK ID.

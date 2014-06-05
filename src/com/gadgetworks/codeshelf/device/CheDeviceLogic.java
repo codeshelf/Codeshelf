@@ -276,6 +276,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 */
 	public final void startDevice() {
 		setState(mCheStateEnum);
+		setLastAckId((byte) 0);
 	}
 
 	// --------------------------------------------------------------------------

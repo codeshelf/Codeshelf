@@ -102,6 +102,9 @@ public abstract class DeviceLogicABC implements INetworkDevice {
 			result = true;
 		} else if (((short) inAckId) == 1) {
 			result = true;
+		} else {
+			// A place to leave a breakpoint.
+			result = false;
 		}
 
 		return result;
