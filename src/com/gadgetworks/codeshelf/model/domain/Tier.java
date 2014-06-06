@@ -20,14 +20,28 @@ import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
-// --------------------------------------------------------------------------
+
+//--------------------------------------------------------------------------
 /**
- * Tier
- * 
- * The object that models a tier within a bay.
- * 
- * @author jeffw
- */
+* TierIds
+* Just a means to allow tier method to return multi-value
+* 
+*/
+final class TierIds {
+	   String aisleName;
+	   String bayName;
+	   String tierName;
+	}
+
+
+//--------------------------------------------------------------------------
+/**
+* Tier
+* 
+* The object that models a tier within a bay.
+* 
+* @author jeffw
+*/
 
 @Entity
 @DiscriminatorValue("TIER")
@@ -64,22 +78,35 @@ public class Tier extends SubLocationABC<Bay> {
 		return "T";
 	}
 	
-	public final String getTierSortName() {
-		// to support list view meta-field tierSortName
-		String bayName = "";
-		String aisleName = "";
-		String tierName = this.getDomainId();
+	private final TierIds getTierIds(){
+		TierIds theTierIds = new TierIds();
+		theTierIds.bayName = "";
+		theTierIds.aisleName = "";
+		theTierIds.tierName = this.getDomainId();
 		Bay bayLocation = this.getParent();
 		Aisle aisleLocation = null;
 				
 		if (bayLocation != null) {
-			bayName = bayLocation.getDomainId();
+			theTierIds.bayName = bayLocation.getDomainId();
 			aisleLocation = bayLocation.getParent();
 		}
 		if (aisleLocation != null) {
-			aisleName = aisleLocation.getDomainId();
+			theTierIds.aisleName = aisleLocation.getDomainId();
 		}
-		return (aisleName + "-" + tierName + "-" + bayName);
+
+		return theTierIds;
+	}
+
+	public final String getBaySortName() {
+		// to support list view meta-field baySortName
+		TierIds theTierIds = getTierIds();
+		return (theTierIds.aisleName + "-" + theTierIds.bayName + "-" + theTierIds.tierName);
+	}
+		
+	public final String getTierSortName() {
+		// to support list view meta-field tierSortName
+		TierIds theTierIds = getTierIds();
+		return (theTierIds.aisleName + "-" + theTierIds.tierName + "-" + theTierIds.bayName);
 	}
 
 }

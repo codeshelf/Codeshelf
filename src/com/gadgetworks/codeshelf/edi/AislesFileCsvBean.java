@@ -39,39 +39,54 @@ public class AislesFileCsvBean extends ImportCsvBeanABC {
 	protected String	controllerLed;
 	protected String	anchorX;
 	protected String	anchorY;
-	protected String	tubeLightKind;
-	protected String	pickFaceEndX;
-	protected String	pickFaceEndY;
+	protected String	ledCountInTier;
+	protected String	tierFloorCm;
+	protected String	orientXorY;
+	protected String	depthCm;
+	protected String	pickFaceEndX; // might be computable later
+	protected String	pickFaceEndY; // might be computable later
 
+	/* Using stripNull instead of strip. If user file is missing some fields, 
+	 * will return empty string instead of null, which may will throw. */
+	
 	public final String getBinType() {
-		return strip(binType);
+		return stripNull(binType);
 	}
 	public final String getNominalDomainID() {
-		return strip(nominalDomainId);
+		return stripNull(nominalDomainId);
 	}
 	public final String getLengthCm() {
-		return strip(lengthCm);
+		return stripNull(lengthCm);
 	}
 	public final String getSlotsInTier() {
-		return strip(slotsInTier);
+		return stripNull(slotsInTier);
 	}
 	public final String getControllerLed() {
-		return strip(controllerLed);
+		return stripNull(controllerLed);
 	}
 	public final String getAnchorX() {
-		return strip(anchorX);
+		return stripNull(anchorX);
 	}
 	public final String getAnchorY() {
-		return strip(anchorY);
+		return stripNull(anchorY);
 	}
-	public final String getTubeLightKind() {
-		return strip(tubeLightKind);
+	public final String getLedCountInTier() {
+		return stripNull(ledCountInTier);
 	}
-	public String getPickFaceEndX() {
-		return strip(pickFaceEndX);
+	public final String getTierFloorCm() {
+		return stripNull(tierFloorCm);
 	}
-	public String getPickFaceEndY() {
-		return strip(pickFaceEndY);
+	public final String getOrientXorY() {
+		return stripNull(orientXorY);
+	}
+	public final String getDepthCm() {
+		return stripNull(depthCm);
+	}
+	public final String getPickFaceEndX() {
+		return stripNull(pickFaceEndX);
+	}
+	public final String getPickFaceEndY() {
+		return stripNull(pickFaceEndY);
 	}
 
 }

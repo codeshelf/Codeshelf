@@ -65,5 +65,19 @@ public abstract class ImportCsvBeanABC {
 			return StringUtils.strip(inValue);
 		}
 	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * Same as strip, but guaranteed to return a string. Empty string if null passed in.
+	 * @param inValue
+	 * @return
+	 */
+	protected String stripNull(String inValue) {
+		if (inValue == null) {
+			return "";
+		} else {
+			return strip(inValue);
+		}
+	}
 
 }

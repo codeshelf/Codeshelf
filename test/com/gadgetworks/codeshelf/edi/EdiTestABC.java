@@ -157,6 +157,12 @@ public abstract class EdiTestABC {
 			mBayDao = new BayDao(mSchemaManager);
 			Bay.DAO = mBayDao;
 
+			mTierDao = new TierDao(mSchemaManager);
+			Tier.DAO = mTierDao;
+
+			mSlotDao = new SlotDao(mSchemaManager);
+			Slot.DAO = mSlotDao;
+
 			mPathDao = new PathDao(mSchemaManager);
 			Path.DAO = mPathDao;
 
