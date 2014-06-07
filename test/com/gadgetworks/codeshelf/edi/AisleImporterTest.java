@@ -34,7 +34,7 @@ public class AisleImporterTest extends DomainTestABC {
 	public final void testAisleImporter() {
 
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm,pickFaceEndX,pickFaceEndY\r\n" //
-				+ "Aisle,A9,,,,,TierRight,12.85,43.45,X,120,\r\n" //
+				+ "Aisle,A9,,,,,TierLeft,12.85,43.45,X,120,\r\n" //
 				+ "Bay,B1,244,,,,,\r\n" //
 				+ "Tier,T1,,8,80,0,,\r\n" //
 				+ "Tier,T2,,9,80,50,,\r\n" //
@@ -101,6 +101,28 @@ public class AisleImporterTest extends DomainTestABC {
 		Slot slotB2T2S3 = Slot.DAO.findByDomainId(tierB2T2, "S3");
 		Assert.assertNotNull(slotB2T2S3);
 		Assert.assertNotEquals(slotB1T2S3, slotB2T2S3);
+		
+		// Demonstrate the tier transient field behaviors. As we are refetching tiers via the DAO, the transients are uninitialized
+		short ledCount = tierB1T2.getMTransientLedsThisTier();
+		// Assert.assertTrue(ledCount == 80); // what we really want to check
+		Assert.assertTrue(ledCount == 0);
+		
+		// Get two more tiers. Then check the tier led values
+		Tier tierB1T1 = Tier.DAO.findByDomainId(bay1, "T1");
+		Assert.assertNotNull(tierB1T2);
+		Tier tierB2T1 = Tier.DAO.findByDomainId(bay2, "T1");
+		Assert.assertNotNull(tierB2T1);
+		// finalizeTiersInThisAisle() used the transientLeds field in order to figure out the first and last led values
+		Assert.assertTrue(tierB1T1.getFirstLedNumAlongPath() == 1);
+		Assert.assertTrue(tierB1T1.getLastLedNumAlongPath() == 80);
+		Assert.assertTrue(tierB2T1.getFirstLedNumAlongPath() == 81);
+		Assert.assertTrue(tierB2T1.getLastLedNumAlongPath() == 160);
+		// should get same values for tier 2
+		Assert.assertTrue(tierB1T2.getFirstLedNumAlongPath() == 1);
+		Assert.assertTrue(tierB1T2.getLastLedNumAlongPath() == 80);
+		Assert.assertTrue(tierB2T2.getFirstLedNumAlongPath() == 81);
+		Assert.assertTrue(tierB2T2.getLastLedNumAlongPath() == 160);
+
 
 	}
 

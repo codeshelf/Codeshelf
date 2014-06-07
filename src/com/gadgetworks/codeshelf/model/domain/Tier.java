@@ -5,10 +5,16 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
+import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
+import javax.persistence.Transient;
+
+import lombok.Getter;
+import lombok.Setter;
 
 import org.codehaus.jackson.annotate.JsonAutoDetect;
+import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +23,7 @@ import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.flyweight.controller.NetworkDeviceStateEnum;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -63,6 +70,20 @@ public class Tier extends SubLocationABC<Bay> {
 			return Tier.class;
 		}
 	}
+
+	// These two transient fields are not in database. Furthermore,
+	// two different references to same object from the DAO may disagree on this field.
+	@Transient
+	@Column(nullable = true)
+	@Getter
+	@Setter
+	private short					mTransientLedsThisTier;
+
+	@Transient
+	@Column(nullable = true)
+	@Getter
+	@Setter
+	private boolean					mTransientLedsIncrease;
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(Tier.class);
 

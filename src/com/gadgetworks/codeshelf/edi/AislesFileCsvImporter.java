@@ -10,6 +10,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.ListIterator;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +27,7 @@ import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Bay;
+import com.gadgetworks.codeshelf.model.domain.ILocation;
 import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.model.domain.Tier;
 import com.gadgetworks.codeshelf.model.domain.Slot;
@@ -53,11 +58,14 @@ public class AislesFileCsvImporter {
 	private Tier mLastReadTier;
 	
 	private String mControllerLed;
-	private Integer mLedsPerTier;
+	private Short mLedsPerTier;
 	private Integer mBayLengthCm;
 	private Integer mTierFloorCm;
 	private boolean mIsOrientationX;
 	private Integer mDepthCm;
+	
+	List<Tier> mTiersThisAisle;
+
 
 
 	@Inject
@@ -77,6 +85,9 @@ public class AislesFileCsvImporter {
 		mBayLengthCm = 0;
 		mTierFloorCm = 0;
 		mIsOrientationX = true;
+		
+		mTiersThisAisle = new ArrayList<Tier>();
+
 	}
 
 	// --------------------------------------------------------------------------
@@ -104,17 +115,24 @@ public class AislesFileCsvImporter {
 
 			if (aislesFileBeanList.size() > 0) {
 
-				LOGGER.debug("Begin location alias map import.");
+				LOGGER.debug("Begin aisles file import.");
 
-				// Iterate over the location alias import beans.
+				// Iterate over the location import beans.
 				for (AislesFileCsvBean aislesFileBean : aislesFileBeanList) {
 					String errorMsg = aislesFileBean.validateBean();
 					if (errorMsg != null) {
 						LOGGER.error("Import errors: " + errorMsg);
 					} else {
+						Aisle lastAisle = mLastReadAisle;
+						// This creates one location: aisle, bay, tier; (tier also creates slots). 
 						aislesFileCsvBeanImport(aislesFileBean, inProcessTime);
+						// if we started a new aisle, then the previous aisle is done. Do those computations and set those fields
+						if (lastAisle != mLastReadAisle) {
+							finalizeTiersInThisAisle(lastAisle);
+						}
 					}
 				}
+				finalizeTiersInThisAisle(mLastReadAisle); 
 
 				// archiveCheckLocationAliases(inFacility, inProcessTime);
 
@@ -134,10 +152,147 @@ public class AislesFileCsvImporter {
 		return result;
 	}
 
+	private class TierBayComparable implements Comparator<Tier> {
+		// For the tierRight and tierLeft aisle types
+		public int compare(Tier inLoc1, Tier inLoc2) {
+
+			if ((inLoc1 == null) && (inLoc2 == null)) {
+				return 0;
+			} else if (inLoc2 == null) {
+				return -1;
+			} else if (inLoc1 == null) {
+				return 1;
+			} else {
+				return inLoc1.getTierSortName().compareTo(inLoc2.getTierSortName());
+			}
+		}
+	}
+	
+	private class BayTierComparable implements Comparator<Tier> {
+		// For the zigzagRight and zigzagLeft aisle types.
+		// Fix later. This is not right as we want B1T2, B1T1, B2T2, B2T1. But getBaySortName gives us B1T1, B1T2, B2T1, B2T2
+		public int compare(Tier inLoc1, Tier inLoc2) {
+
+			if ((inLoc1 == null) && (inLoc2 == null)) {
+				return 0;
+			} else if (inLoc2 == null) {
+				return -1;
+			} else if (inLoc1 == null) {
+				return 1;
+			} else {
+				return inLoc1.getBaySortName().compareTo(inLoc2.getBaySortName());
+			}
+		}
+	}
+
+	 // --------------------------------------------------------------------------
+	/**
+	 * @param inTier
+	 * @param inLastLedNumber
+	 */
+	private short setTierLeds(Tier inTier, short inLastLedNumber) {
+		// would be more obvious with an inOut parameter
+		short returnValue = 0;
+		short ledCount = inTier.getMTransientLedsThisTier();
+		// We should still have hold of the tier reference that has the transient field set. If not, ledCount == 0
+		
+		if (ledCount == 0) {
+			
+		}
+		else {
+			inTier.setFirstLedNumAlongPath((short) (inLastLedNumber + 1));
+			inTier.setLastLedNumAlongPath((short) (inLastLedNumber + ledCount));
+			// transaction?
+			Tier.DAO.store(inTier);
+			returnValue = (short) (inLastLedNumber + ledCount); 
+		}
+		return returnValue;
+	}
+	 
+	 // --------------------------------------------------------------------------
+	/**
+	 * @param inAisle
+	 */
+	private void finalizeTiersInThisAisle(final Aisle inAisle) {
+		// mTiersThisAisle has all the tiers, with their transient fields set for ledCount and ledDirection
+		// We need to sort the tiers in order, then set the first and last LED for each tier.
+		// And, once that is known, we can set the slot leds also
+		
+		boolean tierSortNeeded = true;
+		if (mControllerLed.equalsIgnoreCase("zigzagLeft") || mControllerLed.equalsIgnoreCase("zigzagRight")) {
+			tierSortNeeded = false;
+		}
+		boolean restartLedOnTierChange = tierSortNeeded;
+		
+		if (tierSortNeeded)
+			Collections.sort(mTiersThisAisle, new TierBayComparable());
+		else {
+			Collections.sort(mTiersThisAisle, new BayTierComparable());
+		}
+		
+		// The algorithm is simple: start; increment leds as you go. Start over if the tier name changes.
+		
+		ListIterator li = null;
+
+		boolean forwardIterationNeeded = true;
+		if (mControllerLed.equalsIgnoreCase("tierRight") || mControllerLed.equalsIgnoreCase("zigzagRight")) {
+			forwardIterationNeeded = false;
+		}
+		
+		short lastLedNumber = 0;
+		short newLedNumber = 0;
+		String tierSortName = "";
+		String lastTierDomainName = "";
+		Tier thisTier = null;
+		if (forwardIterationNeeded) {
+			li = mTiersThisAisle.listIterator();
+			while (li.hasNext()) {
+			  thisTier = (Tier) li.next();
+			  // tierSortName just to follow the iteration in debugger
+			  tierSortName = thisTier.getTierSortName();
+
+			  // need to start over? never for zigzag. If tier changed for tier or multi-controller. And extra restarts on the same tier for multi-controller.
+			  if (restartLedOnTierChange) {
+				  String thisTierDomainName = thisTier.getDomainId();
+				  if (! thisTierDomainName.equalsIgnoreCase(lastTierDomainName))
+					  lastLedNumber = 0;
+				  lastTierDomainName = thisTierDomainName;
+			  }
+				  
+			  newLedNumber = setTierLeds(thisTier, lastLedNumber);
+			  lastLedNumber = newLedNumber;
+			}
+		} else {
+			li = mTiersThisAisle.listIterator(mTiersThisAisle.size());
+			while (li.hasPrevious()) {
+				  thisTier = (Tier) li.previous();
+				  // tierSortName just to follow the iteration in debugger
+				  tierSortName = thisTier.getTierSortName();
+
+				  // need to start over? never for zigzag. If tier changed for tier or multi-controller. And extra times for multi-controller.
+				  if (restartLedOnTierChange) {
+					  String thisTierDomainName = thisTier.getDomainId();
+					  if (! thisTierDomainName.equalsIgnoreCase(lastTierDomainName))
+						  lastLedNumber = 0;
+					  lastTierDomainName = thisTierDomainName;
+				  }
+
+				  newLedNumber = setTierLeds(thisTier, lastLedNumber);
+				  lastLedNumber = newLedNumber;
+			}
+			
+		}
+		
+
+		
+	}
+	
 	// --------------------------------------------------------------------------
 	/**
-	 * @param inTierId
-	 * @param inSlotCount
+	 * @param inParentTier
+	 * @param inSlotNumber
+	 * @param inPreviousSlot
+	 * @param inSlotWidthM
 	 */
 	private Slot createOneSlot(final Tier inParentTier, Integer inSlotNumber, Slot inPreviousSlot, Double inSlotWidthM) {
 
@@ -202,7 +357,7 @@ public class AislesFileCsvImporter {
 	 * @param inTierId
 	 * @param inSlotCount
 	 */
-	private Tier createOneTier(final String inTierId, Integer inSlotCount) {
+	private Tier createOneTier(final String inTierId, Integer inSlotCount, short inLedsThisTier, boolean inLedsIncrease) {
 		// PickFaceEndPoint is the same as bays, so that is easy. Just need to get the Z value. Anchor point is relative to parent Bay, so 0,0.
 		if (mLastReadBay == null){
 			LOGGER.error("null last bay when createOneTier called");
@@ -249,6 +404,10 @@ public class AislesFileCsvImporter {
 			// update existing?
 			return null;
 		}
+		
+		// Set our transient fields
+		newTier.setMTransientLedsThisTier(inLedsThisTier);
+		newTier.setMTransientLedsIncrease(inLedsIncrease);
 		// Now make the slots
 		
 		Double slotWidthMeters = (mBayLengthCm / CM_PER_M) / inSlotCount;
@@ -374,6 +533,8 @@ public class AislesFileCsvImporter {
 		// Figure out what kind of bin we have.
 		if (binType.equalsIgnoreCase("aisle")) {
 			
+			mTiersThisAisle.clear(); // prepare to collect tiers for this aisle
+			
 			Double dAnchorX = 0.0;
 			Double dAnchorY = 0.0;
 			Double dPickFaceEndX = 0.0;
@@ -447,18 +608,35 @@ public class AislesFileCsvImporter {
 			try { intValueSlotsDesired = Integer.valueOf(slotsInTier); }
 			catch (NumberFormatException e) { }
 
-			try { mLedsPerTier = Integer.valueOf(ledsPerTier); }
+			try { mLedsPerTier = Short.valueOf(ledsPerTier); }
 			catch (NumberFormatException e) { }
+			if (mLedsPerTier < 2) {
+				mLedsPerTier = 2;
+			}
+			if (mLedsPerTier > 400) {
+				mLedsPerTier = 400;
+			}
 			
 			try { mTierFloorCm = Integer.valueOf(tierFloorCm); }
 			catch (NumberFormatException e) { }
 			
+			if (mTierFloorCm < 0) {
+				mLedsPerTier = 0;
+			}
+			// We know and can set leds count on this tier.
+			// Can we know the led increase direction yet? Not necessarily for zigzag bay, but can for the other aisle types
+			boolean ledsIncrease = true;
+			if (mControllerLed.equalsIgnoreCase("tierRight")) 
+				ledsIncrease = false;
+			//Knowable, but a bit tricky for the multi-controller aisle case. If this tier is in B3, within B1>B5;, ledsIncrease would be false.
 
-
-			Tier newTier = createOneTier(nominalDomainID, intValueSlotsDesired);
+			Tier newTier = createOneTier(nominalDomainID, intValueSlotsDesired, mLedsPerTier, ledsIncrease);
 
 			if (newTier != null) {
 				mLastReadTier = newTier;
+				// Add this tier to our aisle tier list for later led calculations
+				mTiersThisAisle.add(newTier);
+				
 			}
 
 		}
