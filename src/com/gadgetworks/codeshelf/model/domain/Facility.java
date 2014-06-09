@@ -747,10 +747,11 @@ public class Facility extends SubLocationABC<Facility> {
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inLocation
-	 * @param inXDimMeters
-	 * @param inYDimMeters
+	 * @param inDimMeters
 	 */
-	private void createVertices(ILocation inLocation, Point inDimMeters) {
+	public final void createVertices(ILocation inLocation, Point inDimMeters) {
+		// Change to public as this is called from aisle file reader, and later from editor
+		// Maybe this should not be a facility method.
 		try {
 			// Create four simple vertices around the aisle.
 			Vertex vertex1 = new Vertex(inLocation, "V01", 0, new Point(PositionTypeEnum.METERS_FROM_PARENT, 0.0, 0.0, null));

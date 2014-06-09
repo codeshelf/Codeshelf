@@ -64,6 +64,8 @@ import com.gadgetworks.codeshelf.model.domain.SubLocationABC;
 import com.gadgetworks.codeshelf.model.domain.SubLocationABC.SubLocationDao;
 import com.gadgetworks.codeshelf.model.domain.UomMaster;
 import com.gadgetworks.codeshelf.model.domain.UomMaster.UomMasterDao;
+import com.gadgetworks.codeshelf.model.domain.Vertex;
+import com.gadgetworks.codeshelf.model.domain.Vertex.VertexDao;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction.WorkInstructionDao;
 
@@ -94,6 +96,7 @@ public abstract class EdiTestABC {
 	protected UomMasterDao			mUomMasterDao;
 	protected LedControllerDao		mLedControllerDao;
 	protected LocationAliasDao		mLocationAliasDao;
+	protected VertexDao				mVertexDao;
 	protected WorkInstructionDao	mWorkInstructionDao;
 
 
@@ -220,6 +223,9 @@ public abstract class EdiTestABC {
 			mLocationAliasDao = new LocationAliasDao(mSchemaManager);
 			LocationAlias.DAO = mLocationAliasDao;
 			
+			mVertexDao = new VertexDao(mSchemaManager);
+			Vertex.DAO = mVertexDao;
+
 			mWorkInstructionDao = new WorkInstructionDao(mSchemaManager);
 			WorkInstruction.DAO = mWorkInstructionDao;
 
