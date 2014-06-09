@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project name="CodeShelf" default="build.all" basedir="..">
+<project name="Codeshelf" default="build.all" basedir="..">
 
 	<description>
-		CodeShelf build script.
+		Codeshelf build script.
     </description>
 
 	<taskdef resource="net/sf/antcontrib/antcontrib.properties">
@@ -46,6 +46,9 @@
 	<property name="target.native.dir" location="${target.lib}/native" />
 	<property name="target.docs" location="${target.build}/docs" />
 	<property name="target.docsapi" location="${target.docs}/api" />
+	<property name="target.test" location="${target}/test" />
+	<property name="target.report" location="${target}/report" />
+	<property name="test.dir" location="${basedir}/test" />
 	<property name="bin" location="${target.build}/bin" />
 	<property name="conf.dir" location="${basedir}/conf" />
 	<property name="resources.dir" location="${basedir}/resources" />
@@ -79,6 +82,7 @@
 					<contains string="${ant.version}" substring="1.6" />
 					<contains string="${ant.version}" substring="1.7" />
 					<contains string="${ant.version}" substring="1.8" />
+					<contains string="${ant.version}" substring="1.9" />
 				</or>
 			</not>
 		</condition>
@@ -359,6 +363,37 @@
 			command="/sbin/stop codeshelf"/-->
 
 	</target>
+
+        <!--Compiles the JUnit tests ${test.dir} directory into ${target.test} directory-->
+	<target name="compile.junit">
+		<mkdir dir="${target.test}" /> 
+	        <javac destdir="${target.test}" sourcepath="" source="${javac.compile.using.version}" target="${javac.compile.using.version}" verbose="false" compiler="modern" debug="true">
+        	        <classpath>
+                	        <path refid="compile-libs" />
+        	        </classpath>
+                	<src path="${test.dir}" />
+	        </javac>
+	</target>
+
+
+	<target name="junit" depends="build.all, compile.junit">
+		<mkdir dir="${target.report}" />
+		<junit printsummary="on" fork="true" haltonfailure="yes">
+			<classpath>
+				<pathelement location="${target.classes}" />
+				<pathelement location="${target.test}" />
+				<pathelement location="${target.lib}" />
+				<path refid="compile-libs" />
+			</classpath>
+			<formatter type="xml" />
+			<batchtest todir="${target.report}" >
+				<fileset dir="${test.dir}">
+					<include name="**/*Test.java" />
+				</fileset>
+			</batchtest>
+		</junit>
+	</target>
+
 </project>
 
 

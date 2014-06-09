@@ -18,7 +18,8 @@ import com.gadgetworks.flyweight.command.NetEndpoint;
  *  Test the controller.
  *  @author jeffw
  */
-public abstract class ControllerABCTest {
+
+public abstract class ControllerTestABC {
 
 	private static final byte			TEST_ENDPOINT_NUM	= 0x01;
 	private static final byte			SRS_BYTE			= 0x00;

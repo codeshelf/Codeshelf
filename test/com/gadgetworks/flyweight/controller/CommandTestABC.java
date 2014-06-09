@@ -17,7 +17,7 @@ import com.gadgetworks.flyweight.command.ICommand;
  *  @author jeffw
  */
 
-public abstract class CommandABCTest {
+public abstract class CommandTestABC {
 
 	private ICommand	mCommandABC;
 
