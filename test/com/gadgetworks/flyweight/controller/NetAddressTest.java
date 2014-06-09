@@ -6,8 +6,6 @@
 
 package com.gadgetworks.flyweight.controller;
 
-import junit.framework.TestCase;
-
 import org.junit.Test;
 
 import com.gadgetworks.flyweight.command.IPacket;
@@ -17,7 +15,7 @@ import com.gadgetworks.flyweight.command.NetAddress;
  *  Test the NetAddress calss.
  *  @author jeffw
  */
-public final class NetAddressTest extends TestCase {
+public final class NetAddressTest {
 
 	/**
 	 * Test method for {@link com.gadgetworks.flyweightcontroller.command.NetAddress#NetAddress(int)}.

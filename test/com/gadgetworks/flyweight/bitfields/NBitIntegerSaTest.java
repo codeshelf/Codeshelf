@@ -6,20 +6,10 @@
 
 package com.gadgetworks.flyweight.bitfields;
 
-import junit.framework.TestCase;
+import org.junit.Assert;
+import org.junit.Test;
 
-import com.gadgetworks.flyweight.bitfields.IllegalBoundsException;
-import com.gadgetworks.flyweight.bitfields.NBitInteger;
-import com.gadgetworks.flyweight.bitfields.OutOfRangeException;
-
-public class NBitIntegerSaTest extends TestCase {
-
-	public NBitIntegerSaTest(final String inArg0) {
-		super(inArg0);
-	}
-
-	public static void main(String[] inArgs) {
-	}
+public class NBitIntegerSaTest {
 
 	/*
 	 * Test method for 'com.gadgetworks.bitfields.NBitInteger.NBitInteger(int, int)'
@@ -31,6 +21,7 @@ public class NBitIntegerSaTest extends TestCase {
 	/*
 	 * Test method for 'com.gadgetworks.bitfields.NBitInteger.setValue(int)'
 	 */
+	@Test
 	public final void testConstructor() throws OutOfRangeException {
 
 		@SuppressWarnings("unused")
@@ -42,25 +33,25 @@ public class NBitIntegerSaTest extends TestCase {
 
 		try {
 			testInt2 = new NBitInteger((byte) 3, (byte) -1);
-			fail();
+			Assert.fail();
 		} catch (IllegalBoundsException e) {
-			fail();
+			Assert.fail();
 		} catch (OutOfRangeException e) {
 			// Expected case.
 		}
 
 		try {
 			testInt2 = new NBitInteger((byte) 3, (byte) 17);
-			fail();
+			Assert.fail();
 		} catch (IllegalBoundsException e) {
-			fail();
+			Assert.fail();
 		} catch (OutOfRangeException e) {
 			// Expected case.
 		}
 
 		try {
 			testInt2 = new NBitInteger((byte) -1, (byte) 0);
-			fail();
+			Assert.fail();
 		} catch (IllegalBoundsException e) {
 			// Expected case.
 			//		} catch (OutOfRangeException e) {
@@ -69,7 +60,7 @@ public class NBitIntegerSaTest extends TestCase {
 
 		try {
 			testInt2 = new NBitInteger((byte) 17, (byte) 0);
-			fail();
+			Assert.fail();
 		} catch (IllegalBoundsException e) {
 			// Expected case.
 			//		} catch (OutOfRangeException e) {
@@ -81,6 +72,7 @@ public class NBitIntegerSaTest extends TestCase {
 	/*
 	 * Test method for 'com.gadgetworks.bitfields.NBitInteger.setValue(int)'
 	 */
+	@Test
 	public final void testSetValue() {
 
 		try {
@@ -92,23 +84,23 @@ public class NBitIntegerSaTest extends TestCase {
 
 			try {
 				testInt.setValue((byte) 8);
-				fail();
+				Assert.fail();
 			} catch (OutOfRangeException e) {
 				// Expected condition.
 			}
 
 			try {
 				testInt.setValue((byte) -1);
-				fail();
+				Assert.fail();
 			} catch (OutOfRangeException e) {
 				// Expected condition.
 			}
 
 			// Expected case.
 		} catch (IllegalBoundsException e) {
-			fail();
+			Assert.fail();
 		} catch (OutOfRangeException e) {
-			fail();
+			Assert.fail();
 		}
 
 	}
@@ -116,29 +108,31 @@ public class NBitIntegerSaTest extends TestCase {
 	/*
 	 * Test method for 'com.gadgetworks.bitfields.NBitInteger.getValue()'
 	 */
+	@Test
 	public final void testGetValue() {
 
 		try {
 			// Test with 0, 1, 7
 			NBitInteger testInt = new NBitInteger((byte) 3, (byte) 0);
-			assertEquals(0, testInt.getValue());
+			Assert.assertEquals(0, testInt.getValue());
 
 			testInt.setValue((byte) 1);
-			assertEquals(1, testInt.getValue());
+			Assert.assertEquals(1, testInt.getValue());
 
 			testInt.setValue((byte) 7);
-			assertEquals(7, testInt.getValue());
+			Assert.assertEquals(7, testInt.getValue());
 
 		} catch (IllegalBoundsException e) {
-			fail();
+			Assert.fail();
 		} catch (OutOfRangeException e) {
-			fail();
+			Assert.fail();
 		}
 	}
 
 	/*
 	 * Test method for 'com.gadgetworks.bitfields.NBitInteger.getValue()' for an uninitialized value.
 	 */
+	@Test
 	public final void testUnitialized() {
 
 		try {
@@ -146,24 +140,25 @@ public class NBitIntegerSaTest extends TestCase {
 
 			try {
 				short value = testInt.getValue();
-				fail();
+				Assert.fail();
 			} catch (OutOfRangeException e) {
 				// Expected condition.
 			}
 
 			testInt.setValue((byte) 1);
-			assertEquals(1, testInt.getValue());
+			Assert.assertEquals(1, testInt.getValue());
 
 		} catch (IllegalBoundsException e) {
-			fail();
+			Assert.fail();
 		} catch (OutOfRangeException e) {
-			fail();
+			Assert.fail();
 		}
 	}
 
 	/*
 	 * Test method for 'com.gadgetworks.bitfields.NBitInteger.getBitLen()'
 	 */
+	@Test
 	public void testGetBitLen() {
 
 	}
@@ -171,30 +166,31 @@ public class NBitIntegerSaTest extends TestCase {
 	/*
 	 * Test method for 'com.gadgetworks.bitfields.NBitInteger.getMin()'
 	 */
+	@Test
 	public final void testGetMin() {
 		try {
 			NBitInteger testInt = new NBitInteger((byte) 1, (byte) 0);
-			assertEquals(0, testInt.getMin());
+			Assert.assertEquals(0, testInt.getMin());
 		} catch (IllegalBoundsException e) {
-			fail();
+			Assert.fail();
 			//		} catch (OutOfRangeException e) {
 			//			fail();
 		}
 
 		try {
 			NBitInteger testInt = new NBitInteger((byte) 2, (byte) 0);
-			assertEquals(0, testInt.getMin());
+			Assert.assertEquals(0, testInt.getMin());
 		} catch (IllegalBoundsException e) {
-			fail();
+			Assert.fail();
 			//		} catch (OutOfRangeException e) {
 			//			fail();
 		}
 
 		try {
 			NBitInteger testInt = new NBitInteger((byte) 7, (byte) 0);
-			assertEquals(0, testInt.getMin());
+			Assert.assertEquals(0, testInt.getMin());
 		} catch (IllegalBoundsException e) {
-			fail();
+			Assert.fail();
 			//		} catch (OutOfRangeException e) {
 			//			fail();
 		}
@@ -204,39 +200,40 @@ public class NBitIntegerSaTest extends TestCase {
 	/*
 	 * Test method for 'com.gadgetworks.bitfields.NBitInteger.getMax()'
 	 */
+	@Test
 	public final void testGetMax() {
 		try {
 			NBitInteger testInt = new NBitInteger((byte) 1, (byte) 0);
-			assertEquals(1, testInt.getMax());
+			Assert.assertEquals(1, testInt.getMax());
 		} catch (IllegalBoundsException e) {
-			fail();
+			Assert.fail();
 			//		} catch (OutOfRangeException e) {
 			//			fail();
 		}
 
 		try {
 			NBitInteger testInt = new NBitInteger((byte) 2, (byte) 0);
-			assertEquals(3, testInt.getMax());
+			Assert.assertEquals(3, testInt.getMax());
 		} catch (IllegalBoundsException e) {
-			fail();
+			Assert.fail();
 			//		} catch (OutOfRangeException e) {
 			//			fail();
 		}
 
 		try {
 			NBitInteger testInt = new NBitInteger((byte) 7, (byte) 0);
-			assertEquals(127, testInt.getMax());
+			Assert.assertEquals(127, testInt.getMax());
 		} catch (IllegalBoundsException e) {
-			fail();
+			Assert.fail();
 			//		} catch (OutOfRangeException e) {
 			//			fail();
 		}
 
 		try {
 			NBitInteger testInt = new NBitInteger((byte) 8, (byte) 0);
-			assertEquals(255, testInt.getMax());
+			Assert.assertEquals(255, testInt.getMax());
 		} catch (IllegalBoundsException e) {
-			fail();
+			Assert.fail();
 			//		} catch (OutOfRangeException e) {
 			//			fail();
 		}

@@ -6,8 +6,6 @@
 
 package com.gadgetworks.flyweight.controller;
 
-import junit.framework.TestCase;
-
 import org.junit.Test;
 
 import com.gadgetworks.flyweight.command.NetEndpoint;
@@ -16,7 +14,7 @@ import com.gadgetworks.flyweight.command.NetEndpoint;
  *  Test the net endpoint.
  *  @author jeffw
  */
-public final class NetEndpointTest extends TestCase {
+public final class NetEndpointTest {
 
 	private static final byte	DEVICE_TEST_ENDPOPINT	= 0x01;
 
