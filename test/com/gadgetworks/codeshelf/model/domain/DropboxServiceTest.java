@@ -27,7 +27,7 @@ public class DropboxServiceTest {
 	 * Dropbox FORCES to use a manual procedure to connect our app to an account.
 	 */
 
-	private final static String	TEST_CREDENTIALS	= "_j2uNuj7o0AAAAAAAAAAAQSaC0B6__GxvCqr-GMHyr7V97ci8Qqb80KThe-qdvOB";
+	private final static String	TEST_CREDENTIALS	= "aNGT-ls9rKAAAAAAAAAADu5mGXxFh8TqnVjt7zvIdTOt1H17h2UIky_FypTb7RcW";
 
 	@Test
 	public final void dropboxCheckTest() {

@@ -5,8 +5,7 @@
  *******************************************************************************/
 package com.gadgetworks.flyweight.controller;
 
-import junit.framework.TestCase;
-
+import org.junit.Assert;
 import org.junit.Test;
 
 import com.gadgetworks.flyweight.command.CommandAssocReq;
@@ -19,7 +18,8 @@ import com.gadgetworks.flyweight.command.NetEndpoint;
  *  Test the controller.
  *  @author jeffw
  */
-public abstract class ControllerABCTest extends TestCase {
+
+public abstract class ControllerTestABC {
 
 	private static final byte			TEST_ENDPOINT_NUM	= 0x01;
 	private static final byte			SRS_BYTE			= 0x00;
@@ -33,13 +33,9 @@ public abstract class ControllerABCTest extends TestCase {
 
 	private IRadioController			mControllerABC;
 
-	public ControllerABCTest(final String inName) {
-		super(inName);
-	}
-
 	public final void setUp() throws Exception {
 		mControllerABC = createControllerABC();
-		assertNotNull("Problem creating ControllerABC instance.", mControllerABC);
+		Assert.assertNotNull("Problem creating ControllerABC instance.", mControllerABC);
 	}
 
 	/**

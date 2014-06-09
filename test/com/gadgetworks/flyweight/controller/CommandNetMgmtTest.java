@@ -5,15 +5,13 @@
  *******************************************************************************/
 package com.gadgetworks.flyweight.controller;
 
-import junit.framework.TestCase;
-
 import org.junit.Test;
 
 /** --------------------------------------------------------------------------
  *  Test the net management command.
  *  @author jeffw
  */
-public class CommandNetMgmtTest extends TestCase {
+public class CommandNetMgmtTest {
 
 	/**
 	 * Test method for {@link com.gadgetworks.flyweightcontroller.command.CommandAssocReq#doFromStream(com.gadgetworks.bitfields.BitFieldInputStream, int)}.

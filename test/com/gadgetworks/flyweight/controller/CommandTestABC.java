@@ -6,7 +6,8 @@
 
 package com.gadgetworks.flyweight.controller;
 
-import junit.framework.TestCase;
+import org.junit.Assert;
+import org.junit.Test;
 
 import com.gadgetworks.flyweight.command.ICommand;
 
@@ -16,17 +17,14 @@ import com.gadgetworks.flyweight.command.ICommand;
  *  @author jeffw
  */
 
-public abstract class CommandABCTest extends TestCase {
+public abstract class CommandTestABC {
 
 	private ICommand	mCommandABC;
 
-	public CommandABCTest(final String inName) {
-		super(inName);
-	}
-
+	@Test
 	public final void setUp() throws Exception {
 		mCommandABC = createCommandABC();
-		assertNotNull("Problem creating CommandABC instance.", mCommandABC);
+		Assert.assertNotNull("Problem creating CommandABC instance.", mCommandABC);
 	}
 
 	/**

@@ -5,8 +5,6 @@
  *******************************************************************************/
 package com.gadgetworks.flyweight.controller;
 
-import junit.framework.TestCase;
-
 import org.junit.Test;
 
 import com.gadgetworks.flyweight.command.CommandGroupEnum;
@@ -16,7 +14,7 @@ import com.gadgetworks.flyweight.command.NetCommandGroup;
  *  Test the net command ID.
  *  @author jeffw
  */
-public final class NetCmdIDTest extends TestCase {
+public final class NetCmdIDTest {
 
 	/**
 	 * Test method for {@link com.gadgetworks.flyweightcontroller.command.NetEndpoint#NetEndpoint(int)}.

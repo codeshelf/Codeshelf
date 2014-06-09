@@ -28,7 +28,7 @@ import com.gadgetworks.flyweight.command.NetEndpoint;
 import com.gadgetworks.flyweight.command.NetworkId;
 import com.gadgetworks.flyweight.command.Packet;
 
-public final class CommandControlTest extends CommandABCTest {
+public final class CommandControlTest {
 
 	private static final String	TEST_MSG1				= "TEST1";
 	private static final String	TEST_MSG2				= "TEST2";
@@ -51,11 +51,6 @@ public final class CommandControlTest extends CommandABCTest {
 	private static final byte[]	BUTTON_PACKET_IN_DATA	= { 0x01, 0x00, 0x01, 0x00, 0x31, CommandControlButton.BUTTON, POS_NUM, REQ_VALUE, MIN_VALUE,
 		MAX_VALUE, FREQ, DUTYCYCLE };
 
-	public CommandControlTest(final String inName) {
-		super(inName);
-	}
-
-	@Override
 	protected ICommand createCommandABC() throws Exception {
 		return new CommandControlDisplayMessage(NetEndpoint.PRIMARY_ENDPOINT, TEST_MSG1, TEST_MSG2, TEST_MSG3, TEST_MSG4);
 	}
@@ -75,7 +70,7 @@ public final class CommandControlTest extends CommandABCTest {
 
 		// If it is not the datagram command then something went wrong.
 		if (!(command instanceof CommandControlSetPosController))
-			fail("Not a CommandControlRequestQty command");
+			Assert.fail("Not a CommandControlRequestQty command");
 
 		List<PosControllerInstr> instructions = ((CommandControlSetPosController) command).getInstructions();
 		Assert.assertEquals(1, instructions.size());
@@ -121,7 +116,7 @@ public final class CommandControlTest extends CommandABCTest {
 		// Check the byte values of the stream to verify that it's right.
 		byte[] resultBytes = byteArray.toByteArray();
 		if (!Arrays.equals(resultBytes, REQUEST_PACKET_OUT_DATA))
-			fail("Command data is not correct");
+			Assert.fail("Command data is not correct");
 	}
 
 	@Test
@@ -139,15 +134,15 @@ public final class CommandControlTest extends CommandABCTest {
 
 		// If it is not the datagram command then something went wrong.
 		if (!(command instanceof CommandControlButton))
-			fail("Not a CommandControlRequestQty command");
+			Assert.fail("Not a CommandControlRequestQty command");
 
 		Byte posNum = ((CommandControlButton) command).getPosNum();
 		if (!POS_NUM.equals(posNum))
-			fail("Command data is not correct");
+			Assert.fail("Command data is not correct");
 
 		Byte req = ((CommandControlButton) command).getValue();
 		if (!REQ_VALUE.equals(req))
-			fail("Command data is not correct");
+			Assert.fail("Command data is not correct");
 
 	}
 }

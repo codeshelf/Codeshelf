@@ -10,7 +10,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
 
-import junit.framework.TestCase;
+import org.junit.Assert;
+import org.junit.Test;
 
 import com.gadgetworks.flyweight.bitfields.BitFieldInputStream;
 import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
@@ -26,7 +27,7 @@ import com.gadgetworks.flyweight.command.Packet;
  *  Test the Packet class.
  *  @author jeffw
  */
-public final class PacketTest extends TestCase {
+public final class PacketTest {
 
 	private static final byte[]			PACKET_IN_DATA		= { 0x01, 0x00, 0x01, 0x00, 0x31, 0x01, 0x05, 0x54, 0x45, 0x53, 0x54, 0x31, 0x05, 0x54, 0x45, 0x53, 0x54, 0x32, 0x05, 0x54, 0x45, 0x53, 0x54, 0x33, 0x05, 0x54, 0x45, 0x53, 0x54, 0x34 };
 	private static final byte[]			PACKET_OUT_DATA		= { 0x01, 0x00, 0x08, 0x00, 0x31, 0x01, 0x05, 0x54, 0x45, 0x53, 0x54, 0x31, 0x05, 0x54, 0x45, 0x53, 0x54, 0x32, 0x05, 0x54, 0x45, 0x53, 0x54, 0x33, 0x05, 0x54, 0x45, 0x53, 0x54, 0x34 };
@@ -36,17 +37,10 @@ public final class PacketTest extends TestCase {
 	private static final String			TEST_MSG3			= "TEST3";
 	private static final String			TEST_MSG4			= "TEST4";
 
-	/** --------------------------------------------------------------------------
-	 *  Packet constructor.
-	 *  @param inArg
-	 */
-	public PacketTest(final String inArg) {
-		super(inArg);
-	}
-
 	/**
 	 * Test method for {@link com.gadgetworks.flyweightcontroller.command.Packet#Packet(com.gadgetworks.flyweightcontroller.command.CommandABC, com.gadgetworks.flyweightcontroller.command.NetAddress, com.gadgetworks.flyweightcontroller.command.NetAddress, byte)}.
 	 */
+	@Test
 	public void testPacketConstructors() {
 
 		// Test the case of a packet created for transmit.
@@ -63,21 +57,21 @@ public final class PacketTest extends TestCase {
 
 		try {
 			packet = new Packet(null, networkId, srcAddr, destAddr, false);
-			fail();
+			Assert.fail();
 		} catch (NullPointerException e) {
 			// Expected case.
 		}
 
 		try {
 			packet = new Packet(command, networkId, null, destAddr, false);
-			fail();
+			Assert.fail();
 		} catch (NullPointerException e) {
 			// Expected case.
 		}
 
 		try {
 			packet = new Packet(command, networkId, srcAddr, null, false);
-			fail();
+			Assert.fail();
 		} catch (NullPointerException e) {
 			// Expected case.
 		}
@@ -87,6 +81,7 @@ public final class PacketTest extends TestCase {
 	/**
 	 * Test method for {@link com.gadgetworks.flyweightcontroller.command.Packet#toStream(com.gadgetworks.flyweightcontroller.bitfields.BitFieldOutputStream)}.
 	 */
+	@Test
 	public void testFromStream() {
 
 		ByteArrayInputStream byteArray = new ByteArrayInputStream(PACKET_IN_DATA);
@@ -101,20 +96,21 @@ public final class PacketTest extends TestCase {
 
 		// If it is not the datagram command then something went wrong.
 		if (!(command instanceof CommandControlDisplayMessage))
-			fail("Not a CommandControlMessage command");
+			Assert.fail("Not a CommandControlMessage command");
 
 		String message1 = ((CommandControlDisplayMessage) command).getLine1MessageStr();
 		if (!TEST_MSG1.equals(message1))
-			fail("Command data is not correct");
+			Assert.fail("Command data is not correct");
 
 		String message2 = ((CommandControlDisplayMessage) command).getLine2MessageStr();
 		if (!TEST_MSG2.equals(message2))
-			fail("Command data is not correct");
+			Assert.fail("Command data is not correct");
 	}
 
 	/**
 	 * Test method for {@link com.gadgetworks.flyweightcontroller.command.Packet#fromStream(com.gadgetworks.flyweightcontroller.bitfields.BitFieldInputStream)}.
 	 */
+	@Test
 	public void testToStream() {
 
 		ByteArrayOutputStream byteArray = new ByteArrayOutputStream();
@@ -142,6 +138,6 @@ public final class PacketTest extends TestCase {
 		// Check the byte values of the stream to verify that it's right.
 		byte[] resultBytes = byteArray.toByteArray();
 		if (!Arrays.equals(resultBytes, PACKET_OUT_DATA))
-			fail("Command data is not correct");
+			Assert.fail("Command data is not correct");
 	}
 }
