@@ -170,9 +170,8 @@ public class AislesFileCsvImporter {
 		}
 	}
 	
-	private class BayTierComparable implements Comparator<Tier> {
-		// For the zigzagRight and zigzagLeft aisle types.
-		// Fix later. This is not right as we want B1T2, B1T1, B2T2, B2T1. But getBaySortName gives us B1T1, B1T2, B2T1, B2T2
+	private class zigzagLeftComparable implements Comparator<Tier> {
+		// We want B1T2, B1T1, B2T2, B2T1. Incrementing Bay. Decrementing Tier
 		public int compare(Tier inLoc1, Tier inLoc2) {
 
 			if ((inLoc1 == null) && (inLoc2 == null)) {
@@ -182,14 +181,37 @@ public class AislesFileCsvImporter {
 			} else if (inLoc1 == null) {
 				return 1;
 			} else {
-				return inLoc1.getBaySortName().compareTo(inLoc2.getBaySortName());
+				int bayValue = inLoc1.getBayName().compareTo(inLoc2.getBayName());
+				if (bayValue != 0)
+					return bayValue;
+				else
+					return (inLoc1.getDomainId().compareTo(inLoc2.getDomainId()) * -1);
+			}
+		}
+	}
+
+	private class zigzagRightComparable implements Comparator<Tier> {
+		// We want B2T2, B2T1, B1T2, B1T1. Decrementing Bay. Decrementing Tier
+		public int compare(Tier inLoc1, Tier inLoc2) {
+
+			if ((inLoc1 == null) && (inLoc2 == null)) {
+				return 0;
+			} else if (inLoc2 == null) {
+				return -1;
+			} else if (inLoc1 == null) {
+				return 1;
+			} else {
+				int bayValue = inLoc1.getBayName().compareTo(inLoc2.getBayName());
+				if (bayValue != 0)
+					return (bayValue * -1);
+				else
+					return (inLoc1.getDomainId().compareTo(inLoc2.getDomainId()) * -1);
 			}
 		}
 	}
 
 	private class SlotNameComparable implements Comparator<Slot> {
-		// For the zigzagRight and zigzagLeft aisle types.
-		// Fix later. This is not right as we want B1T2, B1T1, B2T2, B2T1. But getBaySortName gives us B1T1, B1T2, B2T1, B2T2
+		// Just order slots S1, S2, S3, etc. 
 		public int compare(Slot inLoc1, Slot inLoc2) {
 
 			if ((inLoc1 == null) && (inLoc2 == null)) {
@@ -213,7 +235,7 @@ public class AislesFileCsvImporter {
 	private void setSlotLeds(Tier inTier, short inLedCountThisTier, boolean slotLedsIncrease) {
 		// First get our list of slot. Fighting through the cast.
 		List<Slot> slotList = new ArrayList<Slot>();	
-		List<ISubLocation> locationList = inTier.getChildren();	
+		List<? extends ISubLocation> locationList = inTier.getChildren();	
 		slotList.addAll((Collection<? extends Slot>) locationList);
 		
 		// sort the slots in the direction the led count will increase		
@@ -301,27 +323,40 @@ public class AislesFileCsvImporter {
 	 */
 	private void finalizeTiersInThisAisle(final Aisle inAisle) {
 		// mTiersThisAisle has all the tiers, with their transient fields set for ledCount and ledDirection
-		// We need to sort the tiers in order, then set the first and last LED for each tier.
+		// We need to sort the tiers in order, then set the first and last LED for each tier. And direction of tier for zigzag tiers
 		// And, once that is known, we can set the slot leds also
+		
+		// This function does not do the mulit-controller aisles
 		
 		boolean tierSortNeeded = true;
 		if (mControllerLed.equalsIgnoreCase("zigzagLeft") || mControllerLed.equalsIgnoreCase("zigzagRight")) {
 			tierSortNeeded = false;
 		}
 		boolean restartLedOnTierChange = tierSortNeeded;
+		boolean isZigzag = false;
+		boolean intialZigTierDirectionIncrease = true;
 		
-		if (tierSortNeeded)
+		if (tierSortNeeded) {
 			Collections.sort(mTiersThisAisle, new TierBayComparable());
-		else {
-			Collections.sort(mTiersThisAisle, new BayTierComparable());
+		}
+		else if (mControllerLed.equalsIgnoreCase("zigzagLeft")) {
+			Collections.sort(mTiersThisAisle, new zigzagLeftComparable());
+			isZigzag = true;
+		}
+		else if (mControllerLed.equalsIgnoreCase("zigzagRight")) {
+			Collections.sort(mTiersThisAisle, new zigzagRightComparable());
+			isZigzag = true;
+			intialZigTierDirectionIncrease = false;
 		}
 		
-		// The algorithm is simple: start; increment leds as you go. Start over if the tier name changes.
+		// The algorithm is simple: start; increment leds as you go. 
+		// For aisle types, start over if the tier name changes.
+		// For zigzag types, start over on tier direction if the bay name changes
 		
 		ListIterator li = null;
 
 		boolean forwardIterationNeeded = true;
-		if (mControllerLed.equalsIgnoreCase("tierRight") || mControllerLed.equalsIgnoreCase("zigzagRight")) {
+		if (mControllerLed.equalsIgnoreCase("tierRight")) {
 			forwardIterationNeeded = false;
 		}
 		
@@ -329,7 +364,10 @@ public class AislesFileCsvImporter {
 		short newLedNumber = 0;
 		String tierSortName = "";
 		String lastTierDomainName = "";
+		String lastTierBayName = "";
 		Tier thisTier = null;
+		boolean zigTierDirectionIncrease = intialZigTierDirectionIncrease;
+		
 		if (forwardIterationNeeded) {
 			li = mTiersThisAisle.listIterator();
 			while (li.hasNext()) {
@@ -340,13 +378,25 @@ public class AislesFileCsvImporter {
 			  // need to start over? never for zigzag. If tier changed for tier or multi-controller. And extra restarts on the same tier for multi-controller.
 			  if (restartLedOnTierChange) {
 				  String thisTierDomainName = thisTier.getDomainId();
-				  if (! thisTierDomainName.equalsIgnoreCase(lastTierDomainName))
+				  if (!thisTierDomainName.equalsIgnoreCase(lastTierDomainName))
 					  lastLedNumber = 0;
 				  lastTierDomainName = thisTierDomainName;
+			  }
+			  
+			  // zigzag cases only forward iterate
+			  if (isZigzag) {
+				  String thisTierBayName = thisTier.getBayName();
+				  if (!thisTierBayName.equalsIgnoreCase(lastTierBayName)) {
+					  zigTierDirectionIncrease = intialZigTierDirectionIncrease;
+				  }
+				  
+				  lastTierBayName = thisTierBayName;
+				  thisTier.setMTransientLedsIncrease(zigTierDirectionIncrease); // remember this direction. Used by setTierLeds()
 			  }
 				  
 			  newLedNumber = setTierLeds(thisTier, lastLedNumber);
 			  lastLedNumber = newLedNumber;
+			  zigTierDirectionIncrease = !zigTierDirectionIncrease; // only used by zigzag bays
 			}
 		} else {
 			li = mTiersThisAisle.listIterator(mTiersThisAisle.size());
@@ -358,7 +408,7 @@ public class AislesFileCsvImporter {
 				  // need to start over? never for zigzag. If tier changed for tier or multi-controller. And extra times for multi-controller.
 				  if (restartLedOnTierChange) {
 					  String thisTierDomainName = thisTier.getDomainId();
-					  if (! thisTierDomainName.equalsIgnoreCase(lastTierDomainName))
+					  if (!thisTierDomainName.equalsIgnoreCase(lastTierDomainName))
 						  lastLedNumber = 0;
 					  lastTierDomainName = thisTierDomainName;
 				  }

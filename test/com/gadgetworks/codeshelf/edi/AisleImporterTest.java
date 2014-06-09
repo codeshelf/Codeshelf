@@ -277,5 +277,127 @@ public class AisleImporterTest extends DomainTestABC {
 
 	}
 	
+	@Test
+	public final void testZigzagLeft() {
+
+		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm,pickFaceEndX,pickFaceEndY\r\n" //
+				+ "Aisle,A12,,,,,zigzagLeft,12.85,43.45,X,120,\r\n" //
+				+ "Bay,B1,115,,,,,\r\n" //
+				+ "Tier,T1,,5,32,0,,\r\n" //
+				+ "Tier,T2,,5,32,0,,\r\n" //
+				+ "Tier,T3,,5,32,0,,\r\n" //
+				+ "Bay,B2,115,,,,,\r\n" //
+				+ "Tier,T1,,5,32,0,,\r\n" //
+				+ "Tier,T2,,5,32,0,,\r\n" //
+				+ "Tier,T3,,5,32,0,,\r\n"; //
+	
+		byte[] csvArray = csvString.getBytes();
+
+		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
+		InputStreamReader reader = new InputStreamReader(stream);
+
+		Organization organization = new Organization();
+		organization.setDomainId("O-AISLE12");
+		mOrganizationDao.store(organization);
+
+		organization.createFacility("F-AISLE12", "TEST", Point.getZeroPoint());
+		Facility facility = organization.getFacility("F-AISLE12");
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		importer.importAislesFromCsvStream(reader, facility, ediProcessTime);
+
+		// Check what we got
+		Aisle aisle = Aisle.DAO.findByDomainId(facility, "A12");
+		Assert.assertNotNull(aisle);
+		
+		Bay bayA12B1 = Bay.DAO.findByDomainId(aisle, "B1");
+		Bay bayA12B2 = Bay.DAO.findByDomainId(aisle, "B2");
+
+		Tier tierB1T1 = Tier.DAO.findByDomainId(bayA12B1, "T1");
+		Tier tierB2T2 = Tier.DAO.findByDomainId(bayA12B2, "T2");
+
+		Slot slotB1T1S1 = Slot.DAO.findByDomainId(tierB1T1, "S1");
+
+		Slot slotB2T2S5 = Slot.DAO.findByDomainId(tierB2T2, "S5");
+
+		// leds should come from the top left for this zigzag bay. Third tier down from top starts at 65
+		Assert.assertTrue(tierB1T1.getFirstLedNumAlongPath() == 65);
+		Assert.assertTrue(tierB1T1.getLastLedNumAlongPath() == 96);
+
+		short tierB2T2First = tierB2T2.getFirstLedNumAlongPath();
+		Assert.assertTrue(tierB2T2First == 129); // fifth tier in the led path, and direction right to left for this tier.
+		Assert.assertTrue(tierB2T2.getLastLedNumAlongPath() == 160);
+
+		short slotB1T1S1First = slotB1T1S1.getFirstLedNumAlongPath();
+		Assert.assertTrue(slotB1T1S1First == 67);
+
+		short slotB2T2S5First = slotB2T2S5.getFirstLedNumAlongPath();
+		Assert.assertTrue(slotB2T2S5First == 131);
+		Assert.assertTrue(slotB2T2S5.getLastLedNumAlongPath() == 134);
+		
+	}
+
+	@Test
+	public final void testZigzagRight() {
+
+		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm,pickFaceEndX,pickFaceEndY\r\n" //
+				+ "Aisle,A13,,,,,zigzagRight,12.85,43.45,X,120,\r\n" //
+				+ "Bay,B1,115,,,,,\r\n" //
+				+ "Tier,T1,,5,32,0,,\r\n" //
+				+ "Tier,T2,,5,32,0,,\r\n" //
+				+ "Tier,T3,,5,32,0,,\r\n" //
+				+ "Bay,B2,115,,,,,\r\n" //
+				+ "Tier,T1,,5,32,0,,\r\n" //
+				+ "Tier,T2,,5,32,0,,\r\n" //
+				+ "Tier,T3,,5,32,0,,\r\n"; //
+	
+		byte[] csvArray = csvString.getBytes();
+
+		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
+		InputStreamReader reader = new InputStreamReader(stream);
+
+		Organization organization = new Organization();
+		organization.setDomainId("O-AISLE13");
+		mOrganizationDao.store(organization);
+
+		organization.createFacility("F-AISLE13", "TEST", Point.getZeroPoint());
+		Facility facility = organization.getFacility("F-AISLE13");
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		importer.importAislesFromCsvStream(reader, facility, ediProcessTime);
+
+		// Check what we got
+		Aisle aisle = Aisle.DAO.findByDomainId(facility, "A13");
+		Assert.assertNotNull(aisle);
+		
+		Bay bayA13B1 = Bay.DAO.findByDomainId(aisle, "B1");
+		Bay bayA13B2 = Bay.DAO.findByDomainId(aisle, "B2");
+
+		Tier tierB1T1 = Tier.DAO.findByDomainId(bayA13B1, "T1");
+		Tier tierB2T2 = Tier.DAO.findByDomainId(bayA13B2, "T2");
+
+		Slot slotB1T1S1 = Slot.DAO.findByDomainId(tierB1T1, "S1");
+	
+		Slot slotB2T2S5 = Slot.DAO.findByDomainId(tierB2T2, "S5");
+
+		// leds should come from the top right for this zigzag bay. Third tier down on second bay starts at 65
+		Assert.assertTrue(tierB1T1.getFirstLedNumAlongPath() == 161);
+		Assert.assertTrue(tierB1T1.getLastLedNumAlongPath() == 192);
+
+		short tierB2T2First = tierB2T2.getFirstLedNumAlongPath();
+		Assert.assertTrue(tierB2T2First == 33); // second tier in the led path, and direction left to right for this tier.
+		Assert.assertTrue(tierB2T2.getLastLedNumAlongPath() == 64);
+
+		short slotB1T1S1First = slotB1T1S1.getFirstLedNumAlongPath(); // last slot in last tier along the led path
+		Assert.assertTrue(slotB1T1S1First == 188);
+
+		short slotB2T2S5First = slotB2T2S5.getFirstLedNumAlongPath(); // last slot in second tier along the led path
+		Assert.assertTrue(slotB2T2S5First == 60);
+		Assert.assertTrue(slotB2T2S5.getLastLedNumAlongPath() == 63);
+		
+	}
+
 
 }
