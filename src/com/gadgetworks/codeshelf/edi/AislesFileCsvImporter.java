@@ -9,6 +9,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.Timestamp;
+import java.util.Collection;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -28,6 +29,7 @@ import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Bay;
 import com.gadgetworks.codeshelf.model.domain.ILocation;
+import com.gadgetworks.codeshelf.model.domain.ISubLocation;
 import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.model.domain.Tier;
 import com.gadgetworks.codeshelf.model.domain.Slot;
@@ -185,6 +187,81 @@ public class AislesFileCsvImporter {
 		}
 	}
 
+	private class SlotNameComparable implements Comparator<Slot> {
+		// For the zigzagRight and zigzagLeft aisle types.
+		// Fix later. This is not right as we want B1T2, B1T1, B2T2, B2T1. But getBaySortName gives us B1T1, B1T2, B2T1, B2T2
+		public int compare(Slot inLoc1, Slot inLoc2) {
+
+			if ((inLoc1 == null) && (inLoc2 == null)) {
+				return 0;
+			} else if (inLoc2 == null) {
+				return -1;
+			} else if (inLoc1 == null) {
+				return 1;
+			} else {
+				return inLoc1.getDomainId().compareTo(inLoc2.getDomainId());
+			}
+		}
+	}
+
+	 // --------------------------------------------------------------------------
+	/**
+	 * @param inTier
+	 * @param inLastLedNumber
+	 * @param slotLedsIncrease
+	 */
+	private void setSlotLeds(Tier inTier, short inLedCountThisTier, boolean slotLedsIncrease) {
+		// First get our list of slot. Fighting through the cast.
+		List<Slot> slotList = new ArrayList<Slot>();	
+		List<ISubLocation> locationList = inTier.getChildren();	
+		slotList.addAll((Collection<? extends Slot>) locationList);
+		
+		// sort the slots in the direction the led count will increase		
+		Collections.sort(slotList, new SlotNameComparable());
+		if (!slotLedsIncrease)
+			Collections.reverse(slotList);
+		
+		// For this purpose, "leds" is the total span of the slot in led positions, and "lit leds" will give the ones lighted toward the center of the slot.
+		short slotCount = (short) (slotList.size());
+		short ledsPerSlot = (short)  (inLedCountThisTier / slotCount);
+		short remainderLeds  = (short) (inLedCountThisTier % slotCount);
+		
+		// The extra -1 matters only when inLedCountThisTier is divisible by (slotCount * 3)
+		short ledsToLightPerSlot = (short) ((inLedCountThisTier - 1 - (slotCount * 3)) / slotCount);
+	
+		short lastSlotEndingLed = (short) (inTier.getFirstLedNumAlongPath() - 1);
+		short slotIndex = 0;
+		
+		// You can see the algorithm. Work down the full width of each slot, using up the remainder making slots wider
+		// until the remainder runs out. Then light a few lights in the middle of that span.
+		
+		// We will leave two dark then light some. That leaves one dark at the end, or two if we used the remainder.
+		ListIterator li = null;
+		li = slotList.listIterator();
+		while (li.hasNext()) {
+			Slot thisSlot = (Slot) li.next();
+			// tierSortName just to follow the iteration in debugger
+			String slotName = thisSlot.getDomainId();
+			  
+			slotIndex += 1;
+			short thisSlotStartLed = (short) (lastSlotEndingLed +  1);
+			short thisSlotEndLed =  (short) (thisSlotStartLed +  ledsPerSlot - 1);
+			if (slotIndex < remainderLeds)
+				thisSlotEndLed += 1; // distribute the unevenness among the first few slots
+  
+			short firstLitLed = (short) (thisSlotStartLed + 2);
+			short lastLitLed = (short) (firstLitLed + ledsToLightPerSlot);
+		  
+			thisSlot.setFirstLedNumAlongPath((short) (firstLitLed));
+			thisSlot.setLastLedNumAlongPath((short) (lastLitLed));
+			// transaction?
+			Slot.DAO.store(thisSlot);	  
+		  
+			lastSlotEndingLed = thisSlotEndLed;
+		}
+
+	}
+	 
 	 // --------------------------------------------------------------------------
 	/**
 	 * @param inTier
@@ -192,20 +269,29 @@ public class AislesFileCsvImporter {
 	 */
 	private short setTierLeds(Tier inTier, short inLastLedNumber) {
 		// would be more obvious with an inOut parameter
+		// returns the value of last led position in this tier, so that the next tier knows where to start.
 		short returnValue = 0;
 		short ledCount = inTier.getMTransientLedsThisTier();
+		short thisTierStartLed = (short) (inLastLedNumber + 1);
+		short thisTierEndLed = (short) (inLastLedNumber + ledCount);
 		// We should still have hold of the tier reference that has the transient field set. If not, ledCount == 0
 		
 		if (ledCount == 0) {
-			
+			return inLastLedNumber;
+			// Not sure we will need this case ever. Would be something like setting a null tier that a cable skips to next tier.
 		}
 		else {
-			inTier.setFirstLedNumAlongPath((short) (inLastLedNumber + 1));
-			inTier.setLastLedNumAlongPath((short) (inLastLedNumber + ledCount));
+			
+			inTier.setFirstLedNumAlongPath(thisTierStartLed);
+			inTier.setLastLedNumAlongPath(thisTierEndLed);
 			// transaction?
 			Tier.DAO.store(inTier);
 			returnValue = (short) (inLastLedNumber + ledCount); 
 		}
+		// Now the tricky bit of setting the slot leds
+		boolean directionIncrease = inTier.isMTransientLedsIncrease();
+		setSlotLeds(inTier, ledCount, directionIncrease);
+		
 		return returnValue;
 	}
 	 
