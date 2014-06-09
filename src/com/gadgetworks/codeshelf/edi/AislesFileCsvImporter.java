@@ -213,7 +213,7 @@ public class AislesFileCsvImporter {
 	private void setSlotLeds(Tier inTier, short inLedCountThisTier, boolean slotLedsIncrease) {
 		// First get our list of slot. Fighting through the cast.
 		List<Slot> slotList = new ArrayList<Slot>();	
-		List<ISubLocation> locationList = inTier.getChildren();	
+		List<? extends ISubLocation> locationList = inTier.getChildren();	
 		slotList.addAll((Collection<? extends Slot>) locationList);
 		
 		// sort the slots in the direction the led count will increase		
