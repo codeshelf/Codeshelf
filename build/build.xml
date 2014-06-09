@@ -35,6 +35,7 @@
 	<property name="libs.dir" location="${basedir}/lib" />
 	<property name="libs.dist.dir" location="${basedir}/lib/dist" />
 	<property name="libs.native.dir" location="${basedir}/lib/native" />
+	<property name="libs.test.dir" location="${libs.dir}/junit" />
 	<property name="keystore" location="${basedir}/build/keystore" />
 	<property name="target" location="${basedir}/target" />
 	<property name="target.build" location="${target}/build" />
@@ -63,6 +64,9 @@
 	<!-- Define the compile set -->
 	<path id="compile-libs">
 		<fileset dir="${target.lib}" includes="*.jar" />
+	</path>
+	<path id="test-libs">
+		<fileset dir="${libs.test.dir}" includes="*.jar" />
 	</path>
 
 	<!-- clean =================================================================================== -->
@@ -370,6 +374,7 @@
 	        <javac destdir="${target.test}" sourcepath="" source="${javac.compile.using.version}" target="${javac.compile.using.version}" verbose="false" compiler="modern" debug="true">
         	        <classpath>
                 	        <path refid="compile-libs" />
+				<path refid="test-libs" />
         	        </classpath>
                 	<src path="${test.dir}" />
 	        </javac>
@@ -384,6 +389,7 @@
 				<pathelement location="${target.test}" />
 				<pathelement location="${target.lib}" />
 				<path refid="compile-libs" />
+				<path refid="test-libs" />
 			</classpath>
 			<formatter type="xml" />
 			<batchtest todir="${target.report}" >
