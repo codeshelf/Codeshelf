@@ -28,8 +28,8 @@ import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Bay;
-import com.gadgetworks.codeshelf.model.domain.ILocation;
 import com.gadgetworks.codeshelf.model.domain.ISubLocation;
+import com.gadgetworks.codeshelf.model.domain.SubLocationABC;
 import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.model.domain.Tier;
 import com.gadgetworks.codeshelf.model.domain.Slot;
@@ -129,12 +129,15 @@ public class AislesFileCsvImporter {
 						// This creates one location: aisle, bay, tier; (tier also creates slots). 
 						aislesFileCsvBeanImport(aislesFileBean, inProcessTime);
 						// if we started a new aisle, then the previous aisle is done. Do those computations and set those fields
-						if (lastAisle != mLastReadAisle) {
+						if (lastAisle != null && lastAisle != mLastReadAisle) {
 							finalizeTiersInThisAisle(lastAisle);
+							finalizeVerticesThisAisle(lastAisle, mLastReadBay);
 						}
 					}
 				}
+				// finish the last aisle read
 				finalizeTiersInThisAisle(mLastReadAisle); 
+				finalizeVerticesThisAisle(mLastReadAisle, mLastReadBay);
 
 				// archiveCheckLocationAliases(inFacility, inProcessTime);
 
@@ -170,9 +173,8 @@ public class AislesFileCsvImporter {
 		}
 	}
 	
-	private class BayTierComparable implements Comparator<Tier> {
-		// For the zigzagRight and zigzagLeft aisle types.
-		// Fix later. This is not right as we want B1T2, B1T1, B2T2, B2T1. But getBaySortName gives us B1T1, B1T2, B2T1, B2T2
+	private class zigzagLeftComparable implements Comparator<Tier> {
+		// We want B1T2, B1T1, B2T2, B2T1. Incrementing Bay. Decrementing Tier
 		public int compare(Tier inLoc1, Tier inLoc2) {
 
 			if ((inLoc1 == null) && (inLoc2 == null)) {
@@ -182,14 +184,37 @@ public class AislesFileCsvImporter {
 			} else if (inLoc1 == null) {
 				return 1;
 			} else {
-				return inLoc1.getBaySortName().compareTo(inLoc2.getBaySortName());
+				int bayValue = inLoc1.getBayName().compareTo(inLoc2.getBayName());
+				if (bayValue != 0)
+					return bayValue;
+				else
+					return (inLoc1.getDomainId().compareTo(inLoc2.getDomainId()) * -1);
+			}
+		}
+	}
+
+	private class zigzagRightComparable implements Comparator<Tier> {
+		// We want B2T2, B2T1, B1T2, B1T1. Decrementing Bay. Decrementing Tier
+		public int compare(Tier inLoc1, Tier inLoc2) {
+
+			if ((inLoc1 == null) && (inLoc2 == null)) {
+				return 0;
+			} else if (inLoc2 == null) {
+				return -1;
+			} else if (inLoc1 == null) {
+				return 1;
+			} else {
+				int bayValue = inLoc1.getBayName().compareTo(inLoc2.getBayName());
+				if (bayValue != 0)
+					return (bayValue * -1);
+				else
+					return (inLoc1.getDomainId().compareTo(inLoc2.getDomainId()) * -1);
 			}
 		}
 	}
 
 	private class SlotNameComparable implements Comparator<Slot> {
-		// For the zigzagRight and zigzagLeft aisle types.
-		// Fix later. This is not right as we want B1T2, B1T1, B2T2, B2T1. But getBaySortName gives us B1T1, B1T2, B2T1, B2T2
+		// Just order slots S1, S2, S3, etc. 
 		public int compare(Slot inLoc1, Slot inLoc2) {
 
 			if ((inLoc1 == null) && (inLoc2 == null)) {
@@ -299,29 +324,112 @@ public class AislesFileCsvImporter {
 	/**
 	 * @param inAisle
 	 */
+	private Point getNewBoundaryPoint(final SubLocationABC inLocation) {
+		// returns a new point with pickfaceEnd offset by depth
+		
+		// The boundary point will be the pickFaceEnd adjusted for mDepth
+		Double pickFaceEndX = inLocation.getPickFaceEndPosX();
+		Double pickFaceEndY = inLocation.getPickFaceEndPosY();
+		Double depthM = mDepthCm / 100.0;
+		
+		if (mIsOrientationX) {
+			pickFaceEndY += depthM;
+		} 
+		else {
+			pickFaceEndX += depthM;
+		}
+		
+		Point aPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, pickFaceEndX, pickFaceEndY, 0.0);
+
+		return aPoint;
+		
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inAisle
+	 */
+	private void finalizeVerticesThisAisle(final Aisle inAisle, Bay lastBayThisAisle) {
+		// See Facility.createVertices(), which is/was private
+		// For this, we might editing existing vertices, or making new.
+		// Start with the new
+		if (mFacility == null)
+			return; // not great. We call mFacility.createVertices(), which is not really right.
+		
+		// First we must set the pickface on the aisle from the last bay in the aisle
+		Double bayX = lastBayThisAisle.getPickFaceEndPosX();
+		Double bayY = lastBayThisAisle.getPickFaceEndPosY();
+		
+		Double anchorX = inAisle.getPickFaceEndPosX();
+		Double anchorY = inAisle.getPickFaceEndPosY();
+		Double aisleX = anchorX + bayX; // bay points are relative to aisle
+		Double aisleY = anchorY + bayY;
+		
+		Point pickFacePoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, aisleX, aisleY, 0.0);
+		inAisle.setPickFaceEndPoint(pickFacePoint);
+		// transaction?
+		Aisle.DAO.store(inAisle);
+
+		
+		Point aPoint = getNewBoundaryPoint(inAisle);
+
+		// Create, or later adjust existing vertices, if any
+		
+		mFacility.createVertices(inAisle, aPoint);
+		
+		// Each bay also has vertices, by the same algorithm.
+		List<? extends ISubLocation> locationList = inAisle.getChildrenAtLevel(Bay.class);
+		
+		ListIterator li = null;
+		li = locationList.listIterator();
+		while (li.hasNext()) {
+			Bay thisBay = (Bay) li.next();
+			Point bayPoint = getNewBoundaryPoint(thisBay);		
+			mFacility.createVertices(thisBay, bayPoint);
+		}
+	}
+	
+	 // --------------------------------------------------------------------------
+	/**
+	 * @param inAisle
+	 */
 	private void finalizeTiersInThisAisle(final Aisle inAisle) {
 		// mTiersThisAisle has all the tiers, with their transient fields set for ledCount and ledDirection
-		// We need to sort the tiers in order, then set the first and last LED for each tier.
+		// We need to sort the tiers in order, then set the first and last LED for each tier. And direction of tier for zigzag tiers
 		// And, once that is known, we can set the slot leds also
+		
+		// This function does not do the multi-controller aisles
+		// Does not really need inAisle as mTiersThisAisle as what is needed
 		
 		boolean tierSortNeeded = true;
 		if (mControllerLed.equalsIgnoreCase("zigzagLeft") || mControllerLed.equalsIgnoreCase("zigzagRight")) {
 			tierSortNeeded = false;
 		}
 		boolean restartLedOnTierChange = tierSortNeeded;
+		boolean isZigzag = false;
+		boolean intialZigTierDirectionIncrease = true;
 		
-		if (tierSortNeeded)
+		if (tierSortNeeded) {
 			Collections.sort(mTiersThisAisle, new TierBayComparable());
-		else {
-			Collections.sort(mTiersThisAisle, new BayTierComparable());
+		}
+		else if (mControllerLed.equalsIgnoreCase("zigzagLeft")) {
+			Collections.sort(mTiersThisAisle, new zigzagLeftComparable());
+			isZigzag = true;
+		}
+		else if (mControllerLed.equalsIgnoreCase("zigzagRight")) {
+			Collections.sort(mTiersThisAisle, new zigzagRightComparable());
+			isZigzag = true;
+			intialZigTierDirectionIncrease = false;
 		}
 		
-		// The algorithm is simple: start; increment leds as you go. Start over if the tier name changes.
+		// The algorithm is simple: start; increment leds as you go. 
+		// For aisle types, start over if the tier name changes.
+		// For zigzag types, start over on tier direction if the bay name changes
 		
 		ListIterator li = null;
 
 		boolean forwardIterationNeeded = true;
-		if (mControllerLed.equalsIgnoreCase("tierRight") || mControllerLed.equalsIgnoreCase("zigzagRight")) {
+		if (mControllerLed.equalsIgnoreCase("tierRight")) {
 			forwardIterationNeeded = false;
 		}
 		
@@ -329,7 +437,10 @@ public class AislesFileCsvImporter {
 		short newLedNumber = 0;
 		String tierSortName = "";
 		String lastTierDomainName = "";
+		String lastTierBayName = "";
 		Tier thisTier = null;
+		boolean zigTierDirectionIncrease = intialZigTierDirectionIncrease;
+		
 		if (forwardIterationNeeded) {
 			li = mTiersThisAisle.listIterator();
 			while (li.hasNext()) {
@@ -340,13 +451,25 @@ public class AislesFileCsvImporter {
 			  // need to start over? never for zigzag. If tier changed for tier or multi-controller. And extra restarts on the same tier for multi-controller.
 			  if (restartLedOnTierChange) {
 				  String thisTierDomainName = thisTier.getDomainId();
-				  if (! thisTierDomainName.equalsIgnoreCase(lastTierDomainName))
+				  if (!thisTierDomainName.equalsIgnoreCase(lastTierDomainName))
 					  lastLedNumber = 0;
 				  lastTierDomainName = thisTierDomainName;
+			  }
+			  
+			  // zigzag cases only forward iterate
+			  if (isZigzag) {
+				  String thisTierBayName = thisTier.getBayName();
+				  if (!thisTierBayName.equalsIgnoreCase(lastTierBayName)) {
+					  zigTierDirectionIncrease = intialZigTierDirectionIncrease;
+				  }
+				  
+				  lastTierBayName = thisTierBayName;
+				  thisTier.setMTransientLedsIncrease(zigTierDirectionIncrease); // remember this direction. Used by setTierLeds()
 			  }
 				  
 			  newLedNumber = setTierLeds(thisTier, lastLedNumber);
 			  lastLedNumber = newLedNumber;
+			  zigTierDirectionIncrease = !zigTierDirectionIncrease; // only used by zigzag bays
 			}
 		} else {
 			li = mTiersThisAisle.listIterator(mTiersThisAisle.size());
@@ -358,7 +481,7 @@ public class AislesFileCsvImporter {
 				  // need to start over? never for zigzag. If tier changed for tier or multi-controller. And extra times for multi-controller.
 				  if (restartLedOnTierChange) {
 					  String thisTierDomainName = thisTier.getDomainId();
-					  if (! thisTierDomainName.equalsIgnoreCase(lastTierDomainName))
+					  if (!thisTierDomainName.equalsIgnoreCase(lastTierDomainName))
 						  lastLedNumber = 0;
 					  lastTierDomainName = thisTierDomainName;
 				  }

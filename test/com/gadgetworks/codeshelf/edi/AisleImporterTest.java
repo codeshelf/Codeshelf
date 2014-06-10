@@ -7,12 +7,12 @@ package com.gadgetworks.codeshelf.edi;
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
 import java.sql.Timestamp;
+import java.util.List;
 
 import org.junit.Assert;
 import org.junit.Test;
 
 import com.gadgetworks.codeshelf.model.domain.DomainTestABC;
-
 import com.gadgetworks.codeshelf.model.domain.ISubLocation;
 // domain objects needed
 import com.gadgetworks.codeshelf.model.domain.Organization;
@@ -22,6 +22,7 @@ import com.gadgetworks.codeshelf.model.domain.Bay;
 import com.gadgetworks.codeshelf.model.domain.Tier;
 import com.gadgetworks.codeshelf.model.domain.Slot;
 import com.gadgetworks.codeshelf.model.domain.Point;
+import com.gadgetworks.codeshelf.model.domain.Vertex;
 
 
 /**
@@ -50,11 +51,11 @@ public class AisleImporterTest extends DomainTestABC {
 		InputStreamReader reader = new InputStreamReader(stream);
 
 		Organization organization = new Organization();
-		organization.setDomainId("O-AISLE1");
+		organization.setDomainId("O-AISLE9");
 		mOrganizationDao.store(organization);
 
-		organization.createFacility("F-AISLE1", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-AISLE1");
+		organization.createFacility("F-AISLE9", "TEST", Point.getZeroPoint());
+		Facility facility = organization.getFacility("F-AISLE9");
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
@@ -135,7 +136,54 @@ public class AisleImporterTest extends DomainTestABC {
 		lastLed = slotB1T1S8.getLastLedNumAlongPath();
 		Assert.assertTrue(firstLed == 73);
 		Assert.assertTrue(lastLed == 79);
+		
+		// Check aisle and bay pick face values. (aisle came as a sublocation)
+		Double pickFaceEndX = ((Aisle) aisle).getPickFaceEndPosX();
+		Double pickFaceEndY = ((Aisle) aisle).getPickFaceEndPosY();
+		Assert.assertTrue(pickFaceEndY == 0.0);
+		pickFaceEndX = ((Bay) bay1).getPickFaceEndPosX();
+		//XXX  bug remaining here. Aisle pickface must be set when last bay is set.
+		pickFaceEndY = ((Bay) bay1).getPickFaceEndPosY();
+		Assert.assertTrue(pickFaceEndX == 2.44); 
+		Assert.assertTrue(pickFaceEndY == 0.0); 
+		pickFaceEndX = ((Bay) bay2).getPickFaceEndPosX();
+		Double bay2EndX = pickFaceEndX;
+		pickFaceEndY = ((Bay) bay2).getPickFaceEndPosY();
+		// bay 2 should be 2.88 (relative to parent). Its anchor is also relative to parent
+		Assert.assertTrue(pickFaceEndX == 4.88); 
+		Double anchorX = ((Bay) bay2).getAnchorPosX();
+		Assert.assertTrue(anchorX == 2.44); // exactly equal to bay1 pickFaceEnd
 
+		Assert.assertTrue(pickFaceEndY == 0.0);
+		pickFaceEndX = ((Tier) tierB2T1).getPickFaceEndPosX();
+		pickFaceEndY = ((Tier) tierB2T1).getPickFaceEndPosY();
+		Assert.assertTrue(pickFaceEndX.equals(bay2EndX)); // tier will match the bay. Cannot use == for two different Double objects.
+		Assert.assertTrue(pickFaceEndY == 0.0);
+		pickFaceEndX = ((Slot) slotB1T2S3).getPickFaceEndPosX();
+		pickFaceEndY = ((Slot) slotB1T2S3).getPickFaceEndPosY();
+		Assert.assertTrue(pickFaceEndX > 0.813);  // value about .813m: 3rd of 9 slots across 244 cm.
+		pickFaceEndX = ((Slot) slotB2T2S3).getPickFaceEndPosX();
+		pickFaceEndY = ((Slot) slotB2T2S3).getPickFaceEndPosY();
+		Assert.assertTrue(pickFaceEndX == 1.22); // Bay 2 Tier 2 has 6 slots across 244 cm, so 3rd ends at 1.22
+
+
+		// Check some vertices. The aisle and each bay should have 4 vertices.
+		List<Vertex> vList1 = aisle.getVertices();
+		Assert.assertEquals(vList1.size(), 4);
+		// the third point is the interesting one. Note index 0,1,2,3
+		Vertex thirdV = (Vertex) vList1.get(2);
+		Double xValue = thirdV.getPosX();
+		Double yValue = thirdV.getPosY();
+		Assert.assertTrue(yValue == 1.2); // depth was 120 cm, so 1.2 meters
+		Assert.assertTrue(xValue == 4.88); // two 244 cm bays, so the aisle vertex is 488 cm
+		
+		List<Vertex> vList2 = bay1.getVertices();
+		Assert.assertEquals(vList2.size(), 4);
+		thirdV = (Vertex) vList2.get(2);
+		xValue = thirdV.getPosX();
+		yValue = thirdV.getPosY();
+		Assert.assertTrue(yValue == 1.2); // each bay has the same depth
+		Assert.assertTrue(xValue == 2.44); // this bay is 244 cm wide
 
 	}
 
@@ -277,5 +325,127 @@ public class AisleImporterTest extends DomainTestABC {
 
 	}
 	
+	@Test
+	public final void testZigzagLeft() {
+
+		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm,pickFaceEndX,pickFaceEndY\r\n" //
+				+ "Aisle,A12,,,,,zigzagLeft,12.85,43.45,X,120,\r\n" //
+				+ "Bay,B1,115,,,,,\r\n" //
+				+ "Tier,T1,,5,32,0,,\r\n" //
+				+ "Tier,T2,,5,32,0,,\r\n" //
+				+ "Tier,T3,,5,32,0,,\r\n" //
+				+ "Bay,B2,115,,,,,\r\n" //
+				+ "Tier,T1,,5,32,0,,\r\n" //
+				+ "Tier,T2,,5,32,0,,\r\n" //
+				+ "Tier,T3,,5,32,0,,\r\n"; //
+	
+		byte[] csvArray = csvString.getBytes();
+
+		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
+		InputStreamReader reader = new InputStreamReader(stream);
+
+		Organization organization = new Organization();
+		organization.setDomainId("O-AISLE12");
+		mOrganizationDao.store(organization);
+
+		organization.createFacility("F-AISLE12", "TEST", Point.getZeroPoint());
+		Facility facility = organization.getFacility("F-AISLE12");
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		importer.importAislesFromCsvStream(reader, facility, ediProcessTime);
+
+		// Check what we got
+		Aisle aisle = Aisle.DAO.findByDomainId(facility, "A12");
+		Assert.assertNotNull(aisle);
+		
+		Bay bayA12B1 = Bay.DAO.findByDomainId(aisle, "B1");
+		Bay bayA12B2 = Bay.DAO.findByDomainId(aisle, "B2");
+
+		Tier tierB1T1 = Tier.DAO.findByDomainId(bayA12B1, "T1");
+		Tier tierB2T2 = Tier.DAO.findByDomainId(bayA12B2, "T2");
+
+		Slot slotB1T1S1 = Slot.DAO.findByDomainId(tierB1T1, "S1");
+
+		Slot slotB2T2S5 = Slot.DAO.findByDomainId(tierB2T2, "S5");
+
+		// leds should come from the top left for this zigzag bay. Third tier down from top starts at 65
+		Assert.assertTrue(tierB1T1.getFirstLedNumAlongPath() == 65);
+		Assert.assertTrue(tierB1T1.getLastLedNumAlongPath() == 96);
+
+		short tierB2T2First = tierB2T2.getFirstLedNumAlongPath();
+		Assert.assertTrue(tierB2T2First == 129); // fifth tier in the led path, and direction right to left for this tier.
+		Assert.assertTrue(tierB2T2.getLastLedNumAlongPath() == 160);
+
+		short slotB1T1S1First = slotB1T1S1.getFirstLedNumAlongPath();
+		Assert.assertTrue(slotB1T1S1First == 67);
+
+		short slotB2T2S5First = slotB2T2S5.getFirstLedNumAlongPath();
+		Assert.assertTrue(slotB2T2S5First == 131);
+		Assert.assertTrue(slotB2T2S5.getLastLedNumAlongPath() == 134);
+		
+	}
+
+	@Test
+	public final void testZigzagRight() {
+
+		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm,pickFaceEndX,pickFaceEndY\r\n" //
+				+ "Aisle,A13,,,,,zigzagRight,12.85,43.45,X,120,\r\n" //
+				+ "Bay,B1,115,,,,,\r\n" //
+				+ "Tier,T1,,5,32,0,,\r\n" //
+				+ "Tier,T2,,5,32,0,,\r\n" //
+				+ "Tier,T3,,5,32,0,,\r\n" //
+				+ "Bay,B2,115,,,,,\r\n" //
+				+ "Tier,T1,,5,32,0,,\r\n" //
+				+ "Tier,T2,,5,32,0,,\r\n" //
+				+ "Tier,T3,,5,32,0,,\r\n"; //
+	
+		byte[] csvArray = csvString.getBytes();
+
+		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
+		InputStreamReader reader = new InputStreamReader(stream);
+
+		Organization organization = new Organization();
+		organization.setDomainId("O-AISLE13");
+		mOrganizationDao.store(organization);
+
+		organization.createFacility("F-AISLE13", "TEST", Point.getZeroPoint());
+		Facility facility = organization.getFacility("F-AISLE13");
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		importer.importAislesFromCsvStream(reader, facility, ediProcessTime);
+
+		// Check what we got
+		Aisle aisle = Aisle.DAO.findByDomainId(facility, "A13");
+		Assert.assertNotNull(aisle);
+		
+		Bay bayA13B1 = Bay.DAO.findByDomainId(aisle, "B1");
+		Bay bayA13B2 = Bay.DAO.findByDomainId(aisle, "B2");
+
+		Tier tierB1T1 = Tier.DAO.findByDomainId(bayA13B1, "T1");
+		Tier tierB2T2 = Tier.DAO.findByDomainId(bayA13B2, "T2");
+
+		Slot slotB1T1S1 = Slot.DAO.findByDomainId(tierB1T1, "S1");
+	
+		Slot slotB2T2S5 = Slot.DAO.findByDomainId(tierB2T2, "S5");
+
+		// leds should come from the top right for this zigzag bay. Third tier down on second bay starts at 65
+		Assert.assertTrue(tierB1T1.getFirstLedNumAlongPath() == 161);
+		Assert.assertTrue(tierB1T1.getLastLedNumAlongPath() == 192);
+
+		short tierB2T2First = tierB2T2.getFirstLedNumAlongPath();
+		Assert.assertTrue(tierB2T2First == 33); // second tier in the led path, and direction left to right for this tier.
+		Assert.assertTrue(tierB2T2.getLastLedNumAlongPath() == 64);
+
+		short slotB1T1S1First = slotB1T1S1.getFirstLedNumAlongPath(); // last slot in last tier along the led path
+		Assert.assertTrue(slotB1T1S1First == 188);
+
+		short slotB2T2S5First = slotB2T2S5.getFirstLedNumAlongPath(); // last slot in second tier along the led path
+		Assert.assertTrue(slotB2T2S5First == 60);
+		Assert.assertTrue(slotB2T2S5.getLastLedNumAlongPath() == 63);
+		
+	}
+
 
 }

@@ -130,4 +130,10 @@ public class Tier extends SubLocationABC<Bay> {
 		return (theTierIds.aisleName + "-" + theTierIds.tierName + "-" + theTierIds.bayName);
 	}
 
+	public final String getBayName() {
+		// this is for a sort comparable. But could add list view meta-field bayName to the tier if desired.
+		TierIds theTierIds = getTierIds();
+		return (theTierIds.aisleName + "-" + theTierIds.bayName);
+	}
+
 }
