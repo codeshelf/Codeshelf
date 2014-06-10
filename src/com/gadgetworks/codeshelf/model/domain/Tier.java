@@ -136,4 +136,13 @@ public class Tier extends SubLocationABC<Bay> {
 		return (theTierIds.aisleName + "-" + theTierIds.bayName);
 	}
 
+	public final void setControllerChannel(String inControllerPersistentIDStr, String inChannelStr, String inTiersStr) {
+		// this is for callMethod from the UI
+		// We are setting the controller and channel for the tier. Depending on the inTierStr parameter, may set also for
+		// on all other same tier in the aisle, or perhaps other patterns.
+		
+		// Initially, log
+		LOGGER.debug("Set tier controller to " + inControllerPersistentIDStr);
+	}
+
 }
