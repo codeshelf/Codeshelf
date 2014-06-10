@@ -387,10 +387,10 @@ public class AisleImporterTest extends DomainTestABC {
 	}
 
 	@Test
-	public final void testZigzagRight() {
-
+	public final void testZigzagRightY() {
+		// do a Y orientation on this as well
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm,pickFaceEndX,pickFaceEndY\r\n" //
-				+ "Aisle,A13,,,,,zigzagRight,12.85,43.45,X,120,\r\n" //
+				+ "Aisle,A13,,,,,zigzagRight,12.85,43.45,Y,120,\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,5,32,0,,\r\n" //
 				+ "Tier,T2,,5,32,0,,\r\n" //
@@ -445,6 +445,76 @@ public class AisleImporterTest extends DomainTestABC {
 		Assert.assertTrue(slotB2T2S5First == 60);
 		Assert.assertTrue(slotB2T2S5.getLastLedNumAlongPath() == 63);
 		
+		// Check pickface and vertex values. This is where the Y orientation comes in
+		Double pickFaceEndX = ((Aisle) aisle).getPickFaceEndPosX();
+		Double pickFaceEndY = ((Aisle) aisle).getPickFaceEndPosY();
+		Assert.assertTrue(pickFaceEndX == 0.0);
+		pickFaceEndX = ((Bay) bayA13B1).getPickFaceEndPosX();
+		pickFaceEndY = ((Bay) bayA13B1).getPickFaceEndPosY();
+		Assert.assertTrue(pickFaceEndX == 0.0); 
+		Assert.assertTrue(pickFaceEndY == 1.15); 
+
+		pickFaceEndX = ((Tier) tierB1T1).getPickFaceEndPosX();
+		pickFaceEndY = ((Tier) tierB1T1).getPickFaceEndPosY();
+		Assert.assertTrue(pickFaceEndX == 0.0);
+		pickFaceEndX = ((Slot) slotB1T1S1).getPickFaceEndPosX();
+		pickFaceEndY = ((Slot) slotB1T1S1).getPickFaceEndPosY();
+		Assert.assertTrue(pickFaceEndX == 0.0);  // S1 Y value is about 0.23 (1/5 of 1.15
+		pickFaceEndX = ((Slot) slotB2T2S5).getPickFaceEndPosX();
+		pickFaceEndY = ((Slot) slotB2T2S5).getPickFaceEndPosY();
+		Assert.assertTrue(pickFaceEndY == 1.15); // S5 is last slot of 115 cm tier
+
+		// Check some vertices. The aisle and each bay should have 4 vertices.
+		List<Vertex> vList1 = aisle.getVertices();
+		Assert.assertEquals(vList1.size(), 4);
+		// the third point is the interesting one. Note index 0,1,2,3
+		Vertex thirdV = (Vertex) vList1.get(2);
+		Double xValue = thirdV.getPosX();
+		Double yValue = thirdV.getPosY();
+		Assert.assertTrue(xValue == 1.2); // depth was 120 cm, so 1.2 meters in the x direction
+		Assert.assertTrue(yValue == 2.3); // two 115 cm bays.
+		
+		List<Vertex> vList2 = bayA13B1.getVertices();
+		Assert.assertEquals(vList2.size(), 4);
+		thirdV = (Vertex) vList2.get(2);
+		xValue = thirdV.getPosX();
+		yValue = thirdV.getPosY();
+		Assert.assertTrue(xValue == 1.2); // each bay has the same depth
+		Assert.assertTrue(yValue == 1.15); // this bay is 115 cm wide
+
+		
+	}
+
+	@Test
+	public final void testBadFile1() {
+		// Ideally, we want non-throwing or caught exceptions that give good user feedback about what is wrong.
+		// This has tier before bay, and some other blank fields
+		// do a Y orientation on this as well
+		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm,pickFaceEndX,pickFaceEndY\r\n" //
+				+ "Aisle,A14,,,,,zigzagRight,12.85,43.45,Y,120,\r\n" //
+				+ "Tier,T1,,5,32,0,,\r\n" //
+				+ "Bay,B2,115,,,,,\r\n" //
+				+ "Tier,,,5,32,0,,\r\n" //
+				+ "xTier,T2,,5,32,0,,\r\n" //
+				+ "Tier,T3,,5,,0,,\r\n"; //
+	
+		byte[] csvArray = csvString.getBytes();
+
+		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
+		InputStreamReader reader = new InputStreamReader(stream);
+
+		Organization organization = new Organization();
+		organization.setDomainId("O-AISLE14");
+		mOrganizationDao.store(organization);
+
+		organization.createFacility("F-AISLE14", "TEST", Point.getZeroPoint());
+		Facility facility = organization.getFacility("F-AISLE14");
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		importer.importAislesFromCsvStream(reader, facility, ediProcessTime);
+		
+		Assert.assertTrue(true); // did we get this far through a bad file?
 	}
 
 
