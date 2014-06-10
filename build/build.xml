@@ -383,7 +383,7 @@
 
 	<target name="junit" depends="build.all, compile.junit">
 		<mkdir dir="${target.report}" />
-		<junit printsummary="on" fork="true" haltonfailure="yes">
+		<junit printsummary="on" fork="true" haltonfailure="no" failureproperty="test.failed">
 			<classpath>
 				<pathelement location="${target.classes}" />
 				<pathelement location="${target.test}" />
@@ -398,6 +398,7 @@
 				</fileset>
 			</batchtest>
 		</junit>
+		<fail message="JUnit test case failure detected, check results." if="test.failed" />
 	</target>
 
 </project>
