@@ -263,12 +263,33 @@ public class AisleImporterTest extends DomainTestABC {
 	public final void test32Led5Slot() {
 		// the purpose of bay B1 is to compare this slotting algorithm to Jeff's hand-done goodeggs zigzag slots
 		// the purpose of bay B2 is to check the sort and LEDs of more than 10 slots in a tier
+		// the purpose of bays 9,10,11 is check the bay sort.
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm,pickFaceEndX,pickFaceEndY\r\n" //
 				+ "Aisle,A11,,,,,TierLeft,12.85,43.45,X,120,\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,5,32,0,,\r\n" //
 				+ "Bay,B2,244,,,,,\r\n" //
-				+ "Tier,T1,,12,80,0,,\r\n"; //
+				+ "Tier,T1,,12,80,0,,\r\n" //
+				+ "Bay,B3,24,,,,,\r\n" //
+				+ "Tier,T1,,1,6,0,,\r\n" //
+				+ "Bay,B4,24,,,,,\r\n" //
+				+ "Tier,T1,,1,6,0,,\r\n" //
+				+ "Bay,B5,24,,,,,\r\n" //
+				+ "Tier,T1,,1,6,0,,\r\n" //
+				+ "Bay,B6,24,,,,,\r\n" //
+				+ "Tier,T1,,1,6,0,,\r\n" //
+				+ "Bay,B7,24,,,,,\r\n" //
+				+ "Tier,T1,,1,6,0,,\r\n" //
+				+ "Bay,B8,24,,,,,\r\n" //
+				+ "Tier,T1,,1,6,0,,\r\n" //
+				+ "Bay,B9,24,,,,,\r\n" //
+				+ "Tier,T1,,1,6,0,,\r\n" //
+				+ "Bay,B10,24,,,,,\r\n" //
+				+ "Tier,T1,,1,6,0,,\r\n" //
+				+ "Bay,B11,24,,,,,\r\n" //
+				+ "Tier,T1,,1,6,0,,\r\n" //
+				+ "Bay,B12,24,,,,,\r\n" //
+				+ "Tier,T1,,1,6,0,,\r\n"; //
 	
 		byte[] csvArray = csvString.getBytes();
 
@@ -336,7 +357,7 @@ public class AisleImporterTest extends DomainTestABC {
 		Slot slotB2T1S9 = Slot.DAO.findByDomainId(tierB2T1, "S9");
 		Slot slotB2T1S10 = Slot.DAO.findByDomainId(tierB2T1, "S10");
 		Slot slotB2T1S11 = Slot.DAO.findByDomainId(tierB2T1, "S11");
-		// We are just checking the sort. Alpha sort would go S1,S10,S11,S2,S9
+		// We are just checking the slotsort. Alpha sort would go S1,S10,S11,S2,S9
 		// subtract 32 because first zigzag used up 32. So this will give the more familiar answer, with S1 starting to light third LED in this tier
 		int firstRelativeLed = slotB2T1S1.getFirstLedNumAlongPath() - 32;
 		Assert.assertTrue(firstRelativeLed == 3);
@@ -348,6 +369,21 @@ public class AisleImporterTest extends DomainTestABC {
 		Assert.assertTrue(firstRelativeLed == 64);
 		firstRelativeLed = slotB2T1S11.getFirstLedNumAlongPath() - 32;
 		Assert.assertTrue(firstRelativeLed == 70);
+
+		// check the bay sort
+		Bay bayA11B3 = Bay.DAO.findByDomainId(aisle, "B3");
+		Tier tierB3T1 = Tier.DAO.findByDomainId(bayA11B3, "T1");
+		// just showing that we do not set bay first led. Could for zigzags, but not for other types
+		// B3 starts at 32 + 80 + 1 = 113.
+		// short bayFirstLed = bayA11B3.getFirstLedNumAlongPath(); // throws
+		// Assert.assertTrue(bayFirstLed == 0);
+		short tierFirstLed = tierB3T1.getFirstLedNumAlongPath();
+		Assert.assertTrue(tierFirstLed == 113);
+		// making sure that bay 10 is after, and not before T2 which would start at 33.
+		Bay bayA11B10 = Bay.DAO.findByDomainId(aisle, "B10");
+		Tier tierB10T1 = Tier.DAO.findByDomainId(bayA11B10, "T1");
+		tierFirstLed = tierB10T1.getFirstLedNumAlongPath();
+		Assert.assertTrue(tierFirstLed == 155);
 
 	}
 	

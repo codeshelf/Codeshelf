@@ -119,6 +119,7 @@ public class AislesFileCsvImporter {
 
 				LOGGER.debug("Begin aisles file import.");
 
+				boolean needAisleBean = true;
 				// Iterate over the location import beans.
 				for (AislesFileCsvBean aislesFileBean : aislesFileBeanList) {
 					String errorMsg = aislesFileBean.validateBean();
@@ -126,18 +127,35 @@ public class AislesFileCsvImporter {
 						LOGGER.error("Import errors: " + errorMsg);
 					} else {
 						Aisle lastAisle = mLastReadAisle;
-						// This creates one location: aisle, bay, tier; (tier also creates slots). 
-						aislesFileCsvBeanImport(aislesFileBean, inProcessTime);
+						
+						// Fairly simple error handling. Throw anywhere in the read with EdiFileReadException. Causes skip to next aisle, if any
+						try {
+							// This creates one location: aisle, bay, tier; (tier also creates slots). 
+							boolean readAisleBean = aislesFileCsvBeanImport(aislesFileBean, inProcessTime, needAisleBean);
+							// If we needed an aisle, and got one, then we don't need aisle again
+							if (needAisleBean && readAisleBean)
+								needAisleBean = false;
+						}
+						// catch (EdiFileReadException e) {
+						catch (DaoException e) {
+							// Log out what the exception said
+							
+							// Mark that that we must now skip beans until the next aisle starts
+							needAisleBean = true;
+						}
 						// if we started a new aisle, then the previous aisle is done. Do those computations and set those fields
-						if (lastAisle != null && lastAisle != mLastReadAisle) {
+						// but not if we threw out of last aisle
+						if (lastAisle != null && lastAisle != mLastReadAisle & !needAisleBean) {
 							finalizeTiersInThisAisle(lastAisle);
 							finalizeVerticesThisAisle(lastAisle, mLastReadBay);
 						}
 					}
 				}
-				// finish the last aisle read
-				finalizeTiersInThisAisle(mLastReadAisle); 
-				finalizeVerticesThisAisle(mLastReadAisle, mLastReadBay);
+				// finish the last aisle read, but not if we threw out of last aisle
+				if (!needAisleBean) {
+					finalizeTiersInThisAisle(mLastReadAisle); 
+					finalizeVerticesThisAisle(mLastReadAisle, mLastReadBay);
+				}
 
 				// archiveCheckLocationAliases(inFacility, inProcessTime);
 
@@ -738,8 +756,10 @@ public class AislesFileCsvImporter {
 	 * @param inCsvBean
 	 * @param inEdiProcessTime
 	 */
-	private void aislesFileCsvBeanImport(final AislesFileCsvBean inCsvBean,
-		final Timestamp inEdiProcessTime) {
+	private boolean aislesFileCsvBeanImport(final AislesFileCsvBean inCsvBean,
+		final Timestamp inEdiProcessTime, boolean inNeedAisleBean) {
+		
+		boolean returnThisIsAisleBean = false;
 		
 		LOGGER.info(inCsvBean.toString());
 		
@@ -748,8 +768,6 @@ public class AislesFileCsvImporter {
 		String lengthCm = inCsvBean.getLengthCm();
 		String anchorX = inCsvBean.getAnchorX();
 		String anchorY = inCsvBean.getAnchorY();
-		String pickFaceEndX = inCsvBean.getPickFaceEndX();
-		String pickFaceEndY = inCsvBean.getPickFaceEndY();
 		String nominalDomainID = inCsvBean.getNominalDomainID();
 		String slotsInTier = inCsvBean.getSlotsInTier();
 		String tierFloorCm = inCsvBean.getTierFloorCm();
@@ -759,6 +777,7 @@ public class AislesFileCsvImporter {
 		
 		// Figure out what kind of bin we have.
 		if (binType.equalsIgnoreCase("aisle")) {
+			returnThisIsAisleBean = true;
 			
 			mTiersThisAisle.clear(); // prepare to collect tiers for this aisle
 			
@@ -772,32 +791,24 @@ public class AislesFileCsvImporter {
 			
 			try { dAnchorY = Double.valueOf(anchorY); }
 			catch (NumberFormatException e) { }
-			
-			try { dPickFaceEndX = Double.valueOf(pickFaceEndX); }
-			catch (NumberFormatException e) { }
-			
-			try { dPickFaceEndY = Double.valueOf(pickFaceEndY); }
-			catch (NumberFormatException e) { }
-			
+						
 			Integer depthCm = 0;
 			try { depthCm = Integer.valueOf(depthCMString); }
 			catch (NumberFormatException e) { }
 
-			
-			Point anchorPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, dAnchorX, dAnchorY, 0.0);
-			
+			mControllerLed = controllerLed; //tierRight, tierLeft, zigzagRight, zigzagLeft, or "B1>B5;B6<B10;B11>B18;B19<B20"
+			mIsOrientationX = !(orientation.equalsIgnoreCase("Y")); // make garbage in default to X			
+			mDepthCm = depthCm;
+						
+			Point anchorPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, dAnchorX, dAnchorY, 0.0);			
 			Point pickFaceEndPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, dPickFaceEndX, dPickFaceEndY, 0.0);
 			
+			// API is not good. Create the aisle with 0,0 pickface, then correct later.
 			Aisle newAisle = createOneAisle(nominalDomainID, anchorPoint, pickFaceEndPoint);
-			
-			mControllerLed = controllerLed; //tierRight, tierLeft, zigzagRight, zigzagLeft, or "B1>B5;B6<B10;B11>B18;B19<B20"
 			
 
 			if (newAisle != null) {
-				// We need to save this aisle as it is the master for the next bay line. And save other fields needed for final calculations.
-				mIsOrientationX = !(orientation.equalsIgnoreCase("Y")); // make garbage in default to X
-				
-				mDepthCm = depthCm;
+				// We need to save this aisle as it is the master for the next bay line. 
 				
 				mLastReadAisle = newAisle;
 				// null out bay/tier
@@ -814,7 +825,7 @@ public class AislesFileCsvImporter {
 
 			Integer intValueLengthCm = 122; // Giving default length of 4 foot bay. Not that this is common; I want people to notice.
 
-			try { intValueLengthCm = Integer.valueOf(lengthCm);}
+			try { intValueLengthCm = Integer.valueOf(lengthCm); }
 			catch (NumberFormatException e) { }
 			
 			Bay newBay = createOneBay(nominalDomainID, intValueLengthCm);
@@ -847,10 +858,7 @@ public class AislesFileCsvImporter {
 			try { mTierFloorCm = Integer.valueOf(tierFloorCm); }
 			catch (NumberFormatException e) { }
 			
-			if (mTierFloorCm < 0) {
-				mLedsPerTier = 0;
-			}
-			// We know and can set leds count on this tier.
+			// We know and can set led count on this tier.
 			// Can we know the led increase direction yet? Not necessarily for zigzag bay, but can for the other aisle types
 			boolean ledsIncrease = true;
 			if (mControllerLed.equalsIgnoreCase("tierRight")) 
@@ -868,6 +876,7 @@ public class AislesFileCsvImporter {
 
 		}
 		
+		return returnThisIsAisleBean;
 	}
 
 }

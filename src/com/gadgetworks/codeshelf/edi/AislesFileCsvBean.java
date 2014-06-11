@@ -43,8 +43,6 @@ public class AislesFileCsvBean extends ImportCsvBeanABC {
 	protected String	tierFloorCm;
 	protected String	orientXorY;
 	protected String	depthCm;
-	protected String	pickFaceEndX; // might be computable later
-	protected String	pickFaceEndY; // might be computable later
 
 	/* Using stripNull instead of strip. If user file is missing some fields, 
 	 * will return empty string instead of null, which may will throw. */
@@ -81,12 +79,6 @@ public class AislesFileCsvBean extends ImportCsvBeanABC {
 	}
 	public final String getDepthCm() {
 		return stripNull(depthCm);
-	}
-	public final String getPickFaceEndX() {
-		return stripNull(pickFaceEndX);
-	}
-	public final String getPickFaceEndY() {
-		return stripNull(pickFaceEndY);
 	}
 
 }
