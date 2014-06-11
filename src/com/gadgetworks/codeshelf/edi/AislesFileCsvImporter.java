@@ -66,7 +66,7 @@ public class AislesFileCsvImporter {
 	private boolean mIsOrientationX;
 	private Integer mDepthCm;
 	
-	List<Tier> mTiersThisAisle;
+	private List<Tier> mTiersThisAisle;
 
 
 
@@ -158,7 +158,8 @@ public class AislesFileCsvImporter {
 	}
 
 	private class TierBayComparable implements Comparator<Tier> {
-		// For the tierRight and tierLeft aisle types
+		// For the tierRight and tierLeft aisle types. 
+		
 		public int compare(Tier inLoc1, Tier inLoc2) {
 
 			if ((inLoc1 == null) && (inLoc2 == null)) {
@@ -168,13 +169,13 @@ public class AislesFileCsvImporter {
 			} else if (inLoc1 == null) {
 				return 1;
 			} else {
-				return inLoc1.getTierSortName().compareTo(inLoc2.getTierSortName());
+				return inLoc1.getAisleTierBayForComparable().compareTo(inLoc2.getAisleTierBayForComparable());
 			}
 		}
 	}
 	
 	private class zigzagLeftComparable implements Comparator<Tier> {
-		// We want B1T2, B1T1, B2T2, B2T1. Incrementing Bay. Decrementing Tier
+		// We want B1T2, B1T1, B2T2, B2T1. Incrementing Bay. Decrementing Tier. Would not sort right for more than 9 tiers.
 		public int compare(Tier inLoc1, Tier inLoc2) {
 
 			if ((inLoc1 == null) && (inLoc2 == null)) {
@@ -184,17 +185,18 @@ public class AislesFileCsvImporter {
 			} else if (inLoc1 == null) {
 				return 1;
 			} else {
-				int bayValue = inLoc1.getBayName().compareTo(inLoc2.getBayName());
+				int bayValue = inLoc1.getAisleBayForComparable().compareTo(inLoc2.getAisleBayForComparable());
 				if (bayValue != 0)
 					return bayValue;
-				else
+				else {
 					return (inLoc1.getDomainId().compareTo(inLoc2.getDomainId()) * -1);
+				}
 			}
 		}
 	}
 
 	private class zigzagRightComparable implements Comparator<Tier> {
-		// We want B2T2, B2T1, B1T2, B1T1. Decrementing Bay. Decrementing Tier
+		// We want B2T2, B2T1, B1T2, B1T1. Decrementing Bay. Decrementing Tier. Would not sort right for more than 9 tiers.
 		public int compare(Tier inLoc1, Tier inLoc2) {
 
 			if ((inLoc1 == null) && (inLoc2 == null)) {
@@ -204,7 +206,7 @@ public class AislesFileCsvImporter {
 			} else if (inLoc1 == null) {
 				return 1;
 			} else {
-				int bayValue = inLoc1.getBayName().compareTo(inLoc2.getBayName());
+				int bayValue = inLoc1.getAisleBayForComparable().compareTo(inLoc2.getAisleBayForComparable());
 				if (bayValue != 0)
 					return (bayValue * -1);
 				else
@@ -224,7 +226,12 @@ public class AislesFileCsvImporter {
 			} else if (inLoc1 == null) {
 				return 1;
 			} else {
-				return inLoc1.getDomainId().compareTo(inLoc2.getDomainId());
+				// We need to sort S1 - S9, S10- S19, etc. Not S1, S10, S11, ... S2
+				String slotOneNumerals = inLoc1.getDomainId().substring(1); // Strip off the S
+				String slotTwoNumerals = inLoc2.getDomainId().substring(1); // Strip off the S
+				Integer slotOneValue = Integer.valueOf(slotOneNumerals);
+				Integer slotTwoValue = Integer.valueOf(slotTwoNumerals);
+				return slotOneValue.compareTo(slotTwoValue);
 			}
 		}
 	}
@@ -233,9 +240,14 @@ public class AislesFileCsvImporter {
 	/**
 	 * @param inTier
 	 * @param inLastLedNumber
-	 * @param slotLedsIncrease
+	 * @param inSlotLedsIncrease
+	 * @param inGuardLow
+	 * @param inGuardHigh
 	 */
-	private void setSlotLeds(Tier inTier, short inLedCountThisTier, boolean slotLedsIncrease) {
+	private void setSlotLeds(Tier inTier, short inLedCountThisTier, boolean inSlotLedsIncrease, int inGuardLow, int inGuardHigh) {
+		// If light tube extends the full length of the tier (rather than coming up a bit short), recommend inGuardLow = 2 and inGuardHigh = 1.
+		// Any remainder slot will essentially inGuardHigh += 1 until on slots until the remainder runs out.
+		
 		// First get our list of slot. Fighting through the cast.
 		List<Slot> slotList = new ArrayList<Slot>();	
 		List<? extends ISubLocation> locationList = inTier.getChildren();	
@@ -243,7 +255,7 @@ public class AislesFileCsvImporter {
 		
 		// sort the slots in the direction the led count will increase		
 		Collections.sort(slotList, new SlotNameComparable());
-		if (!slotLedsIncrease)
+		if (!inSlotLedsIncrease)
 			Collections.reverse(slotList);
 		
 		// For this purpose, "leds" is the total span of the slot in led positions, and "lit leds" will give the ones lighted toward the center of the slot.
@@ -251,8 +263,13 @@ public class AislesFileCsvImporter {
 		short ledsPerSlot = (short)  (inLedCountThisTier / slotCount);
 		short remainderLeds  = (short) (inLedCountThisTier % slotCount);
 		
-		// The extra -1 matters only when inLedCountThisTier is divisible by (slotCount * 3)
-		short ledsToLightPerSlot = (short) ((inLedCountThisTier - 1 - (slotCount * 3)) / slotCount);
+		// Guard concept might be wrong in this algorithm. Treats it slot by slot, leaving gap between slots (end of last and start of next).
+		// There may also be a need to adjust leds to skip at the start and end of the tier. That is, keep the internal guards, but skip or decrease the ends.
+		int guardTotal = inGuardLow + inGuardHigh;
+		if (guardTotal == 0) 
+			guardTotal = 1;
+		// The extra -1 matters only when inLedCountThisTier is divisible by (slotCount * (inGuardLow + inGuardHigh))
+		short ledsToLightPerSlot = (short) ((inLedCountThisTier - 1 - (slotCount * guardTotal)) / slotCount);
 	
 		short lastSlotEndingLed = (short) (inTier.getFirstLedNumAlongPath() - 1);
 		short slotIndex = 0;
@@ -265,8 +282,8 @@ public class AislesFileCsvImporter {
 		li = slotList.listIterator();
 		while (li.hasNext()) {
 			Slot thisSlot = (Slot) li.next();
-			// tierSortName just to follow the iteration in debugger
-			String slotName = thisSlot.getDomainId();
+			// slotName just to follow the iteration in debugger
+			// String slotName = thisSlot.getDomainId();
 			  
 			slotIndex += 1;
 			short thisSlotStartLed = (short) (lastSlotEndingLed +  1);
@@ -274,13 +291,13 @@ public class AislesFileCsvImporter {
 			if (slotIndex < remainderLeds)
 				thisSlotEndLed += 1; // distribute the unevenness among the first few slots
   
-			short firstLitLed = (short) (thisSlotStartLed + 2);
+			short firstLitLed = (short) (thisSlotStartLed + inGuardLow);
 			short lastLitLed = (short) (firstLitLed + ledsToLightPerSlot);
 		  
 			thisSlot.setFirstLedNumAlongPath((short) (firstLitLed));
 			thisSlot.setLastLedNumAlongPath((short) (lastLitLed));
 			// transaction?
-			Slot.DAO.store(thisSlot);	  
+			mSlotDao.store(thisSlot);	  
 		  
 			lastSlotEndingLed = thisSlotEndLed;
 		}
@@ -310,12 +327,12 @@ public class AislesFileCsvImporter {
 			inTier.setFirstLedNumAlongPath(thisTierStartLed);
 			inTier.setLastLedNumAlongPath(thisTierEndLed);
 			// transaction?
-			Tier.DAO.store(inTier);
+			mTierDao.store(inTier);
 			returnValue = (short) (inLastLedNumber + ledCount); 
 		}
 		// Now the tricky bit of setting the slot leds
 		boolean directionIncrease = inTier.isMTransientLedsIncrease();
-		setSlotLeds(inTier, ledCount, directionIncrease);
+		setSlotLeds(inTier, ledCount, directionIncrease, 2, 1); // Guards set at low = 2 and high = 1. Could come from file.
 		
 		return returnValue;
 	}
@@ -349,7 +366,7 @@ public class AislesFileCsvImporter {
 	/**
 	 * @param inAisle
 	 */
-	private void finalizeVerticesThisAisle(final Aisle inAisle, Bay lastBayThisAisle) {
+	private void finalizeVerticesThisAisle(final Aisle inAisle, Bay inLastBayThisAisle) {
 		// See Facility.createVertices(), which is/was private
 		// For this, we might editing existing vertices, or making new.
 		// Start with the new
@@ -357,18 +374,19 @@ public class AislesFileCsvImporter {
 			return; // not great. We call mFacility.createVertices(), which is not really right.
 		
 		// First we must set the pickface on the aisle from the last bay in the aisle
-		Double bayX = lastBayThisAisle.getPickFaceEndPosX();
-		Double bayY = lastBayThisAisle.getPickFaceEndPosY();
+		Double bayX = inLastBayThisAisle.getPickFaceEndPosX();
+		Double bayY = inLastBayThisAisle.getPickFaceEndPosY();
 		
 		Double anchorX = inAisle.getPickFaceEndPosX();
 		Double anchorY = inAisle.getPickFaceEndPosY();
 		Double aisleX = anchorX + bayX; // bay points are relative to aisle
 		Double aisleY = anchorY + bayY;
 		
-		Point pickFacePoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, aisleX, aisleY, 0.0);
+		Point pickFacePoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, aisleX, aisleY
+			, 0.0);
 		inAisle.setPickFaceEndPoint(pickFacePoint);
 		// transaction?
-		Aisle.DAO.store(inAisle);
+		mAisleDao.store(inAisle);
 
 		
 		Point aPoint = getNewBoundaryPoint(inAisle);
@@ -516,7 +534,7 @@ public class AislesFileCsvImporter {
 		Slot newSlot = null;
 		// Next line is incorrect. If it succeeds in finding something, it will throw.  COD-81
 		// It will find second of two S1 slots belonging to different tiers
-		Slot slot = Slot.DAO.findByDomainId(inParentTier, slotId);
+		Slot slot = mSlotDao.findByDomainId(inParentTier, slotId);
 		if (slot == null) {
 			// Slot points relative to parent tier. The Z will be zero. If X orientation, Ys will be zero.
 			
@@ -546,7 +564,7 @@ public class AislesFileCsvImporter {
 
 			try {
 				// transaction?
-				Slot.DAO.store(newSlot);
+				mSlotDao.store(newSlot);
 				
 			} catch (DaoException e) {
 				LOGGER.error("", e);
@@ -584,7 +602,7 @@ public class AislesFileCsvImporter {
 		Tier tier = null;
 		// Next line is incorrect. If it succeeds in finding something, it will throw.  COD-81
 		// It will find second of two T1 bays belonging to different bays
-		tier = Tier.DAO.findByDomainId(mLastReadBay, inTierId);
+		tier = mTierDao.findByDomainId(mLastReadBay, inTierId);
 		if (tier == null) {
 			
 			Double anchorX = 0.0;
@@ -602,7 +620,7 @@ public class AislesFileCsvImporter {
 
 			try {
 				// transaction?
-				Tier.DAO.store(newTier);
+				mTierDao.store(newTier);
 				
 			} catch (DaoException e) {
 				LOGGER.error("", e);
@@ -644,7 +662,7 @@ public class AislesFileCsvImporter {
 		Bay newBay = null;
 		// Next line is incorrect. If it succeeds in finding something, it will throw.  COD-81
 		// It will find second of two B1 bays belonging to different aisle
-		Bay bay = Bay.DAO.findByDomainId(mLastReadAisle, inBayId);
+		Bay bay = mBayDao.findByDomainId(mLastReadAisle, inBayId);
 		if (bay == null) {
 			
 			Double anchorX = 0.0;
@@ -671,7 +689,7 @@ public class AislesFileCsvImporter {
 
 			try {
 				// transaction?
-				Bay.DAO.store(newBay);
+				mBayDao.store(newBay);
 				
 			} catch (DaoException e) {
 				LOGGER.error("", e);
@@ -696,12 +714,12 @@ public class AislesFileCsvImporter {
 		// Create the aisle if it doesn't already exist. Easy case.
 		Aisle newAisle = null;
 		// Next line is incorrect. If it succeeds in finding something, it will throw.  COD-81
-		Aisle aisle = Aisle.DAO.findByDomainId(mFacility, inAisleId);
+		Aisle aisle = mAisleDao.findByDomainId(mFacility, inAisleId);
 		if (aisle == null) {
 			newAisle = new Aisle(mFacility, inAisleId, inAnchorPoint, inPickFaceEndPoint);
 			try {
 				// transaction?
-				Aisle.DAO.store(newAisle);
+				mAisleDao.store(newAisle);
 				
 			} catch (DaoException e) {
 				LOGGER.error("", e);

@@ -99,7 +99,7 @@ public class Tier extends SubLocationABC<Bay> {
 		return "T";
 	}
 	
-	private final TierIds getTierIds(){
+	private TierIds getTierIds() {
 		TierIds theTierIds = new TierIds();
 		theTierIds.bayName = "";
 		theTierIds.aisleName = "";
@@ -119,19 +119,50 @@ public class Tier extends SubLocationABC<Bay> {
 	}
 
 	public final String getBaySortName() {
-		// to support list view meta-field baySortName
+		// to support list view meta-field baySortName. Note: cannot sort by this string if more than 9 bays or 9 aisles.
 		TierIds theTierIds = getTierIds();
 		return (theTierIds.aisleName + "-" + theTierIds.bayName + "-" + theTierIds.tierName);
-	}
-		
+	}		
+
 	public final String getTierSortName() {
-		// to support list view meta-field tierSortName
+		// to support list view meta-field tierSortName. Note: cannot sort by this string if more than 9 bays or 9 aisles.
 		TierIds theTierIds = getTierIds();
 		return (theTierIds.aisleName + "-" + theTierIds.tierName + "-" + theTierIds.bayName);
 	}
+	
+	// converts A3 into 003.  Could put the A back on.
+	private String getCompString(String inString) {
+		String s = inString.substring(1); // Strip off the A, B, T, or S
+		// we will pad with leading spaces to 3
+		int padLength = 3;
+		int needed = padLength - s.length();
+		    if (needed <= 0) {
+		      return s;
+		    }
+	    char[] padding = new char[needed];
+	    java.util.Arrays.fill(padding, '0');
+	    StringBuffer sb = new StringBuffer(padLength);
+	    sb.append(padding);
+	    sb.append(s);
+	    String ss =  sb.toString();
+	    return	ss;	
+	}
+	
+	public final String getAisleTierBayForComparable() {
+		// this is for a sort comparable.
+		TierIds theTierIds = getTierIds();
+		return (getCompString(theTierIds.aisleName) + "-" + getCompString(theTierIds.tierName) + "-" + getCompString(theTierIds.bayName));
+	}
+
+	
+	public final String getAisleBayForComparable() {
+		// this is for a sort comparable.
+		TierIds theTierIds = getTierIds();
+		return (getCompString(theTierIds.aisleName) + "-" + getCompString(theTierIds.bayName));
+	}
 
 	public final String getBayName() {
-		// this is for a sort comparable. But could add list view meta-field bayName to the tier if desired.
+		// this is not for a sort comparable. Used in AislefilesCsvImporter, but could be used for meta field.
 		TierIds theTierIds = getTierIds();
 		return (theTierIds.aisleName + "-" + theTierIds.bayName);
 	}

@@ -261,11 +261,14 @@ public class AisleImporterTest extends DomainTestABC {
 
 	@Test
 	public final void test32Led5Slot() {
-		// the purpose is to compare this slotting algorithm to Jeff's hand-done goodeggs zigzag slots
+		// the purpose of bay B1 is to compare this slotting algorithm to Jeff's hand-done goodeggs zigzag slots
+		// the purpose of bay B2 is to check the sort and LEDs of more than 10 slots in a tier
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm,pickFaceEndX,pickFaceEndY\r\n" //
 				+ "Aisle,A11,,,,,TierLeft,12.85,43.45,X,120,\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
-				+ "Tier,T1,,5,32,0,,\r\n"; //
+				+ "Tier,T1,,5,32,0,,\r\n" //
+				+ "Bay,B2,244,,,,,\r\n" //
+				+ "Tier,T1,,12,80,0,,\r\n"; //
 	
 		byte[] csvArray = csvString.getBytes();
 
@@ -321,7 +324,30 @@ public class AisleImporterTest extends DomainTestABC {
 		
 		// So, we see the difference. 
 		// Jeff's slots were lit 1-4, 8-11,  15-18, 22-25, 29-32
-		// This algorithm lights 3-6, 10-13, 16-19, 22-25, 28-31
+		// This algorithm lights 3-6, 10-13, 16-19, 22-25, 28-31 with 2 guard low, and 1 guard high.
+		// 1,1 guards would yield 2-5, 9-12, 16-19, 22-25, 28-31
+		// 0,0 would get to 5 lit per slot instead of 4
+		
+		Bay bayA11B2 = Bay.DAO.findByDomainId(aisle, "B2");
+		Tier tierB2T1 = Tier.DAO.findByDomainId(bayA11B2, "T1");
+
+		Slot slotB2T1S1 = Slot.DAO.findByDomainId(tierB2T1, "S1");
+		Slot slotB2T1S2 = Slot.DAO.findByDomainId(tierB2T1, "S2");
+		Slot slotB2T1S9 = Slot.DAO.findByDomainId(tierB2T1, "S9");
+		Slot slotB2T1S10 = Slot.DAO.findByDomainId(tierB2T1, "S10");
+		Slot slotB2T1S11 = Slot.DAO.findByDomainId(tierB2T1, "S11");
+		// We are just checking the sort. Alpha sort would go S1,S10,S11,S2,S9
+		// subtract 32 because first zigzag used up 32. So this will give the more familiar answer, with S1 starting to light third LED in this tier
+		int firstRelativeLed = slotB2T1S1.getFirstLedNumAlongPath() - 32;
+		Assert.assertTrue(firstRelativeLed == 3);
+		firstRelativeLed = slotB2T1S2.getFirstLedNumAlongPath() - 32;
+		Assert.assertTrue(firstRelativeLed == 10);
+		firstRelativeLed = slotB2T1S9.getFirstLedNumAlongPath() - 32;
+		Assert.assertTrue(firstRelativeLed == 58);
+		firstRelativeLed = slotB2T1S10.getFirstLedNumAlongPath() - 32;
+		Assert.assertTrue(firstRelativeLed == 64);
+		firstRelativeLed = slotB2T1S11.getFirstLedNumAlongPath() - 32;
+		Assert.assertTrue(firstRelativeLed == 70);
 
 	}
 	
