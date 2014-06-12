@@ -1190,7 +1190,7 @@ public class Facility extends SubLocationABC<Facility> {
 				locationString += orderLocation.getLocation().getLocationId();
 			}
 		}
-		
+
 		inWi.setPickInstruction(locationString);
 
 		try {
@@ -1306,6 +1306,7 @@ public class Facility extends SubLocationABC<Facility> {
 			resultWi.setItemMaster(inOrderDetail.getItemMaster());
 			String cookedDesc = inOrderDetail.getItemMaster().getDescription();
 			cookedDesc = cookedDesc.substring(0, Math.min(MAX_WI_DESC_BYTES, cookedDesc.length()));
+			cookedDesc = cookedDesc.replaceAll("[^\\p{ASCII}]", "");
 			resultWi.setDescription(cookedDesc);
 			if (inOrderDetail.getItemMaster().getDdcId() != null) {
 				resultWi.setPickInstruction(inOrderDetail.getItemMaster().getDdcId());

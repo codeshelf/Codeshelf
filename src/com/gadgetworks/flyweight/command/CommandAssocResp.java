@@ -22,6 +22,7 @@ import com.gadgetworks.flyweight.bitfields.NBitInteger;
  *  1B - assigned address
  *  4b - space
  *  4b - assigned network ID
+ *  1B - wait until sleep seconds
  *  
  *  The controller sends the associate response command to any device whose GUID is under management by this controller.  
  *  The controller maps the GUID string to an unused address slot in the network address table.
@@ -40,6 +41,7 @@ public final class CommandAssocResp extends CommandAssocABC {
 	private NetAddress			mAddressAssigned;
 	private NBitInteger			mNetworkSpacing;
 	private NetworkId			mNetworkId;
+	private short				mSleepSeconds;
 
 	// --------------------------------------------------------------------------
 	/**
@@ -47,12 +49,16 @@ public final class CommandAssocResp extends CommandAssocABC {
 	 *  @param inUniqueID	The GUID of the device. 
 	 *  @param inAddressToAssign	The network address to assign to the device.
 	 */
-	public CommandAssocResp(final String inUniqueID, final NetworkId inNetworkId, final NetAddress inAddressToAssign) {
+	public CommandAssocResp(final String inUniqueID,
+		final NetworkId inNetworkId,
+		final NetAddress inAddressToAssign,
+		final short inSleepSeconds) {
 		super(new NetCommandId(ASSOC_RESP_COMMAND), inUniqueID);
 		mAddressSpacing = new NBitInteger((byte) IPacket.ADDRESS_SPACING_BITS, (byte) 0);
 		mAddressAssigned = inAddressToAssign;
 		mNetworkSpacing = new NBitInteger((byte) IPacket.NETWORK_NUM_SPACING_BITS, (byte) 0);
 		mNetworkId = inNetworkId;
+		mSleepSeconds = inSleepSeconds;
 	}
 
 	// --------------------------------------------------------------------------
@@ -64,6 +70,7 @@ public final class CommandAssocResp extends CommandAssocABC {
 		mAddressAssigned = new NetAddress(IPacket.BROADCAST_ADDRESS);
 		mNetworkSpacing = new NBitInteger((byte) IPacket.NETWORK_NUM_SPACING_BITS);
 		mNetworkId = new NetworkId(IPacket.BROADCAST_NETWORK_ID);
+		mSleepSeconds = 0;
 	}
 
 	/* --------------------------------------------------------------------------
@@ -71,7 +78,8 @@ public final class CommandAssocResp extends CommandAssocABC {
 	 * @see com.gadgetworks.controller.CommandABC#doToString()
 	 */
 	public String doToString() {
-		return Integer.toHexString(ASSOC_RESP_COMMAND) + " RESP" + super.doToString() + " net:" + mNetworkId.toString() + " addr=" + mAddressAssigned.toString();
+		return Integer.toHexString(ASSOC_RESP_COMMAND) + " RESP" + super.doToString() + " net:" + mNetworkId.toString() + " addr="
+				+ mAddressAssigned.toString();
 	}
 
 	// --------------------------------------------------------------------------
@@ -104,6 +112,7 @@ public final class CommandAssocResp extends CommandAssocABC {
 			inOutputStream.writeNBitInteger(mAddressAssigned);
 			inOutputStream.writeNBitInteger(mNetworkSpacing);
 			inOutputStream.writeNBitInteger(mNetworkId);
+			inOutputStream.writeShort(mSleepSeconds);
 			inOutputStream.roundOutByte();
 		} catch (IOException e) {
 			LOGGER.error("", e);
@@ -123,6 +132,7 @@ public final class CommandAssocResp extends CommandAssocABC {
 			inInputStream.readNBitInteger(mAddressAssigned);
 			inInputStream.readNBitInteger(mNetworkSpacing);
 			inInputStream.readNBitInteger(mNetworkId);
+			mSleepSeconds = inInputStream.readByte();
 		} catch (IOException e) {
 			LOGGER.error("", e);
 		}

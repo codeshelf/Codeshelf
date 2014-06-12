@@ -63,7 +63,10 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 		super(inPersistentId, inGuid, inDeviceManager, inRadioController);
 	}
 
-	@Override
+	public final short getSleepSeconds() {
+		return 0;
+	}
+
 	public void startDevice() {
 		//		short position = 1;
 		//		sendLightCommand(CommandControlLed.CHANNEL1, position, ColorEnum.BLUE, CommandControlLed.EFFECT_SOLID);

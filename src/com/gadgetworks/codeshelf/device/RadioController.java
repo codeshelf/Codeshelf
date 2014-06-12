@@ -771,7 +771,7 @@ public class RadioController implements IRadioController {
 				LOGGER.info("----------------------------------------------------");
 
 				// Create and send an assign command to the remote that just woke up.
-				CommandAssocResp assignCmd = new CommandAssocResp(uid, mNetworkId, foundDevice.getAddress());
+				CommandAssocResp assignCmd = new CommandAssocResp(uid, mNetworkId, foundDevice.getAddress(), foundDevice.getSleepSeconds());
 				this.sendCommand(assignCmd, mBroadcastNetworkId, mBroadcastAddress, false);
 				foundDevice.setDeviceStateEnum(NetworkDeviceStateEnum.ASSIGN_SENT);
 			}

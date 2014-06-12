@@ -141,4 +141,11 @@ public interface INetworkDevice {
 	 */
 	void setLastAckId(byte inAckId);
 	
+	// --------------------------------------------------------------------------
+	/**
+	 * This is the number of seconds the remote device should sleep after the last user action.
+	 * @return
+	 */
+	short getSleepSeconds();
+	
 }
