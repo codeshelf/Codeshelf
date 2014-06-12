@@ -554,11 +554,24 @@ public class AisleImporterTest extends DomainTestABC {
 		// do a Y orientation on this as well
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A14,,,,,zigzagRight,12.85,43.45,Y,120,\r\n" //
+				+ "Tier,T1,,5,32,0,,\r\n" // tier before bay invalidates the rest of this aisle
+				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,5,32,0,,\r\n" //
-				+ "Bay,B2,115,,,,,\r\n" //
+				+ "Aisle,A8,,,,,zigzagRight,12.85,43.45,Y,120,\r\n" //
+				+ "xTier,T2,,5,32,0,,\r\n" // invalid binType invalidates the rest of this aisle
+				+ "Bay,B3,115,,,,,\r\n" //
 				+ "Tier,,,5,32,0,,\r\n" //
-				+ "xTier,T2,,5,32,0,,\r\n" //
-				+ "Tier,T3,,5,,0,,\r\n"; //
+				+ "Aisle,A7,,,,,zigzagRight,12.85,43.45,Y,120,\r\n" //
+				+ "Bay,B1,115,,,,,\r\n" //
+				+ "Tier,T1,,5,32,0,,\r\n" //
+				+ "Tier,T3,,5,32,0,,\r\n" // should be T2 here. Invalidates rest of this aisle
+				+ "Tier,T2,,5,32,0,,\r\n" //
+				+ "Bay,B2,115,,,,,\r\n" //
+				+ "Tier,T1,,5,32,0,,\r\n" //
+				+ "Aisle,AB7,,,,,zigzagRight,12.85,43.45,Y,120,\r\n" // Invalid AisleName
+				+ "Bay,B1,115,,,,,\r\n" //
+				+ "Aisle,A9,,,,,zigzagRight,12.85,43.45,Y,120,\r\n" // ok
+				+ "Bay,B1,115,,,,,\r\n"; // ok, even with no tiers
 	
 		byte[] csvArray = csvString.getBytes();
 
@@ -576,7 +589,37 @@ public class AisleImporterTest extends DomainTestABC {
 		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
 		importer.importAislesFromCsvStream(reader, facility, ediProcessTime);
 		
-		Assert.assertTrue(true); // did we get this far through a bad file?
+		// Check what we got from this bad file
+		Aisle aisle = Aisle.DAO.findByDomainId(facility, "A14");
+		Assert.assertNotNull(aisle); // the aisle started ok
+		
+		Bay bayA14B2 = Bay.DAO.findByDomainId(aisle, "B2");
+		Assert.assertNull(bayA14B2); // bay should have failed for the tier coming first.
+
+		Bay bayA14B3 = Bay.DAO.findByDomainId(aisle, "B3");
+		Assert.assertNull(bayA14B2); // bay should have failed for nothing read until next aisle.
+
+		Aisle aisle7 = Aisle.DAO.findByDomainId(facility, "A7");
+		Assert.assertNotNull(aisle7); // the aisle started ok. Note that we do not enforce name number consistency on aisles
+		
+		Bay bayA7B1 = Bay.DAO.findByDomainId(aisle7, "B1");
+		Assert.assertNotNull(bayA7B1); // bay should be ok
+
+		Tier tierB1T1 = Tier.DAO.findByDomainId(bayA7B1, "T1");
+		Assert.assertNotNull(tierB1T1); // should be there
+
+		Bay bayA7B2 = Bay.DAO.findByDomainId(aisle7, "B2");
+		Assert.assertNull(bayA7B2); // will not be there because second T1 in B1 made it skip past rest of this aisle
+
+		Aisle aisleB7 = Aisle.DAO.findByDomainId(facility, "AB7");
+		Assert.assertNull(aisleB7); // the aisle name not accepted
+
+		Aisle aisle9 = Aisle.DAO.findByDomainId(facility, "A9");
+		Assert.assertNotNull(aisle9); // ok
+
+		Bay bayA9B1 = Bay.DAO.findByDomainId(aisle9, "B1");
+		Assert.assertNotNull(bayA9B1); // ok, even with no tiers
+
 	}
 
 	@Test
@@ -607,13 +650,17 @@ public class AisleImporterTest extends DomainTestABC {
 		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
 		importer.importAislesFromCsvStream(reader, facility, ediProcessTime);
 		
-		// Act like "oops, forgot the second tier". And change from 6 slots down to 5. And change to 50 leds across the tier
+		// Act like "oops, forgot the second tier". 
+		// And change from 6 slots down to 5. 
+		// And change to 50 leds across the tier
+		// And change leds to tierLeft
+		// And change bay length
 		String csvString2 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
-				+ "Aisle,A15,,,,,tierRight,12.85,43.45,Y,120,\r\n" //
-				+ "Bay,B1,115,,,,,\r\n" //
+				+ "Aisle,A15,,,,,tierLeft,12.85,43.45,Y,120,\r\n" //
+				+ "Bay,B1,122,,,,,\r\n" //
 				+ "Tier,T1,,5,50,0,,\r\n" //
 				+ "Tier,T2,,5,50,0.8,,\r\n" //
-				+ "Bay,B2,115,,,,,\r\n" //
+				+ "Bay,B2,122,,,,,\r\n" //
 				+ "Tier,T1,,5,50,0,,\r\n" //
 				+ "Tier,T2,,5,50,0.8,,\r\n"; //
 	
@@ -634,12 +681,15 @@ public class AisleImporterTest extends DomainTestABC {
 		Bay bayA15B1 = Bay.DAO.findByDomainId(aisle, "B1");
 		Bay bayA15B2 = Bay.DAO.findByDomainId(aisle, "B2");
 		Assert.assertNotNull(bayA15B2);
+		Double baylength = bayA15B1.getPickFaceEndPosY() - bayA15B1.getAnchorPosY(); // this aisle is Y orientation
+		Assert.assertTrue(baylength > 1.20); // Bay 1 values were updated
+		// Compiler warning on equality of double. (== 1.22) so lets use > as the old value was 1.15
 
 		Tier tierB1T1 = Tier.DAO.findByDomainId(bayA15B1, "T1");
 		Assert.assertNotNull(bayA15B2); // should still exist
 		
 		Tier tierB2T2 = Tier.DAO.findByDomainId(bayA15B2, "T2");
-		Assert.assertNull(tierB2T2); // Incorrect. Not rereading yet.
+		Assert.assertNotNull(tierB2T2); // Shows that we reread and this time created T2
 
 
 		Slot slotB1T1S1 = Slot.DAO.findByDomainId(tierB1T1, "S1");
@@ -647,14 +697,10 @@ public class AisleImporterTest extends DomainTestABC {
 		Slot slotB1T1S5 = Slot.DAO.findByDomainId(tierB1T1, "S5");
 		Assert.assertNotNull(slotB1T1S5); // should still exist
 		Slot slotB1T1S6 = Slot.DAO.findByDomainId(tierB1T1, "S6");
-		Assert.assertNotNull(slotB1T1S6); // Incorrect. Not rereading yet.
+		Assert.assertNotNull(slotB1T1S6); // Shows that we reread and this time created S6
 		
 		short tierB1T1Last = tierB1T1.getLastLedNumAlongPath(); // did the tier LEDs change?
-		Assert.assertTrue(tierB1T1Last == 80); // Incorrect. Not rereading yet. Should be 100
-
-	
-		Assert.assertTrue(true);
-	
+		Assert.assertTrue(tierB1T1Last == 50); // Show that LEDs were recomputed and updated
 
 	}
 

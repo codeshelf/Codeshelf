@@ -423,12 +423,12 @@ public class Facility extends SubLocationABC<Facility> {
 
 						// Create the bay's boundary vertices.
 						if (inRunInXDir) {
-							createVertices(bay, new Point(PositionTypeEnum.METERS_FROM_PARENT,
+							createOrUpdateVertices(bay, new Point(PositionTypeEnum.METERS_FROM_PARENT,
 								inProtoBayPoint.getX(),
 								inProtoBayPoint.getY(),
 								0.0));
 						} else {
-							createVertices(bay, new Point(PositionTypeEnum.METERS_FROM_PARENT,
+							createOrUpdateVertices(bay, new Point(PositionTypeEnum.METERS_FROM_PARENT,
 								inProtoBayPoint.getY(),
 								inProtoBayPoint.getX(),
 								0.0));
@@ -441,7 +441,7 @@ public class Facility extends SubLocationABC<Facility> {
 				}
 
 				// Create the aisle's boundary vertices.
-				createVertices(aisle, aisleBoundary);
+				createOrUpdateVertices(aisle, aisleBoundary);
 			}
 		}
 	}
@@ -749,30 +749,50 @@ public class Facility extends SubLocationABC<Facility> {
 	 * @param inLocation
 	 * @param inDimMeters
 	 */
-	public final void createVertices(ILocation inLocation, Point inDimMeters) {
+	public final void createOrUpdateVertices(ILocation inLocation, Point inDimMeters) {
 		// Change to public as this is called from aisle file reader, and later from editor
+		// change from create to createOrUpdate
 		// Maybe this should not be a facility method.
-		try {
-			// Create four simple vertices around the aisle.
-			Vertex vertex1 = new Vertex(inLocation, "V01", 0, new Point(PositionTypeEnum.METERS_FROM_PARENT, 0.0, 0.0, null));
-			Vertex.DAO.store(vertex1);
-			Vertex vertex2 = new Vertex(inLocation, "V02", 1, new Point(PositionTypeEnum.METERS_FROM_PARENT,
-				inDimMeters.getX(),
-				0.0,
-				null));
-			Vertex.DAO.store(vertex2);
-			Vertex vertex4 = new Vertex(inLocation, "V03", 2, new Point(PositionTypeEnum.METERS_FROM_PARENT,
-				inDimMeters.getX(),
-				inDimMeters.getY(),
-				null));
-			Vertex.DAO.store(vertex4);
-			Vertex vertex3 = new Vertex(inLocation, "V04", 3, new Point(PositionTypeEnum.METERS_FROM_PARENT,
-				0.0,
-				inDimMeters.getY(),
-				null));
-			Vertex.DAO.store(vertex3);
-		} catch (DaoException e) {
-			LOGGER.error("", e);
+		List<Vertex> vList = inLocation.getVertices();
+		
+		// could refactor  more into arrays and for loops. Would need to manufacture the "V01", etc.
+		Point[] points = new Point[4];
+		points[0] = new Point(PositionTypeEnum.METERS_FROM_PARENT, 0.0, 0.0, null);
+		points[1] = new Point(PositionTypeEnum.METERS_FROM_PARENT, inDimMeters.getX(), 0.0, null);
+		points[2] = new Point(PositionTypeEnum.METERS_FROM_PARENT, inDimMeters.getX(), inDimMeters.getY(), null);
+		points[3] = new Point(PositionTypeEnum.METERS_FROM_PARENT, 0.0, inDimMeters.getY(), null);
+		
+		if (vList.size() == 0) {
+			try {
+				// Create four simple vertices around the aisle.
+				Vertex vertex1 = new Vertex(inLocation, "V01", 0, points[0]);
+				Vertex.DAO.store(vertex1);
+				Vertex vertex2 = new Vertex(inLocation, "V02", 1, points[1]);
+				Vertex.DAO.store(vertex2);
+				Vertex vertex4 = new Vertex(inLocation, "V03", 2, points[2]);
+				Vertex.DAO.store(vertex4);
+				Vertex vertex3 = new Vertex(inLocation, "V04", 3, points[3]);
+				Vertex.DAO.store(vertex3);
+			} 
+			catch (DaoException e) {
+				LOGGER.error("", e);
+			}
+		}
+		else  if (vList.size() == 4) {
+			try {
+				// assume 4 vertices. Note that 4 are made
+				for (int n = 0; n < 4; n++) {
+					Vertex theVertex = vList.get(n);
+					theVertex.setPoint(points[n]);
+					Vertex.DAO.store(theVertex);					
+				}
+			} 
+			catch (DaoException e) {
+				LOGGER.error("", e);
+			}
+		}
+		else {
+			// something odd going on. Throw? Log?
 		}
 	}
 

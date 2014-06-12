@@ -55,10 +55,14 @@ public class AislesFileCsvImporter {
 	private ITypedDao<Slot>		mSlotDao;
 	
 	private Facility mFacility;
+	// keep track of the file read. This instead of a state machine and other structures
 	private Aisle mLastReadAisle;
 	private Bay mLastReadBay;
 	private Tier mLastReadTier;
+	private int mBayCountThisAisle;
+	private int mTierCountThisBay;
 	
+	// values from the file that will be in the bean
 	private String mControllerLed;
 	private Short mLedsPerTier;
 	private Integer mBayLengthCm;
@@ -67,6 +71,8 @@ public class AislesFileCsvImporter {
 	private Integer mDepthCm;
 	
 	private List<Tier> mTiersThisAisle;
+	
+	
 
 
 
@@ -84,6 +90,8 @@ public class AislesFileCsvImporter {
 		mLastReadAisle = null;
 		mLastReadBay = null;
 		mLastReadTier = null;
+		mBayCountThisAisle = 0;
+		mTierCountThisBay = 0;
 		mBayLengthCm = 0;
 		mTierFloorCm = 0;
 		mIsOrientationX = true;
@@ -136,10 +144,10 @@ public class AislesFileCsvImporter {
 							if (needAisleBean && readAisleBean)
 								needAisleBean = false;
 						}
-						// catch (EdiFileReadException e) {
-						catch (DaoException e) {
+						catch (EdiFileReadException e) {
 							// Log out what the exception said
-							
+							LOGGER.error("", e);
+
 							// Mark that that we must now skip beans until the next aisle starts
 							needAisleBean = true;
 						}
@@ -192,7 +200,7 @@ public class AislesFileCsvImporter {
 		}
 	}
 	
-	private class zigzagLeftComparable implements Comparator<Tier> {
+	private class ZigzagLeftComparable implements Comparator<Tier> {
 		// We want B1T2, B1T1, B2T2, B2T1. Incrementing Bay. Decrementing Tier. Would not sort right for more than 9 tiers.
 		public int compare(Tier inLoc1, Tier inLoc2) {
 
@@ -213,7 +221,7 @@ public class AislesFileCsvImporter {
 		}
 	}
 
-	private class zigzagRightComparable implements Comparator<Tier> {
+	private class ZigzagRightComparable implements Comparator<Tier> {
 		// We want B2T2, B2T1, B1T2, B1T1. Decrementing Bay. Decrementing Tier. Would not sort right for more than 9 tiers.
 		public int compare(Tier inLoc1, Tier inLoc2) {
 
@@ -385,11 +393,10 @@ public class AislesFileCsvImporter {
 	 * @param inAisle
 	 */
 	private void finalizeVerticesThisAisle(final Aisle inAisle, Bay inLastBayThisAisle) {
-		// See Facility.createVertices(), which is/was private
+		// See Facility.createOrUpdateVertices(), which is/was private
 		// For this, we might editing existing vertices, or making new.
-		// Start with the new
 		if (mFacility == null || inLastBayThisAisle == null)
-			return; // not great. We call mFacility.createVertices(), which is not really right.
+			return; 
 		
 		// First we must set the pickface on the aisle from the last bay in the aisle
 		Double bayX = inLastBayThisAisle.getPickFaceEndPosX();
@@ -411,7 +418,7 @@ public class AislesFileCsvImporter {
 
 		// Create, or later adjust existing vertices, if any
 		
-		mFacility.createVertices(inAisle, aPoint);
+		mFacility.createOrUpdateVertices(inAisle, aPoint);
 		
 		// Each bay also has vertices, by the same algorithm.
 		List<? extends ISubLocation> locationList = inAisle.getChildrenAtLevel(Bay.class);
@@ -421,7 +428,7 @@ public class AislesFileCsvImporter {
 		while (li.hasNext()) {
 			Bay thisBay = (Bay) li.next();
 			Point bayPoint = getNewBoundaryPoint(thisBay);		
-			mFacility.createVertices(thisBay, bayPoint);
+			mFacility.createOrUpdateVertices(thisBay, bayPoint);
 		}
 	}
 	
@@ -449,11 +456,11 @@ public class AislesFileCsvImporter {
 			Collections.sort(mTiersThisAisle, new TierBayComparable());
 		}
 		else if (mControllerLed.equalsIgnoreCase("zigzagLeft")) {
-			Collections.sort(mTiersThisAisle, new zigzagLeftComparable());
+			Collections.sort(mTiersThisAisle, new ZigzagLeftComparable());
 			isZigzag = true;
 		}
 		else if (mControllerLed.equalsIgnoreCase("zigzagRight")) {
-			Collections.sort(mTiersThisAisle, new zigzagRightComparable());
+			Collections.sort(mTiersThisAisle, new ZigzagRightComparable());
 			isZigzag = true;
 			intialZigTierDirectionIncrease = false;
 		}
@@ -471,7 +478,7 @@ public class AislesFileCsvImporter {
 		
 		short lastLedNumber = 0;
 		short newLedNumber = 0;
-		String tierSortName = "";
+		// String tierSortName = "";
 		String lastTierDomainName = "";
 		String lastTierBayName = "";
 		Tier thisTier = null;
@@ -481,10 +488,10 @@ public class AislesFileCsvImporter {
 			li = mTiersThisAisle.listIterator();
 			while (li.hasNext()) {
 			  thisTier = (Tier) li.next();
-			  // tierSortName just to follow the iteration in debugger
-			  tierSortName = thisTier.getTierSortName();
+			  // uncomment to follow the iteration in debugger
+			  // tierSortName = thisTier.getTierSortName();
 
-			  // need to start over? never for zigzag. If tier changed for tier or multi-controller. And extra restarts on the same tier for multi-controller.
+			  // need to start over? never for zigzag. If tier changed for tier or multi-controller. Multi-controller not fully handled yet.
 			  if (restartLedOnTierChange) {
 				  String thisTierDomainName = thisTier.getDomainId();
 				  if (!thisTierDomainName.equalsIgnoreCase(lastTierDomainName))
@@ -511,10 +518,10 @@ public class AislesFileCsvImporter {
 			li = mTiersThisAisle.listIterator(mTiersThisAisle.size());
 			while (li.hasPrevious()) {
 				  thisTier = (Tier) li.previous();
-				  // tierSortName just to follow the iteration in debugger
-				  tierSortName = thisTier.getTierSortName();
+				  // uncomment to follow the iteration in debugger
+				  // tierSortName = thisTier.getTierSortName();
 
-				  // need to start over? never for zigzag. If tier changed for tier or multi-controller. And extra times for multi-controller.
+				  // need to start over? never for zigzag. If tier changed for tier or multi-controller. Multi-controller not fully handled yet.
 				  if (restartLedOnTierChange) {
 					  String thisTierDomainName = thisTier.getDomainId();
 					  if (!thisTierDomainName.equalsIgnoreCase(lastTierDomainName))
@@ -538,62 +545,61 @@ public class AislesFileCsvImporter {
 	 * @param inSlotNumber
 	 * @param inPreviousSlot
 	 * @param inSlotWidthM
+	 * ** throws EdiFileReadException 
 	 */
-	private Slot createOneSlot(final Tier inParentTier, Integer inSlotNumber, Slot inPreviousSlot, Double inSlotWidthM) {
+	private Slot editOrCreateOneSlot(final Tier inParentTier, Integer inSlotNumber, Slot inPreviousSlot, Double inSlotWidthM) {
 
 		if (inParentTier == null || inSlotNumber < 1 || inSlotNumber > maxSlotForTier) {
 			LOGGER.error("unreasonable value to createOneSlot");
-			return null;
+			return null; // this should not happen. Checked upstream
 		}
-		// Manufacture the slotID as S1, S2, et.
+		// Manufacture the slotID as S1, S2, etc.
 		String slotId = String.valueOf(inSlotNumber);
 		slotId = "S" + slotId;
 		
-		Slot newSlot = null;
-		// Next line is incorrect. If it succeeds in finding something, it will throw.  COD-81
-		// It will find second of two S1 slots belonging to different tiers
-		Slot slot = mSlotDao.findByDomainId(inParentTier, slotId);
-		if (slot == null) {
-			// Slot points relative to parent tier. The Z will be zero. If X orientation, Ys will be zero.
-			
-			Double anchorX = 0.0;
-			Double anchorY = 0.0;
-			Double pickFaceEndX = 0.0;
-			Double pickFaceEndY = 0.0;
-			if (mIsOrientationX) {
-				if (inPreviousSlot != null)
-					anchorX = inPreviousSlot.getPickFaceEndPosX();
-				pickFaceEndX = anchorX + inSlotWidthM;
-			}
-			else {
-				if (inPreviousSlot != null)
-					anchorY = inPreviousSlot.getPickFaceEndPosY();
-				pickFaceEndY = anchorY + inSlotWidthM;
-	
-			}
-				
-			Point anchorPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, anchorX, anchorY, 0.0);
-			Point inPickFaceEndPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, pickFaceEndX, pickFaceEndY, 0.0);
-			
-			newSlot = new Slot(anchorPoint, inPickFaceEndPoint);
-			newSlot.setDomainId(slotId);
-			newSlot.setParent(inParentTier);
-			inParentTier.addLocation(newSlot);
-
-			try {
-				// transaction?
-				mSlotDao.store(newSlot);
-				
-			} catch (DaoException e) {
-				LOGGER.error("", e);
-			}
+		// Slot points relative to parent tier. The Z will be zero. If X orientation, Ys will be zero.
+		Double anchorX = 0.0;
+		Double anchorY = 0.0;
+		Double pickFaceEndX = 0.0;
+		Double pickFaceEndY = 0.0;
+		if (mIsOrientationX) {
+			if (inPreviousSlot != null)
+				anchorX = inPreviousSlot.getPickFaceEndPosX();
+			pickFaceEndX = anchorX + inSlotWidthM;
 		}
 		else {
-			LOGGER.error("Slot not made");
-			// update existing?
+			if (inPreviousSlot != null)
+				anchorY = inPreviousSlot.getPickFaceEndPosY();
+			pickFaceEndY = anchorY + inSlotWidthM;
+		}		
+		Point anchorPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, anchorX, anchorY, 0.0);
+		Point pickFaceEndPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, pickFaceEndX, pickFaceEndY, 0.0);
+
+		
+		Slot slot = mSlotDao.findByDomainId(inParentTier, slotId);
+		if (slot == null) {
+			slot = new Slot(anchorPoint, pickFaceEndPoint);
+			slot.setDomainId(slotId);
+			slot.setParent(inParentTier);
+			inParentTier.addLocation(slot);
+		}
+		else {
+			// update existing bay. DomainId is not changing as we found it that way from the same parent.
+			// So only a matter of updating the anchor and pickFace points
+			slot.setAnchorPoint(anchorPoint);
+			slot.setPickFaceEndPoint(pickFaceEndPoint);
 		}
 		
-		return newSlot;	
+		try {
+			// transaction?
+			mSlotDao.store(slot);		
+		} 
+		catch (DaoException e) {
+			LOGGER.error("", e);
+			throw new EdiFileReadException("Could not store the slot update.");
+		}
+		
+		return slot;	
 
 	}
 
@@ -601,153 +607,186 @@ public class AislesFileCsvImporter {
 	/**
 	 * @param inTierId
 	 * @param inSlotCount
+	 * ** throws EdiFileReadException  on tier before bay, unreasonable slot count, invalid tier name, or after catching DaoException
 	 */
-	private Tier createOneTier(final String inTierId, Integer inSlotCount, short inLedsThisTier, boolean inLedsIncrease) {
+	private Tier editOrCreateOneTier(final String inTierId, Integer inSlotCount, short inLedsThisTier, boolean inLedsIncrease) {
 		// PickFaceEndPoint is the same as bays, so that is easy. Just need to get the Z value. Anchor point is relative to parent Bay, so 0,0.
-		if (mLastReadBay == null){
-			LOGGER.error("null last bay when createOneTier called");
-			return null;
+		
+		if (mLastReadBay == null) {
+			throw new EdiFileReadException("Tier: " + inTierId + " came before it had a bay?");
 		}
-		if (inSlotCount < 1 || inSlotCount > 30){
-			LOGGER.error("unreasonable slot count during tier creation");
-			return null;
+		if (inSlotCount < 1 || inSlotCount > maxSlotForTier) {
+			throw new EdiFileReadException("unreasonable slot count during tier creation");
+		}
+		// We are enforcing the tier name.
+		String tierCorrectName = "T" + String.valueOf(mTierCountThisBay + 1);
+		if (!tierCorrectName.equals(inTierId)) {
+			throw new EdiFileReadException("Incorrect tier name: " + inTierId + " Should be " + tierCorrectName);
 		}
 
-		// Create the bay if it doesn't already exist. Easy case.
+		// Get our points
 		Double tierFloorM = mTierFloorCm / CM_PER_M;
+		Double anchorX = 0.0;
+		Double anchorY = 0.0;
+		Double pickFaceEndX = mLastReadBay.getPickFaceEndPosX();
+		Double pickFaceEndY = mLastReadBay.getPickFaceEndPosY();
+		
+		Point anchorPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, anchorX, anchorY, tierFloorM);
+		Point pickFaceEndPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, pickFaceEndX, pickFaceEndY, tierFloorM);
 
-		Tier newTier = null;
-		Tier tier = null;
-		// Next line is incorrect. If it succeeds in finding something, it will throw.  COD-81
-		// It will find second of two T1 bays belonging to different bays
-		tier = mTierDao.findByDomainId(mLastReadBay, inTierId);
+		// create or update
+		Tier tier = mTierDao.findByDomainId(mLastReadBay, inTierId);
 		if (tier == null) {
-			
-			Double anchorX = 0.0;
-			Double anchorY = 0.0;
-			Double pickFaceEndX = mLastReadBay.getPickFaceEndPosX();
-			Double pickFaceEndY = mLastReadBay.getPickFaceEndPosY();
-			
-			Point anchorPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, anchorX, anchorY, tierFloorM);
-			Point inPickFaceEndPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, pickFaceEndX, pickFaceEndY, tierFloorM);
-			
-			newTier = new Tier(anchorPoint, inPickFaceEndPoint);
-			newTier.setDomainId(inTierId);
-			newTier.setParent(mLastReadBay);
-			mLastReadBay.addLocation(newTier);
-
-			try {
-				// transaction?
-				mTierDao.store(newTier);
-				
-			} catch (DaoException e) {
-				LOGGER.error("", e);
-			}
+			tier = new Tier(anchorPoint, pickFaceEndPoint);
+			tier.setDomainId(inTierId);
+			tier.setParent(mLastReadBay);
+			mLastReadBay.addLocation(tier);
 		}
 		else {
-			LOGGER.error("Tier not made");
-			// update existing?
-			return null;
+			// update existing bay. DomainId is not changing as we found it that way from the same parent.
+			// So only a matter of updating the anchor and pickFace points
+			tier.setAnchorPoint(anchorPoint);
+			tier.setPickFaceEndPoint(pickFaceEndPoint);
 		}
-		
+
+		try {
+			// transaction?
+			mTierDao.store(tier);		
+		} catch (DaoException e) {
+			LOGGER.error("", e);
+			throw new EdiFileReadException("Could not store the tier update.");
+		}
+
 		// Set our transient fields
-		newTier.setMTransientLedsThisTier(inLedsThisTier);
-		newTier.setMTransientLedsIncrease(inLedsIncrease);
-		// Now make the slots
+		tier.setMTransientLedsThisTier(inLedsThisTier);
+		tier.setMTransientLedsIncrease(inLedsIncrease);
 		
+		// Now make or edit the slots		
 		Double slotWidthMeters = (mBayLengthCm / CM_PER_M) / inSlotCount;
 		Slot lastSlotMadeThisTier = null;
 		for (Integer n = 1; n <= inSlotCount; n++) {
-			lastSlotMadeThisTier = createOneSlot(newTier, n, lastSlotMadeThisTier, slotWidthMeters);
+			lastSlotMadeThisTier = editOrCreateOneSlot(tier, n, lastSlotMadeThisTier, slotWidthMeters);
 		}
 		
-		return newTier;	
-
+		return tier;	
 	}
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inBayId
 	 * @param inLengthCm
+	 * ** throws EdiFileReadException 
 	 */
-	private Bay createOneBay(final String inBayId, Integer inLengthCm) {
+	private Bay editOrCreateOneBay(final String inBayId, Integer inLengthCm) {
 		// Normal horizontal bays have an easy algorithm for anchorPoint and pickFaceEndPoint. Ys are 0 (if mIsOrientationX). First bay starts at 0 and just goes by length.
 		if (mLastReadAisle == null) {
 			LOGGER.error("null last aisle when createOneBay called");
 			return null;
 		}
+		
+		// We are enforcing the bay name.
+		String bayCorrectName = "B" + String.valueOf(mBayCountThisAisle + 1);
+		if (!bayCorrectName.equals(inBayId)) {
+			throw new EdiFileReadException("Incorrect bay name: " + inBayId + " Should be " + bayCorrectName);
+		}
+
 		Double lengthM = inLengthCm / CM_PER_M;
-		// Create the bay if it doesn't already exist. Easy case.
-		Bay newBay = null;
-		// Next line is incorrect. If it succeeds in finding something, it will throw.  COD-81
-		// It will find second of two B1 bays belonging to different aisle
-		Bay bay = mBayDao.findByDomainId(mLastReadAisle, inBayId);
-		if (bay == null) {
-			
-			Double anchorX = 0.0;
-			Double anchorY = 0.0;
-			Double pickFaceEndX = 0.0;
-			Double pickFaceEndY = 0.0;
-			
-			if (mIsOrientationX) {
-				if (mLastReadBay != null)
-					anchorX = mLastReadBay.getPickFaceEndPosX();
-				pickFaceEndX = anchorX + lengthM;
-			}
-			else {
-				if (mLastReadBay != null)
-					anchorY = mLastReadBay.getPickFaceEndPosY();
-				pickFaceEndY = anchorY + lengthM;
-			}
 
-			Point anchorPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, anchorX, anchorY, 0.0);
-			Point pickFaceEndPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, pickFaceEndX, pickFaceEndY, 0.0);
-			newBay = new Bay(mLastReadAisle, inBayId, anchorPoint, pickFaceEndPoint);
-			newBay.setParent(mLastReadAisle);
-			mLastReadAisle.addLocation(newBay);
-
-			try {
-				// transaction?
-				mBayDao.store(newBay);
-				
-			} catch (DaoException e) {
-				LOGGER.error("", e);
-			}
+		//figure out the points
+		Double anchorX = 0.0;
+		Double anchorY = 0.0;
+		Double pickFaceEndX = 0.0;
+		Double pickFaceEndY = 0.0;
+		
+		if (mIsOrientationX) {
+			if (mLastReadBay != null)
+				anchorX = mLastReadBay.getPickFaceEndPosX();
+			pickFaceEndX = anchorX + lengthM;
 		}
 		else {
-			LOGGER.error("Bay not made");
-			// update existing?
+			if (mLastReadBay != null)
+				anchorY = mLastReadBay.getPickFaceEndPosY();
+			pickFaceEndY = anchorY + lengthM;
 		}
-		return newBay;	
+
+		Point anchorPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, anchorX, anchorY, 0.0);
+		Point pickFaceEndPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, pickFaceEndX, pickFaceEndY, 0.0);
+
+		
+		// Create the bay if it doesn't already exist. Easy case.
+		Bay bay = mBayDao.findByDomainId(mLastReadAisle, inBayId);
+		if (bay == null) {			
+			bay = new Bay(mLastReadAisle, inBayId, anchorPoint, pickFaceEndPoint);
+			bay.setParent(mLastReadAisle);
+			mLastReadAisle.addLocation(bay); // This is odd. ebeans needs it?
+		}
+		else {
+			// update existing bay. DomainId is not changing as we found it that way from the same parent.
+			// So only a matter of updating the anchor and pickFace points
+			bay.setAnchorPoint(anchorPoint);
+			bay.setPickFaceEndPoint(pickFaceEndPoint);
+		}
+		try {
+			// transaction?
+			mBayDao.store(bay);			
+		} catch (DaoException e) {
+			LOGGER.error("", e);
+			throw new EdiFileReadException("Could not store the bay update.");
+		}
+
+		return bay;	
 
 	}
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inAisleId
 	 * @param inAnchorPoint
-	 * @param inPickFaceEndPoint
+	 * ** throws EdiFileReadException 
 	 */
-	private Aisle createOneAisle(final String inAisleId, Point inAnchorPoint, Point inPickFaceEndPoint) {
+	private Aisle editOrCreateOneAisle(final String inAisleId, Point inAnchorPoint) {
 		// PickFaceEndPoint might be calculated when the final bay for the aisle is finished. Kind of hard, so for now, just pass in what we got from aisle editor.
 
-		// Create the aisle if it doesn't already exist. Easy case.
-		Aisle newAisle = null;
-		// Next line is incorrect. If it succeeds in finding something, it will throw.  COD-81
+		// We are enforcing that the aisle name has correct form, but not that the aisle numbers come in order (or even aren't duplicated).
+		boolean aisleNameErrorFound = false;
+		aisleNameErrorFound = aisleNameErrorFound || inAisleId.length() < 2;
+		if (!aisleNameErrorFound)
+			aisleNameErrorFound = !inAisleId.startsWith("A");
+		
+		if (!aisleNameErrorFound) {
+			String s = inAisleId.substring(1); // strip off the A
+			Integer aisleNumber = 0;
+			try { aisleNumber = Integer.valueOf(s); }
+			catch (NumberFormatException e) { 
+				aisleNameErrorFound = true; // not recognizable as a number
+			}
+
+			aisleNameErrorFound = aisleNameErrorFound || aisleNumber < 1; // zero or negative not allowed.
+		}
+
+		if (aisleNameErrorFound) {
+			throw new EdiFileReadException("Incorrect aisle name: " + inAisleId + " Should be similar to A14");
+		}
+
+		// Create the aisle if it doesn't already exist.
 		Aisle aisle = mAisleDao.findByDomainId(mFacility, inAisleId);
 		if (aisle == null) {
-			newAisle = new Aisle(mFacility, inAisleId, inAnchorPoint, inPickFaceEndPoint);
-			try {
-				// transaction?
-				mAisleDao.store(newAisle);
-				
-			} catch (DaoException e) {
-				LOGGER.error("", e);
-			}
+			Point pickFaceEndPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, 0.0, 0.0, 0.0);
+			aisle = new Aisle(mFacility, inAisleId, inAnchorPoint, pickFaceEndPoint);
 		}
 		else {
-			LOGGER.error("Aisle not made");
-			// update existing?
+			// update existing aisle. DomainId is not changing as we found it that way from the facility parent.
+			// So only a matter of updating the anchor point. Don't bother with pickface end as it gets reset later. Now we could only set to zero.
+			aisle.setAnchorPoint(inAnchorPoint);
 		}
-		return newAisle;	
+		
+		try {
+			// transaction?
+			mAisleDao.store(aisle);
+			
+		} catch (DaoException e) {
+			LOGGER.error("", e);
+			throw new EdiFileReadException("Could not store the aisle update.");
+		}
+		return aisle;	
 
 	}
 
@@ -783,8 +822,6 @@ public class AislesFileCsvImporter {
 			
 			Double dAnchorX = 0.0;
 			Double dAnchorY = 0.0;
-			Double dPickFaceEndX = 0.0;
-			Double dPickFaceEndY = 0.0;
 			// valueOf throw NumberFormatException or null exception. Catch the throw and continue since we initialized the values to 0.
 			try { dAnchorX = Double.valueOf(anchorX); }
 			catch (NumberFormatException e) { }
@@ -801,10 +838,9 @@ public class AislesFileCsvImporter {
 			mDepthCm = depthCm;
 						
 			Point anchorPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, dAnchorX, dAnchorY, 0.0);			
-			Point pickFaceEndPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, dPickFaceEndX, dPickFaceEndY, 0.0);
 			
-			// API is not good. Create the aisle with 0,0 pickface, then correct later.
-			Aisle newAisle = createOneAisle(nominalDomainID, anchorPoint, pickFaceEndPoint);
+			// Create the aisle with no pickface; It gets computed later when the bays are known.
+			Aisle newAisle = editOrCreateOneAisle(nominalDomainID, anchorPoint);
 			
 
 			if (newAisle != null) {
@@ -814,28 +850,42 @@ public class AislesFileCsvImporter {
 				// null out bay/tier
 				mLastReadBay = null;
 				mLastReadTier = null;
+				mBayCountThisAisle = 0;
+				mTierCountThisBay = 0;
 			}
 		}
 		
 		else if (binType.equalsIgnoreCase("bay")) {
 			// create a bay
+			if (inNeedAisleBean) // skip this bean if we are waiting for next aisle
+				return false;
 
 			Integer intValueLengthCm = 122; // Giving default length of 4 foot bay. Not that this is common; I want people to notice.
 
 			try { intValueLengthCm = Integer.valueOf(lengthCm); }
 			catch (NumberFormatException e) { }
 			
-			Bay newBay = createOneBay(nominalDomainID, intValueLengthCm);
+			Bay newBay = editOrCreateOneBay(nominalDomainID, intValueLengthCm);
 			
 			if (newBay != null) {
 				mLastReadBay = newBay;
 				mBayLengthCm = intValueLengthCm;
+				mBayCountThisAisle++; 
+
 				// null out tier
 				mLastReadTier = null;
+				mTierCountThisBay = 0;
 			}
+			else {
+				throw new EdiFileReadException("Bay not created. Unknown error");
+			}
+
 
 		}
 		else if (binType.equalsIgnoreCase("tier")) {
+			if (inNeedAisleBean) // skip this bean if we are waiting for next aisle
+				return false;
+
 			// create a tier
 			Integer intValueSlotsDesired = 5; // Giving default
 
@@ -860,18 +910,25 @@ public class AislesFileCsvImporter {
 			boolean ledsIncrease = true;
 			if (mControllerLed.equalsIgnoreCase("tierRight")) 
 				ledsIncrease = false;
-			//Knowable, but a bit tricky for the multi-controller aisle case. If this tier is in B3, within B1>B5;, ledsIncrease would be false.
+			// Knowable, but a bit tricky for the multi-controller aisle case. If this tier is in B3, within B1>B5;, ledsIncrease would be false.
 
-			Tier newTier = createOneTier(nominalDomainID, intValueSlotsDesired, mLedsPerTier, ledsIncrease);
-
+			Tier newTier = editOrCreateOneTier(nominalDomainID, intValueSlotsDesired, mLedsPerTier, ledsIncrease);
+	
 			if (newTier != null) {
 				mLastReadTier = newTier;
 				// Add this tier to our aisle tier list for later led calculations
 				mTiersThisAisle.add(newTier);
-				
+				mTierCountThisBay++; 
+			}
+			else {
+				throw new EdiFileReadException("Tier not created. Unknown error");
 			}
 
 		}
+		else {
+			throw new EdiFileReadException("Unknown bin type");
+		}
+
 		
 		return returnThisIsAisleBean;
 	}
