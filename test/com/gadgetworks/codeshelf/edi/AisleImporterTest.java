@@ -630,9 +630,9 @@ public class AisleImporterTest extends DomainTestABC {
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A15,,,,,tierRight,12.85,43.45,Y,120,\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
-				+ "Tier,T1,,6,40,0,,\r\n" //
+				+ "Tier,T1,,5,40,0,,\r\n" //
 				+ "Bay,B2,115,,,,,\r\n" //
-				+ "Tier,T1,,6,40,0,,\r\n"; //
+				+ "Tier,T1,,5,40,0,,\r\n"; //
 	
 		byte[] csvArray = csvString.getBytes();
 
@@ -658,11 +658,11 @@ public class AisleImporterTest extends DomainTestABC {
 		String csvString2 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A15,,,,,tierLeft,12.85,43.45,Y,120,\r\n" //
 				+ "Bay,B1,122,,,,,\r\n" //
-				+ "Tier,T1,,5,50,0,,\r\n" //
-				+ "Tier,T2,,5,50,0.8,,\r\n" //
+				+ "Tier,T1,,6,50,0,,\r\n" //
+				+ "Tier,T2,,6,50,0.8,,\r\n" //
 				+ "Bay,B2,122,,,,,\r\n" //
-				+ "Tier,T1,,5,50,0,,\r\n" //
-				+ "Tier,T2,,5,50,0.8,,\r\n"; //
+				+ "Tier,T1,,6,50,0,,\r\n" //
+				+ "Tier,T2,,6,50,0.8,,\r\n"; //
 	
 		byte[] csvArray2 = csvString2.getBytes();
 
@@ -673,7 +673,6 @@ public class AisleImporterTest extends DomainTestABC {
 		AislesFileCsvImporter importer2 = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
 		importer2.importAislesFromCsvStream(reader2, facility, ediProcessTime2);
 
-		// The re-read basically skipped everything
 		// Check what we got
 		Aisle aisle = Aisle.DAO.findByDomainId(facility, "A15");
 		Assert.assertNotNull(aisle);
@@ -686,7 +685,7 @@ public class AisleImporterTest extends DomainTestABC {
 		// Compiler warning on equality of double. (== 1.22) so lets use > as the old value was 1.15
 
 		Tier tierB1T1 = Tier.DAO.findByDomainId(bayA15B1, "T1");
-		Assert.assertNotNull(bayA15B2); // should still exist
+		Assert.assertNotNull(tierB1T1); // should still exist
 		
 		Tier tierB2T2 = Tier.DAO.findByDomainId(bayA15B2, "T2");
 		Assert.assertNotNull(tierB2T2); // Shows that we reread and this time created T2
@@ -701,6 +700,45 @@ public class AisleImporterTest extends DomainTestABC {
 		
 		short tierB1T1Last = tierB1T1.getLastLedNumAlongPath(); // did the tier LEDs change?
 		Assert.assertTrue(tierB1T1Last == 50); // Show that LEDs were recomputed and updated
+		
+		// And the third read, that should (but won't yet) delete extras. 
+		// Delete one slot in a tier. 
+		// Delete one tier in a bay
+		// Delete one bay in the aisle
+		String csvString3 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A15,,,,,tierLeft,12.85,43.45,Y,120,\r\n" //
+				+ "Bay,B1,122,,,,,\r\n" //
+				+ "Tier,T1,,4,50,0,,\r\n"; //
+	
+		byte[] csvArray3 = csvString3.getBytes();
+
+		ByteArrayInputStream stream3 = new ByteArrayInputStream(csvArray3);
+		InputStreamReader reader3 = new InputStreamReader(stream3);
+
+		Timestamp ediProcessTime3 = new Timestamp(System.currentTimeMillis());
+		AislesFileCsvImporter importer3 = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		importer3.importAislesFromCsvStream(reader3, facility, ediProcessTime3);
+
+		// Check what we got
+		Aisle aisle3 = Aisle.DAO.findByDomainId(facility, "A15");
+		Assert.assertNotNull(aisle3);
+		
+		bayA15B1 = Bay.DAO.findByDomainId(aisle3, "B1");
+		bayA15B2 = Bay.DAO.findByDomainId(aisle3, "B2");
+		Assert.assertNotNull(bayA15B2); // Incorrect! We want B2 to be null or somehow retired
+		
+		tierB1T1 = Tier.DAO.findByDomainId(bayA15B1, "T1");
+		Assert.assertNotNull(tierB1T1); // should still exist
+		
+		Tier tierB1T2 = Tier.DAO.findByDomainId(bayA15B1, "T2");
+		Assert.assertNotNull(tierB1T2); // Incorrect! We want T2 to be null or somehow retired
+
+
+		slotB1T1S1 = Slot.DAO.findByDomainId(tierB1T1, "S1");
+		Assert.assertNotNull(slotB1T1S1); // should still exist
+		slotB1T1S5 = Slot.DAO.findByDomainId(tierB1T1, "S5");
+		Assert.assertNotNull(slotB1T1S5); // Incorrect! We want T2 to be null or somehow retired
+		
 
 	}
 
