@@ -388,7 +388,7 @@ public class AislesFileCsvImporter {
 		// See Facility.createVertices(), which is/was private
 		// For this, we might editing existing vertices, or making new.
 		// Start with the new
-		if (mFacility == null)
+		if (mFacility == null || inLastBayThisAisle == null)
 			return; // not great. We call mFacility.createVertices(), which is not really right.
 		
 		// First we must set the pickface on the aisle from the last bay in the aisle
@@ -815,9 +815,6 @@ public class AislesFileCsvImporter {
 				mLastReadBay = null;
 				mLastReadTier = null;
 			}
-			else {
-				
-			}			
 		}
 		
 		else if (binType.equalsIgnoreCase("bay")) {

@@ -34,7 +34,7 @@ public class AisleImporterTest extends DomainTestABC {
 	@Test
 	public final void testTierLeft() {
 
-		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm,pickFaceEndX,pickFaceEndY\r\n" //
+		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A9,,,,,TierLeft,12.85,43.45,X,120,\r\n" //
 				+ "Bay,B1,244,,,,,\r\n" //
 				+ "Tier,T1,,8,80,0,,\r\n" //
@@ -190,7 +190,7 @@ public class AisleImporterTest extends DomainTestABC {
 	@Test
 	public final void testTierRight() {
 
-		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm,pickFaceEndX,pickFaceEndY\r\n" //
+		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A10,,,,,TierRight,12.85,43.45,X,120,\r\n" //
 				+ "Bay,B1,244,,,,,\r\n" //
 				+ "Tier,T1,,6,60,0,,\r\n" //
@@ -264,7 +264,7 @@ public class AisleImporterTest extends DomainTestABC {
 		// the purpose of bay B1 is to compare this slotting algorithm to Jeff's hand-done goodeggs zigzag slots
 		// the purpose of bay B2 is to check the sort and LEDs of more than 10 slots in a tier
 		// the purpose of bays 9,10,11 is check the bay sort.
-		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm,pickFaceEndX,pickFaceEndY\r\n" //
+		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A11,,,,,TierLeft,12.85,43.45,X,120,\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,5,32,0,,\r\n" //
@@ -390,7 +390,7 @@ public class AisleImporterTest extends DomainTestABC {
 	@Test
 	public final void testZigzagLeft() {
 
-		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm,pickFaceEndX,pickFaceEndY\r\n" //
+		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A12,,,,,zigzagLeft,12.85,43.45,X,120,\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,5,32,0,,\r\n" //
@@ -451,7 +451,7 @@ public class AisleImporterTest extends DomainTestABC {
 	@Test
 	public final void testZigzagRightY() {
 		// do a Y orientation on this as well
-		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm,pickFaceEndX,pickFaceEndY\r\n" //
+		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A13,,,,,zigzagRight,12.85,43.45,Y,120,\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,5,32,0,,\r\n" //
@@ -552,7 +552,7 @@ public class AisleImporterTest extends DomainTestABC {
 		// Ideally, we want non-throwing or caught exceptions that give good user feedback about what is wrong.
 		// This has tier before bay, and some other blank fields
 		// do a Y orientation on this as well
-		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm,pickFaceEndX,pickFaceEndY\r\n" //
+		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A14,,,,,zigzagRight,12.85,43.45,Y,120,\r\n" //
 				+ "Tier,T1,,5,32,0,,\r\n" //
 				+ "Bay,B2,115,,,,,\r\n" //
@@ -577,6 +577,85 @@ public class AisleImporterTest extends DomainTestABC {
 		importer.importAislesFromCsvStream(reader, facility, ediProcessTime);
 		
 		Assert.assertTrue(true); // did we get this far through a bad file?
+	}
+
+	@Test
+	public final void testDoubleFileRead() {
+		// Ideally, we want non-throwing or caught exceptions that give good user feedback about what is wrong.
+		// This has tier before bay, and some other blank fields
+		// do a Y orientation on this as well
+		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A15,,,,,tierRight,12.85,43.45,Y,120,\r\n" //
+				+ "Bay,B1,115,,,,,\r\n" //
+				+ "Tier,T1,,6,40,0,,\r\n" //
+				+ "Bay,B2,115,,,,,\r\n" //
+				+ "Tier,T1,,6,40,0,,\r\n"; //
+	
+		byte[] csvArray = csvString.getBytes();
+
+		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
+		InputStreamReader reader = new InputStreamReader(stream);
+
+		Organization organization = new Organization();
+		organization.setDomainId("O-AISLE15");
+		mOrganizationDao.store(organization);
+
+		organization.createFacility("F-AISLE15", "TEST", Point.getZeroPoint());
+		Facility facility = organization.getFacility("F-AISLE15");
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		importer.importAislesFromCsvStream(reader, facility, ediProcessTime);
+		
+		// Act like "oops, forgot the second tier". And change from 6 slots down to 5. And change to 50 leds across the tier
+		String csvString2 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A15,,,,,tierRight,12.85,43.45,Y,120,\r\n" //
+				+ "Bay,B1,115,,,,,\r\n" //
+				+ "Tier,T1,,5,50,0,,\r\n" //
+				+ "Tier,T2,,5,50,0.8,,\r\n" //
+				+ "Bay,B2,115,,,,,\r\n" //
+				+ "Tier,T1,,5,50,0,,\r\n" //
+				+ "Tier,T2,,5,50,0.8,,\r\n"; //
+	
+		byte[] csvArray2 = csvString2.getBytes();
+
+		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
+		InputStreamReader reader2 = new InputStreamReader(stream2);
+
+		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
+		AislesFileCsvImporter importer2 = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		importer2.importAislesFromCsvStream(reader2, facility, ediProcessTime2);
+
+		// The re-read basically skipped everything
+		// Check what we got
+		Aisle aisle = Aisle.DAO.findByDomainId(facility, "A15");
+		Assert.assertNotNull(aisle);
+		
+		Bay bayA15B1 = Bay.DAO.findByDomainId(aisle, "B1");
+		Bay bayA15B2 = Bay.DAO.findByDomainId(aisle, "B2");
+		Assert.assertNotNull(bayA15B2);
+
+		Tier tierB1T1 = Tier.DAO.findByDomainId(bayA15B1, "T1");
+		Assert.assertNotNull(bayA15B2); // should still exist
+		
+		Tier tierB2T2 = Tier.DAO.findByDomainId(bayA15B2, "T2");
+		Assert.assertNull(tierB2T2); // Incorrect. Not rereading yet.
+
+
+		Slot slotB1T1S1 = Slot.DAO.findByDomainId(tierB1T1, "S1");
+		Assert.assertNotNull(slotB1T1S1); // should still exist
+		Slot slotB1T1S5 = Slot.DAO.findByDomainId(tierB1T1, "S5");
+		Assert.assertNotNull(slotB1T1S5); // should still exist
+		Slot slotB1T1S6 = Slot.DAO.findByDomainId(tierB1T1, "S6");
+		Assert.assertNotNull(slotB1T1S6); // Incorrect. Not rereading yet.
+		
+		short tierB1T1Last = tierB1T1.getLastLedNumAlongPath(); // did the tier LEDs change?
+		Assert.assertTrue(tierB1T1Last == 80); // Incorrect. Not rereading yet. Should be 100
+
+	
+		Assert.assertTrue(true);
+	
+
 	}
 
 
