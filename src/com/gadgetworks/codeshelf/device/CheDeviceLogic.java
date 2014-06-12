@@ -130,6 +130,10 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		mCompletedWiList = new ArrayList<WorkInstruction>();
 	}
 
+	public final short getSleepSeconds() {
+		return 180;
+	}
+
 	// --------------------------------------------------------------------------
 	/**
 	 * Send a display message to the CHE's embedded control device.
