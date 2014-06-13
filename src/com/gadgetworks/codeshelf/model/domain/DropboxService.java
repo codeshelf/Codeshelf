@@ -39,6 +39,7 @@ import com.dropbox.core.DbxEntry;
 import com.dropbox.core.DbxException;
 import com.dropbox.core.DbxRequestConfig;
 import com.dropbox.core.DbxWebAuthNoRedirect;
+import com.gadgetworks.codeshelf.edi.ICsvAislesFileImporter;
 import com.gadgetworks.codeshelf.edi.ICsvCrossBatchImporter;
 import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
 import com.gadgetworks.codeshelf.edi.ICsvLocationAliasImporter;
@@ -98,8 +99,9 @@ public class DropboxService extends EdiServiceABC {
 	private static final String		IMPORT_DIR_PATH			= "import";
 	private static final String		IMPORT_ORDERS_PATH		= "orders";
 	private static final String		IMPORT_BATCHES_PATH		= "batches";
+	private static final String		IMPORT_AISLES_PATH		= "site"; // site configuration, where you drop the aisles files
 	private static final String		IMPORT_INVENTORY_PATH	= "inventory";
-	private static final String		IMPORT_LOCATIONS_PATH	= "locations";
+	private static final String		IMPORT_LOCATIONS_PATH	= "locations"; // this is location aliases
 	private static final String		IMPORT_SLOTTING_PATH	= "slotting";
 	private static final String		PROCESSED_PATH			= "processed";
 
@@ -130,7 +132,8 @@ public class DropboxService extends EdiServiceABC {
 		ICsvOrderLocationImporter inCsvOrderLocationImporter,
 		ICsvInventoryImporter inCsvInventoryImporter,
 		ICsvLocationAliasImporter inCsvLocationAliasImporter,
-		ICsvCrossBatchImporter inCsvCrossBatchImporter) {
+		ICsvCrossBatchImporter inCsvCrossBatchImporter,
+		ICsvAislesFileImporter inCsvAislesFileImporter) {
 		boolean result = false;
 
 		// Make sure we believe that we're properly registered with the service before we try to contact it.
@@ -143,7 +146,8 @@ public class DropboxService extends EdiServiceABC {
 					inCsvOrderLocationImporter,
 					inCsvInventoryImporter,
 					inCsvLocationAliasImporter,
-					inCsvCrossBatchImporter);
+					inCsvCrossBatchImporter,
+					inCsvAislesFileImporter);
 			}
 		}
 
@@ -159,7 +163,8 @@ public class DropboxService extends EdiServiceABC {
 		ICsvOrderLocationImporter inCsvOrderLocationImporter,
 		ICsvInventoryImporter inCsvInventoryImporter,
 		ICsvLocationAliasImporter inCsvLocationAliasImporter,
-		ICsvCrossBatchImporter inCsvCrossBatchImporter) {
+		ICsvCrossBatchImporter inCsvCrossBatchImporter,
+		ICsvAislesFileImporter inCsvAislesFileImporter) {
 		boolean result = false;
 
 		if (ensureBaseDirectories(inClient)) {
@@ -173,7 +178,8 @@ public class DropboxService extends EdiServiceABC {
 					inCsvOrderLocationImporter,
 					inCsvInventoryImporter,
 					inCsvLocationAliasImporter,
-					inCsvCrossBatchImporter)) {
+					inCsvCrossBatchImporter,
+					inCsvAislesFileImporter)) {
 					// If we've processed everything from the page correctly then save the current dbCursor, and get the next page
 					try {
 						DropboxService.DAO.store(this);
@@ -222,7 +228,8 @@ public class DropboxService extends EdiServiceABC {
 		ICsvOrderLocationImporter inCsvOrderLocationImporter,
 		ICsvInventoryImporter inCsvInventoryImporter,
 		ICsvLocationAliasImporter inCsvLocationAliasImporter,
-		ICsvCrossBatchImporter inCsvCrossBatchImporter) {
+		ICsvCrossBatchImporter inCsvCrossBatchImporter,
+		ICsvAislesFileImporter inCsvAislesFileImporter) {
 		boolean result = true;
 
 		for (DbxDelta.Entry<DbxEntry> entry : inPage.entries) {
@@ -236,7 +243,8 @@ public class DropboxService extends EdiServiceABC {
 						inCsvOrderLocationImporter,
 						inCsvInventoryImporter,
 						inCsvLocationAliasImporter,
-						inCsvCrossBatchImporter);
+						inCsvCrossBatchImporter,
+						inCsvAislesFileImporter);
 				} else {
 					result &= removeEntry(inClient, entry);
 				}
@@ -323,7 +331,9 @@ public class DropboxService extends EdiServiceABC {
 		result &= ensureDirectory(inClient, getFacilityImportPath());
 		result &= ensureDirectory(inClient, getFacilityImportSubDirPath(IMPORT_ORDERS_PATH));
 		result &= ensureDirectory(inClient, getFacilityImportSubDirProcessedPath(IMPORT_ORDERS_PATH));
+		result &= ensureDirectory(inClient, getFacilityImportSubDirPath(IMPORT_AISLES_PATH));
 		result &= ensureDirectory(inClient, getFacilityImportSubDirPath(IMPORT_BATCHES_PATH));
+		result &= ensureDirectory(inClient, getFacilityImportSubDirProcessedPath(IMPORT_AISLES_PATH));
 		result &= ensureDirectory(inClient, getFacilityImportSubDirProcessedPath(IMPORT_BATCHES_PATH));
 		result &= ensureDirectory(inClient, getFacilityImportSubDirPath(IMPORT_INVENTORY_PATH));
 		result &= ensureDirectory(inClient, getFacilityImportSubDirProcessedPath(IMPORT_INVENTORY_PATH));
@@ -451,7 +461,8 @@ public class DropboxService extends EdiServiceABC {
 		ICsvOrderLocationImporter inCsvOrderLocationImporter,
 		ICsvInventoryImporter inCsvInventoryImporter,
 		ICsvLocationAliasImporter inCsvLocationAliasImporter,
-		ICsvCrossBatchImporter inCsvCrossBatchImporter) {
+		ICsvCrossBatchImporter inCsvCrossBatchImporter,
+		ICsvAislesFileImporter inCsvAislesFileImporter) {
 		boolean result = true;
 
 		boolean shouldUpdateEntry = false;
@@ -464,7 +475,8 @@ public class DropboxService extends EdiServiceABC {
 					inCsvOrderLocationImporter,
 					inCsvInventoryImporter,
 					inCsvLocationAliasImporter,
-					inCsvCrossBatchImporter);
+					inCsvCrossBatchImporter,
+					inCsvAislesFileImporter);
 				shouldUpdateEntry = true;
 			}
 		}
@@ -502,7 +514,8 @@ public class DropboxService extends EdiServiceABC {
 		ICsvOrderLocationImporter inCsvOrderLocationImporter,
 		ICsvInventoryImporter inCsvInventoryImporter,
 		ICsvLocationAliasImporter inCsvLocationAliasImporter,
-		ICsvCrossBatchImporter inCsvCrossBatchImporter) {
+		ICsvCrossBatchImporter inCsvCrossBatchImporter,
+		ICsvAislesFileImporter inCsvAislesFileImporter) {
 
 		try {
 
@@ -529,6 +542,8 @@ public class DropboxService extends EdiServiceABC {
 				success = inCsvLocationAliasImporter.importLocationAliasesFromCsvStream(reader, getParent(), ediProcessTime);
 			} else if (filepath.matches(getFacilityImportSubDirPath(IMPORT_BATCHES_PATH) + "/[^/]+\\.csv")) {
 				success = inCsvCrossBatchImporter.importCrossBatchesFromCsvStream(reader, getParent(), ediProcessTime);
+			} else if (filepath.matches(getFacilityImportSubDirPath(IMPORT_AISLES_PATH) + "/[^/]+\\.csv")) {
+				success = inCsvAislesFileImporter.importAislesFileFromCsvStream(reader, getParent(), ediProcessTime);
 			}
 
 			if (success) {

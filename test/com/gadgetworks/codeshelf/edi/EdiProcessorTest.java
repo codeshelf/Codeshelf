@@ -91,12 +91,24 @@ public class EdiProcessorTest extends EdiTestABC {
 				return false;
 			}
 		};
+		
+		ICsvAislesFileImporter aislesFileImporter = new ICsvAislesFileImporter() {
+
+			@Override
+			public boolean importAislesFileFromCsvStream(InputStreamReader inCsvStreamReader,
+				Facility inFacility,
+				Timestamp inProcessTime) {
+				return false;
+			}
+		};
+
 
 		IEdiProcessor ediProcessor = new EdiProcessor(orderImporter,
 			inventoryImporter,
 			locationImporter,
 			orderLocationImporter,
 			crossBatchImporter,
+			aislesFileImporter,
 			Facility.DAO);
 		BlockingQueue<String> testBlockingQueue = new ArrayBlockingQueue<>(100);
 		ediProcessor.startProcessor(testBlockingQueue);
@@ -211,6 +223,16 @@ public class EdiProcessorTest extends EdiTestABC {
 			}
 		};
 
+		ICsvAislesFileImporter aislesFileImporter = new ICsvAislesFileImporter() {
+
+			@Override
+			public boolean importAislesFileFromCsvStream(InputStreamReader inCsvStreamReader,
+				Facility inFacility,
+				Timestamp inProcessTime) {
+				return false;
+			}
+		};
+
 		final Result linkedResult = new Result();
 		final Result unlinkedResult = new Result();
 
@@ -236,10 +258,11 @@ public class EdiProcessorTest extends EdiTestABC {
 			}
 
 			public boolean getUpdatesFromHost(ICsvOrderImporter inCsvOrdersImporter,
-				ICsvOrderLocationImporter iCsvOrderLocationImporter,
+				ICsvOrderLocationImporter inCsvOrderLocationImporter,
 				ICsvInventoryImporter inCsvInventoryImporter,
 				ICsvLocationAliasImporter inCsvLocationsImporter,
-				ICsvCrossBatchImporter inCsvCrossBatchImporter) {
+				ICsvCrossBatchImporter inCsvCrossBatchImporter,
+				ICsvAislesFileImporter inCsvAislesFileImporter) {
 				linkedResult.processed = true;
 				return true;
 			}
@@ -265,7 +288,8 @@ public class EdiProcessorTest extends EdiTestABC {
 				ICsvOrderLocationImporter iCsvOrderLocationImporter,
 				ICsvInventoryImporter inCsvInventoryImporter,
 				ICsvLocationAliasImporter inCsvLocationsImporter,
-				ICsvCrossBatchImporter inCsvCrossBatchImporter) {
+				ICsvCrossBatchImporter inCsvCrossBatchImporter,
+				ICsvAislesFileImporter inCsvAislesFileImporter) {
 				unlinkedResult.processed = true;
 				return true;
 			}
@@ -285,6 +309,7 @@ public class EdiProcessorTest extends EdiTestABC {
 			locationImporter,
 			orderLocationImporter,
 			crossBatchImporter,
+			aislesFileImporter,
 			facilityDao);
 		BlockingQueue<String> testBlockingQueue = new ArrayBlockingQueue<>(100);
 		ediProcessor.startProcessor(testBlockingQueue);

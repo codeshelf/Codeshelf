@@ -59,7 +59,7 @@ public class AisleImporterTest extends DomainTestABC {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
-		importer.importAislesFromCsvStream(reader, facility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Check the aisle
 		ISubLocation<?> aisle = facility.findLocationById("A9");
@@ -213,7 +213,7 @@ public class AisleImporterTest extends DomainTestABC {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
-		importer.importAislesFromCsvStream(reader, facility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Check what we got
 		Aisle aisle = Aisle.DAO.findByDomainId(facility, "A10");
@@ -305,7 +305,7 @@ public class AisleImporterTest extends DomainTestABC {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
-		importer.importAislesFromCsvStream(reader, facility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Check what we got
 		Aisle aisle = Aisle.DAO.findByDomainId(facility, "A11");
@@ -415,7 +415,7 @@ public class AisleImporterTest extends DomainTestABC {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
-		importer.importAislesFromCsvStream(reader, facility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Check what we got
 		Aisle aisle = Aisle.DAO.findByDomainId(facility, "A12");
@@ -476,7 +476,7 @@ public class AisleImporterTest extends DomainTestABC {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
-		importer.importAislesFromCsvStream(reader, facility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Check what we got
 		Aisle aisle = Aisle.DAO.findByDomainId(facility, "A13");
@@ -587,7 +587,7 @@ public class AisleImporterTest extends DomainTestABC {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
-		importer.importAislesFromCsvStream(reader, facility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 		
 		// Check what we got from this bad file
 		Aisle aisle = Aisle.DAO.findByDomainId(facility, "A14");
@@ -648,7 +648,7 @@ public class AisleImporterTest extends DomainTestABC {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
-		importer.importAislesFromCsvStream(reader, facility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 		
 		// Act like "oops, forgot the second tier". 
 		// And change from 6 slots down to 5. 
@@ -671,7 +671,7 @@ public class AisleImporterTest extends DomainTestABC {
 
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer2 = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
-		importer2.importAislesFromCsvStream(reader2, facility, ediProcessTime2);
+		importer2.importAislesFileFromCsvStream(reader2, facility, ediProcessTime2);
 
 		// Check what we got
 		Aisle aisle = Aisle.DAO.findByDomainId(facility, "A15");
@@ -717,7 +717,7 @@ public class AisleImporterTest extends DomainTestABC {
 
 		Timestamp ediProcessTime3 = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer3 = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
-		importer3.importAislesFromCsvStream(reader3, facility, ediProcessTime3);
+		importer3.importAislesFileFromCsvStream(reader3, facility, ediProcessTime3);
 
 		// Check what we got
 		Aisle aisle3 = Aisle.DAO.findByDomainId(facility, "A15");

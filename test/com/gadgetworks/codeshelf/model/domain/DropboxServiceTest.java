@@ -11,6 +11,7 @@ import java.sql.Timestamp;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.gadgetworks.codeshelf.edi.ICsvAislesFileImporter;
 import com.gadgetworks.codeshelf.edi.ICsvCrossBatchImporter;
 import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
 import com.gadgetworks.codeshelf.edi.ICsvLocationAliasImporter;
@@ -115,11 +116,22 @@ public class DropboxServiceTest {
 			}
 		};
 
+		ICsvAislesFileImporter aislesFileImporter = new ICsvAislesFileImporter() {
+
+			@Override
+			public boolean importAislesFileFromCsvStream(InputStreamReader inCsvStreamReader,
+				Facility inFacility,
+				Timestamp inProcessTime) {
+				return false;
+			}
+		};
+
 		dropboxService.getUpdatesFromHost(orderImporter,
 			orderLocationImporter,
 			inventoryImporter,
 			locationImporter,
-			crossBatchImporter);
+			crossBatchImporter,
+			aislesFileImporter);
 
 		Assert.assertTrue(checkImportOrders.result);
 	}

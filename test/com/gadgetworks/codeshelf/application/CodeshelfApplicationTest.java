@@ -15,8 +15,10 @@ import org.java_websocket.WebSocket;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.gadgetworks.codeshelf.edi.AislesFileCsvImporter;
 import com.gadgetworks.codeshelf.edi.CrossBatchCsvImporter;
 import com.gadgetworks.codeshelf.edi.EdiProcessor;
+import com.gadgetworks.codeshelf.edi.ICsvAislesFileImporter;
 import com.gadgetworks.codeshelf.edi.ICsvCrossBatchImporter;
 import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
 import com.gadgetworks.codeshelf.edi.ICsvLocationAliasImporter;
@@ -40,6 +42,10 @@ import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.Container;
 import com.gadgetworks.codeshelf.model.domain.ContainerUse;
 import com.gadgetworks.codeshelf.model.domain.Facility;
+import com.gadgetworks.codeshelf.model.domain.Aisle;
+import com.gadgetworks.codeshelf.model.domain.Bay;
+import com.gadgetworks.codeshelf.model.domain.Tier;
+import com.gadgetworks.codeshelf.model.domain.Slot;
 import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster;
 import com.gadgetworks.codeshelf.model.domain.LocationAlias;
@@ -244,6 +250,10 @@ public class CodeshelfApplicationTest {
 		ITypedDao<Organization> organizationDao = Organization.DAO = new MockDao<Organization>();
 		ITypedDao<User> userDao = User.DAO = new MockDao<User>();
 		ITypedDao<Facility> facilityDao = Facility.DAO = new MockDao<Facility>();
+		ITypedDao<Aisle> aisleDao = Aisle.DAO = new MockDao<Aisle>();
+		ITypedDao<Bay> bayDao = Bay.DAO = new MockDao<Bay>();
+		ITypedDao<Tier> tierDao = Tier.DAO = new MockDao<Tier>();
+		ITypedDao<Slot> slotDao = Slot.DAO = new MockDao<Slot>();
 		ITypedDao<OrderGroup> orderGroupDao = new MockDao<OrderGroup>();
 		ITypedDao<OrderHeader> orderHeaderDao = new MockDao<OrderHeader>();
 		ITypedDao<OrderDetail> orderDetailDao = new MockDao<OrderDetail>();
@@ -300,11 +310,16 @@ public class CodeshelfApplicationTest {
 			containerDao,
 			containerUseDao,
 			uomMasterDao);
+		ICsvAislesFileImporter aislesFileImporter = new AislesFileCsvImporter(aisleDao,
+			bayDao,
+			tierDao,
+			slotDao);
 		IEdiProcessor ediProcessor = new EdiProcessor(orderImporter,
 			inventoryImporter,
 			locationAliasImporter,
 			orderLocationImporter,
 			crossBatchImporter,
+			aislesFileImporter,
 			facilityDao);
 		IPickDocumentGenerator pickDocumentGenerator = new PickDocumentGenerator();
 		IUtil util = new MockUtil();

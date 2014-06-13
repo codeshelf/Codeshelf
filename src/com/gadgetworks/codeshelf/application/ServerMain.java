@@ -18,8 +18,10 @@ import org.java_websocket.server.WebSocketServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.gadgetworks.codeshelf.edi.AislesFileCsvImporter;
 import com.gadgetworks.codeshelf.edi.CrossBatchCsvImporter;
 import com.gadgetworks.codeshelf.edi.EdiProcessor;
+import com.gadgetworks.codeshelf.edi.ICsvAislesFileImporter;
 import com.gadgetworks.codeshelf.edi.ICsvCrossBatchImporter;
 import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
 import com.gadgetworks.codeshelf.edi.ICsvLocationAliasImporter;
@@ -251,6 +253,7 @@ public final class ServerMain {
 				bind(ICsvInventoryImporter.class).to(InventoryCsvImporter.class);
 				bind(ICsvLocationAliasImporter.class).to(LocationAliasCsvImporter.class);
 				bind(ICsvOrderLocationImporter.class).to(OrderLocationCsvImporter.class);
+				bind(ICsvAislesFileImporter.class).to(AislesFileCsvImporter.class);
 				bind(ICsvCrossBatchImporter.class).to(CrossBatchCsvImporter.class);
 
 				// Websocket/WebSession

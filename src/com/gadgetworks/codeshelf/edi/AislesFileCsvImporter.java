@@ -42,7 +42,7 @@ import com.gadgetworks.codeshelf.model.PositionTypeEnum;
  *
  */
 @Singleton
-public class AislesFileCsvImporter {
+public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 	
 	private static double CM_PER_M = 100D;
 	private static int maxSlotForTier = 30;
@@ -104,7 +104,7 @@ public class AislesFileCsvImporter {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.edi.ICsvImporter#importInventoryFromCsvStream(java.io.InputStreamReader, com.gadgetworks.codeshelf.model.domain.Facility)
 	 */
-	public final boolean importAislesFromCsvStream(InputStreamReader inCsvStreamReader,
+	public final boolean importAislesFileFromCsvStream(InputStreamReader inCsvStreamReader,
 		Facility inFacility,
 		Timestamp inProcessTime) {
 		boolean result = true;

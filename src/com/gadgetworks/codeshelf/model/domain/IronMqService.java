@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import au.com.bytecode.opencsv.CSVWriter;
 
 import com.avaje.ebean.annotation.CacheStrategy;
+import com.gadgetworks.codeshelf.edi.ICsvAislesFileImporter;
 import com.gadgetworks.codeshelf.edi.ICsvCrossBatchImporter;
 import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
 import com.gadgetworks.codeshelf.edi.ICsvLocationAliasImporter;
@@ -133,7 +134,8 @@ public class IronMqService extends EdiServiceABC {
 		ICsvOrderLocationImporter inCsvOrderLocationImporter,
 		ICsvInventoryImporter inCsvInventoryImporter,
 		ICsvLocationAliasImporter inCsvLocationsImporter,
-		ICsvCrossBatchImporter inCsvCrossBatchImporter) {
+		ICsvCrossBatchImporter inCsvCrossBatchImporter,
+		ICsvAislesFileImporter inCsvAislesFileImporter) {
 
 		return false;
 	}
