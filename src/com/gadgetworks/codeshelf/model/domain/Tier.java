@@ -5,6 +5,10 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
+import java.util.List;
+import java.util.ListIterator;
+import java.util.UUID;
+
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
@@ -20,6 +24,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
+import com.gadgetworks.codeshelf.edi.EdiFileReadException;
+import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
@@ -167,6 +173,27 @@ public class Tier extends SubLocationABC<Bay> {
 		return (theTierIds.aisleName + "-" + theTierIds.bayName);
 	}
 
+	private void doSetOneControllerChannel(LedController inLedController, Short inChannel) {
+		// set the controller. And set the channel
+		this.setLedController(inLedController);
+		if (inChannel != null && inChannel > 0) {
+			this.setLedChannel(inChannel);
+		}
+		else {
+			// if channel passed is 0 or null Short, make sure tier has a ledChannel. Set to 1 if there is not yet a channel.
+			Short thisLedChannel = this.getLedChannel();
+			if (thisLedChannel == null || thisLedChannel <= 0)
+				this.setLedChannel((short) 1);
+		}
+		
+		try {
+			Tier.DAO.store(this);		
+		} catch (DaoException e) {
+			LOGGER.error("", e);
+		}
+
+	}
+
 	public final void setControllerChannel(String inControllerPersistentIDStr, String inChannelStr, String inTiersStr) {
 		// this is for callMethod from the UI
 		// We are setting the controller and channel for the tier. Depending on the inTierStr parameter, may set also for
@@ -174,6 +201,54 @@ public class Tier extends SubLocationABC<Bay> {
 		
 		// Initially, log
 		LOGGER.debug("Set tier controller to " + inControllerPersistentIDStr);
+		
+		// This, or all of this tier in aisle
+		boolean allTiers = inTiersStr != null && inTiersStr.equalsIgnoreCase("aisle");
+		
+		// Get the LedController
+		UUID persistentId = UUID.fromString(inControllerPersistentIDStr);
+		LedController theLedController = LedController.DAO.findByPersistentId(persistentId);
+		
+		// Get the channel
+		Short theChannel;
+		try { theChannel = Short.valueOf(inChannelStr); }
+		catch (NumberFormatException e) { 
+			theChannel = 0; // not recognizable as a number
+		}
+		if (theChannel < 0)
+			theChannel = 0; // means don't change if there is a channel. Or set to 1 if there isn't.
+
+		// set this tier's
+		if (theLedController != null) {
+			this.doSetOneControllerChannel(theLedController, theChannel);
+		}
+		else {
+			// log and return
+			return;
+		}
+		
+		// if "aisle", then the rest of tiers at same level
+		if (allTiers) {
+			// The goal is to get to the aisle, then ask for all tiers. Filter those to the subset with the same domainID (like "T2")
+			Bay bayParent = this.getParent();
+			Aisle aisleParent = bayParent.getParent();
+			List<Tier> locationList = aisleParent.getChildrenAtLevel(Tier.class);
+			
+			String thisDomainId = this.getDomainId();
+			UUID thisPersistId = this.getPersistentId();
+			ListIterator li = null;
+			li = locationList.listIterator();
+			while (li.hasNext()) {
+				Tier iterTier = (Tier) li.next();
+				// same domainID?
+				if 	(iterTier.getDomainId().equals(thisDomainId)) {
+					if (iterTier.getPersistentId() != thisPersistId) {
+						iterTier.doSetOneControllerChannel(theLedController, theChannel);
+					}
+				}
+
+			}
+		}
 	}
 
 }

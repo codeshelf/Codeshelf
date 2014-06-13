@@ -421,7 +421,8 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 		mFacility.createOrUpdateVertices(inAisle, aPoint);
 		
 		// Each bay also has vertices, by the same algorithm.
-		List<? extends ISubLocation> locationList = inAisle.getChildrenAtLevel(Bay.class);
+		// List<? extends ISubLocation> locationList = inAisle.getChildrenAtLevel(Bay.class);
+		List<Bay> locationList = inAisle.getChildrenAtLevel(Bay.class);
 		
 		ListIterator li = null;
 		li = locationList.listIterator();

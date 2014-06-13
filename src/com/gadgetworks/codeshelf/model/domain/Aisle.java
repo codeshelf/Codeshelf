@@ -5,6 +5,8 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
+import java.util.UUID;
+
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 
@@ -73,13 +75,12 @@ public class Aisle extends SubLocationABC<Facility> {
 	}
 	
 	// getPathSegId() in LocationABC.java
-	public final void setPathSegId(String inPathSegPersistentID) {
+	public final void associatePathSegment(String inPathSegPersistentID) {
 		// to support setting of list view meta-field pathSegId
-		// This is really "setPathSegmentViaPersistentID", but it must match the method name pattern.
-		// This needs to look of the path segment, then make the association via the object.
-		// That is at the Location level
-
-		PathSegment pathSegment = null;
+		
+		// Get the PathSegment
+		UUID persistentId = UUID.fromString(inPathSegPersistentID);
+		PathSegment pathSegment = PathSegment.DAO.findByPersistentId(persistentId);
 
 		if (pathSegment != null) {
 			this.setPathSegment(pathSegment);
