@@ -212,11 +212,11 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * Create the aisle's controller.
+	 * Find existing (by domain ID), or create new controller. Not sure NetGuid should be passed in.
 	 * @param inCodeshelfNetwork
 	 * @param inGUID
 	 */
-	public final LedController createLedController(String inDomainId, NetGuid inGuid) {
+	public final LedController findOrCreateLedController(String inDomainId, NetGuid inGuid) {
 
 		LedController result = LedController.DAO.findByDomainId(this, inDomainId);
 		if (result == null) {
@@ -226,6 +226,8 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 			result.setDomainId(inDomainId);
 			result.setDesc("LED controller for " + this.getDomainId());
 			result.setDeviceNetGuid(inGuid);
+			this.addLedController(result); // so that it works immediately in unit test, and not only after one rehydration cycle
+
 			try {
 				LedController.DAO.store(result);
 			} catch (DaoException e) {

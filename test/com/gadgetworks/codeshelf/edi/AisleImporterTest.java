@@ -7,11 +7,14 @@ package com.gadgetworks.codeshelf.edi;
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.DomainTestABC;
 import com.gadgetworks.codeshelf.model.domain.ISubLocation;
 // domain objects needed
@@ -23,6 +26,8 @@ import com.gadgetworks.codeshelf.model.domain.Tier;
 import com.gadgetworks.codeshelf.model.domain.Slot;
 import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.model.domain.Vertex;
+import com.gadgetworks.codeshelf.model.domain.LedController;
+import com.gadgetworks.flyweight.command.NetGuid;
 
 
 /**
@@ -142,7 +147,6 @@ public class AisleImporterTest extends DomainTestABC {
 		Double pickFaceEndY = ((Aisle) aisle).getPickFaceEndPosY();
 		Assert.assertTrue(pickFaceEndY == 0.0);
 		pickFaceEndX = ((Bay) bay1).getPickFaceEndPosX();
-		//XXX  bug remaining here. Aisle pickface must be set when last bay is set.
 		pickFaceEndY = ((Bay) bay1).getPickFaceEndPosY();
 		Assert.assertTrue(pickFaceEndX == 2.44); 
 		Assert.assertTrue(pickFaceEndY == 0.0); 
@@ -739,6 +743,82 @@ public class AisleImporterTest extends DomainTestABC {
 		slotB1T1S5 = Slot.DAO.findByDomainId(tierB1T1, "S5");
 		Assert.assertNotNull(slotB1T1S5); // Incorrect! We want T2 to be null or somehow retired
 		
+
+	}
+
+	@Test
+	public final void testAfterFileModifications() {
+		// The file read does a lot. But then we rely on the user via the UI to do additional things to complete the configuration. This is
+		// a (nearly) end to end test of that. The actual UI will call a websocket command that calls a method on a domain object.
+		// This test calls the same methods.
+		
+		// Start with a file read to new facility
+		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A16,,,,,tierRight,12.85,43.45,Y,120,\r\n" //
+				+ "Bay,B1,115,,,,,\r\n" //
+				+ "Tier,T1,,5,40,0,,\r\n" //
+				+ "Bay,B2,115,,,,,\r\n" //
+				+ "Tier,T1,,5,40,0,,\r\n"; //
+	
+		byte[] csvArray = csvString.getBytes();
+
+		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
+		InputStreamReader reader = new InputStreamReader(stream);
+
+		Organization organization = new Organization();
+		organization.setDomainId("O-AISLE16");
+		mOrganizationDao.store(organization);
+
+		organization.createFacility("F-AISLE16", "TEST", Point.getZeroPoint());
+		Facility facility = organization.getFacility("F-AISLE16");
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+		
+		// Get the objects we will use
+		Aisle aisle16 = Aisle.DAO.findByDomainId(facility, "A16");
+		Assert.assertNotNull(aisle16);
+		
+		Bay bayA16B1 = Bay.DAO.findByDomainId(aisle16, "B1");
+		Bay bayA16B2 = Bay.DAO.findByDomainId(aisle16, "B2");
+		Assert.assertNotNull(bayA16B2);
+		
+		Tier tierB1T1 = Tier.DAO.findByDomainId(bayA16B1, "T1");
+		Assert.assertNotNull(tierB1T1); 
+		Tier tierB2T1 = Tier.DAO.findByDomainId(bayA16B2, "T1");
+		Assert.assertNotNull(tierB2T1); 
+		
+		// Get our network so that we may add a network controller
+		List<CodeshelfNetwork> networks = facility.getNetworks();
+		int howManyNetworks = networks.size();
+		Assert.assertTrue(howManyNetworks == 1); 
+		
+		// organization.createFacility() should have created this network
+		CodeshelfNetwork network = facility.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_ID);
+		Assert.assertNotNull(network);
+		
+		// There are led controllers, but we will make one. If it exists already, no harm.
+		String cntlrId = "0x000026";
+		LedController ledController = network.findOrCreateLedController(cntlrId, new NetGuid(cntlrId));	
+		LedController aController = network.getLedController(cntlrId);
+		Assert.assertNotNull(aController);
+		UUID cntlrPersistID = aController.getPersistentId();
+		
+		// Now the real point. UI will call as follows to set all of T1 in the aisle to this controller.
+		// Side effect if channel not set is to set to channel 1 also.
+		tierB1T1.setControllerChannel(cntlrPersistID.toString(), "0", "aisle");
+		Short b1T1Channel = tierB1T1.getLedChannel();
+		Short b2T1Channel = tierB2T1.getLedChannel();
+		Assert.assertTrue(b1T1Channel == (short) 1);
+		
+		// Assert.assertTrue(b2T1Channel == (short) 1); bug
+		LedController b1T1Controller = tierB1T1.getLedController();
+		LedController b2T1Controller = tierB2T1.getLedController();
+
+		String b2T1ControllerStr = tierB2T1.getLedControllerId();
+		String b1T1ControllerStr = tierB1T1.getLedControllerId();
+		// Assert.assertEquals(b2T1ControllerStr, b1T1ControllerStr); bug
 
 	}
 

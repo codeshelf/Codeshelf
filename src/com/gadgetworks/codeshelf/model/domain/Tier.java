@@ -242,7 +242,7 @@ public class Tier extends SubLocationABC<Bay> {
 				Tier iterTier = (Tier) li.next();
 				// same domainID?
 				if 	(iterTier.getDomainId().equals(thisDomainId)) {
-					if (iterTier.getPersistentId() != thisPersistId) {
+					if (!iterTier.getPersistentId().equals(thisPersistId)) {
 						iterTier.doSetOneControllerChannel(theLedController, theChannel);
 					}
 				}

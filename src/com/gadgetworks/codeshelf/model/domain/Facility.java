@@ -381,7 +381,7 @@ public class Facility extends SubLocationABC<Facility> {
 		if (network != null) {
 			LedController ledController = network.getLedController("LED1");
 			if (ledController == null) {
-				ledController = network.createLedController(inLedControllerId, new NetGuid(inLedControllerId));
+				ledController = network.findOrCreateLedController(inLedControllerId, new NetGuid(inLedControllerId));
 			}
 			// Create the aisle if it doesn't already exist.
 			Aisle aisle = Aisle.DAO.findByDomainId(this, inAisleId);
