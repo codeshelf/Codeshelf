@@ -936,6 +936,7 @@ public class Facility extends SubLocationABC<Facility> {
 		result.setActive(true);
 		//result.setCredential(Double.toString(Math.random()));
 		result.setCredential("0.6910096026612129");
+		this.addNetwork(result);
 
 		try {
 			CodeshelfNetwork.DAO.store(result);
