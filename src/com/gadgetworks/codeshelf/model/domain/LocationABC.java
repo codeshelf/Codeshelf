@@ -490,6 +490,15 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		return "";
 	}
 
+	public final String getPrimaryAliasId() {
+		// to support list view meta-field 
+		LocationAlias theAlias = getPrimaryAlias();
+		if (theAlias != null) {
+			return theAlias.getAlias();
+		}
+		return "";
+	}
+
 	public final void addVertex(Vertex inVertex) {
 		vertices.add(inVertex);
 	}
