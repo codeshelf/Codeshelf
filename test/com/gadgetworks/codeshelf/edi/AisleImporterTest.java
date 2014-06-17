@@ -798,27 +798,35 @@ public class AisleImporterTest extends DomainTestABC {
 		CodeshelfNetwork network = facility.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_ID);
 		Assert.assertNotNull(network);
 		
-		// There are led controllers, but we will make one. If it exists already, no harm.
+		// There are led controllers, but we will make a new one. If it exists already, no harm.
 		String cntlrId = "0x000026";
 		LedController ledController = network.findOrCreateLedController(cntlrId, new NetGuid(cntlrId));	
-		LedController aController = network.getLedController(cntlrId);
+		Assert.assertNotNull(ledController);
+		LedController aController = network.getLedController(cntlrId); // make sure we can get it as we might
 		Assert.assertNotNull(aController);
 		UUID cntlrPersistID = aController.getPersistentId();
+		String cntrlPersistIdStr = cntlrPersistID.toString();
 		
 		// Now the real point. UI will call as follows to set all of T1 in the aisle to this controller.
 		// Side effect if channel not set is to set to channel 1 also.
-		tierB1T1.setControllerChannel(cntlrPersistID.toString(), "0", "aisle");
+		tierB1T1.setControllerChannel(cntrlPersistIdStr, "0", "aisle");
 		Short b1T1Channel = tierB1T1.getLedChannel();
 		Short b2T1Channel = tierB2T1.getLedChannel();
-		Assert.assertTrue(b1T1Channel == (short) 1);
+		Assert.assertTrue(b1T1Channel == (short) 1);	
+		// Assert.assertTrue(b2T1Channel == (short) 1); bug? Bizarre. This is DEV-165.
+		// b2T1Channel is still uninitialized, even though it definitely got set, but not on this reference. Let's re-get the tier.
+		tierB2T1 = Tier.DAO.findByDomainId(bayA16B2, "T1");
+		b2T1Channel = tierB2T1.getLedChannel(); // need to get this again from the re-hydrated object
+		Assert.assertTrue(b2T1Channel == (short) 1);
 		
-		// Assert.assertTrue(b2T1Channel == (short) 1); bug
+		
 		LedController b1T1Controller = tierB1T1.getLedController();
-		LedController b2T1Controller = tierB2T1.getLedController();
+		LedController b2T1Controller = tierB2T1.getLedController(); // This needed the re-get also
+		Assert.assertEquals(b1T1Controller, b2T1Controller); // different ebeans reference, but same persistent ID should match on equals
 
-		String b2T1ControllerStr = tierB2T1.getLedControllerId();
 		String b1T1ControllerStr = tierB1T1.getLedControllerId();
-		// Assert.assertEquals(b2T1ControllerStr, b1T1ControllerStr); bug
+		String b2T1ControllerStr = tierB2T1.getLedControllerId();
+		Assert.assertEquals(b2T1ControllerStr, b1T1ControllerStr); // strings match; both "0x000026"
 
 	}
 
