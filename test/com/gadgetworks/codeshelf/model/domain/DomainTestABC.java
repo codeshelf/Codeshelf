@@ -7,167 +7,75 @@ package com.gadgetworks.codeshelf.model.domain;
 
 import java.sql.Timestamp;
 
-import com.gadgetworks.codeshelf.edi.EdiTestABC;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.OrderTypeEnum;
+import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.TravelDirectionEnum;
+import com.gadgetworks.codeshelf.model.dao.DAOTestABC;
+import com.gadgetworks.flyweight.command.NetGuid;
 
-public abstract class DomainTestABC extends EdiTestABC {
-
-	/* Now from EdiTestABC
-	protected OrganizationDao		mOrganizationDao;
-	protected LocationABCDao		mLocationDao;
-	protected SubLocationDao		mSubLocationDao;
-	protected FacilityDao			mFacilityDao;
-	protected PathDao				mPathDao;
-	protected PathSegmentDao		mPathSegmentDao;
-	protected AisleDao				mAisleDao;
-	protected BayDao				mBayDao;
-	protected DropboxServiceDao		mDropboxServiceDao;
-	protected OrderGroupDao			mOrderGroupDao;
-	protected OrderHeaderDao		mOrderHeaderDao;
-	protected OrderDetailDao		mOrderDetailDao;
-	protected OrderLocationDao		mOrderLocationDao;
-	protected CodeshelfNetworkDao	mCodeshelfNetworkDao;
-	protected CheDao				mCheDao;
-	protected ContainerDao			mContainerDao;
-	protected ContainerKindDao		mContainerKindDao;
-	protected ContainerUseDao		mContainerUseDao;
-	protected ItemMasterDao			mItemMasterDao;
-	protected ItemDao				mItemDao;
-	protected UomMasterDao			mUomMasterDao;
-	protected LedControllerDao		mLedControllerDao;
-	protected LocationAliasDao		mLocationAliasDao;
-	protected WorkInstructionDao	mWorkInstructionDao;
-
-	private IUtil					mUtil;
-	protected ISchemaManager		mSchemaManager;
-	private IDatabase				mDatabase;
-	*/
+public abstract class DomainTestABC extends DAOTestABC {
 
 	public DomainTestABC() {
 		super();
 	}
-
-	/* now in EdiTestABC
-	@Before
-	public final void setup() {
-
-		try {
-			mUtil = new IUtil() {
-
-				public void setLoggingLevelsFromPrefs(Organization inOrganization,
-					ITypedDao<PersistentProperty> inPersistentPropertyDao) {
-				}
-
-				public String getVersionString() {
-					return "";
-				}
-
-				public String getApplicationLogDirPath() {
-					return ".";
-				}
-
-				public String getApplicationDataDirPath() {
-					return ".";
-				}
-
-				public void exitSystem() {
-					System.exit(-1);
-				}
-			};
-
-			Class.forName("org.h2.Driver");
-			mSchemaManager = new H2SchemaManager(mUtil,
-				"codeshelf",
-				"codeshelf",
-				"codeshelf",
-				"codeshelf",
-				"localhost",
-				"",
-				"false");
-			mDatabase = new Database(mSchemaManager, mUtil);
-
-			mDatabase.start();
-
-			mOrganizationDao = new OrganizationDao(mSchemaManager);
-			Organization.DAO = mOrganizationDao;
-
-			mFacilityDao = new FacilityDao(mSchemaManager);
-			Facility.DAO = mFacilityDao;
-
-			mPathDao = new PathDao(mSchemaManager);
-			Path.DAO = mPathDao;
-
-			mPathSegmentDao = new PathSegmentDao(mSchemaManager);
-			PathSegment.DAO = mPathSegmentDao;
-
-			mAisleDao = new AisleDao(mSchemaManager);
-			Aisle.DAO = mAisleDao;
-
-			mBayDao = new BayDao(mSchemaManager);
-			Bay.DAO = mBayDao;
-
-			mDropboxServiceDao = new DropboxServiceDao(mSchemaManager);
-			DropboxService.DAO = mDropboxServiceDao;
-
-			mCodeshelfNetworkDao = new CodeshelfNetworkDao(mSchemaManager);
-			CodeshelfNetwork.DAO = mCodeshelfNetworkDao;
-
-			mCheDao = new CheDao(mSchemaManager);
-			Che.DAO = mCheDao;
-
-			mSubLocationDao = new SubLocationDao(mSchemaManager);
-			SubLocationABC.DAO = mSubLocationDao;
-
-			mLocationDao = new LocationABCDao(mSchemaManager, mDatabase);
-			LocationABC.DAO = mLocationDao;
-
-			mOrderGroupDao = new OrderGroupDao(mSchemaManager);
-			OrderGroup.DAO = mOrderGroupDao;
-
-			mOrderHeaderDao = new OrderHeaderDao(mSchemaManager);
-			OrderHeader.DAO = mOrderHeaderDao;
-
-			mOrderDetailDao = new OrderDetailDao(mSchemaManager);
-			OrderDetail.DAO = mOrderDetailDao;
-
-			mOrderLocationDao = new OrderLocationDao(mSchemaManager);
-			OrderLocation.DAO = mOrderLocationDao;
-
-			mContainerDao = new ContainerDao(mSchemaManager);
-			Container.DAO = mContainerDao;
-
-			mContainerKindDao = new ContainerKindDao(mSchemaManager);
-			ContainerKind.DAO = mContainerKindDao;
-
-			mContainerUseDao = new ContainerUseDao(mSchemaManager);
-			ContainerUse.DAO = mContainerUseDao;
-
-			mItemMasterDao = new ItemMasterDao(mSchemaManager);
-			ItemMaster.DAO = mItemMasterDao;
-
-			mItemDao = new ItemDao(mSchemaManager);
-			Item.DAO = mItemDao;
-
-			mUomMasterDao = new UomMasterDao(mSchemaManager);
-			UomMaster.DAO = mUomMasterDao;
-
-			mLedControllerDao = new LedControllerDao(mSchemaManager);
-			LedController.DAO = mLedControllerDao;
-
-			mLocationAliasDao = new LocationAliasDao(mSchemaManager);
-			LocationAlias.DAO = mLocationAliasDao;
-
-			mWorkInstructionDao = new WorkInstructionDao(mSchemaManager);
-			WorkInstruction.DAO = mWorkInstructionDao;
-
-		} catch (ClassNotFoundException e) {
-		}
-	}
-	*/
-
+	
 	// --------------------------------------------------------------------------
+
+	protected Organization getOrganization(final String inOrganizationName) {
+		Organization organization = mOrganizationDao.findByDomainId(null, inOrganizationName);
+		if (organization == null) {
+			organization = new Organization();
+			organization.setOrganizationId(inOrganizationName);
+			mOrganizationDao.store(organization);
+		}
+		return organization;
+	}
+	
+	/**
+	 * Create a basic organization of the specified name with enough domain data to make it easy to setup various
+	 * business case unit tests.
+	 * 
+	 * @param inOrganizationName
+	 */ 
+	protected Facility getFacility(Organization inOrganization) {
+		String defaultDomainId = "F1";
+		
+		Facility resultFacility = mFacilityDao.findByDomainId(inOrganization, defaultDomainId);
+		if(resultFacility == null) {
+			inOrganization.createFacility(defaultDomainId, "test", Point.getZeroPoint());
+			resultFacility = inOrganization.getFacility(defaultDomainId);
+		}
+		return resultFacility;
+	}	
+	
+	protected CodeshelfNetwork getNetwork(Facility inFacility) {
+		String defaultDomainId = "0xFEDCBA";
+		
+		CodeshelfNetwork codeshelfNetwork = mCodeshelfNetworkDao.findByDomainId(inFacility, defaultDomainId);
+		if (codeshelfNetwork == null) {
+			codeshelfNetwork = new CodeshelfNetwork(inFacility, defaultDomainId, "Description", "Credential");
+			codeshelfNetwork.getDao().store(codeshelfNetwork);
+		}
+		return codeshelfNetwork;
+	}
+
+	protected Aisle getAisle(Facility facility, String inDomainId) {
+		Aisle aisle = mAisleDao.findByDomainId(facility, inDomainId);
+		if (aisle == null) {
+			aisle = new Aisle(facility, inDomainId, Point.getZeroPoint(), Point.getZeroPoint());
+			mAisleDao.store(aisle);
+		}
+		return aisle;
+	}
+	
+	protected LedController getController(CodeshelfNetwork network, final String inControllerDomainId) {
+		LedController controller = network.findOrCreateLedController(inControllerDomainId, new NetGuid(inControllerDomainId));
+		controller.setDomainId(inControllerDomainId);
+		mLedControllerDao.store(controller);
+		return controller;
+	}
+	
 	/**
 	 * Create a basic organization of the specified name with enough domain data to make it easy to setup various
 	 * business case unit tests.
@@ -193,25 +101,18 @@ public abstract class DomainTestABC extends EdiTestABC {
 	 */
 	protected Facility createFacilityWithOutboundOrders(final String inOrganizationName) {
 
-		Facility resultFacility = null;
+		Organization organization = getOrganization(inOrganizationName);
+		
+		Facility resultFacility = getFacility(organization);
 
-		Organization organization = new Organization();
-		organization.setOrganizationId(inOrganizationName);
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F1", "test", Point.getZeroPoint());
-		resultFacility = organization.getFacility("F1");
-
-		Aisle aisle1 = new Aisle(resultFacility, "A1", Point.getZeroPoint(), Point.getZeroPoint());
-		mAisleDao.store(aisle1);
+		Aisle aisle1 = getAisle(resultFacility, "A1");
 
 		Bay baya1b1 = new Bay(aisle1, "B1", Point.getZeroPoint(), Point.getZeroPoint());
 		mBayDao.store(baya1b1);
 		Bay baya1b2 = new Bay(aisle1, "B2", Point.getZeroPoint(), Point.getZeroPoint());
 		mBayDao.store(baya1b2);
 
-		Aisle aisle2 = new Aisle(resultFacility, "A2", Point.getZeroPoint(), Point.getZeroPoint());
-		mAisleDao.store(aisle2);
+		Aisle aisle2 = getAisle(resultFacility, "A2");
 
 		Bay baya2b1 = new Bay(aisle2, "B1", Point.getZeroPoint(), Point.getZeroPoint());
 		mBayDao.store(baya2b1);
@@ -238,16 +139,14 @@ public abstract class DomainTestABC extends EdiTestABC {
 		mAisleDao.store(aisle2);
 		pathSegment1.addLocation(aisle2);
 
-		Aisle aisle3 = new Aisle(resultFacility, "A3", Point.getZeroPoint(), Point.getZeroPoint());
-		mAisleDao.store(aisle3);
+		Aisle aisle3 = getAisle(resultFacility, "A3");
 
 		Bay baya3b1 = new Bay(aisle3, "B1", Point.getZeroPoint(), Point.getZeroPoint());
 		mBayDao.store(baya3b1);
 		Bay baya3b2 = new Bay(aisle3, "B2", Point.getZeroPoint(), Point.getZeroPoint());
 		mBayDao.store(baya3b2);
 
-		Aisle aisle4 = new Aisle(resultFacility, "A4", Point.getZeroPoint(), Point.getZeroPoint());
-		mAisleDao.store(aisle4);
+		Aisle aisle4 = getAisle(resultFacility, "A4");
 
 		Bay baya4b1 = new Bay(aisle4, "B1", Point.getZeroPoint(), Point.getZeroPoint());
 		mBayDao.store(baya4b1);
@@ -411,5 +310,9 @@ public abstract class DomainTestABC extends EdiTestABC {
 		inOrderHeader.addOrderLocation(result);
 
 		return result;
+	}
+	
+	protected Point anyPoint() {
+		return new Point(PositionTypeEnum.METERS_FROM_PARENT, Math.random()*10, Math.random()*10, Math.random()*10);
 	}
 }
