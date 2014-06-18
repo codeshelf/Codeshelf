@@ -591,7 +591,7 @@ public class AisleImporterTest extends DomainTestABC {
 		Double xValue = thirdV.getPosX();
 		Double yValue = thirdV.getPosY();
 		Assert.assertTrue(xValue == 1.2); // depth was 120 cm, so 1.2 meters in the x direction
-		Assert.assertTrue(yValue == 45.75); 
+		Assert.assertTrue(yValue == 45.75);
 
 		List<Vertex> vList2 = bayA13B1.getVerticesInOrder();
 		Assert.assertEquals(vList2.size(), 4);

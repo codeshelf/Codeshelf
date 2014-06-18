@@ -753,7 +753,7 @@ public class Facility extends SubLocationABC<Facility> {
 		// Change to public as this is called from aisle file reader, and later from editor
 		// change from create to createOrUpdate
 		// Maybe this should not be a facility method.
-		
+
 		List<Vertex> vList = inLocation.getVerticesInOrder();
 
 		// could refactor  more into arrays and for loops. Would need to manufacture the "V01", etc.
