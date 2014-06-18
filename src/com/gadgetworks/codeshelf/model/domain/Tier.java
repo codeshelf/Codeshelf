@@ -59,6 +59,9 @@ final class TierIds {
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class Tier extends SubLocationABC<Bay> {
 
+	private static final String THIS_TIER_ONLY = "";
+	private static final String ALL_TIERS_IN_AISLE = "aisle";
+	
 	@Inject
 	public static ITypedDao<Tier>	DAO;
 
@@ -170,31 +173,10 @@ public class Tier extends SubLocationABC<Bay> {
 		return (theTierIds.aisleName + "-" + theTierIds.bayName);
 	}
 
-	private void doSetOneControllerChannel(LedController inLedController, Short inChannel) {
-		// set the controller. And set the channel
-		this.setLedController(inLedController);
-		if (inChannel != null && inChannel > 0) {
-			this.setLedChannel(inChannel);
-		}
-		else {
-			// if channel passed is 0 or null Short, make sure tier has a ledChannel. Set to 1 if there is not yet a channel.
-			Short thisLedChannel = this.getLedChannel();
-			if (thisLedChannel == null || thisLedChannel <= 0)
-				this.setLedChannel((short) 1);
-		}
-		
-		try {
-			Tier.DAO.store(this);		
-		} catch (DaoException e) {
-			LOGGER.error("", e);
-		}
-
-	}
-
 	public final void setControllerChannel(String inControllerPersistentIDStr, String inChannelStr, String inTiersStr) {
 		// This, or all of this tier in aisle
 		doSetControllerChannel(inControllerPersistentIDStr, inChannelStr);		
-		boolean allTiers = inTiersStr != null && inTiersStr.equalsIgnoreCase("aisle");
+		boolean allTiers = inTiersStr != null && inTiersStr.equalsIgnoreCase(ALL_TIERS_IN_AISLE);
 		// if "aisle", then the rest of tiers at same level
 		if (allTiers) {
 			// The goal is to get to the aisle, then ask for all tiers. Filter those to the subset with the same domainID (like "T2")
@@ -211,7 +193,7 @@ public class Tier extends SubLocationABC<Bay> {
 				// same domainID?
 				if 	(iterTier.getDomainId().equals(thisDomainId)) {
 					if (!iterTier.getPersistentId().equals(thisPersistId)) {
-						iterTier.setControllerChannel(inControllerPersistentIDStr, inChannelStr, "");
+						iterTier.setControllerChannel(inControllerPersistentIDStr, inChannelStr, THIS_TIER_ONLY);
 					}
 				}
 
