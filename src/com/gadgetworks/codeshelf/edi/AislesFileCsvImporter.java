@@ -58,6 +58,7 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 	// keep track of the file read. This instead of a state machine and other structures
 	private Aisle mLastReadAisle;
 	private Bay mLastReadBay;
+	private Bay mLastReadBayForVertices;
 	private Tier mLastReadTier;
 	private int mBayCountThisAisle;
 	private int mTierCountThisBay;
@@ -89,6 +90,7 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 		
 		mLastReadAisle = null;
 		mLastReadBay = null;
+		mLastReadBayForVertices = null;
 		mLastReadTier = null;
 		mBayCountThisAisle = 0;
 		mTierCountThisBay = 0;
@@ -153,12 +155,17 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 
 							// Mark that that we must now skip beans until the next aisle starts
 							needAisleBean = true;
+							
+							// Don't have leftover tiers in the next aisle. Normally cleared in finalize, which will not happen
+							mTiersThisAisle.clear(); 
+							mLastReadBayForVertices = null; // barely necessary. But cleanliness is good.
 						}
 						// if we started a new aisle, then the previous aisle is done. Do those computations and set those fields
 						// but not if we threw out of last aisle
 						if (lastAisle != null && lastAisle != mLastReadAisle & !needAisleBean) {
 							finalizeTiersInThisAisle(lastAisle);
-							finalizeVerticesThisAisle(lastAisle, mLastReadBay);
+							finalizeVerticesThisAisle(lastAisle, mLastReadBayForVertices);
+							// starting an aisle copied mLastReadBay to mLastReadBayForVertices and cleared mLastReadBay
 						}
 					}
 				}
@@ -368,24 +375,24 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 	 
 	 // --------------------------------------------------------------------------
 	/**
-	 * @param inAisle
+	 * @param inLocation
 	 */
 	private Point getNewBoundaryPoint(final SubLocationABC inLocation) {
 		// returns a new point with pickfaceEnd offset by depth
 		
 		// The boundary point will be the pickFaceEnd adjusted for mDepth
-		Double pickFaceEndX = inLocation.getPickFaceEndPosX();
-		Double pickFaceEndY = inLocation.getPickFaceEndPosY();
+		Double pointX = inLocation.getPickFaceEndPosX();
+		Double pointY = inLocation.getPickFaceEndPosY();
 		Double depthM = mDepthCm / 100.0;
 		
 		if (mIsOrientationX) {
-			pickFaceEndY += depthM;
+			pointY += depthM;
 		} 
 		else {
-			pickFaceEndX += depthM;
+			pointX += depthM;
 		}
 		
-		Point aPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, pickFaceEndX, pickFaceEndY, 0.0);
+		Point aPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, pointX, pointY, 0.0);
 
 		return aPoint;
 		
@@ -405,10 +412,16 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 		Double bayX = inLastBayThisAisle.getPickFaceEndPosX();
 		Double bayY = inLastBayThisAisle.getPickFaceEndPosY();
 		
-		Double anchorX = inAisle.getPickFaceEndPosX();
-		Double anchorY = inAisle.getPickFaceEndPosY();
-		Double aisleX = anchorX + bayX; // bay points are relative to aisle
-		Double aisleY = anchorY + bayY;
+		Double anchorX = inAisle.getAnchorPosX();
+		Double anchorY = inAisle.getAnchorPosY();
+		
+		Double aisleX = 0.0;
+		Double aisleY = 0.0;
+		// Probably not correct but so be it.
+		if (bayX != 0.0)
+			aisleX = anchorX + bayX; // bay points are relative to aisle
+		if (bayY != 0.0)
+			aisleY = anchorY + bayY;
 		
 		Point pickFacePoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, aisleX, aisleY
 			, 0.0);
@@ -850,6 +863,7 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 				// We need to save this aisle as it is the master for the next bay line. 
 				
 				mLastReadAisle = newAisle;
+				mLastReadBayForVertices = mLastReadBay; // remember the last bay of the previous aisle
 				// null out bay/tier
 				mLastReadBay = null;
 				mLastReadTier = null;

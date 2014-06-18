@@ -646,4 +646,25 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 		return result;
 	}
+	
+	private class VertexOrderComparator implements Comparator<Vertex> {
+
+		public int compare(Vertex inVertex1, Vertex inVertex2) {
+			if (inVertex1.getDrawOrder() > inVertex2.getDrawOrder()) {
+				return 1;
+			} else if (inVertex1.getDrawOrder() < inVertex2.getDrawOrder()) {
+				return -1;
+			}
+			return 0;
+		}
+	};
+	
+	public final List<Vertex> getVerticesInOrder() {
+
+		List<Vertex> result = getVertices();
+		Collections.sort(result, new VertexOrderComparator());
+
+		return result;
+	}
+
 }

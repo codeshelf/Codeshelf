@@ -749,50 +749,60 @@ public class Facility extends SubLocationABC<Facility> {
 	 * @param inLocation
 	 * @param inDimMeters
 	 */
-	public final void createOrUpdateVertices(ILocation inLocation, Point inDimMeters) {
+	public final void createOrUpdateVertices(LocationABC inLocation, Point inDimMeters) {
 		// Change to public as this is called from aisle file reader, and later from editor
 		// change from create to createOrUpdate
 		// Maybe this should not be a facility method.
-		List<Vertex> vList = inLocation.getVertices();
 		
+		List<Vertex> vList = inLocation.getVerticesInOrder();
+
 		// could refactor  more into arrays and for loops. Would need to manufacture the "V01", etc.
 		Point[] points = new Point[4];
 		points[0] = new Point(PositionTypeEnum.METERS_FROM_PARENT, 0.0, 0.0, null);
 		points[1] = new Point(PositionTypeEnum.METERS_FROM_PARENT, inDimMeters.getX(), 0.0, null);
 		points[2] = new Point(PositionTypeEnum.METERS_FROM_PARENT, inDimMeters.getX(), inDimMeters.getY(), null);
 		points[3] = new Point(PositionTypeEnum.METERS_FROM_PARENT, 0.0, inDimMeters.getY(), null);
-		
-		if (vList.size() == 0) {
+		String[] vertexNames = new String[4];
+		vertexNames[0] = "V01";
+		vertexNames[1] = "V02";
+		vertexNames[2] = "V03";
+		vertexNames[3] = "V04";
+
+		int vertexListSize = vList.size();
+
+		if (vertexListSize == 0) {
 			try {
 				// Create four simple vertices around the aisle.
-				Vertex vertex1 = new Vertex(inLocation, "V01", 0, points[0]);
-				Vertex.DAO.store(vertex1);
-				Vertex vertex2 = new Vertex(inLocation, "V02", 1, points[1]);
-				Vertex.DAO.store(vertex2);
-				Vertex vertex4 = new Vertex(inLocation, "V03", 2, points[2]);
-				Vertex.DAO.store(vertex4);
-				Vertex vertex3 = new Vertex(inLocation, "V04", 3, points[3]);
-				Vertex.DAO.store(vertex3);
-			} 
-			catch (DaoException e) {
-				LOGGER.error("", e);
-			}
-		}
-		else  if (vList.size() == 4) {
-			try {
-				// assume 4 vertices. Note that 4 are made
 				for (int n = 0; n < 4; n++) {
-					Vertex theVertex = vList.get(n);
-					theVertex.setPoint(points[n]);
-					Vertex.DAO.store(theVertex);					
+					Vertex vertexN = new Vertex(inLocation, vertexNames[n], n, points[n]);
+					Vertex.DAO.store(vertexN);
 				}
-			} 
-			catch (DaoException e) {
+			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}
-		}
-		else {
-			// something odd going on. Throw? Log?
+		} else {
+			try {
+				// second try. Not handling < 4 yet
+				for (int n = 0; n < vertexListSize; n++) {
+					Vertex theVertex = vList.get(n);
+					if (n >= 4) {
+						// Vertex.DAO.delete(theVertex);
+						LOGGER.error("extra vertex?. Why is it here?");
+					} else {
+						// just update the points
+						// and verify the name
+						String vertexName = theVertex.getDomainId();
+						if (!vertexName.equals(vertexNames[n])) {
+							LOGGER.error("Wrong vertex name. How?");
+						}
+						theVertex.setPoint(points[n]);
+						Vertex.DAO.store(theVertex);
+					}
+				}
+
+			} catch (DaoException e) {
+				LOGGER.error("", e);
+			}
 		}
 	}
 

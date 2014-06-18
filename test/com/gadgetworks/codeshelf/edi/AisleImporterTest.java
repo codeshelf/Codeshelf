@@ -29,7 +29,6 @@ import com.gadgetworks.codeshelf.model.domain.Vertex;
 import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.flyweight.command.NetGuid;
 
-
 /**
  * @author ranstrom
  * Also see createAisleTest() in FacilityTest.java
@@ -49,7 +48,7 @@ public class AisleImporterTest extends DomainTestABC {
 				+ "Tier,T1,,5,80,50,,\r\n" //
 				+ "Tier,T2,,6,80,100,,\r\n" //
 				+ "Tier,T3,,4,80,150,,\r\n"; //
-	
+
 		byte[] csvArray = csvString.getBytes();
 
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
@@ -70,10 +69,10 @@ public class AisleImporterTest extends DomainTestABC {
 		ISubLocation<?> aisle = facility.findLocationById("A9");
 		Assert.assertNotNull(aisle);
 		Assert.assertEquals(aisle.getDomainId(), "A9");
-		
+
 		Aisle aisle2 = Aisle.DAO.findByDomainId(facility, "A9");
 		Assert.assertNotNull(aisle2);
-		
+
 		// Not sure if they are really the same reference. However, both implement ISubLocation. DomainObjectABC has an equals override that checks class and persistentId
 		Assert.assertEquals(aisle, aisle2);
 
@@ -83,7 +82,7 @@ public class AisleImporterTest extends DomainTestABC {
 		Assert.assertNotNull(bay1);
 		Assert.assertNotNull(bay2);
 		Assert.assertEquals(bay2.getDomainId(), "B2");
-		
+
 		// Can the sublocation find mechanism's aisle be used in this manner?
 		Bay bayA9B2 = Bay.DAO.findByDomainId(aisle2, "B2");
 		Assert.assertNotNull(bayA9B2);
@@ -100,19 +99,19 @@ public class AisleImporterTest extends DomainTestABC {
 
 		// These should not be equal because the persistentIds are different
 		Assert.assertNotEquals(tierB1T2, tierB2T2);
-		
+
 		Slot slotB1T2S3 = Slot.DAO.findByDomainId(tierB1T2, "S3");
 		Assert.assertNotNull(slotB1T2S3);
 
 		Slot slotB2T2S3 = Slot.DAO.findByDomainId(tierB2T2, "S3");
 		Assert.assertNotNull(slotB2T2S3);
 		Assert.assertNotEquals(slotB1T2S3, slotB2T2S3);
-		
+
 		// Demonstrate the tier transient field behaviors. As we are refetching tiers via the DAO, the transients are uninitialized
 		short ledCount = tierB1T2.getMTransientLedsThisTier();
 		// Assert.assertTrue(ledCount == 80); // what we really want to check
 		Assert.assertTrue(ledCount == 0);
-		
+
 		// Get two more tiers. Then check the tier led values
 		Tier tierB1T1 = Tier.DAO.findByDomainId(bay1, "T1");
 		Assert.assertNotNull(tierB1T2);
@@ -128,7 +127,7 @@ public class AisleImporterTest extends DomainTestABC {
 		Assert.assertTrue(tierB1T2.getLastLedNumAlongPath() == 80);
 		Assert.assertTrue(tierB2T2.getFirstLedNumAlongPath() == 81);
 		Assert.assertTrue(tierB2T2.getLastLedNumAlongPath() == 160);
-		
+
 		// Check some slot led values
 		Slot slotB1T1S1 = Slot.DAO.findByDomainId(tierB1T1, "S1");
 		short firstLed = slotB1T1S1.getFirstLedNumAlongPath();
@@ -141,20 +140,20 @@ public class AisleImporterTest extends DomainTestABC {
 		lastLed = slotB1T1S8.getLastLedNumAlongPath();
 		Assert.assertTrue(firstLed == 73);
 		Assert.assertTrue(lastLed == 79);
-		
+
 		// Check aisle and bay pick face values. (aisle came as a sublocation)
 		Double pickFaceEndX = ((Aisle) aisle).getPickFaceEndPosX();
 		Double pickFaceEndY = ((Aisle) aisle).getPickFaceEndPosY();
 		Assert.assertTrue(pickFaceEndY == 0.0);
 		pickFaceEndX = ((Bay) bay1).getPickFaceEndPosX();
 		pickFaceEndY = ((Bay) bay1).getPickFaceEndPosY();
-		Assert.assertTrue(pickFaceEndX == 2.44); 
-		Assert.assertTrue(pickFaceEndY == 0.0); 
+		Assert.assertTrue(pickFaceEndX == 2.44);
+		Assert.assertTrue(pickFaceEndY == 0.0);
 		pickFaceEndX = ((Bay) bay2).getPickFaceEndPosX();
 		Double bay2EndX = pickFaceEndX;
 		pickFaceEndY = ((Bay) bay2).getPickFaceEndPosY();
 		// bay 2 should be 2.88 (relative to parent). Its anchor is also relative to parent
-		Assert.assertTrue(pickFaceEndX == 4.88); 
+		Assert.assertTrue(pickFaceEndX == 4.88);
 		Double anchorX = ((Bay) bay2).getAnchorPosX();
 		Assert.assertTrue(anchorX == 2.44); // exactly equal to bay1 pickFaceEnd
 
@@ -165,35 +164,24 @@ public class AisleImporterTest extends DomainTestABC {
 		Assert.assertTrue(pickFaceEndY == 0.0);
 		pickFaceEndX = ((Slot) slotB1T2S3).getPickFaceEndPosX();
 		pickFaceEndY = ((Slot) slotB1T2S3).getPickFaceEndPosY();
-		Assert.assertTrue(pickFaceEndX > 0.813);  // value about .813m: 3rd of 9 slots across 244 cm.
+		Assert.assertTrue(pickFaceEndX > 0.813); // value about .813m: 3rd of 9 slots across 244 cm.
 		pickFaceEndX = ((Slot) slotB2T2S3).getPickFaceEndPosX();
 		pickFaceEndY = ((Slot) slotB2T2S3).getPickFaceEndPosY();
 		Assert.assertTrue(pickFaceEndX == 1.22); // Bay 2 Tier 2 has 6 slots across 244 cm, so 3rd ends at 1.22
 
-
 		// Check some vertices. The aisle and each bay should have 4 vertices.
-		List<Vertex> vList1 = aisle.getVertices();
+		// aisle defined as an ISublocation. Cannot event cast it to call getVerticesInOrder()
+		List<Vertex> vList1 = aisle2.getVerticesInOrder();
 		Assert.assertEquals(vList1.size(), 4);
 		// the third point is the interesting one. Note index 0,1,2,3
-		Vertex thirdV = (Vertex) vList1.get(2);
-		Double xValue = thirdV.getPosX();
-		Double yValue = thirdV.getPosY();
-		Assert.assertTrue(yValue == 1.2); // depth was 120 cm, so 1.2 meters
-		Assert.assertTrue(xValue == 4.88); // two 244 cm bays, so the aisle vertex is 488 cm
-		
-		List<Vertex> vList2 = bay1.getVertices();
-		Assert.assertEquals(vList2.size(), 4);
-		thirdV = (Vertex) vList2.get(2);
-		xValue = thirdV.getPosX();
-		yValue = thirdV.getPosY();
-		Assert.assertTrue(yValue == 1.2); // each bay has the same depth
-		Assert.assertTrue(xValue == 2.44); // this bay is 244 cm wide
+		// Vertex thirdV = (Vertex) vList1.get(2);
 
 	}
 
 	@Test
 	public final void testTierRight() {
-		// Beside TierRight, this as two aisles, so it makes sure both get their leds properly set.
+		// Beside TierRight, this as two aisles, so it makes sure both get their leds properly set, and both vertices set
+		// Not quite realistic; A10 and A20 are on top of each other. Same anchor point
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A10,,,,,TierRight,12.85,43.45,X,120,\r\n" //
 				+ "Bay,B1,244,,,,,\r\n" //
@@ -204,8 +192,10 @@ public class AisleImporterTest extends DomainTestABC {
 				+ "Tier,T2,,6,60,100,,\r\n" //
 				+ "Aisle,A20,,,,,TierRight,12.85,43.45,X,120,\r\n" //
 				+ "Bay,B1,244,,,,,\r\n" //
+				+ "Tier,T1,,6,60,0,,\r\n" //
+				+ "Bay,B2,244,,,,,\r\n" //
 				+ "Tier,T1,,6,60,0,,\r\n"; //
-	
+
 		byte[] csvArray = csvString.getBytes();
 
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
@@ -225,7 +215,7 @@ public class AisleImporterTest extends DomainTestABC {
 		// Check what we got
 		Aisle aisle = Aisle.DAO.findByDomainId(facility, "A10");
 		Assert.assertNotNull(aisle);
-		
+
 		Bay bayA10B1 = Bay.DAO.findByDomainId(aisle, "B1");
 
 		Bay bayA10B2 = Bay.DAO.findByDomainId(aisle, "B2");
@@ -241,7 +231,7 @@ public class AisleImporterTest extends DomainTestABC {
 		Slot slotB2T2S3 = Slot.DAO.findByDomainId(tierB2T2, "S3");
 		Assert.assertNotNull(slotB2T2S3);
 		Assert.assertNotEquals(slotB1T2S3, slotB2T2S3);
-		
+
 		// leds should come from the right
 		Assert.assertTrue(tierB1T1.getFirstLedNumAlongPath() == 61);
 		Assert.assertTrue(tierB1T1.getLastLedNumAlongPath() == 120);
@@ -264,11 +254,65 @@ public class AisleImporterTest extends DomainTestABC {
 		short slotB2T1S1Last = slotB2T1S1.getLastLedNumAlongPath();
 		Assert.assertTrue(slotB2T1S1Last == 59);
 
+		// Check that vertices were computed for not-last aisle
+		List<Vertex> vList1 = bayA10B1.getVerticesInOrder();
+		Assert.assertEquals(vList1.size(), 4);
+		Vertex thirdV = (Vertex) vList1.get(2);
+		Double xValue = thirdV.getPosX();
+		Double yValue = thirdV.getPosY();
+		Assert.assertTrue(yValue == 1.2); // each bay has the same depth
+		Assert.assertTrue(xValue == 2.44);
+
+		List<Vertex> vList2 = aisle.getVerticesInOrder();
+		Assert.assertEquals(vList2.size(), 4);
+		thirdV = (Vertex) vList2.get(2);
+		xValue = thirdV.getPosX();
+		yValue = thirdV.getPosY();
+		Assert.assertTrue(yValue == 1.2);
+		Assert.assertTrue(xValue == 17.73);
+
+		// Check that led computation occurred for last aisle in the file
 		Aisle aisle20 = Aisle.DAO.findByDomainId(facility, "A20");
 		Assert.assertNotNull(aisle20);
-		
 		Bay bayA20B1 = Bay.DAO.findByDomainId(aisle20, "B1");
 		Assert.assertNotNull(bayA20B1);
+		Tier tierA20B1T1 = Tier.DAO.findByDomainId(bayA20B1, "T1");
+		Assert.assertNotNull(tierA20B1T1);
+		Assert.assertTrue(tierA20B1T1.getFirstLedNumAlongPath() != 0); // If something happened for last aisle in the file, then assume the right thing happened
+
+		// Check that vertex computation occurred for last aisle in the file
+		List<Vertex> vList3 = bayA20B1.getVerticesInOrder();
+		Assert.assertEquals(vList3.size(), 4);
+		thirdV = (Vertex) vList3.get(2);
+		xValue = thirdV.getPosX();
+		yValue = thirdV.getPosY();
+		Assert.assertTrue(yValue == 1.2);
+		Assert.assertTrue(xValue == 2.44); // this bay is 244 cm wide
+
+		List<Vertex> vList4 = aisle20.getVerticesInOrder();
+		Assert.assertEquals(vList4.size(), 4);
+		thirdV = (Vertex) vList4.get(2);
+		xValue = thirdV.getPosX();
+		yValue = thirdV.getPosY();
+		Assert.assertTrue(yValue == 1.2);
+		Assert.assertTrue(xValue == 17.73);
+
+		// Reread. We had a last bay and last aisle vertices bug on re-read
+		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
+		// AislesFileCsvImporter importer2 = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		// new reader, because cannot reset the old reader without handling a possible exception. Same stream, though.
+		InputStreamReader reader2 = new InputStreamReader(stream);
+		importer.importAislesFileFromCsvStream(reader2, facility, ediProcessTime2);
+
+		// just check second aisle. Need to get it again after the reread as our old reference may not be current
+		aisle20 = Aisle.DAO.findByDomainId(facility, "A20");
+		List<Vertex> vList5 = aisle20.getVerticesInOrder();
+		Assert.assertEquals(vList5.size(), 4);
+		thirdV = (Vertex) vList5.get(2);
+		xValue = thirdV.getPosX();
+		yValue = thirdV.getPosY();
+		Assert.assertTrue(yValue == 1.2);
+		Assert.assertTrue(xValue == 17.73);
 
 	}
 
@@ -303,7 +347,7 @@ public class AisleImporterTest extends DomainTestABC {
 				+ "Tier,T1,,1,6,0,,\r\n" //
 				+ "Bay,B12,24,,,,,\r\n" //
 				+ "Tier,T1,,1,6,0,,\r\n"; //
-	
+
 		byte[] csvArray = csvString.getBytes();
 
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
@@ -323,7 +367,7 @@ public class AisleImporterTest extends DomainTestABC {
 		// Check what we got
 		Aisle aisle = Aisle.DAO.findByDomainId(facility, "A11");
 		Assert.assertNotNull(aisle);
-		
+
 		Bay bayA11B1 = Bay.DAO.findByDomainId(aisle, "B1");
 
 		Tier tierB1T1 = Tier.DAO.findByDomainId(bayA11B1, "T1");
@@ -333,7 +377,7 @@ public class AisleImporterTest extends DomainTestABC {
 		Slot slotB1T1S3 = Slot.DAO.findByDomainId(tierB1T1, "S3");
 		Slot slotB1T1S4 = Slot.DAO.findByDomainId(tierB1T1, "S4");
 		Slot slotB1T1S5 = Slot.DAO.findByDomainId(tierB1T1, "S5");
-		
+
 		// leds should come from the left. (This is not a zigzag bay)
 		Assert.assertTrue(tierB1T1.getFirstLedNumAlongPath() == 1);
 		Assert.assertTrue(tierB1T1.getLastLedNumAlongPath() == 32);
@@ -355,13 +399,13 @@ public class AisleImporterTest extends DomainTestABC {
 		short slotB1T1S5First = slotB1T1S5.getFirstLedNumAlongPath();
 		Assert.assertTrue(slotB1T1S5First == 28);
 		Assert.assertTrue(slotB1T1S5.getLastLedNumAlongPath() == 31);
-		
+
 		// So, we see the difference. 
 		// Jeff's slots were lit 1-4, 8-11,  15-18, 22-25, 29-32
 		// This algorithm lights 3-6, 10-13, 16-19, 22-25, 28-31 with 2 guard low, and 1 guard high.
 		// 1,1 guards would yield 2-5, 9-12, 16-19, 22-25, 28-31
 		// 0,0 would get to 5 lit per slot instead of 4
-		
+
 		Bay bayA11B2 = Bay.DAO.findByDomainId(aisle, "B2");
 		Tier tierB2T1 = Tier.DAO.findByDomainId(bayA11B2, "T1");
 
@@ -399,7 +443,7 @@ public class AisleImporterTest extends DomainTestABC {
 		Assert.assertTrue(tierFirstLed == 155);
 
 	}
-	
+
 	@Test
 	public final void testZigzagLeft() {
 
@@ -413,7 +457,7 @@ public class AisleImporterTest extends DomainTestABC {
 				+ "Tier,T1,,5,32,0,,\r\n" //
 				+ "Tier,T2,,5,32,0,,\r\n" //
 				+ "Tier,T3,,5,32,0,,\r\n"; //
-	
+
 		byte[] csvArray = csvString.getBytes();
 
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
@@ -433,7 +477,7 @@ public class AisleImporterTest extends DomainTestABC {
 		// Check what we got
 		Aisle aisle = Aisle.DAO.findByDomainId(facility, "A12");
 		Assert.assertNotNull(aisle);
-		
+
 		Bay bayA12B1 = Bay.DAO.findByDomainId(aisle, "B1");
 		Bay bayA12B2 = Bay.DAO.findByDomainId(aisle, "B2");
 
@@ -458,7 +502,7 @@ public class AisleImporterTest extends DomainTestABC {
 		short slotB2T2S5First = slotB2T2S5.getFirstLedNumAlongPath();
 		Assert.assertTrue(slotB2T2S5First == 131);
 		Assert.assertTrue(slotB2T2S5.getLastLedNumAlongPath() == 134);
-		
+
 	}
 
 	@Test
@@ -474,7 +518,7 @@ public class AisleImporterTest extends DomainTestABC {
 				+ "Tier,T1,,5,32,0,,\r\n" //
 				+ "Tier,T2,,5,32,0,,\r\n" //
 				+ "Tier,T3,,5,32,0,,\r\n"; //
-	
+
 		byte[] csvArray = csvString.getBytes();
 
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
@@ -494,7 +538,7 @@ public class AisleImporterTest extends DomainTestABC {
 		// Check what we got
 		Aisle aisle = Aisle.DAO.findByDomainId(facility, "A13");
 		Assert.assertNotNull(aisle);
-		
+
 		Bay bayA13B1 = Bay.DAO.findByDomainId(aisle, "B1");
 		Bay bayA13B2 = Bay.DAO.findByDomainId(aisle, "B2");
 
@@ -502,7 +546,7 @@ public class AisleImporterTest extends DomainTestABC {
 		Tier tierB2T2 = Tier.DAO.findByDomainId(bayA13B2, "T2");
 
 		Slot slotB1T1S1 = Slot.DAO.findByDomainId(tierB1T1, "S1");
-	
+
 		Slot slotB2T2S5 = Slot.DAO.findByDomainId(tierB2T2, "S5");
 
 		// leds should come from the top right for this zigzag bay. Third tier down on second bay starts at 65
@@ -519,45 +563,43 @@ public class AisleImporterTest extends DomainTestABC {
 		short slotB2T2S5First = slotB2T2S5.getFirstLedNumAlongPath(); // last slot in second tier along the led path
 		Assert.assertTrue(slotB2T2S5First == 60);
 		Assert.assertTrue(slotB2T2S5.getLastLedNumAlongPath() == 63);
-		
+
 		// Check pickface and vertex values. This is where the Y orientation comes in
 		Double pickFaceEndX = ((Aisle) aisle).getPickFaceEndPosX();
 		Double pickFaceEndY = ((Aisle) aisle).getPickFaceEndPosY();
 		Assert.assertTrue(pickFaceEndX == 0.0);
 		pickFaceEndX = ((Bay) bayA13B1).getPickFaceEndPosX();
 		pickFaceEndY = ((Bay) bayA13B1).getPickFaceEndPosY();
-		Assert.assertTrue(pickFaceEndX == 0.0); 
-		Assert.assertTrue(pickFaceEndY == 1.15); 
+		Assert.assertTrue(pickFaceEndX == 0.0);
+		Assert.assertTrue(pickFaceEndY == 1.15);
 
 		pickFaceEndX = ((Tier) tierB1T1).getPickFaceEndPosX();
 		pickFaceEndY = ((Tier) tierB1T1).getPickFaceEndPosY();
 		Assert.assertTrue(pickFaceEndX == 0.0);
 		pickFaceEndX = ((Slot) slotB1T1S1).getPickFaceEndPosX();
 		pickFaceEndY = ((Slot) slotB1T1S1).getPickFaceEndPosY();
-		Assert.assertTrue(pickFaceEndX == 0.0);  // S1 Y value is about 0.23 (1/5 of 1.15
+		Assert.assertTrue(pickFaceEndX == 0.0); // S1 Y value is about 0.23 (1/5 of 1.15
 		pickFaceEndX = ((Slot) slotB2T2S5).getPickFaceEndPosX();
 		pickFaceEndY = ((Slot) slotB2T2S5).getPickFaceEndPosY();
 		Assert.assertTrue(pickFaceEndY == 1.15); // S5 is last slot of 115 cm tier
 
 		// Check some vertices. The aisle and each bay should have 4 vertices.
-		List<Vertex> vList1 = aisle.getVertices();
+		List<Vertex> vList1 = aisle.getVerticesInOrder();
 		Assert.assertEquals(vList1.size(), 4);
 		// the third point is the interesting one. Note index 0,1,2,3
 		Vertex thirdV = (Vertex) vList1.get(2);
 		Double xValue = thirdV.getPosX();
 		Double yValue = thirdV.getPosY();
 		Assert.assertTrue(xValue == 1.2); // depth was 120 cm, so 1.2 meters in the x direction
-		Assert.assertTrue(yValue == 2.3); // two 115 cm bays.
-		
-		List<Vertex> vList2 = bayA13B1.getVertices();
+		Assert.assertTrue(yValue == 45.75); 
+
+		List<Vertex> vList2 = bayA13B1.getVerticesInOrder();
 		Assert.assertEquals(vList2.size(), 4);
 		thirdV = (Vertex) vList2.get(2);
 		xValue = thirdV.getPosX();
 		yValue = thirdV.getPosY();
 		Assert.assertTrue(xValue == 1.2); // each bay has the same depth
 		Assert.assertTrue(yValue == 1.15); // this bay is 115 cm wide
-
-		
 	}
 
 	@Test
@@ -585,7 +627,7 @@ public class AisleImporterTest extends DomainTestABC {
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Aisle,A9,,,,,zigzagRight,12.85,43.45,Y,120,\r\n" // ok
 				+ "Bay,B1,115,,,,,\r\n"; // ok, even with no tiers
-	
+
 		byte[] csvArray = csvString.getBytes();
 
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
@@ -601,11 +643,11 @@ public class AisleImporterTest extends DomainTestABC {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
 		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
-		
+
 		// Check what we got from this bad file
 		Aisle aisle = Aisle.DAO.findByDomainId(facility, "A14");
 		Assert.assertNotNull(aisle); // the aisle started ok
-		
+
 		Bay bayA14B2 = Bay.DAO.findByDomainId(aisle, "B2");
 		Assert.assertNull(bayA14B2); // bay should have failed for the tier coming first.
 
@@ -614,7 +656,7 @@ public class AisleImporterTest extends DomainTestABC {
 
 		Aisle aisle7 = Aisle.DAO.findByDomainId(facility, "A7");
 		Assert.assertNotNull(aisle7); // the aisle started ok. Note that we do not enforce name number consistency on aisles
-		
+
 		Bay bayA7B1 = Bay.DAO.findByDomainId(aisle7, "B1");
 		Assert.assertNotNull(bayA7B1); // bay should be ok
 
@@ -646,7 +688,7 @@ public class AisleImporterTest extends DomainTestABC {
 				+ "Tier,T1,,5,40,0,,\r\n" //
 				+ "Bay,B2,115,,,,,\r\n" //
 				+ "Tier,T1,,5,40,0,,\r\n"; //
-	
+
 		byte[] csvArray = csvString.getBytes();
 
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
@@ -662,7 +704,7 @@ public class AisleImporterTest extends DomainTestABC {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
 		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
-		
+
 		// Act like "oops, forgot the second tier". 
 		// And change from 6 slots down to 5. 
 		// And change to 50 leds across the tier
@@ -676,7 +718,7 @@ public class AisleImporterTest extends DomainTestABC {
 				+ "Bay,B2,122,,,,,\r\n" //
 				+ "Tier,T1,,6,50,0,,\r\n" //
 				+ "Tier,T2,,6,50,0.8,,\r\n"; //
-	
+
 		byte[] csvArray2 = csvString2.getBytes();
 
 		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
@@ -689,7 +731,7 @@ public class AisleImporterTest extends DomainTestABC {
 		// Check what we got
 		Aisle aisle = Aisle.DAO.findByDomainId(facility, "A15");
 		Assert.assertNotNull(aisle);
-		
+
 		Bay bayA15B1 = Bay.DAO.findByDomainId(aisle, "B1");
 		Bay bayA15B2 = Bay.DAO.findByDomainId(aisle, "B2");
 		Assert.assertNotNull(bayA15B2);
@@ -699,10 +741,9 @@ public class AisleImporterTest extends DomainTestABC {
 
 		Tier tierB1T1 = Tier.DAO.findByDomainId(bayA15B1, "T1");
 		Assert.assertNotNull(tierB1T1); // should still exist
-		
+
 		Tier tierB2T2 = Tier.DAO.findByDomainId(bayA15B2, "T2");
 		Assert.assertNotNull(tierB2T2); // Shows that we reread and this time created T2
-
 
 		Slot slotB1T1S1 = Slot.DAO.findByDomainId(tierB1T1, "S1");
 		Assert.assertNotNull(slotB1T1S1); // should still exist
@@ -710,19 +751,20 @@ public class AisleImporterTest extends DomainTestABC {
 		Assert.assertNotNull(slotB1T1S5); // should still exist
 		Slot slotB1T1S6 = Slot.DAO.findByDomainId(tierB1T1, "S6");
 		Assert.assertNotNull(slotB1T1S6); // Shows that we reread and this time created S6
-		
+
 		short tierB1T1Last = tierB1T1.getLastLedNumAlongPath(); // did the tier LEDs change?
 		Assert.assertTrue(tierB1T1Last == 50); // Show that LEDs were recomputed and updated
-		
+
 		// And the third read, that should (but won't yet) delete extras. 
 		// Delete one slot in a tier. 
 		// Delete one tier in a bay
 		// Delete one bay in the aisle
+		// Make the bay shorter,so aisle vertices should be less
 		String csvString3 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A15,,,,,tierLeft,12.85,43.45,Y,120,\r\n" //
-				+ "Bay,B1,122,,,,,\r\n" //
+				+ "Bay,B1,110,,,,,\r\n" //
 				+ "Tier,T1,,4,50,0,,\r\n"; //
-	
+
 		byte[] csvArray3 = csvString3.getBytes();
 
 		ByteArrayInputStream stream3 = new ByteArrayInputStream(csvArray3);
@@ -735,23 +777,29 @@ public class AisleImporterTest extends DomainTestABC {
 		// Check what we got
 		Aisle aisle3 = Aisle.DAO.findByDomainId(facility, "A15");
 		Assert.assertNotNull(aisle3);
-		
+
 		bayA15B1 = Bay.DAO.findByDomainId(aisle3, "B1");
 		bayA15B2 = Bay.DAO.findByDomainId(aisle3, "B2");
 		Assert.assertNotNull(bayA15B2); // Incorrect! We want B2 to be null or somehow retired
-		
+
 		tierB1T1 = Tier.DAO.findByDomainId(bayA15B1, "T1");
 		Assert.assertNotNull(tierB1T1); // should still exist
-		
+
 		Tier tierB1T2 = Tier.DAO.findByDomainId(bayA15B1, "T2");
 		Assert.assertNotNull(tierB1T2); // Incorrect! We want T2 to be null or somehow retired
-
 
 		slotB1T1S1 = Slot.DAO.findByDomainId(tierB1T1, "S1");
 		Assert.assertNotNull(slotB1T1S1); // should still exist
 		slotB1T1S5 = Slot.DAO.findByDomainId(tierB1T1, "S5");
 		Assert.assertNotNull(slotB1T1S5); // Incorrect! We want T2 to be null or somehow retired
-		
+
+		List<Vertex> vList1 = aisle3.getVerticesInOrder();
+		Assert.assertEquals(vList1.size(), 4);
+		// the third point is the interesting one. Note index 0,1,2,3
+		Vertex thirdV = (Vertex) vList1.get(2);
+		Double xValue = thirdV.getPosX();
+		Double yValue = thirdV.getPosY();
+		// Assert.assertTrue(yValue == 1.1); // new bay width 110 cm. But aisle is coming as 2.3 which is the original 2 bay value
 
 	}
 
@@ -760,7 +808,7 @@ public class AisleImporterTest extends DomainTestABC {
 		// The file read does a lot. But then we rely on the user via the UI to do additional things to complete the configuration. This is
 		// a (nearly) end to end test of that. The actual UI will call a websocket command that calls a method on a domain object.
 		// This test calls the same methods.
-		
+
 		// Start with a file read to new facility
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A16,,,,,tierRight,12.85,43.45,Y,120,\r\n" //
@@ -768,7 +816,7 @@ public class AisleImporterTest extends DomainTestABC {
 				+ "Tier,T1,,5,40,0,,\r\n" //
 				+ "Bay,B2,115,,,,,\r\n" //
 				+ "Tier,T1,,5,40,0,,\r\n"; //
-	
+
 		byte[] csvArray = csvString.getBytes();
 
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
@@ -784,51 +832,50 @@ public class AisleImporterTest extends DomainTestABC {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
 		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
-		
+
 		// Get the objects we will use
 		Aisle aisle16 = Aisle.DAO.findByDomainId(facility, "A16");
 		Assert.assertNotNull(aisle16);
-		
+
 		Bay bayA16B1 = Bay.DAO.findByDomainId(aisle16, "B1");
 		Bay bayA16B2 = Bay.DAO.findByDomainId(aisle16, "B2");
 		Assert.assertNotNull(bayA16B2);
-		
+
 		Tier tierB1T1 = Tier.DAO.findByDomainId(bayA16B1, "T1");
-		Assert.assertNotNull(tierB1T1); 
+		Assert.assertNotNull(tierB1T1);
 		Tier tierB2T1 = Tier.DAO.findByDomainId(bayA16B2, "T1");
-		Assert.assertNotNull(tierB2T1); 
-		
+		Assert.assertNotNull(tierB2T1);
+
 		// Get our network so that we may add a network controller
 		List<CodeshelfNetwork> networks = facility.getNetworks();
 		int howManyNetworks = networks.size();
-		Assert.assertTrue(howManyNetworks == 1); 
-		
+		Assert.assertTrue(howManyNetworks == 1);
+
 		// organization.createFacility() should have created this network
 		CodeshelfNetwork network = facility.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_ID);
 		Assert.assertNotNull(network);
-		
+
 		// There are led controllers, but we will make a new one. If it exists already, no harm.
 		String cntlrId = "0x000026";
-		LedController ledController = network.findOrCreateLedController(cntlrId, new NetGuid(cntlrId));	
+		LedController ledController = network.findOrCreateLedController(cntlrId, new NetGuid(cntlrId));
 		Assert.assertNotNull(ledController);
 		LedController aController = network.getLedController(cntlrId); // make sure we can get it as we might
 		Assert.assertNotNull(aController);
 		UUID cntlrPersistID = aController.getPersistentId();
 		String cntrlPersistIdStr = cntlrPersistID.toString();
-		
+
 		// Now the real point. UI will call as follows to set all of T1 in the aisle to this controller.
 		// Side effect if channel not set is to set to channel 1 also.
 		tierB1T1.setControllerChannel(cntrlPersistIdStr, "0", "aisle");
 		Short b1T1Channel = tierB1T1.getLedChannel();
 		Short b2T1Channel = tierB2T1.getLedChannel();
-		Assert.assertTrue(b1T1Channel == (short) 1);	
+		Assert.assertTrue(b1T1Channel == (short) 1);
 		// Assert.assertTrue(b2T1Channel == (short) 1); bug? Bizarre. This is DEV-165.
 		// b2T1Channel is still uninitialized, even though it definitely got set, but not on this reference. Let's re-get the tier.
 		tierB2T1 = Tier.DAO.findByDomainId(bayA16B2, "T1");
 		b2T1Channel = tierB2T1.getLedChannel(); // need to get this again from the re-hydrated object
 		Assert.assertTrue(b2T1Channel == (short) 1);
-		
-		
+
 		LedController b1T1Controller = tierB1T1.getLedController();
 		LedController b2T1Controller = tierB2T1.getLedController(); // This needed the re-get also
 		Assert.assertEquals(b1T1Controller, b2T1Controller); // different ebeans reference, but same persistent ID should match on equals
@@ -838,6 +885,5 @@ public class AisleImporterTest extends DomainTestABC {
 		Assert.assertEquals(b2T1ControllerStr, b1T1ControllerStr); // strings match; both "0x000026"
 
 	}
-
 
 }
