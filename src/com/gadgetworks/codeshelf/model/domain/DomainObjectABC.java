@@ -84,6 +84,10 @@ public abstract class DomainObjectABC implements IDomainObject {
 		//		lastDefaultSequenceId = 0;
 	}
 
+	public DomainObjectABC(String inDomainId) {
+		this.domainId = inDomainId;
+	}
+
 	// --------------------------------------------------------------------------
 	/**
 	 * @return

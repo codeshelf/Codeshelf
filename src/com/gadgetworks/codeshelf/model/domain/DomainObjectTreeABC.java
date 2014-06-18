@@ -31,6 +31,14 @@ public abstract class DomainObjectTreeABC<P extends IDomainObject> extends Domai
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(DomainObjectTreeABC.class);
 
+	public DomainObjectTreeABC() {
+		super();
+	}
+	
+	public DomainObjectTreeABC(String inDomainId) {
+		super(inDomainId);
+	}
+	
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.IDomainObject#getFullDomainId()

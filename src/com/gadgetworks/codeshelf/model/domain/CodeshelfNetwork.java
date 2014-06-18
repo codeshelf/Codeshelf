@@ -119,7 +119,14 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 	private List<WirelessDeviceABC>		devices				= new ArrayList<WirelessDeviceABC>();
 
 	public CodeshelfNetwork() {
-		description = "";
+		this(null, null, "", null);
+	}
+	
+	public CodeshelfNetwork(Facility parent, String domainId, String description, String credential) {
+		super(domainId);
+		this.parent = parent;
+		this.description = description;
+		this.credential = credential;
 		active = true;
 		connected = false;
 	}

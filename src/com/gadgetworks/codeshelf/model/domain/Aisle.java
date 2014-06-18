@@ -12,9 +12,6 @@ import javax.persistence.Entity;
 
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
-import org.codehaus.jackson.annotate.JsonProperty;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
@@ -54,8 +51,6 @@ public class Aisle extends SubLocationABC<Facility> {
 		}
 	}
 
-	private static final Logger	LOGGER	= LoggerFactory.getLogger(Aisle.class);
-
 	public Aisle(final Facility inParentFacility,
 		final String inAisleId,
 		final Point inAnchorPoint,
@@ -86,6 +81,10 @@ public class Aisle extends SubLocationABC<Facility> {
 			this.setPathSegment(pathSegment);
 		}
 		return;
+	}
+
+	public final void setControllerChannel(String inControllerPersistentIDStr, String inChannelStr) {
+		doSetControllerChannel(inControllerPersistentIDStr, inChannelStr);		
 	}
 
 }

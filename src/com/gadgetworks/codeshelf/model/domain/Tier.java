@@ -18,18 +18,15 @@ import lombok.Getter;
 import lombok.Setter;
 
 import org.codehaus.jackson.annotate.JsonAutoDetect;
-import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
-import com.gadgetworks.codeshelf.edi.EdiFileReadException;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.flyweight.controller.NetworkDeviceStateEnum;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -195,38 +192,9 @@ public class Tier extends SubLocationABC<Bay> {
 	}
 
 	public final void setControllerChannel(String inControllerPersistentIDStr, String inChannelStr, String inTiersStr) {
-		// this is for callMethod from the UI
-		// We are setting the controller and channel for the tier. Depending on the inTierStr parameter, may set also for
-		// on all other same tier in the aisle, or perhaps other patterns.
-		
-		// Initially, log
-		LOGGER.debug("Set tier controller to " + inControllerPersistentIDStr);
-		
 		// This, or all of this tier in aisle
+		doSetControllerChannel(inControllerPersistentIDStr, inChannelStr);		
 		boolean allTiers = inTiersStr != null && inTiersStr.equalsIgnoreCase("aisle");
-		
-		// Get the LedController
-		UUID persistentId = UUID.fromString(inControllerPersistentIDStr);
-		LedController theLedController = LedController.DAO.findByPersistentId(persistentId);
-		
-		// Get the channel
-		Short theChannel;
-		try { theChannel = Short.valueOf(inChannelStr); }
-		catch (NumberFormatException e) { 
-			theChannel = 0; // not recognizable as a number
-		}
-		if (theChannel < 0)
-			theChannel = 0; // means don't change if there is a channel. Or set to 1 if there isn't.
-
-		// set this tier's
-		if (theLedController != null) {
-			this.doSetOneControllerChannel(theLedController, theChannel);
-		}
-		else {
-			// log and return
-			return;
-		}
-		
 		// if "aisle", then the rest of tiers at same level
 		if (allTiers) {
 			// The goal is to get to the aisle, then ask for all tiers. Filter those to the subset with the same domainID (like "T2")
@@ -243,7 +211,7 @@ public class Tier extends SubLocationABC<Bay> {
 				// same domainID?
 				if 	(iterTier.getDomainId().equals(thisDomainId)) {
 					if (!iterTier.getPersistentId().equals(thisPersistId)) {
-						iterTier.doSetOneControllerChannel(theLedController, theChannel);
+						iterTier.setControllerChannel(inControllerPersistentIDStr, inChannelStr, "");
 					}
 				}
 

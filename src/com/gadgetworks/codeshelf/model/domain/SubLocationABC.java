@@ -5,6 +5,8 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
+import java.util.UUID;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -195,6 +197,49 @@ public abstract class SubLocationABC<P extends IDomainObject> extends LocationAB
 		// Also force a recompute for all of the child locations.
 		for (ILocation<P> location : getChildren()) {
 			location.computePosAlongPath(inPathSegment);
+		}
+	}
+	
+	protected final void doSetControllerChannel(String inControllerPersistentIDStr, String inChannelStr) {
+		// this is for callMethod from the UI
+		// We are setting the controller and channel for the tier. Depending on the inTierStr parameter, may set also for
+		// on all other same tier in the aisle, or perhaps other patterns.
+		
+		// Initially, log
+		LOGGER.debug("On " + this + ", set LED controller to " + inControllerPersistentIDStr);
+		
+		// Get the LedController
+		UUID persistentId = UUID.fromString(inControllerPersistentIDStr);
+		LedController theLedController = LedController.DAO.findByPersistentId(persistentId);
+		
+		// set this tier's
+		if (theLedController != null) {
+			// Get the channel
+			Short theChannel;
+			try { theChannel = Short.valueOf(inChannelStr); }
+			catch (NumberFormatException e) { 
+				theChannel = 0; // not recognizable as a number
+			}
+			if (theChannel < 0) {
+				theChannel = 0; // means don't change if there is a channel. Or set to 1 if there isn't.
+			}
+
+			// set the controller. And set the channel
+			this.setLedController(theLedController);
+			if (theChannel != null && theChannel > 0) {
+				this.setLedChannel(theChannel);
+			}
+			else {
+				// if channel passed is 0 or null Short, make sure tier has a ledChannel. Set to 1 if there is not yet a channel.
+				Short thisLedChannel = this.getLedChannel();
+				if (thisLedChannel == null || thisLedChannel <= 0)
+					this.setLedChannel((short) 1);
+			}
+			
+			this.getDao().store(this);		
+		}
+		else {
+			throw new DaoException("Unable to set controller, controller " + inControllerPersistentIDStr + " not found");
 		}
 	}
 
