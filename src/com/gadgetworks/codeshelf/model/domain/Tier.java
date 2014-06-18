@@ -30,7 +30,6 @@ import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
-
 //--------------------------------------------------------------------------
 /**
 * TierIds
@@ -38,11 +37,10 @@ import com.google.inject.Singleton;
 * 
 */
 final class TierIds {
-	   String aisleName;
-	   String bayName;
-	   String tierName;
-	}
-
+	String	aisleName;
+	String	bayName;
+	String	tierName;
+}
 
 //--------------------------------------------------------------------------
 /**
@@ -80,13 +78,13 @@ public class Tier extends SubLocationABC<Bay> {
 	@Column(nullable = true)
 	@Getter
 	@Setter
-	private short					mTransientLedsThisTier;
+	private short				mTransientLedsThisTier;
 
 	@Transient
 	@Column(nullable = true)
 	@Getter
 	@Setter
-	private boolean					mTransientLedsIncrease;
+	private boolean				mTransientLedsIncrease;
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(Tier.class);
 
@@ -101,7 +99,7 @@ public class Tier extends SubLocationABC<Bay> {
 	public final String getDefaultDomainIdPrefix() {
 		return "T";
 	}
-	
+
 	private TierIds getTierIds() {
 		TierIds theTierIds = new TierIds();
 		theTierIds.bayName = "";
@@ -109,7 +107,7 @@ public class Tier extends SubLocationABC<Bay> {
 		theTierIds.tierName = this.getDomainId();
 		Bay bayLocation = this.getParent();
 		Aisle aisleLocation = null;
-				
+
 		if (bayLocation != null) {
 			theTierIds.bayName = bayLocation.getDomainId();
 			aisleLocation = bayLocation.getParent();
@@ -125,39 +123,38 @@ public class Tier extends SubLocationABC<Bay> {
 		// to support list view meta-field baySortName. Note: cannot sort by this string if more than 9 bays or 9 aisles.
 		TierIds theTierIds = getTierIds();
 		return (theTierIds.aisleName + "-" + theTierIds.bayName + "-" + theTierIds.tierName);
-	}		
+	}
 
 	public final String getTierSortName() {
 		// to support list view meta-field tierSortName. Note: cannot sort by this string if more than 9 bays or 9 aisles.
 		TierIds theTierIds = getTierIds();
 		return (theTierIds.aisleName + "-" + theTierIds.tierName + "-" + theTierIds.bayName);
 	}
-	
+
 	// converts A3 into 003.  Could put the A back on.
 	private String getCompString(String inString) {
 		String s = inString.substring(1); // Strip off the A, B, T, or S
 		// we will pad with leading spaces to 3
 		int padLength = 3;
 		int needed = padLength - s.length();
-		    if (needed <= 0) {
-		      return s;
-		    }
-	    char[] padding = new char[needed];
-	    java.util.Arrays.fill(padding, '0');
-	    StringBuffer sb = new StringBuffer(padLength);
-	    sb.append(padding);
-	    sb.append(s);
-	    String ss =  sb.toString();
-	    return	ss;	
+		if (needed <= 0) {
+			return s;
+		}
+		char[] padding = new char[needed];
+		java.util.Arrays.fill(padding, '0');
+		StringBuffer sb = new StringBuffer(padLength);
+		sb.append(padding);
+		sb.append(s);
+		String ss = sb.toString();
+		return ss;
 	}
-	
+
 	public final String getAisleTierBayForComparable() {
 		// this is for a sort comparable.
 		TierIds theTierIds = getTierIds();
 		return (getCompString(theTierIds.aisleName) + "-" + getCompString(theTierIds.tierName) + "-" + getCompString(theTierIds.bayName));
 	}
 
-	
 	public final String getAisleBayForComparable() {
 		// this is for a sort comparable.
 		TierIds theTierIds = getTierIds();
@@ -170,21 +167,58 @@ public class Tier extends SubLocationABC<Bay> {
 		return (theTierIds.aisleName + "-" + theTierIds.bayName);
 	}
 
+	public final String getSlotAliasRange() {
+		// for a meta field. If none of the slots have aliases yet, then blank
+		// if some but not all, then "xxx" (cap X will give a compiler warning)
+		// if all, then the first "->" the last.
+		// Try to avoid a localization issue here.
+		String resultStr = "";
+		boolean foundEmpty = false;
+		boolean foundAlias = false;
+		String firstSlotName = "";
+		String lastSlotName = "";
+
+		List<Slot> slotList = this.getChildrenAtLevel(Slot.class);
+		// May have to sort these. Guaranteed to come in order? Probably not.
+
+		ListIterator li = null;
+		li = slotList.listIterator();
+		while (li.hasNext()) {
+			Slot thisSlot = (Slot) li.next();
+			String aliasName = thisSlot.getPrimaryAliasId();
+			boolean thisHasAlias = aliasName.isEmpty(); // length = 0. What about white space?
+			foundEmpty = foundEmpty || !thisHasAlias;
+			foundAlias = foundAlias || thisHasAlias;
+			lastSlotName = aliasName;
+			if (firstSlotName.isEmpty())
+				firstSlotName = aliasName;
+		}
+
+		if (!foundAlias)
+			resultStr = "";
+		else if (foundAlias && foundEmpty) {
+			resultStr = "xxx";
+		} else {
+			resultStr = firstSlotName + " -> " + lastSlotName;
+		}
+
+		return resultStr;
+	}
+
 	private void doSetOneControllerChannel(LedController inLedController, Short inChannel) {
 		// set the controller. And set the channel
 		this.setLedController(inLedController);
 		if (inChannel != null && inChannel > 0) {
 			this.setLedChannel(inChannel);
-		}
-		else {
+		} else {
 			// if channel passed is 0 or null Short, make sure tier has a ledChannel. Set to 1 if there is not yet a channel.
 			Short thisLedChannel = this.getLedChannel();
 			if (thisLedChannel == null || thisLedChannel <= 0)
 				this.setLedChannel((short) 1);
 		}
-		
+
 		try {
-			Tier.DAO.store(this);		
+			Tier.DAO.store(this);
 		} catch (DaoException e) {
 			LOGGER.error("", e);
 		}
@@ -193,7 +227,7 @@ public class Tier extends SubLocationABC<Bay> {
 
 	public final void setControllerChannel(String inControllerPersistentIDStr, String inChannelStr, String inTiersStr) {
 		// This, or all of this tier in aisle
-		doSetControllerChannel(inControllerPersistentIDStr, inChannelStr);		
+		doSetControllerChannel(inControllerPersistentIDStr, inChannelStr);
 		boolean allTiers = inTiersStr != null && inTiersStr.equalsIgnoreCase("aisle");
 		// if "aisle", then the rest of tiers at same level
 		if (allTiers) {
@@ -201,7 +235,7 @@ public class Tier extends SubLocationABC<Bay> {
 			Bay bayParent = this.getParent();
 			Aisle aisleParent = bayParent.getParent();
 			List<Tier> locationList = aisleParent.getChildrenAtLevel(Tier.class);
-			
+
 			String thisDomainId = this.getDomainId();
 			UUID thisPersistId = this.getPersistentId();
 			ListIterator li = null;
@@ -209,7 +243,7 @@ public class Tier extends SubLocationABC<Bay> {
 			while (li.hasNext()) {
 				Tier iterTier = (Tier) li.next();
 				// same domainID?
-				if 	(iterTier.getDomainId().equals(thisDomainId)) {
+				if (iterTier.getDomainId().equals(thisDomainId)) {
 					if (!iterTier.getPersistentId().equals(thisPersistId)) {
 						iterTier.setControllerChannel(inControllerPersistentIDStr, inChannelStr, "");
 					}
