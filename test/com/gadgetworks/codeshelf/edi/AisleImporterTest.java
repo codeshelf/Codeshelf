@@ -193,7 +193,7 @@ public class AisleImporterTest extends DomainTestABC {
 
 	@Test
 	public final void testTierRight() {
-
+		// Beside TierRight, this as two aisles, so it makes sure both get their leds properly set.
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A10,,,,,TierRight,12.85,43.45,X,120,\r\n" //
 				+ "Bay,B1,244,,,,,\r\n" //
@@ -201,7 +201,10 @@ public class AisleImporterTest extends DomainTestABC {
 				+ "Tier,T2,,6,60,100,,\r\n" //
 				+ "Bay,B2,244,,,,,\r\n" //
 				+ "Tier,T1,,6,60,50,,\r\n" //
-				+ "Tier,T2,,6,60,100,,\r\n"; //
+				+ "Tier,T2,,6,60,100,,\r\n" //
+				+ "Aisle,A20,,,,,TierRight,12.85,43.45,X,120,\r\n" //
+				+ "Bay,B1,244,,,,,\r\n" //
+				+ "Tier,T1,,6,60,0,,\r\n"; //
 	
 		byte[] csvArray = csvString.getBytes();
 
@@ -260,6 +263,12 @@ public class AisleImporterTest extends DomainTestABC {
 		Assert.assertTrue(slotB2T1S1First == 53);
 		short slotB2T1S1Last = slotB2T1S1.getLastLedNumAlongPath();
 		Assert.assertTrue(slotB2T1S1Last == 59);
+
+		Aisle aisle20 = Aisle.DAO.findByDomainId(facility, "A20");
+		Assert.assertNotNull(aisle20);
+		
+		Bay bayA20B1 = Bay.DAO.findByDomainId(aisle20, "B1");
+		Assert.assertNotNull(bayA20B1);
 
 	}
 

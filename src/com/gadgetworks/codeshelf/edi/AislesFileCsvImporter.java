@@ -140,6 +140,9 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 						try {
 							// This creates one location: aisle, bay, tier; (tier also creates slots). 
 							boolean readAisleBean = aislesFileCsvBeanImport(aislesFileBean, inProcessTime, needAisleBean);
+							// debug aid
+							if (readAisleBean)
+								readAisleBean = true;
 							// If we needed an aisle, and got one, then we don't need aisle again
 							if (needAisleBean && readAisleBean)
 								needAisleBean = false;
@@ -536,6 +539,7 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 			
 		}
 		
+		mTiersThisAisle.clear(); // prepare to collect tiers for next aisle
 
 		
 	}
@@ -818,9 +822,7 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 		// Figure out what kind of bin we have.
 		if (binType.equalsIgnoreCase("aisle")) {
 			returnThisIsAisleBean = true;
-			
-			mTiersThisAisle.clear(); // prepare to collect tiers for this aisle
-			
+						
 			Double dAnchorX = 0.0;
 			Double dAnchorY = 0.0;
 			// valueOf throw NumberFormatException or null exception. Catch the throw and continue since we initialized the values to 0.
