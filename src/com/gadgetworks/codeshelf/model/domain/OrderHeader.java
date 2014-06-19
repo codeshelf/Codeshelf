@@ -308,6 +308,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	// --------------------------------------------------------------------------
 	/**
 	 * Return the first order location we find along the path (in path working order).
+	 * This is used as a metafield for order in the UI.
 	 * @param inPath
 	 * @return
 	 */
@@ -324,4 +325,40 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 
 		return result;
 	}
+	// --------------------------------------------------------------------------
+	/**
+	 * Return the alias name of the first order location found. If we should later know the first or only path, could use getFirstOrderLocationOnPath
+	 * Jeff wants delimitted list if multiple locations.
+	 * Jeff really wants that list in the order the user thinks about, which he says may not be the path order.
+	 * @return
+	 */
+	public final String getOrderLocationAliasIds() {
+		String result = "";
+		
+		List<OrderLocation> oLocations = getOrderLocations();
+		int numLocations = oLocations.size();
+		if (numLocations == 0)
+			return result;
+		
+		OrderLocation firstLocation = oLocations.get(0);
+		if (firstLocation != null) {
+			ISubLocation theLoc = firstLocation.getLocation();
+			if (theLoc != null)
+				result = ((LocationABC) theLoc).getPrimaryAliasId();
+		}
+		if (numLocations > 1) {
+			// add delimmiter and next one on
+			for (int n = 1; n < numLocations; n++) {
+				OrderLocation nextLocation = oLocations.get(n);
+				if (nextLocation != null) {
+					ISubLocation theLoc = nextLocation.getLocation();
+					if (theLoc != null)
+						result =  result + ";" + ((LocationABC) theLoc).getPrimaryAliasId();
+				}
+			}
+		}
+
+		return result;
+	}
+
 }
