@@ -1103,8 +1103,8 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 					+ "order_type_enum TEXT DEFAULT 'PICK' NOT NULL, " //
 					+ "order_group_persistentid " + UUID_TYPE + ", " //
 					+ "work_sequence " + UUID_TYPE + ", " //
-					+ "order_date TIMESTAMP NOT NULL, " //
-					+ "due_date TIMESTAMP NOT NULL, " //
+					+ "order_date TIMESTAMP, " //
+					+ "due_date TIMESTAMP, " //
 					+ "shipment_id TEXT, " //
 					+ "container_use_persistentid " + UUID_TYPE + ", " //
 					+ "active BOOLEAN DEFAULT TRUE NOT NULL, " //
