@@ -14,6 +14,7 @@ import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 
 import com.avaje.ebean.annotation.CacheStrategy;
+import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
@@ -79,8 +80,11 @@ public class Aisle extends SubLocationABC<Facility> {
 
 		if (pathSegment != null) {
 			this.setPathSegment(pathSegment);
+			this.getDao().store(this);	
 		}
-		return;
+		else {
+			throw new DaoException("Could not associate path segment, segment not found: " + inPathSegPersistentID);
+		}
 	}
 
 	public final void setControllerChannel(String inControllerPersistentIDStr, String inChannelStr) {

@@ -119,6 +119,13 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	public Path() {
 		description = "";
 	}
+	
+	public Path(Facility facility, String inDomainId, String inDescription) {
+		super(inDomainId);
+		parent = facility;
+		description = inDescription;
+		travelDirEnum = TravelDirectionEnum.FORWARD;
+	}
 
 	public final ITypedDao<Path> getDao() {
 		return DAO;

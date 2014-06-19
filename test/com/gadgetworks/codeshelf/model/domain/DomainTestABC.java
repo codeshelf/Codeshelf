@@ -69,6 +69,25 @@ public abstract class DomainTestABC extends DAOTestABC {
 		return aisle;
 	}
 	
+
+	protected PathSegment getPathSegment(Path path, Integer inOrder) {
+		PathSegment segment = path.getPathSegment(inOrder); 
+		if (segment == null) {
+			segment = path.createPathSegment(inOrder.toString(), path, inOrder,  anyPoint(), anyPoint());
+			mPathSegmentDao.store(segment);
+		}
+		return segment;
+	}
+
+	protected Path getPath(Facility facility, String inPathId) {
+		Path path = facility.getPath(inPathId);
+		if (path == null) {
+			path = new Path(facility, inPathId, "Description");
+			mPathDao.store(path);
+		}
+		return path;
+	}
+	
 	protected LedController getController(CodeshelfNetwork network, final String inControllerDomainId) {
 		LedController controller = network.findOrCreateLedController(inControllerDomainId, new NetGuid(inControllerDomainId));
 		controller.setDomainId(inControllerDomainId);
