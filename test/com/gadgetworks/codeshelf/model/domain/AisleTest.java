@@ -36,4 +36,34 @@ public class AisleTest extends DomainTestABC {
 		
 	}
 	
+	@Test
+	public final void updatePathSegment() {
+		String aisleDomainId = "A1";
+		
+		Facility facility = getFacility(getOrganization("Org1"));
+		
+		PathSegment pathSegment  = getPathSegment(getPath(facility, "P1"), 1);
+		Aisle aisle = getAisle(facility, aisleDomainId);
+
+		aisle.associatePathSegment(pathSegment.getPersistentId().toString());
+	
+		Aisle storedAisle = (Aisle) facility.findLocationById(aisleDomainId);
+		assertEquals(pathSegment.getPersistentId(), storedAisle.getPathSegment().getPersistentId());
+	}
+	
+	@Test
+	public final void updateNonexistantPathSegment() {
+		Aisle aisle = getAisle(getFacility(getOrganization("O1")), "A1");
+		try {
+			aisle.associatePathSegment(UUID.randomUUID().toString());
+			fail("Should have thrown an exception");
+		}
+		catch(Exception e) {
+			
+		}
+		
+		
+	}
+
+	
 }
