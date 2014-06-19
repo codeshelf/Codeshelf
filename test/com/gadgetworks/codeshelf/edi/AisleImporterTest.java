@@ -224,6 +224,10 @@ public class AisleImporterTest extends DomainTestABC {
 		Tier tierB2T2 = Tier.DAO.findByDomainId(bayA10B2, "T2");
 		Tier tierB1T1 = Tier.DAO.findByDomainId(bayA10B1, "T1");
 		Tier tierB2T1 = Tier.DAO.findByDomainId(bayA10B2, "T1");
+		
+		// Mostly for code coverage. Does a complex iteration. But not aliases, so will be empty.
+		String aliasRange = tierB1T2.getSlotAliasRange();
+		Assert.assertTrue(aliasRange.isEmpty());
 
 		Slot slotB1T2S3 = Slot.DAO.findByDomainId(tierB1T2, "S3");
 		Assert.assertNotNull(slotB1T2S3);
