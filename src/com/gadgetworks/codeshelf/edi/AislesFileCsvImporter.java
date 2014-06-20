@@ -11,6 +11,7 @@ import java.io.InputStreamReader;
 import java.sql.Timestamp;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -25,6 +26,7 @@ import au.com.bytecode.opencsv.bean.HeaderColumnNameMappingStrategy;
 
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Bay;
@@ -33,9 +35,11 @@ import com.gadgetworks.codeshelf.model.domain.SubLocationABC;
 import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.model.domain.Tier;
 import com.gadgetworks.codeshelf.model.domain.Slot;
+import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
+import com.gadgetworks.flyweight.command.NetGuid;
 
 /**
  * @author ranstrom
@@ -167,6 +171,9 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 					finalizeTiersInThisAisle(mLastReadAisle);
 					finalizeVerticesThisAisle(mLastReadAisle, mLastReadBay);
 				}
+
+				// As an aid to the configurer, create a few LED controllers.
+				ensureLedControllers();
 
 				// archiveCheckLocationAliases(inFacility, inProcessTime);
 
@@ -362,6 +369,39 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 		setSlotLeds(inTier, ledCount, directionIncrease, 2, 1); // Guards set at low = 2 and high = 1. Could come from file.
 
 		return returnValue;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * For a first aisles file read, there will need to be some controllers.
+	 * Assume one controller per aisle to start. (Correct for zigzag. Maybe correct for tier aisles if separate channel per tier.)
+	 */
+	private void ensureLedControllers() {
+		// Count the aisles. Total in the system now, not just what was read. For non-zigzag rows, need one per aisle per tier
+		List<Aisle> aisles = mFacility.getChildrenAtLevel(Aisle.class);
+		int aisleTierCount = aisles.size(); // not correct. Ok for now.
+
+		// Count the ledControllers.
+		int controllerCount = mFacility.countLedControllers();
+
+		// Add controllers, Jeff wants them set o "0x999999" so they definitely will not work
+		if (aisleTierCount > controllerCount) {
+			CodeshelfNetwork network = mFacility.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_ID);
+
+			int needToMake = aisleTierCount - controllerCount;
+			int made = 0;
+			for (int n = 1; n <= aisleTierCount; n++) {
+				int changingRadioID = 99999999 + 1 - n;
+				if (made < needToMake) {
+					String theDomainID = Integer.toString(changingRadioID);
+					if (network.getLedController(theDomainID) == null) {
+						LedController newCtlr = network.findOrCreateLedController(theDomainID, new NetGuid("0x" + theDomainID));
+						if (newCtlr != null)
+							made++;
+					}
+				}
+			}
+		}
 	}
 
 	// --------------------------------------------------------------------------

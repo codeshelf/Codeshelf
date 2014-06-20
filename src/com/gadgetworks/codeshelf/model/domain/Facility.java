@@ -1636,6 +1636,22 @@ public class Facility extends SubLocationABC<Facility> {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * Mostly a testing aid
+	 */
+	public final int countLedControllers() {
+		int result = 0;
+
+		CodeshelfNetwork network = getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_ID);
+		if (network == null)
+			return result;
+		Map<String, LedController> controllerMap = network.getLedControllers();
+		result = controllerMap.size();
+
+		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
 	 * @param inWorkInstruction
 	 */
 	public final void sendWorkInstructionsToHost(final List<WorkInstruction> inWiList) {

@@ -175,6 +175,9 @@ public class AisleImporterTest extends DomainTestABC {
 		Assert.assertEquals(vList1.size(), 4);
 		// the third point is the interesting one. Note index 0,1,2,3
 		// Vertex thirdV = (Vertex) vList1.get(2);
+		
+		// New side effect: creates some LED controllers. But if no network in our test system, may not happen
+		// Assert.assertTrue(facility.countLedControllers() > 0);
 
 	}
 
