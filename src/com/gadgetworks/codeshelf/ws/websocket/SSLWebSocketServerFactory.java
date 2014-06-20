@@ -31,6 +31,7 @@ import org.java_websocket.SSLSocketChannel2;
 import org.java_websocket.WebSocketAdapter;
 import org.java_websocket.WebSocketImpl;
 import org.java_websocket.drafts.Draft;
+import org.java_websocket.drafts.IDraft;
 import org.java_websocket.server.WebSocketServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,13 +79,13 @@ public class SSLWebSocketServerFactory implements WebSocketServer.WebSocketServe
 	}
 
 	@Override
-	public final WebSocketImpl createWebSocket(WebSocketAdapter inAdapter, Draft inDraft, Socket inSocket) {
+	public final WebSocketImpl createWebSocket(WebSocketAdapter inAdapter, IDraft inDraft, Socket inSocket) {
 		LOGGER.debug("WebSocket create: " + inSocket.getRemoteSocketAddress());
 		return new WebSocketImpl(inAdapter, inDraft, inSocket);
 	}
 
 	@Override
-	public final WebSocketImpl createWebSocket(WebSocketAdapter inAdapter, List<Draft> inDraftList, Socket inSocket) {
+	public final WebSocketImpl createWebSocket(WebSocketAdapter inAdapter, List<IDraft> inDraftList, Socket inSocket) {
 		LOGGER.debug("WebSocket create: " + inSocket.getRemoteSocketAddress());
 		return new WebSocketImpl(inAdapter, inDraftList, inSocket);
 	}
