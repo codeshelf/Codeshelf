@@ -43,7 +43,8 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "container_use")
-@CacheStrategy(useBeanCache = true)@JsonAutoDetect(getterVisibility = Visibility.NONE)
+@CacheStrategy(useBeanCache = true)
+@JsonAutoDetect(getterVisibility = Visibility.NONE)
 @ToString(callSuper = true, doNotUseGetters = true)
 public class ContainerUse extends DomainObjectTreeABC<Container> {
 
@@ -56,7 +57,7 @@ public class ContainerUse extends DomainObjectTreeABC<Container> {
 		public ContainerUseDao(final ISchemaManager inSchemaManager) {
 			super(inSchemaManager);
 		}
-		
+
 		public final Class<ContainerUse> getDaoClass() {
 			return ContainerUse.class;
 		}
@@ -132,4 +133,33 @@ public class ContainerUse extends DomainObjectTreeABC<Container> {
 	public final List<IDomainObject> getChildren() {
 		return new ArrayList<IDomainObject>();
 	}
+
+	// UI meta-field support
+	public final String getContainerName() {
+		Container theContainer = getParent();
+		if (theContainer == null)
+			return "";
+		else {
+			return theContainer.getDomainId();
+		}
+	}
+
+	public final String getCheName() {
+		Che theChe = getCurrentChe();
+		if (theChe == null)
+			return "";
+		else {
+			return theChe.getDomainId();
+		}
+	}
+
+	public final String getOrderName() {
+		OrderHeader theOrder = getOrderHeader();
+		if (theOrder == null)
+			return "";
+		else {
+			return theOrder.getDomainId();
+		}
+	}
+
 }
