@@ -307,6 +307,16 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * Order Head does not have a description field. This is for UI meta field that simply shows "Order Header" to help orient the user in the orders view.
+	 * @return
+	 */
+	public final String getDescription() {
+		return "--- Order Header ---";
+		// localization issue
+	}
+
+	// --------------------------------------------------------------------------
+	/**
 	 * Return the first order location we find along the path (in path working order).
 	 * This is used as a metafield for order in the UI.
 	 * @param inPath
