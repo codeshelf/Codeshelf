@@ -1636,7 +1636,7 @@ public class Facility extends SubLocationABC<Facility> {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * Mostly a testing aid
+	 * Used in aisle file read to decide if we should automatically make more controllers
 	 */
 	public final int countLedControllers() {
 		int result = 0;
@@ -1648,6 +1648,28 @@ public class Facility extends SubLocationABC<Facility> {
 		result = controllerMap.size();
 
 		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inChe
+	 * Testing only!  Looks for active unassociated container uses, and set up the CHE with them.
+	 * This is roughly equivalent to CheComputeWorkRespCmd.computeWorkInstructions()
+	 */
+	public final void fakeSetUpChe(String inCheDomainId) {
+		CodeshelfNetwork network = getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_ID);
+		if (network == null)
+			return;
+
+		Che theChe = network.getChe(inCheDomainId);
+		
+		// Get the work instructions for this CHE at this location for the given containers.
+		List<String> containersIdList = new ArrayList<String>();
+		
+		if (theChe != null && containersIdList.size() > 0) {
+			Integer wiCount = this.computeWorkInstructions(theChe, containersIdList);
+		}
+
 	}
 
 	// --------------------------------------------------------------------------
