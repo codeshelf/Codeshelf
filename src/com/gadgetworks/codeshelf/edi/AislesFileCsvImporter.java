@@ -377,9 +377,16 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 	 * Assume one controller per aisle to start. (Correct for zigzag. Maybe correct for tier aisles if separate channel per tier.)
 	 */
 	private void ensureLedControllers() {
-		// Count the aisles. Total in the system now, not just what was read. For non-zigzag rows, need one per aisle per tier
-		List<Aisle> aisles = mFacility.getChildrenAtLevel(Aisle.class);
-		int aisleTierCount = aisles.size(); // not correct. Ok for now.
+		// If the LEDs are set, then assuming no multi-channel capability per controller, we simply need to count tiers with LED starting at 1.
+		List<Tier> tiersList = mFacility.getChildrenAtLevel(Tier.class);
+		int aisleTierCount = 0;
+		ListIterator li = null;
+		li = tiersList.listIterator();
+		while (li.hasNext()) {
+			Tier thisTier = (Tier) li.next();
+			if (thisTier.getFirstLedNumAlongPath() == 1)
+				aisleTierCount++;
+		}
 
 		// Count the ledControllers.
 		int controllerCount = mFacility.countLedControllers();
