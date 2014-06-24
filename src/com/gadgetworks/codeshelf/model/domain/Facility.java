@@ -12,6 +12,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 
 import javax.persistence.Column;
@@ -1662,12 +1663,44 @@ public class Facility extends SubLocationABC<Facility> {
 			return;
 
 		Che theChe = network.getChe(inCheDomainId);
-		
+
 		// Get the work instructions for this CHE at this location for the given containers.
 		List<String> containersIdList = new ArrayList<String>();
-		
+
+		// The algorithm is to find the first active group, and hope it has active order headers without CHE assignment
+		List<OrderGroup> groupsList = this.getOrderGroups();
+		ListIterator li = groupsList.listIterator();
+		OrderGroup foundGroup = null;
+		while (li.hasNext() && foundGroup == null) {
+			OrderGroup thisGroup = (OrderGroup) li.next();
+			if (thisGroup.getActive())
+				foundGroup = thisGroup;
+		}
+		if (foundGroup != null) {
+			List<OrderHeader> headersList = foundGroup.getOrderHeaders();
+			int howMany = headersList.size(); // Just for debugging
+			ListIterator li2 = headersList.listIterator();
+			while (li2.hasNext()) {
+				OrderHeader thisHeader = (OrderHeader) li2.next();
+				if (thisHeader.getActive() && thisHeader.getOrderTypeEnum() == OrderTypeEnum.CROSS) {
+					// we know it belongs to the right order group already
+					// A bit lazy to start. Cross batch process makes one order per container. So doing that to start.
+					ContainerUse thisUse = thisHeader.getContainerUse();
+					if (thisUse.getActive() && thisUse.getCurrentChe() == null) {
+						// found one. We just need the container's domainId, not the contianer use. That can come from container Use or the order header
+						String aString = thisUse.getContainerName();
+						containersIdList.add(aString);
+					}
+				}
+
+			}
+
+		}
+
 		if (theChe != null && containersIdList.size() > 0) {
 			Integer wiCount = this.computeWorkInstructions(theChe, containersIdList);
+			// That did the work. Big side effect.
+			// To do: make computeWorkInstructions update the current che on the order headers
 		}
 
 	}
