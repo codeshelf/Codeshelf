@@ -24,9 +24,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
+import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.flyweight.command.NetGuid;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -40,7 +42,8 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-@CacheStrategy(useBeanCache = true)@Table(name = "che")
+@CacheStrategy(useBeanCache = true)
+@Table(name = "che")
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 @ToString(doNotUseGetters = true, callSuper = true)
 public class Che extends WirelessDeviceABC {
@@ -54,7 +57,7 @@ public class Che extends WirelessDeviceABC {
 		public CheDao(final ISchemaManager inSchemaManager) {
 			super(inSchemaManager);
 		}
-		
+
 		public final Class<Che> getDaoClass() {
 			return Che.class;
 		}
@@ -105,5 +108,30 @@ public class Che extends WirelessDeviceABC {
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void removeContainerUse(ContainerUse inContainerUse) {
 		uses.remove(inContainerUse);
+	}
+
+	//  Called from the UI, so really should return any persistence error.
+	// Perhaps this should be at ancestor level. CHE changes this field only. LED controller changes domain ID and controller ID.
+	public final void changeControllerId(String inNewControllerId) {
+		NetGuid currentGuid = this.getDeviceNetGuid();
+		NetGuid newGuid = null;
+		try {
+			newGuid = new NetGuid(inNewControllerId);
+			if (currentGuid.equals(newGuid))
+				return;
+		}
+
+		catch (Exception e) {
+
+		}
+		if (newGuid != null) {
+			try {
+				this.setDeviceNetGuid(newGuid);
+				// curious that setDeviceNetGuid does not do the persist
+				this.DAO.store(this);
+			} catch (DaoException e) {
+				LOGGER.error("", e);
+			}
+		}
 	}
 }
