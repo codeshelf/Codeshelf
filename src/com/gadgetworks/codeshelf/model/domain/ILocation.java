@@ -232,5 +232,18 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 	 * Recompute the path distance of this location (and recursively for all of its child locations).
 	 */
 	void computePosAlongPath(PathSegment inPathSegment);
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * The effective controller is this one, or any of its parent up the chain
+	 */
+	LedController getEffectiveLedController();
+	// --------------------------------------------------------------------------
+	/**
+	 * The effective channel is this one, or any of its parent up the chain
+	 */
+	Short getEffectiveLedChannel();
+	
+	
 
 }

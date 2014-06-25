@@ -79,10 +79,15 @@ public class Che extends WirelessDeviceABC {
 	@Setter
 	private User				currentUser;
 
-	// For a network this is a list of all of the users that belong in the set.
+	// ebeans maintains a lazy-loaded list of containerUse for this CHE
 	@OneToMany(mappedBy = "currentChe")
 	@Getter
 	private List<ContainerUse>	uses	= new ArrayList<ContainerUse>();
+
+	// ebeans maintains a lazy-loaded list of work instructions for this CHE
+	@OneToMany(mappedBy = "assignedChe")
+	@Getter
+	private List<WorkInstruction>	cheWorkInstructions	= new ArrayList<WorkInstruction>();
 
 	public Che() {
 
@@ -96,6 +101,7 @@ public class Che extends WirelessDeviceABC {
 		return "CHE";
 	}
 
+	// jr comment. Why are the containerUses the children? ContainerUse parent is not the Che.
 	public final List<? extends IDomainObject> getChildren() {
 		return getUses();
 	}
@@ -109,6 +115,15 @@ public class Che extends WirelessDeviceABC {
 	public final void removeContainerUse(ContainerUse inContainerUse) {
 		uses.remove(inContainerUse);
 	}
+	
+	// Ebean Ops for work instructions
+	public final void addWorkInstruction(WorkInstruction inWorkInstruction) {
+		cheWorkInstructions.add(inWorkInstruction);
+	}
+	public final void removeWorkInstruction(WorkInstruction inWorkInstruction) {
+		cheWorkInstructions.remove(inWorkInstruction);
+	}
+
 
 	//  Called from the UI, so really should return any persistence error.
 	// Perhaps this should be at ancestor level. CHE changes this field only. LED controller changes domain ID and controller ID.

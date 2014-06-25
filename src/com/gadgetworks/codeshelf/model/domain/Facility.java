@@ -1387,10 +1387,10 @@ public class Facility extends SubLocationABC<Facility> {
 					lastLedPosNum = temp;
 				}
 
-				// The new way of sending LED data to the remote controller.
+				// The new way of sending LED data to the remote controller. Note getEffectiveXXX instead of getLedController
 				List<LedSample> ledSamples = new ArrayList<LedSample>();
-				LedCmdGroup ledCmdGroup = new LedCmdGroup(orderLocation.getLocation().getLedController().getDeviceGuidStr(),
-					orderLocation.getLocation().getLedChannel(),
+				LedCmdGroup ledCmdGroup = new LedCmdGroup(orderLocation.getLocation().getEffectiveLedController().getDeviceGuidStr(),
+					orderLocation.getLocation().getEffectiveLedChannel(),
 					firstLedPosNum,
 					ledSamples);
 
@@ -1430,8 +1430,8 @@ public class Facility extends SubLocationABC<Facility> {
 		// The new way of sending LED data to the remote controller.
 		List<LedSample> ledSamples = new ArrayList<LedSample>();
 		List<LedCmdGroup> ledCmdGroupList = new ArrayList<LedCmdGroup>();
-		LedCmdGroup ledCmdGroup = new LedCmdGroup(inLocation.getLedController().getDeviceGuidStr(),
-			inLocation.getLedChannel(),
+		LedCmdGroup ledCmdGroup = new LedCmdGroup(inLocation.getEffectiveLedController().getDeviceGuidStr(),
+			inLocation.getEffectiveLedChannel(),
 			firstLedPosNum,
 			ledSamples);
 
@@ -1687,7 +1687,7 @@ public class Facility extends SubLocationABC<Facility> {
 					// A bit lazy to start. Cross batch process makes one order per container. So doing that to start.
 					ContainerUse thisUse = thisHeader.getContainerUse();
 					if (thisUse.getActive() && thisUse.getCurrentChe() == null) {
-						// found one. We just need the container's domainId, not the contianer use. That can come from container Use or the order header
+						// found one. We just need the container's domainId, not the container use. That can come from containerUse or the order header
 						String aString = thisUse.getContainerName();
 						containersIdList.add(aString);
 					}
@@ -1701,6 +1701,8 @@ public class Facility extends SubLocationABC<Facility> {
 			Integer wiCount = this.computeWorkInstructions(theChe, containersIdList);
 			// That did the work. Big side effect.
 			// To do: make computeWorkInstructions update the current che on the order headers
+			
+			// Jeff says to add "getWork"
 		}
 
 	}

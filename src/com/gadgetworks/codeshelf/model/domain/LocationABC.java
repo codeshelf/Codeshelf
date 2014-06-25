@@ -666,5 +666,33 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 		return result;
 	}
+	
+	public final LedController getEffectiveLedController() {
+		// See if we have the controller. Then recursively ask each parent until found.
+		LedController theController = getLedController();
+		if (theController == null) {
+			ILocation aLocation = (ILocation) this.getParent();
+			if (aLocation != null) {
+				theController = aLocation.getEffectiveLedController();
+			}
+		}
+		
+		return theController;
+	}
+
+	public final Short getEffectiveLedChannel() {
+		// See if we have the controller. Then recursively ask each parent until found.
+		Short theChannel = getLedChannel();
+		if (theChannel == null) {
+			ILocation aLocation = (ILocation) this.getParent();
+			if (aLocation != null) {
+				theChannel = aLocation.getEffectiveLedChannel();
+			}
+		}
+		
+		return theChannel;
+
+		
+	}
 
 }

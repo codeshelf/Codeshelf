@@ -870,9 +870,16 @@ public class AisleImporterTest extends DomainTestABC {
 		Assert.assertNotNull(aController);
 		UUID cntlrPersistID = aController.getPersistentId();
 		String cntrlPersistIdStr = cntlrPersistID.toString();
+		
+		// just a null test of getEffectiveXXX before any controller and channel are set. Will go up the parent chain
+		Slot slotB1T1S1 = Slot.DAO.findByDomainId(tierB1T1, "S1");
+		Assert.assertNotNull(slotB1T1S1);
+		Assert.assertNull(slotB1T1S1.getLedController());
+		Assert.assertNull(slotB1T1S1.getLedChannel());
+
 
 		// Now the real point. UI will call as follows to set all of T1 in the aisle to this controller.
-		// Side effect if channel not set is to set to channel 1 also.
+		// Side effect if channel not set is to set to channel 1 also. This was temporarily important before our current controller plus channel dialog.
 		tierB1T1.setControllerChannel(cntrlPersistIdStr, "0", "aisle");
 		Short b1T1Channel = tierB1T1.getLedChannel();
 		Short b2T1Channel = tierB2T1.getLedChannel();
@@ -890,7 +897,14 @@ public class AisleImporterTest extends DomainTestABC {
 		String b1T1ControllerStr = tierB1T1.getLedControllerId();
 		String b2T1ControllerStr = tierB2T1.getLedControllerId();
 		Assert.assertEquals(b2T1ControllerStr, b1T1ControllerStr); // strings match; both "0x000026"
-
+		
+		// test getEffective controller and channel.  The get will not have anything, but getEffective will go up the parent chain.
+		Slot slotB2T1S1 = Slot.DAO.findByDomainId(tierB2T1, "S1");
+		Assert.assertNotNull(slotB2T1S1);
+		Assert.assertNull(slotB2T1S1.getLedController());
+		Assert.assertNull(slotB2T1S1.getLedChannel());
+		Assert.assertEquals(b2T1Controller, slotB2T1S1.getEffectiveLedController());
+		Assert.assertEquals(b2T1Channel, slotB2T1S1.getEffectiveLedChannel());
 	}
 
 }

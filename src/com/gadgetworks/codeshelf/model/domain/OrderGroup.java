@@ -111,9 +111,9 @@ public class OrderGroup extends DomainObjectTreeABC<Facility> {
 	@JsonProperty
 	private Timestamp					updated;
 
-	// For a network this is a list of all of the users that belong in the set.
-	@OneToMany(mappedBy = "parent")
-	@MapKey(name = "domainId")
+	// List of all orders belonging to this group. Some orders have no group.
+	@OneToMany(mappedBy = "orderGroup")
+	@MapKey(name = "persistentId")
 	private Map<String, OrderHeader>	orderHeaders					= new HashMap<String, OrderHeader>();
 
 	public OrderGroup() {
