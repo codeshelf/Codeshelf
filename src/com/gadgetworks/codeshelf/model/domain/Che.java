@@ -128,7 +128,7 @@ public class Che extends WirelessDeviceABC {
 			try {
 				this.setDeviceNetGuid(newGuid);
 				// curious that setDeviceNetGuid does not do the persist
-				this.DAO.store(this);
+				Che.DAO.store(this);
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}
