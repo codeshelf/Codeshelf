@@ -313,4 +313,19 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 
 		return result;
 	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * For a UI meta field
+	 * @return
+	 */
+	public final String getAssignedCheName() {
+		Che theChe = getAssignedChe();
+		if (theChe != null)
+			return theChe.getDomainId();
+		else {
+			return "";
+		}
+	}
+
 }
