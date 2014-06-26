@@ -972,6 +972,8 @@ public class Facility extends SubLocationABC<Facility> {
 	 */
 	@Transactional
 	public final Integer computeWorkInstructions(final Che inChe, final List<String> inContainerIdList) {
+		// TODO: Get one timestamp here
+		
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 
 		// Delete any planned WIs for this CHE.
@@ -987,10 +989,25 @@ public class Facility extends SubLocationABC<Facility> {
 		for (String containerId : inContainerIdList) {
 			Container container = getContainer(containerId);
 			if (container != null) {
+				// add to the list that will generate work instructions
 				containerList.add(container);
+				// Set the CHE on the containerUse
+				ContainerUse thisUse = container.getCurrentContainerUse();
+				if (thisUse != null) {
+					thisUse.setCurrentChe(inChe);
+					try {
+					ContainerUse.DAO.store(thisUse);
+					}
+					catch(DaoException e){
+						LOGGER.error("",e);
+					}
+				}
+
 			}
 		}
 
+		// TODO: pass the timestamp into generateOutboundInstructions and generateCrossWallInstructions to use ass create or assign time
+		
 		// Get all of the OUTBOUND work instructions.
 		//wiResultList.addAll(generateOutboundInstructions(containerList));
 
@@ -1663,6 +1680,8 @@ public class Facility extends SubLocationABC<Facility> {
 			return;
 
 		Che theChe = network.getChe(inCheDomainId);
+		if (theChe == null)
+			return;
 
 		// Get the work instructions for this CHE at this location for the given containers.
 		List<String> containersIdList = new ArrayList<String>();
@@ -1702,7 +1721,13 @@ public class Facility extends SubLocationABC<Facility> {
 			// That did the work. Big side effect.
 			// To do: make computeWorkInstructions update the current che on the order headers
 			
-			// Jeff says to add "getWork"
+			// Get the work instructions for this CHE at this location for the given containers. Can we pass empty string? Normally user would scan where the CHE is starting.
+			List<WorkInstruction> wiList = this.getWorkInstructions(theChe, "");
+			Integer wiCountGot = wiList.size();
+			// getWorkInstructions() has no side effects. But the site controller request gets these.
+			// As work instructions are executed, they come back with start and complete time. and PLAN/NEW changes to ACTUAL/COMPLETE or ACTUAL/SHORT
+			
+
 		}
 
 	}
