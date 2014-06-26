@@ -999,7 +999,7 @@ public class Facility extends SubLocationABC<Facility> {
 					ContainerUse.DAO.store(thisUse);
 					}
 					catch(DaoException e){
-						LOGGER.error("",e);
+						LOGGER.error("", e);
 					}
 				}
 
