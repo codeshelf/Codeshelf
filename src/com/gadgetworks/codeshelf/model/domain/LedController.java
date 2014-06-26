@@ -20,9 +20,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
+import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.flyweight.command.NetGuid;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -86,4 +88,32 @@ public class LedController extends WirelessDeviceABC {
 	public final void removeLocation(ISubLocation inSubLocation) {
 		locations.remove(inSubLocation);
 	}
+	
+	//  Called from the UI, so really should return any persistence error.
+	// Perhaps this should be at ancestor level. CHE changes this field only. LED controller changes domain ID and controller ID.
+	// Therefore, see  and consider declone from Che::changeControllerId()
+	public final void changeLedControllerId(String inNewControllerId) {
+		NetGuid currentGuid = this.getDeviceNetGuid();
+		NetGuid newGuid = null;
+		try {
+			newGuid = new NetGuid(inNewControllerId);
+			if (currentGuid.equals(newGuid))
+				return;
+		}
+
+		catch (Exception e) {
+
+		}
+		if (newGuid != null) {
+			try {
+				this.setDeviceNetGuid(newGuid);
+				String newName = newGuid.getHexStringNoPrefix();
+				this.setDomainId(newName);
+				LedController.DAO.store(this);
+			} catch (DaoException e) {
+				LOGGER.error("", e);
+			}
+		}
+	}
+
 }
