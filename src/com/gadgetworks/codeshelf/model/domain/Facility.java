@@ -1006,13 +1006,14 @@ public class Facility extends SubLocationABC<Facility> {
 			}
 		}
 
-		// TODO: pass the timestamp into generateOutboundInstructions and generateCrossWallInstructions to use ass create or assign time
+		// TODO: pass the timestamp into generateOutboundInstructions and generateCrossWallInstructions to use as create or assign time
+		Timestamp theTime = new Timestamp(System.currentTimeMillis());
 		
 		// Get all of the OUTBOUND work instructions.
-		//wiResultList.addAll(generateOutboundInstructions(containerList));
+		// wiResultList.addAll(generateOutboundInstructions(containerList, theTime));
 
 		// Get all of the CROSS work instructions.
-		wiResultList.addAll(generateCrossWallInstructions(inChe, containerList));
+		wiResultList.addAll(generateCrossWallInstructions(inChe, containerList, theTime));
 
 		return wiResultList.size();
 	}
@@ -1068,7 +1069,8 @@ public class Facility extends SubLocationABC<Facility> {
 		final List<Container> inContainerList,
 		final Path inPath,
 		final String inScannedLocationId,
-		final ISubLocation<?> inCheLocation) {
+		final ISubLocation<?> inCheLocation,
+		final Timestamp inTime) {
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 
 		for (Container container : inContainerList) {
@@ -1088,7 +1090,8 @@ public class Facility extends SubLocationABC<Facility> {
 							orderDetail,
 							container,
 							inChe,
-							inCheLocation);
+							inCheLocation,
+							inTime);
 						if (plannedWi != null) {
 							plannedWi.setPlanQuantity(0);
 							plannedWi.setPlanMinQuantity(0);
@@ -1123,7 +1126,8 @@ public class Facility extends SubLocationABC<Facility> {
 									orderDetail,
 									container,
 									inChe,
-									foundLocation);
+									foundLocation,
+									inTime);
 								if (plannedWi != null) {
 									wiResultList.add(plannedWi);
 								}
@@ -1165,7 +1169,7 @@ public class Facility extends SubLocationABC<Facility> {
 	 * @param inCheLocation
 	 * @return
 	 */
-	private List<WorkInstruction> generateCrossWallInstructions(final Che inChe, final List<Container> inContainerList) {
+	private List<WorkInstruction> generateCrossWallInstructions(final Che inChe, final List<Container> inContainerList, final Timestamp inTime) {
 
 		List<WorkInstruction> wiList = new ArrayList<WorkInstruction>();
 
@@ -1194,7 +1198,8 @@ public class Facility extends SubLocationABC<Facility> {
 														outOrderDetail,
 														container,
 														inChe,
-														firstOutOrderLoc.getLocation());
+														firstOutOrderLoc.getLocation(),
+														inTime);
 
 													// If we created a WI then add it to the list.
 													if (wi != null) {
@@ -1309,7 +1314,8 @@ public class Facility extends SubLocationABC<Facility> {
 		OrderDetail inOrderDetail,
 		Container inContainer,
 		Che inChe,
-		ISubLocation<?> inLocation) {
+		ISubLocation<?> inLocation,
+		final Timestamp inTime) {
 		WorkInstruction resultWi = null;
 
 		Integer qtyToPick = inOrderDetail.getQuantity();
@@ -1374,7 +1380,7 @@ public class Facility extends SubLocationABC<Facility> {
 			resultWi.setPlanMinQuantity(minQtyToPick);
 			resultWi.setPlanMaxQuantity(maxQtyToPick);
 			resultWi.setActualQuantity(0);
-			resultWi.setAssigned(new Timestamp(System.currentTimeMillis()));
+			resultWi.setAssigned(inTime);
 			try {
 				WorkInstruction.DAO.store(resultWi);
 			} catch (DaoException e) {
@@ -1705,7 +1711,8 @@ public class Facility extends SubLocationABC<Facility> {
 					// we know it belongs to the right order group already
 					// A bit lazy to start. Cross batch process makes one order per container. So doing that to start.
 					ContainerUse thisUse = thisHeader.getContainerUse();
-					if (thisUse.getActive() && thisUse.getCurrentChe() == null) {
+					// active use. Don't filter out those with che assignment already. Those will get reset (correctly) to the new Che.
+					if (thisUse.getActive()) {
 						// found one. We just need the container's domainId, not the container use. That can come from containerUse or the order header
 						String aString = thisUse.getContainerName();
 						containersIdList.add(aString);
