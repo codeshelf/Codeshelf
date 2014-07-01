@@ -157,7 +157,10 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 							mTiersThisAisle.clear();
 							mLastReadBayForVertices = null; // barely necessary. But cleanliness is good.
 						}
-						// if we started a new aisle, then the previous aisle is done. Do those computations and set those fields
+						catch (Exception e) {
+							LOGGER.error("unknown exception in file read", e);
+						}
+					// if we started a new aisle, then the previous aisle is done. Do those computations and set those fields
 						// but not if we threw out of last aisle
 						if (lastAisle != null && lastAisle != mLastReadAisle & !needAisleBean) {
 							finalizeTiersInThisAisle(lastAisle);
@@ -295,6 +298,8 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 
 		// For this purpose, "leds" is the total span of the slot in led positions, and "lit leds" will give the ones lighted toward the center of the slot.
 		short slotCount = (short) (slotList.size());
+		if (slotCount == 0)
+			return;
 		short ledsPerSlot = (short) (inLedCountThisTier / slotCount);
 		short remainderLeds = (short) (inLedCountThisTier % slotCount);
 
@@ -328,6 +333,12 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 
 			short firstLitLed = (short) (thisSlotStartLed + inGuardLow);
 			short lastLitLed = (short) (firstLitLed + ledsToLightPerSlot);
+			if (inLedCountThisTier == (short) 0) {
+				// Common case-pick: no leds installed, so just set zeros.
+				firstLitLed = 0;
+				lastLitLed = 0;
+				thisSlotEndLed = 0;
+			}
 
 			thisSlot.setFirstLedNumAlongPath((short) (firstLitLed));
 			thisSlot.setLastLedNumAlongPath((short) (lastLitLed));
@@ -354,8 +365,12 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 		// We should still have hold of the tier reference that has the transient field set. If not, ledCount == 0
 
 		if (ledCount == 0) {
-			return inLastLedNumber;
-			// Not sure we will need this case ever. Would be something like setting a null tier that a cable skips to next tier.
+			inTier.setFirstLedNumAlongPath((short) 0);
+			inTier.setLastLedNumAlongPath((short) 0);
+			mTierDao.store(inTier);
+			returnValue = inLastLedNumber;
+			// Odd case: setting a null tier that a cable skips to next tier.
+			// Common case-pick: no leds installed, so just set zeros.
 		} else {
 
 			inTier.setFirstLedNumAlongPath(thisTierStartLed);
@@ -946,9 +961,11 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 			try {
 				mLedsPerTier = Short.valueOf(ledsPerTier);
 			} catch (NumberFormatException e) {
+				mLedsPerTier = 0; // 0 is valid. Means no LEDs in this tier. Should report out on the parse error
+				LOGGER.info("Leds per tier not resolved", e);
 			}
-			if (mLedsPerTier < 2) {
-				mLedsPerTier = 2;
+			if (mLedsPerTier < 0) { // zero is valid. No leds installed for this tier.
+				mLedsPerTier = 0;
 			}
 			if (mLedsPerTier > 400) {
 				mLedsPerTier = 400;
@@ -957,6 +974,11 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 			try {
 				mTierFloorCm = Integer.valueOf(tierFloorCm);
 			} catch (NumberFormatException e) {
+			}
+			
+			// just a stop sign for zero leds per tier.
+			if (mLedsPerTier == 0) {
+				LOGGER.info(" zero leds this tier");
 			}
 
 			// We know and can set led count on this tier.
