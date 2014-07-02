@@ -63,7 +63,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	}
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(Item.class);
-	
+
 	// The owning location.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
@@ -152,4 +152,44 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	public final List<IDomainObject> getChildren() {
 		return new ArrayList<IDomainObject>();
 	}
+
+	// Assorted meta fields for the UI
+	public final String getItemLocationFullDomainId() {
+		LocationABC theLoc = getStoredLocation();
+		if (theLoc == null)
+			return "";
+		else {
+			return theLoc.getFullDomainId();
+		}
+	}
+
+	public final String getItemLocationAlias() {
+		LocationABC theLoc = getStoredLocation();
+		if (theLoc == null)
+			return "";
+		else {
+			return theLoc.getPrimaryAliasId();
+		}
+	}
+
+	public final String getItemDescription() {
+		ItemMaster theMaster = this.getParent();
+		if (theMaster == null)
+			return "";
+		else {
+			return theMaster.getDescription();
+		}
+	}
+
+	public final String getItemQuantityUom() {
+		Double quant = this.getQuantity();
+		UomMaster theUom = this.getUomMaster();
+
+		if (theUom == null || quant == null)
+			return "";
+		else {
+			return Double.toString(quant) + " " + theUom.toString();
+		}
+	}
+
 }
