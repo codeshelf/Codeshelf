@@ -138,7 +138,7 @@ public class OrderLocationCsvImporter implements ICsvOrderLocationImporter {
 
 			try {
 				if ((inCsvBean.getLocationId() == null) || inCsvBean.getLocationId().length() == 0) {
-					deleteOrder(inCsvBean.getOrderId(), inFacility, inEdiProcessTime);
+					deleteOrderLocations(inCsvBean.getOrderId(), inFacility, inEdiProcessTime);
 				} else if ((inCsvBean.getOrderId() == null) || inCsvBean.getOrderId().length() == 0) {
 					deleteLocation(inCsvBean.getLocationId(), inFacility, inEdiProcessTime);
 				} else {
@@ -213,7 +213,7 @@ public class OrderLocationCsvImporter implements ICsvOrderLocationImporter {
 	 * @param inFacility
 	 * @param inEdiProcessTime
 	 */
-	private void deleteOrder(final String inOrderId, final Facility inFacility, final Timestamp inEdiProcessTime) {
+	private void deleteOrderLocations(final String inOrderId, final Facility inFacility, final Timestamp inEdiProcessTime) {
 
 		OrderHeader order = inFacility.getOrderHeader(inOrderId);
 		if (order != null) {
