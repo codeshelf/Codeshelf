@@ -428,4 +428,49 @@ public class Path extends DomainObjectTreeABC<Facility> {
 
 		return result;
 	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * Delete the path and its segments. Called from the UI
+	 * @return
+	 */
+	public final void deleteThisPath() {
+		if (true) // This function does not work. It needs code review.
+			return;
+		
+		for (PathSegment segment : this.getSegments()) {
+			
+			// make sure segment is not associated to a location			
+			for (ILocation<?> location : segment.getLocations()) {
+				if (location.getPathSegment().equals(segment)) {
+					LOGGER.info("clearing path segment association");
+					location.setPathSegment(null);
+					// which DAO?
+					location.getDao().store(location);				
+				}
+			}
+			// delete the work area
+			WorkArea wa = this.getWorkArea();
+			if (wa != null) {
+				
+				this.setWorkArea(null);
+				Path.DAO.store(this);
+				
+				wa.setParent(null);
+				WorkArea.DAO.store(wa);
+				
+				// WorkArea has lists of loations, users and active ches also. Need to worry about?
+				
+				WorkArea.DAO.delete(wa);
+				
+
+			}
+
+			// delete the segment
+			PathSegment.DAO.delete(segment);
+		}
+		// then delete this path
+		Path.DAO.delete(this);
+	}
+
 }
