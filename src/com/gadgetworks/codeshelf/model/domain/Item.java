@@ -188,7 +188,8 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		if (theUom == null || quant == null)
 			return "";
 		else {
-			return Double.toString(quant) + " " + theUom.toString();
+			return Double.toString(quant) + " " + theUom.getDomainId();
+			// Not real good. Something are like 0.5 liters. However, we do not need to see 1.0 ea or 1.0 cs.
 		}
 	}
 
