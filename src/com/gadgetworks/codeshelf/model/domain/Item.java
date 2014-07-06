@@ -181,15 +181,40 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		}
 	}
 
+	interface Padder {
+		String padRight(String inString, int inPadLength);
+	}
+
 	public final String getItemQuantityUom() {
+
+		// All to have access to a trivial padRight function. Could just in line.
+		// This is done as an anonymous class. Will like move to some utility class someday
+		Padder padder = new Padder() {
+			public String padRight(String inString, int inPadLength) {
+				String str = inString;
+				for (int i = inString.length(); i <= inPadLength; i++) {
+					str += " ";
+				}
+				return str;
+
+			}
+		};
+
 		Double quant = this.getQuantity();
 		UomMaster theUom = this.getUomMaster();
-
 		if (theUom == null || quant == null)
 			return "";
-		else {
-			return Double.toString(quant) + " " + theUom.toString();
+
+		String uom = theUom.getDomainId();
+		String quantStr;
+		// for each or case, make sure we do not return the foolish looking 2.0 EA.
+		if (uom.equalsIgnoreCase("EA") || uom.equalsIgnoreCase("CS")) {
+			quantStr = Integer.toString((int) quant.doubleValue());
+		} else {
+			quantStr = Double.toString(quant);
 		}
+		quantStr = padder.padRight(quantStr, 3);
+		return quantStr + " " + uom;
 	}
 
 }
