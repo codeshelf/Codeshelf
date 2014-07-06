@@ -7,31 +7,20 @@ package com.gadgetworks.codeshelf.ws.websocket;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.Socket;
 import java.net.URL;
-import java.nio.channels.ByteChannel;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.SocketChannel;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLEngine;
 import javax.net.ssl.TrustManagerFactory;
 
-import org.java_websocket.SSLSocketChannel2;
-import org.java_websocket.WebSocketAdapter;
-import org.java_websocket.WebSocketImpl;
-import org.java_websocket.client.WebSocketClient;
-import org.java_websocket.drafts.Draft;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

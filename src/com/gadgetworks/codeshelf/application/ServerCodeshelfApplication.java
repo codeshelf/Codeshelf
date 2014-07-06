@@ -27,6 +27,7 @@ import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
 import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.monitor.IMonitor;
 import com.gadgetworks.codeshelf.report.IPickDocumentGenerator;
+import com.gadgetworks.codeshelf.ws.jetty.server.JettyWebSocketServer;
 import com.gadgetworks.codeshelf.ws.websocket.IWebSocketServer;
 import com.google.inject.Inject;
 
@@ -48,6 +49,9 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 	private IMonitor						mMonitor;
 
 	private BlockingQueue<String>			mEdiProcessSignalQueue;
+	
+	// TODO: replace ws server above with implementation below
+	JettyWebSocketServer mAlternativeWebSocketServer;
 
 	@Inject
 	public ServerCodeshelfApplication(final IWebSocketServer inWebSocketServer,
@@ -98,14 +102,20 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		mDatabase.start();
 
 		// Start the WebSocket UX handler
-		mWebSocketServer.start();
+		// mWebSocketServer.start();
+		
+		mAlternativeWebSocketServer = new JettyWebSocketServer();
+		mAlternativeWebSocketServer.start();
 
 		// Start the EDI process.
+		// TODO: put back in when WS integration is done
+		/*
 		mEdiProcessSignalQueue = new ArrayBlockingQueue<>(100);
 		mEdiProcessor.startProcessor(mEdiProcessSignalQueue);
-
+		
 		// Start the pick document generator process;
 		mPickDocumentGenerator.startProcessor(mEdiProcessSignalQueue);
+		*/
 
 		mHttpServer.startServer();
 	}

@@ -10,8 +10,8 @@ import java.util.concurrent.CopyOnWriteArraySet;
 
 import org.java_websocket.WebSocket;
 import org.java_websocket.WebSocketImpl;
-import org.java_websocket.framing.FramedataImpl1;
 import org.java_websocket.framing.Framedata.Opcode;
+import org.java_websocket.framing.FramedataImpl1;
 import org.java_websocket.handshake.ClientHandshake;
 import org.java_websocket.server.WebSocketServer;
 import org.slf4j.Logger;

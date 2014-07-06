@@ -84,10 +84,10 @@ public class HttpServer implements IHttpServer {
 	 */
 	private Server doStartServer(final String inDefaultPage, final String inContentPath, final String inHostname, final int inPortNum, final boolean inNeedsSsl) {
 
-		Server result = null;
+		Server server = null;
 
 		try {
-			result = new Server();
+			server = new Server();
 
 			ResourceHandler resourceHandler = new ResourceHandler();
 			resourceHandler.setDirectoriesListed(false);
@@ -105,13 +105,14 @@ public class HttpServer implements IHttpServer {
 			NetworkTrafficSelectChannelConnector connector = null;
 
 			if (inNeedsSsl) {
-				connector = new NetworkTrafficSelectChannelConnector(result, sslContextFactory);
+				connector = new NetworkTrafficSelectChannelConnector(server, sslContextFactory);
 
 				HandlerList handlers = new HandlerList();
 				handlers.setHandlers(new Handler[] { resourceHandler });
-				result.setHandler(handlers);
-			} else {
-				connector = new NetworkTrafficSelectChannelConnector(result);
+				server.setHandler(handlers);
+			} 
+			else {
+				connector = new NetworkTrafficSelectChannelConnector(server);
 
 				//				RewriteHandler rewrite = new RewriteHandler();
 				//				rewrite.setRewriteRequestURI(true);
@@ -133,7 +134,7 @@ public class HttpServer implements IHttpServer {
 
 				HandlerList handlers = new HandlerList();
 				handlers.setHandlers(new Handler[] { resourceHandler });//, rewrite });
-				result.setHandler(handlers);
+				server.setHandler(handlers);
 			}
 
 			connector.setHost(inHostname);
@@ -154,17 +155,17 @@ public class HttpServer implements IHttpServer {
 			//				}
 			//			});
 
-			result.addConnector(connector);
+			server.addConnector(connector);
 
-			result.start();
-			result.join();
+			server.start();
+			server.join();
 		} catch (InterruptedException e) {
 			LOGGER.error("", e);
 		} catch (Exception e) {
 			LOGGER.error("", e);
 		}
 
-		return result;
+		return server;
 	}
 
 	// --------------------------------------------------------------------------
