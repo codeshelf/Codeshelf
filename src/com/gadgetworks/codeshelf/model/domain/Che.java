@@ -32,6 +32,8 @@ import com.gadgetworks.flyweight.command.NetGuid;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
+import java.sql.Timestamp;
+
 // --------------------------------------------------------------------------
 /**
  * Che
@@ -137,6 +139,7 @@ public class Che extends WirelessDeviceABC {
 		}
 
 		catch (Exception e) {
+			// Need to fix this. What kind of exception? Presumeably, bad controller ID that leads to invalid GUID
 
 		}
 		if (newGuid != null) {
@@ -149,4 +152,31 @@ public class Che extends WirelessDeviceABC {
 			}
 		}
 	}
+	
+	// Utility functions for CHE work instructions, past runs and current
+	// the ebeans getter gives us List<WorkInstruction> aList =	getCheWorkInstructions();
+	// Work instruction has assignedChe. When work instructions are computed for a run, they all get the same assignedTime field set.
+
+	public final Timestamp getTimeStampOfCurrentRun() {
+		// return null if not on a current run.
+		WorkInstruction latestAssignedWi = null; // there is no active field on wi
+		
+		for (WorkInstruction wi : getCheWorkInstructions()) {
+			Timestamp wiTime = wi.getAssigned();
+			if (wiTime != null) {
+				if (latestAssignedWi == null)
+					latestAssignedWi = wi;
+				else {
+					if (wiTime.after(latestAssignedWi.getAssigned()))
+						latestAssignedWi = wi;
+				}					
+			}
+		}
+		
+		if (latestAssignedWi != null)
+			return latestAssignedWi.getAssigned();
+		
+		return null;
+	}
+	
 }
