@@ -703,7 +703,7 @@ public class Facility extends SubLocationABC<Facility> {
 
 		// Recompute the distances of the structures?
 		// This does no good as the path segments are not associated to aisles yet.
-		// recomputeLocationPathDistances(path);
+		recomputeLocationPathDistances(path);
 
 	}
 
