@@ -37,10 +37,7 @@ public class AisleImporterTest extends DomainTestABC {
 
 	@Test
 	public final void testTierLeft() {
-		
-		if (true)
-			return;
-		
+				
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A9,,,,,TierLeft,12.85,43.45,X,120,\r\n" //
 				+ "Bay,B1,244,,,,,\r\n" //
@@ -634,9 +631,6 @@ public class AisleImporterTest extends DomainTestABC {
 	@Test
 	public final void testBadFile1() {
 		
-		if (true)
-			return;
-
 		// Ideally, we want non-throwing or caught exceptions that give good user feedback about what is wrong.
 		// This has tier before bay, and some other blank fields
 		// do a Y orientation on this as well
