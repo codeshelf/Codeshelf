@@ -295,6 +295,16 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 		ILocation<P> checkParent = (ILocation<P>) getParent();
 
+		// It seems reasonable in the code to ask for getLocationIdToParentLevel(Aisle.class) when the class of the object is unknown, and might even be the facility.
+		// Let's not NPE.
+		/* JR think we need this
+		if (this.getClass().equals(Facility.class))
+			return "";
+		else if (this.getClass().equals(inClassWanted)) {
+			return getLocationId();
+		}
+		*/
+
 		// There's some weirdness with Ebean and navigating a recursive hierarchy. (You can't go down and then back up to a different class.)
 		// This fixes that problem, but it's not pretty.
 		checkParent = DAO.findByPersistentId(checkParent.getClass(), checkParent.getPersistentId());
@@ -469,7 +479,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 		return result;
 	}
-	
+
 	public final String getPathSegId() {
 		// to support list view meta-field pathSegId
 		PathSegment aPathSegment = getPathSegment();
@@ -479,7 +489,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		}
 		return "";
 	}
-	
+
 	public final String getLedControllerId() {
 		// to support list view meta-field ledControllerId
 		LedController aLedController = getLedController();
@@ -624,6 +634,9 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		public int compare(ILocation inLoc1, ILocation inLoc2) {
 			if (inLoc1.getAnchorPosZ() > inLoc2.getAnchorPosZ()) {
 				return -1;
+			} else if (inLoc1.getPosAlongPath() == null || inLoc2.getPosAlongPath() == null) {
+				LOGGER.error("posAlongPath null for location in LocationWorkingOrderComparator");;
+				return 0;			
 			} else if (inLoc1.getPosAlongPath() < inLoc2.getPosAlongPath()) {
 				return -1;
 			}
@@ -646,7 +659,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 		return result;
 	}
-	
+
 	private class VertexOrderComparator implements Comparator<Vertex> {
 
 		public int compare(Vertex inVertex1, Vertex inVertex2) {
@@ -658,7 +671,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 			return 0;
 		}
 	};
-	
+
 	public final List<Vertex> getVerticesInOrder() {
 
 		List<Vertex> result = getVertices();
@@ -666,7 +679,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 		return result;
 	}
-	
+
 	public final LedController getEffectiveLedController() {
 		// See if we have the controller. Then recursively ask each parent until found.
 		LedController theController = getLedController();
@@ -676,7 +689,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 				theController = aLocation.getEffectiveLedController();
 			}
 		}
-		
+
 		return theController;
 	}
 
@@ -689,10 +702,9 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 				theChannel = aLocation.getEffectiveLedChannel();
 			}
 		}
-		
+
 		return theChannel;
 
-		
 	}
 
 }

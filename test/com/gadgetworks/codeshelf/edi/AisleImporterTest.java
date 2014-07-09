@@ -187,9 +187,6 @@ public class AisleImporterTest extends DomainTestABC {
 	@Test
 	public final void testTierRight() {
 		
-		if (true)
-			return;
-
 		// Beside TierRight, this as two aisles, so it makes sure both get their leds properly set, and both vertices set
 		// Not quite realistic; A10 and A20 are on top of each other. Same anchor point
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
@@ -221,26 +218,44 @@ public class AisleImporterTest extends DomainTestABC {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
 		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+		
+		/* JR think we need this
+		String id = facility.getLocationIdToParentLevel(Aisle.class);
+		Assert.assertTrue(id.isEmpty());
+		*/
 
 		// Check what we got
 		Aisle aisle = Aisle.DAO.findByDomainId(facility, "A10");
 		Assert.assertNotNull(aisle);
+		
+		/* JR think we need this
+		id = aisle.getLocationIdToParentLevel(Aisle.class);
+		Assert.assertTrue(id.equals("A10"));
+		*/
 
 		Bay bayA10B1 = Bay.DAO.findByDomainId(aisle, "B1");
-
 		Bay bayA10B2 = Bay.DAO.findByDomainId(aisle, "B2");
+
+		String id = bayA10B1.getLocationIdToParentLevel(Aisle.class);
+		Assert.assertTrue(id.equals("A10.B1"));
 
 		Tier tierB1T2 = Tier.DAO.findByDomainId(bayA10B1, "T2");
 		Tier tierB2T2 = Tier.DAO.findByDomainId(bayA10B2, "T2");
 		Tier tierB1T1 = Tier.DAO.findByDomainId(bayA10B1, "T1");
 		Tier tierB2T1 = Tier.DAO.findByDomainId(bayA10B2, "T1");
-		
+
+		id = tierB1T2.getLocationIdToParentLevel(Aisle.class);
+		Assert.assertTrue(id.equals("A10.B1.T2"));
+
 		// Mostly for code coverage. Does a complex iteration. But not aliases, so will be empty.
 		String aliasRange = tierB1T2.getSlotAliasRange();
 		Assert.assertTrue(aliasRange.isEmpty());
 
 		Slot slotB1T2S3 = Slot.DAO.findByDomainId(tierB1T2, "S3");
 		Assert.assertNotNull(slotB1T2S3);
+		
+		id = slotB1T2S3.getLocationIdToParentLevel(Aisle.class);
+		Assert.assertTrue(id.equals("A10.B1.T2.S3"));
 
 		Slot slotB2T2S3 = Slot.DAO.findByDomainId(tierB2T2, "S3");
 		Assert.assertNotNull(slotB2T2S3);

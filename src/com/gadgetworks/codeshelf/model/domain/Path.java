@@ -119,7 +119,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	public Path() {
 		description = "";
 	}
-	
+
 	public Path(Facility facility, String inDomainId, String inDescription) {
 		super(inDomainId);
 		parent = facility;
@@ -351,6 +351,11 @@ public class Path extends DomainObjectTreeABC<Facility> {
 				return -1;
 			} else if (inLoc1 == null) {
 				return 1;
+			}
+			// posAlongPath field is double, which may be null if the value was never set.
+			else if (inLoc1.getPosAlongPath() == null || inLoc2.getPosAlongPath() == null) {
+				LOGGER.error("posAlongPath value null"); // could output the location name
+				return 0; // not sure this makes sense.
 			} else if (inLoc1.getPosAlongPath() < inLoc2.getPosAlongPath()) {
 				return -1;
 			} else if (inLoc1.getPosAlongPath() > inLoc2.getPosAlongPath()) {
@@ -397,13 +402,20 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	public final <T extends ISubLocation<?>> List<T> getLocationsByClassAtOrPastLocation(final ILocation<?> inAtOrPastLocation,
 		final Class<? extends ISubLocation<?>> inClassWanted) {
 
+		if (inAtOrPastLocation.getPosAlongPath() == null) {
+			LOGGER.error("null posAlongPath in getLocationsByClassAtOrPastLocation #1");
+			return null; // is this right? or should it return an empty list?
+		}
+
 		// First make a list of all the bays on the CHE's path.
 		List<T> locations = getLocationsByClass(inClassWanted);
 
 		Iterator<T> iterator = locations.iterator();
 		while (iterator.hasNext()) {
 			T checkLocation = iterator.next();
-			if (checkLocation.getPosAlongPath() < inAtOrPastLocation.getPosAlongPath()) {
+			if (checkLocation.getPosAlongPath() == null) {
+				LOGGER.error("null posAlongPath in getLocationsByClassAtOrPastLocation #2");
+			} else if (checkLocation.getPosAlongPath() < inAtOrPastLocation.getPosAlongPath()) {
 				iterator.remove();
 			}
 		}
@@ -428,46 +440,43 @@ public class Path extends DomainObjectTreeABC<Facility> {
 
 		return result;
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * Delete the path and its segments. Called from the UI
 	 * @return
 	 */
 	public final void deleteThisPath() {
-		if (true) // This function does not work. It needs code review.
-			return;
-		
+
 		for (PathSegment segment : this.getSegments()) {
-			
+
 			// make sure segment is not associated to a location			
 			for (ILocation<?> location : segment.getLocations()) {
 				if (location.getPathSegment().equals(segment)) {
 					LOGGER.info("clearing path segment association");
 					location.setPathSegment(null);
 					// which DAO?
-					location.getDao().store(location);				
+					location.getDao().store(location);
 				}
 			}
-			// delete the work area
-			WorkArea wa = this.getWorkArea();
-			if (wa != null) {
-				
-				this.setWorkArea(null);
-				Path.DAO.store(this);
-				
-				wa.setParent(null);
-				WorkArea.DAO.store(wa);
-				
-				// WorkArea has lists of loations, users and active ches also. Need to worry about?
-				
-				WorkArea.DAO.delete(wa);
-				
-
-			}
-
 			// delete the segment
 			PathSegment.DAO.delete(segment);
+		}
+
+		// delete the work area
+		WorkArea wa = this.getWorkArea();
+		if (wa != null) {
+			this.setWorkArea(null);
+			Path.DAO.store(this);
+			WorkArea.DAO.delete(wa);
+
+			/*			
+			wa.setParent(null);
+			WorkArea.DAO.store(wa);
+			*/
+			// WorkArea has lists of locations, users and active ches also.
+			// Jeff said users and ches will come later, but for now, they do not point at the wa. He said location list can be removed.
+
 		}
 		// then delete this path
 		Path.DAO.delete(this);

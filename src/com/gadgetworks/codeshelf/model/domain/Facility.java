@@ -973,7 +973,7 @@ public class Facility extends SubLocationABC<Facility> {
 	@Transactional
 	public final Integer computeWorkInstructions(final Che inChe, final List<String> inContainerIdList) {
 		// TODO: Get one timestamp here
-		
+
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 
 		// Delete any planned WIs for this CHE.
@@ -996,9 +996,8 @@ public class Facility extends SubLocationABC<Facility> {
 				if (thisUse != null) {
 					thisUse.setCurrentChe(inChe);
 					try {
-					ContainerUse.DAO.store(thisUse);
-					}
-					catch(DaoException e){
+						ContainerUse.DAO.store(thisUse);
+					} catch (DaoException e) {
 						LOGGER.error("", e);
 					}
 				}
@@ -1008,7 +1007,7 @@ public class Facility extends SubLocationABC<Facility> {
 
 		// TODO: pass the timestamp into generateOutboundInstructions and generateCrossWallInstructions to use as create or assign time
 		Timestamp theTime = new Timestamp(System.currentTimeMillis());
-		
+
 		// Get all of the OUTBOUND work instructions.
 		// wiResultList.addAll(generateOutboundInstructions(containerList, theTime));
 
@@ -1033,9 +1032,19 @@ public class Facility extends SubLocationABC<Facility> {
 		Path path = cheLocation.getPathSegment().getParent();
 		Bay cheBay = cheLocation.getParentAtLevel(Bay.class);
 		Bay selectedBay = cheBay;
+		if (cheBay == null) {
+			LOGGER.error("Che does not have a bay parent location in getWorkInstructions #1");
+			return wiResultList;
+		} else if (cheBay.getPosAlongPath() == null) {
+			LOGGER.error("Ches bay parent location does not have posAlongPath in getWorkInstructions #2");
+			return wiResultList;
+		}
+
 		for (Bay bay : path.<Bay> getLocationsByClass(Bay.class)) {
 			// Find any bay sooner on the work path that's within 2% of this bay.
-			if ((bay.getPosAlongPath() < cheBay.getPosAlongPath())
+			if (bay.getPosAlongPath() == null) {
+				LOGGER.error("bay location does not have posAlongPath in getWorkInstructions #3");
+			} else if ((bay.getPosAlongPath() < cheBay.getPosAlongPath())
 					&& (bay.getPosAlongPath() + ISubLocation.BAY_ALIGNMENT_FUDGE > cheBay.getPosAlongPath())) {
 				selectedBay = bay;
 			}
@@ -1169,7 +1178,9 @@ public class Facility extends SubLocationABC<Facility> {
 	 * @param inCheLocation
 	 * @return
 	 */
-	private List<WorkInstruction> generateCrossWallInstructions(final Che inChe, final List<Container> inContainerList, final Timestamp inTime) {
+	private List<WorkInstruction> generateCrossWallInstructions(final Che inChe,
+		final List<Container> inContainerList,
+		final Timestamp inTime) {
 
 		List<WorkInstruction> wiList = new ArrayList<WorkInstruction>();
 
@@ -1412,10 +1423,9 @@ public class Facility extends SubLocationABC<Facility> {
 
 				// The new way of sending LED data to the remote controller. Note getEffectiveXXX instead of getLedController
 				List<LedSample> ledSamples = new ArrayList<LedSample>();
-				LedCmdGroup ledCmdGroup = new LedCmdGroup(orderLocation.getLocation().getEffectiveLedController().getDeviceGuidStr(),
-					orderLocation.getLocation().getEffectiveLedChannel(),
-					firstLedPosNum,
-					ledSamples);
+				LedCmdGroup ledCmdGroup = new LedCmdGroup(orderLocation.getLocation()
+					.getEffectiveLedController()
+					.getDeviceGuidStr(), orderLocation.getLocation().getEffectiveLedChannel(), firstLedPosNum, ledSamples);
 
 				for (short ledPos = firstLedPosNum; ledPos < lastLedPosNum; ledPos++) {
 					LedSample ledSample = new LedSample(ledPos, ColorEnum.BLUE);
@@ -1727,13 +1737,12 @@ public class Facility extends SubLocationABC<Facility> {
 			Integer wiCount = this.computeWorkInstructions(theChe, containersIdList);
 			// That did the work. Big side effect.
 			// To do: make computeWorkInstructions update the current che on the order headers
-			
+
 			// Get the work instructions for this CHE at this location for the given containers. Can we pass empty string? Normally user would scan where the CHE is starting.
 			List<WorkInstruction> wiList = this.getWorkInstructions(theChe, "");
 			Integer wiCountGot = wiList.size();
 			// getWorkInstructions() has no side effects. But the site controller request gets these.
 			// As work instructions are executed, they come back with start and complete time. and PLAN/NEW changes to ACTUAL/COMPLETE or ACTUAL/SHORT
-			
 
 		}
 
