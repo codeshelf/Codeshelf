@@ -701,8 +701,9 @@ public class Facility extends SubLocationABC<Facility> {
 			path.addPathSegment(pathSegment);
 		}
 
-		// Recompute the distances of the structures.
-		recomputeLocationPathDistances(path);
+		// Recompute the distances of the structures?
+		// This does no good as the path segments are not associated to aisles yet.
+		// recomputeLocationPathDistances(path);
 
 	}
 
@@ -777,6 +778,9 @@ public class Facility extends SubLocationABC<Facility> {
 				for (int n = 0; n < 4; n++) {
 					Vertex vertexN = new Vertex(inLocation, vertexNames[n], n, points[n]);
 					Vertex.DAO.store(vertexN);
+					// should not be necessary. ebeans trouble?
+					// Interesting bug. Drop aisle works. Redrop while still running lead to error if addVertex not there. Subsequent redrops after application start ok.
+					inLocation.addVertex(vertexN);
 				}
 			} catch (DaoException e) {
 				LOGGER.error("", e);

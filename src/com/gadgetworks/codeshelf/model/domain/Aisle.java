@@ -52,10 +52,7 @@ public class Aisle extends SubLocationABC<Facility> {
 		}
 	}
 
-	public Aisle(final Facility inParentFacility,
-		final String inAisleId,
-		final Point inAnchorPoint,
-		final Point inPickFaceEndPoint) {
+	public Aisle(final Facility inParentFacility, final String inAisleId, final Point inAnchorPoint, final Point inPickFaceEndPoint) {
 		super(inAnchorPoint, inPickFaceEndPoint);
 		setParent(inParentFacility);
 		setDomainId(inAisleId);
@@ -69,26 +66,27 @@ public class Aisle extends SubLocationABC<Facility> {
 	public final String getDefaultDomainIdPrefix() {
 		return "A";
 	}
-	
+
 	// getPathSegId() in LocationABC.java
 	public final void associatePathSegment(String inPathSegPersistentID) {
 		// to support setting of list view meta-field pathSegId
-		
+
 		// Get the PathSegment
 		UUID persistentId = UUID.fromString(inPathSegPersistentID);
 		PathSegment pathSegment = PathSegment.DAO.findByPersistentId(persistentId);
 
 		if (pathSegment != null) {
 			this.setPathSegment(pathSegment);
-			this.getDao().store(this);	
-		}
-		else {
+			this.getDao().store(this);
+			// should not be necessary. Ebeans bug? After restart, ebeans figures it out.
+			pathSegment.addLocation(this);
+		} else {
 			throw new DaoException("Could not associate path segment, segment not found: " + inPathSegPersistentID);
 		}
 	}
 
 	public final void setControllerChannel(String inControllerPersistentIDStr, String inChannelStr) {
-		doSetControllerChannel(inControllerPersistentIDStr, inChannelStr);		
+		doSetControllerChannel(inControllerPersistentIDStr, inChannelStr);
 	}
 
 }
