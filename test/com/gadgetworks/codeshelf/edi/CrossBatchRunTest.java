@@ -46,13 +46,9 @@ import com.gadgetworks.codeshelf.model.domain.UomMaster;
  */
 public class CrossBatchRunTest extends EdiTestABC {
 
-	private ItemMaster createItemMaster(final String inItemMasterId, final String inUom, final Facility inFacility) {
-		ItemMaster result = null;
-		if (true)
-			return null;
-
-
-		return result;
+	@Test
+	public final void doNothing() {
+		Assert.assertTrue(true);
 	}
 
 }
