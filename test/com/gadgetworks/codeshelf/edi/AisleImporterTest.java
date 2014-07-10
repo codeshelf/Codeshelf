@@ -216,24 +216,26 @@ public class AisleImporterTest extends DomainTestABC {
 		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
 		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 		
-		/* JR think we need this
+		/* getLocationIdToParentLevel gives "" for this. You might argue it should give "F1". 
+		 * Originally NPE this case, so determinant result is good. 
+		 * Normally calles as this, to the aisle level. */
 		String id = facility.getLocationIdToParentLevel(Aisle.class);
 		Assert.assertTrue(id.isEmpty());
-		*/
+		
 
 		// Check what we got
 		Aisle aisle = Aisle.DAO.findByDomainId(facility, "A10");
 		Assert.assertNotNull(aisle);
 		
-		/* JR think we need this
+		/* getLocationIdToParentLevel */
 		id = aisle.getLocationIdToParentLevel(Aisle.class);
 		Assert.assertTrue(id.equals("A10"));
-		*/
+		
 
 		Bay bayA10B1 = Bay.DAO.findByDomainId(aisle, "B1");
 		Bay bayA10B2 = Bay.DAO.findByDomainId(aisle, "B2");
 
-		String id = bayA10B1.getLocationIdToParentLevel(Aisle.class);
+		id = bayA10B1.getLocationIdToParentLevel(Aisle.class);
 		Assert.assertTrue(id.equals("A10.B1"));
 
 		Tier tierB1T2 = Tier.DAO.findByDomainId(bayA10B1, "T2");
@@ -250,6 +252,9 @@ public class AisleImporterTest extends DomainTestABC {
 
 		Slot slotB1T2S3 = Slot.DAO.findByDomainId(tierB1T2, "S3");
 		Assert.assertNotNull(slotB1T2S3);
+		
+		id = slotB1T2S3.getLocationIdToParentLevel(Aisle.class);
+		Assert.assertTrue(id.equals("A10.B1.T2.S3"));
 		
 		id = slotB1T2S3.getLocationIdToParentLevel(Aisle.class);
 		Assert.assertTrue(id.equals("A10.B1.T2.S3"));

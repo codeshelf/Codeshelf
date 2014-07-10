@@ -121,10 +121,10 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	public static String makeDomainId(final String inItemId, final ILocation<?> inLocation) {
 		// as soon as we have "lot" field on item, we want to either pass the lot in, or get from the item.
 		// an item is defined unique combination of item master, lot, and location.
-		/* JR think we need this
 		return inItemId + "-" + inLocation.getLocationIdToParentLevel(Aisle.class);
-		*/
+		/*
 		return inItemId + "-" + inLocation.getLocationId();
+		*/
 	}
 
 	public Item() {

@@ -297,13 +297,11 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 		// It seems reasonable in the code to ask for getLocationIdToParentLevel(Aisle.class) when the class of the object is unknown, and might even be the facility.
 		// Let's not NPE.
-		/* JR think we need this
 		if (this.getClass().equals(Facility.class))
 			return "";
 		else if (this.getClass().equals(inClassWanted)) {
 			return getLocationId();
 		}
-		*/
 
 		// There's some weirdness with Ebean and navigating a recursive hierarchy. (You can't go down and then back up to a different class.)
 		// This fixes that problem, but it's not pretty.
