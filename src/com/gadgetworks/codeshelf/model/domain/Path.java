@@ -441,6 +441,15 @@ public class Path extends DomainObjectTreeABC<Facility> {
 		return result;
 	}
 
+	// For a UI field
+	public final int getAssociatedLocationCount() {
+		int returnInt = 0;
+		for (PathSegment segment : this.getSegments()) {
+			returnInt += segment.getAssociatedLocationCount();
+		}
+		return returnInt;
+	}
+
 	// --------------------------------------------------------------------------
 	/**
 	 * Delete the path and its segments. Called from the UI
