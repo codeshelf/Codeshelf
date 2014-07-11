@@ -18,5 +18,6 @@ public interface ICsWebSocketClient extends WebSocket {
 	void stop();
 
 	boolean isStarted();
-
+	
+	long getPingTimerElapsed();
 }

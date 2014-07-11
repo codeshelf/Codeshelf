@@ -34,6 +34,7 @@ import com.gadgetworks.codeshelf.ws.command.req.WsReqCmdEnum;
 import com.gadgetworks.codeshelf.ws.command.resp.CheComputeWorkRespCmd;
 import com.gadgetworks.codeshelf.ws.command.resp.WsRespCmdEnum;
 import com.gadgetworks.codeshelf.ws.websocket.CsWebSocketClient;
+import com.gadgetworks.codeshelf.ws.websocket.CsWebSocketServer;
 import com.gadgetworks.codeshelf.ws.websocket.ICsWebSocketClient;
 import com.gadgetworks.codeshelf.ws.websocket.ICsWebsocketClientMsgHandler;
 import com.gadgetworks.codeshelf.ws.websocket.IWebSocketSslContextFactory;
@@ -49,6 +50,7 @@ import com.google.inject.name.Named;
  *
  */
 public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgHandler, IRadioControllerEventListener {
+	public static final int					WS_CLIENT_WATCHDOG_SLEEP_MS	= 1000;
 
 	private static final Logger				LOGGER						= LoggerFactory.getLogger(CsDeviceManager.class);
 
@@ -56,6 +58,7 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 	private static final Integer			WEBSOCKET_OPEN_RETRY_MILLIS	= 5000;
 	private static final String				PREFFERED_CHANNEL_PROP		= "codeshelf.preferred.channel";
 	private static final Byte				DEFAULT_CHANNEL				= 5;
+
 
 	private Map<NetGuid, INetworkDevice>	mDeviceMap;
 	private IRadioController				mRadioController;
@@ -127,7 +130,26 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 		Thread websocketCheckThread = new Thread(new Runnable() {
 			public void run() {
 				while (true) {
-					if ((mWebSocketClient == null) || (!mWebSocketClient.isStarted())) {
+					boolean isDeadConnection = false;
+					if (mWebSocketClient == null) {
+						LOGGER.warn("WebSocket watchdog: dead connection, mWebSocketClient is null");
+						isDeadConnection = true;
+					} else if (!mWebSocketClient.isStarted()) {
+						LOGGER.warn("WebSocket watchdog: dead connection - mWebSocketClient.isStarted() is false");
+						isDeadConnection = true;
+					} else {
+						long elapsed = mWebSocketClient.getPingTimerElapsed();
+						if (elapsed > CsWebSocketServer.WS_PINGPONG_WARN_ELAPSED_MS) {
+							LOGGER.info("WebSocket watchdog: warning for missed PING, last " + elapsed + " ms ago");
+						} else if (elapsed > CsWebSocketServer.WS_PINGPONG_MAX_ELAPSED_MS) {
+							LOGGER.warn("WebSocket watchdog: dead connection - maximum elapsed PING time reached (" + elapsed
+									+ " ms)");
+							isDeadConnection = true;
+						} else {
+							//LOGGER.debug("WebSocket watchdog okay, last ping "+elapsed+" ms ago");
+						}
+					}
+					if (isDeadConnection) {
 						// We used to inject this, but the Java_WebSocket is not re-entrant so we have to create new sockets at runtime if the server connection breaks.
 						mWebSocketClient = new CsWebSocketClient(mUri, mUtil, mMessageHandler, mWebSocketFactory);
 						mWebSocketClient.start();
@@ -151,6 +173,7 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 
 							sendWebSocketMessageNode(WsReqCmdEnum.NET_ATTACH_REQ, dataNode);
 						} else {
+							// wait for socket to reopen
 							try {
 								Thread.sleep(WEBSOCKET_OPEN_RETRY_MILLIS);
 							} catch (InterruptedException e) {
@@ -159,7 +182,7 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 						}
 					} else {
 						try {
-							Thread.sleep(WEBSOCKET_OPEN_RETRY_MILLIS);
+							Thread.sleep(WS_CLIENT_WATCHDOG_SLEEP_MS);
 						} catch (InterruptedException e) {
 							LOGGER.error("", e);
 						}
