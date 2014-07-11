@@ -139,12 +139,12 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 						isDeadConnection = true;
 					} else {
 						long elapsed = mWebSocketClient.getPingTimerElapsed();
-						if (elapsed > CsWebSocketServer.WS_PINGPONG_WARN_ELAPSED_MS) {
-							LOGGER.info("WebSocket watchdog: warning for missed PING, last " + elapsed + " ms ago");
-						} else if (elapsed > CsWebSocketServer.WS_PINGPONG_MAX_ELAPSED_MS) {
+						if (elapsed > CsWebSocketServer.WS_PINGPONG_MAX_ELAPSED_MS) {
 							LOGGER.warn("WebSocket watchdog: dead connection - maximum elapsed PING time reached (" + elapsed
 									+ " ms)");
 							isDeadConnection = true;
+						} else if (elapsed > CsWebSocketServer.WS_PINGPONG_WARN_ELAPSED_MS) {
+							LOGGER.info("WebSocket watchdog: warning for missed PING, last " + elapsed + " ms ago");
 						} else {
 							//LOGGER.debug("WebSocket watchdog okay, last ping "+elapsed+" ms ago");
 						}

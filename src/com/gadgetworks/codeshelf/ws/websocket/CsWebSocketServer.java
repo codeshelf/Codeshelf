@@ -72,12 +72,12 @@ public class CsWebSocketServer extends WebSocketServer implements IWebSocketServ
 						websocket.sendFrame(pingFrame);
 
 						long elapsed = getPongTimerElapsed(websocket);
-						if (elapsed > CsWebSocketServer.WS_PINGPONG_WARN_ELAPSED_MS) {
-							LOGGER.info("WebSocket watchdog: warning for missed PONG, last " + elapsed + " ms ago");
-						} else if (elapsed > CsWebSocketServer.WS_PINGPONG_MAX_ELAPSED_MS) {
+						if (elapsed > CsWebSocketServer.WS_PINGPONG_MAX_ELAPSED_MS) {
 							LOGGER.warn("WebSocket watchdog: dead connection - maximum elapsed PONG time reached (" + elapsed
 									+ " ms)");
 							websocket.closeConnection(WS_CLOSE_CODE_PINGPONG_TIMEOUT, "PONG timeout expired");
+						} else if (elapsed > CsWebSocketServer.WS_PINGPONG_WARN_ELAPSED_MS) {
+							LOGGER.info("WebSocket watchdog: warning for missed PONG, last " + elapsed + " ms ago");
 						} else {
 							//LOGGER.debug("WebSocket watchdog okay, last ping "+elapsed+" ms ago");
 						}
