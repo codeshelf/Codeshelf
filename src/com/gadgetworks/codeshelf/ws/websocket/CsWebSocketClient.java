@@ -14,6 +14,7 @@ import javax.net.ssl.SSLSocketFactory;
 import org.java_websocket.WebSocket;
 import org.java_websocket.WebSocketImpl;
 import org.java_websocket.client.WebSocketClient;
+import org.java_websocket.framing.Framedata;
 import org.java_websocket.handshake.ServerHandshake;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -95,5 +96,12 @@ public class CsWebSocketClient extends WebSocketClient implements ICsWebSocketCl
 
 	public final void onError(final Exception inException) {
 		LOGGER.debug("Websocket error");
+	}
+
+	@Override
+	public final void onWebsocketPing(WebSocket inWebSocket, Framedata inFramedata) {
+		super.onWebsocketPing(inWebSocket, inFramedata); // respond with pong
+		LOGGER.debug("Websocket ping received");
+		// TODO: report time to watchdog
 	}
 }
