@@ -104,9 +104,9 @@ public class CsWebSocketServer extends WebSocketServer implements IWebSocketServ
 	}
 
 	@Override
-	public void onWebsocketPong(WebSocket conn, Framedata f) {
-		super.onWebsocketPong(conn, f); // does nothing
-		LOGGER.debug("WebSocket pong from " + conn.getRemoteSocketAddress());
+	public final void onWebsocketPong(WebSocket inWebSocket, Framedata inFrameData) {
+		super.onWebsocketPong(inWebSocket, inFrameData); // does nothing
+		LOGGER.debug("WebSocket pong from " + inWebSocket.getRemoteSocketAddress());
 		// TODO: report time to ping (watchdog) thread
 	}
 }

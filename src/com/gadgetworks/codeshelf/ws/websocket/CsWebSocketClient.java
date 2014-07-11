@@ -99,8 +99,8 @@ public class CsWebSocketClient extends WebSocketClient implements ICsWebSocketCl
 	}
 
 	@Override
-	public void onWebsocketPing(WebSocket conn, Framedata f) {
-		super.onWebsocketPing(conn, f); // respond with pong
+	public final void onWebsocketPing(WebSocket inWebSocket, Framedata inFramedata) {
+		super.onWebsocketPing(inWebSocket, inFramedata); // respond with pong
 		LOGGER.debug("Websocket ping received");
 		// TODO: report time to watchdog
 	}
