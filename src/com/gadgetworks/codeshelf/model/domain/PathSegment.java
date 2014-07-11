@@ -210,6 +210,11 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 	public final Double getLength() {
 		return Math.sqrt(Math.pow(startPosX - endPosX, 2) + Math.pow(startPosY - endPosY, 2));
 	}
+	
+	// For a UI field
+	public final int getAssociatedLocationCount(){
+		return locations.size();
+	}
 
 	// --------------------------------------------------------------------------
 	/**
