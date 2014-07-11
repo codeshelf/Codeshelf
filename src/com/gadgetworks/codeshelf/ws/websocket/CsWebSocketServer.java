@@ -153,6 +153,6 @@ public class CsWebSocketServer extends WebSocketServer implements IWebSocketServ
 	public final void onWebsocketPong(WebSocket inWebSocket, Framedata inFrameData) {
 		super.onWebsocketPong(inWebSocket, inFrameData); // does nothing
 		LOGGER.debug("WebSocket pong from " + inWebSocket.getRemoteSocketAddress());
-		// TODO: report time to ping (watchdog) thread
+		resetPongTimer(inWebSocket);
 	}
 }
