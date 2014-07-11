@@ -10,6 +10,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 
 import org.java_websocket.WebSocket;
 import org.java_websocket.WebSocketImpl;
+import org.java_websocket.framing.Framedata;
 import org.java_websocket.framing.FramedataImpl1;
 import org.java_websocket.framing.Framedata.Opcode;
 import org.java_websocket.handshake.ClientHandshake;
@@ -100,5 +101,12 @@ public class CsWebSocketServer extends WebSocketServer implements IWebSocketServ
 		} else {
 			LOGGER.error("Error: (CsWebSocketServer.onError - websocket was null)", inException);
 		}
+	}
+
+	@Override
+	public void onWebsocketPong(WebSocket conn, Framedata f) {
+		super.onWebsocketPong(conn, f); // does nothing
+		LOGGER.debug("WebSocket pong from " + conn.getRemoteSocketAddress());
+		// TODO: report time to ping (watchdog) thread
 	}
 }
