@@ -141,14 +141,17 @@ public class ObjectListenerWsReqCmd extends WsReqCmdABC implements IWsPersistent
 				for (String propertyName : mPropertyNames) {
 					// Execute the "get" method against the parents to return the children.
 					// (The method *must* start with "get" to ensure other methods don't get called.)
+					String rememberGetterName = "";
 					try {
 						String getterName = "get" + Character.toUpperCase(propertyName.charAt(0)) + propertyName.substring(1);
+						rememberGetterName = getterName;
 						//String getterName = "get" + propertyName;
 						java.lang.reflect.Method method = matchedObject.getClass().getMethod(getterName, (Class<?>[]) null);
 						Object resultObject = method.invoke(matchedObject, (Object[]) null);
 						propertiesMap.put(propertyName, resultObject);
 					} catch (NoSuchMethodException e) {
-						LOGGER.error("Method not found", e);
+						// Minor problem. UI hierarchical view asks for same data field name for all object types in the view. Not really an error in most cases
+						LOGGER.debug("Method not found in ObjectListenerWsReqCmd getProperties: " + rememberGetterName);
 					}
 				}
 				resultsList.add(propertiesMap);

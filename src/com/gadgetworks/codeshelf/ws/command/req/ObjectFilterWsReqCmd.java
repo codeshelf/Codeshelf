@@ -96,8 +96,9 @@ public class ObjectFilterWsReqCmd extends WsReqCmdABC implements IWsPersistentRe
 			mFilterClause = filterClauseNode.getTextValue();
 
 			JsonNode propertiesNode = dataJsonNode.get(FILTER_PARAMS);
-			List<Map<String, Object>> objectArray = mapper.readValue(propertiesNode, new TypeReference<List<Map<String, Object>>>() {
-			});
+			List<Map<String, Object>> objectArray = mapper.readValue(propertiesNode,
+				new TypeReference<List<Map<String, Object>>>() {
+				});
 			for (Map<String, Object> map : objectArray) {
 				String name = (String) map.get("name");
 				Object value = map.get("value");
@@ -156,13 +157,16 @@ public class ObjectFilterWsReqCmd extends WsReqCmdABC implements IWsPersistentRe
 					// (The method *must* start with "get" to ensure other methods don't get called.)
 					// Capitalize the property name to invoke the getter for it.
 					String getterName = "get" + Character.toUpperCase(propertyName.charAt(0)) + propertyName.substring(1);
+					String rememberGetterName = getterName;
+
 					try {
 						java.lang.reflect.Method method = matchedObject.getClass().getMethod(getterName, (Class<?>[]) null);
 						Class<?> methodReturnType = method.getReturnType();
 						Object resultObject = method.invoke(matchedObject, (Object[]) null);
 						propertiesMap.put(propertyName, resultObject);
 					} catch (NoSuchMethodException e) {
-						LOGGER.error("Method " + getterName + " not found", e);
+						// Minor problem. UI hierarchical view asks for same data field name for all object types in the view. Not really an error in most cases
+						LOGGER.debug("Method not found in ObjectFilterWsReqCmd getProperties: " + rememberGetterName);
 					}
 				}
 				resultsList.add(propertiesMap);
