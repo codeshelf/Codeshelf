@@ -1699,7 +1699,7 @@ public class Facility extends SubLocationABC<Facility> {
 		boolean result = false;
 		for (OrderHeader theOrder : getOrderHeaders()) {
 			if ((theOrder.getOrderTypeEnum().equals(OrderTypeEnum.CROSS)) && (theOrder.getActive())) {
-				result = false;
+				result = true;
 				break;
 			}
 		}

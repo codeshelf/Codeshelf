@@ -5,6 +5,7 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
+import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -16,6 +17,7 @@ import org.codehaus.jackson.node.ObjectNode;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.google.common.collect.Lists;
 
@@ -64,6 +66,29 @@ public class FacilityTest extends DomainTestABC {
 		//			Assert.assertNotNull(wi);
 		//			
 		//		}
+	}
+	
+	@Test
+	public void testHasCrossbatchOrders() {
+		Organization organization = new Organization();
+		organization.setOrganizationId("FTEST3.O1");
+		mOrganizationDao.store(organization);
+
+		Facility facility = new Facility(new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0));
+		facility.setParent(organization);
+		facility.setFacilityId("FTEST3.F2");
+		mFacilityDao.store(facility);
+		
+		OrderHeader crossbatchOrder = new OrderHeader();
+		crossbatchOrder.setParent(facility);
+		crossbatchOrder.setDomainId("ORDER1");
+		crossbatchOrder.setUpdated(new Timestamp(0));
+		crossbatchOrder.setOrderTypeEnum(OrderTypeEnum.CROSS);
+		crossbatchOrder.setActive(true);
+		mOrderHeaderDao.store(crossbatchOrder);
+		
+		boolean hasCrossBatchOrders = mFacilityDao.findByPersistentId(facility.getPersistentId()).hasCrossBatchOrders();
+		Assert.assertTrue(hasCrossBatchOrders);
 	}
 	
 	/**
