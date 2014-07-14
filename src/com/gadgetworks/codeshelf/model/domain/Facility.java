@@ -27,6 +27,7 @@ import lombok.Getter;
 
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
+import org.codehaus.jackson.annotate.JsonProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -1693,6 +1694,7 @@ public class Facility extends SubLocationABC<Facility> {
 	 * This is first done via "inferred parameter"; look at the data to determine the answer. Might change to explicit parameter later.
 	 * The UI needs this answer. UI gets it at login.
 	 */
+	@JsonProperty("hasCrossBatchOrders")
 	public final boolean hasCrossBatchOrders() {
 		boolean result = false;
 		for (OrderHeader theOrder : getOrderHeaders()) {
@@ -1710,6 +1712,7 @@ public class Facility extends SubLocationABC<Facility> {
 	 * The UI needs this answer. UI gets it at login.
 	 * If true, the UI wants to believe that ALL crossbatch and outbound orders have an order group. The orders view will not show at all any orders without a group.
 	 */
+	@JsonProperty("hasMeaningfulOrderGroups")
 	public final boolean hasMeaningfulOrderGroups() {
 		
 		List<OrderGroup> groupsList = this.getOrderGroups();
