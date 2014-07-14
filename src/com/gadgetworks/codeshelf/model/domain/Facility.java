@@ -1687,6 +1687,37 @@ public class Facility extends SubLocationABC<Facility> {
 
 		return result;
 	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * This is first done via "inferred parameter"; look at the data to determine the answer. Might change to explicit parameter later.
+	 * The UI needs this answer. UI gets it at login.
+	 */
+	public final boolean hasCrossBatchOrders() {
+		boolean result = false;
+		for (OrderHeader theOrder : getOrderHeaders()) {
+			if ((theOrder.getOrderTypeEnum().equals(OrderTypeEnum.CROSS)) && (theOrder.getActive())) {
+				result = false;
+				break;
+			}
+		}
+		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * This is first done via "inferred parameter"; look at the data to determine the answer. Might change to explicit parameter later.
+	 * The UI needs this answer. UI gets it at login.
+	 * If true, the UI wants to believe that ALL crossbatch and outbound orders have an order group. The orders view will not show at all any orders without a group.
+	 */
+	public final boolean hasMeaningfulOrderGroups() {
+		
+		List<OrderGroup> groupsList = this.getOrderGroups();
+		boolean result = groupsList.size() > 0;
+		// clearly might give the wrong value if site is initially misconfigured. Could look at the orderHeaders in more detail. Do most have groups?
+
+		return result;
+	}
 
 	// --------------------------------------------------------------------------
 	/**
