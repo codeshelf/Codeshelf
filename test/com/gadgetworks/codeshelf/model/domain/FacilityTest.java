@@ -73,7 +73,6 @@ public class FacilityTest extends DomainTestABC {
 	public void testSerializationOfExtraFields() {
 		Organization organization = new Organization();
 		organization.setOrganizationId("FTEST2.O1");
-		mOrganizationDao.store(organization);
 
 		Facility facility = new Facility(new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0));
 		facility.setParent(organization);
