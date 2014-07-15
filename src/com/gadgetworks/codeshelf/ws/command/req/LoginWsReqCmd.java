@@ -14,7 +14,6 @@ import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.ws.command.resp.IWsRespCmd;
 import com.gadgetworks.codeshelf.ws.command.resp.LoginWsRespCmd;
-import com.gadgetworks.codeshelf.ws.command.resp.LoginWsRespCmdTest;
 
 /**
  * 
