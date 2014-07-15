@@ -12,6 +12,7 @@ import org.java_websocket.WebSocket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.gadgetworks.codeshelf.ws.IWebSession.ConnectionActivityStatus;
 import com.gadgetworks.codeshelf.ws.command.req.IWsReqCmdFactory;
 import com.gadgetworks.codeshelf.ws.command.resp.IWsRespCmd;
 import com.google.inject.Inject;
@@ -24,11 +25,11 @@ import com.google.inject.Singleton;
 @Singleton
 public class WebSessionManager implements IWebSessionManager {
 
-	private static final Logger				LOGGER	= LoggerFactory.getLogger(WebSessionManager.class);
+	private static final Logger			LOGGER	= LoggerFactory.getLogger(WebSessionManager.class);
 
 	private Map<WebSocket, IWebSession>	mWebSessions;
-	private IWsReqCmdFactory				mWebSessionReqCmdFactory;
-	private IWebSessionFactory				mWebSessionFactory;
+	private IWsReqCmdFactory			mWebSessionReqCmdFactory;
+	private IWebSessionFactory			mWebSessionFactory;
 
 	@Inject
 	public WebSessionManager(final IWsReqCmdFactory inWebSessionReqCmdFactory, final IWebSessionFactory inWebSessionFactory) {
@@ -67,5 +68,45 @@ public class WebSessionManager implements IWebSessionManager {
 				webSession.sendCommand(respCommand);
 			}
 		}
+	}
+
+	@Override
+	public final void handlePong(WebSocket inWebSocket) {
+		IWebSession webSession = mWebSessions.get(inWebSocket);
+		if (webSession == null) {
+			LOGGER.warn("Got PONG on web socket for session that doesn't exist!");
+		} else {
+			webSession.resetPongTimer();
+		}
+	}
+
+	@Override
+	public final boolean checkLastPongTime(WebSocket inWebSocket, long inWarningMillis, long inErrorMillis) {
+		IWebSession webSession = mWebSessions.get(inWebSocket);
+		if (webSession == null) {
+			LOGGER.warn("checkLastPongTime called for session that doesn't exist!");
+			return false;
+		} // else
+		long elapsed = webSession.getPongTimerElapsedMillis();
+		boolean elapsedOk = true;
+
+		if (elapsed > inErrorMillis) {
+			if (webSession.setConnectionActivityStatus(ConnectionActivityStatus.DEAD)) {
+				LOGGER.warn("Connection DEAD - elapsed time since PONG " + elapsed + " ms " + inWebSocket.getRemoteSocketAddress());
+			}
+			elapsedOk = false;
+		} else if (elapsed > inWarningMillis) {
+			if (webSession.setConnectionActivityStatus(ConnectionActivityStatus.IDLE)) {
+				LOGGER.info("Connection WARNING - elapsed time since PONG " + elapsed + " ms "
+						+ inWebSocket.getRemoteSocketAddress());
+			}
+		} else {
+			if (webSession.setConnectionActivityStatus(ConnectionActivityStatus.ACTIVE)) {
+				LOGGER.info("Connection RECOVERED - elapsed time since PONG " + elapsed + " ms "
+						+ inWebSocket.getRemoteSocketAddress());
+			}
+		}
+
+		return elapsedOk;
 	}
 }

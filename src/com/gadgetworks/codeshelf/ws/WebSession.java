@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.shiro.realm.Realm;
 import org.codehaus.jackson.JsonNode;
@@ -33,16 +34,20 @@ import com.google.inject.assistedinject.Assisted;
  */
 public class WebSession implements IWebSession, IDaoListener {
 
-	private static final Logger					LOGGER	= LoggerFactory.getLogger(WebSession.class);
+	private static final Logger					LOGGER						= LoggerFactory.getLogger(WebSession.class);
 
 	private WebSessionStateEnum					mState;
 	private Realm								mSecurityRealm;
 	private WebSocket							mWebSocket;
 	private IWsReqCmdFactory					mWebSessionReqCmdFactory;
 	private Map<String, IWsPersistentReqCmd>	mPersistentCommands;
+	private AtomicLong							mLastPongTime = new AtomicLong();
+	private ConnectionActivityStatus			mConnectionActivityStatus	= ConnectionActivityStatus.ACTIVE;
 
 	@Inject
-	public WebSession(@Assisted final WebSocket inWebSocket, @Assisted final IWsReqCmdFactory inWebSessionReqCmdFactory, final Realm inRealm) {
+	public WebSession(@Assisted final WebSocket inWebSocket,
+		@Assisted final IWsReqCmdFactory inWebSessionReqCmdFactory,
+		final Realm inRealm) {
 		mWebSocket = inWebSocket;
 		mWebSessionReqCmdFactory = inWebSessionReqCmdFactory;
 		mSecurityRealm = inRealm;
@@ -135,5 +140,31 @@ public class WebSession implements IWebSession, IDaoListener {
 				}
 			}
 		}
+	}
+
+	@Override
+	public final void resetPongTimer() {
+		mLastPongTime.set(System.currentTimeMillis());
+	}
+
+	@Override
+	public final long getPongTimerElapsedMillis() {
+		long pong = mLastPongTime.get();
+		if (pong == 0) {
+			// first time called for this websocket
+			resetPongTimer();
+			return 0;
+		} //else
+		return System.currentTimeMillis() - pong;
+	}
+
+	@Override
+	public final boolean setConnectionActivityStatus(ConnectionActivityStatus inNewStatus) {
+		if (mConnectionActivityStatus != inNewStatus) {
+			mConnectionActivityStatus = inNewStatus;
+			return true;
+		} //else
+		mConnectionActivityStatus = inNewStatus;
+		return false;
 	}
 }

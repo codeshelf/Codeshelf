@@ -6,7 +6,6 @@
 package com.gadgetworks.codeshelf.ws.websocket;
 
 import java.net.InetSocketAddress;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -27,8 +26,11 @@ import com.google.inject.name.Named;
 
 public class CsWebSocketServer extends WebSocketServer implements IWebSocketServer {
 	public static final int					WEBSOCKET_PING_INTERVAL_MILLIS	= 20000;
+	public static final int					WEBSOCKET_CHECK_INTERVAL_MILLIS	= 1000;											// Must divide evenly into WEBSOCKET_PING_INTERVAL_MILLIS
+
 	public static final long				WS_PINGPONG_ROUNDTRIP_DELAY_MS	= 2000;
-	public static final long				WS_PINGPONG_WARN_ELAPSED_MS		= WEBSOCKET_PING_INTERVAL_MILLIS
+	public static final int					WS_PINGPONG_WARN_MISSED			= 1;
+	public static final long				WS_PINGPONG_WARN_ELAPSED_MS		= (WS_PINGPONG_WARN_MISSED * WEBSOCKET_PING_INTERVAL_MILLIS)
 																					+ WS_PINGPONG_ROUNDTRIP_DELAY_MS;
 	public static final int					WS_PINGPONG_MAX_MISSED			= 2;
 	public static final long				WS_PINGPONG_MAX_ELAPSED_MS		= (WS_PINGPONG_MAX_MISSED * WEBSOCKET_PING_INTERVAL_MILLIS)
@@ -39,8 +41,8 @@ public class CsWebSocketServer extends WebSocketServer implements IWebSocketServ
 
 	private IWebSessionManager				mWebSessionManager;
 	private CopyOnWriteArraySet<WebSocket>	mWebSockets;
+	private boolean							mIdleKill;
 
-	private Map<WebSocket, Long>			webSocketLastPingTime			= new ConcurrentHashMap<WebSocket, Long>();
 	@Inject
 	public CsWebSocketServer(@Named(WEBSOCKET_HOSTNAME_PROPERTY) final String inAddr,
 		@Named(WEBSOCKET_PORTNUM_PROPERTY) final int inPort,
@@ -51,6 +53,8 @@ public class CsWebSocketServer extends WebSocketServer implements IWebSocketServ
 		WebSocketImpl.DEBUG = Boolean.parseBoolean(System.getProperty("websocket.debug"));
 		setWebSocketFactory(inWebSocketServerFactory);
 
+		mIdleKill = Boolean.parseBoolean(System.getProperty("websocket.idle.kill"));
+		
 		mWebSessionManager = inWebSessionManager;
 		mWebSockets = new CopyOnWriteArraySet<WebSocket>();
 	}
@@ -61,43 +65,45 @@ public class CsWebSocketServer extends WebSocketServer implements IWebSocketServ
 
 		Thread websocketPingThread = new Thread(new Runnable() {
 			public void run() {
+				int checksPerPing = WEBSOCKET_PING_INTERVAL_MILLIS / WEBSOCKET_CHECK_INTERVAL_MILLIS;
+				int cycle = 0;
 				while (true) {
-					LOGGER.trace("WebSocket watchdog: ping process start");
-					int activeWebSockets = 0;
-					for (WebSocket websocket : mWebSockets) {
-						activeWebSockets++;
-						LOGGER.debug("WebSocket watchdog: ping " + websocket.getRemoteSocketAddress());
-						FramedataImpl1 pingFrame = new FramedataImpl1(Opcode.PING);
-						pingFrame.setFin(true);
-						websocket.sendFrame(pingFrame);
-
-						long elapsed = getPongTimerElapsed(websocket);
-						if (elapsed > CsWebSocketServer.WS_PINGPONG_MAX_ELAPSED_MS) {
-							LOGGER.warn("WebSocket watchdog: dead connection - maximum elapsed PONG time reached (" + elapsed
-									+ " ms) "+ websocket.getRemoteSocketAddress());
-							websocket.closeConnection(WS_CLOSE_CODE_PINGPONG_TIMEOUT, "PONG timeout expired");
-						} else if (elapsed > CsWebSocketServer.WS_PINGPONG_WARN_ELAPSED_MS) {
-							LOGGER.info("WebSocket watchdog: warning for missed PONG, last " + elapsed + " ms ago "+ websocket.getRemoteSocketAddress());
+					if (++cycle % checksPerPing == 0) {
+						LOGGER.trace("WebSocket watchdog: ping process start");
+						int activeWebSockets = 0;
+						for (WebSocket websocket : mWebSockets) {
+							activeWebSockets++;
+							LOGGER.debug("WebSocket watchdog: ping " + websocket.getRemoteSocketAddress());
+							FramedataImpl1 pingFrame = new FramedataImpl1(Opcode.PING);
+							pingFrame.setFin(true);
+							websocket.sendFrame(pingFrame);
+						}
+						if (activeWebSockets == 0) {
+							// log at a higher level if 0 clients are connected
+							LOGGER.debug("WebSocket watchdog: pinged " + activeWebSockets + " clients");
 						} else {
-							//LOGGER.debug("WebSocket watchdog okay, last ping "+elapsed+" ms ago");
+							LOGGER.trace("WebSocket watchdog: pinged " + activeWebSockets + " clients");
 						}
 					}
-					if (activeWebSockets == 0) {
-						// log at a higher level if 0 clients are connected
-						LOGGER.debug("WebSocket watchdog: pinged " + activeWebSockets + " clients");
-					} else {
-						LOGGER.trace("WebSocket watchdog: pinged " + activeWebSockets + " clients");
+
+					for (WebSocket websocket : mWebSockets) {
+						if (!mWebSessionManager.checkLastPongTime(websocket, WS_PINGPONG_WARN_ELAPSED_MS, WS_PINGPONG_MAX_ELAPSED_MS)) {
+							if (mIdleKill) {
+								websocket.closeConnection(WS_CLOSE_CODE_PINGPONG_TIMEOUT, "PONG timeout expired");
+							}
+						}
 					}
 
 					try {
-						Thread.sleep(WEBSOCKET_PING_INTERVAL_MILLIS);
+						Thread.sleep(WEBSOCKET_CHECK_INTERVAL_MILLIS);
 					} catch (InterruptedException e) {
 						LOGGER.error("", e);
 					}
 				}
 			}
 
-		}, "WebSocket ping thread");
+		},
+			"WebSocket ping thread");
 		websocketPingThread.start();
 	}
 
@@ -135,24 +141,11 @@ public class CsWebSocketServer extends WebSocketServer implements IWebSocketServ
 		}
 	}
 
-	public final void resetPongTimer(WebSocket inWebsocket) {
-		webSocketLastPingTime.put(inWebsocket, System.currentTimeMillis());
-	}
-
-	public final long getPongTimerElapsed(WebSocket inWebsocket) {
-		Long lastPong = webSocketLastPingTime.get(inWebsocket);
-		if (lastPong == null) {
-			// first time called for this websocket
-			resetPongTimer(inWebsocket);
-			return 0;
-		} //else
-		return System.currentTimeMillis() - lastPong;
-	}
-
 	@Override
 	public final void onWebsocketPong(WebSocket inWebSocket, Framedata inFrameData) {
 		super.onWebsocketPong(inWebSocket, inFrameData); // does nothing
+
 		LOGGER.debug("WebSocket pong from " + inWebSocket.getRemoteSocketAddress());
-		resetPongTimer(inWebSocket);
+		mWebSessionManager.handlePong(inWebSocket);
 	}
 }
