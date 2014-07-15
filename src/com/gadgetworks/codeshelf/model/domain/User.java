@@ -49,7 +49,8 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "user")
-@CacheStrategy(useBeanCache = true)@JsonAutoDetect(getterVisibility = Visibility.NONE)
+@CacheStrategy(useBeanCache = true)
+@JsonAutoDetect(getterVisibility = Visibility.NONE)
 public class User extends DomainObjectTreeABC<Organization> {
 
 	@Inject
@@ -90,7 +91,7 @@ public class User extends DomainObjectTreeABC<Organization> {
 	@NonNull
 	@Getter
 	@Setter
-	@JsonProperty
+	//@JsonProperty
 	private String				hashSalt;
 
 	// The hash iterations.
@@ -98,7 +99,7 @@ public class User extends DomainObjectTreeABC<Organization> {
 	@NonNull
 	@Getter
 	@Setter
-	@JsonProperty
+	//@JsonProperty
 	private Integer				hashIterations;
 
 	// The hashed password.
@@ -107,7 +108,7 @@ public class User extends DomainObjectTreeABC<Organization> {
 	// It's not safe to expose these values outside this object!
 	//	@Getter
 	//	@Setter
-	@JsonProperty
+	//@JsonProperty
 	private String				hashedPassword;
 
 	// Email.
@@ -121,7 +122,7 @@ public class User extends DomainObjectTreeABC<Organization> {
 	@Column(nullable = false)
 	@Getter
 	@Setter
-	@JsonProperty
+	//@JsonProperty
 	private Timestamp			created;
 
 	// Is it active.

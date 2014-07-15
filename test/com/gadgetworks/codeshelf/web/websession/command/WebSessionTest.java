@@ -3,20 +3,20 @@ package com.gadgetworks.codeshelf.web.websession.command;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.NotYetConnectedException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
-
-import org.junit.Assert;
 
 import lombok.Getter;
 
 import org.apache.shiro.realm.Realm;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.node.ObjectNode;
 import org.java_websocket.WebSocket;
 import org.java_websocket.drafts.Draft;
-import org.java_websocket.exceptions.InvalidDataException;
-import org.java_websocket.exceptions.InvalidHandshakeException;
 import org.java_websocket.framing.Framedata;
 import org.java_websocket.framing.Framedata.Opcode;
-import org.java_websocket.handshake.ClientHandshakeBuilder;
+import org.junit.Assert;
 import org.junit.Test;
 
 import com.eaio.uuid.UUIDGen;
@@ -31,6 +31,7 @@ import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.security.CodeshelfRealm;
 import com.gadgetworks.codeshelf.ws.IWebSession;
 import com.gadgetworks.codeshelf.ws.WebSession;
+import com.gadgetworks.codeshelf.ws.command.req.IWsReqCmd;
 import com.gadgetworks.codeshelf.ws.command.req.IWsReqCmdFactory;
 import com.gadgetworks.codeshelf.ws.command.req.WsReqCmdFactory;
 import com.gadgetworks.codeshelf.ws.command.resp.IWsRespCmd;
@@ -121,13 +122,13 @@ public class WebSessionTest {
 		@Override
 		public void close() {
 			// TODO Auto-generated method stub
-			
+
 		}
 
 		@Override
 		public void sendFragmentedFrame(Opcode op, ByteBuffer buffer, boolean fin) {
 			// TODO Auto-generated method stub
-			
+
 		}
 
 		@Override
@@ -176,8 +177,35 @@ public class WebSessionTest {
 		String inMessage = "{\"id\":\"cid_5\",\"type\":\"LOGIN_RQ\",\"data\":{\"organizationId\":\"O1\", \"userId\":\"user@example.com\", \"password\":\"password\"}}";
 		IWsRespCmd respCommand = webSession.processMessage(inMessage);
 
-		Assert.assertEquals("{\"id\":\"cid_5\",\"type\":\"LOGIN_RS\",\"data\":{\"LOGIN_RS\":\"SUCCEED\",\"organization\":{\"description\":\"TEST\",\"domainId\":\"O1\",\"persistentId\":\""
-				+ organization.getPersistentId() + "\",\"className\":\"Organization\"}}}", respCommand.getResponseMsg());
+		ObjectMapper mapper = new ObjectMapper();
+		ObjectNode expectedResult = mapper.createObjectNode();
+		expectedResult.put("id", "cid_5");
+		expectedResult.put("type", "LOGIN_RS");
+		ObjectNode loginResult = mapper.createObjectNode();
+		loginResult.put("LOGIN_RS", "SUCCEED");
+
+		Map<String, Object> propertiesMap = new HashMap<String, Object>();
+		propertiesMap.put("className", "Organization");
+		propertiesMap.put("persistentId", organization.getPersistentId());
+		propertiesMap.put("domainId", "O1");
+		propertiesMap.put("description", "TEST");
+
+		loginResult.put("organization", mapper.valueToTree(propertiesMap));
+
+		Map<String, Object> userMap = new HashMap<String, Object>();
+		userMap.put("className", "User");
+		userMap.put("persistentId", user.getPersistentId());
+		userMap.put("fullDomainId", "O1.user@example.com");
+		userMap.put("domainId", "user@example.com");
+		userMap.put("email", "user@example.com");
+		userMap.put("active", true);
+
+		loginResult.put("user", mapper.valueToTree(userMap));
+		expectedResult.put("data", loginResult);
+		//Assert.assertEquals(expectedResu"{\"id\":\"cid_5\",\"type\":\"LOGIN_RS\",\"data\":{\"LOGIN_RS\":\"SUCCEED\",\"organization\":{\"description\":\"TEST\",\"domainId\":\"O1\",\"persistentId\":\""
+		//		+ organization.getPersistentId() + "\",\"className\":\"Organization\"}}}", respCommand.getResponseMsg());
+
+		Assert.assertEquals(expectedResult, respCommand.getResponseNode());
 	}
 
 	@Test
