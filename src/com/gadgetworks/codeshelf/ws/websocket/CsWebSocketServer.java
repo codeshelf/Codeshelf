@@ -41,6 +41,7 @@ public class CsWebSocketServer extends WebSocketServer implements IWebSocketServ
 	private CopyOnWriteArraySet<WebSocket>	mWebSockets;
 
 	private Map<WebSocket, Long>			webSocketLastPingTime			= new ConcurrentHashMap<WebSocket, Long>();
+
 	@Inject
 	public CsWebSocketServer(@Named(WEBSOCKET_HOSTNAME_PROPERTY) final String inAddr,
 		@Named(WEBSOCKET_PORTNUM_PROPERTY) final int inPort,
@@ -74,10 +75,11 @@ public class CsWebSocketServer extends WebSocketServer implements IWebSocketServ
 						long elapsed = getPongTimerElapsed(websocket);
 						if (elapsed > CsWebSocketServer.WS_PINGPONG_MAX_ELAPSED_MS) {
 							LOGGER.warn("WebSocket watchdog: dead connection - maximum elapsed PONG time reached (" + elapsed
-									+ " ms) "+ websocket.getRemoteSocketAddress());
+									+ " ms) " + websocket.getRemoteSocketAddress());
 							websocket.closeConnection(WS_CLOSE_CODE_PINGPONG_TIMEOUT, "PONG timeout expired");
 						} else if (elapsed > CsWebSocketServer.WS_PINGPONG_WARN_ELAPSED_MS) {
-							LOGGER.info("WebSocket watchdog: warning for missed PONG, last " + elapsed + " ms ago "+ websocket.getRemoteSocketAddress());
+							LOGGER.info("WebSocket watchdog: warning for missed PONG, last " + elapsed + " ms ago "
+									+ websocket.getRemoteSocketAddress());
 						} else {
 							//LOGGER.debug("WebSocket watchdog okay, last ping "+elapsed+" ms ago");
 						}
