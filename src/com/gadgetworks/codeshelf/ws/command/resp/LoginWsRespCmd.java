@@ -12,6 +12,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ObjectNode;
 
 import com.gadgetworks.codeshelf.model.domain.Organization;
+import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.ws.command.IWebSessionCmd;
 import com.gadgetworks.codeshelf.ws.command.req.IWsReqCmd;
 
@@ -31,16 +32,18 @@ import com.gadgetworks.codeshelf.ws.command.req.IWsReqCmd;
  */
 public class LoginWsRespCmd extends WsRespCmdABC {
 
-	private String			mResponseValue;
-	private Organization	mOrganization;
+	private final String		mResponseValue;
+	private final Organization	mOrganization;
+	private final User          mUser;
 
 	/**
 	 * 
 	 */
-	public LoginWsRespCmd(final String inResponseValue, final Organization inOrganization) {
+	public LoginWsRespCmd(final String inResponseValue, final Organization inOrganization, final User inUser) {
 		super();
 		mResponseValue = inResponseValue;
 		mOrganization = inOrganization;
+		mUser = inUser;
 	}
 
 	public final WsRespCmdEnum getCommandEnum() {
@@ -58,19 +61,30 @@ public class LoginWsRespCmd extends WsRespCmdABC {
 		// Insert the response code.
 		inOutDataNode.put(WsRespCmdEnum.LOGIN_RESP.toString(), mResponseValue);
 
-		// For valid response codes, also return the organization object;
-		if (mOrganization != null) {
-			ObjectMapper mapper = new ObjectMapper();
-			Map<String, Object> propertiesMap = new HashMap<String, Object>();
-			propertiesMap.put(IWsReqCmd.CLASSNAME, mOrganization.getClassName());
-			propertiesMap.put(IWsReqCmd.PERSISTENT_ID, mOrganization.getPersistentId());
-			propertiesMap.put(IWsReqCmd.SHORT_DOMAIN_ID, mOrganization.getDomainId());
-			propertiesMap.put(IWsReqCmd.DESC, mOrganization.getDescription());
-
-			//			List<Map<String, Object>> resultsList = new ArrayList<Map<String, Object>>();
-			//			resultsList.add(propertiesMap);
-			ObjectNode searchListNode = mapper.valueToTree(propertiesMap);
-			inOutDataNode.put("organization", searchListNode);
+		if (mResponseValue.equals(IWsReqCmd.SUCCEED)) {
+			// For valid response codes, also return the organization object;
+			if (mOrganization != null) {
+				ObjectMapper mapper = new ObjectMapper();
+				Map<String, Object> propertiesMap = new HashMap<String, Object>();
+				propertiesMap.put(IWsReqCmd.CLASSNAME, mOrganization.getClassName());
+				propertiesMap.put(IWsReqCmd.PERSISTENT_ID, mOrganization.getPersistentId());
+				propertiesMap.put(IWsReqCmd.SHORT_DOMAIN_ID, mOrganization.getDomainId());
+				propertiesMap.put(IWsReqCmd.DESC, mOrganization.getDescription());
+	
+				//			List<Map<String, Object>> resultsList = new ArrayList<Map<String, Object>>();
+				//			resultsList.add(propertiesMap);
+				ObjectNode searchListNode = mapper.valueToTree(propertiesMap);
+				inOutDataNode.put("organization", searchListNode);
+			}
+			if (mUser != null) {
+				ObjectMapper mapper = new ObjectMapper();
+				ObjectNode userNode = mapper.valueToTree(mUser);
+				userNode.remove("version");
+				userNode.remove("parentPersistentId");
+				userNode.remove("parentFullDomainId");
+				
+				inOutDataNode.put("user", userNode);
+			}
 		}
 	}
 }

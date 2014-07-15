@@ -14,6 +14,7 @@ import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.ws.command.resp.IWsRespCmd;
 import com.gadgetworks.codeshelf.ws.command.resp.LoginWsRespCmd;
+import com.gadgetworks.codeshelf.ws.command.resp.LoginWsRespCmdTest;
 
 /**
  * 
@@ -73,6 +74,7 @@ public class LoginWsReqCmd extends WsReqCmdABC {
 				String password = passwordNode.getTextValue();
 				if (user.isPasswordValid(password)) {
 					authenticateResult = SUCCEED;
+					result = new LoginWsRespCmd(authenticateResult, organization, user);
 				}
 //				LOGGER.warn("Login " + authenticateResult + " for user: " + user.getDomainId());
 			}
@@ -86,8 +88,10 @@ public class LoginWsReqCmd extends WsReqCmdABC {
 			} catch (InterruptedException e) {
 			}
 		}
+		if (result == null) {
+			result = new LoginWsRespCmd(authenticateResult, organization, null);
+		}
 
-		result = new LoginWsRespCmd(authenticateResult, organization);
 
 		return result;
 	}
