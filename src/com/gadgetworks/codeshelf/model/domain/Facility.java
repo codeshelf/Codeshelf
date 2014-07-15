@@ -1014,7 +1014,7 @@ public class Facility extends SubLocationABC<Facility> {
 		Timestamp theTime = new Timestamp(System.currentTimeMillis());
 
 		// Get all of the OUTBOUND work instructions.
-		// wiResultList.addAll(generateOutboundInstructions(containerList, theTime));
+		wiResultList.addAll(generateOutboundInstructions(inChe, containerList, theTime));
 
 		// Get all of the CROSS work instructions.
 		wiResultList.addAll(generateCrossWallInstructions(inChe, containerList, theTime));
@@ -1073,18 +1073,132 @@ public class Facility extends SubLocationABC<Facility> {
 
 	// --------------------------------------------------------------------------
 	/**
+	 *Utility function for outbound order WI generation
+	 * @param inChe
+	 * @param inContainer
+	 * @param inTime
+	 * @return
+	 */
+	private WorkInstruction makeWIForOutbound(final OrderDetail inOrderDetail,
+		final Che inChe,
+		final Container inContainer,
+		final Timestamp inTime) {
+		
+		WorkInstruction resultWi = null;
+		ItemMaster itemMaster = inOrderDetail.getItemMaster();
+
+		if (itemMaster.getItems().size() == 0) {
+			// If there is no item in inventory (AT ALL) then create a PLANEED, SHORT WI for this order detail.
+			resultWi = createWorkInstruction(WorkInstructionStatusEnum.SHORT,
+				WorkInstructionTypeEnum.ACTUAL,
+				inOrderDetail,
+				inContainer,
+				inChe,
+				this,
+				inTime);
+			// above, passed this (facility) as the location of the short WI..
+			
+			if (resultWi != null) {
+				resultWi.setPlanQuantity(0);
+				resultWi.setPlanMinQuantity(0);
+				resultWi.setPlanMaxQuantity(0);
+				try {
+					WorkInstruction.DAO.store(resultWi);
+				} catch (DaoException e) {
+					LOGGER.error("", e);
+				}
+			}
+		} else {
+			for (Path path : getPaths()) {
+				
+				// cross batch order headers have location that we are going to
+				// OrderLocation firstOutOrderLoc = orderHeader.getFirstOrderLocationOnPath(path);
+				// outbound order item masters have a location to pick from
+				//OrderLocation firstOutOrderLoc = itemMaster.getFirstItemLocationOnPath(path);
+				OrderLocation firstOutOrderLoc =  null;
+						
+				if (firstOutOrderLoc != null) {
+					resultWi = createWorkInstruction(WorkInstructionStatusEnum.NEW,
+						WorkInstructionTypeEnum.PLAN,
+						inOrderDetail,
+						inContainer,
+						inChe,
+						firstOutOrderLoc.getLocation(),
+						inTime);
+
+				}
+			}
+		}
+		return resultWi;
+	}
+	
+	// --------------------------------------------------------------------------
+	/**
 	 * Generate pick work instructions for a container at a specific location on a path.
-	 * @param inContainerUse
-	 * @param inPath
-	 * @param inCheLocation
+	 * @param inChe
+	 * @param inContainerList
+	 * @param inTime
 	 * @return
 	 */
 	private List<WorkInstruction> generateOutboundInstructions(final Che inChe,
 		final List<Container> inContainerList,
-		final Path inPath,
-		final String inScannedLocationId,
-		final ISubLocation<?> inCheLocation,
 		final Timestamp inTime) {
+			
+		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
+		
+		// To proceed, there should container use linked to outbound order
+		// We want to add all orders represented in the container list because these containers (or for Accu, fake containers representing the order) were scanned for this CHE to do.
+		for (Container container : inContainerList) {
+			OrderHeader order = container.getCurrentOrderHeader();
+			if (order != null) {
+				boolean somethingDone = false;
+				for (OrderDetail orderDetail : order.getOrderDetails()) {
+					WorkInstruction aWi = makeWIForOutbound(orderDetail, inChe, container, inTime); // Could be normal WI, or a short WI
+					if (aWi != null) {
+						wiResultList.add(aWi);
+						somethingDone = true;
+						
+						// still do this for a short WI?
+						orderDetail.setStatusEnum(OrderStatusEnum.INPROGRESS);
+						try {
+							OrderDetail.DAO.store(orderDetail);
+						} catch (DaoException e) {
+							LOGGER.error("", e);
+						}
+
+					}
+				}
+				if (somethingDone) {
+					order.setStatusEnum(OrderStatusEnum.INPROGRESS);
+					try {
+						OrderHeader.DAO.store(order);
+					} catch (DaoException e) {
+						LOGGER.error("", e);
+					}
+				}
+			}
+		}
+		
+		// Now we need to sort and group the work instructions, so that the CHE can display them by working order.
+		// Does the same sort work? Perhaps not. Zach says they want tier 1 and 2 for each bay, then come back and do all tier 3s.
+		List<ISubLocation<?>> bayList = new ArrayList<ISubLocation<?>>();
+		for (Path path : getPaths()) {
+			//bayList.addAll(path.<ISubLocation<?>> getLocationsByClassAtOrPastLocation(inCheLocation, Bay.class));
+			bayList.addAll(path.<ISubLocation<?>> getLocationsByClass(Bay.class));
+		}
+		return sortCrosswallInstructionsInLocationOrder(wiResultList, bayList);
+		// Need an accu-sort instead of this.
+		
+			
+			
+		/*  old signature was this followed by old code. Above is vastly different
+		private List<WorkInstruction> generateOutboundInstructions(final Che inChe,
+			final List<Container> inContainerList,
+			final Path inPath,
+			final String inScannedLocationId,
+			final ISubLocation<?> inCheLocation,
+			final Timestamp inTime) {
+			
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 
 		for (Container container : inContainerList) {
@@ -1172,6 +1286,7 @@ public class Facility extends SubLocationABC<Facility> {
 		}
 
 		return wiResultList;
+		*/
 	}
 
 	// --------------------------------------------------------------------------
@@ -1240,7 +1355,7 @@ public class Facility extends SubLocationABC<Facility> {
 			//bayList.addAll(path.<ISubLocation<?>> getLocationsByClassAtOrPastLocation(inCheLocation, Bay.class));
 			bayList.addAll(path.<ISubLocation<?>> getLocationsByClass(Bay.class));
 		}
-		return sortCrosswallInstructionsInLocationOrder(wiList, inContainerList, bayList);
+		return sortCrosswallInstructionsInLocationOrder(wiList, bayList);
 	}
 
 	// --------------------------------------------------------------------------
@@ -1285,12 +1400,10 @@ public class Facility extends SubLocationABC<Facility> {
 	/**
 	 * Sort a list of work instructions on a path through a CrossWall
 	 * @param inCrosswallWiList
-	 * @param inContainerList
 	 * @param inBays
 	 * @return
 	 */
 	private List<WorkInstruction> sortCrosswallInstructionsInLocationOrder(final List<WorkInstruction> inCrosswallWiList,
-		final List<Container> inContainerList,
 		final List<ISubLocation<?>> inSubLocations) {
 
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
@@ -1688,7 +1801,7 @@ public class Facility extends SubLocationABC<Facility> {
 
 		return result;
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * This is first done via "inferred parameter"; look at the data to determine the answer. Might change to explicit parameter later.
@@ -1714,7 +1827,7 @@ public class Facility extends SubLocationABC<Facility> {
 	 */
 	@JsonProperty("hasMeaningfulOrderGroups")
 	public final boolean hasMeaningfulOrderGroups() {
-		
+
 		List<OrderGroup> groupsList = this.getOrderGroups();
 		boolean result = groupsList.size() > 0;
 		// clearly might give the wrong value if site is initially misconfigured. Could look at the orderHeaders in more detail. Do most have groups?
@@ -1766,7 +1879,6 @@ public class Facility extends SubLocationABC<Facility> {
 						containersIdList.add(aString);
 					}
 				}
-
 			}
 
 		}
@@ -1782,6 +1894,55 @@ public class Facility extends SubLocationABC<Facility> {
 			// getWorkInstructions() has no side effects. But the site controller request gets these.
 			// As work instructions are executed, they come back with start and complete time. and PLAN/NEW changes to ACTUAL/COMPLETE or ACTUAL/SHORT
 
+		}
+
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inChe
+	 * Testing only!  For Accu, they scan the order ID, and we will manufacture a fake container with that ID.
+	 * 
+	 */
+	public final void fakeSetUpAccuChe(String inCheDomainId) {
+
+		CodeshelfNetwork network = getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_ID);
+		if (network == null)
+			return;
+
+		Che theChe = network.getChe(inCheDomainId);
+		if (theChe == null)
+			return;
+		
+		// computeWorkInstructions wants a containerId list
+		List<String> containersIdList = new ArrayList<String>();
+		
+		// The accu orders drop should have add the preAssignedContainerId field as duplicate of the orderID.
+		// Therefore, the container should exist already.
+		for (OrderHeader outOrder : getOrderHeaders()) {
+			if ((outOrder.getOrderTypeEnum().equals(OrderTypeEnum.OUTBOUND)) && (outOrder.getActive())) {
+				if (outOrder.getActiveDetailCount() > 0) {
+					ContainerUse thisUse = outOrder.getContainerUse();
+					if (thisUse != null) {
+						String theCntrId = thisUse.getContainerName();
+						if (theCntrId.equalsIgnoreCase(outOrder.getOrderId())) {
+							containersIdList.add(theCntrId);
+						}
+					}
+				}
+			}
+		}
+
+		if (containersIdList.size() > 0) {
+			Integer wiCount = this.computeWorkInstructions(theChe, containersIdList);
+			// That did the work. Big side effect.
+			// To do: make computeWorkInstructions update the current che on the order headers
+
+			// Get the work instructions for this CHE at this location for the given containers. Can we pass empty string? Normally user would scan where the CHE is starting.
+			List<WorkInstruction> wiList = this.getWorkInstructions(theChe, "");
+			Integer wiCountGot = wiList.size();
+			// getWorkInstructions() has no side effects. But the site controller request gets these.
+			// As work instructions are executed, they come back with start and complete time. and PLAN/NEW changes to ACTUAL/COMPLETE or ACTUAL/SHORT
 		}
 
 	}
