@@ -533,6 +533,14 @@ public class AisleImporterTest extends DomainTestABC {
 		short slotB2T2S5First = slotB2T2S5.getFirstLedNumAlongPath();
 		Assert.assertTrue(slotB2T2S5First == 131);
 		Assert.assertTrue(slotB2T2S5.getLastLedNumAlongPath() == 134);
+		
+		// Test the obvious. For 2 bays, 3 tier, zigzagleft, tierB1T3 should start at led1. tierB2T3 should start at 97
+		Tier tierB1T3 = Tier.DAO.findByDomainId(bayA12B1, "T3");
+		Tier tierB2T3 = Tier.DAO.findByDomainId(bayA12B2, "T3");
+		short tierB1T3First = tierB1T3.getFirstLedNumAlongPath();
+		Assert.assertTrue(tierB1T3First == 1);
+		short tierB2T3First = tierB2T3.getFirstLedNumAlongPath();
+		Assert.assertTrue(tierB2T3First == 97);
 
 	}
 
@@ -631,6 +639,14 @@ public class AisleImporterTest extends DomainTestABC {
 		yValue = thirdV.getPosY();
 		Assert.assertTrue(xValue == 1.2); // each bay has the same depth
 		Assert.assertTrue(yValue == 1.15); // this bay is 115 cm wide
+		
+		// Test the obvious. For 2 bays, 3 tier, zigzagright, tierB1T3 should start at led 97. tierB2T3 should start at 1
+		Tier tierB1T3 = Tier.DAO.findByDomainId(bayA13B1, "T3");
+		Tier tierB2T3 = Tier.DAO.findByDomainId(bayA13B2, "T3");
+		short tierB1T3First = tierB1T3.getFirstLedNumAlongPath();
+		Assert.assertTrue(tierB1T3First == 97);
+		short tierB2T3First = tierB2T3.getFirstLedNumAlongPath();
+		Assert.assertTrue(tierB2T3First == 1);
 	}
 
 	@Test

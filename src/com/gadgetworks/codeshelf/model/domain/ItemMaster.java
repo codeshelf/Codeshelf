@@ -185,4 +185,43 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	public Boolean isDdcItem() {
 		return (ddcId != null);
 	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * Return the first item with position along the path (in path working order).
+	 * This is used for cart setup for outbound orders (classic pick)
+	 * @param inPath
+	 * @return
+	 */
+	public final Item getFirstItemOnPath(final Path inPath) {
+		Item result = null;
+
+		ISubLocation foundLocation = null;
+		Item selectedItem = null;
+		
+		// This mimics the old code. Not at all sure it is correct.
+		for (Item item : getItems()) {
+			// Does the Item know where it is?
+			ISubLocation location = (ISubLocation) item.getStoredLocation();
+			
+			if (location != null && inPath.isLocationOnPath(location)) {
+				foundLocation = location;
+				selectedItem = item;
+				break;
+			}
+		}
+
+		// The item is on the CHE's path, so add it.
+		if (foundLocation != null) {
+			result = selectedItem;
+		}
+		
+		// What might we do better?
+		// See getFirstOrderLocationOnPath(). It checks the distance along the path.
+		// We definitely could check the uom to make sure the item uom matches the order uom. That we, we don't send case pick to each pick area, and vice versa.
+		// If we believe in our inventory, we might check the item quantity to see if there is enough for the order detail quantity. But we don't even pass that in.
+
+		return result;
+	}
+
 }

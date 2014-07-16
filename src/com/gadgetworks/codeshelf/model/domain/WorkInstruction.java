@@ -320,6 +320,36 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 	 * For a UI meta field
 	 * @return
 	 */
+	public final String getUomMasterId() {
+		return parent.getUomMasterId();
+	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * For a UI meta field
+	 * @return
+	 */
+	public final String getOrderDetailId() {
+		OrderDetail detail = this.getParent();
+		return detail.getDomainId(); // parent must be there by DB constraint
+	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * For a UI meta field
+	 * @return
+	 */
+	public final String getOrderId() {
+		OrderDetail detail = this.getParent();
+		OrderHeader header = detail.getParent();
+		return header.getDomainId(); // parents must be there by DB constraint
+	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * For a UI meta field
+	 * @return
+	 */
 	public final String getAssignedCheName() {
 		Che theChe = getAssignedChe();
 		if (theChe != null)
