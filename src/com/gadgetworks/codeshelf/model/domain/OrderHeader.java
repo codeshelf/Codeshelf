@@ -76,6 +76,20 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	public static String computeCrossOrderId(String inContainerId, Timestamp inTimestamp) {
 		return inContainerId + "." + inTimestamp;
 	}
+	
+	public static OrderHeader createEmptyOrderHeader(Facility inFacility, String inOrderId) {
+		OrderHeader header = new OrderHeader();
+		header.setParent(inFacility);
+		header.setDomainId(inOrderId);
+		header.setOrderTypeEnum(OrderTypeEnum.INVALID);
+		header.setStatusEnum(OrderStatusEnum.INVALID);
+		header.setPickStrategyEnum(PickStrategyEnum.INVALID);
+		header.setActive(Boolean.TRUE);
+		header.setUpdated(new Timestamp(System.currentTimeMillis()));
+		OrderHeader.DAO.store(header);
+		inFacility.addOrderHeader(header);
+		return header;
+	}
 
 	private static final Logger			LOGGER			= LoggerFactory.getLogger(OrderHeader.class);
 
