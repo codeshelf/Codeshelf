@@ -53,10 +53,7 @@ public class OrderLocationCsvImporter implements ICsvOrderLocationImporter {
 		Facility inFacility,
 		Timestamp inProcessTime) {
 		boolean result = true;
-		try {
-
-			CSVReader csvReader = new CSVReader(inCsvStreamReader);
-
+		try(CSVReader csvReader = new CSVReader(inCsvStreamReader);) {
 			HeaderColumnNameMappingStrategy<OrderLocationCsvBean> strategy = new HeaderColumnNameMappingStrategy<OrderLocationCsvBean>();
 			strategy.setType(OrderLocationCsvBean.class);
 
@@ -82,7 +79,6 @@ public class OrderLocationCsvImporter implements ICsvOrderLocationImporter {
 				LOGGER.debug("End order location import.");
 			}
 
-			csvReader.close();
 		} catch (FileNotFoundException e) {
 			result = false;
 			LOGGER.error("", e);
@@ -179,7 +175,6 @@ public class OrderLocationCsvImporter implements ICsvOrderLocationImporter {
 			OrderHeader order = inFacility.getOrderHeader(orderId);
 			if (order == null) {
 				order = OrderHeader.createEmptyOrderHeader(inFacility, orderId);
-				inFacility.addOrderHeader(order);
 			}
 			
 			String orderLocationId = OrderLocation.makeDomainId(order, mappedLocation);
