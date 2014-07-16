@@ -664,5 +664,49 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		orderDetail = order.getOrderDetail("456.1");
 		Assert.assertNotNull(orderDetail);
 	}
+	
+	@Test
+	public void testImportAfterEmptyOrder() {
+		String testOrderId = "01111";
+		Facility facility = getTestFacility("O-ORD1.11", "F1");
+		OrderHeader.createEmptyOrderHeader(facility, testOrderId);
+		
+		String csvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
+				+ "\r\n1,USF314,COSTCO,,01111,01111.1,10700589,Napa Valley Bistro - Jalape��o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
 
+		importCsvString(facility, csvString);
+		OrderHeader orderHeader = facility.getOrderHeader(testOrderId);
+		Assert.assertEquals(orderHeader.getShipmentId(), "USF314");
+		OrderDetail orderDetail = orderHeader.getOrderDetail("01111.1");
+		Assert.assertNotNull(orderDetail);
+		
+	}
+	
+	private Facility getTestFacility(String orgId, String facilityId) {
+		Organization organization = new Organization();
+		organization.setDomainId(orgId);
+		mOrganizationDao.store(organization);
+
+		organization.createFacility(facilityId, "TEST", Point.getZeroPoint());
+		Facility facility = organization.getFacility(facilityId);
+		return facility;
+	}
+
+	private void importCsvString(Facility facility, String csvString) {
+		byte[] firstCsvArray = csvString.getBytes();
+
+		ByteArrayInputStream stream = new ByteArrayInputStream(firstCsvArray);
+		InputStreamReader reader = new InputStreamReader(stream);
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		ICsvOrderImporter importer = new OutboundOrderCsvImporter(mOrderGroupDao,
+			mOrderHeaderDao,
+			mOrderDetailDao,
+			mContainerDao,
+			mContainerUseDao,
+			mItemMasterDao,
+			mUomMasterDao);
+		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
+
+	}
 }

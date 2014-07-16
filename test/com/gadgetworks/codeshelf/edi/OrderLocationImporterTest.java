@@ -6,6 +6,7 @@
 package com.gadgetworks.codeshelf.edi;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.Timestamp;
 
@@ -13,11 +14,11 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.gadgetworks.codeshelf.model.OrderTypeEnum;
-import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Bay;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.ILocation;
+import com.gadgetworks.codeshelf.model.domain.ISubLocation;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.OrderLocation;
@@ -32,6 +33,10 @@ public class OrderLocationImporterTest extends EdiTestABC {
 
 	@Test
 	public final void testOutOfOrderSlotting1() {
+		String facilityId = "F-SLOTTING9";
+		Organization organization = new Organization();
+		organization.setDomainId("O-SLOTTING9");
+		mOrganizationDao.store(organization);
 
 		// **************
 		// First a trivial aisle
@@ -39,70 +44,63 @@ public class OrderLocationImporterTest extends EdiTestABC {
 				+ "Aisle,A9,,,,,TierLeft,12.85,43.45,X,120,\r\n" //
 				+ "Bay,B1,244,,,,,\r\n" //
 				+ "Tier,T1,,8,80,0,,\r\n"; //
+		
 
-		byte[] csvArray = csvString.getBytes();
+		organization.createFacility(facilityId, "TEST", Point.getZeroPoint());
 
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		Organization organization = new Organization();
-		organization.setDomainId("O-SLOTTING9");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-SLOTTING9", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-SLOTTING9");
-
+		Facility facility = mFacilityDao.findByDomainId(organization, facilityId);
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
-		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(toReader(csvString), facility, ediProcessTime);
 		
 		Aisle aisle = Aisle.DAO.findByDomainId(facility, "A9");
 		Assert.assertNotNull(aisle);
+		ISubLocation<?> location = facility.findSubLocationById("A9.B1.T1.S1");
+		Assert.assertNotNull(location);
+
+		
 		
 		// **************
 		// We need the location aliases
 		String csvString2 = "mappedLocationId,locationAlias\r\n" //
 				+ "A9, D\r\n" //
 				+ "A9.B1, DB\r\n" //
-				+ "A2.B1.T1, DT\r\n" //
-				+ "A2.B1.T1.S1, D-21\r\n" //
-				+ "A2.B1.T1.S2, D-22\r\n" //
-				+ "A2.B1.T1.S3, D-23\r\n" //
-				+ "A2.B1.T1.S4, D-24\r\n" //
-				+ "A2.B1.T1.S5, D-25\r\n" //
-				+ "A2.B1.T1.S6, D-26\r\n"; //
+				+ "A9.B1.T1, DT\r\n" //
+				+ "A9.B1.T1.S1, D-21\r\n" //
+				+ "A9.B1.T1.S2, D-22\r\n" //
+				+ "A9.B1.T1.S3, D-23\r\n" //
+				+ "A9.B1.T1.S4, D-24\r\n" //
+				+ "A9.B1.T1.S5, D-25\r\n" //
+				+ "A9.B1.T1.S6, D-26\r\n"; //
 		// Leaving S7 and S8 unknown
 
-		byte[] csvArray2 = csvString2.getBytes();
-
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		InputStreamReader reader2 = new InputStreamReader(stream2);	
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvLocationAliasImporter importer2 = new LocationAliasCsvImporter(mLocationAliasDao);
-		importer2.importLocationAliasesFromCsvStream(reader2, facility, ediProcessTime2);
-
+		boolean result = importer2.importLocationAliasesFromCsvStream(toReader(csvString2), facility, ediProcessTime2);
+		Assert.assertTrue(result);
+		
+		ISubLocation<?> locationByAlias = facility.findSubLocationById("D-21");
+		Assert.assertNotNull(locationByAlias);
 		// **************
 		// Now a slotting file.  No orders yet. This is the out of order situation.	 Normally we want orders before slotting.
 		String csvString3 = "orderId,locationId\r\n" //
-				+ "O1111, D-21\r\n" //
-				+ "O1111, D-22\r\n" //
-				+ "O2222, D-26\r\n" //
-				+ "O3333, D-27\r\n" // Notice that D-27 does not resolve to a slot
-				+ "O4444, D-23\r\n"; // This will not come in the orders file
+				+ "01111, D-21\r\n" //
+				+ "01111, D-22\r\n" //
+				+ "02222, D-26\r\n" //
+				+ "03333, D-27\r\n" // Notice that D-27 does not resolve to a slot
+				+ "04444, D-23\r\n"; // This will not come in the orders file
 
-		byte[] csvArray3 = csvString.getBytes();
 
-		ByteArrayInputStream stream3 = new ByteArrayInputStream(csvArray3);
-		InputStreamReader reader3 = new InputStreamReader(stream3);
 		Timestamp ediProcessTime3 = new Timestamp(System.currentTimeMillis());
 		ICsvOrderLocationImporter importer3 = new OrderLocationCsvImporter(mOrderLocationDao);
-		importer3.importOrderLocationsFromCsvStream(reader3, facility, ediProcessTime3);
+		importer3.importOrderLocationsFromCsvStream(toReader(csvString3), facility, ediProcessTime3);
 		
-		// At this point (after the fix) we would like order number 01111 and 02222 to exist as dummy outbound orders.
+		// At this point we would like order number 01111 and 02222 to exist as dummy outbound orders.
 		// Not sure about 03333
 		OrderHeader order1111 = facility.getOrderHeader("01111");
-		Assert.assertNull(order1111); // after fix, will have a header
-
+		Assert.assertNotNull(order1111); // after fix, will have a header
+		Assert.assertEquals(2, order1111.getOrderLocations().size());
+		
 		// **************
 		// Now the orders file. The 01111 line has detailId 01111.1. The other two leave the detail blank, so will get a default name.
 		String csvString4 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
@@ -110,10 +108,6 @@ public class OrderLocationImporterTest extends EdiTestABC {
 				+ "\r\n1,USF314,COSTCO,,02222,,10706952,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,,03333,,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
 
-		byte[] csvArray4 = csvString4.getBytes();
-
-		ByteArrayInputStream stream4 = new ByteArrayInputStream(csvArray4);
-		InputStreamReader reader4 = new InputStreamReader(stream4);
 		Timestamp ediProcessTime4 = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter importer4 = new OutboundOrderCsvImporter(mOrderGroupDao,
 			mOrderHeaderDao,
@@ -122,7 +116,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 			mContainerUseDao,
 			mItemMasterDao,
 			mUomMasterDao);
-		importer4.importOrdersFromCsvStream(reader4, facility, ediProcessTime4);
+		importer4.importOrdersFromCsvStream(toReader(csvString4), facility, ediProcessTime4);
 
 		order1111 = facility.getOrderHeader("01111");
 		Assert.assertNotNull(order1111);
@@ -134,10 +128,8 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		Assert.assertNotNull(orderDetail);
 		
 		// Make sure we can lookup all of the locations for order O1111. This pretty much proves it.
-		Assert.assertEquals(0, order1111.getOrderLocations().size()); // after fix
-		// Assert.assertEquals(2, order1111.getOrderLocations().size());
-
-
+		Assert.assertEquals(2, order1111.getOrderLocations().size());
+		
 		// Other use cases?
 		// If you redrop the orders file, do the locations go away?
 		// Redrop slotting with a change should work.
@@ -157,11 +149,6 @@ public class OrderLocationImporterTest extends EdiTestABC {
 				+ "O2222, A2.B1\r\n" //
 				+ ", A2.B2\r\n" // O3333's location
 				+ "O4444, "; //
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
 
 		Organization organization = new Organization();
 		organization.setDomainId("O-ORDLOC.1");
@@ -276,8 +263,9 @@ public class OrderLocationImporterTest extends EdiTestABC {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvOrderLocationImporter importer = new OrderLocationCsvImporter(mOrderLocationDao);
-		importer.importOrderLocationsFromCsvStream(reader, facility, ediProcessTime);
-
+		boolean result = importer.importOrderLocationsFromCsvStream(toReader(csvString), facility, ediProcessTime);
+		Assert.assertTrue(result);
+		
 		// Make sure we can lookup all of the locations for order O1111.
 		Assert.assertEquals(3, order1111.getOrderLocations().size());
 
@@ -481,5 +469,15 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		// Make sure we blanked out the order location for O4444.
 		Assert.assertEquals(0, order4444.getOrderLocations().size());
 	}
+	
+	private InputStreamReader toReader(String csvString) {
+		byte[] csvArray = csvString.getBytes();
+		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
+		InputStreamReader reader = new InputStreamReader(stream);
+		return reader;
+	}
+
+
+
 
 }

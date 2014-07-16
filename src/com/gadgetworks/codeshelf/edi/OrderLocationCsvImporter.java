@@ -177,33 +177,39 @@ public class OrderLocationCsvImporter implements ICsvOrderLocationImporter {
 		if (mappedLocation != null) {
 
 			OrderHeader order = inFacility.getOrderHeader(orderId);
-			if (order != null) {
-				String orderLocationId = OrderLocation.makeDomainId(order, mappedLocation);
-
-				result = order.getOrderLocation(orderLocationId);
-
-				if ((result == null) && (locationId != null)) {
-					result = new OrderLocation();
-					result.setDomainId(orderLocationId);
-					result.setParent(order);
-					order.addOrderLocation(result);
-				}
-
-				// If we were able to get/create an item then update it.
-				if (result != null) {
-					result.setLocation(mappedLocation);
-					try {
-						result.setActive(true);
-						result.setUpdated(inEdiProcessTime);
-						mOrderLocationDao.store(result);
-					} catch (DaoException e) {
-						LOGGER.error("", e);
-					}
-				} else {
-					LOGGER.error("OrderLocation incorrectly setup");
-				}
+			if (order == null) {
+				order = OrderHeader.createEmptyOrderHeader(inFacility, orderId);
+				inFacility.addOrderHeader(order);
 			}
-		}
+			
+			String orderLocationId = OrderLocation.makeDomainId(order, mappedLocation);
+
+			result = order.getOrderLocation(orderLocationId);
+
+			if ((result == null) && (locationId != null)) {
+				result = new OrderLocation();
+				result.setDomainId(orderLocationId);
+				result.setParent(order);
+				order.addOrderLocation(result);
+			}
+
+			// If we were able to get/create an item then update it.
+			if (result != null) {
+				result.setLocation(mappedLocation);
+				try {
+					result.setActive(true);
+					result.setUpdated(inEdiProcessTime);
+					mOrderLocationDao.store(result);
+				} catch (DaoException e) {
+					LOGGER.error("", e);
+				}
+			} else {
+				LOGGER.error("OrderLocation incorrectly setup");
+			}
+		} else {
+			LOGGER.warn("No location found for location: " + locationId);
+			
+		} 
 		return result;
 	}
 
