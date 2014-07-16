@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.ws.jetty.response;
+package com.gadgetworks.codeshelf.ws.jetty.protocol.response;
 
 public enum ResponseStatus {
 	Success,

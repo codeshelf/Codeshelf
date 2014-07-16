@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.ws.jetty.response;
+package com.gadgetworks.codeshelf.ws.jetty.protocol.response;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -15,6 +15,9 @@ public abstract class ResponseABC {
 	@Getter @Setter
 	ResponseStatus status = ResponseStatus.Undefined;
 
+	@Getter @Setter
+	String statusMessage;
+	
 	@Getter
 	String responseId = new UUID().toString();
 	

@@ -8,7 +8,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.ws.jetty.request.RequestABC;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RequestABC;
 
 public class JsonRequestEncoder implements Encoder.Text<RequestABC> {
 
@@ -28,11 +28,10 @@ public class JsonRequestEncoder implements Encoder.Text<RequestABC> {
 			String jsonString = null;
 			ObjectMapper mapper = new ObjectMapper();
 			jsonString = mapper.writeValueAsString(request);
-			LOGGER.info(jsonString);
 			return jsonString;
 		} 
 		catch (Exception e) {
-			LOGGER.error("Failed to encode request", e);
+			LOGGER.error("Failed to encode request "+request, e);
 			throw new EncodeException(request,"Failed to encode request",e);
 		} 
 	}

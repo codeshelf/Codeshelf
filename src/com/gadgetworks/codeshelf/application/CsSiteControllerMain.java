@@ -19,7 +19,6 @@ import com.gadgetworks.codeshelf.device.RadioController;
 import com.gadgetworks.codeshelf.model.dao.DaoProvider;
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.ws.websocket.CsWebSocketClient;
-import com.gadgetworks.codeshelf.ws.websocket.ICsWebsocketClientMsgHandler;
 import com.gadgetworks.codeshelf.ws.websocket.IWebSocketSslContextFactory;
 import com.gadgetworks.codeshelf.ws.websocket.IWebSocketSslContextGenerator;
 import com.gadgetworks.codeshelf.ws.websocket.WebSocketSslContextFactory;
@@ -65,6 +64,7 @@ public final class CsSiteControllerMain {
 					properties.load(configFileStream);
 					for (String name : properties.stringPropertyNames()) {
 						String value = properties.getProperty(name);
+						// LOGGER.debug("Setting "+name+" to "+value);
 						System.setProperty(name, value);
 					}
 				}
@@ -104,28 +104,27 @@ public final class CsSiteControllerMain {
 		Injector injector = Guice.createInjector(new AbstractModule() {
 			@Override
 			protected void configure() {
-				bind(String.class).annotatedWith(Names.named(CsWebSocketClient.WEBSOCKET_URI_PROPERTY)).toInstance(System.getProperty("websocket.uri"));
 
-				bind(String.class).annotatedWith(Names.named(IWebSocketSslContextGenerator.KEYSTORE_PATH_PROPERTY)).toInstance(System.getProperty("keystore.path"));
-				bind(String.class).annotatedWith(Names.named(IWebSocketSslContextGenerator.KEYSTORE_TYPE_PROPERTY)).toInstance(System.getProperty("keystore.type"));
-				bind(String.class).annotatedWith(Names.named(IWebSocketSslContextGenerator.KEYSTORE_STORE_PASSWORD_PROPERTY)).toInstance(System.getProperty("keystore.store.password"));
-				bind(String.class).annotatedWith(Names.named(IWebSocketSslContextGenerator.KEYSTORE_KEY_PASSWORD_PROPERTY)).toInstance(System.getProperty("keystore.key.password"));
-
+				bind(String.class).annotatedWith(Names.named("WS_SERVER_URI")).toInstance(System.getProperty("websocket.uri"));
 				bind(Byte.class).annotatedWith(Names.named(IPacket.NETWORK_NUM_PROPERTY)).toInstance(Byte.valueOf(System.getProperty("codeshelf.networknum")));
 
 				bind(IUtil.class).to(Util.class);
 				bind(ICodeshelfApplication.class).to(CsSiteControllerApplication.class);
-				// Can't inject Java_Websocket classes.  See CsWebSocketClient.java for explanation.
-				//bind(ICsWebSocketClient.class).to(CsWebSocketClient.class);
 				bind(IRadioController.class).to(RadioController.class);
 				bind(IGatewayInterface.class).to(FTDIInterface.class);
 				bind(ICsDeviceManager.class).to(CsDeviceManager.class);
-				bind(ICsWebsocketClientMsgHandler.class).to(CsDeviceManager.class);
 				bind(IDaoProvider.class).to(DaoProvider.class);
 				bind(IWebSocketSslContextFactory.class).to(WebSocketSslContextFactory.class);
 
-				//				requestStaticInjection(WirelessDevice.class);
-				//				bind(IWirelessDeviceDao.class).to(WirelessDeviceDao.class);
+				// requestStaticInjection(WirelessDevice.class);
+				// bind(IWirelessDeviceDao.class).to(WirelessDeviceDao.class);
+
+				// TODO: remove below after taking java WS code out
+				bind(String.class).annotatedWith(Names.named(CsWebSocketClient.WEBSOCKET_URI_PROPERTY)).toInstance(System.getProperty("websocket.uri"));
+				bind(String.class).annotatedWith(Names.named(IWebSocketSslContextGenerator.KEYSTORE_PATH_PROPERTY)).toInstance(System.getProperty("keystore.path"));
+				bind(String.class).annotatedWith(Names.named(IWebSocketSslContextGenerator.KEYSTORE_TYPE_PROPERTY)).toInstance(System.getProperty("keystore.type"));
+				bind(String.class).annotatedWith(Names.named(IWebSocketSslContextGenerator.KEYSTORE_STORE_PASSWORD_PROPERTY)).toInstance(System.getProperty("keystore.store.password"));
+				bind(String.class).annotatedWith(Names.named(IWebSocketSslContextGenerator.KEYSTORE_KEY_PASSWORD_PROPERTY)).toInstance(System.getProperty("keystore.key.password"));
 			}
 		});
 

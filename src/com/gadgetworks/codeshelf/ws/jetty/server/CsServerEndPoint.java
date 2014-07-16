@@ -15,10 +15,11 @@ import javax.websocket.server.ServerEndpoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import  com.gadgetworks.codeshelf.ws.jetty.io.JsonRequestDecoder;
+import com.codahale.metrics.MetricRegistry;
+import com.gadgetworks.codeshelf.ws.jetty.io.JsonRequestDecoder;
 import com.gadgetworks.codeshelf.ws.jetty.io.JsonResponseEncoder;
-import com.gadgetworks.codeshelf.ws.jetty.request.RequestABC;
-import com.gadgetworks.codeshelf.ws.jetty.response.ResponseABC;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RequestABC;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 
 @ServerEndpoint(value="/",encoders={JsonResponseEncoder.class},decoders={JsonRequestDecoder.class})
 public class CsServerEndPoint {
@@ -28,26 +29,22 @@ public class CsServerEndPoint {
 	RequestProcessor mRequestProcessor;
 	SessionManager mSessionManager;
 	
+	MetricRegistry metricsRegistry;
+    
 	public CsServerEndPoint() {	
-		// needs to use a factory patter unfortunately, since Jetty creates endpoints
-		// and does not support user properties to be passed in
-		mRequestProcessor = RequestProcessorFactory.getInstance();
 		mSessionManager = SessionManager.getInstance();
-	}
-	
-	public CsServerEndPoint(RequestProcessor requestProcessor) {
-		mRequestProcessor = requestProcessor;
+		mRequestProcessor = RequestProcessorFactory.getInstance();
 	}
 	
 	@OnOpen
     public void onOpen(Session session, EndpointConfig ec) {
-		LOGGER.info("WS session opened: " + session.getId());
+		LOGGER.info("WS Session Started: " + session.getId());
 		mSessionManager.sessionStarted(session);
     }
     
     @OnMessage
     public void onMessage(Session session, RequestABC request) throws IOException, EncodeException {
-        LOGGER.info("Received request on session "+session.getId()+": " + request);
+        LOGGER.debug("Received request on session "+session.getId()+": " + request);
         // pass request to processor to execute command
         CsSession csSession = this.getCsSession(session);
         ResponseABC response = mRequestProcessor.handleRequest(csSession,request);
@@ -63,7 +60,7 @@ public class CsServerEndPoint {
     
     @OnClose
     public void onClose(Session session, CloseReason reason) {
-    	LOGGER.info(String.format("Session %s close because of %s", session.getId(), reason));
+    	LOGGER.info(String.format("WS Session %s closed because of %s", session.getId(), reason));
 		mSessionManager.sessionEnded(session);
     }
     

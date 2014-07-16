@@ -18,3 +18,8 @@ compare-file-1.txt
 /autofetch*.csv
 /*.autofetch
 /.DS_Store
+/.apt_generated/
+
+/lib/drivers/.DS_Store
+
+/lib/.DS_Store

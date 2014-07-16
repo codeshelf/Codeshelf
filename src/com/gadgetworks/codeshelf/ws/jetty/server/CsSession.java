@@ -16,6 +16,9 @@ public class CsSession {
 	@Getter @Setter
 	boolean isAuthenticated = false;
 
+	@Getter @Setter
+	SessionType type = SessionType.Undefined;
+	
 	public CsSession() {
 	}
 }

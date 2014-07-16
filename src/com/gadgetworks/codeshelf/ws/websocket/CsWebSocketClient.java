@@ -50,13 +50,13 @@ public class CsWebSocketClient extends WebSocketClient implements ICsWebSocketCl
 
 	public final void start() {
 		LOGGER.debug("Starting websocket client");
-
 		try {
 			// Create the SSL context and use that to create the socket.
 			SSLContext sslContext = mWebSocketSslContextFactory.getSslContext();
 			SSLSocketFactory factory = sslContext.getSocketFactory();
 			setSocket(factory.createSocket());
-			connectBlocking();
+			boolean f = connectBlocking();
+			LOGGER.debug("WS Connection: "+f);
 		} catch (InterruptedException e) {
 			LOGGER.error("", e);
 		} catch (IOException e) {

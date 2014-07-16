@@ -1,24 +1,15 @@
 package com.gadgetworks.codeshelf.ws.jetty.io;
 
-import java.util.List;
-
 import javax.websocket.DecodeException;
 import javax.websocket.Decoder;
 import javax.websocket.EndpointConfig;
 
 import org.atteo.classindex.ClassIndex;
-import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.map.ObjectReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.ws.command.IWebSessionCmd;
-import com.gadgetworks.codeshelf.ws.command.req.IWsReqCmd;
-import com.gadgetworks.codeshelf.ws.command.req.LoginWsReqCmd;
-import com.gadgetworks.codeshelf.ws.command.req.WsReqCmdEnum;
-import com.gadgetworks.codeshelf.ws.jetty.request.LoginRequest;
-import com.gadgetworks.codeshelf.ws.jetty.request.RequestABC;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RequestABC;
 
 public class JsonRequestDecoder implements Decoder.Text<RequestABC> {
 
@@ -35,6 +26,7 @@ public class JsonRequestDecoder implements Decoder.Text<RequestABC> {
 	@Override
 	public RequestABC decode(String message) throws DecodeException {
 		try {
+			LOGGER.debug("Decoding request: "+message);
 			// TODO: upgrade to Jackson 2+ and make mapper static
 			ObjectMapper mapper = new ObjectMapper();
 			Iterable<Class<? extends RequestABC>> classes = ClassIndex.getSubclasses(RequestABC.class);

@@ -26,10 +26,13 @@ import lombok.Setter;
 import lombok.ToString;
 
 import org.apache.commons.lang.WordUtils;
+import org.atteo.classindex.IndexSubclasses;
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.annotate.JsonPropertyOrder;
+import org.codehaus.jackson.annotate.JsonTypeInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,7 +49,10 @@ import com.avaje.ebean.bean.EntityBean;
 
 @Entity
 @CacheStrategy(useBeanCache = true)@JsonAutoDetect(getterVisibility = Visibility.NONE)
+@IndexSubclasses
+@JsonTypeInfo(use=JsonTypeInfo.Id.NAME, include=JsonTypeInfo.As.WRAPPER_OBJECT)
 @JsonPropertyOrder({ "domainId", "fullDomainId" })
+@JsonIgnoreProperties({"className"})
 @ToString(doNotUseGetters = true, of = { "domainId" })
 public abstract class DomainObjectABC implements IDomainObject {
 

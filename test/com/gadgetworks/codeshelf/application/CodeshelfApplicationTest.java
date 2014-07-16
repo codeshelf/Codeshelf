@@ -332,6 +332,8 @@ public class CodeshelfApplicationTest {
 			"",
 			"false");
 		IDatabase database = new Database(schemaManager, util);
+		
+		AdminServer adminServer = new AdminServer();
 
 		final ServerCodeshelfApplication application = new ServerCodeshelfApplication(webSocketListener,
 			monitor,
@@ -343,7 +345,8 @@ public class CodeshelfApplicationTest {
 			persistentPropertyDao,
 			organizationDao,
 			facilityDao,
-			userDao);
+			userDao,
+			adminServer);
 
 		final Result checkAppRunning = new Result();
 

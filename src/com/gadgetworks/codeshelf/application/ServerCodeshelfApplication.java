@@ -8,15 +8,25 @@ package com.gadgetworks.codeshelf.application;
 
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
-import java.util.concurrent.ArrayBlockingQueue;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codahale.metrics.Metric;
+import com.codahale.metrics.MetricFilter;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.jvm.MemoryUsageGaugeSet;
 import com.gadgetworks.codeshelf.device.RadioController;
 import com.gadgetworks.codeshelf.edi.IEdiProcessor;
+import com.gadgetworks.codeshelf.metrics.MetricsGroup;
+import com.gadgetworks.codeshelf.metrics.MetricsService;
+import com.gadgetworks.codeshelf.metrics.OpenTSDB;
+import com.gadgetworks.codeshelf.metrics.OpenTSDBReporter;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.IDatabase;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
@@ -27,7 +37,9 @@ import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
 import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.monitor.IMonitor;
 import com.gadgetworks.codeshelf.report.IPickDocumentGenerator;
+import com.gadgetworks.codeshelf.ws.jetty.server.CsRequestProcessor;
 import com.gadgetworks.codeshelf.ws.jetty.server.JettyWebSocketServer;
+import com.gadgetworks.codeshelf.ws.jetty.server.RequestProcessor;
 import com.gadgetworks.codeshelf.ws.websocket.IWebSocketServer;
 import com.google.inject.Inject;
 
@@ -52,7 +64,11 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 	
 	// TODO: replace ws server above with implementation below
 	JettyWebSocketServer mAlternativeWebSocketServer;
-
+	
+	private AdminServer mAdminServer;
+	
+	private MemoryUsageGaugeSet memoryUsage;
+	
 	@Inject
 	public ServerCodeshelfApplication(final IWebSocketServer inWebSocketServer,
 		final IMonitor inMonitor,
@@ -64,7 +80,8 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		final ITypedDao<PersistentProperty> inPersistentPropertyDao,
 		final ITypedDao<Organization> inOrganizationDao,
 		final ITypedDao<Facility> inFacilityDao,
-		final ITypedDao<User> inUserDao) {
+		final ITypedDao<User> inUserDao,
+		final AdminServer inAdminServer) {
 		super(inUtil);
 		mMonitor = inMonitor;
 		mWebSocketServer = inWebSocketServer;
@@ -76,6 +93,7 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		mOrganizationDao = inOrganizationDao;
 		mFacilityDao = inFacilityDao;
 		mUserDao = inUserDao;
+		mAdminServer = inAdminServer;
 	}
 
 	// --------------------------------------------------------------------------
@@ -97,7 +115,14 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		LOGGER.info("------------------------------------------------------------");
 		LOGGER.info("Process info: " + processName);
 
-		//		mMonitor.logToCentralAdmin("Startup: codeshelf server " + processName);
+		// mMonitor.logToCentralAdmin("Startup: codeshelf server " + processName);
+		
+		// register JVM metrics
+		memoryUsage = new MemoryUsageGaugeSet();
+		Map<String, Metric> memoryMetrics  = memoryUsage.getMetrics();
+		for (Entry<String, Metric> entry : memoryMetrics.entrySet()) {
+			MetricsService.registerMetric(MetricsGroup.JVM,"memory."+entry.getKey(), entry.getValue());
+		}
 
 		mDatabase.start();
 
@@ -118,6 +143,22 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		*/
 
 		mHttpServer.startServer();
+		
+		// start admin server, if enabled
+		String useAdminServer = System.getProperty("metrics.adminserver");
+		if ("true".equalsIgnoreCase(useAdminServer)) {
+			mAdminServer.startServer();
+		}
+		
+		// public metrics to opentsdb
+		MetricRegistry registry = MetricsService.getRegistry();
+		OpenTSDB opentsdb = new OpenTSDB();
+		OpenTSDBReporter reporter = OpenTSDBReporter.forRegistry(registry)
+		                                                  .prefixedWith("dev.bjoern")
+		                                                  .convertRatesTo(TimeUnit.SECONDS)
+		                                                  .convertDurationsTo(TimeUnit.MILLISECONDS)
+		                                                  .filter(MetricFilter.ALL)
+		                                                  .build(opentsdb);
 	}
 
 	// --------------------------------------------------------------------------

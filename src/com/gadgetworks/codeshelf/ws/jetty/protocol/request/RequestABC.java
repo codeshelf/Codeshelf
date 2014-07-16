@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.ws.jetty.request;
+package com.gadgetworks.codeshelf.ws.jetty.protocol.request;
 
 import lombok.Getter;
 

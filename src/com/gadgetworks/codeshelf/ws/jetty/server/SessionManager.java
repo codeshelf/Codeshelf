@@ -1,13 +1,15 @@
 package com.gadgetworks.codeshelf.ws.jetty.server;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.websocket.Session;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.codahale.metrics.Counter;
+import com.gadgetworks.codeshelf.metrics.MetricsGroup;
+import com.gadgetworks.codeshelf.metrics.MetricsService;
 
 public class SessionManager {
 
@@ -17,6 +19,9 @@ public class SessionManager {
 	
 	private ConcurrentHashMap<String,CsSession> mActiveSessions = new ConcurrentHashMap<String, CsSession>();
 	
+	private final Counter activeSessionsCounter = MetricsService.addCounter(MetricsGroup.WSS,"sessions.active");
+	private final Counter totalSessionsCounter = MetricsService.addCounter(MetricsGroup.WSS,"sessions.total");
+
 	private SessionManager() {
 	}
 	
@@ -31,6 +36,8 @@ public class SessionManager {
 			csSession.setSessionId(sessionId);
 			mActiveSessions.put(sessionId, csSession);
 			LOGGER.info("Session "+session.getId()+" started");
+			activeSessionsCounter.inc();
+			totalSessionsCounter.inc();
 		}
 		else {
 			LOGGER.warn("Unable to register session: Session with ID "+sessionId+" already registered");
@@ -42,6 +49,7 @@ public class SessionManager {
 		if (mActiveSessions.containsKey(sessionId)) {
 			mActiveSessions.remove(sessionId);
 			LOGGER.info("Session "+session.getId()+" ended");
+			activeSessionsCounter.dec();
 		}
 		else {
 			LOGGER.warn("Unable to unregister session: Session with ID "+sessionId+" not found");

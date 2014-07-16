@@ -1,9 +1,9 @@
-package com.gadgetworks.codeshelf.ws.jetty.response;
-
-import com.gadgetworks.codeshelf.model.domain.Organization;
+package com.gadgetworks.codeshelf.ws.jetty.protocol.response;
 
 import lombok.Getter;
 import lombok.Setter;
+
+import com.gadgetworks.codeshelf.model.domain.Organization;
 
 public class LoginResponse extends ResponseABC {
 

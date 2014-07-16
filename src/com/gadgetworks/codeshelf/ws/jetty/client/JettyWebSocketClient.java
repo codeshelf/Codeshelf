@@ -7,61 +7,99 @@ import javax.websocket.CloseReason;
 import javax.websocket.CloseReason.CloseCodes;
 import javax.websocket.ContainerProvider;
 import javax.websocket.DeploymentException;
-import javax.websocket.EncodeException;
 import javax.websocket.Session;
 import javax.websocket.WebSocketContainer;
+
+import lombok.Setter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.ws.jetty.request.RequestABC;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RequestABC;
 
 public class JettyWebSocketClient {
 	
 	private static final Logger	LOGGER = LoggerFactory.getLogger(JettyWebSocketClient.class);
 	
-	String mConnectionString = null;
-	Session mSession;
-	ResponseProcessor mResponseProcessor = null;
+	String connectionString = null;
+	Session session;
 	
-	public JettyWebSocketClient(String connectionString) {
-		mConnectionString = connectionString;
+	ResponseProcessor responseProcessor = null;
+	
+	MessageCoordinator messageCoordinator = null;
+	
+	CsClientEndpoint endpoint = null;
+
+	private WebSocketEventListener	eventListener;
+	
+	WebSocketContainer container;
+	
+	public JettyWebSocketClient(String connectionString, ResponseProcessor responseProcessor, WebSocketEventListener eventListener) {
+		this.connectionString = connectionString;
+		this.eventListener = eventListener;
+		this.responseProcessor = responseProcessor;
+		
+        // create and configure WS endpoint                 
+        endpoint = new CsClientEndpoint(this);
+        endpoint.setResponseProcessor(responseProcessor);
+     
+        messageCoordinator = new MessageCoordinator(); 
+        endpoint.setMessageCoordinator(messageCoordinator);
+        responseProcessor.setMessageCoordinator(messageCoordinator);
+        container = ContainerProvider.getWebSocketContainer();
 	}
 	
-    public void connect() throws DeploymentException, IOException {
-    	
-    	LOGGER.info("Connecting to WS server at "+mConnectionString);
-        URI uri = URI.create(mConnectionString);
-        WebSocketContainer container = ContainerProvider.getWebSocketContainer();
-        mSession = container.connectToServer(CsClientEndpoint.class,uri);
-        if (mSession.isOpen()) {
+    public void connect() throws DeploymentException, IOException {    			
+    	LOGGER.info("Connecting to WS server at "+connectionString);
+        // connect to the server
+        URI uri = URI.create(connectionString);
+        
+        Session session = container.connectToServer(endpoint,uri);
+        if (session.isOpen()) {
         	LOGGER.info("Connected to WS server");
         }
         else {
-        	LOGGER.warn("Failed to start session on "+mConnectionString);
+        	LOGGER.warn("Failed to start session on "+connectionString);
         }
     }
     
     public void disconnect() throws IOException {
-    	mSession.close(new CloseReason(CloseCodes.NORMAL_CLOSURE, "Connection closed by client"));
+    	session.close(new CloseReason(CloseCodes.NORMAL_CLOSURE, "Connection closed by client"));
     }
     
-    public void sendRequest(RequestABC request) throws IOException, EncodeException, DeploymentException {
-    	// TODO: add connection life cycle management, handling of messages that can't get delivered 
-    	// immediately etc.
-    	if (mSession == null || !mSession.isOpen()) {
-    		// connect to server, if not already connected
-    		connect();
+    public boolean sendRequest(RequestABC request) {
+    	try {
+	    	if (!isConnected()) {
+	    		LOGGER.warn("Unable to send request "+request+": Not connected to server");
+	    		// TODO: queue message to be sent after reconnect
+	    		return false;
+	    	}
+    		session.getBasicRemote().sendObject(request);
+    		this.messageCoordinator.registerRequest(request);
+    		return true;
     	}
-    	if (mSession.isOpen()) {
-    		mSession.getBasicRemote().sendObject(request);
-    	}
-    	else {
-    		LOGGER.error("Unable to deliver message. Can't connect to server.");
+    	catch (Exception e) {
+    		LOGGER.error("Exception while trying to send request #"+request.getRequestId(),e);
+    		return false;
     	}
     }
+    
+    public boolean isConnected() {
+    	if (session == null || !session.isOpen()) {
+    		return false;
+    	}
+    	return true;
+    }
+    
+    public void connected(Session session) {
+    	// set session object and notify
+    	this.session = session;
+    	if (this.eventListener!=null) eventListener.connected();
+    }
 
-	public void setResponseProcessor(ResponseProcessor responseProcessor) {
-		mResponseProcessor = responseProcessor;
+	public void disconnected() {
+		this.session = null;
+    	if (this.eventListener!=null) eventListener.disconnected();
 	}
+    
 }

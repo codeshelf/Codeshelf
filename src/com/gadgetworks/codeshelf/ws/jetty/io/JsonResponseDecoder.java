@@ -9,14 +9,14 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.ws.jetty.response.ResponseABC;
+import com.gadgetworks.codeshelf.model.domain.Organization;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 
 public class JsonResponseDecoder implements Decoder.Text<ResponseABC> {
 
 	private static final Logger	LOGGER = LoggerFactory.getLogger(JsonResponseDecoder.class);
 
 	public JsonResponseDecoder() {
-		LOGGER.debug("Creating JsonResponseDecoder");
 	}
 	
 	@Override
@@ -36,6 +36,7 @@ public class JsonResponseDecoder implements Decoder.Text<ResponseABC> {
 			for (Class<? extends ResponseABC> requestType : classes) {
 				mapper.registerSubtypes(requestType);
 			}
+			mapper.registerSubtypes(Organization.class);
 			ResponseABC response = mapper.readValue(message, ResponseABC.class);
 			return response;
 		} 

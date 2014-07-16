@@ -3,9 +3,9 @@ package com.gadgetworks.codeshelf.ws.jetty.client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.ws.jetty.response.ResponseABC;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 
-public class LogResponseProcessor implements ResponseProcessor {
+public class LogResponseProcessor extends ResponseProcessor {
 
 	private static final Logger	LOGGER = LoggerFactory.getLogger(LogResponseProcessor.class);
 

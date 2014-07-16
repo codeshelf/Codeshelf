@@ -18,6 +18,7 @@ import org.java_websocket.server.WebSocketServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codahale.metrics.MetricRegistry;
 import com.gadgetworks.codeshelf.edi.AislesFileCsvImporter;
 import com.gadgetworks.codeshelf.edi.CrossBatchCsvImporter;
 import com.gadgetworks.codeshelf.edi.EdiProcessor;
@@ -269,6 +270,7 @@ public final class ServerMain {
 				bind(HashedCredentialsMatcher.class);
 				bindConstant().annotatedWith(Names.named("shiro.hashAlgorithmName")).to(Md5Hash.ALGORITHM_NAME);
 
+				
 				// Register the DAOs (statically as a singleton).
 
 				requestStaticInjection(Aisle.class);

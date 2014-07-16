@@ -8,8 +8,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.ws.jetty.request.RequestABC;
-import com.gadgetworks.codeshelf.ws.jetty.response.ResponseABC;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 
 public class JsonResponseEncoder implements Encoder.Text<ResponseABC> {
 
@@ -29,7 +28,7 @@ public class JsonResponseEncoder implements Encoder.Text<ResponseABC> {
 			String jsonString = null;
 			ObjectMapper mapper = new ObjectMapper();
 			jsonString = mapper.writeValueAsString(request);
-			LOGGER.info(jsonString);
+			LOGGER.debug("Encoding response: "+jsonString);
 			return jsonString;
 		} 
 		catch (Exception e) {

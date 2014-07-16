@@ -8,9 +8,8 @@ import javax.websocket.server.ServerContainer;
 import javax.websocket.server.ServerEndpoint;
 import javax.websocket.server.ServerEndpointConfig;
 
+import org.eclipse.jetty.server.NetworkTrafficServerConnector;
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.server.nio.NetworkTrafficSelectChannelConnector;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.util.resource.Resource;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
@@ -18,20 +17,28 @@ import org.eclipse.jetty.websocket.jsr356.server.deploy.WebSocketServerContainer
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.gadgetworks.codeshelf.ws.jetty.client.CsClientEndpoint;
+import com.gadgetworks.codeshelf.ws.jetty.client.ResponseProcessor;
+import com.gadgetworks.codeshelf.ws.jetty.client.WebSocketEventListener;
+
 @ServerEndpoint(value = "/")
 public class JettyWebSocketServer {
 
 	private static final Logger	LOGGER = LoggerFactory.getLogger(JettyWebSocketServer.class);
 	
 	private int mPort = 8444;
-    Server mServer = null;
-    RequestProcessor mRequestProcessor = new CsRequestProcessor();
+    private Server mServer = null;
+    //private RequestProcessor mRequestProcessor;
+	private CsServerEndPoint endpoint;
 
     // TODO: needs to be passed in
 	private String	mKeystoreStorePassword="x2HPbC2avltYQR";
 	private String	mKeystoreKeyPassword="x2HPbC2avltYQR";
 	private String	mKeystorePath="/etc/codeshelf.keystore";
-	
+
+	public JettyWebSocketServer() {
+	}
+		
 	public final void start() {
 		LOGGER.info("Starting Jetty WebSocket Server on port "+mPort+"...");
 		
@@ -40,7 +47,6 @@ public class JettyWebSocketServer {
 			mServer = new Server();
 
 			// create SSL context factory
-	    	/*
 			SslContextFactory sslContextFactory = new SslContextFactory();
 			File file = new File(mKeystorePath);
 			URL url = file.toURL();
@@ -48,11 +54,10 @@ public class JettyWebSocketServer {
 			sslContextFactory.setKeyStoreResource(keyStoreResource);
 			sslContextFactory.setKeyStorePassword(mKeystoreStorePassword);
 			sslContextFactory.setKeyManagerPassword(mKeystoreKeyPassword);
-			*/		
 			
-		    ServerConnector connector = new ServerConnector(mServer);
-			//ServerConnector connector = new NetworkTrafficSelectChannelConnector(mServer, sslContextFactory);
-		    connector.setPort(mPort);
+		    //ServerConnector connector = new ServerConnector(mServer);
+			NetworkTrafficServerConnector connector = new NetworkTrafficServerConnector(mServer,sslContextFactory);
+			connector.setPort(mPort);
 		    mServer.addConnector(connector);
 		
 		    // Setup the basic application "context" for this application at "/"

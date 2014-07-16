@@ -1,7 +1,13 @@
 package com.gadgetworks.codeshelf.ws.jetty.client;
 
-import com.gadgetworks.codeshelf.ws.jetty.response.ResponseABC;
+import lombok.Setter;
 
-public interface ResponseProcessor {
-	void handleResponse(ResponseABC response);
+import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
+
+public abstract class ResponseProcessor {
+	
+	@Setter
+	MessageCoordinator messageCoordinator;
+	
+	public abstract void handleResponse(ResponseABC response);
 }
