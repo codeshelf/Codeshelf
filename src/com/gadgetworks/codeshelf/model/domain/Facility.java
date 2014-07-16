@@ -1083,12 +1083,16 @@ public class Facility extends SubLocationABC<Facility> {
 		final Che inChe,
 		final Container inContainer,
 		final Timestamp inTime) {
-		
+
 		WorkInstruction resultWi = null;
 		ItemMaster itemMaster = inOrderDetail.getItemMaster();
 
 		if (itemMaster.getItems().size() == 0) {
-			// If there is no item in inventory (AT ALL) then create a PLANEED, SHORT WI for this order detail.
+			// If there is no item in inventory (AT ALL) then create a PLANNED, SHORT WI for this order detail.
+			
+			// Need to improve? Do we already have a short WI for this order detail? If so, do we really want to make another?
+			// This should be moderately rare, although it happens in our test case over and over. User has to scan order/container to cart when the item master has 
+			// absolutely no items. Not just none in inventory, or items have zero quantity.
 			resultWi = createWorkInstruction(WorkInstructionStatusEnum.SHORT,
 				WorkInstructionTypeEnum.ACTUAL,
 				inOrderDetail,
@@ -1097,7 +1101,7 @@ public class Facility extends SubLocationABC<Facility> {
 				this,
 				inTime);
 			// above, passed this (facility) as the location of the short WI..
-			
+
 			if (resultWi != null) {
 				resultWi.setPlanQuantity(0);
 				resultWi.setPlanMinQuantity(0);
@@ -1110,28 +1114,27 @@ public class Facility extends SubLocationABC<Facility> {
 			}
 		} else {
 			for (Path path : getPaths()) {
-				
 				// cross batch order headers have location that we are going to
 				// OrderLocation firstOutOrderLoc = orderHeader.getFirstOrderLocationOnPath(path);
 				// outbound order item masters have a location to pick from
 				//OrderLocation firstOutOrderLoc = itemMaster.getFirstItemLocationOnPath(path);
-				OrderLocation firstOutOrderLoc =  null;
-						
-				if (firstOutOrderLoc != null) {
+				Item  item = itemMaster.getFirstItemOnPath(path);
+				
+				if (item != null) {
 					resultWi = createWorkInstruction(WorkInstructionStatusEnum.NEW,
 						WorkInstructionTypeEnum.PLAN,
 						inOrderDetail,
 						inContainer,
 						inChe,
-						firstOutOrderLoc.getLocation(),
+						(ISubLocation<?>) item.getStoredLocation(),
 						inTime);
-
 				}
+				// Bug here, especially if we don't worry about matching uom. Might find the same items on two paths: one case and one each.
 			}
 		}
 		return resultWi;
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * Generate pick work instructions for a container at a specific location on a path.
@@ -1143,9 +1146,9 @@ public class Facility extends SubLocationABC<Facility> {
 	private List<WorkInstruction> generateOutboundInstructions(final Che inChe,
 		final List<Container> inContainerList,
 		final Timestamp inTime) {
-			
+
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
-		
+
 		// To proceed, there should container use linked to outbound order
 		// We want to add all orders represented in the container list because these containers (or for Accu, fake containers representing the order) were scanned for this CHE to do.
 		for (Container container : inContainerList) {
@@ -1153,19 +1156,22 @@ public class Facility extends SubLocationABC<Facility> {
 			if (order != null) {
 				boolean somethingDone = false;
 				for (OrderDetail orderDetail : order.getOrderDetails()) {
-					WorkInstruction aWi = makeWIForOutbound(orderDetail, inChe, container, inTime); // Could be normal WI, or a short WI
-					if (aWi != null) {
-						wiResultList.add(aWi);
-						somethingDone = true;
-						
-						// still do this for a short WI?
-						orderDetail.setStatusEnum(OrderStatusEnum.INPROGRESS);
-						try {
-							OrderDetail.DAO.store(orderDetail);
-						} catch (DaoException e) {
-							LOGGER.error("", e);
-						}
+					// An order detail might be set to zero quantity by customer, essentially canceling that item. Don't make a WI if canceled.
+					if (orderDetail.getQuantity() > 0) {
+						WorkInstruction aWi = makeWIForOutbound(orderDetail, inChe, container, inTime); // Could be normal WI, or a short WI
+						if (aWi != null) {
+							wiResultList.add(aWi);
+							somethingDone = true;
 
+							// still do this for a short WI?
+							orderDetail.setStatusEnum(OrderStatusEnum.INPROGRESS);
+							try {
+								OrderDetail.DAO.store(orderDetail);
+							} catch (DaoException e) {
+								LOGGER.error("", e);
+							}
+
+						}
 					}
 				}
 				if (somethingDone) {
@@ -1178,7 +1184,7 @@ public class Facility extends SubLocationABC<Facility> {
 				}
 			}
 		}
-		
+
 		// Now we need to sort and group the work instructions, so that the CHE can display them by working order.
 		// Does the same sort work? Perhaps not. Zach says they want tier 1 and 2 for each bay, then come back and do all tier 3s.
 		List<ISubLocation<?>> bayList = new ArrayList<ISubLocation<?>>();
@@ -1188,9 +1194,7 @@ public class Facility extends SubLocationABC<Facility> {
 		}
 		return sortCrosswallInstructionsInLocationOrder(wiResultList, bayList);
 		// Need an accu-sort instead of this.
-		
-			
-			
+
 		/*  old signature was this followed by old code. Above is vastly different
 		private List<WorkInstruction> generateOutboundInstructions(final Che inChe,
 			final List<Container> inContainerList,
@@ -1913,10 +1917,10 @@ public class Facility extends SubLocationABC<Facility> {
 		Che theChe = network.getChe(inCheDomainId);
 		if (theChe == null)
 			return;
-		
+
 		// computeWorkInstructions wants a containerId list
 		List<String> containersIdList = new ArrayList<String>();
-		
+
 		// The accu orders drop should have add the preAssignedContainerId field as duplicate of the orderID.
 		// Therefore, the container should exist already.
 		for (OrderHeader outOrder : getOrderHeaders()) {
