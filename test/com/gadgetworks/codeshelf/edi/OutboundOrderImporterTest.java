@@ -12,6 +12,7 @@ import java.sql.Timestamp;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.PickStrategyEnum;
 import com.gadgetworks.codeshelf.model.domain.Container;
 import com.gadgetworks.codeshelf.model.domain.Facility;
@@ -677,6 +678,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		importCsvString(facility, csvString);
 		OrderHeader orderHeader = facility.getOrderHeader(testOrderId);
 		Assert.assertEquals(orderHeader.getShipmentId(), "USF314");
+		Assert.assertEquals(orderHeader.getOrderTypeEnum(), OrderTypeEnum.OUTBOUND);
 		OrderDetail orderDetail = orderHeader.getOrderDetail("01111.1");
 		Assert.assertNotNull(orderDetail);
 		
