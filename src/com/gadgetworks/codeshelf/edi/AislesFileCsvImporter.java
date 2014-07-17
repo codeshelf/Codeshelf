@@ -74,8 +74,22 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 	private Integer				mTierFloorCm;
 	private boolean				mIsOrientationX;
 	private Integer				mDepthCm;
+	
+	// short term memory
+	private String				mLastControllerLed;
 
 	private List<Tier>			mTiersThisAisle;
+	
+	private String getAppropriateControllerLed(){
+		if (mLastControllerLed.isEmpty())
+			return mControllerLed;
+		else {
+			return mLastControllerLed;
+		}
+	}
+	private void clearLastControllerLed(){
+		mLastControllerLed = "";
+	}
 
 	@Inject
 	public AislesFileCsvImporter(final ITypedDao<Aisle> inAisleDao,
@@ -99,6 +113,9 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 		mIsOrientationX = true;
 
 		mTiersThisAisle = new ArrayList<Tier>();
+		
+		mLastControllerLed = "";
+		mControllerLed = "";
 
 	}
 
@@ -512,7 +529,7 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 		// Does not really need inAisle as mTiersThisAisle as what is needed
 
 		boolean tierSortNeeded = true;
-		if (mControllerLed.equalsIgnoreCase("zigzagLeft") || mControllerLed.equalsIgnoreCase("zigzagRight")) {
+		if (getAppropriateControllerLed().equalsIgnoreCase("zigzagLeft") || getAppropriateControllerLed().equalsIgnoreCase("zigzagRight")) {
 			tierSortNeeded = false;
 		}
 		boolean restartLedOnTierChange = tierSortNeeded;
@@ -521,10 +538,10 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 
 		if (tierSortNeeded) {
 			Collections.sort(mTiersThisAisle, new TierBayComparable());
-		} else if (mControllerLed.equalsIgnoreCase("zigzagLeft")) {
+		} else if (getAppropriateControllerLed().equalsIgnoreCase("zigzagLeft")) {
 			Collections.sort(mTiersThisAisle, new ZigzagLeftComparable());
 			isZigzag = true;
-		} else if (mControllerLed.equalsIgnoreCase("zigzagRight")) {
+		} else if (getAppropriateControllerLed().equalsIgnoreCase("zigzagRight")) {
 			Collections.sort(mTiersThisAisle, new ZigzagRightComparable());
 			isZigzag = true;
 			intialZigTierDirectionIncrease = false;
@@ -537,7 +554,7 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 		ListIterator li = null;
 
 		boolean forwardIterationNeeded = true;
-		if (mControllerLed.equalsIgnoreCase("tierRight")) {
+		if (getAppropriateControllerLed().equalsIgnoreCase("tierRight")) {
 			forwardIterationNeeded = false;
 		}
 
@@ -601,6 +618,7 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 		}
 
 		mTiersThisAisle.clear(); // prepare to collect tiers for next aisle
+		clearLastControllerLed();
 
 	}
 
@@ -897,6 +915,9 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 			} catch (NumberFormatException e) {
 			}
 
+			// remember what we had if we are resetting these.
+			mLastControllerLed = mControllerLed;
+			
 			mControllerLed = controllerLed; //tierRight, tierLeft, zigzagRight, zigzagLeft, or "B1>B5;B6<B10;B11>B18;B19<B20"
 			mIsOrientationX = !(orientation.equalsIgnoreCase("Y")); // make garbage in default to X			
 			mDepthCm = depthCm;
@@ -984,7 +1005,7 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 			// We know and can set led count on this tier.
 			// Can we know the led increase direction yet? Not necessarily for zigzag bay, but can for the other aisle types
 			boolean ledsIncrease = true;
-			if (mControllerLed.equalsIgnoreCase("tierRight"))
+			if (getAppropriateControllerLed().equalsIgnoreCase("tierRight"))
 				ledsIncrease = false;
 			// Knowable, but a bit tricky for the multi-controller aisle case. If this tier is in B3, within B1>B5;, ledsIncrease would be false.
 

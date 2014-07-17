@@ -37,7 +37,9 @@ public class AisleImporterTest extends DomainTestABC {
 
 	@Test
 	public final void testTierLeft() {
-				
+		if (false) 
+			return;
+		
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A9,,,,,TierLeft,12.85,43.45,X,120,\r\n" //
 				+ "Bay,B1,244,,,,,\r\n" //
@@ -184,6 +186,9 @@ public class AisleImporterTest extends DomainTestABC {
 	@Test
 	public final void testTierRight() {
 		
+		if (false) 
+			return;
+
 		// Beside TierRight, this as two aisles, so it makes sure both get their leds properly set, and both vertices set
 		// Not quite realistic; A10 and A20 are on top of each other. Same anchor point
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
@@ -349,6 +354,8 @@ public class AisleImporterTest extends DomainTestABC {
 
 	@Test
 	public final void test32Led5Slot() {
+		if (false) 
+			return;
 		// the purpose of bay B1 is to compare this slotting algorithm to Jeff's hand-done goodeggs zigzag slots
 		// the purpose of bay B2 is to check the sort and LEDs of more than 10 slots in a tier
 		// the purpose of bays 9,10,11 is check the bay sort.
@@ -477,6 +484,8 @@ public class AisleImporterTest extends DomainTestABC {
 
 	@Test
 	public final void testZigzagLeft() {
+		if (false) 
+			return;
 
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A12,,,,,zigzagLeft,12.85,43.45,X,120,\r\n" //
@@ -546,6 +555,9 @@ public class AisleImporterTest extends DomainTestABC {
 
 	@Test
 	public final void testZigzagRightY() {
+		if (false) 
+			return;
+
 		// do a Y orientation on this as well
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A13,,,,,zigzagRight,12.85,43.45,Y,120,\r\n" //
@@ -650,7 +662,90 @@ public class AisleImporterTest extends DomainTestABC {
 	}
 
 	@Test
+	public final void testMultiAisleZig() {
+		
+		// We seemed to have a bug in the parse where when processing A21 beans, we have m values set for A22. That is, A21 might come out as zigzagRight
+		// So this tests Bay to bay attributes changing within an aisle, and tier attributes changing within a bay.
+
+		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A21,,,,,zigzagLeft,12.85,43.45,X,120,\r\n" //
+				+ "Bay,B1,115,,,,,\r\n" //
+				+ "Tier,T1,,5,32,0,,\r\n" //
+				+ "Tier,T2,,4,32,0,,\r\n" //
+				+ "Bay,B2,141,,,,,\r\n" //
+				+ "Tier,T1,,3,32,0,,\r\n" //
+				+ "Tier,T2,,6,32,0,,\r\n" //
+				+ "Aisle,A22,,,,,zigzagRight,12.85,48.45,Y,110,\r\n" //
+				+ "Bay,B1,115,,,,,\r\n" //
+				+ "Tier,T1,,5,32,0,,\r\n" //
+				+ "Tier,T2,,5,32,0,,\r\n" //
+				+ "Bay,B2,115,,,,,\r\n" //
+				+ "Tier,T1,,5,32,0,,\r\n" //
+				+ "Tier,T2,,5,32,0,,\r\n"; //
+
+		byte[] csvArray = csvString.getBytes();
+
+		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
+		InputStreamReader reader = new InputStreamReader(stream);
+
+		Organization organization = new Organization();
+		organization.setDomainId("O-AISLE2X");
+		mOrganizationDao.store(organization);
+
+		organization.createFacility("F-AISLE2X", "TEST", Point.getZeroPoint());
+		Facility facility = organization.getFacility("F-AISLE2X");
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+
+		// Check what we got
+		Aisle aisle = Aisle.DAO.findByDomainId(facility, "A21");
+		Assert.assertNotNull(aisle);
+
+		Bay bayA21B1 = Bay.DAO.findByDomainId(aisle, "B1");
+		Bay bayA21B2 = Bay.DAO.findByDomainId(aisle, "B2");
+
+		// For 2 bays, 2 tier, zigzagleft, tierB1T2 should start at led 1. tierB2T2 should start at 65
+		Tier tierB1T1 = Tier.DAO.findByDomainId(bayA21B1, "T1");
+		Tier tierB1T2 = Tier.DAO.findByDomainId(bayA21B1, "T2");
+		Tier tierB2T2 = Tier.DAO.findByDomainId(bayA21B2, "T2");
+		double b1T1FaceEnd = tierB1T1.getPickFaceEndPosX();
+		Assert.assertTrue(b1T1FaceEnd == 1.15);
+		double b2T2FaceEnd = tierB2T2.getPickFaceEndPosX();
+		// 1.15 + 1.41 = 2.56. But real addition is too precise.
+		Assert.assertTrue(b2T2FaceEnd > 2.55);
+		
+		List<ISubLocation> theB1T1Slots = tierB1T1.getChildren();
+		Assert.assertTrue(theB1T1Slots.size() == 5);
+		List<ISubLocation> theB1T2Slots = tierB1T2.getChildren();
+		Assert.assertTrue(theB1T2Slots.size() == 4);
+		short tierB1T2First = tierB1T2.getFirstLedNumAlongPath();
+		Assert.assertTrue(tierB1T2First == 1);
+		short tierB2T2First = tierB2T2.getFirstLedNumAlongPath();
+		Assert.assertTrue(tierB2T2First == 65);
+		
+		// Aisle 22 should have Y orientation
+		Aisle aisle22 = Aisle.DAO.findByDomainId(facility, "A22");
+		Assert.assertNotNull(aisle);
+		Bay bayA22B1 = Bay.DAO.findByDomainId(aisle22, "B1");
+		Tier tierA22B1T1 = Tier.DAO.findByDomainId(bayA22B1, "T1");
+		double pickX = tierA22B1T1.getPickFaceEndPosX();
+		double pickY = tierA22B1T1.getPickFaceEndPosY();
+		// 1.15 + 1.41 = 2.56. But real addition is too precise.
+		Assert.assertTrue(pickX == 0.0);
+		Assert.assertTrue(pickY == 1.15);
+
+
+
+
+	}
+	
+	@Test
 	public final void testBadFile1() {
+	
+		if (false) 
+			return;
 		
 		// Ideally, we want non-throwing or caught exceptions that give good user feedback about what is wrong.
 		// This has tier before bay, and some other blank fields
@@ -727,6 +822,9 @@ public class AisleImporterTest extends DomainTestABC {
 
 	@Test
 	public final void testDoubleFileRead() {
+		if (false) 
+			return;
+
 		// Ideally, we want non-throwing or caught exceptions that give good user feedback about what is wrong.
 		// This has tier before bay, and some other blank fields
 		// do a Y orientation on this as well
@@ -853,6 +951,9 @@ public class AisleImporterTest extends DomainTestABC {
 
 	@Test
 	public final void testAfterFileModifications() {
+		if (false) 
+			return;
+
 		// The file read does a lot. But then we rely on the user via the UI to do additional things to complete the configuration. This is
 		// a (nearly) end to end test of that. The actual UI will call a websocket command that calls a method on a domain object.
 		// This test calls the same methods.
@@ -950,6 +1051,9 @@ public class AisleImporterTest extends DomainTestABC {
 
 	@Test
 	public final void testNoLed() {
+		if (false) 
+			return;
+
 		// do a Y orientation on this as well
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A21,,,,,tierRight,12.85,23.45,Y,240,\r\n" //
