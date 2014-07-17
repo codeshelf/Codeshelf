@@ -9,6 +9,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.Timestamp;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -59,18 +60,27 @@ public class OrderLocationCsvImporter implements ICsvOrderLocationImporter {
 
 			CsvToBean<OrderLocationCsvBean> csv = new CsvToBean<OrderLocationCsvBean>();
 			List<OrderLocationCsvBean> orderLocationBeanList = csv.parse(strategy, csvReader);
+			//Sort to put orders with same id together
+			Collections.sort(orderLocationBeanList);
+
 
 			if (orderLocationBeanList.size() > 0) {
 
 				LOGGER.debug("Begin order location import.");
 
+				String lastOrderId = null; //when changes, locations should be cleared
 				// Iterate over the order location map import beans.
 				for (OrderLocationCsvBean orderLocationBean : orderLocationBeanList) {
 					String errorMsg = orderLocationBean.validateBean();
 					if (errorMsg != null) {
 						LOGGER.error("Import errors: " + errorMsg);
 					} else {
+
+						if (!orderLocationBean.getOrderId().equals(lastOrderId)) {
+							deleteOrderLocations(orderLocationBean.getOrderId(), inFacility, inProcessTime);
+						}
 						orderLocationCsvBeanImport(orderLocationBean, inFacility, inProcessTime);
+						lastOrderId = orderLocationBean.getOrderId();
 					}
 				}
 
@@ -176,7 +186,7 @@ public class OrderLocationCsvImporter implements ICsvOrderLocationImporter {
 			if (order == null) {
 				order = OrderHeader.createEmptyOrderHeader(inFacility, orderId);
 			}
-			
+
 			String orderLocationId = OrderLocation.makeDomainId(order, mappedLocation);
 
 			result = order.getOrderLocation(orderLocationId);

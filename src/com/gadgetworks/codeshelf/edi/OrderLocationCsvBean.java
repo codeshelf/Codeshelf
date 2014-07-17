@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @ToString
-public class OrderLocationCsvBean extends ImportCsvBeanABC {
+public class OrderLocationCsvBean extends ImportCsvBeanABC implements Comparable<OrderLocationCsvBean> {
 
 	static final Logger	LOGGER	= LoggerFactory.getLogger(OrderLocationCsvBean.class);
 
@@ -42,4 +42,24 @@ public class OrderLocationCsvBean extends ImportCsvBeanABC {
 		return strip(locationId);
 	}
 
+	@Override
+	public int compareTo(OrderLocationCsvBean other) {
+		int result = nullSafeStringComparator(this.orderId, other.orderId);
+		if (result != 0) {
+			return result;
+		}
+		return nullSafeStringComparator(this.locationId, other.locationId);
+	}
+		
+	private static int nullSafeStringComparator(final String one, final String two) {
+	    if (one == null ^ two == null) {
+	        return (one == null) ? -1 : 1;
+	    }
+
+	    if (one == null && two == null) {
+	        return 0;
+	    }
+
+	    return one.compareToIgnoreCase(two);
+	}
 }

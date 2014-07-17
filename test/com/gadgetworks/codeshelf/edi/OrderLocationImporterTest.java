@@ -31,8 +31,26 @@ import com.gadgetworks.codeshelf.model.domain.Point;
  */
 public class OrderLocationImporterTest extends EdiTestABC {
 
+	/**
+	 * Given two orders and a single slot
+	 * When both orders are slotted to the same location
+	 * Then both orders will contain that location
+	 *
+	 */
 	@Test
-	public final void testOutOfOrderSlotting1() {
+	public final void testMultipleOrdersToOneSlot() {
+		Facility facility = getTestFacility("O-testMultipleOrdersToOneSlot", "F-testMultipleOrdersToOneSlot");
+		doLocationSetup(facility);
+		String singleSlot = "D-21";
+		doSingleSlotOrder(facility, "01111", singleSlot);
+		doSingleSlotOrder(facility, "02222", singleSlot);
+		
+		assertOrderHasLocation(facility, facility.getOrderHeader("01111"), singleSlot);
+		assertOrderHasLocation(facility, facility.getOrderHeader("02222"), singleSlot);
+	}
+	
+	@Test
+	public final void testSlottingBeforeOrders() {
 		Facility facility = getTestFacility("O-SLOTTING9", "F-SLOTTING9");
 		// **************
 		// First a trivial aisle
@@ -120,7 +138,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 	 * Then the order location is updated
 	 * 
 	 */
-//	@Test
+	@Test
 	public final void testSlotUpdate() {
 		Facility facility = getTestFacility("ORG-testSlotUpdate", "F-testSlotUpdate");
 
@@ -129,10 +147,35 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		String singleSlotUpdateCsv = "orderId,locationId\r\n" //
 				+ "01111, D-22\r\n"; //
 		Assert.assertTrue(importSlotting(facility, singleSlotUpdateCsv));
-		Assert.assertEquals(1, facility.getOrderHeader("01111").getOrderLocations().size());
-		Assert.assertNotNull(facility.getOrderHeader("01111").getOrderLocation("D-22"));
+		
+		OrderHeader order = facility.getOrderHeader("01111");
+		Assert.assertEquals(1, order.getOrderLocations().size());
+		assertOrderHasLocation(facility, order, "D-22");
 	}
 	
+	@Test
+	public final void testSlotsResetWhenOrdersUnsorted() {
+		Facility facility = getTestFacility("ORG-testSlotsResetWhenOrdersUnsorted", "F-testSlotsResetWhenOrdersUnsorted");
+
+		doSingleSlotOrder(facility, "01111", "D-21");
+		doSingleSlotOrder(facility, "02222", "D-22");
+		
+		String multiOrderSlotUpdateCsv = "orderId,locationId\r\n" //
+				+ "01111, D-22\r\n" //
+				+ "02222, D-23\r\n" //
+				+ "01111, D-21\r\n"; //
+		Assert.assertTrue(importSlotting(facility, multiOrderSlotUpdateCsv));
+		
+		OrderHeader order = facility.getOrderHeader("01111");
+		Assert.assertEquals(2, order.getOrderLocations().size());
+		assertOrderHasLocation(facility, order, "D-21");
+		assertOrderHasLocation(facility, order, "D-22");
+		
+		OrderHeader order02222 = facility.getOrderHeader("02222");
+		Assert.assertEquals(1, order02222.getOrderLocations().size());
+		assertOrderHasLocation(facility, order02222, "D-23");
+	}
+
 	/**
 	 * Given an initial order with 2 locations
 	 * 	When a slotting file contains 1 null location and 1 real location for that order
@@ -162,7 +205,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 	 *  Then the order has 1 location
 	 * 
      */	
-	//@Test
+	@Test
 	public final void testReduceOrderLocationsWithSingleLineUpdate() {
 		
 		Facility facility = getTestFacility("ORG-testReduceOrderLocationsWithSingleLineUpdate", "F-testReduceOrderLocationsWithSingleLineUpdate");
@@ -598,6 +641,14 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		Facility facility = organization.getFacility(facilityId);
 		return facility;
 	}
+	
+	private void assertOrderHasLocation(Facility facility, OrderHeader order, String locationAlias) {
+		ILocation mappedLocation = facility.findSubLocationById(locationAlias);
+		String orderLocationId = OrderLocation.makeDomainId(order, mappedLocation);
+		Assert.assertNotNull(order.getOrderLocation(orderLocationId));
+	}
+	
+
 
 
 }
