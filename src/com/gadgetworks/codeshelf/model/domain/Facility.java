@@ -1153,7 +1153,7 @@ public class Facility extends SubLocationABC<Facility> {
 		// We want to add all orders represented in the container list because these containers (or for Accu, fake containers representing the order) were scanned for this CHE to do.
 		for (Container container : inContainerList) {
 			OrderHeader order = container.getCurrentOrderHeader();
-			if (order != null) {
+			if (order != null && order.getOrderTypeEnum().equals(OrderTypeEnum.OUTBOUND)) {
 				boolean somethingDone = false;
 				for (OrderDetail orderDetail : order.getOrderDetails()) {
 					// An order detail might be set to zero quantity by customer, essentially canceling that item. Don't make a WI if canceled.

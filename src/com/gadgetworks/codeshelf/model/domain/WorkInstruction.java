@@ -361,6 +361,20 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * For a UI meta field
+	 * @return
+	 */
+	public final Double getWiPosAlongPath() {
+		ILocation<?> theLoc = this.getLocation();
+		if (theLoc != null)
+			return theLoc.getPosAlongPath();
+		else {
+			return 0.0;
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
 	 * For a UI simulation
 	 * @return
 	 */
