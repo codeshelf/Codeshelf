@@ -114,5 +114,8 @@
 	<classpathentry kind="lib" path="lib/dist/jackson-annotations-2.4.1.jar"/>
 	<classpathentry kind="lib" path="lib/dist/jackson-core-2.4.1.1.jar"/>
 	<classpathentry kind="lib" path="lib/dist/jackson-databind-2.4.1.2.jar"/>
+	<classpathentry kind="lib" path="lib/dist/metrics-opentsdb-1.0.2.jar"/>
+	<classpathentry kind="lib" path="lib/dist/jersey-bundle-1.18.1.jar"/>
+	<classpathentry kind="lib" path="lib/dist/jersey-json-1.18.1.jar"/>
 	<classpathentry kind="output" path="eclipse-bin"/>
 </classpath>

@@ -18,15 +18,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.Metric;
-import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.jvm.MemoryUsageGaugeSet;
 import com.gadgetworks.codeshelf.device.RadioController;
 import com.gadgetworks.codeshelf.edi.IEdiProcessor;
 import com.gadgetworks.codeshelf.metrics.MetricsGroup;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
-import com.gadgetworks.codeshelf.metrics.OpenTSDB;
-import com.gadgetworks.codeshelf.metrics.OpenTSDBReporter;
+import com.gadgetworks.codeshelf.metrics.OpenTsdb;
+import com.gadgetworks.codeshelf.metrics.OpenTsdbReporter;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.IDatabase;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
@@ -37,10 +36,9 @@ import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
 import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.monitor.IMonitor;
 import com.gadgetworks.codeshelf.report.IPickDocumentGenerator;
-import com.gadgetworks.codeshelf.ws.jetty.server.CsRequestProcessor;
 import com.gadgetworks.codeshelf.ws.jetty.server.JettyWebSocketServer;
-import com.gadgetworks.codeshelf.ws.jetty.server.RequestProcessor;
 import com.gadgetworks.codeshelf.ws.websocket.IWebSocketServer;
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 
 public final class ServerCodeshelfApplication extends ApplicationABC {
@@ -147,18 +145,28 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		// start admin server, if enabled
 		String useAdminServer = System.getProperty("metrics.adminserver");
 		if ("true".equalsIgnoreCase(useAdminServer)) {
+			LOGGER.info("Starting Admin Server");
 			mAdminServer.startServer();
+		}
+		else {
+			LOGGER.info("Admin Server not enabled");
 		}
 		
 		// public metrics to opentsdb
-		MetricRegistry registry = MetricsService.getRegistry();
-		OpenTSDB opentsdb = new OpenTSDB();
-		OpenTSDBReporter reporter = OpenTSDBReporter.forRegistry(registry)
-		                                                  .prefixedWith("dev.bjoern")
-		                                                  .convertRatesTo(TimeUnit.SECONDS)
-		                                                  .convertDurationsTo(TimeUnit.MILLISECONDS)
-		                                                  .filter(MetricFilter.ALL)
-		                                                  .build(opentsdb);
+		String useMetricsReporter = System.getProperty("metrics.reporter");
+		if ("true".equalsIgnoreCase(useMetricsReporter)) {
+			LOGGER.info("Starting OpenTSDB Reporter");
+			MetricRegistry registry = MetricsService.getRegistry();
+			OpenTsdbReporter.forRegistry(registry)
+			      .prefixedWith("")
+			      .withTags(ImmutableMap.of("other", "tags"))
+			      .build(OpenTsdb.forService("http://opentsdb.local:8088/")
+			      .create())
+			      .start(10L, TimeUnit.SECONDS);
+		}
+		else {
+			LOGGER.info("Metrics reporter is not enabled");
+		}		
 	}
 
 	// --------------------------------------------------------------------------

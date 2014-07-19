@@ -40,7 +40,7 @@ public class MetricsService {
 	}
 
 	private static String getFullName(MetricsGroup group, String metricName) {
-		return getInstance().getHostName()+":"+group.getName()+":"+metricName;
+		return getInstance().getHostName()+"-"+group.getName()+"-"+metricName;
 	}
 
 	public static MetricRegistry getRegistry() {

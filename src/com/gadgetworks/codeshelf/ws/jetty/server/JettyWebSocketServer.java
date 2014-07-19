@@ -29,7 +29,7 @@ public class JettyWebSocketServer {
 	private int mPort = 8444;
     private Server mServer = null;
     //private RequestProcessor mRequestProcessor;
-	private CsServerEndPoint endpoint;
+	//private CsServerEndPoint endpoint;
 
     // TODO: needs to be passed in
 	private String	mKeystoreStorePassword="x2HPbC2avltYQR";

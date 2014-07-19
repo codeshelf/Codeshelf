@@ -45,6 +45,7 @@ public class LoginCommand extends CommandABC {
 					LoginResponse response = new LoginResponse();
 					response.setOrganization(organization);
 					response.setStatus(ResponseStatus.Success);
+					response.setUser(user);
 					session.setAuthenticated(true);
 					LOGGER.info("User "+userId+" authenticated on session "+session.getSessionId());
 					return response;

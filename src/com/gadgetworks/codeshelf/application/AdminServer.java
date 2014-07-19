@@ -31,7 +31,7 @@ public class AdminServer {
 			server.setHandler(context);
 			context.addServlet(new ServletHolder(new MetricsServlet()),"/*");
 			server.start();
-			server.join();
+			// server.join();
 		} 
 		catch (Exception e) {
 			LOGGER.error("Failed to start admin server", e);
