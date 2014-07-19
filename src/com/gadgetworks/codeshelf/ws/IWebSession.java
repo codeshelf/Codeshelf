@@ -13,11 +13,19 @@ import com.gadgetworks.codeshelf.ws.command.resp.IWsRespCmd;
  *
  */
 public interface IWebSession extends IDaoListener {
+	enum ConnectionActivityStatus { ACTIVE, IDLE, DEAD };
 
 	IWsRespCmd processMessage(String inMessage);
 
 	void sendCommand(IWsRespCmd inCommand);
 
 	void endSession();
-
+	
+	void resetPongTimer();
+	long getPongTimerElapsedMillis();
+	boolean setConnectionActivityStatus(ConnectionActivityStatus inNewStatus);
+	
+	// String getContextFacility()
+	// String getContextUserBadgeId()
+	// String getContextFacility()
 }

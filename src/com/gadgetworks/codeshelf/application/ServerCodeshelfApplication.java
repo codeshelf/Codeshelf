@@ -249,9 +249,14 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 	protected void doInitializeApplicationData() {
 
 		// Create some demo organizations.
-		createDemoOrganzation("DEMO1", "a@example.com", "testme");
-		createDemoOrganzation("DEMO2", "b@example.com", "testme");
-		
+		createOrganizationUser("DEMO1", "a@example.com", "testme"); //view
+		createOrganizationUser("DEMO1", "view@example.com", "testme"); //view
+		createOrganizationUser("DEMO1", "configure@example.com", "testme"); //all
+		createOrganizationUser("DEMO1", "simulate@example.com", "testme"); //simulate + configure
+		createOrganizationUser("DEMO1", "che@example.com", "testme"); //view + simulate
+
+		createOrganizationUser("DEMO2", "b@example.com", "testme");
+
 		// Recompute path positions.
 		// TODO: Remove once we have a tool for linking path segments to locations (aisles usually).
 		for (Organization organization : mOrganizationDao.getAll()) {
@@ -268,18 +273,21 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 	 * @param inOrganizationId
 	 * @param inPassword
 	 */
-	private void createDemoOrganzation(String inOrganizationId, String inDefaultUserId, String inDefaultUserPw) {
+	private void createOrganizationUser(String inOrganizationId, String inDefaultUserId, String inDefaultUserPw) {
 		Organization organization = mOrganizationDao.findByDomainId(null, inOrganizationId);
 		if (organization == null) {
 			organization = new Organization();
 			organization.setDomainId(inOrganizationId);
 			try {
 				mOrganizationDao.store(organization);
-				organization.createUser(inDefaultUserId, inDefaultUserPw);
+
 			} catch (DaoException e) {
 				e.printStackTrace();
 			}
 
+		}
+		if (organization.getUser(inDefaultUserId) == null) {
+			organization.createUser(inDefaultUserId, inDefaultUserPw);
 		}
 	}
 }

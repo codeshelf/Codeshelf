@@ -19,4 +19,7 @@ public interface IWebSessionManager {
 
 	void handleSessionMessage(WebSocket inWebSocket, String inMessage);
 
+	void handlePong(WebSocket inWebSocket);
+	
+	boolean checkLastPongTime(WebSocket inWebSocket, long warningMillis, long errorMillis);
 }

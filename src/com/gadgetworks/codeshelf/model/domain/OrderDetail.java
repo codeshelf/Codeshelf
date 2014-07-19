@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
+import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
@@ -197,6 +198,39 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 
 	public final String getOrderId() {
 		return parent.getOrderId();
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Meta fields. These appropriate for pick (outbound) order details and/or cross--batch order details
+	 * @return
+	 */
+	public final String getWiLocation() {
+		String returnStr = "";
+		for (WorkInstruction wi : getWorkInstructions()) {
+			if (returnStr.isEmpty())
+				if (wi.getStatusEnum() == WorkInstructionStatusEnum.SHORT)
+					returnStr = WorkInstructionStatusEnum.SHORT.getName();
+				else {
+					returnStr = wi.getPickInstruction();
+				}
+			else if (wi.getStatusEnum() != WorkInstructionStatusEnum.SHORT) { // don't pile on extra SHORT if multiple SHORT WIs
+				returnStr = returnStr + ", " + wi.getPickInstruction();
+			}
+		}
+		return returnStr;
+	}
+
+	public final String getWiChe() {
+		String returnStr = "";
+		for (WorkInstruction wi : getWorkInstructions()) {
+			if (returnStr.isEmpty())
+				returnStr = wi.getAssignedCheName();
+			else if (wi.getStatusEnum() != WorkInstructionStatusEnum.SHORT) { // don't pile on extra CHE if multiple SHORT WIs
+				returnStr = returnStr + ", " + wi.getAssignedCheName();
+			}
+		}
+		return returnStr;
 	}
 
 }

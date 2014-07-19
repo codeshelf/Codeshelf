@@ -147,6 +147,10 @@ public abstract class SubLocationABC<P extends IDomainObject> extends LocationAB
 	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#computePosAlongPath(com.gadgetworks.codeshelf.model.domain.PathSegment)
 	 */
 	public final void computePosAlongPath(final PathSegment inPathSegment) {
+		if (inPathSegment == null) {
+			LOGGER.error("null pathSegment in computePosAlongPath");
+			return;
+		}
 
 		Point locationAnchorPoint = getAbsoluteAnchorPoint();
 		Point pickFaceEndPoint = parent.getAbsoluteAnchorPoint();

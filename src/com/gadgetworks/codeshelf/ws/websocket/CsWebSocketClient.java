@@ -7,6 +7,8 @@ package com.gadgetworks.codeshelf.ws.websocket;
 
 import java.io.IOException;
 import java.net.URI;
+import java.sql.Timestamp;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
@@ -14,6 +16,9 @@ import javax.net.ssl.SSLSocketFactory;
 import org.java_websocket.WebSocket;
 import org.java_websocket.WebSocketImpl;
 import org.java_websocket.client.WebSocketClient;
+import org.java_websocket.framing.Framedata;
+import org.java_websocket.framing.FramedataImpl1;
+import org.java_websocket.framing.Framedata.Opcode;
 import org.java_websocket.handshake.ServerHandshake;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +36,7 @@ public class CsWebSocketClient extends WebSocketClient implements ICsWebSocketCl
 
 	private ICsWebsocketClientMsgHandler	mMessageHandler;
 	private IWebSocketSslContextFactory		mWebSocketSslContextFactory;
+	private AtomicLong						mPingTimerStart = new AtomicLong();
 
 	//@Inject
 	// Can't really inject - the Java_WebSocket libs are not really built for re-use or re-entrance.  BLerg.
@@ -62,6 +68,8 @@ public class CsWebSocketClient extends WebSocketClient implements ICsWebSocketCl
 		} catch (IOException e) {
 			LOGGER.error("", e);
 		}
+
+		resetPingTimer();
 	}
 
 	public final void stop() {
@@ -95,5 +103,21 @@ public class CsWebSocketClient extends WebSocketClient implements ICsWebSocketCl
 
 	public final void onError(final Exception inException) {
 		LOGGER.debug("Websocket error");
+	}
+
+	public final long getPingTimerElapsed() {
+		return System.currentTimeMillis() - mPingTimerStart.get();
+	}
+
+	private void resetPingTimer() {
+		this.mPingTimerStart.set(System.currentTimeMillis());
+	}
+
+	@Override
+	public final void onWebsocketPing(WebSocket inWebSocket, Framedata inFramedata) {
+		super.onWebsocketPing(inWebSocket, inFramedata); // respond with pong
+		
+		LOGGER.debug("Websocket ping received, last " + getPingTimerElapsed() + " ms ago");
+		resetPingTimer();
 	}
 }

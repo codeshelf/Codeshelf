@@ -6,6 +6,7 @@
 package com.gadgetworks.codeshelf.edi;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.Timestamp;
 
@@ -13,11 +14,12 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.gadgetworks.codeshelf.model.OrderTypeEnum;
-import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Bay;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.ILocation;
+import com.gadgetworks.codeshelf.model.domain.ISubLocation;
+import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.OrderLocation;
 import com.gadgetworks.codeshelf.model.domain.Organization;
@@ -29,6 +31,195 @@ import com.gadgetworks.codeshelf.model.domain.Point;
  */
 public class OrderLocationImporterTest extends EdiTestABC {
 
+	/**
+	 * Given two orders and a single slot
+	 * When both orders are slotted to the same location
+	 * Then both orders will contain that location
+	 *
+	 */
+	@Test
+	public final void testMultipleOrdersToOneSlot() {
+		Facility facility = getTestFacility("O-testMultipleOrdersToOneSlot", "F-testMultipleOrdersToOneSlot");
+		doLocationSetup(facility);
+		String singleSlot = "D-21";
+		doSingleSlotOrder(facility, "01111", singleSlot);
+		doSingleSlotOrder(facility, "02222", singleSlot);
+		
+		assertOrderHasLocation(facility, facility.getOrderHeader("01111"), singleSlot);
+		assertOrderHasLocation(facility, facility.getOrderHeader("02222"), singleSlot);
+	}
+	
+	@Test
+	public final void testSlottingBeforeOrders() {
+		Facility facility = getTestFacility("O-SLOTTING9", "F-SLOTTING9");
+		// **************
+		// First a trivial aisle
+		String aisleCsv = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A9,,,,,TierLeft,12.85,43.45,X,120,\r\n" //
+				+ "Bay,B1,244,,,,,\r\n" //
+				+ "Tier,T1,,8,80,0,,\r\n"; //
+		Assert.assertTrue(importAisles(facility, aisleCsv));;
+		Aisle aisle = Aisle.DAO.findByDomainId(facility, "A9");
+		Assert.assertNotNull(aisle);
+		ISubLocation<?> location = facility.findSubLocationById("A9.B1.T1.S1");
+		Assert.assertNotNull(location);
+
+		// **************
+		// We need the location aliases
+		String locationAliasCsv = "mappedLocationId,locationAlias\r\n" //
+				+ "A9, D\r\n" //
+				+ "A9.B1, DB\r\n" //
+				+ "A9.B1.T1, DT\r\n" //
+				+ "A9.B1.T1.S1, D-21\r\n" //
+				+ "A9.B1.T1.S2, D-22\r\n" //
+				+ "A9.B1.T1.S3, D-23\r\n" //
+				+ "A9.B1.T1.S4, D-24\r\n" //
+				+ "A9.B1.T1.S5, D-25\r\n" //
+				+ "A9.B1.T1.S6, D-26\r\n"; //
+		// Leaving S7 and S8 unknown
+		
+		Assert.assertTrue(importLocationAliases(facility, locationAliasCsv));
+		ISubLocation<?> locationByAlias = facility.findSubLocationById("D-21");
+		Assert.assertNotNull(locationByAlias);
+		
+		// **************
+		// Now a slotting file.  No orders yet. This is the out of order situation.	 Normally we want orders before slotting.
+		String slottingCsv = "orderId,locationId\r\n" //
+				+ "01111, D-21\r\n" //
+				+ "01111, D-22\r\n" //
+				+ "02222, D-26\r\n" //
+				+ "03333, D-27\r\n" // Notice that D-27 does not resolve to a slot
+				+ "04444, D-23\r\n"; // This will not come in the orders file
+
+		Assert.assertTrue(importSlotting(facility, slottingCsv));
+		// At this point we would like order number 01111 and 02222 to exist as dummy outbound orders.
+		// Not sure about 03333
+		OrderHeader order1111 = facility.getOrderHeader("01111");
+		Assert.assertNotNull(order1111); // after fix, will have a header
+		Assert.assertEquals(2, order1111.getOrderLocations().size());
+		
+		// **************
+		// Now the orders file. The 01111 line has detailId 01111.1. The other two leave the detail blank, so will get a default name.
+		String csvString4 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
+				+ "\r\n1,USF314,COSTCO,,01111,01111.1,10700589,Napa Valley Bistro - Jalape��o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,,02222,,10706952,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,,03333,,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
+
+		Timestamp ediProcessTime4 = new Timestamp(System.currentTimeMillis());
+		ICsvOrderImporter importer4 = new OutboundOrderCsvImporter(mOrderGroupDao,
+			mOrderHeaderDao,
+			mOrderDetailDao,
+			mContainerDao,
+			mContainerUseDao,
+			mItemMasterDao,
+			mUomMasterDao);
+		importer4.importOrdersFromCsvStream(toReader(csvString4), facility, ediProcessTime4);
+
+		order1111 = facility.getOrderHeader("01111");
+		Assert.assertNotNull(order1111);
+		// make sure order details got updated
+		String cust = order1111.getCustomerId();
+		Assert.assertEquals(cust, "COSTCO");
+
+		OrderDetail orderDetail = order1111.getOrderDetail("01111.1");
+		Assert.assertNotNull(orderDetail);
+		
+		// Make sure we can lookup all of the locations for order O1111. This pretty much proves it.
+		Assert.assertEquals(2, order1111.getOrderLocations().size());
+		
+		// Other use cases?
+		// If you redrop the orders file, do the locations go away?
+		// If redrop of slotting has 01111 to unknown location alias, are existing locations cleared?
+	}
+
+	/**
+	 * Given an initial order with a location
+	 * When the slotting file contains a new location (without a null "reset" location line)
+	 * Then the order location is updated
+	 * 
+	 */
+	@Test
+	public final void testSlotUpdate() {
+		Facility facility = getTestFacility("ORG-testSlotUpdate", "F-testSlotUpdate");
+
+		doSingleSlotOrder(facility, "01111", "D-21");
+		
+		String singleSlotUpdateCsv = "orderId,locationId\r\n" //
+				+ "01111, D-22\r\n"; //
+		Assert.assertTrue(importSlotting(facility, singleSlotUpdateCsv));
+		
+		OrderHeader order = facility.getOrderHeader("01111");
+		Assert.assertEquals(1, order.getOrderLocations().size());
+		assertOrderHasLocation(facility, order, "D-22");
+	}
+	
+	@Test
+	public final void testSlotsResetWhenOrdersUnsorted() {
+		Facility facility = getTestFacility("ORG-testSlotsResetWhenOrdersUnsorted", "F-testSlotsResetWhenOrdersUnsorted");
+
+		doSingleSlotOrder(facility, "01111", "D-21");
+		doSingleSlotOrder(facility, "02222", "D-22");
+		
+		String multiOrderSlotUpdateCsv = "orderId,locationId\r\n" //
+				+ "01111, D-22\r\n" //
+				+ "02222, D-23\r\n" //
+				+ "01111, D-21\r\n"; //
+		Assert.assertTrue(importSlotting(facility, multiOrderSlotUpdateCsv));
+		
+		OrderHeader order = facility.getOrderHeader("01111");
+		Assert.assertEquals(2, order.getOrderLocations().size());
+		assertOrderHasLocation(facility, order, "D-21");
+		assertOrderHasLocation(facility, order, "D-22");
+		
+		OrderHeader order02222 = facility.getOrderHeader("02222");
+		Assert.assertEquals(1, order02222.getOrderLocations().size());
+		assertOrderHasLocation(facility, order02222, "D-23");
+	}
+
+	/**
+	 * Given an initial order with 2 locations
+	 * 	When a slotting file contains 1 null location and 1 real location for that order
+	 *  Then the order has 1 location
+	 * 
+     */	
+	@Test
+	public final void testReduceOrderLocationsWithResetLine() {
+		
+		Facility facility = getTestFacility("ORG-testReduceOrderLocations", "F-testReduceOrderLocations");
+		
+		doMultiSlotOrder(facility, "01111", "D-21", "D-22");
+
+		String singleSlotCsv = "orderId,locationId\r\n" //
+				+ "01111, \r\n" // reset
+				+ "01111, D-21\r\n"; //
+		Assert.assertTrue(importSlotting(facility, singleSlotCsv));
+		
+		Assert.assertEquals(1, facility.getOrderHeader("01111").getOrderLocations().size());
+
+	}
+
+	
+	/**
+	 * Given an initial order with 2 locations
+	 * 	When a slotting file contains 1 null location and 1 real location for that order
+	 *  Then the order has 1 location
+	 * 
+     */	
+	@Test
+	public final void testReduceOrderLocationsWithSingleLineUpdate() {
+		
+		Facility facility = getTestFacility("ORG-testReduceOrderLocationsWithSingleLineUpdate", "F-testReduceOrderLocationsWithSingleLineUpdate");
+		
+		doMultiSlotOrder(facility, "01111", "D-21", "D-22");
+
+		String singleSlotCsv = "orderId,locationId\r\n" //
+				+ "01111, D-23\r\n"; //
+		Assert.assertTrue(importSlotting(facility, singleSlotCsv));
+		
+		Assert.assertEquals(1, facility.getOrderHeader("01111").getOrderLocations().size());
+		
+	}
+		
 	@Test
 	public final void testLocationAliasImporterFromCsvStream() {
 
@@ -40,11 +231,6 @@ public class OrderLocationImporterTest extends EdiTestABC {
 				+ "O2222, A2.B1\r\n" //
 				+ ", A2.B2\r\n" // O3333's location
 				+ "O4444, "; //
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
 
 		Organization organization = new Organization();
 		organization.setDomainId("O-ORDLOC.1");
@@ -159,8 +345,9 @@ public class OrderLocationImporterTest extends EdiTestABC {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvOrderLocationImporter importer = new OrderLocationCsvImporter(mOrderLocationDao);
-		importer.importOrderLocationsFromCsvStream(reader, facility, ediProcessTime);
-
+		boolean result = importer.importOrderLocationsFromCsvStream(toReader(csvString), facility, ediProcessTime);
+		Assert.assertTrue(result);
+		
 		// Make sure we can lookup all of the locations for order O1111.
 		Assert.assertEquals(3, order1111.getOrderLocations().size());
 
@@ -364,5 +551,104 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		// Make sure we blanked out the order location for O4444.
 		Assert.assertEquals(0, order4444.getOrderLocations().size());
 	}
+	
+
+	private void doMultiSlotOrder(Facility facility, String orderId, String... locations) {
+		doLocationSetup(facility);
+		
+		String multiSlotCsv = "orderId,locationId\r\n"; //
+				for (int i = 0; i < locations.length; i++) {
+					String locationId = locations[i];
+					multiSlotCsv += orderId + ", " + locationId + "\r\n"; 
+				}
+		
+		Assert.assertTrue(importSlotting(facility, multiSlotCsv));
+		Assert.assertNotNull(facility.getOrderHeader(orderId));
+		Assert.assertEquals(locations.length, facility.getOrderHeader(orderId).getOrderLocations().size());
+	}
+	
+	private void doSingleSlotOrder(Facility facility, String orderId, String locationId) {
+		doLocationSetup(facility);
+		
+		String doubleSlotCsv = "orderId,locationId\r\n" //
+				+ orderId + ", " + locationId + "\r\n"; //
+		
+		Assert.assertTrue(importSlotting(facility, doubleSlotCsv));
+		Assert.assertNotNull(facility.getOrderHeader(orderId));
+		Assert.assertEquals(1, facility.getOrderHeader(orderId).getOrderLocations().size());
+	}
+
+	private void doLocationSetup(Facility facility) {
+		// First a trivial aisle
+		String aisleCsv = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A9,,,,,TierLeft,12.85,43.45,X,120,\r\n" //
+				+ "Bay,B1,244,,,,,\r\n" //
+				+ "Tier,T1,,8,80,0,,\r\n"; //
+		
+
+		Assert.assertTrue(importAisles(facility, aisleCsv));
+		
+		String locationsCsv = "mappedLocationId,locationAlias\r\n" //
+				+ "A9, D\r\n" //
+				+ "A9.B1, DB\r\n" //
+				+ "A9.B1.T1, DT\r\n" //
+				+ "A9.B1.T1.S1, D-21\r\n" //
+				+ "A9.B1.T1.S2, D-22\r\n" //
+				+ "A9.B1.T1.S3, D-23\r\n"; //
+		Assert.assertTrue(importLocationAliases(facility, locationsCsv));
+	}
+	
+	private InputStreamReader toReader(String csvString) {
+		byte[] csvArray = csvString.getBytes();
+		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
+		InputStreamReader reader = new InputStreamReader(stream);
+		return reader;
+	}
+
+	
+	private boolean importAisles(Facility facility, String csvString) {
+		// **************
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		return importer.importAislesFileFromCsvStream(toReader(csvString), facility, ediProcessTime);
+		
+	}
+	
+	private boolean importLocationAliases(Facility facility, String csvString) {
+
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		ICsvLocationAliasImporter importer = new LocationAliasCsvImporter(mLocationAliasDao);
+		boolean result = importer.importLocationAliasesFromCsvStream(toReader(csvString), facility, ediProcessTime);
+		return result;
+	}
+	
+	private boolean importSlotting(Facility facility, String csvString) {
+
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		ICsvOrderLocationImporter importer = new OrderLocationCsvImporter(mOrderLocationDao);
+		return importer.importOrderLocationsFromCsvStream(toReader(csvString), facility, ediProcessTime);
+	}
+
+
+	private Facility getTestFacility(String orgId, String facilityId) {
+		Organization organization = new Organization();
+		organization.setDomainId(orgId);
+		mOrganizationDao.store(organization);
+
+		organization.createFacility(facilityId, "TEST", Point.getZeroPoint());
+		Facility facility = organization.getFacility(facilityId);
+		return facility;
+	}
+	
+	private void assertOrderHasLocation(Facility facility, OrderHeader order, String locationAlias) {
+		ILocation mappedLocation = facility.findSubLocationById(locationAlias);
+		String orderLocationId = OrderLocation.makeDomainId(order, mappedLocation);
+		Assert.assertNotNull(order.getOrderLocation(orderLocationId));
+	}
+	
+
+
 
 }

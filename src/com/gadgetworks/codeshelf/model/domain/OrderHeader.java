@@ -76,6 +76,20 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	public static String computeCrossOrderId(String inContainerId, Timestamp inTimestamp) {
 		return inContainerId + "." + inTimestamp;
 	}
+	
+	public static OrderHeader createEmptyOrderHeader(Facility inFacility, String inOrderId) {
+		OrderHeader header = new OrderHeader();
+		header.setParent(inFacility);
+		header.setDomainId(inOrderId);
+		header.setOrderTypeEnum(OrderTypeEnum.OUTBOUND);
+		header.setStatusEnum(OrderStatusEnum.CREATED);
+		header.setPickStrategyEnum(PickStrategyEnum.SERIAL);
+		header.setActive(Boolean.TRUE);
+		header.setUpdated(new Timestamp(System.currentTimeMillis()));
+		OrderHeader.DAO.store(header);
+		inFacility.addOrderHeader(header);
+		return header;
+	}
 
 	private static final Logger			LOGGER			= LoggerFactory.getLogger(OrderHeader.class);
 
@@ -313,6 +327,21 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	public final String getDescription() {
 		return "--- Order Header ---";
 		// localization issue
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Order Head does not have a description field. This is for UI meta field that simply shows "Order Header" to help orient the user in the orders view.
+	 * @return
+	 */
+	public final Integer getActiveDetailCount() {
+		Integer result = 0;
+		for (OrderDetail orderDetail : getOrderDetails()) {
+			if (orderDetail.getActive()) {
+				result++;
+			}
+		}		
+		return result;
 	}
 
 	// --------------------------------------------------------------------------

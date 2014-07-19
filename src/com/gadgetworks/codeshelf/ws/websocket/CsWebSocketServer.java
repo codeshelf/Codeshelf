@@ -6,12 +6,15 @@
 package com.gadgetworks.codeshelf.ws.websocket;
 
 import java.net.InetSocketAddress;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 import org.java_websocket.WebSocket;
 import org.java_websocket.WebSocketImpl;
-import org.java_websocket.framing.Framedata.Opcode;
+import org.java_websocket.framing.Framedata;
 import org.java_websocket.framing.FramedataImpl1;
+import org.java_websocket.framing.Framedata.Opcode;
 import org.java_websocket.handshake.ClientHandshake;
 import org.java_websocket.server.WebSocketServer;
 import org.slf4j.Logger;
@@ -22,11 +25,23 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
 public class CsWebSocketServer extends WebSocketServer implements IWebSocketServer {
+	public static final int					WEBSOCKET_PING_INTERVAL_MILLIS	= 20000;
+	public static final int					WEBSOCKET_CHECK_INTERVAL_MILLIS	= 1000;											// Must divide evenly into WEBSOCKET_PING_INTERVAL_MILLIS
 
-	private static final Logger				LOGGER	= LoggerFactory.getLogger(CsWebSocketServer.class);
+	public static final long				WS_PINGPONG_ROUNDTRIP_DELAY_MS	= 2000;
+	public static final int					WS_PINGPONG_WARN_MISSED			= 1;
+	public static final long				WS_PINGPONG_WARN_ELAPSED_MS		= (WS_PINGPONG_WARN_MISSED * WEBSOCKET_PING_INTERVAL_MILLIS)
+																					+ WS_PINGPONG_ROUNDTRIP_DELAY_MS;
+	public static final int					WS_PINGPONG_MAX_MISSED			= 2;
+	public static final long				WS_PINGPONG_MAX_ELAPSED_MS		= (WS_PINGPONG_MAX_MISSED * WEBSOCKET_PING_INTERVAL_MILLIS)
+																					+ WS_PINGPONG_ROUNDTRIP_DELAY_MS;
+	public static final int					WS_CLOSE_CODE_PINGPONG_TIMEOUT	= 1;
+
+	private static final Logger				LOGGER							= LoggerFactory.getLogger(CsWebSocketServer.class);
 
 	private IWebSessionManager				mWebSessionManager;
 	private CopyOnWriteArraySet<WebSocket>	mWebSockets;
+	private boolean							mIdleKill;
 
 	@Inject
 	public CsWebSocketServer(@Named(WEBSOCKET_HOSTNAME_PROPERTY) final String inAddr,
@@ -38,6 +53,8 @@ public class CsWebSocketServer extends WebSocketServer implements IWebSocketServ
 		WebSocketImpl.DEBUG = Boolean.parseBoolean(System.getProperty("websocket.debug"));
 		setWebSocketFactory(inWebSocketServerFactory);
 
+		mIdleKill = Boolean.parseBoolean(System.getProperty("websocket.idle.kill"));
+		
 		mWebSessionManager = inWebSessionManager;
 		mWebSockets = new CopyOnWriteArraySet<WebSocket>();
 	}
@@ -48,23 +65,45 @@ public class CsWebSocketServer extends WebSocketServer implements IWebSocketServ
 
 		Thread websocketPingThread = new Thread(new Runnable() {
 			public void run() {
+				int checksPerPing = WEBSOCKET_PING_INTERVAL_MILLIS / WEBSOCKET_CHECK_INTERVAL_MILLIS;
+				int cycle = 0;
 				while (true) {
-					LOGGER.debug("WebSocket ping process start");
-					for (WebSocket websocket : mWebSockets) {
-						LOGGER.debug("WebSocket ping: " + websocket.getRemoteSocketAddress());
-						FramedataImpl1 pingFrame = new FramedataImpl1(Opcode.PING);
-						pingFrame.setFin(true);
-						websocket.sendFrame(pingFrame);
+					if (++cycle % checksPerPing == 0) {
+						LOGGER.trace("WebSocket watchdog: ping process start");
+						int activeWebSockets = 0;
+						for (WebSocket websocket : mWebSockets) {
+							activeWebSockets++;
+							LOGGER.debug("WebSocket watchdog: ping " + websocket.getRemoteSocketAddress());
+							FramedataImpl1 pingFrame = new FramedataImpl1(Opcode.PING);
+							pingFrame.setFin(true);
+							websocket.sendFrame(pingFrame);
+						}
+						if (activeWebSockets == 0) {
+							// log at a higher level if 0 clients are connected
+							LOGGER.debug("WebSocket watchdog: pinged " + activeWebSockets + " clients");
+						} else {
+							LOGGER.trace("WebSocket watchdog: pinged " + activeWebSockets + " clients");
+						}
 					}
-					LOGGER.debug("WebSocket ping process end");
+
+					for (WebSocket websocket : mWebSockets) {
+						if (!mWebSessionManager.checkLastPongTime(websocket, WS_PINGPONG_WARN_ELAPSED_MS, WS_PINGPONG_MAX_ELAPSED_MS)) {
+							if (mIdleKill) {
+								websocket.closeConnection(WS_CLOSE_CODE_PINGPONG_TIMEOUT, "PONG timeout expired");
+							}
+						}
+					}
+
 					try {
-						Thread.sleep(20000);
+						Thread.sleep(WEBSOCKET_CHECK_INTERVAL_MILLIS);
 					} catch (InterruptedException e) {
 						LOGGER.error("", e);
 					}
 				}
 			}
-		}, "WebSocket ping thread");
+
+		},
+			"WebSocket ping thread");
 		websocketPingThread.start();
 	}
 
@@ -100,5 +139,13 @@ public class CsWebSocketServer extends WebSocketServer implements IWebSocketServ
 		} else {
 			LOGGER.error("Error: (CsWebSocketServer.onError - websocket was null)", inException);
 		}
+	}
+
+	@Override
+	public final void onWebsocketPong(WebSocket inWebSocket, Framedata inFrameData) {
+		super.onWebsocketPong(inWebSocket, inFrameData); // does nothing
+
+		LOGGER.debug("WebSocket pong from " + inWebSocket.getRemoteSocketAddress());
+		mWebSessionManager.handlePong(inWebSocket);
 	}
 }

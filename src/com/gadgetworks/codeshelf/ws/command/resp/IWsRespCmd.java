@@ -5,6 +5,8 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.ws.command.resp;
 
+import org.codehaus.jackson.node.ObjectNode;
+
 import com.gadgetworks.codeshelf.ws.command.IWebSessionCmd;
 
 /**
@@ -26,5 +28,9 @@ public interface IWsRespCmd extends IWebSessionCmd {
 	 */
 	String getResponseMsg();
 
+	/**
+	 * Return the response as a JsonNode
+	 */
+	ObjectNode getResponseNode();
 	
 }
