@@ -1,9 +1,9 @@
 package com.gadgetworks.codeshelf.ws.jetty.protocol.command;
 
+import lombok.Setter;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import lombok.Setter;
 
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
@@ -14,7 +14,6 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.request.NetworkAttachRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.NetworkAttachResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
-import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
 
 public class NetworkAttachCommand extends CommandABC {
 
@@ -25,8 +24,7 @@ public class NetworkAttachCommand extends CommandABC {
 	@Setter
 	private OrganizationDao	organizationDao;
 	
-	public NetworkAttachCommand(CsSession session, NetworkAttachRequest request) {
-		super(session);
+	public NetworkAttachCommand(NetworkAttachRequest request) {
 		this.request = request;
 	}
 

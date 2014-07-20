@@ -15,6 +15,7 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageProcessor;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RequestABC;
 
 public class JettyWebSocketClient {
@@ -24,7 +25,7 @@ public class JettyWebSocketClient {
 	String connectionString = null;
 	Session session;
 	
-	ResponseProcessor responseProcessor = null;
+	MessageProcessor responseProcessor = null;
 	
 	MessageCoordinator messageCoordinator = null;
 	
@@ -34,14 +35,14 @@ public class JettyWebSocketClient {
 	
 	WebSocketContainer container;
 	
-	public JettyWebSocketClient(String connectionString, ResponseProcessor responseProcessor, WebSocketEventListener eventListener) {
+	public JettyWebSocketClient(String connectionString, MessageProcessor responseProcessor, WebSocketEventListener eventListener) {
 		this.connectionString = connectionString;
 		this.eventListener = eventListener;
 		this.responseProcessor = responseProcessor;
 		
         // create and configure WS endpoint                 
         endpoint = new CsClientEndpoint(this);
-        endpoint.setResponseProcessor(responseProcessor);
+        endpoint.setMessageProcessor(responseProcessor);
      
         messageCoordinator = new MessageCoordinator(); 
         endpoint.setMessageCoordinator(messageCoordinator);
@@ -79,7 +80,7 @@ public class JettyWebSocketClient {
     		return true;
     	}
     	catch (Exception e) {
-    		LOGGER.error("Exception while trying to send request #"+request.getRequestId(),e);
+    		LOGGER.error("Exception while trying to send request #"+request.getMessageId(),e);
     		return false;
     	}
     }

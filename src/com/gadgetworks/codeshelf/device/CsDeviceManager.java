@@ -95,7 +95,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 
 	public final void startWebSocket() {
     	// create response processor and register it with WS client
-		SiteControllerResponseProcessor responseProcessor = new SiteControllerResponseProcessor(this);
+		SiteControllerMessageProcessor responseProcessor = new SiteControllerMessageProcessor(this);
     	client = new JettyWebSocketClient(mUri,responseProcessor,this);
     	responseProcessor.setWebClient(client);
     	connectionManagerThread = new ConnectionManagerThread(this);

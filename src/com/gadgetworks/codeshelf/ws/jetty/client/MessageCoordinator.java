@@ -16,7 +16,7 @@ public class MessageCoordinator {
 	LinkedHashMap<String, RequestInfo> requests = new LinkedHashMap<String, RequestInfo>();
 	
 	public boolean registerRequest(RequestABC request) {
-		String requestId = request.getRequestId();
+		String requestId = request.getMessageId();
 		if (requestId==null) {
 			LOGGER.warn("Unable to register request. Request ID is not defined.");
 			return false;
@@ -26,13 +26,13 @@ public class MessageCoordinator {
 			return false;
 		}
 		RequestInfo ri = new RequestInfo(request);
-		this.requests.put(request.getRequestId(), ri);
+		this.requests.put(request.getMessageId(), ri);
 		LOGGER.debug("Request #"+requestId+" registered");
 		return true;
 	}
 	
 	public boolean unregisterRequest(ResponseABC response) {
-		String requestId = response.getRequestID();
+		String requestId = response.getRequestId();
 		if (requestId==null) {
 			LOGGER.warn("Unable to unregister request. Request ID is not defined in response.");
 			return false;

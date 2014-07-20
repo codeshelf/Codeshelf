@@ -17,23 +17,26 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.ws.jetty.io.JsonRequestEncoder;
-import com.gadgetworks.codeshelf.ws.jetty.io.JsonResponseDecoder;
+import com.gadgetworks.codeshelf.ws.jetty.io.JsonDecoder;
+import com.gadgetworks.codeshelf.ws.jetty.io.JsonEncoder;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageProcessor;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RequestABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 
-@ClientEndpoint(encoders={JsonRequestEncoder.class},decoders={JsonResponseDecoder.class})
+@ClientEndpoint(encoders={JsonEncoder.class},decoders={JsonDecoder.class})
 public class CsClientEndpoint {
 	
 	private static final Logger	LOGGER = LoggerFactory.getLogger(CsClientEndpoint.class);
 
 	@Getter @Setter
-	ResponseProcessor responseProcessor;
+	MessageProcessor messageProcessor;
 	
 	@Getter @Setter 
 	MessageCoordinator messageCoordinator;
 	
 	JettyWebSocketClient client;
-	
+
 	public CsClientEndpoint(JettyWebSocketClient client) {
 		this.client = client;
 	}
@@ -45,9 +48,26 @@ public class CsClientEndpoint {
     }
     
     @OnMessage
-    public void onMessage(Session session, ResponseABC response) throws IOException, EncodeException {
-    	responseProcessor.handleResponse(response);
-		this.messageCoordinator.unregisterRequest(response);
+    public void onMessage(Session session, MessageABC message) throws IOException, EncodeException {
+    	if (message instanceof ResponseABC) {
+    		ResponseABC response = (ResponseABC) message;
+	    	messageProcessor.handleResponse(session, response);
+			this.messageCoordinator.unregisterRequest(response);
+    	}
+    	else if (message instanceof RequestABC) {
+    		RequestABC request = (RequestABC) message;
+        	LOGGER.debug("Request received: "+request);
+            // pass request to processor to execute command
+            ResponseABC response = messageProcessor.handleRequest(session, request);
+            if (response!=null) {
+            	// send response to client
+            	LOGGER.debug("Sending response "+response+" for request "+request);
+            	session.getBasicRemote().sendObject(response);
+            }
+            else {
+            	LOGGER.warn("No response generated for request "+request);
+            }    	
+    	}    
     }
     
     @OnClose

@@ -3,7 +3,7 @@ package com.gadgetworks.codeshelf.ws.jetty.test;
 import com.gadgetworks.codeshelf.application.Util;
 import com.gadgetworks.codeshelf.ws.jetty.client.JettyWebSocketClient;
 import com.gadgetworks.codeshelf.ws.jetty.client.LogResponseProcessor;
-import com.gadgetworks.codeshelf.ws.jetty.client.ResponseProcessor;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageProcessor;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.EchoRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.LoginRequest;
 
@@ -25,7 +25,7 @@ public class JettyTestClient {
 		
 		try {
     		// create WS client
-        	ResponseProcessor responseProcessor = new LogResponseProcessor();
+        	MessageProcessor responseProcessor = new LogResponseProcessor();
         	JettyWebSocketClient client = new JettyWebSocketClient("wss://localhost:8444/",responseProcessor,null);
         	client.connect();
         

@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import lombok.Getter;
 
 import com.codahale.metrics.Counter;
+import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricRegistry;
@@ -80,7 +81,6 @@ public class MetricsService {
 			// create and register new metric
 			meter = getRegistry().meter(fullName);
 			LOGGER.debug("Added meter "+fullName);
-
 			return meter;
 		}
 		catch (Exception e) {
@@ -100,11 +100,31 @@ public class MetricsService {
 			}
 			// create and register new metric
 			timer = getRegistry().timer(fullName);
-			LOGGER.info("Added timer "+fullName);
+			LOGGER.debug("Added timer "+fullName);
 			return timer;
 		}
 		catch (Exception e) {
 			LOGGER.error("Failed to add meter "+fullName,e);
+		}
+		return null;
+	}
+
+	public static Histogram addHistogram(MetricsGroup group, String metricName) {
+		String fullName = getFullName(group, metricName);
+		try {
+			Histogram histogram = getRegistry().getHistograms().get(fullName);
+			if (histogram!=null) {
+				// return existing metric
+				LOGGER.warn("Unable to add metric "+fullName+".  Metric already exists.");
+				return histogram;
+			}
+			// create and register new metric
+			histogram = getRegistry().histogram(fullName);
+			LOGGER.debug("Added timer "+fullName);
+			return histogram;
+		}
+		catch (Exception e) {
+			LOGGER.error("Failed to add histogram "+fullName,e);
 		}
 		return null;
 	}

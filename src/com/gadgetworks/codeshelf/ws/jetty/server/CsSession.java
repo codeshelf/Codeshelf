@@ -2,6 +2,8 @@ package com.gadgetworks.codeshelf.ws.jetty.server;
 
 import java.util.Date;
 
+import javax.websocket.Session;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -18,7 +20,11 @@ public class CsSession {
 
 	@Getter @Setter
 	SessionType type = SessionType.Undefined;
+
+	@Getter
+	private Session	session=null;
 	
-	public CsSession() {
+	public CsSession(Session session) {
+		this.session = session;
 	}
 }

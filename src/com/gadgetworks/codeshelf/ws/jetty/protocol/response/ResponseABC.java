@@ -6,11 +6,11 @@ import lombok.Setter;
 import org.atteo.classindex.IndexSubclasses;
 import org.codehaus.jackson.annotate.JsonTypeInfo;
 
-import com.eaio.uuid.UUID;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
 
 @IndexSubclasses
 @JsonTypeInfo(use=JsonTypeInfo.Id.NAME, include=JsonTypeInfo.As.WRAPPER_OBJECT)
-public abstract class ResponseABC {
+public abstract class ResponseABC extends MessageABC {
 
 	@Getter @Setter
 	ResponseStatus status = ResponseStatus.Undefined;
@@ -18,9 +18,6 @@ public abstract class ResponseABC {
 	@Getter @Setter
 	String statusMessage;
 	
-	@Getter
-	String responseId = new UUID().toString();
-	
 	@Getter @Setter
-	String requestID;
+	String requestId;
 }

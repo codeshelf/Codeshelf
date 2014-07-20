@@ -8,14 +8,12 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ComputeWorkRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ComputeWorkResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
-import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
 
 public class ComputeWorkCommand extends CommandABC {
 
 	ComputeWorkRequest request;
 	
-	public ComputeWorkCommand(CsSession session, ComputeWorkRequest request) {
-		super(session);
+	public ComputeWorkCommand(ComputeWorkRequest request) {
 		this.request = request;
 	}
 

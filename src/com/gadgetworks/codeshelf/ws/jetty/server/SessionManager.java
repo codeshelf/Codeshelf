@@ -1,5 +1,7 @@
 package com.gadgetworks.codeshelf.ws.jetty.server;
 
+import java.util.Collection;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.websocket.Session;
@@ -32,7 +34,7 @@ public class SessionManager {
 	public synchronized void sessionStarted(Session session) {
 		String sessionId = session.getId();
 		if (!mActiveSessions.containsKey(sessionId)) {
-			CsSession csSession = new CsSession();
+			CsSession csSession = new CsSession(session);
 			csSession.setSessionId(sessionId);
 			mActiveSessions.put(sessionId, csSession);
 			LOGGER.info("Session "+session.getId()+" started");
@@ -62,6 +64,10 @@ public class SessionManager {
 			return null;
 		}
 		return this.mActiveSessions.get(sessionId);
+	}
+	
+	public final Collection<CsSession> getSessions() {
+		return this.mActiveSessions.values();
 	}
 
 }

@@ -16,10 +16,11 @@ public class LoginCommand extends CommandABC {
 	private static final Logger	LOGGER = LoggerFactory.getLogger(LoginCommand.class);
 	
 	private LoginRequest loginRequest;
+	private CsSession session;
 	
 	public LoginCommand(CsSession session, LoginRequest loginRequest) {
-		super(session);
 		this.loginRequest = loginRequest;
+		this.session = session;
 	}
 
 	@Override

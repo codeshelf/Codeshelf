@@ -14,7 +14,6 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.request.NetworkStatusRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.NetworkStatusResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
-import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
 
 public class NetworkStatusCommand extends CommandABC {
 	
@@ -22,8 +21,7 @@ public class NetworkStatusCommand extends CommandABC {
 
 	NetworkStatusRequest request;
 
-	public NetworkStatusCommand(CsSession session, NetworkStatusRequest request) {
-		super(session);
+	public NetworkStatusCommand(NetworkStatusRequest request) {
 		this.request = request;
 	}
 
