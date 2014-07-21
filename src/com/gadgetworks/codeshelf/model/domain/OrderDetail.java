@@ -212,7 +212,9 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 				if (wi.getStatusEnum() == WorkInstructionStatusEnum.SHORT)
 					returnStr = WorkInstructionStatusEnum.SHORT.getName();
 				else {
-					returnStr = wi.getPickInstruction();
+					returnStr = wi.getPickInstruction();					
+					if (wi.getStatusEnum() == WorkInstructionStatusEnum.COMPLETE)
+						returnStr = returnStr + " (" + WorkInstructionStatusEnum.COMPLETE.getName() + ")";					
 				}
 			else if (wi.getStatusEnum() != WorkInstructionStatusEnum.SHORT) { // don't pile on extra SHORT if multiple SHORT WIs
 				returnStr = returnStr + ", " + wi.getPickInstruction();

@@ -7,6 +7,7 @@ package com.gadgetworks.codeshelf.model.domain;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -1839,117 +1840,33 @@ public class Facility extends SubLocationABC<Facility> {
 		return result;
 	}
 
-	// --------------------------------------------------------------------------
-	/**
-	 * @param inChe
-	 * Testing only!  Looks for active unassociated container uses, and set up the CHE with them.
-	 * This is roughly equivalent to CheComputeWorkRespCmd.computeWorkInstructions()
-	 */
-	public final void fakeSetUpChe(String inCheDomainId) {
-		CodeshelfNetwork network = getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_ID);
-		if (network == null)
-			return;
-
-		Che theChe = network.getChe(inCheDomainId);
-		if (theChe == null)
-			return;
-
-		// Get the work instructions for this CHE at this location for the given containers.
-		List<String> containersIdList = new ArrayList<String>();
-
-		// The algorithm is to find the first active group, and hope it has active order headers without CHE assignment
-		List<OrderGroup> groupsList = this.getOrderGroups();
-		ListIterator li = groupsList.listIterator();
-		OrderGroup foundGroup = null;
-		while (li.hasNext() && foundGroup == null) {
-			OrderGroup thisGroup = (OrderGroup) li.next();
-			if (thisGroup.getActive())
-				foundGroup = thisGroup;
-		}
-		if (foundGroup != null) {
-			List<OrderHeader> headersList = foundGroup.getOrderHeaders();
-			int howMany = headersList.size(); // Just for debugging
-			ListIterator li2 = headersList.listIterator();
-			while (li2.hasNext()) {
-				OrderHeader thisHeader = (OrderHeader) li2.next();
-				if (thisHeader.getActive() && thisHeader.getOrderTypeEnum() == OrderTypeEnum.CROSS) {
-					// we know it belongs to the right order group already
-					// A bit lazy to start. Cross batch process makes one order per container. So doing that to start.
-					ContainerUse thisUse = thisHeader.getContainerUse();
-					// active use. Don't filter out those with che assignment already. Those will get reset (correctly) to the new Che.
-					if (thisUse.getActive()) {
-						// found one. We just need the container's domainId, not the container use. That can come from containerUse or the order header
-						String aString = thisUse.getContainerName();
-						containersIdList.add(aString);
-					}
-				}
-			}
-
-		}
-
-		if (theChe != null && containersIdList.size() > 0) {
-			Integer wiCount = this.computeWorkInstructions(theChe, containersIdList);
-			// That did the work. Big side effect.
-			// To do: make computeWorkInstructions update the current che on the order headers
-
-			// Get the work instructions for this CHE at this location for the given containers. Can we pass empty string? Normally user would scan where the CHE is starting.
-			List<WorkInstruction> wiList = this.getWorkInstructions(theChe, "");
-			Integer wiCountGot = wiList.size();
-			// getWorkInstructions() has no side effects. But the site controller request gets these.
-			// As work instructions are executed, they come back with start and complete time. and PLAN/NEW changes to ACTUAL/COMPLETE or ACTUAL/SHORT
-
-		}
-
-	}
 
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inChe
-	 * Testing only!  For Accu, they scan the order ID, and we will manufacture a fake container with that ID.
+	 * @param inContainers
+	 * Testing only!  passs in as 23,46,2341a23. This yields conatiner ID 23 in slot1, container Id 46 in slot 2, etc.
 	 * 
 	 */
-	public final void fakeSetUpAccuChe(String inCheDomainId) {
-
-		CodeshelfNetwork network = getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_ID);
-		if (network == null)
-			return;
-
-		Che theChe = network.getChe(inCheDomainId);
-		if (theChe == null)
+	public final void setUpCheContainerFromString(Che inChe, String inContainers){
+		if (inChe == null)
 			return;
 
 		// computeWorkInstructions wants a containerId list
-		List<String> containersIdList = new ArrayList<String>();
-
-		// The accu orders drop should have add the preAssignedContainerId field as duplicate of the orderID.
-		// Therefore, the container should exist already.
-		for (OrderHeader outOrder : getOrderHeaders()) {
-			if ((outOrder.getOrderTypeEnum().equals(OrderTypeEnum.OUTBOUND)) && (outOrder.getActive())) {
-				if (outOrder.getActiveDetailCount() > 0) {
-					ContainerUse thisUse = outOrder.getContainerUse();
-					if (thisUse != null) {
-						String theCntrId = thisUse.getContainerName();
-						if (theCntrId.equalsIgnoreCase(outOrder.getOrderId())) {
-							containersIdList.add(theCntrId);
-						}
-					}
-				}
-			}
-		}
+		List<String> containersIdList = Arrays.asList(inContainers.split("\\s*,\\s*")); // this trims out white space
+		
 
 		if (containersIdList.size() > 0) {
-			Integer wiCount = this.computeWorkInstructions(theChe, containersIdList);
+			Integer wiCount = this.computeWorkInstructions(inChe, containersIdList);
 			// That did the work. Big side effect.
-			// To do: make computeWorkInstructions update the current che on the order headers
 
 			// Get the work instructions for this CHE at this location for the given containers. Can we pass empty string? Normally user would scan where the CHE is starting.
-			List<WorkInstruction> wiList = this.getWorkInstructions(theChe, "");
+			List<WorkInstruction> wiList = this.getWorkInstructions(inChe, "");
 			Integer wiCountGot = wiList.size();
 			// getWorkInstructions() has no side effects. But the site controller request gets these.
 			// As work instructions are executed, they come back with start and complete time. and PLAN/NEW changes to ACTUAL/COMPLETE or ACTUAL/SHORT
 		}
-
-	}
+	}	
 
 	// --------------------------------------------------------------------------
 	/**
