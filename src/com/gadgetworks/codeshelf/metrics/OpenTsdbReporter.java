@@ -6,15 +6,29 @@ import com.codahale.metrics.Timer;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * A reporter which publishes metric values to a OpenTSDB server.
  */
 public class OpenTsdbReporter extends ScheduledReporter {
+	
+	private static final Logger	LOGGER = LoggerFactory.getLogger(OpenTsdbReporter.class);
 
     private final OpenTsdb opentsdb;
     private final Clock clock;
     private final String prefix;
     private final Map<String, String> tags;
+
+    @Getter @Setter
+    boolean isEnabled = true;
+    
+    int maxReportingFailures = 30;
+    int reportingFailures = 0;
 
     /**
      * Returns a new {@link Builder} for {@link OpenTsdbReporter}.
@@ -187,6 +201,10 @@ public class OpenTsdbReporter extends ScheduledReporter {
     @Override
     public void report(SortedMap<String, Gauge> gauges, SortedMap<String, Counter> counters, SortedMap<String, Histogram> histograms, SortedMap<String, Meter> meters, SortedMap<String, Timer> timers) {
 
+    	if (!this.isEnabled) {
+    		return;
+    	}
+    	
         final long timestamp = clock.getTime() / 1000;
 
         final Set<OpenTsdbMetric> metrics = new HashSet<OpenTsdbMetric>();
@@ -211,7 +229,17 @@ public class OpenTsdbReporter extends ScheduledReporter {
             metrics.addAll(buildTimers(entry.getKey(), entry.getValue(), timestamp));
         }
 
-        opentsdb.send(metrics);
+        try {
+			opentsdb.send(metrics);
+			this.reportingFailures = 0;
+		} catch (ReportingException e) {
+			LOGGER.warn("Failed to report to OpenTSDB: "+e.getMessage());
+			this.reportingFailures++;
+		}
+        if (this.reportingFailures>=maxReportingFailures) {
+        	this.isEnabled = false;
+        	LOGGER.error("Disabled OpenTSDB reporter after "+this.reportingFailures+" failed attempts to send metrics");
+        }
     }
 
     private Set<OpenTsdbMetric> buildTimers(String name, Timer timer, long timestamp) {

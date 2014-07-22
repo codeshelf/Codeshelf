@@ -65,14 +65,19 @@ public class ServerMessageProcessor extends MessageProcessor {
 		
 		requestCounter.inc();
 		requestMeter.mark();
-		
+
+		// check CS session
+        CsSession csSession = sessionManager.getSession(session);
+        if (csSession==null) {
+        	LOGGER.warn("No matching CS session found for session "+session.getId());
+        }
+        
+        // process message...
     	final Timer.Context context = requestProcessingTimer.time();
 	    try {
-			// TODO: consider changing to declarative implementation using custom annotation
-			// to get rid of handling via if statements and type casts...
+			// TODO: get rid of handling via if statements and type casts...
 			if (request instanceof LoginRequest) {
 				LoginRequest loginRequest = (LoginRequest) request;
-	            CsSession csSession = sessionManager.getSession(session);
 				command = new LoginCommand(csSession,loginRequest);
 				loginCounter.inc();
 			}
@@ -81,7 +86,7 @@ public class ServerMessageProcessor extends MessageProcessor {
 				echoCounter.inc();
 			}		
 			else if (request instanceof NetworkAttachRequest) {
-				command = new NetworkAttachCommand((NetworkAttachRequest) request);
+				command = new NetworkAttachCommand(csSession, (NetworkAttachRequest) request);
 				attachCounter.inc();
 			}			
 			else if (request instanceof NetworkStatusRequest) {
@@ -120,6 +125,7 @@ public class ServerMessageProcessor extends MessageProcessor {
 	    } finally {
 	        context.stop();
 	    }
+	    // ...and return the response
 		return response;
 	}
 
@@ -136,6 +142,13 @@ public class ServerMessageProcessor extends MessageProcessor {
 				pingHistogram.update(delta);
 				double elapsedSec = ((double) delta)/1000; 
 				LOGGER.debug("Ping roundtrip on session "+session.getId()+" in "+elapsedSec+"s");
+				CsSession csSession = sessionManager.getSession(session);
+				if (csSession!=null) {
+					csSession.setLastPongReceived(now);
+				}
+				else {
+					LOGGER.warn("Unable to set pong received data: Matching session not found.");
+				}
 			}
 	    } finally {
 	        context.stop();

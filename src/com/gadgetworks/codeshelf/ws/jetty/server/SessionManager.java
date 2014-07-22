@@ -1,7 +1,6 @@
 package com.gadgetworks.codeshelf.ws.jetty.server;
 
 import java.util.Collection;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.websocket.Session;

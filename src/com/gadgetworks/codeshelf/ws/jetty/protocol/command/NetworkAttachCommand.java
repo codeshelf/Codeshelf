@@ -14,6 +14,8 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.request.NetworkAttachRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.NetworkAttachResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
+import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
+import com.gadgetworks.codeshelf.ws.jetty.server.SessionType;
 
 public class NetworkAttachCommand extends CommandABC {
 
@@ -23,9 +25,12 @@ public class NetworkAttachCommand extends CommandABC {
 	
 	@Setter
 	private OrganizationDao	organizationDao;
+
+	private CsSession session;
 	
-	public NetworkAttachCommand(NetworkAttachRequest request) {
+	public NetworkAttachCommand(CsSession session, NetworkAttachRequest request) {
 		this.request = request;
+		this.session = session;
 	}
 
 	@Override
@@ -37,6 +42,12 @@ public class NetworkAttachCommand extends CommandABC {
 				CodeshelfNetwork network = facility.getNetwork(request.getNetworkId());
 				if (network != null) {
 					if (network.isCredentialValid(request.getCredential())) {
+						// set session type to site controller, since authenticated via NA
+						if (session!=null) {
+							session.setType(SessionType.SiteController);
+							session.setAuthenticated(true);
+							LOGGER.info("Site controller on network "+request.getNetworkId()+" authenticated on session "+session.getSessionId());
+						}
 						// generate response 
 						LOGGER.info("Network "+request.getNetworkId()+"("+organization.getDomainId()+") attached");
 						NetworkAttachResponse response = new NetworkAttachResponse();

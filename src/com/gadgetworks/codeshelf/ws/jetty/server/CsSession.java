@@ -24,6 +24,9 @@ public class CsSession {
 	@Getter
 	private Session	session=null;
 	
+	@Getter @Setter
+	long lastPongReceived = 0;
+	
 	public CsSession(Session session) {
 		this.session = session;
 	}

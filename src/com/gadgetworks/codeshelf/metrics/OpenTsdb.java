@@ -21,10 +21,11 @@ import java.util.Set;
  */
 public class OpenTsdb {
 
+	private static final Logger	LOGGER = LoggerFactory.getLogger(OpenTsdb.class);
+
     public static final int DEFAULT_BATCH_SIZE_LIMIT = 0;
     public static final int CONN_TIMEOUT_DEFAULT_MS = 5000;
     public static final int READ_TIMEOUT_DEFAULT_MS = 5000;
-    private static final Logger logger = LoggerFactory.getLogger(OpenTsdb.class);
 
     /**
      * Initiate a client Builder with the provided base opentsdb server url.
@@ -96,8 +97,9 @@ public class OpenTsdb {
      * Send a metric to opentsdb
      *
      * @param metric
+     * @throws ReportingException 
      */
-    public void send(OpenTsdbMetric metric) {
+    public void send(OpenTsdbMetric metric) throws ReportingException {
         send(Collections.singleton(metric));
     }
 
@@ -106,7 +108,7 @@ public class OpenTsdb {
      *
      * @param metrics
      */
-    public void send(Set<OpenTsdbMetric> metrics) {
+    public void send(Set<OpenTsdbMetric> metrics) throws ReportingException {
         // we set the patch size because of existing issue in opentsdb where large batch of metrics failed
         // see at https://groups.google.com/forum/#!topic/opentsdb/U-0ak_v8qu0
         // we recommend batch size of 5 - 10 will be safer
@@ -126,7 +128,7 @@ public class OpenTsdb {
         }
     }
 
-    private void sendHelper(Set<OpenTsdbMetric> metrics) {
+    private void sendHelper(Set<OpenTsdbMetric> metrics) throws ReportingException {
         /*
          * might want to bind to a specific version of the API.
          * according to: http://opentsdb.net/docs/build/html/api_http/index.html#api-versioning
@@ -144,8 +146,8 @@ public class OpenTsdb {
                         //.entity(metrics)
                         .entity(jsonString)
                         .post();
-            } catch(Exception ex) {
-                logger.error("send to opentsdb endpoint failed", ex);
+            } catch (Exception ex) {
+            	throw new ReportingException(ex.getMessage());
             }
         }
     }

@@ -10,6 +10,7 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.response.LoginResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
 import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
+import com.gadgetworks.codeshelf.ws.jetty.server.SessionType;
 
 public class LoginCommand extends CommandABC {
 
@@ -42,13 +43,17 @@ public class LoginCommand extends CommandABC {
 			if (user != null) {
 				String password = loginRequest.getPassword();
 				if (user.isPasswordValid(password)) {
-					// generate a 
+					// set session type to UserApp, since authenticated via login
+					if (session!=null) {
+						session.setType(SessionType.UserApp);
+						session.setAuthenticated(true);
+						LOGGER.info("User "+userId+" of "+organization.getDomainId()+" authenticated on session "+session.getSessionId());
+					}					
+					// generate login response
 					LoginResponse response = new LoginResponse();
 					response.setOrganization(organization);
 					response.setStatus(ResponseStatus.Success);
 					response.setUser(user);
-					session.setAuthenticated(true);
-					LOGGER.info("User "+userId+" authenticated on session "+session.getSessionId());
 					return response;
 				}
 				// LOGGER.warn("Login " + authenticateResult + " for user: " + user.getDomainId());

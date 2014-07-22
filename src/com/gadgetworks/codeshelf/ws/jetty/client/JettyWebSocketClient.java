@@ -10,6 +10,7 @@ import javax.websocket.DeploymentException;
 import javax.websocket.Session;
 import javax.websocket.WebSocketContainer;
 
+import lombok.Getter;
 import lombok.Setter;
 
 import org.slf4j.Logger;
@@ -34,6 +35,11 @@ public class JettyWebSocketClient {
 	private WebSocketEventListener	eventListener;
 	
 	WebSocketContainer container;
+	
+	@Getter @Setter
+	boolean queueingEnabled = true;
+	
+	MessageQueue queue = new MessageQueue();
 	
 	public JettyWebSocketClient(String connectionString, MessageProcessor responseProcessor, WebSocketEventListener eventListener) {
 		this.connectionString = connectionString;
