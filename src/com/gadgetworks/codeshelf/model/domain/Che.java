@@ -179,4 +179,16 @@ public class Che extends WirelessDeviceABC {
 		return null;
 	}
 	
+	// just a call through to facility, but convenient for the UI
+	public final void fakeSetupUpContainersOnChe(String inContainers) {
+		CodeshelfNetwork network = this.getParent();
+		if (network == null)
+			return;
+		Facility facility = network.getParent();
+		if (facility == null)
+			return;
+		facility.setUpCheContainerFromString(this, inContainers);
+	}
+
 }
+
