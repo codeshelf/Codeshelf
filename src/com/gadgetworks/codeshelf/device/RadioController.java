@@ -823,7 +823,7 @@ public class RadioController implements IRadioController {
 			// (This could be two matching network IDs on the same channel.  
 			// This could be a serious flaw in the network protocol.)
 			if (!foundDevice.getGuid().toString().equalsIgnoreCase("0x" + uid)) {
-				LOGGER.info("AssocCheck - NOT ASSOC: GUID mismatch: " + foundDevice.getGuid() + " and " + uid);
+				LOGGER.info("AssocCheck - NOT ASSOC: GUID mismatch: " + foundDevice.getGuid() + " and 0x" + uid);
 				status = CommandAssocAck.IS_NOT_ASSOCIATED;
 			}
 
