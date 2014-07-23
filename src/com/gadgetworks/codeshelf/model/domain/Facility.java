@@ -37,12 +37,14 @@ import com.avaje.ebean.annotation.Transactional;
 import com.gadgetworks.codeshelf.device.LedCmdGroup;
 import com.gadgetworks.codeshelf.device.LedCmdGroupSerializer;
 import com.gadgetworks.codeshelf.device.LedSample;
+import com.gadgetworks.codeshelf.model.BayDistanceWorkInstructionSequencer;
 import com.gadgetworks.codeshelf.model.EdiProviderEnum;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.TravelDirectionEnum;
+import com.gadgetworks.codeshelf.model.WorkInstructionSequencer;
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
@@ -59,9 +61,9 @@ import com.google.inject.Singleton;
 // --------------------------------------------------------------------------
 /**
  * Facility
- * 
+ *
  * The basic unit that holds all of the locations and equipment for a single facility in an organization.
- * 
+ *
  * @author jeffw
  */
 
@@ -504,7 +506,7 @@ public class Facility extends SubLocationABC<Facility> {
 	/**
 	 * Create the zig-zag LED strip bays that we see with rolling cart bays.
 	 * (E.g. the bays we see at GoodEggs.)
-	 * 
+	 *
 	 * @return
 	 */
 	private Bay createZigZagBay(final Aisle inParentAisle,
@@ -967,11 +969,11 @@ public class Facility extends SubLocationABC<Facility> {
 	// --------------------------------------------------------------------------
 	/**
 	 * Compute work instructions for a CHE that's at the listed location with the listed container IDs.
-	 * 
+	 *
 	 * Yes, this has high cyclometric complexity, but the creation of a WI in a complex puzzle.  If you decompose this logic into
 	 * fractured routines then there's a chance that they could get called out of order or in the wrong order, etc.  Sometimes in life
 	 * you have a complex process and there's no way to make it simple.
-	 * 
+	 *
 	 * @param inChe
 	 * @param inContainerIdList
 	 * @return
@@ -1020,7 +1022,15 @@ public class Facility extends SubLocationABC<Facility> {
 		// Get all of the CROSS work instructions.
 		wiResultList.addAll(generateCrossWallInstructions(inChe, containerList, theTime));
 
-		return wiResultList.size();
+		
+		WorkInstructionSequencer sequencer = getSequencer();
+		List<WorkInstruction> sortedWIResults = sequencer.sort(this, wiResultList);
+		return sortedWIResults.size();
+	}
+
+	private WorkInstructionSequencer getSequencer() {
+		//TODO implement short term logic for selecting strategy based on facility
+		return new BayDistanceWorkInstructionSequencer();
 	}
 
 	// --------------------------------------------------------------------------
@@ -1090,9 +1100,9 @@ public class Facility extends SubLocationABC<Facility> {
 
 		if (itemMaster.getItems().size() == 0) {
 			// If there is no item in inventory (AT ALL) then create a PLANNED, SHORT WI for this order detail.
-			
+
 			// Need to improve? Do we already have a short WI for this order detail? If so, do we really want to make another?
-			// This should be moderately rare, although it happens in our test case over and over. User has to scan order/container to cart when the item master has 
+			// This should be moderately rare, although it happens in our test case over and over. User has to scan order/container to cart when the item master has
 			// absolutely no items. Not just none in inventory, or items have zero quantity.
 			resultWi = createWorkInstruction(WorkInstructionStatusEnum.SHORT,
 				WorkInstructionTypeEnum.ACTUAL,
@@ -1120,7 +1130,7 @@ public class Facility extends SubLocationABC<Facility> {
 				// outbound order item masters have a location to pick from
 				//OrderLocation firstOutOrderLoc = itemMaster.getFirstItemLocationOnPath(path);
 				Item  item = itemMaster.getFirstItemOnPath(path);
-				
+
 				if (item != null) {
 					resultWi = createWorkInstruction(WorkInstructionStatusEnum.NEW,
 						WorkInstructionTypeEnum.PLAN,
@@ -1185,15 +1195,7 @@ public class Facility extends SubLocationABC<Facility> {
 				}
 			}
 		}
-
-		// Now we need to sort and group the work instructions, so that the CHE can display them by working order.
-		// Does the same sort work? Perhaps not. Zach says they want tier 1 and 2 for each bay, then come back and do all tier 3s.
-		List<ISubLocation<?>> bayList = new ArrayList<ISubLocation<?>>();
-		for (Path path : getPaths()) {
-			//bayList.addAll(path.<ISubLocation<?>> getLocationsByClassAtOrPastLocation(inCheLocation, Bay.class));
-			bayList.addAll(path.<ISubLocation<?>> getLocationsByClass(Bay.class));
-		}
-		return sortCrosswallInstructionsInLocationOrder(wiResultList, bayList);
+		return wiResultList;
 		// Need an accu-sort instead of this.
 
 		/*  old signature was this followed by old code. Above is vastly different
@@ -1203,7 +1205,7 @@ public class Facility extends SubLocationABC<Facility> {
 			final String inScannedLocationId,
 			final ISubLocation<?> inCheLocation,
 			final Timestamp inTime) {
-			
+
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 
 		for (Container container : inContainerList) {
@@ -1353,14 +1355,7 @@ public class Facility extends SubLocationABC<Facility> {
 				}
 			}
 		}
-
-		// Now we need to sort and group the work instructions, so that the CHE can display them by working order.
-		List<ISubLocation<?>> bayList = new ArrayList<ISubLocation<?>>();
-		for (Path path : getPaths()) {
-			//bayList.addAll(path.<ISubLocation<?>> getLocationsByClassAtOrPastLocation(inCheLocation, Bay.class));
-			bayList.addAll(path.<ISubLocation<?>> getLocationsByClass(Bay.class));
-		}
-		return sortCrosswallInstructionsInLocationOrder(wiList, bayList);
+		return wiList;
 	}
 
 	// --------------------------------------------------------------------------
@@ -1625,7 +1620,7 @@ public class Facility extends SubLocationABC<Facility> {
 	// --------------------------------------------------------------------------
 	/**
 	 * After a change in DDC items we call this routine to recompute the path-relative positions of the items.
-	 * 
+	 *
 	 */
 	public final void recomputeDdcPositions() {
 
@@ -1700,7 +1695,7 @@ public class Facility extends SubLocationABC<Facility> {
 			}
 			lastDdcGroup.setEndPosAlongPath(item.getPosAlongPath());
 		}
-		// Store the last DDC 
+		// Store the last DDC
 		if (lastDdcGroup != null) {
 			ItemDdcGroup.DAO.store(lastDdcGroup);
 		}
@@ -1846,7 +1841,7 @@ public class Facility extends SubLocationABC<Facility> {
 	 * @param inChe
 	 * @param inContainers
 	 * Testing only!  passs in as 23,46,2341a23. This yields conatiner ID 23 in slot1, container Id 46 in slot 2, etc.
-	 * 
+	 *
 	 */
 	public final void setUpCheContainerFromString(Che inChe, String inContainers){
 		if (inChe == null)
@@ -1854,7 +1849,7 @@ public class Facility extends SubLocationABC<Facility> {
 
 		// computeWorkInstructions wants a containerId list
 		List<String> containersIdList = Arrays.asList(inContainers.split("\\s*,\\s*")); // this trims out white space
-		
+
 
 		if (containersIdList.size() > 0) {
 			Integer wiCount = this.computeWorkInstructions(inChe, containersIdList);
@@ -1866,7 +1861,7 @@ public class Facility extends SubLocationABC<Facility> {
 			// getWorkInstructions() has no side effects. But the site controller request gets these.
 			// As work instructions are executed, they come back with start and complete time. and PLAN/NEW changes to ACTUAL/COMPLETE or ACTUAL/SHORT
 		}
-	}	
+	}
 
 	// --------------------------------------------------------------------------
 	/**
