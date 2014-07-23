@@ -822,7 +822,7 @@ public class RadioController implements IRadioController {
 			// If the found device has the wrong GUID then we have the wrong device.
 			// (This could be two matching network IDs on the same channel.  
 			// This could be a serious flaw in the network protocol.)
-			if (!foundDevice.getGuid().toString().equals("0x" + uid)) {
+			if (!foundDevice.getGuid().toString().equalsIgnoreCase("0x" + uid)) {
 				LOGGER.info("AssocCheck - NOT ASSOC: GUID mismatch: " + foundDevice.getGuid() + " and " + uid);
 				status = CommandAssocAck.IS_NOT_ASSOCIATED;
 			}
