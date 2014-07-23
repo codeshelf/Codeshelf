@@ -184,6 +184,11 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 	 */
 	<T extends ILocation> T getParentAtLevel(Class<? extends ILocation> inClassWanted);
 
+	/**
+	 * Get the location id up to but not including the facility
+	 */
+	String getNominalLocationId();
+	
 	String getLocationId();
 
 	// --------------------------------------------------------------------------

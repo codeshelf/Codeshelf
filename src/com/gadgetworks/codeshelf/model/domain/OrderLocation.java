@@ -93,7 +93,7 @@ public class OrderLocation extends DomainObjectTreeABC<OrderHeader> {
 	 * @return
 	 */
 	public static String makeDomainId(final OrderHeader inOrder, final ILocation<?> inLocation) {
-		return inOrder.getOrderId() + "-" + inLocation.getLocationIdToParentLevel(Aisle.class);
+		return inOrder.getOrderId() + "-" + inLocation.getNominalLocationId();
 	}
 
 	public OrderLocation() {
