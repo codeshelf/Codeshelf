@@ -11,7 +11,7 @@ import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 
 /**
- * Sequences work instructions in an order that they should be executed.  The strategy could 
+ * Sequences work instructions in an order that they should be executed.  The strategy could be custom per facility, che, path, etc. over time
  * 
  */
 public interface WorkInstructionSequencer {
@@ -19,10 +19,11 @@ public interface WorkInstructionSequencer {
 	// --------------------------------------------------------------------------
 	/**
 	 * Sort a list of work instructions on a path through a CrossWall
+	 * 
+	 * @param inFacility
 	 * @param inCrosswallWiList
-	 * @param inBays
 	 * @return
 	 */
-	public abstract List<WorkInstruction> sort(Facility facility, List<WorkInstruction> inCrosswallWiList);
+	public abstract List<WorkInstruction> sort(Facility inFacility, List<WorkInstruction> inCrosswallWiList);
 
 }

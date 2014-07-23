@@ -11,6 +11,10 @@ import com.gadgetworks.codeshelf.model.domain.ISubLocation;
 import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 
+/**
+ * Work sequencer that orders bays by distance on path, then tiers from top to bottom, and then slots from distance along path
+ * 
+ */
 public class BayDistanceWorkInstructionSequencer implements WorkInstructionSequencer {
 
 	public BayDistanceWorkInstructionSequencer() {
