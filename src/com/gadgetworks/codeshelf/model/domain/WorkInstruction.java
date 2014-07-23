@@ -375,6 +375,21 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * For a UI meta field
+	 * @return
+	 */
+	public final String getLocationNominalId() {
+		
+		ILocation<?> theLoc = this.getLocation();
+		if (theLoc != null)
+			return theLoc.getLocationIdToParentLevel(Aisle.class);
+		else {
+			return "";
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
 	 * For a UI simulation
 	 * @return
 	 */
