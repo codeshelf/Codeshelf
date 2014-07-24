@@ -69,6 +69,7 @@ import com.gadgetworks.codeshelf.ws.WebSession;
 import com.gadgetworks.codeshelf.ws.WebSessionManager;
 import com.gadgetworks.codeshelf.ws.command.req.IWsReqCmdFactory;
 import com.gadgetworks.codeshelf.ws.command.req.WsReqCmdFactory;
+import com.gadgetworks.codeshelf.ws.jetty.server.JettyWebSocketServer;
 import com.gadgetworks.codeshelf.ws.websocket.CsWebSocketServer;
 import com.gadgetworks.codeshelf.ws.websocket.IWebSocketServer;
 import com.gadgetworks.codeshelf.ws.websocket.SSLWebSocketServerFactory;
@@ -334,6 +335,8 @@ public class CodeshelfApplicationTest {
 		IDatabase database = new Database(schemaManager, util);
 		
 		AdminServer adminServer = new AdminServer();
+		
+		JettyWebSocketServer jettyServer = new JettyWebSocketServer();
 
 		final ServerCodeshelfApplication application = new ServerCodeshelfApplication(webSocketListener,
 			monitor,
@@ -346,7 +349,8 @@ public class CodeshelfApplicationTest {
 			organizationDao,
 			facilityDao,
 			userDao,
-			adminServer);
+			adminServer,
+			jettyServer);
 
 		final Result checkAppRunning = new Result();
 

@@ -35,14 +35,16 @@ public class JsonDecoder implements Decoder.Text<MessageABC> {
 			LOGGER.debug("Decoding message: "+rawMessage);
 			ObjectMapper mapper = new ObjectMapper();
 			// register classes
-			Iterable<Class<? extends RequestABC>> requestClasses = ClassIndex.getSubclasses(RequestABC.class);
-			for (Class<? extends RequestABC> requestType : requestClasses) {
+			Iterable<Class<? extends MessageABC>> requestClasses = ClassIndex.getSubclasses(MessageABC.class);
+			for (Class<? extends MessageABC> requestType : requestClasses) {
 				mapper.registerSubtypes(requestType);
 			}
+			/*
 			Iterable<Class<? extends ResponseABC>> responseClasses = ClassIndex.getSubclasses(ResponseABC.class);
 			for (Class<? extends ResponseABC> responseType : responseClasses) {
 				mapper.registerSubtypes(responseType);
-			}			
+			}
+			*/			
 			// decode message
 			MessageABC message = mapper.readValue(rawMessage, MessageABC.class);
 			return message;

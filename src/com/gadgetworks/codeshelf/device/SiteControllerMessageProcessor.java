@@ -7,13 +7,10 @@ import javax.websocket.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codahale.metrics.Timer;
 import com.gadgetworks.codeshelf.ws.jetty.client.JettyWebSocketClient;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.CommandABC;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.command.LoginCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.PingCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageProcessor;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.request.LoginRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.NetworkStatusRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.PingRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RequestABC;

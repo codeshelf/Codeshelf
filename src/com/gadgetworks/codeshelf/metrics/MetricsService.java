@@ -31,7 +31,14 @@ public class MetricsService {
 		try {
 			this.hostName=InetAddress.getLocalHost().getHostName();
 		} catch (Exception e) {
-			LOGGER.error("Failed to determine hostname", e);
+			LOGGER.error("Failed to determine host name. Trying to fall sback on host address.", e);
+			try {
+				this.hostName=InetAddress.getLocalHost().getHostAddress();
+			}
+			catch (Exception ex) {
+				LOGGER.error("Failed to determine host address", e);
+				this.hostName = "unknown";
+			}
 		}
 	}
 	

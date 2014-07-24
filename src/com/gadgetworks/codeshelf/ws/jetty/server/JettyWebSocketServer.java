@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RequestABC;
+import com.google.inject.Inject;
 
 @ServerEndpoint(value = "/")
 public class JettyWebSocketServer {
@@ -39,6 +40,7 @@ public class JettyWebSocketServer {
 	
 	private String	mKeystorePath="/etc/codeshelf.keystore";
 
+	@Inject
 	public JettyWebSocketServer() {
 		this.watchdog.start();
 	}

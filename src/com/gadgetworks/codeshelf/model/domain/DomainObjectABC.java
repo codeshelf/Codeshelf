@@ -50,7 +50,8 @@ import com.avaje.ebean.bean.EntityBean;
 @Entity
 @CacheStrategy(useBeanCache = true)@JsonAutoDetect(getterVisibility = Visibility.NONE)
 @IndexSubclasses
-@JsonTypeInfo(use=JsonTypeInfo.Id.NAME, include=JsonTypeInfo.As.WRAPPER_OBJECT)
+//@JsonTypeInfo(use=JsonTypeInfo.Id.NAME, include=JsonTypeInfo.As.WRAPPER_OBJECT)
+@JsonTypeInfo(use=JsonTypeInfo.Id.NAME, include=JsonTypeInfo.As.PROPERTY, property = "className")
 @JsonPropertyOrder({ "domainId", "fullDomainId" })
 @JsonIgnoreProperties({"className"})
 @ToString(doNotUseGetters = true, of = { "domainId" })

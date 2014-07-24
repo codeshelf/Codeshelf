@@ -79,7 +79,8 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		final ITypedDao<Organization> inOrganizationDao,
 		final ITypedDao<Facility> inFacilityDao,
 		final ITypedDao<User> inUserDao,
-		final AdminServer inAdminServer) {
+		final AdminServer inAdminServer,
+		final JettyWebSocketServer inAlternativeWebSocketServer) {
 		super(inUtil);
 		mMonitor = inMonitor;
 		mWebSocketServer = inWebSocketServer;
@@ -92,6 +93,7 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		mFacilityDao = inFacilityDao;
 		mUserDao = inUserDao;
 		mAdminServer = inAdminServer;
+		mAlternativeWebSocketServer = inAlternativeWebSocketServer;
 	}
 
 	// --------------------------------------------------------------------------
@@ -127,7 +129,7 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		// Start the WebSocket UX handler
 		// mWebSocketServer.start();
 		
-		mAlternativeWebSocketServer = new JettyWebSocketServer();
+		// mAlternativeWebSocketServer = new JettyWebSocketServer();
 		mAlternativeWebSocketServer.start();
 
 		// Start the EDI process.

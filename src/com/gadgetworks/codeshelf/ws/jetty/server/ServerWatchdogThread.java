@@ -35,14 +35,16 @@ public class ServerWatchdogThread extends Thread {
 		ThreadUtils.sleep(initialWaitTime*1000);
 		while (!exit) {
 			try {
-				// send ping on all open sessions
+				// send ping on all site controller sessions
 				Collection<CsSession> sessions = SessionManager.getInstance().getSessions();
 				for (CsSession session : sessions) {
 					String sessionId = session.getSessionId();
 					Session wsSession = session.getSession();
-					LOGGER.debug("Sending ping on session "+sessionId);
-					PingRequest request = new PingRequest();
-					this.server.sendRequest(wsSession, request);
+					if (session.getType()==SessionType.SiteController) {
+						LOGGER.debug("Sending ping on session "+sessionId);
+						PingRequest request = new PingRequest();
+						this.server.sendRequest(wsSession, request);
+					}
 				}
 				ThreadUtils.sleep(waitTime*1000);
 			} catch (Exception e) {

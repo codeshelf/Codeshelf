@@ -11,6 +11,7 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.Timer;
 import com.gadgetworks.codeshelf.metrics.MetricsGroup;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
+import com.gadgetworks.codeshelf.model.dao.DaoProvider;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.CommandABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.CompleteWorkInstructionCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ComputeWorkCommand;
@@ -19,6 +20,10 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.command.GetWorkCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.LoginCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.NetworkAttachCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.NetworkStatusCommand;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ObjectMethodCommand;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ObjectUpdateCommand;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.command.RegisterFilterCommand;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ObjectGetCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageProcessor;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.CompleteWorkInstructionRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ComputeWorkRequest;
@@ -27,9 +32,14 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.request.GetWorkRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.LoginRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.NetworkAttachRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.NetworkStatusRequest;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectMethodRequest;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectUpdateRequest;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RegisterFilterRequest;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectGetRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RequestABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.PingResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
+import com.google.inject.Inject;
 
 public class ServerMessageProcessor extends MessageProcessor {
 
@@ -45,6 +55,9 @@ public class ServerMessageProcessor extends MessageProcessor {
 	private final Counter completeWiCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.complete-workinstruction");
 	private final Counter computeWorkCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.compute-work");
 	private final Counter getWorkCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.get-work");
+	private final Counter objectGetCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.object-get");
+	private final Counter objectUpdateCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.object-update");
+	private final Counter objectFilterCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.register-filter");
 	private final Meter requestMeter = MetricsService.addMeter(MetricsGroup.WSS,"requests.meter");
 	private final Meter responseMeter = MetricsService.addMeter(MetricsGroup.WSS,"responses.meter");
 	private final Timer requestProcessingTimer = MetricsService.addTimer(MetricsGroup.WSS,"requests.processing-time");
@@ -53,8 +66,12 @@ public class ServerMessageProcessor extends MessageProcessor {
 	
 	SessionManager sessionManager = SessionManager.getInstance();
 	
-	public ServerMessageProcessor() {
+	DaoProvider daoProvider;
+	
+	@Inject
+	public ServerMessageProcessor(DaoProvider daoProvider) {
 		LOGGER.debug("Creating "+this.getClass().getSimpleName());
+		this.daoProvider = daoProvider;
 	}
 	
 	@Override
@@ -104,6 +121,22 @@ public class ServerMessageProcessor extends MessageProcessor {
 			else if (request instanceof GetWorkRequest) {
 				command = new GetWorkCommand((GetWorkRequest) request);
 				getWorkCounter.inc();
+			}
+			else if (request instanceof ObjectGetRequest) {
+				command = new ObjectGetCommand((ObjectGetRequest) request);
+				objectGetCounter.inc();
+			}			
+			else if (request instanceof ObjectUpdateRequest) {
+				command = new ObjectUpdateCommand((ObjectUpdateRequest) request);
+				objectUpdateCounter.inc();
+			}
+			else if (request instanceof ObjectMethodRequest) {
+				command = new ObjectMethodCommand((ObjectMethodRequest) request);
+				objectUpdateCounter.inc();
+			}
+			else if (request instanceof RegisterFilterRequest) {
+				command = new RegisterFilterCommand((RegisterFilterRequest) request);
+				objectFilterCounter.inc();
 			}			
 			// check if matching command was found
 			if (command==null) {
@@ -111,7 +144,10 @@ public class ServerMessageProcessor extends MessageProcessor {
 		        context.stop();
 				return null;
 			}
-	
+
+			// inject context
+			command.setDaoProvider(this.daoProvider);
+
 			// execute command and generate response to be sent to client
 			response = command.exec();
 			if (response!=null) {

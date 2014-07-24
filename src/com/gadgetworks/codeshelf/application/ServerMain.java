@@ -18,7 +18,6 @@ import org.java_websocket.server.WebSocketServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codahale.metrics.MetricRegistry;
 import com.gadgetworks.codeshelf.edi.AislesFileCsvImporter;
 import com.gadgetworks.codeshelf.edi.CrossBatchCsvImporter;
 import com.gadgetworks.codeshelf.edi.EdiProcessor;
@@ -122,6 +121,9 @@ import com.gadgetworks.codeshelf.ws.WebSession;
 import com.gadgetworks.codeshelf.ws.WebSessionManager;
 import com.gadgetworks.codeshelf.ws.command.req.IWsReqCmdFactory;
 import com.gadgetworks.codeshelf.ws.command.req.WsReqCmdFactory;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageProcessor;
+import com.gadgetworks.codeshelf.ws.jetty.server.ServerMessageProcessor;
+import com.gadgetworks.codeshelf.ws.jetty.server.MessageProcessorFactory;
 import com.gadgetworks.codeshelf.ws.websocket.CsWebSocketServer;
 import com.gadgetworks.codeshelf.ws.websocket.IWebSocketServer;
 import com.gadgetworks.codeshelf.ws.websocket.IWebSocketSslContextGenerator;
@@ -264,12 +266,20 @@ public final class ServerMain {
 				bind(WebSocketServer.WebSocketServerFactory.class).to(SSLWebSocketServerFactory.class);
 				install(new FactoryModuleBuilder().implement(IWebSession.class, WebSession.class).build(IWebSessionFactory.class));
 
+				// jetty websocket
+				bind(MessageProcessor.class).to(ServerMessageProcessor.class);
+				
+				requestStaticInjection(MessageProcessorFactory.class);
+				
+				//requestStaticInjection(ServerMessageProcessorFactory.class);
+				//ServerMessageProcessorFactory.inject(ServerMessageProcessor.class);
+
+				
 				// Shiro modules
 				bind(Realm.class).to(CodeshelfRealm.class);
 				bind(CredentialsMatcher.class).to(HashedCredentialsMatcher.class);
 				bind(HashedCredentialsMatcher.class);
 				bindConstant().annotatedWith(Names.named("shiro.hashAlgorithmName")).to(Md5Hash.ALGORITHM_NAME);
-
 				
 				// Register the DAOs (statically as a singleton).
 

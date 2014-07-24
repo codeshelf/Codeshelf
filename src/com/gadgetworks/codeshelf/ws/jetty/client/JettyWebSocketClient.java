@@ -16,6 +16,7 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageProcessor;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RequestABC;
 
@@ -74,19 +75,35 @@ public class JettyWebSocketClient {
     	session.close(new CloseReason(CloseCodes.NORMAL_CLOSURE, "Connection closed by client"));
     }
     
-    public boolean sendRequest(RequestABC request) {
+    public boolean sendRequest(MessageABC message) {
     	try {
 	    	if (!isConnected()) {
-	    		LOGGER.warn("Unable to send request "+request+": Not connected to server");
-	    		// TODO: queue message to be sent after reconnect
-	    		return false;
+	    		if (!this.queueingEnabled) {
+		    		// unable to send message...
+		    		LOGGER.error("Unable to send message "+message+": Not connected to server");
+		    		return false;
+	    		}
+	    		else {
+	    			// attempt to queue message
+	    			if (this.queue.addMessage(message)) {
+			    		LOGGER.warn("Not connected to server. Message "+message+" queued.");
+			    		return true;
+	    			}
+	    			else {
+			    		LOGGER.error("Unable to send message "+message+": Not connected to server and queueing failed");
+			    		return false;
+	    			}
+	    		}
 	    	}
-    		session.getBasicRemote().sendObject(request);
-    		this.messageCoordinator.registerRequest(request);
+    		session.getBasicRemote().sendObject(message);
+    		if (message instanceof RequestABC) {
+    			// keep track of request
+    			this.messageCoordinator.registerRequest((RequestABC)message);
+    		}
     		return true;
     	}
     	catch (Exception e) {
-    		LOGGER.error("Exception while trying to send request #"+request.getMessageId(),e);
+    		LOGGER.error("Exception while trying to send message #"+message.getMessageId(),e);
     		return false;
     	}
     }
@@ -102,6 +119,18 @@ public class JettyWebSocketClient {
     	// set session object and notify
     	this.session = session;
     	if (this.eventListener!=null) eventListener.connected();
+    	
+    	// send queued messages
+    	while (this.queue.getQueueLength()>0) {
+    		MessageABC message = this.queue.peek();
+    		if (this.sendRequest(message)) {
+    			// remove from queue if sent
+    			this.queue.remove(message);
+    		}
+    		else {
+        		LOGGER.warn("Failed to send queued message #"+message.getMessageId());
+    		}
+    	}
     }
 
 	public void disconnected() {

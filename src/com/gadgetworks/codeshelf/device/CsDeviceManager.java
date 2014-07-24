@@ -24,6 +24,7 @@ import com.gadgetworks.codeshelf.ws.jetty.client.JettyWebSocketClient;
 import com.gadgetworks.codeshelf.ws.jetty.client.WebSocketEventListener;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.CompleteWorkInstructionRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ComputeWorkRequest;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.request.EchoRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.GetWorkRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.NetworkAttachRequest;
 import com.gadgetworks.flyweight.command.NetGuid;
@@ -98,6 +99,17 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 		SiteControllerMessageProcessor responseProcessor = new SiteControllerMessageProcessor(this);
     	client = new JettyWebSocketClient(mUri,responseProcessor,this);
     	responseProcessor.setWebClient(client);
+    	
+    	EchoRequest e1 = new EchoRequest("Echo1");
+    	client.sendRequest(e1);
+    	
+    	EchoRequest e2 = new EchoRequest("Echo2");
+    	client.sendRequest(e2);
+    	
+    	EchoRequest e3 = new EchoRequest("Echo3");
+    	client.sendRequest(e3);
+    	client.sendRequest(e3);
+    	
     	connectionManagerThread = new ConnectionManagerThread(this);
     	connectionManagerThread.start();
 	}

@@ -33,14 +33,18 @@ public class CsServerEndPoint {
 	
 	MetricRegistry metricsRegistry;
     
+	// time to close session after mins of inactivity
+	int idleTimeOut = 240;
+	
 	public CsServerEndPoint() {	
 		sessionManager = SessionManager.getInstance();
-		messageProcessor = ServerMessageProcessorFactory.getInstance();
+		messageProcessor = MessageProcessorFactory.getInstance();
 	}
 	
 	@OnOpen
     public void onOpen(Session session, EndpointConfig ec) {
-		LOGGER.info("WS Session Started: " + session.getId());
+		session.setMaxIdleTimeout(1000*60*idleTimeOut);
+		LOGGER.info("WS Session Started: " + session.getId()+", timeout: "+session.getMaxIdleTimeout());
 		sessionManager.sessionStarted(session);
     }
 
