@@ -1038,36 +1038,49 @@ public class Facility extends SubLocationABC<Facility> {
 	 * @param inChe
 	 * @param inScannedLocationId
 	 * @return
+	 * Provides the list of work instruction beyond the current scan location. Implicitly assumes only one path, or more precisely, any work instructions
+	 * for that CHE are assumed be on the path of the scanned location.
+	 * For testing: if scan location, then just return all work instructions assigned to the CHE. (Assumes no negative positions on path.)
 	 */
 	@Transactional
 	public final List<WorkInstruction> getWorkInstructions(final Che inChe, final String inScannedLocationId) {
 
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 
-		ISubLocation<?> cheLocation = findSubLocationById(inScannedLocationId);
-		Path path = cheLocation.getPathSegment().getParent();
-		Bay cheBay = cheLocation.getParentAtLevel(Bay.class);
-		Bay selectedBay = cheBay;
-		if (cheBay == null) {
-			LOGGER.error("Che does not have a bay parent location in getWorkInstructions #1");
-			return wiResultList;
-		} else if (cheBay.getPosAlongPath() == null) {
-			LOGGER.error("Ches bay parent location does not have posAlongPath in getWorkInstructions #2");
-			return wiResultList;
-		}
-
-		for (Bay bay : path.<Bay> getLocationsByClass(Bay.class)) {
-			// Find any bay sooner on the work path that's within 2% of this bay.
-			if (bay.getPosAlongPath() == null) {
-				LOGGER.error("bay location does not have posAlongPath in getWorkInstructions #3");
-			} else if ((bay.getPosAlongPath() < cheBay.getPosAlongPath())
-					&& (bay.getPosAlongPath() + ISubLocation.BAY_ALIGNMENT_FUDGE > cheBay.getPosAlongPath())) {
-				selectedBay = bay;
+		ISubLocation<?> cheLocation = null;
+		if (!inScannedLocationId.isEmpty()) {
+			cheLocation = findSubLocationById(inScannedLocationId);
+			if (cheLocation == null) {
+				LOGGER.warn("unknown CHE scan location" + inScannedLocationId);
 			}
 		}
 
-		// Figure out the starting path position.
-		Double startingPathPos = selectedBay.getPosAlongPath();
+		Double startingPathPos = 0.0;
+		if (cheLocation != null) {
+			Path path = cheLocation.getPathSegment().getParent();
+			Bay cheBay = cheLocation.getParentAtLevel(Bay.class);
+			Bay selectedBay = cheBay;
+			if (cheBay == null) {
+				LOGGER.error("Che does not have a bay parent location in getWorkInstructions #1");
+				return wiResultList;
+			} else if (cheBay.getPosAlongPath() == null) {
+				LOGGER.error("Ches bay parent location does not have posAlongPath in getWorkInstructions #2");
+				return wiResultList;
+			}
+
+			for (Bay bay : path.<Bay> getLocationsByClass(Bay.class)) {
+				// Find any bay sooner on the work path that's within 2% of this bay.
+				if (bay.getPosAlongPath() == null) {
+					LOGGER.error("bay location does not have posAlongPath in getWorkInstructions #3");
+				} else if ((bay.getPosAlongPath() < cheBay.getPosAlongPath())
+						&& (bay.getPosAlongPath() + ISubLocation.BAY_ALIGNMENT_FUDGE > cheBay.getPosAlongPath())) {
+					selectedBay = bay;
+				}
+			}
+
+			// Figure out the starting path position.
+			startingPathPos = selectedBay.getPosAlongPath();
+		}
 
 		// Get all of the PLAN WIs assigned to this CHE beyond the specified position.
 		Map<String, Object> filterParams = new HashMap<String, Object>();
@@ -1905,4 +1918,3 @@ public class Facility extends SubLocationABC<Facility> {
 		}
 	}
 }
-
