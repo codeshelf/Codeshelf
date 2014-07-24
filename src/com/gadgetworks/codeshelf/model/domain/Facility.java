@@ -40,6 +40,7 @@ import com.gadgetworks.codeshelf.device.LedSample;
 import com.gadgetworks.codeshelf.model.BayDistanceWorkInstructionSequencer;
 import com.gadgetworks.codeshelf.model.EdiProviderEnum;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
+import com.gadgetworks.codeshelf.model.HeaderCounts;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
@@ -1022,7 +1023,6 @@ public class Facility extends SubLocationABC<Facility> {
 		// Get all of the CROSS work instructions.
 		wiResultList.addAll(generateCrossWallInstructions(inChe, containerList, theTime));
 
-		
 		WorkInstructionSequencer sequencer = getSequencer();
 		List<WorkInstruction> sortedWIResults = sequencer.sort(this, wiResultList);
 		return sortedWIResults.size();
@@ -1129,7 +1129,7 @@ public class Facility extends SubLocationABC<Facility> {
 				// OrderLocation firstOutOrderLoc = orderHeader.getFirstOrderLocationOnPath(path);
 				// outbound order item masters have a location to pick from
 				//OrderLocation firstOutOrderLoc = itemMaster.getFirstItemLocationOnPath(path);
-				Item  item = itemMaster.getFirstItemOnPath(path);
+				Item item = itemMaster.getFirstItemOnPath(path);
 
 				if (item != null) {
 					resultWi = createWorkInstruction(WorkInstructionStatusEnum.NEW,
@@ -1835,7 +1835,6 @@ public class Facility extends SubLocationABC<Facility> {
 		return result;
 	}
 
-
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inChe
@@ -1843,13 +1842,12 @@ public class Facility extends SubLocationABC<Facility> {
 	 * Testing only!  passs in as 23,46,2341a23. This yields conatiner ID 23 in slot1, container Id 46 in slot 2, etc.
 	 *
 	 */
-	public final void setUpCheContainerFromString(Che inChe, String inContainers){
+	public final void setUpCheContainerFromString(Che inChe, String inContainers) {
 		if (inChe == null)
 			return;
 
 		// computeWorkInstructions wants a containerId list
 		List<String> containersIdList = Arrays.asList(inContainers.split("\\s*,\\s*")); // this trims out white space
-
 
 		if (containersIdList.size() > 0) {
 			Integer wiCount = this.computeWorkInstructions(inChe, containersIdList);
@@ -1865,6 +1863,38 @@ public class Facility extends SubLocationABC<Facility> {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * @param outHeaderCounts
+	 */
+	public final void countCrossOrders(HeaderCounts outHeaderCounts) {
+		int totalCrossHeaders = 0;
+		int activeHeaders = 0;
+		int activeDetails = 0;
+		int activeCntrUses = 0;
+
+		for (OrderHeader crossOrder : getOrderHeaders()) {
+			if (crossOrder.getOrderTypeEnum().equals(OrderTypeEnum.CROSS)) {
+				totalCrossHeaders++;
+				if (crossOrder.getActive()) {
+					activeHeaders++;
+					ContainerUse cntrUse = crossOrder.getContainerUse();
+					if (cntrUse.getActive())
+						activeCntrUses++;
+					for (OrderDetail crossOrderDetail : crossOrder.getOrderDetails()) {
+						if (crossOrderDetail.getActive()) {
+							activeDetails++;
+						}
+					}
+				}
+			}
+		}
+		outHeaderCounts.mTotalHeaders = totalCrossHeaders;
+		outHeaderCounts.mActiveHeaders = activeHeaders;
+		outHeaderCounts.mActiveDetails = activeDetails;
+		outHeaderCounts.mActiveCntrUses = activeCntrUses;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
 	 * @param inWorkInstruction
 	 */
 	public final void sendWorkInstructionsToHost(final List<WorkInstruction> inWiList) {
@@ -1875,3 +1905,4 @@ public class Facility extends SubLocationABC<Facility> {
 		}
 	}
 }
+

@@ -12,6 +12,7 @@ import java.sql.Timestamp;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.gadgetworks.codeshelf.model.HeaderCounts;
 import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.domain.ContainerUse;
 import com.gadgetworks.codeshelf.model.domain.Facility;
@@ -75,6 +76,10 @@ public class CrossBatchImporterTest extends EdiTestABC {
 
 		organization.createFacility("F-CROSS1", "TEST", Point.getZeroPoint());
 		Facility facility = organization.getFacility("F-CROSS1");
+		
+		HeaderCounts theCounts = new HeaderCounts();
+		facility.countCrossOrders(theCounts);
+		Assert.assertTrue(theCounts.mTotalHeaders == 0);
 
 		// We can't import cross batch orders for items not already in inventory or on outbound orders.
 		createItemMaster("I111.1", "ea", facility);
@@ -92,6 +97,14 @@ public class CrossBatchImporterTest extends EdiTestABC {
 			mContainerUseDao,
 			mUomMasterDao);
 		importer.importCrossBatchesFromCsvStream(reader, facility, ediProcessTime);
+
+		// With cross batches, we get one header per unique container, and one detail per unique item in container
+		facility.countCrossOrders(theCounts);
+		Assert.assertTrue(theCounts.mTotalHeaders == 2);
+		Assert.assertTrue(theCounts.mActiveHeaders == 2);
+		Assert.assertTrue(theCounts.mActiveDetails == 6);
+		Assert.assertTrue(theCounts.mActiveCntrUses == 2);
+
 
 		// Make sure we created an order with the container's ID.
 		OrderHeader order = facility.getOrderHeader(OrderHeader.computeCrossOrderId("C111", ediProcessTime));
@@ -195,6 +208,15 @@ public class CrossBatchImporterTest extends EdiTestABC {
 			mContainerUseDao,
 			mUomMasterDao);
 		importer.importCrossBatchesFromCsvStream(reader, facility, firstEdiProcessTime);
+		
+		// With cross batches, we get one header per unique container, and one detail per unique item in container
+		HeaderCounts theCounts = new HeaderCounts();
+		facility.countCrossOrders(theCounts);
+		Assert.assertTrue(theCounts.mTotalHeaders == 2);
+		Assert.assertTrue(theCounts.mActiveHeaders == 2);
+		Assert.assertTrue(theCounts.mActiveDetails == 6);
+		Assert.assertTrue(theCounts.mActiveCntrUses == 2);
+
 
 		// Now re-import the interchange with one order missing a single item.
 		csvString = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
@@ -217,6 +239,15 @@ public class CrossBatchImporterTest extends EdiTestABC {
 			mContainerUseDao,
 			mUomMasterDao);
 		importer.importCrossBatchesFromCsvStream(reader, facility, secondEdiProcessTime);
+		
+		// The reimport resulted in inactivation of previous order headers for those containers
+		// Then we get new stuff.
+		facility.countCrossOrders(theCounts);
+		Assert.assertTrue(theCounts.mTotalHeaders == 4);
+		Assert.assertTrue(theCounts.mActiveHeaders == 2);
+		Assert.assertTrue(theCounts.mActiveDetails == 5);
+		Assert.assertTrue(theCounts.mActiveCntrUses == 2);
+
 
 		// Make sure that first cross batch order is inactive and contains order detail I555.3 but it's inactive
 		OrderHeader order = facility.getOrderHeader(OrderHeader.computeCrossOrderId("C555", firstEdiProcessTime));
@@ -275,8 +306,18 @@ public class CrossBatchImporterTest extends EdiTestABC {
 			mContainerUseDao,
 			mUomMasterDao);
 		importer.importCrossBatchesFromCsvStream(reader, facility, ediProcessTime);
+		
+		// With cross batches, we get one header per unique container, and one detail per unique item in container
+		HeaderCounts theCounts = new HeaderCounts();
+		facility.countCrossOrders(theCounts);
+		Assert.assertTrue(theCounts.mTotalHeaders == 2);
+		Assert.assertTrue(theCounts.mActiveHeaders == 2);
+		Assert.assertTrue(theCounts.mActiveDetails == 6);
+		Assert.assertTrue(theCounts.mActiveCntrUses == 2);
+
 
 		// Now re-import the interchange with one order missing a single item.
+		// add item I777.5
 		csvString = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
 				+ "G1,C777,I777.1,100,ea\r\n" //
 				+ "G1,C777,I777.2,200,ea\r\n" //
@@ -299,8 +340,15 @@ public class CrossBatchImporterTest extends EdiTestABC {
 			mContainerUseDao,
 			mUomMasterDao);
 		importer.importCrossBatchesFromCsvStream(reader, facility, ediProcessTime);
+		
+		facility.countCrossOrders(theCounts);
+		Assert.assertTrue(theCounts.mTotalHeaders == 4);
+		Assert.assertTrue(theCounts.mActiveHeaders == 2);
+		Assert.assertTrue(theCounts.mActiveDetails == 7);
+		Assert.assertTrue(theCounts.mActiveCntrUses == 2);
 
-		// Make sure that order detail item I666.3 still exists, but has quantity 0.
+
+		// check the new order detail.
 		OrderHeader order = facility.getOrderHeader(OrderHeader.computeCrossOrderId("C777", ediProcessTime));
 		Assert.assertNotNull(order);
 		OrderDetail orderDetail = order.getOrderDetail("I777.5");
@@ -349,7 +397,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 			mUomMasterDao);
 		importer.importCrossBatchesFromCsvStream(reader, facility, ediProcessTime);
 
-		// Now re-import the interchange with one order missing a single item.
+		// Now re-import the interchange changing the count on item 3.
 		csvString = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
 				+ "G1,C999,I999.1,100,ea\r\n" //
 				+ "G1,C999,I999.2,200,ea\r\n" //
@@ -457,7 +505,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		Assert.assertEquals(order.getOrderTypeEnum(), OrderTypeEnum.CROSS);
 		Assert.assertEquals(true, order.getActive());
 
-		// Make sure there's a contianer use and that its ID matches the order.
+		// Make sure there's a container use and that its ID matches the order.
 		ContainerUse use = order.getContainerUse();
 		Assert.assertNotNull(use);
 		Assert.assertEquals(use.getParent().getContainerId(), "C111");
@@ -469,15 +517,15 @@ public class CrossBatchImporterTest extends EdiTestABC {
 	}
 
 	@Test
-	public final void testCrossBatchImporterArchive() {
-
+	public final void testCrossBatchGroupArchives() {
+		// Good eggs has group IDs. Make sure the behavior on reread is similar to above
 		String csvString = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
-				+ ",C111,I111.1,100,ea\r\n" //
-				+ ",C111,I111.2,200,ea\r\n" //
-				+ ",C111,I111.3,300,ea\r\n" //
-				+ ",C111,I111.4,400,ea\r\n" //
-				+ ",C222,I222.1,100,ea\r\n" //
-				+ ",C222,I222.2,200,ea\r\n";
+				+ "xx,C111,I111.1,100,ea\r\n" //
+				+ "xx,C111,I111.2,200,ea\r\n" //
+				+ "xx,C111,I111.3,300,ea\r\n" //
+				+ "xx,C111,I111.4,400,ea\r\n" //
+				+ "xx,C222,I222.1,100,ea\r\n" //
+				+ "xx,C222,I222.2,200,ea\r\n";
 
 		byte[] csvArray = csvString.getBytes();
 
@@ -520,6 +568,41 @@ public class CrossBatchImporterTest extends EdiTestABC {
 
 		// Make sure there's four order items.
 		Assert.assertEquals(order.getOrderDetails().size(), 4);
+		
+		HeaderCounts theCounts = new HeaderCounts();
+		facility.countCrossOrders(theCounts);
+		Assert.assertTrue(theCounts.mTotalHeaders == 2);
+		Assert.assertTrue(theCounts.mActiveHeaders == 2);
+		Assert.assertTrue(theCounts.mActiveDetails == 6);
+		Assert.assertTrue(theCounts.mActiveCntrUses == 2);
+		
+		// Now re-import the interchange removing item 4.
+		csvString = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
+				+ "xx,C111,I111.1,100,ea\r\n" //
+				+ "xx,C111,I111.2,200,ea\r\n" //
+				+ "xx,C111,I111.3,300,ea\r\n" //
+				+ "xx,C222,I222.1,100,ea\r\n" //
+				+ "xx,C222,I222.2,200,ea\r\n";
+
+		csvArray = csvString.getBytes();
+
+		stream = new ByteArrayInputStream(csvArray);
+		reader = new InputStreamReader(stream);
+
+		ediProcessTime = new Timestamp(System.currentTimeMillis());
+		importer = new CrossBatchCsvImporter(mOrderGroupDao,
+			mOrderHeaderDao,
+			mOrderDetailDao,
+			mContainerDao,
+			mContainerUseDao,
+			mUomMasterDao);
+		importer.importCrossBatchesFromCsvStream(reader, facility, ediProcessTime);
+
+		facility.countCrossOrders(theCounts);
+		Assert.assertTrue(theCounts.mTotalHeaders == 4);
+		Assert.assertTrue(theCounts.mActiveHeaders == 2);
+		Assert.assertTrue(theCounts.mActiveDetails == 5);
+		Assert.assertTrue(theCounts.mActiveCntrUses == 2);
 
 	}
 
@@ -576,6 +659,15 @@ public class CrossBatchImporterTest extends EdiTestABC {
 
 		// Make sure there's four order items.
 		Assert.assertEquals(order.getOrderDetails().size(), 4);
+		
+		// Verify what we got
+		HeaderCounts theCounts = new HeaderCounts();
+		facility.countCrossOrders(theCounts);
+		Assert.assertTrue(theCounts.mTotalHeaders == 2);
+		Assert.assertTrue(theCounts.mActiveHeaders == 2);
+		Assert.assertTrue(theCounts.mActiveDetails == 6);
+		Assert.assertTrue(theCounts.mActiveCntrUses == 2);
+
 
 		String secondCsvString = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
 				+ ",C333,I111.1,100,ea\r\n" //
@@ -626,6 +718,15 @@ public class CrossBatchImporterTest extends EdiTestABC {
 
 		// Make sure there's four order items.
 		Assert.assertEquals(order.getOrderDetails().size(), 4);
+		
+		// second EDI did had different containers than the first. Should just add on orders.
+		// Same items. But get new detail per container-item combination therefore new details
+		facility.countCrossOrders(theCounts);
+		Assert.assertTrue(theCounts.mTotalHeaders == 4);
+		Assert.assertTrue(theCounts.mActiveHeaders == 4);
+		Assert.assertTrue(theCounts.mActiveDetails == 12);
+		Assert.assertTrue(theCounts.mActiveCntrUses == 4);
+
 
 	}
 }
