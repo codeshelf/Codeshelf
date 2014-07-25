@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
+import com.gadgetworks.codeshelf.model.TimeFormat;
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
@@ -370,6 +371,21 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 			return theLoc.getPosAlongPath();
 		else {
 			return 0.0;
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * For a UI meta field
+	 * @return
+	 */
+	public final String getCompleteTimeForUi() {
+		
+		Timestamp completeTime = this.getCompleted();
+		if (completeTime == null)
+			return "";
+		else {
+			return TimeFormat.getUITime(completeTime);
 		}
 	}
 

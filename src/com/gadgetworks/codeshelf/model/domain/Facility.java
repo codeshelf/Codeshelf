@@ -1878,7 +1878,7 @@ public class Facility extends SubLocationABC<Facility> {
 	/**
 	 * @param outHeaderCounts
 	 */
-	public final void countCrossOrders(HeaderCounts outHeaderCounts) {
+	public final HeaderCounts countCrossOrders() {
 		int totalCrossHeaders = 0;
 		int activeHeaders = 0;
 		int activeDetails = 0;
@@ -1890,20 +1890,23 @@ public class Facility extends SubLocationABC<Facility> {
 				if (crossOrder.getActive()) {
 					activeHeaders++;
 					ContainerUse cntrUse = crossOrder.getContainerUse();
-					if (cntrUse.getActive())
+					if (cntrUse != null && cntrUse.getActive())
 						activeCntrUses++;
 					for (OrderDetail crossOrderDetail : crossOrder.getOrderDetails()) {
 						if (crossOrderDetail.getActive()) {
 							activeDetails++;
+							// if we were doing outbound orders, we might count WI here
 						}
 					}
 				}
 			}
 		}
+		HeaderCounts outHeaderCounts = new HeaderCounts();
 		outHeaderCounts.mTotalHeaders = totalCrossHeaders;
 		outHeaderCounts.mActiveHeaders = activeHeaders;
 		outHeaderCounts.mActiveDetails = activeDetails;
 		outHeaderCounts.mActiveCntrUses = activeCntrUses;
+		return outHeaderCounts;
 	}
 
 	// --------------------------------------------------------------------------
