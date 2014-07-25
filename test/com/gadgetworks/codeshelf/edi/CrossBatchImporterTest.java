@@ -77,8 +77,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		organization.createFacility("F-CROSS1", "TEST", Point.getZeroPoint());
 		Facility facility = organization.getFacility("F-CROSS1");
 		
-		HeaderCounts theCounts = new HeaderCounts();
-		facility.countCrossOrders(theCounts);
+		HeaderCounts theCounts = facility.countCrossOrders();
 		Assert.assertTrue(theCounts.mTotalHeaders == 0);
 
 		// We can't import cross batch orders for items not already in inventory or on outbound orders.
@@ -99,11 +98,11 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		importer.importCrossBatchesFromCsvStream(reader, facility, ediProcessTime);
 
 		// With cross batches, we get one header per unique container, and one detail per unique item in container
-		facility.countCrossOrders(theCounts);
-		Assert.assertTrue(theCounts.mTotalHeaders == 2);
-		Assert.assertTrue(theCounts.mActiveHeaders == 2);
-		Assert.assertTrue(theCounts.mActiveDetails == 6);
-		Assert.assertTrue(theCounts.mActiveCntrUses == 2);
+		HeaderCounts theCounts2 = facility.countCrossOrders();
+		Assert.assertTrue(theCounts2.mTotalHeaders == 2);
+		Assert.assertTrue(theCounts2.mActiveHeaders == 2);
+		Assert.assertTrue(theCounts2.mActiveDetails == 6);
+		Assert.assertTrue(theCounts2.mActiveCntrUses == 2);
 
 
 		// Make sure we created an order with the container's ID.
@@ -210,8 +209,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		importer.importCrossBatchesFromCsvStream(reader, facility, firstEdiProcessTime);
 		
 		// With cross batches, we get one header per unique container, and one detail per unique item in container
-		HeaderCounts theCounts = new HeaderCounts();
-		facility.countCrossOrders(theCounts);
+		HeaderCounts theCounts = facility.countCrossOrders();
 		Assert.assertTrue(theCounts.mTotalHeaders == 2);
 		Assert.assertTrue(theCounts.mActiveHeaders == 2);
 		Assert.assertTrue(theCounts.mActiveDetails == 6);
@@ -242,11 +240,11 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		
 		// The reimport resulted in inactivation of previous order headers for those containers
 		// Then we get new stuff.
-		facility.countCrossOrders(theCounts);
-		Assert.assertTrue(theCounts.mTotalHeaders == 4);
-		Assert.assertTrue(theCounts.mActiveHeaders == 2);
-		Assert.assertTrue(theCounts.mActiveDetails == 5);
-		Assert.assertTrue(theCounts.mActiveCntrUses == 2);
+		HeaderCounts theCounts2 = facility.countCrossOrders();
+		Assert.assertTrue(theCounts2.mTotalHeaders == 4);
+		Assert.assertTrue(theCounts2.mActiveHeaders == 2);
+		Assert.assertTrue(theCounts2.mActiveDetails == 5);
+		Assert.assertTrue(theCounts2.mActiveCntrUses == 2);
 
 
 		// Make sure that first cross batch order is inactive and contains order detail I555.3 but it's inactive
@@ -308,8 +306,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		importer.importCrossBatchesFromCsvStream(reader, facility, ediProcessTime);
 		
 		// With cross batches, we get one header per unique container, and one detail per unique item in container
-		HeaderCounts theCounts = new HeaderCounts();
-		facility.countCrossOrders(theCounts);
+		HeaderCounts theCounts = facility.countCrossOrders();
 		Assert.assertTrue(theCounts.mTotalHeaders == 2);
 		Assert.assertTrue(theCounts.mActiveHeaders == 2);
 		Assert.assertTrue(theCounts.mActiveDetails == 6);
@@ -341,11 +338,11 @@ public class CrossBatchImporterTest extends EdiTestABC {
 			mUomMasterDao);
 		importer.importCrossBatchesFromCsvStream(reader, facility, ediProcessTime);
 		
-		facility.countCrossOrders(theCounts);
-		Assert.assertTrue(theCounts.mTotalHeaders == 4);
-		Assert.assertTrue(theCounts.mActiveHeaders == 2);
-		Assert.assertTrue(theCounts.mActiveDetails == 7);
-		Assert.assertTrue(theCounts.mActiveCntrUses == 2);
+		HeaderCounts theCounts2 = facility.countCrossOrders();
+		Assert.assertTrue(theCounts2.mTotalHeaders == 4);
+		Assert.assertTrue(theCounts2.mActiveHeaders == 2);
+		Assert.assertTrue(theCounts2.mActiveDetails == 7);
+		Assert.assertTrue(theCounts2.mActiveCntrUses == 2);
 
 
 		// check the new order detail.
@@ -569,8 +566,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		// Make sure there's four order items.
 		Assert.assertEquals(order.getOrderDetails().size(), 4);
 		
-		HeaderCounts theCounts = new HeaderCounts();
-		facility.countCrossOrders(theCounts);
+		HeaderCounts theCounts = facility.countCrossOrders();
 		Assert.assertTrue(theCounts.mTotalHeaders == 2);
 		Assert.assertTrue(theCounts.mActiveHeaders == 2);
 		Assert.assertTrue(theCounts.mActiveDetails == 6);
@@ -598,11 +594,11 @@ public class CrossBatchImporterTest extends EdiTestABC {
 			mUomMasterDao);
 		importer.importCrossBatchesFromCsvStream(reader, facility, ediProcessTime);
 
-		facility.countCrossOrders(theCounts);
-		Assert.assertTrue(theCounts.mTotalHeaders == 4);
-		Assert.assertTrue(theCounts.mActiveHeaders == 2);
-		Assert.assertTrue(theCounts.mActiveDetails == 5);
-		Assert.assertTrue(theCounts.mActiveCntrUses == 2);
+		HeaderCounts theCounts2 = facility.countCrossOrders();
+		Assert.assertTrue(theCounts2.mTotalHeaders == 4);
+		Assert.assertTrue(theCounts2.mActiveHeaders == 2);
+		Assert.assertTrue(theCounts2.mActiveDetails == 5);
+		Assert.assertTrue(theCounts2.mActiveCntrUses == 2);
 
 	}
 
@@ -661,8 +657,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		Assert.assertEquals(order.getOrderDetails().size(), 4);
 		
 		// Verify what we got
-		HeaderCounts theCounts = new HeaderCounts();
-		facility.countCrossOrders(theCounts);
+		HeaderCounts theCounts = facility.countCrossOrders();
 		Assert.assertTrue(theCounts.mTotalHeaders == 2);
 		Assert.assertTrue(theCounts.mActiveHeaders == 2);
 		Assert.assertTrue(theCounts.mActiveDetails == 6);
@@ -721,11 +716,11 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		
 		// second EDI did had different containers than the first. Should just add on orders.
 		// Same items. But get new detail per container-item combination therefore new details
-		facility.countCrossOrders(theCounts);
-		Assert.assertTrue(theCounts.mTotalHeaders == 4);
-		Assert.assertTrue(theCounts.mActiveHeaders == 4);
-		Assert.assertTrue(theCounts.mActiveDetails == 12);
-		Assert.assertTrue(theCounts.mActiveCntrUses == 4);
+		HeaderCounts theCounts2 = facility.countCrossOrders();
+		Assert.assertTrue(theCounts2.mTotalHeaders == 4);
+		Assert.assertTrue(theCounts2.mActiveHeaders == 4);
+		Assert.assertTrue(theCounts2.mActiveDetails == 12);
+		Assert.assertTrue(theCounts2.mActiveCntrUses == 4);
 
 
 	}
