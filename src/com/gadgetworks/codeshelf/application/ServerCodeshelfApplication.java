@@ -265,7 +265,11 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		createOrganizationUser("DEMO1", "simulate@example.com", "testme"); //simulate + configure
 		createOrganizationUser("DEMO1", "che@example.com", "testme"); //view + simulate
 
-		createOrganizationUser("DEMO2", "b@example.com", "testme");
+		createOrganizationUser("DEMO2", "a@example.com", "testme"); //view
+		createOrganizationUser("DEMO2", "view@example.com", "testme"); //view
+		createOrganizationUser("DEMO2", "configure@example.com", "testme"); //all
+		createOrganizationUser("DEMO2", "simulate@example.com", "testme"); //simulate + configure
+		createOrganizationUser("DEMO2", "che@example.com", "testme"); //view + simulate
 
 		// Recompute path positions.
 		// TODO: Remove once we have a tool for linking path segments to locations (aisles usually).

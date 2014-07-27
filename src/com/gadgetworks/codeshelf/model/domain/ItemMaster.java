@@ -224,4 +224,10 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 		return result;
 	}
 
+	// --------------------------------------------------------------------------
+	// metafields
+	public final String getItemLocations() {
+		return "";
+	}
+
 }

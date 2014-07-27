@@ -26,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
+import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
@@ -160,6 +161,51 @@ public class ContainerUse extends DomainObjectTreeABC<Container> {
 		else {
 			return theOrder.getDomainId();
 		}
+	}
+
+	// Initially for the GoodEggs case, or general cross wall. 
+	// Not sure if this approach could work for outbound orders. Important. 
+	// GoodEggs puts only one item per container. These meta fields assume that.
+	private final ItemMaster getRelevantItem() {
+		OrderDetail detail = null;
+		ItemMaster theItem = null;
+		OrderHeader header = this.getOrderHeader();
+		if (header != null) {
+			if (header.getOrderTypeEnum() == OrderTypeEnum.CROSS) {
+				List<OrderDetail> details = header.getOrderDetails();
+				if (details.size() > 0)
+					detail = details.get(0); // return the first
+			}
+		}
+		if (detail != null)
+			theItem = detail.getItemMaster();
+			
+		return theItem;
+	}
+
+	public final String getItemInCntrDescription() {
+		ItemMaster  master = getRelevantItem();
+		if (master != null)
+			return master.getDescription();
+		
+		return "";
+	}
+
+	public final String getItemInCntrSku() {
+		ItemMaster  master = getRelevantItem();
+		if (master != null)
+			return master.getItemId();
+		
+		return "";
+	}
+
+
+	public final String getItemInCntrPersistentId() {
+		ItemMaster  master = getRelevantItem();
+		if (master != null)
+			return master.getPersistentId().toString();
+		
+		return "";
 	}
 
 }

@@ -323,6 +323,31 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 		return result;
 	}
+	
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.domain.ILocation#getLocationIdToParentLevel(java.lang.Class)
+	 */
+	public final String getNominalLocationId() {
+		String result;
+
+		// It seems reasonable in the code to ask for getLocationIdToParentLevel(Aisle.class) when the class of the object is unknown, and might even be the facility.
+		// Let's not NPE.
+		if (this.getClass().equals(Facility.class))
+			return "";
+		
+		ILocation<P> checkParent = (ILocation<P>) getParent();
+		if (checkParent.getClass().equals(Facility.class)) {
+			// This is the last child  we want.
+			result = getLocationId();
+		}
+		else {
+			// The current parent is not the class we want so recurse up the hierarchy.
+			result = checkParent.getNominalLocationId();
+			result = result + "." + getLocationId();
+		}
+		return result;
+	}
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
