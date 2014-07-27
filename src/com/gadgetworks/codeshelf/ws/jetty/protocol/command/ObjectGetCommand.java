@@ -1,6 +1,5 @@
 package com.gadgetworks.codeshelf.ws.jetty.protocol.command;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.UUID;
 
 import org.slf4j.Logger;
@@ -64,27 +63,11 @@ public class ObjectGetCommand extends CommandABC {
 					response.setStatus(ResponseStatus.Fail);
 					response.setStatusMessage("Method not found");
 					return response;
-					// Convert the list of objects into a JSon object.
-					/*
-					ObjectMapper mapper = new ObjectMapper();
-					ObjectNode dataNode = mapper.createObjectNode();
-					ArrayNode searchListNode = mapper.valueToTree(resultObject);
-					dataNode.put(RESULTS, searchListNode);
-					*/
-					// result = new ObjectGetterWsRespCmd(dataNode);
 				}
 			}
 
-		} catch (ClassNotFoundException e) {
-			LOGGER.error("", e);
-		} catch (SecurityException e) {
-			LOGGER.error("", e);
-		} catch (IllegalArgumentException e) {
-			LOGGER.error("", e);
-		} catch (IllegalAccessException e) {
-			LOGGER.error("", e);
-		} catch (InvocationTargetException e) {
-			LOGGER.error("", e);
+		} catch (Exception e) {
+			LOGGER.error("Failed to execute ObjectGetCommand", e);
 		}
 		response.setStatus(ResponseStatus.Fail);
 		return response;

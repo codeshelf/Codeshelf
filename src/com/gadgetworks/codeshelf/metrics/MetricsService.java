@@ -48,7 +48,7 @@ public class MetricsService {
 	}
 
 	private static String getFullName(MetricsGroup group, String metricName) {
-		return getInstance().getHostName()+"-"+group.getName()+"-"+metricName;
+		return group.getName()+"-"+metricName;
 	}
 
 	public static MetricRegistry getRegistry() {
@@ -62,7 +62,7 @@ public class MetricsService {
 			Counter counter = getRegistry().getCounters().get(fullName);
 			if (counter!=null) {
 				// return existing metric
-				LOGGER.warn("Unable to add metric "+fullName+".  Metric already exists.");
+				// LOGGER.warn("Unable to add metric "+fullName+".  Metric already exists.");
 				return counter;
 			}
 			// create and register new metric
@@ -82,7 +82,7 @@ public class MetricsService {
 			Meter meter = getRegistry().getMeters().get(fullName);
 			if (meter!=null) {
 				// return existing metric
-				LOGGER.warn("Unable to add metric "+fullName+".  Metric already exists.");
+				// LOGGER.warn("Unable to add metric "+fullName+".  Metric already exists.");
 				return meter;
 			}
 			// create and register new metric
@@ -102,7 +102,7 @@ public class MetricsService {
 			Timer timer = getRegistry().getTimers().get(fullName);
 			if (timer!=null) {
 				// return existing metric
-				LOGGER.warn("Unable to add metric "+fullName+".  Metric already exists.");
+				// LOGGER.warn("Unable to add metric "+fullName+".  Metric already exists.");
 				return timer;
 			}
 			// create and register new metric
@@ -122,7 +122,7 @@ public class MetricsService {
 			Histogram histogram = getRegistry().getHistograms().get(fullName);
 			if (histogram!=null) {
 				// return existing metric
-				LOGGER.warn("Unable to add metric "+fullName+".  Metric already exists.");
+				// LOGGER.warn("Unable to add metric "+fullName+".  Metric already exists.");
 				return histogram;
 			}
 			// create and register new metric

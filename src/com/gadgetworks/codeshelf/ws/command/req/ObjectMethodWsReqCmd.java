@@ -137,7 +137,7 @@ public class ObjectMethodWsReqCmd extends WsReqCmdABC {
 					List<Object> cookedArguments = new ArrayList<Object>();
 					for (ArgsClass arg : mMethodArguments) {
 						// (The method *must* start with "get" to ensure other methods don't get called.)
-						JsonNode argumentValue = arg.getValue();
+						JsonNode argumentValue = null; // arg.getValue();
 						Class classType = Class.forName(arg.getClassType());
 						signatureClasses.add(classType);
 

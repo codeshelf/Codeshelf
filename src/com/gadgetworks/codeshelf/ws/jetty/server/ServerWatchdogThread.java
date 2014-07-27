@@ -26,6 +26,9 @@ public class ServerWatchdogThread extends Thread {
 	@Getter @Setter
 	int initialWaitTime = 10;
 	
+	@Getter @Setter
+	boolean usePing = true;
+	
 	public ServerWatchdogThread(JettyWebSocketServer server) {
 		this.server = server;
 	}
@@ -41,9 +44,11 @@ public class ServerWatchdogThread extends Thread {
 					String sessionId = session.getSessionId();
 					Session wsSession = session.getSession();
 					if (session.getType()==SessionType.SiteController) {
-						LOGGER.debug("Sending ping on session "+sessionId);
-						PingRequest request = new PingRequest();
-						this.server.sendRequest(wsSession, request);
+						if (usePing) {
+							LOGGER.debug("Sending ping on session "+sessionId);
+							PingRequest request = new PingRequest();
+							this.server.sendRequest(wsSession, request);
+						}
 					}
 				}
 				ThreadUtils.sleep(waitTime*1000);

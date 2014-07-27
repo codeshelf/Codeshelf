@@ -21,7 +21,7 @@ public class ArgsClass {
 
 	@Getter
 	@Setter
-	private JsonNode	value;
+	private Object	value;
 
 	@Getter
 	@Setter
@@ -31,7 +31,7 @@ public class ArgsClass {
 
 	}
 
-	public ArgsClass(final String inName, final JsonNode inValue, final String inClassType) {
+	public ArgsClass(final String inName, final Object inValue, final String inClassType) {
 		name = inName;
 		value = inValue;
 		classType = inClassType;

@@ -20,6 +20,7 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.command.GetWorkCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.LoginCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.NetworkAttachCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.NetworkStatusCommand;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ObjectListenerCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ObjectMethodCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ObjectUpdateCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.RegisterFilterCommand;
@@ -32,6 +33,7 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.request.GetWorkRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.LoginRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.NetworkAttachRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.NetworkStatusRequest;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectListenerRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectMethodRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectUpdateRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RegisterFilterRequest;
@@ -57,9 +59,10 @@ public class ServerMessageProcessor extends MessageProcessor {
 	private final Counter getWorkCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.get-work");
 	private final Counter objectGetCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.object-get");
 	private final Counter objectUpdateCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.object-update");
+	private final Counter objectListenerCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.object-listener");
 	private final Counter objectFilterCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.register-filter");
-	private final Meter requestMeter = MetricsService.addMeter(MetricsGroup.WSS,"requests.meter");
-	private final Meter responseMeter = MetricsService.addMeter(MetricsGroup.WSS,"responses.meter");
+//	private final Meter requestMeter = MetricsService.addMeter(MetricsGroup.WSS,"requests.meter");
+//	private final Meter responseMeter = MetricsService.addMeter(MetricsGroup.WSS,"responses.meter");
 	private final Timer requestProcessingTimer = MetricsService.addTimer(MetricsGroup.WSS,"requests.processing-time");
 	private final Timer responseProcessingTimer = MetricsService.addTimer(MetricsGroup.WSS,"responses.processing-time");
 	private final Histogram pingHistogram = MetricsService.addHistogram(MetricsGroup.WSS, "ping-histogram");
@@ -77,11 +80,9 @@ public class ServerMessageProcessor extends MessageProcessor {
 	@Override
 	public ResponseABC handleRequest(Session session, RequestABC request) {
 		LOGGER.info("Request received for processing: "+request);
+		requestCounter.inc();
 		CommandABC command = null;
 		ResponseABC response = null;
-		
-		requestCounter.inc();
-		requestMeter.mark();
 
 		// check CS session
         CsSession csSession = sessionManager.getSession(session);
@@ -92,7 +93,7 @@ public class ServerMessageProcessor extends MessageProcessor {
         // process message...
     	final Timer.Context context = requestProcessingTimer.time();
 	    try {
-			// TODO: get rid of handling via if statements and type casts...
+			// TODO: get rid of type handling using if statements and type casts...
 			if (request instanceof LoginRequest) {
 				LoginRequest loginRequest = (LoginRequest) request;
 				command = new LoginCommand(csSession,loginRequest);
@@ -134,6 +135,10 @@ public class ServerMessageProcessor extends MessageProcessor {
 				command = new ObjectMethodCommand((ObjectMethodRequest) request);
 				objectUpdateCounter.inc();
 			}
+			else if (request instanceof ObjectListenerRequest) {
+				command = new ObjectListenerCommand((ObjectListenerRequest) request);
+				objectListenerCounter.inc();
+			}			
 			else if (request instanceof RegisterFilterRequest) {
 				command = new RegisterFilterCommand((RegisterFilterRequest) request);
 				objectFilterCounter.inc();
@@ -168,7 +173,6 @@ public class ServerMessageProcessor extends MessageProcessor {
 	@Override
 	public void handleResponse(Session session, ResponseABC response) {
 		responseCounter.inc();
-		responseMeter.mark();
     	final Timer.Context context = responseProcessingTimer.time();
 	    try {		
 			if (response instanceof PingResponse) {

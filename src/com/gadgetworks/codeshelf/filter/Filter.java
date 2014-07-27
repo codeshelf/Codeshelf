@@ -52,7 +52,7 @@ public class Filter {
 						propertiesMap.put(propertyName, resultObject);
 					} catch (NoSuchMethodException e) {
 						// Minor problem. UI hierarchical view asks for same data field name for all object types in the view. Not really an error in most cases
-						LOGGER.debug("Method not found in ObjectFilterWsReqCmd getProperties: " + rememberGetterName);
+						LOGGER.debug("Method " + rememberGetterName+" not found in class "+matchedObject.getClassName());
 					}
 				}
 				resultsList.add(propertiesMap);

@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -134,13 +135,11 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 
 		// Start the EDI process.
 		// TODO: put back in when WS integration is done
-		/*
 		mEdiProcessSignalQueue = new ArrayBlockingQueue<>(100);
 		mEdiProcessor.startProcessor(mEdiProcessSignalQueue);
 		
 		// Start the pick document generator process;
 		mPickDocumentGenerator.startProcessor(mEdiProcessSignalQueue);
-		*/
 
 		mHttpServer.startServer();
 		
@@ -157,12 +156,14 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		// public metrics to opentsdb
 		String useMetricsReporter = System.getProperty("metrics.reporter");
 		if ("true".equalsIgnoreCase(useMetricsReporter)) {
-			LOGGER.info("Starting OpenTSDB Reporter");
+			String metricsServerUrl = System.getProperty("metrics.serverurl");
+			LOGGER.info("Starting OpenTSDB Reporter writing to "+metricsServerUrl);
 			MetricRegistry registry = MetricsService.getRegistry();
+			String hostName = MetricsService.getInstance().getHostName();
 			OpenTsdbReporter.forRegistry(registry)
 			      .prefixedWith("")
-			      .withTags(ImmutableMap.of("other", "tags"))
-			      .build(OpenTsdb.forService("http://opentsdb.local:8088/")
+			      .withTags(ImmutableMap.of("host", hostName))
+			      .build(OpenTsdb.forService(metricsServerUrl)
 			      .create())
 			      .start(10L, TimeUnit.SECONDS);
 		}

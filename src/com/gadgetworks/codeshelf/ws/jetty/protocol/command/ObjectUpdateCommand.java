@@ -3,6 +3,7 @@ package com.gadgetworks.codeshelf.ws.jetty.protocol.command;
 import java.util.Map;
 import java.util.UUID;
 
+import org.apache.commons.beanutils.BeanUtils;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ObjectNode;
@@ -58,20 +59,14 @@ public class ObjectUpdateCommand extends CommandABC {
 				// (The method *must* start with "set" to ensure other methods don't get called.)
 				if (updateObject != null) {
 					// update object...
-					
-					// TODO: update object with properties
+					// ORIGNIAL CODE:
+					// ObjectMapper objectSetter = new ObjectMapper();
 					// updateObject = objectSetter.readerForUpdating(updateObject).readValue(properties);
+					BeanUtils.populate(updateObject, properties);
 					
 					dao.store(updateObject);
 					
 					// create response
-					/*
-					mapper = new ObjectMapper();
-					ObjectNode dataNode = mapper.createObjectNode();
-					JsonNode updatedObjectNode = mapper.valueToTree(updateObject);
-					dataNode.put(RESULTS, updatedObjectNode);
-					result = new ObjectUpdateWsRespCmd(dataNode);
-					*/
 					response.setResults(updateObject);
 					response.setStatus(ResponseStatus.Success);
 					return response;

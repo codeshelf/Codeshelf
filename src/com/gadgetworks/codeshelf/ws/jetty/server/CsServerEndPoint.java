@@ -34,7 +34,7 @@ public class CsServerEndPoint {
 	MetricRegistry metricsRegistry;
     
 	// time to close session after mins of inactivity
-	int idleTimeOut = 240;
+	int idleTimeOut = 60;
 	
 	public CsServerEndPoint() {	
 		sessionManager = SessionManager.getInstance();

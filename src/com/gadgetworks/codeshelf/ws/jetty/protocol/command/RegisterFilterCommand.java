@@ -81,16 +81,6 @@ public class RegisterFilterCommand extends CommandABC {
 			List<String> propertyNames = request.getPropertyNames();
 			String filterClause = request.getFilterClause();
 			List<Map<String, Object>> filterParams = request.getFilterParams();
-
-			/*
-			private Class<IDomainObject>			mPersistenceClass;
-			private List<IDomainObject>				mObjectMatchList;
-			private List<String>					mPropertyNames;
-			private String							mFilterClause;
-			private Map<String, Object>				mFilterParams;
-			private IDaoProvider					mDaoProvider;
-			private List<ITypedDao<IDomainObject>>	mDaoList;
-			*/
 			
 			// extract property map
 			HashMap<String, Object> mFilterParams = new HashMap<String, Object>();
@@ -113,6 +103,10 @@ public class RegisterFilterCommand extends CommandABC {
 				
 				// generate results from properties
 				List<Map<String, Object>> results = filter.getProperties(objectMatchList, IWsReqCmd.OP_TYPE_UPDATE);
+				if (results==null) {
+					// don't sent a response, if there is no data
+					return null;
+				}
 				response.setResults(results);
 				return response;
 			}
