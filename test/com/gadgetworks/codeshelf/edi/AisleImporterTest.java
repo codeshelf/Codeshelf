@@ -825,15 +825,12 @@ public class AisleImporterTest extends DomainTestABC {
 		if (false) 
 			return;
 
-		// Ideally, we want non-throwing or caught exceptions that give good user feedback about what is wrong.
-		// This has tier before bay, and some other blank fields
-		// do a Y orientation on this as well
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A15,,,,,tierRight,12.85,43.45,Y,120,\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
-				+ "Tier,T1,,5,40,0,,\r\n" //
+				+ "Tier,T1,,3,40,0,,\r\n" //
 				+ "Bay,B2,115,,,,,\r\n" //
-				+ "Tier,T1,,5,40,0,,\r\n"; //
+				+ "Tier,T1,,3,40,0,,\r\n"; //
 
 		byte[] csvArray = csvString.getBytes();
 
@@ -851,8 +848,21 @@ public class AisleImporterTest extends DomainTestABC {
 		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
 		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
+		// Check what we got
+		Aisle aisle = Aisle.DAO.findByDomainId(facility, "A15");
+		Assert.assertNotNull(aisle);
+		Bay bayA15B1 = Bay.DAO.findByDomainId(aisle, "B1");
+		Tier tierB1T1 = Tier.DAO.findByDomainId(bayA15B1, "T1");
+		Assert.assertNotNull(tierB1T1);
+		Slot slotB1T1S1 = Slot.DAO.findByDomainId(tierB1T1, "S1");
+		Assert.assertNotNull(slotB1T1S1);
+		Slot slotB1T1S3 = Slot.DAO.findByDomainId(tierB1T1, "S3");
+		Assert.assertNotNull(slotB1T1S3);
+		Double s1InitialMetersAlongPath = slotB1T1S1.getPosAlongPath();
+		Double s3InitialMetersAlongPath = slotB1T1S3.getPosAlongPath();
+
 		// Act like "oops, forgot the second tier". 
-		// And change from 6 slots down to 5. 
+		// And change from 3 slots down to 6. 
 		// And change to 50 leds across the tier
 		// And change leds to tierLeft
 		// And change bay length
@@ -874,24 +884,23 @@ public class AisleImporterTest extends DomainTestABC {
 		AislesFileCsvImporter importer2 = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
 		importer2.importAislesFileFromCsvStream(reader2, facility, ediProcessTime2);
 
-		// Check what we got
-		Aisle aisle = Aisle.DAO.findByDomainId(facility, "A15");
+		aisle = Aisle.DAO.findByDomainId(facility, "A15");
 		Assert.assertNotNull(aisle);
 
-		Bay bayA15B1 = Bay.DAO.findByDomainId(aisle, "B1");
+		bayA15B1 = Bay.DAO.findByDomainId(aisle, "B1");
 		Bay bayA15B2 = Bay.DAO.findByDomainId(aisle, "B2");
 		Assert.assertNotNull(bayA15B2);
 		Double baylength = bayA15B1.getPickFaceEndPosY() - bayA15B1.getAnchorPosY(); // this aisle is Y orientation
 		Assert.assertTrue(baylength > 1.20); // Bay 1 values were updated
 		// Compiler warning on equality of double. (== 1.22) so lets use > as the old value was 1.15
 
-		Tier tierB1T1 = Tier.DAO.findByDomainId(bayA15B1, "T1");
+		tierB1T1 = Tier.DAO.findByDomainId(bayA15B1, "T1");
 		Assert.assertNotNull(tierB1T1); // should still exist
 
 		Tier tierB2T2 = Tier.DAO.findByDomainId(bayA15B2, "T2");
 		Assert.assertNotNull(tierB2T2); // Shows that we reread and this time created T2
 
-		Slot slotB1T1S1 = Slot.DAO.findByDomainId(tierB1T1, "S1");
+		slotB1T1S1 = Slot.DAO.findByDomainId(tierB1T1, "S1");
 		Assert.assertNotNull(slotB1T1S1); // should still exist
 		Slot slotB1T1S5 = Slot.DAO.findByDomainId(tierB1T1, "S5");
 		Assert.assertNotNull(slotB1T1S5); // should still exist
@@ -900,6 +909,16 @@ public class AisleImporterTest extends DomainTestABC {
 
 		short tierB1T1Last = tierB1T1.getLastLedNumAlongPath(); // did the tier LEDs change?
 		Assert.assertTrue(tierB1T1Last == 50); // Show that LEDs were recomputed and updated
+		
+		slotB1T1S3 = Slot.DAO.findByDomainId(tierB1T1, "S3");
+		Double s1SubsequentMetersAlongPath = slotB1T1S1.getPosAlongPath();
+		Double s3SubsequentMetersAlongPath = slotB1T1S3.getPosAlongPath();
+		
+		// meters along path should have changed for S3, but not for S1
+		// This would work if we had a path in this unit test. But we don't. So the value of these doubles is null.
+//		Assert.assertEquals(s1InitialMetersAlongPath, s1SubsequentMetersAlongPath);
+//		Assert.assertNotEquals(s3InitialMetersAlongPath, s3SubsequentMetersAlongPath);
+
 
 		// And the third read, that should (but won't yet) delete extras. 
 		// Delete one slot in a tier. 
