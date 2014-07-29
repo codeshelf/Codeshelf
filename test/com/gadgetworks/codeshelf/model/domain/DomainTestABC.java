@@ -95,6 +95,13 @@ public abstract class DomainTestABC extends DAOTestABC {
 		return controller;
 	}
 	
+	
+	protected Facility createFacility(String orgId) {
+		Organization organization = getOrganization(orgId);
+		Facility facility = getFacility(organization);
+		return facility;
+	}
+	
 	/**
 	 * Create a basic organization of the specified name with enough domain data to make it easy to setup various
 	 * business case unit tests.

@@ -366,4 +366,12 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 		
 		return result;
 	}
+	
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.dao.ITypedDao#isNewOrDirty(com.gadgetworks.codeshelf.model.domain.IDomainObject)
+	 */
+	public void clearAllCaches() {
+		mServer.getServerCacheManager().clearAll();
+	}
 }

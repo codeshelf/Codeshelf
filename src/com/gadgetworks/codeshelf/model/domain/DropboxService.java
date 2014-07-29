@@ -533,7 +533,7 @@ public class DropboxService extends EdiServiceABC {
 			if (filepath.matches(getFacilityImportSubDirPath(IMPORT_SLOTTING_PATH) + "/[^/]+\\.csv")) {
 				success = inCsvOrderLocationImporter.importOrderLocationsFromCsvStream(reader, getParent(), ediProcessTime);
 			} else if (filepath.matches(getFacilityImportSubDirPath(IMPORT_ORDERS_PATH) + "/[^/]+\\.csv")) {
-				success = inCsvOrderImporter.importOrdersFromCsvStream(reader, getParent(), ediProcessTime);
+				success = inCsvOrderImporter.importOrdersFromCsvStream(reader, getParent(), ediProcessTime).isSuccessful();
 			} else if (filepath.matches(getFacilityImportSubDirPath(IMPORT_INVENTORY_PATH) + "/[^/]+\\.csv")) {
 				success = inCsvInventoryImporter.importSlottedInventoryFromCsvStream(reader, getParent(), ediProcessTime);
 			} else if (filepath.matches(getFacilityImportSubDirPath(IMPORT_INVENTORY_PATH) + "/[^/]+\\.csv")) {

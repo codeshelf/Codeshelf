@@ -6,6 +6,7 @@
 package com.gadgetworks.codeshelf.edi;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.Timestamp;
 
@@ -425,8 +426,11 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		Assert.assertEquals(orderDetail.getQuantity().intValue(), 999);
 	}
 
+	/*
+	 * TODO this might be better pulled into a higher level EdiProcessor test that goes across crossbatch and outbound
+	 */
 	@Test
-	public final void testSendOrdersAfterCrossBatch() {
+	public final void testSendOrdersAfterCrossBatch() throws IOException {
 		String csvString = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
 				+ ",C111,I111.1,100,ea\r\n" //
 				+ ",C111,I111.2,200,ea\r\n" //

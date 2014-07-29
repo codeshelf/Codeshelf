@@ -8,6 +8,7 @@ package com.gadgetworks.codeshelf.model.dao;
 import org.junit.Before;
 
 import com.gadgetworks.codeshelf.application.IUtil;
+import com.gadgetworks.codeshelf.application.Util;
 import com.gadgetworks.codeshelf.model.dao.Database;
 import com.gadgetworks.codeshelf.model.dao.H2SchemaManager;
 import com.gadgetworks.codeshelf.model.dao.IDatabase;
@@ -70,6 +71,11 @@ import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction.WorkInstructionDao;
 
 public abstract class DAOTestABC {
+	
+	static {
+		Util.initLogging();
+		
+	}
 	
 	protected OrganizationDao		mOrganizationDao;
 	protected LocationABCDao		mLocationDao;
