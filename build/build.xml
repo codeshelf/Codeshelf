@@ -370,7 +370,7 @@
 
         <!--Compiles the JUnit tests ${test.dir} directory into ${target.test} directory-->
 	<target name="compile.junit">
-		<mkdir dir="${target.test}" /> 
+		<mkdir dir="${target.test}" />
 	        <javac destdir="${target.test}" sourcepath="" source="${javac.compile.using.version}" target="${javac.compile.using.version}" verbose="false" compiler="modern" debug="true">
         	        <classpath>
                 	        <path refid="compile-libs" />
@@ -378,6 +378,11 @@
         	        </classpath>
                 	<src path="${test.dir}" />
 	        </javac>
+			<copy todir="${target.test}">
+			  <fileset dir="${test.dir}">
+				<include name="**/resource/*"/>
+			  </fileset>
+			</copy>
 	</target>
 
 
@@ -402,5 +407,3 @@
 	</target>
 
 </project>
-
-
