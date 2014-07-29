@@ -31,6 +31,8 @@ import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Bay;
 import com.gadgetworks.codeshelf.model.domain.ISubLocation;
+import com.gadgetworks.codeshelf.model.domain.Path;
+import com.gadgetworks.codeshelf.model.domain.PathSegment;
 import com.gadgetworks.codeshelf.model.domain.SubLocationABC;
 import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.model.domain.Tier;
@@ -619,6 +621,13 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 
 		mTiersThisAisle.clear(); // prepare to collect tiers for next aisle
 		clearLastControllerLed();
+		
+		// Finally, if the paths already exist, let's update distances instead of waiting for app server restart.
+		PathSegment pathseg = inAisle.getPathSegment();
+		if (pathseg != null) {
+			Path path = pathseg.getParent();
+			mFacility.recomputeLocationPathDistances(path);
+		}
 
 	}
 
