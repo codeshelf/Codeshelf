@@ -174,20 +174,29 @@ public class User extends DomainObjectTreeABC<Organization> {
 	}
 
 	public final void setPassword(final String inPassword) {
-		// Generate a random salt
-		SecureRandom random = new SecureRandom();
-		byte[] salt = new byte[SALT_BYTES];
-		random.nextBytes(salt);
-		setHashSalt(toHex(salt));
-
 		try {
 			// Hash the password
-			byte[] hash = pbkdf2(inPassword.toCharArray(), salt, PBKDF2_ITERATIONS, HASH_BYTES);
-			hashedPassword = toHex(hash);
-			hashIterations = PBKDF2_ITERATIONS;
+			byte[] salt = generateSalt();
+			setHashSalt(toHex(salt
+				));
+			hashedPassword = hashPassword(inPassword, salt, PBKDF2_ITERATIONS);
 		} catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
 			LOGGER.error("", e);
 		}
+	}
+	
+	private static byte[] generateSalt() {
+		SecureRandom random = new SecureRandom();
+		byte[] salt = new byte[SALT_BYTES];
+		random.nextBytes(salt);
+		return salt;
+
+	}
+	
+	public static String hashPassword(String inPlainTextPassword, byte[] salt, int iterations) throws NoSuchAlgorithmException, InvalidKeySpecException {
+		// Hash the password
+		byte[] hash = pbkdf2(inPlainTextPassword.toCharArray(), salt, PBKDF2_ITERATIONS, HASH_BYTES);
+		return toHex(hash);
 	}
 
 	/**
@@ -272,5 +281,25 @@ public class User extends DomainObjectTreeABC<Organization> {
 			return String.format("%0" + paddingLength + "d", 0) + hex;
 		else
 			return hex;
+	}
+	
+	/**
+	 * Generate a sql statement that can be executed at the database to chance a user's password.  
+	 * 
+	 * TODO this is expected to be shortlived until there is a remote admin function
+	 * 
+	 * @throws InvalidKeySpecException 
+	 * @throws NoSuchAlgorithmException 
+	 * 
+	 */
+	public static String generatePasswordUpdateSql(String inOrganizationName, String inEmail, String inPassword) throws NoSuchAlgorithmException, InvalidKeySpecException {
+		byte[] salt = generateSalt();
+		int hashIterations = PBKDF2_ITERATIONS;
+		String passwordOut = hashPassword(inPassword, salt, PBKDF2_ITERATIONS);
+		String sql = "UPDATE codeshelf.\"user\"" +
+				" SET " +
+				"hash_salt='"+toHex(salt)+"', hashed_password='"+ passwordOut +"', hash_iterations="+ hashIterations +
+				" WHERE parent_persistentid = (Select persistentid from codeshelf.organization where domainId = '" + inOrganizationName + "') AND email = '" + inEmail + "';";
+		return sql;
 	}
 }
