@@ -203,7 +203,9 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		createOrganizationUser("DEMO1", "configure@example.com", "testme"); //all
 		createOrganizationUser("DEMO1", "simulate@example.com", "testme"); //simulate + configure
 		createOrganizationUser("DEMO1", "che@example.com", "testme"); //view + simulate
-
+		createOrganizationUser("DEMO1", "view@goodeggs.com", "goodeggs"); //view
+		createOrganizationUser("DEMO1", "view@accu-logistics.com", "accu-logistics"); //view
+		
 		createOrganizationUser("DEMO2", "a@example.com", "testme"); //view
 		createOrganizationUser("DEMO2", "view@example.com", "testme"); //view
 		createOrganizationUser("DEMO2", "configure@example.com", "testme"); //all
