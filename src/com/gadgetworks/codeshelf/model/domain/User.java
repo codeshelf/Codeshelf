@@ -180,6 +180,7 @@ public class User extends DomainObjectTreeABC<Organization> {
 			setHashSalt(toHex(salt
 				));
 			hashedPassword = hashPassword(inPassword, salt, PBKDF2_ITERATIONS);
+			hashIterations = PBKDF2_ITERATIONS;
 		} catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
 			LOGGER.error("", e);
 		}
