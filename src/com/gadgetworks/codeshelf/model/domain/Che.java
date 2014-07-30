@@ -190,5 +190,25 @@ public class Che extends WirelessDeviceABC {
 		facility.setUpCheContainerFromString(this, inContainers);
 	}
 
+	// --------------------------------------------------------------------------
+	/**
+	 * For a UI meta field
+	 * @return
+	 */
+	public final String getActiveContainers() {
+		String returnStr = "";
+		
+		for (ContainerUse use : getUses()) {
+			if (use.getActive()) {
+				if (returnStr.isEmpty())
+					returnStr = use.getContainerName();
+				else {
+					returnStr = returnStr + "," + use.getContainerName();
+				}					
+			}
+		}
+		return returnStr;
+	}
+
 }
 
