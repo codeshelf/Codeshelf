@@ -13,7 +13,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 
 import javax.persistence.Column;
@@ -1378,8 +1377,12 @@ public class Facility extends SubLocationABC<Facility> {
 	 */
 	private void setWiPickInstruction(WorkInstruction inWi, OrderHeader inOrder) {
 		String locationString = "";
+		
+		// For DEV-315, if more than one location, sort them.
+		List<String> locIdList = new ArrayList<String>();
 
-		// Generate a location string.
+		// old way. Not sorted. Just took the locations on the order in whatever order they were.
+		/*
 		for (OrderLocation orderLocation : inOrder.getOrderLocations()) {
 			LocationAlias locAlias = orderLocation.getLocation().getPrimaryAlias();
 			if (locAlias != null) {
@@ -1388,6 +1391,21 @@ public class Facility extends SubLocationABC<Facility> {
 				locationString += orderLocation.getLocation().getLocationId();
 			}
 		}
+		*/
+		for (OrderLocation orderLocation : inOrder.getOrderLocations()) {
+			LocationAlias locAlias = orderLocation.getLocation().getPrimaryAlias();
+			if (locAlias != null) {
+				locIdList.add(locAlias.getAlias());
+			} else {
+				locIdList.add(orderLocation.getLocation().getLocationId());
+			}
+		}
+		// new way. Not sorted. Simple alpha sort. Will fail on D-10 D-11 D-9
+		Collections.sort(locIdList);
+		for (String aString : locIdList) {
+			locationString += aString + " ";
+		}
+		// end DEV-315 modification
 
 		inWi.setPickInstruction(locationString);
 
