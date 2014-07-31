@@ -1163,9 +1163,11 @@ public class AisleImporterTest extends DomainTestABC {
 		Path aPath = createPathForTest("F4X.1", facility);
 		PathSegment segment0 = addPathSegmentForTest("F4X.1.0", aPath, 0,
 			22.0, 48.45, 12.85, 48.45);
+		PathSegment segment1 = addPathSegmentForTest("F4X.1.1", aPath, 1,
+			12.85, 48.45, 12.85, 58.45);
 		SortedSet<PathSegment> segments = aPath.getSegments();
 		int countSegments = segments.size();
-		Assert.assertTrue(countSegments == 1);
+		Assert.assertTrue(countSegments == 2);
 		
 		// Path aPath2 = Path.DAO.findByDomainId(facility, "F4X.1");  does not work
 		Path aPath2 = facility.getPath("F4X.1");
@@ -1238,25 +1240,56 @@ public class AisleImporterTest extends DomainTestABC {
 		PathSegment segment0 = addPathSegmentForTest("F3X.1.0", aPath, 0,
 			22.0, 48.45, 12.85, 48.45);
 		
+		Path bPath = facility.getPath("F3X.1");
+		Assert.assertEquals(aPath, bPath);
+		
+		List<Path> paths = facility.getPaths();
+		int countPaths = paths.size();
+		Assert.assertEquals(1, countPaths);
+		Path aPath2 = segment0.getParent();
+		Assert.assertEquals(aPath, aPath2);
+		int countPaths2 = paths.size();
+		Assert.assertEquals(1, countPaths2);
+		
 		// Then we need to associate the aisles to the path segment. Use the same function as the UI does
 		String persistStr = segment0.getPersistentId().toString();
 		aisle31.associatePathSegment(persistStr);
+		// Interesting. This calls facility.recomputeLocationPathDistances(the path segment's parent path); But does not find any locations on the path segment
+		
 		// this segment should have one location now. However, the old reference is stale and will not know its aisles. Need to re-get.
 		PathSegment segment00 = PathSegment.DAO.findByDomainId(aPath, "F3X.1.0");
-		List<LocationABC> locations = segment00.getLocations();
-		int countLocations = locations.size();
-		Assert.assertEquals(1, countLocations);
+		List<LocationABC> locations1 = segment00.getLocations();
+		int countLocations1 = locations1.size();
+		Assert.assertEquals(1, countLocations1);
+		
+		// Let's check locations on the path segment, derived different ways
+		// original aPath return while created:
+		PathSegment aPathSegment = aPath.getPathSegment(0);
+		int countLocationsA = aPathSegment.getLocations().size(); // ZERO
+		
+		// bPath from the facility before associating aisle to path segment
+		PathSegment bPathSegment = bPath.getPathSegment(0);
+		int countLocationsB = bPathSegment.getLocations().size(); // ZERO
+		
+		// cPath from the facility now (after associating aisle to path segment)
+		Path cPath = facility.getPath("F3X.1");
+		PathSegment cPathSegment = cPath.getPathSegment(0);
+		int countLocationsC = cPathSegment.getLocations().size(); // ZERO. Very odd since segment00.getLocations.size() was 1.
+
 		
 		aisle32.associatePathSegment(persistStr);
 		// this segment should have two locations now
 		//However, the old reference is stale and would only have one aisle. Need to re-get.
 		PathSegment segment000 = PathSegment.DAO.findByDomainId(aPath, "F3X.1.0");
-		locations = segment000.getLocations();
-		countLocations = locations.size();
+		List<LocationABC>locations2 = segment000.getLocations();
+		int countLocations2 = locations2.size();
 		// Assert.assertEquals(2, countLocations);  // PAUL: Only getting 1. Therefore, A32 will not get correct posAlongPath
+		// just for fun, check our other segment references
+		int  value00 = segment00.getLocations().size(); // still 1, which makes some sense.
+		int  value0 = segment0.getLocations().size(); // still 0
 		
 		// should not need to do this as associatePathSegment did already
-		// facility.recomputeLocationPathDistances(aPath);
+		facility.recomputeLocationPathDistances(aPath);
 		
 		Slot firstA31SlotOnPath = Slot.DAO.findByDomainId(tierA31B2T1, "S5");
 		Slot firstA32SlotOnPath = Slot.DAO.findByDomainId(tierA32B1T1, "S1");
@@ -1266,10 +1299,6 @@ public class AisleImporterTest extends DomainTestABC {
 		Double value2 = firstA32SlotOnPath.getPosAlongPath();
 		// Assert.assertNotNull(value1); // PAUL: the eventual point of this test is to get the computation done, so these values are not null DOUBLEs. But that is my work.
 		Assert.assertEquals(value1, value2);
-		
-		
-		
-		
 
 	}
 }
