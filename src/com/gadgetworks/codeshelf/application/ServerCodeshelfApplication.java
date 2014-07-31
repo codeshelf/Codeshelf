@@ -154,10 +154,13 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		}
 		
 		// public metrics to opentsdb
-		String useMetricsReporter = System.getProperty("metrics.reporter");
+		String useMetricsReporter = System.getProperty("metrics.reporter.enabled");
 		if ("true".equalsIgnoreCase(useMetricsReporter)) {
-			String metricsServerUrl = System.getProperty("metrics.serverurl");
-			LOGGER.info("Starting OpenTSDB Reporter writing to "+metricsServerUrl);
+			String metricsServerUrl = System.getProperty("metrics.reporter.serverurl");
+			String intervalStr = System.getProperty("metrics.reporter.interval");
+			int interval = Integer.parseInt(intervalStr);
+			
+			LOGGER.info("Starting OpenTSDB Reporter writing to "+metricsServerUrl+" in "+interval+" sec intervals");
 			MetricRegistry registry = MetricsService.getRegistry();
 			String hostName = MetricsService.getInstance().getHostName();
 			OpenTsdbReporter.forRegistry(registry)
@@ -165,11 +168,11 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 			      .withTags(ImmutableMap.of("host", hostName))
 			      .build(OpenTsdb.forService(metricsServerUrl)
 			      .create())
-			      .start(10L, TimeUnit.SECONDS);
+			      .start(interval, TimeUnit.SECONDS);
 		}
 		else {
 			LOGGER.info("Metrics reporter is not enabled");
-		}		
+		}
 	}
 
 	// --------------------------------------------------------------------------

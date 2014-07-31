@@ -9,13 +9,18 @@ package com.gadgetworks.codeshelf.application;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codahale.metrics.MetricRegistry;
 import com.gadgetworks.codeshelf.device.CsDeviceManager;
 import com.gadgetworks.codeshelf.device.ICsDeviceManager;
 import com.gadgetworks.codeshelf.device.RadioController;
+import com.gadgetworks.codeshelf.metrics.MetricsService;
+import com.gadgetworks.codeshelf.metrics.OpenTsdb;
+import com.gadgetworks.codeshelf.metrics.OpenTsdbReporter;
 import com.gadgetworks.codeshelf.model.dao.DaoProvider;
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.ws.websocket.CsWebSocketClient;
@@ -26,6 +31,7 @@ import com.gadgetworks.flyweight.command.IPacket;
 import com.gadgetworks.flyweight.controller.FTDIInterface;
 import com.gadgetworks.flyweight.controller.IGatewayInterface;
 import com.gadgetworks.flyweight.controller.IRadioController;
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -92,6 +98,27 @@ public final class CsSiteControllerMain {
 
 		// Handle events until the application exits.
 		application.handleEvents();
+		
+		// public metrics to opentsdb
+		String useMetricsReporter = System.getProperty("metrics.reporter.enabled");
+		if ("true".equalsIgnoreCase(useMetricsReporter)) {
+			String metricsServerUrl = System.getProperty("metrics.reporter.serverurl");
+			String intervalStr = System.getProperty("metrics.reporter.interval");
+			int interval = Integer.parseInt(intervalStr);
+			
+			LOGGER.info("Starting OpenTSDB Reporter writing to "+metricsServerUrl+" in "+interval+" sec intervals");
+			MetricRegistry registry = MetricsService.getRegistry();
+			String hostName = MetricsService.getInstance().getHostName();
+			OpenTsdbReporter.forRegistry(registry)
+			      .prefixedWith("")
+			      .withTags(ImmutableMap.of("host", hostName))
+			      .build(OpenTsdb.forService(metricsServerUrl)
+			      .create())
+			      .start(interval, TimeUnit.SECONDS);
+		}
+		else {
+			LOGGER.info("Metrics reporter is not enabled");
+		}
 
 		LOGGER.info("Exiting Main()");
 	}
