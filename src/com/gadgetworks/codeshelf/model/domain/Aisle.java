@@ -79,13 +79,16 @@ public class Aisle extends SubLocationABC<Facility> {
 		PathSegment pathSegment = PathSegment.DAO.findByPersistentId(persistentId);
 
 		if (pathSegment != null) {
+			// Some checking 
+			int initialLocationCount = pathSegment.getLocations().size();
+			
 			this.setPathSegment(pathSegment);
 			this.getDao().store(this);
 			// should not be necessary. Ebeans bug? After restart, ebeans figures it out.
 			pathSegment.addLocation(this);
 			
 			// GOOFY! Does this help maintain locations?
-			PathSegment.DAO.store(pathSegment);
+			// PathSegment.DAO.store(pathSegment);
 
 			// There is now a new association. Need to recompute locations positions along the path.  Kind of too bad to do several times as each segment is assigned.
 			// Note, this is also done on application restart.
@@ -97,6 +100,10 @@ public class Aisle extends SubLocationABC<Facility> {
 				theFacility.recomputeLocationPathDistances(thePath);
 			}
 			
+			int afterLocationCount = pathSegment.getLocations().size();
+			if (initialLocationCount == afterLocationCount)
+				LOGGER.error("associatePathSegment did not correctly update locations array");
+
 
 		} else {
 			throw new DaoException("Could not associate path segment, segment not found: " + inPathSegPersistentID);

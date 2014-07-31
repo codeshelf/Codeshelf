@@ -17,6 +17,7 @@ import org.junit.Test;
 
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.TravelDirectionEnum;
+import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.DomainTestABC;
 import com.gadgetworks.codeshelf.model.domain.ISubLocation;
@@ -44,8 +45,11 @@ public class AisleImporterTest extends DomainTestABC {
 	private PathSegment addPathSegmentForTest(final String inSegmentId,
 		final Path inPath,
 		final Integer inSegmentOrder,
-		Double inStartX, Double inStartY, Double inEndX, Double inEndY) {
-		
+		Double inStartX,
+		Double inStartY,
+		Double inEndX,
+		Double inEndY) {
+
 		Point head = new Point(PositionTypeEnum.METERS_FROM_PARENT, inStartX, inStartY, 0.0);
 		Point tail = new Point(PositionTypeEnum.METERS_FROM_PARENT, inEndX, inEndX, 0.0);
 		PathSegment returnSeg = inPath.createPathSegment(inSegmentId, inSegmentOrder, head, tail);
@@ -58,14 +62,17 @@ public class AisleImporterTest extends DomainTestABC {
 		path.setDomainId(inDomainId);
 		path.setDescription("A Facility Path");
 		path.setTravelDirEnum(TravelDirectionEnum.FORWARD);
-		Path.DAO.store(path);
+		try {
+			Path.DAO.store(path);
+		} catch (DaoException e) {
+			// LOGGER.error("", e);
+		}
+
 		inFacility.addPath(path);
 		// path.createDefaultWorkArea();
-		
+
 		return path;
 	}
-	
-	
 
 	@Test
 	public final void testTierLeft() {
@@ -696,7 +703,7 @@ public class AisleImporterTest extends DomainTestABC {
 
 		// We seemed to have a bug in the parse where when processing A21 beans, we have m values set for A22. That is, A21 might come out as zigzagRight
 		// So this tests Bay to bay attributes changing within an aisle, and tier attributes changing within a bay.
-		
+
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A21,,,,,zigzagLeft,12.85,43.45,X,120,\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
@@ -765,7 +772,7 @@ public class AisleImporterTest extends DomainTestABC {
 		// 1.15 + 1.41 = 2.56. But real addition is too precise.
 		Assert.assertTrue(pickX == 0.0);
 		Assert.assertTrue(pickY == 1.15);
-		
+
 	}
 
 	@Test
@@ -1159,20 +1166,18 @@ public class AisleImporterTest extends DomainTestABC {
 
 		organization.createFacility("F-AISLE4X", "TEST", Point.getZeroPoint());
 		Facility facility = organization.getFacility("F-AISLE4X");
-		
+
 		Path aPath = createPathForTest("F4X.1", facility);
-		PathSegment segment0 = addPathSegmentForTest("F4X.1.0", aPath, 0,
-			22.0, 48.45, 12.85, 48.45);
-		PathSegment segment1 = addPathSegmentForTest("F4X.1.1", aPath, 1,
-			12.85, 48.45, 12.85, 58.45);
+		PathSegment segment0 = addPathSegmentForTest("F4X.1.0", aPath, 0, 22.0, 48.45, 12.85, 48.45);
+		PathSegment segment1 = addPathSegmentForTest("F4X.1.1", aPath, 1, 12.85, 48.45, 12.85, 58.45);
 		SortedSet<PathSegment> segments = aPath.getSegments();
 		int countSegments = segments.size();
 		Assert.assertTrue(countSegments == 2);
-		
+
 		// Path aPath2 = Path.DAO.findByDomainId(facility, "F4X.1");  does not work
 		Path aPath2 = facility.getPath("F4X.1");
 		Assert.assertNotNull(aPath2);
-		
+
 		List<Path> paths = facility.getPaths();
 		int countPaths = paths.size();
 		Assert.assertTrue(countPaths == 1);
@@ -1183,9 +1188,8 @@ public class AisleImporterTest extends DomainTestABC {
 
 		// We seemed to have a bug in the parse where when processing A21 beans, we have m values set for A22. That is, A21 might come out as zigzagRight
 		// So this tests Bay to bay attributes changing within an aisle, and tier attributes changing within a bay.
-		
+
 		// This test is also good for testing path relationship if we run one path between the aisles.
-		
 
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A31,,,,,zigzagLeft,12.85,43.45,X,120,\r\n" //
@@ -1231,18 +1235,24 @@ public class AisleImporterTest extends DomainTestABC {
 		Assert.assertNotNull(aisle32);
 		Bay bayA32B1 = Bay.DAO.findByDomainId(aisle32, "B1");
 		Tier tierA32B1T1 = Tier.DAO.findByDomainId(bayA32B1, "T1");
-		
+
 		// Now Pathing. Simulate UI doing  path between the aisles, right to left.
 		// For A31, B2 will be at the start of the path. And pos along path should be about the same for pairs of slots from A31 and A32
 		// For A32, B1 will be at the start of the path
-		
+
 		Path aPath = createPathForTest("F3X.1", facility);
-		PathSegment segment0 = addPathSegmentForTest("F3X.1.0", aPath, 0,
-			22.0, 48.45, 12.85, 48.45);
+		PathSegment segment0 = addPathSegmentForTest("F3X.1.0", aPath, 0, 22.0, 48.45, 12.85, 48.45);
 		
+		// Mostly check the parent relationship these 4 lines
+		TravelDirectionEnum direction1 = aPath.getTravelDirEnum();
+		Assert.assertEquals(direction1, TravelDirectionEnum.FORWARD);
+		TravelDirectionEnum direction2 = segment0.getParent().getTravelDirEnum();
+		Assert.assertEquals(direction2, TravelDirectionEnum.FORWARD);
+
+
 		Path bPath = facility.getPath("F3X.1");
 		Assert.assertEquals(aPath, bPath);
-		
+
 		List<Path> paths = facility.getPaths();
 		int countPaths = paths.size();
 		Assert.assertEquals(1, countPaths);
@@ -1250,51 +1260,74 @@ public class AisleImporterTest extends DomainTestABC {
 		Assert.assertEquals(aPath, aPath2);
 		int countPaths2 = paths.size();
 		Assert.assertEquals(1, countPaths2);
-		
+
 		// Then we need to associate the aisles to the path segment. Use the same function as the UI does
 		String persistStr = segment0.getPersistentId().toString();
 		aisle31.associatePathSegment(persistStr);
 		// Interesting. This calls facility.recomputeLocationPathDistances(the path segment's parent path); But does not find any locations on the path segment
-		
+
 		// this segment should have one location now. However, the old reference is stale and will not know its aisles. Need to re-get.
 		PathSegment segment00 = PathSegment.DAO.findByDomainId(aPath, "F3X.1.0");
 		List<LocationABC> locations1 = segment00.getLocations();
 		int countLocations1 = locations1.size();
 		Assert.assertEquals(1, countLocations1);
-		
+
 		// Let's check locations on the path segment, derived different ways
 		// original aPath return while created:
 		PathSegment aPathSegment = aPath.getPathSegment(0);
 		int countLocationsA = aPathSegment.getLocations().size(); // ZERO
-		
+		Assert.assertEquals(aPathSegment, segment00);
+
 		// bPath from the facility before associating aisle to path segment
 		PathSegment bPathSegment = bPath.getPathSegment(0);
 		int countLocationsB = bPathSegment.getLocations().size(); // ZERO
-		
+		Assert.assertEquals(bPathSegment, segment00);
+
 		// cPath from the facility now (after associating aisle to path segment)
 		Path cPath = facility.getPath("F3X.1");
 		PathSegment cPathSegment = cPath.getPathSegment(0);
 		int countLocationsC = cPathSegment.getLocations().size(); // ZERO. Very odd since segment00.getLocations.size() was 1.
+		Assert.assertEquals(cPathSegment, segment00);
 
-		
+		// If you step into associatePathSegment, you will see that it finds the segment by UUID, and its location count was 1 and goes to 2.
 		aisle32.associatePathSegment(persistStr);
+		// Check in the same manner
+		UUID persistentId = UUID.fromString(persistStr);
+		PathSegment dPathSegment = PathSegment.DAO.findByPersistentId(persistentId);
+		int countLocationsD = dPathSegment.getLocations().size(); // One. Not two?.
+		Assert.assertEquals(dPathSegment, segment00);
+
 		// this segment should have two locations now
 		//However, the old reference is stale and would only have one aisle. Need to re-get.
 		PathSegment segment000 = PathSegment.DAO.findByDomainId(aPath, "F3X.1.0");
-		List<LocationABC>locations2 = segment000.getLocations();
+		List<LocationABC> locations2 = segment000.getLocations();
 		int countLocations2 = locations2.size();
 		// Assert.assertEquals(2, countLocations);  // PAUL: Only getting 1. Therefore, A32 will not get correct posAlongPath
 		// just for fun, check our other segment references
-		int  value00 = segment00.getLocations().size(); // still 1, which makes some sense.
-		int  value0 = segment0.getLocations().size(); // still 0
-		
+		int value00 = segment00.getLocations().size(); // still 1, which makes some sense.
+		int value0 = segment0.getLocations().size(); // still 0
+		Assert.assertEquals(segment0, segment00);
+
+		// Look for a crash that happened deep within recomputeLocationPathDistances()
+		// Similar lines worked fine above just after the path was created. The difference here is we just got the segment from the DAO.
+		Path dPath = dPathSegment.getParent();
+		Assert.assertNotNull(dPath);
+		// Crash if you uncomment next line!
+		// TravelDirectionEnum theDirection = dPath.getTravelDirEnum();
+		// Assert.assertEquals(theDirection, TravelDirectionEnum.FORWARD);
+
 		// should not need to do this as associatePathSegment did already
-		facility.recomputeLocationPathDistances(aPath);
+		// See major weirdness inside recomputeLocationPathDistances()
+		// Crash here if recomputeLocationPathDistances() fetches the pathSegment again from the DAO
+		// facility.recomputeLocationPathDistances(aPath);
 		
+		// So the answer is, if you fetch from the DAO, path segment has a reference to parent path, but if you access parent(), you will find it is not fully hydrated and it will crash.
+		// If you don't fetch from the DAO, the locations array is not maintained as well.
+		
+
 		Slot firstA31SlotOnPath = Slot.DAO.findByDomainId(tierA31B2T1, "S5");
 		Slot firstA32SlotOnPath = Slot.DAO.findByDomainId(tierA32B1T1, "S1");
-		
-		
+
 		Double value1 = firstA31SlotOnPath.getPosAlongPath();
 		Double value2 = firstA32SlotOnPath.getPosAlongPath();
 		// Assert.assertNotNull(value1); // PAUL: the eventual point of this test is to get the computation done, so these values are not null DOUBLEs. But that is my work.

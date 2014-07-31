@@ -296,7 +296,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 
 		Aisle aisle = inLocation.<Aisle> getParentAtLevel(Aisle.class);
 		if (aisle != null) {
-			PathSegment pathSegment = aisle.getPathSegment();
+			PathSegment pathSegment = aisle.getAssociatedPathSegment();
 			if (pathSegment != null) {
 				result = this.equals(pathSegment.getParent());
 			}
@@ -461,7 +461,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 
 			// make sure segment is not associated to a location			
 			for (ILocation<?> location : segment.getLocations()) {
-				if (location.getPathSegment().equals(segment)) {
+				if (location.getAssociatedPathSegment().equals(segment)) {
 					LOGGER.info("clearing path segment association");
 					location.setPathSegment(null);
 					// which DAO?

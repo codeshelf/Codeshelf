@@ -623,7 +623,7 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 		clearLastControllerLed();
 		
 		// Finally, if the paths already exist, let's update distances instead of waiting for app server restart.
-		PathSegment pathseg = inAisle.getPathSegment();
+		PathSegment pathseg = inAisle.getAssociatedPathSegment();
 		if (pathseg != null) {
 			Path path = pathseg.getParent();
 			mFacility.recomputeLocationPathDistances(path);
