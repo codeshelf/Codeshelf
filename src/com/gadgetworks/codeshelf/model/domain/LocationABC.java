@@ -151,8 +151,11 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	// Associated path segment (optional)
 	@Column(nullable = true)
 	@ManyToOne(optional = true)
+	@Getter
 	@Setter
 	private PathSegment					pathSegment;
+	// The getter is renamed getAssociatedPathSegment, which still looks up the parent chain until it finds a pathSegment.
+	// DomainObjectABC will manufacture a call to getPathSegment during DAO.store(). So do not skip the getter with complicated overrides
 
 	//	// The owning organization.
 	//	@Column(nullable = true)
@@ -488,13 +491,13 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		return result;
 	}
 
-	public final PathSegment getPathSegment() {
+	public final PathSegment getAssociatedPathSegment() {
 		PathSegment result = null;
 
 		if (pathSegment == null) {
 			ILocation<?> parent = (ILocation<?>) getParent();
 			if (parent != null) {
-				result = parent.getPathSegment();
+				result = parent.getAssociatedPathSegment();
 			}
 		} else {
 			result = pathSegment;
@@ -505,7 +508,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 	public final String getPathSegId() {
 		// to support list view meta-field pathSegId
-		PathSegment aPathSegment = getPathSegment();
+		PathSegment aPathSegment = getAssociatedPathSegment();
 
 		if (aPathSegment != null) {
 			return aPathSegment.getDomainId();

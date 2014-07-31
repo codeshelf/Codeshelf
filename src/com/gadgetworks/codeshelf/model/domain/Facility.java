@@ -726,7 +726,10 @@ public class Facility extends SubLocationABC<Facility> {
 			}
 		}
 		*/
-		
+
+		// getting from paths.values() clearly does not work reliable after just making new path
+		// Original code here
+		/*
 		for (Path path : paths.values()) {
 			for (PathSegment segment : path.getSegments()) {
 				segment.computePathDistance();
@@ -734,6 +737,17 @@ public class Facility extends SubLocationABC<Facility> {
 					location.computePosAlongPath(segment);
 				}
 			}
+		}
+		*/
+
+		for (Path path : getPaths()) {
+			if (path.equals(inPath))
+				for (PathSegment segment : path.getSegments()) {
+					segment.computePathDistance();
+					for (ILocation<?> location : segment.getLocations()) {
+						location.computePosAlongPath(segment);
+					}
+				}
 		}
 
 	}
@@ -1068,7 +1082,7 @@ public class Facility extends SubLocationABC<Facility> {
 
 		Double startingPathPos = 0.0;
 		if (cheLocation != null) {
-			Path path = cheLocation.getPathSegment().getParent();
+			Path path = cheLocation.getAssociatedPathSegment().getParent();
 			Bay cheBay = cheLocation.getParentAtLevel(Bay.class);
 			Bay selectedBay = cheBay;
 			if (cheBay == null) {

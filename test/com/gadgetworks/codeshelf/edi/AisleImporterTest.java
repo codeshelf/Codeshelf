@@ -17,6 +17,7 @@ import org.junit.Test;
 
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.TravelDirectionEnum;
+import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.DomainTestABC;
 import com.gadgetworks.codeshelf.model.domain.ISubLocation;
@@ -58,7 +59,12 @@ public class AisleImporterTest extends DomainTestABC {
 		path.setDomainId(inDomainId);
 		path.setDescription("A Facility Path");
 		path.setTravelDirEnum(TravelDirectionEnum.FORWARD);
-		Path.DAO.store(path);
+		try {
+			Path.DAO.store(path);
+		} catch (DaoException e) {
+			// LOGGER.error("", e);
+		}
+		
 		inFacility.addPath(path);
 		// path.createDefaultWorkArea();
 		
@@ -1266,15 +1272,18 @@ public class AisleImporterTest extends DomainTestABC {
 		// original aPath return while created:
 		PathSegment aPathSegment = aPath.getPathSegment(0);
 		int countLocationsA = aPathSegment.getLocations().size(); // ZERO
+		Assert.assertEquals(aPathSegment, segment00);
 		
 		// bPath from the facility before associating aisle to path segment
 		PathSegment bPathSegment = bPath.getPathSegment(0);
 		int countLocationsB = bPathSegment.getLocations().size(); // ZERO
+		Assert.assertEquals(bPathSegment, segment00);
 		
 		// cPath from the facility now (after associating aisle to path segment)
 		Path cPath = facility.getPath("F3X.1");
 		PathSegment cPathSegment = cPath.getPathSegment(0);
 		int countLocationsC = cPathSegment.getLocations().size(); // ZERO. Very odd since segment00.getLocations.size() was 1.
+		Assert.assertEquals(cPathSegment, segment00);
 
 		
 		aisle32.associatePathSegment(persistStr);

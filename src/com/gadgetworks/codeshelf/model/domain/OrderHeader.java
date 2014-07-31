@@ -355,7 +355,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		OrderLocation result = null;
 
 		for (OrderLocation orderLoc : getOrderLocations()) {
-			if (orderLoc.getLocation().getPathSegment().getParent().equals(inPath)) {
+			if (orderLoc.getLocation().getAssociatedPathSegment().getParent().equals(inPath)) {
 				if ((result == null) || (orderLoc.getLocation().getPosAlongPath() < result.getLocation().getPosAlongPath())) {
 					result = orderLoc;
 				}
