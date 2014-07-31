@@ -83,6 +83,9 @@ public class Aisle extends SubLocationABC<Facility> {
 			this.getDao().store(this);
 			// should not be necessary. Ebeans bug? After restart, ebeans figures it out.
 			pathSegment.addLocation(this);
+			
+			// GOOFY! Does this help maintain locations?
+			PathSegment.DAO.store(pathSegment);
 
 			// There is now a new association. Need to recompute locations positions along the path.  Kind of too bad to do several times as each segment is assigned.
 			// Note, this is also done on application restart.
@@ -93,6 +96,7 @@ public class Aisle extends SubLocationABC<Facility> {
 			else {
 				theFacility.recomputeLocationPathDistances(thePath);
 			}
+			
 
 		} else {
 			throw new DaoException("Could not associate path segment, segment not found: " + inPathSegPersistentID);

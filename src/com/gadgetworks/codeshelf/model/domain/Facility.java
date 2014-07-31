@@ -698,6 +698,7 @@ public class Facility extends SubLocationABC<Facility> {
 		path.setDescription("A Facility Path");
 		path.setTravelDirEnum(TravelDirectionEnum.FORWARD);
 		Path.DAO.store(path);
+		this.addPath(path); // missing before. Cause of bug?
 		path.createDefaultWorkArea();
 		for (PathSegment pathSegment : inPathSegments) {
 			pathSegment.setParent(path);
@@ -707,7 +708,7 @@ public class Facility extends SubLocationABC<Facility> {
 
 		// Recompute the distances of the structures?
 		// This does no good as the path segments are not associated to aisles yet.
-		recomputeLocationPathDistances(path);
+		//recomputeLocationPathDistances(path);
 
 	}
 
@@ -716,6 +717,16 @@ public class Facility extends SubLocationABC<Facility> {
 	 * A sample routine to show the distance of locations along a path.
 	 */
 	public final void recomputeLocationPathDistances(Path inPath) {
+		/*  This blows up
+		// This used to do all paths. Now as advertised only the passed in path
+		for (PathSegment segment : inPath.getSegments()) {
+			segment.computePathDistance();
+			for (ILocation<?> location : segment.getLocations()) {
+				location.computePosAlongPath(segment);
+			}
+		}
+		*/
+		
 		for (Path path : paths.values()) {
 			for (PathSegment segment : path.getSegments()) {
 				segment.computePathDistance();
@@ -724,6 +735,7 @@ public class Facility extends SubLocationABC<Facility> {
 				}
 			}
 		}
+
 	}
 
 	// --------------------------------------------------------------------------
@@ -1377,7 +1389,7 @@ public class Facility extends SubLocationABC<Facility> {
 	 */
 	private void setWiPickInstruction(WorkInstruction inWi, OrderHeader inOrder) {
 		String locationString = "";
-		
+
 		// For DEV-315, if more than one location, sort them.
 		List<String> locIdList = new ArrayList<String>();
 

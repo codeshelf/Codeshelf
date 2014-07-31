@@ -115,6 +115,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	@MapKey(name = "segmentOrder")
 	//	@Getter
 	private Map<Integer, PathSegment>	segments					= new HashMap<Integer, PathSegment>();
+	// private Map<Integer, PathSegment>	segments					= null;
 
 	public Path() {
 		description = "";
@@ -253,7 +254,6 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	 * @param inTail
 	 */
 	public final PathSegment createPathSegment(final String inSegmentId,
-		final Path inPath,
 		final Integer inSegmentOrder,
 		final Point inHead,
 		final Point inTail) {
@@ -262,7 +262,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 
 		// The path segment goes along the longest segment of the aisle.
 		result = new PathSegment();
-		result.setParent(inPath);
+		result.setParent(this);
 		result.setSegmentOrder(inSegmentOrder);
 		result.setDomainId(inSegmentId);
 		result.setStartPoint(inHead);
@@ -273,7 +273,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 			LOGGER.error("", e);
 		}
 
-		inPath.addPathSegment(result);
+		this.addPathSegment(result);
 
 		// Force a re-computation of the path distance for this path segment.
 		result.computePathDistance();

@@ -73,7 +73,7 @@ public abstract class DomainTestABC extends DAOTestABC {
 	protected PathSegment getPathSegment(Path path, Integer inOrder) {
 		PathSegment segment = path.getPathSegment(inOrder); 
 		if (segment == null) {
-			segment = path.createPathSegment(inOrder.toString(), path, inOrder,  anyPoint(), anyPoint());
+			segment = path.createPathSegment(inOrder.toString(), inOrder,  anyPoint(), anyPoint());
 			mPathSegmentDao.store(segment);
 		}
 		return segment;
@@ -154,7 +154,7 @@ public abstract class DomainTestABC extends DAOTestABC {
 
 		Point startPoint1 = Point.getZeroPoint();
 		startPoint1.translateX(5.0);
-		PathSegment pathSegment1 = path.createPathSegment("PS1", path, 0, startPoint1, Point.getZeroPoint());
+		PathSegment pathSegment1 = path.createPathSegment("PS1", 0, startPoint1, Point.getZeroPoint());
 		mPathSegmentDao.store(pathSegment1);
 
 		aisle1.setPathSegment(pathSegment1);
@@ -179,7 +179,7 @@ public abstract class DomainTestABC extends DAOTestABC {
 		Bay baya4b2 = new Bay(aisle4, "B2", Point.getZeroPoint(), Point.getZeroPoint());
 		mBayDao.store(baya4b2);
 
-		PathSegment pathSegment2 = path.createPathSegment("PS2", path, 1, Point.getZeroPoint(), Point.getZeroPoint());
+		PathSegment pathSegment2 = path.createPathSegment("PS2", 1, Point.getZeroPoint(), Point.getZeroPoint());
 		mPathSegmentDao.store(pathSegment2);
 
 		aisle3.setPathSegment(pathSegment2);
