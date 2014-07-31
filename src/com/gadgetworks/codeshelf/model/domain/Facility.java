@@ -744,8 +744,25 @@ public class Facility extends SubLocationABC<Facility> {
 			if (path.equals(inPath))
 				for (PathSegment segment : path.getSegments()) {
 					segment.computePathDistance();
-					for (ILocation<?> location : segment.getLocations()) {
-						location.computePosAlongPath(segment);
+					// There is some question about locations maintenance
+					int locCount = segment.getLocations().size();
+					// Let's refetch the segment from the DAO
+					PathSegment segment2 = PathSegment.DAO.findByPersistentId(segment.getPersistentId());
+					if (segment2 != null) {
+						int locCount2 = segment2.getLocations().size();
+						if (locCount != locCount2)
+							LOGGER.warn(" bad location maintenance in path segment"); // could be LOGGER.error, but stack trace here does not show source of the problem.
+					}
+					
+					// Well, segment2 is slightly better than segment. It gets the first location anyway in the aisle import test.
+					// However, using segment2 may crash deep within computePosAlongPath when it refers to parent().getTravelDirEnum();
+					PathSegment segmentReferenceToUse = segment;
+					/*
+					if (segment2 != null)
+						segmentReferenceToUse = segment2;
+					*/
+					for (ILocation<?> location : segmentReferenceToUse.getLocations()) {
+						location.computePosAlongPath(segmentReferenceToUse);
 					}
 				}
 		}
