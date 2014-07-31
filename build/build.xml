@@ -18,14 +18,14 @@
 
 	<!-- Setup the full version property correctly -->
 	<if>
-		<equals arg1="${version.status}" arg2="" />
+		<equals arg1="${version.date}" arg2="none" />
 		<then>
-			<property name="version" value="${version.major}.${version.minor}.${version.revision}" />
-			<property name="version.filename" value="${version.major}_${version.minor}_${version.revision}" />
+			<property name="version" value="${version.major}.${version.revision}" />
+			<property name="version.filename" value="${version.major}_${version.revision}" />
 		</then>
 		<else>
-			<property name="version" value="${version.major}.${version.minor}.${version.revision}.${version.status}" />
-			<property name="version.filename" value="${version.major}_${version.minor}_${version.revision}_${version.status}" />
+			<property name="version" value="${version.major}.${version.revision} (${version.branch}-${version.commit} ${version.date})" />
+			<property name="version.filename" value="${version.major}_${version.revision}_${version.commit}" />
 		</else>
 	</if>
 
