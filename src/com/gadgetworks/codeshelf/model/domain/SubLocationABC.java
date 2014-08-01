@@ -151,6 +151,15 @@ public abstract class SubLocationABC<P extends IDomainObject> extends LocationAB
 			LOGGER.error("null pathSegment in computePosAlongPath");
 			return;
 		}
+		
+		// A fundamental question is whether the bays and slots in an aisle increase or decrease as you move along the path in the forward direction.
+		Aisle theAisle = this.getParentAtLevel(Aisle.class);
+		Boolean forwardIncrease = true;
+		if (theAisle != null)
+			forwardIncrease = theAisle.doesAisleIncreaseForwardAlongPath(); // Inefficient to calculate each time. Should cache it somehow.
+		
+		// For the logic below, we want the forward increasing logic if path direction is forward and forwardIncrease, or if both not.
+		Boolean wantForwardCalculation = forwardIncrease == inPathSegment.getParent().getTravelDirEnum().equals(TravelDirectionEnum.FORWARD);
 
 		Point locationAnchorPoint = getAbsoluteAnchorPoint();
 		Point pickFaceEndPoint = parent.getAbsoluteAnchorPoint();
@@ -168,7 +177,8 @@ public abstract class SubLocationABC<P extends IDomainObject> extends LocationAB
 					inPathSegment.getEndPoint(),
 					pickFaceEndPoint);
 
-		if (inPathSegment.getParent().getTravelDirEnum().equals(TravelDirectionEnum.FORWARD)) {
+		// if (inPathSegment.getParent().getTravelDirEnum().equals(TravelDirectionEnum.FORWARD)) {
+		if (wantForwardCalculation) {
 			// In the forward direction take the "lowest" path pos value.
 			Double position = Math.min(locAnchorPathPosition, pickFacePathPosition);
 			// It can't be "lower" than its parent.

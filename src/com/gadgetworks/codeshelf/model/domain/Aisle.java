@@ -54,7 +54,7 @@ public class Aisle extends SubLocationABC<Facility> {
 		}
 	}
 
-	private static final Logger				LOGGER				= LoggerFactory.getLogger(Aisle.class);
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(Aisle.class);
 
 	public Aisle(final Facility inParentFacility, final String inAisleId, final Point inAnchorPoint, final Point inPickFaceEndPoint) {
 		super(inAnchorPoint, inPickFaceEndPoint);
@@ -81,12 +81,12 @@ public class Aisle extends SubLocationABC<Facility> {
 		if (pathSegment != null) {
 			// Some checking 
 			int initialLocationCount = pathSegment.getLocations().size();
-			
+
 			this.setPathSegment(pathSegment);
 			this.getDao().store(this);
 			// should not be necessary. Ebeans bug? After restart, ebeans figures it out.
 			pathSegment.addLocation(this);
-			
+
 			// GOOFY! Does this help maintain locations?
 			// PathSegment.DAO.store(pathSegment);
 
@@ -99,11 +99,10 @@ public class Aisle extends SubLocationABC<Facility> {
 			else {
 				theFacility.recomputeLocationPathDistances(thePath);
 			}
-			
+
 			int afterLocationCount = pathSegment.getLocations().size();
 			if (initialLocationCount == afterLocationCount)
 				LOGGER.error("associatePathSegment did not correctly update locations array");
-
 
 		} else {
 			throw new DaoException("Could not associate path segment, segment not found: " + inPathSegPersistentID);
@@ -112,6 +111,39 @@ public class Aisle extends SubLocationABC<Facility> {
 
 	public final void setControllerChannel(String inControllerPersistentIDStr, String inChannelStr) {
 		doSetControllerChannel(inControllerPersistentIDStr, inChannelStr);
+	}
+
+	public final Boolean doesAisleIncreaseForwardAlongPath() {
+		// JR in progress for DEV-310
+		// The answer depends on the aisle's relationship to its pathSegment
+		Boolean returnValue = true;
+		
+		PathSegment mySegment = getPathSegment();
+		if ( false  && mySegment != null) {
+			// are we X oriented or Y oriented. Could get that from either the aisle or the path. Here we ask the aisle
+			Boolean xOriented = this.getPickFaceEndPosY() == 0.0;
+			
+			if (xOriented) {
+				// Think about standing on the path, and looking at the aisle pickface. By our convention, B1 and and S1 are left as we look. But is further along the path or not?
+				// That depends on whether the path is above (Y coordinate) the aisle or not.
+				Double aisleY = this.getAnchorPosY();
+				Double pathY = mySegment.getStartPosY(); // assume start and end Y are roughly the same.
+				Boolean pathSegFlowsRight =  mySegment.getEndPosX() > mySegment.getStartPosX();
+				
+				// if aisle above the path, and path going right, then B1, B2, etc. will increase along the path
+				returnValue = ((aisleY < pathY) == pathSegFlowsRight);
+			}
+			else {
+				Double aisleX = this.getAnchorPosX();
+				Double pathX = mySegment.getStartPosX(); // assume start and end X are roughly the same.
+				Boolean pathSegFlowsDown =  mySegment.getEndPosY() > mySegment.getStartPosY();
+				returnValue = ((aisleX < pathX) == pathSegFlowsDown);
+
+			}
+		}
+		
+		// return returnValue;
+		return true;
 	}
 
 }
