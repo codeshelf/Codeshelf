@@ -67,6 +67,8 @@ import com.gadgetworks.codeshelf.model.domain.UomMaster;
 import com.gadgetworks.codeshelf.model.domain.UomMaster.UomMasterDao;
 import com.gadgetworks.codeshelf.model.domain.Vertex;
 import com.gadgetworks.codeshelf.model.domain.Vertex.VertexDao;
+import com.gadgetworks.codeshelf.model.domain.WorkArea;
+import com.gadgetworks.codeshelf.model.domain.WorkArea.WorkAreaDao;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction.WorkInstructionDao;
 
@@ -104,6 +106,7 @@ public abstract class DAOTestABC {
 	protected LocationAliasDao		mLocationAliasDao;
 	protected VertexDao				mVertexDao;
 	protected WorkInstructionDao	mWorkInstructionDao;
+	protected WorkAreaDao			mWorkAreaDao;
 
 
 	private IUtil					mUtil;
@@ -231,6 +234,9 @@ public abstract class DAOTestABC {
 			
 			mVertexDao = new VertexDao(mSchemaManager);
 			Vertex.DAO = mVertexDao;
+
+			mWorkAreaDao = new WorkAreaDao(mSchemaManager);
+			WorkArea.DAO = mWorkAreaDao;
 
 			mWorkInstructionDao = new WorkInstructionDao(mSchemaManager);
 			WorkInstruction.DAO = mWorkInstructionDao;
