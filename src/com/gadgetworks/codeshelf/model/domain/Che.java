@@ -140,7 +140,7 @@ public class Che extends WirelessDeviceABC {
 
 		catch (Exception e) {
 			// Need to fix this. What kind of exception? Presumeably, bad controller ID that leads to invalid GUID
-
+			LOGGER.error("Failed to set controller ID",e);
 		}
 		if (newGuid != null) {
 			try {
