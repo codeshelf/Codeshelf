@@ -7,11 +7,11 @@ package com.gadgetworks.codeshelf.model.domain;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 import lombok.Getter;
@@ -23,6 +23,7 @@ import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.avaje.ebean.Query;
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.TravelDirectionEnum;
@@ -50,7 +51,7 @@ import com.google.inject.Singleton;
 public class PathSegment extends DomainObjectTreeABC<Path> {
 
 	@Inject
-	public static ITypedDao<PathSegment>	DAO;
+	public static PathSegmentDao	DAO;
 
 	@Singleton
 	public static class PathSegmentDao extends GenericDaoABC<PathSegment> implements ITypedDao<PathSegment> {
@@ -62,6 +63,14 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 		public final Class<PathSegment> getDaoClass() {
 			return PathSegment.class;
 		}
+		
+		public List<LocationABC> findLocations(PathSegment inPathSegment) {
+			UUID persistentId = inPathSegment.getPersistentId();
+			Query<LocationABC> query = mServer.createQuery(LocationABC.class);
+			query.where().eq("pathSegment.persistentId", persistentId);
+			return query.findList();
+		}
+		
 	}
 
 	public static final String	DOMAIN_PREFIX	= "SEG";
@@ -127,11 +136,6 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 	@Getter
 	private Double				startPosAlongPath;
 
-	@Column(nullable = true)
-	@OneToMany(mappedBy = "pathSegment")
-	@Getter
-	private List<LocationABC>	locations		= new ArrayList<LocationABC>();
-
 	public PathSegment() {
 
 	}
@@ -167,16 +171,10 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 		parent = inParent;
 	}
 
-	public final void addLocation(ILocation inSubLocation) {
-		// Ebean can't deal with interfaces.
-		LocationABC subLocation = (LocationABC) inSubLocation;
-		locations.add(subLocation);
+	public final List<LocationABC> getLocations() {
+		return DAO.findLocations(this);
 	}
-
-	public final void removeLocation(ILocation inLocation) {
-		locations.remove(inLocation);
-	}
-
+	
 	public final List<IDomainObject> getChildren() {
 		return new ArrayList<IDomainObject>();
 	}
@@ -213,7 +211,7 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 	
 	// For a UI field
 	public final int getAssociatedLocationCount(){
-		return locations.size();
+		return getLocations().size();
 	}
 
 	// --------------------------------------------------------------------------

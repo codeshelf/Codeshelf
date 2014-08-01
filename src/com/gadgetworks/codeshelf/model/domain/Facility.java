@@ -685,6 +685,14 @@ public class Facility extends SubLocationABC<Facility> {
 		}
 	}
 
+	public final Path createPath(String inDomainId) {
+		Path path = Path.create(this, inDomainId);
+		this.addPath(path); // missing before. Cause of bug?
+		getDao().store(this);
+		path.createDefaultWorkArea(); //TODO an odd way to construct, but it is a way to make sure the Path is persisted before the work area
+		return path;
+	}	
+	
 	// --------------------------------------------------------------------------
 	/**
 	 * Create a path
@@ -692,14 +700,7 @@ public class Facility extends SubLocationABC<Facility> {
 	 */
 	@Transactional
 	public final void createPath(String inDomainId, PathSegment[] inPathSegments) {
-		Path path = new Path();
-		path.setParent(this);
-		path.setDomainId(inDomainId);
-		path.setDescription("A Facility Path");
-		path.setTravelDirEnum(TravelDirectionEnum.FORWARD);
-		Path.DAO.store(path);
-		this.addPath(path); // missing before. Cause of bug?
-		path.createDefaultWorkArea();
+		Path path = createPath(inDomainId);
 		for (PathSegment pathSegment : inPathSegments) {
 			pathSegment.setParent(path);
 			PathSegment.DAO.store(pathSegment);

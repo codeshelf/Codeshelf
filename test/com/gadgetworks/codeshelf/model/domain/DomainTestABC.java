@@ -159,11 +159,9 @@ public abstract class DomainTestABC extends DAOTestABC {
 
 		aisle1.setPathSegment(pathSegment1);
 		mAisleDao.store(aisle1);
-		pathSegment1.addLocation(aisle1);
 
 		aisle2.setPathSegment(pathSegment1);
 		mAisleDao.store(aisle2);
-		pathSegment1.addLocation(aisle2);
 
 		Aisle aisle3 = getAisle(resultFacility, "A3");
 
@@ -184,11 +182,9 @@ public abstract class DomainTestABC extends DAOTestABC {
 
 		aisle3.setPathSegment(pathSegment2);
 		mAisleDao.store(aisle3);
-		pathSegment2.addLocation(aisle3);
 
 		aisle4.setPathSegment(pathSegment2);
 		mAisleDao.store(aisle4);
-		pathSegment2.addLocation(aisle4);
 
 		resultFacility.recomputeLocationPathDistances(path);
 

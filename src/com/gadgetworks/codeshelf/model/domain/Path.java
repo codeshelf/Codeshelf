@@ -117,6 +117,12 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	private Map<Integer, PathSegment>	segments					= new HashMap<Integer, PathSegment>();
 	// private Map<Integer, PathSegment>	segments					= null;
 
+	public static final Path create(Facility parent, String inDomainId) {
+		Path path = new Path(parent, inDomainId, "A Facility Path");
+		DAO.store(path);
+		return path;
+	}
+	
 	public Path() {
 		description = "";
 	}
@@ -227,6 +233,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}
+			this.workArea = tempWorkArea;
 		}
 	}
 
