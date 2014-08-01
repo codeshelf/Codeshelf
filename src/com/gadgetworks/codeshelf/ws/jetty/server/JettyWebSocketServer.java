@@ -20,17 +20,23 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RequestABC;
+import com.gadgetworks.codeshelf.ws.websocket.IWebSocketServer;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 
 @ServerEndpoint(value = "/")
-public class JettyWebSocketServer {
+public class JettyWebSocketServer implements IWebSocketServer {
 
+	
+	
+	String	WEBSOCKET_DEFAULT_HOSTNAME	= "localhost";
+	int		WEBSOCKET_DEFAULT_PORTNUM	= 8444;
+	
 	private static final Logger	LOGGER = LoggerFactory.getLogger(JettyWebSocketServer.class);
 	
 	private int mPort = 8444;
+	private String mHost = "localhost";
     private Server mServer = null;
-    //private RequestProcessor mRequestProcessor;
-	//private CsServerEndPoint endpoint;
 
     // TODO: needs to be passed in
 	private String	mKeystoreStorePassword="x2HPbC2avltYQR";
@@ -41,7 +47,17 @@ public class JettyWebSocketServer {
 	private String	mKeystorePath="/etc/codeshelf.keystore";
 
 	@Inject
-	public JettyWebSocketServer() {
+	public JettyWebSocketServer(@Named(WEBSOCKET_HOSTNAME_PROPERTY) final String inAddr,
+		@Named(WEBSOCKET_PORTNUM_PROPERTY) final int inPort,
+		@Named(KEYSTORE_PATH_PROPERTY) final String inKeystorePath,
+		@Named(KEYSTORE_STORE_PASSWORD_PROPERTY) final String inKeystoreStorePassword,
+		@Named(KEYSTORE_KEY_PASSWORD_PROPERTY) final String inKeystoreKeyPassword
+		) {
+		this.mHost = inAddr;
+		this.mPort = inPort;
+		this.mKeystorePath = inKeystorePath;
+		this.mKeystoreStorePassword = inKeystoreStorePassword;
+		this.mKeystoreKeyPassword = inKeystoreKeyPassword;
 		this.watchdog.start();
 	}
 		
@@ -63,6 +79,7 @@ public class JettyWebSocketServer {
 			
 		    //ServerConnector connector = new ServerConnector(mServer);
 			NetworkTrafficServerConnector connector = new NetworkTrafficServerConnector(mServer,sslContextFactory);
+			connector.setHost(mHost);
 			connector.setPort(mPort);
 		    mServer.addConnector(connector);
 		
