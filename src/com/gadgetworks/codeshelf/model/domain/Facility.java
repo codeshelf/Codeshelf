@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedSet;
 
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
@@ -718,19 +719,25 @@ public class Facility extends SubLocationABC<Facility> {
 	 * A sample routine to show the distance of locations along a path.
 	 */
 	public final void recomputeLocationPathDistances(Path inPath) {
-		/*  This blows up
 		// This used to do all paths. Now as advertised only the passed in path
-		for (PathSegment segment : inPath.getSegments()) {
+		
+		// Paul: uncomment this block, then run AisleTest.java
+		// Just some debug help. Crash here sometimes as consequence of path = segment.getParent(), then pass the apparently good path to facility.recomputeLocationPathDistances(path)
+		/*
+		SortedSet<PathSegment> theSegments = inPath.getSegments(); // throws within getSegments if inPath reference is not fully hydrated.
+		int howMany = theSegments.size();
+		for (PathSegment segment : theSegments) {
 			segment.computePathDistance();
 			for (ILocation<?> location : segment.getLocations()) {
 				location.computePosAlongPath(segment);
 			}
 		}
 		*/
-
+		
+		// Paul: comment this block when you uncomment the block above
 		// getting from paths.values() clearly does not work reliable after just making new path
 		// Original code here
-		/*
+		// /*
 		for (Path path : paths.values()) {
 			for (PathSegment segment : path.getSegments()) {
 				segment.computePathDistance();
@@ -739,34 +746,8 @@ public class Facility extends SubLocationABC<Facility> {
 				}
 			}
 		}
-		*/
-
-		for (Path path : getPaths()) {
-			if (path.equals(inPath))
-				for (PathSegment segment : path.getSegments()) {
-					segment.computePathDistance();
-					// There is some question about locations maintenance
-					int locCount = segment.getLocations().size();
-					// Let's refetch the segment from the DAO
-					PathSegment segment2 = PathSegment.DAO.findByPersistentId(segment.getPersistentId());
-					if (segment2 != null) {
-						int locCount2 = segment2.getLocations().size();
-						if (locCount != locCount2)
-							LOGGER.warn(" bad location maintenance in path segment"); // could be LOGGER.error, but stack trace here does not show source of the problem.
-					}
-					
-					// Well, segment2 is slightly better than segment. It gets the first location anyway in the aisle import test.
-					// However, using segment2 may crash deep within computePosAlongPath when it refers to parent().getTravelDirEnum();
-					PathSegment segmentReferenceToUse = segment;
-					/*
-					if (segment2 != null)
-						segmentReferenceToUse = segment2;
-					*/
-					for (ILocation<?> location : segmentReferenceToUse.getLocations()) {
-						location.computePosAlongPath(segmentReferenceToUse);
-					}
-				}
-		}
+		// */
+		
 
 	}
 

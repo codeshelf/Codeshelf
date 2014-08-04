@@ -357,7 +357,12 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#getParentAtLevel(java.lang.Class)
 	 */
 	public final <T extends ILocation> T getParentAtLevel(Class<? extends ILocation> inClassWanted) {
-		T result = null;
+		
+		// if you call aisle.getParentAtLevel(Aisle.class), return itself. This is moderately common.
+		if (this.getClass().equals(inClassWanted)) 
+			return (T) this; // (We can cast safely since we checked the class.)
+			
+		T result = null;		
 
 		ILocation<P> checkParent = (ILocation<P>) getParent();
 

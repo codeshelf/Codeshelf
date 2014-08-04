@@ -84,4 +84,8 @@ public class Bay extends SubLocationABC<Aisle> {
 		return (aisleName + "-" + bayName);
 	}
 
+	public final String getBayIdForComparable() {
+		return getCompString(getDomainId());
+	}
+
 }
