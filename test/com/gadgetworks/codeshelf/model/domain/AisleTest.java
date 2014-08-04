@@ -45,7 +45,9 @@ public class AisleTest extends DomainTestABC {
 		PathSegment pathSegment  = getPathSegment(getPath(facility, "P1"), 1);
 		Aisle aisle = getAisle(facility, aisleDomainId);
 
-		aisle.associatePathSegment(pathSegment.getPersistentId().toString());
+		String segPersistId = pathSegment.getPersistentId().toString();
+		aisle.associatePathSegment(segPersistId);
+		// Paul: please see facility.recomputeLocationPathDistances()
 	
 		Aisle storedAisle = (Aisle) facility.findLocationById(aisleDomainId);
 		assertEquals(pathSegment.getPersistentId(), storedAisle.getAssociatedPathSegment().getPersistentId());

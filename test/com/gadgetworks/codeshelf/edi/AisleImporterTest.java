@@ -1176,14 +1176,16 @@ public class AisleImporterTest extends DomainTestABC {
 		// So this tests Bay to bay attributes changing within an aisle, and tier attributes changing within a bay.
 
 		// This test is also good for testing path relationship if we run one path between the aisles.
+		// Notice  that A31 has B1/S1 by the anchor
+		// A32 has B1/S1 away from anchor point of aisle.
 
-		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
-				+ "Aisle,A31,,,,,zigzagLeft,12.85,43.45,X,120,\r\n" //
+		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm, b1S1NearAnchor\r\n" //
+				+ "Aisle,A31,,,,,zigzagLeft,12.85,43.45,X,120,Y\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,5,32,0,,\r\n" //
 				+ "Bay,B2,141,,,,,\r\n" //
 				+ "Tier,T1,,5,32,0,,\r\n" //
-				+ "Aisle,A32,,,,,zigzagRight,12.85,53.45,X,110,\r\n" //
+				+ "Aisle,A32,,,,,zigzagRight,12.85,53.45,X,110,N\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,5,32,0,,\r\n" //
 				+ "Bay,B2,115,,,,,\r\n" //
@@ -1220,9 +1222,9 @@ public class AisleImporterTest extends DomainTestABC {
 		Aisle aisle32 = Aisle.DAO.findByDomainId(facility, "A32");
 		Assert.assertNotNull(aisle32);
 		Bay bayA32B1 = Bay.DAO.findByDomainId(aisle32, "B1");
+		Bay bayA32B2 = Bay.DAO.findByDomainId(aisle32, "B2");
 		Tier tierA32B1T1 = Tier.DAO.findByDomainId(bayA32B1, "T1");
-
-		
+		Tier tierA32B2T1 = Tier.DAO.findByDomainId(bayA32B2, "T1");	
 		
 		
 		// Now Pathing. Simulate UI doing  path between the aisles, right to left.
@@ -1255,28 +1257,31 @@ public class AisleImporterTest extends DomainTestABC {
 		aisle31.associatePathSegment(persistStr);
 		// Interesting. This calls facility.recomputeLocationPathDistances(the path segment's parent path); But does not find any locations on the path segment
 
-		// this segment should have one location now. However, the old reference is stale and will not know its aisles. Need to re-get.
+		// this segment should have one location now. However, the old reference is stale and may know its aisles (used to be). Re-get
 		PathSegment segment00 = PathSegment.DAO.findByDomainId(aPath, "F3X.1.0");
-		List<LocationABC> locations1 = segment00.getLocations();
-		int countLocations1 = locations1.size();
+		int countLocations1 = segment00.getLocations().size();
 		Assert.assertEquals(1, countLocations1);
 
 		// Let's check locations on the path segment, derived different ways
 		// original aPath return while created:
 		PathSegment aPathSegment = aPath.getPathSegment(0);
-		int countLocationsA = aPathSegment.getLocations().size(); // ZERO
+		int countLocationsA = aPathSegment.getLocations().size(); 
 		Assert.assertEquals(aPathSegment, segment00);
+		Assert.assertEquals(1, countLocationsA); // if this fails, may be irrelevant; just a stale reference.
 
 		// bPath from the facility before associating aisle to path segment
 		PathSegment bPathSegment = bPath.getPathSegment(0);
-		int countLocationsB = bPathSegment.getLocations().size(); // ZERO
+		int countLocationsB = bPathSegment.getLocations().size();
 		Assert.assertEquals(bPathSegment, segment00);
+		Assert.assertEquals(1, countLocationsB); // if this fails, may be irrelevant; just a stale reference.
+
 
 		// cPath from the facility now (after associating aisle to path segment)
 		Path cPath = facility.getPath("F3X.1");
 		PathSegment cPathSegment = cPath.getPathSegment(0);
 		int countLocationsC = cPathSegment.getLocations().size(); 
 		Assert.assertEquals(cPathSegment, segment00);
+		Assert.assertEquals(1, countLocationsC); // if this fails, may be irrelevant; just a stale reference.
 
 		// If you step into associatePathSegment, you will see that it finds the segment by UUID, and its location count was 1 and goes to 2.
 		aisle32.associatePathSegment(persistStr);
@@ -1285,6 +1290,7 @@ public class AisleImporterTest extends DomainTestABC {
 		PathSegment dPathSegment = PathSegment.DAO.findByPersistentId(persistentId);
 		int countLocationsD = dPathSegment.getLocations().size(); 
 		Assert.assertEquals(dPathSegment, segment00);
+		Assert.assertEquals(2, countLocationsD); 
 
 		// this segment should have two locations now
 		//However, the old reference is stale and would only have one aisle. Need to re-get.
@@ -1292,26 +1298,98 @@ public class AisleImporterTest extends DomainTestABC {
 		List<LocationABC> locations2 = segment000.getLocations();
 		int countLocations2 = locations2.size();
 		Assert.assertEquals(2, countLocations2);  
-		// just for fun, check our other segment references
-		int value00 = segment00.getLocations().size(); 
-		int value0 = segment0.getLocations().size(); 
-		Assert.assertEquals(segment0, segment00);
 
+		// Justs checking if the getParent() returns fully hydrated path. Used to NPE from this.
 		Path dPath = dPathSegment.getParent();
 		Assert.assertNotNull(dPath);
 		TravelDirectionEnum theDirection = dPath.getTravelDirEnum();
 		Assert.assertEquals(theDirection, TravelDirectionEnum.FORWARD);
 
+		// This should not be necessary as associatePathSegment() called it
 		facility.recomputeLocationPathDistances(aPath);
 		
 		Slot firstA31SlotOnPath = Slot.DAO.findByDomainId(tierA31B2T1, "S5");
 		Slot firstA32SlotOnPath = Slot.DAO.findByDomainId(tierA32B1T1, "S1");
+		
+		Slot lastA31SlotOnPath = Slot.DAO.findByDomainId(tierA31B1T1, "S1");
+		Slot lastA32SlotOnPath = Slot.DAO.findByDomainId(tierA32B2T1, "S5");
 
-		Double value1 = firstA31SlotOnPath.getPosAlongPath();
-		Double value2 = firstA32SlotOnPath.getPosAlongPath();
-		Assert.assertNotNull(value1); 
-		// JON: Go ahead and uncomment and workout the computation
-//		Assert.assertEquals(value1, value2);
+		Double valueFirst31 = firstA31SlotOnPath.getPosAlongPath();
+		Double valueFirst32 = firstA32SlotOnPath.getPosAlongPath();
+		Double valueLast31 = firstA31SlotOnPath.getPosAlongPath();
+		Double valueLast32 = firstA32SlotOnPath.getPosAlongPath();
+		
+		// old bug got the same position for first two bays. Check that.
+		Double a31b1Value = tierA31B1T1.getPosAlongPath();
+		Double a31b2Value = tierA31B2T1.getPosAlongPath();	
+		// Values are null. Lets get new references tier references after the path was applied, as the posAlongPath is null on old reference
+		tierA31B1T1 = Tier.DAO.findByDomainId(bayA31B1, "T1");
+		tierA31B2T1 = Tier.DAO.findByDomainId(bayA31B2, "T1");
+		tierA32B1T1 = Tier.DAO.findByDomainId(bayA32B1, "T1");
+		tierA32B2T1 = Tier.DAO.findByDomainId(bayA32B2, "T1");
+		
+		// Here is a major point of this test. b1S1NearAnchor is Y for A31, and N for A32
+		// Therefore, A31B1 has anchor 0, but A32B2 has anchor zero as B1 is further away from the anchor point.
+		Double valueTierA31B1T1  = tierA31B1T1.getAnchorPosX();
+		Double valueTierA31B2T1  = tierA31B2T1.getAnchorPosX();
+		Double valueTierA32B1T1  = tierA32B1T1.getAnchorPosX();
+		Double valueTierA32B2T1  = tierA32B2T1.getAnchorPosX();
+		Assert.assertEquals((Double) 0.0, valueTierA31B1T1);
+		Assert.assertEquals((Double) 0.0, valueTierA32B2T1);
+		
+		// Slots should also be appropriate reversed in A32.
+		Slot slotA31B1T1S1 = Slot.DAO.findByDomainId(tierA31B1T1, "S1");
+		Slot slotA31B1T1S5 = Slot.DAO.findByDomainId(tierA31B1T1, "S5");
+		Slot slotA31B2T1S1 = Slot.DAO.findByDomainId(tierA31B2T1, "S1");
+		Slot slotA31B2T1S5 = Slot.DAO.findByDomainId(tierA31B2T1, "S5");
+		Slot slotA32B1T1S1 = Slot.DAO.findByDomainId(tierA32B1T1, "S1");
+		Slot slotA32B1T1S5 = Slot.DAO.findByDomainId(tierA32B1T1, "S5");
+		Slot slotA32B2T1S1 = Slot.DAO.findByDomainId(tierA32B2T1, "S1");
+		Slot slotA32B2T1S5 = Slot.DAO.findByDomainId(tierA32B2T1, "S5");
+
+		Double valueSlotA31B1T1S1  = slotA31B1T1S1.getAnchorPosX();
+		Assert.assertEquals((Double) 0.0, valueSlotA31B1T1S1); // first slot in A31
+		Double valueSlotA31B1T1S5  = slotA31B1T1S5.getAnchorPosX();
+		Assert.assertNotEquals((Double) 0.0, valueSlotA31B1T1S5); 
+		Double valueSlotA31B2T1S1  = slotA31B2T1S1.getAnchorPosX();
+		Assert.assertEquals((Double) 0.0, valueSlotA31B2T1S1);
+		Double valueSlotA31B2T1S5  = slotA31B2T1S5.getAnchorPosX();
+		Assert.assertNotEquals((Double) 0.0, valueSlotA31B2T1S5); 
+// A32 will be a bit backwards. S5 should have the zero value
+		Double valueSlotA32B1T1S1  = slotA32B1T1S1.getAnchorPosX();
+		Assert.assertNotEquals((Double) 0.0, valueSlotA32B1T1S1);
+		Double valueSlotA32B1T1S5  = slotA32B1T1S5.getAnchorPosX();
+		Assert.assertEquals((Double) 0.0, valueSlotA32B1T1S5); 
+		Double valueSlotA32B2T1S1  = slotA32B2T1S1.getAnchorPosX();
+		Assert.assertNotEquals((Double) 0.0, valueSlotA32B2T1S1);
+		Double valueSlotA32B2T1S5  = slotA32B2T1S5.getAnchorPosX();
+		Assert.assertEquals((Double) 0.0, valueSlotA32B2T1S5); // last slot in A32, close to anchor
+
+		// Path values should derive from location anchor and pickface end, relative to the path.
+		// PATH VALUES NOT CORRECT YET
+		// As the path goes right to left between A31 and A32,
+		// Lowest values for meters along path are at A31B2T1S5 and A32B1T1S1
+		Double slotA31B2T1S5Value = slotA31B2T1S5.getPosAlongPath();
+		Double slotA31B2T1S1Value = slotA31B2T1S1.getPosAlongPath();
+		// Assert.assertTrue(slotA31B2T1S1Value > slotA31B2T1S5Value);
+	
+		Double slotA31B1T1S5Value = slotA31B1T1S5.getPosAlongPath();
+		// Assert.assertTrue(slotA31B1T1S5Value > slotA31B2T1S1Value); // first bay last slot further along path than second bay first slot
+		
+		Double slotA31B1T1S1Value = slotA31B1T1S1.getPosAlongPath();
+		// Assert.assertTrue(slotA31B1T1S1Value > slotA31B1T1S5Value);
+
+		// lowest at A32B1T1S1
+		Double slotA32B1T1S5Value = slotA32B1T1S5.getPosAlongPath();
+		Double slotA32B1T1S1Value = slotA32B1T1S1.getPosAlongPath();
+		// Assert.assertTrue(slotA32B1T1S5Value > slotA32B1T1S1Value);
+		
+		Double slotA32B2T1S5Value = slotA32B2T1S5.getPosAlongPath();
+		// Assert.assertTrue(slotA32B1T1S5Value < slotA32B2T1S1Value); // first bay last slot not as far along path than second bay first slot
+		
+		Double slotA32B2T1S1Value = slotA32B2T1S1.getPosAlongPath();
+		// Assert.assertTrue(slotA31B1T1S1Value > slotA31B1T1S5Value);
+
 
 	}
 }

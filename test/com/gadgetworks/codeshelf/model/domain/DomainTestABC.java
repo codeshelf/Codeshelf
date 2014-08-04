@@ -74,7 +74,8 @@ public abstract class DomainTestABC extends DAOTestABC {
 		PathSegment segment = path.getPathSegment(inOrder); 
 		if (segment == null) {
 			segment = path.createPathSegment(inOrder.toString(), inOrder,  anyPoint(), anyPoint());
-			mPathSegmentDao.store(segment);
+			// createPathSegment() does the store
+			// mPathSegmentDao.store(segment);
 		}
 		return segment;
 	}
@@ -84,6 +85,7 @@ public abstract class DomainTestABC extends DAOTestABC {
 		if (path == null) {
 			path = new Path(facility, inPathId, "Description");
 			mPathDao.store(path);
+			// looks wrong. Does not add to facility
 		}
 		return path;
 	}
