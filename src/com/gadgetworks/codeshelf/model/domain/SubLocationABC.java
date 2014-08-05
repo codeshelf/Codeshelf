@@ -189,7 +189,8 @@ public abstract class SubLocationABC<P extends IDomainObject> extends LocationAB
 			} else {
 				// I believe if we hit this, we found a model or algorithm error
 				Double parentPos = parent.getPosAlongPath(); // just so able to debug and know if we are setting to null
-				setPosAlongPath(parentPos);
+				setPosAlongPath(parentPos);  
+				// setPosAlongPath(position); // JR test
 			}
 		} else {
 			// In the reverse direction take the "highest" path pos value.
@@ -200,7 +201,8 @@ public abstract class SubLocationABC<P extends IDomainObject> extends LocationAB
 			} else {
 				// I believe if we hit this, we found a model or algorithm error
 				Double parentPos = parent.getPosAlongPath(); // just so able to debug and know if we are setting to null
-				setPosAlongPath(parentPos);
+				setPosAlongPath(parentPos);   
+				// setPosAlongPath(position);// JR test
 			}
 		}
 		

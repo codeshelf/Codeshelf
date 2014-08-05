@@ -624,8 +624,8 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 		// Now must make each of the bay's tiers match
 		Double anchorX = inBay.getAnchorPosX();
 		Double anchorY = inBay.getAnchorPosY();
-		Double pickFaceEndX = inBay.getPickFaceEndPosX();
-		Double pickFaceEndY = inBay.getPickFaceEndPosY();
+		Double pickFaceEndX = inBay.getPickFaceEndPosX() - inBay.getAnchorPosX();
+		Double pickFaceEndY = inBay.getPickFaceEndPosY()- inBay.getAnchorPosY();;
 
 		List<Tier> tierList = inBay.getChildrenAtLevel(Tier.class);
 		ListIterator li2 = tierList.listIterator();
@@ -898,7 +898,7 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 	 * ** throws EdiFileReadException  on tier before bay, unreasonable slot count, invalid tier name, or after catching DaoException
 	 */
 	private Tier editOrCreateOneTier(final String inTierId, Integer inSlotCount, short inLedsThisTier, boolean inLedsIncrease) {
-		// PickFaceEndPoint is the same as bays, so that is easy. Just need to get the Z value. Anchor point is relative to parent Bay, so 0,0.
+		// PickFaceEndPoint is not the same as bays. Remember the Z value. Anchor point is relative to parent Bay, so 0,0.
 
 		if (mLastReadBay == null) {
 			throw new EdiFileReadException("Tier: " + inTierId + " came before it had a bay?");
@@ -914,10 +914,12 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 
 		// Get our points
 		Double tierFloorM = mTierFloorCm / CM_PER_M;
+		// anchor is relative to parent, so 0.
 		Double anchorX = 0.0;
 		Double anchorY = 0.0;
-		Double pickFaceEndX = mLastReadBay.getPickFaceEndPosX();
-		Double pickFaceEndY = mLastReadBay.getPickFaceEndPosY();
+		// Tier pick face end is relative to its own anchor. Don't just adopt the Bay's end.
+		Double pickFaceEndX = mLastReadBay.getPickFaceEndPosX() - mLastReadBay.getAnchorPosX();
+		Double pickFaceEndY = mLastReadBay.getPickFaceEndPosY() - mLastReadBay.getAnchorPosY();
 
 		Point anchorPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, anchorX, anchorY, tierFloorM);
 		Point pickFaceEndPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, pickFaceEndX, pickFaceEndY, tierFloorM);

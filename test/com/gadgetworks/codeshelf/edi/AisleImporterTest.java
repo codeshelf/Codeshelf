@@ -187,7 +187,8 @@ public class AisleImporterTest extends DomainTestABC {
 		Assert.assertTrue(pickFaceEndY == 0.0);
 		pickFaceEndX = ((Tier) tierB2T1).getPickFaceEndPosX();
 		pickFaceEndY = ((Tier) tierB2T1).getPickFaceEndPosY();
-		Assert.assertTrue(pickFaceEndX.equals(bay2EndX)); // tier will match the bay. Cannot use == for two different Double objects.
+		Assert.assertFalse(pickFaceEndX.equals(bay2EndX)); // tier pickface end is relative to its parent's start. Bays pickpace end is relative to the aisle's start. 
+		// So, they better not be the same except for single bay aisles or first bay in aisle.
 		Assert.assertTrue(pickFaceEndY == 0.0);
 		pickFaceEndX = ((Slot) slotB1T2S3).getPickFaceEndPosX();
 		pickFaceEndY = ((Slot) slotB1T2S3).getPickFaceEndPosY();
@@ -736,8 +737,8 @@ public class AisleImporterTest extends DomainTestABC {
 		double b1T1FaceEnd = tierB1T1.getPickFaceEndPosX();
 		Assert.assertTrue(b1T1FaceEnd == 1.15);
 		double b2T2FaceEnd = tierB2T2.getPickFaceEndPosX();
-		// 1.15 + 1.41 = 2.56. But real addition is too precise.
-		Assert.assertTrue(b2T2FaceEnd > 2.55);
+		// Remember, tier in second bay pickface is relative to the bay. It will be about 1.41
+		Assert.assertTrue(b2T2FaceEnd < 2.0);
 
 		List<ISubLocation> theB1T1Slots = tierB1T1.getChildren();
 		Assert.assertTrue(theB1T1Slots.size() == 5);
