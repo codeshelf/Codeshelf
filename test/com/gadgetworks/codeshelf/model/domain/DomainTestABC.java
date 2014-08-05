@@ -130,19 +130,38 @@ public abstract class DomainTestABC extends DAOTestABC {
 		Organization organization = getOrganization(inOrganizationName);
 		
 		Facility resultFacility = getFacility(organization);
+		
+		CodeshelfNetwork network = resultFacility.createNetwork("WITEST");
+		Che che = network.createChe("WITEST", new NetGuid("0x00000001"));
+
+		LedController controller = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000002"));
 
 		Aisle aisle1 = getAisle(resultFacility, "A1");
 
 		Bay baya1b1 = new Bay(aisle1, "B1", Point.getZeroPoint(), Point.getZeroPoint());
+		baya1b1.setFirstLedNumAlongPath((short) 0);
+		baya1b1.setLastLedNumAlongPath((short) 0);
+		baya1b1.setLedController(controller);
 		mBayDao.store(baya1b1);
+
 		Bay baya1b2 = new Bay(aisle1, "B2", Point.getZeroPoint(), Point.getZeroPoint());
+		baya1b2.setFirstLedNumAlongPath((short) 0);
+		baya1b2.setLastLedNumAlongPath((short) 0);
+		baya1b2.setLedController(controller);
 		mBayDao.store(baya1b2);
 
 		Aisle aisle2 = getAisle(resultFacility, "A2");
 
 		Bay baya2b1 = new Bay(aisle2, "B1", Point.getZeroPoint(), Point.getZeroPoint());
+		baya2b1.setFirstLedNumAlongPath((short) 0);
+		baya2b1.setLastLedNumAlongPath((short) 0);
+		baya2b1.setLedController(controller);
 		mBayDao.store(baya2b1);
+
 		Bay baya2b2 = new Bay(aisle2, "B2", Point.getZeroPoint(), Point.getZeroPoint());
+		baya2b2.setFirstLedNumAlongPath((short) 0);
+		baya2b2.setLastLedNumAlongPath((short) 0);
+		baya2b2.setLedController(controller);
 		mBayDao.store(baya2b2);
 
 		Path path = new Path();
@@ -166,15 +185,29 @@ public abstract class DomainTestABC extends DAOTestABC {
 		Aisle aisle3 = getAisle(resultFacility, "A3");
 
 		Bay baya3b1 = new Bay(aisle3, "B1", Point.getZeroPoint(), Point.getZeroPoint());
+		baya3b1.setFirstLedNumAlongPath((short) 0);
+		baya3b1.setLastLedNumAlongPath((short) 0);
+		baya3b1.setLedController(controller);
 		mBayDao.store(baya3b1);
+
 		Bay baya3b2 = new Bay(aisle3, "B2", Point.getZeroPoint(), Point.getZeroPoint());
+		baya3b2.setFirstLedNumAlongPath((short) 0);
+		baya3b2.setLastLedNumAlongPath((short) 0);
+		baya3b2.setLedController(controller);
 		mBayDao.store(baya3b2);
 
 		Aisle aisle4 = getAisle(resultFacility, "A4");
 
 		Bay baya4b1 = new Bay(aisle4, "B1", Point.getZeroPoint(), Point.getZeroPoint());
+		baya4b1.setFirstLedNumAlongPath((short) 0);
+		baya4b1.setLastLedNumAlongPath((short) 0);
+		baya4b1.setLedController(controller);
 		mBayDao.store(baya4b1);
+
 		Bay baya4b2 = new Bay(aisle4, "B2", Point.getZeroPoint(), Point.getZeroPoint());
+		baya4b2.setFirstLedNumAlongPath((short) 0);
+		baya4b2.setLastLedNumAlongPath((short) 0);
+		baya4b2.setLedController(controller);
 		mBayDao.store(baya4b2);
 
 		PathSegment pathSegment2 = path.createPathSegment("PS2", 1, Point.getZeroPoint(), Point.getZeroPoint());
@@ -201,37 +234,86 @@ public abstract class DomainTestABC extends DAOTestABC {
 		ItemMaster itemMaster1 = createItemMaster("ITEM1", resultFacility, uomMaster);
 		ItemMaster itemMaster2 = createItemMaster("ITEM2", resultFacility, uomMaster);
 		ItemMaster itemMaster3 = createItemMaster("ITEM3", resultFacility, uomMaster);
+		
+		// Create order headers that are not in a group.
 
-		OrderHeader orderOut1 = createOrderHeader("OUT1", OrderTypeEnum.OUTBOUND, resultFacility);
+		OrderHeader orderOut1 = createOrderHeader("OUT1", OrderTypeEnum.OUTBOUND, resultFacility, null);
 		OrderDetail orderOut1Detail1 = createOrderDetail(orderOut1, itemMaster1);
 		OrderDetail orderOut1Detail2 = createOrderDetail(orderOut1, itemMaster2);
 		OrderDetail orderOut1Detail3 = createOrderDetail(orderOut1, itemMaster3);
 
-		OrderHeader orderOut2 = createOrderHeader("OUT2", OrderTypeEnum.OUTBOUND, resultFacility);
+		OrderHeader orderOut2 = createOrderHeader("OUT2", OrderTypeEnum.OUTBOUND, resultFacility, null);
 		OrderDetail orderOut2Detail1 = createOrderDetail(orderOut2, itemMaster1);
 		OrderDetail orderOut2Detail2 = createOrderDetail(orderOut2, itemMaster2);
 		OrderDetail orderOut2Detail3 = createOrderDetail(orderOut2, itemMaster3);
 
-		OrderHeader orderOut3 = createOrderHeader("OUT3", OrderTypeEnum.OUTBOUND, resultFacility);
+		OrderHeader orderOut3 = createOrderHeader("OUT3", OrderTypeEnum.OUTBOUND, resultFacility, null);
 		OrderDetail orderOut3Detail1 = createOrderDetail(orderOut3, itemMaster1);
 		OrderDetail orderOut3Detail2 = createOrderDetail(orderOut3, itemMaster2);
 		OrderDetail orderOut3Detail3 = createOrderDetail(orderOut3, itemMaster3);
 
-		OrderHeader orderCross1 = createOrderHeader("CROSS1", OrderTypeEnum.CROSS, resultFacility);
+		OrderHeader orderCross1 = createOrderHeader("CROSS1", OrderTypeEnum.CROSS, resultFacility, null);
 		OrderDetail orderCross1Detail1 = createOrderDetail(orderCross1, itemMaster1);
 		OrderDetail orderCross1Detail2 = createOrderDetail(orderCross1, itemMaster2);
 		OrderDetail orderCross1Detail3 = createOrderDetail(orderCross1, itemMaster3);
 		OrderLocation orderCross1Loc = createOrderLocation(orderCross1, baya1b1);
 
-		OrderHeader orderCross2 = createOrderHeader("CROSS2", OrderTypeEnum.CROSS, resultFacility);
+		OrderHeader orderCross2 = createOrderHeader("CROSS2", OrderTypeEnum.CROSS, resultFacility, null);
 		OrderDetail orderCross2Detail1 = createOrderDetail(orderCross2, itemMaster1);
 		OrderDetail orderCross2Detail2 = createOrderDetail(orderCross2, itemMaster2);
 		OrderDetail orderCross2Detail3 = createOrderDetail(orderCross2, itemMaster3);
 
-		OrderHeader orderCross3 = createOrderHeader("CROSS3", OrderTypeEnum.CROSS, resultFacility);
+		OrderHeader orderCross3 = createOrderHeader("CROSS3", OrderTypeEnum.CROSS, resultFacility, null);
 		OrderDetail orderCross3Detail1 = createOrderDetail(orderCross3, itemMaster1);
 		OrderDetail orderCross3Detail2 = createOrderDetail(orderCross3, itemMaster2);
 		OrderDetail orderCross3Detail3 = createOrderDetail(orderCross3, itemMaster3);
+		
+		// Create order headers that are in groups with items separate between the groups (to test that we process groups separately).
+		
+		Container container4 = createContainer("C4", resultFacility);
+		Container container5 = createContainer("C5", resultFacility);
+//		Container container6 = createContainer("C6", resultFacility);
+//		Container container7 = createContainer("C7", resultFacility);
+
+		ItemMaster itemMaster4 = createItemMaster("ITEM4", resultFacility, uomMaster);
+		ItemMaster itemMaster5 = createItemMaster("ITEM5", resultFacility, uomMaster);
+//		ItemMaster itemMaster6 = createItemMaster("ITEM6", resultFacility, uomMaster);
+//		ItemMaster itemMaster7 = createItemMaster("ITEM7", resultFacility, uomMaster);
+
+		OrderGroup orderGroup1 = createOrderGroup("GROUP1", resultFacility);
+		OrderHeader orderOut1Group1 = createOrderHeader("OUT1GROUP1", OrderTypeEnum.OUTBOUND, resultFacility, orderGroup1);
+		OrderDetail orderOut1Group1Detail1 = createOrderDetail(orderOut1Group1, itemMaster4);
+		OrderLocation orderOut1Group1Loc = createOrderLocation(orderOut1Group1, baya1b1);
+
+		OrderHeader orderOut2Group1 = createOrderHeader("OUT2GROUP1", OrderTypeEnum.OUTBOUND, resultFacility, orderGroup1);
+		OrderDetail orderOut2Group1Detail1 = createOrderDetail(orderOut2Group1, itemMaster4);
+		OrderLocation orderOut2Group1Loc = createOrderLocation(orderOut2Group1, baya1b1);
+
+		OrderGroup orderGroup2 = createOrderGroup("GROUP2", resultFacility);
+		OrderHeader orderOut3Group2 = createOrderHeader("OUT3GROUP2", OrderTypeEnum.OUTBOUND, resultFacility, orderGroup2);
+		OrderDetail orderOut3Group2Detail1 = createOrderDetail(orderOut3Group2, itemMaster4);
+		OrderLocation orderOut3Group2Loc = createOrderLocation(orderOut3Group2, baya1b1);
+		
+		OrderHeader orderOut4NoGroup = createOrderHeader("OUT4NOGROUP", OrderTypeEnum.OUTBOUND, resultFacility, null);
+		OrderDetail orderOut4NoGroupDetail1 = createOrderDetail(orderOut4NoGroup, itemMaster5);
+		OrderLocation orderOut4NoGroupLoc = createOrderLocation(orderOut4NoGroup, baya1b1);
+		
+		OrderHeader orderCross4 = createOrderHeader("CROSS4", OrderTypeEnum.CROSS, resultFacility, orderGroup1);
+		OrderDetail orderCross4Detail1 = createOrderDetail(orderCross4, itemMaster4);
+
+		OrderHeader orderCross5 = createOrderHeader("CROSS5", OrderTypeEnum.CROSS, resultFacility, null);
+		OrderDetail orderCross5Detail1 = createOrderDetail(orderCross5, itemMaster5);
+
+//		OrderHeader orderCross6 = createOrderHeader("CROSS6", OrderTypeEnum.CROSS, resultFacility, orderGroup2);
+//		OrderDetail orderCross6Detail1 = createOrderDetail(orderCross6, itemMaster6);
+//
+//		OrderHeader orderCross7 = createOrderHeader("CROSS7", OrderTypeEnum.CROSS, resultFacility, null);
+//		OrderDetail orderCross7Detail1 = createOrderDetail(orderCross7, itemMaster7);
+
+		ContainerUse containerUse4 = createContainerUse(container4, orderCross4, resultFacility);
+		ContainerUse containerUse5 = createContainerUse(container5, orderCross5, resultFacility);
+//		ContainerUse containerUse6 = createContainerUse(container6, orderCross6, resultFacility);
+//		ContainerUse containerUse7 = createContainerUse(container7, orderCross7, resultFacility);
 
 		return resultFacility;
 	}
@@ -252,10 +334,57 @@ public abstract class DomainTestABC extends DAOTestABC {
 		result.setActive(true);
 		result.setUpdated(new Timestamp(System.currentTimeMillis()));
 		mContainerDao.store(result);
+		
+		inFacility.addContainer(result);
 
 		return result;
 	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inContainer
+	 * @param inOrderHeader
+	 * @param inFacility
+	 * @return
+	 */
+	protected final ContainerUse createContainerUse(final Container inContainer, final OrderHeader inOrderHeader, final Facility inFacility) {
+		ContainerUse result = null;
+		
+		result = new ContainerUse();
+		result.setParentContainer(inContainer);
+		result.setDomainId(inContainer.getContainerId());
+		result.setOrderHeader(inOrderHeader);
+		result.setUsedOn(new Timestamp(System.currentTimeMillis()));
+		result.setActive(true);
+		result.setUpdated(new Timestamp(System.currentTimeMillis()));
+		mContainerUseDao.store(result);
+		
+		inContainer.addContainerUse(result);
+		
+		return result;
+	}
 
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inOrderGroupId
+	 * @param inFacility
+	 * @return
+	 */
+	protected final OrderGroup createOrderGroup(final String inOrderGroupId, final Facility inFacility) {
+		OrderGroup result = null;
+		
+		result = new OrderGroup();
+		result.setParent(inFacility);
+		result.setOrderGroupId(inOrderGroupId);
+		result.setActive(true);
+		result.setUpdated(new Timestamp(System.currentTimeMillis()));
+		mOrderGroupDao.store(result);
+		
+		inFacility.addOrderGroup(result);
+		
+		return result;
+	}
+	
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inOrderId
@@ -263,11 +392,12 @@ public abstract class DomainTestABC extends DAOTestABC {
 	 * @param inFacility
 	 * @return
 	 */
-	protected final OrderHeader createOrderHeader(final String inOrderId, final OrderTypeEnum inOrderType, final Facility inFacility) {
+	protected final OrderHeader createOrderHeader(final String inOrderId, final OrderTypeEnum inOrderType, final Facility inFacility, final OrderGroup inOrderGroup) {
 		OrderHeader result = null;
 
 		result = new OrderHeader();
 		result.setParent(inFacility);
+		result.setOrderGroup(inOrderGroup);
 		result.setOrderId(inOrderId);
 		result.setOrderTypeEnum(inOrderType);
 		result.setOrderDate(new Timestamp(System.currentTimeMillis()));
@@ -311,6 +441,7 @@ public abstract class DomainTestABC extends DAOTestABC {
 		result = new ItemMaster();
 		result.setItemId(inItemId);
 		result.setParent(inFacility);
+		result.setDescription(inItemId);
 		result.setStandardUom(inUomMaster);
 		result.setActive(true);
 		result.setUpdated(new Timestamp(System.currentTimeMillis()));
