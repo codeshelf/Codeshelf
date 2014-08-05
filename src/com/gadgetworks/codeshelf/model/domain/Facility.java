@@ -692,8 +692,8 @@ public class Facility extends SubLocationABC<Facility> {
 		getDao().store(this);
 		path.createDefaultWorkArea(); //TODO an odd way to construct, but it is a way to make sure the Path is persisted before the work area
 		return path;
-	}	
-	
+	}
+
 	// --------------------------------------------------------------------------
 	/**
 	 * Create a path
@@ -1355,31 +1355,35 @@ public class Facility extends SubLocationABC<Facility> {
 				// Iterate over all active OUTBOUND on the path.
 				for (OrderHeader outOrder : getOrderHeaders()) {
 					if ((outOrder.getOrderTypeEnum().equals(OrderTypeEnum.OUTBOUND)) && (outOrder.getActive())) {
-						// OK, we have an OUTBOUND order on the same path as the CROSS order.
-						// Check to see if any of the active CROSS order detail items match OUTBOUND order details.
-						for (OrderDetail crossOrderDetail : crossOrder.getOrderDetails()) {
-							if (crossOrderDetail.getActive()) {
-								for (OrderDetail outOrderDetail : outOrder.getOrderDetails()) {
-									if ((outOrderDetail.getItemMaster().equals(crossOrderDetail.getItemMaster()))
-											&& (outOrderDetail.getActive())) {
-										// Now make sure the UOM matches.
-										if (outOrderDetail.getUomMasterId().equals(crossOrderDetail.getUomMasterId())) {
-											for (Path path : getPaths()) {
-												OrderLocation firstOutOrderLoc = outOrder.getFirstOrderLocationOnPath(path);
+						// Only use orders without an order group, or orders in the same order group as the cross order.
+						if (((outOrder.getOrderGroup() == null) && (crossOrder.getOrderGroup() == null))
+								|| (outOrder.getOrderGroup() != null) && (outOrder.getOrderGroup().equals(crossOrder.getOrderGroup()))) {
+							// OK, we have an OUTBOUND order on the same path as the CROSS order.
+							// Check to see if any of the active CROSS order detail items match OUTBOUND order details.
+							for (OrderDetail crossOrderDetail : crossOrder.getOrderDetails()) {
+								if (crossOrderDetail.getActive()) {
+									for (OrderDetail outOrderDetail : outOrder.getOrderDetails()) {
+										if ((outOrderDetail.getItemMaster().equals(crossOrderDetail.getItemMaster()))
+												&& (outOrderDetail.getActive())) {
+											// Now make sure the UOM matches.
+											if (outOrderDetail.getUomMasterId().equals(crossOrderDetail.getUomMasterId())) {
+												for (Path path : getPaths()) {
+													OrderLocation firstOutOrderLoc = outOrder.getFirstOrderLocationOnPath(path);
 
-												if (firstOutOrderLoc != null) {
-													WorkInstruction wi = createWorkInstruction(WorkInstructionStatusEnum.NEW,
-														WorkInstructionTypeEnum.PLAN,
-														outOrderDetail,
-														container,
-														inChe,
-														firstOutOrderLoc.getLocation(),
-														inTime);
+													if (firstOutOrderLoc != null) {
+														WorkInstruction wi = createWorkInstruction(WorkInstructionStatusEnum.NEW,
+															WorkInstructionTypeEnum.PLAN,
+															outOrderDetail,
+															container,
+															inChe,
+															firstOutOrderLoc.getLocation(),
+															inTime);
 
-													// If we created a WI then add it to the list.
-													if (wi != null) {
-														setWiPickInstruction(wi, outOrder);
-														wiList.add(wi);
+														// If we created a WI then add it to the list.
+														if (wi != null) {
+															setWiPickInstruction(wi, outOrder);
+															wiList.add(wi);
+														}
 													}
 												}
 											}

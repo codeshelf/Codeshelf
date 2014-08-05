@@ -726,6 +726,5 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		Assert.assertTrue(theCounts2.mActiveDetails == 12);
 		Assert.assertTrue(theCounts2.mActiveCntrUses == 4);
 
-
 	}
 }
