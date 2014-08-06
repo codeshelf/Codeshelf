@@ -817,12 +817,12 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Assert.assertTrue(theCounts3.mInactiveCntrUsesOnActiveOrders  == 1);
 		Assert.assertTrue(theCounts3.mActiveCntrUses == 2);
 		
-		/*
-		// So, can a customer update a single order or detail by setting the count to zero
+		
+		// Can a customer update a single order or detail by setting the count to zero
 		String fourthCsvString = "shipmentId,customerId,preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\nUSF314,COSTCO,123,123,123.3,10706962,Authentic Pizza Sauces,0,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
 		importCsvString(facility, fourthCsvString);
-		// This looks buggy. Orders and 6 details still present.
+		// This looks buggy. Orders and 6 details still present. What two orderDetails went away. Looks like all other cntrUses got inactivated, and new one made.
 		HeaderCounts theCounts4 = facility.countOutboundOrders();
 		Assert.assertTrue(theCounts4.mTotalHeaders == 3);
 		Assert.assertTrue(theCounts4.mActiveHeaders == 2);
@@ -836,16 +836,55 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 				+ "\r\nUSF314,COSTCO,123,123,123.2,10706952,Italian Homemade Style Basil Pesto,3,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
 				
 		importCsvString(facility, fifthCsvString);
-		// Well, yes. The detail is still active, but with a count of zero. And the rest was not made inactive.
+		// Well, yes. Looks like that detail was cleanly updated without bothering anything else.
 		HeaderCounts theCounts5 = facility.countOutboundOrders();
 		Assert.assertTrue(theCounts5.mTotalHeaders == 3);
 		Assert.assertTrue(theCounts5.mActiveHeaders == 2);
 		Assert.assertTrue(theCounts5.mActiveDetails == 6);
 		Assert.assertTrue(theCounts5.mInactiveDetailsOnActiveOrders == 0);
 		Assert.assertTrue(theCounts5.mInactiveCntrUsesOnActiveOrders  == 4);
-		Assert.assertTrue(theCounts5.mActiveCntrUses == 2);
-*/
-		}
+		Assert.assertTrue(theCounts5.mActiveCntrUses == 1);
+
+		
+	
+	// So, here is a count update for three items. Will this doesthe updates, or will this be interpreted as full new file, needing to delete others?
+	String sixthCsvString = "shipmentId,customerId,preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
+			+ "\r\nUSF314,COSTCO,456,456,456.1,10711111,Napa Valley Bistro - Jalape������o Stuffed Olives,4,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+			+ "\r\nUSF314,COSTCO,456,456,456.2,10722222,Italian Homemade Style Basil Pesto,4,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+			+ "\r\nUSF314,COSTCO,456,456,456.3,10706962,Authentic Pizza Sauces,4,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
+			
+	importCsvString(facility, sixthCsvString);
+	// Buggy? Not sure. Hard to understand anyway. All other details except 1 were made inactive.  That led to two more inactive container uses (ok, if the detail inactive is correct).
+	HeaderCounts theCounts6 = facility.countOutboundOrders();
+	Assert.assertTrue(theCounts6.mTotalHeaders == 3);
+	Assert.assertTrue(theCounts6.mActiveHeaders == 2);
+	Assert.assertTrue(theCounts6.mActiveDetails == 4);
+	Assert.assertTrue(theCounts6.mInactiveDetailsOnActiveOrders == 0);
+	Assert.assertTrue(theCounts6.mInactiveCntrUsesOnActiveOrders  == 6);
+	Assert.assertTrue(theCounts6.mActiveCntrUses == 1);
+
+	}
+	
+	// ARCHIVE TESTS?
+	// The code in OutboundOrderCsvImporter.java does a lot of archiving as it reads a file.
+	// By code review, the behavior is this for reading outbound orders file
+	
+	// archiveCheckAllContainers(). After a outbound order file read, iterate all containers.
+	// get each containerUse.
+	// for each, get associated order header if any. If it is an outbound order
+	// Only if this containerUse process time is the same as this EDI process time (that is, created earlier inside of this same file read)
+	// Then inactivate the containerUse. That is why inactiveCntrUses accumulate so much
+	// And then for the owning container, if all its uses are inactive, then inactivate the master container. (Not sure this is wise.)
+	
+	// archiveCheckAllOrders().
+	// Iterate all of the order groups. If not updated or created this order time (during this file read), then inactivate. WARNING. Outbound file read will inactivate different group from batch file group.
+	// Iterate all outbound order headers. Get details. If there was a detail with this process time (created or updated during this file read), then keep the order header active. Otherwise inactivate.
+	// WARNING different file for different waves may kill a lot of orders.
+	// And similarly, if the detail does not match this process time, inactivate it. (Same warning).
+	
+	// archiveCheckOneOrder() If only one order was in the file (even if two or more details for the same order header) then do the archive checking only for this order.
+	// That is, inactivate older details for this order. Do not do anything with containerUse.
+
 	
 	//******************** private helpers ***********************
 	
