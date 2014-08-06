@@ -147,6 +147,10 @@ public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNet
 		return new NetGuid(deviceGuid).toString();
 	}
 
+	public final void setDeviceGuidStr(String inGuidStr) {
+		deviceGuid = new NetGuid(inGuidStr).getParamValueAsByteArray();
+	}
+
 	public final void setNetAddress(NetAddress inNetworkAddress) {
 		networkAddress = (byte) inNetworkAddress.getValue();
 	}

@@ -427,9 +427,10 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 	 * @param inCheUpdateNode
 	 */
 	private void processCheUpdate(final JsonNode inCheUpdateNode) {
+		try {
 		JsonNode updateTypeNode = inCheUpdateNode.get(IWsReqCmd.OP_TYPE);
 		INetworkDevice cheDevice = null;
-		NetGuid deviceGuid = new NetGuid(inCheUpdateNode.get(IWsReqCmd.DEVICE_GUID).asText());
+			NetGuid deviceGuid = new NetGuid(inCheUpdateNode.get(IWsReqCmd.DEVICE_GUID).getBinaryValue());
 		UUID persistentId = UUID.fromString(inCheUpdateNode.get(IWsReqCmd.PERSISTENT_ID).asText());
 		if (updateTypeNode != null) {
 			switch (updateTypeNode.getTextValue()) {
@@ -469,6 +470,9 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 					break;
 			}
 		}
+		} catch (IOException e) {
+			LOGGER.error("", e);
+		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -476,9 +480,10 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 	 * @param inLedControllerUpdateNode
 	 */
 	private void processLedControllerUpdate(final JsonNode inLedControllerUpdateNode) {
+		try {
 		JsonNode updateTypeNode = inLedControllerUpdateNode.get(IWsReqCmd.OP_TYPE);
 		INetworkDevice aisleDevice = null;
-		NetGuid deviceGuid = new NetGuid(inLedControllerUpdateNode.get(IWsReqCmd.DEVICE_GUID).asText());
+			NetGuid deviceGuid = new NetGuid(inLedControllerUpdateNode.get(IWsReqCmd.DEVICE_GUID).getBinaryValue());
 		UUID persistentId = UUID.fromString(inLedControllerUpdateNode.get(IWsReqCmd.PERSISTENT_ID).asText());
 		if (updateTypeNode != null) {
 			switch (updateTypeNode.getTextValue()) {
@@ -517,6 +522,9 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 				default:
 					break;
 			}
+		}
+		} catch (IOException e) {
+			LOGGER.error("", e);
 		}
 	}
 
