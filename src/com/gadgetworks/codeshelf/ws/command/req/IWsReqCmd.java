@@ -33,8 +33,9 @@ public interface IWsReqCmd extends IWebSessionCmd {
 	String	METHODARGS			= "methodArgs";
 	
 	// Changed DEVICE_GUID constant, see DEV-320
-	// String	DEVICE_GUID			= "deviceGuidStr";
-	String	DEVICE_GUID			= "deviceGuid";
+	String	DEVICE_GUID			= "deviceGuidStr";
+	// Changed back to the way it was to resolve DEV-356, better fix forthcoming
+	// String	DEVICE_GUID			= "deviceGuid";
 
 	String	PARENT_CLASS		= "parentClassName";
 	String	PARENT_ID			= "parentPersistentId";
