@@ -14,11 +14,15 @@ public class HeaderCounts {
 	public int mActiveHeaders;
 	public int mActiveDetails;
 	public int mActiveCntrUses;
+	public int mInactiveDetailsOnActiveOrders;
+	public int mInactiveCntrUsesOnActiveOrders;
 	public HeaderCounts() {
 		mTotalHeaders = 0;
 		mActiveHeaders = 0;
 		mActiveDetails = 0;
 		mActiveCntrUses = 0;
+		mInactiveDetailsOnActiveOrders = 0;
+		mInactiveCntrUsesOnActiveOrders = 0;
 	}
 
 }

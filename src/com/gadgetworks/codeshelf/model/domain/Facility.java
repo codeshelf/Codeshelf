@@ -720,7 +720,7 @@ public class Facility extends SubLocationABC<Facility> {
 	 */
 	public final void recomputeLocationPathDistances(Path inPath) {
 		// This used to do all paths. Now as advertised only the passed in path
-		
+
 		// Paul: uncomment this block, then run AisleTest.java
 		// Just some debug help. Crash here sometimes as consequence of path = segment.getParent(), then pass the apparently good path to facility.recomputeLocationPathDistances(path)
 		/*
@@ -733,7 +733,7 @@ public class Facility extends SubLocationABC<Facility> {
 			}
 		}
 		*/
-		
+
 		// Paul: comment this block when you uncomment the block above
 		// getting from paths.values() clearly does not work reliable after just making new path
 		// Original code here
@@ -747,7 +747,6 @@ public class Facility extends SubLocationABC<Facility> {
 			}
 		}
 		// */
-		
 
 	}
 
@@ -1357,7 +1356,8 @@ public class Facility extends SubLocationABC<Facility> {
 					if ((outOrder.getOrderTypeEnum().equals(OrderTypeEnum.OUTBOUND)) && (outOrder.getActive())) {
 						// Only use orders without an order group, or orders in the same order group as the cross order.
 						if (((outOrder.getOrderGroup() == null) && (crossOrder.getOrderGroup() == null))
-								|| (outOrder.getOrderGroup() != null) && (outOrder.getOrderGroup().equals(crossOrder.getOrderGroup()))) {
+								|| (outOrder.getOrderGroup() != null)
+								&& (outOrder.getOrderGroup().equals(crossOrder.getOrderGroup()))) {
 							// OK, we have an OUTBOUND order on the same path as the CROSS order.
 							// Check to see if any of the active CROSS order detail items match OUTBOUND order details.
 							for (OrderDetail crossOrderDetail : crossOrder.getOrderDetails()) {
@@ -1926,24 +1926,49 @@ public class Facility extends SubLocationABC<Facility> {
 	 * @param outHeaderCounts
 	 */
 	public final HeaderCounts countCrossOrders() {
+		return countOrders(OrderTypeEnum.CROSS);
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param outHeaderCounts
+	 */
+	public final HeaderCounts countOutboundOrders() {
+
+		return countOrders(OrderTypeEnum.OUTBOUND);
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param outHeaderCounts
+	 */
+	private HeaderCounts countOrders(OrderTypeEnum inOrderTypeEnum) {
 		int totalCrossHeaders = 0;
 		int activeHeaders = 0;
 		int activeDetails = 0;
 		int activeCntrUses = 0;
+		int inactiveDetailsOnActiveOrders = 0;
+		int inactiveCntrUsesOnActiveOrders = 0;
 
-		for (OrderHeader crossOrder : getOrderHeaders()) {
-			if (crossOrder.getOrderTypeEnum().equals(OrderTypeEnum.CROSS)) {
+		for (OrderHeader order : getOrderHeaders()) {
+			if (order.getOrderTypeEnum().equals(inOrderTypeEnum)) {
 				totalCrossHeaders++;
-				if (crossOrder.getActive()) {
+				if (order.getActive()) {
 					activeHeaders++;
-					ContainerUse cntrUse = crossOrder.getContainerUse();
-					if (cntrUse != null && cntrUse.getActive())
-						activeCntrUses++;
-					for (OrderDetail crossOrderDetail : crossOrder.getOrderDetails()) {
-						if (crossOrderDetail.getActive()) {
+
+					ContainerUse cntrUse = order.getContainerUse();
+					if (cntrUse != null)
+						if (cntrUse.getActive())
+							activeCntrUses++;
+						else
+							inactiveCntrUsesOnActiveOrders++;
+
+					for (OrderDetail orderDetail : order.getOrderDetails()) {
+						if (orderDetail.getActive())
 							activeDetails++;
-							// if we were doing outbound orders, we might count WI here
-						}
+						else
+							inactiveCntrUsesOnActiveOrders++;
+						// if we were doing outbound orders, we might count WI here					
 					}
 				}
 			}
@@ -1953,6 +1978,8 @@ public class Facility extends SubLocationABC<Facility> {
 		outHeaderCounts.mActiveHeaders = activeHeaders;
 		outHeaderCounts.mActiveDetails = activeDetails;
 		outHeaderCounts.mActiveCntrUses = activeCntrUses;
+		outHeaderCounts.mInactiveDetailsOnActiveOrders = inactiveDetailsOnActiveOrders;
+		outHeaderCounts.mInactiveCntrUsesOnActiveOrders = inactiveCntrUsesOnActiveOrders;
 		return outHeaderCounts;
 	}
 

@@ -17,6 +17,7 @@ import org.junit.Test;
 
 import com.avaje.ebean.Ebean;
 import com.gadgetworks.codeshelf.application.Util;
+import com.gadgetworks.codeshelf.model.HeaderCounts;
 import com.gadgetworks.codeshelf.model.PickStrategyEnum;
 import com.gadgetworks.codeshelf.model.domain.Container;
 import com.gadgetworks.codeshelf.model.domain.Facility;
@@ -39,7 +40,10 @@ import com.gadgetworks.codeshelf.model.domain.Point;
  */
 public class OutboundOrderImporterTest extends EdiTestABC {
 
-
+	// the full set of fields known to the bean  (in the order of the bean, just for easier verification) is
+	// orderGroupId,orderId,orderDetailID,itemId,description,quantity,minQuantity,maxQuantity,uom,orderDate,dueDate,destinationId,pickStrategy,preAssignedContainerId,shipmentId,customerId,workSequence
+	// of these: orderId,itemId,description,quantity,uom are not nullable
+	
 	private ICsvOrderImporter importer;
 	
 	@Before
@@ -57,11 +61,11 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 	public final void testOrderImporterFromCsvStream() throws IOException {
 
 		String csvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
-				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalape��o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalape������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,123,123,10706952,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,123,123,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,123,123,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n1,USF314,COSTCO,456,456,10711111,Napa Valley Bistro - Jalape��o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\n1,USF314,COSTCO,456,456,10711111,Napa Valley Bistro - Jalape������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10722222,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
@@ -93,6 +97,8 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 
 		OrderHeader order = facility.getOrderHeader("123");
 		Assert.assertNotNull(order);
+		Integer detailCount = order.getOrderDetails().size();
+		Assert.assertEquals((Integer) 4, detailCount); // 4 details for order header 123. They would get the default name
 
 	}
 
@@ -134,6 +140,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 			mUomMasterDao);
 		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
 
+		// If not specified, default to serial
 		OrderHeader order = facility.getOrderHeader("123");
 		Assert.assertNotNull(order);
 		Assert.assertEquals(order.getPickStrategyEnum(), PickStrategyEnum.SERIAL);
@@ -187,24 +194,34 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 
 		Container container = mContainerDao.findByDomainId(facility, "CONTAINER1");
 		Assert.assertNotNull(container);
+		
+		HeaderCounts theCounts = facility.countOutboundOrders();
+		Assert.assertTrue(theCounts.mTotalHeaders == 3);
+		Assert.assertTrue(theCounts.mActiveHeaders == 3);
+		Assert.assertTrue(theCounts.mActiveDetails == 11);
+		Assert.assertTrue(theCounts.mActiveCntrUses == 1);
+
 	}
 
 	@Test
 	public void testFailOrderImporterFromCsvStream() throws IOException {
-
-		// There's no order due date on 123.1, so it should assert/fail to import.
+		// orderId,itemId,description,quantity,uom are not nullable according to the bean
+		// There's no due date on first order line. nullable, ok
+		// There's no itemID on third to last line. (did not matter)
+		// There's no uom on second to last line. (did not matter)
+		// There's no order date on last order line. nullable, ok
 		String csvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
-				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalape��o Stuffed Olives,1,each,2012-09-26 11:31:01,,0"
+				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalape������o Stuffed Olives,1,each,2012-09-26 11:31:01,,0"
 				+ "\r\n1,USF314,COSTCO,123,123,10706952,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,123,123,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,123,123,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n1,USF314,COSTCO,456,456,10711111,Napa Valley Bistro - Jalape��o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\n1,USF314,COSTCO,456,456,10711111,Napa Valley Bistro - Jalape������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10722222,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
-				+ "\r\n1,USF314,COSTCO,456,456,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
-				+ "\r\n1,USF314,COSTCO,789,789,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
-				+ "\r\n1,USF314,COSTCO,789,789,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
+				+ "\r\n1,USF314,COSTCO,456,456,,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\n1,USF314,COSTCO,789,789,10100250,Organic Fire-Roasted Red Bell Peppers,1,,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\n1,USF314,COSTCO,789,789,10706961,Sun Ripened Dried Tomato Pesto,1,each,,2012-09-26 11:31:02,0";
 
 		byte[] csvArray = csvString.getBytes();
 
@@ -232,13 +249,21 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		OrderHeader order = facility.getOrderHeader("123");
 		Assert.assertNotNull(order);
 
-		// Also fine order detail item 1. Used to not because there is no due date, but now that field is nullable in the schema.
+		// Also find order detail item 1. Used to not because there is no due date, but now that field is nullable in the schema.
 		OrderDetail orderDetail = order.getOrderDetail("10700589");
 		Assert.assertNotNull(orderDetail);
 
 		// But should find order detail item 2
 		orderDetail = order.getOrderDetail("10706952");
 		Assert.assertNotNull(orderDetail);
+		
+		HeaderCounts theCounts = facility.countOutboundOrders();
+		Assert.assertTrue(theCounts.mTotalHeaders == 3);
+		Assert.assertTrue(theCounts.mActiveHeaders == 3);
+		Assert.assertTrue(theCounts.mActiveDetails == 11);
+		Assert.assertTrue(theCounts.mActiveCntrUses == 3);
+		// Seems possibly wrong! Got a detail for missing itemID.
+
 
 	}
 
@@ -246,11 +271,11 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 	public void testManyOrderArchive() throws IOException {
 
 		String firstOrderBatchCsv = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
-				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalape��o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalape������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,123,123,10706952,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,123,123,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,123,123,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n1,USF314,COSTCO,456,456,10711111,Napa Valley Bistro - Jalape��o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\n1,USF314,COSTCO,456,456,10711111,Napa Valley Bistro - Jalape������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10722222,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
@@ -280,14 +305,21 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 			mItemMasterDao,
 			mUomMasterDao);
 		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
+		
+		HeaderCounts theCounts = facility.countOutboundOrders();
+		Assert.assertTrue(theCounts.mTotalHeaders == 3);
+		Assert.assertTrue(theCounts.mActiveHeaders == 3);
+		Assert.assertTrue(theCounts.mActiveDetails == 11);
+		Assert.assertTrue(theCounts.mActiveCntrUses == 3);
+
 
 		// Now import a smaller list of orders, but more than one.
 		String secondOrderBatchCsv = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
-				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalape��o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalape������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,123,123,10706952,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,123,123,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,123,123,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n1,USF314,COSTCO,456,456,10711111,Napa Valley Bistro - Jalape��o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\n1,USF314,COSTCO,456,456,10711111,Napa Valley Bistro - Jalape������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
@@ -307,6 +339,16 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 			mItemMasterDao,
 			mUomMasterDao);
 		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
+		
+		HeaderCounts theCounts2 = facility.countOutboundOrders();
+		Assert.assertTrue(theCounts2.mTotalHeaders == 3);
+		Assert.assertTrue(theCounts2.mActiveHeaders == 2);
+		Assert.assertTrue(theCounts2.mActiveDetails == 8);
+		Assert.assertTrue(theCounts2.mActiveCntrUses == 2);
+		// Unused details are actually deleted
+		Assert.assertTrue(theCounts2.mInactiveDetailsOnActiveOrders == 0);
+		// But container 789 was not deleted. Just went inactive.
+		Assert.assertTrue(theCounts2.mInactiveCntrUsesOnActiveOrders  == 1);
 
 		// Order 789 should exist and be inactive.
 		OrderHeader order = facility.getOrderHeader("789");
@@ -330,11 +372,11 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 	public void testOneOrderArchive() throws IOException {
 
 		String firstOrderBatchCsv = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
-				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalape��o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalape������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,123,123,10706952,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,123,123,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,123,123,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n1,USF314,COSTCO,456,456,10711111,Napa Valley Bistro - Jalape��o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\n1,USF314,COSTCO,456,456,10711111,Napa Valley Bistro - Jalape������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10722222,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
@@ -364,10 +406,17 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 			mItemMasterDao,
 			mUomMasterDao);
 		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
+		
+		HeaderCounts theCounts = facility.countOutboundOrders();
+		Assert.assertTrue(theCounts.mTotalHeaders == 3);
+		Assert.assertTrue(theCounts.mActiveHeaders == 3);
+		Assert.assertTrue(theCounts.mActiveDetails == 11);
+		Assert.assertTrue(theCounts.mActiveCntrUses == 3);
+
 
 		// Now import a smaller list of orders, but more than one.
 		String secondOrderBatchCsv = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
-				+ "\r\n1,USF314,COSTCO,456,456,10711111,Napa Valley Bistro - Jalape��o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\n1,USF314,COSTCO,456,456,10711111,Napa Valley Bistro - Jalape������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
@@ -387,6 +436,15 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 			mItemMasterDao,
 			mUomMasterDao);
 		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
+		
+		HeaderCounts theCounts2 = facility.countOutboundOrders();
+		Assert.assertTrue(theCounts2.mTotalHeaders == 3);
+		Assert.assertTrue(theCounts2.mActiveHeaders == 1);
+		Assert.assertTrue(theCounts2.mActiveDetails == 4);
+		Assert.assertTrue(theCounts2.mActiveCntrUses == 1);
+		Assert.assertTrue(theCounts2.mInactiveDetailsOnActiveOrders == 0);
+		Assert.assertTrue(theCounts2.mInactiveCntrUsesOnActiveOrders  == 0);
+
 
 		// Order 789 should exist and be active.
 		OrderHeader order = facility.getOrderHeader("789");
@@ -410,11 +468,11 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 	public final void testMinMaxOrderImporterFromCsvStream() throws IOException {
 
 		String csvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,minQuantity,maxQuantity,uom,orderDate,dueDate,workSequence"
-				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalape��o Stuffed Olives,	1,0,5,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalape������o Stuffed Olives,	1,0,5,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,123,123,10706952,Italian Homemade Style Basil Pesto,				1,0,5,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,123,123,10706962,Authentic Pizza Sauces,							1,0,5,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,123,123,10100250,Organic Fire-Roasted Red Bell Peppers,			1,0,5,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n1,USF314,COSTCO,456,456,10711111,Napa Valley Bistro - Jalape��o Stuffed Olives,	1,0,5,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\n1,USF314,COSTCO,456,456,10711111,Napa Valley Bistro - Jalape������o Stuffed Olives,	1,0,5,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10722222,Italian Homemade Style Basil Pesto,				1,0,5,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10706962,Authentic Pizza Sauces,							1,0,5,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10100250,Organic Fire-Roasted Red Bell Peppers,			1,0,5,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
@@ -457,11 +515,11 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 	public final void testMinMaxDefaultOrderImporterFromCsvStream() throws IOException {
 
 		String csvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
-				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalape��o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalape������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,123,123,10706952,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,123,123,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,123,123,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n1,USF314,COSTCO,456,456,10711111,Napa Valley Bistro - Jalape��o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\n1,USF314,COSTCO,456,456,10711111,Napa Valley Bistro - Jalape������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10722222,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
@@ -504,11 +562,11 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 	public final void testDetailIdOrderImporterFromCsvStream() throws IOException {
 
 		String firstCsvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
-				+ "\r\n1,USF314,COSTCO,123,123,123.1,10700589,Napa Valley Bistro - Jalape��o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,123,123,123.1,10700589,Napa Valley Bistro - Jalape������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,123,123,123.2,10706952,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,123,123,123.3,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,123,123,123.4,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n1,USF314,COSTCO,456,456,456.1,10711111,Napa Valley Bistro - Jalape��o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\n1,USF314,COSTCO,456,456,456.1,10711111,Napa Valley Bistro - Jalape������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,456.2,10722222,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,456.3,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,456.4,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
@@ -549,19 +607,31 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Assert.assertNotNull(orderDetail);
 		orderDetail = order.getOrderDetail("456.5");
 		Assert.assertNotNull(orderDetail);
+		// try what worked in the absence of the order detail ID
+		orderDetail = order.getOrderDetail("456"); // order ID
+		Assert.assertNull(orderDetail);
+		orderDetail = order.getOrderDetail("10706962"); // item ID
+		Assert.assertNull(orderDetail);
+		
+		HeaderCounts theCounts = facility.countOutboundOrders();
+		Assert.assertTrue(theCounts.mTotalHeaders == 3);
+		Assert.assertTrue(theCounts.mActiveHeaders == 3);
+		Assert.assertTrue(theCounts.mActiveDetails == 11);
+		Assert.assertTrue(theCounts.mActiveCntrUses == 3);
 
+
+		// This is a very odd test. Above had one set of headers, and this a different set. Could happen for different customers maybe, but here same customer and same orders.
+		// So, what happens to the details? The answer is the old details all are inactivated for each represented order ID, and new details made.
 		String secondCsvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
-				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalape��o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalape������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,123,123,10706952,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,123,123,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,123,123,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n1,USF314,COSTCO,456,456,10711111,Napa Valley Bistro - Jalape��o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\n1,USF314,COSTCO,456,456,10711111,Napa Valley Bistro - Jalape������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10722222,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
-				+ "\r\n1,USF314,COSTCO,456,456,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
-				+ "\r\n1,USF314,COSTCO,789,789,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
-				+ "\r\n1,USF314,COSTCO,789,789,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
+				+ "\r\n1,USF314,COSTCO,456,456,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
 
 		byte[] secondCsvArray = secondCsvString.getBytes();
 		stream = new ByteArrayInputStream(secondCsvArray);
@@ -577,6 +647,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 			mUomMasterDao);
 		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
 
+		// Find inactive 123.1 and new active 10700589
 		order = facility.getOrderHeader("123");
 		Assert.assertNotNull(order);
 		orderDetail = order.getOrderDetail("123.1");
@@ -585,6 +656,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		orderDetail = order.getOrderDetail("10700589");
 		Assert.assertNotNull(orderDetail);
 
+		// Find inactive 456.1 and new active 10711111 and 10722222
 		order = facility.getOrderHeader("456");
 		Assert.assertNotNull(order);
 		orderDetail = order.getOrderDetail("456.1");
@@ -594,6 +666,15 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Assert.assertNotNull(orderDetail);
 		orderDetail = order.getOrderDetail("10722222");
 		Assert.assertNotNull(orderDetail);
+		
+		// And what about order 789, missing altogether in second file? Answer is the header went inactive, along with its 2 details and 1 cntrUse
+		
+		HeaderCounts theCounts2 = facility.countOutboundOrders();
+		Assert.assertTrue(theCounts2.mTotalHeaders == 3);
+		Assert.assertTrue(theCounts2.mActiveHeaders == 2);
+		Assert.assertTrue(theCounts2.mActiveDetails == 9);
+		Assert.assertTrue(theCounts2.mActiveCntrUses == 2);
+
 	}
 
 	@Test
@@ -606,11 +687,11 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Facility facility = organization.getFacility("F-ORD1.9");
 
 		String firstCsvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
-				+ "\r\n1,USF314,COSTCO,123,123,123.1,10700589,Napa Valley Bistro - Jalape��o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,123,123,123.1,10700589,Napa Valley Bistro - Jalape������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,123,123,123.2,10706952,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,123,123,123.3,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,123,123,123.4,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n1,USF314,COSTCO,456,456,456.1,10711111,Napa Valley Bistro - Jalape��o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\n1,USF314,COSTCO,456,456,456.1,10711111,Napa Valley Bistro - Jalape������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,456.2,10722222,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,456.3,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,456.4,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
@@ -619,29 +700,24 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 				+ "\r\n1,USF314,COSTCO,789,789,789.2,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
 		importCsvString(facility, firstCsvString);
 		
-		OrderHeader order = facility.getOrderHeader("123");
-		Assert.assertNotNull(order);
-		OrderDetail orderDetail = order.getOrderDetail("123.1");
-		Assert.assertNotNull(orderDetail);
+		HeaderCounts theCounts = facility.countOutboundOrders();
+		Assert.assertTrue(theCounts.mTotalHeaders == 3);
+		Assert.assertTrue(theCounts.mActiveHeaders == 3);
+		Assert.assertTrue(theCounts.mActiveDetails == 11);
+		Assert.assertTrue(theCounts.mActiveCntrUses == 3);
 
-		order = facility.getOrderHeader("456");
-		Assert.assertNotNull(order);
-		orderDetail = order.getOrderDetail("456.1");
-		Assert.assertNotNull(orderDetail);
-		orderDetail = order.getOrderDetail("456.5");
-		Assert.assertNotNull(orderDetail);
-
+		// Import exact same file again
 		importCsvString(facility, firstCsvString);
-		order = facility.getOrderHeader("123");
-		Assert.assertNotNull(order);
-		orderDetail = order.getOrderDetail("123.1");
-		Assert.assertNotNull(orderDetail);
 
-		order = facility.getOrderHeader("456");
-		Assert.assertNotNull(order);
-		orderDetail = order.getOrderDetail("456.1");
-		Assert.assertNotNull(orderDetail);
-	}
+		HeaderCounts theCounts2 = facility.countOutboundOrders();
+		Assert.assertTrue(theCounts2.mTotalHeaders == 3);
+		Assert.assertTrue(theCounts2.mActiveHeaders == 3);
+		Assert.assertTrue(theCounts2.mActiveDetails == 11);
+		Assert.assertTrue(theCounts2.mInactiveDetailsOnActiveOrders == 0);
+		Assert.assertTrue(theCounts2.mInactiveCntrUsesOnActiveOrders  == 0);
+		Assert.assertTrue(theCounts2.mActiveCntrUses == 3);
+
+		}
 	/**
 	 * Simulates the edi process for order importing
 	 */
@@ -669,13 +745,109 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 
 		foundFacility = mFacilityDao.findByPersistentId(testFacility.getPersistentId());
 		
-		//Reimporting the subset again would cause class cast excpetions or the details would be empty and DAOException would occur because we would attempt to create an already existing detail
+		//Reimporting the subset again would cause class cast exception or the details would be empty and DAOException would occur because we would attempt to create an already existing detail
 		result = importOrdersResource(foundFacility, "./resource/subset.orders.csv");
 		Assert.assertTrue(result.toString(), result.isSuccessful());
 		for (OrderHeader orderHeader : foundFacility.getOrderHeaders()) {
 			Assert.assertNotNull(orderHeader.getOrderDetails());
 		}
 	}
+	
+	//******************** TESTS without Group ID ***********************
+	
+	@Test
+	public final void testOutboundOrderNoGroup() throws IOException {
+		Organization organization = new Organization();
+		organization.setDomainId("O-ORD2.1");
+		mOrganizationDao.store(organization);
+
+		organization.createFacility("F-ORD2.1", "TEST", Point.getZeroPoint());
+		Facility facility = organization.getFacility("F-ORD2.1");
+
+		String firstCsvString = "shipmentId,customerId,preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
+				+ "\r\nUSF314,COSTCO,123,123,123.1,10700589,Napa Valley Bistro - Jalape������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\nUSF314,COSTCO,123,123,123.2,10706952,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\nUSF314,COSTCO,123,123,123.3,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\nUSF314,COSTCO,123,123,123.4,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\nUSF314,COSTCO,456,456,456.1,10711111,Napa Valley Bistro - Jalape������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\nUSF314,COSTCO,456,456,456.2,10722222,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\nUSF314,COSTCO,456,456,456.3,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\nUSF314,COSTCO,456,456,456.4,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\nUSF314,COSTCO,456,456,456.5,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\nUSF314,COSTCO,789,789,789.1,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\nUSF314,COSTCO,789,789,789.2,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
+		importCsvString(facility, firstCsvString);
+		
+		HeaderCounts theCounts = facility.countOutboundOrders();
+		Assert.assertTrue(theCounts.mTotalHeaders == 3);
+		Assert.assertTrue(theCounts.mActiveHeaders == 3);
+		Assert.assertTrue(theCounts.mActiveDetails == 11);
+		Assert.assertTrue(theCounts.mActiveCntrUses == 3);
+
+		// Import exact same file again
+		importCsvString(facility, firstCsvString);
+
+		HeaderCounts theCounts2 = facility.countOutboundOrders();
+		Assert.assertTrue(theCounts2.mTotalHeaders == 3);
+		Assert.assertTrue(theCounts2.mActiveHeaders == 3);
+		Assert.assertTrue(theCounts2.mActiveDetails == 11);
+		Assert.assertTrue(theCounts2.mInactiveDetailsOnActiveOrders == 0);
+		Assert.assertTrue(theCounts2.mInactiveCntrUsesOnActiveOrders  == 0);
+		Assert.assertTrue(theCounts2.mActiveCntrUses == 3);
+		
+		// Try the kinds of things we did before with group ID. Remove detail 123.4  And remove 789 altogether. (Dates are the same.)
+		
+		String secondCsvString = "shipmentId,customerId,preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
+				+ "\r\nUSF314,COSTCO,123,123,123.1,10700589,Napa Valley Bistro - Jalape������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\nUSF314,COSTCO,123,123,123.2,10706952,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\nUSF314,COSTCO,123,123,123.3,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\nUSF314,COSTCO,456,456,456.1,10711111,Napa Valley Bistro - Jalape������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\nUSF314,COSTCO,456,456,456.2,10722222,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\nUSF314,COSTCO,456,456,456.3,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\nUSF314,COSTCO,456,456,456.4,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\nUSF314,COSTCO,456,456,456.5,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
+
+		importCsvString(facility, secondCsvString);
+		// See, works same as if matching the group
+		HeaderCounts theCounts3 = facility.countOutboundOrders();
+		Assert.assertTrue(theCounts3.mTotalHeaders == 3);
+		Assert.assertTrue(theCounts3.mActiveHeaders == 2);
+		Assert.assertTrue(theCounts3.mActiveDetails == 8);
+		Assert.assertTrue(theCounts3.mInactiveDetailsOnActiveOrders == 0);
+		Assert.assertTrue(theCounts3.mInactiveCntrUsesOnActiveOrders  == 1);
+		Assert.assertTrue(theCounts3.mActiveCntrUses == 2);
+		
+		/*
+		// So, can a customer update a single order or detail by setting the count to zero
+		String fourthCsvString = "shipmentId,customerId,preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
+				+ "\r\nUSF314,COSTCO,123,123,123.3,10706962,Authentic Pizza Sauces,0,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
+		importCsvString(facility, fourthCsvString);
+		// This looks buggy. Orders and 6 details still present.
+		HeaderCounts theCounts4 = facility.countOutboundOrders();
+		Assert.assertTrue(theCounts4.mTotalHeaders == 3);
+		Assert.assertTrue(theCounts4.mActiveHeaders == 2);
+		Assert.assertTrue(theCounts4.mActiveDetails == 6);
+		Assert.assertTrue(theCounts4.mInactiveDetailsOnActiveOrders == 0);
+		Assert.assertTrue(theCounts4.mInactiveCntrUsesOnActiveOrders  == 4);
+		Assert.assertTrue(theCounts4.mActiveCntrUses == 1);
+
+		// So, can a customer update the count on a single item? 123.2 going to 3.
+		String fifthCsvString = "shipmentId,customerId,preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
+				+ "\r\nUSF314,COSTCO,123,123,123.2,10706952,Italian Homemade Style Basil Pesto,3,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
+				
+		importCsvString(facility, fifthCsvString);
+		// Well, yes. The detail is still active, but with a count of zero. And the rest was not made inactive.
+		HeaderCounts theCounts5 = facility.countOutboundOrders();
+		Assert.assertTrue(theCounts5.mTotalHeaders == 3);
+		Assert.assertTrue(theCounts5.mActiveHeaders == 2);
+		Assert.assertTrue(theCounts5.mActiveDetails == 6);
+		Assert.assertTrue(theCounts5.mInactiveDetailsOnActiveOrders == 0);
+		Assert.assertTrue(theCounts5.mInactiveCntrUsesOnActiveOrders  == 4);
+		Assert.assertTrue(theCounts5.mActiveCntrUses == 2);
+*/
+		}
+	
+	//******************** private helpers ***********************
 	
 	private Facility getTestFacility(String orgId, String facilityId) {
 		Organization organization = new Organization();
