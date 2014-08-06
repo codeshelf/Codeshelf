@@ -428,48 +428,48 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 	 */
 	private void processCheUpdate(final JsonNode inCheUpdateNode) {
 		try {
-		JsonNode updateTypeNode = inCheUpdateNode.get(IWsReqCmd.OP_TYPE);
-		INetworkDevice cheDevice = null;
+			JsonNode updateTypeNode = inCheUpdateNode.get(IWsReqCmd.OP_TYPE);
+			INetworkDevice cheDevice = null;
 			NetGuid deviceGuid = new NetGuid(inCheUpdateNode.get(IWsReqCmd.DEVICE_GUID).getBinaryValue());
-		UUID persistentId = UUID.fromString(inCheUpdateNode.get(IWsReqCmd.PERSISTENT_ID).asText());
-		if (updateTypeNode != null) {
-			switch (updateTypeNode.getTextValue()) {
-				case IWsReqCmd.OP_TYPE_CREATE:
-					// Create the CHE.
-					cheDevice = new CheDeviceLogic(persistentId, deviceGuid, this, mRadioController);
-
-					// Check to see if the Che is already in our map.
-					if (!mDeviceMap.containsValue(cheDevice)) {
-						mDeviceMap.put(deviceGuid, cheDevice);
-						mRadioController.addNetworkDevice(cheDevice);
-					}
-
-					LOGGER.info("Created che: " + cheDevice.getGuid());
-					break;
-
-				case IWsReqCmd.OP_TYPE_UPDATE:
-					// Update the CHE.
-					cheDevice = mDeviceMap.get(deviceGuid);
-
-					if (cheDevice == null) {
+			UUID persistentId = UUID.fromString(inCheUpdateNode.get(IWsReqCmd.PERSISTENT_ID).asText());
+			if (updateTypeNode != null) {
+				switch (updateTypeNode.getTextValue()) {
+					case IWsReqCmd.OP_TYPE_CREATE:
+						// Create the CHE.
 						cheDevice = new CheDeviceLogic(persistentId, deviceGuid, this, mRadioController);
-						mDeviceMap.put(deviceGuid, cheDevice);
-						mRadioController.addNetworkDevice(cheDevice);
-					}
-					LOGGER.info("Updated che: " + cheDevice.getGuid());
-					break;
 
-				case IWsReqCmd.OP_TYPE_DELETE:
-					// Delete the CHE.
-					cheDevice = mDeviceMap.remove(deviceGuid);
-					mRadioController.removeNetworkDevice(cheDevice);
-					LOGGER.info("Deleted che: " + cheDevice.getGuid());
-					break;
+						// Check to see if the Che is already in our map.
+						if (!mDeviceMap.containsValue(cheDevice)) {
+							mDeviceMap.put(deviceGuid, cheDevice);
+							mRadioController.addNetworkDevice(cheDevice);
+						}
 
-				default:
-					break;
+						LOGGER.info("Created che: " + cheDevice.getGuid());
+						break;
+
+					case IWsReqCmd.OP_TYPE_UPDATE:
+						// Update the CHE.
+						cheDevice = mDeviceMap.get(deviceGuid);
+
+						if (cheDevice == null) {
+							cheDevice = new CheDeviceLogic(persistentId, deviceGuid, this, mRadioController);
+							mDeviceMap.put(deviceGuid, cheDevice);
+							mRadioController.addNetworkDevice(cheDevice);
+						}
+						LOGGER.info("Updated che: " + cheDevice.getGuid());
+						break;
+
+					case IWsReqCmd.OP_TYPE_DELETE:
+						// Delete the CHE.
+						cheDevice = mDeviceMap.remove(deviceGuid);
+						mRadioController.removeNetworkDevice(cheDevice);
+						LOGGER.info("Deleted che: " + cheDevice.getGuid());
+						break;
+
+					default:
+						break;
+				}
 			}
-		}
 		} catch (IOException e) {
 			LOGGER.error("", e);
 		}
@@ -481,48 +481,48 @@ public class CsDeviceManager implements ICsDeviceManager, ICsWebsocketClientMsgH
 	 */
 	private void processLedControllerUpdate(final JsonNode inLedControllerUpdateNode) {
 		try {
-		JsonNode updateTypeNode = inLedControllerUpdateNode.get(IWsReqCmd.OP_TYPE);
-		INetworkDevice aisleDevice = null;
+			JsonNode updateTypeNode = inLedControllerUpdateNode.get(IWsReqCmd.OP_TYPE);
+			INetworkDevice aisleDevice = null;
 			NetGuid deviceGuid = new NetGuid(inLedControllerUpdateNode.get(IWsReqCmd.DEVICE_GUID).getBinaryValue());
-		UUID persistentId = UUID.fromString(inLedControllerUpdateNode.get(IWsReqCmd.PERSISTENT_ID).asText());
-		if (updateTypeNode != null) {
-			switch (updateTypeNode.getTextValue()) {
-				case IWsReqCmd.OP_TYPE_CREATE:
-					// Create the aisle device.
-					aisleDevice = new AisleDeviceLogic(persistentId, deviceGuid, this, mRadioController);
-
-					// Check to see if the aisle device is already in our map.
-					if (!mDeviceMap.containsValue(aisleDevice)) {
-						mDeviceMap.put(deviceGuid, aisleDevice);
-						mRadioController.addNetworkDevice(aisleDevice);
-					}
-
-					LOGGER.info("Created aisle device: " + aisleDevice.getGuid());
-					break;
-
-				case IWsReqCmd.OP_TYPE_UPDATE:
-					// Update the aisle device.
-					aisleDevice = mDeviceMap.get(deviceGuid);
-
-					if (aisleDevice == null) {
+			UUID persistentId = UUID.fromString(inLedControllerUpdateNode.get(IWsReqCmd.PERSISTENT_ID).asText());
+			if (updateTypeNode != null) {
+				switch (updateTypeNode.getTextValue()) {
+					case IWsReqCmd.OP_TYPE_CREATE:
+						// Create the aisle device.
 						aisleDevice = new AisleDeviceLogic(persistentId, deviceGuid, this, mRadioController);
-						mDeviceMap.put(deviceGuid, aisleDevice);
-						mRadioController.addNetworkDevice(aisleDevice);
-					}
-					LOGGER.info("Updated aisle device: " + aisleDevice.getGuid());
-					break;
 
-				case IWsReqCmd.OP_TYPE_DELETE:
-					// Delete the aisle device.
-					aisleDevice = mDeviceMap.remove(deviceGuid);
-					mRadioController.removeNetworkDevice(aisleDevice);
-					LOGGER.info("Deleted aisle device: " + aisleDevice.getGuid());
-					break;
+						// Check to see if the aisle device is already in our map.
+						if (!mDeviceMap.containsValue(aisleDevice)) {
+							mDeviceMap.put(deviceGuid, aisleDevice);
+							mRadioController.addNetworkDevice(aisleDevice);
+						}
 
-				default:
-					break;
+						LOGGER.info("Created aisle device: " + aisleDevice.getGuid());
+						break;
+
+					case IWsReqCmd.OP_TYPE_UPDATE:
+						// Update the aisle device.
+						aisleDevice = mDeviceMap.get(deviceGuid);
+
+						if (aisleDevice == null) {
+							aisleDevice = new AisleDeviceLogic(persistentId, deviceGuid, this, mRadioController);
+							mDeviceMap.put(deviceGuid, aisleDevice);
+							mRadioController.addNetworkDevice(aisleDevice);
+						}
+						LOGGER.info("Updated aisle device: " + aisleDevice.getGuid());
+						break;
+
+					case IWsReqCmd.OP_TYPE_DELETE:
+						// Delete the aisle device.
+						aisleDevice = mDeviceMap.remove(deviceGuid);
+						mRadioController.removeNetworkDevice(aisleDevice);
+						LOGGER.info("Deleted aisle device: " + aisleDevice.getGuid());
+						break;
+
+					default:
+						break;
+				}
 			}
-		}
 		} catch (IOException e) {
 			LOGGER.error("", e);
 		}
