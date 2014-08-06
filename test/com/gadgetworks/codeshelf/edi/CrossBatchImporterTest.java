@@ -562,7 +562,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		Assert.assertNotNull(order);
 		Assert.assertEquals(order.getOrderTypeEnum(), OrderTypeEnum.CROSS);
 
-		// Make sure there's a contianer use and that its ID matches the order.
+		// Make sure there's a container use and that its ID matches the order.
 		ContainerUse use = order.getContainerUse();
 		Assert.assertNotNull(use);
 		Assert.assertEquals(use.getParent().getContainerId(), "C111");
@@ -603,6 +603,38 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		Assert.assertTrue(theCounts2.mActiveHeaders == 2);
 		Assert.assertTrue(theCounts2.mActiveDetails == 5);
 		Assert.assertTrue(theCounts2.mActiveCntrUses == 2);
+		
+		// The next bit is a minor test for DEV-278, adding uom to the default domain name.
+		// Re-import, with two difference. Duplicate one detail with different uom. And change a uom.
+		String csvString3 = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
+				+ "xx,C111,I111.1,100,ea\r\n" //
+				+ "xx,C111,I111.2,200,ea\r\n" //
+				+ "xx,C111,I111.3,300,ea\r\n" //
+				+ "xx,C222,I222.1,100,ea\r\n" //
+				+ "xx,C222,I222.1,5,cs\r\n" //
+				+ "xx,C222,I222.2,200,cs\r\n";
+
+		csvArray = csvString3.getBytes();
+
+		stream = new ByteArrayInputStream(csvArray);
+		reader = new InputStreamReader(stream);
+
+		ediProcessTime = new Timestamp(System.currentTimeMillis());
+		CrossBatchCsvImporter importer3 = new CrossBatchCsvImporter(mOrderGroupDao,
+			mOrderHeaderDao,
+			mOrderDetailDao,
+			mContainerDao,
+			mContainerUseDao,
+			mUomMasterDao);
+		importer3.importCrossBatchesFromCsvStream(reader, facility, ediProcessTime);
+
+		// JR for DEV-278. Just making it pass now.
+		// 5 details. After change, we might get 6 there are both ea and cs orders for I222.1 in C2222
+		HeaderCounts theCounts3 = facility.countCrossOrders();
+		Assert.assertTrue(theCounts3.mTotalHeaders == 6);
+		Assert.assertTrue(theCounts3.mActiveHeaders == 2);
+		Assert.assertTrue(theCounts3.mActiveDetails == 5);
+		Assert.assertTrue(theCounts3.mActiveCntrUses == 2);
 
 	}
 
