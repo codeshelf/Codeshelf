@@ -1,7 +1,7 @@
 package com.gadgetworks.codeshelf.ws.jetty.server;
 
 import java.util.Collection;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.HashMap;
 
 import javax.websocket.Session;
 
@@ -18,7 +18,7 @@ public class SessionManager {
 
 	private final static SessionManager theSessionManager = new SessionManager();
 	
-	private ConcurrentHashMap<String,CsSession> mActiveSessions = new ConcurrentHashMap<String, CsSession>();
+	private HashMap<String,CsSession> activeSessions = new HashMap<String, CsSession>();
 	
 	private final Counter activeSessionsCounter = MetricsService.addCounter(MetricsGroup.WSS,"sessions.active");
 	private final Counter totalSessionsCounter = MetricsService.addCounter(MetricsGroup.WSS,"sessions.total");
@@ -32,10 +32,10 @@ public class SessionManager {
 
 	public synchronized void sessionStarted(Session session) {
 		String sessionId = session.getId();
-		if (!mActiveSessions.containsKey(sessionId)) {
+		if (!activeSessions.containsKey(sessionId)) {
 			CsSession csSession = new CsSession(session);
 			csSession.setSessionId(sessionId);
-			mActiveSessions.put(sessionId, csSession);
+			activeSessions.put(sessionId, csSession);
 			LOGGER.info("Session "+session.getId()+" started");
 			activeSessionsCounter.inc();
 			totalSessionsCounter.inc();
@@ -47,8 +47,10 @@ public class SessionManager {
 
 	public synchronized void sessionEnded(Session session) {
 		String sessionId = session.getId();
-		if (mActiveSessions.containsKey(sessionId)) {
-			mActiveSessions.remove(sessionId);
+		CsSession csSession = activeSessions.get(sessionId);
+		if (csSession!=null) {
+			csSession.close();
+			activeSessions.remove(sessionId);
 			LOGGER.info("Session "+session.getId()+" ended");
 			activeSessionsCounter.dec();
 		}
@@ -62,11 +64,11 @@ public class SessionManager {
 		if (sessionId==null) {
 			return null;
 		}
-		return this.mActiveSessions.get(sessionId);
+		return this.activeSessions.get(sessionId);
 	}
 	
 	public final Collection<CsSession> getSessions() {
-		return this.mActiveSessions.values();
+		return this.activeSessions.values();
 	}
 
 }

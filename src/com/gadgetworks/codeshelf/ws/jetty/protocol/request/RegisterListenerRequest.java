@@ -6,7 +6,7 @@ import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
 
-public class ObjectListenerRequest extends RequestABC {
+public class RegisterListenerRequest extends RequestABC {
 
 	@Getter @Setter
 	String className;

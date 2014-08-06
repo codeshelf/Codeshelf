@@ -10,12 +10,14 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.request.GetWorkRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.GetWorkResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
+import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
 
 public class GetWorkCommand extends CommandABC {
 
 	GetWorkRequest request;
 	
-	public GetWorkCommand(GetWorkRequest request) {
+	public GetWorkCommand(CsSession session, GetWorkRequest request) {
+		super(session);
 		this.request = request;
 	}
 

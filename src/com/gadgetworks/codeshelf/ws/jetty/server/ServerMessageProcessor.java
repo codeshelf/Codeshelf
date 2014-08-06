@@ -7,7 +7,6 @@ import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
-import com.codahale.metrics.Meter;
 import com.codahale.metrics.Timer;
 import com.gadgetworks.codeshelf.metrics.MetricsGroup;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
@@ -20,11 +19,11 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.command.GetWorkCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.LoginCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.NetworkAttachCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.NetworkStatusCommand;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ObjectListenerCommand;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ObjectGetCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ObjectMethodCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ObjectUpdateCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.RegisterFilterCommand;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ObjectGetCommand;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.command.RegisterListenerCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageProcessor;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.CompleteWorkInstructionRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ComputeWorkRequest;
@@ -33,11 +32,11 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.request.GetWorkRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.LoginRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.NetworkAttachRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.NetworkStatusRequest;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectListenerRequest;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectGetRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectMethodRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectUpdateRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RegisterFilterRequest;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectGetRequest;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RegisterListenerRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RequestABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.PingResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
@@ -93,14 +92,14 @@ public class ServerMessageProcessor extends MessageProcessor {
         // process message...
     	final Timer.Context context = requestProcessingTimer.time();
 	    try {
-			// TODO: get rid of type handling using if statements and type casts...
+			// TODO: get rid of message type handling using if statements and type casts...
 			if (request instanceof LoginRequest) {
 				LoginRequest loginRequest = (LoginRequest) request;
 				command = new LoginCommand(csSession,loginRequest);
 				loginCounter.inc();
 			}
 			else if (request instanceof EchoRequest) {
-				command = new EchoCommand((EchoRequest) request);
+				command = new EchoCommand(csSession,(EchoRequest) request);
 				echoCounter.inc();
 			}		
 			else if (request instanceof NetworkAttachRequest) {
@@ -108,39 +107,39 @@ public class ServerMessageProcessor extends MessageProcessor {
 				attachCounter.inc();
 			}			
 			else if (request instanceof NetworkStatusRequest) {
-				command = new NetworkStatusCommand((NetworkStatusRequest) request);
+				command = new NetworkStatusCommand(csSession,(NetworkStatusRequest) request);
 				statusCounter.inc();
 			}			
 			else if (request instanceof CompleteWorkInstructionRequest) {
-				command = new CompleteWorkInstructionCommand((CompleteWorkInstructionRequest) request);
+				command = new CompleteWorkInstructionCommand(csSession,(CompleteWorkInstructionRequest) request);
 				completeWiCounter.inc();
 			}
 			else if (request instanceof ComputeWorkRequest) {
-				command = new ComputeWorkCommand((ComputeWorkRequest) request);
+				command = new ComputeWorkCommand(csSession,(ComputeWorkRequest) request);
 				computeWorkCounter.inc();
 			}			
 			else if (request instanceof GetWorkRequest) {
-				command = new GetWorkCommand((GetWorkRequest) request);
+				command = new GetWorkCommand(csSession,(GetWorkRequest) request);
 				getWorkCounter.inc();
 			}
 			else if (request instanceof ObjectGetRequest) {
-				command = new ObjectGetCommand((ObjectGetRequest) request);
+				command = new ObjectGetCommand(csSession,(ObjectGetRequest) request);
 				objectGetCounter.inc();
 			}			
 			else if (request instanceof ObjectUpdateRequest) {
-				command = new ObjectUpdateCommand((ObjectUpdateRequest) request);
+				command = new ObjectUpdateCommand(csSession,(ObjectUpdateRequest) request);
 				objectUpdateCounter.inc();
 			}
 			else if (request instanceof ObjectMethodRequest) {
-				command = new ObjectMethodCommand((ObjectMethodRequest) request);
+				command = new ObjectMethodCommand(csSession,(ObjectMethodRequest) request);
 				objectUpdateCounter.inc();
 			}
-			else if (request instanceof ObjectListenerRequest) {
-				command = new ObjectListenerCommand((ObjectListenerRequest) request);
+			else if (request instanceof RegisterListenerRequest) {
+				command = new RegisterListenerCommand(csSession, (RegisterListenerRequest) request);
 				objectListenerCounter.inc();
 			}			
 			else if (request instanceof RegisterFilterRequest) {
-				command = new RegisterFilterCommand((RegisterFilterRequest) request);
+				command = new RegisterFilterCommand(csSession,(RegisterFilterRequest) request);
 				objectFilterCounter.inc();
 			}			
 			// check if matching command was found

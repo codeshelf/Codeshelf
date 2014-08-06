@@ -4,21 +4,16 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.apache.commons.beanutils.BeanUtils;
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
-import com.gadgetworks.codeshelf.ws.command.resp.ObjectMethodWsRespCmd;
-import com.gadgetworks.codeshelf.ws.command.resp.ObjectUpdateWsRespCmd;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectGetRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectUpdateRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectUpdateResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
+import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
 
 public class ObjectUpdateCommand extends CommandABC {
 
@@ -26,7 +21,8 @@ public class ObjectUpdateCommand extends CommandABC {
 
 	private ObjectUpdateRequest	request;
 
-	public ObjectUpdateCommand(ObjectUpdateRequest request) {
+	public ObjectUpdateCommand(CsSession session, ObjectUpdateRequest request) {
+		super(session);
 		this.request = request;
 	}
 	

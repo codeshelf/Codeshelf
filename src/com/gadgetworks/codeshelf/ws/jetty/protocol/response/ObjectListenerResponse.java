@@ -4,7 +4,6 @@ import lombok.Getter;
 import lombok.Setter;
 
 public class ObjectListenerResponse extends ResponseABC {
-
 	@Getter @Setter
 	Object results;
 }

@@ -127,7 +127,7 @@ public class ObjectListenerWsReqCmd extends WsReqCmdABC implements IWsPersistent
 			List<Map<String, Object>> resultsList = new ArrayList<Map<String, Object>>();
 			for (IDomainObject matchedObject : inDomainObjectList) {
 				Map<String, Object> propertiesMap = new HashMap<String, Object>();
-				// Always include the class naem and persistent ID in the results.
+				// Always include the class name and persistent ID in the results.
 				propertiesMap.put(CLASSNAME, matchedObject.getClassName());
 				propertiesMap.put(OP_TYPE, inOperationType);
 				propertiesMap.put(PERSISTENT_ID, matchedObject.getPersistentId());

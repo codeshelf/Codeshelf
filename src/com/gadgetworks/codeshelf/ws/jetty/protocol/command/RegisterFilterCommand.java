@@ -1,42 +1,20 @@
 package com.gadgetworks.codeshelf.ws.jetty.protocol.command;
 
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.JsonParseException;
-import org.codehaus.jackson.map.JsonMappingException;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.node.ArrayNode;
-import org.codehaus.jackson.node.ObjectNode;
-import org.codehaus.jackson.type.TypeReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.databind.PropertyName;
 import com.gadgetworks.codeshelf.filter.Filter;
-import com.gadgetworks.codeshelf.model.dao.DaoProvider;
-import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
-import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.ws.command.req.IWsReqCmd;
-import com.gadgetworks.codeshelf.ws.command.resp.IWsRespCmd;
-import com.gadgetworks.codeshelf.ws.command.resp.ObjectGetterWsRespCmd;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RegisterFilterRequest;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectGetRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.RegisterFilterResponse;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectGetResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
-
+import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
 
 /*
 	Example Message:
@@ -56,11 +34,10 @@ public class RegisterFilterCommand extends CommandABC {
 	private static final Logger	LOGGER = LoggerFactory.getLogger(RegisterFilterCommand.class);
 
 	private RegisterFilterRequest request;
-	private List<ITypedDao<IDomainObject>> daoList;
 	
-	public RegisterFilterCommand(RegisterFilterRequest request) {
+	public RegisterFilterCommand(CsSession session, RegisterFilterRequest request) {
+		super(session);
 		this.request = request;
-		daoList = new ArrayList<ITypedDao<IDomainObject>>();
 	}
 	
 	@Override
@@ -83,26 +60,33 @@ public class RegisterFilterCommand extends CommandABC {
 			List<Map<String, Object>> filterParams = request.getFilterParams();
 			
 			// extract property map
-			HashMap<String, Object> mFilterParams = new HashMap<String, Object>();
+			HashMap<String, Object> processedParams = new HashMap<String, Object>();
 			for (Map<String, Object> map : filterParams) {
 				String name = (String) map.get("name");
 				Object value = map.get("value");
-				mFilterParams.put(name, value);
+				processedParams.put(name, value);
 			}
 
 			// First we find the object (by it's ID).
 			Class<?> classObject = Class.forName(objectClassName);
 			if (IDomainObject.class.isAssignableFrom(classObject)) {
-				ITypedDao<IDomainObject> dao = daoProvider.getDaoInstance((Class<IDomainObject>) classObject);
-				List<IDomainObject> objectMatchList = dao.findByFilter(filterClause, mFilterParams);
-				daoList.add(dao);
+				ITypedDao<IDomainObject> dao = daoProvider.getDaoInstance((Class<IDomainObject>) classObject);	
+				this.session.registerAsDAOListener(dao);
+
+				// moved to filter
+				// List<IDomainObject> objectMatchList = dao.findByFilter(filterClause, processedParams);
 
 				// create and register filter
-				Filter filter = new Filter();
+				Filter filter = new Filter((Class<IDomainObject>) classObject);
 				filter.setPropertyNames(propertyNames);
+				filter.setFilterClause(filterClause);
+				filter.setFilterParams(processedParams);
+				filter.setDao(dao);
+				filter.setId(request.getMessageId());
+				this.session.registerObjectEventListener(filter);
 				
 				// generate results from properties
-				List<Map<String, Object>> results = filter.getProperties(objectMatchList, IWsReqCmd.OP_TYPE_UPDATE);
+				List<Map<String, Object>> results = filter.getProperties(IWsReqCmd.OP_TYPE_UPDATE);
 				if (results==null) {
 					// don't sent a response, if there is no data
 					return null;

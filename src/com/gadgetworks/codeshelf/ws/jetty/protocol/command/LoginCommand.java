@@ -20,8 +20,8 @@ public class LoginCommand extends CommandABC {
 	private CsSession session;
 	
 	public LoginCommand(CsSession session, LoginRequest loginRequest) {
+		super(session);
 		this.loginRequest = loginRequest;
-		this.session = session;
 	}
 
 	@Override

@@ -2,21 +2,17 @@ package com.gadgetworks.codeshelf.ws.jetty.protocol.command;
 
 import java.util.UUID;
 
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
-import com.gadgetworks.codeshelf.ws.command.resp.DeleteWsRespCmd;
 import com.gadgetworks.codeshelf.ws.command.resp.IWsRespCmd;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectDeleteRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectDeleteResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
+import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
 
 public class ObjectDeleteCommand extends CommandABC {
 	
@@ -24,7 +20,8 @@ public class ObjectDeleteCommand extends CommandABC {
 
 	ObjectDeleteRequest request;
 	
-	public ObjectDeleteCommand(ObjectDeleteRequest request) {
+	public ObjectDeleteCommand(CsSession session, ObjectDeleteRequest request) {
+		super(session);
 		this.request = request;
 	}
 	

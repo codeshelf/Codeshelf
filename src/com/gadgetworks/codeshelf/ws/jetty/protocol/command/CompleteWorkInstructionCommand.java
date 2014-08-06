@@ -19,6 +19,7 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.request.CompleteWorkInstructi
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.CompleteWorkInstructionResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
+import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
 
 public class CompleteWorkInstructionCommand extends CommandABC {
 
@@ -26,7 +27,8 @@ public class CompleteWorkInstructionCommand extends CommandABC {
 
 	CompleteWorkInstructionRequest request;
 	
-	public CompleteWorkInstructionCommand(CompleteWorkInstructionRequest request) {
+	public CompleteWorkInstructionCommand(CsSession session, CompleteWorkInstructionRequest request) {
+		super(session);
 		this.request = request;
 	}
 

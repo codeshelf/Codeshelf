@@ -1,32 +1,21 @@
 package com.gadgetworks.codeshelf.ws.jetty.protocol.command;
 
-import java.io.IOException;
-import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.JsonParseException;
-import org.codehaus.jackson.map.JsonMappingException;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.node.ArrayNode;
-import org.codehaus.jackson.node.ObjectNode;
-import org.codehaus.jackson.type.TypeReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.ws.command.req.ArgsClass;
-import com.gadgetworks.codeshelf.ws.command.resp.ObjectMethodWsRespCmd;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectMethodRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectMethodResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
+import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
 
 public class ObjectMethodCommand extends CommandABC {
 
@@ -34,7 +23,8 @@ public class ObjectMethodCommand extends CommandABC {
 
 	private ObjectMethodRequest	request;
 
-	public ObjectMethodCommand(ObjectMethodRequest request) {
+	public ObjectMethodCommand(CsSession session, ObjectMethodRequest request) {
+		super(session);
 		this.request = request;
 	}
 	

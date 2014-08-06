@@ -2,10 +2,10 @@ package com.gadgetworks.codeshelf.ws.jetty.protocol.request;
 
 import java.util.List;
 
-import com.gadgetworks.codeshelf.ws.command.req.ArgsClass;
-
 import lombok.Getter;
 import lombok.Setter;
+
+import com.gadgetworks.codeshelf.ws.command.req.ArgsClass;
 
 /* {"className":"Che",
  * "persistentId":"66535fc0-00b8-11e4-ba3a-48d705ccef0f",

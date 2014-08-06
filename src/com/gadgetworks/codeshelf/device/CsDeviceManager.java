@@ -99,17 +99,6 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 		SiteControllerMessageProcessor responseProcessor = new SiteControllerMessageProcessor(this);
     	client = new JettyWebSocketClient(mUri,responseProcessor,this);
     	responseProcessor.setWebClient(client);
-    	
-    	EchoRequest e1 = new EchoRequest("Echo1");
-    	client.sendRequest(e1);
-    	
-    	EchoRequest e2 = new EchoRequest("Echo2");
-    	client.sendRequest(e2);
-    	
-    	EchoRequest e3 = new EchoRequest("Echo3");
-    	client.sendRequest(e3);
-    	client.sendRequest(e3);
-    	
     	connectionManagerThread = new ConnectionManagerThread(this);
     	connectionManagerThread.start();
 	}
@@ -154,7 +143,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	 * @see com.gadgetworks.codeshelf.device.ICsDeviceManager#requestCheWork(java.lang.String, java.lang.String, java.lang.String)
 	 */
 	public final void computeCheWork(final String inCheId, final UUID inPersistentId, final List<String> inContainerIdList) {
-		LOGGER.info("Compute work: Che: " + inCheId + " Container: " + inContainerIdList.toString());
+		LOGGER.debug("Compute work: Che: " + inCheId + " Container: " + inContainerIdList.toString());
 		String cheId = inPersistentId.toString();
 		LinkedList<String> containerIds = new LinkedList<String>();
 		for (String containerId : inContainerIdList) {
@@ -169,7 +158,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	 * @see com.gadgetworks.codeshelf.device.ICsDeviceManager#requestCheWork(java.lang.String, java.lang.String, java.lang.String)
 	 */
 	public final void getCheWork(final String inCheId, final UUID inPersistentId, final String inLocationId) {
-		LOGGER.info("Get work: Che: " + inCheId + " Loc: " + inLocationId);
+		LOGGER.debug("Get work: Che: " + inCheId + " Loc: " + inLocationId);
 		String cheId = inPersistentId.toString();
 		GetWorkRequest req  = new GetWorkRequest(cheId,inLocationId);
 		client.sendRequest(req);
@@ -181,7 +170,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	 */
 	@Override
 	public final void completeWi(final String inCheId, final UUID inPersistentId, final WorkInstruction inWorkInstruction) {
-		LOGGER.info("Complete: Che: " + inCheId + " WI: " + inWorkInstruction.toString());
+		LOGGER.debug("Complete: Che: " + inCheId + " WI: " + inWorkInstruction.toString());
 		CompleteWorkInstructionRequest req = new CompleteWorkInstructionRequest(inPersistentId,inWorkInstruction);
 		client.sendRequest(req);
 	}
@@ -223,7 +212,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 		}
 		// update device map
 		this.mDeviceMap = deviceMap;
-		LOGGER.info("Network updated: "+this.mDeviceMap.size()+" active devices");
+		LOGGER.debug("Network updated: "+this.mDeviceMap.size()+" active devices");
 	}
 
 	public void processComputeWorkResponse(String networkGuid, Integer workInstructionCount) {

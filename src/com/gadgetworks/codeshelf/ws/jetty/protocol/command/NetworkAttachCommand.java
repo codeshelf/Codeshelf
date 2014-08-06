@@ -29,8 +29,8 @@ public class NetworkAttachCommand extends CommandABC {
 	private CsSession session;
 	
 	public NetworkAttachCommand(CsSession session, NetworkAttachRequest request) {
+		super(session);
 		this.request = request;
-		this.session = session;
 	}
 
 	@Override
@@ -47,7 +47,7 @@ public class NetworkAttachCommand extends CommandABC {
 							session.setType(SessionType.SiteController);
 							session.setAuthenticated(true);
 							LOGGER.info("Site controller on network "+request.getNetworkId()+" authenticated on session "+session.getSessionId());
-						}
+						}						
 						// generate response 
 						LOGGER.info("Network "+request.getNetworkId()+"("+organization.getDomainId()+") attached");
 						NetworkAttachResponse response = new NetworkAttachResponse();

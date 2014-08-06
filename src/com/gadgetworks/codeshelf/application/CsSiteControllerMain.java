@@ -95,9 +95,6 @@ public final class CsSiteControllerMain {
 		Injector injector = setupInjector();
 		ICodeshelfApplication application = injector.getInstance(CsSiteControllerApplication.class);
 		application.startApplication();
-
-		// Handle events until the application exits.
-		application.handleEvents();
 		
 		// public metrics to opentsdb
 		String useMetricsReporter = System.getProperty("metrics.reporter.enabled");
@@ -118,7 +115,10 @@ public final class CsSiteControllerMain {
 		}
 		else {
 			LOGGER.info("Metrics reporter is not enabled");
-		}
+		}		
+
+		// Handle events until the application exits.
+		application.handleEvents();
 
 		LOGGER.info("Exiting Main()");
 	}

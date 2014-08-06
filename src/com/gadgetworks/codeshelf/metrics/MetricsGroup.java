@@ -6,7 +6,8 @@ public enum MetricsGroup {
 	JVM("jvm"),
 	Database("database"),
 	WSS("wss"), 
-	EDI("edi");
+	EDI("edi"), 
+	Radio("radio");
 	
 	@Getter
 	String name;

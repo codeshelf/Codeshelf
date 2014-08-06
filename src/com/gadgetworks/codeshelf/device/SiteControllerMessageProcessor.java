@@ -98,7 +98,7 @@ public class SiteControllerMessageProcessor extends MessageProcessor {
 		ResponseABC response = null;
 		
 		if (request instanceof PingRequest) {
-			command = new PingCommand((PingRequest) request);
+			command = new PingCommand(null,(PingRequest) request);
 		}		
 		// check if matching command was found
 		if (command==null) {

@@ -4,11 +4,11 @@ import java.util.Collection;
 
 import javax.websocket.Session;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import lombok.Getter;
 import lombok.Setter;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.util.ThreadUtils;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.PingRequest;
@@ -18,6 +18,8 @@ public class ServerWatchdogThread extends Thread {
 	private static final Logger	LOGGER = LoggerFactory.getLogger(ServerWatchdogThread.class);
 
 	JettyWebSocketServer server;
+	
+	@Getter @Setter
 	boolean exit = false;
 	
 	@Getter @Setter
@@ -31,6 +33,7 @@ public class ServerWatchdogThread extends Thread {
 	
 	public ServerWatchdogThread(JettyWebSocketServer server) {
 		this.server = server;
+		this.setDaemon(true);
 	}
 
 	@Override
