@@ -5,6 +5,7 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -35,16 +36,7 @@ public class EdiProcessorTest extends EdiTestABC {
 	@Test
 	public final void ediProcessThreadTest() {
 
-		ICsvOrderImporter orderImporter = new ICsvOrderImporter() {
-
-			@Override
-			public boolean importOrdersFromCsvStream(InputStreamReader inCsvStreamReader,
-				Facility inFacility,
-				Timestamp inProcessTime) {
-				return false;
-			}
-		};
-
+		ICsvOrderImporter orderImporter = 	generateFailingImporter();
 		ICsvInventoryImporter inventoryImporter = new ICsvInventoryImporter() {
 
 			@Override
@@ -166,16 +158,8 @@ public class EdiProcessorTest extends EdiTestABC {
 			public boolean	processed	= false;
 		}
 
-		ICsvOrderImporter orderImporter = new ICsvOrderImporter() {
-
-			@Override
-			public boolean importOrdersFromCsvStream(InputStreamReader inCsvStreamReader,
-				Facility inFacility,
-				Timestamp inProcessTime) {
-				return false;
-			}
-		};
-
+		ICsvOrderImporter orderImporter = generateFailingImporter();
+		
 		ICsvInventoryImporter inventoryImporter = new ICsvInventoryImporter() {
 
 			@Override
@@ -323,5 +307,19 @@ public class EdiProcessorTest extends EdiTestABC {
 		Assert.assertTrue(linkedResult.processed);
 		Assert.assertFalse(unlinkedResult.processed);
 
+	}
+	
+	private ICsvOrderImporter generateFailingImporter() {
+		return new ICsvOrderImporter() {
+
+			@Override
+			public ImportResult importOrdersFromCsvStream(InputStreamReader inCsvStreamReader,
+				Facility inFacility,
+				Timestamp inProcessTime) throws IOException {
+				ImportResult result = new ImportResult();
+				result.addFailure("failed line", new Exception("fail"));
+				return result;
+			}
+		};
 	}
 }

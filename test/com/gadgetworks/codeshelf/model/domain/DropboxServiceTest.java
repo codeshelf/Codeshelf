@@ -5,11 +5,14 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
+import static org.mockito.Matchers.any;
+
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.Timestamp;
 
-import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import com.gadgetworks.codeshelf.edi.ICsvAislesFileImporter;
 import com.gadgetworks.codeshelf.edi.ICsvCrossBatchImporter;
@@ -17,6 +20,7 @@ import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
 import com.gadgetworks.codeshelf.edi.ICsvLocationAliasImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderLocationImporter;
+import com.gadgetworks.codeshelf.edi.ImportResult;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.dao.MockDao;
 import com.gadgetworks.codeshelf.model.dao.Result;
@@ -31,7 +35,7 @@ public class DropboxServiceTest {
 	private final static String	TEST_CREDENTIALS	= "aNGT-ls9rKAAAAAAAAAADu5mGXxFh8TqnVjt7zvIdTOt1H17h2UIky_FypTb7RcW";
 
 	@Test
-	public final void dropboxCheckTest() {
+	public final void dropboxCheckTest() throws IOException {
 
 		Organization.DAO = new MockDao<Organization>();
 		Facility.DAO = new MockDao<Facility>();
@@ -56,18 +60,10 @@ public class DropboxServiceTest {
 		dropboxService.setProviderCredentials(TEST_CREDENTIALS);
 		dropboxService.setServiceStateEnum(EdiServiceStateEnum.LINKED);
 
-		final Result checkImportOrders = new Result();
-
-		ICsvOrderImporter orderImporter = new ICsvOrderImporter() {
-
-			@Override
-			public boolean importOrdersFromCsvStream(InputStreamReader inCsvStreamReader,
-				Facility inFacility,
-				Timestamp inProcessTime) {
-				checkImportOrders.result = true;
-				return false;
-			}
-		};
+		ICsvOrderImporter orderImporter = Mockito.mock(ICsvOrderImporter.class);
+		Mockito.when(
+				orderImporter.importOrdersFromCsvStream(any(InputStreamReader.class), any(Facility.class), any(Timestamp.class)))
+				.thenReturn(generateFailureResult());
 
 		ICsvInventoryImporter inventoryImporter = new ICsvInventoryImporter() {
 
@@ -132,7 +128,11 @@ public class DropboxServiceTest {
 			locationImporter,
 			crossBatchImporter,
 			aislesFileImporter);
+	}
 
-		Assert.assertTrue(checkImportOrders.result);
+	private ImportResult generateFailureResult() {
+		ImportResult result = new ImportResult();
+		result.addFailure("failed line", new Exception("fail"));
+		return result;
 	}
 }

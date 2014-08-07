@@ -13,8 +13,8 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
+import java.util.SortedSet;
 
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
@@ -686,6 +686,14 @@ public class Facility extends SubLocationABC<Facility> {
 		}
 	}
 
+	public final Path createPath(String inDomainId) {
+		Path path = Path.create(this, inDomainId);
+		this.addPath(path); // missing before. Cause of bug?
+		getDao().store(this);
+		path.createDefaultWorkArea(); //TODO an odd way to construct, but it is a way to make sure the Path is persisted before the work area
+		return path;
+	}
+
 	// --------------------------------------------------------------------------
 	/**
 	 * Create a path
@@ -693,13 +701,7 @@ public class Facility extends SubLocationABC<Facility> {
 	 */
 	@Transactional
 	public final void createPath(String inDomainId, PathSegment[] inPathSegments) {
-		Path path = new Path();
-		path.setParent(this);
-		path.setDomainId(inDomainId);
-		path.setDescription("A Facility Path");
-		path.setTravelDirEnum(TravelDirectionEnum.FORWARD);
-		Path.DAO.store(path);
-		path.createDefaultWorkArea();
+		Path path = createPath(inDomainId);
 		for (PathSegment pathSegment : inPathSegments) {
 			pathSegment.setParent(path);
 			PathSegment.DAO.store(pathSegment);
@@ -708,7 +710,7 @@ public class Facility extends SubLocationABC<Facility> {
 
 		// Recompute the distances of the structures?
 		// This does no good as the path segments are not associated to aisles yet.
-		recomputeLocationPathDistances(path);
+		//recomputeLocationPathDistances(path);
 
 	}
 
@@ -717,6 +719,25 @@ public class Facility extends SubLocationABC<Facility> {
 	 * A sample routine to show the distance of locations along a path.
 	 */
 	public final void recomputeLocationPathDistances(Path inPath) {
+		// This used to do all paths. Now as advertised only the passed in path
+
+		// Paul: uncomment this block, then run AisleTest.java
+		// Just some debug help. Crash here sometimes as consequence of path = segment.getParent(), then pass the apparently good path to facility.recomputeLocationPathDistances(path)
+		/*
+		SortedSet<PathSegment> theSegments = inPath.getSegments(); // throws within getSegments if inPath reference is not fully hydrated.
+		int howMany = theSegments.size();
+		for (PathSegment segment : theSegments) {
+			segment.computePathDistance();
+			for (ILocation<?> location : segment.getLocations()) {
+				location.computePosAlongPath(segment);
+			}
+		}
+		*/
+
+		// Paul: comment this block when you uncomment the block above
+		// getting from paths.values() clearly does not work reliable after just making new path
+		// Original code here
+		// /*
 		for (Path path : paths.values()) {
 			for (PathSegment segment : path.getSegments()) {
 				segment.computePathDistance();
@@ -725,6 +746,8 @@ public class Facility extends SubLocationABC<Facility> {
 				}
 			}
 		}
+		// */
+
 	}
 
 	// --------------------------------------------------------------------------
@@ -1057,7 +1080,7 @@ public class Facility extends SubLocationABC<Facility> {
 
 		Double startingPathPos = 0.0;
 		if (cheLocation != null) {
-			Path path = cheLocation.getPathSegment().getParent();
+			Path path = cheLocation.getAssociatedPathSegment().getParent();
 			Bay cheBay = cheLocation.getParentAtLevel(Bay.class);
 			Bay selectedBay = cheBay;
 			if (cheBay == null) {
@@ -1331,31 +1354,36 @@ public class Facility extends SubLocationABC<Facility> {
 				// Iterate over all active OUTBOUND on the path.
 				for (OrderHeader outOrder : getOrderHeaders()) {
 					if ((outOrder.getOrderTypeEnum().equals(OrderTypeEnum.OUTBOUND)) && (outOrder.getActive())) {
-						// OK, we have an OUTBOUND order on the same path as the CROSS order.
-						// Check to see if any of the active CROSS order detail items match OUTBOUND order details.
-						for (OrderDetail crossOrderDetail : crossOrder.getOrderDetails()) {
-							if (crossOrderDetail.getActive()) {
-								for (OrderDetail outOrderDetail : outOrder.getOrderDetails()) {
-									if ((outOrderDetail.getItemMaster().equals(crossOrderDetail.getItemMaster()))
-											&& (outOrderDetail.getActive())) {
-										// Now make sure the UOM matches.
-										if (outOrderDetail.getUomMasterId().equals(crossOrderDetail.getUomMasterId())) {
-											for (Path path : getPaths()) {
-												OrderLocation firstOutOrderLoc = outOrder.getFirstOrderLocationOnPath(path);
+						// Only use orders without an order group, or orders in the same order group as the cross order.
+						if (((outOrder.getOrderGroup() == null) && (crossOrder.getOrderGroup() == null))
+								|| (outOrder.getOrderGroup() != null)
+								&& (outOrder.getOrderGroup().equals(crossOrder.getOrderGroup()))) {
+							// OK, we have an OUTBOUND order on the same path as the CROSS order.
+							// Check to see if any of the active CROSS order detail items match OUTBOUND order details.
+							for (OrderDetail crossOrderDetail : crossOrder.getOrderDetails()) {
+								if (crossOrderDetail.getActive()) {
+									for (OrderDetail outOrderDetail : outOrder.getOrderDetails()) {
+										if ((outOrderDetail.getItemMaster().equals(crossOrderDetail.getItemMaster()))
+												&& (outOrderDetail.getActive())) {
+											// Now make sure the UOM matches.
+											if (outOrderDetail.getUomMasterId().equals(crossOrderDetail.getUomMasterId())) {
+												for (Path path : getPaths()) {
+													OrderLocation firstOutOrderLoc = outOrder.getFirstOrderLocationOnPath(path);
 
-												if (firstOutOrderLoc != null) {
-													WorkInstruction wi = createWorkInstruction(WorkInstructionStatusEnum.NEW,
-														WorkInstructionTypeEnum.PLAN,
-														outOrderDetail,
-														container,
-														inChe,
-														firstOutOrderLoc.getLocation(),
-														inTime);
+													if (firstOutOrderLoc != null) {
+														WorkInstruction wi = createWorkInstruction(WorkInstructionStatusEnum.NEW,
+															WorkInstructionTypeEnum.PLAN,
+															outOrderDetail,
+															container,
+															inChe,
+															firstOutOrderLoc.getLocation(),
+															inTime);
 
-													// If we created a WI then add it to the list.
-													if (wi != null) {
-														setWiPickInstruction(wi, outOrder);
-														wiList.add(wi);
+														// If we created a WI then add it to the list.
+														if (wi != null) {
+															setWiPickInstruction(wi, outOrder);
+															wiList.add(wi);
+														}
 													}
 												}
 											}
@@ -1379,7 +1407,11 @@ public class Facility extends SubLocationABC<Facility> {
 	private void setWiPickInstruction(WorkInstruction inWi, OrderHeader inOrder) {
 		String locationString = "";
 
-		// Generate a location string.
+		// For DEV-315, if more than one location, sort them.
+		List<String> locIdList = new ArrayList<String>();
+
+		// old way. Not sorted. Just took the locations on the order in whatever order they were.
+		/*
 		for (OrderLocation orderLocation : inOrder.getOrderLocations()) {
 			LocationAlias locAlias = orderLocation.getLocation().getPrimaryAlias();
 			if (locAlias != null) {
@@ -1388,6 +1420,21 @@ public class Facility extends SubLocationABC<Facility> {
 				locationString += orderLocation.getLocation().getLocationId();
 			}
 		}
+		*/
+		for (OrderLocation orderLocation : inOrder.getOrderLocations()) {
+			LocationAlias locAlias = orderLocation.getLocation().getPrimaryAlias();
+			if (locAlias != null) {
+				locIdList.add(locAlias.getAlias());
+			} else {
+				locIdList.add(orderLocation.getLocation().getLocationId());
+			}
+		}
+		// new way. Not sorted. Simple alpha sort. Will fail on D-10 D-11 D-9
+		Collections.sort(locIdList);
+		for (String aString : locIdList) {
+			locationString += aString + " ";
+		}
+		// end DEV-315 modification
 
 		inWi.setPickInstruction(locationString);
 
@@ -1879,24 +1926,49 @@ public class Facility extends SubLocationABC<Facility> {
 	 * @param outHeaderCounts
 	 */
 	public final HeaderCounts countCrossOrders() {
+		return countOrders(OrderTypeEnum.CROSS);
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param outHeaderCounts
+	 */
+	public final HeaderCounts countOutboundOrders() {
+
+		return countOrders(OrderTypeEnum.OUTBOUND);
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param outHeaderCounts
+	 */
+	private HeaderCounts countOrders(OrderTypeEnum inOrderTypeEnum) {
 		int totalCrossHeaders = 0;
 		int activeHeaders = 0;
 		int activeDetails = 0;
 		int activeCntrUses = 0;
+		int inactiveDetailsOnActiveOrders = 0;
+		int inactiveCntrUsesOnActiveOrders = 0;
 
-		for (OrderHeader crossOrder : getOrderHeaders()) {
-			if (crossOrder.getOrderTypeEnum().equals(OrderTypeEnum.CROSS)) {
+		for (OrderHeader order : getOrderHeaders()) {
+			if (order.getOrderTypeEnum().equals(inOrderTypeEnum)) {
 				totalCrossHeaders++;
-				if (crossOrder.getActive()) {
+				if (order.getActive()) {
 					activeHeaders++;
-					ContainerUse cntrUse = crossOrder.getContainerUse();
-					if (cntrUse != null && cntrUse.getActive())
-						activeCntrUses++;
-					for (OrderDetail crossOrderDetail : crossOrder.getOrderDetails()) {
-						if (crossOrderDetail.getActive()) {
+
+					ContainerUse cntrUse = order.getContainerUse();
+					if (cntrUse != null)
+						if (cntrUse.getActive())
+							activeCntrUses++;
+						else
+							inactiveCntrUsesOnActiveOrders++;
+
+					for (OrderDetail orderDetail : order.getOrderDetails()) {
+						if (orderDetail.getActive())
 							activeDetails++;
-							// if we were doing outbound orders, we might count WI here
-						}
+						else
+							inactiveCntrUsesOnActiveOrders++;
+						// if we were doing outbound orders, we might count WI here					
 					}
 				}
 			}
@@ -1906,6 +1978,8 @@ public class Facility extends SubLocationABC<Facility> {
 		outHeaderCounts.mActiveHeaders = activeHeaders;
 		outHeaderCounts.mActiveDetails = activeDetails;
 		outHeaderCounts.mActiveCntrUses = activeCntrUses;
+		outHeaderCounts.mInactiveDetailsOnActiveOrders = inactiveDetailsOnActiveOrders;
+		outHeaderCounts.mInactiveCntrUsesOnActiveOrders = inactiveCntrUsesOnActiveOrders;
 		return outHeaderCounts;
 	}
 

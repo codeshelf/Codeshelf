@@ -151,8 +151,11 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	// Associated path segment (optional)
 	@Column(nullable = true)
 	@ManyToOne(optional = true)
+	@Getter
 	@Setter
 	private PathSegment					pathSegment;
+	// The getter is renamed getAssociatedPathSegment, which still looks up the parent chain until it finds a pathSegment.
+	// DomainObjectABC will manufacture a call to getPathSegment during DAO.store(). So do not skip the getter with complicated overrides
 
 	//	// The owning organization.
 	//	@Column(nullable = true)
@@ -354,7 +357,12 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#getParentAtLevel(java.lang.Class)
 	 */
 	public final <T extends ILocation> T getParentAtLevel(Class<? extends ILocation> inClassWanted) {
-		T result = null;
+		
+		// if you call aisle.getParentAtLevel(Aisle.class), return itself. This is moderately common.
+		if (this.getClass().equals(inClassWanted)) 
+			return (T) this; // (We can cast safely since we checked the class.)
+			
+		T result = null;		
 
 		ILocation<P> checkParent = (ILocation<P>) getParent();
 
@@ -488,13 +496,13 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		return result;
 	}
 
-	public final PathSegment getPathSegment() {
+	public final PathSegment getAssociatedPathSegment() {
 		PathSegment result = null;
 
 		if (pathSegment == null) {
 			ILocation<?> parent = (ILocation<?>) getParent();
 			if (parent != null) {
-				result = parent.getPathSegment();
+				result = parent.getAssociatedPathSegment();
 			}
 		} else {
 			result = pathSegment;
@@ -505,7 +513,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 	public final String getPathSegId() {
 		// to support list view meta-field pathSegId
-		PathSegment aPathSegment = getPathSegment();
+		PathSegment aPathSegment = getAssociatedPathSegment();
 
 		if (aPathSegment != null) {
 			return aPathSegment.getDomainId();

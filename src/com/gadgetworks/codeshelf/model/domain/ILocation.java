@@ -34,7 +34,7 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 
 	void setPosAlongPath(Double inPoseAlongPath);
 
-	PathSegment getPathSegment();
+	PathSegment getAssociatedPathSegment();
 
 	LedController getLedController();
 

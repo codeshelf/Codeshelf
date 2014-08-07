@@ -135,23 +135,6 @@ public class Tier extends SubLocationABC<Bay> {
 		return (theTierIds.aisleName + "-" + theTierIds.tierName + "-" + theTierIds.bayName);
 	}
 
-	// converts A3 into 003.  Could put the A back on.
-	private String getCompString(String inString) {
-		String s = inString.substring(1); // Strip off the A, B, T, or S
-		// we will pad with leading spaces to 3
-		int padLength = 3;
-		int needed = padLength - s.length();
-		if (needed <= 0) {
-			return s;
-		}
-		char[] padding = new char[needed];
-		java.util.Arrays.fill(padding, '0');
-		StringBuffer sb = new StringBuffer(padLength);
-		sb.append(padding);
-		sb.append(s);
-		String ss = sb.toString();
-		return ss;
-	}
 
 	public final String getAisleTierBayForComparable() {
 		// this is for a sort comparable.

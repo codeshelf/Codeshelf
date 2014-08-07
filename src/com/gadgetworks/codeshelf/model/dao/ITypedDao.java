@@ -50,5 +50,11 @@ public interface ITypedDao<T> extends IDao {
 	void endTransaction();
 	
 	Boolean isNewOrDirty(IDomainObject inDomainObject);
+	
+	/**
+	 * Exposed for a few cases until we understand the caching mechanism better. 
+	 * @see tests of the outbound order importer
+	 */
+	void clearAllCaches();
 
 }

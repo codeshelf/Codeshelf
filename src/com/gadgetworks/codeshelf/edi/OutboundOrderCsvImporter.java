@@ -5,7 +5,6 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.Timestamp;
@@ -79,15 +78,11 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.edi.ICsvImporter#importOrdersFromCsvStream(java.io.InputStreamReader, com.gadgetworks.codeshelf.model.domain.Facility)
 	 */
-	public final boolean importOrdersFromCsvStream(final InputStreamReader inCsvStreamReader,
-		final Facility inFacility,
-		Timestamp inProcessTime) {
-
-		boolean result = true;
-		try {
-
-			CSVReader csvReader = new CSVReader(inCsvStreamReader);
-
+	public final ImportResult importOrdersFromCsvStream(final InputStreamReader inCsvStreamReader,
+														final Facility inFacility,
+														Timestamp inProcessTime) throws IOException {
+		mOrderGroupDao.clearAllCaches();
+		try(CSVReader csvReader = new CSVReader(inCsvStreamReader);) {
 			HeaderColumnNameMappingStrategy<OutboundOrderCsvBean> strategy = new HeaderColumnNameMappingStrategy<OutboundOrderCsvBean>();
 			strategy.setType(OutboundOrderCsvBean.class);
 
@@ -97,23 +92,32 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 			List<OrderHeader> orderList = new ArrayList<OrderHeader>();
 
 			LOGGER.debug("Begin order import.");
-
+			ImportResult result = new ImportResult();
 			for (OutboundOrderCsvBean orderBean : list) {
 				String errorMsg = orderBean.validateBean();
 				if (errorMsg != null) {
 					LOGGER.error("Import errors: " + errorMsg);
+					result.addFailure(orderBean, "errorMsg");
 				} else {
-					OrderHeader order = orderCsvBeanImport(orderBean, inFacility, inProcessTime);
-					if ((order != null) && (!orderList.contains(order))) {
-						orderList.add(order);
+					try {
+						OrderHeader order = orderCsvBeanImport(orderBean, inFacility, inProcessTime);
+						if ((order != null) && (!orderList.contains(order))) {
+							orderList.add(order);
+						}
 					}
+					catch(Exception e) {
+						result.addFailure(orderBean, e);
+						LOGGER.error("unable to import order line: " + orderBean, e);
+					}
+					
 				}
 			}
 
+			
 			if (orderList.size() == 0) {
 				// Do nothing.
 			} else if (orderList.size() == 1) {
-				// If we've only imported one order then don't change the status of other orders.
+					// If we've only imported one order then don't change the status of other orders.
 				archiveCheckOneOrder(inFacility, orderList, inProcessTime);
 			} else {
 				// If we've imported more than one order then do a full archive.
@@ -123,21 +127,12 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 
 			LOGGER.debug("End order import.");
 
-			csvReader.close();
-
 			cleanupArchivedOrders();
-
-		} catch (FileNotFoundException e) {
-			result = false;
-			LOGGER.error("", e);
-		} catch (IOException e) {
-			result = false;
-			LOGGER.error("", e);
+			return result;
 		}
-
-		return result;
+		
 	}
-
+ 
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inFacility
@@ -183,28 +178,39 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 
 			// Iterate all of the order headers in this order group to see if they're still active.
 			for (OrderHeader order : inFacility.getOrderHeaders()) {
-				if (order.getOrderTypeEnum().equals(OrderTypeEnum.OUTBOUND)) {
-					Boolean orderHeaderIsActive = false;
+				try {
+					if (order.getOrderTypeEnum().equals(OrderTypeEnum.OUTBOUND)) {
+						Boolean orderHeaderIsActive = false;
 
-					// Iterate all of the order details in this order header to see if they're still active.
-					for (OrderDetail orderDetail : order.getOrderDetails()) {
-						if (orderDetail.getUpdated().equals(inProcessTime)) {
-							orderHeaderIsActive = true;
-						} else {
-							LOGGER.debug("Archive old order detail: " + orderDetail.getOrderDetailId());
-							orderDetail.setActive(false);
-							// orderDetail.setQuantity(0);
-							// orderDetail.setMinQuantity(0);
-							// orderDetail.setMaxQuantity(0);
-							mOrderDetailDao.store(orderDetail);
+						// Iterate all of the order details in this order header to see if they're still active.
+						for (OrderDetail orderDetail : order.getOrderDetails()) {
+							try {
+								if (orderDetail.getUpdated().equals(inProcessTime)) {
+									orderHeaderIsActive = true;
+								} else {
+									LOGGER.debug("Archive old order detail: " + orderDetail.getOrderDetailId());
+									orderDetail.setActive(false);
+									// orderDetail.setQuantity(0);
+									// orderDetail.setMinQuantity(0);
+									// orderDetail.setMaxQuantity(0);
+									mOrderDetailDao.store(orderDetail);
+								}
+							} catch (RuntimeException e) {
+								LOGGER.warn("Unable to archive order detail: " + orderDetail, e);
+								throw e;
+							}
+						}
+
+						if (!orderHeaderIsActive) {
+							LOGGER.debug("Archive old order header: " + order.getOrderId());
+							order.setActive(false);
+							mOrderHeaderDao.store(order);
 						}
 					}
-
-					if (!orderHeaderIsActive) {
-						LOGGER.debug("Archive old order header: " + order.getOrderId());
-						order.setActive(false);
-						mOrderHeaderDao.store(order);
-					}
+				}
+				catch(RuntimeException e) {
+					LOGGER.warn("Unable to archive order: " + order, e);
+					throw e;
 				}
 			}
 
@@ -285,22 +291,17 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 		try {
 			mOrderHeaderDao.beginTransaction();
 
-			try {
-				OrderGroup group = updateOptionalOrderGroup(inCsvBean, inFacility, inEdiProcessTime);
-				OrderHeader order = updateOrderHeader(inCsvBean, inFacility, inEdiProcessTime, group);
-				result = order;
-				Container container = updateContainer(inCsvBean, inFacility, inEdiProcessTime, order);
-				UomMaster uomMaster = updateUomMaster(inCsvBean.getUom(), inFacility);
-				ItemMaster itemMaster = updateItemMaster(inCsvBean.getItemId(),
-					inCsvBean.getDescription(),
-					inFacility,
-					inEdiProcessTime,
-					uomMaster);
-				OrderDetail orderDetail = updateOrderDetail(inCsvBean, inFacility, inEdiProcessTime, order, uomMaster, itemMaster);
-			} catch (Exception e) {
-				LOGGER.error("", e);
-			}
-
+			OrderGroup group = updateOptionalOrderGroup(inCsvBean, inFacility, inEdiProcessTime);
+			OrderHeader order = updateOrderHeader(inCsvBean, inFacility, inEdiProcessTime, group);
+			result = order;
+			Container container = updateContainer(inCsvBean, inFacility, inEdiProcessTime, order);
+			UomMaster uomMaster = updateUomMaster(inCsvBean.getUom(), inFacility);
+			ItemMaster itemMaster = updateItemMaster(inCsvBean.getItemId(),
+				inCsvBean.getDescription(),
+				inFacility,
+				inEdiProcessTime,
+				uomMaster);
+			OrderDetail orderDetail = updateOrderDetail(inCsvBean, inFacility, inEdiProcessTime, order, uomMaster, itemMaster);
 			mOrderHeaderDao.commitTransaction();
 		} finally {
 			mOrderHeaderDao.endTransaction();
@@ -429,6 +430,7 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 		result = inFacility.getOrderHeader(inCsvBean.getOrderId());
 
 		if (result == null) {
+			LOGGER.debug("Creating new OrderHeader instance for " + inCsvBean.getOrderId() + " , for facility: " + inFacility);
 			result = new OrderHeader();
 			result.setParent(inFacility);
 			result.setDomainId(inCsvBean.getOrderId());
@@ -623,13 +625,9 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 			result.setMaxQuantity(Integer.valueOf(inCsvBean.getQuantity()));
 		}
 
-		try {
-			result.setActive(true);
-			result.setUpdated(inEdiProcessTime);
-			mOrderDetailDao.store(result);
-		} catch (DaoException e) {
-			LOGGER.error("", e);
-		}
+		result.setActive(true);
+		result.setUpdated(inEdiProcessTime);
+		mOrderDetailDao.store(result);
 		return result;
 	}
 }

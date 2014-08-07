@@ -39,7 +39,7 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	private static final Logger					LOGGER		= LoggerFactory.getLogger(GenericDaoABC.class);
 
 	private LinkedBlockingQueue<IDaoListener>	mListeners	= new LinkedBlockingQueue<IDaoListener>();
-	private EbeanServer							mServer;
+	protected EbeanServer							mServer;
 
 	@Inject
 	public GenericDaoABC(final ISchemaManager inSchemaManager) {
@@ -365,5 +365,13 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 		}
 		
 		return result;
+	}
+	
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.dao.ITypedDao#isNewOrDirty(com.gadgetworks.codeshelf.model.domain.IDomainObject)
+	 */
+	public void clearAllCaches() {
+		mServer.getServerCacheManager().clearAll();
 	}
 }

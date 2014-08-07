@@ -175,4 +175,10 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 		// TODO Auto-generated method stub
 		return false;
 	}
+
+	@Override
+	public void clearAllCaches() {
+		// TODO Auto-generated method stub
+		
+	}
 }

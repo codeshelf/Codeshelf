@@ -68,4 +68,9 @@ public class Slot extends SubLocationABC<Tier> {
 	public final String getDefaultDomainIdPrefix() {
 		return "T";
 	}
+	
+	public final String getSlotIdForComparable() {
+		return getCompString(getDomainId());
+	}
+
 }

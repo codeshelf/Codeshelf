@@ -46,7 +46,7 @@ public final class Util implements IUtil {
 	// be part of pre-main static initialization.  Since it uses methods from Util we moved it
 	// here before Util tries to use the LogFactory.
 	static {
-		
+
 		// If the command line didn't specify a console appender then make the console logger a NullAppender.
 		if (System.getProperty("console.appender") == null) {
 			System.setProperty("console.appender", "org.apache.log4j.varia.NullAppender");
@@ -56,14 +56,15 @@ public final class Util implements IUtil {
 		if (System.getProperty("codeshelf.remotelog.port") == null) {
 			System.setProperty("codeshelf.remotelog.port", "80");
 		}
-		
+
 		if (System.getProperty("codeshelf.remotelog.ipaddress") == null) {
 			System.setProperty("codeshelf.remotelog.ipaddress", "127.0.0.1");
 		}
 
 		Util util = new Util();
 		String appLogPath = util.getApplicationLogDirPath();
-		System.setProperty("codeshelf.logfile", appLogPath + System.getProperty("file.separator") + System.getProperty("cs.logfile.name"));
+		System.setProperty("codeshelf.logfile",
+			appLogPath + System.getProperty("file.separator") + System.getProperty("cs.logfile.name"));
 		File appDir = new File(appLogPath);
 		if (!appDir.exists()) {
 			try {
@@ -92,7 +93,7 @@ public final class Util implements IUtil {
 		}
 	}
 
-	private static final Logger	LOGGER		= LoggerFactory.getLogger(Util.class);
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(Util.class);
 
 	/**
 	 * 
@@ -115,9 +116,14 @@ public final class Util implements IUtil {
 			versionProps.load(inStream);
 			inStream.close();
 			result = versionProps.getProperty("version.major");
-			result += "." + versionProps.getProperty("version.minor");
+			//result += "." + versionProps.getProperty("version.minor");
 			result += "." + versionProps.getProperty("version.revision");
-			result += "." + versionProps.getProperty("version.status");
+			//result += "." + versionProps.getProperty("version.status");
+			String date = versionProps.getProperty("version.date");
+			if (!date.equals("none")) {
+				result += " (" + versionProps.getProperty("version.branch") + "-" + versionProps.getProperty("version.commit")
+						+ " " + date + ")";
+			}
 		} catch (FileNotFoundException e) {
 			result = "conf/version.properties not found";
 		} catch (IOException e) {
@@ -169,7 +175,8 @@ public final class Util implements IUtil {
 		if (platform.toLowerCase().indexOf("mac") > -1) {
 			result += "/Library/Application Support/Codeshelf";
 		} else if (platform.toLowerCase().indexOf("windows") > -1) {
-			result += System.getProperty("file.separator") + "Application Data" + System.getProperty("file.separator") + "Codeshelf";
+			result += System.getProperty("file.separator") + "Application Data" + System.getProperty("file.separator")
+					+ "Codeshelf";
 		} else if (platform.toLowerCase().indexOf("linux") > -1) {
 			result += System.getProperty("file.separator") + ".Codeshelf";
 		} else {
@@ -199,21 +206,21 @@ public final class Util implements IUtil {
 	 */
 	public void setLoggingLevelsFromPrefs(Organization inOrganization, ITypedDao<PersistentProperty> inPersistentPropertyDao) {
 
-//		PersistentProperty gwLogLvlProp = inPersistentPropertyDao.findByDomainId(inOrganization, PersistentProperty.GENERAL_INTF_LOG_LEVEL);
-//		Level level = Level.toLevel(gwLogLvlProp.getCurrentValueAsStr());
-//
-//		// Set the root logger level.
-//		Logger logger = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
-//		logger.setLevel(level);
-//
-//		// Set the GW logger level.
-//		logger = (Logger) LoggerFactory.getLogger("com.gadgetworks");
-//		logger.setLevel(level);
-//
-//		gwLogLvlProp = inPersistentPropertyDao.findByDomainId(inOrganization, PersistentProperty.GATEWAY_INTF_LOG_LEVEL);
-//		level = Level.toLevel(gwLogLvlProp.getCurrentValueAsStr());
-//		//Logger.getRootLogger().setLevel(level);
-//		//Logger.getLogger("com.gadgetworks.codeshelf.controller").setLevel(level);
+		//		PersistentProperty gwLogLvlProp = inPersistentPropertyDao.findByDomainId(inOrganization, PersistentProperty.GENERAL_INTF_LOG_LEVEL);
+		//		Level level = Level.toLevel(gwLogLvlProp.getCurrentValueAsStr());
+		//
+		//		// Set the root logger level.
+		//		Logger logger = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+		//		logger.setLevel(level);
+		//
+		//		// Set the GW logger level.
+		//		logger = (Logger) LoggerFactory.getLogger("com.gadgetworks");
+		//		logger.setLevel(level);
+		//
+		//		gwLogLvlProp = inPersistentPropertyDao.findByDomainId(inOrganization, PersistentProperty.GATEWAY_INTF_LOG_LEVEL);
+		//		level = Level.toLevel(gwLogLvlProp.getCurrentValueAsStr());
+		//		//Logger.getRootLogger().setLevel(level);
+		//		//Logger.getLogger("com.gadgetworks.codeshelf.controller").setLevel(level);
 	}
 
 	// --------------------------------------------------------------------------

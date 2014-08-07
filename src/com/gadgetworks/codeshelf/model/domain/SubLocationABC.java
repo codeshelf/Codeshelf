@@ -151,9 +151,20 @@ public abstract class SubLocationABC<P extends IDomainObject> extends LocationAB
 			LOGGER.error("null pathSegment in computePosAlongPath");
 			return;
 		}
+		
+		// A fundamental question is whether the bays and slots in an aisle increase or decrease as you move along the path in the forward direction.
+		// I think this question does not need to be answered here. Hence the if (false). CD_0036 explains the new aisle file field that lets the aisle children
+		// set anchor and pickEndPos correctly based on which way the pick face is relative to the aisle anchor. With that, just use the path direction.
+		Aisle theAisle = this.getParentAtLevel(Aisle.class);
+		Boolean forwardIncrease = true;
+		if (false && theAisle != null)
+			forwardIncrease = theAisle.doesAisleIncreaseForwardAlongPath(); // Inefficient to calculate each time. Should cache it somehow.
+		
+		// For the logic below, we want the forward increasing logic if path direction is forward and forwardIncrease, or if both not.
+		Boolean wantForwardCalculation = forwardIncrease == inPathSegment.getParent().getTravelDirEnum().equals(TravelDirectionEnum.FORWARD);
 
 		Point locationAnchorPoint = getAbsoluteAnchorPoint();
-		Point pickFaceEndPoint = parent.getAbsoluteAnchorPoint();
+		Point pickFaceEndPoint = parent.getAbsoluteAnchorPoint(); // JR this looks wrong. Should want this.getAbsolutePickEndPoint();
 		pickFaceEndPoint.translateX(getPickFaceEndPosX());
 		pickFaceEndPoint.translateY(getPickFaceEndPosY());
 		pickFaceEndPoint.translateZ(getPickFaceEndPosZ());
@@ -168,14 +179,18 @@ public abstract class SubLocationABC<P extends IDomainObject> extends LocationAB
 					inPathSegment.getEndPoint(),
 					pickFaceEndPoint);
 
-		if (inPathSegment.getParent().getTravelDirEnum().equals(TravelDirectionEnum.FORWARD)) {
+		// if (inPathSegment.getParent().getTravelDirEnum().equals(TravelDirectionEnum.FORWARD)) {
+		if (wantForwardCalculation) {
 			// In the forward direction take the "lowest" path pos value.
 			Double position = Math.min(locAnchorPathPosition, pickFacePathPosition);
 			// It can't be "lower" than its parent.
 			if ((parent.getPosAlongPath() == null) || (position >= parent.getPosAlongPath())) {
 				setPosAlongPath(position);
 			} else {
-				setPosAlongPath(parent.getPosAlongPath());
+				// I believe if we hit this, we found a model or algorithm error
+				Double parentPos = parent.getPosAlongPath(); // just so able to debug and know if we are setting to null
+				setPosAlongPath(parentPos);  
+				// setPosAlongPath(position); // JR test
 			}
 		} else {
 			// In the reverse direction take the "highest" path pos value.
@@ -184,7 +199,10 @@ public abstract class SubLocationABC<P extends IDomainObject> extends LocationAB
 			if ((parent.getPosAlongPath() == null) || (position <= parent.getPosAlongPath())) {
 				setPosAlongPath(position);
 			} else {
-				setPosAlongPath(parent.getPosAlongPath());
+				// I believe if we hit this, we found a model or algorithm error
+				Double parentPos = parent.getPosAlongPath(); // just so able to debug and know if we are setting to null
+				setPosAlongPath(parentPos);   
+				// setPosAlongPath(position);// JR test
 			}
 		}
 		
@@ -246,5 +264,24 @@ public abstract class SubLocationABC<P extends IDomainObject> extends LocationAB
 			throw new DaoException("Unable to set controller, controller " + inControllerPersistentIDStr + " not found");
 		}
 	}
+	
+	// converts A3 into 003.  Could put the A back on.  Could be a static, but called this way conveniently from tier and from bay
+	public String getCompString(String inString) {
+		String s = inString.substring(1); // Strip off the A, B, T, or S
+		// we will pad with leading spaces to 3
+		int padLength = 3;
+		int needed = padLength - s.length();
+		if (needed <= 0) {
+			return s;
+		}
+		char[] padding = new char[needed];
+		java.util.Arrays.fill(padding, '0');
+		StringBuffer sb = new StringBuffer(padLength);
+		sb.append(padding);
+		sb.append(s);
+		String ss = sb.toString();
+		return ss;
+	}
+
 
 }

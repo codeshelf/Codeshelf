@@ -31,6 +31,8 @@ import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Bay;
 import com.gadgetworks.codeshelf.model.domain.ISubLocation;
+import com.gadgetworks.codeshelf.model.domain.Path;
+import com.gadgetworks.codeshelf.model.domain.PathSegment;
 import com.gadgetworks.codeshelf.model.domain.SubLocationABC;
 import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.model.domain.Tier;
@@ -74,20 +76,22 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 	private Integer				mTierFloorCm;
 	private boolean				mIsOrientationX;
 	private Integer				mDepthCm;
-	
+	private boolean				mB1S1NearAnchor;
+
 	// short term memory
 	private String				mLastControllerLed;
 
 	private List<Tier>			mTiersThisAisle;
-	
-	private String getAppropriateControllerLed(){
+
+	private String getAppropriateControllerLed() {
 		if (mLastControllerLed.isEmpty())
 			return mControllerLed;
 		else {
 			return mLastControllerLed;
 		}
 	}
-	private void clearLastControllerLed(){
+
+	private void clearLastControllerLed() {
 		mLastControllerLed = "";
 	}
 
@@ -111,9 +115,10 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 		mBayLengthCm = 0;
 		mTierFloorCm = 0;
 		mIsOrientationX = true;
+		mB1S1NearAnchor = true;
 
 		mTiersThisAisle = new ArrayList<Tier>();
-		
+
 		mLastControllerLed = "";
 		mControllerLed = "";
 
@@ -152,6 +157,7 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 						LOGGER.error("Import errors: " + errorMsg);
 					} else {
 						Aisle lastAisle = mLastReadAisle;
+						boolean lastAisleB1S1NearAnchor = mB1S1NearAnchor;
 
 						// Fairly simple error handling. Throw anywhere in the read with EdiFileReadException. Causes skip to next aisle, if any
 						try {
@@ -173,13 +179,14 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 							// Don't have leftover tiers in the next aisle. Normally cleared in finalize, which will not happen
 							mTiersThisAisle.clear();
 							mLastReadBayForVertices = null; // barely necessary. But cleanliness is good.
-						}
-						catch (Exception e) {
+						} catch (Exception e) {
 							LOGGER.error("unknown exception in file read", e);
 						}
-					// if we started a new aisle, then the previous aisle is done. Do those computations and set those fields
+						// if we started a new aisle, then the previous aisle is done. Do those computations and set those fields
 						// but not if we threw out of last aisle
 						if (lastAisle != null && lastAisle != mLastReadAisle & !needAisleBean) {
+							if (!lastAisleB1S1NearAnchor)
+								adjustXYValuesForRightHandAisle(lastAisle);
 							finalizeTiersInThisAisle(lastAisle);
 							finalizeVerticesThisAisle(lastAisle, mLastReadBayForVertices);
 							// starting an aisle copied mLastReadBay to mLastReadBayForVertices and cleared mLastReadBay
@@ -188,6 +195,8 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 				}
 				// finish the last aisle read, but not if we threw out of last aisle
 				if (!needAisleBean) {
+					if (!mB1S1NearAnchor)
+						adjustXYValuesForRightHandAisle(mLastReadAisle);
 					finalizeTiersInThisAisle(mLastReadAisle);
 					finalizeVerticesThisAisle(mLastReadAisle, mLastReadBay);
 				}
@@ -266,6 +275,38 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 					return (bayValue * -1);
 				else
 					return (inLoc1.getDomainId().compareTo(inLoc2.getDomainId()) * -1);
+			}
+		}
+	}
+
+	private class BayComparable implements Comparator<Bay> {
+		// We want B1, B2, ...B9, B10,B11, etc.
+		public int compare(Bay inLoc1, Bay inLoc2) {
+
+			if ((inLoc1 == null) && (inLoc2 == null)) {
+				return 0;
+			} else if (inLoc2 == null) {
+				return -1;
+			} else if (inLoc1 == null) {
+				return 1;
+			} else {
+				return inLoc1.getBayIdForComparable().compareTo(inLoc2.getBayIdForComparable());
+			}
+		}
+	}
+
+	private class SlotComparable implements Comparator<Slot> {
+		// We want B1, B2, ...B9, B10,B11, etc.
+		public int compare(Slot inLoc1, Slot inLoc2) {
+
+			if ((inLoc1 == null) && (inLoc2 == null)) {
+				return 0;
+			} else if (inLoc2 == null) {
+				return -1;
+			} else if (inLoc1 == null) {
+				return 1;
+			} else {
+				return inLoc1.getSlotIdForComparable().compareTo(inLoc2.getSlotIdForComparable());
 			}
 		}
 	}
@@ -520,6 +561,166 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 	/**
 	 * @param inAisle
 	 */
+	private void adjustSlotsToMatchTier(final Tier inTier) {
+		// Get our list of Slots. Fighting through the cast to get something that will do Collections.sort()
+		List<Slot> slotList = new ArrayList<Slot>();
+		List<? extends ISubLocation> locationList = inTier.getChildrenAtLevel(Slot.class); // Not necessarily bays as only children of aisle
+		slotList.addAll((Collection<? extends Slot>) locationList);
+
+		Collections.sort(slotList, new SlotComparable());
+
+		Slot previousSlot = null;
+		Boolean isAisleXOriented = inTier.getPickFaceEndPosY() == 0.0;
+		Double tierZ = inTier.getAnchorPosZ();
+
+		// A reverse iteration
+		ListIterator li = slotList.listIterator(slotList.size());
+		while (li.hasPrevious()) {
+			Slot thisSlot = (Slot) li.previous();
+			Double lengthM = 0.0;
+			if (isAisleXOriented) {
+				lengthM = thisSlot.getPickFaceEndPosX() - thisSlot.getAnchorPosX();
+			} else {
+				lengthM = thisSlot.getPickFaceEndPosY() - thisSlot.getAnchorPosY();
+			}
+
+			//figure out the points
+			Double anchorX = 0.0;
+			Double anchorY = 0.0;
+			Double pickFaceEndX = 0.0;
+			Double pickFaceEndY = 0.0;
+
+			if (isAisleXOriented) {
+				if (previousSlot != null)
+					anchorX = previousSlot.getPickFaceEndPosX();
+				pickFaceEndX = anchorX + lengthM;
+			} else {
+				if (previousSlot != null)
+					anchorY = previousSlot.getPickFaceEndPosY();
+				pickFaceEndY = anchorY + lengthM;
+			}
+
+			Point anchorPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, anchorX, anchorY, tierZ);
+			Point pickFaceEndPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, pickFaceEndX, pickFaceEndY, tierZ);
+
+			thisSlot.setAnchorPoint(anchorPoint);
+			thisSlot.setPickFaceEndPoint(pickFaceEndPoint);
+			try {
+				// transaction?
+				mSlotDao.store(thisSlot);
+			} catch (DaoException e) {
+				LOGGER.error("", e);
+				throw new EdiFileReadException("Could not store the bay update.");
+			}
+			previousSlot = thisSlot;
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inAisle
+	 */
+	private void adjustTiersToMatchBay(final Bay inBay) {
+		// Now must make each of the bay's tiers match
+		Double anchorX = inBay.getAnchorPosX();
+		Double anchorY = inBay.getAnchorPosY();
+		Double pickFaceEndX = inBay.getPickFaceEndPosX() - inBay.getAnchorPosX();
+		Double pickFaceEndY = inBay.getPickFaceEndPosY()- inBay.getAnchorPosY();;
+
+		List<Tier> tierList = inBay.getChildrenAtLevel(Tier.class);
+		ListIterator li2 = tierList.listIterator();
+		while (li2.hasNext()) {
+			Tier thisTier = (Tier) li2.next();
+			Double zValue = thisTier.getAnchorPosZ();
+			Point anchorPointTier = new Point(PositionTypeEnum.METERS_FROM_PARENT, anchorX, anchorY, zValue);
+			Point pickFaceEndPointTier = new Point(PositionTypeEnum.METERS_FROM_PARENT, pickFaceEndX, pickFaceEndY, zValue);
+			thisTier.setAnchorPoint(anchorPointTier);
+			thisTier.setPickFaceEndPoint(pickFaceEndPointTier);
+			try {
+				// transaction?
+				mTierDao.store(thisTier);
+			} catch (DaoException e) {
+				LOGGER.error("", e);
+				throw new EdiFileReadException("Could not store the tier point update.");
+			}
+
+			// The slots are backward also, just wrong anchors and pick face end
+			adjustSlotsToMatchTier(thisTier);
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inAisle
+	 */
+	private void adjustXYValuesForRightHandAisle(final Aisle inAisle) {
+		// A "left-hand" has the aisle anchor point on the left as you face the pick face.
+		// Bays were created  in order B1, B2, etc. from the anchor point, so left-hand aisle are correct.
+		// For right, we could switch and flip, or just do a reverse iteration of bays from the anchor
+		// The caller decided that this aisle is right-handed and needs its points redone.
+		// See confluence CD_0036 for discussion.
+
+		// Get our list of bays. Fighting through the cast to get something that will do Collections.sort()
+		List<Bay> bayList = new ArrayList<Bay>();
+		List<? extends ISubLocation> locationList = inAisle.getChildrenAtLevel(Bay.class); // Not necessarily bays as only children of aisle
+		bayList.addAll((Collection<? extends Bay>) locationList);
+
+		Collections.sort(bayList, new BayComparable());
+
+		Bay previousBay = null;
+		Boolean isAisleXOriented = inAisle.getPickFaceEndPosY() == 0.0;
+
+		// A reverse iteration
+		ListIterator li = bayList.listIterator(bayList.size());
+		while (li.hasPrevious()) {
+			Bay thisBay = (Bay) li.previous();
+			Double lengthM = 0.0;
+			if (isAisleXOriented) {
+				lengthM = thisBay.getPickFaceEndPosX() - thisBay.getAnchorPosX();
+			} else {
+				lengthM = thisBay.getPickFaceEndPosY() - thisBay.getAnchorPosY();
+			}
+
+			//figure out the points
+			Double anchorX = 0.0;
+			Double anchorY = 0.0;
+			Double pickFaceEndX = 0.0;
+			Double pickFaceEndY = 0.0;
+
+			if (isAisleXOriented) {
+				if (previousBay != null)
+					anchorX = previousBay.getPickFaceEndPosX();
+				pickFaceEndX = anchorX + lengthM;
+			} else {
+				if (previousBay != null)
+					anchorY = previousBay.getPickFaceEndPosY();
+				pickFaceEndY = anchorY + lengthM;
+			}
+
+			Point anchorPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, anchorX, anchorY, 0.0);
+			Point pickFaceEndPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, pickFaceEndX, pickFaceEndY, 0.0);
+
+			thisBay.setAnchorPoint(anchorPoint);
+			thisBay.setPickFaceEndPoint(pickFaceEndPoint);
+			try {
+				// transaction?
+				mBayDao.store(thisBay);
+			} catch (DaoException e) {
+				LOGGER.error("", e);
+				throw new EdiFileReadException("Could not store the bay update.");
+			}
+
+			adjustTiersToMatchBay(thisBay);
+
+			previousBay = thisBay;
+		}
+
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inAisle
+	 */
 	private void finalizeTiersInThisAisle(final Aisle inAisle) {
 		// mTiersThisAisle has all the tiers, with their transient fields set for ledCount and ledDirection
 		// We need to sort the tiers in order, then set the first and last LED for each tier. And direction of tier for zigzag tiers
@@ -529,7 +730,8 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 		// Does not really need inAisle as mTiersThisAisle as what is needed
 
 		boolean tierSortNeeded = true;
-		if (getAppropriateControllerLed().equalsIgnoreCase("zigzagLeft") || getAppropriateControllerLed().equalsIgnoreCase("zigzagRight")) {
+		if (getAppropriateControllerLed().equalsIgnoreCase("zigzagLeft")
+				|| getAppropriateControllerLed().equalsIgnoreCase("zigzagRight")) {
 			tierSortNeeded = false;
 		}
 		boolean restartLedOnTierChange = tierSortNeeded;
@@ -620,6 +822,13 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 		mTiersThisAisle.clear(); // prepare to collect tiers for next aisle
 		clearLastControllerLed();
 
+		// Finally, if the paths already exist, let's update distances instead of waiting for app server restart.
+		PathSegment pathseg = inAisle.getAssociatedPathSegment();
+		if (pathseg != null) {
+			Path path = pathseg.getParent();
+			mFacility.recomputeLocationPathDistances(path);
+		}
+
 	}
 
 	// --------------------------------------------------------------------------
@@ -689,7 +898,7 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 	 * ** throws EdiFileReadException  on tier before bay, unreasonable slot count, invalid tier name, or after catching DaoException
 	 */
 	private Tier editOrCreateOneTier(final String inTierId, Integer inSlotCount, short inLedsThisTier, boolean inLedsIncrease) {
-		// PickFaceEndPoint is the same as bays, so that is easy. Just need to get the Z value. Anchor point is relative to parent Bay, so 0,0.
+		// PickFaceEndPoint is not the same as bays. Remember the Z value. Anchor point is relative to parent Bay, so 0,0.
 
 		if (mLastReadBay == null) {
 			throw new EdiFileReadException("Tier: " + inTierId + " came before it had a bay?");
@@ -705,10 +914,12 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 
 		// Get our points
 		Double tierFloorM = mTierFloorCm / CM_PER_M;
+		// anchor is relative to parent, so 0.
 		Double anchorX = 0.0;
 		Double anchorY = 0.0;
-		Double pickFaceEndX = mLastReadBay.getPickFaceEndPosX();
-		Double pickFaceEndY = mLastReadBay.getPickFaceEndPosY();
+		// Tier pick face end is relative to its own anchor. Don't just adopt the Bay's end.
+		Double pickFaceEndX = mLastReadBay.getPickFaceEndPosX() - mLastReadBay.getAnchorPosX();
+		Double pickFaceEndY = mLastReadBay.getPickFaceEndPosY() - mLastReadBay.getAnchorPosY();
 
 		Point anchorPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, anchorX, anchorY, tierFloorM);
 		Point pickFaceEndPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, pickFaceEndX, pickFaceEndY, tierFloorM);
@@ -891,6 +1102,7 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 		String ledsPerTier = inCsvBean.getLedCountInTier();
 		String orientation = inCsvBean.getOrientXorY();
 		String depthCMString = inCsvBean.getDepthCm();
+		String b1s1NearAnchor = inCsvBean.getB1S1NearAnchor();
 
 		// Figure out what kind of bin we have.
 		if (binType.equalsIgnoreCase("aisle")) {
@@ -917,10 +1129,11 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 
 			// remember what we had if we are resetting these.
 			mLastControllerLed = mControllerLed;
-			
+
 			mControllerLed = controllerLed; //tierRight, tierLeft, zigzagRight, zigzagLeft, or "B1>B5;B6<B10;B11>B18;B19<B20"
 			mIsOrientationX = !(orientation.equalsIgnoreCase("Y")); // make garbage in default to X			
 			mDepthCm = depthCm;
+			mB1S1NearAnchor = !(b1s1NearAnchor.equalsIgnoreCase("N")); // make garbage in default to true	
 
 			Point anchorPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, dAnchorX, dAnchorY, 0.0);
 
@@ -996,7 +1209,7 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 				mTierFloorCm = Integer.valueOf(tierFloorCm);
 			} catch (NumberFormatException e) {
 			}
-			
+
 			// just a stop sign for zero leds per tier.
 			if (mLedsPerTier == 0) {
 				LOGGER.info(" zero leds this tier");

@@ -140,7 +140,7 @@ public class Che extends WirelessDeviceABC {
 
 		catch (Exception e) {
 			// Need to fix this. What kind of exception? Presumeably, bad controller ID that leads to invalid GUID
-
+			LOGGER.error("Failed to set controller ID",e);
 		}
 		if (newGuid != null) {
 			try {
@@ -188,6 +188,26 @@ public class Che extends WirelessDeviceABC {
 		if (facility == null)
 			return;
 		facility.setUpCheContainerFromString(this, inContainers);
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * For a UI meta field
+	 * @return
+	 */
+	public final String getActiveContainers() {
+		String returnStr = "";
+		
+		for (ContainerUse use : getUses()) {
+			if (use.getActive()) {
+				if (returnStr.isEmpty())
+					returnStr = use.getContainerName();
+				else {
+					returnStr = returnStr + "," + use.getContainerName();
+				}					
+			}
+		}
+		return returnStr;
 	}
 
 }

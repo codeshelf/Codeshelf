@@ -8,6 +8,7 @@ package com.gadgetworks.codeshelf.model.dao;
 import org.junit.Before;
 
 import com.gadgetworks.codeshelf.application.IUtil;
+import com.gadgetworks.codeshelf.application.Util;
 import com.gadgetworks.codeshelf.model.dao.Database;
 import com.gadgetworks.codeshelf.model.dao.H2SchemaManager;
 import com.gadgetworks.codeshelf.model.dao.IDatabase;
@@ -66,10 +67,17 @@ import com.gadgetworks.codeshelf.model.domain.UomMaster;
 import com.gadgetworks.codeshelf.model.domain.UomMaster.UomMasterDao;
 import com.gadgetworks.codeshelf.model.domain.Vertex;
 import com.gadgetworks.codeshelf.model.domain.Vertex.VertexDao;
+import com.gadgetworks.codeshelf.model.domain.WorkArea;
+import com.gadgetworks.codeshelf.model.domain.WorkArea.WorkAreaDao;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction.WorkInstructionDao;
 
 public abstract class DAOTestABC {
+	
+	static {
+		Util.initLogging();
+		
+	}
 	
 	protected OrganizationDao		mOrganizationDao;
 	protected LocationABCDao		mLocationDao;
@@ -98,6 +106,7 @@ public abstract class DAOTestABC {
 	protected LocationAliasDao		mLocationAliasDao;
 	protected VertexDao				mVertexDao;
 	protected WorkInstructionDao	mWorkInstructionDao;
+	protected WorkAreaDao			mWorkAreaDao;
 
 
 	private IUtil					mUtil;
@@ -226,8 +235,15 @@ public abstract class DAOTestABC {
 			mVertexDao = new VertexDao(mSchemaManager);
 			Vertex.DAO = mVertexDao;
 
+			mWorkAreaDao = new WorkAreaDao(mSchemaManager);
+			WorkArea.DAO = mWorkAreaDao;
+
 			mWorkInstructionDao = new WorkInstructionDao(mSchemaManager);
 			WorkInstruction.DAO = mWorkInstructionDao;
+
+			mWorkAreaDao = new WorkAreaDao(mSchemaManager);
+			WorkArea.DAO = mWorkAreaDao;
+
 			doBefore();
 		} catch (ClassNotFoundException e) {
 		}

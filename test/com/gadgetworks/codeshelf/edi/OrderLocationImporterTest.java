@@ -49,8 +49,11 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		assertOrderHasLocation(facility, facility.getOrderHeader("02222"), singleSlot);
 	}
 	
+	/*
+	 * TODO probably better to move to a higher level test across slotting and orders
+	 */
 	@Test
-	public final void testSlottingBeforeOrders() {
+	public final void testSlottingBeforeOrders() throws IOException {
 		Facility facility = getTestFacility("O-SLOTTING9", "F-SLOTTING9");
 		// **************
 		// First a trivial aisle

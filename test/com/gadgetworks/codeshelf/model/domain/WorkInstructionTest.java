@@ -6,6 +6,8 @@
 package com.gadgetworks.codeshelf.model.domain;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -14,6 +16,7 @@ import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
+import com.gadgetworks.flyweight.command.NetGuid;
 
 /**
  * @author jeffw
@@ -127,4 +130,48 @@ public class WorkInstructionTest extends DomainTestABC {
 		Assert.assertFalse(wi.isContainedByLocation(null));
 
 	}
+
+	@Test
+	public final void crossBatchOrderGroupTest() {
+		Facility facility = createFacilityWithOutboundOrders("WITEST2");
+
+		List<String> containerIdList = new ArrayList<String>();
+		containerIdList.add("C4");
+		containerIdList.add("C5");
+		containerIdList.add("C6");
+		containerIdList.add("C7");
+
+		CodeshelfNetwork network = facility.getNetwork("WITEST");
+		Che che = network.getChe("WITEST");
+
+		Integer wiCount = facility.computeWorkInstructions(che, containerIdList);
+
+		OrderHeader out1Group1 = facility.getOrderHeader("OUT1GROUP1");
+		Assert.assertNotNull(out1Group1);
+		Assert.assertTrue(wiExistsForOrder(out1Group1));
+		
+		OrderHeader out2Group1 = facility.getOrderHeader("OUT2GROUP1");
+		Assert.assertNotNull(out2Group1);
+		Assert.assertTrue(wiExistsForOrder(out2Group1));
+
+		OrderHeader out3Group2 = facility.getOrderHeader("OUT3GROUP2");
+		Assert.assertNotNull(out3Group2);
+		Assert.assertFalse(wiExistsForOrder(out3Group2));
+
+		OrderHeader out4NoGroup = facility.getOrderHeader("OUT4NOGROUP");
+		Assert.assertNotNull(out4NoGroup);
+		Assert.assertTrue(wiExistsForOrder(out4NoGroup));
+
+	}
+	
+	private final boolean wiExistsForOrder(final OrderHeader inOrderHeader) {
+		boolean result = false;
+		for (WorkInstruction wi : WorkInstruction.DAO.getAll()) {
+			if (wi.getOrderId().equals(inOrderHeader.getOrderId())) {
+				result = true;
+			}
+		}
+		return result;
+	}
+
 }
