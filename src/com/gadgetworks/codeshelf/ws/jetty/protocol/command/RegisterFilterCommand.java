@@ -1,19 +1,22 @@
 package com.gadgetworks.codeshelf.ws.jetty.protocol.command;
 
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.filter.Filter;
+import com.gadgetworks.codeshelf.filter.EventType;
+import com.gadgetworks.codeshelf.filter.Listener;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
-import com.gadgetworks.codeshelf.ws.command.req.IWsReqCmd;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RegisterFilterRequest;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.RegisterFilterResponse;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectChangeResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
 import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
 
 /*
@@ -42,14 +45,6 @@ public class RegisterFilterCommand extends CommandABC {
 	
 	@Override
 	public ResponseABC exec() {
-		RegisterFilterResponse response = new RegisterFilterResponse();
-		
-		// CRITICAL SECURITYY CONCEPT.
-		// The remote end can NEVER get object results outside of it's own scope.
-		// Today, the scope is set by the user's ORGANIZATION.
-		// That means we can never return objects not part of the current (logged in) user's organization.
-		// THAT MEANS WE MUST ALWAYS ADD A WHERE CLAUSE HERE THAT LOCKS US INTO THIS.
-
 		try {
 			String objectClassName = request.getClassName();
 			if (!objectClassName.startsWith("com.gadgetworks.codeshelf.model.domain.")) {
@@ -73,30 +68,33 @@ public class RegisterFilterCommand extends CommandABC {
 				ITypedDao<IDomainObject> dao = daoProvider.getDaoInstance((Class<IDomainObject>) classObject);	
 				this.session.registerAsDAOListener(dao);
 
-				// moved to filter
-				// List<IDomainObject> objectMatchList = dao.findByFilter(filterClause, processedParams);
-
-				// create and register filter
-				Filter filter = new Filter((Class<IDomainObject>) classObject);
-				filter.setPropertyNames(propertyNames);
-				filter.setFilterClause(filterClause);
-				filter.setFilterParams(processedParams);
-				filter.setDao(dao);
-				filter.setId(request.getMessageId());
-				this.session.registerObjectEventListener(filter);
-				
-				// generate results from properties
-				List<Map<String, Object>> results = filter.getProperties(IWsReqCmd.OP_TYPE_UPDATE);
-				if (results==null) {
-					// don't sent a response, if there is no data
-					return null;
+				// extract IDs from object list
+				List<IDomainObject> objectMatchList = dao.findByFilter(filterClause, processedParams);
+				List<UUID> objectIds = new LinkedList<UUID>();
+				for (IDomainObject object : objectMatchList) {
+					objectIds.add(object.getPersistentId());
 				}
+
+				// create listener
+				Listener listener = new Listener((Class<IDomainObject>) classObject);				
+				listener.setId(request.getMessageId());
+				listener.setMatchList(objectIds);
+				listener.setPropertyNames(request.getPropertyNames());
+				this.session.registerObjectEventListener(listener);
+
+				// generate response
+				List<Map<String, Object>> results = listener.getProperties(objectMatchList, EventType.Update);
+				ObjectChangeResponse response = new ObjectChangeResponse();
 				response.setResults(results);
-				return response;
+				response.setStatus(ResponseStatus.Success);
+				return response;				
+				
 			}
 		} catch (Exception e) {
 			LOGGER.error("Failed to execute object filter command", e);
 		}
+		ObjectChangeResponse response = new ObjectChangeResponse();
+		response.setStatus(ResponseStatus.Fail);
 		return response;
 	}
 

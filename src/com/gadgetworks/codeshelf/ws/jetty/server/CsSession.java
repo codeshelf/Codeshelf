@@ -14,7 +14,7 @@ import org.eclipse.jetty.util.ConcurrentHashSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.filter.IObjectEventListener;
+import com.gadgetworks.codeshelf.filter.ObjectEventListener;
 import com.gadgetworks.codeshelf.model.dao.IDaoListener;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
@@ -42,7 +42,7 @@ public class CsSession implements IDaoListener {
 	@Getter @Setter
 	long lastPongReceived = 0;
 	
-	private Map<String,IObjectEventListener> eventListeners = new HashMap<String,IObjectEventListener>();
+	private Map<String,ObjectEventListener> eventListeners = new HashMap<String,ObjectEventListener>();
 	
 	private Set<ITypedDao<IDomainObject>> daoList = new ConcurrentHashSet<ITypedDao<IDomainObject>>();
 	
@@ -60,7 +60,7 @@ public class CsSession implements IDaoListener {
 	
 	@Override
 	public void objectAdded(IDomainObject inDomainObject) {
-		for (IObjectEventListener listener : eventListeners.values()) {
+		for (ObjectEventListener listener : eventListeners.values()) {
 			ResponseABC response = listener.processObjectAdd(inDomainObject);
 			if (response != null) {
             	sendResponse(response);
@@ -70,7 +70,7 @@ public class CsSession implements IDaoListener {
 
 	@Override
 	public void objectUpdated(IDomainObject inDomainObject, Set<String> inChangedProperties) {
-		for (IObjectEventListener listener : eventListeners.values()) {
+		for (ObjectEventListener listener : eventListeners.values()) {
 			ResponseABC response = listener.processObjectUpdate(inDomainObject, inChangedProperties);
 			if (response != null) {
             	sendResponse(response);
@@ -80,7 +80,7 @@ public class CsSession implements IDaoListener {
 
 	@Override
 	public void objectDeleted(IDomainObject inDomainObject) {
-		for (IObjectEventListener listener : eventListeners.values()) {
+		for (ObjectEventListener listener : eventListeners.values()) {
 			ResponseABC response = listener.processObjectDelete(inDomainObject);
 			if (response != null) {
             	sendResponse(response);
@@ -88,7 +88,7 @@ public class CsSession implements IDaoListener {
 		}		
 	}
 	
-	public void registerObjectEventListener(IObjectEventListener listener) {
+	public void registerObjectEventListener(ObjectEventListener listener) {
 		String listenerId = listener.getId();
 		if (this.eventListeners.containsKey(listenerId)) {
 			LOGGER.warn("Event listener "+listenerId+" already registered");

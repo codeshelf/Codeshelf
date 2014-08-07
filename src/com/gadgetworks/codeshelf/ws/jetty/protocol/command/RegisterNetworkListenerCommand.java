@@ -19,13 +19,13 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
 import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
 
-public class NetworkStatusCommand extends CommandABC {
+public class RegisterNetworkListenerCommand extends CommandABC {
 	
-	private static final Logger	LOGGER = LoggerFactory.getLogger(NetworkStatusCommand.class);
+	private static final Logger	LOGGER = LoggerFactory.getLogger(RegisterNetworkListenerCommand.class);
 
 	NetworkStatusRequest request;
 
-	public NetworkStatusCommand(CsSession session, NetworkStatusRequest request) {
+	public RegisterNetworkListenerCommand(CsSession session, NetworkStatusRequest request) {
 		super(session);
 		this.request = request;
 	}

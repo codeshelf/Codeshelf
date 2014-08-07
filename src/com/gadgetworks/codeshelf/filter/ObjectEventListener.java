@@ -5,7 +5,7 @@ import java.util.Set;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 
-public interface IObjectEventListener {
+public interface ObjectEventListener {
 
 	String getId();
 

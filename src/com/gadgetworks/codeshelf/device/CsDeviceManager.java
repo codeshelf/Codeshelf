@@ -206,9 +206,9 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 		for (LedController ledController : ledControllers) {
 			UUID id = ledController.getPersistentId();
 			NetGuid deviceGuid = new NetGuid(ledController.getDeviceGuid());
-			CheDeviceLogic cheDevice = new CheDeviceLogic(id, deviceGuid, this, mRadioController);
-			deviceMap.put(deviceGuid, cheDevice);
-			mRadioController.addNetworkDevice(cheDevice);
+			AisleDeviceLogic aisleDevice = new AisleDeviceLogic(id, deviceGuid, this, mRadioController);
+			deviceMap.put(deviceGuid, aisleDevice);
+			mRadioController.addNetworkDevice(aisleDevice);
 		}
 		// update device map
 		this.mDeviceMap = deviceMap;

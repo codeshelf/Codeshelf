@@ -1,16 +1,17 @@
 package com.gadgetworks.codeshelf.ws.jetty.protocol.command;
 
 import java.util.List;
-import java.util.UUID;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.gadgetworks.codeshelf.filter.EventType;
 import com.gadgetworks.codeshelf.filter.Listener;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RegisterListenerRequest;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectListenerResponse;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectChangeResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
 import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
@@ -28,58 +29,39 @@ public class RegisterListenerCommand extends CommandABC {
 
 	@Override
 	public ResponseABC exec() {
-		// CRITICAL SECURITYY CONCEPT.
-		// The remote end can NEVER get object results outside of it's own scope.
-		// Today, the scope is set by the user's ORGANIZATION.
-		// That means we can never return objects not part of the current (logged in) user's organization.
-		// THAT MEANS WE MUST ALWAYS ADD A WHERE CLAUSE HERE THAT LOCKS US INTO THIS.
-
 		try {
 			String objectClassName = request.getClassName();
 			if (!objectClassName.startsWith("com.gadgetworks.codeshelf.model.domain.")) {
 				objectClassName = "com.gadgetworks.codeshelf.model.domain." + objectClassName;
-			}
-			
-			List<UUID> objectIds = request.getObjectIds();
-			List<String> propertyNames = request.getPropertyNames();
+			}			
 
 			// First we find the object (by it's ID).
 			Class<?> classObject = Class.forName(objectClassName);
 			if (IDomainObject.class.isAssignableFrom(classObject)) {
+				// register session with DAO
 				Class<IDomainObject> persistenceClass = (Class<IDomainObject>) classObject;
 				ITypedDao<IDomainObject> dao = daoProvider.getDaoInstance((Class<IDomainObject>) persistenceClass);
 				this.session.registerAsDAOListener(dao);
 
-				List<IDomainObject> objectMatchList = dao.findByPersistentIdList(objectIds);
-
+				// create listener
+				List<IDomainObject> objectMatchList = dao.findByPersistentIdList(request.getObjectIds());
 				Listener listener = new Listener((Class<IDomainObject>) classObject);				
 				listener.setId(request.getMessageId());
-				listener.setMatchList(objectMatchList);
+				listener.setMatchList(request.getObjectIds());
+				listener.setPropertyNames(request.getPropertyNames());
+				this.session.registerObjectEventListener(listener);
 
-				
-
-				// create and register filter
-				// TODO: implement filter
-				/*
-				Filter filter = new Filter(classObject);
-				filter.setPropertyNames(propertyNames);
-				
-				List<Map<String, Object>> results = filter.getProperties(objectMatchList, IWsReqCmd.OP_TYPE_UPDATE);
-				if (results==null) {
-					// don't sent a response, if there is no data
-					return null;
-				}
-				*/				
-				
-				ObjectListenerResponse response = new ObjectListenerResponse();				
-				//response.setResults(results);
+				// generate response
+				List<Map<String, Object>> results = listener.getProperties(objectMatchList, EventType.Update);
+				ObjectChangeResponse response = new ObjectChangeResponse();
+				response.setResults(results);
 				response.setStatus(ResponseStatus.Success);
 				return response;
 			}
 		} catch (Exception e) {
 			LOGGER.error("Failed to execute "+this.getClass().getSimpleName(), e);
 		}
-		ObjectListenerResponse response = new ObjectListenerResponse();
+		ObjectChangeResponse response = new ObjectChangeResponse();
 		response.setStatus(ResponseStatus.Fail);
 		return response;
 	}

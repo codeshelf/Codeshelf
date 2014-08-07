@@ -6,9 +6,7 @@ import java.util.Map;
 import lombok.Getter;
 import lombok.Setter;
 
-public class RegisterFilterResponse extends ResponseABC {
-
+public class ObjectChangeResponse extends ResponseABC {
 	@Getter @Setter
 	List<Map<String, Object>> results;
-
 }

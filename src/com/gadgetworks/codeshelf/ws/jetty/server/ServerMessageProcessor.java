@@ -18,7 +18,7 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.command.EchoCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.GetWorkCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.LoginCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.NetworkAttachCommand;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.command.NetworkStatusCommand;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.command.RegisterNetworkListenerCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ObjectGetCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ObjectMethodCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ObjectUpdateCommand;
@@ -107,7 +107,7 @@ public class ServerMessageProcessor extends MessageProcessor {
 				attachCounter.inc();
 			}			
 			else if (request instanceof NetworkStatusRequest) {
-				command = new NetworkStatusCommand(csSession,(NetworkStatusRequest) request);
+				command = new RegisterNetworkListenerCommand(csSession,(NetworkStatusRequest) request);
 				statusCounter.inc();
 			}			
 			else if (request instanceof CompleteWorkInstructionRequest) {

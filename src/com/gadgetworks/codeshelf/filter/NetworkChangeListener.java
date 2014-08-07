@@ -16,7 +16,7 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.response.NetworkStatusRespons
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
 
-public class NetworkChangeListener implements IObjectEventListener {
+public class NetworkChangeListener implements ObjectEventListener {
 
 	@Getter @Setter
 	String id;
