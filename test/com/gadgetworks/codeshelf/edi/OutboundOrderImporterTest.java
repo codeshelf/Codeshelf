@@ -71,7 +71,8 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 				+ "\r\n1,USF314,COSTCO,456,456,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,789,789,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
-				+ "\r\n1,USF314,COSTCO,789,789,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
+				+ "\r\n1,USF314,COSTCO,789,789,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\n1,USF314,COSTCO,120,931,10706962,Sun Ripened Dried Tomato Pesto 24oz,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
 
 		byte[] csvArray = csvString.getBytes();
 
@@ -99,6 +100,21 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Assert.assertNotNull(order);
 		Integer detailCount = order.getOrderDetails().size();
 		Assert.assertEquals((Integer) 4, detailCount); // 4 details for order header 123. They would get the default name
+
+		OrderHeader order931 = facility.getOrderHeader("931");
+		Assert.assertNotNull(order931);
+		Integer detail931Count = order931.getOrderDetails().size();
+		Assert.assertEquals((Integer) 1, detail931Count); // 4 details for order header 123. They would get the default name
+
+		OrderDetail detail931 = order931.getOrderDetail("931");
+		Assert.assertNull(detail931); // not this. Do not find by order.
+		detail931 = order931.getOrderDetail("10706962");
+		Assert.assertNotNull(detail931); // this works, find by itemId within an order.
+		String detail931DomainID = detail931.getOrderDetailId();  // this calls through to domainID
+		OrderDetail detail931b = order931.getOrderDetail(detail931DomainID);
+		Assert.assertNotNull(detail931b); // this works, find by itemId within an order.
+		Assert.assertEquals(detail931b, detail931);
+		Assert.assertEquals(detail931DomainID, "10706962"); // This is the itemID from file above.
 
 	}
 
