@@ -32,10 +32,7 @@ public class Listener implements ObjectEventListener {
 	@Getter
 	Class<IDomainObject> persistenceClass;
 	
-	@Setter
-	ITypedDao<IDomainObject> dao;
-	
-	@Setter
+	@Getter @Setter
 	List<UUID> matchList;
 		
 	@Getter @Setter

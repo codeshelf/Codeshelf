@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.filter.EventType;
+import com.gadgetworks.codeshelf.filter.Filter;
 import com.gadgetworks.codeshelf.filter.Listener;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
@@ -50,7 +51,6 @@ public class RegisterFilterCommand extends CommandABC {
 			if (!objectClassName.startsWith("com.gadgetworks.codeshelf.model.domain.")) {
 				objectClassName = "com.gadgetworks.codeshelf.model.domain." + objectClassName;
 			}
-			List<String> propertyNames = request.getPropertyNames();
 			String filterClause = request.getFilterClause();
 			List<Map<String, Object>> filterParams = request.getFilterParams();
 			
@@ -68,30 +68,31 @@ public class RegisterFilterCommand extends CommandABC {
 				ITypedDao<IDomainObject> dao = daoProvider.getDaoInstance((Class<IDomainObject>) classObject);	
 				this.session.registerAsDAOListener(dao);
 
-				// extract IDs from object list
-				List<IDomainObject> objectMatchList = dao.findByFilter(filterClause, processedParams);
-				List<UUID> objectIds = new LinkedList<UUID>();
-				for (IDomainObject object : objectMatchList) {
-					objectIds.add(object.getPersistentId());
-				}
-
 				// create listener
-				Listener listener = new Listener((Class<IDomainObject>) classObject);				
-				listener.setId(request.getMessageId());
-				listener.setMatchList(objectIds);
-				listener.setPropertyNames(request.getPropertyNames());
-				this.session.registerObjectEventListener(listener);
+				Filter filter = new Filter((Class<IDomainObject>) classObject);				
+				filter.setId(request.getMessageId());
+				filter.setPropertyNames(request.getPropertyNames());
+				filter.setParams(processedParams);
+				filter.setClause(filterClause);
+				filter.setDao(dao);
+				List<IDomainObject> objectMatchList = filter.refreshMatchList();
+				this.session.registerObjectEventListener(filter);
 
 				// generate response
-				List<Map<String, Object>> results = listener.getProperties(objectMatchList, EventType.Update);
+				List<Map<String, Object>> results = filter.getProperties(objectMatchList, EventType.Update);
+				if (results==null || results.size()==0) {
+					return null;
+				}
 				ObjectChangeResponse response = new ObjectChangeResponse();
 				response.setResults(results);
 				response.setStatus(ResponseStatus.Success);
-				return response;				
-				
+				return response;
+			}
+			else {
+				LOGGER.error("Failed to execute "+this.getClass().getSimpleName()+": "+objectClassName+" is not a domain object");
 			}
 		} catch (Exception e) {
-			LOGGER.error("Failed to execute object filter command", e);
+			LOGGER.error("Failed to execute "+this.getClass().getSimpleName(), e);
 		}
 		ObjectChangeResponse response = new ObjectChangeResponse();
 		response.setStatus(ResponseStatus.Fail);
