@@ -284,8 +284,8 @@ public class CodeshelfApplicationTest {
 			"x2HPbC2avltYQR",
 			"x2HPbC2avltYQR");
 
-		IWebSocketServer webSocketListener = new CsWebSocketServer(IWebSocketServer.WEBSOCKET_DEFAULT_HOSTNAME,
-			CsWebSocketServer.WEBSOCKET_DEFAULT_PORTNUM,
+		IWebSocketServer webSocketListener = new CsWebSocketServer("localhost",
+			8444,
 			webSessionManager,
 			webSocketFactory);
 		IHttpServer httpServer = new HttpServer("./",
@@ -336,7 +336,7 @@ public class CodeshelfApplicationTest {
 		
 		AdminServer adminServer = new AdminServer();
 		
-		JettyWebSocketServer jettyServer = new JettyWebSocketServer();
+		JettyWebSocketServer jettyServer = new JettyWebSocketServer("localhost", 8444, "path", "pass", "pass");
 
 		final ServerCodeshelfApplication application = new ServerCodeshelfApplication(webSocketListener,
 			monitor,

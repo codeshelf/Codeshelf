@@ -7,27 +7,16 @@ package com.gadgetworks.codeshelf.ws.websocket;
 
 import java.io.IOException;
 
-import org.java_websocket.WebSocket;
-import org.java_websocket.handshake.ClientHandshake;
-
 public interface IWebSocketServer {
 
-	String	WEBSOCKET_HOSTNAME_PROPERTY	= "WEBSOCKET_HOSTNAME_PROPERTY";
-	String	WEBSOCKET_PORTNUM_PROPERTY	= "WEBSOCKET_PORTNUM_PROPERTY";
-
-	String	WEBSOCKET_DEFAULT_HOSTNAME	= "localhost";
-	int		WEBSOCKET_DEFAULT_PORTNUM	= 8444;
+	static final String	WEBSOCKET_HOSTNAME_PROPERTY	= "WEBSOCKET_HOSTNAME_PROPERTY";
+	static final String	WEBSOCKET_PORTNUM_PROPERTY	= "WEBSOCKET_PORTNUM_PROPERTY";
+	static final String	KEYSTORE_TYPE_PROPERTY				= "KEYSTORE_TYPE_PROPERTY";
+	static final String	KEYSTORE_PATH_PROPERTY				= "KEYSTORE_PATH_PROPERTY";
+	static final String	KEYSTORE_STORE_PASSWORD_PROPERTY	= "KEYSTORE_STORE_PASSWORD_PROPERTY";
+	static final String	KEYSTORE_KEY_PASSWORD_PROPERTY		= "KEYSTORE_KEY_PASSWORD_PROPERTY";
 
 	void start();
 
 	void stop() throws IOException, InterruptedException;
-
-	void onOpen(WebSocket inWebSocket, ClientHandshake inHandshake);
-
-	void onClose(WebSocket inWebSocket, int inCode, String inReason, boolean inRemote);
-
-	void onMessage(WebSocket inWebSocket, String inMessage);
-
-	void onError(WebSocket inWebSocket, Exception inException);
-
 }
