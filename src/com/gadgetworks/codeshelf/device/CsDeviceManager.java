@@ -217,15 +217,17 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 				suppressMapUpdate = true;
 			}
 
-			INetworkDevice oldNetworkDevice = mRadioController.getNetworkDevice(deviceGuid);
-			if (oldNetworkDevice != null) {
-				LOGGER.warn("Creating " + deviceType + " " + deviceGuid
-						+ " but a NetworkDevice already existed with that NetGuid (removing)");
-				mRadioController.removeNetworkDevice(oldNetworkDevice);
-			} else {
-				LOGGER.info("Creating " + deviceType + " " + persistentId + " / " + netDevice.getGuid());
+			if(!suppressMapUpdate) {
+				INetworkDevice oldNetworkDevice = mRadioController.getNetworkDevice(deviceGuid);
+				if (oldNetworkDevice != null) {
+					LOGGER.warn("Creating " + deviceType + " " + deviceGuid
+							+ " but a NetworkDevice already existed with that NetGuid (removing)");
+					mRadioController.removeNetworkDevice(oldNetworkDevice);
+				} else {
+					LOGGER.info("Creating " + deviceType + " " + persistentId + " / " + netDevice.getGuid());
+				}
+				mRadioController.addNetworkDevice(netDevice);
 			}
-			mRadioController.addNetworkDevice(netDevice);
 		} else {
 			// update existing device
 			if (!netDevice.getGuid().equals(deviceGuid)) {
@@ -248,10 +250,12 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 					LOGGER.error("Cannot update existing network device of unrecognized type "+deviceType);
 					suppressMapUpdate = true;
 				}
-				mRadioController.addNetworkDevice(netDevice);
+				if(!suppressMapUpdate) {
+					mRadioController.addNetworkDevice(netDevice);
+				}
 			} else {
 				// if not changing netGuid, there is nothing to change
-				LOGGER.info("No update to " + deviceType + " " + persistentId + " / " + deviceGuid);
+				LOGGER.debug("No update to " + deviceType + " " + persistentId + " / " + deviceGuid);
 				suppressMapUpdate = true;
 			}
 		}
