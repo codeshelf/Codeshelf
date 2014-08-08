@@ -78,7 +78,7 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 		boolean result = true;
 		
 		try {
-
+			mOrderGroupDao.clearAllCaches(); // avoids a class cast exception if ebeans had trimmed some objects
 			CSVReader csvReader = new CSVReader(inCsvStreamReader);
 
 			HeaderColumnNameMappingStrategy<CrossBatchCsvBean> strategy = new HeaderColumnNameMappingStrategy<CrossBatchCsvBean>();
