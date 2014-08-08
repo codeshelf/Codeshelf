@@ -214,6 +214,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 				netDevice = new AisleDeviceLogic(persistentId, deviceGuid, this, mRadioController);
 			} else {
 				LOGGER.error("Don't know how to create new network device of type "+deviceType);
+				suppressMapUpdate = true;
 			}
 
 			INetworkDevice oldNetworkDevice = mRadioController.getNetworkDevice(deviceGuid);
@@ -223,7 +224,6 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 				mRadioController.removeNetworkDevice(oldNetworkDevice);
 			} else {
 				LOGGER.info("Creating " + deviceType + " " + persistentId + " / " + netDevice.getGuid());
-				suppressMapUpdate = true;
 			}
 			mRadioController.addNetworkDevice(netDevice);
 		} else {
