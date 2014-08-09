@@ -5,10 +5,10 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import lombok.Getter;
@@ -44,7 +44,10 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	private static final String				PREFFERED_CHANNEL_PROP		= "codeshelf.preferred.channel";
 	private static final Byte				DEFAULT_CHANNEL				= 5;
 
-	private Map<NetGuid, INetworkDevice>	mDeviceMap;
+	private static final String							DEVICETYPE_CHE			= "CHE";
+	private static final String							DEVICETYPE_LED			= "LED Controller";
+	
+	private TwoKeyMap<UUID, NetGuid, INetworkDevice> mDeviceMap;
 	private IRadioController				mRadioController;
 	private String							mOrganizationId;
 	private String							mFacilityId;
@@ -64,7 +67,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 		final IRadioController inRadioController) {
 
 		mRadioController = inRadioController;
-		mDeviceMap = new HashMap<NetGuid, INetworkDevice>();
+		mDeviceMap = new TwoKeyMap<UUID, NetGuid, INetworkDevice>();
 
 		mUri = inUriStr;
 
@@ -192,26 +195,141 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 		LOGGER.info("Disconnected from server");
 	}
 
+	private void doCreateUpdateNetDevice(UUID persistentId, NetGuid deviceGuid, String deviceType) {
+		// Update the device or create if it does not exist
+		// NOTE: it appears CsDeviceManager receives but does not use about the domainId e.g. "CHE1" or "00000013"
+
+		if (persistentId == null || deviceGuid == null || deviceType == null) {
+			LOGGER.error("Invalid null parameter in call to doCreateUpdateNetDevice");
+			return;
+		}
+		boolean suppressMapUpdate = false;
+		INetworkDevice netDevice = mDeviceMap.get(persistentId);
+		
+		if (netDevice == null) {
+			// new device
+			if (deviceType.equals(DEVICETYPE_CHE)) {
+				netDevice = new CheDeviceLogic(persistentId, deviceGuid, this, mRadioController);
+			} else if (deviceType.equals(DEVICETYPE_LED)) {
+				netDevice = new AisleDeviceLogic(persistentId, deviceGuid, this, mRadioController);
+			} else {
+				LOGGER.error("Don't know how to create new network device of type "+deviceType);
+				suppressMapUpdate = true;
+			}
+
+			if(!suppressMapUpdate) {
+				INetworkDevice oldNetworkDevice = mRadioController.getNetworkDevice(deviceGuid);
+				if (oldNetworkDevice != null) {
+					LOGGER.warn("Creating " + deviceType + " " + deviceGuid
+							+ " but a NetworkDevice already existed with that NetGuid (removing)");
+					mRadioController.removeNetworkDevice(oldNetworkDevice);
+				} else {
+					LOGGER.info("Creating " + deviceType + " " + persistentId + " / " + netDevice.getGuid());
+				}
+				mRadioController.addNetworkDevice(netDevice);
+			}
+		} else {
+			// update existing device
+			if (!netDevice.getGuid().equals(deviceGuid)) {
+				// changing NetGuid (deprecated/bad!)
+				INetworkDevice oldNetworkDevice = mRadioController.getNetworkDevice(netDevice.getGuid());
+				if (oldNetworkDevice != null) {
+					LOGGER.warn("Changing NetGuid of " + deviceType + " " + persistentId + " from " + netDevice.getGuid() + " to "
+							+ deviceGuid);
+					mRadioController.removeNetworkDevice(oldNetworkDevice);
+				} else {
+					LOGGER.error("Changing NetGuid of " + deviceType + " " + persistentId + " from " + netDevice.getGuid() + " to "
+							+ deviceGuid + " but couldn't find original NetworkDevice");
+				}
+				// can't really change the NetGuid so we will create new device
+				if (deviceType.equals(DEVICETYPE_CHE)) {
+					netDevice = new CheDeviceLogic(persistentId, deviceGuid, this, mRadioController);
+				} else if (deviceType.equals(DEVICETYPE_LED)) {
+					netDevice = new AisleDeviceLogic(persistentId, deviceGuid, this, mRadioController);
+				} else {
+					LOGGER.error("Cannot update existing network device of unrecognized type "+deviceType);
+					suppressMapUpdate = true;
+				}
+				if(!suppressMapUpdate) {
+					mRadioController.addNetworkDevice(netDevice);
+				}
+			} else {
+				// if not changing netGuid, there is nothing to change
+				LOGGER.debug("No update to " + deviceType + " " + persistentId + " / " + deviceGuid);
+				suppressMapUpdate = true;
+			}
+		}
+
+		// update device map will also remove any mismatches (e.g. other entries with same guid/persistentId - see TwoKeyMap)
+		if(!suppressMapUpdate) {
+			mDeviceMap.put(persistentId, deviceGuid, netDevice);
+		}
+	}
+
+	private void doDeleteNetDevice(UUID persistentId, NetGuid deviceGuid) {
+		// Delete the CHE or LED controller.
+		INetworkDevice netDevice = mDeviceMap.remove(persistentId);
+		String deviceType = "unknown device";
+		if (netDevice == null) {
+			LOGGER.error("Failed to remove " + deviceType + " " + persistentId + " / " + deviceGuid
+					+ " from device map by persistentId, will try NetGuid");
+			netDevice = mDeviceMap.remove(deviceGuid);
+			if (netDevice == null) {
+				LOGGER.error("Failed to remove " + deviceType + " " + persistentId + " / " + deviceGuid
+						+ " from device map by NetGuid");
+				// but still try to remove from radio controller
+				INetworkDevice deviceByNetGuid = mRadioController.getNetworkDevice(deviceGuid);
+				if (deviceByNetGuid != null) {
+					mRadioController.removeNetworkDevice(deviceByNetGuid);
+					LOGGER.error("Removed unmapped " + deviceType + " " + persistentId + " / " + deviceGuid
+							+ " from Radio Controller by NetGuid");
+				} else {
+					LOGGER.error("Failed to remove unmapped " + deviceType + " " + persistentId + " / " + deviceGuid
+							+ " from Radio Controller by NetGuid");
+				}
+			} else {
+				deviceType = netDevice.getClass().getSimpleName();
+				mRadioController.removeNetworkDevice(netDevice);
+				LOGGER.warn("Removed partially unmapped " + deviceType + " " + persistentId + " / " + deviceGuid
+						+ " from device map and Radio Controller by NetGuid");
+			}
+		} else {
+			deviceType = netDevice.getClass().getSimpleName();
+			mRadioController.removeNetworkDevice(netDevice);
+			LOGGER.info("Removed " + deviceType + " " + persistentId + " / " + netDevice.getGuid());
+		}
+	}
+	
 	public void updateNetwork(List<Che> ches, List<LedController> ledControllers) {
-		Map<NetGuid, INetworkDevice> deviceMap = new HashMap<NetGuid, INetworkDevice>();
+		Set<UUID> updateDevices=new HashSet<UUID>();
 		// update network devices
 		for (Che che : ches) {
 			UUID id = che.getPersistentId();
 			NetGuid deviceGuid = new NetGuid(che.getDeviceGuid());
-			CheDeviceLogic cheDevice = new CheDeviceLogic(id, deviceGuid, this, mRadioController);
-			deviceMap.put(deviceGuid, cheDevice);
-			mRadioController.addNetworkDevice(cheDevice);
+			doCreateUpdateNetDevice(id, deviceGuid, DEVICETYPE_CHE);
+			updateDevices.add(id);
 		}
 		for (LedController ledController : ledControllers) {
 			UUID id = ledController.getPersistentId();
 			NetGuid deviceGuid = new NetGuid(ledController.getDeviceGuid());
-			AisleDeviceLogic aisleDevice = new AisleDeviceLogic(id, deviceGuid, this, mRadioController);
-			deviceMap.put(deviceGuid, aisleDevice);
-			mRadioController.addNetworkDevice(aisleDevice);
+			doCreateUpdateNetDevice(id, deviceGuid, DEVICETYPE_LED);
+			updateDevices.add(id);
 		}
-		// update device map
-		this.mDeviceMap = deviceMap;
-		LOGGER.debug("Network updated: "+this.mDeviceMap.size()+" active devices");
+		
+		// now process deletions
+		Set<UUID> deleteDevices=new HashSet<UUID>();
+		for (UUID existingDevice : mDeviceMap.keys1()) {
+			if (!updateDevices.contains(existingDevice)) {
+				deleteDevices.add(existingDevice);
+			}
+		}
+		for (UUID deleteUUID : deleteDevices) {
+			INetworkDevice dev = mDeviceMap.get(deleteUUID);
+			NetGuid netGuid = mDeviceMap.getKeys(dev).key2;
+			doDeleteNetDevice(deleteUUID, netGuid);
+		}
+		
+		LOGGER.debug("Network updated: "+updateDevices.size()+" active devices, "+ deleteDevices.size()+" removed");
 	}
 
 	public void processComputeWorkResponse(String networkGuid, Integer workInstructionCount) {
