@@ -23,13 +23,17 @@ public class MockDaoProvider implements IDaoProvider {
 		ITypedDao<User> userDao = new MockDao<User>();
 		daos.put(User.class, userDao);
 		
-		/*
-		ITypedDao<User> userDao = new MockDao<User>();
 		ITypedDao<Che> cheDao = new MockDao<Che>();
+		daos.put(Che.class, cheDao);
+
 		ITypedDao<WorkInstruction> workInstructionDao = new MockDao<WorkInstruction>();
+		daos.put(WorkInstruction.class, workInstructionDao);
+
 		ITypedDao<OrderHeader> orderHeaderDao = new MockDao<OrderHeader>();
+		daos.put(OrderHeader.class, orderHeaderDao);
+
 		ITypedDao<OrderDetail> orderDetailDao = new MockDao<OrderDetail>();
-		*/
+		daos.put(OrderDetail.class, orderDetailDao);
 	}
 	
 	@Override

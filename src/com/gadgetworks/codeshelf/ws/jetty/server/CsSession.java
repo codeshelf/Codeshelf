@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import javax.websocket.CloseReason;
 import javax.websocket.Session;
 
 import lombok.Getter;
@@ -35,7 +36,7 @@ public class CsSession implements IDaoListener {
 	boolean isAuthenticated = false;
 
 	@Getter @Setter
-	SessionType type = SessionType.Undefined;
+	SessionType type = SessionType.Unknown;
 
 	@Getter
 	private Session	session=null;
@@ -44,10 +45,10 @@ public class CsSession implements IDaoListener {
 	long lastPongReceived = 0;
 	
 	@Getter @Setter
-	long lastMessageSent = 0;
+	long lastMessageSent = System.currentTimeMillis();
 	
 	@Getter @Setter
-	long lastMessageReceived = 0;
+	long lastMessageReceived = System.currentTimeMillis();
 	
 	private Map<String,ObjectEventListener> eventListeners = new HashMap<String,ObjectEventListener>();
 	
@@ -130,6 +131,14 @@ public class CsSession implements IDaoListener {
 
 	public void messageSent() {
 		this.lastMessageSent = System.currentTimeMillis();
+	}
+
+	public void disconnect(CloseReason reason) {
+		try {
+			this.session.close(reason);
+		} catch (Exception e) {
+			LOGGER.error("Failed to close session", e);
+		}
 	}
 
 }

@@ -4,5 +4,5 @@ public enum SessionType {
 	SiteController,
 	UserApp,
 	AdminApp,
-	Undefined;
+	Unknown;
 }
