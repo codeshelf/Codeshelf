@@ -5,4 +5,5 @@ public interface WebSocketEventListener {
 	void connected();
 
 	void disconnected();
+
 }

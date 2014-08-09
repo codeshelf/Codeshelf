@@ -24,8 +24,6 @@ import com.google.inject.name.Named;
 
 @ServerEndpoint(value = "/")
 public class JettyWebSocketServer implements IWebSocketServer {
-
-	
 	
 	String	WEBSOCKET_DEFAULT_HOSTNAME	= "localhost";
 	int		WEBSOCKET_DEFAULT_PORTNUM	= 8444;
@@ -106,19 +104,4 @@ public class JettyWebSocketServer implements IWebSocketServer {
 			LOGGER.error("Failed to stop Jetty WebSocket server", e);
 		}
 	}
-	
-    public boolean sendRequest(Session session, RequestABC request) {
-    	try {
-	    	if (session==null || !session.isOpen()) {
-	    		LOGGER.warn("Unable to send request "+request+": Not connected");
-	    		return false;
-	    	}
-    		session.getBasicRemote().sendObject(request);
-    		return true;
-    	}
-    	catch (Exception e) {
-    		LOGGER.error("Exception while trying to send request #"+request.getMessageId(),e);
-    		return false;
-    	}
-    }
 }

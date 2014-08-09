@@ -18,6 +18,7 @@ import com.gadgetworks.codeshelf.filter.ObjectEventListener;
 import com.gadgetworks.codeshelf.model.dao.IDaoListener;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 
 public class CsSession implements IDaoListener {
@@ -42,6 +43,12 @@ public class CsSession implements IDaoListener {
 	@Getter @Setter
 	long lastPongReceived = 0;
 	
+	@Getter @Setter
+	long lastMessageSent = 0;
+	
+	@Getter @Setter
+	long lastMessageReceived = 0;
+	
 	private Map<String,ObjectEventListener> eventListeners = new HashMap<String,ObjectEventListener>();
 	
 	private Set<ITypedDao<IDomainObject>> daoList = new ConcurrentHashSet<ITypedDao<IDomainObject>>();
@@ -50,11 +57,12 @@ public class CsSession implements IDaoListener {
 		this.session = session;
 	}
 
-	private void sendResponse(ResponseABC response) {
+	public void sendMessage(MessageABC response) {
 		try {
 			session.getBasicRemote().sendObject(response);
+			this.messageSent();
 		} catch (Exception e) {
-			LOGGER.error("Failed to send response", e);
+			LOGGER.error("Failed to send message", e);
 		}
 	}
 	
@@ -63,7 +71,7 @@ public class CsSession implements IDaoListener {
 		for (ObjectEventListener listener : eventListeners.values()) {
 			ResponseABC response = listener.processObjectAdd(inDomainObject);
 			if (response != null) {
-            	sendResponse(response);
+				sendMessage(response);
 			}
 		}		
 	}
@@ -73,7 +81,7 @@ public class CsSession implements IDaoListener {
 		for (ObjectEventListener listener : eventListeners.values()) {
 			ResponseABC response = listener.processObjectUpdate(inDomainObject, inChangedProperties);
 			if (response != null) {
-            	sendResponse(response);
+				sendMessage(response);
 			}
 		}
 	}
@@ -83,7 +91,7 @@ public class CsSession implements IDaoListener {
 		for (ObjectEventListener listener : eventListeners.values()) {
 			ResponseABC response = listener.processObjectDelete(inDomainObject);
 			if (response != null) {
-            	sendResponse(response);
+				sendMessage(response);
 			}
 		}		
 	}
@@ -114,6 +122,14 @@ public class CsSession implements IDaoListener {
 	
 	public void close() {
 		this.unregisterAsDAOListener();
+	}
+
+	public void messageReceived() {
+		this.lastMessageReceived = System.currentTimeMillis();
+	}
+
+	public void messageSent() {
+		this.lastMessageSent = System.currentTimeMillis();
 	}
 
 }

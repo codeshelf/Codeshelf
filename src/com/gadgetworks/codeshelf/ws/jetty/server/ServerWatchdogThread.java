@@ -48,9 +48,13 @@ public class ServerWatchdogThread extends Thread {
 					Session wsSession = session.getSession();
 					if (session.getType()==SessionType.SiteController) {
 						if (usePing) {
-							LOGGER.debug("Sending ping on session "+sessionId);
-							PingRequest request = new PingRequest();
-							this.server.sendRequest(wsSession, request);
+							//LOGGER.debug("Sending ping on session "+sessionId);
+							//PingRequest request = new PingRequest();
+							// this.server.sendRequest(wsSession, request);
+							long timeSinceLastSent = System.currentTimeMillis() - session.getLastMessageSent();
+							long timeSinceLastReceived = System.currentTimeMillis() - session.getLastMessageReceived();
+							LOGGER.info(session.getSessionId()+": Sent="+timeSinceLastSent+" Received="+timeSinceLastReceived);
+							// session.getLastMessageReceived()
 						}
 					}
 				}

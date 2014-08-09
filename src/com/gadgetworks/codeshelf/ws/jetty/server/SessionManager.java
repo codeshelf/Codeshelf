@@ -71,4 +71,25 @@ public class SessionManager {
 		return this.activeSessions.values();
 	}
 
+	public void messageReceived(Session session) {
+		String sessionId = session.getId();
+		CsSession csSession = activeSessions.get(sessionId);
+		if (csSession!=null) {
+			csSession.setLastMessageReceived(System.currentTimeMillis());
+		}
+		else {
+			LOGGER.warn("Unable to update message received timestamp: Session with ID "+sessionId+" not found");
+		}		
+	}
+
+	public void messageSent(Session session) {
+		String sessionId = session.getId();
+		CsSession csSession = activeSessions.get(sessionId);
+		if (csSession!=null) {
+			csSession.setLastMessageSent(System.currentTimeMillis());
+		}
+		else {
+			LOGGER.warn("Unable to update message sent timestamp: Session with ID "+sessionId+" not found");
+		}		
+	}
 }

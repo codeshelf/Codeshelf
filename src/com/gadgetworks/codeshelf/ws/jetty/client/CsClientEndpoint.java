@@ -49,6 +49,7 @@ public class CsClientEndpoint {
     
     @OnMessage
     public void onMessage(Session session, MessageABC message) throws IOException, EncodeException {
+    	client.messageReceived();
     	if (message instanceof ResponseABC) {
     		ResponseABC response = (ResponseABC) message;
 	    	messageProcessor.handleResponse(session, response);
@@ -62,7 +63,7 @@ public class CsClientEndpoint {
             if (response!=null) {
             	// send response to client
             	LOGGER.debug("Sending response "+response+" for request "+request);
-            	session.getBasicRemote().sendObject(response);
+            	client.sendMessage(response);
             }
             else {
             	LOGGER.warn("No response generated for request "+request);

@@ -25,8 +25,6 @@ public class NetworkAttachCommand extends CommandABC {
 	
 	@Setter
 	private OrganizationDao	organizationDao;
-
-	private CsSession session;
 	
 	public NetworkAttachCommand(CsSession session, NetworkAttachRequest request) {
 		super(session);

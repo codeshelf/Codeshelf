@@ -17,7 +17,7 @@ public class JsonDecoderTest  {
 	}
 	
 	/**
-	 * Test sinple decoding without exception
+	 * Test simple decoding without exception
 	 */
 	@Test
 	public void testDecoding() throws DecodeException {

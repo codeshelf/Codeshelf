@@ -42,6 +42,12 @@ public class JettyWebSocketClient {
 	
 	MessageQueue queue = new MessageQueue();
 	
+	@Getter @Setter
+	long lastMessageSent = 0;
+	
+	@Getter @Setter
+	long lastMessageReceived = 0;
+	
 	public JettyWebSocketClient(String connectionString, MessageProcessor responseProcessor, WebSocketEventListener eventListener) {
 		this.connectionString = connectionString;
 		this.eventListener = eventListener;
@@ -75,7 +81,7 @@ public class JettyWebSocketClient {
     	session.close(new CloseReason(CloseCodes.NORMAL_CLOSURE, "Connection closed by client"));
     }
     
-    public boolean sendRequest(MessageABC message) {
+    public boolean sendMessage(MessageABC message) {
     	try {
 	    	if (!isConnected()) {
 	    		if (!this.queueingEnabled) {
@@ -96,6 +102,7 @@ public class JettyWebSocketClient {
 	    		}
 	    	}
     		session.getBasicRemote().sendObject(message);
+			this.messageSent();
     		if (message instanceof RequestABC) {
     			// keep track of request
     			this.messageCoordinator.registerRequest((RequestABC)message);
@@ -123,7 +130,7 @@ public class JettyWebSocketClient {
     	// send queued messages
     	while (this.queue.getQueueLength()>0) {
     		MessageABC message = this.queue.peek();
-    		if (this.sendRequest(message)) {
+    		if (this.sendMessage(message)) {
     			// remove from queue if sent
     			this.queue.remove(message);
     		}
@@ -137,5 +144,12 @@ public class JettyWebSocketClient {
 		this.session = null;
     	if (this.eventListener!=null) eventListener.disconnected();
 	}
-    
+
+	public void messageReceived() {
+		this.lastMessageReceived = System.currentTimeMillis();
+	}
+
+	public void messageSent() {
+		this.lastMessageSent = System.currentTimeMillis();
+	}
 }

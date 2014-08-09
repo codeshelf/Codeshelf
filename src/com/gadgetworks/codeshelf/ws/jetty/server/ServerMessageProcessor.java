@@ -11,6 +11,7 @@ import com.codahale.metrics.Timer;
 import com.gadgetworks.codeshelf.metrics.MetricsGroup;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
 import com.gadgetworks.codeshelf.model.dao.DaoProvider;
+import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.CommandABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.CompleteWorkInstructionCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ComputeWorkCommand;
@@ -68,10 +69,10 @@ public class ServerMessageProcessor extends MessageProcessor {
 	
 	SessionManager sessionManager = SessionManager.getInstance();
 	
-	DaoProvider daoProvider;
+	IDaoProvider daoProvider;
 	
 	@Inject
-	public ServerMessageProcessor(DaoProvider daoProvider) {
+	public ServerMessageProcessor(IDaoProvider daoProvider) {
 		LOGGER.debug("Creating "+this.getClass().getSimpleName());
 		this.daoProvider = daoProvider;
 	}

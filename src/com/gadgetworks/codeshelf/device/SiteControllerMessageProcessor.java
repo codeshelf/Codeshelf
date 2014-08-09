@@ -51,7 +51,7 @@ public class SiteControllerMessageProcessor extends MessageProcessor {
 				// request current network status
 				NetworkStatusRequest req = new NetworkStatusRequest();
 				req.setNetworkId(networkId);
-				this.client.sendRequest(req);		
+				this.client.sendMessage(req);		
 			}
 		}
 		//////////////////////////////////////////

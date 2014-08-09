@@ -149,7 +149,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 			containerIds.add(containerId);
 		}
 		ComputeWorkRequest req = new ComputeWorkRequest(cheId,containerIds);
-		client.sendRequest(req);
+		client.sendMessage(req);
 	}
 
 	// --------------------------------------------------------------------------
@@ -160,7 +160,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 		LOGGER.debug("Get work: Che: " + inCheId + " Loc: " + inLocationId);
 		String cheId = inPersistentId.toString();
 		GetWorkRequest req  = new GetWorkRequest(cheId,inLocationId);
-		client.sendRequest(req);
+		client.sendMessage(req);
 	}
 
 	// --------------------------------------------------------------------------
@@ -171,7 +171,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	public final void completeWi(final String inCheId, final UUID inPersistentId, final WorkInstruction inWorkInstruction) {
 		LOGGER.debug("Complete: Che: " + inCheId + " WI: " + inWorkInstruction.toString());
 		CompleteWorkInstructionRequest req = new CompleteWorkInstructionRequest(inPersistentId,inWorkInstruction);
-		client.sendRequest(req);
+		client.sendMessage(req);
 	}
 
 	@Override
@@ -183,7 +183,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 		attachRequest.setFacilityId(mFacilityId);
 		attachRequest.setOrganizationId(mOrganizationId);
 		attachRequest.setCredential(mNetworkCredential);
-		client.sendRequest(attachRequest);
+		client.sendMessage(attachRequest);
 	}
 
 	@Override

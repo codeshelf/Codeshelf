@@ -3,6 +3,7 @@ package com.gadgetworks.codeshelf.ws.jetty.protocol.command;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.LoginRequest;
@@ -17,7 +18,6 @@ public class LoginCommand extends CommandABC {
 	private static final Logger	LOGGER = LoggerFactory.getLogger(LoginCommand.class);
 	
 	private LoginRequest loginRequest;
-	private CsSession session;
 	
 	public LoginCommand(CsSession session, LoginRequest loginRequest) {
 		super(session);
@@ -30,7 +30,8 @@ public class LoginCommand extends CommandABC {
 		// Search for a user with the specified ID (that has no password).
 		String organizationId = loginRequest.getOrganizationId();
 		
-		Organization organization = Organization.DAO.findByDomainId(null, organizationId);
+		ITypedDao<Organization> orgDao = this.daoProvider.getDaoInstance(Organization.class);
+		Organization organization = orgDao.findByDomainId(null, organizationId);
 
 		// CRITICAL SECURITY CONCEPT.
 		// LaunchCodes are anonymous users that we create WITHOUT passwords or final userIDs.

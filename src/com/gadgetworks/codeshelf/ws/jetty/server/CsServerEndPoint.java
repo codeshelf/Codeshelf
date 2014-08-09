@@ -50,6 +50,9 @@ public class CsServerEndPoint {
 
     @OnMessage
     public void onMessage(Session session, MessageABC message) throws IOException, EncodeException {
+    	CsSession csSession = sessionManager.getSession(session);
+    	csSession.messageReceived();
+		sessionManager.messageReceived(session);
     	if (message instanceof ResponseABC) {
     		ResponseABC response = (ResponseABC) message;
             LOGGER.debug("Received response on session "+session.getId()+": " + response);
@@ -63,7 +66,7 @@ public class CsServerEndPoint {
             if (response!=null) {
             	// send response to client
             	LOGGER.debug("Sending response "+response+" for request "+request);
-            	session.getBasicRemote().sendObject(response);
+            	csSession.sendMessage(response);
             }
             else {
             	LOGGER.warn("No response generated for request "+request);

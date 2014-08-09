@@ -1,5 +1,6 @@
 package com.gadgetworks.codeshelf.ws.jetty.protocol.command;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.List;
@@ -60,9 +61,14 @@ public class ObjectMethodCommand extends CommandABC {
 						Object argumentValue = arg.getValue();
 						Class classType = Class.forName(arg.getClassType());
 						signatureClasses.add(classType);
+						
+						cookedArguments.add(argumentValue);
+
+						/*
 
 						Object typedArg = null;
 						try {
+							typedArg = argumentValue;
 							if (!classType.isArray()) {
 								// create object for simple data types
 								if (argumentValue.getClass().equals(classType)) {
@@ -73,9 +79,15 @@ public class ObjectMethodCommand extends CommandABC {
 								}
 							} else {
 								// create object for composite data types
-								argumentValue.toString();
+								typedArg = argumentValue;
+								/ *
+								Array array = (Array) argumentValue;
 
-								/*
+								Class<?> arrayType = classType.getComponentType();
+								typedArg = Array.newInstance(arrayType, array.getLength(arrayType).size());
+								* /
+								
+								/ *
 								//ArrayNode arrayNode = mapper.readValue(argumentValue, ArrayNode.class);
 								Class<?> arrayType = classType.getComponentType();
 								typedArg = Array.newInstance(arrayType, arrayNode.size());
@@ -85,13 +97,14 @@ public class ObjectMethodCommand extends CommandABC {
 									Object nodeItem = mapper.readValue(node, arrayType);
 									Array.set(typedArg, i++, nodeItem);
 								}
-								*/
+								* /
 							}
 							cookedArguments.add(typedArg);
 						} catch (Exception e) {
 							response.setStatus(ResponseStatus.Fail);
 							return response;
 						}
+							*/
 					}
 
 					Object methodResult = null;
@@ -103,6 +116,7 @@ public class ObjectMethodCommand extends CommandABC {
 							response.setStatus(ResponseStatus.Success);
 							return response;
 						} catch (Exception e) {
+							LOGGER.error("Failed to invoke "+className+"."+methodName,e);
 							response.setStatus(ResponseStatus.Fail);
 							return response;
 						}
