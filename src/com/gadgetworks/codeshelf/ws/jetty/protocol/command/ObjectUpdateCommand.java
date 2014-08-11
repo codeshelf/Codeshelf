@@ -36,13 +36,31 @@ public class ObjectUpdateCommand extends CommandABC {
 		// That means we can never return objects not part of the current (logged in) user's organization.
 		// THAT MEANS WE MUST ALWAYS ADD A WHERE CLAUSE HERE THAT LOCKS US INTO THIS.
 
+		// extract UUID
 		String className = request.getClassName();
+		String persistentId = request.getPersistentId();
+		if (persistentId==null) {
+			LOGGER.error("Failed to update "+className+":  Object ID is undefined");
+			response.setStatus(ResponseStatus.Fail);
+			response.setStatusMessage("Object ID is not defined");
+			return response;
+		}
+		UUID objectId = null;
+		try {
+			objectId = UUID.fromString(persistentId);
+		}
+		catch (Exception e) {
+			LOGGER.error("Failed to update "+className,e);
+			response.setStatus(ResponseStatus.Fail);
+			response.setStatusMessage("Failed to convert object ID "+persistentId+" to UUID");
+			return response;
+		}
+
 		if (!className.startsWith("com.gadgetworks.codeshelf.model.domain.")) {
 			className = "com.gadgetworks.codeshelf.model.domain." + className;
 		}
-		UUID objectId = UUID.fromString(request.getPersistentId());
+		
 		Map<String, Object> properties = request.getProperties();
-
 		try {
 			// First we find the parent object (by it's ID).
 			Class<?> classObject = Class.forName(className);
@@ -69,7 +87,7 @@ public class ObjectUpdateCommand extends CommandABC {
 				}
 				else {
 					response.setStatus(ResponseStatus.Fail);
-					response.setStatusMessage(classObject+" with ID #"+objectId+" not founds");
+					response.setStatusMessage(className+" with ID #"+objectId+" not found");
 					return response;
 				}
 			}

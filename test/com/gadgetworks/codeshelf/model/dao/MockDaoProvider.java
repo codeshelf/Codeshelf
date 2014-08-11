@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Map;
 
 import com.gadgetworks.codeshelf.model.domain.Che;
+import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
+import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
@@ -19,6 +21,12 @@ public class MockDaoProvider implements IDaoProvider {
 	public MockDaoProvider() {
 		ITypedDao<Organization> organizationDao = new MockDao<Organization>();
 		daos.put(Organization.class, organizationDao);
+
+		ITypedDao<Facility> facilityDao = new MockDao<Facility>();
+		daos.put(Facility.class, facilityDao);
+
+		ITypedDao<CodeshelfNetwork> networkDao = new MockDao<CodeshelfNetwork>();
+		daos.put(CodeshelfNetwork.class, networkDao);
 
 		ITypedDao<User> userDao = new MockDao<User>();
 		daos.put(User.class, userDao);

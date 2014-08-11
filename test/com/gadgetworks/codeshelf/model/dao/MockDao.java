@@ -16,7 +16,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import javax.management.RuntimeErrorException;
 import javax.persistence.Column;
+
+import org.apache.commons.lang.NotImplementedException;
 
 import com.avaje.ebean.Query;
 import com.eaio.uuid.UUIDGen;
@@ -29,7 +32,8 @@ import com.gadgetworks.codeshelf.model.domain.IDomainObjectTree;
  */
 public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 
-	private Map<String, T>	mStorage	= new HashMap<String, T>();
+	private Map<String, T>	storageByDomainId	= new HashMap<String, T>();
+	private Map<UUID, T>	storageByPersistentId	= new HashMap<UUID, T>();
 
 	public MockDao() {
 
@@ -60,17 +64,16 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 	}
 
 	public final Query<T> query() {
-		// TODO Auto-generated method stub
-		return null;
+		throw new NotImplementedException();
 	}
 
 	public final T findByPersistentId(UUID inPersistentId) {
-		return mStorage.get(inPersistentId);
+		return storageByPersistentId.get(inPersistentId);
 	}
 
 	@Override
 	public <P extends IDomainObject> P findByPersistentId(Class<P> inClass, UUID inPersistentId) {
-		return (P) mStorage.get(inPersistentId);
+		return (P) storageByDomainId.get(inPersistentId);
 	}
 
 	public final T findByDomainId(IDomainObject inParentObject, String inDomainId) {
@@ -80,17 +83,16 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 		} else {
 			domainId = inDomainId;
 		}
-		return mStorage.get(domainId);
+		return storageByDomainId.get(domainId);
 	}
 
 	public final List<T> findByPersistentIdList(List<UUID> inPersistentIdList) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new NotImplementedException();
+
 	}
 
 	public final List<T> findByFilter(String inFilter, Map<String, Object> inFilterParams) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new NotImplementedException();
 	}
 
 	public final void store(T inDomainObject) {
@@ -117,7 +119,8 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 			e.printStackTrace();
 		}
 
-		mStorage.put(getFullDomainId(inDomainObject), inDomainObject);
+		storageByDomainId.put(getFullDomainId(inDomainObject), inDomainObject);
+		storageByPersistentId.put(inDomainObject.getPersistentId(), inDomainObject);
 	}
 
 	private static void addDeclaredAndInheritedFields(Class<?> c, Collection<Field> fields) {
@@ -129,11 +132,12 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 	}
 	
 	public final void delete(T inDomainObject) {
-		mStorage.remove(inDomainObject);
+		storageByDomainId.remove(inDomainObject);
+		storageByPersistentId.remove(inDomainObject.getPersistentId());
 	}
 
 	public final List<T> getAll() {
-		return new ArrayList(mStorage.values());
+		return new ArrayList(storageByDomainId.values());
 	}
 
 	public final void pushNonPersistentUpdates(T inDomainObject) {
@@ -145,40 +149,32 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 
 	@Override
 	public final <L> List<L> findByFilterAndClass(String inFilter, Map<String, Object> inFilterParams, Class<L> inClass) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new NotImplementedException();
 	}
 
 	@Override
 	public Object getNextId(Class<?> beanType) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new NotImplementedException();
 	}
 
 	@Override
 	public void beginTransaction() {
-
 	}
 
 	@Override
 	public void endTransaction() {
-
 	}
 
 	@Override
-	public void commitTransaction() {
-		
+	public void commitTransaction() {	
 	}
 
 	@Override
 	public Boolean isNewOrDirty(IDomainObject inDomainObject) {
-		// TODO Auto-generated method stub
-		return false;
+		throw new NotImplementedException();
 	}
 
 	@Override
 	public void clearAllCaches() {
-		// TODO Auto-generated method stub
-		
 	}
 }

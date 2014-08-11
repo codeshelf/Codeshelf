@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.device;
+package com.gadgetworks.codeshelf.util;
 
 import java.util.Collection;
 import java.util.HashMap;

@@ -15,7 +15,10 @@ import javax.websocket.server.ServerEndpoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
+import com.gadgetworks.codeshelf.metrics.MetricsGroup;
+import com.gadgetworks.codeshelf.metrics.MetricsService;
 import com.gadgetworks.codeshelf.ws.jetty.io.JsonDecoder;
 import com.gadgetworks.codeshelf.ws.jetty.io.JsonEncoder;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
@@ -27,6 +30,8 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 public class CsServerEndPoint {
 
 	private static final Logger	LOGGER = LoggerFactory.getLogger(CsServerEndPoint.class);
+
+	private static final Counter messageCounter = MetricsService.addCounter(MetricsGroup.WSS,"messages.received");
 
 	MessageProcessor messageProcessor;
 	SessionManager sessionManager;
@@ -50,6 +55,7 @@ public class CsServerEndPoint {
 
     @OnMessage
     public void onMessage(Session session, MessageABC message) throws IOException, EncodeException {
+    	messageCounter.inc();
     	CsSession csSession = sessionManager.getSession(session);
     	csSession.messageReceived();
 		sessionManager.messageReceived(session);

@@ -17,6 +17,9 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codahale.metrics.Counter;
+import com.gadgetworks.codeshelf.metrics.MetricsGroup;
+import com.gadgetworks.codeshelf.metrics.MetricsService;
 import com.gadgetworks.codeshelf.ws.jetty.io.JsonDecoder;
 import com.gadgetworks.codeshelf.ws.jetty.io.JsonEncoder;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
@@ -28,6 +31,11 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 public class CsClientEndpoint {
 	
 	private static final Logger	LOGGER = LoggerFactory.getLogger(CsClientEndpoint.class);
+
+	private static final Counter messageCounter = MetricsService.addCounter(MetricsGroup.WSS,"messages.received");
+	private static final Counter sessionStartCounter = MetricsService.addCounter(MetricsGroup.WSS,"sessions.started");
+	private static final Counter sessionEndCounter = MetricsService.addCounter(MetricsGroup.WSS,"sessions.ended");
+	private static final Counter sessionErrorCounter = MetricsService.addCounter(MetricsGroup.WSS,"sessions.errors");
 
 	@Getter @Setter
 	MessageProcessor messageProcessor;
@@ -43,12 +51,14 @@ public class CsClientEndpoint {
 	
     @OnOpen
 	public final void onConnect(Session session) {
-        LOGGER.info("Connected to server: " + session);
+        sessionStartCounter.inc();
+    	LOGGER.info("Connected to server: " + session);
         client.connected(session);
     }
     
     @OnMessage
     public void onMessage(Session session, MessageABC message) throws IOException, EncodeException {
+    	messageCounter.inc();
     	client.messageReceived();
     	if (message instanceof ResponseABC) {
     		ResponseABC response = (ResponseABC) message;
@@ -73,12 +83,14 @@ public class CsClientEndpoint {
     
     @OnClose
 	public final void onDisconnect(CloseReason reason) {
+    	sessionEndCounter.inc();
     	LOGGER.info("Disconnected from server: " + reason);
     	client.disconnected();
     }
     
     @OnError
 	public final void onError(Throwable cause) {
+    	sessionErrorCounter.inc();
     	LOGGER.error("WebSocket: "+cause.getMessage());
     }
 }

@@ -20,6 +20,7 @@ import com.gadgetworks.codeshelf.application.IUtil;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
+import com.gadgetworks.codeshelf.util.TwoKeyMap;
 import com.gadgetworks.codeshelf.ws.jetty.client.JettyWebSocketClient;
 import com.gadgetworks.codeshelf.ws.jetty.client.WebSocketEventListener;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.CompleteWorkInstructionRequest;

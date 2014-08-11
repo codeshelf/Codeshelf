@@ -243,7 +243,7 @@ public abstract class DAOTestABC {
 
 			mWorkAreaDao = new WorkAreaDao(mSchemaManager);
 			WorkArea.DAO = mWorkAreaDao;
-
+			
 			doBefore();
 		} catch (ClassNotFoundException e) {
 		}

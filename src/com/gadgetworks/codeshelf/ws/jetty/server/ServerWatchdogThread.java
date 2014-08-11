@@ -3,7 +3,6 @@ package com.gadgetworks.codeshelf.ws.jetty.server;
 import java.util.Collection;
 
 import javax.websocket.CloseReason;
-import javax.websocket.Session;
 import javax.websocket.CloseReason.CloseCodes;
 
 import lombok.Getter;
@@ -59,11 +58,10 @@ public class ServerWatchdogThread extends Thread {
 				Collection<CsSession> sessions = SessionManager.getInstance().getSessions();
 				for (CsSession session : sessions) {
 					String sessionId = session.getSessionId();
-					Session wsSession = session.getSession();
 					if (useKeepAlive) {
 						long timeSinceLastSent = System.currentTimeMillis() - session.getLastMessageSent();
 						long timeSinceLastReceived = System.currentTimeMillis() - session.getLastMessageReceived();
-						LOGGER.debug(session.getSessionId()+": Sent="+timeSinceLastSent+" Received="+timeSinceLastReceived);
+						// LOGGER.debug(session.getSessionId()+": Sent="+timeSinceLastSent+" Received="+timeSinceLastReceived);
 						if (session.getType()==SessionType.SiteController && timeSinceLastReceived>siteControllerTimeout) {
 							// disconnect timed out site controller
 							LOGGER.info("Site Controller connection timed out.  Closing session.");

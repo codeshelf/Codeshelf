@@ -31,12 +31,12 @@ public class MetricsService {
 		try {
 			this.hostName=InetAddress.getLocalHost().getHostName();
 		} catch (Exception e) {
-			LOGGER.error("Failed to determine host name. Trying to fall sback on host address.", e);
+			LOGGER.error("Failed to determine host name: "+e.getMessage()+".  Trying to fall back on host address.");
 			try {
-				this.hostName=InetAddress.getLocalHost().getHostAddress();
+				this.hostName=InetAddress.getLocalHost().getHostAddress()+" ";
 			}
 			catch (Exception ex) {
-				LOGGER.error("Failed to determine host address", e);
+				LOGGER.error("Failed to determine host address: "+e.getMessage());
 				this.hostName = "unknown";
 			}
 		}
