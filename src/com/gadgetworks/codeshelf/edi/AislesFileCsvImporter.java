@@ -155,7 +155,7 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 						LOGGER.error("Import errors: " + errorMsg);
 					} else {
 						Aisle lastAisle = mLastReadAisle;
-	
+
 						// Fairly simple error handling. Throw anywhere in the read with EdiFileReadException. Causes skip to next aisle, if any
 						try {
 							// This creates one location: aisle, bay, tier; (tier also creates slots). 
@@ -568,7 +568,7 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 		boolean isZigzag = upperStr.contains("ZIGZAG");
 		if (isZigzag)
 			tierSortNeeded = false;
-		
+
 		boolean restartLedOnTierChange = tierSortNeeded;
 		boolean intialZigTierDirectionIncrease = true;
 
@@ -576,7 +576,8 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 			Collections.sort(mTiersThisAisle, new TierBayComparable());
 		} else if (controllerLedPattern.equalsIgnoreCase("zigzagLeft") || controllerLedPattern.equalsIgnoreCase("zigzagB1S1Side")) {
 			Collections.sort(mTiersThisAisle, new ZigzagLeftComparable());
-		} else if (controllerLedPattern.equalsIgnoreCase("zigzagRight") || controllerLedPattern.equalsIgnoreCase("zigzagNotB1S1Side")) {
+		} else if (controllerLedPattern.equalsIgnoreCase("zigzagRight")
+				|| controllerLedPattern.equalsIgnoreCase("zigzagNotB1S1Side")) {
 			Collections.sort(mTiersThisAisle, new ZigzagRightComparable());
 			intialZigTierDirectionIncrease = false;
 		}
@@ -736,7 +737,8 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 		if (mLastReadBay == null) {
 			throw new EdiFileReadException("Tier: " + inTierId + " came before it had a bay?");
 		}
-		if (inSlotCount < 1 || inSlotCount > maxSlotForTier) {
+		// For non-slotted inventory we support 0 slot count, meaning the tier has no slots at all.
+		if (inSlotCount < 0 || inSlotCount > maxSlotForTier) {
 			throw new EdiFileReadException("unreasonable slot count during tier creation");
 		}
 		// We are enforcing the tier name.
@@ -783,11 +785,13 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 		tier.setMTransientLedsThisTier(inLedsThisTier);
 		tier.setMTransientLedsIncrease(inLedsIncrease);
 
-		// Now make or edit the slots		
-		Double slotWidthMeters = (mBayLengthCm / CM_PER_M) / inSlotCount;
-		Slot lastSlotMadeThisTier = null;
-		for (Integer n = 1; n <= inSlotCount; n++) {
-			lastSlotMadeThisTier = editOrCreateOneSlot(tier, n, lastSlotMadeThisTier, slotWidthMeters);
+		if (inSlotCount > 0) {
+			// Now make or edit the slots		
+			Double slotWidthMeters = (mBayLengthCm / CM_PER_M) / inSlotCount;
+			Slot lastSlotMadeThisTier = null;
+			for (Integer n = 1; n <= inSlotCount; n++) {
+				lastSlotMadeThisTier = editOrCreateOneSlot(tier, n, lastSlotMadeThisTier, slotWidthMeters);
+			}
 		}
 
 		return tier;
@@ -1050,7 +1054,7 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 			// Can we know the led increase direction yet? Not necessarily for zigzag bay, but can for the other aisle types
 			boolean ledsIncrease = true;
 			String controllerLedPattern = getAppropriateControllerLed();
-			if (controllerLedPattern.equalsIgnoreCase("tierRight") || controllerLedPattern.equalsIgnoreCase("tierNotB1S1Side")) 
+			if (controllerLedPattern.equalsIgnoreCase("tierRight") || controllerLedPattern.equalsIgnoreCase("tierNotB1S1Side"))
 				ledsIncrease = false;
 			// Knowable, but a bit tricky for the multi-controller aisle case. If this tier is in B3, within B1>B5;, ledsIncrease would be false.
 
