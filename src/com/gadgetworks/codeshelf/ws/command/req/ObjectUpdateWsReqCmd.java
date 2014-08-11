@@ -115,7 +115,6 @@ public class ObjectUpdateWsReqCmd extends WsReqCmdABC {
 					ObjectMapper objectSetter = new ObjectMapper();
 					updateObject = objectSetter.readerForUpdating(updateObject).readValue(propertiesNode);
 					
-					
 					dao.store(updateObject);
 					mapper = new ObjectMapper();
 					ObjectNode dataNode = mapper.createObjectNode();

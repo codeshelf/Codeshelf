@@ -64,23 +64,6 @@ public class ObjectMethodWsReqCmdTest {
 		assertIsErrorResponse(respCmd);
 	}
 
-	@Test
-	public void shouldReturnErrorResponseWhenMethodThrowsException() throws Exception {
-		MockModel mockModel = mock(MockModel.class);
-		doThrow(new Exception("test")).when(mockModel).testMethod(any(String.class));
-		
-		when(mockDaoProvider.getDaoInstance(MockModel.class)).thenReturn(mockTypedDao);
-		when(mockTypedDao.findByPersistentId(any(UUID.class))).thenReturn(mockModel);
-		
-		
-		ObjectNode mockJsonNode = createReqCmdJsonNode();
-		
-		ObjectMethodWsReqCmd subject = new ObjectMethodWsReqCmd("commandId", mockJsonNode, mockDaoProvider);
-		IWsRespCmd respCmd = subject.exec();
-
-		assertIsErrorResponse(respCmd);
-	}
-
 	private void assertIsErrorResponse(IWsRespCmd respCmd) throws IOException, JsonParseException, JsonMappingException {
 		String response = respCmd.getResponseMsg();
 		ObjectMapper mapper = new ObjectMapper();

@@ -13,6 +13,7 @@ import lombok.ToString;
 
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
+import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +26,8 @@ import com.avaje.ebean.annotation.CacheStrategy;
  */
 
 @Entity
-@CacheStrategy(useBeanCache = true)@JsonAutoDetect(getterVisibility = Visibility.NONE)
+@CacheStrategy(useBeanCache = true)
+@JsonAutoDetect(getterVisibility = Visibility.NONE)
 //@ToString(doNotUseGetters = true)
 public abstract class DomainObjectTreeABC<P extends IDomainObject> extends DomainObjectABC implements IDomainObjectTree<P> {
 
@@ -43,7 +45,7 @@ public abstract class DomainObjectTreeABC<P extends IDomainObject> extends Domai
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.IDomainObject#getFullDomainId()
 	 */
-	@JsonProperty
+	@JsonIgnore
 	public String getFullDomainId() {
 		return getParentFullDomainId() + "." + getDomainId();
 	}
@@ -52,7 +54,7 @@ public abstract class DomainObjectTreeABC<P extends IDomainObject> extends Domai
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.IDomainObject#getFullParentDomainId()
 	 */
-	@JsonProperty
+	@JsonIgnore
 	public final String getParentFullDomainId() {
 		String result = "";
 
@@ -71,7 +73,7 @@ public abstract class DomainObjectTreeABC<P extends IDomainObject> extends Domai
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.IDomainObject#getParentPersistentId()
 	 */
-	@JsonProperty
+	@JsonIgnore
 	public final UUID getParentPersistentId() {
 		UUID result = null;
 		IDomainObject domainObject = getParent();

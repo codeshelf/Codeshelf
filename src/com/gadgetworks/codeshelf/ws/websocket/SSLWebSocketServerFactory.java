@@ -30,7 +30,6 @@ import javax.net.ssl.TrustManagerFactory;
 import org.java_websocket.SSLSocketChannel2;
 import org.java_websocket.WebSocketAdapter;
 import org.java_websocket.WebSocketImpl;
-import org.java_websocket.drafts.Draft;
 import org.java_websocket.drafts.IDraft;
 import org.java_websocket.server.WebSocketServer;
 import org.slf4j.Logger;

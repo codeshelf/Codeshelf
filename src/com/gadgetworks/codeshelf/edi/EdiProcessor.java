@@ -10,6 +10,9 @@ import java.util.concurrent.BlockingQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codahale.metrics.Timer;
+import com.gadgetworks.codeshelf.metrics.MetricsGroup;
+import com.gadgetworks.codeshelf.metrics.MetricsService;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Facility;
@@ -37,6 +40,8 @@ public final class EdiProcessor implements IEdiProcessor {
 	private ICsvAislesFileImporter		mCsvAislesFileImporter;
 	private ICsvCrossBatchImporter		mCsvCrossBatchImporter;
 	private ITypedDao<Facility>			mFacilityDao;
+	
+	private final Timer ediProcessingTimer = MetricsService.addTimer(MetricsGroup.EDI,"processing-time");
 
 	@Inject
 	public EdiProcessor(final ICsvOrderImporter inCsvOrdersImporter,
@@ -115,30 +120,32 @@ public final class EdiProcessor implements IEdiProcessor {
 	/**
 	 */
 	private void checkEdiServices(BlockingQueue<String> inEdiSignalQueue) {
-
 		LOGGER.debug("Begin EDI process.");
-
-		// Loop through each facility to make sure that it's EDI service processes any queued EDI.
-		for (Facility facility : mFacilityDao.getAll()) {
-			for (IEdiService ediService : facility.getEdiServices()) {
-				if (ediService.getServiceStateEnum().equals(EdiServiceStateEnum.LINKED)) {
-					if (ediService.getUpdatesFromHost(mCsvOrderImporter,
-						mCsvOrderLocationImporter,
-						mCsvInventoryImporter,
-						mCsvLocationAliasImporter,
-						mCsvCrossBatchImporter,
-						mCsvAislesFileImporter)) {
-						// Signal other threads that we've just processed new EDI.
-						try {
-							inEdiSignalQueue.put(ediService.getServiceName());
-						} catch (InterruptedException e) {
-							LOGGER.error("", e);
+    	final Timer.Context context = ediProcessingTimer.time();
+    	try {
+			// Loop through each facility to make sure that it's EDI service processes any queued EDI.
+			for (Facility facility : mFacilityDao.getAll()) {
+				for (IEdiService ediService : facility.getEdiServices()) {
+					if (ediService.getServiceStateEnum().equals(EdiServiceStateEnum.LINKED)) {
+						if (ediService.getUpdatesFromHost(mCsvOrderImporter,
+							mCsvOrderLocationImporter,
+							mCsvInventoryImporter,
+							mCsvLocationAliasImporter,
+							mCsvCrossBatchImporter,
+							mCsvAislesFileImporter)) {
+							// Signal other threads that we've just processed new EDI.
+							try {
+								inEdiSignalQueue.put(ediService.getServiceName());
+							} catch (InterruptedException e) {
+								LOGGER.error("", e);
+							}
 						}
 					}
 				}
 			}
-		}
-
+    	} finally {
+    		context.stop();
+    	}
 		LOGGER.debug("End EDI process.");
 	}
 }

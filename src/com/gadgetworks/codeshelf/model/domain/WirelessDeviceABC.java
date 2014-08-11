@@ -20,6 +20,7 @@ import lombok.ToString;
 
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
+import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,7 +46,8 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-@CacheStrategy(useBeanCache = true)@JsonAutoDetect(getterVisibility = Visibility.NONE)
+@CacheStrategy(useBeanCache = true)
+@JsonAutoDetect(getterVisibility = Visibility.NONE)
 @ToString(doNotUseGetters = true, callSuper = true)
 public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNetwork> {
 
@@ -77,6 +79,7 @@ public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNet
 	@Column(nullable = false)
 	@Getter
 	@Setter
+	@JsonProperty
 	private byte[]					deviceGuid;
 
 	@Column(nullable = false)
@@ -142,7 +145,7 @@ public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNet
 		deviceGuid = inGuid.getParamValueAsByteArray();
 	}
 
-	@JsonProperty
+	@JsonIgnore
 	public final String getDeviceGuidStr() {
 		return new NetGuid(deviceGuid).toString();
 	}

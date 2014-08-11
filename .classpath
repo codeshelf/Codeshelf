@@ -29,19 +29,7 @@
 	<classpathentry kind="lib" path="lib/dist/httpcore-4.0.1.jar"/>
 	<classpathentry kind="lib" path="lib/dist/httpmime-4.0.3.jar"/>
 	<classpathentry kind="lib" path="lib/dist/opencsv-2.3.jar" sourcepath="APIs/opencsv-2.3.-src..zip"/>
-	<classpathentry kind="lib" path="lib/dist/jetty-continuation-9.0.0.M0.jar"/>
-	<classpathentry kind="lib" path="lib/dist/servlet-api-3.0.jar"/>
-	<classpathentry kind="lib" path="lib/dist/jetty-continuation-9.0.0.M2.jar"/>
-	<classpathentry kind="lib" path="lib/dist/jetty-http-9.0.0.M2.jar"/>
-	<classpathentry kind="lib" path="lib/dist/jetty-io-9.0.0.M2.jar"/>
-	<classpathentry kind="lib" path="lib/dist/jetty-server-9.0.0.M2.jar" sourcepath="/Users/jeffw/.m2/repository/org/eclipse/jetty/jetty-server/9.0.0.M2/jetty-server-9.0.0.M2-sources.jar"/>
-	<classpathentry kind="lib" path="lib/dist/jetty-servlet-9.0.0.M2.jar"/>
-	<classpathentry kind="lib" path="lib/dist/jetty-servlets-9.0.0.M2.jar"/>
-	<classpathentry kind="lib" path="lib/dist/jetty-util-9.0.0.M2.jar" sourcepath="/Users/jeffw/.m2/repository/org/eclipse/jetty/jetty-util/9.0.0.M2/jetty-util-9.0.0.M2-sources.jar"/>
-	<classpathentry kind="lib" path="lib/dist/jetty-rewrite-9.0.0.M2.jar" sourcepath="/Users/jeffw/.m2/repository/org/eclipse/jetty/jetty-rewrite/9.0.0.M2/jetty-rewrite-9.0.0.M2-sources.jar"/>
 	<classpathentry kind="lib" path="lib/dist/uuid-3.3.jar" sourcepath="APIs/uuid-3.3-sources.jar"/>
-	<classpathentry kind="lib" path="lib/dist/websocket-core-9.0.0.M2.jar" sourcepath="/Users/jeffw/.m2/repository/org/eclipse/jetty/websocket/websocket-core/9.0.0.M2/websocket-core-9.0.0.M2-sources.jar"/>
-	<classpathentry kind="lib" path="lib/dist/websocket-server-9.0.0.M2.jar" sourcepath="/Users/jeffw/.m2/repository/org/eclipse/jetty/websocket/websocket-server/9.0.0.M2/websocket-server-9.0.0.M2-sources.jar"/>
 	<classpathentry kind="lib" path="lib/dist/shiro-core-1.2.1.jar" sourcepath="/Users/jeffw/.m2/repository/org/apache/shiro/shiro-core/1.2.1/shiro-core-1.2.1-sources.jar"/>
 	<classpathentry kind="lib" path="lib/dist/shiro-guice-1.2.1.jar"/>
 	<classpathentry kind="lib" path="lib/dist/guice-assistedinject-3.0.jar"/>
@@ -74,7 +62,60 @@
 	<classpathentry kind="lib" path="lib/dist/guava-16.0.1.jar"/>
 	<classpathentry kind="lib" path="lib/dist/avaje-ebeanorm-3.3.1-RC3-SNAPSHOT.jar" sourcepath="APIs/avaje-ebeanorm-3.3.1-RC3-SNAPSHOT-sources.jar"/>
 	<classpathentry kind="lib" path="lib/dist/dropbox-core-sdk-1.7.6.jar" sourcepath="/Users/jeffw/.m2/repository/com/dropbox/core/dropbox-core-sdk/1.7.6/dropbox-core-sdk-1.7.6-sources.jar"/>
-	<classpathentry kind="lib" path="lib/dist/jackson-core-2.2.3.jar"/>
 	<classpathentry kind="lib" path="lib/dist/ironmq-0.0.10.jar" sourcepath="APIs/ironmq-0.0.10.zip"/>
+	<classpathentry kind="lib" path="lib/dist/jetty-alpn-client-9.2.1.v20140609.jar"/>
+	<classpathentry kind="lib" path="lib/dist/jetty-alpn-server-9.2.1.v20140609.jar"/>
+	<classpathentry kind="lib" path="lib/dist/jetty-annotations-9.2.1.v20140609.jar"/>
+	<classpathentry kind="lib" path="lib/dist/jetty-client-9.2.1.v20140609.jar"/>
+	<classpathentry kind="lib" path="lib/dist/jetty-continuation-9.2.1.v20140609.jar"/>
+	<classpathentry kind="lib" path="lib/dist/jetty-deploy-9.2.1.v20140609.jar"/>
+	<classpathentry kind="lib" path="lib/dist/jetty-http-9.2.1.v20140609.jar"/>
+	<classpathentry kind="lib" path="lib/dist/jetty-io-9.2.1.v20140609.jar" sourcepath="lib/dist/jetty-all-9.2.1.v20140609-sources.jar"/>
+	<classpathentry kind="lib" path="lib/dist/jetty-jaas-9.2.1.v20140609.jar"/>
+	<classpathentry kind="lib" path="lib/dist/jetty-jaspi-9.2.1.v20140609.jar"/>
+	<classpathentry kind="lib" path="lib/dist/jetty-jmx-9.2.1.v20140609.jar"/>
+	<classpathentry kind="lib" path="lib/dist/jetty-jndi-9.2.1.v20140609.jar"/>
+	<classpathentry kind="lib" path="lib/dist/jetty-plus-9.2.1.v20140609.jar"/>
+	<classpathentry kind="lib" path="lib/dist/jetty-proxy-9.2.1.v20140609.jar"/>
+	<classpathentry kind="lib" path="lib/dist/jetty-quickstart-9.2.1.v20140609.jar"/>
+	<classpathentry kind="lib" path="lib/dist/jetty-rewrite-9.2.1.v20140609.jar"/>
+	<classpathentry kind="lib" path="lib/dist/jetty-schemas-3.1.jar"/>
+	<classpathentry kind="lib" path="lib/dist/jetty-security-9.2.1.v20140609.jar"/>
+	<classpathentry kind="lib" path="lib/dist/jetty-server-9.2.1.v20140609.jar" sourcepath="lib/dist/jetty-all-9.2.1.v20140609-sources.jar"/>
+	<classpathentry kind="lib" path="lib/dist/jetty-servlet-9.2.1.v20140609.jar"/>
+	<classpathentry kind="lib" path="lib/dist/jetty-servlets-9.2.1.v20140609.jar"/>
+	<classpathentry kind="lib" path="lib/dist/jetty-util-9.2.1.v20140609.jar" sourcepath="lib/dist/jetty-all-9.2.1.v20140609-sources.jar"/>
+	<classpathentry kind="lib" path="lib/dist/jetty-webapp-9.2.1.v20140609.jar"/>
+	<classpathentry kind="lib" path="lib/dist/jetty-xml-9.2.1.v20140609.jar"/>
+	<classpathentry kind="lib" path="lib/dist/servlet-api-3.1.jar"/>
+	<classpathentry kind="lib" path="lib/dist/javax-websocket-client-impl-9.2.1.v20140609.jar" sourcepath="lib/dist/jetty-all-9.2.1.v20140609-sources.jar"/>
+	<classpathentry kind="lib" path="lib/dist/javax-websocket-server-impl-9.2.1.v20140609.jar" sourcepath="lib/dist/jetty-all-9.2.1.v20140609-sources.jar"/>
+	<classpathentry kind="lib" path="lib/dist/javax.websocket-api-1.0.jar" sourcepath="lib/dist/jetty-all-9.2.1.v20140609-sources.jar"/>
+	<classpathentry kind="lib" path="lib/dist/websocket-api-9.2.1.v20140609.jar"/>
+	<classpathentry kind="lib" path="lib/dist/websocket-client-9.2.1.v20140609.jar" sourcepath="lib/dist/jetty-all-9.2.1.v20140609-sources.jar"/>
+	<classpathentry kind="lib" path="lib/dist/websocket-common-9.2.1.v20140609.jar"/>
+	<classpathentry kind="lib" path="lib/dist/websocket-server-9.2.1.v20140609.jar" sourcepath="lib/dist/jetty-all-9.2.1.v20140609-sources.jar"/>
+	<classpathentry kind="lib" path="lib/dist/websocket-servlet-9.2.1.v20140609.jar"/>
+	<classpathentry kind="lib" path="lib/dist/classindex-3.1.jar"/>
+	<classpathentry kind="src" path=".apt_generated">
+		<attributes>
+			<attribute name="optional" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="lib/dist/jetty-all-9.2.1.v20140609-sources.jar"/>
+	<classpathentry kind="lib" path="lib/dist/metrics-annotation-3.0.2.jar"/>
+	<classpathentry kind="lib" path="lib/dist/metrics-core-3.0.2.jar" sourcepath="/Users/bhe/Downloads/metrics-3.0.2/metrics-core/src/main/java"/>
+	<classpathentry kind="lib" path="lib/dist/metrics-healthchecks-3.0.2.jar"/>
+	<classpathentry kind="lib" path="lib/dist/metrics-jetty9-3.0.2.jar"/>
+	<classpathentry kind="lib" path="lib/dist/metrics-json-3.0.2.jar"/>
+	<classpathentry kind="lib" path="lib/dist/metrics-jvm-3.0.2.jar"/>
+	<classpathentry kind="lib" path="lib/dist/metrics-log4j-3.0.2.jar"/>
+	<classpathentry kind="lib" path="lib/dist/metrics-servlets-3.0.2.jar"/>
+	<classpathentry kind="lib" path="lib/dist/jackson-annotations-2.4.1.jar"/>
+	<classpathentry kind="lib" path="lib/dist/jackson-core-2.4.1.1.jar"/>
+	<classpathentry kind="lib" path="lib/dist/jackson-databind-2.4.1.2.jar"/>
+	<classpathentry kind="lib" path="lib/dist/metrics-opentsdb-1.0.2.jar"/>
+	<classpathentry kind="lib" path="lib/dist/jersey-bundle-1.18.1.jar"/>
+	<classpathentry kind="lib" path="lib/dist/jersey-json-1.18.1.jar"/>
 	<classpathentry kind="output" path="eclipse-bin"/>
 </classpath>

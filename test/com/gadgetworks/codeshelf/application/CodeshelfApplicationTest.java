@@ -69,6 +69,7 @@ import com.gadgetworks.codeshelf.ws.WebSession;
 import com.gadgetworks.codeshelf.ws.WebSessionManager;
 import com.gadgetworks.codeshelf.ws.command.req.IWsReqCmdFactory;
 import com.gadgetworks.codeshelf.ws.command.req.WsReqCmdFactory;
+import com.gadgetworks.codeshelf.ws.jetty.server.JettyWebSocketServer;
 import com.gadgetworks.codeshelf.ws.websocket.CsWebSocketServer;
 import com.gadgetworks.codeshelf.ws.websocket.IWebSocketServer;
 import com.gadgetworks.codeshelf.ws.websocket.SSLWebSocketServerFactory;
@@ -283,8 +284,8 @@ public class CodeshelfApplicationTest {
 			"x2HPbC2avltYQR",
 			"x2HPbC2avltYQR");
 
-		IWebSocketServer webSocketListener = new CsWebSocketServer(IWebSocketServer.WEBSOCKET_DEFAULT_HOSTNAME,
-			CsWebSocketServer.WEBSOCKET_DEFAULT_PORTNUM,
+		IWebSocketServer webSocketListener = new CsWebSocketServer("localhost",
+			8444,
 			webSessionManager,
 			webSocketFactory);
 		IHttpServer httpServer = new HttpServer("./",
@@ -332,6 +333,10 @@ public class CodeshelfApplicationTest {
 			"",
 			"false");
 		IDatabase database = new Database(schemaManager, util);
+		
+		AdminServer adminServer = new AdminServer();
+		
+		JettyWebSocketServer jettyServer = new JettyWebSocketServer("localhost", 8444, "path", "pass", "pass");
 
 		final ServerCodeshelfApplication application = new ServerCodeshelfApplication(webSocketListener,
 			monitor,
@@ -343,7 +348,9 @@ public class CodeshelfApplicationTest {
 			persistentPropertyDao,
 			organizationDao,
 			facilityDao,
-			userDao);
+			userDao,
+			adminServer,
+			jettyServer);
 
 		final Result checkAppRunning = new Result();
 

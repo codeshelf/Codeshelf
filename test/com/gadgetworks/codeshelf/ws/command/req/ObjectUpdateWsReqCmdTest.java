@@ -90,7 +90,6 @@ public class ObjectUpdateWsReqCmdTest {
 		when(mockDaoProvider.getDaoInstance(MockModel.class)).thenReturn(mockTypedDao);
 		when(mockTypedDao.findByPersistentId(any(UUID.class))).thenReturn(null);
 
-		
 		ObjectNode mockJsonNode = createReqCmdJsonNode();
 		
 		ObjectUpdateWsReqCmd subject = new ObjectUpdateWsReqCmd("commandId", mockJsonNode, mockDaoProvider);

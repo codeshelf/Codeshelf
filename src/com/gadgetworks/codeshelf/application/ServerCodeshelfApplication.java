@@ -8,15 +8,25 @@ package com.gadgetworks.codeshelf.application;
 
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codahale.metrics.Metric;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.jvm.MemoryUsageGaugeSet;
 import com.gadgetworks.codeshelf.device.RadioController;
 import com.gadgetworks.codeshelf.edi.IEdiProcessor;
+import com.gadgetworks.codeshelf.metrics.MetricsGroup;
+import com.gadgetworks.codeshelf.metrics.MetricsService;
+import com.gadgetworks.codeshelf.metrics.OpenTsdb;
+import com.gadgetworks.codeshelf.metrics.OpenTsdbReporter;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.IDatabase;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
@@ -27,7 +37,9 @@ import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
 import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.monitor.IMonitor;
 import com.gadgetworks.codeshelf.report.IPickDocumentGenerator;
+import com.gadgetworks.codeshelf.ws.jetty.server.JettyWebSocketServer;
 import com.gadgetworks.codeshelf.ws.websocket.IWebSocketServer;
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 
 public final class ServerCodeshelfApplication extends ApplicationABC {
@@ -48,7 +60,14 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 	private IMonitor						mMonitor;
 
 	private BlockingQueue<String>			mEdiProcessSignalQueue;
-
+	
+	// TODO: replace ws server above with implementation below
+	JettyWebSocketServer mAlternativeWebSocketServer;
+	
+	private AdminServer mAdminServer;
+	
+	private MemoryUsageGaugeSet memoryUsage;
+	
 	@Inject
 	public ServerCodeshelfApplication(final IWebSocketServer inWebSocketServer,
 		final IMonitor inMonitor,
@@ -60,7 +79,9 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		final ITypedDao<PersistentProperty> inPersistentPropertyDao,
 		final ITypedDao<Organization> inOrganizationDao,
 		final ITypedDao<Facility> inFacilityDao,
-		final ITypedDao<User> inUserDao) {
+		final ITypedDao<User> inUserDao,
+		final AdminServer inAdminServer,
+		final JettyWebSocketServer inAlternativeWebSocketServer) {
 		super(inUtil);
 		mMonitor = inMonitor;
 		mWebSocketServer = inWebSocketServer;
@@ -72,6 +93,8 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		mOrganizationDao = inOrganizationDao;
 		mFacilityDao = inFacilityDao;
 		mUserDao = inUserDao;
+		mAdminServer = inAdminServer;
+		mAlternativeWebSocketServer = inAlternativeWebSocketServer;
 	}
 
 	// --------------------------------------------------------------------------
@@ -93,21 +116,63 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		LOGGER.info("------------------------------------------------------------");
 		LOGGER.info("Process info: " + processName);
 
-		//		mMonitor.logToCentralAdmin("Startup: codeshelf server " + processName);
+		// mMonitor.logToCentralAdmin("Startup: codeshelf server " + processName);
+		
+		// register JVM metrics
+		memoryUsage = new MemoryUsageGaugeSet();
+		Map<String, Metric> memoryMetrics  = memoryUsage.getMetrics();
+		for (Entry<String, Metric> entry : memoryMetrics.entrySet()) {
+			MetricsService.registerMetric(MetricsGroup.JVM,"memory."+entry.getKey(), entry.getValue());
+		}
 
 		mDatabase.start();
 
 		// Start the WebSocket UX handler
-		mWebSocketServer.start();
+		// mWebSocketServer.start();
+		
+		// mAlternativeWebSocketServer = new JettyWebSocketServer();
+		mAlternativeWebSocketServer.start();
 
 		// Start the EDI process.
+		// TODO: put back in when WS integration is done
 		mEdiProcessSignalQueue = new ArrayBlockingQueue<>(100);
 		mEdiProcessor.startProcessor(mEdiProcessSignalQueue);
-
+		
 		// Start the pick document generator process;
 		mPickDocumentGenerator.startProcessor(mEdiProcessSignalQueue);
 
 		mHttpServer.startServer();
+		
+		// start admin server, if enabled
+		String useAdminServer = System.getProperty("metrics.adminserver");
+		if ("true".equalsIgnoreCase(useAdminServer)) {
+			LOGGER.info("Starting Admin Server");
+			mAdminServer.startServer();
+		}
+		else {
+			LOGGER.info("Admin Server not enabled");
+		}
+		
+		// public metrics to opentsdb
+		String useMetricsReporter = System.getProperty("metrics.reporter.enabled");
+		if ("true".equalsIgnoreCase(useMetricsReporter)) {
+			String metricsServerUrl = System.getProperty("metrics.reporter.serverurl");
+			String intervalStr = System.getProperty("metrics.reporter.interval");
+			int interval = Integer.parseInt(intervalStr);
+			
+			LOGGER.info("Starting OpenTSDB Reporter writing to "+metricsServerUrl+" in "+interval+" sec intervals");
+			MetricRegistry registry = MetricsService.getRegistry();
+			String hostName = MetricsService.getInstance().getHostName();
+			OpenTsdbReporter.forRegistry(registry)
+			      .prefixedWith("")
+			      .withTags(ImmutableMap.of("host", hostName))
+			      .build(OpenTsdb.forService(metricsServerUrl)
+			      .create())
+			      .start(interval, TimeUnit.SECONDS);
+		}
+		else {
+			LOGGER.info("Metrics reporter is not enabled");
+		}
 	}
 
 	// --------------------------------------------------------------------------

@@ -17,6 +17,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.Timer;
+import com.gadgetworks.codeshelf.metrics.MetricsGroup;
+import com.gadgetworks.codeshelf.metrics.MetricsService;
 import com.gadgetworks.flyweight.bitfields.NBitInteger;
 import com.gadgetworks.flyweight.command.AckStateEnum;
 import com.gadgetworks.flyweight.command.CommandAssocABC;
@@ -115,6 +119,8 @@ public class RadioController implements IRadioController {
 	private Thread												mPacketProcessorThread;
 
 	private byte												mNextAddress;
+	
+	private final Counter packetsSentCounter = MetricsService.addCounter(MetricsGroup.Radio,"packets.sent");
 
 	// --------------------------------------------------------------------------
 	/**
@@ -849,7 +855,9 @@ public class RadioController implements IRadioController {
 	 */
 	private void startPacketReceivers() {
 
+		// ~bhe: this should go into a separate class
 		Thread gwThread = new Thread(new Runnable() {
+			private final Counter packetsSentCounter = MetricsService.addCounter(MetricsGroup.Radio,"packets.sent");
 			public void run() {
 				while (mShouldRun) {
 					try {
@@ -867,6 +875,7 @@ public class RadioController implements IRadioController {
 									}
 									receiveCommand(packet.getCommand(), packet.getSrcAddr());
 								}
+								this.packetsSentCounter.inc();
 							}
 						} else {
 							try {
@@ -916,6 +925,7 @@ public class RadioController implements IRadioController {
 	 * @param inPacket
 	 */
 	private void sendPacket(IPacket inPacket) {
+
 		try {
 			if (mGatewayInterface.isStarted()) {
 				while ((System.currentTimeMillis() - mLastPacketSentMillis) < PACKET_SPACING_MILLIS) {
@@ -925,6 +935,7 @@ public class RadioController implements IRadioController {
 				inPacket.incrementSendCount();
 				mLastPacketSentMillis = System.currentTimeMillis();
 				mGatewayInterface.sendPacket(inPacket);
+				this.packetsSentCounter.inc();
 			} else {
 				Thread.sleep(CTRL_START_DELAY_MILLIS);
 			}

@@ -212,7 +212,7 @@ public final class FTDIInterface extends SerialInterfaceABC {
 			LOGGER.info("Device started: " + devInfo.toString());
 
 		} catch (IOException e) {
-			LOGGER.error("", e);
+			LOGGER.error(e.getMessage());
 			//resetInterface();
 			mJD2XXInterface = new JD2XX();
 		}
@@ -354,7 +354,7 @@ public final class FTDIInterface extends SerialInterfaceABC {
 		try {
 			mJD2XXInterface.write(inByte);
 		} catch (IOException e) {
-			LOGGER.error("", e);
+			LOGGER.error(e.getMessage());
 			resetInterface();
 		}
 	};
