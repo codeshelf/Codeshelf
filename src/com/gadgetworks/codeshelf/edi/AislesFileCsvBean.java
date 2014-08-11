@@ -43,7 +43,6 @@ public class AislesFileCsvBean extends ImportCsvBeanABC {
 	protected String	tierFloorCm;
 	protected String	orientXorY;
 	protected String	depthCm;
-	protected String	b1S1NearAnchor;
 
 	/* Using stripNull instead of strip. If user file is missing some fields, 
 	 * will return empty string instead of null, which may will throw. */
@@ -80,9 +79,6 @@ public class AislesFileCsvBean extends ImportCsvBeanABC {
 	}
 	public final String getDepthCm() {
 		return stripNull(depthCm);
-	}
-	public final String getB1S1NearAnchor() {
-		return stripNull(b1S1NearAnchor);
 	}
 
 

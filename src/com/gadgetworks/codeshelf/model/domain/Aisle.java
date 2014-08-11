@@ -109,13 +109,16 @@ public class Aisle extends SubLocationABC<Facility> {
 		doSetControllerChannel(inControllerPersistentIDStr, inChannelStr);
 	}
 
-	public final Boolean doesAisleIncreaseForwardAlongPath() {
+	// As you face the pickface, is the left toward the anchor point? If so, any cm offset adds to an anchorpoint. 
+	// If not, any cm offset subracts from a pickface end
+	
+	public final Boolean isLeftSideAsYouFaceByB1S1() {
 		// JR in progress for DEV-310
 		// The answer depends on the aisle's relationship to its pathSegment
 		Boolean returnValue = true;
 		
 		PathSegment mySegment = getPathSegment();
-		if ( false  && mySegment != null) {
+		if (mySegment != null) {
 			// are we X oriented or Y oriented. Could get that from either the aisle or the path. Here we ask the aisle
 			Boolean xOriented = this.getPickFaceEndPosY() == 0.0;
 			
@@ -138,8 +141,7 @@ public class Aisle extends SubLocationABC<Facility> {
 			}
 		}
 		
-		// return returnValue;
-		return true;
+		return returnValue;
 	}
 
 }

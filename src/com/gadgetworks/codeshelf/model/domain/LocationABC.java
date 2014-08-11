@@ -37,8 +37,6 @@ import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
-import com.gadgetworks.codeshelf.model.TravelDirectionEnum;
-import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.IDatabase;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
@@ -737,5 +735,5 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		return theChannel;
 
 	}
-
+	
 }

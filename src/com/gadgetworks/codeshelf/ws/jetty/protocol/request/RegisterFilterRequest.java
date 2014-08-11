@@ -5,7 +5,9 @@ import java.util.Map;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
+@ToString
 public class RegisterFilterRequest extends RequestABC {
 
 	@Getter @Setter
