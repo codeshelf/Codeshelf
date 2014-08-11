@@ -5,6 +5,7 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
+import java.text.DecimalFormat;
 import java.util.UUID;
 
 import javax.persistence.Column;
@@ -153,12 +154,9 @@ public abstract class SubLocationABC<P extends IDomainObject> extends LocationAB
 		}
 		
 		// A fundamental question is whether the bays and slots in an aisle increase or decrease as you move along the path in the forward direction.
-		// I think this question does not need to be answered here. Hence the if (false). CD_0036 explains the new aisle file field that lets the aisle children
-		// set anchor and pickEndPos correctly based on which way the pick face is relative to the aisle anchor. With that, just use the path direction.
-		Aisle theAisle = this.getParentAtLevel(Aisle.class);
+		
+		// By our new model, B1S1 is always by anchor, so all aisles increase X or Y
 		Boolean forwardIncrease = true;
-		if (false && theAisle != null)
-			forwardIncrease = theAisle.doesAisleIncreaseForwardAlongPath(); // Inefficient to calculate each time. Should cache it somehow.
 		
 		// For the logic below, we want the forward increasing logic if path direction is forward and forwardIncrease, or if both not.
 		Boolean wantForwardCalculation = forwardIncrease == inPathSegment.getParent().getTravelDirEnum().equals(TravelDirectionEnum.FORWARD);
@@ -179,41 +177,49 @@ public abstract class SubLocationABC<P extends IDomainObject> extends LocationAB
 					inPathSegment.getEndPoint(),
 					pickFaceEndPoint);
 
+		Double newPosition = 0.0;
+		Double oldPosition = this.getPosAlongPath();
+		
 		// if (inPathSegment.getParent().getTravelDirEnum().equals(TravelDirectionEnum.FORWARD)) {
 		if (wantForwardCalculation) {
 			// In the forward direction take the "lowest" path pos value.
 			Double position = Math.min(locAnchorPathPosition, pickFacePathPosition);
 			// It can't be "lower" than its parent.
+			
 			if ((parent.getPosAlongPath() == null) || (position >= parent.getPosAlongPath())) {
-				setPosAlongPath(position);
+				newPosition = position;
 			} else {
 				// I believe if we hit this, we found a model or algorithm error
-				Double parentPos = parent.getPosAlongPath(); // just so able to debug and know if we are setting to null
-				setPosAlongPath(parentPos);  
-				// setPosAlongPath(position); // JR test
+				Double parentPos = parent.getPosAlongPath(); 
+				// newPosition = parentPos;
+				newPosition = position; // JR test
 			}
 		} else {
 			// In the reverse direction take the "highest" path pos value.
 			Double position = Math.max(locAnchorPathPosition, pickFacePathPosition);
 			// I t can't be "higher" than its parent.
 			if ((parent.getPosAlongPath() == null) || (position <= parent.getPosAlongPath())) {
-				setPosAlongPath(position);
+				// setPosAlongPath(position);
+				newPosition = position;
 			} else {
 				// I believe if we hit this, we found a model or algorithm error
-				Double parentPos = parent.getPosAlongPath(); // just so able to debug and know if we are setting to null
-				setPosAlongPath(parentPos);   
-				// setPosAlongPath(position);// JR test
+				Double parentPos = parent.getPosAlongPath();
+				// newPosition = parentPos;
+				newPosition = position; // JR test
 			}
 		}
 		
 
-		LOGGER.debug(this.getFullDomainId() + " path pos: " + getPosAlongPath() + " Anchor x: " + locationAnchorPoint.getX()
-				+ " y: " + locationAnchorPoint.getY() + " Face x: ");
-
-		try {
-			LocationABC.DAO.store(this);
-		} catch (DaoException e) {
-			LOGGER.error("", e);
+		// Doing this to avoid the DAO needing to check the change, which also generates a bunch of logging.
+		if (!newPosition.equals(oldPosition)) {
+			try {
+				LOGGER.debug(this.getFullDomainId() + " path pos: " + getPosAlongPath() + " Anchor x: " + locationAnchorPoint.getX()
+					+ " y: " + locationAnchorPoint.getY() + " Face x: ");
+				setPosAlongPath(newPosition);
+				LocationABC.DAO.store(this);
+			} catch (DaoException e) {
+				LOGGER.error("", e);
+			}
 		}
 
 		// Also force a recompute for all of the child locations.
@@ -283,5 +289,38 @@ public abstract class SubLocationABC<P extends IDomainObject> extends LocationAB
 		return ss;
 	}
 
+	private String ourRepresentationToTwoDecimalsString(Double inDouble) {
+		// Most of our internals are Double floats, distance in meters.  Raw UI fetch of that looks bad.
+		if (inDouble == null || inDouble == 0.0)
+			return "0";
+		else {
+			DecimalFormat df = new DecimalFormat("#.##");      
+			Double rounded = Double.valueOf(df.format(inDouble));
+			return rounded.toString();
+		}
+	}
+	
+	// UI fields
+	public String getAnchorPosXui() {
+		return ourRepresentationToTwoDecimalsString(getAnchorPosX());
+	}
+	public String getAnchorPosYui() {
+		return ourRepresentationToTwoDecimalsString(getAnchorPosY());
+	}
+	public String getAnchorPosZui() {
+		return ourRepresentationToTwoDecimalsString(getAnchorPosZ());
+	}
+	public String getPickFaceEndPosXui() {
+		return ourRepresentationToTwoDecimalsString(getPickFaceEndPosX());
+	}
+	public String getPickFaceEndPosYui() {
+		return ourRepresentationToTwoDecimalsString(getPickFaceEndPosY());
+	}
+	public String getPickFaceEndPosZui() {
+		return ourRepresentationToTwoDecimalsString(getPickFaceEndPosZ());
+	}
+	public String getPosAlongPathui() {
+		return ourRepresentationToTwoDecimalsString(getPosAlongPath());
+	}
 
 }

@@ -61,12 +61,12 @@ public class AisleImporterTest extends DomainTestABC {
 	}
 
 	@Test
-	public final void testTierLeft() {
+	public final void testTierB1S1Side() {
 		if (false)
 			return;
 
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
-				+ "Aisle,A9,,,,,TierLeft,12.85,43.45,X,120,\r\n" //
+				+ "Aisle,A9,,,,,tierB1S1Side,12.85,43.45,X,120,\r\n" //
 				+ "Bay,B1,244,,,,,\r\n" //
 				+ "Tier,T1,,8,80,0,,\r\n" //
 				+ "Tier,T2,,9,80,50,,\r\n" //
@@ -210,22 +210,22 @@ public class AisleImporterTest extends DomainTestABC {
 	}
 
 	@Test
-	public final void testTierRight() {
+	public final void testTierNotB1S1Side() {
 
 		if (false)
 			return;
 
-		// Beside TierRight, this as two aisles, so it makes sure both get their leds properly set, and both vertices set
+		// Beside tierNotB1S1Side, this as two aisles, so it makes sure both get their leds properly set, and both vertices set
 		// Not quite realistic; A10 and A20 are on top of each other. Same anchor point
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
-				+ "Aisle,A10,,,,,TierRight,12.85,43.45,X,120,\r\n" //
+				+ "Aisle,A10,,,,,tierNotB1S1Side,12.85,43.45,X,120,\r\n" //
 				+ "Bay,B1,244,,,,,\r\n" //
 				+ "Tier,T1,,6,60,0,,\r\n" //
 				+ "Tier,T2,,6,60,100,,\r\n" //
 				+ "Bay,B2,244,,,,,\r\n" //
 				+ "Tier,T1,,6,60,50,,\r\n" //
 				+ "Tier,T2,,6,60,100,,\r\n" //
-				+ "Aisle,A20,,,,,TierRight,12.85,43.45,X,120,\r\n" //
+				+ "Aisle,A20,,,,,tierNotB1S1Side,12.85,43.45,X,120,\r\n" //
 				+ "Bay,B1,244,,,,,\r\n" //
 				+ "Tier,T1,,6,60,0,,\r\n" //
 				+ "Bay,B2,244,,,,,\r\n" //
@@ -384,7 +384,7 @@ public class AisleImporterTest extends DomainTestABC {
 		// the purpose of bay B2 is to check the sort and LEDs of more than 10 slots in a tier
 		// the purpose of bays 9,10,11 is check the bay sort.
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
-				+ "Aisle,A11,,,,,TierLeft,12.85,43.45,X,120,\r\n" //
+				+ "Aisle,A11,,,,,tierB1S1Side,12.85,43.45,X,120,\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,5,32,0,,\r\n" //
 				+ "Bay,B2,244,,,,,\r\n" //
@@ -507,12 +507,12 @@ public class AisleImporterTest extends DomainTestABC {
 	}
 
 	@Test
-	public final void testZigzagLeft() {
+	public final void testZigzagB1S1Side() {
 		if (false)
 			return;
 
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
-				+ "Aisle,A12,,,,,zigzagLeft,12.85,43.45,X,120,\r\n" //
+				+ "Aisle,A12,,,,,zigzagB1S1Side,12.85,43.45,X,120,\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,5,32,0,,\r\n" //
 				+ "Tier,T2,,5,32,0,,\r\n" //
@@ -567,7 +567,7 @@ public class AisleImporterTest extends DomainTestABC {
 		Assert.assertTrue(slotB2T2S5First == 131);
 		Assert.assertTrue(slotB2T2S5.getLastLedNumAlongPath() == 134);
 
-		// Test the obvious. For 2 bays, 3 tier, zigzagleft, tierB1T3 should start at led1. tierB2T3 should start at 97
+		// Test the obvious. For 2 bays, 3 tier, zigzagB1S1Side, tierB1T3 should start at led1. tierB2T3 should start at 97
 		Tier tierB1T3 = Tier.DAO.findByDomainId(bayA12B1, "T3");
 		Tier tierB2T3 = Tier.DAO.findByDomainId(bayA12B2, "T3");
 		short tierB1T3First = tierB1T3.getFirstLedNumAlongPath();
@@ -578,13 +578,13 @@ public class AisleImporterTest extends DomainTestABC {
 	}
 
 	@Test
-	public final void testZigzagRightY() {
+	public final void testZigzagNotB1S1Side() {
 		if (false)
 			return;
 
 		// do a Y orientation on this as well
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
-				+ "Aisle,A13,,,,,zigzagRight,12.85,43.45,Y,120,\r\n" //
+				+ "Aisle,A13,,,,,zigzagNotB1S1Side,12.85,43.45,Y,120,\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,5,32,0,,\r\n" //
 				+ "Tier,T2,,5,32,0,,\r\n" //
@@ -676,7 +676,7 @@ public class AisleImporterTest extends DomainTestABC {
 		Assert.assertTrue(xValue == 1.2); // each bay has the same depth
 		Assert.assertTrue(yValue == 1.15); // this bay is 115 cm wide
 
-		// Test the obvious. For 2 bays, 3 tier, zigzagright, tierB1T3 should start at led 97. tierB2T3 should start at 1
+		// Test the obvious. For 2 bays, 3 tier, zigzagNotB1S1Side, tierB1T3 should start at led 97. tierB2T3 should start at 1
 		Tier tierB1T3 = Tier.DAO.findByDomainId(bayA13B1, "T3");
 		Tier tierB2T3 = Tier.DAO.findByDomainId(bayA13B2, "T3");
 		short tierB1T3First = tierB1T3.getFirstLedNumAlongPath();
@@ -688,18 +688,18 @@ public class AisleImporterTest extends DomainTestABC {
 	@Test
 	public final void testMultiAisleZig() {
 
-		// We seemed to have a bug in the parse where when processing A21 beans, we have m values set for A22. That is, A21 might come out as zigzagRight
+		// We seemed to have a bug in the parse where when processing A21 beans, we have m values set for A22. That is, A21 might come out as zigzagNotB1S1Side
 		// So this tests Bay to bay attributes changing within an aisle, and tier attributes changing within a bay.
 
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
-				+ "Aisle,A21,,,,,zigzagLeft,12.85,43.45,X,120,\r\n" //
+				+ "Aisle,A21,,,,,zigzagB1S1Side,12.85,43.45,X,120,\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,5,32,0,,\r\n" //
 				+ "Tier,T2,,4,32,0,,\r\n" //
 				+ "Bay,B2,141,,,,,\r\n" //
 				+ "Tier,T1,,3,32,0,,\r\n" //
 				+ "Tier,T2,,6,32,0,,\r\n" //
-				+ "Aisle,A22,,,,,zigzagRight,12.85,53.45,Y,110,\r\n" //
+				+ "Aisle,A22,,,,,zigzagNotB1S1Side,12.85,53.45,Y,110,\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,5,32,0,,\r\n" //
 				+ "Tier,T2,,5,32,0,,\r\n" //
@@ -730,7 +730,7 @@ public class AisleImporterTest extends DomainTestABC {
 		Bay bayA21B1 = Bay.DAO.findByDomainId(aisle, "B1");
 		Bay bayA21B2 = Bay.DAO.findByDomainId(aisle, "B2");
 
-		// For 2 bays, 2 tier, zigzagleft, tierB1T2 should start at led 1. tierB2T2 should start at 65
+		// For 2 bays, 2 tier, zigzagB1S1Side, tierB1T2 should start at led 1. tierB2T2 should start at 65
 		Tier tierB1T1 = Tier.DAO.findByDomainId(bayA21B1, "T1");
 		Tier tierB1T2 = Tier.DAO.findByDomainId(bayA21B1, "T2");
 		Tier tierB2T2 = Tier.DAO.findByDomainId(bayA21B2, "T2");
@@ -772,24 +772,24 @@ public class AisleImporterTest extends DomainTestABC {
 		// This has tier before bay, and some other blank fields
 		// do a Y orientation on this as well
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
-				+ "Aisle,A14,,,,,zigzagRight,12.85,43.45,Y,120,\r\n" //
+				+ "Aisle,A14,,,,,zigzagNotB1S1Side,12.85,43.45,Y,120,\r\n" //
 				+ "Tier,T1,,5,32,0,,\r\n" // tier before bay invalidates the rest of this aisle
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,5,32,0,,\r\n" //
-				+ "Aisle,A8,,,,,zigzagRight,12.85,43.45,Y,120,\r\n" //
+				+ "Aisle,A8,,,,,zigzagNotB1S1Side,12.85,43.45,Y,120,\r\n" //
 				+ "xTier,T2,,5,32,0,,\r\n" // invalid binType invalidates the rest of this aisle
 				+ "Bay,B3,115,,,,,\r\n" //
 				+ "Tier,,,5,32,0,,\r\n" //
-				+ "Aisle,A7,,,,,zigzagRight,12.85,43.45,Y,120,\r\n" //
+				+ "Aisle,A7,,,,,zigzagNotB1S1Side,12.85,43.45,Y,120,\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,5,32,0,,\r\n" //
 				+ "Tier,T3,,5,32,0,,\r\n" // should be T2 here. Invalidates rest of this aisle
 				+ "Tier,T2,,5,32,0,,\r\n" //
 				+ "Bay,B2,115,,,,,\r\n" //
 				+ "Tier,T1,,5,32,0,,\r\n" //
-				+ "Aisle,AB7,,,,,zigzagRight,12.85,43.45,Y,120,\r\n" // Invalid AisleName
+				+ "Aisle,AB7,,,,,zigzagNotB1S1Side,12.85,43.45,Y,120,\r\n" // Invalid AisleName
 				+ "Bay,B1,115,,,,,\r\n" //
-				+ "Aisle,A9,,,,,zigzagRight,12.85,43.45,Y,120,\r\n" // ok
+				+ "Aisle,A9,,,,,zigzagNotB1S1Side,12.85,43.45,Y,120,\r\n" // ok
 				+ "Bay,B1,115,,,,,\r\n"; // ok, even with no tiers
 
 		byte[] csvArray = csvString.getBytes();
@@ -847,7 +847,7 @@ public class AisleImporterTest extends DomainTestABC {
 			return;
 
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
-				+ "Aisle,A15,,,,,tierRight,12.85,43.45,Y,120,\r\n" //
+				+ "Aisle,A15,,,,,tierNotB1S1Side,12.85,43.45,Y,120,\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,3,40,0,,\r\n" //
 				+ "Bay,B2,115,,,,,\r\n" //
@@ -885,10 +885,10 @@ public class AisleImporterTest extends DomainTestABC {
 		// Act like "oops, forgot the second tier". 
 		// And change from 3 slots down to 6. 
 		// And change to 50 leds across the tier
-		// And change leds to tierLeft
+		// And change leds to tierB1S1Side
 		// And change bay length
 		String csvString2 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
-				+ "Aisle,A15,,,,,tierLeft,12.85,43.45,Y,120,\r\n" //
+				+ "Aisle,A15,,,,,tierB1S1Side,12.85,43.45,Y,120,\r\n" //
 				+ "Bay,B1,122,,,,,\r\n" //
 				+ "Tier,T1,,6,50,0,,\r\n" //
 				+ "Tier,T2,,6,50,0.8,,\r\n" //
@@ -946,7 +946,7 @@ public class AisleImporterTest extends DomainTestABC {
 		// Delete one bay in the aisle
 		// Make the bay shorter,so aisle vertices should be less
 		String csvString3 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
-				+ "Aisle,A15,,,,,tierLeft,12.85,43.45,Y,120,\r\n" //
+				+ "Aisle,A15,,,,,tierB1S1Side,12.85,43.45,Y,120,\r\n" //
 				+ "Bay,B1,110,,,,,\r\n" //
 				+ "Tier,T1,,4,50,0,,\r\n"; //
 
@@ -999,7 +999,7 @@ public class AisleImporterTest extends DomainTestABC {
 
 		// Start with a file read to new facility
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
-				+ "Aisle,A16,,,,,tierRight,12.85,43.45,Y,120,\r\n" //
+				+ "Aisle,A16,,,,,tierNotB1S1Side,12.85,43.45,Y,120,\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,5,40,0,,\r\n" //
 				+ "Bay,B2,115,,,,,\r\n" //
@@ -1094,7 +1094,7 @@ public class AisleImporterTest extends DomainTestABC {
 
 		// do a Y orientation on this as well
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
-				+ "Aisle,A21,,,,,tierRight,12.85,23.45,Y,240,\r\n" //
+				+ "Aisle,A21,,,,,tierNotB1S1Side,12.85,23.45,Y,240,\r\n" //
 				+ "Bay,B1,244,,,,,\r\n" //
 				+ "Tier,T1,,5,0,0,,\r\n" //
 				+ "Tier,T2,,5,0,0,,\r\n" //
@@ -1171,22 +1171,88 @@ public class AisleImporterTest extends DomainTestABC {
 	}
 
 	@Test
+	public final void simplestPathTest() {
+
+		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A51,,,,,zigzagB1S1Side,12.85,43.45,X,120,Y\r\n" //
+				+ "Bay,B1,115,,,,,\r\n" //
+				+ "Tier,T1,,4,32,0,,\r\n"; //
+
+		byte[] csvArray = csvString.getBytes();
+
+		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
+		InputStreamReader reader = new InputStreamReader(stream);
+
+		Organization organization = new Organization();
+		organization.setDomainId("O-AISLE5X");
+		mOrganizationDao.store(organization);
+
+		organization.createFacility("F-AISLE5X", "TEST", Point.getZeroPoint());
+		Facility facility = organization.getFacility("F-AISLE5X");
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+
+		// Get A31
+		Aisle aisle51 = Aisle.DAO.findByDomainId(facility, "A51");
+		Assert.assertNotNull(aisle51);
+
+		Path aPath = createPathForTest("F5X.1", facility);
+		PathSegment segment0 = addPathSegmentForTest("F5X.1.0", aPath, 0, 22.0, 48.45, 12.85, 48.45);
+		
+		String persistStr = segment0.getPersistentId().toString();
+		aisle51.associatePathSegment(persistStr);
+		// This should have recomputed all positions along path.  Aisle, bay, tier, and slots should ahve position now
+		// Although the old reference to aisle before path association would not.
+
+		Bay bayA51B1 = Bay.DAO.findByDomainId(aisle51, "B1");
+		Tier tierA51B1T1 = Tier.DAO.findByDomainId(bayA51B1, "T1");
+		Slot slotS1 = Slot.DAO.findByDomainId(tierA51B1T1, "S1");
+		Assert.assertNotNull(slotS1);
+		Slot slotS4 = Slot.DAO.findByDomainId(tierA51B1T1, "S4");
+		Assert.assertNotNull(slotS4);
+		
+		Double bayMeters = bayA51B1.getPosAlongPath();
+		Double tierMeters = tierA51B1T1.getPosAlongPath();
+		Assert.assertNotNull(bayMeters);
+		Assert.assertEquals(bayMeters, tierMeters); // tier spans the bay, so should be the same
+		Double slot1Meters = slotS1.getPosAlongPath();
+		Assert.assertNotNull(slot1Meters);
+		Double slot4Meters = slotS4.getPosAlongPath();
+		Assert.assertNotNull(slot4Meters);
+		
+		// Not be necessary as associatePathSegment() called it. But convenient to debug as it computes again.
+		facility.recomputeLocationPathDistances(aPath);
+		
+		
+		Assert.assertNotEquals(slot1Meters, slot4Meters); // one of these should be further along the path
+		Assert.assertTrue(slot1Meters > slot4Meters); // path goes right to left, so S4 lowest.
+
+
+
+
+	}
+	
+	@Test
 	public final void testPath() {
 
-		// We seemed to have a bug in the parse where when processing A21 beans, we have m values set for A22. That is, A21 might come out as zigzagRight
-		// So this tests Bay to bay attributes changing within an aisle, and tier attributes changing within a bay.
+		// We seemed to have a bug in the parse where when processing A21 beans, we have m values set for A22. That is, A21 might come out as zigzagNotB1S1Side
+		// This also tests Bay to bay attributes changing within A31.
 
-		// This test is also good for testing path relationship if we run one path between the aisles.
-		// Notice  that A31 has B1/S1 by the anchor
-		// A32 has B1/S1 away from anchor point of aisle.
+		// The main point is testing path relationship if we run one path between the aisles. (right to left)
+		// B1/S1 is always by the anchor. All values go positive from there. 
+		// Lowest path values at A31B2T1S5 and A32B2T1S5
+		// For the LED, Lowest LED values should be A31B1T1S1 and A32B2T1S5
+		//
 
-		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm, b1S1NearAnchor\r\n" //
-				+ "Aisle,A31,,,,,zigzagLeft,12.85,43.45,X,120,Y\r\n" //
+		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A31,,,,,zigzagB1S1Side,12.85,43.45,X,120,Y\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,5,32,0,,\r\n" //
 				+ "Bay,B2,141,,,,,\r\n" //
 				+ "Tier,T1,,5,32,0,,\r\n" //
-				+ "Aisle,A32,,,,,zigzagRight,12.85,53.45,X,110,N\r\n" //
+				+ "Aisle,A32,,,,,zigzagNotB1S1Side,12.85,53.45,X,110,N\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,5,32,0,,\r\n" //
 				+ "Bay,B2,115,,,,,\r\n" //
@@ -1215,7 +1281,7 @@ public class AisleImporterTest extends DomainTestABC {
 		Bay bayA31B1 = Bay.DAO.findByDomainId(aisle31, "B1");
 		Bay bayA31B2 = Bay.DAO.findByDomainId(aisle31, "B2");
 
-		// For 2 bays, 2 tier, zigzagleft, tierB1T2 should start at led 1. tierB2T2 should start at 65
+		// For 2 bays, 2 tier, zigzagB1S1Side, tierB1T2 should start at led 1. tierB2T2 should start at 65
 		Tier tierA31B1T1 = Tier.DAO.findByDomainId(bayA31B1, "T1");
 		Tier tierA31B2T1 = Tier.DAO.findByDomainId(bayA31B2, "T1");
 
@@ -1227,6 +1293,10 @@ public class AisleImporterTest extends DomainTestABC {
 		Tier tierA32B1T1 = Tier.DAO.findByDomainId(bayA32B1, "T1");
 		Tier tierA32B2T1 = Tier.DAO.findByDomainId(bayA32B2, "T1");	
 		
+		// There is no path yet. Try to find positionAlongPath values.
+		Double tierA32B1T1Value = tierA32B1T1.getPosAlongPath();
+		Assert.assertNull(tierA32B1T1Value);
+	
 		
 		// Now Pathing. Simulate UI doing  path between the aisles, right to left.
 		// For A31, B2 will be at the start of the path. And pos along path should be about the same for pairs of slots from A31 and A32
@@ -1300,7 +1370,7 @@ public class AisleImporterTest extends DomainTestABC {
 		int countLocations2 = locations2.size();
 		Assert.assertEquals(2, countLocations2);  
 
-		// Justs checking if the getParent() returns fully hydrated path. Used to NPE from this.
+		// Just checking if the getParent() returns fully hydrated path. Used to NPE from this.
 		Path dPath = dPathSegment.getParent();
 		Assert.assertNotNull(dPath);
 		TravelDirectionEnum theDirection = dPath.getTravelDirEnum();
@@ -1309,28 +1379,33 @@ public class AisleImporterTest extends DomainTestABC {
 		// This should not be necessary as associatePathSegment() called it
 		facility.recomputeLocationPathDistances(aPath);
 		
+		// Lowest path values at A31B2T1S5 and A32B2T1S5
+		// Lowest LED values should be A31B1T1S1 and A32B2T1S5
 		Slot firstA31SlotOnPath = Slot.DAO.findByDomainId(tierA31B2T1, "S5");
-		Slot firstA32SlotOnPath = Slot.DAO.findByDomainId(tierA32B1T1, "S1");
-		
+		Slot firstA32SlotOnPath = Slot.DAO.findByDomainId(tierA32B2T1, "S5");	
 		Slot lastA31SlotOnPath = Slot.DAO.findByDomainId(tierA31B1T1, "S1");
-		Slot lastA32SlotOnPath = Slot.DAO.findByDomainId(tierA32B2T1, "S5");
+		Slot lastA32SlotOnPath = Slot.DAO.findByDomainId(tierA32B2T1, "S1");
 
 		Double valueFirst31 = firstA31SlotOnPath.getPosAlongPath();
 		Double valueFirst32 = firstA32SlotOnPath.getPosAlongPath();
-		Double valueLast31 = firstA31SlotOnPath.getPosAlongPath();
-		Double valueLast32 = firstA32SlotOnPath.getPosAlongPath();
+		Double valueLast31 = lastA31SlotOnPath.getPosAlongPath();
+		Double valueLast32 = lastA32SlotOnPath.getPosAlongPath();
+		
+		Short lowestLEDforA32 = firstA32SlotOnPath.getFirstLedNumAlongPath();
+		Assert.assertTrue(lowestLEDforA32 < 4);
+		Slot lowestA31LedSLot = Slot.DAO.findByDomainId(tierA31B1T1, "S1");
+		Short lowestLEDforA31 = lowestA31LedSLot.getFirstLedNumAlongPath();
+		Assert.assertTrue(lowestLEDforA31 < 4);
 		
 		// old bug got the same position for first two bays. Check that.
 		Double a31b1Value = tierA31B1T1.getPosAlongPath();
 		Double a31b2Value = tierA31B2T1.getPosAlongPath();	
-		// Values are null. Lets get new references tier references after the path was applied, as the posAlongPath is null on old reference
+		// Values are null. Lets get new tier references after the path was applied, as the posAlongPath is null on old reference
 		tierA31B1T1 = Tier.DAO.findByDomainId(bayA31B1, "T1");
 		tierA31B2T1 = Tier.DAO.findByDomainId(bayA31B2, "T1");
 		tierA32B1T1 = Tier.DAO.findByDomainId(bayA32B1, "T1");
 		tierA32B2T1 = Tier.DAO.findByDomainId(bayA32B2, "T1");
 		
-		// Here is a major point of this test. b1S1NearAnchor is Y for A31, and N for A32
-		// Therefore, A31B1 has anchor 0, but A32B2 has anchor zero as B1 is further away from the anchor point.
 		Double valueTierA31B1T1  = tierA31B1T1.getAnchorPosX();
 		Double valueTierA31B2T1  = tierA31B2T1.getAnchorPosX();
 		Double valueTierA32B1T1  = tierA32B1T1.getAnchorPosX();
@@ -1338,7 +1413,7 @@ public class AisleImporterTest extends DomainTestABC {
 		Assert.assertEquals((Double) 0.0, valueTierA31B1T1);
 		Assert.assertEquals((Double) 0.0, valueTierA32B2T1);
 		
-		// Slots should also be appropriate reversed in A32.
+		// Slots increase the same way in A32. So S1 anchor will always be 0 and S5 anchor will not
 		Slot slotA31B1T1S1 = Slot.DAO.findByDomainId(tierA31B1T1, "S1");
 		Slot slotA31B1T1S5 = Slot.DAO.findByDomainId(tierA31B1T1, "S5");
 		Slot slotA31B2T1S1 = Slot.DAO.findByDomainId(tierA31B2T1, "S1");
@@ -1356,20 +1431,18 @@ public class AisleImporterTest extends DomainTestABC {
 		Assert.assertEquals((Double) 0.0, valueSlotA31B2T1S1);
 		Double valueSlotA31B2T1S5  = slotA31B2T1S5.getAnchorPosX();
 		Assert.assertNotEquals((Double) 0.0, valueSlotA31B2T1S5); 
-// A32 will be a bit backwards. S5 should have the zero value
-		Double valueSlotA32B1T1S1  = slotA32B1T1S1.getAnchorPosX();
-		Assert.assertNotEquals((Double) 0.0, valueSlotA32B1T1S1);
-		Double valueSlotA32B1T1S5  = slotA32B1T1S5.getAnchorPosX();
-		Assert.assertEquals((Double) 0.0, valueSlotA32B1T1S5); 
-		Double valueSlotA32B2T1S1  = slotA32B2T1S1.getAnchorPosX();
-		Assert.assertNotEquals((Double) 0.0, valueSlotA32B2T1S1);
-		Double valueSlotA32B2T1S5  = slotA32B2T1S5.getAnchorPosX();
-		Assert.assertEquals((Double) 0.0, valueSlotA32B2T1S5); // last slot in A32, close to anchor
 
-		// Path values should derive from location anchor and pickface end, relative to the path.
-		// PATH VALUES NOT CORRECT YET
+		Double valueSlotA32B1T1S1  = slotA32B1T1S1.getAnchorPosX();
+		Assert.assertEquals((Double) 0.0, valueSlotA32B1T1S1); // first slot in A31
+		Double valueSlotA32B1T1S5  = slotA32B1T1S5.getAnchorPosX();
+		Assert.assertNotEquals((Double) 0.0, valueSlotA32B1T1S5); 
+		Double valueSlotA32B2T1S1  = slotA32B2T1S1.getAnchorPosX();
+		Assert.assertEquals((Double) 0.0, valueSlotA32B2T1S1);
+		Double valueSlotA32B2T1S5  = slotA32B2T1S5.getAnchorPosX();
+		Assert.assertNotEquals((Double) 0.0, valueSlotA32B2T1S5); 
+
 		// As the path goes right to left between A31 and A32,
-		// Lowest values for meters along path are at A31B2T1S5 and A32B1T1S1
+		// lowest values for meters along path are at A31B2T1S5 and A32B1T1S5
 		Double slotA31B2T1S5Value = slotA31B2T1S5.getPosAlongPath();
 		Double slotA31B2T1S1Value = slotA31B2T1S1.getPosAlongPath();
 		// Assert.assertTrue(slotA31B2T1S1Value > slotA31B2T1S5Value);

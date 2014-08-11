@@ -156,17 +156,22 @@ public class ObjectFilterWsReqCmd extends WsReqCmdABC implements IWsPersistentRe
 					// Execute the "get" method against the parents to return the children.
 					// (The method *must* start with "get" to ensure other methods don't get called.)
 					// Capitalize the property name to invoke the getter for it.
-					String getterName = "get" + Character.toUpperCase(propertyName.charAt(0)) + propertyName.substring(1);
-					String rememberGetterName = getterName;
+					if (propertyName.isEmpty())
+						LOGGER.error("empty property name in IWsRespCmd. Probable bug in js domainObject");  // Used to throw on charAt(0), which made this totally fail out.
+						// How do you get here? Indicates a bug. Seen when slot had and error in domainObjects.js.
+					else {
+						String getterName = "get" + Character.toUpperCase(propertyName.charAt(0)) + propertyName.substring(1);
+						String rememberGetterName = getterName;
 
-					try {
-						java.lang.reflect.Method method = matchedObject.getClass().getMethod(getterName, (Class<?>[]) null);
-						Class<?> methodReturnType = method.getReturnType();
-						Object resultObject = method.invoke(matchedObject, (Object[]) null);
-						propertiesMap.put(propertyName, resultObject);
-					} catch (NoSuchMethodException e) {
-						// Minor problem. UI hierarchical view asks for same data field name for all object types in the view. Not really an error in most cases
-						LOGGER.debug("Method not found in ObjectFilterWsReqCmd getProperties: " + rememberGetterName);
+						try {
+							java.lang.reflect.Method method = matchedObject.getClass().getMethod(getterName, (Class<?>[]) null);
+							Class<?> methodReturnType = method.getReturnType();
+							Object resultObject = method.invoke(matchedObject, (Object[]) null);
+							propertiesMap.put(propertyName, resultObject);
+						} catch (NoSuchMethodException e) {
+							// Minor problem. UI hierarchical view asks for same data field name for all object types in the view. Not really an error in most cases
+							LOGGER.debug("Method not found in ObjectFilterWsReqCmd getProperties: " + rememberGetterName);
+						}
 					}
 				}
 				resultsList.add(propertiesMap);
