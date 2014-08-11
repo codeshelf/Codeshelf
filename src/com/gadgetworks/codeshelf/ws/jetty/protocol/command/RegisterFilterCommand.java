@@ -92,7 +92,7 @@ public class RegisterFilterCommand extends CommandABC {
 				LOGGER.error("Failed to execute "+this.getClass().getSimpleName()+": "+objectClassName+" is not a domain object");
 			}
 		} catch (Exception e) {
-			LOGGER.error("Failed to execute "+this.getClass().getSimpleName(), e);
+			LOGGER.error("Failed to execute "+this.getClass().getSimpleName() + " for request: " + request, e);
 		}
 		ObjectChangeResponse response = new ObjectChangeResponse();
 		response.setStatus(ResponseStatus.Fail);
