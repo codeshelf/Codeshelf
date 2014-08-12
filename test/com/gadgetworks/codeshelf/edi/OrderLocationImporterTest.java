@@ -55,35 +55,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 	@Test
 	public final void testSlottingBeforeOrders() throws IOException {
 		Facility facility = getTestFacility("O-SLOTTING9", "F-SLOTTING9");
-		// **************
-		// First a trivial aisle
-		String aisleCsv = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
-				+ "Aisle,A9,,,,,TierLeft,12.85,43.45,X,120,\r\n" //
-				+ "Bay,B1,244,,,,,\r\n" //
-				+ "Tier,T1,,8,80,0,,\r\n"; //
-		Assert.assertTrue(importAisles(facility, aisleCsv));;
-		Aisle aisle = Aisle.DAO.findByDomainId(facility, "A9");
-		Assert.assertNotNull(aisle);
-		ISubLocation<?> location = facility.findSubLocationById("A9.B1.T1.S1");
-		Assert.assertNotNull(location);
-
-		// **************
-		// We need the location aliases
-		String locationAliasCsv = "mappedLocationId,locationAlias\r\n" //
-				+ "A9, D\r\n" //
-				+ "A9.B1, DB\r\n" //
-				+ "A9.B1.T1, DT\r\n" //
-				+ "A9.B1.T1.S1, D-21\r\n" //
-				+ "A9.B1.T1.S2, D-22\r\n" //
-				+ "A9.B1.T1.S3, D-23\r\n" //
-				+ "A9.B1.T1.S4, D-24\r\n" //
-				+ "A9.B1.T1.S5, D-25\r\n" //
-				+ "A9.B1.T1.S6, D-26\r\n"; //
-		// Leaving S7 and S8 unknown
-		
-		Assert.assertTrue(importLocationAliases(facility, locationAliasCsv));
-		ISubLocation<?> locationByAlias = facility.findSubLocationById("D-21");
-		Assert.assertNotNull(locationByAlias);
+		setupTestLocations(facility);
 		
 		// **************
 		// Now a slotting file.  No orders yet. This is the out of order situation.	 Normally we want orders before slotting.
@@ -94,7 +66,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 				+ "03333, D-27\r\n" // Notice that D-27 does not resolve to a slot
 				+ "04444, D-23\r\n"; // This will not come in the orders file
 
-		Assert.assertTrue(importSlotting(facility, slottingCsv));
+		Assert.assertFalse(importSlotting(facility, slottingCsv)); //One of the order slots couldn't be updated
 		// At this point we would like order number 01111 and 02222 to exist as dummy outbound orders.
 		// Not sure about 03333
 		OrderHeader order1111 = facility.getOrderHeader("01111");
@@ -154,6 +126,54 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		OrderHeader order = facility.getOrderHeader("01111");
 		Assert.assertEquals(1, order.getOrderLocations().size());
 		assertOrderHasLocation(facility, order, "D-22");
+	}
+	
+	/**
+	 * Given a initial order file with more than one order
+	 */
+	@Test
+	public final void testOnlyActiveSlotsReturned() {
+		
+		Facility facility = getTestFacility("ORG-testOnlyActiveSlotsReturned", "F-testOnlyActiveSlotsReturned");
+		setupTestLocations(facility);
+
+		String initialSlotFile = new SlotFileBuilder()
+			.slot("01111", "D-21")
+			.slot("01112", "D-22")
+			.slot("01113", "D-23")
+				.slot("01114", "D-24")
+			.build();
+		
+		
+		Assert.assertTrue("Failed to import slotting file", importSlotting(facility, initialSlotFile));
+		
+		facility = Facility.DAO.findByPersistentId(facility.getPersistentId());
+
+		OrderHeader order = facility.getOrderHeader("01111");
+		assertOrderHasLocation(facility, order, "D-21");
+		
+		String modifySlots = new SlotFileBuilder()
+		.slot("01111", "D-23")
+		.slot("01112", "D-21")
+		.slot("01113", "D-22")
+			.slot("01114", "D-24")
+		.build();
+	
+		Assert.assertTrue("Failed to import slotting file", importSlotting(facility, modifySlots));
+
+		String rotateAgain = new SlotFileBuilder()
+		.slot("01111", "D-22")
+		.slot("01112", "D-23")
+		.slot("01113", "D-21")
+			.slot("01114", "D-24")
+		.build();
+
+		Assert.assertTrue(importSlotting(facility, rotateAgain));
+
+		facility = Facility.DAO.findByPersistentId(facility.getPersistentId());
+		OrderHeader orderAfterReduction = facility.getOrderHeader("01111");
+		Assert.assertEquals(1, orderAfterReduction.getOrderLocations().size());
+		assertOrderHasLocation(facility, orderAfterReduction, "D-22");
 	}
 	
 	@Test
@@ -555,6 +575,38 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		Assert.assertEquals(0, order4444.getOrderLocations().size());
 	}
 	
+	private void setupTestLocations(Facility facility) {
+		// **************
+		// First a trivial aisle
+		String aisleCsv = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A9,,,,,TierLeft,12.85,43.45,X,120,\r\n" //
+				+ "Bay,B1,244,,,,,\r\n" //
+				+ "Tier,T1,,8,80,0,,\r\n"; //
+		Assert.assertTrue(importAisles(facility, aisleCsv));;
+		Aisle aisle = Aisle.DAO.findByDomainId(facility, "A9");
+		Assert.assertNotNull(aisle);
+		ISubLocation<?> location = facility.findSubLocationById("A9.B1.T1.S1");
+		Assert.assertNotNull(location);
+
+		// **************
+		// We need the location aliases
+		String locationAliasCsv = "mappedLocationId,locationAlias\r\n" //
+				+ "A9, D\r\n" //
+				+ "A9.B1, DB\r\n" //
+				+ "A9.B1.T1, DT\r\n" //
+				+ "A9.B1.T1.S1, D-21\r\n" //
+				+ "A9.B1.T1.S2, D-22\r\n" //
+				+ "A9.B1.T1.S3, D-23\r\n" //
+				+ "A9.B1.T1.S4, D-24\r\n" //
+				+ "A9.B1.T1.S5, D-25\r\n" //
+				+ "A9.B1.T1.S6, D-26\r\n"; //
+		// Leaving S7 and S8 unknown
+		
+		Assert.assertTrue(importLocationAliases(facility, locationAliasCsv));
+		ISubLocation<?> locationByAlias = facility.findSubLocationById("D-21");
+		Assert.assertNotNull(locationByAlias);
+	}
+
 
 	private void doMultiSlotOrder(Facility facility, String orderId, String... locations) {
 		doLocationSetup(facility);
@@ -647,11 +699,28 @@ public class OrderLocationImporterTest extends EdiTestABC {
 	
 	private void assertOrderHasLocation(Facility facility, OrderHeader order, String locationAlias) {
 		ILocation mappedLocation = facility.findSubLocationById(locationAlias);
-		String orderLocationId = OrderLocation.makeDomainId(order, mappedLocation);
-		Assert.assertNotNull(order.getOrderLocation(orderLocationId));
+		//String orderLocationId = OrderLocation.makeDomainId(order, mappedLocation);
+		Assert.assertTrue(order.getOrderLocations().size() > 0);
+		boolean found = false;
+		for (OrderLocation orderLocation : order.getOrderLocations()) {
+			found = orderLocation.getLocation().getPersistentId().equals(mappedLocation.getPersistentId());
+			if (found) break;
+		}
+		Assert.assertTrue("Unable to find order location " + locationAlias + " for order: " + order, found);
 	}
 	
 
-
+	private static class SlotFileBuilder {
+		StringBuilder file = new StringBuilder("orderId,locationId\r\n");
+		
+		public SlotFileBuilder slot(String orderHeaderId, String slotLocationId) {
+			file.append(orderHeaderId + ", " + slotLocationId + "\r\n");
+			return this;
+		}
+		
+		public String build() {
+			return file.toString();
+		}
+	}
 
 }
