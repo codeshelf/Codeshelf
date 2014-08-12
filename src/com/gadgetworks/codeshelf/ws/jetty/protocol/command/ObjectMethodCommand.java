@@ -1,11 +1,10 @@
 package com.gadgetworks.codeshelf.ws.jetty.protocol.command;
 
-import java.lang.reflect.Array;
-import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import org.apache.commons.lang.ClassUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,15 +32,28 @@ public class ObjectMethodCommand extends CommandABC {
 	public ResponseABC exec() {
 		ObjectMethodResponse response = new ObjectMethodResponse();
 		
-		try {
-			String className = request.getClassName();
-			if (!className.startsWith("com.gadgetworks.codeshelf.model.domain.")) {
-				className = "com.gadgetworks.codeshelf.model.domain." + className;
-			}
-			UUID objectId = UUID.fromString(request.getPersistentId());
-			String methodName = request.getMethodName();
-			List<ArgsClass> methodArgs = request.getMethodArgs();
+		String className = request.getClassName();
+		if (className==null) {
+			LOGGER.error("Object method command failed: Class name is undefined");
 
+			response.setStatus(ResponseStatus.Fail);
+			response.setStatusMessage("Class name is undefined");
+			return response;
+		}
+		if (!className.startsWith("com.gadgetworks.codeshelf.model.domain.")) {
+			className = "com.gadgetworks.codeshelf.model.domain." + className;
+		}
+		
+		String methodName = request.getMethodName();
+		if (methodName==null) {
+			response.setStatus(ResponseStatus.Fail);
+			response.setStatusMessage("Method name is undefined");
+			return response;
+		}
+
+		try {
+			UUID objectId = UUID.fromString(request.getPersistentId());
+			List<ArgsClass> methodArgs = request.getMethodArgs();
 
 			// First we find the parent object (by it's ID).
 			Class<?> classObject = Class.forName(className);
@@ -59,13 +71,12 @@ public class ObjectMethodCommand extends CommandABC {
 					for (ArgsClass arg : methodArgs) {
 						// (The method *must* start with "get" to ensure other methods don't get called.)
 						Object argumentValue = arg.getValue();
-						Class classType = Class.forName(arg.getClassType());
+						//Class classType = Class.forName(arg.getClassType());
+						Class classType = ClassUtils.getClass(arg.getClassType());
 						signatureClasses.add(classType);
-						
 						cookedArguments.add(argumentValue);
-
+ 
 						/*
-
 						Object typedArg = null;
 						try {
 							typedArg = argumentValue;
@@ -104,7 +115,7 @@ public class ObjectMethodCommand extends CommandABC {
 							response.setStatus(ResponseStatus.Fail);
 							return response;
 						}
-							*/
+						 */
 					}
 
 					Object methodResult = null;
@@ -123,12 +134,15 @@ public class ObjectMethodCommand extends CommandABC {
 					}
 				} else {
 					response.setStatus(ResponseStatus.Fail);
-					response.setStatusMessage("Instance: " + objectId + " not found for type: " + classObject);
+					response.setStatusMessage("Instance " + objectId + " of type " + classObject+" not found");
 					return response;
 				}
 			}
+		} catch (NoSuchMethodException e) {
+			LOGGER.error("Mehtod "+methodName+" does not exist on "+className, e);
+			response.setStatusMessage("Method does not exist");
 		} catch (Exception e) {
-			LOGGER.error("", e);
+			LOGGER.error("Failed to invoke "+methodName+" on "+className, e);
 		}
 		response.setStatus(ResponseStatus.Fail);
 		return response;

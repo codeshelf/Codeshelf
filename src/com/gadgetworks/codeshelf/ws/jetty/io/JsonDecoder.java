@@ -18,7 +18,6 @@ public class JsonDecoder implements Decoder.Text<MessageABC> {
 	private static final Logger	LOGGER = LoggerFactory.getLogger(JsonDecoder.class);
 
 	public JsonDecoder() {
-		LOGGER.debug("Creating "+this.getClass().getSimpleName());
 	}
 	
 	@Override
@@ -38,13 +37,7 @@ public class JsonDecoder implements Decoder.Text<MessageABC> {
 			Iterable<Class<? extends MessageABC>> requestClasses = ClassIndex.getSubclasses(MessageABC.class);
 			for (Class<? extends MessageABC> requestType : requestClasses) {
 				mapper.registerSubtypes(requestType);
-			}
-			/*
-			Iterable<Class<? extends ResponseABC>> responseClasses = ClassIndex.getSubclasses(ResponseABC.class);
-			for (Class<? extends ResponseABC> responseType : responseClasses) {
-				mapper.registerSubtypes(responseType);
-			}
-			*/			
+			}		
 			// decode message
 			MessageABC message = mapper.readValue(rawMessage, MessageABC.class);
 			return message;

@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.avaje.ebean.annotation.Transactional;
+import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
@@ -196,7 +197,21 @@ public class Organization extends DomainObjectABC {
 	 * @param inAnchorPosY
 	 */
 	@Transactional
-	public final void createFacility(final String inDomainId, final String inDescription, final Point inAnchorPoint) {
+	public final Facility createFacility(final String inDomainId, final String inDescription, Double x, Double y) {
+		Point point = new Point(PositionTypeEnum.GPS,x,y,0d);
+		return this.createFacility(inDomainId, inDescription, point);
+	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inDomainId
+	 * @param inDescription
+	 * @param inPosTypeByStr
+	 * @param inAnchorPosx
+	 * @param inAnchorPosY
+	 */
+	@Transactional
+	public final Facility createFacility(final String inDomainId, final String inDescription, final Point inAnchorPoint) {
 
 		Facility facility = new Facility();
 		facility.setParentOrganization(this);
@@ -225,6 +240,7 @@ public class Organization extends DomainObjectABC {
 				che = network.createChe(cheName, new NetGuid("0x0000999" + cheNum));
 			}
 		}
+		return facility;
 	}
 
 	// --------------------------------------------------------------------------
