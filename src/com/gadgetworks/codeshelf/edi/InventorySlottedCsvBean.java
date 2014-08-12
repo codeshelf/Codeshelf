@@ -43,6 +43,7 @@ public class InventorySlottedCsvBean extends ImportCsvBeanABC {
 	@NotNull
 	@Size(min = 1)
 	protected String	locationId;
+	protected String	cmFromLeft;	
 
 	public final String getItemId() {
 		return strip(itemId);
@@ -71,4 +72,9 @@ public class InventorySlottedCsvBean extends ImportCsvBeanABC {
 	public final String getLocationId() {
 		return strip(locationId);
 	}
+	
+	public final String getCmFromLeft() {
+		return strip(cmFromLeft);
+	}
+
 }

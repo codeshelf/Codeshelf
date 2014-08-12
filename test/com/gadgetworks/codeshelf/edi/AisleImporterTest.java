@@ -42,23 +42,6 @@ import com.gadgetworks.flyweight.command.NetGuid;
  */
 public class AisleImporterTest extends DomainTestABC {
 
-	private PathSegment addPathSegmentForTest(final String inSegmentId,
-		final Path inPath,
-		final Integer inSegmentOrder,
-		Double inStartX,
-		Double inStartY,
-		Double inEndX,
-		Double inEndY) {
-
-		Point head = new Point(PositionTypeEnum.METERS_FROM_PARENT, inStartX, inStartY, 0.0);
-		Point tail = new Point(PositionTypeEnum.METERS_FROM_PARENT, inEndX, inEndX, 0.0);
-		PathSegment returnSeg = inPath.createPathSegment(inSegmentId, inSegmentOrder, head, tail);
-		return returnSeg;
-	}
-
-	private Path createPathForTest(String inDomainId, Facility inFacility) {
-		return inFacility.createPath(inDomainId);
-	}
 
 	@Test
 	public final void testTierB1S1Side() {

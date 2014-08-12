@@ -401,7 +401,23 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 			result.setStoredLocation(location);
 			result.setUomMaster(inUomMaster);
 			result.setQuantity(Double.valueOf(inCsvBean.getQuantity()));
-			result.setPosAlongPath(location.getPosAlongPath());
+			
+			// This used to call only this
+			// now refine using the cm value if there is one
+			Integer cmValue = 0;
+			try {
+				cmValue = Integer.valueOf(inCsvBean.getCmFromLeft());
+			} catch (NumberFormatException e) {
+				// not recognizable as a number
+			}
+			// Our new setter
+			String errors = result.validatePositionFromLeft(location, cmValue);
+			if (errors.isEmpty())
+				result.setPositionFromLeft(location, cmValue);
+			else
+				LOGGER.error(errors);
+
+			
 			try {
 				result.setActive(true);
 				result.setUpdated(inEdiProcessTime);

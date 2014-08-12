@@ -94,7 +94,6 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 
 	// Ddc position.
 	@Column(nullable = true)
-	@ManyToOne(optional = true)
 	@Getter
 	@Setter
 	private Double				posAlongPath;
@@ -221,5 +220,32 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		quantStr = padder.padRight(quantStr, 3);
 		return quantStr + " " + uom;
 	}
+	
+	// Public setter/getter/validate functions for our cmFromLeft feature
+	public final void setPositionFromLeft(LocationABC inLocation, Integer inCmFromLeft) {
+		if (inLocation != null)
+			// this is the original behavior
+			setPosAlongPath(inLocation.getPosAlongPath());		
+	}
+	
+	public final String validatePositionFromLeft(LocationABC inLocation, Integer inCmFromLeft) {
+		String result = "";
+		if (inLocation == null)
+			result = "Unknown location";
+		// if the cm value is wider than that bay/tier, or negative
+		if (inCmFromLeft < 0)
+			result = "Negative cm value not allowed";
+		return result;
+		// 
+		
+	}
+	
+	public Integer getCmFromLeft() {
+		Integer value = 0;
+		return value;
+		// if this item's stored location getPosAlongPath() == this.getPosAlongPath(), then cm is 0.
+	}
+
+
 
 }
