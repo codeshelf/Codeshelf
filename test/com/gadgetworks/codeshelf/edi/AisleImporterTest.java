@@ -42,23 +42,6 @@ import com.gadgetworks.flyweight.command.NetGuid;
  */
 public class AisleImporterTest extends DomainTestABC {
 
-	private PathSegment addPathSegmentForTest(final String inSegmentId,
-		final Path inPath,
-		final Integer inSegmentOrder,
-		Double inStartX,
-		Double inStartY,
-		Double inEndX,
-		Double inEndY) {
-
-		Point head = new Point(PositionTypeEnum.METERS_FROM_PARENT, inStartX, inStartY, 0.0);
-		Point tail = new Point(PositionTypeEnum.METERS_FROM_PARENT, inEndX, inEndX, 0.0);
-		PathSegment returnSeg = inPath.createPathSegment(inSegmentId, inSegmentOrder, head, tail);
-		return returnSeg;
-	}
-
-	private Path createPathForTest(String inDomainId, Facility inFacility) {
-		return inFacility.createPath(inDomainId);
-	}
 
 	@Test
 	public final void testTierB1S1Side() {
@@ -1433,7 +1416,7 @@ public class AisleImporterTest extends DomainTestABC {
 		Assert.assertNotEquals((Double) 0.0, valueSlotA31B2T1S5); 
 
 		Double valueSlotA32B1T1S1  = slotA32B1T1S1.getAnchorPosX();
-		Assert.assertEquals((Double) 0.0, valueSlotA32B1T1S1); // first slot in A31
+		Assert.assertEquals((Double) 0.0, valueSlotA32B1T1S1); // first slot in A32
 		Double valueSlotA32B1T1S5  = slotA32B1T1S5.getAnchorPosX();
 		Assert.assertNotEquals((Double) 0.0, valueSlotA32B1T1S5); 
 		Double valueSlotA32B2T1S1  = slotA32B2T1S1.getAnchorPosX();
@@ -1445,25 +1428,90 @@ public class AisleImporterTest extends DomainTestABC {
 		// lowest values for meters along path are at A31B2T1S5 and A32B1T1S5
 		Double slotA31B2T1S5Value = slotA31B2T1S5.getPosAlongPath();
 		Double slotA31B2T1S1Value = slotA31B2T1S1.getPosAlongPath();
-		// Assert.assertTrue(slotA31B2T1S1Value > slotA31B2T1S5Value);
+		Assert.assertTrue(slotA31B2T1S1Value > slotA31B2T1S5Value); // S1 further along path than S5 in any tier. (if path runs right to left there)
 	
 		Double slotA31B1T1S5Value = slotA31B1T1S5.getPosAlongPath();
-		// Assert.assertTrue(slotA31B1T1S5Value > slotA31B2T1S1Value); // first bay last slot further along path than second bay first slot
-		
 		Double slotA31B1T1S1Value = slotA31B1T1S1.getPosAlongPath();
-		// Assert.assertTrue(slotA31B1T1S1Value > slotA31B1T1S5Value);
+		Assert.assertTrue(slotA31B1T1S1Value > slotA31B1T1S5Value); // S1 further in B1 also
 
+		Assert.assertTrue(slotA31B1T1S5Value > slotA31B2T1S1Value); // first bay last slot further along path than second bay first slot
+		
 		// lowest at A32B1T1S1
 		Double slotA32B1T1S5Value = slotA32B1T1S5.getPosAlongPath();
 		Double slotA32B1T1S1Value = slotA32B1T1S1.getPosAlongPath();
-		// Assert.assertTrue(slotA32B1T1S5Value > slotA32B1T1S1Value);
+		Assert.assertTrue(slotA32B1T1S5Value > slotA32B1T1S1Value); // in A32 also,first bay last slot further along path than second bay first slot
 		
-		Double slotA32B2T1S5Value = slotA32B2T1S5.getPosAlongPath();
-		// Assert.assertTrue(slotA32B1T1S5Value < slotA32B2T1S1Value); // first bay last slot not as far along path than second bay first slot
+	}
+	
+	@Test
+	public final void nonSlottedTest() {
+		// For tier-wise non-slotted inventory, we will support the same file format, but with zero tiers.
+		if (false)
+			return;
 		
-		Double slotA32B2T1S1Value = slotA32B2T1S1.getPosAlongPath();
-		// Assert.assertTrue(slotA31B1T1S1Value > slotA31B1T1S5Value);
+		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A61,,,,,tierNotB1S1Side,12.85,43.45,X,120,Y\r\n" //
+				+ "Bay,B1,115,,,,,\r\n" //
+				+ "\r\n" // blank line in the middle
+				+ "Tier,T1,,0,32,0,,\r\n" //
+				+ "Bay,B2,115,,,,,\r\n" //
+				+ "Tier,T1,,0,32,0,,\r\n" //
+				+ "\r\n" //
+				+ "\r\n"; // extra blank lines, just to see if they cause trouble
+
+		byte[] csvArray = csvString.getBytes();
+
+		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
+		InputStreamReader reader = new InputStreamReader(stream);
+
+		Organization organization = new Organization();
+		organization.setDomainId("O-AISLE6X");
+		mOrganizationDao.store(organization);
+
+		organization.createFacility("F-AISLE6X", "TEST", Point.getZeroPoint());
+		Facility facility = organization.getFacility("F-AISLE6X");
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+
+		// Get the aisle
+		Aisle aisle61 = Aisle.DAO.findByDomainId(facility, "A61");
+		Assert.assertNotNull(aisle61);
+
+		Path aPath = createPathForTest("F5X.1", facility);
+		PathSegment segment0 = addPathSegmentForTest("F6X.1.0", aPath, 0, 22.0, 48.45, 12.85, 48.45);
+		
+		String persistStr = segment0.getPersistentId().toString();
+		aisle61.associatePathSegment(persistStr);
+		// This should have recomputed all positions along path.  Aisle, bay, tier, and slots should ahve position now
+		// Although the old reference to aisle before path association would not.
+
+		Bay bayA61B1 = Bay.DAO.findByDomainId(aisle61, "B1");
+		Tier tierA61B1T1 = Tier.DAO.findByDomainId(bayA61B1, "T1");
+		Assert.assertNotNull(tierA61B1T1);
+		Bay bayA61B2 = Bay.DAO.findByDomainId(aisle61, "B2");
+		Tier tierA61B2T1 = Tier.DAO.findByDomainId(bayA61B2, "T1");
+		Assert.assertNotNull(tierA61B2T1);
+		Slot slotS1 = Slot.DAO.findByDomainId(tierA61B1T1, "S1");
+		Assert.assertNull(slotS1); // no slots
+		
+		Double bay1Meters = bayA61B1.getPosAlongPath();
+		Double tierB1Meters = tierA61B1T1.getPosAlongPath();
+		Double tierB2Meters = tierA61B2T1.getPosAlongPath();
+		Assert.assertNotNull(bay1Meters);
+		Assert.assertNotEquals(tierB1Meters, tierB2Meters); // tier spans the bay, so should be the same
+		
+		// Not be necessary as associatePathSegment() called it. But convenient to debug as it computes again.
+		// facility.recomputeLocationPathDistances(aPath);
+		
+		
+		Assert.assertNotEquals(tierB1Meters, tierB2Meters); // one of these should be further along the path
+		Assert.assertTrue(tierB1Meters > tierB2Meters); // path goes right to left, so B2 lowest.
+
+
 
 
 	}
+
 }
