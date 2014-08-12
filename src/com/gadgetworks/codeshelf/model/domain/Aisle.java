@@ -77,34 +77,37 @@ public class Aisle extends SubLocationABC<Facility> {
 		// Get the PathSegment
 		UUID persistentId = UUID.fromString(inPathSegPersistentID);
 		PathSegment pathSegment = PathSegment.DAO.findByPersistentId(persistentId);
-
 		if (pathSegment != null) {
-			// Some checking 
-			int initialLocationCount = pathSegment.getLocations().size();
-
-			this.setPathSegment(pathSegment);
-			ITypedDao<Aisle> theDao = this.getDao();
-			theDao.store(this);
-
-			// There is now a new association. Need to recompute locations positions along the path.  Kind of too bad to do several times as each segment is assigned.
-			// Note, this is also done on application restart.
-			Facility theFacility = this.getParent();
-			Path thePath = pathSegment.getParent();
-			if (thePath == null || theFacility == null)
-				LOGGER.error("null value in associatePathSegment");
-			else {
-				theFacility.recomputeLocationPathDistances(thePath);
-			}
-
-			int afterLocationCount = pathSegment.getLocations().size();
-			if (initialLocationCount == afterLocationCount)
-				LOGGER.error("associatePathSegment did not correctly update locations array");
-
-		} else {
+			associatePathSegment(pathSegment);
+		} else {	
 			throw new DaoException("Could not associate path segment, segment not found: " + inPathSegPersistentID);
 		}
 	}
 
+	public final void associatePathSegment(PathSegment pathSegment) {
+
+		// Some checking 
+		int initialLocationCount = pathSegment.getLocations().size();
+
+		this.setPathSegment(pathSegment);
+		ITypedDao<Aisle> theDao = this.getDao();
+		theDao.store(this);
+
+		// There is now a new association. Need to recompute locations positions along the path.  Kind of too bad to do several times as each segment is assigned.
+		// Note, this is also done on application restart.
+		Facility theFacility = this.getParent();
+		Path thePath = pathSegment.getParent();
+		if (thePath == null || theFacility == null)
+			LOGGER.error("null value in associatePathSegment");
+		else {
+			theFacility.recomputeLocationPathDistances(thePath);
+		}
+
+		int afterLocationCount = pathSegment.getLocations().size();
+		if (initialLocationCount == afterLocationCount)
+			LOGGER.error("associatePathSegment did not correctly update locations array");
+	}
+	
 	public final void setControllerChannel(String inControllerPersistentIDStr, String inChannelStr) {
 		doSetControllerChannel(inControllerPersistentIDStr, inChannelStr);
 	}

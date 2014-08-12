@@ -10,6 +10,7 @@ import javax.persistence.Embeddable;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -29,6 +30,7 @@ import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 @Embeddable
 @JsonAutoDetect(getterVisibility = Visibility.NONE)
 @ToString(doNotUseGetters = true)
+@EqualsAndHashCode(doNotUseGetters=true)
 public class Point {
 
 	@Column(nullable = false)
