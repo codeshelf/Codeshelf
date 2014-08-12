@@ -129,7 +129,9 @@ public class OrderLocationImporterTest extends EdiTestABC {
 	}
 	
 	/**
-	 * Given a initial order file with more than one order
+	 * Given an initial slotting
+	 * When the order is moved 
+	 * Then the final slot is the one returned
 	 */
 	@Test
 	public final void testOnlyActiveSlotsReturned() {
