@@ -264,7 +264,12 @@ public class Path extends DomainObjectTreeABC<Facility> {
 		final Integer inSegmentOrder,
 		final Point inHead,
 		final Point inTail) {
-
+		
+		/* TODO a zero distance path segment isn't useful and unrealistic
+		if (inHead.equals(inTail)) {
+			throw new IllegalArgumentException("inHead and inPath points should not be the same");
+		}
+		*/
 		PathSegment result = null;
 
 		// The path segment goes along the longest segment of the aisle.
@@ -438,8 +443,8 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	public final boolean isOrderOnPath(final OrderHeader inOrderHeader) {
 		boolean result = false;
 
-		for (OrderLocation outOrderLoc : inOrderHeader.getOrderLocations()) {
-			if ((isLocationOnPath(outOrderLoc.getLocation()) && (outOrderLoc.getActive()))) {
+		for (OrderLocation outOrderLoc : inOrderHeader.getActiveOrderLocations()) {
+			if (isLocationOnPath(outOrderLoc.getLocation())) {
 				result = true;
 				break;
 			}

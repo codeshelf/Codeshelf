@@ -1421,7 +1421,7 @@ public class Facility extends SubLocationABC<Facility> {
 			}
 		}
 		*/
-		for (OrderLocation orderLocation : inOrder.getOrderLocations()) {
+		for (OrderLocation orderLocation : inOrder.getActiveOrderLocations()) {
 			LocationAlias locAlias = orderLocation.getLocation().getPrimaryAlias();
 			if (locAlias != null) {
 				locIdList.add(locAlias.getAlias());
@@ -1587,31 +1587,29 @@ public class Facility extends SubLocationABC<Facility> {
 	private void setOutboundWorkInstructionLedPattern(final WorkInstruction inWi, final OrderHeader inOrder) {
 
 		List<LedCmdGroup> ledCmdGroupList = new ArrayList<LedCmdGroup>();
-		for (OrderLocation orderLocation : inOrder.getOrderLocations()) {
-			if (orderLocation.getActive()) {
-				short firstLedPosNum = orderLocation.getLocation().getFirstLedNumAlongPath();
-				short lastLedPosNum = orderLocation.getLocation().getLastLedNumAlongPath();
+		for (OrderLocation orderLocation : inOrder.getActiveOrderLocations()) {
+			short firstLedPosNum = orderLocation.getLocation().getFirstLedNumAlongPath();
+			short lastLedPosNum = orderLocation.getLocation().getLastLedNumAlongPath();
 
-				// Put the positions into increasing order.
-				if (firstLedPosNum > lastLedPosNum) {
-					Short temp = firstLedPosNum;
-					firstLedPosNum = lastLedPosNum;
-					lastLedPosNum = temp;
-				}
-
-				// The new way of sending LED data to the remote controller. Note getEffectiveXXX instead of getLedController
-				List<LedSample> ledSamples = new ArrayList<LedSample>();
-				LedCmdGroup ledCmdGroup = new LedCmdGroup(orderLocation.getLocation()
-					.getEffectiveLedController()
-					.getDeviceGuidStr(), orderLocation.getLocation().getEffectiveLedChannel(), firstLedPosNum, ledSamples);
-
-				for (short ledPos = firstLedPosNum; ledPos < lastLedPosNum; ledPos++) {
-					LedSample ledSample = new LedSample(ledPos, ColorEnum.BLUE);
-					ledSamples.add(ledSample);
-				}
-				ledCmdGroup.setLedSampleList(ledSamples);
-				ledCmdGroupList.add(ledCmdGroup);
+			// Put the positions into increasing order.
+			if (firstLedPosNum > lastLedPosNum) {
+				Short temp = firstLedPosNum;
+				firstLedPosNum = lastLedPosNum;
+				lastLedPosNum = temp;
 			}
+
+			// The new way of sending LED data to the remote controller. Note getEffectiveXXX instead of getLedController
+			List<LedSample> ledSamples = new ArrayList<LedSample>();
+			LedCmdGroup ledCmdGroup = new LedCmdGroup(orderLocation.getLocation()
+				.getEffectiveLedController()
+				.getDeviceGuidStr(), orderLocation.getLocation().getEffectiveLedChannel(), firstLedPosNum, ledSamples);
+
+			for (short ledPos = firstLedPosNum; ledPos < lastLedPosNum; ledPos++) {
+				LedSample ledSample = new LedSample(ledPos, ColorEnum.BLUE);
+				ledSamples.add(ledSample);
+			}
+			ledCmdGroup.setLedSampleList(ledSamples);
+			ledCmdGroupList.add(ledCmdGroup);
 		}
 		inWi.setLedCmdStream(LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList));
 	}
