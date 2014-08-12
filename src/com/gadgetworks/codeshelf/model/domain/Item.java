@@ -176,6 +176,33 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		}
 	}
 
+	public final String getItemCmFromLeft() {
+		Integer value = getCmFromLeft();
+		if (value != 0)
+			return value.toString();
+		else {
+			return "";
+		}
+	}
+
+	public final String getPosAlongPathui() {
+		// for the moment, just return the location's value.
+		SubLocationABC location = (SubLocationABC) this.getStoredLocation();
+		return location.getPosAlongPathui();
+		// later, need to adjust for cmFromLeft
+	}
+
+	public final String getItemTier() {
+		// The intended purpose is allow user to filter by aisle, then sort by tier and getPosAlongPathui
+		//  Should allow easy verification of inventory, working across a tier.
+		String result = "";
+		SubLocationABC location = (SubLocationABC) this.getStoredLocation();
+		LocationABC tierLocation = (LocationABC) location.getParentAtLevel(Tier.class);
+		if (tierLocation != null)
+			result = tierLocation.getDomainId();
+		return result;
+	}
+
 	public final String getItemDescription() {
 		ItemMaster theMaster = this.getParent();
 		if (theMaster == null)
@@ -220,14 +247,14 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		quantStr = padder.padRight(quantStr, 3);
 		return quantStr + " " + uom;
 	}
-	
+
 	// Public setter/getter/validate functions for our cmFromLeft feature
 	public final void setPositionFromLeft(LocationABC inLocation, Integer inCmFromLeft) {
 		if (inLocation != null)
 			// this is the original behavior
-			setPosAlongPath(inLocation.getPosAlongPath());		
+			setPosAlongPath(inLocation.getPosAlongPath());
 	}
-	
+
 	public final String validatePositionFromLeft(LocationABC inLocation, Integer inCmFromLeft) {
 		String result = "";
 		if (inLocation == null)
@@ -237,15 +264,13 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 			result = "Negative cm value not allowed";
 		return result;
 		// 
-		
+
 	}
-	
+
 	public Integer getCmFromLeft() {
 		Integer value = 0;
 		return value;
 		// if this item's stored location getPosAlongPath() == this.getPosAlongPath(), then cm is 0.
 	}
-
-
 
 }
