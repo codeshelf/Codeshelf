@@ -1484,7 +1484,7 @@ public class AisleImporterTest extends DomainTestABC {
 		
 		String persistStr = segment0.getPersistentId().toString();
 		aisle61.associatePathSegment(persistStr);
-		// This should have recomputed all positions along path.  Aisle, bay, tier, and slots should ahve position now
+		// This should have recomputed all positions along path.  Aisle, bay, tier, and slots should have position now
 		// Although the old reference to aisle before path association would not.
 
 		Bay bayA61B1 = Bay.DAO.findByDomainId(aisle61, "B1");
