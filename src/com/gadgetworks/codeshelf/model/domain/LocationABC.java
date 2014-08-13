@@ -11,6 +11,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorColumn;
@@ -363,21 +364,27 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		T result = null;		
 
 		ILocation<P> checkParent = (ILocation<P>) getParent();
-
-		// There's some weirdness with Ebean and navigating a recursive hierarchy. (You can't go down and then back up to a different class.)
-		// This fixes that problem, but it's not pretty.
-		checkParent = DAO.findByPersistentId(checkParent.getClass(), checkParent.getPersistentId());
-
-		if (checkParent.getClass().equals(inClassWanted)) {
-			// This is the parent we want. (We can cast safely since we checked the class.)
-			result = (T) checkParent;
-		} else {
-			if (checkParent.getClass().equals(Facility.class)) {
-				// We cannot go higher than the Facility as a parent, so there is no such parent with the requested class.
-				result = null;
-			} else {
-				// The current parent is not the class we want so recurse up the hierarchy.
-				result = (T) checkParent.getParentAtLevel(inClassWanted);
+		if (checkParent != null) {
+			// There's some weirdness with Ebean and navigating a recursive hierarchy. (You can't go down and then back up to a different class.)
+			// This fixes that problem, but it's not pretty.
+			UUID persistentId = checkParent.getPersistentId();
+			checkParent = DAO.findByPersistentId(checkParent.getClass(), persistentId);
+			if (checkParent != null) {
+				if (checkParent.getClass().equals(inClassWanted)) {
+					// This is the parent we want. (We can cast safely since we checked the class.)
+					result = (T) checkParent;
+				} else {
+					if (checkParent.getClass().equals(Facility.class)) {
+						// We cannot go higher than the Facility as a parent, so there is no such parent with the requested class.
+						result = null;
+					} else {
+						// The current parent is not the class we want so recurse up the hierarchy.
+						result = (T) checkParent.getParentAtLevel(inClassWanted);
+					}
+				}
+			}
+			else {
+				LOGGER.error("parent location of: " + this + " could not be retrieved with id: " + persistentId);
 			}
 		}
 
