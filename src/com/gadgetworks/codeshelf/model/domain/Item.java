@@ -25,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
+import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
@@ -176,6 +177,14 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		}
 	}
 
+	public void setItemLocationAlias(String inLocationAliasId) {
+		LocationAlias alias = getParent().getParent().getLocationAlias(inLocationAliasId);
+		if (alias == null) {
+			throw new DaoException("could not find location with alias: " + inLocationAliasId);
+		}
+		setStoredLocation(alias.getMappedLocation());
+	}
+
 	public final String getItemCmFromLeft() {
 		Integer value = getCmFromLeft();
 		if (value != 0)
@@ -183,6 +192,10 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		else {
 			return "";
 		}
+	}
+	
+	public final void setItemCmFromLeft(String inValueFromLeft) {
+		setPositionFromLeft(this.getStoredLocation(), Integer.valueOf(inValueFromLeft));
 	}
 
 	public final String getPosAlongPathui() {
@@ -197,9 +210,12 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		//  Should allow easy verification of inventory, working across a tier.
 		String result = "";
 		SubLocationABC location = (SubLocationABC) this.getStoredLocation();
-		LocationABC tierLocation = (LocationABC) location.getParentAtLevel(Tier.class);
-		if (tierLocation != null)
-			result = tierLocation.getDomainId();
+		if (location != null) {
+			LocationABC tierLocation = (LocationABC) location.getParentAtLevel(Tier.class);
+			if (tierLocation != null) {
+				result = tierLocation.getDomainId();
+			}
+		}
 		return result;
 	}
 
@@ -212,6 +228,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		}
 	}
 
+	
 	interface Padder {
 		String padRight(String inString, int inPadLength);
 	}

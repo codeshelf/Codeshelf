@@ -1,12 +1,18 @@
 package com.gadgetworks.codeshelf.ws.jetty.protocol.command;
 
+import java.beans.PropertyDescriptor;
+import java.beans.PropertyEditor;
+import java.lang.reflect.InvocationTargetException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.beanutils.PropertyUtilsBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectUpdateRequest;
@@ -20,9 +26,11 @@ public class ObjectUpdateCommand extends CommandABC {
 	private static final Logger	LOGGER = LoggerFactory.getLogger(ObjectUpdateCommand.class);
 
 	private ObjectUpdateRequest	request;
-
-	public ObjectUpdateCommand(CsSession session, ObjectUpdateRequest request) {
-		super(session);
+	
+	private PropertyUtilsBean propertyUtil = new PropertyUtilsBean();
+	
+	public ObjectUpdateCommand(IDaoProvider daoProvider, CsSession session, ObjectUpdateRequest request) {
+		super(daoProvider, session);
 		this.request = request;
 	}
 	
@@ -76,14 +84,33 @@ public class ObjectUpdateCommand extends CommandABC {
 					// ORIGNIAL CODE:
 					// ObjectMapper objectSetter = new ObjectMapper();
 					// updateObject = objectSetter.readerForUpdating(updateObject).readValue(properties);
-					BeanUtils.populate(updateObject, properties);
-					
-					dao.store(updateObject);
-					
-					// create response
-					response.setResults(updateObject);
-					response.setStatus(ResponseStatus.Success);
-					return response;
+					Map<String, Throwable> failures = new HashMap<String, Throwable>();
+					for (Map.Entry<String, Object> property : properties.entrySet()) {
+						try {
+							Class<?> type= propertyUtil.getPropertyType(updateObject, property.getKey());
+							ObjectMapper mapper = new ObjectMapper();
+							Object value = mapper.convertValue(property.getValue(), type);
+							propertyUtil.setProperty(updateObject, property.getKey(), value);
+						}
+						catch(InvocationTargetException e) {
+							failures.put(property.getKey(), e.getTargetException());
+						}
+						catch(Exception e) {
+							failures.put(property.getKey(), e);
+						}
+					}
+					if (failures.isEmpty()) {
+						dao.store(updateObject);	
+						// create response
+						response.setResults(updateObject);
+						response.setStatus(ResponseStatus.Success);
+						return response;
+					}
+					else {
+						response.setStatus(ResponseStatus.Fail);
+						response.setStatusMessage("Some properties failed to update: " + failures.toString());
+						return response;
+					}
 				}
 				else {
 					response.setStatus(ResponseStatus.Fail);

@@ -19,7 +19,7 @@ public class JsonDecoder implements Decoder.Text<MessageABC> {
 
 	public JsonDecoder() {
 	}
-	
+
 	@Override
 	public void destroy() {
 	}
@@ -37,11 +37,11 @@ public class JsonDecoder implements Decoder.Text<MessageABC> {
 			Iterable<Class<? extends MessageABC>> requestClasses = ClassIndex.getSubclasses(MessageABC.class);
 			for (Class<? extends MessageABC> requestType : requestClasses) {
 				mapper.registerSubtypes(requestType);
-			}		
+			}
 			// decode message
 			MessageABC message = mapper.readValue(rawMessage, MessageABC.class);
 			return message;
-		} 
+		}
 		catch (Exception e) {
 			LOGGER.error("Failed to decode request: "+rawMessage, e);
 			throw new DecodeException(rawMessage, "Failed to decode request", e);

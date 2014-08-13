@@ -16,6 +16,11 @@ public abstract class CommandABC {
 	public CommandABC(CsSession session) {
 		this.session = session;
 	}
+	
+	public CommandABC(IDaoProvider daoProvider, CsSession session) {
+		this.daoProvider = daoProvider;
+		this.session = session;
+	}
 
 	public abstract ResponseABC exec();
 

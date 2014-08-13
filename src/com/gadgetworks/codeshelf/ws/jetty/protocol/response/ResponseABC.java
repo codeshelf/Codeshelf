@@ -2,11 +2,13 @@ package com.gadgetworks.codeshelf.ws.jetty.protocol.response;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
 
 //@IndexSubclasses
 //@JsonTypeInfo(use=JsonTypeInfo.Id.NAME, include=JsonTypeInfo.As.WRAPPER_OBJECT)
+@ToString
 public abstract class ResponseABC extends MessageABC {
 
 	@Getter @Setter
@@ -17,4 +19,8 @@ public abstract class ResponseABC extends MessageABC {
 	
 	@Getter @Setter
 	String requestId;
+	
+	public boolean isFailed() {
+		return getStatus().equals(ResponseStatus.Fail);
+	}
 }

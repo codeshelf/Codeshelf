@@ -128,7 +128,7 @@ public class ServerMessageProcessor extends MessageProcessor {
 				objectGetCounter.inc();
 			}			
 			else if (request instanceof ObjectUpdateRequest) {
-				command = new ObjectUpdateCommand(csSession,(ObjectUpdateRequest) request);
+				command = new ObjectUpdateCommand(this.daoProvider, csSession,(ObjectUpdateRequest) request);
 				objectUpdateCounter.inc();
 			}
 			else if (request instanceof ObjectMethodRequest) {
