@@ -358,6 +358,10 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 			result &= doUpgrade016();
 		}
 
+		if ((result) && (inOldVersion < ISchemaManager.DATABASE_VERSION_17)) {
+			result &= doUpgrade017();
+		}
+
 		result &= updateSchemaVersion(ISchemaManager.DATABASE_VERSION_CUR);
 
 		return result;
@@ -604,7 +608,18 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		return result;
 	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * @return
+	 */
+	private boolean doUpgrade017() {
+		boolean result = true;
 
+		result &= safeRenameColumn("item", "pos_along_path", "meters_from_anchor");
+		return result;
+	}
+	
 	// --------------------------------------------------------------------------
 	/**
 	 *  @param inFromSchema
@@ -1010,7 +1025,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		// Item
 		result &= createTable("item", //
 			"quantity INTEGER NOT NULL, " //
-					+ "pos_along_path DOUBLE PRECISION, " //
+					+ "meters_from_anchor DOUBLE PRECISION, " //
 					+ "active BOOLEAN DEFAULT TRUE NOT NULL, " //
 					+ "updated TIMESTAMP NOT NULL, " //
 					+ "stored_location_persistentid " + UUID_TYPE + " NOT NULL, " //

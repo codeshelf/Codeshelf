@@ -96,7 +96,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	@Column(nullable = true)
 	@Getter
 	@Setter
-	private Double				posAlongPath;
+	private Double				metersFromAnchor; // used to be posAlongPath. Upgrade action doUpgrade017()
 
 	@Column(nullable = false)
 	@Getter
@@ -251,8 +251,8 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	// Public setter/getter/validate functions for our cmFromLeft feature
 	public final void setPositionFromLeft(LocationABC inLocation, Integer inCmFromLeft) {
 		if (inLocation != null)
-			// this is the original behavior
-			setPosAlongPath(inLocation.getPosAlongPath());
+			// this matches the original behavior
+			setMetersFromAnchor(0.0);
 	}
 
 	public final String validatePositionFromLeft(LocationABC inLocation, Integer inCmFromLeft) {
@@ -268,9 +268,25 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	}
 
 	public Integer getCmFromLeft() {
+		Double meters = getMetersFromAnchor();
+		// The trick is knowing whether left is towards or away from the anchor.
 		Integer value = 0;
 		return value;
 		// if this item's stored location getPosAlongPath() == this.getPosAlongPath(), then cm is 0.
+	}
+	
+	// This mimics the old getter, but now is done via a computation.
+	public Double getPosAlongPath(){
+		Double returnValue = 0.0;
+		return returnValue;
+	}
+
+	// This mimics the old setter, but now would be done via a computation.
+	public void setPosAlongPath(Double inDdcPosition) {
+		setMetersFromAnchor(0.0);
+		// only called by facility putDdcItemsInPositionOrder(), which is probably never used now.
+		// Used to be used by an old stitchfix DDC case. Compute, and immediately set inventory each time. 
+		// We probably will not do it this way now that we have a good non-slotted model.
 	}
 
 }
