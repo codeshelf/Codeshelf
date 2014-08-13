@@ -44,7 +44,7 @@ public class JsonDecoder implements Decoder.Text<MessageABC> {
 		} 
 		catch (Exception e) {
 			LOGGER.error("Failed to decode request: "+rawMessage, e);
-			throw new DecodeException(rawMessage, "Failed to decode request");
+			throw new DecodeException(rawMessage, "Failed to decode request", e);
 		}
 	}
 
