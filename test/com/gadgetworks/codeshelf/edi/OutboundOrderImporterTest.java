@@ -13,6 +13,7 @@ import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -28,6 +29,7 @@ import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Point;
+import com.joestelmach.natty.Parser;
 
 /**
  * @author jeffw
@@ -58,48 +60,6 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 			mContainerUseDao,
 			mItemMasterDao,
 			mUomMasterDao);
-	}
-
-	private Date parseOneDate(String inDateString) throws ParseException {
-		// Some of the order file processing works like this. This should match (or be) the code used in order processing
-		Date returnDate = null;
-
-		try {
-			// First try to parse it as a SQL timestamp.
-			returnDate = Timestamp.valueOf(inDateString);
-		} catch (IllegalArgumentException e) {
-			// Then try to parse it as just a SQL date.
-			try {
-				SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-				dateFormat.setLenient(true);
-				Date date = dateFormat.parse(inDateString);
-				returnDate = new Timestamp(date.getTime());
-			} catch (IllegalArgumentException | ParseException e1) {
-				// LOGGER.error("", e1);
-			}
-		}
-		return returnDate;
-	}
-
-	@Test
-	public final void dateParseTest() throws ParseException {
-		// Try timestamp forms we are encountering.
-		
-		Date dateValue = null;
-		dateValue = parseOneDate("2012-09-26 11:31:03");
-		Assert.assertNotNull(dateValue);
-		String readItBack = dateValue.toString(); // Just to see what we got. Need to step through to see it.
-		dateValue = parseOneDate("2012-09-26 11:31");
-		Assert.assertNotNull(dateValue);
-		readItBack = dateValue.toString(); // Just to see what we got. Need to step through to see it.
-		/*
-		dateValue = parseOneDate("6/25/14 12:00:03");
-		Assert.assertNotNull(dateValue);
-		readItBack = dateValue.toString(); // Just to see what we got. Need to step through to see it.
-		dateValue = parseOneDate("6/25/14 12:00");
-		Assert.assertNotNull(dateValue);
-		readItBack = dateValue.toString(); // Just to see what we got. Need to step through to see it.
-		*/
 	}
 
 	@Test
