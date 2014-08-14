@@ -19,8 +19,4 @@ public abstract class ResponseABC extends MessageABC {
 	
 	@Getter @Setter
 	String requestId;
-	
-	public boolean isFailed() {
-		return getStatus().equals(ResponseStatus.Fail);
-	}
 }

@@ -22,6 +22,7 @@ import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.MockModel;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectUpdateRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ObjectUpdateCommandTest {
@@ -70,7 +71,7 @@ public class ObjectUpdateCommandTest {
 		String testValue = "a";
 	
 		ResponseABC resp = testSetterFail(testProperty, testValue);
-		Assert.assertTrue(resp.isFailed());
+		Assert.assertTrue(resp.getStatus().equals(ResponseStatus.Fail));
 	}
 	
 	@Test
@@ -130,13 +131,13 @@ public class ObjectUpdateCommandTest {
 		
 		ObjectUpdateCommand subject = new ObjectUpdateCommand(mockDaoProvider, null, objectUpdateRequest);
 		ResponseABC respCmd = subject.exec();
-		Assert.assertEquals(respCmd.toString(), false, respCmd.isFailed());
+		Assert.assertEquals(respCmd.toString(), false, respCmd.getStatus().equals(ResponseStatus.Fail));
 		return mockModel;
 	}
 
 	private void assertIsErrorResponse(ResponseABC respCmd) throws IOException, JsonParseException, JsonMappingException {
 		Assert.assertNotNull("Command response should not have been null", respCmd);
-		Assert.assertTrue(respCmd.isFailed());
+		Assert.assertTrue(respCmd.getStatus().equals(ResponseStatus.Fail));
 		Assert.assertNotNull(respCmd.getStatusMessage());
 	}
 
