@@ -743,4 +743,18 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 	}
 	
+	public final Boolean isLeftSideTowardsAnchor() {
+		// As you face the pickface, is the left toward the anchor (where the B1/S1 side is)
+		Aisle theAisle = this.getParentAtLevel(Aisle.class);
+		if (theAisle == null) {
+			return false;
+		}
+		else {
+			return theAisle.isLeftSideAsYouFaceByB1S1();
+			// this is moderately expensive, and rarely changes. Cache after first computation? Even at that LocationABC level?
+		}
+	}
+	
+
+	
 }

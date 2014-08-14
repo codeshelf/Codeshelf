@@ -279,22 +279,53 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		// if the cm value is wider than that bay/tier, or negative
 		if (inCmFromLeft < 0)
 			result = "Negative cm value not allowed";
+		Double pickEnd = ((SubLocationABC) inLocation).getPickFaceEndPosX();
+		if (pickEnd == 0.0)
+			pickEnd = ((SubLocationABC) inLocation).getPickFaceEndPosY();
+		if (pickEnd < inCmFromLeft/100.0) {
+			result = "Cm value too large. Location is not that wide.";
+		}
 		return result;
-		// 
 
 	}
 
 	public Integer getCmFromLeft() {
 		Double meters = getMetersFromAnchor();
-		// The trick is knowing whether left is towards or away from the anchor.
+		if (meters == null || meters == 0.0)
+			return 0;
+	
 		Integer value = 0;
+
+		LocationABC theLocation = this.getStoredLocation();
+		if (theLocation.isLeftSideTowardsAnchor()) {
+			value = (int) Math.round(meters * 100.0);
+		}
+		else { // cm back from the pickface end
+			Double pickEnd = ((SubLocationABC) theLocation).getPickFaceEndPosX();
+			if (pickEnd == 0.0)
+				pickEnd = ((SubLocationABC) theLocation).getPickFaceEndPosY();
+			if (pickEnd < meters) {
+				LOGGER.error("obvious bug in getCmFromLeft and non-slotted inventory model");
+				value = (int) Math.round(pickEnd * 100.0);
+			} else {
+				value = (int) Math.round((pickEnd - meters) * 100.0);
+			}			
+		}
+			
 		return value;
-		// if this item's stored location getPosAlongPath() == this.getPosAlongPath(), then cm is 0.
 	}
 	
 	// This mimics the old getter, but now is done via a computation.
 	public Double getPosAlongPath(){
 		Double returnValue = 0.0;
+		
+		LocationABC theLocation = this.getStoredLocation();
+		returnValue = theLocation.getPosAlongPath(); 
+		// Now we need to add or subtract the bit corresponding to getMetersFromAnchor. 
+		// Is left going up or down the path? That depends on direction of the local pathSegment, and getMetersFromAnchor.
+		// NOT DONE YET
+		
+
 		return returnValue;
 	}
 
@@ -304,6 +335,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		// only called by facility putDdcItemsInPositionOrder(), which is probably never used now.
 		// Used to be used by an old stitchfix DDC case. Compute, and immediately set inventory each time. 
 		// We probably will not do it this way now that we have a good non-slotted model.
+		// getPosAlongPath at least will return the location's value.
 	}
 
 }
