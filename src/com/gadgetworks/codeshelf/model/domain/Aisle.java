@@ -79,7 +79,7 @@ public class Aisle extends SubLocationABC<Facility> {
 		PathSegment pathSegment = PathSegment.DAO.findByPersistentId(persistentId);
 		if (pathSegment != null) {
 			associatePathSegment(pathSegment);
-		} else {	
+		} else {
 			throw new DaoException("Could not associate path segment, segment not found: " + inPathSegPersistentID);
 		}
 	}
@@ -107,44 +107,56 @@ public class Aisle extends SubLocationABC<Facility> {
 		if (initialLocationCount == afterLocationCount)
 			LOGGER.error("associatePathSegment did not correctly update locations array");
 	}
-	
+
 	public final void setControllerChannel(String inControllerPersistentIDStr, String inChannelStr) {
 		doSetControllerChannel(inControllerPersistentIDStr, inChannelStr);
 	}
 
-	// As you face the pickface, is the left toward the anchor point? If so, any cm offset adds to an anchorpoint. 
-	// If not, any cm offset subracts from a pickface end
-	
+	// As you face the pick face, is the left toward the anchor point? If so, any cm offset adds to an anchor point. 
+	// If not, any cm offset subtracts from a pick face end	
 	public final Boolean isLeftSideAsYouFaceByB1S1() {
 		// JR in progress for DEV-310
 		// The answer depends on the aisle's relationship to its pathSegment
 		Boolean returnValue = true;
-		
+
 		PathSegment mySegment = getPathSegment();
 		if (mySegment != null) {
 			// are we X oriented or Y oriented. Could get that from either the aisle or the path. Here we ask the aisle
 			Boolean xOriented = this.getPickFaceEndPosY() == 0.0;
-			
+
 			if (xOriented) {
 				// Think about standing on the path, and looking at the aisle pickface. By our convention, B1 and and S1 are left as we look. But is further along the path or not?
 				// That depends on whether the path is above (Y coordinate) the aisle or not.
 				Double aisleY = this.getAnchorPosY();
 				Double pathY = mySegment.getStartPosY(); // assume start and end Y are roughly the same.
-				Boolean pathSegFlowsRight =  mySegment.getEndPosX() > mySegment.getStartPosX();
-				
+				Boolean pathSegFlowsRight = mySegment.getEndPosX() > mySegment.getStartPosX();
+
 				// if aisle above the path, and path going right, then B1, B2, etc. will increase along the path
 				returnValue = ((aisleY < pathY) == pathSegFlowsRight);
-			}
-			else {
+			} else {
 				Double aisleX = this.getAnchorPosX();
 				Double pathX = mySegment.getStartPosX(); // assume start and end X are roughly the same.
-				Boolean pathSegFlowsDown =  mySegment.getEndPosY() > mySegment.getStartPosY();
+				Boolean pathSegFlowsDown = mySegment.getEndPosY() > mySegment.getStartPosY();
 				returnValue = ((aisleX < pathX) == pathSegFlowsDown);
 
 			}
 		}
-		
+
 		return returnValue;
+	}
+
+	public final Boolean associatedPathSegmentIncreasesFromAnchor() {
+		PathSegment mySegment = getPathSegment();
+		Boolean pathSegIncreaseFromAisleAnchor = true;
+		if (mySegment != null) {
+			Boolean xOriented = this.getPickFaceEndPosY() == 0.0;
+			if (xOriented) {
+				pathSegIncreaseFromAisleAnchor = mySegment.getEndPosX() > mySegment.getStartPosX();
+			} else {
+				pathSegIncreaseFromAisleAnchor = mySegment.getEndPosY() > mySegment.getStartPosY();
+			}
+		}
+		return pathSegIncreaseFromAisleAnchor;
 	}
 
 }

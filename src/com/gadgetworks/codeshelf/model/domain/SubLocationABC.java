@@ -31,6 +31,7 @@ import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.codeshelf.util.StringUIConverter;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -160,9 +161,12 @@ public abstract class SubLocationABC<P extends IDomainObject> extends LocationAB
 		
 		// For the logic below, we want the forward increasing logic if path direction is forward and forwardIncrease, or if both not.
 		Boolean wantForwardCalculation = forwardIncrease == inPathSegment.getParent().getTravelDirEnum().equals(TravelDirectionEnum.FORWARD);
+		// wrong; // does the local path segment increase in the direction the aisle is increasing?
 
 		Point locationAnchorPoint = getAbsoluteAnchorPoint();
-		Point pickFaceEndPoint = parent.getAbsoluteAnchorPoint(); // JR this looks wrong. Should want this.getAbsolutePickEndPoint();
+		Point pickFaceEndPoint = getAbsoluteAnchorPoint(); // JR this looks wrong. Should want this.getAbsolutePickEndPoint();
+		// Point pickFaceEndPoint = parent.getAbsoluteAnchorPoint(); // JR this looks wrong. Should want this.getAbsolutePickEndPoint();
+
 		pickFaceEndPoint.translateX(getPickFaceEndPosX());
 		pickFaceEndPoint.translateY(getPickFaceEndPosY());
 		pickFaceEndPoint.translateZ(getPickFaceEndPosZ());
@@ -191,8 +195,8 @@ public abstract class SubLocationABC<P extends IDomainObject> extends LocationAB
 			} else {
 				// I believe if we hit this, we found a model or algorithm error
 				Double parentPos = parent.getPosAlongPath(); 
-				// newPosition = parentPos;
-				newPosition = position; // JR test
+				newPosition = parentPos;
+				// newPosition = position; // JR test
 			}
 		} else {
 			// In the reverse direction take the "highest" path pos value.
@@ -204,8 +208,8 @@ public abstract class SubLocationABC<P extends IDomainObject> extends LocationAB
 			} else {
 				// I believe if we hit this, we found a model or algorithm error
 				Double parentPos = parent.getPosAlongPath();
-				// newPosition = parentPos;
-				newPosition = position; // JR test
+				newPosition = parentPos;
+				// newPosition = position; // JR test
 			}
 		}
 		
@@ -289,38 +293,28 @@ public abstract class SubLocationABC<P extends IDomainObject> extends LocationAB
 		return ss;
 	}
 
-	private String ourRepresentationToTwoDecimalsString(Double inDouble) {
-		// Most of our internals are Double floats, distance in meters.  Raw UI fetch of that looks bad.
-		if (inDouble == null || inDouble == 0.0)
-			return "0";
-		else {
-			DecimalFormat df = new DecimalFormat("#.##");      
-			Double rounded = Double.valueOf(df.format(inDouble));
-			return rounded.toString();
-		}
-	}
 	
 	// UI fields
 	public String getAnchorPosXui() {
-		return ourRepresentationToTwoDecimalsString(getAnchorPosX());
+		return StringUIConverter.doubleToTwoDecimalsString(getAnchorPosX());
 	}
 	public String getAnchorPosYui() {
-		return ourRepresentationToTwoDecimalsString(getAnchorPosY());
+		return StringUIConverter.doubleToTwoDecimalsString(getAnchorPosY());
 	}
 	public String getAnchorPosZui() {
-		return ourRepresentationToTwoDecimalsString(getAnchorPosZ());
+		return StringUIConverter.doubleToTwoDecimalsString(getAnchorPosZ());
 	}
 	public String getPickFaceEndPosXui() {
-		return ourRepresentationToTwoDecimalsString(getPickFaceEndPosX());
+		return StringUIConverter.doubleToTwoDecimalsString(getPickFaceEndPosX());
 	}
 	public String getPickFaceEndPosYui() {
-		return ourRepresentationToTwoDecimalsString(getPickFaceEndPosY());
+		return StringUIConverter.doubleToTwoDecimalsString(getPickFaceEndPosY());
 	}
 	public String getPickFaceEndPosZui() {
-		return ourRepresentationToTwoDecimalsString(getPickFaceEndPosZ());
+		return StringUIConverter.doubleToTwoDecimalsString(getPickFaceEndPosZ());
 	}
 	public String getPosAlongPathui() {
-		return ourRepresentationToTwoDecimalsString(getPosAlongPath());
+		return StringUIConverter.doubleToTwoDecimalsString(getPosAlongPath());
 	}
 
 }

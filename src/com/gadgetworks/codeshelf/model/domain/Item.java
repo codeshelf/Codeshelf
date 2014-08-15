@@ -29,6 +29,7 @@ import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.codeshelf.util.StringUIConverter;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -204,10 +205,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	}
 
 	public final String getPosAlongPathui() {
-		// for the moment, just return the location's value.
-		SubLocationABC location = (SubLocationABC) this.getStoredLocation();
-		return location.getPosAlongPathui();
-		// later, need to adjust for cmFromLeft
+		return StringUIConverter.doubleToTwoDecimalsString(getPosAlongPath());
 	}
 
 	public final String getItemTier() {
@@ -324,7 +322,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 			if (pickEnd == 0.0)
 				pickEnd = ((SubLocationABC) theLocation).getPickFaceEndPosY();
 			if (pickEnd < meters) {
-				LOGGER.error("obvious bug in getCmFromLeft and non-slotted inventory model");
+				LOGGER.error("Bug found: getCmFromLeft in non-slotted inventory model");
 				value = (int) Math.round(pickEnd * 100.0);
 			} else {
 				value = (int) Math.round((pickEnd - meters) * 100.0);
@@ -334,15 +332,34 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		return value;
 	}
 
-	// This mimics the old getter, but now is done via a computation.
+	// This mimics the old getter, but now is done via a computation. This is the key routine.
+	// May well be worth caching this value. Only changes if item's location changes, metersFromAnchor changes, or path change.
 	public Double getPosAlongPath() {
 		Double returnValue = 0.0;
 
 		LocationABC theLocation = this.getStoredLocation();
 		returnValue = theLocation.getPosAlongPath();
-		// Now we need to add or subtract the bit corresponding to getMetersFromAnchor. 
-		// Is left going up or down the path? That depends on direction of the local pathSegment, and getMetersFromAnchor.
-		// NOT DONE YET
+		Double meters = getMetersFromAnchor();
+		if (meters == 0.0) // we can skip the complications
+			return returnValue;
+		// 2 cases.
+		// - path increasing from anchor, so location's posAlongPath reflects the anchor.
+		// - path decreasing from anchor, so location's posAlongPath reflects its pickEndPos.
+		
+		// We either add or subtract the value. We just need to know if the location's anchor is up or down the path.
+		if (theLocation.isPathIncreasingFromAnchor())
+			returnValue += meters;
+		else {
+			Double pickEnd = ((SubLocationABC) theLocation).getPickFaceEndPosX();
+			if (pickEnd == 0.0)
+				pickEnd = ((SubLocationABC) theLocation).getPickFaceEndPosY();
+			if (pickEnd < meters) {
+				LOGGER.error("Bug found: Item.getPosAlongPath in non-slotted inventory model");
+				// let it return the location's posAlongPath
+			} else {
+				returnValue -= meters;
+			}
+		}
 
 		return returnValue;
 	}

@@ -738,9 +738,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 				theChannel = aLocation.getEffectiveLedChannel();
 			}
 		}
-
 		return theChannel;
-
 	}
 	
 	public final Boolean isLeftSideTowardsAnchor() {
@@ -751,7 +749,18 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		}
 		else {
 			return theAisle.isLeftSideAsYouFaceByB1S1();
-			// this is moderately expensive, and rarely changes. Cache after first computation? Even at that LocationABC level?
+			// this is moderately expensive, and rarely changes. Cache after first computation? Used extensively in item cmFromLeft calculations
+		}
+	}
+	
+	public final Boolean isPathIncreasingFromAnchor(){
+		Aisle theAisle = this.getParentAtLevel(Aisle.class);
+		if (theAisle == null) {
+			return true; // as good a default as any
+		}
+		else {
+			return theAisle.associatedPathSegmentIncreasesFromAnchor();
+			// this is moderately expensive, and rarely changes. Cache after first computation? Used in item.getPosAlongPath computation
 		}
 	}
 	

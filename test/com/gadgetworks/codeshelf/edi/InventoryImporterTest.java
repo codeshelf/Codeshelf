@@ -23,6 +23,7 @@ import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.PathSegment;
 import com.gadgetworks.codeshelf.model.domain.Point;
+import com.gadgetworks.codeshelf.model.domain.SubLocationABC;
 
 /**
  * @author jeffw
@@ -149,13 +150,16 @@ public class InventoryImporterTest extends EdiTestABC {
 		// Caller must use a different organization name each time this is used
 		// Valid tier names: A1.B1.T1 = D101, and A1.B2.T1
 		// Also, A1.B1 has alias D100
+		// Just for variance, bay3 has 4 slots
 		
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A1,,,,,tierB1S1Side,12.85,43.45,X,120,Y\r\n" //
 				+ "Bay,B1,230,,,,,\r\n" //
 				+ "Tier,T1,,0,80,0,,\r\n" //
 				+ "Bay,B2,230,,,,,\r\n" //
-				+ "Tier,T1,,0,80,0,,\r\n"; //
+				+ "Tier,T1,,0,80,0,,\r\n" //
+				+ "Bay,B3,230,,,,,\r\n" //
+				+ "Tier,T1,,4,80,0,,\r\n"; //
 
 		byte[] csvArray = csvString.getBytes();
 
@@ -164,7 +168,7 @@ public class InventoryImporterTest extends EdiTestABC {
 
 		Organization organization = new Organization();
 		String oName = "O-" + inOrganizationName;
-		organization.setDomainId("oName");
+		organization.setDomainId(oName);
 		mOrganizationDao.store(organization);
 
 		String fName = "F-" + inOrganizationName;
@@ -187,7 +191,11 @@ public class InventoryImporterTest extends EdiTestABC {
 		
 		String csvString2 = "mappedLocationId,locationAlias\r\n" //
 				+ "A1.B1, D100\r\n" //
-				+ "A1.B1.T1, D101\r\n"; //
+				+ "A1.B1.T1, D101\r\n" //
+				+ "A1.B1.T1.S1, D301\r\n" //
+				+ "A1.B1.T1.S2, D302\r\n" //
+				+ "A1.B1.T1.S3, D303\r\n" //
+				+ "A1.B1.T1.S4, D304\r\n"; //
 
 		byte[] csvArray2 = csvString2.getBytes();
 
@@ -204,10 +212,65 @@ public class InventoryImporterTest extends EdiTestABC {
 	
 	}
 
-		@Test
+	@Test
+	public final void checkBayanchors() {
+		// This is critical for path values for non-slotted inventory. Otherwise, this belongs in aisle file test, and not in inventory test.
+		Facility facility = setUpSimpleNoSlotFacility("XX01");	
+		SubLocationABC locationB1 =  (SubLocationABC) facility.findSubLocationById("A1.B1");
+		Assert.assertNotNull(locationB1);
+		SubLocationABC locationB2 =  (SubLocationABC)facility.findSubLocationById("A1.B2");
+		Assert.assertNotNull(locationB2);
+		SubLocationABC locationB3 =  (SubLocationABC) facility.findSubLocationById("A1.B3");
+		Assert.assertNotNull(locationB3);
+		
+		// By our model, each bay's anchor is relative to the owner aisle, so will differ.
+		// Each bay's pickFaceEnd is relative to its own anchor. As the bays are uniformly wide, the pickFace end values will be the same.
+		String bay1Anchor = locationB1.getAnchorPosXui(); // bay 1 anchor will be zero.
+		String bay2Anchor = locationB2.getAnchorPosXui();
+		String bay3Anchor = locationB3.getAnchorPosXui();
+		Assert.assertNotEquals(bay2Anchor, bay3Anchor);
+		String bay1PickEnd = locationB1.getPickFaceEndPosXui();
+		String bay2PickEnd = locationB2.getPickFaceEndPosXui();
+		String bay3PickEnd = locationB3.getPickFaceEndPosXui();
+		Assert.assertEquals(bay1PickEnd, bay2PickEnd);
+		
+		SubLocationABC locationB3T1S1 =  (SubLocationABC) facility.findSubLocationById("A1.B3.T1.S1");
+		Assert.assertNotNull(locationB3T1S1);
+		SubLocationABC locationB3T1S2 =  (SubLocationABC) facility.findSubLocationById("A1.B3.T1.S2");
+		Assert.assertNotNull(locationB3T1S2);
+		SubLocationABC locationB3T1S3 =  (SubLocationABC) facility.findSubLocationById("A1.B3.T1.S3");
+		Assert.assertNotNull(locationB3T1S3);
+		SubLocationABC locationB3T1S4 =  (SubLocationABC) facility.findSubLocationById("A1.B3.T1.S4");
+		Assert.assertNotNull(locationB3T1S4);
+
+		// By our model, each slot's anchor is relative to the owner tier, so will differ.
+		// Each slot's pickFaceEnd is relative to its own anchor. As the slots are uniformly wide, the pickFace end values will be the same.
+		String slot1Anchor = locationB3T1S1.getAnchorPosXui(); // slot 1 anchor will be zero.
+		String slot2Anchor = locationB3T1S2.getAnchorPosXui();
+		String slot4Anchor = locationB3T1S4.getAnchorPosXui();
+		Assert.assertNotEquals(slot2Anchor, slot4Anchor);
+		String slot1PickEnd = locationB3T1S1.getPickFaceEndPosXui();
+		String slot4PickEnd = locationB3T1S4.getPickFaceEndPosXui();
+		Assert.assertEquals(slot1PickEnd, slot4PickEnd);
+		
+		String slot1Pos = locationB3T1S1.getPosAlongPathui();
+		String slot2Pos = locationB3T1S2.getPosAlongPathui();
+		String slot4Pos = locationB3T1S4.getPosAlongPathui();
+
+		String bay1Pos = locationB1.getPosAlongPathui();
+		String bay2Pos = locationB2.getPosAlongPathui();
+		String bay3Pos = locationB3.getPosAlongPathui();
+		// The last slot in bay3 should have same path value as the bay
+		Assert.assertEquals(slot4PickEnd, bay3Pos);
+
+
+	}
+		
+
+	@Test
 	public final void testNonSlottedInventory() {
 			
-		Facility facility = setUpSimpleNoSlotFacility("XX01");
+		Facility facility = setUpSimpleNoSlotFacility("XX02");
 
 		// leave out the optional lot, and organize the file as we are telling Accu. Note: there is no such thing as itemDetailId
 		// D102 (item 1522) will not resolve
@@ -255,6 +318,27 @@ public class InventoryImporterTest extends EdiTestABC {
 		Assert.assertNull(locationD102);
 		Item item1522 = facility.getStoredItem("1522");
 		Assert.assertNotNull(item1522);
+
+		// Now check the good stuff. We have a path, items with position, with cm offset. So, we should get posAlongPath values, 
+		// as well as getting back any valid cm values. (They converted to Double meters from anchor, and then convert back.)
+		
+		// zero cm value. Same posAlongPath as the location
+		Integer cmValue = itemBOL1.getCmFromLeft(); // this did not have a value.
+		Assert.assertEquals(cmValue, (Integer) 0);
+		// for zero cmfromLeft, either 0 meters,or the full pickFaceEnd value
+		Double correspondingMeters = itemBOL1.getMetersFromAnchor();
+		
+		String itemPosValue = itemBOL1.getPosAlongPathui();
+		String locPosValue = ((SubLocationABC) locationB1T1).getPosAlongPathui();
+		// Assert.assertEquals(itemPosValue, locPosValue);
+		// Bug here
+
+		// Has a cm value pf 6. Different posAlongPath than the location
+		Integer cmValue2 = item1123.getCmFromLeft(); // this did not have a value.
+		Assert.assertEquals(cmValue2, (Integer) 6);
+		String itemPosValue2 = item1123.getPosAlongPathui();
+		String locPosValue2 = ((SubLocationABC) locationD101).getPosAlongPathui();
+		Assert.assertNotEquals(itemPosValue2, locPosValue2);
 
 	}
 

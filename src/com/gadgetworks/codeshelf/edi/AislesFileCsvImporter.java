@@ -482,7 +482,7 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 	 * @param inLocation
 	 */
 	private Point getNewBoundaryPoint(final SubLocationABC inLocation) {
-		// returns a new point with pickfaceEnd offset by depth
+		// returns a new point in the same coordinate system as the location's anchor
 
 		// The boundary point will be the pickFaceEnd adjusted for mDepth
 		Double pointX = inLocation.getPickFaceEndPosX();
@@ -496,9 +496,12 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 		}
 
 		Point aPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, pointX, pointY, 0.0);
+		// So, that was relative to zero. Now need to translate by the anchor to get into the anchor's coordinate system.
+		aPoint.translateX(inLocation.getAnchorPosX());
+		aPoint.translateY(inLocation.getAnchorPosY());
+		aPoint.translateZ(inLocation.getAnchorPosZ());	
 
 		return aPoint;
-
 	}
 
 	// --------------------------------------------------------------------------
@@ -515,14 +518,14 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 		Double bayX = inLastBayThisAisle.getPickFaceEndPosX();
 		Double bayY = inLastBayThisAisle.getPickFaceEndPosY();
 
-		Double anchorX = inAisle.getAnchorPosX();
-		Double anchorY = inAisle.getAnchorPosY();
+		Double anchorX = inLastBayThisAisle.getAnchorPosX();
+		Double anchorY = inLastBayThisAisle.getAnchorPosY();
 
 		Double aisleX = 0.0;
 		Double aisleY = 0.0;
 		// Probably not correct but so be it.
 		if (bayX != 0.0)
-			aisleX = anchorX + bayX; // bay points are relative to aisle
+			aisleX = anchorX + bayX; // the aisle pickFaceEnd is relative to the anchor, not in the same coordinate system as the anchor
 		if (bayY != 0.0)
 			aisleY = anchorY + bayY;
 
@@ -683,19 +686,21 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 		String slotId = String.valueOf(inSlotNumber);
 		slotId = "S" + slotId;
 
-		// Slot points relative to parent tier. The Z will be zero. If X orientation, Ys will be zero.
+		// anchor is in the coordinate system of the parent.
+		// pickface end is relative to the anchor, not in the same coordinate system as the anchor
+		// The Z will be zero. If X orientation, Ys will be zero.
 		Double anchorX = 0.0;
 		Double anchorY = 0.0;
 		Double pickFaceEndX = 0.0;
 		Double pickFaceEndY = 0.0;
 		if (mIsOrientationX) {
 			if (inPreviousSlot != null)
-				anchorX = inPreviousSlot.getPickFaceEndPosX();
-			pickFaceEndX = anchorX + inSlotWidthM;
+				anchorX = inPreviousSlot.getAnchorPosX() + inPreviousSlot.getPickFaceEndPosX();
+			pickFaceEndX = inSlotWidthM;
 		} else {
 			if (inPreviousSlot != null)
-				anchorY = inPreviousSlot.getPickFaceEndPosY();
-			pickFaceEndY = anchorY + inSlotWidthM;
+				anchorY = inPreviousSlot.getAnchorPosY() + inPreviousSlot.getPickFaceEndPosY();
+			pickFaceEndY = inSlotWidthM;
 		}
 		Point anchorPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, anchorX, anchorY, 0.0);
 		Point pickFaceEndPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, pickFaceEndX, pickFaceEndY, 0.0);
@@ -752,9 +757,9 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 		// anchor is relative to parent, so 0.
 		Double anchorX = 0.0;
 		Double anchorY = 0.0;
-		// Tier pick face end is relative to its own anchor. Don't just adopt the Bay's end.
-		Double pickFaceEndX = mLastReadBay.getPickFaceEndPosX() - mLastReadBay.getAnchorPosX();
-		Double pickFaceEndY = mLastReadBay.getPickFaceEndPosY() - mLastReadBay.getAnchorPosY();
+		// Tier pick face end is relative to its own anchor. Which happens to match the bay's
+		Double pickFaceEndX = mLastReadBay.getPickFaceEndPosX();
+		Double pickFaceEndY = mLastReadBay.getPickFaceEndPosY();
 
 		Point anchorPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, anchorX, anchorY, tierFloorM);
 		Point pickFaceEndPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, pickFaceEndX, pickFaceEndY, tierFloorM);
@@ -824,14 +829,16 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 		Double pickFaceEndX = 0.0;
 		Double pickFaceEndY = 0.0;
 
+		// anchor is in the coordinate system of the parent.
+		// pickface end is relative to the anchor, not in the same coordinate system as the anchor
 		if (mIsOrientationX) {
 			if (mLastReadBay != null)
-				anchorX = mLastReadBay.getPickFaceEndPosX();
-			pickFaceEndX = anchorX + lengthM;
+				anchorX = mLastReadBay.getAnchorPosX() + mLastReadBay.getPickFaceEndPosX();
+			pickFaceEndX = lengthM; 
 		} else {
 			if (mLastReadBay != null)
-				anchorY = mLastReadBay.getPickFaceEndPosY();
-			pickFaceEndY = anchorY + lengthM;
+				anchorY = mLastReadBay.getAnchorPosY() + mLastReadBay.getPickFaceEndPosY();
+			pickFaceEndY = lengthM;
 		}
 
 		Point anchorPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, anchorX, anchorY, 0.0);
