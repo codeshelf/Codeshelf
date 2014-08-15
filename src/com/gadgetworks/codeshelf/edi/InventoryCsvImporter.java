@@ -413,7 +413,7 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 			// Our new setter
 			String errors = result.validatePositionFromLeft(location, cmValue);
 			if (errors.isEmpty())
-				result.setPositionFromLeft(location, cmValue);
+				result.setPositionFromLeft(cmValue);
 			else
 				LOGGER.error(errors);
 

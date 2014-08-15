@@ -97,7 +97,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	@Column(nullable = true)
 	@Getter
 	@Setter
-	private Double				metersFromAnchor; // used to be posAlongPath. Upgrade action doUpgrade017()
+	private Double				metersFromAnchor;								// used to be posAlongPath. Upgrade action doUpgrade017()
 
 	@Column(nullable = false)
 	@Getter
@@ -194,8 +194,13 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		}
 	}
 	
+	public final String getItemMasterId() {
+		ItemMaster master = getParent();
+		return master.getDomainId();
+	}
+
 	public final void setItemCmFromLeft(String inValueFromLeft) {
-		setPositionFromLeft(this.getStoredLocation(), Integer.valueOf(inValueFromLeft));
+		setPositionFromLeft(Integer.valueOf(inValueFromLeft));
 	}
 
 	public final String getPosAlongPathui() {
@@ -228,7 +233,6 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		}
 	}
 
-	
 	interface Padder {
 		String padRight(String inString, int inPadLength);
 	}
@@ -266,10 +270,26 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	}
 
 	// Public setter/getter/validate functions for our cmFromLeft feature
-	public final void setPositionFromLeft(LocationABC inLocation, Integer inCmFromLeft) {
-		if (inLocation != null)
-			// this matches the original behavior
-			setMetersFromAnchor(0.0);
+	public final void setPositionFromLeft(Integer inCmFromLeft) {
+		Double value = 0.0;
+		LocationABC theLocation = this.getStoredLocation();
+		Double pickEnd = ((SubLocationABC) theLocation).getPickFaceEndPosX();
+		if (pickEnd == 0.0)
+			pickEnd = ((SubLocationABC) theLocation).getPickFaceEndPosY();
+		if (theLocation.isLeftSideTowardsAnchor()) {
+			value = inCmFromLeft / 100.0;
+		} else {
+			value = pickEnd - (inCmFromLeft / 100.0);
+		}
+		if (value > pickEnd) {
+			LOGGER.error("setPositionFromLeft value out of range");
+			value = pickEnd;
+		}
+		if (value < 0.0) {
+			LOGGER.error("ssetPositionFromLeft value out of range");
+			value = 0.0;
+		}
+		setMetersFromAnchor(value);
 	}
 
 	public final String validatePositionFromLeft(LocationABC inLocation, Integer inCmFromLeft) {
@@ -282,7 +302,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		Double pickEnd = ((SubLocationABC) inLocation).getPickFaceEndPosX();
 		if (pickEnd == 0.0)
 			pickEnd = ((SubLocationABC) inLocation).getPickFaceEndPosY();
-		if (pickEnd < inCmFromLeft/100.0) {
+		if (pickEnd < inCmFromLeft / 100.0) {
 			result = "Cm value too large. Location is not that wide.";
 		}
 		return result;
@@ -293,14 +313,13 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		Double meters = getMetersFromAnchor();
 		if (meters == null || meters == 0.0)
 			return 0;
-	
+
 		Integer value = 0;
 
 		LocationABC theLocation = this.getStoredLocation();
 		if (theLocation.isLeftSideTowardsAnchor()) {
 			value = (int) Math.round(meters * 100.0);
-		}
-		else { // cm back from the pickface end
+		} else { // cm back from the pickface end
 			Double pickEnd = ((SubLocationABC) theLocation).getPickFaceEndPosX();
 			if (pickEnd == 0.0)
 				pickEnd = ((SubLocationABC) theLocation).getPickFaceEndPosY();
@@ -309,22 +328,21 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 				value = (int) Math.round(pickEnd * 100.0);
 			} else {
 				value = (int) Math.round((pickEnd - meters) * 100.0);
-			}			
+			}
 		}
-			
+
 		return value;
 	}
-	
+
 	// This mimics the old getter, but now is done via a computation.
-	public Double getPosAlongPath(){
+	public Double getPosAlongPath() {
 		Double returnValue = 0.0;
-		
+
 		LocationABC theLocation = this.getStoredLocation();
-		returnValue = theLocation.getPosAlongPath(); 
+		returnValue = theLocation.getPosAlongPath();
 		// Now we need to add or subtract the bit corresponding to getMetersFromAnchor. 
 		// Is left going up or down the path? That depends on direction of the local pathSegment, and getMetersFromAnchor.
 		// NOT DONE YET
-		
 
 		return returnValue;
 	}
