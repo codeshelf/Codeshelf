@@ -10,6 +10,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.sql.Timestamp;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -24,6 +28,7 @@ import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Point;
+import com.joestelmach.natty.Parser;
 
 /**
  * @author jeffw
@@ -42,9 +47,9 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 	// the full set of fields known to the bean  (in the order of the bean, just for easier verification) is
 	// orderGroupId,orderId,orderDetailID,itemId,description,quantity,minQuantity,maxQuantity,uom,orderDate,dueDate,destinationId,pickStrategy,preAssignedContainerId,shipmentId,customerId,workSequence
 	// of these: orderId,itemId,description,quantity,uom are not nullable
-	
-	private ICsvOrderImporter importer;
-	
+
+	private ICsvOrderImporter	importer;
+
 	@Before
 	public void initTest() {
 		importer = new OutboundOrderCsvImporter(mOrderGroupDao,
@@ -55,7 +60,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 			mItemMasterDao,
 			mUomMasterDao);
 	}
-	
+
 	@Test
 	public final void testOrderImporterFromCsvStream() throws IOException {
 
@@ -109,7 +114,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Assert.assertNull(detail931); // not this. Do not find by order.
 		detail931 = order931.getOrderDetail("10706962");
 		Assert.assertNotNull(detail931); // this works, find by itemId within an order.
-		String detail931DomainID = detail931.getOrderDetailId();  // this calls through to domainID
+		String detail931DomainID = detail931.getOrderDetailId(); // this calls through to domainID
 		OrderDetail detail931b = order931.getOrderDetail(detail931DomainID);
 		Assert.assertNotNull(detail931b); // this works, find by itemId within an order.
 		Assert.assertEquals(detail931b, detail931);
@@ -209,7 +214,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 
 		Container container = mContainerDao.findByDomainId(facility, "CONTAINER1");
 		Assert.assertNotNull(container);
-		
+
 		HeaderCounts theCounts = facility.countOutboundOrders();
 		Assert.assertTrue(theCounts.mTotalHeaders == 3);
 		Assert.assertTrue(theCounts.mActiveHeaders == 3);
@@ -271,14 +276,13 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		// But should find order detail item 2
 		orderDetail = order.getOrderDetail("10706952");
 		Assert.assertNotNull(orderDetail);
-		
+
 		HeaderCounts theCounts = facility.countOutboundOrders();
 		Assert.assertTrue(theCounts.mTotalHeaders == 3);
 		Assert.assertTrue(theCounts.mActiveHeaders == 3);
 		Assert.assertTrue(theCounts.mActiveDetails == 11);
 		Assert.assertTrue(theCounts.mActiveCntrUses == 3);
 		// Seems possibly wrong! Got a detail for missing itemID.
-
 
 	}
 
@@ -320,13 +324,12 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 			mItemMasterDao,
 			mUomMasterDao);
 		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
-		
+
 		HeaderCounts theCounts = facility.countOutboundOrders();
 		Assert.assertTrue(theCounts.mTotalHeaders == 3);
 		Assert.assertTrue(theCounts.mActiveHeaders == 3);
 		Assert.assertTrue(theCounts.mActiveDetails == 11);
 		Assert.assertTrue(theCounts.mActiveCntrUses == 3);
-
 
 		// Now import a smaller list of orders, but more than one.
 		String secondOrderBatchCsv = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
@@ -354,7 +357,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 			mItemMasterDao,
 			mUomMasterDao);
 		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
-		
+
 		HeaderCounts theCounts2 = facility.countOutboundOrders();
 		Assert.assertTrue(theCounts2.mTotalHeaders == 3);
 		Assert.assertTrue(theCounts2.mActiveHeaders == 2);
@@ -363,7 +366,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		// Unused details are actually deleted
 		Assert.assertTrue(theCounts2.mInactiveDetailsOnActiveOrders == 0);
 		// But container 789 was not deleted. Just went inactive.
-		Assert.assertTrue(theCounts2.mInactiveCntrUsesOnActiveOrders  == 1);
+		Assert.assertTrue(theCounts2.mInactiveCntrUsesOnActiveOrders == 1);
 
 		// Order 789 should exist and be inactive.
 		OrderHeader order = facility.getOrderHeader("789");
@@ -421,13 +424,12 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 			mItemMasterDao,
 			mUomMasterDao);
 		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
-		
+
 		HeaderCounts theCounts = facility.countOutboundOrders();
 		Assert.assertTrue(theCounts.mTotalHeaders == 3);
 		Assert.assertTrue(theCounts.mActiveHeaders == 3);
 		Assert.assertTrue(theCounts.mActiveDetails == 11);
 		Assert.assertTrue(theCounts.mActiveCntrUses == 3);
-
 
 		// Now import a smaller list of orders, but more than one.
 		String secondOrderBatchCsv = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
@@ -451,15 +453,14 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 			mItemMasterDao,
 			mUomMasterDao);
 		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
-		
+
 		HeaderCounts theCounts2 = facility.countOutboundOrders();
 		Assert.assertTrue(theCounts2.mTotalHeaders == 3);
 		Assert.assertTrue(theCounts2.mActiveHeaders == 1);
 		Assert.assertTrue(theCounts2.mActiveDetails == 4);
 		Assert.assertTrue(theCounts2.mActiveCntrUses == 1);
 		Assert.assertTrue(theCounts2.mInactiveDetailsOnActiveOrders == 0);
-		Assert.assertTrue(theCounts2.mInactiveCntrUsesOnActiveOrders  == 0);
-
+		Assert.assertTrue(theCounts2.mInactiveCntrUsesOnActiveOrders == 0);
 
 		// Order 789 should exist and be active.
 		OrderHeader order = facility.getOrderHeader("789");
@@ -627,13 +628,12 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Assert.assertNull(orderDetail);
 		orderDetail = order.getOrderDetail("10706962"); // item ID
 		Assert.assertNull(orderDetail);
-		
+
 		HeaderCounts theCounts = facility.countOutboundOrders();
 		Assert.assertTrue(theCounts.mTotalHeaders == 3);
 		Assert.assertTrue(theCounts.mActiveHeaders == 3);
 		Assert.assertTrue(theCounts.mActiveDetails == 11);
 		Assert.assertTrue(theCounts.mActiveCntrUses == 3);
-
 
 		// This is a very odd test. Above had one set of headers, and this a different set. Could happen for different customers maybe, but here same customer and same orders.
 		// So, what happens to the details? The answer is the old details all are inactivated for each represented order ID, and new details made.
@@ -681,9 +681,9 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Assert.assertNotNull(orderDetail);
 		orderDetail = order.getOrderDetail("10722222");
 		Assert.assertNotNull(orderDetail);
-		
+
 		// And what about order 789, missing altogether in second file? Answer is the header went inactive, along with its 2 details and 1 cntrUse
-		
+
 		HeaderCounts theCounts2 = facility.countOutboundOrders();
 		Assert.assertTrue(theCounts2.mTotalHeaders == 3);
 		Assert.assertTrue(theCounts2.mActiveHeaders == 2);
@@ -714,7 +714,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 				+ "\r\n1,USF314,COSTCO,789,789,789.1,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,789,789,789.2,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
 		importCsvString(facility, firstCsvString);
-		
+
 		HeaderCounts theCounts = facility.countOutboundOrders();
 		Assert.assertTrue(theCounts.mTotalHeaders == 3);
 		Assert.assertTrue(theCounts.mActiveHeaders == 3);
@@ -729,37 +729,38 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Assert.assertTrue(theCounts2.mActiveHeaders == 3);
 		Assert.assertTrue(theCounts2.mActiveDetails == 11);
 		Assert.assertTrue(theCounts2.mInactiveDetailsOnActiveOrders == 0);
-		Assert.assertTrue(theCounts2.mInactiveCntrUsesOnActiveOrders  == 0);
+		Assert.assertTrue(theCounts2.mInactiveCntrUsesOnActiveOrders == 0);
 		Assert.assertTrue(theCounts2.mActiveCntrUses == 3);
 
-		}
+	}
+
 	/**
 	 * Simulates the edi process for order importing
 	 */
 	@Test
 	public void testMultipleImportOfLargeSet() throws IOException, InterruptedException {
-		
+
 		Facility testFacility = getTestFacility("O-testMultipleImportOfLargeSet", "F1");
-		
+
 		//The edi mechanism finds the facility from DAO before entering the importers
 		Facility foundFacility = null;
 		foundFacility = mFacilityDao.findByPersistentId(testFacility.getPersistentId());
 
 		//The large set creates the initial sets of orders
-		ImportResult result = importOrdersResource(foundFacility, "./resource/superset.orders.csv");		
+		ImportResult result = importOrdersResource(foundFacility, "./resource/superset.orders.csv");
 		Assert.assertTrue(result.toString(), result.isSuccessful());
-		
+
 		foundFacility = mFacilityDao.findByPersistentId(testFacility.getPersistentId());
 
 		//The subset triggers all but one of the details to be active = false
 		result = importOrdersResource(foundFacility, "./resource/subset.orders.csv");
 		Assert.assertTrue(result.toString(), result.isSuccessful());
-		
+
 		//Simulate a cache trim between the uploads
 		Ebean.getServer("codeshelf").getServerCacheManager().getCollectionIdsCache(OrderHeader.class, "orderDetails").clear();
 
 		foundFacility = mFacilityDao.findByPersistentId(testFacility.getPersistentId());
-		
+
 		//Reimporting the subset again would cause class cast exception or the details would be empty and DAOException would occur because we would attempt to create an already existing detail
 		result = importOrdersResource(foundFacility, "./resource/subset.orders.csv");
 		Assert.assertTrue(result.toString(), result.isSuccessful());
@@ -767,9 +768,9 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 			Assert.assertNotNull(orderHeader.getOrderDetails());
 		}
 	}
-	
+
 	//******************** TESTS without Group ID ***********************
-	
+
 	@Test
 	public final void testOutboundOrderNoGroup() throws IOException {
 		Organization organization = new Organization();
@@ -792,7 +793,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 				+ "\r\nUSF314,COSTCO,789,789,789.1,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\nUSF314,COSTCO,789,789,789.2,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
 		importCsvString(facility, firstCsvString);
-		
+
 		HeaderCounts theCounts = facility.countOutboundOrders();
 		Assert.assertTrue(theCounts.mTotalHeaders == 3);
 		Assert.assertTrue(theCounts.mActiveHeaders == 3);
@@ -807,11 +808,11 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Assert.assertTrue(theCounts2.mActiveHeaders == 3);
 		Assert.assertTrue(theCounts2.mActiveDetails == 11);
 		Assert.assertTrue(theCounts2.mInactiveDetailsOnActiveOrders == 0);
-		Assert.assertTrue(theCounts2.mInactiveCntrUsesOnActiveOrders  == 0);
+		Assert.assertTrue(theCounts2.mInactiveCntrUsesOnActiveOrders == 0);
 		Assert.assertTrue(theCounts2.mActiveCntrUses == 3);
-		
+
 		// Try the kinds of things we did before with group ID. Remove detail 123.4  And remove 789 altogether. (Dates are the same.)
-		
+
 		String secondCsvString = "shipmentId,customerId,preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\nUSF314,COSTCO,123,123,123.1,10700589,Napa Valley Bistro - Jalape������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\nUSF314,COSTCO,123,123,123.2,10706952,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -829,10 +830,9 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Assert.assertTrue(theCounts3.mActiveHeaders == 2);
 		Assert.assertTrue(theCounts3.mActiveDetails == 8);
 		Assert.assertTrue(theCounts3.mInactiveDetailsOnActiveOrders == 0);
-		Assert.assertTrue(theCounts3.mInactiveCntrUsesOnActiveOrders  == 1);
+		Assert.assertTrue(theCounts3.mInactiveCntrUsesOnActiveOrders == 1);
 		Assert.assertTrue(theCounts3.mActiveCntrUses == 2);
-		
-		
+
 		// Can a customer update a single order or detail by setting the count to zero
 		String fourthCsvString = "shipmentId,customerId,preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\nUSF314,COSTCO,123,123,123.3,10706962,Authentic Pizza Sauces,0,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
@@ -843,13 +843,13 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Assert.assertTrue(theCounts4.mActiveHeaders == 2);
 		Assert.assertTrue(theCounts4.mActiveDetails == 6);
 		Assert.assertTrue(theCounts4.mInactiveDetailsOnActiveOrders == 0);
-		Assert.assertTrue(theCounts4.mInactiveCntrUsesOnActiveOrders  == 4);
+		Assert.assertTrue(theCounts4.mInactiveCntrUsesOnActiveOrders == 4);
 		Assert.assertTrue(theCounts4.mActiveCntrUses == 1);
 
 		// So, can a customer update the count on a single item? 123.2 going to 3.
 		String fifthCsvString = "shipmentId,customerId,preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\nUSF314,COSTCO,123,123,123.2,10706952,Italian Homemade Style Basil Pesto,3,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
-				
+
 		importCsvString(facility, fifthCsvString);
 		// Well, yes. Looks like that detail was cleanly updated without bothering anything else.
 		HeaderCounts theCounts5 = facility.countOutboundOrders();
@@ -857,52 +857,49 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Assert.assertTrue(theCounts5.mActiveHeaders == 2);
 		Assert.assertTrue(theCounts5.mActiveDetails == 6);
 		Assert.assertTrue(theCounts5.mInactiveDetailsOnActiveOrders == 0);
-		Assert.assertTrue(theCounts5.mInactiveCntrUsesOnActiveOrders  == 4);
+		Assert.assertTrue(theCounts5.mInactiveCntrUsesOnActiveOrders == 4);
 		Assert.assertTrue(theCounts5.mActiveCntrUses == 1);
 
-		
-	
-	// So, here is a count update for three items. Will this doesthe updates, or will this be interpreted as full new file, needing to delete others?
-	String sixthCsvString = "shipmentId,customerId,preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
-			+ "\r\nUSF314,COSTCO,456,456,456.1,10711111,Napa Valley Bistro - Jalape������o Stuffed Olives,4,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
-			+ "\r\nUSF314,COSTCO,456,456,456.2,10722222,Italian Homemade Style Basil Pesto,4,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
-			+ "\r\nUSF314,COSTCO,456,456,456.3,10706962,Authentic Pizza Sauces,4,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
-			
-	importCsvString(facility, sixthCsvString);
-	// Buggy? Not sure. Hard to understand anyway. All other details except 1 were made inactive.  That led to two more inactive container uses (ok, if the detail inactive is correct).
-	HeaderCounts theCounts6 = facility.countOutboundOrders();
-	Assert.assertTrue(theCounts6.mTotalHeaders == 3);
-	Assert.assertTrue(theCounts6.mActiveHeaders == 2);
-	Assert.assertTrue(theCounts6.mActiveDetails == 4);
-	Assert.assertTrue(theCounts6.mInactiveDetailsOnActiveOrders == 0);
-	Assert.assertTrue(theCounts6.mInactiveCntrUsesOnActiveOrders  == 6);
-	Assert.assertTrue(theCounts6.mActiveCntrUses == 1);
+		// So, here is a count update for three items. Will this doesthe updates, or will this be interpreted as full new file, needing to delete others?
+		String sixthCsvString = "shipmentId,customerId,preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
+				+ "\r\nUSF314,COSTCO,456,456,456.1,10711111,Napa Valley Bistro - Jalape������o Stuffed Olives,4,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\nUSF314,COSTCO,456,456,456.2,10722222,Italian Homemade Style Basil Pesto,4,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\nUSF314,COSTCO,456,456,456.3,10706962,Authentic Pizza Sauces,4,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
+
+		importCsvString(facility, sixthCsvString);
+		// Buggy? Not sure. Hard to understand anyway. All other details except 1 were made inactive.  That led to two more inactive container uses (ok, if the detail inactive is correct).
+		HeaderCounts theCounts6 = facility.countOutboundOrders();
+		Assert.assertTrue(theCounts6.mTotalHeaders == 3);
+		Assert.assertTrue(theCounts6.mActiveHeaders == 2);
+		Assert.assertTrue(theCounts6.mActiveDetails == 4);
+		Assert.assertTrue(theCounts6.mInactiveDetailsOnActiveOrders == 0);
+		Assert.assertTrue(theCounts6.mInactiveCntrUsesOnActiveOrders == 6);
+		Assert.assertTrue(theCounts6.mActiveCntrUses == 1);
 
 	}
-	
+
 	// ARCHIVE TESTS?
 	// The code in OutboundOrderCsvImporter.java does a lot of archiving as it reads a file.
 	// By code review, the behavior is this for reading outbound orders file
-	
+
 	// archiveCheckAllContainers(). After a outbound order file read, iterate all containers.
 	// get each containerUse.
 	// for each, get associated order header if any. If it is an outbound order
 	// Only if this containerUse process time is the same as this EDI process time (that is, created earlier inside of this same file read)
 	// Then inactivate the containerUse. That is why inactiveCntrUses accumulate so much
 	// And then for the owning container, if all its uses are inactive, then inactivate the master container. (Not sure this is wise.)
-	
+
 	// archiveCheckAllOrders().
 	// Iterate all of the order groups. If not updated or created this order time (during this file read), then inactivate. WARNING. Outbound file read will inactivate different group from batch file group.
 	// Iterate all outbound order headers. Get details. If there was a detail with this process time (created or updated during this file read), then keep the order header active. Otherwise inactivate.
 	// WARNING different file for different waves may kill a lot of orders.
 	// And similarly, if the detail does not match this process time, inactivate it. (Same warning).
-	
+
 	// archiveCheckOneOrder() If only one order was in the file (even if two or more details for the same order header) then do the archive checking only for this order.
 	// That is, inactivate older details for this order. Do not do anything with containerUse.
 
-	
 	//******************** private helpers ***********************
-	
+
 	private Facility getTestFacility(String orgId, String facilityId) {
 		Organization organization = new Organization();
 		organization.setDomainId(orgId);
@@ -916,7 +913,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 	private void importCsvString(Facility facility, String csvString) throws IOException {
 		byte[] firstCsvArray = csvString.getBytes();
 
-		try(ByteArrayInputStream stream = new ByteArrayInputStream(firstCsvArray);) {
+		try (ByteArrayInputStream stream = new ByteArrayInputStream(firstCsvArray);) {
 			InputStreamReader reader = new InputStreamReader(stream);
 
 			Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
@@ -925,10 +922,10 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 	}
 
 	private ImportResult importOrdersResource(Facility facility, String csvResource) throws IOException, InterruptedException {
-		try(InputStream stream = this.getClass().getResourceAsStream(csvResource);) {
+		try (InputStream stream = this.getClass().getResourceAsStream(csvResource);) {
 			InputStreamReader reader = new InputStreamReader(stream);
 			Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 			return importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
-		}	
+		}
 	}
 }

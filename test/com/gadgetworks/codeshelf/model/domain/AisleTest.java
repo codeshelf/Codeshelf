@@ -5,10 +5,18 @@ import static org.junit.Assert.fail;
 
 import java.util.UUID;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 public class AisleTest extends DomainTestABC {
 
+	@Test
+	public final void testGetLocationIdWithInvalidSublevel() {
+		Aisle aisle = getAisle(getFacility(getOrganization("Org1")), "A1");
+		String locationId = aisle.getLocationIdToParentLevel(Tier.class);
+		Assert.assertEquals("", locationId);
+	}
+	
 	@Test
 	public final void updateControllerOnAisle() {
 		LedController controller = getController(getNetwork(getFacility(getOrganization("Org1"))), "0xABCDEF");

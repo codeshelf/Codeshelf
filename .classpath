@@ -115,5 +115,7 @@
 	<classpathentry kind="lib" path="lib/dist/metrics-opentsdb-1.0.2.jar"/>
 	<classpathentry kind="lib" path="lib/dist/jersey-bundle-1.18.1.jar"/>
 	<classpathentry kind="lib" path="lib/dist/jersey-json-1.18.1.jar"/>
+	<classpathentry kind="lib" path="lib/dist/natty-0.8.jar"/>
+	<classpathentry kind="lib" path="lib/dist/antlr-runtime-3.2.jar"/>
 	<classpathentry kind="output" path="eclipse-bin"/>
 </classpath>

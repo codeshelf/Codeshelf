@@ -1,6 +1,7 @@
 package com.gadgetworks.codeshelf.ws.jetty.protocol.request;
 
 import java.util.Map;
+import java.util.UUID;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -27,4 +28,16 @@ public class ObjectUpdateRequest extends RequestABC {
 	
 	@Getter @Setter
 	Map<String, Object> properties;
+	
+	public ObjectUpdateRequest() {
+		super();
+	}
+	
+	public ObjectUpdateRequest(String className, UUID persistentId, Map<String, Object> properties) {
+		super();
+		this.className = className;
+		this.persistentId = persistentId.toString();
+		this.properties = properties;
+	}
+
 }

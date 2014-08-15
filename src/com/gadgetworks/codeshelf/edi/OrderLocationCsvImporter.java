@@ -89,14 +89,10 @@ public class OrderLocationCsvImporter implements ICsvOrderLocationImporter {
 				LOGGER.debug("End order location import.");
 			}
 
-		} catch (FileNotFoundException e) {
+		} catch (IOException | DaoException e) {
 			result = false;
 			LOGGER.error("", e);
-		} catch (IOException e) {
-			result = false;
-			LOGGER.error("", e);
-		}
-
+		} 
 		return result;
 	}
 
@@ -142,16 +138,12 @@ public class OrderLocationCsvImporter implements ICsvOrderLocationImporter {
 
 			LOGGER.info(inCsvBean.toString());
 
-			try {
-				if ((inCsvBean.getLocationId() == null) || inCsvBean.getLocationId().length() == 0) {
-					deleteOrderLocations(inCsvBean.getOrderId(), inFacility, inEdiProcessTime);
-				} else if ((inCsvBean.getOrderId() == null) || inCsvBean.getOrderId().length() == 0) {
-					deleteLocation(inCsvBean.getLocationId(), inFacility, inEdiProcessTime);
-				} else {
-					OrderLocation orderLocation = updateOrderLocation(inCsvBean, inFacility, inEdiProcessTime);
-				}
-			} catch (Exception e) {
-				LOGGER.error("", e);
+			if ((inCsvBean.getLocationId() == null) || inCsvBean.getLocationId().length() == 0) {
+				deleteOrderLocations(inCsvBean.getOrderId(), inFacility, inEdiProcessTime);
+			} else if ((inCsvBean.getOrderId() == null) || inCsvBean.getOrderId().length() == 0) {
+				deleteLocation(inCsvBean.getLocationId(), inFacility, inEdiProcessTime);
+			} else {
+				updateOrderLocation(inCsvBean, inFacility, inEdiProcessTime);
 			}
 
 			mOrderLocationDao.commitTransaction();
@@ -212,7 +204,7 @@ public class OrderLocationCsvImporter implements ICsvOrderLocationImporter {
 				LOGGER.error("OrderLocation incorrectly setup");
 			}
 		} else {
-			LOGGER.warn("No location found for location: " + locationId);
+			throw new DaoException("No location found for location: " + locationId);
 			
 		} 
 		return result;

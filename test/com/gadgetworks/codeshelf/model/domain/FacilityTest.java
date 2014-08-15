@@ -22,6 +22,20 @@ import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 public class FacilityTest extends DomainTestABC {
 
 	@Test
+	public final void testGetParentAtLevelWithInvalidSublevel() {
+		Facility facility = createFacility("ORG-testGetParentAtLevelWhenSublevel");
+		Tier nullParent = facility.getParentAtLevel(Tier.class);
+		Assert.assertNull(nullParent);
+	}
+	
+	@Test
+	public final void testGetLocationIdWithInvalidSublevel() {
+		Facility facility = createFacility("ORG-testGetParentAtLevelWhenSublevel");
+		String locationId = facility.getLocationIdToParentLevel(Tier.class);
+		Assert.assertEquals("", locationId);
+	}
+
+	@Test
 	public final void createAisleTest() {
 
 		Organization organization = new Organization();

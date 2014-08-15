@@ -35,6 +35,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.PickStrategyEnum;
+import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
@@ -243,6 +244,23 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		return new ArrayList<OrderDetail>(orderDetails.values());
 	}
 
+	public final OrderLocation addOrderLocation(ILocation inLocation) {
+		OrderLocation result = createOrderLocation(inLocation);
+		addOrderLocation(result);
+		return result;
+	}
+	
+	private OrderLocation createOrderLocation(ILocation inLocation) {
+		OrderLocation result = new OrderLocation();
+		result.setDomainId(OrderLocation.makeDomainId(this, inLocation));
+		result.setParent(this);
+		result.setLocation(inLocation);
+		result.setActive(true);
+		result.setUpdated(new Timestamp(System.currentTimeMillis()));
+		OrderLocation.DAO.store(result);
+		return result;
+	}
+
 	public final void addOrderLocation(OrderLocation inOrderLocation) {
 		orderLocations.put(inOrderLocation.getDomainId(), inOrderLocation);
 	}
@@ -253,6 +271,17 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 
 	public final void removeOrderLocation(String inOrderLocationId) {
 		orderLocations.remove(inOrderLocationId);
+	}
+	
+	public final List<OrderLocation> getActiveOrderLocations() {
+		//TODO do efficient DB lookup
+		List<OrderLocation> newActiveOrderLocations = new ArrayList<OrderLocation>();
+		for (OrderLocation orderLocation : getOrderLocations()) {
+			if (orderLocation.getActive()) {
+				newActiveOrderLocations.add(orderLocation);
+			}
+		}
+		return newActiveOrderLocations;
 	}
 
 	public final List<OrderLocation> getOrderLocations() {
@@ -353,7 +382,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	public final OrderLocation getFirstOrderLocationOnPath(final Path inPath) {
 		OrderLocation result = null;
 
-		for (OrderLocation orderLoc : getOrderLocations()) {
+		for (OrderLocation orderLoc : getActiveOrderLocations()) {
 			if (orderLoc.getLocation().getAssociatedPathSegment().getParent().equals(inPath)) {
 				if ((result == null) || (orderLoc.getLocation().getPosAlongPath() < result.getLocation().getPosAlongPath())) {
 					result = orderLoc;
@@ -373,7 +402,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	public final String getOrderLocationAliasIds() {
 		String result = "";
 		
-		List<OrderLocation> oLocations = getOrderLocations();
+		List<OrderLocation> oLocations = getActiveOrderLocations();
 		int numLocations = oLocations.size();
 		if (numLocations == 0)
 			return result;
