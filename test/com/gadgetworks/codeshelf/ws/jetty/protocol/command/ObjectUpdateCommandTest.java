@@ -35,7 +35,7 @@ public class ObjectUpdateCommandTest {
 	@Test
 	public void shouldChangeValueOfBooleanSetter() throws JsonProcessingException, IOException {
 		String testProperty = "testSetterBoolean";
-		String testValue = "true";
+		Boolean testValue = Boolean.TRUE;
 		
 		MockModel mockModel = testSetter(testProperty, testValue);
 		Assert.assertEquals(new Boolean(testValue).booleanValue(), mockModel.getTestSetterBoolean()); //note that this correlates to the the test property getter/setter
@@ -47,24 +47,41 @@ public class ObjectUpdateCommandTest {
 	@Test
 	public void shouldChangeValueOfDoubleSetter() throws JsonProcessingException, IOException {
 		String testProperty = "testSetterDouble";
-		String testValue = "1.1";
+		Double testValue = 1.1d;
 		
 		MockModel mockModel = testSetter(testProperty, testValue);
 		Assert.assertEquals(Double.valueOf(testValue).doubleValue(), mockModel.getTestSetterDouble(), 0.0); //note that this correlates to the the test property getter/setter
 	}
 
+	@Test
+	public void shouldFailDoubleSetterWrongType() throws JsonProcessingException, IOException {
+		String testProperty = "testSetterDouble";
+		String testValue = "1.1";
+		
+		ResponseABC resp = testSetterFail(testProperty, testValue);
+		Assert.assertTrue(resp.getStatus().equals(ResponseStatus.Fail));
+	}
+
 
 	
 	@Test
-	public void shouldChangeValueOfIntSetter() throws JsonProcessingException, IOException {
+	public void shouldFailIntSetterWrongType() throws JsonProcessingException, IOException {
 		String testProperty = "testSetterInt";
 		String testValue = "1";
+		
+		ResponseABC resp = testSetterFail(testProperty, testValue);
+		Assert.assertTrue(resp.getStatus().equals(ResponseStatus.Fail));
+	}
+
+	@Test
+	public void shouldChangeValueOfIntSetter() throws JsonProcessingException, IOException {
+		String testProperty = "testSetterInt";
+		Integer testValue = 1;
 		
 		MockModel mockModel = testSetter(testProperty, testValue);
 		Assert.assertEquals(Integer.valueOf(testValue).intValue(), mockModel.getTestSetterInt()); //note that this correlates to the the test property getter/setter
 	}
-
-
+	
 	@Test
 	public void shouldRespondAsFailed() throws JsonProcessingException, IOException {
 		String testProperty = "testSetterInt";
@@ -121,7 +138,7 @@ public class ObjectUpdateCommandTest {
 		return respCmd;
 	}
 	
-	private MockModel testSetter(String testProperty, String testValue) throws JsonParseException, JsonMappingException, IOException {
+	private MockModel testSetter(String testProperty, Object testValue) throws JsonParseException, JsonMappingException, IOException {
 
 		MockModel mockModel = new MockModel();
 		when(mockDaoProvider.getDaoInstance(MockModel.class)).thenReturn(mockTypedDao);
@@ -148,7 +165,7 @@ public class ObjectUpdateCommandTest {
 		return createReqCmdJsonNode("testSetterString", "testString");
 	}
 	
-	private ObjectUpdateRequest createReqCmdJsonNode(String testProperty, String testValue) throws JsonParseException, JsonMappingException, IOException {
+	private ObjectUpdateRequest createReqCmdJsonNode(String testProperty, Object testValue) throws JsonParseException, JsonMappingException, IOException {
 		Map <String, Object> properties = new HashMap<String, Object>();
 		properties.put(testProperty, testValue);
 		ObjectUpdateRequest req =  new ObjectUpdateRequest("com.gadgetworks.codeshelf.model.domain.MockModel", UUID.randomUUID(), properties);

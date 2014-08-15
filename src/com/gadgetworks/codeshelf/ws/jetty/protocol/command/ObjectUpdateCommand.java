@@ -87,10 +87,7 @@ public class ObjectUpdateCommand extends CommandABC {
 					Map<String, Throwable> failures = new HashMap<String, Throwable>();
 					for (Map.Entry<String, Object> property : properties.entrySet()) {
 						try {
-							Class<?> type= propertyUtil.getPropertyType(updateObject, property.getKey());
-							ObjectMapper mapper = new ObjectMapper();
-							Object value = mapper.convertValue(property.getValue(), type);
-							propertyUtil.setProperty(updateObject, property.getKey(), value);
+							propertyUtil.setProperty(updateObject, property.getKey(), property.getValue());
 						}
 						catch(InvocationTargetException e) {
 							failures.put(property.getKey(), e.getTargetException());
