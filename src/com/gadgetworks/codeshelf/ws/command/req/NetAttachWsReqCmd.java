@@ -5,8 +5,7 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.ws.command.req;
 
-import org.codehaus.jackson.JsonNode;
-
+import com.fasterxml.jackson.databind.JsonNode;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
@@ -51,22 +50,22 @@ public class NetAttachWsReqCmd extends WsReqCmdABC {
 		String authenticateResult = FAIL;
 
 		JsonNode organizationIdNode = getDataJsonNode().get("organizationId");
-		String organizationId = organizationIdNode.getTextValue();
+		String organizationId = organizationIdNode.asText();
 		Organization organization = mOrganizationDao.findByDomainId(null, organizationId);
 
 		if (organization != null) {
 			JsonNode facilityIdNode = getDataJsonNode().get("facilityId");
-			String facilityId = facilityIdNode.getTextValue();
+			String facilityId = facilityIdNode.asText();
 			Facility facility = organization.getFacility(facilityId);
 
 			if (facility != null) {
 				JsonNode codeshelfNetworkIdNode = getDataJsonNode().get("networkId");
-				String networkId = codeshelfNetworkIdNode.getTextValue();
+				String networkId = codeshelfNetworkIdNode.asText();
 				CodeshelfNetwork network = facility.getNetwork(networkId);
 				if (network != null) {
 
 					JsonNode credentialNode = getDataJsonNode().get("credential");
-					String credential = credentialNode.getTextValue();
+					String credential = credentialNode.asText();
 					if (network.isCredentialValid(credential)) {
 						authenticateResult = SUCCEED;
 					}

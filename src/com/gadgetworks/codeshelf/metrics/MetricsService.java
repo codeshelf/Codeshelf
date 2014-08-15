@@ -2,10 +2,10 @@ package com.gadgetworks.codeshelf.metrics;
 
 import java.net.InetAddress;
 
+import lombok.Getter;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import lombok.Getter;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;

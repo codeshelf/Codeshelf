@@ -5,10 +5,10 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.ws.command.req;
 
-import org.codehaus.jackson.JsonNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.User;
@@ -55,7 +55,7 @@ public class LoginWsReqCmd extends WsReqCmdABC {
 		// Search for a user with the specified ID (that has no password).
 
 		JsonNode organizationIdNode = getDataJsonNode().get("organizationId");
-		String organizationId = organizationIdNode.getTextValue();
+		String organizationId = organizationIdNode.asText();
 		Organization organization = mOrganizationDao.findByDomainId(null, organizationId);
 
 		// CRITICAL SECURITY CONCEPT.
@@ -66,11 +66,11 @@ public class LoginWsReqCmd extends WsReqCmdABC {
 			// Find the user.
 
 			JsonNode userIdNode = getDataJsonNode().get("userId");
-			String userId = userIdNode.getTextValue();
+			String userId = userIdNode.asText();
 			User user = organization.getUser(userId);
 			if (user != null) {
 				JsonNode passwordNode = getDataJsonNode().get("password");
-				String password = passwordNode.getTextValue();
+				String password = passwordNode.asText();
 				if (user.isPasswordValid(password)) {
 					authenticateResult = SUCCEED;
 					result = new LoginWsRespCmd(authenticateResult, organization, user);

@@ -15,7 +15,8 @@ public interface IWebSocketServer {
 	static final String	KEYSTORE_PATH_PROPERTY				= "KEYSTORE_PATH_PROPERTY";
 	static final String	KEYSTORE_STORE_PASSWORD_PROPERTY	= "KEYSTORE_STORE_PASSWORD_PROPERTY";
 	static final String	KEYSTORE_KEY_PASSWORD_PROPERTY		= "KEYSTORE_KEY_PASSWORD_PROPERTY";
-
+	static final String	WEBSOCKET_USE_KEEPALIVE_PROPERTY		= "KEYSTORE_KEY_PASSWORD_PROPERTY";
+	
 	void start();
 
 	void stop() throws IOException, InterruptedException;

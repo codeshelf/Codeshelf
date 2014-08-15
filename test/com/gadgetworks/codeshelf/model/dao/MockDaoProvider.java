@@ -6,13 +6,17 @@ import java.util.Map;
 
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
+import com.gadgetworks.codeshelf.model.domain.ContainerKind;
+import com.gadgetworks.codeshelf.model.domain.DropboxService;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.User;
+import com.gadgetworks.codeshelf.model.domain.Vertex;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
+import com.gadgetworks.codeshelf.model.domain.Vertex.VertexDao;
 
 public class MockDaoProvider implements IDaoProvider {
 
@@ -42,6 +46,15 @@ public class MockDaoProvider implements IDaoProvider {
 
 		ITypedDao<OrderDetail> orderDetailDao = new MockDao<OrderDetail>();
 		daos.put(OrderDetail.class, orderDetailDao);
+
+		ITypedDao<DropboxService> dropboxDao = new MockDao<DropboxService>();
+		daos.put(DropboxService.class, dropboxDao);
+		
+		ITypedDao<ContainerKind> containerKindDao = new MockDao<ContainerKind>();
+		daos.put(ContainerKind.class, containerKindDao);
+
+		ITypedDao<Vertex> vertexDao = new MockDao<Vertex>();
+		daos.put(Vertex.class, vertexDao);
 	}
 	
 	@Override

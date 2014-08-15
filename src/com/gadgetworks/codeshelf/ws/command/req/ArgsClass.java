@@ -8,8 +8,6 @@ package com.gadgetworks.codeshelf.ws.command.req;
 import lombok.Getter;
 import lombok.Setter;
 
-import org.codehaus.jackson.JsonNode;
-
 /**
  * @author jeffw
  *
@@ -28,7 +26,6 @@ public class ArgsClass {
 	private String		classType	= "";
 
 	public ArgsClass() {
-
 	}
 
 	public ArgsClass(final String inName, final Object inValue, final String inClassType) {

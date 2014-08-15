@@ -30,8 +30,8 @@ import com.gadgetworks.codeshelf.edi.ICsvOrderLocationImporter;
 import com.gadgetworks.codeshelf.edi.IEdiProcessor;
 import com.gadgetworks.codeshelf.edi.InventoryCsvImporter;
 import com.gadgetworks.codeshelf.edi.LocationAliasCsvImporter;
-import com.gadgetworks.codeshelf.edi.OutboundOrderCsvImporter;
 import com.gadgetworks.codeshelf.edi.OrderLocationCsvImporter;
+import com.gadgetworks.codeshelf.edi.OutboundOrderCsvImporter;
 import com.gadgetworks.codeshelf.model.dao.DaoProvider;
 import com.gadgetworks.codeshelf.model.dao.Database;
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
@@ -122,8 +122,8 @@ import com.gadgetworks.codeshelf.ws.WebSessionManager;
 import com.gadgetworks.codeshelf.ws.command.req.IWsReqCmdFactory;
 import com.gadgetworks.codeshelf.ws.command.req.WsReqCmdFactory;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageProcessor;
-import com.gadgetworks.codeshelf.ws.jetty.server.ServerMessageProcessor;
 import com.gadgetworks.codeshelf.ws.jetty.server.MessageProcessorFactory;
+import com.gadgetworks.codeshelf.ws.jetty.server.ServerMessageProcessor;
 import com.gadgetworks.codeshelf.ws.websocket.CsWebSocketServer;
 import com.gadgetworks.codeshelf.ws.websocket.IWebSocketServer;
 import com.gadgetworks.codeshelf.ws.websocket.IWebSocketSslContextGenerator;
@@ -235,6 +235,8 @@ public final class ServerMain {
 					.toInstance(System.getProperty("websocket.hostname"));
 				bind(Integer.class).annotatedWith(Names.named(IWebSocketServer.WEBSOCKET_PORTNUM_PROPERTY))
 					.toInstance(Integer.valueOf(System.getProperty("websocket.portnum")));
+				bind(Boolean.class).annotatedWith(Names.named(IWebSocketServer.WEBSOCKET_USE_KEEPALIVE_PROPERTY))
+					.toInstance(Boolean.valueOf(System.getProperty("websocket.keepalive")));
 
 				bind(String.class).annotatedWith(Names.named(IHttpServer.WEBAPP_CONTENT_PATH_PROPERTY))
 					.toInstance(System.getProperty("webapp.content.path"));

@@ -5,13 +5,11 @@ import javax.websocket.Decoder;
 import javax.websocket.EndpointConfig;
 
 import org.atteo.classindex.ClassIndex;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RequestABC;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 
 public class JsonDecoder implements Decoder.Text<MessageABC> {
 

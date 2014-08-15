@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 
-import javax.websocket.Session;
 import javax.websocket.server.ServerContainer;
 import javax.websocket.server.ServerEndpoint;
 
@@ -17,7 +16,6 @@ import org.eclipse.jetty.websocket.jsr356.server.deploy.WebSocketServerContainer
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RequestABC;
 import com.gadgetworks.codeshelf.ws.websocket.IWebSocketServer;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -34,7 +32,6 @@ public class JettyWebSocketServer implements IWebSocketServer {
 	private String mHost = "localhost";
     private Server mServer = null;
 
-    // TODO: needs to be passed in
 	private String	mKeystoreStorePassword="x2HPbC2avltYQR";
 	private String	mKeystoreKeyPassword="x2HPbC2avltYQR";
 	
@@ -45,6 +42,7 @@ public class JettyWebSocketServer implements IWebSocketServer {
 	@Inject
 	public JettyWebSocketServer(@Named(WEBSOCKET_HOSTNAME_PROPERTY) final String inAddr,
 		@Named(WEBSOCKET_PORTNUM_PROPERTY) final int inPort,
+		@Named(WEBSOCKET_USE_KEEPALIVE_PROPERTY) final boolean useKeepAlive,
 		@Named(KEYSTORE_PATH_PROPERTY) final String inKeystorePath,
 		@Named(KEYSTORE_STORE_PASSWORD_PROPERTY) final String inKeystoreStorePassword,
 		@Named(KEYSTORE_KEY_PASSWORD_PROPERTY) final String inKeystoreKeyPassword
@@ -54,6 +52,7 @@ public class JettyWebSocketServer implements IWebSocketServer {
 		this.mKeystorePath = inKeystorePath;
 		this.mKeystoreStorePassword = inKeystoreStorePassword;
 		this.mKeystoreKeyPassword = inKeystoreKeyPassword;
+		this.watchdog.setUseKeepAlive(useKeepAlive);
 		this.watchdog.start();
 	}
 		

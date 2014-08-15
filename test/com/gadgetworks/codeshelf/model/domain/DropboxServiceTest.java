@@ -23,7 +23,6 @@ import com.gadgetworks.codeshelf.edi.ICsvOrderLocationImporter;
 import com.gadgetworks.codeshelf.edi.ImportResult;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.dao.MockDao;
-import com.gadgetworks.codeshelf.model.dao.Result;
 
 public class DropboxServiceTest {
 

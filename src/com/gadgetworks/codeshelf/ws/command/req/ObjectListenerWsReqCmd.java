@@ -14,14 +14,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.node.ArrayNode;
-import org.codehaus.jackson.node.ObjectNode;
-import org.codehaus.jackson.type.TypeReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
@@ -81,17 +81,15 @@ public class ObjectListenerWsReqCmd extends WsReqCmdABC implements IWsPersistent
 		try {
 			JsonNode dataJsonNode = getDataJsonNode();
 			JsonNode objectClassNode = dataJsonNode.get(CLASSNAME);
-			String objectClassName = objectClassNode.getTextValue();
+			String objectClassName = objectClassNode.asText();
 			if (!objectClassName.startsWith("com.gadgetworks.codeshelf.model.domain.")) {
 				objectClassName = "com.gadgetworks.codeshelf.model.domain." + objectClassName;
 			}
 			JsonNode objectIdListNode = dataJsonNode.get(OBJECT_ID_LIST);
 			ObjectMapper mapper = new ObjectMapper();
-			mObjectIdList = mapper.readValue(objectIdListNode, new TypeReference<List<UUID>>() {
-			});
+			mObjectIdList = null; // mapper.readValue(objectIdListNode, new TypeReference<List<UUID>>() {});
 			JsonNode propertyNamesNode = dataJsonNode.get(PROPERTY_NAME_LIST);
-			mPropertyNames = mapper.readValue(propertyNamesNode, new TypeReference<List<String>>() {
-			});
+			mPropertyNames = null; // mapper.readValue(propertyNamesNode, new TypeReference<List<String>>() {});
 
 			// First we find the object (by it's ID).
 			Class<?> classObject = Class.forName(objectClassName);
@@ -104,14 +102,9 @@ public class ObjectListenerWsReqCmd extends WsReqCmdABC implements IWsPersistent
 
 				result = getProperties(mObjectMatchList, OP_TYPE_UPDATE);
 			}
-		} catch (IOException e) {
-			LOGGER.error("", e);
-		} catch (ClassNotFoundException e) {
-			LOGGER.error("", e);
-		} catch (SecurityException e) {
+		} catch (Exception e) {
 			LOGGER.error("", e);
 		}
-
 		return result;
 	}
 

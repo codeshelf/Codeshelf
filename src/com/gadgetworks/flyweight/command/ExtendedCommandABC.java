@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.flyweight.bitfields.BitFieldInputStream;
 import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
-import com.gadgetworks.flyweight.bitfields.NBitInteger;
 
 // --------------------------------------------------------------------------
 /**

@@ -8,14 +8,16 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.codehaus.jackson.JsonParseException;
-import org.codehaus.jackson.map.JsonMappingException;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import com.fasterxml.jackson.core.JsonGenerationException;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.DAOTestABC;
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
@@ -28,19 +30,68 @@ import com.gadgetworks.codeshelf.model.domain.PathSegment.PathSegmentDao;
 import com.gadgetworks.codeshelf.model.domain.WorkArea;
 import com.gadgetworks.codeshelf.model.domain.WorkArea.WorkAreaDao;
 import com.gadgetworks.codeshelf.ws.command.req.ArgsClass;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.request.CreatePathRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectMethodRequest;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.response.CreatePathResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectMethodResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.gadgetworks.codeshelf.ws.jetty.server.ServerMessageProcessor;
 
 @RunWith(MockitoJUnitRunner.class)
-public class CreatePathReqTest extends DAOTestABC {
+public class CreatePathCommandTest extends DAOTestABC {
 
 	@Mock
 	private IDaoProvider mockDaoProvider;
+
+	@Test
+	public void testPojo() throws JsonGenerationException, JsonMappingException, IOException {
+		JsonPojo pojo = new JsonPojo();
+		
+		ObjectMapper mapper = new ObjectMapper();
+		String jsonString = "";
+		jsonString = mapper.writeValueAsString(pojo);
+		System.out.println(jsonString);
+	}
 	
 	@Test
-	public void testShouldCreatePath() throws JsonParseException, JsonMappingException, IOException {
+	public void testCreatePathWithCommand() throws JsonGenerationException, JsonMappingException, IOException {
+		int numberOfSegments = 3;
+		String testPathDomainId = "DOMID-2";
+		
+		DAOMaker maker = new DAOMaker(mSchemaManager);
+		Facility testFacility = make(a(maker.TestFacility));
+		Path.DAO = new PathDao(mSchemaManager);
+		PathSegment.DAO = new PathSegmentDao(mSchemaManager);
+		WorkArea.DAO = new WorkAreaDao(mSchemaManager);
+	
+		Path noPath = Path.DAO.findByDomainId(testFacility, testPathDomainId);
+		Assert.assertNull(noPath);
+		
+		when(mockDaoProvider.getDaoInstance(Facility.class)).thenReturn(Facility.DAO);		
+		
+		PathSegment[] segments = createPathSegment(numberOfSegments);
+		
+		CreatePathRequest request = new CreatePathRequest();
+		request.setDomainId(testPathDomainId);
+		request.setFacilityId(testFacility.getPersistentId().toString());
+		request.setPathSegments(segments);
+		
+		ObjectMapper mapper = new ObjectMapper();
+		String jsonString = "";
+		jsonString = mapper.writeValueAsString(request);
+		System.out.println(jsonString);
+		
+		MockSession session = new MockSession();
+		session.setId("test-session");
+		
+		ServerMessageProcessor processor = new ServerMessageProcessor(mockDaoProvider);
+		ResponseABC response = processor.handleRequest(session, request);
+
+		Assert.assertTrue(response instanceof CreatePathResponse);
+	}
+	
+	@Test
+	public void testCreatePathViaObjectMethod() throws JsonParseException, JsonMappingException, IOException {
 		int numberOfSegments = 3;
 		String testPathDomainId = "DOMID";
 		
@@ -62,7 +113,6 @@ public class CreatePathReqTest extends DAOTestABC {
 		args.add(arg);
 		ArgsClass arg2 = new ArgsClass("segments", segments, PathSegment[].class.getName());
 		args.add(arg2);
-		
 		
 		ObjectMethodRequest request = new ObjectMethodRequest();
 		request.setClassName("Facility");

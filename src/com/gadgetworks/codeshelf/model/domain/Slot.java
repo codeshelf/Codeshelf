@@ -8,13 +8,11 @@ package com.gadgetworks.codeshelf.model.domain;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 
-import org.codehaus.jackson.annotate.JsonAutoDetect;
-import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
-import com.gadgetworks.codeshelf.model.PositionTypeEnum;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
@@ -33,7 +31,7 @@ import com.google.inject.Singleton;
 @Entity
 @DiscriminatorValue("SLOT")
 @CacheStrategy(useBeanCache = false)
-@JsonAutoDetect(getterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class Slot extends SubLocationABC<Tier> {
 
 	@Inject
