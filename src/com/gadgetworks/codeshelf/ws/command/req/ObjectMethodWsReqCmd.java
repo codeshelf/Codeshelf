@@ -23,16 +23,16 @@ import lombok.libs.org.objectweb.asm.tree.ClassNode;
 import lombok.libs.org.objectweb.asm.tree.LocalVariableNode;
 import lombok.libs.org.objectweb.asm.tree.MethodNode;
 
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.JsonParseException;
-import org.codehaus.jackson.map.JsonMappingException;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.node.ArrayNode;
-import org.codehaus.jackson.node.ObjectNode;
-import org.codehaus.jackson.type.TypeReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
@@ -106,21 +106,20 @@ public class ObjectMethodWsReqCmd extends WsReqCmdABC {
 
 			JsonNode dataJsonNode = getDataJsonNode();
 			JsonNode classNode = dataJsonNode.get(CLASSNAME);
-			String className = classNode.getTextValue();
+			String className = classNode.asText();
 			if (!className.startsWith("com.gadgetworks.codeshelf.model.domain.")) {
 				className = "com.gadgetworks.codeshelf.model.domain." + className;
 			}
 			JsonNode idNode = dataJsonNode.get(PERSISTENT_ID);
-			UUID objectId = UUID.fromString(idNode.getTextValue());
+			UUID objectId = UUID.fromString(idNode.asText());
 
 			JsonNode methodNameNode = dataJsonNode.get(METHODNAME);
-			String methodName = methodNameNode.getTextValue();
+			String methodName = methodNameNode.asText();
 
 			ObjectMapper mapper = new ObjectMapper();
 			JsonNode argumentsNode = dataJsonNode.get(METHODARGS);
 
-			mMethodArguments = mapper.readValue(argumentsNode, new TypeReference<List<ArgsClass>>() {
-			});
+			mMethodArguments = null; //mapper.readValue(argumentsNode, new TypeReference<List<ArgsClass>>() {});
 
 			// First we find the parent object (by it's ID).
 			Class<?> classObject = Class.forName(className);
@@ -158,9 +157,9 @@ public class ObjectMethodWsReqCmd extends WsReqCmdABC {
 								Class<?> arrayType = classType.getComponentType();
 								typedArg = Array.newInstance(arrayType, arrayNode.size());
 								int i = 0;
-								for (Iterator<JsonNode> iter = arrayNode.getElements(); iter.hasNext();) {
+								for (Iterator<JsonNode> iter = arrayNode.elements(); iter.hasNext();) {
 									JsonNode node = iter.next();
-									Object nodeItem = mapper.readValue(node, arrayType);
+									Object nodeItem = null; // mapper.readValue(node, arrayType);
 									Array.set(typedArg, i++, nodeItem);
 								}
 							}

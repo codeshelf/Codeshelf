@@ -7,6 +7,7 @@
 package com.gadgetworks.flyweight.command;
 
 import com.gadgetworks.flyweight.bitfields.NBitInteger;
+import com.gadgetworks.flyweight.bitfields.OutOfRangeException;
 
 public class PacketVersion extends NBitInteger {
 

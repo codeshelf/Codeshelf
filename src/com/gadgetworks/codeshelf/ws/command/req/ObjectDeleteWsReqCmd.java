@@ -7,12 +7,12 @@ package com.gadgetworks.codeshelf.ws.command.req;
 
 import java.util.UUID;
 
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
@@ -65,12 +65,12 @@ public class ObjectDeleteWsReqCmd extends WsReqCmdABC {
 
 			JsonNode dataJsonNode = getDataJsonNode();
 			JsonNode classNode = dataJsonNode.get(CLASSNAME);
-			String className = classNode.getTextValue();
+			String className = classNode.asText();
 			if (!className.startsWith("com.gadgetworks.codeshelf.model.domain.")) {
 				className = "com.gadgetworks.codeshelf.model.domain." + className;
 			}
 			JsonNode objectIdNode = dataJsonNode.get(PERSISTENT_ID);
-			UUID objectIdId = UUID.fromString(objectIdNode.getTextValue());
+			UUID objectIdId = UUID.fromString(objectIdNode.asText());
 
 			// First we find the parent object (by it's ID).
 			Class<?> classObject = Class.forName(className);

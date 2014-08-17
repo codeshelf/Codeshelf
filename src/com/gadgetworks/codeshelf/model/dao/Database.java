@@ -18,7 +18,6 @@ import com.avaje.ebean.Transaction;
 import com.avaje.ebean.config.AutofetchConfig;
 import com.avaje.ebean.config.AutofetchMode;
 import com.avaje.ebean.config.DataSourceConfig;
-import com.avaje.ebean.config.NamingConvention;
 import com.avaje.ebean.config.ServerConfig;
 import com.avaje.ebean.config.UnderscoreNamingConvention;
 import com.avaje.ebeaninternal.server.lib.ShutdownManager;

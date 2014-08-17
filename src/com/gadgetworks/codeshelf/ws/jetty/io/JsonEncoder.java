@@ -4,10 +4,10 @@ import javax.websocket.EncodeException;
 import javax.websocket.Encoder;
 import javax.websocket.EndpointConfig;
 
-import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
 
 public class JsonEncoder implements Encoder.Text<MessageABC> {

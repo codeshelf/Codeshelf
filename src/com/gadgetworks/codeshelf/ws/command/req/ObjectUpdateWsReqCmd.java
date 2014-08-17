@@ -11,14 +11,14 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.JsonParseException;
-import org.codehaus.jackson.map.JsonMappingException;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
@@ -92,12 +92,12 @@ public class ObjectUpdateWsReqCmd extends WsReqCmdABC {
 
 			JsonNode dataJsonNode = getDataJsonNode();
 			JsonNode classNode = dataJsonNode.get(CLASSNAME);
-			String className = classNode.getTextValue();
+			String className = classNode.asText();
 			if (!className.startsWith("com.gadgetworks.codeshelf.model.domain.")) {
 				className = "com.gadgetworks.codeshelf.model.domain." + className;
 			}
 			JsonNode idNode = dataJsonNode.get(PERSISTENT_ID);
-			UUID objectId = UUID.fromString(idNode.getTextValue());
+			UUID objectId = UUID.fromString(idNode.asText());
 
 			ObjectMapper mapper = new ObjectMapper();
 			JsonNode propertiesNode = dataJsonNode.get(PROPERTIES);

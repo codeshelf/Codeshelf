@@ -18,13 +18,12 @@ import javax.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 
-import org.codehaus.jackson.annotate.JsonAutoDetect;
-import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
-import org.codehaus.jackson.annotate.JsonProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
@@ -43,7 +42,7 @@ import com.google.inject.Singleton;
 @Entity
 @Table(name = "container")
 @CacheStrategy(useBeanCache = true)
-@JsonAutoDetect(getterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class Container extends DomainObjectTreeABC<Facility> {
 
 	@Inject

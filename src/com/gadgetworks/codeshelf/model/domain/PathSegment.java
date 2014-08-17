@@ -10,21 +10,23 @@ import java.util.List;
 import java.util.UUID;
 
 import javax.persistence.Column;
+import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 
-import org.codehaus.jackson.annotate.JsonAutoDetect;
-import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.Query;
 import com.avaje.ebean.annotation.CacheStrategy;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.TravelDirectionEnum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
@@ -46,9 +48,15 @@ import com.google.inject.Singleton;
 @Entity
 @Table(name = "path_segment")
 @CacheStrategy(useBeanCache = true)
-@JsonAutoDetect(getterVisibility = Visibility.NONE)
+//@JsonAutoDetect(fieldVisibility = Visibility.ANY)
+@JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 //@ToString(doNotUseGetters = true, exclude = { "parent" })
 public class PathSegment extends DomainObjectTreeABC<Path> {
+
+	/**
+	 * 
+	 */
+	private static final long	serialVersionUID	= -2776468192822374495L;
 
 	@Inject
 	public static PathSegmentDao	DAO;
@@ -94,42 +102,49 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 	@Column(nullable = true)
 	@Getter
 	@Setter
+	@JsonProperty
 	private PositionTypeEnum	posTypeEnum;
 
 	@NonNull
 	@Column(nullable = true)
 	@Getter
 	@Setter
+	@JsonProperty
 	private Double				startPosX;
 
 	@NonNull
 	@Column(nullable = true)
 	@Getter
 	@Setter
+	@JsonProperty
 	private Double				startPosY;
 
 	@NonNull
 	@Column(nullable = true)
 	@Getter
 	@Setter
+	@JsonProperty
 	private Double				startPosZ;
 
 	@NonNull
 	@Column(nullable = true)
 	@Getter
 	@Setter
+	@JsonProperty
 	private Double				endPosX;
 
 	@NonNull
 	@Column(nullable = true)
 	@Getter
 	@Setter
+	@JsonProperty
 	private Double				endPosY;
 
 	@NonNull
 	@Column(nullable = true)
 	@Getter
 	@Setter
+	@JsonProperty
 	private Double				endPosZ;
 
 	@Setter
@@ -137,7 +152,6 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 	private Double				startPosAlongPath;
 
 	public PathSegment() {
-
 	}
 
 	public PathSegment(final Path inParentPath,
@@ -180,6 +194,7 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 	}
 
 	public final String getParentPathID() {
+		if (this.parent==null) return null;
 		return parent.getDomainId();
 	}
 

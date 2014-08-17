@@ -8,13 +8,13 @@ package com.gadgetworks.codeshelf.ws.command.req;
 import java.lang.reflect.InvocationTargetException;
 import java.util.UUID;
 
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.node.ArrayNode;
-import org.codehaus.jackson.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
@@ -69,14 +69,14 @@ public class ObjectGetterWsReqCmd extends WsReqCmdABC {
 
 			JsonNode dataJsonNode = getDataJsonNode();
 			JsonNode parentClassNode = dataJsonNode.get(CLASSNAME);
-			String parentClassName = parentClassNode.getTextValue();
+			String parentClassName = parentClassNode.asText();
 			if (!parentClassName.startsWith("com.gadgetworks.codeshelf.model.domain.")) {
 				parentClassName = "com.gadgetworks.codeshelf.model.domain." + parentClassName;
 			}
 			JsonNode parentIdNode = dataJsonNode.get(PERSISTENT_ID);
-			UUID parentId = UUID.fromString(parentIdNode.getTextValue());
+			UUID parentId = UUID.fromString(parentIdNode.asText());
 			JsonNode getMethodNode = dataJsonNode.get(GETTER_METHOD);
-			String getterMethodName = getMethodNode.getTextValue();
+			String getterMethodName = getMethodNode.asText();
 
 			// First we find the parent object (by it's ID).
 			Class<?> classObject = Class.forName(parentClassName);

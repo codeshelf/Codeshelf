@@ -5,8 +5,7 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.ws.command.req;
 
-import org.codehaus.jackson.JsonNode;
-
+import com.fasterxml.jackson.databind.JsonNode;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Organization;
@@ -52,7 +51,7 @@ public class RegisterEdiWsReqCmd extends WsReqCmdABC {
 		// Search for a user with the specified ID (that has no password).
 
 		JsonNode serviceProviderNode = getDataJsonNode().get("serviceProvider");
-		String serviceProviderCode = serviceProviderNode.getTextValue();
+		String serviceProviderCode = serviceProviderNode.asText();
 		Facility facility = mFacilityDao.findByDomainId(mOrganization, serviceProviderCode);
 
 		if (facility != null) {

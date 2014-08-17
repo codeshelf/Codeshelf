@@ -16,6 +16,7 @@ import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Point;
+import com.gadgetworks.codeshelf.model.domain.Vertex;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectUpdateRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectUpdateResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
@@ -26,7 +27,7 @@ import com.gadgetworks.codeshelf.ws.jetty.server.ServerMessageProcessor;
 // "ObjectUpdateRequest":{"className":"Che","persistentId":"66575760-00b8-11e4-ba3a-48d705ccef0f","properties":{"description":"1123"},"messageId":"cid_6"}
 
 @RunWith(MockitoJUnitRunner.class)
-public class UpdateCommandTest extends DAOTestABC {
+public class CreateCheTest extends DAOTestABC {
 
 	@Test
 	public final void testUpdateCheOK() {
@@ -100,6 +101,9 @@ public class UpdateCommandTest extends DAOTestABC {
 		ITypedDao<Facility> facDao = daoProvider.getDaoInstance(Facility.class);
 		ITypedDao<CodeshelfNetwork> netDao = daoProvider.getDaoInstance(CodeshelfNetwork.class);
 		ITypedDao<Che> cheDao = daoProvider.getDaoInstance(Che.class);
+		ITypedDao<Vertex> vertexDao = daoProvider.getDaoInstance(Vertex.class);
+
+		Vertex.DAO = vertexDao;
 
 		Organization organization = new Organization();
 		organization.setOrganizationId("CTEST1.O1");

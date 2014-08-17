@@ -26,13 +26,12 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
-import org.codehaus.jackson.annotate.JsonAutoDetect;
-import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
-import org.codehaus.jackson.annotate.JsonProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.PickStrategyEnum;
@@ -55,7 +54,7 @@ import com.google.inject.Singleton;
 @Entity
 @Table(name = "order_header")
 @CacheStrategy(useBeanCache = true)
-@JsonAutoDetect(getterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 @ToString(of = { "orderTypeEnum", "statusEnum", "orderGroup", "active" }, callSuper = true, doNotUseGetters = true)
 public class OrderHeader extends DomainObjectTreeABC<Facility> {
 

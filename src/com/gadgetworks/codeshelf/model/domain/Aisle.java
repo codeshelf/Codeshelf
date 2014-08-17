@@ -10,12 +10,11 @@ import java.util.UUID;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 
-import org.codehaus.jackson.annotate.JsonAutoDetect;
-import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
@@ -35,7 +34,7 @@ import com.google.inject.Singleton;
 @Entity
 @DiscriminatorValue("AISLE")
 @CacheStrategy(useBeanCache = false)
-@JsonAutoDetect(getterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 //@ToString(doNotUseGetters = true)
 public class Aisle extends SubLocationABC<Facility> {
 

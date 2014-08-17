@@ -1,26 +1,20 @@
 package com.gadgetworks.codeshelf.ws.jetty;
 
-import java.util.LinkedList;
-import java.util.List;
-
 import javax.websocket.DecodeException;
-import javax.websocket.EncodeException;
 
-import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.eaio.uuid.UUID;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gadgetworks.codeshelf.application.Util;
+import com.gadgetworks.codeshelf.model.PositionTypeEnum;
+import com.gadgetworks.codeshelf.model.domain.PathSegment;
 import com.gadgetworks.codeshelf.model.domain.Point;
-import com.gadgetworks.codeshelf.ws.command.req.ArgsClass;
 import com.gadgetworks.codeshelf.ws.jetty.io.JsonDecoder;
-import com.gadgetworks.codeshelf.ws.jetty.io.JsonEncoder;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.LoginRequest;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectMethodRequest;
 
 public class JsonDecoderTest  {
 
@@ -55,6 +49,41 @@ public class JsonDecoderTest  {
 		}
 		int pos = jsonString.indexOf("className");
 		Assert.assertTrue(pos>=0);
+	}
+	
+	@Test
+	public void testPointPathArraySerialization() throws DecodeException {
+		PathSegment[] segments = createPathSegment(3);
+		ObjectMapper mapper = new ObjectMapper();
+		String jsonString = "";
+		try {
+			jsonString = mapper.writeValueAsString(segments);
+			System.out.println(jsonString);
+		} catch (Exception e) {
+			LOGGER.error("Failed to seriaize point", e);
+			Assert.fail("Failed to seriaize point");
+		}
+		int pos = jsonString.indexOf("className");
+		Assert.assertTrue(pos>=0);
+	}
+
+	private PathSegment[] createPathSegment(int numberOfSegments) {
+		PathSegment[] segments = new PathSegment[numberOfSegments];
+		for (int i = 0; i < numberOfSegments; i++) {
+			double di = i;
+			PathSegment segment = new PathSegment();
+			segment.setDomainId("P."+i);
+			segment.setSegmentOrder(i);
+			segment.setPosTypeEnum(PositionTypeEnum.METERS_FROM_PARENT);
+			segment.setStartPosX(di);
+			segment.setStartPosY(di);
+			segment.setStartPosZ(di);
+			segment.setEndPosX(di);
+			segment.setEndPosY(di);
+			segment.setEndPosZ(di);			
+			segments[i]=segment;
+		}
+		return segments;
 	}
 	
 	/*

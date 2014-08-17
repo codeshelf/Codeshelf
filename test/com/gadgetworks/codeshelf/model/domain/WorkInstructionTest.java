@@ -16,7 +16,6 @@ import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
-import com.gadgetworks.flyweight.command.NetGuid;
 
 /**
  * @author jeffw

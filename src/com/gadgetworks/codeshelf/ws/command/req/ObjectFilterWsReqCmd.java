@@ -13,16 +13,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.JsonParseException;
-import org.codehaus.jackson.map.JsonMappingException;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.node.ArrayNode;
-import org.codehaus.jackson.node.ObjectNode;
-import org.codehaus.jackson.type.TypeReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
@@ -84,21 +84,18 @@ public class ObjectFilterWsReqCmd extends WsReqCmdABC implements IWsPersistentRe
 		try {
 			JsonNode dataJsonNode = getDataJsonNode();
 			JsonNode objectClassNode = dataJsonNode.get(CLASSNAME);
-			String objectClassName = objectClassNode.getTextValue();
+			String objectClassName = objectClassNode.asText();
 			if (!objectClassName.startsWith("com.gadgetworks.codeshelf.model.domain.")) {
 				objectClassName = "com.gadgetworks.codeshelf.model.domain." + objectClassName;
 			}
 			JsonNode propertyNamesNode = dataJsonNode.get(PROPERTY_NAME_LIST);
 			ObjectMapper mapper = new ObjectMapper();
-			mPropertyNames = mapper.readValue(propertyNamesNode, new TypeReference<List<String>>() {
-			});
+			mPropertyNames = null; // mapper.readValue(propertyNamesNode, new TypeReference<List<String>>() {});
 			JsonNode filterClauseNode = dataJsonNode.get(FILTER_CLAUSE);
-			mFilterClause = filterClauseNode.getTextValue();
+			mFilterClause = filterClauseNode.asText();
 
 			JsonNode propertiesNode = dataJsonNode.get(FILTER_PARAMS);
-			List<Map<String, Object>> objectArray = mapper.readValue(propertiesNode,
-				new TypeReference<List<Map<String, Object>>>() {
-				});
+			List<Map<String, Object>> objectArray = null; // mapper.readValue(propertiesNode, new TypeReference<List<Map<String, Object>>>() {});
 			for (Map<String, Object> map : objectArray) {
 				String name = (String) map.get("name");
 				Object value = map.get("value");
@@ -120,11 +117,7 @@ public class ObjectFilterWsReqCmd extends WsReqCmdABC implements IWsPersistentRe
 			LOGGER.error("", e);
 		} catch (SecurityException e) {
 			LOGGER.error("", e);
-		} catch (JsonParseException e) {
-			LOGGER.error("", e);
-		} catch (JsonMappingException e) {
-			LOGGER.error("", e);
-		} catch (IOException e) {
+		} catch (Exception e) {
 			LOGGER.error("", e);
 		}
 

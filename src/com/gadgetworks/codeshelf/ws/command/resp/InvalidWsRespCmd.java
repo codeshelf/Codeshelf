@@ -1,6 +1,6 @@
 package com.gadgetworks.codeshelf.ws.command.resp;
 
-import org.codehaus.jackson.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class InvalidWsRespCmd extends WsRespCmdABC {
 

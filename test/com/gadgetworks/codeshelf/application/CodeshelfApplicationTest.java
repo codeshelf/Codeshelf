@@ -27,8 +27,8 @@ import com.gadgetworks.codeshelf.edi.ICsvOrderLocationImporter;
 import com.gadgetworks.codeshelf.edi.IEdiProcessor;
 import com.gadgetworks.codeshelf.edi.InventoryCsvImporter;
 import com.gadgetworks.codeshelf.edi.LocationAliasCsvImporter;
-import com.gadgetworks.codeshelf.edi.OutboundOrderCsvImporter;
 import com.gadgetworks.codeshelf.edi.OrderLocationCsvImporter;
+import com.gadgetworks.codeshelf.edi.OutboundOrderCsvImporter;
 import com.gadgetworks.codeshelf.model.dao.DaoProvider;
 import com.gadgetworks.codeshelf.model.dao.Database;
 import com.gadgetworks.codeshelf.model.dao.H2SchemaManager;
@@ -38,14 +38,12 @@ import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.dao.MockDao;
 import com.gadgetworks.codeshelf.model.dao.Result;
+import com.gadgetworks.codeshelf.model.domain.Aisle;
+import com.gadgetworks.codeshelf.model.domain.Bay;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.Container;
 import com.gadgetworks.codeshelf.model.domain.ContainerUse;
 import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.Aisle;
-import com.gadgetworks.codeshelf.model.domain.Bay;
-import com.gadgetworks.codeshelf.model.domain.Tier;
-import com.gadgetworks.codeshelf.model.domain.Slot;
 import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster;
 import com.gadgetworks.codeshelf.model.domain.LocationAlias;
@@ -55,6 +53,8 @@ import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.OrderLocation;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
+import com.gadgetworks.codeshelf.model.domain.Slot;
+import com.gadgetworks.codeshelf.model.domain.Tier;
 import com.gadgetworks.codeshelf.model.domain.UomMaster;
 import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
@@ -336,7 +336,7 @@ public class CodeshelfApplicationTest {
 		
 		AdminServer adminServer = new AdminServer();
 		
-		JettyWebSocketServer jettyServer = new JettyWebSocketServer("localhost", 8444, "path", "pass", "pass");
+		JettyWebSocketServer jettyServer = new JettyWebSocketServer("localhost", 8444, false, "path", "pass", "pass");
 
 		final ServerCodeshelfApplication application = new ServerCodeshelfApplication(webSocketListener,
 			monitor,

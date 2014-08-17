@@ -10,11 +10,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
@@ -80,14 +80,14 @@ public class CompleteWorkInstructionWsReqCmd extends WsReqCmdABC {
 		IWsRespCmd result = null;
 
 		JsonNode persistentIdNode = getDataJsonNode().get("persistentId");
-		String persistentId = persistentIdNode.getTextValue();
+		String persistentId = persistentIdNode.asText();
 		Che che = mCheDao.findByPersistentId(UUID.fromString(persistentId));
 
 		if (che != null) {
 			ObjectMapper mapper = new ObjectMapper();
 			JsonNode wiNode = getDataJsonNode().get("wi");
 			try {
-				WorkInstruction wiBean = mapper.readValue(wiNode, WorkInstruction.class);
+				WorkInstruction wiBean = null; // mapper.readValue(wiNode, WorkInstruction.class);
 
 				WorkInstruction storedWi = mWorkInstructionDao.findByPersistentId(wiBean.getPersistentId());
 				if (storedWi != null) {
@@ -107,7 +107,7 @@ public class CompleteWorkInstructionWsReqCmd extends WsReqCmdABC {
 					
 					sendWorkInstructionToHost(storedWi);
 				}
-			} catch (IOException e) {
+			} catch (Exception e) {
 				LOGGER.error("", e);
 			}
 

@@ -11,7 +11,6 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.gadgetworks.codeshelf.model.OrderTypeEnum;
-import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 
 /**
  * @author jeffw

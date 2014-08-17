@@ -6,20 +6,14 @@
 package com.gadgetworks.codeshelf.model.domain;
 
 import java.sql.Timestamp;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.node.ArrayNode;
-import org.codehaus.jackson.node.BooleanNode;
-import org.codehaus.jackson.node.ObjectNode;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
-import com.google.common.collect.Lists;
 
 /**
  * @author jeffw

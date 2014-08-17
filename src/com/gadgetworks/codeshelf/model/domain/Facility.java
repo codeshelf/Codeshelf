@@ -14,7 +14,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.SortedSet;
 
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
@@ -26,14 +25,13 @@ import javax.persistence.OneToMany;
 
 import lombok.Getter;
 
-import org.codehaus.jackson.annotate.JsonAutoDetect;
-import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
-import org.codehaus.jackson.annotate.JsonProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.avaje.ebean.annotation.Transactional;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.device.LedCmdGroup;
 import com.gadgetworks.codeshelf.device.LedCmdGroupSerializer;
 import com.gadgetworks.codeshelf.device.LedSample;
@@ -44,7 +42,6 @@ import com.gadgetworks.codeshelf.model.HeaderCounts;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
-import com.gadgetworks.codeshelf.model.TravelDirectionEnum;
 import com.gadgetworks.codeshelf.model.WorkInstructionSequencer;
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
@@ -71,7 +68,7 @@ import com.google.inject.Singleton;
 @Entity
 @DiscriminatorValue("FACILITY")
 @CacheStrategy(useBeanCache = false)
-@JsonAutoDetect(getterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class Facility extends SubLocationABC<Facility> {
 
 	@Inject
@@ -700,14 +697,14 @@ public class Facility extends SubLocationABC<Facility> {
 	 *
 	 */
 	@Transactional
-	public final void createPath(String inDomainId, PathSegment[] inPathSegments) {
+	public final Path createPath(String inDomainId, PathSegment[] inPathSegments) {
 		Path path = createPath(inDomainId);
 		for (PathSegment pathSegment : inPathSegments) {
 			pathSegment.setParent(path);
 			PathSegment.DAO.store(pathSegment);
 			path.addPathSegment(pathSegment);
 		}
-
+		return path;
 		// Recompute the distances of the structures?
 		// This does no good as the path segments are not associated to aisles yet.
 		//recomputeLocationPathDistances(path);

@@ -20,7 +20,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.avaje.ebean.Ebean;
-import com.gadgetworks.codeshelf.application.Util;
 import com.gadgetworks.codeshelf.model.HeaderCounts;
 import com.gadgetworks.codeshelf.model.PickStrategyEnum;
 import com.gadgetworks.codeshelf.model.domain.Container;

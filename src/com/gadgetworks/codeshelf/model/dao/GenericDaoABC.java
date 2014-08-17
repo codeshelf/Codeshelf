@@ -122,6 +122,11 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 		return result;
 	}
 
+	public final T findByPersistentId(String inPersistentIdString) {
+		UUID inPersistentId = UUID.fromString(inPersistentIdString);
+		return this.findByPersistentId(inPersistentId);
+	}
+	
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#loadByPersistentId(java.lang.Integer)

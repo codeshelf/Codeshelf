@@ -1,16 +1,27 @@
 package com.gadgetworks.codeshelf.metrics;
 
-import com.codahale.metrics.*;
-import com.codahale.metrics.Timer;
-
-import java.util.*;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedMap;
 import java.util.concurrent.TimeUnit;
+
+import lombok.Getter;
+import lombok.Setter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import lombok.Getter;
-import lombok.Setter;
+import com.codahale.metrics.Clock;
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.Gauge;
+import com.codahale.metrics.Histogram;
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.MetricFilter;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.ScheduledReporter;
+import com.codahale.metrics.Snapshot;
+import com.codahale.metrics.Timer;
 
 /**
  * A reporter which publishes metric values to a OpenTSDB server.

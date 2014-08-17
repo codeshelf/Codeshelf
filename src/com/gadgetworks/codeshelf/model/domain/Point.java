@@ -16,11 +16,9 @@ import lombok.NonNull;
 import lombok.Setter;
 import lombok.ToString;
 
-import org.codehaus.jackson.annotate.JsonAutoDetect;
-import org.codehaus.jackson.annotate.JsonProperty;
-import org.codehaus.jackson.annotate.JsonTypeInfo;
-import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
-
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 
 /**
@@ -29,7 +27,7 @@ import com.gadgetworks.codeshelf.model.PositionTypeEnum;
  */
 
 @Embeddable
-@JsonAutoDetect(getterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 @ToString(doNotUseGetters = true)
 @JsonTypeInfo(use=JsonTypeInfo.Id.NAME, include=JsonTypeInfo.As.PROPERTY, property = "className")
 @EqualsAndHashCode(doNotUseGetters=true)

@@ -5,12 +5,8 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
-import java.util.List;
-
 import org.junit.Assert;
 import org.junit.Test;
-
-import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 
 /**
  * @author ranstrom

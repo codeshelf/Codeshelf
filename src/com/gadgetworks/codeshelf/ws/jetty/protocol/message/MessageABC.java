@@ -3,9 +3,9 @@ package com.gadgetworks.codeshelf.ws.jetty.protocol.message;
 import lombok.Getter;
 
 import org.atteo.classindex.IndexSubclasses;
-import org.codehaus.jackson.annotate.JsonTypeInfo;
 
 import com.eaio.uuid.UUID;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 @IndexSubclasses
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.WRAPPER_OBJECT)

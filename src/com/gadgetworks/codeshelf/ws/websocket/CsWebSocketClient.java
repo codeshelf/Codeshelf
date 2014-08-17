@@ -7,7 +7,6 @@ package com.gadgetworks.codeshelf.ws.websocket;
 
 import java.io.IOException;
 import java.net.URI;
-import java.sql.Timestamp;
 import java.util.concurrent.atomic.AtomicLong;
 
 import javax.net.ssl.SSLContext;
@@ -17,8 +16,6 @@ import org.java_websocket.WebSocket;
 import org.java_websocket.WebSocketImpl;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.framing.Framedata;
-import org.java_websocket.framing.FramedataImpl1;
-import org.java_websocket.framing.Framedata.Opcode;
 import org.java_websocket.handshake.ServerHandshake;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

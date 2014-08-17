@@ -124,17 +124,12 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		for (Entry<String, Metric> entry : memoryMetrics.entrySet()) {
 			MetricsService.registerMetric(MetricsGroup.JVM,"memory."+entry.getKey(), entry.getValue());
 		}
-
 		mDatabase.start();
 
-		// Start the WebSocket UX handler
-		// mWebSocketServer.start();
-		
-		// mAlternativeWebSocketServer = new JettyWebSocketServer();
+		// Start the WebSocket server 
 		mAlternativeWebSocketServer.start();
 
 		// Start the EDI process.
-		// TODO: put back in when WS integration is done
 		mEdiProcessSignalQueue = new ArrayBlockingQueue<>(100);
 		mEdiProcessor.startProcessor(mEdiProcessSignalQueue);
 		
@@ -268,6 +263,8 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		createOrganizationUser("DEMO1", "configure@example.com", "testme"); //all
 		createOrganizationUser("DEMO1", "simulate@example.com", "testme"); //simulate + configure
 		createOrganizationUser("DEMO1", "che@example.com", "testme"); //view + simulate
+		createOrganizationUser("DEMO1", "work@example.com", "testme"); //view + simulate
+		
 		createOrganizationUser("DEMO1", "view@goodeggs.com", "goodeggs"); //view
 		createOrganizationUser("DEMO1", "view@accu-logistics.com", "accu-logistics"); //view
 		

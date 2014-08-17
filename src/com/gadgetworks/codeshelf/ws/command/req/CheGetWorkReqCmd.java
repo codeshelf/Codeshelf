@@ -7,10 +7,10 @@ package com.gadgetworks.codeshelf.ws.command.req;
 
 import java.util.UUID;
 
-import org.codehaus.jackson.JsonNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.ws.command.resp.CheGetWorkRespCmd;
@@ -55,12 +55,12 @@ public class CheGetWorkReqCmd extends WsReqCmdABC {
 		IWsRespCmd result = null;
 
 		JsonNode persistentIdNode = getDataJsonNode().get("persistentId");
-		String persistentId = persistentIdNode.getTextValue();
+		String persistentId = persistentIdNode.asText();
 		Che che = mCheDao.findByPersistentId(UUID.fromString(persistentId));
 
 		if (che != null) {
 			JsonNode locationIdNode = getDataJsonNode().get("locationId");
-			String locationId = locationIdNode.getTextValue();
+			String locationId = locationIdNode.asText();
 
 			result = new CheGetWorkRespCmd(che, locationId);
 		}

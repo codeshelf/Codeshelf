@@ -5,10 +5,10 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.ws.command.req;
 
-import org.codehaus.jackson.JsonNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Che;
@@ -59,7 +59,7 @@ public final class WsReqCmdFactory implements IWsReqCmdFactory {
 
 		WsReqCmdEnum commandEnum = getCommandTypeEnum(inCommandAsJson);
 
-		String commandId = inCommandAsJson.get(IWebSessionCmd.COMMAND_ID_ELEMENT).getTextValue();
+		String commandId = inCommandAsJson.get(IWebSessionCmd.COMMAND_ID_ELEMENT).asText();
 		JsonNode dataNode = inCommandAsJson.get(IWebSessionCmd.DATA_ELEMENT);
 
 		switch (commandEnum) {
@@ -123,7 +123,7 @@ public final class WsReqCmdFactory implements IWsReqCmdFactory {
 
 		JsonNode commandTypeNode = inCommandAsJson.get(IWebSessionCmd.COMMAND_TYPE_ELEMENT);
 		if (commandTypeNode != null) {
-			result = WsReqCmdEnum.fromString(commandTypeNode.getTextValue());
+			result = WsReqCmdEnum.fromString(commandTypeNode.asText());
 		}
 
 		return result;

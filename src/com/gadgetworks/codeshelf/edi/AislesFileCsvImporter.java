@@ -9,12 +9,11 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.Timestamp;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 import java.util.ListIterator;
 
 import org.slf4j.Logger;
@@ -24,24 +23,24 @@ import au.com.bytecode.opencsv.CSVReader;
 import au.com.bytecode.opencsv.bean.CsvToBean;
 import au.com.bytecode.opencsv.bean.HeaderColumnNameMappingStrategy;
 
+import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
-import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Bay;
+import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
+import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.ISubLocation;
+import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.PathSegment;
-import com.gadgetworks.codeshelf.model.domain.SubLocationABC;
 import com.gadgetworks.codeshelf.model.domain.Point;
-import com.gadgetworks.codeshelf.model.domain.Tier;
 import com.gadgetworks.codeshelf.model.domain.Slot;
-import com.gadgetworks.codeshelf.model.domain.LedController;
+import com.gadgetworks.codeshelf.model.domain.SubLocationABC;
+import com.gadgetworks.codeshelf.model.domain.Tier;
+import com.gadgetworks.flyweight.command.NetGuid;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.gadgetworks.codeshelf.model.PositionTypeEnum;
-import com.gadgetworks.flyweight.command.NetGuid;
 
 /**
  * @author ranstrom

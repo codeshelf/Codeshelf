@@ -1,17 +1,14 @@
 package com.gadgetworks.codeshelf.ws.jetty.protocol.command;
 
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.filter.EventType;
 import com.gadgetworks.codeshelf.filter.Filter;
-import com.gadgetworks.codeshelf.filter.Listener;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RegisterFilterRequest;

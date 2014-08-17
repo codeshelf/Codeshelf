@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import javax.management.RuntimeErrorException;
 import javax.persistence.Column;
 
 import org.apache.commons.lang.NotImplementedException;
@@ -176,5 +175,11 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 
 	@Override
 	public void clearAllCaches() {
+	}
+
+	@Override
+	public T findByPersistentId(String inPersistentIdAsString) {
+		UUID persistentId = UUID.fromString(inPersistentIdAsString);
+		return this.findByPersistentId(persistentId);
 	}
 }

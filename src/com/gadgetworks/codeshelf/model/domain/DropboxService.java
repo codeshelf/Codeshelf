@@ -24,9 +24,6 @@ import lombok.Getter;
 import lombok.Setter;
 
 import org.apache.commons.io.FilenameUtils;
-import org.codehaus.jackson.annotate.JsonAutoDetect;
-import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
-import org.codehaus.jackson.annotate.JsonProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +36,8 @@ import com.dropbox.core.DbxEntry;
 import com.dropbox.core.DbxException;
 import com.dropbox.core.DbxRequestConfig;
 import com.dropbox.core.DbxWebAuthNoRedirect;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.edi.ICsvAislesFileImporter;
 import com.gadgetworks.codeshelf.edi.ICsvCrossBatchImporter;
 import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
@@ -67,7 +66,7 @@ import com.google.inject.Singleton;
 @Table(name = "edi_service")
 @DiscriminatorValue("DROPBOX")
 @CacheStrategy(useBeanCache = true)
-@JsonAutoDetect(getterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class DropboxService extends EdiServiceABC {
 
 	@Inject
