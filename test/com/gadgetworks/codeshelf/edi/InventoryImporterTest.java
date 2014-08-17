@@ -260,7 +260,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		String bay2Pos = locationB2.getPosAlongPathui();
 		String bay3Pos = locationB3.getPosAlongPathui();
 		// The last slot in bay3 should have same path value as the bay
-		Assert.assertEquals(slot4PickEnd, bay3Pos);
+		Assert.assertEquals(slot4Pos, bay3Pos);
 
 
 	}
