@@ -1596,7 +1596,7 @@ public class Facility extends SubLocationABC<Facility> {
 			}
 
 			// The new way of sending LED data to the remote controller. Note getEffectiveXXX instead of getLedController
-			// This will throw if aisles/tiers are not configured yet. Lets avoid.
+			// This will throw if aisles/tiers are not configured yet. Lets avoid by the null checks.
 			ISubLocation theLocation = orderLocation.getLocation(); // this should never be null by database constraint
 			LedController theController = null;
 			Short theChannel = 0;
@@ -1607,7 +1607,7 @@ public class Facility extends SubLocationABC<Facility> {
 				theChannel = theLocation.getEffectiveLedChannel();
 			}
 			// If this location has no controller, let's bail on led pattern
-			if (theController == null || theChannel == 0)
+			if (theController == null || theChannel == null ||  theChannel == 0)
 				continue; // just don't add a new ledCmdGrop to the WI command list
 
 			List<LedSample> ledSamples = new ArrayList<LedSample>();
