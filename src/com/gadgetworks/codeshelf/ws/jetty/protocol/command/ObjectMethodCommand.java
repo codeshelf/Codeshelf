@@ -127,7 +127,7 @@ public class ObjectMethodCommand extends CommandABC {
 							response.setStatus(ResponseStatus.Success);
 							return response;
 						} catch (Exception e) {
-							LOGGER.error("Failed to invoke "+className+"."+methodName,e);
+							LOGGER.error("Failed to invoke "+className+"."+method + ", with arguments: " + cookedArguments,e);
 							response.setStatus(ResponseStatus.Fail);
 							return response;
 						}
