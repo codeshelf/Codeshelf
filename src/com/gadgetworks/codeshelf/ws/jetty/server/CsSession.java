@@ -4,6 +4,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.websocket.CloseReason;
 import javax.websocket.Session;
@@ -50,7 +51,8 @@ public class CsSession implements IDaoListener {
 	@Getter @Setter
 	long lastMessageReceived = System.currentTimeMillis();
 	
-	private Map<String,ObjectEventListener> eventListeners = new HashMap<String,ObjectEventListener>();
+	// used to be new HashMap
+	private Map<String,ObjectEventListener> eventListeners = new ConcurrentHashMap<String,ObjectEventListener>();
 	
 	private Set<ITypedDao<IDomainObject>> daoList = new ConcurrentHashSet<ITypedDao<IDomainObject>>();
 	
