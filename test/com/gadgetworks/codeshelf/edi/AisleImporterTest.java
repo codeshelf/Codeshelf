@@ -309,8 +309,8 @@ public class AisleImporterTest extends DomainTestABC {
 		thirdV = (Vertex) vList2.get(2);
 		xValue = thirdV.getPosX();
 		yValue = thirdV.getPosY();
-		Assert.assertTrue(yValue > 14.0);		// 12.85 + 1.2 = 14.05
-		Assert.assertTrue(xValue == 17.73);
+		Assert.assertTrue(xValue == 4.88);		// two bays of 144 cm.
+		Assert.assertTrue(yValue == 1.2); // just the depth, relative to anchor as 0,0
 
 		// Check that led computation occurred for last aisle in the file
 		Aisle aisle20 = Aisle.DAO.findByDomainId(facility, "A20");
@@ -335,8 +335,8 @@ public class AisleImporterTest extends DomainTestABC {
 		thirdV = (Vertex) vList4.get(2);
 		xValue = thirdV.getPosX();
 		yValue = thirdV.getPosY();
-		Assert.assertTrue(yValue > 14.0);		
-		Assert.assertTrue(xValue == 17.73);
+		Assert.assertTrue(yValue == 1.2);		
+		Assert.assertTrue(xValue == 4.88);
 
 		// Reread. We had a last bay and last aisle vertices bug on re-read
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
@@ -352,8 +352,8 @@ public class AisleImporterTest extends DomainTestABC {
 		thirdV = (Vertex) vList5.get(2);
 		xValue = thirdV.getPosX();
 		yValue = thirdV.getPosY();
-		Assert.assertTrue(yValue > 14.0);
-		Assert.assertTrue(xValue == 17.73);
+		Assert.assertTrue(yValue == 1.2);
+		Assert.assertTrue(xValue == 4.88);
 
 	}
 
@@ -647,9 +647,9 @@ public class AisleImporterTest extends DomainTestABC {
 		Vertex thirdV = (Vertex) vList1.get(2);
 		Double xValue = thirdV.getPosX();
 		Double yValue = thirdV.getPosY();
-		Assert.assertTrue(xValue > 14.0); // depth was 120 cm. 12.85 + 1.20 = 14.05
+		Assert.assertTrue(xValue == 1.2); // Just the depth:120 cm. Relative aisle vertex at the anchor: (0,0)
 		
-		Assert.assertTrue(yValue == 45.75);
+		Assert.assertTrue(yValue == 2.3); // two bays of 115 cm. Again, relative to anchor as 0,0
 
 		List<Vertex> vList2 = bayA13B1.getVerticesInOrder();
 		Assert.assertEquals(vList2.size(), 4);

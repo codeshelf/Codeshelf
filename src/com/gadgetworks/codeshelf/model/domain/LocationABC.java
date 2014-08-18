@@ -41,6 +41,7 @@ import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.IDatabase;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.codeshelf.util.StringUIConverter;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -533,6 +534,22 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 			return aLedController.getDomainId();
 		}
 		return "";
+	}
+	
+	public final String getVerticesUi(){
+		// A UI meta field. Mostly for developers as we refine our graphic ui
+		List<Vertex> vList = getVerticesInOrder();
+		String returnStr = "";
+		for(Vertex vertex : vList) {
+			// we want to assemble "(xvalue,yvalue)" for each vertex in order
+			String vString = "(";
+			vString += StringUIConverter.doubleToTwoDecimalsString(vertex.getPosX());
+			vString += ", ";
+			vString += StringUIConverter.doubleToTwoDecimalsString(vertex.getPosY());
+			vString += ") ";
+			returnStr += vString;
+		}
+		return returnStr;
 	}
 
 	public final String getPrimaryAliasId() {

@@ -480,18 +480,17 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 	/**
 	 * @param inLocation
 	 */
-	private Point getNewBoundaryPoint(final SubLocationABC inLocation) {
+	private Point getNewBoundaryPoint(final SubLocationABC inLocation, Double inDepthM, Boolean inXOriented) {
 		// returns a new point in the same coordinate system as the location's anchor
 
 		// The boundary point will be the pickFaceEnd adjusted for mDepth
 		Double pointX = inLocation.getPickFaceEndPosX();
 		Double pointY = inLocation.getPickFaceEndPosY();
-		Double depthM = mDepthCm / 100.0;
 
-		if (mIsOrientationX) {
-			pointY += depthM;
+		if (inXOriented) {
+			pointY += inDepthM;
 		} else {
-			pointX += depthM;
+			pointX += inDepthM;
 		}
 
 		Point aPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, pointX, pointY, 0.0);
@@ -512,42 +511,46 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 		// For this, we might editing existing vertices, or making new.
 		if (mFacility == null || inLastBayThisAisle == null)
 			return;
+		
+		Double depthM = mDepthCm / 100.0; // Is mDepth still current? Perhaps not, probably reflects next aisle as we are finalizing this one.
 
-		// First we must set the pickface on the aisle from the last bay in the aisle
-		Double bayX = inLastBayThisAisle.getPickFaceEndPosX();
-		Double bayY = inLastBayThisAisle.getPickFaceEndPosY();
+		// Aisle anchorX and anchorY are in the facility coordinate system.
+		// Aisle vertices are relative to each aisle anchor. That is, first vertex is (0,0). Third vertex will be depth of the bays, and the last bay's anchor + last bays pickface end		
+		Boolean isXOrientedAisle = inLastBayThisAisle.getPickFaceEndPosY() == 0.0;
+		Double aislePickEndX = 0.0;
+		Double aislePickEndY = 0.0;
+		Double boundaryPointX = 0.0;
+		Double boundaryPointY = 0.0;
+		if (isXOrientedAisle) {
+			aislePickEndX =  inLastBayThisAisle.getAnchorPosX() + inLastBayThisAisle.getPickFaceEndPosX();
+			boundaryPointX = aislePickEndX;
+			boundaryPointY = depthM;
+		}
+		else {
+			aislePickEndY =  inLastBayThisAisle.getAnchorPosY() + inLastBayThisAisle.getPickFaceEndPosY();
+			boundaryPointY = aislePickEndY;
+			boundaryPointX = depthM;
+		}
 
-		Double anchorX = inLastBayThisAisle.getAnchorPosX();
-		Double anchorY = inLastBayThisAisle.getAnchorPosY();
-
-		Double aisleX = 0.0;
-		Double aisleY = 0.0;
-		// Probably not correct but so be it.
-		if (bayX != 0.0)
-			aisleX = anchorX + bayX; // the aisle pickFaceEnd is relative to the anchor, not in the same coordinate system as the anchor
-		if (bayY != 0.0)
-			aisleY = anchorY + bayY;
-
-		Point pickFacePoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, aisleX, aisleY, 0.0);
+		Point pickFacePoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, aislePickEndX, aislePickEndY, 0.0);
 		inAisle.setPickFaceEndPoint(pickFacePoint);
 		// transaction?
 		mAisleDao.store(inAisle);
 
-		Point aPoint = getNewBoundaryPoint(inAisle);
+		// do not call getNewBoundaryPoint (inAisle) because that does a translation against the anchor. Correct (for now) for bays, but not for aisle.
+		Point aPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, boundaryPointX, boundaryPointY, 0.0);
 
 		// Create, or later adjust existing vertices, if any
-
 		mFacility.createOrUpdateVertices(inAisle, aPoint);
 
-		// Each bay also has vertices, by the same algorithm.
-		// List<? extends ISubLocation> locationList = inAisle.getChildrenAtLevel(Bay.class);
+		// Each bay also has vertices. The point will come from pickfaceEnd, then translate to the anchor coordinate system for the vertices.
 		List<Bay> locationList = inAisle.getChildrenAtLevel(Bay.class);
 
 		ListIterator li = null;
 		li = locationList.listIterator();
 		while (li.hasNext()) {
 			Bay thisBay = (Bay) li.next();
-			Point bayPoint = getNewBoundaryPoint(thisBay);
+			Point bayPoint = getNewBoundaryPoint(thisBay, depthM, isXOrientedAisle);
 			mFacility.createOrUpdateVertices(thisBay, bayPoint);
 		}
 	}
