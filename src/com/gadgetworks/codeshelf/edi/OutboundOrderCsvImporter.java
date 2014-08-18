@@ -36,6 +36,7 @@ import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderGroup;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.UomMaster;
+import com.gadgetworks.codeshelf.util.DateTimeParser;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -55,6 +56,7 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 	private ITypedDao<ContainerUse>	mContainerUseDao;
 	private ITypedDao<ItemMaster>	mItemMasterDao;
 	private ITypedDao<UomMaster>	mUomMasterDao;
+	DateTimeParser					mDateTimeParser;
 
 	@Inject
 	public OutboundOrderCsvImporter(final ITypedDao<OrderGroup> inOrderGroupDao,
@@ -72,6 +74,7 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 		mContainerUseDao = inContainerUseDao;
 		mItemMasterDao = inItemMasterDao;
 		mUomMasterDao = inUomMaster;
+		mDateTimeParser = new DateTimeParser();
 	}
 
 	// --------------------------------------------------------------------------
@@ -79,10 +82,10 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 	 * @see com.gadgetworks.codeshelf.edi.ICsvImporter#importOrdersFromCsvStream(java.io.InputStreamReader, com.gadgetworks.codeshelf.model.domain.Facility)
 	 */
 	public final ImportResult importOrdersFromCsvStream(final InputStreamReader inCsvStreamReader,
-														final Facility inFacility,
-														Timestamp inProcessTime) throws IOException {
+		final Facility inFacility,
+		Timestamp inProcessTime) throws IOException {
 		mOrderGroupDao.clearAllCaches();
-		try(CSVReader csvReader = new CSVReader(inCsvStreamReader);) {
+		try (CSVReader csvReader = new CSVReader(inCsvStreamReader);) {
 			HeaderColumnNameMappingStrategy<OutboundOrderCsvBean> strategy = new HeaderColumnNameMappingStrategy<OutboundOrderCsvBean>();
 			strategy.setType(OutboundOrderCsvBean.class);
 
@@ -104,20 +107,18 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 						if ((order != null) && (!orderList.contains(order))) {
 							orderList.add(order);
 						}
-					}
-					catch(Exception e) {
+					} catch (Exception e) {
 						result.addFailure(orderBean, e);
 						LOGGER.error("unable to import order line: " + orderBean, e);
 					}
-					
+
 				}
 			}
 
-			
 			if (orderList.size() == 0) {
 				// Do nothing.
 			} else if (orderList.size() == 1) {
-					// If we've only imported one order then don't change the status of other orders.
+				// If we've only imported one order then don't change the status of other orders.
 				archiveCheckOneOrder(inFacility, orderList, inProcessTime);
 			} else {
 				// If we've imported more than one order then do a full archive.
@@ -130,9 +131,9 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 			cleanupArchivedOrders();
 			return result;
 		}
-		
+
 	}
- 
+
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inFacility
@@ -207,8 +208,7 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 							mOrderHeaderDao.store(order);
 						}
 					}
-				}
-				catch(RuntimeException e) {
+				} catch (RuntimeException e) {
 					LOGGER.warn("Unable to archive order: " + order, e);
 					throw e;
 				}
@@ -447,35 +447,27 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 
 		if (inCsvBean.getOrderDate() != null) {
 			try {
-				// First try to parse it as a SQL timestamp.
-				result.setOrderDate(Timestamp.valueOf(inCsvBean.getOrderDate()));
-			} catch (IllegalArgumentException e) {
-				// Then try to parse it as just a SQL date.
-				try {
-					SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-					dateFormat.setLenient(true);
-					Date date = dateFormat.parse(inCsvBean.getOrderDate());
+				Date date = mDateTimeParser.parse(inCsvBean.getDueDate());
+				// date may be null if string was blank
+				if (date != null)
 					result.setOrderDate(new Timestamp(date.getTime()));
-				} catch (IllegalArgumentException | ParseException e1) {
-					LOGGER.error("", e1);
-				}
+				// Note: on an update, cannot clear a previous set time back to null. Could do it, just haven't bothered here.
+				// Mandatory field?
+
+			} catch (IllegalArgumentException e1) {
+				LOGGER.error("", e1);
 			}
 		}
 
 		if (inCsvBean.getDueDate() != null) {
 			try {
-				// First try to parse it as a SQL timestamp.
-				result.setDueDate(Timestamp.valueOf(inCsvBean.getDueDate()));
-			} catch (IllegalArgumentException e) {
-				// Then try to parse it as just a SQL date.
-				try {
-					SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-					dateFormat.setLenient(true);
-					Date date = dateFormat.parse(inCsvBean.getDueDate());
+				Date date = mDateTimeParser.parse(inCsvBean.getDueDate());
+				// date may be null if string was blank
+				if (date != null)
 					result.setDueDate(new Timestamp(date.getTime()));
-				} catch (IllegalArgumentException | ParseException e1) {
-					LOGGER.error("", e1);
-				}
+				// Note: on an update, cannot clear a previous set time back to null. Could do it, just haven't bothered here.
+			} catch (IllegalArgumentException e1) {
+				LOGGER.error("", e1);
 			}
 		}
 
