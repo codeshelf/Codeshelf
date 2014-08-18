@@ -34,6 +34,7 @@ import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.codeshelf.util.StringUIConverter;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -364,12 +365,14 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 	 * For a UI meta field
 	 * @return
 	 */
-	public final Double getWiPosAlongPath() {
+	public final String getWiPosAlongPath() {
+		// This needs work for Accu non-slotted inventory.
+		
 		ILocation<?> theLoc = this.getLocation();
 		if (theLoc != null)
-			return theLoc.getPosAlongPath();
+			return StringUIConverter.doubleToTwoDecimalsString(theLoc.getPosAlongPath());
 		else {
-			return 0.0;
+			return "";
 		}
 	}
 
