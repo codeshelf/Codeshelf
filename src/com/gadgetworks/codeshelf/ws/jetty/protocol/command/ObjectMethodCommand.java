@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import org.apache.commons.beanutils.ConvertUtilsBean;
+import org.apache.commons.beanutils.Converter;
 import org.apache.commons.lang.ClassUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +24,7 @@ public class ObjectMethodCommand extends CommandABC {
 	private static final Logger	LOGGER = LoggerFactory.getLogger(ObjectMethodCommand.class);
 
 	private ObjectMethodRequest	request;
-
+	
 	public ObjectMethodCommand(CsSession session, ObjectMethodRequest request) {
 		super(session);
 		this.request = request;
@@ -72,50 +74,13 @@ public class ObjectMethodCommand extends CommandABC {
 						// (The method *must* start with "get" to ensure other methods don't get called.)
 						Object argumentValue = arg.getValue();
 						//Class classType = Class.forName(arg.getClassType());
-						Class classType = ClassUtils.getClass(arg.getClassType());
+						Class<?> classType = ClassUtils.getClass(arg.getClassType());
 						signatureClasses.add(classType);
-						cookedArguments.add(argumentValue);
- 
-						/*
-						Object typedArg = null;
-						try {
-							typedArg = argumentValue;
-							if (!classType.isArray()) {
-								// create object for simple data types
-								if (argumentValue.getClass().equals(classType)) {
-									typedArg = argumentValue;
-								} else {
-									Constructor<?> ctor = classType.getConstructor(String.class);
-									typedArg = ctor.newInstance(argumentValue.toString());
-								}
-							} else {
-								// create object for composite data types
-								typedArg = argumentValue;
-								/ *
-								Array array = (Array) argumentValue;
-
-								Class<?> arrayType = classType.getComponentType();
-								typedArg = Array.newInstance(arrayType, array.getLength(arrayType).size());
-								* /
-								
-								/ *
-								//ArrayNode arrayNode = mapper.readValue(argumentValue, ArrayNode.class);
-								Class<?> arrayType = classType.getComponentType();
-								typedArg = Array.newInstance(arrayType, arrayNode.size());
-								int i = 0;
-								for (Iterator<JsonNode> iter = arrayNode.getElements(); iter.hasNext();) {
-									JsonNode node = iter.next();
-									Object nodeItem = mapper.readValue(node, arrayType);
-									Array.set(typedArg, i++, nodeItem);
-								}
-								* /
-							}
-							cookedArguments.add(typedArg);
-						} catch (Exception e) {
-							response.setStatus(ResponseStatus.Fail);
-							return response;
+						if (Double.class.isAssignableFrom(classType)){
+								argumentValue = Double.valueOf(argumentValue.toString());
 						}
-						 */
+						cookedArguments.add(argumentValue);	
+						
 					}
 
 					Object methodResult = null;

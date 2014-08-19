@@ -242,6 +242,13 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	public LocationABC(final Point inAnchorPoint) {
 		setAnchorPoint(inAnchorPoint);
 	}
+	
+	public void updateAnchorPoint(double x, double y, double z) {
+		anchorPosX = x;
+		anchorPosY = y;
+		anchorPosZ = z;
+		DAO.store(this);
+	}
 
 	public Point getAnchorPoint() {
 		return new Point(anchorPosTypeEnum, anchorPosX, anchorPosY, anchorPosZ);

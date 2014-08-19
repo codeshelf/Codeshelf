@@ -124,6 +124,13 @@ public class Vertex extends DomainObjectTreeABC<ILocation> {
 		return new ArrayList<IDomainObject>();
 	}
 
+	public final void updatePoint(Double x, Double y, Double z) {
+		posX = x;
+		posY = y;
+		posZ = z;
+		getDao().store(this);
+	}
+	
 	public final void setPoint(final Point inPoint) {
 		posTypeEnum = inPoint.getPosTypeEnum();
 		posX = inPoint.getX();
