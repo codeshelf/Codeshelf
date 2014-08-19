@@ -229,6 +229,11 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 			return theMaster.getDescription();
 		}
 	}
+	
+	public final String getUomMasterId() {
+		return getUomMaster().getDomainId();
+	}
+
 
 	interface Padder {
 		String padRight(String inString, int inPadLength);
