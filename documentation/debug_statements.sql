@@ -13,8 +13,8 @@ select * FROM container_use WHERE container_use.order_header_persistentid IN (SE
 
 # Delete all of the production pick data, but leave the facility setup.
 delete from container_use;
-delete from container;
 delete from work_instruction;
+delete from container;
 delete from order_location;
 delete from order_detail;
 delete from order_header;

@@ -13,13 +13,14 @@ import com.joestelmach.natty.Parser;
  */
 public class DateTimeParser {
 	
+	private Parser mparser;
+	
 	public DateTimeParser() {
-		
+		mparser = new Parser();
 	}
 	
-	public Date parse(String inDateString) {
-		Parser parser = new Parser();
-		List<DateGroup> dateGroups = parser.parse(inDateString);
+	synchronized public Date parse(String inDateString) {
+		List<DateGroup> dateGroups = mparser.parse(inDateString);
 		if (dateGroups.isEmpty()) {
 			return null;
 		}

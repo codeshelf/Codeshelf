@@ -46,6 +46,26 @@ public class DateTimeParserTest {
 		validateDateTime("6/25/14 12:00PM", 2014, 6, 25, 12, 00, 00);
 	}
 
+	@Test
+	public void testDateParseExceptions() {
+		// No uncaught throws happen. Returns a date or not.
+		Date theDate = null;
+		// first two result in a null data returned
+		theDate = parseSingleDate("");
+		Assert.assertNull(theDate);
+		theDate = parseSingleDate("a");
+		Assert.assertNull(theDate);
+		
+		// next ones return something. Not meaningful!
+		theDate = parseSingleDate("9"); // parses to 9AM local time today.
+		Assert.assertNotNull(theDate);
+		theDate = parseSingleDate("-3"); // parses to 3AM local time today. (3 would also)
+		Assert.assertNotNull(theDate);
+		Assert.assertNotNull(theDate);
+		theDate = parseSingleDate("0");// parses to 00:00 (midnight) local time today.
+		Assert.assertNotNull(theDate);
+	}
+
 	private Date parseSingleDate(String inValue) {
 		return parser.parse(inValue);
 	}
