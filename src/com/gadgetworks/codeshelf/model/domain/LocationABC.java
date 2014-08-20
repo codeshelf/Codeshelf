@@ -243,7 +243,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		setAnchorPoint(inAnchorPoint);
 	}
 	
-	public void updateAnchorPoint(double x, double y, double z) {
+	public void updateAnchorPoint(Double x, Double y, Double z) {
 		anchorPosX = x;
 		anchorPosY = y;
 		anchorPosZ = z;
