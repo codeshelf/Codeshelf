@@ -122,7 +122,7 @@ public abstract class DomainObjectABC implements IDomainObject {
 
 		if (inObject instanceof DomainObjectABC) {
 			if (this.getClass().equals(inObject.getClass())) {
-				result = (persistentId.equals(((DomainObjectABC) inObject).getPersistentId()));
+				result = (persistentId.equals(((DomainObjectABC) inObject).persistentId));
 			}
 		} else {
 			result = super.equals(inObject);

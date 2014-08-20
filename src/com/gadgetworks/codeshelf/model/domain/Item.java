@@ -130,6 +130,11 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	public Item() {
 	}
 
+	public Item(ItemMaster parent, String domainId) {
+		super(domainId);
+		setParent(parent);
+	}
+	
 	public final ITypedDao<Item> getDao() {
 		return DAO;
 	}
@@ -339,10 +344,11 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	// This mimics the old getter, but now is done via a computation. This is the key routine.
 	// May well be worth caching this value. Only changes if item's location changes, metersFromAnchor changes, or path change.
 	public Double getPosAlongPath() {
-		Double returnValue = 0.0;
-
 		LocationABC theLocation = this.getStoredLocation();
-		returnValue = theLocation.getPosAlongPath();
+		Double returnValue = theLocation.getPosAlongPath();
+		if (returnValue == null) {
+			return null;
+		}
 		Double meters = getMetersFromAnchor();
 		if (meters == 0.0) // we can skip the complications
 			return returnValue;
