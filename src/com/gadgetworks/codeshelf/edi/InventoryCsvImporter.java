@@ -390,7 +390,7 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 		}
 
 		// Get or create the item at the specified location.
-		result = location.getStoredItem(inCsvBean.getItemId());
+		result = location.getStoredItemFromMasterIdAndUom(inCsvBean.getItemId(),inCsvBean.getUom());
 		if ((result == null) && (inCsvBean.getItemId() != null) && (inCsvBean.getItemId().length() > 0)) {
 			result = new Item();
 			result.setParent(inItemMaster);
@@ -398,8 +398,9 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 
 		// If we were able to get/create an item then update it.
 		if (result != null) {
-			result.setStoredLocation(location);
+			// setStoredLocation has the side effect of setting domainId, but that requires that UOM already be set. So setUomMaster first.
 			result.setUomMaster(inUomMaster);
+			result.setStoredLocation(location);
 			result.setQuantity(Double.valueOf(inCsvBean.getQuantity()));
 			
 			// This used to call only this
