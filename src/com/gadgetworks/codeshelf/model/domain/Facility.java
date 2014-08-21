@@ -1005,8 +1005,10 @@ public class Facility extends SubLocationABC<Facility> {
 	 */
 	@Transactional
 	public final Integer computeWorkInstructions(final Che inChe, final List<String> inContainerIdList) {
-		// TODO: Get one timestamp here
 
+		// Work around serious ebeans problem. See OrderHeader's orderDetails cache getting trimmed and then failing to get work instructions made for some orders.
+		OrderHeader.DAO.clearAllCaches();
+		
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 
 		// Delete any planned WIs for this CHE.
@@ -1038,7 +1040,6 @@ public class Facility extends SubLocationABC<Facility> {
 			}
 		}
 
-		// TODO: pass the timestamp into generateOutboundInstructions and generateCrossWallInstructions to use as create or assign time
 		Timestamp theTime = new Timestamp(System.currentTimeMillis());
 
 		// Get all of the OUTBOUND work instructions.
