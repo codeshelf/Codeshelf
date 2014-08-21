@@ -56,7 +56,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		ICsvInventoryImporter importer = new InventoryCsvImporter(mItemMasterDao, mItemDao, mUomMasterDao);
 		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
 
-		Item item = facility.getStoredItem("3001");
+		Item item = facility.getStoredItemFromMasterIdAndUom("3001", "each");
 		Assert.assertNotNull(item);
 
 		ItemMaster itemMaster = item.getParent();
@@ -104,11 +104,11 @@ public class InventoryImporterTest extends EdiTestABC {
 		bay1 = (Bay) facility.findSubLocationById("A1.B1");
 		bay2 = (Bay) facility.findSubLocationById("A1.B2");
 
-		Item item = bay1.getStoredItem("3001");
+		Item item = bay1.getStoredItemFromMasterIdAndUom("3001", "each");
 		Assert.assertNotNull(item);
 		Assert.assertEquals(100.0, item.getQuantity().doubleValue(), 0.0);
 
-		item = bay2.getStoredItem("3001");
+		item = bay2.getStoredItemFromMasterIdAndUom("3001", "each");
 		Assert.assertNotNull(item);
 		Assert.assertEquals(100.0, item.getQuantity().doubleValue(), 0.0);
 
@@ -133,7 +133,8 @@ public class InventoryImporterTest extends EdiTestABC {
 		bay1 = (Bay) facility.findSubLocationById("A1.B1");
 		bay2 = (Bay) facility.findSubLocationById("A1.B2");
 
-		item = bay1.getStoredItem("3001");
+		// test our flexibility of "EA" vs. "each"
+		item = bay1.getStoredItemFromMasterIdAndUom("3001", "EA");
 		Assert.assertNotNull(item);
 		Assert.assertEquals(200.0, item.getQuantity().doubleValue(), 0.0);
 
@@ -295,13 +296,13 @@ public class InventoryImporterTest extends EdiTestABC {
 
 		// How do you find the inventory items made?
 		// other unit tests do it like this:
-		Item item1123 = facility.getStoredItem("1123");
+		Item item1123 = facility.getStoredItemFromMasterIdAndUom("1123", "CS");
 		Assert.assertNull(item1123);
 		// This would only work if the location did not resolve, so item went to the facility.
 		// Let's find the D101 location
 		LocationABC locationD101 = (LocationABC) facility.findSubLocationById("D101");
 		Assert.assertNotNull(locationD101);
-		item1123 = locationD101.getStoredItem("1123");
+		item1123 = locationD101.getStoredItemFromMasterIdAndUom("1123", "CS");
 		Assert.assertNotNull(item1123);
 
 		ItemMaster itemMaster = item1123.getParent();
@@ -309,13 +310,14 @@ public class InventoryImporterTest extends EdiTestABC {
 		
 		LocationABC locationB1T1 = (LocationABC) facility.findSubLocationById("A1.B1.T1");
 		Assert.assertNotNull(locationB1T1);
-		Item itemBOL1 = locationB1T1.getStoredItem("BOL-CS-8");
+		// test our flexibility of "CS" vs. "case"
+		Item itemBOL1 = locationB1T1.getStoredItemFromMasterIdAndUom("BOL-CS-8", "case");
 		Assert.assertNotNull(itemBOL1);
 
 		// D102 will not resolve. Let's see if it went to the facility
 		LocationABC locationD102 = (LocationABC) facility.findSubLocationById("D102");
 		Assert.assertNull(locationD102);
-		Item item1522 = facility.getStoredItem("1522");
+		Item item1522 = facility.getStoredItemFromMasterIdAndUom("1522", "EA");
 		Assert.assertNotNull(item1522);
 
 		// Now check the good stuff. We have a path, items with position, with cm offset. So, we should get posAlongPath values, 

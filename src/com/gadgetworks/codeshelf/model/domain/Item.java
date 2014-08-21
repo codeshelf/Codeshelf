@@ -118,13 +118,18 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	 * @param inLocationId
 	 * @return
 	 */
-	public static String makeDomainId(final String inItemId, final ILocation<?> inLocation) {
+	public static String makeDomainId(final String inItemMasterId, final ILocation<?> inLocation, final String inUom) {
 		// as soon as we have "lot" field on item, we want to either pass the lot in, or get from the item.
 		// an item is defined unique combination of item master, lot, and location.
-		return inItemId + "-" + inLocation.getNominalLocationId();
-		/*
-		return inItemId + "-" + inLocation.getLocationId();
-		*/
+		String revisedUom = inUom;
+		// Let's not be confused if some items have unit "case" and some are "CS". Also "each" variants
+		if (inUom == null)
+			revisedUom = "?uom";
+		else if (inUom.equalsIgnoreCase("cs") || inUom.equalsIgnoreCase("case"))
+			revisedUom = "CS";
+		else if (inUom.equalsIgnoreCase("ea") || inUom.equalsIgnoreCase("each"))
+			revisedUom = "EA";
+		return inItemMasterId + "-" + inLocation.getNominalLocationId() + "-" + revisedUom;
 	}
 
 	public Item() {
@@ -145,12 +150,14 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 
 	public final void setStoredLocation(final ILocation inStoredLocation) {
 		// If it's already in another location then remove it from that location.
+		// Shall we use its existing domainID (which will change momentarily?
+		// Or compute what its domainID must have been in that location?
 		if (storedLocation != null) {
-			storedLocation.removeStoredItem(getItemId());
+			storedLocation.removeStoredItemFromMasterIdAndUom(getItemId(), getUomMasterId());
 		}
 		storedLocation = (LocationABC) inStoredLocation;
 		// The stored location is part of the domain key for an item's instance.
-		setDomainId(makeDomainId(getItemId(), inStoredLocation));
+		setDomainId(makeDomainId(getItemId(), inStoredLocation, getUomMasterId()));
 		inStoredLocation.addStoredItem(this);
 	}
 
@@ -231,7 +238,22 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	}
 	
 	public final String getUomMasterId() {
-		return getUomMaster().getDomainId();
+		// uom is not nullable, but we see null in unit test.
+		UomMaster theUom = getUomMaster();
+		if (theUom != null)
+			return theUom.getDomainId();
+		else {
+			// what to do? Let's use the default for the item master
+			LOGGER.error("null uom on item in getUomMasterId");
+			ItemMaster theMaster = this.getParent();
+			if (theMaster == null)
+				return "";
+			else {
+				return "";
+				// standardUom is private. Could make public.
+				// return theMaster.getStandardUom.getDomainId();
+			}
+		}
 	}
 
 
