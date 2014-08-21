@@ -127,6 +127,19 @@ public class WorkInstructionTest extends DomainTestABC {
 
 		Assert.assertFalse(wi.isContainedByLocation(aisle2));
 		Assert.assertFalse(wi.isContainedByLocation(null));
+		
+		// Test some of our toString() calls. Just looking for trouble with Lamboc annotations.
+		// Recently changed CHE, container, and containerUse
+		String theString = wi.toString();
+		theString = orderDetail.toString();
+		theString = order1.toString();
+		theString = itemMaster.toString();
+		theString = container.toString();
+		theString = aisle1.toString();
+		theString = baya1b1.toString();
+		theString = facility.toString();
+		// no containerUse in this test case
+	
 
 	}
 

@@ -17,7 +17,6 @@ import javax.persistence.Table;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,7 +44,6 @@ import com.google.inject.Singleton;
 @Table(name = "container_use")
 @CacheStrategy(useBeanCache = true)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-@ToString(callSuper = true, doNotUseGetters = true)
 public class ContainerUse extends DomainObjectTreeABC<Container> {
 
 	@Inject
@@ -128,6 +126,20 @@ public class ContainerUse extends DomainObjectTreeABC<Container> {
 
 	public final void setParent(Container inParent) {
 		parent = inParent;
+	}
+	
+	// used to have a lomboc annotation, but that had an infinite loop potential with CHE toString.
+	public final String toString() {
+		// What we would want to see if logged as toString?  parent containerID for sure. Order header. Che?
+		String returnString = getParentContainer().getDomainId();
+		returnString += " forOrder:";
+		returnString += getOrderHeader().getDomainId();
+		Che theChe = getCurrentChe();
+		if (theChe != null) {
+			returnString += " on CHE:";
+			returnString += theChe.getDomainId();
+		}		
+		return returnString;
 	}
 
 	public final List<IDomainObject> getChildren() {

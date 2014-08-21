@@ -187,5 +187,13 @@ public class Container extends DomainObjectTreeABC<Facility> {
 		}
 		return result;
 	}
+	
+	// Instead of lomboc annotation, which can lead to infinite loop if fields are not restricted
+	public final String toString() {
+		// What we would want to see if logged as toString?
+		String returnString = getDomainId();
+		return returnString;
+	}
+
 
 }
