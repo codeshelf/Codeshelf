@@ -598,18 +598,29 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	}
 
 	public final void addStoredItem(Item inItem) {
-		String domainId = Item.makeDomainId(inItem.getItemId(), this);
+		String domainId = Item.makeDomainId(inItem.getItemId(), this, inItem.getUomMasterId());
+		// why not just ask the item for its domainId?
 		storedItems.put(domainId, inItem);
 	}
 
-	public final Item getStoredItem(final String inItemId) {
-		String domainId = Item.makeDomainId(inItemId, this);
-		return storedItems.get(domainId);
+	public final Item getStoredItemFromMasterIdAndUom(final String inItemMasterId, final String inUom) {
+		String domainId = Item.makeDomainId(inItemMasterId, this, inUom);
+		// why not just ask the item for its domainId?
+		Item returnItem = storedItems.get(domainId);
+		return returnItem;
+	}
+	
+	public final Item getStoredItem(final String inItemDomainId) {
+		return storedItems.get(inItemDomainId);
 	}
 
-	public final void removeStoredItem(final String inItemId) {
-		String domainId = Item.makeDomainId(inItemId, this);
+	public final void removeStoredItemFromMasterIdAndUom(final String inItemMasterId, final String inUom) {
+		String domainId = Item.makeDomainId(inItemMasterId, this, inUom);
 		storedItems.remove(domainId);
+	}
+
+	public final void removeStoredItem(final String inItemDomainId) {
+		storedItems.remove(inItemDomainId);
 	}
 
 	public final void addItemDdcGroup(ItemDdcGroup inItemDdcGroup) {

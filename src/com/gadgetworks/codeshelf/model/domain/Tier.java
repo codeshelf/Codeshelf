@@ -178,6 +178,7 @@ public class Tier extends SubLocationABC<Bay> {
 		// if some but not all, then "xxx" (cap X will give a compiler warning)
 		// if all, then the first "->" the last.
 		// Try to avoid a localization issue here.
+		// If there are no slots at all in this tier, then look for the tier alias.
 		String resultStr = "";
 		boolean foundEmpty = false;
 		boolean foundAlias = false;
@@ -185,6 +186,11 @@ public class Tier extends SubLocationABC<Bay> {
 		String lastSlotName = "";
 
 		List<Slot> slotList = this.getChildrenAtLevel(Slot.class);
+		if (slotList.size() == 0) {
+			String tierAlias = this.getPrimaryAliasId();
+			return tierAlias;
+		}
+		
 		// We definitely have to sort these. Not guaranteed to come in order.
 		Collections.sort(slotList, new SlotIDComparator());
 

@@ -131,11 +131,12 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 	void setStoredItems(Map<String, Item> inItems);
 
 	void addStoredItem(Item inItem);
+	
+	Item getStoredItem(final String inItemDomainId);
+	Item getStoredItemFromMasterIdAndUom(final String inItemMasterId, final String inUom);
 
-	Item getStoredItem(String inItemId);
-
-	void removeStoredItem(String inItemId);
-
+	void removeStoredItem(final String inItemDomainId);
+	void removeStoredItemFromMasterIdAndUom(final String inItemMasterId, final String inUom);
 	// --------------------------------------------------------------------------
 	/**
 	 * Get all of the DDC item groups in this location (if it is a DDC location and has any DDC groups).

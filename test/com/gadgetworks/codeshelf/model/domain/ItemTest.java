@@ -3,7 +3,7 @@ package com.gadgetworks.codeshelf.model.domain;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class ItemTest {
+public class ItemTest extends DomainTestABC {
 
 	@Test
 	public void testItemWithoutAssignedTier() {
@@ -11,6 +11,15 @@ public class ItemTest {
 		String tier = item.getItemTier();
 		Assert.assertNotNull(tier);
 		Assert.assertEquals("", tier);
+	}
+	
+	@Test
+	public void testItemWithLocationNoPath() {
+		Facility facility = createFacility("ORG-testItemWithLocationNoPath");
+		Item item = new Item(new ItemMaster(), "domain");
+		item.setStoredLocation(facility);
+		String result = item.getPosAlongPathui();
+		Assert.assertEquals("0", result);
 	}
 
 }

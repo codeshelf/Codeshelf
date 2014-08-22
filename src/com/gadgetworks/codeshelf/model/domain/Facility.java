@@ -1001,8 +1001,10 @@ public class Facility extends SubLocationABC<Facility> {
 	 */
 	@Transactional
 	public final Integer computeWorkInstructions(final Che inChe, final List<String> inContainerIdList) {
-		// TODO: Get one timestamp here
 
+		// Work around serious ebeans problem. See OrderHeader's orderDetails cache getting trimmed and then failing to get work instructions made for some orders.
+		OrderHeader.DAO.clearAllCaches();
+		
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 
 		// Delete any planned WIs for this CHE.
@@ -1034,7 +1036,6 @@ public class Facility extends SubLocationABC<Facility> {
 			}
 		}
 
-		// TODO: pass the timestamp into generateOutboundInstructions and generateCrossWallInstructions to use as create or assign time
 		Timestamp theTime = new Timestamp(System.currentTimeMillis());
 
 		// Get all of the OUTBOUND work instructions.
@@ -1532,7 +1533,7 @@ public class Facility extends SubLocationABC<Facility> {
 
 			// Set the LED lighting pattern for this WI.
 			if (inOrderDetail.getParent().getOrderTypeEnum().equals(OrderTypeEnum.CROSS)) {
-				setCrossWorkInstructionLedPattern(resultWi, inOrderDetail.getItemMasterId(), inLocation);
+				setCrossWorkInstructionLedPattern(resultWi, inOrderDetail.getItemMasterId(), inLocation, inOrderDetail.getUomMasterId());
 			} else {
 				setOutboundWorkInstructionLedPattern(resultWi, inOrderDetail.getParent());
 			}
@@ -1635,11 +1636,13 @@ public class Facility extends SubLocationABC<Facility> {
 	 * @param inLocation
 	 */
 	private void setCrossWorkInstructionLedPattern(final WorkInstruction inWi,
-		final String inItemId,
-		final ISubLocation<?> inLocation) {
-
-		short firstLedPosNum = inLocation.getFirstLedPosForItemId(inItemId);
-		short lastLedPosNum = inLocation.getLastLedPosForItemId(inItemId);
+		final String inItemMasterId,
+		final ISubLocation<?> inLocation,
+		final String inUom) {
+		
+		String itemDomainId = Item.makeDomainId(inItemMasterId, inLocation, inUom);
+		short firstLedPosNum = inLocation.getFirstLedPosForItemId(itemDomainId);
+		short lastLedPosNum = inLocation.getLastLedPosForItemId(itemDomainId);
 
 		// Put the positions into increasing order.
 		if (firstLedPosNum > lastLedPosNum) {
