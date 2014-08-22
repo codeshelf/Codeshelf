@@ -25,6 +25,7 @@ import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster;
 import com.gadgetworks.codeshelf.model.domain.LocationABC;
 import com.gadgetworks.codeshelf.model.domain.UomMaster;
+import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -268,7 +269,7 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 	 * @param inUomMaster
 	 * @return
 	 */
-	private ItemMaster updateItemMaster(final String inItemId,
+	public ItemMaster updateItemMaster(final String inItemId,
 		final String inDescription,
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime,
@@ -305,7 +306,7 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 	 * @param inFacility
 	 * @return
 	 */
-	private UomMaster updateUomMaster(final String inUomId, final Facility inFacility) {
+	public UomMaster updateUomMaster(final String inUomId, final Facility inFacility) {
 		UomMaster result = null;
 
 		result = inFacility.getUomMaster(inUomId);
@@ -375,12 +376,11 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 	 * @param inUomMaster
 	 * @return
 	 */
-	private Item updateSlottedItem(final InventorySlottedCsvBean inCsvBean,
+	public Item updateSlottedItem(final InventorySlottedCsvBean inCsvBean,
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime,
 		final ItemMaster inItemMaster,
 		final UomMaster inUomMaster) {
-		Item result = null;
 
 		LocationABC location = (LocationABC) inFacility.findSubLocationById(inCsvBean.getLocationId());
 
@@ -390,7 +390,7 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 		}
 
 		// Get or create the item at the specified location.
-		result = location.getStoredItemFromMasterIdAndUom(inCsvBean.getItemId(),inCsvBean.getUom());
+		Item result = location.getStoredItemFromMasterIdAndUom(inCsvBean.getItemId(),inCsvBean.getUom());
 		if ((result == null) && (inCsvBean.getItemId() != null) && (inCsvBean.getItemId().length() > 0)) {
 			result = new Item();
 			result.setParent(inItemMaster);
@@ -402,7 +402,6 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 			result.setUomMaster(inUomMaster);
 			result.setStoredLocation(location);
 			result.setQuantity(Double.valueOf(inCsvBean.getQuantity()));
-			
 			// This used to call only this
 			// now refine using the cm value if there is one
 			Integer cmValue = 0;
@@ -419,14 +418,10 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 				LOGGER.error(errors);
 
 			
-			try {
-				result.setActive(true);
-				result.setUpdated(inEdiProcessTime);
-				mItemDao.store(result);
-			} catch (DaoException e) {
-				LOGGER.error("", e);
-			}
+			result.setActive(true);
+			result.setUpdated(inEdiProcessTime);
 			inItemMaster.addItem(result);
+			mItemDao.store(result);
 		}
 
 		return result;

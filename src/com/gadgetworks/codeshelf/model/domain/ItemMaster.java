@@ -29,6 +29,8 @@ import org.slf4j.LoggerFactory;
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.gadgetworks.codeshelf.edi.InventoryCsvImporter;
+import com.gadgetworks.codeshelf.edi.InventorySlottedCsvBean;
 import com.gadgetworks.codeshelf.model.LotHandlingEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
@@ -137,6 +139,16 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	public ItemMaster() {
 		lotHandlingEnum = LotHandlingEnum.FIFO;
 	}
+	
+	public ItemMaster(Facility inParent, String inItemId, UomMaster standardUom) {
+		super(inItemId);
+		this.parent = inParent;
+		this.standardUom = standardUom;
+		lotHandlingEnum = LotHandlingEnum.FIFO;
+		active = true;
+		updated = new Timestamp(System.currentTimeMillis());
+	}
+	
 
 	public final ITypedDao<ItemMaster> getDao() {
 		return DAO;
@@ -268,5 +280,7 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	public final String getItemLocations() {
 		return "";
 	}
+
+
 
 }

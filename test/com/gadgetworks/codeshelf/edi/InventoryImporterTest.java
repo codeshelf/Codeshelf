@@ -154,8 +154,8 @@ public class InventoryImporterTest extends EdiTestABC {
 	}
 
 	private Facility setUpSimpleNoSlotFacility(String inOrganizationName) {
-		// This returns a facility with aisle A1, with two bays with one tier each. No slots. With a path, associated to the aisle. 
-		//   With location alias for first baytier only, not second. 
+		// This returns a facility with aisle A1, with two bays with one tier each. No slots. With a path, associated to the aisle.
+		//   With location alias for first baytier only, not second.
 		// The organization will get "O-" prepended to the name. Facility F-
 		// Caller must use a different organization name each time this is used
 		// Valid tier names: A1.B1.T1 = D101, and A1.B2.T1
@@ -245,7 +245,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvLocationAliasImporter importer2 = new LocationAliasCsvImporter(mLocationAliasDao);
 		importer2.importLocationAliasesFromCsvStream(reader2, facility, ediProcessTime2);
-		
+
 		String nName = "N-" + inOrganizationName;
 		CodeshelfNetwork network = facility.createNetwork(nName);
 		Che che = network.createChe("CHE1", new NetGuid("0x00000001"));
@@ -272,7 +272,7 @@ public class InventoryImporterTest extends EdiTestABC {
 	}
 
 	@Test
-	public final void checkBayanchors() {
+	public final void testBayAnchors() {
 		// This is critical for path values for non-slotted inventory. Otherwise, this belongs in aisle file test, and not in inventory test.
 		Facility facility = setUpSimpleNoSlotFacility("XX01");
 		SubLocationABC locationB1 = (SubLocationABC) facility.findSubLocationById("A1.B1");
@@ -378,7 +378,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		Item item1522 = facility.getStoredItemFromMasterIdAndUom("1522", "EA");
 		Assert.assertNotNull(item1522);
 
-		// Now check the good stuff. We have a path, items with position, with cm offset. So, we should get posAlongPath values, 
+		// Now check the good stuff. We have a path, items with position, with cm offset. So, we should get posAlongPath values,
 		// as well as getting back any valid cm values. (They converted to Double meters from anchor, and then convert back.)
 
 		// zero cm value. Same posAlongPath as the location
@@ -399,7 +399,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		String locPosValue2 = ((SubLocationABC) locationD101).getPosAlongPathui();
 		Assert.assertNotEquals(itemPosValue2, locPosValue2);
 
-		// We can now see how the inventory would light. 
+		// We can now see how the inventory would light.
 		// BOL 1 is case item in A1.B1.T1, with 80 LEDs. No cmFromLeftValue, so it will take the central 4 LEDs.
 		LocationABC theLoc = itemBOL1.getStoredLocation();
 		// verify the conditions.
@@ -579,7 +579,7 @@ public class InventoryImporterTest extends EdiTestABC {
 			mUomMasterDao);
 		importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);
 
-		// We should have one order with 3 details. Only 2 of which are fulfillable. 
+		// We should have one order with 3 details. Only 2 of which are fulfillable.
 		OrderHeader order = facility.getOrderHeader("12345");
 		Assert.assertNotNull(order);
 		Integer detailCount = order.getOrderDetails().size();
@@ -590,18 +590,18 @@ public class InventoryImporterTest extends EdiTestABC {
 		Assert.assertNotNull(theNetwork);
 		Che theChe = theNetwork.getChe("CHE1");
 		Assert.assertNotNull(theChe);
-		
+
 		// Set up a cart for order 12345, which will generate work instructions
 		facility.setUpCheContainerFromString(theChe, "12345");
-				
+
 		List<WorkInstruction> aList = theChe.getCheWorkInstructions();
 		Integer wiCount = aList.size();
 		Assert.assertEquals((Integer) 2, wiCount); // 3, but one should be short. Only 1123 and 1522 find each inventory
-		
+
 		List<WorkInstruction> wiListAfterScan = facility.getWorkInstructions(theChe, "D403");
 		Integer wiCountAfterScan = wiListAfterScan.size();
 		Assert.assertEquals((Integer) 1, wiCountAfterScan); // only the one each item in 403 should be there. The item in 402 is earlier on the path.
-	
+
 
 	}
 

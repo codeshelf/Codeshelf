@@ -65,6 +65,11 @@ public class UomMaster extends DomainObjectTreeABC<Facility> {
 	public UomMaster() {
 
 	}
+	
+	public UomMaster(Facility parent, String inUomId) {
+		super(inUomId);
+		this.parent = parent;
+	}
 
 	public final ITypedDao<UomMaster> getDao() {
 		return DAO;

@@ -37,6 +37,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.device.LedCmdGroup;
 import com.gadgetworks.codeshelf.device.LedCmdGroupSerializer;
 import com.gadgetworks.codeshelf.device.LedSample;
+import com.gadgetworks.codeshelf.edi.InventoryCsvImporter;
+import com.gadgetworks.codeshelf.edi.InventorySlottedCsvBean;
+import com.gadgetworks.codeshelf.model.BayDistanceWorkInstructionSequencer;
+
 import com.gadgetworks.codeshelf.model.EdiProviderEnum;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.HeaderCounts;
@@ -1448,12 +1452,12 @@ public class Facility extends SubLocationABC<Facility> {
 				resultWi.setCreated(new Timestamp(System.currentTimeMillis()));
 			}
 
-			// Set the LED lighting pattern for this WI. 
+			// Set the LED lighting pattern for this WI.
 			if (inStatus == WorkInstructionStatusEnum.SHORT) {
 				// But not if it is a short WI (made to the facility location)
 			}
 			else if (inOrderDetail.getParent().getOrderTypeEnum().equals(OrderTypeEnum.CROSS)) {
-				// We currently have no use case that gets here. We never make direct work instruction from Cross order (which is a vendor put away). 
+				// We currently have no use case that gets here. We never make direct work instruction from Cross order (which is a vendor put away).
 				setCrossWorkInstructionLedPattern(resultWi,
 					inOrderDetail.getItemMasterId(),
 					inLocation,
@@ -1595,7 +1599,7 @@ public class Facility extends SubLocationABC<Facility> {
 			LOGGER.error("inappropriate call to  setOutboundWorkInstructionLedPatternFromInventoryItem");
 			return;
 		}
-		
+
 		// if the location does not have led numbers, we do not have tubes or lasers there. Do not proceed.
 		if (inLocation.getFirstLedNumAlongPath() == 0)
 			return;
@@ -2012,7 +2016,7 @@ public class Facility extends SubLocationABC<Facility> {
 							activeDetails++;
 						else
 							inactiveCntrUsesOnActiveOrders++;
-						// if we were doing outbound orders, we might count WI here					
+						// if we were doing outbound orders, we might count WI here
 					}
 				}
 			}
@@ -2037,5 +2041,20 @@ public class Facility extends SubLocationABC<Facility> {
 		if (ironMqService != null) {
 			ironMqService.sendWorkInstructionsToHost(inWiList);
 		}
+	}
+
+	public Item upsertItem(String itemId, String locationAlias, String cmDistanceFromLeft, String quantity, String inUomId) {
+		//TODO This is a proof of concept and needs refactor to not have a dependency out of the EDI package
+		InventoryCsvImporter importer = new InventoryCsvImporter(ItemMaster.DAO, Item.DAO, UomMaster.DAO);
+		UomMaster uomMaster = importer.updateUomMaster(inUomId, this);
+
+		ItemMaster itemMaster = this.getItemMaster(itemId);
+		InventorySlottedCsvBean itemBean = new InventorySlottedCsvBean();
+		itemBean.setItemId(itemId);
+		itemBean.setLocationId(locationAlias);
+		itemBean.setCmFromLeft(String.valueOf(cmDistanceFromLeft));
+		itemBean.setQuantity(String.valueOf(quantity));
+		itemBean.setUom(inUomId);
+		return importer.updateSlottedItem(itemBean, this, new Timestamp(System.currentTimeMillis()), itemMaster, uomMaster);
 	}
 }
