@@ -883,6 +883,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	 * Create all of the indexes needed to maintain the systems referential integrity and performance.
 	 * @return
 	 */
+	
 	private boolean createIndexes() {
 		boolean result = true;
 
