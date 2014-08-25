@@ -362,6 +362,10 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 			result &= doUpgrade017();
 		}
 
+		if ((result) && (inOldVersion < ISchemaManager.DATABASE_VERSION_18)) {
+			result &= doUpgrade018();
+		}
+
 		result &= updateSchemaVersion(ISchemaManager.DATABASE_VERSION_CUR);
 
 		return result;
