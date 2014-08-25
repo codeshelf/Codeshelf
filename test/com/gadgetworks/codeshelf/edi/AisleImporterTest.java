@@ -185,6 +185,15 @@ public class AisleImporterTest extends DomainTestABC {
 
 		// New side effect: creates some LED controllers. But if no network in our test system, may not happen
 		// Assert.assertTrue(facility.countLedControllers() > 0);
+		
+		// Check that the locations know which side has lower led numbers.
+		// as a tierB1S1Side aisle, tier and slot have lower led number on anchor side.
+		
+		Assert.assertTrue(tierB2T1.isLowerLedNearAnchor());
+		Assert.assertTrue(slotB1T1S8.isLowerLedNearAnchor());
+		// Not so meaningful, but check these
+		Assert.assertTrue(bayA9B2.isLowerLedNearAnchor());
+		Assert.assertTrue(aisle2.isLowerLedNearAnchor());	
 
 	}
 
@@ -354,6 +363,15 @@ public class AisleImporterTest extends DomainTestABC {
 		yValue = thirdV.getPosY();
 		Assert.assertTrue(yValue == 1.2);
 		Assert.assertTrue(xValue == 4.88);
+		
+		// Check that the locations know which side has lower led numbers.
+		// as a tierNotB1S1Side aisle, tier and slot have higher led number on anchor side.		
+		Assert.assertFalse(tierA20B1T1.isLowerLedNearAnchor());
+		Assert.assertFalse(slotB1T1S6.isLowerLedNearAnchor());
+		// Not so meaningful, but check these
+		Assert.assertTrue(bayA10B1.isLowerLedNearAnchor());
+		Assert.assertTrue(aisle.isLowerLedNearAnchor());	
+
 
 	}
 
@@ -556,6 +574,17 @@ public class AisleImporterTest extends DomainTestABC {
 		short tierB2T3First = tierB2T3.getFirstLedNumAlongPath();
 		Assert.assertTrue(tierB2T3First == 97);
 
+		// Check that the locations know which side has lower led numbers.
+		// as a zigzagB1S1Side aisle, top tier (3) will have tier and slot have lower led number on anchor side. (2) opposite, and tier1 same again.	
+		Assert.assertTrue(tierB1T3.isLowerLedNearAnchor());
+		Assert.assertFalse(tierB2T2.isLowerLedNearAnchor());
+		Assert.assertTrue(tierB1T1.isLowerLedNearAnchor());
+		Assert.assertTrue(slotB1T1S1.isLowerLedNearAnchor());
+		Assert.assertFalse(slotB2T2S5.isLowerLedNearAnchor());		
+		// Not so meaningful, but check these
+		Assert.assertTrue(bayA12B1.isLowerLedNearAnchor());
+		Assert.assertTrue(aisle.isLowerLedNearAnchor());	
+
 	}
 
 	@Test
@@ -666,6 +695,18 @@ public class AisleImporterTest extends DomainTestABC {
 		Assert.assertTrue(tierB1T3First == 97);
 		short tierB2T3First = tierB2T3.getFirstLedNumAlongPath();
 		Assert.assertTrue(tierB2T3First == 1);
+		
+		// Check that the locations know which side has lower led numbers.
+		// as a zigzagNotB1S1Side aisle, top tier (3) will have tier and slot have higher led number on anchor side. (2) opposite, and tier1 same again.	
+		Assert.assertFalse(tierB1T3.isLowerLedNearAnchor());
+		Assert.assertTrue(tierB2T2.isLowerLedNearAnchor());
+		Assert.assertFalse(tierB1T1.isLowerLedNearAnchor());
+		Assert.assertFalse(slotB1T1S1.isLowerLedNearAnchor());
+		Assert.assertTrue(slotB2T2S5.isLowerLedNearAnchor());		
+		// Not so meaningful, but check these
+		Assert.assertTrue(bayA13B1.isLowerLedNearAnchor());
+		Assert.assertTrue(aisle.isLowerLedNearAnchor());	
+
 	}
 
 	@Test

@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.gadgetworks.codeshelf.model.LedRange;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
@@ -403,6 +404,39 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		// Used to be used by an old stitchfix DDC case. Compute, and immediately set inventory each time. 
 		// We probably will not do it this way now that we have a good non-slotted model.
 		// getPosAlongPath at least will return the location's value.
+	}
+	
+	public LedRange getFirstLastLedsForItem() {
+		LedRange theLedRange = new LedRange();
+		
+		// to compute, we need the locations first and last led positions
+		LocationABC theLocation = this.getStoredLocation();
+		int firstLocLed = theLocation.getFirstLedNumAlongPath(); 
+		int lastLocLed = theLocation.getLastLedNumAlongPath(); 
+		// following cast not safe if the stored location is facility
+		if (theLocation.getClass() == Facility.class)
+			return theLedRange; // was initialized to give values of 0,0
+		
+		Double metersFromAnchor = getMetersFromAnchor();
+		
+		Double locationWidth = ((SubLocationABC) theLocation).getLocationWidthMeters();
+		boolean lowerLedNearAnchor = theLocation.isLowerLedNearAnchor();
+		
+		theLedRange.computeLedsToLight(firstLocLed, lastLocLed, locationWidth, metersFromAnchor, lowerLedNearAnchor);
+		
+		return theLedRange;
+	}
+	
+	public String getLitLedsForItem(){
+		LedRange theRange = getFirstLastLedsForItem();
+		String returnStr = "";
+		if (theRange.mFirstLedToLight == 0)
+			return returnStr;
+		
+		returnStr = ((Integer)(theRange.mFirstLedToLight)).toString();
+		returnStr += ">";
+		returnStr += ((Integer)(theRange.mLastLedToLight)).toString();;
+		return returnStr;
 	}
 
 }

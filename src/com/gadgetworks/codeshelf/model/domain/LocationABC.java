@@ -235,6 +235,12 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	@Setter
 	private Map<String, ItemDdcGroup>	itemDdcGroups		= new HashMap<String, ItemDdcGroup>();
 
+	// For this location, is the lower led on the anchor side?
+	@Column(nullable = true)
+	@Getter
+	@Setter
+	private Boolean				lowerLedNearAnchor;
+
 	public LocationABC() {
 
 	}
@@ -787,7 +793,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		}
 	}
 	
-	public final Boolean isPathIncreasingFromAnchor(){
+	public final Boolean isPathIncreasingFromAnchor() {
 		Aisle theAisle = this.getParentAtLevel(Aisle.class);
 		if (theAisle == null) {
 			return true; // as good a default as any
@@ -798,6 +804,14 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		}
 	}
 	
+	public final Boolean isLowerLedNearAnchor() {
+		// This answer may not be meaningful for some locations, such as for a bay with zigzag led pattern.
+		Boolean answer = getLowerLedNearAnchor();
+		return (answer == null || answer);
+		// Could this have been computed instead of persisted?
+		// The only way would have been to examine siblings of this location. Or children if there are any.
+		// Not siblings with the same parent, but same level tier for adjacent bay. Note that zigzags are tricky.				
+	}
 
 	
 }
