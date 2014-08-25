@@ -392,6 +392,7 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 
 			thisSlot.setFirstLedNumAlongPath((short) (firstLitLed));
 			thisSlot.setLastLedNumAlongPath((short) (lastLitLed));
+			thisSlot.setLowerLedNearAnchor(inSlotLedsIncrease);
 			// transaction?
 			mSlotDao.store(thisSlot);
 
@@ -425,6 +426,7 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 
 			inTier.setFirstLedNumAlongPath(thisTierStartLed);
 			inTier.setLastLedNumAlongPath(thisTierEndLed);
+			inTier.setLowerLedNearAnchor(inTier.isMTransientLedsIncrease());
 			// transaction?
 			mTierDao.store(inTier);
 			returnValue = (short) (inLastLedNumber + ledCount);
@@ -516,7 +518,7 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 
 		// Aisle anchorX and anchorY are in the facility coordinate system.
 		// Aisle vertices are relative to each aisle anchor. That is, first vertex is (0,0). Third vertex will be depth of the bays, and the last bay's anchor + last bays pickface end		
-		Boolean isXOrientedAisle = inLastBayThisAisle.getPickFaceEndPosY() == 0.0;
+		Boolean isXOrientedAisle = inLastBayThisAisle.isLocationXOriented();
 		Double aislePickEndX = 0.0;
 		Double aislePickEndY = 0.0;
 		Double boundaryPointX = 0.0;

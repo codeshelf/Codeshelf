@@ -291,6 +291,18 @@ public abstract class SubLocationABC<P extends IDomainObject> extends LocationAB
 		String ss = sb.toString();
 		return ss;
 	}
+	
+	public Double getLocationWidthMeters() {
+		// This is true for all sublocations except aisles
+		if (isLocationXOriented())
+			return (this.getPickFaceEndPosX() - this.getAnchorPosX());
+		else
+			return (this.getPickFaceEndPosY() - this.getAnchorPosY());			
+	}
+	
+	public boolean isLocationXOriented() {
+		return getPickFaceEndPosY() == 0.0;
+	}
 
 	
 	// UI fields

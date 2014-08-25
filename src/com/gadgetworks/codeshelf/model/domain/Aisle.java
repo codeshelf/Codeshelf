@@ -121,7 +121,7 @@ public class Aisle extends SubLocationABC<Facility> {
 		PathSegment mySegment = getPathSegment();
 		if (mySegment != null) {
 			// are we X oriented or Y oriented. Could get that from either the aisle or the path. Here we ask the aisle
-			Boolean xOriented = this.getPickFaceEndPosY() == 0.0;
+			Boolean xOriented = this.isLocationXOriented();
 
 			if (xOriented) {
 				// Think about standing on the path, and looking at the aisle pickface. By our convention, B1 and and S1 are left as we look. But is further along the path or not?

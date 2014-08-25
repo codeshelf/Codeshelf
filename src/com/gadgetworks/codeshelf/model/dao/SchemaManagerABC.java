@@ -622,6 +622,17 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	
 	// --------------------------------------------------------------------------
 	/**
+	 * @return
+	 */
+	private boolean doUpgrade018() {
+		boolean result = true;
+
+		result &= safeAddColumn("location", "lower_led_near_anchor", "BOOLEAN DEFAULT TRUE");
+		return result;
+	}
+	
+	// --------------------------------------------------------------------------
+	/**
 	 *  @param inFromSchema
 	 *  @param inToSchema
 	 */
@@ -1079,7 +1090,9 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 					+ "last_led_num_along_path INTEGER, " //
 					+ "first_ddc_id TEXT, " //
 					+ "last_ddc_id TEXT, " //
-					+ "parent_organization_persistentid " + UUID_TYPE + " "//
+					+ "parent_organization_persistentid " + UUID_TYPE + ", "//
+					+ "lower_led_near_anchor BOOLEAN DEFAULT TRUE " //
+
 		);
 
 		// LocationAlias
