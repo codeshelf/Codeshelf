@@ -63,7 +63,9 @@ public abstract class DomainTestABC extends DAOTestABC {
 	protected Aisle getAisle(Facility facility, String inDomainId) {
 		Aisle aisle = mAisleDao.findByDomainId(facility, inDomainId);
 		if (aisle == null) {
-			aisle = new Aisle(facility, inDomainId, Point.getZeroPoint(), Point.getZeroPoint());
+			Point pickFaceEndPoint = Point.getZeroPoint();
+			pickFaceEndPoint.setX(5.0);
+			aisle = new Aisle(facility, inDomainId, Point.getZeroPoint(), pickFaceEndPoint);
 			mAisleDao.store(aisle);
 		}
 		return aisle;
@@ -244,11 +246,7 @@ public abstract class DomainTestABC extends DAOTestABC {
 		Container container2 = createContainer("C2", resultFacility);
 		Container container3 = createContainer("C3", resultFacility);
 
-		UomMaster uomMaster = new UomMaster();
-		uomMaster.setUomMasterId("EA");
-		uomMaster.setParent(resultFacility);
-		mUomMasterDao.store(uomMaster);
-		resultFacility.addUomMaster(uomMaster);
+		UomMaster uomMaster = createUomMaster("EA", resultFacility);
 
 		ItemMaster itemMaster1 = createItemMaster("ITEM1", resultFacility, uomMaster);
 		ItemMaster itemMaster2 = createItemMaster("ITEM2", resultFacility, uomMaster);
@@ -335,6 +333,15 @@ public abstract class DomainTestABC extends DAOTestABC {
 //		ContainerUse containerUse7 = createContainerUse(container7, orderCross7, resultFacility);
 
 		return resultFacility;
+	}
+
+	protected UomMaster createUomMaster(String inUom, Facility inFacility) {
+		UomMaster uomMaster = new UomMaster();
+		uomMaster.setUomMasterId(inUom);
+		uomMaster.setParent(inFacility);
+		mUomMasterDao.store(uomMaster);
+		inFacility.addUomMaster(uomMaster);
+		return uomMaster;
 	}
 
 	// --------------------------------------------------------------------------
@@ -464,6 +471,7 @@ public abstract class DomainTestABC extends DAOTestABC {
 		result.setStandardUom(inUomMaster);
 		result.setActive(true);
 		result.setUpdated(new Timestamp(System.currentTimeMillis()));
+		inFacility.addItemMaster(result);
 		mItemMasterDao.store(result);
 
 		return result;

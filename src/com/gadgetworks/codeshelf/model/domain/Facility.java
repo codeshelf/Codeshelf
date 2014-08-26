@@ -59,6 +59,7 @@ import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.flyweight.command.ColorEnum;
 import com.gadgetworks.flyweight.command.NetGuid;
+import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
@@ -2051,10 +2052,11 @@ public class Facility extends SubLocationABC<Facility> {
 		ItemMaster itemMaster = this.getItemMaster(itemId);
 		InventorySlottedCsvBean itemBean = new InventorySlottedCsvBean();
 		itemBean.setItemId(itemId);
-		itemBean.setLocationId(locationAlias);
+		itemBean.setLocationId(storedLocationId);
 		itemBean.setCmFromLeft(String.valueOf(cmDistanceFromLeft));
 		itemBean.setQuantity(String.valueOf(quantity));
 		itemBean.setUom(inUomId);
-		return importer.updateSlottedItem(itemBean, this, new Timestamp(System.currentTimeMillis()), itemMaster, uomMaster);
+		LocationABC location = (LocationABC) this.findSubLocationById(storedLocationId);
+		return importer.updateSlottedItem(false, itemBean, location, new Timestamp(System.currentTimeMillis()), itemMaster, uomMaster);
 	}
 }

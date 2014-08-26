@@ -9,7 +9,9 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.Timestamp;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +20,8 @@ import au.com.bytecode.opencsv.CSVReader;
 import au.com.bytecode.opencsv.bean.CsvToBean;
 import au.com.bytecode.opencsv.bean.HeaderColumnNameMappingStrategy;
 
+import com.gadgetworks.codeshelf.model.InputValidation;
+import com.gadgetworks.codeshelf.model.InputValidationException;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Facility;
@@ -203,7 +207,7 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 			LOGGER.debug("Import ddc item: " + inCsvBean.toString());
 
 			try {
-				UomMaster uomMaster = updateUomMaster(inCsvBean.getUom(), inFacility);
+				UomMaster uomMaster = upsertUomMaster(inCsvBean.getUom(), inFacility);
 
 				// Create or update the DDC item master, and then set the DDC ID for it.
 				ItemMaster itemMaster = updateItemMaster(inCsvBean.getItemId(),
@@ -244,15 +248,33 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 		try {
 			mItemDao.beginTransaction();
 
-			LOGGER.info(inCsvBean.toString());
 
-			UomMaster uomMaster = updateUomMaster(inCsvBean.getUom(), inFacility);
-			ItemMaster itemMaster = updateItemMaster(inCsvBean.getItemId(),
-				inCsvBean.getDescription(),
-				inFacility,
-				inEdiProcessTime,
-				uomMaster);
-			Item item = updateSlottedItem(inCsvBean, inFacility, inEdiProcessTime, itemMaster, uomMaster);
+			
+			try {
+				LOGGER.info(inCsvBean.toString());
+				
+				UomMaster uomMaster = upsertUomMaster(inCsvBean.getUom(), inFacility);
+				
+				ItemMaster itemMaster = updateItemMaster(inCsvBean.getItemId(),
+					inCsvBean.getDescription(),
+					inFacility,
+					inEdiProcessTime,
+					uomMaster);
+				
+				LocationABC location = (LocationABC) inFacility.findSubLocationById(inCsvBean.getLocationId());
+				// We couldn't find the location, so assign the inventory to the facility itself (which is a location);
+				if (location == null) {
+					location = inFacility;
+				}
+
+				if (Strings.isNullOrEmpty(inCsvBean.getCmFromLeft())) {
+					inCsvBean.setCmFromLeft("0");
+				}
+				Item item = updateSlottedItem(true, inCsvBean, location, inEdiProcessTime, itemMaster, uomMaster);
+			}
+			catch(InputValidationException e) {
+				LOGGER.error("unable to save line: " + inCsvBean, e);
+			}
 
 			mItemDao.commitTransaction();
 
@@ -306,7 +328,13 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 	 * @param inFacility
 	 * @return
 	 */
-	public UomMaster updateUomMaster(final String inUomId, final Facility inFacility) {
+	public UomMaster upsertUomMaster(final String inUomId, final Facility inFacility) {
+		Set<InputValidation<?>> violations = new HashSet<InputValidation<?>>();
+		if (Strings.emptyToNull(inUomId) == null) {
+			violations.add(new InputValidation<Item>(new Item(), "uomMasterId", "uomMasterId is required", inUomId));
+			throw new InputValidationException(violations);
+		}
+
 		UomMaster result = null;
 
 		result = inFacility.getUomMaster(inUomId);
@@ -376,54 +404,76 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 	 * @param inUomMaster
 	 * @return
 	 */
-	public Item updateSlottedItem(final InventorySlottedCsvBean inCsvBean,
-		final Facility inFacility,
+	public Item updateSlottedItem(boolean useLenientValidation, final InventorySlottedCsvBean inCsvBean,
+		final LocationABC<?> inLocation,
 		final Timestamp inEdiProcessTime,
 		final ItemMaster inItemMaster,
-		final UomMaster inUomMaster) {
-
-		LocationABC location = (LocationABC) inFacility.findSubLocationById(inCsvBean.getLocationId());
-
-		// We couldn't find the location, so assign the inventory to the facility itself (which is a location);
-		if (location == null) {
-			location = inFacility;
+		final UomMaster inUomMaster) throws InputValidationException {
+		
+		Set<InputValidation<?>> violations = new HashSet<InputValidation<?>>();
+		if (inLocation == null) {
+			violations.add(new InputValidation<Item>(new Item(), "storedLocation", "storedLocation cannot be null", null));
 		}
 
-		// Get or create the item at the specified location.
-		Item result = location.getStoredItemFromMasterIdAndUom(inCsvBean.getItemId(),inCsvBean.getUom());
-		if ((result == null) && (inCsvBean.getItemId() != null) && (inCsvBean.getItemId().length() > 0)) {
-			result = new Item();
-			result.setParent(inItemMaster);
+		if (inItemMaster == null) {
+			violations.add(new InputValidation<Item>(new Item(), "parent", "parent cannot be null", null));
 		}
-
-		// If we were able to get/create an item then update it.
-		if (result != null) {
-			// setStoredLocation has the side effect of setting domainId, but that requires that UOM already be set. So setUomMaster first.
-			result.setUomMaster(inUomMaster);
-			result.setStoredLocation(location);
-			result.setQuantity(Double.valueOf(inCsvBean.getQuantity()));
-			// This used to call only this
-			// now refine using the cm value if there is one
-			Integer cmValue = 0;
-			try {
-				cmValue = Integer.valueOf(inCsvBean.getCmFromLeft());
-			} catch (NumberFormatException e) {
-				// not recognizable as a number
+		
+		Double quantity = 0.0d;
+		String quantityString = inCsvBean.getQuantity();
+		try {
+			quantity = Double.valueOf(quantityString);
+			if (quantity <= 0.0d) {
+				quantity = 0.0d;
+				violations.add(new InputValidation<Item>(new Item(), "quantity", "quantity cannot be a negative number", quantityString));
 			}
-			// Our new setter
-			String errors = result.validatePositionFromLeft(location, cmValue);
-			if (errors.isEmpty())
-				result.setPositionFromLeft(cmValue);
-			else
-				LOGGER.error(errors);
-
-			
-			result.setActive(true);
-			result.setUpdated(inEdiProcessTime);
-			inItemMaster.addItem(result);
-			mItemDao.store(result);
+		}
+		catch(NumberFormatException e) {
+			violations.add(new InputValidation<Item>(new Item(), "quantity", "quantity is not a number", quantityString));
+		}
+		
+		if (!violations.isEmpty() && !useLenientValidation) {
+			throw new InputValidationException(violations);
 		}
 
+		
+		// Get or create the item at the specified location.
+		Item result = inLocation.getStoredItemFromMasterIdAndUom(inCsvBean.getItemId(),inCsvBean.getUom());
+		if ((result == null)) {
+			result = new Item();
+		} 
+		result.setParent(inItemMaster);
+		// setStoredLocation has the side effect of setting domainId, but that requires that UOM already be set. So setUomMaster first.
+		result.setUomMaster(inUomMaster);
+		result.setStoredLocation(inLocation);
+		
+		result.setQuantity(quantity);
+		// This used to call only this
+		// now refine using the cm value if there is one
+		Integer cmValue = 0;
+		try {
+			cmValue = Integer.valueOf(inCsvBean.getCmFromLeft());
+		} catch (NumberFormatException e) {
+			violations.add(new InputValidation<Item>(result, "positionFromLeft", "positionFromLeft is not a positive number", inCsvBean.getCmFromLeft()));
+		}
+		// Our new setter
+		String error = result.validatePositionFromLeft(inLocation, cmValue);
+		if (error.isEmpty()) {
+			result.setPositionFromLeft(cmValue);
+		}  else {
+			violations.add(new InputValidation<Item>(result, "positionFromLeft", error, cmValue));
+		}
+		result.setActive(true);
+		result.setUpdated(inEdiProcessTime);
+		inItemMaster.addItem(result);
+		
+		
+		if(!violations.isEmpty()) {
+			if (!useLenientValidation) {
+				throw new InputValidationException(violations); 
+			}
+		} 
+		mItemDao.store(result);
 		return result;
 	}
 }

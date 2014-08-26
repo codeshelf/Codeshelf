@@ -15,7 +15,11 @@ import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 
+<<<<<<< Updated upstream
 import com.gadgetworks.codeshelf.model.LedRange;
+=======
+import com.gadgetworks.codeshelf.application.Util;
+>>>>>>> Stashed changes
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Bay;
 import com.gadgetworks.codeshelf.model.domain.Che;
@@ -40,31 +44,16 @@ import com.gadgetworks.flyweight.command.NetGuid;
  */
 public class InventoryImporterTest extends EdiTestABC {
 
+	static {
+		Util.initLogging();
+		
+	}
+	
 	@Test
 	public final void testInventoryImporterFromCsvStream() {
-
 		String csvString = "itemId,itemDetailId,description,quantity,uom,locationId,lotId,inventoryDate\r\n" //
-				+ "3001,3001,Widget,100,each,A1.B1,111,2012-09-26 11:31:01\r\n" //
-				+ "4550,4550,Gadget,450,case,A1.B2,222,2012-09-26 11:31:01\r\n" //
-				+ "3007,3007,Dealybob,300,case,A1.B3,333,2012-09-26 11:31:02\r\n" //
-				+ "2150,2150,Thingamajig,220,case,A1.B4,444,2012-09-26 11:31:03\r\n" //
-				+ "2170,2170,Doodad,125,each,A1.B5,555,2012-09-26 11:31:03";
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		Organization organization = new Organization();
-		organization.setDomainId("O-INV1.1");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-INV1.1", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-INV1.1");
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvInventoryImporter importer = new InventoryCsvImporter(mItemMasterDao, mItemDao, mUomMasterDao);
-		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
+				+ "3001,3001,Widget,100,each,A1.B1,111,2012-09-26 11:31:01\r\n";
+		Facility facility = setupInventoryData("testInventoryImporterFromCsvStream", csvString);
 
 		Item item = facility.getStoredItemFromMasterIdAndUom("3001", "each");
 		Assert.assertNotNull(item);
@@ -72,6 +61,44 @@ public class InventoryImporterTest extends EdiTestABC {
 		ItemMaster itemMaster = item.getParent();
 		Assert.assertNotNull(itemMaster);
 
+	}
+	
+	@Test
+	public final void testEmptyUom() {
+		String csvString = "itemId,itemDetailId,description,quantity,uom,locationId,lotId,inventoryDate\r\n" //
+				+ "3001,3001,Widget,A,,A1.B1,111,2012-09-26 11:31:01\r\n";
+		Facility facility = setupInventoryData("testEmptyUom", csvString);
+
+		Item item = facility.getStoredItemFromMasterIdAndUom("3001", "");
+		Assert.assertNull(item);
+	}
+
+	@Test
+	public final void testAlphaQuantity() {
+		String csvString = "itemId,itemDetailId,description,quantity,uom,locationId,lotId,inventoryDate\r\n" //
+				+ "3001,3001,Widget,A,each,A1.B1,111,2012-09-26 11:31:01\r\n";
+		Facility facility = setupInventoryData("testAlphaQuantity", csvString);
+
+		Item item = facility.getStoredItemFromMasterIdAndUom("3001", "each");
+		Assert.assertNotNull(item);
+		Assert.assertEquals(0.0d, item.getQuantity(), 0.0d);
+		
+		ItemMaster itemMaster = item.getParent();
+		Assert.assertNotNull(itemMaster);
+	}
+
+	@Test
+	public final void testNegativeQuantity() {
+		String csvString = "itemId,itemDetailId,description,quantity,uom,locationId,lotId,inventoryDate\r\n" //
+				+ "3001,3001,Widget,-2,each,A1.B1,111,2012-09-26 11:31:01\r\n";
+		Facility facility = setupInventoryData("testNegativeQuantity", csvString);
+
+		Item item = facility.getStoredItemFromMasterIdAndUom("3001", "each");
+		Assert.assertNotNull(item);
+		Assert.assertEquals(0.0d, item.getQuantity(), 0.0d);
+		
+		ItemMaster itemMaster = item.getParent();
+		Assert.assertNotNull(itemMaster);
 	}
 
 	// --------------------------------------------------------------------------
@@ -519,6 +546,25 @@ public class InventoryImporterTest extends EdiTestABC {
 		Assert.assertNotNull(item1123Loc403CS);
 		// Not tested here. Later, we will enforce only one each location per item in a facility (or perhaps work area) even as we allow multiple case locations.
 
+	}
+	
+	private Facility setupInventoryData(String organizationId, String csvString) {
+		byte[] csvArray = csvString.getBytes();
+
+		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
+		InputStreamReader reader = new InputStreamReader(stream);
+
+		Organization organization = new Organization();
+		organization.setDomainId(organizationId);
+		mOrganizationDao.store(organization);
+
+		organization.createFacility("F-INV1.1", "TEST", Point.getZeroPoint());
+		Facility facility = organization.getFacility("F-INV1.1");
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		ICsvInventoryImporter importer = new InventoryCsvImporter(mItemMasterDao, mItemDao, mUomMasterDao);
+		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
+		return facility;
 	}
 
 	@Test
