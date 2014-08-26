@@ -51,8 +51,31 @@ public class LedRange {
 		mFirstLedNearAnchor = inFirstLedNearAnchor;
 		_computeLedsToLight();
 	}
+
+	public void computeLedsToLightForLocationNoOffset(int inFirstLocLed,
+		int inLastLocLed,
+		boolean inFirstLedNearAnchor) {
+		mFirstLocationLed = inFirstLocLed;
+		mLastLocationLed = inLastLocLed;
+		mLocationWidth = 0.0;
+		mMetersFromAnchor = 0.0;
+		mFirstLedNearAnchor = inFirstLedNearAnchor; // Does not really matter. Just centers in the led span
+		_computeLedsToLight();
+	}
 	
+	public String getRangeString(){
+		if (mFirstLedToLight == 0)
+			return ""; // just blank if there are no values
+
+		String returnStr = "";
+		returnStr = ((Integer) (mFirstLedToLight)).toString();
+		returnStr += ">";
+		returnStr += ((Integer) (mLastLedToLight)).toString();
+		return returnStr;
+	}
+
 	private void _computeLedsToLight() {
+		// Note mLocationWidth = 0 may be commonly used by computeLedsToLightForLocationNoOffset. There is a width, but does not matter to the computation. So passed as 0.
 		mFirstLedToLight = 0;
 		mLastLedToLight = 0;
 		if (mFirstLocationLed <= 0 || mLastLocationLed <= 0) {
@@ -64,7 +87,7 @@ public class LedRange {
 			return;
 		}
 		int ledSpan = mLastLocationLed - mFirstLocationLed + 1;
-		if (mMetersFromAnchor < 0.0 || mLocationWidth <= 0.0) {
+		if (mMetersFromAnchor < 0.0 || mLocationWidth < 0.0) {
 			// log?
 			return;
 		}
@@ -75,7 +98,7 @@ public class LedRange {
 		Double fractionOfSpan = 0.0;
 		Boolean slottedInventory = false;
 		Boolean uninitializedCmFromLeft = false;
-		if (mMetersFromAnchor.equals((Double) 0.0) || mMetersFromAnchor.equals(mLocationWidth))  {// if uninitialized, just take the middle of the location
+		if (mMetersFromAnchor.equals((Double) 0.0) || mLocationWidth.equals((Double) 0.0) || mMetersFromAnchor.equals(mLocationWidth))  {// if uninitialized, just take the middle of the location
 			// tricky. cmFromLeft is 0 if uninitialized, but we convert to metersFromAnchor, which may be the full width.
 			fractionOfSpan = 0.5;
 			uninitializedCmFromLeft = true;

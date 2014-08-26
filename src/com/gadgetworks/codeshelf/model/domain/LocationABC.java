@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.gadgetworks.codeshelf.model.LedRange;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.IDatabase;
@@ -811,6 +812,24 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		// Could this have been computed instead of persisted?
 		// The only way would have been to examine siblings of this location. Or children if there are any.
 		// Not siblings with the same parent, but same level tier for adjacent bay. Note that zigzags are tricky.				
+	}
+
+	public LedRange getFirstLastLedsForLocation() {
+		// This often returns the stated leds for slots. But if the span is large, returns the central 4 leds.
+		LedRange theLedRange = new LedRange();
+		
+		// to compute, we need the locations first and last led positions
+		int firstLocLed = getFirstLedNumAlongPath(); 
+		int lastLocLed = getLastLedNumAlongPath(); 
+		// following cast not safe if the stored location is facility
+		if (this.getClass() == Facility.class)
+			return theLedRange; // was initialized to give values of 0,0
+				
+		boolean lowerLedNearAnchor = this.isLowerLedNearAnchor();
+		
+		theLedRange.computeLedsToLightForLocationNoOffset(firstLocLed, lastLocLed, lowerLedNearAnchor);
+		
+		return theLedRange;
 	}
 
 	
