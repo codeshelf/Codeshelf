@@ -1,5 +1,7 @@
 package com.gadgetworks.codeshelf.ws.jetty;
 
+import java.io.IOException;
+
 import javax.websocket.DecodeException;
 
 import org.junit.Assert;
@@ -7,12 +9,15 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gadgetworks.codeshelf.application.Util;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.domain.PathSegment;
 import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.ws.jetty.io.JsonDecoder;
+import com.gadgetworks.codeshelf.ws.jetty.io.ObjectMixIn;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.LoginRequest;
 
@@ -36,20 +41,59 @@ public class JsonDecoderTest  {
 	}
 	
 	@Test
-	public void testPointSerialization() throws DecodeException {
-		Point point = new Point();
+	public void testJsonPojoSerDeser() throws DecodeException, JsonParseException, JsonMappingException, IOException {
+		JsonPojo pojo = new JsonPojo();
+		
 		ObjectMapper mapper = new ObjectMapper();
+		mapper.addMixInAnnotations(Object.class, ObjectMixIn.class);
+		mapper.registerSubtypes(JsonPojo.class);
+		
+		String jsonString = "";
+		try {
+			jsonString = mapper.writeValueAsString(pojo);
+			System.out.println(jsonString);
+		} catch (Exception e) {
+			LOGGER.error("Failed to serialize JsonPojo", e);
+			Assert.fail("Failed to serialize JsonPojo");
+		}		
+		try {
+			Object object = mapper.readValue(jsonString, Object.class);
+			System.out.println(object);
+			Assert.assertTrue(object instanceof JsonPojo);
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+			Assert.fail(e.getMessage());
+		}
+	}
+	
+	@Test
+	public void testPointSerDeser() throws DecodeException, JsonParseException, JsonMappingException, IOException {
+		Point point = new Point(PositionTypeEnum.GPS,123d,232d,0d);
+		
+		ObjectMapper mapper = new ObjectMapper();
+		mapper.addMixInAnnotations(Object.class, ObjectMixIn.class);
+		mapper.registerSubtypes(Point.class);
+		mapper.registerSubtypes(PathSegment.class);
+		
 		String jsonString = "";
 		try {
 			jsonString = mapper.writeValueAsString(point);
-			// System.out.println(jsonString);
+			System.out.println(jsonString);
 		} catch (Exception e) {
 			LOGGER.error("Failed to seriaize point", e);
 			Assert.fail("Failed to seriaize point");
+		}		
+		try {
+			Object object = mapper.readValue(jsonString, Object.class);
+			System.out.println(object);
+			Assert.assertTrue(object instanceof Point);
 		}
-		int pos = jsonString.indexOf("className");
-		Assert.assertTrue(pos>=0);
-	}
+		catch (Exception e) {
+			e.printStackTrace();
+			Assert.fail(e.getMessage());
+		}
+	}	
 	
 	@Test
 	public void testPointPathArraySerialization() throws DecodeException {

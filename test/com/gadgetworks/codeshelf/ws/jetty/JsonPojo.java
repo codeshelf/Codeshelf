@@ -1,31 +1,21 @@
 package com.gadgetworks.codeshelf.ws.jetty;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 
 @JsonAutoDetect(getterVisibility=Visibility.NONE)
-public class JsonPojo {
-	
-	String value="Value";
+@JsonTypeInfo(use=JsonTypeInfo.Id.NAME, include=JsonTypeInfo.As.PROPERTY, property="className")
+public class JsonPojo extends Object {
+
+	@Getter @Setter
+	String privateValue="privateValue";
 
 	@JsonProperty
-	String value2="Value2";
-	
-	public String getValue() {
-		return value;
-	}
-	
-	public void setValue(String value) {
-		this.value = value;
-	}
-	
-	public String getValue2() {
-		return value2;
-	}
-	
-	public void setValue2(String value2) {
-		this.value2 = value2;
-	}
-
+	String publicValue="publicValue";
 }

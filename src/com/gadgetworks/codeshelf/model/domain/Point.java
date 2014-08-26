@@ -37,25 +37,21 @@ public class Point {
 	@Enumerated(value = EnumType.STRING)
 	@NonNull
 	@Getter
-	@Setter
 	@JsonProperty
 	private PositionTypeEnum	posTypeEnum;
 
 	@NonNull
 	@Getter
-	@Setter
 	@JsonProperty
 	private Double				x;
 
 	@NonNull
 	@Getter
-	@Setter
 	@JsonProperty
 	private Double				y;
 
 	@NonNull
 	@Getter
-	@Setter
 	@JsonProperty
 	private Double				z;
 
@@ -130,6 +126,22 @@ public class Point {
 		Double xDiff = getX() - inPoint.getX();
 		Double yDiff = getY() - inPoint.getY();
 		return Math.sqrt((xDiff * xDiff) + (yDiff * yDiff));
+	}
+	
+	public void setX(Double x) {
+		this.x = x;
+	}
+	
+	public void setY(Double y) {
+		this.y = y;
+	}
+	
+	public void setZ(Double z) {
+		this.z = z;
+	}
+	
+	public void setPosTypeEnum(PositionTypeEnum posTypeEnum) {
+		this.posTypeEnum = posTypeEnum;
 	}
 
 }

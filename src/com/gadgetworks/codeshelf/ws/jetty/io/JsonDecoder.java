@@ -9,6 +9,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.gadgetworks.codeshelf.model.domain.Point;
+import com.gadgetworks.codeshelf.model.domain.Vertex;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
 
 public class JsonDecoder implements Decoder.Text<MessageABC> {
@@ -36,6 +38,8 @@ public class JsonDecoder implements Decoder.Text<MessageABC> {
 			for (Class<? extends MessageABC> requestType : requestClasses) {
 				mapper.registerSubtypes(requestType);
 			}
+			mapper.registerSubtypes(Point.class);
+			mapper.registerSubtypes(Vertex.class);
 			// decode message
 			MessageABC message = mapper.readValue(rawMessage, MessageABC.class);
 			return message;

@@ -104,7 +104,7 @@ public class ObjectMethodCommand extends CommandABC {
 				}
 			}
 		} catch (NoSuchMethodException e) {
-			LOGGER.error("Mehtod "+methodName+" does not exist on "+className, e);
+			LOGGER.error("Method "+methodName+" does not exist on "+className, e);
 			response.setStatusMessage("Method does not exist");
 		} catch (Exception e) {
 			LOGGER.error("Failed to invoke "+methodName+" on "+className, e);
