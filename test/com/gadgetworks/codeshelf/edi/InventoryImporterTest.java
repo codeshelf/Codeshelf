@@ -10,20 +10,17 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.Timestamp;
 import java.util.List;
-import java.util.Map;
 
 import org.junit.Assert;
 import org.junit.Test;
 
-<<<<<<< Updated upstream
-import com.gadgetworks.codeshelf.model.LedRange;
-=======
 import com.gadgetworks.codeshelf.application.Util;
->>>>>>> Stashed changes
+import com.gadgetworks.codeshelf.model.LedRange;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Bay;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
+import com.gadgetworks.codeshelf.model.domain.DomainTestABC;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster;
@@ -46,9 +43,9 @@ public class InventoryImporterTest extends EdiTestABC {
 
 	static {
 		Util.initLogging();
-		
+
 	}
-	
+
 	@Test
 	public final void testInventoryImporterFromCsvStream() {
 		String csvString = "itemId,itemDetailId,description,quantity,uom,locationId,lotId,inventoryDate\r\n" //
@@ -62,7 +59,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		Assert.assertNotNull(itemMaster);
 
 	}
-	
+
 	@Test
 	public final void testEmptyUom() {
 		String csvString = "itemId,itemDetailId,description,quantity,uom,locationId,lotId,inventoryDate\r\n" //
@@ -82,7 +79,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		Item item = facility.getStoredItemFromMasterIdAndUom("3001", "each");
 		Assert.assertNotNull(item);
 		Assert.assertEquals(0.0d, item.getQuantity(), 0.0d);
-		
+
 		ItemMaster itemMaster = item.getParent();
 		Assert.assertNotNull(itemMaster);
 	}
@@ -96,7 +93,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		Item item = facility.getStoredItemFromMasterIdAndUom("3001", "each");
 		Assert.assertNotNull(item);
 		Assert.assertEquals(0.0d, item.getQuantity(), 0.0d);
-		
+
 		ItemMaster itemMaster = item.getParent();
 		Assert.assertNotNull(itemMaster);
 	}
@@ -547,7 +544,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		// Not tested here. Later, we will enforce only one each location per item in a facility (or perhaps work area) even as we allow multiple case locations.
 
 	}
-	
+
 	private Facility setupInventoryData(String organizationId, String csvString) {
 		byte[] csvArray = csvString.getBytes();
 
