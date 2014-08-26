@@ -8,6 +8,7 @@ package com.gadgetworks.codeshelf.edi;
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
 import java.sql.Timestamp;
+import java.util.Map;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -143,7 +144,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		Assert.assertNotNull(itemMaster);
 
 	}
-	
+
 	private Facility setUpSimpleNoSlotFacility(String inOrganizationName) {
 		// This returns a facility with aisle A1, with two bays with one tier each. No slots. With a path, associated to the aisle. 
 		//   With location alias for first baytier only, not second. 
@@ -153,8 +154,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		// Also, A1.B1 has alias D100
 		// Just for variance, bay3 has 4 slots
 		// Aisle 2 associated to same path segment. But with aisle controller on the other side
-		
-		
+
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A1,,,,,tierB1S1Side,12.85,43.45,X,120,Y\r\n" //
 				+ "Bay,B1,230,,,,,\r\n" //
@@ -193,14 +193,13 @@ public class InventoryImporterTest extends EdiTestABC {
 
 		Path aPath = createPathForTest("F5X.1", facility);
 		PathSegment segment0 = addPathSegmentForTest("F5X.1.0", aPath, 0, 22.0, 48.45, 12.85, 48.45);
-		
+
 		String persistStr = segment0.getPersistentId().toString();
 		aisle1.associatePathSegment(persistStr);
-		
+
 		Aisle aisle2 = Aisle.DAO.findByDomainId(facility, "A2");
 		Assert.assertNotNull(aisle2);
 		aisle2.associatePathSegment(persistStr);
-		
 
 		String csvString2 = "mappedLocationId,locationAlias\r\n" //
 				+ "A1.B1, D100\r\n" //
@@ -210,34 +209,32 @@ public class InventoryImporterTest extends EdiTestABC {
 				+ "A1.B1.T1.S3, D303\r\n" //
 				+ "A1.B1.T1.S4, D304\r\n" //
 				+ "A2.B1.T1, D402\r\n" //
-				+ "A2.B2.T1, D403\r\n" ;//
+				+ "A2.B2.T1, D403\r\n";//
 
 		byte[] csvArray2 = csvString2.getBytes();
 
 		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
 		InputStreamReader reader2 = new InputStreamReader(stream2);
-		
+
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvLocationAliasImporter importer2 = new LocationAliasCsvImporter(mLocationAliasDao);
 		importer2.importLocationAliasesFromCsvStream(reader2, facility, ediProcessTime2);
 
-
-		
 		return facility;
-	
+
 	}
 
 	@Test
 	public final void checkBayanchors() {
 		// This is critical for path values for non-slotted inventory. Otherwise, this belongs in aisle file test, and not in inventory test.
-		Facility facility = setUpSimpleNoSlotFacility("XX01");	
-		SubLocationABC locationB1 =  (SubLocationABC) facility.findSubLocationById("A1.B1");
+		Facility facility = setUpSimpleNoSlotFacility("XX01");
+		SubLocationABC locationB1 = (SubLocationABC) facility.findSubLocationById("A1.B1");
 		Assert.assertNotNull(locationB1);
-		SubLocationABC locationB2 =  (SubLocationABC)facility.findSubLocationById("A1.B2");
+		SubLocationABC locationB2 = (SubLocationABC) facility.findSubLocationById("A1.B2");
 		Assert.assertNotNull(locationB2);
-		SubLocationABC locationB3 =  (SubLocationABC) facility.findSubLocationById("A1.B3");
+		SubLocationABC locationB3 = (SubLocationABC) facility.findSubLocationById("A1.B3");
 		Assert.assertNotNull(locationB3);
-		
+
 		// By our model, each bay's anchor is relative to the owner aisle, so will differ.
 		// Each bay's pickFaceEnd is relative to its own anchor. As the bays are uniformly wide, the pickFace end values will be the same.
 		String bay1Anchor = locationB1.getAnchorPosXui(); // bay 1 anchor will be zero.
@@ -248,14 +245,14 @@ public class InventoryImporterTest extends EdiTestABC {
 		String bay2PickEnd = locationB2.getPickFaceEndPosXui();
 		String bay3PickEnd = locationB3.getPickFaceEndPosXui();
 		Assert.assertEquals(bay1PickEnd, bay2PickEnd);
-		
-		SubLocationABC locationB3T1S1 =  (SubLocationABC) facility.findSubLocationById("A1.B3.T1.S1");
+
+		SubLocationABC locationB3T1S1 = (SubLocationABC) facility.findSubLocationById("A1.B3.T1.S1");
 		Assert.assertNotNull(locationB3T1S1);
-		SubLocationABC locationB3T1S2 =  (SubLocationABC) facility.findSubLocationById("A1.B3.T1.S2");
+		SubLocationABC locationB3T1S2 = (SubLocationABC) facility.findSubLocationById("A1.B3.T1.S2");
 		Assert.assertNotNull(locationB3T1S2);
-		SubLocationABC locationB3T1S3 =  (SubLocationABC) facility.findSubLocationById("A1.B3.T1.S3");
+		SubLocationABC locationB3T1S3 = (SubLocationABC) facility.findSubLocationById("A1.B3.T1.S3");
 		Assert.assertNotNull(locationB3T1S3);
-		SubLocationABC locationB3T1S4 =  (SubLocationABC) facility.findSubLocationById("A1.B3.T1.S4");
+		SubLocationABC locationB3T1S4 = (SubLocationABC) facility.findSubLocationById("A1.B3.T1.S4");
 		Assert.assertNotNull(locationB3T1S4);
 
 		// By our model, each slot's anchor is relative to the owner tier, so will differ.
@@ -267,7 +264,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		String slot1PickEnd = locationB3T1S1.getPickFaceEndPosXui();
 		String slot4PickEnd = locationB3T1S4.getPickFaceEndPosXui();
 		Assert.assertEquals(slot1PickEnd, slot4PickEnd);
-		
+
 		String slot1Pos = locationB3T1S1.getPosAlongPathui();
 		String slot2Pos = locationB3T1S2.getPosAlongPathui();
 		String slot4Pos = locationB3T1S4.getPosAlongPathui();
@@ -278,13 +275,11 @@ public class InventoryImporterTest extends EdiTestABC {
 		// The last slot in bay3 should have same path value as the bay
 		Assert.assertEquals(slot4Pos, bay3Pos);
 
-
 	}
-		
 
 	@Test
 	public final void testNonSlottedInventory() {
-			
+
 		Facility facility = setUpSimpleNoSlotFacility("XX02");
 
 		// leave out the optional lot, and organize the file as we are telling Accu. Note: there is no such thing as itemDetailId
@@ -298,7 +293,7 @@ public class InventoryImporterTest extends EdiTestABC {
 				+ "BOL-CS-8,D100,8 oz Paper Bowl Lids - Comp Case of 1000,22,CS,6/25/14 12:00,56\r\n" //
 				+ "1493,D101,PARK RANGER Doll,40,EA,6/25/14 12:00,66\r\n" //
 				+ "1522,D109,SJJ BPP,10,EA,6/25/14 12:00,3\r\n" //
-				+ "1546,,BAD KITTY BBP,10,EA,6/25/14 12:00,89" //
+				+ "1546,,BAD KITTY BBP,10,EA,6/25/14 12:00,89\r\n"//
 				+ "1123,D403,12/16 oz Bowl Lids -PLA Compostable,6,EA,6/25/14 12:00,135\r\n"; //
 
 		byte[] csvArray = csvString.getBytes();
@@ -322,8 +317,8 @@ public class InventoryImporterTest extends EdiTestABC {
 		Assert.assertNotNull(item1123);
 
 		ItemMaster itemMaster = item1123.getParent();
-		Assert.assertNotNull(itemMaster);	
-		
+		Assert.assertNotNull(itemMaster);
+
 		LocationABC locationB1T1 = (LocationABC) facility.findSubLocationById("A1.B1.T1");
 		Assert.assertNotNull(locationB1T1);
 		// test our flexibility of "CS" vs. "case"
@@ -338,13 +333,13 @@ public class InventoryImporterTest extends EdiTestABC {
 
 		// Now check the good stuff. We have a path, items with position, with cm offset. So, we should get posAlongPath values, 
 		// as well as getting back any valid cm values. (They converted to Double meters from anchor, and then convert back.)
-		
+
 		// zero cm value. Same posAlongPath as the location
 		Integer cmValue = itemBOL1.getCmFromLeft(); // this did not have a value.
 		Assert.assertEquals(cmValue, (Integer) 0);
 		// for zero cmfromLeft, either 0 meters,or the full pickFaceEnd value
 		Double correspondingMeters = itemBOL1.getMetersFromAnchor();
-		
+
 		String itemPosValue = itemBOL1.getPosAlongPathui();
 		String locPosValue = ((SubLocationABC) locationB1T1).getPosAlongPathui();
 		// Assert.assertEquals(itemPosValue, locPosValue);
@@ -356,11 +351,11 @@ public class InventoryImporterTest extends EdiTestABC {
 		String itemPosValue2 = item1123.getPosAlongPathui();
 		String locPosValue2 = ((SubLocationABC) locationD101).getPosAlongPathui();
 		Assert.assertNotEquals(itemPosValue2, locPosValue2);
-		
+
 		// We can now see how the inventory would light. 
-		// BOL 1 is case item in A1.B1.T1, with 80 LEDs. No cmFromLeftValue. We would like it it to light in the middle of the tier.
-		// Just verify what I said
+		// BOL 1 is case item in A1.B1.T1, with 80 LEDs. No cmFromLeftValue, so it will take the central 4 LEDs.
 		LocationABC theLoc = itemBOL1.getStoredLocation();
+		// verify the conditions.
 		int firstLocLed = theLoc.getFirstLedNumAlongPath();
 		int lastLocLed = theLoc.getLastLedNumAlongPath();
 		Assert.assertEquals(1, firstLocLed);
@@ -369,7 +364,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		LedRange theLedRange = itemBOL1.getFirstLastLedsForItem();
 		Assert.assertEquals(39, theLedRange.mFirstLedToLight);
 		Assert.assertEquals(42, theLedRange.mLastLedToLight, 1);
-		
+
 		// item1123 for CS in D101 which is the A1.B1.T1. 16 cm from left of 230 cm aisle
 		LedRange theLedRange2 = item1123.getFirstLastLedsForItem();
 		Assert.assertEquals(73, theLedRange2.mFirstLedToLight);
@@ -383,21 +378,18 @@ public class InventoryImporterTest extends EdiTestABC {
 		Assert.assertEquals(locationD403, locationA2B2T1);
 		// Item item1123EA = locationA2B2T1.getStoredItemFromMasterIdAndUom("1123", "EA");
 		Item item1123EA = locationD403.getStoredItemFromMasterIdAndUom("1123", "EA");
-		
-		// Something wrong here, but checking in for now.
-		/*
 		Assert.assertNotNull(item1123EA);
+		Assert.assertFalse(locationD403.isLowerLedNearAnchor());
+		// This is A2 bay 2; LEDs come from that side in A2. ((230-135)/230)*80 == 33 is the central LED.
 		LedRange theLedRange3 = item1123EA.getFirstLastLedsForItem();
-		Assert.assertEquals(73, theLedRange3.mFirstLedToLight);
-		Assert.assertEquals(76, theLedRange3.mLastLedToLight);
-		*/
-
+		Assert.assertEquals(32, theLedRange3.mFirstLedToLight);
+		Assert.assertEquals(35, theLedRange3.mLastLedToLight);
 
 	}
 
 	@Test
 	public final void testNonSlottedInventory2() {
-		
+
 		Facility facility = setUpSimpleNoSlotFacility("XX03");
 
 		// Very small test checking leds for this one inventory item
@@ -412,7 +404,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvInventoryImporter importer = new InventoryCsvImporter(mItemMasterDao, mItemDao, mUomMasterDao);
 		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
-		
+
 		// item1123 for EA in D402 which is the A2.B1.T1. 135 cm from left of 230 cm aisle
 		LocationABC locationA2B2T1 = (LocationABC) facility.findSubLocationById("A2.B2.T1");
 		Assert.assertNotNull(locationA2B2T1);
@@ -420,21 +412,21 @@ public class InventoryImporterTest extends EdiTestABC {
 		Assert.assertNotNull(locationD403);
 		Assert.assertEquals(locationD403, locationA2B2T1);
 		LocationABC locationD402 = (LocationABC) facility.findSubLocationById("D402");
-		
+
 		// Let's check the LEDs. A2 is tierNotB1S1 side, so B2 is 1 to 80. A1 is tierB1S1 .
 		// Just check our led range on the tiers
-		SubLocationABC locationA2B1T1 =  (SubLocationABC) facility.findSubLocationById("A2.B1.T1");
+		SubLocationABC locationA2B1T1 = (SubLocationABC) facility.findSubLocationById("A2.B1.T1");
 		Assert.assertNotNull(locationA2B1T1);
 		Short firstLED1 = locationA2B1T1.getFirstLedNumAlongPath();
 		Short lastLED1 = locationA2B1T1.getLastLedNumAlongPath();
 		Assert.assertTrue(firstLED1 == 81);
 		Assert.assertTrue(lastLED1 == 160);
-	
+
 		Short firstLED2 = locationA2B2T1.getFirstLedNumAlongPath();
 		Short lastLED2 = locationA2B2T1.getLastLedNumAlongPath();
 		Assert.assertTrue(firstLED2 == 1);
 		Assert.assertTrue(lastLED2 == 80);
-		
+
 		// Item item1123EA = locationA2B2T1.getStoredItemFromMasterIdAndUom("1123", "EA");
 		Item item1123EA = locationD402.getStoredItemFromMasterIdAndUom("1123", "EA");
 		Assert.assertNotNull(item1123EA);
@@ -447,7 +439,7 @@ public class InventoryImporterTest extends EdiTestABC {
 
 	@Test
 	public final void testNonSlottedInventory3() {
-		
+
 		Facility facility = setUpSimpleNoSlotFacility("XX04");
 
 		// Very small test checking multiple inventory items for same SKU
@@ -464,12 +456,12 @@ public class InventoryImporterTest extends EdiTestABC {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvInventoryImporter importer = new InventoryCsvImporter(mItemMasterDao, mItemDao, mUomMasterDao);
 		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
-		
+
 		LocationABC locationD403 = (LocationABC) facility.findSubLocationById("D403");
 		Assert.assertNotNull(locationD403);
 		LocationABC locationD402 = (LocationABC) facility.findSubLocationById("D402");
 		Assert.assertNotNull(locationD403);
-				
+
 		Item item1123Loc402EA = locationD402.getStoredItemFromMasterIdAndUom("1123", "EA");
 		Assert.assertNotNull(item1123Loc402EA);
 		Item item1123Loc402CS = locationD402.getStoredItemFromMasterIdAndUom("1123", "CS"); // notice each and case are separate items in the same locations

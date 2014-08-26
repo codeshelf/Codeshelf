@@ -429,14 +429,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	
 	public String getLitLedsForItem(){
 		LedRange theRange = getFirstLastLedsForItem();
-		String returnStr = "";
-		if (theRange.mFirstLedToLight == 0)
-			return returnStr;
-		
-		returnStr = ((Integer)(theRange.mFirstLedToLight)).toString();
-		returnStr += ">";
-		returnStr += ((Integer)(theRange.mLastLedToLight)).toString();;
-		return returnStr;
+		return (theRange.getRangeString());
 	}
 
 }

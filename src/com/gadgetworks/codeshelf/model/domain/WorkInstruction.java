@@ -27,6 +27,7 @@ import com.avaje.ebean.annotation.CacheStrategy;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.gadgetworks.codeshelf.model.LedRange;
 import com.gadgetworks.codeshelf.model.TimeFormat;
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
@@ -324,7 +325,7 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 	public final String getUomMasterId() {
 		return parent.getUomMasterId();
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * For a UI meta field
@@ -334,7 +335,7 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 		OrderDetail detail = this.getParent();
 		return detail.getDomainId(); // parent must be there by DB constraint
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * For a UI meta field
@@ -345,7 +346,7 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 		OrderHeader header = detail.getParent();
 		return header.getDomainId(); // parents must be there by DB constraint
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * For a UI meta field
@@ -367,7 +368,7 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 	 */
 	public final String getWiPosAlongPath() {
 		// This needs work for Accu non-slotted inventory.
-		
+
 		ILocation<?> theLoc = this.getLocation();
 		if (theLoc != null)
 			return StringUIConverter.doubleToTwoDecimalsString(theLoc.getPosAlongPath());
@@ -382,7 +383,7 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 	 * @return
 	 */
 	public final String getCompleteTimeForUi() {
-		
+
 		Timestamp completeTime = this.getCompleted();
 		if (completeTime == null)
 			return "";
@@ -397,7 +398,7 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 	 * @return
 	 */
 	public final String getNominalLocationId() {
-		
+
 		ILocation<?> theLoc = this.getLocation();
 		if (theLoc != null)
 			return theLoc.getNominalLocationId();
@@ -441,4 +442,34 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 
 	}
 
+	// A UI meta-field. Should match what actually lights as it calls the same computation.
+	public String getLitLedsForWi() {
+		// Questions before we can code this.
+		// 1) is this a put work instruction, or a pick? If a put, probably just going to the location, unless it is a replenish.
+		// 2) Is there inventory in that location? If a pick, there should be. If a put, there may or may not be.
+		// 3) If inventory is there, is there meters from anchor value?
+
+		String returnStr = "";
+		ILocation<?> theWiLocation = this.getLocation();
+		if (theWiLocation == null)
+			return returnStr;
+		LocationABC theLocation = (LocationABC) theWiLocation;
+		Item wiItem = theLocation.getStoredItemFromMasterIdAndUom(getItemId(), getUomMasterId());
+
+		// If there is the right item at the location the WI is going to, then use it.
+		if (wiItem != null) {
+			LedRange theRange = wiItem.getFirstLastLedsForItem();
+			returnStr = theRange.getRangeString();
+		} else {
+			LedRange theRange = theLocation.getFirstLastLedsForLocation();
+			returnStr = theRange.getRangeString();
+		}
+		return returnStr;
+	}
+
+	public String getItemMasterId() {
+		// Note: there is the denormalized field for itemId/getItemId. For this purpose, I want to show the real SKU only.
+		ItemMaster theMaster = this.getItemMaster();
+		return theMaster.getItemId();
+	}
 }
