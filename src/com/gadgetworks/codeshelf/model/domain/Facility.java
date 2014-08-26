@@ -1004,7 +1004,7 @@ public class Facility extends SubLocationABC<Facility> {
 
 		// Work around serious ebeans problem. See OrderHeader's orderDetails cache getting trimmed and then failing to get work instructions made for some orders.
 		OrderHeader.DAO.clearAllCaches();
-		
+
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 
 		// Delete any planned WIs for this CHE.
@@ -1159,11 +1159,9 @@ public class Facility extends SubLocationABC<Facility> {
 			}
 		} else {
 			for (Path path : getPaths()) {
-				// cross batch order headers have location that we are going to
-				// OrderLocation firstOutOrderLoc = orderHeader.getFirstOrderLocationOnPath(path);
-				// outbound order item masters have a location to pick from
-				//OrderLocation firstOutOrderLoc = itemMaster.getFirstItemLocationOnPath(path);
-				Item item = itemMaster.getFirstItemOnPath(path);
+				// Item item = itemMaster.getFirstItemOnPath(path); // was this before v3
+				String uomStr = inOrderDetail.getUomMasterId();
+				Item item = itemMaster.getFirstItemMatchingUomOnPath(path, uomStr);
 
 				if (item != null) {
 					resultWi = createWorkInstruction(WorkInstructionStatusEnum.NEW,
@@ -1174,7 +1172,8 @@ public class Facility extends SubLocationABC<Facility> {
 						(ISubLocation<?>) item.getStoredLocation(),
 						inTime);
 				}
-				// Bug here, especially if we don't worry about matching uom. Might find the same items on two paths: one case and one each.
+				// Bug remains. We no long make case work instruction for a pick. Or if case and each exist, make two work instructions.
+				// However, still may make two case work instructions. Doubt we want that.
 			}
 		}
 		return resultWi;
@@ -1533,7 +1532,10 @@ public class Facility extends SubLocationABC<Facility> {
 
 			// Set the LED lighting pattern for this WI.
 			if (inOrderDetail.getParent().getOrderTypeEnum().equals(OrderTypeEnum.CROSS)) {
-				setCrossWorkInstructionLedPattern(resultWi, inOrderDetail.getItemMasterId(), inLocation, inOrderDetail.getUomMasterId());
+				setCrossWorkInstructionLedPattern(resultWi,
+					inOrderDetail.getItemMasterId(),
+					inLocation,
+					inOrderDetail.getUomMasterId());
 			} else {
 				setOutboundWorkInstructionLedPattern(resultWi, inOrderDetail.getParent());
 			}
@@ -1570,6 +1572,7 @@ public class Facility extends SubLocationABC<Facility> {
 			resultWi.setAssigned(inTime);
 			try {
 				WorkInstruction.DAO.store(resultWi);
+				inChe.addWorkInstruction(resultWi); // This line new from v3
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}
@@ -1602,13 +1605,14 @@ public class Facility extends SubLocationABC<Facility> {
 			LedController theController = null;
 			Short theChannel = 0;
 			if (theLocation == null) {
-				LOGGER.error("null order location in setOutboundWorkInstructionLedPattern. How?");;
+				LOGGER.error("null order location in setOutboundWorkInstructionLedPattern. How?");
+				;
 			} else {
 				theController = theLocation.getEffectiveLedController();
 				theChannel = theLocation.getEffectiveLedChannel();
 			}
 			// If this location has no controller, let's bail on led pattern
-			if (theController == null || theChannel == null ||  theChannel == 0)
+			if (theController == null || theChannel == null || theChannel == 0)
 				continue; // just don't add a new ledCmdGrop to the WI command list
 
 			List<LedSample> ledSamples = new ArrayList<LedSample>();
@@ -1639,7 +1643,7 @@ public class Facility extends SubLocationABC<Facility> {
 		final String inItemMasterId,
 		final ISubLocation<?> inLocation,
 		final String inUom) {
-		
+
 		String itemDomainId = Item.makeDomainId(inItemMasterId, inLocation, inUom);
 		short firstLedPosNum = inLocation.getFirstLedPosForItemId(itemDomainId);
 		short lastLedPosNum = inLocation.getLastLedPosForItemId(itemDomainId);
@@ -1924,13 +1928,32 @@ public class Facility extends SubLocationABC<Facility> {
 
 		if (containersIdList.size() > 0) {
 			Integer wiCount = this.computeWorkInstructions(inChe, containersIdList);
-			// That did the work. Big side effect.
+			// That did the work. Big side effect. Deleted existing WIs for the CHE. Made new ones. Assigned container uses to the CHE.
 
-			// Get the work instructions for this CHE at this location for the given containers. Can we pass empty string? Normally user would scan where the CHE is starting.
-			List<WorkInstruction> wiList = this.getWorkInstructions(inChe, "");
-			Integer wiCountGot = wiList.size();
-			// getWorkInstructions() has no side effects. But the site controller request gets these.
-			// As work instructions are executed, they come back with start and complete time. and PLAN/NEW changes to ACTUAL/COMPLETE or ACTUAL/SHORT
+			if (wiCount > 0) {
+				// debug aid. Does the CHE know its work instructions?
+				List<WorkInstruction> cheWiList = inChe.getCheWorkInstructions();
+				Integer cheCountGot = cheWiList.size();
+				if (cheCountGot != wiCount) {
+					LOGGER.warn("setUpCheContainerFromString did not result in CHE getting all work instructions. Why?"); // Should this be an error? Maybe shorts do not go the CHE
+				}
+
+				// Get the work instructions for this CHE at this location for the given containers. Can we pass empty string? Normally user would scan where the CHE is starting.
+				List<WorkInstruction> wiListAfterScanBlank = this.getWorkInstructions(inChe, ""); // cannot really scan blank, but this is how our UI simulation works
+				Integer wiCountGot = wiListAfterScanBlank.size();
+				// getWorkInstructions() has no side effects. But the site controller request gets these.
+				// As work instructions are executed, they come back with start and complete time. and PLAN/NEW changes to ACTUAL/COMPLETE or ACTUAL/SHORT
+				if (wiCountGot > 0) {
+					// debug aid. Does the CHE know its work instructions?
+					List<WorkInstruction> cheWiList2 = inChe.getCheWorkInstructions();
+					Integer cheCountGot2 = cheWiList2.size();
+					if (cheCountGot2 != wiCountGot) {
+						LOGGER.warn("setUpCheContainerFromString did not result in CHE getting all work instructions. Why?"); // Should this be an error? Maybe shorts do not go the CHE
+					}
+
+				}
+
+			}
 		}
 	}
 

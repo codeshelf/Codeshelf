@@ -30,6 +30,7 @@ import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.util.StringUIConverter;
+import com.gadgetworks.codeshelf.util.UomNormalizer;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -126,10 +127,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		// Let's not be confused if some items have unit "case" and some are "CS". Also "each" variants
 		if (inUom == null)
 			revisedUom = "?uom";
-		else if (inUom.equalsIgnoreCase("cs") || inUom.equalsIgnoreCase("case"))
-			revisedUom = "CS";
-		else if (inUom.equalsIgnoreCase("ea") || inUom.equalsIgnoreCase("each"))
-			revisedUom = "EA";
+		else revisedUom = UomNormalizer.normalizeString(inUom);
 		return inItemMasterId + "-" + inLocation.getNominalLocationId() + "-" + revisedUom;
 	}
 
