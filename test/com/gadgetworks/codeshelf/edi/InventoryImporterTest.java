@@ -534,7 +534,7 @@ public class InventoryImporterTest extends EdiTestABC {
 				+ "1123,D503,12/16 oz Bowl Lids -PLA Compostable,6,CS,6/25/14 12:00,55\r\n" //
 				+ "1493,D502,PARK RANGER Doll,2,case,6/25/14 12:00,66\r\n" //
 				+ "1522,D503,SJJ BPP,1,Case,6/25/14 12:00,3\r\n" //
-				+ "1522,D402,SJJ BPP,10,each,6/25/14 12:00,3\r\n" ;//
+				+ "1522,D403,SJJ BPP,10,each,6/25/14 12:00,3\r\n" ;//
 
 
 		byte[] csvArray = csvString.getBytes();
@@ -596,11 +596,11 @@ public class InventoryImporterTest extends EdiTestABC {
 				
 		List<WorkInstruction> aList = theChe.getCheWorkInstructions();
 		Integer wiCount = aList.size();
-		//Assert.assertEquals((Integer) 3, wiCount); // 3, but one should be short  We are getting 5? One for the each, and one for the case.
+		Assert.assertEquals((Integer) 2, wiCount); // 3, but one should be short. Only 1123 and 1522 find each inventory
 		
-		List<WorkInstruction> wiListAfterScan = facility.getWorkInstructions(theChe, "D502");
+		List<WorkInstruction> wiListAfterScan = facility.getWorkInstructions(theChe, "D403");
 		Integer wiCountAfterScan = wiListAfterScan.size();
-		//Assert.assertEquals((Integer) 1, wiCountAfterScan); // only the one each item in 502 should be there.
+		Assert.assertEquals((Integer) 1, wiCountAfterScan); // only the one each item in 403 should be there. The item in 402 is earlier on the path.
 	
 
 	}
