@@ -73,6 +73,17 @@ public class LedRange {
 		returnStr += ((Integer) (mLastLedToLight)).toString();
 		return returnStr;
 	}
+	
+	public short getFirstLedToLight() {
+		// This API because LED command groups want shorts
+		return (short) mFirstLedToLight;
+	}
+	
+	public short getLastLedToLight() {
+		// This API because LED command groups want shorts
+		return (short) mLastLedToLight;
+	}
+
 
 	private void _computeLedsToLight() {
 		// Note mLocationWidth = 0 may be commonly used by computeLedsToLightForLocationNoOffset. There is a width, but does not matter to the computation. So passed as 0.
