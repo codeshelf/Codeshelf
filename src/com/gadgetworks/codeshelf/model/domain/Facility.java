@@ -1169,7 +1169,7 @@ public class Facility extends SubLocationABC<Facility> {
 						inOrderDetail,
 						inContainer,
 						inChe,
-						(ISubLocation<?>) item.getStoredLocation(),
+						item.getStoredLocation(),
 						inTime);
 				}
 				// Bug remains. We no long make case work instruction for a pick. Or if case and each exist, make two work instructions.
@@ -1373,7 +1373,7 @@ public class Facility extends SubLocationABC<Facility> {
 															outOrderDetail,
 															container,
 															inChe,
-															firstOutOrderLoc.getLocation(),
+															(LocationABC) (firstOutOrderLoc.getLocation()),
 															inTime);
 
 														// If we created a WI then add it to the list.
@@ -1500,7 +1500,7 @@ public class Facility extends SubLocationABC<Facility> {
 		OrderDetail inOrderDetail,
 		Container inContainer,
 		Che inChe,
-		ISubLocation<?> inLocation,
+		LocationABC inLocation,
 		final Timestamp inTime) {
 		WorkInstruction resultWi = null;
 
@@ -1537,7 +1537,8 @@ public class Facility extends SubLocationABC<Facility> {
 					inLocation,
 					inOrderDetail.getUomMasterId());
 			} else {
-				setOutboundWorkInstructionLedPattern(resultWi, inOrderDetail.getParent());
+				// new with v3. Add parameters inLocation, inOrderDetail.getItemMasterId(), inOrderDetail.getUomMasterId())
+				setOutboundWorkInstructionLedPattern(resultWi, inOrderDetail.getParent(), inLocation, inOrderDetail.getItemMasterId(), inOrderDetail.getUomMasterId());
 			}
 
 			// Update the WI
@@ -1562,7 +1563,11 @@ public class Facility extends SubLocationABC<Facility> {
 					resultWi.setPickInstruction(resultWi.getLocationId());
 				}
 			}
-			resultWi.setPosAlongPath(inLocation.getPosAlongPath());
+			if (inLocation instanceof Facility)
+				resultWi.setPosAlongPath(0.0);
+			else
+				resultWi.setPosAlongPath(inLocation.getPosAlongPath());
+			
 			resultWi.setContainer(inContainer);
 			resultWi.setAssignedChe(inChe);
 			resultWi.setPlanQuantity(qtyToPick);
@@ -1585,8 +1590,17 @@ public class Facility extends SubLocationABC<Facility> {
 	 * @param inWi
 	 * @param inOrder
 	 */
-	private void setOutboundWorkInstructionLedPattern(final WorkInstruction inWi, final OrderHeader inOrder) {
-
+	private void setOutboundWorkInstructionLedPattern(final WorkInstruction inWi, 
+		final OrderHeader inOrder,
+		final LocationABC inLocation,
+		final String inItemMasterId,
+		final String inUomId) {
+		// from version v3, add parameters inLocation, inItemMasterID, inUomId
+		
+		// We expect to find an inventory item at the location.
+		Item theItem = inLocation.getStoredItemFromMasterIdAndUom(inItemMasterId, inUomId);
+		
+		
 		List<LedCmdGroup> ledCmdGroupList = new ArrayList<LedCmdGroup>();
 		for (OrderLocation orderLocation : inOrder.getActiveOrderLocations()) {
 			short firstLedPosNum = orderLocation.getLocation().getFirstLedNumAlongPath();
@@ -1641,7 +1655,7 @@ public class Facility extends SubLocationABC<Facility> {
 	 */
 	private void setCrossWorkInstructionLedPattern(final WorkInstruction inWi,
 		final String inItemMasterId,
-		final ISubLocation<?> inLocation,
+		final LocationABC inLocation,
 		final String inUom) {
 
 		String itemDomainId = Item.makeDomainId(inItemMasterId, inLocation, inUom);
