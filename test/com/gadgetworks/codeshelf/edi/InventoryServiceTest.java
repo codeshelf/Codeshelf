@@ -36,9 +36,10 @@ public class InventoryServiceTest extends DomainTestABC {
 
 
 	private ICsvOrderImporter	importer;
-
+	private Facility facility;
+	
 	@Before
-	public void initTest() {
+	public void initTest() throws IOException {
 		importer = new OutboundOrderCsvImporter(mOrderGroupDao,
 			mOrderHeaderDao,
 			mOrderDetailDao,
@@ -46,11 +47,99 @@ public class InventoryServiceTest extends DomainTestABC {
 			mContainerUseDao,
 			mItemMasterDao,
 			mUomMasterDao);
+		facility = setupData(this.getClass().toString() + System.currentTimeMillis());
+	}
+	
+	/**
+	 * Given an each item at a location
+	 * When we upsert a another location for the an item with the same itemId and uom
+	 * Then the item is "moved" to the new location
+	 * @throws IOException 
+	 */
+	@Test
+	public void testExistingItemWithEachIsMoved() throws IOException {
+		String testUom = "each";
+		testMove(testUom);
+	}
+
+	@Test
+	public void testExistingItemWithEACHAliasIsMoved() throws IOException {
+		String testUom = "EA";
+		testMove(testUom);
+	}
+	
+	/**
+	 * Given a non-each item at a location
+	 * When we upsert another location of the item with same itemId and uom
+	 * Then a new item is created  
+	 */
+	@Test
+	public void testNonEachItemCreatedIfDifferentLocation() throws IOException {
+		String testUom = "case";
+		String sku = "10706961";
+		Integer testCmFromLeft = 10;
+		
+		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
+		ItemMaster itemMaster = facility.getItemMaster(sku);
+		String locationAlias = tier.getAliases().get(0).getAlias();
+
+
+		
+		Item createdItem = facility.upsertItem(itemMaster.getItemId(), locationAlias, String.valueOf(testCmFromLeft - 1), "1", testUom);
+		
+		Tier newItemLocation = (Tier) facility.findSubLocationById("A2.B1.T1");
+		String newItemLocationAlias = newItemLocation.getAliases().get(0).getAlias();
+		Assert.assertNotEquals(locationAlias, newItemLocationAlias);
+		Item additionalItem = facility.upsertItem(itemMaster.getItemId(), newItemLocationAlias, String.valueOf(testCmFromLeft), "15", testUom);
+
+		Assert.assertNotEquals("Should not be the same item", createdItem.getPersistentId(), additionalItem.getPersistentId());
+		Assert.assertEquals(createdItem.getUomMaster(), additionalItem.getUomMaster());
+		Assert.assertEquals(createdItem.getItemId(), additionalItem.getItemId());
+	}
+	
+
+	/**
+	 * Given a non-each item at a location
+	 * When we upsert item infor with same itemId, location and uom
+	 * Then the existing item is updated  
+	 */
+	@Test
+	public void testNonEachItemIsUpdated() throws IOException {
+		String testUom = "case";
+		String sku = "10706961";
+		Integer testCmFromLeft = 10;
+		
+		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
+		ItemMaster itemMaster = facility.getItemMaster(sku);
+		String locationAlias = tier.getAliases().get(0).getAlias();
+		
+		Item createdItem = facility.upsertItem(itemMaster.getItemId(), locationAlias, String.valueOf(testCmFromLeft - 1), "1", testUom);
+
+		Item updatedItem = facility.upsertItem(itemMaster.getItemId(), locationAlias, String.valueOf(testCmFromLeft), "15", testUom);
+		Assert.assertEquals("Should have been the same item", createdItem.getPersistentId(), updatedItem.getPersistentId());
+		Assert.assertEquals(testCmFromLeft, updatedItem.getCmFromLeft());
+	}
+	
+
+	
+	private void testMove(String testUomUserInput) throws IOException {
+		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
+		ItemMaster itemMaster = facility.getItemMaster("10700589");
+		String locationAlias = tier.getAliases().get(0).getAlias();
+		
+		Item createdItem = facility.upsertItem(itemMaster.getItemId(), locationAlias, "1", "1", testUomUserInput);
+
+		Tier newItemLocation = (Tier) facility.findSubLocationById("A2.B1.T1");
+		String newItemLocationAlias = newItemLocation.getAliases().get(0).getAlias();
+		Assert.assertNotEquals(locationAlias, newItemLocationAlias);
+		
+		Item movedItem = facility.upsertItem(itemMaster.getItemId(), newItemLocationAlias, "1", "1", testUomUserInput);
+		Assert.assertEquals("Should have been the same item", createdItem.getPersistentId(), movedItem.getPersistentId());
+		Assert.assertEquals(movedItem.getStoredLocation(), newItemLocation);
 	}
 	
 	@Test
 	public void testUpsertItemNullLocationAlias() throws IOException {
-		Facility facility = setupData("testUpsertItemNullLocationAlias");
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
 		ItemMaster itemMaster = facility.getItemMaster("10700589");
@@ -67,7 +156,6 @@ public class InventoryServiceTest extends DomainTestABC {
 
 	@Test
 	public void testUpsertItemEmptyLocationAlias() throws IOException {
-		Facility facility = setupData("testUpsertItemEmptyLocationAlias");
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
 		ItemMaster itemMaster = facility.getItemMaster("10700589");
@@ -83,7 +171,6 @@ public class InventoryServiceTest extends DomainTestABC {
 
 	@Test
 	public void testUpsertItemUsingAlphaCount() throws IOException {
-		Facility facility = setupData("testUpsertItemUsingAlphaCount");
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
 		ItemMaster itemMaster = facility.getItemMaster("10700589");
@@ -100,7 +187,6 @@ public class InventoryServiceTest extends DomainTestABC {
 
 	@Test
 	public void testUpsertItemUsingNegativeCount() throws IOException {
-		Facility facility = setupData("testUpsertItemUsingNegativeCount");
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
 		ItemMaster itemMaster = facility.getItemMaster("10700589");
@@ -117,8 +203,6 @@ public class InventoryServiceTest extends DomainTestABC {
 
 	@Test
 	public void testUpsertItemUsingNegativePositionFromLeft() throws IOException {
-		Facility facility = setUpSimpleNoSlotFacility("testUpsertItemUsingNegativePositionFromLeft");
-		setupOrders(facility);
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
 		ItemMaster itemMaster = facility.getItemMaster("10700589");
@@ -135,8 +219,6 @@ public class InventoryServiceTest extends DomainTestABC {
 	
 	@Test
 	public void testUpsertItemUsingAlphaPositionFromLeft() throws IOException {
-		Facility facility = setUpSimpleNoSlotFacility("testUpsertItemUsingAlphaPositionFromLeft");
-		setupOrders(facility);
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
 		ItemMaster itemMaster = facility.getItemMaster("10700589");
@@ -153,8 +235,6 @@ public class InventoryServiceTest extends DomainTestABC {
 	
 	@Test
 	public void testUpsertItemUsingEmptyUom() throws IOException {
-		Facility facility = setUpSimpleNoSlotFacility("testUpsertItemUsingEmptyUom");
-		setupOrders(facility);
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
 		ItemMaster itemMaster = facility.getItemMaster("10700589");
@@ -171,8 +251,6 @@ public class InventoryServiceTest extends DomainTestABC {
 
 	@Test
 	public void testUpsertItemUsingNominalLocationId() throws IOException {
-		Facility facility = setUpSimpleNoSlotFacility("testUpsertItemUsingLocationId");
-		setupOrders(facility);
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
 		ItemMaster itemMaster = facility.getItemMaster("10700589");
@@ -184,8 +262,6 @@ public class InventoryServiceTest extends DomainTestABC {
 
 	@Test
 	public void testUpsertItemUsingLocationAlias() throws IOException {
-		Facility facility = setUpSimpleNoSlotFacility("testUpsertItemUsingLocationAlias");
-		setupOrders(facility);
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
 		ItemMaster itemMaster = facility.getItemMaster("10700589");
@@ -209,7 +285,7 @@ public class InventoryServiceTest extends DomainTestABC {
 				+ "\r\nUSF314,COSTCO,456,456,456.4,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\nUSF314,COSTCO,456,456,456.5,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\nUSF314,COSTCO,789,789,789.1,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
-				+ "\r\nUSF314,COSTCO,789,789,789.2,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
+				+ "\r\nUSF314,COSTCO,789,789,789.2,10706961,Sun Ripened Dried Tomato Pesto,1,case,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
 		importCsvString(inFacility, firstCsvString);
 	}
 	
@@ -345,10 +421,6 @@ public class InventoryServiceTest extends DomainTestABC {
 	private Facility setupData(String organizationId) throws IOException {
 		Facility facility = setUpSimpleNoSlotFacility(organizationId);
 		setupOrders(facility);
-		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
-		UomMaster uomMaster = facility.getUomMaster("each");
-		ItemMaster itemMaster = facility.getItemMaster("10700589");
-		String locationAlias = tier.getAliases().get(0).getAlias();
 		return facility;
 	}
 

@@ -27,6 +27,7 @@ import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster;
 import com.gadgetworks.codeshelf.model.domain.LocationABC;
 import com.gadgetworks.codeshelf.model.domain.UomMaster;
+import com.gadgetworks.codeshelf.util.UomNormalizer;
 import com.gadgetworks.codeshelf.validation.DefaultErrors;
 import com.gadgetworks.codeshelf.validation.ErrorCode;
 import com.gadgetworks.codeshelf.validation.Errors;
@@ -440,12 +441,28 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 		}
 
 		
-		// Get or create the item at the specified location.
-		Item result = inLocation.getStoredItemFromMasterIdAndUom(inCsvBean.getItemId(),inCsvBean.getUom());
+		Item result = null;
+		
+		
+		String normalizedUom = UomNormalizer.normalizeString(inCsvBean.getUom());
+		if (normalizedUom.equals(UomNormalizer.EACH)) {
+			List<Item> items = inItemMaster.getItems();
+			for (Item item : items) {
+				if (UomNormalizer.normalizeString(item.getUomMaster().getUomMasterId()).equals(normalizedUom)) {
+					result = item;
+					break;
+				}
+			}
+		}
+		else {
+			result = inLocation.getStoredItemFromMasterIdAndUom(inCsvBean.getItemId(),inCsvBean.getUom());
+				
+		}
 		if ((result == null)) {
 			result = new Item();
+			result.setParent(inItemMaster);
+			inItemMaster.addItem(result);
 		} 
-		result.setParent(inItemMaster);
 		// setStoredLocation has the side effect of setting domainId, but that requires that UOM already be set. So setUomMaster first.
 		result.setUomMaster(inUomMaster);
 		result.setStoredLocation(inLocation);
@@ -468,7 +485,6 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 		}
 		result.setActive(true);
 		result.setUpdated(inEdiProcessTime);
-		inItemMaster.addItem(result);
 		
 		
 		if(errors.hasErrors()) {
