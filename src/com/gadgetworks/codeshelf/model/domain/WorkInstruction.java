@@ -453,7 +453,11 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 		ILocation<?> theWiLocation = this.getLocation();
 		if (theWiLocation == null)
 			return returnStr;
+		
 		LocationABC theLocation = (LocationABC) theWiLocation;
+		if (theLocation.getClass() == Facility.class)
+			return returnStr;
+		
 		Item wiItem = theLocation.getStoredItemFromMasterIdAndUom(getItemId(), getUomMasterId());
 
 		// If there is the right item at the location the WI is going to, then use it.
