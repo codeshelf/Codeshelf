@@ -57,6 +57,10 @@ import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.codeshelf.validation.DefaultErrors;
+import com.gadgetworks.codeshelf.validation.ErrorCode;
+import com.gadgetworks.codeshelf.validation.Errors;
+import com.gadgetworks.codeshelf.validation.InputValidationException;
 import com.gadgetworks.flyweight.command.ColorEnum;
 import com.gadgetworks.flyweight.command.NetGuid;
 import com.google.common.base.Strings;
@@ -2057,6 +2061,11 @@ public class Facility extends SubLocationABC<Facility> {
 		itemBean.setQuantity(String.valueOf(quantity));
 		itemBean.setUom(inUomId);
 		LocationABC location = (LocationABC) this.findSubLocationById(storedLocationId);
+		if (location == null && !Strings.isNullOrEmpty(storedLocationId)) {
+			Errors errors = new DefaultErrors(Item.class);
+			errors.rejectValue("storedLocation", ErrorCode.FIELD_NOT_FOUND, "storedLocation was not found");
+			throw new InputValidationException(errors);
+		}
 		return importer.updateSlottedItem(false, itemBean, location, new Timestamp(System.currentTimeMillis()), itemMaster, uomMaster);
 	}
 }
