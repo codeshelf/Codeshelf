@@ -1,5 +1,6 @@
 package com.gadgetworks.codeshelf.ws.jetty.protocol.command;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -96,11 +97,15 @@ public class ObjectMethodCommand extends CommandABC {
 							response.setResults(methodResult);
 							response.setStatus(ResponseStatus.Success);
 							return response;
-						} catch (InputValidationException e) {
-							errors.addAllErrors(e.getErrors());
-							response.setStatus(ResponseStatus.Fail);
-							response.setErrors(errors);
-							return response;
+						} catch (InvocationTargetException e ) {
+							Throwable t = e.getTargetException();
+							if (t instanceof InputValidationException) {
+								errors.addAllErrors(((InputValidationException)t).getErrors());
+								response.setStatus(ResponseStatus.Fail);
+								response.setErrors(errors);
+								return response;
+								
+							}
 						} catch (Exception e) {
 							LOGGER.error("Failed to invoke "+className+"."+method + ", with arguments: " + cookedArguments,e);
 							errors.reject(ErrorCode.GENERAL, e.toString());
