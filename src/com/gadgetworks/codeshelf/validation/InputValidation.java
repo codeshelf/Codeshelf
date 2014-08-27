@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.model;
+package com.gadgetworks.codeshelf.validation;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.Path;

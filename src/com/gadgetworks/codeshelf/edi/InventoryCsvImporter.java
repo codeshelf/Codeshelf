@@ -20,8 +20,6 @@ import au.com.bytecode.opencsv.CSVReader;
 import au.com.bytecode.opencsv.bean.CsvToBean;
 import au.com.bytecode.opencsv.bean.HeaderColumnNameMappingStrategy;
 
-import com.gadgetworks.codeshelf.model.InputValidation;
-import com.gadgetworks.codeshelf.model.InputValidationException;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Facility;
@@ -29,6 +27,11 @@ import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster;
 import com.gadgetworks.codeshelf.model.domain.LocationABC;
 import com.gadgetworks.codeshelf.model.domain.UomMaster;
+import com.gadgetworks.codeshelf.validation.DefaultErrors;
+import com.gadgetworks.codeshelf.validation.ErrorCode;
+import com.gadgetworks.codeshelf.validation.Errors;
+import com.gadgetworks.codeshelf.validation.InputValidation;
+import com.gadgetworks.codeshelf.validation.InputValidationException;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -329,10 +332,10 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 	 * @return
 	 */
 	public UomMaster upsertUomMaster(final String inUomId, final Facility inFacility) {
-		Set<InputValidation<?>> violations = new HashSet<InputValidation<?>>();
+		Errors errors = new DefaultErrors(UomMaster.class);
 		if (Strings.emptyToNull(inUomId) == null) {
-			violations.add(new InputValidation<Item>(new Item(), "uomMasterId", "uomMasterId is required", inUomId));
-			throw new InputValidationException(violations);
+			errors.rejectValue("uomMasterId", ErrorCode.FIELD_REQUIRED, "uomMasterId is required");
+			throw new InputValidationException(errors);
 		}
 
 		UomMaster result = null;
@@ -410,30 +413,30 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 		final ItemMaster inItemMaster,
 		final UomMaster inUomMaster) throws InputValidationException {
 		
-		Set<InputValidation<?>> violations = new HashSet<InputValidation<?>>();
+		Errors errors = new DefaultErrors(Item.class);
 		if (inLocation == null) {
-			violations.add(new InputValidation<Item>(new Item(), "storedLocation", "storedLocation cannot be null", null));
+			errors.rejectValue("storedLocation", ErrorCode.FIELD_REQUIRED, "storedLocation is required");
 		}
 
 		if (inItemMaster == null) {
-			violations.add(new InputValidation<Item>(new Item(), "parent", "parent cannot be null", null));
+			errors.rejectValue("parent", ErrorCode.FIELD_REQUIRED, "parent is required");
 		}
 		
 		Double quantity = 0.0d;
 		String quantityString = inCsvBean.getQuantity();
 		try {
 			quantity = Double.valueOf(quantityString);
-			if (quantity <= 0.0d) {
+			if (quantity < 0.0d) {
 				quantity = 0.0d;
-				violations.add(new InputValidation<Item>(new Item(), "quantity", "quantity cannot be a negative number", quantityString));
+				errors.rejectValue("quantity", ErrorCode.FIELD_NUMBER_NOT_NEGATIVE, "quantity cannot be a negative number");
 			}
 		}
 		catch(NumberFormatException e) {
-			violations.add(new InputValidation<Item>(new Item(), "quantity", "quantity is not a number", quantityString));
+			errors.rejectValue("quantity", ErrorCode.FIELD_NUMBER_REQUIRED, "quantity must be a number");
 		}
 		
-		if (!violations.isEmpty() && !useLenientValidation) {
-			throw new InputValidationException(violations);
+		if (errors.hasErrors() && !useLenientValidation) {
+			throw new InputValidationException(errors);
 		}
 
 		
@@ -454,23 +457,23 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 		try {
 			cmValue = Integer.valueOf(inCsvBean.getCmFromLeft());
 		} catch (NumberFormatException e) {
-			violations.add(new InputValidation<Item>(result, "positionFromLeft", "positionFromLeft is not a positive number", inCsvBean.getCmFromLeft()));
+			errors.rejectValue("positionFromLeft", ErrorCode.FIELD_NUMBER_NOT_NEGATIVE, "positionFromLeft is not a positive number");
 		}
 		// Our new setter
 		String error = result.validatePositionFromLeft(inLocation, cmValue);
 		if (error.isEmpty()) {
 			result.setPositionFromLeft(cmValue);
 		}  else {
-			violations.add(new InputValidation<Item>(result, "positionFromLeft", error, cmValue));
+			errors.rejectValue("positionFromLeft", ErrorCode.FIELD_GENERAL, error);
 		}
 		result.setActive(true);
 		result.setUpdated(inEdiProcessTime);
 		inItemMaster.addItem(result);
 		
 		
-		if(!violations.isEmpty()) {
+		if(errors.hasErrors()) {
 			if (!useLenientValidation) {
-				throw new InputValidationException(violations); 
+				throw new InputValidationException(errors); 
 			}
 		} 
 		mItemDao.store(result);
