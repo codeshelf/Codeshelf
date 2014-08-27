@@ -94,8 +94,8 @@ public abstract class SubLocationABC<P extends IDomainObject & ISubLocation> ext
 	public SubLocationABC(P parent, String domainId, final Point inAnchorPoint, final Point inPickFaceEndPoint) {
 		super(domainId, inAnchorPoint);
 		setParent(parent);
-		if (parent != null) {
-			parent.addLocation(this);
+		if (parent != null && parent instanceof SubLocationABC<?>) {
+			((SubLocationABC<?>)parent).addLocation(this);
 		}
 		setPickFaceEndPosTypeEnum(inPickFaceEndPoint.getPosTypeEnum());
 		setPickFaceEndPosX(inPickFaceEndPoint.getX());

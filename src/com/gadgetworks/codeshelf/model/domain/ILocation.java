@@ -203,8 +203,6 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 
 	void setLocationId(String inLocationId);
 
-	void addLocation(ISubLocation inLocation);
-
 	// --------------------------------------------------------------------------
 	/**
 	 * Get a location by its location ID.
