@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -20,6 +23,8 @@ import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
  */
 public class BayDistanceTopLastWorkInstructionSequencer implements WorkInstructionSequencer {
 	
+	private static final Logger LOGGER = LoggerFactory.getLogger(BayDistanceTopLastWorkInstructionSequencer.class);
+
 	public BayDistanceTopLastWorkInstructionSequencer() {
 	
 	}
@@ -36,8 +41,10 @@ public class BayDistanceTopLastWorkInstructionSequencer implements WorkInstructi
 		for (Path path : facility.getPaths()) {
 			bayList.addAll(path.<ISubLocation<?>> getLocationsByClass(Bay.class));
 		}
+		LOGGER.debug("Sequencing work instructions at "+facility.getDomainId());
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 		// Cycle over all bays on the path skipping the top tiers
+		//LOGGER.debug("Processing lower tiers...");
 		for (ISubLocation<?> subLocation : bayList) {
 			List<ILocation<?>> tiers = subLocation.getSubLocationsInWorkingOrder();
 			int numTiers = tiers.size();
@@ -48,12 +55,15 @@ public class BayDistanceTopLastWorkInstructionSequencer implements WorkInstructi
 				for (ILocation<?> workLocation : tiers) {
 					if (workLocation.equals(lastTier)) {
 						// skip last tier for later processing
+						// LOGGER.debug("Skipping tier "+workLocation);
 						continue;
 					}
+					// LOGGER.debug("Processing tier "+workLocation);
 					Iterator<WorkInstruction> wiIterator = crosswallWiList.iterator();
 					while (wiIterator.hasNext()) {
 						WorkInstruction wi = wiIterator.next();
 						if (wi.getLocation().equals(workLocation)) {
+							LOGGER.debug("Adding WI "+wi+" at "+workLocation);
 							wiResultList.add(wi);
 							wi.setGroupAndSortCode(String.format("%04d", wiResultList.size()));
 							WorkInstruction.DAO.store(wi);
@@ -64,6 +74,7 @@ public class BayDistanceTopLastWorkInstructionSequencer implements WorkInstructi
 			}
 		}
 		// now cycle through top tiers
+		LOGGER.debug("Processing top tier...");
 		for (ISubLocation<?> subLocation : bayList) {
 			List<ILocation<?>> tiers = subLocation.getSubLocationsInWorkingOrder();
 			int numTiers = tiers.size();
@@ -74,12 +85,15 @@ public class BayDistanceTopLastWorkInstructionSequencer implements WorkInstructi
 				for (ILocation<?> workLocation : tiers) {
 					if (!workLocation.equals(lastTier)) {
 						// skip tier, if not top one
+						// LOGGER.debug("Skipping tier "+workLocation);
 						continue;
 					}
+					// LOGGER.debug("Processing tier "+workLocation);
 					Iterator<WorkInstruction> wiIterator = crosswallWiList.iterator();
 					while (wiIterator.hasNext()) {
 						WorkInstruction wi = wiIterator.next();
 						if (wi.getLocation().equals(workLocation)) {
+							LOGGER.debug("Adding WI "+wi+" at "+workLocation);
 							wiResultList.add(wi);
 							wi.setGroupAndSortCode(String.format("%04d", wiResultList.size()));
 							WorkInstruction.DAO.store(wi);

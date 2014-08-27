@@ -42,7 +42,6 @@ public enum WorkInstructionOpEnum {
 			default:
 				result = WorkInstructionOpEnum.INVALID;
 				break;
-
 		}
 
 		return result;

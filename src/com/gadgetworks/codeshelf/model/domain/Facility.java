@@ -22,8 +22,10 @@ import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import javax.persistence.MapKey;
 import javax.persistence.OneToMany;
+import javax.persistence.Transient;
 
 import lombok.Getter;
+import lombok.Setter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,6 +45,8 @@ import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.WorkInstructionSequencer;
+import com.gadgetworks.codeshelf.model.WorkInstructionSequencerFactory;
+import com.gadgetworks.codeshelf.model.WorkInstructionSequencerType;
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
@@ -143,6 +147,20 @@ public class Facility extends SubLocationABC<Facility> {
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	private Map<String, LocationAlias>		locationAliases		= new HashMap<String, LocationAlias>();
+	
+	@Transient // for now installation specific.  property needs to be exposed as a configuration parameter.
+	@Getter @Setter
+	static WorkInstructionSequencerType sequencerType = WorkInstructionSequencerType.BayDistance;
+	
+	static {
+		String sequencerConfig = System.getProperty("facility.sequencer");
+		if ("BayDistance".equalsIgnoreCase(sequencerConfig)) {
+			sequencerType = WorkInstructionSequencerType.BayDistance;
+		}
+		else if ("BayDistanceTopLast".equalsIgnoreCase(sequencerConfig)) {
+			sequencerType = WorkInstructionSequencerType.BayDistanceTopLast;
+		}
+	}
 
 	public Facility() {
 		super(Point.getZeroPoint(), Point.getZeroPoint());
@@ -1050,8 +1068,7 @@ public class Facility extends SubLocationABC<Facility> {
 	}
 
 	private WorkInstructionSequencer getSequencer() {
-		//TODO implement short term logic for selecting strategy based on facility
-		return new BayDistanceWorkInstructionSequencer();
+		return WorkInstructionSequencerFactory.createSequencer(this.sequencerType);
 	}
 
 	// --------------------------------------------------------------------------

@@ -13,6 +13,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.OrderBy;
 import javax.persistence.Table;
 
 import lombok.Getter;
@@ -84,6 +85,7 @@ public class Che extends WirelessDeviceABC {
 
 	// ebeans maintains a lazy-loaded list of work instructions for this CHE
 	@OneToMany(mappedBy = "assignedChe")
+	@OrderBy("groupAndSortCode")
 	@Getter
 	private List<WorkInstruction>	cheWorkInstructions	= new ArrayList<WorkInstruction>();
 

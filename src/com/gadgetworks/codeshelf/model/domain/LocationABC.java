@@ -722,18 +722,15 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	};
 
 	public final List<ILocation<?>> getSubLocationsInWorkingOrder() {
-
 		List<ILocation<?>> result = new ArrayList<ILocation<?>>();
-
-		result.add(this);
 		List<ISubLocation> childLocations = getChildren();
-
 		Collections.sort(childLocations, new LocationWorkingOrderComparator());
-
 		for (ILocation<?> childLocation : childLocations) {
+			// add sublocation
+			result.add(childLocation);
+			// and its sublocations recursively
 			result.addAll(childLocation.getSubLocationsInWorkingOrder());
 		}
-
 		return result;
 	}
 

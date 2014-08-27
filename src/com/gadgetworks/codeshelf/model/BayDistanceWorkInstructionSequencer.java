@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.gadgetworks.codeshelf.model.domain.Bay;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.ILocation;
@@ -16,6 +19,8 @@ import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
  * 
  */
 public class BayDistanceWorkInstructionSequencer implements WorkInstructionSequencer {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(BayDistanceWorkInstructionSequencer.class);
 
 	public BayDistanceWorkInstructionSequencer() {
 	
@@ -34,7 +39,7 @@ public class BayDistanceWorkInstructionSequencer implements WorkInstructionSeque
 		for (Path path : facility.getPaths()) {
 			bayList.addAll(path.<ISubLocation<?>> getLocationsByClass(Bay.class));
 		}
-
+		LOGGER.debug("Sequencing work instructions at "+facility.getDomainId());
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 		// Cycle over all bays on the path.
 		for (ISubLocation<?> subLocation : bayList) {
@@ -43,6 +48,7 @@ public class BayDistanceWorkInstructionSequencer implements WorkInstructionSeque
 				while (wiIterator.hasNext()) {
 					WorkInstruction wi = wiIterator.next();
 					if (wi.getLocation().equals(workLocation)) {
+						LOGGER.debug("Adding WI "+wi+" at "+workLocation);
 						wiResultList.add(wi);
 						wi.setGroupAndSortCode(String.format("%04d", wiResultList.size()));
 						WorkInstruction.DAO.store(wi);

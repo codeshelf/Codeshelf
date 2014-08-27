@@ -61,7 +61,6 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 
 	private BlockingQueue<String>			mEdiProcessSignalQueue;
 	
-	// TODO: replace ws server above with implementation below
 	JettyWebSocketServer mAlternativeWebSocketServer;
 	
 	private AdminServer mAdminServer;
