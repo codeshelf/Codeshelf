@@ -39,6 +39,7 @@ import com.gadgetworks.codeshelf.model.BayDistanceWorkInstructionSequencer;
 import com.gadgetworks.codeshelf.model.EdiProviderEnum;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.HeaderCounts;
+import com.gadgetworks.codeshelf.model.LedRange;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
@@ -1532,13 +1533,14 @@ public class Facility extends SubLocationABC<Facility> {
 
 			// Set the LED lighting pattern for this WI.
 			if (inOrderDetail.getParent().getOrderTypeEnum().equals(OrderTypeEnum.CROSS)) {
+				// We currently have no use case for this.
 				setCrossWorkInstructionLedPattern(resultWi,
 					inOrderDetail.getItemMasterId(),
 					inLocation,
 					inOrderDetail.getUomMasterId());
 			} else {
-				// new with v3. Add parameters inLocation, inOrderDetail.getItemMasterId(), inOrderDetail.getUomMasterId())
-				setOutboundWorkInstructionLedPattern(resultWi, inOrderDetail.getParent(), inLocation, inOrderDetail.getItemMasterId(), inOrderDetail.getUomMasterId());
+				// This is a cross batch case! The work instruction came from cross batch order, but position and leds comes from the outbound order.
+				setWorkInstructionLedPatternFromOrderLocations(resultWi, inOrderDetail.getParent());
 			}
 
 			// Update the WI
@@ -1590,15 +1592,14 @@ public class Facility extends SubLocationABC<Facility> {
 	 * @param inWi
 	 * @param inOrder
 	 */
-	private void setOutboundWorkInstructionLedPattern(final WorkInstruction inWi, 
-		final OrderHeader inOrder,
-		final LocationABC inLocation,
-		final String inItemMasterId,
-		final String inUomId) {
-		// from version v3, add parameters inLocation, inItemMasterID, inUomId
+	private void setWorkInstructionLedPatternFromOrderLocations(final WorkInstruction inWi, 
+		final OrderHeader inOrder) {
+		// This is used for GoodEggs cross batch processs. The order header passed in is the outbound order (which has order locations),
+		// but inWi was generated from the cross batch order detail.
 		
-		// We expect to find an inventory item at the location.
-		Item theItem = inLocation.getStoredItemFromMasterIdAndUom(inItemMasterId, inUomId);
+		// Important: you get empty led stream "[]" if either
+		// the outbound order has no order locations, or
+		// the order location does not know its controller yet.
 		
 		
 		List<LedCmdGroup> ledCmdGroupList = new ArrayList<LedCmdGroup>();
@@ -1619,8 +1620,7 @@ public class Facility extends SubLocationABC<Facility> {
 			LedController theController = null;
 			Short theChannel = 0;
 			if (theLocation == null) {
-				LOGGER.error("null order location in setOutboundWorkInstructionLedPattern. How?");
-				;
+				LOGGER.error("null order location in setWorkInstructionLedPatternFromOrderLocations. How?");
 			} else {
 				theController = theLocation.getEffectiveLedController();
 				theChannel = theLocation.getEffectiveLedChannel();
@@ -1642,6 +1642,54 @@ public class Facility extends SubLocationABC<Facility> {
 			ledCmdGroup.setLedSampleList(ledSamples);
 			ledCmdGroupList.add(ledCmdGroup);
 		}
+		inWi.setLedCmdStream(LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList));
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inWi
+	 * @param inOrder
+	 */
+	private void setOutboundWorkInstructionLedPatternFromInventoryItem(final WorkInstruction inWi, 
+		final LocationABC inLocation,
+		final String inItemMasterId,
+		final String inUomId) {
+		
+		// This work instruction should have been generated from a pick order, so there must be inventory for the pick at the location.
+		if (inWi == null || inLocation == null) {
+			LOGGER.error("unexpected null condition in setOutboundWorkInstructionLedPatternFromInventoryItem");
+			return;
+		}
+		
+		List<LedCmdGroup> ledCmdGroupList = new ArrayList<LedCmdGroup>();
+		
+		// We expect to find an inventory item at the location.
+		Item theItem = inLocation.getStoredItemFromMasterIdAndUom(inItemMasterId, inUomId);
+		if (theItem == null) {
+			LOGGER.error("did not find item in setOutboundWorkInstructionLedPatternFromInventoryItem");
+			// output the empty value, which is "[]".  Is this better than nothing? Not sure.
+			inWi.setLedCmdStream(LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList));
+			return;
+		}
+		// Use our utility function to get the leds for the item
+		LedRange theRange = theItem.getFirstLastLedsForItem();
+		short firstLedPosNum = theRange.getFirstLedToLight();
+		short lastLedPosNum = theRange.getLastLedToLight();
+		
+		// This is how we send LED data to the remote controller. In this case, only one led sample range.
+		List<LedSample> ledSamples = new ArrayList<LedSample>();
+		LedCmdGroup ledCmdGroup = new LedCmdGroup(inLocation.getEffectiveLedController().getDeviceGuidStr(),
+			inLocation.getEffectiveLedChannel(),
+			firstLedPosNum,
+			ledSamples);
+
+		for (short ledPos = firstLedPosNum; ledPos < lastLedPosNum; ledPos++) {
+			LedSample ledSample = new LedSample(ledPos, ColorEnum.BLUE);
+			ledSamples.add(ledSample);
+		}
+		ledCmdGroup.setLedSampleList(ledSamples);
+
+		ledCmdGroupList.add(ledCmdGroup);
 		inWi.setLedCmdStream(LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList));
 	}
 
