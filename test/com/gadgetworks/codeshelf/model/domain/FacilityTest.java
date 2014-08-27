@@ -38,55 +38,20 @@ public class FacilityTest extends DomainTestABC {
 	@Test
 	public final void createAisleTest() {
 
-		Organization organization = new Organization();
-		organization.setOrganizationId("FTEST1.O1");
-		mOrganizationDao.store(organization);
-
-		Facility facility = new Facility(Point.getZeroPoint());
-		facility.setParent(organization);
-		facility.setFacilityId("FTEST1.F1");
-		mFacilityDao.store(facility);
-
+		Facility facility = createFacility("FTEST1.01");
 		Point anchorPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, 1.0, 1.0, 1.0);
 		Point protoBayPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, 2.0, 2.0, 2.0);
 		facility.createAisle("FTEST1.A1", anchorPoint, protoBayPoint, 2, 5, "0x00000002", true, true);
 
-		Facility foundFacility = Facility.DAO.findByDomainId(organization, "FTEST1.F1");
+		Aisle foundAisle = Aisle.DAO.findByDomainId(facility, "FTEST1.A1");
 
-		Assert.assertNotNull(foundFacility);
+		Assert.assertNotNull(foundAisle);
 	}
 
-	@Test
-	public final void createWorkInstructionTest() {
-		Organization organization = new Organization();
-		organization.setOrganizationId("FTEST2.O1");
-		mOrganizationDao.store(organization);
-
-		Facility facility = new Facility(new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0));
-		facility.setParent(organization);
-		facility.setFacilityId("FTEST2.F2");
-		mFacilityDao.store(facility);
-
-		//		wiList = facility.getWorkInstructions(inChe, inLocationId, inContainerIdList);
-		//		
-		//		Assert.assertNotNull(wiList);
-		//		for (WorkInstruction wi : wiList) {
-		//			Assert.assertNotNull(wi);
-		//			
-		//		}
-	}
-	
 	@Test
 	public void testHasCrossbatchOrders() {
-		Organization organization = new Organization();
-		organization.setOrganizationId("FTEST3.O1");
-		mOrganizationDao.store(organization);
 
-		Facility facility = new Facility(new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0));
-		facility.setParent(organization);
-		facility.setFacilityId("FTEST3.F2");
-		mFacilityDao.store(facility);
-		
+		Facility facility = createFacility("FTEST3.O1");
 		OrderHeader crossbatchOrder = new OrderHeader();
 		crossbatchOrder.setParent(facility);
 		crossbatchOrder.setDomainId("ORDER1");
@@ -104,13 +69,7 @@ public class FacilityTest extends DomainTestABC {
 	 */
 	@Test
 	public void testSerializationOfExtraFields() {
-		Organization organization = new Organization();
-		organization.setOrganizationId("FTEST2.O1");
-
-		Facility facility = new Facility(new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0));
-		facility.setParent(organization);
-		facility.setFacilityId("FTEST2.F2");
-		
+		Facility facility = createFacility("FTEST2.O1");
 		ObjectMapper mapper = new ObjectMapper();
 		ObjectNode objectNode= mapper.valueToTree(facility);
 		Assert.assertNotNull(objectNode.findValue("hasMeaningfulOrderGroups"));

@@ -69,6 +69,23 @@ public abstract class DomainTestABC extends DAOTestABC {
 		return aisle;
 	}
 	
+	protected Bay getBay(Aisle aisle, String inDomainId) {
+		Bay bay  = mBayDao.findByDomainId(aisle, inDomainId);
+		if (bay == null) {
+			bay = new Bay(aisle, inDomainId, Point.getZeroPoint(), Point.getZeroPoint());
+			mBayDao.store(bay);
+		}
+		return bay;
+	}
+
+	protected Tier getTier(Bay bay, String inDomainId) {
+		Tier tier  = mTierDao.findByDomainId(bay, inDomainId);
+		if (tier == null) {
+			tier = new Tier(bay, inDomainId, Point.getZeroPoint(), Point.getZeroPoint());
+			mTierDao.store(tier);
+		}
+		return tier;
+	}
 
 	protected PathSegment getPathSegment(Path path, Integer inOrder) {
 		PathSegment segment = path.getPathSegment(inOrder); 

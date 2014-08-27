@@ -218,9 +218,7 @@ public class GenericDaoTest {
 		organization1.setDescription(ORGANIZATION_ID);
 		organizationDao.store(organization1);
 
-		Facility facility = new Facility(new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0));
-		facility.setParent(organization1);
-		facility.setDomainId(FACILITY_ID);
+		Facility facility = new Facility(organization1, FACILITY_ID, new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0));
 		facility.setDescription(FACILITY_ID);
 		faciltyDao.store(facility);
 
@@ -248,9 +246,7 @@ public class GenericDaoTest {
 		organization1.setDescription(ORGANIZATION_ID);
 		organizationDao.store(organization1);
 
-		Facility facility = new Facility(new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0));
-		facility.setParent(organization1);
-		facility.setDomainId(FACILITY_ID);
+		Facility facility = new Facility(organization1, FACILITY_ID, new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0));
 		facility.setDescription(FACILITY_ID);
 		faciltyDao.store(facility);
 
@@ -264,9 +260,7 @@ public class GenericDaoTest {
 		Aisle foundAisle = aisleDao.findByDomainId(facility, AISLE_ID);
 		Assert.assertNotNull(foundAisle);
 
-		facility = new Facility(new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0));
-		facility.setParent(organization1);
-		facility.setDomainId(FACILITY2_ID);
+		facility = new Facility(organization1, FACILITY2_ID, new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0));
 		facility.setDescription(FACILITY2_ID);
 		faciltyDao.store(facility);
 

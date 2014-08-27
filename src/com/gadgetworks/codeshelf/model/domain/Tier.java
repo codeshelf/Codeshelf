@@ -91,8 +91,8 @@ public class Tier extends SubLocationABC<Bay> {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(Tier.class);
 
-	public Tier(final Point inAnchorPoint, final Point inPickFaceEndPoint) {
-		super(inAnchorPoint, inPickFaceEndPoint);
+	public Tier(Bay bay, String domainId, final Point inAnchorPoint, final Point inPickFaceEndPoint) {
+		super(bay, domainId, inAnchorPoint, inPickFaceEndPoint);
 	}
 
 	public final ITypedDao<Tier> getDao() {

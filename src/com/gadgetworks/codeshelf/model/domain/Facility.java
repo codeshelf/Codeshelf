@@ -145,11 +145,12 @@ public class Facility extends SubLocationABC<Facility> {
 	private Map<String, LocationAlias>		locationAliases		= new HashMap<String, LocationAlias>();
 
 	public Facility() {
-		super(Point.getZeroPoint(), Point.getZeroPoint());
+		super(null, null, Point.getZeroPoint(), Point.getZeroPoint());
 	}
 
-	public Facility(final Point inAnchorPoint) {
-		super(inAnchorPoint, Point.getZeroPoint());
+	public Facility(Organization organization, String domainId, final Point inAnchorPoint) {
+		super(null, domainId, inAnchorPoint, Point.getZeroPoint());
+		setParentOrganization(organization);
 	}
 
 	public final String getDefaultDomainIdPrefix() {
@@ -596,9 +597,8 @@ public class Facility extends SubLocationABC<Facility> {
 		anchorPoint.translateZ(inTierZOffset);
 		Point pickFaceEndPoint = computePickFaceEndPoint(anchorPoint, inBayWidth, inRunsInXDir);
 		pickFaceEndPoint.translateZ(inTierZOffset);
-		Tier tier = new Tier(anchorPoint, pickFaceEndPoint);
+		Tier tier = new Tier(inParentBay, inTierId, anchorPoint, pickFaceEndPoint);
 
-		tier.setDomainId(inTierId);
 		tier.setLedController(inLedController);
 		tier.setLedChannel(inLedChannelNum);
 		if (inSlotRunsRight) {
@@ -608,8 +608,6 @@ public class Facility extends SubLocationABC<Facility> {
 			tier.setFirstLedNumAlongPath((short) (inParentBay.getFirstLedNumAlongPath() + inFirstLedPosNum + inTierLedCount - 1));
 			tier.setLastLedNumAlongPath((short) (inParentBay.getFirstLedNumAlongPath() + inFirstLedPosNum - 1));
 		}
-		tier.setParent(inParentBay);
-		inParentBay.addLocation(tier);
 		try {
 			Tier.DAO.store(tier);
 		} catch (DaoException e) {
@@ -661,9 +659,7 @@ public class Facility extends SubLocationABC<Facility> {
 
 		Point pickFaceEndPoint = computePickFaceEndPoint(anchorPoint, 0.25, inRunsInXDir);
 
-		Slot slot = new Slot(anchorPoint, pickFaceEndPoint);
-
-		slot.setDomainId(inSlotId);
+		Slot slot = new Slot(inParentTier, inSlotId, anchorPoint, pickFaceEndPoint);
 		slot.setLedController(inLedController);
 		slot.setLedChannel(inChannelNum);
 		if (inParentTier.getFirstLedNumAlongPath() < inParentTier.getLastLedNumAlongPath()) {
@@ -673,9 +669,6 @@ public class Facility extends SubLocationABC<Facility> {
 			slot.setFirstLedNumAlongPath((short) (inParentTier.getLastLedNumAlongPath() + inFirstLedPosNum - 1));
 			slot.setLastLedNumAlongPath((short) (inParentTier.getLastLedNumAlongPath() + inLastLedPosNum - 1));
 		}
-		slot.setParent(inParentTier);
-
-		inParentTier.addLocation(slot);
 		try {
 			Slot.DAO.store(slot);
 		} catch (DaoException e) {

@@ -246,7 +246,8 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 	}
 
-	public LocationABC(final Point inAnchorPoint) {
+	public LocationABC(String domainId, final Point inAnchorPoint) {
+		super(domainId);
 		setAnchorPoint(inAnchorPoint);
 	}
 	
@@ -448,7 +449,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	 */
 	public final void addLocation(ISubLocation inLocation) {
 		// Ebean can't deal with interfaces.
-		SubLocationABC<P> subLocation = (SubLocationABC<P>) inLocation;
+		SubLocationABC subLocation = (SubLocationABC) inLocation;
 		locations.put(inLocation.getDomainId(), subLocation);
 	}
 
@@ -721,7 +722,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		}
 	};
 
-	public final List<ILocation<?>> getSubLocationsInWorkingOrder() {
+	public List<ILocation<?>> getSubLocationsInWorkingOrder() {
 
 		List<ILocation<?>> result = new ArrayList<ILocation<?>>();
 

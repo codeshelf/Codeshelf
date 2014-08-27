@@ -5,6 +5,11 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 
@@ -16,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.google.common.collect.Ordering;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -35,6 +41,7 @@ import com.google.inject.Singleton;
 //@ToString(doNotUseGetters = true)
 public class Bay extends SubLocationABC<Aisle> {
 
+
 	@Inject
 	public static ITypedDao<Bay>	DAO;
 
@@ -52,17 +59,13 @@ public class Bay extends SubLocationABC<Aisle> {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(Bay.class);
 
-	public Bay(final Aisle inAisle,
-		final String inBayId,
-		final Point inAnchorPoint,
-		final Point inPickFaceEndPoint
-		) {
-		super(inAnchorPoint, inPickFaceEndPoint);
-		setParent(inAisle);
-		setDomainId(inBayId);
-		inAisle.addLocation(this);
-	}
+	private Comparator<ISubLocation> topDownTierOrder = new TopDownTierOrder();
+	
 
+	public Bay(Aisle parent, String domainId, Point inAnchorPoint, Point inPickFaceEndPoint) {
+		super(parent, domainId, inAnchorPoint, inPickFaceEndPoint);
+	}
+	
 	public final ITypedDao<Bay> getDao() {
 		return DAO;
 	}
@@ -85,6 +88,33 @@ public class Bay extends SubLocationABC<Aisle> {
 
 	public final String getBayIdForComparable() {
 		return getCompString(getDomainId());
+	}
+	
+	@Override
+	public List<ILocation<?>> getSubLocationsInWorkingOrder() {
+		List<ISubLocation> copy = new ArrayList<ISubLocation>(getChildren());
+		Collections.sort(copy, topDownTierOrder);
+		List<ILocation<?>> result = new ArrayList<ILocation<?>>();
+		result.add(this);
+		for (ILocation<?> childLocation : copy) {
+			result.addAll(childLocation.getSubLocationsInWorkingOrder());
+		}
+
+		return result;
+
+	}
+	
+	private static final class TopDownTierOrder implements Comparator<ISubLocation> {
+		final Ordering<Double> doubleOrdering = Ordering.<Double>natural().reverse().nullsLast();
+
+		@Override
+		public int compare(ISubLocation o1, ISubLocation o2) {
+			Double o1Z = o1.getAbsoluteAnchorPoint().getZ();
+			Double o2Z = o2.getAbsoluteAnchorPoint().getZ();
+			int result = doubleOrdering.compare(o1Z, o2Z); 
+			return result;
+		}
+		
 	}
 
 }

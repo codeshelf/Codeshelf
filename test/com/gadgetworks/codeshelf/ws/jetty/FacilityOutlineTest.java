@@ -1,9 +1,5 @@
 package com.gadgetworks.codeshelf.ws.jetty;
 
-import static com.natpryce.makeiteasy.MakeItEasy.a;
-import static com.natpryce.makeiteasy.MakeItEasy.make;
-import static org.mockito.Mockito.when;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -15,39 +11,26 @@ import javax.websocket.EncodeException;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
-import com.gadgetworks.codeshelf.model.dao.DAOTestABC;
-import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.dao.MockDaoProvider;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.ContainerKind;
-import com.gadgetworks.codeshelf.model.domain.DAOMaker;
 import com.gadgetworks.codeshelf.model.domain.DropboxService;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Organization;
-import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.model.domain.Vertex;
-import com.gadgetworks.codeshelf.model.domain.Path.PathDao;
-import com.gadgetworks.codeshelf.model.domain.PathSegment;
-import com.gadgetworks.codeshelf.model.domain.PathSegment.PathSegmentDao;
-import com.gadgetworks.codeshelf.model.domain.WorkArea;
-import com.gadgetworks.codeshelf.model.domain.WorkArea.WorkAreaDao;
 import com.gadgetworks.codeshelf.ws.command.req.ArgsClass;
 import com.gadgetworks.codeshelf.ws.jetty.io.JsonEncoder;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.request.CreatePathRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectMethodRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectUpdateRequest;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.CreatePathResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectMethodResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectUpdateResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
@@ -82,9 +65,7 @@ public class FacilityOutlineTest {
 		organization.setOrganizationId("CTEST1.O1");
 		orgDao.store(organization);
 
-		Facility facility = new Facility(Point.getZeroPoint());
-		facility.setParent(organization);
-		facility.setFacilityId("CTEST1.F1");
+		Facility facility = new Facility(organization, "F1", Point.getZeroPoint());
 		facDao.store(facility);
 		
 		ObjectMethodRequest request = new ObjectMethodRequest();
@@ -157,9 +138,7 @@ public class FacilityOutlineTest {
 		organization.setOrganizationId("CTEST1.O1");
 		orgDao.store(organization);
 
-		Facility facility = new Facility(Point.getZeroPoint());
-		facility.setParent(organization);
-		facility.setFacilityId("CTEST1.F1");
+		Facility facility = new Facility(organization, "F1", Point.getZeroPoint());
 		facDao.store(facility);	
 		
 		/*

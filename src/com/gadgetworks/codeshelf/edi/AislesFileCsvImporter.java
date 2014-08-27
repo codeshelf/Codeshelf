@@ -447,12 +447,11 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 		// If the LEDs are set, then assuming no multi-channel capability per controller, we simply need to count tiers with LED starting at 1.
 		List<Tier> tiersList = mFacility.getChildrenAtLevel(Tier.class);
 		int aisleTierCount = 0;
-		ListIterator li = null;
-		li = tiersList.listIterator();
-		while (li.hasNext()) {
-			Tier thisTier = (Tier) li.next();
-			if (thisTier.getFirstLedNumAlongPath() == 1)
+		for (Tier tier : tiersList) {
+			Short firstLedNum  = tier.getFirstLedNumAlongPath();
+			if (firstLedNum != null && firstLedNum == 1) {
 				aisleTierCount++;
+			}
 		}
 
 		// Count the ledControllers.
@@ -711,10 +710,7 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 
 		Slot slot = mSlotDao.findByDomainId(inParentTier, slotId);
 		if (slot == null) {
-			slot = new Slot(anchorPoint, pickFaceEndPoint);
-			slot.setDomainId(slotId);
-			slot.setParent(inParentTier);
-			inParentTier.addLocation(slot);
+			slot = new Slot(inParentTier, slotId, anchorPoint, pickFaceEndPoint);
 		} else {
 			// update existing bay. DomainId is not changing as we found it that way from the same parent.
 			// So only a matter of updating the anchor and pickFace points
@@ -771,10 +767,7 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 		// create or update
 		Tier tier = mTierDao.findByDomainId(mLastReadBay, inTierId);
 		if (tier == null) {
-			tier = new Tier(anchorPoint, pickFaceEndPoint);
-			tier.setDomainId(inTierId);
-			tier.setParent(mLastReadBay);
-			mLastReadBay.addLocation(tier);
+			tier = new Tier(mLastReadBay, inTierId, anchorPoint, pickFaceEndPoint);
 		} else {
 			// update existing bay. DomainId is not changing as we found it that way from the same parent.
 			// So only a matter of updating the anchor and pickFace points
