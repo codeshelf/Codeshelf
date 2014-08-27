@@ -40,9 +40,10 @@ public class DAOMaker {
 
 	public final Instantiator<Facility> TestFacility = new Instantiator<Facility>() {
 	    public Facility instantiate(PropertyLookup<Facility> lookup) {
-	        Facility facility = new Facility(new Point(PositionTypeEnum.GPS, 0.0d, 0.0d, 0.0d));
-	        facility.setFacilityId(lookup.valueOf(facilityId, RandomStringUtils.randomAlphanumeric(5)));
-	    	facility.setParent(lookup.valueOf(organization, make(a(TestOrganization))));
+	        Facility facility = new Facility(
+	        	lookup.valueOf(organization, make(a(TestOrganization))),
+	        	lookup.valueOf(facilityId, RandomStringUtils.randomAlphanumeric(5)),
+	        	new Point(PositionTypeEnum.GPS, 0.0d, 0.0d, 0.0d));
 	    	Facility.DAO.store(facility);
 	        return facility;
 	    }

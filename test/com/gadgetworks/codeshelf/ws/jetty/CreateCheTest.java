@@ -49,9 +49,7 @@ public class CreateCheTest extends DAOTestABC {
 		organization.setOrganizationId("CTEST1.O1");
 		orgDao.store(organization);
 
-		Facility facility = new Facility(Point.getZeroPoint());
-		facility.setParent(organization);
-		facility.setFacilityId("CTEST1.F1");
+		Facility facility = new Facility(organization, "F1", Point.getZeroPoint());
 		facDao.store(facility);		
 		
 		CodeshelfNetwork network = new CodeshelfNetwork(facility, "N1", "foo", "bar");
@@ -109,9 +107,8 @@ public class CreateCheTest extends DAOTestABC {
 		organization.setOrganizationId("CTEST1.O1");
 		orgDao.store(organization);
 
-		Facility facility = new Facility(Point.getZeroPoint());
-		facility.setParent(organization);
-		facility.setFacilityId("CTEST1.F1");
+		Facility facility = new Facility(organization, "F1", Point.getZeroPoint());
+
 		facDao.store(facility);		
 		
 		CodeshelfNetwork network = new CodeshelfNetwork(facility, "N1", "foo", "bar");
@@ -161,9 +158,7 @@ public class CreateCheTest extends DAOTestABC {
 		organization.setOrganizationId("CTEST1.O1");
 		orgDao.store(organization);
 
-		Facility facility = new Facility(Point.getZeroPoint());
-		facility.setParent(organization);
-		facility.setFacilityId("CTEST1.F1");
+		Facility facility = new Facility(organization, "F1", Point.getZeroPoint());
 		facDao.store(facility);		
 		
 		CodeshelfNetwork network = new CodeshelfNetwork(facility, "N1", "foo", "bar");
@@ -241,9 +236,7 @@ public class CreateCheTest extends DAOTestABC {
 		organization.setOrganizationId("CTEST1.O1");
 		orgDao.store(organization);
 
-		Facility facility = new Facility(Point.getZeroPoint());
-		facility.setParent(organization);
-		facility.setFacilityId("CTEST1.F1");
+		Facility facility = new Facility(organization, "F1", Point.getZeroPoint());
 		facDao.store(facility);		
 		
 		CodeshelfNetwork network = new CodeshelfNetwork(facility, "N1", "foo", "bar");

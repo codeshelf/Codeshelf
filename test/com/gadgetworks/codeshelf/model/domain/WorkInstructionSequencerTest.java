@@ -298,7 +298,7 @@ public class WorkInstructionSequencerTest extends DomainTestABC {
 		
 		// paths is expected to be backwards from b2 to b1, see set-up method
 		for (WorkInstruction wi : aList) {
-			// System.out.println(wi.getLocationId()+": "+wi.getGroupAndSortCode());
+			System.out.println(wi.getLocationId()+": "+wi.getGroupAndSortCode());
 			if (wi.getLocationId().endsWith("B2.T3")) {
 				Assert.assertTrue(wi.getGroupAndSortCode().equals("0001"));
 			}

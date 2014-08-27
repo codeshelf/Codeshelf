@@ -39,7 +39,7 @@ import com.google.inject.Singleton;
 @CacheStrategy(useBeanCache = false)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 //@ToString(doNotUseGetters = true)
-public abstract class SubLocationABC<P extends IDomainObject> extends LocationABC<P> implements ISubLocation<P> {
+public abstract class SubLocationABC<P extends IDomainObject & ISubLocation> extends LocationABC<P> implements ISubLocation<P> {
 
 	@Inject
 	public static ITypedDao<SubLocationABC>	DAO;
@@ -91,8 +91,12 @@ public abstract class SubLocationABC<P extends IDomainObject> extends LocationAB
 	@JsonProperty
 	private Double				pickFaceEndPosZ;
 
-	public SubLocationABC(final Point inAnchorPoint, final Point inPickFaceEndPoint) {
-		super(inAnchorPoint);
+	public SubLocationABC(P parent, String domainId, final Point inAnchorPoint, final Point inPickFaceEndPoint) {
+		super(domainId, inAnchorPoint);
+		setParent(parent);
+		if (parent != null && parent instanceof SubLocationABC<?>) {
+			((SubLocationABC<?>)parent).addLocation(this);
+		}
 		setPickFaceEndPosTypeEnum(inPickFaceEndPoint.getPosTypeEnum());
 		setPickFaceEndPosX(inPickFaceEndPoint.getX());
 		setPickFaceEndPosY(inPickFaceEndPoint.getY());

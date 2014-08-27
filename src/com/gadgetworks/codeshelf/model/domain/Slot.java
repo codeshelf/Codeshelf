@@ -51,8 +51,8 @@ public class Slot extends SubLocationABC<Tier> {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(Slot.class);
 
-	public Slot(final Point inAnchorPoint, final Point inPickFaceEndPoint) {
-		super(inAnchorPoint, inPickFaceEndPoint);
+	public Slot(Tier parent, String domainId, final Point inAnchorPoint, final Point inPickFaceEndPoint) {
+		super(parent, domainId, inAnchorPoint, inPickFaceEndPoint);
 	}
 
 	public final void setParentTier(final Tier inParentTier) {

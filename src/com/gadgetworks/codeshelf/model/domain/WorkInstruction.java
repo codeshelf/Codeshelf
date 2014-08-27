@@ -177,7 +177,7 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 	// From location.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	private SubLocationABC<?>			location;
+	private LocationABC					location;
 
 	// Denormalized for serialized WIs at the site controller.
 	@Column(nullable = false)
@@ -286,7 +286,7 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 	}
 
 	// Denormalized for serialized WIs at the site controller.
-	public final void setLocation(ISubLocation<?> inLocation) {
+	public final void setLocation(LocationABC inLocation) {
 		location = (SubLocationABC<?>) inLocation;
 		// This string is user-readable format set by application logic.
 		// locationId = inLocation.getLocationId();
@@ -453,7 +453,11 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 		ILocation<?> theWiLocation = this.getLocation();
 		if (theWiLocation == null)
 			return returnStr;
+		
 		LocationABC theLocation = (LocationABC) theWiLocation;
+		if (theLocation.getClass() == Facility.class)
+			return returnStr;
+		
 		Item wiItem = theLocation.getStoredItemFromMasterIdAndUom(getItemId(), getUomMasterId());
 
 		// If there is the right item at the location the WI is going to, then use it.

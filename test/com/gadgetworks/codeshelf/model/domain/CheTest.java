@@ -16,19 +16,8 @@ public class CheTest extends DomainTestABC {
 
 	@Test
 	public final void trivialCheTest() {
-
-		Organization organization = new Organization();
-		organization.setOrganizationId("CTEST1.O1");
-		mOrganizationDao.store(organization);
-
-		Facility facility = new Facility(Point.getZeroPoint());
-		facility.setParent(organization);
-		facility.setFacilityId("CTEST1.F1");
-		mFacilityDao.store(facility);
-
-		Facility foundFacility = Facility.DAO.findByDomainId(organization, "CTEST1.F1");
-
-		Assert.assertNotNull(foundFacility);
+		Facility facility = createFacility("CTEST1.O1");
+		Assert.assertNotNull(facility);
 		
 		Che newChe = new Che(); // not right
 		// This throws horribly. But we catch it.

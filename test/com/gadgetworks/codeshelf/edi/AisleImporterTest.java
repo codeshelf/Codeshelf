@@ -788,10 +788,6 @@ public class AisleImporterTest extends DomainTestABC {
 
 	@Test
 	public final void testBadFile1() {
-
-		if (false)
-			return;
-
 		// Ideally, we want non-throwing or caught exceptions that give good user feedback about what is wrong.
 		// This has tier before bay, and some other blank fields
 		// do a Y orientation on this as well
@@ -840,7 +836,7 @@ public class AisleImporterTest extends DomainTestABC {
 		Assert.assertNull(bayA14B2); // bay should have failed for the tier coming first.
 
 		Bay bayA14B3 = Bay.DAO.findByDomainId(aisle, "B3");
-		Assert.assertNull(bayA14B2); // bay should have failed for nothing read until next aisle.
+		Assert.assertNull(bayA14B3); // bay should have failed for nothing read until next aisle.
 
 		Aisle aisle7 = Aisle.DAO.findByDomainId(facility, "A7");
 		Assert.assertNotNull(aisle7); // the aisle started ok. Note that we do not enforce name number consistency on aisles
