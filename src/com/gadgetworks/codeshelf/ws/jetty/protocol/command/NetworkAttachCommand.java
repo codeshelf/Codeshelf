@@ -65,13 +65,26 @@ public class NetworkAttachCommand extends CommandABC {
 						return response;
 					}
 				}
+				else {
+					LOGGER.warn("Unable to attach network "+request.getNetworkId()+"("+request.getOrganizationId()+"): Network "+request.getNetworkId()+" does not exist");
+					NetworkAttachResponse response = new NetworkAttachResponse();
+					response.setStatus(ResponseStatus.Fail);
+					response.setStatusMessage("Invalid network");
+					return response;
+				}
+			}
+			else {
+				LOGGER.warn("Unable to attach network "+request.getNetworkId()+"("+request.getOrganizationId()+"): Facility "+request.getFacilityId()+" does not exist");
+				NetworkAttachResponse response = new NetworkAttachResponse();
+				response.setStatus(ResponseStatus.Fail);
+				response.setStatusMessage("Invalid facility");
+				return response;
 			}
 		}
-		LOGGER.warn("Unable to attach network "+request.getNetworkId()+"("+request.getOrganizationId()+"): Invalid data");
+		LOGGER.warn("Unable to attach network "+request.getNetworkId()+"("+request.getOrganizationId()+"): Organization does not exist");
 		NetworkAttachResponse response = new NetworkAttachResponse();
 		response.setStatus(ResponseStatus.Fail);
-		response.setStatusMessage("Invalid data");
+		response.setStatusMessage("Invalid organization");
 		return response;
 	}
-
 }

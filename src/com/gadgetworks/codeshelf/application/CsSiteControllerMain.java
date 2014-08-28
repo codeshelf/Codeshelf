@@ -7,6 +7,7 @@ CodeshelfWebSocketServer *  CodeShelf
 package com.gadgetworks.codeshelf.application;
 
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
@@ -24,6 +25,7 @@ import com.gadgetworks.codeshelf.metrics.OpenTsdbReporter;
 import com.gadgetworks.codeshelf.model.dao.DaoProvider;
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.ws.websocket.CsWebSocketClient;
+import com.gadgetworks.codeshelf.ws.websocket.IWebSocketServer;
 import com.gadgetworks.codeshelf.ws.websocket.IWebSocketSslContextFactory;
 import com.gadgetworks.codeshelf.ws.websocket.IWebSocketSslContextGenerator;
 import com.gadgetworks.codeshelf.ws.websocket.WebSocketSslContextFactory;
@@ -55,29 +57,14 @@ public final class CsSiteControllerMain {
 	 */
 	private CsSiteControllerMain() {
 	}
+	
+
 
 	// --------------------------------------------------------------------------
 	/**
 	 */
 	public static void main(String[] inArgs) {
-
-		Properties properties = new Properties();
-		try {
-			String configFileName = System.getProperty("config.properties") + "." + System.getProperty("user.name");
-			if (configFileName != null) {
-				FileInputStream configFileStream = new FileInputStream(configFileName);
-				if (configFileStream != null) {
-					properties.load(configFileStream);
-					for (String name : properties.stringPropertyNames()) {
-						String value = properties.getProperty(name);
-						// LOGGER.debug("Setting "+name+" to "+value);
-						System.setProperty(name, value);
-					}
-				}
-			}
-		} catch (IOException e) {
-			System.err.println();
-		}
+		Util.loadConfig();
 
 		// Guice (injector) will invoke log4j, so we need to set some log dir parameters before we call it.
 		Util util = new Util();
@@ -146,8 +133,14 @@ public final class CsSiteControllerMain {
 				// requestStaticInjection(WirelessDevice.class);
 				// bind(IWirelessDeviceDao.class).to(WirelessDeviceDao.class);
 
-				// TODO: remove below after taking java WS code out
 				bind(String.class).annotatedWith(Names.named(CsWebSocketClient.WEBSOCKET_URI_PROPERTY)).toInstance(System.getProperty("websocket.uri"));
+				
+				bind(Boolean.class).annotatedWith(Names.named(CsWebSocketClient.WEBSOCKET_SUPPRESS_KEEPALIVE_PROPERTY))
+					.toInstance(Boolean.valueOf(System.getProperty("websocket.idle.suppresskeepalive")));
+				bind(Boolean.class).annotatedWith(Names.named(CsWebSocketClient.WEBSOCKET_KILL_IDLE_PROPERTY))
+					.toInstance(Boolean.valueOf(System.getProperty("websocket.idle.kill")));
+
+				// 	TODO: remove below after taking java WS code out
 				bind(String.class).annotatedWith(Names.named(IWebSocketSslContextGenerator.KEYSTORE_PATH_PROPERTY)).toInstance(System.getProperty("keystore.path"));
 				bind(String.class).annotatedWith(Names.named(IWebSocketSslContextGenerator.KEYSTORE_TYPE_PROPERTY)).toInstance(System.getProperty("keystore.type"));
 				bind(String.class).annotatedWith(Names.named(IWebSocketSslContextGenerator.KEYSTORE_STORE_PASSWORD_PROPERTY)).toInstance(System.getProperty("keystore.store.password"));

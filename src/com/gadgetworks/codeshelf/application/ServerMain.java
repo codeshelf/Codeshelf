@@ -159,22 +159,7 @@ public final class ServerMain {
 	 */
 	public static void main(String[] inArgs) {
 
-		Properties properties = new Properties();
-		try {
-			String configFileName = System.getProperty("config.properties") + "." + System.getProperty("user.name");
-			if (configFileName != null) {
-				FileInputStream configFileStream = new FileInputStream(configFileName);
-				if (configFileStream != null) {
-					properties.load(configFileStream);
-					for (String name : properties.stringPropertyNames()) {
-						String value = properties.getProperty(name);
-						System.setProperty(name, value);
-					}
-				}
-			}
-		} catch (IOException e) {
-			System.err.println();
-		}
+		Util.loadConfig();
 
 		// Guice (injector) will invoke log4j, so we need to set some log dir parameters before we call it.
 		Util util = new Util();
@@ -235,9 +220,13 @@ public final class ServerMain {
 					.toInstance(System.getProperty("websocket.hostname"));
 				bind(Integer.class).annotatedWith(Names.named(IWebSocketServer.WEBSOCKET_PORTNUM_PROPERTY))
 					.toInstance(Integer.valueOf(System.getProperty("websocket.portnum")));
-				bind(Boolean.class).annotatedWith(Names.named(IWebSocketServer.WEBSOCKET_USE_KEEPALIVE_PROPERTY))
-					.toInstance(Boolean.valueOf(System.getProperty("websocket.keepalive")));
-
+				
+				// TODO: refactor for common injected items? (server+sitecon)
+				bind(Boolean.class).annotatedWith(Names.named(IWebSocketServer.WEBSOCKET_SUPPRESS_KEEPALIVE_PROPERTY))
+					.toInstance(Boolean.valueOf(System.getProperty("websocket.idle.suppresskeepalive")));
+				bind(Boolean.class).annotatedWith(Names.named(IWebSocketServer.WEBSOCKET_KILL_IDLE_PROPERTY))
+					.toInstance(Boolean.valueOf(System.getProperty("websocket.idle.kill")));
+				
 				bind(String.class).annotatedWith(Names.named(IHttpServer.WEBAPP_CONTENT_PATH_PROPERTY))
 					.toInstance(System.getProperty("webapp.content.path"));
 				bind(String.class).annotatedWith(Names.named(IHttpServer.WEBAPP_HOSTNAME_PROPERTY))

@@ -29,6 +29,8 @@ import org.slf4j.LoggerFactory;
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.gadgetworks.codeshelf.edi.InventoryCsvImporter;
+import com.gadgetworks.codeshelf.edi.InventorySlottedCsvBean;
 import com.gadgetworks.codeshelf.model.LotHandlingEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
@@ -137,6 +139,16 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	public ItemMaster() {
 		lotHandlingEnum = LotHandlingEnum.FIFO;
 	}
+	
+	public ItemMaster(Facility inParent, String inItemId, UomMaster standardUom) {
+		super(inItemId);
+		this.parent = inParent;
+		this.standardUom = standardUom;
+		lotHandlingEnum = LotHandlingEnum.FIFO;
+		active = true;
+		updated = new Timestamp(System.currentTimeMillis());
+	}
+	
 
 	public final ITypedDao<ItemMaster> getDao() {
 		return DAO;
@@ -229,6 +241,7 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	 * Return the first item with matching uom along the path (in path working order).
 	 * This is used for cart setup for outbound orders (classic pick)
 	 * @param inPath
+	 * @param inUomStr
 	 * @return
 	 */
 	public final Item getFirstItemMatchingUomOnPath(final Path inPath, final String inUomStr) {
@@ -262,11 +275,31 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 		
 		return result;
 	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * Return list of inventory items of the right UOM for that SKU
+	 * @param inUomStr
+	 * @return
+	 */
+	public final List<Item> getItemsOfUom(final String inUomStr) {
+		String normalizedUomStr = UomNormalizer.normalizeString(inUomStr);
+		List<Item> theReturnList = new ArrayList<Item>() ;
+		for (Item item : getItems()) {
+			String itemUom = item.getUomMasterId();
+			String itemNormalizedUom = UomNormalizer.normalizeString(itemUom);
+			if (normalizedUomStr.equals(itemNormalizedUom))
+				theReturnList.add(item);
+		}
+		return theReturnList;
+	}
 
 	// --------------------------------------------------------------------------
 	// metafields
 	public final String getItemLocations() {
 		return "";
 	}
+
+
 
 }

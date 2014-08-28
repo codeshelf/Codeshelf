@@ -15,7 +15,7 @@ import com.gadgetworks.codeshelf.util.ThreadUtils;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.KeepAlive;
 
 public class ServerWatchdogThread extends Thread {
-
+	
 	private static final Logger	LOGGER = LoggerFactory.getLogger(ServerWatchdogThread.class);
 
 	JettyWebSocketServer server;
@@ -30,7 +30,10 @@ public class ServerWatchdogThread extends Thread {
 	int initialWaitTime = 2*1000;
 	
 	@Getter @Setter
-	boolean useKeepAlive = true;
+	boolean suppressKeepAlive = false;
+	
+	@Getter @Setter
+	boolean killIdle = false;
 	
 	@Getter @Setter
 	int siteControllerTimeout = 60*1000; // 1 min
@@ -39,10 +42,13 @@ public class ServerWatchdogThread extends Thread {
 	int webAppTimeout = 5*60*1000; // 5 mins
 	
 	@Getter @Setter
-	int unknownTimeout = 5*60*1000; // 5 mins
+	int defaultTimeout = 5*60*1000; // 5 mins
 
 	@Getter @Setter
-	int keepAliveInterval = 10*1000;
+	int keepAliveInterval = 10*1000; // 10 seconds keepalive interval
+	
+	@Getter @Setter
+	int idleWarningTimeout = 15*1000; // 15 seconds warning if no keepalive
 	
 	public ServerWatchdogThread(JettyWebSocketServer server) {
 		this.server = server;
@@ -53,41 +59,49 @@ public class ServerWatchdogThread extends Thread {
 	public void run() {
 		ThreadUtils.sleep(initialWaitTime);
 		while (!exit) {
-			try {
-				// send ping on all site controller sessions
-				Collection<CsSession> sessions = SessionManager.getInstance().getSessions();
-				for (CsSession session : sessions) {
-					String sessionId = session.getSessionId();
-					if (useKeepAlive) {
-						long timeSinceLastSent = System.currentTimeMillis() - session.getLastMessageSent();
-						long timeSinceLastReceived = System.currentTimeMillis() - session.getLastMessageReceived();
-						// LOGGER.debug(session.getSessionId()+": Sent="+timeSinceLastSent+" Received="+timeSinceLastReceived);
-						if (session.getType()==SessionType.SiteController && timeSinceLastReceived>siteControllerTimeout) {
-							// disconnect timed out site controller
-							LOGGER.info("Site Controller connection timed out.  Closing session.");
-							session.disconnect(new CloseReason(CloseCodes.GOING_AWAY, "Timeout"));
-						}
-						else if (session.getType()==SessionType.UserApp && timeSinceLastReceived>webAppTimeout) {
-							// disconnect user application
-							LOGGER.info("Client application connection timed out.  Closing session.");
-							session.disconnect(new CloseReason(CloseCodes.GOING_AWAY, "Timeout"));
-						}
-						else if (session.getType()==SessionType.Unknown && timeSinceLastReceived>unknownTimeout) {
-							// disconnect unknown client
-							LOGGER.info("Connection to unkown client timed out.  Closing session.");
-							session.disconnect(new CloseReason(CloseCodes.GOING_AWAY, "Timeout"));
-						}
-						else if (timeSinceLastSent>keepAliveInterval) {
-							// send keep-alive message
-							LOGGER.debug("Sending keep-alive on "+sessionId);
+			// send ping on all site controller sessions
+			Collection<CsSession> sessions = SessionManager.getInstance().getSessions();
+			for (CsSession session : sessions) {
+				String sessionId = session.getSessionId();
+
+				if (!suppressKeepAlive) {
+					long timeSinceLastSent = System.currentTimeMillis() - session.getLastMessageSent();
+					if (timeSinceLastSent>keepAliveInterval) {
+						LOGGER.debug("Sending keep-alive on "+sessionId);
+						try {
 							session.sendMessage(new KeepAlive());
+						} catch (Exception e) {
+							LOGGER.error("Failed to send Keepalive", e);
 						}
 					}
 				}
-				ThreadUtils.sleep(waitTime);
-			} catch (Exception e) {
-				LOGGER.error("Failed to send keep alive", e);
+
+				CsSession.State newSessionState = determineSessionState(session);
+				if(newSessionState != session.getLastState()) {
+					LOGGER.info("Session state changed from "+session.getLastState().toString()+" to "+newSessionState.toString());
+					session.setLastState(newSessionState);
+					
+					if(killIdle && newSessionState == CsSession.State.INACTIVE) {
+						LOGGER.warn("Sonnection timed out with "+session.getType().toString()+".  Closing session.");
+						session.disconnect(new CloseReason(CloseCodes.GOING_AWAY, "Timeout"));
+					}
+				}
 			}
+			ThreadUtils.sleep(waitTime);
 		}
+	}
+
+	private CsSession.State determineSessionState(CsSession session) {
+		long timeSinceLastReceived = System.currentTimeMillis() - session.getLastMessageReceived();
+
+		if ((session.getType()==SessionType.SiteController && timeSinceLastReceived > siteControllerTimeout) 
+			|| (session.getType()==SessionType.UserApp && timeSinceLastReceived > webAppTimeout)
+			|| (session.getType()==SessionType.Unknown && timeSinceLastReceived > defaultTimeout)) {
+			return CsSession.State.INACTIVE;
+		}//else 
+		if (timeSinceLastReceived > idleWarningTimeout) {
+			return CsSession.State.IDLE_WARNING;
+		}//else
+		return CsSession.State.ACTIVE;
 	}
 }

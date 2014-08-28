@@ -371,6 +371,9 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 			return null;
 		}
 		Double meters = getMetersFromAnchor();
+		if (meters == null) {
+			return null;
+		}
 		if (meters == 0.0) // we can skip the complications
 			return returnValue;
 		// 2 cases.

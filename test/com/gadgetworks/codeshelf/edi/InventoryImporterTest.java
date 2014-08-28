@@ -10,16 +10,17 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.Timestamp;
 import java.util.List;
-import java.util.Map;
 
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.gadgetworks.codeshelf.application.Util;
 import com.gadgetworks.codeshelf.model.LedRange;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Bay;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
+import com.gadgetworks.codeshelf.model.domain.DomainTestABC;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster;
@@ -40,31 +41,16 @@ import com.gadgetworks.flyweight.command.NetGuid;
  */
 public class InventoryImporterTest extends EdiTestABC {
 
+	static {
+		Util.initLogging();
+
+	}
+
 	@Test
 	public final void testInventoryImporterFromCsvStream() {
-
 		String csvString = "itemId,itemDetailId,description,quantity,uom,locationId,lotId,inventoryDate\r\n" //
-				+ "3001,3001,Widget,100,each,A1.B1,111,2012-09-26 11:31:01\r\n" //
-				+ "4550,4550,Gadget,450,case,A1.B2,222,2012-09-26 11:31:01\r\n" //
-				+ "3007,3007,Dealybob,300,case,A1.B3,333,2012-09-26 11:31:02\r\n" //
-				+ "2150,2150,Thingamajig,220,case,A1.B4,444,2012-09-26 11:31:03\r\n" //
-				+ "2170,2170,Doodad,125,each,A1.B5,555,2012-09-26 11:31:03";
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		Organization organization = new Organization();
-		organization.setDomainId("O-INV1.1");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-INV1.1", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-INV1.1");
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvInventoryImporter importer = new InventoryCsvImporter(mItemMasterDao, mItemDao, mUomMasterDao);
-		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
+				+ "3001,3001,Widget,100,each,A1.B1,111,2012-09-26 11:31:01\r\n";
+		Facility facility = setupInventoryData("testInventoryImporterFromCsvStream", csvString);
 
 		Item item = facility.getStoredItemFromMasterIdAndUom("3001", "each");
 		Assert.assertNotNull(item);
@@ -74,16 +60,54 @@ public class InventoryImporterTest extends EdiTestABC {
 
 	}
 
+	@Test
+	public final void testEmptyUom() {
+		String csvString = "itemId,itemDetailId,description,quantity,uom,locationId,lotId,inventoryDate\r\n" //
+				+ "3001,3001,Widget,A,,A1.B1,111,2012-09-26 11:31:01\r\n";
+		Facility facility = setupInventoryData("testEmptyUom", csvString);
+
+		Item item = facility.getStoredItemFromMasterIdAndUom("3001", "");
+		Assert.assertNull(item);
+	}
+
+	@Test
+	public final void testAlphaQuantity() {
+		String csvString = "itemId,itemDetailId,description,quantity,uom,locationId,lotId,inventoryDate\r\n" //
+				+ "3001,3001,Widget,A,each,A1.B1,111,2012-09-26 11:31:01\r\n";
+		Facility facility = setupInventoryData("testAlphaQuantity", csvString);
+
+		Item item = facility.getStoredItemFromMasterIdAndUom("3001", "each");
+		Assert.assertNotNull(item);
+		Assert.assertEquals(0.0d, item.getQuantity(), 0.0d);
+
+		ItemMaster itemMaster = item.getParent();
+		Assert.assertNotNull(itemMaster);
+	}
+
+	@Test
+	public final void testNegativeQuantity() {
+		String csvString = "itemId,itemDetailId,description,quantity,uom,locationId,lotId,inventoryDate\r\n" //
+				+ "3001,3001,Widget,-2,each,A1.B1,111,2012-09-26 11:31:01\r\n";
+		Facility facility = setupInventoryData("testNegativeQuantity", csvString);
+
+		Item item = facility.getStoredItemFromMasterIdAndUom("3001", "each");
+		Assert.assertNotNull(item);
+		Assert.assertEquals(0.0d, item.getQuantity(), 0.0d);
+
+		ItemMaster itemMaster = item.getParent();
+		Assert.assertNotNull(itemMaster);
+	}
+
 	// --------------------------------------------------------------------------
 	/**
 	 * Created when we discovered that multiple inventory items in the same facility failed to import due to key collisions.
 	 */
 	@Test
-	public final void testMultipleItemInstancesInventoryImporterFromCsvStream() {
+	public final void testMultipleNonEachItemInstancesInventoryImporterFromCsvStream() {
 
 		String csvString = "itemId,itemDetailId,description,quantity,uom,locationId,lotId,inventoryDate\r\n" //
-				+ "3001,3001,Widget,100,each,A1.B1,111,2012-09-26 11:31:01\r\n" //
-				+ "3001,3001,Widget,100,each,A1.B2,111,2012-09-26 11:31:01\r\n";
+				+ "3001,3001,Widget,100,case,A1.B1,111,2012-09-26 11:31:01\r\n" //
+				+ "3001,3001,Widget,100,case,A1.B2,111,2012-09-26 11:31:01\r\n";
 
 		byte[] csvArray = csvString.getBytes();
 
@@ -114,11 +138,11 @@ public class InventoryImporterTest extends EdiTestABC {
 		bay1 = (Bay) facility.findSubLocationById("A1.B1");
 		bay2 = (Bay) facility.findSubLocationById("A1.B2");
 
-		Item item = bay1.getStoredItemFromMasterIdAndUom("3001", "each");
+		Item item = bay1.getStoredItemFromMasterIdAndUom("3001", "case");
 		Assert.assertNotNull(item);
 		Assert.assertEquals(100.0, item.getQuantity().doubleValue(), 0.0);
 
-		item = bay2.getStoredItemFromMasterIdAndUom("3001", "each");
+		item = bay2.getStoredItemFromMasterIdAndUom("3001", "case");
 		Assert.assertNotNull(item);
 		Assert.assertEquals(100.0, item.getQuantity().doubleValue(), 0.0);
 
@@ -128,8 +152,8 @@ public class InventoryImporterTest extends EdiTestABC {
 		// Run the import again - it should not trip up on the same items at the same place(s) - it should instead update them.
 
 		csvString = "itemId,itemDetailId,description,quantity,uom,locationId,lotId,inventoryDate\r\n" //
-				+ "3001,3001,Widget,200,each,A1.B1,111,2012-09-26 11:31:01\r\n" //
-				+ "3001,3001,Widget,200,each,A1.B2,111,2012-09-26 11:31:01\r\n";
+				+ "3001,3001,Widget,200,case,A1.B1,111,2012-09-26 11:31:01\r\n" //
+				+ "3001,3001,Widget,200,case,A1.B2,111,2012-09-26 11:31:01\r\n";
 
 		csvArray = csvString.getBytes();
 
@@ -143,8 +167,8 @@ public class InventoryImporterTest extends EdiTestABC {
 		bay1 = (Bay) facility.findSubLocationById("A1.B1");
 		bay2 = (Bay) facility.findSubLocationById("A1.B2");
 
-		// test our flexibility of "EA" vs. "each"
-		item = bay1.getStoredItemFromMasterIdAndUom("3001", "EA");
+		// test our flexibility of "CS" vs. "case"
+		item = bay1.getStoredItemFromMasterIdAndUom("3001", "CS");
 		Assert.assertNotNull(item);
 		Assert.assertEquals(200.0, item.getQuantity().doubleValue(), 0.0);
 
@@ -154,8 +178,8 @@ public class InventoryImporterTest extends EdiTestABC {
 	}
 
 	private Facility setUpSimpleNoSlotFacility(String inOrganizationName) {
-		// This returns a facility with aisle A1, with two bays with one tier each. No slots. With a path, associated to the aisle. 
-		//   With location alias for first baytier only, not second. 
+		// This returns a facility with aisle A1, with two bays with one tier each. No slots. With a path, associated to the aisle.
+		//   With location alias for first baytier only, not second.
 		// The organization will get "O-" prepended to the name. Facility F-
 		// Caller must use a different organization name each time this is used
 		// Valid tier names: A1.B1.T1 = D101, and A1.B2.T1
@@ -245,7 +269,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvLocationAliasImporter importer2 = new LocationAliasCsvImporter(mLocationAliasDao);
 		importer2.importLocationAliasesFromCsvStream(reader2, facility, ediProcessTime2);
-		
+
 		String nName = "N-" + inOrganizationName;
 		CodeshelfNetwork network = facility.createNetwork(nName);
 		Che che = network.createChe("CHE1", new NetGuid("0x00000001"));
@@ -272,7 +296,7 @@ public class InventoryImporterTest extends EdiTestABC {
 	}
 
 	@Test
-	public final void checkBayanchors() {
+	public final void testBayAnchors() {
 		// This is critical for path values for non-slotted inventory. Otherwise, this belongs in aisle file test, and not in inventory test.
 		Facility facility = setUpSimpleNoSlotFacility("XX01");
 		SubLocationABC locationB1 = (SubLocationABC) facility.findSubLocationById("A1.B1");
@@ -378,7 +402,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		Item item1522 = facility.getStoredItemFromMasterIdAndUom("1522", "EA");
 		Assert.assertNotNull(item1522);
 
-		// Now check the good stuff. We have a path, items with position, with cm offset. So, we should get posAlongPath values, 
+		// Now check the good stuff. We have a path, items with position, with cm offset. So, we should get posAlongPath values,
 		// as well as getting back any valid cm values. (They converted to Double meters from anchor, and then convert back.)
 
 		// zero cm value. Same posAlongPath as the location
@@ -399,7 +423,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		String locPosValue2 = ((SubLocationABC) locationD101).getPosAlongPathui();
 		Assert.assertNotEquals(itemPosValue2, locPosValue2);
 
-		// We can now see how the inventory would light. 
+		// We can now see how the inventory would light.
 		// BOL 1 is case item in A1.B1.T1, with 80 LEDs. No cmFromLeftValue, so it will take the central 4 LEDs.
 		LocationABC theLoc = itemBOL1.getStoredLocation();
 		// verify the conditions.
@@ -521,6 +545,25 @@ public class InventoryImporterTest extends EdiTestABC {
 
 	}
 
+	private Facility setupInventoryData(String organizationId, String csvString) {
+		byte[] csvArray = csvString.getBytes();
+
+		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
+		InputStreamReader reader = new InputStreamReader(stream);
+
+		Organization organization = new Organization();
+		organization.setDomainId(organizationId);
+		mOrganizationDao.store(organization);
+
+		organization.createFacility("F-INV1.1", "TEST", Point.getZeroPoint());
+		Facility facility = organization.getFacility("F-INV1.1");
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		ICsvInventoryImporter importer = new InventoryCsvImporter(mItemMasterDao, mItemDao, mUomMasterDao);
+		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
+		return facility;
+	}
+
 	@Test
 	public final void testNonSlottedPick()  throws IOException{
 
@@ -579,7 +622,7 @@ public class InventoryImporterTest extends EdiTestABC {
 			mUomMasterDao);
 		importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);
 
-		// We should have one order with 3 details. Only 2 of which are fulfillable. 
+		// We should have one order with 3 details. Only 2 of which are fulfillable.
 		OrderHeader order = facility.getOrderHeader("12345");
 		Assert.assertNotNull(order);
 		Integer detailCount = order.getOrderDetails().size();
@@ -590,18 +633,18 @@ public class InventoryImporterTest extends EdiTestABC {
 		Assert.assertNotNull(theNetwork);
 		Che theChe = theNetwork.getChe("CHE1");
 		Assert.assertNotNull(theChe);
-		
+
 		// Set up a cart for order 12345, which will generate work instructions
 		facility.setUpCheContainerFromString(theChe, "12345");
-				
+
 		List<WorkInstruction> aList = theChe.getCheWorkInstructions();
 		Integer wiCount = aList.size();
-		Assert.assertEquals((Integer) 2, wiCount); // 3, but one should be short. Only 1123 and 1522 find each inventory
-		
+		Assert.assertEquals((Integer) 3, wiCount); // 3, but one should be short. Only 1123 and 1522 find each inventory
+
 		List<WorkInstruction> wiListAfterScan = facility.getWorkInstructions(theChe, "D403");
 		Integer wiCountAfterScan = wiListAfterScan.size();
 		Assert.assertEquals((Integer) 1, wiCountAfterScan); // only the one each item in 403 should be there. The item in 402 is earlier on the path.
-	
+
 
 	}
 

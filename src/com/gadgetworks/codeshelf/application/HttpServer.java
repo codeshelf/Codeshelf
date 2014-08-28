@@ -139,7 +139,7 @@ public class HttpServer implements IHttpServer {
 
 			connector.setHost(inHostname);
 			connector.setPort(inPortNum);
-
+			
 			//			connector.addNetworkTrafficListener(new NetworkTrafficListener() {
 			//				public void outgoing(Socket inSocket, ByteBuffer inByteBuffer) {
 			//				}
@@ -157,6 +157,7 @@ public class HttpServer implements IHttpServer {
 
 			server.addConnector(connector);
 
+			LOGGER.info("Starting Web Server on "+inHostname+":"+inPortNum);
 			server.start();
 			server.join();
 		} catch (InterruptedException e) {

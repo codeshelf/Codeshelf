@@ -7,6 +7,9 @@ package com.gadgetworks.codeshelf.util;
  */
 public class UomNormalizer {
 
+	public static final String EACH = "EA";
+	public static final String CASE = "CS";
+	
 	public UomNormalizer() {
 
 	}
@@ -16,9 +19,9 @@ public class UomNormalizer {
 		String returnStr = inUomStr;
 		
 		if (inUomStr.equalsIgnoreCase("cs") || inUomStr.equalsIgnoreCase("case"))
-			returnStr = "CS";
+			returnStr = CASE;
 		else if (inUomStr.equalsIgnoreCase("ea") || inUomStr.equalsIgnoreCase("each"))
-			returnStr = "EA";
+			returnStr = EACH;
 
 		return returnStr;
 	}
