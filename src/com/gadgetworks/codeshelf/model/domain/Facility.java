@@ -2048,10 +2048,12 @@ public class Facility extends SubLocationABC<Facility> {
 		}
 	}
 
-	public Item upsertItem(String itemId, String locationAlias, String cmDistanceFromLeft, String quantity, String inUomId) {
+	public Item upsertItem(String itemId, String storedLocationId, String cmDistanceFromLeft, String quantity, String inUomId) {
 		//TODO This is a proof of concept and needs refactor to not have a dependency out of the EDI package
+		storedLocationId = Strings.nullToEmpty(storedLocationId);
+		
 		InventoryCsvImporter importer = new InventoryCsvImporter(ItemMaster.DAO, Item.DAO, UomMaster.DAO);
-		UomMaster uomMaster = importer.updateUomMaster(inUomId, this);
+		UomMaster uomMaster = importer.upsertUomMaster(inUomId, this);
 
 		ItemMaster itemMaster = this.getItemMaster(itemId);
 		InventorySlottedCsvBean itemBean = new InventorySlottedCsvBean();

@@ -103,11 +103,11 @@ public class InventoryImporterTest extends EdiTestABC {
 	 * Created when we discovered that multiple inventory items in the same facility failed to import due to key collisions.
 	 */
 	@Test
-	public final void testMultipleItemInstancesInventoryImporterFromCsvStream() {
+	public final void testMultipleNonEachItemInstancesInventoryImporterFromCsvStream() {
 
 		String csvString = "itemId,itemDetailId,description,quantity,uom,locationId,lotId,inventoryDate\r\n" //
-				+ "3001,3001,Widget,100,each,A1.B1,111,2012-09-26 11:31:01\r\n" //
-				+ "3001,3001,Widget,100,each,A1.B2,111,2012-09-26 11:31:01\r\n";
+				+ "3001,3001,Widget,100,case,A1.B1,111,2012-09-26 11:31:01\r\n" //
+				+ "3001,3001,Widget,100,case,A1.B2,111,2012-09-26 11:31:01\r\n";
 
 		byte[] csvArray = csvString.getBytes();
 
@@ -138,11 +138,11 @@ public class InventoryImporterTest extends EdiTestABC {
 		bay1 = (Bay) facility.findSubLocationById("A1.B1");
 		bay2 = (Bay) facility.findSubLocationById("A1.B2");
 
-		Item item = bay1.getStoredItemFromMasterIdAndUom("3001", "each");
+		Item item = bay1.getStoredItemFromMasterIdAndUom("3001", "case");
 		Assert.assertNotNull(item);
 		Assert.assertEquals(100.0, item.getQuantity().doubleValue(), 0.0);
 
-		item = bay2.getStoredItemFromMasterIdAndUom("3001", "each");
+		item = bay2.getStoredItemFromMasterIdAndUom("3001", "case");
 		Assert.assertNotNull(item);
 		Assert.assertEquals(100.0, item.getQuantity().doubleValue(), 0.0);
 
@@ -152,8 +152,8 @@ public class InventoryImporterTest extends EdiTestABC {
 		// Run the import again - it should not trip up on the same items at the same place(s) - it should instead update them.
 
 		csvString = "itemId,itemDetailId,description,quantity,uom,locationId,lotId,inventoryDate\r\n" //
-				+ "3001,3001,Widget,200,each,A1.B1,111,2012-09-26 11:31:01\r\n" //
-				+ "3001,3001,Widget,200,each,A1.B2,111,2012-09-26 11:31:01\r\n";
+				+ "3001,3001,Widget,200,case,A1.B1,111,2012-09-26 11:31:01\r\n" //
+				+ "3001,3001,Widget,200,case,A1.B2,111,2012-09-26 11:31:01\r\n";
 
 		csvArray = csvString.getBytes();
 
@@ -167,8 +167,8 @@ public class InventoryImporterTest extends EdiTestABC {
 		bay1 = (Bay) facility.findSubLocationById("A1.B1");
 		bay2 = (Bay) facility.findSubLocationById("A1.B2");
 
-		// test our flexibility of "EA" vs. "each"
-		item = bay1.getStoredItemFromMasterIdAndUom("3001", "EA");
+		// test our flexibility of "CS" vs. "case"
+		item = bay1.getStoredItemFromMasterIdAndUom("3001", "CS");
 		Assert.assertNotNull(item);
 		Assert.assertEquals(200.0, item.getQuantity().doubleValue(), 0.0);
 
