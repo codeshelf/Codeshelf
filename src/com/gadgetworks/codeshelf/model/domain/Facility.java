@@ -147,17 +147,18 @@ public class Facility extends SubLocationABC<Facility> {
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	private Map<String, LocationAlias>		locationAliases		= new HashMap<String, LocationAlias>();
-	
-	@Transient // for now installation specific.  property needs to be exposed as a configuration parameter.
-	@Getter @Setter
-	static WorkInstructionSequencerType sequencerType = WorkInstructionSequencerType.BayDistance;
-	
+
+	@Transient
+	// for now installation specific.  property needs to be exposed as a configuration parameter.
+	@Getter
+	@Setter
+	static WorkInstructionSequencerType		sequencerType		= WorkInstructionSequencerType.BayDistance;
+
 	static {
 		String sequencerConfig = System.getProperty("facility.sequencer");
 		if ("BayDistance".equalsIgnoreCase(sequencerConfig)) {
 			sequencerType = WorkInstructionSequencerType.BayDistance;
-		}
-		else if ("BayDistanceTopLast".equalsIgnoreCase(sequencerConfig)) {
+		} else if ("BayDistanceTopLast".equalsIgnoreCase(sequencerConfig)) {
 			sequencerType = WorkInstructionSequencerType.BayDistanceTopLast;
 		}
 	}
@@ -1169,6 +1170,7 @@ public class Facility extends SubLocationABC<Facility> {
 			}
 		} else {
 			for (Path path : getPaths()) {
+				boolean foundOne = false;
 				// Item item = itemMaster.getFirstItemOnPath(path); // was this before v3
 				String uomStr = inOrderDetail.getUomMasterId();
 				Item item = itemMaster.getFirstItemMatchingUomOnPath(path, uomStr);
@@ -1181,9 +1183,13 @@ public class Facility extends SubLocationABC<Facility> {
 						inChe,
 						item.getStoredLocation(),
 						inTime);
+					if (resultWi != null)
+						foundOne = true;
 				}
-				// Bug remains. We no long make case work instruction for a pick. Or if case and each exist, make two work instructions.
-				// However, still may make two case work instructions. Doubt we want that.
+				// We only want one work instruction made, not one per path.
+				if (foundOne)
+					break;
+				// Bug remains, sort of. If cases exist on several paths, we would like to choose more intelligently which area to pick from.
 			}
 		}
 		return resultWi;
@@ -1239,104 +1245,6 @@ public class Facility extends SubLocationABC<Facility> {
 			}
 		}
 		return wiResultList;
-		// Need an accu-sort instead of this.
-
-		/*  old signature was this followed by old code. Above is vastly different
-		private List<WorkInstruction> generateOutboundInstructions(final Che inChe,
-			final List<Container> inContainerList,
-			final Path inPath,
-			final String inScannedLocationId,
-			final ISubLocation<?> inCheLocation,
-			final Timestamp inTime) {
-
-		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
-
-		for (Container container : inContainerList) {
-			OrderHeader order = container.getCurrentOrderHeader();
-			if (order != null) {
-				for (OrderDetail orderDetail : order.getOrderDetails()) {
-					ItemMaster itemMaster = orderDetail.getItemMaster();
-
-					// Figure out if there are any items are on the current path.
-					// (We just take the first one we find, because items slotted on the same path should be close together.)
-					Item selectedItem = null;
-
-					if (itemMaster.getItems().size() == 0) {
-						// If there is no item in inventory (AT ALL) then create a PLANEED, SHORT WI for this order detail.
-						WorkInstruction plannedWi = createWorkInstruction(WorkInstructionStatusEnum.SHORT,
-							WorkInstructionTypeEnum.ACTUAL,
-							orderDetail,
-							container,
-							inChe,
-							inCheLocation,
-							inTime);
-						if (plannedWi != null) {
-							plannedWi.setPlanQuantity(0);
-							plannedWi.setPlanMinQuantity(0);
-							plannedWi.setPlanMaxQuantity(0);
-							try {
-								WorkInstruction.DAO.store(plannedWi);
-							} catch (DaoException e) {
-								LOGGER.error("", e);
-							}
-							wiResultList.add(plannedWi);
-						}
-					} else {
-						// Search through the items to see if any are on the CHE's pick path.
-						ISubLocation<IDomainObject> foundLocation = null;
-						for (Item item : itemMaster.getItems()) {
-							if (item.getStoredLocation() instanceof ISubLocation) {
-								ISubLocation location = (ISubLocation) item.getStoredLocation();
-								if (inPath.isLocationOnPath(location)) {
-									foundLocation = location;
-									selectedItem = item;
-									break;
-								}
-							}
-						}
-
-						// The item is on the CHE's path, so add it.
-						if (foundLocation != null) {
-							// If there is anything to pick on this item then create a WI for it.
-							if (orderDetail.getQuantity() > 0) {
-								WorkInstruction plannedWi = createWorkInstruction(WorkInstructionStatusEnum.NEW,
-									WorkInstructionTypeEnum.PLAN,
-									orderDetail,
-									container,
-									inChe,
-									foundLocation,
-									inTime);
-								if (plannedWi != null) {
-									wiResultList.add(plannedWi);
-								}
-
-								orderDetail.setStatusEnum(OrderStatusEnum.INPROGRESS);
-								try {
-									OrderDetail.DAO.store(orderDetail);
-								} catch (DaoException e) {
-									LOGGER.error("", e);
-								}
-
-								order.setStatusEnum(OrderStatusEnum.INPROGRESS);
-								try {
-									OrderHeader.DAO.store(order);
-								} catch (DaoException e) {
-									LOGGER.error("", e);
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-
-		// If we found WIs then sort them by they distance from the named location (closest first).
-		if (wiResultList.size() > 0) {
-			inPath.sortWisByDistance(wiResultList);
-		}
-
-		return wiResultList;
-		*/
 	}
 
 	// --------------------------------------------------------------------------
@@ -1540,16 +1448,32 @@ public class Facility extends SubLocationABC<Facility> {
 				resultWi.setCreated(new Timestamp(System.currentTimeMillis()));
 			}
 
-			// Set the LED lighting pattern for this WI.
-			if (inOrderDetail.getParent().getOrderTypeEnum().equals(OrderTypeEnum.CROSS)) {
-				// We currently have no use case for this.
+			// Set the LED lighting pattern for this WI. 
+			if (inStatus == WorkInstructionStatusEnum.SHORT) {
+				// But not if it is a short WI (made to the facility location)
+			}
+			else if (inOrderDetail.getParent().getOrderTypeEnum().equals(OrderTypeEnum.CROSS)) {
+				// We currently have no use case that gets here. We never make direct work instruction from Cross order (which is a vendor put away). 
 				setCrossWorkInstructionLedPattern(resultWi,
 					inOrderDetail.getItemMasterId(),
 					inLocation,
 					inOrderDetail.getUomMasterId());
 			} else {
-				// This is a cross batch case! The work instruction came from cross batch order, but position and leds comes from the outbound order.
-				setWorkInstructionLedPatternFromOrderLocations(resultWi, inOrderDetail.getParent());
+				// This might be a cross batch case! The work instruction came from cross batch order, but position and leds comes from the outbound order.
+				// We could (should?) add a parameter to createWorkInstruction. Called from makeWIForOutbound() for normal outbound pick, and generateCrossWallInstructions().
+				OrderHeader passedInDetailParent = inOrderDetail.getParent();
+
+				// This test might be fragile. If it was a cross batch situation, then the orderHeader will have one or more locations.
+				// If no order locations, then it must be a pick order. We want the leds for the inventory item.
+				if (passedInDetailParent.getOrderLocations().size() == 0) {
+					setOutboundWorkInstructionLedPatternFromInventoryItem(resultWi,
+						inLocation,
+						inOrderDetail.getItemMasterId(),
+						inOrderDetail.getUomMasterId());
+				} else {
+					// The cross batch situation. We want the leds for the order location(s)
+					setWorkInstructionLedPatternFromOrderLocations(resultWi, passedInDetailParent);
+				}
 			}
 
 			// Update the WI
@@ -1578,7 +1502,7 @@ public class Facility extends SubLocationABC<Facility> {
 				resultWi.setPosAlongPath(0.0);
 			else
 				resultWi.setPosAlongPath(inLocation.getPosAlongPath());
-			
+
 			resultWi.setContainer(inContainer);
 			resultWi.setAssignedChe(inChe);
 			resultWi.setPlanQuantity(qtyToPick);
@@ -1601,16 +1525,14 @@ public class Facility extends SubLocationABC<Facility> {
 	 * @param inWi
 	 * @param inOrder
 	 */
-	private void setWorkInstructionLedPatternFromOrderLocations(final WorkInstruction inWi, 
-		final OrderHeader inOrder) {
+	private void setWorkInstructionLedPatternFromOrderLocations(final WorkInstruction inWi, final OrderHeader inOrder) {
 		// This is used for GoodEggs cross batch processs. The order header passed in is the outbound order (which has order locations),
 		// but inWi was generated from the cross batch order detail.
-		
+
 		// Important: you get empty led stream "[]" if either
 		// the outbound order has no order locations, or
 		// the order location does not know its controller yet.
-		
-		
+
 		List<LedCmdGroup> ledCmdGroupList = new ArrayList<LedCmdGroup>();
 		for (OrderLocation orderLocation : inOrder.getActiveOrderLocations()) {
 			short firstLedPosNum = orderLocation.getLocation().getFirstLedNumAlongPath();
@@ -1659,19 +1581,31 @@ public class Facility extends SubLocationABC<Facility> {
 	 * @param inWi
 	 * @param inOrder
 	 */
-	private void setOutboundWorkInstructionLedPatternFromInventoryItem(final WorkInstruction inWi, 
+	private void setOutboundWorkInstructionLedPatternFromInventoryItem(final WorkInstruction inWi,
 		final LocationABC inLocation,
 		final String inItemMasterId,
 		final String inUomId) {
-		
+
 		// This work instruction should have been generated from a pick order, so there must be inventory for the pick at the location.
 		if (inWi == null || inLocation == null) {
 			LOGGER.error("unexpected null condition in setOutboundWorkInstructionLedPatternFromInventoryItem");
 			return;
 		}
+		if (inLocation instanceof Facility) {
+			LOGGER.error("inappropriate call to  setOutboundWorkInstructionLedPatternFromInventoryItem");
+			return;
+		}
 		
+		// if the location does not have led numbers, we do not have tubes or lasers there. Do not proceed.
+		if (inLocation.getFirstLedNumAlongPath() == 0)
+			return;
+		// if the location does not have controller associated, we would NPE below. Might as well check now.
+		LedController theLedController = inLocation.getEffectiveLedController();
+		if (theLedController == null)
+			return;
+
 		List<LedCmdGroup> ledCmdGroupList = new ArrayList<LedCmdGroup>();
-		
+
 		// We expect to find an inventory item at the location.
 		Item theItem = inLocation.getStoredItemFromMasterIdAndUom(inItemMasterId, inUomId);
 		if (theItem == null) {
@@ -1684,10 +1618,13 @@ public class Facility extends SubLocationABC<Facility> {
 		LedRange theRange = theItem.getFirstLastLedsForItem();
 		short firstLedPosNum = theRange.getFirstLedToLight();
 		short lastLedPosNum = theRange.getLastLedToLight();
-		
+		// if the led number is zero, we do not have tubes or lasers there. Do not proceed.
+		if (firstLedPosNum == 0)
+			return;
+
 		// This is how we send LED data to the remote controller. In this case, only one led sample range.
 		List<LedSample> ledSamples = new ArrayList<LedSample>();
-		LedCmdGroup ledCmdGroup = new LedCmdGroup(inLocation.getEffectiveLedController().getDeviceGuidStr(),
+		LedCmdGroup ledCmdGroup = new LedCmdGroup(theLedController.getDeviceGuidStr(),
 			inLocation.getEffectiveLedChannel(),
 			firstLedPosNum,
 			ledSamples);
