@@ -42,7 +42,8 @@ public class JettyWebSocketServer implements IWebSocketServer {
 	@Inject
 	public JettyWebSocketServer(@Named(WEBSOCKET_HOSTNAME_PROPERTY) final String inAddr,
 		@Named(WEBSOCKET_PORTNUM_PROPERTY) final int inPort,
-		@Named(WEBSOCKET_USE_KEEPALIVE_PROPERTY) final boolean useKeepAlive,
+		@Named(WEBSOCKET_SUPPRESS_KEEPALIVE_PROPERTY) final boolean inSuppressKeepAlive,
+		@Named(WEBSOCKET_KILL_IDLE_PROPERTY) final boolean inKillIdle,
 		@Named(KEYSTORE_PATH_PROPERTY) final String inKeystorePath,
 		@Named(KEYSTORE_STORE_PASSWORD_PROPERTY) final String inKeystoreStorePassword,
 		@Named(KEYSTORE_KEY_PASSWORD_PROPERTY) final String inKeystoreKeyPassword
@@ -52,7 +53,8 @@ public class JettyWebSocketServer implements IWebSocketServer {
 		this.mKeystorePath = inKeystorePath;
 		this.mKeystoreStorePassword = inKeystoreStorePassword;
 		this.mKeystoreKeyPassword = inKeystoreKeyPassword;
-		this.watchdog.setUseKeepAlive(useKeepAlive);
+		this.watchdog.setSuppressKeepAlive(inSuppressKeepAlive);
+		this.watchdog.setKillIdle(inKillIdle);
 		this.watchdog.start();
 	}
 		

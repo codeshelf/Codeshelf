@@ -24,6 +24,11 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 
 public class CsSession implements IDaoListener {
+	public enum State {
+		ACTIVE,
+		IDLE_WARNING,
+		INACTIVE
+	};
 
 	private static final Logger	LOGGER = LoggerFactory.getLogger(CsSession.class);
 
@@ -50,6 +55,9 @@ public class CsSession implements IDaoListener {
 	
 	@Getter @Setter
 	long lastMessageReceived = System.currentTimeMillis();
+	
+	@Getter @Setter
+	State lastState = State.INACTIVE;
 	
 	// used to be new HashMap
 	private Map<String,ObjectEventListener> eventListeners = new ConcurrentHashMap<String,ObjectEventListener>();

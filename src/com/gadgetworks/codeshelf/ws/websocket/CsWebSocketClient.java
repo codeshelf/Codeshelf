@@ -26,6 +26,8 @@ import com.google.inject.name.Named;
 public class CsWebSocketClient extends WebSocketClient implements ICsWebSocketClient {
 
 	public static final String				WEBSOCKET_URI_PROPERTY	= "WEBSOCKET_URI_PROPERTY";
+	public static final String	WEBSOCKET_SUPPRESS_KEEPALIVE_PROPERTY	= "WEBSOCKET_SUPPRESS_KEEPALIVE_PROPERTY";
+	public static final String	WEBSOCKET_KILL_IDLE_PROPERTY		= "WEBSOCKET_KILL_IDLE_PROPERTY";
 
 	public static final String				WEBSOCKET_DEFAULT_URI	= "wss://localhost:8444";
 

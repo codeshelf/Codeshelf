@@ -12,6 +12,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import lombok.Getter;
+import lombok.Setter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,8 +56,15 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	private String							mNetworkId;
 	private String							mNetworkCredential;
 
+	/* Device Manager owns websocket configuration too */
 	private String							mUri;
-
+	
+	@Getter @Setter
+	boolean suppressKeepAlive = false;
+	
+	@Getter @Setter
+	boolean idleKill = false;
+	
 	@Getter
 	private JettyWebSocketClient client;
 	
@@ -64,6 +72,8 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	
 	@Inject
 	public CsDeviceManager(@Named("WS_SERVER_URI") final String inUriStr,
+		@Named("WEBSOCKET_SUPPRESS_KEEPALIVE_PROPERTY") final Boolean inSuppressKeepAlive,
+		@Named("WEBSOCKET_KILL_IDLE_PROPERTY") final Boolean inIdleKill,
 		final IUtil inUtil,
 		final IRadioController inRadioController) {
 
@@ -71,6 +81,8 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 		mDeviceMap = new TwoKeyMap<UUID, NetGuid, INetworkDevice>();
 
 		mUri = inUriStr;
+		suppressKeepAlive = inSuppressKeepAlive;
+		idleKill = inIdleKill;
 
 		mOrganizationId = System.getProperty("organizationId");
 		mFacilityId = System.getProperty("facilityId");

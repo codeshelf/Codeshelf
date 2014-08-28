@@ -284,4 +284,47 @@ public final class Util implements IUtil {
 
 		return pbeCipher;
 	}
+	
+	
+	private static boolean tryLoadConfig(String configFileName) {
+		Properties properties = new Properties();
+		if (configFileName != null) {
+			FileInputStream configFileStream;
+			try {
+				configFileStream = new FileInputStream(configFileName);
+			} catch (FileNotFoundException e) {
+				System.err.println("Configuration file not found: "+configFileName);
+				configFileStream = null;
+			}
+			if (configFileStream != null) {
+				try {
+					properties.load(configFileStream);
+				} catch (IOException e) {
+					System.err.println("Failed to load properties from config file "+configFileName);
+					properties = null;
+				}
+				if(properties != null) {
+					System.out.println("Loading properties from config file "+configFileName);
+					for (String name : properties.stringPropertyNames()) {
+						String value = properties.getProperty(name);
+						// LOGGER.debug("Setting "+name+" to "+value);
+						System.setProperty(name, value);
+					}
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	
+	public static void loadConfig() {
+		/* try to load <configfile>.username first, if not found just load <configfile> */
+		String configFileName = System.getProperty("config.properties") + "." + System.getProperty("user.name");
+		if(!tryLoadConfig(configFileName)) {
+			if(!tryLoadConfig(System.getProperty("config.properties")) ) {
+				System.err.println("No configuration file available, terminating");
+				System.exit(1);;
+			}
+		}
+	}
 }

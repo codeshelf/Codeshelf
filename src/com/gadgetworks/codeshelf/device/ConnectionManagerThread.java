@@ -1,5 +1,8 @@
 package com.gadgetworks.codeshelf.device;
 
+import javax.websocket.CloseReason;
+import javax.websocket.CloseReason.CloseCodes;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -9,6 +12,8 @@ import org.slf4j.LoggerFactory;
 import com.gadgetworks.codeshelf.util.ThreadUtils;
 import com.gadgetworks.codeshelf.ws.jetty.client.JettyWebSocketClient;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.KeepAlive;
+import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
+import com.gadgetworks.codeshelf.ws.jetty.server.SessionType;
 
 public class ConnectionManagerThread extends Thread {
 
@@ -26,13 +31,16 @@ public class ConnectionManagerThread extends Thread {
 	int initialWaitTime = 2*1000;
 	
 	@Getter @Setter
-	boolean useKeepAlive = true;
-	
-	@Getter @Setter
 	int siteControllerTimeout = 60*1000;
 	
 	@Getter @Setter
 	int keepAliveInterval = 10*1000;	
+	
+	@Getter @Setter
+	int idleWarningTimeout = 15*1000;	
+	
+	@Getter @Setter
+	CsSession.State lastState = CsSession.State.INACTIVE;
 	
 	public ConnectionManagerThread(CsDeviceManager deviceManager) {
 		this.deviceManager = deviceManager;
@@ -51,20 +59,25 @@ public class ConnectionManagerThread extends Thread {
 	    			client.connect();
 	    		}
 	    		else {
-					if (useKeepAlive) {
-						long timeSinceLastSent = System.currentTimeMillis() - client.getLastMessageSent();
-						long timeSinceLastReceived = System.currentTimeMillis() - client.getLastMessageReceived();
-						LOGGER.debug("WebSocket: Sent="+timeSinceLastSent+" Received="+timeSinceLastReceived);
+					long timeSinceLastSent = System.currentTimeMillis() - client.getLastMessageSent();
+					if (!deviceManager.isSuppressKeepAlive()) {
 						if (timeSinceLastSent>keepAliveInterval) {
-							// send keep-alive message
-							LOGGER.debug("Sending keep-alive");
 							client.sendMessage(new KeepAlive());
 						}
-						if (timeSinceLastReceived>siteControllerTimeout) {
-							LOGGER.info("Server connection timed out.  Restarting session.");
+					}
+					
+					CsSession.State newSessionState = determineSessionState(client);
+					if(newSessionState != this.getLastState()) {
+						LOGGER.info("Session state changed from "+getLastState().toString()+" to "+newSessionState.toString());
+						setLastState(newSessionState);
+						
+						if (deviceManager.isIdleKill() && newSessionState == CsSession.State.INACTIVE) {
+							LOGGER.warn("Server connection timed out.  Restarting session.");
 							client.disconnect();
 						}
 					}
+
+					
 	    			
 	    		}
 			} 
@@ -73,6 +86,18 @@ public class ConnectionManagerThread extends Thread {
 			}
     		ThreadUtils.sleep(waitTime);
 		}
+	}
+
+	private CsSession.State determineSessionState(JettyWebSocketClient client) {
+		long timeSinceLastReceived = System.currentTimeMillis() - client.getLastMessageReceived();
+
+		if (timeSinceLastReceived > siteControllerTimeout) {
+			return CsSession.State.INACTIVE;
+		}//else 
+		if (timeSinceLastReceived > idleWarningTimeout) {
+			return CsSession.State.IDLE_WARNING;
+		}//else
+		return CsSession.State.ACTIVE;
 	}
 
 }
