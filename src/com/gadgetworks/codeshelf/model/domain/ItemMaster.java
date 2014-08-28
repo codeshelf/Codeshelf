@@ -241,6 +241,7 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	 * Return the first item with matching uom along the path (in path working order).
 	 * This is used for cart setup for outbound orders (classic pick)
 	 * @param inPath
+	 * @param inUomStr
 	 * @return
 	 */
 	public final Item getFirstItemMatchingUomOnPath(final Path inPath, final String inUomStr) {
@@ -273,6 +274,24 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 		}
 		
 		return result;
+	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * Return list of inventory items of the right UOM for that SKU
+	 * @param inUomStr
+	 * @return
+	 */
+	public final List<Item> getItemsOfUom(final String inUomStr) {
+		String normalizedUomStr = UomNormalizer.normalizeString(inUomStr);
+		List<Item> theReturnList = new ArrayList<Item>() ;
+		for (Item item : getItems()) {
+			String itemUom = item.getUomMasterId();
+			String itemNormalizedUom = UomNormalizer.normalizeString(itemUom);
+			if (normalizedUomStr.equals(itemNormalizedUom))
+				theReturnList.add(item);
+		}
+		return theReturnList;
 	}
 
 	// --------------------------------------------------------------------------

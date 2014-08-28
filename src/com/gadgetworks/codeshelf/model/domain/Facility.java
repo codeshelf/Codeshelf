@@ -1034,7 +1034,17 @@ public class Facility extends SubLocationABC<Facility> {
 		filterParams.put("type", WorkInstructionTypeEnum.PLAN.toString());
 		for (WorkInstruction wi : WorkInstruction.DAO.findByFilter("assignedChe.persistentId = :chePersistentId and typeEnum = :type",
 			filterParams)) {
-			WorkInstruction.DAO.delete(wi);
+			try {
+				/*
+				Che assignedChe = wi.getAssignedChe();
+				assignedChe.removeWorkInstruction(wi); // necessary? new from v3
+				OrderDetail owningDetail = wi.getParent();
+				owningDetail.removeWorkInstruction(wi); // necessary? new from v3
+				*/
+				WorkInstruction.DAO.delete(wi);
+			} catch (DaoException e) {
+				LOGGER.error("failed to delete prior work instruction for CHE", e);
+			}
 		}
 
 		List<Container> containerList = new ArrayList<Container>();
@@ -1136,6 +1146,27 @@ public class Facility extends SubLocationABC<Facility> {
 		return wiResultList;
 	}
 
+	private void deleteExistingShortWiToFacility(final OrderDetail inOrderDetail) {
+		// Do we have short work instruction already for this orderDetail, for any CHE, going to facility?
+		// Note, that leaves the shorts around that a user shorted.  This only delete the shorts created immediately upon scan if there is no product.
+		for (WorkInstruction wi : inOrderDetail.getWorkInstructions()) {
+			if (wi.getStatusEnum() == WorkInstructionStatusEnum.SHORT)
+				if (wi.getLocation().equals(this)) { // planned to the facility
+					try {
+						/*
+						Che assignedChe = wi.getAssignedChe();
+						assignedChe.removeWorkInstruction(wi); // necessary?
+						inOrderDetail.removeWorkInstruction(wi); // necessary?
+						WorkInstruction.DAO.delete(wi);
+						*/
+					} catch (DaoException e) {
+						LOGGER.error("failed to delete prior work SHORT instruction", e);
+					}
+				}
+		}
+
+	}
+
 	// --------------------------------------------------------------------------
 	/**
 	 *Utility function for outbound order WI generation
@@ -1152,12 +1183,12 @@ public class Facility extends SubLocationABC<Facility> {
 		WorkInstruction resultWi = null;
 		ItemMaster itemMaster = inOrderDetail.getItemMaster();
 
-		if (itemMaster.getItems().size() == 0) {
-			// If there is no item in inventory (AT ALL) then create a PLANNED, SHORT WI for this order detail.
+		if (itemMaster.getItemsOfUom(inOrderDetail.getUomMasterId()).size() == 0) {
+			// If there is no item in inventory for that uom (AT ALL) then create a PLANNED, SHORT WI for this order detail.
 
 			// Need to improve? Do we already have a short WI for this order detail? If so, do we really want to make another?
-			// This should be moderately rare, although it happens in our test case over and over. User has to scan order/container to cart when the item master has
-			// absolutely no items. Not just none in inventory, or items have zero quantity.
+			// This should be moderately rare, although it happens in our test case over and over. User has to scan order/container to cart to make this happen.
+			deleteExistingShortWiToFacility(inOrderDetail);
 			resultWi = createWorkInstruction(WorkInstructionStatusEnum.SHORT,
 				WorkInstructionTypeEnum.ACTUAL,
 				inOrderDetail,
@@ -1455,13 +1486,13 @@ public class Facility extends SubLocationABC<Facility> {
 				resultWi = new WorkInstruction();
 				resultWi.setParent(inOrderDetail);
 				resultWi.setCreated(new Timestamp(System.currentTimeMillis()));
+				resultWi.setLedCmdStream("[]"); // empty array
 			}
 
 			// Set the LED lighting pattern for this WI.
 			if (inStatus == WorkInstructionStatusEnum.SHORT) {
 				// But not if it is a short WI (made to the facility location)
-			}
-			else if (inOrderDetail.getParent().getOrderTypeEnum().equals(OrderTypeEnum.CROSS)) {
+			} else if (inOrderDetail.getParent().getOrderTypeEnum().equals(OrderTypeEnum.CROSS)) {
 				// We currently have no use case that gets here. We never make direct work instruction from Cross order (which is a vendor put away).
 				setCrossWorkInstructionLedPattern(resultWi,
 					inOrderDetail.getItemMasterId(),
@@ -1521,6 +1552,7 @@ public class Facility extends SubLocationABC<Facility> {
 			resultWi.setAssigned(inTime);
 			try {
 				WorkInstruction.DAO.store(resultWi);
+				inOrderDetail.addWorkInstruction(resultWi); // This line new from v3
 				inChe.addWorkInstruction(resultWi); // This line new from v3
 			} catch (DaoException e) {
 				LOGGER.error("", e);
@@ -1538,9 +1570,13 @@ public class Facility extends SubLocationABC<Facility> {
 		// This is used for GoodEggs cross batch processs. The order header passed in is the outbound order (which has order locations),
 		// but inWi was generated from the cross batch order detail.
 
-		// Important: you get empty led stream "[]" if either
-		// the outbound order has no order locations, or
-		// the order location does not know its controller yet.
+		// Warning: the ledCmdStream must be set to "[]" if we bail. If not, site controller will NPE. Hence the check at this late stage
+		// This does not bail intentionally. Perhap should if led = 0.
+		String existingCmdString = inWi.getLedCmdStream();
+		if (existingCmdString == null || existingCmdString.isEmpty()) {
+			inWi.setLedCmdStream("[]"); // empty array
+			LOGGER.error("work instruction was not initialized");
+		}
 
 		List<LedCmdGroup> ledCmdGroupList = new ArrayList<LedCmdGroup>();
 		for (OrderLocation orderLocation : inOrder.getActiveOrderLocations()) {
@@ -1595,6 +1631,13 @@ public class Facility extends SubLocationABC<Facility> {
 		final String inItemMasterId,
 		final String inUomId) {
 
+		// Warning: the ledCmdStream must be set to "[]" if we bail. If not, site controller will NPE. Hence the check at this late stage
+		String existingCmdString = inWi.getLedCmdStream();
+		if (existingCmdString == null || existingCmdString.isEmpty()) {
+			inWi.setLedCmdStream("[]"); // empty array
+			LOGGER.error("work instruction was not initialized");
+		}
+		
 		// This work instruction should have been generated from a pick order, so there must be inventory for the pick at the location.
 		if (inWi == null || inLocation == null) {
 			LOGGER.error("unexpected null condition in setOutboundWorkInstructionLedPatternFromInventoryItem");
@@ -1619,8 +1662,6 @@ public class Facility extends SubLocationABC<Facility> {
 		Item theItem = inLocation.getStoredItemFromMasterIdAndUom(inItemMasterId, inUomId);
 		if (theItem == null) {
 			LOGGER.error("did not find item in setOutboundWorkInstructionLedPatternFromInventoryItem");
-			// output the empty value, which is "[]".  Is this better than nothing? Not sure.
-			inWi.setLedCmdStream(LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList));
 			return;
 		}
 		// Use our utility function to get the leds for the item
@@ -1660,6 +1701,14 @@ public class Facility extends SubLocationABC<Facility> {
 		final String inItemMasterId,
 		final LocationABC inLocation,
 		final String inUom) {
+
+		// Warning: the ledCmdStream must be set to "[]" if we bail. If not, site controller will NPE. Hence the check at this late stage
+		// This does not bail intentionally. Perhap should if led = 0.
+		String existingCmdString = inWi.getLedCmdStream();
+		if (existingCmdString == null || existingCmdString.isEmpty()) {
+			inWi.setLedCmdStream("[]"); // empty array
+			LOGGER.error("work instruction was not initialized");
+		}
 
 		String itemDomainId = Item.makeDomainId(inItemMasterId, inLocation, inUom);
 		short firstLedPosNum = inLocation.getFirstLedPosForItemId(itemDomainId);
@@ -2051,7 +2100,7 @@ public class Facility extends SubLocationABC<Facility> {
 	public Item upsertItem(String itemId, String storedLocationId, String cmDistanceFromLeft, String quantity, String inUomId) {
 		//TODO This is a proof of concept and needs refactor to not have a dependency out of the EDI package
 		storedLocationId = Strings.nullToEmpty(storedLocationId);
-		
+
 		InventoryCsvImporter importer = new InventoryCsvImporter(ItemMaster.DAO, Item.DAO, UomMaster.DAO);
 		UomMaster uomMaster = importer.upsertUomMaster(inUomId, this);
 
@@ -2068,6 +2117,11 @@ public class Facility extends SubLocationABC<Facility> {
 			errors.rejectValue("storedLocation", ErrorCode.FIELD_NOT_FOUND, "storedLocation was not found");
 			throw new InputValidationException(errors);
 		}
-		return importer.updateSlottedItem(false, itemBean, location, new Timestamp(System.currentTimeMillis()), itemMaster, uomMaster);
+		return importer.updateSlottedItem(false,
+			itemBean,
+			location,
+			new Timestamp(System.currentTimeMillis()),
+			itemMaster,
+			uomMaster);
 	}
 }

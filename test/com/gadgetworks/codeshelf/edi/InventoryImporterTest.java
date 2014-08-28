@@ -639,7 +639,7 @@ public class InventoryImporterTest extends EdiTestABC {
 
 		List<WorkInstruction> aList = theChe.getCheWorkInstructions();
 		Integer wiCount = aList.size();
-		Assert.assertEquals((Integer) 2, wiCount); // 3, but one should be short. Only 1123 and 1522 find each inventory
+		Assert.assertEquals((Integer) 3, wiCount); // 3, but one should be short. Only 1123 and 1522 find each inventory
 
 		List<WorkInstruction> wiListAfterScan = facility.getWorkInstructions(theChe, "D403");
 		Integer wiCountAfterScan = wiListAfterScan.size();
