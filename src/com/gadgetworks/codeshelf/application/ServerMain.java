@@ -262,12 +262,14 @@ public final class ServerMain {
 				bind(ICsvCrossBatchImporter.class).to(CrossBatchCsvImporter.class);
 
 				// Websocket/WebSession
+				/*
 				bind(IWebSocketServer.class).to(CsWebSocketServer.class);
 				bind(IWebSessionManager.class).to(WebSessionManager.class);
 				bind(IWsReqCmdFactory.class).to(WsReqCmdFactory.class);
 				bind(WebSocketServer.WebSocketServerFactory.class).to(SSLWebSocketServerFactory.class);
 				install(new FactoryModuleBuilder().implement(IWebSession.class, WebSession.class).build(IWebSessionFactory.class));
-
+				*/
+				
 				// jetty websocket
 				bind(MessageProcessor.class).to(ServerMessageProcessor.class);
 				
