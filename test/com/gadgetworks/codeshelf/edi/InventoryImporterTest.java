@@ -632,7 +632,11 @@ public class InventoryImporterTest extends EdiTestABC {
 		
 		List<String> itemLocations = new ArrayList<String>();
 		for (OrderDetail detail : order.getOrderDetails()) {
+<<<<<<< Updated upstream
 			String itemLocationString = detail.getItemLocationsui();
+=======
+			String itemLocationString = detail.getItemLocations();
+>>>>>>> Stashed changes
 			if (!Strings.isNullOrEmpty(itemLocationString)) {
 				itemLocations.add(itemLocationString);			
 			}
