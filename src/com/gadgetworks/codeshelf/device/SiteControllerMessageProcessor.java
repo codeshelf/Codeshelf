@@ -1,5 +1,6 @@
 package com.gadgetworks.codeshelf.device;
 
+import java.io.IOException;
 import java.util.UUID;
 
 import javax.websocket.Session;
@@ -36,10 +37,9 @@ public class SiteControllerMessageProcessor extends MessageProcessor {
 	
 	@Override
 	public void handleResponse(Session session, ResponseABC response) {
-		LOGGER.info("Response received:"+response);
+		LOGGER.debug("Response received:"+response);
 		if (response.getStatus()!=ResponseStatus.Success) {
 			LOGGER.warn("Request #"+response.getRequestId()+" failed: "+response.getStatusMessage());
-			return;
 		}
 		//////////////////////////////////////////
 		// Handler for Network Attach Response
@@ -52,6 +52,15 @@ public class SiteControllerMessageProcessor extends MessageProcessor {
 				NetworkStatusRequest req = new NetworkStatusRequest();
 				req.setNetworkId(networkId);
 				this.client.sendMessage(req);		
+			}
+			else {
+				LOGGER.warn("Failed to attach network: "+response.getStatusMessage());
+				try {
+					client.disconnect();
+				} 
+				catch (IOException e) {
+					LOGGER.error("Failed to disconnect client", e);
+				}
 			}
 		}
 		//////////////////////////////////////////
