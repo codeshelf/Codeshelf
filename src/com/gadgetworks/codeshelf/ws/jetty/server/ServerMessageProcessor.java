@@ -19,6 +19,7 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.command.EchoCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.GetWorkCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.LoginCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.NetworkAttachCommand;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ObjectDeleteCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ObjectGetCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ObjectMethodCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ObjectUpdateCommand;
@@ -34,6 +35,7 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.request.GetWorkRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.LoginRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.NetworkAttachRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.NetworkStatusRequest;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectDeleteRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectGetRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectMethodRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectUpdateRequest;
@@ -60,6 +62,7 @@ public class ServerMessageProcessor extends MessageProcessor {
 	private final Counter getWorkCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.get-work");
 	private final Counter objectGetCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.object-get");
 	private final Counter objectUpdateCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.object-update");
+	private final Counter objectDeleteCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.object-delete");
 	private final Counter objectListenerCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.object-listener");
 	private final Counter objectFilterCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.register-filter");
 //	private final Meter requestMeter = MetricsService.addMeter(MetricsGroup.WSS,"requests.meter");
@@ -131,6 +134,10 @@ public class ServerMessageProcessor extends MessageProcessor {
 			else if (request instanceof ObjectUpdateRequest) {
 				command = new ObjectUpdateCommand(this.daoProvider, csSession,(ObjectUpdateRequest) request);
 				objectUpdateCounter.inc();
+			}
+			else if (request instanceof ObjectDeleteRequest) {
+				command = new ObjectDeleteCommand(this.daoProvider, csSession,(ObjectDeleteRequest) request);
+				objectDeleteCounter.inc();
 			}
 			else if (request instanceof ObjectMethodRequest) {
 				command = new ObjectMethodCommand(csSession,(ObjectMethodRequest) request);
