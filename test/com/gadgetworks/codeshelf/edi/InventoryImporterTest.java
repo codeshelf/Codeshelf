@@ -9,6 +9,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.Assert;
@@ -20,12 +21,12 @@ import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Bay;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
-import com.gadgetworks.codeshelf.model.domain.DomainTestABC;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster;
 import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.LocationABC;
+import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Path;
@@ -34,6 +35,7 @@ import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.model.domain.SubLocationABC;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.flyweight.command.NetGuid;
+import com.google.common.base.Strings;
 
 /**
  * @author jeffw
@@ -627,7 +629,16 @@ public class InventoryImporterTest extends EdiTestABC {
 		Assert.assertNotNull(order);
 		Integer detailCount = order.getOrderDetails().size();
 		Assert.assertEquals((Integer) 3, detailCount);
-
+		
+		List<String> itemLocations = new ArrayList<String>();
+		for (OrderDetail detail : order.getOrderDetails()) {
+			String itemLocationString = detail.getItemLocations();
+			if (!Strings.isNullOrEmpty(itemLocationString)) {
+				itemLocations.add(itemLocationString);			
+			}
+		}
+		Assert.assertEquals(2, itemLocations.size());
+		
 		// Let's find our CHE
 		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
 		Assert.assertNotNull(theNetwork);

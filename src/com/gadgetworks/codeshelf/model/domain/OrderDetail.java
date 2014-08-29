@@ -7,6 +7,8 @@ package com.gadgetworks.codeshelf.model.domain;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import javax.persistence.Column;
@@ -23,6 +25,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,6 +37,9 @@ import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.codeshelf.util.ASCIIAlphanumericComparator;
+import com.gadgetworks.codeshelf.util.UomNormalizer;
+import com.google.common.base.Joiner;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -70,6 +76,8 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 
 	private static final Logger		LOGGER				= LoggerFactory.getLogger(OrderDetail.class);
 
+	private static final Comparator<String> asciiAlphanumericComparator = new ASCIIAlphanumericComparator();
+	
 	// The owning order header.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
@@ -232,6 +240,20 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 			}
 		}
 		return returnStr;
+	}
+	
+	public final String getItemLocations() {
+		List<String> itemLocationIds = new ArrayList<String>();
+		List<Item> items = getItemMaster().getItems();
+		//filter by uom and join the aliases together
+		for (Item item : items) {
+			if (UomNormalizer.normalizedEquals(item.getUomMasterId(), this.getUomMasterId())) {
+				String itemLocationId = item.getStoredLocation().getPrimaryAliasId();
+				itemLocationIds.add(itemLocationId);
+			}
+		}
+		Collections.sort(itemLocationIds, asciiAlphanumericComparator);
+		return Joiner.on(",").join(itemLocationIds);
 	}
 
 }

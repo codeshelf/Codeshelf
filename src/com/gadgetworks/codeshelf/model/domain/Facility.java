@@ -1035,12 +1035,13 @@ public class Facility extends SubLocationABC<Facility> {
 		for (WorkInstruction wi : WorkInstruction.DAO.findByFilter("assignedChe.persistentId = :chePersistentId and typeEnum = :type",
 			filterParams)) {
 			try {
-				/*
+			
 				Che assignedChe = wi.getAssignedChe();
-				assignedChe.removeWorkInstruction(wi); // necessary? new from v3
+				if (assignedChe != null)
+					assignedChe.removeWorkInstruction(wi); // necessary? new from v3
 				OrderDetail owningDetail = wi.getParent();
 				owningDetail.removeWorkInstruction(wi); // necessary? new from v3
-				*/
+				
 				WorkInstruction.DAO.delete(wi);
 			} catch (DaoException e) {
 				LOGGER.error("failed to delete prior work instruction for CHE", e);
@@ -1153,12 +1154,13 @@ public class Facility extends SubLocationABC<Facility> {
 			if (wi.getStatusEnum() == WorkInstructionStatusEnum.SHORT)
 				if (wi.getLocation().equals(this)) { // planned to the facility
 					try {
-						/*
+						
 						Che assignedChe = wi.getAssignedChe();
-						assignedChe.removeWorkInstruction(wi); // necessary?
+						if (assignedChe != null)
+							assignedChe.removeWorkInstruction(wi); // necessary?
 						inOrderDetail.removeWorkInstruction(wi); // necessary?
 						WorkInstruction.DAO.delete(wi);
-						*/
+						
 					} catch (DaoException e) {
 						LOGGER.error("failed to delete prior work SHORT instruction", e);
 					}
