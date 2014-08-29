@@ -5,9 +5,9 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
-import com.gadgetworks.codeshelf.ws.command.resp.IWsRespCmd;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectDeleteRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectDeleteResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
@@ -18,17 +18,15 @@ public class ObjectDeleteCommand extends CommandABC {
 	
 	private static final Logger	LOGGER = LoggerFactory.getLogger(ObjectDeleteCommand.class);
 
-	ObjectDeleteRequest request;
+	private ObjectDeleteRequest	request;
 	
-	public ObjectDeleteCommand(CsSession session, ObjectDeleteRequest request) {
-		super(session);
+	public ObjectDeleteCommand(IDaoProvider daoProvider, CsSession session, ObjectDeleteRequest request) {
+		super(daoProvider, session);
 		this.request = request;
 	}
 	
 	@Override
 	public ResponseABC exec() {
-		IWsRespCmd result = null;
-
 		// CRITICAL SECUTIRY CONCEPT.
 		// The remote end can NEVER get object results outside of it's own scope.
 		// Today, the scope is set by the user's ORGANIZATION.
