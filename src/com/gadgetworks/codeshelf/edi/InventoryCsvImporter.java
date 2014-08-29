@@ -470,19 +470,22 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 		result.setQuantity(quantity);
 		// This used to call only this
 		// now refine using the cm value if there is one
-		Integer cmValue = 0;
-		try {
-			cmValue = Integer.valueOf(inCsvBean.getCmFromLeft());
-		} catch (NumberFormatException e) {
-			errors.rejectValue("positionFromLeft", ErrorCode.FIELD_NUMBER_NOT_NEGATIVE, "positionFromLeft is not a positive number");
-		}
-		// Our new setter
-		String error = result.validatePositionFromLeft(inLocation, cmValue);
-		if (error.isEmpty()) {
-			result.setPositionFromLeft(cmValue);
-		}  else {
-			errors.rejectValue("positionFromLeft", ErrorCode.FIELD_GENERAL, error);
-		}
+		Integer cmValue = null;
+		String cmFromLeftString = inCsvBean.getCmFromLeft();
+		if (!Strings.isNullOrEmpty(cmFromLeftString)) {
+			try {
+				cmValue = Integer.valueOf(cmFromLeftString);
+				// Our new setter
+				String error = result.validatePositionFromLeft(inLocation, cmValue);
+				if (error.isEmpty()) {
+					result.setPositionFromLeft(cmValue);
+				}  else {
+					errors.rejectValue("positionFromLeft", ErrorCode.FIELD_GENERAL, error);
+				}
+			} catch (NumberFormatException e) {
+				errors.rejectValue("positionFromLeft", ErrorCode.FIELD_NUMBER_NOT_NEGATIVE, "positionFromLeft is not a positive number");
+			}
+		} 
 		result.setActive(true);
 		result.setUpdated(inEdiProcessTime);
 		

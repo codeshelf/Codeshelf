@@ -2110,8 +2110,8 @@ public class Facility extends SubLocationABC<Facility> {
 		InventorySlottedCsvBean itemBean = new InventorySlottedCsvBean();
 		itemBean.setItemId(itemId);
 		itemBean.setLocationId(storedLocationId);
-		itemBean.setCmFromLeft(String.valueOf(cmDistanceFromLeft));
-		itemBean.setQuantity(String.valueOf(quantity));
+		itemBean.setCmFromLeft(cmDistanceFromLeft);
+		itemBean.setQuantity(quantity);
 		itemBean.setUom(inUomId);
 		LocationABC location = (LocationABC) this.findSubLocationById(storedLocationId);
 		if (location == null && !Strings.isNullOrEmpty(storedLocationId)) {
