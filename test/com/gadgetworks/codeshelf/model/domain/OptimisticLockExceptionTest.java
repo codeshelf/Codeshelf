@@ -6,8 +6,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.avaje.ebean.Ebean;
-import com.avaje.ebean.EbeanServer;
 import com.gadgetworks.codeshelf.application.IUtil;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.OrderTypeEnum;
@@ -75,7 +73,7 @@ public class OptimisticLockExceptionTest {
 	@Test
 	public final void optimisticLockExceptionTest() {
 
-		EbeanServer defaultServer = Ebean.getServer(null);
+		// EbeanServer defaultServer = Ebean.getServer(null);
 
 		OrderHeader.DAO = new OrderHeaderDao(mSchemaManager);
 		OrderDetail.DAO = new OrderDetailDao(mSchemaManager);

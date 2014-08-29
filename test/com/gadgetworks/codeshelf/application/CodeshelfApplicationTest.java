@@ -11,7 +11,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.shiro.realm.Realm;
-import org.java_websocket.WebSocket;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -33,7 +32,6 @@ import com.gadgetworks.codeshelf.model.dao.DaoProvider;
 import com.gadgetworks.codeshelf.model.dao.Database;
 import com.gadgetworks.codeshelf.model.dao.H2SchemaManager;
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
-import com.gadgetworks.codeshelf.model.dao.IDatabase;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.dao.MockDao;
@@ -63,16 +61,10 @@ import com.gadgetworks.codeshelf.monitor.Monitor;
 import com.gadgetworks.codeshelf.report.IPickDocumentGenerator;
 import com.gadgetworks.codeshelf.report.PickDocumentGenerator;
 import com.gadgetworks.codeshelf.security.CodeshelfRealm;
-import com.gadgetworks.codeshelf.ws.IWebSessionFactory;
-import com.gadgetworks.codeshelf.ws.IWebSessionManager;
-import com.gadgetworks.codeshelf.ws.WebSession;
-import com.gadgetworks.codeshelf.ws.WebSessionManager;
 import com.gadgetworks.codeshelf.ws.command.req.IWsReqCmdFactory;
 import com.gadgetworks.codeshelf.ws.command.req.WsReqCmdFactory;
 import com.gadgetworks.codeshelf.ws.jetty.server.JettyWebSocketServer;
-import com.gadgetworks.codeshelf.ws.websocket.CsWebSocketServer;
 import com.gadgetworks.codeshelf.ws.websocket.IWebSocketServer;
-import com.gadgetworks.codeshelf.ws.websocket.SSLWebSocketServerFactory;
 import com.google.inject.Binding;
 import com.google.inject.Injector;
 import com.google.inject.Key;
@@ -92,7 +84,7 @@ public class CodeshelfApplicationTest {
 	private static final String	DB_INIT_URL	= "jdbc:h2:mem:database;DB_CLOSE_DELAY=-1";
 	private static final String	DB_URL		= "jdbc:h2:mem:database;SCHEMA=CODESHELF;DB_CLOSE_DELAY=-1";
 
-	public class MockUtil implements IUtil {
+	public class MockUtil extends Util {
 		public void setLoggingLevelsFromPrefs(Organization inOrganization, ITypedDao<PersistentProperty> inPersistentPropertyDao) {
 		}
 
@@ -232,15 +224,6 @@ public class CodeshelfApplicationTest {
 		}
 	}
 
-	private class WebSessionFactory implements IWebSessionFactory {
-
-		@Override
-		public WebSession create(WebSocket inWebSocket, IWsReqCmdFactory inWebSessionReqCmdFactory) {
-			Realm realm = new CodeshelfRealm();
-			return new WebSession(inWebSocket, inWebSessionReqCmdFactory, realm);
-		}
-	}
-
 	/**
 	 * Test method for {@link com.gadgetworks.codeshelf.application.ServerCodeshelfApplication#startApplication()}.
 	 */
@@ -277,17 +260,7 @@ public class CodeshelfApplicationTest {
 			orderHeaderDao,
 			orderDetailDao,
 			daoProvider);
-		IWebSessionFactory webSessionFactory = new WebSessionFactory();
-		IWebSessionManager webSessionManager = new WebSessionManager(webSessionReqCmdFactory, webSessionFactory);
-		SSLWebSocketServerFactory webSocketFactory = new SSLWebSocketServerFactory("./conf/codeshelf.keystore",
-			"JKS",
-			"x2HPbC2avltYQR",
-			"x2HPbC2avltYQR");
 
-		IWebSocketServer webSocketListener = new CsWebSocketServer("localhost",
-			8444,
-			webSessionManager,
-			webSocketFactory);
 		IHttpServer httpServer = new HttpServer("./",
 			"localhost",
 			8443,
@@ -323,27 +296,19 @@ public class CodeshelfApplicationTest {
 			aislesFileImporter,
 			facilityDao);
 		IPickDocumentGenerator pickDocumentGenerator = new PickDocumentGenerator();
-		IUtil util = new MockUtil();
-		ISchemaManager schemaManager = new H2SchemaManager(util,
-			"codeshelf",
-			"codeshelf",
-			"codeshelf",
-			"codeshelf",
-			"localhost",
-			"",
-			"false");
-		IDatabase database = new Database(schemaManager, util);
+		Util util = new MockUtil();
+		
+		//IDatabase database = new Database(schemaManager, util);
 		
 		AdminServer adminServer = new AdminServer();
 		
 		JettyWebSocketServer jettyServer = new JettyWebSocketServer("localhost", 8444, false, false, "path", "pass", "pass");
 
-		final ServerCodeshelfApplication application = new ServerCodeshelfApplication(webSocketListener,
+		final ServerCodeshelfApplication application = new ServerCodeshelfApplication(null,
 			monitor,
 			httpServer,
 			ediProcessor,
 			pickDocumentGenerator,
-			database,
 			util,
 			persistentPropertyDao,
 			organizationDao,

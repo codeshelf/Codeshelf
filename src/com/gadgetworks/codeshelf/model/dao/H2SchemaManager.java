@@ -12,7 +12,7 @@ import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.application.IUtil;
+import com.gadgetworks.codeshelf.application.Util;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
@@ -28,7 +28,7 @@ public final class H2SchemaManager extends SchemaManagerABC {
 	private static final Logger	LOGGER		= LoggerFactory.getLogger(H2SchemaManager.class);
 
 	@Inject
-	public H2SchemaManager(final IUtil inUtil,
+	public H2SchemaManager(final Util inUtil,
 		@Named(DATABASE_USERID_PROPERTY) final String inDbUserId,
 		@Named(DATABASE_PASSWORD_PROPERTY) final String inDbPassword,
 		@Named(DATABASE_NAME_PROPERTY) final String inDbName,
@@ -66,12 +66,10 @@ public final class H2SchemaManager extends SchemaManagerABC {
 	 */
 	public String getApplicationInitDatabaseURL() {
 		String result = DB_INIT_URL;
-
 		// Setup the data directory for this application.
 		// We switched H2 to in-memory instances only.		
 		//		result = "jdbc:h2:" + getUtil().getApplicationDataDirPath() + System.getProperty("file.separator") + "db" + System.getProperty("file.separator") + "database"
 		//				+ ";TRACE_LEVEL_FILE=0;AUTO_SERVER=TRUE";
-
 		return result;
 	}
 
@@ -95,7 +93,6 @@ public final class H2SchemaManager extends SchemaManagerABC {
 	 * @see com.gadgetworks.codeshelf.model.dao.SchemaManagerABC#doUpgradeSchema()
 	 */
 	protected boolean doUpgradeSchema() {
-
 		// First get rid of the eBean dictionary file, so that the internal schema dictionary gets rebuilt.
 		File dictFile = new File(getUtil().getApplicationLogDirPath() + System.getProperty("file.separator") + ".ebean.h2.dictionary");
 		if (dictFile.exists()) {

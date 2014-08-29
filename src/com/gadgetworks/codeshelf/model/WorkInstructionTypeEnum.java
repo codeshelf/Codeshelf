@@ -5,20 +5,18 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model;
 
-import com.avaje.ebean.annotation.EnumValue;
-
 // --------------------------------------------------------------------------
 /**
  *  @author jeffw
  */
 public enum WorkInstructionTypeEnum {
-	@EnumValue("INVALID")
+	// @EnumValue("INVALID")
 	INVALID(WorkInstructionTypeNum.INVALID, "INVALID"),
-	@EnumValue("PLAN")
+	// @EnumValue("PLAN")
 	PLAN(WorkInstructionTypeNum.PLAN, "PLAN"),
-	@EnumValue("ACTUAL")
+	// @EnumValue("ACTUAL")
 	ACTUAL(WorkInstructionTypeNum.ACTUAL, "ACTUAL"),
-	@EnumValue("INDICATOR")
+	// @EnumValue("INDICATOR")
 	INDICATOR(WorkInstructionTypeNum.INDICATOR, "INDICATOR");
 
 	private int		mValue;

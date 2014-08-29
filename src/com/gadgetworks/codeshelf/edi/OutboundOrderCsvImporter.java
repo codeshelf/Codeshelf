@@ -21,7 +21,6 @@ import au.com.bytecode.opencsv.CSVReader;
 import au.com.bytecode.opencsv.bean.CsvToBean;
 import au.com.bytecode.opencsv.bean.HeaderColumnNameMappingStrategy;
 
-import com.avaje.ebean.annotation.Transactional;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.PickStrategyEnum;
@@ -279,7 +278,7 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 	 * @param inCsvBean
 	 * @param inFacility
 	 */
-	@Transactional
+	// @Transactional
 	private OrderHeader orderCsvBeanImport(final OutboundOrderCsvBean inCsvBean,
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime) {

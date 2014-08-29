@@ -8,7 +8,7 @@ package com.gadgetworks.codeshelf.model.dao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.application.IUtil;
+import com.gadgetworks.codeshelf.application.Util;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
@@ -21,7 +21,7 @@ public final class PostgresSchemaManager extends SchemaManagerABC {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(PostgresSchemaManager.class);
 
 	@Inject
-	public PostgresSchemaManager(final IUtil inUtil,
+	public PostgresSchemaManager(final Util inUtil,
 		@Named(DATABASE_USERID_PROPERTY) final String inDbUserId,
 		@Named(DATABASE_PASSWORD_PROPERTY) final String inDbPassword,
 		@Named(DATABASE_NAME_PROPERTY) final String inDbName,

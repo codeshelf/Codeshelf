@@ -28,7 +28,6 @@ import org.slf4j.LoggerFactory;
 
 import au.com.bytecode.opencsv.CSVWriter;
 
-import com.avaje.ebean.annotation.CacheStrategy;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.gadgetworks.codeshelf.edi.ICsvAislesFileImporter;
 import com.gadgetworks.codeshelf.edi.ICsvCrossBatchImporter;
@@ -39,6 +38,7 @@ import com.gadgetworks.codeshelf.edi.ICsvOrderLocationImporter;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.codeshelf.platform.services.PersistencyService;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.Expose;
@@ -54,7 +54,7 @@ import com.google.inject.Singleton;
 @Entity
 @Table(name = "edi_service")
 @DiscriminatorValue("IRONMQ")
-@CacheStrategy(useBeanCache = true)
+//@CacheStrategy(useBeanCache = true)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class IronMqService extends EdiServiceABC {
 
@@ -64,8 +64,8 @@ public class IronMqService extends EdiServiceABC {
 	@Singleton
 	public static class IronMqServiceDao extends GenericDaoABC<IronMqService> implements ITypedDao<IronMqService> {
 		@Inject
-		public IronMqServiceDao(final ISchemaManager inSchemaManager) {
-			super(inSchemaManager);
+		public IronMqServiceDao(PersistencyService persistencyService) {
+			super(persistencyService);
 		}
 
 		public final Class<IronMqService> getDaoClass() {

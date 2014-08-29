@@ -23,8 +23,6 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.avaje.ebean.annotation.CacheStrategy;
-import com.avaje.ebean.annotation.Transactional;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
@@ -32,6 +30,7 @@ import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.codeshelf.platform.services.PersistencyService;
 import com.gadgetworks.flyweight.command.NetGuid;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -50,7 +49,7 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-@CacheStrategy(useBeanCache = true)
+//@CacheStrategy(useBeanCache = true)
 @Table(name = "organization")
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 //@ToString(doNotUseGetters = true)
@@ -62,8 +61,8 @@ public class Organization extends DomainObjectABC {
 	@Singleton
 	public static class OrganizationDao extends GenericDaoABC<Organization> implements ITypedDao<Organization> {
 		@Inject
-		public OrganizationDao(final ISchemaManager inSchemaManager) {
-			super(inSchemaManager);
+		public OrganizationDao(final PersistencyService persistencyService) {
+			super(persistencyService);
 		}
 
 		public final Class<Organization> getDaoClass() {
@@ -193,7 +192,7 @@ public class Organization extends DomainObjectABC {
 	 * @param inAnchorPosx
 	 * @param inAnchorPosY
 	 */
-	@Transactional
+	// @Transactional
 	public final Facility createFacility(final String inDomainId, final String inDescription, Double x, Double y) {
 		Point point = new Point(PositionTypeEnum.GPS,x,y,0d);
 		return this.createFacility(inDomainId, inDescription, point);
@@ -207,7 +206,7 @@ public class Organization extends DomainObjectABC {
 	 * @param inAnchorPosx
 	 * @param inAnchorPosY
 	 */
-	@Transactional
+	// @Transactional
 	public final Facility createFacility(final String inDomainId, final String inDescription, final Point inAnchorPoint) {
 
 		Facility facility = new Facility();
@@ -245,7 +244,7 @@ public class Organization extends DomainObjectABC {
 	 * Create a user for this organization.
 	 * @return
 	 */
-	@Transactional
+	// @Transactional
 	public final User createUser(final String inEmailAddr, final String inPassword) {
 		User result = null;
 

@@ -17,7 +17,7 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.application.IUtil;
+import com.gadgetworks.codeshelf.application.Util;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
@@ -74,7 +74,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	public CsDeviceManager(@Named("WS_SERVER_URI") final String inUriStr,
 		@Named("WEBSOCKET_SUPPRESS_KEEPALIVE_PROPERTY") final Boolean inSuppressKeepAlive,
 		@Named("WEBSOCKET_KILL_IDLE_PROPERTY") final Boolean inIdleKill,
-		final IUtil inUtil,
+		final Util inUtil,
 		final IRadioController inRadioController) {
 
 		mRadioController = inRadioController;

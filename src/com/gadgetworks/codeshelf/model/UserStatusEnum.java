@@ -5,24 +5,22 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model;
 
-import com.avaje.ebean.annotation.EnumValue;
-
 // --------------------------------------------------------------------------
 /**
  *  @author jeffw
  */
 public enum UserStatusEnum {
-	@EnumValue("INVALID")
+	// @EnumValue("INVALID")
 	INVALID(UserStatusNum.INVALID, "INVALID"),
-	@EnumValue("AVAILABLE")
+	// @EnumValue("AVAILABLE")
 	AVAILABLE(UserStatusNum.AVAILABLE, "AVAILABLE"),
-	@EnumValue("AWAY")
+	// @EnumValue("AWAY")
 	AWAY(UserStatusNum.AWAY, "AWAY"),
-	@EnumValue("CHAT")
+	// @EnumValue("CHAT")
 	CHAT(UserStatusNum.CHAT, "CHAT"),
-	@EnumValue("DND")
+	// @EnumValue("DND")
 	DND(UserStatusNum.DND, "DND"),
-	@EnumValue("XA")
+	// @EnumValue("XA")
 	XA(UserStatusNum.XA, "XA");
 
 	private int		mValue;

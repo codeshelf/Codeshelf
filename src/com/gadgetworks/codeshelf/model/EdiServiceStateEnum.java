@@ -5,22 +5,20 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model;
 
-import com.avaje.ebean.annotation.EnumValue;
-
 // --------------------------------------------------------------------------
 /**
  *  @author jeffw
  */
 public enum EdiServiceStateEnum {
-	@EnumValue("INVALID")
+	// @EnumValue("INVALID")
 	INVALID(EdiServiceStateType.INVALID, "INVALID"),
-	@EnumValue("UNLINKED")
+	// @EnumValue("UNLINKED")
 	UNLINKED(EdiServiceStateType.UNLINKED, "UNLINKED"),
-	@EnumValue("LINKING")
+	// @EnumValue("LINKING")
 	LINKING(EdiServiceStateType.LINKING, "LINKING"),
-	@EnumValue("LINKED")
+	// @EnumValue("LINKED")
 	LINKED(EdiServiceStateType.LINKED, "LINKED"),
-	@EnumValue("LINK_FAILED")
+	// @EnumValue("LINK_FAILED")
 	LINK_FAILED(EdiServiceStateType.LINK_FAILED, "LINK_FAILED");
 
 	private int		mValue;

@@ -5,18 +5,16 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model;
 
-import com.avaje.ebean.annotation.EnumValue;
-
 // --------------------------------------------------------------------------
 /**
  *  @author jeffw
  */
 public enum EdiProviderEnum {
-	@EnumValue("INVALID")
+	// @EnumValue("INVALID")
 	INVALID(EdiProviderTypeNum.INVALID, "INVALID"),
-	@EnumValue("DROPBOX")
+	// @EnumValue("DROPBOX")
 	DROPBOX(EdiProviderTypeNum.DROPBOX, "DROPBOX"),
-	@EnumValue("IRONMQ")
+	// @EnumValue("IRONMQ")
 	IRONMQ(EdiProviderTypeNum.IRONMQ, "IRONMQ");
 
 	private int		mValue;

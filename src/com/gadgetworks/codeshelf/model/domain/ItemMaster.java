@@ -26,7 +26,6 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.avaje.ebean.annotation.CacheStrategy;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.edi.InventoryCsvImporter;
@@ -35,6 +34,7 @@ import com.gadgetworks.codeshelf.model.LotHandlingEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.codeshelf.platform.services.PersistencyService;
 import com.gadgetworks.codeshelf.util.UomNormalizer;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -50,7 +50,7 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "item_master")
-@CacheStrategy(useBeanCache = true)
+//@CacheStrategy(useBeanCache = true)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class ItemMaster extends DomainObjectTreeABC<Facility> {
 
@@ -60,8 +60,8 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	@Singleton
 	public static class ItemMasterDao extends GenericDaoABC<ItemMaster> implements ITypedDao<ItemMaster> {
 		@Inject
-		public ItemMasterDao(final ISchemaManager inSchemaManager) {
-			super(inSchemaManager);
+		public ItemMasterDao(final PersistencyService persistencyService) {
+			super(persistencyService);
 		}
 
 		public final Class<ItemMaster> getDaoClass() {

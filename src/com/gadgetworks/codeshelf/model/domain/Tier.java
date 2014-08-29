@@ -22,11 +22,11 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.avaje.ebean.annotation.CacheStrategy;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.codeshelf.platform.services.PersistencyService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -53,7 +53,7 @@ final class TierIds {
 
 @Entity
 @DiscriminatorValue("TIER")
-@CacheStrategy(useBeanCache = false)
+//@CacheStrategy(useBeanCache = false)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class Tier extends SubLocationABC<Bay> {
 
@@ -66,8 +66,8 @@ public class Tier extends SubLocationABC<Bay> {
 	@Singleton
 	public static class TierDao extends GenericDaoABC<Tier> implements ITypedDao<Tier> {
 		@Inject
-		public TierDao(final ISchemaManager inSchemaManager) {
-			super(inSchemaManager);
+		public TierDao(final PersistencyService persistencyService) {
+			super(persistencyService);
 		}
 
 		public final Class<Tier> getDaoClass() {

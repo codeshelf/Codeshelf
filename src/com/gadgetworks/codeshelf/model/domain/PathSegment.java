@@ -20,11 +20,10 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 
+import org.apache.commons.lang.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.avaje.ebean.Query;
-import com.avaje.ebean.annotation.CacheStrategy;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
@@ -33,6 +32,7 @@ import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.codeshelf.platform.services.PersistencyService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -47,7 +47,7 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "path_segment")
-@CacheStrategy(useBeanCache = true)
+//@CacheStrategy(useBeanCache = true)
 //@JsonAutoDetect(fieldVisibility = Visibility.ANY)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 //@ToString(doNotUseGetters = true, exclude = { "parent" })
@@ -64,8 +64,8 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 	@Singleton
 	public static class PathSegmentDao extends GenericDaoABC<PathSegment> implements ITypedDao<PathSegment> {
 		@Inject
-		public PathSegmentDao(final ISchemaManager inSchemaManager) {
-			super(inSchemaManager);
+		public PathSegmentDao(final PersistencyService persistencyService) {
+			super(persistencyService);
 		}
 
 		public final Class<PathSegment> getDaoClass() {
@@ -74,11 +74,13 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 		
 		public List<LocationABC> findLocations(PathSegment inPathSegment) {
 			UUID persistentId = inPathSegment.getPersistentId();
+			/*
 			Query<LocationABC> query = mServer.createQuery(LocationABC.class);
 			query.where().eq("pathSegment.persistentId", persistentId);
 			return query.findList();
+			*/
+			throw new NotImplementedException();
 		}
-		
 	}
 
 	public static final String	DOMAIN_PREFIX	= "SEG";

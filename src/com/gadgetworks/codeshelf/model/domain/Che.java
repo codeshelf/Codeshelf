@@ -22,12 +22,12 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.avaje.ebean.annotation.CacheStrategy;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.codeshelf.platform.services.PersistencyService;
 import com.gadgetworks.flyweight.command.NetGuid;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -42,7 +42,6 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-@CacheStrategy(useBeanCache = true)
 @Table(name = "che")
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class Che extends WirelessDeviceABC {
@@ -53,8 +52,8 @@ public class Che extends WirelessDeviceABC {
 	@Singleton
 	public static class CheDao extends GenericDaoABC<Che> implements ITypedDao<Che> {
 		@Inject
-		public CheDao(final ISchemaManager inSchemaManager) {
-			super(inSchemaManager);
+		public CheDao(PersistencyService persistencyService) {
+			super(persistencyService);
 		}
 
 		public final Class<Che> getDaoClass() {

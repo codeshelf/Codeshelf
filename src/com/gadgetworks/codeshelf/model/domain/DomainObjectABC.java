@@ -25,13 +25,12 @@ import lombok.NonNull;
 import lombok.Setter;
 import lombok.ToString;
 
+import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.WordUtils;
 import org.atteo.classindex.IndexSubclasses;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.avaje.ebean.annotation.CacheStrategy;
-import com.avaje.ebean.bean.EntityBean;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -47,10 +46,9 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
  */
 
 @Entity
-@CacheStrategy(useBeanCache = true)
+//@CacheStrategy(useBeanCache = true)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 @IndexSubclasses
-//@JsonTypeInfo(use=JsonTypeInfo.Id.NAME, include=JsonTypeInfo.As.WRAPPER_OBJECT)
 @JsonTypeInfo(use=JsonTypeInfo.Id.NAME, include=JsonTypeInfo.As.PROPERTY, property = "className")
 @JsonPropertyOrder({ "domainId", "fullDomainId" })
 @JsonIgnoreProperties({"className"})
@@ -164,6 +162,8 @@ public abstract class DomainObjectABC implements IDomainObject {
 	 * @return
 	 */
 	public final Object getFieldValueByName(final String inFieldName) {
+		throw new NotImplementedException();
+		/*
 		Object result = null;
 
 		boolean interceptingWas = ((EntityBean) this)._ebean_getIntercept().isIntercepting();
@@ -176,19 +176,8 @@ public abstract class DomainObjectABC implements IDomainObject {
 		}
 		((EntityBean) this)._ebean_getIntercept().setIntercepting(interceptingWas);
 
-		//		try {
-		//			Collection<Field> fields = new ArrayList<Field>();
-		//			addDeclaredAndInheritedFields(getClass(), fields);
-		//			for (Field field : fields) {
-		//				if (field.getName().equals(inFieldName)) {
-		//					result = field.get(this);
-		//				}	
-		//			}
-		//		} catch (SecurityException | IllegalArgumentException | IllegalAccessException e) {
-		//			LOGGER.error("", e);
-		//		}
-
 		return result;
+		*/
 	}
 
 	// --------------------------------------------------------------------------

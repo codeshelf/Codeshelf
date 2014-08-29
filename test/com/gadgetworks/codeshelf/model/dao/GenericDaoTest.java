@@ -16,7 +16,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.gadgetworks.codeshelf.application.IUtil;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Facility;
@@ -24,14 +23,21 @@ import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
 import com.gadgetworks.codeshelf.model.domain.Point;
+import com.gadgetworks.codeshelf.platform.services.PersistencyService;
 import com.google.inject.Inject;
 
 public class GenericDaoTest {
+	
+	PersistencyService persistencyService = new PersistencyService();
+	
+	public GenericDaoTest() {
+		PersistencyService persistencyService = new PersistencyService();
+	}
 
 	public class OrganizationDao extends GenericDaoABC<Organization> {
 		@Inject
-		public OrganizationDao(final ISchemaManager inSchemaManager) {
-			super(inSchemaManager);
+		public OrganizationDao(PersistencyService persistencyService) {
+			super(persistencyService);
 		}
 
 		public final Class<Organization> getDaoClass() {
@@ -41,8 +47,8 @@ public class GenericDaoTest {
 
 	public class FacilityDao extends GenericDaoABC<Facility> {
 		@Inject
-		public FacilityDao(final ISchemaManager inSchemaManager) {
-			super(inSchemaManager);
+		public FacilityDao(PersistencyService persistencyService) {
+			super(persistencyService);
 		}
 
 		public final Class<Facility> getDaoClass() {
@@ -52,65 +58,21 @@ public class GenericDaoTest {
 
 	public class AisleDao extends GenericDaoABC<Aisle> {
 		@Inject
-		public AisleDao(final ISchemaManager inSchemaManager) {
-			super(inSchemaManager);
+		public AisleDao(PersistencyService persistencyService) {
+			super(persistencyService);
 		}
-
 		public final Class<Aisle> getDaoClass() {
 			return Aisle.class;
 		}
 	}
 
-	private IUtil			mUtil;
-	private ISchemaManager	mSchemaManager;
-	private IDatabase		mDatabase;
-
 	@Before
 	public final void setup() {
-
-		try {
-			mUtil = new IUtil() {
-
-				public void setLoggingLevelsFromPrefs(Organization inOrganization,
-					ITypedDao<PersistentProperty> inPersistentPropertyDao) {
-				}
-
-				public String getVersionString() {
-					return "";
-				}
-
-				public String getApplicationLogDirPath() {
-					return ".";
-				}
-
-				public String getApplicationDataDirPath() {
-					return ".";
-				}
-
-				public void exitSystem() {
-					System.exit(-1);
-				}
-			};
-
-			Class.forName("org.h2.Driver");
-			mSchemaManager = new H2SchemaManager(mUtil,
-				"codeshelf",
-				"codeshelf",
-				"codeshelf",
-				"CODESHELF",
-				"localhost",
-				"",
-				"false");
-			mDatabase = new Database(mSchemaManager, mUtil);
-
-			mDatabase.start();
-		} catch (ClassNotFoundException e) {
-		}
 	}
 
 	@Test
 	public final void testPushNonPersistentUpdates() {
-		OrganizationDao dao = new OrganizationDao(mSchemaManager);
+		OrganizationDao dao = new OrganizationDao(persistencyService);
 
 		Organization organization = new Organization();
 		organization.setDomainId("NON-PERSIST");
@@ -143,7 +105,7 @@ public class GenericDaoTest {
 
 	@Test
 	public final void testFindByFilter() {
-		OrganizationDao dao = new OrganizationDao(mSchemaManager);
+		OrganizationDao dao = new OrganizationDao(persistencyService);
 
 		List<Long> persistentIdList = new ArrayList<Long>();
 
@@ -167,7 +129,7 @@ public class GenericDaoTest {
 
 	@Test
 	public final void testLoadByPersistentId() {
-		OrganizationDao dao = new OrganizationDao(mSchemaManager);
+		OrganizationDao dao = new OrganizationDao(persistencyService);
 
 		Organization organization = new Organization();
 		organization.setDomainId("LOADBY-TEST");
@@ -181,7 +143,7 @@ public class GenericDaoTest {
 
 	@Test
 	public final void testLoadByPersistentIdList() {
-		OrganizationDao dao = new OrganizationDao(mSchemaManager);
+		OrganizationDao dao = new OrganizationDao(persistencyService);
 
 		List<UUID> persistentIdList = new ArrayList<UUID>();
 
@@ -210,8 +172,8 @@ public class GenericDaoTest {
 		String ORGANIZATION_ID = "FIND-BY-DOMAINID";
 		String FACILITY_ID = "FIND-BY-DOMAINID";
 
-		OrganizationDao organizationDao = new OrganizationDao(mSchemaManager);
-		FacilityDao faciltyDao = new FacilityDao(mSchemaManager);
+		OrganizationDao organizationDao = new OrganizationDao(persistencyService);
+		FacilityDao faciltyDao = new FacilityDao(persistencyService);
 
 		Organization organization1 = new Organization();
 		organization1.setDomainId(ORGANIZATION_ID);
@@ -237,9 +199,9 @@ public class GenericDaoTest {
 		String FACILITY2_ID = "FAC2-FIND-BY-DOMAINID-INC";
 		String AISLE_ID = "AISLE-FIND-BY-DOMAINID-INC";
 
-		OrganizationDao organizationDao = new OrganizationDao(mSchemaManager);
-		FacilityDao faciltyDao = new FacilityDao(mSchemaManager);
-		AisleDao aisleDao = new AisleDao(mSchemaManager);
+		OrganizationDao organizationDao = new OrganizationDao(persistencyService);
+		FacilityDao faciltyDao = new FacilityDao(persistencyService);
+		AisleDao aisleDao = new AisleDao(persistencyService);
 
 		Organization organization1 = new Organization();
 		organization1.setDomainId(ORGANIZATION_ID);
@@ -270,7 +232,7 @@ public class GenericDaoTest {
 
 	@Test
 	public final void testStoreNew() {
-		OrganizationDao dao = new OrganizationDao(mSchemaManager);
+		OrganizationDao dao = new OrganizationDao(persistencyService);
 
 		Organization organization1 = new Organization();
 		organization1.setDomainId("STORE-TEST-NEW");
@@ -303,7 +265,7 @@ public class GenericDaoTest {
 
 	@Test
 	public final void testStoreUpdate() {
-		OrganizationDao dao = new OrganizationDao(mSchemaManager);
+		OrganizationDao dao = new OrganizationDao(persistencyService);
 
 		Organization organization2 = new Organization();
 		organization2.setDomainId("STORE-TEST-UPDATE");
@@ -339,7 +301,7 @@ public class GenericDaoTest {
 
 	@Test
 	public final void testDelete() {
-		OrganizationDao dao = new OrganizationDao(mSchemaManager);
+		OrganizationDao dao = new OrganizationDao(persistencyService);
 
 		Organization organization2 = new Organization();
 		organization2.setDomainId("DELETE-TEST");
@@ -374,7 +336,7 @@ public class GenericDaoTest {
 
 	@Test
 	public final void testGetAll() {
-		OrganizationDao dao = new OrganizationDao(mSchemaManager);
+		OrganizationDao dao = new OrganizationDao(persistencyService);
 
 		Organization organization = new Organization();
 		organization.setDomainId("GETALL-TEST1");

@@ -5,20 +5,20 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model;
 
-import com.avaje.ebean.annotation.EnumValue;
+import javax.persistence.Enumerated;
 
 // --------------------------------------------------------------------------
 /**
  *  @author jeffw
  */
 public enum PositionTypeEnum {
-	@EnumValue("INVALID")
+	// @EnumValue("INVALID")
 	INVALID(PositionTypeNum.INVALID, "INVALID"),
-	@EnumValue("GPS")
+	// @EnumValue("GPS")
 	GPS(PositionTypeNum.GPS, "GPS"),
-	@EnumValue("METERS_PARENT")
+	// @EnumValue("METERS_PARENT")
 	METERS_FROM_PARENT(PositionTypeNum.METERS_FROM_PARENT, "METERS_FROM_PARENT"),
-	@EnumValue("METERS_DATUM")
+	// @EnumValue("METERS_DATUM")
 	METERS_FROM_DATUM(PositionTypeNum.METERS_FROM_DATUM, "METERS_FROM_DATUM");
 
 	private int		mValue;

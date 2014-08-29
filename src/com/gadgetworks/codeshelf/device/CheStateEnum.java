@@ -5,32 +5,30 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
-import com.avaje.ebean.annotation.EnumValue;
-
 // --------------------------------------------------------------------------
 /**
  *  @author jeffw
  */
 public enum CheStateEnum {
-	@EnumValue("INVALID")
+	// @EnumValue("INVALID")
 	INVALID(CheStateNum.INVALID, "INVALID"),
-	@EnumValue("IDLE")
+	// @EnumValue("IDLE")
 	IDLE(CheStateNum.IDLE, "IDLE"),
-	@EnumValue("COMPUTE_WORK")
+	// @EnumValue("COMPUTE_WORK")
 	COMPUTE_WORK(CheStateNum.COMPUTE_WORK, "COMPUTE_WORK"),
-	@EnumValue("GET_WORK")
+	// @EnumValue("GET_WORK")
 	GET_WORK(CheStateNum.GET_WORK, "GET_WORK"),
-	@EnumValue("LOCATION_SELECT")
+	// @EnumValue("LOCATION_SELECT")
 	LOCATION_SELECT(CheStateNum.LOCATION_SELECT, "LOCATION_SELECT"),
-	@EnumValue("CONTAINER_SELECT")
+	// @EnumValue("CONTAINER_SELECT")
 	CONTAINER_SELECT(CheStateNum.CONTAINER_SELECT, "CONTAINER_SELECT"),
-	@EnumValue("CONTAINER_POSITION")
+	// @EnumValue("CONTAINER_POSITION")
 	CONTAINER_POSITION(CheStateNum.CONTAINER_POSITION, "CONTAINER_POSITION"),
-	@EnumValue("DO_PICK")
+	// @EnumValue("DO_PICK")
 	DO_PICK(CheStateNum.DO_PICK, "DO_PICK"),
-	@EnumValue("SHORT_PICK")
+	// @EnumValue("SHORT_PICK")
 	SHORT_PICK_CONFIRM(CheStateNum.SHORT_PICK, "SHORT_PICK"),
-	@EnumValue("PICK_COMPLETE")
+	// @EnumValue("PICK_COMPLETE")
 	PICK_COMPLETE(CheStateNum.PICK_COMPLETE, "PICK_COMPLETE");
 
 	private int		mValue;

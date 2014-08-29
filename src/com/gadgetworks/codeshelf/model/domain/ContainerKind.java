@@ -19,12 +19,12 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.avaje.ebean.annotation.CacheStrategy;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.codeshelf.platform.services.PersistencyService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -38,7 +38,8 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-@CacheStrategy(useBeanCache = true)@Table(name = "container_kind")
+//@CacheStrategy(useBeanCache = true)
+@Table(name = "container_kind")
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class ContainerKind extends DomainObjectTreeABC<Facility> {
 
@@ -48,8 +49,8 @@ public class ContainerKind extends DomainObjectTreeABC<Facility> {
 	@Singleton
 	public static class ContainerKindDao extends GenericDaoABC<ContainerKind> implements ITypedDao<ContainerKind> {
 		@Inject
-		public ContainerKindDao(final ISchemaManager inSchemaManager) {
-			super(inSchemaManager);
+		public ContainerKindDao(PersistencyService persistencyService) {
+			super(persistencyService);
 		}
 		
 		public final Class<ContainerKind> getDaoClass() {

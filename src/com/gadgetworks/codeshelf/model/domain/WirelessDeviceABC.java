@@ -21,13 +21,13 @@ import lombok.ToString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.avaje.ebean.annotation.CacheStrategy;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.codeshelf.platform.services.PersistencyService;
 import com.gadgetworks.flyweight.command.NetAddress;
 import com.gadgetworks.flyweight.command.NetGuid;
 import com.gadgetworks.flyweight.controller.NetworkDeviceStateEnum;
@@ -45,7 +45,7 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-@CacheStrategy(useBeanCache = true)
+//@CacheStrategy(useBeanCache = true)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 @ToString(doNotUseGetters = true, callSuper = true)
 public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNetwork> {
@@ -59,8 +59,8 @@ public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNet
 	@Singleton
 	public static class WirelessDeviceDao extends GenericDaoABC<WirelessDeviceABC> implements ITypedDao<WirelessDeviceABC> {
 		@Inject
-		public WirelessDeviceDao(final ISchemaManager inSchemaManager) {
-			super(inSchemaManager);
+		public WirelessDeviceDao(final PersistencyService persistencyService) {
+			super(persistencyService);
 		}
 		
 		public final Class<WirelessDeviceABC> getDaoClass() {

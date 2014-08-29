@@ -19,12 +19,12 @@ import lombok.ToString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.avaje.ebean.annotation.CacheStrategy;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.codeshelf.platform.services.PersistencyService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -39,7 +39,7 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "location_alias")
-@CacheStrategy(useBeanCache = true)
+//@CacheStrategy(useBeanCache = true)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 @ToString(of = { "mappedLocation", "active" }, callSuper = true, doNotUseGetters = true)
 public class LocationAlias extends DomainObjectTreeABC<Facility> {
@@ -50,8 +50,8 @@ public class LocationAlias extends DomainObjectTreeABC<Facility> {
 	@Singleton
 	public static class LocationAliasDao extends GenericDaoABC<LocationAlias> implements ITypedDao<LocationAlias> {
 		@Inject
-		public LocationAliasDao(final ISchemaManager inSchemaManager) {
-			super(inSchemaManager);
+		public LocationAliasDao(final PersistencyService persistencyService) {
+			super(persistencyService);
 		}
 
 		public final Class<LocationAlias> getDaoClass() {

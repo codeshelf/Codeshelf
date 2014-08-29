@@ -28,7 +28,6 @@ import com.gadgetworks.codeshelf.metrics.MetricsService;
 import com.gadgetworks.codeshelf.metrics.OpenTsdb;
 import com.gadgetworks.codeshelf.metrics.OpenTsdbReporter;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
-import com.gadgetworks.codeshelf.model.dao.IDatabase;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Organization;
@@ -50,7 +49,6 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 	private IWebSocketServer				mWebSocketServer;
 	private IHttpServer						mHttpServer;
 	private IPickDocumentGenerator			mPickDocumentGenerator;
-	private IDatabase						mDatabase;
 
 	private ITypedDao<PersistentProperty>	mPersistentPropertyDao;
 	private ITypedDao<Organization>			mOrganizationDao;
@@ -73,8 +71,7 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		final IHttpServer inHttpServer,
 		final IEdiProcessor inEdiProcessor,
 		final IPickDocumentGenerator inPickDocumentGenerator,
-		final IDatabase inDatabase,
-		final IUtil inUtil,
+		final Util inUtil,
 		final ITypedDao<PersistentProperty> inPersistentPropertyDao,
 		final ITypedDao<Organization> inOrganizationDao,
 		final ITypedDao<Facility> inFacilityDao,
@@ -86,7 +83,6 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		mWebSocketServer = inWebSocketServer;
 		mHttpServer = inHttpServer;
 		mEdiProcessor = inEdiProcessor;
-		mDatabase = inDatabase;
 		mPickDocumentGenerator = inPickDocumentGenerator;
 		mPersistentPropertyDao = inPersistentPropertyDao;
 		mOrganizationDao = inOrganizationDao;

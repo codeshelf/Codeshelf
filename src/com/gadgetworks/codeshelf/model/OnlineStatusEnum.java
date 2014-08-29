@@ -5,22 +5,20 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model;
 
-import com.avaje.ebean.annotation.EnumValue;
-
 // --------------------------------------------------------------------------
 /**
  *  @author jeffw
  */
 public enum OnlineStatusEnum {
-	@EnumValue("INVALID")
+	// @EnumValue("INVALID")
 	INVALID(OnlineStatusNum.INVALID, "INVALID"),
-	@EnumValue("OFFLINE")
+	// @EnumValue("OFFLINE")
 	OFFLINE(OnlineStatusNum.OFFLINE, "OFFLINE"),
-	@EnumValue("CONNECTING")
+	// @EnumValue("CONNECTING")
 	CONNECTING(OnlineStatusNum.CONNECTING, "CONNECTING"),
-	@EnumValue("FAILED")
+	// @EnumValue("FAILED")
 	FAILED(OnlineStatusNum.FAILED, "FAILED"),
-	@EnumValue("ONLINE")
+	// @EnumValue("ONLINE")
 	ONLINE(OnlineStatusNum.ONLINE, "ONLINE");
 
 	private int		mValue;

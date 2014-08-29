@@ -27,7 +27,6 @@ import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.avaje.ebean.annotation.CacheStrategy;
 import com.dropbox.core.DbxAppInfo;
 import com.dropbox.core.DbxAuthFinish;
 import com.dropbox.core.DbxClient;
@@ -50,6 +49,7 @@ import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.codeshelf.platform.services.PersistencyService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -65,7 +65,7 @@ import com.google.inject.Singleton;
 @Entity
 @Table(name = "edi_service")
 @DiscriminatorValue("DROPBOX")
-@CacheStrategy(useBeanCache = true)
+//@CacheStrategy(useBeanCache = true)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class DropboxService extends EdiServiceABC {
 
@@ -75,8 +75,8 @@ public class DropboxService extends EdiServiceABC {
 	@Singleton
 	public static class DropboxServiceDao extends GenericDaoABC<DropboxService> implements ITypedDao<DropboxService> {
 		@Inject
-		public DropboxServiceDao(final ISchemaManager inSchemaManager) {
-			super(inSchemaManager);
+		public DropboxServiceDao(PersistencyService persistencyService) {
+			super(persistencyService);
 		}
 
 		public final Class<DropboxService> getDaoClass() {

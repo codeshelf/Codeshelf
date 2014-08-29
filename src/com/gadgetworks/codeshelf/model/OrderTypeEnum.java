@@ -5,23 +5,21 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model;
 
-import com.avaje.ebean.annotation.EnumValue;
-
 // --------------------------------------------------------------------------
 /**
  *  @author jeffw
  */
 public enum OrderTypeEnum {
-	@EnumValue("INVALID")
+	// @EnumValue("INVALID")
 	INVALID(OrderTypeNum.INVALID, "INVALID"),
 	// Outbound customer orders picked from inventory.
-	@EnumValue("OUTBOUND")
+	// @EnumValue("OUTBOUND")
 	OUTBOUND(OrderTypeNum.OUTBOUND, "OUTBOUND"),
 	// Inbound orders to put material into inventory.
-	@EnumValue("PUT")
+	// @EnumValue("PUT")
 	INBOUND(OrderTypeNum.INBOUND, "INBOUND"),
 	// Orders the cross the facility to fill outbound customer orders on a CrossWall.
-	@EnumValue("CROSS")
+	// @EnumValue("CROSS")
 	CROSS(OrderTypeNum.CROSS, "CROSS");
 
 	private int		mValue;

@@ -5,18 +5,16 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model;
 
-import com.avaje.ebean.annotation.EnumValue;
-
 // --------------------------------------------------------------------------
 /**
  *  @author jeffw
  */
 public enum WorkInstructionOpEnum {
-	@EnumValue("INVALID")
+	// @EnumValue("INVALID")
 	INVALID(WorkInstructionOpNum.INVALID, "INVALID"),
-	@EnumValue("CONTAINER_MOVE")
+	// @EnumValue("CONTAINER_MOVE")
 	CONTAINER_MOVE(WorkInstructionOpNum.CONTAINER_MOVE, "CONTAINER_MOVE"),
-	@EnumValue("ITEM_MOVE")
+	// @EnumValue("ITEM_MOVE")
 	ITEM_MOVE(WorkInstructionOpNum.ITEM_MOVE, "ITEM_MOVE");
 
 	private int		mValue;

@@ -14,7 +14,6 @@ import org.apache.shiro.authc.credential.CredentialsMatcher;
 import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
 import org.apache.shiro.crypto.hash.Md5Hash;
 import org.apache.shiro.realm.Realm;
-import org.java_websocket.server.WebSocketServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -114,25 +113,15 @@ import com.gadgetworks.codeshelf.monitor.Monitor;
 import com.gadgetworks.codeshelf.report.IPickDocumentGenerator;
 import com.gadgetworks.codeshelf.report.PickDocumentGenerator;
 import com.gadgetworks.codeshelf.security.CodeshelfRealm;
-import com.gadgetworks.codeshelf.ws.IWebSession;
-import com.gadgetworks.codeshelf.ws.IWebSessionFactory;
-import com.gadgetworks.codeshelf.ws.IWebSessionManager;
-import com.gadgetworks.codeshelf.ws.WebSession;
-import com.gadgetworks.codeshelf.ws.WebSessionManager;
-import com.gadgetworks.codeshelf.ws.command.req.IWsReqCmdFactory;
-import com.gadgetworks.codeshelf.ws.command.req.WsReqCmdFactory;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageProcessor;
 import com.gadgetworks.codeshelf.ws.jetty.server.MessageProcessorFactory;
 import com.gadgetworks.codeshelf.ws.jetty.server.ServerMessageProcessor;
-import com.gadgetworks.codeshelf.ws.websocket.CsWebSocketServer;
 import com.gadgetworks.codeshelf.ws.websocket.IWebSocketServer;
 import com.gadgetworks.codeshelf.ws.websocket.IWebSocketSslContextGenerator;
-import com.gadgetworks.codeshelf.ws.websocket.SSLWebSocketServerFactory;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.TypeLiteral;
-import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Names;
 
 // --------------------------------------------------------------------------
@@ -234,10 +223,9 @@ public final class ServerMain {
 				bind(Integer.class).annotatedWith(Names.named(IHttpServer.WEBAPP_PORTNUM_PROPERTY))
 					.toInstance(Integer.valueOf(System.getProperty("webapp.portnum")));
 
-				bind(IUtil.class).to(Util.class);
+				// bind(IUtil.class).to(Util.class);
 				bind(IMonitor.class).to(Monitor.class);
 				bind(ISchemaManager.class).to(PostgresSchemaManager.class);
-				bind(IDatabase.class).to(Database.class);
 				bind(ICodeshelfApplication.class).to(ServerCodeshelfApplication.class);
 				bind(IDaoProvider.class).to(DaoProvider.class);
 				bind(IHttpServer.class).to(HttpServer.class);

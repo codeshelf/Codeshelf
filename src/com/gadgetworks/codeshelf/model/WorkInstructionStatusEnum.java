@@ -5,24 +5,22 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model;
 
-import com.avaje.ebean.annotation.EnumValue;
-
 // --------------------------------------------------------------------------
 /**
  *  @author jeffw
  */
 public enum WorkInstructionStatusEnum {
-	@EnumValue("INVALID")
+	// @EnumValue("INVALID")
 	INVALID(WorkInstructionStatusNum.INVALID, "INVALID"),
-	@EnumValue("NEW")
+	// @EnumValue("NEW")
 	NEW(WorkInstructionStatusNum.NEW, "NEW"),
-	@EnumValue("INPROGRESS")
+	// @EnumValue("INPROGRESS")
 	INPROGRESS(WorkInstructionStatusNum.INPROGRESS, "INPROGRESS"),
-	@EnumValue("SHORT")
+	// @EnumValue("SHORT")
 	SHORT(WorkInstructionStatusNum.SHORT, "SHORT"),
-	@EnumValue("COMPLETE")
+	// @EnumValue("COMPLETE")
 	COMPLETE(WorkInstructionStatusNum.COMPLETE, "COMPLETE"),
-	@EnumValue("REVERT")
+	// @EnumValue("REVERT")
 	REVERT(WorkInstructionStatusNum.REVERT, "REVERT");
 
 	private int		mValue;

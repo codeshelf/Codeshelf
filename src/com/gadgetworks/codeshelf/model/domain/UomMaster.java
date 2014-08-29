@@ -17,11 +17,11 @@ import javax.persistence.Table;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.avaje.ebean.annotation.CacheStrategy;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.codeshelf.platform.services.PersistencyService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -36,7 +36,7 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "uom_master")
-@CacheStrategy(useBeanCache = true)
+//@CacheStrategy(useBeanCache = true)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class UomMaster extends DomainObjectTreeABC<Facility> {
 
@@ -46,8 +46,8 @@ public class UomMaster extends DomainObjectTreeABC<Facility> {
 	@Singleton
 	public static class UomMasterDao extends GenericDaoABC<UomMaster> implements ITypedDao<UomMaster> {
 		@Inject
-		public UomMasterDao(final ISchemaManager inSchemaManager) {
-			super(inSchemaManager);
+		public UomMasterDao(final PersistencyService persistencyService) {
+			super(persistencyService);
 		}
 
 		public final Class<UomMaster> getDaoClass() {

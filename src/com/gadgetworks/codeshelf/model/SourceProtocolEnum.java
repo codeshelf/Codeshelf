@@ -5,16 +5,14 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model;
 
-import com.avaje.ebean.annotation.EnumValue;
-
 // --------------------------------------------------------------------------
 /**
  *  @author jeffw
  */
 public enum SourceProtocolEnum {
-	@EnumValue("INVALID")
+	// @EnumValue("INVALID")
 	INVALID(SourceProtocolNum.INVALID, "INVALID"),
-	@EnumValue("JMS")
+	// @EnumValue("JMS")
 	JMS(SourceProtocolNum.JMS, "JMS");
 
 	private int		mValue;

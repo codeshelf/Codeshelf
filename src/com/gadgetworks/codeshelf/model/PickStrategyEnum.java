@@ -5,18 +5,16 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model;
 
-import com.avaje.ebean.annotation.EnumValue;
-
 // --------------------------------------------------------------------------
 /**
  *  @author jeffw
  */
 public enum PickStrategyEnum {
-	@EnumValue("INVALID")
+	// @EnumValue("INVALID")
 	INVALID(PickStrategyNum.INVALID, "INVALID"),
-	@EnumValue("SERIAL")
+	// @EnumValue("SERIAL")
 	SERIAL(PickStrategyNum.SERIAL, "SERIAL"),
-	@EnumValue("PARALLEL")
+	// @EnumValue("PARALLEL")
 	PARALLEL(PickStrategyNum.PARALLEL, "PARALLEL");
 
 	private int		mValue;

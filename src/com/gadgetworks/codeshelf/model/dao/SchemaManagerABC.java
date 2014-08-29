@@ -19,7 +19,7 @@ import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.application.IUtil;
+import com.gadgetworks.codeshelf.application.Util;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -39,7 +39,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	private static final String	DOMAINID_TYPE	= "TEXT";
 
 	@Getter(value = AccessLevel.PROTECTED)
-	private final IUtil			util;
+	private final Util			util;
 	@Getter
 	private final String		dbUserId;
 	@Getter
@@ -56,7 +56,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	private final String		dbSsl;
 
 	@Inject
-	public SchemaManagerABC(final IUtil inUtil,
+	public SchemaManagerABC(final Util inUtil,
 		final String inDbUserId,
 		final String inDbPassword,
 		final String inDbName,

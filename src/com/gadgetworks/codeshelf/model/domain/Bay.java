@@ -16,11 +16,11 @@ import javax.persistence.Entity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.avaje.ebean.annotation.CacheStrategy;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.codeshelf.platform.services.PersistencyService;
 import com.google.common.collect.Ordering;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -36,7 +36,6 @@ import com.google.inject.Singleton;
 
 @Entity
 @DiscriminatorValue("BAY")
-@CacheStrategy(useBeanCache = false)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 //@ToString(doNotUseGetters = true)
 public class Bay extends SubLocationABC<Aisle> {
@@ -48,8 +47,8 @@ public class Bay extends SubLocationABC<Aisle> {
 	@Singleton
 	public static class BayDao extends GenericDaoABC<Bay> implements ITypedDao<Bay> {
 		@Inject
-		public BayDao(final ISchemaManager inSchemaManager) {
-			super(inSchemaManager);
+		public BayDao(PersistencyService persistencyService) {
+			super(persistencyService);
 		}
 
 		public final Class<Bay> getDaoClass() {

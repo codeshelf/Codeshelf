@@ -17,12 +17,12 @@ import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.avaje.ebean.annotation.CacheStrategy;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.codeshelf.platform.services.PersistencyService;
 import com.gadgetworks.flyweight.command.NetGuid;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -37,7 +37,8 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-@CacheStrategy(useBeanCache = true)@Table(name = "led_controller")
+//@CacheStrategy(useBeanCache = true)
+@Table(name = "led_controller")
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 //@ToString(doNotUseGetters = true)
 public class LedController extends WirelessDeviceABC {
@@ -48,8 +49,8 @@ public class LedController extends WirelessDeviceABC {
 	@Singleton
 	public static class LedControllerDao extends GenericDaoABC<LedController> implements ITypedDao<LedController> {
 		@Inject
-		public LedControllerDao(final ISchemaManager inSchemaManager) {
-			super(inSchemaManager);
+		public LedControllerDao(final PersistencyService persistencyService) {
+			super(persistencyService);
 		}
 		
 		public final Class<LedController> getDaoClass() {

@@ -18,12 +18,12 @@ public abstract class ApplicationABC implements ICodeshelfApplication {
 	private static final Logger	LOGGER		= LoggerFactory.getLogger(ApplicationABC.class);
 
 	private boolean				mIsRunning	= true;
-	private IUtil				mUtil;
+	private Util				mUtil;
 	private Thread				mShutdownHookThread;
 	private Runnable			mShutdownRunnable;
 
 	@Inject
-	public ApplicationABC(final IUtil inUtil) {
+	public ApplicationABC(final Util inUtil) {
 		mUtil = inUtil;
 	}
 

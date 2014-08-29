@@ -20,12 +20,12 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.avaje.ebean.annotation.CacheStrategy;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.codeshelf.platform.services.PersistencyService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -40,7 +40,8 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "user_session")
-@CacheStrategy(useBeanCache = true)@JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
+//@CacheStrategy(useBeanCache = true)
+@JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class UserSession extends DomainObjectTreeABC<User> {
 
 	@Inject
@@ -49,8 +50,8 @@ public class UserSession extends DomainObjectTreeABC<User> {
 	@Singleton
 	public static class UserSessionDao extends GenericDaoABC<UserSession> implements ITypedDao<UserSession> {
 		@Inject
-		public UserSessionDao(final ISchemaManager inSchemaManager) {
-			super(inSchemaManager);
+		public UserSessionDao(final PersistencyService persistencyService) {
+			super(persistencyService);
 		}
 		
 		public final Class<UserSession> getDaoClass() {

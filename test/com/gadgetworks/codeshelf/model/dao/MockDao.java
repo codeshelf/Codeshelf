@@ -20,7 +20,6 @@ import javax.persistence.Column;
 
 import org.apache.commons.lang.NotImplementedException;
 
-import com.avaje.ebean.Query;
 import com.eaio.uuid.UUIDGen;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.model.domain.IDomainObjectTree;

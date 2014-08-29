@@ -26,7 +26,6 @@ import lombok.ToString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.avaje.ebean.annotation.CacheStrategy;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
@@ -34,6 +33,7 @@ import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.codeshelf.platform.services.PersistencyService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -48,7 +48,7 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "order_detail")
-@CacheStrategy(useBeanCache = true)
+//@CacheStrategy(useBeanCache = true)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 @ToString(of = { "statusEnum", "quantity", "itemMaster", "uomMaster", "active" }, callSuper = true, doNotUseGetters = true)
 public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
@@ -59,8 +59,8 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	@Singleton
 	public static class OrderDetailDao extends GenericDaoABC<OrderDetail> implements ITypedDao<OrderDetail> {
 		@Inject
-		public OrderDetailDao(final ISchemaManager inSchemaManager) {
-			super(inSchemaManager);
+		public OrderDetailDao(final PersistencyService persistencyService) {
+			super(persistencyService);
 		}
 
 		public final Class<OrderDetail> getDaoClass() {

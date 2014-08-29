@@ -5,20 +5,18 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model;
 
-import com.avaje.ebean.annotation.EnumValue;
-
 // --------------------------------------------------------------------------
 /**
  *  @author jeffw
  */
 public enum LotHandlingEnum {
-	@EnumValue("INVALID")
+	// @EnumValue("INVALID")
 	INVALID(OrderStatusNum.INVALID, "INVALID"),
-	@EnumValue("NONE")
+	// @EnumValue("NONE")
 	NONE(OrderStatusNum.NONE, "NONE"),
-	@EnumValue("FIFO")
+	// @EnumValue("FIFO")
 	FIFO(OrderStatusNum.FIFO, "FIFO"),
-	@EnumValue("REQUIRED")
+	// @EnumValue("REQUIRED")
 	REQUIRED(OrderStatusNum.REQUIRED, "REQUIRED");
 
 	private int		mValue;

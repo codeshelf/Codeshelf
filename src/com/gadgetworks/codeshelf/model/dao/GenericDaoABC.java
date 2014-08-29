@@ -17,37 +17,40 @@ import java.util.concurrent.LinkedBlockingQueue;
 import javax.persistence.OptimisticLockException;
 import javax.persistence.PersistenceException;
 
+import org.apache.commons.lang.NotImplementedException;
+import org.hibernate.Criteria;
+import org.hibernate.Session;
+import org.hibernate.Transaction;
+import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.avaje.ebean.BeanState;
-import com.avaje.ebean.Ebean;
-import com.avaje.ebean.EbeanServer;
-import com.avaje.ebean.Query;
-import com.avaje.ebean.bean.EntityBean;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.model.domain.IDomainObjectTree;
+import com.gadgetworks.codeshelf.platform.services.PersistencyService;
 import com.google.inject.Inject;
 
 /**
  * @author jeffw
  *
  */
+@SuppressWarnings("unchecked")
 public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDao<T> {
 
-	private static final Logger					LOGGER		= LoggerFactory.getLogger(GenericDaoABC.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(GenericDaoABC.class);
 
 	private LinkedBlockingQueue<IDaoListener>	mListeners	= new LinkedBlockingQueue<IDaoListener>();
-	protected EbeanServer							mServer;
+	
+	PersistencyService persistencyService;
 
 	@Inject
-	public GenericDaoABC(final ISchemaManager inSchemaManager) {
-		// This should be the only singleton for Ebean.
-		// It's a bummer that the singleton exists at all, and that it shows up in a constructor.
-		// This causes Guice to not be as good for us.
-		// In the future we should work with the Ebean folks to support DI-style programming.  (Or fork Ebean and do it ourselves.)
-		mServer = Ebean.getServer(inSchemaManager.getDbSchemaName());
+	public GenericDaoABC(PersistencyService persistencyService) {
+		this.persistencyService = persistencyService;
+	}
+	
+	private Session getCurrentSession() {
+		return persistencyService.getCurrentSession();
 	}
 
 	// --------------------------------------------------------------------------
@@ -86,9 +89,13 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	 * @see com.gadgetworks.codeshelf.model.dao.ISystemDAO#pushNonPersistentAccountUpdates(com.gadgetworks.codeshelf.model.domain.Account)
 	 */
 	public final void pushNonPersistentUpdates(T inPerstitentObject) {
+		throw new NotImplementedException();
+		/*
+		 * needs to be re-implemented using hibernate interceptors
 		EntityBean bean = (EntityBean) inPerstitentObject;
 		Set<String> changedProps = bean._ebean_getIntercept().getChangedProps();
 		privateBroadcastUpdate(inPerstitentObject, changedProps);
+		*/
 	}
 
 	// --------------------------------------------------------------------------
@@ -112,12 +119,15 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#loadByPersistentId(java.lang.Integer)
 	 */
+	@SuppressWarnings("unchecked")
 	public final T findByPersistentId(UUID inPersistentId) {
 		T result = null;
 		try {
-			result = mServer.find(getDaoClass(), inPersistentId);
+			Session session = getCurrentSession();
+			result = (T) session.get(getDaoClass(), inPersistentId);
+			//result = mServer.find(getDaoClass(), inPersistentId);
 		} catch (PersistenceException e) {
-			LOGGER.error("", e);
+			LOGGER.error("Failed to retrieve object of type "+getDaoClass().getSimpleName()+" with ID "+inPersistentId, e);
 		}
 		return result;
 	}
@@ -131,12 +141,15 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#loadByPersistentId(java.lang.Integer)
 	 */
+	@SuppressWarnings("unchecked")
 	public final <P extends IDomainObject> P findByPersistentId(Class<P> inClass, UUID inPersistentId) {
 		P result = null;
 		try {
-			result = mServer.find(inClass, inPersistentId);
+			Session session = getCurrentSession();
+			result = (P) session.get(inClass, inPersistentId);
+			// result = mServer.find(inClass, inPersistentId);
 		} catch (PersistenceException e) {
-			LOGGER.error("", e);
+			LOGGER.error("Failed to retrieve object of type "+getDaoClass().getSimpleName()+" with ID "+inPersistentId, e);
 		}
 		return result;
 	}
@@ -150,20 +163,34 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 
 		String effectiveId = inId;
 		try {
-			Query<T> query = mServer.createQuery(getDaoClass());
+			Session session = getCurrentSession();
+
+			
+			
+			// Query<T> query = mServer.createQuery(getDaoClass());
+	        Criteria criteria = session.createCriteria(getDaoClass());
 			if (inParentObject != null) {
 				if (getDaoClass().equals(Facility.class)) {
 					// This is a bit odd: the Facility is the top-level Location object, but Ebean doesn't allow us to have a parent field that points to another table.
 					// (It *should* be able to do this since Ebean knows the class type at runtime, but it just doesn't.)
-					query.where().eq(IDomainObject.ID_PROPERTY, effectiveId).eq(IDomainObjectTree.PARENT_ORG_PROPERTY, inParentObject.getPersistentId());
-				} else {
-					query.where().eq(IDomainObject.ID_PROPERTY, effectiveId).eq(IDomainObjectTree.PARENT_PROPERTY, inParentObject.getPersistentId());
+					criteria
+						.add(Restrictions.eq(IDomainObject.ID_PROPERTY,effectiveId))
+						.add(Restrictions.eq(IDomainObject.PARENT_ORG_PROPERTY,inParentObject.getPersistentId()));
+					// query.where().eq(IDomainObject.ID_PROPERTY, effectiveId).eq(IDomainObjectTree.PARENT_ORG_PROPERTY, inParentObject.getPersistentId());
+				} 
+				else {
+					criteria
+						.add(Restrictions.eq(IDomainObject.ID_PROPERTY,effectiveId))
+						.add(Restrictions.eq(IDomainObject.PARENT_PROPERTY,inParentObject.getPersistentId()));
+					// query.where().eq(IDomainObject.ID_PROPERTY, effectiveId).eq(IDomainObjectTree.PARENT_PROPERTY, inParentObject.getPersistentId());
 				}
-			} else {
-				query.where().eq(IDomainObject.ID_PROPERTY, effectiveId);
+			} 
+			else {
+				criteria.add(Restrictions.eq(IDomainObject.ID_PROPERTY,effectiveId));
+				// query.where().eq(IDomainObject.ID_PROPERTY, effectiveId);
 			}
 			//query = query.setUseCache(true);
-			result = query.findUnique();
+			result = (T) criteria.uniqueResult();
 		} catch (PersistenceException e) {
 			LOGGER.error("", e);
 		}
@@ -175,8 +202,12 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#findByIdList(java.util.List)
 	 */
 	public final List<T> findByPersistentIdList(List<UUID> inIdList) {
-		Query<T> query = mServer.find(getDaoClass());
-		List<T> methodResultsList = query.where().in("persistentId", inIdList).findList();
+		Session session = getCurrentSession();
+        Criteria criteria = session.createCriteria(getDaoClass());
+        criteria.add(Restrictions.in("persistentId", inIdList));
+        List<T> methodResultsList = (List<T>) criteria.list();
+		//Query<T> query = mServer.find(getDaoClass());
+		//List<T> methodResultsList = query.where().in("persistentId", inIdList).findList();
 		return methodResultsList;
 	}
 
@@ -187,6 +218,10 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	public final List<T> findByFilter(String inFilter, Map<String, Object> inFilterParams) {
 		if ((inFilter != null) && (inFilter.length() > 0)) {
 			// If we have a valid filter then get the filtered objects.
+			Session session = getCurrentSession();
+	        Criteria criteria = session.createCriteria(getDaoClass());
+	        throw new NotImplementedException();
+	        /*
 			Query<T> query = mServer.find(getDaoClass());
 			query = query.where(inFilter);
 			for (Entry<String, Object> param : inFilterParams.entrySet()) {
@@ -194,6 +229,7 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 			}
 			List<T> methodResultsList = query.findList();
 			return methodResultsList;
+			*/
 		} else {
 			// Otherwise get everything.
 			return getAll();
@@ -207,6 +243,8 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	public final <L> List<L> findByFilterAndClass(String inFilter, Map<String, Object> inFilterParams, Class<L> inClass) {
 		if ((inFilter != null) && (inFilter.length() > 0)) {
 			// If we have a valid filter then get the filtered objects.
+			throw new NotImplementedException();
+			/*
 			Query<L> query = mServer.find(inClass);
 			query = query.where(inFilter);
 			for (Entry<String, Object> param : inFilterParams.entrySet()) {
@@ -214,6 +252,7 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 			}
 			List<L> methodResultsList = query.findList();
 			return methodResultsList;
+			*/
 		} else {
 			return new ArrayList<L>();
 		}
@@ -224,6 +263,10 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#store(java.lang.Object)
 	 */
 	public final void store(final T inDomainObject) throws DaoException {
+		// TODO: need to add change property intercepter and versioning
+		Session session = getCurrentSession();
+		session.persist(inDomainObject);
+		/*
 		EntityBean bean = (EntityBean) inDomainObject;
 		Set<String> changedProps = bean._ebean_getIntercept().getChangedProps();
 		Map<String, Object> changedValues = new HashMap<String, Object>();
@@ -262,6 +305,7 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 				}
 			}
 		}
+		*/
 	}
 
 	// --------------------------------------------------------------------------
@@ -270,7 +314,8 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	 */
 	public final void delete(final T inDomainObject) throws DaoException {
 		try {
-			mServer.delete(inDomainObject);
+			Session session = getCurrentSession();
+			session.delete(inDomainObject);
 			privateBroadcastDelete(inDomainObject);
 		} catch (OptimisticLockException e) {
 			LOGGER.error("", e);
@@ -283,9 +328,10 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#getAll()
 	 */
 	public List<T> getAll() {
-		Query<T> query = mServer.createQuery(getDaoClass());
-		//query = query.setUseCache(true);
-		return query.findList();
+		Session session = getCurrentSession();
+        Criteria criteria = session.createCriteria(getDaoClass());
+		List<T> results = criteria.list();
+		return results;
 	}
 
 	/*
@@ -328,8 +374,9 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 		// An example of how to do this.
 		//		Object nextId = Path.DAO.getNextId(Path.class);
 		//		path.setPersistentId(new Long((Integer) nextId));
-
-		return mServer.nextId(beanType);
+		//return mServer.nextId(beanType);
+	    UUID persistentId = UUID.randomUUID();
+	    return persistentId;
 	}
 
 	// --------------------------------------------------------------------------
@@ -337,7 +384,8 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	 * @see com.gadgetworks.codeshelf.model.dao.ITypedDao#beginTransaction()
 	 */
 	public final void beginTransaction() {
-		mServer.beginTransaction();
+		Session session = getCurrentSession();
+		Transaction tx = session.beginTransaction();
 	}
 
 	// --------------------------------------------------------------------------
@@ -345,7 +393,9 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	 * @see com.gadgetworks.codeshelf.model.dao.ITypedDao#commitTransaction()
 	 */
 	public final void commitTransaction() {
-		mServer.commitTransaction();
+		Session session = getCurrentSession();
+		Transaction tx = session.getTransaction();
+		tx.commit();
 	}
 	
 	// --------------------------------------------------------------------------
@@ -353,7 +403,8 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	 * @see com.gadgetworks.codeshelf.model.dao.ITypedDao#endTransaction()
 	 */
 	public final void endTransaction() {
-		mServer.endTransaction();
+		// mServer.endTransaction();
+		this.commitTransaction();
 	}
 	
 	// --------------------------------------------------------------------------
@@ -363,13 +414,16 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	public Boolean isNewOrDirty(IDomainObject inDomainObject) {
 		Boolean result = false;
 		
+		/*
 		BeanState beanState = mServer.getBeanState(inDomainObject);
+		
 		
 		if (beanState != null) {
 			result = beanState.isNewOrDirty();
 		}
-		
 		return result;
+		*/
+		throw new NotImplementedException();
 	}
 	
 	// --------------------------------------------------------------------------
@@ -377,6 +431,6 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	 * @see com.gadgetworks.codeshelf.model.dao.ITypedDao#isNewOrDirty(com.gadgetworks.codeshelf.model.domain.IDomainObject)
 	 */
 	public void clearAllCaches() {
-		mServer.getServerCacheManager().clearAll();
+		// mServer.getServerCacheManager().clearAll();
 	}
 }

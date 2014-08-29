@@ -25,6 +25,7 @@ import com.gadgetworks.codeshelf.model.domain.IEdiService;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
+import com.gadgetworks.codeshelf.platform.services.PersistencyService;
 import com.google.inject.Inject;
 
 /**
@@ -33,6 +34,8 @@ import com.google.inject.Inject;
  */
 public class EdiProcessorTest extends EdiTestABC {
 
+	PersistencyService persistencyService = new PersistencyService();
+	
 	@Test
 	public final void ediProcessThreadTest() {
 
@@ -135,8 +138,8 @@ public class EdiProcessorTest extends EdiTestABC {
 		private Facility	mFacility;
 
 		@Inject
-		public TestFacilityDao(final ISchemaManager inSchemaManager, final Facility inFacility) {
-			super(inSchemaManager);
+		public TestFacilityDao(final PersistencyService persistencyService, final Facility inFacility) {
+			super(persistencyService);
 			mFacility = inFacility;
 		}
 
@@ -228,7 +231,7 @@ public class EdiProcessorTest extends EdiTestABC {
 		Facility facility = organization.getFacility("F-EDI.1");
 		facility.setParent(organization);
 
-		TestFacilityDao facilityDao = new TestFacilityDao(mSchemaManager, facility);
+		TestFacilityDao facilityDao = new TestFacilityDao(persistencyService, facility);
 		facilityDao.store(facility);
 
 		IEdiService ediServiceLinked = new IEdiService() {

@@ -15,7 +15,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.avaje.ebean.Ebean;
 import com.gadgetworks.codeshelf.model.HeaderCounts;
 import com.gadgetworks.codeshelf.model.PickStrategyEnum;
 import com.gadgetworks.codeshelf.model.domain.Container;
@@ -752,7 +751,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Assert.assertTrue(result.toString(), result.isSuccessful());
 
 		//Simulate a cache trim between the uploads
-		Ebean.getServer("codeshelf").getServerCacheManager().getCollectionIdsCache(OrderHeader.class, "orderDetails").clear();
+		// Ebean.getServer("codeshelf").getServerCacheManager().getCollectionIdsCache(OrderHeader.class, "orderDetails").clear();
 
 		foundFacility = mFacilityDao.findByPersistentId(testFacility.getPersistentId());
 

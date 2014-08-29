@@ -30,8 +30,6 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.avaje.ebean.annotation.CacheStrategy;
-import com.avaje.ebean.annotation.Transactional;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.device.LedCmdGroup;
@@ -40,7 +38,6 @@ import com.gadgetworks.codeshelf.device.LedSample;
 import com.gadgetworks.codeshelf.edi.InventoryCsvImporter;
 import com.gadgetworks.codeshelf.edi.InventorySlottedCsvBean;
 import com.gadgetworks.codeshelf.model.BayDistanceWorkInstructionSequencer;
-
 import com.gadgetworks.codeshelf.model.EdiProviderEnum;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.HeaderCounts;
@@ -57,6 +54,7 @@ import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.codeshelf.platform.services.PersistencyService;
 import com.gadgetworks.codeshelf.validation.DefaultErrors;
 import com.gadgetworks.codeshelf.validation.ErrorCode;
 import com.gadgetworks.codeshelf.validation.Errors;
@@ -80,7 +78,7 @@ import com.google.inject.Singleton;
 
 @Entity
 @DiscriminatorValue("FACILITY")
-@CacheStrategy(useBeanCache = false)
+//@CacheStrategy(useBeanCache = false)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class Facility extends SubLocationABC<Facility> {
 
@@ -90,8 +88,8 @@ public class Facility extends SubLocationABC<Facility> {
 	@Singleton
 	public static class FacilityDao extends GenericDaoABC<Facility> implements ITypedDao<Facility> {
 		@Inject
-		public FacilityDao(final ISchemaManager inSchemaManager) {
-			super(inSchemaManager);
+		public FacilityDao(PersistencyService persistencyService) {
+			super(persistencyService);
 		}
 
 		public final Class<Facility> getDaoClass() {
@@ -399,7 +397,7 @@ public class Facility extends SubLocationABC<Facility> {
 	 * @param inBaysHigh
 	 * @param inBaysLong
 	 */
-	@Transactional
+	// @Transactional
 	public final void createAisle(final String inAisleId,
 		final Point inAnchorPoint,
 		final Point inProtoBayPoint,
@@ -717,7 +715,7 @@ public class Facility extends SubLocationABC<Facility> {
 	 * Create a path
 	 *
 	 */
-	@Transactional
+	// @Transactional
 	public final Path createPath(String inDomainId, PathSegment[] inPathSegments) {
 		Path path = createPath(inDomainId);
 		for (PathSegment pathSegment : inPathSegments) {
@@ -860,7 +858,7 @@ public class Facility extends SubLocationABC<Facility> {
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	@Transactional
+	// @Transactional
 	public final void createDefaultContainerKind() {
 		ContainerKind containerKind = createContainerKind(ContainerKind.DEFAULT_CONTAINER_KIND, 0.0, 0.0, 0.0);
 	}
@@ -868,7 +866,7 @@ public class Facility extends SubLocationABC<Facility> {
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	@Transactional
+	// @Transactional
 	public final ContainerKind createContainerKind(String inDomainId,
 		Double inLengthMeters,
 		Double inWidthMeters,
@@ -962,7 +960,7 @@ public class Facility extends SubLocationABC<Facility> {
 	/**
 	 * @return
 	 */
-	@Transactional
+	// @Transactional
 	public final DropboxService createDropboxService() {
 
 		DropboxService result = null;
@@ -986,7 +984,7 @@ public class Facility extends SubLocationABC<Facility> {
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	@Transactional
+	// @Transactional
 	public final CodeshelfNetwork createNetwork(final String inNetworkName) {
 
 		CodeshelfNetwork result = null;
@@ -1020,7 +1018,7 @@ public class Facility extends SubLocationABC<Facility> {
 	 * @param inContainerIdList
 	 * @return
 	 */
-	@Transactional
+	// @Transactional
 	public final Integer computeWorkInstructions(final Che inChe, final List<String> inContainerIdList) {
 
 		// Work around serious ebeans problem. See OrderHeader's orderDetails cache getting trimmed and then failing to get work instructions made for some orders.
@@ -1093,7 +1091,7 @@ public class Facility extends SubLocationABC<Facility> {
 	 * for that CHE are assumed be on the path of the scanned location.
 	 * For testing: if scan location, then just return all work instructions assigned to the CHE. (Assumes no negative positions on path.)
 	 */
-	@Transactional
+	// @Transactional
 	public final List<WorkInstruction> getWorkInstructions(final Che inChe, final String inScannedLocationId) {
 
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();

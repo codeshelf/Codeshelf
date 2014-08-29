@@ -16,7 +16,6 @@ import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.model.domain.Vertex;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
-import com.gadgetworks.codeshelf.model.domain.Vertex.VertexDao;
 
 public class MockDaoProvider implements IDaoProvider {
 

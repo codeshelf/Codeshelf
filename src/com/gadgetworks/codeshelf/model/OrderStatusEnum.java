@@ -5,24 +5,22 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model;
 
-import com.avaje.ebean.annotation.EnumValue;
-
 // --------------------------------------------------------------------------
 /**
  *  @author jeffw
  */
 public enum OrderStatusEnum {
-	@EnumValue("INVALID")
+	// @EnumValue("INVALID")
 	INVALID(OrderStatusNum.INVALID, "INVALID"),
-	@EnumValue("CREATED")
+	// @EnumValue("CREATED")
 	CREATED(OrderStatusNum.CREATED, "CREATED"),
-	@EnumValue("RELEASE")
+	// @EnumValue("RELEASE")
 	RELEASE(OrderStatusNum.RELEASE, "RELEASE"),
-	@EnumValue("INPROGRESS")
+	// @EnumValue("INPROGRESS")
 	INPROGRESS(OrderStatusNum.INPROGRESS, "INPROGRESS"),
-	@EnumValue("COMPLETE")
+	// @EnumValue("COMPLETE")
 	COMPLETE(OrderStatusNum.COMPLETE, "COMPLETE"),
-	@EnumValue("SHORT")
+	// @EnumValue("SHORT")
 	SHORT(OrderStatusNum.SHORT, "SHORT");
 
 	private int		mValue;

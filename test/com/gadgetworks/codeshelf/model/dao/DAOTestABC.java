@@ -7,7 +7,6 @@ package com.gadgetworks.codeshelf.model.dao;
 
 import org.junit.Before;
 
-import com.gadgetworks.codeshelf.application.IUtil;
 import com.gadgetworks.codeshelf.application.Util;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Aisle.AisleDao;
@@ -66,6 +65,7 @@ import com.gadgetworks.codeshelf.model.domain.WorkArea;
 import com.gadgetworks.codeshelf.model.domain.WorkArea.WorkAreaDao;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction.WorkInstructionDao;
+import com.gadgetworks.codeshelf.platform.services.PersistencyService;
 
 public abstract class DAOTestABC {
 	
@@ -102,11 +102,6 @@ public abstract class DAOTestABC {
 	protected WorkInstructionDao	mWorkInstructionDao;
 	protected WorkAreaDao			mWorkAreaDao;
 
-
-	private IUtil					mUtil;
-	protected ISchemaManager		mSchemaManager;
-	private IDatabase				mDatabase;
-
 	public DAOTestABC() {
 		super();
 	}
@@ -114,136 +109,99 @@ public abstract class DAOTestABC {
 	@Before
 	public final void setup() {
 
-		try {
-			mUtil = new IUtil() {
+		PersistencyService persistencyService = new PersistencyService();
+		persistencyService.start();
 
-				public void setLoggingLevelsFromPrefs(Organization inOrganization,
-					ITypedDao<PersistentProperty> inPersistentPropertyDao) {
-				}
+		mOrganizationDao = new OrganizationDao(persistencyService);
+		Organization.DAO = mOrganizationDao;
 
-				public String getVersionString() {
-					return "";
-				}
+		mFacilityDao = new FacilityDao(persistencyService);
+		Facility.DAO = mFacilityDao;
 
-				public String getApplicationLogDirPath() {
-					return ".";
-				}
+		mAisleDao = new AisleDao(persistencyService);
+		Aisle.DAO = mAisleDao;
 
-				public String getApplicationDataDirPath() {
-					return ".";
-				}
+		mBayDao = new BayDao(persistencyService);
+		Bay.DAO = mBayDao;
 
-				public void exitSystem() {
-					System.exit(-1);
-				}
-			};
+		mTierDao = new TierDao(persistencyService);
+		Tier.DAO = mTierDao;
 
-			Class.forName("org.h2.Driver");
-			mSchemaManager = new H2SchemaManager(mUtil,
-				"codeshelf",
-				"codeshelf",
-				"codeshelf",
-				"codeshelf",
-				"localhost",
-				"",
-				"false");
-			mDatabase = new Database(mSchemaManager, mUtil);
+		mSlotDao = new SlotDao(persistencyService);
+		Slot.DAO = mSlotDao;
 
-			mDatabase.start();
+		mPathDao = new PathDao(persistencyService);
+		Path.DAO = mPathDao;
 
-			mOrganizationDao = new OrganizationDao(mSchemaManager);
-			Organization.DAO = mOrganizationDao;
+		mPathSegmentDao = new PathSegmentDao(persistencyService);
+		PathSegment.DAO = mPathSegmentDao;
 
-			mFacilityDao = new FacilityDao(mSchemaManager);
-			Facility.DAO = mFacilityDao;
+		mDropboxServiceDao = new DropboxServiceDao(persistencyService);
+		DropboxService.DAO = mDropboxServiceDao;
 
-			mAisleDao = new AisleDao(mSchemaManager);
-			Aisle.DAO = mAisleDao;
+		mCodeshelfNetworkDao = new CodeshelfNetworkDao(persistencyService);
+		CodeshelfNetwork.DAO = mCodeshelfNetworkDao;
 
-			mBayDao = new BayDao(mSchemaManager);
-			Bay.DAO = mBayDao;
+		mCheDao = new CheDao(persistencyService);
+		Che.DAO = mCheDao;
 
-			mTierDao = new TierDao(mSchemaManager);
-			Tier.DAO = mTierDao;
+		mSubLocationDao = new SubLocationDao(persistencyService);
+		SubLocationABC.DAO = mSubLocationDao;
 
-			mSlotDao = new SlotDao(mSchemaManager);
-			Slot.DAO = mSlotDao;
+		mLocationDao = new LocationABCDao(persistencyService);
+		LocationABC.DAO = mLocationDao;
 
-			mPathDao = new PathDao(mSchemaManager);
-			Path.DAO = mPathDao;
+		mOrderGroupDao = new OrderGroupDao(persistencyService);
+		OrderGroup.DAO = mOrderGroupDao;
 
-			mPathSegmentDao = new PathSegmentDao(mSchemaManager);
-			PathSegment.DAO = mPathSegmentDao;
+		mOrderHeaderDao = new OrderHeaderDao(persistencyService);
+		OrderHeader.DAO = mOrderHeaderDao;
 
-			mDropboxServiceDao = new DropboxServiceDao(mSchemaManager);
-			DropboxService.DAO = mDropboxServiceDao;
+		mOrderDetailDao = new OrderDetailDao(persistencyService);
+		OrderDetail.DAO = mOrderDetailDao;
 
-			mCodeshelfNetworkDao = new CodeshelfNetworkDao(mSchemaManager);
-			CodeshelfNetwork.DAO = mCodeshelfNetworkDao;
+		mOrderLocationDao = new OrderLocationDao(persistencyService);
+		OrderLocation.DAO = mOrderLocationDao;
 
-			mCheDao = new CheDao(mSchemaManager);
-			Che.DAO = mCheDao;
+		mContainerDao = new ContainerDao(persistencyService);
+		Container.DAO = mContainerDao;
 
-			mSubLocationDao = new SubLocationDao(mSchemaManager);
-			SubLocationABC.DAO = mSubLocationDao;
+		mContainerKindDao = new ContainerKindDao(persistencyService);
+		ContainerKind.DAO = mContainerKindDao;
 
-			mLocationDao = new LocationABCDao(mSchemaManager, mDatabase);
-			LocationABC.DAO = mLocationDao;
+		mContainerUseDao = new ContainerUseDao(persistencyService);
+		ContainerUse.DAO = mContainerUseDao;
 
-			mOrderGroupDao = new OrderGroupDao(mSchemaManager);
-			OrderGroup.DAO = mOrderGroupDao;
+		mItemMasterDao = new ItemMasterDao(persistencyService);
+		ItemMaster.DAO = mItemMasterDao;
 
-			mOrderHeaderDao = new OrderHeaderDao(mSchemaManager);
-			OrderHeader.DAO = mOrderHeaderDao;
+		mItemDao = new ItemDao(persistencyService);
+		Item.DAO = mItemDao;
 
-			mOrderDetailDao = new OrderDetailDao(mSchemaManager);
-			OrderDetail.DAO = mOrderDetailDao;
+		mUomMasterDao = new UomMasterDao(persistencyService);
+		UomMaster.DAO = mUomMasterDao;
 
-			mOrderLocationDao = new OrderLocationDao(mSchemaManager);
-			OrderLocation.DAO = mOrderLocationDao;
+		mLedControllerDao = new LedControllerDao(persistencyService);
+		LedController.DAO = mLedControllerDao;
 
-			mContainerDao = new ContainerDao(mSchemaManager);
-			Container.DAO = mContainerDao;
+		mLocationAliasDao = new LocationAliasDao(persistencyService);
+		LocationAlias.DAO = mLocationAliasDao;
+		
+		mVertexDao = new VertexDao(persistencyService);
+		Vertex.DAO = mVertexDao;
 
-			mContainerKindDao = new ContainerKindDao(mSchemaManager);
-			ContainerKind.DAO = mContainerKindDao;
+		mWorkAreaDao = new WorkAreaDao(persistencyService);
+		WorkArea.DAO = mWorkAreaDao;
 
-			mContainerUseDao = new ContainerUseDao(mSchemaManager);
-			ContainerUse.DAO = mContainerUseDao;
+		mWorkInstructionDao = new WorkInstructionDao(persistencyService);
+		WorkInstruction.DAO = mWorkInstructionDao;
 
-			mItemMasterDao = new ItemMasterDao(mSchemaManager);
-			ItemMaster.DAO = mItemMasterDao;
-
-			mItemDao = new ItemDao(mSchemaManager);
-			Item.DAO = mItemDao;
-
-			mUomMasterDao = new UomMasterDao(mSchemaManager);
-			UomMaster.DAO = mUomMasterDao;
-
-			mLedControllerDao = new LedControllerDao(mSchemaManager);
-			LedController.DAO = mLedControllerDao;
-
-			mLocationAliasDao = new LocationAliasDao(mSchemaManager);
-			LocationAlias.DAO = mLocationAliasDao;
+		mWorkAreaDao = new WorkAreaDao(persistencyService);
+		WorkArea.DAO = mWorkAreaDao;
 			
-			mVertexDao = new VertexDao(mSchemaManager);
-			Vertex.DAO = mVertexDao;
-
-			mWorkAreaDao = new WorkAreaDao(mSchemaManager);
-			WorkArea.DAO = mWorkAreaDao;
-
-			mWorkInstructionDao = new WorkInstructionDao(mSchemaManager);
-			WorkInstruction.DAO = mWorkInstructionDao;
-
-			mWorkAreaDao = new WorkAreaDao(mSchemaManager);
-			WorkArea.DAO = mWorkAreaDao;
-			
-			doBefore();
-		} catch (ClassNotFoundException e) {
-		}
+		doBefore();
 	}
 	
 	protected void doBefore() {
-		
 	}
 }

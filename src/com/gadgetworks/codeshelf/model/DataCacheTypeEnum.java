@@ -5,16 +5,14 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model;
 
-import com.avaje.ebean.annotation.EnumValue;
-
 // --------------------------------------------------------------------------
 /**
  *  @author jeffw
  */
 public enum DataCacheTypeEnum {
-	@EnumValue("INVALID")
+	// @EnumValue("INVALID")
 	INVALID(DataCacheTypeNum.INVALID, "INVALID"),
-	@EnumValue("JPEG")
+	// @EnumValue("JPEG")
 	JPEG(DataCacheTypeNum.JPEG, "JPEG");
 
 	private int		mValue;

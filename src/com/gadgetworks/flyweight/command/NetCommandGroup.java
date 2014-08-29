@@ -6,9 +6,7 @@
 
 package com.gadgetworks.flyweight.command;
 
-import com.gadgetworks.flyweight.bitfields.IllegalBoundsException;
 import com.gadgetworks.flyweight.bitfields.NBitInteger;
-import com.gadgetworks.flyweight.bitfields.OutOfRangeException;
 
 /** 
  *  --------------------------------------------------------------------------

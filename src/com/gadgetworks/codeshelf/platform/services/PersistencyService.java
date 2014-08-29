@@ -1,12 +1,8 @@
-/*******************************************************************************
- *  CodeShelf
- *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: Database.java,v 1.16 2013/09/18 00:40:10 jeffw Exp $
- *******************************************************************************/
-package com.gadgetworks.codeshelf.model.dao;
+package com.gadgetworks.codeshelf.platform.services;
 
 import lombok.Getter;
 
+import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Configuration;
@@ -17,13 +13,12 @@ import com.gadgetworks.codeshelf.multitenancy.Tenant;
 import com.google.inject.Singleton;
 
 /**
- * @author jeffw
- *
+ * @author bheckel
  */
 @Singleton
-public class Database {
+public class PersistencyService implements Service {
 
-	private static final Logger		LOGGER	= LoggerFactory.getLogger(Database.class);
+	private static final Logger LOGGER	= LoggerFactory.getLogger(PersistencyService.class);
 
 	@Getter
 	int port;
@@ -40,7 +35,7 @@ public class Database {
 
 	String schemaName;
 	
-	public Database() {
+	public PersistencyService() {
 	}
 	
 	/*
@@ -115,7 +110,7 @@ public class Database {
 	}
 	*/
 
-	private SessionFactory createTenantSessionFactory(Tenant tenant) {
+	public SessionFactory createTenantSessionFactory(Tenant tenant) {
 		// ignore tenant and shard for now using static config data
         try {
         	// Shard shard = this.shardingService.getShard(tenant.getShardId());
@@ -137,10 +132,7 @@ public class Database {
         }
 	}
 	
-
-	// --------------------------------------------------------------------------
-	/**
-	 */
+	@Override
 	public final boolean start() {
 		boolean result = false;
 		// fetch database config from properties file
@@ -155,9 +147,7 @@ public class Database {
 		return result;
 	}
 
-	// --------------------------------------------------------------------------
-	/**
-	 */
+	@Override
 	public final boolean stop() {
 		boolean result = false;
 		LOGGER.info("Stopping Database");
@@ -176,6 +166,10 @@ public class Database {
 		result = true;
 		LOGGER.info("Database shutdown");
 		return result;
+	}
+
+	public Session getCurrentSession() {
+		return null;
 	}
 
 }

@@ -5,20 +5,18 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model;
 
-import com.avaje.ebean.annotation.EnumValue;
-
 // --------------------------------------------------------------------------
 /**
  *  @author jeffw
  */
 public enum EdiDocumentStatusEnum {
-	@EnumValue("JPEG")
+	// @EnumValue("JPEG")
 	INVALID(EdiDocumentStateType.INVALID, "INVALID"),
-	@EnumValue("NEW")
+	// @EnumValue("NEW")
 	NEW(EdiDocumentStateType.NEW, "NEW"),
-	@EnumValue("SUCCESS")
+	// @EnumValue("SUCCESS")
 	SUCCESS(EdiDocumentStateType.SUCCESS, "SUCCESS"),
-	@EnumValue("FAILED")
+	// @EnumValue("FAILED")
 	FAILED(EdiDocumentStateType.FAILED, "FAILED");
 
 	private int		mValue;

@@ -24,8 +24,6 @@ import com.gadgetworks.codeshelf.metrics.OpenTsdb;
 import com.gadgetworks.codeshelf.metrics.OpenTsdbReporter;
 import com.gadgetworks.codeshelf.model.dao.DaoProvider;
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
-import com.gadgetworks.codeshelf.ws.websocket.CsWebSocketClient;
-import com.gadgetworks.codeshelf.ws.websocket.IWebSocketServer;
 import com.gadgetworks.codeshelf.ws.websocket.IWebSocketSslContextFactory;
 import com.gadgetworks.codeshelf.ws.websocket.IWebSocketSslContextGenerator;
 import com.gadgetworks.codeshelf.ws.websocket.WebSocketSslContextFactory;
@@ -122,7 +120,7 @@ public final class CsSiteControllerMain {
 				bind(String.class).annotatedWith(Names.named("WS_SERVER_URI")).toInstance(System.getProperty("websocket.uri"));
 				bind(Byte.class).annotatedWith(Names.named(IPacket.NETWORK_NUM_PROPERTY)).toInstance(Byte.valueOf(System.getProperty("codeshelf.networknum")));
 
-				bind(IUtil.class).to(Util.class);
+				// bind(IUtil.class).to(Util.class);
 				bind(ICodeshelfApplication.class).to(CsSiteControllerApplication.class);
 				bind(IRadioController.class).to(RadioController.class);
 				bind(IGatewayInterface.class).to(FTDIInterface.class);
@@ -133,14 +131,6 @@ public final class CsSiteControllerMain {
 				// requestStaticInjection(WirelessDevice.class);
 				// bind(IWirelessDeviceDao.class).to(WirelessDeviceDao.class);
 
-				bind(String.class).annotatedWith(Names.named(CsWebSocketClient.WEBSOCKET_URI_PROPERTY)).toInstance(System.getProperty("websocket.uri"));
-				
-				bind(Boolean.class).annotatedWith(Names.named(CsWebSocketClient.WEBSOCKET_SUPPRESS_KEEPALIVE_PROPERTY))
-					.toInstance(Boolean.valueOf(System.getProperty("websocket.idle.suppresskeepalive")));
-				bind(Boolean.class).annotatedWith(Names.named(CsWebSocketClient.WEBSOCKET_KILL_IDLE_PROPERTY))
-					.toInstance(Boolean.valueOf(System.getProperty("websocket.idle.kill")));
-
-				// 	TODO: remove below after taking java WS code out
 				bind(String.class).annotatedWith(Names.named(IWebSocketSslContextGenerator.KEYSTORE_PATH_PROPERTY)).toInstance(System.getProperty("keystore.path"));
 				bind(String.class).annotatedWith(Names.named(IWebSocketSslContextGenerator.KEYSTORE_TYPE_PROPERTY)).toInstance(System.getProperty("keystore.type"));
 				bind(String.class).annotatedWith(Names.named(IWebSocketSslContextGenerator.KEYSTORE_STORE_PASSWORD_PROPERTY)).toInstance(System.getProperty("keystore.store.password"));

@@ -5,22 +5,20 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model;
 
-import com.avaje.ebean.annotation.EnumValue;
-
 // --------------------------------------------------------------------------
 /**
  *  @author jeffw
  */
 public enum TravelDirectionEnum {
-	@EnumValue("INVALID")
+	// @EnumValue("INVALID")
 	INVALID(OrderStatusNum.INVALID, "INVALID"),
-	@EnumValue("NONE")
+	// @EnumValue("NONE")
 	NONE(OrderStatusNum.NONE, "NONE"),
-	@EnumValue("FORWARD")
+	// @EnumValue("FORWARD")
 	FORWARD(OrderStatusNum.FORWARD, "FORWARD"),
-	@EnumValue("REVERSE")
+	// @EnumValue("REVERSE")
 	REVERSE(OrderStatusNum.REVERSE, "REVERSE"),
-	@EnumValue("BOTH")
+	// @EnumValue("BOTH")
 	BOTH(OrderStatusNum.BOTH, "BOTH");
 
 	private int		mValue;

@@ -38,7 +38,7 @@ import com.google.inject.Singleton;
  */
 
 @Singleton
-public final class Util implements IUtil {
+public class Util {
 
 	// This is a slightly weird case.
 	// log4j needs to find a system property for one of its file appenders (in log4j.properties, but

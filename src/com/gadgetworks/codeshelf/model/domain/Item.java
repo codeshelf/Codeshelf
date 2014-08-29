@@ -21,7 +21,6 @@ import lombok.ToString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.avaje.ebean.annotation.CacheStrategy;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.model.LedRange;
@@ -29,6 +28,7 @@ import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.codeshelf.platform.services.PersistencyService;
 import com.gadgetworks.codeshelf.util.StringUIConverter;
 import com.gadgetworks.codeshelf.util.UomNormalizer;
 import com.google.inject.Inject;
@@ -45,7 +45,7 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "item")
-@CacheStrategy(useBeanCache = true)
+//@CacheStrategy(useBeanCache = true)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 @ToString
 public class Item extends DomainObjectTreeABC<ItemMaster> {
@@ -56,8 +56,8 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	@Singleton
 	public static class ItemDao extends GenericDaoABC<Item> implements ITypedDao<Item> {
 		@Inject
-		public ItemDao(final ISchemaManager inSchemaManager) {
-			super(inSchemaManager);
+		public ItemDao(PersistencyService persistencyService) {
+			super(persistencyService);
 		}
 
 		public final Class<Item> getDaoClass() {

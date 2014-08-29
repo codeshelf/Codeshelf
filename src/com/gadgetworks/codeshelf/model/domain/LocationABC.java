@@ -33,15 +33,13 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.avaje.ebean.annotation.CacheStrategy;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.model.LedRange;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
-import com.gadgetworks.codeshelf.model.dao.IDatabase;
-import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.codeshelf.platform.services.PersistencyService;
 import com.gadgetworks.codeshelf.util.StringUIConverter;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -68,12 +66,11 @@ import com.google.inject.Singleton;
 
 @Entity
 @MappedSuperclass
-@CacheStrategy(useBeanCache = false)
+//@CacheStrategy(useBeanCache = false)
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @Table(name = "location")
 @DiscriminatorColumn(name = "dtype", discriminatorType = DiscriminatorType.STRING)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-//@ToString(doNotUseGetters = true)
 public abstract class LocationABC<P extends IDomainObject> extends DomainObjectTreeABC<P> implements ILocation<P> {
 
 	@Inject
@@ -84,8 +81,8 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 		// We include the IDatabase arg to cause Guice to initialize it *before* locations.
 		@Inject
-		public LocationABCDao(final ISchemaManager inSchemaManager, final IDatabase inDatabase) {
-			super(inSchemaManager);
+		public LocationABCDao(final PersistencyService persistencyService) {
+			super(persistencyService);
 		}
 
 		public final Class<LocationABC> getDaoClass() {
