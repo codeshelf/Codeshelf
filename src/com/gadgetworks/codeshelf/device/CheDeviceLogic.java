@@ -43,6 +43,8 @@ import com.gadgetworks.flyweight.controller.NetworkDeviceStateEnum;
  *
  */
 public class CheDeviceLogic extends DeviceLogicABC {
+	// This code runs on the site controller, not the CHE.
+	// The goal is to convert data and instructions to something that the CHE controller can consume and act on with minimal logic.
 
 	private static final Logger		LOGGER					= LoggerFactory.getLogger(CheDeviceLogic.class);
 
@@ -78,6 +80,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private static final String		RESUME_COMMAND			= "RESUME";
 	private static final String		YES_COMMAND				= "YES";
 	private static final String		NO_COMMAND				= "NO";
+	
+	private static final Integer maxCountForPositionControllerDisplay = 99;
 
 	// The CHE's current state.
 	@Accessors(prefix = "m")
@@ -171,26 +175,34 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	/**
 	 * Breakup the description into three static lines no longer than 20 characters.
 	 * Except the last line can be up to 40 characters (since it scrolls).
+	 * Important change from v3. If quantity > 98, then tweak the description adding the count to the start.
 	 * @param inPickInstructions
 	 * @param inDescription
 	 */
-	private void sendDisplayWorkInstruction(final String inPickInstructions, final String inDescription) {
+	private void sendDisplayWorkInstruction(final String inPickInstructions, final String inDescription, final Integer inPlanQuantity) {
+		String displayDescription = inDescription;
+		if (inPlanQuantity > maxCountForPositionControllerDisplay - 1) {
+			String countStr = inPlanQuantity.toString();
+			displayDescription = countStr + " " + inDescription;
+		}
+		
 		String[] descriptionLine = { "", "", ""};
 		int pos = 0;
 		for (int line = 0; line < 3; line++) {
-			if (pos < inDescription.length()) {
-				int toGet = Math.min(20, inDescription.length() - pos);
-				descriptionLine[line] = inDescription.substring(pos, pos + toGet);
+			if (pos < displayDescription.length()) {
+				int toGet = Math.min(20, displayDescription.length() - pos);
+				descriptionLine[line] = displayDescription.substring(pos, pos + toGet);
 				pos += toGet;
 			}
 		}
 		
 		// Check if there is more description to add to the last line.
-		if (pos < inDescription.length()) {
-			int toGet = Math.min(20, inDescription.length() - pos);
-			descriptionLine[2] += inDescription.substring(pos, pos + toGet);
+		if (pos < displayDescription.length()) {
+			int toGet = Math.min(20, displayDescription.length() - pos);
+			descriptionLine[2] += displayDescription.substring(pos, pos + toGet);
 		}
 		
+		// Note: pickInstruction is more or less a location. Commonly a location alias, but may be a locationId or DDcId.
 		sendDisplayCommand(inPickInstructions, descriptionLine[0], descriptionLine[1], descriptionLine[2]);
 	}
 
@@ -792,6 +804,18 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * Our position controllers may only display up to 99. Integer overflows into bytes go negative, which have special meanings.
+	 * So, any value larger than 99 shall display 99. For those cases, we show the count in the description.
+	 */
+	private byte byteValueForPositionDisplay(Integer inInt) {
+		if (inInt > maxCountForPositionControllerDisplay)
+			return maxCountForPositionControllerDisplay.byteValue();
+		else 
+			return inInt.byteValue();
+	}
+
+	// --------------------------------------------------------------------------
+	/**
 	 * Send to the LED controller the active picks for the work instruction that's active on the CHE now.
 	 */
 	private void showActivePicks() {
@@ -804,7 +828,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				setState(CheStateEnum.DO_PICK);
 			}
 			ledControllerClearLeds();
-			sendDisplayWorkInstruction(firstWi.getPickInstruction(), firstWi.getDescription());
+			sendDisplayWorkInstruction(firstWi.getPickInstruction(), firstWi.getDescription(), firstWi.getPlanQuantity());
 
 			List<LedCmdGroup> ledCmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(firstWi.getLedCmdStream());
 
@@ -846,9 +870,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				for (Entry<String, String> mapEntry : mContainersMap.entrySet()) {
 					if (mapEntry.getValue().equals(wi.getContainerId())) {
 						PosControllerInstr instruction = new PosControllerInstr(Byte.valueOf(mapEntry.getKey()),
-							firstWi.getPlanQuantity().byteValue(),
-							firstWi.getPlanMinQuantity().byteValue(),
-							firstWi.getPlanMaxQuantity().byteValue(),
+							byteValueForPositionDisplay(firstWi.getPlanQuantity()),
+							byteValueForPositionDisplay(firstWi.getPlanMinQuantity()),
+							byteValueForPositionDisplay(firstWi.getPlanMaxQuantity()),
 							PosControllerInstr.BRIGHT_FREQ,
 							PosControllerInstr.BRIGHT_DUTYCYCLE);
 						instructions.add(instruction);

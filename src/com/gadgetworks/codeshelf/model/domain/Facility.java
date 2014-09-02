@@ -99,8 +99,6 @@ public class Facility extends SubLocationABC<Facility> {
 
 	private static final Logger				LOGGER				= LoggerFactory.getLogger(Facility.class);
 
-	private static final Integer			MAX_WI_DESC_BYTES	= 80;
-
 	// The owning organization.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
@@ -1033,12 +1031,13 @@ public class Facility extends SubLocationABC<Facility> {
 		for (WorkInstruction wi : WorkInstruction.DAO.findByFilter("assignedChe.persistentId = :chePersistentId and typeEnum = :type",
 			filterParams)) {
 			try {
-				/*
+			
 				Che assignedChe = wi.getAssignedChe();
-				assignedChe.removeWorkInstruction(wi); // necessary? new from v3
+				if (assignedChe != null)
+					assignedChe.removeWorkInstruction(wi); // necessary? new from v3
 				OrderDetail owningDetail = wi.getParent();
 				owningDetail.removeWorkInstruction(wi); // necessary? new from v3
-				*/
+				
 				WorkInstruction.DAO.delete(wi);
 			} catch (DaoException e) {
 				LOGGER.error("failed to delete prior work instruction for CHE", e);
@@ -1151,12 +1150,13 @@ public class Facility extends SubLocationABC<Facility> {
 			if (wi.getStatusEnum() == WorkInstructionStatusEnum.SHORT)
 				if (wi.getLocation().equals(this)) { // planned to the facility
 					try {
-						/*
+						
 						Che assignedChe = wi.getAssignedChe();
-						assignedChe.removeWorkInstruction(wi); // necessary?
+						if (assignedChe != null)
+							assignedChe.removeWorkInstruction(wi); // necessary?
 						inOrderDetail.removeWorkInstruction(wi); // necessary?
 						WorkInstruction.DAO.delete(wi);
-						*/
+						
 					} catch (DaoException e) {
 						LOGGER.error("failed to delete prior work SHORT instruction", e);
 					}
@@ -1522,9 +1522,7 @@ public class Facility extends SubLocationABC<Facility> {
 			resultWi.setLocation(inLocation);
 			resultWi.setLocationId(inLocation.getFullDomainId());
 			resultWi.setItemMaster(inOrderDetail.getItemMaster());
-			String cookedDesc = inOrderDetail.getItemMaster().getDescription();
-			cookedDesc = cookedDesc.substring(0, Math.min(MAX_WI_DESC_BYTES, cookedDesc.length()));
-			cookedDesc = cookedDesc.replaceAll("[^\\p{ASCII}]", "");
+			String cookedDesc = WorkInstruction.cookDescription(inOrderDetail.getItemMaster().getDescription());
 			resultWi.setDescription(cookedDesc);
 			if (inOrderDetail.getItemMaster().getDdcId() != null) {
 				resultWi.setPickInstruction(inOrderDetail.getItemMaster().getDdcId());
@@ -2106,8 +2104,8 @@ public class Facility extends SubLocationABC<Facility> {
 		InventorySlottedCsvBean itemBean = new InventorySlottedCsvBean();
 		itemBean.setItemId(itemId);
 		itemBean.setLocationId(storedLocationId);
-		itemBean.setCmFromLeft(String.valueOf(cmDistanceFromLeft));
-		itemBean.setQuantity(String.valueOf(quantity));
+		itemBean.setCmFromLeft(cmDistanceFromLeft);
+		itemBean.setQuantity(quantity);
 		itemBean.setUom(inUomId);
 		LocationABC location = (LocationABC) this.findSubLocationById(storedLocationId);
 		if (location == null && !Strings.isNullOrEmpty(storedLocationId)) {

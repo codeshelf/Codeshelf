@@ -6,10 +6,6 @@ CodeshelfWebSocketServer *  CodeShelf
 
 package com.gadgetworks.codeshelf.application;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.util.Properties;
-
 import org.apache.shiro.authc.credential.CredentialsMatcher;
 import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
 import org.apache.shiro.crypto.hash.Md5Hash;

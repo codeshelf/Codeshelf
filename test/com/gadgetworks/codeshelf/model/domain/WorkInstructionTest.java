@@ -24,6 +24,55 @@ import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
 public class WorkInstructionTest extends DomainTestABC {
 
 	@Test
+	public final void cookedDescriptionTest() {
+		// The goal of cooking descriptions is to make the remaining description safe to be transmitted to the cart controller.
+		// Our general test mechanism is to measure the string length before and after.
+		
+		// This is real order data from GoodEggs. The problem was non-ASCI characters
+		String inputStr = "Napa Valley Bistro - Jalape������������������o Stuffed Olives";
+		Integer lengthBefore = inputStr.length();
+		Assert.assertEquals((Integer) 61, lengthBefore);
+
+		String referenceStr = "Napa Valley Bistro - Jalapeo Stuffed Olives";
+		Integer lengthOfReference = referenceStr.length();
+		Assert.assertEquals((Integer) 43, lengthOfReference);
+
+		String cookedString = WorkInstruction.cookDescription(inputStr);
+		Integer lengthAfterCooking = cookedString.length();
+		Assert.assertEquals((Integer) 43, lengthAfterCooking);
+		
+		// This is real data from Accu-Logistics. The problem is the internal quote for inches. And perhaps trailing double quote
+		// use \" to place a quote inside a java string
+		inputStr = "22\" LLAMA LLAMA Doll\"\"";
+		lengthBefore = inputStr.length();
+		Assert.assertEquals((Integer) 22, lengthBefore);
+
+		referenceStr = "22 LLAMA LLAMA Doll";
+		lengthOfReference = referenceStr.length();
+		Assert.assertEquals((Integer) 19, lengthOfReference);
+		
+		cookedString = WorkInstruction.cookDescription(inputStr);
+		lengthAfterCooking = cookedString.length();
+		Assert.assertEquals((Integer) 19, lengthAfterCooking);
+		
+		// What shall we keep? See WorkInstruction.cookDescription  
+		// replaceAll("[^\\p{L}\\p{Z}\\-]",""); means keep numbers, letters, whitespace, and minus. We can modify to add or remove characters like plus, period, etc.
+		// Below show that we lose single and double quotes, but keep +, -, comma, and period. In fact we are only keep these four extra chars
+		inputStr = "22\" Llama-donkey + 8.5' tail, 50% assembled!";
+		lengthBefore = inputStr.length();
+		Assert.assertEquals((Integer) 44, lengthBefore);
+
+		referenceStr = "22 Llama-donkey + 8.5 tail, 50 assembled";
+		lengthOfReference = referenceStr.length();
+		Assert.assertEquals((Integer) 40, lengthOfReference);
+		
+		cookedString = WorkInstruction.cookDescription(inputStr);
+		lengthAfterCooking = cookedString.length();
+		Assert.assertEquals((Integer) 40, lengthAfterCooking);
+
+	}
+
+	@Test
 	public final void addRemoveOrderGroupTest() {
 
 		Organization organization = new Organization();

@@ -234,6 +234,26 @@ public class InventoryServiceTest extends DomainTestABC {
 	}
 	
 	@Test
+	public void testUpsertItemUsingEmptyPositionFromLeft() throws IOException {
+		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
+		UomMaster uomMaster = facility.getUomMaster("each");
+		ItemMaster itemMaster = facility.getItemMaster("10700589");
+		String locationAlias = tier.getAliases().get(0).getAlias();
+		Item item = facility.upsertItem(itemMaster.getItemId(), locationAlias, "", "1", uomMaster.getUomMasterId());
+		Assert.assertEquals(0, item.getCmFromLeft().intValue());
+	}
+	
+	@Test
+	public void testUpsertItemUsingNullPositionFromLeft() throws IOException {
+		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
+		UomMaster uomMaster = facility.getUomMaster("each");
+		ItemMaster itemMaster = facility.getItemMaster("10700589");
+		String locationAlias = tier.getAliases().get(0).getAlias();
+		Item item = facility.upsertItem(itemMaster.getItemId(), locationAlias, null, "1", uomMaster.getUomMasterId());
+		Assert.assertEquals(0, item.getCmFromLeft().intValue());
+	}
+	
+	@Test
 	public void testUpsertItemUsingEmptyUom() throws IOException {
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");

@@ -245,7 +245,9 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 	@JsonProperty
 	private Timestamp					completed;
 
-	public WorkInstruction() {
+   	private static final Integer			MAX_WI_DESC_BYTES	= 80;
+
+   	public WorkInstruction() {
 
 	}
 
@@ -476,4 +478,25 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 		ItemMaster theMaster = this.getItemMaster();
 		return theMaster.getItemId();
 	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * The description comes in from customer orders. It could have quite a mess in it. Ok for most of our application,
+	 * But not ok to ship over to our radio controller elements.
+	 * @param inDescription
+	 */
+	public static final String cookDescription(final String inDescription) {
+		String cookedDesc = inDescription.substring(0, Math.min(MAX_WI_DESC_BYTES, inDescription.length()));
+		// This was the original remove ASCII line
+		// cookedDesc = cookedDesc.replaceAll("[^\\p{ASCII}]", "");
+		
+		// This might over do it. Letters or numbers or white space ok. Nothing else. +, - % $ etc. stripped
+		// cookedDesc = cookedDesc.replaceAll("[^\\p{L}\\p{Z}]","");
+
+		// Or this
+		cookedDesc = cookedDesc.replaceAll("[^a-zA-Z0-9+., -]","");
+		return cookedDesc;
+	}
+
+	
 }

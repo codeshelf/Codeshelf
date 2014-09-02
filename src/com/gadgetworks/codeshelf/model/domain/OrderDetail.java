@@ -7,6 +7,8 @@ package com.gadgetworks.codeshelf.model.domain;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import javax.persistence.Column;
@@ -23,17 +25,26 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import org.apache.commons.lang.StringUtils;
+import org.apache.http.annotation.Immutable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
+import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.platform.services.PersistencyService;
+import com.gadgetworks.codeshelf.util.ASCIIAlphanumericComparator;
+import com.gadgetworks.codeshelf.util.UomNormalizer;
+import com.google.common.base.Joiner;
+import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -70,6 +81,8 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 
 	private static final Logger		LOGGER				= LoggerFactory.getLogger(OrderDetail.class);
 
+	private static final Comparator<String> asciiAlphanumericComparator = new ASCIIAlphanumericComparator();
+	
 	// The owning order header.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
@@ -233,5 +246,42 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 		}
 		return returnStr;
 	}
+	
+	public final String getItemLocations() {
+		//If cross batch return empty
+		if (getParent().getOrderTypeEnum().equals(OrderTypeEnum.CROSS)) {
+			return "";
+		}
+		else {
+			//if work instructions are assigned use the location from that 
+			List<String> wiLocationDisplay = getPickableWorkInstructions();
+			if (!wiLocationDisplay .isEmpty()) {
+				return Joiner.on(",").join(wiLocationDisplay);
+			} else {
+				List<String> itemLocationIds = new ArrayList<String>();
+				List<Item> items = getItemMaster().getItems();
+				//filter by uom and join the aliases together
+				for (Item item : items) {
+					if (UomNormalizer.normalizedEquals(item.getUomMasterId(), this.getUomMasterId())) {
+						String itemLocationId = item.getStoredLocation().getPrimaryAliasId();
+						itemLocationIds.add(itemLocationId);
+					}
+				}
+				Collections.sort(itemLocationIds, asciiAlphanumericComparator);
+				return Joiner.on(",").join(itemLocationIds);
+			} 
+		}
+	}
 
+	private List<String> getPickableWorkInstructions() {
+		ImmutableSet<WorkInstructionStatusEnum> pickableWiSet = Sets.immutableEnumSet(WorkInstructionStatusEnum.NEW, WorkInstructionStatusEnum.INPROGRESS, WorkInstructionStatusEnum.COMPLETE);
+		List<String> pickableWiLocations =  new ArrayList<String>();
+		for (WorkInstruction wi : getWorkInstructions()) {
+			if (pickableWiSet.contains(wi.getStatusEnum())) {
+				pickableWiLocations.add(wi.getPickInstruction());
+			}
+		}
+		return pickableWiLocations;
+	}
+	
 }
