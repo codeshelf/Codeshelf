@@ -308,7 +308,7 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 		//filter by uom and join the aliases together
 		for (Item item : items) {
 			String itemLocationId = item.getStoredLocation().getPrimaryAliasId();
-			itemLocationIds.add(String.format("%s(%s)", itemLocationId, item.getUomMasterId()));
+			itemLocationIds.add(itemLocationId);
 		}
 		Collections.sort(itemLocationIds, asciiAlphanumericComparator);
 		return Joiner.on(",").join(itemLocationIds);

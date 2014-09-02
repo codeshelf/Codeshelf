@@ -101,8 +101,6 @@ public class Facility extends SubLocationABC<Facility> {
 
 	private static final Logger				LOGGER				= LoggerFactory.getLogger(Facility.class);
 
-	private static final Integer			MAX_WI_DESC_BYTES	= 80;
-
 	// The owning organization.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
@@ -1526,9 +1524,7 @@ public class Facility extends SubLocationABC<Facility> {
 			resultWi.setLocation(inLocation);
 			resultWi.setLocationId(inLocation.getFullDomainId());
 			resultWi.setItemMaster(inOrderDetail.getItemMaster());
-			String cookedDesc = inOrderDetail.getItemMaster().getDescription();
-			cookedDesc = cookedDesc.substring(0, Math.min(MAX_WI_DESC_BYTES, cookedDesc.length()));
-			cookedDesc = cookedDesc.replaceAll("[^\\p{ASCII}]", "");
+			String cookedDesc = WorkInstruction.cookDescription(inOrderDetail.getItemMaster().getDescription());
 			resultWi.setDescription(cookedDesc);
 			if (inOrderDetail.getItemMaster().getDdcId() != null) {
 				resultWi.setPickInstruction(inOrderDetail.getItemMaster().getDdcId());
