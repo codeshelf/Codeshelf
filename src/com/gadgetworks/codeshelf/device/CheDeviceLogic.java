@@ -1007,7 +1007,12 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				if (inQuantity >= wi.getPlanMinQuantity()) {
 					processNormalPick(wi, inQuantity);
 				} else {
-					processShortPick(wi, inQuantity);
+					// More kludge for count > 99 case
+					Integer planQuantity = wi.getPlanQuantity();
+					if (inQuantity == maxCountForPositionControllerDisplay && planQuantity > maxCountForPositionControllerDisplay)
+						processNormalPick(wi, planQuantity); // Assume all were picked. No way for user to tell if more than 98 given.
+					else
+						processShortPick(wi, inQuantity);
 				}
 			}
 		}
