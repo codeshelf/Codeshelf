@@ -81,7 +81,7 @@ public class User extends DomainObjectTreeABC<Organization> {
 	public static final int		PBKDF2_INDEX		= 2;
 
 	// The owning organization.
-	@Column(name = "parentOrganization", nullable = false)
+	// @Column(name = "parentOrganization")
 	@ManyToOne(optional = false)
 	private Organization		parent;
 

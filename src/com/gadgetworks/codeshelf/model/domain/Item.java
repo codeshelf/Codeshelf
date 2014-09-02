@@ -68,14 +68,12 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(Item.class);
 
 	// The owning location.
-	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	@Getter
 	@Setter
 	private ItemMaster			parent;
 
 	// The stored location.
-	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	@Getter
 	//	@Setter
@@ -89,7 +87,6 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	private Double				quantity;
 
 	// The actual UoM.
-	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	@Getter
 	@Setter

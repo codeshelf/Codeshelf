@@ -62,7 +62,6 @@ public class OrderLocation extends DomainObjectTreeABC<OrderHeader> {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(OrderLocation.class);
 
-	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	@JsonProperty
 	private LocationABC			location;
@@ -80,7 +79,6 @@ public class OrderLocation extends DomainObjectTreeABC<OrderHeader> {
 	private Timestamp			updated;
 
 	// The owning facility.
-	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	private OrderHeader			parent;
 

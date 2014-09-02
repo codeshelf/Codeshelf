@@ -62,16 +62,19 @@ public class Che extends WirelessDeviceABC {
 	}
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(Che.class);
+		
+	/*
+	@ManyToOne(optional = false)
+	private CodeshelfNetwork parent;
+	 */
 
 	// The current work area.
-	@Column(nullable = true)
 	@ManyToOne(optional = true)
 	@Getter
 	@Setter
 	private WorkArea			currentWorkArea;
 
 	// The current user.
-	@Column(nullable = true)
 	@ManyToOne(optional = true)
 	@Getter
 	@Setter
@@ -89,7 +92,6 @@ public class Che extends WirelessDeviceABC {
 	private List<WorkInstruction>	cheWorkInstructions	= new ArrayList<WorkInstruction>();
 
 	public Che() {
-
 	}
 
 	public final ITypedDao<Che> getDao() {

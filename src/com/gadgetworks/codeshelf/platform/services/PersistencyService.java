@@ -1,5 +1,8 @@
 package com.gadgetworks.codeshelf.platform.services;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import lombok.Getter;
 
 import org.hibernate.Session;
@@ -18,6 +21,8 @@ import com.google.inject.Singleton;
 @Singleton
 public class PersistencyService implements Service {
 
+	private static final int DEFAULT_PORT = 5432;
+
 	private static final Logger LOGGER	= LoggerFactory.getLogger(PersistencyService.class);
 
 	@Getter
@@ -35,7 +40,16 @@ public class PersistencyService implements Service {
 
 	String schemaName;
 	
+	// stores the factories for different tenants
+	Map<Tenant,SessionFactory> factories = new HashMap<Tenant, SessionFactory>();
+
+	// temp solution to get current tenant, while multitenancy has not been built out
+	Tenant fixedTenant;
+	
 	public PersistencyService() {
+		fixedTenant = new Tenant();
+		fixedTenant.setName("Tenant #1");
+		fixedTenant.setShardId(1);
 	}
 	
 	/*
@@ -137,12 +151,19 @@ public class PersistencyService implements Service {
 		boolean result = false;
 		// fetch database config from properties file
 		this.hostName = System.getProperty("db.address");
-		this.port = Integer.parseInt(System.getProperty("db.portnum"));
+		String portStr = System.getProperty("db.portnum");
+		if (portStr==null) {
+			LOGGER.warn("Database port not defined in sytem properties file.  Using ");
+			this.port = DEFAULT_PORT;
+		}
+		else {
+			this.port = Integer.parseInt(portStr);
+		}
 		this.databaseName = System.getProperty("db.name");
 		this.schemaName = System.getProperty("db.schemaname");
 		this.userId = System.getProperty("db.userid");
 		this.password = System.getProperty("db.password");
-		LOGGER.info("Database started");
+		// LOGGER.info("Database started");
 		result = true;
 		return result;
 	}
@@ -168,8 +189,19 @@ public class PersistencyService implements Service {
 		return result;
 	}
 
-	public Session getCurrentSession() {
-		return null;
+	public Session getCurrentTenantSession() {
+		Tenant tenant = getCurrentTenant();
+		SessionFactory fac = this.factories.get(tenant);
+		if (fac==null) {
+			fac = createTenantSessionFactory(tenant);
+			this.factories.put(tenant, fac);
+		}
+		Session session = fac.getCurrentSession();
+		return session;
+	}
+
+	private Tenant getCurrentTenant() {
+		return this.fixedTenant;
 	}
 
 }

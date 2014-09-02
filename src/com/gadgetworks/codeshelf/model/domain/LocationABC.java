@@ -65,7 +65,7 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-@MappedSuperclass
+//@MappedSuperclass
 //@CacheStrategy(useBeanCache = false)
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @Table(name = "location")
@@ -146,7 +146,6 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	private Double						posAlongPath;
 
 	// Associated path segment (optional)
-	@Column(nullable = true)
 	@ManyToOne(optional = true)
 	@Getter
 	@Setter
@@ -162,7 +161,6 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	//	private Organization				parentOrganization;
 	//
 	// The LED controller.
-	@Column(nullable = true)
 	@ManyToOne(optional = true)
 	@Getter
 	@Setter

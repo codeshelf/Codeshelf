@@ -59,13 +59,15 @@ public abstract class DomainObjectABC implements IDomainObject {
 
 	// This is the internal GUID for the object.
 	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO, generator = "com.gadgetworks.codeshelf.model.dao.UuidGenGw")
+	// @GeneratedValue(strategy = GenerationType.AUTO, generator = "com.gadgetworks.codeshelf.model.dao.UuidGenGw")
 	@NonNull
 	@Column(name = "persistentid", nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private UUID				persistentId;
+	// private UUID persistentId;
+	private UUID persistentId = UUID.randomUUID();
+
 
 	// The domain ID
 	@NonNull

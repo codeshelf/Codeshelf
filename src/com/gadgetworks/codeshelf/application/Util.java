@@ -49,7 +49,8 @@ public class Util {
 
 		// If the command line didn't specify a console appender then make the console logger a NullAppender.
 		if (System.getProperty("console.appender") == null) {
-			System.setProperty("console.appender", "org.apache.log4j.varia.NullAppender");
+			//System.setProperty("console.appender", "org.apache.log4j.varia.NullAppender");
+			System.setProperty("console.appender", "org.apache.log4j.ConsoleAppender");
 		}
 
 		// Set safe defaults for remote logging (when it's not needed, such as in developer debug).

@@ -84,7 +84,6 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	private static final Comparator<String> asciiAlphanumericComparator = new ASCIIAlphanumericComparator();
 	
 	// The owning order header.
-	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	private OrderHeader				parent;
 
@@ -97,7 +96,6 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	private OrderStatusEnum			statusEnum;
 
 	// The item master.
-	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	@Getter
 	@Setter
@@ -132,7 +130,6 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	private Integer					maxQuantity;
 
 	// The UoM.
-	@Column(nullable = false)
 	@OneToOne(fetch = FetchType.LAZY)
 	@Getter
 	@Setter

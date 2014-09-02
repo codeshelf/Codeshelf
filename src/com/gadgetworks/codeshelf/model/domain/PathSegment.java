@@ -88,16 +88,15 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 	private static final Logger	LOGGER			= LoggerFactory.getLogger(PathSegment.class);
 
 	// The owning organization.
-	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	private Path				parent;
+	private Path parent;
 
 	// The order of this path segment in the path (from the tail/origin).
 	@NonNull
 	@Column(nullable = true)
 	@Getter
 	@Setter
-	private Integer				segmentOrder;
+	private Integer segmentOrder;
 
 	// The positioning type.
 	@NonNull

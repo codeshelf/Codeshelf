@@ -65,13 +65,11 @@ public class EdiDocumentLocator extends DomainObjectTreeABC<DropboxService> {
 
 	// The owning EdiService.
 	// We prefer to use the abstract class here, but it's not currently possible with Ebean.
-	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	private DropboxService			parent;
 
 	// Document Path
 	@Column(nullable = false)
-	@ManyToOne(optional = false)
 	@Getter
 	@Setter
 	@JsonProperty
@@ -79,7 +77,6 @@ public class EdiDocumentLocator extends DomainObjectTreeABC<DropboxService> {
 
 	// Document Name
 	@Column(nullable = true)
-	@ManyToOne(optional = false)
 	@Getter
 	@Setter
 	@JsonProperty

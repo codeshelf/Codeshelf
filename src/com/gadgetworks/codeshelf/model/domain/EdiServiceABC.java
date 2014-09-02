@@ -43,7 +43,7 @@ import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
  */
 
 @Entity
-@MappedSuperclass
+//@MappedSuperclass
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @Table(name = "edi_service")
 @DiscriminatorColumn(name = "dtype", discriminatorType = DiscriminatorType.STRING)
@@ -55,7 +55,6 @@ public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implem
 	private static final Logger			LOGGER				= LoggerFactory.getLogger(EdiServiceABC.class);
 
 	// The owning Facility.
-	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	private Facility					parent;
 

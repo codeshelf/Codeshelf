@@ -77,7 +77,6 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	private static final Logger			LOGGER						= LoggerFactory.getLogger(Path.class);
 
 	// The parent facility.
-	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	@Getter
 	@Setter

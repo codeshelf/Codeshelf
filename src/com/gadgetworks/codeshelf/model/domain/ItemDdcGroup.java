@@ -58,7 +58,6 @@ public class ItemDdcGroup extends DomainObjectTreeABC<ILocation> {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(ItemDdcGroup.class);
 
 	// The parent location.
-	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	private LocationABC			parent;
 

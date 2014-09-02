@@ -9,10 +9,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.persistence.Entity;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 import lombok.Getter;
+import lombok.Setter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,7 +42,6 @@ import com.google.inject.Singleton;
 //@CacheStrategy(useBeanCache = true)
 @Table(name = "led_controller")
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-//@ToString(doNotUseGetters = true)
 public class LedController extends WirelessDeviceABC {
 
 	@Inject
@@ -59,11 +60,16 @@ public class LedController extends WirelessDeviceABC {
 	}
 
 	private static final Logger		LOGGER		= LoggerFactory.getLogger(LedController.class);
+	
+	// parent of che is network
+	//@Getter @Setter
+	//@ManyToOne(optional = false)
+	//private CodeshelfNetwork parent;
 
 	// All of the locations that use this controller.
-	@OneToMany(mappedBy = "ledController")
+	@OneToMany(mappedBy = "ledControllers",targetEntity=CodeshelfNetwork.class)
 	@Getter
-	private List<SubLocationABC>	locations	= new ArrayList<SubLocationABC>();
+	private List<SubLocationABC> locations	= new ArrayList<SubLocationABC>();
 
 	public LedController() {
 

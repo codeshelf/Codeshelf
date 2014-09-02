@@ -100,14 +100,9 @@ public class Facility extends SubLocationABC<Facility> {
 	private static final Logger				LOGGER				= LoggerFactory.getLogger(Facility.class);
 
 	// The owning organization.
-	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	@Getter
 	private Organization					parentOrganization;
-
-	//	@Column(nullable = false)
-	//	@ManyToOne(optional = false)
-	//	private SubLocationABC					parent;
 
 	@OneToMany(mappedBy = "parent")
 	@Getter
@@ -155,8 +150,7 @@ public class Facility extends SubLocationABC<Facility> {
 
 	@Transient
 	// for now installation specific.  property needs to be exposed as a configuration parameter.
-	@Getter
-	@Setter
+	@Getter @Setter
 	static WorkInstructionSequencerType		sequencerType		= WorkInstructionSequencerType.BayDistance;
 
 	static {

@@ -94,7 +94,6 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	private static final Logger			LOGGER			= LoggerFactory.getLogger(OrderHeader.class);
 
 	// The parent facility.
-	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	private Facility					parent;
 
@@ -123,7 +122,6 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	private PickStrategyEnum			pickStrategyEnum;
 
 	// The parent order group.
-	@Column(nullable = true)
 	@ManyToOne(optional = true)
 	@Getter
 	@Setter
@@ -169,7 +167,6 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	private Timestamp					dueDate;
 
 	// The container use for this order.
-	@Column(nullable = true)
 	@OneToOne(optional = true)
 	@Getter
 	@Setter

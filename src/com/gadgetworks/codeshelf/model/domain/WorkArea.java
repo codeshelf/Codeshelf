@@ -62,7 +62,6 @@ public class WorkArea extends DomainObjectTreeABC<Path> {
 	private static final Logger	LOGGER		= LoggerFactory.getLogger(WorkArea.class);
 
 	// The parent facility.
-	@Column(nullable = false)
 	@OneToOne(optional = false)
 	private Path				parent;
 

@@ -50,7 +50,6 @@ import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.Path.PathDao;
 import com.gadgetworks.codeshelf.model.domain.PathSegment;
 import com.gadgetworks.codeshelf.model.domain.PathSegment.PathSegmentDao;
-import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
 import com.gadgetworks.codeshelf.model.domain.Slot;
 import com.gadgetworks.codeshelf.model.domain.Slot.SlotDao;
 import com.gadgetworks.codeshelf.model.domain.SubLocationABC;
@@ -70,7 +69,9 @@ import com.gadgetworks.codeshelf.platform.services.PersistencyService;
 public abstract class DAOTestABC {
 	
 	static {
+		System.setProperty("config.properties", "./conf/test.config.properties");
 		Util.initLogging();
+		Util.loadConfig();
 	}
 	
 	protected OrganizationDao		mOrganizationDao;
@@ -108,7 +109,7 @@ public abstract class DAOTestABC {
 
 	@Before
 	public final void setup() {
-
+		
 		PersistencyService persistencyService = new PersistencyService();
 		persistencyService.start();
 

@@ -12,6 +12,7 @@ import java.util.Map;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.MapKey;
 import javax.persistence.OneToMany;
@@ -21,6 +22,7 @@ import javax.persistence.Transient;
 import lombok.Getter;
 import lombok.Setter;
 
+import org.hibernate.annotations.Where;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -97,22 +99,28 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 	private boolean						connected;
 
 	// The owning facility.
-	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	private Facility					parent;
 
-	@OneToMany(mappedBy = "parent")
-	@MapKey(name = "domainId")
+	
 	@Getter
+    @OneToMany
+	// @OneToMany(mappedBy = "parent",targetEntity=Che.class)
+	@JoinColumn(name="parent", insertable=false, updatable=false)
+    @Where(clause="dtype='Che'")
+    @MapKey(name = "domainId")
 	private Map<String, Che>			ches				= new HashMap<String, Che>();
 
-	@OneToMany(mappedBy = "parent")
-	@MapKey(name = "domainId")
 	@Getter
+    @OneToMany
+	// @OneToMany(mappedBy = "parent",targetEntity=LedController.class)
+	@JoinColumn(name="parent", insertable=false, updatable=false)
+    @Where(clause="dtype='LedController'")
+	@MapKey(name = "domainId")
 	private Map<String, LedController>	ledControllers		= new HashMap<String, LedController>();
 
 	// For a network this is a list of all of the devices that belong to this network.
-	@Column(nullable = false)
+	// @Column(nullable = false)
 	@Getter
 	@OneToMany(mappedBy = "parent")
 	private List<WirelessDeviceABC>		devices				= new ArrayList<WirelessDeviceABC>();

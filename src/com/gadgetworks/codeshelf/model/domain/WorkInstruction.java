@@ -88,7 +88,6 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 	private static final Logger			LOGGER	= LoggerFactory.getLogger(WorkInstruction.class);
 
 	// The parent order detail item.
-	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	private OrderDetail					parent;
 
@@ -109,7 +108,6 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 	private WorkInstructionStatusEnum	statusEnum;
 
 	// The container.
-	@Column(nullable = false)
 	@Getter
 	@ManyToOne(optional = false)
 	private Container					container;
@@ -121,7 +119,6 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 	private String						containerId;
 
 	// The item id.
-	@Column(nullable = false)
 	@Getter
 	@ManyToOne(optional = false)
 	private ItemMaster					itemMaster;
@@ -175,7 +172,6 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 	private Integer						actualQuantity;
 
 	// From location.
-	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	private LocationABC					location;
 
@@ -194,7 +190,6 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 	private String						pickerId;
 
 	// Assigned CHE
-	@Column(nullable = true)
 	@Getter
 	@Setter
 	@ManyToOne(optional = true)

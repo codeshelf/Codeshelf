@@ -63,9 +63,8 @@ public class ContainerKind extends DomainObjectTreeABC<Facility> {
 	public static final String	DEFAULT_CONTAINER_KIND	= "DEFAULT";
 
 	// The parent facility.
-	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	private Facility			parent;
+	private Facility parent;
 
 	// The container class ID.
 	@Column(nullable = false)

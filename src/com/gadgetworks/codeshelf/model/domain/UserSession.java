@@ -64,7 +64,7 @@ public class UserSession extends DomainObjectTreeABC<User> {
 	private static final long	serialVersionUID	= 3001609308065821464L;
 
 	// The owning CodeShelf network.
-	@Column(name = "parentUser", nullable = false)
+	//@Column(name = "parentUser", nullable = false)
 	@ManyToOne(optional = false)
 	private User				parent;
 

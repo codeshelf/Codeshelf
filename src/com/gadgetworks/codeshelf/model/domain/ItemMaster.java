@@ -78,7 +78,6 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	private static final Comparator<String> asciiAlphanumericComparator = new ASCIIAlphanumericComparator();
 	
 	// The parent facility.
-	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	private Facility			parent;
 
@@ -119,7 +118,6 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	private Integer				ddcPackDepth;
 
 	// The standard UoM.
-	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	@Getter
 	@Setter

@@ -62,7 +62,6 @@ public class Container extends DomainObjectTreeABC<Facility> {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(Container.class);
 
 	// The container kind.
-	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	@Getter
 	@Setter
@@ -82,7 +81,6 @@ public class Container extends DomainObjectTreeABC<Facility> {
 	private Timestamp			updated;
 
 	// The parent facility.
-	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	private Facility			parent;
 

@@ -64,7 +64,6 @@ public class ContainerUse extends DomainObjectTreeABC<Container> {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(ContainerUse.class);
 
 	// The container used.
-	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	private Container			parent;
 
@@ -76,14 +75,12 @@ public class ContainerUse extends DomainObjectTreeABC<Container> {
 	private Timestamp			usedOn;
 
 	// The order where we used this container.
-	@Column(nullable = false)
 	@OneToOne(optional = true)
 	@Getter
 	@Setter
 	private OrderHeader			orderHeader;
 
 	// The che where we're using this container.
-	@Column(nullable = true)
 	@ManyToOne(optional = true)
 	@Getter
 	@Setter

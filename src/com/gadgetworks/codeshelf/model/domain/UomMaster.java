@@ -58,7 +58,6 @@ public class UomMaster extends DomainObjectTreeABC<Facility> {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(UomMaster.class);
 
 	// The parent facility.
-	@Column(nullable = false)
 	@ManyToOne(optional = false, fetch = FetchType.EAGER)
 	private Facility			parent;
 

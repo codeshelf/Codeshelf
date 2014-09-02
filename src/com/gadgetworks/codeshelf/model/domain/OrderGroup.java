@@ -71,7 +71,6 @@ public class OrderGroup extends DomainObjectTreeABC<Facility> {
 	private static final Logger			LOGGER							= LoggerFactory.getLogger(OrderGroup.class);
 
 	// The parent facility.
-	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	private Facility					parent;
 

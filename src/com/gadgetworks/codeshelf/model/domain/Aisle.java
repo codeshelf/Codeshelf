@@ -9,6 +9,8 @@ import java.util.UUID;
 
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,9 +38,13 @@ import com.google.inject.Singleton;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 //@ToString(doNotUseGetters = true)
 public class Aisle extends SubLocationABC<Facility> {
-
+	
 	@Inject
 	public static ITypedDao<Aisle>	DAO;
+
+	@ManyToOne(optional = false)
+	@JoinColumn(name = "parent_facility")
+	private Facility parent;
 
 	@Singleton
 	public static class AisleDao extends GenericDaoABC<Aisle> implements ITypedDao<Aisle> {

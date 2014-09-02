@@ -62,7 +62,6 @@ public class LocationAlias extends DomainObjectTreeABC<Facility> {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(LocationAlias.class);
 
 	// Attachment credential.
-	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	@JsonProperty
 	private LocationABC			mappedLocation;
@@ -80,7 +79,6 @@ public class LocationAlias extends DomainObjectTreeABC<Facility> {
 	private Timestamp			updated;
 
 	// The owning facility.
-	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	private Facility			parent;
 

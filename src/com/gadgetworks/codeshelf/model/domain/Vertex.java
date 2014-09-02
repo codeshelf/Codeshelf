@@ -64,7 +64,6 @@ public class Vertex extends DomainObjectTreeABC<ILocation> {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(Vertex.class);
 
 	// The owning location.
-	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	private LocationABC			parent;
 

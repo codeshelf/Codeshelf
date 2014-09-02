@@ -71,9 +71,8 @@ public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNet
 	private static final Logger		LOGGER	= LoggerFactory.getLogger(WirelessDeviceABC.class);
 
 	// The owning network.
-	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	private CodeshelfNetwork		parent;
+	protected CodeshelfNetwork		parent;
 
 	@Column(nullable = false)
 	@Getter

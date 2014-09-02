@@ -62,7 +62,6 @@ public class PersistentProperty extends DomainObjectTreeABC<Organization> {
 	private static final long	serialVersionUID		= -7735810092352246641L;
 
 	// The owning organization.
-	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	private Organization		parent;
 

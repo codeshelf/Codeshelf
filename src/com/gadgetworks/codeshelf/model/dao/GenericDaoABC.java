@@ -50,7 +50,7 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	}
 	
 	private Session getCurrentSession() {
-		return persistencyService.getCurrentSession();
+		return persistencyService.getCurrentTenantSession();
 	}
 
 	// --------------------------------------------------------------------------
@@ -164,8 +164,6 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 		String effectiveId = inId;
 		try {
 			Session session = getCurrentSession();
-
-			
 			
 			// Query<T> query = mServer.createQuery(getDaoClass());
 	        Criteria criteria = session.createCriteria(getDaoClass());
