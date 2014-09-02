@@ -902,6 +902,10 @@ public class RadioController implements IRadioController {
 	 */
 	private void respondToAck(final byte inAckId, final NetworkId inNetId, final NetAddress inSrcAddr) {
 		INetworkDevice device = mDeviceNetAddrMap.get(inSrcAddr);
+		if (device==null) {
+			LOGGER.warn("Unable to respond to ack: Device with address "+inSrcAddr+" not found");
+			return;
+		}
 		if (device.isAckIdNew(inAckId)) {
 
 			LOGGER.info("Remote ack request RECEIVED: ack: " + inAckId + " net: " + inNetId + " src: " + inSrcAddr);
