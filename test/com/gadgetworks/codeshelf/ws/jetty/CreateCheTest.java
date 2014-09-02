@@ -5,6 +5,7 @@ import java.util.HashMap;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import com.eaio.uuid.UUID;
@@ -21,7 +22,9 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectUpdateRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectUpdateResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
+import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
 import com.gadgetworks.codeshelf.ws.jetty.server.ServerMessageProcessor;
+import com.gadgetworks.codeshelf.ws.jetty.server.SessionManager;
 
 // example che update message:
 // "ObjectUpdateRequest":{"className":"Che","persistentId":"66575760-00b8-11e4-ba3a-48d705ccef0f","properties":{"description":"1123"},"messageId":"cid_6"}
@@ -37,8 +40,8 @@ public class CreateCheTest extends DAOTestABC {
 		
 		MockDaoProvider daoProvider = new MockDaoProvider();
 		
-		MockSession session = new MockSession();
-		session.setId("test-session");
+		CsSession session = Mockito.mock(CsSession.class);
+		session.setSessionId("test-session");
 	
 		ITypedDao<Organization> orgDao = daoProvider.getDaoInstance(Organization.class);
 		ITypedDao<Facility> facDao = daoProvider.getDaoInstance(Facility.class);
@@ -92,8 +95,9 @@ public class CreateCheTest extends DAOTestABC {
 		
 		MockDaoProvider daoProvider = new MockDaoProvider();
 		
-		MockSession session = new MockSession();
-		session.setId("test-session");
+		CsSession session = Mockito.mock(CsSession.class);
+		session.setSessionId("test-session");
+
 	
 		ITypedDao<Organization> orgDao = daoProvider.getDaoInstance(Organization.class);
 		ITypedDao<Facility> facDao = daoProvider.getDaoInstance(Facility.class);
@@ -129,6 +133,7 @@ public class CreateCheTest extends DAOTestABC {
 		req.setProperties(properties);
 		
 		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider);
+
 		ResponseABC response = processor.handleRequest(session, req);
 		Assert.assertTrue(response instanceof ObjectUpdateResponse);
 		
@@ -146,8 +151,9 @@ public class CreateCheTest extends DAOTestABC {
 		
 		MockDaoProvider daoProvider = new MockDaoProvider();
 		
-		MockSession session = new MockSession();
-		session.setId("test-session");
+		CsSession session = Mockito.mock(CsSession.class);
+		session.setSessionId("test-session");
+
 	
 		ITypedDao<Organization> orgDao = daoProvider.getDaoInstance(Organization.class);
 		ITypedDao<Facility> facDao = daoProvider.getDaoInstance(Facility.class);
@@ -179,6 +185,7 @@ public class CreateCheTest extends DAOTestABC {
 		req.setProperties(properties);
 		
 		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider);
+
 		ResponseABC response = processor.handleRequest(session, req);
 		Assert.assertTrue(response instanceof ObjectUpdateResponse);
 		
@@ -194,8 +201,9 @@ public class CreateCheTest extends DAOTestABC {
 	public final void testInvalidClass() {	
 		MockDaoProvider daoProvider = new MockDaoProvider();
 		
-		MockSession session = new MockSession();
-		session.setId("test-session");
+		CsSession session = Mockito.mock(CsSession.class);
+		session.setSessionId("test-session");
+
 	
 		ObjectUpdateRequest req = new ObjectUpdateRequest();
 		req.setClassName("Foobar");
@@ -206,6 +214,7 @@ public class CreateCheTest extends DAOTestABC {
 		req.setProperties(properties);
 		
 		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider);
+
 		ResponseABC response = processor.handleRequest(session, req);
 		Assert.assertTrue(response instanceof ObjectUpdateResponse);
 		
@@ -224,8 +233,8 @@ public class CreateCheTest extends DAOTestABC {
 		
 		MockDaoProvider daoProvider = new MockDaoProvider();
 		
-		MockSession session = new MockSession();
-		session.setId("test-session");
+		CsSession session = Mockito.mock(CsSession.class);
+		session.setSessionId("test-session");
 	
 		ITypedDao<Organization> orgDao = daoProvider.getDaoInstance(Organization.class);
 		ITypedDao<Facility> facDao = daoProvider.getDaoInstance(Facility.class);
@@ -257,6 +266,7 @@ public class CreateCheTest extends DAOTestABC {
 		req.setProperties(properties);
 		
 		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider);
+
 		ResponseABC response = processor.handleRequest(session, req);
 		Assert.assertTrue(response instanceof ObjectUpdateResponse);
 		

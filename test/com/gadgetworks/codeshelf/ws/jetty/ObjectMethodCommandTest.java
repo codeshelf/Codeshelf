@@ -8,6 +8,7 @@ import javax.websocket.EncodeException;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import com.gadgetworks.codeshelf.application.Configuration;
@@ -26,6 +27,7 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectMethodRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectMethodResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
+import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
 import com.gadgetworks.codeshelf.ws.jetty.server.ServerMessageProcessor;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -51,9 +53,6 @@ public class ObjectMethodCommandTest {
 		
 		MockDaoProvider daoProvider = new MockDaoProvider();
 		
-		MockSession session = new MockSession();
-		session.setId("test-session");
-	
 		ITypedDao<Organization> orgDao = daoProvider.getDaoInstance(Organization.class);
 		ITypedDao<Facility> facDao = daoProvider.getDaoInstance(Facility.class);
 		ITypedDao<CodeshelfNetwork> netDao = daoProvider.getDaoInstance(CodeshelfNetwork.class);
@@ -97,7 +96,7 @@ public class ObjectMethodCommandTest {
 		}		
 		
 		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider);
-		ResponseABC response = processor.handleRequest(session, request);
+		ResponseABC response = processor.handleRequest(Mockito.mock(CsSession.class), request);
 		Assert.assertTrue(response instanceof ObjectMethodResponse);
 		
 		ObjectMethodResponse updateResponse = (ObjectMethodResponse) response;

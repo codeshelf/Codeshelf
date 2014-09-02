@@ -12,6 +12,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import com.fasterxml.jackson.core.JsonGenerationException;
@@ -35,6 +36,7 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectMethodRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.CreatePathResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectMethodResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
+import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
 import com.gadgetworks.codeshelf.ws.jetty.server.ServerMessageProcessor;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -81,8 +83,8 @@ public class CreatePathCommandTest extends DAOTestABC {
 		jsonString = mapper.writeValueAsString(request);
 		System.out.println(jsonString);
 		
-		MockSession session = new MockSession();
-		session.setId("test-session");
+		CsSession session = Mockito.mock(CsSession.class);
+		session.setSessionId("test-session");
 		
 		ServerMessageProcessor processor = new ServerMessageProcessor(mockDaoProvider);
 		ResponseABC response = processor.handleRequest(session, request);
@@ -120,10 +122,12 @@ public class CreatePathCommandTest extends DAOTestABC {
 		request.setMethodName("createPath");
 		request.setMethodArgs(args);
 		
-		MockSession session = new MockSession();
-		session.setId("test-session");
+		CsSession session = Mockito.mock(CsSession.class);
+		session.setSessionId("test-session");
+
 		
 		ServerMessageProcessor processor = new ServerMessageProcessor(mockDaoProvider);
+
 		ResponseABC response = processor.handleRequest(session, request);
 
 		Assert.assertTrue(response instanceof ObjectMethodResponse);

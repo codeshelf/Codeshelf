@@ -1,10 +1,10 @@
 package com.gadgetworks.codeshelf.ws.jetty.server;
 
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
 
 import javax.websocket.CloseReason;
 import javax.websocket.Session;
@@ -22,6 +22,7 @@ import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
+import com.google.common.base.Objects;
 
 public class CsSession implements IDaoListener {
 	public enum State {
@@ -64,17 +65,26 @@ public class CsSession implements IDaoListener {
 	
 	private Set<ITypedDao<IDomainObject>> daoList = new ConcurrentHashSet<ITypedDao<IDomainObject>>();
 	
-	public CsSession(Session session) {
+	private Executor messageSender;
+	
+	public CsSession(Session session, Executor messageSender) {
 		this.session = session;
+		this.messageSender = messageSender;
 	}
 
-	public void sendMessage(MessageABC response) {
-		try {
-			session.getBasicRemote().sendObject(response);
-			this.messageSent();
-		} catch (Exception e) {
-			LOGGER.error("Failed to send message", e);
-		}
+	public void sendMessage(final MessageABC response) {
+		messageSender.execute(new Runnable() {
+
+			@Override
+			public void run() {
+				try {
+					session.getBasicRemote().sendObject(response);
+					CsSession.this.messageSent();
+				} catch (Exception e) {
+					LOGGER.error("Failed to send message", e);
+				}
+			}
+		});
 	}
 	
 	@Override
@@ -149,6 +159,12 @@ public class CsSession implements IDaoListener {
 		} catch (Exception e) {
 			LOGGER.error("Failed to close session", e);
 		}
+	}
+	
+	public String toString() {
+		return Objects.toStringHelper(this)
+			.add("sessionId", this.sessionId)
+			.toString();
 	}
 
 }
