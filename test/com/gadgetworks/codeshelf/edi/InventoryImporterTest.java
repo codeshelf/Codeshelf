@@ -17,6 +17,8 @@ import org.junit.Test;
 
 import com.gadgetworks.codeshelf.application.Util;
 import com.gadgetworks.codeshelf.model.LedRange;
+import com.gadgetworks.codeshelf.model.WiSetSummary;
+import com.gadgetworks.codeshelf.model.WiSummarizer;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Bay;
 import com.gadgetworks.codeshelf.model.domain.Che;
@@ -292,7 +294,6 @@ public class InventoryImporterTest extends EdiTestABC {
 		tier = (SubLocationABC) facility.findSubLocationById("A3.B2.T1");
 		tier.setLedController(controller3);
 
-
 		return facility;
 
 	}
@@ -567,7 +568,7 @@ public class InventoryImporterTest extends EdiTestABC {
 	}
 
 	@Test
-	public final void testNonSlottedPick()  throws IOException{
+	public final void testNonSlottedPick() throws IOException {
 
 		Facility facility = setUpSimpleNoSlotFacility("XX05");
 
@@ -579,8 +580,7 @@ public class InventoryImporterTest extends EdiTestABC {
 				+ "1123,D503,12/16 oz Bowl Lids -PLA Compostable,6,CS,6/25/14 12:00,55\r\n" //
 				+ "1493,D502,PARK RANGER Doll,2,case,6/25/14 12:00,66\r\n" //
 				+ "1522,D503,SJJ BPP,1,Case,6/25/14 12:00,3\r\n" //
-				+ "1522,D403,SJJ BPP,10,each,6/25/14 12:00,3\r\n" ;//
-
+				+ "1522,D403,SJJ BPP,10,each,6/25/14 12:00,3\r\n";//
 
 		byte[] csvArray = csvString.getBytes();
 
@@ -629,16 +629,16 @@ public class InventoryImporterTest extends EdiTestABC {
 		Assert.assertNotNull(order);
 		Integer detailCount = order.getOrderDetails().size();
 		Assert.assertEquals((Integer) 3, detailCount);
-		
+
 		List<String> itemLocations = new ArrayList<String>();
 		for (OrderDetail detail : order.getOrderDetails()) {
 			String itemLocationString = detail.getItemLocations();
 			if (!Strings.isNullOrEmpty(itemLocationString)) {
-				itemLocations.add(itemLocationString);			
+				itemLocations.add(itemLocationString);
 			}
 		}
 		Assert.assertEquals(2, itemLocations.size());
-		
+
 		// Let's find our CHE
 		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
 		Assert.assertNotNull(theNetwork);
@@ -655,9 +655,33 @@ public class InventoryImporterTest extends EdiTestABC {
 		List<WorkInstruction> wiListAfterScan = facility.getWorkInstructions(theChe, "D403");
 		Integer wiCountAfterScan = wiListAfterScan.size();
 		Assert.assertEquals((Integer) 1, wiCountAfterScan); // only the one each item in 403 should be there. The item in 402 is earlier on the path.
+		// just checking the relationships of the work instruction
+		WorkInstruction wi = wiListAfterScan.get(0);
+		Assert.assertNotNull(wi);
+		OrderDetail wiDetail = wi.getParent();
+		Assert.assertNotNull(wiDetail);
+		OrderHeader wiOrderHeader = wiDetail.getParent();
+		Assert.assertNotNull(wiOrderHeader);
+		Assert.assertEquals(facility, wiOrderHeader.getParent());
+		
 
+		// New from v4. Test our work instruction summarizer
+		WiSummarizer theSummarizer = new WiSummarizer();
+		theSummarizer.computeWiSummariesForChe(theChe, facility);
+		// as this test, this facility only set up this one che, there should be only one wi set. But we have 3. How?
+		Assert.assertEquals((Integer) 1, (Integer) theSummarizer.getCountOfSummaries());
+		
+		// getAny should get the one. Call it somewhat as the UI would. Get a time, then query again with that time.
+		Timestamp theTime = theSummarizer.getAnySummaryTime();
+		WiSetSummary theSummary = theSummarizer.getSummaryForTime(theTime);
+		// So, how many shorts, how many active? None complete yet.
+		int actives = theSummary.getActiveCount();
+		int shorts = theSummary.getShortCount();
+		int completes = theSummary.getCompleteCount();
+		Assert.assertEquals((Integer) 0, (Integer) completes);
+		Assert.assertEquals((Integer) 2, (Integer) actives);
+		Assert.assertEquals((Integer) 1, (Integer) shorts);
 
 	}
-
 
 }
