@@ -304,7 +304,7 @@ public class CodeshelfApplicationTest {
 		
 		JettyWebSocketServer jettyServer = new JettyWebSocketServer("localhost", 8444, false, false, "path", "pass", "pass");
 
-		final ServerCodeshelfApplication application = new ServerCodeshelfApplication(null,
+		final ServerCodeshelfApplication application = new ServerCodeshelfApplication(
 			monitor,
 			httpServer,
 			ediProcessor,

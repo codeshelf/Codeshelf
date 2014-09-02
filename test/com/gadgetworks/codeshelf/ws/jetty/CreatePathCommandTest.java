@@ -29,6 +29,7 @@ import com.gadgetworks.codeshelf.model.domain.PathSegment;
 import com.gadgetworks.codeshelf.model.domain.PathSegment.PathSegmentDao;
 import com.gadgetworks.codeshelf.model.domain.WorkArea;
 import com.gadgetworks.codeshelf.model.domain.WorkArea.WorkAreaDao;
+import com.gadgetworks.codeshelf.platform.services.PersistencyService;
 import com.gadgetworks.codeshelf.ws.command.req.ArgsClass;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.CreatePathRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectMethodRequest;
@@ -39,6 +40,8 @@ import com.gadgetworks.codeshelf.ws.jetty.server.ServerMessageProcessor;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CreatePathCommandTest extends DAOTestABC {
+
+	PersistencyService persistencyService = new PersistencyService();
 
 	@Mock
 	private IDaoProvider mockDaoProvider;
@@ -58,11 +61,11 @@ public class CreatePathCommandTest extends DAOTestABC {
 		int numberOfSegments = 3;
 		String testPathDomainId = "DOMID-2";
 		
-		DAOMaker maker = new DAOMaker(mSchemaManager);
+		DAOMaker maker = new DAOMaker(persistencyService);
 		Facility testFacility = make(a(maker.TestFacility));
-		Path.DAO = new PathDao(mSchemaManager);
-		PathSegment.DAO = new PathSegmentDao(mSchemaManager);
-		WorkArea.DAO = new WorkAreaDao(mSchemaManager);
+		Path.DAO = new PathDao(persistencyService);
+		PathSegment.DAO = new PathSegmentDao(persistencyService);
+		WorkArea.DAO = new WorkAreaDao(persistencyService);
 	
 		Path noPath = Path.DAO.findByDomainId(testFacility, testPathDomainId);
 		Assert.assertNull(noPath);
@@ -95,11 +98,11 @@ public class CreatePathCommandTest extends DAOTestABC {
 		int numberOfSegments = 3;
 		String testPathDomainId = "DOMID";
 		
-		DAOMaker maker = new DAOMaker(mSchemaManager);
+		DAOMaker maker = new DAOMaker(persistencyService);
 		Facility testFacility = make(a(maker.TestFacility));
-		Path.DAO = new PathDao(mSchemaManager);
-		PathSegment.DAO = new PathSegmentDao(mSchemaManager);
-		WorkArea.DAO = new WorkAreaDao(mSchemaManager);
+		Path.DAO = new PathDao(persistencyService);
+		PathSegment.DAO = new PathSegmentDao(persistencyService);
+		WorkArea.DAO = new WorkAreaDao(persistencyService);
 	
 		Path noPath = Path.DAO.findByDomainId(testFacility, testPathDomainId);
 		Assert.assertNull(noPath);

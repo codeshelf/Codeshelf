@@ -61,10 +61,6 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 		return result;
 	}
 
-	public final Query<T> query() {
-		throw new NotImplementedException();
-	}
-
 	public final T findByPersistentId(UUID inPersistentId) {
 		return storageByPersistentId.get(inPersistentId);
 	}

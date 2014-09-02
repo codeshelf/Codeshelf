@@ -46,14 +46,11 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 	private static final Logger				LOGGER	= LoggerFactory.getLogger(ServerCodeshelfApplication.class);
 
 	private IEdiProcessor					mEdiProcessor;
-	private IWebSocketServer				mWebSocketServer;
 	private IHttpServer						mHttpServer;
 	private IPickDocumentGenerator			mPickDocumentGenerator;
 
 	private ITypedDao<PersistentProperty>	mPersistentPropertyDao;
 	private ITypedDao<Organization>			mOrganizationDao;
-	private ITypedDao<Facility>				mFacilityDao;
-	private ITypedDao<User>					mUserDao;
 
 	private IMonitor						mMonitor;
 
@@ -66,7 +63,7 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 	private MemoryUsageGaugeSet memoryUsage;
 	
 	@Inject
-	public ServerCodeshelfApplication(final IWebSocketServer inWebSocketServer,
+	public ServerCodeshelfApplication(
 		final IMonitor inMonitor,
 		final IHttpServer inHttpServer,
 		final IEdiProcessor inEdiProcessor,
@@ -80,14 +77,11 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		final JettyWebSocketServer inAlternativeWebSocketServer) {
 		super(inUtil);
 		mMonitor = inMonitor;
-		mWebSocketServer = inWebSocketServer;
 		mHttpServer = inHttpServer;
 		mEdiProcessor = inEdiProcessor;
 		mPickDocumentGenerator = inPickDocumentGenerator;
 		mPersistentPropertyDao = inPersistentPropertyDao;
 		mOrganizationDao = inOrganizationDao;
-		mFacilityDao = inFacilityDao;
-		mUserDao = inUserDao;
 		mAdminServer = inAdminServer;
 		mAlternativeWebSocketServer = inAlternativeWebSocketServer;
 	}
@@ -119,7 +113,6 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		for (Entry<String, Metric> entry : memoryMetrics.entrySet()) {
 			MetricsService.registerMetric(MetricsGroup.JVM,"memory."+entry.getKey(), entry.getValue());
 		}
-		mDatabase.start();
 
 		// Start the WebSocket server 
 		mAlternativeWebSocketServer.start();
@@ -182,12 +175,10 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 
 		// Stop the web socket manager.
 		try {
-			mWebSocketServer.stop();
+			mAlternativeWebSocketServer.stop();
 		} catch (IOException | InterruptedException e) {
 			LOGGER.error("", e);
 		}
-
-		mDatabase.stop();
 
 		LOGGER.info("Application terminated normally");
 

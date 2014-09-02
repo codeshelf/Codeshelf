@@ -10,15 +10,16 @@ import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.domain.Facility.FacilityDao;
 import com.gadgetworks.codeshelf.model.domain.Organization.OrganizationDao;
+import com.gadgetworks.codeshelf.platform.services.PersistencyService;
 import com.natpryce.makeiteasy.Instantiator;
 import com.natpryce.makeiteasy.Property;
 import com.natpryce.makeiteasy.PropertyLookup;
 
 public class DAOMaker {
 
-	public DAOMaker(ISchemaManager mSchemaManager) {
-		Organization.DAO = new OrganizationDao(mSchemaManager);
-		Facility.DAO = new FacilityDao(mSchemaManager);
+	public DAOMaker(PersistencyService persistencyService) {
+		Organization.DAO = new OrganizationDao(persistencyService);
+		Facility.DAO = new FacilityDao(persistencyService);
 
 	}
 

@@ -17,15 +17,14 @@ import com.gadgetworks.codeshelf.model.domain.Facility.FacilityDao;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail.OrderDetailDao;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader.OrderHeaderDao;
 import com.gadgetworks.codeshelf.model.domain.Organization.OrganizationDao;
+import com.gadgetworks.codeshelf.platform.services.PersistencyService;
 
 public class OptimisticLockExceptionTest {
 
+	PersistencyService persistencyService = new PersistencyService();
+
 	@Before
 	public final void setup() {
-
-		try {
-		} catch (ClassNotFoundException e) {
-		}
 	}
 
 	@Test
@@ -33,17 +32,17 @@ public class OptimisticLockExceptionTest {
 
 		// EbeanServer defaultServer = Ebean.getServer(null);
 
-		OrderHeader.DAO = new OrderHeaderDao(mSchemaManager);
-		OrderDetail.DAO = new OrderDetailDao(mSchemaManager);
-		Organization.DAO = new OrganizationDao(mSchemaManager);
-		Facility.DAO = new FacilityDao(mSchemaManager);
+		OrderHeader.DAO = new OrderHeaderDao(persistencyService);
+		OrderDetail.DAO = new OrderDetailDao(persistencyService);
+		Organization.DAO = new OrganizationDao(persistencyService);
+		Facility.DAO = new FacilityDao(persistencyService);
 
-		Organization.DAO = new OrganizationDao(mSchemaManager);
+		Organization.DAO = new OrganizationDao(persistencyService);
 		Organization organization = new Organization();
 		organization.setOrganizationId("OPTIMISTIC-O1");
 		Organization.DAO.store(organization);
 
-		Facility.DAO = new FacilityDao(mSchemaManager);
+		Facility.DAO = new FacilityDao(persistencyService);
 		Facility facility = new Facility();
 		facility.setParent(organization);
 		facility.setFacilityId("OPTIMISTIC-F1");
@@ -68,12 +67,7 @@ public class OptimisticLockExceptionTest {
 
 		order1.setStatusEnum(OrderStatusEnum.COMPLETE);
 		order1.setVersion(new Timestamp(order1.getVersion().getTime() + 1));
-		try {
-			OrderHeader.DAO.store(order1);
-		} catch (RuntimeException e) {
-			// So we should come here with an optimistic lock exception.
-			Assert.fail("DAO Exception");
-		}
+		OrderHeader.DAO.store(order1);
 
 		foundOrder = OrderHeader.DAO.findByDomainId(facility, "OPTIMISTIC-123");
 		Assert.assertEquals(foundOrder.getStatusEnum(), order1.getStatusEnum());

@@ -91,11 +91,6 @@
 	<classpathentry kind="lib" path="lib/dist/websocket-server-9.2.1.v20140609.jar" sourcepath="lib/dist/jetty-all-9.2.1.v20140609-sources.jar"/>
 	<classpathentry kind="lib" path="lib/dist/websocket-servlet-9.2.1.v20140609.jar"/>
 	<classpathentry kind="lib" path="lib/dist/classindex-3.1.jar"/>
-	<classpathentry kind="src" path=".apt_generated">
-		<attributes>
-			<attribute name="optional" value="true"/>
-		</attributes>
-	</classpathentry>
 	<classpathentry kind="lib" path="lib/dist/jetty-all-9.2.1.v20140609-sources.jar"/>
 	<classpathentry kind="lib" path="lib/dist/metrics-annotation-3.0.2.jar"/>
 	<classpathentry kind="lib" path="lib/dist/metrics-core-3.0.2.jar" sourcepath="/Users/bhe/Downloads/metrics-3.0.2/metrics-core/src/main/java"/>
@@ -116,5 +111,10 @@
 	<classpathentry kind="lib" path="lib/dist/hibernate-commons-annotations-4.0.5.Final.jar"/>
 	<classpathentry kind="lib" path="lib/dist/hibernate-core-4.3.6.Final.jar"/>
 	<classpathentry kind="lib" path="lib/dist/hibernate-jpa-2.1-api-1.0.0.Final.jar"/>
+	<classpathentry kind="src" path=".apt_generated">
+		<attributes>
+			<attribute name="optional" value="true"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="output" path="eclipse-bin"/>
 </classpath>

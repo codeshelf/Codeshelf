@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import org.apache.commons.lang.NotImplementedException;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -238,7 +239,10 @@ public class GenericDaoTest {
 		organization1.setDomainId("STORE-TEST-NEW");
 		organization1.setDescription("STORE-TEST-NEW");
 		dao.store(organization1);
+		
+		throw new NotImplementedException();
 
+		/*
 		try {
 			Class.forName("org.h2.Driver");
 			Connection connection = DriverManager.getConnection(mSchemaManager.getApplicationDatabaseURL(),
@@ -261,6 +265,7 @@ public class GenericDaoTest {
 		} catch (ClassNotFoundException e) {
 		} catch (SQLException e) {
 		}
+		*/
 	}
 
 	@Test
@@ -274,6 +279,9 @@ public class GenericDaoTest {
 		organization2.setDescription("STORE-TEST-UPDATED");
 		dao.store(organization2);
 
+		throw new NotImplementedException();
+		
+		/*
 		try {
 			Class.forName("org.h2.Driver");
 			Connection connection = DriverManager.getConnection(mSchemaManager.getApplicationDatabaseURL(),
@@ -296,6 +304,7 @@ public class GenericDaoTest {
 		} catch (ClassNotFoundException e) {
 		} catch (SQLException e) {
 		}
+		*/
 
 	}
 
@@ -310,6 +319,9 @@ public class GenericDaoTest {
 
 		dao.delete(organization2);
 
+		throw new NotImplementedException();
+		
+		/*
 		try {
 			Class.forName("org.h2.Driver");
 			Connection connection = DriverManager.getConnection(mSchemaManager.getApplicationDatabaseURL(),
@@ -331,6 +343,7 @@ public class GenericDaoTest {
 		} catch (ClassNotFoundException e) {
 		} catch (SQLException e) {
 		}
+		*/
 
 	}
 
