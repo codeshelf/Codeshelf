@@ -1,10 +1,13 @@
 package com.gadgetworks.codeshelf.ws.jetty.server;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.websocket.CloseReason;
 import javax.websocket.Session;
@@ -65,11 +68,11 @@ public class CsSession implements IDaoListener {
 	
 	private Set<ITypedDao<IDomainObject>> daoList = new ConcurrentHashSet<ITypedDao<IDomainObject>>();
 	
-	private Executor messageSender;
+	private ExecutorService messageSender;
 	
-	public CsSession(Session session, Executor messageSender) {
+	public CsSession(Session session) {
 		this.session = session;
-		this.messageSender = messageSender;
+		this.messageSender = Executors.newSingleThreadExecutor();
 	}
 
 	public void sendMessage(final MessageABC response) {
@@ -143,6 +146,8 @@ public class CsSession implements IDaoListener {
 	
 	public void close() {
 		this.unregisterAsDAOListener();
+		List<Runnable> unsentMessages = this.messageSender.shutdownNow();
+		LOGGER.debug("Closing session with " + unsentMessages.size() + " unsent messages");
 	}
 
 	public void messageReceived() {

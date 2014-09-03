@@ -25,10 +25,8 @@ public class SessionManager {
 	private final Counter activeSessionsCounter = MetricsService.addCounter(MetricsGroup.WSS,"sessions.active");
 	private final Counter totalSessionsCounter = MetricsService.addCounter(MetricsGroup.WSS,"sessions.total");
 
-	private final Executor messageSenderExecutor;
 	
 	private SessionManager() {
-		this.messageSenderExecutor = Executors.newCachedThreadPool();
 	}
 	 
 	public static SessionManager getInstance() {
@@ -38,7 +36,7 @@ public class SessionManager {
 	public synchronized void sessionStarted(Session session) {
 		String sessionId = session.getId();
 		if (!activeSessions.containsKey(sessionId)) {
-			CsSession csSession = new CsSession(session, messageSenderExecutor);
+			CsSession csSession = new CsSession(session);
 			csSession.setSessionId(sessionId);
 			activeSessions.put(sessionId, csSession);
 			LOGGER.info("Session "+session.getId()+" started");
