@@ -299,6 +299,10 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		// IMPORTANT:
 		// Apply these upgrades in version order.
+
+		// If an multiple upgrades fail part way, make sure we record only what we achieved.
+		int versionOfDBAchived = inOldVersion;
+
 		if ((result) && (inOldVersion < ISchemaManager.DATABASE_VERSION_2)) {
 			result &= doUpgrade002();
 		}
@@ -361,13 +365,27 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		if ((result) && (inOldVersion < ISchemaManager.DATABASE_VERSION_17)) {
 			result &= doUpgrade017();
+			if (result)
+				versionOfDBAchived = ISchemaManager.DATABASE_VERSION_17;
 		}
 
 		if ((result) && (inOldVersion < ISchemaManager.DATABASE_VERSION_18)) {
 			result &= doUpgrade018();
+			if (result)
+				versionOfDBAchived = ISchemaManager.DATABASE_VERSION_18;
 		}
 
-		result &= updateSchemaVersion(ISchemaManager.DATABASE_VERSION_CUR);
+		if (versionOfDBAchived > inOldVersion) {
+			LOGGER.info("Updating version in db_property table");
+			if (!result)
+				LOGGER.error("An upgrade action failed. You may need to check the consistency of db_property.version and whatever upgrade action failed.");
+			// Sounds bogus, but I saw a failure returned, when the table was successfully modified.
+			// Or, we could be trying to add a column that exists already.
+			
+			result &= updateSchemaVersion(versionOfDBAchived);
+		}
+			
+		// result &= updateSchemaVersion(ISchemaManager.DATABASE_VERSION_CUR);
 
 		return result;
 	}
@@ -626,7 +644,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 			// result &= safeRenameColumn("item", "pos_along_path", "meters_from_anchor");
 			// say a PSQLException, but code is not annotated to say it throws that.
 		} catch (Exception e) {
-			LOGGER.error("", e);
+			LOGGER.error("doUpgrade017", e);
 		}
 		if (!result)
 			LOGGER.error("upgrade action 17 failed. Is meters_from_anchor column in item table present?");
@@ -643,7 +661,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		try {
 			result &= safeAddColumn("location", "lower_led_near_anchor", "BOOLEAN DEFAULT TRUE");
 		} catch (Exception e) {
-			LOGGER.error("", e);
+			LOGGER.error("doUpgrade018", e);
 		}
 		if (!result)
 			LOGGER.error("upgrade action 18 failed. Is lower_led_near_anchor column in location table present?");
@@ -830,6 +848,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	/**
 	 * @param inTableName
 	 * @param inColumnName
+	 * @param inTypeDef
 	 * @return
 	 */
 	private boolean safeAddColumn(final String inTableName, final String inColumnName, final String inTypeDef) {
