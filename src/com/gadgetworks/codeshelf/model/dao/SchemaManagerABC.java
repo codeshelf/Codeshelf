@@ -637,16 +637,16 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	private boolean doUpgrade017() {
 		boolean result = true;
 		try {
-			// safeRenameColumn did not work!  renamed. Threw. Returned false, which makes subsequent upgrade action not work.
-			//result &= safeAddColumn("item", "meters_from_anchor", "DOUBLE PRECISION DEFAULT 0");
 			result &= safeRenameColumn("item", "pos_along_path", "meters_from_anchor");
-			// say a PSQLException, but code is not annotated to say it throws that.
+			// will throw a PSQLException, but code is not annotated to say it throws that. So, compiler will not let us catch that.
 		} catch (Exception e) {
 			LOGGER.error("doUpgrade017", e);
 			result = false;
 		}
 		if (!result)
-			LOGGER.error("upgrade action 17 failed. Is meters_from_anchor column in item table present?");
+			LOGGER.error("upgrade action 17 failed. Is meters_from_anchor column in item table present? If so, set db_property.version to 17 (or higher).");
+		else
+			LOGGER.info("upgrade action 17: rename column pos_along_path to meters_from_anchor");
 		return result;
 	}
 
@@ -664,7 +664,9 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 			result = false;
 		}
 		if (!result)
-			LOGGER.error("upgrade action 18 failed. Is lower_led_near_anchor column in location table present?");
+			LOGGER.error("upgrade action 18 failed. Is lower_led_near_anchor column in location table present? If so, set db_property.version to 18 (or higher).");
+		else
+			LOGGER.info("upgrade action 18: add column lower_led_near_anchor");
 		return result;
 	}
 
