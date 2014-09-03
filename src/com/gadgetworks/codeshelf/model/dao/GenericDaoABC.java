@@ -50,7 +50,8 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	}
 	
 	private Session getCurrentSession() {
-		return persistencyService.getCurrentTenantSession();
+		Session session = persistencyService.getCurrentTenantSession(); 
+		return session;
 	}
 
 	// --------------------------------------------------------------------------
