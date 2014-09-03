@@ -16,6 +16,7 @@ import java.util.Properties;
 import lombok.AccessLevel;
 import lombok.Getter;
 
+import org.postgresql.util.PSQLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -612,18 +613,26 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		return result;
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * @return
 	 */
 	private boolean doUpgrade017() {
 		boolean result = true;
-
-		result &= safeRenameColumn("item", "pos_along_path", "meters_from_anchor");
+		try {
+			// safeRenameColumn did not work!  renamed. Threw. Returned false, which makes subsequent upgrade action not work.
+			result &= safeAddColumn("item", "meters_from_anchor", "DOUBLE PRECISION DEFAULT 0");
+			// result &= safeRenameColumn("item", "pos_along_path", "meters_from_anchor");
+			// say a PSQLException, but code is not annotated to say it throws that.
+		} catch (Exception e) {
+			LOGGER.error("", e);
+		}
+		if (!result)
+			LOGGER.error("upgrade action 17 failed. Is meters_from_anchor column in item table present?");
 		return result;
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * @return
@@ -631,10 +640,16 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	private boolean doUpgrade018() {
 		boolean result = true;
 
-		result &= safeAddColumn("location", "lower_led_near_anchor", "BOOLEAN DEFAULT TRUE");
+		try {
+			result &= safeAddColumn("location", "lower_led_near_anchor", "BOOLEAN DEFAULT TRUE");
+		} catch (Exception e) {
+			LOGGER.error("", e);
+		}
+		if (!result)
+			LOGGER.error("upgrade action 18 failed. Is lower_led_near_anchor column in location table present?");
 		return result;
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 *  @param inFromSchema
@@ -883,7 +898,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	 * Create all of the indexes needed to maintain the systems referential integrity and performance.
 	 * @return
 	 */
-	
+
 	private boolean createIndexes() {
 		boolean result = true;
 
