@@ -385,8 +385,6 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 			result &= updateSchemaVersion(versionOfDBAchived);
 		}
 			
-		// result &= updateSchemaVersion(ISchemaManager.DATABASE_VERSION_CUR);
-
 		return result;
 	}
 
@@ -640,11 +638,12 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		boolean result = true;
 		try {
 			// safeRenameColumn did not work!  renamed. Threw. Returned false, which makes subsequent upgrade action not work.
-			result &= safeAddColumn("item", "meters_from_anchor", "DOUBLE PRECISION DEFAULT 0");
-			// result &= safeRenameColumn("item", "pos_along_path", "meters_from_anchor");
+			//result &= safeAddColumn("item", "meters_from_anchor", "DOUBLE PRECISION DEFAULT 0");
+			result &= safeRenameColumn("item", "pos_along_path", "meters_from_anchor");
 			// say a PSQLException, but code is not annotated to say it throws that.
 		} catch (Exception e) {
 			LOGGER.error("doUpgrade017", e);
+			result = false;
 		}
 		if (!result)
 			LOGGER.error("upgrade action 17 failed. Is meters_from_anchor column in item table present?");
@@ -662,6 +661,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 			result &= safeAddColumn("location", "lower_led_near_anchor", "BOOLEAN DEFAULT TRUE");
 		} catch (Exception e) {
 			LOGGER.error("doUpgrade018", e);
+			result = false;
 		}
 		if (!result)
 			LOGGER.error("upgrade action 18 failed. Is lower_led_near_anchor column in location table present?");
@@ -852,14 +852,12 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	 * @return
 	 */
 	private boolean safeAddColumn(final String inTableName, final String inColumnName, final String inTypeDef) {
-		boolean result = false;
 
-		result &= execOneSQLCommand("ALTER TABLE " + getDbSchemaName() + "." + inTableName //
+		return execOneSQLCommand("ALTER TABLE " + getDbSchemaName() + "." + inTableName //
 				+ " ADD " + inColumnName //
 				+ " " + inTypeDef // 
 				+ ";");
 
-		return result;
 	}
 
 	// --------------------------------------------------------------------------
@@ -869,13 +867,11 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	 * @return
 	 */
 	private boolean safeDropColumn(final String inTableName, final String inColumnName) {
-		boolean result = false;
 
-		result &= execOneSQLCommand("ALTER TABLE " + getDbSchemaName() + "." + inTableName //
+		return execOneSQLCommand("ALTER TABLE " + getDbSchemaName() + "." + inTableName //
 				+ " DROP " + inColumnName //
 				+ ";");
 
-		return result;
 	}
 
 	// --------------------------------------------------------------------------
@@ -885,14 +881,12 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	 * @return
 	 */
 	private boolean safeModifyColumnType(final String inTableName, final String inColumnName, final String inNewColumnType) {
-		boolean result = false;
 
-		result &= execOneSQLCommand("ALTER TABLE " + getDbSchemaName() + "." + inTableName //
+		return  execOneSQLCommand("ALTER TABLE " + getDbSchemaName() + "." + inTableName //
 				+ " ALTER COLUMN " + inColumnName //
 				+ " TYPE " + inNewColumnType //
 				+ ";");
 
-		return result;
 	}
 
 	// --------------------------------------------------------------------------
@@ -902,14 +896,12 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	 * @return
 	 */
 	private boolean safeRenameColumn(final String inTableName, final String inColumnName, final String inNewColumnName) {
-		boolean result = false;
 
-		result &= execOneSQLCommand("ALTER TABLE " + getDbSchemaName() + "." + inTableName //
+		return execOneSQLCommand("ALTER TABLE " + getDbSchemaName() + "." + inTableName //
 				+ " RENAME COLUMN " + inColumnName //
 				+ " TO " + inNewColumnName //
 				+ ";");
 
-		return result;
 	}
 
 	// --------------------------------------------------------------------------
