@@ -196,7 +196,8 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 			}
 			if ((LOGGER.isDebugEnabled() && (result != null))) {
 				try {
-					boolean isMerelyNetManagementTraffic = packet.getCommand().getCommandTypeEnum() == CommandGroupEnum.NETMGMT;
+//					boolean isMerelyNetManagementTraffic = packet.getCommand().getCommandTypeEnum() == CommandGroupEnum.NETMGMT;
+					boolean isMerelyNetManagementTraffic = false;
 					if (isMerelyNetManagementTraffic)
 						LOGGER.debug("Receive packet: " + result.toString());
 					else
