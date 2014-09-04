@@ -1146,6 +1146,8 @@ public class Facility extends SubLocationABC<Facility> {
 	}
 
 	private void deleteExistingShortWiToFacility(final OrderDetail inOrderDetail) {
+		if (true)  // Find that delete in the for loop causes a ConcurrentModificationException
+			return;
 		// Do we have short work instruction already for this orderDetail, for any CHE, going to facility?
 		// Note, that leaves the shorts around that a user shorted.  This only delete the shorts created immediately upon scan if there is no product.
 		for (WorkInstruction wi : inOrderDetail.getWorkInstructions()) {
