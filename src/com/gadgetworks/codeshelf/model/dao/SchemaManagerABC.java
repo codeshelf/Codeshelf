@@ -16,6 +16,7 @@ import java.util.Properties;
 import lombok.AccessLevel;
 import lombok.Getter;
 
+import org.postgresql.util.PSQLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -298,6 +299,10 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		// IMPORTANT:
 		// Apply these upgrades in version order.
+
+		// If an multiple upgrades fail part way, make sure we record only what we achieved.
+		int versionOfDBAchived = inOldVersion;
+
 		if ((result) && (inOldVersion < ISchemaManager.DATABASE_VERSION_2)) {
 			result &= doUpgrade002();
 		}
@@ -360,14 +365,26 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		if ((result) && (inOldVersion < ISchemaManager.DATABASE_VERSION_17)) {
 			result &= doUpgrade017();
+			if (result)
+				versionOfDBAchived = ISchemaManager.DATABASE_VERSION_17;
 		}
 
 		if ((result) && (inOldVersion < ISchemaManager.DATABASE_VERSION_18)) {
 			result &= doUpgrade018();
+			if (result)
+				versionOfDBAchived = ISchemaManager.DATABASE_VERSION_18;
 		}
 
-		result &= updateSchemaVersion(ISchemaManager.DATABASE_VERSION_CUR);
-
+		if (versionOfDBAchived > inOldVersion) {
+			LOGGER.info("Updating version in db_property table");
+			if (!result)
+				LOGGER.error("An upgrade action failed. You may need to check the consistency of db_property.version and whatever upgrade action failed.");
+			// Sounds bogus, but I saw a failure returned, when the table was successfully modified.
+			// Or, we could be trying to add a column that exists already.
+			
+			result &= updateSchemaVersion(versionOfDBAchived);
+		}
+			
 		return result;
 	}
 
@@ -612,18 +629,27 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		return result;
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * @return
 	 */
 	private boolean doUpgrade017() {
 		boolean result = true;
-
-		result &= safeRenameColumn("item", "pos_along_path", "meters_from_anchor");
+		try {
+			result &= safeRenameColumn("item", "pos_along_path", "meters_from_anchor");
+			// will throw a PSQLException, but code is not annotated to say it throws that. So, compiler will not let us catch that.
+		} catch (Exception e) {
+			LOGGER.error("doUpgrade017", e);
+			result = false;
+		}
+		if (!result)
+			LOGGER.error("upgrade action 17 failed. Is meters_from_anchor column in item table present? If so, set db_property.version to 17 (or higher).");
+		else
+			LOGGER.info("upgrade action 17: rename column pos_along_path to meters_from_anchor");
 		return result;
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * @return
@@ -631,10 +657,19 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	private boolean doUpgrade018() {
 		boolean result = true;
 
-		result &= safeAddColumn("location", "lower_led_near_anchor", "BOOLEAN DEFAULT TRUE");
+		try {
+			result &= safeAddColumn("location", "lower_led_near_anchor", "BOOLEAN DEFAULT TRUE");
+		} catch (Exception e) {
+			LOGGER.error("doUpgrade018", e);
+			result = false;
+		}
+		if (!result)
+			LOGGER.error("upgrade action 18 failed. Is lower_led_near_anchor column in location table present? If so, set db_property.version to 18 (or higher).");
+		else
+			LOGGER.info("upgrade action 18: add column lower_led_near_anchor");
 		return result;
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 *  @param inFromSchema
@@ -815,17 +850,16 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	/**
 	 * @param inTableName
 	 * @param inColumnName
+	 * @param inTypeDef
 	 * @return
 	 */
 	private boolean safeAddColumn(final String inTableName, final String inColumnName, final String inTypeDef) {
-		boolean result = false;
 
-		result &= execOneSQLCommand("ALTER TABLE " + getDbSchemaName() + "." + inTableName //
+		return execOneSQLCommand("ALTER TABLE " + getDbSchemaName() + "." + inTableName //
 				+ " ADD " + inColumnName //
 				+ " " + inTypeDef // 
 				+ ";");
 
-		return result;
 	}
 
 	// --------------------------------------------------------------------------
@@ -835,13 +869,11 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	 * @return
 	 */
 	private boolean safeDropColumn(final String inTableName, final String inColumnName) {
-		boolean result = false;
 
-		result &= execOneSQLCommand("ALTER TABLE " + getDbSchemaName() + "." + inTableName //
+		return execOneSQLCommand("ALTER TABLE " + getDbSchemaName() + "." + inTableName //
 				+ " DROP " + inColumnName //
 				+ ";");
 
-		return result;
 	}
 
 	// --------------------------------------------------------------------------
@@ -851,14 +883,12 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	 * @return
 	 */
 	private boolean safeModifyColumnType(final String inTableName, final String inColumnName, final String inNewColumnType) {
-		boolean result = false;
 
-		result &= execOneSQLCommand("ALTER TABLE " + getDbSchemaName() + "." + inTableName //
+		return  execOneSQLCommand("ALTER TABLE " + getDbSchemaName() + "." + inTableName //
 				+ " ALTER COLUMN " + inColumnName //
 				+ " TYPE " + inNewColumnType //
 				+ ";");
 
-		return result;
 	}
 
 	// --------------------------------------------------------------------------
@@ -868,14 +898,12 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	 * @return
 	 */
 	private boolean safeRenameColumn(final String inTableName, final String inColumnName, final String inNewColumnName) {
-		boolean result = false;
 
-		result &= execOneSQLCommand("ALTER TABLE " + getDbSchemaName() + "." + inTableName //
+		return execOneSQLCommand("ALTER TABLE " + getDbSchemaName() + "." + inTableName //
 				+ " RENAME COLUMN " + inColumnName //
 				+ " TO " + inNewColumnName //
 				+ ";");
 
-		return result;
 	}
 
 	// --------------------------------------------------------------------------
@@ -883,7 +911,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	 * Create all of the indexes needed to maintain the systems referential integrity and performance.
 	 * @return
 	 */
-	
+
 	private boolean createIndexes() {
 		boolean result = true;
 
