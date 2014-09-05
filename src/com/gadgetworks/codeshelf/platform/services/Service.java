@@ -1,6 +1,12 @@
 package com.gadgetworks.codeshelf.platform.services;
 
-public interface Service {
-	boolean stop();
-	boolean start();
+import lombok.Getter;
+
+public abstract class Service {
+	
+	@Getter
+	boolean isInitialized=false;
+	
+	public abstract boolean stop();
+	public abstract boolean start();
 }

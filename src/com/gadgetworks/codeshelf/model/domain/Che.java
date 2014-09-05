@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.persistence.Column;
+import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
@@ -42,7 +43,8 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-@Table(name = "che")
+// @Table(name = "che")
+@DiscriminatorValue("CHE")
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class Che extends WirelessDeviceABC {
 

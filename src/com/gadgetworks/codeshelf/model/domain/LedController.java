@@ -8,6 +8,7 @@ package com.gadgetworks.codeshelf.model.domain;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
@@ -40,7 +41,8 @@ import com.google.inject.Singleton;
 
 @Entity
 //@CacheStrategy(useBeanCache = true)
-@Table(name = "led_controller")
+//@Table(name = "led_controller")
+@DiscriminatorValue("LEDCONTROLLER")
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class LedController extends WirelessDeviceABC {
 

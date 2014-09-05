@@ -45,6 +45,9 @@ public class Aisle extends SubLocationABC<Facility> {
 	@ManyToOne(optional = false)
 	@JoinColumn(name = "parent_facility")
 	private Facility parent;
+	
+	public Aisle() {
+	}
 
 	@Singleton
 	public static class AisleDao extends GenericDaoABC<Aisle> implements ITypedDao<Aisle> {

@@ -59,6 +59,9 @@ public class Bay extends SubLocationABC<Aisle> {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(Bay.class);
 
 	private static Comparator<ISubLocation> topDownTierOrder = new TopDownTierOrder();
+	
+	public Bay() {
+	}
 
 	public Bay(Aisle parent, String domainId, Point inAnchorPoint, Point inPickFaceEndPoint) {
 		super(parent, domainId, inAnchorPoint, inPickFaceEndPoint);

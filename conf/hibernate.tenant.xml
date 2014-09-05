@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <!DOCTYPE hibernate-configuration PUBLIC
         "-//Hibernate/Hibernate Configuration DTD 3.0//EN"
-        "http://hibernate.sourceforge.net/hibernate-configuration-3.0.dtd">
+        "http://www.hibernate.org/dtd//hibernate-configuration-3.0.dtd">
  
 <hibernate-configuration>
     <session-factory>
@@ -30,6 +30,8 @@
         <mapping class="com.gadgetworks.codeshelf.model.domain.Organization"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.Facility"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork"/>
+        <mapping class="com.gadgetworks.codeshelf.model.domain.WirelessDeviceABC"/>
+        <mapping class="com.gadgetworks.codeshelf.model.domain.Che"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.LedController"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.PathSegment"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.Path"/>
@@ -53,7 +55,6 @@
         <mapping class="com.gadgetworks.codeshelf.model.domain.OrderDetail"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.OrderLocation"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.WorkInstruction"/>
-        <mapping class="com.gadgetworks.codeshelf.model.domain.Che"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.WorkArea"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.UserSession"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.EdiDocumentLocator"/>

@@ -308,7 +308,7 @@ public class Util {
 					System.out.println("Loading properties from config file "+configFileName);
 					for (String name : properties.stringPropertyNames()) {
 						String value = properties.getProperty(name);
-						// LOGGER.debug("Setting "+name+" to "+value);
+						LOGGER.debug("Setting "+name+" to "+value);
 						System.setProperty(name, value);
 					}
 					return true;

@@ -63,7 +63,7 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-@Table(name = "edi_service")
+//@Table(name = "edi_service")
 @DiscriminatorValue("DROPBOX")
 //@CacheStrategy(useBeanCache = true)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)

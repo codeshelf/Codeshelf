@@ -237,60 +237,7 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		}
 	}
 
-	// --------------------------------------------------------------------------
-	/**
-	 *	Reset some of the persistent object fields to a base state at start-up.
-	 */
+	@Override
 	protected void doInitializeApplicationData() {
-
-		// Create some demo organizations.
-		createOrganizationUser("DEMO1", "a@example.com", "testme"); //view
-		createOrganizationUser("DEMO1", "view@example.com", "testme"); //view
-		createOrganizationUser("DEMO1", "configure@example.com", "testme"); //all
-		createOrganizationUser("DEMO1", "simulate@example.com", "testme"); //simulate + configure
-		createOrganizationUser("DEMO1", "che@example.com", "testme"); //view + simulate
-		createOrganizationUser("DEMO1", "work@example.com", "testme"); //view + simulate
-		
-		createOrganizationUser("DEMO1", "view@goodeggs.com", "goodeggs"); //view
-		createOrganizationUser("DEMO1", "view@accu-logistics.com", "accu-logistics"); //view
-		
-		createOrganizationUser("DEMO2", "a@example.com", "testme"); //view
-		createOrganizationUser("DEMO2", "view@example.com", "testme"); //view
-		createOrganizationUser("DEMO2", "configure@example.com", "testme"); //all
-		createOrganizationUser("DEMO2", "simulate@example.com", "testme"); //simulate + configure
-		createOrganizationUser("DEMO2", "che@example.com", "testme"); //view + simulate
-
-		// Recompute path positions.
-		// TODO: Remove once we have a tool for linking path segments to locations (aisles usually).
-		for (Organization organization : mOrganizationDao.getAll()) {
-			for (Facility facility : organization.getFacilities()) {
-				for (Path path : facility.getPaths()) {
-					facility.recomputeLocationPathDistances(path);
-				}
-			}
-		}
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * @param inOrganizationId
-	 * @param inPassword
-	 */
-	private void createOrganizationUser(String inOrganizationId, String inDefaultUserId, String inDefaultUserPw) {
-		Organization organization = mOrganizationDao.findByDomainId(null, inOrganizationId);
-		if (organization == null) {
-			organization = new Organization();
-			organization.setDomainId(inOrganizationId);
-			try {
-				mOrganizationDao.store(organization);
-
-			} catch (DaoException e) {
-				e.printStackTrace();
-			}
-
-		}
-		if (organization.getUser(inDefaultUserId) == null) {
-			organization.createUser(inDefaultUserId, inDefaultUserPw);
-		}
 	}
 }

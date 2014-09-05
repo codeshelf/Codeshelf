@@ -87,6 +87,9 @@ public abstract class SubLocationABC<P extends IDomainObject & ISubLocation> ext
 	@Setter
 	@JsonProperty
 	private Double				pickFaceEndPosZ;
+	
+	public SubLocationABC() {
+	}
 
 	public SubLocationABC(P parent, String domainId, final Point inAnchorPoint, final Point inPickFaceEndPoint) {
 		super(domainId, inAnchorPoint);

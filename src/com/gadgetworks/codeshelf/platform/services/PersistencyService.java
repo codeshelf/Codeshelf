@@ -2,6 +2,10 @@ package com.gadgetworks.codeshelf.platform.services;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Properties;
+
+import javax.management.RuntimeErrorException;
 
 import lombok.Getter;
 
@@ -19,7 +23,7 @@ import com.google.inject.Singleton;
  * @author bheckel
  */
 @Singleton
-public class PersistencyService implements Service {
+public class PersistencyService extends Service {
 
 	private static final int DEFAULT_PORT = 5432;
 
@@ -125,6 +129,9 @@ public class PersistencyService implements Service {
 	*/
 
 	public SessionFactory createTenantSessionFactory(Tenant tenant) {
+		if (isInitialized==false) {
+			throw new ServiceNotInitializedException();
+		}
 		// ignore tenant and shard for now using static config data
         try {
         	// Shard shard = this.shardingService.getShard(tenant.getShardId());
@@ -141,16 +148,25 @@ public class PersistencyService implements Service {
 	        SessionFactory factory = configuration.buildSessionFactory(ssrb.build());
 	        return factory;
         } catch (Exception ex) {
-        	LOGGER.error("SessionFactory creation for "+tenant+" failed:"+ex);
-            throw new ExceptionInInitializerError(ex);
+        	LOGGER.error("SessionFactory creation for "+tenant+" failed",ex);
+            throw new RuntimeException(ex);
         }
 	}
 	
 	@Override
 	public final boolean start() {
-		boolean result = false;
+		LOGGER.info("Starting "+PersistencyService.class.getSimpleName());
+		
+		Properties probs = System.getProperties();
+		for (Entry<Object, Object> e : probs.entrySet()) {
+			LOGGER.debug(e.getKey()+" - "+e.getValue());
+		}
 		// fetch database config from properties file
 		this.hostName = System.getProperty("db.address");
+		if (this.hostName==null) {
+			LOGGER.error("Database host is not defined.");
+			System.exit(-1);
+		}
 		String portStr = System.getProperty("db.portnum");
 		if (portStr==null) {
 			LOGGER.warn("Database port not defined in sytem properties file.  Using ");
@@ -160,12 +176,20 @@ public class PersistencyService implements Service {
 			this.port = Integer.parseInt(portStr);
 		}
 		this.databaseName = System.getProperty("db.name");
+		if (this.databaseName==null) {
+			LOGGER.error("Database name not defined.");
+			System.exit(-1);
+		}
 		this.schemaName = System.getProperty("db.schemaname");
 		this.userId = System.getProperty("db.userid");
+		if (this.userId==null) {
+			LOGGER.error("Database User ID is not defined.");
+			System.exit(-1);
+		}
 		this.password = System.getProperty("db.password");
-		// LOGGER.info("Database started");
-		result = true;
-		return result;
+		this.isInitialized = true;
+		LOGGER.info(PersistencyService.class.getSimpleName()+" started");
+		return true;
 	}
 
 	@Override

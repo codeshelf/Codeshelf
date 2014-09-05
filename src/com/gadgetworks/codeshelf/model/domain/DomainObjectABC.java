@@ -18,6 +18,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.MappedSuperclass;
 import javax.persistence.Version;
 
 import lombok.Getter;
@@ -45,8 +46,9 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
  *  @author jeffw
  */
 
-@Entity
+//@Entity
 //@CacheStrategy(useBeanCache = true)
+@MappedSuperclass
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 @IndexSubclasses
 @JsonTypeInfo(use=JsonTypeInfo.Id.NAME, include=JsonTypeInfo.As.PROPERTY, property = "className")

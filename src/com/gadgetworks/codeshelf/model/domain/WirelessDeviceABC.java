@@ -8,10 +8,16 @@ package com.gadgetworks.codeshelf.model.domain;
 import java.util.Arrays;
 
 import javax.persistence.Column;
+import javax.persistence.DiscriminatorColumn;
+import javax.persistence.DiscriminatorType;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.Inheritance;
+import javax.persistence.InheritanceType;
 import javax.persistence.ManyToOne;
+import javax.persistence.MappedSuperclass;
+import javax.persistence.Table;
 import javax.persistence.Transient;
 
 import lombok.Getter;
@@ -46,7 +52,11 @@ import com.google.inject.Singleton;
 
 @Entity
 //@CacheStrategy(useBeanCache = true)
+//@MappedSuperclass
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@Table(name = "device")
+@DiscriminatorColumn(name = "dtype", discriminatorType = DiscriminatorType.STRING)
 @ToString(doNotUseGetters = true, callSuper = true)
 public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNetwork> {
 

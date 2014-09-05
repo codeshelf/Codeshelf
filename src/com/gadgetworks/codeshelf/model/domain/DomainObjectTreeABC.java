@@ -20,7 +20,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  *
  */
 
-@Entity
+//@Entity
 //@CacheStrategy(useBeanCache = true)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 //@ToString(doNotUseGetters = true)
