@@ -20,6 +20,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 
+import org.postgresql.util.PSQLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -220,7 +221,17 @@ public class Organization extends DomainObjectABC {
 		Facility.DAO.store(facility);
 
 		// Create a first Dropbox Service entry for this facility.
+		LOGGER.info("Creating dropbox service");
 		DropboxService dropboxService = facility.createDropboxService();
+
+		// Create a first IronMQ Service entry for this facility.
+		LOGGER.info("Creating IronMQ service");
+		try {
+		IronMqService ironMqService = facility.createIronMqService();
+		}
+		catch (PSQLException e) {
+			LOGGER.error("failed to create ironMQ service");			
+		}
 
 		// Create the default network for the facility.
 		CodeshelfNetwork network = facility.createNetwork(CodeshelfNetwork.DEFAULT_NETWORK_ID);
@@ -230,6 +241,7 @@ public class Organization extends DomainObjectABC {
 		facility.recomputeDdcPositions();
 
 		// Setup six dummy CHEs
+		LOGGER.info("creating 6 CHEs");;
 		for (int cheNum = 1; cheNum <= 6; cheNum++) {
 			String cheName = "CHE" + cheNum;
 			Che che = network.getChe(cheName);
