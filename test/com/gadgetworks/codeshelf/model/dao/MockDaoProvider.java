@@ -10,6 +10,7 @@ import com.gadgetworks.codeshelf.model.domain.ContainerKind;
 import com.gadgetworks.codeshelf.model.domain.DropboxService;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
+import com.gadgetworks.codeshelf.model.domain.IronMqService;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.Organization;
@@ -49,6 +50,9 @@ public class MockDaoProvider implements IDaoProvider {
 
 		ITypedDao<DropboxService> dropboxDao = new MockDao<DropboxService>();
 		daos.put(DropboxService.class, dropboxDao);
+		
+		ITypedDao<IronMqService> ironMqDao = new MockDao<IronMqService>();
+		daos.put(IronMqService.class, ironMqDao);
 		
 		ITypedDao<ContainerKind> containerKindDao = new MockDao<ContainerKind>();
 		daos.put(ContainerKind.class, containerKindDao);
