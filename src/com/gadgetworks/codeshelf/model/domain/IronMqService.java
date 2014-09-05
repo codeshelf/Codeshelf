@@ -76,8 +76,15 @@ public class IronMqService extends EdiServiceABC {
 	public static final String		IRONMQ_SERVICE_NAME	= "IRONMQ";
 
 	public static final String		WI_QUEUE_NAME		= "CompletedWIs";
-	public static final String		PROJECT_ID			= "533717c400bf4c000500001e";
-	public static final String		TOKEN				= "Lrzn73XweR5uNdWeNp65_ZMi_Ew";
+	
+	// Are these the GoodEggs credentials?
+	// public static final String		PROJECT_ID			= "533717c400bf4c000500001e";
+	// public static final String		TOKEN				= "Lrzn73XweR5uNdWeNp65_ZMi_Ew";
+	// Let's go with our new temporary credentials instead. Need configuration!
+	// public static final String		PROJECT_ID			= "5408fee49393690009000010";
+	// public static final String		TOKEN				= "T9yxS7H9vUE8ck15vCPJOT_iymY";
+	public static final String		PROJECT_ID			= "";
+	public static final String		TOKEN				= "";
 
 	private static final Logger		LOGGER				= LoggerFactory.getLogger(IronMqService.class);
 	

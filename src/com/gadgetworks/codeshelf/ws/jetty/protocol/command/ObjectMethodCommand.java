@@ -98,11 +98,19 @@ public class ObjectMethodCommand extends CommandABC {
 						} catch (InvocationTargetException e ) {
 							Throwable t = e.getTargetException();
 							if (t instanceof InputValidationException) {
+								LOGGER.error("Failed to invoke "+className+"."+method + ", with arguments: " + cookedArguments, t);
 								errors.addAllErrors(((InputValidationException)t).getErrors());
 								response.setStatus(ResponseStatus.Fail);
 								response.setErrors(errors);
 								return response;
 								
+							}
+							else{
+								LOGGER.error("Failed to invoke "+className+"."+method + ", with arguments: " + cookedArguments,e);
+								errors.reject(ErrorCode.GENERAL, e.toString());
+								response.setStatus(ResponseStatus.Fail);
+								response.setErrors(errors);
+								return response;						
 							}
 						} catch (Exception e) {
 							LOGGER.error("Failed to invoke "+className+"."+method + ", with arguments: " + cookedArguments,e);

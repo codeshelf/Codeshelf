@@ -5,6 +5,7 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
+import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,6 +28,7 @@ import javax.persistence.Transient;
 import lombok.Getter;
 import lombok.Setter;
 
+import org.postgresql.util.PSQLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,7 +42,6 @@ import com.gadgetworks.codeshelf.device.LedSample;
 import com.gadgetworks.codeshelf.edi.InventoryCsvImporter;
 import com.gadgetworks.codeshelf.edi.InventorySlottedCsvBean;
 import com.gadgetworks.codeshelf.model.BayDistanceWorkInstructionSequencer;
-
 import com.gadgetworks.codeshelf.model.EdiProviderEnum;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.HeaderCounts;
@@ -99,7 +100,7 @@ public class Facility extends SubLocationABC<Facility> {
 		}
 	}
 
-	private static final Logger				LOGGER				= LoggerFactory.getLogger(Facility.class);
+	private static final Logger				LOGGER			= LoggerFactory.getLogger(Facility.class);
 
 	// The owning organization.
 	@Column(nullable = false)
@@ -113,53 +114,53 @@ public class Facility extends SubLocationABC<Facility> {
 
 	@OneToMany(mappedBy = "parent")
 	@Getter
-	private List<Aisle>						aisles				= new ArrayList<Aisle>();
+	private List<Aisle>						aisles			= new ArrayList<Aisle>();
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
-	private Map<String, Container>			containers			= new HashMap<String, Container>();
+	private Map<String, Container>			containers		= new HashMap<String, Container>();
 
 	@OneToMany(mappedBy = "parent", fetch = FetchType.EAGER)
 	@MapKey(name = "domainId")
-	private Map<String, ContainerKind>		containerKinds		= new HashMap<String, ContainerKind>();
+	private Map<String, ContainerKind>		containerKinds	= new HashMap<String, ContainerKind>();
 
 	@OneToMany(mappedBy = "parent", targetEntity = EdiServiceABC.class)
 	@Getter
-	private List<IEdiService>				ediServices			= new ArrayList<IEdiService>();
+	private List<IEdiService>				ediServices		= new ArrayList<IEdiService>();
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
-	private Map<String, ItemMaster>			itemMasters			= new HashMap<String, ItemMaster>();
+	private Map<String, ItemMaster>			itemMasters		= new HashMap<String, ItemMaster>();
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
-	private Map<String, CodeshelfNetwork>	networks			= new HashMap<String, CodeshelfNetwork>();
+	private Map<String, CodeshelfNetwork>	networks		= new HashMap<String, CodeshelfNetwork>();
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
-	private Map<String, OrderGroup>			orderGroups			= new HashMap<String, OrderGroup>();
+	private Map<String, OrderGroup>			orderGroups		= new HashMap<String, OrderGroup>();
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
-	private Map<String, OrderHeader>		orderHeaders		= new HashMap<String, OrderHeader>();
+	private Map<String, OrderHeader>		orderHeaders	= new HashMap<String, OrderHeader>();
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
-	private Map<String, Path>				paths				= new HashMap<String, Path>();
+	private Map<String, Path>				paths			= new HashMap<String, Path>();
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
-	private Map<String, UomMaster>			uomMasters			= new HashMap<String, UomMaster>();
+	private Map<String, UomMaster>			uomMasters		= new HashMap<String, UomMaster>();
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
-	private Map<String, LocationAlias>		locationAliases		= new HashMap<String, LocationAlias>();
+	private Map<String, LocationAlias>		locationAliases	= new HashMap<String, LocationAlias>();
 
 	@Transient
 	// for now installation specific.  property needs to be exposed as a configuration parameter.
 	@Getter
 	@Setter
-	static WorkInstructionSequencerType		sequencerType		= WorkInstructionSequencerType.BayDistance;
+	static WorkInstructionSequencerType		sequencerType	= WorkInstructionSequencerType.BayDistance;
 
 	static {
 		String sequencerConfig = System.getProperty("facility.sequencer");
@@ -895,6 +896,18 @@ public class Facility extends SubLocationABC<Facility> {
 	/**
 	 * @return
 	 */
+	public final void ensureIronMqService() {
+		// This is a weak kludge. Just do the get, which does a get and create if not found.
+		// Otherwise, the create only happens upon the first attempt at a work instruction save.
+		IronMqService theService = getIronMqService();
+		if (theService == null)
+			LOGGER.error("Failed to get IronMQ service");
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @return
+	 */
 	public final IronMqService getIronMqService() {
 		IronMqService result = null;
 
@@ -906,7 +919,13 @@ public class Facility extends SubLocationABC<Facility> {
 		}
 
 		if (result == null) {
-			return createIronMqService();
+			LOGGER.info("Creating IronMQ service");
+			try {
+				return createIronMqService();
+			} catch (PSQLException e) {
+				LOGGER.error("SQL error trying to create IronMqService", e);
+				// allow it to return null
+			}
 		}
 
 		return result;
@@ -916,7 +935,8 @@ public class Facility extends SubLocationABC<Facility> {
 	/**
 	 * @return
 	 */
-	public final IronMqService createIronMqService() {
+	public final IronMqService createIronMqService() throws PSQLException {
+		// we saw the PSQL exception in staging test when the record could not be added
 		IronMqService result = null;
 
 		result = new IronMqService();
@@ -1033,13 +1053,13 @@ public class Facility extends SubLocationABC<Facility> {
 		for (WorkInstruction wi : WorkInstruction.DAO.findByFilter("assignedChe.persistentId = :chePersistentId and typeEnum = :type",
 			filterParams)) {
 			try {
-			
+
 				Che assignedChe = wi.getAssignedChe();
 				if (assignedChe != null)
 					assignedChe.removeWorkInstruction(wi); // necessary? new from v3
 				OrderDetail owningDetail = wi.getParent();
 				owningDetail.removeWorkInstruction(wi); // necessary? new from v3
-				
+
 				WorkInstruction.DAO.delete(wi);
 			} catch (DaoException e) {
 				LOGGER.error("failed to delete prior work instruction for CHE", e);
@@ -1146,7 +1166,7 @@ public class Facility extends SubLocationABC<Facility> {
 	}
 
 	private void deleteExistingShortWiToFacility(final OrderDetail inOrderDetail) {
-		if (true)  // Find that delete in the for loop causes a ConcurrentModificationException
+		if (true) // Find that delete in the for loop causes a ConcurrentModificationException
 			return;
 		// Do we have short work instruction already for this orderDetail, for any CHE, going to facility?
 		// Note, that leaves the shorts around that a user shorted.  This only delete the shorts created immediately upon scan if there is no product.
@@ -1154,13 +1174,13 @@ public class Facility extends SubLocationABC<Facility> {
 			if (wi.getStatusEnum() == WorkInstructionStatusEnum.SHORT)
 				if (wi.getLocation().equals(this)) { // planned to the facility
 					try {
-						
+
 						Che assignedChe = wi.getAssignedChe();
 						if (assignedChe != null)
 							assignedChe.removeWorkInstruction(wi); // necessary?
 						inOrderDetail.removeWorkInstruction(wi); // necessary?
 						WorkInstruction.DAO.delete(wi);
-						
+
 					} catch (DaoException e) {
 						LOGGER.error("failed to delete prior work SHORT instruction", e);
 					}
@@ -1637,7 +1657,7 @@ public class Facility extends SubLocationABC<Facility> {
 			inWi.setLedCmdStream("[]"); // empty array
 			LOGGER.error("work instruction was not initialized");
 		}
-		
+
 		// This work instruction should have been generated from a pick order, so there must be inventory for the pick at the location.
 		if (inWi == null || inLocation == null) {
 			LOGGER.error("unexpected null condition in setOutboundWorkInstructionLedPatternFromInventoryItem");
@@ -2090,7 +2110,8 @@ public class Facility extends SubLocationABC<Facility> {
 	 * @param inWorkInstruction
 	 */
 	public final void sendWorkInstructionsToHost(final List<WorkInstruction> inWiList) {
-		IronMqService ironMqService = getIronMqService();
+
+		IronMqService ironMqService = getIronMqService(); // this should succeed, or catch its own throw and return null
 
 		if (ironMqService != null) {
 			ironMqService.sendWorkInstructionsToHost(inWiList);
