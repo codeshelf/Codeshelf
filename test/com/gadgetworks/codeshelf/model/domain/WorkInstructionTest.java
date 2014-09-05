@@ -29,9 +29,9 @@ public class WorkInstructionTest extends DomainTestABC {
 		// Our general test mechanism is to measure the string length before and after.
 		
 		// This is real order data from GoodEggs. The problem was non-ASCI characters
-		String inputStr = "Napa Valley Bistro - Jalape������������������o Stuffed Olives";
+		String inputStr = "Napa Valley Bistro - Jalape������������o Stuffed Olives";
 		Integer lengthBefore = inputStr.length();
-		Assert.assertEquals((Integer) 61, lengthBefore);
+		Assert.assertEquals((Integer) 55, lengthBefore);
 
 		String referenceStr = "Napa Valley Bistro - Jalapeo Stuffed Olives";
 		Integer lengthOfReference = referenceStr.length();
