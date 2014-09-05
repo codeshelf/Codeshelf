@@ -27,6 +27,8 @@ import com.gadgetworks.codeshelf.model.domain.DropboxService;
 import com.gadgetworks.codeshelf.model.domain.DropboxService.DropboxServiceDao;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Facility.FacilityDao;
+import com.gadgetworks.codeshelf.model.domain.IronMqService;
+import com.gadgetworks.codeshelf.model.domain.IronMqService.IronMqServiceDao;
 import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.Item.ItemDao;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster;
@@ -84,6 +86,7 @@ public abstract class DAOTestABC {
 	protected TierDao				mTierDao;
 	protected SlotDao				mSlotDao;
 	protected DropboxServiceDao		mDropboxServiceDao;
+	protected IronMqServiceDao		mIronMqServiceDao;
 	protected OrderGroupDao			mOrderGroupDao;
 	protected OrderHeaderDao		mOrderHeaderDao;
 	protected OrderDetailDao		mOrderDetailDao;
@@ -177,6 +180,9 @@ public abstract class DAOTestABC {
 
 			mDropboxServiceDao = new DropboxServiceDao(mSchemaManager);
 			DropboxService.DAO = mDropboxServiceDao;
+
+			mIronMqServiceDao = new IronMqServiceDao(mSchemaManager);
+			IronMqService.DAO = mIronMqServiceDao;
 
 			mCodeshelfNetworkDao = new CodeshelfNetworkDao(mSchemaManager);
 			CodeshelfNetwork.DAO = mCodeshelfNetworkDao;
