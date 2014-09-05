@@ -147,6 +147,12 @@ public class IronMqService extends EdiServiceABC {
 	}
 
 	public final void sendWorkInstructionsToHost(final List<WorkInstruction> inWiList) {
+		// If the credentials are empty, don't bother. Could check the link, but we are not maintaining that well currently.
+		String theCredentials = getProviderCredentials();
+		
+		if (theCredentials == null || theCredentials.length() < 25)
+			return; // this is a Json encoding  of two credentials. Much longer if valid
+
 		// Convert the WI into a CSV string.
 		StringWriter stringWriter = new StringWriter();
 		CSVWriter csvWriter = new CSVWriter(stringWriter);
@@ -178,7 +184,14 @@ public class IronMqService extends EdiServiceABC {
 			properties[DOMAINID_POS] = wi.getDomainId();
 			properties[TYPE_POS] = wi.getTypeEnum().toString();
 			properties[STATUS_POS] = wi.getStatusEnum().toString();
-			properties[ORDERGROUPID_POS] = wi.getParent().getParent().getOrderGroup().getDomainId();
+
+			// groups are optional!
+			String groupStr = "";
+			OrderGroup theGroup = wi.getParent().getParent().getOrderGroup();
+			if (theGroup != null)
+				groupStr = theGroup.getDomainId();
+			properties[ORDERGROUPID_POS] = groupStr;
+
 			properties[ORDERID_POS] = wi.getParent().getOrderId();
 			properties[CONTAINERID_POS] = wi.getContainerId();
 			properties[ITEMID_POS] = wi.getItemId();
