@@ -143,7 +143,6 @@
 			<fileset dir="${conf.dir}">
 				<include name="commons-logging.properties" />
 				<include name="ebean.properties" />
-				<include name="locale.properties" />
 				<include name="log4j.properties" />
 				<include name="logging.properties" />
 				<include name="version.properties" />

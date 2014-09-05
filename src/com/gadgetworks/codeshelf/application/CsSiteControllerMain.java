@@ -45,9 +45,9 @@ import com.google.inject.name.Names;
  */
 public final class CsSiteControllerMain {
 
-	// See the top of Util to understand why we do the following:
+	// pre-main static load configuration and set up logging (see Configuration.java)
 	static {
-		Util.initLogging();
+		Configuration.loadConfig("sitecontroller");
 	}
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(CsSiteControllerMain.class);
@@ -64,19 +64,6 @@ public final class CsSiteControllerMain {
 	/**
 	 */
 	public static void main(String[] inArgs) {
-		Util.loadConfig();
-
-		// Guice (injector) will invoke log4j, so we need to set some log dir parameters before we call it.
-		Util util = new Util();
-		String appDataDir = util.getApplicationDataDirPath();
-		System.setProperty("app.data.dir", appDataDir);
-
-		//		java.util.logging.Logger rootLogger = LogManager.getLogManager().getLogger("");
-		//		Handler[] handlers = rootLogger.getHandlers();
-		//		for (int i = 0; i < handlers.length; i++) {
-		//			rootLogger.removeHandler(handlers[i]);
-		//		}
-		//		SLF4JBridgeHandler.install();
 
 		// Create and start the application.
 		Injector injector = setupInjector();
@@ -122,7 +109,6 @@ public final class CsSiteControllerMain {
 				bind(String.class).annotatedWith(Names.named("WS_SERVER_URI")).toInstance(System.getProperty("websocket.uri"));
 				bind(Byte.class).annotatedWith(Names.named(IPacket.NETWORK_NUM_PROPERTY)).toInstance(Byte.valueOf(System.getProperty("codeshelf.networknum")));
 
-				bind(IUtil.class).to(Util.class);
 				bind(ICodeshelfApplication.class).to(CsSiteControllerApplication.class);
 				bind(IRadioController.class).to(RadioController.class);
 				bind(IGatewayInterface.class).to(FTDIInterface.class);

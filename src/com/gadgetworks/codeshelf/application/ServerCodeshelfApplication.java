@@ -74,14 +74,13 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		final IEdiProcessor inEdiProcessor,
 		final IPickDocumentGenerator inPickDocumentGenerator,
 		final IDatabase inDatabase,
-		final IUtil inUtil,
 		final ITypedDao<PersistentProperty> inPersistentPropertyDao,
 		final ITypedDao<Organization> inOrganizationDao,
 		final ITypedDao<Facility> inFacilityDao,
 		final ITypedDao<User> inUserDao,
 		final AdminServer inAdminServer,
 		final JettyWebSocketServer inAlternativeWebSocketServer) {
-		super(inUtil);
+		super();
 		mMonitor = inMonitor;
 		mWebSocketServer = inWebSocketServer;
 		mHttpServer = inHttpServer;

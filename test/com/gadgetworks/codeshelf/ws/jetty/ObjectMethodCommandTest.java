@@ -10,6 +10,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import com.gadgetworks.codeshelf.application.Configuration;
 import com.gadgetworks.codeshelf.application.Util;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.dao.MockDaoProvider;
@@ -34,7 +35,7 @@ import com.gadgetworks.codeshelf.ws.jetty.server.ServerMessageProcessor;
 public class ObjectMethodCommandTest {
 	
 	static {
-		Util.initLogging();
+		Configuration.loadConfig("server");
 	}	
 	
 	@Test

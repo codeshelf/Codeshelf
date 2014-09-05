@@ -21,7 +21,8 @@ import com.avaje.ebean.config.DataSourceConfig;
 import com.avaje.ebean.config.ServerConfig;
 import com.avaje.ebean.config.UnderscoreNamingConvention;
 import com.avaje.ebeaninternal.server.lib.ShutdownManager;
-import com.gadgetworks.codeshelf.application.IUtil;
+import com.gadgetworks.codeshelf.application.Configuration;
+import com.gadgetworks.codeshelf.application.Util;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -35,31 +36,20 @@ public class Database implements IDatabase {
 	private static final Logger		LOGGER	= LoggerFactory.getLogger(Database.class);
 
 	private final ISchemaManager	mSchemaManager;
-	private final IUtil				mUtil;
 
 	@Inject
-	public Database(final ISchemaManager inSchemaManager, final IUtil inUtil) {
+	public Database(final ISchemaManager inSchemaManager) {
 		mSchemaManager = inSchemaManager;
-		mUtil = inUtil;
 
 		// Set our class loader to the system classloader, so ebean can find the enhanced classes.
 		Thread.currentThread().setContextClassLoader(ClassLoader.getSystemClassLoader());
 
-		String appDataDir = mUtil.getApplicationDataDirPath();
-		System.setProperty("app.data.dir", appDataDir);
-		System.setProperty("app.database.url", mSchemaManager.getApplicationDatabaseURL());
-		System.setProperty("ebean.props.file", "conf/ebean.properties");
-		System.setProperty("java.util.logging.config.file", "conf/logging.properties");
+		Configuration.commonSetup();
 
-		File appDir = new File(appDataDir);
-		if (!appDir.exists()) {
-			try {
-				appDir.mkdir();
-			} catch (SecurityException e) {
-				LOGGER.error("", e);
-				mUtil.exitSystem();
-			}
-		}
+		System.setProperty("app.database.url", mSchemaManager.getApplicationDatabaseURL());
+		//System.setProperty("ebean.props.file", "conf/ebean.properties");
+		//System.setProperty("java.util.logging.config.file", "conf/logging.properties");
+
 
 		mSchemaManager.verifySchema();
 
@@ -71,7 +61,7 @@ public class Database implements IDatabase {
 
 		// Now set values we never want changed by properties file.
 		serverConfig.setDefaultServer(false);
-		serverConfig.setResourceDirectory(mUtil.getApplicationDataDirPath());
+		serverConfig.setResourceDirectory(Util.getApplicationDataDirPath());
 		//		serverConfig.setDebugLazyLoad(false);
 		//		serverConfig.setDebugSql(false);
 		//		serverConfig.setLoggingLevel(LogLevel.NONE);
@@ -99,12 +89,12 @@ public class Database implements IDatabase {
 
 		AutofetchConfig autofetchConfig = serverConfig.getAutofetchConfig();
 		autofetchConfig.setMode(AutofetchMode.DEFAULT_OFF);
-		autofetchConfig.setLogDirectory(mUtil.getApplicationLogDirPath());
+		autofetchConfig.setLogDirectory(Util.getApplicationLogDirPath());
 //		autofetchConfig.setUseFileLogging(true);
 
 		EbeanServer server = EbeanServerFactory.create(serverConfig);
 		if (server == null) {
-			mUtil.exitSystem();
+			Util.exitSystem();
 		}
 	}
 

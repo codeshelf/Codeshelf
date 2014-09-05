@@ -20,7 +20,6 @@ import org.java_websocket.handshake.ServerHandshake;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.application.IUtil;
 import com.google.inject.name.Named;
 
 public class CsWebSocketClient extends WebSocketClient implements ICsWebSocketClient {
@@ -42,7 +41,6 @@ public class CsWebSocketClient extends WebSocketClient implements ICsWebSocketCl
 	// If the server connection breaks we can't reuse the websocket and have to create a new one are runtime.
 	// See CsDeviceManager where we cache these values on inject and reuse them to create new sockets.
 	public CsWebSocketClient(@Named(WEBSOCKET_URI_PROPERTY) final String inUriStr,
-		final IUtil inUtil,
 		final ICsWebsocketClientMsgHandler inMessageHandler,
 		final IWebSocketSslContextFactory inWebSocketSslContextFactory) {
 

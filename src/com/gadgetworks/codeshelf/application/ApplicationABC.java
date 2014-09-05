@@ -18,13 +18,11 @@ public abstract class ApplicationABC implements ICodeshelfApplication {
 	private static final Logger	LOGGER		= LoggerFactory.getLogger(ApplicationABC.class);
 
 	private boolean				mIsRunning	= true;
-	private IUtil				mUtil;
 	private Thread				mShutdownHookThread;
 	private Runnable			mShutdownRunnable;
 
 	@Inject
-	public ApplicationABC(final IUtil inUtil) {
-		mUtil = inUtil;
+	public ApplicationABC() {
 	}
 
 	protected abstract void doStartup();
@@ -40,7 +38,7 @@ public abstract class ApplicationABC implements ICodeshelfApplication {
 	 * Setup the JVM environment.
 	 */
 	private void setupLibraries() {
-		LOGGER.warn("Codeshelf version: " + mUtil.getVersionString());
+		LOGGER.warn("Codeshelf version: " + Util.getVersionString());
 		LOGGER.info("user.dir = " + System.getProperty("user.dir"));
 		LOGGER.info("java.class.path = " + System.getProperty("java.class.path"));
 		LOGGER.info("java.library.path = " + System.getProperty("java.library.path"));

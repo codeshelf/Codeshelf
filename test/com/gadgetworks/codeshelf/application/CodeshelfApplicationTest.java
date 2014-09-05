@@ -89,38 +89,6 @@ import com.google.inject.spi.TypeConverterBinding;
  */
 public class CodeshelfApplicationTest {
 
-	private static final String	DB_INIT_URL	= "jdbc:h2:mem:database;DB_CLOSE_DELAY=-1";
-	private static final String	DB_URL		= "jdbc:h2:mem:database;SCHEMA=CODESHELF;DB_CLOSE_DELAY=-1";
-
-	public class MockUtil implements IUtil {
-		public void setLoggingLevelsFromPrefs(Organization inOrganization, ITypedDao<PersistentProperty> inPersistentPropertyDao) {
-		}
-
-		public String getVersionString() {
-			return "";
-		}
-
-		public String getApplicationLogDirPath() {
-			return ".";
-		}
-
-		public String getApplicationInitDatabaseURL() {
-			return DB_INIT_URL;
-		}
-
-		public String getApplicationDatabaseURL() {
-			return DB_URL;
-		}
-
-		public String getApplicationDataDirPath() {
-			return ".";
-		}
-
-		public void exitSystem() {
-			System.exit(-1);
-		}
-	}
-
 	public class MockInjector implements Injector {
 
 		@Override
@@ -323,16 +291,14 @@ public class CodeshelfApplicationTest {
 			aislesFileImporter,
 			facilityDao);
 		IPickDocumentGenerator pickDocumentGenerator = new PickDocumentGenerator();
-		IUtil util = new MockUtil();
-		ISchemaManager schemaManager = new H2SchemaManager(util,
+		ISchemaManager schemaManager = new H2SchemaManager(
 			"codeshelf",
 			"codeshelf",
 			"codeshelf",
 			"codeshelf",
 			"localhost",
-			"",
-			"false");
-		IDatabase database = new Database(schemaManager, util);
+			"");
+		IDatabase database = new Database(schemaManager);
 		
 		AdminServer adminServer = new AdminServer();
 		
@@ -344,7 +310,6 @@ public class CodeshelfApplicationTest {
 			ediProcessor,
 			pickDocumentGenerator,
 			database,
-			util,
 			persistentPropertyDao,
 			organizationDao,
 			facilityDao,

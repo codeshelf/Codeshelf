@@ -18,7 +18,6 @@ public interface ISchemaManager {
 	String	DATABASE_PORTNUM_PROPERTY		= "DATABASE_PORTNUM_PROPERTY";
 	String	DATABASE_USERID_PROPERTY		= "DATABASE_USERID_PROPERTY";
 	String	DATABASE_PASSWORD_PROPERTY		= "DATABASE_PASSWORD_PROPERTY";
-	String	DATABASE_SSL_PROPERTY			= "DATABASE_SSL_PROPERTY";
 
 	// Database schema version increases monotonically as there are incompatible changes to the DB schema.	
 	int		DATABASE_VERSION_1				= 1;								// Original DB
@@ -53,8 +52,6 @@ public interface ISchemaManager {
 	String getDbSchemaName();
 
 	String getDbUserId();
-
-	String getDbSsl();
 
 	boolean verifySchema();
 

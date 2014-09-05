@@ -14,8 +14,8 @@ public final class CsSiteControllerApplication extends ApplicationABC {
 	private ICsDeviceManager	mDeviceManager;
 
 	@Inject
-	public CsSiteControllerApplication(final ICsDeviceManager inDeviceManager, final IUtil inUtil) {
-		super(inUtil);
+	public CsSiteControllerApplication(final ICsDeviceManager inDeviceManager) {
+		super();
 		mDeviceManager = inDeviceManager;
 	}
 

@@ -23,10 +23,6 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.PBEParameterSpec;
 
-import org.apache.log4j.PropertyConfigurator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
@@ -38,62 +34,7 @@ import com.google.inject.Singleton;
  */
 
 @Singleton
-public final class Util implements IUtil {
-
-	// This is a slightly weird case.
-	// log4j needs to find a system property for one of its file appenders (in log4j.properties, but
-	// we have to compute it before we attempt to use the LogFactory.  This means it needs to 
-	// be part of pre-main static initialization.  Since it uses methods from Util we moved it
-	// here before Util tries to use the LogFactory.
-	static {
-
-		// If the command line didn't specify a console appender then make the console logger a NullAppender.
-		if (System.getProperty("console.appender") == null) {
-			System.setProperty("console.appender", "org.apache.log4j.varia.NullAppender");
-		}
-
-		// Set safe defaults for remote logging (when it's not needed, such as in developer debug).
-		if (System.getProperty("codeshelf.remotelog.port") == null) {
-			System.setProperty("codeshelf.remotelog.port", "80");
-		}
-
-		if (System.getProperty("codeshelf.remotelog.ipaddress") == null) {
-			System.setProperty("codeshelf.remotelog.ipaddress", "127.0.0.1");
-		}
-
-		Util util = new Util();
-		String appLogPath = util.getApplicationLogDirPath();
-		System.setProperty("codeshelf.logfile",
-			appLogPath + System.getProperty("file.separator") + System.getProperty("cs.logfile.name"));
-		File appDir = new File(appLogPath);
-		if (!appDir.exists()) {
-			try {
-				appDir.mkdir();
-			} catch (SecurityException e) {
-				e.printStackTrace();
-				util.exitSystem();
-			}
-		}
-
-		URL log4jURL = ClassLoader.getSystemClassLoader().getResource("conf/log4j.properties");
-		if (log4jURL != null) {
-			//			System.out.println("Log4J props file:" + log4jURL.toString());
-			PropertyConfigurator.configure(log4jURL);
-		}
-
-		URL javaUtilLoggingjURL = ClassLoader.getSystemClassLoader().getResource("conf/logging.properties");
-		if (javaUtilLoggingjURL != null) {
-			try {
-				java.util.logging.LogManager.getLogManager().readConfiguration(javaUtilLoggingjURL.openStream());
-			} catch (SecurityException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-	}
-
-	private static final Logger	LOGGER	= LoggerFactory.getLogger(Util.class);
+public final class Util {
 
 	/**
 	 * 
@@ -106,7 +47,7 @@ public final class Util implements IUtil {
 	/**
 	 *  @return
 	 */
-	public String getVersionString() {
+	public static String getVersionString() {
 		String result = "???";
 
 		Properties versionProps = new Properties();
@@ -137,15 +78,8 @@ public final class Util implements IUtil {
 	/**
 	 * Handle ungraceful error/exit conditions.
 	 */
-	public void exitSystem() {
+	public static void exitSystem() {
 		System.exit(-1);
-	}
-
-	/**
-	 * This routine exists simply so that main<init> can invoke Util<init> to setup logging.
-	 */
-	public static void initLogging() {
-
 	}
 
 	// --------------------------------------------------------------------------
@@ -153,7 +87,7 @@ public final class Util implements IUtil {
 	 *  @param inURLName
 	 *  @return
 	 */
-	public URL findResource(String inResourceName) {
+	public static URL findResource(String inResourceName) {
 		//		try {
 		//			//return new URL(inURLName);
 		return Util.class.getClassLoader().getResource(inResourceName);
@@ -166,7 +100,7 @@ public final class Util implements IUtil {
 	/**
 	 *  @return
 	 */
-	public String getApplicationDataDirPath() {
+	public static String getApplicationDataDirPath() {
 		String result = "";
 
 		// Setup the data directory for this application.
@@ -191,7 +125,7 @@ public final class Util implements IUtil {
 	/**
 	 * @return
 	 */
-	public String getApplicationLogDirPath() {
+	public static String getApplicationLogDirPath() {
 		String result = "";
 
 		// Setup the data directory for this application.
@@ -231,7 +165,7 @@ public final class Util implements IUtil {
 	 *  @throws Exception
 	 */
 
-	public Cipher getCipher(int inMode, char[] inPassword) throws Exception {
+	public static Cipher getCipher(int inMode, char[] inPassword) throws Exception {
 
 		int saltBytes = 8;
 		byte[] salt = new byte[saltBytes];
@@ -239,7 +173,7 @@ public final class Util implements IUtil {
 
 		// First let's get the salt from the .salt file.
 		// NB: The salt is not secret - it's just meant to protect against dictionary attacks on the PBE algol for various keys.
-		File file = new File(this.getApplicationDataDirPath() + File.separatorChar + ".salt");
+		File file = new File(Util.getApplicationDataDirPath() + File.separatorChar + ".salt");
 		if (!file.exists()) {
 			// The salt file didn't exist, so let's create one, and populate it with a new, random salt.
 
@@ -251,7 +185,8 @@ public final class Util implements IUtil {
 			try {
 				file.createNewFile();
 			} catch (IOException e) {
-				LOGGER.error("", e);
+				System.err.println("FATAL: Unable to create salt file "+file.getName());
+				Util.exitSystem();
 			}
 			FileOutputStream outputStream = new FileOutputStream(file);
 			outputStream.write(salt, 0, saltBytes);
@@ -260,7 +195,8 @@ public final class Util implements IUtil {
 			FileInputStream inputStream = new FileInputStream(file);
 			int bytesRead = inputStream.read(salt, 0, saltBytes);
 			if (bytesRead == 0) {
-				LOGGER.error("Unable to read salt value.");
+				System.err.println("FATAL: Unable to read salt value from "+file.getName());
+				Util.exitSystem();
 			}
 			inputStream.close();
 		}
@@ -285,46 +221,4 @@ public final class Util implements IUtil {
 		return pbeCipher;
 	}
 	
-	
-	private static boolean tryLoadConfig(String configFileName) {
-		Properties properties = new Properties();
-		if (configFileName != null) {
-			FileInputStream configFileStream;
-			try {
-				configFileStream = new FileInputStream(configFileName);
-			} catch (FileNotFoundException e) {
-				System.err.println("Configuration file not found: "+configFileName);
-				configFileStream = null;
-			}
-			if (configFileStream != null) {
-				try {
-					properties.load(configFileStream);
-				} catch (IOException e) {
-					System.err.println("Failed to load properties from config file "+configFileName);
-					properties = null;
-				}
-				if(properties != null) {
-					System.out.println("Loading properties from config file "+configFileName);
-					for (String name : properties.stringPropertyNames()) {
-						String value = properties.getProperty(name);
-						// LOGGER.debug("Setting "+name+" to "+value);
-						System.setProperty(name, value);
-					}
-					return true;
-				}
-			}
-		}
-		return false;
-	}
-	
-	public static void loadConfig() {
-		/* try to load <configfile>.username first, if not found just load <configfile> */
-		String configFileName = System.getProperty("config.properties") + "." + System.getProperty("user.name");
-		if(!tryLoadConfig(configFileName)) {
-			if(!tryLoadConfig(System.getProperty("config.properties")) ) {
-				System.err.println("No configuration file available, terminating");
-				System.exit(1);;
-			}
-		}
-	}
 }

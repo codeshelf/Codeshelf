@@ -10,7 +10,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.eaio.uuid.UUIDGen;
-import com.gadgetworks.codeshelf.application.IUtil;
 import com.gadgetworks.codeshelf.model.dao.Database;
 import com.gadgetworks.codeshelf.model.dao.H2SchemaManager;
 import com.gadgetworks.codeshelf.model.dao.IDatabase;
@@ -18,8 +17,7 @@ import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 
 public class PersistABCTest {
-	
-	private static IUtil			mUtil;
+
 	private static ISchemaManager	mSchemaManager;
 	private static IDatabase		mDatabase;
 
@@ -27,31 +25,10 @@ public class PersistABCTest {
 	public final static void setup() {
 
 		try {
-			mUtil = new IUtil() {
-
-				public void setLoggingLevelsFromPrefs(Organization inOrganization, ITypedDao<PersistentProperty> inPersistentPropertyDao) {
-				}
-
-				public String getVersionString() {
-					return "";
-				}
-
-				public String getApplicationLogDirPath() {
-					return ".";
-				}
-
-				public String getApplicationDataDirPath() {
-					return ".";
-				}
-
-				public void exitSystem() {
-					System.exit(-1);
-				}
-			};
 
 			Class.forName("org.h2.Driver");
-			mSchemaManager = new H2SchemaManager(mUtil, "codeshelf", "codeshelf", "codeshelf", "CODESHELF", "localhost", "", "false");
-			mDatabase = new Database(mSchemaManager, mUtil);
+			mSchemaManager = new H2SchemaManager("codeshelf", "codeshelf", "codeshelf", "CODESHELF", "localhost", "");
+			mDatabase = new Database(mSchemaManager);
 
 			mDatabase.start();
 		} catch (ClassNotFoundException e) {

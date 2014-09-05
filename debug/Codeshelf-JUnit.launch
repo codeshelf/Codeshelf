@@ -25,5 +25,4 @@
 <booleanAttribute key="org.eclipse.jdt.launching.ATTR_USE_START_ON_FIRST_THREAD" value="true"/>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value=""/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="CodeShelf"/>
-<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Dcom.gadgetworks.memorydebug=false &#10;-Duser.language=en -Duser.country=US&#10;-Dconsole.appender=org.apache.log4j.ConsoleAppender"/>
 </launchConfiguration>
