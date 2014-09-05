@@ -151,7 +151,7 @@ public class IronMqService extends EdiServiceABC {
 		// If the credentials are empty, don't bother. Could check the link, but we are not maintaining that well currently.
 		String theCredentials = getProviderCredentials();
 		
-		if (theCredentials.length() < 15)
+		if (theCredentials.length() < 25)
 			return; // this is a Json encoding  of two credentials. Much longer if valid
 
 		// Convert the WI into a CSV string.
