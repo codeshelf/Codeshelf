@@ -7,12 +7,18 @@ package com.gadgetworks.codeshelf.model;
 
 import java.sql.Timestamp;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
 /**
  * This is a structure for summary values for one set of work instructions
  * We expect the UI to ask for and present this. One of the summaries will lead to a follow on query to get that set of work instructions.
  * A set is defined by work instructions all with the same create time. (Several processes create sets of work instructions, giving all the same time.)
  * 
  */
+
+@JsonAutoDetect(getterVisibility=Visibility.PUBLIC_ONLY, fieldVisibility=Visibility.NONE)
 public class WiSetSummary {
 	public Timestamp	mWiSetAssignedTime;
 	public int			mCompleteCount;
@@ -49,10 +55,11 @@ public class WiSetSummary {
 	public int getActiveCount() {
 		return mActiveCount;
 	}
-	public Timestamp getWiSetAssignedTime() {
+	
+	public Timestamp getAssignedTime() {
 		return mWiSetAssignedTime;
 	}
-	public String getUnderstandableTimeString() {
+	public String getFormattedAssignedTime() {
 		return mUnderstandableTimeString;
 	}
 	

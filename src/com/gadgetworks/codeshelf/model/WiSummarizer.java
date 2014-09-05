@@ -8,11 +8,14 @@ package com.gadgetworks.codeshelf.model;
 import java.sql.Timestamp;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
+import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 
 /**
  * This computes and returns a list of work instruction sets, summarized
@@ -26,18 +29,17 @@ public class WiSummarizer {
 		mWiSetSummaries = new HashMap<Timestamp, WiSetSummary>();
 	}
 
-	public Collection<WiSetSummary> getSummaries() {
-		return mWiSetSummaries.values();
+	public List<WiSetSummary> getSummaries() {
+		return ImmutableList.<WiSetSummary>copyOf(mWiSetSummaries.values());
 	}
 
-	public void computeWiSummariesForChe(final Che inChe, final Facility inFacility) {
-		if (inChe == null || inFacility == null) {
-			// LOGGER.error("incorrect use of getAnyValidTimeStampInSummaries");
+	public void computeWiSummariesForChe(String inCheId, String inFacilityId) {
+		if (Strings.isNullOrEmpty(inCheId) || Strings.isNullOrEmpty(inFacilityId)) {
 			return;
 		}
 		Map<String, Object> filterParams = new HashMap<String, Object>();
-		filterParams.put("chePersistentId", inChe.getPersistentId().toString());
-		filterParams.put("facilityPersistentId", inFacility.getPersistentId().toString());
+		filterParams.put("chePersistentId", inCheId);
+		filterParams.put("facilityPersistentId", inFacilityId);
 		// wi -> orderDetail -> orderHeader -> facility
 		for (WorkInstruction wi : WorkInstruction.DAO.findByFilter("assignedChe.persistentId = :chePersistentId and parent.parent.parent.persistentId = :facilityPersistentId",
 			filterParams)) {
@@ -64,7 +66,7 @@ public class WiSummarizer {
 	public Timestamp getAnySummaryTime() { // primarily for unit testing
 		WiSetSummary aSummary = getAnySummary();
 		if (aSummary != null)
-			return aSummary.getWiSetAssignedTime();
+			return aSummary.getAssignedTime();
 		else
 			return null;
 	}

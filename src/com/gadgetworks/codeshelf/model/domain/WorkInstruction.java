@@ -83,6 +83,8 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 		public final Class<WorkInstruction> getDaoClass() {
 			return WorkInstruction.class;
 		}
+		
+		
 	}
 
 	private static final Logger			LOGGER	= LoggerFactory.getLogger(WorkInstruction.class);
@@ -391,6 +393,21 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 			return "";
 		else {
 			return TimeFormat.getUITime(completeTime);
+		}
+	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * For a UI meta field
+	 * @return
+	 */
+	public final String getAssignTimeForUi() {
+
+		Timestamp assignTime = this.getAssigned();
+		if (assignTime == null)
+			return "";
+		else {
+			return TimeFormat.getUITime(assignTime);
 		}
 	}
 
