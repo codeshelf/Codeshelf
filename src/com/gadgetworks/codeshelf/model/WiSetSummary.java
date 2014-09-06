@@ -35,6 +35,10 @@ public class WiSetSummary {
 		mActiveCount = 0;
 		mUnderstandableTimeString = "";
 	}
+	
+	public boolean isActive() {
+		return getActiveCount() > 0;
+	}
 
 	private void incrementCompletes() {
 		mCompleteCount++;
@@ -71,6 +75,7 @@ public class WiSetSummary {
 		else 
 			incrementActives();
 	}
+	
 	public boolean equalCounts(final WiSetSummary inSummary) {
 		if (inSummary.mActiveCount != this.mActiveCount)
 			return false;
