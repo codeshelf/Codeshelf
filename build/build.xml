@@ -141,11 +141,16 @@
 		</copy-->
 		<copy todir="${target.resources}/conf">
 			<fileset dir="${conf.dir}">
+				<include name="common.config.properties" />
+				<include name="server.config.properties" />
+				<include name="sitecontroller.config.properties" />
+				
+				<include name="log4j.properties" />
+				<include name="version.properties" />
+
 				<include name="commons-logging.properties" />
 				<include name="ebean.properties" />
-				<include name="log4j.properties" />
 				<include name="logging.properties" />
-				<include name="version.properties" />
 			</fileset>
 		</copy>
 		<!--copy todir="${target.resources}/images">
@@ -295,10 +300,7 @@
 		<!-- Create the final application JAR file. -->
 		<jar duplicate="fail" jarfile="${appjar.build.dir}/${codeshelf.app.jar.name}">
 			<zipfileset dir="${target.enhanced.classes}" />
-			<zipfileset dir="${target.resources}/">
-				<exclude name="**/server.config.properties*" />
-				<exclude name="**/sitecontroller.config.properties*" />
-			</zipfileset>
+			<zipfileset dir="${target.resources}/"/>
 			<zipfileset dir="${target.classes}/">
 				<exclude name="com.gadgetworks.codeshelf.model.domain/**.*" />
 			</zipfileset>
