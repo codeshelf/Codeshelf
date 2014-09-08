@@ -42,7 +42,7 @@ public class Database implements IDatabase {
 		// Set our class loader to the system classloader, so ebean can find the enhanced classes.
 		Thread.currentThread().setContextClassLoader(ClassLoader.getSystemClassLoader());
 
-		Configuration.commonSetup();
+		Configuration.loadConfig("server");
 
 		System.setProperty("app.database.url", mSchemaManager.getApplicationDatabaseURL());
 		//System.setProperty("ebean.props.file", "conf/ebean.properties");

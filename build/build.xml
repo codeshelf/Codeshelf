@@ -374,8 +374,9 @@
 		<mkdir dir="${target.test}" />
 	        <javac destdir="${target.test}" sourcepath="" source="${javac.compile.using.version}" target="${javac.compile.using.version}" verbose="false" compiler="modern" debug="true">
         	        <classpath>
-                	        <path refid="compile-libs" />
-				<path refid="test-libs" />
+        				<pathelement location="${target.resources}" />
+               	        <path refid="compile-libs" />
+						<path refid="test-libs" />
         	        </classpath>
                 	<src path="${test.dir}" />
 	        </javac>
@@ -391,6 +392,7 @@
 		<mkdir dir="${target.report}" />
 		<junit printsummary="on" fork="true" haltonfailure="no" failureproperty="test.failed">
 			<classpath>
+				<pathelement location="${target.resources}" />
 				<pathelement location="${target.classes}" />
 				<pathelement location="${target.test}" />
 				<pathelement location="${target.lib}" />

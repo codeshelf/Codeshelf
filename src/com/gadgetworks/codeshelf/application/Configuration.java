@@ -21,28 +21,7 @@ import javax.crypto.spec.PBEParameterSpec;
 import org.apache.log4j.PropertyConfigurator;
 
 public final class Configuration {
-	private static Boolean commonSetupDone = null;
 	private static Boolean mainConfigDone = null;
-
-	/**
-	 * set up global common app properties before loading other configuration files - may be used in tests etc 
-	 * @param inUtil
-	 */
-	public static void commonSetup() {
-		if(commonSetupDone!=null)
-			return;
-
-		commonSetupDone=true;
-		String appDataDir = Configuration.getApplicationDataDirPath();
-		System.setProperty("app.data.dir", appDataDir);
-		ensureFolderExists(appDataDir);
-		
-		String appLogPath = Configuration.getApplicationLogDirPath();
-		System.setProperty("app.log.dir", appLogPath);
-		ensureFolderExists(appLogPath);
-
-		loadRequiredSystemPropertiesNamed("common.config.properties");
-	}
 
 	/**
 	 * prepare to run application by configuring system properties + logging subsystems. should be called from static block before main() and injection.
@@ -53,10 +32,18 @@ public final class Configuration {
 			return;
 		mainConfigDone=true;
 
-		commonSetup();
+		String appDataDir = Configuration.getApplicationDataDirPath();
+		System.setProperty("app.data.dir", appDataDir);
+		ensureFolderExists(appDataDir);
+		
+		String appLogPath = Configuration.getApplicationLogDirPath();
+		System.setProperty("app.log.dir", appLogPath);
+		ensureFolderExists(appLogPath);
+
+		loadSystemPropertiesNamed("common.config.properties");
 				
 		// Load properties config file(s) from defined locations/names
-		loadRequiredSystemPropertiesNamed(appName+".config.properties");
+		loadSystemPropertiesNamed(appName+".config.properties");
 
 		// main log file
 		System.setProperty("codeshelf.logfile",
@@ -73,8 +60,8 @@ public final class Configuration {
 		if(log4jProps!=null) {
 			PropertyConfigurator.configure(log4jProps);
 		} else {
-			System.err.println("Failed to initialize log4j, terminating.");
-			System.exit(1);
+			System.err.println("Failed to initialize log4j");
+			//System.exit(1);
 			
 		}
 
@@ -90,7 +77,7 @@ public final class Configuration {
 			}
 		} else {
 			System.out.println("Failed to init java.util.logging properties");
-			System.exit(1);
+			//System.exit(1);
 		}
 		System.out.println("Configuration done");
 	}
@@ -163,7 +150,8 @@ public final class Configuration {
 		String userName = System.getProperty("user.name");
 		String osName = System.getProperty("os.name");
 				
-		propertiesLoaded |= tryMergeProperties(properties,"conf/"+propertiesFileName,true); // base common config (as resource)
+		propertiesLoaded |= tryMergeProperties(properties,"conf/"+propertiesFileName,true); // base config (as resource)
+		propertiesLoaded |= tryMergeProperties(properties,propertiesFileName,true); // base config (as resource)
 		//propertiesLoaded |= tryLoadConfig("conf/"+baseConfigFileName,false); // base common config (as file in dev environment)
 		propertiesLoaded |= tryMergeProperties(properties,"/etc/codeshelf/"+propertiesFileName,false); // production standard config 
 		propertiesLoaded |= tryMergeProperties(properties,"/etc/codeshelf/"+propertiesFileName+"."+osName,false); // os-specific
@@ -173,7 +161,7 @@ public final class Configuration {
 		return (propertiesLoaded?properties:null);
 	}
 	
-	private static void loadRequiredSystemPropertiesNamed(String baseConfigFileName) {
+	private static void loadSystemPropertiesNamed(String baseConfigFileName) {
 		Properties systemProps=loadAllPropertiesFilesNamed(baseConfigFileName);
 		
 		if(systemProps != null) {
@@ -181,8 +169,8 @@ public final class Configuration {
 				System.setProperty(name, systemProps.getProperty(name));
 			}
 		} else {
-			System.err.println("no configuration file "+baseConfigFileName+" available, terminating");
-			System.exit(1);
+			System.err.println("no configuration file "+baseConfigFileName+" available!");
+			//System.exit(1);
 		}
 	}
 
