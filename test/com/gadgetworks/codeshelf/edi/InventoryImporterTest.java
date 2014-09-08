@@ -16,7 +16,6 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.gadgetworks.codeshelf.application.Configuration;
-import com.gadgetworks.codeshelf.application.Util;
 import com.gadgetworks.codeshelf.model.LedRange;
 import com.gadgetworks.codeshelf.model.WiSetSummary;
 import com.gadgetworks.codeshelf.model.WiSummarizer;

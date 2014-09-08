@@ -13,14 +13,12 @@ import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.Properties;
 
-import lombok.AccessLevel;
 import lombok.Getter;
 
 import org.postgresql.util.PSQLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.application.Util;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -86,7 +84,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		if (!doesSchemaExist()) {
 			if (!creatNewSchema()) {
 				LOGGER.error("Cannot create DB schema");
-				Util.exitSystem();
+				System.exit(1);
 			} else {
 				result = true;
 			}
@@ -105,7 +103,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 				if (!resultSet.next()) {
 					LOGGER.error("Cannot create DB schema");
-					Util.exitSystem();
+					System.exit(1);
 				} else {
 					Integer schemaVersion = resultSet.getInt("version");
 					if (schemaVersion < ISchemaManager.DATABASE_VERSION_CUR) {

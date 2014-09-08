@@ -1,6 +1,5 @@
 package com.gadgetworks.codeshelf.ws.jetty.test;
 
-import com.gadgetworks.codeshelf.application.Util;
 import com.gadgetworks.codeshelf.ws.jetty.client.JettyWebSocketClient;
 import com.gadgetworks.codeshelf.ws.jetty.client.LogResponseProcessor;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageProcessor;
@@ -13,7 +12,6 @@ public class JettyTestClient {
 
     public static void main(String[] args) {
 		System.setProperty("console.appender","org.apache.log4j.ConsoleAppender");
-		Util util = new Util();
 		
 		// init keystore and trust store
 		System.setProperty("javax.net.ssl.keyStore", "/etc/codeshelf.keystore");

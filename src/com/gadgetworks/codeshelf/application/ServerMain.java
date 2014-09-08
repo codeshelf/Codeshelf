@@ -105,8 +105,6 @@ import com.gadgetworks.codeshelf.model.domain.WorkArea;
 import com.gadgetworks.codeshelf.model.domain.WorkArea.WorkAreaDao;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction.WorkInstructionDao;
-import com.gadgetworks.codeshelf.monitor.IMonitor;
-import com.gadgetworks.codeshelf.monitor.Monitor;
 import com.gadgetworks.codeshelf.report.IPickDocumentGenerator;
 import com.gadgetworks.codeshelf.report.PickDocumentGenerator;
 import com.gadgetworks.codeshelf.security.CodeshelfRealm;
@@ -214,7 +212,6 @@ public final class ServerMain {
 				bind(Integer.class).annotatedWith(Names.named(IHttpServer.WEBAPP_PORTNUM_PROPERTY))
 					.toInstance(Integer.valueOf(System.getProperty("webapp.portnum")));
 
-				bind(IMonitor.class).to(Monitor.class);
 				bind(ISchemaManager.class).to(PostgresSchemaManager.class);
 				bind(IDatabase.class).to(Database.class);
 				bind(ICodeshelfApplication.class).to(ServerCodeshelfApplication.class);

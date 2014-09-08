@@ -5,7 +5,6 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -22,7 +21,6 @@ import com.avaje.ebean.config.ServerConfig;
 import com.avaje.ebean.config.UnderscoreNamingConvention;
 import com.avaje.ebeaninternal.server.lib.ShutdownManager;
 import com.gadgetworks.codeshelf.application.Configuration;
-import com.gadgetworks.codeshelf.application.Util;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -61,7 +59,7 @@ public class Database implements IDatabase {
 
 		// Now set values we never want changed by properties file.
 		serverConfig.setDefaultServer(false);
-		serverConfig.setResourceDirectory(Util.getApplicationDataDirPath());
+		serverConfig.setResourceDirectory(Configuration.getApplicationDataDirPath());
 		//		serverConfig.setDebugLazyLoad(false);
 		//		serverConfig.setDebugSql(false);
 		//		serverConfig.setLoggingLevel(LogLevel.NONE);
@@ -89,12 +87,12 @@ public class Database implements IDatabase {
 
 		AutofetchConfig autofetchConfig = serverConfig.getAutofetchConfig();
 		autofetchConfig.setMode(AutofetchMode.DEFAULT_OFF);
-		autofetchConfig.setLogDirectory(Util.getApplicationLogDirPath());
+		autofetchConfig.setLogDirectory(Configuration.getApplicationLogDirPath());
 //		autofetchConfig.setUseFileLogging(true);
 
 		EbeanServer server = EbeanServerFactory.create(serverConfig);
 		if (server == null) {
-			Util.exitSystem();
+			System.exit(1);
 		}
 	}
 

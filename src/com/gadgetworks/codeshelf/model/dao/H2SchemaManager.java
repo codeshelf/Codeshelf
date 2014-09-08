@@ -12,7 +12,7 @@ import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.application.Util;
+import com.gadgetworks.codeshelf.application.Configuration;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
@@ -41,7 +41,7 @@ public final class H2SchemaManager extends SchemaManagerABC {
 		String[] extensions = { "temp.lob.db" };
 		boolean recursive = true;
 
-		File dbDir = new File(Util.getApplicationDataDirPath());
+		File dbDir = new File(Configuration.getApplicationDataDirPath());
 		@SuppressWarnings("unchecked")
 		Collection<File> files = FileUtils.listFiles(dbDir, extensions, recursive);
 		for (File file : files) {
@@ -96,7 +96,7 @@ public final class H2SchemaManager extends SchemaManagerABC {
 	protected boolean doUpgradeSchema() {
 
 		// First get rid of the eBean dictionary file, so that the internal schema dictionary gets rebuilt.
-		File dictFile = new File(Util.getApplicationLogDirPath() + System.getProperty("file.separator") + ".ebean.h2.dictionary");
+		File dictFile = new File(Configuration.getApplicationLogDirPath() + System.getProperty("file.separator") + ".ebean.h2.dictionary");
 		if (dictFile.exists()) {
 			try {
 				dictFile.delete();

@@ -8,7 +8,6 @@ package com.gadgetworks.codeshelf.model.dao;
 import org.junit.Before;
 
 import com.gadgetworks.codeshelf.application.Configuration;
-import com.gadgetworks.codeshelf.application.Util;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Aisle.AisleDao;
 import com.gadgetworks.codeshelf.model.domain.Bay;
@@ -53,7 +52,6 @@ import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.Path.PathDao;
 import com.gadgetworks.codeshelf.model.domain.PathSegment;
 import com.gadgetworks.codeshelf.model.domain.PathSegment.PathSegmentDao;
-import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
 import com.gadgetworks.codeshelf.model.domain.Slot;
 import com.gadgetworks.codeshelf.model.domain.Slot.SlotDao;
 import com.gadgetworks.codeshelf.model.domain.SubLocationABC;

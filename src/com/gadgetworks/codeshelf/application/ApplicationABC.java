@@ -38,7 +38,7 @@ public abstract class ApplicationABC implements ICodeshelfApplication {
 	 * Setup the JVM environment.
 	 */
 	private void setupLibraries() {
-		LOGGER.warn("Codeshelf version: " + Util.getVersionString());
+		LOGGER.warn("Codeshelf version: " + Configuration.getVersionString());
 		LOGGER.info("user.dir = " + System.getProperty("user.dir"));
 		LOGGER.info("java.class.path = " + System.getProperty("java.class.path"));
 		LOGGER.info("java.library.path = " + System.getProperty("java.library.path"));

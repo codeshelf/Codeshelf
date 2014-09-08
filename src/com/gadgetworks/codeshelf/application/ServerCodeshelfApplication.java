@@ -35,7 +35,6 @@ import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
 import com.gadgetworks.codeshelf.model.domain.User;
-import com.gadgetworks.codeshelf.monitor.IMonitor;
 import com.gadgetworks.codeshelf.report.IPickDocumentGenerator;
 import com.gadgetworks.codeshelf.ws.jetty.server.JettyWebSocketServer;
 import com.gadgetworks.codeshelf.ws.websocket.IWebSocketServer;
@@ -57,8 +56,6 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 	private ITypedDao<Facility>				mFacilityDao;
 	private ITypedDao<User>					mUserDao;
 
-	private IMonitor						mMonitor;
-
 	private BlockingQueue<String>			mEdiProcessSignalQueue;
 	
 	JettyWebSocketServer mAlternativeWebSocketServer;
@@ -69,7 +66,6 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 	
 	@Inject
 	public ServerCodeshelfApplication(final IWebSocketServer inWebSocketServer,
-		final IMonitor inMonitor,
 		final IHttpServer inHttpServer,
 		final IEdiProcessor inEdiProcessor,
 		final IPickDocumentGenerator inPickDocumentGenerator,
@@ -81,7 +77,6 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		final AdminServer inAdminServer,
 		final JettyWebSocketServer inAlternativeWebSocketServer) {
 		super();
-		mMonitor = inMonitor;
 		mWebSocketServer = inWebSocketServer;
 		mHttpServer = inHttpServer;
 		mEdiProcessor = inEdiProcessor;
@@ -111,11 +106,8 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 	protected void doStartup() {
 
 		String processName = ManagementFactory.getRuntimeMXBean().getName();
-		LOGGER.info("------------------------------------------------------------");
 		LOGGER.info("Process info: " + processName);
 
-		// mMonitor.logToCentralAdmin("Startup: codeshelf server " + processName);
-		
 		// register JVM metrics
 		memoryUsage = new MemoryUsageGaugeSet();
 		Map<String, Metric> memoryMetrics  = memoryUsage.getMetrics();
@@ -174,7 +166,6 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 	protected void doShutdown() {
 
 		String processName = ManagementFactory.getRuntimeMXBean().getName();
-		mMonitor.logToCentralAdmin("Shutodwn: codeshelf server " + processName);
 
 		LOGGER.info("Stopping application");
 
