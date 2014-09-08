@@ -430,7 +430,9 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 		writeBytes(buffer, bufPos);
 		setRTS();
 		
-		boolean isMerelyNetManagementTraffic = inPacket.getCommand().getCommandTypeEnum() == CommandGroupEnum.NETMGMT;
+		boolean isMerelyNetManagementTraffic = false;
+		ICommand aCommand = inPacket.getCommand();
+		isMerelyNetManagementTraffic = aCommand != null && aCommand.getCommandTypeEnum() == CommandGroupEnum.NETMGMT;
 		if (isMerelyNetManagementTraffic)
 			LOGGER.debug("Send packet:    " + inPacket.toString());
 		else
