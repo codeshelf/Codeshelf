@@ -222,17 +222,22 @@ public final class Configuration {
 		Properties versionProps = new Properties();
 		try {
 			URL url = ClassLoader.getSystemClassLoader().getResource("conf/version.properties");
-			BufferedInputStream inStream = new BufferedInputStream(url.openStream());
-			versionProps.load(inStream);
-			inStream.close();
-			result = versionProps.getProperty("version.major");
-			//result += "." + versionProps.getProperty("version.minor");
-			result += "." + versionProps.getProperty("version.revision");
-			//result += "." + versionProps.getProperty("version.status");
-			String date = versionProps.getProperty("version.date");
-			if (!date.equals("none")) {
-				result += " (" + versionProps.getProperty("version.branch") + "-" + versionProps.getProperty("version.commit")
-						+ " " + date + ")";
+			if(url == null) {
+				url = ClassLoader.getSystemClassLoader().getResource("version.properties");
+			}
+			if(url != null) {
+				BufferedInputStream inStream = new BufferedInputStream(url.openStream());
+				versionProps.load(inStream);
+				inStream.close();
+				result = versionProps.getProperty("version.major");
+				//result += "." + versionProps.getProperty("version.minor");
+				result += "." + versionProps.getProperty("version.revision");
+				//result += "." + versionProps.getProperty("version.status");
+				String date = versionProps.getProperty("version.date");
+				if (!date.equals("none")) {
+					result += " (" + versionProps.getProperty("version.branch") + "-" + versionProps.getProperty("version.commit")
+							+ " " + date + ")";
+				}
 			}
 		} catch (FileNotFoundException e) {
 			result = "conf/version.properties not found";

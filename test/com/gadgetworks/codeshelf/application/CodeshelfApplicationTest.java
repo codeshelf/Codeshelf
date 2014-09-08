@@ -212,6 +212,7 @@ public class CodeshelfApplicationTest {
 	 */
 	@Test
 	public void testStartStopApplication() {
+		Configuration.loadConfig("server");
 
 		ITypedDao<PersistentProperty> persistentPropertyDao = new MockDao<PersistentProperty>();
 		ITypedDao<Organization> organizationDao = Organization.DAO = new MockDao<Organization>();
