@@ -50,6 +50,7 @@ import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -127,6 +128,12 @@ public class DropboxService extends EdiServiceABC {
 		return DAO;
 	}
 
+	@Override
+	@JsonProperty
+	public boolean getHasCredentials() {
+		return !Strings.isNullOrEmpty(getProviderCredentials());
+	}
+	
 	public final boolean getUpdatesFromHost(ICsvOrderImporter inCsvOrderImporter,
 		ICsvOrderLocationImporter inCsvOrderLocationImporter,
 		ICsvInventoryImporter inCsvInventoryImporter,

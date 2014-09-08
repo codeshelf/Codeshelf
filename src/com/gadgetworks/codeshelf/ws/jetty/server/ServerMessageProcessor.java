@@ -26,6 +26,7 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ObjectUpdateCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.RegisterFilterCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.RegisterListenerCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.RegisterNetworkListenerCommand;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ServiceMethodCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageProcessor;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.CompleteWorkInstructionRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ComputeWorkRequest;
@@ -42,6 +43,7 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectUpdateRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RegisterFilterRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RegisterListenerRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RequestABC;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ServiceMethodRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.PingResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.google.inject.Inject;
@@ -141,6 +143,10 @@ public class ServerMessageProcessor extends MessageProcessor {
 			}
 			else if (request instanceof ObjectMethodRequest) {
 				command = new ObjectMethodCommand(csSession,(ObjectMethodRequest) request);
+				objectUpdateCounter.inc();
+			}
+			else if (request instanceof ServiceMethodRequest) {
+				command = new ServiceMethodCommand(csSession,(ServiceMethodRequest) request);
 				objectUpdateCounter.inc();
 			}
 			else if (request instanceof RegisterListenerRequest) {

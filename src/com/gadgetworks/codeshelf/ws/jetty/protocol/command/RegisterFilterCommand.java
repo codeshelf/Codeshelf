@@ -16,6 +16,7 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectChangeResponse
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
 import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
+import com.google.common.base.Strings;
 
 /*
 	Example Message:
@@ -56,6 +57,10 @@ public class RegisterFilterCommand extends CommandABC {
 			for (Map<String, Object> map : filterParams) {
 				String name = (String) map.get("name");
 				Object value = map.get("value");
+				String className = (String) map.get("type");
+				if (!Strings.isNullOrEmpty(className)) {
+					value = convertFilterParam(className, value);
+				}
 				processedParams.put(name, value);
 			}
 
@@ -96,4 +101,14 @@ public class RegisterFilterCommand extends CommandABC {
 		return response;
 	}
 
+	private Object convertFilterParam(String className, Object value) throws ClassNotFoundException {
+		Class<?> classObject = Class.forName(className);
+		if (java.sql.Timestamp.class.isAssignableFrom(classObject)) {
+			return new java.sql.Timestamp(Long.valueOf(value.toString()));
+		}
+		else {
+			return value;
+		}
+	}
+	
 }

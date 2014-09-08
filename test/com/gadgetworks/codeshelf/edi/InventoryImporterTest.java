@@ -36,6 +36,7 @@ import com.gadgetworks.codeshelf.model.domain.PathSegment;
 import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.model.domain.SubLocationABC;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
+import com.gadgetworks.codeshelf.service.WorkService;
 import com.gadgetworks.flyweight.command.NetGuid;
 import com.google.common.base.Strings;
 
@@ -665,21 +666,20 @@ public class InventoryImporterTest extends EdiTestABC {
 		
 
 		// New from v4. Test our work instruction summarizer
-		WiSummarizer theSummarizer = new WiSummarizer();
-		theSummarizer.computeWiSummariesForChe(theChe, facility);
+		List<WiSetSummary> summaries = new WorkService().workSummary(theChe.getPersistentId().toString(), facility.getPersistentId().toString());
+		
 		// as this test, this facility only set up this one che, there should be only one wi set. But we have 3. How?
-		Assert.assertEquals((Integer) 1, (Integer) theSummarizer.getCountOfSummaries());
+		Assert.assertEquals(1, summaries.size());
 		
 		// getAny should get the one. Call it somewhat as the UI would. Get a time, then query again with that time.
-		Timestamp theTime = theSummarizer.getAnySummaryTime();
-		WiSetSummary theSummary = theSummarizer.getSummaryForTime(theTime);
+		WiSetSummary theSummary = summaries.get(0);
 		// So, how many shorts, how many active? None complete yet.
 		int actives = theSummary.getActiveCount();
 		int shorts = theSummary.getShortCount();
 		int completes = theSummary.getCompleteCount();
-		Assert.assertEquals((Integer) 0, (Integer) completes);
-		Assert.assertEquals((Integer) 2, (Integer) actives);
-		Assert.assertEquals((Integer) 1, (Integer) shorts);
+		Assert.assertEquals(0, completes);
+		Assert.assertEquals(2, actives);
+		Assert.assertEquals(1, shorts);
 
 	}
 
