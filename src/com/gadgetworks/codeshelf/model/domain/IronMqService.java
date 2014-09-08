@@ -150,7 +150,7 @@ public class IronMqService extends EdiServiceABC {
 		// If the credentials are empty, don't bother. Could check the link, but we are not maintaining that well currently.
 		String theCredentials = getProviderCredentials();
 		
-		if (theCredentials == null || theCredentials.length() < 25)
+		if (theCredentials == null || theCredentials.length() < 55)
 			return; // this is a Json encoding  of two credentials. Much longer if valid
 
 		// Convert the WI into a CSV string.
@@ -252,7 +252,7 @@ public class IronMqService extends EdiServiceABC {
 		try {
 			queue.push(inMessage);
 		} catch (IOException e) {
-			LOGGER.error("", e);
+			LOGGER.error("IOException in ironMQ sendMessage", e);
 		}
 	}
 
