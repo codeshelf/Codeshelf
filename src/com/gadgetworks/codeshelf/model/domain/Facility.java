@@ -943,13 +943,8 @@ public class Facility extends SubLocationABC<Facility> {
 		result.setParent(this);
 		result.setDomainId("IRONMQ");
 		result.setProviderEnum(EdiProviderEnum.IRONMQ);
-		result.setServiceStateEnum(EdiServiceStateEnum.LINKED);
-
-		IronMqService.Credentials credentials = result.new Credentials(IronMqService.PROJECT_ID, IronMqService.TOKEN);
-		Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
-		String json = gson.toJson(credentials);
-		result.setProviderCredentials(json);
-
+		result.setServiceStateEnum(EdiServiceStateEnum.UNLINKED);
+		result.setCredentials("", ""); // non-null credentials
 		this.addEdiService(result);
 		try {
 			IronMqService.DAO.store(result);
