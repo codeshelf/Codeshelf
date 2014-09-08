@@ -76,7 +76,7 @@ public class IronMqService extends EdiServiceABC {
 	public static final String		IRONMQ_SERVICE_NAME	= "IRONMQ";
 
 	public static final String		WI_QUEUE_NAME		= "CompletedWIs";
-	
+
 	// Are these the GoodEggs credentials?
 	// public static final String		PROJECT_ID			= "533717c400bf4c000500001e";
 	// public static final String		TOKEN				= "Lrzn73XweR5uNdWeNp65_ZMi_Ew";
@@ -87,8 +87,8 @@ public class IronMqService extends EdiServiceABC {
 	public static final String		TOKEN				= "";
 
 	private static final Logger		LOGGER				= LoggerFactory.getLogger(IronMqService.class);
-	
-	private static final String     TIME_FORMAT			= "yyyy-MM-dd'T'HH:mm:ss'Z'";
+
+	private static final String		TIME_FORMAT			= "yyyy-MM-dd'T'HH:mm:ss'Z'";
 
 	private static final Integer	DOMAINID_POS		= 0;
 	private static final Integer	TYPE_POS			= 1;
@@ -150,8 +150,8 @@ public class IronMqService extends EdiServiceABC {
 
 		// If the credentials are empty, don't bother. Could check the link, but we are not maintaining that well currently.
 		String theCredentials = getProviderCredentials();
-		
-		if (theCredentials == null || theCredentials.length() < 25)
+
+		if (theCredentials == null || theCredentials.length() < 55)
 			return; // this is a Json encoding  of two credentials. Much longer if valid
 
 		// Convert the WI into a CSV string.
@@ -180,7 +180,7 @@ public class IronMqService extends EdiServiceABC {
 			if (wi.getLocation().getAliases().size() > 0) {
 				locAlias = wi.getLocation().getAliases().get(0);
 			}
-			
+
 			properties = new String[WI_ATTR_COUNT];
 			properties[DOMAINID_POS] = wi.getDomainId();
 			properties[TYPE_POS] = wi.getTypeEnum().toString();
@@ -253,7 +253,7 @@ public class IronMqService extends EdiServiceABC {
 		try {
 			queue.push(inMessage);
 		} catch (IOException e) {
-			LOGGER.error("", e);
+			LOGGER.error("IOException in sendMessage", e);
 		}
 	}
 
