@@ -2,6 +2,8 @@ package com.gadgetworks.codeshelf.ws.jetty.server;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 import javax.websocket.Session;
 
@@ -23,9 +25,10 @@ public class SessionManager {
 	private final Counter activeSessionsCounter = MetricsService.addCounter(MetricsGroup.WSS,"sessions.active");
 	private final Counter totalSessionsCounter = MetricsService.addCounter(MetricsGroup.WSS,"sessions.total");
 
+	
 	private SessionManager() {
 	}
-	
+	 
 	public static SessionManager getInstance() {
 		return theSessionManager;
 	}

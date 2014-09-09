@@ -35,7 +35,7 @@ public class JettyWebSocketServer implements IWebSocketServer {
 	private String	mKeystoreStorePassword="x2HPbC2avltYQR";
 	private String	mKeystoreKeyPassword="x2HPbC2avltYQR";
 	
-	private final ServerWatchdogThread watchdog = new ServerWatchdogThread(this);
+	private final ServerWatchdogThread watchdog;
 	
 	private String	mKeystorePath="/etc/codeshelf.keystore";
 
@@ -53,6 +53,7 @@ public class JettyWebSocketServer implements IWebSocketServer {
 		this.mKeystorePath = inKeystorePath;
 		this.mKeystoreStorePassword = inKeystoreStorePassword;
 		this.mKeystoreKeyPassword = inKeystoreKeyPassword;
+		this.watchdog = new ServerWatchdogThread(SessionManager.getInstance());
 		this.watchdog.setSuppressKeepAlive(inSuppressKeepAlive);
 		this.watchdog.setKillIdle(inKillIdle);
 		this.watchdog.start();

@@ -26,6 +26,8 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageProcessor;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RequestABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
+import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
+import com.gadgetworks.codeshelf.ws.jetty.server.SessionManager;
 
 @ClientEndpoint(encoders={JsonEncoder.class},decoders={JsonDecoder.class})
 public class CsClientEndpoint {
@@ -38,12 +40,16 @@ public class CsClientEndpoint {
 	private static final Counter sessionErrorCounter = MetricsService.addCounter(MetricsGroup.WSS,"sessions.errors");
 
 	@Getter @Setter
-	MessageProcessor messageProcessor;
+	private MessageProcessor messageProcessor;
+	
+	@Getter @Setter
+	private SessionManager sessionManager;
+	
 	
 	@Getter @Setter 
-	MessageCoordinator messageCoordinator;
+	private MessageCoordinator messageCoordinator;
 	
-	JettyWebSocketClient client;
+	private JettyWebSocketClient client;
 
 	public CsClientEndpoint(JettyWebSocketClient client) {
 		this.client = client;
@@ -62,14 +68,21 @@ public class CsClientEndpoint {
     	client.messageReceived();
     	if (message instanceof ResponseABC) {
     		ResponseABC response = (ResponseABC) message;
-	    	messageProcessor.handleResponse(session, response);
-			this.messageCoordinator.unregisterRequest(response);
+    		// check CS session
+            CsSession csSession = sessionManager.getSession(session);
+            if (csSession==null) {
+            	LOGGER.warn("No matching CS session found for session "+session.getId());
+            } else {
+    	    	messageProcessor.handleResponse(csSession, response);
+    			this.messageCoordinator.unregisterRequest(response);
+            }
     	}
     	else if (message instanceof RequestABC) {
     		RequestABC request = (RequestABC) message;
         	LOGGER.debug("Request received: "+request);
             // pass request to processor to execute command
-            ResponseABC response = messageProcessor.handleRequest(session, request);
+            CsSession csSession = sessionManager.getSession(session);
+            ResponseABC response = messageProcessor.handleRequest(csSession, request);
             if (response!=null) {
             	// send response to client
             	LOGGER.debug("Sending response "+response+" for request "+request);

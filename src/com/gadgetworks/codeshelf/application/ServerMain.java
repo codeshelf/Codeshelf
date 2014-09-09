@@ -53,6 +53,8 @@ import com.gadgetworks.codeshelf.model.domain.DropboxService;
 import com.gadgetworks.codeshelf.model.domain.DropboxService.DropboxServiceDao;
 import com.gadgetworks.codeshelf.model.domain.EdiDocumentLocator;
 import com.gadgetworks.codeshelf.model.domain.EdiDocumentLocator.EdiDocumentLocatorDao;
+import com.gadgetworks.codeshelf.model.domain.EdiServiceABC;
+import com.gadgetworks.codeshelf.model.domain.EdiServiceABC.EdiServiceABCDao;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Facility.FacilityDao;
 import com.gadgetworks.codeshelf.model.domain.IronMqService;
@@ -105,8 +107,6 @@ import com.gadgetworks.codeshelf.model.domain.WorkArea;
 import com.gadgetworks.codeshelf.model.domain.WorkArea.WorkAreaDao;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction.WorkInstructionDao;
-import com.gadgetworks.codeshelf.monitor.IMonitor;
-import com.gadgetworks.codeshelf.monitor.Monitor;
 import com.gadgetworks.codeshelf.report.IPickDocumentGenerator;
 import com.gadgetworks.codeshelf.report.PickDocumentGenerator;
 import com.gadgetworks.codeshelf.security.CodeshelfRealm;
@@ -137,9 +137,9 @@ import com.google.inject.name.Names;
  */
 public final class ServerMain {
 
-	// See the top of Util to understand why we do the following:
+	// pre-main static load configuration and set up logging (see Configuration.java)
 	static {
-		Util.initLogging();
+		Configuration.loadConfig("server");
 	}
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(ServerMain.class);
@@ -154,20 +154,6 @@ public final class ServerMain {
 	/**
 	 */
 	public static void main(String[] inArgs) {
-
-		Util.loadConfig();
-
-		// Guice (injector) will invoke log4j, so we need to set some log dir parameters before we call it.
-		Util util = new Util();
-		String appDataDir = util.getApplicationDataDirPath();
-		System.setProperty("app.data.dir", appDataDir);
-
-		//		java.util.logging.Logger rootLogger = LogManager.getLogManager().getLogger("");
-		//		Handler[] handlers = rootLogger.getHandlers();
-		//		for (int i = 0; i < handlers.length; i++) {
-		//			rootLogger.removeHandler(handlers[i]);
-		//		}
-		//		SLF4JBridgeHandler.install();
 
 		// Create and start the application.
 		Injector dynamicInjector = setupInjector();
@@ -200,8 +186,6 @@ public final class ServerMain {
 					.toInstance(System.getProperty("db.address"));
 				bind(String.class).annotatedWith(Names.named(ISchemaManager.DATABASE_PORTNUM_PROPERTY))
 					.toInstance(System.getProperty("db.portnum"));
-				bind(String.class).annotatedWith(Names.named(ISchemaManager.DATABASE_SSL_PROPERTY))
-					.toInstance(System.getProperty("db.ssl"));
 
 				bind(String.class).annotatedWith(Names.named(IWebSocketSslContextGenerator.KEYSTORE_PATH_PROPERTY))
 					.toInstance(System.getProperty("keystore.path"));
@@ -230,8 +214,6 @@ public final class ServerMain {
 				bind(Integer.class).annotatedWith(Names.named(IHttpServer.WEBAPP_PORTNUM_PROPERTY))
 					.toInstance(Integer.valueOf(System.getProperty("webapp.portnum")));
 
-				bind(IUtil.class).to(Util.class);
-				bind(IMonitor.class).to(Monitor.class);
 				bind(ISchemaManager.class).to(PostgresSchemaManager.class);
 				bind(IDatabase.class).to(Database.class);
 				bind(ICodeshelfApplication.class).to(ServerCodeshelfApplication.class);
@@ -301,6 +283,10 @@ public final class ServerMain {
 				requestStaticInjection(ContainerUse.class);
 				bind(new TypeLiteral<ITypedDao<ContainerUse>>() {
 				}).to(ContainerUseDao.class);
+
+				requestStaticInjection(EdiServiceABC.class);
+				bind(new TypeLiteral<ITypedDao<EdiServiceABC>>() {
+				}).to(EdiServiceABCDao.class);
 
 				requestStaticInjection(DropboxService.class);
 				bind(new TypeLiteral<ITypedDao<DropboxService>>() {

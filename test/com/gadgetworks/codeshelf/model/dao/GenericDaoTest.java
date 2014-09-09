@@ -16,7 +16,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.gadgetworks.codeshelf.application.IUtil;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Facility;
@@ -61,7 +60,6 @@ public class GenericDaoTest {
 		}
 	}
 
-	private IUtil			mUtil;
 	private ISchemaManager	mSchemaManager;
 	private IDatabase		mDatabase;
 
@@ -69,39 +67,15 @@ public class GenericDaoTest {
 	public final void setup() {
 
 		try {
-			mUtil = new IUtil() {
-
-				public void setLoggingLevelsFromPrefs(Organization inOrganization,
-					ITypedDao<PersistentProperty> inPersistentPropertyDao) {
-				}
-
-				public String getVersionString() {
-					return "";
-				}
-
-				public String getApplicationLogDirPath() {
-					return ".";
-				}
-
-				public String getApplicationDataDirPath() {
-					return ".";
-				}
-
-				public void exitSystem() {
-					System.exit(-1);
-				}
-			};
-
 			Class.forName("org.h2.Driver");
-			mSchemaManager = new H2SchemaManager(mUtil,
+			mSchemaManager = new H2SchemaManager(
 				"codeshelf",
 				"codeshelf",
 				"codeshelf",
 				"CODESHELF",
 				"localhost",
-				"",
-				"false");
-			mDatabase = new Database(mSchemaManager, mUtil);
+				"");
+			mDatabase = new Database(mSchemaManager);
 
 			mDatabase.start();
 		} catch (ClassNotFoundException e) {

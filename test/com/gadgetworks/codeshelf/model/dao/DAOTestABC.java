@@ -7,8 +7,7 @@ package com.gadgetworks.codeshelf.model.dao;
 
 import org.junit.Before;
 
-import com.gadgetworks.codeshelf.application.IUtil;
-import com.gadgetworks.codeshelf.application.Util;
+import com.gadgetworks.codeshelf.application.Configuration;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Aisle.AisleDao;
 import com.gadgetworks.codeshelf.model.domain.Bay;
@@ -53,7 +52,6 @@ import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.Path.PathDao;
 import com.gadgetworks.codeshelf.model.domain.PathSegment;
 import com.gadgetworks.codeshelf.model.domain.PathSegment.PathSegmentDao;
-import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
 import com.gadgetworks.codeshelf.model.domain.Slot;
 import com.gadgetworks.codeshelf.model.domain.Slot.SlotDao;
 import com.gadgetworks.codeshelf.model.domain.SubLocationABC;
@@ -72,7 +70,7 @@ import com.gadgetworks.codeshelf.model.domain.WorkInstruction.WorkInstructionDao
 public abstract class DAOTestABC {
 	
 	static {
-		Util.initLogging();
+		Configuration.loadConfig("server");
 	}
 	
 	protected OrganizationDao		mOrganizationDao;
@@ -105,8 +103,6 @@ public abstract class DAOTestABC {
 	protected WorkInstructionDao	mWorkInstructionDao;
 	protected WorkAreaDao			mWorkAreaDao;
 
-
-	private IUtil					mUtil;
 	protected ISchemaManager		mSchemaManager;
 	private IDatabase				mDatabase;
 
@@ -118,39 +114,16 @@ public abstract class DAOTestABC {
 	public final void setup() {
 
 		try {
-			mUtil = new IUtil() {
-
-				public void setLoggingLevelsFromPrefs(Organization inOrganization,
-					ITypedDao<PersistentProperty> inPersistentPropertyDao) {
-				}
-
-				public String getVersionString() {
-					return "";
-				}
-
-				public String getApplicationLogDirPath() {
-					return ".";
-				}
-
-				public String getApplicationDataDirPath() {
-					return ".";
-				}
-
-				public void exitSystem() {
-					System.exit(-1);
-				}
-			};
 
 			Class.forName("org.h2.Driver");
-			mSchemaManager = new H2SchemaManager(mUtil,
+			mSchemaManager = new H2SchemaManager(
 				"codeshelf",
 				"codeshelf",
 				"codeshelf",
 				"codeshelf",
 				"localhost",
-				"",
-				"false");
-			mDatabase = new Database(mSchemaManager, mUtil);
+				"");
+			mDatabase = new Database(mSchemaManager);
 
 			mDatabase.start();
 

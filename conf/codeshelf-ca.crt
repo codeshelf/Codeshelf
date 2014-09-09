@@ -1,0 +1,72 @@
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: 1 (0x1)
+    Signature Algorithm: sha256WithRSAEncryption
+        Issuer: CN=Codeshelf
+        Validity
+            Not Before: May 16 17:29:49 2014 GMT
+            Not After : May 13 17:29:49 2024 GMT
+        Subject: CN=Codeshelf
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                Public-Key: (2048 bit)
+                Modulus:
+                    00:9f:64:0f:ca:1c:c9:c6:36:ab:98:27:32:2a:81:
+                    95:95:a1:00:e2:82:92:9d:ef:2b:56:b0:7f:0c:02:
+                    f4:4c:53:8f:a5:fe:ca:26:c2:5d:7e:6a:53:80:8b:
+                    51:07:f4:fb:07:b5:c8:f5:6d:00:3b:bb:82:4e:25:
+                    a0:42:d0:8a:e6:7f:65:47:20:02:01:d3:29:ab:92:
+                    0d:8c:00:11:4f:7b:0e:a7:8b:34:c0:6c:d8:9c:fe:
+                    44:63:ad:a0:0d:8d:cf:3b:b3:0c:43:89:dc:11:c9:
+                    59:d9:dd:8d:ff:b4:7f:d4:ec:af:1d:34:de:38:0d:
+                    bc:94:fe:19:da:cd:7f:1f:23:08:d4:c0:07:20:81:
+                    cb:b2:0f:df:4c:6e:01:00:88:02:ba:8e:c6:b2:f9:
+                    e8:79:c8:cb:a8:88:4d:60:3d:49:7d:17:08:97:b4:
+                    53:1d:95:6f:99:62:2d:8f:3d:59:f2:3a:27:f5:cc:
+                    6c:46:44:f9:45:29:4e:97:d2:7e:b0:41:68:10:85:
+                    eb:b5:67:3a:dc:83:d6:c4:d0:f7:0a:c3:d9:74:f2:
+                    30:38:36:e4:35:0e:8d:6f:8a:85:85:0e:c4:6e:ec:
+                    5d:bf:7a:ed:97:a6:39:7d:ae:21:3d:3e:87:fd:07:
+                    87:27:18:ad:0b:5a:72:58:03:1d:0c:06:59:62:2d:
+                    c5:6d
+                Exponent: 65537 (0x10001)
+        X509v3 extensions:
+            X509v3 Basic Constraints: 
+                CA:TRUE
+            X509v3 Subject Key Identifier: 
+                D0:4E:B2:BF:96:10:9F:DE:B2:AA:3E:60:FD:8C:C5:18:C3:CB:CA:81
+    Signature Algorithm: sha256WithRSAEncryption
+         13:d2:7a:09:0a:c1:f8:b0:11:47:0b:de:05:10:5b:4b:de:82:
+         b8:65:3d:b1:b7:d5:bb:75:fb:b7:ce:a7:f4:b1:6a:3b:f4:6c:
+         b5:47:27:c0:94:16:5f:81:9e:c5:61:71:c4:52:5b:6e:c1:fa:
+         16:c6:f4:76:5a:a0:ba:96:f5:d4:91:2e:fb:4c:8f:34:57:d8:
+         76:98:e3:03:c6:8f:e2:da:95:f3:49:02:c1:d0:90:22:02:3e:
+         7d:9f:c5:81:48:44:1b:72:a9:e6:fc:db:96:f9:e5:bb:f2:be:
+         cc:6f:2a:97:1b:95:16:6f:70:c3:09:3c:0a:3a:68:9c:54:8b:
+         79:1c:36:57:32:62:ba:93:74:2f:5d:cc:4f:8e:f2:05:00:6f:
+         05:66:8e:7e:90:3f:ec:17:96:bd:16:e1:ad:36:c0:ac:10:e8:
+         6a:3d:7f:fd:60:53:11:0c:2f:46:de:8d:db:82:18:98:c2:18:
+         8b:3b:28:69:fd:d5:78:fa:42:68:48:92:32:62:84:b0:2a:b8:
+         05:8a:c0:0f:54:a7:0e:ed:56:b6:4d:87:be:eb:2f:5b:f7:e8:
+         61:12:cf:ba:ce:e6:1c:cc:70:8d:b0:b9:c1:6f:e2:c3:79:fc:
+         98:a7:ca:42:18:ab:65:a2:a2:8a:cb:96:16:10:ed:b1:5d:da:
+         32:5f:ea:09
+-----BEGIN CERTIFICATE-----
+MIIC0jCCAbqgAwIBAgIBATANBgkqhkiG9w0BAQsFADAUMRIwEAYDVQQDEwlDb2Rl
+c2hlbGYwHhcNMTQwNTE2MTcyOTQ5WhcNMjQwNTEzMTcyOTQ5WjAUMRIwEAYDVQQD
+EwlDb2Rlc2hlbGYwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCfZA/K
+HMnGNquYJzIqgZWVoQDigpKd7ytWsH8MAvRMU4+l/somwl1+alOAi1EH9PsHtcj1
+bQA7u4JOJaBC0Irmf2VHIAIB0ymrkg2MABFPew6nizTAbNic/kRjraANjc87swxD
+idwRyVnZ3Y3/tH/U7K8dNN44DbyU/hnazX8fIwjUwAcggcuyD99MbgEAiAK6jsay
++eh5yMuoiE1gPUl9FwiXtFMdlW+ZYi2PPVnyOif1zGxGRPlFKU6X0n6wQWgQheu1
+Zzrcg9bE0PcKw9l08jA4NuQ1Do1vioWFDsRu7F2/eu2Xpjl9riE9Pof9B4cnGK0L
+WnJYAx0MBlliLcVtAgMBAAGjLzAtMAwGA1UdEwQFMAMBAf8wHQYDVR0OBBYEFNBO
+sr+WEJ/esqo+YP2MxRjDy8qBMA0GCSqGSIb3DQEBCwUAA4IBAQAT0noJCsH4sBFH
+C94FEFtL3oK4ZT2xt9W7dfu3zqf0sWo79Gy1RyfAlBZfgZ7FYXHEUltuwfoWxvR2
+WqC6lvXUkS77TI80V9h2mOMDxo/i2pXzSQLB0JAiAj59n8WBSEQbcqnm/NuW+eW7
+8r7MbyqXG5UWb3DDCTwKOmicVIt5HDZXMmK6k3QvXcxPjvIFAG8FZo5+kD/sF5a9
+FuGtNsCsEOhqPX/9YFMRDC9G3o3bghiYwhiLOyhp/dV4+kJoSJIyYoSwKrgFisAP
+VKcO7Va2TYe+6y9b9+hhEs+6zuYczHCNsLnBb+LDefyYp8pCGKtloqKKy5YWEO2x
+XdoyX+oJ
+-----END CERTIFICATE-----

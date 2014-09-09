@@ -58,8 +58,6 @@ import com.gadgetworks.codeshelf.model.domain.Tier;
 import com.gadgetworks.codeshelf.model.domain.UomMaster;
 import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
-import com.gadgetworks.codeshelf.monitor.IMonitor;
-import com.gadgetworks.codeshelf.monitor.Monitor;
 import com.gadgetworks.codeshelf.report.IPickDocumentGenerator;
 import com.gadgetworks.codeshelf.report.PickDocumentGenerator;
 import com.gadgetworks.codeshelf.security.CodeshelfRealm;
@@ -88,38 +86,6 @@ import com.google.inject.spi.TypeConverterBinding;
  *
  */
 public class CodeshelfApplicationTest {
-
-	private static final String	DB_INIT_URL	= "jdbc:h2:mem:database;DB_CLOSE_DELAY=-1";
-	private static final String	DB_URL		= "jdbc:h2:mem:database;SCHEMA=CODESHELF;DB_CLOSE_DELAY=-1";
-
-	public class MockUtil implements IUtil {
-		public void setLoggingLevelsFromPrefs(Organization inOrganization, ITypedDao<PersistentProperty> inPersistentPropertyDao) {
-		}
-
-		public String getVersionString() {
-			return "";
-		}
-
-		public String getApplicationLogDirPath() {
-			return ".";
-		}
-
-		public String getApplicationInitDatabaseURL() {
-			return DB_INIT_URL;
-		}
-
-		public String getApplicationDatabaseURL() {
-			return DB_URL;
-		}
-
-		public String getApplicationDataDirPath() {
-			return ".";
-		}
-
-		public void exitSystem() {
-			System.exit(-1);
-		}
-	}
 
 	public class MockInjector implements Injector {
 
@@ -246,6 +212,7 @@ public class CodeshelfApplicationTest {
 	 */
 	@Test
 	public void testStartStopApplication() {
+		Configuration.loadConfig("server");
 
 		ITypedDao<PersistentProperty> persistentPropertyDao = new MockDao<PersistentProperty>();
 		ITypedDao<Organization> organizationDao = Organization.DAO = new MockDao<Organization>();
@@ -267,7 +234,6 @@ public class CodeshelfApplicationTest {
 		ITypedDao<WorkInstruction> workInstructionDao = new MockDao<WorkInstruction>();
 		ITypedDao<LocationAlias> locationAliasDao = new MockDao<LocationAlias>();
 		ITypedDao<OrderLocation> orderLocationDao = new MockDao<OrderLocation>();
-		IMonitor monitor = new Monitor();
 
 		Injector injector = new MockInjector();
 		IDaoProvider daoProvider = new DaoProvider(injector);
@@ -323,28 +289,24 @@ public class CodeshelfApplicationTest {
 			aislesFileImporter,
 			facilityDao);
 		IPickDocumentGenerator pickDocumentGenerator = new PickDocumentGenerator();
-		IUtil util = new MockUtil();
-		ISchemaManager schemaManager = new H2SchemaManager(util,
+		ISchemaManager schemaManager = new H2SchemaManager(
 			"codeshelf",
 			"codeshelf",
 			"codeshelf",
 			"codeshelf",
 			"localhost",
-			"",
-			"false");
-		IDatabase database = new Database(schemaManager, util);
+			"");
+		IDatabase database = new Database(schemaManager);
 		
 		AdminServer adminServer = new AdminServer();
 		
 		JettyWebSocketServer jettyServer = new JettyWebSocketServer("localhost", 8444, false, false, "path", "pass", "pass");
 
 		final ServerCodeshelfApplication application = new ServerCodeshelfApplication(webSocketListener,
-			monitor,
 			httpServer,
 			ediProcessor,
 			pickDocumentGenerator,
 			database,
-			util,
 			persistentPropertyDao,
 			organizationDao,
 			facilityDao,

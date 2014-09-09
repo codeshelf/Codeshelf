@@ -48,18 +48,7 @@ public class Listener implements ObjectEventListener {
 
 	@Override
 	public ResponseABC processObjectUpdate(IDomainObject inDomainObject, Set<String> inChangedProperties) {
-		// first see if any changed properties match the properties
-		boolean matchedChangedProperty = false;
-		for (String propertyName : this.propertyNames) {
-			if ((inChangedProperties != null) && (inChangedProperties.contains(propertyName))) {
-				matchedChangedProperty = true;
-				break;
-			}
-		}
-		if (matchedChangedProperty) {
-			return this.processEvent(inDomainObject, EventType.Update);
-		}
-		return null;
+		return this.processEvent(inDomainObject, EventType.Update);
 	}
 
 	@Override

@@ -12,9 +12,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
@@ -41,7 +43,6 @@ import com.gadgetworks.codeshelf.device.LedCmdGroupSerializer;
 import com.gadgetworks.codeshelf.device.LedSample;
 import com.gadgetworks.codeshelf.edi.InventoryCsvImporter;
 import com.gadgetworks.codeshelf.edi.InventorySlottedCsvBean;
-import com.gadgetworks.codeshelf.model.BayDistanceWorkInstructionSequencer;
 import com.gadgetworks.codeshelf.model.EdiProviderEnum;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.HeaderCounts;
@@ -943,13 +944,8 @@ public class Facility extends SubLocationABC<Facility> {
 		result.setParent(this);
 		result.setDomainId("IRONMQ");
 		result.setProviderEnum(EdiProviderEnum.IRONMQ);
-		result.setServiceStateEnum(EdiServiceStateEnum.LINKED);
-
-		IronMqService.Credentials credentials = result.new Credentials(IronMqService.PROJECT_ID, IronMqService.TOKEN);
-		Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
-		String json = gson.toJson(credentials);
-		result.setProviderCredentials(json);
-
+		result.setServiceStateEnum(EdiServiceStateEnum.UNLINKED);
+		result.setCredentials("", ""); // non-null credentials
 		this.addEdiService(result);
 		try {
 			IronMqService.DAO.store(result);
@@ -1046,6 +1042,11 @@ public class Facility extends SubLocationABC<Facility> {
 
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 
+		//manually track changed ches here to trigger an update broadcast
+		Set<Che> changedChes = new HashSet<Che>();
+		changedChes.add(inChe);
+
+
 		// Delete any planned WIs for this CHE.
 		Map<String, Object> filterParams = new HashMap<String, Object>();
 		filterParams.put("chePersistentId", inChe.getPersistentId().toString());
@@ -1055,8 +1056,10 @@ public class Facility extends SubLocationABC<Facility> {
 			try {
 
 				Che assignedChe = wi.getAssignedChe();
-				if (assignedChe != null)
+				if (assignedChe != null) {
 					assignedChe.removeWorkInstruction(wi); // necessary? new from v3
+					changedChes.add(assignedChe);
+				}
 				OrderDetail owningDetail = wi.getParent();
 				owningDetail.removeWorkInstruction(wi); // necessary? new from v3
 
@@ -1075,6 +1078,9 @@ public class Facility extends SubLocationABC<Facility> {
 				// Set the CHE on the containerUse
 				ContainerUse thisUse = container.getCurrentContainerUse();
 				if (thisUse != null) {
+					if (thisUse.getCurrentChe() != null) {
+						changedChes.add(thisUse.getCurrentChe());
+					}
 					thisUse.setCurrentChe(inChe);
 					try {
 						ContainerUse.DAO.store(thisUse);
@@ -1084,6 +1090,11 @@ public class Facility extends SubLocationABC<Facility> {
 				}
 
 			}
+		}
+
+
+		for (Che changedChe : changedChes) {
+			changedChe.getDao().pushNonPersistentUpdates(changedChe);
 		}
 
 		Timestamp theTime = new Timestamp(System.currentTimeMillis());

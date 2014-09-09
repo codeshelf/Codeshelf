@@ -13,14 +13,12 @@ import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.Properties;
 
-import lombok.AccessLevel;
 import lombok.Getter;
 
 import org.postgresql.util.PSQLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.application.IUtil;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -39,8 +37,6 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	// Might be worth a change later, but it could be painful to maintain it on-going.
 	private static final String	DOMAINID_TYPE	= "TEXT";
 
-	@Getter(value = AccessLevel.PROTECTED)
-	private final IUtil			util;
 	@Getter
 	private final String		dbUserId;
 	@Getter
@@ -53,26 +49,21 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	private final String		dbAddress;
 	@Getter
 	private final String		dbPortnum;
-	@Getter
-	private final String		dbSsl;
 
 	@Inject
-	public SchemaManagerABC(final IUtil inUtil,
+	public SchemaManagerABC(
 		final String inDbUserId,
 		final String inDbPassword,
 		final String inDbName,
 		final String inDbSchemaName,
 		final String inDbAddress,
-		final String inDbPortnum,
-		final String inSsl) {
-		util = inUtil;
+		final String inDbPortnum) {
 		dbUserId = inDbUserId;
 		dbPassword = inDbPassword;
 		dbName = inDbName;
 		dbSchemaName = inDbSchemaName;
 		dbAddress = inDbAddress;
 		dbPortnum = inDbPortnum;
-		dbSsl = inSsl;
 	}
 
 	protected abstract boolean doUpgradeSchema();
@@ -93,7 +84,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		if (!doesSchemaExist()) {
 			if (!creatNewSchema()) {
 				LOGGER.error("Cannot create DB schema");
-				util.exitSystem();
+				System.exit(1);
 			} else {
 				result = true;
 			}
@@ -112,7 +103,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 				if (!resultSet.next()) {
 					LOGGER.error("Cannot create DB schema");
-					util.exitSystem();
+					System.exit(1);
 				} else {
 					Integer schemaVersion = resultSet.getInt("version");
 					if (schemaVersion < ISchemaManager.DATABASE_VERSION_CUR) {
@@ -147,9 +138,6 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 				Properties props = new Properties();
 				props.setProperty("user", getDbUserId());
 				props.setProperty("password", getDbPassword());
-				if ((getDbSsl() != null) && (getDbSsl().compareToIgnoreCase("true") == 0)) {
-					props.setProperty("ssl", "true");
-				}
 
 				result = DriverManager.getConnection(inDbUrl, props);
 			}

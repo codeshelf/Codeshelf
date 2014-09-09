@@ -8,7 +8,6 @@ import org.junit.Test;
 
 import com.avaje.ebean.Ebean;
 import com.avaje.ebean.EbeanServer;
-import com.gadgetworks.codeshelf.application.IUtil;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.PickStrategyEnum;
@@ -25,7 +24,6 @@ import com.gadgetworks.codeshelf.model.domain.Organization.OrganizationDao;
 
 public class OptimisticLockExceptionTest {
 
-	private IUtil			mUtil;
 	private ISchemaManager	mSchemaManager;
 	private IDatabase		mDatabase;
 
@@ -33,39 +31,16 @@ public class OptimisticLockExceptionTest {
 	public final void setup() {
 
 		try {
-			mUtil = new IUtil() {
-
-				public void setLoggingLevelsFromPrefs(Organization inOrganization,
-					ITypedDao<PersistentProperty> inPersistentPropertyDao) {
-				}
-
-				public String getVersionString() {
-					return "";
-				}
-
-				public String getApplicationLogDirPath() {
-					return ".";
-				}
-
-				public String getApplicationDataDirPath() {
-					return ".";
-				}
-
-				public void exitSystem() {
-					System.exit(-1);
-				}
-			};
 
 			Class.forName("org.h2.Driver");
-			mSchemaManager = new H2SchemaManager(mUtil,
+			mSchemaManager = new H2SchemaManager(
 				"codeshelf",
 				"codeshelf",
 				"codeshelf",
 				"CODESHELF",
 				"localhost",
-				"",
-				"false");
-			mDatabase = new Database(mSchemaManager, mUtil);
+				"");
+			mDatabase = new Database(mSchemaManager);
 
 			mDatabase.start();
 		} catch (ClassNotFoundException e) {

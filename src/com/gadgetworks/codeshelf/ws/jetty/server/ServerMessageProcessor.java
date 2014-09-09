@@ -1,7 +1,5 @@
 package com.gadgetworks.codeshelf.ws.jetty.server;
 
-import javax.websocket.Session;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,8 +71,6 @@ public class ServerMessageProcessor extends MessageProcessor {
 	private final Timer responseProcessingTimer = MetricsService.addTimer(MetricsGroup.WSS,"responses.processing-time");
 	private final Histogram pingHistogram = MetricsService.addHistogram(MetricsGroup.WSS, "ping-histogram");
 	
-	SessionManager sessionManager = SessionManager.getInstance();
-	
 	IDaoProvider daoProvider;
 	
 	@Inject
@@ -84,18 +80,12 @@ public class ServerMessageProcessor extends MessageProcessor {
 	}
 	
 	@Override
-	public ResponseABC handleRequest(Session session, RequestABC request) {
+	public ResponseABC handleRequest(CsSession csSession, RequestABC request) {
 		LOGGER.info("Request received for processing: "+request);
 		requestCounter.inc();
 		CommandABC command = null;
 		ResponseABC response = null;
 
-		// check CS session
-        CsSession csSession = sessionManager.getSession(session);
-        if (csSession==null) {
-        	LOGGER.warn("No matching CS session found for session "+session.getId());
-        }
-        
         // process message...
     	final Timer.Context context = requestProcessingTimer.time();
 	    try {
@@ -189,7 +179,7 @@ public class ServerMessageProcessor extends MessageProcessor {
 	}
 
 	@Override
-	public void handleResponse(Session session, ResponseABC response) {
+	public void handleResponse(CsSession csSession, ResponseABC response) {
 		responseCounter.inc();
     	final Timer.Context context = responseProcessingTimer.time();
 	    try {		
@@ -199,8 +189,7 @@ public class ServerMessageProcessor extends MessageProcessor {
 				long delta = now-pingResponse.getStartTime();
 				pingHistogram.update(delta);
 				double elapsedSec = ((double) delta)/1000; 
-				LOGGER.debug("Ping roundtrip on session "+session.getId()+" in "+elapsedSec+"s");
-				CsSession csSession = sessionManager.getSession(session);
+				LOGGER.debug("Ping roundtrip on session "+csSession +" in "+elapsedSec+"s");
 				if (csSession!=null) {
 					csSession.setLastPongReceived(now);
 				}
