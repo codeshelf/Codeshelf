@@ -151,7 +151,7 @@ public class IronMqService extends EdiServiceABC {
 		} else {
 			setServiceStateEnum(EdiServiceStateEnum.UNLINKED);
 		}
-		this.getDao().store(this);
+		EdiServiceABC.DAO.store(this); //This is what the UI is listening to
 	}
 
 	@Override

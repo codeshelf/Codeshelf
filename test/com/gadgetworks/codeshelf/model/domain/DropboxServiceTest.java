@@ -42,6 +42,7 @@ public class DropboxServiceTest {
 		Bay.DAO = new MockDao<Bay>();
 		Vertex.DAO = new MockDao<Vertex>();
 		DropboxService.DAO = new MockDao<DropboxService>();
+		EdiServiceABC.DAO = new MockDao<EdiServiceABC>();
 		EdiDocumentLocator.DAO = new MockDao<EdiDocumentLocator>();
 
 		Organization organization = new Organization();

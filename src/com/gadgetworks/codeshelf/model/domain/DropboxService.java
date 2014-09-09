@@ -188,7 +188,7 @@ public class DropboxService extends EdiServiceABC {
 					inCsvAislesFileImporter)) {
 					// If we've processed everything from the page correctly then save the current dbCursor, and get the next page
 					try {
-						DropboxService.DAO.store(this);
+						EdiServiceABC.DAO.store(this);
 					} catch (DaoException e) {
 						LOGGER.error("", e);
 					}
@@ -403,19 +403,18 @@ public class DropboxService extends EdiServiceABC {
 	 * @return
 	 */
 	public final String startLink() {
-		String result = "";
 
-		setServiceStateEnum(EdiServiceStateEnum.LINKING);
 		try {
-			DropboxService.DAO.store(this);
+			setServiceStateEnum(EdiServiceStateEnum.LINKING);
+			EdiServiceABC.DAO.store(this);
 		} catch (DaoException e) {
-			LOGGER.error("", e);
+			LOGGER.error("Unable to change dropbox service state", e);
 		}
 
 		DbxAppInfo appInfo = new DbxAppInfo(APPKEY, APPSECRET);
 		DbxRequestConfig config = new DbxRequestConfig("Codeshelf Interface", Locale.getDefault().toString());
 		DbxWebAuthNoRedirect webAuth = new DbxWebAuthNoRedirect(config, appInfo);
-		result = webAuth.start();
+		String result = webAuth.start();
 
 		return result;
 	}
@@ -436,22 +435,22 @@ public class DropboxService extends EdiServiceABC {
 			DbxAuthFinish authFinish = webAuth.finish(inDbxCode);
 			String accessToken = authFinish.accessToken;
 
-			// We did get an access token.
-			if (accessToken == null) {
-				setServiceStateEnum(EdiServiceStateEnum.LINK_FAILED);
-			} else {
-				result = true;
-				setProviderCredentials(accessToken);
-				setServiceStateEnum(EdiServiceStateEnum.LINKED);
-				setDbCursor("");
-			}
 			try {
-				DropboxService.DAO.store(this);
+				// We did get an access token.
+				if (accessToken == null) {
+					setServiceStateEnum(EdiServiceStateEnum.LINK_FAILED);
+				} else {
+					setProviderCredentials(accessToken);
+					setServiceStateEnum(EdiServiceStateEnum.LINKED);
+					setDbCursor("");
+					result = true;
+				}
+				EdiServiceABC.DAO.store(this);
 			} catch (DaoException e) {
-				LOGGER.error("", e);
+				LOGGER.error("Unable to store dropboxservice change after linking", e);
 			}
 		} catch (DbxException e) {
-			LOGGER.error("", e);
+			LOGGER.error("Unable to get accessToken for dropbox service", e);
 		}
 
 		return result;
