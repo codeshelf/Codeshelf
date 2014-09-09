@@ -59,6 +59,9 @@ public class CsSession implements IDaoListener {
 	@Getter @Setter
 	State lastState = State.INACTIVE;
 	
+	@Getter @Setter
+	String organizationName;
+	
 	// used to be new HashMap
 	private Map<String,ObjectEventListener> eventListeners = new ConcurrentHashMap<String,ObjectEventListener>();
 	
