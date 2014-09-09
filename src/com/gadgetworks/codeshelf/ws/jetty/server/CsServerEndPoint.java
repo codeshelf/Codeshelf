@@ -61,14 +61,14 @@ public class CsServerEndPoint {
 		sessionManager.messageReceived(session);
     	if (message instanceof ResponseABC) {
     		ResponseABC response = (ResponseABC) message;
-            LOGGER.debug("Received response on session "+session.getId()+": " + response);
-            messageProcessor.handleResponse(session, response);
+            LOGGER.debug("Received response on session "+csSession+": " + response);
+            messageProcessor.handleResponse(csSession, response);
     	}
     	else if (message instanceof RequestABC) {
     		RequestABC request = (RequestABC) message;
-            LOGGER.debug("Received request on session "+session.getId()+": " + request);
+            LOGGER.debug("Received request on session "+csSession+": " + request);
             // pass request to processor to execute command
-            ResponseABC response = messageProcessor.handleRequest(session,request);
+            ResponseABC response = messageProcessor.handleRequest(csSession, request);
             if (response!=null) {
             	// send response to client
             	LOGGER.debug("Sending response "+response+" for request "+request);

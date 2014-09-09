@@ -4,6 +4,7 @@ import java.util.UUID;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import com.eaio.uuid.UUIDGen;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
@@ -14,6 +15,7 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.request.LoginRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.LoginResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
+import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
 import com.gadgetworks.codeshelf.ws.jetty.server.ServerMessageProcessor;
 
 public class LoginTest {
@@ -42,16 +44,13 @@ public class LoginTest {
 		userDao.store(user);
 		organization.addUser(user);
 
-		MockSession session = new MockSession();
-		session.setId("test-session");
-		
 		LoginRequest request = new LoginRequest();
 		request.setOrganizationId(organization.getDomainId());
 		request.setUserId(user.getDomainId());
 		request.setPassword(password);
 		
 		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider);
-		ResponseABC response = processor.handleRequest(session, request);
+		ResponseABC response = processor.handleRequest(Mockito.mock(CsSession.class), request);
 
 		Assert.assertTrue(response instanceof LoginResponse);
 		
@@ -83,9 +82,6 @@ public class LoginTest {
 		user.setActive(true);
 		userDao.store(user);
 		organization.addUser(user);
-
-		MockSession session = new MockSession();
-		session.setId("test-session");
 		
 		LoginRequest request = new LoginRequest();
 		request.setOrganizationId(organization.getDomainId());
@@ -93,7 +89,7 @@ public class LoginTest {
 		request.setPassword(password);
 		
 		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider);
-		ResponseABC response = processor.handleRequest(session, request);
+		ResponseABC response = processor.handleRequest(Mockito.mock(CsSession.class), request);
 
 		Assert.assertTrue(response instanceof LoginResponse);
 		
@@ -125,16 +121,13 @@ public class LoginTest {
 		userDao.store(user);
 		organization.addUser(user);
 
-		MockSession session = new MockSession();
-		session.setId("test-session");
-		
 		LoginRequest request = new LoginRequest();
 		request.setOrganizationId(organization.getDomainId());
 		request.setUserId(user.getDomainId());
 		request.setPassword("invalid");
 		
 		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider);
-		ResponseABC response = processor.handleRequest(session, request);
+		ResponseABC response = processor.handleRequest(Mockito.mock(CsSession.class), request);
 
 		Assert.assertTrue(response instanceof LoginResponse);
 		

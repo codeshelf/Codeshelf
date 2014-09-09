@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageProcessor;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RequestABC;
+import com.gadgetworks.codeshelf.ws.jetty.server.SessionManager;
 
 public class JettyWebSocketClient {
 	
@@ -55,6 +56,7 @@ public class JettyWebSocketClient {
 		
         // create and configure WS endpoint                 
         endpoint = new CsClientEndpoint(this);
+        endpoint.setSessionManager(SessionManager.getInstance());
         endpoint.setMessageProcessor(responseProcessor);
      
         messageCoordinator = new MessageCoordinator(); 
