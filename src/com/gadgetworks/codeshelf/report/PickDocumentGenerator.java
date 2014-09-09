@@ -70,7 +70,9 @@ public class PickDocumentGenerator implements IPickDocumentGenerator {
 		mShouldRun = false;
 		try {
 			// Send a shutdown signal to the queue so that it loops and exits its thread.
-			mSignalQueue.put(SHUTDOWN);
+			if (mSignalQueue != null) {
+				mSignalQueue.put(SHUTDOWN);
+			}
 		} catch (InterruptedException e) {
 			LOGGER.error("", e);
 		}
