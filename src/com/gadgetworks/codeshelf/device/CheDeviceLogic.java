@@ -827,15 +827,25 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			if (getCheStateEnum() != CheStateEnum.DO_PICK) {
 				setState(CheStateEnum.DO_PICK);
 			}
+			
+			// Tell all aisleControllers, or the last aisle controller this device displayed on, to remove any led commands for this.
 			ledControllerClearLeds();
+			
+			// This part is easy. Just display on the CHE controller
 			sendDisplayWorkInstruction(firstWi.getPickInstruction(), firstWi.getDescription(), firstWi.getPlanQuantity());
 
+			
+			// Not as easy. Clear this CHE's last leds off of aisle controller(s), and tell aisle controller(s) what to light next
 			List<LedCmdGroup> ledCmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(firstWi.getLedCmdStream());
 
 			INetworkDevice lastLedController = null;
+			// This is not about clearing controllers/channels this CHE had lights on for.  Rather, it was about iterating the command groups and making sure
+			// we do not clear out the first group when adding on a second
+			
 			for (Iterator iterator = ledCmdGroups.iterator(); iterator.hasNext();) {
 				LedCmdGroup ledCmdGroup = (LedCmdGroup) iterator.next();
 
+				// The WI's ledCmdStream includes the controller ID. Usually only one command group per WI. So, we are setting ledController as the aisleDeviceLogic for the next WI's lights
 				INetworkDevice ledController = mRadioController.getNetworkDevice(new NetGuid(ledCmdGroup.getControllerId()));
 				if (ledController != null) {
 
@@ -864,7 +874,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				}
 			}
 
-			// Now create a light instruction for each position.
+			// Also pretty easy. Light the position controllers on this CHE
 			List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
 			for (WorkInstruction wi : mActivePickWiList) {
 				for (Entry<String, String> mapEntry : mContainersMap.entrySet()) {

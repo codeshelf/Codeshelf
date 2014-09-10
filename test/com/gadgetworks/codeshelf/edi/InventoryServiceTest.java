@@ -270,6 +270,15 @@ public class InventoryServiceTest extends DomainTestABC {
 	}
 
 	@Test
+	public void testUpsertItemUsingUomDifferentCase() throws IOException {
+		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
+		UomMaster uomMaster = facility.getUomMaster("each");
+		ItemMaster itemMaster = facility.getItemMaster("10700589");
+		Item item = facility.upsertItem(itemMaster.getItemId(), tier.getNominalLocationId(), "1", "1", "EACH");
+		Assert.assertEquals(tier, item.getStoredLocation());
+	}
+	
+	@Test
 	public void testUpsertItemUsingNominalLocationId() throws IOException {
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");

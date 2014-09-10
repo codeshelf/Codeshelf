@@ -24,6 +24,8 @@ public class UomNormalizer {
 			returnStr = CASE;
 		else if (inUomStr.equalsIgnoreCase("ea") || inUomStr.equalsIgnoreCase("each"))
 			returnStr = EACH;
+		else 
+			returnStr = inUomStr.toUpperCase();
 
 		return returnStr;
 	}
