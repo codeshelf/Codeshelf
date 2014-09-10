@@ -20,9 +20,6 @@ import com.gadgetworks.codeshelf.metrics.OpenTsdb;
 import com.gadgetworks.codeshelf.metrics.OpenTsdbReporter;
 import com.gadgetworks.codeshelf.model.dao.DaoProvider;
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
-import com.gadgetworks.codeshelf.ws.websocket.IWebSocketSslContextFactory;
-import com.gadgetworks.codeshelf.ws.websocket.WebSocketSslContextFactory;
-import com.gadgetworks.flyweight.command.IPacket;
 import com.gadgetworks.flyweight.controller.FTDIInterface;
 import com.gadgetworks.flyweight.controller.IGatewayInterface;
 import com.gadgetworks.flyweight.controller.IRadioController;
@@ -30,7 +27,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.name.Names;
 
 // --------------------------------------------------------------------------
 /**
@@ -96,8 +92,6 @@ public final class CsSiteControllerMain {
 		Injector injector = Guice.createInjector(new AbstractModule() {
 			@Override
 			protected void configure() {
-				bind(String.class).annotatedWith(Names.named("WS_SERVER_URI")).toInstance(System.getProperty("websocket.uri"));
-				bind(Byte.class).annotatedWith(Names.named(IPacket.NETWORK_NUM_PROPERTY)).toInstance(Byte.valueOf(System.getProperty("codeshelf.networknum")));
 				bind(ICodeshelfApplication.class).to(CsSiteControllerApplication.class);
 				bind(IRadioController.class).to(RadioController.class);
 				bind(IGatewayInterface.class).to(FTDIInterface.class);

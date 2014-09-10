@@ -43,4 +43,13 @@ public class PropertyUtils {
 		int value = Integer.parseInt(stringValue);
 		return value;
 	}
+
+	public static Byte getByte(String name) {
+		String stringValue = PropertyUtils.getString(name);
+		if (stringValue==null) {
+			throw new RuntimeException("Property is not defined: "+name);
+		}
+		Byte value = Byte.parseByte(stringValue);
+		return value;
+	}
 }

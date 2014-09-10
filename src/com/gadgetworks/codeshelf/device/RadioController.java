@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import com.codahale.metrics.Counter;
 import com.gadgetworks.codeshelf.metrics.MetricsGroup;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
+import com.gadgetworks.codeshelf.util.PropertyUtils;
 import com.gadgetworks.flyweight.bitfields.NBitInteger;
 import com.gadgetworks.flyweight.command.AckStateEnum;
 import com.gadgetworks.flyweight.command.CommandAssocABC;
@@ -126,15 +127,16 @@ public class RadioController implements IRadioController {
 	 *  @param inSessionManager   The session manager for this controller.
 	 */
 	@Inject
-	public RadioController(@Named(IPacket.NETWORK_NUM_PROPERTY) final byte inNetworkId, final IGatewayInterface inGatewayInterface) {
+	public RadioController(final IGatewayInterface inGatewayInterface) {
+		// fetch network ID from property files
+		Byte rawNetworkId = PropertyUtils.getByte("codeshelf.networknum");
+		mNetworkId = new NetworkId(rawNetworkId);
 
 		mGatewayInterface = inGatewayInterface;
 		mServerAddress = new NetAddress(IPacket.GATEWAY_ADDRESS);
 		mBroadcastAddress = new NetAddress(IPacket.BROADCAST_ADDRESS);
 		mBroadcastNetworkId = new NetworkId(IPacket.BROADCAST_NETWORK_ID);
 		mEventListeners = new ArrayList<IRadioControllerEventListener>();
-
-		mNetworkId = new NetworkId(inNetworkId);
 
 		mChannelSelected = false;
 		mChannelInfo = new ChannelInfo[MAX_CHANNELS];

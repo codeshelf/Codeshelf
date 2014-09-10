@@ -69,6 +69,8 @@ public class IntegrationTest1 extends EdiTestABC {
 	public void doBefore() {
 		webSocketServer = new JettyWebSocketServer();
 		webSocketServer.start();
+		
+		
 	}
 	
 	private Facility setUpSimpleNoSlotFacility(String inOrganizationName) {

@@ -21,5 +21,14 @@ public class ItemTest extends DomainTestABC {
 		String result = item.getPosAlongPathui();
 		Assert.assertEquals("0", result);
 	}
+	
+	@Test
+	public void testItemWithNullCmFromLeft() {
+		Facility anyLocation = createFacility("ORG-testItemWithLocationNoPath");
+		Item item = new Item(new ItemMaster(), "domain");
+		item.setStoredLocation(anyLocation);
+		item.setItemCmFromLeft(" "); //allowed
+		Assert.assertNull(item.getPosAlongPath());
+	}
 
 }

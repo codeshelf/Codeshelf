@@ -14,8 +14,6 @@ import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
  */
 public interface IPacket {
 
-	String	NETWORK_NUM_PROPERTY		= "NETWORK_NUM";
-
 	byte	PACKET_VERSION_0			= 0;
 
 	// Packet header structure sizes.  (See Packet.java)

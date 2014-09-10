@@ -29,81 +29,82 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
 import com.gadgetworks.codeshelf.ws.jetty.server.SessionManager;
 
-@ClientEndpoint(encoders={JsonEncoder.class},decoders={JsonDecoder.class})
+@ClientEndpoint(encoders = { JsonEncoder.class }, decoders = { JsonDecoder.class })
 public class CsClientEndpoint {
-	
-	private static final Logger	LOGGER = LoggerFactory.getLogger(CsClientEndpoint.class);
 
-	private static final Counter messageCounter = MetricsService.addCounter(MetricsGroup.WSS,"messages.received");
-	private static final Counter sessionStartCounter = MetricsService.addCounter(MetricsGroup.WSS,"sessions.started");
-	private static final Counter sessionEndCounter = MetricsService.addCounter(MetricsGroup.WSS,"sessions.ended");
-	private static final Counter sessionErrorCounter = MetricsService.addCounter(MetricsGroup.WSS,"sessions.errors");
+	private static final Logger		LOGGER				= LoggerFactory.getLogger(CsClientEndpoint.class);
 
-	@Getter @Setter
-	private MessageProcessor messageProcessor;
-	
-	@Getter @Setter
-	private SessionManager sessionManager;
-	
-	
-	@Getter @Setter 
-	private MessageCoordinator messageCoordinator;
-	
-	private JettyWebSocketClient client;
+	private static final Counter	messageCounter		= MetricsService.addCounter(MetricsGroup.WSS, "messages.received");
+	private static final Counter	sessionStartCounter	= MetricsService.addCounter(MetricsGroup.WSS, "sessions.started");
+	private static final Counter	sessionEndCounter	= MetricsService.addCounter(MetricsGroup.WSS, "sessions.ended");
+	private static final Counter	sessionErrorCounter	= MetricsService.addCounter(MetricsGroup.WSS, "sessions.errors");
+
+	@Getter
+	@Setter
+	private MessageProcessor		messageProcessor;
+
+	@Getter
+	@Setter
+	private SessionManager			sessionManager;
+
+	@Getter
+	@Setter
+	private MessageCoordinator		messageCoordinator;
+
+	private JettyWebSocketClient	client;
 
 	public CsClientEndpoint(JettyWebSocketClient client) {
 		this.client = client;
 	}
-	
-    @OnOpen
+
+	@OnOpen
 	public final void onConnect(Session session) {
-        sessionStartCounter.inc();
-    	LOGGER.info("Connected to server: " + session);
-        client.connected(session);
-    }
-    
-    @OnMessage
-    public void onMessage(Session session, MessageABC message) throws IOException, EncodeException {
-    	messageCounter.inc();
-    	client.messageReceived();
-    	if (message instanceof ResponseABC) {
-    		ResponseABC response = (ResponseABC) message;
-    		// check CS session
-            CsSession csSession = sessionManager.getSession(session);
-            if (csSession==null) {
-            	LOGGER.warn("No matching CS session found for session "+session.getId());
-            } else {
-    	    	messageProcessor.handleResponse(csSession, response);
-    			this.messageCoordinator.unregisterRequest(response);
-            }
-    	}
-    	else if (message instanceof RequestABC) {
-    		RequestABC request = (RequestABC) message;
-        	LOGGER.debug("Request received: "+request);
-            // pass request to processor to execute command
-            CsSession csSession = sessionManager.getSession(session);
-            ResponseABC response = messageProcessor.handleRequest(csSession, request);
-            if (response!=null) {
-            	// send response to client
-            	LOGGER.debug("Sending response "+response+" for request "+request);
-            	client.sendMessage(response);
-            }
-            else {
-            	LOGGER.warn("No response generated for request "+request);
-            }    	
-    	}    
-    }
-    
-    @OnClose
+		sessionStartCounter.inc();
+		LOGGER.info("Connected to server: " + session);
+		client.connected(session);
+	}
+
+	@OnMessage
+	public void onMessage(Session session, MessageABC message) throws IOException, EncodeException {
+		messageCounter.inc();
+		client.messageReceived();
+		if (message instanceof ResponseABC) {
+			ResponseABC response = (ResponseABC) message;
+			// check CS session
+			CsSession csSession = sessionManager.getSession(session);
+			if (csSession == null) {
+				LOGGER.warn("No matching CS session found for session " + session.getId());
+			}
+			// null session ok here?
+			messageProcessor.handleResponse(csSession, response);
+			this.messageCoordinator.unregisterRequest(response);
+
+		} else if (message instanceof RequestABC) {
+			RequestABC request = (RequestABC) message;
+			LOGGER.debug("Request received: " + request);
+			// pass request to processor to execute command
+			CsSession csSession = sessionManager.getSession(session);
+			ResponseABC response = messageProcessor.handleRequest(csSession, request);
+			if (response != null) {
+				// send response to client
+				LOGGER.debug("Sending response " + response + " for request " + request);
+				client.sendMessage(response);
+			} else {
+				LOGGER.warn("No response generated for request " + request);
+			}
+		}
+	}
+
+	@OnClose
 	public final void onDisconnect(CloseReason reason) {
-    	sessionEndCounter.inc();
-    	LOGGER.info("Disconnected from server: " + reason);
-    	client.disconnected();
-    }
-    
-    @OnError
+		sessionEndCounter.inc();
+		LOGGER.info("Disconnected from server: " + reason);
+		client.disconnected();
+	}
+
+	@OnError
 	public final void onError(Throwable cause) {
-    	sessionErrorCounter.inc();
-    	LOGGER.error("WebSocket: "+cause.getMessage());
-    }
+		sessionErrorCounter.inc();
+		LOGGER.error("WebSocket: " + cause.getMessage());
+	}
 }
