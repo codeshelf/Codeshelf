@@ -31,6 +31,7 @@ import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.util.StringUIConverter;
 import com.gadgetworks.codeshelf.util.UomNormalizer;
+import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -265,20 +266,8 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		String padRight(String inString, int inPadLength);
 	}
 
+	// UI Metafield
 	public final String getItemQuantityUom() {
-
-		// All to have access to a trivial padRight function. Could just in line.
-		// This is done as an anonymous class. Will like move to some utility class someday
-		Padder padder = new Padder() {
-			public String padRight(String inString, int inPadLength) {
-				String str = inString;
-				for (int i = inString.length(); i <= inPadLength; i++) {
-					str += " ";
-				}
-				return str;
-
-			}
-		};
 
 		Double quant = this.getQuantity();
 		UomMaster theUom = this.getUomMaster();
@@ -287,13 +276,21 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 
 		String uom = theUom.getDomainId();
 		String quantStr;
+
 		// for each or case, make sure we do not return the foolish looking 2.0 EA.
-		if (uom.equalsIgnoreCase("EA") || uom.equalsIgnoreCase("CS")) {
+		
+		//It was deemed that zero in the system is the unknown quantity in this system 
+		//   the system is not inventory tracking system so zero quantity in item does not mean you 
+		//   are out of stock
+		if (Math.abs(quant.doubleValue() - 0.0d) < 0.000001) {//zero essentially
+			quantStr = "?";
+			
+		} else if (uom.equalsIgnoreCase("EA") || uom.equalsIgnoreCase("CS")) {
 			quantStr = Integer.toString((int) quant.doubleValue());
 		} else {
 			quantStr = Double.toString(quant);
 		}
-		quantStr = padder.padRight(quantStr, 3);
+		quantStr = Strings.padEnd(quantStr, 3, ' ');
 		return quantStr + " " + uom;
 	}
 
