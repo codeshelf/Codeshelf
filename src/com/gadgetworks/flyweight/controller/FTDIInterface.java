@@ -243,13 +243,13 @@ public final class FTDIInterface extends SerialInterfaceABC {
 			try {
 				mJD2XXInterface.close();
 			} catch (IOException e) {
-				LOGGER.error("", e);
+				LOGGER.error("Failed to close interface", e);
 			}
 
 			try {
 				mJD2XXInterface.resetDevice();
 			} catch (IOException e) {
-				LOGGER.error("", e);
+				LOGGER.error("Failed to reset device", e);
 			}
 		}
 		//		}
@@ -265,7 +265,7 @@ public final class FTDIInterface extends SerialInterfaceABC {
 		try {
 			mJD2XXInterface.close();
 		} catch (IOException e) {
-			LOGGER.error("", e);
+			LOGGER.error("Failed to close interface", e);
 			resetInterface();
 		}
 	};
@@ -354,7 +354,7 @@ public final class FTDIInterface extends SerialInterfaceABC {
 		try {
 			mJD2XXInterface.write(inByte);
 		} catch (IOException e) {
-			LOGGER.error(e.getMessage());
+			LOGGER.error("Failed to send data",e.getMessage());
 			resetInterface();
 		}
 	};
@@ -370,7 +370,7 @@ public final class FTDIInterface extends SerialInterfaceABC {
 			mJD2XXInterface.write(inBytes, 0, inLength);
 			//			System.out.println("Frame: " + inLength + " delay: " + (System.currentTimeMillis() - now));
 		} catch (IOException e) {
-			LOGGER.error("", e);
+			LOGGER.error("Failed to send data", e);
 			resetInterface();
 		}
 		long endTime = System.currentTimeMillis();
