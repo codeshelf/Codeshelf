@@ -282,20 +282,26 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * Clear the LEDs for this CHE on this specified LED controller.
+	 * Clear the LEDs for this CHE one whatever LED controllers it last sent to.
+	 * Side effect: clears its information on what was previously sent to.
 	 * @param inGuid
 	 */
 	private void ledControllerClearLeds() {
 		// Clear the LEDs for the last location(s) the CHE worked.
+		NetGuid aisleControllerGuid = getLastLedControllerGuid();
+		if (aisleControllerGuid == null)
+			return;
+		
 		if (wereMultipleLastLedControllerGuids()) {
 			// check all
 			LOGGER.info("Needing to clear multiple aisle controllers for one CHE device clear. This case should be unusual.");
 		}		
 		
-		INetworkDevice device = mDeviceManager.getDeviceByGuid(getLastLedControllerGuid());
+		INetworkDevice device = mDeviceManager.getDeviceByGuid(aisleControllerGuid);
 		if (device instanceof AisleDeviceLogic) {
 			AisleDeviceLogic aisleDevice = (AisleDeviceLogic) device;
 			aisleDevice.clearLedCmdFor(getGuid());
+			// aisleDevice.removeLedCmdsForCheAndSend(getGuid());
 		}
 		clearLastLedControllerGuids(); // Setting the state that we have nothing more to clear for this CHE.
 	}
@@ -303,6 +309,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	// --------------------------------------------------------------------------
 	/**
 	 * Clear the LEDs for this CHE on this specified LED controller.
+	 * No side effect: does not clears its information on what was previously sent to.
 	 * @param inGuid
 	 */
 	private void ledControllerClearLeds(final NetGuid inLedControllerId) {
@@ -311,6 +318,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		if (device instanceof AisleDeviceLogic) {
 			AisleDeviceLogic aisleDevice = (AisleDeviceLogic) device;
 			aisleDevice.clearLedCmdFor(getGuid());
+			// aisleDevice.removeLedCmdsForCheAndSend(getGuid());
 		}
 	}
 
@@ -820,10 +828,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		// There are no more WIs, so the pick is complete.
 
 		// Clear the existing LEDs.
-		if (mLastLedControllerGuid != null) {
-			ledControllerClearLeds();
-		}
+		ledControllerClearLeds();  // this checks getLastLedControllerGuid(), and bails if null.
 
+		// CD_0041 is there a need for this?
 		ledControllerShowLeds(getGuid());
 
 		mCompletedWiList.clear();
