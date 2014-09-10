@@ -67,7 +67,11 @@ public class SiteControllerMessageProcessor extends MessageProcessor {
 		else if (response instanceof NetworkStatusResponse) {
 			NetworkStatusResponse update = (NetworkStatusResponse) response;
 			if (response.getStatus()==ResponseStatus.Success) {
+				LOGGER.info("Reading CHEs and aisle controllers from NetworkStatusResponse");
 				this.deviceManager.updateNetwork(update.getChes(),update.getLedControllers());
+			}
+			else {
+				LOGGER.warn("did not read CHEs and aisle controllers from NetworkStatusResponse becuase response was negative");			
 			}
 		}
 		//////////////////////////////////////////
