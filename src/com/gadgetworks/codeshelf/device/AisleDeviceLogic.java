@@ -32,6 +32,7 @@ import com.gadgetworks.flyweight.controller.NetworkDeviceStateEnum;
 public class AisleDeviceLogic extends DeviceLogicABC {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(AisleDeviceLogic.class);
+	private static int kNumChannelsOnAislController = 2; // We expect 4 ultimately. Just matching what was there.
 
 	@Accessors(prefix = "m")
 	protected class LedCmd {
@@ -87,7 +88,7 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 			List<LedSample> sampleList = new ArrayList<LedSample>();
 			LedSample sample = new LedSample(CommandControlLed.POSITION_NONE, ColorEnum.BLACK);
 			sampleList.add(sample);
-			for (short channel = 1; channel <= 2; channel++) {
+			for (short channel = 1; channel <= kNumChannelsOnAislController; channel++) {
 				ICommand command = new CommandControlLed(NetEndpoint.PRIMARY_ENDPOINT, channel, EffectEnum.FLASH, sampleList);
 				mRadioController.sendCommand(command, getAddress(), true);
 			}
@@ -114,7 +115,7 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 			List<LedSample> sampleList = new ArrayList<LedSample>();
 			LedSample sample = new LedSample(CommandControlLed.POSITION_NONE, ColorEnum.BLACK);
 			sampleList.add(sample);
-			for (short channel = 1; channel <= 2; channel++) {
+			for (short channel = 1; channel <= kNumChannelsOnAislController; channel++) {
 				ICommand command = new CommandControlLed(NetEndpoint.PRIMARY_ENDPOINT, channel, EffectEnum.FLASH, sampleList);
 				mRadioController.sendCommand(command, getAddress(), true);
 			}
@@ -124,7 +125,7 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * Clear all of the active LED commands for the specified GUID.
+	 * Clear all of the active LED commands for the specified CHE GUID. on this aisle controller
 	 * @param inNetGuid
 	 */
 	public final void removeLedCmdsForCheAndSend(final NetGuid inNetGuid) {
@@ -232,7 +233,7 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 	 */
 	public final void updateLeds() {
 		// CD_0041 note: Perfect for initial scope. DEV-411 will have us send out separate CommandControlLed if the byte stream of samples > 125.
-		// Does it need to clear channel 2 also?
+		// Looks like it does not really work yet for multiple channels. Does this need to figure out each channel, then send separate commands? Probably.
 
 		Short channel = 1;
 
