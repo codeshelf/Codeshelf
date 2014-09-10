@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
+import com.gadgetworks.codeshelf.util.PropertyUtils;
 import com.gadgetworks.codeshelf.util.TwoKeyMap;
 import com.gadgetworks.codeshelf.ws.jetty.client.JettyWebSocketClient;
 import com.gadgetworks.codeshelf.ws.jetty.client.WebSocketEventListener;
@@ -70,17 +71,14 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	private ConnectionManagerThread connectionManagerThread;
 	
 	@Inject
-	public CsDeviceManager(@Named("WS_SERVER_URI") final String inUriStr,
-		@Named("WEBSOCKET_SUPPRESS_KEEPALIVE_PROPERTY") final Boolean inSuppressKeepAlive,
-		@Named("WEBSOCKET_KILL_IDLE_PROPERTY") final Boolean inIdleKill,
-		final IRadioController inRadioController) {
+	public CsDeviceManager(final IRadioController inRadioController) {
+		// fetch properties from config files
+		mUri = PropertyUtils.getString("websocket.uri");
+		suppressKeepAlive = PropertyUtils.getBoolean("websocket.idle.suppresskeepalive");
+		idleKill = PropertyUtils.getBoolean("websocket.idle.kill");
 
 		mRadioController = inRadioController;
 		mDeviceMap = new TwoKeyMap<UUID, NetGuid, INetworkDevice>();
-
-		mUri = inUriStr;
-		suppressKeepAlive = inSuppressKeepAlive;
-		idleKill = inIdleKill;
 
 		mOrganizationId = System.getProperty("organizationId");
 		mFacilityId = System.getProperty("facilityId");

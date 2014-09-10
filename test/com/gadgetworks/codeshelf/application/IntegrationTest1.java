@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import com.gadgetworks.codeshelf.application.Configuration;
@@ -45,6 +46,7 @@ import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.model.domain.SubLocationABC;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.service.WorkService;
+import com.gadgetworks.codeshelf.ws.jetty.server.JettyWebSocketServer;
 import com.gadgetworks.flyweight.command.NetGuid;
 import com.google.common.base.Strings;
 
@@ -54,10 +56,21 @@ import com.google.common.base.Strings;
  */
 public class IntegrationTest1 extends EdiTestABC {
 
+	JettyWebSocketServer webSocketServer;
+	
 	static {
 		Configuration.loadConfig("server");
 	}
-
+	
+	public IntegrationTest1() {
+	}
+	
+	@Override
+	public void doBefore() {
+		webSocketServer = new JettyWebSocketServer();
+		webSocketServer.start();
+	}
+	
 	private Facility setUpSimpleNoSlotFacility(String inOrganizationName) {
 		// This returns a facility with aisle A1, with two bays with one tier each. No slots. With a path, associated to the aisle.
 		//   With location alias for first baytier only, not second.

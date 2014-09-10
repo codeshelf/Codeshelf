@@ -37,7 +37,6 @@ import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
 import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.report.IPickDocumentGenerator;
 import com.gadgetworks.codeshelf.ws.jetty.server.JettyWebSocketServer;
-import com.gadgetworks.codeshelf.ws.websocket.IWebSocketServer;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 
@@ -46,26 +45,23 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 	private static final Logger				LOGGER	= LoggerFactory.getLogger(ServerCodeshelfApplication.class);
 
 	private IEdiProcessor					mEdiProcessor;
-	private IWebSocketServer				mWebSocketServer;
 	private IHttpServer						mHttpServer;
 	private IPickDocumentGenerator			mPickDocumentGenerator;
 	private IDatabase						mDatabase;
 
 	private ITypedDao<PersistentProperty>	mPersistentPropertyDao;
 	private ITypedDao<Organization>			mOrganizationDao;
-	private ITypedDao<Facility>				mFacilityDao;
-	private ITypedDao<User>					mUserDao;
 
 	private BlockingQueue<String>			mEdiProcessSignalQueue;
 	
-	JettyWebSocketServer mAlternativeWebSocketServer;
+	JettyWebSocketServer webSocketServer;
 	
 	private AdminServer mAdminServer;
 	
 	private MemoryUsageGaugeSet memoryUsage;
 	
 	@Inject
-	public ServerCodeshelfApplication(final IWebSocketServer inWebSocketServer,
+	public ServerCodeshelfApplication(
 		final IHttpServer inHttpServer,
 		final IEdiProcessor inEdiProcessor,
 		final IPickDocumentGenerator inPickDocumentGenerator,
@@ -77,17 +73,14 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		final AdminServer inAdminServer,
 		final JettyWebSocketServer inAlternativeWebSocketServer) {
 		super();
-		mWebSocketServer = inWebSocketServer;
 		mHttpServer = inHttpServer;
 		mEdiProcessor = inEdiProcessor;
 		mDatabase = inDatabase;
 		mPickDocumentGenerator = inPickDocumentGenerator;
 		mPersistentPropertyDao = inPersistentPropertyDao;
 		mOrganizationDao = inOrganizationDao;
-		mFacilityDao = inFacilityDao;
-		mUserDao = inUserDao;
 		mAdminServer = inAdminServer;
-		mAlternativeWebSocketServer = inAlternativeWebSocketServer;
+		webSocketServer = inAlternativeWebSocketServer;
 	}
 
 	// --------------------------------------------------------------------------
@@ -117,7 +110,7 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		mDatabase.start();
 
 		// Start the WebSocket server 
-		mAlternativeWebSocketServer.start();
+		webSocketServer.start();
 
 		// Start the EDI process.
 		mEdiProcessSignalQueue = new ArrayBlockingQueue<>(100);
@@ -164,27 +157,18 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 	/**
 	 */
 	protected void doShutdown() {
-
-		String processName = ManagementFactory.getRuntimeMXBean().getName();
-
 		LOGGER.info("Stopping application");
-
 		mHttpServer.stopServer();
-
 		mEdiProcessor.stopProcessor();
 		mPickDocumentGenerator.stopProcessor();
-
-		// Stop the web socket manager.
+		// Stop the web socket server
 		try {
-			mWebSocketServer.stop();
+			webSocketServer.stop();
 		} catch (IOException | InterruptedException e) {
-			LOGGER.error("", e);
+			LOGGER.error("Failed to stop WebSocket server", e);
 		}
-
 		mDatabase.stop();
-
 		LOGGER.info("Application terminated normally");
-
 	}
 
 	private void initPreferencesStore(Organization inOrganization) {

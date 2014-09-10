@@ -223,6 +223,5 @@ public abstract class DAOTestABC {
 	}
 	
 	protected void doBefore() {
-		
 	}
 }

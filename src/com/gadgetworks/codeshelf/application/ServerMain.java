@@ -10,7 +10,6 @@ import org.apache.shiro.authc.credential.CredentialsMatcher;
 import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
 import org.apache.shiro.crypto.hash.Md5Hash;
 import org.apache.shiro.realm.Realm;
-import org.java_websocket.server.WebSocketServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -110,25 +109,14 @@ import com.gadgetworks.codeshelf.model.domain.WorkInstruction.WorkInstructionDao
 import com.gadgetworks.codeshelf.report.IPickDocumentGenerator;
 import com.gadgetworks.codeshelf.report.PickDocumentGenerator;
 import com.gadgetworks.codeshelf.security.CodeshelfRealm;
-import com.gadgetworks.codeshelf.ws.IWebSession;
-import com.gadgetworks.codeshelf.ws.IWebSessionFactory;
-import com.gadgetworks.codeshelf.ws.IWebSessionManager;
-import com.gadgetworks.codeshelf.ws.WebSession;
-import com.gadgetworks.codeshelf.ws.WebSessionManager;
-import com.gadgetworks.codeshelf.ws.command.req.IWsReqCmdFactory;
-import com.gadgetworks.codeshelf.ws.command.req.WsReqCmdFactory;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageProcessor;
 import com.gadgetworks.codeshelf.ws.jetty.server.MessageProcessorFactory;
 import com.gadgetworks.codeshelf.ws.jetty.server.ServerMessageProcessor;
-import com.gadgetworks.codeshelf.ws.websocket.CsWebSocketServer;
-import com.gadgetworks.codeshelf.ws.websocket.IWebSocketServer;
 import com.gadgetworks.codeshelf.ws.websocket.IWebSocketSslContextGenerator;
-import com.gadgetworks.codeshelf.ws.websocket.SSLWebSocketServerFactory;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.TypeLiteral;
-import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Names;
 
 // --------------------------------------------------------------------------
@@ -196,17 +184,6 @@ public final class ServerMain {
 				bind(String.class).annotatedWith(Names.named(IWebSocketSslContextGenerator.KEYSTORE_KEY_PASSWORD_PROPERTY))
 					.toInstance(System.getProperty("keystore.key.password"));
 
-				bind(String.class).annotatedWith(Names.named(IWebSocketServer.WEBSOCKET_HOSTNAME_PROPERTY))
-					.toInstance(System.getProperty("websocket.hostname"));
-				bind(Integer.class).annotatedWith(Names.named(IWebSocketServer.WEBSOCKET_PORTNUM_PROPERTY))
-					.toInstance(Integer.valueOf(System.getProperty("websocket.portnum")));
-				
-				// TODO: refactor for common injected items? (server+sitecon)
-				bind(Boolean.class).annotatedWith(Names.named(IWebSocketServer.WEBSOCKET_SUPPRESS_KEEPALIVE_PROPERTY))
-					.toInstance(Boolean.valueOf(System.getProperty("websocket.idle.suppresskeepalive")));
-				bind(Boolean.class).annotatedWith(Names.named(IWebSocketServer.WEBSOCKET_KILL_IDLE_PROPERTY))
-					.toInstance(Boolean.valueOf(System.getProperty("websocket.idle.kill")));
-				
 				bind(String.class).annotatedWith(Names.named(IHttpServer.WEBAPP_CONTENT_PATH_PROPERTY))
 					.toInstance(System.getProperty("webapp.content.path"));
 				bind(String.class).annotatedWith(Names.named(IHttpServer.WEBAPP_HOSTNAME_PROPERTY))
@@ -227,13 +204,6 @@ public final class ServerMain {
 				bind(ICsvOrderLocationImporter.class).to(OrderLocationCsvImporter.class);
 				bind(ICsvAislesFileImporter.class).to(AislesFileCsvImporter.class);
 				bind(ICsvCrossBatchImporter.class).to(CrossBatchCsvImporter.class);
-
-				// Websocket/WebSession
-				bind(IWebSocketServer.class).to(CsWebSocketServer.class);
-				bind(IWebSessionManager.class).to(WebSessionManager.class);
-				bind(IWsReqCmdFactory.class).to(WsReqCmdFactory.class);
-				bind(WebSocketServer.WebSocketServerFactory.class).to(SSLWebSocketServerFactory.class);
-				install(new FactoryModuleBuilder().implement(IWebSession.class, WebSession.class).build(IWebSessionFactory.class));
 
 				// jetty websocket
 				bind(MessageProcessor.class).to(ServerMessageProcessor.class);

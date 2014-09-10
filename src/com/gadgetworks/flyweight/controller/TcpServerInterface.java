@@ -15,8 +15,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.ws.websocket.CsWebSocketClient;
-
 /**
  * @author jeffw
  *
@@ -26,7 +24,7 @@ public class TcpServerInterface extends SerialInterfaceABC {
 	public static final int				PORT_NUM			= 45000;
 	public static final int				READ_WAIT_MILLIS	= 10;
 
-	private static final Logger			LOGGER				= LoggerFactory.getLogger(CsWebSocketClient.class);
+	private static final Logger			LOGGER				= LoggerFactory.getLogger(TcpServerInterface.class);
 
 	private ServerSocket				mServerSocket;
 	private LinkedBlockingQueue<Remote>	mRemotes			= new LinkedBlockingQueue<Remote>();

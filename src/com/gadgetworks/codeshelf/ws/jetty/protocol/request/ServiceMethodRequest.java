@@ -7,7 +7,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.gadgetworks.codeshelf.ws.command.req.ArgsClass;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ArgsClass;
 
 /* {"className":"WorkService",
  * "methodName":"wiSummaryForChe",

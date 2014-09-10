@@ -15,7 +15,6 @@ import com.gadgetworks.codeshelf.validation.DefaultErrors;
 import com.gadgetworks.codeshelf.validation.ErrorCode;
 import com.gadgetworks.codeshelf.validation.Errors;
 import com.gadgetworks.codeshelf.validation.InputValidationException;
-import com.gadgetworks.codeshelf.ws.command.req.ArgsClass;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectMethodRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectMethodResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;

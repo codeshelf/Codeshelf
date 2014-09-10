@@ -5,7 +5,7 @@ import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 
-import com.gadgetworks.codeshelf.ws.command.req.ArgsClass;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ArgsClass;
 
 /* {"className":"Che",
  * "persistentId":"66535fc0-00b8-11e4-ba3a-48d705ccef0f",

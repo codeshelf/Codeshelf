@@ -11,7 +11,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.shiro.realm.Realm;
-import org.java_websocket.WebSocket;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -61,16 +60,7 @@ import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.report.IPickDocumentGenerator;
 import com.gadgetworks.codeshelf.report.PickDocumentGenerator;
 import com.gadgetworks.codeshelf.security.CodeshelfRealm;
-import com.gadgetworks.codeshelf.ws.IWebSessionFactory;
-import com.gadgetworks.codeshelf.ws.IWebSessionManager;
-import com.gadgetworks.codeshelf.ws.WebSession;
-import com.gadgetworks.codeshelf.ws.WebSessionManager;
-import com.gadgetworks.codeshelf.ws.command.req.IWsReqCmdFactory;
-import com.gadgetworks.codeshelf.ws.command.req.WsReqCmdFactory;
 import com.gadgetworks.codeshelf.ws.jetty.server.JettyWebSocketServer;
-import com.gadgetworks.codeshelf.ws.websocket.CsWebSocketServer;
-import com.gadgetworks.codeshelf.ws.websocket.IWebSocketServer;
-import com.gadgetworks.codeshelf.ws.websocket.SSLWebSocketServerFactory;
 import com.google.inject.Binding;
 import com.google.inject.Injector;
 import com.google.inject.Key;
@@ -197,16 +187,7 @@ public class CodeshelfApplicationTest {
 			return null;
 		}
 	}
-
-	private class WebSessionFactory implements IWebSessionFactory {
-
-		@Override
-		public WebSession create(WebSocket inWebSocket, IWsReqCmdFactory inWebSessionReqCmdFactory) {
-			Realm realm = new CodeshelfRealm();
-			return new WebSession(inWebSocket, inWebSessionReqCmdFactory, realm);
-		}
-	}
-
+	
 	/**
 	 * Test method for {@link com.gadgetworks.codeshelf.application.ServerCodeshelfApplication#startApplication()}.
 	 */
@@ -237,23 +218,7 @@ public class CodeshelfApplicationTest {
 
 		Injector injector = new MockInjector();
 		IDaoProvider daoProvider = new DaoProvider(injector);
-		IWsReqCmdFactory webSessionReqCmdFactory = new WsReqCmdFactory(organizationDao,
-			cheDao,
-			workInstructionDao,
-			orderHeaderDao,
-			orderDetailDao,
-			daoProvider);
-		IWebSessionFactory webSessionFactory = new WebSessionFactory();
-		IWebSessionManager webSessionManager = new WebSessionManager(webSessionReqCmdFactory, webSessionFactory);
-		SSLWebSocketServerFactory webSocketFactory = new SSLWebSocketServerFactory("./conf/codeshelf.keystore",
-			"JKS",
-			"x2HPbC2avltYQR",
-			"x2HPbC2avltYQR");
 
-		IWebSocketServer webSocketListener = new CsWebSocketServer("localhost",
-			8444,
-			webSessionManager,
-			webSocketFactory);
 		IHttpServer httpServer = new HttpServer("./",
 			"localhost",
 			8443,
@@ -300,9 +265,9 @@ public class CodeshelfApplicationTest {
 		
 		AdminServer adminServer = new AdminServer();
 		
-		JettyWebSocketServer jettyServer = new JettyWebSocketServer("localhost", 8444, false, false, "path", "pass", "pass");
+		JettyWebSocketServer jettyServer = new JettyWebSocketServer();
 
-		final ServerCodeshelfApplication application = new ServerCodeshelfApplication(webSocketListener,
+		final ServerCodeshelfApplication application = new ServerCodeshelfApplication(
 			httpServer,
 			ediProcessor,
 			pickDocumentGenerator,
