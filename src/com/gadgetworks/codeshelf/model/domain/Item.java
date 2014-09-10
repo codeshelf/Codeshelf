@@ -212,7 +212,14 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	}
 
 	public final void setItemCmFromLeft(String inValueFromLeft) {
-		setPositionFromLeft(Integer.valueOf(inValueFromLeft));
+		Integer positionValue;
+		if (Strings.isNullOrEmpty(inValueFromLeft) || inValueFromLeft.trim().length() == 0) {
+			positionValue = null;
+		}
+		else {
+			positionValue = Integer.valueOf(inValueFromLeft);
+		}
+		setPositionFromLeft(positionValue);
 	}
 
 	public final String getPosAlongPathui() {
@@ -262,10 +269,6 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	}
 
 
-	interface Padder {
-		String padRight(String inString, int inPadLength);
-	}
-
 	// UI Metafield
 	public final String getItemQuantityUom() {
 
@@ -296,25 +299,30 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 
 	// Public setter/getter/validate functions for our cmFromLeft feature
 	public final void setPositionFromLeft(Integer inCmFromLeft) {
-		Double value = 0.0;
-		LocationABC theLocation = this.getStoredLocation();
-		Double pickEnd = ((SubLocationABC) theLocation).getPickFaceEndPosX();
-		if (pickEnd == 0.0)
-			pickEnd = ((SubLocationABC) theLocation).getPickFaceEndPosY();
-		if (theLocation.isLeftSideTowardsAnchor()) {
-			value = inCmFromLeft / 100.0;
-		} else {
-			value = pickEnd - (inCmFromLeft / 100.0);
+		if (inCmFromLeft == null) {
+			setMetersFromAnchor(null);
 		}
-		if (value > pickEnd) {
-			LOGGER.error("setPositionFromLeft value out of range");
-			value = pickEnd;
+		else {
+			Double value = 0.0;
+			LocationABC theLocation = this.getStoredLocation();
+			Double pickEnd = ((SubLocationABC) theLocation).getPickFaceEndPosX();
+			if (pickEnd == 0.0)
+				pickEnd = ((SubLocationABC) theLocation).getPickFaceEndPosY();
+			if (theLocation.isLeftSideTowardsAnchor()) {
+				value = inCmFromLeft / 100.0;
+			} else {
+				value = pickEnd - (inCmFromLeft / 100.0);
+			}
+			if (value > pickEnd) {
+				LOGGER.error("setPositionFromLeft value out of range");
+				value = pickEnd;
+			}
+			if (value < 0.0) {
+				LOGGER.error("ssetPositionFromLeft value out of range");
+				value = 0.0;
+			}
+			setMetersFromAnchor(value);
 		}
-		if (value < 0.0) {
-			LOGGER.error("ssetPositionFromLeft value out of range");
-			value = 0.0;
-		}
-		setMetersFromAnchor(value);
 	}
 
 	public final String validatePositionFromLeft(LocationABC inLocation, Integer inCmFromLeft) {
@@ -322,7 +330,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		if (inLocation == null)
 			result = "Unknown location";
 		// if the cm value is wider than that bay/tier, or negative
-		if (inCmFromLeft < 0)
+		if (inCmFromLeft != null && inCmFromLeft < 0)
 			result = "Negative cm value not allowed";
 		Double pickEnd = ((SubLocationABC) inLocation).getPickFaceEndPosX();
 		if (pickEnd == 0.0)
