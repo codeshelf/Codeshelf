@@ -294,14 +294,17 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		
 		if (wereMultipleLastLedControllerGuids()) {
 			// check all
-			LOGGER.info("Needing to clear multiple aisle controllers for one CHE device clear. This case should be unusual.");
+			LOGGER.warn("Needing to clear multiple aisle controllers for one CHE device clear. This case should be unusual.");
+			// CsDeviceManager devManager = (CsDeviceManager) mDeviceManager;
+			// Map theDeviceMap = devManager.mDeviceMap;
+			// Something like this. Need to iterate all devices. For now, see how often the warn comes up.
 		}		
 		
 		INetworkDevice device = mDeviceManager.getDeviceByGuid(aisleControllerGuid);
 		if (device instanceof AisleDeviceLogic) {
 			AisleDeviceLogic aisleDevice = (AisleDeviceLogic) device;
-			aisleDevice.clearLedCmdFor(getGuid());
-			// aisleDevice.removeLedCmdsForCheAndSend(getGuid());
+			// aisleDevice.clearLedCmdFor(getGuid()); // CD_0041 change
+			aisleDevice.removeLedCmdsForCheAndSend(getGuid());
 		}
 		clearLastLedControllerGuids(); // Setting the state that we have nothing more to clear for this CHE.
 	}
@@ -317,9 +320,11 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		INetworkDevice device = mDeviceManager.getDeviceByGuid(inLedControllerId);
 		if (device instanceof AisleDeviceLogic) {
 			AisleDeviceLogic aisleDevice = (AisleDeviceLogic) device;
-			aisleDevice.clearLedCmdFor(getGuid());
-			// aisleDevice.removeLedCmdsForCheAndSend(getGuid());
+			// aisleDevice.clearLedCmdFor(getGuid()); // CD_0041 change
+			aisleDevice.removeLedCmdsForCheAndSend(getGuid());
 		}
+		
+		clearLastLedControllerGuids(); // Not sure this is right!!! Need tests in CD_0043		
 	}
 
 	// --------------------------------------------------------------------------
