@@ -14,8 +14,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
 
 public class JsonEncoder implements Encoder.Text<MessageABC> {
-	final public static int JSON_COMPRESS_THRESHOLD = 32768;
-	final public static int JSON_COMPRESS_MAXIMUM = 1048576;
+	final public static int WEBSOCKET_MAX_MESSAGE_SIZE = 500000;
+	final public static int JSON_COMPRESS_THRESHOLD = WEBSOCKET_MAX_MESSAGE_SIZE-10000;
+	final public static int JSON_COMPRESS_MAXIMUM = 1048576; //adjust to suit
 
 	private static final Logger	LOGGER = LoggerFactory.getLogger(JsonEncoder.class);
 	LZ4Factory lz4Factory = LZ4Factory.safeInstance();
@@ -35,7 +36,7 @@ public class JsonEncoder implements Encoder.Text<MessageABC> {
 			ObjectMapper mapper = new ObjectMapper();
 			jsonString = mapper.writeValueAsString(message);
 			
-			LOGGER.debug("Encoding message: "+jsonString);
+			//LOGGER.debug("Encoding message: "+jsonString);
 			
 			if(jsonString.length() >= JSON_COMPRESS_THRESHOLD ) {
 				String compressedJson = Base64.encode(lz4Factory.fastCompressor().compress(jsonString.getBytes("UTF-8")));
