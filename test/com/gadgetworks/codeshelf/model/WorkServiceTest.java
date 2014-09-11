@@ -21,23 +21,21 @@ import com.google.common.collect.ImmutableList;
 
 public class WorkServiceTest<E> {
 
-	
-	
 	@Test
 	public void summariesAreSorted() {
 		ITypedDao<WorkInstruction> workInstructionDao = mock(ITypedDao.class);
 		WorkInstruction.DAO = workInstructionDao;
-		
+
 		ArrayList<WorkInstruction> inputs = new ArrayList<WorkInstruction>();
 		for (int i = 0; i < 4; i++) {
 			inputs.add(generateValidWorkInstruction(nextUniqueTimestamp()));
 		}
 		when(workInstructionDao.findByFilter(anyString(), anyMap())).thenReturn(inputs);
-		
+
 		WorkService workService = new WorkService();
 		List<WiSetSummary> workSummaries  = workService.workSummary("testCheId", "testFacilityId");
-		
-		//since each timestamp is unique they will each get summarized into one summary object
+
+		//since each timestamp is unique they will each get summarized into their own summary object
 		Assert.assertEquals(inputs.size(), workSummaries.size());
 		Timestamp lastTimestamp = new Timestamp(Long.MAX_VALUE);
 		for (WiSetSummary wiSetSummary : workSummaries) {
@@ -54,9 +52,9 @@ public class WorkServiceTest<E> {
 		wi.setAssigned(timestamp);
 		return wi;
 	}
-	
+
 	private Timestamp nextUniqueTimestamp() {
 		return new Timestamp(System.currentTimeMillis() - Math.abs(RandomUtils.nextLong()));
 	}
-	
+
 }
