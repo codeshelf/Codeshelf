@@ -2111,6 +2111,10 @@ public class Facility extends SubLocationABC<Facility> {
 	 */
 	public final void sendWorkInstructionsToHost(final List<WorkInstruction> inWiList) {
 
+		// For v3, don't do this.
+		if (true)
+			return;
+		
 		IronMqService ironMqService = getIronMqService(); // this should succeed, or catch its own throw and return null
 
 		if (ironMqService != null) {
