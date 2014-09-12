@@ -371,24 +371,28 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	// May well be worth caching this value. Only changes if item's location changes, metersFromAnchor changes, or path change.
 	public Double getPosAlongPath() {
 		LocationABC theLocation = this.getStoredLocation();
-		Double returnValue = theLocation.getPosAlongPath();
+		Double locationPosValue = theLocation.getPosAlongPath();
+		Double returnValue = locationPosValue;
 		if (returnValue == null) {
+			// should only happen if path is not set yet. Should it return 0.0?
 			return null;
 		}
 		Double meters = getMetersFromAnchor();
 		if (meters == null) {
-			return null;
+			return locationPosValue;
 		}
 		if (meters == 0.0) // we can skip the complications
-			return returnValue;
+			return locationPosValue;
 		// 2 cases.
 		// - path increasing from anchor, so location's posAlongPath reflects the anchor.
 		// - path decreasing from anchor, so location's posAlongPath reflects its pickEndPos.
 		
-		// We either add or subtract the value. We just need to know if the location's anchor is up or down the path.
+		// We need to know if the location's anchor is up or down the path.
+		// If we have a meters value, we are adding, because the location's value is its first edge along the path; the item is futher along with any offset at all.
 		if (theLocation.isPathIncreasingFromAnchor())
 			returnValue += meters;
 		else {
+			// if path opposing the anchor, then the pickface end corresponds to the location value. We have to convert before adding.
 			Double pickEnd = ((SubLocationABC) theLocation).getPickFaceEndPosX();
 			if (pickEnd == 0.0)
 				pickEnd = ((SubLocationABC) theLocation).getPickFaceEndPosY();
@@ -396,8 +400,16 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 				LOGGER.error("Bug found: Item.getPosAlongPath in non-slotted inventory model");
 				// let it return the location's posAlongPath
 			} else {
-				returnValue -= meters;
+				Double correctedMeters = pickEnd - meters;
+				returnValue += correctedMeters;
 			}
+		}
+
+		// It should be true that no item in a location can ever have lower posAlongPath value than the location itself.
+		// This is required for cart runs, or else scanned start location for cart my not include work instructions in the location.
+		if (returnValue < locationPosValue) {
+			LOGGER.error("suspect item meters along path calculation");
+			returnValue = locationPosValue;
 		}
 
 		return returnValue;

@@ -950,7 +950,7 @@ public class Facility extends SubLocationABC<Facility> {
 		try {
 			IronMqService.DAO.store(result);
 		} catch (DaoException e) {
-			LOGGER.error("", e);
+			LOGGER.error("Failed to save IronMQ service", e);
 		}
 
 		return result;
@@ -1494,6 +1494,7 @@ public class Facility extends SubLocationABC<Facility> {
 		LocationABC inLocation,
 		final Timestamp inTime) {
 		WorkInstruction resultWi = null;
+		boolean isInventoryPickInstruction = false;
 
 		Integer qtyToPick = inOrderDetail.getQuantity();
 		Integer minQtyToPick = inOrderDetail.getMinQuantity();
@@ -1539,7 +1540,8 @@ public class Facility extends SubLocationABC<Facility> {
 				// This test might be fragile. If it was a cross batch situation, then the orderHeader will have one or more locations.
 				// If no order locations, then it must be a pick order. We want the leds for the inventory item.
 				if (passedInDetailParent.getOrderLocations().size() == 0) {
-					setOutboundWorkInstructionLedPatternFromInventoryItem(resultWi,
+					isInventoryPickInstruction = true;
+					setOutboundWorkInstructionLedPatternAndPosAlongPathFromInventoryItem(resultWi,
 						inLocation,
 						inOrderDetail.getItemMasterId(),
 						inOrderDetail.getUomMasterId());
@@ -1571,8 +1573,14 @@ public class Facility extends SubLocationABC<Facility> {
 			}
 			if (inLocation instanceof Facility)
 				resultWi.setPosAlongPath(0.0);
-			else
-				resultWi.setPosAlongPath(inLocation.getPosAlongPath());
+			else {
+				if (isInventoryPickInstruction) {					
+					// do nothing as it was set with the leds
+				}
+				else {
+					resultWi.setPosAlongPath(inLocation.getPosAlongPath());
+				}
+			}
 
 			resultWi.setContainer(inContainer);
 			resultWi.setAssignedChe(inChe);
@@ -1657,7 +1665,7 @@ public class Facility extends SubLocationABC<Facility> {
 	 * @param inWi
 	 * @param inOrder
 	 */
-	private void setOutboundWorkInstructionLedPatternFromInventoryItem(final WorkInstruction inWi,
+	private void setOutboundWorkInstructionLedPatternAndPosAlongPathFromInventoryItem(final WorkInstruction inWi,
 		final LocationABC inLocation,
 		final String inItemMasterId,
 		final String inUomId) {
@@ -1678,23 +1686,32 @@ public class Facility extends SubLocationABC<Facility> {
 			LOGGER.error("inappropriate call to  setOutboundWorkInstructionLedPatternFromInventoryItem");
 			return;
 		}
-
-		// if the location does not have led numbers, we do not have tubes or lasers there. Do not proceed.
-		if (inLocation.getFirstLedNumAlongPath() == 0)
-			return;
-		// if the location does not have controller associated, we would NPE below. Might as well check now.
-		LedController theLedController = inLocation.getEffectiveLedController();
-		if (theLedController == null)
-			return;
-
-		List<LedCmdGroup> ledCmdGroupList = new ArrayList<LedCmdGroup>();
-
-		// We expect to find an inventory item at the location.
+		
+		// We expect to find an inventory item at the location. Be sure to get item and set posAlongPath always, before bailing out on the led command.
 		Item theItem = inLocation.getStoredItemFromMasterIdAndUom(inItemMasterId, inUomId);
 		if (theItem == null) {
 			LOGGER.error("did not find item in setOutboundWorkInstructionLedPatternFromInventoryItem");
 			return;
 		}
+		
+		// Set the pos along path
+		Double posAlongPath = theItem.getPosAlongPath();
+		inWi.setPosAlongPath(posAlongPath);
+
+		
+		// if the location does not have led numbers, we do not have tubes or lasers there. Do not proceed.
+		if (inLocation.getFirstLedNumAlongPath() == 0)
+			return;
+		
+		// if the location does not have controller associated, we would NPE below. Might as well check now.
+		LedController theLedController = inLocation.getEffectiveLedController();
+		if (theLedController == null) {
+			LOGGER.warn("Cannot set LED pattern on new pick WorkInstruction because no aisle controller for the item location ");
+			return;
+		}
+
+		List<LedCmdGroup> ledCmdGroupList = new ArrayList<LedCmdGroup>();
+
 		// Use our utility function to get the leds for the item
 		LedRange theRange = theItem.getFirstLastLedsForItem();
 		short firstLedPosNum = theRange.getFirstLedToLight();
@@ -1718,6 +1735,7 @@ public class Facility extends SubLocationABC<Facility> {
 
 		ledCmdGroupList.add(ledCmdGroup);
 		inWi.setLedCmdStream(LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList));
+		
 	}
 
 	// --------------------------------------------------------------------------

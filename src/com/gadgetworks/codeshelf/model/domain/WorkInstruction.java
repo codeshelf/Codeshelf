@@ -372,13 +372,21 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 	 */
 	public final String getWiPosAlongPath() {
 		// This needs work for Accu non-slotted inventory.
+		// 
+		Double wiPosValue = getPosAlongPath();
+		if (wiPosValue == null || wiPosValue == 0.0)
+			return ""; // 0.0 happens for short plans to facility
+		else
+			return StringUIConverter.doubleToTwoDecimalsString(wiPosValue);
 
+		/* old code
 		ILocation<?> theLoc = this.getLocation();
 		if (theLoc != null)
 			return StringUIConverter.doubleToTwoDecimalsString(theLoc.getPosAlongPath());
 		else {
 			return "";
 		}
+		*/
 	}
 
 	// --------------------------------------------------------------------------

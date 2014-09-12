@@ -117,6 +117,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private List<WorkInstruction>	mCompletedWiList;
 
 	private NetGuid					mLastLedControllerGuid;
+	private boolean					mMultipleLastLedControllerGuids; // Could have a list, but this will be quite rare.
 
 	private WorkInstruction			mShortPickWi;
 	private Integer					mShortPickQty;
@@ -137,6 +138,27 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	public final short getSleepSeconds() {
 		return 180;
 	}
+	
+	// The last-aisle-controller-for-this-CHE package.
+	private void setLastLedControllerGuid(NetGuid inAisleControllerGuid) {
+		if (mLastLedControllerGuid == null)
+			mLastLedControllerGuid = inAisleControllerGuid;
+		else if (mLastLedControllerGuid != inAisleControllerGuid) {
+			mLastLedControllerGuid = inAisleControllerGuid;
+			mMultipleLastLedControllerGuids = true;
+		}
+	}
+	private NetGuid getLastLedControllerGuid() {
+		return mLastLedControllerGuid;
+	}
+	private boolean wereMultipleLastLedControllerGuids() {
+		return mMultipleLastLedControllerGuids;
+	}
+	private void clearLastLedControllerGuids() {
+		mLastLedControllerGuid = null;
+		mMultipleLastLedControllerGuids = false;
+	}
+	
 
 	// --------------------------------------------------------------------------
 	/**
@@ -239,9 +261,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			}
 		}
 
-		// Remember the last non-CHE LED controller we used.
+		// Remember any aisle controller we sent messages with lights to.
 		if (!(device instanceof CheDeviceLogic)) {
-			mLastLedControllerGuid = inControllerGuid;
+			setLastLedControllerGuid(inControllerGuid);
 		}
 	}
 
@@ -260,21 +282,37 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * Clear the LEDs for this CHE on this specified LED controller.
+	 * Clear the LEDs for this CHE one whatever LED controllers it last sent to.
+	 * Side effect: clears its information on what was previously sent to.
 	 * @param inGuid
 	 */
 	private void ledControllerClearLeds() {
-		// Clear the LEDs for the last location the CHE worked.
-		INetworkDevice device = mDeviceManager.getDeviceByGuid(mLastLedControllerGuid);
+		// Clear the LEDs for the last location(s) the CHE worked.
+		NetGuid aisleControllerGuid = getLastLedControllerGuid();
+		if (aisleControllerGuid == null)
+			return;
+		
+		if (wereMultipleLastLedControllerGuids()) {
+			// check all
+			LOGGER.warn("Needing to clear multiple aisle controllers for one CHE device clear. This case should be unusual.");
+			// CsDeviceManager devManager = (CsDeviceManager) mDeviceManager;
+			// Map theDeviceMap = devManager.mDeviceMap;
+			// Something like this. Need to iterate all devices. For now, see how often the warn comes up.
+		}		
+		
+		INetworkDevice device = mDeviceManager.getDeviceByGuid(aisleControllerGuid);
 		if (device instanceof AisleDeviceLogic) {
 			AisleDeviceLogic aisleDevice = (AisleDeviceLogic) device;
-			aisleDevice.clearLedCmdFor(getGuid());
+			// aisleDevice.clearLedCmdFor(getGuid()); // CD_0041 change
+			aisleDevice.removeLedCmdsForCheAndSend(getGuid());
 		}
+		clearLastLedControllerGuids(); // Setting the state that we have nothing more to clear for this CHE.
 	}
 
 	// --------------------------------------------------------------------------
 	/**
 	 * Clear the LEDs for this CHE on this specified LED controller.
+	 * No side effect: does not clears its information on what was previously sent to.
 	 * @param inGuid
 	 */
 	private void ledControllerClearLeds(final NetGuid inLedControllerId) {
@@ -282,8 +320,11 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		INetworkDevice device = mDeviceManager.getDeviceByGuid(inLedControllerId);
 		if (device instanceof AisleDeviceLogic) {
 			AisleDeviceLogic aisleDevice = (AisleDeviceLogic) device;
-			aisleDevice.clearLedCmdFor(getGuid());
+			// aisleDevice.clearLedCmdFor(getGuid()); // CD_0041 change
+			aisleDevice.removeLedCmdsForCheAndSend(getGuid());
 		}
+		
+		clearLastLedControllerGuids(); // Not sure this is right!!! Need tests in CD_0043		
 	}
 
 	// --------------------------------------------------------------------------
@@ -792,10 +833,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		// There are no more WIs, so the pick is complete.
 
 		// Clear the existing LEDs.
-		if (mLastLedControllerGuid != null) {
-			ledControllerClearLeds();
-		}
+		ledControllerClearLeds();  // this checks getLastLedControllerGuid(), and bails if null.
 
+		// CD_0041 is there a need for this?
 		ledControllerShowLeds(getGuid());
 
 		mCompletedWiList.clear();
