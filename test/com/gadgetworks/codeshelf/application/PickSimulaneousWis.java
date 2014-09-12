@@ -176,7 +176,6 @@ public class PickSimulaneousWis extends EdiTestABC {
 
 	}
 
-
 	@Test
 	public final void testPick() throws IOException {
 
@@ -245,51 +244,72 @@ public class PickSimulaneousWis extends EdiTestABC {
 		Che theChe = theNetwork.getChe("CHE1");
 		Assert.assertNotNull(theChe);
 
-		// Set up a cart for the five orders, which will generate work instructions
-		facility.setUpCheContainerFromString(theChe, "12001,12002,12003,12004,12005");
+		// Set up a cart for the five orders, which will generate work instructions. (Tweak the order. 12001/1123 should be the first WI by the path.
+		facility.setUpCheContainerFromString(theChe, "12004,12005,12001,12002,12003");
 
 		List<WorkInstruction> aList = theChe.getCheWorkInstructions();
 		Integer wiCount = aList.size();
 		Assert.assertEquals((Integer) 8, wiCount); // 8 work instructions. But 2,3,4 in same group and 7,8 in same group.
 
+		// All work instructions are for items in D402. So all 8 will have posAlongPath >= to the D402 value. 
+		// Therefore, all 8 will be in the result of starting from D402
 		List<WorkInstruction> wiListAfterScan = facility.getWorkInstructions(theChe, "D402");
 		Integer wiCountAfterScan = wiListAfterScan.size();
 		Assert.assertEquals((Integer) 8, wiCountAfterScan); // all 8 work instructions from D402 should be there.
-		// Check the order of the work instructions
+
+		// Check the order of the work instructions. What we are really doing is seeing if the the 2nd, 3rd, and 4th WI have group component in the group and sort.
+		// Answer: no. Not now anyway. So no simultaneous dispatch.
 		WorkInstruction wi1 = wiListAfterScan.get(0);
 		Assert.assertNotNull(wi1);
-		String groupSortStr1 = wi1.getGroupAndSortCode();
-		
+		String wi1Order = wi1.getOrderId();
+		String wi1Item = wi1.getItemMasterId();
+		Double wi1Pos = wi1.getPosAlongPath();
+
 		WorkInstruction wi2 = wiListAfterScan.get(1);
 		Assert.assertNotNull(wi2);
 		String groupSortStr2 = wi2.getGroupAndSortCode();
+		Double wi2Pos = wi2.getPosAlongPath();
+
+		// Assert.assertTrue(wi2Pos > wi1Pos);
 
 		WorkInstruction wi3 = wiListAfterScan.get(2);
 		Assert.assertNotNull(wi3);
-		String groupSortStr3= wi3.getGroupAndSortCode();
+		String groupSortStr3 = wi3.getGroupAndSortCode();
+		Double wi3Pos = wi3.getPosAlongPath();
 
 		WorkInstruction wi4 = wiListAfterScan.get(3);
 		Assert.assertNotNull(wi4);
 		String groupSortStr4 = wi4.getGroupAndSortCode();
 		Assert.assertEquals("0004", groupSortStr4);
+		Double wi4Pos = wi4.getPosAlongPath();
+		// 2, 3 and 4 for same item, so should be equal.
+		// Assert.assertEquals(wi2Pos, wi4Pos);
 
 		WorkInstruction wi5 = wiListAfterScan.get(4);
 		Assert.assertNotNull(wi5);
 		String groupSortStr5 = wi5.getGroupAndSortCode();
+		Double wi5Pos = wi5.getPosAlongPath();
 
 		WorkInstruction wi6 = wiListAfterScan.get(5);
 		Assert.assertNotNull(wi6);
-		String groupSortStr6= wi6.getGroupAndSortCode();
+		String groupSortStr6 = wi6.getGroupAndSortCode();
+		Double wi6Pos = wi6.getPosAlongPath();
 
 		WorkInstruction wi7 = wiListAfterScan.get(6);
 		Assert.assertNotNull(wi7);
 		String groupSortStr7 = wi7.getGroupAndSortCode();
 		Assert.assertEquals("0007", groupSortStr7);
+		Double wi7Pos = wi7.getPosAlongPath();
 
 		WorkInstruction wi8 = wiListAfterScan.get(7);
 		Assert.assertNotNull(wi8);
 		String groupSortStr8 = wi8.getGroupAndSortCode();
 		Assert.assertEquals("0008", groupSortStr8);
+		Double wi8Pos = wi8.getPosAlongPath();
+
+		// Bug. Getting odd sort for items on the same shelf. Will address soon.
+		// Assert.assertEquals("1123", wi1Item);
+		//Assert.assertEquals("12001", wi1Order);
 
 	}
 
