@@ -151,10 +151,10 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 			csvReader.close();
 		} catch (FileNotFoundException e) {
 			result = false;
-			LOGGER.error("", e);
+			LOGGER.error("Inventory file not found", e);
 		} catch (IOException e) {
 			result = false;
-			LOGGER.error("", e);
+			LOGGER.error("Inventory file IO", e);
 		}
 
 		return result;
@@ -265,9 +265,11 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 					inEdiProcessTime,
 					uomMaster);
 				
-				LocationABC location = (LocationABC) inFacility.findSubLocationById(inCsvBean.getLocationId());
+				String theLocationID = inCsvBean.getLocationId();
+				LocationABC location = (LocationABC) inFacility.findSubLocationById(theLocationID);
 				// We couldn't find the location, so assign the inventory to the facility itself (which is a location);
 				if (location == null) {
+					LOGGER.warn("Updating inventory item for location because did not recognize: " + theLocationID);
 					location = inFacility;
 				}
 
@@ -275,12 +277,12 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 					inCsvBean.setCmFromLeft("0");
 				}
 				Item item = updateSlottedItem(true, inCsvBean, location, inEdiProcessTime, itemMaster, uomMaster);
+
+				mItemDao.commitTransaction();
 			}
 			catch(InputValidationException e) {
 				LOGGER.error("unable to save line: " + inCsvBean, e);
 			}
-
-			mItemDao.commitTransaction();
 
 		} finally {
 			mItemDao.endTransaction();
@@ -320,7 +322,7 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 				result.setUpdated(inEdiProcessTime);
 				mItemMasterDao.store(result);
 			} catch (DaoException e) {
-				LOGGER.error("", e);
+				LOGGER.error("updateItemMaster", e);
 			}
 		}
 		return result;
@@ -352,8 +354,13 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 			try {
 				mUomMasterDao.store(result);
 			} catch (DaoException e) {
-				LOGGER.error("", e);
+				LOGGER.error("upsertUomMaster save", e);
 			}
+			/*
+			catch (InputValidationException e) {
+				// can we catch this here? If the UOM did not save, the next transaction might fail trying to reference it
+				LOGGER.error("upsertUomMaster validate", e);
+			} */
 		}
 
 		return result;

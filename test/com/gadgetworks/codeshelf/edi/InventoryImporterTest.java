@@ -603,11 +603,15 @@ public class InventoryImporterTest extends EdiTestABC {
 		// Item 1123 exists in case and each.
 		// Item 1493 exists in case only. Order for each should short.
 		// Item 1522 exists in case and each.
+		// And extra lines  with variant endings just for fun
 
 		String csvString2 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,12345,12345,1123,12/16 oz Bowl Lids -PLA Compostable,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,12345,12345,1493,PARK RANGER Doll,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n1,USF314,COSTCO,12345,12345,1522,SJJ BPP,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
+				+ "\r\n1,USF314,COSTCO,12345,12345,1522,SJJ BPP,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n"
+				+ "\r"
+				+ "\r\n" + "\n";
 
 		byte[] csvArray2 = csvString2.getBytes();
 
@@ -664,14 +668,14 @@ public class InventoryImporterTest extends EdiTestABC {
 		OrderHeader wiOrderHeader = wiDetail.getParent();
 		Assert.assertNotNull(wiOrderHeader);
 		Assert.assertEquals(facility, wiOrderHeader.getParent());
-		
 
 		// New from v4. Test our work instruction summarizer
-		List<WiSetSummary> summaries = new WorkService().workSummary(theChe.getPersistentId().toString(), facility.getPersistentId().toString());
-		
+		List<WiSetSummary> summaries = new WorkService().workSummary(theChe.getPersistentId().toString(),
+			facility.getPersistentId().toString());
+
 		// as this test, this facility only set up this one che, there should be only one wi set. But we have 3. How?
 		Assert.assertEquals(1, summaries.size());
-		
+
 		// getAny should get the one. Call it somewhat as the UI would. Get a time, then query again with that time.
 		WiSetSummary theSummary = summaries.get(0);
 		// So, how many shorts, how many active? None complete yet.
