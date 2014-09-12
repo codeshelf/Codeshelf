@@ -950,7 +950,7 @@ public class Facility extends SubLocationABC<Facility> {
 		try {
 			IronMqService.DAO.store(result);
 		} catch (DaoException e) {
-			LOGGER.error("", e);
+			LOGGER.error("Failed to save IronMQ service", e);
 		}
 
 		return result;
