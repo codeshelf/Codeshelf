@@ -87,7 +87,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	}
 
 	public final void start() {
-		startWebSocket();
+		startWebSocketClient();
 
 		// Check if there is a default channel.
 		byte preferredChannel = DEFAULT_CHANNEL;
@@ -105,7 +105,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 		mRadioController.addControllerEventListener(this);
 	}
 
-	public final void startWebSocket() {
+	public final void startWebSocketClient() {
     	// create response processor and register it with WS client
 		SiteControllerMessageProcessor responseProcessor = new SiteControllerMessageProcessor(this);
     	client = new JettyWebSocketClient(mUri,responseProcessor,this);
@@ -115,6 +115,8 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	}
 
 	public final void stop() {
+		mRadioController.stopController();
+		connectionManagerThread.setExit(true);
 	}
 
 	// --------------------------------------------------------------------------

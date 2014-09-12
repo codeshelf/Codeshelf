@@ -4,7 +4,6 @@ import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.application.Configuration;
 import com.gadgetworks.codeshelf.application.CsSiteControllerApplication;
 import com.gadgetworks.codeshelf.application.CsSiteControllerMain;
 import com.gadgetworks.codeshelf.device.CheDeviceLogic;
@@ -17,7 +16,6 @@ import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.DomainTestABC;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Organization;
-import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.util.ThreadUtils;
 import com.gadgetworks.codeshelf.ws.jetty.client.JettyWebSocketClient;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageProcessor;
@@ -34,15 +32,13 @@ public class EndToEndIntegrationTest extends DomainTestABC {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(EndToEndIntegrationTest.class);
 
 	// id of the organization has to match site controller configuration
-	protected static String organizationId = "E2EOrg";
+	protected static String organizationId = "TestOrg";
 
 	protected static String facilityId = "F1";
 	protected static String networkId = "DEFAULT";
 	protected static String networkCredential = "0.6910096026612129";
 	protected static String cheId = "CHE1";
-	// protected static String cheGuid = "0x23";
 	protected static NetGuid cheGuid = new NetGuid("0x23");
-
 
 	JettyWebSocketServer webSocketServer;
 	CsSiteControllerApplication siteController;
@@ -52,7 +48,6 @@ public class EndToEndIntegrationTest extends DomainTestABC {
 
 	@Override
 	protected void init() { 
-		Configuration.loadConfig("e2etest");
 	}
 
 	public static Injector setupWSSInjector() {
@@ -122,6 +117,7 @@ public class EndToEndIntegrationTest extends DomainTestABC {
 			connected = client.isConnected();
 			long elapsed = System.currentTimeMillis() - start;
 			if (elapsed>connectionTimeOut) {
+				stop();
 				throw new RuntimeException("Failed to establish connection between embedded site controller and server");
 			}
 		}
@@ -130,12 +126,22 @@ public class EndToEndIntegrationTest extends DomainTestABC {
 	
 	@Override 
 	public void doAfter() {
+		stop();
+		webSocketServer = null;
+	}
+	
+	private void stop() {
+		try {
+			siteController.stopApplication();
+		}
+		catch (Exception e) {
+			LOGGER.error("Failed to stop site controller",e);
+		}
 		try {
 			webSocketServer.stop();
 		} catch (Exception e) {
 			LOGGER.error("Failed to stop WebSocket server", e);
 		}
-		webSocketServer = null;
 	}
 	
 	protected void waitForCheState(CheDeviceLogic cheDeviceLogic, CheStateEnum state, int timeoutInMillis) {

@@ -4,19 +4,10 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.security.SecureRandom;
 import java.util.Properties;
-import java.util.Random;
-
-import javax.crypto.Cipher;
-import javax.crypto.SecretKey;
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.PBEKeySpec;
-import javax.crypto.spec.PBEParameterSpec;
 
 import org.apache.log4j.PropertyConfigurator;
 
@@ -50,13 +41,13 @@ public final class Configuration {
 		System.setProperty("codeshelf.logfile",
 			System.getProperty("app.log.dir") + System.getProperty("file.separator") + System.getProperty("cs.logfile.name"));
 
-
 		// Currently, when PropertyConfigurator.configure(URL) is called, the log4j system will initialize itself
 		// searching for the DEFAULT configuration file always at "conf/log4j.properties" no matter what URL
 		// we pass in. Then, it will initialize from our URL.
 		//
 		// This does not seem to be documented behavior, but it happens nonetheless. So here we do
 		// explicitly (re)load the default file in case that behavior changes in the future.
+
 		Properties log4jProps = loadAllPropertiesFilesNamed("log4j.properties");
 		if(log4jProps!=null) {
 			PropertyConfigurator.configure(log4jProps);

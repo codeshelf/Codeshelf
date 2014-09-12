@@ -70,11 +70,9 @@ import com.gadgetworks.codeshelf.model.domain.WorkInstruction.WorkInstructionDao
 
 public abstract class DAOTestABC {
 	
-	/*
 	static {
-		Configuration.loadConfig("server");
+		Configuration.loadConfig("test");
 	}
-	*/
 	
 	protected OrganizationDao		mOrganizationDao;
 	protected LocationABCDao		mLocationDao;
@@ -115,7 +113,6 @@ public abstract class DAOTestABC {
 	}
 	
 	protected void init() {
-		Configuration.loadConfig("server");
 	}
 
 	@Before

@@ -13,8 +13,6 @@ import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Organization;
-import com.gadgetworks.codeshelf.util.ThreadUtils;
-import com.gadgetworks.flyweight.controller.INetworkDevice;
 
 public class CheSimulationTest extends EndToEndIntegrationTest {
 
@@ -52,5 +50,4 @@ public class CheSimulationTest extends EndToEndIntegrationTest {
 		cheDeviceLogic.scanCommandReceived("X%LOGOUT");		
 		waitForCheState(cheDeviceLogic,CheStateEnum.IDLE,1000);
 	}
-
 }

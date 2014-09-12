@@ -47,7 +47,7 @@ import com.google.common.base.Strings;
 public class InventoryImporterTest extends EdiTestABC {
 
 	static {
-		Configuration.loadConfig("server");
+		Configuration.loadConfig("test");
 	}
 
 	@Test

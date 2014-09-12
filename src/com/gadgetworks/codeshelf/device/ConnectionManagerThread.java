@@ -1,8 +1,5 @@
 package com.gadgetworks.codeshelf.device;
 
-import javax.websocket.CloseReason;
-import javax.websocket.CloseReason.CloseCodes;
-
 import lombok.Getter;
 import lombok.Setter;
 
@@ -13,7 +10,6 @@ import com.gadgetworks.codeshelf.util.ThreadUtils;
 import com.gadgetworks.codeshelf.ws.jetty.client.JettyWebSocketClient;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.KeepAlive;
 import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
-import com.gadgetworks.codeshelf.ws.jetty.server.SessionType;
 
 public class ConnectionManagerThread extends Thread {
 
@@ -51,6 +47,7 @@ public class ConnectionManagerThread extends Thread {
 	@Override
 	public void run() {
 		ThreadUtils.sleep(initialWaitTime);
+		LOGGER.info("WS connection manager thread is starting");
 		while(!exit) {
 	    	try {
 	    		JettyWebSocketClient client = deviceManager.getClient();
@@ -76,9 +73,6 @@ public class ConnectionManagerThread extends Thread {
 							client.disconnect();
 						}
 					}
-
-					
-	    			
 	    		}
 			} 
 	    	catch (Exception e) {
@@ -86,6 +80,7 @@ public class ConnectionManagerThread extends Thread {
 			}
     		ThreadUtils.sleep(waitTime);
 		}
+		LOGGER.info("WS connection manager thread is terminating");
 	}
 
 	private CsSession.State determineSessionState(JettyWebSocketClient client) {

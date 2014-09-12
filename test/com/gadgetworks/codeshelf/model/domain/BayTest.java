@@ -15,12 +15,11 @@ public class BayTest extends DomainTestABC {
 	
 	@Before
 	public void init() {
-		facility = createFacility(this.getClass().toString() + System.currentTimeMillis());
-		
 	}
 	
 	@Test
 	public void testOrderingOfTiers() {
+		facility = createFacility(this.getClass().toString() + System.currentTimeMillis());
 		Aisle aisle = getAisle(facility, "A1");
 		Bay bay = getBay(aisle, "B1");
 		Tier tier1 = getTier(bay, "TA");

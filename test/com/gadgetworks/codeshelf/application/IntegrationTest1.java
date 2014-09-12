@@ -59,7 +59,7 @@ public class IntegrationTest1 extends EdiTestABC {
 	JettyWebSocketServer webSocketServer;
 	
 	static {
-		Configuration.loadConfig("server");
+		Configuration.loadConfig("test");
 	}
 	
 	public IntegrationTest1() {

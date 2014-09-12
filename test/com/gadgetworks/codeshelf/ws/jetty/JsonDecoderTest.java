@@ -26,7 +26,7 @@ public class JsonDecoderTest  {
 	private static final Logger	LOGGER = LoggerFactory.getLogger(JsonDecoderTest.class);
 
 	static {
-		Configuration.loadConfig("server");
+		Configuration.loadConfig("test");
 	}
 	
 	/**

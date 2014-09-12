@@ -55,7 +55,7 @@ import com.google.common.base.Strings;
 public class PickSimulaneousWis extends EdiTestABC {
 
 	static {
-		Configuration.loadConfig("server");
+		Configuration.loadConfig("test");
 	}
 
 	private Facility setUpSimpleNoSlotFacility(String inOrganizationName) {
