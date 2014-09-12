@@ -44,6 +44,9 @@ public class CsServerEndPoint {
 	public CsServerEndPoint() {	
 		sessionManager = SessionManager.getInstance();
 		messageProcessor = MessageProcessorFactory.getInstance();
+		if (messageProcessor==null) {
+			LOGGER.error("Unable to get Web Socket message processor from factory");
+		}
 	}
 	
 	@OnOpen

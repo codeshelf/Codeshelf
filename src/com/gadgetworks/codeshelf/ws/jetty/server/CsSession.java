@@ -133,6 +133,10 @@ public class CsSession implements IDaoListener {
 	}
 
 	public void registerAsDAOListener(ITypedDao<IDomainObject> dao) {
+		if (dao==null) {
+			LOGGER.warn("Can't register undefined DAO as event listener");
+			return;
+		}
 		if (!daoList.contains(dao)) {
 			dao.registerDAOListener(this);
 			LOGGER.debug("Registered session "+this.sessionId+" with "+dao.getClass().getSimpleName());

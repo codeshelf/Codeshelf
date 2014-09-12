@@ -27,9 +27,10 @@ public final class Configuration {
 	 * prepare to run application by configuring system properties + logging subsystems. should be called from static block before main() and injection.
 	 * @param appName the name of the app running (sitecontroller or server)  
 	 */
-	public static void loadConfig(String appName) {		
-		if(mainConfigDone!=null)
+	public static synchronized void loadConfig(String appName) {		
+		if (mainConfigDone!=null) {
 			return;
+		}
 		mainConfigDone=true;
 
 		String appDataDir = Configuration.getApplicationDataDirPath();
@@ -61,8 +62,7 @@ public final class Configuration {
 			PropertyConfigurator.configure(log4jProps);
 		} else {
 			System.err.println("Failed to initialize log4j");
-			//System.exit(1);
-			
+			//System.exit(1);	
 		}
 
 		URL javaUtilLoggingjURL = ClassLoader.getSystemClassLoader().getResource(System.getProperty("java.util.logging.config.file"));

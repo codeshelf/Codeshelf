@@ -88,7 +88,7 @@ public final class CsSiteControllerMain {
 	/**
 	 * @return
 	 */
-	private static Injector setupInjector() {
+	public static Injector setupInjector() {
 		Injector injector = Guice.createInjector(new AbstractModule() {
 			@Override
 			protected void configure() {

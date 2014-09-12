@@ -5,6 +5,7 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
+import org.junit.After;
 import org.junit.Before;
 
 import com.gadgetworks.codeshelf.application.Configuration;
@@ -69,9 +70,11 @@ import com.gadgetworks.codeshelf.model.domain.WorkInstruction.WorkInstructionDao
 
 public abstract class DAOTestABC {
 	
+	/*
 	static {
 		Configuration.loadConfig("server");
 	}
+	*/
 	
 	protected OrganizationDao		mOrganizationDao;
 	protected LocationABCDao		mLocationDao;
@@ -108,6 +111,11 @@ public abstract class DAOTestABC {
 
 	public DAOTestABC() {
 		super();
+		init();
+	}
+	
+	protected void init() {
+		Configuration.loadConfig("server");
 	}
 
 	@Before
@@ -224,4 +232,14 @@ public abstract class DAOTestABC {
 	
 	protected void doBefore() {
 	}
+	
+	@After
+	public final void tearDown() {
+		doAfter();
+	}
+
+	protected void doAfter() {
+	}
+	
+
 }

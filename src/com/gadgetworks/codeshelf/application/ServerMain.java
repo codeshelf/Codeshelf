@@ -207,7 +207,6 @@ public final class ServerMain {
 
 				// jetty websocket
 				bind(MessageProcessor.class).to(ServerMessageProcessor.class);
-				
 				requestStaticInjection(MessageProcessorFactory.class);
 				
 				//requestStaticInjection(ServerMessageProcessorFactory.class);

@@ -6,17 +6,20 @@
 
 package com.gadgetworks.codeshelf.application;
 
+import lombok.Getter;
+
 import com.gadgetworks.codeshelf.device.ICsDeviceManager;
 import com.google.inject.Inject;
 
 public final class CsSiteControllerApplication extends ApplicationABC {
 
-	private ICsDeviceManager	mDeviceManager;
+	@Getter
+	private ICsDeviceManager	deviceManager;
 
 	@Inject
 	public CsSiteControllerApplication(final ICsDeviceManager inDeviceManager) {
 		super();
-		mDeviceManager = inDeviceManager;
+		deviceManager = inDeviceManager;
 	}
 
 	// --------------------------------------------------------------------------
@@ -35,7 +38,7 @@ public final class CsSiteControllerApplication extends ApplicationABC {
 	protected void doStartup() {
 
 		// Start the device manager.
-		mDeviceManager.start();
+		deviceManager.start();
 	}
 
 	// --------------------------------------------------------------------------
@@ -44,7 +47,7 @@ public final class CsSiteControllerApplication extends ApplicationABC {
 	protected void doShutdown() {
 
 		// Stop the web socket.
-		mDeviceManager.stop();
+		deviceManager.stop();
 	}
 
 	// --------------------------------------------------------------------------
