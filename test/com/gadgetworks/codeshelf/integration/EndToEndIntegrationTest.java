@@ -137,7 +137,7 @@ public abstract class EndToEndIntegrationTest extends DomainTestABC {
 		while (lastNetworkUpdate==0) {
 			LOGGER.debug("Embedded site controller has not yet received a network update");
 			ThreadUtils.sleep(1000);
-			connected = client.isConnected();
+			lastNetworkUpdate = deviceManager.getLastNetworkUpdate();
 			long elapsed = System.currentTimeMillis() - start;
 			if (elapsed>connectionTimeOut) {
 				stop();
