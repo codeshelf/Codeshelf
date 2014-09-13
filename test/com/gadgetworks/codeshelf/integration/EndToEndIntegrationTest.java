@@ -1,6 +1,7 @@
 package com.gadgetworks.codeshelf.integration;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,6 +28,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
+@Ignore
 public abstract class EndToEndIntegrationTest extends DomainTestABC {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(EndToEndIntegrationTest.class);
