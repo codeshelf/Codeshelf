@@ -128,7 +128,7 @@ public abstract class ApplicationABC implements ICodeshelfApplication {
 					while ((mIsRunning) && ((System.currentTimeMillis() - time) < 20000)) {
 						Thread.sleep(1000);
 					}
-					System.out.println("Shutdown signal handled");
+					//System.out.println("Shutdown signal handled");
 				} catch (Exception e) {
 					System.out.println("Shutdown signal exception:" + e);
 					e.printStackTrace();

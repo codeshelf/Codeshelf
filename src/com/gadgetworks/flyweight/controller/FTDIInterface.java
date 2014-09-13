@@ -267,11 +267,15 @@ public final class FTDIInterface extends SerialInterfaceABC {
 	 * @see com.gadgetworks.controller.SerialInterfaceABC#doStopInterface()
 	 */
 	protected void doStopInterface() {
-		try {
-			mJD2XXInterface.close();
-		} catch (IOException e) {
-			LOGGER.error("Failed to close interface", e);
-			resetInterface();
+		if(mJD2XXInterface == null) {
+			LOGGER.warn("doStopInterface called, but mJD2XXInterface was null");
+		} else {
+			try {
+				mJD2XXInterface.close();
+			} catch (IOException e) {
+				LOGGER.error("Failed to close interface", e);
+				resetInterface();
+			}
 		}
 	};
 

@@ -144,6 +144,7 @@
 				<include name="common.config.properties" />
 				<include name="server.config.properties" />
 				<include name="sitecontroller.config.properties" />
+				<include name="test.config.properties" />
 				
 				<include name="log4j.properties" />
 				<include name="version.properties" />
