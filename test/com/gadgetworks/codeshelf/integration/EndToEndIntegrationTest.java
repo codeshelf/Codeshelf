@@ -27,7 +27,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
-public class EndToEndIntegrationTest extends DomainTestABC {
+public abstract class EndToEndIntegrationTest extends DomainTestABC {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(EndToEndIntegrationTest.class);
 

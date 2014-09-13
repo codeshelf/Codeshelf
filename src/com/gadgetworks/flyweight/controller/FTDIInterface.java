@@ -75,8 +75,13 @@ public final class FTDIInterface extends SerialInterfaceABC {
 	 *  The constructor tries to setup the serial connection.
 	 */
 	public FTDIInterface() {
-		mJD2XXInterface = new JD2XX();
 		mReadBuffer = new byte[READ_BUFFER_BYTES];
+		try {
+			mJD2XXInterface = new JD2XX();
+		}
+		catch (UnsatisfiedLinkError e) {
+			LOGGER.error("JD2XX is not available",e);
+		}
 	}
 
 	/* --------------------------------------------------------------------------
