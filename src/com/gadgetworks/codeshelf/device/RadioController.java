@@ -595,7 +595,6 @@ public class RadioController implements IRadioController {
 		 * is to allow the controller to maintain the state info about the network
 		 * that is running.
 		 */
-
 		CommandNetMgmtSetup netSetupCmd = new CommandNetMgmtSetup(mNetworkId, mRadioChannel);
 		//sendCommand(netSetupCmd, mBroadcastAddress, false);
 	}
@@ -945,7 +944,7 @@ public class RadioController implements IRadioController {
 				Thread.sleep(CTRL_START_DELAY_MILLIS);
 			}
 		} catch (InterruptedException e) {
-			LOGGER.error("", e);
+			LOGGER.error("Failed to send packet", e);
 		}
 	}
 

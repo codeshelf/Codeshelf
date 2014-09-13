@@ -73,9 +73,13 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	@Getter
 	private long	lastNetworkUpdate=0;
 	
+	@Getter @Setter
+	boolean radioEnabled = true;
+	
 	@Inject
 	public CsDeviceManager(final IRadioController inRadioController) {
-		// fetch properties from config files
+		// fetch properties from config file
+		radioEnabled = PropertyUtils.getBoolean("radio.enabled",true);
 		mUri = PropertyUtils.getString("websocket.uri");
 		suppressKeepAlive = PropertyUtils.getBoolean("websocket.idle.suppresskeepalive");
 		idleKill = PropertyUtils.getBoolean("websocket.idle.kill");
@@ -92,20 +96,22 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	public final void start() {
 		startWebSocketClient();
 
-		// Check if there is a default channel.
-		byte preferredChannel = DEFAULT_CHANNEL;
-		String preferredChannelProp = System.getProperty(PREFFERED_CHANNEL_PROP);
-		if (preferredChannelProp != null) {
-			try {
-				preferredChannel = Byte.valueOf(preferredChannelProp);
-			} catch (NumberFormatException e) {
-				LOGGER.error("", e);
+		// Check if there is a default channel
+		if (this.radioEnabled) {
+			byte preferredChannel = DEFAULT_CHANNEL;
+			String preferredChannelProp = System.getProperty(PREFFERED_CHANNEL_PROP);
+			if (preferredChannelProp != null) {
+				try {
+					preferredChannel = Byte.valueOf(preferredChannelProp);
+				} 
+				catch (NumberFormatException e) {
+					LOGGER.error("Failed to set preferred radio channel", e);
+				}
 			}
+			// start radio controller
+			mRadioController.startController(preferredChannel);
+			mRadioController.addControllerEventListener(this);
 		}
-
-		// Start the background startup and wait until it's finished.
-		mRadioController.startController(preferredChannel);
-		mRadioController.addControllerEventListener(this);
 	}
 
 	public final void startWebSocketClient() {

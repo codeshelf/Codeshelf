@@ -28,7 +28,6 @@ public class PropertyUtils {
 	public static String getString(String name, String defaultValue) {
 		String stringValue = PropertyUtils.getString(name);
 		if (stringValue==null) {
-			// return default value
 			return defaultValue;
 		}
 		return stringValue;
@@ -37,7 +36,6 @@ public class PropertyUtils {
 	public static int getInt(String name, int defaultValue) {
 		String stringValue = PropertyUtils.getString(name);
 		if (stringValue==null) {
-			// return default value
 			return defaultValue;
 		}
 		int value = Integer.parseInt(stringValue);
@@ -50,6 +48,15 @@ public class PropertyUtils {
 			throw new RuntimeException("Property is not defined: "+name);
 		}
 		Byte value = Byte.parseByte(stringValue);
+		return value;
+	}
+
+	public static boolean getBoolean(String name, boolean defaultValue) {
+		String stringValue = PropertyUtils.getString(name);
+		if (stringValue==null) {
+			return defaultValue;
+		}
+		boolean value = Boolean.parseBoolean(stringValue);
 		return value;
 	}
 }
