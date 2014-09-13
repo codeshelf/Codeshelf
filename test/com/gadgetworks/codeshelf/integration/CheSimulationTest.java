@@ -27,11 +27,11 @@ public class CheSimulationTest extends EndToEndIntegrationTest {
 		Assert.assertNotNull(fac);
 		CodeshelfNetwork network = fac.getNetwork(networkId);
 		Assert.assertNotNull(network);
-		Che che = network.getChe(cheId);
+		Che che = network.getChe(cheId1);
 		Assert.assertNotNull(che);
 		
 		// verify that che is in site controller's device list
-		CheDeviceLogic cheDeviceLogic = (CheDeviceLogic) this.siteController.getDeviceManager().getDeviceByGuid(cheGuid);
+		CheDeviceLogic cheDeviceLogic = (CheDeviceLogic) this.siteController.getDeviceManager().getDeviceByGuid(cheGuid1);
 		Assert.assertNotNull(cheDeviceLogic);
 		
 		// cycle through empty WI list scenario

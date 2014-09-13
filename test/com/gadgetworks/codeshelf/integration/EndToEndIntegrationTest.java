@@ -37,8 +37,10 @@ public class EndToEndIntegrationTest extends DomainTestABC {
 	protected static String facilityId = "F1";
 	protected static String networkId = "DEFAULT";
 	protected static String networkCredential = "0.6910096026612129";
-	protected static String cheId = "CHE1";
-	protected static NetGuid cheGuid = new NetGuid("0x23");
+	protected static String cheId1 = "CHE1";
+	protected static NetGuid cheGuid1 = new NetGuid("0x23");
+	protected static String cheId2 = "CHE2";
+	protected static NetGuid cheGuid2 = new NetGuid("0x24");
 
 	JettyWebSocketServer webSocketServer;
 	CsSiteControllerApplication siteController;
@@ -85,13 +87,21 @@ public class EndToEndIntegrationTest extends DomainTestABC {
 			network = new CodeshelfNetwork(fac, networkId, "The Network", networkCredential);
 			mCodeshelfNetworkDao.store(network);
 		}
-		Che che = network.getChe(cheId);
-		if (che==null) {
-			che = new Che();
-			che.setParent(network);
-			che.setDomainId(cheId);
-			che.setDeviceGuidStr(cheGuid.getHexStringWithPrefix());
-			mCheDao.store(che);
+		Che che1 = network.getChe(cheId1);
+		if (che1==null) {
+			che1 = new Che();
+			che1.setParent(network);
+			che1.setDomainId(cheId1);
+			che1.setDeviceGuidStr(cheGuid1.getHexStringWithPrefix());
+			mCheDao.store(che1);
+		}
+		Che che2 = network.getChe(cheId2);
+		if (che2==null) {
+			che2 = new Che();
+			che2.setParent(network);
+			che2.setDomainId(cheId2);
+			che2.setDeviceGuidStr(cheGuid2.getHexStringWithPrefix());
+			mCheDao.store(che2);
 		}
 		
 		// start web socket server
@@ -109,8 +119,8 @@ public class EndToEndIntegrationTest extends DomainTestABC {
 		// wait for site controller/server connection to be established
 		deviceManager = (CsDeviceManager) siteController.getDeviceManager();
 		JettyWebSocketClient client = deviceManager.getClient();
-		boolean connected = client.isConnected();
 		long start = System.currentTimeMillis();
+		boolean connected = client.isConnected();
 		while (!connected) {
 			LOGGER.debug("Embedded site controller and server are not connected yet");
 			ThreadUtils.sleep(1000);
@@ -119,6 +129,17 @@ public class EndToEndIntegrationTest extends DomainTestABC {
 			if (elapsed>connectionTimeOut) {
 				stop();
 				throw new RuntimeException("Failed to establish connection between embedded site controller and server");
+			}
+		}
+		long lastNetworkUpdate = deviceManager.getLastNetworkUpdate();
+		while (lastNetworkUpdate==0) {
+			LOGGER.debug("Embedded site controller has not yet received a network update");
+			ThreadUtils.sleep(1000);
+			connected = client.isConnected();
+			long elapsed = System.currentTimeMillis() - start;
+			if (elapsed>connectionTimeOut) {
+				stop();
+				throw new RuntimeException("Failed to receive network update in allowed time");
 			}
 		}
 		LOGGER.debug("Embedded site controller and server connected");

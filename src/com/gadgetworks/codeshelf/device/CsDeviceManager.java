@@ -69,6 +69,9 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	private JettyWebSocketClient client;
 	
 	private ConnectionManagerThread connectionManagerThread;
+
+	@Getter
+	private long	lastNetworkUpdate=0;
 	
 	@Inject
 	public CsDeviceManager(final IRadioController inRadioController) {
@@ -312,6 +315,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	}
 	
 	public void updateNetwork(List<Che> ches, List<LedController> ledControllers) {
+		this.lastNetworkUpdate = System.currentTimeMillis();		
 		Set<UUID> updateDevices=new HashSet<UUID>();
 		// update network devices
 		for (Che che : ches) {
