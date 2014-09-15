@@ -96,7 +96,7 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	protected void doStartup() {
+	protected void doStartup() throws Exception {
 
 		String processName = ManagementFactory.getRuntimeMXBean().getName();
 		LOGGER.info("Process info: " + processName);

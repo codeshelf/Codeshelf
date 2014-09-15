@@ -116,118 +116,114 @@ public abstract class DAOTestABC {
 	}
 
 	@Before
-	public final void setup() {
+	public final void setup() throws Exception {
 
-		try {
+		Class.forName("org.h2.Driver");
+		mSchemaManager = new H2SchemaManager(
+			"codeshelf",
+			"codeshelf",
+			"codeshelf",
+			"codeshelf",
+			"localhost",
+			"");
+		mDatabase = new Database(mSchemaManager);
 
-			Class.forName("org.h2.Driver");
-			mSchemaManager = new H2SchemaManager(
-				"codeshelf",
-				"codeshelf",
-				"codeshelf",
-				"codeshelf",
-				"localhost",
-				"");
-			mDatabase = new Database(mSchemaManager);
+		mDatabase.start();
 
-			mDatabase.start();
+		mOrganizationDao = new OrganizationDao(mSchemaManager);
+		Organization.DAO = mOrganizationDao;
 
-			mOrganizationDao = new OrganizationDao(mSchemaManager);
-			Organization.DAO = mOrganizationDao;
+		mFacilityDao = new FacilityDao(mSchemaManager);
+		Facility.DAO = mFacilityDao;
 
-			mFacilityDao = new FacilityDao(mSchemaManager);
-			Facility.DAO = mFacilityDao;
+		mAisleDao = new AisleDao(mSchemaManager);
+		Aisle.DAO = mAisleDao;
 
-			mAisleDao = new AisleDao(mSchemaManager);
-			Aisle.DAO = mAisleDao;
+		mBayDao = new BayDao(mSchemaManager);
+		Bay.DAO = mBayDao;
 
-			mBayDao = new BayDao(mSchemaManager);
-			Bay.DAO = mBayDao;
+		mTierDao = new TierDao(mSchemaManager);
+		Tier.DAO = mTierDao;
 
-			mTierDao = new TierDao(mSchemaManager);
-			Tier.DAO = mTierDao;
+		mSlotDao = new SlotDao(mSchemaManager);
+		Slot.DAO = mSlotDao;
 
-			mSlotDao = new SlotDao(mSchemaManager);
-			Slot.DAO = mSlotDao;
+		mPathDao = new PathDao(mSchemaManager);
+		Path.DAO = mPathDao;
 
-			mPathDao = new PathDao(mSchemaManager);
-			Path.DAO = mPathDao;
+		mPathSegmentDao = new PathSegmentDao(mSchemaManager);
+		PathSegment.DAO = mPathSegmentDao;
 
-			mPathSegmentDao = new PathSegmentDao(mSchemaManager);
-			PathSegment.DAO = mPathSegmentDao;
+		mDropboxServiceDao = new DropboxServiceDao(mSchemaManager);
+		DropboxService.DAO = mDropboxServiceDao;
 
-			mDropboxServiceDao = new DropboxServiceDao(mSchemaManager);
-			DropboxService.DAO = mDropboxServiceDao;
+		mIronMqServiceDao = new IronMqServiceDao(mSchemaManager);
+		IronMqService.DAO = mIronMqServiceDao;
 
-			mIronMqServiceDao = new IronMqServiceDao(mSchemaManager);
-			IronMqService.DAO = mIronMqServiceDao;
+		mCodeshelfNetworkDao = new CodeshelfNetworkDao(mSchemaManager);
+		CodeshelfNetwork.DAO = mCodeshelfNetworkDao;
 
-			mCodeshelfNetworkDao = new CodeshelfNetworkDao(mSchemaManager);
-			CodeshelfNetwork.DAO = mCodeshelfNetworkDao;
+		mCheDao = new CheDao(mSchemaManager);
+		Che.DAO = mCheDao;
 
-			mCheDao = new CheDao(mSchemaManager);
-			Che.DAO = mCheDao;
+		mSubLocationDao = new SubLocationDao(mSchemaManager);
+		SubLocationABC.DAO = mSubLocationDao;
 
-			mSubLocationDao = new SubLocationDao(mSchemaManager);
-			SubLocationABC.DAO = mSubLocationDao;
+		mLocationDao = new LocationABCDao(mSchemaManager, mDatabase);
+		LocationABC.DAO = mLocationDao;
 
-			mLocationDao = new LocationABCDao(mSchemaManager, mDatabase);
-			LocationABC.DAO = mLocationDao;
+		mOrderGroupDao = new OrderGroupDao(mSchemaManager);
+		OrderGroup.DAO = mOrderGroupDao;
 
-			mOrderGroupDao = new OrderGroupDao(mSchemaManager);
-			OrderGroup.DAO = mOrderGroupDao;
+		mOrderHeaderDao = new OrderHeaderDao(mSchemaManager);
+		OrderHeader.DAO = mOrderHeaderDao;
 
-			mOrderHeaderDao = new OrderHeaderDao(mSchemaManager);
-			OrderHeader.DAO = mOrderHeaderDao;
+		mOrderDetailDao = new OrderDetailDao(mSchemaManager);
+		OrderDetail.DAO = mOrderDetailDao;
 
-			mOrderDetailDao = new OrderDetailDao(mSchemaManager);
-			OrderDetail.DAO = mOrderDetailDao;
+		mOrderLocationDao = new OrderLocationDao(mSchemaManager);
+		OrderLocation.DAO = mOrderLocationDao;
 
-			mOrderLocationDao = new OrderLocationDao(mSchemaManager);
-			OrderLocation.DAO = mOrderLocationDao;
+		mContainerDao = new ContainerDao(mSchemaManager);
+		Container.DAO = mContainerDao;
 
-			mContainerDao = new ContainerDao(mSchemaManager);
-			Container.DAO = mContainerDao;
+		mContainerKindDao = new ContainerKindDao(mSchemaManager);
+		ContainerKind.DAO = mContainerKindDao;
 
-			mContainerKindDao = new ContainerKindDao(mSchemaManager);
-			ContainerKind.DAO = mContainerKindDao;
+		mContainerUseDao = new ContainerUseDao(mSchemaManager);
+		ContainerUse.DAO = mContainerUseDao;
 
-			mContainerUseDao = new ContainerUseDao(mSchemaManager);
-			ContainerUse.DAO = mContainerUseDao;
+		mItemMasterDao = new ItemMasterDao(mSchemaManager);
+		ItemMaster.DAO = mItemMasterDao;
 
-			mItemMasterDao = new ItemMasterDao(mSchemaManager);
-			ItemMaster.DAO = mItemMasterDao;
+		mItemDao = new ItemDao(mSchemaManager);
+		Item.DAO = mItemDao;
 
-			mItemDao = new ItemDao(mSchemaManager);
-			Item.DAO = mItemDao;
+		mUomMasterDao = new UomMasterDao(mSchemaManager);
+		UomMaster.DAO = mUomMasterDao;
 
-			mUomMasterDao = new UomMasterDao(mSchemaManager);
-			UomMaster.DAO = mUomMasterDao;
+		mLedControllerDao = new LedControllerDao(mSchemaManager);
+		LedController.DAO = mLedControllerDao;
 
-			mLedControllerDao = new LedControllerDao(mSchemaManager);
-			LedController.DAO = mLedControllerDao;
+		mLocationAliasDao = new LocationAliasDao(mSchemaManager);
+		LocationAlias.DAO = mLocationAliasDao;
+		
+		mVertexDao = new VertexDao(mSchemaManager);
+		Vertex.DAO = mVertexDao;
 
-			mLocationAliasDao = new LocationAliasDao(mSchemaManager);
-			LocationAlias.DAO = mLocationAliasDao;
-			
-			mVertexDao = new VertexDao(mSchemaManager);
-			Vertex.DAO = mVertexDao;
+		mWorkAreaDao = new WorkAreaDao(mSchemaManager);
+		WorkArea.DAO = mWorkAreaDao;
 
-			mWorkAreaDao = new WorkAreaDao(mSchemaManager);
-			WorkArea.DAO = mWorkAreaDao;
+		mWorkInstructionDao = new WorkInstructionDao(mSchemaManager);
+		WorkInstruction.DAO = mWorkInstructionDao;
 
-			mWorkInstructionDao = new WorkInstructionDao(mSchemaManager);
-			WorkInstruction.DAO = mWorkInstructionDao;
-
-			mWorkAreaDao = new WorkAreaDao(mSchemaManager);
-			WorkArea.DAO = mWorkAreaDao;
-			
-			doBefore();
-		} catch (ClassNotFoundException e) {
-		}
+		mWorkAreaDao = new WorkAreaDao(mSchemaManager);
+		WorkArea.DAO = mWorkAreaDao;
+		
+		doBefore();
 	}
 	
-	protected void doBefore() {
+	protected void doBefore() throws Exception {
 	}
 	
 	@After
