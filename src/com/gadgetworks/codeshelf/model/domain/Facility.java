@@ -613,7 +613,6 @@ public class Facility extends SubLocationABC<Facility> {
 			if (ediService instanceof IronMqService) {
 				result = (IronMqService) ediService;
 			}
-			break;
 		}
 
 		if (result == null) {
