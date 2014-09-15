@@ -167,22 +167,13 @@ public abstract class SubLocationABC<P extends IDomainObject & ISubLocation> ext
 		// wrong; // does the local path segment increase in the direction the aisle is increasing?
 
 		Point locationAnchorPoint = getAbsoluteAnchorPoint();
-		Point pickFaceEndPoint = getAbsoluteAnchorPoint(); // JR this looks wrong. Should want this.getAbsolutePickEndPoint();
+		Point pickFaceEndPoint = getAbsolutePickFaceEndPoint();// JR this looks wrong. Should want this.getAbsolutePickEndPoint();
 		// Point pickFaceEndPoint = parent.getAbsoluteAnchorPoint(); // JR this looks wrong. Should want this.getAbsolutePickEndPoint();
 
-		pickFaceEndPoint.translateX(getPickFaceEndPosX());
-		pickFaceEndPoint.translateY(getPickFaceEndPosY());
-		pickFaceEndPoint.translateZ(getPickFaceEndPosZ());
 
-		Double locAnchorPathPosition = inPathSegment.getStartPosAlongPath()
-				+ inPathSegment.computeDistanceOfPointFromLine(inPathSegment.getStartPoint(),
-					inPathSegment.getEndPoint(),
-					locationAnchorPoint);
+		Double locAnchorPathPosition = inPathSegment.computePathPosition(locationAnchorPoint);
 
-		Double pickFacePathPosition = inPathSegment.getStartPosAlongPath()
-				+ inPathSegment.computeDistanceOfPointFromLine(inPathSegment.getStartPoint(),
-					inPathSegment.getEndPoint(),
-					pickFaceEndPoint);
+		Double pickFacePathPosition = inPathSegment.computePathPosition(pickFaceEndPoint);
 
 		Double newPosition = 0.0;
 		Double oldPosition = this.getPosAlongPath();
@@ -235,6 +226,12 @@ public abstract class SubLocationABC<P extends IDomainObject & ISubLocation> ext
 		}
 	}
 	
+	private Point getAbsolutePickFaceEndPoint() {
+		// TODO Auto-generated method stub
+		Point base = getAbsoluteAnchorPoint();
+		return base.add(getPickFaceEndPosX(), getPickFaceEndPosY(), getPickFaceEndPosZ());
+	}
+
 	protected final void doSetControllerChannel(String inControllerPersistentIDStr, String inChannelStr) {
 		// this is for callMethod from the UI
 		// We are setting the controller and channel for the tier. Depending on the inTierStr parameter, may set also for

@@ -17,6 +17,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
 
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
@@ -678,11 +679,11 @@ public class Facility extends SubLocationABC<Facility> {
 		final Short inFirstLedPosNum,
 		final Short inLastLedPosNum) {
 
-		Point anchorPoint = Point.getZeroPoint();
+		Point anchorPoint = null;
 		if (inRunsInXDir) {
-			anchorPoint.translateX(inOffset);
+			anchorPoint = Point.getZeroPoint().add(inOffset, 0.0);
 		} else {
-			anchorPoint.translateY(inOffset);
+			anchorPoint = Point.getZeroPoint().add(0.0, inOffset);
 		}
 
 		Point pickFaceEndPoint = computePickFaceEndPoint(anchorPoint, 0.25, inRunsInXDir);

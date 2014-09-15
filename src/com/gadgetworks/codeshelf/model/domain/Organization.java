@@ -102,6 +102,13 @@ public class Organization extends DomainObjectABC {
 		description = "";
 	}
 
+	public Organization(String domainId) {
+		super(domainId);
+		setParent(this);
+		description = "";
+	}
+
+	
 	public final void addUser(User inUser) {
 		users.put(inUser.getDomainId(), inUser);
 	}
