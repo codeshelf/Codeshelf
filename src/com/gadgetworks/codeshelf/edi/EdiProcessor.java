@@ -89,6 +89,13 @@ public final class EdiProcessor implements IEdiProcessor {
 	 */
 	public void stopProcessor() {
 		mShouldRun = false;
+		mProcessorThread.interrupt();
+		long timeout = 5000;
+		try {
+			mProcessorThread.join(timeout);
+		} catch (InterruptedException e) {
+			LOGGER.error("EdiProcessor thread did not stop within " + timeout, e);
+		}
 	}
 
 	// --------------------------------------------------------------------------

@@ -116,11 +116,6 @@ public class EdiProcessorTest extends EdiTestABC {
 
 		ediProcessor.stopProcessor();
 
-		// That thread might be sleeping.
-		if (foundThread != null) {
-			foundThread.interrupt();
-		}
-
 		foundThread = null;
 		for (Thread thread : Thread.getAllStackTraces().keySet()) {
 			if (thread.getName().equals(IEdiProcessor.EDIPROCESSOR_THREAD_NAME)) {
@@ -128,7 +123,7 @@ public class EdiProcessorTest extends EdiTestABC {
 			}
 		}
 
-		Assert.assertNotNull(foundThread);
+		Assert.assertNull("EdiProcessor should no longer be running", foundThread);
 	}
 
 	public final class TestFacilityDao extends GenericDaoABC<Facility> implements ITypedDao<Facility> {
