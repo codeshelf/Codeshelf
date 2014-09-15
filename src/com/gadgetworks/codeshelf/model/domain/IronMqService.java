@@ -145,7 +145,7 @@ public class IronMqService extends EdiServiceABC {
 		String json = gson.toJson(credentials);
 		setProviderCredentials(json);
 	}
-	
+
 	public final void storeCredentials(String projectId,  String token) {
 		setCredentials(projectId, token);
 		if (getHasCredentials()) {
@@ -179,8 +179,7 @@ public class IronMqService extends EdiServiceABC {
 		return false;
 	}
 
-	public final void sendWorkInstructionsToHost(final List<WorkInstruction> inWiList) {
-
+	public final void sendWorkInstructionsToHost(final List<WorkInstruction> inWiList) throws IOException {
 		// If the credentials are empty, don't bother. Could check the link, but we are not maintaining that well currently.
 		String theCredentials = getProviderCredentials();
 
@@ -242,12 +241,8 @@ public class IronMqService extends EdiServiceABC {
 			properties[COMPLETED_POS] = new SimpleDateFormat(TIME_FORMAT).format(wi.getCompleted());
 			csvWriter.writeNext(properties);
 		}
-		try {
-			csvWriter.close();
-			sendMessage(WI_QUEUE_NAME, stringWriter.toString());
-		} catch (IOException e) {
-			LOGGER.error("", e);
-		}
+		csvWriter.close();
+		sendMessage(WI_QUEUE_NAME, stringWriter.toString());
 	}
 
 	// --------------------------------------------------------------------------
@@ -276,16 +271,12 @@ public class IronMqService extends EdiServiceABC {
 	 * @param inQueueName
 	 * @param inMessage
 	 */
-	private void sendMessage(final String inQueueName, final String inMessage) {
+	void sendMessage(final String inQueueName, final String inMessage) throws IOException {
 
 		Credentials credentials = getCredentials();
 		Client client = new Client(credentials.getProjectId(), credentials.getToken(), Cloud.ironAWSUSEast);
 		Queue queue = client.queue(inQueueName);
-		try {
-			queue.push(inMessage);
-		} catch (IOException e) {
-			LOGGER.error("IOException in ironMQ sendMessage", e);
-		}
+		queue.push(inMessage);
 	}
 
 	private Credentials getCredentials() {
