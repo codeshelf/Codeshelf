@@ -14,7 +14,7 @@ import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
  * Sequences work instructions in an order that they should be executed.  The strategy could be custom per facility, che, path, etc. over time
  * 
  */
-public interface WorkInstructionSequencer {
+public interface IWorkInstructionSequencer {
 
 	// --------------------------------------------------------------------------
 	/**

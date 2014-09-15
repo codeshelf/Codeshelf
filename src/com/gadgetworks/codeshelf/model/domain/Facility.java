@@ -50,7 +50,7 @@ import com.gadgetworks.codeshelf.model.LedRange;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
-import com.gadgetworks.codeshelf.model.WorkInstructionSequencer;
+import com.gadgetworks.codeshelf.model.WorkInstructionSequencerABC;
 import com.gadgetworks.codeshelf.model.WorkInstructionSequencerFactory;
 import com.gadgetworks.codeshelf.model.WorkInstructionSequencerType;
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
@@ -1046,7 +1046,6 @@ public class Facility extends SubLocationABC<Facility> {
 		Set<Che> changedChes = new HashSet<Che>();
 		changedChes.add(inChe);
 
-
 		// Delete any planned WIs for this CHE.
 		Map<String, Object> filterParams = new HashMap<String, Object>();
 		filterParams.put("chePersistentId", inChe.getPersistentId().toString());
@@ -1092,7 +1091,6 @@ public class Facility extends SubLocationABC<Facility> {
 			}
 		}
 
-
 		for (Che changedChe : changedChes) {
 			changedChe.getDao().pushNonPersistentUpdates(changedChe);
 		}
@@ -1105,14 +1103,33 @@ public class Facility extends SubLocationABC<Facility> {
 		// Get all of the CROSS work instructions.
 		wiResultList.addAll(generateCrossWallInstructions(inChe, containerList, theTime));
 
-		WorkInstructionSequencer sequencer = getSequencer();
+		WorkInstructionSequencerABC sequencer = getSequencer();
 		List<WorkInstruction> sortedWIResults = sequencer.sort(this, wiResultList);
 		return sortedWIResults.size();
 	}
 
-	private WorkInstructionSequencer getSequencer() {
+	private WorkInstructionSequencerABC getSequencer() {
 		return WorkInstructionSequencerFactory.createSequencer(this.sequencerType);
 	}
+
+	private class GroupAndSortCodeComparator implements Comparator<WorkInstruction> {
+
+		public int compare(WorkInstruction inWi1, WorkInstruction inWi2) {
+			// watch for uninitialized data
+			String sort1 = inWi1.getGroupAndSortCode();
+			String sort2 = inWi2.getGroupAndSortCode();
+			if (sort1 == null) {
+				if (sort2 == null)
+					return 0;
+				else
+					return -1;
+			}
+			if (sort2 == null)
+				return 1;
+			else
+				return sort1.compareTo(sort2);
+		}
+	};
 
 	// --------------------------------------------------------------------------
 	/**
@@ -1173,29 +1190,37 @@ public class Facility extends SubLocationABC<Facility> {
 			wiResultList.add(wi);
 		}
 
+		// New from V4. make sure sorted correctly. Hard to believe we did not catch this before. (Should we have the DB sort for us?)
+		Collections.sort(wiResultList, new GroupAndSortCodeComparator());
 		return wiResultList;
 	}
 
 	private void deleteExistingShortWiToFacility(final OrderDetail inOrderDetail) {
-		if (true) // Find that delete in the for loop causes a ConcurrentModificationException
-			return;
 		// Do we have short work instruction already for this orderDetail, for any CHE, going to facility?
 		// Note, that leaves the shorts around that a user shorted.  This only delete the shorts created immediately upon scan if there is no product.
+
+		// separate list to delete from, because we get ConcurrentModificationException if we delete in the middle of inOrderDetail.getWorkInstructions()
+		List<WorkInstruction> aList = new ArrayList<WorkInstruction>();
 		for (WorkInstruction wi : inOrderDetail.getWorkInstructions()) {
 			if (wi.getStatusEnum() == WorkInstructionStatusEnum.SHORT)
 				if (wi.getLocation().equals(this)) { // planned to the facility
-					try {
-
-						Che assignedChe = wi.getAssignedChe();
-						if (assignedChe != null)
-							assignedChe.removeWorkInstruction(wi); // necessary?
-						inOrderDetail.removeWorkInstruction(wi); // necessary?
-						WorkInstruction.DAO.delete(wi);
-
-					} catch (DaoException e) {
-						LOGGER.error("failed to delete prior work SHORT instruction", e);
-					}
+					aList.add(wi);
 				}
+		}
+
+		// need a reverse iteration?
+		for (WorkInstruction wi : aList) {
+			try {
+				Che assignedChe = wi.getAssignedChe();
+				if (assignedChe != null)
+					assignedChe.removeWorkInstruction(wi); // necessary?
+				inOrderDetail.removeWorkInstruction(wi); // necessary?
+				WorkInstruction.DAO.delete(wi);
+
+			} catch (DaoException e) {
+				LOGGER.error("failed to delete prior work SHORT instruction", e);
+			}
+
 		}
 
 	}
@@ -1574,10 +1599,9 @@ public class Facility extends SubLocationABC<Facility> {
 			if (inLocation instanceof Facility)
 				resultWi.setPosAlongPath(0.0);
 			else {
-				if (isInventoryPickInstruction) {					
+				if (isInventoryPickInstruction) {
 					// do nothing as it was set with the leds
-				}
-				else {
+				} else {
 					resultWi.setPosAlongPath(inLocation.getPosAlongPath());
 				}
 			}
@@ -1686,23 +1710,22 @@ public class Facility extends SubLocationABC<Facility> {
 			LOGGER.error("inappropriate call to  setOutboundWorkInstructionLedPatternFromInventoryItem");
 			return;
 		}
-		
+
 		// We expect to find an inventory item at the location. Be sure to get item and set posAlongPath always, before bailing out on the led command.
 		Item theItem = inLocation.getStoredItemFromMasterIdAndUom(inItemMasterId, inUomId);
 		if (theItem == null) {
 			LOGGER.error("did not find item in setOutboundWorkInstructionLedPatternFromInventoryItem");
 			return;
 		}
-		
+
 		// Set the pos along path
 		Double posAlongPath = theItem.getPosAlongPath();
 		inWi.setPosAlongPath(posAlongPath);
 
-		
 		// if the location does not have led numbers, we do not have tubes or lasers there. Do not proceed.
 		if (inLocation.getFirstLedNumAlongPath() == 0)
 			return;
-		
+
 		// if the location does not have controller associated, we would NPE below. Might as well check now.
 		LedController theLedController = inLocation.getEffectiveLedController();
 		if (theLedController == null) {
@@ -1735,7 +1758,7 @@ public class Facility extends SubLocationABC<Facility> {
 
 		ledCmdGroupList.add(ledCmdGroup);
 		inWi.setLedCmdStream(LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList));
-		
+
 	}
 
 	// --------------------------------------------------------------------------

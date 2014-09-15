@@ -263,18 +263,22 @@ public class PickSimulaneousWis extends EdiTestABC {
 		Assert.assertNotNull(wi1);
 		String wi1Order = wi1.getOrderId();
 		String wi1Item = wi1.getItemMasterId();
+		String groupSortStr1 = wi1.getGroupAndSortCode();
+		Assert.assertEquals("0001", groupSortStr1);
 		Double wi1Pos = wi1.getPosAlongPath();
 
 		WorkInstruction wi2 = wiListAfterScan.get(1);
 		Assert.assertNotNull(wi2);
 		String groupSortStr2 = wi2.getGroupAndSortCode();
+		Assert.assertEquals("0002", groupSortStr2);
 		Double wi2Pos = wi2.getPosAlongPath();
 
-		// Assert.assertTrue(wi2Pos > wi1Pos);
+		Assert.assertTrue(wi2Pos > wi1Pos);
 
 		WorkInstruction wi3 = wiListAfterScan.get(2);
 		Assert.assertNotNull(wi3);
 		String groupSortStr3 = wi3.getGroupAndSortCode();
+		Assert.assertEquals("0003", groupSortStr3);
 		Double wi3Pos = wi3.getPosAlongPath();
 
 		WorkInstruction wi4 = wiListAfterScan.get(3);
@@ -283,7 +287,7 @@ public class PickSimulaneousWis extends EdiTestABC {
 		Assert.assertEquals("0004", groupSortStr4);
 		Double wi4Pos = wi4.getPosAlongPath();
 		// 2, 3 and 4 for same item, so should be equal.
-		// Assert.assertEquals(wi2Pos, wi4Pos);
+		Assert.assertEquals(wi2Pos, wi4Pos);
 
 		WorkInstruction wi5 = wiListAfterScan.get(4);
 		Assert.assertNotNull(wi5);
@@ -307,9 +311,15 @@ public class PickSimulaneousWis extends EdiTestABC {
 		Assert.assertEquals("0008", groupSortStr8);
 		Double wi8Pos = wi8.getPosAlongPath();
 
-		// Bug. Getting odd sort for items on the same shelf. Will address soon.
-		// Assert.assertEquals("1123", wi1Item);
-		//Assert.assertEquals("12001", wi1Order);
+		Assert.assertEquals("1123", wi1Item);
+		Assert.assertEquals("12001", wi1Order);
+		
+		// Last items picked should be 1522. Two orders, so that is arbitrary. (Until later, when we might care to alternate somewhat to reduce confusion about orders going to same cart slot.
+		String wi7Item = wi7.getItemMasterId();
+		String wi8Item = wi8.getItemMasterId();
+		Assert.assertEquals("1522", wi7Item);
+		Assert.assertEquals("1522", wi8Item);
+
 
 	}
 
