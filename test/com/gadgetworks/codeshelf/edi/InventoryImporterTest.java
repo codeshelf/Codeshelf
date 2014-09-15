@@ -236,7 +236,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		Assert.assertNotNull(aisle1);
 
 		Path aPath = createPathForTest("F5X.1", facility);
-		PathSegment segment0 = addPathSegmentForTest("F5X.1.0", aPath, 0, 22.0, 48.45, 12.85, 48.45);
+		PathSegment segment0 = addPathSegmentForTest("F5X.1.0", aPath, 0, 22.0, 48.45, 10.85, 48.45);
 
 		String persistStr = segment0.getPersistentId().toString();
 		aisle1.associatePathSegment(persistStr);
@@ -246,7 +246,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		aisle2.associatePathSegment(persistStr);
 
 		Path path2 = createPathForTest("F5X.3", facility);
-		PathSegment segment02 = addPathSegmentForTest("F5X.3.0", path2, 0, 22.0, 58.45, 12.85, 58.45);
+		PathSegment segment02 = addPathSegmentForTest("F5X.3.0", path2, 0, 22.0, 58.45, 10.85, 58.45);
 
 		Aisle aisle3 = Aisle.DAO.findByDomainId(facility, "A3");
 		Assert.assertNotNull(aisle3);
@@ -660,10 +660,26 @@ public class InventoryImporterTest extends EdiTestABC {
 		Integer wiCountAfterScan = wiListAfterScan.size();
 		// Now getting 2. Something is wrong!
 		// Assert.assertEquals((Integer) 1, wiCountAfterScan); // only the one each item in 403 should be there. The item in 402 is earlier on the path.
+		
+		WorkInstruction wi1 = wiListAfterScan.get(0);
+		Assert.assertNotNull(wi1);
+		String groupSortStr1 = wi1.getGroupAndSortCode();
+		Assert.assertEquals("0001", groupSortStr1);
+		Double wi1Pos = wi1.getPosAlongPath();
+		String wi1Item = wi1.getItemMasterId();
+
+		WorkInstruction wi2 = wiListAfterScan.get(1);
+		Assert.assertNotNull(wi2);
+		String groupSortStr2 = wi2.getGroupAndSortCode();
+		Assert.assertEquals("0002", groupSortStr2);
+		Double wi2Pos = wi2.getPosAlongPath();
+		String wi2Item = wi2.getItemMasterId();
+		
+		Double pos403 = locationD403.getPosAlongPath();
+		Double pos402 = locationD402.getPosAlongPath();		
+
 		// just checking the relationships of the work instruction
-		WorkInstruction wi = wiListAfterScan.get(0);
-		Assert.assertNotNull(wi);
-		OrderDetail wiDetail = wi.getParent();
+		OrderDetail wiDetail = wi1.getParent();
 		Assert.assertNotNull(wiDetail);
 		OrderHeader wiOrderHeader = wiDetail.getParent();
 		Assert.assertNotNull(wiOrderHeader);
