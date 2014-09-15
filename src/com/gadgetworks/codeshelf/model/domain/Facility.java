@@ -5,6 +5,7 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
+import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -1888,7 +1889,12 @@ public class Facility extends SubLocationABC<Facility> {
 		IronMqService ironMqService = getIronMqService(); // this should succeed, or catch its own throw and return null
 
 		if (ironMqService != null) {
-			ironMqService.sendWorkInstructionsToHost(inWiList);
+			try {
+				ironMqService.sendWorkInstructionsToHost(inWiList);
+			}
+			catch (IOException e) {
+				LOGGER.warn("Unable to send wi list to service:" + ironMqService, e);
+			}
 		}
 	}
 
