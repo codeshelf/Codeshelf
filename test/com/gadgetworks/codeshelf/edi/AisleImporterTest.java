@@ -1542,14 +1542,8 @@ public class AisleImporterTest extends DomainTestABC {
 		Point bay1AnchorPoint = bayA61B1.getAbsoluteAnchorPoint();
 		Point bay2AnchorPoint = bayA61B2.getAbsoluteAnchorPoint();
 		// replicating the pickEnd logic
-		Point bay1PickFaceEndPoint = bayA61B1.getAbsoluteAnchorPoint();
-		bay1PickFaceEndPoint.translateX(bayA61B1.getPickFaceEndPosX());
-		bay1PickFaceEndPoint.translateY(bayA61B1.getPickFaceEndPosY());
-		bay1PickFaceEndPoint.translateZ(bayA61B1.getPickFaceEndPosZ());
-		Point bay2PickFaceEndPoint = bayA61B2.getAbsoluteAnchorPoint();
-		bay2PickFaceEndPoint.translateX(bayA61B2.getPickFaceEndPosX());
-		bay2PickFaceEndPoint.translateY(bayA61B2.getPickFaceEndPosY());
-		bay2PickFaceEndPoint.translateZ(bayA61B2.getPickFaceEndPosZ());
+		Point bay1PickFaceEndPoint = bayA61B1.getAbsolutePickFaceEndPoint();
+		Point bay2PickFaceEndPoint = bayA61B2.getAbsolutePickFaceEndPoint();
 		// Manual check here. The bay1 and bay2 points are correct.		
 		
 		// pickface end values are critical. This simple test should cover in a non-confusing way.

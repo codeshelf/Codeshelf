@@ -127,7 +127,12 @@ public abstract class SubLocationABC<P extends IDomainObject & ISubLocation> ext
 	public final void setParent(P inParent) {
 		parent = (SubLocationABC) inParent;
 	}
-
+	
+	public Point getAbsolutePickFaceEndPoint() {
+		Point base = getAbsoluteAnchorPoint();
+		return base.add(getPickFaceEndPosX(), getPickFaceEndPosY(), getPickFaceEndPosZ());
+	}
+	
 	// --------------------------------------------------------------------------
 	/**
 	 * @return
@@ -147,6 +152,8 @@ public abstract class SubLocationABC<P extends IDomainObject & ISubLocation> ext
 		pickFaceEndPosZ = inPickFaceEndPoint.getZ();
 	}
 
+	
+	
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#computePosAlongPath(com.gadgetworks.codeshelf.model.domain.PathSegment)
@@ -225,12 +232,7 @@ public abstract class SubLocationABC<P extends IDomainObject & ISubLocation> ext
 			location.computePosAlongPath(inPathSegment);
 		}
 	}
-	
-	private Point getAbsolutePickFaceEndPoint() {
-		// TODO Auto-generated method stub
-		Point base = getAbsoluteAnchorPoint();
-		return base.add(getPickFaceEndPosX(), getPickFaceEndPosY(), getPickFaceEndPosZ());
-	}
+
 
 	protected final void doSetControllerChannel(String inControllerPersistentIDStr, String inChannelStr) {
 		// this is for callMethod from the UI
