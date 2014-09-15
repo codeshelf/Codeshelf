@@ -1,7 +1,10 @@
 package com.gadgetworks.codeshelf.ws.jetty.test;
 
+import java.util.Arrays;
+
 import com.gadgetworks.codeshelf.ws.jetty.client.JettyWebSocketClient;
 import com.gadgetworks.codeshelf.ws.jetty.client.LogResponseProcessor;
+import com.gadgetworks.codeshelf.ws.jetty.io.CompressedJsonMessage;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageProcessor;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.EchoRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.LoginRequest;
@@ -26,8 +29,10 @@ public class JettyTestClient {
         	MessageProcessor responseProcessor = new LogResponseProcessor();
         	JettyWebSocketClient client = new JettyWebSocketClient("wss://localhost:8444/",responseProcessor,null);
         	client.connect();
-        
-    		EchoRequest genericRequest = new EchoRequest("Hello!");
+        	//Message that shouldn't compress
+        	char[] charBuf = new char[CompressedJsonMessage.JSON_COMPRESS_MAXIMUM - 1];
+        	Arrays.fill(charBuf, '{');
+    		EchoRequest genericRequest = new EchoRequest(new String(charBuf));
     		client.sendMessage(genericRequest);
     		
         	// create a login request and send it to the server

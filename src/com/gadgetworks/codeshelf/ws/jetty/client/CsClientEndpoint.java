@@ -64,7 +64,7 @@ public class CsClientEndpoint {
 		client.connected(session);
 	}
 
-	@OnMessage
+    @OnMessage(maxMessageSize=JsonEncoder.WEBSOCKET_MAX_MESSAGE_SIZE)
 	public void onMessage(Session session, MessageABC message) throws IOException, EncodeException {
 		messageCounter.inc();
 		client.messageReceived();

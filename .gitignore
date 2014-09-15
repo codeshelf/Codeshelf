@@ -18,6 +18,6 @@ compare-file-1.txt
 /autofetch*.csv
 /*.autofetch
 /.DS_Store
-
+/build/.ant-targets-build.xml
 /lib/.DS_Store
 /.projectile

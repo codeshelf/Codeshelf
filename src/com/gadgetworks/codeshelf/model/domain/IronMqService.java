@@ -86,10 +86,12 @@ public class IronMqService extends EdiServiceABC {
 	// Let's go with our new temporary credentials instead. Need configuration!
 	// public static final String		PROJECT_ID			= "5408fee49393690009000010";
 	// public static final String		TOKEN				= "T9yxS7H9vUE8ck15vCPJOT_iymY";
+	public static final String		PROJECT_ID			= "";
+	public static final String		TOKEN				= "";
 
 	private static final Logger		LOGGER				= LoggerFactory.getLogger(IronMqService.class);
 
-	private static final String     TIME_FORMAT			= "yyyy-MM-dd'T'HH:mm:ss'Z'";
+	private static final String		TIME_FORMAT			= "yyyy-MM-dd'T'HH:mm:ss'Z'";
 
 	private static final Integer	DOMAINID_POS		= 0;
 	private static final Integer	TYPE_POS			= 1;
@@ -178,10 +180,12 @@ public class IronMqService extends EdiServiceABC {
 	}
 
 	public final void sendWorkInstructionsToHost(final List<WorkInstruction> inWiList) {
+
 		// If the credentials are empty, don't bother. Could check the link, but we are not maintaining that well currently.
-		if (!getHasCredentials()) {
-			return;
-		}
+		String theCredentials = getProviderCredentials();
+
+		if (theCredentials == null || theCredentials.length() < 55)
+			return; // this is a Json encoding  of two credentials. Much longer if valid
 
 		// Convert the WI into a CSV string.
 		StringWriter stringWriter = new StringWriter();
@@ -209,7 +213,7 @@ public class IronMqService extends EdiServiceABC {
 			if (wi.getLocation().getAliases().size() > 0) {
 				locAlias = wi.getLocation().getAliases().get(0);
 			}
-			
+
 			properties = new String[WI_ATTR_COUNT];
 			properties[DOMAINID_POS] = wi.getDomainId();
 			properties[TYPE_POS] = wi.getTypeEnum().toString();
