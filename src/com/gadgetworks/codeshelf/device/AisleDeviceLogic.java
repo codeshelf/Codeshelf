@@ -73,33 +73,6 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 		//		sendLightCommand(CommandControlLed.CHANNEL1, position, ColorEnum.BLUE, CommandControlLed.EFFECT_SOLID);
 		updateLeds();
 	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * Clear all of the active LED commands for the specified GUID.
-	 * @param inNetGuid
-	 */
-	public final void clearLedCmdFor(final NetGuid inNetGuid) {
-		// CD_0041 note: this will be replaced by two specific functions
-		
-		// Only send the command if the device is known active.
-		if ((getDeviceStateEnum() != null) && (getDeviceStateEnum() == NetworkDeviceStateEnum.STARTED)) {
-			// First send a blanking command on each channel.
-			List<LedSample> sampleList = new ArrayList<LedSample>();
-			LedSample sample = new LedSample(CommandControlLed.POSITION_NONE, ColorEnum.BLACK);
-			sampleList.add(sample);
-			for (short channel = 1; channel <= kNumChannelsOnAislController; channel++) {
-				ICommand command = new CommandControlLed(NetEndpoint.PRIMARY_ENDPOINT, channel, EffectEnum.FLASH, sampleList);
-				mRadioController.sendCommand(command, getAddress(), true);
-			}
-		}
-		mDeviceLedPosMap.remove(inNetGuid);
-		//updateLeds();
-		
-		// Note: simplify if we sort out the channels by calling only:
-		// mDeviceLedPosMap.remove(inNetGuid);
-		// updateLeds();
-	}
 	
 	// --------------------------------------------------------------------------
 	/**
@@ -108,6 +81,9 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 	 */
 	public final void clearAllLedCmdsAndSend() {
 		// CD_0041 note: one of two new functions. Clears two channels. why 2?
+		// Note: as of V4, this is never called.
+		// We really should have a means to call it. The important part is mDeviceLedPosMap.clear(); If some CHE's led samples gets in there, and then the CHE never goes away,
+		// How can we get those lights off?
 		
 		// Only send the command if the device is known active.
 		if ((getDeviceStateEnum() != null) && (getDeviceStateEnum() == NetworkDeviceStateEnum.STARTED)) {

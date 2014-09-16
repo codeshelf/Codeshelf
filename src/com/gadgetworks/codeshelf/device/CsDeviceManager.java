@@ -5,6 +5,7 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -111,6 +112,15 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 			mRadioController.startController(preferredChannel);
 			mRadioController.addControllerEventListener(this);
 		}
+	}
+	
+	public final List<AisleDeviceLogic> getAisleControllers() {
+		ArrayList<AisleDeviceLogic> aList = new ArrayList<AisleDeviceLogic>();
+		for (INetworkDevice theDevice :mDeviceMap.values()) {
+			if (theDevice instanceof AisleDeviceLogic)
+				aList.add((AisleDeviceLogic) theDevice);			
+		}
+		return aList;
 	}
 
 	public final void startWebSocketClient() {
