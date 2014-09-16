@@ -146,6 +146,7 @@ public abstract class DomainTestABC extends DAOTestABC {
 	 * 		OrderDetail: 2 of item1, 4 of item 2, 8 of item 3
 	 * 
 	 */
+	@SuppressWarnings("unused")
 	protected Facility createFacilityWithOutboundOrders(final String inOrganizationName) {
 
 		Organization organization = getOrganization(inOrganizationName);

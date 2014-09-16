@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.shiro.realm.Realm;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -28,10 +27,8 @@ import com.gadgetworks.codeshelf.edi.InventoryCsvImporter;
 import com.gadgetworks.codeshelf.edi.LocationAliasCsvImporter;
 import com.gadgetworks.codeshelf.edi.OrderLocationCsvImporter;
 import com.gadgetworks.codeshelf.edi.OutboundOrderCsvImporter;
-import com.gadgetworks.codeshelf.model.dao.DaoProvider;
 import com.gadgetworks.codeshelf.model.dao.Database;
 import com.gadgetworks.codeshelf.model.dao.H2SchemaManager;
-import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.IDatabase;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
@@ -39,7 +36,6 @@ import com.gadgetworks.codeshelf.model.dao.MockDao;
 import com.gadgetworks.codeshelf.model.dao.Result;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Bay;
-import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.Container;
 import com.gadgetworks.codeshelf.model.domain.ContainerUse;
 import com.gadgetworks.codeshelf.model.domain.Facility;
@@ -56,7 +52,6 @@ import com.gadgetworks.codeshelf.model.domain.Slot;
 import com.gadgetworks.codeshelf.model.domain.Tier;
 import com.gadgetworks.codeshelf.model.domain.UomMaster;
 import com.gadgetworks.codeshelf.model.domain.User;
-import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.report.IPickDocumentGenerator;
 import com.gadgetworks.codeshelf.report.PickDocumentGenerator;
 import com.gadgetworks.codeshelf.ws.jetty.server.JettyWebSocketServer;
@@ -210,13 +205,13 @@ public class CodeshelfApplicationTest {
 		ITypedDao<ItemMaster> itemMasterDao = new MockDao<ItemMaster>();
 		ITypedDao<Item> itemDao = new MockDao<Item>();
 		ITypedDao<UomMaster> uomMasterDao = new MockDao<UomMaster>();
-		ITypedDao<Che> cheDao = new MockDao<Che>();
-		ITypedDao<WorkInstruction> workInstructionDao = new MockDao<WorkInstruction>();
+		//ITypedDao<Che> cheDao = new MockDao<Che>();
+		//ITypedDao<WorkInstruction> workInstructionDao = new MockDao<WorkInstruction>();
 		ITypedDao<LocationAlias> locationAliasDao = new MockDao<LocationAlias>();
 		ITypedDao<OrderLocation> orderLocationDao = new MockDao<OrderLocation>();
 
-		Injector injector = new MockInjector();
-		IDaoProvider daoProvider = new DaoProvider(injector);
+		//Injector injector = new MockInjector();
+		//IDaoProvider daoProvider = new DaoProvider(injector);
 
 		IHttpServer httpServer = new HttpServer("./",
 			"localhost",

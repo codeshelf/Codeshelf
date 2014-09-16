@@ -13,7 +13,6 @@ import javax.persistence.Enumerated;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
-import lombok.Setter;
 import lombok.ToString;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;

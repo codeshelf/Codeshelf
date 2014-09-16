@@ -8,7 +8,6 @@ import static org.mockito.Mockito.when;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Assert;
@@ -17,10 +16,10 @@ import org.junit.Test;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.service.WorkService;
-import com.google.common.collect.ImmutableList;
 
 public class WorkServiceTest<E> {
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void summariesAreSorted() {
 		ITypedDao<WorkInstruction> workInstructionDao = mock(ITypedDao.class);

@@ -60,6 +60,7 @@ public class EdiDocumentLocator extends DomainObjectTreeABC<DropboxService> {
 		}
 	}
 
+	@SuppressWarnings("unused")
 	private static final Logger		LOGGER	= LoggerFactory.getLogger(EdiDocumentLocator.class);
 
 	// The owning EdiService.
@@ -118,6 +119,7 @@ public class EdiDocumentLocator extends DomainObjectTreeABC<DropboxService> {
 		return 9;
 	}
 
+	@SuppressWarnings("unchecked")
 	public final ITypedDao<EdiDocumentLocator> getDao() {
 		return DAO;
 	}

@@ -76,9 +76,11 @@ import com.google.inject.Singleton;
 //@ToString(doNotUseGetters = true)
 public abstract class LocationABC<P extends IDomainObject> extends DomainObjectTreeABC<P> implements ILocation<P> {
 
+	@SuppressWarnings("rawtypes")
 	@Inject
 	public static ITypedDao<LocationABC>	DAO;
 
+	@SuppressWarnings("rawtypes")
 	@Singleton
 	public static class LocationABCDao extends GenericDaoABC<LocationABC> implements ITypedDao<LocationABC> {
 
@@ -210,6 +212,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	private List<Vertex>				vertices			= new ArrayList<Vertex>();
 
 	// The child locations.
+	@SuppressWarnings("rawtypes")
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	@Getter
@@ -273,6 +276,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		anchorPosTypeEnum = PositionTypeEnum.valueOf(inPosType);
 	}
 
+	@SuppressWarnings("rawtypes")
 	public final List<ISubLocation> getChildren() {
 		return new ArrayList<ISubLocation>(locations.values());
 	}
@@ -281,11 +285,12 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#getChildrenAtLevel(java.lang.Class)
 	 */
-	public final <T extends ISubLocation> List<T> getChildrenAtLevel(Class<? extends ISubLocation> inClassWanted) {
+	@SuppressWarnings("unchecked")
+	public final <T extends ISubLocation<?>> List<T> getChildrenAtLevel(Class<? extends ISubLocation<?>> inClassWanted) {
 		List<T> result = new ArrayList<T>();
 
 		// Loop through all of the children.
-		for (ILocation<P> child : getChildren()) {
+		for (ISubLocation<? extends IDomainObject> child : getChildren()) {
 			if (child.getClass().equals(inClassWanted)) {
 				// If the child is the kind we want then add it to the list.
 				result.add((T) child);
@@ -307,7 +312,8 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.ILocation#getLocationIdToParentLevel(java.lang.Class)
 	 */
-	public final String getLocationIdToParentLevel(Class<? extends ILocation> inClassWanted) {
+	@SuppressWarnings("unchecked")
+	public final String getLocationIdToParentLevel(Class<? extends ILocation<?>> inClassWanted) {
 		String result;
 
 		ILocation<P> checkParent = (ILocation<P>) getParent();
@@ -353,6 +359,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		if (this.getClass().equals(Facility.class))
 			return "";
 		
+		@SuppressWarnings("unchecked")
 		ILocation<P> checkParent = (ILocation<P>) getParent();
 		if (checkParent.getClass().equals(Facility.class)) {
 			// This is the last child  we want.
@@ -370,7 +377,8 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#getParentAtLevel(java.lang.Class)
 	 */
-	public final <T extends ILocation> T getParentAtLevel(Class<? extends ILocation> inClassWanted) {
+	@SuppressWarnings("unchecked")
+	public final <T extends ILocation<?>> T getParentAtLevel(Class<? extends ILocation<?>> inClassWanted) {
 		
 		// if you call aisle.getParentAtLevel(Aisle.class), return itself. This is moderately common.
 		if (this.getClass().equals(inClassWanted)) 
@@ -410,6 +418,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.ILocation#getAbsolutePosX()
 	 */
+	@SuppressWarnings("unchecked")
 	public Point getAbsoluteAnchorPoint() {
 		Point result = getAnchorPoint();
 
@@ -447,9 +456,9 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#addLocation(com.gadgetworks.codeshelf.model.domain.SubLocationABC)
 	 */
-	public final void addLocation(ISubLocation inLocation) {
+	public final void addLocation(ISubLocation<?> inLocation) {
 		// Ebean can't deal with interfaces.
-		SubLocationABC subLocation = (SubLocationABC) inLocation;
+		SubLocationABC<?> subLocation = (SubLocationABC<?>) inLocation;
 		locations.put(inLocation.getDomainId(), subLocation);
 	}
 
@@ -457,10 +466,10 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#getLocation(java.lang.String)
 	 */
-	public final ISubLocation findLocationById(String inLocationId) {
+	public final ISubLocation<?> findLocationById(String inLocationId) {
 		// There's some ebean weirdness around Map caches, so we have to use a different strategy to resolve this request.
 		//return locations.get(inLocationId);
-		ISubLocation result = null;
+		ISubLocation<?> result = null;
 
 		// If the current location is a facility then first look for an alias 
 		if (this.getClass().equals(Facility.class)) {
@@ -472,10 +481,13 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		}
 
 		// We didn't find an alias, so search through DB for the matching location.
+		@SuppressWarnings("rawtypes")
 		ITypedDao<SubLocationABC> dao = SubLocationABC.DAO;
 		Map<String, Object> filterParams = new HashMap<String, Object>();
 		filterParams.put("persistentId", this.getPersistentId().toString());
 		filterParams.put("domainId", inLocationId);
+		
+		@SuppressWarnings("rawtypes")
 		List<SubLocationABC> resultSet = dao.findByFilter("parent.persistentId = :persistentId and domainId = :domainId",
 			filterParams);
 		if ((resultSet != null) && (resultSet.size() > 0)) {
@@ -707,6 +719,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	 * Compare locations by their position relative to each other.
 	 *
 	 */
+	@SuppressWarnings("rawtypes")
 	private class LocationWorkingOrderComparator implements Comparator<ILocation> {
 
 		public int compare(ILocation inLoc1, ILocation inLoc2) {
@@ -724,6 +737,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 	public List<ILocation<?>> getSubLocationsInWorkingOrder() {
 		List<ILocation<?>> result = new ArrayList<ILocation<?>>();
+		@SuppressWarnings("rawtypes")
 		List<ISubLocation> childLocations = getChildren();
 		Collections.sort(childLocations, new LocationWorkingOrderComparator());
 		for (ILocation<?> childLocation : childLocations) {
@@ -759,7 +773,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		// See if we have the controller. Then recursively ask each parent until found.
 		LedController theController = getLedController();
 		if (theController == null) {
-			ILocation aLocation = (ILocation) this.getParent();
+			ILocation<?> aLocation = (ILocation<?>) this.getParent();
 			if (aLocation != null) {
 				theController = aLocation.getEffectiveLedController();
 			}
@@ -772,7 +786,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		// See if we have the controller. Then recursively ask each parent until found.
 		Short theChannel = getLedChannel();
 		if (theChannel == null) {
-			ILocation aLocation = (ILocation) this.getParent();
+			ILocation<?> aLocation = (ILocation<?>) this.getParent();
 			if (aLocation != null) {
 				theChannel = aLocation.getEffectiveLedChannel();
 			}

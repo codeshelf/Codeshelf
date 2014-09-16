@@ -171,6 +171,7 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		LOGGER.info("Application terminated normally");
 	}
 
+	@SuppressWarnings("unused")
 	private void initPreferencesStore(Organization inOrganization) {
 		initPreference(inOrganization,
 			PersistentProperty.FORCE_CHANNEL,

@@ -17,6 +17,7 @@ import com.google.inject.name.Named;
  */
 public final class PostgresSchemaManager extends SchemaManagerABC {
 
+	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(PostgresSchemaManager.class);
 
 	@Inject

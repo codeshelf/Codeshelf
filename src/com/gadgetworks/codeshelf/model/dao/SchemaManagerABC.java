@@ -15,7 +15,6 @@ import java.util.Properties;
 
 import lombok.Getter;
 
-import org.postgresql.util.PSQLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -663,8 +662,9 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	 *  @param inFromSchema
 	 *  @param inToSchema
 	 */
+	@SuppressWarnings("unused")
 	private void downgradeSchema(int inOldVersion, int inNewVersion) {
-
+		throw new UnsupportedOperationException("Cannot downgrade database");
 	}
 
 	// --------------------------------------------------------------------------

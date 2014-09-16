@@ -5,7 +5,6 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
-import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -66,8 +65,6 @@ import com.gadgetworks.codeshelf.validation.InputValidationException;
 import com.gadgetworks.flyweight.command.ColorEnum;
 import com.gadgetworks.flyweight.command.NetGuid;
 import com.google.common.base.Strings;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -181,10 +178,15 @@ public class Facility extends SubLocationABC<Facility> {
 		setParentOrganization(organization);
 	}
 
+	public final static void setDAO(ITypedDao<Facility> dao) {
+		Facility.DAO = dao;
+	}
+
 	public final String getDefaultDomainIdPrefix() {
 		return "F";
 	}
 
+	@SuppressWarnings("unchecked")
 	public final ITypedDao<Facility> getDao() {
 		return DAO;
 	}
@@ -797,7 +799,7 @@ public class Facility extends SubLocationABC<Facility> {
 	 * @param inLocation
 	 * @param inDimMeters
 	 */
-	public final void createOrUpdateVertices(LocationABC inLocation, Point inDimMeters) {
+	public final void createOrUpdateVertices(LocationABC<?> inLocation, Point inDimMeters) {
 		// Change to public as this is called from aisle file reader, and later from editor
 		// change from create to createOrUpdate
 		// Maybe this should not be a facility method.
@@ -862,7 +864,8 @@ public class Facility extends SubLocationABC<Facility> {
 	 */
 	@Transactional
 	public final void createDefaultContainerKind() {
-		ContainerKind containerKind = createContainerKind(ContainerKind.DEFAULT_CONTAINER_KIND, 0.0, 0.0, 0.0);
+		//ContainerKind containerKind = 
+		createContainerKind(ContainerKind.DEFAULT_CONTAINER_KIND, 0.0, 0.0, 0.0);
 	}
 
 	// --------------------------------------------------------------------------
@@ -1109,7 +1112,7 @@ public class Facility extends SubLocationABC<Facility> {
 	}
 
 	private WorkInstructionSequencerABC getSequencer() {
-		return WorkInstructionSequencerFactory.createSequencer(this.sequencerType);
+		return WorkInstructionSequencerFactory.createSequencer(Facility.sequencerType);
 	}
 
 	private class GroupAndSortCodeComparator implements Comparator<WorkInstruction> {
@@ -1389,7 +1392,7 @@ public class Facility extends SubLocationABC<Facility> {
 															outOrderDetail,
 															container,
 															inChe,
-															(LocationABC) (firstOutOrderLoc.getLocation()),
+															(LocationABC<?>) (firstOutOrderLoc.getLocation()),
 															inTime);
 
 														// If we created a WI then add it to the list.
@@ -1462,6 +1465,7 @@ public class Facility extends SubLocationABC<Facility> {
 	 * Compare Work Instructions by their ItemIds.
 	 *
 	 */
+	@SuppressWarnings("unused")
 	private class WiItemIdComparator implements Comparator<WorkInstruction> {
 
 		public int compare(WorkInstruction inWi1, WorkInstruction inWi2) {
@@ -1476,6 +1480,7 @@ public class Facility extends SubLocationABC<Facility> {
 	 * @param inBays
 	 * @return
 	 */
+	@SuppressWarnings("unused")
 	private List<WorkInstruction> sortCrosswallInstructionsInLocationOrder(final List<WorkInstruction> inCrosswallWiList,
 		final List<ISubLocation<?>> inSubLocations) {
 
@@ -1516,7 +1521,7 @@ public class Facility extends SubLocationABC<Facility> {
 		OrderDetail inOrderDetail,
 		Container inContainer,
 		Che inChe,
-		LocationABC inLocation,
+		ILocation<?> inLocation,
 		final Timestamp inTime) {
 		WorkInstruction resultWi = null;
 		boolean isInventoryPickInstruction = false;
@@ -1633,9 +1638,15 @@ public class Facility extends SubLocationABC<Facility> {
 		// This is used for GoodEggs cross batch processs. The order header passed in is the outbound order (which has order locations),
 		// but inWi was generated from the cross batch order detail.
 
+		if(inWi == null) {
+			LOGGER.error("Unexpected null WorkInstruction processing "+inOrder==null?"null order":inOrder.getOrderId());
+			return;
+		} 
+
 		// Warning: the ledCmdStream must be set to "[]" if we bail. If not, site controller will NPE. Hence the check at this late stage
 		// This does not bail intentionally. Perhap should if led = 0.
 		String existingCmdString = inWi.getLedCmdStream();
+
 		if (existingCmdString == null || existingCmdString.isEmpty()) {
 			inWi.setLedCmdStream("[]"); // empty array
 			LOGGER.error("work instruction was not initialized");
@@ -1655,7 +1666,7 @@ public class Facility extends SubLocationABC<Facility> {
 
 			// The new way of sending LED data to the remote controller. Note getEffectiveXXX instead of getLedController
 			// This will throw if aisles/tiers are not configured yet. Lets avoid by the null checks.
-			ISubLocation theLocation = orderLocation.getLocation(); // this should never be null by database constraint
+			ISubLocation<?> theLocation = orderLocation.getLocation(); // this should never be null by database constraint
 			LedController theController = null;
 			Short theChannel = 0;
 			if (theLocation == null) {
@@ -1690,9 +1701,15 @@ public class Facility extends SubLocationABC<Facility> {
 	 * @param inOrder
 	 */
 	private void setOutboundWorkInstructionLedPatternAndPosAlongPathFromInventoryItem(final WorkInstruction inWi,
-		final LocationABC inLocation,
+		final ILocation<?> inLocation,
 		final String inItemMasterId,
 		final String inUomId) {
+
+
+		if(inWi == null) {
+			LOGGER.error("Unexpected null WorkInstruction processing "+inItemMasterId);
+			return;
+		}
 
 		// Warning: the ledCmdStream must be set to "[]" if we bail. If not, site controller will NPE. Hence the check at this late stage
 		String existingCmdString = inWi.getLedCmdStream();
@@ -1771,9 +1788,14 @@ public class Facility extends SubLocationABC<Facility> {
 	 */
 	private void setCrossWorkInstructionLedPattern(final WorkInstruction inWi,
 		final String inItemMasterId,
-		final LocationABC inLocation,
+		final ILocation<?> inLocation,
 		final String inUom) {
 
+		if(inWi == null) {
+			LOGGER.error("Unexpected null WorkInstruction processing "+inItemMasterId);
+			return;
+		}
+		
 		// Warning: the ledCmdStream must be set to "[]" if we bail. If not, site controller will NPE. Hence the check at this late stage
 		// This does not bail intentionally. Perhap should if led = 0.
 		String existingCmdString = inWi.getLedCmdStream();
@@ -1889,7 +1911,7 @@ public class Facility extends SubLocationABC<Facility> {
 			ddcPos += distPerItem * item.getQuantity();
 			item.setPosAlongPath(ddcPos);
 			try {
-				item.DAO.store(item);
+				Item.DAO.store(item);
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}
@@ -2072,7 +2094,7 @@ public class Facility extends SubLocationABC<Facility> {
 				// debug aid. Does the CHE know its work instructions?
 				List<WorkInstruction> cheWiList = inChe.getCheWorkInstructions();
 				Integer cheCountGot = cheWiList.size();
-				if (cheCountGot != wiCount) {
+				if (!cheCountGot.equals(wiCount)) {
 					LOGGER.warn("setUpCheContainerFromString did not result in CHE getting all work instructions. Why?"); // Should this be an error? Maybe shorts do not go the CHE
 				}
 
@@ -2085,7 +2107,7 @@ public class Facility extends SubLocationABC<Facility> {
 					// debug aid. Does the CHE know its work instructions?
 					List<WorkInstruction> cheWiList2 = inChe.getCheWorkInstructions();
 					Integer cheCountGot2 = cheWiList2.size();
-					if (cheCountGot2 != wiCountGot) {
+					if (!cheCountGot2.equals(wiCountGot)) {
 						LOGGER.warn("setUpCheContainerFromString did not result in CHE getting all work instructions. Why?"); // Should this be an error? Maybe shorts do not go the CHE
 					}
 
@@ -2184,7 +2206,7 @@ public class Facility extends SubLocationABC<Facility> {
 		itemBean.setCmFromLeft(cmDistanceFromLeft);
 		itemBean.setQuantity(quantity);
 		itemBean.setUom(inUomId);
-		LocationABC location = (LocationABC) this.findSubLocationById(storedLocationId);
+		LocationABC<?> location = (LocationABC<?>) this.findSubLocationById(storedLocationId);
 		if (location == null && !Strings.isNullOrEmpty(storedLocationId)) {
 			Errors errors = new DefaultErrors(Item.class);
 			errors.rejectValue("storedLocation", ErrorCode.FIELD_NOT_FOUND, "storedLocation was not found");

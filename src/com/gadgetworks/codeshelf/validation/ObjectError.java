@@ -89,6 +89,9 @@ public class ObjectError implements Serializable {
 
 	@Override
 	public boolean equals(Object other) {
+		if (other == null) {
+			return false;
+		}
 		if (this == other) {
 			return true;
 		}

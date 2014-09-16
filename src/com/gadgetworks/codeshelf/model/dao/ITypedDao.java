@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.UUID;
 
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
-import com.gadgetworks.codeshelf.model.domain.LocationABC;
 
 /**
  * @author jeffw

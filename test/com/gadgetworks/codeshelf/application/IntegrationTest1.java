@@ -13,10 +13,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
-import com.gadgetworks.codeshelf.application.Configuration;
 import com.gadgetworks.codeshelf.edi.AislesFileCsvImporter;
 import com.gadgetworks.codeshelf.edi.EdiTestABC;
 import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
@@ -25,16 +23,12 @@ import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
 import com.gadgetworks.codeshelf.edi.InventoryCsvImporter;
 import com.gadgetworks.codeshelf.edi.LocationAliasCsvImporter;
 import com.gadgetworks.codeshelf.edi.OutboundOrderCsvImporter;
-import com.gadgetworks.codeshelf.model.LedRange;
 import com.gadgetworks.codeshelf.model.WiSetSummary;
-import com.gadgetworks.codeshelf.model.WiSummarizer;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
-import com.gadgetworks.codeshelf.model.domain.Bay;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Item;
-import com.gadgetworks.codeshelf.model.domain.ItemMaster;
 import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.LocationABC;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
@@ -73,6 +67,7 @@ public class IntegrationTest1 extends EdiTestABC {
 		
 	}
 	
+	@SuppressWarnings({ "unused", "rawtypes" })
 	private Facility setUpSimpleNoSlotFacility(String inOrganizationName) {
 		// This returns a facility with aisle A1, with two bays with one tier each. No slots. With a path, associated to the aisle.
 		//   With location alias for first baytier only, not second.
@@ -191,6 +186,7 @@ public class IntegrationTest1 extends EdiTestABC {
 
 	}
 
+	@SuppressWarnings({ "unused", "rawtypes" })
 	@Test
 	public final void testPick() throws IOException {
 

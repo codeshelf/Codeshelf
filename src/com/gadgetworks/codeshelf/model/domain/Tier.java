@@ -89,12 +89,14 @@ public class Tier extends SubLocationABC<Bay> {
 	@Setter
 	private boolean				mTransientLedsIncrease;
 
+	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(Tier.class);
 
 	public Tier(Bay bay, String domainId, final Point inAnchorPoint, final Point inPickFaceEndPoint) {
 		super(bay, domainId, inAnchorPoint, inPickFaceEndPoint);
 	}
 
+	@SuppressWarnings("unchecked")
 	public final ITypedDao<Tier> getDao() {
 		return DAO;
 	}
@@ -194,7 +196,7 @@ public class Tier extends SubLocationABC<Bay> {
 		// We definitely have to sort these. Not guaranteed to come in order.
 		Collections.sort(slotList, new SlotIDComparator());
 
-		ListIterator li = null;
+		ListIterator<Slot> li = null;
 		li = slotList.listIterator();
 		while (li.hasNext()) {
 			Slot thisSlot = (Slot) li.next();
@@ -231,7 +233,7 @@ public class Tier extends SubLocationABC<Bay> {
 
 			String thisDomainId = this.getDomainId();
 			UUID thisPersistId = this.getPersistentId();
-			ListIterator li = null;
+			ListIterator<Tier> li = null;
 			li = locationList.listIterator();
 			while (li.hasNext()) {
 				Tier iterTier = (Tier) li.next();

@@ -9,7 +9,6 @@ import java.sql.Timestamp;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 /**
  * This is a structure for summary values for one set of work instructions

@@ -160,6 +160,7 @@ public final class ServerMain {
 	 */
 	private static Injector setupInjector() {
 		Injector injector = Guice.createInjector(new AbstractModule() {
+			@SuppressWarnings("rawtypes")
 			@Override
 			protected void configure() {
 				bind(String.class).annotatedWith(Names.named(ISchemaManager.DATABASE_NAME_PROPERTY))

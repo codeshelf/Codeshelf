@@ -30,6 +30,7 @@ public class WorkInstructionSequencerTest extends DomainTestABC {
 	public WorkInstructionSequencerTest() {
 	}
 
+	@SuppressWarnings("unused")
 	private Facility setUpFacility(String inOrganizationName) {
 		// This returns a facility with aisle A1, with two bays with one tier each. No slots. With a path, associated to the aisle. 
 		//   With location alias for first baytier only, not second. 
@@ -115,6 +116,7 @@ public class WorkInstructionSequencerTest extends DomainTestABC {
 		return facility;
 	}	
 	
+	@SuppressWarnings({ "rawtypes", "unused" })
 	@Test
 	public final void testBayDistanceSequencer()  throws IOException{
 		
@@ -216,6 +218,7 @@ public class WorkInstructionSequencerTest extends DomainTestABC {
 		}		
 	}
 	
+	@SuppressWarnings({ "rawtypes", "unused" })
 	@Test
 	public final void testBayDistanceTopLastSequencer()  throws IOException{
 		

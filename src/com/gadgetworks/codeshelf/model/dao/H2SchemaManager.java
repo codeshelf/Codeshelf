@@ -23,6 +23,7 @@ import com.google.inject.name.Named;
 public final class H2SchemaManager extends SchemaManagerABC {
 
 	private static final String	DB_INIT_URL	= "jdbc:h2:mem:database;DB_CLOSE_DELAY=-1";
+	@SuppressWarnings("unused")
 	private static final String	DB_URL		= "jdbc:h2:mem:database;SCHEMA=CODESHELF;DB_CLOSE_DELAY=-1";
 
 	private static final Logger	LOGGER		= LoggerFactory.getLogger(H2SchemaManager.class);

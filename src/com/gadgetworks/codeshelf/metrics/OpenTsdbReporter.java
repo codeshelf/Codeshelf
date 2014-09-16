@@ -209,7 +209,8 @@ public class OpenTsdbReporter extends ScheduledReporter {
         this.tags = tags;
     }
 
-    @Override
+    @SuppressWarnings("rawtypes")
+	@Override
     public void report(SortedMap<String, Gauge> gauges, SortedMap<String, Counter> counters, SortedMap<String, Histogram> histograms, SortedMap<String, Meter> meters, SortedMap<String, Timer> timers) {
 
     	if (!this.isEnabled) {
@@ -318,7 +319,7 @@ public class OpenTsdbReporter extends ScheduledReporter {
     }
 
 
-    private OpenTsdbMetric buildGauge(String name, Gauge gauge, long timestamp) {
+    private OpenTsdbMetric buildGauge(String name, @SuppressWarnings("rawtypes") Gauge gauge, long timestamp) {
         return OpenTsdbMetric.named(prefix(name))
                 .withValue(gauge.getValue())
                 .withTimestamp(timestamp)

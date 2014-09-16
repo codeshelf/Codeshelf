@@ -9,13 +9,11 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.gadgetworks.codeshelf.application.Configuration;
 import com.gadgetworks.codeshelf.edi.AislesFileCsvImporter;
 import com.gadgetworks.codeshelf.edi.EdiTestABC;
 import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
@@ -24,29 +22,20 @@ import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
 import com.gadgetworks.codeshelf.edi.InventoryCsvImporter;
 import com.gadgetworks.codeshelf.edi.LocationAliasCsvImporter;
 import com.gadgetworks.codeshelf.edi.OutboundOrderCsvImporter;
-import com.gadgetworks.codeshelf.model.LedRange;
-import com.gadgetworks.codeshelf.model.WiSetSummary;
-import com.gadgetworks.codeshelf.model.WiSummarizer;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
-import com.gadgetworks.codeshelf.model.domain.Bay;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Item;
-import com.gadgetworks.codeshelf.model.domain.ItemMaster;
 import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.LocationABC;
-import com.gadgetworks.codeshelf.model.domain.OrderDetail;
-import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.PathSegment;
 import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.model.domain.SubLocationABC;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
-import com.gadgetworks.codeshelf.service.WorkService;
 import com.gadgetworks.flyweight.command.NetGuid;
-import com.google.common.base.Strings;
 
 /**
  * @author jon ranstrom
@@ -58,6 +47,7 @@ public class PickSimulaneousWis extends EdiTestABC {
 		Configuration.loadConfig("test");
 	}
 
+	@SuppressWarnings({ "rawtypes", "unused" })
 	private Facility setUpSimpleNoSlotFacility(String inOrganizationName) {
 		// This returns a facility with aisle A1, with two bays with one tier each. No slots. With a path, associated to the aisle.
 		//   With location alias for first baytier only, not second.
@@ -176,6 +166,7 @@ public class PickSimulaneousWis extends EdiTestABC {
 
 	}
 
+	@SuppressWarnings("unused")
 	@Test
 	public final void testPick() throws IOException {
 
@@ -206,7 +197,7 @@ public class PickSimulaneousWis extends EdiTestABC {
 		ICsvInventoryImporter importer = new InventoryCsvImporter(mItemMasterDao, mItemDao, mUomMasterDao);
 		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
 
-		LocationABC locationD402 = (LocationABC) facility.findSubLocationById("D402");
+		LocationABC<?> locationD402 = (LocationABC<?>) facility.findSubLocationById("D402");
 
 		Item item1123Loc402EA = locationD402.getStoredItemFromMasterIdAndUom("1123", "EA");
 		Assert.assertNotNull(item1123Loc402EA);

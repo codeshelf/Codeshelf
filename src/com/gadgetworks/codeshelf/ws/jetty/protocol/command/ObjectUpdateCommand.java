@@ -1,7 +1,5 @@
 package com.gadgetworks.codeshelf.ws.jetty.protocol.command;
 
-import java.beans.PropertyDescriptor;
-import java.beans.PropertyEditor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
@@ -11,7 +9,6 @@ import org.apache.commons.beanutils.PropertyUtilsBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
@@ -74,6 +71,7 @@ public class ObjectUpdateCommand extends CommandABC {
 			Class<?> classObject = Class.forName(className);
 			if (IDomainObject.class.isAssignableFrom(classObject)) {
 				// First locate an instance of the parent class.
+				@SuppressWarnings("unchecked")
 				ITypedDao<IDomainObject> dao = daoProvider.getDaoInstance((Class<IDomainObject>) classObject);
 				IDomainObject updateObject = dao.findByPersistentId(objectId);
 

@@ -58,6 +58,7 @@ public class WorkArea extends DomainObjectTreeABC<Path> {
 		}
 	}
 
+	@SuppressWarnings("unused")
 	private static final Logger	LOGGER		= LoggerFactory.getLogger(WorkArea.class);
 
 	// The parent facility.
@@ -80,6 +81,7 @@ public class WorkArea extends DomainObjectTreeABC<Path> {
 	private String				description;
 
 	// A work area is a collection of locations.
+	@SuppressWarnings("rawtypes")
 	@OneToMany(mappedBy = "parent")
 	@Getter
 	private List<SubLocationABC>	locations	= new ArrayList<SubLocationABC>();
@@ -98,6 +100,7 @@ public class WorkArea extends DomainObjectTreeABC<Path> {
 		workAreaId = "";
 	}
 
+	@SuppressWarnings("unchecked")
 	public final ITypedDao<WorkArea> getDao() {
 		return DAO;
 	}
@@ -119,14 +122,14 @@ public class WorkArea extends DomainObjectTreeABC<Path> {
 	}
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
-	public final void addLocation(ISubLocation inSubLocation) {
+	public final void addLocation(ISubLocation<?> inSubLocation) {
 		// Ebean can't deal with interfaces.
-		SubLocationABC subLocation = (SubLocationABC) inSubLocation;
+		SubLocationABC<?> subLocation = (SubLocationABC<?>) inSubLocation;
 		locations.add(subLocation);
 	}
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
-	public final void removeLocation(ISubLocation inLocation) {
+	public final void removeLocation(ISubLocation<?> inLocation) {
 		locations.remove(inLocation);
 	}
 

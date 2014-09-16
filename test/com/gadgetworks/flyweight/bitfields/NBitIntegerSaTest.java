@@ -25,11 +25,9 @@ public class NBitIntegerSaTest {
 	public final void testConstructor() throws OutOfRangeException {
 
 		@SuppressWarnings("unused")
-		NBitInteger testInt1;
-		@SuppressWarnings("unused")
 		NBitInteger testInt2;
 
-		testInt1 = new NBitInteger((byte) 3, (byte) 1);
+		new NBitInteger((byte) 3, (byte) 1);
 
 		try {
 			testInt2 = new NBitInteger((byte) 3, (byte) -1);
@@ -139,6 +137,7 @@ public class NBitIntegerSaTest {
 			NBitInteger testInt = new NBitInteger((byte) 3);
 
 			try {
+				@SuppressWarnings("unused")
 				short value = testInt.getValue();
 				Assert.fail();
 			} catch (OutOfRangeException e) {

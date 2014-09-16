@@ -33,7 +33,6 @@ import com.gadgetworks.flyweight.controller.INetworkDevice;
 import com.gadgetworks.flyweight.controller.IRadioController;
 import com.gadgetworks.flyweight.controller.IRadioControllerEventListener;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 
 /**
  * @author jeffw

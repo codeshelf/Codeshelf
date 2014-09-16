@@ -101,6 +101,10 @@ public class Organization extends DomainObjectABC {
 		setParent(this);
 		description = "";
 	}
+	
+	public final static void setDAO(ITypedDao<Organization> dao) {
+		Organization.DAO = dao;
+	}
 
 	public final void addUser(User inUser) {
 		users.put(inUser.getDomainId(), inUser);
@@ -126,6 +130,7 @@ public class Organization extends DomainObjectABC {
 		persistentProperties.remove(inPersistentPropertyId);
 	}
 
+	@SuppressWarnings("unchecked")
 	public final ITypedDao<Organization> getDao() {
 		return DAO;
 	}
@@ -162,7 +167,7 @@ public class Organization extends DomainObjectABC {
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void removeFacility(Facility inFacility) {
-		facilities.remove(inFacility);
+		facilities.remove(inFacility.getDomainId());
 	}
 
 	// --------------------------------------------------------------------------
@@ -222,11 +227,13 @@ public class Organization extends DomainObjectABC {
 
 		// Create a first Dropbox Service entry for this facility.
 		LOGGER.info("Creating dropbox service");
+		@SuppressWarnings("unused")
 		DropboxService dropboxService = facility.createDropboxService();
 
 		// Create a first IronMQ Service entry for this facility.
 		LOGGER.info("Creating IronMQ service");
 		try {
+		@SuppressWarnings("unused")
 		IronMqService ironMqService = facility.createIronMqService();
 		}
 		catch (PSQLException e) {

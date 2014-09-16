@@ -18,12 +18,12 @@ import org.junit.Test;
 import com.gadgetworks.codeshelf.application.Configuration;
 import com.gadgetworks.codeshelf.model.LedRange;
 import com.gadgetworks.codeshelf.model.WiSetSummary;
-import com.gadgetworks.codeshelf.model.WiSummarizer;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Bay;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
+import com.gadgetworks.codeshelf.model.domain.ILocation;
 import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster;
 import com.gadgetworks.codeshelf.model.domain.LedController;
@@ -181,6 +181,7 @@ public class InventoryImporterTest extends EdiTestABC {
 
 	}
 
+	@SuppressWarnings("rawtypes")
 	private Facility setUpSimpleNoSlotFacility(String inOrganizationName) {
 		// This returns a facility with aisle A1, with two bays with one tier each. No slots. With a path, associated to the aisle.
 		//   With location alias for first baytier only, not second.
@@ -276,7 +277,8 @@ public class InventoryImporterTest extends EdiTestABC {
 
 		String nName = "N-" + inOrganizationName;
 		CodeshelfNetwork network = facility.createNetwork(nName);
-		Che che = network.createChe("CHE1", new NetGuid("0x00000001"));
+		//Che che = 
+		network.createChe("CHE1", new NetGuid("0x00000001"));
 
 		LedController controller1 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000011"));
 		LedController controller2 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000012"));
@@ -298,6 +300,7 @@ public class InventoryImporterTest extends EdiTestABC {
 
 	}
 
+	@SuppressWarnings({ "rawtypes", "unused" })
 	@Test
 	public final void testBayAnchors() {
 		// This is critical for path values for non-slotted inventory. Otherwise, this belongs in aisle file test, and not in inventory test.
@@ -351,6 +354,7 @@ public class InventoryImporterTest extends EdiTestABC {
 
 	}
 
+	@SuppressWarnings({ "rawtypes", "unused" })
 	@Test
 	public final void testNonSlottedInventory() {
 
@@ -428,7 +432,7 @@ public class InventoryImporterTest extends EdiTestABC {
 
 		// We can now see how the inventory would light.
 		// BOL 1 is case item in A1.B1.T1, with 80 LEDs. No cmFromLeftValue, so it will take the central 4 LEDs.
-		LocationABC theLoc = itemBOL1.getStoredLocation();
+		ILocation<?> theLoc = itemBOL1.getStoredLocation();
 		// verify the conditions.
 		int firstLocLed = theLoc.getFirstLedNumAlongPath();
 		int lastLocLed = theLoc.getLastLedNumAlongPath();
@@ -461,6 +465,7 @@ public class InventoryImporterTest extends EdiTestABC {
 
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Test
 	public final void testNonSlottedInventory2() {
 
@@ -511,6 +516,7 @@ public class InventoryImporterTest extends EdiTestABC {
 
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Test
 	public final void testNonSlottedInventory3() {
 
@@ -567,6 +573,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		return facility;
 	}
 
+	@SuppressWarnings({ "rawtypes", "unused" })
 	@Test
 	public final void testNonSlottedPick() throws IOException {
 

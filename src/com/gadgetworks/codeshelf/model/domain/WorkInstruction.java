@@ -177,6 +177,7 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 	private Integer						actualQuantity;
 
 	// From location.
+	@SuppressWarnings("rawtypes")
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	private LocationABC					location;
@@ -253,6 +254,7 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 
 	}
 
+	@SuppressWarnings("unchecked")
 	public final ITypedDao<WorkInstruction> getDao() {
 		return DAO;
 	}
@@ -290,7 +292,7 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 	}
 
 	// Denormalized for serialized WIs at the site controller.
-	public final void setLocation(LocationABC inLocation) {
+	public final void setLocation(ILocation<?> inLocation) {
 		location = (SubLocationABC<?>) inLocation;
 		// This string is user-readable format set by application logic.
 		// locationId = inLocation.getLocationId();
@@ -312,6 +314,7 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 			result = true;
 		} else {
 			// The check location is parent of the WI location, so it contains it.
+			@SuppressWarnings("unchecked")
 			ILocation<?> parentLoc = location.getParentAtLevel(inCheckLocation.getClass());
 			if ((parentLoc != null) && (parentLoc.equals(inCheckLocation))) {
 				result = true;
@@ -481,7 +484,7 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 		if (theWiLocation == null)
 			return returnStr;
 		
-		LocationABC theLocation = (LocationABC) theWiLocation;
+		LocationABC<?> theLocation = (LocationABC<?>) theWiLocation;
 		if (theLocation.getClass() == Facility.class)
 			return returnStr;
 		

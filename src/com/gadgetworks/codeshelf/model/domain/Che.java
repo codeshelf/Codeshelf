@@ -93,6 +93,7 @@ public class Che extends WirelessDeviceABC {
 
 	}
 
+	@SuppressWarnings("unchecked")
 	public final ITypedDao<Che> getDao() {
 		return DAO;
 	}

@@ -10,11 +10,9 @@ import java.util.List;
 import java.util.UUID;
 
 import javax.persistence.Column;
-import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
-import javax.persistence.Transient;
 
 import lombok.Getter;
 import lombok.NonNull;
@@ -56,6 +54,7 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 	/**
 	 * 
 	 */
+	@SuppressWarnings("unused")
 	private static final long	serialVersionUID	= -2776468192822374495L;
 
 	@Inject
@@ -72,6 +71,7 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 			return PathSegment.class;
 		}
 		
+		@SuppressWarnings("rawtypes")
 		public List<LocationABC> findLocations(PathSegment inPathSegment) {
 			UUID persistentId = inPathSegment.getPersistentId();
 			Query<LocationABC> query = mServer.createQuery(LocationABC.class);
@@ -169,6 +169,7 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 		endPosZ = inEndPoint.getZ();
 	}
 
+	@SuppressWarnings("unchecked")
 	public final ITypedDao<PathSegment> getDao() {
 		return DAO;
 	}
@@ -185,6 +186,7 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 		parent = inParent;
 	}
 
+	@SuppressWarnings("rawtypes")
 	public final List<LocationABC> getLocations() {
 		return DAO.findLocations(this);
 	}

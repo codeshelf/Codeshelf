@@ -91,8 +91,8 @@ public class DropboxService extends EdiServiceABC {
 
 	private static final String		APPKEY					= "0l3auhytaxn2q50";
 	private static final String		APPSECRET				= "5syhdiyq0bd2oxq";
-	private static final Integer	LINK_RETRIES			= 20;
-	private static final Integer	RETRY_SECONDS			= 10 * 1000;
+	//private static final Integer	LINK_RETRIES			= 20;
+	//private static final Integer	RETRY_SECONDS			= 10 * 1000;
 
 	private static final String		FACILITY_FOLDER_PATH	= "FACILITY_";
 
@@ -124,6 +124,7 @@ public class DropboxService extends EdiServiceABC {
 		return DROPBOX_SERVICE_NAME;
 	}
 
+	@SuppressWarnings("unchecked")
 	public final ITypedDao<DropboxService> getDao() {
 		return DAO;
 	}
@@ -321,6 +322,7 @@ public class DropboxService extends EdiServiceABC {
 		return new String(getFacilityPath() + System.getProperty("file.separator") + EXPORT_DIR_PATH).toLowerCase();
 	}
 
+	@SuppressWarnings("unused")
 	private String getFacilityExportSubDirPath(final String inExportSubDirPath) {
 		return new String(getFacilityExportPath() + System.getProperty("file.separator") + inExportSubDirPath).toLowerCase();
 	}
@@ -529,7 +531,8 @@ public class DropboxService extends EdiServiceABC {
 
 			//DropboxInputStream stream = inClient.getFileStream(filepath, null);
 			ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-			DbxEntry.File downloadedFile = inClient.getFile(inEntry.lcPath, null, outputStream);
+			//DbxEntry.File downloadedFile = 
+			inClient.getFile(inEntry.lcPath, null, outputStream);
 			InputStreamReader reader = new InputStreamReader(new ByteArrayInputStream(outputStream.toByteArray()));
 
 			boolean success = false;

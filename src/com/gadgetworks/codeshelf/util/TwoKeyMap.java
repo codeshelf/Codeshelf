@@ -42,6 +42,7 @@ public class TwoKeyMap<KT1, KT2, VT> {
 				return false;
 			if (getClass() != obj.getClass())
 				return false;
+			@SuppressWarnings("unchecked")
 			KeyPair<KPT1, KPT2> other = (KeyPair<KPT1, KPT2>) obj;
 			if (!getOuterType().equals(other.getOuterType()))
 				return false;
@@ -107,6 +108,7 @@ public class TwoKeyMap<KT1, KT2, VT> {
 		}
 	}
 	
+	@SuppressWarnings("unchecked")
 	private VT removeValue(Object value) {
 		if (value == null)
 			return null;
@@ -121,6 +123,7 @@ public class TwoKeyMap<KT1, KT2, VT> {
 
 	}
 
+	@SuppressWarnings("unchecked")
 	public VT remove(Object valueOrKey) {
 		if(removeValue(valueOrKey) != null) {
 			return (VT)valueOrKey; // it's a value

@@ -76,6 +76,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	private ItemMaster			parent;
 
 	// The stored location.
+	@SuppressWarnings("rawtypes")
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	@Getter
@@ -140,6 +141,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		setParent(parent);
 	}
 	
+	@SuppressWarnings("unchecked")
 	public final ITypedDao<Item> getDao() {
 		return DAO;
 	}
@@ -153,14 +155,14 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		return parent.getItemId();
 	}
 
-	public final void setStoredLocation(final ILocation inStoredLocation) {
+	public final void setStoredLocation(final ILocation<?> inStoredLocation) {
 		// If it's already in another location then remove it from that location.
 		// Shall we use its existing domainID (which will change momentarily?
 		// Or compute what its domainID must have been in that location?
 		if (storedLocation != null) {
 			storedLocation.removeStoredItemFromMasterIdAndUom(getItemId(), getUomMasterId());
 		}
-		storedLocation = (LocationABC) inStoredLocation;
+		storedLocation = (LocationABC<?>) inStoredLocation;
 		// The stored location is part of the domain key for an item's instance.
 		setDomainId(makeDomainId(getItemId(), inStoredLocation, getUomMasterId()));
 		inStoredLocation.addStoredItem(this);
@@ -172,7 +174,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 
 	// Assorted meta fields for the UI
 	public final String getNominalLocationId() {
-		LocationABC theLoc = getStoredLocation();
+		ILocation<?> theLoc = getStoredLocation();
 		if (theLoc == null)
 			return "";
 		else {
@@ -181,7 +183,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	}
 
 	public final String getItemLocationAlias() {
-		LocationABC theLoc = getStoredLocation();
+		ILocation<?> theLoc = getStoredLocation();
 		if (theLoc == null)
 			return "";
 		else {
@@ -230,9 +232,9 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		// The intended purpose is allow user to filter by aisle, then sort by tier and getPosAlongPathui
 		//  Should allow easy verification of inventory, working across a tier.
 		String result = "";
-		SubLocationABC location = (SubLocationABC) this.getStoredLocation();
+		SubLocationABC<?> location = (SubLocationABC<?>) this.getStoredLocation();
 		if (location != null) {
-			LocationABC tierLocation = (LocationABC) location.getParentAtLevel(Tier.class);
+			LocationABC<?> tierLocation = (LocationABC<?>) location.getParentAtLevel(Tier.class);
 			if (tierLocation != null) {
 				result = tierLocation.getDomainId();
 			}
@@ -304,10 +306,10 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		}
 		else {
 			Double value = 0.0;
-			LocationABC theLocation = this.getStoredLocation();
-			Double pickEnd = ((SubLocationABC) theLocation).getPickFaceEndPosX();
+			ILocation<?> theLocation = this.getStoredLocation();
+			Double pickEnd = ((SubLocationABC<?>) theLocation).getPickFaceEndPosX();
 			if (pickEnd == 0.0)
-				pickEnd = ((SubLocationABC) theLocation).getPickFaceEndPosY();
+				pickEnd = ((SubLocationABC<?>) theLocation).getPickFaceEndPosY();
 			if (theLocation.isLeftSideTowardsAnchor()) {
 				value = inCmFromLeft / 100.0;
 			} else {
@@ -325,18 +327,35 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		}
 	}
 
-	public final String validatePositionFromLeft(LocationABC inLocation, Integer inCmFromLeft) {
+	public final String validatePositionFromLeft(ILocation<?> inLocation, Integer inCmFromLeft) {
 		String result = "";
-		if (inLocation == null)
+		if (inLocation == null) {
 			result = "Unknown location";
-		// if the cm value is wider than that bay/tier, or negative
-		if (inCmFromLeft != null && inCmFromLeft < 0)
+		} else if (inCmFromLeft != null && inCmFromLeft < 0) {
+			// if the cm value is wider than that bay/tier, or negative
 			result = "Negative cm value not allowed";
-		Double pickEnd = ((SubLocationABC) inLocation).getPickFaceEndPosX();
-		if (pickEnd == 0.0)
-			pickEnd = ((SubLocationABC) inLocation).getPickFaceEndPosY();
-		if (pickEnd < inCmFromLeft / 100.0) {
-			result = "Cm value too large. Location is not that wide.";
+		} else {
+			Double pickEnd = ((SubLocationABC<?>) inLocation).getPickFaceEndPosX();
+			if (pickEnd != null) {
+				if (pickEnd == 0.0)
+					pickEnd = ((SubLocationABC<?>) inLocation).getPickFaceEndPosY();
+				if (pickEnd != null) {
+					if (inCmFromLeft != null) {
+						if (pickEnd < inCmFromLeft / 100.0) {
+							result = "Cm value too large. Location is not that wide.";
+						}
+					} else {
+						LOGGER.error("inCmFromLeft was null");
+						result = "invalid null value (inCmFromLeft)";
+					}
+				} else {
+					LOGGER.error("getPickFaceEndPosY returned null");
+					result = "invalid null value (getPickFaceEndPosY)";
+				}
+			} else {
+				LOGGER.error("getPickFaceEndPosX returned null");
+				result = "invalid null value (getPickFaceEndPosX)";
+			}
 		}
 		return result;
 
@@ -349,13 +368,13 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 
 		Integer value = 0;
 
-		LocationABC theLocation = this.getStoredLocation();
+		ILocation<?> theLocation = this.getStoredLocation();
 		if (theLocation.isLeftSideTowardsAnchor()) {
 			value = (int) Math.round(meters * 100.0);
 		} else { // cm back from the pickface end
-			Double pickEnd = ((SubLocationABC) theLocation).getPickFaceEndPosX();
+			Double pickEnd = ((SubLocationABC<?>) theLocation).getPickFaceEndPosX();
 			if (pickEnd == 0.0)
-				pickEnd = ((SubLocationABC) theLocation).getPickFaceEndPosY();
+				pickEnd = ((SubLocationABC<?>) theLocation).getPickFaceEndPosY();
 			if (pickEnd < meters) {
 				LOGGER.error("Bug found: getCmFromLeft in non-slotted inventory model");
 				value = (int) Math.round(pickEnd * 100.0);
@@ -370,7 +389,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	// This mimics the old getter, but now is done via a computation. This is the key routine.
 	// May well be worth caching this value. Only changes if item's location changes, metersFromAnchor changes, or path change.
 	public Double getPosAlongPath() {
-		LocationABC theLocation = this.getStoredLocation();
+		ILocation<?> theLocation = this.getStoredLocation();
 		Double locationPosValue = theLocation.getPosAlongPath();
 		Double returnValue = locationPosValue;
 		if (returnValue == null) {
@@ -393,9 +412,9 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 			returnValue += meters;
 		else {
 			// if path opposing the anchor, then the pickface end corresponds to the location value. We have to convert before adding.
-			Double pickEnd = ((SubLocationABC) theLocation).getPickFaceEndPosX();
+			Double pickEnd = ((SubLocationABC<?>) theLocation).getPickFaceEndPosX();
 			if (pickEnd == 0.0)
-				pickEnd = ((SubLocationABC) theLocation).getPickFaceEndPosY();
+				pickEnd = ((SubLocationABC<?>) theLocation).getPickFaceEndPosY();
 			if (pickEnd < meters) {
 				LOGGER.error("Bug found: Item.getPosAlongPath in non-slotted inventory model");
 				// let it return the location's posAlongPath
@@ -428,7 +447,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		LedRange theLedRange = new LedRange();
 		
 		// to compute, we need the locations first and last led positions
-		LocationABC theLocation = this.getStoredLocation();
+		ILocation<?> theLocation = this.getStoredLocation();
 		int firstLocLed = theLocation.getFirstLedNumAlongPath(); 
 		int lastLocLed = theLocation.getLastLedNumAlongPath(); 
 		// following cast not safe if the stored location is facility
@@ -437,7 +456,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		
 		Double metersFromAnchor = getMetersFromAnchor();
 		
-		Double locationWidth = ((SubLocationABC) theLocation).getLocationWidthMeters();
+		Double locationWidth = ((SubLocationABC<?>) theLocation).getLocationWidthMeters();
 		boolean lowerLedNearAnchor = theLocation.isLowerLedNearAnchor();
 		
 		theLedRange.computeLedsToLight(firstLocLed, lastLocLed, locationWidth, metersFromAnchor, lowerLedNearAnchor);

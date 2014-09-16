@@ -108,7 +108,7 @@ public class PickDocumentGenerator implements IPickDocumentGenerator {
 				//JasperReport jasperReport = JasperCompileManager.compileReport(jasperDesign);
 				JasperReport jasperReport = (JasperReport) JRLoader.loadObject(defaultDocUrl);
 
-				Map parameters = new HashMap();
+				Map<String,Object> parameters = new HashMap<String,Object>();
 
 				String xml = "<codeshelf></codeshelf>";
 				InputStream xmlStream = new ByteArrayInputStream(xml.getBytes());

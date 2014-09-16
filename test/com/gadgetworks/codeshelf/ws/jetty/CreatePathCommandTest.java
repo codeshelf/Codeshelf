@@ -38,6 +38,7 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectMethodResponse
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
 import com.gadgetworks.codeshelf.ws.jetty.server.ServerMessageProcessor;
+import com.natpryce.makeiteasy.Maker;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CreatePathCommandTest extends DAOTestABC {
@@ -61,7 +62,11 @@ public class CreatePathCommandTest extends DAOTestABC {
 		String testPathDomainId = "DOMID-2";
 		
 		DAOMaker maker = new DAOMaker(mSchemaManager);
-		Facility testFacility = make(a(maker.TestFacility));
+		
+		@SuppressWarnings("unchecked")
+		Maker<Facility> fm = a(maker.TestFacility);
+		Facility testFacility = make(fm);
+		
 		Path.DAO = new PathDao(mSchemaManager);
 		PathSegment.DAO = new PathSegmentDao(mSchemaManager);
 		WorkArea.DAO = new WorkAreaDao(mSchemaManager);
@@ -98,6 +103,7 @@ public class CreatePathCommandTest extends DAOTestABC {
 		String testPathDomainId = "DOMID";
 		
 		DAOMaker maker = new DAOMaker(mSchemaManager);
+		@SuppressWarnings("unchecked")
 		Facility testFacility = make(a(maker.TestFacility));
 		Path.DAO = new PathDao(mSchemaManager);
 		PathSegment.DAO = new PathSegmentDao(mSchemaManager);

@@ -77,7 +77,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private static final String		SETUP_COMMAND			= "SETUP";
 	private static final String		SHORT_COMMAND			= "SHORT";
 	private static final String		LOGOUT_COMMAND			= "LOGOUT";
-	private static final String		RESUME_COMMAND			= "RESUME";
+	//private static final String		RESUME_COMMAND			= "RESUME";
 	private static final String		YES_COMMAND				= "YES";
 	private static final String		NO_COMMAND				= "NO";
 	
@@ -761,6 +761,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	/**
 	 * Sort the WIs by their distance along the path.
 	 */
+	@SuppressWarnings("unused")
 	private class WiDistanceComparator implements Comparator<WorkInstruction> {
 
 		public int compare(WorkInstruction inWi1, WorkInstruction inWi2) {
@@ -882,7 +883,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			// This is not about clearing controllers/channels this CHE had lights on for.  Rather, it was about iterating the command groups and making sure
 			// we do not clear out the first group when adding on a second
 			
-			for (Iterator iterator = ledCmdGroups.iterator(); iterator.hasNext();) {
+			for (Iterator<LedCmdGroup> iterator = ledCmdGroups.iterator(); iterator.hasNext();) {
 				LedCmdGroup ledCmdGroup = (LedCmdGroup) iterator.next();
 
 				// The WI's ledCmdStream includes the controller ID. Usually only one command group per WI. So, we are setting ledController as the aisleDeviceLogic for the next WI's lights
@@ -943,8 +944,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 		List<LedCmdGroup> ledCmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(inWi.getLedCmdStream());
 
-		for (Iterator iterator = ledCmdGroups.iterator(); iterator.hasNext();) {
-			LedCmdGroup ledCmdGroup = (LedCmdGroup) iterator.next();
+		for (Iterator<LedCmdGroup> iterator = ledCmdGroups.iterator(); iterator.hasNext();) {
+			LedCmdGroup ledCmdGroup = iterator.next();
 
 			INetworkDevice ledController = mRadioController.getNetworkDevice(new NetGuid(ledCmdGroup.getControllerId()));
 			if (ledController != null) {
@@ -978,7 +979,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		if (LOCATION_PREFIX.equals(inScanPrefixStr)) {
 			setLocationId(inScanStr);
 
-			List<String> containerIdList = new ArrayList<String>(mContainersMap.values());
+			new ArrayList<String>(mContainersMap.values());
 			mDeviceManager.getCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), inScanStr);
 
 			setState(CheStateEnum.GET_WORK);

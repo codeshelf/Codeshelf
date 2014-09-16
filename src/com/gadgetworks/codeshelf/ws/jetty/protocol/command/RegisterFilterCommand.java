@@ -67,10 +67,12 @@ public class RegisterFilterCommand extends CommandABC {
 			// First we find the object (by it's ID).
 			Class<?> classObject = Class.forName(objectClassName);
 			if (IDomainObject.class.isAssignableFrom(classObject)) {
+				@SuppressWarnings("unchecked")
 				ITypedDao<IDomainObject> dao = daoProvider.getDaoInstance((Class<IDomainObject>) classObject);	
 				this.session.registerAsDAOListener(dao);
 
 				// create listener
+				@SuppressWarnings("unchecked")
 				Filter filter = new Filter((Class<IDomainObject>) classObject);				
 				filter.setId(request.getMessageId());
 				filter.setPropertyNames(request.getPropertyNames());

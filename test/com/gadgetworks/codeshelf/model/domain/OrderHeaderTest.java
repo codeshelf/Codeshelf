@@ -15,6 +15,7 @@ public class OrderHeaderTest extends DomainTestABC {
 	 * When I Get First Location Along the Path
 	 * Then I should not receive inactive locations 
 	 */
+	@SuppressWarnings("unused")
 	@Test
 	public void testReturnActiveLocationsOnly() {
 		Facility facility = createFacility("ORG-testReturnActiveLocationsOnly");

@@ -148,6 +148,7 @@ public abstract class DomainObjectABC implements IDomainObject {
 	 * @param inClass
 	 * @param inFields
 	 */
+	@SuppressWarnings("unused")
 	private void addDeclaredAndInheritedFields(Class<?> inClass, Collection<Field> inFields) {
 		inFields.addAll(Arrays.asList(inClass.getDeclaredFields()));
 		Class<?> superClass = inClass.getSuperclass();

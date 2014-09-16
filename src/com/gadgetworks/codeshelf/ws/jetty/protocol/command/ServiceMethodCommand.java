@@ -7,8 +7,6 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.model.domain.IDomainObject;
-import com.gadgetworks.codeshelf.service.WorkService;
 import com.gadgetworks.codeshelf.validation.DefaultErrors;
 import com.gadgetworks.codeshelf.validation.ErrorCode;
 import com.gadgetworks.codeshelf.validation.Errors;

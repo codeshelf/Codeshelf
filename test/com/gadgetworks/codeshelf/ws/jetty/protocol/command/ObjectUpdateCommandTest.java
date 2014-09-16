@@ -172,6 +172,7 @@ public class ObjectUpdateCommandTest {
 		return req;
 	}
 	
+	@SuppressWarnings("unused")
 	private String toDoubleQuote(String simpleJSONSyntax) {
 		return simpleJSONSyntax.replaceAll("'", "\"");
 		

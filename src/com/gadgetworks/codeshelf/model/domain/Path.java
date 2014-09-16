@@ -131,6 +131,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 		travelDirEnum = TravelDirectionEnum.FORWARD;
 	}
 
+	@SuppressWarnings("unchecked")
 	public final ITypedDao<Path> getDao() {
 		return DAO;
 	}
@@ -350,6 +351,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	 * @author jeffw
 	 *
 	 */
+	@SuppressWarnings("rawtypes")
 	private class LocationsComparable implements Comparator<ILocation> {
 
 		public int compare(ILocation inLoc1, ILocation inLoc2) {
@@ -383,7 +385,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	 * @param inPath
 	 * @return
 	 */
-	public final <T extends ISubLocation> List<T> getLocationsByClass(final Class<? extends ISubLocation> inClassWanted) {
+	public final <T extends ISubLocation<?>> List<T> getLocationsByClass(final Class<? extends ISubLocation<?>> inClassWanted) {
 
 		// First make a list of all the bays on the CHE's path.
 		List<T> locations = new ArrayList<T>();

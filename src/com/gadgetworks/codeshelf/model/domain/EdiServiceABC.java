@@ -57,6 +57,7 @@ import com.google.inject.Singleton;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implements IEdiService {
 
+	@SuppressWarnings("unused")
 	private static final Logger			LOGGER				= LoggerFactory.getLogger(EdiServiceABC.class);
 
 	@Inject

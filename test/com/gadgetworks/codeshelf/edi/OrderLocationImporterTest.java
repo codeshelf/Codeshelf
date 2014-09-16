@@ -704,7 +704,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 	}
 	
 	private void assertOrderHasLocation(Facility facility, OrderHeader order, String locationAlias) {
-		ILocation mappedLocation = facility.findSubLocationById(locationAlias);
+		ILocation<?> mappedLocation = facility.findSubLocationById(locationAlias);
 		//String orderLocationId = OrderLocation.makeDomainId(order, mappedLocation);
 		Assert.assertTrue(order.getOrderLocations().size() > 0);
 		boolean found = false;

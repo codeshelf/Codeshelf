@@ -38,7 +38,7 @@ import com.google.inject.Singleton;
 @Table(name = "item_ddc_group")
 @CacheStrategy(useBeanCache = true)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-public class ItemDdcGroup extends DomainObjectTreeABC<ILocation> {
+public class ItemDdcGroup extends DomainObjectTreeABC<ILocation<?>> {
 
 	@Inject
 	public static ITypedDao<ItemDdcGroup>	DAO;
@@ -55,9 +55,11 @@ public class ItemDdcGroup extends DomainObjectTreeABC<ILocation> {
 		}
 	}
 
+	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(ItemDdcGroup.class);
 
 	// The parent location.
+	@SuppressWarnings("rawtypes")
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	private LocationABC			parent;
@@ -80,6 +82,7 @@ public class ItemDdcGroup extends DomainObjectTreeABC<ILocation> {
 
 	}
 
+	@SuppressWarnings("unchecked")
 	public final ITypedDao<ItemDdcGroup> getDao() {
 		return DAO;
 	}
@@ -88,8 +91,8 @@ public class ItemDdcGroup extends DomainObjectTreeABC<ILocation> {
 		return "DDC";
 	}
 
-	public final ILocation getParent() {
-		return (ILocation) parent;
+	public final ILocation<?> getParent() {
+		return (ILocation<?>) parent;
 	}
 	
 	public final void setDdcGroupId(final String inDdcGroupId) {
@@ -100,7 +103,7 @@ public class ItemDdcGroup extends DomainObjectTreeABC<ILocation> {
 		return getDomainId();
 	}
 
-	public final void setParent(ILocation inParent) {
-		parent = (LocationABC) inParent;
+	public final void setParent(ILocation<?> inParent) {
+		parent = (LocationABC<?>) inParent;
 	}
 }

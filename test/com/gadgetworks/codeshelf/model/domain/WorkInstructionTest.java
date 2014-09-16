@@ -72,6 +72,7 @@ public class WorkInstructionTest extends DomainTestABC {
 
 	}
 
+	@SuppressWarnings("unused")
 	@Test
 	public final void addRemoveOrderGroupTest() {
 
@@ -192,6 +193,7 @@ public class WorkInstructionTest extends DomainTestABC {
 
 	}
 
+	@SuppressWarnings("unused")
 	@Test
 	public final void crossBatchOrderGroupTest() {
 		Facility facility = createFacilityWithOutboundOrders("WITEST2");

@@ -25,8 +25,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
-import org.apache.commons.lang.StringUtils;
-import org.apache.http.annotation.Immutable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,7 +40,6 @@ import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.util.ASCIIAlphanumericComparator;
 import com.gadgetworks.codeshelf.util.UomNormalizer;
 import com.google.common.base.Joiner;
-import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
@@ -79,6 +76,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 		}
 	}
 
+	@SuppressWarnings("unused")
 	private static final Logger		LOGGER				= LoggerFactory.getLogger(OrderDetail.class);
 
 	private static final Comparator<String> asciiAlphanumericComparator = new ASCIIAlphanumericComparator();
@@ -158,6 +156,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	public OrderDetail() {
 	}
 
+	@SuppressWarnings("unchecked")
 	public final ITypedDao<OrderDetail> getDao() {
 		return DAO;
 	}

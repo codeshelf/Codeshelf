@@ -59,9 +59,11 @@ public class LocationAlias extends DomainObjectTreeABC<Facility> {
 		}
 	}
 
+	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(LocationAlias.class);
 
 	// Attachment credential.
+	@SuppressWarnings("rawtypes")
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
 	@JsonProperty
@@ -88,6 +90,7 @@ public class LocationAlias extends DomainObjectTreeABC<Facility> {
 
 	}
 
+	@SuppressWarnings("unchecked")
 	public final ITypedDao<LocationAlias> getDao() {
 		return DAO;
 	}
@@ -117,7 +120,7 @@ public class LocationAlias extends DomainObjectTreeABC<Facility> {
 	}
 
 	public final void setMappedLocation(final ISubLocation<?> inMappedLocation) {
-		mappedLocation = (SubLocationABC) inMappedLocation;
+		mappedLocation = (SubLocationABC<?>) inMappedLocation;
 	}
 
 }

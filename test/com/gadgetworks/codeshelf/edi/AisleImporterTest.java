@@ -42,8 +42,6 @@ public class AisleImporterTest extends DomainTestABC {
 
 	@Test
 	public final void testTierB1S1Side() {
-		if (false)
-			return;
 
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A9,,,,,tierB1S1Side,12.85,43.45,X,120,\r\n" //
@@ -199,9 +197,6 @@ public class AisleImporterTest extends DomainTestABC {
 
 	@Test
 	public final void testTierNotB1S1Side() {
-
-		if (false)
-			return;
 
 		// Beside tierNotB1S1Side, this as two aisles, so it makes sure both get their leds properly set, and both vertices set
 		// Not quite realistic; A10 and A20 are on top of each other. Same anchor point
@@ -377,8 +372,7 @@ public class AisleImporterTest extends DomainTestABC {
 
 	@Test
 	public final void test32Led5Slot() {
-		if (false)
-			return;
+
 		// the purpose of bay B1 is to compare this slotting algorithm to Jeff's hand-done goodeggs zigzag slots
 		// the purpose of bay B2 is to check the sort and LEDs of more than 10 slots in a tier
 		// the purpose of bays 9,10,11 is check the bay sort.
@@ -507,8 +501,6 @@ public class AisleImporterTest extends DomainTestABC {
 
 	@Test
 	public final void testZigzagB1S1Side() {
-		if (false)
-			return;
 
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A12,,,,,zigzagB1S1Side,12.85,43.45,X,120,\r\n" //
@@ -589,8 +581,6 @@ public class AisleImporterTest extends DomainTestABC {
 
 	@Test
 	public final void testZigzagNotB1S1Side() {
-		if (false)
-			return;
 
 		// do a Y orientation on this as well
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
@@ -764,8 +754,10 @@ public class AisleImporterTest extends DomainTestABC {
 		// Remember, tier in second bay pickface is relative to the bay. It will be about 1.41
 		Assert.assertTrue(b2T2FaceEnd < 2.0);
 
+		@SuppressWarnings("rawtypes")
 		List<ISubLocation> theB1T1Slots = tierB1T1.getChildren();
 		Assert.assertTrue(theB1T1Slots.size() == 5);
+		@SuppressWarnings("rawtypes")
 		List<ISubLocation> theB1T2Slots = tierB1T2.getChildren();
 		Assert.assertTrue(theB1T2Slots.size() == 4);
 		short tierB1T2First = tierB1T2.getFirstLedNumAlongPath();
@@ -861,10 +853,9 @@ public class AisleImporterTest extends DomainTestABC {
 
 	}
 
+	@SuppressWarnings("unused")
 	@Test
 	public final void testDoubleFileRead() {
-		if (false)
-			return;
 
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A15,,,,,tierNotB1S1Side,12.85,43.45,Y,120,\r\n" //
@@ -1010,8 +1001,6 @@ public class AisleImporterTest extends DomainTestABC {
 
 	@Test
 	public final void testAfterFileModifications() {
-		if (false)
-			return;
 
 		// The file read does a lot. But then we rely on the user via the UI to do additional things to complete the configuration. This is
 		// a (nearly) end to end test of that. The actual UI will call a websocket command that calls a method on a domain object.
@@ -1109,8 +1098,6 @@ public class AisleImporterTest extends DomainTestABC {
 
 	@Test
 	public final void testNoLed() {
-		if (false)
-			return;
 
 		// do a Y orientation on this as well
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
@@ -1165,6 +1152,7 @@ public class AisleImporterTest extends DomainTestABC {
 
 	}
 
+	@SuppressWarnings("unused")
 	@Test
 	public final void testPathCreation() {
 		Organization organization = new Organization();
@@ -1254,6 +1242,7 @@ public class AisleImporterTest extends DomainTestABC {
 
 	}
 	
+	@SuppressWarnings({ "unused", "rawtypes" })
 	@Test
 	public final void testPath() {
 
@@ -1483,9 +1472,7 @@ public class AisleImporterTest extends DomainTestABC {
 	@Test
 	public final void nonSlottedTest() {
 		// For tier-wise non-slotted inventory, we will support the same file format, but with zero tiers.
-		if (false)
-			return;
-		
+
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A61,,,,,tierNotB1S1Side,12.85,43.45,X,120,Y\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //

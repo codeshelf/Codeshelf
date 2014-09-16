@@ -58,8 +58,10 @@ public class UserSession extends DomainObjectTreeABC<User> {
 		}
 	}
 
+	@SuppressWarnings("unused")
 	private static final Logger	LOGGER				= LoggerFactory.getLogger(UserSession.class);
 
+	@SuppressWarnings("unused")
 	private static final long	serialVersionUID	= 3001609308065821464L;
 
 	// The owning CodeShelf network.
@@ -92,6 +94,7 @@ public class UserSession extends DomainObjectTreeABC<User> {
 		created = new Timestamp(System.currentTimeMillis());
 	}
 
+	@SuppressWarnings("unchecked")
 	public final ITypedDao<UserSession> getDao() {
 		return DAO;
 	}

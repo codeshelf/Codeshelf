@@ -1,13 +1,9 @@
 package com.gadgetworks.codeshelf.ws.jetty.protocol.request;
 
 import java.util.List;
-import java.util.UUID;
 
 import lombok.Getter;
 import lombok.Setter;
-
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ArgsClass;
 
 /* {"className":"WorkService",
  * "methodName":"wiSummaryForChe",

@@ -9,8 +9,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import com.gadgetworks.codeshelf.device.LedSample;
-import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 
 /**

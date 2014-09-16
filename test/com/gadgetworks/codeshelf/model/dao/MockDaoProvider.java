@@ -17,7 +17,6 @@ import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.model.domain.Vertex;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
-import com.gadgetworks.codeshelf.model.domain.Vertex.VertexDao;
 
 public class MockDaoProvider implements IDaoProvider {
 
@@ -61,6 +60,7 @@ public class MockDaoProvider implements IDaoProvider {
 		daos.put(Vertex.class, vertexDao);
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
 	public <T extends IDomainObject> ITypedDao<T> getDaoInstance(Class<T> inDomainObjectClass) {
 		ITypedDao<? extends IDomainObject> dao = this.daos.get(inDomainObjectClass);

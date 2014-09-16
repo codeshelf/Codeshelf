@@ -58,10 +58,10 @@ public final class FTDIInterface extends SerialInterfaceABC {
 	//	private static final int BAUD_625000 = 625000;
 	private static final int	BAUD_1250000		= 1250000;
 	private static final int	READ_BUFFER_BYTES	= Packet.MAX_PACKET_BYTES * 2;
-	private static final int	VID					= 0x0403;
-	private static final int	GW_PID				= 0xada8;
+	//private static final int	VID					= 0x0403;
+	//private static final int	GW_PID				= 0xada8;
 	private static final long	GW_VID_PID			= 0x0403ada8;
-	private static final int	FTDI_PID			= 0x6001;
+	//private static final int	FTDI_PID			= 0x6001;
 	private static final long	FTDI_VID_PID		= 0x04036001;
 
 	private JD2XX				mJD2XXInterface;

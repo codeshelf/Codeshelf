@@ -131,6 +131,7 @@ public class IronMqService extends EdiServiceABC {
 		private String	mToken;
 	}
 
+	@SuppressWarnings("unchecked")
 	public final ITypedDao<IronMqService> getDao() {
 		return DAO;
 	}
@@ -255,6 +256,7 @@ public class IronMqService extends EdiServiceABC {
 	 * @param inQueueName
 	 * @return
 	 */
+	@SuppressWarnings("unused")
 	private String getMessage(String inQueueName) {
 		String result = null;
 

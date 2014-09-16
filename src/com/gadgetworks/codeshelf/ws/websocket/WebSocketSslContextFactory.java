@@ -44,6 +44,7 @@ public class WebSocketSslContextFactory implements IWebSocketSslContextFactory {
 	private String				mKeystoreType;
 	private String				mKeystoreStorePassword;
 	private String				mKeystoreKeyPassword;
+	@SuppressWarnings("unused")
 	private ExecutorService		mExec;
 
 	@Inject
@@ -65,7 +66,7 @@ public class WebSocketSslContextFactory implements IWebSocketSslContextFactory {
 		try {
 			KeyStore ks = KeyStore.getInstance(mKeystoreType);
 			File file = new File(mKeystorePath);
-			URL url = file.toURL();
+			URL url = file.toURI().toURL();
 			ks.load(url.openStream(), mKeystoreStorePassword.toCharArray());
 
 			KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");

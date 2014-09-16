@@ -61,6 +61,7 @@ public class ContainerUse extends DomainObjectTreeABC<Container> {
 		}
 	}
 
+	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(ContainerUse.class);
 
 	// The container used.
@@ -104,6 +105,7 @@ public class ContainerUse extends DomainObjectTreeABC<Container> {
 	public ContainerUse() {
 	}
 
+	@SuppressWarnings("unchecked")
 	public final ITypedDao<ContainerUse> getDao() {
 		return DAO;
 	}

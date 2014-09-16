@@ -5,7 +5,7 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
-import java.text.DecimalFormat;
+import java.util.List;
 import java.util.UUID;
 
 import javax.persistence.Column;
@@ -39,11 +39,13 @@ import com.google.inject.Singleton;
 @CacheStrategy(useBeanCache = false)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 //@ToString(doNotUseGetters = true)
-public abstract class SubLocationABC<P extends IDomainObject & ISubLocation> extends LocationABC<P> implements ISubLocation<P> {
+public abstract class SubLocationABC<P extends IDomainObject & ISubLocation<?>> extends LocationABC<P> implements ISubLocation<P> {
 
+	@SuppressWarnings("rawtypes")
 	@Inject
 	public static ITypedDao<SubLocationABC>	DAO;
 
+	@SuppressWarnings("rawtypes")
 	@Singleton
 	public static class SubLocationDao extends GenericDaoABC<SubLocationABC> implements ITypedDao<SubLocationABC> {
 		@Inject
@@ -59,6 +61,7 @@ public abstract class SubLocationABC<P extends IDomainObject & ISubLocation> ext
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(SubLocationABC.class);
 
 	// The owning location.
+	@SuppressWarnings("rawtypes")
 	@Column(nullable = true)
 	@ManyToOne(optional = true)
 	private SubLocationABC		parent;
@@ -107,6 +110,7 @@ public abstract class SubLocationABC<P extends IDomainObject & ISubLocation> ext
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.SubLocationABC#getParent()
 	 */
+	@SuppressWarnings("unchecked")
 	@Override
 	public final P getParent() {
 		// There's some weirdness with Ebean and navigating a recursive hierarchy. (You can't go down and then back up to a different class.)
@@ -125,7 +129,7 @@ public abstract class SubLocationABC<P extends IDomainObject & ISubLocation> ext
 	 */
 	@Override
 	public final void setParent(P inParent) {
-		parent = (SubLocationABC) inParent;
+		parent = (SubLocationABC<?>) inParent;
 	}
 
 	// --------------------------------------------------------------------------
@@ -230,7 +234,9 @@ public abstract class SubLocationABC<P extends IDomainObject & ISubLocation> ext
 		}
 
 		// Also force a recompute for all of the child locations.
-		for (ILocation<P> location : getChildren()) {
+		@SuppressWarnings("rawtypes")
+		List<ISubLocation> locations = getChildren();
+		for (@SuppressWarnings("rawtypes") ISubLocation location : locations) {
 			location.computePosAlongPath(inPathSegment);
 		}
 	}

@@ -60,6 +60,7 @@ public class LedController extends WirelessDeviceABC {
 	private static final Logger		LOGGER		= LoggerFactory.getLogger(LedController.class);
 
 	// All of the locations that use this controller.
+	@SuppressWarnings("rawtypes")
 	@OneToMany(mappedBy = "ledController")
 	@Getter
 	private List<SubLocationABC>	locations	= new ArrayList<SubLocationABC>();
@@ -68,6 +69,7 @@ public class LedController extends WirelessDeviceABC {
 
 	}
 
+	@SuppressWarnings("unchecked")
 	public final ITypedDao<LedController> getDao() {
 		return DAO;
 	}
@@ -77,14 +79,14 @@ public class LedController extends WirelessDeviceABC {
 	}
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
-	public final void addLocation(ISubLocation inSubLocation) {
+	public final void addLocation(ISubLocation<?> inSubLocation) {
 		// Ebean can't deal with interfaces.
-		SubLocationABC subLocation = (SubLocationABC) inSubLocation;
+		SubLocationABC<?> subLocation = (SubLocationABC<?>) inSubLocation;
 		locations.add(subLocation);
 	}
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
-	public final void removeLocation(ISubLocation inSubLocation) {
+	public final void removeLocation(ISubLocation<?> inSubLocation) {
 		locations.remove(inSubLocation);
 	}
 	

@@ -76,6 +76,7 @@ public class InputValidation<T> implements ConstraintViolation<T> {
 		return rootObject;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public Class<T> getRootBeanClass() {
 		return (Class<T>) rootObject.getClass();

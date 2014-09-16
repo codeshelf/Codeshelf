@@ -49,7 +49,6 @@ import com.gadgetworks.flyweight.controller.IRadioController;
 import com.gadgetworks.flyweight.controller.IRadioControllerEventListener;
 import com.gadgetworks.flyweight.controller.NetworkDeviceStateEnum;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 
 // --------------------------------------------------------------------------
 /**
@@ -105,7 +104,8 @@ public class RadioController implements IRadioController {
 	private List<IRadioControllerEventListener>					mEventListeners;
 	private long												mLastIntfCheckMillis;
 	private long												mLastPacketSentMillis;
-	private boolean												mIntfCheckPending;
+	@SuppressWarnings("unused")
+	private boolean												mIntfCheckPending; // actually, this is used, suppressing bogus warning
 	private byte												mAckId;
 	private volatile Map<NetAddress, BlockingQueue<IPacket>>	mPendingAcksMap;
 
@@ -595,7 +595,7 @@ public class RadioController implements IRadioController {
 		 * is to allow the controller to maintain the state info about the network
 		 * that is running.
 		 */
-		CommandNetMgmtSetup netSetupCmd = new CommandNetMgmtSetup(mNetworkId, mRadioChannel);
+		new CommandNetMgmtSetup(mNetworkId, mRadioChannel);
 		//sendCommand(netSetupCmd, mBroadcastAddress, false);
 	}
 

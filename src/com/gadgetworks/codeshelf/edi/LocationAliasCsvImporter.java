@@ -133,6 +133,7 @@ public class LocationAliasCsvImporter implements ICsvLocationAliasImporter {
 			LOGGER.info(inCsvBean.toString());
 
 			try {
+				@SuppressWarnings("unused")
 				LocationAlias locationAlias = updateLocationAlias(inCsvBean, inFacility, inEdiProcessTime);
 			} catch (Exception e) {
 				LOGGER.error("", e);

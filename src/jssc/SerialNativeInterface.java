@@ -52,7 +52,7 @@ public class SerialNativeInterface {
 
         String osName = System.getProperty("os.name");
         String architecture = System.getProperty("os.arch");
-        String userHome = System.getProperty("user.home");
+        //String userHome = System.getProperty("user.home");
         String fileSeparator = System.getProperty("file.separator");
 
         String javaLibPath = System.getProperty("java.library.path");//since 2.1.0
@@ -200,7 +200,9 @@ public class SerialNativeInterface {
             }
             catch (Exception ex) {
                 try {
-                    output.close();
+                	if(output != null) {
+                        output.close();
+                	}
                     if(libFile.exists()){
                         libFile.delete();
                     }

@@ -199,6 +199,7 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 						OrderHeader order = updateOrderHeader(inCsvBean, inFacility, inEdiProcessTime, group);
 						Container container = updateContainer(inCsvBean, inFacility, inEdiProcessTime, order);
 						UomMaster uomMaster = updateUomMaster(inCsvBean, inFacility);
+						@SuppressWarnings("unused")
 						OrderDetail detail = updateOrderDetail(inCsvBean,
 							inFacility,
 							inEdiProcessTime,
@@ -208,7 +209,7 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 							uomMaster);
 					}
 				} catch (Exception e) {
-					LOGGER.error("", e);
+					LOGGER.error("Caught exception while importing cross-batch", e);
 				}
 				mOrderHeaderDao.commitTransaction();
 

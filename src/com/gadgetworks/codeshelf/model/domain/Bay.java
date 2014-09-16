@@ -57,14 +57,17 @@ public class Bay extends SubLocationABC<Aisle> {
 		}
 	}
 
+	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(Bay.class);
 
+	@SuppressWarnings("rawtypes")
 	private static Comparator<ISubLocation> topDownTierOrder = new TopDownTierOrder();
 
 	public Bay(Aisle parent, String domainId, Point inAnchorPoint, Point inPickFaceEndPoint) {
 		super(parent, domainId, inAnchorPoint, inPickFaceEndPoint);
 	}
 	
+	@SuppressWarnings("unchecked")
 	public final ITypedDao<Bay> getDao() {
 		return DAO;
 	}
@@ -91,6 +94,7 @@ public class Bay extends SubLocationABC<Aisle> {
 	
 	@Override
 	public List<ILocation<?>> getSubLocationsInWorkingOrder() {
+		@SuppressWarnings("rawtypes")
 		List<ISubLocation> copy = new ArrayList<ISubLocation>(getChildren());
 		Collections.sort(copy, topDownTierOrder);
 		List<ILocation<?>> result = new ArrayList<ILocation<?>>();
@@ -104,6 +108,7 @@ public class Bay extends SubLocationABC<Aisle> {
 
 	}
 	
+	@SuppressWarnings("rawtypes")
 	private static final class TopDownTierOrder implements Comparator<ISubLocation> {
 		final Ordering<Double> doubleOrdering = Ordering.<Double>natural().reverse().nullsLast();
 

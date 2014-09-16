@@ -16,6 +16,7 @@ import com.gadgetworks.codeshelf.model.domain.Organization;
 
 public class CheSimulationTest extends EndToEndIntegrationTest {
 
+	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(CheSimulationTest.class);
 
 	@Test

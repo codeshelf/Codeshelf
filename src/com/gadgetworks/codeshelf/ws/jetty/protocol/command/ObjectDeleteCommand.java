@@ -45,6 +45,7 @@ public class ObjectDeleteCommand extends CommandABC {
 			if (IDomainObject.class.isAssignableFrom(classObject)) {
 
 				// First locate an instance of the parent class.
+				@SuppressWarnings("unchecked")
 				ITypedDao<IDomainObject> dao = this.daoProvider.getDaoInstance((Class<IDomainObject>) classObject);
 				IDomainObject object = dao.findByPersistentId(objectIdId);
 

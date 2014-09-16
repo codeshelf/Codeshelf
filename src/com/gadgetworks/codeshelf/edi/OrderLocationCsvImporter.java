@@ -5,7 +5,6 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.Timestamp;
@@ -180,7 +179,7 @@ public class OrderLocationCsvImporter implements ICsvOrderLocationImporter {
 		String locationId = inCsvBean.getLocationId();
 
 		// Only create an OrderLocation mapping if the location is valid.
-		ILocation mappedLocation = inFacility.findSubLocationById(locationId);
+		ILocation<?> mappedLocation = inFacility.findSubLocationById(locationId);
 		if (mappedLocation != null) {
 
 			OrderHeader order = inFacility.getOrderHeader(orderId);
@@ -243,7 +242,7 @@ public class OrderLocationCsvImporter implements ICsvOrderLocationImporter {
 	 */
 	private void deleteLocation(final String inLocationId, final Facility inFacility, final Timestamp inEdiProcessTime) {
 
-		ILocation location = inFacility.findSubLocationById(inLocationId);
+		ILocation<?> location = inFacility.findSubLocationById(inLocationId);
 
 		for (OrderHeader order : inFacility.getOrderHeaders()) {
 			// For every OrderLocation on this order, set it to inactive.

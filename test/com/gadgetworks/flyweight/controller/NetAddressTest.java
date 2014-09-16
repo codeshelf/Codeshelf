@@ -23,12 +23,10 @@ public final class NetAddressTest {
 	@Test
 	public void testNetAddress() {
 
-		@SuppressWarnings("unused")
-		NetAddress address;
 
 //		try {
-			address = new NetAddress(IPacket.GATEWAY_ADDRESS);
-			address = new NetAddress(IPacket.BROADCAST_ADDRESS);
+		new NetAddress(IPacket.GATEWAY_ADDRESS);
+		new NetAddress(IPacket.BROADCAST_ADDRESS);
 			
 			// Expected result.
 		//		} catch (OutOfRangeException e) {
