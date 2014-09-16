@@ -1469,14 +1469,15 @@ public class AisleImporterTest extends DomainTestABC {
 		
 	}
 	
+	@SuppressWarnings("unused")
 	@Test
 	public final void nonSlottedTest() {
 		// For tier-wise non-slotted inventory, we will support the same file format, but with zero tiers.
 
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
-				+ "Aisle,A61,,,,,tierNotB1S1Side,12.85,43.45,X,120,Y\r\n" //
+				+ "Aisle,A61,,,,,tierNotB1S1Side,12.85,43.45,X,120\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
-				+ "\r\n" // blank line in the middle
+				// + "\r\n" // blank line in the middle
 				+ "Tier,T1,,0,32,0,,\r\n" //
 				+ "Bay,B2,115,,,,,\r\n" //
 				+ "Tier,T1,,0,32,0,,\r\n" //
@@ -1504,7 +1505,16 @@ public class AisleImporterTest extends DomainTestABC {
 		Assert.assertNotNull(aisle61);
 
 		Path aPath = createPathForTest("F5X.1", facility);
-		PathSegment segment0 = addPathSegmentForTest("F6X.1.0", aPath, 0, 22.0, 48.45, 12.85, 48.45);
+		// this path goes from right to left, and should easily extend beyond the aisle boundaries.
+		PathSegment segment0 = addPathSegmentForTest("F6X.1.0", aPath, 0, 22.0, 48.45, 10.85, 48.45);
+		// let's check that assumption.
+		Double segmentLeftMostX = segment0.getEndPosX();
+		Double segmentRightMostX = segment0.getStartPosX();
+		Double aisleAnchorX = aisle61.getAnchorPosX();
+		Double aislePickEndX = aisle61.getPickFaceEndPosX();
+		Double aisleCorrectedEndX = aisleAnchorX + aislePickEndX;
+		Assert.assertTrue(segmentLeftMostX < aisleAnchorX);
+		Assert.assertTrue(segmentRightMostX > aisleCorrectedEndX);
 		
 		String persistStr = segment0.getPersistentId().toString();
 		aisle61.associatePathSegment(persistStr);
@@ -1514,6 +1524,16 @@ public class AisleImporterTest extends DomainTestABC {
 		aisle61 = Aisle.DAO.findByDomainId(facility, "A61");
 		Bay bayA61B1 = Bay.DAO.findByDomainId(aisle61, "B1");
 		Bay bayA61B2 = Bay.DAO.findByDomainId(aisle61, "B2");
+		
+		// Check some of the functions called by computePosAlongPath
+		Point aisle61AnchorPoint = aisle61.getAbsoluteAnchorPoint();
+		Point bay1AnchorPoint = bayA61B1.getAbsoluteAnchorPoint();
+		Point bay2AnchorPoint = bayA61B2.getAbsoluteAnchorPoint();
+		// replicating the pickEnd logic
+		Point bay1PickFaceEndPoint = bayA61B1.getAbsolutePickFaceEndPoint();
+		Point bay2PickFaceEndPoint = bayA61B2.getAbsolutePickFaceEndPoint();
+		// Manual check here. The bay1 and bay2 points are correct.		
+		
 		// pickface end values are critical. This simple test should cover in a non-confusing way.
 		// Aisle anchor is 12.85,43.45
 		String aislePickEnd = aisle61.getPickFaceEndPosXui();
@@ -1526,6 +1546,9 @@ public class AisleImporterTest extends DomainTestABC {
 		String aislePosAlongPath = aisle61.getPosAlongPathui();
 		String bay1PosAlongPath = bayA61B1.getPosAlongPathui();
 		String bay2PosAlongPath = bayA61B2.getPosAlongPathui();
+		// BUG!  bays should be 1.15 meters different, not .3
+		// The source of this error is known. We call computeDistanceOfPointFromLine(). But we we really want is computeDistanceAlongLine.
+		// Until fixed, the mitigation is to have the path very close to the aisle pick face.
 		Assert.assertNotEquals(bay1PosAlongPath, bay2PosAlongPath);
 		Assert.assertEquals(aislePosAlongPath, bay2PosAlongPath);
 	

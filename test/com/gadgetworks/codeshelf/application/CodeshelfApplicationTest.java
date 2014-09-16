@@ -277,15 +277,20 @@ public class CodeshelfApplicationTest {
 
 		Thread appThread = new Thread(new Runnable() {
 			public void run() {
-				application.startApplication();
-				Assert.assertTrue(true);
-				checkAppRunning.result = true;
-				application.handleEvents();
+				try {
+					application.startApplication();
+					Assert.assertTrue(true);
+					checkAppRunning.result = true;
+					application.handleEvents();
+				}
+				catch(Exception e) {
+					Assert.fail("Application should not have thrown an exception on startup: " + e);
+				}
 			}
 		}, "APP_TEST_THREAD");
 		appThread.start();
 
-		while (!checkAppRunning.result) {
+		while (appThread.isAlive() && !checkAppRunning.result) {
 			try {
 				Thread.sleep(500);
 			} catch (InterruptedException e) {
@@ -296,8 +301,8 @@ public class CodeshelfApplicationTest {
 		// Yes, I know it's terrible to have dependent unit tests.
 		// I don't know how to fix this.  WIll consult with someone.
 
-		//application.stopApplication();
+		application.stopApplication();
 
-		Assert.assertTrue(true);
+		Assert.assertTrue("application failed to start", checkAppRunning.result);
 	}
 }

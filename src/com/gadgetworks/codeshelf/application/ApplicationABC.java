@@ -25,7 +25,7 @@ public abstract class ApplicationABC implements ICodeshelfApplication {
 	public ApplicationABC() {
 	}
 
-	protected abstract void doStartup();
+	protected abstract void doStartup() throws Exception;
 
 	protected abstract void doShutdown();
 
@@ -52,7 +52,7 @@ public abstract class ApplicationABC implements ICodeshelfApplication {
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	public final void startApplication() {
+	public final void startApplication() throws Exception {
 
 		setupLibraries();
 

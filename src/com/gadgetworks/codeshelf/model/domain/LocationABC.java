@@ -420,8 +420,8 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	 */
 	@SuppressWarnings("unchecked")
 	public Point getAbsoluteAnchorPoint() {
-		Point result = getAnchorPoint();
-
+		Point anchor = getAnchorPoint();
+		Point result = anchor;
 		if (!anchorPosTypeEnum.equals(PositionTypeEnum.GPS)) {
 			ILocation<P> parent = (ILocation<P>) getParent();
 
@@ -429,7 +429,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 			// This fixes that problem, but it's not pretty.
 			parent = DAO.findByPersistentId(parent.getClass(), parent.getPersistentId());
 			if ((parent != null) && (parent.getAnchorPoint().getPosTypeEnum().equals(PositionTypeEnum.METERS_FROM_PARENT))) {
-				result.add(parent.getAbsoluteAnchorPoint());
+				result = anchor.add(parent.getAbsoluteAnchorPoint());
 			}
 		}
 

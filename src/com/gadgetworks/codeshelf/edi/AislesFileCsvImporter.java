@@ -506,12 +506,8 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 			pointX += inDepthM;
 		}
 
-		Point aPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, pointX, pointY, 0.0);
-		// So, that was relative to zero. Now need to translate by the anchor to get into the anchor's coordinate system.
-		aPoint.translateX(inLocation.getAnchorPosX());
-		aPoint.translateY(inLocation.getAnchorPosY());
-		aPoint.translateZ(inLocation.getAnchorPosZ());	
-
+		//Now need to translate by the anchor to get into the anchor's coordinate system.
+		Point aPoint = inLocation.getAnchorPoint().add(pointX, pointY);
 		return aPoint;
 	}
 

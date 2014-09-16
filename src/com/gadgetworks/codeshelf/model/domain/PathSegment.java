@@ -255,6 +255,10 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 		}
 	}
 
+	public double computePathPosition(Point inFromPoint) {
+		return getStartPosAlongPath() + computeDistanceOfPointFromLine(this.getStartPoint(), this.getEndPoint(), inFromPoint);
+	}
+	
 	// --------------------------------------------------------------------------
 	/**
 	 * Compute the distance of a point from a line that it's next to.
@@ -263,7 +267,7 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 	 * @param inFromPoint
 	 * @return
 	 */
-	public final Double computeDistanceOfPointFromLine(final Point inLinePointA, final Point inLinePointB, final Point inFromPoint) {
+	private  final Double computeDistanceOfPointFromLine(final Point inLinePointA, final Point inLinePointB, final Point inFromPoint) {
 		Double result = 0.0;
 
 		Double k = ((inLinePointB.getY() - inLinePointA.getY()) * (inFromPoint.getX() - inLinePointA.getX()) - (inLinePointB.getX() - inLinePointA.getX())

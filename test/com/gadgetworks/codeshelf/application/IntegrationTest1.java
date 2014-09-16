@@ -60,12 +60,26 @@ public class IntegrationTest1 extends EdiTestABC {
 	}
 	
 	@Override
-	public void doBefore() {
+	public void doBefore() throws Exception {
 		webSocketServer = new JettyWebSocketServer();
 		webSocketServer.start();
 		
 		
 	}
+	
+	@Override
+	public void doAfter() {
+		try {
+			webSocketServer.stop();
+		} catch (IOException e) {
+			throw new RuntimeException("could not stop websocketserver", e);
+		} catch (InterruptedException e) {
+			throw new RuntimeException("could not stop websocketserver", e);
+		}
+		
+		
+	}
+	
 	
 	@SuppressWarnings({ "unused", "rawtypes" })
 	private Facility setUpSimpleNoSlotFacility(String inOrganizationName) {

@@ -50,7 +50,7 @@ public final class CsSiteControllerMain {
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	public static void main(String[] inArgs) {
+	public static void main(String[] inArgs) throws Exception {
 
 		// Create and start the application.
 		Injector injector = setupInjector();

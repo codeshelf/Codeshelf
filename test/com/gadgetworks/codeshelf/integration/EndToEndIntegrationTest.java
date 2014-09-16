@@ -67,7 +67,7 @@ public abstract class EndToEndIntegrationTest extends DomainTestABC {
 	}	
 	
 	@Override
-	public void doBefore() {
+	public void doBefore() throws Exception {
 		// ensure facility, organization, network exist in database before booting up site controller
 		Organization organization = mOrganizationDao.findByDomainId(null, organizationId);
 		if (organization==null) {

@@ -63,7 +63,6 @@ import com.gadgetworks.codeshelf.validation.ErrorCode;
 import com.gadgetworks.codeshelf.validation.Errors;
 import com.gadgetworks.codeshelf.validation.InputValidationException;
 import com.gadgetworks.flyweight.command.ColorEnum;
-import com.gadgetworks.flyweight.command.NetGuid;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -392,101 +391,12 @@ public class Facility extends SubLocationABC<Facility> {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * Create a new aisle with prototype bays.
-	 * @param inPosX
-	 * @param inPosY
-	 * @param inProtoBayXDim
-	 * @param inProtoBayYDim
-	 * @param inProtoBayZDim
-	 * @param inBaysHigh
-	 * @param inBaysLong
-	 */
-	@Transactional
-	public final void createAisle(final String inAisleId,
-		final Point inAnchorPoint,
-		final Point inProtoBayPoint,
-		final Integer inBaysHigh,
-		final Integer inBaysLong,
-		final String inLedControllerId,
-		final Boolean inRunInXDir,
-		final Boolean inLeftHandBay) {
-
-		CodeshelfNetwork network = networks.get(CodeshelfNetwork.DEFAULT_NETWORK_ID);
-		if (network != null) {
-			LedController ledController = network.getLedController("LED1");
-			if (ledController == null) {
-				ledController = network.findOrCreateLedController(inLedControllerId, new NetGuid(inLedControllerId));
-			}
-			// Create the aisle if it doesn't already exist.
-			Aisle aisle = Aisle.DAO.findByDomainId(this, inAisleId);
-			if (aisle == null) {
-				Point pickFaceEndPoint = computePickFaceEndPoint(inAnchorPoint, inProtoBayPoint.getX() * inBaysLong, inRunInXDir);
-				aisle = new Aisle(this, inAisleId, inAnchorPoint, pickFaceEndPoint);
-				try {
-					Aisle.DAO.store(aisle);
-				} catch (DaoException e) {
-					LOGGER.error("", e);
-				}
-
-				Point bayAnchorPoint = Point.getZeroPoint();
-				Point aisleBoundary = Point.getZeroPoint();
-
-				Short curLedPosNum = 1;
-				Short channelNum = 1;
-				for (int bayNum = 1; bayNum <= inBaysLong; bayNum++) {
-					Double anchorPosZ = 0.0;
-					for (int bayHighNum = 0; bayHighNum < inBaysHigh; bayHighNum++) {
-						String bayName = "B" + bayNum;
-						if (inBaysHigh > 1) {
-							bayName += Integer.toString(bayHighNum);
-						}
-						bayAnchorPoint.setAnchorPosZ(anchorPosZ);
-						Bay bay = createZigZagBay(aisle,
-							bayName,
-							inLeftHandBay,
-							curLedPosNum,
-							bayAnchorPoint,
-							inProtoBayPoint,
-							inRunInXDir,
-							ledController,
-							channelNum);
-						aisle.addLocation(bay);
-
-						// Get the last LED position from the bay to setup the next one.
-						curLedPosNum = (short) (bay.getLastLedNumAlongPath());
-
-						// Create the bay's boundary vertices.
-						if (inRunInXDir) {
-							createOrUpdateVertices(bay, new Point(PositionTypeEnum.METERS_FROM_PARENT,
-								inProtoBayPoint.getX(),
-								inProtoBayPoint.getY(),
-								0.0));
-						} else {
-							createOrUpdateVertices(bay, new Point(PositionTypeEnum.METERS_FROM_PARENT,
-								inProtoBayPoint.getY(),
-								inProtoBayPoint.getX(),
-								0.0));
-						}
-
-						anchorPosZ += inProtoBayPoint.getZ();
-					}
-
-					prepareNextBayAnchorPoint(inProtoBayPoint, inRunInXDir, bayAnchorPoint, aisleBoundary);
-				}
-
-				// Create the aisle's boundary vertices.
-				createOrUpdateVertices(aisle, aisleBoundary);
-			}
-		}
-	}
-
-	// --------------------------------------------------------------------------
-	/**
 	 * @param inProtoBayWidthMeters
 	 * @param inBaysLong
 	 * @param inRunInXDir
 	 * @return
 	 */
+	@SuppressWarnings("unused")
 	private Point computePickFaceEndPoint(final Point inAnchorPoint, final Double inDistanceMeters, final Boolean inRunInXDir) {
 		Point result;
 		if (inRunInXDir) {
@@ -495,215 +405,6 @@ public class Facility extends SubLocationABC<Facility> {
 			result = new Point(PositionTypeEnum.METERS_FROM_PARENT, 0.0, inAnchorPoint.getY() + inDistanceMeters, 0.0);
 		}
 		return result;
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * @param inProtoBayPoint
-	 * @param inRunInXDir
-	 * @param inAnchorPos
-	 * @param inAisleBoundary
-	 */
-	private void prepareNextBayAnchorPoint(final Point inProtoBayPoint,
-		final Boolean inRunInXDir,
-		Point inAnchorPos,
-		Point inAisleBoundary) {
-		if (inRunInXDir) {
-			if ((inAnchorPos.getX() + inProtoBayPoint.getX()) > inAisleBoundary.getX()) {
-				inAisleBoundary.setX(inAnchorPos.getX() + inProtoBayPoint.getX());
-			}
-
-			if ((inAnchorPos.getY() + inProtoBayPoint.getY()) > inAisleBoundary.getY()) {
-				inAisleBoundary.setY(inAnchorPos.getY() + inProtoBayPoint.getY());
-			}
-
-			inAnchorPos.setX(inAnchorPos.getX() + inProtoBayPoint.getX());
-		} else {
-			if ((inAnchorPos.getX() + inProtoBayPoint.getY()) > inAisleBoundary.getX()) {
-				inAisleBoundary.setX(inAnchorPos.getX() + inProtoBayPoint.getY());
-			}
-
-			if ((inAnchorPos.getY() + inProtoBayPoint.getX()) > inAisleBoundary.getY()) {
-				inAisleBoundary.setY(inAnchorPos.getY() + inProtoBayPoint.getX());
-			}
-
-			inAnchorPos.setY(inAnchorPos.getY() + inProtoBayPoint.getY());
-		}
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * Create the zig-zag LED strip bays that we see with rolling cart bays.
-	 * (E.g. the bays we see at GoodEggs.)
-	 *
-	 * @return
-	 */
-	private Bay createZigZagBay(final Aisle inParentAisle,
-		final String inBayId,
-		final Boolean inIsLeftHandBay,
-		final Short inFirstLedNum,
-		final Point inAnchorPoint,
-		final Point inProtoBayPoint,
-		final Boolean inRunsInXDir,
-		final LedController inLedController,
-		final short inLedChannelNum) {
-
-		Point bayAnchorPoint = new Point(inAnchorPoint);
-		Point bayPickFacePoint = new Point(inProtoBayPoint);
-
-		Point pickFaceEndPoint = computePickFaceEndPoint(bayAnchorPoint, bayPickFacePoint.getX(), inRunsInXDir);
-		Bay resultBay = new Bay(inParentAisle, inBayId, bayAnchorPoint, pickFaceEndPoint);
-
-		resultBay.setFirstLedNumAlongPath(inFirstLedNum);
-		resultBay.setLastLedNumAlongPath((short) (inFirstLedNum + 160));
-
-		Double bayWidth = 0.0;
-		if (inRunsInXDir) {
-			bayWidth = inProtoBayPoint.getX();
-		} else {
-			bayWidth = inProtoBayPoint.getY();
-		}
-
-		try {
-			Bay.DAO.store(resultBay);
-		} catch (DaoException e) {
-			LOGGER.error("", e);
-		}
-
-		double tierZPos = 1.25;
-		short tierStartLedNum = 1;
-		short tierLedCount = 32;
-		boolean leftToRight = inIsLeftHandBay;
-		for (int tierNum = 5; tierNum > 0; tierNum--) {
-			createTier(resultBay,
-				"T" + tierNum,
-				leftToRight,
-				inRunsInXDir,
-				bayWidth,
-				inProtoBayPoint.getZ(),
-				tierZPos,
-				inLedController,
-				inLedChannelNum,
-				tierStartLedNum,
-				tierLedCount);
-			tierZPos -= 0.25;
-			tierStartLedNum += 32;
-			leftToRight = !leftToRight;
-		}
-
-		try {
-			Bay.DAO.store(resultBay);
-		} catch (DaoException e) {
-			LOGGER.error("", e);
-		}
-
-		return resultBay;
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * @param inParentBay
-	 * @param inTierId
-	 * @param inSlotsRunRight
-	 * @param inRunsInXDir
-	 * @param inOffset1
-	 * @param inOffset2
-	 * @param inLedController
-	 * @param inLedChannelNum
-	 */
-	private void createTier(final Bay inParentBay,
-		final String inTierId,
-		final Boolean inSlotRunsRight,
-		final Boolean inRunsInXDir,
-		final Double inBayWidth,
-		final Double inBayHeight,
-		final Double inTierZOffset,
-		final LedController inLedController,
-		final Short inLedChannelNum,
-		final Short inFirstLedPosNum,
-		final Short inTierLedCount) {
-
-		Point anchorPoint = Point.getZeroPoint();
-		anchorPoint.translateZ(inTierZOffset);
-		Point pickFaceEndPoint = computePickFaceEndPoint(anchorPoint, inBayWidth, inRunsInXDir);
-		pickFaceEndPoint.translateZ(inTierZOffset);
-		Tier tier = new Tier(inParentBay, inTierId, anchorPoint, pickFaceEndPoint);
-
-		tier.setLedController(inLedController);
-		tier.setLedChannel(inLedChannelNum);
-		if (inSlotRunsRight) {
-			tier.setFirstLedNumAlongPath((short) (inParentBay.getFirstLedNumAlongPath() + inFirstLedPosNum - 1));
-			tier.setLastLedNumAlongPath((short) (inParentBay.getFirstLedNumAlongPath() + inFirstLedPosNum + inTierLedCount - 1));
-		} else {
-			tier.setFirstLedNumAlongPath((short) (inParentBay.getFirstLedNumAlongPath() + inFirstLedPosNum + inTierLedCount - 1));
-			tier.setLastLedNumAlongPath((short) (inParentBay.getFirstLedNumAlongPath() + inFirstLedPosNum - 1));
-		}
-		try {
-			Tier.DAO.store(tier);
-		} catch (DaoException e) {
-			LOGGER.error("", e);
-		}
-
-		// Add slots to this tier.
-		if (inSlotRunsRight) {
-			createSlot(tier, "S1", inRunsInXDir, 0.0, inLedController, inLedChannelNum, (short) 1, (short) 4);
-			createSlot(tier, "S2", inRunsInXDir, 0.25, inLedController, inLedChannelNum, (short) 11, (short) 8);
-			createSlot(tier, "S3", inRunsInXDir, 0.5, inLedController, inLedChannelNum, (short) 15, (short) 18);
-			createSlot(tier, "S4", inRunsInXDir, 0.75, inLedController, inLedChannelNum, (short) 25, (short) 22);
-			createSlot(tier, "S5", inRunsInXDir, 1.0, inLedController, inLedChannelNum, (short) 29, (short) 32);
-		} else {
-			createSlot(tier, "S1", inRunsInXDir, 0.0, inLedController, inLedChannelNum, (short) 32, (short) 29);
-			createSlot(tier, "S2", inRunsInXDir, 0.25, inLedController, inLedChannelNum, (short) 22, (short) 25);
-			createSlot(tier, "S3", inRunsInXDir, 0.5, inLedController, inLedChannelNum, (short) 18, (short) 15);
-			createSlot(tier, "S4", inRunsInXDir, 0.75, inLedController, inLedChannelNum, (short) 8, (short) 11);
-			createSlot(tier, "S5", inRunsInXDir, 1.0, inLedController, inLedChannelNum, (short) 4, (short) 1);
-		}
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * @param inParentTier
-	 * @param inSlotId
-	 * @param inOffset1
-	 * @param inOffset2
-	 * @param inLedController
-	 * @param inChannelNum
-	 * @param inFirstLedNum
-	 * @param inLastLedNum
-	 */
-	private void createSlot(final Tier inParentTier,
-		final String inSlotId,
-		final Boolean inRunsInXDir,
-		final Double inOffset,
-		final LedController inLedController,
-		final Short inChannelNum,
-		final Short inFirstLedPosNum,
-		final Short inLastLedPosNum) {
-
-		Point anchorPoint = Point.getZeroPoint();
-		if (inRunsInXDir) {
-			anchorPoint.translateX(inOffset);
-		} else {
-			anchorPoint.translateY(inOffset);
-		}
-
-		Point pickFaceEndPoint = computePickFaceEndPoint(anchorPoint, 0.25, inRunsInXDir);
-
-		Slot slot = new Slot(inParentTier, inSlotId, anchorPoint, pickFaceEndPoint);
-		slot.setLedController(inLedController);
-		slot.setLedChannel(inChannelNum);
-		if (inParentTier.getFirstLedNumAlongPath() < inParentTier.getLastLedNumAlongPath()) {
-			slot.setFirstLedNumAlongPath((short) (inParentTier.getFirstLedNumAlongPath() + inFirstLedPosNum - 1));
-			slot.setLastLedNumAlongPath((short) (inParentTier.getFirstLedNumAlongPath() + inLastLedPosNum - 1));
-		} else {
-			slot.setFirstLedNumAlongPath((short) (inParentTier.getLastLedNumAlongPath() + inFirstLedPosNum - 1));
-			slot.setLastLedNumAlongPath((short) (inParentTier.getLastLedNumAlongPath() + inLastLedPosNum - 1));
-		}
-		try {
-			Slot.DAO.store(slot);
-		} catch (DaoException e) {
-			LOGGER.error("", e);
-		}
 	}
 
 	public final Path createPath(String inDomainId) {
@@ -919,7 +620,6 @@ public class Facility extends SubLocationABC<Facility> {
 			if (ediService instanceof IronMqService) {
 				result = (IronMqService) ediService;
 			}
-			break;
 		}
 
 		if (result == null) {

@@ -13,7 +13,6 @@ import org.junit.Test;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.gadgetworks.codeshelf.model.OrderTypeEnum;
-import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 
 /**
  * @author jeffw
@@ -33,19 +32,6 @@ public class FacilityTest extends DomainTestABC {
 		Facility facility = createFacility("ORG-testGetParentAtLevelWhenSublevel");
 		String locationId = facility.getLocationIdToParentLevel(Tier.class);
 		Assert.assertEquals("", locationId);
-	}
-
-	@Test
-	public final void createAisleTest() {
-
-		Facility facility = createFacility("FTEST1.01");
-		Point anchorPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, 1.0, 1.0, 1.0);
-		Point protoBayPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, 2.0, 2.0, 2.0);
-		facility.createAisle("FTEST1.A1", anchorPoint, protoBayPoint, 2, 5, "0x00000002", true, true);
-
-		Aisle foundAisle = Aisle.DAO.findByDomainId(facility, "FTEST1.A1");
-
-		Assert.assertNotNull(foundAisle);
 	}
 
 	@Test

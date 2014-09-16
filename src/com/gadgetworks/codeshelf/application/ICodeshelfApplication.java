@@ -11,7 +11,7 @@ package com.gadgetworks.codeshelf.application;
  */
 public interface ICodeshelfApplication {
 
-	void startApplication();
+	void startApplication() throws Exception;
 
 	void handleEvents();
 }
