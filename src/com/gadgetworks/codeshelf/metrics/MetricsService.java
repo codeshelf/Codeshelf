@@ -13,6 +13,8 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
+import com.codahale.metrics.health.HealthCheck;
+import com.codahale.metrics.health.HealthCheckRegistry;
 
 public class MetricsService {
 	
@@ -26,6 +28,9 @@ public class MetricsService {
 	
 	@Getter
 	private MetricRegistry metricsRegistry = new MetricRegistry();
+	
+	@Getter
+	private HealthCheckRegistry healthRegistry = new HealthCheckRegistry();
 	
 	private MetricsService() {
 		try {
@@ -42,6 +47,12 @@ public class MetricsService {
 		}
 	}
 	
+	public static void registerHealthCheck(MetricsGroup group, String metricName, HealthCheck healthCheck) {
+		String fullName = getFullName(group,metricName);
+		getHealthCheckRegistry().register(fullName, healthCheck);
+		LOGGER.info("Registered Healthcheck "+healthCheck);
+	}
+	
 	public static <T> void registerMetric(MetricsGroup group, String metricName, Metric metric) {
 		String fullName = getFullName(group,metricName);
 		getRegistry().register(fullName, metric);
@@ -53,6 +64,10 @@ public class MetricsService {
 
 	public static MetricRegistry getRegistry() {
 		return instance.getMetricsRegistry();
+	}
+	
+	public static HealthCheckRegistry getHealthCheckRegistry() {
+		return instance.healthRegistry;
 	}
 
 	// <T extends Metric> T

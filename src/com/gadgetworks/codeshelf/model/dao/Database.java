@@ -8,6 +8,8 @@ package com.gadgetworks.codeshelf.model.dao;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import lombok.Getter;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,26 +35,27 @@ public class Database implements IDatabase {
 
 	private static final Logger		LOGGER	= LoggerFactory.getLogger(Database.class);
 
-	private final ISchemaManager	mSchemaManager;
+	@Getter
+	private final ISchemaManager	schemaManager;
 
 	@Inject
 	public Database(final ISchemaManager inSchemaManager) {
-		mSchemaManager = inSchemaManager;
+		schemaManager = inSchemaManager;
 
 		// Set our class loader to the system classloader, so ebean can find the enhanced classes.
 		Thread.currentThread().setContextClassLoader(ClassLoader.getSystemClassLoader());
 
 		Configuration.loadConfig("test");
 
-		System.setProperty("app.database.url", mSchemaManager.getApplicationDatabaseURL());
+		System.setProperty("app.database.url", schemaManager.getApplicationDatabaseURL());
 		//System.setProperty("ebean.props.file", "conf/ebean.properties");
 		//System.setProperty("java.util.logging.config.file", "conf/logging.properties");
 
 
-		mSchemaManager.verifySchema();
+		schemaManager.verifySchema();
 
 		ServerConfig serverConfig = new ServerConfig();
-		serverConfig.setName(mSchemaManager.getDbSchemaName());
+		serverConfig.setName(schemaManager.getDbSchemaName());
 
 		// Give the properties file a chance to setup values.
 		serverConfig.loadFromProperties();
@@ -72,14 +75,14 @@ public class Database implements IDatabase {
 		serverConfig.setDdlRun(false);
 		//serverConfig.setNamingConvention(new GWEbeanNamingConvention());
 		UnderscoreNamingConvention namingConvetion = new UnderscoreNamingConvention();
-		namingConvetion.setSchema(mSchemaManager.getDbSchemaName());
+		namingConvetion.setSchema(schemaManager.getDbSchemaName());
 		serverConfig.setNamingConvention(namingConvetion);
 
 		DataSourceConfig dataSourceConfig = serverConfig.getDataSourceConfig();
-		dataSourceConfig.setUsername(mSchemaManager.getDbUserId());
-		dataSourceConfig.setPassword(mSchemaManager.getDbPassword());
-		dataSourceConfig.setUrl(mSchemaManager.getApplicationDatabaseURL());
-		dataSourceConfig.setDriver(mSchemaManager.getDriverName());
+		dataSourceConfig.setUsername(schemaManager.getDbUserId());
+		dataSourceConfig.setPassword(schemaManager.getDbPassword());
+		dataSourceConfig.setUrl(schemaManager.getApplicationDatabaseURL());
+		dataSourceConfig.setDriver(schemaManager.getDriverName());
 		dataSourceConfig.setMinConnections(5);
 		dataSourceConfig.setMaxConnections(25);
 		dataSourceConfig.setIsolationLevel(Transaction.READ_COMMITTED);
