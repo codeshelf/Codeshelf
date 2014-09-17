@@ -286,23 +286,18 @@ public class IntegrationTest1 extends EdiTestABC {
 		Integer wiCount = aList.size();
 		Assert.assertEquals((Integer) 3, wiCount); // 3, but one should be short. Only 1123 and 1522 find each inventory
 
-		List<WorkInstruction> wiListAfterScan = facility.getWorkInstructions(theChe, "D403");
+		List<WorkInstruction> wiListAfterScan = facility.getWorkInstructions(theChe, "D402");
 		Integer wiCountAfterScan = wiListAfterScan.size();
 		Double posOf402 = locationD402.getPosAlongPath();
 		Double posOf403 = locationD403.getPosAlongPath();
-		Assert.assertTrue(posOf403 > posOf402);
+		Assert.assertTrue(posOf402 > posOf403);
 		
-		// Bug? Should be 1, not 2. But wi2Pos below is 7. something. Why? If it corresponded better to the D402 value + 3cm, then wi2 would be null.
-		//Assert.assertEquals((Integer) 1, wiCountAfterScan); // only the one each item in 403 should be there. The item in 402 is earlier on the path.
+		Assert.assertEquals((Integer) 1, wiCountAfterScan); // only the one each item in 402 should be there. The item in 403 is earlier on the path.
 		// See which work instruction is which
 		WorkInstruction wi1 = wiListAfterScan.get(0);
 		Assert.assertNotNull(wi1);
 		String wi1Item = wi1.getItemMasterId();
 		Double wi1Pos = wi1.getPosAlongPath();
-		WorkInstruction wi2 = wiListAfterScan.get(1);
-		Assert.assertNotNull(wi2);
-		String wi2Item = wi2.getItemMasterId();
-		Double wi2Pos = wi2.getPosAlongPath();
 
 		// New from v4. Test our work instruction summarizer
 		List<WiSetSummary> summaries = new WorkService().workSummary(theChe.getPersistentId().toString(),

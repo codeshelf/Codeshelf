@@ -14,6 +14,7 @@ import java.util.UUID;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.TravelDirectionEnum;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Bay;
@@ -1152,6 +1153,11 @@ public class AisleImporterTest extends DomainTestABC {
 
 	}
 
+	private Double helperGetPosAlongSegment(PathSegment inSegment, Double inX, Double inY){
+		Point testPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, inX, inY, 0.0);
+		return inSegment.computeNormalizedPositionAlongPath(testPoint);
+	}
+
 	@SuppressWarnings("unused")
 	@Test
 	public final void testPathCreation() {
@@ -1163,8 +1169,8 @@ public class AisleImporterTest extends DomainTestABC {
 		Facility facility = organization.getFacility("F-AISLE4X");
 
 		Path aPath = createPathForTest("F4X.1", facility);
-		PathSegment segment0 = addPathSegmentForTest("F4X.1.0", aPath, 0, 22.0, 48.45, 12.85, 48.45);
-		PathSegment segment1 = addPathSegmentForTest("F4X.1.1", aPath, 1, 12.85, 48.45, 12.85, 58.45);
+		PathSegment segment0 = addPathSegmentForTest("F4X.1.0", aPath, 0, 22.0, 48.0, 12.0, 48.0);
+		PathSegment segment1 = addPathSegmentForTest("F4X.1.1", aPath, 1, 12.0, 48.0, 12.0, 58.0);
 		SortedSet<PathSegment> segments = aPath.getSegments();
 		int countSegments = segments.size();
 		Assert.assertTrue(countSegments == 2);
@@ -1176,13 +1182,55 @@ public class AisleImporterTest extends DomainTestABC {
 		List<Path> paths = facility.getPaths();
 		int countPaths = paths.size();
 		Assert.assertTrue(countPaths == 1);
-	}
+		
+		// Take this chance to unit test the path segment position calculator for X oriented segment.
+		Double posAlongPath = segment0.getStartPosAlongPath(); 
+		Assert.assertEquals(posAlongPath, (Double) 0.0);
+		
+		// case 1: beyond the start. Give the path segment's starting value. In this case zero.
+		Double value = helperGetPosAlongSegment(segment0, 25.0, 43.45);
+		Assert.assertEquals(value, (Double) 0.0);
+		// case 2: at the start
+		value = helperGetPosAlongSegment(segment0, 22.0, 43.45);
+		Assert.assertEquals(value, (Double) 0.0);
+		// case 3: usual situation. Along the segment. In this case, 4.0 meters along from start
+		value = helperGetPosAlongSegment(segment0, 18.0, 43.45);
+		Assert.assertEquals(value, (Double) 4.0);
+		// case 4: at the end
+		value = helperGetPosAlongSegment(segment0, 12.0, 43.45);
+		Assert.assertEquals(value, (Double) 10.0);
+		// case 5: beyond the end. Give the path segment's ending value, or at least the x component of it.
+		value = helperGetPosAlongSegment(segment0, 8.0, 43.45);
+		Assert.assertEquals(value, (Double) 10.0);
+	
 
+		// And the Y oriented segment. Note that the Y start with distance 10.00 along path
+		 posAlongPath = segment1.getStartPosAlongPath(); 
+		 Assert.assertEquals(posAlongPath, (Double) 10.0);
+		 
+		// case 1: beyond the start. Give the path segment's starting value. In this case zero.
+		value = helperGetPosAlongSegment(segment1, 25.0, 43.45);
+		Assert.assertEquals(value, (Double) 10.0);
+		// case 2: at the start
+		value = helperGetPosAlongSegment(segment1, 25.0, 48.0);
+		Assert.assertEquals(value, (Double) 10.0);
+		// case 3: usual situation. Along the segment. In this case, 4.0 meters along from start
+		value = helperGetPosAlongSegment(segment1, 25.0, 55.0);
+		Assert.assertEquals(value, (Double) 17.0);
+		// case 4: at the end
+		value = helperGetPosAlongSegment(segment1, 25.0, 58.0);
+		Assert.assertEquals(value, (Double) 20.0);
+		// case 5: beyond the end. Give the path segment's ending value, or at least the x component of it.
+		value = helperGetPosAlongSegment(segment1, 25.0, 62.0);
+		Assert.assertEquals(value, (Double) 20.0);		
+
+	}
+	
 	@Test
 	public final void simplestPathTest() {
 
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
-				+ "Aisle,A51,,,,,zigzagB1S1Side,12.85,43.45,X,120,Y\r\n" //
+				+ "Aisle,A51,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n"; //
 
@@ -1207,13 +1255,13 @@ public class AisleImporterTest extends DomainTestABC {
 		Assert.assertNotNull(aisle51);
 
 		Path aPath = createPathForTest("F5X.1", facility);
-		PathSegment segment0 = addPathSegmentForTest("F5X.1.0", aPath, 0, 22.0, 48.45, 12.85, 48.45);
+		PathSegment segment0 = addPathSegmentForTest("F5X.1.0", aPath, 0, 22.0, 48.45, 12.00, 48.45);
 		
 		String persistStr = segment0.getPersistentId().toString();
 		aisle51.associatePathSegment(persistStr);
 		// This should have recomputed all positions along path.  Aisle, bay, tier, and slots should ahve position now
 		// Although the old reference to aisle before path association would not.
-
+		
 		Bay bayA51B1 = Bay.DAO.findByDomainId(aisle51, "B1");
 		Tier tierA51B1T1 = Tier.DAO.findByDomainId(bayA51B1, "T1");
 		Slot slotS1 = Slot.DAO.findByDomainId(tierA51B1T1, "S1");
@@ -1462,10 +1510,10 @@ public class AisleImporterTest extends DomainTestABC {
 
 		Assert.assertTrue(slotA31B1T1S5Value > slotA31B2T1S1Value); // first bay last slot further along path than second bay first slot
 		
-		// lowest at A32B1T1S1
+		// lowest at A32B1T1S5
 		Double slotA32B1T1S5Value = slotA32B1T1S5.getPosAlongPath();
 		Double slotA32B1T1S1Value = slotA32B1T1S1.getPosAlongPath();
-		Assert.assertTrue(slotA32B1T1S5Value > slotA32B1T1S1Value); // in A32 also,first bay last slot further along path than second bay first slot
+		Assert.assertTrue(slotA32B1T1S5Value < slotA32B1T1S1Value); // in A32 also,first bay last slot further along path than second bay first slot
 		
 	}
 	
@@ -1546,9 +1594,6 @@ public class AisleImporterTest extends DomainTestABC {
 		String aislePosAlongPath = aisle61.getPosAlongPathui();
 		String bay1PosAlongPath = bayA61B1.getPosAlongPathui();
 		String bay2PosAlongPath = bayA61B2.getPosAlongPathui();
-		// BUG!  bays should be 1.15 meters different, not .3
-		// The source of this error is known. We call computeDistanceOfPointFromLine(). But we we really want is computeDistanceAlongLine.
-		// Until fixed, the mitigation is to have the path very close to the aisle pick face.
 		Assert.assertNotEquals(bay1PosAlongPath, bay2PosAlongPath);
 		Assert.assertEquals(aislePosAlongPath, bay2PosAlongPath);
 	
@@ -1563,11 +1608,8 @@ public class AisleImporterTest extends DomainTestABC {
 		String tierB1Meters = tierA61B1T1.getPosAlongPathui();
 		String tierB2Meters = tierA61B2T1.getPosAlongPathui();
 		Assert.assertNotEquals(tierB1Meters, tierB2Meters); // tier spans the bay, so should be the same
-		// Looks dicey, though. Bay1 and bay2 differ by only .3 meters, even though the bay is 115 cm long. How?
+		// Bay1 and bay2 path position differ by about 1.15 meters;  bay is 115 cm long.
 		
-		// Should not be necessary as associatePathSegment() called it. But convenient to debug as it computes again.
-		// facility.recomputeLocationPathDistances(aPath);
-
 	}
 
 }

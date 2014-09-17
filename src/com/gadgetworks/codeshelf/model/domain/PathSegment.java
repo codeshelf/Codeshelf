@@ -55,7 +55,7 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 	 * 
 	 */
 	@SuppressWarnings("unused")
-	private static final long	serialVersionUID	= -2776468192822374495L;
+	private static final long		serialVersionUID	= -2776468192822374495L;
 
 	@Inject
 	public static PathSegmentDao	DAO;
@@ -70,7 +70,7 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 		public final Class<PathSegment> getDaoClass() {
 			return PathSegment.class;
 		}
-		
+
 		@SuppressWarnings("rawtypes")
 		public List<LocationABC> findLocations(PathSegment inPathSegment) {
 			UUID persistentId = inPathSegment.getPersistentId();
@@ -78,7 +78,7 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 			query.where().eq("pathSegment.persistentId", persistentId);
 			return query.findList();
 		}
-		
+
 	}
 
 	public static final String	DOMAIN_PREFIX	= "SEG";
@@ -190,13 +190,14 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 	public final List<LocationABC> getLocations() {
 		return DAO.findLocations(this);
 	}
-	
+
 	public final List<IDomainObject> getChildren() {
 		return new ArrayList<IDomainObject>();
 	}
 
 	public final String getParentPathID() {
-		if (this.parent==null) return null;
+		if (this.parent == null)
+			return null;
 		return parent.getDomainId();
 	}
 
@@ -225,9 +226,9 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 	public final Double getLength() {
 		return Math.sqrt(Math.pow(startPosX - endPosX, 2) + Math.pow(startPosY - endPosY, 2));
 	}
-	
+
 	// For a UI field
-	public final int getAssociatedLocationCount(){
+	public final int getAssociatedLocationCount() {
 		return getLocations().size();
 	}
 
@@ -255,29 +256,74 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 		}
 	}
 
-	public double computePathPosition(Point inFromPoint) {
-		return getStartPosAlongPath() + computeDistanceOfPointFromLine(this.getStartPoint(), this.getEndPoint(), inFromPoint);
-	}
-	
 	// --------------------------------------------------------------------------
 	/**
-	 * Compute the distance of a point from a line that it's next to.
-	 * @param inLinePointA
-	 * @param inLinePointB
+	 * X or Y oriented?
+	 * (We are normalizing in the facility coordinate system.)
+	 * @return
+	 */
+	private boolean isPathSegmentXOriented() {
+		Point startP = this.getStartPoint();
+		Point endP = this.getEndPoint();
+		Double deltaX = Math.abs(endP.getX() - startP.getX());
+		Double deltaY = Math.abs(endP.getY() - startP.getY());
+		return deltaX > deltaY;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Helper function for computeNormalizedPositionAlongPath
+	 * inNormalizedValue comes from the normal dropped from the point to the path segment.
+	 * We need to know if this is between the start and end, or beyond. And if beyond, to adopt a value corresponding to the start or end.
+	 * Returns the value to add to the path segment's startPosAlongPath to get the point's value.
+	 * @param inStart
+	 * @param inEnd
+	 * @param inNormalizedValue
+	 * @return
+	 */
+	private Double getValueAlongPathSegment(Double inStart, Double inEnd, Double inNormalizedValue) {
+		boolean segmentRunningTowardHigherXorY = inEnd > inStart;
+		// are we between the start and end if the path segment. This should be usual case
+		// careful: path can run either way, so inEnd could have lower value than inStart
+		if ((inStart <= inNormalizedValue && inNormalizedValue <= inEnd)
+				|| (inEnd <= inNormalizedValue && inNormalizedValue <= inStart)) {
+			// normal case
+			Double distanceFromStart = Math.abs(inNormalizedValue - inStart);
+			return distanceFromStart;
+		}
+		// Is our value beyond the end point of the path segment. If so, adopt the end point
+		else if ((!segmentRunningTowardHigherXorY && inNormalizedValue < inEnd)
+				|| (segmentRunningTowardHigherXorY && inNormalizedValue > inEnd)) {
+			return Math.abs(inStart - inEnd); // That is, add the full length of this segment along this coordinate.
+		}
+		// Our value is beyond  the starting point of the path segment. 
+		// Therefore, just taking the starting posAlongPath of the segment. That is, the value to add to that is zero.
+		else {
+			return 0.0;
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Compute the distance along the path segment, if you drop a normal from the point to the path segment.
+	 * If beyond the end, just take the value of the end of the path segment.
 	 * @param inFromPoint
 	 * @return
 	 */
-	private  final Double computeDistanceOfPointFromLine(final Point inLinePointA, final Point inLinePointB, final Point inFromPoint) {
-		Double result = 0.0;
+	public Double computeNormalizedPositionAlongPath(Point inFromPoint) {
+		Double distance = getStartPosAlongPath(); // initial value is start of this path segment
+		boolean xOrientedSegment = isPathSegmentXOriented();
+		Point startP = this.getStartPoint();
+		Point endP = this.getEndPoint();
+		Double deltaFromStartOfSegment = 0.0;
 
-		Double k = ((inLinePointB.getY() - inLinePointA.getY()) * (inFromPoint.getX() - inLinePointA.getX()) - (inLinePointB.getX() - inLinePointA.getX())
-				* (inFromPoint.getY() - inLinePointA.getY()))
-				/ (Math.pow(inLinePointB.getY() - inLinePointA.getY(), 2) + Math.pow(inLinePointB.getX() - inLinePointA.getX(), 2));
-		Double x4 = inFromPoint.getX() - k * (inLinePointB.getY() - inLinePointA.getY());
-		Double y4 = inFromPoint.getY() + k * (inLinePointB.getX() - inLinePointA.getX());
+		// Obviously makes the X or Y assumption here. If we need to handle angled aisles and paths, this algorithm can still work; just some fancy trig.
+		if (xOrientedSegment)
+			deltaFromStartOfSegment = getValueAlongPathSegment(startP.getX(), endP.getX(), inFromPoint.getX());
+		else
+			deltaFromStartOfSegment = getValueAlongPathSegment(startP.getY(), endP.getY(), inFromPoint.getY());
 
-		result = Math.sqrt(Math.pow(inLinePointA.getX() - x4, 2) + Math.pow(inLinePointA.getY() - y4, 2));
-
-		return result;
+		return distance + deltaFromStartOfSegment;
 	}
+
 }

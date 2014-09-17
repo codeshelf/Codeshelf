@@ -168,56 +168,14 @@ public abstract class SubLocationABC<P extends IDomainObject & ISubLocation<?>> 
 			return;
 		}
 		
-		// A fundamental question is whether the bays and slots in an aisle increase or decrease as you move along the path in the forward direction.
-		
-		// By our new model, B1S1 is always by anchor, so all aisles increase X or Y
-		Boolean forwardIncrease = true;
-		
-		// For the logic below, we want the forward increasing logic if path direction is forward and forwardIncrease, or if both not.
-		Boolean wantForwardCalculation = forwardIncrease == inPathSegment.getParent().getTravelDirEnum().equals(TravelDirectionEnum.FORWARD);
-		// wrong; // does the local path segment increase in the direction the aisle is increasing?
-
+		// Complete revision at V4
 		Point locationAnchorPoint = getAbsoluteAnchorPoint();
-		Point pickFaceEndPoint = getAbsolutePickFaceEndPoint();// JR this looks wrong. Should want this.getAbsolutePickEndPoint();
-		// Point pickFaceEndPoint = parent.getAbsoluteAnchorPoint(); // JR this looks wrong. Should want this.getAbsolutePickEndPoint();
-
-
-		Double locAnchorPathPosition = inPathSegment.computePathPosition(locationAnchorPoint);
-
-		Double pickFacePathPosition = inPathSegment.computePathPosition(pickFaceEndPoint);
-
-		Double newPosition = 0.0;
+		Point pickFaceEndPoint = getAbsolutePickFaceEndPoint();
+		// The location's posAlongPath is the lower of the anchor or pickFaceEnd
+		Double locAnchorPathPosition = inPathSegment.computeNormalizedPositionAlongPath(locationAnchorPoint);
+		Double pickFaceEndPathPosition = inPathSegment.computeNormalizedPositionAlongPath(pickFaceEndPoint);
+		Double newPosition = Math.min(locAnchorPathPosition, pickFaceEndPathPosition);
 		Double oldPosition = this.getPosAlongPath();
-		
-		// if (inPathSegment.getParent().getTravelDirEnum().equals(TravelDirectionEnum.FORWARD)) {
-		if (wantForwardCalculation) {
-			// In the forward direction take the "lowest" path pos value.
-			Double position = Math.min(locAnchorPathPosition, pickFacePathPosition);
-			// It can't be "lower" than its parent.
-			
-			if ((parent.getPosAlongPath() == null) || (position >= parent.getPosAlongPath())) {
-				newPosition = position;
-			} else {
-				// I believe if we hit this, we found a model or algorithm error
-				Double parentPos = parent.getPosAlongPath(); 
-				newPosition = parentPos;
-				// newPosition = position; // JR test
-			}
-		} else {
-			// In the reverse direction take the "highest" path pos value.
-			Double position = Math.max(locAnchorPathPosition, pickFacePathPosition);
-			// I t can't be "higher" than its parent.
-			if ((parent.getPosAlongPath() == null) || (position <= parent.getPosAlongPath())) {
-				// setPosAlongPath(position);
-				newPosition = position;
-			} else {
-				// I believe if we hit this, we found a model or algorithm error
-				Double parentPos = parent.getPosAlongPath();
-				newPosition = parentPos;
-				// newPosition = position; // JR test
-			}
-		}
-		
 
 		// Doing this to avoid the DAO needing to check the change, which also generates a bunch of logging.
 		if (!newPosition.equals(oldPosition)) {
