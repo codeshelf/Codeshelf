@@ -11,6 +11,7 @@ import java.lang.reflect.Method;
 import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.UUID;
 
 import javax.persistence.Column;
@@ -121,9 +122,8 @@ public abstract class DomainObjectABC implements IDomainObject {
 		boolean result = false;
 
 		if (inObject instanceof DomainObjectABC) {
-			if (this.getClass().equals(inObject.getClass())) {
-				result = (persistentId.equals(((DomainObjectABC) inObject).persistentId));
-			}
+			return (Objects.equals(this.getClass(), inObject.getClass())
+					&& Objects.equals(this.persistentId, ((DomainObjectABC) inObject).persistentId));
 		} else {
 			result = super.equals(inObject);
 		}

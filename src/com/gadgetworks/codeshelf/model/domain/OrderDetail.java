@@ -48,9 +48,9 @@ import com.google.inject.Singleton;
 // --------------------------------------------------------------------------
 /**
  * OrderDetail
- * 
+ *
  * An order detail is a request for items/SKUs from the facility.
- * 
+ *
  * @author jeffw
  */
 
@@ -80,7 +80,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	private static final Logger		LOGGER				= LoggerFactory.getLogger(OrderDetail.class);
 
 	private static final Comparator<String> asciiAlphanumericComparator = new ASCIIAlphanumericComparator();
-	
+
 	// The owning order header.
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
@@ -156,6 +156,11 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	public OrderDetail() {
 	}
 
+	public OrderDetail(OrderHeader inOrderHeader, String inDomainId) {
+		super(inDomainId);
+		this.parent = inOrderHeader;
+	}
+
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<OrderDetail> getDao() {
 		return DAO;
@@ -223,9 +228,9 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 				if (wi.getStatusEnum() == WorkInstructionStatusEnum.SHORT)
 					returnStr = WorkInstructionStatusEnum.SHORT.getName();
 				else {
-					returnStr = wi.getPickInstruction();					
+					returnStr = wi.getPickInstruction();
 					if (wi.getStatusEnum() == WorkInstructionStatusEnum.COMPLETE)
-						returnStr = returnStr + " (" + WorkInstructionStatusEnum.COMPLETE.getName() + ")";					
+						returnStr = returnStr + " (" + WorkInstructionStatusEnum.COMPLETE.getName() + ")";
 				}
 			else if (wi.getStatusEnum() != WorkInstructionStatusEnum.SHORT) { // don't pile on extra SHORT if multiple SHORT WIs
 				returnStr = returnStr + ", " + wi.getPickInstruction();
@@ -245,14 +250,14 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 		}
 		return returnStr;
 	}
-	
+
 	public final String getItemLocations() {
 		//If cross batch return empty
 		if (getParent().getOrderTypeEnum().equals(OrderTypeEnum.CROSS)) {
 			return "";
 		}
 		else {
-			//if work instructions are assigned use the location from that 
+			//if work instructions are assigned use the location from that
 			List<String> wiLocationDisplay = getPickableWorkInstructions();
 			if (!wiLocationDisplay .isEmpty()) {
 				return Joiner.on(",").join(wiLocationDisplay);
@@ -268,7 +273,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 				}
 				Collections.sort(itemLocationIds, asciiAlphanumericComparator);
 				return Joiner.on(",").join(itemLocationIds);
-			} 
+			}
 		}
 	}
 
@@ -282,5 +287,5 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 		}
 		return pickableWiLocations;
 	}
-	
+
 }
