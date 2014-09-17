@@ -68,11 +68,12 @@ public class LedRangeTest {
 		Assert.assertEquals(79, ledRange.mFirstLedToLight);
 		Assert.assertEquals(80, ledRange.mLastLedToLight);
 		
-		// various out of range
+		// various out of range. These error cases return zero values. Only some are logged
 		ledRange.computeLedsToLight(0, 0, 2.5, 0.5, true);
 		Assert.assertEquals(0, ledRange.mFirstLedToLight);
 		Assert.assertEquals(0, ledRange.mLastLedToLight);
 		
+		// this next line will log an error for meters from anchor greater than width. 
 		ledRange.computeLedsToLight(1, 80, 2.5, 3.0, false);
 		Assert.assertEquals(0, ledRange.mFirstLedToLight);
 		Assert.assertEquals(0, ledRange.mLastLedToLight);
@@ -85,6 +86,7 @@ public class LedRangeTest {
 		Assert.assertEquals(0, ledRange.mFirstLedToLight);
 		Assert.assertEquals(0, ledRange.mLastLedToLight);
 
+		// this next line will log an error for negative meters from anchor.
 		ledRange.computeLedsToLight(1, 80, 2.5, -0.5, false);
 		Assert.assertEquals(0, ledRange.mFirstLedToLight);
 		Assert.assertEquals(0, ledRange.mLastLedToLight);
