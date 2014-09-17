@@ -31,8 +31,8 @@ import com.gadgetworks.flyweight.controller.NetworkDeviceStateEnum;
 
 public class AisleDeviceLogic extends DeviceLogicABC {
 
-	private static final Logger	LOGGER	= LoggerFactory.getLogger(AisleDeviceLogic.class);
-	private static int kNumChannelsOnAislController = 2; // We expect 4 ultimately. Just matching what was there.
+	private static final Logger	LOGGER							= LoggerFactory.getLogger(AisleDeviceLogic.class);
+	private static int			kNumChannelsOnAislController	= 2;												// We expect 4 ultimately. Just matching what was there.
 
 	@Accessors(prefix = "m")
 	protected class LedCmd {
@@ -45,11 +45,11 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 			mChannel = inChannel;
 			mLedSample = inLedSample;
 		}
-		
+
 		public Short getPosition() {
 			return mLedSample.getPosition();
 		}
-		
+
 		public ColorEnum getColor() {
 			return mLedSample.getColor();
 		}
@@ -73,7 +73,7 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 		//		sendLightCommand(CommandControlLed.CHANNEL1, position, ColorEnum.BLUE, CommandControlLed.EFFECT_SOLID);
 		updateLeds();
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * Clear all of the active LED commands on this aisle controller.
@@ -84,7 +84,9 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 		// Note: as of V4, this is never called.
 		// We really should have a means to call it. The important part is mDeviceLedPosMap.clear(); If some CHE's led samples gets in there, and then the CHE never goes away,
 		// How can we get those lights off?
-		
+
+		LOGGER.info("Clear LEDs for all CHEs on " + getMyGuidStr());
+
 		// Only send the command if the device is known active.
 		if ((getDeviceStateEnum() != null) && (getDeviceStateEnum() == NetworkDeviceStateEnum.STARTED)) {
 			// Send a blanking command on each channel.
@@ -106,7 +108,10 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 	 */
 	public final void removeLedCmdsForCheAndSend(final NetGuid inNetGuid) {
 		// CD_0041 note: one of two new functions
+		String cheGuidStr = inNetGuid.getHexStringNoPrefix();
 		
+		LOGGER.info("Clear LEDs for CHE:" + cheGuidStr + " on " + getMyGuidStr());
+
 		mDeviceLedPosMap.remove(inNetGuid);
 		// Only send the command if the device is known active.
 		if ((getDeviceStateEnum() != null) && (getDeviceStateEnum() == NetworkDeviceStateEnum.STARTED)) {
@@ -129,7 +134,7 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 		// CD_0041 note: perfect. Gets existing or makes command list. Adds new LedCmd to list. Note, does not check if same or similar command already in list.
 		// inNetGuid is the Guid of the CHE, not of this aisle controller.
 		// Called only in CheDeviceLogic ledControllerSetLed(), if getLedCmdFor returned null.  So, perhaps a getOrAdd would be better.
-		
+
 		List<LedCmd> ledCmds = mDeviceLedPosMap.get(inNetGuid);
 		if (ledCmds == null) {
 			ledCmds = new ArrayList<LedCmd>();
@@ -148,7 +153,7 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 	 */
 	public final LedCmd getLedCmdFor(final NetGuid inNetGuid, final Short inChannel, final Short inPosition) {
 		// CD_0041 note: Called only in CheDeviceLogic ledControllerSetLed()
-		
+
 		LedCmd result = null;
 
 		List<LedCmd> ledCmds = mDeviceLedPosMap.get(inNetGuid);
@@ -172,7 +177,7 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 	public void scanCommandReceived(String inCommandStr) {
 		// The aisle device never returns commands.
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.flyweight.controller.INetworkDevice#buttonCommandReceived(com.gadgetworks.flyweight.command.CommandControlButton)
@@ -180,7 +185,7 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 	@Override
 	public void buttonCommandReceived(CommandControlButton inButtonCommand) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	/**
@@ -201,6 +206,18 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * Utility function. Should be promoted, and get a cached value.
+	 */
+	private String getMyGuidStr() {
+		String thisGuidStr = "";
+		NetGuid thisGuid = this.getGuid();
+		if (thisGuid != null)
+			thisGuidStr = thisGuid.getHexStringNoPrefix();
+		return thisGuidStr;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
 	 * Light all of the LEDs required.
 	 * 
 	 * TODO: Right now we just send the FLASH commands.  Those are the LEDs that get lit in the "ON" part of the cycle only.
@@ -210,6 +227,8 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 	public final void updateLeds() {
 		// CD_0041 note: Perfect for initial scope. DEV-411 will have us send out separate CommandControlLed if the byte stream of samples > 125.
 		// Looks like it does not really work yet for multiple channels. Does this need to figure out each channel, then send separate commands? Probably.
+
+		LOGGER.info("updateLeds on " + getMyGuidStr());
 
 		Short channel = 1;
 
