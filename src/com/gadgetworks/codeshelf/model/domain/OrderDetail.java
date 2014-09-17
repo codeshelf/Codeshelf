@@ -158,6 +158,11 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	public OrderDetail() {
 	}
 
+	public OrderDetail(OrderHeader inOrderHeader, String inDomainId) {
+		super(inDomainId);
+		this.parent = inOrderHeader;
+	}
+	
 	public final ITypedDao<OrderDetail> getDao() {
 		return DAO;
 	}

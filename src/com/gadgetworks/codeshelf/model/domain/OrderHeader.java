@@ -199,6 +199,14 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		statusEnum = OrderStatusEnum.CREATED;
 		pickStrategyEnum = PickStrategyEnum.SERIAL;
 	}
+	
+	public OrderHeader(Facility facility, String domainId) {
+		super(domainId);
+		parent = facility;
+		parent.addOrderHeader(this);
+		statusEnum = OrderStatusEnum.CREATED;
+		pickStrategyEnum = PickStrategyEnum.SERIAL;
+	}
 
 	public final ITypedDao<OrderHeader> getDao() {
 		return DAO;

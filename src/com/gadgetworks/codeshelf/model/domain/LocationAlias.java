@@ -88,6 +88,13 @@ public class LocationAlias extends DomainObjectTreeABC<Facility> {
 
 	}
 
+	public LocationAlias(Facility facility, String domainId, LocationABC<?> mappedLocation) {
+		super(domainId);
+		this.parent = facility;
+		this.mappedLocation = mappedLocation;
+		parent.addLocationAlias(this);
+	}
+	
 	public final ITypedDao<LocationAlias> getDao() {
 		return DAO;
 	}
