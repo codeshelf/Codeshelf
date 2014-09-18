@@ -16,7 +16,6 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.command.CreatePathCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.EchoCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.GetWorkCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.LoginCommand;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.command.NetworkAttachCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ObjectDeleteCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ObjectGetCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ObjectMethodCommand;
@@ -32,7 +31,6 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.request.CreatePathRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.EchoRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.GetWorkRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.LoginRequest;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.request.NetworkAttachRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.NetworkStatusRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectDeleteRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectGetRequest;
@@ -53,7 +51,6 @@ public class ServerMessageProcessor extends MessageProcessor {
 	private final Counter requestCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.processed");
 	private final Counter responseCounter = MetricsService.addCounter(MetricsGroup.WSS,"responses.processed");
 	private final Counter loginCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.logins");
-	private final Counter attachCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.network-attach");
 	private final Counter statusCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.network-status");
 	private final Counter missingResponseCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.missing-responses");
 	private final Counter echoCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.echo");
@@ -99,10 +96,6 @@ public class ServerMessageProcessor extends MessageProcessor {
 				command = new EchoCommand(csSession,(EchoRequest) request);
 				echoCounter.inc();
 			}		
-			else if (request instanceof NetworkAttachRequest) {
-				command = new NetworkAttachCommand(csSession, (NetworkAttachRequest) request);
-				attachCounter.inc();
-			}			
 			else if (request instanceof NetworkStatusRequest) {
 				command = new RegisterNetworkListenerCommand(csSession,(NetworkStatusRequest) request);
 				statusCounter.inc();

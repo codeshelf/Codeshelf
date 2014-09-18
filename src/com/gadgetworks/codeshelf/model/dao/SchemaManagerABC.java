@@ -670,21 +670,36 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 			result &= createTable("site_controller", //
 				"description VARCHAR(255), " //
-					+ "device_guid BYTEA DEFAULT '' NOT NULL, " //
-					+ "last_battery_level SMALLINT DEFAULT 0 NOT NULL, " //
-					+ "channel SMALLINT DEFAULT 5 NOT NULL, " //
-					+ "network_num SMALLINT DEFAULT 1 NOT NULL, " //
-					+ "monitor BOOLEAN DEFAULT TRUE NOT NULL" //
+						+ "device_guid BYTEA DEFAULT '' NOT NULL, " //
+						+ "last_battery_level SMALLINT DEFAULT 0 NOT NULL, " //
+						+ "monitor BOOLEAN DEFAULT TRUE NOT NULL, " //
+						+ "describeLocation VARCHAR(255) DEFAULT 'Unknown' NOT NULL"
 			);
+			execOneSQLCommand("CREATE UNIQUE INDEX site_controller_domainid_unique ON " + getDbSchemaName()
+				+ ".site_controller (domainid)"); // serial number of site controller must be unique 
 
 			result &= linkToParentTable("site_controller", "parent", "codeshelf_network");
 			
-			result &= safeDropColumn("user","email");
-			result &= safeAddColumn("user","default_network_persistentid",UUID_TYPE);
+			result &= safeAddColumn("codeshelf_network","channel","SMALLINT DEFAULT 5 NOT NULL");
+			result &= safeAddColumn("codeshelf_network","network_num","SMALLINT DEFAULT 1 NOT NULL");
 			
+			result &= execOneSQLCommand("DELETE FROM " 
+					+ getDbSchemaName()	+ ".user WHERE parent_persistentid IN "
+					+ "(SELECT persistentid FROM "+getDbSchemaName()+".organization WHERE domainid='DEMO2')");
+			result &= safeDropColumn("user","email");
+			result &= safeAddColumn("user","site_controller_persistentid",UUID_TYPE); // null okay
+			result &= linkToParentTable("user", "site_controller", "site_controller");
+			result &= execOneSQLCommand("CREATE UNIQUE INDEX user_site_controller_index ON " + getDbSchemaName()
+					+ ".user (site_controller_persistentid)"); // only one user per site controller
+			result &= execOneSQLCommand("CREATE UNIQUE INDEX user_domainid_index ON " + getDbSchemaName()
+					+ ".user (domainid)"); // only one user per username
+
 			result &= safeDropColumn("che","public_key");
+			result &= safeAddColumn("che","color","TEXT DEFAULT 'BLUE' NOT NULL");
 			
 			result &= safeDropColumn("led_controller","public_key");
+
+			result &= safeAddColumn("location","active","BOOLEAN DEFAULT TRUE NOT NULL");
 
 			return result;
 
@@ -761,20 +776,20 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		return result;
 	}
 
-	// --------------------------------------------------------------------------
+		// --------------------------------------------------------------------------
 	/**
 	 * Create a standard DomainObject table with all the appropriate boilerplate and then add the stuff for the particular domain class.
 	 * @param inTableName
 	 * @param inColumns
+	 * @param allowNullParent
 	 */
-	private boolean createTable(final String inTableName, final String inColumns) {
+	private boolean createTable(final String inTableName, final String inColumns, boolean allowNullParent) {
 
 		boolean result = true;
 
-		//result &= execOneSQLCommand("CREATE SEQUENCE " + getDbSchemaName() + "." + inTableName + "_seq");
 		result &= execOneSQLCommand("CREATE TABLE " + getDbSchemaName() + "." + inTableName + " (" //
 				+ "persistentid " + UUID_TYPE + " NOT NULL, " //
-				+ "parent_persistentid " + UUID_TYPE + " NOT NULL, " //
+				+ "parent_persistentid " + UUID_TYPE + (allowNullParent?", ":" NOT NULL, ") //
 				+ "domainid " + DOMAINID_TYPE + " NOT NULL, " //
 				+ "version TIMESTAMP, " //
 				+ inColumns //
@@ -789,27 +804,22 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	// --------------------------------------------------------------------------
 	/**
 	 * Create a standard DomainObject table with all the appropriate boilerplate and then add the stuff for the particular domain class.
+	 * @param inTableName
+	 * @param inColumns
+	 */
+	private boolean createTable(final String inTableName, final String inColumns) {
+		return createTable(inTableName,inColumns,false);
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Create a standard DomainObject table with all the appropriate boilerplate and then add the stuff for the particular domain class.
 	 * (Except in this case the parent_persistentid can be null.)
 	 * @param inTableName
 	 * @param inColumns
 	 */
 	private boolean createTableOptionalParent(final String inTableName, final String inColumns) {
-
-		boolean result = true;
-
-		//result &= execOneSQLCommand("CREATE SEQUENCE " + getDbSchemaName() + "." + inTableName + "_seq");
-		result &= execOneSQLCommand("CREATE TABLE " + getDbSchemaName() + "." + inTableName + " (" //
-				+ "persistentid " + UUID_TYPE + " NOT NULL, " //
-				+ "parent_persistentid " + UUID_TYPE + " , " //
-				+ "domainid " + DOMAINID_TYPE + " NOT NULL, " //
-				+ "version TIMESTAMP, " //
-				+ inColumns //
-				+ ", PRIMARY KEY (persistentid));");
-
-		result &= execOneSQLCommand("CREATE UNIQUE INDEX " + inTableName + "_domainid_index ON " + getDbSchemaName() + "."
-				+ inTableName + " (parent_persistentid, domainid)");
-
-		return result;
+		return createTable(inTableName,inColumns,true);
 	}
 
 	// --------------------------------------------------------------------------
@@ -1003,10 +1013,19 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		result &= linkToParentTable("persistent_property", "parent", "organization");
 
 		result &= linkToParentTable("site_controller", "parent", "codeshelf_network");
+		execOneSQLCommand("CREATE UNIQUE INDEX site_controller_domainid_unique ON " + getDbSchemaName()
+			+ ".site_controller (domainid)"); // serial number of site controller must be unique 
 
 		result &= linkToParentTable("uom_master", "parent", "location");
 
 		result &= linkToParentTable("user", "parent", "organization");
+		result &= linkToParentTable("user", "site_controller", "site_controller");
+		// Ensure only one user per site controller
+		execOneSQLCommand("CREATE UNIQUE INDEX user_site_controller_index ON " + getDbSchemaName()
+				+ ".user (site_controller_persistentid)");
+		// Ensure only one user per username
+		execOneSQLCommand("CREATE UNIQUE INDEX user_domainid_index ON " + getDbSchemaName()
+				+ ".user (domainid)");
 
 		result &= linkToParentTable("user_session", "parent", "USER");
 
@@ -1042,13 +1061,14 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 					+ "last_battery_level SMALLINT DEFAULT 0 NOT NULL, " //
 					+ "serial_bus_position INT DEFAULT 0, " //
 					+ "current_user_persistentid " + UUID_TYPE + ", " //
-					+ "current_work_area_persistentid " + UUID_TYPE //
-		);
+					+ "current_work_area_persistentid " + UUID_TYPE + ", " //
+					+ "color TEXT DEFAULT 'BLUE' NOT NULL");
 
 		// CodeshelfNetwork
 		result &= createTable("codeshelf_network", //
 			"description VARCHAR(255) NOT NULL, " //
-					+ "credential VARCHAR(255) NOT NULL, " //
+					+ "channel SMALLINT DEFAULT 5 NOT NULL, " //
+					+ "network_num SMALLINT DEFAULT 1 NOT NULL, " //
 					+ "active BOOLEAN DEFAULT TRUE NOT NULL " //
 		);
 
@@ -1156,9 +1176,8 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 					+ "first_ddc_id TEXT, " //
 					+ "last_ddc_id TEXT, " //
 					+ "parent_organization_persistentid " + UUID_TYPE + ", "//
-					+ "lower_led_near_anchor BOOLEAN DEFAULT TRUE " //
-
-		);
+					+ "lower_led_near_anchor BOOLEAN DEFAULT TRUE, " //
+					+ "active BOOLEAN DEFAULT TRUE NOT NULL ");
 
 		// LocationAlias
 		result &= createTable("location_alias", //
@@ -1245,11 +1264,9 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		result &= createTable("site_controller", //
 			"description VARCHAR(255), " //
 					+ "device_guid BYTEA DEFAULT '' NOT NULL, " //
-					+ "public_key VARCHAR(255) NOT NULL, " //
 					+ "last_battery_level SMALLINT DEFAULT 0 NOT NULL, " //
-					+ "channel SMALLINT DEFAULT 5 NOT NULL, " //
-					+ "network_num SMALLINT DEFAULT 1 NOT NULL, " //
-					+ "monitor BOOLEAN DEFAULT TRUE NOT NULL" //
+					+ "monitor BOOLEAN DEFAULT TRUE NOT NULL, " //
+					+ "describeLocation VARCHAR(255) NOT NULL"
 		);
 
 		// UomMaster
@@ -1262,7 +1279,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 			"hash_salt TEXT, " //
 					+ "hashed_password TEXT, " //
 					+ "hash_iterations INTEGER, " //
-					+ "default_network_persistentid "+UUID_TYPE+", " //
+					+ "site_controller_persistentid "+UUID_TYPE+", " //
 					+ "created TIMESTAMP, " //
 					+ "active BOOLEAN DEFAULT TRUE NOT NULL " //
 		);

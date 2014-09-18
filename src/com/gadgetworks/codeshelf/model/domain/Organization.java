@@ -273,21 +273,26 @@ public class Organization extends DomainObjectABC {
 	 * @return
 	 */
 	@Transactional
-	public final User createUser(final String inEmailAddr, final String inPassword) {
+	public final User createUser(final String inUsername, final String inPassword, final SiteController inSiteController) {
 		User result = null;
 
-		// Create a user for the organization.
-		User user = new User();
-		user.setParent(this);
-		user.setDomainId(inEmailAddr);
-		user.setPassword(inPassword);
-		user.setActive(true);
+		if(User.DAO.findByDomainId(null,inUsername) == null) {
+			// Create a user for the organization.
+			User user = new User();
+			user.setParent(this);
+			user.setDomainId(inUsername);
+			user.setPassword(inPassword);
+			user.setSiteController(inSiteController);
+			user.setActive(true);
 
-		try {
-			User.DAO.store(user);
-			result = user;
-		} catch (DaoException e) {
-			e.printStackTrace();
+			try {
+				User.DAO.store(user);
+				result = user;
+			} catch (DaoException e) {
+				e.printStackTrace();
+			}
+		} else {
+			LOGGER.warn("Tried to create user but username already existed - "+inUsername);
 		}
 
 		return result;

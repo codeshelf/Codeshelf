@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.model.domain.Che;
+import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.util.PropertyUtils;
@@ -28,7 +29,7 @@ import com.gadgetworks.codeshelf.ws.jetty.client.WebSocketEventListener;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.CompleteWorkInstructionRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ComputeWorkRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.GetWorkRequest;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.request.NetworkAttachRequest;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.request.LoginRequest;
 import com.gadgetworks.flyweight.command.NetGuid;
 import com.gadgetworks.flyweight.controller.INetworkDevice;
 import com.gadgetworks.flyweight.controller.IRadioController;
@@ -51,9 +52,11 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	
 	private TwoKeyMap<UUID, NetGuid, INetworkDevice> mDeviceMap;
 	private IRadioController				mRadioController;
+/*
 	private String							mOrganizationId;
 	private String							mFacilityId;
 	private String							mNetworkId;
+	*/
 	private String							mNetworkCredential;
 
 	/* Device Manager owns websocket configuration too */
@@ -87,9 +90,6 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 		mRadioController = inRadioController;
 		mDeviceMap = new TwoKeyMap<UUID, NetGuid, INetworkDevice>();
 
-		mOrganizationId = System.getProperty("organizationId");
-		mFacilityId = System.getProperty("facilityId");
-		mNetworkId = System.getProperty("networkId");
 		mNetworkCredential = System.getProperty("networkCredential");
 	}
 
@@ -210,12 +210,11 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	public void connected() {
 		// connected to server - send attach request
 		LOGGER.info("Connected to server");
-		NetworkAttachRequest attachRequest = new NetworkAttachRequest();
-		attachRequest.setNetworkId(mNetworkId);
-		attachRequest.setFacilityId(mFacilityId);
-		attachRequest.setOrganizationId(mOrganizationId);
-		attachRequest.setCredential(mNetworkCredential);
-		client.sendMessage(attachRequest);
+		LoginRequest loginRequest = new LoginRequest();
+		loginRequest.setUserId(CodeshelfNetwork.DEFAULT_SITECON_SERIAL);
+		loginRequest.setPassword(mNetworkCredential);
+		
+		client.sendMessage(loginRequest);
 	}
 
 	@Override

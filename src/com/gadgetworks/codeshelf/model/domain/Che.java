@@ -11,6 +11,8 @@ import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OrderBy;
@@ -24,10 +26,12 @@ import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.flyweight.command.ColorEnum;
 import com.gadgetworks.flyweight.command.NetGuid;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -78,6 +82,14 @@ public class Che extends WirelessDeviceABC {
 	@Setter
 	private User				currentUser;
 
+	// Service state.
+	@Column(nullable = false)
+	@Enumerated(value = EnumType.STRING)
+	@Getter
+	@Setter
+	@JsonProperty
+	private ColorEnum			color;
+
 	// ebeans maintains a lazy-loaded list of containerUse for this CHE
 	@OneToMany(mappedBy = "currentChe")
 	@Getter
@@ -90,7 +102,7 @@ public class Che extends WirelessDeviceABC {
 	private List<WorkInstruction>	cheWorkInstructions	= new ArrayList<WorkInstruction>();
 
 	public Che() {
-
+		color = ColorEnum.BLUE;
 	}
 
 	@SuppressWarnings("unchecked")

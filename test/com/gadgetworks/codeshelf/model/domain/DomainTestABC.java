@@ -54,7 +54,7 @@ public abstract class DomainTestABC extends DAOTestABC {
 		
 		CodeshelfNetwork codeshelfNetwork = mCodeshelfNetworkDao.findByDomainId(inFacility, defaultDomainId);
 		if (codeshelfNetwork == null) {
-			codeshelfNetwork = new CodeshelfNetwork(inFacility, defaultDomainId, "Description", "Credential");
+			codeshelfNetwork = new CodeshelfNetwork(inFacility, defaultDomainId, "Description");
 			codeshelfNetwork.getDao().store(codeshelfNetwork);
 		}
 		return codeshelfNetwork;

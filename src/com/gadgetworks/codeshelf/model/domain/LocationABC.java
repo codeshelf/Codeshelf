@@ -243,14 +243,21 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	@Column(nullable = true)
 	@Getter
 	@Setter
-	private Boolean				lowerLedNearAnchor;
+	private Boolean						lowerLedNearAnchor;
+
+	// Is this location active?
+	@Column(nullable = false)
+	@Getter
+	@Setter
+	private Boolean						active;
 
 	public LocationABC() {
-
+		active=true;
 	}
 
 	public LocationABC(String domainId, final Point inAnchorPoint) {
 		super(domainId);
+		active=true;
 		setAnchorPoint(inAnchorPoint);
 	}
 	
@@ -824,6 +831,10 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		// Could this have been computed instead of persisted?
 		// The only way would have been to examine siblings of this location. Or children if there are any.
 		// Not siblings with the same parent, but same level tier for adjacent bay. Note that zigzags are tricky.				
+	}
+	
+	public final Boolean isActive() {
+		return getActive();
 	}
 
 	public LedRange getFirstLastLedsForLocation() {

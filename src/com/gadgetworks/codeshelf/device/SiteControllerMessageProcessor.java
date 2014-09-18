@@ -46,7 +46,7 @@ public class SiteControllerMessageProcessor extends MessageProcessor {
 			LoginResponse naResponse = (LoginResponse) response;
 			if (response.getStatus()==ResponseStatus.Success) {
 				LOGGER.info("Attached to network");
-				UUID networkId = naResponse.getNetworkId();
+				UUID networkId = naResponse.getUser().getSiteController().getParent().getPersistentId();
 				// request current network status
 				NetworkStatusRequest req = new NetworkStatusRequest();
 				req.setNetworkId(networkId);

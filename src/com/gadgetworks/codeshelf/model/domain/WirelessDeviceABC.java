@@ -197,17 +197,17 @@ public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNet
 	/* --------------------------------------------------------------------------
 	 * (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.controller.INetworkDevice#setDesc(java.lang.String)
-	 */
 	public final void setDesc(String inDeviceDescription) {
 		//		mDeviceDesc = inDeviceDescription;
 	}
+	 */
 
 	/* --------------------------------------------------------------------------
 	 * (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.controller.INetworkDevice#setDeviceType(short)
-	 */
 	public final void setDeviceType(short inDeviceType) {
 		//		mDeviceType = inDeviceType;
 	}
+	 */
 
 }

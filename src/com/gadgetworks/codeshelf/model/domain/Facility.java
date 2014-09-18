@@ -608,25 +608,6 @@ public class Facility extends SubLocationABC<Facility> {
 		if (theService == null)
 			LOGGER.error("Failed to get IronMQ service");
 	}
-	
-	// --------------------------------------------------------------------------
-	/**
-	 * @return
-	 */
-	public final void ensureSiteController() {
-/*		this.getParentOrganization()
-	
-		User defaultSiteConUser = createOrganizationUser("DEMO1", "5000", "0.6910096026612129"); // site controller
-		// Setup one site controller
-		LOGGER.info("creating site controller # 5000");
-		int scSerial = 5000;
-		String scName = "SC"+scSerial;
-		SiteController sc = network.getSiteController(scName);
-		if(sc == null) {
-			sc = new SiteController();
-			network.addSiteController(sc);;			
-		}*/
-	}
 
 	// --------------------------------------------------------------------------
 	/**
@@ -732,18 +713,19 @@ public class Facility extends SubLocationABC<Facility> {
 		result.setDomainId(inNetworkName);
 		result.setActive(true);
 		//result.setCredential(Double.toString(Math.random()));
-		result.setCredential("0.6910096026612129");
+		//result.setCredential("0.6910096026612129");
+		
 		this.addNetwork(result);
 
 		try {
 			CodeshelfNetwork.DAO.store(result);
 		} catch (DaoException e) {
-			LOGGER.error("", e);
+			LOGGER.error("persistence error storing CodeshelfNetwork", e);
 		}
-
+		
 		return result;
 	}
-
+	
 	// --------------------------------------------------------------------------
 	/**
 	 * Compute work instructions for a CHE that's at the listed location with the listed container IDs.

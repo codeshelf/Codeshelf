@@ -38,7 +38,6 @@ public abstract class EndToEndIntegrationTest extends DomainTestABC {
 
 	protected static String facilityId = "F1";
 	protected static String networkId = "DEFAULT";
-	protected static String networkCredential = "0.6910096026612129";
 	protected static String cheId1 = "CHE1";
 	protected static NetGuid cheGuid1 = new NetGuid("0x23");
 	protected static String cheId2 = "CHE2";
@@ -86,7 +85,7 @@ public abstract class EndToEndIntegrationTest extends DomainTestABC {
 		}
 		CodeshelfNetwork network = fac.getNetwork(networkId);
 		if (network==null) {
-			network = new CodeshelfNetwork(fac, networkId, "The Network", networkCredential);
+			network = new CodeshelfNetwork(fac, networkId, "The Network");
 			mCodeshelfNetworkDao.store(network);
 		}
 		Che che1 = network.getChe(cheId1);

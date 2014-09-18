@@ -112,11 +112,10 @@ public class User extends DomainObjectTreeABC<Organization> {
 
 	// Create date.
 	@Column(nullable = true)
-	@ManyToOne(optional = false)
 	@Getter
 	@Setter
 	//@JsonProperty
-	private CodeshelfNetwork	defaultNetwork;
+	private SiteController		siteController;
 
 	// Create date.
 	@Column(nullable = false)
@@ -303,4 +302,5 @@ public class User extends DomainObjectTreeABC<Organization> {
 				" WHERE parent_persistentid = (Select persistentid from codeshelf.organization where domainId = '" + inOrganizationName + "') AND domainId = '" + inEmail + "';";
 		return sql;
 	}
+
 }

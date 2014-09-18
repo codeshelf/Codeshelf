@@ -3,7 +3,6 @@ package com.gadgetworks.codeshelf.ws.jetty.protocol.command;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.LoginRequest;
@@ -26,42 +25,48 @@ public class LoginCommand extends CommandABC {
 
 	@Override
 	public ResponseABC exec() {
-		LOGGER.info("Executing "+this);
-		// Search for a user with the specified ID (that has no password).
-		String organizationId = loginRequest.getOrganizationId();
-		
-		ITypedDao<Organization> orgDao = this.daoProvider.getDaoInstance(Organization.class);
-		Organization organization = orgDao.findByDomainId(null, organizationId);
-
-		// CRITICAL SECURITY CONCEPT.
+		// CRITICAL SECURITY CONCEPT - (not implemented? comments preserved cic2014)
 		// LaunchCodes are anonymous users that we create WITHOUT passwords or final userIDs.
 		// If a user has a NULL hashed password then this is a launch code (promo) user.
 		// A user with a launch code can elect to become a real user and change their userId (and created a password).
-		if (organization != null) {
-			// Find the user
-			String userId = loginRequest.getUserId();
-			User user = organization.getUser(userId);
+
+		LoginResponse response = new LoginResponse();
+		String userId = loginRequest.getUserId();
+
+		if(session != null) {
+			User user = User.DAO.findByDomainId(null, userId);
 			if (user != null) {
 				String password = loginRequest.getPassword();
 				if (user.isPasswordValid(password)) {
-					// set session type to UserApp, since authenticated via login
-					if (session!=null) {
-						session.setType(SessionType.UserApp);
-						session.setAuthenticated(true);
-						LOGGER.info("User "+userId+" of "+organization.getDomainId()+" authenticated on session "+session.getSessionId());
-					}					
+					Organization org = user.getParent();
+
+					if(user.getSiteController() != null) {
+						session.setType(SessionType.SiteController);
+					} else {
+						session.setType(SessionType.UserApp);						
+					}
+					session.setOrganizationName(org.getDomainId());
+					session.setAuthenticated(true);
+
 					// generate login response
-					LoginResponse response = new LoginResponse();
-					response.setOrganization(organization);
+					LOGGER.info("User "+userId+" of "+org.getDomainId()+" authenticated on session "+session.getSessionId());
+					response.setOrganization(org);
+
 					response.setStatus(ResponseStatus.Success);
 					response.setUser(user);
-					return response;
+				} else {
+					LOGGER.warn("Invalid password for user: " + user.getDomainId());
+					response.setStatus(ResponseStatus.Authentication_Failed);
 				}
-				// LOGGER.warn("Login " + authenticateResult + " for user: " + user.getDomainId());
+			} else {
+				LOGGER.warn("Invalid username: " + userId);
+				response.setStatus(ResponseStatus.Authentication_Failed);
 			}
+		} else {
+			LOGGER.warn("Null session on login attempt for user " + userId);
+			response.setStatus(ResponseStatus.Authentication_Failed);
 		}
-		LoginResponse response = new LoginResponse();
-		response.setStatus(ResponseStatus.Authentication_Failed);
+						
 		return response;
 	}
 }

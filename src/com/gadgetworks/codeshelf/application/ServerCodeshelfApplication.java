@@ -231,7 +231,7 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 	 */
 	protected void doInitializeApplicationData() {
 
-		// Create some demo organizations.
+		// Create a demo organization
 		createOrganizationUser("DEMO1", "a@example.com", "testme"); //view
 		createOrganizationUser("DEMO1", "view@example.com", "testme"); //view
 		createOrganizationUser("DEMO1", "configure@example.com", "testme"); //all
@@ -242,14 +242,8 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		createOrganizationUser("DEMO1", "view@goodeggs.com", "goodeggs"); //view
 		createOrganizationUser("DEMO1", "view@accu-logistics.com", "accu-logistics"); //view
 		
-		createOrganizationUser("DEMO2", "a@example.com", "testme"); //view
-		createOrganizationUser("DEMO2", "view@example.com", "testme"); //view
-		createOrganizationUser("DEMO2", "configure@example.com", "testme"); //all
-		createOrganizationUser("DEMO2", "simulate@example.com", "testme"); //simulate + configure
-		createOrganizationUser("DEMO2", "che@example.com", "testme"); //view + simulate
-		
 		// Recompute path positions, 
-		//   and ensure IronMq configuration,
+		//   and ensure IronMq configuration
 		for (Organization organization : mOrganizationDao.getAll()) {
 			for (Facility facility : organization.getFacilities()) {
 				for (Path path : facility.getPaths()) {
@@ -281,7 +275,7 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		}
 		User user = organization.getUser(inDefaultUserId);
 		if (user == null) {
-			user = organization.createUser(inDefaultUserId, inDefaultUserPw);
+			user = organization.createUser(inDefaultUserId, inDefaultUserPw, null);
 		} 
 		return user;
 	}
