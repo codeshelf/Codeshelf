@@ -471,7 +471,7 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 
 		// Add controllers, Jeff wants them set o "0x999999" so they definitely will not work
 		if (aisleTierCount > controllerCount) {
-			CodeshelfNetwork network = mFacility.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_ID);
+			CodeshelfNetwork network = mFacility.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
 
 			int needToMake = aisleTierCount - controllerCount;
 			int made = 0;

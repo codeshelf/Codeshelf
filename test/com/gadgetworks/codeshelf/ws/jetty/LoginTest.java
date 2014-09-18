@@ -37,7 +37,6 @@ public class LoginTest {
 		User user = new User();
 		user.setParent(organization);
 		user.setDomainId("user@example.com");
-		user.setEmail("user@example.com");
 		String password = "password";
 		user.setPassword(password);
 		user.setActive(true);
@@ -76,7 +75,6 @@ public class LoginTest {
 		User user = new User();
 		user.setParent(organization);
 		user.setDomainId("user@example.com");
-		user.setEmail("user@example.com");
 		String password = "password";
 		user.setPassword(password);
 		user.setActive(true);
@@ -114,7 +112,6 @@ public class LoginTest {
 		User user = new User();
 		user.setParent(organization);
 		user.setDomainId("user@example.com");
-		user.setEmail("user@example.com");
 		String password = "password";
 		user.setPassword(password);
 		user.setActive(true);

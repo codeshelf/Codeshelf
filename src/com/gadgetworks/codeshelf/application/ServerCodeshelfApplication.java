@@ -247,12 +247,13 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		createOrganizationUser("DEMO2", "configure@example.com", "testme"); //all
 		createOrganizationUser("DEMO2", "simulate@example.com", "testme"); //simulate + configure
 		createOrganizationUser("DEMO2", "che@example.com", "testme"); //view + simulate
-
-		// Recompute path positions.
-		// TODO: Remove once we have a tool for linking path segments to locations (aisles usually).
+		
+		// Recompute path positions, 
+		//   and ensure IronMq configuration,
 		for (Organization organization : mOrganizationDao.getAll()) {
 			for (Facility facility : organization.getFacilities()) {
 				for (Path path : facility.getPaths()) {
+					// TODO: Remove once we have a tool for linking path segments to locations (aisles usually).
 					facility.recomputeLocationPathDistances(path);
 				}
 				facility.ensureIronMqService(); // This is weak, but the only place we know that runs once after most data is present
@@ -265,7 +266,7 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 	 * @param inOrganizationId
 	 * @param inPassword
 	 */
-	private void createOrganizationUser(String inOrganizationId, String inDefaultUserId, String inDefaultUserPw) {
+	private User createOrganizationUser(String inOrganizationId, String inDefaultUserId, String inDefaultUserPw) {
 		Organization organization = mOrganizationDao.findByDomainId(null, inOrganizationId);
 		if (organization == null) {
 			organization = new Organization();
@@ -278,8 +279,10 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 			}
 
 		}
-		if (organization.getUser(inDefaultUserId) == null) {
-			organization.createUser(inDefaultUserId, inDefaultUserPw);
-		}
+		User user = organization.getUser(inDefaultUserId);
+		if (user == null) {
+			user = organization.createUser(inDefaultUserId, inDefaultUserPw);
+		} 
+		return user;
 	}
 }

@@ -1049,7 +1049,7 @@ public class AisleImporterTest extends DomainTestABC {
 		Assert.assertTrue(howManyNetworks == 1);
 
 		// organization.createFacility() should have created this network
-		CodeshelfNetwork network = facility.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_ID);
+		CodeshelfNetwork network = facility.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
 		Assert.assertNotNull(network);
 
 		// There are led controllers, but we will make a new one. If it exists already, no harm.

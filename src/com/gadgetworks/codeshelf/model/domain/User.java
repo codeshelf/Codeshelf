@@ -110,12 +110,13 @@ public class User extends DomainObjectTreeABC<Organization> {
 	//@JsonProperty
 	private String				hashedPassword;
 
-	// Email.
-	@Column(nullable = false)
+	// Create date.
+	@Column(nullable = true)
+	@ManyToOne(optional = false)
 	@Getter
 	@Setter
-	@JsonProperty
-	private String				email;
+	//@JsonProperty
+	private CodeshelfNetwork	defaultNetwork;
 
 	// Create date.
 	@Column(nullable = false)
@@ -137,7 +138,6 @@ public class User extends DomainObjectTreeABC<Organization> {
 	private List<UserSession>	userSessions		= new ArrayList<UserSession>();
 
 	public User() {
-		email = "";
 		created = new Timestamp(System.currentTimeMillis());
 		active = true;
 	}
@@ -300,7 +300,7 @@ public class User extends DomainObjectTreeABC<Organization> {
 		String sql = "UPDATE codeshelf.\"user\"" +
 				" SET " +
 				"hash_salt='"+toHex(salt)+"', hashed_password='"+ passwordOut +"', hash_iterations="+ hashIterations +
-				" WHERE parent_persistentid = (Select persistentid from codeshelf.organization where domainId = '" + inOrganizationName + "') AND email = '" + inEmail + "';";
+				" WHERE parent_persistentid = (Select persistentid from codeshelf.organization where domainId = '" + inOrganizationName + "') AND domainId = '" + inEmail + "';";
 		return sql;
 	}
 }

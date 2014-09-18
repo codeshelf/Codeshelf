@@ -362,6 +362,12 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 				versionOfDBAchived = ISchemaManager.DATABASE_VERSION_18;
 		}
 
+		if ((result) && (inOldVersion < ISchemaManager.DATABASE_VERSION_19)) {
+			result &= doUpgrade019();
+			if (result)
+				versionOfDBAchived = ISchemaManager.DATABASE_VERSION_19;
+		}
+
 		if (versionOfDBAchived > inOldVersion) {
 			LOGGER.info("Updating version in db_property table");
 			if (!result)
@@ -654,6 +660,44 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 			LOGGER.error("upgrade action 18 failed. Is lower_led_near_anchor column in location table present? If so, set db_property.version to 18 (or higher).");
 		else
 			LOGGER.info("upgrade action 18: add column lower_led_near_anchor");
+		return result;
+	}
+
+	private boolean doUpgrade019() {
+		boolean result = true;
+
+		try {
+
+			result &= createTable("site_controller", //
+				"description VARCHAR(255), " //
+					+ "device_guid BYTEA DEFAULT '' NOT NULL, " //
+					+ "last_battery_level SMALLINT DEFAULT 0 NOT NULL, " //
+					+ "channel SMALLINT DEFAULT 5 NOT NULL, " //
+					+ "network_num SMALLINT DEFAULT 1 NOT NULL, " //
+					+ "monitor BOOLEAN DEFAULT TRUE NOT NULL" //
+			);
+
+			result &= linkToParentTable("site_controller", "parent", "codeshelf_network");
+			
+			result &= safeDropColumn("user","email");
+			result &= safeAddColumn("user","default_network_persistentid",UUID_TYPE);
+			
+			result &= safeDropColumn("che","public_key");
+			
+			result &= safeDropColumn("led_controller","public_key");
+
+			return result;
+
+		
+		
+		} catch (Exception e) {
+			LOGGER.error("error in doUpgrade019", e);
+			result = false;
+		}
+		if (!result)
+			LOGGER.error("upgrade action 19 failed. Is sitecontroller table present w/ fkey relations? If so, set db_property.version to 19+");
+		else
+			LOGGER.info("upgrade action 19: add sitecontroller table");
 		return result;
 	}
 
@@ -958,6 +1002,8 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		result &= linkToParentTable("persistent_property", "parent", "organization");
 
+		result &= linkToParentTable("site_controller", "parent", "codeshelf_network");
+
 		result &= linkToParentTable("uom_master", "parent", "location");
 
 		result &= linkToParentTable("user", "parent", "organization");
@@ -993,7 +1039,6 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		result &= createTable("che", //
 			"description VARCHAR(255), " //
 					+ "device_guid BYTEA DEFAULT '' NOT NULL, " //
-					+ "public_key VARCHAR(255) NOT NULL, " //
 					+ "last_battery_level SMALLINT DEFAULT 0 NOT NULL, " //
 					+ "serial_bus_position INT DEFAULT 0, " //
 					+ "current_user_persistentid " + UUID_TYPE + ", " //
@@ -1086,7 +1131,6 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		result &= createTable("led_controller", //
 			"description TEXT, " //
 					+ "device_guid BYTEA DEFAULT '' NOT NULL, " //
-					+ "public_key TEXT NOT NULL, " //
 					+ "last_battery_level SMALLINT DEFAULT 0 NOT NULL, " //
 					+ "serial_bus_position INT DEFAULT 0 " //
 		);
@@ -1196,6 +1240,17 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 			"current_value_str TEXT, " //
 					+ "default_value_str TEXT " //
 		);
+		
+		// SiteController
+		result &= createTable("site_controller", //
+			"description VARCHAR(255), " //
+					+ "device_guid BYTEA DEFAULT '' NOT NULL, " //
+					+ "public_key VARCHAR(255) NOT NULL, " //
+					+ "last_battery_level SMALLINT DEFAULT 0 NOT NULL, " //
+					+ "channel SMALLINT DEFAULT 5 NOT NULL, " //
+					+ "network_num SMALLINT DEFAULT 1 NOT NULL, " //
+					+ "monitor BOOLEAN DEFAULT TRUE NOT NULL" //
+		);
 
 		// UomMaster
 		result &= createTable("uom_master", //
@@ -1207,7 +1262,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 			"hash_salt TEXT, " //
 					+ "hashed_password TEXT, " //
 					+ "hash_iterations INTEGER, " //
-					+ "email TEXT, " //
+					+ "default_network_persistentid "+UUID_TYPE+", " //
 					+ "created TIMESTAMP, " //
 					+ "active BOOLEAN DEFAULT TRUE NOT NULL " //
 		);

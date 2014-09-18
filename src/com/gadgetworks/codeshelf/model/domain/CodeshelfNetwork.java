@@ -66,7 +66,7 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 		}
 	}
 
-	public static final String			DEFAULT_NETWORK_ID	= "DEFAULT";
+	public static final String			DEFAULT_NETWORK_NAME	= "DEFAULT";
 
 	private static final Logger			LOGGER				= LoggerFactory.getLogger(CodeshelfNetwork.class);
 
@@ -111,6 +111,11 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 	@MapKey(name = "domainId")
 	@Getter
 	private Map<String, LedController>	ledControllers		= new HashMap<String, LedController>();
+
+	@OneToMany(mappedBy = "parent")
+	@MapKey(name = "domainId")
+	@Getter
+	private Map<String, SiteController>	siteControllers		= new HashMap<String, SiteController>();
 
 	// For a network this is a list of all of the devices that belong to this network.
 	@Column(nullable = false)
@@ -172,6 +177,18 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 
 	public final void removeChe(String inCheId) {
 		ches.remove(inCheId);
+	}
+
+	public final void addSiteController(SiteController inSiteController) {
+		siteControllers.put(inSiteController.getDomainId(), inSiteController);
+	}
+
+	public final SiteController getSiteController(String inSiteControllerId) {
+		return siteControllers.get(inSiteControllerId);
+	}
+
+	public final void removeSiteController(String inSiteControllerId) {
+		siteControllers.remove(inSiteControllerId);
 	}
 
 	public final void addLedController(LedController inLedController) {
@@ -238,7 +255,7 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 
 			try {
 				LedController.DAO.store(result);
-			} catch (DaoException e) {
+			} catch (DaoException e) { 
 				LOGGER.error("", e);
 			}
 		}

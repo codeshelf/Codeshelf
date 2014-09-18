@@ -38,8 +38,9 @@ public interface ISchemaManager {
 	int		DATABASE_VERSION_16				= 16;								// Add min and max quantity to the order detail.
 	int		DATABASE_VERSION_17				= 17;								// Rename item field to meterFromAnchor.
 	int		DATABASE_VERSION_18				= 18;								// Add locationABC field: lowerLedNearAnchor.
+	int		DATABASE_VERSION_19				= 19;								// Add sitecontroller table
 
-	int		DATABASE_VERSION_CUR			= DATABASE_VERSION_18;
+	int		DATABASE_VERSION_CUR			= DATABASE_VERSION_19;
 
 	String getDbAddress();
 

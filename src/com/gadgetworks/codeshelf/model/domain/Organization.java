@@ -248,7 +248,7 @@ public class Organization extends DomainObjectABC {
 		}
 
 		// Create the default network for the facility.
-		CodeshelfNetwork network = facility.createNetwork(CodeshelfNetwork.DEFAULT_NETWORK_ID);
+		CodeshelfNetwork network = facility.createNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
 
 		// Create the generic container kind (for all unspecified containers)
 		facility.createDefaultContainerKind();
@@ -263,6 +263,7 @@ public class Organization extends DomainObjectABC {
 				che = network.createChe(cheName, new NetGuid("0x0000999" + cheNum));
 			}
 		}
+		
 		return facility;
 	}
 
@@ -279,7 +280,6 @@ public class Organization extends DomainObjectABC {
 		User user = new User();
 		user.setParent(this);
 		user.setDomainId(inEmailAddr);
-		user.setEmail(inEmailAddr);
 		user.setPassword(inPassword);
 		user.setActive(true);
 

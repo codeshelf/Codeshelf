@@ -608,6 +608,25 @@ public class Facility extends SubLocationABC<Facility> {
 		if (theService == null)
 			LOGGER.error("Failed to get IronMQ service");
 	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * @return
+	 */
+	public final void ensureSiteController() {
+/*		this.getParentOrganization()
+	
+		User defaultSiteConUser = createOrganizationUser("DEMO1", "5000", "0.6910096026612129"); // site controller
+		// Setup one site controller
+		LOGGER.info("creating site controller # 5000");
+		int scSerial = 5000;
+		String scName = "SC"+scSerial;
+		SiteController sc = network.getSiteController(scName);
+		if(sc == null) {
+			sc = new SiteController();
+			network.addSiteController(sc);;			
+		}*/
+	}
 
 	// --------------------------------------------------------------------------
 	/**
@@ -1730,7 +1749,7 @@ public class Facility extends SubLocationABC<Facility> {
 	public final int countLedControllers() {
 		int result = 0;
 
-		CodeshelfNetwork network = getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_ID);
+		CodeshelfNetwork network = getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
 		if (network == null)
 			return result;
 		Map<String, LedController> controllerMap = network.getLedControllers();

@@ -53,6 +53,8 @@ import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.Path.PathDao;
 import com.gadgetworks.codeshelf.model.domain.PathSegment;
 import com.gadgetworks.codeshelf.model.domain.PathSegment.PathSegmentDao;
+import com.gadgetworks.codeshelf.model.domain.SiteController;
+import com.gadgetworks.codeshelf.model.domain.SiteController.SiteControllerDao;
 import com.gadgetworks.codeshelf.model.domain.Slot;
 import com.gadgetworks.codeshelf.model.domain.Slot.SlotDao;
 import com.gadgetworks.codeshelf.model.domain.SubLocationABC;
@@ -92,6 +94,7 @@ public abstract class DAOTestABC {
 	protected OrderLocationDao		mOrderLocationDao;
 	protected CodeshelfNetworkDao	mCodeshelfNetworkDao;
 	protected CheDao				mCheDao;
+	protected SiteControllerDao		mSiteControllerDao; 
 	protected ContainerDao			mContainerDao;
 	protected ContainerKindDao		mContainerKindDao;
 	protected ContainerUseDao		mContainerUseDao;
@@ -165,6 +168,9 @@ public abstract class DAOTestABC {
 
 		mCheDao = new CheDao(mSchemaManager);
 		Che.DAO = mCheDao;
+
+		mSiteControllerDao = new SiteControllerDao(mSchemaManager);
+		SiteController.DAO = mSiteControllerDao;
 
 		mSubLocationDao = new SubLocationDao(mSchemaManager);
 		SubLocationABC.DAO = mSubLocationDao;

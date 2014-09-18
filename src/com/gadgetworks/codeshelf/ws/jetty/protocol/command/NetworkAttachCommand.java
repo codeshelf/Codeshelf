@@ -11,7 +11,7 @@ import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Organization.OrganizationDao;
 import com.gadgetworks.codeshelf.util.ThreadUtils;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.NetworkAttachRequest;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.NetworkAttachResponse;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.response.LoginResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
 import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
@@ -49,18 +49,15 @@ public class NetworkAttachCommand extends CommandABC {
 						}						
 						// generate response 
 						LOGGER.info("Network "+request.getNetworkId()+"("+organization.getDomainId()+") attached");
-						NetworkAttachResponse response = new NetworkAttachResponse();
+						LoginResponse response = new LoginResponse();
 						response.setStatus(ResponseStatus.Success);
-						response.setClassName(network.getClassName());
 						response.setNetworkId(network.getPersistentId());
-						response.setDomainId(network.getDomainId());
-						response.setDescription(network.getDescription());
 						return response;
 					}
 					else {
 						LOGGER.warn("Unable to attach network "+request.getNetworkId()+"("+organization.getDomainId()+"): Authentication failed");
 						ThreadUtils.sleep(2000);
-						NetworkAttachResponse response = new NetworkAttachResponse();
+						LoginResponse response = new LoginResponse();
 						response.setStatus(ResponseStatus.Authentication_Failed);
 						response.setStatusMessage("Invalid credentials");
 						return response;
@@ -68,7 +65,7 @@ public class NetworkAttachCommand extends CommandABC {
 				}
 				else {
 					LOGGER.warn("Unable to attach network "+request.getNetworkId()+"("+request.getOrganizationId()+"): Network "+request.getNetworkId()+" does not exist");
-					NetworkAttachResponse response = new NetworkAttachResponse();
+					LoginResponse response = new LoginResponse();
 					response.setStatus(ResponseStatus.Fail);
 					response.setStatusMessage("Invalid network");
 					return response;
@@ -76,14 +73,14 @@ public class NetworkAttachCommand extends CommandABC {
 			}
 			else {
 				LOGGER.warn("Unable to attach network "+request.getNetworkId()+"("+request.getOrganizationId()+"): Facility "+request.getFacilityId()+" does not exist");
-				NetworkAttachResponse response = new NetworkAttachResponse();
+				LoginResponse response = new LoginResponse();
 				response.setStatus(ResponseStatus.Fail);
 				response.setStatusMessage("Invalid facility");
 				return response;
 			}
 		}
 		LOGGER.warn("Unable to attach network "+request.getNetworkId()+"("+request.getOrganizationId()+"): Organization does not exist");
-		NetworkAttachResponse response = new NetworkAttachResponse();
+		LoginResponse response = new LoginResponse();
 		response.setStatus(ResponseStatus.Fail);
 		response.setStatusMessage("Invalid organization");
 		return response;

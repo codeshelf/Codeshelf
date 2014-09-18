@@ -82,12 +82,6 @@ public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNet
 	@JsonProperty
 	private byte[]					deviceGuid;
 
-	@Column(nullable = false)
-	@Getter
-	@Setter
-	@JsonProperty
-	private String					publicKey;
-
 	// The description.
 	@Column(nullable = false)
 	@Getter
@@ -124,7 +118,6 @@ public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNet
 
 	public WirelessDeviceABC() {
 		deviceGuid = new byte[NetGuid.NET_GUID_BYTES];
-		publicKey = "";
 		description = "";
 		lastBatteryLevel = 0;
 	}

@@ -16,7 +16,7 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RequestABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.CompleteWorkInstructionResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ComputeWorkResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.GetWorkResponse;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.NetworkAttachResponse;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.response.LoginResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.NetworkStatusResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
@@ -42,8 +42,8 @@ public class SiteControllerMessageProcessor extends MessageProcessor {
 		}
 		//////////////////////////////////////////
 		// Handler for Network Attach Response
-		if (response instanceof NetworkAttachResponse) {
-			NetworkAttachResponse naResponse = (NetworkAttachResponse) response;
+		if (response instanceof LoginResponse) {
+			LoginResponse naResponse = (LoginResponse) response;
 			if (response.getStatus()==ResponseStatus.Success) {
 				LOGGER.info("Attached to network");
 				UUID networkId = naResponse.getNetworkId();

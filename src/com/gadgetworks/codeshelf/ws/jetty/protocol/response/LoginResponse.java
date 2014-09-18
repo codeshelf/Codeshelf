@@ -1,5 +1,7 @@
 package com.gadgetworks.codeshelf.ws.jetty.protocol.response;
 
+import java.util.UUID;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -13,6 +15,9 @@ public class LoginResponse extends ResponseABC {
 	
 	@Getter @Setter
 	User user;
+
+	@Getter @Setter
+	UUID networkId;
 	
 	public LoginResponse() {
 	}
