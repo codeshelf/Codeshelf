@@ -1466,7 +1466,7 @@ public class Facility extends SubLocationABC<Facility> {
 	public List<LedCmdGroup> getLedCmdGroupListForLocation(final ILocation<?> inLocation, final ColorEnum inColor) {
 		return getLedCmdGroupListForItemOrLocation(null, inColor, inLocation);
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * API to get LED group to light an inventory item
@@ -1499,7 +1499,7 @@ public class Facility extends SubLocationABC<Facility> {
 	private List<LedCmdGroup> getLedCmdGroupListForItemOrLocation(final Item inItem,
 		final ColorEnum inColor,
 		final ILocation<?> inLocation) {
-		
+
 		List<LedCmdGroup> ledCmdGroupList = new ArrayList<LedCmdGroup>();
 
 		LedController theLedController = inLocation.getEffectiveLedController();
@@ -1520,8 +1520,7 @@ public class Facility extends SubLocationABC<Facility> {
 			LedRange theRange = ((LocationABC) inLocation).getFirstLastLedsForLocation();
 			firstLedPosNum = theRange.getFirstLedToLight();
 			lastLedPosNum = theRange.getLastLedToLight();
-		}
-		else {
+		} else {
 			LOGGER.error("getLedCmdGroupListForItemOrLocation  no item nor location");
 			return ledCmdGroupList;
 		}
@@ -1647,6 +1646,67 @@ public class Facility extends SubLocationABC<Facility> {
 		ledCmdGroupList.add(ledCmdGroup);
 		inWi.setLedCmdStream(LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList));
 	}
+
+	// -------UI support for lighting items and locations- START ------------------
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Light one location transiently. Any subsequent activity on the aisle controller will wipe this away.
+	 * May be called with BLACK to clear whatever you just sent. 
+	 */
+	public void lightOneLocation(final String inColorStr, final String inLocationNominalId) {
+		ColorEnum theColor = ColorEnum.valueOf(inColorStr);
+		if (theColor == ColorEnum.INVALID) {
+			LOGGER.error("lightOneLocation called with unknown color");
+			return;
+		}
+		ISubLocation<?> theLocation = this.findSubLocationById(inLocationNominalId);
+		if (theLocation == null || theLocation instanceof Facility) {
+			LOGGER.error("lightOneLocation called with unknown location");
+			return;
+		}
+		
+		List<LedCmdGroup> ledCmdGroupList = getLedCmdGroupListForItemOrLocation(null, theColor, theLocation);
+		if (ledCmdGroupList.size() == 0) {
+			LOGGER.info("lightOneLocation called for location with incomplete LED configuration");
+			return;
+		}
+		
+		String theLedCommands = LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList);
+		// Need to embed this in a command and send to site controller.
+		LOGGER.info("lightOneLocation called correctly. Need command and site controller implementation");
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Light one item. Any subsequent activity on the aisle controller will wipe this away.
+	 * May be called with BLACK to clear whatever you just sent.
+	 */
+	@SuppressWarnings("rawtypes")
+	public void lightOneItem(final String inColorStr, final String inItemPersistentId) {
+		ColorEnum theColor = ColorEnum.valueOf(inColorStr);
+		if (theColor == ColorEnum.INVALID) {
+			LOGGER.error("lightOneItem called with unknown color");
+			return;
+		}
+		Item theItem = Item.DAO.findByPersistentId(inItemPersistentId);
+		if (theItem == null) {
+			LOGGER.error("lightOneItem called with unknown item");
+			return;
+		}	
+		
+		LocationABC location = theItem.getStoredLocation();
+		List<LedCmdGroup> ledCmdGroupList = getLedCmdGroupListForItemOrLocation(theItem, theColor, location);
+		if (ledCmdGroupList.size() == 0) {
+			LOGGER.info("lightOneItem called for location with incomplete LED configuration");
+			return;
+		}
+		String theLedCommands = LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList);
+		// Need to embed this in a command and send to site controller.
+		LOGGER.info("lightOneItem called correctly. Need command and site controller implementation");
+	}
+
+	// -------UI support for lighting items and locations- END-----------------------
 
 	/**
 	 * Compare Items by their ItemMasterDdc.
