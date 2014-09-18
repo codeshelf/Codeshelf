@@ -227,8 +227,8 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 	public final void updateLeds() {
 		// CD_0041 note: Perfect for initial scope. DEV-411 will have us send out separate CommandControlLed if the byte stream of samples > 125.
 		// Looks like it does not really work yet for multiple channels. Does this need to figure out each channel, then send separate commands? Probably.
-
-		LOGGER.info("updateLeds on " + getMyGuidStr());
+		final Integer kMaxLedCmdToLog = 25;
+		String myGuidStr = getMyGuidStr();
 
 		Short channel = 1;
 
@@ -238,16 +238,27 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 		LedSample sample = new LedSample(CommandControlLed.POSITION_NONE, ColorEnum.BLACK);
 		samples.add(sample);
 
+		String toLogString = "updateLeds on " + myGuidStr + ". "+ EffectEnum.FLASH;
+		Integer sentCount = 0;
 		// Now send the commands needed for each CHE.
 		for (Map.Entry<NetGuid, List<LedCmd>> entry : mDeviceLedPosMap.entrySet()) {
 			for (LedCmd ledCmd : entry.getValue()) {
 				channel = ledCmd.getChannel();
 				samples.add(ledCmd.getLedSample());
 
-				LOGGER.info("Light position: " + ledCmd.getPosition() + " color: " + ledCmd.getColor() + " effect: "
-						+ EffectEnum.FLASH);
+				// Log concisely instead of each ledCmd individually
+				sentCount ++;
+				if (sentCount <= kMaxLedCmdToLog)
+					toLogString  = toLogString + " " + ledCmd.getPosition() + ":" + ledCmd.getColor();				
 			}
 		}
+		if (sentCount > 0)
+			LOGGER.info(toLogString);
+		else { // A clearing sample was still sent
+			LOGGER.info("updateLeds on " + myGuidStr + ". Cleared. None lit back."); // position 0 black is being sent
+		}
+		if (sentCount > kMaxLedCmdToLog)
+			LOGGER.info("And more LED not logged. Total LED Cmds this update = " + sentCount);
 
 		// Now we have to sort the samples in position order.
 		Collections.sort(samples, new LedPositionComparator());
