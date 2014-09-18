@@ -141,12 +141,17 @@
 		</copy-->
 		<copy todir="${target.resources}/conf">
 			<fileset dir="${conf.dir}">
+				<include name="common.config.properties" />
+				<include name="server.config.properties" />
+				<include name="sitecontroller.config.properties" />
+				<include name="test.config.properties" />
+				
+				<include name="log4j.properties" />
+				<include name="version.properties" />
+
 				<include name="commons-logging.properties" />
 				<include name="ebean.properties" />
-				<include name="locale.properties" />
-				<include name="log4j.properties" />
 				<include name="logging.properties" />
-				<include name="version.properties" />
 			</fileset>
 		</copy>
 		<!--copy todir="${target.resources}/images">
@@ -296,10 +301,7 @@
 		<!-- Create the final application JAR file. -->
 		<jar duplicate="fail" jarfile="${appjar.build.dir}/${codeshelf.app.jar.name}">
 			<zipfileset dir="${target.enhanced.classes}" />
-			<zipfileset dir="${target.resources}/">
-				<exclude name="**/server.config.properties*" />
-				<exclude name="**/sitecontroller.config.properties*" />
-			</zipfileset>
+			<zipfileset dir="${target.resources}/"/>
 			<zipfileset dir="${target.classes}/">
 				<exclude name="com.gadgetworks.codeshelf.model.domain/**.*" />
 			</zipfileset>
@@ -373,8 +375,9 @@
 		<mkdir dir="${target.test}" />
 	        <javac destdir="${target.test}" sourcepath="" source="${javac.compile.using.version}" target="${javac.compile.using.version}" verbose="false" compiler="modern" debug="true">
         	        <classpath>
-                	        <path refid="compile-libs" />
-				<path refid="test-libs" />
+        				<pathelement location="${target.resources}" />
+               	        <path refid="compile-libs" />
+						<path refid="test-libs" />
         	        </classpath>
                 	<src path="${test.dir}" />
 	        </javac>
@@ -390,6 +393,7 @@
 		<mkdir dir="${target.report}" />
 		<junit printsummary="on" fork="true" haltonfailure="no" failureproperty="test.failed">
 			<classpath>
+				<pathelement location="${target.resources}" />
 				<pathelement location="${target.classes}" />
 				<pathelement location="${target.test}" />
 				<pathelement location="${target.lib}" />

@@ -64,7 +64,8 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 	private Aisle				mLastReadAisle;
 	private Bay					mLastReadBay;
 	private Bay					mLastReadBayForVertices;
-	private Tier				mLastReadTier;
+	@SuppressWarnings("unused")
+	private Tier				mLastReadTier; // actually, this is used, suppressing bogus warning
 	private int					mBayCountThisAisle;
 	private int					mTierCountThisBay;
 
@@ -271,6 +272,7 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 		}
 	}
 
+	@SuppressWarnings("unused")
 	private class BayComparable implements Comparator<Bay> {
 		// We want B1, B2, ...B9, B10,B11, etc.
 		public int compare(Bay inLoc1, Bay inLoc2) {
@@ -287,6 +289,7 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 		}
 	}
 
+	@SuppressWarnings("unused")
 	private class SlotComparable implements Comparator<Slot> {
 		// We want B1, B2, ...B9, B10,B11, etc.
 		public int compare(Slot inLoc1, Slot inLoc2) {
@@ -338,9 +341,18 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 
 		// First get our list of slot. Fighting through the cast.
 		List<Slot> slotList = new ArrayList<Slot>();
+		
+		@SuppressWarnings("rawtypes")
 		List<? extends ISubLocation> locationList = inTier.getChildren();
-		slotList.addAll((Collection<? extends Slot>) locationList);
+		
+		@SuppressWarnings("unchecked")
+		Collection<? extends Slot> slotCollection = (Collection<? extends Slot>) locationList;
+		
+		slotList.addAll(slotCollection);
 
+		//List<? extends ISubLocation> locationList = inTier.getChildren();
+		//slotList.addAll((Collection<? extends Slot>) locationList);
+		
 		// sort the slots in the direction the led count will increase		
 		Collections.sort(slotList, new SlotNameComparable());
 		if (!inSlotLedsIncrease)
@@ -368,7 +380,7 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 		// until the remainder runs out. Then light a few lights in the middle of that span.
 
 		// We will leave two dark then light some. That leaves one dark at the end, or two if we used the remainder.
-		ListIterator li = null;
+		ListIterator<Slot> li = null;
 		li = slotList.listIterator();
 		while (li.hasNext()) {
 			Slot thisSlot = (Slot) li.next();
@@ -481,7 +493,7 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 	/**
 	 * @param inLocation
 	 */
-	private Point getNewBoundaryPoint(final SubLocationABC inLocation, Double inDepthM, Boolean inXOriented) {
+	private Point getNewBoundaryPoint(final SubLocationABC<?> inLocation, Double inDepthM, Boolean inXOriented) {
 		// returns a new point in the same coordinate system as the location's anchor
 
 		// The boundary point will be the pickFaceEnd adjusted for mDepth
@@ -494,12 +506,8 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 			pointX += inDepthM;
 		}
 
-		Point aPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, pointX, pointY, 0.0);
-		// So, that was relative to zero. Now need to translate by the anchor to get into the anchor's coordinate system.
-		aPoint.translateX(inLocation.getAnchorPosX());
-		aPoint.translateY(inLocation.getAnchorPosY());
-		aPoint.translateZ(inLocation.getAnchorPosZ());	
-
+		//Now need to translate by the anchor to get into the anchor's coordinate system.
+		Point aPoint = inLocation.getAnchorPoint().add(pointX, pointY);
 		return aPoint;
 	}
 
@@ -547,7 +555,7 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 		// Each bay also has vertices. The point will come from pickfaceEnd, then translate to the anchor coordinate system for the vertices.
 		List<Bay> locationList = inAisle.getChildrenAtLevel(Bay.class);
 
-		ListIterator li = null;
+		ListIterator<Bay> li = null;
 		li = locationList.listIterator();
 		while (li.hasNext()) {
 			Bay thisBay = (Bay) li.next();
@@ -592,7 +600,7 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 		// For aisle types, start over if the tier name changes.
 		// For zigzag types, start over on tier direction if the bay name changes
 
-		ListIterator li = null;
+		ListIterator<Tier> li = null;
 
 		boolean forwardIterationNeeded = true;
 		if (controllerLedPattern.equalsIgnoreCase("tierRight") || controllerLedPattern.equalsIgnoreCase("tierNotB1S1Side")) {

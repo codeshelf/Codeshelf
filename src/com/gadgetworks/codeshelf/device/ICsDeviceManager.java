@@ -50,4 +50,6 @@ public interface ICsDeviceManager {
 	 */
 	void completeWi(String inCheId, UUID inPersistentId, WorkInstruction inWorkInstruction);
 
+	List<AisleDeviceLogic> getAisleControllers();
+
 }

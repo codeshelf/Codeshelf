@@ -32,7 +32,8 @@ public abstract class ImportCsvBeanABC {
 	 */
 	public final String validateBean() {
 		String result = null;
-
+		int missingCount = 0;
+		
 		// Iterate over all of the fields and see which are required, but have no value.
 		for (Field field : this.getClass().getDeclaredFields()) {
 			Annotation annotation = field.getAnnotation(NotNull.class);
@@ -42,10 +43,13 @@ public abstract class ImportCsvBeanABC {
 					if (result == null) {
 						result = "";
 					}
-					result = result + "field " + field.getName() + " is null, but is required";
+					// If a record is horribly blank, stop the verbosity after 3 fields are named
+					if (missingCount <= 2)
+						result = result + "field " + field.getName() + " is null, but is required";
+					missingCount++;
 				}
 			} catch (IllegalArgumentException | IllegalAccessException e) {
-				LOGGER.error("", e);
+				LOGGER.error("validateBean", e);
 			}
 		}
 

@@ -23,6 +23,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.jvm.MemoryUsageGaugeSet;
 import com.gadgetworks.codeshelf.device.RadioController;
 import com.gadgetworks.codeshelf.edi.IEdiProcessor;
+import com.gadgetworks.codeshelf.metrics.DatabaseConnectionHealthCheck;
 import com.gadgetworks.codeshelf.metrics.MetricsGroup;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
 import com.gadgetworks.codeshelf.metrics.OpenTsdb;
@@ -34,10 +35,9 @@ import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
 import com.gadgetworks.codeshelf.model.domain.User;
-import com.gadgetworks.codeshelf.monitor.IMonitor;
+import com.gadgetworks.codeshelf.platform.services.PersistencyService;
 import com.gadgetworks.codeshelf.report.IPickDocumentGenerator;
 import com.gadgetworks.codeshelf.ws.jetty.server.JettyWebSocketServer;
-import com.gadgetworks.codeshelf.ws.websocket.IWebSocketServer;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 
@@ -48,15 +48,14 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 	private IEdiProcessor					mEdiProcessor;
 	private IHttpServer						mHttpServer;
 	private IPickDocumentGenerator			mPickDocumentGenerator;
+	private PersistencyService				persistencyService;
 
 	private ITypedDao<PersistentProperty>	mPersistentPropertyDao;
 	private ITypedDao<Organization>			mOrganizationDao;
 
-	private IMonitor						mMonitor;
-
 	private BlockingQueue<String>			mEdiProcessSignalQueue;
 	
-	JettyWebSocketServer mAlternativeWebSocketServer;
+	JettyWebSocketServer webSocketServer;
 	
 	private AdminServer mAdminServer;
 	
@@ -64,26 +63,23 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 	
 	@Inject
 	public ServerCodeshelfApplication(
-		final IMonitor inMonitor,
 		final IHttpServer inHttpServer,
 		final IEdiProcessor inEdiProcessor,
 		final IPickDocumentGenerator inPickDocumentGenerator,
-		final Util inUtil,
 		final ITypedDao<PersistentProperty> inPersistentPropertyDao,
 		final ITypedDao<Organization> inOrganizationDao,
 		final ITypedDao<Facility> inFacilityDao,
 		final ITypedDao<User> inUserDao,
 		final AdminServer inAdminServer,
 		final JettyWebSocketServer inAlternativeWebSocketServer) {
-		super(inUtil);
-		mMonitor = inMonitor;
+		super();
 		mHttpServer = inHttpServer;
 		mEdiProcessor = inEdiProcessor;
 		mPickDocumentGenerator = inPickDocumentGenerator;
 		mPersistentPropertyDao = inPersistentPropertyDao;
 		mOrganizationDao = inOrganizationDao;
 		mAdminServer = inAdminServer;
-		mAlternativeWebSocketServer = inAlternativeWebSocketServer;
+		webSocketServer = inAlternativeWebSocketServer;
 	}
 
 	// --------------------------------------------------------------------------
@@ -99,14 +95,11 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	protected void doStartup() {
+	protected void doStartup() throws Exception {
 
 		String processName = ManagementFactory.getRuntimeMXBean().getName();
-		LOGGER.info("------------------------------------------------------------");
 		LOGGER.info("Process info: " + processName);
 
-		// mMonitor.logToCentralAdmin("Startup: codeshelf server " + processName);
-		
 		// register JVM metrics
 		memoryUsage = new MemoryUsageGaugeSet();
 		Map<String, Metric> memoryMetrics  = memoryUsage.getMetrics();
@@ -115,7 +108,7 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		}
 
 		// Start the WebSocket server 
-		mAlternativeWebSocketServer.start();
+		webSocketServer.start();
 
 		// Start the EDI process.
 		mEdiProcessSignalQueue = new ArrayBlockingQueue<>(100);
@@ -135,6 +128,10 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		else {
 			LOGGER.info("Admin Server not enabled");
 		}
+		
+		// create health checks
+		DatabaseConnectionHealthCheck dbCheck = new DatabaseConnectionHealthCheck(persistencyService);
+		MetricsService.registerHealthCheck(MetricsGroup.Database, dbCheck.getName(), dbCheck);
 		
 		// public metrics to opentsdb
 		String useMetricsReporter = System.getProperty("metrics.reporter.enabled");
@@ -162,28 +159,20 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 	/**
 	 */
 	protected void doShutdown() {
-
-		String processName = ManagementFactory.getRuntimeMXBean().getName();
-		mMonitor.logToCentralAdmin("Shutodwn: codeshelf server " + processName);
-
 		LOGGER.info("Stopping application");
-
 		mHttpServer.stopServer();
-
 		mEdiProcessor.stopProcessor();
 		mPickDocumentGenerator.stopProcessor();
-
-		// Stop the web socket manager.
+		// Stop the web socket server
 		try {
-			mAlternativeWebSocketServer.stop();
+			webSocketServer.stop();
 		} catch (IOException | InterruptedException e) {
-			LOGGER.error("", e);
+			LOGGER.error("Failed to stop WebSocket server", e);
 		}
-
 		LOGGER.info("Application terminated normally");
-
 	}
 
+	@SuppressWarnings("unused")
 	private void initPreferencesStore(Organization inOrganization) {
 		initPreference(inOrganization,
 			PersistentProperty.FORCE_CHANNEL,
@@ -237,7 +226,61 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		}
 	}
 
-	@Override
+	// --------------------------------------------------------------------------
+	/**
+	 *	Reset some of the persistent object fields to a base state at start-up.
+	 */
 	protected void doInitializeApplicationData() {
+
+		// Create some demo organizations.
+		createOrganizationUser("DEMO1", "a@example.com", "testme"); //view
+		createOrganizationUser("DEMO1", "view@example.com", "testme"); //view
+		createOrganizationUser("DEMO1", "configure@example.com", "testme"); //all
+		createOrganizationUser("DEMO1", "simulate@example.com", "testme"); //simulate + configure
+		createOrganizationUser("DEMO1", "che@example.com", "testme"); //view + simulate
+		createOrganizationUser("DEMO1", "work@example.com", "testme"); //view + simulate
+		
+		createOrganizationUser("DEMO1", "view@goodeggs.com", "goodeggs"); //view
+		createOrganizationUser("DEMO1", "view@accu-logistics.com", "accu-logistics"); //view
+		
+		createOrganizationUser("DEMO2", "a@example.com", "testme"); //view
+		createOrganizationUser("DEMO2", "view@example.com", "testme"); //view
+		createOrganizationUser("DEMO2", "configure@example.com", "testme"); //all
+		createOrganizationUser("DEMO2", "simulate@example.com", "testme"); //simulate + configure
+		createOrganizationUser("DEMO2", "che@example.com", "testme"); //view + simulate
+
+		// Recompute path positions.
+		// TODO: Remove once we have a tool for linking path segments to locations (aisles usually).
+		for (Organization organization : mOrganizationDao.getAll()) {
+			for (Facility facility : organization.getFacilities()) {
+				for (Path path : facility.getPaths()) {
+					facility.recomputeLocationPathDistances(path);
+				}
+				facility.ensureIronMqService(); // This is weak, but the only place we know that runs once after most data is present
+			}
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inOrganizationId
+	 * @param inPassword
+	 */
+	private void createOrganizationUser(String inOrganizationId, String inDefaultUserId, String inDefaultUserPw) {
+		Organization organization = mOrganizationDao.findByDomainId(null, inOrganizationId);
+		if (organization == null) {
+			organization = new Organization();
+			organization.setDomainId(inOrganizationId);
+			try {
+				mOrganizationDao.store(organization);
+
+			} catch (DaoException e) {
+				e.printStackTrace();
+			}
+
+		}
+		if (organization.getUser(inDefaultUserId) == null) {
+			organization.createUser(inDefaultUserId, inDefaultUserPw);
+		}
 	}
 }

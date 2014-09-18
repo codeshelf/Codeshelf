@@ -62,7 +62,6 @@ public class OrderLocationCsvImporter implements ICsvOrderLocationImporter {
 			//Sort to put orders with same id together
 			Collections.sort(orderLocationBeanList);
 
-
 			if (orderLocationBeanList.size() > 0) {
 
 				LOGGER.debug("Begin order location import.");
@@ -70,16 +69,29 @@ public class OrderLocationCsvImporter implements ICsvOrderLocationImporter {
 				String lastOrderId = null; //when changes, locations should be cleared
 				// Iterate over the order location map import beans.
 				for (OrderLocationCsvBean orderLocationBean : orderLocationBeanList) {
-					String errorMsg = orderLocationBean.validateBean();
-					if (errorMsg != null) {
-						LOGGER.error("Import errors: " + errorMsg);
-					} else {
+					try {	
+						mOrderLocationDao.beginTransaction();
 
-						if (!orderLocationBean.getOrderId().equals(lastOrderId)) {
-							deleteOrderLocations(orderLocationBean.getOrderId(), inFacility, inProcessTime);
+						String errorMsg = orderLocationBean.validateBean();
+						if (errorMsg != null) {
+							LOGGER.error("Order location error: " + errorMsg + " for line: " + orderLocationBean);
+						} else {
+	
+							if (!orderLocationBean.getOrderId().equals(lastOrderId)) {
+								deleteOrderLocations(orderLocationBean.getOrderId(), inFacility, inProcessTime);
+							}
+							orderLocationCsvBeanImport(orderLocationBean, inFacility, inProcessTime);
+							lastOrderId = orderLocationBean.getOrderId();
 						}
-						orderLocationCsvBeanImport(orderLocationBean, inFacility, inProcessTime);
-						lastOrderId = orderLocationBean.getOrderId();
+						mOrderLocationDao.commitTransaction();
+					} catch (DaoException e) {
+						LOGGER.warn("dao persistence issue importing order location: " + orderLocationBean, e);
+					} catch(EdiFileReadException e) {
+						LOGGER.warn("file input issue importing order location: " + orderLocationBean, e);
+					} catch (Exception e) {
+						LOGGER.error("unknown issue importing order location: " + orderLocationBean, e);
+					} finally {
+						mOrderLocationDao.endTransaction();
 					}
 				}
 
@@ -90,7 +102,7 @@ public class OrderLocationCsvImporter implements ICsvOrderLocationImporter {
 
 		} catch (IOException | DaoException e) {
 			result = false;
-			LOGGER.error("", e);
+			LOGGER.error("Unable to process order location stream", e);
 		} 
 		return result;
 	}
@@ -124,6 +136,8 @@ public class OrderLocationCsvImporter implements ICsvOrderLocationImporter {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * Caller should wrap in a transaction and handle exceptions
+	 * 
 	 * @param inCsvBean
 	 * @param inFacility
 	 * @param inEdiProcessTime
@@ -132,28 +146,23 @@ public class OrderLocationCsvImporter implements ICsvOrderLocationImporter {
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime) {
 
-		try {
-			mOrderLocationDao.beginTransaction();
+		LOGGER.info(inCsvBean.toString());
 
-			LOGGER.info(inCsvBean.toString());
-
-			if ((inCsvBean.getLocationId() == null) || inCsvBean.getLocationId().length() == 0) {
-				deleteOrderLocations(inCsvBean.getOrderId(), inFacility, inEdiProcessTime);
-			} else if ((inCsvBean.getOrderId() == null) || inCsvBean.getOrderId().length() == 0) {
-				deleteLocation(inCsvBean.getLocationId(), inFacility, inEdiProcessTime);
-			} else {
-				updateOrderLocation(inCsvBean, inFacility, inEdiProcessTime);
-			}
-
-			mOrderLocationDao.commitTransaction();
-
-		} finally {
-			mOrderLocationDao.endTransaction();
+		if ((inCsvBean.getLocationId() == null) || inCsvBean.getLocationId().length() == 0) {
+			deleteOrderLocations(inCsvBean.getOrderId(), inFacility, inEdiProcessTime);
+		} else if ((inCsvBean.getOrderId() == null) || inCsvBean.getOrderId().length() == 0) {
+			deleteLocation(inCsvBean.getLocationId(), inFacility, inEdiProcessTime);
+		} else {
+			updateOrderLocation(inCsvBean, inFacility, inEdiProcessTime);
 		}
+
 	}
 
 	// --------------------------------------------------------------------------
 	/**
+	 * 
+	 * Caller should wrap in a transaction and handle exceptions
+	 * 
 	 * @param inCsvBean
 	 * @param inFacility
 	 * @param inEdiProcessTime
@@ -170,7 +179,7 @@ public class OrderLocationCsvImporter implements ICsvOrderLocationImporter {
 		String locationId = inCsvBean.getLocationId();
 
 		// Only create an OrderLocation mapping if the location is valid.
-		ILocation mappedLocation = inFacility.findSubLocationById(locationId);
+		ILocation<?> mappedLocation = inFacility.findSubLocationById(locationId);
 		if (mappedLocation != null) {
 
 			OrderHeader order = inFacility.getOrderHeader(orderId);
@@ -192,18 +201,13 @@ public class OrderLocationCsvImporter implements ICsvOrderLocationImporter {
 			// If we were able to get/create an item then update it.
 			if (result != null) {
 				result.setLocation(mappedLocation);
-				try {
-					result.setActive(true);
-					result.setUpdated(inEdiProcessTime);
-					mOrderLocationDao.store(result);
-				} catch (DaoException e) {
-					LOGGER.error("", e);
-				}
-			} else {
-				LOGGER.error("OrderLocation incorrectly setup");
-			}
+				result.setActive(true);
+				result.setUpdated(inEdiProcessTime);
+				mOrderLocationDao.store(result);
+			} 
+			
 		} else {
-			throw new DaoException("No location found for location: " + locationId);
+			throw new EdiFileReadException("No location found for location: " + locationId);
 			
 		} 
 		return result;
@@ -238,7 +242,7 @@ public class OrderLocationCsvImporter implements ICsvOrderLocationImporter {
 	 */
 	private void deleteLocation(final String inLocationId, final Facility inFacility, final Timestamp inEdiProcessTime) {
 
-		ILocation location = inFacility.findSubLocationById(inLocationId);
+		ILocation<?> location = inFacility.findSubLocationById(inLocationId);
 
 		for (OrderHeader order : inFacility.getOrderHeaders()) {
 			// For every OrderLocation on this order, set it to inactive.

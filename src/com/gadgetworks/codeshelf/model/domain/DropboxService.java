@@ -50,6 +50,7 @@ import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.platform.services.PersistencyService;
+import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -90,8 +91,8 @@ public class DropboxService extends EdiServiceABC {
 
 	private static final String		APPKEY					= "0l3auhytaxn2q50";
 	private static final String		APPSECRET				= "5syhdiyq0bd2oxq";
-	private static final Integer	LINK_RETRIES			= 20;
-	private static final Integer	RETRY_SECONDS			= 10 * 1000;
+	//private static final Integer	LINK_RETRIES			= 20;
+	//private static final Integer	RETRY_SECONDS			= 10 * 1000;
 
 	private static final String		FACILITY_FOLDER_PATH	= "FACILITY_";
 
@@ -123,10 +124,17 @@ public class DropboxService extends EdiServiceABC {
 		return DROPBOX_SERVICE_NAME;
 	}
 
+	@SuppressWarnings("unchecked")
 	public final ITypedDao<DropboxService> getDao() {
 		return DAO;
 	}
 
+	@Override
+	@JsonProperty
+	public boolean getHasCredentials() {
+		return !Strings.isNullOrEmpty(getProviderCredentials());
+	}
+	
 	public final boolean getUpdatesFromHost(ICsvOrderImporter inCsvOrderImporter,
 		ICsvOrderLocationImporter inCsvOrderLocationImporter,
 		ICsvInventoryImporter inCsvInventoryImporter,
@@ -181,7 +189,7 @@ public class DropboxService extends EdiServiceABC {
 					inCsvAislesFileImporter)) {
 					// If we've processed everything from the page correctly then save the current dbCursor, and get the next page
 					try {
-						DropboxService.DAO.store(this);
+						EdiServiceABC.DAO.store(this);
 					} catch (DaoException e) {
 						LOGGER.error("", e);
 					}
@@ -314,6 +322,7 @@ public class DropboxService extends EdiServiceABC {
 		return new String(getFacilityPath() + System.getProperty("file.separator") + EXPORT_DIR_PATH).toLowerCase();
 	}
 
+	@SuppressWarnings("unused")
 	private String getFacilityExportSubDirPath(final String inExportSubDirPath) {
 		return new String(getFacilityExportPath() + System.getProperty("file.separator") + inExportSubDirPath).toLowerCase();
 	}
@@ -396,19 +405,18 @@ public class DropboxService extends EdiServiceABC {
 	 * @return
 	 */
 	public final String startLink() {
-		String result = "";
 
-		setServiceStateEnum(EdiServiceStateEnum.LINKING);
 		try {
-			DropboxService.DAO.store(this);
+			setServiceStateEnum(EdiServiceStateEnum.LINKING);
+			EdiServiceABC.DAO.store(this);
 		} catch (DaoException e) {
-			LOGGER.error("", e);
+			LOGGER.error("Unable to change dropbox service state", e);
 		}
 
 		DbxAppInfo appInfo = new DbxAppInfo(APPKEY, APPSECRET);
 		DbxRequestConfig config = new DbxRequestConfig("Codeshelf Interface", Locale.getDefault().toString());
 		DbxWebAuthNoRedirect webAuth = new DbxWebAuthNoRedirect(config, appInfo);
-		result = webAuth.start();
+		String result = webAuth.start();
 
 		return result;
 	}
@@ -429,22 +437,22 @@ public class DropboxService extends EdiServiceABC {
 			DbxAuthFinish authFinish = webAuth.finish(inDbxCode);
 			String accessToken = authFinish.accessToken;
 
-			// We did get an access token.
-			if (accessToken == null) {
-				setServiceStateEnum(EdiServiceStateEnum.LINK_FAILED);
-			} else {
-				result = true;
-				setProviderCredentials(accessToken);
-				setServiceStateEnum(EdiServiceStateEnum.LINKED);
-				setDbCursor("");
-			}
 			try {
-				DropboxService.DAO.store(this);
+				// We did get an access token.
+				if (accessToken == null) {
+					setServiceStateEnum(EdiServiceStateEnum.LINK_FAILED);
+				} else {
+					setProviderCredentials(accessToken);
+					setServiceStateEnum(EdiServiceStateEnum.LINKED);
+					setDbCursor("");
+					result = true;
+				}
+				EdiServiceABC.DAO.store(this);
 			} catch (DaoException e) {
-				LOGGER.error("", e);
+				LOGGER.error("Unable to store dropboxservice change after linking", e);
 			}
 		} catch (DbxException e) {
-			LOGGER.error("", e);
+			LOGGER.error("Unable to get accessToken for dropbox service", e);
 		}
 
 		return result;
@@ -523,7 +531,8 @@ public class DropboxService extends EdiServiceABC {
 
 			//DropboxInputStream stream = inClient.getFileStream(filepath, null);
 			ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-			DbxEntry.File downloadedFile = inClient.getFile(inEntry.lcPath, null, outputStream);
+			//DbxEntry.File downloadedFile = 
+			inClient.getFile(inEntry.lcPath, null, outputStream);
 			InputStreamReader reader = new InputStreamReader(new ByteArrayInputStream(outputStream.toByteArray()));
 
 			boolean success = false;

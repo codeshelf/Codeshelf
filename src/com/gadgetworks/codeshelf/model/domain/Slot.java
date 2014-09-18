@@ -49,6 +49,7 @@ public class Slot extends SubLocationABC<Tier> {
 		}
 	}
 
+	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(Slot.class);
 
 	public Slot(Tier parent, String domainId, final Point inAnchorPoint, final Point inPickFaceEndPoint) {
@@ -59,6 +60,7 @@ public class Slot extends SubLocationABC<Tier> {
 		setParent(inParentTier);
 	}
 
+	@SuppressWarnings("unchecked")
 	public final ITypedDao<Slot> getDao() {
 		return DAO;
 	}

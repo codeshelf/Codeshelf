@@ -8,9 +8,10 @@ import javax.websocket.EncodeException;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import com.gadgetworks.codeshelf.application.Util;
+import com.gadgetworks.codeshelf.application.Configuration;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.dao.MockDaoProvider;
 import com.gadgetworks.codeshelf.model.domain.Che;
@@ -18,20 +19,22 @@ import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.ContainerKind;
 import com.gadgetworks.codeshelf.model.domain.DropboxService;
 import com.gadgetworks.codeshelf.model.domain.Facility;
+import com.gadgetworks.codeshelf.model.domain.IronMqService;
 import com.gadgetworks.codeshelf.model.domain.Organization;
-import com.gadgetworks.codeshelf.ws.command.req.ArgsClass;
 import com.gadgetworks.codeshelf.ws.jetty.io.JsonEncoder;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ArgsClass;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectMethodRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectMethodResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
+import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
 import com.gadgetworks.codeshelf.ws.jetty.server.ServerMessageProcessor;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ObjectMethodCommandTest {
 	
 	static {
-		Util.initLogging();
+		Configuration.loadConfig("server");
 	}	
 	
 	@Test
@@ -50,17 +53,16 @@ public class ObjectMethodCommandTest {
 		
 		MockDaoProvider daoProvider = new MockDaoProvider();
 		
-		MockSession session = new MockSession();
-		session.setId("test-session");
-	
 		ITypedDao<Organization> orgDao = daoProvider.getDaoInstance(Organization.class);
 		ITypedDao<Facility> facDao = daoProvider.getDaoInstance(Facility.class);
 		ITypedDao<CodeshelfNetwork> netDao = daoProvider.getDaoInstance(CodeshelfNetwork.class);
 		ITypedDao<Che> cheDao = daoProvider.getDaoInstance(Che.class);
 		ITypedDao<DropboxService> dropboxDao = daoProvider.getDaoInstance(DropboxService.class);
+		ITypedDao<IronMqService> ironMqDao = daoProvider.getDaoInstance(IronMqService.class);
 		ITypedDao<ContainerKind> containerKindDao = daoProvider.getDaoInstance(ContainerKind.class);
 		Facility.DAO = facDao;
 		DropboxService.DAO = dropboxDao;
+		IronMqService.DAO = ironMqDao;
 		CodeshelfNetwork.DAO = netDao;
 		ContainerKind.DAO = containerKindDao;
 		Che.DAO = cheDao;
@@ -94,7 +96,7 @@ public class ObjectMethodCommandTest {
 		}		
 		
 		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider);
-		ResponseABC response = processor.handleRequest(session, request);
+		ResponseABC response = processor.handleRequest(Mockito.mock(CsSession.class), request);
 		Assert.assertTrue(response instanceof ObjectMethodResponse);
 		
 		ObjectMethodResponse updateResponse = (ObjectMethodResponse) response;

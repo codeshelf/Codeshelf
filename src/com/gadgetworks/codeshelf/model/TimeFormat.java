@@ -39,11 +39,11 @@ public final class TimeFormat {
 		TimePast formatToUse = getTimeFormatCategory(inTime);
 
 		if (formatToUse == TimePast.TimePastSameDay) { // a time today as 1527
-			SimpleDateFormat formatter = new SimpleDateFormat("HHmm");
+			SimpleDateFormat formatter = new SimpleDateFormat("HH:mm");
 			return formatter.format(inTime);
 		} else if (formatToUse == TimePast.TimePastWithinWeek || formatToUse == TimePast.TimePastFuture) { // within the last week as Tue1347
 			// future beyond same day. Should not hit this case much. Let's assume TU2317 will be useful. Future to show +TU2317
-			SimpleDateFormat formatter = new SimpleDateFormat("EEEHHmm");
+			SimpleDateFormat formatter = new SimpleDateFormat("EEE HH:mm");
 			String returnStr = formatter.format(inTime);
 			if (formatToUse == TimePast.TimePastFuture)
 				returnStr = "+" + returnStr;

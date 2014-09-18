@@ -64,7 +64,7 @@ public class LocationAliasImporterTest extends EdiTestABC {
 		importer.importLocationAliasesFromCsvStream(reader, facility, ediProcessTime);
 
 		// Make sure we can still look up an aisle by it's FQN.
-		ILocation location = facility.findLocationById("A1");
+		ILocation<?> location = facility.findLocationById("A1");
 		Assert.assertNotNull(location);
 		Assert.assertEquals(location.getDomainId(), "A1");
 

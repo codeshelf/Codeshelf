@@ -49,6 +49,7 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 
 	}
 
+	@SuppressWarnings("rawtypes")
 	private String getFullDomainId(IDomainObject inDomainObject) {
 		String result = "";
 
@@ -65,6 +66,7 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 		return storageByPersistentId.get(inPersistentId);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public <P extends IDomainObject> P findByPersistentId(Class<P> inClass, UUID inPersistentId) {
 		return (P) storageByDomainId.get(inPersistentId);
@@ -131,7 +133,7 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 	}
 
 	public final List<T> getAll() {
-		return new ArrayList(storageByDomainId.values());
+		return new ArrayList<T>(storageByDomainId.values());
 	}
 
 	public final void pushNonPersistentUpdates(T inDomainObject) {

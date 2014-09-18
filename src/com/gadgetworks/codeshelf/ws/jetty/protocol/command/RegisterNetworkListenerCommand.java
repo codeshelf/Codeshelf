@@ -21,6 +21,7 @@ import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
 
 public class RegisterNetworkListenerCommand extends CommandABC {
 	
+	@SuppressWarnings("unused")
 	private static final Logger	LOGGER = LoggerFactory.getLogger(RegisterNetworkListenerCommand.class);
 
 	NetworkStatusRequest request;
@@ -49,9 +50,11 @@ public class RegisterNetworkListenerCommand extends CommandABC {
 
 		// register session with daos
 		Class<?> cheClass = Che.class;
+		@SuppressWarnings("unchecked")
 		ITypedDao<IDomainObject> cheDao = daoProvider.getDaoInstance((Class<IDomainObject>) cheClass);
 		session.registerAsDAOListener(cheDao);
 		Class<?> ledControllerClass = LedController.class;
+		@SuppressWarnings("unchecked")
 		ITypedDao<IDomainObject> ledControllerDao = daoProvider.getDaoInstance((Class<IDomainObject>) ledControllerClass);
 		session.registerAsDAOListener(ledControllerDao);
 

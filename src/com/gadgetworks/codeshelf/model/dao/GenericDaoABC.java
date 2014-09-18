@@ -128,7 +128,7 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 			result = (T) session.get(getDaoClass(), inPersistentId);
 			//result = mServer.find(getDaoClass(), inPersistentId);
 		} catch (PersistenceException e) {
-			LOGGER.error("Failed to retrieve object of type "+getDaoClass().getSimpleName()+" with ID "+inPersistentId, e);
+			LOGGER.error("Failed to find object by persistent ID", e);
 		}
 		return result;
 	}
@@ -191,7 +191,7 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 			//query = query.setUseCache(true);
 			result = (T) criteria.uniqueResult();
 		} catch (PersistenceException e) {
-			LOGGER.error("", e);
+			LOGGER.error("Failed to find object by domain ID", e);
 		}
 		return result;
 	}
@@ -299,7 +299,7 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 					mServer.save(inDomainObject);
 				} catch (OptimisticLockException e1) {
 					// If there is another error, well, that will just go up to the application to deal with it.
-					LOGGER.error("", e1);
+					LOGGER.error("Failed to store object", e1);
 					throw new DaoException("Couldn't recover from optimistic lock exception.");
 				}
 			}
@@ -317,7 +317,7 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 			session.delete(inDomainObject);
 			privateBroadcastDelete(inDomainObject);
 		} catch (OptimisticLockException e) {
-			LOGGER.error("", e);
+			LOGGER.error("Failed to delete object", e);
 			throw new DaoException(e.getMessage());
 		}
 	}

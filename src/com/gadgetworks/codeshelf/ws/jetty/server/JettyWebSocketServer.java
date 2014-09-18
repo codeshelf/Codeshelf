@@ -16,15 +16,13 @@ import org.eclipse.jetty.websocket.jsr356.server.deploy.WebSocketServerContainer
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.ws.websocket.IWebSocketServer;
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
+import com.gadgetworks.codeshelf.util.PropertyUtils;
 
 @ServerEndpoint(value = "/")
-public class JettyWebSocketServer implements IWebSocketServer {
+public class JettyWebSocketServer {
 	
-	String	WEBSOCKET_DEFAULT_HOSTNAME	= "localhost";
-	int		WEBSOCKET_DEFAULT_PORTNUM	= 8444;
+	String	DEFAULT_HOSTNAME = "localhost";
+	int		DEFAULT_PORTNUM	= 8444;
 	
 	private static final Logger	LOGGER = LoggerFactory.getLogger(JettyWebSocketServer.class);
 	
@@ -35,67 +33,59 @@ public class JettyWebSocketServer implements IWebSocketServer {
 	private String	mKeystoreStorePassword="x2HPbC2avltYQR";
 	private String	mKeystoreKeyPassword="x2HPbC2avltYQR";
 	
-	private final ServerWatchdogThread watchdog = new ServerWatchdogThread(this);
+	private final ServerWatchdogThread watchdog;
 	
 	private String	mKeystorePath="/etc/codeshelf.keystore";
 
-	@Inject
-	public JettyWebSocketServer(@Named(WEBSOCKET_HOSTNAME_PROPERTY) final String inAddr,
-		@Named(WEBSOCKET_PORTNUM_PROPERTY) final int inPort,
-		@Named(WEBSOCKET_SUPPRESS_KEEPALIVE_PROPERTY) final boolean inSuppressKeepAlive,
-		@Named(WEBSOCKET_KILL_IDLE_PROPERTY) final boolean inKillIdle,
-		@Named(KEYSTORE_PATH_PROPERTY) final String inKeystorePath,
-		@Named(KEYSTORE_STORE_PASSWORD_PROPERTY) final String inKeystoreStorePassword,
-		@Named(KEYSTORE_KEY_PASSWORD_PROPERTY) final String inKeystoreKeyPassword
-		) {
-		this.mHost = inAddr;
-		this.mPort = inPort;
-		this.mKeystorePath = inKeystorePath;
-		this.mKeystoreStorePassword = inKeystoreStorePassword;
-		this.mKeystoreKeyPassword = inKeystoreKeyPassword;
-		this.watchdog.setSuppressKeepAlive(inSuppressKeepAlive);
-		this.watchdog.setKillIdle(inKillIdle);
+	public JettyWebSocketServer() {		
+		// fetch properties from configuration files
+		this.mHost = PropertyUtils.getString("websocket.hostname", DEFAULT_HOSTNAME);
+		this.mPort = PropertyUtils.getInt("websocket.port", DEFAULT_PORTNUM);
+		this.mKeystorePath = PropertyUtils.getString("keystore.path");
+		this.mKeystoreStorePassword = PropertyUtils.getString("keystore.store.password");
+		this.mKeystoreKeyPassword = PropertyUtils.getString("keystore.key.password");	
+
+		boolean suppressKeepAlive = PropertyUtils.getBoolean("websocket.idle.suppresskeepalive");
+		boolean killIdle = PropertyUtils.getBoolean("websocket.idle.kill");
+
+		this.watchdog = new ServerWatchdogThread(SessionManager.getInstance());
+		this.watchdog.setSuppressKeepAlive(suppressKeepAlive);
+		this.watchdog.setKillIdle(killIdle);
 		this.watchdog.start();
 	}
 		
-	public final void start() {
+	public final void start() throws Exception {
 		LOGGER.info("Starting Jetty WebSocket Server on port "+mPort+"...");
 		
-	    try {
-			// create server and connector
-			mServer = new Server();
-
-			// create SSL context factory
-			SslContextFactory sslContextFactory = new SslContextFactory();
-			File file = new File(mKeystorePath);
-			URL url = file.toURL();
-			Resource keyStoreResource = Resource.newResource(url);
-			sslContextFactory.setKeyStoreResource(keyStoreResource);
-			sslContextFactory.setKeyStorePassword(mKeystoreStorePassword);
-			sslContextFactory.setKeyManagerPassword(mKeystoreKeyPassword);
-			
-		    //ServerConnector connector = new ServerConnector(mServer);
-			NetworkTrafficServerConnector connector = new NetworkTrafficServerConnector(mServer,sslContextFactory);
-			connector.setHost(mHost);
-			connector.setPort(mPort);
-		    mServer.addConnector(connector);
+		// create server and connector
+		mServer = new Server();
+		// create SSL context factory
+		SslContextFactory sslContextFactory = new SslContextFactory();
+		File file = new File(mKeystorePath);
+			URL url = file.toURI().toURL();
+		Resource keyStoreResource = Resource.newResource(url);
+		sslContextFactory.setKeyStoreResource(keyStoreResource);
+		sslContextFactory.setKeyStorePassword(mKeystoreStorePassword);
+		sslContextFactory.setKeyManagerPassword(mKeystoreKeyPassword);
 		
-		    // Setup the basic application "context" for this application at "/"
-		    ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
-		    mServer.setHandler(context);
-	        // Initialize javax.websocket layer
-	        ServerContainer wscontainer = WebSocketServerContainerInitializer.configureContext(context);
-	        wscontainer.addEndpoint(CsServerEndPoint.class);
-	        
-	        // start server
-	        mServer.start();
-	        //mServer.join();
-	        
-			LOGGER.info("Jetty WebSocket Server started");
-	    } catch (Exception e) {
-	    	LOGGER.error("Failed to start WebWocket Server", e);
-	    }	
+	    //ServerConnector connector = new ServerConnector(mServer);
+		NetworkTrafficServerConnector connector = new NetworkTrafficServerConnector(mServer,sslContextFactory);
+		connector.setHost(mHost);
+		connector.setPort(mPort);
+	    mServer.addConnector(connector);
+	
+	    // Setup the basic application "context" for this application at "/"
+	    ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
+	    mServer.setHandler(context);
+        // Initialize javax.websocket layer
+        ServerContainer wscontainer = WebSocketServerContainerInitializer.configureContext(context);
+        wscontainer.addEndpoint(CsServerEndPoint.class);
 
+        
+        LOGGER.info("Jetty WebSocket Server starting");
+        // start server
+        mServer.start();
+        LOGGER.info("Jetty WebSocket Server started");
 	}
 
 	public void stop() throws IOException, InterruptedException {
@@ -105,4 +95,5 @@ public class JettyWebSocketServer implements IWebSocketServer {
 			LOGGER.error("Failed to stop Jetty WebSocket server", e);
 		}
 	}
+
 }

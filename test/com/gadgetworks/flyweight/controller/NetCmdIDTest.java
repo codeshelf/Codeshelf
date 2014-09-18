@@ -21,20 +21,9 @@ public final class NetCmdIDTest {
 	 */
 	@Test
 	public void testNetEndpoint() {
+		new NetCommandGroup(CommandGroupEnum.CONTROL);
+		new NetCommandGroup(CommandGroupEnum.CONTROL);
 
-		@SuppressWarnings("unused")
-		NetCommandGroup cmd;
-
-//		try {
-			cmd = new NetCommandGroup(CommandGroupEnum.CONTROL);
-			cmd = new NetCommandGroup(CommandGroupEnum.CONTROL);
-			
-			// Expected result.
-//		} catch (OutOfRangeException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//			fail();
-//		}
 	}
 
 }

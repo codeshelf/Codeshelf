@@ -21,6 +21,7 @@ import com.sun.jersey.api.json.JSONConfiguration;
  */
 public class OpenTsdb {
 
+	@SuppressWarnings("unused")
 	private static final Logger	LOGGER = LoggerFactory.getLogger(OpenTsdb.class);
 
     public static final int DEFAULT_BATCH_SIZE_LIMIT = 0;

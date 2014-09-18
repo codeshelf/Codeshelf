@@ -44,7 +44,7 @@ import com.google.inject.Singleton;
 @Table(name = "vertex")
 //@CacheStrategy(useBeanCache = true)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-public class Vertex extends DomainObjectTreeABC<ILocation> {
+public class Vertex extends DomainObjectTreeABC<ILocation<?>> {
 
 	@Inject
 	public static ITypedDao<Vertex>	DAO;
@@ -61,9 +61,11 @@ public class Vertex extends DomainObjectTreeABC<ILocation> {
 		}
 	}
 
+	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(Vertex.class);
 
 	// The owning location.
+	@SuppressWarnings("rawtypes")
 	@ManyToOne(optional = false)
 	private LocationABC			parent;
 
@@ -93,8 +95,8 @@ public class Vertex extends DomainObjectTreeABC<ILocation> {
 
 	}
 
-	public Vertex(final ILocation inParentLocation, final String inLocationId, final int inDrawOrder, final Point inPoint) {
-		parent = (LocationABC) inParentLocation;
+	public Vertex(final ILocation<?> inParentLocation, final String inLocationId, final int inDrawOrder, final Point inPoint) {
+		parent = (LocationABC<?>) inParentLocation;
 		setDomainId(inLocationId);
 		posTypeEnum = inPoint.getPosTypeEnum();
 		posX = inPoint.getX();
@@ -103,6 +105,7 @@ public class Vertex extends DomainObjectTreeABC<ILocation> {
 		drawOrder = inDrawOrder;
 	}
 
+	@SuppressWarnings("unchecked")
 	public final ITypedDao<Vertex> getDao() {
 		return DAO;
 	}
@@ -111,12 +114,12 @@ public class Vertex extends DomainObjectTreeABC<ILocation> {
 		return "V";
 	}
 
-	public final ILocation getParent() {
+	public final ILocation<?> getParent() {
 		return parent;
 	}
 
-	public final void setParent(ILocation inParent) {
-		parent = (LocationABC) inParent;
+	public final void setParent(ILocation<?> inParent) {
+		parent = (LocationABC<?>) inParent;
 	}
 
 	public final List<IDomainObject> getChildren() {

@@ -68,6 +68,7 @@ public class OrderGroup extends DomainObjectTreeABC<Facility> {
 
 	public final static String			DEFAULT_ORDER_GROUP_DESC_PREFIX	= "Order group - ";
 
+	@SuppressWarnings("unused")
 	private static final Logger			LOGGER							= LoggerFactory.getLogger(OrderGroup.class);
 
 	// The parent facility.
@@ -119,6 +120,7 @@ public class OrderGroup extends DomainObjectTreeABC<Facility> {
 		statusEnum = OrderStatusEnum.CREATED;
 	}
 
+	@SuppressWarnings("unchecked")
 	public final ITypedDao<OrderGroup> getDao() {
 		return DAO;
 	}

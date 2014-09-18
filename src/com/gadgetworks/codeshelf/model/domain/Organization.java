@@ -20,6 +20,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 
+import org.postgresql.util.PSQLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -98,7 +99,18 @@ public class Organization extends DomainObjectABC {
 		setParent(this);
 		description = "";
 	}
+	
+	public final static void setDAO(ITypedDao<Organization> dao) {
+		Organization.DAO = dao;
+	}
 
+	public Organization(String domainId) {
+		super(domainId);
+		setParent(this);
+		description = "";
+	}
+
+	
 	public final void addUser(User inUser) {
 		users.put(inUser.getDomainId(), inUser);
 	}
@@ -123,6 +135,7 @@ public class Organization extends DomainObjectABC {
 		persistentProperties.remove(inPersistentPropertyId);
 	}
 
+	@SuppressWarnings("unchecked")
 	public final ITypedDao<Organization> getDao() {
 		return DAO;
 	}
@@ -159,7 +172,7 @@ public class Organization extends DomainObjectABC {
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void removeFacility(Facility inFacility) {
-		facilities.remove(inFacility);
+		facilities.remove(inFacility.getDomainId());
 	}
 
 	// --------------------------------------------------------------------------
@@ -218,7 +231,19 @@ public class Organization extends DomainObjectABC {
 		Facility.DAO.store(facility);
 
 		// Create a first Dropbox Service entry for this facility.
+		LOGGER.info("Creating dropbox service");
+		@SuppressWarnings("unused")
 		DropboxService dropboxService = facility.createDropboxService();
+
+		// Create a first IronMQ Service entry for this facility.
+		LOGGER.info("Creating IronMQ service");
+		try {
+		@SuppressWarnings("unused")
+		IronMqService ironMqService = facility.createIronMqService();
+		}
+		catch (PSQLException e) {
+			LOGGER.error("failed to create ironMQ service");			
+		}
 
 		// Create the default network for the facility.
 		CodeshelfNetwork network = facility.createNetwork(CodeshelfNetwork.DEFAULT_NETWORK_ID);
@@ -228,6 +253,7 @@ public class Organization extends DomainObjectABC {
 		facility.recomputeDdcPositions();
 
 		// Setup six dummy CHEs
+		LOGGER.info("creating 6 CHEs");;
 		for (int cheNum = 1; cheNum <= 6; cheNum++) {
 			String cheName = "CHE" + cheNum;
 			Che che = network.getChe(cheName);

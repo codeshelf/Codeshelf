@@ -8,8 +8,6 @@ package com.gadgetworks.codeshelf.edi;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.Timestamp;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -293,6 +291,7 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 			OrderGroup group = updateOptionalOrderGroup(inCsvBean, inFacility, inEdiProcessTime);
 			OrderHeader order = updateOrderHeader(inCsvBean, inFacility, inEdiProcessTime, group);
 			result = order;
+			@SuppressWarnings("unused")
 			Container container = updateContainer(inCsvBean, inFacility, inEdiProcessTime, order);
 			UomMaster uomMaster = updateUomMaster(inCsvBean.getUom(), inFacility);
 			ItemMaster itemMaster = updateItemMaster(inCsvBean.getItemId(),
@@ -300,6 +299,7 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 				inFacility,
 				inEdiProcessTime,
 				uomMaster);
+			@SuppressWarnings("unused")
 			OrderDetail orderDetail = updateOrderDetail(inCsvBean, inFacility, inEdiProcessTime, order, uomMaster, itemMaster);
 			mOrderHeaderDao.commitTransaction();
 		} finally {

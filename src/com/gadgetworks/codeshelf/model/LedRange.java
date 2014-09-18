@@ -13,6 +13,7 @@ package com.gadgetworks.codeshelf.model;
 public class LedRange {
 	public int		mFirstLedToLight;
 	public int		mLastLedToLight;
+	@SuppressWarnings("unused")
 	private int		mLedCountToLight;
 	private int		mFirstLocationLed;
 	private int		mLastLocationLed;

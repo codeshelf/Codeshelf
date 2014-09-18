@@ -9,9 +9,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.Timestamp;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,15 +21,15 @@ import au.com.bytecode.opencsv.bean.HeaderColumnNameMappingStrategy;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Facility;
+import com.gadgetworks.codeshelf.model.domain.IDomainObject;
+import com.gadgetworks.codeshelf.model.domain.ILocation;
 import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster;
-import com.gadgetworks.codeshelf.model.domain.LocationABC;
 import com.gadgetworks.codeshelf.model.domain.UomMaster;
 import com.gadgetworks.codeshelf.util.UomNormalizer;
 import com.gadgetworks.codeshelf.validation.DefaultErrors;
 import com.gadgetworks.codeshelf.validation.ErrorCode;
 import com.gadgetworks.codeshelf.validation.Errors;
-import com.gadgetworks.codeshelf.validation.InputValidation;
 import com.gadgetworks.codeshelf.validation.InputValidationException;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
@@ -151,10 +149,10 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 			csvReader.close();
 		} catch (FileNotFoundException e) {
 			result = false;
-			LOGGER.error("", e);
+			LOGGER.error("Inventory file not found", e);
 		} catch (IOException e) {
 			result = false;
-			LOGGER.error("", e);
+			LOGGER.error("Inventory file IO", e);
 		}
 
 		return result;
@@ -228,6 +226,7 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 					LOGGER.error("", e);
 				}
 
+				@SuppressWarnings("unused")
 				Item item = updateDdcItem(inCsvBean, inFacility, inEdiProcessTime, itemMaster, uomMaster);
 
 			} catch (Exception e) {
@@ -265,22 +264,25 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 					inEdiProcessTime,
 					uomMaster);
 				
-				LocationABC location = (LocationABC) inFacility.findSubLocationById(inCsvBean.getLocationId());
+				String theLocationID = inCsvBean.getLocationId();
+				ILocation<? extends IDomainObject> location = inFacility.findSubLocationById(theLocationID);
 				// We couldn't find the location, so assign the inventory to the facility itself (which is a location);
 				if (location == null) {
+					LOGGER.warn("Updating inventory item for location because did not recognize: " + theLocationID);
 					location = inFacility;
 				}
 
 				if (Strings.isNullOrEmpty(inCsvBean.getCmFromLeft())) {
 					inCsvBean.setCmFromLeft("0");
 				}
+				@SuppressWarnings("unused")
 				Item item = updateSlottedItem(true, inCsvBean, location, inEdiProcessTime, itemMaster, uomMaster);
+
+				mItemDao.commitTransaction();
 			}
 			catch(InputValidationException e) {
 				LOGGER.error("unable to save line: " + inCsvBean, e);
 			}
-
-			mItemDao.commitTransaction();
 
 		} finally {
 			mItemDao.endTransaction();
@@ -320,7 +322,7 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 				result.setUpdated(inEdiProcessTime);
 				mItemMasterDao.store(result);
 			} catch (DaoException e) {
-				LOGGER.error("", e);
+				LOGGER.error("updateItemMaster", e);
 			}
 		}
 		return result;
@@ -352,8 +354,13 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 			try {
 				mUomMasterDao.store(result);
 			} catch (DaoException e) {
-				LOGGER.error("", e);
+				LOGGER.error("upsertUomMaster save", e);
 			}
+			/*
+			catch (InputValidationException e) {
+				// can we catch this here? If the UOM did not save, the next transaction might fail trying to reference it
+				LOGGER.error("upsertUomMaster validate", e);
+			} */
 		}
 
 		return result;
@@ -409,7 +416,7 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 	 * @return
 	 */
 	public Item updateSlottedItem(boolean useLenientValidation, final InventorySlottedCsvBean inCsvBean,
-		final LocationABC<?> inLocation,
+		final ILocation<?> inLocation,
 		final Timestamp inEdiProcessTime,
 		final ItemMaster inItemMaster,
 		final UomMaster inUomMaster) throws InputValidationException {

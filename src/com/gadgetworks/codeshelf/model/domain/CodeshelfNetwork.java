@@ -138,6 +138,7 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 		connected = false;
 	}
 
+	@SuppressWarnings("unchecked")
 	public final ITypedDao<CodeshelfNetwork> getDao() {
 		return DAO;
 	}

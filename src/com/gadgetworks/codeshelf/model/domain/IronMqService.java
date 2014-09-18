@@ -29,16 +29,19 @@ import org.slf4j.LoggerFactory;
 import au.com.bytecode.opencsv.CSVWriter;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.edi.ICsvAislesFileImporter;
 import com.gadgetworks.codeshelf.edi.ICsvCrossBatchImporter;
 import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
 import com.gadgetworks.codeshelf.edi.ICsvLocationAliasImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderLocationImporter;
+import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.platform.services.PersistencyService;
+import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.Expose;
@@ -76,12 +79,19 @@ public class IronMqService extends EdiServiceABC {
 	public static final String		IRONMQ_SERVICE_NAME	= "IRONMQ";
 
 	public static final String		WI_QUEUE_NAME		= "CompletedWIs";
-	public static final String		PROJECT_ID			= "533717c400bf4c000500001e";
-	public static final String		TOKEN				= "Lrzn73XweR5uNdWeNp65_ZMi_Ew";
+
+	// Are these the GoodEggs credentials?
+	// public static final String		PROJECT_ID			= "533717c400bf4c000500001e";
+	// public static final String		TOKEN				= "Lrzn73XweR5uNdWeNp65_ZMi_Ew";
+	// Let's go with our new temporary credentials instead. Need configuration!
+	// public static final String		PROJECT_ID			= "5408fee49393690009000010";
+	// public static final String		TOKEN				= "T9yxS7H9vUE8ck15vCPJOT_iymY";
+	public static final String		PROJECT_ID			= "";
+	public static final String		TOKEN				= "";
 
 	private static final Logger		LOGGER				= LoggerFactory.getLogger(IronMqService.class);
-	
-	private static final String     TIME_FORMAT			= "yyyy-MM-dd'T'HH:mm:ss'Z'";
+
+	private static final String		TIME_FORMAT			= "yyyy-MM-dd'T'HH:mm:ss'Z'";
 
 	private static final Integer	DOMAINID_POS		= 0;
 	private static final Integer	TYPE_POS			= 1;
@@ -121,12 +131,43 @@ public class IronMqService extends EdiServiceABC {
 		private String	mToken;
 	}
 
+	@SuppressWarnings("unchecked")
 	public final ITypedDao<IronMqService> getDao() {
 		return DAO;
 	}
 
 	public final String getServiceName() {
 		return IRONMQ_SERVICE_NAME;
+	}
+
+	public final void setCredentials(String projectId,  String token) {
+		IronMqService.Credentials credentials = new Credentials(projectId, token);
+		Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
+		String json = gson.toJson(credentials);
+		setProviderCredentials(json);
+	}
+	
+	public final void storeCredentials(String projectId,  String token) {
+		setCredentials(projectId, token);
+		if (getHasCredentials()) {
+			setServiceStateEnum(EdiServiceStateEnum.LINKED);
+		} else {
+			setServiceStateEnum(EdiServiceStateEnum.UNLINKED);
+		}
+		EdiServiceABC.DAO.store(this); //This is what the UI is listening to
+	}
+
+	@Override
+	@JsonProperty
+	public boolean getHasCredentials() {
+		// If the credentials are empty, don't bother. Could check the link, but we are not maintaining that well currently.
+		String theCredentials = getProviderCredentials();
+		if (Strings.isNullOrEmpty(theCredentials) || theCredentials.length() < 55) {
+			return false; // this is a Json encoding  of two credentials. Much longer if valid...
+		}
+		else {
+			return true;
+		}
 	}
 
 	public final boolean getUpdatesFromHost(ICsvOrderImporter inCsvOrderImporter,
@@ -140,6 +181,13 @@ public class IronMqService extends EdiServiceABC {
 	}
 
 	public final void sendWorkInstructionsToHost(final List<WorkInstruction> inWiList) {
+
+		// If the credentials are empty, don't bother. Could check the link, but we are not maintaining that well currently.
+		String theCredentials = getProviderCredentials();
+
+		if (theCredentials == null || theCredentials.length() < 55)
+			return; // this is a Json encoding  of two credentials. Much longer if valid
+
 		// Convert the WI into a CSV string.
 		StringWriter stringWriter = new StringWriter();
 		CSVWriter csvWriter = new CSVWriter(stringWriter);
@@ -166,12 +214,19 @@ public class IronMqService extends EdiServiceABC {
 			if (wi.getLocation().getAliases().size() > 0) {
 				locAlias = wi.getLocation().getAliases().get(0);
 			}
-			
+
 			properties = new String[WI_ATTR_COUNT];
 			properties[DOMAINID_POS] = wi.getDomainId();
 			properties[TYPE_POS] = wi.getTypeEnum().toString();
 			properties[STATUS_POS] = wi.getStatusEnum().toString();
-			properties[ORDERGROUPID_POS] = wi.getParent().getParent().getOrderGroup().getDomainId();
+
+			// groups are optional!
+			String groupStr = "";
+			OrderGroup theGroup = wi.getParent().getParent().getOrderGroup();
+			if (theGroup != null)
+				groupStr = theGroup.getDomainId();
+			properties[ORDERGROUPID_POS] = groupStr;
+
 			properties[ORDERID_POS] = wi.getParent().getOrderId();
 			properties[CONTAINERID_POS] = wi.getContainerId();
 			properties[ITEMID_POS] = wi.getItemId();
@@ -201,11 +256,11 @@ public class IronMqService extends EdiServiceABC {
 	 * @param inQueueName
 	 * @return
 	 */
+	@SuppressWarnings("unused")
 	private String getMessage(String inQueueName) {
 		String result = null;
 
-		Gson mGson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
-		Credentials credentials = mGson.fromJson(getProviderCredentials(), Credentials.class);
+		Credentials credentials = getCredentials();
 		Client client = new Client(credentials.getProjectId(), credentials.getToken(), Cloud.ironAWSUSEast);
 		Queue queue = client.queue(inQueueName);
 		Message msg;
@@ -225,15 +280,20 @@ public class IronMqService extends EdiServiceABC {
 	 */
 	private void sendMessage(final String inQueueName, final String inMessage) {
 
-		Gson mGson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
-		Credentials credentials = mGson.fromJson(getProviderCredentials(), Credentials.class);
+		Credentials credentials = getCredentials();
 		Client client = new Client(credentials.getProjectId(), credentials.getToken(), Cloud.ironAWSUSEast);
 		Queue queue = client.queue(inQueueName);
 		try {
 			queue.push(inMessage);
 		} catch (IOException e) {
-			LOGGER.error("", e);
+			LOGGER.error("IOException in ironMQ sendMessage", e);
 		}
+	}
+
+	private Credentials getCredentials() {
+		Gson mGson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
+		Credentials credentials = mGson.fromJson(getProviderCredentials(), Credentials.class);
+		return credentials;
 	}
 
 }

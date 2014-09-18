@@ -55,6 +55,7 @@ public class UomMaster extends DomainObjectTreeABC<Facility> {
 		}
 	}
 
+	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(UomMaster.class);
 
 	// The parent facility.
@@ -70,6 +71,7 @@ public class UomMaster extends DomainObjectTreeABC<Facility> {
 		this.parent = parent;
 	}
 
+	@SuppressWarnings("unchecked")
 	public final ITypedDao<UomMaster> getDao() {
 		return DAO;
 	}

@@ -60,8 +60,10 @@ public class OrderLocation extends DomainObjectTreeABC<OrderHeader> {
 		}
 	}
 
+	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(OrderLocation.class);
 
+	@SuppressWarnings("rawtypes")
 	@ManyToOne(optional = false)
 	@JsonProperty
 	private LocationABC			location;
@@ -97,6 +99,7 @@ public class OrderLocation extends DomainObjectTreeABC<OrderHeader> {
 
 	}
 
+	@SuppressWarnings("unchecked")
 	public final ITypedDao<OrderLocation> getDao() {
 		return DAO;
 	}
@@ -113,12 +116,12 @@ public class OrderLocation extends DomainObjectTreeABC<OrderHeader> {
 		parent = inParent;
 	}
 
-	public final ISubLocation getLocation() {
-		return (ISubLocation) location;
+	public final ISubLocation<?> getLocation() {
+		return (ISubLocation<?>) location;
 	}
 
-	public final void setLocation(final ILocation inLocation) {
-		location = (LocationABC) inLocation;
+	public final void setLocation(final ILocation<?> inLocation) {
+		location = (LocationABC<?>) inLocation;
 	}
 
 }

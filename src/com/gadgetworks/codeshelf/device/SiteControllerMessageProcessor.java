@@ -3,8 +3,6 @@ package com.gadgetworks.codeshelf.device;
 import java.io.IOException;
 import java.util.UUID;
 
-import javax.websocket.Session;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,6 +20,7 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.response.NetworkAttachRespons
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.NetworkStatusResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
+import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
 
 public class SiteControllerMessageProcessor extends MessageProcessor {
 	
@@ -36,7 +35,7 @@ public class SiteControllerMessageProcessor extends MessageProcessor {
 	}
 	
 	@Override
-	public void handleResponse(Session session, ResponseABC response) {
+	public void handleResponse(CsSession session, ResponseABC response) {
 		LOGGER.debug("Response received:"+response);
 		if (response.getStatus()!=ResponseStatus.Success) {
 			LOGGER.warn("Request #"+response.getRequestId()+" failed: "+response.getStatusMessage());
@@ -68,7 +67,11 @@ public class SiteControllerMessageProcessor extends MessageProcessor {
 		else if (response instanceof NetworkStatusResponse) {
 			NetworkStatusResponse update = (NetworkStatusResponse) response;
 			if (response.getStatus()==ResponseStatus.Success) {
+				LOGGER.info("Reading CHEs and aisle controllers from NetworkStatusResponse");
 				this.deviceManager.updateNetwork(update.getChes(),update.getLedControllers());
+			}
+			else {
+				LOGGER.warn("did not read CHEs and aisle controllers from NetworkStatusResponse becuase response was negative");			
 			}
 		}
 		//////////////////////////////////////////
@@ -101,7 +104,7 @@ public class SiteControllerMessageProcessor extends MessageProcessor {
 	}
 	
 	@Override
-	public ResponseABC handleRequest(Session session, RequestABC request) {
+	public ResponseABC handleRequest(CsSession session, RequestABC request) {
 		LOGGER.info("Request received for processing: "+request);
 		CommandABC command = null;
 		ResponseABC response = null;

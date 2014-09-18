@@ -55,7 +55,7 @@ public class WebSocketSslContextGenerator implements IWebSocketSslContextGenerat
 		try {
 			KeyStore ks = KeyStore.getInstance(mKeystoreType);
 			File file = new File(mKeystorePath);
-			URL url = file.toURL();
+			URL url = file.toURI().toURL();
 			ks.load(url.openStream(), mKeystoreStorePassword.toCharArray());
 
 			KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");

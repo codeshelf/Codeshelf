@@ -21,9 +21,9 @@ import com.gadgetworks.flyweight.command.NetEndpoint;
 
 public abstract class ControllerTestABC {
 
-	private static final byte			TEST_ENDPOINT_NUM	= 0x01;
+	//private static final byte			TEST_ENDPOINT_NUM	= 0x01;
 	private static final byte			SRS_BYTE			= 0x00;
-	private static final NetEndpoint	TEST_ENDPOINT		= new NetEndpoint(TEST_ENDPOINT_NUM);
+	//private static final NetEndpoint	TEST_ENDPOINT		= new NetEndpoint(TEST_ENDPOINT_NUM);
 	private static final String			TEST_ID				= "12345678";
 
 	private static final String			TEST_MSG1			= "TEST1";
@@ -53,18 +53,12 @@ public abstract class ControllerTestABC {
 		//		try {
 		NetAddress srcAddress = new NetAddress((byte) 0x04);
 
-		byte[] cmdBytes = { 0x00, 0x01, 0x02, 0x03, 0x04 };
+		//byte[] cmdBytes = { 0x00, 0x01, 0x02, 0x03, 0x04 };
 		ICommand command = new CommandControlDisplayMessage(NetEndpoint.PRIMARY_ENDPOINT, TEST_MSG1, TEST_MSG2, TEST_MSG3, TEST_MSG4);
 		mControllerABC.receiveCommand(command, srcAddress);
 
-		CommandAssocReq netCmd = new CommandAssocReq(INetworkDevice.PROTOCOL_VERSION_1, SRS_BYTE, TEST_ID);
-		if (netCmd == null) {
+		new CommandAssocReq(INetworkDevice.PROTOCOL_VERSION_1, SRS_BYTE, TEST_ID);
 
-		}
-		//		} catch (OutOfRangeException e) {
-		//			// TODO Auto-generated catch block
-		//			e.printStackTrace();
-		//		}
 	}
 
 	//	/**

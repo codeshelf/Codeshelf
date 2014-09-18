@@ -28,17 +28,14 @@ import com.gadgetworks.codeshelf.edi.InventoryCsvImporter;
 import com.gadgetworks.codeshelf.edi.LocationAliasCsvImporter;
 import com.gadgetworks.codeshelf.edi.OrderLocationCsvImporter;
 import com.gadgetworks.codeshelf.edi.OutboundOrderCsvImporter;
-import com.gadgetworks.codeshelf.model.dao.DaoProvider;
 import com.gadgetworks.codeshelf.model.dao.Database;
 import com.gadgetworks.codeshelf.model.dao.H2SchemaManager;
-import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.dao.MockDao;
 import com.gadgetworks.codeshelf.model.dao.Result;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Bay;
-import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.Container;
 import com.gadgetworks.codeshelf.model.domain.ContainerUse;
 import com.gadgetworks.codeshelf.model.domain.Facility;
@@ -55,16 +52,10 @@ import com.gadgetworks.codeshelf.model.domain.Slot;
 import com.gadgetworks.codeshelf.model.domain.Tier;
 import com.gadgetworks.codeshelf.model.domain.UomMaster;
 import com.gadgetworks.codeshelf.model.domain.User;
-import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
-import com.gadgetworks.codeshelf.monitor.IMonitor;
-import com.gadgetworks.codeshelf.monitor.Monitor;
 import com.gadgetworks.codeshelf.report.IPickDocumentGenerator;
 import com.gadgetworks.codeshelf.report.PickDocumentGenerator;
 import com.gadgetworks.codeshelf.security.CodeshelfRealm;
-import com.gadgetworks.codeshelf.ws.command.req.IWsReqCmdFactory;
-import com.gadgetworks.codeshelf.ws.command.req.WsReqCmdFactory;
 import com.gadgetworks.codeshelf.ws.jetty.server.JettyWebSocketServer;
-import com.gadgetworks.codeshelf.ws.websocket.IWebSocketServer;
 import com.google.inject.Binding;
 import com.google.inject.Injector;
 import com.google.inject.Key;
@@ -80,38 +71,6 @@ import com.google.inject.spi.TypeConverterBinding;
  *
  */
 public class CodeshelfApplicationTest {
-
-	private static final String	DB_INIT_URL	= "jdbc:h2:mem:database;DB_CLOSE_DELAY=-1";
-	private static final String	DB_URL		= "jdbc:h2:mem:database;SCHEMA=CODESHELF;DB_CLOSE_DELAY=-1";
-
-	public class MockUtil extends Util {
-		public void setLoggingLevelsFromPrefs(Organization inOrganization, ITypedDao<PersistentProperty> inPersistentPropertyDao) {
-		}
-
-		public String getVersionString() {
-			return "";
-		}
-
-		public String getApplicationLogDirPath() {
-			return ".";
-		}
-
-		public String getApplicationInitDatabaseURL() {
-			return DB_INIT_URL;
-		}
-
-		public String getApplicationDatabaseURL() {
-			return DB_URL;
-		}
-
-		public String getApplicationDataDirPath() {
-			return ".";
-		}
-
-		public void exitSystem() {
-			System.exit(-1);
-		}
-	}
 
 	public class MockInjector implements Injector {
 
@@ -229,6 +188,7 @@ public class CodeshelfApplicationTest {
 	 */
 	@Test
 	public void testStartStopApplication() {
+		Configuration.loadConfig("test");
 
 		ITypedDao<PersistentProperty> persistentPropertyDao = new MockDao<PersistentProperty>();
 		ITypedDao<Organization> organizationDao = Organization.DAO = new MockDao<Organization>();
@@ -246,20 +206,13 @@ public class CodeshelfApplicationTest {
 		ITypedDao<ItemMaster> itemMasterDao = new MockDao<ItemMaster>();
 		ITypedDao<Item> itemDao = new MockDao<Item>();
 		ITypedDao<UomMaster> uomMasterDao = new MockDao<UomMaster>();
-		ITypedDao<Che> cheDao = new MockDao<Che>();
-		ITypedDao<WorkInstruction> workInstructionDao = new MockDao<WorkInstruction>();
+		//ITypedDao<Che> cheDao = new MockDao<Che>();
+		//ITypedDao<WorkInstruction> workInstructionDao = new MockDao<WorkInstruction>();
 		ITypedDao<LocationAlias> locationAliasDao = new MockDao<LocationAlias>();
 		ITypedDao<OrderLocation> orderLocationDao = new MockDao<OrderLocation>();
-		IMonitor monitor = new Monitor();
 
-		Injector injector = new MockInjector();
-		IDaoProvider daoProvider = new DaoProvider(injector);
-		IWsReqCmdFactory webSessionReqCmdFactory = new WsReqCmdFactory(organizationDao,
-			cheDao,
-			workInstructionDao,
-			orderHeaderDao,
-			orderDetailDao,
-			daoProvider);
+		//Injector injector = new MockInjector();
+		//IDaoProvider daoProvider = new DaoProvider(injector);
 
 		IHttpServer httpServer = new HttpServer("./",
 			"localhost",
@@ -296,20 +249,22 @@ public class CodeshelfApplicationTest {
 			aislesFileImporter,
 			facilityDao);
 		IPickDocumentGenerator pickDocumentGenerator = new PickDocumentGenerator();
-		Util util = new MockUtil();
-		
-		//IDatabase database = new Database(schemaManager, util);
+		ISchemaManager schemaManager = new H2SchemaManager(
+			"codeshelf",
+			"codeshelf",
+			"codeshelf",
+			"codeshelf",
+			"localhost",
+			"");
 		
 		AdminServer adminServer = new AdminServer();
 		
-		JettyWebSocketServer jettyServer = new JettyWebSocketServer("localhost", 8444, false, false, "path", "pass", "pass");
+		JettyWebSocketServer jettyServer = new JettyWebSocketServer();
 
 		final ServerCodeshelfApplication application = new ServerCodeshelfApplication(
-			monitor,
 			httpServer,
 			ediProcessor,
 			pickDocumentGenerator,
-			util,
 			persistentPropertyDao,
 			organizationDao,
 			facilityDao,
@@ -321,15 +276,20 @@ public class CodeshelfApplicationTest {
 
 		Thread appThread = new Thread(new Runnable() {
 			public void run() {
-				application.startApplication();
-				Assert.assertTrue(true);
-				checkAppRunning.result = true;
-				application.handleEvents();
+				try {
+					application.startApplication();
+					Assert.assertTrue(true);
+					checkAppRunning.result = true;
+					application.handleEvents();
+				}
+				catch(Exception e) {
+					Assert.fail("Application should not have thrown an exception on startup: " + e);
+				}
 			}
 		}, "APP_TEST_THREAD");
 		appThread.start();
 
-		while (!checkAppRunning.result) {
+		while (appThread.isAlive() && !checkAppRunning.result) {
 			try {
 				Thread.sleep(500);
 			} catch (InterruptedException e) {
@@ -340,8 +300,8 @@ public class CodeshelfApplicationTest {
 		// Yes, I know it's terrible to have dependent unit tests.
 		// I don't know how to fix this.  WIll consult with someone.
 
-		//application.stopApplication();
+		application.stopApplication();
 
-		Assert.assertTrue(true);
+		Assert.assertTrue("application failed to start", checkAppRunning.result);
 	}
 }

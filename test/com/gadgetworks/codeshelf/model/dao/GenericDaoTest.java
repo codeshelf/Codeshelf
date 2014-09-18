@@ -22,7 +22,6 @@ import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.model.domain.Organization;
-import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
 import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.platform.services.PersistencyService;
 import com.google.inject.Inject;
@@ -108,7 +107,8 @@ public class GenericDaoTest {
 	public final void testFindByFilter() {
 		OrganizationDao dao = new OrganizationDao(persistencyService);
 
-		List<Long> persistentIdList = new ArrayList<Long>();
+		//List<Long> persistentIdList = 
+		new ArrayList<Long>();
 
 		Organization organization = new Organization();
 		organization.setDomainId("LOADBYFILTERTEST1");

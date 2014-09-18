@@ -46,6 +46,7 @@ public class ObjectGetCommand extends CommandABC {
 			Class<?> classObject = Class.forName(parentClassName);
 			if (IDomainObject.class.isAssignableFrom(classObject)) {
 				
+				@SuppressWarnings("unchecked")
 				ITypedDao<IDomainObject> dao = daoProvider.getDaoInstance((Class<IDomainObject>) classObject);
 				
 				IDomainObject parentObject = dao.findByPersistentId(parentId);

@@ -18,7 +18,7 @@ public class ServerWatchdogThread extends Thread {
 	
 	private static final Logger	LOGGER = LoggerFactory.getLogger(ServerWatchdogThread.class);
 
-	JettyWebSocketServer server;
+	private SessionManager sessionManager;
 	
 	@Getter @Setter
 	boolean exit = false;
@@ -50,8 +50,8 @@ public class ServerWatchdogThread extends Thread {
 	@Getter @Setter
 	int idleWarningTimeout = 15*1000; // 15 seconds warning if no keepalive
 	
-	public ServerWatchdogThread(JettyWebSocketServer server) {
-		this.server = server;
+	public ServerWatchdogThread(SessionManager sessionManager) {
+		this.sessionManager = sessionManager;
 		this.setDaemon(true);
 	}
 
@@ -60,7 +60,7 @@ public class ServerWatchdogThread extends Thread {
 		ThreadUtils.sleep(initialWaitTime);
 		while (!exit) {
 			// send ping on all site controller sessions
-			Collection<CsSession> sessions = SessionManager.getInstance().getSessions();
+			Collection<CsSession> sessions = this.sessionManager.getSessions();
 			for (CsSession session : sessions) {
 				String sessionId = session.getSessionId();
 

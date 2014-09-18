@@ -7,7 +7,7 @@ public class WorkInstructionSequencerFactory {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(WorkInstructionSequencerFactory.class);
 
-	public static WorkInstructionSequencer createSequencer(WorkInstructionSequencerType type) {
+	public static WorkInstructionSequencerABC createSequencer(WorkInstructionSequencerType type) {
 		if (type==WorkInstructionSequencerType.BayDistance) {
 			return new BayDistanceWorkInstructionSequencer();
 		}

@@ -13,7 +13,7 @@ import org.hibernate.cfg.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.multitenancy.Tenant;
+import com.gadgetworks.codeshelf.platform.multitenancy.Tenant;
 import com.google.inject.Singleton;
 
 /**

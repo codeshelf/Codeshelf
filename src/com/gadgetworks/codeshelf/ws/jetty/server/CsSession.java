@@ -34,6 +34,9 @@ public class CsSession implements IDaoListener {
 	@Getter @Setter
 	String sessionId;
 	
+	@Getter @Setter
+	String organizationName;
+	
 	@Getter
 	Date sessionStart = new Date();
 	
@@ -149,5 +152,4 @@ public class CsSession implements IDaoListener {
 			LOGGER.error("Failed to close session", e);
 		}
 	}
-
 }

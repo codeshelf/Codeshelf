@@ -142,6 +142,7 @@ public class User extends DomainObjectTreeABC<Organization> {
 		active = true;
 	}
 
+	@SuppressWarnings("unchecked")
 	public final ITypedDao<User> getDao() {
 		return DAO;
 	}

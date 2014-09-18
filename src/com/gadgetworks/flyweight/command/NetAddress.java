@@ -10,6 +10,7 @@ import com.gadgetworks.flyweight.bitfields.NBitInteger;
 import com.gadgetworks.flyweight.bitfields.OutOfRangeException;
 
 
+@SuppressWarnings("serial")
 public final class NetAddress extends NBitInteger {
 
 	/**

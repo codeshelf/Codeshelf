@@ -11,7 +11,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.gadgetworks.codeshelf.model.domain.Aisle;
-import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.DomainTestABC;
 import com.gadgetworks.codeshelf.model.domain.Facility;
@@ -138,6 +137,7 @@ public class InventoryServiceTest extends DomainTestABC {
 		Assert.assertEquals(movedItem.getStoredLocation(), newItemLocation);
 	}
 	
+	@SuppressWarnings("unused")
 	@Test
 	public void testUpsertItemNullLocationAlias() throws IOException {
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
@@ -154,6 +154,7 @@ public class InventoryServiceTest extends DomainTestABC {
 		}
 	}
 
+	@SuppressWarnings("unused")
 	@Test
 	public void testUpsertItemEmptyLocationAlias() throws IOException {
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
@@ -169,6 +170,7 @@ public class InventoryServiceTest extends DomainTestABC {
 		}
 	}
 
+	@SuppressWarnings("unused")
 	@Test
 	public void testUpsertItemUsingAlphaCount() throws IOException {
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
@@ -185,6 +187,7 @@ public class InventoryServiceTest extends DomainTestABC {
 		}
 	}
 
+	@SuppressWarnings("unused")
 	@Test
 	public void testUpsertItemUsingNegativeCount() throws IOException {
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
@@ -201,6 +204,7 @@ public class InventoryServiceTest extends DomainTestABC {
 		}
 	}
 
+	@SuppressWarnings("unused")
 	@Test
 	public void testUpsertItemUsingNegativePositionFromLeft() throws IOException {
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
@@ -217,6 +221,7 @@ public class InventoryServiceTest extends DomainTestABC {
 		}
 	}
 	
+	@SuppressWarnings("unused")
 	@Test
 	public void testUpsertItemUsingAlphaPositionFromLeft() throws IOException {
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
@@ -253,6 +258,7 @@ public class InventoryServiceTest extends DomainTestABC {
 		Assert.assertEquals(0, item.getCmFromLeft().intValue());
 	}
 	
+	@SuppressWarnings("unused")
 	@Test
 	public void testUpsertItemUsingEmptyUom() throws IOException {
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
@@ -269,6 +275,16 @@ public class InventoryServiceTest extends DomainTestABC {
 		}
 	}
 
+	@SuppressWarnings("unused")
+	@Test
+	public void testUpsertItemUsingUomDifferentCase() throws IOException {
+		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
+		UomMaster uomMaster = facility.getUomMaster("each");
+		ItemMaster itemMaster = facility.getItemMaster("10700589");
+		Item item = facility.upsertItem(itemMaster.getItemId(), tier.getNominalLocationId(), "1", "1", "EACH");
+		Assert.assertEquals(tier, item.getStoredLocation());
+	}
+	
 	@Test
 	public void testUpsertItemUsingNominalLocationId() throws IOException {
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
@@ -320,6 +336,7 @@ public class InventoryServiceTest extends DomainTestABC {
 		}
 	}
 	
+	@SuppressWarnings("rawtypes")
 	protected Facility setUpSimpleNoSlotFacility(String inOrganizationName) {
 		// This returns a facility with aisle A1, with two bays with one tier each. No slots. With a path, associated to the aisle.
 		//   With location alias for first baytier only, not second.
@@ -415,12 +432,13 @@ public class InventoryServiceTest extends DomainTestABC {
 
 		String nName = "N-" + inOrganizationName;
 		CodeshelfNetwork network = facility.createNetwork(nName);
-		Che che = network.createChe("CHE1", new NetGuid("0x00000001"));
+		//Che che = 
+		network.createChe("CHE1", new NetGuid("0x00000001"));
 
 		LedController controller1 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000011"));
 		LedController controller2 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000012"));
 		LedController controller3 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000013"));
-		SubLocationABC tier = (SubLocationABC) facility.findSubLocationById("A1.B1.T1");
+		SubLocationABC<?> tier = (SubLocationABC<?>) facility.findSubLocationById("A1.B1.T1");
 		tier.setLedController(controller1);
 		tier = (SubLocationABC) facility.findSubLocationById("A1.B2.T1");
 		tier.setLedController(controller1);

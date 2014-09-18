@@ -26,6 +26,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 //@ToString(doNotUseGetters = true)
 public abstract class DomainObjectTreeABC<P extends IDomainObject> extends DomainObjectABC implements IDomainObjectTree<P> {
 
+	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(DomainObjectTreeABC.class);
 
 	public DomainObjectTreeABC() {
@@ -49,6 +50,7 @@ public abstract class DomainObjectTreeABC<P extends IDomainObject> extends Domai
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.IDomainObject#getFullParentDomainId()
 	 */
+	@SuppressWarnings("rawtypes")
 	@JsonIgnore
 	public final String getParentFullDomainId() {
 		String result = "";

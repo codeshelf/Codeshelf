@@ -31,6 +31,7 @@ public class DaoProvider implements IDaoProvider {
 		mInjector = inInjector;
 	}
 
+	@SuppressWarnings("unchecked")
 	public final <T extends IDomainObject> ITypedDao<T> getDaoInstance(final Class<T> inDomainObjectClass) {
 
 		final ParameterizedType parameterizedDaoType = new ParameterizedType() {
@@ -57,6 +58,7 @@ public class DaoProvider implements IDaoProvider {
 		return null;
 	}
 
+	@SuppressWarnings("unchecked")
 	public final <T extends IDomainObject> List<ITypedDao<T>> getAllDaos() {
 
 		List<ITypedDao<T>> result = new ArrayList<ITypedDao<T>>();

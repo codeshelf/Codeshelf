@@ -5,6 +5,7 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -17,10 +18,10 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.application.Util;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
+import com.gadgetworks.codeshelf.util.PropertyUtils;
 import com.gadgetworks.codeshelf.util.TwoKeyMap;
 import com.gadgetworks.codeshelf.ws.jetty.client.JettyWebSocketClient;
 import com.gadgetworks.codeshelf.ws.jetty.client.WebSocketEventListener;
@@ -33,7 +34,6 @@ import com.gadgetworks.flyweight.controller.INetworkDevice;
 import com.gadgetworks.flyweight.controller.IRadioController;
 import com.gadgetworks.flyweight.controller.IRadioControllerEventListener;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 
 /**
  * @author jeffw
@@ -69,20 +69,23 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	private JettyWebSocketClient client;
 	
 	private ConnectionManagerThread connectionManagerThread;
+
+	@Getter
+	private long	lastNetworkUpdate=0;
+	
+	@Getter @Setter
+	boolean radioEnabled = true;
 	
 	@Inject
-	public CsDeviceManager(@Named("WS_SERVER_URI") final String inUriStr,
-		@Named("WEBSOCKET_SUPPRESS_KEEPALIVE_PROPERTY") final Boolean inSuppressKeepAlive,
-		@Named("WEBSOCKET_KILL_IDLE_PROPERTY") final Boolean inIdleKill,
-		final Util inUtil,
-		final IRadioController inRadioController) {
+	public CsDeviceManager(final IRadioController inRadioController) {
+		// fetch properties from config file
+		radioEnabled = PropertyUtils.getBoolean("radio.enabled",true);
+		mUri = PropertyUtils.getString("websocket.uri");
+		suppressKeepAlive = PropertyUtils.getBoolean("websocket.idle.suppresskeepalive");
+		idleKill = PropertyUtils.getBoolean("websocket.idle.kill");
 
 		mRadioController = inRadioController;
 		mDeviceMap = new TwoKeyMap<UUID, NetGuid, INetworkDevice>();
-
-		mUri = inUriStr;
-		suppressKeepAlive = inSuppressKeepAlive;
-		idleKill = inIdleKill;
 
 		mOrganizationId = System.getProperty("organizationId");
 		mFacilityId = System.getProperty("facilityId");
@@ -91,25 +94,36 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	}
 
 	public final void start() {
-		startWebSocket();
+		startWebSocketClient();
 
-		// Check if there is a default channel.
-		byte preferredChannel = DEFAULT_CHANNEL;
-		String preferredChannelProp = System.getProperty(PREFFERED_CHANNEL_PROP);
-		if (preferredChannelProp != null) {
-			try {
-				preferredChannel = Byte.valueOf(preferredChannelProp);
-			} catch (NumberFormatException e) {
-				LOGGER.error("", e);
+		// Check if there is a default channel
+		if (this.radioEnabled) {
+			byte preferredChannel = DEFAULT_CHANNEL;
+			String preferredChannelProp = System.getProperty(PREFFERED_CHANNEL_PROP);
+			if (preferredChannelProp != null) {
+				try {
+					preferredChannel = Byte.valueOf(preferredChannelProp);
+				} 
+				catch (NumberFormatException e) {
+					LOGGER.error("Failed to set preferred radio channel", e);
+				}
 			}
+			// start radio controller
+			mRadioController.startController(preferredChannel);
+			mRadioController.addControllerEventListener(this);
 		}
-
-		// Start the background startup and wait until it's finished.
-		mRadioController.startController(preferredChannel);
-		mRadioController.addControllerEventListener(this);
+	}
+	
+	public final List<AisleDeviceLogic> getAisleControllers() {
+		ArrayList<AisleDeviceLogic> aList = new ArrayList<AisleDeviceLogic>();
+		for (INetworkDevice theDevice :mDeviceMap.values()) {
+			if (theDevice instanceof AisleDeviceLogic)
+				aList.add((AisleDeviceLogic) theDevice);			
+		}
+		return aList;
 	}
 
-	public final void startWebSocket() {
+	public final void startWebSocketClient() {
     	// create response processor and register it with WS client
 		SiteControllerMessageProcessor responseProcessor = new SiteControllerMessageProcessor(this);
     	client = new JettyWebSocketClient(mUri,responseProcessor,this);
@@ -119,6 +133,8 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	}
 
 	public final void stop() {
+		mRadioController.stopController();
+		connectionManagerThread.setExit(true);
 	}
 
 	// --------------------------------------------------------------------------
@@ -314,6 +330,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	}
 	
 	public void updateNetwork(List<Che> ches, List<LedController> ledControllers) {
+		this.lastNetworkUpdate = System.currentTimeMillis();		
 		Set<UUID> updateDevices=new HashSet<UUID>();
 		// update network devices
 		for (Che che : ches) {

@@ -5,8 +5,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 
-import javax.management.RuntimeErrorException;
-
 import lombok.Getter;
 
 import org.hibernate.Session;
@@ -16,7 +14,7 @@ import org.hibernate.cfg.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.multitenancy.Tenant;
+import com.gadgetworks.codeshelf.platform.multitenancy.Tenant;
 import com.google.inject.Singleton;
 
 /**
@@ -157,10 +155,12 @@ public class PersistencyService extends Service {
 	public final boolean start() {
 		LOGGER.info("Starting "+PersistencyService.class.getSimpleName());
 		
+		/*
 		Properties probs = System.getProperties();
 		for (Entry<Object, Object> e : probs.entrySet()) {
 			LOGGER.debug(e.getKey()+" - "+e.getValue());
 		}
+		*/
 		// fetch database config from properties file
 		this.hostName = System.getProperty("db.address");
 		if (this.hostName==null) {

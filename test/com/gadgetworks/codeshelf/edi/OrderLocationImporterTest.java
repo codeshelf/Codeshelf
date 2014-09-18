@@ -62,17 +62,21 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		String slottingCsv = "orderId,locationId\r\n" //
 				+ "01111, D-21\r\n" //
 				+ "01111, D-22\r\n" //
-				+ "02222, D-26\r\n" //
-				+ "03333, D-27\r\n" // Notice that D-27 does not resolve to a slot
+				+ "02222, D-27\r\n" // Notice that D-27 does not resolve to a slot
+				+ "03333, D-26\r\n" // Should still be processed
 				+ "04444, D-23\r\n"; // This will not come in the orders file
 
-		Assert.assertFalse(importSlotting(facility, slottingCsv)); //One of the order slots couldn't be updated
-		// At this point we would like order number 01111 and 02222 to exist as dummy outbound orders.
-		// Not sure about 03333
+		Assert.assertTrue("Should have been 'successful' if something was imported", importSlotting(facility, slottingCsv)); //One of the order slots could be updated
+		// At this point we would like order number 01111 and 03333 to exist as dummy outbound orders.
+		// Not sure about 02222
 		OrderHeader order1111 = facility.getOrderHeader("01111");
 		Assert.assertNotNull(order1111); // after fix, will have a header
 		Assert.assertEquals(2, order1111.getOrderLocations().size());
-		
+
+		OrderHeader order3333 = facility.getOrderHeader("03333");
+		Assert.assertNotNull("Should have still processed the other lines after an error", order3333); // after fix, will have a header
+		Assert.assertEquals("Should have still processed the other lines after an error",1, order3333.getOrderLocations().size());
+
 		// **************
 		// Now the orders file. The 01111 line has detailId 01111.1. The other two leave the detail blank, so will get a default name.
 		String csvString4 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
@@ -700,7 +704,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 	}
 	
 	private void assertOrderHasLocation(Facility facility, OrderHeader order, String locationAlias) {
-		ILocation mappedLocation = facility.findSubLocationById(locationAlias);
+		ILocation<?> mappedLocation = facility.findSubLocationById(locationAlias);
 		//String orderLocationId = OrderLocation.makeDomainId(order, mappedLocation);
 		Assert.assertTrue(order.getOrderLocations().size() > 0);
 		boolean found = false;

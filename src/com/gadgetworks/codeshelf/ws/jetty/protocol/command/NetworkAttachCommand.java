@@ -44,6 +44,7 @@ public class NetworkAttachCommand extends CommandABC {
 						if (session!=null) {
 							session.setType(SessionType.SiteController);
 							session.setAuthenticated(true);
+							session.setOrganizationName(organization.getDomainId());
 							LOGGER.info("Site controller on network "+request.getNetworkId()+" authenticated on session "+session.getSessionId());
 						}						
 						// generate response 

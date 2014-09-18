@@ -63,6 +63,7 @@ public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNet
 	public static final int						MAC_ADDR_BYTES		= 8;
 	public static final int						PUBLIC_KEY_BYTES	= 8;
 
+	@SuppressWarnings("unused")
 	@Inject
 	private static ITypedDao<WirelessDeviceABC>	DAO;
 

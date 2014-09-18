@@ -24,13 +24,10 @@ public final class NetEndpointTest {
 	@Test
 	public void testNetEndpoint() {
 
-		@SuppressWarnings("unused")
-		NetEndpoint endpoint;
-
 		//		try {
-		endpoint = new NetEndpoint(NetEndpoint.MGMT_ENDPOINT_NUM);
-		endpoint = new NetEndpoint(NetEndpoint.BROADCAST_ENDPOINT_NUM);
-		endpoint = new NetEndpoint(DEVICE_TEST_ENDPOPINT);
+		new NetEndpoint(NetEndpoint.MGMT_ENDPOINT_NUM);
+		new NetEndpoint(NetEndpoint.BROADCAST_ENDPOINT_NUM);
+		new NetEndpoint(DEVICE_TEST_ENDPOPINT);
 
 		// Expected result.
 		//		} catch (OutOfRangeException e) {

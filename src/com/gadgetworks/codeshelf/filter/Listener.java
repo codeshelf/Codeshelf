@@ -15,15 +15,17 @@ import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.model.domain.IDomainObjectTree;
-import com.gadgetworks.codeshelf.ws.command.req.IWsReqCmd;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectChangeResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
-
-// TODO: get rid of references to constants defined in IWsReqCmd
 
 public class Listener implements ObjectEventListener {
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(Listener.class);
+	
+	String	PERSISTENT_ID		= "persistentId";
+	String	PARENT_ID			= "parentPersistentId";
+	String	CLASSNAME			= "className";
+	String	OP_TYPE				= "op";
 
 	@Getter @Setter
 	String id;
@@ -48,18 +50,7 @@ public class Listener implements ObjectEventListener {
 
 	@Override
 	public ResponseABC processObjectUpdate(IDomainObject inDomainObject, Set<String> inChangedProperties) {
-		// first see if any changed properties match the properties
-		boolean matchedChangedProperty = false;
-		for (String propertyName : this.propertyNames) {
-			if ((inChangedProperties != null) && (inChangedProperties.contains(propertyName))) {
-				matchedChangedProperty = true;
-				break;
-			}
-		}
-		if (matchedChangedProperty) {
-			return this.processEvent(inDomainObject, EventType.Update);
-		}
-		return null;
+		return this.processEvent(inDomainObject, EventType.Update);
 	}
 
 	@Override
@@ -90,14 +81,14 @@ public class Listener implements ObjectEventListener {
 			for (IDomainObject matchedObject : inDomainObjectList) {
 				Map<String, Object> propertiesMap = new HashMap<String, Object>();
 				// Always include the class name and persistent ID in the results.
-				propertiesMap.put(IWsReqCmd.CLASSNAME, matchedObject.getClassName());
-				propertiesMap.put(IWsReqCmd.OP_TYPE, type.toString());
-				propertiesMap.put(IWsReqCmd.PERSISTENT_ID, matchedObject.getPersistentId());
+				propertiesMap.put(CLASSNAME, matchedObject.getClassName());
+				propertiesMap.put(OP_TYPE, type.toString());
+				propertiesMap.put(PERSISTENT_ID, matchedObject.getPersistentId());
 				// If this is a tree object then get the parent ID as well.
 				if (matchedObject instanceof IDomainObjectTree<?>) {
 					IDomainObject parent = ((IDomainObjectTree<?>) matchedObject).getParent();
 					if (parent != null) {
-						propertiesMap.put(IWsReqCmd.PARENT_ID, parent.getPersistentId());
+						propertiesMap.put(PARENT_ID, parent.getPersistentId());
 					}
 				}
 				for (String propertyName : this.propertyNames) {

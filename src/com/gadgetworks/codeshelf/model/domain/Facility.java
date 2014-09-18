@@ -11,9 +11,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
@@ -27,6 +29,7 @@ import javax.persistence.Transient;
 import lombok.Getter;
 import lombok.Setter;
 
+import org.postgresql.util.PSQLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,7 +40,6 @@ import com.gadgetworks.codeshelf.device.LedCmdGroupSerializer;
 import com.gadgetworks.codeshelf.device.LedSample;
 import com.gadgetworks.codeshelf.edi.InventoryCsvImporter;
 import com.gadgetworks.codeshelf.edi.InventorySlottedCsvBean;
-import com.gadgetworks.codeshelf.model.BayDistanceWorkInstructionSequencer;
 import com.gadgetworks.codeshelf.model.EdiProviderEnum;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.HeaderCounts;
@@ -45,7 +47,7 @@ import com.gadgetworks.codeshelf.model.LedRange;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
-import com.gadgetworks.codeshelf.model.WorkInstructionSequencer;
+import com.gadgetworks.codeshelf.model.WorkInstructionSequencerABC;
 import com.gadgetworks.codeshelf.model.WorkInstructionSequencerFactory;
 import com.gadgetworks.codeshelf.model.WorkInstructionSequencerType;
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
@@ -60,10 +62,7 @@ import com.gadgetworks.codeshelf.validation.ErrorCode;
 import com.gadgetworks.codeshelf.validation.Errors;
 import com.gadgetworks.codeshelf.validation.InputValidationException;
 import com.gadgetworks.flyweight.command.ColorEnum;
-import com.gadgetworks.flyweight.command.NetGuid;
 import com.google.common.base.Strings;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -78,7 +77,6 @@ import com.google.inject.Singleton;
 
 @Entity
 @DiscriminatorValue("FACILITY")
-//@CacheStrategy(useBeanCache = false)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class Facility extends SubLocationABC<Facility> {
 
@@ -97,61 +95,66 @@ public class Facility extends SubLocationABC<Facility> {
 		}
 	}
 
-	private static final Logger				LOGGER				= LoggerFactory.getLogger(Facility.class);
+	private static final Logger				LOGGER			= LoggerFactory.getLogger(Facility.class);
 
 	// The owning organization.
 	@ManyToOne(optional = false)
 	@Getter
 	private Organization					parentOrganization;
 
+	//	@Column(nullable = false)
+	//	@ManyToOne(optional = false)
+	//	private SubLocationABC					parent;
+
 	@OneToMany(mappedBy = "parent")
 	@Getter
-	private List<Aisle>						aisles				= new ArrayList<Aisle>();
+	private List<Aisle>						aisles			= new ArrayList<Aisle>();
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
-	private Map<String, Container>			containers			= new HashMap<String, Container>();
+	private Map<String, Container>			containers		= new HashMap<String, Container>();
 
 	@OneToMany(mappedBy = "parent", fetch = FetchType.EAGER)
 	@MapKey(name = "domainId")
-	private Map<String, ContainerKind>		containerKinds		= new HashMap<String, ContainerKind>();
+	private Map<String, ContainerKind>		containerKinds	= new HashMap<String, ContainerKind>();
 
 	@OneToMany(mappedBy = "parent", targetEntity = EdiServiceABC.class)
 	@Getter
-	private List<IEdiService>				ediServices			= new ArrayList<IEdiService>();
+	private List<IEdiService>				ediServices		= new ArrayList<IEdiService>();
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
-	private Map<String, ItemMaster>			itemMasters			= new HashMap<String, ItemMaster>();
+	private Map<String, ItemMaster>			itemMasters		= new HashMap<String, ItemMaster>();
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
-	private Map<String, CodeshelfNetwork>	networks			= new HashMap<String, CodeshelfNetwork>();
+	private Map<String, CodeshelfNetwork>	networks		= new HashMap<String, CodeshelfNetwork>();
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
-	private Map<String, OrderGroup>			orderGroups			= new HashMap<String, OrderGroup>();
+	private Map<String, OrderGroup>			orderGroups		= new HashMap<String, OrderGroup>();
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
-	private Map<String, OrderHeader>		orderHeaders		= new HashMap<String, OrderHeader>();
+	private Map<String, OrderHeader>		orderHeaders	= new HashMap<String, OrderHeader>();
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
-	private Map<String, Path>				paths				= new HashMap<String, Path>();
+	private Map<String, Path>				paths			= new HashMap<String, Path>();
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
-	private Map<String, UomMaster>			uomMasters			= new HashMap<String, UomMaster>();
+	private Map<String, UomMaster>			uomMasters		= new HashMap<String, UomMaster>();
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
-	private Map<String, LocationAlias>		locationAliases		= new HashMap<String, LocationAlias>();
+	private Map<String, LocationAlias>		locationAliases	= new HashMap<String, LocationAlias>();
 
 	@Transient
 	// for now installation specific.  property needs to be exposed as a configuration parameter.
-	@Getter @Setter
-	static WorkInstructionSequencerType		sequencerType		= WorkInstructionSequencerType.BayDistance;
+	@Getter
+	@Setter
+	static WorkInstructionSequencerType		sequencerType	= WorkInstructionSequencerType.BayDistance;
 
 	static {
 		String sequencerConfig = System.getProperty("facility.sequencer");
@@ -171,10 +174,15 @@ public class Facility extends SubLocationABC<Facility> {
 		setParentOrganization(organization);
 	}
 
+	public final static void setDAO(ITypedDao<Facility> dao) {
+		Facility.DAO = dao;
+	}
+
 	public final String getDefaultDomainIdPrefix() {
 		return "F";
 	}
 
+	@SuppressWarnings("unchecked")
 	public final ITypedDao<Facility> getDao() {
 		return DAO;
 	}
@@ -380,101 +388,12 @@ public class Facility extends SubLocationABC<Facility> {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * Create a new aisle with prototype bays.
-	 * @param inPosX
-	 * @param inPosY
-	 * @param inProtoBayXDim
-	 * @param inProtoBayYDim
-	 * @param inProtoBayZDim
-	 * @param inBaysHigh
-	 * @param inBaysLong
-	 */
-	// @Transactional
-	public final void createAisle(final String inAisleId,
-		final Point inAnchorPoint,
-		final Point inProtoBayPoint,
-		final Integer inBaysHigh,
-		final Integer inBaysLong,
-		final String inLedControllerId,
-		final Boolean inRunInXDir,
-		final Boolean inLeftHandBay) {
-
-		CodeshelfNetwork network = networks.get(CodeshelfNetwork.DEFAULT_NETWORK_ID);
-		if (network != null) {
-			LedController ledController = network.getLedController("LED1");
-			if (ledController == null) {
-				ledController = network.findOrCreateLedController(inLedControllerId, new NetGuid(inLedControllerId));
-			}
-			// Create the aisle if it doesn't already exist.
-			Aisle aisle = Aisle.DAO.findByDomainId(this, inAisleId);
-			if (aisle == null) {
-				Point pickFaceEndPoint = computePickFaceEndPoint(inAnchorPoint, inProtoBayPoint.getX() * inBaysLong, inRunInXDir);
-				aisle = new Aisle(this, inAisleId, inAnchorPoint, pickFaceEndPoint);
-				try {
-					Aisle.DAO.store(aisle);
-				} catch (DaoException e) {
-					LOGGER.error("", e);
-				}
-
-				Point bayAnchorPoint = Point.getZeroPoint();
-				Point aisleBoundary = Point.getZeroPoint();
-
-				Short curLedPosNum = 1;
-				Short channelNum = 1;
-				for (int bayNum = 1; bayNum <= inBaysLong; bayNum++) {
-					Double anchorPosZ = 0.0;
-					for (int bayHighNum = 0; bayHighNum < inBaysHigh; bayHighNum++) {
-						String bayName = "B" + bayNum;
-						if (inBaysHigh > 1) {
-							bayName += Integer.toString(bayHighNum);
-						}
-						bayAnchorPoint.setAnchorPosZ(anchorPosZ);
-						Bay bay = createZigZagBay(aisle,
-							bayName,
-							inLeftHandBay,
-							curLedPosNum,
-							bayAnchorPoint,
-							inProtoBayPoint,
-							inRunInXDir,
-							ledController,
-							channelNum);
-						aisle.addLocation(bay);
-
-						// Get the last LED position from the bay to setup the next one.
-						curLedPosNum = (short) (bay.getLastLedNumAlongPath());
-
-						// Create the bay's boundary vertices.
-						if (inRunInXDir) {
-							createOrUpdateVertices(bay, new Point(PositionTypeEnum.METERS_FROM_PARENT,
-								inProtoBayPoint.getX(),
-								inProtoBayPoint.getY(),
-								0.0));
-						} else {
-							createOrUpdateVertices(bay, new Point(PositionTypeEnum.METERS_FROM_PARENT,
-								inProtoBayPoint.getY(),
-								inProtoBayPoint.getX(),
-								0.0));
-						}
-
-						anchorPosZ += inProtoBayPoint.getZ();
-					}
-
-					prepareNextBayAnchorPoint(inProtoBayPoint, inRunInXDir, bayAnchorPoint, aisleBoundary);
-				}
-
-				// Create the aisle's boundary vertices.
-				createOrUpdateVertices(aisle, aisleBoundary);
-			}
-		}
-	}
-
-	// --------------------------------------------------------------------------
-	/**
 	 * @param inProtoBayWidthMeters
 	 * @param inBaysLong
 	 * @param inRunInXDir
 	 * @return
 	 */
+	@SuppressWarnings("unused")
 	private Point computePickFaceEndPoint(final Point inAnchorPoint, final Double inDistanceMeters, final Boolean inRunInXDir) {
 		Point result;
 		if (inRunInXDir) {
@@ -483,215 +402,6 @@ public class Facility extends SubLocationABC<Facility> {
 			result = new Point(PositionTypeEnum.METERS_FROM_PARENT, 0.0, inAnchorPoint.getY() + inDistanceMeters, 0.0);
 		}
 		return result;
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * @param inProtoBayPoint
-	 * @param inRunInXDir
-	 * @param inAnchorPos
-	 * @param inAisleBoundary
-	 */
-	private void prepareNextBayAnchorPoint(final Point inProtoBayPoint,
-		final Boolean inRunInXDir,
-		Point inAnchorPos,
-		Point inAisleBoundary) {
-		if (inRunInXDir) {
-			if ((inAnchorPos.getX() + inProtoBayPoint.getX()) > inAisleBoundary.getX()) {
-				inAisleBoundary.setX(inAnchorPos.getX() + inProtoBayPoint.getX());
-			}
-
-			if ((inAnchorPos.getY() + inProtoBayPoint.getY()) > inAisleBoundary.getY()) {
-				inAisleBoundary.setY(inAnchorPos.getY() + inProtoBayPoint.getY());
-			}
-
-			inAnchorPos.setX(inAnchorPos.getX() + inProtoBayPoint.getX());
-		} else {
-			if ((inAnchorPos.getX() + inProtoBayPoint.getY()) > inAisleBoundary.getX()) {
-				inAisleBoundary.setX(inAnchorPos.getX() + inProtoBayPoint.getY());
-			}
-
-			if ((inAnchorPos.getY() + inProtoBayPoint.getX()) > inAisleBoundary.getY()) {
-				inAisleBoundary.setY(inAnchorPos.getY() + inProtoBayPoint.getX());
-			}
-
-			inAnchorPos.setY(inAnchorPos.getY() + inProtoBayPoint.getY());
-		}
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * Create the zig-zag LED strip bays that we see with rolling cart bays.
-	 * (E.g. the bays we see at GoodEggs.)
-	 *
-	 * @return
-	 */
-	private Bay createZigZagBay(final Aisle inParentAisle,
-		final String inBayId,
-		final Boolean inIsLeftHandBay,
-		final Short inFirstLedNum,
-		final Point inAnchorPoint,
-		final Point inProtoBayPoint,
-		final Boolean inRunsInXDir,
-		final LedController inLedController,
-		final short inLedChannelNum) {
-
-		Point bayAnchorPoint = new Point(inAnchorPoint);
-		Point bayPickFacePoint = new Point(inProtoBayPoint);
-
-		Point pickFaceEndPoint = computePickFaceEndPoint(bayAnchorPoint, bayPickFacePoint.getX(), inRunsInXDir);
-		Bay resultBay = new Bay(inParentAisle, inBayId, bayAnchorPoint, pickFaceEndPoint);
-
-		resultBay.setFirstLedNumAlongPath(inFirstLedNum);
-		resultBay.setLastLedNumAlongPath((short) (inFirstLedNum + 160));
-
-		Double bayWidth = 0.0;
-		if (inRunsInXDir) {
-			bayWidth = inProtoBayPoint.getX();
-		} else {
-			bayWidth = inProtoBayPoint.getY();
-		}
-
-		try {
-			Bay.DAO.store(resultBay);
-		} catch (DaoException e) {
-			LOGGER.error("", e);
-		}
-
-		double tierZPos = 1.25;
-		short tierStartLedNum = 1;
-		short tierLedCount = 32;
-		boolean leftToRight = inIsLeftHandBay;
-		for (int tierNum = 5; tierNum > 0; tierNum--) {
-			createTier(resultBay,
-				"T" + tierNum,
-				leftToRight,
-				inRunsInXDir,
-				bayWidth,
-				inProtoBayPoint.getZ(),
-				tierZPos,
-				inLedController,
-				inLedChannelNum,
-				tierStartLedNum,
-				tierLedCount);
-			tierZPos -= 0.25;
-			tierStartLedNum += 32;
-			leftToRight = !leftToRight;
-		}
-
-		try {
-			Bay.DAO.store(resultBay);
-		} catch (DaoException e) {
-			LOGGER.error("", e);
-		}
-
-		return resultBay;
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * @param inParentBay
-	 * @param inTierId
-	 * @param inSlotsRunRight
-	 * @param inRunsInXDir
-	 * @param inOffset1
-	 * @param inOffset2
-	 * @param inLedController
-	 * @param inLedChannelNum
-	 */
-	private void createTier(final Bay inParentBay,
-		final String inTierId,
-		final Boolean inSlotRunsRight,
-		final Boolean inRunsInXDir,
-		final Double inBayWidth,
-		final Double inBayHeight,
-		final Double inTierZOffset,
-		final LedController inLedController,
-		final Short inLedChannelNum,
-		final Short inFirstLedPosNum,
-		final Short inTierLedCount) {
-
-		Point anchorPoint = Point.getZeroPoint();
-		anchorPoint.translateZ(inTierZOffset);
-		Point pickFaceEndPoint = computePickFaceEndPoint(anchorPoint, inBayWidth, inRunsInXDir);
-		pickFaceEndPoint.translateZ(inTierZOffset);
-		Tier tier = new Tier(inParentBay, inTierId, anchorPoint, pickFaceEndPoint);
-
-		tier.setLedController(inLedController);
-		tier.setLedChannel(inLedChannelNum);
-		if (inSlotRunsRight) {
-			tier.setFirstLedNumAlongPath((short) (inParentBay.getFirstLedNumAlongPath() + inFirstLedPosNum - 1));
-			tier.setLastLedNumAlongPath((short) (inParentBay.getFirstLedNumAlongPath() + inFirstLedPosNum + inTierLedCount - 1));
-		} else {
-			tier.setFirstLedNumAlongPath((short) (inParentBay.getFirstLedNumAlongPath() + inFirstLedPosNum + inTierLedCount - 1));
-			tier.setLastLedNumAlongPath((short) (inParentBay.getFirstLedNumAlongPath() + inFirstLedPosNum - 1));
-		}
-		try {
-			Tier.DAO.store(tier);
-		} catch (DaoException e) {
-			LOGGER.error("", e);
-		}
-
-		// Add slots to this tier.
-		if (inSlotRunsRight) {
-			createSlot(tier, "S1", inRunsInXDir, 0.0, inLedController, inLedChannelNum, (short) 1, (short) 4);
-			createSlot(tier, "S2", inRunsInXDir, 0.25, inLedController, inLedChannelNum, (short) 11, (short) 8);
-			createSlot(tier, "S3", inRunsInXDir, 0.5, inLedController, inLedChannelNum, (short) 15, (short) 18);
-			createSlot(tier, "S4", inRunsInXDir, 0.75, inLedController, inLedChannelNum, (short) 25, (short) 22);
-			createSlot(tier, "S5", inRunsInXDir, 1.0, inLedController, inLedChannelNum, (short) 29, (short) 32);
-		} else {
-			createSlot(tier, "S1", inRunsInXDir, 0.0, inLedController, inLedChannelNum, (short) 32, (short) 29);
-			createSlot(tier, "S2", inRunsInXDir, 0.25, inLedController, inLedChannelNum, (short) 22, (short) 25);
-			createSlot(tier, "S3", inRunsInXDir, 0.5, inLedController, inLedChannelNum, (short) 18, (short) 15);
-			createSlot(tier, "S4", inRunsInXDir, 0.75, inLedController, inLedChannelNum, (short) 8, (short) 11);
-			createSlot(tier, "S5", inRunsInXDir, 1.0, inLedController, inLedChannelNum, (short) 4, (short) 1);
-		}
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * @param inParentTier
-	 * @param inSlotId
-	 * @param inOffset1
-	 * @param inOffset2
-	 * @param inLedController
-	 * @param inChannelNum
-	 * @param inFirstLedNum
-	 * @param inLastLedNum
-	 */
-	private void createSlot(final Tier inParentTier,
-		final String inSlotId,
-		final Boolean inRunsInXDir,
-		final Double inOffset,
-		final LedController inLedController,
-		final Short inChannelNum,
-		final Short inFirstLedPosNum,
-		final Short inLastLedPosNum) {
-
-		Point anchorPoint = Point.getZeroPoint();
-		if (inRunsInXDir) {
-			anchorPoint.translateX(inOffset);
-		} else {
-			anchorPoint.translateY(inOffset);
-		}
-
-		Point pickFaceEndPoint = computePickFaceEndPoint(anchorPoint, 0.25, inRunsInXDir);
-
-		Slot slot = new Slot(inParentTier, inSlotId, anchorPoint, pickFaceEndPoint);
-		slot.setLedController(inLedController);
-		slot.setLedChannel(inChannelNum);
-		if (inParentTier.getFirstLedNumAlongPath() < inParentTier.getLastLedNumAlongPath()) {
-			slot.setFirstLedNumAlongPath((short) (inParentTier.getFirstLedNumAlongPath() + inFirstLedPosNum - 1));
-			slot.setLastLedNumAlongPath((short) (inParentTier.getFirstLedNumAlongPath() + inLastLedPosNum - 1));
-		} else {
-			slot.setFirstLedNumAlongPath((short) (inParentTier.getLastLedNumAlongPath() + inFirstLedPosNum - 1));
-			slot.setLastLedNumAlongPath((short) (inParentTier.getLastLedNumAlongPath() + inLastLedPosNum - 1));
-		}
-		try {
-			Slot.DAO.store(slot);
-		} catch (DaoException e) {
-			LOGGER.error("", e);
-		}
 	}
 
 	public final Path createPath(String inDomainId) {
@@ -707,7 +417,6 @@ public class Facility extends SubLocationABC<Facility> {
 	 * Create a path
 	 *
 	 */
-	// @Transactional
 	public final Path createPath(String inDomainId, PathSegment[] inPathSegments) {
 		Path path = createPath(inDomainId);
 		for (PathSegment pathSegment : inPathSegments) {
@@ -787,7 +496,7 @@ public class Facility extends SubLocationABC<Facility> {
 	 * @param inLocation
 	 * @param inDimMeters
 	 */
-	public final void createOrUpdateVertices(LocationABC inLocation, Point inDimMeters) {
+	public final void createOrUpdateVertices(LocationABC<?> inLocation, Point inDimMeters) {
 		// Change to public as this is called from aisle file reader, and later from editor
 		// change from create to createOrUpdate
 		// Maybe this should not be a facility method.
@@ -850,15 +559,14 @@ public class Facility extends SubLocationABC<Facility> {
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	// @Transactional
 	public final void createDefaultContainerKind() {
-		ContainerKind containerKind = createContainerKind(ContainerKind.DEFAULT_CONTAINER_KIND, 0.0, 0.0, 0.0);
+		//ContainerKind containerKind = 
+		createContainerKind(ContainerKind.DEFAULT_CONTAINER_KIND, 0.0, 0.0, 0.0);
 	}
 
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	// @Transactional
 	public final ContainerKind createContainerKind(String inDomainId,
 		Double inLengthMeters,
 		Double inWidthMeters,
@@ -887,6 +595,18 @@ public class Facility extends SubLocationABC<Facility> {
 	/**
 	 * @return
 	 */
+	public final void ensureIronMqService() {
+		// This is a weak kludge. Just do the get, which does a get and create if not found.
+		// Otherwise, the create only happens upon the first attempt at a work instruction save.
+		IronMqService theService = getIronMqService();
+		if (theService == null)
+			LOGGER.error("Failed to get IronMQ service");
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @return
+	 */
 	public final IronMqService getIronMqService() {
 		IronMqService result = null;
 
@@ -894,11 +614,16 @@ public class Facility extends SubLocationABC<Facility> {
 			if (ediService instanceof IronMqService) {
 				result = (IronMqService) ediService;
 			}
-			break;
 		}
 
 		if (result == null) {
-			return createIronMqService();
+			LOGGER.info("Creating IronMQ service");
+			try {
+				return createIronMqService();
+			} catch (PSQLException e) {
+				LOGGER.error("SQL error trying to create IronMqService", e);
+				// allow it to return null
+			}
 		}
 
 		return result;
@@ -908,25 +633,21 @@ public class Facility extends SubLocationABC<Facility> {
 	/**
 	 * @return
 	 */
-	public final IronMqService createIronMqService() {
+	public final IronMqService createIronMqService() throws PSQLException {
+		// we saw the PSQL exception in staging test when the record could not be added
 		IronMqService result = null;
 
 		result = new IronMqService();
 		result.setParent(this);
 		result.setDomainId("IRONMQ");
 		result.setProviderEnum(EdiProviderEnum.IRONMQ);
-		result.setServiceStateEnum(EdiServiceStateEnum.LINKED);
-
-		IronMqService.Credentials credentials = result.new Credentials(IronMqService.PROJECT_ID, IronMqService.TOKEN);
-		Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
-		String json = gson.toJson(credentials);
-		result.setProviderCredentials(json);
-
+		result.setServiceStateEnum(EdiServiceStateEnum.UNLINKED);
+		result.setCredentials("", ""); // non-null credentials
 		this.addEdiService(result);
 		try {
 			IronMqService.DAO.store(result);
 		} catch (DaoException e) {
-			LOGGER.error("", e);
+			LOGGER.error("Failed to save IronMQ service", e);
 		}
 
 		return result;
@@ -952,7 +673,6 @@ public class Facility extends SubLocationABC<Facility> {
 	/**
 	 * @return
 	 */
-	// @Transactional
 	public final DropboxService createDropboxService() {
 
 		DropboxService result = null;
@@ -976,7 +696,6 @@ public class Facility extends SubLocationABC<Facility> {
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	// @Transactional
 	public final CodeshelfNetwork createNetwork(final String inNetworkName) {
 
 		CodeshelfNetwork result = null;
@@ -1010,13 +729,16 @@ public class Facility extends SubLocationABC<Facility> {
 	 * @param inContainerIdList
 	 * @return
 	 */
-	// @Transactional
 	public final Integer computeWorkInstructions(final Che inChe, final List<String> inContainerIdList) {
 
 		// Work around serious ebeans problem. See OrderHeader's orderDetails cache getting trimmed and then failing to get work instructions made for some orders.
 		OrderHeader.DAO.clearAllCaches();
 
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
+
+		//manually track changed ches here to trigger an update broadcast
+		Set<Che> changedChes = new HashSet<Che>();
+		changedChes.add(inChe);
 
 		// Delete any planned WIs for this CHE.
 		Map<String, Object> filterParams = new HashMap<String, Object>();
@@ -1025,13 +747,15 @@ public class Facility extends SubLocationABC<Facility> {
 		for (WorkInstruction wi : WorkInstruction.DAO.findByFilter("assignedChe.persistentId = :chePersistentId and typeEnum = :type",
 			filterParams)) {
 			try {
-			
+
 				Che assignedChe = wi.getAssignedChe();
-				if (assignedChe != null)
+				if (assignedChe != null) {
 					assignedChe.removeWorkInstruction(wi); // necessary? new from v3
+					changedChes.add(assignedChe);
+				}
 				OrderDetail owningDetail = wi.getParent();
 				owningDetail.removeWorkInstruction(wi); // necessary? new from v3
-				
+
 				WorkInstruction.DAO.delete(wi);
 			} catch (DaoException e) {
 				LOGGER.error("failed to delete prior work instruction for CHE", e);
@@ -1047,6 +771,9 @@ public class Facility extends SubLocationABC<Facility> {
 				// Set the CHE on the containerUse
 				ContainerUse thisUse = container.getCurrentContainerUse();
 				if (thisUse != null) {
+					if (thisUse.getCurrentChe() != null) {
+						changedChes.add(thisUse.getCurrentChe());
+					}
 					thisUse.setCurrentChe(inChe);
 					try {
 						ContainerUse.DAO.store(thisUse);
@@ -1058,6 +785,10 @@ public class Facility extends SubLocationABC<Facility> {
 			}
 		}
 
+		for (Che changedChe : changedChes) {
+			changedChe.getDao().pushNonPersistentUpdates(changedChe);
+		}
+
 		Timestamp theTime = new Timestamp(System.currentTimeMillis());
 
 		// Get all of the OUTBOUND work instructions.
@@ -1066,14 +797,33 @@ public class Facility extends SubLocationABC<Facility> {
 		// Get all of the CROSS work instructions.
 		wiResultList.addAll(generateCrossWallInstructions(inChe, containerList, theTime));
 
-		WorkInstructionSequencer sequencer = getSequencer();
+		WorkInstructionSequencerABC sequencer = getSequencer();
 		List<WorkInstruction> sortedWIResults = sequencer.sort(this, wiResultList);
 		return sortedWIResults.size();
 	}
 
-	private WorkInstructionSequencer getSequencer() {
-		return WorkInstructionSequencerFactory.createSequencer(this.sequencerType);
+	private WorkInstructionSequencerABC getSequencer() {
+		return WorkInstructionSequencerFactory.createSequencer(Facility.sequencerType);
 	}
+
+	private class GroupAndSortCodeComparator implements Comparator<WorkInstruction> {
+
+		public int compare(WorkInstruction inWi1, WorkInstruction inWi2) {
+			// watch for uninitialized data
+			String sort1 = inWi1.getGroupAndSortCode();
+			String sort2 = inWi2.getGroupAndSortCode();
+			if (sort1 == null) {
+				if (sort2 == null)
+					return 0;
+				else
+					return -1;
+			}
+			if (sort2 == null)
+				return 1;
+			else
+				return sort1.compareTo(sort2);
+		}
+	};
 
 	// --------------------------------------------------------------------------
 	/**
@@ -1084,7 +834,6 @@ public class Facility extends SubLocationABC<Facility> {
 	 * for that CHE are assumed be on the path of the scanned location.
 	 * For testing: if scan location, then just return all work instructions assigned to the CHE. (Assumes no negative positions on path.)
 	 */
-	// @Transactional
 	public final List<WorkInstruction> getWorkInstructions(final Che inChe, final String inScannedLocationId) {
 
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
@@ -1134,27 +883,37 @@ public class Facility extends SubLocationABC<Facility> {
 			wiResultList.add(wi);
 		}
 
+		// New from V4. make sure sorted correctly. Hard to believe we did not catch this before. (Should we have the DB sort for us?)
+		Collections.sort(wiResultList, new GroupAndSortCodeComparator());
 		return wiResultList;
 	}
 
 	private void deleteExistingShortWiToFacility(final OrderDetail inOrderDetail) {
 		// Do we have short work instruction already for this orderDetail, for any CHE, going to facility?
 		// Note, that leaves the shorts around that a user shorted.  This only delete the shorts created immediately upon scan if there is no product.
+
+		// separate list to delete from, because we get ConcurrentModificationException if we delete in the middle of inOrderDetail.getWorkInstructions()
+		List<WorkInstruction> aList = new ArrayList<WorkInstruction>();
 		for (WorkInstruction wi : inOrderDetail.getWorkInstructions()) {
 			if (wi.getStatusEnum() == WorkInstructionStatusEnum.SHORT)
 				if (wi.getLocation().equals(this)) { // planned to the facility
-					try {
-						
-						Che assignedChe = wi.getAssignedChe();
-						if (assignedChe != null)
-							assignedChe.removeWorkInstruction(wi); // necessary?
-						inOrderDetail.removeWorkInstruction(wi); // necessary?
-						WorkInstruction.DAO.delete(wi);
-						
-					} catch (DaoException e) {
-						LOGGER.error("failed to delete prior work SHORT instruction", e);
-					}
+					aList.add(wi);
 				}
+		}
+
+		// need a reverse iteration?
+		for (WorkInstruction wi : aList) {
+			try {
+				Che assignedChe = wi.getAssignedChe();
+				if (assignedChe != null)
+					assignedChe.removeWorkInstruction(wi); // necessary?
+				inOrderDetail.removeWorkInstruction(wi); // necessary?
+				WorkInstruction.DAO.delete(wi);
+
+			} catch (DaoException e) {
+				LOGGER.error("failed to delete prior work SHORT instruction", e);
+			}
+
 		}
 
 	}
@@ -1323,7 +1082,7 @@ public class Facility extends SubLocationABC<Facility> {
 															outOrderDetail,
 															container,
 															inChe,
-															(LocationABC) (firstOutOrderLoc.getLocation()),
+															(LocationABC<?>) (firstOutOrderLoc.getLocation()),
 															inTime);
 
 														// If we created a WI then add it to the list.
@@ -1396,6 +1155,7 @@ public class Facility extends SubLocationABC<Facility> {
 	 * Compare Work Instructions by their ItemIds.
 	 *
 	 */
+	@SuppressWarnings("unused")
 	private class WiItemIdComparator implements Comparator<WorkInstruction> {
 
 		public int compare(WorkInstruction inWi1, WorkInstruction inWi2) {
@@ -1410,6 +1170,7 @@ public class Facility extends SubLocationABC<Facility> {
 	 * @param inBays
 	 * @return
 	 */
+	@SuppressWarnings("unused")
 	private List<WorkInstruction> sortCrosswallInstructionsInLocationOrder(final List<WorkInstruction> inCrosswallWiList,
 		final List<ISubLocation<?>> inSubLocations) {
 
@@ -1450,9 +1211,10 @@ public class Facility extends SubLocationABC<Facility> {
 		OrderDetail inOrderDetail,
 		Container inContainer,
 		Che inChe,
-		LocationABC inLocation,
+		ILocation<?> inLocation,
 		final Timestamp inTime) {
 		WorkInstruction resultWi = null;
+		boolean isInventoryPickInstruction = false;
 
 		Integer qtyToPick = inOrderDetail.getQuantity();
 		Integer minQtyToPick = inOrderDetail.getMinQuantity();
@@ -1498,7 +1260,8 @@ public class Facility extends SubLocationABC<Facility> {
 				// This test might be fragile. If it was a cross batch situation, then the orderHeader will have one or more locations.
 				// If no order locations, then it must be a pick order. We want the leds for the inventory item.
 				if (passedInDetailParent.getOrderLocations().size() == 0) {
-					setOutboundWorkInstructionLedPatternFromInventoryItem(resultWi,
+					isInventoryPickInstruction = true;
+					setOutboundWorkInstructionLedPatternAndPosAlongPathFromInventoryItem(resultWi,
 						inLocation,
 						inOrderDetail.getItemMasterId(),
 						inOrderDetail.getUomMasterId());
@@ -1530,8 +1293,13 @@ public class Facility extends SubLocationABC<Facility> {
 			}
 			if (inLocation instanceof Facility)
 				resultWi.setPosAlongPath(0.0);
-			else
-				resultWi.setPosAlongPath(inLocation.getPosAlongPath());
+			else {
+				if (isInventoryPickInstruction) {
+					// do nothing as it was set with the leds
+				} else {
+					resultWi.setPosAlongPath(inLocation.getPosAlongPath());
+				}
+			}
 
 			resultWi.setContainer(inContainer);
 			resultWi.setAssignedChe(inChe);
@@ -1560,9 +1328,15 @@ public class Facility extends SubLocationABC<Facility> {
 		// This is used for GoodEggs cross batch processs. The order header passed in is the outbound order (which has order locations),
 		// but inWi was generated from the cross batch order detail.
 
+		if(inWi == null) {
+			LOGGER.error("Unexpected null WorkInstruction processing "+inOrder==null?"null order":inOrder.getOrderId());
+			return;
+		} 
+
 		// Warning: the ledCmdStream must be set to "[]" if we bail. If not, site controller will NPE. Hence the check at this late stage
 		// This does not bail intentionally. Perhap should if led = 0.
 		String existingCmdString = inWi.getLedCmdStream();
+
 		if (existingCmdString == null || existingCmdString.isEmpty()) {
 			inWi.setLedCmdStream("[]"); // empty array
 			LOGGER.error("work instruction was not initialized");
@@ -1582,7 +1356,7 @@ public class Facility extends SubLocationABC<Facility> {
 
 			// The new way of sending LED data to the remote controller. Note getEffectiveXXX instead of getLedController
 			// This will throw if aisles/tiers are not configured yet. Lets avoid by the null checks.
-			ISubLocation theLocation = orderLocation.getLocation(); // this should never be null by database constraint
+			ISubLocation<?> theLocation = orderLocation.getLocation(); // this should never be null by database constraint
 			LedController theController = null;
 			Short theChannel = 0;
 			if (theLocation == null) {
@@ -1616,10 +1390,16 @@ public class Facility extends SubLocationABC<Facility> {
 	 * @param inWi
 	 * @param inOrder
 	 */
-	private void setOutboundWorkInstructionLedPatternFromInventoryItem(final WorkInstruction inWi,
-		final LocationABC inLocation,
+	private void setOutboundWorkInstructionLedPatternAndPosAlongPathFromInventoryItem(final WorkInstruction inWi,
+		final ILocation<?> inLocation,
 		final String inItemMasterId,
 		final String inUomId) {
+
+
+		if(inWi == null) {
+			LOGGER.error("Unexpected null WorkInstruction processing "+inItemMasterId);
+			return;
+		}
 
 		// Warning: the ledCmdStream must be set to "[]" if we bail. If not, site controller will NPE. Hence the check at this late stage
 		String existingCmdString = inWi.getLedCmdStream();
@@ -1627,7 +1407,7 @@ public class Facility extends SubLocationABC<Facility> {
 			inWi.setLedCmdStream("[]"); // empty array
 			LOGGER.error("work instruction was not initialized");
 		}
-		
+
 		// This work instruction should have been generated from a pick order, so there must be inventory for the pick at the location.
 		if (inWi == null || inLocation == null) {
 			LOGGER.error("unexpected null condition in setOutboundWorkInstructionLedPatternFromInventoryItem");
@@ -1638,22 +1418,30 @@ public class Facility extends SubLocationABC<Facility> {
 			return;
 		}
 
-		// if the location does not have led numbers, we do not have tubes or lasers there. Do not proceed.
-		if (inLocation.getFirstLedNumAlongPath() == 0)
-			return;
-		// if the location does not have controller associated, we would NPE below. Might as well check now.
-		LedController theLedController = inLocation.getEffectiveLedController();
-		if (theLedController == null)
-			return;
-
-		List<LedCmdGroup> ledCmdGroupList = new ArrayList<LedCmdGroup>();
-
-		// We expect to find an inventory item at the location.
+		// We expect to find an inventory item at the location. Be sure to get item and set posAlongPath always, before bailing out on the led command.
 		Item theItem = inLocation.getStoredItemFromMasterIdAndUom(inItemMasterId, inUomId);
 		if (theItem == null) {
 			LOGGER.error("did not find item in setOutboundWorkInstructionLedPatternFromInventoryItem");
 			return;
 		}
+
+		// Set the pos along path
+		Double posAlongPath = theItem.getPosAlongPath();
+		inWi.setPosAlongPath(posAlongPath);
+
+		// if the location does not have led numbers, we do not have tubes or lasers there. Do not proceed.
+		if (inLocation.getFirstLedNumAlongPath() == 0)
+			return;
+
+		// if the location does not have controller associated, we would NPE below. Might as well check now.
+		LedController theLedController = inLocation.getEffectiveLedController();
+		if (theLedController == null) {
+			LOGGER.warn("Cannot set LED pattern on new pick WorkInstruction because no aisle controller for the item location ");
+			return;
+		}
+
+		List<LedCmdGroup> ledCmdGroupList = new ArrayList<LedCmdGroup>();
+
 		// Use our utility function to get the leds for the item
 		LedRange theRange = theItem.getFirstLastLedsForItem();
 		short firstLedPosNum = theRange.getFirstLedToLight();
@@ -1677,6 +1465,7 @@ public class Facility extends SubLocationABC<Facility> {
 
 		ledCmdGroupList.add(ledCmdGroup);
 		inWi.setLedCmdStream(LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList));
+
 	}
 
 	// --------------------------------------------------------------------------
@@ -1689,9 +1478,14 @@ public class Facility extends SubLocationABC<Facility> {
 	 */
 	private void setCrossWorkInstructionLedPattern(final WorkInstruction inWi,
 		final String inItemMasterId,
-		final LocationABC inLocation,
+		final ILocation<?> inLocation,
 		final String inUom) {
 
+		if(inWi == null) {
+			LOGGER.error("Unexpected null WorkInstruction processing "+inItemMasterId);
+			return;
+		}
+		
 		// Warning: the ledCmdStream must be set to "[]" if we bail. If not, site controller will NPE. Hence the check at this late stage
 		// This does not bail intentionally. Perhap should if led = 0.
 		String existingCmdString = inWi.getLedCmdStream();
@@ -1807,7 +1601,7 @@ public class Facility extends SubLocationABC<Facility> {
 			ddcPos += distPerItem * item.getQuantity();
 			item.setPosAlongPath(ddcPos);
 			try {
-				item.DAO.store(item);
+				Item.DAO.store(item);
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}
@@ -1990,7 +1784,7 @@ public class Facility extends SubLocationABC<Facility> {
 				// debug aid. Does the CHE know its work instructions?
 				List<WorkInstruction> cheWiList = inChe.getCheWorkInstructions();
 				Integer cheCountGot = cheWiList.size();
-				if (cheCountGot != wiCount) {
+				if (!cheCountGot.equals(wiCount)) {
 					LOGGER.warn("setUpCheContainerFromString did not result in CHE getting all work instructions. Why?"); // Should this be an error? Maybe shorts do not go the CHE
 				}
 
@@ -2003,7 +1797,7 @@ public class Facility extends SubLocationABC<Facility> {
 					// debug aid. Does the CHE know its work instructions?
 					List<WorkInstruction> cheWiList2 = inChe.getCheWorkInstructions();
 					Integer cheCountGot2 = cheWiList2.size();
-					if (cheCountGot2 != wiCountGot) {
+					if (!cheCountGot2.equals(wiCountGot)) {
 						LOGGER.warn("setUpCheContainerFromString did not result in CHE getting all work instructions. Why?"); // Should this be an error? Maybe shorts do not go the CHE
 					}
 
@@ -2080,7 +1874,8 @@ public class Facility extends SubLocationABC<Facility> {
 	 * @param inWorkInstruction
 	 */
 	public final void sendWorkInstructionsToHost(final List<WorkInstruction> inWiList) {
-		IronMqService ironMqService = getIronMqService();
+
+		IronMqService ironMqService = getIronMqService(); // this should succeed, or catch its own throw and return null
 
 		if (ironMqService != null) {
 			ironMqService.sendWorkInstructionsToHost(inWiList);
@@ -2101,7 +1896,7 @@ public class Facility extends SubLocationABC<Facility> {
 		itemBean.setCmFromLeft(cmDistanceFromLeft);
 		itemBean.setQuantity(quantity);
 		itemBean.setUom(inUomId);
-		LocationABC location = (LocationABC) this.findSubLocationById(storedLocationId);
+		LocationABC<?> location = (LocationABC<?>) this.findSubLocationById(storedLocationId);
 		if (location == null && !Strings.isNullOrEmpty(storedLocationId)) {
 			Errors errors = new DefaultErrors(Item.class);
 			errors.rejectValue("storedLocation", ErrorCode.FIELD_NOT_FOUND, "storedLocation was not found");

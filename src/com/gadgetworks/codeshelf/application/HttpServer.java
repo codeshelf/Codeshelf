@@ -25,6 +25,7 @@ import com.google.inject.name.Named;
  * @author jeffw
  *
  */
+@SuppressWarnings("deprecation")
 public class HttpServer implements IHttpServer {
 
 	private static final Logger	LOGGER						= LoggerFactory.getLogger(HttpServer.class);
@@ -96,7 +97,7 @@ public class HttpServer implements IHttpServer {
 
 			SslContextFactory sslContextFactory = new SslContextFactory();
 			File file = new File(mKeystorePath);
-			URL url = file.toURL();
+			URL url = file.toURI().toURL();
 			Resource keyStoreResource = Resource.newResource(url);
 			sslContextFactory.setKeyStoreResource(keyStoreResource);
 			sslContextFactory.setKeyStorePassword(mKeystoreStorePassword);

@@ -32,6 +32,7 @@ import com.gadgetworks.flyweight.controller.NetworkDeviceStateEnum;
 public class AisleDeviceLogic extends DeviceLogicABC {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(AisleDeviceLogic.class);
+	private static int kNumChannelsOnAislController = 2; // We expect 4 ultimately. Just matching what was there.
 
 	@Accessors(prefix = "m")
 	protected class LedCmd {
@@ -72,26 +73,45 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 		//		sendLightCommand(CommandControlLed.CHANNEL1, position, ColorEnum.BLUE, CommandControlLed.EFFECT_SOLID);
 		updateLeds();
 	}
-
+	
 	// --------------------------------------------------------------------------
 	/**
-	 * Clear all of the active LED commands for the specified GUID.
-	 * @param inNetGuid
+	 * Clear all of the active LED commands on this aisle controller.
+	 * This does the send directly. Does not leave a clearing command in mDeviceLedPosMap. No need to follow with updateLeds();
 	 */
-	public final void clearLedCmdFor(final NetGuid inNetGuid) {
-		// Only send the command if the device is known acrtive.
+	public final void clearAllLedCmdsAndSend() {
+		// CD_0041 note: one of two new functions. Clears two channels. why 2?
+		// Note: as of V4, this is never called.
+		// We really should have a means to call it. The important part is mDeviceLedPosMap.clear(); If some CHE's led samples gets in there, and then the CHE never goes away,
+		// How can we get those lights off?
+		
+		// Only send the command if the device is known active.
 		if ((getDeviceStateEnum() != null) && (getDeviceStateEnum() == NetworkDeviceStateEnum.STARTED)) {
-			// First send a blanking command on each channel.
+			// Send a blanking command on each channel.
 			List<LedSample> sampleList = new ArrayList<LedSample>();
 			LedSample sample = new LedSample(CommandControlLed.POSITION_NONE, ColorEnum.BLACK);
 			sampleList.add(sample);
-			for (short channel = 1; channel <= 2; channel++) {
+			for (short channel = 1; channel <= kNumChannelsOnAislController; channel++) {
 				ICommand command = new CommandControlLed(NetEndpoint.PRIMARY_ENDPOINT, channel, EffectEnum.FLASH, sampleList);
 				mRadioController.sendCommand(command, getAddress(), true);
 			}
 		}
+		mDeviceLedPosMap.clear();
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Clear all of the active LED commands for the specified CHE GUID. on this aisle controller
+	 * @param inNetGuid
+	 */
+	public final void removeLedCmdsForCheAndSend(final NetGuid inNetGuid) {
+		// CD_0041 note: one of two new functions
+		
 		mDeviceLedPosMap.remove(inNetGuid);
-		//updateLeds();
+		// Only send the command if the device is known active.
+		if ((getDeviceStateEnum() != null) && (getDeviceStateEnum() == NetworkDeviceStateEnum.STARTED)) {
+			updateLeds();
+		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -106,6 +126,10 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 		final Short inChannel,
 		final LedSample inLedSample,
 		final EffectEnum inEffect) {
+		// CD_0041 note: perfect. Gets existing or makes command list. Adds new LedCmd to list. Note, does not check if same or similar command already in list.
+		// inNetGuid is the Guid of the CHE, not of this aisle controller.
+		// Called only in CheDeviceLogic ledControllerSetLed(), if getLedCmdFor returned null.  So, perhaps a getOrAdd would be better.
+		
 		List<LedCmd> ledCmds = mDeviceLedPosMap.get(inNetGuid);
 		if (ledCmds == null) {
 			ledCmds = new ArrayList<LedCmd>();
@@ -123,6 +147,8 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 	 * @return
 	 */
 	public final LedCmd getLedCmdFor(final NetGuid inNetGuid, final Short inChannel, final Short inPosition) {
+		// CD_0041 note: Called only in CheDeviceLogic ledControllerSetLed()
+		
 		LedCmd result = null;
 
 		List<LedCmd> ledCmds = mDeviceLedPosMap.get(inNetGuid);
@@ -182,6 +208,8 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 	 * support any other effects, so we're skipping it for now.
 	 */
 	public final void updateLeds() {
+		// CD_0041 note: Perfect for initial scope. DEV-411 will have us send out separate CommandControlLed if the byte stream of samples > 125.
+		// Looks like it does not really work yet for multiple channels. Does this need to figure out each channel, then send separate commands? Probably.
 
 		Short channel = 1;
 

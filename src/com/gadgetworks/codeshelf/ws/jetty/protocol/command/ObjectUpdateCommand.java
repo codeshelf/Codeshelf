@@ -71,6 +71,7 @@ public class ObjectUpdateCommand extends CommandABC {
 			Class<?> classObject = Class.forName(className);
 			if (IDomainObject.class.isAssignableFrom(classObject)) {
 				// First locate an instance of the parent class.
+				@SuppressWarnings("unchecked")
 				ITypedDao<IDomainObject> dao = daoProvider.getDaoInstance((Class<IDomainObject>) classObject);
 				IDomainObject updateObject = dao.findByPersistentId(objectId);
 

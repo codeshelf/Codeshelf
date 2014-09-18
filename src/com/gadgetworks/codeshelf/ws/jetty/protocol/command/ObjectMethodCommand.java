@@ -15,7 +15,6 @@ import com.gadgetworks.codeshelf.validation.DefaultErrors;
 import com.gadgetworks.codeshelf.validation.ErrorCode;
 import com.gadgetworks.codeshelf.validation.Errors;
 import com.gadgetworks.codeshelf.validation.InputValidationException;
-import com.gadgetworks.codeshelf.ws.command.req.ArgsClass;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectMethodRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectMethodResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
@@ -65,6 +64,7 @@ public class ObjectMethodCommand extends CommandABC {
 			if (IDomainObject.class.isAssignableFrom(classObject)) {
 
 				// First locate an instance of the parent class.
+				@SuppressWarnings("unchecked")
 				ITypedDao<IDomainObject> dao = daoProvider.getDaoInstance((Class<IDomainObject>) classObject);
 				IDomainObject targetObject = dao.findByPersistentId(objectId);
 
@@ -98,11 +98,19 @@ public class ObjectMethodCommand extends CommandABC {
 						} catch (InvocationTargetException e ) {
 							Throwable t = e.getTargetException();
 							if (t instanceof InputValidationException) {
+								LOGGER.error("Failed to invoke "+className+"."+method + ", with arguments: " + cookedArguments, t);
 								errors.addAllErrors(((InputValidationException)t).getErrors());
 								response.setStatus(ResponseStatus.Fail);
 								response.setErrors(errors);
 								return response;
 								
+							}
+							else{
+								LOGGER.error("Failed to invoke "+className+"."+method + ", with arguments: " + cookedArguments,e);
+								errors.reject(ErrorCode.GENERAL, e.toString());
+								response.setStatus(ResponseStatus.Fail);
+								response.setErrors(errors);
+								return response;						
 							}
 						} catch (Exception e) {
 							LOGGER.error("Failed to invoke "+className+"."+method + ", with arguments: " + cookedArguments,e);

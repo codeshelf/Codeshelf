@@ -14,6 +14,8 @@ import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.flyweight.bitfields.BitFieldInputStream;
 import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
+import com.gadgetworks.flyweight.command.CommandGroupEnum;
+import com.gadgetworks.flyweight.command.ICommand;
 import com.gadgetworks.flyweight.command.IPacket;
 import com.gadgetworks.flyweight.command.NetworkId;
 import com.gadgetworks.flyweight.command.Packet;
@@ -195,7 +197,14 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 			}
 			if ((LOGGER.isDebugEnabled() && (result != null))) {
 				try {
-					LOGGER.info("Receive packet: " + result.toString());
+					boolean isMerelyNetManagementTraffic = false;
+					ICommand aCommand = packet.getCommand();
+					if (aCommand != null && aCommand.getCommandTypeEnum() == CommandGroupEnum.NETMGMT)
+						isMerelyNetManagementTraffic = true;
+					if (isMerelyNetManagementTraffic)
+						LOGGER.debug("Receive packet: " + result.toString());
+					else
+						LOGGER.info("Receive packet: " + result.toString());
 					hexDumpArray(nextFrameArray);
 				} catch (Exception e) {
 					LOGGER.error("", e);
@@ -420,8 +429,14 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 		clrRTS();
 		writeBytes(buffer, bufPos);
 		setRTS();
-
-		LOGGER.info("Send packet:    " + inPacket.toString());
+		
+		boolean isMerelyNetManagementTraffic = false;
+		ICommand aCommand = inPacket.getCommand();
+		isMerelyNetManagementTraffic = aCommand != null && aCommand.getCommandTypeEnum() == CommandGroupEnum.NETMGMT;
+		if (isMerelyNetManagementTraffic)
+			LOGGER.debug("Send packet:    " + inPacket.toString());
+		else
+			LOGGER.info("Send packet:    " + inPacket.toString());
 		if (LOGGER.isDebugEnabled()) {
 			try {
 				hexDumpArray(packetBytes);

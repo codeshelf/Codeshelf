@@ -5,9 +5,10 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
+import org.junit.After;
 import org.junit.Before;
 
-import com.gadgetworks.codeshelf.application.Util;
+import com.gadgetworks.codeshelf.application.Configuration;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Aisle.AisleDao;
 import com.gadgetworks.codeshelf.model.domain.Bay;
@@ -69,9 +70,7 @@ import com.gadgetworks.codeshelf.platform.services.PersistencyService;
 public abstract class DAOTestABC {
 	
 	static {
-		System.setProperty("config.properties", "./conf/test.config.properties");
-		Util.initLogging();
-		Util.loadConfig();
+		Configuration.loadConfig("test");
 	}
 	
 	protected OrganizationDao		mOrganizationDao;
@@ -105,6 +104,10 @@ public abstract class DAOTestABC {
 
 	public DAOTestABC() {
 		super();
+		init();
+	}
+	
+	public void init() {
 	}
 
 	@Before
@@ -203,6 +206,14 @@ public abstract class DAOTestABC {
 		doBefore();
 	}
 	
-	protected void doBefore() {
+	public void doBefore() {
+	}
+	
+	@After
+	public void tearDown() {
+		doAfter();
+	}
+	
+	public void doAfter() {
 	}
 }

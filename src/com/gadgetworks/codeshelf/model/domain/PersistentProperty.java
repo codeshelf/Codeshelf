@@ -59,6 +59,7 @@ public class PersistentProperty extends DomainObjectTreeABC<Organization> {
 	public static final String	GENERAL_INTF_LOG_LEVEL	= "GENLLOGL";
 	public static final String	GATEWAY_INTF_LOG_LEVEL	= "GATELOGL";
 
+	@SuppressWarnings("unused")
 	private static final long	serialVersionUID		= -7735810092352246641L;
 
 	// The owning organization.
@@ -82,6 +83,7 @@ public class PersistentProperty extends DomainObjectTreeABC<Organization> {
 		currentValueStr = "";
 	}
 
+	@SuppressWarnings("unchecked")
 	public final ITypedDao<PersistentProperty> getDao() {
 		return DAO;
 	}

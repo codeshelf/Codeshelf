@@ -32,6 +32,12 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.model.EdiProviderEnum;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
+import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
+import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
+import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.codeshelf.platform.services.PersistencyService;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
@@ -52,8 +58,25 @@ import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implements IEdiService {
 
+	@SuppressWarnings("unused")
 	private static final Logger			LOGGER				= LoggerFactory.getLogger(EdiServiceABC.class);
 
+	@Inject
+	public static ITypedDao<EdiServiceABC>	DAO;
+
+	@Singleton
+	public static class EdiServiceABCDao extends GenericDaoABC<EdiServiceABC> implements ITypedDao<EdiServiceABC> {
+		@Inject
+		public EdiServiceABCDao(PersistencyService persistencyService) {
+			super(persistencyService);
+		}
+
+		public final Class<EdiServiceABC> getDaoClass() {
+			return EdiServiceABC.class;
+		}
+	}
+
+	
 	// The owning Facility.
 	@ManyToOne(optional = false)
 	private Facility					parent;
@@ -99,19 +122,6 @@ public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implem
 
 	}
 
-	//	public final Facility getParentFacility() {
-	//		IDomainObject theParent = getParent();
-	//		if (theParent instanceof Facility) {
-	//			return (Facility) theParent;
-	//		} else {
-	//			return null;
-	//		}
-	//	}
-	//
-	//	public final void setParentFacility(final Facility inFacility) {
-	//		setParent(inFacility);
-	//	}
-
 	public final List<? extends IDomainObject> getChildren() {
 		return null; //getEdiDocuments();
 	}
@@ -120,6 +130,9 @@ public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implem
 		return "EDI";
 	}
 
+	@JsonProperty
+	public abstract boolean getHasCredentials();
+	
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void addEdiDocumentLocator(EdiDocumentLocator inEdiDocumentLocator) {
 		documentLocators.add(inEdiDocumentLocator);

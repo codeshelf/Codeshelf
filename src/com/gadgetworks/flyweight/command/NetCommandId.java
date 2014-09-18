@@ -14,6 +14,7 @@ import com.gadgetworks.flyweight.bitfields.NBitInteger;
  *  @param inNewValue
  */
 
+@SuppressWarnings("serial")
 public class NetCommandId extends NBitInteger {
 
 	public static final byte	COMMANDID_BITS	= 8;

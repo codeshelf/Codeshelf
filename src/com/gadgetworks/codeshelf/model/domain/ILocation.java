@@ -155,6 +155,7 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 	 * Get all of the child locations for this location.
 	 * @return
 	 */
+	@SuppressWarnings("rawtypes")
 	List<ISubLocation> getChildren();
 
 	// --------------------------------------------------------------------------
@@ -169,7 +170,7 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 	 * @param inClassWanted
 	 * @return
 	 */
-	<T extends ISubLocation> List<T> getChildrenAtLevel(Class<? extends ISubLocation> inClassWanted);
+	<T extends ISubLocation<?>> List<T> getChildrenAtLevel(Class<? extends ISubLocation<?>> inClassWanted);
 
 	// --------------------------------------------------------------------------
 	/**
@@ -183,7 +184,7 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 	 * @param inClassWanted
 	 * @return
 	 */
-	<T extends ILocation> T getParentAtLevel(Class<? extends ILocation> inClassWanted);
+	<T extends ILocation<?>> T getParentAtLevel(Class<? extends ILocation<?>> inClassWanted);
 
 	/**
 	 * Get the location id up to but not including the facility
@@ -199,7 +200,7 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 	 * @param inClassWanted
 	 * @return
 	 */
-	String getLocationIdToParentLevel(Class<? extends ILocation> inClassWanted);
+	String getLocationIdToParentLevel(Class<? extends ILocation<?>> inClassWanted);
 
 	void setLocationId(String inLocationId);
 
@@ -209,7 +210,7 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 	 * @param inLocationId
 	 * @return
 	 */
-	ISubLocation findLocationById(String inLocationId);
+	ISubLocation<?> findLocationById(String inLocationId);
 
 	void removeLocation(String inLocationId);
 
@@ -248,6 +249,8 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 	 */
 	Short getEffectiveLedChannel();
 	
-	
-
+	String getPrimaryAliasId();
+	Boolean isLeftSideTowardsAnchor();
+	Boolean isLowerLedNearAnchor(); 
+	Boolean isPathIncreasingFromAnchor();
 }

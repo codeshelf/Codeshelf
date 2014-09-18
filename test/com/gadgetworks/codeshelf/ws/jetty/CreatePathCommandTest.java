@@ -12,6 +12,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import com.fasterxml.jackson.core.JsonGenerationException;
@@ -30,13 +31,15 @@ import com.gadgetworks.codeshelf.model.domain.PathSegment.PathSegmentDao;
 import com.gadgetworks.codeshelf.model.domain.WorkArea;
 import com.gadgetworks.codeshelf.model.domain.WorkArea.WorkAreaDao;
 import com.gadgetworks.codeshelf.platform.services.PersistencyService;
-import com.gadgetworks.codeshelf.ws.command.req.ArgsClass;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ArgsClass;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.CreatePathRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectMethodRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.CreatePathResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectMethodResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
+import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
 import com.gadgetworks.codeshelf.ws.jetty.server.ServerMessageProcessor;
+import com.natpryce.makeiteasy.Maker;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CreatePathCommandTest extends DAOTestABC {
@@ -62,7 +65,11 @@ public class CreatePathCommandTest extends DAOTestABC {
 		String testPathDomainId = "DOMID-2";
 		
 		DAOMaker maker = new DAOMaker(persistencyService);
-		Facility testFacility = make(a(maker.TestFacility));
+		
+		@SuppressWarnings("unchecked")
+		Maker<Facility> fm = a(maker.TestFacility);
+		Facility testFacility = make(fm);
+		
 		Path.DAO = new PathDao(persistencyService);
 		PathSegment.DAO = new PathSegmentDao(persistencyService);
 		WorkArea.DAO = new WorkAreaDao(persistencyService);
@@ -84,8 +91,8 @@ public class CreatePathCommandTest extends DAOTestABC {
 		jsonString = mapper.writeValueAsString(request);
 		System.out.println(jsonString);
 		
-		MockSession session = new MockSession();
-		session.setId("test-session");
+		CsSession session = Mockito.mock(CsSession.class);
+		session.setSessionId("test-session");
 		
 		ServerMessageProcessor processor = new ServerMessageProcessor(mockDaoProvider);
 		ResponseABC response = processor.handleRequest(session, request);
@@ -123,10 +130,12 @@ public class CreatePathCommandTest extends DAOTestABC {
 		request.setMethodName("createPath");
 		request.setMethodArgs(args);
 		
-		MockSession session = new MockSession();
-		session.setId("test-session");
+		CsSession session = Mockito.mock(CsSession.class);
+		session.setSessionId("test-session");
+
 		
 		ServerMessageProcessor processor = new ServerMessageProcessor(mockDaoProvider);
+
 		ResponseABC response = processor.handleRequest(session, request);
 
 		Assert.assertTrue(response instanceof ObjectMethodResponse);

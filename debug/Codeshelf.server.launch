@@ -21,6 +21,6 @@
 <booleanAttribute key="org.eclipse.jdt.launching.DEFAULT_CLASSPATH" value="false"/>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="com.gadgetworks.codeshelf.application.ServerMain"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="CodeShelf"/>
-<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Xms50M -Xmx512M  -Dconfig.properties=./conf/server.config.properties -Dcs.logfile.name=codeshelf.server.log -Dconsole.appender=org.apache.log4j.ConsoleAppender"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Xms50M -Xmx512M"/>
 <stringAttribute key="yk-options" value="&#10;alloc-size-limit-enabled=true&#10;alloc-record-each=1&#10;alloc-size-limit=1048576&#10;alloc-sampled=false&#10;alloc-record-each-enabled=true&#10;additional-options2=onexit\=snapshot&#10;startup=2&#10;"/>
 </launchConfiguration>

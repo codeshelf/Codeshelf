@@ -8,7 +8,6 @@ package com.gadgetworks.codeshelf.model.dao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.application.Util;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
@@ -18,18 +17,18 @@ import com.google.inject.name.Named;
  */
 public final class PostgresSchemaManager extends SchemaManagerABC {
 
+	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(PostgresSchemaManager.class);
 
 	@Inject
-	public PostgresSchemaManager(final Util inUtil,
+	public PostgresSchemaManager(
 		@Named(DATABASE_USERID_PROPERTY) final String inDbUserId,
 		@Named(DATABASE_PASSWORD_PROPERTY) final String inDbPassword,
 		@Named(DATABASE_NAME_PROPERTY) final String inDbName,
 		@Named(DATABASE_SCHEMANAME_PROPERTY) final String inDbSchemaName,
 		@Named(DATABASE_ADDRESS_PROPERTY) final String inDbAddress,
-		@Named(DATABASE_PORTNUM_PROPERTY) final String inDbPortnum,
-		@Named(DATABASE_SSL_PROPERTY) final String inDbSsl) {
-		super(inUtil, inDbUserId, inDbPassword, inDbName, inDbSchemaName, inDbAddress, inDbPortnum, inDbSsl);
+		@Named(DATABASE_PORTNUM_PROPERTY) final String inDbPortnum) {
+		super(inDbUserId, inDbPassword, inDbName, inDbSchemaName, inDbAddress, inDbPortnum);
 	}
 
 	public String getDriverName() {
@@ -65,13 +64,8 @@ public final class PostgresSchemaManager extends SchemaManagerABC {
 	 * @see com.gadgetworks.codeshelf.model.dao.ISchemaManager#getApplicationDatabaseURL()
 	 */
 	public String getApplicationDatabaseURL() {
-		if ((getDbSsl() != null && (getDbSsl().equalsIgnoreCase("true")))) {
-			return "jdbc:postgresql://" + getDbAddress() + ":" + getDbPortnum() + "/" + getDbName() + "?user=" + getDbUserId()
-					+ "&password=" + getDbPassword() + "&ssl=true";
-		} else {
-			return "jdbc:postgresql://" + getDbAddress() + ":" + getDbPortnum() + "/" + getDbName() + "?user=" + getDbUserId()
-					+ "&password=" + getDbPassword();
-		}
+		return "jdbc:postgresql://" + getDbAddress() + ":" + getDbPortnum() + "/" + getDbName() + "?user=" + getDbUserId()
+				+ "&password=" + getDbPassword();
 	}
 
 	// --------------------------------------------------------------------------

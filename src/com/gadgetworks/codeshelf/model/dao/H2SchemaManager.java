@@ -12,7 +12,7 @@ import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.application.Util;
+import com.gadgetworks.codeshelf.application.Configuration;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
@@ -23,26 +23,26 @@ import com.google.inject.name.Named;
 public final class H2SchemaManager extends SchemaManagerABC {
 
 	private static final String	DB_INIT_URL	= "jdbc:h2:mem:database;DB_CLOSE_DELAY=-1";
+	@SuppressWarnings("unused")
 	private static final String	DB_URL		= "jdbc:h2:mem:database;SCHEMA=CODESHELF;DB_CLOSE_DELAY=-1";
 
 	private static final Logger	LOGGER		= LoggerFactory.getLogger(H2SchemaManager.class);
 
 	@Inject
-	public H2SchemaManager(final Util inUtil,
+	public H2SchemaManager(
 		@Named(DATABASE_USERID_PROPERTY) final String inDbUserId,
 		@Named(DATABASE_PASSWORD_PROPERTY) final String inDbPassword,
 		@Named(DATABASE_NAME_PROPERTY) final String inDbName,
 		@Named(DATABASE_SCHEMANAME_PROPERTY) final String inDbSchemaName,
 		@Named(DATABASE_ADDRESS_PROPERTY) final String inDbAddress,
-		@Named(DATABASE_PORTNUM_PROPERTY) final String inDbPortnum,
-		@Named(DATABASE_SSL_PROPERTY) final String inDbSsl) {
-		super(inUtil, inDbUserId, inDbPassword, inDbName, inDbSchemaName, inDbAddress, inDbPortnum, inDbSsl);
+		@Named(DATABASE_PORTNUM_PROPERTY) final String inDbPortnum) {
+		super(inDbUserId, inDbPassword, inDbName, inDbSchemaName, inDbAddress, inDbPortnum);
 
 		// The H2 database has a serious problem with deleting temp files for LOBs.  We have to do it ourselves, or it will grow without bound.
 		String[] extensions = { "temp.lob.db" };
 		boolean recursive = true;
 
-		File dbDir = new File(inUtil.getApplicationDataDirPath());
+		File dbDir = new File(Configuration.getApplicationDataDirPath());
 		@SuppressWarnings("unchecked")
 		Collection<File> files = FileUtils.listFiles(dbDir, extensions, recursive);
 		for (File file : files) {
@@ -94,7 +94,7 @@ public final class H2SchemaManager extends SchemaManagerABC {
 	 */
 	protected boolean doUpgradeSchema() {
 		// First get rid of the eBean dictionary file, so that the internal schema dictionary gets rebuilt.
-		File dictFile = new File(getUtil().getApplicationLogDirPath() + System.getProperty("file.separator") + ".ebean.h2.dictionary");
+		File dictFile = new File(Configuration.getApplicationLogDirPath() + System.getProperty("file.separator") + ".ebean.h2.dictionary");
 		if (dictFile.exists()) {
 			try {
 				dictFile.delete();

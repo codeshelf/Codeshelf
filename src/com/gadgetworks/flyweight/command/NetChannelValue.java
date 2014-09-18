@@ -14,6 +14,7 @@ import com.gadgetworks.flyweight.bitfields.NBitInteger;
  *  @param inNewValue
  */
 
+@SuppressWarnings("serial")
 public class NetChannelValue extends NBitInteger {
 
 	public static final byte	CHANNEL_ENERGY_BITS	= 8;

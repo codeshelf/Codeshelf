@@ -83,6 +83,8 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 		public final Class<WorkInstruction> getDaoClass() {
 			return WorkInstruction.class;
 		}
+		
+		
 	}
 
 	private static final Logger			LOGGER	= LoggerFactory.getLogger(WorkInstruction.class);
@@ -172,6 +174,7 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 	private Integer						actualQuantity;
 
 	// From location.
+	@SuppressWarnings("rawtypes")
 	@ManyToOne(optional = false)
 	private LocationABC					location;
 
@@ -246,6 +249,7 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 
 	}
 
+	@SuppressWarnings("unchecked")
 	public final ITypedDao<WorkInstruction> getDao() {
 		return DAO;
 	}
@@ -283,7 +287,7 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 	}
 
 	// Denormalized for serialized WIs at the site controller.
-	public final void setLocation(LocationABC inLocation) {
+	public final void setLocation(ILocation<?> inLocation) {
 		location = (SubLocationABC<?>) inLocation;
 		// This string is user-readable format set by application logic.
 		// locationId = inLocation.getLocationId();
@@ -305,6 +309,7 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 			result = true;
 		} else {
 			// The check location is parent of the WI location, so it contains it.
+			@SuppressWarnings("unchecked")
 			ILocation<?> parentLoc = location.getParentAtLevel(inCheckLocation.getClass());
 			if ((parentLoc != null) && (parentLoc.equals(inCheckLocation))) {
 				result = true;
@@ -365,13 +370,21 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 	 */
 	public final String getWiPosAlongPath() {
 		// This needs work for Accu non-slotted inventory.
+		// 
+		Double wiPosValue = getPosAlongPath();
+		if (wiPosValue == null || wiPosValue == 0.0)
+			return ""; // 0.0 happens for short plans to facility
+		else
+			return StringUIConverter.doubleToTwoDecimalsString(wiPosValue);
 
+		/* old code
 		ILocation<?> theLoc = this.getLocation();
 		if (theLoc != null)
 			return StringUIConverter.doubleToTwoDecimalsString(theLoc.getPosAlongPath());
 		else {
 			return "";
 		}
+		*/
 	}
 
 	// --------------------------------------------------------------------------
@@ -386,6 +399,21 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 			return "";
 		else {
 			return TimeFormat.getUITime(completeTime);
+		}
+	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * For a UI meta field
+	 * @return
+	 */
+	public final String getAssignTimeForUi() {
+
+		Timestamp assignTime = this.getAssigned();
+		if (assignTime == null)
+			return "";
+		else {
+			return TimeFormat.getUITime(assignTime);
 		}
 	}
 
@@ -451,7 +479,7 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 		if (theWiLocation == null)
 			return returnStr;
 		
-		LocationABC theLocation = (LocationABC) theWiLocation;
+		LocationABC<?> theLocation = (LocationABC<?>) theWiLocation;
 		if (theLocation.getClass() == Facility.class)
 			return returnStr;
 		

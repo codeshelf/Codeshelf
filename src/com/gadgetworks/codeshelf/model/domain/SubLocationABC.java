@@ -5,6 +5,7 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
+import java.util.List;
 import java.util.UUID;
 
 import javax.persistence.Column;
@@ -37,11 +38,13 @@ import com.google.inject.Singleton;
 //@CacheStrategy(useBeanCache = false)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 //@ToString(doNotUseGetters = true)
-public abstract class SubLocationABC<P extends IDomainObject & ISubLocation> extends LocationABC<P> implements ISubLocation<P> {
+public abstract class SubLocationABC<P extends IDomainObject & ISubLocation<?>> extends LocationABC<P> implements ISubLocation<P> {
 
+	@SuppressWarnings("rawtypes")
 	@Inject
 	public static ITypedDao<SubLocationABC>	DAO;
 
+	@SuppressWarnings("rawtypes")
 	@Singleton
 	public static class SubLocationDao extends GenericDaoABC<SubLocationABC> implements ITypedDao<SubLocationABC> {
 		@Inject
@@ -57,6 +60,7 @@ public abstract class SubLocationABC<P extends IDomainObject & ISubLocation> ext
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(SubLocationABC.class);
 
 	// The owning location.
+	@SuppressWarnings("rawtypes")
 	@ManyToOne(optional = true)
 	private SubLocationABC		parent;
 
@@ -107,6 +111,7 @@ public abstract class SubLocationABC<P extends IDomainObject & ISubLocation> ext
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.SubLocationABC#getParent()
 	 */
+	@SuppressWarnings("unchecked")
 	@Override
 	public final P getParent() {
 		// There's some weirdness with Ebean and navigating a recursive hierarchy. (You can't go down and then back up to a different class.)
@@ -125,9 +130,14 @@ public abstract class SubLocationABC<P extends IDomainObject & ISubLocation> ext
 	 */
 	@Override
 	public final void setParent(P inParent) {
-		parent = (SubLocationABC) inParent;
+		parent = (SubLocationABC<?>) inParent;
 	}
-
+	
+	public Point getAbsolutePickFaceEndPoint() {
+		Point base = getAbsoluteAnchorPoint();
+		return base.add(getPickFaceEndPosX(), getPickFaceEndPosY(), getPickFaceEndPosZ());
+	}
+	
 	// --------------------------------------------------------------------------
 	/**
 	 * @return
@@ -147,6 +157,8 @@ public abstract class SubLocationABC<P extends IDomainObject & ISubLocation> ext
 		pickFaceEndPosZ = inPickFaceEndPoint.getZ();
 	}
 
+	
+	
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#computePosAlongPath(com.gadgetworks.codeshelf.model.domain.PathSegment)
@@ -157,65 +169,14 @@ public abstract class SubLocationABC<P extends IDomainObject & ISubLocation> ext
 			return;
 		}
 		
-		// A fundamental question is whether the bays and slots in an aisle increase or decrease as you move along the path in the forward direction.
-		
-		// By our new model, B1S1 is always by anchor, so all aisles increase X or Y
-		Boolean forwardIncrease = true;
-		
-		// For the logic below, we want the forward increasing logic if path direction is forward and forwardIncrease, or if both not.
-		Boolean wantForwardCalculation = forwardIncrease == inPathSegment.getParent().getTravelDirEnum().equals(TravelDirectionEnum.FORWARD);
-		// wrong; // does the local path segment increase in the direction the aisle is increasing?
-
+		// Complete revision at V4
 		Point locationAnchorPoint = getAbsoluteAnchorPoint();
-		Point pickFaceEndPoint = getAbsoluteAnchorPoint(); // JR this looks wrong. Should want this.getAbsolutePickEndPoint();
-		// Point pickFaceEndPoint = parent.getAbsoluteAnchorPoint(); // JR this looks wrong. Should want this.getAbsolutePickEndPoint();
-
-		pickFaceEndPoint.translateX(getPickFaceEndPosX());
-		pickFaceEndPoint.translateY(getPickFaceEndPosY());
-		pickFaceEndPoint.translateZ(getPickFaceEndPosZ());
-
-		Double locAnchorPathPosition = inPathSegment.getStartPosAlongPath()
-				+ inPathSegment.computeDistanceOfPointFromLine(inPathSegment.getStartPoint(),
-					inPathSegment.getEndPoint(),
-					locationAnchorPoint);
-
-		Double pickFacePathPosition = inPathSegment.getStartPosAlongPath()
-				+ inPathSegment.computeDistanceOfPointFromLine(inPathSegment.getStartPoint(),
-					inPathSegment.getEndPoint(),
-					pickFaceEndPoint);
-
-		Double newPosition = 0.0;
+		Point pickFaceEndPoint = getAbsolutePickFaceEndPoint();
+		// The location's posAlongPath is the lower of the anchor or pickFaceEnd
+		Double locAnchorPathPosition = inPathSegment.computeNormalizedPositionAlongPath(locationAnchorPoint);
+		Double pickFaceEndPathPosition = inPathSegment.computeNormalizedPositionAlongPath(pickFaceEndPoint);
+		Double newPosition = Math.min(locAnchorPathPosition, pickFaceEndPathPosition);
 		Double oldPosition = this.getPosAlongPath();
-		
-		// if (inPathSegment.getParent().getTravelDirEnum().equals(TravelDirectionEnum.FORWARD)) {
-		if (wantForwardCalculation) {
-			// In the forward direction take the "lowest" path pos value.
-			Double position = Math.min(locAnchorPathPosition, pickFacePathPosition);
-			// It can't be "lower" than its parent.
-			
-			if ((parent.getPosAlongPath() == null) || (position >= parent.getPosAlongPath())) {
-				newPosition = position;
-			} else {
-				// I believe if we hit this, we found a model or algorithm error
-				Double parentPos = parent.getPosAlongPath(); 
-				newPosition = parentPos;
-				// newPosition = position; // JR test
-			}
-		} else {
-			// In the reverse direction take the "highest" path pos value.
-			Double position = Math.max(locAnchorPathPosition, pickFacePathPosition);
-			// I t can't be "higher" than its parent.
-			if ((parent.getPosAlongPath() == null) || (position <= parent.getPosAlongPath())) {
-				// setPosAlongPath(position);
-				newPosition = position;
-			} else {
-				// I believe if we hit this, we found a model or algorithm error
-				Double parentPos = parent.getPosAlongPath();
-				newPosition = parentPos;
-				// newPosition = position; // JR test
-			}
-		}
-		
 
 		// Doing this to avoid the DAO needing to check the change, which also generates a bunch of logging.
 		if (!newPosition.equals(oldPosition)) {
@@ -230,11 +191,14 @@ public abstract class SubLocationABC<P extends IDomainObject & ISubLocation> ext
 		}
 
 		// Also force a recompute for all of the child locations.
-		for (ILocation<P> location : getChildren()) {
+		@SuppressWarnings("rawtypes")
+		List<ISubLocation> locations = getChildren();
+		for (@SuppressWarnings("rawtypes") ISubLocation location : locations) {
 			location.computePosAlongPath(inPathSegment);
 		}
 	}
-	
+
+
 	protected final void doSetControllerChannel(String inControllerPersistentIDStr, String inChannelStr) {
 		// this is for callMethod from the UI
 		// We are setting the controller and channel for the tier. Depending on the inTierStr parameter, may set also for

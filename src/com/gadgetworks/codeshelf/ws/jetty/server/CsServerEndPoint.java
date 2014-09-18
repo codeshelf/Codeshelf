@@ -44,6 +44,9 @@ public class CsServerEndPoint {
 	public CsServerEndPoint() {	
 		sessionManager = SessionManager.getInstance();
 		messageProcessor = MessageProcessorFactory.getInstance();
+		if (messageProcessor==null) {
+			LOGGER.error("Unable to get Web Socket message processor from factory");
+		}
 	}
 	
 	@OnOpen
@@ -53,7 +56,7 @@ public class CsServerEndPoint {
 		sessionManager.sessionStarted(session);
     }
 
-    @OnMessage
+    @OnMessage(maxMessageSize=JsonEncoder.WEBSOCKET_MAX_MESSAGE_SIZE)
     public void onMessage(Session session, MessageABC message) throws IOException, EncodeException {
     	messageCounter.inc();
     	CsSession csSession = sessionManager.getSession(session);
@@ -61,14 +64,14 @@ public class CsServerEndPoint {
 		sessionManager.messageReceived(session);
     	if (message instanceof ResponseABC) {
     		ResponseABC response = (ResponseABC) message;
-            LOGGER.debug("Received response on session "+session.getId()+": " + response);
-            messageProcessor.handleResponse(session, response);
+            LOGGER.debug("Received response on session "+csSession+": " + response);
+            messageProcessor.handleResponse(csSession, response);
     	}
     	else if (message instanceof RequestABC) {
     		RequestABC request = (RequestABC) message;
-            LOGGER.debug("Received request on session "+session.getId()+": " + request);
+            LOGGER.debug("Received request on session "+csSession+": " + request);
             // pass request to processor to execute command
-            ResponseABC response = messageProcessor.handleRequest(session,request);
+            ResponseABC response = messageProcessor.handleRequest(csSession, request);
             if (response!=null) {
             	// send response to client
             	LOGGER.debug("Sending response "+response+" for request "+request);

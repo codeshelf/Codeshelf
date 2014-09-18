@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
 
 //@IndexSubclasses
@@ -19,4 +20,10 @@ public abstract class ResponseABC extends MessageABC {
 	
 	@Getter @Setter
 	String requestId;
+	
+	@JsonIgnore
+	public boolean isSuccess() {
+		return status.equals(ResponseStatus.Success);
+	}
+
 }

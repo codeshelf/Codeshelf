@@ -46,42 +46,42 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	// This code runs on the site controller, not the CHE.
 	// The goal is to convert data and instructions to something that the CHE controller can consume and act on with minimal logic.
 
-	private static final Logger		LOGGER					= LoggerFactory.getLogger(CheDeviceLogic.class);
+	private static final Logger		LOGGER									= LoggerFactory.getLogger(CheDeviceLogic.class);
 
-	private static final String		COMMAND_PREFIX			= "X%";
-	private static final String		USER_PREFIX				= "U%";
-	private static final String		CONTAINER_PREFIX		= "C%";
-	private static final String		LOCATION_PREFIX			= "L%";
-	private static final String		ITEMID_PREFIX			= "I%";
-	private static final String		POSITION_PREFIX			= "P%";
+	private static final String		COMMAND_PREFIX							= "X%";
+	private static final String		USER_PREFIX								= "U%";
+	private static final String		CONTAINER_PREFIX						= "C%";
+	private static final String		LOCATION_PREFIX							= "L%";
+	private static final String		ITEMID_PREFIX							= "I%";
+	private static final String		POSITION_PREFIX							= "P%";
 
 	// These are the message strings we send to the remote CHE.
 	// Currently, these cannot be longer than 10 characters.
-	private static final String		EMPTY_MSG				= "                    ";
-	private static final String		INVALID_SCAN_MSG		= "INVALID             ";
-	private static final String		SCAN_USERID_MSG			= "SCAN BADGE          ";							//		 new String(new byte[] { 0x7c, (byte) 0x05 });
-	private static final String		SCAN_LOCATION_MSG		= "SCAN LOCATION       ";
-	private static final String		SCAN_CONTAINER_MSG		= "SCAN CONTAINER      ";
-	private static final String		OR_START_WORK_MSG		= "OR START WORK       ";
-	private static final String		SELECT_POSITION_MSG		= "SELECT POSITION     ";
-	private static final String		SHORT_PICK_CONFIRM_MSG	= "CONFIRM SHORT       ";
-	private static final String		PICK_COMPLETE_MSG		= "ALL WORK COMPLETE   ";
-	private static final String		YES_NO_MSG				= "SCAN YES OR NO      ";
-	private static final String		NO_CONTAINERS_SETUP_MSG	= "NO SETUP CONTAINERS ";
-	private static final String		POSITION_IN_USE_MSG		= "POSITION IN USE     ";
-	private static final String		FINISH_SETUP_MSG		= "PLS SETUP CONTAINERS";
-	private static final String		COMPUTE_WORK_MSG		= "COMPUTING WORK      ";
-	private static final String		GET_WORK_MSG			= "GETTING WORK        ";
+	private static final String		EMPTY_MSG								= "                    ";
+	private static final String		INVALID_SCAN_MSG						= "INVALID             ";
+	private static final String		SCAN_USERID_MSG							= "SCAN BADGE          ";							//		 new String(new byte[] { 0x7c, (byte) 0x05 });
+	private static final String		SCAN_LOCATION_MSG						= "SCAN LOCATION       ";
+	private static final String		SCAN_CONTAINER_MSG						= "SCAN CONTAINER      ";
+	private static final String		OR_START_WORK_MSG						= "OR START WORK       ";
+	private static final String		SELECT_POSITION_MSG						= "SELECT POSITION     ";
+	private static final String		SHORT_PICK_CONFIRM_MSG					= "CONFIRM SHORT       ";
+	private static final String		PICK_COMPLETE_MSG						= "ALL WORK COMPLETE   ";
+	private static final String		YES_NO_MSG								= "SCAN YES OR NO      ";
+	private static final String		NO_CONTAINERS_SETUP_MSG					= "NO SETUP CONTAINERS ";
+	private static final String		POSITION_IN_USE_MSG						= "POSITION IN USE     ";
+	private static final String		FINISH_SETUP_MSG						= "PLS SETUP CONTAINERS";
+	private static final String		COMPUTE_WORK_MSG						= "COMPUTING WORK      ";
+	private static final String		GET_WORK_MSG							= "GETTING WORK        ";
 
-	private static final String		STARTWORK_COMMAND		= "START";
-	private static final String		SETUP_COMMAND			= "SETUP";
-	private static final String		SHORT_COMMAND			= "SHORT";
-	private static final String		LOGOUT_COMMAND			= "LOGOUT";
-	private static final String		RESUME_COMMAND			= "RESUME";
-	private static final String		YES_COMMAND				= "YES";
-	private static final String		NO_COMMAND				= "NO";
-	
-	private static final Integer maxCountForPositionControllerDisplay = 99;
+	private static final String		STARTWORK_COMMAND						= "START";
+	private static final String		SETUP_COMMAND							= "SETUP";
+	private static final String		SHORT_COMMAND							= "SHORT";
+	private static final String		LOGOUT_COMMAND							= "LOGOUT";
+	//private static final String		RESUME_COMMAND			= "RESUME";
+	private static final String		YES_COMMAND								= "YES";
+	private static final String		NO_COMMAND								= "NO";
+
+	private static final Integer	maxCountForPositionControllerDisplay	= 99;
 
 	// The CHE's current state.
 	@Accessors(prefix = "m")
@@ -117,6 +117,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private List<WorkInstruction>	mCompletedWiList;
 
 	private NetGuid					mLastLedControllerGuid;
+	private boolean					mMultipleLastLedControllerGuids;															// Could have a list, but this will be quite rare.
 
 	private WorkInstruction			mShortPickWi;
 	private Integer					mShortPickQty;
@@ -136,6 +137,29 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 	public final short getSleepSeconds() {
 		return 180;
+	}
+
+	// The last-aisle-controller-for-this-CHE package.
+	private void setLastLedControllerGuid(NetGuid inAisleControllerGuid) {
+		if (mLastLedControllerGuid == null)
+			mLastLedControllerGuid = inAisleControllerGuid;
+		else if (mLastLedControllerGuid != inAisleControllerGuid) {
+			mLastLedControllerGuid = inAisleControllerGuid;
+			mMultipleLastLedControllerGuids = true;
+		}
+	}
+
+	private NetGuid getLastLedControllerGuid() {
+		return mLastLedControllerGuid;
+	}
+
+	private boolean wereMultipleLastLedControllerGuids() {
+		return mMultipleLastLedControllerGuids;
+	}
+
+	private void clearLastLedControllerGuids() {
+		mLastLedControllerGuid = null;
+		mMultipleLastLedControllerGuids = false;
 	}
 
 	// --------------------------------------------------------------------------
@@ -170,7 +194,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			inLine4Message);
 		mRadioController.sendCommand(command, getAddress(), true);
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * Breakup the description into three static lines no longer than 20 characters.
@@ -179,14 +203,16 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 * @param inPickInstructions
 	 * @param inDescription
 	 */
-	private void sendDisplayWorkInstruction(final String inPickInstructions, final String inDescription, final Integer inPlanQuantity) {
+	private void sendDisplayWorkInstruction(final String inPickInstructions,
+		final String inDescription,
+		final Integer inPlanQuantity) {
 		String displayDescription = inDescription;
 		if (inPlanQuantity > maxCountForPositionControllerDisplay - 1) {
 			String countStr = inPlanQuantity.toString();
 			displayDescription = countStr + " " + inDescription;
 		}
-		
-		String[] descriptionLine = { "", "", ""};
+
+		String[] descriptionLine = { "", "", "" };
 		int pos = 0;
 		for (int line = 0; line < 3; line++) {
 			if (pos < displayDescription.length()) {
@@ -195,13 +221,13 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				pos += toGet;
 			}
 		}
-		
+
 		// Check if there is more description to add to the last line.
 		if (pos < displayDescription.length()) {
 			int toGet = Math.min(20, displayDescription.length() - pos);
 			descriptionLine[2] += displayDescription.substring(pos, pos + toGet);
 		}
-		
+
 		// Note: pickInstruction is more or less a location. Commonly a location alias, but may be a locationId or DDcId.
 		sendDisplayCommand(inPickInstructions, descriptionLine[0], descriptionLine[1], descriptionLine[2]);
 	}
@@ -239,9 +265,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			}
 		}
 
-		// Remember the last non-CHE LED controller we used.
+		// Remember any aisle controller we sent messages with lights to.
 		if (!(device instanceof CheDeviceLogic)) {
-			mLastLedControllerGuid = inControllerGuid;
+			setLastLedControllerGuid(inControllerGuid);
 		}
 	}
 
@@ -260,21 +286,52 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * Clear the LEDs for this CHE on this specified LED controller.
+	 * Called at logout. (or the multiple case below). Trying to provide a means to self-correct.
+	 * Clears aisle controllers only, not position controllers on this CHE
+	 * Side effect: clears its information on what was previously sent to.
+	 */
+	private void forceClearAllLedsForThisCheDevice() {
+		List<AisleDeviceLogic> aList = mDeviceManager.getAisleControllers();
+		for (AisleDeviceLogic theAisleDevice : aList) {
+			theAisleDevice.removeLedCmdsForCheAndSend(getGuid());
+		}
+		clearLastLedControllerGuids(); // Setting the state that we have nothing more to clear for this CHE.		
+	}
+
+		// --------------------------------------------------------------------------
+	/**
+	 * Clear the LEDs for this CHE one whatever LED controllers it last sent to.
+	 * Side effect: clears its information on what was previously sent to.
 	 * @param inGuid
 	 */
 	private void ledControllerClearLeds() {
-		// Clear the LEDs for the last location the CHE worked.
-		INetworkDevice device = mDeviceManager.getDeviceByGuid(mLastLedControllerGuid);
-		if (device instanceof AisleDeviceLogic) {
-			AisleDeviceLogic aisleDevice = (AisleDeviceLogic) device;
-			aisleDevice.clearLedCmdFor(getGuid());
+		// Clear the LEDs for the last location(s) the CHE worked.
+		NetGuid aisleControllerGuid = getLastLedControllerGuid();
+		if (aisleControllerGuid == null)
+			return;
+
+		if (wereMultipleLastLedControllerGuids()) {
+			// check all
+			LOGGER.warn("Needing to clear multiple aisle controllers for one CHE device clear. This case should be unusual.");
+			forceClearAllLedsForThisCheDevice();
+		} 
+		// Normal case. Just clear the one aisle device we know we sent to last.
+		else {
+			INetworkDevice device = mDeviceManager.getDeviceByGuid(aisleControllerGuid);
+			if (device instanceof AisleDeviceLogic) {
+				AisleDeviceLogic aisleDevice = (AisleDeviceLogic) device;
+				aisleDevice.removeLedCmdsForCheAndSend(getGuid());
+			}
+			clearLastLedControllerGuids(); // Setting the state that we have nothing more to clear for this CHE.
 		}
 	}
 
 	// --------------------------------------------------------------------------
 	/**
-	 * Clear the LEDs for this CHE on this specified LED controller.
+	 * Clear the LEDs for this CHE on this specified LED (aisle) controller.
+	 * No side effect: does not clears its information on what was previously sent to.
+	 * This is called on completing one work instruction only. The work instruction knows its aisle controller (in theory)
+	 * Would only be necessary for simultaneous multiple WI dispatch. Otherwise, could just as well call the above
 	 * @param inGuid
 	 */
 	private void ledControllerClearLeds(final NetGuid inLedControllerId) {
@@ -282,8 +339,10 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		INetworkDevice device = mDeviceManager.getDeviceByGuid(inLedControllerId);
 		if (device instanceof AisleDeviceLogic) {
 			AisleDeviceLogic aisleDevice = (AisleDeviceLogic) device;
-			aisleDevice.clearLedCmdFor(getGuid());
+			aisleDevice.removeLedCmdsForCheAndSend(getGuid());
 		}
+
+		clearLastLedControllerGuids(); // Not sure this is right!!! Need tests in CD_0043		
 	}
 
 	// --------------------------------------------------------------------------
@@ -584,7 +643,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		mAllPicksWiList.clear();
 		setState(CheStateEnum.IDLE);
 
-		ledControllerClearLeds();
+		forceClearAllLedsForThisCheDevice();
 		clearAllPositionControllers();
 	}
 
@@ -720,6 +779,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	/**
 	 * Sort the WIs by their distance along the path.
 	 */
+	@SuppressWarnings("unused")
 	private class WiDistanceComparator implements Comparator<WorkInstruction> {
 
 		public int compare(WorkInstruction inWi1, WorkInstruction inWi2) {
@@ -792,10 +852,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		// There are no more WIs, so the pick is complete.
 
 		// Clear the existing LEDs.
-		if (mLastLedControllerGuid != null) {
-			ledControllerClearLeds();
-		}
+		ledControllerClearLeds(); // this checks getLastLedControllerGuid(), and bails if null.
 
+		// CD_0041 is there a need for this?
 		ledControllerShowLeds(getGuid());
 
 		mCompletedWiList.clear();
@@ -810,7 +869,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private byte byteValueForPositionDisplay(Integer inInt) {
 		if (inInt > maxCountForPositionControllerDisplay)
 			return maxCountForPositionControllerDisplay.byteValue();
-		else 
+		else
 			return inInt.byteValue();
 	}
 
@@ -827,16 +886,26 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			if (getCheStateEnum() != CheStateEnum.DO_PICK) {
 				setState(CheStateEnum.DO_PICK);
 			}
+
+			// Tell the last aisle controller this device displayed on, to remove any led commands for this.
 			ledControllerClearLeds();
+
+			// This part is easy. Just display on the CHE controller
 			sendDisplayWorkInstruction(firstWi.getPickInstruction(), firstWi.getDescription(), firstWi.getPlanQuantity());
 
+			// Not as easy. Clear this CHE's last leds off of aisle controller(s), and tell aisle controller(s) what to light next
 			List<LedCmdGroup> ledCmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(firstWi.getLedCmdStream());
 
 			INetworkDevice lastLedController = null;
-			for (Iterator iterator = ledCmdGroups.iterator(); iterator.hasNext();) {
+			// This is not about clearing controllers/channels this CHE had lights on for.  Rather, it was about iterating the command groups and making sure
+			// we do not clear out the first group when adding on a second. This is a concern for simultaneous multiple dispatch--not currently done.
+
+			for (Iterator<LedCmdGroup> iterator = ledCmdGroups.iterator(); iterator.hasNext();) {
 				LedCmdGroup ledCmdGroup = (LedCmdGroup) iterator.next();
 
-				INetworkDevice ledController = mRadioController.getNetworkDevice(new NetGuid(ledCmdGroup.getControllerId()));
+				// The WI's ledCmdStream includes the controller ID. Usually only one command group per WI. So, we are setting ledController as the aisleDeviceLogic for the next WI's lights
+				NetGuid nextControllerGuid = new NetGuid(ledCmdGroup.getControllerId());
+				INetworkDevice ledController = mRadioController.getNetworkDevice(nextControllerGuid);
 				if (ledController != null) {
 
 					Short startLedNum = ledCmdGroup.getPosNum();
@@ -844,7 +913,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 					// Clear the last LED commands to this controller if the last controller was different.
 					if ((lastLedController != null) && (!ledController.equals(lastLedController))) {
-						ledControllerClearLeds();
+						ledControllerClearLeds(nextControllerGuid);
 						lastLedController = ledController;
 					}
 
@@ -864,7 +933,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				}
 			}
 
-			// Now create a light instruction for each position.
+			// Also pretty easy. Light the position controllers on this CHE
 			List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
 			for (WorkInstruction wi : mActivePickWiList) {
 				for (Entry<String, String> mapEntry : mContainersMap.entrySet()) {
@@ -893,8 +962,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 		List<LedCmdGroup> ledCmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(inWi.getLedCmdStream());
 
-		for (Iterator iterator = ledCmdGroups.iterator(); iterator.hasNext();) {
-			LedCmdGroup ledCmdGroup = (LedCmdGroup) iterator.next();
+		for (Iterator<LedCmdGroup> iterator = ledCmdGroups.iterator(); iterator.hasNext();) {
+			LedCmdGroup ledCmdGroup = iterator.next();
 
 			INetworkDevice ledController = mRadioController.getNetworkDevice(new NetGuid(ledCmdGroup.getControllerId()));
 			if (ledController != null) {
@@ -928,7 +997,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		if (LOCATION_PREFIX.equals(inScanPrefixStr)) {
 			setLocationId(inScanStr);
 
-			List<String> containerIdList = new ArrayList<String>(mContainersMap.values());
+			new ArrayList<String>(mContainersMap.values());
 			mDeviceManager.getCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), inScanStr);
 
 			setState(CheStateEnum.GET_WORK);
@@ -1007,7 +1076,12 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				if (inQuantity >= wi.getPlanMinQuantity()) {
 					processNormalPick(wi, inQuantity);
 				} else {
-					processShortPick(wi, inQuantity);
+					// More kludge for count > 99 case
+					Integer planQuantity = wi.getPlanQuantity();
+					if (inQuantity == maxCountForPositionControllerDisplay && planQuantity > maxCountForPositionControllerDisplay)
+						processNormalPick(wi, planQuantity); // Assume all were picked. No way for user to tell if more than 98 given.
+					else
+						processShortPick(wi, inQuantity);
 				}
 			}
 		}

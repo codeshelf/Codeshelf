@@ -59,6 +59,7 @@ public class Container extends DomainObjectTreeABC<Facility> {
 		}
 	}
 
+	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(Container.class);
 
 	// The container kind.
@@ -93,6 +94,7 @@ public class Container extends DomainObjectTreeABC<Facility> {
 
 	}
 
+	@SuppressWarnings("unchecked")
 	public final ITypedDao<Container> getDao() {
 		return DAO;
 	}

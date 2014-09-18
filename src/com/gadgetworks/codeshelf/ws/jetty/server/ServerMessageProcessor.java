@@ -1,7 +1,5 @@
 package com.gadgetworks.codeshelf.ws.jetty.server;
 
-import javax.websocket.Session;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,6 +24,7 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ObjectUpdateCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.RegisterFilterCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.RegisterListenerCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.RegisterNetworkListenerCommand;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ServiceMethodCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageProcessor;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.CompleteWorkInstructionRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ComputeWorkRequest;
@@ -42,6 +41,7 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectUpdateRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RegisterFilterRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RegisterListenerRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RequestABC;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ServiceMethodRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.PingResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.google.inject.Inject;
@@ -71,8 +71,6 @@ public class ServerMessageProcessor extends MessageProcessor {
 	private final Timer responseProcessingTimer = MetricsService.addTimer(MetricsGroup.WSS,"responses.processing-time");
 	private final Histogram pingHistogram = MetricsService.addHistogram(MetricsGroup.WSS, "ping-histogram");
 	
-	SessionManager sessionManager = SessionManager.getInstance();
-	
 	IDaoProvider daoProvider;
 	
 	@Inject
@@ -82,18 +80,12 @@ public class ServerMessageProcessor extends MessageProcessor {
 	}
 	
 	@Override
-	public ResponseABC handleRequest(Session session, RequestABC request) {
+	public ResponseABC handleRequest(CsSession csSession, RequestABC request) {
 		LOGGER.info("Request received for processing: "+request);
 		requestCounter.inc();
 		CommandABC command = null;
 		ResponseABC response = null;
 
-		// check CS session
-        CsSession csSession = sessionManager.getSession(session);
-        if (csSession==null) {
-        	LOGGER.warn("No matching CS session found for session "+session.getId());
-        }
-        
         // process message...
     	final Timer.Context context = requestProcessingTimer.time();
 	    try {
@@ -143,6 +135,10 @@ public class ServerMessageProcessor extends MessageProcessor {
 				command = new ObjectMethodCommand(csSession,(ObjectMethodRequest) request);
 				objectUpdateCounter.inc();
 			}
+			else if (request instanceof ServiceMethodRequest) {
+				command = new ServiceMethodCommand(csSession,(ServiceMethodRequest) request);
+				objectUpdateCounter.inc();
+			}
 			else if (request instanceof RegisterListenerRequest) {
 				command = new RegisterListenerCommand(csSession, (RegisterListenerRequest) request);
 				objectListenerCounter.inc();
@@ -183,7 +179,7 @@ public class ServerMessageProcessor extends MessageProcessor {
 	}
 
 	@Override
-	public void handleResponse(Session session, ResponseABC response) {
+	public void handleResponse(CsSession csSession, ResponseABC response) {
 		responseCounter.inc();
     	final Timer.Context context = responseProcessingTimer.time();
 	    try {		
@@ -193,8 +189,7 @@ public class ServerMessageProcessor extends MessageProcessor {
 				long delta = now-pingResponse.getStartTime();
 				pingHistogram.update(delta);
 				double elapsedSec = ((double) delta)/1000; 
-				LOGGER.debug("Ping roundtrip on session "+session.getId()+" in "+elapsedSec+"s");
-				CsSession csSession = sessionManager.getSession(session);
+				LOGGER.debug("Ping roundtrip on session "+csSession +" in "+elapsedSec+"s");
 				if (csSession!=null) {
 					csSession.setLastPongReceived(now);
 				}

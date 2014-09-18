@@ -28,6 +28,7 @@ import com.gadgetworks.codeshelf.edi.LocationAliasCsvImporter;
 import com.gadgetworks.codeshelf.edi.OrderLocationCsvImporter;
 import com.gadgetworks.codeshelf.edi.OutboundOrderCsvImporter;
 import com.gadgetworks.codeshelf.model.dao.DaoProvider;
+import com.gadgetworks.codeshelf.model.dao.Database;
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
@@ -50,6 +51,8 @@ import com.gadgetworks.codeshelf.model.domain.DropboxService;
 import com.gadgetworks.codeshelf.model.domain.DropboxService.DropboxServiceDao;
 import com.gadgetworks.codeshelf.model.domain.EdiDocumentLocator;
 import com.gadgetworks.codeshelf.model.domain.EdiDocumentLocator.EdiDocumentLocatorDao;
+import com.gadgetworks.codeshelf.model.domain.EdiServiceABC;
+import com.gadgetworks.codeshelf.model.domain.EdiServiceABC.EdiServiceABCDao;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Facility.FacilityDao;
 import com.gadgetworks.codeshelf.model.domain.IronMqService;
@@ -102,15 +105,12 @@ import com.gadgetworks.codeshelf.model.domain.WorkArea;
 import com.gadgetworks.codeshelf.model.domain.WorkArea.WorkAreaDao;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction.WorkInstructionDao;
-import com.gadgetworks.codeshelf.monitor.IMonitor;
-import com.gadgetworks.codeshelf.monitor.Monitor;
 import com.gadgetworks.codeshelf.report.IPickDocumentGenerator;
 import com.gadgetworks.codeshelf.report.PickDocumentGenerator;
 import com.gadgetworks.codeshelf.security.CodeshelfRealm;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageProcessor;
 import com.gadgetworks.codeshelf.ws.jetty.server.MessageProcessorFactory;
 import com.gadgetworks.codeshelf.ws.jetty.server.ServerMessageProcessor;
-import com.gadgetworks.codeshelf.ws.websocket.IWebSocketServer;
 import com.gadgetworks.codeshelf.ws.websocket.IWebSocketSslContextGenerator;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -124,9 +124,9 @@ import com.google.inject.name.Names;
  */
 public final class ServerMain {
 
-	// See the top of Util to understand why we do the following:
+	// pre-main static load configuration and set up logging (see Configuration.java)
 	static {
-		Util.initLogging();
+		Configuration.loadConfig("server");
 	}
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(ServerMain.class);
@@ -140,21 +140,7 @@ public final class ServerMain {
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	public static void main(String[] inArgs) {
-
-		Util.loadConfig();
-
-		// Guice (injector) will invoke log4j, so we need to set some log dir parameters before we call it.
-		Util util = new Util();
-		String appDataDir = util.getApplicationDataDirPath();
-		System.setProperty("app.data.dir", appDataDir);
-
-		//		java.util.logging.Logger rootLogger = LogManager.getLogManager().getLogger("");
-		//		Handler[] handlers = rootLogger.getHandlers();
-		//		for (int i = 0; i < handlers.length; i++) {
-		//			rootLogger.removeHandler(handlers[i]);
-		//		}
-		//		SLF4JBridgeHandler.install();
+	public static void main(String[] inArgs) throws Exception {
 
 		// Create and start the application.
 		Injector dynamicInjector = setupInjector();
@@ -173,6 +159,7 @@ public final class ServerMain {
 	 */
 	private static Injector setupInjector() {
 		Injector injector = Guice.createInjector(new AbstractModule() {
+			@SuppressWarnings("rawtypes")
 			@Override
 			protected void configure() {
 				bind(String.class).annotatedWith(Names.named(ISchemaManager.DATABASE_NAME_PROPERTY))
@@ -187,8 +174,6 @@ public final class ServerMain {
 					.toInstance(System.getProperty("db.address"));
 				bind(String.class).annotatedWith(Names.named(ISchemaManager.DATABASE_PORTNUM_PROPERTY))
 					.toInstance(System.getProperty("db.portnum"));
-				bind(String.class).annotatedWith(Names.named(ISchemaManager.DATABASE_SSL_PROPERTY))
-					.toInstance(System.getProperty("db.ssl"));
 
 				bind(String.class).annotatedWith(Names.named(IWebSocketSslContextGenerator.KEYSTORE_PATH_PROPERTY))
 					.toInstance(System.getProperty("keystore.path"));
@@ -199,17 +184,6 @@ public final class ServerMain {
 				bind(String.class).annotatedWith(Names.named(IWebSocketSslContextGenerator.KEYSTORE_KEY_PASSWORD_PROPERTY))
 					.toInstance(System.getProperty("keystore.key.password"));
 
-				bind(String.class).annotatedWith(Names.named(IWebSocketServer.WEBSOCKET_HOSTNAME_PROPERTY))
-					.toInstance(System.getProperty("websocket.hostname"));
-				bind(Integer.class).annotatedWith(Names.named(IWebSocketServer.WEBSOCKET_PORTNUM_PROPERTY))
-					.toInstance(Integer.valueOf(System.getProperty("websocket.portnum")));
-				
-				// TODO: refactor for common injected items? (server+sitecon)
-				bind(Boolean.class).annotatedWith(Names.named(IWebSocketServer.WEBSOCKET_SUPPRESS_KEEPALIVE_PROPERTY))
-					.toInstance(Boolean.valueOf(System.getProperty("websocket.idle.suppresskeepalive")));
-				bind(Boolean.class).annotatedWith(Names.named(IWebSocketServer.WEBSOCKET_KILL_IDLE_PROPERTY))
-					.toInstance(Boolean.valueOf(System.getProperty("websocket.idle.kill")));
-				
 				bind(String.class).annotatedWith(Names.named(IHttpServer.WEBAPP_CONTENT_PATH_PROPERTY))
 					.toInstance(System.getProperty("webapp.content.path"));
 				bind(String.class).annotatedWith(Names.named(IHttpServer.WEBAPP_HOSTNAME_PROPERTY))
@@ -217,8 +191,6 @@ public final class ServerMain {
 				bind(Integer.class).annotatedWith(Names.named(IHttpServer.WEBAPP_PORTNUM_PROPERTY))
 					.toInstance(Integer.valueOf(System.getProperty("webapp.portnum")));
 
-				// bind(IUtil.class).to(Util.class);
-				bind(IMonitor.class).to(Monitor.class);
 				bind(ISchemaManager.class).to(PostgresSchemaManager.class);
 				bind(ICodeshelfApplication.class).to(ServerCodeshelfApplication.class);
 				bind(IDaoProvider.class).to(DaoProvider.class);
@@ -232,23 +204,12 @@ public final class ServerMain {
 				bind(ICsvAislesFileImporter.class).to(AislesFileCsvImporter.class);
 				bind(ICsvCrossBatchImporter.class).to(CrossBatchCsvImporter.class);
 
-				// Websocket/WebSession
-				/*
-				bind(IWebSocketServer.class).to(CsWebSocketServer.class);
-				bind(IWebSessionManager.class).to(WebSessionManager.class);
-				bind(IWsReqCmdFactory.class).to(WsReqCmdFactory.class);
-				bind(WebSocketServer.WebSocketServerFactory.class).to(SSLWebSocketServerFactory.class);
-				install(new FactoryModuleBuilder().implement(IWebSession.class, WebSession.class).build(IWebSessionFactory.class));
-				*/
-				
 				// jetty websocket
 				bind(MessageProcessor.class).to(ServerMessageProcessor.class);
-				
 				requestStaticInjection(MessageProcessorFactory.class);
 				
 				//requestStaticInjection(ServerMessageProcessorFactory.class);
 				//ServerMessageProcessorFactory.inject(ServerMessageProcessor.class);
-
 				
 				// Shiro modules
 				bind(Realm.class).to(CodeshelfRealm.class);
@@ -289,6 +250,10 @@ public final class ServerMain {
 				requestStaticInjection(ContainerUse.class);
 				bind(new TypeLiteral<ITypedDao<ContainerUse>>() {
 				}).to(ContainerUseDao.class);
+
+				requestStaticInjection(EdiServiceABC.class);
+				bind(new TypeLiteral<ITypedDao<EdiServiceABC>>() {
+				}).to(EdiServiceABCDao.class);
 
 				requestStaticInjection(DropboxService.class);
 				bind(new TypeLiteral<ITypedDao<DropboxService>>() {

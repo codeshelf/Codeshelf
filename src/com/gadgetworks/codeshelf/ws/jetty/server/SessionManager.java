@@ -23,9 +23,10 @@ public class SessionManager {
 	private final Counter activeSessionsCounter = MetricsService.addCounter(MetricsGroup.WSS,"sessions.active");
 	private final Counter totalSessionsCounter = MetricsService.addCounter(MetricsGroup.WSS,"sessions.total");
 
+	
 	private SessionManager() {
 	}
-	
+	 
 	public static SessionManager getInstance() {
 		return theSessionManager;
 	}

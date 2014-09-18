@@ -18,7 +18,7 @@ import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
  * Work sequencer that orders bays by distance on path, then tiers from top to bottom, and then slots from distance along path
  * 
  */
-public class BayDistanceTopLastWorkInstructionSequencer implements WorkInstructionSequencer {
+public class BayDistanceTopLastWorkInstructionSequencer extends WorkInstructionSequencerABC {
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(BayDistanceTopLastWorkInstructionSequencer.class);
 
@@ -32,7 +32,10 @@ public class BayDistanceTopLastWorkInstructionSequencer implements WorkInstructi
 	 * @see com.gadgetworks.codeshelf.model.WISequenceStrategy#sort(com.gadgetworks.codeshelf.model.domain.Facility, java.util.List)
 	 */
 	@Override
-	public List<WorkInstruction> sort(Facility facility, List<WorkInstruction> crosswallWiList) {
+	public List<WorkInstruction> sort(Facility facility, List<WorkInstruction> inWiList) {
+		
+		// preSortByPosAlongPath(inWiList); // Necessary for non-slotted so that sort within one location is good.
+		
 		// Now we need to sort and group the work instructions, so that the CHE can display them by working order.
 		List<ISubLocation<?>> bayList = new ArrayList<ISubLocation<?>>();
 		for (Path path : facility.getPaths()) {
@@ -56,7 +59,7 @@ public class BayDistanceTopLastWorkInstructionSequencer implements WorkInstructi
 						continue;
 					}
 					// LOGGER.debug("Processing tier "+workLocation);
-					Iterator<WorkInstruction> wiIterator = crosswallWiList.iterator();
+					Iterator<WorkInstruction> wiIterator = inWiList.iterator();
 					while (wiIterator.hasNext()) {
 						WorkInstruction wi = wiIterator.next();
 						if (wi.getLocation().equals(workLocation)) {
@@ -86,7 +89,7 @@ public class BayDistanceTopLastWorkInstructionSequencer implements WorkInstructi
 						continue;
 					}
 					// LOGGER.debug("Processing tier "+workLocation);
-					Iterator<WorkInstruction> wiIterator = crosswallWiList.iterator();
+					Iterator<WorkInstruction> wiIterator = inWiList.iterator();
 					while (wiIterator.hasNext()) {
 						WorkInstruction wi = wiIterator.next();
 						if (wi.getLocation().equals(workLocation)) {

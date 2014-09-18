@@ -34,7 +34,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.PickStrategyEnum;
-import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
@@ -51,6 +50,7 @@ import com.google.inject.Singleton;
  * @author jeffw
  */
 
+@SuppressWarnings("unused")
 @Entity
 @Table(name = "order_header")
 //@CacheStrategy(useBeanCache = true)
@@ -197,6 +197,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		pickStrategyEnum = PickStrategyEnum.SERIAL;
 	}
 
+	@SuppressWarnings("unchecked")
 	public final ITypedDao<OrderHeader> getDao() {
 		return DAO;
 	}
@@ -241,13 +242,13 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		return new ArrayList<OrderDetail>(orderDetails.values());
 	}
 
-	public final OrderLocation addOrderLocation(ILocation inLocation) {
+	public final OrderLocation addOrderLocation(ILocation<?> inLocation) {
 		OrderLocation result = createOrderLocation(inLocation);
 		addOrderLocation(result);
 		return result;
 	}
 	
-	private OrderLocation createOrderLocation(ILocation inLocation) {
+	private OrderLocation createOrderLocation(ILocation<?> inLocation) {
 		OrderLocation result = new OrderLocation();
 		result.setDomainId(OrderLocation.makeDomainId(this, inLocation));
 		result.setParent(this);
@@ -406,18 +407,18 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		
 		OrderLocation firstLocation = oLocations.get(0);
 		if (firstLocation != null) {
-			ISubLocation theLoc = firstLocation.getLocation();
+			ISubLocation<?> theLoc = firstLocation.getLocation();
 			if (theLoc != null)
-				result = ((LocationABC) theLoc).getPrimaryAliasId();
+				result = ((LocationABC<?>) theLoc).getPrimaryAliasId();
 		}
 		if (numLocations > 1) {
 			// add delimmiter and next one on
 			for (int n = 1; n < numLocations; n++) {
 				OrderLocation nextLocation = oLocations.get(n);
 				if (nextLocation != null) {
-					ISubLocation theLoc = nextLocation.getLocation();
+					ISubLocation<?> theLoc = nextLocation.getLocation();
 					if (theLoc != null)
-						result =  result + ";" + ((LocationABC) theLoc).getPrimaryAliasId();
+						result =  result + ";" + ((LocationABC<?>) theLoc).getPrimaryAliasId();
 				}
 			}
 		}

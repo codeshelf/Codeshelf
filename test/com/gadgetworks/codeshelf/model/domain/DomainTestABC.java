@@ -43,7 +43,7 @@ public abstract class DomainTestABC extends DAOTestABC {
 		
 		Facility resultFacility = mFacilityDao.findByDomainId(inOrganization, defaultDomainId);
 		if(resultFacility == null) {
-			inOrganization.createFacility(defaultDomainId, "test", Point.getZeroPoint());
+			inOrganization.createFacility(defaultDomainId, "test", new Point(PositionTypeEnum.GPS, -120.0, 30.0, 0.0));
 			resultFacility = inOrganization.getFacility(defaultDomainId);
 		}
 		return resultFacility;
@@ -61,15 +61,18 @@ public abstract class DomainTestABC extends DAOTestABC {
 	}
 
 	protected Aisle getAisle(Facility facility, String inDomainId) {
+		return getAisle(facility, inDomainId, Point.getZeroPoint(), Point.getZeroPoint().add(5.0, 0.0)); 
+	}
+
+	protected Aisle getAisle(Facility facility, String inDomainId, Point anchorPoint, Point pickFaceEndPoint) {
 		Aisle aisle = mAisleDao.findByDomainId(facility, inDomainId);
 		if (aisle == null) {
-			Point pickFaceEndPoint = Point.getZeroPoint();
-			pickFaceEndPoint.setX(5.0);
-			aisle = new Aisle(facility, inDomainId, Point.getZeroPoint(), pickFaceEndPoint);
+			aisle = new Aisle(facility, inDomainId, anchorPoint, pickFaceEndPoint);
 			mAisleDao.store(aisle);
 		}
 		return aisle;
 	}
+
 	
 	protected Bay getBay(Aisle aisle, String inDomainId) {
 		Bay bay  = mBayDao.findByDomainId(aisle, inDomainId);
@@ -146,6 +149,7 @@ public abstract class DomainTestABC extends DAOTestABC {
 	 * 		OrderDetail: 2 of item1, 4 of item 2, 8 of item 3
 	 * 
 	 */
+	@SuppressWarnings("unused")
 	protected Facility createFacilityWithOutboundOrders(final String inOrganizationName) {
 
 		Organization organization = getOrganization(inOrganizationName);
@@ -192,8 +196,7 @@ public abstract class DomainTestABC extends DAOTestABC {
 		mPathDao.store(path);
 		resultFacility.addPath(path);
 
-		Point startPoint1 = Point.getZeroPoint();
-		startPoint1.translateX(5.0);
+		Point startPoint1 = Point.getZeroPoint().add(5.0,0.0);
 		PathSegment pathSegment1 = path.createPathSegment("PS1", 0, startPoint1, Point.getZeroPoint());
 		mPathSegmentDao.store(pathSegment1);
 
@@ -505,7 +508,7 @@ public abstract class DomainTestABC extends DAOTestABC {
 		Double inEndY) {
 
 		Point head = new Point(PositionTypeEnum.METERS_FROM_PARENT, inStartX, inStartY, 0.0);
-		Point tail = new Point(PositionTypeEnum.METERS_FROM_PARENT, inEndX, inEndX, 0.0);
+		Point tail = new Point(PositionTypeEnum.METERS_FROM_PARENT, inEndX, inEndY, 0.0);
 		PathSegment returnSeg = inPath.createPathSegment(inSegmentId, inSegmentOrder, head, tail);
 		return returnSeg;
 	}

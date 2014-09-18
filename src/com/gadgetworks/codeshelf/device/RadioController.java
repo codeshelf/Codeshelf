@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import com.codahale.metrics.Counter;
 import com.gadgetworks.codeshelf.metrics.MetricsGroup;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
+import com.gadgetworks.codeshelf.util.PropertyUtils;
 import com.gadgetworks.flyweight.bitfields.NBitInteger;
 import com.gadgetworks.flyweight.command.AckStateEnum;
 import com.gadgetworks.flyweight.command.CommandAssocABC;
@@ -48,7 +49,6 @@ import com.gadgetworks.flyweight.controller.IRadioController;
 import com.gadgetworks.flyweight.controller.IRadioControllerEventListener;
 import com.gadgetworks.flyweight.controller.NetworkDeviceStateEnum;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 
 // --------------------------------------------------------------------------
 /**
@@ -104,7 +104,8 @@ public class RadioController implements IRadioController {
 	private List<IRadioControllerEventListener>					mEventListeners;
 	private long												mLastIntfCheckMillis;
 	private long												mLastPacketSentMillis;
-	private boolean												mIntfCheckPending;
+	@SuppressWarnings("unused")
+	private boolean												mIntfCheckPending; // actually, this is used, suppressing bogus warning
 	private byte												mAckId;
 	private volatile Map<NetAddress, BlockingQueue<IPacket>>	mPendingAcksMap;
 
@@ -126,15 +127,16 @@ public class RadioController implements IRadioController {
 	 *  @param inSessionManager   The session manager for this controller.
 	 */
 	@Inject
-	public RadioController(@Named(IPacket.NETWORK_NUM_PROPERTY) final byte inNetworkId, final IGatewayInterface inGatewayInterface) {
+	public RadioController(final IGatewayInterface inGatewayInterface) {
+		// fetch network ID from property files
+		Byte rawNetworkId = PropertyUtils.getByte("codeshelf.networknum");
+		mNetworkId = new NetworkId(rawNetworkId);
 
 		mGatewayInterface = inGatewayInterface;
 		mServerAddress = new NetAddress(IPacket.GATEWAY_ADDRESS);
 		mBroadcastAddress = new NetAddress(IPacket.BROADCAST_ADDRESS);
 		mBroadcastNetworkId = new NetworkId(IPacket.BROADCAST_NETWORK_ID);
 		mEventListeners = new ArrayList<IRadioControllerEventListener>();
-
-		mNetworkId = new NetworkId(inNetworkId);
 
 		mChannelSelected = false;
 		mChannelInfo = new ChannelInfo[MAX_CHANNELS];
@@ -593,8 +595,7 @@ public class RadioController implements IRadioController {
 		 * is to allow the controller to maintain the state info about the network
 		 * that is running.
 		 */
-
-		CommandNetMgmtSetup netSetupCmd = new CommandNetMgmtSetup(mNetworkId, mRadioChannel);
+		new CommandNetMgmtSetup(mNetworkId, mRadioChannel);
 		//sendCommand(netSetupCmd, mBroadcastAddress, false);
 	}
 
@@ -943,7 +944,7 @@ public class RadioController implements IRadioController {
 				Thread.sleep(CTRL_START_DELAY_MILLIS);
 			}
 		} catch (InterruptedException e) {
-			LOGGER.error("", e);
+			LOGGER.error("Failed to send packet", e);
 		}
 	}
 

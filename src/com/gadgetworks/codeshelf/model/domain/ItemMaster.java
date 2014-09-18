@@ -30,8 +30,6 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.gadgetworks.codeshelf.edi.InventoryCsvImporter;
-import com.gadgetworks.codeshelf.edi.InventorySlottedCsvBean;
 import com.gadgetworks.codeshelf.model.LotHandlingEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
@@ -73,6 +71,7 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 		}
 	}
 
+	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(ItemMaster.class);
 
 	private static final Comparator<String> asciiAlphanumericComparator = new ASCIIAlphanumericComparator();
@@ -154,6 +153,7 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	}
 	
 
+	@SuppressWarnings("unchecked")
 	public final ITypedDao<ItemMaster> getDao() {
 		return DAO;
 	}
@@ -212,13 +212,13 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	public final Item getFirstItemOnPath(final Path inPath) {
 		Item result = null;
 
-		ISubLocation foundLocation = null;
+		ISubLocation<?> foundLocation = null;
 		Item selectedItem = null;
 		
 		// This mimics the old code. Not at all sure it is correct.
 		for (Item item : getItems()) {
 			// Does the Item know where it is?
-			ISubLocation location = (ISubLocation) item.getStoredLocation();
+			ISubLocation<?> location = (ISubLocation<?>) item.getStoredLocation();
 			
 			if (location != null && inPath.isLocationOnPath(location)) {
 				foundLocation = location;
@@ -253,13 +253,13 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 		
 		String normalizedUomStr = UomNormalizer.normalizeString(inUomStr);
 
-		ISubLocation foundLocation = null;
+		ISubLocation<?> foundLocation = null;
 		Item selectedItem = null;
 		
 		// This mimics the old code. Not at all sure it is correct.
 		for (Item item : getItems()) {
 			// Does the Item know where it is?
-			ISubLocation location = (ISubLocation) item.getStoredLocation();
+			ISubLocation<?> location = (ISubLocation<?>) item.getStoredLocation();
 			
 			if (location != null && inPath.isLocationOnPath(location)) {
 				String itemUom = item.getUomMasterId();

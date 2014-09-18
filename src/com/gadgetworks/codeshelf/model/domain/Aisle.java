@@ -67,6 +67,7 @@ public class Aisle extends SubLocationABC<Facility> {
 		super(parent, domainId, inAnchorPoint, inPickFaceEndPoint);
 	}
 
+	@SuppressWarnings("unchecked")
 	public final ITypedDao<Aisle> getDao() {
 		return DAO;
 	}

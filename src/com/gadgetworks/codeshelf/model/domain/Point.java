@@ -13,7 +13,6 @@ import javax.persistence.Enumerated;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
-import lombok.Setter;
 import lombok.ToString;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
@@ -88,24 +87,24 @@ public class Point {
 		return new Point(PositionTypeEnum.METERS_FROM_PARENT, 0.0, 0.0, 0.0);
 	}
 
-	public final void add(final Point inAddPoint) {
+	public final Point add(final Point inAddPoint) {
 		if (inAddPoint.getPosTypeEnum().equals(posTypeEnum)) {
-			x += inAddPoint.getX();
-			y += inAddPoint.getY();
-			z += inAddPoint.getZ();
+			return add(inAddPoint.getX(), inAddPoint.getY(), inAddPoint.getZ());
+		}
+		else {
+			throw new IllegalArgumentException("inAddPoint is not the same point type: " + inAddPoint.getPosTypeEnum());
 		}
 	}
 
-	public final void translateX(final Double inOffset) {
-		x += inOffset;
+	/**
+	 * BigDecimal style, immutable add
+	 */
+	public final Point add(double inX, double inY) {
+		return add(inX, inY, 0);
 	}
-
-	public final void translateY(final Double inOffset) {
-		y += inOffset;
-	}
-
-	public final void translateZ(final Double inOffset) {
-		z += inOffset;
+	
+	public final Point add(double inX, double inY, double inZ) {
+		return new Point(posTypeEnum, x+inX, y+inY, z+inZ);
 	}
 
 	// These are legacy from the front-end GUI.

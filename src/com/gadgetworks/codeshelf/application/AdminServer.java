@@ -7,7 +7,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.health.HealthCheckRegistry;
+import com.codahale.metrics.servlets.HealthCheckServlet;
 import com.codahale.metrics.servlets.MetricsServlet;
+import com.codahale.metrics.servlets.PingServlet;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
 
 public class AdminServer {
@@ -23,13 +26,24 @@ public class AdminServer {
 	
 	public final void startServer() {
 		try {
-			MetricRegistry metricsRegistry = MetricsService.getRegistry();
 			Server server = new Server(port);
 			ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
-			context.setContextPath("/");
-			context.setAttribute(MetricsServlet.METRICS_REGISTRY, metricsRegistry);
+			context.setContextPath("/*");
 			server.setHandler(context);
-			context.addServlet(new ServletHolder(new MetricsServlet()),"/*");
+
+			// add metrics servlet
+			MetricRegistry metricsRegistry = MetricsService.getRegistry();
+			context.setAttribute(MetricsServlet.METRICS_REGISTRY, metricsRegistry);
+			context.addServlet(new ServletHolder(new MetricsServlet()),"/metrics");
+
+			// add health check servlet
+			HealthCheckRegistry hcReg = MetricsService.getHealthCheckRegistry();
+			context.setAttribute(HealthCheckServlet.HEALTH_CHECK_REGISTRY, hcReg);
+			context.addServlet(new ServletHolder(new HealthCheckServlet()),"/healthchecks");
+			
+			// add ping servlet
+			context.addServlet(new ServletHolder(new PingServlet()),"/ping");
+
 			server.start();
 			// server.join();
 		} 

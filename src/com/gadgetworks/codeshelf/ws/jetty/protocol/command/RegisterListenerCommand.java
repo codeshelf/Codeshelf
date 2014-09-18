@@ -39,12 +39,14 @@ public class RegisterListenerCommand extends CommandABC {
 			Class<?> classObject = Class.forName(objectClassName);
 			if (IDomainObject.class.isAssignableFrom(classObject)) {
 				// register session with DAO
+				@SuppressWarnings("unchecked")
 				Class<IDomainObject> persistenceClass = (Class<IDomainObject>) classObject;
 				ITypedDao<IDomainObject> dao = daoProvider.getDaoInstance((Class<IDomainObject>) persistenceClass);
 				this.session.registerAsDAOListener(dao);
 
 				// create listener
 				List<IDomainObject> objectMatchList = dao.findByPersistentIdList(request.getObjectIds());
+				@SuppressWarnings("unchecked")
 				Listener listener = new Listener((Class<IDomainObject>) classObject);				
 				listener.setId(request.getMessageId());
 				listener.setMatchList(request.getObjectIds());

@@ -75,7 +75,7 @@ public class PersistABCTest {
 
 	@Test
 	public void testGetId() {
-		PersistABCStub persist = new PersistABCStub();
+		new PersistABCStub();
 		assertEquals(IDomainObject.ID_PROPERTY, "domainId");
 	}
 
