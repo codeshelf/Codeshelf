@@ -23,6 +23,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.jvm.MemoryUsageGaugeSet;
 import com.gadgetworks.codeshelf.device.RadioController;
 import com.gadgetworks.codeshelf.edi.IEdiProcessor;
+import com.gadgetworks.codeshelf.metrics.DatabaseConnectionHealthCheck;
 import com.gadgetworks.codeshelf.metrics.MetricsGroup;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
 import com.gadgetworks.codeshelf.metrics.OpenTsdb;
@@ -108,6 +109,8 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		for (Entry<String, Metric> entry : memoryMetrics.entrySet()) {
 			MetricsService.registerMetric(MetricsGroup.JVM,"memory."+entry.getKey(), entry.getValue());
 		}
+
+		// start database
 		mDatabase.start();
 
 		// Start the WebSocket server 
@@ -131,6 +134,10 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		else {
 			LOGGER.info("Admin Server not enabled");
 		}
+		
+		// create health checks
+		DatabaseConnectionHealthCheck dbCheck = new DatabaseConnectionHealthCheck(this.mDatabase);
+		MetricsService.registerHealthCheck(MetricsGroup.Database, dbCheck.getName(), dbCheck);
 		
 		// public metrics to opentsdb
 		String useMetricsReporter = System.getProperty("metrics.reporter.enabled");

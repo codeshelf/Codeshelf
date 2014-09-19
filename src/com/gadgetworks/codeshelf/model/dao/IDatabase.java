@@ -14,5 +14,6 @@ public interface IDatabase {
 	boolean start();
 
 	boolean stop();
-	
+
+	ISchemaManager getSchemaManager();
 }

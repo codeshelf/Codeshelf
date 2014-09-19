@@ -5,6 +5,9 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+
 // --------------------------------------------------------------------------
 /**
  *  @author jeffw
@@ -61,5 +64,7 @@ public interface ISchemaManager {
 	String getApplicationInitDatabaseURL();
 
 	String getApplicationDatabaseURL();
+
+	Connection getConnection(String inDbUrl) throws SQLException;
 
 }

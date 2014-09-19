@@ -125,7 +125,8 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	/**
 	 * @return
 	 */
-	private Connection getConnection(final String inDbUrl) throws SQLException {
+	@Override
+	public Connection getConnection(final String inDbUrl) throws SQLException {
 		Connection result = null;
 
 		try {

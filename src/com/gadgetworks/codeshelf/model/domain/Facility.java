@@ -1340,10 +1340,10 @@ public class Facility extends SubLocationABC<Facility> {
 		// This is used for GoodEggs cross batch processs. The order header passed in is the outbound order (which has order locations),
 		// but inWi was generated from the cross batch order detail.
 
-		if(inWi == null) {
-			LOGGER.error("Unexpected null WorkInstruction processing "+inOrder==null?"null order":inOrder.getOrderId());
+		if (inWi == null) {
+			LOGGER.error("Unexpected null WorkInstruction processing " + inOrder == null ? "null order" : inOrder.getOrderId());
 			return;
-		} 
+		}
 
 		// Warning: the ledCmdStream must be set to "[]" if we bail. If not, site controller will NPE. Hence the check at this late stage
 		// This does not bail intentionally. Perhap should if led = 0.
@@ -1354,62 +1354,26 @@ public class Facility extends SubLocationABC<Facility> {
 			LOGGER.error("work instruction was not initialized");
 		}
 
-		List<LedCmdGroup> ledCmdGroupList = new ArrayList<LedCmdGroup>();
-		for (OrderLocation orderLocation : inOrder.getActiveOrderLocations()) {
-			short firstLedPosNum = orderLocation.getLocation().getFirstLedNumAlongPath();
-			short lastLedPosNum = orderLocation.getLocation().getLastLedNumAlongPath();
-
-			// Put the positions into increasing order.
-			if (firstLedPosNum > lastLedPosNum) {
-				Short temp = firstLedPosNum;
-				firstLedPosNum = lastLedPosNum;
-				lastLedPosNum = temp;
-			}
-
-			// The new way of sending LED data to the remote controller. Note getEffectiveXXX instead of getLedController
-			// This will throw if aisles/tiers are not configured yet. Lets avoid by the null checks.
-			ISubLocation<?> theLocation = orderLocation.getLocation(); // this should never be null by database constraint
-			LedController theController = null;
-			Short theChannel = 0;
-			if (theLocation == null) {
-				LOGGER.error("null order location in setWorkInstructionLedPatternFromOrderLocations. How?");
-			} else {
-				theController = theLocation.getEffectiveLedController();
-				theChannel = theLocation.getEffectiveLedChannel();
-			}
-			// If this location has no controller, let's bail on led pattern
-			if (theController == null || theChannel == null || theChannel == 0)
-				continue; // just don't add a new ledCmdGrop to the WI command list
-
-			List<LedSample> ledSamples = new ArrayList<LedSample>();
-			LedCmdGroup ledCmdGroup = new LedCmdGroup(orderLocation.getLocation().getEffectiveLedController().getDeviceGuidStr(),
-				orderLocation.getLocation().getEffectiveLedChannel(),
-				firstLedPosNum,
-				ledSamples);
-
-			for (short ledPos = firstLedPosNum; ledPos < lastLedPosNum; ledPos++) {
-				LedSample ledSample = new LedSample(ledPos, ColorEnum.BLUE);
-				ledSamples.add(ledSample);
-			}
-			ledCmdGroup.setLedSampleList(ledSamples);
-			ledCmdGroupList.add(ledCmdGroup);
-		}
-		inWi.setLedCmdStream(LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList));
+		List<LedCmdGroup> ledCmdGroupList = getLedCmdGroupListForLocationList(inOrder.getActiveOrderLocations(), ColorEnum.BLUE);
+		if (ledCmdGroupList.size() > 0)
+			inWi.setLedCmdStream(LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList));
 	}
 
 	// --------------------------------------------------------------------------
 	/**
+	 * For pick work instruction, set LEDs for where the inventory is. Also set the WI pos along path from where the inventory is.
 	 * @param inWi
-	 * @param inOrder
+	 * @param inLocation
+	 * @param inItemMasterId
+	 * @param inUomId
 	 */
 	private void setOutboundWorkInstructionLedPatternAndPosAlongPathFromInventoryItem(final WorkInstruction inWi,
 		final ILocation<?> inLocation,
 		final String inItemMasterId,
 		final String inUomId) {
 
-
-		if(inWi == null) {
-			LOGGER.error("Unexpected null WorkInstruction processing "+inItemMasterId);
+		if (inWi == null) {
+			LOGGER.error("Unexpected null WorkInstruction processing " + inItemMasterId);
 			return;
 		}
 
@@ -1452,37 +1416,150 @@ public class Facility extends SubLocationABC<Facility> {
 			return;
 		}
 
+		// We will light the inventory where it is in blue
+		List<LedCmdGroup> ledCmdGroupList = getLedCmdGroupListForItemInLocation(theItem, ColorEnum.BLUE, inLocation);
+
+		if (ledCmdGroupList.size() > 0)
+			inWi.setLedCmdStream(LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList));
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * API to get LED group to light a location
+	 */
+	public List<LedCmdGroup> getLedCmdGroupListForLocation(final ILocation<?> inLocation, final ColorEnum inColor) {
+		return getLedCmdGroupListForItemOrLocation(null, inColor, inLocation);
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * API to get LED group to light an inventory item
+	 */
+	public List<LedCmdGroup> getLedCmdGroupListForInventoryItem(final Item inItem, final ColorEnum inColor) {
+		ILocation<?> location = inItem.getStoredLocation();
+		return getLedCmdGroupListForItemOrLocation(inItem, inColor, location);
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * API used by setOutboundWorkInstructionLedPatternAndPosAlongPathFromInventoryItem
+	 */
+	private List<LedCmdGroup> getLedCmdGroupListForItemInLocation(final Item inItem,
+		final ColorEnum inColor,
+		final ILocation<?> inLocation) {
+		return getLedCmdGroupListForItemOrLocation(inItem, inColor, inLocation);
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Utility function to create LED command group. Will return a list, which may be empty if there is nothing to send. Caller should check for empty list.
+	 * Called now for setting WI LED pattern for inventory pick.
+	 * May be called soon for directly lighting inventory item or location
+	 * @param inNetGuidStr
+	 * @param inItem
+	 * @param inColor
+	 */
+	@SuppressWarnings("rawtypes")
+	private List<LedCmdGroup> getLedCmdGroupListForItemOrLocation(final Item inItem,
+		final ColorEnum inColor,
+		final ILocation<?> inLocation) {
+
 		List<LedCmdGroup> ledCmdGroupList = new ArrayList<LedCmdGroup>();
 
-		// Use our utility function to get the leds for the item
-		LedRange theRange = theItem.getFirstLastLedsForItem();
-		short firstLedPosNum = theRange.getFirstLedToLight();
-		short lastLedPosNum = theRange.getLastLedToLight();
+		LedController theLedController = inLocation.getEffectiveLedController();
+		if (theLedController == null) {
+			LOGGER.error("getLedCmdGroupListForItemOrLocation");
+			return ledCmdGroupList;
+		}
+		String netGuidStr = theLedController.getDeviceGuidStr();
+
+		short firstLedPosNum = 0;
+		short lastLedPosNum = 0;
+		if (inItem != null) {
+			// Use our utility function to get the leds for the item
+			LedRange theRange = inItem.getFirstLastLedsForItem();
+			firstLedPosNum = theRange.getFirstLedToLight();
+			lastLedPosNum = theRange.getLastLedToLight();
+		} else if (inLocation != null) { // null item. Just get the location values.
+			LedRange theRange = ((LocationABC) inLocation).getFirstLastLedsForLocation();
+			firstLedPosNum = theRange.getFirstLedToLight();
+			lastLedPosNum = theRange.getLastLedToLight();
+		} else {
+			LOGGER.error("getLedCmdGroupListForItemOrLocation  no item nor location");
+			return ledCmdGroupList;
+		}
+
 		// if the led number is zero, we do not have tubes or lasers there. Do not proceed.
 		if (firstLedPosNum == 0)
-			return;
+			return ledCmdGroupList;
 
 		// This is how we send LED data to the remote controller. In this case, only one led sample range.
 		List<LedSample> ledSamples = new ArrayList<LedSample>();
-		LedCmdGroup ledCmdGroup = new LedCmdGroup(theLedController.getDeviceGuidStr(),
-			inLocation.getEffectiveLedChannel(),
-			firstLedPosNum,
-			ledSamples);
+		LedCmdGroup ledCmdGroup = new LedCmdGroup(netGuidStr, inLocation.getEffectiveLedChannel(), firstLedPosNum, ledSamples);
 
-		for (short ledPos = firstLedPosNum; ledPos < lastLedPosNum; ledPos++) {
-			LedSample ledSample = new LedSample(ledPos, ColorEnum.BLUE);
+		for (short ledPos = firstLedPosNum; ledPos <= lastLedPosNum; ledPos++) {
+			LedSample ledSample = new LedSample(ledPos, inColor);
 			ledSamples.add(ledSample);
 		}
 		ledCmdGroup.setLedSampleList(ledSamples);
 
 		ledCmdGroupList.add(ledCmdGroup);
-		inWi.setLedCmdStream(LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList));
+		return ledCmdGroupList;
+	}
 
+	// --------------------------------------------------------------------------
+	/**
+	 * Utility function to create LED command group. Will return a list, which may be empty if there is nothing to send. Caller should check for empty list.
+	 * Called now for setting WI LED pattern for crossbatch put.
+	 * @param inLocationList
+	 * @param inColor
+	 */
+	private List<LedCmdGroup> getLedCmdGroupListForLocationList(final List<OrderLocation> inLocationList, final ColorEnum inColor) {
+		List<LedCmdGroup> ledCmdGroupList = new ArrayList<LedCmdGroup>();
+		for (OrderLocation orderLocation : inLocationList) {
+			ISubLocation<?> theLocation = orderLocation.getLocation(); // this should never be null by database constraint
+			if (theLocation == null) {
+				LOGGER.error("null order location in getLedCmdGroupListForLocationList. How?");
+				continue;
+			}
+			short firstLedPosNum = theLocation.getFirstLedNumAlongPath();
+			short lastLedPosNum = theLocation.getLastLedNumAlongPath();
+
+			// Put the positions into increasing order.
+			if (firstLedPosNum > lastLedPosNum) {
+				Short temp = firstLedPosNum;
+				firstLedPosNum = lastLedPosNum;
+				lastLedPosNum = temp;
+			}
+
+			// The new way of sending LED data to the remote controller. Note getEffectiveXXX instead of getLedController
+			// This will throw if aisles/tiers are not configured yet. Lets avoid by the null checks.
+			LedController theController = null;
+			Short theChannel = 0;
+				theController = theLocation.getEffectiveLedController();
+				theChannel = theLocation.getEffectiveLedChannel();
+
+				// If this location has no controller, let's bail on led pattern
+			if (theController == null || theChannel == null || theChannel == 0)
+				continue; // just don't add a new ledCmdGrop to the WI command list
+
+			List<LedSample> ledSamples = new ArrayList<LedSample>();
+			LedCmdGroup ledCmdGroup = new LedCmdGroup(theController.getDeviceGuidStr(), theChannel, firstLedPosNum, ledSamples);
+
+			for (short ledPos = firstLedPosNum; ledPos <= lastLedPosNum; ledPos++) {
+				LedSample ledSample = new LedSample(ledPos, inColor);
+				ledSamples.add(ledSample);
+			}
+			ledCmdGroup.setLedSampleList(ledSamples);
+			ledCmdGroupList.add(ledCmdGroup);
+		}
+		return ledCmdGroupList;
 	}
 
 	// --------------------------------------------------------------------------
 	/**
 	 * Create the LED lighting pattern for the WI.
+	 * Note: no current use case gets us here
 	 * @param inWi
 	 * @param inOrderType
 	 * @param inItemId
@@ -1493,11 +1570,11 @@ public class Facility extends SubLocationABC<Facility> {
 		final ILocation<?> inLocation,
 		final String inUom) {
 
-		if(inWi == null) {
-			LOGGER.error("Unexpected null WorkInstruction processing "+inItemMasterId);
+		if (inWi == null) {
+			LOGGER.error("Unexpected null WorkInstruction processing " + inItemMasterId);
 			return;
 		}
-		
+
 		// Warning: the ledCmdStream must be set to "[]" if we bail. If not, site controller will NPE. Hence the check at this late stage
 		// This does not bail intentionally. Perhap should if led = 0.
 		String existingCmdString = inWi.getLedCmdStream();
@@ -1534,6 +1611,67 @@ public class Facility extends SubLocationABC<Facility> {
 		ledCmdGroupList.add(ledCmdGroup);
 		inWi.setLedCmdStream(LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList));
 	}
+
+	// -------UI support for lighting items and locations- START ------------------
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Light one location transiently. Any subsequent activity on the aisle controller will wipe this away.
+	 * May be called with BLACK to clear whatever you just sent. 
+	 */
+	public void lightOneLocation(final String inColorStr, final String inLocationNominalId) {
+		ColorEnum theColor = ColorEnum.valueOf(inColorStr);
+		if (theColor == ColorEnum.INVALID) {
+			LOGGER.error("lightOneLocation called with unknown color");
+			return;
+		}
+		ISubLocation<?> theLocation = this.findSubLocationById(inLocationNominalId);
+		if (theLocation == null || theLocation instanceof Facility) {
+			LOGGER.error("lightOneLocation called with unknown location");
+			return;
+		}
+		
+		List<LedCmdGroup> ledCmdGroupList = getLedCmdGroupListForItemOrLocation(null, theColor, theLocation);
+		if (ledCmdGroupList.size() == 0) {
+			LOGGER.info("lightOneLocation called for location with incomplete LED configuration");
+			return;
+		}
+		
+		String theLedCommands = LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList);
+		// Need to embed this in a command and send to site controller.
+		LOGGER.info("lightOneLocation called correctly. Need command and site controller implementation");
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Light one item. Any subsequent activity on the aisle controller will wipe this away.
+	 * May be called with BLACK to clear whatever you just sent.
+	 */
+	@SuppressWarnings("rawtypes")
+	public void lightOneItem(final String inColorStr, final String inItemPersistentId) {
+		ColorEnum theColor = ColorEnum.valueOf(inColorStr);
+		if (theColor == ColorEnum.INVALID) {
+			LOGGER.error("lightOneItem called with unknown color");
+			return;
+		}
+		Item theItem = Item.DAO.findByPersistentId(inItemPersistentId);
+		if (theItem == null) {
+			LOGGER.error("lightOneItem called with unknown item");
+			return;
+		}	
+		
+		LocationABC location = theItem.getStoredLocation();
+		List<LedCmdGroup> ledCmdGroupList = getLedCmdGroupListForItemOrLocation(theItem, theColor, location);
+		if (ledCmdGroupList.size() == 0) {
+			LOGGER.info("lightOneItem called for location with incomplete LED configuration");
+			return;
+		}
+		String theLedCommands = LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList);
+		// Need to embed this in a command and send to site controller.
+		LOGGER.info("lightOneItem called correctly. Need command and site controller implementation");
+	}
+
+	// -------UI support for lighting items and locations- END-----------------------
 
 	/**
 	 * Compare Items by their ItemMasterDdc.

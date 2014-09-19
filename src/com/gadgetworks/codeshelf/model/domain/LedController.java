@@ -37,7 +37,8 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-@CacheStrategy(useBeanCache = true)@Table(name = "led_controller")
+@CacheStrategy(useBeanCache = true)
+@Table(name = "led_controller")
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 //@ToString(doNotUseGetters = true)
 public class LedController extends WirelessDeviceABC {
@@ -51,7 +52,7 @@ public class LedController extends WirelessDeviceABC {
 		public LedControllerDao(final ISchemaManager inSchemaManager) {
 			super(inSchemaManager);
 		}
-		
+
 		public final Class<LedController> getDaoClass() {
 			return LedController.class;
 		}
@@ -89,7 +90,7 @@ public class LedController extends WirelessDeviceABC {
 	public final void removeLocation(ISubLocation<?> inSubLocation) {
 		locations.remove(inSubLocation);
 	}
-	
+
 	//  Called from the UI, so really should return any persistence error.
 	// Perhaps this should be at ancestor level. CHE changes this field only. LED controller changes domain ID and controller ID.
 	// Therefore, see  and consider declone from Che::changeControllerId()

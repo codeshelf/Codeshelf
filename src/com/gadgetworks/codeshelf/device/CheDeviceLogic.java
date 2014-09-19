@@ -255,7 +255,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		final LedSample inLedSample,
 		final EffectEnum inEffect) {
 
-		LOGGER.info("Light position: " + inLedSample.getPosition() + " color: " + inLedSample.getColor());
+		// The caller logs more concisely. This would log each LED separately.
+		// LOGGER.info("Light position: " + inLedSample.getPosition() + " color: " + inLedSample.getColor());
 		INetworkDevice device = mDeviceManager.getDeviceByGuid(inControllerGuid);
 		if (device instanceof AisleDeviceLogic) {
 			AisleDeviceLogic aisleDevice = (AisleDeviceLogic) device;
@@ -878,6 +879,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 * Send to the LED controller the active picks for the work instruction that's active on the CHE now.
 	 */
 	private void showActivePicks() {
+		final int kMaxLedSetsToLog = 20;
+		
 		if (mActivePickWiList.size() > 0) {
 			// The first WI has the SKU and location info.
 			WorkInstruction firstWi = mActivePickWiList.get(0);
@@ -900,6 +903,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			// This is not about clearing controllers/channels this CHE had lights on for.  Rather, it was about iterating the command groups and making sure
 			// we do not clear out the first group when adding on a second. This is a concern for simultaneous multiple dispatch--not currently done.
 
+			String myGuidStr = getGuid().getHexStringNoPrefix();
+			
 			for (Iterator<LedCmdGroup> iterator = ledCmdGroups.iterator(); iterator.hasNext();) {
 				LedCmdGroup ledCmdGroup = (LedCmdGroup) iterator.next();
 
@@ -917,18 +922,32 @@ public class CheDeviceLogic extends DeviceLogicABC {
 						lastLedController = ledController;
 					}
 
+					NetGuid ledControllerGuid = ledController.getGuid();
+					String controllerGuidStr = ledControllerGuid.getHexStringNoPrefix();
+					short cmdGroupChannnel = ledCmdGroup.getChannelNum();
+					String toLogString = "CHE " + myGuidStr + " telling "+ controllerGuidStr + " to set LEDs. "+ EffectEnum.FLASH;
+					Integer setCount = 0;
 					for (LedSample ledSample : ledCmdGroup.getLedSampleList()) {
 
+						// why are we doing this? Aren't the samples made correctly?
 						ledSample.setPosition(currLedNum++);
 
-						// Send the LED display command.
-						ledControllerSetLed(ledController.getGuid(), ledCmdGroup.getChannelNum(), ledSample, EffectEnum.FLASH);
-
+						// Add this LED display to the aisleController. We are accumulating the log information here rather than logging separate in the called routine.
+						ledControllerSetLed(ledControllerGuid, cmdGroupChannnel, ledSample, EffectEnum.FLASH);
+						
+						// Log concisely instead of each ledCmd individually
+						setCount ++;
+						if (setCount <= kMaxLedSetsToLog)
+							toLogString  = toLogString + " " + ledSample.getPosition() + ":" + ledSample.getColor();				
 					}
+					if (setCount > 0)
+						LOGGER.info(toLogString);
+					if (setCount > kMaxLedSetsToLog)
+						LOGGER.info("And more LED not logged. Total LED Sets this update = " + setCount);
 
 					if ((ledController.getDeviceStateEnum() != null)
 							&& (ledController.getDeviceStateEnum() == NetworkDeviceStateEnum.STARTED)) {
-						ledControllerShowLeds(ledController.getGuid());
+						ledControllerShowLeds(ledControllerGuid);
 					}
 				}
 			}

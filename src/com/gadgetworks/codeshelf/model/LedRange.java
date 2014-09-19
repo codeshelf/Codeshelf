@@ -5,6 +5,11 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.gadgetworks.codeshelf.model.domain.LedController;
+
 /**
  * Primarily a class to return some out parameters.
  * But does the led computation for non-slotted
@@ -31,6 +36,8 @@ public class LedRange {
 		mMetersFromAnchor = 0.0;
 		mFirstLedNearAnchor = true;
 	}
+
+	private static final Logger		LOGGER		= LoggerFactory.getLogger(LedRange.class);
 
 	public void setLedCountToLight(int inLedsToLight) {
 		mLedCountToLight = inLedsToLight; // probably will not call this for a while. Just use the default of 4.
@@ -100,11 +107,11 @@ public class LedRange {
 		}
 		int ledSpan = mLastLocationLed - mFirstLocationLed + 1;
 		if (mMetersFromAnchor < 0.0 || mLocationWidth < 0.0) {
-			// log?
+			LOGGER.error("unexpected width or metersFromAnchor in _computeLedsToLight");;
 			return;
 		}
 		if (mMetersFromAnchor > mLocationWidth) {
-			// log?
+			LOGGER.error("metersFromAnchor larger than width in _computeLedsToLight");;
 			return;
 		}
 		Double fractionOfSpan = 0.0;
