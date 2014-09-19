@@ -65,7 +65,7 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 	private Bay					mLastReadBay;
 	private Bay					mLastReadBayForVertices;
 	@SuppressWarnings("unused")
-	private Tier				mLastReadTier; // actually, this is used, suppressing bogus warning
+	private Tier				mLastReadTier;													// actually, this is used, suppressing bogus warning
 	private int					mBayCountThisAisle;
 	private int					mTierCountThisBay;
 
@@ -339,20 +339,22 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 		// If light tube extends the full length of the tier (rather than coming up a bit short), recommend inGuardLow = 2 and inGuardHigh = 1.
 		// Any remainder slot will essentially inGuardHigh += 1 until on slots until the remainder runs out.
 
+		final int kMaxLedsPerSlot = 4;
+
 		// First get our list of slot. Fighting through the cast.
 		List<Slot> slotList = new ArrayList<Slot>();
-		
+
 		@SuppressWarnings("rawtypes")
 		List<? extends ISubLocation> locationList = inTier.getChildren();
-		
+
 		@SuppressWarnings("unchecked")
 		Collection<? extends Slot> slotCollection = (Collection<? extends Slot>) locationList;
-		
+
 		slotList.addAll(slotCollection);
 
 		//List<? extends ISubLocation> locationList = inTier.getChildren();
 		//slotList.addAll((Collection<? extends Slot>) locationList);
-		
+
 		// sort the slots in the direction the led count will increase		
 		Collections.sort(slotList, new SlotNameComparable());
 		if (!inSlotLedsIncrease)
@@ -401,6 +403,14 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 				lastLitLed = 0;
 				thisSlotEndLed = 0;
 			}
+			// A correction for v4.1, mostly for good egs. Do not set more than 4 leds.
+			// And if <= halfway through the slot, take it out of the upper. else the lower.
+			if (lastLitLed - firstLitLed > kMaxLedsPerSlot) {
+				if (slotIndex > slotCount / 2)
+					firstLitLed = (short) (lastLitLed - kMaxLedsPerSlot + 1);
+				else
+					lastLitLed = (short) (firstLitLed + kMaxLedsPerSlot - 1);
+			}
 
 			thisSlot.setFirstLedNumAlongPath((short) (firstLitLed));
 			thisSlot.setLastLedNumAlongPath((short) (lastLitLed));
@@ -445,7 +455,10 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 		}
 		// Now the tricky bit of setting the slot leds
 		boolean directionIncrease = inTier.isMTransientLedsIncrease();
-		setSlotLeds(inTier, ledCount, directionIncrease, 2, 1); // Guards set at low = 2 and high = 1. Could come from file.
+		if (ledCount == 32) // kludge for GoodEggs
+			setSlotLeds(inTier, ledCount, directionIncrease, 0, 0); // Guards set at low = 2 and high = 1. Could come from file.
+		else
+			setSlotLeds(inTier, ledCount, directionIncrease, 2, 1); // Guards set at low = 2 and high = 1. Could come from file.
 
 		return returnValue;
 	}
@@ -460,7 +473,7 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 		List<Tier> tiersList = mFacility.getChildrenAtLevel(Tier.class);
 		int aisleTierCount = 0;
 		for (Tier tier : tiersList) {
-			Short firstLedNum  = tier.getFirstLedNumAlongPath();
+			Short firstLedNum = tier.getFirstLedNumAlongPath();
 			if (firstLedNum != null && firstLedNum == 1) {
 				aisleTierCount++;
 			}
@@ -520,7 +533,7 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 		// For this, we might editing existing vertices, or making new.
 		if (mFacility == null || inLastBayThisAisle == null)
 			return;
-		
+
 		Double depthM = mDepthCm / 100.0; // Is mDepth still current? Perhaps not, probably reflects next aisle as we are finalizing this one.
 
 		// Aisle anchorX and anchorY are in the facility coordinate system.
@@ -531,12 +544,11 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 		Double boundaryPointX = 0.0;
 		Double boundaryPointY = 0.0;
 		if (isXOrientedAisle) {
-			aislePickEndX =  inLastBayThisAisle.getAnchorPosX() + inLastBayThisAisle.getPickFaceEndPosX();
+			aislePickEndX = inLastBayThisAisle.getAnchorPosX() + inLastBayThisAisle.getPickFaceEndPosX();
 			boundaryPointX = aislePickEndX;
 			boundaryPointY = depthM;
-		}
-		else {
-			aislePickEndY =  inLastBayThisAisle.getAnchorPosY() + inLastBayThisAisle.getPickFaceEndPosY();
+		} else {
+			aislePickEndY = inLastBayThisAisle.getAnchorPosY() + inLastBayThisAisle.getPickFaceEndPosY();
 			boundaryPointY = aislePickEndY;
 			boundaryPointX = depthM;
 		}
@@ -839,7 +851,7 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 		if (mIsOrientationX) {
 			if (mLastReadBay != null)
 				anchorX = mLastReadBay.getAnchorPosX() + mLastReadBay.getPickFaceEndPosX();
-			pickFaceEndX = lengthM; 
+			pickFaceEndX = lengthM;
 		} else {
 			if (mLastReadBay != null)
 				anchorY = mLastReadBay.getAnchorPosY() + mLastReadBay.getPickFaceEndPosY();
