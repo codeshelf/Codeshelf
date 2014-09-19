@@ -46,8 +46,6 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
  *  @author jeffw
  */
 
-//@Entity
-//@CacheStrategy(useBeanCache = true)
 @MappedSuperclass
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 @IndexSubclasses

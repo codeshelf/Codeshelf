@@ -10,7 +10,7 @@ import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.domain.Facility.FacilityDao;
 import com.gadgetworks.codeshelf.model.domain.Organization.OrganizationDao;
-import com.gadgetworks.codeshelf.platform.services.PersistencyService;
+import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
 import com.natpryce.makeiteasy.Instantiator;
 import com.natpryce.makeiteasy.Property;
 import com.natpryce.makeiteasy.PropertyLookup;

@@ -30,7 +30,7 @@ import com.gadgetworks.codeshelf.model.domain.PathSegment;
 import com.gadgetworks.codeshelf.model.domain.PathSegment.PathSegmentDao;
 import com.gadgetworks.codeshelf.model.domain.WorkArea;
 import com.gadgetworks.codeshelf.model.domain.WorkArea.WorkAreaDao;
-import com.gadgetworks.codeshelf.platform.services.PersistencyService;
+import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ArgsClass;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.CreatePathRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectMethodRequest;

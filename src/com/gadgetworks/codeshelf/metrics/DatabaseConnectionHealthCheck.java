@@ -5,7 +5,7 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
-import com.gadgetworks.codeshelf.platform.services.PersistencyService;
+import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
 
 public class DatabaseConnectionHealthCheck extends CodeshelfHealthCheck {
 

@@ -14,6 +14,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import javax.persistence.Column;
@@ -87,7 +88,7 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 
 	}
 
-	public final List<T> findByFilter(String inFilter, Map<String, Object> inFilterParams) {
+	public final List<T> findByFilter(Map<String, Object> inFilterParams) {
 		throw new NotImplementedException();
 	}
 
@@ -166,11 +167,6 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 	}
 
 	@Override
-	public Boolean isNewOrDirty(IDomainObject inDomainObject) {
-		throw new NotImplementedException();
-	}
-
-	@Override
 	public void clearAllCaches() {
 	}
 
@@ -178,5 +174,17 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 	public T findByPersistentId(String inPersistentIdAsString) {
 		UUID persistentId = UUID.fromString(inPersistentIdAsString);
 		return this.findByPersistentId(persistentId);
+	}
+
+	@Override
+	public void broadcastAdd(IDomainObject inDomainObject) {
+	}
+
+	@Override
+	public void broadcastUpdate(IDomainObject inDomainObject, Set<String> inChangedProperties) {
+	}
+
+	@Override
+	public void broadcastDelete(IDomainObject inDomainObject) {
 	}
 }

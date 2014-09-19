@@ -11,6 +11,7 @@ import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,9 +19,8 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
-import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.platform.services.PersistencyService;
+import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -42,7 +42,8 @@ public class Aisle extends SubLocationABC<Facility> {
 	@Inject
 	public static ITypedDao<Aisle>	DAO;
 
-	@ManyToOne(optional = false)
+	@NotNull
+	@ManyToOne
 	@JoinColumn(name = "parent_facility")
 	private Facility parent;
 	
@@ -65,6 +66,7 @@ public class Aisle extends SubLocationABC<Facility> {
 
 	public Aisle(Facility parent, String domainId, Point inAnchorPoint, Point inPickFaceEndPoint) {
 		super(parent, domainId, inAnchorPoint, inPickFaceEndPoint);
+		this.parent = parent;
 	}
 
 	@SuppressWarnings("unchecked")

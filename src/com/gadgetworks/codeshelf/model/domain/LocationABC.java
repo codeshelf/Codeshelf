@@ -39,7 +39,7 @@ import com.gadgetworks.codeshelf.model.LedRange;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.platform.services.PersistencyService;
+import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
 import com.gadgetworks.codeshelf.util.StringUIConverter;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -65,8 +65,6 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-//@MappedSuperclass
-//@CacheStrategy(useBeanCache = false)
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @Table(name = "location")
 @DiscriminatorColumn(name = "dtype", discriminatorType = DiscriminatorType.STRING)
@@ -479,12 +477,10 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		@SuppressWarnings("rawtypes")
 		ITypedDao<SubLocationABC> dao = SubLocationABC.DAO;
 		Map<String, Object> filterParams = new HashMap<String, Object>();
-		filterParams.put("persistentId", this.getPersistentId().toString());
+		filterParams.put("parent.persistentId", this.getPersistentId().toString());
 		filterParams.put("domainId", inLocationId);
-		
 		@SuppressWarnings("rawtypes")
-		List<SubLocationABC> resultSet = dao.findByFilter("parent.persistentId = :persistentId and domainId = :domainId",
-			filterParams);
+		List<SubLocationABC> resultSet = dao.findByFilter(filterParams);
 		if ((resultSet != null) && (resultSet.size() > 0)) {
 			result = resultSet.get(0);
 		}

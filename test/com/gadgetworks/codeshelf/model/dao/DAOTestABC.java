@@ -65,13 +65,15 @@ import com.gadgetworks.codeshelf.model.domain.WorkArea;
 import com.gadgetworks.codeshelf.model.domain.WorkArea.WorkAreaDao;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction.WorkInstructionDao;
-import com.gadgetworks.codeshelf.platform.services.PersistencyService;
+import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
 
 public abstract class DAOTestABC {
 	
 	static {
 		Configuration.loadConfig("test");
 	}
+	
+	PersistencyService persistencyService;
 	
 	protected OrganizationDao		mOrganizationDao;
 	protected LocationABCDao		mLocationDao;
@@ -112,9 +114,8 @@ public abstract class DAOTestABC {
 
 	@Before
 	public final void setup() {
-		
-		PersistencyService persistencyService = new PersistencyService();
-		persistencyService.start();
+		this.persistencyService = new PersistencyService();
+		this.persistencyService.start();
 
 		mOrganizationDao = new OrganizationDao(persistencyService);
 		Organization.DAO = mOrganizationDao;

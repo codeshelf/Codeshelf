@@ -35,7 +35,7 @@ import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
 import com.gadgetworks.codeshelf.model.domain.User;
-import com.gadgetworks.codeshelf.platform.services.PersistencyService;
+import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
 import com.gadgetworks.codeshelf.report.IPickDocumentGenerator;
 import com.gadgetworks.codeshelf.ws.jetty.server.JettyWebSocketServer;
 import com.google.common.collect.ImmutableMap;

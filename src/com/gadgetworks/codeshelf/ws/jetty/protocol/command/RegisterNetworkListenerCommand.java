@@ -34,13 +34,13 @@ public class RegisterNetworkListenerCommand extends CommandABC {
 	@Override
 	public ResponseABC exec() {
 		UUID networkId = request.getNetworkId();
-		String filterClause = "parent.persistentId = :theId";
+		// String filterClause = "parent.persistentId = :theId";
 		Map<String, Object> filterParams = new HashMap<String, Object>();
 		filterParams.put("theId", networkId);
 
 		// retrieve current list of CHEs and LED controllers
-		List<Che> ches = Che.DAO.findByFilter(filterClause, filterParams);
-		List<LedController> ledContollers = LedController.DAO.findByFilter(filterClause, filterParams);
+		List<Che> ches = Che.DAO.findByFilter(filterParams);
+		List<LedController> ledContollers = LedController.DAO.findByFilter(filterParams);
 
 		// register network change listener
 		NetworkChangeListener listener = new NetworkChangeListener();

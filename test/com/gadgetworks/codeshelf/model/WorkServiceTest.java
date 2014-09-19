@@ -29,7 +29,7 @@ public class WorkServiceTest<E> {
 		for (int i = 0; i < 4; i++) {
 			inputs.add(generateValidWorkInstruction(nextUniqueTimestamp()));
 		}
-		when(workInstructionDao.findByFilter(anyString(), anyMap())).thenReturn(inputs);
+		when(workInstructionDao.findByFilter(anyMap())).thenReturn(inputs);
 
 		WorkService workService = new WorkService();
 		List<WiSetSummary> workSummaries  = workService.workSummary("testCheId", "testFacilityId");

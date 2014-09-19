@@ -7,6 +7,7 @@ package com.gadgetworks.codeshelf.model.dao;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
@@ -29,7 +30,8 @@ public interface ITypedDao<T> extends IDao {
 
 	List<T> findByPersistentIdList(List<UUID> inPersistentIdList);
 
-	List<T> findByFilter(String inFilter, Map<String, Object> inFilterParams);
+	//List<T> findByFilter(String inFilter, Map<String, Object> inFilterParams);
+	List<T> findByFilter(Map<String, Object> inFilterParams);
 
 	<L> List<L> findByFilterAndClass(String inFilter, Map<String, Object> inFilterParams, Class<L> inClass);
 
@@ -39,7 +41,7 @@ public interface ITypedDao<T> extends IDao {
 
 	List<T> getAll();
 
-	void pushNonPersistentUpdates(T inDomainObject);
+	// void pushNonPersistentUpdates(T inDomainObject);
 
 	Class<T> getDaoClass();
 	
@@ -51,12 +53,15 @@ public interface ITypedDao<T> extends IDao {
 	
 	void endTransaction();
 	
-	Boolean isNewOrDirty(IDomainObject inDomainObject);
-	
 	/**
 	 * Exposed for a few cases until we understand the caching mechanism better. 
 	 * @see tests of the outbound order importer
 	 */
 	void clearAllCaches();
 
+	void broadcastAdd(IDomainObject inDomainObject);
+
+	void broadcastUpdate(IDomainObject inDomainObject, Set<String> inChangedProperties);
+
+	void broadcastDelete(IDomainObject inDomainObject);
 }

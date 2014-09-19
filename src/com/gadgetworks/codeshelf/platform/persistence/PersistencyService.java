@@ -1,19 +1,20 @@
-package com.gadgetworks.codeshelf.platform.services;
+package com.gadgetworks.codeshelf.platform.persistence;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Properties;
 
 import lombok.Getter;
 
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.gadgetworks.codeshelf.platform.Service;
+import com.gadgetworks.codeshelf.platform.ServiceNotInitializedException;
 import com.gadgetworks.codeshelf.platform.multitenancy.Tenant;
 import com.google.inject.Singleton;
 
@@ -127,7 +128,7 @@ public class PersistencyService extends Service {
 	*/
 
 	public SessionFactory createTenantSessionFactory(Tenant tenant) {
-		if (isInitialized==false) {
+		if (this.isInitialized()==false) {
 			throw new ServiceNotInitializedException();
 		}
 		// ignore tenant and shard for now using static config data
@@ -140,6 +141,7 @@ public class PersistencyService extends Service {
 	    	configuration.setProperty("hibernate.connection.url", connectionUrl);
 	    	configuration.setProperty("hibernate.connection.username", this.userId);
 	    	configuration.setProperty("hibernate.connection.password", this.password);
+	    	configuration.setInterceptor(new HibernateInterceptor());
 	    	//configuration.setProperty("hibernate.connection.username", tenant.getName());
 	    	//configuration.setProperty("hibernate.connection.password", tenant.getDbPassword());
 	        StandardServiceRegistryBuilder ssrb = new StandardServiceRegistryBuilder().applySettings(configuration.getProperties());
@@ -161,6 +163,7 @@ public class PersistencyService extends Service {
 			LOGGER.debug(e.getKey()+" - "+e.getValue());
 		}
 		*/
+		
 		// fetch database config from properties file
 		this.hostName = System.getProperty("db.address");
 		if (this.hostName==null) {
@@ -187,7 +190,7 @@ public class PersistencyService extends Service {
 			System.exit(-1);
 		}
 		this.password = System.getProperty("db.password");
-		this.isInitialized = true;
+		this.setInitialized(true);
 		LOGGER.info(PersistencyService.class.getSimpleName()+" started");
 		return true;
 	}
@@ -227,5 +230,15 @@ public class PersistencyService extends Service {
 	private Tenant getCurrentTenant() {
 		return this.fixedTenant;
 	}
+	
+	public final void beginTenantTransaction() {
+		Session session = getCurrentTenantSession();
+		Transaction tx = session.beginTransaction();
+	}
 
+	public final void endTenantTransaction() {
+		Session session = getCurrentTenantSession();
+		Transaction tx = session.getTransaction();
+		tx.commit();
+	}
 }

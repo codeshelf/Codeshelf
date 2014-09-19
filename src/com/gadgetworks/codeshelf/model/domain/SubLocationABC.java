@@ -28,16 +28,13 @@ import com.gadgetworks.codeshelf.model.TravelDirectionEnum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.platform.services.PersistencyService;
+import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
 import com.gadgetworks.codeshelf.util.StringUIConverter;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 @Entity
-//@MappedSuperclass
-//@CacheStrategy(useBeanCache = false)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-//@ToString(doNotUseGetters = true)
 public abstract class SubLocationABC<P extends IDomainObject & ISubLocation<?>> extends LocationABC<P> implements ISubLocation<P> {
 
 	@SuppressWarnings("rawtypes")

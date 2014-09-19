@@ -16,7 +16,7 @@ import com.gadgetworks.codeshelf.model.domain.Facility.FacilityDao;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail.OrderDetailDao;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader.OrderHeaderDao;
 import com.gadgetworks.codeshelf.model.domain.Organization.OrganizationDao;
-import com.gadgetworks.codeshelf.platform.services.PersistencyService;
+import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
 
 public class OptimisticLockExceptionTest {
 

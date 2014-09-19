@@ -25,10 +25,12 @@ import javax.persistence.ManyToOne;
 import javax.persistence.MapKey;
 import javax.persistence.OneToMany;
 import javax.persistence.Transient;
+import javax.validation.constraints.NotNull;
 
 import lombok.Getter;
 import lombok.Setter;
 
+import org.apache.commons.lang.NotImplementedException;
 import org.postgresql.util.PSQLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,7 +58,7 @@ import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.platform.services.PersistencyService;
+import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
 import com.gadgetworks.codeshelf.validation.DefaultErrors;
 import com.gadgetworks.codeshelf.validation.ErrorCode;
 import com.gadgetworks.codeshelf.validation.Errors;
@@ -98,7 +100,8 @@ public class Facility extends SubLocationABC<Facility> {
 	private static final Logger				LOGGER			= LoggerFactory.getLogger(Facility.class);
 
 	// The owning organization.
-	@ManyToOne(optional = false)
+	@NotNull
+	@ManyToOne
 	@Getter
 	private Organization					parentOrganization;
 
@@ -106,7 +109,7 @@ public class Facility extends SubLocationABC<Facility> {
 	//	@ManyToOne(optional = false)
 	//	private SubLocationABC					parent;
 
-	@OneToMany(mappedBy = "parent")
+	@OneToMany(mappedBy = "parent",targetEntity=Aisle.class)
 	@Getter
 	private List<Aisle>						aisles			= new ArrayList<Aisle>();
 
@@ -742,10 +745,9 @@ public class Facility extends SubLocationABC<Facility> {
 
 		// Delete any planned WIs for this CHE.
 		Map<String, Object> filterParams = new HashMap<String, Object>();
-		filterParams.put("chePersistentId", inChe.getPersistentId().toString());
-		filterParams.put("type", WorkInstructionTypeEnum.PLAN.toString());
-		for (WorkInstruction wi : WorkInstruction.DAO.findByFilter("assignedChe.persistentId = :chePersistentId and typeEnum = :type",
-			filterParams)) {
+		filterParams.put("assignedChe.persistentId", inChe.getPersistentId().toString());
+		filterParams.put("typeEnum", WorkInstructionTypeEnum.PLAN.toString());
+		for (WorkInstruction wi : WorkInstruction.DAO.findByFilter(filterParams)) {
 			try {
 
 				Che assignedChe = wi.getAssignedChe();
@@ -785,9 +787,11 @@ public class Facility extends SubLocationABC<Facility> {
 			}
 		}
 
+		/*
 		for (Che changedChe : changedChes) {
 			changedChe.getDao().pushNonPersistentUpdates(changedChe);
 		}
+		*/
 
 		Timestamp theTime = new Timestamp(System.currentTimeMillis());
 
@@ -879,6 +883,8 @@ public class Facility extends SubLocationABC<Facility> {
 		filterParams.put("type", WorkInstructionTypeEnum.PLAN.toString());
 		filterParams.put("pos", startingPathPos);
 		String filter = "(assignedChe.persistentId = :chePersistentId) and (typeEnum = :type) and (posAlongPath >= :pos)";
+		throw new NotImplementedException("Needs to be implemented with a custom query");
+		/*
 		for (WorkInstruction wi : WorkInstruction.DAO.findByFilter(filter, filterParams)) {
 			wiResultList.add(wi);
 		}
@@ -886,6 +892,7 @@ public class Facility extends SubLocationABC<Facility> {
 		// New from V4. make sure sorted correctly. Hard to believe we did not catch this before. (Should we have the DB sort for us?)
 		Collections.sort(wiResultList, new GroupAndSortCodeComparator());
 		return wiResultList;
+		*/
 	}
 
 	private void deleteExistingShortWiToFacility(final OrderDetail inOrderDetail) {

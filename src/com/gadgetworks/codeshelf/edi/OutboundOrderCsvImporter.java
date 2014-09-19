@@ -342,9 +342,7 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 			try {
 				result.setActive(true);
 				result.setUpdated(inEdiProcessTime);
-				if (mOrderGroupDao.isNewOrDirty(result)) {
-					mOrderGroupDao.store(result);
-				}
+				mOrderGroupDao.store(result);
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}
@@ -523,9 +521,7 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 			try {
 				result.setActive(true);
 				result.setUpdated(inEdiProcessTime);
-				if (mItemMasterDao.isNewOrDirty(result)) {
-					mItemMasterDao.store(result);
-				}
+				mItemMasterDao.store(result);
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}

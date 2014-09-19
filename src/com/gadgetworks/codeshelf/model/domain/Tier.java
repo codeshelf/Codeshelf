@@ -26,7 +26,7 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.platform.services.PersistencyService;
+import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 

@@ -25,7 +25,7 @@ import com.gadgetworks.codeshelf.model.domain.IEdiService;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
-import com.gadgetworks.codeshelf.platform.services.PersistencyService;
+import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
 import com.google.inject.Inject;
 
 /**

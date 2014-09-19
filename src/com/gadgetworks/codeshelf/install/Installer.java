@@ -17,7 +17,7 @@ import com.gadgetworks.codeshelf.model.domain.Organization.OrganizationDao;
 import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.model.domain.User.UserDao;
-import com.gadgetworks.codeshelf.platform.services.PersistencyService;
+import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Inject;

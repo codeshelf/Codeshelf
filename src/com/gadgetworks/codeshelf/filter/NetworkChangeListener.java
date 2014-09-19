@@ -49,13 +49,13 @@ public class NetworkChangeListener implements ObjectEventListener {
 	}
 	
 	private NetworkStatusResponse generateResponse() {
-		String filterClause = "parent.persistentId = :theId";
+		// String filterClause = "parent.persistentId = :theId";
 		Map<String, Object> filterParams = new HashMap<String, Object>();
-		filterParams.put("theId", this.networkId);
+		filterParams.put("parent.persistentId", this.networkId);
 	
 		// retrieve current list of CHEs and LED controllers
-		List<Che> ches = Che.DAO.findByFilter(filterClause, filterParams);
-		List<LedController> ledContollers = LedController.DAO.findByFilter(filterClause, filterParams);
+		List<Che> ches = Che.DAO.findByFilter(filterParams);
+		List<LedController> ledContollers = LedController.DAO.findByFilter(filterParams);
 	
 		// create response describing network devices
 		NetworkStatusResponse response = new NetworkStatusResponse();

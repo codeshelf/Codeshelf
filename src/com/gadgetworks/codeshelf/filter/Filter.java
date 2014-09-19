@@ -28,7 +28,7 @@ public class Filter extends Listener {
 	}
 	
 	public List<IDomainObject> refreshMatchList() {
-		List<IDomainObject> objectMatchList = dao.findByFilter(clause, params);
+		List<IDomainObject> objectMatchList = dao.findByFilter(params);
 		List<UUID> objectIds = new LinkedList<UUID>();
 		for (IDomainObject object : objectMatchList) {
 			objectIds.add(object.getPersistentId());
