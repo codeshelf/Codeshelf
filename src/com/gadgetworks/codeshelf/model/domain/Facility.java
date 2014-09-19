@@ -177,7 +177,7 @@ public class Facility extends SubLocationABC<Facility> {
 		setParentOrganization(organization);
 	}
 
-	public final static void setDAO(ITypedDao<Facility> dao) {
+	public final static void setDao(ITypedDao<Facility> dao) {
 		Facility.DAO = dao;
 	}
 
@@ -723,6 +723,7 @@ public class Facility extends SubLocationABC<Facility> {
 			LOGGER.error("persistence error storing CodeshelfNetwork", e);
 		}
 		
+		result.createDefaultSiteControllerUser(); // this should go away. will only create default user+sitecon if it doesn't exist
 		return result;
 	}
 	

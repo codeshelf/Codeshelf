@@ -17,8 +17,8 @@ import com.natpryce.makeiteasy.PropertyLookup;
 public class DAOMaker {
 
 	public DAOMaker(ISchemaManager mSchemaManager) {
-		Organization.setDAO(new OrganizationDao(mSchemaManager));
-		Facility.setDAO(new FacilityDao(mSchemaManager));
+		Organization.setDao(new OrganizationDao(mSchemaManager));
+		Facility.setDao(new FacilityDao(mSchemaManager));
 
 	}
 

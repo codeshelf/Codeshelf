@@ -63,6 +63,8 @@ import com.gadgetworks.codeshelf.model.domain.Tier;
 import com.gadgetworks.codeshelf.model.domain.Tier.TierDao;
 import com.gadgetworks.codeshelf.model.domain.UomMaster;
 import com.gadgetworks.codeshelf.model.domain.UomMaster.UomMasterDao;
+import com.gadgetworks.codeshelf.model.domain.User;
+import com.gadgetworks.codeshelf.model.domain.User.UserDao;
 import com.gadgetworks.codeshelf.model.domain.Vertex;
 import com.gadgetworks.codeshelf.model.domain.Vertex.VertexDao;
 import com.gadgetworks.codeshelf.model.domain.WorkArea;
@@ -77,6 +79,7 @@ public abstract class DAOTestABC {
 	}
 	
 	protected OrganizationDao		mOrganizationDao;
+	protected UserDao				mUserDao;
 	protected LocationABCDao		mLocationDao;
 	protected SubLocationDao		mSubLocationDao;
 	protected FacilityDao			mFacilityDao;
@@ -135,6 +138,9 @@ public abstract class DAOTestABC {
 
 		mOrganizationDao = new OrganizationDao(mSchemaManager);
 		Organization.DAO = mOrganizationDao;
+
+		mUserDao = new UserDao(mSchemaManager);
+		User.DAO = mUserDao;
 
 		mFacilityDao = new FacilityDao(mSchemaManager);
 		Facility.DAO = mFacilityDao;

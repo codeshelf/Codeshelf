@@ -110,18 +110,18 @@ public class User extends DomainObjectTreeABC<Organization> {
 	//@JsonProperty
 	private String				hashedPassword;
 
-	// Create date.
+	// Site controller - if present, this user is linked to a site controller 
 	@Column(nullable = true)
+	@ManyToOne(optional = true)
 	@Getter
 	@Setter
-	//@JsonProperty
 	private SiteController		siteController;
 
 	// Create date.
 	@Column(nullable = false)
 	@Getter
 	@Setter
-	//@JsonProperty
+	@JsonProperty
 	private Timestamp			created;
 
 	// Is it active.
@@ -144,6 +144,10 @@ public class User extends DomainObjectTreeABC<Organization> {
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<User> getDao() {
 		return DAO;
+	}
+	
+	public final static void setDao(ITypedDao<User> dao) {
+		User.DAO = dao;
 	}
 
 	public final String getDefaultDomainIdPrefix() {

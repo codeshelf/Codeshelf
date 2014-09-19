@@ -1,15 +1,20 @@
 package com.gadgetworks.codeshelf.filter;
 
 import java.util.Set;
-import java.util.UUID;
 
 import lombok.Getter;
 
+import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
+import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
+import com.gadgetworks.codeshelf.model.domain.LedController;
+import com.gadgetworks.codeshelf.model.domain.SiteController;
 import com.gadgetworks.codeshelf.model.domain.WirelessDeviceABC;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.NetworkStatusResponse;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.message.NetworkStatusMessage;
+import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
 
 public class NetworkChangeListener implements ObjectEventListener {
 
@@ -17,39 +22,65 @@ public class NetworkChangeListener implements ObjectEventListener {
 	String id;
 	
 	@Getter
-	private UUID networkId;
+	private CodeshelfNetwork network;
 
-	public NetworkChangeListener(UUID networkId,String id) {
-		this.networkId=networkId;
-		this.id=id;
+	private NetworkChangeListener(CodeshelfNetwork network,String listenerId) {
+		this.network=network;
+		this.id=listenerId;
 	}
 	
 	@Override
-	public ResponseABC processObjectAdd(IDomainObject inDomainObject) {
+	public MessageABC processObjectAdd(IDomainObject inDomainObject) {
 		return onAnythingChanged(inDomainObject);
 	}
 
 	@Override
-	public ResponseABC processObjectUpdate(IDomainObject inDomainObject, Set<String> inChangedProperties) {
+	public MessageABC processObjectUpdate(IDomainObject inDomainObject, Set<String> inChangedProperties) {
 		return onAnythingChanged(inDomainObject);
 	}
 
 	@Override
-	public ResponseABC processObjectDelete(IDomainObject inDomainObject) {
+	public MessageABC processObjectDelete(IDomainObject inDomainObject) {
 		return onAnythingChanged(inDomainObject);
 	}
 	
-	private ResponseABC onAnythingChanged(IDomainObject inDomainObject) {
+	private MessageABC onAnythingChanged(IDomainObject inDomainObject) {
+		CodeshelfNetwork network = null;
 		if(inDomainObject instanceof WirelessDeviceABC) {
 			WirelessDeviceABC device = (WirelessDeviceABC)inDomainObject;
-			CodeshelfNetwork network = device.getParent();
+			network = device.getParent();
 			
+		} else if(inDomainObject instanceof CodeshelfNetwork) {
+			network = (CodeshelfNetwork) inDomainObject;
+		}
+		if(network != null) {
 			// if the object changed within this network, generate a new network status response
-			if(network.getPersistentId().equals(this.networkId)) {
-				return NetworkStatusResponse.generate(networkId);
+			if(network.equals(this.network)) {
+				return new NetworkStatusMessage(network);
 			}
 		}
 		return null;
 	}
+	
+	public static void registerWithSession(CsSession session, CodeshelfNetwork network, IDaoProvider daoProvider) {
+		// register network change listener
+		NetworkChangeListener listener = new NetworkChangeListener(network,"network-change-listener");
+		session.registerObjectEventListener(listener);
+
+		// register session with daos
+		Class<?> cheClass = Che.class;
+		@SuppressWarnings("unchecked")
+		ITypedDao<IDomainObject> cheDao = daoProvider.getDaoInstance((Class<IDomainObject>) cheClass);
+		session.registerAsDAOListener(cheDao);
+		
+		Class<?> ledControllerClass = LedController.class;
+		@SuppressWarnings("unchecked")
+		ITypedDao<IDomainObject> ledControllerDao = daoProvider.getDaoInstance((Class<IDomainObject>) ledControllerClass);
+		session.registerAsDAOListener(ledControllerDao);
+
+		Class<?> siteControllerClass = SiteController.class;
+		@SuppressWarnings("unchecked")
+		ITypedDao<IDomainObject> siteControllerDao = daoProvider.getDaoInstance((Class<IDomainObject>) siteControllerClass);
+		session.registerAsDAOListener(siteControllerDao);	}
 	
 }

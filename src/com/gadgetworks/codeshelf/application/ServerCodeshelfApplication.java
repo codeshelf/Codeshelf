@@ -30,6 +30,7 @@ import com.gadgetworks.codeshelf.metrics.OpenTsdbReporter;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.IDatabase;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Path;
@@ -244,12 +245,20 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		
 		// Recompute path positions, 
 		//   and ensure IronMq configuration
+		//   and create a default site controller user if doesn't already exist
 		for (Organization organization : mOrganizationDao.getAll()) {
 			for (Facility facility : organization.getFacilities()) {
 				for (Path path : facility.getPaths()) {
 					// TODO: Remove once we have a tool for linking path segments to locations (aisles usually).
 					facility.recomputeLocationPathDistances(path);
 				}
+								
+				// create a default site controller and user for the first facility you see
+				// this should go away
+				for(CodeshelfNetwork network : facility.getNetworks()) {
+					network.createDefaultSiteControllerUser(); // does nothing if user already exists 
+				}
+
 				facility.ensureIronMqService(); // This is weak, but the only place we know that runs once after most data is present
 			}
 		}

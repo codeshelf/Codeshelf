@@ -109,6 +109,10 @@ public class Che extends WirelessDeviceABC {
 	public final ITypedDao<Che> getDao() {
 		return DAO;
 	}
+	
+	public final static void setDao(ITypedDao<Che> dao) {
+		Che.DAO = dao;
+	}
 
 	public final String getDefaultDomainIdPrefix() {
 		return "CHE";

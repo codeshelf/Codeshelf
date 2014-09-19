@@ -43,6 +43,12 @@ public interface IRadioController extends Runnable {
 	
 	// --------------------------------------------------------------------------
 	/**
+	 *	Set the network ID (call before startController) 
+	 */
+	void setNetworkId(final NetworkId inNetworkId);
+	
+	// --------------------------------------------------------------------------
+	/**
 	 *	Perform a controlled start of the controller.
 	 */
 	void startController(byte inPreferredChannel);
@@ -89,5 +95,11 @@ public interface IRadioController extends Runnable {
 	 * @return
 	 */
 	INetworkDevice getNetworkDevice(NetGuid inGuid);
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @return
+	 */
+	boolean isRunning();
 	
 }

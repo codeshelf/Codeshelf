@@ -17,6 +17,7 @@ import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.DomainTestABC;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Organization;
+import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.util.ThreadUtils;
 import com.gadgetworks.codeshelf.ws.jetty.client.JettyWebSocketClient;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageProcessor;
@@ -65,6 +66,7 @@ public abstract class EndToEndIntegrationTest extends DomainTestABC {
 		return injector;
 	}	
 	
+	@SuppressWarnings("unused")
 	@Override
 	public void doBefore() throws Exception {
 		// ensure facility, organization, network exist in database before booting up site controller
@@ -88,6 +90,7 @@ public abstract class EndToEndIntegrationTest extends DomainTestABC {
 			network = new CodeshelfNetwork(fac, networkId, "The Network");
 			mCodeshelfNetworkDao.store(network);
 		}
+		User scUser = network.createDefaultSiteControllerUser();
 		Che che1 = network.getChe(cheId1);
 		if (che1==null) {
 			che1 = new Che();

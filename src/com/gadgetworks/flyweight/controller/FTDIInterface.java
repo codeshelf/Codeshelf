@@ -80,7 +80,7 @@ public final class FTDIInterface extends SerialInterfaceABC {
 			mJD2XXInterface = new JD2XX();
 		}
 		catch (UnsatisfiedLinkError e) {
-			LOGGER.error("JD2XX is not available",e);
+			LOGGER.error("JD2XX is not available");
 		}
 	}
 

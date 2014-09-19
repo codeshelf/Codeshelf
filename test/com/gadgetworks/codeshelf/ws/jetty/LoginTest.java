@@ -7,6 +7,7 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 import com.eaio.uuid.UUIDGen;
+import com.gadgetworks.codeshelf.application.Configuration;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.dao.MockDaoProvider;
 import com.gadgetworks.codeshelf.model.domain.Organization;
@@ -20,13 +21,20 @@ import com.gadgetworks.codeshelf.ws.jetty.server.ServerMessageProcessor;
 
 public class LoginTest {
 	
+	static {
+		Configuration.loadConfig("test");
+	}
+
 	@Test
 	public final void testLoginSucceed() {
 		MockDaoProvider daoProvider = new MockDaoProvider();
-		
+
 		ITypedDao<Organization> organizationDao = daoProvider.getDaoInstance(Organization.class);
 		ITypedDao<User> userDao = daoProvider.getDaoInstance(User.class);
 		
+		Organization.setDao(organizationDao);
+		User.setDao(userDao);
+			
 		Organization organization = new Organization();
 		organization.setPersistentId(new UUID(UUIDGen.newTime(), UUIDGen.getClockSeqAndNode()));
 		organization.setDomainId("O1");

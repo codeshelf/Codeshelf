@@ -31,6 +31,7 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ComputeWorkRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.GetWorkRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.LoginRequest;
 import com.gadgetworks.flyweight.command.NetGuid;
+import com.gadgetworks.flyweight.command.NetworkId;
 import com.gadgetworks.flyweight.controller.INetworkDevice;
 import com.gadgetworks.flyweight.controller.IRadioController;
 import com.gadgetworks.flyweight.controller.IRadioControllerEventListener;
@@ -43,9 +44,6 @@ import com.google.inject.Inject;
 public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventListener, WebSocketEventListener {
 
 	private static final Logger				LOGGER						= LoggerFactory.getLogger(CsDeviceManager.class);
-
-	private static final String				PREFFERED_CHANNEL_PROP		= "codeshelf.preferred.channel";
-	private static final Byte				DEFAULT_CHANNEL				= 5;
 
 	private static final String							DEVICETYPE_CHE			= "CHE";
 	private static final String							DEVICETYPE_LED			= "LED Controller";
@@ -96,21 +94,21 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	public final void start() {
 		startWebSocketClient();
 
-		// Check if there is a default channel
-		if (this.radioEnabled) {
-			byte preferredChannel = DEFAULT_CHANNEL;
-			String preferredChannelProp = System.getProperty(PREFFERED_CHANNEL_PROP);
-			if (preferredChannelProp != null) {
-				try {
-					preferredChannel = Byte.valueOf(preferredChannelProp);
-				} 
-				catch (NumberFormatException e) {
-					LOGGER.error("Failed to set preferred radio channel", e);
-				}
-			}
+	}
+	
+	public final void startRadio(CodeshelfNetwork network) {
+		if (mRadioController.isRunning()) {
+			LOGGER.warn("Radio controller is already running, cannot start again");
+		} else if (this.radioEnabled) {
 			// start radio controller
-			mRadioController.startController(preferredChannel);
+			NetworkId networkId = new NetworkId(network.getNetworkNum().byteValue());
+			mRadioController.setNetworkId(networkId);
+			mRadioController.startController(network.getChannel().byteValue());
 			mRadioController.addControllerEventListener(this);
+		} else {			
+			LOGGER.warn("Radio controller disabled by setting, cannot start");
+			mRadioController.setNetworkId(new NetworkId((byte) 1)); // for test
+
 		}
 	}
 	
@@ -328,17 +326,17 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 		}
 	}
 	
-	public void updateNetwork(List<Che> ches, List<LedController> ledControllers) {
+	public void updateNetwork(CodeshelfNetwork network) {
 		this.lastNetworkUpdate = System.currentTimeMillis();		
 		Set<UUID> updateDevices=new HashSet<UUID>();
 		// update network devices
-		for (Che che : ches) {
+		for (Che che : network.getChes().values()) {
 			UUID id = che.getPersistentId();
 			NetGuid deviceGuid = new NetGuid(che.getDeviceGuid());
 			doCreateUpdateNetDevice(id, deviceGuid, DEVICETYPE_CHE);
 			updateDevices.add(id);
 		}
-		for (LedController ledController : ledControllers) {
+		for (LedController ledController : network.getLedControllers().values()) {
 			UUID id = ledController.getPersistentId();
 			NetGuid deviceGuid = new NetGuid(ledController.getDeviceGuid());
 			doCreateUpdateNetDevice(id, deviceGuid, DEVICETYPE_LED);

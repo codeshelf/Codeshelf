@@ -175,7 +175,6 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 			connection.close();
 		} catch (SQLException e) {
-			LOGGER.error("", e);
 		}
 		return result;
 	};
@@ -673,25 +672,29 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 						+ "device_guid BYTEA DEFAULT '' NOT NULL, " //
 						+ "last_battery_level SMALLINT DEFAULT 0 NOT NULL, " //
 						+ "monitor BOOLEAN DEFAULT TRUE NOT NULL, " //
-						+ "describeLocation VARCHAR(255) DEFAULT 'Unknown' NOT NULL"
+						+ "describe_location VARCHAR(255) DEFAULT 'Unknown' NOT NULL"
 			);
 			execOneSQLCommand("CREATE UNIQUE INDEX site_controller_domainid_unique ON " + getDbSchemaName()
 				+ ".site_controller (domainid)"); // serial number of site controller must be unique 
 
 			result &= linkToParentTable("site_controller", "parent", "codeshelf_network");
 			
-			result &= safeAddColumn("codeshelf_network","channel","SMALLINT DEFAULT 5 NOT NULL");
+			result &= safeAddColumn("codeshelf_network","channel","SMALLINT DEFAULT 10 NOT NULL");
 			result &= safeAddColumn("codeshelf_network","network_num","SMALLINT DEFAULT 1 NOT NULL");
 			
+			// completely remove DEMO2 organization if present
 			result &= execOneSQLCommand("DELETE FROM " 
 					+ getDbSchemaName()	+ ".user WHERE parent_persistentid IN "
 					+ "(SELECT persistentid FROM "+getDbSchemaName()+".organization WHERE domainid='DEMO2')");
-			result &= safeDropColumn("user","email");
+			result &= execOneSQLCommand("DELETE FROM " 
+					+ getDbSchemaName()	+ ".organization WHERE domainid='DEMO2'");
+			
+			result &= safeDropColumn("user","email"); // now using domainid
 			result &= safeAddColumn("user","site_controller_persistentid",UUID_TYPE); // null okay
 			result &= linkToParentTable("user", "site_controller", "site_controller");
 			result &= execOneSQLCommand("CREATE UNIQUE INDEX user_site_controller_index ON " + getDbSchemaName()
 					+ ".user (site_controller_persistentid)"); // only one user per site controller
-			result &= execOneSQLCommand("CREATE UNIQUE INDEX user_domainid_index ON " + getDbSchemaName()
+			result &= execOneSQLCommand("CREATE UNIQUE INDEX user_unique_domainid_index ON " + getDbSchemaName()
 					+ ".user (domainid)"); // only one user per username
 
 			result &= safeDropColumn("che","public_key");
@@ -1024,8 +1027,8 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		execOneSQLCommand("CREATE UNIQUE INDEX user_site_controller_index ON " + getDbSchemaName()
 				+ ".user (site_controller_persistentid)");
 		// Ensure only one user per username
-		execOneSQLCommand("CREATE UNIQUE INDEX user_domainid_index ON " + getDbSchemaName()
-				+ ".user (domainid)");
+		result &= execOneSQLCommand("CREATE UNIQUE INDEX user_unique_domainid_index ON " + getDbSchemaName()
+			+ ".user (domainid)"); // only one user per username
 
 		result &= linkToParentTable("user_session", "parent", "USER");
 
@@ -1067,7 +1070,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		// CodeshelfNetwork
 		result &= createTable("codeshelf_network", //
 			"description VARCHAR(255) NOT NULL, " //
-					+ "channel SMALLINT DEFAULT 5 NOT NULL, " //
+					+ "channel SMALLINT DEFAULT 10 NOT NULL, " //
 					+ "network_num SMALLINT DEFAULT 1 NOT NULL, " //
 					+ "active BOOLEAN DEFAULT TRUE NOT NULL " //
 		);
@@ -1266,7 +1269,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 					+ "device_guid BYTEA DEFAULT '' NOT NULL, " //
 					+ "last_battery_level SMALLINT DEFAULT 0 NOT NULL, " //
 					+ "monitor BOOLEAN DEFAULT TRUE NOT NULL, " //
-					+ "describeLocation VARCHAR(255) NOT NULL"
+					+ "describe_location VARCHAR(255) NOT NULL"
 		);
 
 		// UomMaster

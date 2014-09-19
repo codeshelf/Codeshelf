@@ -80,7 +80,11 @@ public class JettyWebSocketClient {
     }
     
     public void disconnect() throws IOException {
-    	session.close(new CloseReason(CloseCodes.NORMAL_CLOSURE, "Connection closed by client"));
+    	if(session!=null) {
+        	session.close(new CloseReason(CloseCodes.NORMAL_CLOSURE, "Connection closed by client"));
+    	} else {
+    		LOGGER.warn("disconnecting client, but there is no session to close");
+    	}
     }
     
     public boolean sendMessage(MessageABC message) {

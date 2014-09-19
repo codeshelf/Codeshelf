@@ -173,7 +173,7 @@ public abstract class DomainObjectABC implements IDomainObject {
 			Method method = getClass().getMethod("get" + WordUtils.capitalize(inFieldName), (Class<?>[]) null);
 			result = method.invoke(this, (Object[]) null);
 		} catch (InvocationTargetException | IllegalAccessException | NoSuchMethodException | SecurityException e) {
-			LOGGER.error("", e);
+			LOGGER.error("Caught exception invoking getter by name", e);
 		}
 		((EntityBean) this)._ebean_getIntercept().setIntercepting(interceptingWas);
 
@@ -205,7 +205,7 @@ public abstract class DomainObjectABC implements IDomainObject {
 			method.invoke(this, inFieldValue);
 		} catch (InvocationTargetException | NoSuchMethodException | SecurityException | IllegalArgumentException
 				| IllegalAccessException e) {
-			LOGGER.error("", e);
+			LOGGER.error("Caught exception invoking setter by name", e);
 		}
 	}
 }

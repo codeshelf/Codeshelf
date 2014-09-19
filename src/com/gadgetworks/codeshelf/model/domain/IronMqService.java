@@ -129,11 +129,15 @@ public class IronMqService extends EdiServiceABC {
 		@SerializedName(value = "token")
 		@Expose
 		private String	mToken;
-	}
+	} 
 
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<IronMqService> getDao() {
 		return DAO;
+	}
+	
+	public final static void setDao(ITypedDao<IronMqService> dao) {
+		IronMqService.DAO = dao;
 	}
 
 	public final String getServiceName() {

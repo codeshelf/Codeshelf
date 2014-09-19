@@ -102,7 +102,7 @@ public class Organization extends DomainObjectABC {
 		description = "";
 	}
 	
-	public final static void setDAO(ITypedDao<Organization> dao) {
+	public final static void setDao(ITypedDao<Organization> dao) {
 		Organization.DAO = dao;
 	}
 

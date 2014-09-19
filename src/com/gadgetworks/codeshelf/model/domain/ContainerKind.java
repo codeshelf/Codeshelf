@@ -104,6 +104,10 @@ public class ContainerKind extends DomainObjectTreeABC<Facility> {
 		return DAO;
 	}
 
+	public final static void setDao(ITypedDao<ContainerKind> dao) {
+		ContainerKind.DAO = dao;
+	}
+
 	public final String getDefaultDomainIdPrefix() {
 		return "P";
 	}

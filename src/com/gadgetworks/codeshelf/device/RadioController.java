@@ -20,7 +20,6 @@ import org.slf4j.LoggerFactory;
 import com.codahale.metrics.Counter;
 import com.gadgetworks.codeshelf.metrics.MetricsGroup;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
-import com.gadgetworks.codeshelf.util.PropertyUtils;
 import com.gadgetworks.flyweight.bitfields.NBitInteger;
 import com.gadgetworks.flyweight.command.AckStateEnum;
 import com.gadgetworks.flyweight.command.CommandAssocABC;
@@ -120,6 +119,8 @@ public class RadioController implements IRadioController {
 
 	private byte												mNextAddress;
 	
+	private boolean 											mRunning;
+	
 	private final Counter packetsSentCounter = MetricsService.addCounter(MetricsGroup.Radio,"packets.sent");
 
 	// --------------------------------------------------------------------------
@@ -128,10 +129,6 @@ public class RadioController implements IRadioController {
 	 */
 	@Inject
 	public RadioController(final IGatewayInterface inGatewayInterface) {
-		// fetch network ID from property files
-		Byte rawNetworkId = PropertyUtils.getByte("codeshelf.networknum");
-		mNetworkId = new NetworkId(rawNetworkId);
-
 		mGatewayInterface = inGatewayInterface;
 		mServerAddress = new NetAddress(IPacket.GATEWAY_ADDRESS);
 		mBroadcastAddress = new NetAddress(IPacket.BROADCAST_ADDRESS);
@@ -150,6 +147,19 @@ public class RadioController implements IRadioController {
 		mDeviceGuidMap = new HashMap<NetGuid, INetworkDevice>();
 		mDeviceNetAddrMap = new HashMap<NetAddress, INetworkDevice>();
 		mNextAddress = 1;
+		
+		mRunning=false;
+	}
+	
+	public final void setNetworkId(NetworkId inNetworkId) {
+		if (mRunning) {
+			if (!this.mNetworkId.equals(inNetworkId)) {
+				LOGGER.error("Cannot change network ID, radio is already running");
+			}
+			return;
+		}
+		mNetworkId = inNetworkId;
+		
 	}
 
 	// --------------------------------------------------------------------------
@@ -157,7 +167,17 @@ public class RadioController implements IRadioController {
 	 * @see com.gadgetworks.flyweight.controller.IController#startController(byte)
 	 */
 	public final void startController(final byte inPreferredChannel) {
-
+		if (this.mNetworkId == null) {
+			LOGGER.error("Cannot start radio controller, must call setNetworkId() first");
+			return;
+		}
+		if (mRunning) {
+			if (inPreferredChannel != this.mPreferredChannel) {
+				LOGGER.error("Cannot change channel, radio is already running");
+			}
+			return;
+		}
+		mRunning = true;
 		mPreferredChannel = inPreferredChannel;
 
 		LOGGER.info("--------------------------------------------");
@@ -190,7 +210,7 @@ public class RadioController implements IRadioController {
 				LOGGER.error("", e);
 			}
 		}
-
+		mRunning=false;
 	}
 
 	/* --------------------------------------------------------------------------
@@ -1071,5 +1091,10 @@ public class RadioController implements IRadioController {
 	@Override
 	public final INetworkDevice getNetworkDevice(NetGuid inGuid) {
 		return mDeviceGuidMap.get(inGuid);
+	}
+
+	@Override
+	public boolean isRunning() {
+		return this.mRunning;
 	}
 }

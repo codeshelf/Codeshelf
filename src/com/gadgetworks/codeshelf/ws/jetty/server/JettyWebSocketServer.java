@@ -35,7 +35,7 @@ public class JettyWebSocketServer {
 	
 	private final ServerWatchdogThread watchdog;
 	
-	private String	mKeystorePath="/etc/codeshelf.keystore";
+	private String	mKeystorePath;
 
 	public JettyWebSocketServer() {		
 		// fetch properties from configuration files

@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
@@ -48,12 +49,14 @@ public class SiteController extends WirelessDeviceABC {
 	@Column(nullable = false)
 	@Getter
 	@Setter
+	@JsonProperty
 	private Boolean				monitor;
 
 	// Text describing how to find the hardware installed in the warehouse (should be required non-blank when registering)
 	@Column(nullable = false)
 	@Getter
 	@Setter
+	@JsonProperty
 	private String				describeLocation;
 
 	public SiteController () {
@@ -61,6 +64,10 @@ public class SiteController extends WirelessDeviceABC {
 		this.describeLocation = defaultLocationDescription;
 	}
 	
+	public final static void setDao(ITypedDao<SiteController> dao) {
+		SiteController.DAO = dao;
+	}
+
 	@Override
 	public String getDefaultDomainIdPrefix() {
 		return "SC";

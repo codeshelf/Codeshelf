@@ -25,7 +25,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
-import com.avaje.ebean.annotation.Transactional;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
@@ -69,6 +68,9 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 	}
 
 	public static final String			DEFAULT_NETWORK_NAME	= "DEFAULT";
+	public static final Short			DEFAULT_NETWORK_NUM		= 1;
+	public static final Short			DEFAULT_CHANNEL			= 10;
+	
 	public static final String			DEFAULT_SITECON_SERIAL	= "5000";
 	public static final String			DEFAULT_SITECON_PASS	= "0.6910096026612129";
 
@@ -85,12 +87,14 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 	@Column(nullable = false)
 	@Getter
 	@Setter
+	@JsonProperty
 	private Short 						channel;
 
 	// Logical network number to further subdivide channel
 	@Column(nullable = false)
 	@Getter
 	@Setter
+	@JsonProperty
 	private Short 						networkNum;
 
 	// Active/Inactive network
@@ -114,16 +118,19 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	@Getter
+	@JsonProperty
 	private Map<String, Che>			ches				= new HashMap<String, Che>();
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	@Getter
+	@JsonProperty
 	private Map<String, LedController>	ledControllers		= new HashMap<String, LedController>();
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	@Getter
+	@JsonProperty
 	private Map<String, SiteController>	siteControllers		= new HashMap<String, SiteController>();
 
 	// For a network this is a list of all of the devices that belong to this network.
@@ -142,11 +149,18 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 		this.description = description;
 		active = true;
 		connected = false;
+		
+		this.channel = CodeshelfNetwork.DEFAULT_CHANNEL;
+		this.networkNum = CodeshelfNetwork.DEFAULT_NETWORK_NUM;
 	}
 
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<CodeshelfNetwork> getDao() {
 		return DAO;
+	}
+	
+	public final static void setDao(ITypedDao<CodeshelfNetwork> dao) {
+		CodeshelfNetwork.DAO = dao;
 	}
 
 	public final String getDefaultDomainIdPrefix() {
@@ -280,7 +294,6 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 		return siteconUser;
 	}
 	
-	@Transactional
 	public final User createSiteControllerAndUser(String inDomainId, String inDescribeLocation, Boolean inMonitor, String inPassword) {
 		User siteconUser = User.DAO.findByDomainId(null,inDomainId);
 		if(siteconUser == null) {
@@ -300,12 +313,15 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 					SiteController.DAO.store(sitecon); 
 				} catch (DaoException e) { 
 					LOGGER.error("Couldn't store new Site Controller "+CodeshelfNetwork.DEFAULT_SITECON_SERIAL, e);
+					sitecon=null;
 				}
 				
-				siteconUser = this.getParent().getParentOrganization().createUser(inDomainId, inPassword, sitecon);
-				
-				if (siteconUser == null) {
-					LOGGER.error("Failed to create user for new site controller "+inDomainId);
+				if(sitecon!=null) {
+					siteconUser = this.getParent().getParentOrganization().createUser(inDomainId, inPassword, sitecon);
+					
+					if (siteconUser == null) {
+						LOGGER.error("Failed to create user for new site controller "+inDomainId);
+					}
 				}
 			} else {
 				LOGGER.error("Tried to create Site Controller User "+inDomainId+" but it already exists (Site Controller does not exist)");

@@ -3,7 +3,11 @@ package com.gadgetworks.codeshelf.ws.jetty.protocol.command;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.gadgetworks.codeshelf.filter.NetworkChangeListener;
+import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
+import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Organization;
+import com.gadgetworks.codeshelf.model.domain.SiteController;
 import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.LoginRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.LoginResponse;
@@ -18,9 +22,12 @@ public class LoginCommand extends CommandABC {
 	
 	private LoginRequest loginRequest;
 	
-	public LoginCommand(CsSession session, LoginRequest loginRequest) {
+	private IDaoProvider daoProvider;
+	
+	public LoginCommand(CsSession session, LoginRequest loginRequest, IDaoProvider daoProvider) {
 		super(session);
 		this.loginRequest = loginRequest;
+		this.daoProvider = daoProvider;
 	}
 
 	@Override
@@ -39,21 +46,28 @@ public class LoginCommand extends CommandABC {
 				String password = loginRequest.getPassword();
 				if (user.isPasswordValid(password)) {
 					Organization org = user.getParent();
+					session.setOrganizationName(org.getDomainId());
+					session.setAuthenticated(true);
+					LOGGER.info("User "+userId+" of "+org.getDomainId()+" authenticated on session "+session.getSessionId());
 
-					if(user.getSiteController() != null) {
+					// determine if site controller
+					SiteController sitecon = user.getSiteController();
+					CodeshelfNetwork network = null;
+					if(sitecon  != null) {
 						session.setType(SessionType.SiteController);
+						network = sitecon.getParent();
+						network.getDomainId(); // restore entity
 					} else {
 						session.setType(SessionType.UserApp);						
 					}
-					session.setOrganizationName(org.getDomainId());
-					session.setAuthenticated(true);
-
 					// generate login response
-					LOGGER.info("User "+userId+" of "+org.getDomainId()+" authenticated on session "+session.getSessionId());
-					response.setOrganization(org);
-
 					response.setStatus(ResponseStatus.Success);
+					response.setOrganization(org);
 					response.setUser(user);
+					response.setNetwork(network); // null if not sitecon
+					
+					// send all network updates to this session for this network 
+					NetworkChangeListener.registerWithSession(session, network, daoProvider);
 				} else {
 					LOGGER.warn("Invalid password for user: " + user.getDomainId());
 					response.setStatus(ResponseStatus.Authentication_Failed);
@@ -69,4 +83,5 @@ public class LoginCommand extends CommandABC {
 						
 		return response;
 	}
+	
 }

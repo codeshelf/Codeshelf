@@ -22,8 +22,8 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ObjectMethodCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ObjectUpdateCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.RegisterFilterCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.RegisterListenerCommand;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.command.RegisterNetworkListenerCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ServiceMethodCommand;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageProcessor;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.CompleteWorkInstructionRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ComputeWorkRequest;
@@ -31,7 +31,6 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.request.CreatePathRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.EchoRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.GetWorkRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.LoginRequest;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.request.NetworkStatusRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectDeleteRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectGetRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectMethodRequest;
@@ -51,7 +50,7 @@ public class ServerMessageProcessor extends MessageProcessor {
 	private final Counter requestCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.processed");
 	private final Counter responseCounter = MetricsService.addCounter(MetricsGroup.WSS,"responses.processed");
 	private final Counter loginCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.logins");
-	private final Counter statusCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.network-status");
+//	private final Counter statusCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.network-status");
 	private final Counter missingResponseCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.missing-responses");
 	private final Counter echoCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.echo");
 	private final Counter completeWiCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.complete-workinstruction");
@@ -89,17 +88,13 @@ public class ServerMessageProcessor extends MessageProcessor {
 			// TODO: get rid of message type handling using if statements and type casts...
 			if (request instanceof LoginRequest) {
 				LoginRequest loginRequest = (LoginRequest) request;
-				command = new LoginCommand(csSession,loginRequest);
+				command = new LoginCommand(csSession,loginRequest,daoProvider);
 				loginCounter.inc();
 			}
 			else if (request instanceof EchoRequest) {
 				command = new EchoCommand(csSession,(EchoRequest) request);
 				echoCounter.inc();
 			}		
-			else if (request instanceof NetworkStatusRequest) {
-				command = new RegisterNetworkListenerCommand(csSession,(NetworkStatusRequest) request);
-				statusCounter.inc();
-			}			
 			else if (request instanceof CompleteWorkInstructionRequest) {
 				command = new CompleteWorkInstructionCommand(csSession,(CompleteWorkInstructionRequest) request);
 				completeWiCounter.inc();
@@ -193,5 +188,11 @@ public class ServerMessageProcessor extends MessageProcessor {
 	    } finally {
 	        context.stop();
 	    }
+	}
+
+
+	@Override
+	public void handleOtherMessage(CsSession session, MessageABC message) {
+		LOGGER.warn("Unexpected message received on session "+session+": "+message);
 	}
 }
