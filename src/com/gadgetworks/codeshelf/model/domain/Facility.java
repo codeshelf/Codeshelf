@@ -1351,48 +1351,7 @@ public class Facility extends SubLocationABC<Facility> {
 			inWi.setLedCmdStream("[]"); // empty array
 			LOGGER.error("work instruction was not initialized");
 		}
-		/*
-				List<LedCmdGroup> ledCmdGroupList = new ArrayList<LedCmdGroup>();
-				for (OrderLocation orderLocation : inOrder.getActiveOrderLocations()) {
-					short firstLedPosNum = orderLocation.getLocation().getFirstLedNumAlongPath();
-					short lastLedPosNum = orderLocation.getLocation().getLastLedNumAlongPath();
 
-					// Put the positions into increasing order.
-					if (firstLedPosNum > lastLedPosNum) {
-						Short temp = firstLedPosNum;
-						firstLedPosNum = lastLedPosNum;
-						lastLedPosNum = temp;
-					}
-
-					// The new way of sending LED data to the remote controller. Note getEffectiveXXX instead of getLedController
-					// This will throw if aisles/tiers are not configured yet. Lets avoid by the null checks.
-					ISubLocation<?> theLocation = orderLocation.getLocation(); // this should never be null by database constraint
-					LedController theController = null;
-					Short theChannel = 0;
-					if (theLocation == null) {
-						LOGGER.error("null order location in setWorkInstructionLedPatternFromOrderLocations. How?");
-					} else {
-						theController = theLocation.getEffectiveLedController();
-						theChannel = theLocation.getEffectiveLedChannel();
-					}
-					// If this location has no controller, let's bail on led pattern
-					if (theController == null || theChannel == null || theChannel == 0)
-						continue; // just don't add a new ledCmdGrop to the WI command list
-
-					List<LedSample> ledSamples = new ArrayList<LedSample>();
-					LedCmdGroup ledCmdGroup = new LedCmdGroup(orderLocation.getLocation().getEffectiveLedController().getDeviceGuidStr(),
-						orderLocation.getLocation().getEffectiveLedChannel(),
-						firstLedPosNum,
-						ledSamples);
-
-					for (short ledPos = firstLedPosNum; ledPos < lastLedPosNum; ledPos++) {
-						LedSample ledSample = new LedSample(ledPos, ColorEnum.BLUE);
-						ledSamples.add(ledSample);
-					}
-					ledCmdGroup.setLedSampleList(ledSamples);
-					ledCmdGroupList.add(ledCmdGroup);
-				}
-		*/
 		List<LedCmdGroup> ledCmdGroupList = getLedCmdGroupListForLocationList(inOrder.getActiveOrderLocations(), ColorEnum.BLUE);
 		if (ledCmdGroupList.size() > 0)
 			inWi.setLedCmdStream(LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList));
@@ -1400,8 +1359,11 @@ public class Facility extends SubLocationABC<Facility> {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * For pick work instruction, set LEDs for where the inventory is. Also set the WI pos along path from where the inventory is.
 	 * @param inWi
-	 * @param inOrder
+	 * @param inLocation
+	 * @param inItemMasterId
+	 * @param inUomId
 	 */
 	private void setOutboundWorkInstructionLedPatternAndPosAlongPathFromInventoryItem(final WorkInstruction inWi,
 		final ILocation<?> inLocation,
@@ -1533,7 +1495,7 @@ public class Facility extends SubLocationABC<Facility> {
 		List<LedSample> ledSamples = new ArrayList<LedSample>();
 		LedCmdGroup ledCmdGroup = new LedCmdGroup(netGuidStr, inLocation.getEffectiveLedChannel(), firstLedPosNum, ledSamples);
 
-		for (short ledPos = firstLedPosNum; ledPos < lastLedPosNum; ledPos++) {
+		for (short ledPos = firstLedPosNum; ledPos <= lastLedPosNum; ledPos++) {
 			LedSample ledSample = new LedSample(ledPos, inColor);
 			ledSamples.add(ledSample);
 		}
@@ -1553,8 +1515,13 @@ public class Facility extends SubLocationABC<Facility> {
 	private List<LedCmdGroup> getLedCmdGroupListForLocationList(final List<OrderLocation> inLocationList, final ColorEnum inColor) {
 		List<LedCmdGroup> ledCmdGroupList = new ArrayList<LedCmdGroup>();
 		for (OrderLocation orderLocation : inLocationList) {
-			short firstLedPosNum = orderLocation.getLocation().getFirstLedNumAlongPath();
-			short lastLedPosNum = orderLocation.getLocation().getLastLedNumAlongPath();
+			ISubLocation<?> theLocation = orderLocation.getLocation(); // this should never be null by database constraint
+			if (theLocation == null) {
+				LOGGER.error("null order location in getLedCmdGroupListForLocationList. How?");
+				continue;
+			}
+			short firstLedPosNum = theLocation.getFirstLedNumAlongPath();
+			short lastLedPosNum = theLocation.getLastLedNumAlongPath();
 
 			// Put the positions into increasing order.
 			if (firstLedPosNum > lastLedPosNum) {
@@ -1565,23 +1532,19 @@ public class Facility extends SubLocationABC<Facility> {
 
 			// The new way of sending LED data to the remote controller. Note getEffectiveXXX instead of getLedController
 			// This will throw if aisles/tiers are not configured yet. Lets avoid by the null checks.
-			ISubLocation<?> theLocation = orderLocation.getLocation(); // this should never be null by database constraint
 			LedController theController = null;
 			Short theChannel = 0;
-			if (theLocation == null) {
-				LOGGER.error("null order location in getLedCmdGroupListForLocationList. How?");
-			} else {
 				theController = theLocation.getEffectiveLedController();
 				theChannel = theLocation.getEffectiveLedChannel();
-			}
-			// If this location has no controller, let's bail on led pattern
+
+				// If this location has no controller, let's bail on led pattern
 			if (theController == null || theChannel == null || theChannel == 0)
 				continue; // just don't add a new ledCmdGrop to the WI command list
 
 			List<LedSample> ledSamples = new ArrayList<LedSample>();
 			LedCmdGroup ledCmdGroup = new LedCmdGroup(theController.getDeviceGuidStr(), theChannel, firstLedPosNum, ledSamples);
 
-			for (short ledPos = firstLedPosNum; ledPos < lastLedPosNum; ledPos++) {
+			for (short ledPos = firstLedPosNum; ledPos <= lastLedPosNum; ledPos++) {
 				LedSample ledSample = new LedSample(ledPos, inColor);
 				ledSamples.add(ledSample);
 			}
