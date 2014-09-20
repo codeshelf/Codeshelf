@@ -119,6 +119,10 @@ public class DropboxService extends EdiServiceABC {
 	public DropboxService() {
 
 	}
+	
+	public final static void setDao(ITypedDao<DropboxService> dao) {
+		DropboxService.DAO = dao;
+	}
 
 	public final String getServiceName() {
 		return DROPBOX_SERVICE_NAME;

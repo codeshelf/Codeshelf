@@ -12,7 +12,9 @@ public abstract class MessageProcessor {
 	@Setter
 	MessageCoordinator messageCoordinator;
 	
+	public abstract ResponseABC handleRequest(CsSession session, RequestABC request);
+
 	public abstract void handleResponse(CsSession session, ResponseABC response);
 
-	public abstract ResponseABC handleRequest(CsSession session, RequestABC request);
+	public abstract void handleOtherMessage(CsSession session, MessageABC message);
 }

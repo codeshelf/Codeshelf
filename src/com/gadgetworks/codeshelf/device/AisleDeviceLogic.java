@@ -31,8 +31,8 @@ import com.gadgetworks.flyweight.controller.NetworkDeviceStateEnum;
 
 public class AisleDeviceLogic extends DeviceLogicABC {
 
-	private static final Logger	LOGGER	= LoggerFactory.getLogger(AisleDeviceLogic.class);
-	private static int kNumChannelsOnAislController = 2; // We expect 4 ultimately. Just matching what was there.
+	private static final Logger	LOGGER							= LoggerFactory.getLogger(AisleDeviceLogic.class);
+	private static int			kNumChannelsOnAislController	= 2;												// We expect 4 ultimately. Just matching what was there.
 
 	@Accessors(prefix = "m")
 	protected class LedCmd {
@@ -45,11 +45,11 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 			mChannel = inChannel;
 			mLedSample = inLedSample;
 		}
-		
+
 		public Short getPosition() {
 			return mLedSample.getPosition();
 		}
-		
+
 		public ColorEnum getColor() {
 			return mLedSample.getColor();
 		}
@@ -73,7 +73,7 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 		//		sendLightCommand(CommandControlLed.CHANNEL1, position, ColorEnum.BLUE, CommandControlLed.EFFECT_SOLID);
 		updateLeds();
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * Clear all of the active LED commands on this aisle controller.
@@ -84,7 +84,9 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 		// Note: as of V4, this is never called.
 		// We really should have a means to call it. The important part is mDeviceLedPosMap.clear(); If some CHE's led samples gets in there, and then the CHE never goes away,
 		// How can we get those lights off?
-		
+
+		LOGGER.info("Clear LEDs for all CHEs on " + getMyGuidStr());
+
 		// Only send the command if the device is known active.
 		if ((getDeviceStateEnum() != null) && (getDeviceStateEnum() == NetworkDeviceStateEnum.STARTED)) {
 			// Send a blanking command on each channel.
@@ -106,7 +108,10 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 	 */
 	public final void removeLedCmdsForCheAndSend(final NetGuid inNetGuid) {
 		// CD_0041 note: one of two new functions
-		
+		String cheGuidStr = inNetGuid.getHexStringNoPrefix();
+
+		LOGGER.info("Clear LEDs for CHE:" + cheGuidStr + " on " + getMyGuidStr());
+
 		mDeviceLedPosMap.remove(inNetGuid);
 		// Only send the command if the device is known active.
 		if ((getDeviceStateEnum() != null) && (getDeviceStateEnum() == NetworkDeviceStateEnum.STARTED)) {
@@ -129,7 +134,7 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 		// CD_0041 note: perfect. Gets existing or makes command list. Adds new LedCmd to list. Note, does not check if same or similar command already in list.
 		// inNetGuid is the Guid of the CHE, not of this aisle controller.
 		// Called only in CheDeviceLogic ledControllerSetLed(), if getLedCmdFor returned null.  So, perhaps a getOrAdd would be better.
-		
+
 		List<LedCmd> ledCmds = mDeviceLedPosMap.get(inNetGuid);
 		if (ledCmds == null) {
 			ledCmds = new ArrayList<LedCmd>();
@@ -148,7 +153,7 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 	 */
 	public final LedCmd getLedCmdFor(final NetGuid inNetGuid, final Short inChannel, final Short inPosition) {
 		// CD_0041 note: Called only in CheDeviceLogic ledControllerSetLed()
-		
+
 		LedCmd result = null;
 
 		List<LedCmd> ledCmds = mDeviceLedPosMap.get(inNetGuid);
@@ -172,7 +177,7 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 	public void scanCommandReceived(String inCommandStr) {
 		// The aisle device never returns commands.
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.flyweight.controller.INetworkDevice#buttonCommandReceived(com.gadgetworks.flyweight.command.CommandControlButton)
@@ -180,7 +185,7 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 	@Override
 	public void buttonCommandReceived(CommandControlButton inButtonCommand) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	/**
@@ -201,6 +206,18 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * Utility function. Should be promoted, and get a cached value.
+	 */
+	private String getMyGuidStr() {
+		String thisGuidStr = "";
+		NetGuid thisGuid = this.getGuid();
+		if (thisGuid != null)
+			thisGuidStr = thisGuid.getHexStringNoPrefix();
+		return thisGuidStr;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
 	 * Light all of the LEDs required.
 	 * 
 	 * TODO: Right now we just send the FLASH commands.  Those are the LEDs that get lit in the "ON" part of the cycle only.
@@ -210,6 +227,10 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 	public final void updateLeds() {
 		// CD_0041 note: Perfect for initial scope. DEV-411 will have us send out separate CommandControlLed if the byte stream of samples > 125.
 		// Looks like it does not really work yet for multiple channels. Does this need to figure out each channel, then send separate commands? Probably.
+		final Integer kMaxLedCmdToLog = 25;
+		final Integer kMaxLedCmdSendAtATime = 20;
+		final Integer kDelayMillsBetweenPartialSends = 0;
+		String myGuidStr = getMyGuidStr();
 
 		Short channel = 1;
 
@@ -219,21 +240,65 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 		LedSample sample = new LedSample(CommandControlLed.POSITION_NONE, ColorEnum.BLACK);
 		samples.add(sample);
 
+		String toLogString = "updateLeds on " + myGuidStr + ". " + EffectEnum.FLASH;
+		Integer sentCount = 0;
 		// Now send the commands needed for each CHE.
 		for (Map.Entry<NetGuid, List<LedCmd>> entry : mDeviceLedPosMap.entrySet()) {
 			for (LedCmd ledCmd : entry.getValue()) {
 				channel = ledCmd.getChannel();
 				samples.add(ledCmd.getLedSample());
 
-				LOGGER.info("Light position: " + ledCmd.getPosition() + " color: " + ledCmd.getColor() + " effect: "
-						+ EffectEnum.FLASH);
+				// Log concisely instead of each ledCmd individually
+				sentCount++;
+				if (sentCount <= kMaxLedCmdToLog)
+					toLogString = toLogString + " " + ledCmd.getPosition() + ":" + ledCmd.getColor();
 			}
 		}
+		if (sentCount > 0)
+			LOGGER.info(toLogString);
+		else { // A clearing sample was still sent
+			LOGGER.info("updateLeds on " + myGuidStr + ". Cleared. None lit back."); // position 0 black is being sent
+		}
+		if (sentCount > kMaxLedCmdToLog)
+			LOGGER.info("And more LED not logged. Total LED Cmds this update = " + sentCount);
 
 		// Now we have to sort the samples in position order.
 		Collections.sort(samples, new LedPositionComparator());
 
-		ICommand command = new CommandControlLed(NetEndpoint.PRIMARY_ENDPOINT, channel, EffectEnum.FLASH, samples);
-		mRadioController.sendCommand(command, getAddress(), true);
+		// New to V5. We are seeing that the aisle controller can only handle 22 ledCmds at once, at least with our simple cases.
+		if (sentCount <= kMaxLedCmdSendAtATime) {
+			ICommand command = new CommandControlLed(NetEndpoint.PRIMARY_ENDPOINT, channel, EffectEnum.FLASH, samples);
+			mRadioController.sendCommand(command, getAddress(), true);
+		} else {
+			int partialCount = 0;
+			List<LedSample> partialSamples = new ArrayList<LedSample>();
+			for (LedSample theSample : samples) {
+				partialCount++;
+				partialSamples.add(theSample);
+				if (partialCount == kMaxLedCmdSendAtATime) {
+					ICommand command = new CommandControlLed(NetEndpoint.PRIMARY_ENDPOINT,
+						channel,
+						EffectEnum.FLASH,
+						partialSamples);
+					mRadioController.sendCommand(command, getAddress(), true);
+					partialCount = 0;
+					partialSamples.clear();
+					LOGGER.debug("partial send to aisle controller");
+
+					if (kDelayMillsBetweenPartialSends > 0)
+						try { // This does not appear to help anything. Might need to throw in another thread and modify the protocol a bit.
+							Thread.sleep(kDelayMillsBetweenPartialSends);
+						} catch (InterruptedException e) {
+							LOGGER.error("updateLeds delay exeption", e);
+						}
+
+				}
+			}
+			if (partialCount > 0) { // send the final leftovers
+				ICommand command = new CommandControlLed(NetEndpoint.PRIMARY_ENDPOINT, channel, EffectEnum.FLASH, partialSamples);
+				mRadioController.sendCommand(command, getAddress(), true);
+				LOGGER.debug("last partial send to aisle controller");
+			}
+		}
 	}
 }

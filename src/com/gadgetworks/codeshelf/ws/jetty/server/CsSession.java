@@ -20,7 +20,6 @@ import com.gadgetworks.codeshelf.model.dao.IDaoListener;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 
 public class CsSession implements IDaoListener {
 	public enum State {
@@ -82,7 +81,7 @@ public class CsSession implements IDaoListener {
 	@Override
 	public void objectAdded(IDomainObject inDomainObject) {
 		for (ObjectEventListener listener : eventListeners.values()) {
-			ResponseABC response = listener.processObjectAdd(inDomainObject);
+			MessageABC response = listener.processObjectAdd(inDomainObject);
 			if (response != null) {
 				sendMessage(response);
 			}
@@ -92,7 +91,7 @@ public class CsSession implements IDaoListener {
 	@Override
 	public void objectUpdated(IDomainObject inDomainObject, Set<String> inChangedProperties) {
 		for (ObjectEventListener listener : eventListeners.values()) {
-			ResponseABC response = listener.processObjectUpdate(inDomainObject, inChangedProperties);
+			MessageABC response = listener.processObjectUpdate(inDomainObject, inChangedProperties);
 			if (response != null) {
 				sendMessage(response);
 			}
@@ -102,7 +101,7 @@ public class CsSession implements IDaoListener {
 	@Override
 	public void objectDeleted(IDomainObject inDomainObject) {
 		for (ObjectEventListener listener : eventListeners.values()) {
-			ResponseABC response = listener.processObjectDelete(inDomainObject);
+			MessageABC response = listener.processObjectDelete(inDomainObject);
 			if (response != null) {
 				sendMessage(response);
 			}

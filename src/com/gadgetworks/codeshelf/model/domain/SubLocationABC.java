@@ -24,7 +24,6 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
-import com.gadgetworks.codeshelf.model.TravelDirectionEnum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
@@ -258,11 +257,12 @@ public abstract class SubLocationABC<P extends IDomainObject & ISubLocation<?>> 
 	}
 	
 	public Double getLocationWidthMeters() {
-		// This is true for all sublocations except aisles
+		// Seems funny, but it is so. Anchor is relative to parent. PickFaceEnd is relative to anchor.
+		// So, the width is just the pickface end value.
 		if (isLocationXOriented())
-			return (this.getPickFaceEndPosX() - this.getAnchorPosX());
+			return this.getPickFaceEndPosX();
 		else
-			return (this.getPickFaceEndPosY() - this.getAnchorPosY());			
+			return this.getPickFaceEndPosY();			
 	}
 	
 	public boolean isLocationXOriented() {

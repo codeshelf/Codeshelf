@@ -108,30 +108,31 @@ public class EdiProcessorTest extends EdiTestABC {
 		BlockingQueue<String> testBlockingQueue = new ArrayBlockingQueue<>(100);
 		ediProcessor.startProcessor(testBlockingQueue);
 
+		Thread foundThread=EdiThread();
+		
+		Assert.assertFalse(foundThread == null);
+
+		ediProcessor.stopProcessor();
+		// That thread might be sleeping.
+		if (foundThread != null) {
+			foundThread.interrupt();
+		}
+		try {
+			Thread.sleep(500);
+		} catch (InterruptedException e) {
+		} // wait a moment for EDI processor thread to stop
+
+		Assert.assertNull(EdiThread());
+	}
+	
+	private final Thread EdiThread() {
 		Thread foundThread = null;
 		for (Thread thread : Thread.getAllStackTraces().keySet()) {
 			if (thread.getName().equals(IEdiProcessor.EDIPROCESSOR_THREAD_NAME)) {
 				foundThread = thread;
 			}
 		}
-
-		Assert.assertNotNull(foundThread);
-
-		ediProcessor.stopProcessor();
-
-		// That thread might be sleeping.
-		if (foundThread != null) {
-			foundThread.interrupt();
-		}
-
-		foundThread = null;
-		for (Thread thread : Thread.getAllStackTraces().keySet()) {
-			if (thread.getName().equals(IEdiProcessor.EDIPROCESSOR_THREAD_NAME)) {
-				foundThread = thread;
-			}
-		}
-
-		Assert.assertNotNull(foundThread);
+		return foundThread;
 	}
 
 	public final class TestFacilityDao extends GenericDaoABC<Facility> implements ITypedDao<Facility> {

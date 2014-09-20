@@ -85,6 +85,8 @@ import com.gadgetworks.codeshelf.model.domain.PathSegment;
 import com.gadgetworks.codeshelf.model.domain.PathSegment.PathSegmentDao;
 import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
 import com.gadgetworks.codeshelf.model.domain.PersistentProperty.PersistentPropertyDao;
+import com.gadgetworks.codeshelf.model.domain.SiteController;
+import com.gadgetworks.codeshelf.model.domain.SiteController.SiteControllerDao;
 import com.gadgetworks.codeshelf.model.domain.Slot;
 import com.gadgetworks.codeshelf.model.domain.Slot.SlotDao;
 import com.gadgetworks.codeshelf.model.domain.SubLocationABC;
@@ -234,6 +236,10 @@ public final class ServerMain {
 				requestStaticInjection(Che.class);
 				bind(new TypeLiteral<ITypedDao<Che>>() {
 				}).to(CheDao.class);
+
+				requestStaticInjection(SiteController.class);
+				bind(new TypeLiteral<ITypedDao<SiteController>>() {
+				}).to(SiteControllerDao.class);
 
 				requestStaticInjection(CodeshelfNetwork.class);
 				bind(new TypeLiteral<ITypedDao<CodeshelfNetwork>>() {

@@ -31,7 +31,8 @@ import com.gadgetworks.codeshelf.model.domain.IDomainObjectTree;
  */
 public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 
-	private Map<String, T>	storageByDomainId	= new HashMap<String, T>();
+	private Map<String, T>	storageByFullDomainId	= new HashMap<String, T>(); // e.g. "O1.user@email"
+	private Map<String, T>	storageByDomainIdOnly	= new HashMap<String, T>(); // e.g. "user@email" for searching without specifying parent
 	private Map<UUID, T>	storageByPersistentId	= new HashMap<UUID, T>();
 
 	public MockDao() {
@@ -70,17 +71,16 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 	@SuppressWarnings("unchecked")
 	@Override
 	public <P extends IDomainObject> P findByPersistentId(Class<P> inClass, UUID inPersistentId) {
-		return (P) storageByDomainId.get(inPersistentId);
+		return (P) storageByPersistentId.get(inPersistentId);
 	}
 
 	public final T findByDomainId(IDomainObject inParentObject, String inDomainId) {
 		String domainId = "";
 		if ((inParentObject != null)) {
 			domainId = getFullDomainId(inParentObject) + "." + inDomainId;
-		} else {
-			domainId = inDomainId;
-		}
-		return storageByDomainId.get(domainId);
+			return storageByFullDomainId.get(domainId);
+		} //else 
+		return storageByDomainIdOnly.get(inDomainId);
 	}
 
 	public final List<T> findByPersistentIdList(List<UUID> inPersistentIdList) {
@@ -116,7 +116,8 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 			e.printStackTrace();
 		}
 
-		storageByDomainId.put(getFullDomainId(inDomainObject), inDomainObject);
+		storageByFullDomainId.put(getFullDomainId(inDomainObject), inDomainObject);
+		storageByDomainIdOnly.put(inDomainObject.getDomainId(), inDomainObject);
 		storageByPersistentId.put(inDomainObject.getPersistentId(), inDomainObject);
 	}
 
@@ -129,12 +130,13 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 	}
 	
 	public final void delete(T inDomainObject) {
-		storageByDomainId.remove(inDomainObject);
+		storageByDomainIdOnly.remove(inDomainObject.getDomainId());
+		storageByFullDomainId.remove(getFullDomainId(inDomainObject));
 		storageByPersistentId.remove(inDomainObject.getPersistentId());
 	}
 
 	public final List<T> getAll() {
-		return new ArrayList<T>(storageByDomainId.values());
+		return new ArrayList<T>(storageByDomainIdOnly.values());
 	}
 
 	public final void pushNonPersistentUpdates(T inDomainObject) {

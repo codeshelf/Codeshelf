@@ -1,23 +1,23 @@
 package com.gadgetworks.codeshelf.device;
 
 import java.io.IOException;
-import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.ws.jetty.client.JettyWebSocketClient;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.CommandABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.PingCommand;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageProcessor;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.request.NetworkStatusRequest;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.message.NetworkStatusMessage;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.PingRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RequestABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.CompleteWorkInstructionResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ComputeWorkResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.GetWorkResponse;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.NetworkAttachResponse;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.NetworkStatusResponse;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.response.LoginResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
 import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
@@ -41,18 +41,22 @@ public class SiteControllerMessageProcessor extends MessageProcessor {
 			LOGGER.warn("Request #"+response.getRequestId()+" failed: "+response.getStatusMessage());
 		}
 		//////////////////////////////////////////
-		// Handler for Network Attach Response
-		if (response instanceof NetworkAttachResponse) {
-			NetworkAttachResponse naResponse = (NetworkAttachResponse) response;
-			if (response.getStatus()==ResponseStatus.Success) {
-				LOGGER.info("Attached to network");
-				UUID networkId = naResponse.getNetworkId();
-				// request current network status
-				NetworkStatusRequest req = new NetworkStatusRequest();
-				req.setNetworkId(networkId);
-				this.client.sendMessage(req);		
-			}
-			else {
+		// Handler for Login Response
+		if (response instanceof LoginResponse) {
+			LoginResponse loginResponse = (LoginResponse) response;
+			boolean attached = false;
+			if (loginResponse.getStatus()==ResponseStatus.Success) {
+				CodeshelfNetwork network = loginResponse.getNetwork();
+				if(network != null) {
+					LOGGER.info("Attached to network "+network.getDomainId());
+					attached=true;
+					this.deviceManager.updateNetwork(network);
+					this.deviceManager.startRadio(network);
+				} else {
+					LOGGER.error("loginResponse has no network");
+				}
+			} 
+			if (!attached) {
 				LOGGER.warn("Failed to attach network: "+response.getStatusMessage());
 				try {
 					client.disconnect();
@@ -60,18 +64,6 @@ public class SiteControllerMessageProcessor extends MessageProcessor {
 				catch (IOException e) {
 					LOGGER.error("Failed to disconnect client", e);
 				}
-			}
-		}
-		//////////////////////////////////////////
-		// Handler for Network Update
-		else if (response instanceof NetworkStatusResponse) {
-			NetworkStatusResponse update = (NetworkStatusResponse) response;
-			if (response.getStatus()==ResponseStatus.Success) {
-				LOGGER.info("Reading CHEs and aisle controllers from NetworkStatusResponse");
-				this.deviceManager.updateNetwork(update.getChes(),update.getLedControllers());
-			}
-			else {
-				LOGGER.warn("did not read CHEs and aisle controllers from NetworkStatusResponse becuase response was negative");			
 			}
 		}
 		//////////////////////////////////////////
@@ -104,6 +96,18 @@ public class SiteControllerMessageProcessor extends MessageProcessor {
 	}
 	
 	@Override
+	public void handleOtherMessage(CsSession session, MessageABC message) {
+		//////////////////////////////////////////
+		// Handler for Network Update
+		if (message instanceof NetworkStatusMessage) {
+			NetworkStatusMessage update = (NetworkStatusMessage) message;
+			LOGGER.info("Processing Network Status update");
+			this.deviceManager.updateNetwork(update.getNetwork());
+		}
+
+	}
+	
+	@Override
 	public ResponseABC handleRequest(CsSession session, RequestABC request) {
 		LOGGER.info("Request received for processing: "+request);
 		CommandABC command = null;
@@ -132,5 +136,4 @@ public class SiteControllerMessageProcessor extends MessageProcessor {
 	public void setWebClient(JettyWebSocketClient client) {
 		this.client = client;
 	}
-
 }

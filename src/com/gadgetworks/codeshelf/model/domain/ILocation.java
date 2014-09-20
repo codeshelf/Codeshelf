@@ -56,6 +56,17 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 
 	Short getLastLedPosForItemId(final String inItemId);
 
+	String getPrimaryAliasId();
+	
+	Boolean isLeftSideTowardsAnchor();
+	
+	Boolean isLowerLedNearAnchor();
+	
+	Boolean isPathIncreasingFromAnchor();
+	
+	Boolean isActive();
+	void setActive(Boolean inNowActive);
+
 	// --------------------------------------------------------------------------
 	/**
 	 * If this is a DDC location then return the first DDC ID for the location.
@@ -249,8 +260,4 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 	 */
 	Short getEffectiveLedChannel();
 	
-	String getPrimaryAliasId();
-	Boolean isLeftSideTowardsAnchor();
-	Boolean isLowerLedNearAnchor(); 
-	Boolean isPathIncreasingFromAnchor();
 }

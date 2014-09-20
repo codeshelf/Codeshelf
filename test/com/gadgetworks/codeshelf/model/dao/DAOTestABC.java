@@ -51,6 +51,8 @@ import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.Path.PathDao;
 import com.gadgetworks.codeshelf.model.domain.PathSegment;
 import com.gadgetworks.codeshelf.model.domain.PathSegment.PathSegmentDao;
+import com.gadgetworks.codeshelf.model.domain.SiteController;
+import com.gadgetworks.codeshelf.model.domain.SiteController.SiteControllerDao;
 import com.gadgetworks.codeshelf.model.domain.Slot;
 import com.gadgetworks.codeshelf.model.domain.Slot.SlotDao;
 import com.gadgetworks.codeshelf.model.domain.SubLocationABC;
@@ -59,6 +61,8 @@ import com.gadgetworks.codeshelf.model.domain.Tier;
 import com.gadgetworks.codeshelf.model.domain.Tier.TierDao;
 import com.gadgetworks.codeshelf.model.domain.UomMaster;
 import com.gadgetworks.codeshelf.model.domain.UomMaster.UomMasterDao;
+import com.gadgetworks.codeshelf.model.domain.User;
+import com.gadgetworks.codeshelf.model.domain.User.UserDao;
 import com.gadgetworks.codeshelf.model.domain.Vertex;
 import com.gadgetworks.codeshelf.model.domain.Vertex.VertexDao;
 import com.gadgetworks.codeshelf.model.domain.WorkArea;
@@ -76,6 +80,7 @@ public abstract class DAOTestABC {
 	PersistencyService persistencyService;
 	
 	protected OrganizationDao		mOrganizationDao;
+	protected UserDao				mUserDao;
 	protected LocationABCDao		mLocationDao;
 	protected SubLocationDao		mSubLocationDao;
 	protected FacilityDao			mFacilityDao;
@@ -92,6 +97,7 @@ public abstract class DAOTestABC {
 	protected OrderLocationDao		mOrderLocationDao;
 	protected CodeshelfNetworkDao	mCodeshelfNetworkDao;
 	protected CheDao				mCheDao;
+	protected SiteControllerDao		mSiteControllerDao; 
 	protected ContainerDao			mContainerDao;
 	protected ContainerKindDao		mContainerKindDao;
 	protected ContainerUseDao		mContainerUseDao;
@@ -120,7 +126,10 @@ public abstract class DAOTestABC {
 		mOrganizationDao = new OrganizationDao(persistencyService);
 		Organization.DAO = mOrganizationDao;
 
-		mFacilityDao = new FacilityDao(persistencyService);
+		mUserDao = new UserDao(mSchemaManager);
+		User.DAO = mUserDao;
+
+		mFacilityDao = new FacilityDao(mSchemaManager);
 		Facility.DAO = mFacilityDao;
 
 		mAisleDao = new AisleDao(persistencyService);
@@ -150,7 +159,10 @@ public abstract class DAOTestABC {
 		mCheDao = new CheDao(persistencyService);
 		Che.DAO = mCheDao;
 
-		mSubLocationDao = new SubLocationDao(persistencyService);
+		mSiteControllerDao = new SiteControllerDao(mSchemaManager);
+		SiteController.DAO = mSiteControllerDao;
+
+		mSubLocationDao = new SubLocationDao(mSchemaManager);
 		SubLocationABC.DAO = mSubLocationDao;
 
 		mLocationDao = new LocationABCDao(persistencyService);

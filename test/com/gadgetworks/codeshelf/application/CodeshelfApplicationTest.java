@@ -217,9 +217,9 @@ public class CodeshelfApplicationTest {
 		IHttpServer httpServer = new HttpServer("./",
 			"localhost",
 			8443,
-			"./conf/codeshelf.keystore",
-			"x2HPbC2avltYQR",
-			"x2HPbC2avltYQR");
+			"conf/localhost.jks",
+			"1qazse4",
+			"1qazse4");
 
 		ICsvOrderImporter orderImporter = new OutboundOrderCsvImporter(orderGroupDao,
 			orderHeaderDao,

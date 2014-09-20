@@ -3,6 +3,7 @@ package com.gadgetworks.codeshelf.ws.jetty.client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageProcessor;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RequestABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
@@ -21,5 +22,10 @@ public class LogResponseProcessor extends MessageProcessor {
 	public ResponseABC handleRequest(CsSession session, RequestABC request) {
 		LOGGER.info("Request received:"+request);
 		return null;
+	}
+
+	@Override
+	public void handleOtherMessage(CsSession session, MessageABC message) {
+		LOGGER.info("Message received:"+message);
 	}
 }

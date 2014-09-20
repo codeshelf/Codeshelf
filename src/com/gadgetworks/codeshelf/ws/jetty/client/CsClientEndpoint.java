@@ -22,6 +22,7 @@ import com.gadgetworks.codeshelf.metrics.MetricsGroup;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
 import com.gadgetworks.codeshelf.ws.jetty.io.JsonDecoder;
 import com.gadgetworks.codeshelf.ws.jetty.io.JsonEncoder;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.message.KeepAlive;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageProcessor;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RequestABC;
@@ -92,6 +93,14 @@ public class CsClientEndpoint {
 			} else {
 				LOGGER.warn("No response generated for request " + request);
 			}
+		} else if (!(message instanceof KeepAlive)) {
+			LOGGER.debug("Other message received: " + message);
+			CsSession csSession = sessionManager.getSession(session);
+			if (csSession == null) {
+				LOGGER.warn("No matching CS session found for session " + session.getId());
+			}
+			// null session ok here?
+			messageProcessor.handleOtherMessage(csSession, message);
 		}
 	}
 

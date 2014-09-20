@@ -64,7 +64,10 @@ public class ServerWatchdogThread extends Thread {
 			for (CsSession session : sessions) {
 				String sessionId = session.getSessionId();
 
-				if (!suppressKeepAlive) {
+				// don't send keepalive if suppressed
+				// don't send keepalive to unauthenticated site controller
+				if (!suppressKeepAlive && 
+						(!session.getType().equals(SessionType.SiteController) || session.isAuthenticated())) {
 					long timeSinceLastSent = System.currentTimeMillis() - session.getLastMessageSent();
 					if (timeSinceLastSent>keepAliveInterval) {
 						LOGGER.debug("Sending keep-alive on "+sessionId);

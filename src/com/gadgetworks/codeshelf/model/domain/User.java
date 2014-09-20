@@ -110,18 +110,18 @@ public class User extends DomainObjectTreeABC<Organization> {
 	//@JsonProperty
 	private String				hashedPassword;
 
-	// Email.
-	@Column(nullable = false)
+	// Site controller - if present, this user is linked to a site controller 
+	@Column(nullable = true)
+	@ManyToOne(optional = true)
 	@Getter
 	@Setter
-	@JsonProperty
-	private String				email;
+	private SiteController		siteController;
 
 	// Create date.
 	@Column(nullable = false)
 	@Getter
 	@Setter
-	//@JsonProperty
+	@JsonProperty
 	private Timestamp			created;
 
 	// Is it active.
@@ -137,7 +137,6 @@ public class User extends DomainObjectTreeABC<Organization> {
 	private List<UserSession>	userSessions		= new ArrayList<UserSession>();
 
 	public User() {
-		email = "";
 		created = new Timestamp(System.currentTimeMillis());
 		active = true;
 	}
@@ -145,6 +144,10 @@ public class User extends DomainObjectTreeABC<Organization> {
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<User> getDao() {
 		return DAO;
+	}
+	
+	public final static void setDao(ITypedDao<User> dao) {
+		User.DAO = dao;
 	}
 
 	public final String getDefaultDomainIdPrefix() {
@@ -300,7 +303,8 @@ public class User extends DomainObjectTreeABC<Organization> {
 		String sql = "UPDATE codeshelf.\"user\"" +
 				" SET " +
 				"hash_salt='"+toHex(salt)+"', hashed_password='"+ passwordOut +"', hash_iterations="+ hashIterations +
-				" WHERE parent_persistentid = (Select persistentid from codeshelf.organization where domainId = '" + inOrganizationName + "') AND email = '" + inEmail + "';";
+				" WHERE parent_persistentid = (Select persistentid from codeshelf.organization where domainId = '" + inOrganizationName + "') AND domainId = '" + inEmail + "';";
 		return sql;
 	}
+
 }

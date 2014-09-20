@@ -91,12 +91,6 @@ public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNet
 	@JsonProperty
 	private byte[]					deviceGuid;
 
-	@Column(nullable = false)
-	@Getter
-	@Setter
-	@JsonProperty
-	private String					publicKey;
-
 	// The description.
 	@Column(nullable = false)
 	@Getter
@@ -133,7 +127,6 @@ public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNet
 
 	public WirelessDeviceABC() {
 		deviceGuid = new byte[NetGuid.NET_GUID_BYTES];
-		publicKey = "";
 		description = "";
 		lastBatteryLevel = 0;
 	}
@@ -213,17 +206,17 @@ public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNet
 	/* --------------------------------------------------------------------------
 	 * (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.controller.INetworkDevice#setDesc(java.lang.String)
-	 */
 	public final void setDesc(String inDeviceDescription) {
 		//		mDeviceDesc = inDeviceDescription;
 	}
+	 */
 
 	/* --------------------------------------------------------------------------
 	 * (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.controller.INetworkDevice#setDeviceType(short)
-	 */
 	public final void setDeviceType(short inDeviceType) {
 		//		mDeviceType = inDeviceType;
 	}
+	 */
 
 }

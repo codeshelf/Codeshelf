@@ -14,6 +14,7 @@ import com.gadgetworks.codeshelf.model.domain.IronMqService;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.Organization;
+import com.gadgetworks.codeshelf.model.domain.SiteController;
 import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.model.domain.Vertex;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
@@ -37,6 +38,9 @@ public class MockDaoProvider implements IDaoProvider {
 		
 		ITypedDao<Che> cheDao = new MockDao<Che>();
 		daos.put(Che.class, cheDao);
+
+		ITypedDao<SiteController> siteControllerDao = new MockDao<SiteController>();
+		daos.put(SiteController.class, siteControllerDao);
 
 		ITypedDao<WorkInstruction> workInstructionDao = new MockDao<WorkInstruction>();
 		daos.put(WorkInstruction.class, workInstructionDao);

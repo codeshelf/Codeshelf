@@ -17,10 +17,10 @@ public class JettyTestClient {
 		System.setProperty("console.appender","org.apache.log4j.ConsoleAppender");
 		
 		// init keystore and trust store
-		System.setProperty("javax.net.ssl.keyStore", "/etc/codeshelf.keystore");
-		System.setProperty("javax.net.ssl.keyStorePassword", "x2HPbC2avltYQR");
-		System.setProperty("javax.net.ssl.trustStore", "/etc/codeshelf.keystore");
-		System.setProperty("javax.net.ssl.trustStorePassword", "x2HPbC2avltYQR");
+		System.setProperty("javax.net.ssl.keyStore", "conf/localhost.jks");
+		System.setProperty("javax.net.ssl.keyStorePassword", "1qazse4");
+		System.setProperty("javax.net.ssl.trustStore", "conf/localhost.jks");
+		System.setProperty("javax.net.ssl.trustStorePassword", "1qazse4");
 		System.setProperty("javax.net.ssl.trustStoreType", "JKS");
 		// System.setProperty("javax.net.debug", "ssl");
 		

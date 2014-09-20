@@ -139,12 +139,12 @@ public class AisleImporterTest extends DomainTestABC {
 		short firstLed = slotB1T1S1.getFirstLedNumAlongPath();
 		short lastLed = slotB1T1S1.getLastLedNumAlongPath();
 		Assert.assertTrue(firstLed == 3);
-		Assert.assertTrue(lastLed == 9);
+		Assert.assertTrue(lastLed == 6);
 
 		Slot slotB1T1S8 = Slot.DAO.findByDomainId(tierB1T1, "S8");
 		firstLed = slotB1T1S8.getFirstLedNumAlongPath();
 		lastLed = slotB1T1S8.getLastLedNumAlongPath();
-		Assert.assertTrue(firstLed == 73);
+		Assert.assertTrue(firstLed == 76);
 		Assert.assertTrue(lastLed == 79);
 
 		// Check aisle and bay pick face values. (aisle came as a sublocation)
@@ -290,11 +290,11 @@ public class AisleImporterTest extends DomainTestABC {
 		Slot slotB1T1S6 = Slot.DAO.findByDomainId(tierB1T1, "S6");
 		short slotB1T1S6First = slotB1T1S6.getFirstLedNumAlongPath();
 		Assert.assertTrue(slotB1T1S6First == 63);
-		Assert.assertTrue(slotB1T1S6.getLastLedNumAlongPath() == 69);
+		Assert.assertTrue(slotB1T1S6.getLastLedNumAlongPath() == 66);
 
 		Slot slotB2T1S1 = Slot.DAO.findByDomainId(tierB2T1, "S1");
 		short slotB2T1S1First = slotB2T1S1.getFirstLedNumAlongPath();
-		Assert.assertTrue(slotB2T1S1First == 53);
+		Assert.assertTrue(slotB2T1S1First == 56);
 		short slotB2T1S1Last = slotB2T1S1.getLastLedNumAlongPath();
 		Assert.assertTrue(slotB2T1S1Last == 59);
 
@@ -371,6 +371,7 @@ public class AisleImporterTest extends DomainTestABC {
 
 	}
 
+	@SuppressWarnings("unused")
 	@Test
 	public final void test32Led5Slot() {
 
@@ -439,26 +440,34 @@ public class AisleImporterTest extends DomainTestABC {
 		Assert.assertTrue(tierB1T1.getLastLedNumAlongPath() == 32);
 
 		short slotB1T1S1First = slotB1T1S1.getFirstLedNumAlongPath();
-		Assert.assertTrue(slotB1T1S1First == 3);
+		short slotB1T1S1Last = slotB1T1S1.getLastLedNumAlongPath();
+		Assert.assertTrue(slotB1T1S1First == 1);
+		Assert.assertTrue(slotB1T1S1Last == 4);
 
 		short slotB1T1S2First = slotB1T1S2.getFirstLedNumAlongPath();
-		Assert.assertTrue(slotB1T1S2First == 10);
+		short slotB1T1S2Last = slotB1T1S2.getLastLedNumAlongPath();
+		Assert.assertTrue(slotB1T1S2First == 8);
+		Assert.assertTrue(slotB1T1S2Last == 11);
 
 		short slotB1T1S3First = slotB1T1S3.getFirstLedNumAlongPath();
+		short slotB1T1S3Last = slotB1T1S3.getLastLedNumAlongPath();
 		Assert.assertTrue(slotB1T1S3First == 16);
-		Assert.assertTrue(slotB1T1S3.getLastLedNumAlongPath() == 19);
+		Assert.assertTrue(slotB1T1S3Last == 19);
 
 		short slotB1T1S4First = slotB1T1S4.getFirstLedNumAlongPath();
+		short slotB1T1S4Last = slotB1T1S4.getLastLedNumAlongPath();
 		Assert.assertTrue(slotB1T1S4First == 22);
 		Assert.assertTrue(slotB1T1S4.getLastLedNumAlongPath() == 25);
 
 		short slotB1T1S5First = slotB1T1S5.getFirstLedNumAlongPath();
+		short slotB1T1S5Last = slotB1T1S5.getLastLedNumAlongPath();
 		Assert.assertTrue(slotB1T1S5First == 28);
 		Assert.assertTrue(slotB1T1S5.getLastLedNumAlongPath() == 31);
 
 		// So, we see the difference. 
 		// Jeff's slots were lit 1-4, 8-11,  15-18, 22-25, 29-32
-		// This algorithm lights 3-6, 10-13, 16-19, 22-25, 28-31 with 2 guard low, and 1 guard high.
+		// This algorithm  (with v4 modification) lights 3-6, 10-13, 16-19, 22-25, 28-31 with 2 guard low, and 1 guard high.
+		// With v4 modification lights 1-4, 8-11, 16-19, 22-25, 28-31 with almost any guard parameters
 		// 1,1 guards would yield 2-5, 9-12, 16-19, 22-25, 28-31
 		// 0,0 would get to 5 lit per slot instead of 4
 
@@ -553,11 +562,11 @@ public class AisleImporterTest extends DomainTestABC {
 		Assert.assertTrue(tierB2T2.getLastLedNumAlongPath() == 160);
 
 		short slotB1T1S1First = slotB1T1S1.getFirstLedNumAlongPath();
-		Assert.assertTrue(slotB1T1S1First == 67);
+		Assert.assertTrue(slotB1T1S1First == 65);
 
 		short slotB2T2S5First = slotB2T2S5.getFirstLedNumAlongPath();
-		Assert.assertTrue(slotB2T2S5First == 131);
-		Assert.assertTrue(slotB2T2S5.getLastLedNumAlongPath() == 134);
+		Assert.assertTrue(slotB2T2S5First == 129);
+		Assert.assertTrue(slotB2T2S5.getLastLedNumAlongPath() == 132);
 
 		// Test the obvious. For 2 bays, 3 tier, zigzagB1S1Side, tierB1T3 should start at led1. tierB2T3 should start at 97
 		Tier tierB1T3 = Tier.DAO.findByDomainId(bayA12B1, "T3");
@@ -1050,7 +1059,7 @@ public class AisleImporterTest extends DomainTestABC {
 		Assert.assertTrue(howManyNetworks == 1);
 
 		// organization.createFacility() should have created this network
-		CodeshelfNetwork network = facility.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_ID);
+		CodeshelfNetwork network = facility.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
 		Assert.assertNotNull(network);
 
 		// There are led controllers, but we will make a new one. If it exists already, no harm.
@@ -1158,7 +1167,6 @@ public class AisleImporterTest extends DomainTestABC {
 		return inSegment.computeNormalizedPositionAlongPath(testPoint);
 	}
 
-	@SuppressWarnings("unused")
 	@Test
 	public final void testPathCreation() {
 		Organization organization = new Organization();

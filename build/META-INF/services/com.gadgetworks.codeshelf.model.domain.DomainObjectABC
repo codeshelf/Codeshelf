@@ -25,6 +25,7 @@ com.gadgetworks.codeshelf.model.domain.Organization
 com.gadgetworks.codeshelf.model.domain.Path
 com.gadgetworks.codeshelf.model.domain.PathSegment
 com.gadgetworks.codeshelf.model.domain.PersistentProperty
+com.gadgetworks.codeshelf.model.domain.SiteController
 com.gadgetworks.codeshelf.model.domain.Slot
 com.gadgetworks.codeshelf.model.domain.SubLocationABC
 com.gadgetworks.codeshelf.model.domain.Tier
