@@ -1464,17 +1464,10 @@ public class Facility extends SubLocationABC<Facility> {
 		final ColorEnum inColor,
 		final ILocation<?> inLocation) {
 
-		List<LedCmdGroup> ledCmdGroupList = new ArrayList<LedCmdGroup>();
-
-		LedController theLedController = inLocation.getEffectiveLedController();
-		if (theLedController == null) {
-			LOGGER.error("getLedCmdGroupListForItemOrLocation");
-			return ledCmdGroupList;
-		}
-		String netGuidStr = theLedController.getDeviceGuidStr();
-
 		short firstLedPosNum = 0;
 		short lastLedPosNum = 0;
+		List<LedCmdGroup> ledCmdGroupList = new ArrayList<LedCmdGroup>();
+		
 		if (inItem != null) {
 			// Use our utility function to get the leds for the item
 			LedRange theRange = inItem.getFirstLastLedsForItem();
@@ -1488,6 +1481,13 @@ public class Facility extends SubLocationABC<Facility> {
 			LOGGER.error("getLedCmdGroupListForItemOrLocation  no item nor location");
 			return ledCmdGroupList;
 		}
+
+		LedController theLedController = inLocation.getEffectiveLedController();
+		if (theLedController == null) {
+			LOGGER.error("getLedCmdGroupListForItemOrLocation");
+			return ledCmdGroupList;
+		}
+		String netGuidStr = theLedController.getDeviceGuidStr();
 
 		// if the led number is zero, we do not have tubes or lasers there. Do not proceed.
 		if (firstLedPosNum == 0)
@@ -1619,6 +1619,7 @@ public class Facility extends SubLocationABC<Facility> {
 	 * Light one location transiently. Any subsequent activity on the aisle controller will wipe this away.
 	 * May be called with BLACK to clear whatever you just sent. 
 	 */
+	@SuppressWarnings("unused")
 	public void lightOneLocation(final String inColorStr, final String inLocationNominalId) {
 		ColorEnum theColor = ColorEnum.valueOf(inColorStr);
 		if (theColor == ColorEnum.INVALID) {
@@ -1666,6 +1667,7 @@ public class Facility extends SubLocationABC<Facility> {
 			LOGGER.info("lightOneItem called for location with incomplete LED configuration");
 			return;
 		}
+		@SuppressWarnings("unused")
 		String theLedCommands = LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList);
 		// Need to embed this in a command and send to site controller.
 		LOGGER.info("lightOneItem called correctly. Need command and site controller implementation");

@@ -8,8 +8,6 @@ package com.gadgetworks.codeshelf.model;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.model.domain.LedController;
-
 /**
  * Primarily a class to return some out parameters.
  * But does the led computation for non-slotted

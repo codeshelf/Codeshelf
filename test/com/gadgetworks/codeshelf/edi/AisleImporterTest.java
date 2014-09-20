@@ -371,6 +371,7 @@ public class AisleImporterTest extends DomainTestABC {
 
 	}
 
+	@SuppressWarnings("unused")
 	@Test
 	public final void test32Led5Slot() {
 
@@ -1166,7 +1167,6 @@ public class AisleImporterTest extends DomainTestABC {
 		return inSegment.computeNormalizedPositionAlongPath(testPoint);
 	}
 
-	@SuppressWarnings("unused")
 	@Test
 	public final void testPathCreation() {
 		Organization organization = new Organization();
