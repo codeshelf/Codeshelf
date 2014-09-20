@@ -74,4 +74,10 @@ public class LedCmdGroup {
 		mPosNum = inPos;
 		mLedSampleList = inLedSamples;
 	}
+
+	public int compareTo(LedCmdGroup anotherLedCmdGroup) {
+		// this could do a compare by controller, then channel, then posNum.
+		// but as of V4/v5, only posNum is relevant.
+		return Short.compare(getPosNum(), anotherLedCmdGroup.getPosNum());
+	}
 }
