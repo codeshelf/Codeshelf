@@ -109,7 +109,7 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 	public final void removeLedCmdsForCheAndSend(final NetGuid inNetGuid) {
 		// CD_0041 note: one of two new functions
 		String cheGuidStr = inNetGuid.getHexStringNoPrefix();
-		
+
 		LOGGER.info("Clear LEDs for CHE:" + cheGuidStr + " on " + getMyGuidStr());
 
 		mDeviceLedPosMap.remove(inNetGuid);
@@ -228,6 +228,8 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 		// CD_0041 note: Perfect for initial scope. DEV-411 will have us send out separate CommandControlLed if the byte stream of samples > 125.
 		// Looks like it does not really work yet for multiple channels. Does this need to figure out each channel, then send separate commands? Probably.
 		final Integer kMaxLedCmdToLog = 25;
+		final Integer kMaxLedCmdSendAtATime = 20;
+		final Integer kDelayMillsBetweenPartialSends = 0;
 		String myGuidStr = getMyGuidStr();
 
 		Short channel = 1;
@@ -238,7 +240,7 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 		LedSample sample = new LedSample(CommandControlLed.POSITION_NONE, ColorEnum.BLACK);
 		samples.add(sample);
 
-		String toLogString = "updateLeds on " + myGuidStr + ". "+ EffectEnum.FLASH;
+		String toLogString = "updateLeds on " + myGuidStr + ". " + EffectEnum.FLASH;
 		Integer sentCount = 0;
 		// Now send the commands needed for each CHE.
 		for (Map.Entry<NetGuid, List<LedCmd>> entry : mDeviceLedPosMap.entrySet()) {
@@ -247,9 +249,9 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 				samples.add(ledCmd.getLedSample());
 
 				// Log concisely instead of each ledCmd individually
-				sentCount ++;
+				sentCount++;
 				if (sentCount <= kMaxLedCmdToLog)
-					toLogString  = toLogString + " " + ledCmd.getPosition() + ":" + ledCmd.getColor();				
+					toLogString = toLogString + " " + ledCmd.getPosition() + ":" + ledCmd.getColor();
 			}
 		}
 		if (sentCount > 0)
@@ -263,7 +265,40 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 		// Now we have to sort the samples in position order.
 		Collections.sort(samples, new LedPositionComparator());
 
-		ICommand command = new CommandControlLed(NetEndpoint.PRIMARY_ENDPOINT, channel, EffectEnum.FLASH, samples);
-		mRadioController.sendCommand(command, getAddress(), true);
+		// New to V5. We are seeing that the aisle controller can only handle 22 ledCmds at once, at least with our simple cases.
+		if (sentCount <= kMaxLedCmdSendAtATime) {
+			ICommand command = new CommandControlLed(NetEndpoint.PRIMARY_ENDPOINT, channel, EffectEnum.FLASH, samples);
+			mRadioController.sendCommand(command, getAddress(), true);
+		} else {
+			int partialCount = 0;
+			List<LedSample> partialSamples = new ArrayList<LedSample>();
+			for (LedSample theSample : samples) {
+				partialCount++;
+				partialSamples.add(theSample);
+				if (partialCount == kMaxLedCmdSendAtATime) {
+					ICommand command = new CommandControlLed(NetEndpoint.PRIMARY_ENDPOINT,
+						channel,
+						EffectEnum.FLASH,
+						partialSamples);
+					mRadioController.sendCommand(command, getAddress(), true);
+					partialCount = 0;
+					partialSamples.clear();
+					LOGGER.debug("partial send to aisle controller");
+
+					if (kDelayMillsBetweenPartialSends > 0)
+						try { // This does not appear to help anything. Might need to throw in another thread and modify the protocol a bit.
+							Thread.sleep(kDelayMillsBetweenPartialSends);
+						} catch (InterruptedException e) {
+							LOGGER.error("updateLeds delay exeption", e);
+						}
+
+				}
+			}
+			if (partialCount > 0) { // send the final leftovers
+				ICommand command = new CommandControlLed(NetEndpoint.PRIMARY_ENDPOINT, channel, EffectEnum.FLASH, partialSamples);
+				mRadioController.sendCommand(command, getAddress(), true);
+				LOGGER.debug("last partial send to aisle controller");
+			}
+		}
 	}
 }

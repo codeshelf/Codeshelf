@@ -876,6 +876,23 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * Sort the command groups by their position. It is important that lower ones go out first.
+	 */
+	private class CmdGroupComparator implements Comparator<LedCmdGroup> {
+
+		public int compare(LedCmdGroup inGroup1, LedCmdGroup inGroup2) {
+			if (inGroup1 == null) {
+				return -1;
+			} else if (inGroup2 == null) {
+				return 1;
+			} else {								
+				return inGroup1.compareTo(inGroup2);
+			}
+		}
+	};
+
+	// --------------------------------------------------------------------------
+	/**
 	 * Send to the LED controller the active picks for the work instruction that's active on the CHE now.
 	 */
 	private void showActivePicks() {
@@ -898,6 +915,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 			// Not as easy. Clear this CHE's last leds off of aisle controller(s), and tell aisle controller(s) what to light next
 			List<LedCmdGroup> ledCmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(firstWi.getLedCmdStream());
+			
+			// It is important sort the CmdGroups.
+			Collections.sort(ledCmdGroups, new CmdGroupComparator());
 
 			INetworkDevice lastLedController = null;
 			// This is not about clearing controllers/channels this CHE had lights on for.  Rather, it was about iterating the command groups and making sure
