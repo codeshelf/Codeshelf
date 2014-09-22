@@ -1263,7 +1263,7 @@ public class Facility extends SubLocationABC<Facility> {
 				setCrossWorkInstructionLedPattern(resultWi,
 					inOrderDetail.getItemMasterId(),
 					inLocation,
-					inOrderDetail.getUomMasterId());
+					inOrderDetail.getUomMasterId(), ColorEnum.BLUE);
 			} else {
 				// This might be a cross batch case! The work instruction came from cross batch order, but position and leds comes from the outbound order.
 				// We could (should?) add a parameter to createWorkInstruction. Called from makeWIForOutbound() for normal outbound pick, and generateCrossWallInstructions().
@@ -1276,10 +1276,10 @@ public class Facility extends SubLocationABC<Facility> {
 					setOutboundWorkInstructionLedPatternAndPosAlongPathFromInventoryItem(resultWi,
 						inLocation,
 						inOrderDetail.getItemMasterId(),
-						inOrderDetail.getUomMasterId());
+						inOrderDetail.getUomMasterId(), ColorEnum.BLUE);
 				} else {
 					// The cross batch situation. We want the leds for the order location(s)
-					setWorkInstructionLedPatternFromOrderLocations(resultWi, passedInDetailParent);
+					setWorkInstructionLedPatternFromOrderLocations(resultWi, passedInDetailParent, ColorEnum.BLUE);
 				}
 			}
 
@@ -1336,7 +1336,7 @@ public class Facility extends SubLocationABC<Facility> {
 	 * @param inWi
 	 * @param inOrder
 	 */
-	private void setWorkInstructionLedPatternFromOrderLocations(final WorkInstruction inWi, final OrderHeader inOrder) {
+	private void setWorkInstructionLedPatternFromOrderLocations(final WorkInstruction inWi, final OrderHeader inOrder, final ColorEnum inColor) {
 		// This is used for GoodEggs cross batch processs. The order header passed in is the outbound order (which has order locations),
 		// but inWi was generated from the cross batch order detail.
 
@@ -1354,7 +1354,7 @@ public class Facility extends SubLocationABC<Facility> {
 			LOGGER.error("work instruction was not initialized");
 		}
 
-		List<LedCmdGroup> ledCmdGroupList = getLedCmdGroupListForLocationList(inOrder.getActiveOrderLocations(), ColorEnum.BLUE);
+		List<LedCmdGroup> ledCmdGroupList = getLedCmdGroupListForLocationList(inOrder.getActiveOrderLocations(), inColor);
 		if (ledCmdGroupList.size() > 0)
 			inWi.setLedCmdStream(LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList));
 	}
@@ -1370,7 +1370,8 @@ public class Facility extends SubLocationABC<Facility> {
 	private void setOutboundWorkInstructionLedPatternAndPosAlongPathFromInventoryItem(final WorkInstruction inWi,
 		final ILocation<?> inLocation,
 		final String inItemMasterId,
-		final String inUomId) {
+		final String inUomId,
+		final ColorEnum inColor) {
 
 		if (inWi == null) {
 			LOGGER.error("Unexpected null WorkInstruction processing " + inItemMasterId);
@@ -1417,7 +1418,7 @@ public class Facility extends SubLocationABC<Facility> {
 		}
 
 		// We will light the inventory where it is in blue
-		List<LedCmdGroup> ledCmdGroupList = getLedCmdGroupListForItemInLocation(theItem, ColorEnum.BLUE, inLocation);
+		List<LedCmdGroup> ledCmdGroupList = getLedCmdGroupListForItemInLocation(theItem, inColor, inLocation);
 
 		if (ledCmdGroupList.size() > 0)
 			inWi.setLedCmdStream(LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList));
@@ -1568,7 +1569,8 @@ public class Facility extends SubLocationABC<Facility> {
 	private void setCrossWorkInstructionLedPattern(final WorkInstruction inWi,
 		final String inItemMasterId,
 		final ILocation<?> inLocation,
-		final String inUom) {
+		final String inUom,
+		final ColorEnum inColor) {
 
 		if (inWi == null) {
 			LOGGER.error("Unexpected null WorkInstruction processing " + inItemMasterId);
@@ -1603,7 +1605,7 @@ public class Facility extends SubLocationABC<Facility> {
 			ledSamples);
 
 		for (short ledPos = firstLedPosNum; ledPos < lastLedPosNum; ledPos++) {
-			LedSample ledSample = new LedSample(ledPos, ColorEnum.BLUE);
+			LedSample ledSample = new LedSample(ledPos, inColor);
 			ledSamples.add(ledSample);
 		}
 		ledCmdGroup.setLedSampleList(ledSamples);
