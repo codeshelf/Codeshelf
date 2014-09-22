@@ -9,7 +9,6 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -26,8 +25,8 @@ public class PickDocumentGeneratorTest {
 		BlockingQueue<String> testBlockingQueue = new ArrayBlockingQueue<>(100);
 		pickDocumentGenerator.startProcessor(testBlockingQueue);
 
-		Thread foundThread=findPickDocumentGeneratorThread();
-		Assert.assertNotNull(foundThread); // running
+		Thread foundThread = findPickDocumentGeneratorThread();
+		Assert.assertFalse(foundThread == null); // running
 
 		pickDocumentGenerator.stopProcessor();
 		// That thread might be sleeping, interrupt if so
@@ -43,13 +42,13 @@ public class PickDocumentGeneratorTest {
 	}
 	
 	Thread findPickDocumentGeneratorThread() {
-		Thread foundThread = null;
+		Thread found = null;
 		for (Thread thread : Thread.getAllStackTraces().keySet()) {
 			if (thread.getName().equals(IPickDocumentGenerator.PICK_DOCUMENT_GENERATOR_THREAD_NAME)) {
-				foundThread = thread;
+				found = thread;
 			}
 		}
-		return foundThread;
+		return found;
 	}
 
 	@Test
