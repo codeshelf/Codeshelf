@@ -18,11 +18,7 @@ import org.junit.Test;
  */
 public class PickDocumentGeneratorTest {
 
-	/*
-	 * This test fails frequently and unpredictably due to a race condition
-	 * Putting on ignore for now. JIRA DEV-110
-	 */
-	@Ignore
+	@Test
 	public void pickDocGeneratorThreadTest() {
 
 
@@ -30,30 +26,30 @@ public class PickDocumentGeneratorTest {
 		BlockingQueue<String> testBlockingQueue = new ArrayBlockingQueue<>(100);
 		pickDocumentGenerator.startProcessor(testBlockingQueue);
 
+		Thread foundThread=findPickDocumentGeneratorThread();
+		Assert.assertNotNull(foundThread); // running
+
+		pickDocumentGenerator.stopProcessor();
+		// That thread might be sleeping, interrupt if so
+		if (foundThread != null) {
+			foundThread.interrupt();
+		}
+		try {
+			Thread.sleep(500);
+		} catch (InterruptedException e) {
+		} // give it a sec to stop
+
+		Assert.assertNull(findPickDocumentGeneratorThread()); // no longer running
+	}
+	
+	Thread findPickDocumentGeneratorThread() {
 		Thread foundThread = null;
 		for (Thread thread : Thread.getAllStackTraces().keySet()) {
 			if (thread.getName().equals(IPickDocumentGenerator.PICK_DOCUMENT_GENERATOR_THREAD_NAME)) {
 				foundThread = thread;
 			}
 		}
-
-		Assert.assertNotNull(foundThread);
-
-		pickDocumentGenerator.stopProcessor();
-
-		// That thread might be sleeping.
-		if (foundThread != null) {
-			foundThread.interrupt();
-		}
-
-		foundThread = null;
-		for (Thread thread : Thread.getAllStackTraces().keySet()) {
-			if (thread.getName().equals(IPickDocumentGenerator.PICK_DOCUMENT_GENERATOR_THREAD_NAME)) {
-				foundThread = thread;
-			}
-		}
-
-		Assert.assertNotNull(foundThread);
+		return foundThread;
 	}
 
 	@Test
