@@ -31,7 +31,6 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
-import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
 import com.gadgetworks.flyweight.command.NetAddress;
@@ -50,13 +49,11 @@ import com.google.inject.Singleton;
  * @author jeffw
  */
 
-@Entity
-//@CacheStrategy(useBeanCache = true)
-//@MappedSuperclass
+@MappedSuperclass
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@Table(name = "device")
-@DiscriminatorColumn(name = "dtype", discriminatorType = DiscriminatorType.STRING)
+//@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+//@Table(name = "devices")
+//@DiscriminatorColumn(name = "dtype", discriminatorType = DiscriminatorType.STRING)
 @ToString(doNotUseGetters = true, callSuper = true)
 public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNetwork> {
 

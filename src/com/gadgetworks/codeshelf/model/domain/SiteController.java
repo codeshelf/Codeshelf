@@ -1,6 +1,7 @@
 package com.gadgetworks.codeshelf.model.domain;
 
 import javax.persistence.Column;
+import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 
@@ -10,18 +11,17 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.avaje.ebean.annotation.CacheStrategy;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
-import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 @Entity
-@CacheStrategy(useBeanCache = true)
 @Table(name = "site_controller")
+@DiscriminatorValue("SITECONTROLLER")
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class SiteController extends WirelessDeviceABC {
 	
@@ -33,8 +33,8 @@ public class SiteController extends WirelessDeviceABC {
 	@Singleton
 	public static class SiteControllerDao extends GenericDaoABC<SiteController> implements ITypedDao<SiteController> {
 		@Inject
-		public SiteControllerDao(final ISchemaManager inSchemaManager) {
-			super(inSchemaManager);
+		public SiteControllerDao(final PersistencyService persistencyService) {
+			super(persistencyService);
 		}
 		
 		public final Class<SiteController> getDaoClass() {

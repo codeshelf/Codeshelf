@@ -5,9 +5,7 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import javax.persistence.Column;
@@ -30,7 +28,6 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
-import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
 import com.gadgetworks.flyweight.command.NetGuid;
@@ -49,7 +46,7 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-@Table(name = "codeshelf_network")
+@Table(name = "network")
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 
@@ -114,27 +111,20 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 	// The owning facility.
 	@ManyToOne(optional = false)
 	private Facility					parent;
-
 	
 	@Getter
-    @OneToMany
-	// @OneToMany(mappedBy = "parent",targetEntity=Che.class)
-	@JoinColumn(name="parent", insertable=false, updatable=false)
-    @Where(clause="dtype='Che'")
+    @OneToMany(mappedBy = "parent",targetEntity=Che.class)
     @MapKey(name = "domainId")
 	@JsonProperty
 	private Map<String, Che>			ches				= new HashMap<String, Che>();
 
 	@Getter
-    @OneToMany
-	// @OneToMany(mappedBy = "parent",targetEntity=LedController.class)
-	@JoinColumn(name="parent", insertable=false, updatable=false)
-    @Where(clause="dtype='LedController'")
+	@OneToMany(mappedBy = "parent",targetEntity=LedController.class)
 	@MapKey(name = "domainId")
 	@JsonProperty
 	private Map<String, LedController>	ledControllers		= new HashMap<String, LedController>();
 
-	@OneToMany(mappedBy = "parent")
+	@OneToMany(mappedBy = "parent",targetEntity=SiteController.class)
 	@MapKey(name = "domainId")
 	@Getter
 	@JsonProperty
@@ -142,9 +132,9 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 
 	// For a network this is a list of all of the devices that belong to this network.
 	// @Column(nullable = false)
-	@Getter
-	@OneToMany(mappedBy = "parent")
-	private List<WirelessDeviceABC>		devices				= new ArrayList<WirelessDeviceABC>();
+	// @Getter
+	// @OneToMany(mappedBy = "parent")
+	// private List<WirelessDeviceABC>		devices				= new ArrayList<WirelessDeviceABC>();
 
 	public CodeshelfNetwork() {
 		this(null, null, "");
@@ -182,6 +172,7 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 		parent = inParent;
 	}
 
+	/*
 	public final List<? extends IDomainObject> getChildren() {
 		return getDevices();
 	}
@@ -195,6 +186,7 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 	public final void removeDevice(WirelessDeviceABC inWirelessDevice) {
 		devices.remove(inWirelessDevice);
 	}
+	*/
 
 	public final void addChe(Che inChe) {
 		ches.put(inChe.getDomainId(), inChe);

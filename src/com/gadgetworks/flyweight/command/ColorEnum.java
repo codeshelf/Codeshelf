@@ -5,35 +5,24 @@
  *******************************************************************************/
 package com.gadgetworks.flyweight.command;
 
-import com.avaje.ebean.annotation.EnumValue;
-
-// --------------------------------------------------------------------------
-/**
- *  @author jeffw
- */
-
-// --------------------------------------------------------------------------
-/**
- *  @author jeffw
- */
 public enum ColorEnum {
-	@EnumValue("INVALID")
+	//@EnumValue("INVALID")
 	INVALID(ColorNum.INVALID, "INVALID"),
-	@EnumValue("RED")
+	//@EnumValue("RED")
 	RED(ColorNum.RED, "RED"),
-	@EnumValue("GREEN")
+	//@EnumValue("GREEN")
 	GREEN(ColorNum.GREEN, "GREEN"),
-	@EnumValue("BLUE")
+	//@EnumValue("BLUE")
 	BLUE(ColorNum.BLUE, "BLUE"),
-	@EnumValue("MAGENTA")
+	//@EnumValue("MAGENTA")
 	MAGENTA(ColorNum.MAGENTA, "MAGENTA"),
-	@EnumValue("CYAN")
+	//@EnumValue("CYAN")
 	CYAN(ColorNum.CYAN, "CYAN"),
-	@EnumValue("ORANGE")
+	//@EnumValue("ORANGE")
 	ORANGE(ColorNum.ORANGE, "ORANGE"),
-	@EnumValue("BLACK")
+	//@EnumValue("BLACK")
 	BLACK(ColorNum.BLACK, "BLACK"),
-	@EnumValue("WHITE")
+	//@EnumValue("WHITE")
 	WHITE(ColorNum.WHITE, "WHITE");
 
 	private int		mValue;

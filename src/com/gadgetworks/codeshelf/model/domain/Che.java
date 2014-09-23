@@ -18,6 +18,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OrderBy;
 import javax.persistence.Table;
+import javax.validation.constraints.NotNull;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -47,8 +48,8 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-// @Table(name = "che")
-@DiscriminatorValue("CHE")
+@Table(name = "ches")
+//@DiscriminatorValue("CHE")
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class Che extends WirelessDeviceABC {
 
@@ -87,7 +88,7 @@ public class Che extends WirelessDeviceABC {
 	private User				currentUser;
 
 	// Service state.
-	@Column(nullable = false)
+	@NotNull
 	@Enumerated(value = EnumType.STRING)
 	@Getter
 	@Setter

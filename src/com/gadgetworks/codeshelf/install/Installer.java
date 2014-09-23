@@ -106,7 +106,7 @@ public class Installer {
 
 		}
 		if (organization.getUser(inDefaultUserId) == null) {
-			organization.createUser(inDefaultUserId, inDefaultUserPw);
+			organization.createUser(inDefaultUserId, inDefaultUserPw, null);
 		}
 	}	
 	

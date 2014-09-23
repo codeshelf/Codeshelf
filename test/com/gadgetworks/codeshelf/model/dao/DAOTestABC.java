@@ -5,6 +5,8 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
+import lombok.Getter;
+
 import org.junit.After;
 import org.junit.Before;
 
@@ -27,7 +29,9 @@ import com.gadgetworks.codeshelf.model.domain.DropboxService;
 import com.gadgetworks.codeshelf.model.domain.DropboxService.DropboxServiceDao;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Facility.FacilityDao;
+import com.gadgetworks.codeshelf.model.domain.IronMqService;
 import com.gadgetworks.codeshelf.model.domain.Item;
+import com.gadgetworks.codeshelf.model.domain.IronMqService.IronMqServiceDao;
 import com.gadgetworks.codeshelf.model.domain.Item.ItemDao;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster.ItemMasterDao;
@@ -77,6 +81,7 @@ public abstract class DAOTestABC {
 		Configuration.loadConfig("test");
 	}
 	
+	@Getter
 	PersistencyService persistencyService;
 	
 	protected OrganizationDao		mOrganizationDao;
@@ -104,6 +109,7 @@ public abstract class DAOTestABC {
 	protected ItemMasterDao			mItemMasterDao;
 	protected ItemDao				mItemDao;
 	protected UomMasterDao			mUomMasterDao;
+	protected IronMqServiceDao		mIronMqServiceDao;
 	protected LedControllerDao		mLedControllerDao;
 	protected LocationAliasDao		mLocationAliasDao;
 	protected VertexDao				mVertexDao;
@@ -126,10 +132,10 @@ public abstract class DAOTestABC {
 		mOrganizationDao = new OrganizationDao(persistencyService);
 		Organization.DAO = mOrganizationDao;
 
-		mUserDao = new UserDao(mSchemaManager);
+		mUserDao = new UserDao(persistencyService);
 		User.DAO = mUserDao;
 
-		mFacilityDao = new FacilityDao(mSchemaManager);
+		mFacilityDao = new FacilityDao(persistencyService);
 		Facility.DAO = mFacilityDao;
 
 		mAisleDao = new AisleDao(persistencyService);
@@ -159,10 +165,10 @@ public abstract class DAOTestABC {
 		mCheDao = new CheDao(persistencyService);
 		Che.DAO = mCheDao;
 
-		mSiteControllerDao = new SiteControllerDao(mSchemaManager);
+		mSiteControllerDao = new SiteControllerDao(persistencyService);
 		SiteController.DAO = mSiteControllerDao;
 
-		mSubLocationDao = new SubLocationDao(mSchemaManager);
+		mSubLocationDao = new SubLocationDao(persistencyService);
 		SubLocationABC.DAO = mSubLocationDao;
 
 		mLocationDao = new LocationABCDao(persistencyService);
@@ -194,7 +200,10 @@ public abstract class DAOTestABC {
 
 		mItemDao = new ItemDao(persistencyService);
 		Item.DAO = mItemDao;
-
+		
+		mIronMqServiceDao = new IronMqServiceDao(persistencyService);
+		IronMqService.DAO = mIronMqServiceDao;
+		
 		mUomMasterDao = new UomMasterDao(persistencyService);
 		UomMaster.DAO = mUomMasterDao;
 

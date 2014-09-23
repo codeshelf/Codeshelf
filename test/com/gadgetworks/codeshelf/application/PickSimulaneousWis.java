@@ -61,6 +61,8 @@ public class PickSimulaneousWis extends EdiTestABC {
 		// All tiers have controllers associated.
 		// There are two CHE called CHE1 and CHE2
 
+		getPersistencyService().beginTenantTransaction();
+
 		Organization organization = new Organization();
 		String oName = "O-" + inOrganizationName;
 		organization.setDomainId(oName);
@@ -69,6 +71,7 @@ public class PickSimulaneousWis extends EdiTestABC {
 		String fName = "F-" + inOrganizationName;
 		organization.createFacility(fName, "TEST", Point.getZeroPoint());
 		Facility facility = organization.getFacility(fName);
+		getPersistencyService().endTenantTransaction();
 
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A1,,,,,tierB1S1Side,12.85,43.45,X,120,Y\r\n" //
@@ -99,6 +102,7 @@ public class PickSimulaneousWis extends EdiTestABC {
 		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Get the aisle
+		getPersistencyService().beginTenantTransaction();
 		Aisle aisle1 = Aisle.DAO.findByDomainId(facility, "A1");
 		Assert.assertNotNull(aisle1);
 
@@ -119,6 +123,7 @@ public class PickSimulaneousWis extends EdiTestABC {
 		Assert.assertNotNull(aisle3);
 		String persistStr2 = segment02.getPersistentId().toString();
 		aisle3.associatePathSegment(persistStr2);
+		getPersistencyService().endTenantTransaction();
 
 		String csvString2 = "mappedLocationId,locationAlias\r\n" //
 				+ "A1.B1, D100\r\n" //
@@ -169,7 +174,6 @@ public class PickSimulaneousWis extends EdiTestABC {
 	@SuppressWarnings("unused")
 	@Test
 	public final void testPick() throws IOException {
-
 		Facility facility = setUpSimpleNoSlotFacility("PK01");
 
 		/*  From CD_0043  applied to each pick in aisle A1
@@ -310,8 +314,7 @@ public class PickSimulaneousWis extends EdiTestABC {
 		String wi8Item = wi8.getItemMasterId();
 		Assert.assertEquals("1522", wi7Item);
 		Assert.assertEquals("1522", wi8Item);
-
-
+		getPersistencyService().endTenantTransaction();
 	}
 
 }

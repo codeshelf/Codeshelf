@@ -19,6 +19,7 @@ public class BayTest extends DomainTestABC {
 	
 	@Test
 	public void testOrderingOfTiers() {
+		this.getPersistencyService().beginTenantTransaction();
 		facility = createFacility(this.getClass().toString() + System.currentTimeMillis());
 		Aisle aisle = getAisle(facility, "A1");
 		Bay bay = getBay(aisle, "B1");
@@ -29,6 +30,7 @@ public class BayTest extends DomainTestABC {
 		Tier tier3 = getTier(bay, "TC");
 		tier3.setAnchorPoint(new Point(PositionTypeEnum.METERS_FROM_PARENT, 0.0d, 0.0d, 4.0d));
 		List<ILocation<?>> locations = bay.getSubLocationsInWorkingOrder();
+		this.getPersistencyService().endTenantTransaction();
 		Assert.assertEquals(ImmutableList.of(tier3, tier2, tier1), ImmutableList.copyOf(locations));
 	}
 }

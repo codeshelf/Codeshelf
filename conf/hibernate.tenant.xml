@@ -30,9 +30,9 @@
         <mapping class="com.gadgetworks.codeshelf.model.domain.Organization"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.Facility"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork"/>
-        <mapping class="com.gadgetworks.codeshelf.model.domain.WirelessDeviceABC"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.Che"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.LedController"/>
+        <mapping class="com.gadgetworks.codeshelf.model.domain.SiteController"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.PathSegment"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.Path"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.LocationAlias"/>
@@ -46,6 +46,7 @@
         <mapping class="com.gadgetworks.codeshelf.model.domain.Bay"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.Aisle"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.Tier"/>
+        <mapping class="com.gadgetworks.codeshelf.model.domain.Slot"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.Container"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.ContainerKind"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.ContainerUse"/>
@@ -59,6 +60,7 @@
         <mapping class="com.gadgetworks.codeshelf.model.domain.UserSession"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.EdiDocumentLocator"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.DropboxService"/>
+        <mapping class="com.gadgetworks.codeshelf.model.domain.IronMqService"/>
 
     </session-factory>
 </hibernate-configuration>

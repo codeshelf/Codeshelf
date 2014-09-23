@@ -31,7 +31,14 @@ public class HibernateInterceptor extends EmptyInterceptor {
 			Set<String> changedProperties = new HashSet<String>();
 			DomainObjectABC domainObject = (DomainObjectABC) entity;
 			for (int i=0;i<propertyNames.length;i++) {
-				if (!currentState[i].equals(previousState[i])) {
+				if (currentState[i]==null && previousState[i]==null) {
+					continue;
+				}
+				if (currentState[i]==null && previousState[i]!=null) {
+					LOGGER.trace(propertyNames[i]+" changed from "+previousState[i]+" to "+currentState[i]);
+					changedProperties.add(propertyNames[i]);
+				}
+				else if (!currentState[i].equals(previousState[i])) {
 					LOGGER.trace(propertyNames[i]+" changed from "+previousState[i]+" to "+currentState[i]);
 					changedProperties.add(propertyNames[i]);
 				}

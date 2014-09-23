@@ -47,10 +47,9 @@ public interface ITypedDao<T> extends IDao {
 	
 	Object getNextId(final Class<?> beanType);
 	
+	// TODO: remove transaction methods from DAO layer
 	void beginTransaction();
-	
 	void commitTransaction();
-	
 	void endTransaction();
 	
 	/**

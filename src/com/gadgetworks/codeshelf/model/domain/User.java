@@ -48,7 +48,6 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "users")
-//@CacheStrategy(useBeanCache = true)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class User extends DomainObjectTreeABC<Organization> {
 
@@ -111,7 +110,6 @@ public class User extends DomainObjectTreeABC<Organization> {
 	private String				hashedPassword;
 
 	// Site controller - if present, this user is linked to a site controller 
-	@Column(nullable = true)
 	@ManyToOne(optional = true)
 	@Getter
 	@Setter

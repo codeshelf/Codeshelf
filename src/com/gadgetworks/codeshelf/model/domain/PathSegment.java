@@ -19,6 +19,9 @@ import lombok.NonNull;
 import lombok.Setter;
 
 import org.apache.commons.lang.NotImplementedException;
+import org.hibernate.Criteria;
+import org.hibernate.Session;
+import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,13 +76,17 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 
 		@SuppressWarnings("rawtypes")
 		public List<LocationABC> findLocations(PathSegment inPathSegment) {
-			UUID persistentId = inPathSegment.getPersistentId();
+			Session session = this.getCurrentSession();
+	        Criteria criteria = session.createCriteria(LocationABC.class);
+			criteria.add(Restrictions.eq("pathSegment",inPathSegment));
+			List<LocationABC> locations = criteria.list();
+			return locations;
 			/*
+			 * old ebeans implementation:
 			Query<LocationABC> query = mServer.createQuery(LocationABC.class);
 			query.where().eq("pathSegment.persistentId", persistentId);
 			return query.findList();
 			*/
-			throw new NotImplementedException();
 		}
 	}
 
