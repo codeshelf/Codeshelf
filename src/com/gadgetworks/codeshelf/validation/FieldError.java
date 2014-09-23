@@ -1,5 +1,7 @@
 package com.gadgetworks.codeshelf.validation;
 
+import java.util.Arrays;
+
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -105,6 +107,7 @@ public class FieldError extends ObjectError {
 	public String toString() {
 		return Objects.toStringHelper(this)
 			.add("field", getField())
+			.add("codes", Arrays.toString(getCodes()))
 			.add("message", getMessage())
 			.toString();
 	}
