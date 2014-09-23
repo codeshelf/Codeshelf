@@ -1498,7 +1498,8 @@ public class Facility extends SubLocationABC<Facility> {
 		List<LedSample> ledSamples = new ArrayList<LedSample>();
 		LedCmdGroup ledCmdGroup = new LedCmdGroup(netGuidStr, inLocation.getEffectiveLedChannel(), firstLedPosNum, ledSamples);
 
-		for (short ledPos = firstLedPosNum; ledPos <= lastLedPosNum; ledPos++) {
+		// IMPORTANT. When DEV-411 resumes, change back to <=.  For now, we want only 3 LED lit at GoodEggs.
+		for (short ledPos = firstLedPosNum; ledPos < lastLedPosNum; ledPos++) {
 			LedSample ledSample = new LedSample(ledPos, inColor);
 			ledSamples.add(ledSample);
 		}
@@ -1547,7 +1548,8 @@ public class Facility extends SubLocationABC<Facility> {
 			List<LedSample> ledSamples = new ArrayList<LedSample>();
 			LedCmdGroup ledCmdGroup = new LedCmdGroup(theController.getDeviceGuidStr(), theChannel, firstLedPosNum, ledSamples);
 
-			for (short ledPos = firstLedPosNum; ledPos <= lastLedPosNum; ledPos++) {
+			// IMPORTANT. When DEV-411 resumes, change back to <=.  For now, we want only 3 LED lit at GoodEggs.
+			for (short ledPos = firstLedPosNum; ledPos < lastLedPosNum; ledPos++) {
 				LedSample ledSample = new LedSample(ledPos, inColor);
 				ledSamples.add(ledSample);
 			}
