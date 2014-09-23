@@ -1,10 +1,5 @@
 package com.gadgetworks.codeshelf.metrics;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.Statement;
-
-import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
 
 public class DatabaseConnectionHealthCheck extends CodeshelfHealthCheck {

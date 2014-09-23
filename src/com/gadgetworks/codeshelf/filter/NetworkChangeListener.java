@@ -14,7 +14,7 @@ import com.gadgetworks.codeshelf.model.domain.SiteController;
 import com.gadgetworks.codeshelf.model.domain.WirelessDeviceABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.NetworkStatusMessage;
-import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
+import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
 
 public class NetworkChangeListener implements ObjectEventListener {
 
@@ -62,7 +62,7 @@ public class NetworkChangeListener implements ObjectEventListener {
 		return null;
 	}
 	
-	public static void registerWithSession(CsSession session, CodeshelfNetwork network, IDaoProvider daoProvider) {
+	public static void registerWithSession(UserSession session, CodeshelfNetwork network, IDaoProvider daoProvider) {
 		// register network change listener
 		NetworkChangeListener listener = new NetworkChangeListener(network,"network-change-listener");
 		session.registerObjectEventListener(listener);

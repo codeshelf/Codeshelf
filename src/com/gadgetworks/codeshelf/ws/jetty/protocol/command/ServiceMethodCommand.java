@@ -15,7 +15,7 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ServiceMethodRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ServiceMethodResponse;
-import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
+import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
 import com.google.common.base.Strings;
 
 public class ServiceMethodCommand extends CommandABC {
@@ -24,7 +24,7 @@ public class ServiceMethodCommand extends CommandABC {
 
 	private ServiceMethodRequest	request;
 	
-	public ServiceMethodCommand(CsSession session, ServiceMethodRequest request) {
+	public ServiceMethodCommand(UserSession session, ServiceMethodRequest request) {
 		super(session);
 		this.request = request;
 	}
@@ -115,7 +115,7 @@ public class ServiceMethodCommand extends CommandABC {
 		return response;
 	}
 
-	private Object getServiceInstance(CsSession session, Class <?> classObject) throws InstantiationException, IllegalAccessException {
+	private Object getServiceInstance(UserSession session, Class <?> classObject) throws InstantiationException, IllegalAccessException {
 		return classObject.newInstance();
 	}
 	

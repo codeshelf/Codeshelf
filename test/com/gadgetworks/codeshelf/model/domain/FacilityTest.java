@@ -7,7 +7,10 @@ package com.gadgetworks.codeshelf.model.domain;
 
 import java.sql.Timestamp;
 
+import org.hibernate.Session;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -19,7 +22,16 @@ import com.gadgetworks.codeshelf.model.OrderTypeEnum;
  *
  */
 public class FacilityTest extends DomainTestABC {
-
+	@Before
+	public final void before() {
+		this.getPersistencyService().beginTenantTransaction();
+	}
+	
+	@After
+	public final void after() {
+		this.getPersistencyService().endTenantTransaction();
+	}
+	
 	@Test
 	public final void testGetParentAtLevelWithInvalidSublevel() {
 		Facility facility = createFacility("ORG-testGetParentAtLevelWhenSublevel");

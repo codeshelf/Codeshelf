@@ -17,6 +17,8 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
@@ -31,7 +33,6 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
-import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
 import com.google.inject.Inject;
@@ -109,11 +110,11 @@ public class User extends DomainObjectTreeABC<Organization> {
 	//@JsonProperty
 	private String				hashedPassword;
 
-	// Site controller - if present, this user is linked to a site controller 
-	@ManyToOne(optional = true)
+	// sitecon, webapp, system user etc
 	@Getter
 	@Setter
-	private SiteController		siteController;
+	@Enumerated(value = EnumType.STRING)
+	private UserType			type;
 
 	// Create date.
 	@Column(nullable = false)

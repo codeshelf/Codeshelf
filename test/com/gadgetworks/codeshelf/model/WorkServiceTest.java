@@ -1,7 +1,6 @@
 package com.gadgetworks.codeshelf.model;
 
 import static org.mockito.Matchers.anyMap;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 

@@ -20,7 +20,7 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.response.GetWorkResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.LoginResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
-import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
+import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
 
 public class SiteControllerMessageProcessor extends MessageProcessor {
 	
@@ -35,7 +35,7 @@ public class SiteControllerMessageProcessor extends MessageProcessor {
 	}
 	
 	@Override
-	public void handleResponse(CsSession session, ResponseABC response) {
+	public void handleResponse(UserSession session, ResponseABC response) {
 		LOGGER.debug("Response received:"+response);
 		if (response.getStatus()!=ResponseStatus.Success) {
 			LOGGER.warn("Request #"+response.getRequestId()+" failed: "+response.getStatusMessage());
@@ -96,7 +96,7 @@ public class SiteControllerMessageProcessor extends MessageProcessor {
 	}
 	
 	@Override
-	public void handleOtherMessage(CsSession session, MessageABC message) {
+	public void handleOtherMessage(UserSession session, MessageABC message) {
 		//////////////////////////////////////////
 		// Handler for Network Update
 		if (message instanceof NetworkStatusMessage) {
@@ -108,7 +108,7 @@ public class SiteControllerMessageProcessor extends MessageProcessor {
 	}
 	
 	@Override
-	public ResponseABC handleRequest(CsSession session, RequestABC request) {
+	public ResponseABC handleRequest(UserSession session, RequestABC request) {
 		LOGGER.info("Request received for processing: "+request);
 		CommandABC command = null;
 		ResponseABC response = null;

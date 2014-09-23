@@ -10,9 +10,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.eaio.uuid.UUIDGen;
-import com.gadgetworks.codeshelf.model.dao.Database;
-import com.gadgetworks.codeshelf.model.dao.H2SchemaManager;
-import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 
 public class PersistABCTest {

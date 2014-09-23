@@ -2,13 +2,12 @@ package com.gadgetworks.codeshelf.model.dao;
 
 import java.util.Set;
 
+import lombok.Getter;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import lombok.Getter;
-
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
-import com.gadgetworks.codeshelf.model.domain.Organization;
 
 public class DaoTestListener implements IDaoListener {
 

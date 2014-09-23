@@ -1,9 +1,9 @@
 package com.gadgetworks.codeshelf.ws.jetty.protocol.response;
 
-import com.gadgetworks.codeshelf.validation.Errors;
-
 import lombok.Getter;
 import lombok.Setter;
+
+import com.gadgetworks.codeshelf.validation.Errors;
 
 public class ObjectMethodResponse extends ResponseABC {
 	@Getter @Setter

@@ -11,7 +11,7 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectGetRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectGetResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
-import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
+import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
 
 public class ObjectGetCommand extends CommandABC {
 
@@ -19,7 +19,7 @@ public class ObjectGetCommand extends CommandABC {
 
 	private ObjectGetRequest request;
 	
-	public ObjectGetCommand(CsSession session, ObjectGetRequest request) {
+	public ObjectGetCommand(UserSession session, ObjectGetRequest request) {
 		super(session);
 		this.request = request;
 	}

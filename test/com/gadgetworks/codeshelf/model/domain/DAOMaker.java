@@ -7,7 +7,6 @@ import static com.natpryce.makeiteasy.Property.newProperty;
 import org.apache.commons.lang.RandomStringUtils;
 
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
-import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.domain.Facility.FacilityDao;
 import com.gadgetworks.codeshelf.model.domain.Organization.OrganizationDao;
 import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;

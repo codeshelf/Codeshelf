@@ -37,7 +37,7 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectMethodRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.CreatePathResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectMethodResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
-import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
+import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
 import com.gadgetworks.codeshelf.ws.jetty.server.ServerMessageProcessor;
 import com.natpryce.makeiteasy.Maker;
 
@@ -91,7 +91,7 @@ public class CreatePathCommandTest extends DAOTestABC {
 		jsonString = mapper.writeValueAsString(request);
 		System.out.println(jsonString);
 		
-		CsSession session = Mockito.mock(CsSession.class);
+		UserSession session = Mockito.mock(UserSession.class);
 		session.setSessionId("test-session");
 		
 		ServerMessageProcessor processor = new ServerMessageProcessor(mockDaoProvider);
@@ -130,7 +130,7 @@ public class CreatePathCommandTest extends DAOTestABC {
 		request.setMethodName("createPath");
 		request.setMethodArgs(args);
 		
-		CsSession session = Mockito.mock(CsSession.class);
+		UserSession session = Mockito.mock(UserSession.class);
 		session.setSessionId("test-session");
 
 		

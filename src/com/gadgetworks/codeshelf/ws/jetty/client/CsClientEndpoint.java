@@ -27,7 +27,7 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageProcessor;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RequestABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
-import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
+import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
 import com.gadgetworks.codeshelf.ws.jetty.server.SessionManager;
 
 @ClientEndpoint(encoders = { JsonEncoder.class }, decoders = { JsonDecoder.class })
@@ -72,7 +72,7 @@ public class CsClientEndpoint {
 		if (message instanceof ResponseABC) {
 			ResponseABC response = (ResponseABC) message;
 			// check CS session
-			CsSession csSession = sessionManager.getSession(session);
+			UserSession csSession = sessionManager.getSession(session);
 			if (csSession == null) {
 				LOGGER.warn("No matching CS session found for session " + session.getId());
 			}
@@ -84,7 +84,7 @@ public class CsClientEndpoint {
 			RequestABC request = (RequestABC) message;
 			LOGGER.debug("Request received: " + request);
 			// pass request to processor to execute command
-			CsSession csSession = sessionManager.getSession(session);
+			UserSession csSession = sessionManager.getSession(session);
 			ResponseABC response = messageProcessor.handleRequest(csSession, request);
 			if (response != null) {
 				// send response to client
@@ -95,7 +95,7 @@ public class CsClientEndpoint {
 			}
 		} else if (!(message instanceof KeepAlive)) {
 			LOGGER.debug("Other message received: " + message);
-			CsSession csSession = sessionManager.getSession(session);
+			UserSession csSession = sessionManager.getSession(session);
 			if (csSession == null) {
 				LOGGER.warn("No matching CS session found for session " + session.getId());
 			}

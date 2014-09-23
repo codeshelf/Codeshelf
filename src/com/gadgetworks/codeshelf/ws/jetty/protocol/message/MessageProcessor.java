@@ -5,16 +5,16 @@ import lombok.Setter;
 import com.gadgetworks.codeshelf.ws.jetty.client.MessageCoordinator;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RequestABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
-import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
+import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
 
 public abstract class MessageProcessor {
 	
 	@Setter
 	MessageCoordinator messageCoordinator;
 	
-	public abstract ResponseABC handleRequest(CsSession session, RequestABC request);
+	public abstract ResponseABC handleRequest(UserSession session, RequestABC request);
 
-	public abstract void handleResponse(CsSession session, ResponseABC response);
+	public abstract void handleResponse(UserSession session, ResponseABC response);
 
-	public abstract void handleOtherMessage(CsSession session, MessageABC message);
+	public abstract void handleOtherMessage(UserSession session, MessageABC message);
 }

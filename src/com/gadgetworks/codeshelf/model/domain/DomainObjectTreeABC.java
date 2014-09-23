@@ -7,8 +7,6 @@ package com.gadgetworks.codeshelf.model.domain;
 
 import java.util.UUID;
 
-import javax.persistence.Entity;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -16,7 +16,7 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectUpdateRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectUpdateResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
-import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
+import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
 
 public class ObjectUpdateCommand extends CommandABC {
 
@@ -26,7 +26,7 @@ public class ObjectUpdateCommand extends CommandABC {
 	
 	private PropertyUtilsBean propertyUtil = new PropertyUtilsBean();
 	
-	public ObjectUpdateCommand(IDaoProvider daoProvider, CsSession session, ObjectUpdateRequest request) {
+	public ObjectUpdateCommand(IDaoProvider daoProvider, UserSession session, ObjectUpdateRequest request) {
 		super(daoProvider, session);
 		this.request = request;
 	}

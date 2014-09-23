@@ -36,7 +36,7 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectMethodResponse
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectUpdateResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
-import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
+import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
 import com.gadgetworks.codeshelf.ws.jetty.server.ServerMessageProcessor;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -103,7 +103,7 @@ public class FacilityOutlineTest {
 		}		
 		
 		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider);
-		ResponseABC response = processor.handleRequest(Mockito.mock(CsSession.class), request);
+		ResponseABC response = processor.handleRequest(Mockito.mock(UserSession.class), request);
 		Assert.assertTrue(response instanceof ObjectMethodResponse);
 		
 		ObjectMethodResponse updateResponse = (ObjectMethodResponse) response;
@@ -168,7 +168,7 @@ public class FacilityOutlineTest {
 		}
 				
 		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider);
-		ResponseABC response = processor.handleRequest(Mockito.mock(CsSession.class), request);
+		ResponseABC response = processor.handleRequest(Mockito.mock(UserSession.class), request);
 
 		Assert.assertTrue(response instanceof ObjectUpdateResponse);
 		Assert.assertEquals(ResponseStatus.Success, response.getStatus());

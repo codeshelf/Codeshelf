@@ -24,7 +24,10 @@ NaturalOrderComparator.java -- Perform 'natural order' comparisons of strings in
  3. This notice may not be removed or altered from any source distribution.
  */
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 public class ASCIIAlphanumericComparator implements Comparator<String>
 {
