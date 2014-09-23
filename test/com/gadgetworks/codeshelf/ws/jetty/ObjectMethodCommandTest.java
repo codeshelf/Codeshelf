@@ -18,6 +18,7 @@ import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.ContainerKind;
 import com.gadgetworks.codeshelf.model.domain.DropboxService;
+import com.gadgetworks.codeshelf.model.domain.EdiServiceABC;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.IronMqService;
 import com.gadgetworks.codeshelf.model.domain.Organization;
@@ -59,10 +60,12 @@ public class ObjectMethodCommandTest {
 		ITypedDao<Che> cheDao = daoProvider.getDaoInstance(Che.class);
 		ITypedDao<DropboxService> dropboxDao = daoProvider.getDaoInstance(DropboxService.class);
 		ITypedDao<IronMqService> ironMqDao = daoProvider.getDaoInstance(IronMqService.class);
+		ITypedDao<EdiServiceABC> ediServiceABCDao = daoProvider.getDaoInstance(EdiServiceABC.class);
 		ITypedDao<ContainerKind> containerKindDao = daoProvider.getDaoInstance(ContainerKind.class);
 		Facility.DAO = facDao;
 		DropboxService.DAO = dropboxDao;
 		IronMqService.DAO = ironMqDao;
+		EdiServiceABC.DAO = ediServiceABCDao;
 		CodeshelfNetwork.DAO = netDao;
 		ContainerKind.DAO = containerKindDao;
 		Che.DAO = cheDao;
@@ -100,6 +103,6 @@ public class ObjectMethodCommandTest {
 		Assert.assertTrue(response instanceof ObjectMethodResponse);
 		
 		ObjectMethodResponse updateResponse = (ObjectMethodResponse) response;
-		Assert.assertEquals(ResponseStatus.Success, updateResponse.getStatus());
+		Assert.assertEquals(updateResponse.toString(), ResponseStatus.Success, updateResponse.getStatus());
 	}
 }

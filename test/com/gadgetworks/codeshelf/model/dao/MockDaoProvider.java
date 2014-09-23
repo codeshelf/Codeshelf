@@ -8,6 +8,7 @@ import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.ContainerKind;
 import com.gadgetworks.codeshelf.model.domain.DropboxService;
+import com.gadgetworks.codeshelf.model.domain.EdiServiceABC;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.model.domain.IronMqService;
@@ -53,6 +54,9 @@ public class MockDaoProvider implements IDaoProvider {
 		
 		ITypedDao<IronMqService> ironMqDao = new MockDao<IronMqService>();
 		daos.put(IronMqService.class, ironMqDao);
+
+		ITypedDao<EdiServiceABC> ediServiceABCDao = new MockDao<EdiServiceABC>();
+		daos.put(EdiServiceABC.class, ediServiceABCDao);
 		
 		ITypedDao<ContainerKind> containerKindDao = new MockDao<ContainerKind>();
 		daos.put(ContainerKind.class, containerKindDao);
