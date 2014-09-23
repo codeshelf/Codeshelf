@@ -25,8 +25,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
-import org.apache.commons.lang.StringUtils;
-import org.apache.http.annotation.Immutable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,7 +40,6 @@ import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.util.ASCIIAlphanumericComparator;
 import com.gadgetworks.codeshelf.util.UomNormalizer;
 import com.google.common.base.Joiner;
-import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
@@ -113,7 +110,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	// The actual quantity requested.
 	@Column(nullable = false)
 	@Getter
-	@Setter
+	//@Setter use setQuantities() to set all quantities at once 
 	@JsonProperty
 	private Integer					quantity;
 
@@ -217,6 +214,15 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 		return parent.getOrderId();
 	}
 
+	/**
+	 * Convenience function to set all quantities at once
+	 */
+	public final void setQuantities(Integer quantity) {
+		this.quantity = quantity;
+		setMinQuantity(quantity);
+		setMaxQuantity(quantity);
+	}
+	
 	// --------------------------------------------------------------------------
 	/**
 	 * Meta fields. These appropriate for pick (outbound) order details and/or cross--batch order details

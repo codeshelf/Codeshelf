@@ -450,9 +450,7 @@ public abstract class DomainTestABC extends DAOTestABC {
 		result.setDomainId(inItemMaster.getItemId());
 		result.setParent(inOrderHeader);
 		result.setItemMaster(inItemMaster);
-		result.setQuantity(5);
-		result.setMinQuantity(5);
-		result.setMaxQuantity(5);
+		result.setQuantities(5);
 		result.setUomMaster(inItemMaster.getStandardUom());
 		result.setStatusEnum(OrderStatusEnum.CREATED);
 		result.setActive(true);
