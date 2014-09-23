@@ -42,7 +42,9 @@ public class WorkInstructionGenerator {
 		OrderHeader orderHeader = new OrderHeader(facility, "OH1");
 		orderHeader.setOrderGroup(new OrderGroup(facility, "OG1"));
 		OrderDetail detail = new OrderDetail(orderHeader, "OD1");
-		detail.setQuantities(5);
+		detail.setQuantity(5);
+		detail.setMinQuantity(5);
+		detail.setMaxQuantity(5);
 		return detail;
 		
 	}
