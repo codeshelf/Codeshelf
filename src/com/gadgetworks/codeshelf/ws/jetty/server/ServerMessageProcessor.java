@@ -9,6 +9,7 @@ import com.codahale.metrics.Timer;
 import com.gadgetworks.codeshelf.metrics.MetricsGroup;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
+import com.gadgetworks.codeshelf.service.WorkService;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.CommandABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.CompleteWorkInstructionCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ComputeWorkCommand;
@@ -67,12 +68,16 @@ public class ServerMessageProcessor extends MessageProcessor {
 	private final Timer responseProcessingTimer = MetricsService.addTimer(MetricsGroup.WSS,"responses.processing-time");
 	private final Histogram pingHistogram = MetricsService.addHistogram(MetricsGroup.WSS, "ping-histogram");
 	
-	IDaoProvider daoProvider;
+	final private IDaoProvider daoProvider;
+
+	final private WorkService	workService;
 	
 	@Inject
 	public ServerMessageProcessor(IDaoProvider daoProvider) {
 		LOGGER.debug("Creating "+this.getClass().getSimpleName());
 		this.daoProvider = daoProvider;
+		this.workService = new WorkService();
+		
 	}
 	
 	@Override
@@ -96,7 +101,7 @@ public class ServerMessageProcessor extends MessageProcessor {
 				echoCounter.inc();
 			}		
 			else if (request instanceof CompleteWorkInstructionRequest) {
-				command = new CompleteWorkInstructionCommand(csSession,(CompleteWorkInstructionRequest) request);
+				command = new CompleteWorkInstructionCommand(csSession,(CompleteWorkInstructionRequest) request, this.workService);
 				completeWiCounter.inc();
 			}
 			else if (request instanceof ComputeWorkRequest) {

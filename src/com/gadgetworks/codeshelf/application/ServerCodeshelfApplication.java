@@ -55,13 +55,13 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 	private ITypedDao<Organization>			mOrganizationDao;
 
 	private BlockingQueue<String>			mEdiProcessSignalQueue;
-	
+
 	JettyWebSocketServer webSocketServer;
-	
+
 	private AdminServer mAdminServer;
-	
+
 	private MemoryUsageGaugeSet memoryUsage;
-	
+
 	@Inject
 	public ServerCodeshelfApplication(
 		final IHttpServer inHttpServer,
@@ -113,18 +113,18 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		// start database
 		mDatabase.start();
 
-		// Start the WebSocket server 
+		// Start the WebSocket server
 		webSocketServer.start();
 
 		// Start the EDI process.
 		mEdiProcessSignalQueue = new ArrayBlockingQueue<>(100);
 		mEdiProcessor.startProcessor(mEdiProcessSignalQueue);
-		
+
 		// Start the pick document generator process;
 		mPickDocumentGenerator.startProcessor(mEdiProcessSignalQueue);
 
 		mHttpServer.startServer();
-		
+
 		// start admin server, if enabled
 		String useAdminServer = System.getProperty("metrics.adminserver");
 		if ("true".equalsIgnoreCase(useAdminServer)) {
@@ -134,18 +134,18 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		else {
 			LOGGER.info("Admin Server not enabled");
 		}
-		
+
 		// create health checks
 		DatabaseConnectionHealthCheck dbCheck = new DatabaseConnectionHealthCheck(this.mDatabase);
 		MetricsService.registerHealthCheck(MetricsGroup.Database, dbCheck.getName(), dbCheck);
-		
+
 		// public metrics to opentsdb
 		String useMetricsReporter = System.getProperty("metrics.reporter.enabled");
 		if ("true".equalsIgnoreCase(useMetricsReporter)) {
 			String metricsServerUrl = System.getProperty("metrics.reporter.serverurl");
 			String intervalStr = System.getProperty("metrics.reporter.interval");
 			int interval = Integer.parseInt(intervalStr);
-			
+
 			LOGGER.info("Starting OpenTSDB Reporter writing to "+metricsServerUrl+" in "+interval+" sec intervals");
 			MetricRegistry registry = MetricsService.getRegistry();
 			String hostName = MetricsService.getInstance().getHostName();
@@ -246,11 +246,11 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		createOrganizationUser("DEMO1", "simulate@example.com", "testme"); //simulate + configure
 		createOrganizationUser("DEMO1", "che@example.com", "testme"); //view + simulate
 		createOrganizationUser("DEMO1", "work@example.com", "testme"); //view + simulate
-		
+
 		createOrganizationUser("DEMO1", "view@goodeggs.com", "goodeggs"); //view
 		createOrganizationUser("DEMO1", "view@accu-logistics.com", "accu-logistics"); //view
-		
-		// Recompute path positions, 
+
+		// Recompute path positions,
 		//   and ensure IronMq configuration
 		//   and create a default site controller user if doesn't already exist
 		for (Organization organization : mOrganizationDao.getAll()) {
@@ -259,14 +259,14 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 					// TODO: Remove once we have a tool for linking path segments to locations (aisles usually).
 					facility.recomputeLocationPathDistances(path);
 				}
-								
+
 				// create a default site controller and user for the first facility you see
 				// this should go away
 				for(CodeshelfNetwork network : facility.getNetworks()) {
-					network.createDefaultSiteControllerUser(); // does nothing if user already exists 
+					network.createDefaultSiteControllerUser(); // does nothing if user already exists
 				}
 
-				facility.ensureIronMqService(); // This is weak, but the only place we know that runs once after most data is present
+				facility.ensureEdiExportService(); // This is weak, but the only place we know that runs once after most data is present
 			}
 		}
 	}
@@ -292,7 +292,7 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		User user = organization.getUser(inDefaultUserId);
 		if (user == null) {
 			user = organization.createUser(inDefaultUserId, inDefaultUserPw, null);
-		} 
+		}
 		return user;
 	}
 }

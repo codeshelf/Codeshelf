@@ -105,7 +105,7 @@ public class EdiProcessorTest extends EdiTestABC {
 		BlockingQueue<String> testBlockingQueue = new ArrayBlockingQueue<>(100);
 		ediProcessor.startProcessor(testBlockingQueue);
 
-		Thread foundThread=EdiThread();
+		Thread foundThread=findEdiThread();
 		
 		Assert.assertFalse(foundThread == null);
 
@@ -119,10 +119,10 @@ public class EdiProcessorTest extends EdiTestABC {
 		} catch (InterruptedException e) {
 		} // wait a moment for EDI processor thread to stop
 
-		Assert.assertNull(EdiThread());
+		Assert.assertNull(findEdiThread());
 	}
 	
-	private final Thread EdiThread() {
+	private final Thread findEdiThread() {
 		Thread foundThread = null;
 		for (Thread thread : Thread.getAllStackTraces().keySet()) {
 			if (thread.getName().equals(IEdiProcessor.EDIPROCESSOR_THREAD_NAME)) {

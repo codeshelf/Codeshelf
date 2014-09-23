@@ -135,9 +135,7 @@ public class WorkInstructionTest extends DomainTestABC {
 		orderDetail.setDomainId(itemMaster.getItemId());
 		orderDetail.setParent(order1);
 		orderDetail.setItemMaster(itemMaster);
-		orderDetail.setQuantity(5);
-		orderDetail.setMinQuantity(5);
-		orderDetail.setMaxQuantity(5);
+		orderDetail.setQuantities(5);
 		orderDetail.setUomMaster(uomMaster);
 		orderDetail.setStatusEnum(OrderStatusEnum.CREATED);
 		orderDetail.setActive(true);
