@@ -56,9 +56,9 @@ public class ObjectMethodCommand extends CommandABC {
 		}
 
 		try {
+			
 			UUID objectId = UUID.fromString(request.getPersistentId());
 			List<ArgsClass> methodArgs = request.getMethodArgs();
-
 			// First we find the parent object (by it's ID).
 			Class<?> classObject = Class.forName(className);
 			if (IDomainObject.class.isAssignableFrom(classObject)) {
@@ -95,19 +95,21 @@ public class ObjectMethodCommand extends CommandABC {
 							response.setStatus(ResponseStatus.Success);
 							return response;
 						} catch (InvocationTargetException e ) {
-							Throwable t = e.getTargetException();
-							if (t instanceof InputValidationException) {
-								LOGGER.error("Failed to invoke "+className+"."+method + ", with arguments: " + cookedArguments, t);
-								errors.addAllErrors(((InputValidationException)t).getErrors());
+							Throwable targetException = e.getTargetException();
+							if (targetException instanceof InputValidationException) {
+								LOGGER.error("Failed to invoke "+className+"."+method + ", with arguments: " + cookedArguments, targetException);
+								errors.addAllErrors(((InputValidationException)targetException).getErrors());
 								response.setStatus(ResponseStatus.Fail);
+								response.setStatusMessage(errors.toString());
 								response.setErrors(errors);
 								return response;
 								
 							}
 							else{
-								LOGGER.error("Failed to invoke "+className+"."+method + ", with arguments: " + cookedArguments,e);
-								errors.reject(ErrorCode.GENERAL, e.toString());
+								LOGGER.error("Failed to invoke "+className+"."+method + ", with arguments: " + cookedArguments, targetException);
+								errors.reject(ErrorCode.GENERAL, targetException.toString());
 								response.setStatus(ResponseStatus.Fail);
+								response.setStatusMessage(errors.toString());
 								response.setErrors(errors);
 								return response;						
 							}
