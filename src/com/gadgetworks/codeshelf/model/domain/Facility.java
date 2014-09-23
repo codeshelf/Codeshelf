@@ -60,6 +60,7 @@ import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.codeshelf.util.UomNormalizer;
 import com.gadgetworks.codeshelf.validation.DefaultErrors;
 import com.gadgetworks.codeshelf.validation.ErrorCode;
 import com.gadgetworks.codeshelf.validation.Errors;
@@ -815,7 +816,8 @@ public class Facility extends SubLocationABC<Facility> {
 
 		WorkInstructionSequencerABC sequencer = getSequencer();
 		List<WorkInstruction> sortedWIResults = sequencer.sort(this, wiResultList);
-		return sortedWIResults.size();
+		List<WorkInstruction> finalWIResults = sequencer.addHouseKeepingAndSaveSort(this, sortedWIResults);		
+		return finalWIResults.size();
 	}
 
 	private WorkInstructionSequencerABC getSequencer() {
@@ -1089,7 +1091,7 @@ public class Facility extends SubLocationABC<Facility> {
 										if ((outOrderDetail.getItemMaster().equals(crossOrderDetail.getItemMaster()))
 												&& (outOrderDetail.getActive())) {
 											// Now make sure the UOM matches.
-											if (outOrderDetail.getUomMasterId().equals(crossOrderDetail.getUomMasterId())) {
+											if (UomNormalizer.normalizedEquals(outOrderDetail.getUomMasterId(), crossOrderDetail.getUomMasterId())) {
 												for (Path path : getPaths()) {
 													OrderLocation firstOutOrderLoc = outOrder.getFirstOrderLocationOnPath(path);
 

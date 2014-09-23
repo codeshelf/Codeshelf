@@ -52,8 +52,7 @@ public class BayDistanceWorkInstructionSequencer extends WorkInstructionSequence
 					if (wi.getLocation().equals(workLocation)) {
 						LOGGER.debug("Adding WI "+wi+" at "+workLocation);
 						wiResultList.add(wi);
-						wi.setGroupAndSortCode(String.format("%04d", wiResultList.size()));
-						WorkInstruction.DAO.store(wi);
+						// WorkInstructionSequencerABC sets the sort code and persists
 						wiIterator.remove();
 					}
 				}
