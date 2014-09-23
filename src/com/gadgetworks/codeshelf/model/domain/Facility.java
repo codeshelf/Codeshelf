@@ -43,6 +43,7 @@ import com.gadgetworks.codeshelf.device.LedCmdGroupSerializer;
 import com.gadgetworks.codeshelf.device.LedSample;
 import com.gadgetworks.codeshelf.edi.InventoryCsvImporter;
 import com.gadgetworks.codeshelf.edi.InventorySlottedCsvBean;
+import com.gadgetworks.codeshelf.edi.WorkInstructionCSVExporter;
 import com.gadgetworks.codeshelf.model.EdiProviderEnum;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.HeaderCounts;
@@ -153,6 +154,8 @@ public class Facility extends SubLocationABC<Facility> {
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	private Map<String, LocationAlias>		locationAliases	= new HashMap<String, LocationAlias>();
+
+
 
 	@Transient
 	// for now installation specific.  property needs to be exposed as a configuration parameter.
@@ -595,10 +598,10 @@ public class Facility extends SubLocationABC<Facility> {
 	/**
 	 * @return
 	 */
-	public final void ensureIronMqService() {
+	public final void ensureEdiExportService() {
 		// This is a weak kludge. Just do the get, which does a get and create if not found.
 		// Otherwise, the create only happens upon the first attempt at a work instruction save.
-		IronMqService theService = getIronMqService();
+		IEdiService theService = getEdiExportService();
 		if (theService == null)
 			LOGGER.error("Failed to get IronMQ service");
 	}
@@ -607,14 +610,14 @@ public class Facility extends SubLocationABC<Facility> {
 	/**
 	 * @return
 	 */
-	public final IronMqService getIronMqService() {
+	public final IEdiService getEdiExportService() {
 		IronMqService result = null;
 
 		for (IEdiService ediService : getEdiServices()) {
 			if (ediService instanceof IronMqService) {
 				result = (IronMqService) ediService;
+				break;
 			}
-			break;
 		}
 
 		if (result == null) {
@@ -643,7 +646,7 @@ public class Facility extends SubLocationABC<Facility> {
 		result.setDomainId("IRONMQ");
 		result.setProviderEnum(EdiProviderEnum.IRONMQ);
 		result.setServiceStateEnum(EdiServiceStateEnum.UNLINKED);
-		result.setCredentials("", ""); // non-null credentials
+		result.storeCredentials("", ""); // non-null credentials
 		this.addEdiService(result);
 		try {
 			IronMqService.DAO.store(result);
@@ -1861,14 +1864,14 @@ public class Facility extends SubLocationABC<Facility> {
 	 */
 	public final void sendWorkInstructionsToHost(final List<WorkInstruction> inWiList) {
 
-		IronMqService ironMqService = getIronMqService(); // this should succeed, or catch its own throw and return null
+		IEdiService ediExportService = getEdiExportService(); // this should succeed, or catch its own throw and return null
 
-		if (ironMqService != null) {
+		if (ediExportService != null) {
 			try {
-				ironMqService.sendWorkInstructionsToHost(inWiList);
+				ediExportService.sendWorkInstructionsToHost(inWiList);
 			}
 			catch (IOException e) {
-				LOGGER.warn("Unable to send wi list to service:" + ironMqService, e);
+				LOGGER.warn("Unable to send wi list to service:" + ediExportService, e);
 			}
 		}
 	}

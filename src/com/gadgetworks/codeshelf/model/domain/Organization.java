@@ -234,7 +234,7 @@ public class Organization extends DomainObjectABC {
 		// Create a first IronMQ Service entry for this facility.
 		LOGGER.info("Creating IronMQ service");
 		try {
-		IronMqService ironMqService = facility.createIronMqService();
+			facility.createIronMqService();
 		}
 		catch (PSQLException e) {
 			LOGGER.error("failed to create ironMQ service");			

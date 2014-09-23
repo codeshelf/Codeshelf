@@ -29,6 +29,6 @@ public interface IEdiService {
 		ICsvCrossBatchImporter inCsvCrossBatchImporter,
 		ICsvAislesFileImporter inCsvAislesFileImporter);
 	
-	void sendWorkInstructionsToHost(final List<WorkInstruction> inWiList) throws IOException;
+	void sendWorkInstructionsToHost(final List<WorkInstruction> inCompletedWorkInstructions) throws IOException;
 
 }
