@@ -103,5 +103,9 @@ public class ObjectError implements Serializable {
 	public int hashCode() {
 		return super.hashCode() * 29 + getObjectName().hashCode();
 	}
+	
+	protected String[] getCodes() {
+		return this.codes;
+	}
 
 }
