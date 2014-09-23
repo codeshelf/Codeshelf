@@ -229,7 +229,8 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 		// Looks like it does not really work yet for multiple channels. Does this need to figure out each channel, then send separate commands? Probably.
 		final Integer kMaxLedCmdToLog = 25;
 		final Integer kMaxLedCmdSendAtATime = 20;
-		final Integer kDelayMillsBetweenPartialSends = 0;
+		final Integer kDelayMillisBetweenPartialSends = 0;
+		final Boolean splitLargeLedSendsIntoPartials = false; // abandoning this work at least through V5
 		String myGuidStr = getMyGuidStr();
 
 		Short channel = 1;
@@ -266,7 +267,7 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 		Collections.sort(samples, new LedPositionComparator());
 
 		// New to V5. We are seeing that the aisle controller can only handle 22 ledCmds at once, at least with our simple cases.
-		if (sentCount <= kMaxLedCmdSendAtATime) {
+		if (!splitLargeLedSendsIntoPartials || sentCount <= kMaxLedCmdSendAtATime) {
 			ICommand command = new CommandControlLed(NetEndpoint.PRIMARY_ENDPOINT, channel, EffectEnum.FLASH, samples);
 			mRadioController.sendCommand(command, getAddress(), true);
 		} else {
@@ -283,11 +284,12 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 					mRadioController.sendCommand(command, getAddress(), true);
 					partialCount = 0;
 					partialSamples.clear();
-					LOGGER.debug("partial send to aisle controller");
+					LOGGER.info("partial send to aisle controller");
 
-					if (kDelayMillsBetweenPartialSends > 0)
+					// experiment. Set to 0 now for V5
+					if (kDelayMillisBetweenPartialSends > 0)
 						try { // This does not appear to help anything. Might need to throw in another thread and modify the protocol a bit.
-							Thread.sleep(kDelayMillsBetweenPartialSends);
+							Thread.sleep(kDelayMillisBetweenPartialSends);
 						} catch (InterruptedException e) {
 							LOGGER.error("updateLeds delay exeption", e);
 						}
@@ -297,7 +299,16 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 			if (partialCount > 0) { // send the final leftovers
 				ICommand command = new CommandControlLed(NetEndpoint.PRIMARY_ENDPOINT, channel, EffectEnum.FLASH, partialSamples);
 				mRadioController.sendCommand(command, getAddress(), true);
-				LOGGER.debug("last partial send to aisle controller");
+				LOGGER.info("last partial send to aisle controller");
+				
+				// experiment. Set to 0 now for V5
+				if (kDelayMillisBetweenPartialSends > 0)
+					try { // This does not appear to help anything. Might need to throw in another thread and modify the protocol a bit.
+						Thread.sleep(kDelayMillisBetweenPartialSends);
+					} catch (InterruptedException e) {
+						LOGGER.error("updateLeds delay exeption", e);
+					}
+
 			}
 		}
 	}

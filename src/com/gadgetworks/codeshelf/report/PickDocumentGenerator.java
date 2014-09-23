@@ -53,9 +53,10 @@ public class PickDocumentGenerator implements IPickDocumentGenerator {
 			Thread.sleep(5000);
 		} catch (InterruptedException e) {
 		}
+		mSignalQueue = inEdiSignalQueue;
 		mProcessorThread = new Thread(new Runnable() {
 			public void run() {
-				process(inEdiSignalQueue);
+				process();
 			}
 		}, PICK_DOCUMENT_GENERATOR_THREAD_NAME);
 		mProcessorThread.setDaemon(true);
@@ -79,11 +80,10 @@ public class PickDocumentGenerator implements IPickDocumentGenerator {
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	private void process(final BlockingQueue<String> inEdiSignalQueue) {
-		mSignalQueue = inEdiSignalQueue;
+	private void process() {
 		while (mShouldRun) {
 			try {
-				String signalName = inEdiSignalQueue.take();
+				String signalName = mSignalQueue.take();
 
 				if (!signalName.equals(SHUTDOWN)) {
 					LOGGER.debug("Pick doc generator received signal from: " + signalName);
