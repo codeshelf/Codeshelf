@@ -10,6 +10,7 @@ import org.junit.Before;
 
 import com.gadgetworks.codeshelf.application.Configuration;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
+import com.gadgetworks.codeshelf.model.domain.EdiServiceABC;
 import com.gadgetworks.codeshelf.model.domain.Aisle.AisleDao;
 import com.gadgetworks.codeshelf.model.domain.Bay;
 import com.gadgetworks.codeshelf.model.domain.Bay.BayDao;
@@ -25,6 +26,7 @@ import com.gadgetworks.codeshelf.model.domain.ContainerUse;
 import com.gadgetworks.codeshelf.model.domain.ContainerUse.ContainerUseDao;
 import com.gadgetworks.codeshelf.model.domain.DropboxService;
 import com.gadgetworks.codeshelf.model.domain.DropboxService.DropboxServiceDao;
+import com.gadgetworks.codeshelf.model.domain.EdiServiceABC.EdiServiceABCDao;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Facility.FacilityDao;
 import com.gadgetworks.codeshelf.model.domain.IronMqService;
@@ -91,6 +93,7 @@ public abstract class DAOTestABC {
 	protected SlotDao				mSlotDao;
 	protected DropboxServiceDao		mDropboxServiceDao;
 	protected IronMqServiceDao		mIronMqServiceDao;
+	protected EdiServiceABCDao 		mEdiServiceABCDao;
 	protected OrderGroupDao			mOrderGroupDao;
 	protected OrderHeaderDao		mOrderHeaderDao;
 	protected OrderDetailDao		mOrderDetailDao;
@@ -172,6 +175,9 @@ public abstract class DAOTestABC {
 		mIronMqServiceDao = new IronMqServiceDao(mSchemaManager);
 		IronMqService.DAO = mIronMqServiceDao;
 
+		mEdiServiceABCDao = new EdiServiceABCDao(mSchemaManager);
+		EdiServiceABC.DAO = mEdiServiceABCDao;
+		
 		mCodeshelfNetworkDao = new CodeshelfNetworkDao(mSchemaManager);
 		CodeshelfNetwork.DAO = mCodeshelfNetworkDao;
 

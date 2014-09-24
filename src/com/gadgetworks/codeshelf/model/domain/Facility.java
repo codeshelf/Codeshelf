@@ -5,6 +5,7 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
+import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -42,6 +43,7 @@ import com.gadgetworks.codeshelf.device.LedCmdGroupSerializer;
 import com.gadgetworks.codeshelf.device.LedSample;
 import com.gadgetworks.codeshelf.edi.InventoryCsvImporter;
 import com.gadgetworks.codeshelf.edi.InventorySlottedCsvBean;
+import com.gadgetworks.codeshelf.edi.WorkInstructionCSVExporter;
 import com.gadgetworks.codeshelf.model.EdiProviderEnum;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.HeaderCounts;
@@ -58,6 +60,7 @@ import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.codeshelf.util.UomNormalizer;
 import com.gadgetworks.codeshelf.validation.DefaultErrors;
 import com.gadgetworks.codeshelf.validation.ErrorCode;
 import com.gadgetworks.codeshelf.validation.Errors;
@@ -152,6 +155,8 @@ public class Facility extends SubLocationABC<Facility> {
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	private Map<String, LocationAlias>		locationAliases	= new HashMap<String, LocationAlias>();
+
+
 
 	@Transient
 	// for now installation specific.  property needs to be exposed as a configuration parameter.
@@ -601,10 +606,10 @@ public class Facility extends SubLocationABC<Facility> {
 	/**
 	 * @return
 	 */
-	public final void ensureIronMqService() {
+	public final void ensureEdiExportService() {
 		// This is a weak kludge. Just do the get, which does a get and create if not found.
 		// Otherwise, the create only happens upon the first attempt at a work instruction save.
-		IronMqService theService = getIronMqService();
+		IEdiService theService = getEdiExportService();
 		if (theService == null)
 			LOGGER.error("Failed to get IronMQ service");
 	}
@@ -613,12 +618,13 @@ public class Facility extends SubLocationABC<Facility> {
 	/**
 	 * @return
 	 */
-	public final IronMqService getIronMqService() {
+	public final IEdiService getEdiExportService() {
 		IronMqService result = null;
 
 		for (IEdiService ediService : getEdiServices()) {
 			if (ediService instanceof IronMqService) {
 				result = (IronMqService) ediService;
+				break;
 			}
 		}
 
@@ -648,7 +654,7 @@ public class Facility extends SubLocationABC<Facility> {
 		result.setDomainId("IRONMQ");
 		result.setProviderEnum(EdiProviderEnum.IRONMQ);
 		result.setServiceStateEnum(EdiServiceStateEnum.UNLINKED);
-		result.setCredentials("", ""); // non-null credentials
+		result.storeCredentials("", ""); // non-null credentials
 		this.addEdiService(result);
 		try {
 			IronMqService.DAO.store(result);
@@ -810,7 +816,8 @@ public class Facility extends SubLocationABC<Facility> {
 
 		WorkInstructionSequencerABC sequencer = getSequencer();
 		List<WorkInstruction> sortedWIResults = sequencer.sort(this, wiResultList);
-		return sortedWIResults.size();
+		List<WorkInstruction> finalWIResults = sequencer.addHouseKeepingAndSaveSort(this, sortedWIResults);		
+		return finalWIResults.size();
 	}
 
 	private WorkInstructionSequencerABC getSequencer() {
@@ -1084,7 +1091,7 @@ public class Facility extends SubLocationABC<Facility> {
 										if ((outOrderDetail.getItemMaster().equals(crossOrderDetail.getItemMaster()))
 												&& (outOrderDetail.getActive())) {
 											// Now make sure the UOM matches.
-											if (outOrderDetail.getUomMasterId().equals(crossOrderDetail.getUomMasterId())) {
+											if (UomNormalizer.normalizedEquals(outOrderDetail.getUomMasterId(), crossOrderDetail.getUomMasterId())) {
 												for (Path path : getPaths()) {
 													OrderLocation firstOutOrderLoc = outOrder.getFirstOrderLocationOnPath(path);
 
@@ -1163,18 +1170,6 @@ public class Facility extends SubLocationABC<Facility> {
 		}
 	}
 
-	/**
-	 * Compare Work Instructions by their ItemIds.
-	 *
-	 */
-	@SuppressWarnings("unused")
-	private class WiItemIdComparator implements Comparator<WorkInstruction> {
-
-		public int compare(WorkInstruction inWi1, WorkInstruction inWi2) {
-			return inWi1.getItemMaster().getItemId().compareTo(inWi2.getItemMaster().getItemId());
-		}
-	};
-
 	// --------------------------------------------------------------------------
 	/**
 	 * Sort a list of work instructions on a path through a CrossWall
@@ -1195,7 +1190,6 @@ public class Facility extends SubLocationABC<Facility> {
 				while (wiIterator.hasNext()) {
 					WorkInstruction wi = wiIterator.next();
 					if (wi.getLocation().equals(workLocation)) {
-						String wantedItemId = wi.getItemMaster().getItemId();
 						wiResultList.add(wi);
 						wi.setGroupAndSortCode(String.format("%04d", wiResultList.size()));
 						WorkInstruction.DAO.store(wi);
@@ -2031,10 +2025,15 @@ public class Facility extends SubLocationABC<Facility> {
 	 */
 	public final void sendWorkInstructionsToHost(final List<WorkInstruction> inWiList) {
 
-		IronMqService ironMqService = getIronMqService(); // this should succeed, or catch its own throw and return null
+		IEdiService ediExportService = getEdiExportService(); // this should succeed, or catch its own throw and return null
 
-		if (ironMqService != null) {
-			ironMqService.sendWorkInstructionsToHost(inWiList);
+		if (ediExportService != null) {
+			try {
+				ediExportService.sendWorkInstructionsToHost(inWiList);
+			}
+			catch (IOException e) {
+				LOGGER.warn("Unable to send wi list to service:" + ediExportService, e);
+			}
 		}
 	}
 

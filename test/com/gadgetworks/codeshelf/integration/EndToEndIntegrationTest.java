@@ -21,6 +21,7 @@ import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.model.domain.User;
+import com.gadgetworks.codeshelf.util.PropertyUtils;
 import com.gadgetworks.codeshelf.util.ThreadUtils;
 import com.gadgetworks.codeshelf.ws.jetty.client.JettyWebSocketClient;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageProcessor;
@@ -88,6 +89,12 @@ public abstract class EndToEndIntegrationTest extends DomainTestABC {
 	@Override
 	public void doBefore() throws Exception {
 		LOGGER.debug("-------------- Creating environment before running test case");
+		//The client WSS needs the self-signed certificate to be trusted
+		System.setProperty("javax.net.ssl.keyStore", PropertyUtils.getString("keystore.path"));
+		System.setProperty("javax.net.ssl.keyStorePassword",PropertyUtils.getString("keystore.store.password"));
+		System.setProperty("javax.net.ssl.trustStore", PropertyUtils.getString("keystore.path"));
+		System.setProperty("javax.net.ssl.trustStorePassword", PropertyUtils.getString("keystore.store.password"));
+		
 		// ensure facility, organization, network exist in database before booting up site controller
 		this.organization = mOrganizationDao.findByDomainId(null, organizationId);
 		if (organization==null) {
@@ -185,6 +192,10 @@ public abstract class EndToEndIntegrationTest extends DomainTestABC {
 		stop();
 		webSocketServer = null;
 		siteController = null;
+		System.clearProperty("javax.net.ssl.keyStore");
+		System.clearProperty("javax.net.ssl.keyStorePassword");
+		System.clearProperty("javax.net.ssl.trustStore");
+		System.clearProperty("javax.net.ssl.trustStorePassword");
 	}
 	
 	private void stop() {

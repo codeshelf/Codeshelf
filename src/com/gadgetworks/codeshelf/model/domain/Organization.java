@@ -40,13 +40,13 @@ import com.google.inject.Singleton;
 // --------------------------------------------------------------------------
 /**
  * Organization
- * 
+ *
  * The organization is the top-level object that is the parent of all other objects.
- * To handle user-scope/security, all objects in the system must satisfy getParent()/setParent(), but since 
+ * To handle user-scope/security, all objects in the system must satisfy getParent()/setParent(), but since
  * organization is the top-most object it's parent is null.
- * 
+ *
  * There is a DB constraint that parent cannot be null.  In the case of organization we break that constraint.
- * 
+ *
  * @author jeffw
  */
 
@@ -101,7 +101,7 @@ public class Organization extends DomainObjectABC {
 		setParent(this);
 		description = "";
 	}
-	
+
 	public final static void setDao(ITypedDao<Organization> dao) {
 		Organization.DAO = dao;
 	}
@@ -112,7 +112,7 @@ public class Organization extends DomainObjectABC {
 		description = "";
 	}
 
-	
+
 	public final void addUser(User inUser) {
 		users.put(inUser.getDomainId(), inUser);
 	}
@@ -211,7 +211,7 @@ public class Organization extends DomainObjectABC {
 		Point point = new Point(PositionTypeEnum.GPS,x,y,0d);
 		return this.createFacility(inDomainId, inDescription, point);
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inDomainId
@@ -240,11 +240,10 @@ public class Organization extends DomainObjectABC {
 		// Create a first IronMQ Service entry for this facility.
 		LOGGER.info("Creating IronMQ service");
 		try {
-		@SuppressWarnings("unused")
-		IronMqService ironMqService = facility.createIronMqService();
+			facility.createIronMqService();
 		}
 		catch (PSQLException e) {
-			LOGGER.error("failed to create ironMQ service");			
+			LOGGER.error("failed to create ironMQ service");
 		}
 
 		// Create the default network for the facility.
@@ -263,7 +262,7 @@ public class Organization extends DomainObjectABC {
 				che = network.createChe(cheName, new NetGuid("0x0000999" + cheNum));
 			}
 		}
-		
+
 		return facility;
 	}
 
