@@ -187,6 +187,7 @@ public class IronMqService extends EdiServiceABC {
 		Queue queue = getWorkInstructionQueue();
 		String message = wiCSVExporter.exportWorkInstructions(inWiList);
 		queue.push(message);
+		LOGGER.debug("Sent " + inWiList.size() + " work instructions to iron mq service");
 	}
 
 	String[] getMessages(@Max(100) int numberOfMessages, int timeoutInSeconds) throws IOException {
@@ -205,8 +206,10 @@ public class IronMqService extends EdiServiceABC {
 		if (getHasCredentials()) {
 			Credentials theCredentials = getCredentials();
 			Client client = clientProvider.get(theCredentials.getProjectId(), theCredentials.getToken());
-			return client.queue(WI_QUEUE_NAME);
-		} else {
+			Queue queue = client.queue(WI_QUEUE_NAME);
+			LOGGER.debug("Retrieving IronMQ Queue: " + WI_QUEUE_NAME + " for project: " + theCredentials.getProjectId());
+			return queue;
+		} else { 
 			throw new IllegalStateException("Unable to send work instruction, no credentials for IronMqService");
 		}
 	}
