@@ -46,7 +46,9 @@ public class IronMqServiceOnlineTest {
 	@After
 	public void doAfter() {
 		for (Entry<String, String> entry : tempPropertyRestore.entrySet()) {
-			System.setProperty(entry.getKey(), entry.getValue());
+			if (entry.getValue() != null) {
+				System.setProperty(entry.getKey(), entry.getValue());
+			}
 		}
 	}
 	
