@@ -6,6 +6,10 @@
 package com.gadgetworks.codeshelf.model.dao;
 
 import java.io.File;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Collection;
 
 import org.apache.commons.io.FileUtils;
@@ -51,7 +55,7 @@ public final class H2SchemaManager extends SchemaManagerABC {
 			}
 		}
 	}
-
+	
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.dao.ISchemaManager#getDriverName()
@@ -130,5 +134,29 @@ public final class H2SchemaManager extends SchemaManagerABC {
 	 */
 	protected String getSchemaSetterString() {
 		return "SET SCHEMA " + getDbSchemaName();
+	}
+
+	@Override
+	public void deleteDatabase() {
+		try {
+			Connection connection = DriverManager.getConnection(getApplicationDatabaseURL(), "codeshelf", "codeshelf");
+			// Try to switch to the proper schema.
+			Statement stmt = connection.createStatement();
+			String sql = "DROP ALL OBJECTS";
+			stmt.execute(sql);
+			/*
+			ResultSet rs = stmt.executeQuery("SELECT datname FROM pg_database where datname = '"+schemaManager.getDbName()+"'");
+			if (rs.getFetchSize()==1) {
+				LOGGER.debug("Database "+schemaManager.getDbName()+" exists.");
+			}
+			else {
+				LOGGER.debug("Database "+schemaManager.getDbName()+" does not exist.");
+			}
+			*/
+			stmt.close();
+			connection.close();
+		} catch (SQLException e) {
+			LOGGER.error("Failed to delete H2 Database", e);
+		}		
 	}
 }

@@ -43,15 +43,14 @@ public class JettyWebSocketServer {
 		this.mPort = PropertyUtils.getInt("websocket.port", DEFAULT_PORTNUM);
 		this.mKeystorePath = PropertyUtils.getString("keystore.path");
 		this.mKeystoreStorePassword = PropertyUtils.getString("keystore.store.password");
-		this.mKeystoreKeyPassword = PropertyUtils.getString("keystore.key.password");	
-
+		this.mKeystoreKeyPassword = PropertyUtils.getString("keystore.key.password");
+		
+		// create and configure watch dog
+		this.watchdog = new ServerWatchdogThread(SessionManager.getInstance());
 		boolean suppressKeepAlive = PropertyUtils.getBoolean("websocket.idle.suppresskeepalive");
 		boolean killIdle = PropertyUtils.getBoolean("websocket.idle.kill");
-
-		this.watchdog = new ServerWatchdogThread(SessionManager.getInstance());
 		this.watchdog.setSuppressKeepAlive(suppressKeepAlive);
 		this.watchdog.setKillIdle(killIdle);
-		this.watchdog.start();
 	}
 		
 	public final void start() throws Exception {
@@ -80,16 +79,20 @@ public class JettyWebSocketServer {
         // Initialize javax.websocket layer
         ServerContainer wscontainer = WebSocketServerContainerInitializer.configureContext(context);
         wscontainer.addEndpoint(CsServerEndPoint.class);
-
         
-        LOGGER.info("Jetty WebSocket Server starting");
-        // start server
+        // make sure sessions are cleared out
+        SessionManager.getInstance().resetSessions();
+
+        // start server and watch dog
+        LOGGER.info("Jetty WebSocket Server starting");       
         mServer.start();
+		watchdog.start();        
         LOGGER.info("Jetty WebSocket Server started");
 	}
 
 	public void stop() throws IOException, InterruptedException {
 		try {
+			watchdog.setExit(true);
 			mServer.stop();
 		} catch (Exception e) {
 			LOGGER.error("Failed to stop Jetty WebSocket server", e);

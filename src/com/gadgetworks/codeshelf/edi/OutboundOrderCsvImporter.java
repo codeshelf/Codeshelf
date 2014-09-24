@@ -375,7 +375,8 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 				result = new Container();
 				result.setParent(inFacility);
 				result.setContainerId(inCsvBean.getPreAssignedContainerId());
-				result.setKind(inFacility.getContainerKind(ContainerKind.DEFAULT_CONTAINER_KIND));
+				ContainerKind kind = inFacility.getContainerKind(ContainerKind.DEFAULT_CONTAINER_KIND); 
+				result.setKind(kind);
 				inFacility.addContainer(result);
 			}
 

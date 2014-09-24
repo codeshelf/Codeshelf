@@ -93,4 +93,8 @@ public class SessionManager {
 			LOGGER.warn("Unable to update message sent timestamp: Session with ID "+sessionId+" not found");
 		}		
 	}
+	
+	public void resetSessions() {
+		activeSessions = new HashMap<String, CsSession>();
+	}
 }

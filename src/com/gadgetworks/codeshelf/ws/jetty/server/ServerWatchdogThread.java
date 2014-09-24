@@ -63,7 +63,10 @@ public class ServerWatchdogThread extends Thread {
 			Collection<CsSession> sessions = this.sessionManager.getSessions();
 			for (CsSession session : sessions) {
 				String sessionId = session.getSessionId();
-
+				if (session.getLastState()==CsSession.State.INACTIVE) {
+					// don't send keep-alives on inactive sessions
+					continue;
+				}
 				// don't send keepalive if suppressed
 				// don't send keepalive to unauthenticated site controller
 				if (!suppressKeepAlive && 

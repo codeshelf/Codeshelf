@@ -26,6 +26,7 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
 import com.google.common.base.Objects;
 
 public class CsSession implements IDaoListener {
+	
 	public enum State {
 		ACTIVE,
 		IDLE_WARNING,
@@ -78,7 +79,6 @@ public class CsSession implements IDaoListener {
 
 	public void sendMessage(final MessageABC response) {
 		messageSender.execute(new Runnable() {
-
 			@Override
 			public void run() {
 				try {

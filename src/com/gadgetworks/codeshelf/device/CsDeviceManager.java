@@ -327,7 +327,6 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	}
 	
 	public void updateNetwork(CodeshelfNetwork network) {
-		this.lastNetworkUpdate = System.currentTimeMillis();		
 		Set<UUID> updateDevices=new HashSet<UUID>();
 		// update network devices
 		for (Che che : network.getChes().values()) {
@@ -355,7 +354,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 			NetGuid netGuid = mDeviceMap.getKeys(dev).key2;
 			doDeleteNetDevice(deleteUUID, netGuid);
 		}
-		
+		this.lastNetworkUpdate = System.currentTimeMillis();		
 		LOGGER.debug("Network updated: "+updateDevices.size()+" active devices, "+ deleteDevices.size()+" removed");
 	}
 

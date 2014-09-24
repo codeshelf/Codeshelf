@@ -134,6 +134,9 @@ public abstract class DAOTestABC {
 			"");
 		mDatabase = new Database(mSchemaManager);
 
+		// nuke database, if exists to enforce isolation of unit tests
+		mDatabase.deleteDatabase();
+
 		mDatabase.start();
 
 		mOrganizationDao = new OrganizationDao(mSchemaManager);
@@ -240,6 +243,8 @@ public abstract class DAOTestABC {
 	
 	@After
 	public final void tearDown() {
+		mDatabase.stop();
+		mDatabase = null;
 		doAfter();
 	}
 
