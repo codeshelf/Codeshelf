@@ -70,13 +70,16 @@ public abstract class WorkInstructionSequencerABC implements IWorkInstructionSeq
 			LOGGER.error("null value in wisNeedHouseKeepingBetween");
 			return false;
 		}
-		else { // expand this
-			return false;
+		else { // container is associated to cart position
+			return inPrevWi.getContainer().equals(inNextWi.getContainer());
+			// Nothing we can do on server side if multiple items will be recorded to same cart position.
 		}
 	}
 	
 	private WorkInstruction getNewHousekeepingWiSimilarTo(Facility inFacility, WorkInstruction inWi) {
 		// expand this. Call through to facility
+		// perhaps we would want to change the signature to include previous and the next wi. (inWi is the next wi)
+		
 		return null;
 	}	
 
@@ -95,9 +98,10 @@ public abstract class WorkInstructionSequencerABC implements IWorkInstructionSeq
 				if (houseKeepingWi != null)
 					wiResultList.add(houseKeepingWi);
 				else 
-					LOGGER.error("null returned from getNewHousekeepingWiSimilarTo");
+					LOGGER.debug("null returned from getNewHousekeepingWiSimilarTo");
 			}
 			wiResultList.add(wi);
+			lastWi = wi;
 		}
 		// At this point, some or none added. wiResultList is ordered. Time to add the sort codes.
 		int count = 0;

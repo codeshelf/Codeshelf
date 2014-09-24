@@ -182,8 +182,7 @@ public class CrossBatchRunTest extends EdiTestABC {
 				+ "\r\n1,USF314,COSTCO,,456,10722222,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,,456,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,,456,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
-				+ "\r\n1,USF314,COSTCO,,456,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
-				+ "\r\n1,USF314,COSTCO,,789,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\n1,USF314,COSTCO,,789,10100250,Organic Fire-Roasted Red Bell Peppers,3,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,,789,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
 
 		byte orderCsvArray[] = orderCsvString.getBytes();
@@ -297,6 +296,7 @@ public class CrossBatchRunTest extends EdiTestABC {
 		Assert.assertEquals("0002", groupSortStr2);
 	}
 	
+	@Test
 	public final void basicHousekeeping() throws IOException {
 		Facility facility = setUpSimpleSlottedFacility("XB02");
 		setUpGroup1OrdersAndSlotting(facility);
@@ -310,7 +310,21 @@ public class CrossBatchRunTest extends EdiTestABC {
 
 		List<WorkInstruction> aList = theChe.getCheWorkInstructions();
 		Integer wiCount = aList.size();
-		Assert.assertEquals((Integer) 4, wiCount); // one product going to 2 orders
+		Assert.assertEquals((Integer) 4, wiCount); // one product going to 1 order, and 1 product going to the same order and 2 more.
+		
+		WorkInstruction wi1 = aList.get(0);
+		WorkInstruction wi2 = aList.get(1);
+		WorkInstruction wi3 = aList.get(2);
+		WorkInstruction wi4 = aList.get(3);
+		String wi1Cntr = wi1.getContainerId();
+		// no housekeeping WI needed here. Different container
+		String wi2Cntr = wi2.getContainerId();
+		// needed
+		String wi3Cntr = wi3.getContainerId();
+		// needed
+		String wi4Cntr = wi4.getContainerId();
+		Assert.assertEquals("14", wi4Cntr);
+
 	}
 
 }

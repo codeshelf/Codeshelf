@@ -1170,18 +1170,6 @@ public class Facility extends SubLocationABC<Facility> {
 		}
 	}
 
-	/**
-	 * Compare Work Instructions by their ItemIds.
-	 *
-	 */
-	@SuppressWarnings("unused")
-	private class WiItemIdComparator implements Comparator<WorkInstruction> {
-
-		public int compare(WorkInstruction inWi1, WorkInstruction inWi2) {
-			return inWi1.getItemMaster().getItemId().compareTo(inWi2.getItemMaster().getItemId());
-		}
-	};
-
 	// --------------------------------------------------------------------------
 	/**
 	 * Sort a list of work instructions on a path through a CrossWall
@@ -1202,7 +1190,6 @@ public class Facility extends SubLocationABC<Facility> {
 				while (wiIterator.hasNext()) {
 					WorkInstruction wi = wiIterator.next();
 					if (wi.getLocation().equals(workLocation)) {
-						String wantedItemId = wi.getItemMaster().getItemId();
 						wiResultList.add(wi);
 						wi.setGroupAndSortCode(String.format("%04d", wiResultList.size()));
 						WorkInstruction.DAO.store(wi);
