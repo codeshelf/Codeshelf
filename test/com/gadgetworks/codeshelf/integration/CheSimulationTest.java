@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.Ignore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,6 +15,7 @@ import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 
+@Ignore
 public class CheSimulationTest extends EndToEndIntegrationTest {
 
 	@SuppressWarnings("unused")
@@ -30,11 +32,11 @@ public class CheSimulationTest extends EndToEndIntegrationTest {
 		Assert.assertNotNull(network);
 		Che che = network.getChe(cheId1);
 		Assert.assertNotNull(che);
-		
+
 		// verify that che is in site controller's device list
 		CheDeviceLogic cheDeviceLogic = (CheDeviceLogic) this.siteController.getDeviceManager().getDeviceByGuid(cheGuid1);
 		Assert.assertNotNull(cheDeviceLogic);
-		
+
 		// cycle through empty WI list scenario
 		cheDeviceLogic.scanCommandReceived("U%PICKER1");
 		waitForCheState(cheDeviceLogic,CheStateEnum.CONTAINER_SELECT,1000);
@@ -47,8 +49,8 @@ public class CheSimulationTest extends EndToEndIntegrationTest {
 
 		cheDeviceLogic.scanCommandReceived("X%START");
 		waitForCheState(cheDeviceLogic,CheStateEnum.PICK_COMPLETE,5000);
-		
-		cheDeviceLogic.scanCommandReceived("X%LOGOUT");		
+
+		cheDeviceLogic.scanCommandReceived("X%LOGOUT");
 		waitForCheState(cheDeviceLogic,CheStateEnum.IDLE,1000);
 	}
 }
