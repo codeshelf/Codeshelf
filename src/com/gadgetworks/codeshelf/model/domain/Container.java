@@ -96,6 +96,12 @@ public class Container extends DomainObjectTreeABC<Facility> {
 	public Container() {
 
 	}
+	
+	public Container(Facility facility, String domainId) {
+		super(domainId);
+		parent = facility;
+		facility.addContainer(this);
+	}
 
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<Container> getDao() {

@@ -262,7 +262,7 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 				for (Path path : facility.getPaths()) {
 					facility.recomputeLocationPathDistances(path);
 				}
-				facility.ensureIronMqService(); // This is weak, but the only place we know that runs once after most data is present
+				facility.ensureEdiExportService(); // This is weak, but the only place we know that runs once after most data is present
 			}
 		}
 	}

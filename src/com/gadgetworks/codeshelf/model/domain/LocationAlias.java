@@ -31,9 +31,9 @@ import com.google.inject.Singleton;
 // --------------------------------------------------------------------------
 /**
  * LocationAlias
- * 
+ *
  * Map a string to a fully qualified location name in the facility.
- * 
+ *
  * @author jeffw
  */
 
@@ -88,6 +88,13 @@ public class LocationAlias extends DomainObjectTreeABC<Facility> {
 
 	public LocationAlias() {
 
+	}
+
+	public LocationAlias(Facility facility, String domainId, LocationABC<?> mappedLocation) {
+		super(domainId);
+		this.parent = facility;
+		this.mappedLocation = mappedLocation;
+		parent.addLocationAlias(this);
 	}
 
 	@SuppressWarnings("unchecked")

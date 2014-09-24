@@ -611,7 +611,7 @@ public class DropboxService extends EdiServiceABC {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.IEdiService#sendCompletedWorkInstructions(java.util.List)
 	 */
-	public void sendWorkInstructionsToHost(final List<WorkInstruction> inWiList) {
+	public void sendWorkInstructionsToHost(final List<WorkInstruction> inWiMessage) {
 		// Do nothing at DropBox (for now).
 	}
 }
