@@ -41,8 +41,9 @@ public class WiSummarizer {
 		Map<String, Object> filterParams = new HashMap<String, Object>();
 		filterParams.put("chePersistentId", inCheId);
 		filterParams.put("facilityPersistentId", inFacilityId);
-		// wi -> orderDetail -> orderHeader -> facility
-		for (WorkInstruction wi : WorkInstruction.DAO.findByFilter("assignedChe.persistentId = :chePersistentId and parent.parent.parent.persistentId = :facilityPersistentId",
+		// wi -via orderDetail field-> orderDetail -> orderHeader -> facility
+		// wi -> facility
+		for (WorkInstruction wi : WorkInstruction.DAO.findByFilter("assignedChe.persistentId = :chePersistentId and parent.persistentId = :facilityPersistentId",
 			filterParams)) {
 			Timestamp wiAssignTime = wi.getAssigned();
 			WiSetSummary theSummary = getOrCreateSummaryForTime(wiAssignTime);

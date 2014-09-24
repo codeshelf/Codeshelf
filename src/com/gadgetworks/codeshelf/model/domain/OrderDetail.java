@@ -148,8 +148,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	@JsonProperty
 	private Timestamp				updated;
 
-	// A work area will contain a set of active users (workers).
-	@OneToMany(mappedBy = "parent")
+	@OneToMany(mappedBy = "orderDetail")
 	@Getter
 	private List<WorkInstruction>	workInstructions	= new ArrayList<WorkInstruction>();
 

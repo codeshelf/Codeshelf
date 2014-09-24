@@ -770,7 +770,7 @@ public class Facility extends SubLocationABC<Facility> {
 					assignedChe.removeWorkInstruction(wi); // necessary? new from v3
 					changedChes.add(assignedChe);
 				}
-				OrderDetail owningDetail = wi.getParent();
+				OrderDetail owningDetail = wi.getOrderDetail();
 				owningDetail.removeWorkInstruction(wi); // necessary? new from v3
 
 				WorkInstruction.DAO.delete(wi);
@@ -1244,7 +1244,9 @@ public class Facility extends SubLocationABC<Facility> {
 			// If there is no planned WI then create one.
 			if (resultWi == null) {
 				resultWi = new WorkInstruction();
-				resultWi.setParent(inOrderDetail);
+				// v5 change parent is facility
+				resultWi.setParent(this);
+				resultWi.setOrderDetail(inOrderDetail);
 				resultWi.setCreated(new Timestamp(System.currentTimeMillis()));
 				resultWi.setLedCmdStream("[]"); // empty array
 			}

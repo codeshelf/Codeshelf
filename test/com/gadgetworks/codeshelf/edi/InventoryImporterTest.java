@@ -686,7 +686,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		Double pos402 = locationD402.getPosAlongPath();		
 
 		// just checking the relationships of the work instruction
-		OrderDetail wiDetail = wi1.getParent();
+		OrderDetail wiDetail = wi1.getOrderDetail();
 		Assert.assertNotNull(wiDetail);
 		OrderHeader wiOrderHeader = wiDetail.getParent();
 		Assert.assertNotNull(wiOrderHeader);
