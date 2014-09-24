@@ -57,7 +57,9 @@ public class WorkService {
 							try {
 								Facility facility = wi.getParent().getParent().getParent();
 								IEdiService ediExportService = exportServiceProvider.getWorkInstructionExporter(facility);
+								LOGGER.debug("attempting send of work instructions: " + wiList);
 								ediExportService.sendWorkInstructionsToHost(wiList);
+								LOGGER.debug("sent work instructions: " + wiList);
 								sent = true;
 							}
 							catch(IOException e) {
@@ -122,9 +124,8 @@ public class WorkService {
 	 * @throws InterruptedException 
 	 */
 	public void exportWorkInstruction(WorkInstruction inWorkInstruction) {
+		LOGGER.debug("Queueing work instruction: " + inWorkInstruction);
 		completedWorkInstructions.add(inWorkInstruction);
-		System.out.println(completedWorkInstructions.size());
-		
 	}
 	
 	// --------------------------------------------------------------------------
