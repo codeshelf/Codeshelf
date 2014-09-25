@@ -32,8 +32,8 @@ import com.gadgetworks.codeshelf.model.domain.EdiServiceABC.EdiServiceABCDao;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Facility.FacilityDao;
 import com.gadgetworks.codeshelf.model.domain.IronMqService;
-import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.IronMqService.IronMqServiceDao;
+import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.Item.ItemDao;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster.ItemMasterDao;
@@ -242,8 +242,6 @@ public abstract class DAOTestABC {
 	
 	@After
 	public final void tearDown() {
-		mDatabase.stop();
-		mDatabase = null;
 		doAfter();
 	}
 	

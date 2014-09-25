@@ -10,8 +10,6 @@ import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.PickStrategyEnum;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
-import com.gadgetworks.codeshelf.model.dao.Database;
-import com.gadgetworks.codeshelf.model.dao.H2SchemaManager;
 import com.gadgetworks.codeshelf.model.domain.Facility.FacilityDao;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail.OrderDetailDao;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader.OrderHeaderDao;

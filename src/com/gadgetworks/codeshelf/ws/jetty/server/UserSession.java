@@ -7,6 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import javax.websocket.CloseReason;
 import javax.websocket.Session;
+import javax.websocket.CloseReason.CloseCodes;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -19,38 +20,32 @@ import com.gadgetworks.codeshelf.filter.ObjectEventListener;
 import com.gadgetworks.codeshelf.model.dao.IDaoListener;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
+import com.gadgetworks.codeshelf.model.domain.Organization;
+import com.gadgetworks.codeshelf.model.domain.User;
+import com.gadgetworks.codeshelf.model.domain.UserType;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
 
-public class CsSession implements IDaoListener {
-	
+public class UserSession implements IDaoListener {
 	public enum State {
 		ACTIVE,
 		IDLE_WARNING,
-		INACTIVE
+		INACTIVE,
+		CLOSED
 	};
 
-	private static final Logger	LOGGER = LoggerFactory.getLogger(CsSession.class);
+	private static final Logger	LOGGER = LoggerFactory.getLogger(UserSession.class);
 
 	@Getter @Setter
 	String sessionId;
-	
+
 	@Getter @Setter
-	String organizationName;
+	User user;
 	
 	@Getter
 	Date sessionStart = new Date();
-	
-	@Getter @Setter
-	boolean isAuthenticated = false;
-
-	@Getter @Setter
-	SessionType type = SessionType.Unknown;
 
 	@Getter
-	private Session	session=null;
-	
-	@Getter @Setter
-	long lastPongReceived = 0;
+	private Session	wsSession=null;
 	
 	@Getter @Setter
 	long lastMessageSent = System.currentTimeMillis();
@@ -59,29 +54,39 @@ public class CsSession implements IDaoListener {
 	long lastMessageReceived = System.currentTimeMillis();
 	
 	@Getter @Setter
-	State lastState = State.INACTIVE;
+	State lastState = State.ACTIVE;
 	
-	// used to be new HashMap
 	private Map<String,ObjectEventListener> eventListeners = new ConcurrentHashMap<String,ObjectEventListener>();
 	
 	private Set<ITypedDao<IDomainObject>> daoList = new ConcurrentHashSet<ITypedDao<IDomainObject>>();
 	
-	public CsSession(Session session) {
-		this.session = session;
+	public UserSession(Session session) {
+		this.wsSession = session;
 	}
 
 	public void sendMessage(final MessageABC response) {
-		messageSender.execute(new Runnable() {
-			@Override
-			public void run() {
-				try {
-					session.getBasicRemote().sendObject(response);
-					CsSession.this.messageSent();
-				} catch (Exception e) {
-					LOGGER.error("Failed to send message", e);
-				}
-			}
-		});
+		try {
+			this.wsSession.getBasicRemote().sendObject(response);
+			this.messageSent();
+		} catch (Exception e) {
+			LOGGER.error("Failed to send message", e);
+		}
+	}
+	
+	public boolean isAuthenticated() {
+		return (user!=null);
+	}
+	
+	public boolean isSiteController() {
+		if(!this.isAuthenticated())
+			return false;
+		return this.user.getType().equals(UserType.SITECON);
+	}
+	
+	public boolean isAppUser() {
+		if(!this.isAuthenticated())
+			return false;
+		return this.user.getType().equals(UserType.APPUSER);
 	}
 	
 	@Override
@@ -138,10 +143,6 @@ public class CsSession implements IDaoListener {
 		}
 	}
 	
-	public void close() {
-		this.unregisterAsDAOListener();
-	}
-
 	public void messageReceived() {
 		this.lastMessageReceived = System.currentTimeMillis();
 	}
@@ -149,12 +150,25 @@ public class CsSession implements IDaoListener {
 	public void messageSent() {
 		this.lastMessageSent = System.currentTimeMillis();
 	}
+	
+	public void disconnect() {
+		disconnect(new CloseReason(CloseCodes.GOING_AWAY, "Unspecified"));
+	}
 
 	public void disconnect(CloseReason reason) {
-		try {
-			this.session.close(reason);
-		} catch (Exception e) {
-			LOGGER.error("Failed to close session", e);
+		this.unregisterAsDAOListener();
+		this.lastState=State.CLOSED;
+		if(this.user != null)
+			this.user=null;
+		if(this.sessionId != null)
+			this.sessionId=null;
+		if(this.wsSession != null) {
+			try {
+				this.wsSession.close(reason);
+			} catch (Exception e) {
+				LOGGER.error("Failed to close session", e);
+			}
+			this.wsSession=null;
 		}
 	}
 }

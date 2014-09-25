@@ -18,7 +18,7 @@ public class SessionManager {
 
 	private final static SessionManager theSessionManager = new SessionManager();
 	
-	private HashMap<String,CsSession> activeSessions = new HashMap<String, CsSession>();
+	private HashMap<String,UserSession> activeSessions = new HashMap<String, UserSession>();
 	
 	private final Counter activeSessionsCounter = MetricsService.addCounter(MetricsGroup.WSS,"sessions.active");
 	private final Counter totalSessionsCounter = MetricsService.addCounter(MetricsGroup.WSS,"sessions.total");
@@ -34,7 +34,7 @@ public class SessionManager {
 	public synchronized void sessionStarted(Session session) {
 		String sessionId = session.getId();
 		if (!activeSessions.containsKey(sessionId)) {
-			CsSession csSession = new CsSession(session);
+			UserSession csSession = new UserSession(session);
 			csSession.setSessionId(sessionId);
 			activeSessions.put(sessionId, csSession);
 			LOGGER.info("Session "+session.getId()+" started");
@@ -48,9 +48,9 @@ public class SessionManager {
 
 	public synchronized void sessionEnded(Session session) {
 		String sessionId = session.getId();
-		CsSession csSession = activeSessions.get(sessionId);
+		UserSession csSession = activeSessions.get(sessionId);
 		if (csSession!=null) {
-			csSession.close();
+			csSession.disconnect();
 			activeSessions.remove(sessionId);
 			LOGGER.info("Session "+session.getId()+" ended");
 			activeSessionsCounter.dec();
@@ -60,7 +60,7 @@ public class SessionManager {
 		}
 	}
 	
-	public CsSession getSession(Session session) {
+	public UserSession getSession(Session session) {
 		String sessionId = session.getId();
 		if (sessionId==null) {
 			return null;
@@ -68,13 +68,13 @@ public class SessionManager {
 		return this.activeSessions.get(sessionId);
 	}
 	
-	public final Collection<CsSession> getSessions() {
+	public final Collection<UserSession> getSessions() {
 		return this.activeSessions.values();
 	}
 
 	public void messageReceived(Session session) {
 		String sessionId = session.getId();
-		CsSession csSession = activeSessions.get(sessionId);
+		UserSession csSession = activeSessions.get(sessionId);
 		if (csSession!=null) {
 			csSession.setLastMessageReceived(System.currentTimeMillis());
 		}
@@ -85,7 +85,7 @@ public class SessionManager {
 
 	public void messageSent(Session session) {
 		String sessionId = session.getId();
-		CsSession csSession = activeSessions.get(sessionId);
+		UserSession csSession = activeSessions.get(sessionId);
 		if (csSession!=null) {
 			csSession.setLastMessageSent(System.currentTimeMillis());
 		}
@@ -95,6 +95,6 @@ public class SessionManager {
 	}
 	
 	public void resetSessions() {
-		activeSessions = new HashMap<String, CsSession>();
+		activeSessions.clear();
 	}
 }

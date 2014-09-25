@@ -60,7 +60,7 @@ public class CsServerEndPoint {
     @OnMessage(maxMessageSize=JsonEncoder.WEBSOCKET_MAX_MESSAGE_SIZE)
     public void onMessage(Session session, MessageABC message) throws IOException, EncodeException {
     	messageCounter.inc();
-    	CsSession csSession = sessionManager.getSession(session);
+    	UserSession csSession = sessionManager.getSession(session);
     	csSession.messageReceived();
 		sessionManager.messageReceived(session);
     	if (message instanceof ResponseABC) {

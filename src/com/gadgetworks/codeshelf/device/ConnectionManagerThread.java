@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 import com.gadgetworks.codeshelf.util.ThreadUtils;
 import com.gadgetworks.codeshelf.ws.jetty.client.JettyWebSocketClient;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.KeepAlive;
-import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
+import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
 
 public class ConnectionManagerThread extends Thread {
 
@@ -36,7 +36,7 @@ public class ConnectionManagerThread extends Thread {
 	int idleWarningTimeout = 15*1000;	
 	
 	@Getter @Setter
-	CsSession.State lastState = CsSession.State.INACTIVE;
+	UserSession.State lastState = UserSession.State.INACTIVE;
 	
 	public ConnectionManagerThread(CsDeviceManager deviceManager) {
 		this.deviceManager = deviceManager;
@@ -63,12 +63,12 @@ public class ConnectionManagerThread extends Thread {
 						}
 					}
 					
-					CsSession.State newSessionState = determineSessionState(client);
+					UserSession.State newSessionState = determineSessionState(client);
 					if(newSessionState != this.getLastState()) {
 						LOGGER.info("Session state changed from "+getLastState().toString()+" to "+newSessionState.toString());
 						setLastState(newSessionState);
 						
-						if (deviceManager.isIdleKill() && newSessionState == CsSession.State.INACTIVE) {
+						if (deviceManager.isIdleKill() && newSessionState == UserSession.State.INACTIVE) {
 							LOGGER.warn("Server connection timed out.  Restarting session.");
 							client.disconnect();
 						}
@@ -83,16 +83,16 @@ public class ConnectionManagerThread extends Thread {
 		LOGGER.info("WS connection manager thread is terminating");
 	}
 
-	private CsSession.State determineSessionState(JettyWebSocketClient client) {
+	private UserSession.State determineSessionState(JettyWebSocketClient client) {
 		long timeSinceLastReceived = System.currentTimeMillis() - client.getLastMessageReceived();
 
 		if (timeSinceLastReceived > siteControllerTimeout) {
-			return CsSession.State.INACTIVE;
+			return UserSession.State.INACTIVE;
 		}//else 
 		if (timeSinceLastReceived > idleWarningTimeout) {
-			return CsSession.State.IDLE_WARNING;
+			return UserSession.State.IDLE_WARNING;
 		}//else
-		return CsSession.State.ACTIVE;
+		return UserSession.State.ACTIVE;
 	}
 
 }

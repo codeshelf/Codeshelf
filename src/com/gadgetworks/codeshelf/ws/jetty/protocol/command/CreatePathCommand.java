@@ -9,7 +9,7 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.request.CreatePathRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.CreatePathResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
-import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
+import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
 
 public class CreatePathCommand extends CommandABC {
 
@@ -17,7 +17,7 @@ public class CreatePathCommand extends CommandABC {
 
 	CreatePathRequest request;
 	
-	public CreatePathCommand(CsSession session, CreatePathRequest request) {
+	public CreatePathCommand(UserSession session, CreatePathRequest request) {
 		super(session);
 		this.request = request;
 	}

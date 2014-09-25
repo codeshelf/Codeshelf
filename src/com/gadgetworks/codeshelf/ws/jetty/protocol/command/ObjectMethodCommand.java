@@ -19,7 +19,7 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectMethodRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectMethodResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
-import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
+import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
 
 public class ObjectMethodCommand extends CommandABC {
 
@@ -27,7 +27,7 @@ public class ObjectMethodCommand extends CommandABC {
 
 	private ObjectMethodRequest	request;
 	
-	public ObjectMethodCommand(CsSession session, ObjectMethodRequest request) {
+	public ObjectMethodCommand(UserSession session, ObjectMethodRequest request) {
 		super(session);
 		this.request = request;
 	}

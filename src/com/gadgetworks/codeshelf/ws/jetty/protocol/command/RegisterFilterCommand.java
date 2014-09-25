@@ -15,7 +15,7 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RegisterFilterRequest
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectChangeResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
-import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
+import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
 import com.google.common.base.Strings;
 
 /*
@@ -37,7 +37,7 @@ public class RegisterFilterCommand extends CommandABC {
 
 	private RegisterFilterRequest request;
 	
-	public RegisterFilterCommand(CsSession session, RegisterFilterRequest request) {
+	public RegisterFilterCommand(UserSession session, RegisterFilterRequest request) {
 		super(session);
 		this.request = request;
 	}

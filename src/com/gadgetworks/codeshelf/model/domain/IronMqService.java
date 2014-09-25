@@ -37,7 +37,6 @@ import com.gadgetworks.codeshelf.edi.ICsvOrderLocationImporter;
 import com.gadgetworks.codeshelf.edi.WorkInstructionCSVExporter;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
-import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
 import com.google.common.base.Strings;

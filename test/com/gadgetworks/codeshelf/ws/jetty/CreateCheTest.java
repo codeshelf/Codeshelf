@@ -22,7 +22,7 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectUpdateRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectUpdateResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
-import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
+import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
 import com.gadgetworks.codeshelf.ws.jetty.server.ServerMessageProcessor;
 
 // example che update message:
@@ -39,7 +39,7 @@ public class CreateCheTest extends DAOTestABC {
 		
 		MockDaoProvider daoProvider = new MockDaoProvider();
 		
-		CsSession session = Mockito.mock(CsSession.class);
+		UserSession session = Mockito.mock(UserSession.class);
 		session.setSessionId("test-session");
 	
 		ITypedDao<Organization> orgDao = daoProvider.getDaoInstance(Organization.class);
@@ -94,7 +94,7 @@ public class CreateCheTest extends DAOTestABC {
 		
 		MockDaoProvider daoProvider = new MockDaoProvider();
 		
-		CsSession session = Mockito.mock(CsSession.class);
+		UserSession session = Mockito.mock(UserSession.class);
 		session.setSessionId("test-session");
 
 	
@@ -150,7 +150,7 @@ public class CreateCheTest extends DAOTestABC {
 		
 		MockDaoProvider daoProvider = new MockDaoProvider();
 		
-		CsSession session = Mockito.mock(CsSession.class);
+		UserSession session = Mockito.mock(UserSession.class);
 		session.setSessionId("test-session");
 
 	
@@ -200,7 +200,7 @@ public class CreateCheTest extends DAOTestABC {
 	public final void testInvalidClass() {	
 		MockDaoProvider daoProvider = new MockDaoProvider();
 		
-		CsSession session = Mockito.mock(CsSession.class);
+		UserSession session = Mockito.mock(UserSession.class);
 		session.setSessionId("test-session");
 
 	
@@ -232,7 +232,7 @@ public class CreateCheTest extends DAOTestABC {
 		
 		MockDaoProvider daoProvider = new MockDaoProvider();
 		
-		CsSession session = Mockito.mock(CsSession.class);
+		UserSession session = Mockito.mock(UserSession.class);
 		session.setSessionId("test-session");
 	
 		ITypedDao<Organization> orgDao = daoProvider.getDaoInstance(Organization.class);

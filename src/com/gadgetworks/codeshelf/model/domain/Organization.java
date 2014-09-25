@@ -29,7 +29,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
-import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
 import com.gadgetworks.flyweight.command.NetGuid;
@@ -270,7 +269,7 @@ public class Organization extends DomainObjectABC {
 	 * @return
 	 */
 	// @Transactional
-	public final User createUser(final String inUsername, final String inPassword, final SiteController inSiteController) {
+	public final User createUser(final String inUsername, final String inPassword, UserType type) {
 		User result = null;
 
 		if(User.DAO.findByDomainId(null,inUsername) == null) {
@@ -279,7 +278,7 @@ public class Organization extends DomainObjectABC {
 			user.setParent(this);
 			user.setDomainId(inUsername);
 			user.setPassword(inPassword);
-			user.setSiteController(inSiteController);
+			user.setType(type);
 			user.setActive(true);
 
 			try {

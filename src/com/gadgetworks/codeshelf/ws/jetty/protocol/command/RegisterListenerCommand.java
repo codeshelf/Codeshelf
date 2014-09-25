@@ -14,7 +14,7 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RegisterListenerReque
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectChangeResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
-import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
+import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
 
 public class RegisterListenerCommand extends CommandABC {
 
@@ -22,7 +22,7 @@ public class RegisterListenerCommand extends CommandABC {
 
 	private RegisterListenerRequest request;
 	
-	public RegisterListenerCommand(CsSession session, RegisterListenerRequest request) {
+	public RegisterListenerCommand(UserSession session, RegisterListenerRequest request) {
 		super(session);
 		this.request = request;
 	}

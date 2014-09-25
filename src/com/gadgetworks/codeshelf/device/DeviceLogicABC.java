@@ -65,10 +65,10 @@ public abstract class DeviceLogicABC implements INetworkDevice {
 	// The device manager.
 	protected ICsDeviceManager		mDeviceManager;
 
-	@Transient
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
+	@Transient
 	private byte					mLastAckId;
 
 	public DeviceLogicABC(final UUID inPersistentId,

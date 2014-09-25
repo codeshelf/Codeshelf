@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
-import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
 import com.google.inject.Inject;
@@ -54,6 +53,10 @@ public class Slot extends SubLocationABC<Tier> {
 
 	public Slot(Tier parent, String domainId, final Point inAnchorPoint, final Point inPickFaceEndPoint) {
 		super(parent, domainId, inAnchorPoint, inPickFaceEndPoint);
+	}
+	
+	public Slot() {
+		super();
 	}
 
 	public final void setParentTier(final Tier inParentTier) {

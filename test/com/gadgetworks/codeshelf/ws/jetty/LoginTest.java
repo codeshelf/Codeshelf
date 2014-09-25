@@ -16,7 +16,7 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.request.LoginRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.LoginResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
-import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
+import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
 import com.gadgetworks.codeshelf.ws.jetty.server.ServerMessageProcessor;
 
 public class LoginTest {
@@ -57,7 +57,7 @@ public class LoginTest {
 		request.setPassword(password);
 		
 		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider);
-		ResponseABC response = processor.handleRequest(Mockito.mock(CsSession.class), request);
+		ResponseABC response = processor.handleRequest(Mockito.mock(UserSession.class), request);
 
 		Assert.assertTrue(response instanceof LoginResponse);
 		
@@ -95,7 +95,7 @@ public class LoginTest {
 		request.setPassword(password);
 		
 		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider);
-		ResponseABC response = processor.handleRequest(Mockito.mock(CsSession.class), request);
+		ResponseABC response = processor.handleRequest(Mockito.mock(UserSession.class), request);
 
 		Assert.assertTrue(response instanceof LoginResponse);
 		
@@ -132,7 +132,7 @@ public class LoginTest {
 		request.setPassword("invalid");
 		
 		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider);
-		ResponseABC response = processor.handleRequest(Mockito.mock(CsSession.class), request);
+		ResponseABC response = processor.handleRequest(Mockito.mock(UserSession.class), request);
 
 		Assert.assertTrue(response instanceof LoginResponse);
 		

@@ -18,7 +18,6 @@ import java.util.Locale;
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
-import javax.persistence.Table;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -47,7 +46,6 @@ import com.gadgetworks.codeshelf.model.EdiDocumentStatusEnum;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
-import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
 import com.google.common.base.Strings;

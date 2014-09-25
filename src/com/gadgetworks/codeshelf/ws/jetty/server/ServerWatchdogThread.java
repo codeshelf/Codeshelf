@@ -60,17 +60,16 @@ public class ServerWatchdogThread extends Thread {
 		ThreadUtils.sleep(initialWaitTime);
 		while (!exit) {
 			// send ping on all site controller sessions
-			Collection<CsSession> sessions = this.sessionManager.getSessions();
-			for (CsSession session : sessions) {
+			Collection<UserSession> sessions = this.sessionManager.getSessions();
+			for (UserSession session : sessions) {
 				String sessionId = session.getSessionId();
-				if (session.getLastState()==CsSession.State.INACTIVE) {
+				if (session.getLastState()==UserSession.State.INACTIVE) {
 					// don't send keep-alives on inactive sessions
 					continue;
 				}
 				// don't send keepalive if suppressed
 				// don't send keepalive to unauthenticated site controller
-				if (!suppressKeepAlive && 
-						(!session.getType().equals(SessionType.SiteController) || session.isAuthenticated())) {
+				if (!suppressKeepAlive && session.isAuthenticated()) {
 					long timeSinceLastSent = System.currentTimeMillis() - session.getLastMessageSent();
 					if (timeSinceLastSent>keepAliveInterval) {
 						LOGGER.debug("Sending keep-alive on "+sessionId);
@@ -82,13 +81,13 @@ public class ServerWatchdogThread extends Thread {
 					}
 				}
 
-				CsSession.State newSessionState = determineSessionState(session);
+				UserSession.State newSessionState = determineSessionState(session);
 				if(newSessionState != session.getLastState()) {
 					LOGGER.info("Session state changed from "+session.getLastState().toString()+" to "+newSessionState.toString());
 					session.setLastState(newSessionState);
 					
-					if(killIdle && newSessionState == CsSession.State.INACTIVE) {
-						LOGGER.warn("Sonnection timed out with "+session.getType().toString()+".  Closing session.");
+					if(killIdle && newSessionState == UserSession.State.INACTIVE) {
+						LOGGER.warn("Connection timed out, Closing session.");
 						session.disconnect(new CloseReason(CloseCodes.GOING_AWAY, "Timeout"));
 					}
 				}
@@ -97,17 +96,17 @@ public class ServerWatchdogThread extends Thread {
 		}
 	}
 
-	private CsSession.State determineSessionState(CsSession session) {
+	private UserSession.State determineSessionState(UserSession session) {
 		long timeSinceLastReceived = System.currentTimeMillis() - session.getLastMessageReceived();
 
-		if ((session.getType()==SessionType.SiteController && timeSinceLastReceived > siteControllerTimeout) 
-			|| (session.getType()==SessionType.UserApp && timeSinceLastReceived > webAppTimeout)
-			|| (session.getType()==SessionType.Unknown && timeSinceLastReceived > defaultTimeout)) {
-			return CsSession.State.INACTIVE;
+		if ((session.isSiteController() && timeSinceLastReceived > siteControllerTimeout) 
+			|| (session.isAppUser() && timeSinceLastReceived > webAppTimeout)
+			|| (timeSinceLastReceived > defaultTimeout)) {
+			return UserSession.State.INACTIVE;
 		}//else 
 		if (timeSinceLastReceived > idleWarningTimeout) {
-			return CsSession.State.IDLE_WARNING;
+			return UserSession.State.IDLE_WARNING;
 		}//else
-		return CsSession.State.ACTIVE;
+		return UserSession.State.ACTIVE;
 	}
 }

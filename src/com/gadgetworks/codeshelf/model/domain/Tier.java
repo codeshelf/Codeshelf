@@ -24,7 +24,6 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
-import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
 import com.google.inject.Inject;
@@ -95,7 +94,11 @@ public class Tier extends SubLocationABC<Bay> {
 	public Tier(Bay bay, String domainId, final Point inAnchorPoint, final Point inPickFaceEndPoint) {
 		super(bay, domainId, inAnchorPoint, inPickFaceEndPoint);
 	}
-
+	
+	public Tier() {
+		super();
+	}
+	
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<Tier> getDao() {
 		return DAO;

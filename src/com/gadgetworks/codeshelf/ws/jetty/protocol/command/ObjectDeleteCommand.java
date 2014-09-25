@@ -12,7 +12,7 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectDeleteRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectDeleteResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
-import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
+import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
 
 public class ObjectDeleteCommand extends CommandABC {
 	
@@ -20,7 +20,7 @@ public class ObjectDeleteCommand extends CommandABC {
 
 	private ObjectDeleteRequest	request;
 	
-	public ObjectDeleteCommand(IDaoProvider daoProvider, CsSession session, ObjectDeleteRequest request) {
+	public ObjectDeleteCommand(IDaoProvider daoProvider, UserSession session, ObjectDeleteRequest request) {
 		super(daoProvider, session);
 		this.request = request;
 	}

@@ -10,7 +10,6 @@ import java.util.Map;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.MapKey;
 import javax.persistence.OneToMany;
@@ -20,7 +19,6 @@ import javax.persistence.Transient;
 import lombok.Getter;
 import lombok.Setter;
 
-import org.hibernate.annotations.Where;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -316,7 +314,7 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 				}
 				
 				if(sitecon!=null) {
-					siteconUser = this.getParent().getParentOrganization().createUser(inDomainId, inPassword, sitecon);
+					siteconUser = this.getParent().getParentOrganization().createUser(inDomainId, inPassword, UserType.SITECON);
 					
 					if (siteconUser == null) {
 						LOGGER.error("Failed to create user for new site controller "+inDomainId);

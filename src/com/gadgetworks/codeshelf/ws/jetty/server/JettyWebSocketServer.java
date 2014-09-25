@@ -76,6 +76,7 @@ public class JettyWebSocketServer {
 	    // Setup the basic application "context" for this application at "/"
 	    ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
 	    mServer.setHandler(context);
+	    
         // Initialize javax.websocket layer
         ServerContainer wscontainer = WebSocketServerContainerInitializer.configureContext(context);
         wscontainer.addEndpoint(CsServerEndPoint.class);

@@ -1,8 +1,5 @@
 package com.gadgetworks.codeshelf.install;
 
-import lombok.Getter;
-import lombok.Setter;
-
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.slf4j.Logger;
@@ -17,10 +14,10 @@ import com.gadgetworks.codeshelf.model.domain.Organization.OrganizationDao;
 import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.model.domain.User.UserDao;
+import com.gadgetworks.codeshelf.model.domain.UserType;
 import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
-import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.TypeLiteral;
 
@@ -71,12 +68,6 @@ public class Installer {
 		createOrganizationUser("DEMO1", "view@goodeggs.com", "goodeggs"); //view
 		createOrganizationUser("DEMO1", "view@accu-logistics.com", "accu-logistics"); //view
 		
-		createOrganizationUser("DEMO2", "a@example.com", "testme"); //view
-		createOrganizationUser("DEMO2", "view@example.com", "testme"); //view
-		createOrganizationUser("DEMO2", "configure@example.com", "testme"); //all
-		createOrganizationUser("DEMO2", "simulate@example.com", "testme"); //simulate + configure
-		createOrganizationUser("DEMO2", "che@example.com", "testme"); //view + simulate
-
 		// Recompute path positions.
 		// TODO: Remove once we have a tool for linking path segments to locations (aisles usually).
 		for (Organization organization : Organization.DAO.getAll()) {
@@ -106,7 +97,7 @@ public class Installer {
 
 		}
 		if (organization.getUser(inDefaultUserId) == null) {
-			organization.createUser(inDefaultUserId, inDefaultUserPw, null);
+			organization.createUser(inDefaultUserId, inDefaultUserPw, UserType.APPUSER);
 		}
 	}	
 	

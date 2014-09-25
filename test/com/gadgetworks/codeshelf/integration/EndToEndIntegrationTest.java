@@ -86,7 +86,7 @@ public abstract class EndToEndIntegrationTest extends DomainTestABC {
 	
 	@SuppressWarnings("unused")
 	@Override
-	public void doBefore() throws Exception {
+	public void doBefore() {
 		LOGGER.debug("-------------- Creating environment before running test case");
 		//The client WSS needs the self-signed certificate to be trusted
 		System.setProperty("javax.net.ssl.keyStore", PropertyUtils.getString("keystore.path"));

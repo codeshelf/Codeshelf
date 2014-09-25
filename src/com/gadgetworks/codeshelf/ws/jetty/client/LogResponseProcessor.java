@@ -7,25 +7,25 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageProcessor;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RequestABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
-import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
+import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
 
 public class LogResponseProcessor extends MessageProcessor {
 
 	private static final Logger	LOGGER = LoggerFactory.getLogger(LogResponseProcessor.class);
 
 	@Override
-	public void handleResponse(CsSession session, ResponseABC response) {
+	public void handleResponse(UserSession session, ResponseABC response) {
 		LOGGER.info("Response received:"+response);
 	}
 
 	@Override
-	public ResponseABC handleRequest(CsSession session, RequestABC request) {
+	public ResponseABC handleRequest(UserSession session, RequestABC request) {
 		LOGGER.info("Request received:"+request);
 		return null;
 	}
 
 	@Override
-	public void handleOtherMessage(CsSession session, MessageABC message) {
+	public void handleOtherMessage(UserSession session, MessageABC message) {
 		LOGGER.info("Message received:"+message);
 	}
 }

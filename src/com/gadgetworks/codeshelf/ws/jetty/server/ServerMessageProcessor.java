@@ -81,7 +81,7 @@ public class ServerMessageProcessor extends MessageProcessor {
 	}
 	
 	@Override
-	public ResponseABC handleRequest(CsSession csSession, RequestABC request) {
+	public ResponseABC handleRequest(UserSession csSession, RequestABC request) {
 		LOGGER.info("Request received for processing: "+request);
 		requestCounter.inc();
 		CommandABC command = null;
@@ -172,10 +172,11 @@ public class ServerMessageProcessor extends MessageProcessor {
 	}
 
 	@Override
-	public void handleResponse(CsSession csSession, ResponseABC response) {
+	public void handleResponse(UserSession csSession, ResponseABC response) {
 		responseCounter.inc();
-    	final Timer.Context context = responseProcessingTimer.time();
+		final Timer.Context context = responseProcessingTimer.time();
 	    try {		
+			/*
 			if (response instanceof PingResponse) {
 				PingResponse pingResponse = (PingResponse) response;
 				long now = System.currentTimeMillis();
@@ -190,6 +191,7 @@ public class ServerMessageProcessor extends MessageProcessor {
 					LOGGER.warn("Unable to set pong received data: Matching session not found.");
 				}
 			}
+			*/
 	    } finally {
 	        context.stop();
 	    }
@@ -197,7 +199,7 @@ public class ServerMessageProcessor extends MessageProcessor {
 
 
 	@Override
-	public void handleOtherMessage(CsSession session, MessageABC message) {
+	public void handleOtherMessage(UserSession session, MessageABC message) {
 		LOGGER.warn("Unexpected message received on session "+session+": "+message);
 	}
 }
