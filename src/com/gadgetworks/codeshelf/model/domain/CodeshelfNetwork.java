@@ -27,7 +27,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.flyweight.command.NetGuid;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -54,7 +54,7 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 	@Singleton
 	public static class CodeshelfNetworkDao extends GenericDaoABC<CodeshelfNetwork> implements ITypedDao<CodeshelfNetwork> {
 		@Inject
-		public CodeshelfNetworkDao(PersistencyService persistencyService) {
+		public CodeshelfNetworkDao(PersistenceService persistencyService) {
 			super(persistencyService);
 		}
 
@@ -135,20 +135,15 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 	// private List<WirelessDeviceABC>		devices				= new ArrayList<WirelessDeviceABC>();
 
 	public CodeshelfNetwork() {
-		this(null, null, "");
-	}
-	
-	public CodeshelfNetwork(Facility parent, String domainId, String description) {
-		super(domainId);
-		this.parent = parent;
-		this.description = description;
+		super();
+		
 		active = true;
 		connected = false;
-		
+		this.description = "";		
 		this.channel = CodeshelfNetwork.DEFAULT_CHANNEL;
 		this.networkNum = CodeshelfNetwork.DEFAULT_NETWORK_NUM;
 	}
-
+	
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<CodeshelfNetwork> getDao() {
 		return DAO;
@@ -187,7 +182,13 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 	*/
 
 	public final void addChe(Che inChe) {
-		ches.put(inChe.getDomainId(), inChe);
+		CodeshelfNetwork previousNetwork = inChe.getParent();
+		if(previousNetwork == null) {
+			ches.put(inChe.getDomainId(), inChe);
+			inChe.setParent(this);
+		} else if(!previousNetwork.equals(this)) {
+			LOGGER.error("cannot add Che "+inChe.getDomainId()+" to "+this.getDomainId()+" because it has not been removed from "+previousNetwork.getDomainId());
+		}	
 	}
 
 	public final Che getChe(String inCheId) {
@@ -195,11 +196,23 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 	}
 
 	public final void removeChe(String inCheId) {
-		ches.remove(inCheId);
+		Che che = this.getChe(inCheId);
+		if(che != null) {
+			che.setParent(null);
+			ches.remove(inCheId);
+		} else {
+			LOGGER.error("cannot remove Che "+inCheId+" from "+this.getDomainId()+" because it isn't found in children");
+		}
 	}
 
 	public final void addSiteController(SiteController inSiteController) {
-		siteControllers.put(inSiteController.getDomainId(), inSiteController);
+		CodeshelfNetwork previousNetwork = inSiteController.getParent();
+		if(previousNetwork == null) {
+			siteControllers.put(inSiteController.getDomainId(), inSiteController);
+			inSiteController.setParent(this);
+		} else if(!previousNetwork.equals(this)) {
+			LOGGER.error("cannot add SiteController "+inSiteController.getDomainId()+" to "+this.getDomainId()+" because it has not been removed from "+previousNetwork.getDomainId());
+		}	
 	}
 
 	public final SiteController getSiteController(String inSiteControllerId) {
@@ -207,11 +220,23 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 	}
 
 	public final void removeSiteController(String inSiteControllerId) {
-		siteControllers.remove(inSiteControllerId);
+		SiteController siteController = this.getSiteController(inSiteControllerId);
+		if(siteController != null) {
+			siteController.setParent(null);
+			siteControllers.remove(inSiteControllerId);
+		} else {
+			LOGGER.error("cannot remove SiteController "+inSiteControllerId+" from "+this.getDomainId()+" because it isn't found in children");
+		}
 	}
 
 	public final void addLedController(LedController inLedController) {
-		ledControllers.put(inLedController.getDomainId(), inLedController);
+		CodeshelfNetwork previousNetwork = inLedController.getParent();
+		if(previousNetwork == null) {
+			ledControllers.put(inLedController.getDomainId(), inLedController);
+			inLedController.setParent(this);
+		} else if(!previousNetwork.equals(this)) {
+			LOGGER.error("cannot add LedController "+inLedController.getDomainId()+" to "+this.getDomainId()+" because it has not been removed from "+previousNetwork.getDomainId());
+		}	
 	}
 
 	public final LedController getLedController(String inLedControllerId) {
@@ -219,7 +244,13 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 	}
 
 	public final void removeLedController(String inLedControllerId) {
-		ledControllers.remove(inLedControllerId);
+		LedController ledController = this.getLedController(inLedControllerId);
+		if(ledController != null) {
+			ledController.setParent(null);
+			ledControllers.remove(inLedControllerId);
+		} else {
+			LOGGER.error("cannot remove LedController "+inLedControllerId+" from "+this.getDomainId()+" because it isn't found in children");
+		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -314,7 +345,7 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 				}
 				
 				if(sitecon!=null) {
-					siteconUser = this.getParent().getParentOrganization().createUser(inDomainId, inPassword, UserType.SITECON);
+					siteconUser = this.getParent().getOrganization().createUser(inDomainId, inPassword, UserType.SITECON);
 					
 					if (siteconUser == null) {
 						LOGGER.error("Failed to create user for new site controller "+inDomainId);
@@ -327,6 +358,10 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 			LOGGER.info("Tried to create Site Controller "+inDomainId+" but it already exists");
 		}
 		return siteconUser;
+	}
+	
+	public Facility getFacility() {
+		return this.getParent();
 	}
 
 }

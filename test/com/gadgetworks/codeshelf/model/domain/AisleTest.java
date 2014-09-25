@@ -12,15 +12,15 @@ public class AisleTest extends DomainTestABC {
 
 	@Test
 	public final void testGetLocationIdWithInvalidSublevel() {
-		Aisle aisle = getAisle(getFacility(getOrganization("Org1")), "A1");
+		Aisle aisle = getDefaultAisle(getDefaultFacility(), "A1");
 		String locationId = aisle.getLocationIdToParentLevel(Tier.class);
 		Assert.assertEquals("", locationId);
 	}
 	
 	@Test
 	public final void updateControllerOnAisle() {
-		LedController controller = getController(getNetwork(getFacility(getOrganization("Org1"))), "0xABCDEF");
-		Aisle aisle = getAisle(getFacility(getOrganization("Org1")), "A1");
+		LedController controller = getDefaultController(getDefaultNetwork(getDefaultFacility()), "0xABCDEF");
+		Aisle aisle = getDefaultAisle(getDefaultFacility(getDefaultOrganization("Org1")), "A1");
 
 		Short testChannel = 8;
 		aisle.setControllerChannel(controller.getPersistentId().toString(), testChannel.toString());
@@ -33,7 +33,7 @@ public class AisleTest extends DomainTestABC {
 	@Test
 	public final void updateNonexistantController() {
 		Short testChannel = 8;
-		Aisle aisle = getAisle(getFacility(getOrganization("O1")), "A1");
+		Aisle aisle = getDefaultAisle(getDefaultFacility(), "A1");
 		try {
 			aisle.setControllerChannel(UUID.randomUUID().toString(), testChannel.toString());
 			fail("Should have thrown an exception");
@@ -49,10 +49,10 @@ public class AisleTest extends DomainTestABC {
 	public final void updatePathSegment() {
 		String aisleDomainId = "A1";
 		
-		Facility facility = getFacility(getOrganization("Org1"));
+		Facility facility = getDefaultFacility();
 		
-		PathSegment pathSegment  = getPathSegment(getPath(facility, "P1"), 1);
-		Aisle aisle = getAisle(facility, aisleDomainId);
+		PathSegment pathSegment  = getDefaultPathSegment(getDefaultPath(facility, "P1"), 1);
+		Aisle aisle = getDefaultAisle(facility, aisleDomainId);
 
 		String segPersistId = pathSegment.getPersistentId().toString();
 		aisle.associatePathSegment(segPersistId);
@@ -64,7 +64,7 @@ public class AisleTest extends DomainTestABC {
 	
 	@Test
 	public final void updateNonexistantPathSegment() {
-		Aisle aisle = getAisle(getFacility(getOrganization("O1")), "A1");
+		Aisle aisle = getDefaultAisle(getDefaultFacility(), "A1");
 		try {
 			aisle.associatePathSegment(UUID.randomUUID().toString());
 			fail("Should have thrown an exception");

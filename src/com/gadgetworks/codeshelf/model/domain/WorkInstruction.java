@@ -33,7 +33,7 @@ import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.util.StringUIConverter;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -75,7 +75,7 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 	@Singleton
 	public static class WorkInstructionDao extends GenericDaoABC<WorkInstruction> implements ITypedDao<WorkInstruction> {
 		@Inject
-		public WorkInstructionDao(final PersistencyService persistencyService) {
+		public WorkInstructionDao(final PersistenceService persistencyService) {
 			super(persistencyService);
 		}
 
@@ -518,5 +518,13 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 		return cookedDesc;
 	}
 
+	public static void setDao(WorkInstructionDao inWorkInstructionDao) {
+		WorkInstruction.DAO = inWorkInstructionDao;
+	}
+
+	@Override
+	public Facility getFacility() {
+		return getParent().getFacility();
+	}
 	
 }

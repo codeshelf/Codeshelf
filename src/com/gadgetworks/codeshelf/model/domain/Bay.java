@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.google.common.collect.Ordering;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -46,7 +46,7 @@ public class Bay extends SubLocationABC<Aisle> {
 	@Singleton
 	public static class BayDao extends GenericDaoABC<Bay> implements ITypedDao<Bay> {
 		@Inject
-		public BayDao(PersistencyService persistencyService) {
+		public BayDao(PersistenceService persistencyService) {
 			super(persistencyService);
 		}
 
@@ -62,12 +62,13 @@ public class Bay extends SubLocationABC<Aisle> {
 	private static Comparator<ISubLocation> topDownTierOrder = new TopDownTierOrder();
 	
 	public Bay() {
+		super();
 	}
-
+/*
 	public Bay(Aisle parent, String domainId, Point inAnchorPoint, Point inPickFaceEndPoint) {
 		super(parent, domainId, inAnchorPoint, inPickFaceEndPoint);
 	}
-	
+	*/
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<Bay> getDao() {
 		return DAO;
@@ -121,6 +122,26 @@ public class Bay extends SubLocationABC<Aisle> {
 			return result;
 		}
 		
+	}
+
+	public static void setDao(ITypedDao<Bay> inBayDao) {
+		Bay.DAO = inBayDao;
+	}
+	
+	public Tier createTier(String inTierId, Point inAnchorPoint, Point inPickFaceEndPoint) {
+		Tier tier = new Tier();
+		tier.setDomainId(inTierId);
+		tier.setAnchorPoint(inAnchorPoint);
+		tier.setPickFaceEndPoint(inPickFaceEndPoint);
+		
+		this.addLocation((SubLocationABC<? extends IDomainObject>)tier);
+		
+		return tier;
+	}
+
+	@Override
+	public void setParent(Aisle inParent) {
+		this.setParent((ILocation<?>)inParent);
 	}
 
 }

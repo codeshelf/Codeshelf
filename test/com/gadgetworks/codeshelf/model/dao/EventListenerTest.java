@@ -27,7 +27,7 @@ public class EventListenerTest extends DAOTestABC {
 		Assert.assertEquals(0, l.getObjectsAdded());
 		// store new organization
 		String desc = "Test-Desc";
-		Session session = persistencyService.getCurrentTenantSession();
+		Session session = persistenceService.getCurrentTenantSession();
 		Transaction t = session.beginTransaction();
 		Organization organization = new Organization();
 		organization.setDomainId("LOADBY-TEST");
@@ -49,7 +49,7 @@ public class EventListenerTest extends DAOTestABC {
 		String orgDesc = "org-desc";
 		String updatedDesc = "updated-desc";
 		// create org
-		Session session = persistencyService.getCurrentTenantSession();
+		Session session = persistenceService.getCurrentTenantSession();
 		Transaction t = session.beginTransaction();
 		Organization organization = new Organization();
 		organization.setDomainId("DELETE-TEST");
@@ -59,7 +59,7 @@ public class EventListenerTest extends DAOTestABC {
 		t.commit();
 		
 		// make sure org exists and then update it
-		session = persistencyService.getCurrentTenantSession();
+		session = persistenceService.getCurrentTenantSession();
 		t = session.beginTransaction();
 		Organization foundOrganization = mOrganizationDao.findByPersistentId(id);
 		Assert.assertNotNull(foundOrganization);
@@ -74,7 +74,7 @@ public class EventListenerTest extends DAOTestABC {
 		Assert.assertTrue(l.getLastObjectPropertiesUpdated().contains("description"));
 		
 		// now reload it again and make sure desc has changed
-		session = persistencyService.getCurrentTenantSession();
+		session = persistenceService.getCurrentTenantSession();
 		t = session.beginTransaction();
 		foundOrganization = mOrganizationDao.findByPersistentId(id);
 		Assert.assertNotNull(foundOrganization);
@@ -89,7 +89,7 @@ public class EventListenerTest extends DAOTestABC {
 		Assert.assertEquals(0, l.getObjectsDeleted());
 		
 		// first transaction - create org
-		Session session = persistencyService.getCurrentTenantSession();
+		Session session = persistenceService.getCurrentTenantSession();
 		Transaction t = session.beginTransaction();
 		Organization organization = new Organization();
 		organization.setDomainId("DELETE-TEST");
@@ -99,7 +99,7 @@ public class EventListenerTest extends DAOTestABC {
 		t.commit();
 		
 		// make sure org exists and then delete it
-		session = persistencyService.getCurrentTenantSession();
+		session = persistenceService.getCurrentTenantSession();
 		t = session.beginTransaction();
 		Organization foundOrganization = mOrganizationDao.findByPersistentId(id);
 		Assert.assertNotNull(foundOrganization);
@@ -109,7 +109,7 @@ public class EventListenerTest extends DAOTestABC {
 		Assert.assertEquals(1, l.getObjectsDeleted());
 		
 		// now try to reload it again
-		session = persistencyService.getCurrentTenantSession();
+		session = persistenceService.getCurrentTenantSession();
 		t = session.beginTransaction();
 		foundOrganization = mOrganizationDao.findByPersistentId(id);
 		Assert.assertNull(foundOrganization);

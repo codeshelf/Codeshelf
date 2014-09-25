@@ -16,8 +16,8 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.request.LoginRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.LoginResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
-import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
 import com.gadgetworks.codeshelf.ws.jetty.server.ServerMessageProcessor;
+import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
 
 public class LoginTest {
 	

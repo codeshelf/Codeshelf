@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -44,7 +44,7 @@ public class UomMaster extends DomainObjectTreeABC<Facility> {
 	@Singleton
 	public static class UomMasterDao extends GenericDaoABC<UomMaster> implements ITypedDao<UomMaster> {
 		@Inject
-		public UomMasterDao(final PersistencyService persistencyService) {
+		public UomMasterDao(final PersistenceService persistencyService) {
 			super(persistencyService);
 		}
 
@@ -82,6 +82,10 @@ public class UomMaster extends DomainObjectTreeABC<Facility> {
 		return parent;
 	}
 
+	public final Facility getFacility() {
+		return getParent();
+	}
+
 	public final void setParent(Facility inParent) {
 		parent = inParent;
 	}
@@ -96,5 +100,9 @@ public class UomMaster extends DomainObjectTreeABC<Facility> {
 
 	public final void setUomMasterId(String inUomMasterId) {
 		setDomainId(inUomMasterId);
+	}
+
+	public static void setDao(UomMasterDao inUomMasterDao) {
+		UomMaster.DAO = inUomMasterDao;
 	}
 }

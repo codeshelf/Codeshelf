@@ -36,8 +36,8 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectMethodResponse
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectUpdateResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
-import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
 import com.gadgetworks.codeshelf.ws.jetty.server.ServerMessageProcessor;
+import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
 
 @RunWith(MockitoJUnitRunner.class)
 public class FacilityOutlineTest {
@@ -64,7 +64,7 @@ public class FacilityOutlineTest {
 		organization.setOrganizationId("CTEST1.O1");
 		orgDao.store(organization);
 
-		Facility facility = new Facility(organization, "F1", Point.getZeroPoint());
+		Facility facility = organization.createFacility("F1", "facf1",Point.getZeroPoint());
 		facDao.store(facility);
 		
 		ObjectMethodRequest request = new ObjectMethodRequest();
@@ -134,7 +134,7 @@ public class FacilityOutlineTest {
 		organization.setOrganizationId("CTEST1.O1");
 		orgDao.store(organization);
 
-		Facility facility = new Facility(organization, "F1", Point.getZeroPoint());
+		Facility facility = organization.createFacility("F1", "facf1",Point.getZeroPoint());
 		facDao.store(facility);	
 		
 		/*

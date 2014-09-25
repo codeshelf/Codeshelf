@@ -8,7 +8,7 @@ public class IronMqServiceDaoTest extends DomainTestABC {
 
 	@Test
 	public void updatedCredentialsAvailableToFacilityReference() throws PSQLException {
-		Facility f = createFacility("updatedCredentialsAvailableToFacilityReference");
+		Facility f = createDefaultFacility("updatedCredentialsAvailableToFacilityReference");
 		IronMqService ironMqService = ((IronMqService)f.getEdiExportService());
 		String originalCredentials = ironMqService.getProviderCredentials();
 		

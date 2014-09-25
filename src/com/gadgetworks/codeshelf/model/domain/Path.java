@@ -35,7 +35,7 @@ import com.gadgetworks.codeshelf.model.TravelDirectionEnum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -61,7 +61,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	@Singleton
 	public static class PathDao extends GenericDaoABC<Path> implements ITypedDao<Path> {
 		@Inject
-		public PathDao(final PersistencyService persistencyService) {
+		public PathDao(final PersistenceService persistencyService) {
 			super(persistencyService);
 		}
 
@@ -111,27 +111,29 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	//	@Getter
 	private Map<Integer, PathSegment>	segments					= new HashMap<Integer, PathSegment>();
 	// private Map<Integer, PathSegment>	segments					= null;
-
+/*
 	public static final Path create(Facility parent, String inDomainId) {
 		Path path = new Path(parent, inDomainId, "A Facility Path");
 		DAO.store(path);
 		return path;
 	}
-	
+	*/
 	public Path() {
 		description = "";
+		travelDirEnum = TravelDirectionEnum.FORWARD;
 	}
 
+	/*
 	public Path(Facility facility, String inDomainId, String inDescription) {
 		super(inDomainId);
 		parent = facility;
 		description = inDescription;
 		travelDirEnum = TravelDirectionEnum.FORWARD;
 	}
-
+*/
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<Path> getDao() {
-		return DAO;
+		return Path.DAO;
 	}
 
 	public final String getDefaultDomainIdPrefix() {
@@ -143,7 +145,13 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	}
 
 	public final void addPathSegment(PathSegment inPathSegment) {
-		segments.put(inPathSegment.getSegmentOrder(), inPathSegment);
+		Path previousPath = inPathSegment.getParent();
+		if(previousPath == null) {
+			segments.put(inPathSegment.getSegmentOrder(), inPathSegment);
+			inPathSegment.setParent(this);
+		} else if (previousPath!=this) {
+			LOGGER.error("cannot add PathSegment "+inPathSegment.getDomainId()+" to "+this.getDomainId()+" because it has not been removed from "+previousPath.getDomainId());
+		}	
 	}
 
 	public final PathSegment getPathSegment(Integer inOrder) {
@@ -151,7 +159,13 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	}
 
 	public final void removePathSegment(Integer inOrder) {
-		segments.remove(inOrder);
+		PathSegment pathSegment = this.getPathSegment(inOrder);
+		if(pathSegment != null) {
+			pathSegment.setParent(null);
+			segments.remove(inOrder);
+		} else {
+			LOGGER.error("cannot remove PathSegment "+inOrder+" from "+this.getDomainId()+" because it isn't found in children");
+		}
 	}
 
 	/**
@@ -499,5 +513,16 @@ public class Path extends DomainObjectTreeABC<Facility> {
 		// then delete this path
 		Path.DAO.delete(this);
 	}
+
+	public static void setDao(PathDao inPathDao) {
+		Path.DAO = inPathDao;
+	}
+
+	@Override
+	public final Facility getFacility() {
+		return getParent();
+	}
+
+
 
 }

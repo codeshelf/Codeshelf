@@ -38,7 +38,7 @@ import com.gadgetworks.codeshelf.model.LedRange;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.util.StringUIConverter;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -80,7 +80,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 		// We include the IDatabase arg to cause Guice to initialize it *before* locations.
 		@Inject
-		public LocationABCDao(final PersistencyService persistencyService) {
+		public LocationABCDao(final PersistenceService persistencyService) {
 			super(persistencyService);
 		}
 
@@ -204,12 +204,11 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	private List<Vertex>				vertices			= new ArrayList<Vertex>();
 
 	// The child locations.
-	@SuppressWarnings("rawtypes")
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	@Getter
 	@Setter
-	private Map<String, SubLocationABC>	locations			= new HashMap<String, SubLocationABC>();
+	private Map<String, SubLocationABC<? extends IDomainObject>>	locations			= new HashMap<String, SubLocationABC<? extends IDomainObject>>();
 
 	// The location aliases for this location.
 	@OneToMany(mappedBy = "mappedLocation")
@@ -455,10 +454,14 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#addLocation(com.gadgetworks.codeshelf.model.domain.SubLocationABC)
 	 */
-	public final void addLocation(ISubLocation<?> inLocation) {
-		// Ebean can't deal with interfaces.
-		SubLocationABC<?> subLocation = (SubLocationABC<?>) inLocation;
-		locations.put(inLocation.getDomainId(), subLocation);
+	public final void addLocation(SubLocationABC<? extends IDomainObject> inLocation) {
+		IDomainObject oldParent = inLocation.getParent();
+		if(oldParent == null) {
+			locations.put(inLocation.getDomainId(), inLocation);
+			inLocation.setParent(this);
+		} else if(!oldParent.equals(this)){
+			LOGGER.error("cannot add Location "+inLocation.getDomainId()+" to "+this.getClassName()+" "+this.getDomainId()+" because it has not been removed from "+oldParent.getDomainId());
+		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -483,7 +486,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		@SuppressWarnings("rawtypes")
 		ITypedDao<SubLocationABC> dao = SubLocationABC.DAO;
 		Map<String, Object> filterParams = new HashMap<String, Object>();
-		filterParams.put("parent.persistentId", this.getPersistentId().toString());
+		filterParams.put("parent.persistentId", this.getPersistentId());
 		filterParams.put("domainId", inLocationId);
 		@SuppressWarnings("rawtypes")
 		List<SubLocationABC> resultSet = dao.findByFilter(filterParams);
@@ -845,5 +848,22 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		return theLedRange;
 	}
 
+	public static void setDao(LocationABCDao inLocationDao) {
+		LocationABC.DAO = inLocationDao;
+	}
+
+	/*
+	@Override
+	public ILocation<?> getLocation() {
+		return this;
+	}
+	*/
 	
+	public Organization getOrganization() {
+		return getFacility().getOrganization();
+	}
+
+	public Facility getFacility() {
+		return getParent().getFacility();
+	}
 }

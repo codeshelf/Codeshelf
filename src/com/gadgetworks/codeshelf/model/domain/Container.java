@@ -25,7 +25,7 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -49,7 +49,7 @@ public class Container extends DomainObjectTreeABC<Facility> {
 	@Singleton
 	public static class ContainerDao extends GenericDaoABC<Container> implements ITypedDao<Container> {
 		@Inject
-		public ContainerDao(PersistencyService persistencyService) {
+		public ContainerDao(PersistenceService persistencyService) {
 			super(persistencyService);
 		}
 
@@ -91,14 +91,7 @@ public class Container extends DomainObjectTreeABC<Facility> {
 
 	public Container() {
 
-	}
-	
-	public Container(Facility facility, String domainId) {
-		super(domainId);
-		parent = facility;
-		facility.addContainer(this);
-	}
-
+	}	
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<Container> getDao() {
 		return DAO;
@@ -119,6 +112,10 @@ public class Container extends DomainObjectTreeABC<Facility> {
 	public final Facility getParent() {
 		return parent;
 	}
+	
+	public final Facility getFacility() {
+		return getParent();
+	}
 
 	public final void setParent(Facility inParent) {
 		parent = inParent;
@@ -128,14 +125,23 @@ public class Container extends DomainObjectTreeABC<Facility> {
 		return getUses();
 	}
 
-	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void addContainerUse(ContainerUse inContainerUse) {
-		uses.add(inContainerUse);
+		Container previousContainer = inContainerUse.getParent();
+		if(previousContainer == null) {
+			uses.add(inContainerUse);
+			inContainerUse.setParent(this);
+		} else {
+			LOGGER.error("cannot add ContainerUse "+inContainerUse.getDomainId()+" to "+this.getDomainId()+" because it has not been removed from "+previousContainer.getDomainId());
+		}	
 	}
 
-	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void removeContainerUse(ContainerUse inContainerUse) {
-		uses.remove(inContainerUse);
+		if(uses.contains(inContainerUse)) {
+			inContainerUse.setParent(null);
+			uses.remove(inContainerUse);
+		} else {
+			LOGGER.error("cannot remove ContainerUse "+inContainerUse.getDomainId()+" from "+this.getDomainId()+" because it isn't found in children");
+		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -197,6 +203,10 @@ public class Container extends DomainObjectTreeABC<Facility> {
 		// What we would want to see if logged as toString?
 		String returnString = getDomainId();
 		return returnString;
+	}
+
+	public static void setDao(ContainerDao inContainerDao) {
+		Container.DAO = inContainerDao;
 	}
 
 

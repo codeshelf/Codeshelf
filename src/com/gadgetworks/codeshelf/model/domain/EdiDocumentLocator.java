@@ -26,7 +26,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.model.EdiDocumentStatusEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -51,7 +51,7 @@ public class EdiDocumentLocator extends DomainObjectTreeABC<DropboxService> {
 	@Singleton
 	public static class EdiDocumentLocatorDao extends GenericDaoABC<EdiDocumentLocator> implements ITypedDao<EdiDocumentLocator> {
 		@Inject
-		public EdiDocumentLocatorDao(PersistencyService persistencyService) {
+		public EdiDocumentLocatorDao(PersistenceService persistencyService) {
 			super(persistencyService);
 		}
 		
@@ -125,6 +125,10 @@ public class EdiDocumentLocator extends DomainObjectTreeABC<DropboxService> {
 		return parent;
 	}
 
+	public final Facility getFacility() {
+		return getParent().getFacility();
+	}
+
 	public final void setParent(DropboxService inParent) {
 		parent = inParent;
 	}
@@ -135,5 +139,10 @@ public class EdiDocumentLocator extends DomainObjectTreeABC<DropboxService> {
 
 	public final String getParentEdiServiceID() {
 		return parent.getDomainId();
+	}
+
+	public static void setDao(ITypedDao<EdiDocumentLocator> inEdiDocumentLocatorDao) {
+		EdiDocumentLocator.DAO = inEdiDocumentLocatorDao; 
+		
 	}
 }

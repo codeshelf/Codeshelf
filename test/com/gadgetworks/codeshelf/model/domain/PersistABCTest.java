@@ -42,6 +42,18 @@ public class PersistABCTest {
 			// TODO Auto-generated method stub
 			return null;
 		}
+
+		@Override
+		public Organization getOrganization() {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public Facility getFacility() {
+			// TODO Auto-generated method stub
+			return null;
+		}
 	}
 	
 	class PersistABCOtherStub extends DomainObjectABC {
@@ -65,6 +77,18 @@ public class PersistABCTest {
 
 		@Override
 		public <T extends IDomainObject> ITypedDao<T> getDao() {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public Organization getOrganization() {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public Facility getFacility() {
 			// TODO Auto-generated method stub
 			return null;
 		}

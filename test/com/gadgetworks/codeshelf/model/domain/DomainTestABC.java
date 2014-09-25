@@ -22,7 +22,7 @@ public abstract class DomainTestABC extends DAOTestABC {
 	
 	// --------------------------------------------------------------------------
 
-	protected Organization getOrganization(final String inOrganizationName) {
+	protected Organization getDefaultOrganization(final String inOrganizationName) {
 		Organization organization = mOrganizationDao.findByDomainId(null, inOrganizationName);
 		if (organization == null) {
 			organization = new Organization();
@@ -38,7 +38,7 @@ public abstract class DomainTestABC extends DAOTestABC {
 	 * 
 	 * @param inOrganizationName
 	 */ 
-	protected Facility getFacility(Organization inOrganization) {
+	protected Facility getDefaultFacility(Organization inOrganization) {
 		String defaultDomainId = "F1";
 		
 		Facility resultFacility = mFacilityDao.findByDomainId(inOrganization, defaultDomainId);
@@ -47,52 +47,60 @@ public abstract class DomainTestABC extends DAOTestABC {
 			resultFacility = inOrganization.getFacility(defaultDomainId);
 		}
 		return resultFacility;
-	}	
+	}
 	
-	protected CodeshelfNetwork getNetwork(Facility inFacility) {
+	protected Facility getDefaultFacility() {
+		return getDefaultFacility(getDefaultOrganization());
+	}
+	
+	protected Organization getDefaultOrganization() {
+		return getDefaultOrganization("orgTest");
+	}
+
+	protected CodeshelfNetwork getDefaultNetwork(Facility inFacility) {
 		String defaultDomainId = "0xFEDCBA";
 		
 		CodeshelfNetwork codeshelfNetwork = mCodeshelfNetworkDao.findByDomainId(inFacility, defaultDomainId);
 		if (codeshelfNetwork == null) {
-			codeshelfNetwork = new CodeshelfNetwork(inFacility, defaultDomainId, "Description");
+			codeshelfNetwork = inFacility.createNetwork(defaultDomainId);
 			codeshelfNetwork.getDao().store(codeshelfNetwork);
 		}
 		return codeshelfNetwork;
 	}
 
-	protected Aisle getAisle(Facility facility, String inDomainId) {
-		return getAisle(facility, inDomainId, Point.getZeroPoint(), Point.getZeroPoint().add(5.0, 0.0)); 
+	protected Aisle getDefaultAisle(Facility facility, String inDomainId) {
+		return getDefaultAisle(facility, inDomainId, Point.getZeroPoint(), Point.getZeroPoint().add(5.0, 0.0)); 
 	}
 
-	protected Aisle getAisle(Facility facility, String inDomainId, Point anchorPoint, Point pickFaceEndPoint) {
+	protected Aisle getDefaultAisle(Facility facility, String inDomainId, Point anchorPoint, Point pickFaceEndPoint) {
 		Aisle aisle = mAisleDao.findByDomainId(facility, inDomainId);
 		if (aisle == null) {
-			aisle = new Aisle(facility, inDomainId, anchorPoint, pickFaceEndPoint);
+			aisle = facility.createAisle(inDomainId, anchorPoint, pickFaceEndPoint);
 			mAisleDao.store(aisle);
 		}
 		return aisle;
 	}
 
 	
-	protected Bay getBay(Aisle aisle, String inDomainId) {
+	protected Bay getDefaultBay(Aisle aisle, String inDomainId) {
 		Bay bay  = mBayDao.findByDomainId(aisle, inDomainId);
 		if (bay == null) {
-			bay = new Bay(aisle, inDomainId, Point.getZeroPoint(), Point.getZeroPoint());
+			bay = aisle.createBay(inDomainId, Point.getZeroPoint(), Point.getZeroPoint());
 			mBayDao.store(bay);
 		}
 		return bay;
 	}
 
-	protected Tier getTier(Bay bay, String inDomainId) {
+	protected Tier getDefaultTier(Bay bay, String inDomainId) {
 		Tier tier  = mTierDao.findByDomainId(bay, inDomainId);
 		if (tier == null) {
-			tier = new Tier(bay, inDomainId, Point.getZeroPoint(), Point.getZeroPoint());
+			tier = bay.createTier(inDomainId, Point.getZeroPoint(), Point.getZeroPoint());
 			mTierDao.store(tier);
 		}
 		return tier;
 	}
 
-	protected PathSegment getPathSegment(Path path, Integer inOrder) {
+	protected PathSegment getDefaultPathSegment(Path path, Integer inOrder) {
 		PathSegment segment = path.getPathSegment(inOrder); 
 		if (segment == null) {
 			segment = path.createPathSegment(inOrder.toString(), inOrder,  anyPoint(), anyPoint());
@@ -102,17 +110,17 @@ public abstract class DomainTestABC extends DAOTestABC {
 		return segment;
 	}
 
-	protected Path getPath(Facility facility, String inPathId) {
+	protected Path getDefaultPath(Facility facility, String inPathId) {
 		Path path = facility.getPath(inPathId);
 		if (path == null) {
-			path = new Path(facility, inPathId, "Description");
+			path = facility.createPath(inPathId);
 			mPathDao.store(path);
 			// looks wrong. Does not add to facility
 		}
 		return path;
 	}
 	
-	protected LedController getController(CodeshelfNetwork network, final String inControllerDomainId) {
+	protected LedController getDefaultController(CodeshelfNetwork network, final String inControllerDomainId) {
 		LedController controller = network.findOrCreateLedController(inControllerDomainId, new NetGuid(inControllerDomainId));
 		controller.setDomainId(inControllerDomainId);
 		mLedControllerDao.store(controller);
@@ -120,9 +128,9 @@ public abstract class DomainTestABC extends DAOTestABC {
 	}
 	
 	
-	protected Facility createFacility(String orgId) {
-		Organization organization = getOrganization(orgId);
-		Facility facility = getFacility(organization);
+	protected Facility createDefaultFacility(String orgId) {
+		Organization organization = getDefaultOrganization(orgId);
+		Facility facility = getDefaultFacility(organization);
 		return facility;
 	}
 	
@@ -152,38 +160,38 @@ public abstract class DomainTestABC extends DAOTestABC {
 	@SuppressWarnings("unused")
 	protected Facility createFacilityWithOutboundOrders(final String inOrganizationName) {
 
-		Organization organization = getOrganization(inOrganizationName);
+		Organization organization = getDefaultOrganization(inOrganizationName);
 		
-		Facility resultFacility = getFacility(organization);
+		Facility resultFacility = getDefaultFacility(organization);
 		
 		CodeshelfNetwork network = resultFacility.createNetwork("WITEST");
 		Che che = network.createChe("WITEST", new NetGuid("0x00000001"));
 
 		LedController controller = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000002"));
 
-		Aisle aisle1 = getAisle(resultFacility, "A1");
+		Aisle aisle1 = getDefaultAisle(resultFacility, "A1");
 
-		Bay baya1b1 = new Bay(aisle1, "B1", Point.getZeroPoint(), Point.getZeroPoint());
+		Bay baya1b1 = aisle1.createBay("B1", Point.getZeroPoint(), Point.getZeroPoint());
 		baya1b1.setFirstLedNumAlongPath((short) 0);
 		baya1b1.setLastLedNumAlongPath((short) 0);
 		baya1b1.setLedController(controller);
 		mBayDao.store(baya1b1);
 
-		Bay baya1b2 = new Bay(aisle1, "B2", Point.getZeroPoint(), Point.getZeroPoint());
+		Bay baya1b2 = aisle1.createBay("B2", Point.getZeroPoint(), Point.getZeroPoint());
 		baya1b2.setFirstLedNumAlongPath((short) 0);
 		baya1b2.setLastLedNumAlongPath((short) 0);
 		baya1b2.setLedController(controller);
 		mBayDao.store(baya1b2);
 
-		Aisle aisle2 = getAisle(resultFacility, "A2");
+		Aisle aisle2 = getDefaultAisle(resultFacility, "A2");
 
-		Bay baya2b1 = new Bay(aisle2, "B1", Point.getZeroPoint(), Point.getZeroPoint());
+		Bay baya2b1 = aisle2.createBay("B1", Point.getZeroPoint(), Point.getZeroPoint());
 		baya2b1.setFirstLedNumAlongPath((short) 0);
 		baya2b1.setLastLedNumAlongPath((short) 0);
 		baya2b1.setLedController(controller);
 		mBayDao.store(baya2b1);
 
-		Bay baya2b2 = new Bay(aisle2, "B2", Point.getZeroPoint(), Point.getZeroPoint());
+		Bay baya2b2 = aisle2.createBay("B2", Point.getZeroPoint(), Point.getZeroPoint());
 		baya2b2.setFirstLedNumAlongPath((short) 0);
 		baya2b2.setLastLedNumAlongPath((short) 0);
 		baya2b2.setLedController(controller);
@@ -206,29 +214,29 @@ public abstract class DomainTestABC extends DAOTestABC {
 		aisle2.setPathSegment(pathSegment1);
 		mAisleDao.store(aisle2);
 
-		Aisle aisle3 = getAisle(resultFacility, "A3");
+		Aisle aisle3 = getDefaultAisle(resultFacility, "A3");
 
-		Bay baya3b1 = new Bay(aisle3, "B1", Point.getZeroPoint(), Point.getZeroPoint());
+		Bay baya3b1 = aisle3.createBay( "B1", Point.getZeroPoint(), Point.getZeroPoint());
 		baya3b1.setFirstLedNumAlongPath((short) 0);
 		baya3b1.setLastLedNumAlongPath((short) 0);
 		baya3b1.setLedController(controller);
 		mBayDao.store(baya3b1);
 
-		Bay baya3b2 = new Bay(aisle3, "B2", Point.getZeroPoint(), Point.getZeroPoint());
+		Bay baya3b2 = aisle3.createBay("B2", Point.getZeroPoint(), Point.getZeroPoint());
 		baya3b2.setFirstLedNumAlongPath((short) 0);
 		baya3b2.setLastLedNumAlongPath((short) 0);
 		baya3b2.setLedController(controller);
 		mBayDao.store(baya3b2);
 
-		Aisle aisle4 = getAisle(resultFacility, "A4");
+		Aisle aisle4 = getDefaultAisle(resultFacility, "A4");
 
-		Bay baya4b1 = new Bay(aisle4, "B1", Point.getZeroPoint(), Point.getZeroPoint());
+		Bay baya4b1 = aisle4.createBay( "B1", Point.getZeroPoint(), Point.getZeroPoint());
 		baya4b1.setFirstLedNumAlongPath((short) 0);
 		baya4b1.setLastLedNumAlongPath((short) 0);
 		baya4b1.setLedController(controller);
 		mBayDao.store(baya4b1);
 
-		Bay baya4b2 = new Bay(aisle4, "B2", Point.getZeroPoint(), Point.getZeroPoint());
+		Bay baya4b2 = aisle4.createBay("B2", Point.getZeroPoint(), Point.getZeroPoint());
 		baya4b2.setFirstLedNumAlongPath((short) 0);
 		baya4b2.setLastLedNumAlongPath((short) 0);
 		baya4b2.setLedController(controller);

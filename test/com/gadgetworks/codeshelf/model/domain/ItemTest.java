@@ -15,7 +15,7 @@ public class ItemTest extends DomainTestABC {
 	
 	@Test
 	public void testItemWithLocationNoPath() {
-		Facility facility = createFacility("ORG-testItemWithLocationNoPath");
+		Facility facility = createDefaultFacility("ORG-testItemWithLocationNoPath");
 		Item item = new Item(new ItemMaster(), "domain");
 		item.setStoredLocation(facility);
 		String result = item.getPosAlongPathui();
@@ -24,7 +24,7 @@ public class ItemTest extends DomainTestABC {
 	
 	@Test
 	public void testItemWithNullCmFromLeft() {
-		Facility anyLocation = createFacility("ORG-testItemWithLocationNoPath");
+		Facility anyLocation = createDefaultFacility("ORG-testItemWithLocationNoPath");
 		Item item = new Item(new ItemMaster(), "domain");
 		item.setStoredLocation(anyLocation);
 		item.setItemCmFromLeft(" "); //allowed

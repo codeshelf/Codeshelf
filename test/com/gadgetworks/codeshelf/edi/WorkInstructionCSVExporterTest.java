@@ -70,7 +70,7 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 	private DateFormat timestampFormat = new SimpleDateFormat(TIME_FORMAT);
 	
 	public void doBefore() {
-		facility = createFacility(this.getClass().toString() + System.currentTimeMillis());
+		facility = createDefaultFacility(this.getClass().toString() + System.currentTimeMillis());
 		exporter  = new WorkInstructionCSVExporter();
 	}
 	
@@ -199,10 +199,10 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 		orderHeader.setOrderGroup(new OrderGroup(facility, "OG1"));
 		workInstruction.setParent(new OrderDetail(orderHeader, "OD1"));
 		workInstruction.setDomainId("WIDOMAINID");
-		workInstruction.setContainer(new Container(facility, "C1"));
-		workInstruction.setItemMaster(new ItemMaster(facility, "ITEMID", new UomMaster(facility, "UOMID")));
+		workInstruction.setContainer(facility.createContainer("C1"));
+		workInstruction.setItemMaster(facility.createItemMaster("ITEMID", facility.createUomMaster("UOMID")));
 		workInstruction.setLocationId("LOCID");
-		workInstruction.setLocation(new Aisle(facility, "A1", Point.getZeroPoint(), Point.getZeroPoint()));
+		workInstruction.setLocation(facility.createAisle("A1", Point.getZeroPoint(), Point.getZeroPoint()));
 		workInstruction.setPickerId("Picker");
 		workInstruction.setTypeEnum(WorkInstructionTypeEnum.ACTUAL);
 		workInstruction.setStatusEnum(WorkInstructionStatusEnum.COMPLETE);
@@ -237,7 +237,8 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 	}
 	
 	private SubLocationABC<Facility> mockSubLocation(String domainId) {
-		return new SubLocationABC<Facility>(facility, domainId, mock(Point.class), mock(Point.class)) {
+		
+		SubLocationABC<Facility> mockLocation = new SubLocationABC<Facility>() {
 
 			/**
 			 * 
@@ -254,6 +255,19 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 			public <T extends IDomainObject> ITypedDao<T> getDao() {
 				// TODO Auto-generated method stub
 				return null;
+			}
+
+			@Override
+			public void setParent(Facility inParent) {
+				// TODO Auto-generated method stub
+				
 			}}; 
+			
+		mockLocation.setDomainId(domainId);
+		mockLocation.setDescription("");
+		mockLocation.setAnchorPoint(mock(Point.class));
+		mockLocation.setPickFaceEndPoint(mock(Point.class));
+			
+		return mockLocation;
 	}
 }

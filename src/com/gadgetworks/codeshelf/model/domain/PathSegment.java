@@ -30,7 +30,7 @@ import com.gadgetworks.codeshelf.model.TravelDirectionEnum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -63,7 +63,7 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 	@Singleton
 	public static class PathSegmentDao extends GenericDaoABC<PathSegment> implements ITypedDao<PathSegment> {
 		@Inject
-		public PathSegmentDao(final PersistencyService persistencyService) {
+		public PathSegmentDao(final PersistenceService persistencyService) {
 			super(persistencyService);
 		}
 
@@ -185,6 +185,10 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 
 	public final Path getParent() {
 		return parent;
+	}
+
+	public final Facility getFacility() {
+		return getParent().getFacility();
 	}
 
 	public final void setParent(Path inParent) {
@@ -329,6 +333,10 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 			deltaFromStartOfSegment = getValueAlongPathSegment(startP.getY(), endP.getY(), inFromPoint.getY());
 
 		return distance + deltaFromStartOfSegment;
+	}
+
+	public static void setDao(PathSegmentDao inPathSegmentDao) {
+		PathSegment.DAO = inPathSegmentDao;
 	}
 
 }

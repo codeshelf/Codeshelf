@@ -34,7 +34,7 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -58,7 +58,7 @@ public class User extends DomainObjectTreeABC<Organization> {
 	@Singleton
 	public static class UserDao extends GenericDaoABC<User> implements ITypedDao<User> {
 		@Inject
-		public UserDao(final PersistencyService persistencyService) {
+		public UserDao(final PersistenceService persistencyService) {
 			super(persistencyService);
 		}
 		
@@ -304,6 +304,12 @@ public class User extends DomainObjectTreeABC<Organization> {
 				"hash_salt='"+toHex(salt)+"', hashed_password='"+ passwordOut +"', hash_iterations="+ hashIterations +
 				" WHERE parent_persistentid = (Select persistentid from codeshelf.organization where domainId = '" + inOrganizationName + "') AND domainId = '" + inEmail + "';";
 		return sql;
+	}
+
+	@Override
+	public Facility getFacility() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

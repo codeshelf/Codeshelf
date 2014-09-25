@@ -19,18 +19,18 @@ public class BayTest extends DomainTestABC {
 	
 	@Test
 	public void testOrderingOfTiers() {
-		this.getPersistencyService().beginTenantTransaction();
-		facility = createFacility(this.getClass().toString() + System.currentTimeMillis());
-		Aisle aisle = getAisle(facility, "A1");
-		Bay bay = getBay(aisle, "B1");
-		Tier tier1 = getTier(bay, "TA");
+		this.getPersistenceService().beginTenantTransaction();
+		facility = createDefaultFacility(this.getClass().toString() + System.currentTimeMillis());
+		Aisle aisle = getDefaultAisle(facility, "A1");
+		Bay bay = getDefaultBay(aisle, "B1");
+		Tier tier1 = getDefaultTier(bay, "TA");
 		tier1.setAnchorPoint(new Point(PositionTypeEnum.METERS_FROM_PARENT, 0.0d, 0.0d, 0.0d));
-		Tier tier2 = getTier(bay, "TB");
+		Tier tier2 = getDefaultTier(bay, "TB");
 		tier2.setAnchorPoint(new Point(PositionTypeEnum.METERS_FROM_PARENT, 0.0d, 0.0d, 2.0d));
-		Tier tier3 = getTier(bay, "TC");
+		Tier tier3 = getDefaultTier(bay, "TC");
 		tier3.setAnchorPoint(new Point(PositionTypeEnum.METERS_FROM_PARENT, 0.0d, 0.0d, 4.0d));
 		List<ILocation<?>> locations = bay.getSubLocationsInWorkingOrder();
-		this.getPersistencyService().endTenantTransaction();
+		this.getPersistenceService().endTenantTransaction();
 		Assert.assertEquals(ImmutableList.of(tier3, tier2, tier1), ImmutableList.copyOf(locations));
 	}
 }

@@ -19,7 +19,7 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -44,7 +44,7 @@ public class PersistentProperty extends DomainObjectTreeABC<Organization> {
 	@Singleton
 	public static class PersistentPropertyDao extends GenericDaoABC<PersistentProperty> implements ITypedDao<PersistentProperty> {
 		@Inject
-		public PersistentPropertyDao(final PersistencyService persistencyService) {
+		public PersistentPropertyDao(final PersistenceService persistencyService) {
 			super(persistencyService);
 		}
 
@@ -62,6 +62,8 @@ public class PersistentProperty extends DomainObjectTreeABC<Organization> {
 
 	// The owning organization.
 	@ManyToOne(optional = false)
+	@Getter
+	@Setter
 	private Organization		parent;
 
 	@Column(nullable = false)
@@ -88,14 +90,6 @@ public class PersistentProperty extends DomainObjectTreeABC<Organization> {
 
 	public final String getDefaultDomainIdPrefix() {
 		return "";
-	}
-
-	public final Organization getParent() {
-		return parent;
-	}
-
-	public final void setParent(Organization inParent) {
-		parent = inParent;
 	}
 
 	public final List<IDomainObject> getChildren() {
@@ -198,5 +192,15 @@ public class PersistentProperty extends DomainObjectTreeABC<Organization> {
 		if (currentValueStr.length() == 0)
 			currentValueStr = "0.0";
 		return Double.parseDouble(currentValueStr);
+	}
+
+	@Override
+	public Organization getOrganization() {
+		return getParent();
+	}
+	
+	@Override
+	public Facility getFacility() {
+		return null;
 	}
 }

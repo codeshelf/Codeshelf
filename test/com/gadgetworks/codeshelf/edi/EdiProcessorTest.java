@@ -10,6 +10,7 @@ import java.io.InputStreamReader;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
@@ -20,11 +21,12 @@ import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Facility;
+import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.model.domain.IEdiService;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
-import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.google.inject.Inject;
 
 /**
@@ -33,7 +35,7 @@ import com.google.inject.Inject;
  */
 public class EdiProcessorTest extends EdiTestABC {
 
-	PersistencyService persistencyService = new PersistencyService();
+	PersistenceService persistencyService = new PersistenceService();
 	
 	@Test
 	public final void ediProcessThreadTest() {
@@ -138,7 +140,7 @@ public class EdiProcessorTest extends EdiTestABC {
 		private Facility	mFacility;
 
 		@Inject
-		public TestFacilityDao(final PersistencyService persistencyService, final Facility inFacility) {
+		public TestFacilityDao(final PersistenceService persistencyService, final Facility inFacility) {
 			super(persistencyService);
 			mFacility = inFacility;
 		}
@@ -229,7 +231,7 @@ public class EdiProcessorTest extends EdiTestABC {
 
 		organization.createFacility("F-EDI.1", "TEST", Point.getZeroPoint());
 		Facility facility = organization.getFacility("F-EDI.1");
-		facility.setParent(organization);
+		organization.addFacility(facility);
 
 		TestFacilityDao facilityDao = new TestFacilityDao(persistencyService, facility);
 		facilityDao.store(facility);
@@ -259,6 +261,114 @@ public class EdiProcessorTest extends EdiTestABC {
 				// TODO Auto-generated method stub
 
 			}
+
+			@Override
+			public Facility getParent() {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public void setParent(Facility inParent) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public UUID getParentPersistentId() {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public String getParentFullDomainId() {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public String getFullDomainId() {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public String getDefaultDomainIdPrefix() {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public String getDomainId() {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public void setDomainId(String inId) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public String getClassName() {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public UUID getPersistentId() {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public void setPersistentId(UUID inPersistentId) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public Timestamp getVersion() {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public void setVersion(Timestamp inVersion) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public <T extends IDomainObject> ITypedDao<T> getDao() {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public Object getFieldValueByName(String inFieldName) {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public void setFieldValueByName(String inFieldName, Object inFieldValue) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public Organization getOrganization() {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public Facility getFacility() {
+				// TODO Auto-generated method stub
+				return null;
+			}
 		};
 
 		IEdiService ediServiceUnlinked = new IEdiService() {
@@ -285,6 +395,114 @@ public class EdiProcessorTest extends EdiTestABC {
 			public void sendWorkInstructionsToHost(List<WorkInstruction> inWiList) {
 				// TODO Auto-generated method stub
 
+			}
+
+			@Override
+			public Facility getParent() {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public void setParent(Facility inParent) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public UUID getParentPersistentId() {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public String getParentFullDomainId() {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public String getFullDomainId() {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public String getDefaultDomainIdPrefix() {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public String getDomainId() {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public void setDomainId(String inId) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public String getClassName() {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public UUID getPersistentId() {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public void setPersistentId(UUID inPersistentId) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public Timestamp getVersion() {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public void setVersion(Timestamp inVersion) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public <T extends IDomainObject> ITypedDao<T> getDao() {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public Object getFieldValueByName(String inFieldName) {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public void setFieldValueByName(String inFieldName, Object inFieldValue) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public Organization getOrganization() {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public Facility getFacility() {
+				// TODO Auto-generated method stub
+				return null;
 			}
 		};
 

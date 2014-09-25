@@ -21,7 +21,7 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.flyweight.command.NetGuid;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -47,7 +47,7 @@ public class LedController extends WirelessDeviceABC {
 	@Singleton
 	public static class LedControllerDao extends GenericDaoABC<LedController> implements ITypedDao<LedController> {
 		@Inject
-		public LedControllerDao(final PersistencyService persistencyService) {
+		public LedControllerDao(final PersistenceService persistencyService) {
 			super(persistencyService);
 		}
 
@@ -66,7 +66,7 @@ public class LedController extends WirelessDeviceABC {
 	// All of the locations that use this controller.
 	@OneToMany(targetEntity=SubLocationABC.class)
 	@Getter
-	private List<SubLocationABC> locations	= new ArrayList<SubLocationABC>();
+	private List<SubLocationABC<?>> locations	= new ArrayList<SubLocationABC<?>>();
 
 	public LedController() {
 
@@ -81,16 +81,24 @@ public class LedController extends WirelessDeviceABC {
 		return "LED";
 	}
 
-	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void addLocation(ISubLocation<?> inSubLocation) {
-		// Ebean can't deal with interfaces.
-		SubLocationABC<?> subLocation = (SubLocationABC<?>) inSubLocation;
-		locations.add(subLocation);
+		LedController previousLedController = inSubLocation.getLedController();
+		if(previousLedController == null) {
+			SubLocationABC<?> subLocation = (SubLocationABC<?>) inSubLocation;
+			locations.add(subLocation);
+			inSubLocation.setLedController(this);
+		} else {
+			LOGGER.error("cannot add Location "+inSubLocation.getDomainId()+" to "+this.getDomainId()+" because it has not been removed from "+previousLedController.getDomainId());
+		}	
 	}
 
-	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void removeLocation(ISubLocation<?> inSubLocation) {
-		locations.remove(inSubLocation);
+		if(locations.contains(inSubLocation)) {
+			inSubLocation.setLedController(null);
+			locations.remove(inSubLocation);
+		} else {
+			LOGGER.error("cannot remove Location "+inSubLocation.getDomainId()+" from "+this.getDomainId()+" because it isn't found in children");
+		}
 	}
 
 	//  Called from the UI, so really should return any persistence error.
@@ -118,6 +126,10 @@ public class LedController extends WirelessDeviceABC {
 				LOGGER.error("", e);
 			}
 		}
+	}
+
+	public static void setDao(LedControllerDao inLedControllerDao) {
+		LedController.DAO = inLedControllerDao;
 	}
 
 }

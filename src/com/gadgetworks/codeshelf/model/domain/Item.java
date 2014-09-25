@@ -27,7 +27,7 @@ import com.gadgetworks.codeshelf.model.LedRange;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.util.StringUIConverter;
 import com.gadgetworks.codeshelf.util.UomNormalizer;
 import com.google.common.base.Strings;
@@ -56,7 +56,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	@Singleton
 	public static class ItemDao extends GenericDaoABC<Item> implements ITypedDao<Item> {
 		@Inject
-		public ItemDao(PersistencyService persistencyService) {
+		public ItemDao(PersistenceService persistencyService) {
 			super(persistencyService);
 		}
 
@@ -77,7 +77,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	@ManyToOne(optional = false)
 	@Getter
 	//	@Setter
-	private LocationABC			storedLocation;
+	private LocationABC<?>			storedLocation;
 
 	// Quantity.
 	@Column(nullable = false)
@@ -462,6 +462,14 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	public String getLitLedsForItem(){
 		LedRange theRange = getFirstLastLedsForItem();
 		return (theRange.getRangeString());
+	}
+
+	public static void setDao(ItemDao inItemDao) {
+		Item.DAO = inItemDao;
+	}
+
+	public final Facility getFacility() {
+		return getParent().getFacility();
 	}
 
 }

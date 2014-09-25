@@ -15,7 +15,7 @@ import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.model.domain.User.UserDao;
 import com.gadgetworks.codeshelf.model.domain.UserType;
-import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -29,9 +29,9 @@ public class Installer {
 	
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(Installer.class);
 	
-	PersistencyService persistencyService;
+	PersistenceService persistencyService;
 	
-	public Installer(PersistencyService persistencyService) {
+	public Installer(PersistenceService persistencyService) {
 		this.persistencyService = persistencyService;
 		if (!persistencyService.isInitialized()) {
 			persistencyService.start();
@@ -103,7 +103,7 @@ public class Installer {
 	
 	public static void main(String[] args) {
 		Injector injector = setupInjector();
-		PersistencyService ps = injector.getInstance(PersistencyService.class);
+		PersistenceService ps = injector.getInstance(PersistenceService.class);
 		Installer installer = new Installer(ps);
 		installer.run();
 		System.exit(0);

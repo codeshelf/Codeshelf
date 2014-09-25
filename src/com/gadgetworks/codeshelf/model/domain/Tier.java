@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -65,7 +65,7 @@ public class Tier extends SubLocationABC<Bay> {
 	@Singleton
 	public static class TierDao extends GenericDaoABC<Tier> implements ITypedDao<Tier> {
 		@Inject
-		public TierDao(final PersistencyService persistencyService) {
+		public TierDao(final PersistenceService persistencyService) {
 			super(persistencyService);
 		}
 
@@ -90,11 +90,11 @@ public class Tier extends SubLocationABC<Bay> {
 
 	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(Tier.class);
-
+/*
 	public Tier(Bay bay, String domainId, final Point inAnchorPoint, final Point inPickFaceEndPoint) {
 		super(bay, domainId, inAnchorPoint, inPickFaceEndPoint);
 	}
-	
+	*/
 	public Tier() {
 		super();
 	}
@@ -249,6 +249,26 @@ public class Tier extends SubLocationABC<Bay> {
 
 			}
 		}
+	}
+
+	public static void setDao(TierDao inTierDao) {
+		Tier.DAO = inTierDao;
+	}
+
+	public Slot createSlot(String inSlotId, Point inAnchorPoint, Point inPickFaceEndPoint) {
+		Slot slot=new Slot();
+		slot.setDomainId(inSlotId);
+		slot.setAnchorPoint(inAnchorPoint);
+		slot.setPickFaceEndPoint(inPickFaceEndPoint);
+		
+		this.addLocation(slot);
+		
+		return slot;
+	}
+
+	@Override
+	public void setParent(Bay inParent) {
+		this.setParent(inParent);
 	}
 
 }

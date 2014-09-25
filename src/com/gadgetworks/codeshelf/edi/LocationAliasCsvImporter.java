@@ -136,7 +136,7 @@ public class LocationAliasCsvImporter implements ICsvLocationAliasImporter {
 				@SuppressWarnings("unused")
 				LocationAlias locationAlias = updateLocationAlias(inCsvBean, inFacility, inEdiProcessTime);
 			} catch (Exception e) {
-				LOGGER.error("", e);
+				LOGGER.error("Exception while updating LocationAlias CSV", e);
 			}
 
 			mLocationAliasDao.commitTransaction();
@@ -167,7 +167,6 @@ public class LocationAliasCsvImporter implements ICsvLocationAliasImporter {
 		if ((result == null) && (inCsvBean.getMappedLocationId() != null) && (mappedLocation != null)) {
 			result = new LocationAlias();
 			result.setDomainId(locationAliasId);
-			result.setParent(inFacility);
 			inFacility.addLocationAlias(result);
 		}
 

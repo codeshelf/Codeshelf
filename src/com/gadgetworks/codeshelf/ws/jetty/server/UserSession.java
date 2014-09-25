@@ -6,8 +6,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.websocket.CloseReason;
-import javax.websocket.Session;
 import javax.websocket.CloseReason.CloseCodes;
+import javax.websocket.Session;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -20,7 +20,6 @@ import com.gadgetworks.codeshelf.filter.ObjectEventListener;
 import com.gadgetworks.codeshelf.model.dao.IDaoListener;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
-import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.model.domain.UserType;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;

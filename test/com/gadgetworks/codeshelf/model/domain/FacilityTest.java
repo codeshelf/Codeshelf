@@ -7,7 +7,6 @@ package com.gadgetworks.codeshelf.model.domain;
 
 import java.sql.Timestamp;
 
-import org.hibernate.Session;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -22,34 +21,30 @@ import com.gadgetworks.codeshelf.model.OrderTypeEnum;
  *
  */
 public class FacilityTest extends DomainTestABC {
-	@Before
-	public final void before() {
-		this.getPersistencyService().beginTenantTransaction();
-	}
-	
-	@After
-	public final void after() {
-		this.getPersistencyService().endTenantTransaction();
-	}
 	
 	@Test
 	public final void testGetParentAtLevelWithInvalidSublevel() {
-		Facility facility = createFacility("ORG-testGetParentAtLevelWhenSublevel");
+		this.getPersistenceService().beginTenantTransaction();
+		Facility facility = createDefaultFacility("ORG-testGetParentAtLevelWhenSublevel");
 		Tier nullParent = facility.getParentAtLevel(Tier.class);
 		Assert.assertNull(nullParent);
+		this.getPersistenceService().endTenantTransaction();
 	}
 	
 	@Test
 	public final void testGetLocationIdWithInvalidSublevel() {
-		Facility facility = createFacility("ORG-testGetParentAtLevelWhenSublevel");
+		this.getPersistenceService().beginTenantTransaction();
+		Facility facility = createDefaultFacility("ORG-testGetParentAtLevelWhenSublevel");
 		String locationId = facility.getLocationIdToParentLevel(Tier.class);
 		Assert.assertEquals("", locationId);
+		this.getPersistenceService().endTenantTransaction();
 	}
 
 	@Test
 	public void testHasCrossbatchOrders() {
+		this.getPersistenceService().beginTenantTransaction();
 
-		Facility facility = createFacility("FTEST3.O1");
+		Facility facility = createDefaultFacility("FTEST3.O1");
 		OrderHeader crossbatchOrder = new OrderHeader();
 		crossbatchOrder.setParent(facility);
 		crossbatchOrder.setDomainId("ORDER1");
@@ -58,8 +53,14 @@ public class FacilityTest extends DomainTestABC {
 		crossbatchOrder.setActive(true);
 		mOrderHeaderDao.store(crossbatchOrder);
 		
-		boolean hasCrossBatchOrders = mFacilityDao.findByPersistentId(facility.getPersistentId()).hasCrossBatchOrders();
+		boolean hasCrossBatchOrders = facility.hasCrossBatchOrders();
 		Assert.assertTrue(hasCrossBatchOrders);
+		
+		Facility retrievedFacility=mFacilityDao.findByPersistentId(facility.getPersistentId());
+		hasCrossBatchOrders = retrievedFacility.hasCrossBatchOrders();
+		
+		Assert.assertTrue(hasCrossBatchOrders);
+		this.getPersistenceService().endTenantTransaction();
 	}
 	
 	/**
@@ -67,10 +68,12 @@ public class FacilityTest extends DomainTestABC {
 	 */
 	@Test
 	public void testSerializationOfExtraFields() {
-		Facility facility = createFacility("FTEST2.O1");
+		this.getPersistenceService().beginTenantTransaction();
+		Facility facility = createDefaultFacility("FTEST2.O1");
 		ObjectMapper mapper = new ObjectMapper();
 		ObjectNode objectNode= mapper.valueToTree(facility);
 		Assert.assertNotNull(objectNode.findValue("hasMeaningfulOrderGroups"));
 		Assert.assertNotNull(objectNode.findValue("hasCrossBatchOrders"));
+		this.getPersistenceService().endTenantTransaction();
 	}
 }

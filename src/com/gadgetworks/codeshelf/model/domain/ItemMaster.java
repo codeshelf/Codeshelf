@@ -33,7 +33,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.model.LotHandlingEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.util.ASCIIAlphanumericComparator;
 import com.gadgetworks.codeshelf.util.UomNormalizer;
 import com.google.common.base.Joiner;
@@ -61,7 +61,7 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	@Singleton
 	public static class ItemMasterDao extends GenericDaoABC<ItemMaster> implements ITypedDao<ItemMaster> {
 		@Inject
-		public ItemMasterDao(final PersistencyService persistencyService) {
+		public ItemMasterDao(final PersistenceService persistencyService) {
 			super(persistencyService);
 		}
 
@@ -140,8 +140,11 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 
 	public ItemMaster() {
 		lotHandlingEnum = LotHandlingEnum.FIFO;
+		active=true;
+		updated = new Timestamp(System.currentTimeMillis());
 	}
 	
+	/*
 	public ItemMaster(Facility inParent, String inItemId, UomMaster standardUom) {
 		super(inItemId);
 		this.parent = inParent;
@@ -150,7 +153,7 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 		active = true;
 		updated = new Timestamp(System.currentTimeMillis());
 	}
-	
+	*/
 
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<ItemMaster> getDao() {
@@ -165,6 +168,10 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 		return parent;
 	}
 
+	public final Facility getFacility() {
+		return getParent();
+	}
+
 	public final void setParent(Facility inParent) {
 		parent = inParent;
 	}
@@ -174,15 +181,27 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	}
 	
 	public final void addItem(Item inItem) {
-		items.put(inItem.getDomainId(), inItem);
+		ItemMaster previousItemMaster = inItem.getParent();
+		if(previousItemMaster == null) {
+			items.put(inItem.getDomainId(), inItem);
+			inItem.setParent(this);
+		} else if(!previousItemMaster.equals(this)) {
+			LOGGER.error("cannot add Item "+inItem.getDomainId()+" to "+this.getDomainId()+" because it has not been removed from "+previousItemMaster.getDomainId());
+		}	
 	}
 
 	public final Item getItem(String inItemId) {
 		return items.get(inItemId);
 	}
 
-	public final void removeNetwork(String inNetworkId) {
-		items.remove(inNetworkId);
+	public final void removeItem(String inItemId) {
+		Item item = this.getItem(inItemId);
+		if(item != null) {
+			item.setParent(null);
+			items.remove(inItemId);
+		} else {
+			LOGGER.error("cannot remove Item "+inItemId+" from "+this.getDomainId()+" because it isn't found in children");
+		}
 	}
 
 	public final List<Item> getItems() {
@@ -309,5 +328,9 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 		}
 		Collections.sort(itemLocationIds, asciiAlphanumericComparator);
 		return Joiner.on(",").join(itemLocationIds);
+	}
+
+	public static void setDao(ItemMasterDao inItemMasterDao) {
+		ItemMaster.DAO = inItemMasterDao;
 	}
 }

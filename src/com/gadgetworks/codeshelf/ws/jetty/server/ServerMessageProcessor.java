@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.Counter;
-import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Timer;
 import com.gadgetworks.codeshelf.metrics.MetricsGroup;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
@@ -40,7 +39,6 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RegisterFilterRequest
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RegisterListenerRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RequestABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ServiceMethodRequest;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.PingResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.google.inject.Inject;
 
@@ -66,7 +64,7 @@ public class ServerMessageProcessor extends MessageProcessor {
 //	private final Meter responseMeter = MetricsService.addMeter(MetricsGroup.WSS,"responses.meter");
 	private final Timer requestProcessingTimer = MetricsService.addTimer(MetricsGroup.WSS,"requests.processing-time");
 	private final Timer responseProcessingTimer = MetricsService.addTimer(MetricsGroup.WSS,"responses.processing-time");
-	private final Histogram pingHistogram = MetricsService.addHistogram(MetricsGroup.WSS, "ping-histogram");
+	//private final Histogram pingHistogram = MetricsService.addHistogram(MetricsGroup.WSS, "ping-histogram");
 	
 	final private IDaoProvider daoProvider;
 

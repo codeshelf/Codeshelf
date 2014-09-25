@@ -61,7 +61,7 @@ public class PickSimulaneousWis extends EdiTestABC {
 		// All tiers have controllers associated.
 		// There are two CHE called CHE1 and CHE2
 
-		getPersistencyService().beginTenantTransaction();
+		this.getPersistenceService().beginTenantTransaction();
 
 		Organization organization = new Organization();
 		String oName = "O-" + inOrganizationName;
@@ -71,7 +71,7 @@ public class PickSimulaneousWis extends EdiTestABC {
 		String fName = "F-" + inOrganizationName;
 		organization.createFacility(fName, "TEST", Point.getZeroPoint());
 		Facility facility = organization.getFacility(fName);
-		getPersistencyService().endTenantTransaction();
+		getPersistenceService().endTenantTransaction();
 
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A1,,,,,tierB1S1Side,12.85,43.45,X,120,Y\r\n" //
@@ -99,10 +99,13 @@ public class PickSimulaneousWis extends EdiTestABC {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		
+		getPersistenceService().beginTenantTransaction();
 		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+		getPersistenceService().endTenantTransaction();
 
 		// Get the aisle
-		getPersistencyService().beginTenantTransaction();
+		getPersistenceService().beginTenantTransaction();
 		Aisle aisle1 = Aisle.DAO.findByDomainId(facility, "A1");
 		Assert.assertNotNull(aisle1);
 
@@ -123,7 +126,7 @@ public class PickSimulaneousWis extends EdiTestABC {
 		Assert.assertNotNull(aisle3);
 		String persistStr2 = segment02.getPersistentId().toString();
 		aisle3.associatePathSegment(persistStr2);
-		getPersistencyService().endTenantTransaction();
+		getPersistenceService().endTenantTransaction();
 
 		String csvString2 = "mappedLocationId,locationAlias\r\n" //
 				+ "A1.B1, D100\r\n" //
@@ -146,6 +149,8 @@ public class PickSimulaneousWis extends EdiTestABC {
 		ICsvLocationAliasImporter importer2 = new LocationAliasCsvImporter(mLocationAliasDao);
 		importer2.importLocationAliasesFromCsvStream(reader2, facility, ediProcessTime2);
 
+		getPersistenceService().beginTenantTransaction();
+
 		String nName = "N-" + inOrganizationName;
 		CodeshelfNetwork network = facility.createNetwork(nName);
 		Che che1 = network.createChe("CHE1", new NetGuid("0x00000001"));
@@ -166,6 +171,7 @@ public class PickSimulaneousWis extends EdiTestABC {
 		tier.setLedController(controller3);
 		tier = (SubLocationABC) facility.findSubLocationById("A3.B2.T1");
 		tier.setLedController(controller3);
+		getPersistenceService().endTenantTransaction();
 
 		return facility;
 
@@ -174,6 +180,7 @@ public class PickSimulaneousWis extends EdiTestABC {
 	@SuppressWarnings("unused")
 	@Test
 	public final void testPick() throws IOException {
+
 		Facility facility = setUpSimpleNoSlotFacility("PK01");
 
 		/*  From CD_0043  applied to each pick in aisle A1
@@ -197,9 +204,12 @@ public class PickSimulaneousWis extends EdiTestABC {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
+
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvInventoryImporter importer = new InventoryCsvImporter(mItemMasterDao, mItemDao, mUomMasterDao);
 		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
+
+		this.getPersistenceService().beginTenantTransaction();
 
 		LocationABC<?> locationD402 = (LocationABC<?>) facility.findSubLocationById("D402");
 
@@ -314,7 +324,7 @@ public class PickSimulaneousWis extends EdiTestABC {
 		String wi8Item = wi8.getItemMasterId();
 		Assert.assertEquals("1522", wi7Item);
 		Assert.assertEquals("1522", wi8Item);
-		getPersistencyService().endTenantTransaction();
+		getPersistenceService().endTenantTransaction();
 	}
 
 }

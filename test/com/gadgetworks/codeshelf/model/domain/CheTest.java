@@ -16,7 +16,7 @@ public class CheTest extends DomainTestABC {
 
 	@Test
 	public final void trivialCheTest() {
-		Facility facility = createFacility("CTEST1.O1");
+		Facility facility = createDefaultFacility("CTEST1.O1");
 		Assert.assertNotNull(facility);
 		
 		Che newChe = new Che(); // not right

@@ -312,34 +312,34 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		facility.addOrderHeader(order4444);
 		mOrderHeaderDao.store(order4444);
 
-		Aisle aisleA1 = new Aisle(facility, "A1", Point.getZeroPoint(), Point.getZeroPoint());
+		Aisle aisleA1 = facility.createAisle("A1", Point.getZeroPoint(), Point.getZeroPoint());
 		mSubLocationDao.store(aisleA1);
 
-		Bay bayA1B1 = new Bay(aisleA1, "B1", Point.getZeroPoint(), Point.getZeroPoint());
+		Bay bayA1B1 = aisleA1.createBay("B1", Point.getZeroPoint(), Point.getZeroPoint());
 		mSubLocationDao.store(bayA1B1);
 
-		Bay bayA1B2 = new Bay(aisleA1, "B2", Point.getZeroPoint(), Point.getZeroPoint());
+		Bay bayA1B2 = aisleA1.createBay("B2", Point.getZeroPoint(), Point.getZeroPoint());
 		mSubLocationDao.store(bayA1B2);
 
-		Bay bayA1B3 = new Bay(aisleA1, "B3", Point.getZeroPoint(), Point.getZeroPoint());
+		Bay bayA1B3 = aisleA1.createBay("B3", Point.getZeroPoint(), Point.getZeroPoint());
 		mSubLocationDao.store(bayA1B3);
 
-		Aisle aisleA2 = new Aisle(facility, "A2", Point.getZeroPoint(), Point.getZeroPoint());
+		Aisle aisleA2 = facility.createAisle("A2", Point.getZeroPoint(), Point.getZeroPoint());
 		mSubLocationDao.store(aisleA2);
 
-		Bay bayA2B1 = new Bay(aisleA2, "B1", Point.getZeroPoint(), Point.getZeroPoint());
+		Bay bayA2B1 = aisleA2.createBay("B1", Point.getZeroPoint(), Point.getZeroPoint());
 		mSubLocationDao.store(bayA2B1);
 
-		Bay bayA2B2 = new Bay(aisleA2, "B2", Point.getZeroPoint(), Point.getZeroPoint());
+		Bay bayA2B2 = aisleA2.createBay( "B2", Point.getZeroPoint(), Point.getZeroPoint());
 		mSubLocationDao.store(bayA2B2);
 
-		Aisle aisleA3 = new Aisle(facility, "A3", Point.getZeroPoint(), Point.getZeroPoint());
+		Aisle aisleA3 = facility.createAisle("A3", Point.getZeroPoint(), Point.getZeroPoint());
 		mSubLocationDao.store(aisleA3);
 
-		Bay bayA3B1 = new Bay(aisleA3, "B1", Point.getZeroPoint(), Point.getZeroPoint());
+		Bay bayA3B1 = aisleA3.createBay("B1", Point.getZeroPoint(), Point.getZeroPoint());
 		mSubLocationDao.store(bayA3B1);
 
-		Bay bayA3B2 = new Bay(aisleA3, "B2", Point.getZeroPoint(), Point.getZeroPoint());
+		Bay bayA3B2 = aisleA3.createBay( "B2", Point.getZeroPoint(), Point.getZeroPoint());
 		mSubLocationDao.store(bayA3B2);
 
 		// This order location should get blanked out by the import.
@@ -465,34 +465,34 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		facility.addOrderHeader(order4444);
 		mOrderHeaderDao.store(order4444);
 
-		Aisle aisleA1 = new Aisle(facility, "A1", Point.getZeroPoint(), Point.getZeroPoint());
+		Aisle aisleA1 = facility.createAisle("A1", Point.getZeroPoint(), Point.getZeroPoint());
 		mSubLocationDao.store(aisleA1);
 
-		Bay bayA1B1 = new Bay(aisleA1, "B1", Point.getZeroPoint(), Point.getZeroPoint());
+		Bay bayA1B1 = aisleA1.createBay("B1", Point.getZeroPoint(), Point.getZeroPoint());
 		mSubLocationDao.store(bayA1B1);
 
-		Bay bayA1B2 = new Bay(aisleA1, "B2", Point.getZeroPoint(), Point.getZeroPoint());
+		Bay bayA1B2 = aisleA1.createBay("B2", Point.getZeroPoint(), Point.getZeroPoint());
 		mSubLocationDao.store(bayA1B2);
 
-		Bay bayA1B3 = new Bay(aisleA1, "B3", Point.getZeroPoint(), Point.getZeroPoint());
+		Bay bayA1B3 = aisleA1.createBay( "B3", Point.getZeroPoint(), Point.getZeroPoint());
 		mSubLocationDao.store(bayA1B3);
 
-		Aisle aisleA2 = new Aisle(facility, "A2", Point.getZeroPoint(), Point.getZeroPoint());
+		Aisle aisleA2 = facility.createAisle("A2", Point.getZeroPoint(), Point.getZeroPoint());
 		mSubLocationDao.store(aisleA2);
 
-		Bay bayA2B1 = new Bay(aisleA2, "B1", Point.getZeroPoint(), Point.getZeroPoint());
+		Bay bayA2B1 = aisleA2.createBay( "B1", Point.getZeroPoint(), Point.getZeroPoint());
 		mSubLocationDao.store(bayA2B1);
 
-		Bay bayA2B2 = new Bay(aisleA2, "B2", Point.getZeroPoint(), Point.getZeroPoint());
+		Bay bayA2B2 = aisleA2.createBay("B2", Point.getZeroPoint(), Point.getZeroPoint());
 		mSubLocationDao.store(bayA2B2);
 
-		Aisle aisleA3 = new Aisle(facility, "A3", Point.getZeroPoint(), Point.getZeroPoint());
+		Aisle aisleA3 = facility.createAisle("A3", Point.getZeroPoint(), Point.getZeroPoint());
 		mSubLocationDao.store(aisleA3);
 
-		Bay bayA3B1 = new Bay(aisleA3, "B1", Point.getZeroPoint(), Point.getZeroPoint());
+		Bay bayA3B1 = aisleA3.createBay( "B1", Point.getZeroPoint(), Point.getZeroPoint());
 		mSubLocationDao.store(bayA3B1);
 
-		Bay bayA3B2 = new Bay(aisleA3, "B2", Point.getZeroPoint(), Point.getZeroPoint());
+		Bay bayA3B2 = aisleA3.createBay("B2", Point.getZeroPoint(), Point.getZeroPoint());
 		mSubLocationDao.store(bayA3B2);
 
 		// This order location should get blanked out by the import.

@@ -77,5 +77,11 @@ public abstract class DomainObjectTreeABC<P extends IDomainObject> extends Domai
 		}
 		return result;
 	}
+	
+	public Organization getOrganization() {
+		return getFacility().getOrganization();
+	}
 
+	//abstract ILocation<?> getLocation();
+	
 }

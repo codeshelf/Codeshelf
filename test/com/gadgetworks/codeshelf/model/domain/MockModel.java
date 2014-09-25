@@ -121,5 +121,16 @@ public class MockModel implements IDomainObject {
 	public void setTestSetterBoolean(boolean testSetterBoolean) {
 		this.testSetterBoolean = testSetterBoolean;
 	}
+	
+	@Override
+	public final Facility getFacility() {
+		return null;
+	}
+
+	@Override
+	public Organization getOrganization() {
+		return null;
+	}
+
 
 }

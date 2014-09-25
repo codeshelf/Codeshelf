@@ -29,7 +29,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.flyweight.command.ColorEnum;
 import com.gadgetworks.flyweight.command.NetGuid;
 import com.google.inject.Inject;
@@ -56,7 +56,7 @@ public class Che extends WirelessDeviceABC {
 	@Singleton
 	public static class CheDao extends GenericDaoABC<Che> implements ITypedDao<Che> {
 		@Inject
-		public CheDao(PersistencyService persistencyService) {
+		public CheDao(PersistenceService persistencyService) {
 			super(persistencyService);
 		}
 
@@ -127,12 +127,23 @@ public class Che extends WirelessDeviceABC {
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void addContainerUse(ContainerUse inContainerUse) {
-		uses.add(inContainerUse);
+		Che previousChe = inContainerUse.getCurrentChe();
+		if(previousChe == null) {
+			uses.add(inContainerUse);
+			inContainerUse.setCurrentChe(this);
+		} else {
+			LOGGER.error("cannot add ContainerUse "+inContainerUse.getDomainId()+" to "+this.getDomainId()+" because it has not been removed from "+previousChe.getDomainId());
+		}	
 	}
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void removeContainerUse(ContainerUse inContainerUse) {
-		uses.remove(inContainerUse);
+		if(uses.contains(inContainerUse)) {
+			inContainerUse.setCurrentChe(null);
+			uses.remove(inContainerUse);
+		} else {
+			LOGGER.error("cannot remove ContainerUse "+inContainerUse.getDomainId()+" from "+this.getDomainId()+" because it isn't found in children");
+		}
 	}
 	
 	// Ebean Ops for work instructions

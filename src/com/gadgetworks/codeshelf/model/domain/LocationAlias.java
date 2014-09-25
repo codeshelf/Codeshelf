@@ -23,7 +23,7 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -49,7 +49,7 @@ public class LocationAlias extends DomainObjectTreeABC<Facility> {
 	@Singleton
 	public static class LocationAliasDao extends GenericDaoABC<LocationAlias> implements ITypedDao<LocationAlias> {
 		@Inject
-		public LocationAliasDao(final PersistencyService persistencyService) {
+		public LocationAliasDao(final PersistenceService persistencyService) {
 			super(persistencyService);
 		}
 
@@ -106,6 +106,11 @@ public class LocationAlias extends DomainObjectTreeABC<Facility> {
 	public final Facility getParent() {
 		return parent;
 	}
+	
+	public final Facility getFacility() {
+		return getParent();
+	}
+
 
 	public final void setParent(Facility inParent) {
 		parent = inParent;
@@ -125,6 +130,10 @@ public class LocationAlias extends DomainObjectTreeABC<Facility> {
 
 	public final void setMappedLocation(final ISubLocation<?> inMappedLocation) {
 		mappedLocation = (SubLocationABC<?>) inMappedLocation;
+	}
+
+	public static void setDao(LocationAliasDao inLocationAliasDao) {
+		LocationAlias.DAO = inLocationAliasDao;
 	}
 
 }

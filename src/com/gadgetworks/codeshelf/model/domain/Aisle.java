@@ -20,7 +20,7 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -41,19 +41,16 @@ public class Aisle extends SubLocationABC<Facility> {
 	
 	@Inject
 	public static ITypedDao<Aisle>	DAO;
-
+/*
 	@NotNull
 	@ManyToOne
-	@JoinColumn(name = "parent_facility")
-	private Facility parent;
+//	@JoinColumn(name = "parent_facility")
+	private Facility parent;*/
 	
-	public Aisle() {
-	}
-
 	@Singleton
 	public static class AisleDao extends GenericDaoABC<Aisle> implements ITypedDao<Aisle> {
 		@Inject
-		public AisleDao(PersistencyService persistencyService) {
+		public AisleDao(PersistenceService persistencyService) {
 			super(persistencyService);
 		}
 
@@ -63,12 +60,16 @@ public class Aisle extends SubLocationABC<Facility> {
 	}
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(Aisle.class);
-
+	
+	public Aisle() {
+		super();
+	}
+/*
 	public Aisle(Facility parent, String domainId, Point inAnchorPoint, Point inPickFaceEndPoint) {
 		super(parent, domainId, inAnchorPoint, inPickFaceEndPoint);
 		this.parent = parent;
 	}
-
+*/
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<Aisle> getDao() {
 		return DAO;
@@ -164,6 +165,25 @@ public class Aisle extends SubLocationABC<Facility> {
 			}
 		}
 		return pathSegIncreaseFromAisleAnchor;
+	}
+
+	public static void setDao(ITypedDao<Aisle> inAisleDao) {
+		Aisle.DAO = inAisleDao;
+	}
+	public Bay createBay(String inBayId, Point inAnchorPoint, Point inPickFaceEndPoint) {
+		Bay bay = new Bay();
+		bay.setDomainId(inBayId);
+		bay.setAnchorPoint(inAnchorPoint);
+		bay.setPickFaceEndPoint(inPickFaceEndPoint);
+		
+		this.addLocation(bay);
+		
+		return bay;
+	}
+	
+	@Override
+	public void setParent(Facility inParent) {
+		this.setParent((ILocation<?>)inParent);
 	}
 
 }

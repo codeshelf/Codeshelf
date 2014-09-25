@@ -9,14 +9,14 @@ import org.apache.commons.lang.RandomStringUtils;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.domain.Facility.FacilityDao;
 import com.gadgetworks.codeshelf.model.domain.Organization.OrganizationDao;
-import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.natpryce.makeiteasy.Instantiator;
 import com.natpryce.makeiteasy.Property;
 import com.natpryce.makeiteasy.PropertyLookup;
 
 public class DAOMaker {
 
-	public DAOMaker(PersistencyService persistencyService) {
+	public DAOMaker(PersistenceService persistencyService) {
 		Organization.DAO = new OrganizationDao(persistencyService);
 		Facility.DAO = new FacilityDao(persistencyService);
 
@@ -41,8 +41,10 @@ public class DAOMaker {
 	public final Instantiator<Facility> TestFacility = new Instantiator<Facility>() {
 	    public Facility instantiate(PropertyLookup<Facility> lookup) {
 	        @SuppressWarnings("unchecked")
-			Facility facility = new Facility(
-	        	lookup.valueOf(organization, make(a(TestOrganization))),
+	        Organization org = lookup.valueOf(organization, make(a(TestOrganization)));
+	        
+			Facility facility = org.createFacility(
+	        	lookup.valueOf(facilityId, RandomStringUtils.randomAlphanumeric(5)),
 	        	lookup.valueOf(facilityId, RandomStringUtils.randomAlphanumeric(5)),
 	        	new Point(PositionTypeEnum.GPS, 0.0d, 0.0d, 0.0d));
 	    	Facility.DAO.store(facility);

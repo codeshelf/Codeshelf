@@ -101,4 +101,6 @@ public interface IDomainObject {
 	 */
 	void setFieldValueByName(final String inFieldName, final Object inFieldValue);
 
+	abstract Organization getOrganization();
+	abstract Facility getFacility();
 }

@@ -36,19 +36,18 @@ public class DropboxServiceTest {
 	@Test
 	public final void dropboxCheckTest() throws IOException {
 
-		Organization.DAO = new MockDao<Organization>();
-		Facility.DAO = new MockDao<Facility>();
-		Aisle.DAO = new MockDao<Aisle>();
-		Bay.DAO = new MockDao<Bay>();
-		Vertex.DAO = new MockDao<Vertex>();
-		DropboxService.DAO = new MockDao<DropboxService>();
-		EdiServiceABC.DAO = new MockDao<EdiServiceABC>();
-		EdiDocumentLocator.DAO = new MockDao<EdiDocumentLocator>();
+		Organization.setDao(new MockDao<Organization>());
+		Facility.setDao(new MockDao<Facility>());
+		Aisle.setDao(new MockDao<Aisle>());
+		Bay.setDao(new MockDao<Bay>());
+		Vertex.setDao(new MockDao<Vertex>());
+		DropboxService.setDao(new MockDao<DropboxService>());
+		EdiDocumentLocator.setDao(new MockDao<EdiDocumentLocator>());
 
 		Organization organization = new Organization();
 		organization.setOrganizationId("O1");
 		Facility facility = new Facility();
-		facility.setParent(organization);
+		organization.addFacility(facility);
 		facility.setFacilityId("TEST1");
 
 		facility.createDropboxService();

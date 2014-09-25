@@ -26,7 +26,7 @@ import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.util.StringUIConverter;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -43,7 +43,7 @@ public abstract class SubLocationABC<P extends IDomainObject & ISubLocation<?>> 
 	@Singleton
 	public static class SubLocationDao extends GenericDaoABC<SubLocationABC> implements ITypedDao<SubLocationABC> {
 		@Inject
-		public SubLocationDao(final PersistencyService persistencyService) {
+		public SubLocationDao(final PersistenceService persistencyService) {
 			super(persistencyService);
 		}
 
@@ -55,9 +55,8 @@ public abstract class SubLocationABC<P extends IDomainObject & ISubLocation<?>> 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(SubLocationABC.class);
 
 	// The owning location.
-	@SuppressWarnings("rawtypes")
-	@ManyToOne(optional = true)
-	private SubLocationABC		parent;
+	@ManyToOne
+	protected LocationABC<?> parent;
 
 	@Column(nullable = false)
 	@Enumerated(value = EnumType.STRING)
@@ -88,24 +87,29 @@ public abstract class SubLocationABC<P extends IDomainObject & ISubLocation<?>> 
 	private Double				pickFaceEndPosZ;
 	
 	public SubLocationABC() {
+		super();
+		this.setAnchorPoint(Point.getZeroPoint());
+		this.setPickFaceEndPoint(Point.getZeroPoint());
 	}
-
+/*
 	public SubLocationABC(P parent, String domainId, final Point inAnchorPoint, final Point inPickFaceEndPoint) {
 		super(domainId, inAnchorPoint);
 		setParent(parent);
 		if (parent != null && parent instanceof SubLocationABC<?>) {
-			((SubLocationABC<?>)parent).addLocation(this);
+			parent.ad
+			((SubLocationABC<? extends LocationABC>)parent).addLocation(this);
 		}
 		setPickFaceEndPosTypeEnum(inPickFaceEndPoint.getPosTypeEnum());
 		setPickFaceEndPosX(inPickFaceEndPoint.getX());
 		setPickFaceEndPosY(inPickFaceEndPoint.getY());
 		setPickFaceEndPosZ(inPickFaceEndPoint.getZ());
 	}
-
+*/
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.SubLocationABC#getParent()
 	 */
+	/*
 	@SuppressWarnings("unchecked")
 	@Override
 	public final P getParent() {
@@ -117,15 +121,21 @@ public abstract class SubLocationABC<P extends IDomainObject & ISubLocation<?>> 
 		} else {
 			return (P) DAO.findByPersistentId(parent.getClass(), parent.getPersistentId());
 		}
+	}*/
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public P getParent() {
+		return (P) parent;
 	}
 
+	
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.SubLocationABC#setParent(P)
 	 */
-	@Override
-	public final void setParent(P inParent) {
-		parent = (SubLocationABC<?>) inParent;
+	public void setParent(ILocation<?> inParent) {
+		parent = (LocationABC<?>)inParent;
 	}
 	
 	public Point getAbsolutePickFaceEndPoint() {
@@ -292,4 +302,7 @@ public abstract class SubLocationABC<P extends IDomainObject & ISubLocation<?>> 
 		return StringUIConverter.doubleToTwoDecimalsString(getPosAlongPath());
 	}
 
+	public static void setDao(SubLocationDao inSubLocationDao) {
+		SubLocationABC.DAO = inSubLocationDao;
+	}
 }

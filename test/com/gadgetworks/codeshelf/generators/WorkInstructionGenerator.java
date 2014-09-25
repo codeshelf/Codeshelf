@@ -22,10 +22,10 @@ public class WorkInstructionGenerator {
 		WorkInstruction workInstruction = new WorkInstruction();
 		workInstruction.setParent(generateValidOrderDetail(facility));
 		workInstruction.setDomainId("WIDOMAINID");
-		workInstruction.setContainer(new Container(facility, "C1"));
-		workInstruction.setItemMaster(new ItemMaster(facility, "ITEMID", new UomMaster(facility, "UOMID")));
+		workInstruction.setContainer(facility.createContainer("C1"));
+		workInstruction.setItemMaster(facility.createItemMaster( "ITEMID", facility.createUomMaster("UOMID")));
 		workInstruction.setLocationId("LOCID");
-		workInstruction.setLocation(new Aisle(facility, "A1", Point.getZeroPoint(), Point.getZeroPoint()));
+		workInstruction.setLocation(facility.createAisle("A1", Point.getZeroPoint(), Point.getZeroPoint()));
 		workInstruction.setPickerId("Picker");
 		workInstruction.setTypeEnum(WorkInstructionTypeEnum.ACTUAL);
 		workInstruction.setStatusEnum(WorkInstructionStatusEnum.COMPLETE);

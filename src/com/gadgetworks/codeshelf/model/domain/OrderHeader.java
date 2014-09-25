@@ -36,7 +36,7 @@ import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.PickStrategyEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -63,7 +63,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	@Singleton
 	public static class OrderHeaderDao extends GenericDaoABC<OrderHeader> implements ITypedDao<OrderHeader> {
 		@Inject
-		public OrderHeaderDao(final PersistencyService persistencyService) {
+		public OrderHeaderDao(final PersistenceService persistencyService) {
 			super(persistencyService);
 		}
 
@@ -217,8 +217,13 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		return parent;
 	}
 
+	@Override
 	public final void setParent(Facility inParent) {
 		parent = inParent;
+	}
+
+	public final Facility getFacility() {
+		return getParent();
 	}
 
 	public final String getOrderId() {
@@ -234,7 +239,13 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	}
 
 	public final void addOrderDetail(OrderDetail inOrderDetail) {
-		orderDetails.put(inOrderDetail.getDomainId(), inOrderDetail);
+		OrderHeader previousOrderHeader = inOrderDetail.getParent();
+		if(previousOrderHeader == null) {
+			orderDetails.put(inOrderDetail.getDomainId(), inOrderDetail);
+			inOrderDetail.setParent(this);
+		} else {
+			LOGGER.error("cannot add OrderDetail "+inOrderDetail.getDomainId()+" to "+this.getDomainId()+" because it has not been removed from "+previousOrderHeader.getDomainId());
+		}	
 	}
 
 	public final OrderDetail getOrderDetail(String inOrderDetailId) {
@@ -242,7 +253,13 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	}
 
 	public final void removeOrderDetail(String inOrderDetailId) {
-		orderDetails.remove(inOrderDetailId);
+		OrderDetail orderDetail = this.getOrderDetail(inOrderDetailId);
+		if(orderDetail != null) {
+			orderDetail.setParent(null);
+			orderDetails.remove(inOrderDetailId);
+		} else {
+			LOGGER.error("cannot remove OrderDetail "+inOrderDetailId+" from "+this.getDomainId()+" because it isn't found in children");
+		}
 	}
 
 	public final List<OrderDetail> getOrderDetails() {
@@ -267,7 +284,13 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	}
 
 	public final void addOrderLocation(OrderLocation inOrderLocation) {
-		orderLocations.put(inOrderLocation.getDomainId(), inOrderLocation);
+		OrderHeader previousOrderHeader = inOrderLocation.getParent();
+		if(previousOrderHeader == null) {
+			orderLocations.put(inOrderLocation.getDomainId(), inOrderLocation);
+			inOrderLocation.setParent(this);
+		} else {
+			LOGGER.error("cannot add OrderLocation"+inOrderLocation.getDomainId()+" to "+this.getDomainId()+" because it has not been removed from "+previousOrderHeader.getDomainId());
+		}	
 	}
 
 	public final OrderLocation getOrderLocation(String inOrderLocationId) {
@@ -275,7 +298,13 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	}
 
 	public final void removeOrderLocation(String inOrderLocationId) {
-		orderLocations.remove(inOrderLocationId);
+		OrderLocation orderLocation = this.getOrderLocation(inOrderLocationId);
+		if(orderLocation != null) {
+			orderLocation.setParent(null);
+			orderLocations.remove(inOrderLocationId);
+		} else {
+			LOGGER.error("cannot remove OrderLocation "+inOrderLocationId+" from "+this.getDomainId()+" because it isn't found in children");
+		}
 	}
 	
 	public final List<OrderLocation> getActiveOrderLocations() {
@@ -431,6 +460,10 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		}
 
 		return result;
+	}
+
+	public static void setDao(OrderHeaderDao inOrderHeaderDao) {
+		OrderHeader.DAO = inOrderHeaderDao;
 	}
 
 }

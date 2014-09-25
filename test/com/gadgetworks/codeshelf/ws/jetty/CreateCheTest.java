@@ -22,8 +22,8 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectUpdateRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectUpdateResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
-import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
 import com.gadgetworks.codeshelf.ws.jetty.server.ServerMessageProcessor;
+import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
 
 // example che update message:
 // "ObjectUpdateRequest":{"className":"Che","persistentId":"66575760-00b8-11e4-ba3a-48d705ccef0f","properties":{"description":"1123"},"messageId":"cid_6"}
@@ -51,10 +51,10 @@ public class CreateCheTest extends DAOTestABC {
 		organization.setOrganizationId("CTEST1.O1");
 		orgDao.store(organization);
 
-		Facility facility = new Facility(organization, "F1", Point.getZeroPoint());
+		Facility facility = organization.createFacility("F1", "facilityf1", Point.getZeroPoint());
 		facDao.store(facility);		
 		
-		CodeshelfNetwork network = new CodeshelfNetwork(facility, "N1", "foo");
+		CodeshelfNetwork network = facility.createNetwork("N1");
 		netDao.store(network);
 		
 		Che che = new Che();
@@ -110,11 +110,11 @@ public class CreateCheTest extends DAOTestABC {
 		organization.setOrganizationId("CTEST1.O1");
 		orgDao.store(organization);
 
-		Facility facility = new Facility(organization, "F1", Point.getZeroPoint());
+		Facility facility = organization.createFacility("F1", "facf1",Point.getZeroPoint());
 
 		facDao.store(facility);		
 		
-		CodeshelfNetwork network = new CodeshelfNetwork(facility, "N1", "foo");
+		CodeshelfNetwork network = facility.createNetwork("N1");
 		netDao.store(network);
 		
 		Che che = new Che();
@@ -163,10 +163,10 @@ public class CreateCheTest extends DAOTestABC {
 		organization.setOrganizationId("CTEST1.O1");
 		orgDao.store(organization);
 
-		Facility facility = new Facility(organization, "F1", Point.getZeroPoint());
+		Facility facility = organization.createFacility("F1", "facf1", Point.getZeroPoint());
 		facDao.store(facility);		
 		
-		CodeshelfNetwork network = new CodeshelfNetwork(facility, "N1", "foo");
+		CodeshelfNetwork network = facility.createNetwork("N1");
 		netDao.store(network);
 		
 		Che che = new Che();
@@ -244,10 +244,10 @@ public class CreateCheTest extends DAOTestABC {
 		organization.setOrganizationId("CTEST1.O1");
 		orgDao.store(organization);
 
-		Facility facility = new Facility(organization, "F1", Point.getZeroPoint());
+		Facility facility = organization.createFacility("F1", "facf1", Point.getZeroPoint());
 		facDao.store(facility);		
 		
-		CodeshelfNetwork network = new CodeshelfNetwork(facility, "N1", "foo");
+		CodeshelfNetwork network = facility.createNetwork("N1");
 		netDao.store(network);
 		
 		Che che = new Che();

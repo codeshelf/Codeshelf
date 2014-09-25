@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
-import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.google.inject.Inject;
 
 /**
@@ -39,10 +39,10 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 
 	private LinkedBlockingQueue<IDaoListener>	mListeners	= new LinkedBlockingQueue<IDaoListener>();
 	
-	PersistencyService persistencyService;
+	PersistenceService persistencyService;
 
 	@Inject
-	public GenericDaoABC(PersistencyService persistencyService) {
+	public GenericDaoABC(PersistenceService persistencyService) {
 		this.persistencyService = persistencyService;
 	}
 	

@@ -35,7 +35,7 @@ import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.util.ASCIIAlphanumericComparator;
 import com.gadgetworks.codeshelf.util.UomNormalizer;
 import com.google.common.base.Joiner;
@@ -66,7 +66,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	@Singleton
 	public static class OrderDetailDao extends GenericDaoABC<OrderDetail> implements ITypedDao<OrderDetail> {
 		@Inject
-		public OrderDetailDao(final PersistencyService persistencyService) {
+		public OrderDetailDao(final PersistenceService persistencyService) {
 			super(persistencyService);
 		}
 
@@ -176,6 +176,10 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 
 	public final OrderHeader getParent() {
 		return parent;
+	}
+
+	public final Facility getFacility() {
+		return getParent().getFacility();
 	}
 
 	public final void setParent(OrderHeader inParent) {
@@ -291,6 +295,10 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 			}
 		}
 		return pickableWiLocations;
+	}
+
+	public static void setDao(OrderDetailDao inOrderDetailDao) {
+		OrderDetail.DAO = inOrderDetailDao;
 	}
 
 }

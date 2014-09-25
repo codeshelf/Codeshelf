@@ -24,7 +24,7 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -49,7 +49,7 @@ public class WorkArea extends DomainObjectTreeABC<Path> {
 	@Singleton
 	public static class WorkAreaDao extends GenericDaoABC<WorkArea> implements ITypedDao<WorkArea> {
 		@Inject
-		public WorkAreaDao(final PersistencyService persistencyService) {
+		public WorkAreaDao(final PersistenceService persistencyService) {
 			super(persistencyService);
 		}
 		
@@ -140,5 +140,14 @@ public class WorkArea extends DomainObjectTreeABC<Path> {
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void removeUser(User inUser) {
 		users.remove(inUser);
+	}
+
+	public static void setDao(WorkAreaDao inWorkAreaDao) {
+		WorkArea.DAO = inWorkAreaDao;
+	}
+
+	@Override
+	public Facility getFacility() {
+		return getParent().getFacility();
 	}
 }

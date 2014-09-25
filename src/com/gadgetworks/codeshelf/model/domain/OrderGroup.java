@@ -31,7 +31,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -56,7 +56,7 @@ public class OrderGroup extends DomainObjectTreeABC<Facility> {
 	@Singleton
 	public static class OrderGroupDao extends GenericDaoABC<OrderGroup> implements ITypedDao<OrderGroup> {
 		@Inject
-		public OrderGroupDao(final PersistencyService persistencyService) {
+		public OrderGroupDao(final PersistenceService persistencyService) {
 			super(persistencyService);
 		}
 
@@ -139,6 +139,10 @@ public class OrderGroup extends DomainObjectTreeABC<Facility> {
 		return parent;
 	}
 
+	public final Facility getFacility() {
+		return getParent();
+	}
+
 	public final void setParent(Facility inParent) {
 		parent = inParent;
 	}
@@ -152,7 +156,13 @@ public class OrderGroup extends DomainObjectTreeABC<Facility> {
 	}
 
 	public final void addOrderHeader(OrderHeader inOrderHeader) {
-		orderHeaders.put(inOrderHeader.getDomainId(), inOrderHeader);
+		OrderGroup previousOrderGroup = inOrderHeader.getOrderGroup();
+		if(previousOrderGroup == null) {
+			orderHeaders.put(inOrderHeader.getDomainId(), inOrderHeader);
+			inOrderHeader.setOrderGroup(this);
+		} else {
+			LOGGER.error("cannot add OrderHeader "+inOrderHeader.getDomainId()+" to "+this.getDomainId()+" because it has not been removed from "+previousOrderGroup.getDomainId());
+		}	
 	}
 
 	public final OrderHeader getOrderHeader(String inOrderid) {
@@ -160,7 +170,13 @@ public class OrderGroup extends DomainObjectTreeABC<Facility> {
 	}
 
 	public final void removeOrderHeader(String inOrderId) {
-		orderHeaders.remove(inOrderId);
+		OrderHeader orderHeader = this.getOrderHeader(inOrderId);
+		if(orderHeader != null) {
+			orderHeader.setParent(null);
+			orderHeaders.remove(inOrderId);
+		} else {
+			LOGGER.error("cannot remove Item "+inOrderId+" from "+this.getDomainId()+" because it isn't found in children");
+		}
 	}
 
 	public final List<OrderHeader> getOrderHeaders() {
@@ -188,5 +204,9 @@ public class OrderGroup extends DomainObjectTreeABC<Facility> {
 		}
 
 		return result;
+	}
+
+	public static void setDao(OrderGroupDao inOrderGroupDao) {
+		OrderGroup.DAO = inOrderGroupDao;
 	}
 }

@@ -26,7 +26,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -51,7 +51,7 @@ public class ContainerUse extends DomainObjectTreeABC<Container> {
 	@Singleton
 	public static class ContainerUseDao extends GenericDaoABC<ContainerUse> implements ITypedDao<ContainerUse> {
 		@Inject
-		public ContainerUseDao(PersistencyService persistencyService) {
+		public ContainerUseDao(PersistenceService persistencyService) {
 			super(persistencyService);
 		}
 
@@ -120,6 +120,10 @@ public class ContainerUse extends DomainObjectTreeABC<Container> {
 
 	public final Container getParent() {
 		return getParentContainer();
+	}
+
+	public final Facility getFacility() {
+		return getParent().getFacility();
 	}
 
 	public final void setParent(Container inParent) {
@@ -215,6 +219,10 @@ public class ContainerUse extends DomainObjectTreeABC<Container> {
 			return master.getPersistentId().toString();
 		
 		return "";
+	}
+
+	public static void setDao(ContainerUseDao inContainerUseDao) {
+		ContainerUse.DAO = inContainerUseDao;
 	}
 
 }

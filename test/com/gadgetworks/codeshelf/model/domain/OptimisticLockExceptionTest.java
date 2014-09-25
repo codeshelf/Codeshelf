@@ -14,17 +14,16 @@ import com.gadgetworks.codeshelf.model.domain.Facility.FacilityDao;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail.OrderDetailDao;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader.OrderHeaderDao;
 import com.gadgetworks.codeshelf.model.domain.Organization.OrganizationDao;
-import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 
 public class OptimisticLockExceptionTest {
 
-	PersistencyService persistencyService = new PersistencyService();
+	PersistenceService persistencyService = new PersistenceService();
 
 	@Before
 	public final void setup() {
 	}
 
-	@SuppressWarnings("unused")
 	@Test
 	public final void optimisticLockExceptionTest() {
 
@@ -42,7 +41,7 @@ public class OptimisticLockExceptionTest {
 
 		Facility.DAO = new FacilityDao(persistencyService);
 		Facility facility = new Facility();
-		facility.setParent(organization);
+		organization.addFacility(facility);
 		facility.setFacilityId("OPTIMISTIC-F1");
 		facility.setAnchorPoint(new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0));
 		Facility.DAO.store(facility);

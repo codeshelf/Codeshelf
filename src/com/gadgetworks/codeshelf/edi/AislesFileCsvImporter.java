@@ -730,7 +730,7 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 
 		Slot slot = mSlotDao.findByDomainId(inParentTier, slotId);
 		if (slot == null) {
-			slot = new Slot(inParentTier, slotId, anchorPoint, pickFaceEndPoint);
+			slot = inParentTier.createSlot(slotId, anchorPoint, pickFaceEndPoint);
 		} else {
 			// update existing bay. DomainId is not changing as we found it that way from the same parent.
 			// So only a matter of updating the anchor and pickFace points
@@ -787,7 +787,7 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 		// create or update
 		Tier tier = mTierDao.findByDomainId(mLastReadBay, inTierId);
 		if (tier == null) {
-			tier = new Tier(mLastReadBay, inTierId, anchorPoint, pickFaceEndPoint);
+			tier = mLastReadBay.createTier(inTierId, anchorPoint, pickFaceEndPoint);
 		} else {
 			// update existing bay. DomainId is not changing as we found it that way from the same parent.
 			// So only a matter of updating the anchor and pickFace points
@@ -864,7 +864,7 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 		// Create the bay if it doesn't already exist. Easy case.
 		Bay bay = mBayDao.findByDomainId(mLastReadAisle, inBayId);
 		if (bay == null) {
-			bay = new Bay(mLastReadAisle, inBayId, anchorPoint, pickFaceEndPoint);
+			bay = mLastReadAisle.createBay(inBayId, anchorPoint, pickFaceEndPoint);
 			bay.setParent(mLastReadAisle);
 			mLastReadAisle.addLocation(bay); // This is odd. ebeans needs it?
 		} else {
@@ -920,7 +920,7 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 		Aisle aisle = mAisleDao.findByDomainId(mFacility, inAisleId);
 		if (aisle == null) {
 			Point pickFaceEndPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, 0.0, 0.0, 0.0);
-			aisle = new Aisle(mFacility, inAisleId, inAnchorPoint, pickFaceEndPoint);
+			aisle = mFacility.createAisle(inAisleId, inAnchorPoint, pickFaceEndPoint);
 		} else {
 			// update existing aisle. DomainId is not changing as we found it that way from the facility parent.
 			// So only a matter of updating the anchor point. Don't bother with pickface end as it gets reset later. Now we could only set to zero.

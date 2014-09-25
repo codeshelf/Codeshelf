@@ -31,11 +31,8 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.model.EdiProviderEnum;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
-import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
 import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
@@ -62,10 +59,11 @@ public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implem
 	@Inject
 	public static ITypedDao<EdiServiceABC>	DAO;
 
+	/*
 	@Singleton
 	public static class EdiServiceABCDao extends GenericDaoABC<EdiServiceABC> implements ITypedDao<EdiServiceABC> {
 		@Inject
-		public EdiServiceABCDao(PersistencyService persistencyService) {
+		public EdiServiceABCDao(PersistenceService persistencyService) {
 			super(persistencyService);
 		}
 
@@ -73,7 +71,7 @@ public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implem
 			return EdiServiceABC.class;
 		}
 	}
-
+	 */
 	
 	// The owning Facility.
 	@ManyToOne(optional = false)
@@ -113,6 +111,10 @@ public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implem
 
 	public final Facility getParent() {
 		return parent;
+	}
+	
+	public final Facility getFacility() {
+		return getParent();
 	}
 
 	public final void setParent(Facility inParent) {

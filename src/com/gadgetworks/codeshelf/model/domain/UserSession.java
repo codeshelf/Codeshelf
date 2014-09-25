@@ -24,7 +24,7 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -49,7 +49,7 @@ public class UserSession extends DomainObjectTreeABC<User> {
 	@Singleton
 	public static class UserSessionDao extends GenericDaoABC<UserSession> implements ITypedDao<UserSession> {
 		@Inject
-		public UserSessionDao(final PersistencyService persistencyService) {
+		public UserSessionDao(final PersistenceService persistencyService) {
 			super(persistencyService);
 		}
 		
@@ -114,4 +114,14 @@ public class UserSession extends DomainObjectTreeABC<User> {
 	public final List<IDomainObject> getChildren() {
 		return new ArrayList<IDomainObject>();
 	}
+
+	@Override
+	public Facility getFacility() {
+		return null;
+	}
+
+	public Organization getOrganization() {
+		return getParent().getOrganization();
+	}
+
 }

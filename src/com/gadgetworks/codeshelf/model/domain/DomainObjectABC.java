@@ -27,6 +27,7 @@ import lombok.ToString;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.WordUtils;
 import org.atteo.classindex.IndexSubclasses;
+import org.hibernate.annotations.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,7 +56,7 @@ public abstract class DomainObjectABC implements IDomainObject {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(DomainObjectABC.class);
 
-	// This is the internal GUID for the object.
+	// This is the internal GUID for the object.org.hibernate.
 	@Id
 	// @GeneratedValue(strategy = GenerationType.AUTO, generator = "com.gadgetworks.codeshelf.model.dao.UuidGenGw")
 	@NonNull
@@ -63,6 +64,7 @@ public abstract class DomainObjectABC implements IDomainObject {
 	@Getter
 	@Setter
 	@JsonProperty
+	@Type(type="org.hibernate.type.PostgresUUIDType")
 	// private UUID persistentId;
 	private UUID persistentId = UUID.randomUUID();
 

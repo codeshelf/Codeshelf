@@ -51,7 +51,7 @@ import com.gadgetworks.codeshelf.model.domain.DropboxService.DropboxServiceDao;
 import com.gadgetworks.codeshelf.model.domain.EdiDocumentLocator;
 import com.gadgetworks.codeshelf.model.domain.EdiDocumentLocator.EdiDocumentLocatorDao;
 import com.gadgetworks.codeshelf.model.domain.EdiServiceABC;
-import com.gadgetworks.codeshelf.model.domain.EdiServiceABC.EdiServiceABCDao;
+//import com.gadgetworks.codeshelf.model.domain.EdiServiceABC.EdiServiceABCDao;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Facility.FacilityDao;
 import com.gadgetworks.codeshelf.model.domain.IronMqService;
@@ -253,11 +253,11 @@ public final class ServerMain {
 				requestStaticInjection(ContainerUse.class);
 				bind(new TypeLiteral<ITypedDao<ContainerUse>>() {
 				}).to(ContainerUseDao.class);
-
+/*
 				requestStaticInjection(EdiServiceABC.class);
 				bind(new TypeLiteral<ITypedDao<EdiServiceABC>>() {
 				}).to(EdiServiceABCDao.class);
-
+*/
 				requestStaticInjection(DropboxService.class);
 				bind(new TypeLiteral<ITypedDao<DropboxService>>() {
 				}).to(DropboxServiceDao.class);

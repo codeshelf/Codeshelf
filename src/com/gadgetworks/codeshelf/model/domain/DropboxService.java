@@ -47,7 +47,7 @@ import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -74,7 +74,7 @@ public class DropboxService extends EdiServiceABC {
 	@Singleton
 	public static class DropboxServiceDao extends GenericDaoABC<DropboxService> implements ITypedDao<DropboxService> {
 		@Inject
-		public DropboxServiceDao(PersistencyService persistencyService) {
+		public DropboxServiceDao(PersistenceService persistencyService) {
 			super(persistencyService);
 		}
 

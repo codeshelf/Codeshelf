@@ -18,11 +18,11 @@ public class OrderHeaderTest extends DomainTestABC {
 	@SuppressWarnings("unused")
 	@Test
 	public void testReturnActiveLocationsOnly() {
-		Facility facility = createFacility("ORG-testReturnActiveLocationsOnly");
-		Aisle a1 = getAisle(facility, "A1");
+		Facility facility = createDefaultFacility("ORG-testReturnActiveLocationsOnly");
+		Aisle a1 = getDefaultAisle(facility, "A1");
 		a1.setPickFaceEndPoint(new Point(PositionTypeEnum.METERS_FROM_PARENT, 5.0, 0.0, 0.0));
 		Aisle.DAO.store(a1);
-		Aisle a2 = getAisle(facility, "A2");
+		Aisle a2 = getDefaultAisle(facility, "A2");
 		a2.setAnchorPoint(new Point(PositionTypeEnum.METERS_FROM_PARENT, 0.0, 10.0, 0.0)); //should have a move that moves
 		a2.setPickFaceEndPoint(new Point(PositionTypeEnum.METERS_FROM_PARENT, 5.0, 10.0, 0.0)); //should have a move that moves
 		Aisle.DAO.store(a2);

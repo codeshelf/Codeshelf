@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -39,7 +39,7 @@ public class Slot extends SubLocationABC<Tier> {
 	@Singleton
 	public static class SlotDao extends GenericDaoABC<Slot> implements ITypedDao<Slot> {
 		@Inject
-		public SlotDao(final PersistencyService persistencyService) {
+		public SlotDao(final PersistenceService persistencyService) {
 			super(persistencyService);
 		}
 
@@ -50,11 +50,11 @@ public class Slot extends SubLocationABC<Tier> {
 
 	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(Slot.class);
-
+/*
 	public Slot(Tier parent, String domainId, final Point inAnchorPoint, final Point inPickFaceEndPoint) {
 		super(parent, domainId, inAnchorPoint, inPickFaceEndPoint);
 	}
-	
+	*/
 	public Slot() {
 		super();
 	}
@@ -74,6 +74,15 @@ public class Slot extends SubLocationABC<Tier> {
 	
 	public final String getSlotIdForComparable() {
 		return getCompString(getDomainId());
+	}
+
+	public static void setDao(SlotDao inSlotDao) {
+		Slot.DAO = inSlotDao;
+	}
+
+	@Override
+	public void setParent(Tier inParent) {
+		this.setParent((LocationABC<?>)inParent);		
 	}
 
 }

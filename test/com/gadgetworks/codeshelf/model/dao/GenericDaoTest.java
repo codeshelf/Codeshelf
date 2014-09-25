@@ -29,7 +29,7 @@ public class GenericDaoTest extends DAOTestABC {
 
 	@Test
 	public final void testFindByFilter() {
-		Session session = persistencyService.getCurrentTenantSession();
+		Session session = persistenceService.getCurrentTenantSession();
 		Transaction t = session.beginTransaction();
 		Organization organization = new Organization();
 		organization.setDomainId("LOADBYFILTERTEST1");
@@ -50,7 +50,7 @@ public class GenericDaoTest extends DAOTestABC {
 	public final void testLoadByPersistentId() {
 		// store new organization
 		String desc = "Test-Desc";
-		Session session = persistencyService.getCurrentTenantSession();
+		Session session = persistenceService.getCurrentTenantSession();
 		Transaction t = session.beginTransaction();
 		Organization organization = new Organization();
 		organization.setDomainId("LOADBY-TEST");
@@ -59,7 +59,7 @@ public class GenericDaoTest extends DAOTestABC {
 		t.commit();
 
 		// load stored org and check data in a sep transaction
-		session = persistencyService.getCurrentTenantSession();
+		session = persistenceService.getCurrentTenantSession();
 		t = session.beginTransaction();
 		Organization foundOrganization = mOrganizationDao.findByPersistentId(organization.getPersistentId());
 		t.commit();
@@ -69,7 +69,7 @@ public class GenericDaoTest extends DAOTestABC {
 
 	@Test
 	public final void testLoadByPersistentIdList() {
-		Session session = persistencyService.getCurrentTenantSession();
+		Session session = persistenceService.getCurrentTenantSession();
 		Transaction t = session.beginTransaction();
 
 		List<UUID> persistentIdList = new ArrayList<UUID>();
@@ -86,7 +86,7 @@ public class GenericDaoTest extends DAOTestABC {
 		persistentIdList.add(organization.getPersistentId());
 		t.commit();
 		
-		session = persistencyService.getCurrentTenantSession();
+		session = persistenceService.getCurrentTenantSession();
 		t = session.beginTransaction();
 		List<Organization> foundOrganizationList = mOrganizationDao.findByPersistentIdList(persistentIdList);
 		Assert.assertEquals(2, foundOrganizationList.size());
@@ -98,7 +98,7 @@ public class GenericDaoTest extends DAOTestABC {
 		String ORGANIZATION_ID = "FIND-BY-DOMAINID";
 		String FACILITY_ID = "FIND-BY-DOMAINID";
 
-		Session session = persistencyService.getCurrentTenantSession();
+		Session session = persistenceService.getCurrentTenantSession();
 		Transaction t = session.beginTransaction();
 
 		Organization organization1 = new Organization();
@@ -106,12 +106,12 @@ public class GenericDaoTest extends DAOTestABC {
 		organization1.setDescription(ORGANIZATION_ID);
 		mOrganizationDao.store(organization1);
 
-		Facility facility = new Facility(organization1, FACILITY_ID, new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0));
+		Facility facility = organization1.createFacility(FACILITY_ID, FACILITY_ID, new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0));
 		facility.setDescription(FACILITY_ID);
 		mFacilityDao.store(facility);
 		t.commit();
 
-		session = persistencyService.getCurrentTenantSession();
+		session = persistenceService.getCurrentTenantSession();
 		t = session.beginTransaction();
 		Facility foundFacility = mFacilityDao.findByDomainId(organization1, FACILITY_ID);
 		Assert.assertNotNull(foundFacility);
@@ -123,7 +123,7 @@ public class GenericDaoTest extends DAOTestABC {
 
 	@Test
 	public final void testFindByDomainIdIncludeParentDomainId() {		
-		Session session = persistencyService.getCurrentTenantSession();
+		Session session = persistenceService.getCurrentTenantSession();
 		Transaction t = session.beginTransaction();
 
 		String ORGANIZATION_ID = "ORG-FIND-BY-DOMAINID-INC";
@@ -137,14 +137,14 @@ public class GenericDaoTest extends DAOTestABC {
 		mOrganizationDao.store(organization1);
 		t.commit();
 
-		session = persistencyService.getCurrentTenantSession();
+		session = persistenceService.getCurrentTenantSession();
 		t = session.beginTransaction();
-		Facility facility = new Facility(organization1, FACILITY_ID, new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0));
+		Facility facility = organization1.createFacility(FACILITY_ID, FACILITY_ID, new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0));
 		facility.setDescription(FACILITY_ID);
-		facility.setParent(organization1);
+		organization1.addFacility(facility);
 		mFacilityDao.store(facility);
 
-		Aisle aisle1 = new Aisle(facility,
+		Aisle aisle1 = facility.createAisle(
 			AISLE_ID,
 			new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0),
 			new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0));
@@ -152,17 +152,17 @@ public class GenericDaoTest extends DAOTestABC {
 		mAisleDao.store(aisle1);
 		t.commit();
 
-		session = persistencyService.getCurrentTenantSession();
+		session = persistenceService.getCurrentTenantSession();
 		t = session.beginTransaction();
 		Aisle foundAisle = mAisleDao.findByDomainId(facility, AISLE_ID);
 		Assert.assertNotNull(foundAisle);
 
-		facility = new Facility(organization1, FACILITY2_ID, new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0));
+		facility = organization1.createFacility(FACILITY2_ID, FACILITY2_ID, new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0));
 		facility.setDescription(FACILITY2_ID);
 		mFacilityDao.store(facility);
 		t.commit();
 
-		session = persistencyService.getCurrentTenantSession();
+		session = persistenceService.getCurrentTenantSession();
 		t = session.beginTransaction();
 		foundAisle = mAisleDao.findByDomainId(facility, AISLE_ID);
 		Assert.assertNull(foundAisle);
@@ -173,7 +173,7 @@ public class GenericDaoTest extends DAOTestABC {
 	public final void testStoreNew() {
 		// store new organization
 		String desc = "Test-Desc";
-		Session session = persistencyService.getCurrentTenantSession();
+		Session session = persistenceService.getCurrentTenantSession();
 		Transaction t = session.beginTransaction();
 		Organization organization = new Organization();
 		organization.setDomainId("LOADBY-TEST");
@@ -189,7 +189,7 @@ public class GenericDaoTest extends DAOTestABC {
 		String orgDesc = "org-desc";
 		String updatedDesc = "updated-desc";
 		// create org
-		Session session = persistencyService.getCurrentTenantSession();
+		Session session = persistenceService.getCurrentTenantSession();
 		Transaction t = session.beginTransaction();
 		Assert.assertNotNull(mOrganizationDao);
 		Organization organization = new Organization();
@@ -200,7 +200,7 @@ public class GenericDaoTest extends DAOTestABC {
 		t.commit();
 		
 		// make sure org exists and then update it
-		session = persistencyService.getCurrentTenantSession();
+		session = persistenceService.getCurrentTenantSession();
 		t = session.beginTransaction();
 		Organization foundOrganization = mOrganizationDao.findByPersistentId(id);
 		Assert.assertNotNull(foundOrganization);
@@ -212,7 +212,7 @@ public class GenericDaoTest extends DAOTestABC {
 		Assert.assertNotNull(foundOrganization);
 		
 		// now reload it again and make sure desc has changed
-		session = persistencyService.getCurrentTenantSession();
+		session = persistenceService.getCurrentTenantSession();
 		t = session.beginTransaction();
 		foundOrganization = mOrganizationDao.findByPersistentId(id);
 		Assert.assertNotNull(foundOrganization);
@@ -223,7 +223,7 @@ public class GenericDaoTest extends DAOTestABC {
 	@Test
 	public final void testDelete() {
 		// first transaction - create org
-		Session session = persistencyService.getCurrentTenantSession();
+		Session session = persistenceService.getCurrentTenantSession();
 		Transaction t = session.beginTransaction();
 		Organization organization = new Organization();
 		organization.setDomainId("DELETE-TEST");
@@ -233,7 +233,7 @@ public class GenericDaoTest extends DAOTestABC {
 		t.commit();
 		
 		// make sure org exists and then delete it
-		session = persistencyService.getCurrentTenantSession();
+		session = persistenceService.getCurrentTenantSession();
 		t = session.beginTransaction();
 		Organization foundOrganization = mOrganizationDao.findByPersistentId(id);
 		Assert.assertNotNull(foundOrganization);
@@ -242,7 +242,7 @@ public class GenericDaoTest extends DAOTestABC {
 		Assert.assertNotNull(foundOrganization);
 		
 		// now try to reload it again
-		session = persistencyService.getCurrentTenantSession();
+		session = persistenceService.getCurrentTenantSession();
 		t = session.beginTransaction();
 		foundOrganization = mOrganizationDao.findByPersistentId(id);
 		Assert.assertNull(foundOrganization);
@@ -251,7 +251,7 @@ public class GenericDaoTest extends DAOTestABC {
 
 	@Test
 	public final void testGetAll() {
-		Session session = persistencyService.getCurrentTenantSession();
+		Session session = persistenceService.getCurrentTenantSession();
 		Transaction t = session.beginTransaction();
 
 		Organization organization = new Organization();
@@ -265,7 +265,7 @@ public class GenericDaoTest extends DAOTestABC {
 		mOrganizationDao.store(organization);
 		t.commit();
 		
-		session = persistencyService.getCurrentTenantSession();
+		session = persistenceService.getCurrentTenantSession();
 		t = session.beginTransaction();
 		// This is not a great test - all these DB tests run in parallel against the same DB.
 		// There's no way to know how many items getAll() will return, so we just look for the ones we put in.
