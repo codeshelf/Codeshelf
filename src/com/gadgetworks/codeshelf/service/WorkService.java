@@ -55,7 +55,7 @@ public class WorkService {
 						while(!sent) {
 							List<WorkInstruction> wiList = ImmutableList.of(wi);
 							try {
-								Facility facility = wi.getParent().getParent().getParent();
+								Facility facility = wi.getParent();
 								IEdiService ediExportService = exportServiceProvider.getWorkInstructionExporter(facility);
 								LOGGER.debug("attempting send of work instructions: " + wiList);
 								ediExportService.sendWorkInstructionsToHost(wiList);
@@ -135,7 +135,7 @@ public class WorkService {
 	 */
 	private OrderDetail setOrderDetailStatus(final WorkInstruction inWorkInstruction) {
 		// Find the order item for this WI and mark it.
-		OrderDetail detail = inWorkInstruction.getParent();
+		OrderDetail detail = inWorkInstruction.getOrderDetail();
 		Double qtyPicked = 0.0;
 		for (WorkInstruction sumWi : detail.getWorkInstructions()) {
 			qtyPicked += sumWi.getActualQuantity();

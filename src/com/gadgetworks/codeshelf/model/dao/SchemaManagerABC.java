@@ -50,8 +50,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	private final String		dbPortnum;
 
 	@Inject
-	public SchemaManagerABC(
-		final String inDbUserId,
+	public SchemaManagerABC(final String inDbUserId,
 		final String inDbPassword,
 		final String inDbName,
 		final String inDbSchemaName,
@@ -368,16 +367,22 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 				versionOfDBAchived = ISchemaManager.DATABASE_VERSION_19;
 		}
 
+		if ((result) && (inOldVersion < ISchemaManager.DATABASE_VERSION_20)) {
+			result &= doUpgrade020();
+			if (result)
+				versionOfDBAchived = ISchemaManager.DATABASE_VERSION_20;
+		}
+
 		if (versionOfDBAchived > inOldVersion) {
 			LOGGER.info("Updating version in db_property table");
 			if (!result)
 				LOGGER.error("An upgrade action failed. You may need to check the consistency of db_property.version and whatever upgrade action failed.");
 			// Sounds bogus, but I saw a failure returned, when the table was successfully modified.
 			// Or, we could be trying to add a column that exists already.
-			
+
 			result &= updateSchemaVersion(versionOfDBAchived);
 		}
-			
+
 		return result;
 	}
 
@@ -645,7 +650,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * @return
+	 * upgrade 18 add column to location
 	 */
 	private boolean doUpgrade018() {
 		boolean result = true;
@@ -663,8 +668,13 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		return result;
 	}
 
+	// --------------------------------------------------------------------------
+	/**
+	 * upgrade 19 add site controller table; add color to che; add active to location
+	 */
 	private boolean doUpgrade019() {
 		boolean result = true;
+		LOGGER.info("start upgrade action 19");
 
 		try {
 
@@ -673,42 +683,37 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 						+ "device_guid BYTEA DEFAULT '' NOT NULL, " //
 						+ "last_battery_level SMALLINT DEFAULT 0 NOT NULL, " //
 						+ "monitor BOOLEAN DEFAULT TRUE NOT NULL, " //
-						+ "describe_location VARCHAR(255) DEFAULT 'Unknown' NOT NULL"
-			);
+						+ "describe_location VARCHAR(255) DEFAULT 'Unknown' NOT NULL");
 			execOneSQLCommand("CREATE UNIQUE INDEX site_controller_domainid_unique ON " + getDbSchemaName()
-				+ ".site_controller (domainid)"); // serial number of site controller must be unique 
+					+ ".site_controller (domainid)"); // serial number of site controller must be unique 
 
 			result &= linkToParentTable("site_controller", "parent", "codeshelf_network");
-			
-			result &= safeAddColumn("codeshelf_network","channel","SMALLINT DEFAULT 10 NOT NULL");
-			result &= safeAddColumn("codeshelf_network","network_num","SMALLINT DEFAULT 1 NOT NULL");
-			
+
+			result &= safeAddColumn("codeshelf_network", "channel", "SMALLINT DEFAULT 10 NOT NULL");
+			result &= safeAddColumn("codeshelf_network", "network_num", "SMALLINT DEFAULT 1 NOT NULL");
+
 			// completely remove DEMO2 organization if present
-			result &= execOneSQLCommand("DELETE FROM " 
-					+ getDbSchemaName()	+ ".user WHERE parent_persistentid IN "
-					+ "(SELECT persistentid FROM "+getDbSchemaName()+".organization WHERE domainid='DEMO2')");
-			result &= execOneSQLCommand("DELETE FROM " 
-					+ getDbSchemaName()	+ ".organization WHERE domainid='DEMO2'");
-			
-			result &= safeDropColumn("user","email"); // now using domainid
-			result &= safeAddColumn("user","site_controller_persistentid",UUID_TYPE); // null okay
+			result &= execOneSQLCommand("DELETE FROM " + getDbSchemaName() + ".user WHERE parent_persistentid IN "
+					+ "(SELECT persistentid FROM " + getDbSchemaName() + ".organization WHERE domainid='DEMO2')");
+			result &= execOneSQLCommand("DELETE FROM " + getDbSchemaName() + ".organization WHERE domainid='DEMO2'");
+
+			result &= safeDropColumn("user", "email"); // now using domainid
+			result &= safeAddColumn("user", "site_controller_persistentid", UUID_TYPE); // null okay
 			result &= linkToParentTable("user", "site_controller", "site_controller");
 			result &= execOneSQLCommand("CREATE UNIQUE INDEX user_site_controller_index ON " + getDbSchemaName()
 					+ ".user (site_controller_persistentid)"); // only one user per site controller
 			result &= execOneSQLCommand("CREATE UNIQUE INDEX user_unique_domainid_index ON " + getDbSchemaName()
 					+ ".user (domainid)"); // only one user per username
 
-			result &= safeDropColumn("che","public_key");
-			result &= safeAddColumn("che","color","TEXT DEFAULT 'BLUE' NOT NULL");
-			
-			result &= safeDropColumn("led_controller","public_key");
+			result &= safeDropColumn("che", "public_key");
+			result &= safeAddColumn("che", "color", "TEXT DEFAULT 'BLUE' NOT NULL");
 
-			result &= safeAddColumn("location","active","BOOLEAN DEFAULT TRUE NOT NULL");
+			result &= safeDropColumn("led_controller", "public_key");
+
+			result &= safeAddColumn("location", "active", "BOOLEAN DEFAULT TRUE NOT NULL");
 
 			return result;
 
-		
-		
 		} catch (Exception e) {
 			LOGGER.error("error in doUpgrade019", e);
 			result = false;
@@ -717,6 +722,89 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 			LOGGER.error("upgrade action 19 failed. Is sitecontroller table present w/ fkey relations? If so, set db_property.version to 19+");
 		else
 			LOGGER.info("upgrade action 19: add sitecontroller table");
+		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * upgrade 20 
+	 */
+	private boolean doUpgrade020() {
+		boolean result = true;
+		LOGGER.info("start upgrade action 20");
+
+		try {
+			result &= execOneSQLCommand("ALTER TABLE " + getDbSchemaName()
+					+ ".work_instruction ALTER COLUMN container_persistentid DROP NOT NULL");
+			result &= execOneSQLCommand("ALTER TABLE " + getDbSchemaName()
+					+ ".work_instruction ALTER COLUMN item_master_persistentid DROP NOT NULL");
+
+			result &= safeAddColumn("work_instruction", "order_detail_persistentid", UUID_TYPE);
+			result &= unLinkToParentTable("work_instruction", "parent", "order_detail");
+
+			// Now the good part. Copy contents of parent_persistentid column to order_detail column. Then put the facility persistentId into parent_persistentid
+			if (result) {
+
+				Connection connection = getConnection(getApplicationInitDatabaseURL());
+				Statement stmt = connection.createStatement();
+
+				ResultSet resultSet = stmt.executeQuery("SELECT wi.parent_persistentid as wi_parent_id, wi.order_detail_persistentid, fac.persistentid as new_facility_parent_persistentid, wi.persistentid as wi_persist_id "
+						+ "from "
+						+ getDbSchemaName()
+						+ ".work_instruction as wi "
+						+ "join "
+						+ getDbSchemaName()
+						+ ".order_detail as od on wi.parent_persistentid = od.persistentid "
+						+ "join "
+						+ getDbSchemaName()
+						+ ".order_header as oh on od.parent_persistentid = oh.persistentid "
+						+ "join "
+						+ getDbSchemaName()
+						+ ".location as fac on oh.parent_persistentid = fac.persistentid");
+
+				while (resultSet.next()) {
+					String wiPersistentId = resultSet.getString("wi_persist_id");
+					String detailPersistentId = resultSet.getString("wi_parent_id");
+					String facilityPersistentId = resultSet.getString("new_facility_parent_persistentid");
+					// Let's guard a bit against a double update. If parent is already the facility, don't copy to orderDetail field.
+					if (!detailPersistentId.equals(facilityPersistentId)) {
+						/*  // this could work, but doesn't
+						resultSet.updateString("order_detail_persistentid", detailPersistentId);
+						resultSet.updateString("wi_parent_id", facilityPersistentId);
+						resultSet.updateRow();
+						*/
+						String sql1 = "UPDATE " + getDbSchemaName() + ".work_instruction SET order_detail_persistentid = '"
+								+ detailPersistentId + "' WHERE persistentid = '" + wiPersistentId + "'";
+						LOGGER.info(sql1);
+						boolean thisActionValue = execOneSQLCommand(sql1);
+
+						String sql2 = "UPDATE " + getDbSchemaName() + ".work_instruction SET parent_persistentid = '"
+								+ facilityPersistentId + "' WHERE persistentid = '" + wiPersistentId + "'";
+						LOGGER.info(sql2);
+						thisActionValue &= execOneSQLCommand(sql2);
+
+						if (!thisActionValue) {
+							LOGGER.error("Failed to set order_detail and/or parent fields on this record.");
+						}
+					} else {
+						LOGGER.error("oops-getting records for update that does not need it.");
+					}
+				}
+			}
+			if (result) {
+				// add these links/constraints after the column changes above, so we do not get constraint violations
+				result &= linkToParentTable("work_instruction", "order_detail", "order_detail");
+				result &= linkToParentTable("work_instruction", "parent", "location");
+			}
+
+		} catch (Exception e) {
+			LOGGER.error("doUpgrade020", e);
+			result = false;
+		}
+		if (!result) {
+			LOGGER.error("upgrade action 20 failed. In work instruction, container and itemMaster become nullable; new order_detail field populated. If so already, set db_property.version to 20+.");
+		} else
+			LOGGER.info("upgrade action 20: In work instruction table, container and itemMaster should be nullable. New orderDetail field. ");
 		return result;
 	}
 
@@ -780,7 +868,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		return result;
 	}
 
-		// --------------------------------------------------------------------------
+	// --------------------------------------------------------------------------
 	/**
 	 * Create a standard DomainObject table with all the appropriate boilerplate and then add the stuff for the particular domain class.
 	 * @param inTableName
@@ -793,7 +881,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		result &= execOneSQLCommand("CREATE TABLE " + getDbSchemaName() + "." + inTableName + " (" //
 				+ "persistentid " + UUID_TYPE + " NOT NULL, " //
-				+ "parent_persistentid " + UUID_TYPE + (allowNullParent?", ":" NOT NULL, ") //
+				+ "parent_persistentid " + UUID_TYPE + (allowNullParent ? ", " : " NOT NULL, ") //
 				+ "domainid " + DOMAINID_TYPE + " NOT NULL, " //
 				+ "version TIMESTAMP, " //
 				+ inColumns //
@@ -812,7 +900,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	 * @param inColumns
 	 */
 	private boolean createTable(final String inTableName, final String inColumns) {
-		return createTable(inTableName,inColumns,false);
+		return createTable(inTableName, inColumns, false);
 	}
 
 	// --------------------------------------------------------------------------
@@ -823,7 +911,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	 * @param inColumns
 	 */
 	private boolean createTableOptionalParent(final String inTableName, final String inColumns) {
-		return createTable(inTableName,inColumns,true);
+		return createTable(inTableName, inColumns, true);
 	}
 
 	// --------------------------------------------------------------------------
@@ -848,6 +936,37 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		result &= execOneSQLCommand("CREATE INDEX " //
 				+ inChildTableName + "_" + inForeignKeyColumnName + "_" + inParentTableName //
 				+ " ON " + getDbSchemaName() + "." + inChildTableName + " (" + inForeignKeyColumnName + "_persistentid)");
+
+		return result;
+
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inChildTableName
+	 * @param inForeignKeyColumnName
+	 * @param inParentTableName
+	 */
+	private boolean unLinkToParentTable(final String inChildTableName,
+		final String inForeignKeyColumnName,
+		final String inParentTableName) {
+
+		boolean result = true;
+
+		// Drop the foreign key constraint.
+		// many databases use "DROP FOREIGN KEY"
+		// but Postgres uses "DROP CONSTRAINT"  and notice the _fkey1.
+
+		String constraintString = "ALTER TABLE " + getDbSchemaName() + "." + inChildTableName //
+				+ " DROP CONSTRAINT " + inChildTableName + "_" + inForeignKeyColumnName + "_persistentid" + "_fkey";
+		LOGGER.info("unLinkToParentTable: " + constraintString);
+		result &= execOneSQLCommand(constraintString); //
+
+		// And drop the index
+		String indexString = "DROP INDEX " //
+				+ inChildTableName + "_" + inForeignKeyColumnName + "_" + inParentTableName;
+		LOGGER.info("unLinkToParentTable: " + indexString);
+		result &= execOneSQLCommand(indexString);
 
 		return result;
 
@@ -930,7 +1049,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	 */
 	private boolean safeModifyColumnType(final String inTableName, final String inColumnName, final String inNewColumnType) {
 
-		return  execOneSQLCommand("ALTER TABLE " + getDbSchemaName() + "." + inTableName //
+		return execOneSQLCommand("ALTER TABLE " + getDbSchemaName() + "." + inTableName //
 				+ " ALTER COLUMN " + inColumnName //
 				+ " TYPE " + inNewColumnType //
 				+ ";");
@@ -1018,7 +1137,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		result &= linkToParentTable("site_controller", "parent", "codeshelf_network");
 		execOneSQLCommand("CREATE UNIQUE INDEX site_controller_domainid_unique ON " + getDbSchemaName()
-			+ ".site_controller (domainid)"); // serial number of site controller must be unique 
+				+ ".site_controller (domainid)"); // serial number of site controller must be unique 
 
 		result &= linkToParentTable("uom_master", "parent", "location");
 
@@ -1028,8 +1147,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		execOneSQLCommand("CREATE UNIQUE INDEX user_site_controller_index ON " + getDbSchemaName()
 				+ ".user (site_controller_persistentid)");
 		// Ensure only one user per username
-		result &= execOneSQLCommand("CREATE UNIQUE INDEX user_unique_domainid_index ON " + getDbSchemaName()
-			+ ".user (domainid)"); // only one user per username
+		result &= execOneSQLCommand("CREATE UNIQUE INDEX user_unique_domainid_index ON " + getDbSchemaName() + ".user (domainid)"); // only one user per username
 
 		result &= linkToParentTable("user_session", "parent", "USER");
 
@@ -1037,9 +1155,10 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		result &= linkToParentTable("work_area", "parent", "PATH");
 
-		result &= linkToParentTable("work_instruction", "parent", "order_detail");
+		result &= linkToParentTable("work_instruction", "parent", "location");
 		result &= linkToParentTable("work_instruction", "item_master", "item_master");
 		result &= linkToParentTable("work_instruction", "container", "container");
+		result &= linkToParentTable("work_instruction", "order_detail", "order_detail");
 
 		result &= execOneSQLCommand("CREATE  INDEX work_instruction_che_index ON " + getDbSchemaName()
 				+ ".work_instruction (assigned_che_persistentid)");
@@ -1263,15 +1382,14 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 			"current_value_str TEXT, " //
 					+ "default_value_str TEXT " //
 		);
-		
+
 		// SiteController
 		result &= createTable("site_controller", //
 			"description VARCHAR(255), " //
 					+ "device_guid BYTEA DEFAULT '' NOT NULL, " //
 					+ "last_battery_level SMALLINT DEFAULT 0 NOT NULL, " //
 					+ "monitor BOOLEAN DEFAULT TRUE NOT NULL, " //
-					+ "describe_location VARCHAR(255) NOT NULL"
-		);
+					+ "describe_location VARCHAR(255) NOT NULL");
 
 		// UomMaster
 		result &= createTable("uom_master", //
@@ -1283,7 +1401,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 			"hash_salt TEXT, " //
 					+ "hashed_password TEXT, " //
 					+ "hash_iterations INTEGER, " //
-					+ "site_controller_persistentid "+UUID_TYPE+", " //
+					+ "site_controller_persistentid " + UUID_TYPE + ", " //
 					+ "created TIMESTAMP, " //
 					+ "active BOOLEAN DEFAULT TRUE NOT NULL " //
 		);
@@ -1334,7 +1452,8 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 					+ "created TIMESTAMP, " //
 					+ "assigned TIMESTAMP, " //
 					+ "started TIMESTAMP, " //
-					+ "completed TIMESTAMP " //
+					+ "completed TIMESTAMP, " //
+					+ "order_detail_persistentid " + UUID_TYPE //
 		);
 
 		return result;

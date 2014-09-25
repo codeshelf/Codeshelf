@@ -61,12 +61,12 @@ public class WorkInstructionCSVExporter {
 
 			// groups are optional!
 			String groupStr = "";
-			OrderGroup theGroup = wi.getParent().getParent().getOrderGroup();
+			OrderGroup theGroup = wi.getOrderDetail().getParent().getOrderGroup();
 			if (theGroup != null)
 				groupStr = theGroup.getDomainId();
 			properties[ORDERGROUPID_POS] = groupStr;
 
-			properties[ORDERID_POS] = wi.getParent().getOrderId();
+			properties[ORDERID_POS] = wi.getOrderDetail().getOrderId();
 			properties[CONTAINERID_POS] = wi.getContainerId();
 			properties[ITEMID_POS] = wi.getItemId();
 

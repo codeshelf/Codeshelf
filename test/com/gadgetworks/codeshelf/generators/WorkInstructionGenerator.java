@@ -20,7 +20,8 @@ public class WorkInstructionGenerator {
 	
 	public WorkInstruction generateValid(Facility facility) {
 		WorkInstruction workInstruction = new WorkInstruction();
-		workInstruction.setParent(generateValidOrderDetail(facility));
+		workInstruction.setParent(facility);
+		workInstruction.setOrderDetail(generateValidOrderDetail(facility));
 		workInstruction.setDomainId("WIDOMAINID");
 		workInstruction.setContainer(new Container(facility, "C1"));
 		workInstruction.setItemMaster(new ItemMaster(facility, "ITEMID", new UomMaster(facility, "UOMID")));

@@ -68,7 +68,7 @@ import com.google.inject.Singleton;
 @JsonIgnoreProperties({ "fullDomainId", "parentFullDomainId", "parentPersistentId", "className", "container", "itemMaster",
 		"location" })
 @ToString(of = { "typeEnum", "statusEnum", "itemId", "planQuantity", "actualQuantity", "locationId" }, callSuper = true, doNotUseGetters = true)
-public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
+public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 
 	@Inject
 	public static ITypedDao<WorkInstruction>	DAO;
@@ -82,15 +82,15 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 
 		public final Class<WorkInstruction> getDaoClass() {
 			return WorkInstruction.class;
-		}	
+		}
 	}
 
-	private static final Logger			LOGGER	= LoggerFactory.getLogger(WorkInstruction.class);
+	private static final Logger			LOGGER				= LoggerFactory.getLogger(WorkInstruction.class);
 
-	// The parent order detail item.
+	// The parent is the facility
 	@Column(nullable = false)
 	@ManyToOne(optional = false)
-	private OrderDetail					parent;
+	private Facility					parent;
 
 	// Type.
 	@Column(nullable = false)
@@ -108,8 +108,8 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 	@JsonProperty
 	private WorkInstructionStatusEnum	statusEnum;
 
-	// The container.
-	@Column(nullable = false)
+	// The container. Change to nullable v5 upgrade020
+	@Column(nullable = true)
 	@Getter
 	@ManyToOne(optional = false)
 	private Container					container;
@@ -120,7 +120,7 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 	@JsonProperty
 	private String						containerId;
 
-	// The item id.
+	// The itemMaster. Change to nullable v5 upgrade020
 	@Column(nullable = false)
 	@Getter
 	@ManyToOne(optional = false)
@@ -245,10 +245,16 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 	@Setter
 	@JsonProperty
 	private Timestamp					completed;
+	
+	// The parent order detail item.
+	@Column(nullable = true)
+	@ManyToOne(optional = true)
+	private OrderDetail					orderDetail;
 
-   	private static final Integer			MAX_WI_DESC_BYTES	= 80;
 
-   	public WorkInstruction() {
+	private static final Integer		MAX_WI_DESC_BYTES	= 80;
+
+	public WorkInstruction() {
 
 	}
 
@@ -261,12 +267,21 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 		return "WI";
 	}
 
-	public final OrderDetail getParent() {
+	public final Facility getParent() {
 		return parent;
 	}
+	
+	public final OrderDetail getOrderDetail() {
+		// v5 interim
+		return orderDetail;
+	}
 
-	public final void setParent(OrderDetail inParent) {
+	public final void setParent(Facility inParent) {
 		parent = inParent;
+	}
+	
+	public final void setOrderDetail(OrderDetail inDetail) {
+		orderDetail = inDetail;
 	}
 
 	public final List<? extends IDomainObject> getChildren() {
@@ -280,13 +295,26 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 	// Denormalized for serialized WIs at the site controller.
 	public final void setContainer(Container inContainer) {
 		container = inContainer;
-		containerId = inContainer.getContainerId();
+		if (container != null)
+			containerId = inContainer.getContainerId();
+		else {
+			// we might look at a type enumeration to set this more appropriately. See CD_0045 for list of housekeeping and other possibilities with no container.
+			containerId = "None";
+		}
 	}
 
 	// Denormalized for serialized WIs at the site controller.
 	public final void setItemMaster(ItemMaster inItemMaster) {
 		itemMaster = inItemMaster;
-		itemId = inItemMaster.getItemId();
+		if (itemMaster != null)
+			itemId = inItemMaster.getItemId();
+		else
+			itemId = getItemIdIfMasterNull();
+	}
+
+	private final String getItemIdIfMasterNull() {
+		// we might look at a type enumeration to set this more appropriately. See CD_0045 for list of housekeeping and other possibilities with no container.
+		return "Housekeeping"; // may need to localize on the UI.
 	}
 
 	// Denormalized for serialized WIs at the site controller.
@@ -328,7 +356,11 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 	 * @return
 	 */
 	public final String getUomMasterId() {
-		return parent.getUomMasterId();
+		OrderDetail detail = getOrderDetail();
+		if (detail != null)
+			return detail.getUomMasterId();
+		else
+			return "";
 	}
 
 	// --------------------------------------------------------------------------
@@ -337,7 +369,7 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 	 * @return
 	 */
 	public final String getOrderDetailId() {
-		OrderDetail detail = this.getParent();
+		OrderDetail detail = this.getOrderDetail();
 		return detail.getDomainId(); // parent must be there by DB constraint
 	}
 
@@ -347,7 +379,7 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 	 * @return
 	 */
 	public final String getOrderId() {
-		OrderDetail detail = this.getParent();
+		OrderDetail detail = this.getOrderDetail();
 		OrderHeader header = detail.getParent();
 		return header.getDomainId(); // parents must be there by DB constraint
 	}
@@ -404,7 +436,7 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 			return TimeFormat.getUITime(completeTime);
 		}
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * For a UI meta field
@@ -481,11 +513,11 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 		ILocation<?> theWiLocation = this.getLocation();
 		if (theWiLocation == null)
 			return returnStr;
-		
+
 		LocationABC<?> theLocation = (LocationABC<?>) theWiLocation;
 		if (theLocation.getClass() == Facility.class)
 			return returnStr;
-		
+
 		Item wiItem = theLocation.getStoredItemFromMasterIdAndUom(getItemId(), getUomMasterId());
 
 		// If there is the right item at the location the WI is going to, then use it.
@@ -501,10 +533,14 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 
 	public String getItemMasterId() {
 		// Note: there is the denormalized field for itemId/getItemId. For this purpose, I want to show the real SKU only.
+		// the itemId may set to the itemId, rather than the master domainID.
 		ItemMaster theMaster = this.getItemMaster();
-		return theMaster.getItemId();
+		if (theMaster != null)
+			return theMaster.getItemId();
+		else
+			return getItemIdIfMasterNull();
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * The description comes in from customer orders. It could have quite a mess in it. Ok for most of our application,
@@ -515,14 +551,13 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 		String cookedDesc = inDescription.substring(0, Math.min(MAX_WI_DESC_BYTES, inDescription.length()));
 		// This was the original remove ASCII line
 		// cookedDesc = cookedDesc.replaceAll("[^\\p{ASCII}]", "");
-		
+
 		// This might over do it. Letters or numbers or white space ok. Nothing else. +, - % $ etc. stripped
 		// cookedDesc = cookedDesc.replaceAll("[^\\p{L}\\p{Z}]","");
 
 		// Or this
-		cookedDesc = cookedDesc.replaceAll("[^a-zA-Z0-9+., -]","");
+		cookedDesc = cookedDesc.replaceAll("[^a-zA-Z0-9+., -]", "");
 		return cookedDesc;
 	}
 
-	
 }

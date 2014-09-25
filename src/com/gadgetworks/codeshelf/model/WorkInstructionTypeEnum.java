@@ -19,7 +19,11 @@ public enum WorkInstructionTypeEnum {
 	@EnumValue("ACTUAL")
 	ACTUAL(WorkInstructionTypeNum.ACTUAL, "ACTUAL"),
 	@EnumValue("INDICATOR")
-	INDICATOR(WorkInstructionTypeNum.INDICATOR, "INDICATOR");
+	INDICATOR(WorkInstructionTypeNum.INDICATOR, "INDICATOR"),
+	@EnumValue("HK_REPEATPOS")
+	HK_REPEATPOS(WorkInstructionTypeNum.HK_REPEATPOS, "HK_REPEATPOS"),
+	@EnumValue("HK_BAYCOMPLETE")
+	HK_BAYCOMPLETE(WorkInstructionTypeNum.HK_BAYCOMPLETE, "HK_BAYCOMPLETE");
 
 	private int		mValue;
 	private String	mName;
@@ -45,6 +49,14 @@ public enum WorkInstructionTypeEnum {
 				result = WorkInstructionTypeEnum.INDICATOR;
 				break;
 
+			case WorkInstructionTypeNum.HK_REPEATPOS:
+				result = WorkInstructionTypeEnum.HK_REPEATPOS;
+				break;
+
+			case WorkInstructionTypeNum.HK_BAYCOMPLETE:
+				result = WorkInstructionTypeEnum.HK_BAYCOMPLETE;
+				break;
+
 			default:
 				result = WorkInstructionTypeEnum.INVALID;
 				break;
@@ -68,6 +80,8 @@ public enum WorkInstructionTypeEnum {
 		static final byte	PLAN		= 0;
 		static final byte	ACTUAL		= 1;
 		static final byte	INDICATOR	= 2;
+		static final byte	HK_REPEATPOS	= 3;
+		static final byte	HK_BAYCOMPLETE	= 4;
 
 		private WorkInstructionTypeNum() {
 		};

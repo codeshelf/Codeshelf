@@ -144,7 +144,8 @@ public class WorkInstructionTest extends DomainTestABC {
 		order1.addOrderDetail(orderDetail);
 
 		WorkInstruction wi = new WorkInstruction();
-		wi.setParent(orderDetail);
+		wi.setParent(facility);
+		wi.setOrderDetail(orderDetail);
 		wi.setCreated(new Timestamp(System.currentTimeMillis()));
 
 		// Update the WI
