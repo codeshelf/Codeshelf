@@ -82,9 +82,7 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 
 		public final Class<WorkInstruction> getDaoClass() {
 			return WorkInstruction.class;
-		}
-		
-		
+		}	
 	}
 
 	private static final Logger			LOGGER	= LoggerFactory.getLogger(WorkInstruction.class);

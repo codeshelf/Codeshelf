@@ -333,9 +333,8 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 		result.setItemMaster(inItemMaster);
 		result.setDescription(inItemMaster.getDescription());
 		// In CrossBatch orders the nominal, min and max quantities are always equal on the cross order side.
-		result.setQuantity(Integer.valueOf(inCsvBean.getQuantity()));
-		result.setMinQuantity(Integer.valueOf(inCsvBean.getQuantity()));
-		result.setMaxQuantity(Integer.valueOf(inCsvBean.getQuantity()));
+		result.setQuantities(Integer.valueOf(inCsvBean.getQuantity()));
+
 		result.setUomMaster(inUomMaster);
 		result.setUpdated(inEdiProcessTime);
 		if (result.getQuantity() == 0) {

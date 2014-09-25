@@ -47,7 +47,7 @@ public class SiteControllerMessageProcessor extends MessageProcessor {
 			boolean attached = false;
 			if (loginResponse.getStatus()==ResponseStatus.Success) {
 				CodeshelfNetwork network = loginResponse.getNetwork();
-				if(network != null) {
+				if (network != null) {
 					LOGGER.info("Attached to network "+network.getDomainId());
 					attached=true;
 					this.deviceManager.updateNetwork(network);

@@ -12,6 +12,7 @@ import org.junit.Before;
 
 import com.gadgetworks.codeshelf.application.Configuration;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
+import com.gadgetworks.codeshelf.model.domain.EdiServiceABC;
 import com.gadgetworks.codeshelf.model.domain.Aisle.AisleDao;
 import com.gadgetworks.codeshelf.model.domain.Bay;
 import com.gadgetworks.codeshelf.model.domain.Bay.BayDao;
@@ -27,6 +28,7 @@ import com.gadgetworks.codeshelf.model.domain.ContainerUse;
 import com.gadgetworks.codeshelf.model.domain.ContainerUse.ContainerUseDao;
 import com.gadgetworks.codeshelf.model.domain.DropboxService;
 import com.gadgetworks.codeshelf.model.domain.DropboxService.DropboxServiceDao;
+import com.gadgetworks.codeshelf.model.domain.EdiServiceABC.EdiServiceABCDao;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Facility.FacilityDao;
 import com.gadgetworks.codeshelf.model.domain.IronMqService;
@@ -96,6 +98,7 @@ public abstract class DAOTestABC {
 	protected TierDao				mTierDao;
 	protected SlotDao				mSlotDao;
 	protected DropboxServiceDao		mDropboxServiceDao;
+	protected EdiServiceABCDao 		mEdiServiceABCDao;
 	protected OrderGroupDao			mOrderGroupDao;
 	protected OrderHeaderDao		mOrderHeaderDao;
 	protected OrderDetailDao		mOrderDetailDao;
@@ -159,6 +162,12 @@ public abstract class DAOTestABC {
 		mDropboxServiceDao = new DropboxServiceDao(persistencyService);
 		DropboxService.DAO = mDropboxServiceDao;
 
+		mIronMqServiceDao = new IronMqServiceDao(persistencyService);
+		IronMqService.DAO = mIronMqServiceDao;
+
+		mEdiServiceABCDao = new EdiServiceABCDao(persistencyService);
+		EdiServiceABC.DAO = mEdiServiceABCDao;
+		
 		mCodeshelfNetworkDao = new CodeshelfNetworkDao(persistencyService);
 		CodeshelfNetwork.DAO = mCodeshelfNetworkDao;
 
@@ -232,7 +241,9 @@ public abstract class DAOTestABC {
 	}
 	
 	@After
-	public void tearDown() {
+	public final void tearDown() {
+		mDatabase.stop();
+		mDatabase = null;
 		doAfter();
 	}
 	

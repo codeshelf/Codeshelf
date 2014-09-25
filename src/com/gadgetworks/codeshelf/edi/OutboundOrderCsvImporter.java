@@ -372,7 +372,8 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 				result = new Container();
 				result.setParent(inFacility);
 				result.setContainerId(inCsvBean.getPreAssignedContainerId());
-				result.setKind(inFacility.getContainerKind(ContainerKind.DEFAULT_CONTAINER_KIND));
+				ContainerKind kind = inFacility.getContainerKind(ContainerKind.DEFAULT_CONTAINER_KIND); 
+				result.setKind(kind);
 				inFacility.addContainer(result);
 			}
 
@@ -596,21 +597,17 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 		result.setItemMaster(inItemMaster);
 		result.setDescription(inCsvBean.getDescription());
 		result.setUomMaster(inUomMaster);
-		result.setQuantity(Integer.valueOf(inCsvBean.getQuantity()));
+		result.setQuantities(Integer.valueOf(inCsvBean.getQuantity()));
 
-		// Set the min quantity if specified - otherwise make the same as the nominal quantity.
+		// Override the min quantity if specified - otherwise make the same as the nominal quantity.
 		if (inCsvBean.getMinQuantity() != null) {
 			result.setMinQuantity(Integer.valueOf(inCsvBean.getMinQuantity()));
-		} else {
-			result.setMinQuantity(Integer.valueOf(inCsvBean.getQuantity()));
-		}
+		} 
 
-		// Set the max quantity if specified - otherwise make the same as the nominal quantity.
+		// Override the max quantity if specified - otherwise make the same as the nominal quantity.
 		if (inCsvBean.getMaxQuantity() != null) {
 			result.setMaxQuantity(Integer.valueOf(inCsvBean.getMaxQuantity()));
-		} else {
-			result.setMaxQuantity(Integer.valueOf(inCsvBean.getQuantity()));
-		}
+		} 
 
 		result.setActive(true);
 		result.setUpdated(inEdiProcessTime);

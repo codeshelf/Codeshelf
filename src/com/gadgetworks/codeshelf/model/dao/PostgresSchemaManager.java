@@ -83,4 +83,9 @@ public final class PostgresSchemaManager extends SchemaManagerABC {
 	protected String getSchemaSetterString() {
 		return "SET SCHEMA '" + getDbSchemaName() + "'";
 	}
+
+	@Override
+	public void deleteDatabase() {
+		throw new RuntimeException("Delete Database not supported for Postgres");
+	}		
 }

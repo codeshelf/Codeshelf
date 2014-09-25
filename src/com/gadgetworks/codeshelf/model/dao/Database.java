@@ -67,7 +67,7 @@ public class Database {
 			}
 		}
 
-		mSchemaManager.verifySchema();
+		schemaManager.verifySchema();
 
 		ServerConfig serverConfig = new ServerConfig();
 		serverConfig.setName(mSchemaManager.getDbSchemaName());
@@ -81,14 +81,14 @@ public class Database {
 		//		serverConfig.setDebugLazyLoad(false);
 		//		serverConfig.setDebugSql(false);
 		//		serverConfig.setLoggingLevel(LogLevel.NONE);
-//		serverConfig.setLoggingToJavaLogger(true);
-//		serverConfig.setLoggingDirectory(mUtil.getApplicationLogDirPath());
+		//		serverConfig.setLoggingToJavaLogger(true);
+		//		serverConfig.setLoggingDirectory(mUtil.getApplicationLogDirPath());
 		serverConfig.setPackages(new ArrayList<String>(Arrays.asList("com.gadgetworks.codeshelf.model.domain")));
 		serverConfig.setJars(new ArrayList<String>(Arrays.asList("server.codeshelf.jar")));
 		serverConfig.setUpdateChangesOnly(true);
 		serverConfig.setDdlGenerate(false);
 		serverConfig.setDdlRun(false);
-		//serverConfig.setNamingConvention(new GWEbeanNamingConvention());
+		// serverConfig.setNamingConvention(new GWEbeanNamingConvention());
 		UnderscoreNamingConvention namingConvetion = new UnderscoreNamingConvention();
 		namingConvetion.setSchema(mSchemaManager.getDbSchemaName());
 		serverConfig.setNamingConvention(namingConvetion);
@@ -101,17 +101,17 @@ public class Database {
 		dataSourceConfig.setMinConnections(5);
 		dataSourceConfig.setMaxConnections(25);
 		dataSourceConfig.setIsolationLevel(Transaction.READ_COMMITTED);
-		//		dataSourceConfig.setHeartbeatSql("select count(*) from dual");
+		// dataSourceConfig.setHeartbeatSql("select count(*) from dual");
 
 		AutofetchConfig autofetchConfig = serverConfig.getAutofetchConfig();
 		autofetchConfig.setMode(AutofetchMode.DEFAULT_OFF);
 		autofetchConfig.setLogDirectory(mUtil.getApplicationLogDirPath());
-//		autofetchConfig.setUseFileLogging(true);
-
+		// autofetchConfig.setUseFileLogging(true);
+		
 		EbeanServer server = EbeanServerFactory.create(serverConfig);
 		if (server == null) {
 			mUtil.exitSystem();
-		}
+		}		
 	}
 	*/
 
@@ -142,24 +142,14 @@ public class Database {
 	/**
 	 */
 	public final boolean start() {
-		boolean result = false;
-		// fetch database config from properties file
-		this.hostName = System.getProperty("db.address");
-		this.port = Integer.parseInt(System.getProperty("db.portnum"));
-		this.databaseName = System.getProperty("db.name");
-		this.schemaName = System.getProperty("db.schemaname");
-		this.userId = System.getProperty("db.userid");
-		this.password = System.getProperty("db.password");
 		LOGGER.info("Database started");
-		result = true;
-		return result;
+		return true;
 	}
 
 	// --------------------------------------------------------------------------
 	/**
 	 */
 	public final boolean stop() {
-		boolean result = false;
 		LOGGER.info("Stopping Database");
 		//		try {
 		//			Connection connection = DriverManager.getConnection(mUtil.getApplicationDatabaseURL(), "codeshelf", "codeshelf");
@@ -172,10 +162,8 @@ public class Database {
 		//		} catch (SQLException e) {
 		//			LOGGER.error("", e);
 		//		}
-		// ShutdownManager.shutdown();
-		result = true;
+		ShutdownManager.shutdown();
 		LOGGER.info("Database shutdown");
-		return result;
+		return true;
 	}
-
 }

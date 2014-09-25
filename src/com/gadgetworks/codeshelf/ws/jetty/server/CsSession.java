@@ -22,6 +22,7 @@ import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
 
 public class CsSession implements IDaoListener {
+	
 	public enum State {
 		ACTIVE,
 		IDLE_WARNING,
@@ -69,13 +70,18 @@ public class CsSession implements IDaoListener {
 		this.session = session;
 	}
 
-	public void sendMessage(MessageABC response) {
-		try {
-			session.getBasicRemote().sendObject(response);
-			this.messageSent();
-		} catch (Exception e) {
-			LOGGER.error("Failed to send message", e);
-		}
+	public void sendMessage(final MessageABC response) {
+		messageSender.execute(new Runnable() {
+			@Override
+			public void run() {
+				try {
+					session.getBasicRemote().sendObject(response);
+					CsSession.this.messageSent();
+				} catch (Exception e) {
+					LOGGER.error("Failed to send message", e);
+				}
+			}
+		});
 	}
 	
 	@Override

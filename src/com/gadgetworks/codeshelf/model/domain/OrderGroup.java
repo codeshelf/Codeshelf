@@ -119,6 +119,13 @@ public class OrderGroup extends DomainObjectTreeABC<Facility> {
 	public OrderGroup() {
 		statusEnum = OrderStatusEnum.CREATED;
 	}
+	
+	public OrderGroup(Facility facility, String domainId) {
+		super(domainId);
+		parent = facility;
+		parent.addOrderGroup(this);
+		statusEnum = OrderStatusEnum.CREATED;
+	}
 
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<OrderGroup> getDao() {

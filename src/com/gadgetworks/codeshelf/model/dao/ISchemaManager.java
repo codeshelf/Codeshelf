@@ -67,4 +67,6 @@ public interface ISchemaManager {
 
 	Connection getConnection(String inDbUrl) throws SQLException;
 
+	void deleteDatabase();
+
 }
