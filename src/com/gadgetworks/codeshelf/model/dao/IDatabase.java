@@ -16,6 +16,4 @@ public interface IDatabase {
 	boolean stop();
 
 	ISchemaManager getSchemaManager();
-
-	void deleteDatabase();
 }

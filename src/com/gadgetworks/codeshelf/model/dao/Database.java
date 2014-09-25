@@ -41,17 +41,8 @@ public class Database implements IDatabase {
 	@Inject
 	public Database(final ISchemaManager inSchemaManager) {
 		schemaManager = inSchemaManager;
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 */
-	public final boolean start() {
 		// Set our class loader to the system classloader, so ebean can find the enhanced classes.
 		Thread.currentThread().setContextClassLoader(ClassLoader.getSystemClassLoader());
-
-		// bhe: commented out - this should not be here
-		// Configuration.loadConfig("test");
 
 		System.setProperty("app.database.url", schemaManager.getApplicationDatabaseURL());
 		//System.setProperty("ebean.props.file", "conf/ebean.properties");
@@ -101,7 +92,13 @@ public class Database implements IDatabase {
 		EbeanServer server = EbeanServerFactory.create(serverConfig);
 		if (server == null) {
 			System.exit(1);
-		}
+		}		
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 */
+	public final boolean start() {
 		LOGGER.info("Database started");
 		return true;
 	}
@@ -126,10 +123,4 @@ public class Database implements IDatabase {
 		LOGGER.info("Database shutdown");
 		return true;
 	}
-	
-	@Override
-	public void deleteDatabase() {
-		schemaManager.deleteDatabase();
-	}
-
 }

@@ -135,11 +135,10 @@ public abstract class DAOTestABC {
 			"codeshelf",
 			"localhost",
 			"");
+		
+		mSchemaManager.deleteDatabase();
+		
 		mDatabase = new Database(mSchemaManager);
-
-		// nuke database, if exists to enforce isolation of unit tests
-		mDatabase.deleteDatabase();
-
 		mDatabase.start();
 
 		mOrganizationDao = new OrganizationDao(mSchemaManager);

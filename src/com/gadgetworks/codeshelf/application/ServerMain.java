@@ -212,10 +212,6 @@ public final class ServerMain {
 				bind(MessageProcessor.class).to(ServerMessageProcessor.class);
 				requestStaticInjection(MessageProcessorFactory.class);
 				
-				//requestStaticInjection(ServerMessageProcessorFactory.class);
-				//ServerMessageProcessorFactory.inject(ServerMessageProcessor.class);
-
-				
 				// Shiro modules
 				bind(Realm.class).to(CodeshelfRealm.class);
 				bind(CredentialsMatcher.class).to(HashedCredentialsMatcher.class);
@@ -223,6 +219,7 @@ public final class ServerMain {
 				bindConstant().annotatedWith(Names.named("shiro.hashAlgorithmName")).to(Md5Hash.ALGORITHM_NAME);
 				
 				// Register the DAOs (statically as a singleton).
+				
 
 				requestStaticInjection(Aisle.class);
 				bind(new TypeLiteral<ITypedDao<Aisle>>() {

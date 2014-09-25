@@ -19,7 +19,6 @@ import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.DomainTestABC;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Organization;
-import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.util.PropertyUtils;
 import com.gadgetworks.codeshelf.util.ThreadUtils;
