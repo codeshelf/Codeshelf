@@ -366,7 +366,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 			if (result)
 				versionOfDBAchived = ISchemaManager.DATABASE_VERSION_19;
 		}
-		
+
 		if ((result) && (inOldVersion < ISchemaManager.DATABASE_VERSION_20)) {
 			result &= doUpgrade020();
 			if (result)
@@ -748,10 +748,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 				Connection connection = getConnection(getApplicationInitDatabaseURL());
 				Statement stmt = connection.createStatement();
 
-				/*ResultSet resultSet = stmt.executeQuery("SELECT parent_persistentid, order_detail FROM " + getDbSchemaName()
-						+ ".work_instruction");*/
-
-				ResultSet resultSet = stmt.executeQuery("SELECT wi.parent_persistentid as wi_parent_id, wi.order_detail_persistentid, fac.persistentid as new_facility_parent_persistentid "
+				ResultSet resultSet = stmt.executeQuery("SELECT wi.parent_persistentid as wi_parent_id, wi.order_detail_persistentid, fac.persistentid as new_facility_parent_persistentid, wi.persistentid as wi_persist_id "
 						+ "from "
 						+ getDbSchemaName()
 						+ ".work_instruction as wi "
@@ -766,23 +763,38 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 						+ ".location as fac on oh.parent_persistentid = fac.persistentid");
 
 				while (resultSet.next()) {
+					String wiPersistentId = resultSet.getString("wi_persist_id");
 					String detailPersistentId = resultSet.getString("wi_parent_id");
 					String facilityPersistentId = resultSet.getString("new_facility_parent_persistentid");
 					// Let's guard a bit against a double update. If parent is already the facility, don't copy to orderDetail field.
 					if (!detailPersistentId.equals(facilityPersistentId)) {
+						/*  // this could work, but doesn't
 						resultSet.updateString("order_detail_persistentid", detailPersistentId);
 						resultSet.updateString("wi_parent_id", facilityPersistentId);
 						resultSet.updateRow();
-					}
-					else {
-						LOGGER.error("oops");
+						*/
+						String sql1 = "UPDATE " + getDbSchemaName() + ".work_instruction SET order_detail_persistentid = '"
+								+ detailPersistentId + "' WHERE persistentid = '" + wiPersistentId + "'";
+						LOGGER.info(sql1);
+						boolean thisActionValue = execOneSQLCommand(sql1);
+
+						String sql2 = "UPDATE " + getDbSchemaName() + ".work_instruction SET wi_parent_id = '"
+								+ facilityPersistentId + "' WHERE persistentid = '" + wiPersistentId + "'";
+						LOGGER.info(sql2);
+						thisActionValue &= execOneSQLCommand(sql2);
+
+						if (!thisActionValue) {
+							LOGGER.error("Failed to set order_detail and/or parent fields on this record.");
+						}
+					} else {
+						LOGGER.error("oops-getting records for update that does not need it.");
 					}
 				}
 			}
 			if (result) {
 				// add these links/constraints after the column changes above, so we do not get constraint violations
 				result &= linkToParentTable("work_instruction", "order_detail", "order_detail");
-				result &= linkToParentTable("work_instruction", "parent", "location");			
+				result &= linkToParentTable("work_instruction", "parent", "location");
 			}
 
 		} catch (Exception e) {
@@ -944,7 +956,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		// Drop the foreign key constraint.
 		// many databases use "DROP FOREIGN KEY"
 		// but Postgres uses "DROP CONSTRAINT"  and notice the _fkey1.
-		
+
 		String constraintString = "ALTER TABLE " + getDbSchemaName() + "." + inChildTableName //
 				+ " DROP CONSTRAINT " + inChildTableName + "_" + inForeignKeyColumnName + "_persistentid" + "_fkey";
 		LOGGER.info("unLinkToParentTable: " + constraintString);
@@ -1147,7 +1159,6 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 		result &= linkToParentTable("work_instruction", "item_master", "item_master");
 		result &= linkToParentTable("work_instruction", "container", "container");
 		result &= linkToParentTable("work_instruction", "order_detail", "order_detail");
-
 
 		result &= execOneSQLCommand("CREATE  INDEX work_instruction_che_index ON " + getDbSchemaName()
 				+ ".work_instruction (assigned_che_persistentid)");
