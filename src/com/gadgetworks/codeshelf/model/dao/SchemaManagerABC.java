@@ -733,9 +733,9 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		try {
 			result &= execOneSQLCommand("ALTER TABLE " + getDbSchemaName()
-					+ ".work_instruction ALTER COLUMN container DROP NOT NULL");
+					+ ".work_instruction ALTER COLUMN container_persistentid DROP NOT NULL");
 			result &= execOneSQLCommand("ALTER TABLE " + getDbSchemaName()
-					+ ".work_instruction ALTER COLUMN item_master DROP NOT NULL");
+					+ ".work_instruction ALTER COLUMN item_master_persistentid DROP NOT NULL");
 
 			result &= safeAddColumn("work_instruction", "order_detail_persistentid", UUID_TYPE);
 			result &= linkToParentTable("work_instruction", "order_detail", "order_detail");
@@ -936,15 +936,20 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 
 		boolean result = true;
 
-		// Add the foreign key constraint.
-		result &= execOneSQLCommand("ALTER TABLE " + getDbSchemaName() + "." + inChildTableName //
-				+ " DROP FOREIGN KEY (" + inForeignKeyColumnName + "_persistentid)" //
-				+ " REFERENCES DATABASE." + getDbSchemaName() + "." + inParentTableName + " (persistentid)" //
-				+ " ON DELETE RESTRICT ON UPDATE RESTRICT;");
+		// Drop the foreign key constraint.
+		// many databases use "DROP FOREIGN KEY"
+		// but Postgres uses "DROP CONSTRAINT"  and notice the _fkey1.
+		
+		String constraintString = "ALTER TABLE " + getDbSchemaName() + "." + inChildTableName //
+				+ " DROP CONSTRAINT " + inChildTableName + "_" + inForeignKeyColumnName + "_persistentid" + "_fkey";
+		LOGGER.info("unLinkToParentTable: " + constraintString);
+		result &= execOneSQLCommand(constraintString); //
 
-		// Add the index that makes it efficient to find the child objects from the parent.
-		result &= execOneSQLCommand("DROP INDEX " //
-				+ inChildTableName + "_" + inForeignKeyColumnName + "_" + inParentTableName );
+		// And drop the index
+		String indexString = "DROP INDEX " //
+				+ inChildTableName + "_" + inForeignKeyColumnName + "_" + inParentTableName;
+		LOGGER.info("unLinkToParentTable: " + indexString);
+		result &= execOneSQLCommand(indexString);
 
 		return result;
 
