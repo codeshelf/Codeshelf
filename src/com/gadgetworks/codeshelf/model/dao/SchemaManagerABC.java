@@ -778,7 +778,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 						LOGGER.info(sql1);
 						boolean thisActionValue = execOneSQLCommand(sql1);
 
-						String sql2 = "UPDATE " + getDbSchemaName() + ".work_instruction SET wi_parent_id = '"
+						String sql2 = "UPDATE " + getDbSchemaName() + ".work_instruction SET parent_persistentid = '"
 								+ facilityPersistentId + "' WHERE persistentid = '" + wiPersistentId + "'";
 						LOGGER.info(sql2);
 						thisActionValue &= execOneSQLCommand(sql2);
