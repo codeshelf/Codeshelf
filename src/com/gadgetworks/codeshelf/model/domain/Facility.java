@@ -1263,7 +1263,9 @@ public class Facility extends SubLocationABC<Facility> {
 			}
 
 			// Update the WI
-			resultWi.setDomainId(Long.toString(System.currentTimeMillis()));
+			String wiDomainId = Long.toString(System.currentTimeMillis());
+			LOGGER.debug("new WI domainID: " + wiDomainId);
+			resultWi.setDomainId(wiDomainId);
 			resultWi.setTypeEnum(inType);
 			resultWi.setStatusEnum(inStatus);
 
