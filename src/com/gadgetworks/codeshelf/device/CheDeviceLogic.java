@@ -37,6 +37,9 @@ import com.gadgetworks.flyweight.command.NetGuid;
 import com.gadgetworks.flyweight.controller.INetworkDevice;
 import com.gadgetworks.flyweight.controller.IRadioController;
 import com.gadgetworks.flyweight.controller.NetworkDeviceStateEnum;
+import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 
 /**
  * @author jeffw
@@ -56,23 +59,26 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private static final String		POSITION_PREFIX							= "P%";
 
 	// These are the message strings we send to the remote CHE.
-	// Currently, these cannot be longer than 10 characters.
-	private static final String		EMPTY_MSG								= "                    ";
-	private static final String		INVALID_SCAN_MSG						= "INVALID             ";
-	private static final String		SCAN_USERID_MSG							= "SCAN BADGE          ";							//		 new String(new byte[] { 0x7c, (byte) 0x05 });
-	private static final String		SCAN_LOCATION_MSG						= "SCAN LOCATION       ";
-	private static final String		SCAN_CONTAINER_MSG						= "SCAN CONTAINER      ";
-	private static final String		OR_START_WORK_MSG						= "OR START WORK       ";
-	private static final String		SELECT_POSITION_MSG						= "SELECT POSITION     ";
-	private static final String		SHORT_PICK_CONFIRM_MSG					= "CONFIRM SHORT       ";
-	private static final String		PICK_COMPLETE_MSG						= "ALL WORK COMPLETE   ";
-	private static final String		YES_NO_MSG								= "SCAN YES OR NO      ";
-	private static final String		NO_CONTAINERS_SETUP_MSG					= "NO SETUP CONTAINERS ";
-	private static final String		POSITION_IN_USE_MSG						= "POSITION IN USE     ";
-	private static final String		FINISH_SETUP_MSG						= "PLS SETUP CONTAINERS";
-	private static final String		COMPUTE_WORK_MSG						= "COMPUTING WORK      ";
-	private static final String		GET_WORK_MSG							= "GETTING WORK        ";
+	// Currently, these cannot be longer than 20 characters.
+	private static final String		EMPTY_MSG								= cheLine("");
+	private static final String		INVALID_SCAN_MSG						= cheLine("INVALID");
+	private static final String		SCAN_USERID_MSG							= cheLine("SCAN BADGE");
+	private static final String		SCAN_LOCATION_MSG						= cheLine("SCAN LOCATION");
+	private static final String		SCAN_CONTAINER_MSG						= cheLine("SCAN CONTAINER");
+	private static final String		OR_START_WORK_MSG						= cheLine("OR START WORK");
+	private static final String		SELECT_POSITION_MSG						= cheLine("SELECT POSITION");
+	private static final String		SHORT_PICK_CONFIRM_MSG					= cheLine("CONFIRM SHORT");
+	private static final String		PICK_COMPLETE_MSG						= cheLine("ALL WORK COMPLETE");
+	private static final String		YES_NO_MSG								= cheLine("SCAN YES OR NO");
+	private static final String		NO_CONTAINERS_SETUP_MSG					= cheLine("NO SETUP CONTAINERS");
+	private static final String		POSITION_IN_USE_MSG						= cheLine("POSITION IN USE");
+	private static final String		FINISH_SETUP_MSG						= cheLine("PLS SETUP CONTAINERS");
+	private static final String		COMPUTE_WORK_MSG						= cheLine("COMPUTING WORK");
+	private static final String		GET_WORK_MSG							= cheLine("GETTING WORK");
+	private static final String		NO_WORK_MSG								= cheLine("NO WORK TO DO");
 
+
+	
 	private static final String		STARTWORK_COMMAND						= "START";
 	private static final String		SETUP_COMMAND							= "SETUP";
 	private static final String		SHORT_COMMAND							= "SHORT";
@@ -364,7 +370,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		if (inWorkInstructionCount > 0) {
 			setState(CheStateEnum.LOCATION_SELECT);
 		} else {
-			setState(CheStateEnum.PICK_COMPLETE);
+			setState(CheStateEnum.NO_WORK);
 		}
 	}
 
@@ -383,8 +389,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		}
 
 		if (inWorkItemList.size() == 0) {
-			sendDisplayCommand(PICK_COMPLETE_MSG, EMPTY_MSG);
-			setState(CheStateEnum.PICK_COMPLETE);
+			setState(CheStateEnum.NO_WORK);
 		} else {
 			mActivePickWiList.clear();
 			mAllPicksWiList.clear();
@@ -552,6 +557,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 			case PICK_COMPLETE:
 				sendDisplayCommand(PICK_COMPLETE_MSG, EMPTY_MSG);
+				break;
+			case NO_WORK:
+				sendDisplayCommand(NO_WORK_MSG, EMPTY_MSG);
 				break;
 
 			default:
@@ -762,7 +770,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	/**
 	 */
 	private void doNextPick() {
-		LOGGER.info("Next pick");
+		LOGGER.debug(this + "doNextPick");
 
 		if (mActivePickWiList.size() > 0) {
 			// There are still picks in the active list.
@@ -823,6 +831,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		String firstItemId = null;
 		Collections.sort(mAllPicksWiList, new WiGroupSortComparator());
 		for (WorkInstruction wi : mAllPicksWiList) {
+			if(mContainersMap.values().isEmpty()) {
+				LOGGER.warn(this + " assigned work but no containers assigned");
+			}
 			for (String containerId : mContainersMap.values()) {
 				// If the WI is for this container then consider it.
 				if (wi.getContainerId().equals(containerId)) {
@@ -1221,5 +1232,19 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			instructions.add(instruction);
 		}
 		sendPickRequestCommand(instructions);
+	}
+	
+	public String toString() {
+		return Objects.toStringHelper(this)
+			.add("netGuid", getGuid()).toString();
+	}
+
+	/**
+	 *  Currently, these cannot be longer than 20 characters.
+	 */
+	private static String cheLine(String message) {
+		Preconditions.checkNotNull(message, "Message cannot be null");
+		Preconditions.checkArgument(message.length() <= 20, "Message '%s' will not fit on che display", message);
+		return Strings.padEnd(message, 20 - message.length(), ' ');
 	}
 }

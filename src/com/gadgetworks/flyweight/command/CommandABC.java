@@ -8,6 +8,8 @@ package com.gadgetworks.flyweight.command;
 
 import java.io.IOException;
 
+import lombok.EqualsAndHashCode;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,6 +42,7 @@ import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
  * @author jeffw
  */
 
+@EqualsAndHashCode(doNotUseGetters=true)
 public abstract class CommandABC implements ICommand {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(CommandABC.class);
