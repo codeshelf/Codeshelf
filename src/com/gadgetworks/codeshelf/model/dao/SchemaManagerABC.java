@@ -674,6 +674,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	 */
 	private boolean doUpgrade019() {
 		boolean result = true;
+		LOGGER.info("start upgrade action 19");
 
 		try {
 
@@ -730,6 +731,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 	 */
 	private boolean doUpgrade020() {
 		boolean result = true;
+		LOGGER.info("start upgrade action 20");
 
 		try {
 			result &= execOneSQLCommand("ALTER TABLE " + getDbSchemaName()
