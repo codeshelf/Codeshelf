@@ -13,7 +13,11 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum.WorkInstructionTypeNum;
+import com.gadgetworks.codeshelf.model.domain.Bay;
 import com.gadgetworks.codeshelf.model.domain.Facility;
+import com.gadgetworks.codeshelf.model.domain.ILocation;
+import com.gadgetworks.codeshelf.model.domain.LocationABC;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 
 /**
@@ -22,7 +26,7 @@ import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
  */
 public abstract class WorkInstructionSequencerABC implements IWorkInstructionSequencer {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(WorkInstructionSequencerABC.class);
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(WorkInstructionSequencerABC.class);
 
 	/**
 	 * Sort WorkInstructions by their posAlongPath.
@@ -58,30 +62,68 @@ public abstract class WorkInstructionSequencerABC implements IWorkInstructionSeq
 
 	// --------------------------------------------------------------------------
 	/**
+	 * Helper function. Adds to existing list, or creates the list if null
+	 * @param inList
+	 * @param inEnum
+	 * @return
+	 */
+	private List<WorkInstructionTypeEnum> addHouseKeepEnumToList(List<WorkInstructionTypeEnum> inList,
+		WorkInstructionTypeEnum inEnum) {
+		if (inList != null) {
+			inList.add(inEnum);
+			return inList;
+		} else {
+			List<WorkInstructionTypeEnum> returnList = new ArrayList<WorkInstructionTypeEnum>();
+			returnList.add(inEnum);
+			return returnList;
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
 	 * Are the workInstructions coming/going to the same cart position? If so, the user may be confused about the button press. We want an intervening housekeeping WI
+	 * Somewhat similar story for bay-change. And later for aisle/path segment change.
+	 * Returns null if no WI needed. The enum of the right type if a housekeep is needed. Notice that it returns a list. It can return two or more separate housekeeps to insert.
 	 * @param prevWi
 	 * @param nextWi
 	 * @return
 	 */
-	private boolean wisNeedHouseKeepingBetween(WorkInstruction inPrevWi, WorkInstruction inNextWi) {
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	private List<WorkInstructionTypeEnum> wisNeedHouseKeepingBetween(WorkInstruction inPrevWi, WorkInstruction inNextWi) {
+		final boolean kWantHK_REPEATPOS = true;
+		final boolean kWantHK_BAYCOMPLETE = true;
+		List<WorkInstructionTypeEnum> returnList = null;
+
 		if (inPrevWi == null)
-			return false;
+			return null;
 		else if (inNextWi == null) {
 			LOGGER.error("null value in wisNeedHouseKeepingBetween");
-			return false;
+			return null;
+		} else {
+
+			// container is associated to cart position. User cares about same cart position twice in a row.
+			if (kWantHK_REPEATPOS && inPrevWi.getContainer().equals(inNextWi.getContainer())) {
+				// Nothing we can do on server side if multiple items will be recorded to same cart position.
+				returnList = addHouseKeepEnumToList(returnList, WorkInstructionTypeEnum.HK_REPEATPOS);
+			}
+
+			if (kWantHK_BAYCOMPLETE) {
+				// This can be tricky. Crossbatch put WI may have multiple locations. Initial implementation will not be completely right if the multiple locations span across bays.
+				// In our model, the WI.location field in this case is the arbitrary "first" location of all the locations for the outbound order.
+				ILocation loc1 = inPrevWi.getLocation();
+				ILocation loc2 = inNextWi.getLocation();
+				if (loc1 == null || loc2 == null)
+					LOGGER.error("unanticipated case in wisNeedHouseKeepingBetween");
+				else {
+					ILocation bay1 = loc1.getParentAtLevel(Bay.class);
+					ILocation bay2 = loc2.getParentAtLevel(Bay.class);
+					if (bay1 != null && bay2 != null && !bay1.equals(bay2))
+						returnList = addHouseKeepEnumToList(returnList, WorkInstructionTypeEnum.HK_BAYCOMPLETE);
+				}
+			}
 		}
-		else { // container is associated to cart position
-			return inPrevWi.getContainer().equals(inNextWi.getContainer());
-			// Nothing we can do on server side if multiple items will be recorded to same cart position.
-		}
+		return returnList;
 	}
-	
-	private WorkInstruction getNewHousekeepingWiSimilarTo(Facility inFacility, WorkInstruction inWi) {
-		// expand this. Call through to facility
-		// perhaps we would want to change the signature to include previous and the next wi. (inWi is the next wi)
-		
-		return null;
-	}	
 
 	// --------------------------------------------------------------------------
 	/**
@@ -93,12 +135,16 @@ public abstract class WorkInstructionSequencerABC implements IWorkInstructionSeq
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 		WorkInstruction lastWi = null;
 		for (WorkInstruction wi : inSortedWiList) {
-			if (wisNeedHouseKeepingBetween(lastWi, wi)) {
-				WorkInstruction houseKeepingWi = getNewHousekeepingWiSimilarTo(inFacility, wi);
-				if (houseKeepingWi != null)
-					wiResultList.add(houseKeepingWi);
-				else 
-					LOGGER.debug("null returned from getNewHousekeepingWiSimilarTo");
+			List<WorkInstructionTypeEnum> theHousekeepingTypeList = wisNeedHouseKeepingBetween(lastWi, wi);
+			// returns null if nothing to do. If non-null, then at lease one in the list.
+			if (theHousekeepingTypeList != null) {
+				for (WorkInstructionTypeEnum theType : theHousekeepingTypeList) {
+					WorkInstruction houseKeepingWi = WiFactory.createHouseKeepingWi(theType, inFacility, lastWi, wi);
+					if (houseKeepingWi != null)
+						wiResultList.add(houseKeepingWi);
+					else
+						LOGGER.debug("null returned from getNewHousekeepingWiOfType");
+				}
 			}
 			wiResultList.add(wi);
 			lastWi = wi;
