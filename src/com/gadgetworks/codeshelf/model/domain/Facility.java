@@ -85,6 +85,8 @@ import com.google.inject.Singleton;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class Facility extends SubLocationABC<Facility> {
 
+	private static final String	IRONMQ_DOMAINID	= "IRONMQ";
+
 	@Inject
 	public static ITypedDao<Facility>	DAO;
 
@@ -619,26 +621,7 @@ public class Facility extends SubLocationABC<Facility> {
 	 * @return
 	 */
 	public final IEdiService getEdiExportService() {
-		IronMqService result = null;
-
-		for (IEdiService ediService : getEdiServices()) {
-			if (ediService instanceof IronMqService) {
-				result = (IronMqService) ediService;
-				break;
-			}
-		}
-
-		if (result == null) {
-			LOGGER.info("Creating IronMQ service");
-			try {
-				return createIronMqService();
-			} catch (PSQLException e) {
-				LOGGER.error("SQL error trying to create IronMqService", e);
-				// allow it to return null
-			}
-		}
-
-		return result;
+		return IronMqService.DAO.findByDomainId(this, IRONMQ_DOMAINID);
 	}
 
 	// --------------------------------------------------------------------------
@@ -651,7 +634,7 @@ public class Facility extends SubLocationABC<Facility> {
 
 		result = new IronMqService();
 		result.setParent(this);
-		result.setDomainId("IRONMQ");
+		result.setDomainId(IRONMQ_DOMAINID);
 		result.setProviderEnum(EdiProviderEnum.IRONMQ);
 		result.setServiceStateEnum(EdiServiceStateEnum.UNLINKED);
 		result.storeCredentials("", ""); // non-null credentials
