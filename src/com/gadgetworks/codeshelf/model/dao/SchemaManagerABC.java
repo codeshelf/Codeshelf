@@ -740,9 +740,7 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 					+ ".work_instruction ALTER COLUMN item_master_persistentid DROP NOT NULL");
 
 			result &= safeAddColumn("work_instruction", "order_detail_persistentid", UUID_TYPE);
-			result &= linkToParentTable("work_instruction", "order_detail", "order_detail");
 			result &= unLinkToParentTable("work_instruction", "parent", "order_detail");
-			result &= linkToParentTable("work_instruction", "parent", "location");
 
 			// Now the good part. Copy contents of parent_persistentid column to order_detail column. Then put the facility persistentId into parent_persistentid
 			if (result) {
@@ -780,6 +778,11 @@ public abstract class SchemaManagerABC implements ISchemaManager {
 						LOGGER.error("oops");
 					}
 				}
+			}
+			if (result) {
+				// add these links/constraints after the column changes above, so we do not get constraint violations
+				result &= linkToParentTable("work_instruction", "order_detail", "order_detail");
+				result &= linkToParentTable("work_instruction", "parent", "location");			
 			}
 
 		} catch (Exception e) {
