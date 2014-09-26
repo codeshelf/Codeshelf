@@ -90,8 +90,8 @@ public abstract class WorkInstructionSequencerABC implements IWorkInstructionSeq
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private List<WorkInstructionTypeEnum> wisNeedHouseKeepingBetween(WorkInstruction inPrevWi, WorkInstruction inNextWi) {
-		final boolean kWantHK_REPEATPOS = true;
-		final boolean kWantHK_BAYCOMPLETE = true;
+		boolean wantHK_REPEATPOS = WiFactory.getShouldCreateThisHK(WorkInstructionTypeEnum.HK_REPEATPOS);
+		boolean wantHK_BAYCOMPLETE = WiFactory.getShouldCreateThisHK(WorkInstructionTypeEnum.HK_BAYCOMPLETE);
 		List<WorkInstructionTypeEnum> returnList = null;
 
 		if (inPrevWi == null)
@@ -102,12 +102,12 @@ public abstract class WorkInstructionSequencerABC implements IWorkInstructionSeq
 		} else {
 
 			// container is associated to cart position. User cares about same cart position twice in a row.
-			if (kWantHK_REPEATPOS && inPrevWi.getContainer().equals(inNextWi.getContainer())) {
+			if (wantHK_REPEATPOS && inPrevWi.getContainer().equals(inNextWi.getContainer())) {
 				// Nothing we can do on server side if multiple items will be recorded to same cart position.
 				returnList = addHouseKeepEnumToList(returnList, WorkInstructionTypeEnum.HK_REPEATPOS);
 			}
 
-			if (kWantHK_BAYCOMPLETE) {
+			if (wantHK_BAYCOMPLETE) {
 				// This can be tricky. Crossbatch put WI may have multiple locations. Initial implementation will not be completely right if the multiple locations span across bays.
 				// In our model, the WI.location field in this case is the arbitrary "first" location of all the locations for the outbound order.
 				ILocation loc1 = inPrevWi.getLocation();
@@ -140,8 +140,9 @@ public abstract class WorkInstructionSequencerABC implements IWorkInstructionSeq
 			if (theHousekeepingTypeList != null) {
 				for (WorkInstructionTypeEnum theType : theHousekeepingTypeList) {
 					WorkInstruction houseKeepingWi = WiFactory.createHouseKeepingWi(theType, inFacility, lastWi, wi);
-					if (houseKeepingWi != null)
+					if (houseKeepingWi != null) {
 						wiResultList.add(houseKeepingWi);
+					}
 					else
 						LOGGER.debug("null returned from getNewHousekeepingWiOfType");
 				}

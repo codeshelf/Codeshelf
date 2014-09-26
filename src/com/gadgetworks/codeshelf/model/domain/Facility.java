@@ -744,8 +744,11 @@ public class Facility extends SubLocationABC<Facility> {
 		// Delete any planned WIs for this CHE.
 		Map<String, Object> filterParams = new HashMap<String, Object>();
 		filterParams.put("chePersistentId", inChe.getPersistentId().toString());
-		filterParams.put("type", WorkInstructionTypeEnum.PLAN.toString());
-		for (WorkInstruction wi : WorkInstruction.DAO.findByFilter("assignedChe.persistentId = :chePersistentId and typeEnum = :type",
+		// This is ugly. We probably do want a housekeeping type here, but then might want subtypes not in this query
+		filterParams.put("typeplan", WorkInstructionTypeEnum.PLAN.toString());
+		filterParams.put("typehkbaychange", WorkInstructionTypeEnum.HK_BAYCOMPLETE.toString());
+		filterParams.put("typehkrepeat", WorkInstructionTypeEnum.HK_REPEATPOS.toString());
+		for (WorkInstruction wi : WorkInstruction.DAO.findByFilter("assignedChe.persistentId = :chePersistentId and (typeEnum = :typeplan or typeEnum = :typehkbaychange or typeEnum = :typehkrepeat) ",
 			filterParams)) {
 			try {
 
@@ -879,9 +882,11 @@ public class Facility extends SubLocationABC<Facility> {
 		// Get all of the PLAN WIs assigned to this CHE beyond the specified position.
 		Map<String, Object> filterParams = new HashMap<String, Object>();
 		filterParams.put("chePersistentId", inChe.getPersistentId().toString());
-		filterParams.put("type", WorkInstructionTypeEnum.PLAN.toString());
+		filterParams.put("typeplan", WorkInstructionTypeEnum.PLAN.toString());
+		filterParams.put("typehkbaychange", WorkInstructionTypeEnum.HK_BAYCOMPLETE.toString());
+		filterParams.put("typehkrepeat", WorkInstructionTypeEnum.HK_REPEATPOS.toString());
 		filterParams.put("pos", startingPathPos);
-		String filter = "(assignedChe.persistentId = :chePersistentId) and (typeEnum = :type) and (posAlongPath >= :pos)";
+		String filter = "(assignedChe.persistentId = :chePersistentId) and (typeEnum = :typeplan or typeEnum = :typehkbaychange or typeEnum = :typehkrepeat) and (posAlongPath >= :pos)";
 		for (WorkInstruction wi : WorkInstruction.DAO.findByFilter(filter, filterParams)) {
 			wiResultList.add(wi);
 		}
@@ -1002,6 +1007,7 @@ public class Facility extends SubLocationABC<Facility> {
 		final Timestamp inTime) {
 
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
+		Integer count = 0;
 
 		// To proceed, there should container use linked to outbound order
 		// We want to add all orders represented in the container list because these containers (or for Accu, fake containers representing the order) were scanned for this CHE to do.
@@ -1012,6 +1018,8 @@ public class Facility extends SubLocationABC<Facility> {
 				for (OrderDetail orderDetail : order.getOrderDetails()) {
 					// An order detail might be set to zero quantity by customer, essentially canceling that item. Don't make a WI if canceled.
 					if (orderDetail.getQuantity() > 0) {
+						count++;
+						LOGGER.debug("WI #" + count + "in generateOutboundInstructions");
 						WorkInstruction aWi = makeWIForOutbound(orderDetail, inChe, container, inTime); // Could be normal WI, or a short WI
 						if (aWi != null) {
 							wiResultList.add(aWi);
@@ -1917,29 +1925,34 @@ public class Facility extends SubLocationABC<Facility> {
 		if (containersIdList.size() > 0) {
 			Integer wiCount = this.computeWorkInstructions(inChe, containersIdList);
 			// That did the work. Big side effect. Deleted existing WIs for the CHE. Made new ones. Assigned container uses to the CHE.
+			// The wiCount returned is mainly or convenience and debugging. It may not include some shorts
 
 			if (wiCount > 0) {
 				// debug aid. Does the CHE know its work instructions?
-				List<WorkInstruction> cheWiList = inChe.getCheWorkInstructions();
+				List<WorkInstruction> cheWiList = inChe.getCheWorkInstructions(); // This gets all, including shorts
 				Integer cheCountGot = cheWiList.size();
-				if (!cheCountGot.equals(wiCount)) {
-					LOGGER.warn("setUpCheContainerFromString did not result in CHE getting all work instructions. Why?"); // Should this be an error? Maybe shorts do not go the CHE
+				if (cheCountGot < wiCount) {
+					LOGGER.error("setUpCheContainerFromString did not result in CHE getting all work instructions. Why?"); 
+					// if there are shorts cheCountGot might be greater.
 				}
 
+				//  /*
+				
 				// Get the work instructions for this CHE at this location for the given containers. Can we pass empty string? Normally user would scan where the CHE is starting.
 				List<WorkInstruction> wiListAfterScanBlank = this.getWorkInstructions(inChe, ""); // cannot really scan blank, but this is how our UI simulation works
 				Integer wiCountGot = wiListAfterScanBlank.size();
-				// getWorkInstructions() has no side effects. But the site controller request gets these.
-				// As work instructions are executed, they come back with start and complete time. and PLAN/NEW changes to ACTUAL/COMPLETE or ACTUAL/SHORT
+				// getWorkInstructions() does a new filtered query from db
+				// Only PLAN and housekeeping types come
 				if (wiCountGot > 0) {
 					// debug aid. Does the CHE know its work instructions?
 					List<WorkInstruction> cheWiList2 = inChe.getCheWorkInstructions();
 					Integer cheCountGot2 = cheWiList2.size();
-					if (!cheCountGot2.equals(wiCountGot)) {
-						LOGGER.warn("setUpCheContainerFromString did not result in CHE getting all work instructions. Why?"); // Should this be an error? Maybe shorts do not go the CHE
+					if (cheCountGot2 < wiCountGot) {
+						LOGGER.error("setUpCheContainerFromString did not result in CHE getting all work instructions. Why?"); 
 					}
 
 				}
+				//  */
 
 			}
 		}
