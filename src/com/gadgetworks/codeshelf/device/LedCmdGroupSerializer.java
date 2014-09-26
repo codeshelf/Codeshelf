@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -73,6 +75,7 @@ public final class LedCmdGroupSerializer {
 	 * @return
 	 */
 	public static List<LedCmdGroup> deserializeLedCmdString(final String inCmdString) {
+		Preconditions.checkArgument(!Strings.isNullOrEmpty(inCmdString), "ledCmdString cannot be null");
 		List<LedCmdGroup> result = new ArrayList<LedCmdGroup>();
 
 		Gson mGson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();

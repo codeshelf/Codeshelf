@@ -6,6 +6,8 @@
 
 package com.gadgetworks.flyweight.command;
 
+import lombok.EqualsAndHashCode;
+
 import com.gadgetworks.flyweight.bitfields.BitFieldInputStream;
 import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
 
@@ -23,6 +25,7 @@ import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
  *  @author jeffw
  *  
  */
+@EqualsAndHashCode(callSuper=true, doNotUseGetters=true)
 public abstract class CommandControlABC extends ExtendedCommandABC {
 
 	public static final int		COMMAND_CONTROL_HDR_BYTES	= 1;

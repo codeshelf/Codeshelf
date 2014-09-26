@@ -8,6 +8,7 @@ package com.gadgetworks.flyweight.command;
 
 import java.io.IOException;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -28,6 +29,7 @@ import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
 
  *  @author jeffw
  */
+@EqualsAndHashCode(callSuper=true, doNotUseGetters=true)
 public final class CommandControlClearPosController extends CommandControlABC {
 
 	private static final Logger		LOGGER					= LoggerFactory.getLogger(CommandControlClearPosController.class);

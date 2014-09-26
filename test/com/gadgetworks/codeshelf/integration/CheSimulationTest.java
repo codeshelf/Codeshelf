@@ -46,7 +46,7 @@ public class CheSimulationTest extends EndToEndIntegrationTest {
 		waitForCheState(cheDeviceLogic,CheStateEnum.CONTAINER_SELECT,1000);
 
 		cheDeviceLogic.scanCommandReceived("X%START");
-		waitForCheState(cheDeviceLogic,CheStateEnum.PICK_COMPLETE,5000);
+		waitForCheState(cheDeviceLogic,CheStateEnum.NO_WORK,5000);
 		
 		cheDeviceLogic.scanCommandReceived("X%LOGOUT");		
 		waitForCheState(cheDeviceLogic,CheStateEnum.IDLE,1000);
