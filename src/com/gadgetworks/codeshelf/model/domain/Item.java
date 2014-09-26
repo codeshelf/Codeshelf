@@ -448,12 +448,12 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		
 		// to compute, we need the locations first and last led positions
 		ILocation<?> theLocation = this.getStoredLocation();
+		if (theLocation instanceof Facility)
+			return theLedRange; // was initialized to give values of 0,0
+
 		int firstLocLed = theLocation.getFirstLedNumAlongPath(); 
 		int lastLocLed = theLocation.getLastLedNumAlongPath(); 
-		// following cast not safe if the stored location is facility
-		if (theLocation.getClass() == Facility.class)
-			return theLedRange; // was initialized to give values of 0,0
-		
+	
 		Double metersFromAnchor = getMetersFromAnchor();
 		
 		Double locationWidth = ((SubLocationABC<?>) theLocation).getLocationWidthMeters();

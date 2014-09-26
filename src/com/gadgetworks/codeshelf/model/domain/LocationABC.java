@@ -845,7 +845,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		int firstLocLed = getFirstLedNumAlongPath(); 
 		int lastLocLed = getLastLedNumAlongPath(); 
 		// following cast not safe if the stored location is facility
-		if (this.getClass() == Facility.class)
+		if (this instanceof Facility)
 			return theLedRange; // was initialized to give values of 0,0
 				
 		boolean lowerLedNearAnchor = this.isLowerLedNearAnchor();
