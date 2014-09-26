@@ -60,6 +60,7 @@ import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.codeshelf.util.SequenceNumber;
 import com.gadgetworks.codeshelf.util.UomNormalizer;
 import com.gadgetworks.codeshelf.validation.DefaultErrors;
 import com.gadgetworks.codeshelf.validation.ErrorCode;
@@ -1263,8 +1264,8 @@ public class Facility extends SubLocationABC<Facility> {
 			}
 
 			// Update the WI
-			String wiDomainId = Long.toString(System.currentTimeMillis());
-			LOGGER.debug("new WI domainID: " + wiDomainId);
+			long seq = SequenceNumber.generate();
+			String wiDomainId = Long.toString(seq);
 			resultWi.setDomainId(wiDomainId);
 			resultWi.setTypeEnum(inType);
 			resultWi.setStatusEnum(inStatus);
