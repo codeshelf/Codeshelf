@@ -17,7 +17,6 @@ import java.util.Map.Entry;
 import java.util.UUID;
 
 import lombok.Getter;
-import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import org.slf4j.Logger;
@@ -92,19 +91,16 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	// The CHE's current state.
 	@Accessors(prefix = "m")
 	@Getter
-	@Setter
 	private CheStateEnum			mCheStateEnum;
 
 	// The CHE's current location.
 	@Accessors(prefix = "m")
 	@Getter
-	@Setter
 	private String					mLocationId;
 
 	// The CHE's current user.
 	@Accessors(prefix = "m")
 	@Getter
-	@Setter
 	private String					mUserId;
 
 	// The CHE's container map.
@@ -398,20 +394,6 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			doNextPick();
 			setState(CheStateEnum.DO_PICK);
 		}
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 */
-	public final void signalNetworkDown() {
-		//sendDisplayCommand("NETWORK DOWN", "");
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 */
-	public final void signalNetworkUp() {
-		//sendDisplayCommand("NETWORK UP", "");
 	}
 
 	// --------------------------------------------------------------------------
@@ -1045,7 +1027,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 */
 	private void processLocationScan(final String inScanPrefixStr, String inScanStr) {
 		if (LOCATION_PREFIX.equals(inScanPrefixStr)) {
-			setLocationId(inScanStr);
+			this.mLocationId = inScanStr;
 
 			new ArrayList<String>(mContainersMap.values());
 			mDeviceManager.getCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), inScanStr);
