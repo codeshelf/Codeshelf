@@ -34,12 +34,10 @@ public class WorkService {
 	
 	public WorkService() {
 		this(Integer.MAX_VALUE, new IEdiExportServiceProvider() {
-
 			@Override
 			public IEdiService getWorkInstructionExporter(Facility facility) {
 				return facility.getEdiExportService();
 			}
-		
 		}, 10000L);
 	}
 	
@@ -70,12 +68,9 @@ public class WorkService {
 					}
 				} catch (InterruptedException e) {
 					LOGGER.error("Work instruction exporter interrupted waiting for completed work instructions. Shutting down.", e);
-				}
-				
+				}	
 			}
-			
 		});
-		
 	}
 	
 	public List<WiSetSummary> workSummary(String cheId, String facilityId) {
@@ -169,7 +164,7 @@ public class WorkService {
 		try {
 			OrderHeader.DAO.store(order);
 		} catch (DaoException e) {
-			LOGGER.error("", e);
+			LOGGER.error("Failed to update order status", e);
 		}
 	}
 

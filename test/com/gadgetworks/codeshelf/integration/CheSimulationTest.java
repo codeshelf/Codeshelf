@@ -1,6 +1,7 @@
 package com.gadgetworks.codeshelf.integration;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -13,6 +14,7 @@ import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Organization;
+import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 
 public class CheSimulationTest extends EndToEndIntegrationTest {
 
@@ -20,7 +22,7 @@ public class CheSimulationTest extends EndToEndIntegrationTest {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(CheSimulationTest.class);
 
 	@Test
-	public final void testChe() throws IOException {
+	public final void testNoWorkToDo() throws IOException {
 		// get basic data from database
 		Organization organization = mOrganizationDao.findByDomainId(null, organizationId);
 		Assert.assertNotNull(organization);
@@ -31,24 +33,11 @@ public class CheSimulationTest extends EndToEndIntegrationTest {
 		Che che = network.getChe(cheId1);
 		Assert.assertNotNull(che);
 		
-		// verify that che is in site controller's device list
-		CheDeviceLogic cheDeviceLogic = (CheDeviceLogic) this.siteController.getDeviceManager().getDeviceByGuid(cheGuid1);
-		Assert.assertNotNull(cheDeviceLogic);
-		
-		// cycle through empty WI list scenario
-		cheDeviceLogic.scanCommandReceived("U%PICKER1");
-		waitForCheState(cheDeviceLogic,CheStateEnum.CONTAINER_SELECT,1000);
-
-		cheDeviceLogic.scanCommandReceived("C%1");
-		waitForCheState(cheDeviceLogic,CheStateEnum.CONTAINER_POSITION,1000);
-
-		cheDeviceLogic.scanCommandReceived("P%1");
-		waitForCheState(cheDeviceLogic,CheStateEnum.CONTAINER_SELECT,1000);
-
-		cheDeviceLogic.scanCommandReceived("X%START");
-		waitForCheState(cheDeviceLogic,CheStateEnum.NO_WORK,5000);
-		
-		cheDeviceLogic.scanCommandReceived("X%LOGOUT");		
-		waitForCheState(cheDeviceLogic,CheStateEnum.IDLE,1000);
+		PickSimulator picker = new PickSimulator(this,cheGuid1);
+		picker.login("Picker #1");
+		picker.setupContainer("1", "1");
+		picker.start(null);
+		picker.waitForCheState(CheStateEnum.NO_WORK,1000);
+		picker.logout();
 	}
 }

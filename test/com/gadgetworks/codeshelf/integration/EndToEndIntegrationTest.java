@@ -43,12 +43,19 @@ public abstract class EndToEndIntegrationTest extends DomainTestABC {
 	protected static String facilityId = "F1";
 	protected static String networkId = CodeshelfNetwork.DEFAULT_NETWORK_NAME;
 	protected static String cheId1 = "CHE1";
+	@Getter
 	protected static NetGuid cheGuid1 = new NetGuid("0x23");
 	protected static String cheId2 = "CHE2";
+	@Getter
 	protected static NetGuid cheGuid2 = new NetGuid("0x24");
 
+	@Getter
 	JettyWebSocketServer webSocketServer;
+	
+	@Getter
 	CsSiteControllerApplication siteController;
+	
+	@Getter
 	CsDeviceManager deviceManager;
 	
 	@Getter
@@ -212,18 +219,4 @@ public abstract class EndToEndIntegrationTest extends DomainTestABC {
 		}
 		LOGGER.debug("-------------- Clean up completed");
 	}
-	
-	protected void waitForCheState(CheDeviceLogic cheDeviceLogic, CheStateEnum state, int timeoutInMillis) {
-		long start = System.currentTimeMillis();
-		while (System.currentTimeMillis()-start<timeoutInMillis) {
-			// retry every 100ms
-			ThreadUtils.sleep(100);
-			if (cheDeviceLogic.getCheStateEnum()==state) {
-				// expected state found - all good
-				return;
-			}
-		}
-		Assert.fail("Che state "+state+" not encountered in "+timeoutInMillis+"ms");
-	}	
-
 }

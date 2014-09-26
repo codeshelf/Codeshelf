@@ -77,8 +77,6 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private static final String		GET_WORK_MSG							= cheLine("GETTING WORK");
 	private static final String		NO_WORK_MSG								= cheLine("NO WORK TO DO");
 
-
-	
 	private static final String		STARTWORK_COMMAND						= "START";
 	private static final String		SETUP_COMMAND							= "SETUP";
 	private static final String		SHORT_COMMAND							= "SHORT";
@@ -117,9 +115,13 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private List<WorkInstruction>	mAllPicksWiList;
 
 	// The active pick WIs.
+	@Accessors(prefix = "m")
+	@Getter
 	private List<WorkInstruction>	mActivePickWiList;
 
 	// The completed  WIs.
+	@Accessors(prefix = "m")
+	@Getter
 	private List<WorkInstruction>	mCompletedWiList;
 
 	private NetGuid					mLastLedControllerGuid;
