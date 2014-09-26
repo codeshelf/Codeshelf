@@ -194,7 +194,6 @@ public class OrderLocationCsvImporter implements ICsvOrderLocationImporter {
 			if ((result == null) && (locationId != null)) {
 				result = new OrderLocation();
 				result.setDomainId(orderLocationId);
-				result.setParent(order);
 				order.addOrderLocation(result);
 			}
 

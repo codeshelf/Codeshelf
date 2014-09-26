@@ -63,8 +63,8 @@ public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implem
 	@Singleton
 	public static class EdiServiceABCDao extends GenericDaoABC<EdiServiceABC> implements ITypedDao<EdiServiceABC> {
 		@Inject
-		public EdiServiceABCDao(PersistenceService persistencyService) {
-			super(persistencyService);
+		public EdiServiceABCDao(PersistenceService persistenceService) {
+			super(persistenceService);
 		}
 
 		public final Class<EdiServiceABC> getDaoClass() {
@@ -133,13 +133,22 @@ public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implem
 	@JsonProperty
 	public abstract boolean getHasCredentials();
 	
-	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void addEdiDocumentLocator(EdiDocumentLocator inEdiDocumentLocator) {
-		documentLocators.add(inEdiDocumentLocator);
+		EdiServiceABC previousEdiService = inEdiDocumentLocator.getParent();
+		if(previousEdiService == null) {
+			documentLocators.add(inEdiDocumentLocator);
+			inEdiDocumentLocator.setParent(this);
+		} else if(!previousEdiService.equals(this)) {
+			LOGGER.error("cannot add EdiDocumentLocator "+inEdiDocumentLocator.getDomainId()+" to "+this.getDomainId()+" because it has not been removed from "+previousEdiService.getDomainId());
+		}	
 	}
 
-	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void removeEdiDocumentLocator(EdiDocumentLocator inEdiDocumentLocator) {
-		documentLocators.remove(inEdiDocumentLocator);
+		if(this.documentLocators.contains(inEdiDocumentLocator)) {
+			inEdiDocumentLocator.setParent(null);
+			documentLocators.remove(inEdiDocumentLocator);
+		} else {
+			LOGGER.error("cannot remove EdiDocumentLocator "+inEdiDocumentLocator.getDomainId()+" from "+this.getDomainId()+" because it isn't found in children");
+		}
 	}
 }

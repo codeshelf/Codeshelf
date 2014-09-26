@@ -163,7 +163,7 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 		// Inactivate the *order details* that don't match the import timestamp.
 		// All orders and related items get marked with the same timestamp when imported from the same interchange.
 		try {
-			mOrderGroupDao.beginTransaction();
+			//mOrderGroupDao.beginTransaction();
 
 			// Iterate all of the order groups to see if they're still active.
 			for (OrderGroup group : inFacility.getOrderGroups()) {
@@ -211,9 +211,9 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 				}
 			}
 
-			mOrderGroupDao.commitTransaction();
+			//mOrderGroupDao.commitTransaction();
 		} finally {
-			mOrderGroupDao.endTransaction();
+			//mOrderGroupDao.endTransaction();
 		}
 
 	}
@@ -227,7 +227,7 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 		LOGGER.debug("Archive unreferenced container data");
 
 		try {
-			mContainerDao.beginTransaction();
+			//mContainerDao.beginTransaction();
 
 			// Iterate all of the containers to see if they're still active.
 			for (Container container : inFacility.getContainers()) {
@@ -252,9 +252,9 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 				}
 			}
 
-			mContainerDao.commitTransaction();
+			//mContainerDao.commitTransaction();
 		} finally {
-			mContainerDao.endTransaction();
+			//mContainerDao.endTransaction();
 		}
 
 	}
@@ -286,7 +286,7 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 		LOGGER.info(inCsvBean.toString());
 
 		try {
-			mOrderHeaderDao.beginTransaction();
+			//mOrderHeaderDao.beginTransaction();
 
 			OrderGroup group = updateOptionalOrderGroup(inCsvBean, inFacility, inEdiProcessTime);
 			OrderHeader order = updateOrderHeader(inCsvBean, inFacility, inEdiProcessTime, group);
@@ -301,9 +301,9 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 				uomMaster);
 			@SuppressWarnings("unused")
 			OrderDetail orderDetail = updateOrderDetail(inCsvBean, inFacility, inEdiProcessTime, order, uomMaster, itemMaster);
-			mOrderHeaderDao.commitTransaction();
+			//mOrderHeaderDao.commitTransaction();
 		} finally {
-			mOrderHeaderDao.endTransaction();
+			//mOrderHeaderDao.endTransaction();
 		}
 
 		return result;
@@ -324,7 +324,6 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 		result = inFacility.getOrderGroup(inCsvBean.getOrderGroupId());
 		if ((result == null) && (inCsvBean.getOrderGroupId() != null) && (inCsvBean.getOrderGroupId().length() > 0)) {
 			result = new OrderGroup();
-			result.setParent(inFacility);
 			result.setOrderGroupId(inCsvBean.getOrderGroupId());
 			result.setDescription(OrderGroup.DEFAULT_ORDER_GROUP_DESC_PREFIX + inCsvBean.getOrderGroupId());
 			result.setStatusEnum(OrderStatusEnum.CREATED);
@@ -370,7 +369,6 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 
 			if (result == null) {
 				result = new Container();
-				result.setParent(inFacility);
 				result.setContainerId(inCsvBean.getPreAssignedContainerId());
 				ContainerKind kind = inFacility.getContainerKind(ContainerKind.DEFAULT_CONTAINER_KIND); 
 				result.setKind(kind);
@@ -391,12 +389,12 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 				use = new ContainerUse();
 				use.setDomainId(inOrder.getOrderId());
 				use.setOrderHeader(inOrder);
-				use.setParent(result);
 			}
 			Timestamp timestamp = new Timestamp(System.currentTimeMillis());
 			use.setUsedOn(timestamp);
 			use.setActive(true);
 			use.setUpdated(inEdiProcessTime);
+			result.addContainerUse(use);
 
 			try {
 				mContainerUseDao.store(use);
@@ -405,7 +403,6 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}
-			result.addContainerUse(use);
 
 		}
 
@@ -430,7 +427,6 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 		if (result == null) {
 			LOGGER.debug("Creating new OrderHeader instance for " + inCsvBean.getOrderId() + " , for facility: " + inFacility);
 			result = new OrderHeader();
-			result.setParent(inFacility);
 			result.setDomainId(inCsvBean.getOrderId());
 			inFacility.addOrderHeader(result);
 		}
@@ -509,7 +505,6 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 		result = mItemMasterDao.findByDomainId(inFacility, inItemId);
 		if (result == null) {
 			result = new ItemMaster();
-			result.setParent(inFacility);
 			result.setDomainId(inItemId);
 			result.setItemId(inItemId);
 			inFacility.addItemMaster(result);
@@ -543,7 +538,6 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 
 		if (result == null) {
 			result = new UomMaster();
-			result.setParent(inFacility);
 			result.setUomMasterId(inUomId);
 			inFacility.addUomMaster(result);
 
@@ -587,7 +581,6 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 		result = inOrder.getOrderDetail(detailId);
 		if (result == null) {
 			result = new OrderDetail();
-			result.setParent(inOrder);
 			result.setOrderDetailId(detailId);
 
 			inOrder.addOrderDetail(result);

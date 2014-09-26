@@ -204,15 +204,16 @@ public class PickSimulaneousWis extends EdiTestABC {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
+		this.getPersistenceService().beginTenantTransaction();
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvInventoryImporter importer = new InventoryCsvImporter(mItemMasterDao, mItemDao, mUomMasterDao);
 		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
 
-		this.getPersistenceService().beginTenantTransaction();
 
 		LocationABC<?> locationD402 = (LocationABC<?>) facility.findSubLocationById("D402");
 
+		this.getPersistenceService().beginTenantTransaction();
 		Item item1123Loc402EA = locationD402.getStoredItemFromMasterIdAndUom("1123", "EA");
 		Assert.assertNotNull(item1123Loc402EA);
 

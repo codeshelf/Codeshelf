@@ -45,18 +45,18 @@ public class CrossBatchImporterTest extends EdiTestABC {
 
 		result = new ItemMaster();
 		result.setItemId(inItemMasterId);
-		result.setParent(inFacility);
 		result.setStandardUom(uomMaster);
 		result.setActive(true);
 		result.setUpdated(new Timestamp(System.currentTimeMillis()));
-		mItemMasterDao.store(result);
 		inFacility.addItemMaster(result);
+		mItemMasterDao.store(result);
 
 		return result;
 	}
 
 	@Test
 	public final void testCrossBatchImporter() {
+		this.getPersistenceService().beginTenantTransaction();
 
 		String csvString = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
 				+ ",C111,I111.1,100,ea\r\n" //
@@ -118,11 +118,13 @@ public class CrossBatchImporterTest extends EdiTestABC {
 
 		// Make sure there's four order items.
 		Assert.assertEquals(order.getOrderDetails().size(), 4);
-
+		
+		this.getPersistenceService().endTenantTransaction();
 	}
 
 	@Test
 	public final void testCrossBatchOrderGroups() {
+		this.getPersistenceService().beginTenantTransaction();
 
 		String csvString = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
 				+ "G1,C333,I333.1,100,ea\r\n" //
@@ -166,11 +168,14 @@ public class CrossBatchImporterTest extends EdiTestABC {
 
 		OrderHeader order = group.getOrderHeader(OrderHeader.computeCrossOrderId("C333", ediProcessTime));
 		Assert.assertNotNull(order);
+		
+		this.getPersistenceService().endTenantTransaction();
 
 	}
 
 	@Test
 	public final void testResendCrossBatchRemoveItem() {
+		this.getPersistenceService().beginTenantTransaction();
 
 		String csvString = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
 				+ "G1,C555,I555.1,100,ea\r\n" //
@@ -262,11 +267,14 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		Assert.assertEquals(true, order.getActive());
 		orderDetail = order.getOrderDetail("I555.3");
 		Assert.assertNull(orderDetail);
+		
+		this.getPersistenceService().endTenantTransaction();
 
 	}
 
 	@Test
 	public final void testResendCrossBatchAddItem() {
+		this.getPersistenceService().beginTenantTransaction();
 
 		String csvString = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
 				+ "G1,C777,I777.1,100,ea\r\n" //
@@ -352,11 +360,14 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		OrderDetail orderDetail = order.getOrderDetail("I777.5");
 		Assert.assertNotNull(orderDetail);
 		Assert.assertEquals(orderDetail.getQuantity().intValue(), 500);
+		
+		this.getPersistenceService().endTenantTransaction();
 
 	}
 
 	@Test
 	public final void testResendCrossBatchAlterItems() {
+		this.getPersistenceService().beginTenantTransaction();
 
 		String csvString = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
 				+ "G1,C999,I999.1,100,ea\r\n" //
@@ -424,6 +435,9 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		OrderDetail orderDetail = order.getOrderDetail("I999.3");
 		Assert.assertNotNull(orderDetail);
 		Assert.assertEquals(orderDetail.getQuantity().intValue(), 999);
+		
+		this.getPersistenceService().endTenantTransaction();
+
 	}
 
 	/*
@@ -431,6 +445,8 @@ public class CrossBatchImporterTest extends EdiTestABC {
 	 */
 	@Test
 	public final void testSendOrdersAfterCrossBatch() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
+
 		String csvString = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
 				+ ",C111,I111.1,100,ea\r\n" //
 				+ ",C111,I111.2,200,ea\r\n" //
@@ -514,11 +530,15 @@ public class CrossBatchImporterTest extends EdiTestABC {
 
 		// Make sure there's four order items.
 		Assert.assertEquals(order.getOrderDetails().size(), 4);
+		
+		this.getPersistenceService().endTenantTransaction();
 
 	}
 
 	@Test
 	public final void testCrossBatchGroupArchives() {
+		this.getPersistenceService().beginTenantTransaction();
+
 		// Good eggs has group IDs. Make sure the behavior on reread is similar to above
 		String csvString = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
 				+ "xx,C111,I111.1,100,ea\r\n" //
@@ -635,11 +655,15 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		Assert.assertTrue(theCounts3.mActiveHeaders == 2);
 		Assert.assertTrue(theCounts3.mActiveDetails == 5);
 		Assert.assertTrue(theCounts3.mActiveCntrUses == 2);
+		
+		this.getPersistenceService().endTenantTransaction();
 
 	}
 
 	@Test
 	public final void testCrossBatchDoubleImporter() {
+		this.getPersistenceService().beginTenantTransaction();
+
 
 		Organization organization = new Organization();
 		organization.setDomainId("O-CROSS8");
@@ -678,6 +702,10 @@ public class CrossBatchImporterTest extends EdiTestABC {
 			mUomMasterDao);
 		importer.importCrossBatchesFromCsvStream(reader, facility, firstEdiProcessTime);
 
+		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().beginTenantTransaction();
+
+		
 		// Make sure we created an order with the container's ID.
 		OrderHeader order = facility.getOrderHeader(OrderHeader.computeCrossOrderId("C111", firstEdiProcessTime));
 		Assert.assertNotNull(order);
@@ -758,5 +786,6 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		Assert.assertTrue(theCounts2.mActiveDetails == 12);
 		Assert.assertTrue(theCounts2.mActiveCntrUses == 4);
 
+		this.getPersistenceService().endTenantTransaction();
 	}
 }

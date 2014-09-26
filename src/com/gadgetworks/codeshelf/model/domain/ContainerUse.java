@@ -51,8 +51,8 @@ public class ContainerUse extends DomainObjectTreeABC<Container> {
 	@Singleton
 	public static class ContainerUseDao extends GenericDaoABC<ContainerUse> implements ITypedDao<ContainerUse> {
 		@Inject
-		public ContainerUseDao(PersistenceService persistencyService) {
-			super(persistencyService);
+		public ContainerUseDao(PersistenceService persistenceService) {
+			super(persistenceService);
 		}
 
 		public final Class<ContainerUse> getDaoClass() {
@@ -110,16 +110,8 @@ public class ContainerUse extends DomainObjectTreeABC<Container> {
 		return "USE";
 	}
 
-	public final Container getParentContainer() {
-		return parent;
-	}
-
-	public final void setParentContainer(final Container inContaienr) {
-		parent = inContaienr;
-	}
-
 	public final Container getParent() {
-		return getParentContainer();
+		return this.parent;
 	}
 
 	public final Facility getFacility() {
@@ -133,7 +125,7 @@ public class ContainerUse extends DomainObjectTreeABC<Container> {
 	// used to have a lomboc annotation, but that had an infinite loop potential with CHE toString.
 	public final String toString() {
 		// What we would want to see if logged as toString?  parent containerID for sure. Order header. Che?
-		String returnString = getParentContainer().getDomainId();
+		String returnString = getParent().getDomainId();
 		returnString += " forOrder:";
 		returnString += getOrderHeader().getDomainId();
 		Che theChe = getCurrentChe();

@@ -75,8 +75,8 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 	@Singleton
 	public static class WorkInstructionDao extends GenericDaoABC<WorkInstruction> implements ITypedDao<WorkInstruction> {
 		@Inject
-		public WorkInstructionDao(final PersistenceService persistencyService) {
-			super(persistencyService);
+		public WorkInstructionDao(final PersistenceService persistenceService) {
+			super(persistenceService);
 		}
 
 		public final Class<WorkInstruction> getDaoClass() {

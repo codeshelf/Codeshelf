@@ -119,7 +119,8 @@ public class WorkInstructionSequencerTest extends DomainTestABC {
 	@SuppressWarnings({ "rawtypes", "unused" })
 	@Test
 	public final void testBayDistanceSequencer()  throws IOException{
-		
+		this.getPersistenceService().beginTenantTransaction();
+
 		Facility facility = setUpFacility("FAC-"+new UUID());
 
 		// We are going to put cases in A3 and each in A2. Also showing variation in EA/each, etc.
@@ -215,13 +216,16 @@ public class WorkInstructionSequencerTest extends DomainTestABC {
 			else {
 				Assert.fail("Invalid WI location: "+wi.getLocation().getLocationId());
 			}
-		}		
+		}	
+		this.getPersistenceService().endTenantTransaction();
+
 	}
 	
 	@SuppressWarnings({ "rawtypes", "unused" })
 	@Test
 	public final void testBayDistanceTopLastSequencer()  throws IOException{
-		
+		this.getPersistenceService().beginTenantTransaction();
+
 		Facility facility = setUpFacility("FAC-"+new UUID());
 
 		// We are going to put cases in A3 and each in A2. Also showing variation in EA/each, etc.
@@ -317,6 +321,8 @@ public class WorkInstructionSequencerTest extends DomainTestABC {
 			else {
 				Assert.fail("Invalid WI location: "+wi.getLocation().getLocationId());
 			}
-		}		
+		}
+		this.getPersistenceService().endTenantTransaction();
+
 	}
 }

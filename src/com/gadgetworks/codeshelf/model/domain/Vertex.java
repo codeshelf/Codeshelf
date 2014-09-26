@@ -51,8 +51,8 @@ public class Vertex extends DomainObjectTreeABC<ILocation<?>> {
 	@Singleton
 	public static class VertexDao extends GenericDaoABC<Vertex> implements ITypedDao<Vertex> {
 		@Inject
-		public VertexDao(final PersistenceService persistencyService) {
-			super(persistencyService);
+		public VertexDao(final PersistenceService persistenceService) {
+			super(persistenceService);
 		}
 		
 		public final Class<Vertex> getDaoClass() {

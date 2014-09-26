@@ -66,8 +66,8 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	@Singleton
 	public static class OrderDetailDao extends GenericDaoABC<OrderDetail> implements ITypedDao<OrderDetail> {
 		@Inject
-		public OrderDetailDao(final PersistenceService persistencyService) {
-			super(persistencyService);
+		public OrderDetailDao(final PersistenceService persistenceService) {
+			super(persistenceService);
 		}
 
 		public final Class<OrderDetail> getDaoClass() {

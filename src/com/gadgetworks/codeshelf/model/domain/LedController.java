@@ -47,8 +47,8 @@ public class LedController extends WirelessDeviceABC {
 	@Singleton
 	public static class LedControllerDao extends GenericDaoABC<LedController> implements ITypedDao<LedController> {
 		@Inject
-		public LedControllerDao(final PersistenceService persistencyService) {
-			super(persistencyService);
+		public LedControllerDao(final PersistenceService persistenceService) {
+			super(persistenceService);
 		}
 
 		public final Class<LedController> getDaoClass() {

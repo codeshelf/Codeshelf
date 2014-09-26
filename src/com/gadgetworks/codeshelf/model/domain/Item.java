@@ -56,8 +56,8 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	@Singleton
 	public static class ItemDao extends GenericDaoABC<Item> implements ITypedDao<Item> {
 		@Inject
-		public ItemDao(PersistenceService persistencyService) {
-			super(persistencyService);
+		public ItemDao(PersistenceService persistenceService) {
+			super(persistenceService);
 		}
 
 		public final Class<Item> getDaoClass() {
@@ -131,11 +131,6 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	public Item() {
 	}
 
-	public Item(ItemMaster parent, String domainId) {
-		super(domainId);
-		setParent(parent);
-	}
-	
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<Item> getDao() {
 		return DAO;

@@ -44,8 +44,8 @@ public class PersistentProperty extends DomainObjectTreeABC<Organization> {
 	@Singleton
 	public static class PersistentPropertyDao extends GenericDaoABC<PersistentProperty> implements ITypedDao<PersistentProperty> {
 		@Inject
-		public PersistentPropertyDao(final PersistenceService persistencyService) {
-			super(persistencyService);
+		public PersistentPropertyDao(final PersistenceService persistenceService) {
+			super(persistenceService);
 		}
 
 		public final Class<PersistentProperty> getDaoClass() {

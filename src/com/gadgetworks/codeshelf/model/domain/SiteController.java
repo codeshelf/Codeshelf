@@ -33,8 +33,8 @@ public class SiteController extends WirelessDeviceABC {
 	@Singleton
 	public static class SiteControllerDao extends GenericDaoABC<SiteController> implements ITypedDao<SiteController> {
 		@Inject
-		public SiteControllerDao(final PersistenceService persistencyService) {
-			super(persistencyService);
+		public SiteControllerDao(final PersistenceService persistenceService) {
+			super(persistenceService);
 		}
 		
 		public final Class<SiteController> getDaoClass() {

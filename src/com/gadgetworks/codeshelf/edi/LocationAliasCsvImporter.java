@@ -102,7 +102,7 @@ public class LocationAliasCsvImporter implements ICsvLocationAliasImporter {
 
 		// Inactivate the locations aliases that don't match the import timestamp.
 		try {
-			mLocationAliasDao.beginTransaction();
+			//mLocationAliasDao.beginTransaction();
 			for (LocationAlias locationAlias : inFacility.getLocationAliases()) {
 				if (!locationAlias.getUpdated().equals(inProcessTime)) {
 					LOGGER.debug("Archive old locationAlias: " + locationAlias.getAlias());
@@ -110,9 +110,9 @@ public class LocationAliasCsvImporter implements ICsvLocationAliasImporter {
 					mLocationAliasDao.store(locationAlias);
 				}
 			}
-			mLocationAliasDao.commitTransaction();
+			//mLocationAliasDao.commitTransaction();
 		} finally {
-			mLocationAliasDao.endTransaction();
+			//mLocationAliasDao.endTransaction();
 		}
 
 	}
@@ -128,7 +128,7 @@ public class LocationAliasCsvImporter implements ICsvLocationAliasImporter {
 		final Timestamp inEdiProcessTime) {
 
 		try {
-			mLocationAliasDao.beginTransaction();
+			//mLocationAliasDao.beginTransaction();
 
 			LOGGER.info(inCsvBean.toString());
 
@@ -139,10 +139,10 @@ public class LocationAliasCsvImporter implements ICsvLocationAliasImporter {
 				LOGGER.error("Exception while updating LocationAlias CSV", e);
 			}
 
-			mLocationAliasDao.commitTransaction();
+			//mLocationAliasDao.commitTransaction();
 
 		} finally {
-			mLocationAliasDao.endTransaction();
+			//mLocationAliasDao.endTransaction();
 		}
 	}
 

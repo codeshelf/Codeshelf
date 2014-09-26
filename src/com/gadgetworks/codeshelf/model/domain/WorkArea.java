@@ -49,8 +49,8 @@ public class WorkArea extends DomainObjectTreeABC<Path> {
 	@Singleton
 	public static class WorkAreaDao extends GenericDaoABC<WorkArea> implements ITypedDao<WorkArea> {
 		@Inject
-		public WorkAreaDao(final PersistenceService persistencyService) {
-			super(persistencyService);
+		public WorkAreaDao(final PersistenceService persistenceService) {
+			super(persistenceService);
 		}
 		
 		public final Class<WorkArea> getDaoClass() {

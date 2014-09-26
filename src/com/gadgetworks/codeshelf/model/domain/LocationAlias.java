@@ -49,8 +49,8 @@ public class LocationAlias extends DomainObjectTreeABC<Facility> {
 	@Singleton
 	public static class LocationAliasDao extends GenericDaoABC<LocationAlias> implements ITypedDao<LocationAlias> {
 		@Inject
-		public LocationAliasDao(final PersistenceService persistencyService) {
-			super(persistencyService);
+		public LocationAliasDao(final PersistenceService persistenceService) {
+			super(persistenceService);
 		}
 
 		public final Class<LocationAlias> getDaoClass() {

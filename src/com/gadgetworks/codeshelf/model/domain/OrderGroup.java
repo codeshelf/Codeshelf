@@ -56,8 +56,8 @@ public class OrderGroup extends DomainObjectTreeABC<Facility> {
 	@Singleton
 	public static class OrderGroupDao extends GenericDaoABC<OrderGroup> implements ITypedDao<OrderGroup> {
 		@Inject
-		public OrderGroupDao(final PersistenceService persistencyService) {
-			super(persistencyService);
+		public OrderGroupDao(final PersistenceService persistenceService) {
+			super(persistenceService);
 		}
 
 		public final Class<OrderGroup> getDaoClass() {
@@ -160,7 +160,7 @@ public class OrderGroup extends DomainObjectTreeABC<Facility> {
 		if(previousOrderGroup == null) {
 			orderHeaders.put(inOrderHeader.getDomainId(), inOrderHeader);
 			inOrderHeader.setOrderGroup(this);
-		} else {
+		} else if(!previousOrderGroup.equals(this)){
 			LOGGER.error("cannot add OrderHeader "+inOrderHeader.getDomainId()+" to "+this.getDomainId()+" because it has not been removed from "+previousOrderGroup.getDomainId());
 		}	
 	}
@@ -172,10 +172,10 @@ public class OrderGroup extends DomainObjectTreeABC<Facility> {
 	public final void removeOrderHeader(String inOrderId) {
 		OrderHeader orderHeader = this.getOrderHeader(inOrderId);
 		if(orderHeader != null) {
-			orderHeader.setParent(null);
+			orderHeader.setOrderGroup(null);
 			orderHeaders.remove(inOrderId);
 		} else {
-			LOGGER.error("cannot remove Item "+inOrderId+" from "+this.getDomainId()+" because it isn't found in children");
+			LOGGER.error("cannot remove OrderHeader "+inOrderId+" from "+this.getDomainId()+" because it isn't found in my order headers");
 		}
 	}
 

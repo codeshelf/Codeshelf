@@ -27,6 +27,7 @@ public class LocationAliasImporterTest extends EdiTestABC {
 
 	@Test
 	public final void testLocationAliasImporterFromCsvStream() {
+		this.getPersistenceService().beginTenantTransaction();
 
 		String csvString = "mappedLocationId,locationAlias\r\n" //
 				+ "A1, AisleA\r\n" //
@@ -63,6 +64,8 @@ public class LocationAliasImporterTest extends EdiTestABC {
 		ICsvLocationAliasImporter importer = new LocationAliasCsvImporter(mLocationAliasDao);
 		importer.importLocationAliasesFromCsvStream(reader, facility, ediProcessTime);
 
+		this.getPersistenceService().beginTenantTransaction();
+
 		// Make sure we can still look up an aisle by it's FQN.
 		ILocation<?> location = facility.findLocationById("A1");
 		Assert.assertNotNull(location);
@@ -86,6 +89,8 @@ public class LocationAliasImporterTest extends EdiTestABC {
 		// Make sure we cannot lookup the bad entry (there is no A3).
 		location = facility.findLocationById("AisleC");
 		Assert.assertNull(location);
+		
+		this.getPersistenceService().endTenantTransaction();
 
 	}
 }

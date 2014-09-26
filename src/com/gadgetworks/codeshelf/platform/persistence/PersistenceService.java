@@ -234,7 +234,15 @@ public class PersistenceService extends Service {
 	
 	public final void beginTenantTransaction() {
 		Session session = getCurrentTenantSession();
-		Transaction tx = session.beginTransaction();
+		Transaction tx = session.getTransaction();
+		if (tx != null) {
+			if (tx.isActive()) {
+				LOGGER.warn("tried to begin transaction, but was already in active transaction");
+				return;
+			}
+		}
+		
+		session.beginTransaction();
 	}
 
 	public final void endTenantTransaction() {

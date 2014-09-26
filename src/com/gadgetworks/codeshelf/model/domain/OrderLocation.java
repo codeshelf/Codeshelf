@@ -50,8 +50,8 @@ public class OrderLocation extends DomainObjectTreeABC<OrderHeader> {
 	@Singleton
 	public static class OrderLocationDao extends GenericDaoABC<OrderLocation> implements ITypedDao<OrderLocation> {
 		@Inject
-		public OrderLocationDao(final PersistenceService persistencyService) {
-			super(persistencyService);
+		public OrderLocationDao(final PersistenceService persistenceService) {
+			super(persistenceService);
 		}
 
 		public final Class<OrderLocation> getDaoClass() {

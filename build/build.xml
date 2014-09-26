@@ -139,7 +139,7 @@
 				<include name="*.*" />
 			</fileset>
 		</copy-->
-		<copy todir="${target.resources}/conf">
+		<copy todir="${target.resources}">
 			<fileset dir="${conf.dir}">
 				<include name="common.config.properties" />
 				<include name="server.config.properties" />
@@ -152,6 +152,8 @@
 				<include name="commons-logging.properties" />
 				<include name="ebean.properties" />
 				<include name="logging.properties" />
+				
+				<include name="hibernate.tenant.xml" />
 			</fileset>
 		</copy>
 		<!--copy todir="${target.resources}/images">
@@ -283,7 +285,7 @@
 			<fileset dir="${target.lib}/native" />
 		</copy>
 
-		<antcall target="ebean-enhance" />
+		<!-- <antcall target="ebean-enhance" /> -->
 
 		<!-- Prep the CLASSPATH variable for the manifest. -->
 		<fileset id="jardir" dir="${target.lib}">

@@ -80,8 +80,8 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 		// We include the IDatabase arg to cause Guice to initialize it *before* locations.
 		@Inject
-		public LocationABCDao(final PersistenceService persistencyService) {
-			super(persistencyService);
+		public LocationABCDao(final PersistenceService persistenceService) {
+			super(persistenceService);
 		}
 
 		public final Class<LocationABC> getDaoClass() {
@@ -502,7 +502,13 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#removeLocation(java.lang.String)
 	 */
 	public final void removeLocation(String inLocationId) {
-		locations.remove(inLocationId);
+		SubLocationABC<? extends IDomainObject> location = locations.get(inLocationId);
+		if(location != null) {
+			location.setParent(null);
+			locations.remove(inLocationId);
+		} else {
+			LOGGER.error("cannot remove SubLocationABC "+inLocationId+" from "+this.getDomainId()+" because it isn't found in children");
+		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -589,19 +595,41 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	}
 
 	public final void addVertex(Vertex inVertex) {
-		vertices.add(inVertex);
+		ILocation<?> previousLocation = inVertex.getParent();
+		if(previousLocation == null) {
+			vertices.add(inVertex);
+			inVertex.setParent(this);
+		} else if(!previousLocation.equals(this)) {
+			LOGGER.error("cannot add Vertex "+inVertex.getDomainId()+" to "+this.getDomainId()+" because it has not been removed from "+previousLocation.getDomainId());
+		}	
 	}
 
 	public final void removeVertex(Vertex inVertex) {
-		vertices.remove(inVertex);
+		if(this.vertices.contains(inVertex)) {
+			inVertex.setParent(null);
+			vertices.remove(inVertex);
+		} else {
+			LOGGER.error("cannot remove Vertex "+inVertex.getDomainId()+" from "+this.getDomainId()+" because it isn't found in children");
+		}
 	}
 
 	public final void addAlias(LocationAlias inAlias) {
-		aliases.add(inAlias);
+		ILocation<?> previousLocation = inAlias.getMappedLocation();
+		if(previousLocation == null) {
+			aliases.add(inAlias);
+			inAlias.setMappedLocation((ISubLocation<?>) this);
+		} else if(!previousLocation.equals(this)) {
+			LOGGER.error("cannot map Alias "+inAlias.getDomainId()+" to "+this.getDomainId()+" because it is still mapped to "+previousLocation.getDomainId());
+		}	
 	}
 
 	public final void removeAlias(LocationAlias inAlias) {
-		aliases.remove(inAlias);
+		if(this.aliases.contains(inAlias)) {
+			inAlias.setMappedLocation(null);
+			aliases.remove(inAlias);
+		} else {
+			LOGGER.error("cannot unmap Alias "+inAlias.getDomainId()+" from "+this.getDomainId()+" because it isn't found in aliases");
+		}
 	}
 
 	public final LocationAlias getPrimaryAlias() {
@@ -618,14 +646,23 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	}
 
 	public final void addStoredItem(Item inItem) {
-		String domainId = Item.makeDomainId(inItem.getItemId(), this, inItem.getUomMasterId());
-		// why not just ask the item for its domainId?
-		storedItems.put(domainId, inItem);
+		ILocation<?> previousLocation = inItem.getStoredLocation();
+		if(previousLocation == null) {
+			String domainId = Item.makeDomainId(inItem.getItemId(), this, inItem.getUomMasterId());
+			// why not just ask the item for its domainId?
+			storedItems.put(domainId, inItem);
+			inItem.setStoredLocation(this);
+		} else if(!previousLocation.equals(this)) {
+			LOGGER.error("cannot addStoredItem "+inItem.getDomainId()+" to "+this.getDomainId()+" because it is still stored at "+previousLocation.getDomainId());
+		}	
+
+		
 	}
 
 	public final Item getStoredItemFromMasterIdAndUom(final String inItemMasterId, final String inUom) {
 		String domainId = Item.makeDomainId(inItemMasterId, this, inUom);
 		// why not just ask the item for its domainId?
+
 		Item returnItem = storedItems.get(domainId);
 		return returnItem;
 	}
@@ -636,15 +673,28 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 	public final void removeStoredItemFromMasterIdAndUom(final String inItemMasterId, final String inUom) {
 		String domainId = Item.makeDomainId(inItemMasterId, this, inUom);
-		storedItems.remove(domainId);
+		removeStoredItem(domainId);
 	}
 
 	public final void removeStoredItem(final String inItemDomainId) {
-		storedItems.remove(inItemDomainId);
+		Item storedItem = storedItems.get(inItemDomainId);
+		if(storedItem != null) {
+			storedItem.setStoredLocation(null);
+			storedItems.remove(inItemDomainId);
+		} else {
+			LOGGER.error("cannot removeStoredItem "+inItemDomainId+" from "+this.getDomainId()+" because it isn't found in children");
+		}
 	}
 
 	public final void addItemDdcGroup(ItemDdcGroup inItemDdcGroup) {
-		itemDdcGroups.put(inItemDdcGroup.getDdcGroupId(), inItemDdcGroup);
+		ILocation<?> previousLocation = inItemDdcGroup.getParent();
+		if(previousLocation == null) {
+			itemDdcGroups.put(inItemDdcGroup.getDdcGroupId(), inItemDdcGroup);
+			inItemDdcGroup.setParent(this);
+		} else if(!previousLocation.equals(this)) {
+			LOGGER.error("cannot addItemDdcGroup "+inItemDdcGroup.getDomainId()+" to "+this.getDomainId()+" because it is still stored at "+previousLocation.getDomainId());
+		}	
+
 	}
 
 	public final ItemDdcGroup getItemDdcGroup(final String inItemDdcGroupId) {
@@ -652,7 +702,13 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	}
 
 	public final void removeItemDdcGroup(final String inItemDdcGroupId) {
-		itemDdcGroups.remove(inItemDdcGroupId);
+		ItemDdcGroup itemDdcGroup = itemDdcGroups.get(inItemDdcGroupId);
+		if(itemDdcGroup != null) {
+			itemDdcGroup.setParent(null);
+			itemDdcGroups.remove(inItemDdcGroupId);
+		} else {
+			LOGGER.error("cannot removeItemDdcGroup "+inItemDdcGroupId+" from "+this.getDomainId()+" because it isn't found in children");
+		}
 	}
 
 	public final List<ItemDdcGroup> getDdcGroups() {

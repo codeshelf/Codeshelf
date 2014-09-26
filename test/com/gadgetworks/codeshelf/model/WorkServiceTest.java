@@ -22,6 +22,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import lombok.Getter;
+
 import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Assert;
 import org.junit.Test;
@@ -33,6 +35,7 @@ import org.mockito.invocation.InvocationOnMock;
 import com.gadgetworks.codeshelf.edi.IEdiExportServiceProvider;
 import com.gadgetworks.codeshelf.generators.FacilityGenerator;
 import com.gadgetworks.codeshelf.generators.WorkInstructionGenerator;
+import com.gadgetworks.codeshelf.model.dao.DAOTestABC;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Che;
@@ -41,19 +44,21 @@ import com.gadgetworks.codeshelf.model.domain.IEdiService;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.service.WorkService;
-
 import com.gadgetworks.codeshelf.validation.InputValidationException;
 import com.google.common.collect.ImmutableList;
 
-public class WorkServiceTest {
-
+public class WorkServiceTest extends DAOTestABC {
+	
 	private WorkInstructionGenerator wiGenerator = new WorkInstructionGenerator();
 	private FacilityGenerator facilityGenerator = new FacilityGenerator();
 
 	@SuppressWarnings("unchecked")
 	@Test
 	public void summariesAreSorted() {
+		this.getPersistenceService().beginTenantTransaction();
+
 		Facility facility = facilityGenerator.generateValid();
 
 		ITypedDao<WorkInstruction> workInstructionDao = mock(ITypedDao.class);
@@ -76,10 +81,14 @@ public class WorkServiceTest {
 			Assert.assertTrue(thisTime.toString() + "should have been before" + lastTimestamp, wiSetSummary.getAssignedTime().before(lastTimestamp));
 			lastTimestamp = wiSetSummary.getAssignedTime();
 		}
+
+		this.getPersistenceService().endTenantTransaction();
 	}
 
 	@Test
 	public void exceptionIfWICannotBeFound() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
+
 		UUID cheId = UUID.randomUUID();
 
 		WorkService workService = createWorkService(Integer.MAX_VALUE, mock(IEdiService.class), 1L);
@@ -98,10 +107,13 @@ public class WorkServiceTest {
 			Assert.assertNotNull(e.getErrors().getFieldError("persistentId"));
 		}
 		verify(WorkInstruction.DAO, never()).store(any(WorkInstruction.class));
+		this.getPersistenceService().endTenantTransaction();
 	}
 
 	@Test
 	public void doesNotExportIfWICannotBeStored() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
+
 		IEdiService mockEdiExportService = mock(IEdiService.class);
 		WorkService workService = createWorkService(Integer.MAX_VALUE, mockEdiExportService, 1L);
 
@@ -126,10 +138,13 @@ public class WorkServiceTest {
 		workService.completeWorkInstruction(cheId, wiToRecord);
 
 		verify(mockEdiExportService, never()).sendWorkInstructionsToHost(any(List.class));
+		this.getPersistenceService().endTenantTransaction();
 	}
 
 	@Test
 	public void allWorkInstructionsSent() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
+
 		IEdiService mockEdiExportService = mock(IEdiService.class);
 
 		int total = 100;
@@ -141,10 +156,13 @@ public class WorkServiceTest {
 		}
 
 		verify(mockEdiExportService, Mockito.timeout(2000).times(total)).sendWorkInstructionsToHost(any(List.class));
+		this.getPersistenceService().endTenantTransaction();
 	}
 
 	@Test
 	public void workInstructionExportIsRetried() throws IOException, InterruptedException {
+		this.getPersistenceService().beginTenantTransaction();
+
 		long expectedRetryDelay = 1L;
 		Facility facility = facilityGenerator.generateValid();
 		WorkInstruction wi = generateValidWorkInstruction(facility, nextUniquePastTimestamp());
@@ -160,10 +178,13 @@ public class WorkServiceTest {
 		//Wait up to a second per invocation to verify
 		verify(mockEdiExportService, Mockito.timeout((int)(expectedRetryDelay * 1000L)).times(3)).sendWorkInstructionsToHost(eq(wiList));
 
+		this.getPersistenceService().endTenantTransaction();
 	}
 
 	@Test
 	public void workInstructionExportRetriesAreDelayed() throws IOException, InterruptedException {
+		this.getPersistenceService().beginTenantTransaction();
+
 		Facility facility = facilityGenerator.generateValid();
 		WorkInstruction wi = generateValidWorkInstruction(facility, nextUniquePastTimestamp());
 		List<WorkInstruction> wiList = ImmutableList.of(wi);
@@ -188,10 +209,12 @@ public class WorkServiceTest {
 			Assert.assertTrue("The delay between calls was not greater than " + expectedRetryDelay + "ms but was: " + diff, diff > expectedRetryDelay);
 		}
 
+		this.getPersistenceService().endTenantTransaction();
 	}
 
 	@Test
 	public void workInstructionExportingIsNotBlocked() throws IOException, InterruptedException {
+		
 		final int total = 100;
 		Lock callBlocker = new ReentrantLock();
 		callBlocker.lock();
@@ -227,6 +250,8 @@ public class WorkServiceTest {
 
 	@Test
 	public void throwsExceptionWhenAtCapacity() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
+
 		int capacity = 10;
 		int inflight = capacity + 1; //1 for the blocked work instruction
 		int totalWorkInstructions = inflight + 1;
@@ -249,6 +274,7 @@ public class WorkServiceTest {
 
 			}
 		}
+		this.getPersistenceService().endTenantTransaction();
 	}
 
 	private WorkService createWorkService(int capacity, IEdiService ediService, long retryDelay) {

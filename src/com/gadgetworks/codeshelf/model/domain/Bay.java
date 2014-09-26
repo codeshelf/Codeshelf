@@ -46,8 +46,8 @@ public class Bay extends SubLocationABC<Aisle> {
 	@Singleton
 	public static class BayDao extends GenericDaoABC<Bay> implements ITypedDao<Bay> {
 		@Inject
-		public BayDao(PersistenceService persistencyService) {
-			super(persistencyService);
+		public BayDao(PersistenceService persistenceService) {
+			super(persistenceService);
 		}
 
 		public final Class<Bay> getDaoClass() {

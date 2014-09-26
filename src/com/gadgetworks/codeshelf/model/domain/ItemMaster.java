@@ -61,8 +61,8 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	@Singleton
 	public static class ItemMasterDao extends GenericDaoABC<ItemMaster> implements ITypedDao<ItemMaster> {
 		@Inject
-		public ItemMasterDao(final PersistenceService persistencyService) {
-			super(persistencyService);
+		public ItemMasterDao(final PersistenceService persistenceService) {
+			super(persistenceService);
 		}
 
 		public final Class<ItemMaster> getDaoClass() {

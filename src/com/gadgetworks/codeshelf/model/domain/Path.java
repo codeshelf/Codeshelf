@@ -61,8 +61,8 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	@Singleton
 	public static class PathDao extends GenericDaoABC<Path> implements ITypedDao<Path> {
 		@Inject
-		public PathDao(final PersistenceService persistencyService) {
-			super(persistencyService);
+		public PathDao(final PersistenceService persistenceService) {
+			super(persistenceService);
 		}
 
 		public final Class<Path> getDaoClass() {
@@ -98,7 +98,6 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	// It shouldn't be null, but there is no way to create a parent-child relation when neither can be null.
 	@OneToOne(mappedBy = "parent")
 	@Getter
-	@Setter
 	private WorkArea					workArea;
 
 	// The computed path length.
@@ -235,15 +234,14 @@ public class Path extends DomainObjectTreeABC<Facility> {
 		WorkArea tempWorkArea = this.getWorkArea();
 		if (tempWorkArea == null) {
 			tempWorkArea = new WorkArea();
-			tempWorkArea.setParent(this);
 			tempWorkArea.setDomainId(this.getDomainId());
 			tempWorkArea.setDescription("Default work area");
+			this.setWorkArea(tempWorkArea);
 			try {
 				WorkArea.DAO.store(tempWorkArea);
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}
-			this.workArea = tempWorkArea;
 		}
 	}
 
@@ -284,18 +282,17 @@ public class Path extends DomainObjectTreeABC<Facility> {
 
 		// The path segment goes along the longest segment of the aisle.
 		result = new PathSegment();
-		result.setParent(this);
 		result.setSegmentOrder(inSegmentOrder);
 		result.setDomainId(inSegmentId);
 		result.setStartPoint(inHead);
 		result.setEndPoint(inTail);
+		this.addPathSegment(result);
 		try {
 			PathSegment.DAO.store(result);
 		} catch (DaoException e) {
 			LOGGER.error("", e);
 		}
 
-		this.addPathSegment(result);
 
 		// Force a re-computation of the path distance for this path segment.
 		result.computePathDistance();
@@ -523,6 +520,20 @@ public class Path extends DomainObjectTreeABC<Facility> {
 		return getParent();
 	}
 
-
-
+	public void setWorkArea(WorkArea inWorkArea) {
+		if(inWorkArea != null) {
+			// attach work area
+			Path previousPath = inWorkArea.getParent();
+			if(previousPath == null) {
+				inWorkArea.setParent(this);
+				this.workArea = inWorkArea;
+			} else if(!previousPath.equals(this)) {
+				LOGGER.error("cannot attach WorkArea "+inWorkArea.getDomainId()+" because it is attached to "+previousPath.getDomainId());
+			}
+		} else if(this.workArea != null) {
+			// detach work area (set to null)
+			this.workArea.setParent(null);
+			this.workArea = null;
+		}
+	}
 }

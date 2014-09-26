@@ -63,8 +63,8 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	@Singleton
 	public static class OrderHeaderDao extends GenericDaoABC<OrderHeader> implements ITypedDao<OrderHeader> {
 		@Inject
-		public OrderHeaderDao(final PersistenceService persistencyService) {
-			super(persistencyService);
+		public OrderHeaderDao(final PersistenceService persistenceService) {
+			super(persistenceService);
 		}
 
 		public final Class<OrderHeader> getDaoClass() {
@@ -78,7 +78,6 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	
 	public static OrderHeader createEmptyOrderHeader(Facility inFacility, String inOrderId) {
 		OrderHeader header = new OrderHeader();
-		header.setParent(inFacility);
 		header.setDomainId(inOrderId);
 		header.setOrderTypeEnum(OrderTypeEnum.OUTBOUND);
 		header.setStatusEnum(OrderStatusEnum.CREATED);
@@ -269,17 +268,16 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	public final OrderLocation addOrderLocation(ILocation<?> inLocation) {
 		OrderLocation result = createOrderLocation(inLocation);
 		addOrderLocation(result);
+		OrderLocation.DAO.store(result);
 		return result;
 	}
 	
 	private OrderLocation createOrderLocation(ILocation<?> inLocation) {
 		OrderLocation result = new OrderLocation();
 		result.setDomainId(OrderLocation.makeDomainId(this, inLocation));
-		result.setParent(this);
 		result.setLocation(inLocation);
 		result.setActive(true);
 		result.setUpdated(new Timestamp(System.currentTimeMillis()));
-		OrderLocation.DAO.store(result);
 		return result;
 	}
 
@@ -351,7 +349,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		String result = "";
 
 		if (containerUse != null) {
-			result = containerUse.getParentContainer().getContainerId();
+			result = containerUse.getParent().getContainerId();
 		}
 
 		return result;

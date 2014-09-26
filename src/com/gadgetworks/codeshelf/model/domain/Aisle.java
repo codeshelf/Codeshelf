@@ -50,8 +50,8 @@ public class Aisle extends SubLocationABC<Facility> {
 	@Singleton
 	public static class AisleDao extends GenericDaoABC<Aisle> implements ITypedDao<Aisle> {
 		@Inject
-		public AisleDao(PersistenceService persistencyService) {
-			super(persistencyService);
+		public AisleDao(PersistenceService persistenceService) {
+			super(persistenceService);
 		}
 
 		public final Class<Aisle> getDaoClass() {

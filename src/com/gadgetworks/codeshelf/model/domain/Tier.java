@@ -65,8 +65,8 @@ public class Tier extends SubLocationABC<Bay> {
 	@Singleton
 	public static class TierDao extends GenericDaoABC<Tier> implements ITypedDao<Tier> {
 		@Inject
-		public TierDao(final PersistenceService persistencyService) {
-			super(persistencyService);
+		public TierDao(final PersistenceService persistenceService) {
+			super(persistenceService);
 		}
 
 		public final Class<Tier> getDaoClass() {
@@ -268,7 +268,7 @@ public class Tier extends SubLocationABC<Bay> {
 
 	@Override
 	public void setParent(Bay inParent) {
-		this.setParent(inParent);
+		this.setParent((ILocation<?>)inParent);
 	}
 
 }

@@ -39,8 +39,8 @@ public class Slot extends SubLocationABC<Tier> {
 	@Singleton
 	public static class SlotDao extends GenericDaoABC<Slot> implements ITypedDao<Slot> {
 		@Inject
-		public SlotDao(final PersistenceService persistencyService) {
-			super(persistencyService);
+		public SlotDao(final PersistenceService persistenceService) {
+			super(persistenceService);
 		}
 
 		public final Class<Slot> getDaoClass() {
@@ -57,10 +57,6 @@ public class Slot extends SubLocationABC<Tier> {
 	*/
 	public Slot() {
 		super();
-	}
-
-	public final void setParentTier(final Tier inParentTier) {
-		setParent(inParentTier);
 	}
 
 	@SuppressWarnings("unchecked")

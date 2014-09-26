@@ -49,7 +49,7 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 	private IEdiProcessor					mEdiProcessor;
 	private IHttpServer						mHttpServer;
 	private IPickDocumentGenerator			mPickDocumentGenerator;
-	private PersistenceService				persistencyService;
+	private PersistenceService				persistenceService;
 
 	private ITypedDao<PersistentProperty>	mPersistentPropertyDao;
 	private ITypedDao<Organization>			mOrganizationDao;
@@ -131,7 +131,7 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		}
 
 		// create health checks
-		DatabaseConnectionHealthCheck dbCheck = new DatabaseConnectionHealthCheck(persistencyService);
+		DatabaseConnectionHealthCheck dbCheck = new DatabaseConnectionHealthCheck(persistenceService);
 		MetricsService.registerHealthCheck(MetricsGroup.Database, dbCheck.getName(), dbCheck);
 
 		// public metrics to opentsdb
@@ -204,10 +204,10 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		// If the property doesn't exist then create it.
 		if (property == null) {
 			property = new PersistentProperty();
-			property.setParent(inOrganization);
 			property.setDomainId(inPropertyID);
 			property.setCurrentValueAsStr(inDefaultValue);
 			property.setDefaultValueAsStr(inDefaultValue);
+			inOrganization.addPersistentProperty(property);
 			shouldUpdate = true;
 		}
 

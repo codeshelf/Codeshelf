@@ -43,8 +43,8 @@ public abstract class SubLocationABC<P extends IDomainObject & ISubLocation<?>> 
 	@Singleton
 	public static class SubLocationDao extends GenericDaoABC<SubLocationABC> implements ITypedDao<SubLocationABC> {
 		@Inject
-		public SubLocationDao(final PersistenceService persistencyService) {
-			super(persistencyService);
+		public SubLocationDao(final PersistenceService persistenceService) {
+			super(persistenceService);
 		}
 
 		public final Class<SubLocationABC> getDaoClass() {

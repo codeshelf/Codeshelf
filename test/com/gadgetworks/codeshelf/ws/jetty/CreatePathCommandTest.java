@@ -44,7 +44,7 @@ import com.natpryce.makeiteasy.Maker;
 @RunWith(MockitoJUnitRunner.class)
 public class CreatePathCommandTest extends DAOTestABC {
 
-	PersistenceService persistencyService = new PersistenceService();
+	PersistenceService persistenceService = new PersistenceService();
 
 	@Mock
 	private IDaoProvider mockDaoProvider;
@@ -64,15 +64,15 @@ public class CreatePathCommandTest extends DAOTestABC {
 		int numberOfSegments = 3;
 		String testPathDomainId = "DOMID-2";
 		
-		DAOMaker maker = new DAOMaker(persistencyService);
+		DAOMaker maker = new DAOMaker(persistenceService);
 		
 		@SuppressWarnings("unchecked")
 		Maker<Facility> fm = a(maker.TestFacility);
 		Facility testFacility = make(fm);
 		
-		Path.DAO = new PathDao(persistencyService);
-		PathSegment.DAO = new PathSegmentDao(persistencyService);
-		WorkArea.DAO = new WorkAreaDao(persistencyService);
+		Path.DAO = new PathDao(persistenceService);
+		PathSegment.DAO = new PathSegmentDao(persistenceService);
+		WorkArea.DAO = new WorkAreaDao(persistenceService);
 	
 		Path noPath = Path.DAO.findByDomainId(testFacility, testPathDomainId);
 		Assert.assertNull(noPath);
@@ -105,11 +105,11 @@ public class CreatePathCommandTest extends DAOTestABC {
 		int numberOfSegments = 3;
 		String testPathDomainId = "DOMID";
 		
-		DAOMaker maker = new DAOMaker(persistencyService);
+		DAOMaker maker = new DAOMaker(persistenceService);
 		Facility testFacility = make(a(maker.TestFacility));
-		Path.DAO = new PathDao(persistencyService);
-		PathSegment.DAO = new PathSegmentDao(persistencyService);
-		WorkArea.DAO = new WorkAreaDao(persistencyService);
+		Path.DAO = new PathDao(persistenceService);
+		PathSegment.DAO = new PathSegmentDao(persistenceService);
+		WorkArea.DAO = new WorkAreaDao(persistenceService);
 	
 		Path noPath = Path.DAO.findByDomainId(testFacility, testPathDomainId);
 		Assert.assertNull(noPath);

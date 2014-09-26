@@ -49,8 +49,8 @@ public class Container extends DomainObjectTreeABC<Facility> {
 	@Singleton
 	public static class ContainerDao extends GenericDaoABC<Container> implements ITypedDao<Container> {
 		@Inject
-		public ContainerDao(PersistenceService persistencyService) {
-			super(persistencyService);
+		public ContainerDao(PersistenceService persistenceService) {
+			super(persistenceService);
 		}
 
 		public final Class<Container> getDaoClass() {

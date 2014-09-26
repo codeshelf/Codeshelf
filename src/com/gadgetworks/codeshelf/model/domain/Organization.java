@@ -111,7 +111,13 @@ public class Organization extends DomainObjectABC {
 
 	
 	public final void addUser(User inUser) {
-		users.put(inUser.getDomainId(), inUser);
+		Organization previousOrganization = inUser.getParent();
+		if(previousOrganization == null) {
+			users.put(inUser.getDomainId(), inUser);
+			inUser.setParent(this);
+		} else if(!previousOrganization.equals(this)) {
+			LOGGER.error("cannot add User "+inUser.getDomainId()+" to "+this.getDomainId()+" because it has not been removed from "+previousOrganization.getDomainId());
+		}	
 	}
 
 	public final User getUser(String inUserId) {
@@ -119,11 +125,23 @@ public class Organization extends DomainObjectABC {
 	}
 
 	public final void removeUser(String inUserId) {
-		users.remove(inUserId);
+		User user= this.getUser(inUserId);
+		if(user != null) {
+			user.setParent(null);
+			users.remove(inUserId);
+		} else {
+			LOGGER.error("cannot remove UomMaster "+inUserId+" from "+this.getDomainId()+" because it isn't found in children");
+		}
 	}
 
 	public final void addPersistentProperty(PersistentProperty inPersistentProperty) {
-		persistentProperties.put(inPersistentProperty.getDomainId(), inPersistentProperty);
+		Organization previousOrganization = inPersistentProperty.getParent();
+		if(previousOrganization == null) {
+			persistentProperties.put(inPersistentProperty.getDomainId(), inPersistentProperty);
+			inPersistentProperty.setParent(this);
+		} else if(!previousOrganization.equals(this)) {
+			LOGGER.error("cannot add PersistentProperty "+inPersistentProperty.getDomainId()+" to "+this.getDomainId()+" because it has not been removed from "+previousOrganization.getDomainId());
+		}	
 	}
 
 	public final PersistentProperty getPersistentProperty(String inPersistentPropertyId) {
@@ -131,7 +149,13 @@ public class Organization extends DomainObjectABC {
 	}
 
 	public final void removePersistentProperty(String inPersistentPropertyId) {
-		persistentProperties.remove(inPersistentPropertyId);
+		PersistentProperty persistentProperty= this.getPersistentProperty(inPersistentPropertyId);
+		if(persistentProperty != null) {
+			persistentProperty.setParent(null);
+			persistentProperties.remove(inPersistentPropertyId);
+		} else {
+			LOGGER.error("cannot remove PersistentProperty "+inPersistentPropertyId+" from "+this.getDomainId()+" because it isn't found in children");
+		}
 	}
 
 	@SuppressWarnings("unchecked")
@@ -164,14 +188,24 @@ public class Organization extends DomainObjectABC {
 		return new ArrayList<Facility>(facilities.values());
 	}
 
-	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void addFacility(Facility inFacility) {
-		facilities.put(inFacility.getDomainId(), inFacility);
+		Organization previousOrganization = inFacility.getOrganization();
+		if(previousOrganization == null) {
+			facilities.put(inFacility.getDomainId(), inFacility);
+			inFacility.setOrganization(this);
+		} else if(!previousOrganization.equals(this)) {
+			LOGGER.error("cannot add Facility "+inFacility.getDomainId()+" to "+this.getDomainId()+" because it has not been removed from "+previousOrganization.getDomainId());
+		}	
 	}
 
-	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void removeFacility(Facility inFacility) {
-		facilities.remove(inFacility.getDomainId());
+		Facility facility = this.getFacility(inFacility.getDomainId());
+		if(facility != null) {
+			facility.setOrganization(null);
+			facilities.remove(inFacility.getDomainId());
+		} else {
+			LOGGER.error("cannot remove Facility "+inFacility.getDomainId()+" from "+this.getDomainId()+" because it isn't found in children");
+		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -221,7 +255,6 @@ public class Organization extends DomainObjectABC {
 	public final Facility createFacility(final String inDomainId, final String inDescription, final Point inAnchorPoint) {
 
 		Facility facility = new Facility();
-		facility.setOrganization(this);
 		facility.setDomainId(inDomainId);
 		facility.setDescription(inDescription);
 		facility.setAnchorPoint(inAnchorPoint);
@@ -276,17 +309,17 @@ public class Organization extends DomainObjectABC {
 		if(User.DAO.findByDomainId(null,inUsername) == null) {
 			// Create a user for the organization.
 			User user = new User();
-			user.setParent(this);
 			user.setDomainId(inUsername);
 			user.setPassword(inPassword);
 			user.setType(type);
 			user.setActive(true);
+			this.addUser(user);
 
 			try {
 				User.DAO.store(user);
 				result = user;
 			} catch (DaoException e) {
-				e.printStackTrace();
+				LOGGER.error("error persisting new user "+inUsername,e);
 			}
 		} else {
 			LOGGER.warn("Tried to create user but username already existed - "+inUsername);

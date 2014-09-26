@@ -57,6 +57,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 
 	@Test
 	public final void testOrderImporterFromCsvStream() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
 
 		String csvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalape������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -114,10 +115,12 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Assert.assertEquals(detail931b, detail931);
 		Assert.assertEquals(detail931DomainID, "10706962"); // This is the itemID from file above.
 
+		this.getPersistenceService().endTenantTransaction();
 	}
 
 	@Test
 	public final void testOrderImporterWithPickStrategyFromCsvStream() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
 
 		String csvString = "orderGroupId,pickStrategy,orderId,itemId,description,quantity,uom,orderDate, dueDate\r\n" //
 				+ "1,,123,3001,Widget,100,each,2012-09-26 11:31:01,2012-09-26 11:31:01\r\n" //
@@ -163,10 +166,13 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Assert.assertNotNull(order);
 		Assert.assertEquals(order.getPickStrategyEnum(), PickStrategyEnum.PARALLEL);
 
+		this.getPersistenceService().endTenantTransaction();
+
 	}
 
 	@Test
 	public final void testOrderImporterWithPreassignedContainerIdFromCsvStream() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
 
 		String csvString = "orderGroupId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate, dueDate\r\n" //
 				+ "1,,123,3001,Widget,100,each,2012-09-26 11:31:01,2012-09-26 11:31:01\r\n" //
@@ -215,10 +221,13 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Assert.assertTrue(theCounts.mActiveDetails == 11);
 		Assert.assertTrue(theCounts.mActiveCntrUses == 1);
 
+		this.getPersistenceService().endTenantTransaction();
+
 	}
 
 	@Test
 	public void testFailOrderImporterFromCsvStream() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
 		// orderId,itemId,description,quantity,uom are not nullable according to the bean
 		// There's no due date on first order line. nullable, ok
 		// There's no itemID on third to last line. (did not matter)
@@ -278,10 +287,13 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Assert.assertTrue(theCounts.mActiveCntrUses == 3);
 		// Seems possibly wrong! Got a detail for missing itemID.
 
+		this.getPersistenceService().endTenantTransaction();
+
 	}
 
 	@Test
 	public void testManyOrderArchive() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
 
 		String firstOrderBatchCsv = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalape������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -378,6 +390,8 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 				Assert.assertNotEquals(Integer.valueOf(0), detail.getQuantity());
 			}
 		}
+		this.getPersistenceService().endTenantTransaction();
+
 	}
 
 	//@Test
@@ -472,10 +486,13 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 				Assert.assertNotEquals(Integer.valueOf(0), detail.getQuantity());
 			}
 		}
+		this.getPersistenceService().endTenantTransaction();
+
 	}
 
 	@Test
 	public final void testMinMaxOrderImporterFromCsvStream() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
 
 		String csvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,minQuantity,maxQuantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalape������o Stuffed Olives,	1,0,5,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -519,10 +536,14 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Assert.assertNotNull(orderDetail);
 		Assert.assertEquals(Integer.valueOf(0), orderDetail.getMinQuantity());
 		Assert.assertEquals(Integer.valueOf(5), orderDetail.getMaxQuantity());
+		
+		this.getPersistenceService().endTenantTransaction();
+
 	}
 
 	@Test
 	public final void testMinMaxDefaultOrderImporterFromCsvStream() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
 
 		String csvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalape������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -566,10 +587,13 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Assert.assertEquals(orderDetail.getQuantity(), orderDetail.getMinQuantity());
 		Assert.assertEquals(orderDetail.getQuantity(), orderDetail.getMaxQuantity());
 
+		this.getPersistenceService().endTenantTransaction();
+
 	}
 
 	@Test
 	public final void testDetailIdOrderImporterFromCsvStream() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
 
 		String firstCsvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,123,123,123.1,10700589,Napa Valley Bistro - Jalape������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -684,10 +708,14 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Assert.assertTrue(theCounts2.mActiveDetails == 9);
 		Assert.assertTrue(theCounts2.mActiveCntrUses == 2);
 
+		this.getPersistenceService().endTenantTransaction();
+
 	}
 
 	@Test
 	public final void testReimportDetailIdOrderImporterFromCsvStream() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
+
 		Organization organization = new Organization();
 		organization.setDomainId("O-ORD1.9");
 		mOrganizationDao.store(organization);
@@ -726,6 +754,8 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Assert.assertTrue(theCounts2.mInactiveCntrUsesOnActiveOrders == 0);
 		Assert.assertTrue(theCounts2.mActiveCntrUses == 3);
 
+		this.getPersistenceService().endTenantTransaction();
+
 	}
 
 	/**
@@ -733,6 +763,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 	 */
 	@Test
 	public void testMultipleImportOfLargeSet() throws IOException, InterruptedException {
+		this.getPersistenceService().beginTenantTransaction();
 
 		Facility testFacility = getTestFacility("O-testMultipleImportOfLargeSet", "F1");
 
@@ -761,12 +792,16 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		for (OrderHeader orderHeader : foundFacility.getOrderHeaders()) {
 			Assert.assertNotNull(orderHeader.getOrderDetails());
 		}
+		this.getPersistenceService().endTenantTransaction();
+
 	}
 
 	//******************** TESTS without Group ID ***********************
 
 	@Test
 	public final void testOutboundOrderNoGroup() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
+
 		Organization organization = new Organization();
 		organization.setDomainId("O-ORD2.1");
 		mOrganizationDao.store(organization);
@@ -869,6 +904,8 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Assert.assertTrue(theCounts6.mInactiveDetailsOnActiveOrders == 0);
 		Assert.assertTrue(theCounts6.mInactiveCntrUsesOnActiveOrders == 6);
 		Assert.assertTrue(theCounts6.mActiveCntrUses == 1);
+
+		this.getPersistenceService().endTenantTransaction();
 
 	}
 

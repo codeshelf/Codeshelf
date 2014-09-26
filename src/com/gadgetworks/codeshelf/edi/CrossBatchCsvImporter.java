@@ -135,7 +135,7 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 
 		// Inactivate the WONDERWALL order detail that don't match the import timestamp.
 		try {
-			mOrderHeaderDao.beginTransaction();
+			//mOrderHeaderDao.beginTransaction();
 			for (OrderHeader order : inFacility.getOrderHeaders()) {
 				if (order.getOrderTypeEnum().equals(OrderTypeEnum.CROSS)) {
 					Boolean shouldArchiveOrder = true;
@@ -165,9 +165,9 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 					}
 				}
 			}
-			mOrderHeaderDao.commitTransaction();
+			//mOrderHeaderDao.commitTransaction();
 		} finally {
-			mOrderHeaderDao.endTransaction();
+			//mOrderHeaderDao.endTransaction();
 		}
 
 	}
@@ -185,7 +185,7 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 		// Only create the CROSS detail if the quantity is > 0.
 		if (Integer.valueOf(inCsvBean.getQuantity()) > 0) {
 			try {
-				mOrderHeaderDao.beginTransaction();
+				//mOrderHeaderDao.beginTransaction();
 
 				LOGGER.info(inCsvBean.toString());
 
@@ -211,10 +211,10 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 				} catch (Exception e) {
 					LOGGER.error("Caught exception while importing cross-batch", e);
 				}
-				mOrderHeaderDao.commitTransaction();
+				//mOrderHeaderDao.commitTransaction();
 
 			} finally {
-				mOrderHeaderDao.endTransaction();
+				//mOrderHeaderDao.endTransaction();
 			}
 		}
 	}
@@ -234,7 +234,6 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 		result = inFacility.getOrderGroup(inCsvBean.getOrderGroupId());
 		if ((result == null) && (inCsvBean.getOrderGroupId() != null) && (inCsvBean.getOrderGroupId().length() > 0)) {
 			result = new OrderGroup();
-			result.setParent(inFacility);
 			result.setOrderGroupId(inCsvBean.getOrderGroupId());
 			result.setDescription(OrderGroup.DEFAULT_ORDER_GROUP_DESC_PREFIX + inCsvBean.getOrderGroupId());
 			inFacility.addOrderGroup(result);
@@ -271,7 +270,6 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 
 		if (result == null) {
 			result = new OrderHeader();
-			result.setParent(inFacility);
 			result.setDomainId(OrderHeader.computeCrossOrderId(inCsvBean.getContainerId(), inEdiProcessTime));
 			result.setStatusEnum(OrderStatusEnum.CREATED);
 			inFacility.addOrderHeader(result);
@@ -323,7 +321,6 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 		result = inOrder.getOrderDetail(inCsvBean.getItemId());
 		if (result == null) {
 			result = new OrderDetail();
-			result.setParent(inOrder);
 			result.setDomainId(inCsvBean.getItemId());
 			result.setStatusEnum(OrderStatusEnum.CREATED);
 
@@ -370,7 +367,6 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 
 			if (result == null) {
 				result = new Container();
-				result.setParent(inFacility);
 				result.setContainerId(inCsvBean.getContainerId());
 				result.setKind(inFacility.getContainerKind(ContainerKind.DEFAULT_CONTAINER_KIND));
 				inFacility.addContainer(result);
@@ -390,12 +386,12 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 				use = new ContainerUse();
 				use.setDomainId(inOrder.getOrderId());
 				use.setOrderHeader(inOrder);
-				use.setParent(result);
 			}
 			Timestamp timestamp = new Timestamp(System.currentTimeMillis());
 			use.setUsedOn(timestamp);
 			use.setActive(true);
 			use.setUpdated(inEdiProcessTime);
+			result.addContainerUse(use);
 
 			try {
 				mContainerUseDao.store(use);
@@ -404,7 +400,6 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}
-			result.addContainerUse(use);
 
 		}
 
@@ -425,7 +420,6 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 
 		if (result == null) {
 			result = new UomMaster();
-			result.setParent(inFacility);
 			result.setUomMasterId(uomId);
 			inFacility.addUomMaster(result);
 

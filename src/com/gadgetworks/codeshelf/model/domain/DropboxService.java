@@ -74,8 +74,8 @@ public class DropboxService extends EdiServiceABC {
 	@Singleton
 	public static class DropboxServiceDao extends GenericDaoABC<DropboxService> implements ITypedDao<DropboxService> {
 		@Inject
-		public DropboxServiceDao(PersistenceService persistencyService) {
-			super(persistencyService);
+		public DropboxServiceDao(PersistenceService persistenceService) {
+			super(persistenceService);
 		}
 
 		public final Class<DropboxService> getDaoClass() {
@@ -494,7 +494,6 @@ public class DropboxService extends EdiServiceABC {
 			EdiDocumentLocator locator = EdiDocumentLocator.DAO.findByDomainId(this, inEntry.lcPath);
 			if (locator == null) {
 				locator = new EdiDocumentLocator();
-				locator.setParent(this);
 				locator.setReceived(new Timestamp(System.currentTimeMillis()));
 				locator.setDocumentStateEnum(EdiDocumentStatusEnum.NEW);
 				locator.setDomainId(inEntry.lcPath);

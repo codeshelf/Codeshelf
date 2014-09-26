@@ -42,7 +42,9 @@ public class IronMqServiceOnlineTest {
 
 
 		IronMqService.DAO = mock(ITypedDao.class);
+		DropboxService.DAO = mock(ITypedDao.class);
 		Facility.DAO = mock(ITypedDao.class);
+		Organization.DAO = mock(ITypedDao.class);
 	}
 
 	@After

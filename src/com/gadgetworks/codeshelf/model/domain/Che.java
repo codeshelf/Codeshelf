@@ -56,8 +56,8 @@ public class Che extends WirelessDeviceABC {
 	@Singleton
 	public static class CheDao extends GenericDaoABC<Che> implements ITypedDao<Che> {
 		@Inject
-		public CheDao(PersistenceService persistencyService) {
-			super(persistencyService);
+		public CheDao(PersistenceService persistenceService) {
+			super(persistenceService);
 		}
 
 		public final Class<Che> getDaoClass() {

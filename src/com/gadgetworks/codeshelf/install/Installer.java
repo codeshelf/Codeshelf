@@ -29,12 +29,12 @@ public class Installer {
 	
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(Installer.class);
 	
-	PersistenceService persistencyService;
+	PersistenceService persistenceService;
 	
-	public Installer(PersistenceService persistencyService) {
-		this.persistencyService = persistencyService;
-		if (!persistencyService.isInitialized()) {
-			persistencyService.start();
+	public Installer(PersistenceService persistenceService) {
+		this.persistenceService = persistenceService;
+		if (!persistenceService.isInitialized()) {
+			persistenceService.start();
 		}
 	}
 	
@@ -111,7 +111,7 @@ public class Installer {
 
 	private void run() {
 		LOGGER.info("Running installer...");
-		Session session = persistencyService.getCurrentTenantSession();
+		Session session = persistenceService.getCurrentTenantSession();
 		Transaction t = session.beginTransaction();
 		doInitializeApplicationData();
 		t.commit();

@@ -388,7 +388,6 @@ public abstract class DomainTestABC extends DAOTestABC {
 		ContainerUse result = null;
 		
 		result = new ContainerUse();
-		result.setParentContainer(inContainer);
 		result.setDomainId(inContainer.getContainerId());
 		result.setOrderHeader(inOrderHeader);
 		result.setUsedOn(new Timestamp(System.currentTimeMillis()));

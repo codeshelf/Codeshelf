@@ -44,8 +44,8 @@ public class UomMaster extends DomainObjectTreeABC<Facility> {
 	@Singleton
 	public static class UomMasterDao extends GenericDaoABC<UomMaster> implements ITypedDao<UomMaster> {
 		@Inject
-		public UomMasterDao(final PersistenceService persistencyService) {
-			super(persistencyService);
+		public UomMasterDao(final PersistenceService persistenceService) {
+			super(persistenceService);
 		}
 
 		public final Class<UomMaster> getDaoClass() {

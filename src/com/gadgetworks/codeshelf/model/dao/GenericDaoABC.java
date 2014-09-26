@@ -39,15 +39,15 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 
 	private LinkedBlockingQueue<IDaoListener>	mListeners	= new LinkedBlockingQueue<IDaoListener>();
 	
-	PersistenceService persistencyService;
+	PersistenceService persistenceService;
 
 	@Inject
-	public GenericDaoABC(PersistenceService persistencyService) {
-		this.persistencyService = persistencyService;
+	public GenericDaoABC(PersistenceService persistenceService) {
+		this.persistenceService = persistenceService;
 	}
 	
 	protected Session getCurrentSession() {
-		Session session = persistencyService.getCurrentTenantSession(); 
+		Session session = persistenceService.getCurrentTenantSession(); 
 		return session;
 	}
 
@@ -352,7 +352,7 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	 * @see com.gadgetworks.codeshelf.model.dao.ITypedDao#beginTransaction()
 	 */
 	public final void beginTransaction() {
-		this.persistencyService.beginTenantTransaction();
+		this.persistenceService.beginTenantTransaction();
 	}
 
 	// --------------------------------------------------------------------------
@@ -360,7 +360,7 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	 * @see com.gadgetworks.codeshelf.model.dao.ITypedDao#commitTransaction()
 	 */
 	public final void commitTransaction() {
-		this.persistencyService.endTenantTransaction();
+		this.persistenceService.endTenantTransaction();
 	}
 	
 	// --------------------------------------------------------------------------
@@ -368,7 +368,7 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	 * @see com.gadgetworks.codeshelf.model.dao.ITypedDao#endTransaction()
 	 */
 	public final void endTransaction() {
-		this.persistencyService.endTenantTransaction();
+		this.persistenceService.endTenantTransaction();
 	}
 	
 	// --------------------------------------------------------------------------

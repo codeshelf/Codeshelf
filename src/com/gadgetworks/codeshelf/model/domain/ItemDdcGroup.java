@@ -45,8 +45,8 @@ public class ItemDdcGroup extends DomainObjectTreeABC<ILocation<?>> {
 	@Singleton
 	public static class ItemDdcGroupDao extends GenericDaoABC<ItemDdcGroup> implements ITypedDao<ItemDdcGroup> {
 		@Inject
-		public ItemDdcGroupDao(PersistenceService persistencyService) {
-			super(persistencyService);
+		public ItemDdcGroupDao(PersistenceService persistenceService) {
+			super(persistenceService);
 		}
 
 		public final Class<ItemDdcGroup> getDaoClass() {

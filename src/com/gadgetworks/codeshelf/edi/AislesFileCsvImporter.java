@@ -865,8 +865,6 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 		Bay bay = mBayDao.findByDomainId(mLastReadAisle, inBayId);
 		if (bay == null) {
 			bay = mLastReadAisle.createBay(inBayId, anchorPoint, pickFaceEndPoint);
-			bay.setParent(mLastReadAisle);
-			mLastReadAisle.addLocation(bay); // This is odd. ebeans needs it?
 		} else {
 			// update existing bay. DomainId is not changing as we found it that way from the same parent.
 			// So only a matter of updating the anchor and pickFace points

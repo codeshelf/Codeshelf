@@ -18,6 +18,8 @@ public class OrderHeaderTest extends DomainTestABC {
 	@SuppressWarnings("unused")
 	@Test
 	public void testReturnActiveLocationsOnly() {
+		this.getPersistenceService().beginTenantTransaction();
+
 		Facility facility = createDefaultFacility("ORG-testReturnActiveLocationsOnly");
 		Aisle a1 = getDefaultAisle(facility, "A1");
 		a1.setPickFaceEndPoint(new Point(PositionTypeEnum.METERS_FROM_PARENT, 5.0, 0.0, 0.0));
@@ -50,6 +52,7 @@ public class OrderHeaderTest extends DomainTestABC {
 		Assert.assertEquals(a2, orderLocationAfterInactivating.getLocation());
 		
 		
+		this.getPersistenceService().endTenantTransaction();
 		
 		
 		

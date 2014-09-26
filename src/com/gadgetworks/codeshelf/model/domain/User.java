@@ -58,8 +58,8 @@ public class User extends DomainObjectTreeABC<Organization> {
 	@Singleton
 	public static class UserDao extends GenericDaoABC<User> implements ITypedDao<User> {
 		@Inject
-		public UserDao(final PersistenceService persistencyService) {
-			super(persistencyService);
+		public UserDao(final PersistenceService persistenceService) {
+			super(persistenceService);
 		}
 		
 		public final Class<User> getDaoClass() {

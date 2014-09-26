@@ -204,7 +204,7 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 		final Timestamp inEdiProcessTime) {
 
 		try {
-			mItemDao.beginTransaction();
+			//mItemDao.beginTransaction();
 
 			LOGGER.debug("Import ddc item: " + inCsvBean.toString());
 
@@ -232,10 +232,10 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 			} catch (Exception e) {
 				LOGGER.error("", e);
 			}
-			mItemDao.commitTransaction();
+			//mItemDao.commitTransaction();
 
 		} finally {
-			mItemDao.endTransaction();
+			//mItemDao.endTransaction();
 		}
 	}
 
@@ -307,7 +307,6 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 		result = mItemMasterDao.findByDomainId(inFacility, inItemId);
 		if (result == null) {
 			result = new ItemMaster();
-			result.setParent(inFacility);
 			result.setDomainId(inItemId);
 			result.setItemId(inItemId);
 			inFacility.addItemMaster(result);
@@ -347,7 +346,6 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 
 		if (result == null) {
 			result = new UomMaster();
-			result.setParent(inFacility);
 			result.setUomMasterId(inUomId);
 			inFacility.addUomMaster(result);
 
@@ -385,7 +383,6 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 		result = inItemMaster.getItem(inCsvBean.getItemId());
 		if ((result == null) && (inCsvBean.getItemId() != null) && (inCsvBean.getItemId().length() > 0)) {
 			result = new Item();
-			result.setParent(inItemMaster);
 		}
 
 		// If we were able to get/create an item then update it.
@@ -402,6 +399,8 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}
+		} else {
+			LOGGER.warn("Failed to update inventory item with ID "+inCsvBean.getItemId());
 		}
 
 		return result;
@@ -467,7 +466,6 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 		}
 		if ((result == null)) {
 			result = new Item();
-			result.setParent(inItemMaster);
 			inItemMaster.addItem(result);
 		} 
 		// setStoredLocation has the side effect of setting domainId, but that requires that UOM already be set. So setUomMaster first.

@@ -49,8 +49,8 @@ public class UserSession extends DomainObjectTreeABC<User> {
 	@Singleton
 	public static class UserSessionDao extends GenericDaoABC<UserSession> implements ITypedDao<UserSession> {
 		@Inject
-		public UserSessionDao(final PersistenceService persistencyService) {
-			super(persistencyService);
+		public UserSessionDao(final PersistenceService persistenceService) {
+			super(persistenceService);
 		}
 		
 		public final Class<UserSession> getDaoClass() {

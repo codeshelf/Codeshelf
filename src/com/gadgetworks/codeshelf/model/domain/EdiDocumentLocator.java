@@ -43,7 +43,7 @@ import com.google.inject.Singleton;
 @Table(name = "edi_document_locator")
 //@CacheStrategy(useBeanCache = true)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-public class EdiDocumentLocator extends DomainObjectTreeABC<DropboxService> {
+public class EdiDocumentLocator extends DomainObjectTreeABC<EdiServiceABC> {
 
 	@Inject
 	public static ITypedDao<EdiDocumentLocator>	DAO;
@@ -51,8 +51,8 @@ public class EdiDocumentLocator extends DomainObjectTreeABC<DropboxService> {
 	@Singleton
 	public static class EdiDocumentLocatorDao extends GenericDaoABC<EdiDocumentLocator> implements ITypedDao<EdiDocumentLocator> {
 		@Inject
-		public EdiDocumentLocatorDao(PersistenceService persistencyService) {
-			super(persistencyService);
+		public EdiDocumentLocatorDao(PersistenceService persistenceService) {
+			super(persistenceService);
 		}
 		
 		public final Class<EdiDocumentLocator> getDaoClass() {
@@ -64,9 +64,8 @@ public class EdiDocumentLocator extends DomainObjectTreeABC<DropboxService> {
 	private static final Logger		LOGGER	= LoggerFactory.getLogger(EdiDocumentLocator.class);
 
 	// The owning EdiService.
-	// We prefer to use the abstract class here, but it's not currently possible with Ebean.
 	@ManyToOne(optional = false)
-	private DropboxService			parent;
+	private EdiServiceABC			parent;
 
 	// Document Path
 	@Column(nullable = false)
@@ -121,7 +120,7 @@ public class EdiDocumentLocator extends DomainObjectTreeABC<DropboxService> {
 		return DAO;
 	}
 
-	public final DropboxService getParent() {
+	public final EdiServiceABC getParent() {
 		return parent;
 	}
 
@@ -129,7 +128,7 @@ public class EdiDocumentLocator extends DomainObjectTreeABC<DropboxService> {
 		return getParent().getFacility();
 	}
 
-	public final void setParent(DropboxService inParent) {
+	public final void setParent(EdiServiceABC inParent) {
 		parent = inParent;
 	}
 
@@ -145,4 +144,5 @@ public class EdiDocumentLocator extends DomainObjectTreeABC<DropboxService> {
 		EdiDocumentLocator.DAO = inEdiDocumentLocatorDao; 
 		
 	}
+
 }

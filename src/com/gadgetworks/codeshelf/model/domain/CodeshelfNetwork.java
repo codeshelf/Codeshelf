@@ -54,8 +54,8 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 	@Singleton
 	public static class CodeshelfNetworkDao extends GenericDaoABC<CodeshelfNetwork> implements ITypedDao<CodeshelfNetwork> {
 		@Inject
-		public CodeshelfNetworkDao(PersistenceService persistencyService) {
-			super(persistencyService);
+		public CodeshelfNetworkDao(PersistenceService persistenceService) {
+			super(persistenceService);
 		}
 
 		public final Class<CodeshelfNetwork> getDaoClass() {
@@ -262,7 +262,6 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 		Che result = Che.DAO.findByDomainId(this, inGuid.getHexStringNoPrefix());
 		if (result == null) {
 			result = new Che();
-			result.setParent(this);
 			result.setDomainId(inDomainId);
 			result.setDeviceNetGuid(inGuid);
 
@@ -288,7 +287,6 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 		if (result == null) {
 			// Get the first network in the list of networks.
 			result = new LedController();
-			result.setParent(this);
 			result.setDomainId(inDomainId);
 			result.setDescription("LED controller for " + this.getDomainId());
 			result.setDeviceNetGuid(inGuid);
@@ -330,7 +328,6 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 			if(sitecon == null) {
 				// ok to create site controller + user
 				sitecon = new SiteController();
-				sitecon.setParent(this);
 				sitecon.setDomainId(inDomainId);
 				sitecon.setDescription("Site Controller for " + this.getDomainId());
 				sitecon.setDescribeLocation(inDescribeLocation);

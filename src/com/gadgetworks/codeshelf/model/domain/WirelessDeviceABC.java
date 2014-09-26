@@ -61,8 +61,8 @@ public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNet
 	@Singleton
 	public static class WirelessDeviceDao extends GenericDaoABC<WirelessDeviceABC> implements ITypedDao<WirelessDeviceABC> {
 		@Inject
-		public WirelessDeviceDao(final PersistenceService persistencyService) {
-			super(persistencyService);
+		public WirelessDeviceDao(final PersistenceService persistenceService) {
+			super(persistenceService);
 		}
 		
 		public final Class<WirelessDeviceABC> getDaoClass() {

@@ -18,7 +18,7 @@ import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 
 public class OptimisticLockExceptionTest {
 
-	PersistenceService persistencyService = new PersistenceService();
+	PersistenceService persistenceService = new PersistenceService();
 
 	@Before
 	public final void setup() {
@@ -29,17 +29,17 @@ public class OptimisticLockExceptionTest {
 
 		// EbeanServer defaultServer = Ebean.getServer(null);
 
-		OrderHeader.DAO = new OrderHeaderDao(persistencyService);
-		OrderDetail.DAO = new OrderDetailDao(persistencyService);
-		Organization.DAO = new OrganizationDao(persistencyService);
-		Facility.DAO = new FacilityDao(persistencyService);
+		OrderHeader.DAO = new OrderHeaderDao(persistenceService);
+		OrderDetail.DAO = new OrderDetailDao(persistenceService);
+		Organization.DAO = new OrganizationDao(persistenceService);
+		Facility.DAO = new FacilityDao(persistenceService);
 
-		Organization.DAO = new OrganizationDao(persistencyService);
+		Organization.DAO = new OrganizationDao(persistenceService);
 		Organization organization = new Organization();
 		organization.setOrganizationId("OPTIMISTIC-O1");
 		Organization.DAO.store(organization);
 
-		Facility.DAO = new FacilityDao(persistencyService);
+		Facility.DAO = new FacilityDao(persistenceService);
 		Facility facility = new Facility();
 		organization.addFacility(facility);
 		facility.setFacilityId("OPTIMISTIC-F1");

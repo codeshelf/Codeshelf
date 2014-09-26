@@ -63,8 +63,8 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 	@Singleton
 	public static class PathSegmentDao extends GenericDaoABC<PathSegment> implements ITypedDao<PathSegment> {
 		@Inject
-		public PathSegmentDao(final PersistenceService persistencyService) {
-			super(persistencyService);
+		public PathSegmentDao(final PersistenceService persistenceService) {
+			super(persistenceService);
 		}
 
 		public final Class<PathSegment> getDaoClass() {

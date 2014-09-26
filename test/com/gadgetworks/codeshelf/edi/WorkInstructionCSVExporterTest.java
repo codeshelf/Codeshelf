@@ -70,12 +70,16 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 	private DateFormat timestampFormat = new SimpleDateFormat(TIME_FORMAT);
 	
 	public void doBefore() {
+		this.getPersistenceService().beginTenantTransaction();
 		facility = createDefaultFacility(this.getClass().toString() + System.currentTimeMillis());
 		exporter  = new WorkInstructionCSVExporter();
+		this.getPersistenceService().endTenantTransaction();
 	}
 	
 	@Test
 	public void generatesCSV() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
+
 		WorkInstruction testWi = generateValidFullWorkInstruction();
 		WorkInstruction testWi2 = generateValidFullWorkInstruction();
 		List<WorkInstruction> wiList = ImmutableList.of(testWi, testWi2);
@@ -93,7 +97,8 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 			Assert.assertNotEquals("Data Field Value was empty at position: " + i, "", dataField.trim());
 			
 		}
-
+		
+		this.getPersistenceService().endTenantTransaction();
 	}
 
 	private List<String[]> toTable(List<WorkInstruction> wiList) throws IOException {
@@ -106,6 +111,7 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 	
 	@Test
 	public void dateFieldsAreISO8601UTC() throws Exception {
+		this.getPersistenceService().beginTenantTransaction();
 		
 		WorkInstruction testWi = generateValidFullWorkInstruction();
 		WorkInstruction testWi2 = generateValidFullWorkInstruction();
@@ -116,11 +122,15 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 		dataRows.next(); //skip header
 		for (String[] dataRow : ImmutableList.copyOf(dataRows)) {
 			assertEachDateField(workInstructions.next(), dataRow);
-		}
+		}		
+		this.getPersistenceService().endTenantTransaction();
+
 	}
 
 	@Test
 	public void usesLocationIdWhenNoAlias() throws Exception {
+		this.getPersistenceService().beginTenantTransaction();
+
 		String expectedValue = "TESTDOMAINID";
 		List<LocationAlias> emptyAliases = Collections.<LocationAlias>emptyList();
 		SubLocationABC<?> noAliasLocation = mockSubLocation("ID_FROM_LOCATION"); 
@@ -133,11 +143,15 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 		List<WorkInstruction> wiList = ImmutableList.of(testWi);
 		List<String[]> table = toTable(wiList);
 		String[] dataRow = table.get(1);
-		assertField(dataRow, "locationId", expectedValue);
+		assertField(dataRow, "locationId", expectedValue);		
+		this.getPersistenceService().endTenantTransaction();
+
 	}
 
 	@Test
 	public void usesFirstLocationAliasIfAvailable() throws Exception {
+		this.getPersistenceService().beginTenantTransaction();
+
 		String expectedValue = "ALIASID";
 		SubLocationABC<?> aliasedLocation = mockSubLocation("NOT_EXPECTED");
 		aliasedLocation.setAliases(ImmutableList.of(
@@ -150,12 +164,16 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 		List<WorkInstruction> wiList = ImmutableList.of(testWi);
 		List<String[]> table = toTable(wiList);
 		String[] dataRow = table.get(1);
-		assertField(dataRow, "locationId", expectedValue);
+		assertField(dataRow, "locationId", expectedValue);		
+		this.getPersistenceService().endTenantTransaction();
+
 	}
 
 	
 	@Test
 	public void usesOrderDomainId() throws Exception {
+		this.getPersistenceService().beginTenantTransaction();
+
 		String expectedValue = "TESTDOMAINID";
 		
 		
@@ -164,12 +182,16 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 		List<WorkInstruction> wiList = ImmutableList.of(testWi);
 		List<String[]> table = toTable(wiList);
 		String[] dataRow = table.get(1);
-		assertField(dataRow, "orderId", expectedValue);
+		assertField(dataRow, "orderId", expectedValue);		
+		this.getPersistenceService().endTenantTransaction();
+
 	}
 
 	
 	@Test
 	public void usesOrderGroupDomainId() throws Exception {
+		this.getPersistenceService().beginTenantTransaction();
+
 		String expectedValue = "TESTDOMAINID";
 		
 		
@@ -178,18 +200,23 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 		List<WorkInstruction> wiList = ImmutableList.of(testWi);
 		List<String[]> table = toTable(wiList);
 		String[] dataRow = table.get(1);
-		assertField(dataRow, "orderGroupId", expectedValue);
+		assertField(dataRow, "orderGroupId", expectedValue);		
+		this.getPersistenceService().endTenantTransaction();
+
 	}
 	
 	@Test
 	public void orderGroupIdOptional() throws Exception {
-		
+		this.getPersistenceService().beginTenantTransaction();
+
 		WorkInstruction testWi = generateValidFullWorkInstruction();
 		testWi.getParent().getParent().setOrderGroup(null);
 		List<WorkInstruction> wiList = ImmutableList.of(testWi);
 		List<String[]> table = toTable(wiList);
 		String[] dataRow = table.get(1);
-		assertField(dataRow, "orderGroupId", "");
+		assertField(dataRow, "orderGroupId", "");		
+		this.getPersistenceService().endTenantTransaction();
+
 	}
 
 	

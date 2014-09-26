@@ -35,7 +35,7 @@ import com.google.inject.Inject;
  */
 public class EdiProcessorTest extends EdiTestABC {
 
-	PersistenceService persistencyService = new PersistenceService();
+	PersistenceService persistenceService = new PersistenceService();
 	
 	@Test
 	public final void ediProcessThreadTest() {
@@ -140,8 +140,8 @@ public class EdiProcessorTest extends EdiTestABC {
 		private Facility	mFacility;
 
 		@Inject
-		public TestFacilityDao(final PersistenceService persistencyService, final Facility inFacility) {
-			super(persistencyService);
+		public TestFacilityDao(final PersistenceService persistenceService, final Facility inFacility) {
+			super(persistenceService);
 			mFacility = inFacility;
 		}
 
@@ -233,7 +233,7 @@ public class EdiProcessorTest extends EdiTestABC {
 		Facility facility = organization.getFacility("F-EDI.1");
 		organization.addFacility(facility);
 
-		TestFacilityDao facilityDao = new TestFacilityDao(persistencyService, facility);
+		TestFacilityDao facilityDao = new TestFacilityDao(persistenceService, facility);
 		facilityDao.store(facility);
 
 		IEdiService ediServiceLinked = new IEdiService() {

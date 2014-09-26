@@ -91,8 +91,8 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 	@Singleton
 	public static class FacilityDao extends GenericDaoABC<Facility> implements ITypedDao<Facility> {
 		@Inject
-		public FacilityDao(PersistenceService persistencyService) {
-			super(persistencyService);
+		public FacilityDao(PersistenceService persistenceService) {
+			super(persistenceService);
 		}
 
 		public final Class<Facility> getDaoClass() {
@@ -175,21 +175,7 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 	public Facility() {
 		super();
 	}
-/*		
-		setPickFaceEndPosTypeEnum(inPickFaceEndPoint.getPosTypeEnum());
-		setPickFaceEndPosX(inPickFaceEndPoint.getX());
-		setPickFaceEndPosY(inPickFaceEndPoint.getY());
-		setPickFaceEndPosZ(inPickFaceEndPoint.getZ());
-		
-		
-		super(null, null, Point.getZeroPoint(), Point.getZeroPoint());
-	}
 
-	public Facility(Organization organization, String domainId, final Point inAnchorPoint) {
-		super(null, domainId, inAnchorPoint, Point.getZeroPoint());
-		setParent(organization);
-	}
-*/
 	public final static void setDao(ITypedDao<Facility> dao) {
 		Facility.DAO = dao;
 	}
@@ -205,7 +191,7 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 
 	@Override
 	public final String getFullDomainId() {
-		return getParent().getDomainId() + "." + getDomainId();
+		return getOrganization().getDomainId() + "." + getDomainId();
 	}
 
 	public final void setFacilityId(String inFacilityId) {
@@ -328,7 +314,7 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 	}
 
 	public final void removeEdiService(IEdiService inEdiService) {
-		if(!this.ediServices.contains(inEdiService)) {
+		if(this.ediServices.contains(inEdiService)) {
 			inEdiService.setParent(null);
 			ediServices.remove(inEdiService);			
 		} else {
@@ -553,7 +539,6 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 	public final Path createPath(String inDomainId, PathSegment[] inPathSegments) {
 		Path path = createPath(inDomainId);
 		for (PathSegment pathSegment : inPathSegments) {
-			pathSegment.setParent(path);
 			PathSegment.DAO.store(pathSegment);
 			path.addPathSegment(pathSegment);
 		}
@@ -615,7 +600,6 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		final Integer inDrawOrder) {
 
 		Vertex vertex = new Vertex();
-		vertex.setParent(this);
 		vertex.setDomainId(inDomainId);
 		vertex.setPoint(new Point(PositionTypeEnum.valueOf(inPosTypeByStr), inPosX, inPosY, null));
 		vertex.setDrawOrder(inDrawOrder);
@@ -708,7 +692,6 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		ContainerKind result = null;
 
 		result = new ContainerKind();
-		result.setParent(this);
 		result.setDomainId(inDomainId);
 		result.setLengthMeters(inLengthMeters);
 		result.setWidthMeters(inWidthMeters);
@@ -753,12 +736,11 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		IronMqService result = null;
 
 		result = new IronMqService();
-		result.setParent(this);
 		result.setDomainId(IRONMQ_DOMAINID);
 		result.setProviderEnum(EdiProviderEnum.IRONMQ);
 		result.setServiceStateEnum(EdiServiceStateEnum.UNLINKED);
-		result.storeCredentials("", ""); // non-null credentials
 		this.addEdiService(result);
+		result.storeCredentials("", ""); // non-null credentials
 		try {
 			IronMqService.DAO.store(result);
 		} catch (DaoException e) {
@@ -793,7 +775,6 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		DropboxService result = null;
 
 		result = new DropboxService();
-		result.setParent(this);
 		result.setDomainId("DROPBOX");
 		result.setProviderEnum(EdiProviderEnum.DROPBOX);
 		result.setServiceStateEnum(EdiServiceStateEnum.UNLINKED);
@@ -1348,7 +1329,6 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 			// If there is no planned WI then create one.
 			if (resultWi == null) {
 				resultWi = new WorkInstruction();
-				resultWi.setParent(inOrderDetail);
 				resultWi.setCreated(new Timestamp(System.currentTimeMillis()));
 				resultWi.setLedCmdStream("[]"); // empty array
 			}
@@ -1871,8 +1851,9 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 				// Start the next DDC group.
 				lastDdcGroup = new ItemDdcGroup();
 				lastDdcGroup.setDdcGroupId(item.getParent().getDdcId());
-				lastDdcGroup.setParent(item.getStoredLocation());
+				
 				lastDdcGroup.setStartPosAlongPath(item.getPosAlongPath());
+				item.getStoredLocation().addItemDdcGroup(lastDdcGroup);
 			}
 			lastDdcGroup.setEndPosAlongPath(item.getPosAlongPath());
 		}
