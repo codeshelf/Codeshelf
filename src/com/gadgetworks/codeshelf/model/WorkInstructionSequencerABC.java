@@ -140,8 +140,9 @@ public abstract class WorkInstructionSequencerABC implements IWorkInstructionSeq
 			if (theHousekeepingTypeList != null) {
 				for (WorkInstructionTypeEnum theType : theHousekeepingTypeList) {
 					WorkInstruction houseKeepingWi = WiFactory.createHouseKeepingWi(theType, inFacility, lastWi, wi);
-					if (houseKeepingWi != null)
+					if (houseKeepingWi != null) {
 						wiResultList.add(houseKeepingWi);
+					}
 					else
 						LOGGER.debug("null returned from getNewHousekeepingWiOfType");
 				}
