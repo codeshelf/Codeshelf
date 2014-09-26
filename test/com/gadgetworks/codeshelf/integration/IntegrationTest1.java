@@ -25,6 +25,7 @@ import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
 import com.gadgetworks.codeshelf.edi.InventoryCsvImporter;
 import com.gadgetworks.codeshelf.edi.LocationAliasCsvImporter;
 import com.gadgetworks.codeshelf.edi.OutboundOrderCsvImporter;
+import com.gadgetworks.codeshelf.model.WiFactory;
 import com.gadgetworks.codeshelf.model.WiSetSummary;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Che;
@@ -260,8 +261,11 @@ public class IntegrationTest1 extends EndToEndIntegrationTest {
 		}
 		Assert.assertEquals(2, itemLocations.size());
 
+		// Turn off housekeeping work instructions so as to not confuse the counts
+		WiFactory.turnOffHK();
 		// Set up a cart for order 12345, which will generate work instructions
 		facility.setUpCheContainerFromString(che1, "12345");
+		WiFactory.restoreHKDefaults();
 
 		List<WorkInstruction> aList = che1.getCheWorkInstructions();
 		Integer wiCount = aList.size();
@@ -375,16 +379,11 @@ public class IntegrationTest1 extends EndToEndIntegrationTest {
 		}
 		Assert.assertEquals(2, itemLocations.size());
 
+		// Turn off housekeeping work instructions so as to not confuse the counts
+		WiFactory.turnOffHK();
 		// Set up a cart for order 12345, which will generate work instructions
-		
-		
-		
-		
-		
-		
-		
-		
 		facility.setUpCheContainerFromString(che1, "12345");
+		WiFactory.restoreHKDefaults();
 
 		List<WorkInstruction> aList = che1.getCheWorkInstructions();
 		Integer wiCount = aList.size();

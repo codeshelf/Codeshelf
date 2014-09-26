@@ -15,7 +15,9 @@ import org.junit.Assert;
 import org.junit.Test;
 // domain objects needed
 
+
 import com.gadgetworks.codeshelf.model.HeaderCounts;
+import com.gadgetworks.codeshelf.model.WiFactory;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
@@ -279,9 +281,12 @@ public class CrossBatchRunTest extends EdiTestABC {
 		Assert.assertTrue(theCounts.mActiveCntrUses == 5);
 		// Assume all is good.  Other tests in this class will not need to check these things.
 
+		// Turn off housekeeping work instructions so as to not confuse the counts
+		WiFactory.turnOffHK();
 		// Set up a cart for container 11, which should generate work instructions for orders 123 and 456.
 		facility.setUpCheContainerFromString(theChe, "11");
-
+		WiFactory.restoreHKDefaults();
+		
 		List<WorkInstruction> aList = theChe.getCheWorkInstructions();
 		Integer wiCount = aList.size();
 		Assert.assertEquals((Integer) 2, wiCount); // one product going to 2 orders
@@ -306,24 +311,44 @@ public class CrossBatchRunTest extends EdiTestABC {
 		
 		// Set up a cart for containers 15 and 14, which should generate 4 work normal instructions.
 		// However, as we are coming from the same container for subsequent ones, there will be housekeeping WIs inserted.
+
+		// Make sure housekeeping is on
+		WiFactory.restoreHKDefaults();
 		facility.setUpCheContainerFromString(theChe, "15,14");
 
 		List<WorkInstruction> aList = theChe.getCheWorkInstructions();
 		Integer wiCount = aList.size();
-		Assert.assertEquals((Integer) 4, wiCount); // one product going to 1 order, and 1 product going to the same order and 2 more.
+		Assert.assertEquals((Integer) 7, wiCount); // one product going to 1 order, and 1 product going to the same order and 2 more.
+
 		
 		WorkInstruction wi1 = aList.get(0);
 		WorkInstruction wi2 = aList.get(1);
 		WorkInstruction wi3 = aList.get(2);
 		WorkInstruction wi4 = aList.get(3);
+		WorkInstruction wi5 = aList.get(4);
+		WorkInstruction wi6 = aList.get(5);
+		WorkInstruction wi7 = aList.get(6);
 		String wi1Cntr = wi1.getContainerId();
 		// no housekeeping WI needed here. Different container
 		String wi2Cntr = wi2.getContainerId();
+		String wi2Desc = wi2.getDescription();
 		// needed
 		String wi3Cntr = wi3.getContainerId();
+		String wi3Desc = wi3.getDescription();
 		// needed
 		String wi4Cntr = wi4.getContainerId();
-		Assert.assertEquals("14", wi4Cntr);
+		String wi4Desc = wi4.getDescription();
+	//
+		String wi5Cntr = wi5.getContainerId();
+		String wi5Desc = wi5.getDescription();
+		// needed
+		String wi6Cntr = wi6.getContainerId();
+		String wi6Desc = wi6.getDescription();
+		// needed
+		String wi7Cntr = wi7.getContainerId();
+		String wi7Desc = wi7.getDescription();
+
+		// Assert.assertEquals("14", wi7Cntr);
 
 	}
 
