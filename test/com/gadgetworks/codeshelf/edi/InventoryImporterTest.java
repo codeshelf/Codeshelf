@@ -16,6 +16,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.gadgetworks.codeshelf.application.Configuration;
+import com.gadgetworks.codeshelf.model.HousekeepingInjector;
 import com.gadgetworks.codeshelf.model.LedRange;
 import com.gadgetworks.codeshelf.model.WiFactory;
 import com.gadgetworks.codeshelf.model.WiSetSummary;
@@ -658,14 +659,14 @@ public class InventoryImporterTest extends EdiTestABC {
 		Assert.assertNotNull(theChe);
 
 		// Turn off housekeeping work instructions so as to not confuse the counts
-		WiFactory.turnOffHK();
+		HousekeepingInjector.turnOffHK();
 		// Set up a cart for order 12345, which will generate work instructions
 		facility.setUpCheContainerFromString(theChe, "12345");
 		
 		// Just checking variant case hard on ebeans. What if we immediately set up again? Answer optimistic lock exception and assorted bad behavior.
 		// facility.setUpCheContainerFromString(theChe, "12345");
 	
-		WiFactory.restoreHKDefaults();
+		HousekeepingInjector.restoreHKDefaults();
 
 		List<WorkInstruction> aList = theChe.getCheWorkInstructions();
 		Integer wiCount = aList.size();

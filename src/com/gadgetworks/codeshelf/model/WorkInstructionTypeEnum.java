@@ -24,6 +24,10 @@ public enum WorkInstructionTypeEnum {
 	HK_REPEATPOS(WorkInstructionTypeNum.HK_REPEATPOS, "HK_REPEATPOS"),
 	@EnumValue("HK_BAYCOMPLETE")
 	HK_BAYCOMPLETE(WorkInstructionTypeNum.HK_BAYCOMPLETE, "HK_BAYCOMPLETE");
+	
+	// If you add a new one, please search code for filters like this
+	// 		String filter = "(assignedChe.persistentId = :chePersistentId) and (typeEnum = :typeplan or typeEnum = :typehkbaychange or typeEnum = :typehkrepeat) and (posAlongPath >= :pos)";
+
 
 	private int		mValue;
 	private String	mName;

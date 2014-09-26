@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.model.HeaderCounts;
+import com.gadgetworks.codeshelf.model.HousekeepingInjector;
 import com.gadgetworks.codeshelf.model.WiFactory;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Che;
@@ -286,10 +287,10 @@ public class CrossBatchRunTest extends EdiTestABC {
 		// Assume all is good.  Other tests in this class will not need to check these things.
 
 		// Turn off housekeeping work instructions so as to not confuse the counts
-		WiFactory.turnOffHK();
+		HousekeepingInjector.turnOffHK();
 		// Set up a cart for container 11, which should generate work instructions for orders 123 and 456.
 		facility.setUpCheContainerFromString(theChe, "11");
-		WiFactory.restoreHKDefaults();
+		HousekeepingInjector.restoreHKDefaults();
 		
 		List<WorkInstruction> aList = theChe.getCheWorkInstructions();
 		Integer wiCount = aList.size();
@@ -317,7 +318,7 @@ public class CrossBatchRunTest extends EdiTestABC {
 		// However, as we are coming from the same container for subsequent ones, there will be housekeeping WIs inserted.
 
 		// Make sure housekeeping is on
-		WiFactory.restoreHKDefaults();
+		HousekeepingInjector.restoreHKDefaults();
 		facility.setUpCheContainerFromString(theChe, "15,14");
 
 		// Important to realize. theChe.getWorkInstruction() just gives all work instructions in an arbitrary order.

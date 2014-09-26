@@ -6,6 +6,7 @@
 package com.gadgetworks.codeshelf.model;
 
 import java.sql.Timestamp;
+import java.util.Collections;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -32,56 +33,6 @@ import com.gadgetworks.flyweight.command.ColorEnum;
 public class WiFactory {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(WiFactory.class);
 	
-	private static boolean kWantHK_REPEATPOS = true;
-	private static boolean kWantHK_BAYCOMPLETE = true;
-
-	public WiFactory() {
-
-	}
-	
-	private static boolean shouldCreateThisHK(WorkInstructionTypeEnum inType){
-		switch (inType) {			
-			case HK_REPEATPOS:
-				return kWantHK_REPEATPOS;
-			case HK_BAYCOMPLETE:
-				return kWantHK_BAYCOMPLETE;
-			default:
-				LOGGER.error("shouldCreateThisHK unknown case");
-				return false;
-		}		
-	}
-	
-	public static boolean getShouldCreateThisHK(WorkInstructionTypeEnum inType) {
-		switch (inType) {			
-			case HK_REPEATPOS:
-				return kWantHK_REPEATPOS;
-			case HK_BAYCOMPLETE:
-				return kWantHK_BAYCOMPLETE;
-			default:
-				LOGGER.error("getShouldCreateThisHK unknown case");
-				return false;
-		}		
-	}
-
-	public static void setCreateThisHK(WorkInstructionTypeEnum inType, boolean inValue){
-		switch (inType) {			
-			case HK_REPEATPOS:
-				kWantHK_REPEATPOS = inValue;
-			case HK_BAYCOMPLETE:
-				kWantHK_BAYCOMPLETE = inValue;
-			default:
-				LOGGER.error("setCreateThisHK unknown case");
-		}		
-	}
-	
-	public static void restoreHKDefaults(){
-		kWantHK_REPEATPOS = true;
-		kWantHK_BAYCOMPLETE = true;
-	}
-	public static void turnOffHK(){
-		kWantHK_REPEATPOS = false;
-		kWantHK_BAYCOMPLETE = false;
-	}
 
 	/**
 	 * The API to create housekeeping work instruction
@@ -90,9 +41,6 @@ public class WiFactory {
 		Facility inFacility,
 		WorkInstruction inPrevWi,
 		WorkInstruction inNextWi) {
-		
-		if (!shouldCreateThisHK(inType))
-			return null;
 		
 		// Let's declare that inPrevWi must be there, but inNextWi might be null (if for example there is QA function after the last one done).
 		if (inPrevWi == null){
@@ -192,7 +140,7 @@ public class WiFactory {
 		}
 
 		List<LedCmdGroup> ledCmdGroupList = getLedCmdGroupListForHK(inType, inTargetWi.getLocation());
-		if (ledCmdGroupList != null && ledCmdGroupList.size() > 0)
+		if (ledCmdGroupList.size() > 0)
 			inTargetWi.setLedCmdStream(LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList));
 	}
 	
@@ -200,7 +148,7 @@ public class WiFactory {
 	 * ok to return null if no aisle lights. Only some kinds of housekeeps involve aisle lights.
 	 */
 	private static List<LedCmdGroup> getLedCmdGroupListForHK(WorkInstructionTypeEnum inType, ILocation inLocation) {
-		return null;
+		return Collections.<LedCmdGroup>emptyList(); // returns empty immutable list
 	}
 
 }

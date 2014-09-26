@@ -47,6 +47,7 @@ import com.gadgetworks.codeshelf.edi.WorkInstructionCSVExporter;
 import com.gadgetworks.codeshelf.model.EdiProviderEnum;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.HeaderCounts;
+import com.gadgetworks.codeshelf.model.HousekeepingInjector;
 import com.gadgetworks.codeshelf.model.LedRange;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.OrderTypeEnum;
@@ -803,7 +804,8 @@ public class Facility extends SubLocationABC<Facility> {
 
 		WorkInstructionSequencerABC sequencer = getSequencer();
 		List<WorkInstruction> sortedWIResults = sequencer.sort(this, wiResultList);
-		List<WorkInstruction> finalWIResults = sequencer.addHouseKeepingAndSaveSort(this, sortedWIResults);		
+		
+		List<WorkInstruction> finalWIResults = HousekeepingInjector.addHouseKeepingAndSaveSort(this, sortedWIResults);		
 		return finalWIResults.size();
 	}
 
