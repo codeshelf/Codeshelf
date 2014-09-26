@@ -124,6 +124,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private WorkInstruction			mShortPickWi;
 	private Integer					mShortPickQty;
 
+	private boolean	connectedToServer = true;
+
 	public CheDeviceLogic(final UUID inPersistentId,
 		final NetGuid inGuid,
 		final ICsDeviceManager inDeviceManager,
@@ -402,7 +404,12 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 */
 	@Override
 	public final void scanCommandReceived(String inCommandStr) {
-		LOGGER.info("Remote command: " + inCommandStr);
+		if (!connectedToServer) {
+			LOGGER.debug("NotConnectedToServer: Ignoring scan command: " + inCommandStr);
+			return;
+		}
+
+		LOGGER.info(this + " received scan command: " + inCommandStr);
 
 		String scanPrefixStr = getScanPrefix(inCommandStr);
 		String scanStr = getScanContents(inCommandStr, scanPrefixStr);
@@ -450,9 +457,13 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 */
 	@Override
 	public void buttonCommandReceived(CommandControlButton inButtonCommand) {
-		// Send a command to clear the position, so the controller knows we've gotten the button press.
-		clearOnePositionController(inButtonCommand.getPosNum());
-		processButtonPress((int) inButtonCommand.getPosNum(), (int) inButtonCommand.getValue());
+		if (connectedToServer) {
+			// Send a command to clear the position, so the controller knows we've gotten the button press.
+			clearOnePositionController(inButtonCommand.getPosNum());
+			processButtonPress((int) inButtonCommand.getPosNum(), (int) inButtonCommand.getValue());
+		} else {
+			LOGGER.debug("NotConnectedToServer: Ignoring button command: " + inButtonCommand);
+		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -1228,5 +1239,20 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		Preconditions.checkNotNull(message, "Message cannot be null");
 		Preconditions.checkArgument(message.length() <= 20, "Message '%s' will not fit on che display", message);
 		return Strings.padEnd(message, 20 - message.length(), ' ');
+	}
+
+	public void disconnectedFromServer() {
+		connectedToServer = false;
+		sendDisplayCommand("Server Connection", "Unavailable", "Please Wait...", "");
+	}
+
+	public void connectedToServer() {
+		connectedToServer = true;
+		redisplayState();
+		
+	}
+	
+	private void redisplayState() {
+		setState(mCheStateEnum);
 	}
 }
