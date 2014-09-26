@@ -30,7 +30,7 @@ import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.flyweight.command.NetGuid;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -60,8 +60,8 @@ public class Organization extends DomainObjectABC {
 	@Singleton
 	public static class OrganizationDao extends GenericDaoABC<Organization> implements ITypedDao<Organization> {
 		@Inject
-		public OrganizationDao(final PersistencyService persistencyService) {
-			super(persistencyService);
+		public OrganizationDao(final PersistenceService persistenceService) {
+			super(persistenceService);
 		}
 
 		public final Class<Organization> getDaoClass() {
@@ -221,7 +221,7 @@ public class Organization extends DomainObjectABC {
 	public final Facility createFacility(final String inDomainId, final String inDescription, final Point inAnchorPoint) {
 
 		Facility facility = new Facility();
-		facility.setParentOrganization(this);
+		facility.setOrganization(this);
 		facility.setDomainId(inDomainId);
 		facility.setDescription(inDescription);
 		facility.setAnchorPoint(inAnchorPoint);
@@ -293,5 +293,15 @@ public class Organization extends DomainObjectABC {
 		}
 
 		return result;
+	}
+
+	@Override
+	public Organization getOrganization() {
+		return this;
+	}
+
+	@Override
+	public Facility getFacility() {
+		return null;
 	}
 }

@@ -28,7 +28,7 @@ import com.gadgetworks.codeshelf.model.domain.ContainerUse;
 import com.gadgetworks.codeshelf.model.domain.ContainerUse.ContainerUseDao;
 import com.gadgetworks.codeshelf.model.domain.DropboxService;
 import com.gadgetworks.codeshelf.model.domain.DropboxService.DropboxServiceDao;
-import com.gadgetworks.codeshelf.model.domain.EdiServiceABC.EdiServiceABCDao;
+//import com.gadgetworks.codeshelf.model.domain.EdiServiceABC.EdiServiceABCDao;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Facility.FacilityDao;
 import com.gadgetworks.codeshelf.model.domain.IronMqService;
@@ -75,7 +75,7 @@ import com.gadgetworks.codeshelf.model.domain.WorkArea;
 import com.gadgetworks.codeshelf.model.domain.WorkArea.WorkAreaDao;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction.WorkInstructionDao;
-import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 
 public abstract class DAOTestABC {
 	
@@ -84,7 +84,7 @@ public abstract class DAOTestABC {
 	}
 	
 	@Getter
-	PersistencyService persistencyService;
+	PersistenceService persistenceService;
 	
 	protected OrganizationDao		mOrganizationDao;
 	protected UserDao				mUserDao;
@@ -98,7 +98,7 @@ public abstract class DAOTestABC {
 	protected TierDao				mTierDao;
 	protected SlotDao				mSlotDao;
 	protected DropboxServiceDao		mDropboxServiceDao;
-	protected EdiServiceABCDao 		mEdiServiceABCDao;
+	//protected EdiServiceABCDao 		mEdiServiceABCDao;
 	protected OrderGroupDao			mOrderGroupDao;
 	protected OrderHeaderDao		mOrderHeaderDao;
 	protected OrderDetailDao		mOrderDetailDao;
@@ -129,109 +129,109 @@ public abstract class DAOTestABC {
 
 	@Before
 	public final void setup() {
-		this.persistencyService = new PersistencyService();
-		this.persistencyService.start();
+		this.persistenceService = new PersistenceService();
+		this.persistenceService.start();
 
-		mOrganizationDao = new OrganizationDao(persistencyService);
+		mOrganizationDao = new OrganizationDao(persistenceService);
 		Organization.DAO = mOrganizationDao;
 
-		mUserDao = new UserDao(persistencyService);
+		mUserDao = new UserDao(persistenceService);
 		User.DAO = mUserDao;
 
-		mFacilityDao = new FacilityDao(persistencyService);
+		mFacilityDao = new FacilityDao(persistenceService);
 		Facility.DAO = mFacilityDao;
 
-		mAisleDao = new AisleDao(persistencyService);
+		mAisleDao = new AisleDao(persistenceService);
 		Aisle.DAO = mAisleDao;
 
-		mBayDao = new BayDao(persistencyService);
+		mBayDao = new BayDao(persistenceService);
 		Bay.DAO = mBayDao;
 
-		mTierDao = new TierDao(persistencyService);
+		mTierDao = new TierDao(persistenceService);
 		Tier.DAO = mTierDao;
 
-		mSlotDao = new SlotDao(persistencyService);
+		mSlotDao = new SlotDao(persistenceService);
 		Slot.DAO = mSlotDao;
 
-		mPathDao = new PathDao(persistencyService);
+		mPathDao = new PathDao(persistenceService);
 		Path.DAO = mPathDao;
 
-		mPathSegmentDao = new PathSegmentDao(persistencyService);
+		mPathSegmentDao = new PathSegmentDao(persistenceService);
 		PathSegment.DAO = mPathSegmentDao;
 
-		mDropboxServiceDao = new DropboxServiceDao(persistencyService);
+		mDropboxServiceDao = new DropboxServiceDao(persistenceService);
 		DropboxService.DAO = mDropboxServiceDao;
 
-		mIronMqServiceDao = new IronMqServiceDao(persistencyService);
+		mIronMqServiceDao = new IronMqServiceDao(persistenceService);
 		IronMqService.DAO = mIronMqServiceDao;
 
-		mEdiServiceABCDao = new EdiServiceABCDao(persistencyService);
-		EdiServiceABC.DAO = mEdiServiceABCDao;
+//		mEdiServiceABCDao = new EdiServiceABCDao(persistenceService);
+//		EdiServiceABC.DAO = mEdiServiceABCDao;
 		
-		mCodeshelfNetworkDao = new CodeshelfNetworkDao(persistencyService);
+		mCodeshelfNetworkDao = new CodeshelfNetworkDao(persistenceService);
 		CodeshelfNetwork.DAO = mCodeshelfNetworkDao;
 
-		mCheDao = new CheDao(persistencyService);
+		mCheDao = new CheDao(persistenceService);
 		Che.DAO = mCheDao;
 
-		mSiteControllerDao = new SiteControllerDao(persistencyService);
+		mSiteControllerDao = new SiteControllerDao(persistenceService);
 		SiteController.DAO = mSiteControllerDao;
 
-		mSubLocationDao = new SubLocationDao(persistencyService);
+		mSubLocationDao = new SubLocationDao(persistenceService);
 		SubLocationABC.DAO = mSubLocationDao;
 
-		mLocationDao = new LocationABCDao(persistencyService);
+		mLocationDao = new LocationABCDao(persistenceService);
 		LocationABC.DAO = mLocationDao;
 
-		mOrderGroupDao = new OrderGroupDao(persistencyService);
+		mOrderGroupDao = new OrderGroupDao(persistenceService);
 		OrderGroup.DAO = mOrderGroupDao;
 
-		mOrderHeaderDao = new OrderHeaderDao(persistencyService);
+		mOrderHeaderDao = new OrderHeaderDao(persistenceService);
 		OrderHeader.DAO = mOrderHeaderDao;
 
-		mOrderDetailDao = new OrderDetailDao(persistencyService);
+		mOrderDetailDao = new OrderDetailDao(persistenceService);
 		OrderDetail.DAO = mOrderDetailDao;
 
-		mOrderLocationDao = new OrderLocationDao(persistencyService);
+		mOrderLocationDao = new OrderLocationDao(persistenceService);
 		OrderLocation.DAO = mOrderLocationDao;
 
-		mContainerDao = new ContainerDao(persistencyService);
+		mContainerDao = new ContainerDao(persistenceService);
 		Container.DAO = mContainerDao;
 
-		mContainerKindDao = new ContainerKindDao(persistencyService);
+		mContainerKindDao = new ContainerKindDao(persistenceService);
 		ContainerKind.DAO = mContainerKindDao;
 
-		mContainerUseDao = new ContainerUseDao(persistencyService);
+		mContainerUseDao = new ContainerUseDao(persistenceService);
 		ContainerUse.DAO = mContainerUseDao;
 
-		mItemMasterDao = new ItemMasterDao(persistencyService);
+		mItemMasterDao = new ItemMasterDao(persistenceService);
 		ItemMaster.DAO = mItemMasterDao;
 
-		mItemDao = new ItemDao(persistencyService);
+		mItemDao = new ItemDao(persistenceService);
 		Item.DAO = mItemDao;
 		
-		mIronMqServiceDao = new IronMqServiceDao(persistencyService);
+		mIronMqServiceDao = new IronMqServiceDao(persistenceService);
 		IronMqService.DAO = mIronMqServiceDao;
 		
-		mUomMasterDao = new UomMasterDao(persistencyService);
+		mUomMasterDao = new UomMasterDao(persistenceService);
 		UomMaster.DAO = mUomMasterDao;
 
-		mLedControllerDao = new LedControllerDao(persistencyService);
+		mLedControllerDao = new LedControllerDao(persistenceService);
 		LedController.DAO = mLedControllerDao;
 
-		mLocationAliasDao = new LocationAliasDao(persistencyService);
+		mLocationAliasDao = new LocationAliasDao(persistenceService);
 		LocationAlias.DAO = mLocationAliasDao;
 		
-		mVertexDao = new VertexDao(persistencyService);
+		mVertexDao = new VertexDao(persistenceService);
 		Vertex.DAO = mVertexDao;
 
-		mWorkAreaDao = new WorkAreaDao(persistencyService);
+		mWorkAreaDao = new WorkAreaDao(persistenceService);
 		WorkArea.DAO = mWorkAreaDao;
 
-		mWorkInstructionDao = new WorkInstructionDao(persistencyService);
+		mWorkInstructionDao = new WorkInstructionDao(persistenceService);
 		WorkInstruction.DAO = mWorkInstructionDao;
 
-		mWorkAreaDao = new WorkAreaDao(persistencyService);
+		mWorkAreaDao = new WorkAreaDao(persistenceService);
 		WorkArea.DAO = mWorkAreaDao;
 			
 		doBefore();

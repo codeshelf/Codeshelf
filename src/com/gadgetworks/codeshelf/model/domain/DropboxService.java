@@ -191,7 +191,7 @@ public class DropboxService extends EdiServiceABC {
 					inCsvAislesFileImporter)) {
 					// If we've processed everything from the page correctly then save the current dbCursor, and get the next page
 					try {
-						EdiServiceABC.DAO.store(this);
+						DropboxService.DAO.store(this);
 					} catch (DaoException e) {
 						LOGGER.error("", e);
 					}
@@ -410,7 +410,7 @@ public class DropboxService extends EdiServiceABC {
 
 		try {
 			setServiceStateEnum(EdiServiceStateEnum.LINKING);
-			EdiServiceABC.DAO.store(this);
+			DropboxService.DAO.store(this);
 		} catch (DaoException e) {
 			LOGGER.error("Unable to change dropbox service state", e);
 		}
@@ -449,7 +449,7 @@ public class DropboxService extends EdiServiceABC {
 					setDbCursor("");
 					result = true;
 				}
-				EdiServiceABC.DAO.store(this);
+				DropboxService.DAO.store(this);
 			} catch (DaoException e) {
 				LOGGER.error("Unable to store dropboxservice change after linking", e);
 			}

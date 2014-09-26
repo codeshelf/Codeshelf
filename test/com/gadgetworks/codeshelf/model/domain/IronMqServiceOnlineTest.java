@@ -41,7 +41,8 @@ public class IronMqServiceOnlineTest {
 		}
 
 
-		EdiServiceABC.DAO = mock(ITypedDao.class);
+		IronMqService.DAO = mock(ITypedDao.class);
+		Facility.DAO = mock(ITypedDao.class);
 	}
 
 	@After

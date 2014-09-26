@@ -31,7 +31,7 @@ public class IronMqServiceTest {
 
 	@Before
 	public void doBefore() {
-		EdiServiceABC.DAO = mock(ITypedDao.class);
+		IronMqService.DAO = mock(ITypedDao.class);
 	}
 	
 	@Test

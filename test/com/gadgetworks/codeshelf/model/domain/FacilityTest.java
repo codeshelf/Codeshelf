@@ -46,12 +46,15 @@ public class FacilityTest extends DomainTestABC {
 
 		Facility facility = createDefaultFacility("FTEST3.O1");
 		OrderHeader crossbatchOrder = new OrderHeader();
-		crossbatchOrder.setParent(facility);
 		crossbatchOrder.setDomainId("ORDER1");
 		crossbatchOrder.setUpdated(new Timestamp(0));
 		crossbatchOrder.setOrderTypeEnum(OrderTypeEnum.CROSS);
 		crossbatchOrder.setActive(true);
+
+		facility.addOrderHeader(crossbatchOrder);
+
 		mOrderHeaderDao.store(crossbatchOrder);
+
 		
 		boolean hasCrossBatchOrders = facility.hasCrossBatchOrders();
 		Assert.assertTrue(hasCrossBatchOrders);

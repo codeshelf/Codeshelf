@@ -85,8 +85,6 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 
 	private static final String	IRONMQ_DOMAINID	= "IRONMQ";
 
-	private static final String	IRONMQ_DOMAINID	= "IRONMQ";
-
 	@Inject
 	public static ITypedDao<Facility>	DAO;
 

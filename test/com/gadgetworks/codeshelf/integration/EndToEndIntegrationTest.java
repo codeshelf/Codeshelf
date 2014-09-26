@@ -106,16 +106,14 @@ public abstract class EndToEndIntegrationTest extends DomainTestABC {
 		if (facility==null) {
 			// create organization object
 			// facility = organization.createFacility(facilityId, "Integration Test Facility", Point.getZeroPoint());
-			facility = new Facility();
-			facility.setDomainId(facilityId);
-			facility.setParent(organization);
+			facility=organization.createFacility(facilityId,"",0.0,0.0);
 			mFacilityDao.store(facility);
 			facility.createDefaultContainerKind();
 			facility.recomputeDdcPositions();
 		}
 		network = facility.getNetwork(networkId);
 		if (network==null) {
-			network = new CodeshelfNetwork(facility, networkId, "The Network");
+			network = facility.createNetwork(networkId);
 			facility.addNetwork(network);
 			mCodeshelfNetworkDao.store(network);
 		}

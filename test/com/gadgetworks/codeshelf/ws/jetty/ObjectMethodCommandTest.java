@@ -70,7 +70,7 @@ public class ObjectMethodCommandTest {
 		Facility.DAO = facDao;
 		DropboxService.DAO = dropboxDao;
 		IronMqService.DAO = ironMqDao;
-		EdiServiceABC.DAO = ediServiceABCDao;
+		//EdiServiceABC.DAO = ediServiceABCDao;
 		CodeshelfNetwork.DAO = netDao;
 		ContainerKind.DAO = containerKindDao;
 		Che.DAO = cheDao;

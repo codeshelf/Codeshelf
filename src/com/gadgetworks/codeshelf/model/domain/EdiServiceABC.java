@@ -56,8 +56,8 @@ public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implem
 	@SuppressWarnings("unused")
 	private static final Logger			LOGGER				= LoggerFactory.getLogger(EdiServiceABC.class);
 
-	@Inject
-	public static ITypedDao<EdiServiceABC>	DAO;
+	//@Inject
+	//public static ITypedDao<EdiServiceABC>	DAO;
 
 	/*
 	@Singleton

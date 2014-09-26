@@ -38,7 +38,7 @@ import com.gadgetworks.codeshelf.edi.WorkInstructionCSVExporter;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.platform.persistence.PersistencyService;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -53,7 +53,7 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-@Table(name = "edi_service")
+//@Table(name = "edi_service")
 @DiscriminatorValue("IRONMQ")
 //@CacheStrategy(useBeanCache = true)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
@@ -67,8 +67,8 @@ public class IronMqService extends EdiServiceABC {
 	@Singleton
 	public static class IronMqServiceDao extends GenericDaoABC<IronMqService> implements ITypedDao<IronMqService> {
 		@Inject
-		public IronMqServiceDao(PersistencyService persistencyService) {
-			super(persistencyService);
+		public IronMqServiceDao(PersistenceService persistenceService) {
+			super(persistenceService);
 		}
 
 		public final Class<IronMqService> getDaoClass() {
@@ -173,7 +173,7 @@ public class IronMqService extends EdiServiceABC {
 				setServiceStateEnum(EdiServiceStateEnum.UNLINKED);
 			}
 		}
-		EdiServiceABC.DAO.store(this); //This is the DAO the UI is listening to
+		IronMqService.DAO.store(this); //This is the DAO the UI is listening to
 	}
 
 	public final boolean getUpdatesFromHost(ICsvOrderImporter inCsvOrderImporter,
