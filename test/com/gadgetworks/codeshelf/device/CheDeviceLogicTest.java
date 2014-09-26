@@ -8,6 +8,7 @@ import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -76,6 +77,40 @@ public class CheDeviceLogicTest {
 		verifyDisplayOfMockitoObj(ordered.verify(radioController), "COMPLETE");
 	}
 
+	@Test
+	public void showsNoWorkIfNothingAheadOfLocation() {
+		int chePosition = 1;
+		
+		Facility facility = new FacilityGenerator().generateValid();
+		WorkInstruction wi = new WorkInstructionGenerator().generateWithNewStatus(facility);
+		List<WorkInstruction> wiToDo = ImmutableList.of(wi);
+		
+		IRadioController radioController = mock(IRadioController.class);
+		
+		CheDeviceLogic cheDeviceLogic = new CheDeviceLogic(UUID.randomUUID(), new NetGuid("0xABC"), mock(ICsDeviceManager.class), radioController);
+		
+		cheDeviceLogic.startDevice();
+		
+		cheDeviceLogic.scanCommandReceived("U%PICKER1");
+
+		cheDeviceLogic.scanCommandReceived("C%" + wi.getContainerId());
+		
+		cheDeviceLogic.scanCommandReceived("P%" + chePosition);
+		
+		cheDeviceLogic.scanCommandReceived("X%START");
+		
+		cheDeviceLogic.assignComputedWorkCount(wiToDo.size());
+		
+		cheDeviceLogic.scanCommandReceived("L%ANYLOCATIONAFTERPICK");
+	
+		//Pretend no work ahead of this location
+		cheDeviceLogic.assignWork(Collections.<WorkInstruction>emptyList());
+		
+
+		pressButton(cheDeviceLogic, chePosition, wi.getPlanQuantity());
+	
+		verifyDisplay(radioController, "NO WORK TO DO");
+	}
 	
 	@Test
 	public void ShowsNoMoreWorkWhenNoWIs() {
