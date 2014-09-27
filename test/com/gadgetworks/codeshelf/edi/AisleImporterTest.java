@@ -43,6 +43,7 @@ public class AisleImporterTest extends DomainTestABC {
 
 	@Test
 	public final void testTierB1S1Side() {
+		this.getPersistenceService().beginTenantTransaction();
 
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A9,,,,,tierB1S1Side,12.85,43.45,X,120,\r\n" //
@@ -194,10 +195,13 @@ public class AisleImporterTest extends DomainTestABC {
 		Assert.assertTrue(bayA9B2.isLowerLedNearAnchor());
 		Assert.assertTrue(aisle2.isLowerLedNearAnchor());	
 
+		this.getPersistenceService().endTenantTransaction();
+
 	}
 
 	@Test
 	public final void testTierNotB1S1Side() {
+		this.getPersistenceService().beginTenantTransaction();
 
 		// Beside tierNotB1S1Side, this as two aisles, so it makes sure both get their leds properly set, and both vertices set
 		// Not quite realistic; A10 and A20 are on top of each other. Same anchor point
@@ -368,12 +372,15 @@ public class AisleImporterTest extends DomainTestABC {
 		Assert.assertTrue(bayA10B1.isLowerLedNearAnchor());
 		Assert.assertTrue(aisle.isLowerLedNearAnchor());	
 
+		this.getPersistenceService().endTenantTransaction();
+
 
 	}
 
 	@SuppressWarnings("unused")
 	@Test
 	public final void test32Led5Slot() {
+		this.getPersistenceService().beginTenantTransaction();
 
 		// the purpose of bay B1 is to compare this slotting algorithm to Jeff's hand-done goodeggs zigzag slots
 		// the purpose of bay B2 is to check the sort and LEDs of more than 10 slots in a tier
@@ -507,10 +514,13 @@ public class AisleImporterTest extends DomainTestABC {
 		tierFirstLed = tierB10T1.getFirstLedNumAlongPath();
 		Assert.assertTrue(tierFirstLed == 155);
 
+		this.getPersistenceService().endTenantTransaction();
+
 	}
 
 	@Test
 	public final void testZigzagB1S1Side() {
+		this.getPersistenceService().beginTenantTransaction();
 
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A12,,,,,zigzagB1S1Side,12.85,43.45,X,120,\r\n" //
@@ -587,10 +597,13 @@ public class AisleImporterTest extends DomainTestABC {
 		Assert.assertTrue(bayA12B1.isLowerLedNearAnchor());
 		Assert.assertTrue(aisle.isLowerLedNearAnchor());	
 
+		this.getPersistenceService().endTenantTransaction();
+
 	}
 
 	@Test
 	public final void testZigzagNotB1S1Side() {
+		this.getPersistenceService().beginTenantTransaction();
 
 		// do a Y orientation on this as well
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
@@ -707,10 +720,13 @@ public class AisleImporterTest extends DomainTestABC {
 		Assert.assertTrue(bayA13B1.isLowerLedNearAnchor());
 		Assert.assertTrue(aisle.isLowerLedNearAnchor());	
 
+		this.getPersistenceService().endTenantTransaction();
+
 	}
 
 	@Test
 	public final void testMultiAisleZig() {
+		this.getPersistenceService().beginTenantTransaction();
 
 		// We seemed to have a bug in the parse where when processing A21 beans, we have m values set for A22. That is, A21 might come out as zigzagNotB1S1Side
 		// So this tests Bay to bay attributes changing within an aisle, and tier attributes changing within a bay.
@@ -786,10 +802,14 @@ public class AisleImporterTest extends DomainTestABC {
 		Assert.assertTrue(pickX == 0.0);
 		Assert.assertTrue(pickY == 1.15);
 
+		this.getPersistenceService().endTenantTransaction();
+
 	}
 
 	@Test
 	public final void testBadFile1() {
+		this.getPersistenceService().beginTenantTransaction();
+
 		// Ideally, we want non-throwing or caught exceptions that give good user feedback about what is wrong.
 		// This has tier before bay, and some other blank fields
 		// do a Y orientation on this as well
@@ -861,11 +881,14 @@ public class AisleImporterTest extends DomainTestABC {
 		Bay bayA9B1 = Bay.DAO.findByDomainId(aisle9, "B1");
 		Assert.assertNotNull(bayA9B1); // ok, even with no tiers
 
+		this.getPersistenceService().endTenantTransaction();
+
 	}
 
 	@SuppressWarnings("unused")
 	@Test
 	public final void testDoubleFileRead() {
+		this.getPersistenceService().beginTenantTransaction();
 
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A15,,,,,tierNotB1S1Side,12.85,43.45,Y,120,\r\n" //
@@ -1007,10 +1030,13 @@ public class AisleImporterTest extends DomainTestABC {
 		Double yValue = thirdV.getPosY();
 		// Assert.assertTrue(yValue == 1.1); // new bay width 110 cm. But aisle is coming as 2.3 which is the original 2 bay value
 
+		this.getPersistenceService().endTenantTransaction();
+
 	}
 
 	@Test
 	public final void testAfterFileModifications() {
+		this.getPersistenceService().beginTenantTransaction();
 
 		// The file read does a lot. But then we rely on the user via the UI to do additional things to complete the configuration. This is
 		// a (nearly) end to end test of that. The actual UI will call a websocket command that calls a method on a domain object.
@@ -1104,10 +1130,14 @@ public class AisleImporterTest extends DomainTestABC {
 		Assert.assertNull(slotB2T1S1.getLedChannel());
 		Assert.assertEquals(b2T1Controller, slotB2T1S1.getEffectiveLedController());
 		Assert.assertEquals(b2T1Channel, slotB2T1S1.getEffectiveLedChannel());
+
+		this.getPersistenceService().endTenantTransaction();
+
 	}
 
 	@Test
 	public final void testNoLed() {
+		this.getPersistenceService().beginTenantTransaction();
 
 		// do a Y orientation on this as well
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
@@ -1160,6 +1190,8 @@ public class AisleImporterTest extends DomainTestABC {
 		Short ledValue3 = slotB2T1S1.getFirstLedNumAlongPath();
 		Assert.assertTrue(ledValue3 == 0);
 
+		this.getPersistenceService().endTenantTransaction();
+
 	}
 
 	private Double helperGetPosAlongSegment(PathSegment inSegment, Double inX, Double inY){
@@ -1169,6 +1201,8 @@ public class AisleImporterTest extends DomainTestABC {
 
 	@Test
 	public final void testPathCreation() {
+		this.getPersistenceService().beginTenantTransaction();
+
 		Organization organization = new Organization();
 		organization.setDomainId("O-AISLE4X");
 		mOrganizationDao.store(organization);
@@ -1232,10 +1266,13 @@ public class AisleImporterTest extends DomainTestABC {
 		value = helperGetPosAlongSegment(segment1, 25.0, 62.0);
 		Assert.assertEquals(value, (Double) 20.0);		
 
+		this.getPersistenceService().endTenantTransaction();
+
 	}
 	
 	@Test
 	public final void simplestPathTest() {
+		this.getPersistenceService().beginTenantTransaction();
 
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A51,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
@@ -1294,6 +1331,8 @@ public class AisleImporterTest extends DomainTestABC {
 		Assert.assertTrue(slot1Meters > slot4Meters); // path goes right to left, so S4 lowest.
 
 
+		this.getPersistenceService().endTenantTransaction();
+
 
 
 	}
@@ -1301,6 +1340,7 @@ public class AisleImporterTest extends DomainTestABC {
 	@SuppressWarnings({ "unused", "rawtypes" })
 	@Test
 	public final void testPath() {
+		this.getPersistenceService().beginTenantTransaction();
 
 		// We seemed to have a bug in the parse where when processing A21 beans, we have m values set for A22. That is, A21 might come out as zigzagNotB1S1Side
 		// This also tests Bay to bay attributes changing within A31.
@@ -1522,12 +1562,16 @@ public class AisleImporterTest extends DomainTestABC {
 		Double slotA32B1T1S5Value = slotA32B1T1S5.getPosAlongPath();
 		Double slotA32B1T1S1Value = slotA32B1T1S1.getPosAlongPath();
 		Assert.assertTrue(slotA32B1T1S5Value < slotA32B1T1S1Value); // in A32 also,first bay last slot further along path than second bay first slot
-		
+
+		this.getPersistenceService().endTenantTransaction();
+
 	}
 	
 	@SuppressWarnings("unused")
 	@Test
 	public final void nonSlottedTest() {
+		this.getPersistenceService().beginTenantTransaction();
+
 		// For tier-wise non-slotted inventory, we will support the same file format, but with zero tiers.
 
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
@@ -1617,7 +1661,9 @@ public class AisleImporterTest extends DomainTestABC {
 		String tierB2Meters = tierA61B2T1.getPosAlongPathui();
 		Assert.assertNotEquals(tierB1Meters, tierB2Meters); // tier spans the bay, so should be the same
 		// Bay1 and bay2 path position differ by about 1.15 meters;  bay is 115 cm long.
-		
+
+		this.getPersistenceService().endTenantTransaction();
+
 	}
 
 }

@@ -14,7 +14,9 @@ import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.dao.MockDaoProvider;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
+import com.gadgetworks.codeshelf.model.domain.DropboxService;
 import com.gadgetworks.codeshelf.model.domain.Facility;
+import com.gadgetworks.codeshelf.model.domain.IronMqService;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.model.domain.Vertex;
@@ -30,38 +32,32 @@ import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CreateCheTest extends DAOTestABC {
-
+	MockDaoProvider mDaoProvider;
+	UserSession mSession;
+	
 	@Test
 	public final void testUpdateCheOK() {
 
 		String description1 = "che description";
 		String description2 = "changed che description";
 		
-		MockDaoProvider daoProvider = new MockDaoProvider();
-		
-		UserSession session = Mockito.mock(UserSession.class);
-		session.setSessionId("test-session");
-	
-		ITypedDao<Organization> orgDao = daoProvider.getDaoInstance(Organization.class);
-		ITypedDao<Facility> facDao = daoProvider.getDaoInstance(Facility.class);
-		ITypedDao<CodeshelfNetwork> netDao = daoProvider.getDaoInstance(CodeshelfNetwork.class);
-		ITypedDao<Che> cheDao = daoProvider.getDaoInstance(Che.class);
+		setupDaos();
 
 		Organization organization = new Organization();
 		organization.setOrganizationId("CTEST1.O1");
-		orgDao.store(organization);
-
+		Organization.DAO.store(organization);
+		
 		Facility facility = organization.createFacility("F1", "facilityf1", Point.getZeroPoint());
-		facDao.store(facility);		
+		Facility.DAO.store(facility);		
 		
 		CodeshelfNetwork network = facility.createNetwork("N1");
-		netDao.store(network);
+		CodeshelfNetwork.DAO.store(network);
 		
 		Che che = new Che();
 		che.setDescription(description1);
 		che.setParent(network);
 		che.setDomainId("C1");
-		cheDao.store(che);
+		Che.DAO.store(che);
 		
 		ObjectUpdateRequest req = new ObjectUpdateRequest();
 		req.setClassName("Che");
@@ -71,8 +67,8 @@ public class CreateCheTest extends DAOTestABC {
 		properties.put("description", description2);
 		req.setProperties(properties);
 		
-		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider);
-		ResponseABC response = processor.handleRequest(session, req);
+		ServerMessageProcessor processor = new ServerMessageProcessor(mDaoProvider);
+		ResponseABC response = processor.handleRequest(mSession, req);
 
 		Assert.assertTrue(response instanceof ObjectUpdateResponse);
 		
@@ -91,37 +87,25 @@ public class CreateCheTest extends DAOTestABC {
 
 		String description1 = "che description";
 		String description2 = "changed che description";
-		
-		MockDaoProvider daoProvider = new MockDaoProvider();
-		
-		UserSession session = Mockito.mock(UserSession.class);
-		session.setSessionId("test-session");
 
-	
-		ITypedDao<Organization> orgDao = daoProvider.getDaoInstance(Organization.class);
-		ITypedDao<Facility> facDao = daoProvider.getDaoInstance(Facility.class);
-		ITypedDao<CodeshelfNetwork> netDao = daoProvider.getDaoInstance(CodeshelfNetwork.class);
-		ITypedDao<Che> cheDao = daoProvider.getDaoInstance(Che.class);
-		ITypedDao<Vertex> vertexDao = daoProvider.getDaoInstance(Vertex.class);
-
-		Vertex.DAO = vertexDao;
+		setupDaos();
 
 		Organization organization = new Organization();
 		organization.setOrganizationId("CTEST1.O1");
-		orgDao.store(organization);
+		Organization.DAO.store(organization);
 
 		Facility facility = organization.createFacility("F1", "facf1",Point.getZeroPoint());
 
-		facDao.store(facility);		
+		Facility.DAO.store(facility);		
 		
 		CodeshelfNetwork network = facility.createNetwork("N1");
-		netDao.store(network);
+		CodeshelfNetwork.DAO.store(network);
 		
 		Che che = new Che();
 		che.setDescription(description1);
 		che.setParent(network);
 		che.setDomainId("C1");
-		cheDao.store(che);
+		Che.DAO.store(che);
 		
 		ObjectUpdateRequest req = new ObjectUpdateRequest();
 		req.setClassName("Che");
@@ -131,9 +115,9 @@ public class CreateCheTest extends DAOTestABC {
 		properties.put("description", description2);
 		req.setProperties(properties);
 		
-		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider);
+		ServerMessageProcessor processor = new ServerMessageProcessor(mDaoProvider);
 
-		ResponseABC response = processor.handleRequest(session, req);
+		ResponseABC response = processor.handleRequest(mSession, req);
 		Assert.assertTrue(response instanceof ObjectUpdateResponse);
 		
 		ObjectUpdateResponse updateResponse = (ObjectUpdateResponse) response;
@@ -148,32 +132,23 @@ public class CreateCheTest extends DAOTestABC {
 		String description1 = "che description";
 		String description2 = "changed che description";
 		
-		MockDaoProvider daoProvider = new MockDaoProvider();
-		
-		UserSession session = Mockito.mock(UserSession.class);
-		session.setSessionId("test-session");
-
-	
-		ITypedDao<Organization> orgDao = daoProvider.getDaoInstance(Organization.class);
-		ITypedDao<Facility> facDao = daoProvider.getDaoInstance(Facility.class);
-		ITypedDao<CodeshelfNetwork> netDao = daoProvider.getDaoInstance(CodeshelfNetwork.class);
-		ITypedDao<Che> cheDao = daoProvider.getDaoInstance(Che.class);
+		setupDaos();
 
 		Organization organization = new Organization();
 		organization.setOrganizationId("CTEST1.O1");
-		orgDao.store(organization);
+		Organization.DAO.store(organization);
 
 		Facility facility = organization.createFacility("F1", "facf1", Point.getZeroPoint());
-		facDao.store(facility);		
+		Facility.DAO.store(facility);		
 		
 		CodeshelfNetwork network = facility.createNetwork("N1");
-		netDao.store(network);
+		CodeshelfNetwork.DAO.store(network);
 		
 		Che che = new Che();
 		che.setDescription(description1);
 		che.setParent(network);
 		che.setDomainId("C1");
-		cheDao.store(che);
+		Che.DAO.store(che);
 		
 		ObjectUpdateRequest req = new ObjectUpdateRequest();
 		req.setClassName("Che");
@@ -183,9 +158,9 @@ public class CreateCheTest extends DAOTestABC {
 		properties.put("description", description2);
 		req.setProperties(properties);
 		
-		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider);
+		ServerMessageProcessor processor = new ServerMessageProcessor(mDaoProvider);
 
-		ResponseABC response = processor.handleRequest(session, req);
+		ResponseABC response = processor.handleRequest(mSession, req);
 		Assert.assertTrue(response instanceof ObjectUpdateResponse);
 		
 		ObjectUpdateResponse updateResponse = (ObjectUpdateResponse) response;
@@ -198,11 +173,8 @@ public class CreateCheTest extends DAOTestABC {
 	
 	@Test
 	public final void testInvalidClass() {	
-		MockDaoProvider daoProvider = new MockDaoProvider();
-		
 		UserSession session = Mockito.mock(UserSession.class);
 		session.setSessionId("test-session");
-
 	
 		ObjectUpdateRequest req = new ObjectUpdateRequest();
 		req.setClassName("Foobar");
@@ -212,7 +184,7 @@ public class CreateCheTest extends DAOTestABC {
 		properties.put("foo", "bar");
 		req.setProperties(properties);
 		
-		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider);
+		ServerMessageProcessor processor = new ServerMessageProcessor(mDaoProvider);
 
 		ResponseABC response = processor.handleRequest(session, req);
 		Assert.assertTrue(response instanceof ObjectUpdateResponse);
@@ -229,32 +201,24 @@ public class CreateCheTest extends DAOTestABC {
 	public final void testUndefinedCheId() {
 		String description1 = "che description";
 		String description2 = "changed che description";
-		
-		MockDaoProvider daoProvider = new MockDaoProvider();
-		
-		UserSession session = Mockito.mock(UserSession.class);
-		session.setSessionId("test-session");
-	
-		ITypedDao<Organization> orgDao = daoProvider.getDaoInstance(Organization.class);
-		ITypedDao<Facility> facDao = daoProvider.getDaoInstance(Facility.class);
-		ITypedDao<CodeshelfNetwork> netDao = daoProvider.getDaoInstance(CodeshelfNetwork.class);
-		ITypedDao<Che> cheDao = daoProvider.getDaoInstance(Che.class);
+
+		setupDaos();
 
 		Organization organization = new Organization();
 		organization.setOrganizationId("CTEST1.O1");
-		orgDao.store(organization);
+		Organization.DAO.store(organization);
 
 		Facility facility = organization.createFacility("F1", "facf1", Point.getZeroPoint());
-		facDao.store(facility);		
+		Facility.DAO.store(facility);		
 		
 		CodeshelfNetwork network = facility.createNetwork("N1");
-		netDao.store(network);
+		CodeshelfNetwork.DAO.store(network);
 		
 		Che che = new Che();
 		che.setDescription(description1);
 		che.setParent(network);
 		che.setDomainId("C1");
-		cheDao.store(che);
+		Che.DAO.store(che);
 		
 		ObjectUpdateRequest req = new ObjectUpdateRequest();
 		req.setClassName("Che");
@@ -264,9 +228,9 @@ public class CreateCheTest extends DAOTestABC {
 		properties.put("description", description2);
 		req.setProperties(properties);
 		
-		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider);
+		ServerMessageProcessor processor = new ServerMessageProcessor(mDaoProvider);
 
-		ResponseABC response = processor.handleRequest(session, req);
+		ResponseABC response = processor.handleRequest(mSession, req);
 		Assert.assertTrue(response instanceof ObjectUpdateResponse);
 		
 		ObjectUpdateResponse updateResponse = (ObjectUpdateResponse) response;
@@ -274,6 +238,22 @@ public class CreateCheTest extends DAOTestABC {
 		
 		Object result = updateResponse.getResults();
 		Assert.assertNull(result);		
+	}
+
+	private void setupDaos() {
+		mDaoProvider = new MockDaoProvider();
+		
+		mSession = Mockito.mock(UserSession.class);
+		mSession.setSessionId("test-session");
+		
+		Organization.setDao(mDaoProvider.getDaoInstance(Organization.class));
+		Facility.setDao(mDaoProvider.getDaoInstance(Facility.class));
+		CodeshelfNetwork.setDao(mDaoProvider.getDaoInstance(CodeshelfNetwork.class));
+		Che.setDao(mDaoProvider.getDaoInstance(Che.class));
+		Vertex.setDao(mDaoProvider.getDaoInstance(Vertex.class));
+		DropboxService.setDao(mDaoProvider.getDaoInstance(DropboxService.class));
+		IronMqService.setDao(mDaoProvider.getDaoInstance(IronMqService.class));
+		CodeshelfNetwork.setDao(mDaoProvider.getDaoInstance(CodeshelfNetwork.class));
 	}	
 
 }
