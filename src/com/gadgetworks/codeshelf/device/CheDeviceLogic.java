@@ -656,7 +656,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private void setupChe() {
 		LOGGER.info("Setup work");
 
-		if (mCheStateEnum.equals(CheStateEnum.PICK_COMPLETE)) {
+		if (mCheStateEnum.equals(CheStateEnum.PICK_COMPLETE) || 
+			mCheStateEnum.equals(CheStateEnum.NO_WORK)) {
 			mContainersMap.clear();
 			mContainerInSetup = "";
 			setState(CheStateEnum.CONTAINER_SELECT);
