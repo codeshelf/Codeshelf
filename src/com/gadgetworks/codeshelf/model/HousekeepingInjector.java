@@ -157,6 +157,7 @@ public class HousekeepingInjector {
 					WorkInstruction houseKeepingWi = WiFactory.createHouseKeepingWi(theType, inFacility, lastWi, wi);
 					if (houseKeepingWi != null) {
 						wiResultList.add(houseKeepingWi);
+						LOGGER.info("adding housekeeping WI type " + houseKeepingWi.getDescription());
 					}
 					else
 						LOGGER.debug("null returned from getNewHousekeepingWiOfType");
