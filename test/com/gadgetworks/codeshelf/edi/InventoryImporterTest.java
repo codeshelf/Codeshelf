@@ -14,6 +14,8 @@ import java.util.List;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.application.Configuration;
 import com.gadgetworks.codeshelf.model.HousekeepingInjector;
@@ -47,6 +49,7 @@ import com.google.common.base.Strings;
  *
  */
 public class InventoryImporterTest extends EdiTestABC {
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(InventoryImporterTest.class);
 
 	static {
 		Configuration.loadConfig("test");
@@ -717,6 +720,100 @@ public class InventoryImporterTest extends EdiTestABC {
 		Assert.assertEquals(0, completes);
 		Assert.assertEquals(2, actives);
 		Assert.assertEquals(1, shorts);
+
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Attempting to demonstrate when we might get several work instructions that would work simultaneously
+	 */
+	@SuppressWarnings({ "rawtypes", "unused" })
+	@Test
+	public final void testSameProductPick() throws IOException {
+
+		Facility facility = setUpSimpleNoSlotFacility("XX06");
+
+		// We are going to put cases in A3 and each in A2. Also showing variation in EA/each, etc.
+		// 402 and 403 are in A2, the each aisle. 502 and 503 are in A3, the case aisle, on a separate path.
+		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
+				+ "1123,D402,12/16 oz Bowl Lids -PLA Compostable,6,EA,6/25/14 12:00,135\r\n" //
+				+ "1522,D403,SJJ BPP,10,each,6/25/14 12:00,3\r\n";//
+
+		byte[] csvArray = csvString.getBytes();
+		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
+		InputStreamReader reader = new InputStreamReader(stream);
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		ICsvInventoryImporter importer = new InventoryCsvImporter(mItemMasterDao, mItemDao, mUomMasterDao);
+		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
+
+		LocationABC locationD403 = (LocationABC) facility.findSubLocationById("D403");
+		LocationABC locationD402 = (LocationABC) facility.findSubLocationById("D402");
+		LocationABC locationD502 = (LocationABC) facility.findSubLocationById("D502");
+		LocationABC locationD503 = (LocationABC) facility.findSubLocationById("D503");
+
+		Item item1123Loc402EA = locationD402.getStoredItemFromMasterIdAndUom("1123", "EA");
+		Assert.assertNotNull(item1123Loc402EA);
+
+		// Outbound order. No group. Using 5 digit order number and preassigned container number.
+		// SKU 1123 needed for 12000
+		// SKU 1123 needed for 12010
+		// Each product needed for 12345
+
+		String csvString2 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
+				+ "\r\n1,USF314,TARGET,12000,12000,1123,12/16 oz Bowl Lids -PLA Compostable,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,PENNYS,12010,12010,1123,12/16 oz Bowl Lids -PLA Compostable,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,12345,12345,1123,12/16 oz Bowl Lids -PLA Compostable,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,12345,12345,1522,SJJ BPP,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\n";
+
+		byte[] csvArray2 = csvString2.getBytes();
+		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
+		InputStreamReader reader2 = new InputStreamReader(stream2);
+
+		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
+		ICsvOrderImporter importer2 = new OutboundOrderCsvImporter(mOrderGroupDao,
+			mOrderHeaderDao,
+			mOrderDetailDao,
+			mContainerDao,
+			mContainerUseDao,
+			mItemMasterDao,
+			mUomMasterDao);
+		importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);
+
+		// Let's find our CHE
+		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
+		Assert.assertNotNull(theNetwork);
+		Che theChe = theNetwork.getChe("CHE1");
+		Assert.assertNotNull(theChe);
+
+		// Housekeeping left on. Expect 4 normal WIs and one housekeep
+		// Set up a cart for the three orders, which will generate work instructions
+		facility.setUpCheContainerFromString(theChe, "12000,12010,12345");
+
+		List<WorkInstruction> wiListAfterScan = facility.getWorkInstructions(theChe, ""); // get all in working order
+		Integer wiCountAfterScan = wiListAfterScan.size();
+		Assert.assertEquals(wiCountAfterScan, (Integer) 5);
+
+		// The only interesting thing here is probably the group and sort code. (Lack of group code)
+		WorkInstruction wi1 = wiListAfterScan.get(0);
+		String groupSortStr1 = wi1.getGroupAndSortCode();
+		Assert.assertEquals("0001", groupSortStr1);
+
+		WorkInstruction wi4 = wiListAfterScan.get(3);
+		Assert.assertNotNull(wi4);
+		String groupSortStr4 = wi4.getGroupAndSortCode();
+		Assert.assertEquals("0004", groupSortStr4);
+		
+		// We would really like to see in integration test if all three position controllers light at once for SKU 1123
+		// Just some quick log output to see it
+		for (WorkInstruction wi : wiListAfterScan)
+			LOGGER.debug("WiSort: " + wi.getGroupAndSortCode() + " cntr: " + wi.getContainerId() + " loc: " + wi.getPickInstruction() + " desc.: " + wi.getDescription());
+
+		// Try setting up the cart again in different order. DOES NOT WORK! Hits this optimistic commit case, then fails
+		// 		at com.avaje.ebeaninternal.server.core.DefaultServer.refresh(DefaultServer.java:545)
+		// facility.setUpCheContainerFromString(theChe, "12345,12010,12000");
+		// wiListAfterScan = facility.getWorkInstructions(theChe, ""); // get all in working order
 
 	}
 

@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.device.AisleDeviceLogic.LedCmd;
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
+import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.flyweight.command.CommandControlButton;
 import com.gadgetworks.flyweight.command.CommandControlClearPosController;
@@ -307,7 +308,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		clearLastLedControllerGuids(); // Setting the state that we have nothing more to clear for this CHE.		
 	}
 
-		// --------------------------------------------------------------------------
+	// --------------------------------------------------------------------------
 	/**
 	 * Clear the LEDs for this CHE one whatever LED controllers it last sent to.
 	 * Side effect: clears its information on what was previously sent to.
@@ -323,7 +324,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			// check all
 			LOGGER.warn("Needing to clear multiple aisle controllers for one CHE device clear. This case should be unusual.");
 			forceClearAllLedsForThisCheDevice();
-		} 
+		}
 		// Normal case. Just clear the one aisle device we know we sent to last.
 		else {
 			INetworkDevice device = mDeviceManager.getDeviceByGuid(aisleControllerGuid);
@@ -665,8 +666,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private void setupChe() {
 		LOGGER.info("Setup work");
 
-		if (mCheStateEnum.equals(CheStateEnum.PICK_COMPLETE) || 
-			mCheStateEnum.equals(CheStateEnum.NO_WORK)) {
+		if (mCheStateEnum.equals(CheStateEnum.PICK_COMPLETE) || mCheStateEnum.equals(CheStateEnum.NO_WORK)) {
 			mContainersMap.clear();
 			mContainerInSetup = "";
 			setState(CheStateEnum.CONTAINER_SELECT);
@@ -834,7 +834,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		String firstItemId = null;
 		Collections.sort(mAllPicksWiList, new WiGroupSortComparator());
 		for (WorkInstruction wi : mAllPicksWiList) {
-			if(mContainersMap.values().isEmpty()) {
+			if (mContainersMap.values().isEmpty()) {
 				LOGGER.warn(this + " assigned work but no containers assigned");
 			}
 			for (String containerId : mContainersMap.values()) {
@@ -899,7 +899,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				return -1;
 			} else if (inGroup2 == null) {
 				return 1;
-			} else {								
+			} else {
 				return inGroup1.compareTo(inGroup2);
 			}
 		}
@@ -911,7 +911,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 */
 	private void showActivePicks() {
 		final int kMaxLedSetsToLog = 20;
-		
+
 		if (mActivePickWiList.size() > 0) {
 			// The first WI has the SKU and location info.
 			WorkInstruction firstWi = mActivePickWiList.get(0);
@@ -929,7 +929,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 			// Not as easy. Clear this CHE's last leds off of aisle controller(s), and tell aisle controller(s) what to light next
 			List<LedCmdGroup> ledCmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(firstWi.getLedCmdStream());
-			
+
 			// It is important sort the CmdGroups.
 			Collections.sort(ledCmdGroups, new CmdGroupComparator());
 
@@ -938,7 +938,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			// we do not clear out the first group when adding on a second. This is a concern for simultaneous multiple dispatch--not currently done.
 
 			String myGuidStr = getGuid().getHexStringNoPrefix();
-			
+
 			for (Iterator<LedCmdGroup> iterator = ledCmdGroups.iterator(); iterator.hasNext();) {
 				LedCmdGroup ledCmdGroup = (LedCmdGroup) iterator.next();
 
@@ -959,7 +959,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 					NetGuid ledControllerGuid = ledController.getGuid();
 					String controllerGuidStr = ledControllerGuid.getHexStringNoPrefix();
 					short cmdGroupChannnel = ledCmdGroup.getChannelNum();
-					String toLogString = "CHE " + myGuidStr + " telling "+ controllerGuidStr + " to set LEDs. "+ EffectEnum.FLASH;
+					String toLogString = "CHE " + myGuidStr + " telling " + controllerGuidStr + " to set LEDs. " + EffectEnum.FLASH;
 					Integer setCount = 0;
 					for (LedSample ledSample : ledCmdGroup.getLedSampleList()) {
 
@@ -968,11 +968,11 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 						// Add this LED display to the aisleController. We are accumulating the log information here rather than logging separate in the called routine.
 						ledControllerSetLed(ledControllerGuid, cmdGroupChannnel, ledSample, EffectEnum.FLASH);
-						
+
 						// Log concisely instead of each ledCmd individually
-						setCount ++;
+						setCount++;
 						if (setCount <= kMaxLedSetsToLog)
-							toLogString  = toLogString + " " + ledSample.getPosition() + ":" + ledSample.getColor();				
+							toLogString = toLogString + " " + ledSample.getPosition() + ":" + ledSample.getColor();
 					}
 					if (setCount > 0)
 						LOGGER.info(toLogString);
@@ -986,22 +986,26 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				}
 			}
 
-			// Also pretty easy. Light the position controllers on this CHE
-			List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
-			for (WorkInstruction wi : mActivePickWiList) {
-				for (Entry<String, String> mapEntry : mContainersMap.entrySet()) {
-					if (mapEntry.getValue().equals(wi.getContainerId())) {
-						PosControllerInstr instruction = new PosControllerInstr(Byte.valueOf(mapEntry.getKey()),
-							byteValueForPositionDisplay(firstWi.getPlanQuantity()),
-							byteValueForPositionDisplay(firstWi.getPlanMinQuantity()),
-							byteValueForPositionDisplay(firstWi.getPlanMaxQuantity()),
-							PosControllerInstr.BRIGHT_FREQ,
-							PosControllerInstr.BRIGHT_DUTYCYCLE);
-						instructions.add(instruction);
+			// Housekeeping moves will result in a single work instruction in the active pickes. Enum tells if housekeeping.
+			if (!sendHousekeepingDisplay()) {
+
+				// Also pretty easy. Light the position controllers on this CHE
+				List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
+				for (WorkInstruction wi : mActivePickWiList) {
+					for (Entry<String, String> mapEntry : mContainersMap.entrySet()) {
+						if (mapEntry.getValue().equals(wi.getContainerId())) {
+							PosControllerInstr instruction = new PosControllerInstr(Byte.valueOf(mapEntry.getKey()),
+								byteValueForPositionDisplay(firstWi.getPlanQuantity()),
+								byteValueForPositionDisplay(firstWi.getPlanMinQuantity()),
+								byteValueForPositionDisplay(firstWi.getPlanMaxQuantity()),
+								PosControllerInstr.BRIGHT_FREQ,
+								PosControllerInstr.BRIGHT_DUTYCYCLE);
+							instructions.add(instruction);
+						}
 					}
 				}
+				sendPickRequestCommand(instructions);
 			}
-			sendPickRequestCommand(instructions);
 
 		}
 		ledControllerShowLeds(getGuid());
@@ -1222,6 +1226,31 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * Determine if the mActivePickWiList represents a housekeeping move. If so, display it and return true
+	 */
+	private boolean sendHousekeepingDisplay() {
+		boolean returnBool = false;
+		if (mActivePickWiList.size() == 1) {
+			WorkInstruction wi = mActivePickWiList.get(0);
+			if (wi == null)
+				LOGGER.error("misunderstanding in sendHousekeepingDisplay");
+			else {
+				WorkInstructionTypeEnum theEnum = wi.getTypeEnum();
+				if (theEnum == WorkInstructionTypeEnum.HK_BAYCOMPLETE) {
+					returnBool = true;
+					showSpecialPositionCode(PosControllerInstr.BAY_COMPLETE_CODE, wi.getContainerId());
+				} else if (theEnum == WorkInstructionTypeEnum.HK_REPEATPOS) {
+					returnBool = true;
+					showSpecialPositionCode(PosControllerInstr.REPEAT_CONTAINER_CODE, wi.getContainerId());
+				}
+			}
+		}
+		return returnBool;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * This shows all the positions already assigned to containers in the mContainersMap
 	 */
 	private void showAssignedPositions() {
 		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
@@ -1236,10 +1265,56 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		}
 		sendPickRequestCommand(instructions);
 	}
-	
+
+	// --------------------------------------------------------------------------
+	/**
+	 */
+	private void showSpecialPositionCode(Byte inSpecialQuantityCode, String inContainerId) {
+		boolean codeUnderstood = false;
+		Byte codeToSend = inSpecialQuantityCode;
+		if (inSpecialQuantityCode == PosControllerInstr.BAY_COMPLETE_CODE)
+			codeUnderstood = true;
+		else if (inSpecialQuantityCode == PosControllerInstr.REPEAT_CONTAINER_CODE)
+			codeUnderstood = true;
+
+		if (!codeUnderstood) {
+			codeToSend = PosControllerInstr.ERROR_CODE_QTY;
+			LOGGER.error("showSpecialPositionCode: unknown quantity code in ");
+		}
+		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
+		for (Entry<String, String> mapEntry : mContainersMap.entrySet()) {
+			if (mapEntry.getValue().equals(inContainerId)) {
+				PosControllerInstr instruction = new PosControllerInstr(Byte.valueOf(mapEntry.getKey()),
+					codeToSend,
+					codeToSend,
+					codeToSend,
+					PosControllerInstr.BRIGHT_FREQ,
+					PosControllerInstr.BRIGHT_DUTYCYCLE);
+				instructions.add(instruction);
+			}
+		}
+		if (instructions.size() > 0)
+			sendPickRequestCommand(instructions);
+		else
+			LOGGER.error("container match not found in showSpecialPositionCode");
+	}
+
+	// --------------------------------------------------------------------------
+	/** Light position controllers appropriately for bay change, keyed off the previous work instruction's containerId
+	 */
+	private void showBayChange(String inContainerId) {
+		showSpecialPositionCode(PosControllerInstr.BAY_COMPLETE_CODE, inContainerId);
+	}
+
+	// --------------------------------------------------------------------------
+	/** Light position controllers appropriately for repeat container, keyed off the previous work instruction's containerId
+	 */
+	private void showRepeatContainer(String inContainerId) {
+		showSpecialPositionCode(PosControllerInstr.REPEAT_CONTAINER_CODE, inContainerId);
+	}
+
 	public String toString() {
-		return Objects.toStringHelper(this)
-			.add("netGuid", getGuid()).toString();
+		return Objects.toStringHelper(this).add("netGuid", getGuid()).toString();
 	}
 
 	/**

@@ -759,7 +759,9 @@ public class Facility extends SubLocationABC<Facility> {
 					changedChes.add(assignedChe);
 				}
 				OrderDetail owningDetail = wi.getOrderDetail();
-				owningDetail.removeWorkInstruction(wi); // necessary? new from v3
+				// detail is optional from v5
+				if (owningDetail != null)
+					owningDetail.removeWorkInstruction(wi); // necessary? new from v3
 
 				WorkInstruction.DAO.delete(wi);
 			} catch (DaoException e) {
