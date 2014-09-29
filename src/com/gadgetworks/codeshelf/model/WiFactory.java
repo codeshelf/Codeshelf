@@ -18,6 +18,7 @@ import com.gadgetworks.codeshelf.device.LedCmdGroupSerializer;
 import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum.WorkInstructionTypeNum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.domain.Che;
+import com.gadgetworks.codeshelf.model.domain.Container;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.ILocation;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
@@ -54,7 +55,7 @@ public class WiFactory {
 			return null;
 		}
 		Timestamp assignTime = inPrevWi.getAssigned();
-
+		Container ourCntr = inPrevWi.getContainer();
 		
 		WorkInstruction resultWi = new WorkInstruction();
 		resultWi.setParent(inFacility);
@@ -82,8 +83,8 @@ public class WiFactory {
 		resultWi.setPlanMaxQuantity(0);
 		resultWi.setActualQuantity(0);
 
-		// Let's not copy the container. Valid for some, but not all housekeeping work instructions
-		resultWi.setContainer(null);
+		// The container provides our map to the position controller. That is the only way the user can acknowledge the housekeeping command.
+		resultWi.setContainer(ourCntr);
 		resultWi.setAssignedChe(ourChe);
 		resultWi.setAssigned(assignTime);
 

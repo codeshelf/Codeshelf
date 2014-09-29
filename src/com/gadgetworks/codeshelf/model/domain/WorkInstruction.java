@@ -245,12 +245,11 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	@Setter
 	@JsonProperty
 	private Timestamp					completed;
-	
+
 	// The parent order detail item.
 	@Column(nullable = true)
 	@ManyToOne(optional = true)
 	private OrderDetail					orderDetail;
-
 
 	private static final Integer		MAX_WI_DESC_BYTES	= 80;
 
@@ -270,7 +269,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	public final Facility getParent() {
 		return parent;
 	}
-	
+
 	public final OrderDetail getOrderDetail() {
 		// v5 interim
 		return orderDetail;
@@ -279,7 +278,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	public final void setParent(Facility inParent) {
 		parent = inParent;
 	}
-	
+
 	public final void setOrderDetail(OrderDetail inDetail) {
 		orderDetail = inDetail;
 	}
@@ -370,7 +369,10 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	 */
 	public final String getOrderDetailId() {
 		OrderDetail detail = this.getOrderDetail();
-		return detail.getDomainId(); // parent must be there by DB constraint
+		if (detail == null)
+			return "";
+		else
+			return detail.getDomainId(); // detail may be null from v5
 	}
 
 	// --------------------------------------------------------------------------
@@ -380,8 +382,12 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	 */
 	public final String getOrderId() {
 		OrderDetail detail = this.getOrderDetail();
-		OrderHeader header = detail.getParent();
-		return header.getDomainId(); // parents must be there by DB constraint
+		if (detail == null)
+			return "";
+		else {
+			OrderHeader header = detail.getParent();
+			return header.getDomainId(); // parent must be there by DB constraint
+		}
 	}
 
 	// --------------------------------------------------------------------------
