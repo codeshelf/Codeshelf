@@ -20,6 +20,8 @@ import com.gadgetworks.codeshelf.metrics.OpenTsdb;
 import com.gadgetworks.codeshelf.metrics.OpenTsdbReporter;
 import com.gadgetworks.codeshelf.model.dao.DaoProvider;
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
+import com.gadgetworks.codeshelf.util.IConfiguration;
+import com.gadgetworks.codeshelf.util.JVMSystemConfiguration;
 import com.gadgetworks.flyweight.controller.FTDIInterface;
 import com.gadgetworks.flyweight.controller.IGatewayInterface;
 import com.gadgetworks.flyweight.controller.IRadioController;
@@ -94,6 +96,7 @@ public final class CsSiteControllerMain {
 			protected void configure() {
 				bind(ICodeshelfApplication.class).to(CsSiteControllerApplication.class);
 				bind(IRadioController.class).to(RadioController.class);
+				bind(IConfiguration.class).to(JVMSystemConfiguration.class);
 				bind(IGatewayInterface.class).to(FTDIInterface.class);
 				bind(ICsDeviceManager.class).to(CsDeviceManager.class);
 				bind(IDaoProvider.class).to(DaoProvider.class);
