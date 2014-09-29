@@ -377,11 +377,15 @@ public class IntegrationTest1 extends EndToEndIntegrationTest {
 		}
 		Assert.assertEquals(2, itemLocations.size());
 
+		// Turn off housekeeping work instructions so as to not confuse the counts
+		HousekeepingInjector.turnOffHK();
 		// Set up a cart for order 12345, which will generate work instructions
 		PickSimulator picker = new PickSimulator(this,cheGuid1);
 		picker.login("Picker #1");
 		picker.setupContainer("12345", "1");
 		List<WorkInstruction> activeWIs=picker.start("402");
+		HousekeepingInjector.restoreHKDefaults();
+
 		Assert.assertEquals(1, activeWIs.size());
 		WorkInstruction currentWI = activeWIs.get(0);
 		Assert.assertEquals("SJJ BPP", currentWI.getDescription());

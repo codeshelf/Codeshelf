@@ -190,10 +190,16 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		final String inLine2Message,
 		final String inLine3Message,
 		final String inLine4Message) {
-		LOGGER.info("Display message: line1: " + inLine1Message);
-		LOGGER.info("Display message: line2: " + inLine2Message);
-		LOGGER.info("Display message: line3: " + inLine3Message);
-		LOGGER.info("Display message: line4: " + inLine4Message);
+		String displayString = "Display message for "+ getMyGuidStrForLog();
+		if (!inLine1Message.isEmpty())
+			displayString += " line1: " + inLine1Message;
+		if (!inLine2Message.isEmpty())
+			displayString += " line2: " + inLine2Message;
+		if (!inLine3Message.isEmpty())
+			displayString += " line3: " + inLine3Message;
+		if (!inLine4Message.isEmpty())
+			displayString += " line4: " + inLine4Message;
+		LOGGER.info(displayString);
 		ICommand command = new CommandControlDisplayMessage(NetEndpoint.PRIMARY_ENDPOINT,
 			inLine1Message,
 			inLine2Message,
@@ -898,6 +904,10 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		}
 	};
 
+	private String getMyGuidStrForLog() {
+		return getGuid().getHexStringNoPrefix();
+	}
+	
 	// --------------------------------------------------------------------------
 	/**
 	 * Send to the LED controller the active picks for the work instruction that's active on the CHE now.
@@ -930,7 +940,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			// This is not about clearing controllers/channels this CHE had lights on for.  Rather, it was about iterating the command groups and making sure
 			// we do not clear out the first group when adding on a second. This is a concern for simultaneous multiple dispatch--not currently done.
 
-			String myGuidStr = getGuid().getHexStringNoPrefix();
+			String myGuidStr = getMyGuidStrForLog();
 
 			for (Iterator<LedCmdGroup> iterator = ledCmdGroups.iterator(); iterator.hasNext();) {
 				LedCmdGroup ledCmdGroup = (LedCmdGroup) iterator.next();
