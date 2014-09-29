@@ -136,4 +136,12 @@ public final class CommandControlDisplayMessage extends CommandControlABC {
 		return super.doComputeCommandSize() + LENGTH_BYTES + mLine1MessageStr.length() + mLine2MessageStr.length() + mLine3MessageStr.length() + mLine4MessageStr.length();
 	}
 
+	public String getEntireMessageStr() {
+		StringBuilder builder = new StringBuilder(getLine1MessageStr()).append(System.lineSeparator())
+				.append(getLine2MessageStr()).append(System.lineSeparator())
+				.append(getLine3MessageStr()).append(System.lineSeparator())
+				.append(getLine4MessageStr()).append(System.lineSeparator());
+		return builder.toString();
+	}
+
 }

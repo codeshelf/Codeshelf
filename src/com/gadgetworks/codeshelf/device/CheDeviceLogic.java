@@ -17,7 +17,6 @@ import java.util.Map.Entry;
 import java.util.UUID;
 
 import lombok.Getter;
-import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import org.slf4j.Logger;
@@ -91,19 +90,16 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	// The CHE's current state.
 	@Accessors(prefix = "m")
 	@Getter
-	@Setter
 	private CheStateEnum			mCheStateEnum;
 
 	// The CHE's current location.
 	@Accessors(prefix = "m")
 	@Getter
-	@Setter
 	private String					mLocationId;
 
 	// The CHE's current user.
 	@Accessors(prefix = "m")
 	@Getter
-	@Setter
 	private String					mUserId;
 
 	// The CHE's container map.
@@ -130,6 +126,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 	private WorkInstruction			mShortPickWi;
 	private Integer					mShortPickQty;
+
+	private boolean	connectedToServer = true;
 
 	public CheDeviceLogic(final UUID inPersistentId,
 		final NetGuid inGuid,
@@ -404,26 +402,17 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	}
 
 	// --------------------------------------------------------------------------
-	/**
-	 */
-	public final void signalNetworkDown() {
-		//sendDisplayCommand("NETWORK DOWN", "");
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 */
-	public final void signalNetworkUp() {
-		//sendDisplayCommand("NETWORK UP", "");
-	}
-
-	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.flyweight.controller.INetworkDevice#commandReceived(java.lang.String)
 	 */
 	@Override
 	public final void scanCommandReceived(String inCommandStr) {
-		LOGGER.info("Remote command: " + inCommandStr);
+		if (!connectedToServer) {
+			LOGGER.debug("NotConnectedToServer: Ignoring scan command: " + inCommandStr);
+			return;
+		}
+
+		LOGGER.info(this + " received scan command: " + inCommandStr);
 
 		String scanPrefixStr = getScanPrefix(inCommandStr);
 		String scanStr = getScanContents(inCommandStr, scanPrefixStr);
@@ -471,9 +460,13 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 */
 	@Override
 	public void buttonCommandReceived(CommandControlButton inButtonCommand) {
-		// Send a command to clear the position, so the controller knows we've gotten the button press.
-		clearOnePositionController(inButtonCommand.getPosNum());
-		processButtonPress((int) inButtonCommand.getPosNum(), (int) inButtonCommand.getValue());
+		if (connectedToServer) {
+			// Send a command to clear the position, so the controller knows we've gotten the button press.
+			clearOnePositionController(inButtonCommand.getPosNum());
+			processButtonPress((int) inButtonCommand.getPosNum(), (int) inButtonCommand.getValue());
+		} else {
+			LOGGER.debug("NotConnectedToServer: Ignoring button command: " + inButtonCommand);
+		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -1052,7 +1045,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 */
 	private void processLocationScan(final String inScanPrefixStr, String inScanStr) {
 		if (LOCATION_PREFIX.equals(inScanPrefixStr)) {
-			setLocationId(inScanStr);
+			this.mLocationId = inScanStr;
 
 			new ArrayList<String>(mContainersMap.values());
 			mDeviceManager.getCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), inScanStr);
@@ -1324,5 +1317,20 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		Preconditions.checkNotNull(message, "Message cannot be null");
 		Preconditions.checkArgument(message.length() <= 20, "Message '%s' will not fit on che display", message);
 		return Strings.padEnd(message, 20 - message.length(), ' ');
+	}
+
+	public void disconnectedFromServer() {
+		connectedToServer = false;
+		sendDisplayCommand("Server Connection", "Unavailable", "Please Wait...", "");
+	}
+
+	public void connectedToServer() {
+		connectedToServer = true;
+		redisplayState();
+		
+	}
+	
+	private void redisplayState() {
+		setState(mCheStateEnum);
 	}
 }
