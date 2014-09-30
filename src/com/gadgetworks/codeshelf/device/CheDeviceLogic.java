@@ -825,6 +825,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	/**
 	 */
 	private boolean selectNextActivePicks() {
+		final boolean kDoMultipleWiPicks = false;
+		
 		boolean result = false;
 
 		// Loop through each container to see if there is a WI for that container at the next location.
@@ -849,6 +851,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 								wi.setStarted(new Timestamp(System.currentTimeMillis()));
 								mActivePickWiList.add(wi);
 								result = true;
+								if (!kDoMultipleWiPicks)
+									return true; // bail here instead of continuing to next wi in mAllPicksWiList, looking for location/item match
 							}
 						}
 					}
