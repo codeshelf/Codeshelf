@@ -45,22 +45,22 @@ A field value that contains QUOTATION MARK, MUST be escaped with an additional Q
 A field cannot contain line separation characters.
 
 === Numeric Field Values
-Numeric field values have special consideration in these cases
+Numeric field values have special consideration in the cases below.
 
 ==== Negative Numbers
 First character may be a DASH to indicate a negative number
 
 ==== Positive Numbers
-Will not contain a PLUS
+Will not contain a PLUS character
 
 ==== Floating Point Numbers
-Fixed point format using a PERIOD as the separator between the integral and decimal digits (with optional negative sign).
+Fixed point format using a PERIOD character as the separator between the integral and decimal digits (with optional negative sign).
 
 ==== Exponential Numbers
 Numbers will NOT be written in exponential form using 'e' or 'E'
 
 ==== Leading Zeros
-Values with leading zeros that are significant to the Codeshelf system will be delimited with DOUBLE-QUOTES. In general, the value should be treated as a string such as in zip codes and identifiers.
+Values with leading zeros are significant when not in a numeric field, In general, the value should be treated as a UTF-8 string such as in zip codes and identifiers.
 
 === Common Data Types
 These are common data types that may be specified for a field
@@ -85,7 +85,6 @@ When the field value represents a named member of a set of options, the field wi
 
 == Treatment of White-space
 
-=== Surrounding a field value
 White-space characters such as TAB or SPACE following or preceding a field delimiter should be considered insignificant and trimmed before processing
 
 === Treatment of Numeric Field Values
