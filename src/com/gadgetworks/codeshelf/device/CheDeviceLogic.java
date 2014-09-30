@@ -517,6 +517,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private void setState(final CheStateEnum inCheState) {
 		boolean wasSameState = inCheState == mCheStateEnum;
 		mCheStateEnum = inCheState;
+		LOGGER.debug("switching to state: " + inCheState + " sameState: " + wasSameState);
 
 		switch (inCheState) {
 			case IDLE:
