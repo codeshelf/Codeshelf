@@ -55,9 +55,7 @@ public class WorkService {
 							try {
 								Facility facility = wi.getParent();
 								IEdiService ediExportService = exportServiceProvider.getWorkInstructionExporter(facility);
-								LOGGER.debug("attempting send of work instructions: " + wiList);
 								ediExportService.sendWorkInstructionsToHost(wiList);
-								LOGGER.debug("sent work instructions: " + wiList);
 								sent = true;
 							} catch (IOException e) {
 								Thread.sleep(retryDelay);

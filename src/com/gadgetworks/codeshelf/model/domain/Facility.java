@@ -610,18 +610,6 @@ public class Facility extends SubLocationABC<Facility> {
 	/**
 	 * @return
 	 */
-	public final void ensureEdiExportService() {
-		// This is a weak kludge. Just do the get, which does a get and create if not found.
-		// Otherwise, the create only happens upon the first attempt at a work instruction save.
-		IEdiService theService = getEdiExportService();
-		if (theService == null)
-			LOGGER.error("Failed to get IronMQ service");
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * @return
-	 */
 	public final IEdiService getEdiExportService() {
 		return IronMqService.DAO.findByDomainId(this, IRONMQ_DOMAINID);
 	}
