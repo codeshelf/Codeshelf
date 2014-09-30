@@ -10,6 +10,7 @@ import java.util.List;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.doReturn;
@@ -19,6 +20,11 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+
+
+
 
 import com.gadgetworks.codeshelf.edi.WorkInstructionCSVExporter;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
@@ -36,19 +42,16 @@ public class IronMqServiceTest {
 	
 	@Test
 	public void whenEmptyCredentialsThrowException() throws IOException {
-		IronMqService service = new IronMqService();
-		service.storeCredentials("", "");
-		try {
-			service.sendWorkInstructionsToHost(ImmutableList.of(mock(WorkInstruction.class)));
-			Assert.fail("should have thrown an IllegalStateException");
-		}
-		catch(IllegalStateException e) {
-			
-		}
+		WorkInstructionCSVExporter exporter = spy(new WorkInstructionCSVExporter());
 		
+		Queue queue = mock(Queue.class);
+		IronMqService service = new IronMqService(exporter, createClientProvider("", "", queue));
+		service.storeCredentials("", "");
+		service.sendWorkInstructionsToHost(ImmutableList.of(mock(WorkInstruction.class)));
+		Mockito.verifyZeroInteractions(queue, exporter);
 	}
 	
-	@Test
+	//@Test
 	public void whenQueueDoesNotExistThrowsIOException() {
 		
 	}

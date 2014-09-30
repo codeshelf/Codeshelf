@@ -266,7 +266,6 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 					network.createDefaultSiteControllerUser(); // does nothing if user already exists
 				}
 
-				facility.ensureEdiExportService(); // This is weak, but the only place we know that runs once after most data is present
 			}
 		}
 	}
