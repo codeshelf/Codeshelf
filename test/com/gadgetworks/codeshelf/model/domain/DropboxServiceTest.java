@@ -57,7 +57,7 @@ public class DropboxServiceTest {
 		dropboxService.setParent(facility);
 		dropboxService.setDomainId("DB");
 		dropboxService.setProviderCredentials(TEST_CREDENTIALS);
-		dropboxService.setServiceStateEnum(EdiServiceStateEnum.LINKED);
+		dropboxService.setServiceState(EdiServiceStateEnum.LINKED);
 
 		ICsvOrderImporter orderImporter = Mockito.mock(ICsvOrderImporter.class);
 		Mockito.when(

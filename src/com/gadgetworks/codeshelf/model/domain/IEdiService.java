@@ -20,7 +20,7 @@ public interface IEdiService extends IDomainObjectTree<Facility> {
 
 	String getServiceName();
 
-	EdiServiceStateEnum getServiceStateEnum();
+	EdiServiceStateEnum getServiceState();
 
 	boolean getUpdatesFromHost(ICsvOrderImporter inCsvOrderImporter,
 		ICsvOrderLocationImporter inCsvOrderLocationImporter,

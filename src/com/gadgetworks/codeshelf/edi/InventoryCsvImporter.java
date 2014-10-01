@@ -168,7 +168,7 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 
 		// Inactivate the DDC item that don't match the import timestamp.
 		try {
-			mItemMasterDao.beginTransaction();
+			//mItemMasterDao.beginTransaction();
 			for (ItemMaster itemMaster : inFacility.getItemMasters()) {
 				Boolean itemMasterIsActive = false;
 				for (Item item : itemMaster.getItems()) {
@@ -187,9 +187,9 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 					mItemMasterDao.store(itemMaster);
 				}
 			}
-			mItemMasterDao.commitTransaction();
+			//mItemMasterDao.commitTransaction();
 		} finally {
-			mItemMasterDao.endTransaction();
+			//mItemMasterDao.endTransaction();
 		}
 
 	}

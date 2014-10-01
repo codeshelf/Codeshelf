@@ -29,6 +29,7 @@ import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
 // example che update message:
 // "ObjectUpdateRequest":{"className":"Che","persistentId":"66575760-00b8-11e4-ba3a-48d705ccef0f","properties":{"description":"1123"},"messageId":"cid_6"}
 
+// TODO: should use mock DAO
 @RunWith(MockitoJUnitRunner.class)
 public class CreateCheTest extends DAOTestABC {
 	MockDaoProvider mDaoProvider;
@@ -36,11 +37,12 @@ public class CreateCheTest extends DAOTestABC {
 	
 	@Test
 	public final void testUpdateCheOK() {
+		this.getPersistenceService().beginTenantTransaction();
 
 		String description1 = "che description";
 		String description2 = "changed che description";
 		
-		setupDaos();
+		//setupDaos();
 
 		Organization organization = new Organization();
 		organization.setOrganizationId("CTEST1.O1");
@@ -79,15 +81,19 @@ public class CreateCheTest extends DAOTestABC {
 		
 		Che changedChe = (Che) result;
 		Assert.assertEquals(description2, changedChe.getDescription());
+		
+		this.getPersistenceService().endTenantTransaction();
+
 	}
 	
 	@Test
 	public final void testCheNotFound() {
+		this.getPersistenceService().beginTenantTransaction();
 
 		String description1 = "che description";
 		String description2 = "changed che description";
 
-		setupDaos();
+		//setupDaos();
 
 		Organization organization = new Organization();
 		organization.setOrganizationId("CTEST1.O1");
@@ -124,14 +130,19 @@ public class CreateCheTest extends DAOTestABC {
 		
 		Object result = updateResponse.getResults();
 		Assert.assertNull(result);
+		
+		this.getPersistenceService().endTenantTransaction();
+
 	}
 	
 	@Test
 	public final void testBogusCheId() {
+		this.getPersistenceService().beginTenantTransaction();
+
 		String description1 = "che description";
 		String description2 = "changed che description";
 		
-		setupDaos();
+		//setupDaos();
 
 		Organization organization = new Organization();
 		organization.setOrganizationId("CTEST1.O1");
@@ -167,6 +178,9 @@ public class CreateCheTest extends DAOTestABC {
 		
 		Object result = updateResponse.getResults();
 		Assert.assertNull(result);		
+
+		this.getPersistenceService().endTenantTransaction();
+
 	}
 	
 	
@@ -198,10 +212,12 @@ public class CreateCheTest extends DAOTestABC {
 	
 	@Test
 	public final void testUndefinedCheId() {
+		this.getPersistenceService().beginTenantTransaction();
+
 		String description1 = "che description";
 		String description2 = "changed che description";
 
-		setupDaos();
+		//setupDaos();
 
 		Organization organization = new Organization();
 		organization.setOrganizationId("CTEST1.O1");
@@ -237,6 +253,8 @@ public class CreateCheTest extends DAOTestABC {
 		
 		Object result = updateResponse.getResults();
 		Assert.assertNull(result);		
+		
+		this.getPersistenceService().endTenantTransaction();
 	}
 
 	private void setupDaos() {

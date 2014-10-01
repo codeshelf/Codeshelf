@@ -146,7 +146,7 @@ public class DropboxService extends EdiServiceABC {
 		boolean result = false;
 
 		// Make sure we believe that we're properly registered with the service before we try to contact it.
-		if (getServiceStateEnum().equals(EdiServiceStateEnum.LINKED)) {
+		if (getServiceState().equals(EdiServiceStateEnum.LINKED)) {
 
 			DbxClient client = getClient();
 			if (client != null) {
@@ -409,7 +409,7 @@ public class DropboxService extends EdiServiceABC {
 	public final String startLink() {
 
 		try {
-			setServiceStateEnum(EdiServiceStateEnum.LINKING);
+			setServiceState(EdiServiceStateEnum.LINKING);
 			DropboxService.DAO.store(this);
 		} catch (DaoException e) {
 			LOGGER.error("Unable to change dropbox service state", e);
@@ -442,10 +442,10 @@ public class DropboxService extends EdiServiceABC {
 			try {
 				// We did get an access token.
 				if (accessToken == null) {
-					setServiceStateEnum(EdiServiceStateEnum.LINK_FAILED);
+					setServiceState(EdiServiceStateEnum.LINK_FAILED);
 				} else {
 					setProviderCredentials(accessToken);
-					setServiceStateEnum(EdiServiceStateEnum.LINKED);
+					setServiceState(EdiServiceStateEnum.LINKED);
 					setDbCursor("");
 					result = true;
 				}

@@ -103,7 +103,10 @@ public class PersistABCTest {
 	@Test
 	public void testHashCode() {
 		PersistABCStub persist = new PersistABCStub();
-		assertEquals(persist.hashCode(), 0);
+		
+		//ABC sets default random UUID on init
+		//assertEquals(persist.hashCode(), 0); 
+		
 		UUID testId = new UUID(UUIDGen.newTime(), UUIDGen.getClockSeqAndNode());
 		persist.setPersistentId(testId);
 		assertEquals(persist.hashCode(), testId.hashCode());

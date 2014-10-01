@@ -259,7 +259,6 @@ public class Organization extends DomainObjectABC {
 		facility.setDescription(inDescription);
 		facility.setAnchorPoint(inAnchorPoint);
 		this.addFacility(facility);
-
 		Facility.DAO.store(facility);
 
 		// Create a first Dropbox Service entry for this facility.

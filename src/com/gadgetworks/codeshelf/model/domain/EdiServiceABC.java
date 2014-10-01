@@ -80,7 +80,7 @@ public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implem
 	@Getter
 	@Setter
 	@JsonProperty
-	private EdiProviderEnum				providerEnum;
+	private EdiProviderEnum				provider;
 
 	// Service state.
 	@Column(nullable = false)
@@ -88,7 +88,7 @@ public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implem
 	@Getter
 	@Setter
 	@JsonProperty
-	private EdiServiceStateEnum			serviceStateEnum;
+	private EdiServiceStateEnum			serviceState;
 
 	// The credentials (encoded toekns or obfuscated keys only).
 	@Column(nullable = true)

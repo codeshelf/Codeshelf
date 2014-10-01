@@ -165,11 +165,11 @@ public class IronMqService extends EdiServiceABC {
 			try {
 				Queue queue = getWorkInstructionQueue();
 				queue.getSize();
-				setServiceStateEnum(EdiServiceStateEnum.LINKED);
+				setServiceState(EdiServiceStateEnum.LINKED);
 			}
 			catch(Exception e) {
 				LOGGER.warn("Unable to connect to iron mq with credentials", e);
-				setServiceStateEnum(EdiServiceStateEnum.UNLINKED);
+				setServiceState(EdiServiceStateEnum.UNLINKED);
 			}
 		}
 		IronMqService.DAO.store(this); //This is the DAO the UI is listening to

@@ -133,7 +133,7 @@ public final class EdiProcessor implements IEdiProcessor {
 			// Loop through each facility to make sure that it's EDI service processes any queued EDI.
 			for (Facility facility : mFacilityDao.getAll()) {
 				for (IEdiService ediService : facility.getEdiServices()) {
-					if (ediService.getServiceStateEnum().equals(EdiServiceStateEnum.LINKED)) {
+					if (ediService.getServiceState().equals(EdiServiceStateEnum.LINKED)) {
 						if (ediService.getUpdatesFromHost(mCsvOrderImporter,
 							mCsvOrderLocationImporter,
 							mCsvInventoryImporter,

@@ -14,15 +14,19 @@ import org.junit.Test;
 
 import com.gadgetworks.codeshelf.generators.FacilityGenerator;
 import com.gadgetworks.codeshelf.generators.WorkInstructionGenerator;
+import com.gadgetworks.codeshelf.model.EdiProviderEnum;
+import com.gadgetworks.codeshelf.model.dao.DAOTestABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.google.common.collect.ImmutableList;
 
-public class IronMqServiceOnlineTest {
+// TODO: should use mock DAO 
+public class IronMqServiceOnlineTest extends DomainTestABC {
 
 	private Map<String, String> tempPropertyRestore  = new HashMap<String, String>();
 	
 	@Before
 	public void doBefore() {
+		super.doBefore();
 		//USE THE DEFAULT KEYSTORE COMMUNICATING TO IRON MQ
 		String[] keys = new String[]{
 				"javax.net.ssl.keyStore",
@@ -38,14 +42,15 @@ public class IronMqServiceOnlineTest {
 		}
 
 
-		IronMqService.DAO = mock(ITypedDao.class);
-		DropboxService.DAO = mock(ITypedDao.class);
-		Facility.DAO = mock(ITypedDao.class);
-		Organization.DAO = mock(ITypedDao.class);
+		//IronMqService.DAO = mock(ITypedDao.class);
+		//DropboxService.DAO = mock(ITypedDao.class);
+		//Facility.DAO = mock(ITypedDao.class);
+		//Organization.DAO = mock(ITypedDao.class);
 	}
 
 	@After
 	public void doAfter() {
+		super.doAfter();
 		for (Entry<String, String> entry : tempPropertyRestore.entrySet()) {
 			if (entry.getValue() != null) {
 				try {
@@ -59,11 +64,18 @@ public class IronMqServiceOnlineTest {
 	
 	@Test //TODO Tests Connectivity. Could put into a Category that commonly excludes
 	public void networkConnectionTest() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
+		
 		WorkInstructionGenerator workInstructionGenerator = new WorkInstructionGenerator();
 		FacilityGenerator facilityGenerator = new FacilityGenerator();
-		WorkInstruction wi = workInstructionGenerator.generateValid(facilityGenerator.generateValid());
+		Facility facility = facilityGenerator.generateValid();
+		WorkInstruction wi = workInstructionGenerator.generateValid(facility);
 		
 		IronMqService service = new IronMqService();
+		service.setDomainId("IRONMQTEST");
+		service.setProvider(EdiProviderEnum.IRONMQ);
+		facility.addEdiService(service);
+
 		service.storeCredentials("540e1486364af100050000b4", "RzgIyO5FNeNAgZljs9x4um5UVqw");
 		service.sendWorkInstructionsToHost(ImmutableList.of(wi));
 		String[] messages = service.getMessages(IronMqService.MAX_NUM_MESSAGES, 5);
@@ -74,16 +86,25 @@ public class IronMqServiceOnlineTest {
 			found = string.contains(wi.getDomainId());
 		}
 		Assert.assertTrue("Did not find work instruction message", found);
+		
+		this.getPersistenceService().endTenantTransaction();
 	}
 	
 	
 	@Test //TODO Tests Connectivity. Could put into a Category that commonly excludes
 	public void badTokenTest() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
+
 		WorkInstructionGenerator workInstructionGenerator = new WorkInstructionGenerator();
 		FacilityGenerator facilityGenerator = new FacilityGenerator();
-		WorkInstruction wi = workInstructionGenerator.generateValid(facilityGenerator.generateValid());
+		Facility facility = facilityGenerator.generateValid();
+		WorkInstruction wi = workInstructionGenerator.generateValid(facility);
 		
 		IronMqService service = new IronMqService();
+		service.setDomainId("IRONMQTEST");
+		service.setProvider(EdiProviderEnum.IRONMQ);
+		facility.addEdiService(service);
+
 		service.storeCredentials("540e1486364af100050000b4", "BAD");
 		try {
 			service.sendWorkInstructionsToHost(ImmutableList.of(wi));
@@ -91,22 +112,34 @@ public class IronMqServiceOnlineTest {
 		} catch(IOException e) {
 			e.printStackTrace();
 		}
+		
+		this.getPersistenceService().endTenantTransaction();
 	}
 
 	@Test //TODO Tests Connectivity. Could put into a Category that commonly excludes
 	public void badProjectId() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
+
 		WorkInstructionGenerator workInstructionGenerator = new WorkInstructionGenerator();
 		FacilityGenerator facilityGenerator = new FacilityGenerator();
-		WorkInstruction wi = workInstructionGenerator.generateValid(facilityGenerator.generateValid());
+		Facility facility = facilityGenerator.generateValid();
+		WorkInstruction wi = workInstructionGenerator.generateValid(facility);
 		
 		IronMqService service = new IronMqService();
+		service.setDomainId("IRONMQTEST");
+		service.setProvider(EdiProviderEnum.IRONMQ);
+		facility.addEdiService(service);
+
 		service.storeCredentials("BAD", "RzgIyO5FNeNAgZljs9x4um5UVqw");
 		try {
 			service.sendWorkInstructionsToHost(ImmutableList.of(wi));
 			Assert.fail("Should have thrown IOException");
 		} catch(IOException e) {
 			e.printStackTrace();
-		}
+
+		
+		this.getPersistenceService().endTenantTransaction();
+}
 	}
 
 }

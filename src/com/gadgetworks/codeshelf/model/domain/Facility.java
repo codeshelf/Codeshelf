@@ -738,8 +738,8 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 
 		result = new IronMqService();
 		result.setDomainId(IRONMQ_DOMAINID);
-		result.setProviderEnum(EdiProviderEnum.IRONMQ);
-		result.setServiceStateEnum(EdiServiceStateEnum.UNLINKED);
+		result.setProvider(EdiProviderEnum.IRONMQ);
+		result.setServiceState(EdiServiceStateEnum.UNLINKED);
 		this.addEdiService(result);
 		result.storeCredentials("", ""); // non-null credentials
 		try {
@@ -777,8 +777,8 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 
 		result = new DropboxService();
 		result.setDomainId("DROPBOX");
-		result.setProviderEnum(EdiProviderEnum.DROPBOX);
-		result.setServiceStateEnum(EdiServiceStateEnum.UNLINKED);
+		result.setProvider(EdiProviderEnum.DROPBOX);
+		result.setServiceState(EdiServiceStateEnum.UNLINKED);
 
 		this.addEdiService(result);
 		try {
@@ -809,7 +809,7 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		try {
 			CodeshelfNetwork.DAO.store(result);
 		} catch (DaoException e) {
-			LOGGER.error("persistence error storing CodeshelfNetwork", e);
+			LOGGER.error("DaoException persistence error storing CodeshelfNetwork", e);
 		}
 		
 		result.createDefaultSiteControllerUser(); // this should go away. will only create default user+sitecon if it doesn't exist

@@ -8,6 +8,8 @@ public class IronMqServiceDaoTest extends DomainTestABC {
 
 	@Test
 	public void updatedCredentialsAvailableToFacilityReference() throws PSQLException {
+		this.getPersistenceService().beginTenantTransaction();
+
 		Facility f = createDefaultFacility("updatedCredentialsAvailableToFacilityReference");
 		IronMqService ironMqService = ((IronMqService)f.getEdiExportService());
 		String originalCredentials = ironMqService.getProviderCredentials();
@@ -16,6 +18,8 @@ public class IronMqServiceDaoTest extends DomainTestABC {
 		ironMqServiceByDao.storeCredentials("NEWPROJ", "NEWTOKEN");
 		String updatedCredentials = ((IronMqService)f.getEdiExportService()).getProviderCredentials();
 		Assert.assertNotEquals(originalCredentials, updatedCredentials);
+		
+		this.getPersistenceService().endTenantTransaction();
 	}
 	
 }

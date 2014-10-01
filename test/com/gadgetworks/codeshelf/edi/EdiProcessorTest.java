@@ -35,7 +35,7 @@ import com.google.inject.Inject;
  */
 public class EdiProcessorTest extends EdiTestABC {
 
-	PersistenceService persistenceService = new PersistenceService();
+	//PersistenceService persistenceService = new PersistenceService();
 	
 	@Test
 	public final void ediProcessThreadTest() {
@@ -158,6 +158,7 @@ public class EdiProcessorTest extends EdiTestABC {
 
 	@Test
 	public final void ediProcessorTest() {
+		this.getPersistenceService().beginTenantTransaction();
 
 		final class Result {
 			public boolean	processed	= false;
@@ -238,7 +239,7 @@ public class EdiProcessorTest extends EdiTestABC {
 
 		IEdiService ediServiceLinked = new IEdiService() {
 
-			public EdiServiceStateEnum getServiceStateEnum() {
+			public EdiServiceStateEnum getServiceState() {
 				return EdiServiceStateEnum.LINKED;
 			}
 
@@ -373,7 +374,7 @@ public class EdiProcessorTest extends EdiTestABC {
 
 		IEdiService ediServiceUnlinked = new IEdiService() {
 
-			public EdiServiceStateEnum getServiceStateEnum() {
+			public EdiServiceStateEnum getServiceState() {
 				return EdiServiceStateEnum.UNLINKED;
 			}
 
@@ -528,6 +529,7 @@ public class EdiProcessorTest extends EdiTestABC {
 		Assert.assertTrue(linkedResult.processed);
 		Assert.assertFalse(unlinkedResult.processed);
 
+		this.getPersistenceService().endTenantTransaction();
 	}
 	
 	private ICsvOrderImporter generateFailingImporter() {
