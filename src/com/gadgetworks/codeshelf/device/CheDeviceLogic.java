@@ -60,10 +60,11 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 	// These are the message strings we send to the remote CHE.
 	// Currently, these cannot be longer than 20 characters.
+	// "SCAN START LOCATION" is at the 20 limit. If you change to "SCAN STARTING LOCATION", you get very bad behavior. The class loader will not find the CheDeviceLogic. Repeating throws.	
 	private static final String		EMPTY_MSG								= cheLine("");
 	private static final String		INVALID_SCAN_MSG						= cheLine("INVALID");
 	private static final String		SCAN_USERID_MSG							= cheLine("SCAN BADGE");
-	private static final String		SCAN_LOCATION_MSG						= cheLine("SCAN LOCATION");
+	private static final String		SCAN_LOCATION_MSG						= cheLine("SCAN START LOCATION");
 	private static final String		SCAN_CONTAINER_MSG						= cheLine("SCAN CONTAINER");
 	private static final String		OR_START_WORK_MSG						= cheLine("OR START WORK");
 	private static final String		SELECT_POSITION_MSG						= cheLine("SELECT POSITION");
