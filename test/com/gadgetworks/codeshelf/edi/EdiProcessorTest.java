@@ -234,7 +234,7 @@ public class EdiProcessorTest extends EdiTestABC {
 		Facility facility = organization.getFacility("F-EDI.1");
 		organization.addFacility(facility);
 
-		TestFacilityDao facilityDao = new TestFacilityDao(persistenceService, facility);
+		TestFacilityDao facilityDao = new TestFacilityDao(this.getPersistenceService(), facility);
 		facilityDao.store(facility);
 
 		IEdiService ediServiceLinked = new IEdiService() {
