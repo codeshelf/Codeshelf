@@ -57,44 +57,62 @@ public class ServerWatchdogThread extends Thread {
 
 	@Override
 	public void run() {
-		ThreadUtils.sleep(initialWaitTime);
+		LOGGER.info("Watchdog thread running. SuppressKeepAlive="+this.isSuppressKeepAlive()+" KillIdle="+this.isKillIdle());
+		try {
+			ThreadUtils.sleep(initialWaitTime);
+		} catch (Exception e) {
+		}
 		while (!exit) {
-			// send ping on all site controller sessions
-			Collection<CsSession> sessions = this.sessionManager.getSessions();
-			for (CsSession session : sessions) {
-				String sessionId = session.getSessionId();
+			try {
+				doSessionWatchdog();
+				ThreadUtils.sleep(waitTime);
+			} catch (Exception e) {
+				LOGGER.error("Caught exception in watchdog, continuing.",e);
+			}
+		}
+		LOGGER.info("Watchdog thread exiting by request.");
+	}
+	
+	private void doSessionWatchdog() {
+		// check status, send keepalive etc on all sessions
+		Collection<CsSession> sessions = this.sessionManager.getSessions();
+		for (CsSession session : sessions) {
+			doSessionWatchdog(session);
+		}
+	}
+	
+	private void doSessionWatchdog(CsSession session) {
+		if(!suppressKeepAlive) {
+			// consider sending keepalive
+			long timeSinceLastSent = System.currentTimeMillis() - session.getLastMessageSent();
+			if (timeSinceLastSent>keepAliveInterval) {
 				if (session.getLastState()==CsSession.State.INACTIVE) {
 					// don't send keep-alives on inactive sessions
-					continue;
-				}
-				// don't send keepalive if suppressed
-				// don't send keepalive to unauthenticated site controller
-				if (!suppressKeepAlive && 
-						(!session.getType().equals(SessionType.SiteController) || session.isAuthenticated())) {
-					long timeSinceLastSent = System.currentTimeMillis() - session.getLastMessageSent();
-					if (timeSinceLastSent>keepAliveInterval) {
-						LOGGER.debug("Sending keep-alive on "+sessionId);
-						try {
-							session.sendMessage(new KeepAlive());
-						} catch (Exception e) {
-							LOGGER.error("Failed to send Keepalive", e);
-						}
-					}
-				}
-
-				CsSession.State newSessionState = determineSessionState(session);
-				if(newSessionState != session.getLastState()) {
-					LOGGER.info("Session state changed from "+session.getLastState().toString()+" to "+newSessionState.toString());
-					session.setLastState(newSessionState);
-					
-					if(killIdle && newSessionState == CsSession.State.INACTIVE) {
-						LOGGER.warn("Sonnection timed out with "+session.getType().toString()+".  Closing session.");
-						session.disconnect(new CloseReason(CloseCodes.GOING_AWAY, "Timeout"));
+					LOGGER.warn("Session is INACTIVE, not sending keepalives - "+session.getType().toString()+" ",session.getSessionId());
+				} else {
+					LOGGER.debug("Sending keep-alive on "+session.getSessionId());
+					try {
+						session.sendMessage(new KeepAlive());
+					} catch (Exception e) {
+						LOGGER.error("Failed to send Keepalive", e);
 					}
 				}
 			}
-			ThreadUtils.sleep(waitTime);
+		} // else suppressing keepalives
+
+		// regardless of keepalive setting, monitor session activity state
+		CsSession.State newSessionState = determineSessionState(session);
+		if(newSessionState != session.getLastState()) {
+			LOGGER.info("Session state on "+session.getType().toString()+" changed from "+session.getLastState().toString()+" to "+newSessionState.toString());
+			session.setLastState(newSessionState);
+			
+			if(killIdle && newSessionState == CsSession.State.INACTIVE) {
+				// kill idle session on state change, if configured to do so
+				LOGGER.warn("Connection timed out with "+session.getType().toString()+".  Closing session.");
+				session.disconnect(new CloseReason(CloseCodes.GOING_AWAY, "Timeout"));
+			}
 		}
+
 	}
 
 	private CsSession.State determineSessionState(CsSession session) {
