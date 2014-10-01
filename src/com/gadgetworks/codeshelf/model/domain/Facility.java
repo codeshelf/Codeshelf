@@ -1,4 +1,5 @@
 /*******************************************************************************
+
  *  CodeShelf
  *  Copyright (c) 2005-2014, Jeffrey B. Williams, All rights reserved
  *  $Id: Facility.java,v 1.82 2013/11/05 06:14:55 jeffw Exp $
@@ -30,7 +31,8 @@ import javax.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
-import org.apache.commons.lang.NotImplementedException;
+import org.hibernate.criterion.Restrictions;
+import org.hibernate.criterion.SimpleExpression;
 import org.postgresql.util.PSQLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,7 +44,6 @@ import com.gadgetworks.codeshelf.device.LedCmdGroupSerializer;
 import com.gadgetworks.codeshelf.device.LedSample;
 import com.gadgetworks.codeshelf.edi.InventoryCsvImporter;
 import com.gadgetworks.codeshelf.edi.InventorySlottedCsvBean;
-import com.gadgetworks.codeshelf.edi.WorkInstructionCSVExporter;
 import com.gadgetworks.codeshelf.model.EdiProviderEnum;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.HeaderCounts;
@@ -111,10 +112,12 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 	//	@ManyToOne(optional = false)
 	//	private SubLocationABC					parent;
 
+	/*
 	@OneToMany(mappedBy = "parent",targetEntity=SubLocationABC.class)
 	@Getter
 	private List<Aisle>						aisles			= new ArrayList<Aisle>();
-
+	*/
+	
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	private Map<String, Container>			containers		= new HashMap<String, Container>();
@@ -201,13 +204,7 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 	public final void addAisle(Aisle inAisle) {
 		Facility previousFacility = inAisle.getParent();
 		if(previousFacility == null) {
-			aisles.add(inAisle);
-			if(!aisles.contains(inAisle)) {
-				aisles.add(inAisle);
-				if(!aisles.contains(inAisle)) {
-					aisles.add(inAisle);
-				}
-			}
+			this.addLocation(inAisle);
 			inAisle.setParent(this);
 		} else if(!previousFacility.equals(this)) {
 			LOGGER.error("cannot add Aisle "+inAisle.getDomainId()+" to "+this.getDomainId()+" because it has not been removed from "+previousFacility.getDomainId());
@@ -215,9 +212,10 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 	}
 
 	public final void removeAisle(Aisle inAisle) {
-		if(!this.aisles.contains(inAisle)) {
+		String domainId = inAisle.getDomainId();
+		if(this.getLocations().get(domainId) != null) {				
 			inAisle.setParent(null);
-			aisles.remove(inAisle);			
+			this.removeLocation(domainId);
 		} else {
 			LOGGER.error("cannot remove Aisle "+inAisle.getDomainId()+" from "+this.getDomainId()+" because it isn't found in children");
 		}
@@ -638,11 +636,14 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 			try {
 				// Create four simple vertices around the aisle.
 				for (int n = 0; n < 4; n++) {
-					Vertex vertexN = new Vertex(inLocation, vertexNames[n], n, points[n]);
-					Vertex.DAO.store(vertexN);
-					// should not be necessary. ebeans trouble?
+					Vertex vertexN = new Vertex();
+					vertexN.setDomainId(vertexNames[n]);
+					vertexN.setDrawOrder(n);
+					vertexN.setPoint(points[n]);
+
 					// Interesting bug. Drop aisle works. Redrop while still running lead to error if addVertex not there. Subsequent redrops after application start ok.
 					inLocation.addVertex(vertexN);
+					Vertex.DAO.store(vertexN);
 				}
 			} catch (DaoException e) {
 				LOGGER.error("", e);
@@ -797,7 +798,6 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		CodeshelfNetwork result = null;
 
 		result = new CodeshelfNetwork();
-		result.setParent(this);
 		result.setDomainId(inNetworkName);
 		result.setActive(true);
 		result.setDescription("");
@@ -840,9 +840,9 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		changedChes.add(inChe);
 
 		// Delete any planned WIs for this CHE.
-		Map<String, Object> filterParams = new HashMap<String, Object>();
-		filterParams.put("assignedChe.persistentId", inChe.getPersistentId().toString());
-		filterParams.put("typeEnum", WorkInstructionTypeEnum.PLAN.toString());
+		List<SimpleExpression> filterParams = new ArrayList<SimpleExpression>();
+		filterParams.add(Restrictions.eq("assignedChe.persistentId", inChe.getPersistentId()));
+		filterParams.add(Restrictions.eq("type", WorkInstructionTypeEnum.PLAN));
 		for (WorkInstruction wi : WorkInstruction.DAO.findByFilter(filterParams)) {
 			try {
 
@@ -975,21 +975,22 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		}
 
 		// Get all of the PLAN WIs assigned to this CHE beyond the specified position.
-		Map<String, Object> filterParams = new HashMap<String, Object>();
-		filterParams.put("chePersistentId", inChe.getPersistentId().toString());
-		filterParams.put("type", WorkInstructionTypeEnum.PLAN.toString());
-		filterParams.put("pos", startingPathPos);
-		String filter = "(assignedChe.persistentId = :chePersistentId) and (typeEnum = :type) and (posAlongPath >= :pos)";
-		throw new NotImplementedException("Needs to be implemented with a custom query");
-		/*
-		for (WorkInstruction wi : WorkInstruction.DAO.findByFilter(filter, filterParams)) {
+		List<SimpleExpression> filterParams = new ArrayList<SimpleExpression>();
+		filterParams.add(Restrictions.eq("assignedChe", inChe));
+		filterParams.add(Restrictions.eq("type", WorkInstructionTypeEnum.PLAN));
+		filterParams.add(Restrictions.ge("posAlongPath", startingPathPos));
+		
+		//String filter = "(assignedChe.persistentId = :chePersistentId) and (typeEnum = :type) and (posAlongPath >= :pos)";
+		//throw new NotImplementedException("Needs to be implemented with a custom query");
+		
+		for (WorkInstruction wi : WorkInstruction.DAO.findByFilter(filterParams)) {
 			wiResultList.add(wi);
 		}
 
 		// New from V4. make sure sorted correctly. Hard to believe we did not catch this before. (Should we have the DB sort for us?)
 		Collections.sort(wiResultList, new GroupAndSortCodeComparator());
 		return wiResultList;
-		*/
+		
 	}
 
 	private void deleteExistingShortWiToFacility(final OrderDetail inOrderDetail) {
@@ -999,7 +1000,7 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		// separate list to delete from, because we get ConcurrentModificationException if we delete in the middle of inOrderDetail.getWorkInstructions()
 		List<WorkInstruction> aList = new ArrayList<WorkInstruction>();
 		for (WorkInstruction wi : inOrderDetail.getWorkInstructions()) {
-			if (wi.getStatusEnum() == WorkInstructionStatusEnum.SHORT)
+			if (wi.getStatus() == WorkInstructionStatusEnum.SHORT)
 				if (wi.getLocation().equals(this)) { // planned to the facility
 					aList.add(wi);
 				}
@@ -1108,7 +1109,7 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		// We want to add all orders represented in the container list because these containers (or for Accu, fake containers representing the order) were scanned for this CHE to do.
 		for (Container container : inContainerList) {
 			OrderHeader order = container.getCurrentOrderHeader();
-			if (order != null && order.getOrderTypeEnum().equals(OrderTypeEnum.OUTBOUND)) {
+			if (order != null && order.getOrderType().equals(OrderTypeEnum.OUTBOUND)) {
 				boolean somethingDone = false;
 				for (OrderDetail orderDetail : order.getOrderDetails()) {
 					// An order detail might be set to zero quantity by customer, essentially canceling that item. Don't make a WI if canceled.
@@ -1119,7 +1120,7 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 							somethingDone = true;
 
 							// still do this for a short WI?
-							orderDetail.setStatusEnum(OrderStatusEnum.INPROGRESS);
+							orderDetail.setStatus(OrderStatusEnum.INPROGRESS);
 							try {
 								OrderDetail.DAO.store(orderDetail);
 							} catch (DaoException e) {
@@ -1130,7 +1131,7 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 					}
 				}
 				if (somethingDone) {
-					order.setStatusEnum(OrderStatusEnum.INPROGRESS);
+					order.setStatus(OrderStatusEnum.INPROGRESS);
 					try {
 						OrderHeader.DAO.store(order);
 					} catch (DaoException e) {
@@ -1160,10 +1161,10 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		for (Container container : inContainerList) {
 			// Iterate over all active CROSS orders on the path.
 			OrderHeader crossOrder = container.getCurrentOrderHeader();
-			if ((crossOrder != null) && (crossOrder.getActive()) && (crossOrder.getOrderTypeEnum().equals(OrderTypeEnum.CROSS))) {
+			if ((crossOrder != null) && (crossOrder.getActive()) && (crossOrder.getOrderType().equals(OrderTypeEnum.CROSS))) {
 				// Iterate over all active OUTBOUND on the path.
 				for (OrderHeader outOrder : getOrderHeaders()) {
-					if ((outOrder.getOrderTypeEnum().equals(OrderTypeEnum.OUTBOUND)) && (outOrder.getActive())) {
+					if ((outOrder.getOrderType().equals(OrderTypeEnum.OUTBOUND)) && (outOrder.getActive())) {
 						// Only use orders without an order group, or orders in the same order group as the cross order.
 						if (((outOrder.getOrderGroup() == null) && (crossOrder.getOrderGroup() == null))
 								|| (outOrder.getOrderGroup() != null)
@@ -1312,10 +1313,10 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		Integer maxQtyToPick = inOrderDetail.getMaxQuantity();
 
 		for (WorkInstruction wi : inOrderDetail.getWorkInstructions()) {
-			if (wi.getTypeEnum().equals(WorkInstructionTypeEnum.PLAN)) {
+			if (wi.getType().equals(WorkInstructionTypeEnum.PLAN)) {
 				resultWi = wi;
 				break;
-			} else if (wi.getTypeEnum().equals(WorkInstructionTypeEnum.ACTUAL)) {
+			} else if (wi.getType().equals(WorkInstructionTypeEnum.ACTUAL)) {
 				// Deduct any WIs already completed for this line item.
 				qtyToPick -= wi.getActualQuantity();
 				minQtyToPick = Math.max(0, minQtyToPick - wi.getActualQuantity());
@@ -1336,7 +1337,7 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 			// Set the LED lighting pattern for this WI.
 			if (inStatus == WorkInstructionStatusEnum.SHORT) {
 				// But not if it is a short WI (made to the facility location)
-			} else if (inOrderDetail.getParent().getOrderTypeEnum().equals(OrderTypeEnum.CROSS)) {
+			} else if (inOrderDetail.getParent().getOrderType().equals(OrderTypeEnum.CROSS)) {
 				// We currently have no use case that gets here. We never make direct work instruction from Cross order (which is a vendor put away).
 				setCrossWorkInstructionLedPattern(resultWi,
 					inOrderDetail.getItemMasterId(),
@@ -1363,8 +1364,8 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 
 			// Update the WI
 			resultWi.setDomainId(Long.toString(System.currentTimeMillis()));
-			resultWi.setTypeEnum(inType);
-			resultWi.setStatusEnum(inStatus);
+			resultWi.setType(inType);
+			resultWi.setStatus(inStatus);
 
 			resultWi.setLocation(inLocation);
 			resultWi.setLocationId(inLocation.getFullDomainId());
@@ -1398,10 +1399,12 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 			resultWi.setPlanMaxQuantity(maxQtyToPick);
 			resultWi.setActualQuantity(0);
 			resultWi.setAssigned(inTime);
+
+			inOrderDetail.addWorkInstruction(resultWi); // set parent
+			inChe.addWorkInstruction(resultWi); // attach to che
+
 			try {
 				WorkInstruction.DAO.store(resultWi);
-				inOrderDetail.addWorkInstruction(resultWi); // This line new from v3
-				inChe.addWorkInstruction(resultWi); // This line new from v3
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}
@@ -1938,11 +1941,15 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 	private List<ILocation<?>> getDdcLocations() {
 		LOGGER.debug("DDC get locations");
 		List<ILocation<?>> ddcLocations = new ArrayList<ILocation<?>>();
-		for (Aisle aisle : getAisles()) {
-			for (ILocation<?> location : aisle.getChildren()) {
-				if (location.getFirstDdcId() != null) {
-					ddcLocations.add(location);
+		for (ILocation<?> aisle : this.getLocations().values()) {
+			if(aisle.getClass().equals(Aisle.class)) {
+				for (ILocation<?> location : aisle.getChildren()) {
+					if (location.getFirstDdcId() != null) {
+						ddcLocations.add(location);
+					}
 				}
+			} else {
+				LOGGER.error("Child "+aisle.getDomainId()+" of facility is not an Aisle but a "+aisle.getClassName());
 			}
 		}
 		return ddcLocations;
@@ -1973,7 +1980,7 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 	public final boolean hasCrossBatchOrders() {
 		boolean result = false;
 		for (OrderHeader theOrder : getOrderHeaders()) {
-			if ((theOrder.getOrderTypeEnum().equals(OrderTypeEnum.CROSS)) && (theOrder.getActive())) {
+			if ((theOrder.getOrderType().equals(OrderTypeEnum.CROSS)) && (theOrder.getActive())) {
 				result = true;
 				break;
 			}
@@ -2072,7 +2079,7 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		int inactiveCntrUsesOnActiveOrders = 0;
 
 		for (OrderHeader order : getOrderHeaders()) {
-			if (order.getOrderTypeEnum().equals(inOrderTypeEnum)) {
+			if (order.getOrderType().equals(inOrderTypeEnum)) {
 				totalCrossHeaders++;
 				if (order.getActive()) {
 					activeHeaders++;
@@ -2204,5 +2211,18 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 			LOGGER.error("can't create ItemMaster "+inDomainId+" with UomMaster "+uomMaster.getDomainId()+" under "+this.getDomainId()+" because UomMaster parent is "+uomMaster.getParentFullDomainId());
 		}
 		return itemMaster;
+	}
+
+	public Aisle getAisle(String domainId) {
+		SubLocationABC<? extends IDomainObject> location = this.getLocations().get(domainId);
+		
+		if(location!=null) {
+			if(location.getClass().equals(Aisle.class)) {
+				return (Aisle)location;
+			} else {
+				LOGGER.error("child location "+domainId+" of Facility was not an Aisle, found "+location.getClassName());
+			}
+		} //else
+		return null;
 	}
 }

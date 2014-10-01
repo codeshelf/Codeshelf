@@ -6,11 +6,14 @@
 package com.gadgetworks.codeshelf.model;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+
+import org.hibernate.criterion.Restrictions;
+import org.hibernate.criterion.SimpleExpression;
 
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.google.common.base.Strings;
@@ -38,14 +41,14 @@ public class WiSummarizer {
 		if (Strings.isNullOrEmpty(inCheId) || Strings.isNullOrEmpty(inFacilityId)) {
 			return;
 		}
-		Map<String, Object> filterParams = new HashMap<String, Object>();
-		filterParams.put("assignedChe.persistentId", inCheId);
-		filterParams.put("parent.parent.parent.persistentId", inFacilityId);
+		List<SimpleExpression> filterParams = new ArrayList<SimpleExpression>();
+		filterParams.add(Restrictions.eq("assignedChe.persistentId", inCheId));
+		filterParams.add(Restrictions.eq("parent.parent.parent.persistentId", inFacilityId));
 		// wi -> orderDetail -> orderHeader -> facility
 		for (WorkInstruction wi : WorkInstruction.DAO.findByFilter(filterParams)) {
 			Timestamp wiAssignTime = wi.getAssigned();
 			WiSetSummary theSummary = getOrCreateSummaryForTime(wiAssignTime);
-			WorkInstructionStatusEnum status = wi.getStatusEnum();
+			WorkInstructionStatusEnum status = wi.getStatus();
 			theSummary.incrementStatus(status);
 		}
 	}

@@ -49,16 +49,16 @@ public class LocationAliasImporterTest extends EdiTestABC {
 		Facility facility = organization.getFacility("F-LOCS.1");
 
 		Aisle aisleA1 = facility.createAisle("A1", Point.getZeroPoint(), Point.getZeroPoint());
-		mSubLocationDao.store(aisleA1);
+		mAisleDao.store(aisleA1);
 
 		Bay bay1 = aisleA1.createBay("B1", Point.getZeroPoint(), Point.getZeroPoint());
-		mSubLocationDao.store(bay1);
+		mBayDao.store(bay1);
 
 		Aisle aisleA2 = facility.createAisle("A2", Point.getZeroPoint(), Point.getZeroPoint());
-		mSubLocationDao.store(aisleA2);
+		mAisleDao.store(aisleA2);
 
 		Bay bay2 = aisleA2.createBay("B2", Point.getZeroPoint(), Point.getZeroPoint());
-		mSubLocationDao.store(bay2);
+		mBayDao.store(bay2);
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvLocationAliasImporter importer = new LocationAliasCsvImporter(mLocationAliasDao);

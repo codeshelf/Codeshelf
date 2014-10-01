@@ -12,7 +12,6 @@ import org.junit.Before;
 
 import com.gadgetworks.codeshelf.application.Configuration;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
-import com.gadgetworks.codeshelf.model.domain.EdiServiceABC;
 import com.gadgetworks.codeshelf.model.domain.Aisle.AisleDao;
 import com.gadgetworks.codeshelf.model.domain.Bay;
 import com.gadgetworks.codeshelf.model.domain.Bay.BayDao;
@@ -40,7 +39,7 @@ import com.gadgetworks.codeshelf.model.domain.ItemMaster.ItemMasterDao;
 import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.LedController.LedControllerDao;
 import com.gadgetworks.codeshelf.model.domain.LocationABC;
-import com.gadgetworks.codeshelf.model.domain.LocationABC.LocationABCDao;
+//import com.gadgetworks.codeshelf.model.domain.LocationABC.LocationABCDao;
 import com.gadgetworks.codeshelf.model.domain.LocationAlias;
 import com.gadgetworks.codeshelf.model.domain.LocationAlias.LocationAliasDao;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
@@ -62,7 +61,7 @@ import com.gadgetworks.codeshelf.model.domain.SiteController.SiteControllerDao;
 import com.gadgetworks.codeshelf.model.domain.Slot;
 import com.gadgetworks.codeshelf.model.domain.Slot.SlotDao;
 import com.gadgetworks.codeshelf.model.domain.SubLocationABC;
-import com.gadgetworks.codeshelf.model.domain.SubLocationABC.SubLocationDao;
+//import com.gadgetworks.codeshelf.model.domain.SubLocationABC.SubLocationDao;
 import com.gadgetworks.codeshelf.model.domain.Tier;
 import com.gadgetworks.codeshelf.model.domain.Tier.TierDao;
 import com.gadgetworks.codeshelf.model.domain.UomMaster;
@@ -88,8 +87,8 @@ public abstract class DAOTestABC {
 	
 	protected OrganizationDao		mOrganizationDao;
 	protected UserDao				mUserDao;
-	protected LocationABCDao		mLocationDao;
-	protected SubLocationDao		mSubLocationDao;
+	//protected LocationABCDao		mLocationDao;
+//	protected SubLocationDao		mSubLocationDao;
 	protected FacilityDao			mFacilityDao;
 	protected PathDao				mPathDao;
 	protected PathSegmentDao		mPathSegmentDao;
@@ -176,12 +175,12 @@ public abstract class DAOTestABC {
 
 		mSiteControllerDao = new SiteControllerDao(persistenceService);
 		SiteController.DAO = mSiteControllerDao;
-
+/*
 		mSubLocationDao = new SubLocationDao(persistenceService);
 		SubLocationABC.DAO = mSubLocationDao;
-
-		mLocationDao = new LocationABCDao(persistenceService);
-		LocationABC.DAO = mLocationDao;
+*/
+//		mLocationDao = new LocationABCDao(persistenceService);
+//		LocationABC.DAO = mLocationDao;
 
 		mOrderGroupDao = new OrderGroupDao(persistenceService);
 		OrderGroup.DAO = mOrderGroupDao;

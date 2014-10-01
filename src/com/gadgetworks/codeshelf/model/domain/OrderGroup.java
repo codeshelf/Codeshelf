@@ -67,7 +67,6 @@ public class OrderGroup extends DomainObjectTreeABC<Facility> {
 
 	public final static String			DEFAULT_ORDER_GROUP_DESC_PREFIX	= "Order group - ";
 
-	@SuppressWarnings("unused")
 	private static final Logger			LOGGER							= LoggerFactory.getLogger(OrderGroup.class);
 
 	// The parent facility.
@@ -80,7 +79,7 @@ public class OrderGroup extends DomainObjectTreeABC<Facility> {
 	@Getter
 	@Setter
 	@JsonProperty
-	private OrderStatusEnum				statusEnum;
+	private OrderStatusEnum				status;
 
 	// The description.
 	@Column(nullable = true)
@@ -116,14 +115,14 @@ public class OrderGroup extends DomainObjectTreeABC<Facility> {
 	private Map<String, OrderHeader>	orderHeaders					= new HashMap<String, OrderHeader>();
 
 	public OrderGroup() {
-		statusEnum = OrderStatusEnum.CREATED;
+		status = OrderStatusEnum.CREATED;
 	}
 	
 	public OrderGroup(Facility facility, String domainId) {
 		super(domainId);
 		parent = facility;
 		parent.addOrderGroup(this);
-		statusEnum = OrderStatusEnum.CREATED;
+		status = OrderStatusEnum.CREATED;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -197,9 +196,9 @@ public class OrderGroup extends DomainObjectTreeABC<Facility> {
 		Boolean result = false;
 
 		// We can only release order groyps that are in the new state.
-		if (getStatusEnum().equals(OrderStatusEnum.CREATED)) {
+		if (getStatus().equals(OrderStatusEnum.CREATED)) {
 			result = true;
-			setStatusEnum(OrderStatusEnum.RELEASE);
+			setStatus(OrderStatusEnum.RELEASE);
 			OrderGroup.DAO.store(this);
 		}
 

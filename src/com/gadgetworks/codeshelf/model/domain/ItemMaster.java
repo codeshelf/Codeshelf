@@ -70,7 +70,6 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 		}
 	}
 
-	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(ItemMaster.class);
 
 	private static final Comparator<String> asciiAlphanumericComparator = new ASCIIAlphanumericComparator();

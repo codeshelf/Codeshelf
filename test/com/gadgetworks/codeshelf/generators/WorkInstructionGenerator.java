@@ -4,15 +4,11 @@ import java.sql.Timestamp;
 
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
-import com.gadgetworks.codeshelf.model.domain.Aisle;
-import com.gadgetworks.codeshelf.model.domain.Container;
 import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.ItemMaster;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderGroup;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.Point;
-import com.gadgetworks.codeshelf.model.domain.UomMaster;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 
 public class WorkInstructionGenerator {
@@ -27,8 +23,8 @@ public class WorkInstructionGenerator {
 		workInstruction.setLocationId("LOCID");
 		workInstruction.setLocation(facility.createAisle("A1", Point.getZeroPoint(), Point.getZeroPoint()));
 		workInstruction.setPickerId("Picker");
-		workInstruction.setTypeEnum(WorkInstructionTypeEnum.ACTUAL);
-		workInstruction.setStatusEnum(WorkInstructionStatusEnum.COMPLETE);
+		workInstruction.setType(WorkInstructionTypeEnum.ACTUAL);
+		workInstruction.setStatus(WorkInstructionStatusEnum.COMPLETE);
 		workInstruction.setPlanQuantity(2);
 		workInstruction.setActualQuantity(2);
 		workInstruction.setAssigned( new Timestamp(System.currentTimeMillis()-10000));

@@ -31,8 +31,6 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.model.EdiProviderEnum;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
-import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.google.inject.Inject;
 
 // --------------------------------------------------------------------------
 /**
@@ -53,7 +51,6 @@ import com.google.inject.Inject;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implements IEdiService {
 
-	@SuppressWarnings("unused")
 	private static final Logger			LOGGER				= LoggerFactory.getLogger(EdiServiceABC.class);
 
 	//@Inject

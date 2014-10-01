@@ -736,7 +736,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				wi.setActualQuantity(mShortPickQty);
 				wi.setPickerId(mUserId);
 				wi.setCompleted(new Timestamp(System.currentTimeMillis()));
-				wi.setStatusEnum(WorkInstructionStatusEnum.SHORT);
+				wi.setStatus(WorkInstructionStatusEnum.SHORT);
 				mActivePickWiList.remove(wi);
 
 				mDeviceManager.completeWi(getGuid().getHexStringNoPrefix(), getPersistentId(), wi);
@@ -827,8 +827,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				// If the WI is for this container then consider it.
 				if (wi.getContainerId().equals(containerId)) {
 					// If the WI is INPROGRESS or NEW then consider it.
-					if ((wi.getStatusEnum().equals(WorkInstructionStatusEnum.NEW))
-							|| (wi.getStatusEnum().equals(WorkInstructionStatusEnum.INPROGRESS))) {
+					if ((wi.getStatus().equals(WorkInstructionStatusEnum.NEW))
+							|| (wi.getStatus().equals(WorkInstructionStatusEnum.INPROGRESS))) {
 						if ((firstLocationId == null) || (firstLocationId.equals(wi.getLocationId()))) {
 							if ((firstItemId == null) || (firstItemId.equals(wi.getItemId()))) {
 								firstLocationId = wi.getLocationId();
@@ -1165,7 +1165,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		inWi.setActualQuantity(inQuantity);
 		inWi.setPickerId(mUserId);
 		inWi.setCompleted(new Timestamp(System.currentTimeMillis()));
-		inWi.setStatusEnum(WorkInstructionStatusEnum.COMPLETE);
+		inWi.setStatus(WorkInstructionStatusEnum.COMPLETE);
 
 		mDeviceManager.completeWi(getGuid().getHexStringNoPrefix(), getPersistentId(), inWi);
 		LOGGER.info("Pick completed: " + inWi);

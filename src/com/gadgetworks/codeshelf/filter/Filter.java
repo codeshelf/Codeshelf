@@ -2,11 +2,12 @@ package com.gadgetworks.codeshelf.filter;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import lombok.Getter;
 import lombok.Setter;
+
+import org.hibernate.criterion.SimpleExpression;
 
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
@@ -21,7 +22,7 @@ public class Filter extends Listener {
 	String clause;
 	
 	@Getter @Setter
-	Map<String,Object> params;
+	List<SimpleExpression> params;
 	
 	public Filter(Class<IDomainObject> classObject) {
 		super(classObject);

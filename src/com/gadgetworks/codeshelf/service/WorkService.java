@@ -106,8 +106,8 @@ public class WorkService {
 		}
 		storedWi.setPickerId(updatedWi.getPickerId());
 		storedWi.setActualQuantity(updatedWi.getActualQuantity());
-		storedWi.setStatusEnum(updatedWi.getStatusEnum());
-		storedWi.setTypeEnum(WorkInstructionTypeEnum.ACTUAL);
+		storedWi.setStatus(updatedWi.getStatus());
+		storedWi.setType(WorkInstructionTypeEnum.ACTUAL);
 		storedWi.setStarted(updatedWi.getStarted());
 		storedWi.setCompleted(updatedWi.getCompleted());
 		WorkInstruction.DAO.store(storedWi);
@@ -141,9 +141,9 @@ public class WorkService {
 			qtyPicked += sumWi.getActualQuantity();
 		}
 		if (qtyPicked >= detail.getMinQuantity()) {
-			detail.setStatusEnum(OrderStatusEnum.COMPLETE);
+			detail.setStatus(OrderStatusEnum.COMPLETE);
 		} else {
-			detail.setStatusEnum(OrderStatusEnum.SHORT);
+			detail.setStatus(OrderStatusEnum.SHORT);
 		}
 		OrderDetail.DAO.store(detail);
 		return detail;
@@ -156,13 +156,13 @@ public class WorkService {
 	 */
 	private void setOrderStatus(final OrderDetail inOrderDetail) {
 		OrderHeader order = inOrderDetail.getParent();
-		order.setStatusEnum(OrderStatusEnum.COMPLETE);
+		order.setStatus(OrderStatusEnum.COMPLETE);
 		for (OrderDetail detail : order.getOrderDetails()) {
-			if (detail.getStatusEnum().equals(OrderStatusEnum.SHORT)) {
-				order.setStatusEnum(OrderStatusEnum.SHORT);
+			if (detail.getStatus().equals(OrderStatusEnum.SHORT)) {
+				order.setStatus(OrderStatusEnum.SHORT);
 				break;
-			} else if (!detail.getStatusEnum().equals(OrderStatusEnum.COMPLETE)) {
-				order.setStatusEnum(OrderStatusEnum.INPROGRESS);
+			} else if (!detail.getStatus().equals(OrderStatusEnum.COMPLETE)) {
+				order.setStatus(OrderStatusEnum.INPROGRESS);
 				break;
 			}
 		}

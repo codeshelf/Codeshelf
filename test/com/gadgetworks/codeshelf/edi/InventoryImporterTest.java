@@ -127,13 +127,13 @@ public class InventoryImporterTest extends EdiTestABC {
 		mFacilityDao.store(facility);
 
 		Aisle aisleA1 = facility.createAisle("A1", Point.getZeroPoint(), Point.getZeroPoint());
-		mSubLocationDao.store(aisleA1);
+		mAisleDao.store(aisleA1);
 
 		Bay bay1 = aisleA1.createBay("B1", Point.getZeroPoint(), Point.getZeroPoint());
-		mSubLocationDao.store(bay1);
+		mBayDao.store(bay1);
 
 		Bay bay2 = aisleA1.createBay("B2", Point.getZeroPoint(), Point.getZeroPoint());
-		mSubLocationDao.store(bay2);
+		mBayDao.store(bay2);
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvInventoryImporter importer = new InventoryCsvImporter(mItemMasterDao, mItemDao, mUomMasterDao);

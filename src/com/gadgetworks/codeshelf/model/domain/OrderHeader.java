@@ -49,12 +49,11 @@ import com.google.inject.Singleton;
  * @author jeffw
  */
 
-@SuppressWarnings("unused")
 @Entity
 @Table(name = "order_header")
 //@CacheStrategy(useBeanCache = true)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-@ToString(of = { "orderTypeEnum", "statusEnum", "orderGroup", "active" }, callSuper = true, doNotUseGetters = true)
+@ToString(of = { "orderType", "status", "orderGroup", "active" }, callSuper = true, doNotUseGetters = true)
 public class OrderHeader extends DomainObjectTreeABC<Facility> {
 
 	@Inject
@@ -79,9 +78,9 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	public static OrderHeader createEmptyOrderHeader(Facility inFacility, String inOrderId) {
 		OrderHeader header = new OrderHeader();
 		header.setDomainId(inOrderId);
-		header.setOrderTypeEnum(OrderTypeEnum.OUTBOUND);
-		header.setStatusEnum(OrderStatusEnum.CREATED);
-		header.setPickStrategyEnum(PickStrategyEnum.SERIAL);
+		header.setOrderType(OrderTypeEnum.OUTBOUND);
+		header.setStatus(OrderStatusEnum.CREATED);
+		header.setPickStrategy(PickStrategyEnum.SERIAL);
 		header.setActive(Boolean.TRUE);
 		header.setUpdated(new Timestamp(System.currentTimeMillis()));
 		OrderHeader.DAO.store(header);
@@ -101,7 +100,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	@Getter
 	@Setter
 	@JsonProperty
-	private OrderTypeEnum				orderTypeEnum;
+	private OrderTypeEnum				orderType;
 
 	// The collective order status.
 	@Column(nullable = false)
@@ -109,7 +108,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	@Getter
 	@Setter
 	@JsonProperty
-	private OrderStatusEnum				statusEnum;
+	private OrderStatusEnum				status;
 
 	// The pick strategy.
 	@Column(nullable = false)
@@ -117,7 +116,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	@Getter
 	@Setter
 	@JsonProperty
-	private PickStrategyEnum			pickStrategyEnum;
+	private PickStrategyEnum			pickStrategy;
 
 	// The parent order group.
 	@ManyToOne(optional = true)
@@ -191,16 +190,16 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	private Map<String, OrderLocation>	orderLocations	= new HashMap<String, OrderLocation>();
 
 	public OrderHeader() {
-		statusEnum = OrderStatusEnum.CREATED;
-		pickStrategyEnum = PickStrategyEnum.SERIAL;
+		status = OrderStatusEnum.CREATED;
+		pickStrategy = PickStrategyEnum.SERIAL;
 	}
 	
 	public OrderHeader(Facility facility, String domainId) {
 		super(domainId);
 		parent = facility;
 		parent.addOrderHeader(this);
-		statusEnum = OrderStatusEnum.CREATED;
-		pickStrategyEnum = PickStrategyEnum.SERIAL;
+		status = OrderStatusEnum.CREATED;
+		pickStrategy = PickStrategyEnum.SERIAL;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -321,10 +320,10 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	}
 
 	// Set the status from the websocket by a string.
-	public final void setStatusEnumStr(final String inStatus) {
-		OrderStatusEnum status = OrderStatusEnum.valueOf(inStatus);
-		if (status != null) {
-			statusEnum = status;
+	public final void setStatusStr(final String inStatusString) {
+		OrderStatusEnum inStatus = OrderStatusEnum.valueOf(inStatusString);
+		if (inStatus != null) {
+			status = inStatus;
 		}
 	}
 

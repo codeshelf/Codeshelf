@@ -27,7 +27,6 @@ import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.PathSegment;
 import com.gadgetworks.codeshelf.model.domain.Point;
-import com.gadgetworks.codeshelf.model.domain.SubLocationABC;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.flyweight.command.ColorEnum;
 import com.gadgetworks.flyweight.command.NetGuid;
@@ -38,7 +37,6 @@ import com.gadgetworks.flyweight.command.NetGuid;
  */
 public class CrossBatchRunTest extends EdiTestABC {
 
-	@SuppressWarnings("rawtypes")
 	private Facility setUpSimpleSlottedFacility(String inOrganizationName) {
 		// Besides basic crossbatch functionality, with this facility we want to test housekeeping WIs for
 		// 1) same position on cart

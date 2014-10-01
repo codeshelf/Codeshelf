@@ -159,6 +159,8 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 	public PathSegment() {
 	}
 
+	
+	/*
 	public PathSegment(final Path inParentPath,
 		final TravelDirectionEnum inTravelDirectionEnum,
 		final Point inBeginPoint,
@@ -173,6 +175,7 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 		endPosY = inEndPoint.getY();
 		endPosZ = inEndPoint.getZ();
 	}
+	*/
 
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<PathSegment> getDao() {

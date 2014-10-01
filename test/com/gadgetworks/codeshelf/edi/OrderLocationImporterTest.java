@@ -271,7 +271,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		OrderHeader order1111 = new OrderHeader();
 		order1111.setOrderId("O1111");
 		order1111.setParent(facility);
-		order1111.setOrderTypeEnum(OrderTypeEnum.OUTBOUND);
+		order1111.setOrderType(OrderTypeEnum.OUTBOUND);
 		order1111.setOrderDate(new Timestamp(System.currentTimeMillis()));
 		order1111.setDueDate(new Timestamp(System.currentTimeMillis()));
 		order1111.setActive(true);
@@ -282,7 +282,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		OrderHeader order2222 = new OrderHeader();
 		order2222.setOrderId("O2222");
 		order2222.setParent(facility);
-		order2222.setOrderTypeEnum(OrderTypeEnum.OUTBOUND);
+		order2222.setOrderType(OrderTypeEnum.OUTBOUND);
 		order2222.setOrderDate(new Timestamp(System.currentTimeMillis()));
 		order2222.setDueDate(new Timestamp(System.currentTimeMillis()));
 		order2222.setActive(true);
@@ -293,7 +293,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		OrderHeader order3333 = new OrderHeader();
 		order3333.setOrderId("O3333");
 		order3333.setParent(facility);
-		order3333.setOrderTypeEnum(OrderTypeEnum.OUTBOUND);
+		order3333.setOrderType(OrderTypeEnum.OUTBOUND);
 		order3333.setOrderDate(new Timestamp(System.currentTimeMillis()));
 		order3333.setDueDate(new Timestamp(System.currentTimeMillis()));
 		order3333.setActive(true);
@@ -304,7 +304,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		OrderHeader order4444 = new OrderHeader();
 		order4444.setOrderId("O4444");
 		order4444.setParent(facility);
-		order4444.setOrderTypeEnum(OrderTypeEnum.OUTBOUND);
+		order4444.setOrderType(OrderTypeEnum.OUTBOUND);
 		order4444.setOrderDate(new Timestamp(System.currentTimeMillis()));
 		order4444.setDueDate(new Timestamp(System.currentTimeMillis()));
 		order4444.setActive(true);
@@ -313,34 +313,34 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		mOrderHeaderDao.store(order4444);
 
 		Aisle aisleA1 = facility.createAisle("A1", Point.getZeroPoint(), Point.getZeroPoint());
-		mSubLocationDao.store(aisleA1);
+		mAisleDao.store(aisleA1);
 
 		Bay bayA1B1 = aisleA1.createBay("B1", Point.getZeroPoint(), Point.getZeroPoint());
-		mSubLocationDao.store(bayA1B1);
+		mBayDao.store(bayA1B1);
 
 		Bay bayA1B2 = aisleA1.createBay("B2", Point.getZeroPoint(), Point.getZeroPoint());
-		mSubLocationDao.store(bayA1B2);
+		mBayDao.store(bayA1B2);
 
 		Bay bayA1B3 = aisleA1.createBay("B3", Point.getZeroPoint(), Point.getZeroPoint());
-		mSubLocationDao.store(bayA1B3);
+		mBayDao.store(bayA1B3);
 
 		Aisle aisleA2 = facility.createAisle("A2", Point.getZeroPoint(), Point.getZeroPoint());
-		mSubLocationDao.store(aisleA2);
+		mAisleDao.store(aisleA2);
 
 		Bay bayA2B1 = aisleA2.createBay("B1", Point.getZeroPoint(), Point.getZeroPoint());
-		mSubLocationDao.store(bayA2B1);
+		mBayDao.store(bayA2B1);
 
 		Bay bayA2B2 = aisleA2.createBay( "B2", Point.getZeroPoint(), Point.getZeroPoint());
-		mSubLocationDao.store(bayA2B2);
+		mBayDao.store(bayA2B2);
 
 		Aisle aisleA3 = facility.createAisle("A3", Point.getZeroPoint(), Point.getZeroPoint());
-		mSubLocationDao.store(aisleA3);
+		mAisleDao.store(aisleA3);
 
 		Bay bayA3B1 = aisleA3.createBay("B1", Point.getZeroPoint(), Point.getZeroPoint());
-		mSubLocationDao.store(bayA3B1);
+		mBayDao.store(bayA3B1);
 
 		Bay bayA3B2 = aisleA3.createBay( "B2", Point.getZeroPoint(), Point.getZeroPoint());
-		mSubLocationDao.store(bayA3B2);
+		mBayDao.store(bayA3B2);
 
 		// This order location should get blanked out by the import.
 		OrderLocation orderLocation3333 = new OrderLocation();
@@ -424,7 +424,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		OrderHeader order1111 = new OrderHeader();
 		order1111.setOrderId("O1111");
 		order1111.setParent(facility);
-		order1111.setOrderTypeEnum(OrderTypeEnum.OUTBOUND);
+		order1111.setOrderType(OrderTypeEnum.OUTBOUND);
 		order1111.setOrderDate(new Timestamp(System.currentTimeMillis()));
 		order1111.setDueDate(new Timestamp(System.currentTimeMillis()));
 		order1111.setActive(true);
@@ -435,7 +435,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		OrderHeader order2222 = new OrderHeader();
 		order2222.setOrderId("O2222");
 		order2222.setParent(facility);
-		order2222.setOrderTypeEnum(OrderTypeEnum.OUTBOUND);
+		order2222.setOrderType(OrderTypeEnum.OUTBOUND);
 		order2222.setOrderDate(new Timestamp(System.currentTimeMillis()));
 		order2222.setDueDate(new Timestamp(System.currentTimeMillis()));
 		order2222.setActive(true);
@@ -446,7 +446,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		OrderHeader order3333 = new OrderHeader();
 		order3333.setOrderId("O3333");
 		order3333.setParent(facility);
-		order3333.setOrderTypeEnum(OrderTypeEnum.OUTBOUND);
+		order3333.setOrderType(OrderTypeEnum.OUTBOUND);
 		order3333.setOrderDate(new Timestamp(System.currentTimeMillis()));
 		order3333.setDueDate(new Timestamp(System.currentTimeMillis()));
 		order3333.setActive(true);
@@ -457,7 +457,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		OrderHeader order4444 = new OrderHeader();
 		order4444.setOrderId("O4444");
 		order4444.setParent(facility);
-		order4444.setOrderTypeEnum(OrderTypeEnum.OUTBOUND);
+		order4444.setOrderType(OrderTypeEnum.OUTBOUND);
 		order4444.setOrderDate(new Timestamp(System.currentTimeMillis()));
 		order4444.setDueDate(new Timestamp(System.currentTimeMillis()));
 		order4444.setActive(true);
@@ -466,34 +466,34 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		mOrderHeaderDao.store(order4444);
 
 		Aisle aisleA1 = facility.createAisle("A1", Point.getZeroPoint(), Point.getZeroPoint());
-		mSubLocationDao.store(aisleA1);
+		mAisleDao.store(aisleA1);
 
 		Bay bayA1B1 = aisleA1.createBay("B1", Point.getZeroPoint(), Point.getZeroPoint());
-		mSubLocationDao.store(bayA1B1);
+		mBayDao.store(bayA1B1);
 
 		Bay bayA1B2 = aisleA1.createBay("B2", Point.getZeroPoint(), Point.getZeroPoint());
-		mSubLocationDao.store(bayA1B2);
+		mBayDao.store(bayA1B2);
 
 		Bay bayA1B3 = aisleA1.createBay( "B3", Point.getZeroPoint(), Point.getZeroPoint());
-		mSubLocationDao.store(bayA1B3);
+		mBayDao.store(bayA1B3);
 
 		Aisle aisleA2 = facility.createAisle("A2", Point.getZeroPoint(), Point.getZeroPoint());
-		mSubLocationDao.store(aisleA2);
+		mAisleDao.store(aisleA2);
 
 		Bay bayA2B1 = aisleA2.createBay( "B1", Point.getZeroPoint(), Point.getZeroPoint());
-		mSubLocationDao.store(bayA2B1);
+		mBayDao.store(bayA2B1);
 
 		Bay bayA2B2 = aisleA2.createBay("B2", Point.getZeroPoint(), Point.getZeroPoint());
-		mSubLocationDao.store(bayA2B2);
+		mBayDao.store(bayA2B2);
 
 		Aisle aisleA3 = facility.createAisle("A3", Point.getZeroPoint(), Point.getZeroPoint());
-		mSubLocationDao.store(aisleA3);
+		mAisleDao.store(aisleA3);
 
 		Bay bayA3B1 = aisleA3.createBay( "B1", Point.getZeroPoint(), Point.getZeroPoint());
-		mSubLocationDao.store(bayA3B1);
+		mBayDao.store(bayA3B1);
 
 		Bay bayA3B2 = aisleA3.createBay("B2", Point.getZeroPoint(), Point.getZeroPoint());
-		mSubLocationDao.store(bayA3B2);
+		mBayDao.store(bayA3B2);
 
 		// This order location should get blanked out by the import.
 		OrderLocation orderLocation3333 = new OrderLocation();

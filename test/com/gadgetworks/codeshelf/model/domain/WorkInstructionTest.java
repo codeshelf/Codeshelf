@@ -124,7 +124,7 @@ public class WorkInstructionTest extends DomainTestABC {
 		OrderHeader order1 = new OrderHeader();
 		order1.setParent(facility);
 		order1.setOrderId("1");
-		order1.setOrderTypeEnum(OrderTypeEnum.OUTBOUND);
+		order1.setOrderType(OrderTypeEnum.OUTBOUND);
 		order1.setOrderDate(new Timestamp(System.currentTimeMillis()));
 		order1.setDueDate(new Timestamp(System.currentTimeMillis()));
 		order1.setActive(true);
@@ -137,7 +137,7 @@ public class WorkInstructionTest extends DomainTestABC {
 		orderDetail.setItemMaster(itemMaster);
 		orderDetail.setQuantities(5);
 		orderDetail.setUomMaster(uomMaster);
-		orderDetail.setStatusEnum(OrderStatusEnum.CREATED);
+		orderDetail.setStatus(OrderStatusEnum.CREATED);
 		orderDetail.setActive(true);
 		orderDetail.setUpdated(new Timestamp(System.currentTimeMillis()));
 		mOrderDetailDao.store(orderDetail);
@@ -149,8 +149,8 @@ public class WorkInstructionTest extends DomainTestABC {
 
 		// Update the WI
 		wi.setDomainId(Long.toString(System.currentTimeMillis()));
-		wi.setTypeEnum(WorkInstructionTypeEnum.PLAN);
-		wi.setStatusEnum(WorkInstructionStatusEnum.NEW);
+		wi.setType(WorkInstructionTypeEnum.PLAN);
+		wi.setStatus(WorkInstructionStatusEnum.NEW);
 
 		wi.setLocation(baya1b2);
 		wi.setLocationId(baya1b2.getFullDomainId());

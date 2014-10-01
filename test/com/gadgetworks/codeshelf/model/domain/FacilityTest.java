@@ -7,9 +7,7 @@ package com.gadgetworks.codeshelf.model.domain;
 
 import java.sql.Timestamp;
 
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -48,7 +46,7 @@ public class FacilityTest extends DomainTestABC {
 		OrderHeader crossbatchOrder = new OrderHeader();
 		crossbatchOrder.setDomainId("ORDER1");
 		crossbatchOrder.setUpdated(new Timestamp(0));
-		crossbatchOrder.setOrderTypeEnum(OrderTypeEnum.CROSS);
+		crossbatchOrder.setOrderType(OrderTypeEnum.CROSS);
 		crossbatchOrder.setActive(true);
 
 		facility.addOrderHeader(crossbatchOrder);

@@ -57,7 +57,7 @@ import com.google.inject.Singleton;
 @Table(name = "order_detail")
 //@CacheStrategy(useBeanCache = true)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-@ToString(of = { "statusEnum", "quantity", "itemMaster", "uomMaster", "active" }, callSuper = true, doNotUseGetters = true)
+@ToString(of = { "status", "quantity", "itemMaster", "uomMaster", "active" }, callSuper = true, doNotUseGetters = true)
 public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 
 	@Inject
@@ -75,7 +75,6 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 		}
 	}
 
-	@SuppressWarnings("unused")
 	private static final Logger		LOGGER				= LoggerFactory.getLogger(OrderDetail.class);
 
 	private static final Comparator<String> asciiAlphanumericComparator = new ASCIIAlphanumericComparator();
@@ -90,7 +89,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	@Getter
 	@Setter
 	@JsonProperty
-	private OrderStatusEnum			statusEnum;
+	private OrderStatusEnum			status;
 
 	// The item master.
 	@ManyToOne(optional = false)
@@ -189,15 +188,24 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	public final List<IDomainObject> getChildren() {
 		return new ArrayList<IDomainObject>();
 	}
-
-	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
+	
 	public final void addWorkInstruction(WorkInstruction inWorkInstruction) {
-		workInstructions.add(inWorkInstruction);
+		OrderDetail previousOrderDetail = inWorkInstruction.getParent();
+		if(previousOrderDetail == null) {
+			workInstructions.add(inWorkInstruction);
+			inWorkInstruction.setParent(this);
+		} else if(!previousOrderDetail.equals(this)) {
+			LOGGER.error("cannot add WorkInstruction "+inWorkInstruction.getDomainId()+" to "+this.getDomainId()+" because it has not been removed from "+previousOrderDetail.getDomainId());
+		}	
 	}
 
-	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void removeWorkInstruction(WorkInstruction inWorkInstruction) {
-		workInstructions.remove(inWorkInstruction);
+		if(this.workInstructions.contains(inWorkInstruction)) {
+			inWorkInstruction.setParent(null);
+			workInstructions.remove(inWorkInstruction);
+		} else {
+			LOGGER.error("cannot remove WorkInstruction "+inWorkInstruction.getDomainId()+" from "+this.getDomainId()+" because it isn't found in children");
+		}
 	}
 
 	public final String getParentOrderID() {
@@ -234,14 +242,14 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 		String returnStr = "";
 		for (WorkInstruction wi : getWorkInstructions()) {
 			if (returnStr.isEmpty())
-				if (wi.getStatusEnum() == WorkInstructionStatusEnum.SHORT)
+				if (wi.getStatus() == WorkInstructionStatusEnum.SHORT)
 					returnStr = WorkInstructionStatusEnum.SHORT.getName();
 				else {
 					returnStr = wi.getPickInstruction();
-					if (wi.getStatusEnum() == WorkInstructionStatusEnum.COMPLETE)
+					if (wi.getStatus() == WorkInstructionStatusEnum.COMPLETE)
 						returnStr = returnStr + " (" + WorkInstructionStatusEnum.COMPLETE.getName() + ")";
 				}
-			else if (wi.getStatusEnum() != WorkInstructionStatusEnum.SHORT) { // don't pile on extra SHORT if multiple SHORT WIs
+			else if (wi.getStatus() != WorkInstructionStatusEnum.SHORT) { // don't pile on extra SHORT if multiple SHORT WIs
 				returnStr = returnStr + ", " + wi.getPickInstruction();
 			}
 		}
@@ -253,7 +261,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 		for (WorkInstruction wi : getWorkInstructions()) {
 			if (returnStr.isEmpty())
 				returnStr = wi.getAssignedCheName();
-			else if (wi.getStatusEnum() != WorkInstructionStatusEnum.SHORT) { // don't pile on extra CHE if multiple SHORT WIs
+			else if (wi.getStatus() != WorkInstructionStatusEnum.SHORT) { // don't pile on extra CHE if multiple SHORT WIs
 				returnStr = returnStr + ", " + wi.getAssignedCheName();
 			}
 		}
@@ -262,7 +270,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 
 	public final String getItemLocations() {
 		//If cross batch return empty
-		if (getParent().getOrderTypeEnum().equals(OrderTypeEnum.CROSS)) {
+		if (getParent().getOrderType().equals(OrderTypeEnum.CROSS)) {
 			return "";
 		}
 		else {
@@ -290,7 +298,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 		ImmutableSet<WorkInstructionStatusEnum> pickableWiSet = Sets.immutableEnumSet(WorkInstructionStatusEnum.NEW, WorkInstructionStatusEnum.INPROGRESS, WorkInstructionStatusEnum.COMPLETE);
 		List<String> pickableWiLocations =  new ArrayList<String>();
 		for (WorkInstruction wi : getWorkInstructions()) {
-			if (pickableWiSet.contains(wi.getStatusEnum())) {
+			if (pickableWiSet.contains(wi.getStatus())) {
 				pickableWiLocations.add(wi.getPickInstruction());
 			}
 		}

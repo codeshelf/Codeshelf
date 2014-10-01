@@ -1,13 +1,13 @@
 package com.gadgetworks.codeshelf.model.dao;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import org.hibernate.Session;
 import org.hibernate.Transaction;
+import org.hibernate.criterion.Restrictions;
+import org.hibernate.criterion.SimpleExpression;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -39,9 +39,11 @@ public class GenericDaoTest extends DAOTestABC {
 		organization.setDomainId("LOADBYFILTERTEST2");
 		organization.setDescription("LOADBYFILTER");
 		mOrganizationDao.store(organization);
-		Map<String, Object> filterParams = new HashMap<String, Object>();
-		filterParams.put("domainId", "LOADBYFILTERTEST1");
+		
+		List<SimpleExpression> filterParams = new ArrayList<SimpleExpression>();
+		filterParams.add(Restrictions.eq("domainId", "LOADBYFILTERTEST1"));
 		List<Organization> foundOrganizationList = mOrganizationDao.findByFilter(filterParams);
+		
 		t.commit();
 		Assert.assertEquals(1, foundOrganizationList.size());
 	}

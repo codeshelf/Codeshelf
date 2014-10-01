@@ -49,9 +49,9 @@ public class OptimisticLockExceptionTest {
 		OrderHeader order1 = new OrderHeader();
 		order1.setDomainId("OPTIMISTIC-123");
 		order1.setParent(facility);
-		order1.setOrderTypeEnum(OrderTypeEnum.OUTBOUND);
-		order1.setStatusEnum(OrderStatusEnum.CREATED);
-		order1.setPickStrategyEnum(PickStrategyEnum.SERIAL);
+		order1.setOrderType(OrderTypeEnum.OUTBOUND);
+		order1.setStatus(OrderStatusEnum.CREATED);
+		order1.setPickStrategy(PickStrategyEnum.SERIAL);
 		order1.setOrderDate(new Timestamp(System.currentTimeMillis()));
 		order1.setDueDate(new Timestamp(System.currentTimeMillis()));
 		order1.setActive(true);
@@ -59,14 +59,14 @@ public class OptimisticLockExceptionTest {
 		OrderHeader.DAO.store(order1);
 
 		OrderHeader foundOrder = OrderHeader.DAO.findByDomainId(facility, "OPTIMISTIC-123");
-		foundOrder.setStatusEnum(OrderStatusEnum.INPROGRESS);
+		foundOrder.setStatus(OrderStatusEnum.INPROGRESS);
 		OrderHeader.DAO.store(foundOrder);
 
-		order1.setStatusEnum(OrderStatusEnum.COMPLETE);
+		order1.setStatus(OrderStatusEnum.COMPLETE);
 		order1.setVersion(new Timestamp(order1.getVersion().getTime() + 1));
 		OrderHeader.DAO.store(order1);
 
 		foundOrder = OrderHeader.DAO.findByDomainId(facility, "OPTIMISTIC-123");
-		Assert.assertEquals(foundOrder.getStatusEnum(), order1.getStatusEnum());
+		Assert.assertEquals(foundOrder.getStatus(), order1.getStatus());
 	}
 }

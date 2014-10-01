@@ -109,7 +109,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		// Make sure we created an order with the container's ID.
 		OrderHeader order = facility.getOrderHeader(OrderHeader.computeCrossOrderId("C111", ediProcessTime));
 		Assert.assertNotNull(order);
-		Assert.assertEquals(order.getOrderTypeEnum(), OrderTypeEnum.CROSS);
+		Assert.assertEquals(order.getOrderType(), OrderTypeEnum.CROSS);
 
 		// Make sure there's a contianer use and that its ID matches the order.
 		ContainerUse use = order.getContainerUse();
@@ -519,7 +519,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		// Now make sure that all of the cross batch orders are still valid.
 		order = facility.getOrderHeader(OrderHeader.computeCrossOrderId("C111", crossBatchEdiProcessTime));
 		Assert.assertNotNull(order);
-		Assert.assertEquals(order.getOrderTypeEnum(), OrderTypeEnum.CROSS);
+		Assert.assertEquals(order.getOrderType(), OrderTypeEnum.CROSS);
 		Assert.assertEquals(true, order.getActive());
 
 		// Make sure there's a container use and that its ID matches the order.
@@ -580,7 +580,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		// Make sure we created an order with the container's ID.
 		OrderHeader order = facility.getOrderHeader(OrderHeader.computeCrossOrderId("C111", ediProcessTime));
 		Assert.assertNotNull(order);
-		Assert.assertEquals(order.getOrderTypeEnum(), OrderTypeEnum.CROSS);
+		Assert.assertEquals(order.getOrderType(), OrderTypeEnum.CROSS);
 
 		// Make sure there's a container use and that its ID matches the order.
 		ContainerUse use = order.getContainerUse();
@@ -709,7 +709,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		// Make sure we created an order with the container's ID.
 		OrderHeader order = facility.getOrderHeader(OrderHeader.computeCrossOrderId("C111", firstEdiProcessTime));
 		Assert.assertNotNull(order);
-		Assert.assertEquals(order.getOrderTypeEnum(), OrderTypeEnum.CROSS);
+		Assert.assertEquals(order.getOrderType(), OrderTypeEnum.CROSS);
 		Assert.assertEquals(true, order.getActive());
 
 		// Make sure there's a contianer use and that its ID matches the order.
@@ -753,7 +753,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		// Make sure we created an order with the container's ID.
 		order = facility.getOrderHeader(OrderHeader.computeCrossOrderId("C111", firstEdiProcessTime));
 		Assert.assertNotNull(order);
-		Assert.assertEquals(order.getOrderTypeEnum(), OrderTypeEnum.CROSS);
+		Assert.assertEquals(order.getOrderType(), OrderTypeEnum.CROSS);
 		Assert.assertEquals(true, order.getActive());
 
 		// Make sure there's a contianer use and that its ID matches the order.
@@ -767,7 +767,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		// Make sure we created an order with the container's ID.
 		order = facility.getOrderHeader(OrderHeader.computeCrossOrderId("C333", secondEdiProcessTime));
 		Assert.assertNotNull(order);
-		Assert.assertEquals(order.getOrderTypeEnum(), OrderTypeEnum.CROSS);
+		Assert.assertEquals(order.getOrderType(), OrderTypeEnum.CROSS);
 		Assert.assertEquals(true, order.getActive());
 
 		// Make sure there's a contianer use and that its ID matches the order.

@@ -176,7 +176,7 @@ public class ContainerUse extends DomainObjectTreeABC<Container> {
 		ItemMaster theItem = null;
 		OrderHeader header = this.getOrderHeader();
 		if (header != null) {
-			if (header.getOrderTypeEnum() == OrderTypeEnum.CROSS) {
+			if (header.getOrderType() == OrderTypeEnum.CROSS) {
 				List<OrderDetail> details = header.getOrderDetails();
 				if (details.size() > 0)
 					detail = details.get(0); // return the first

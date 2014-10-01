@@ -278,10 +278,9 @@ public class Path extends DomainObjectTreeABC<Facility> {
 			throw new IllegalArgumentException("inHead and inPath points should not be the same");
 		}
 		*/
-		PathSegment result = null;
 
 		// The path segment goes along the longest segment of the aisle.
-		result = new PathSegment();
+		PathSegment result = new PathSegment();
 		result.setSegmentOrder(inSegmentOrder);
 		result.setDomainId(inSegmentId);
 		result.setStartPoint(inHead);
@@ -290,7 +289,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 		try {
 			PathSegment.DAO.store(result);
 		} catch (DaoException e) {
-			LOGGER.error("", e);
+			LOGGER.error("Failed to store PathSegment", e);
 		}
 
 

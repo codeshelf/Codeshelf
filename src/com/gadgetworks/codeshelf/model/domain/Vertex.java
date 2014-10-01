@@ -94,6 +94,7 @@ public class Vertex extends DomainObjectTreeABC<ILocation<?>> {
 
 	}
 
+	/*
 	public Vertex(final ILocation<?> inParentLocation, final String inLocationId, final int inDrawOrder, final Point inPoint) {
 		parent = (LocationABC<?>) inParentLocation;
 		setDomainId(inLocationId);
@@ -103,6 +104,7 @@ public class Vertex extends DomainObjectTreeABC<ILocation<?>> {
 		posZ = inPoint.getZ();
 		drawOrder = inDrawOrder;
 	}
+	*/
 
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<Vertex> getDao() {

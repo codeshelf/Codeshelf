@@ -71,7 +71,6 @@ public class PickSimulaneousWis extends EdiTestABC {
 		String fName = "F-" + inOrganizationName;
 		organization.createFacility(fName, "TEST", Point.getZeroPoint());
 		Facility facility = organization.getFacility(fName);
-		getPersistenceService().endTenantTransaction();
 
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A1,,,,,tierB1S1Side,12.85,43.45,X,120,Y\r\n" //
@@ -100,13 +99,10 @@ public class PickSimulaneousWis extends EdiTestABC {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
 		
-		getPersistenceService().beginTenantTransaction();
 		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
-		getPersistenceService().endTenantTransaction();
 
 		// Get the aisle
-		getPersistenceService().beginTenantTransaction();
-		Aisle aisle1 = Aisle.DAO.findByDomainId(facility, "A1");
+		Aisle aisle1 = facility.getAisle("A1");// Aisle.DAO.findByDomainId(facility, "A1");
 		Assert.assertNotNull(aisle1);
 
 		Path aPath = createPathForTest("F5X.1", facility);
@@ -115,18 +111,18 @@ public class PickSimulaneousWis extends EdiTestABC {
 		String persistStr = segment0.getPersistentId().toString();
 		aisle1.associatePathSegment(persistStr);
 
-		Aisle aisle2 = Aisle.DAO.findByDomainId(facility, "A2");
+		Aisle aisle2 = facility.getAisle("A2");//Aisle.DAO.findByDomainId(facility, "A2");
 		Assert.assertNotNull(aisle2);
 		aisle2.associatePathSegment(persistStr);
 
 		Path path2 = createPathForTest("F5X.3", facility);
 		PathSegment segment02 = addPathSegmentForTest("F5X.3.0", path2, 0, 22.0, 58.45, 12.85, 58.45);
 
-		Aisle aisle3 = Aisle.DAO.findByDomainId(facility, "A3");
+//		facility.getLocations().get("A2")l
+		Aisle aisle3 = facility.getAisle("A3");//Aisle.DAO.findByDomainId(facility, "A3");
 		Assert.assertNotNull(aisle3);
 		String persistStr2 = segment02.getPersistentId().toString();
 		aisle3.associatePathSegment(persistStr2);
-		getPersistenceService().endTenantTransaction();
 
 		String csvString2 = "mappedLocationId,locationAlias\r\n" //
 				+ "A1.B1, D100\r\n" //
@@ -144,12 +140,10 @@ public class PickSimulaneousWis extends EdiTestABC {
 
 		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
 		InputStreamReader reader2 = new InputStreamReader(stream2);
-
+		
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvLocationAliasImporter importer2 = new LocationAliasCsvImporter(mLocationAliasDao);
 		importer2.importLocationAliasesFromCsvStream(reader2, facility, ediProcessTime2);
-
-		getPersistenceService().beginTenantTransaction();
 
 		String nName = "N-" + inOrganizationName;
 		CodeshelfNetwork network = facility.createNetwork(nName);

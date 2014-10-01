@@ -8,7 +8,6 @@ package com.gadgetworks.codeshelf.model.dao;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -20,6 +19,7 @@ import org.apache.commons.lang.NotImplementedException;
 import org.hibernate.Criteria;
 import org.hibernate.Session;
 import org.hibernate.criterion.Restrictions;
+import org.hibernate.criterion.SimpleExpression;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -192,13 +192,22 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#findByIdList(java.util.List)
-	 */
 	public final List<T> findByFilter(Map<String, Object> inFilterParams) {
 		// If we have a valid filter then get the filtered objects.
 		Session session = getCurrentSession();
         Criteria criteria = session.createCriteria(getDaoClass());
 		for (Entry<String, Object> param : inFilterParams.entrySet()) {
 			criteria.add(Restrictions.eq(param.getKey(), param.getValue()));
+		}
+		List<T> results = criteria.list();
+		return results;
+	}*/
+	public final List<T> findByFilter(List<SimpleExpression> inFilter) {
+		// If we have a valid filter then get the filtered objects.
+		Session session = getCurrentSession();
+        Criteria criteria = session.createCriteria(getDaoClass());
+		for (SimpleExpression expression : inFilter) {
+			criteria.add(expression);
 		}
 		List<T> results = criteria.list();
 		return results;

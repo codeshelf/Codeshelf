@@ -20,6 +20,7 @@ import java.util.UUID;
 import javax.persistence.Column;
 
 import org.apache.commons.lang.NotImplementedException;
+import org.hibernate.criterion.SimpleExpression;
 
 import com.eaio.uuid.UUIDGen;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
@@ -88,7 +89,7 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 
 	}
 
-	public final List<T> findByFilter(Map<String, Object> inFilterParams) {
+	public final List<T> findByFilter(List<SimpleExpression> inFilter) {
 		throw new NotImplementedException();
 	}
 

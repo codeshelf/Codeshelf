@@ -1,7 +1,7 @@
 package com.gadgetworks.codeshelf.model;
 
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyMap;
+import static org.mockito.Matchers.anyList;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doCallRealMethod;
@@ -21,8 +21,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-
-import lombok.Getter;
 
 import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Assert;
@@ -44,7 +42,6 @@ import com.gadgetworks.codeshelf.model.domain.IEdiService;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.service.WorkService;
 import com.gadgetworks.codeshelf.validation.InputValidationException;
 import com.google.common.collect.ImmutableList;
@@ -68,7 +65,7 @@ public class WorkServiceTest extends DAOTestABC {
 		for (int i = 0; i < 4; i++) {
 			inputs.add(generateValidWorkInstruction(facility, nextUniquePastTimestamp()));
 		}
-		when(workInstructionDao.findByFilter(anyMap())).thenReturn(inputs);
+		when(workInstructionDao.findByFilter(anyList())).thenReturn(inputs);
 
 		WorkService workService = new WorkService();
 		List<WiSetSummary> workSummaries  = workService.workSummary("testCheId", "testFacilityId");

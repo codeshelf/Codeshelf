@@ -50,7 +50,6 @@ import com.gadgetworks.codeshelf.model.domain.DropboxService;
 import com.gadgetworks.codeshelf.model.domain.DropboxService.DropboxServiceDao;
 import com.gadgetworks.codeshelf.model.domain.EdiDocumentLocator;
 import com.gadgetworks.codeshelf.model.domain.EdiDocumentLocator.EdiDocumentLocatorDao;
-import com.gadgetworks.codeshelf.model.domain.EdiServiceABC;
 //import com.gadgetworks.codeshelf.model.domain.EdiServiceABC.EdiServiceABCDao;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Facility.FacilityDao;
@@ -65,7 +64,7 @@ import com.gadgetworks.codeshelf.model.domain.ItemMaster.ItemMasterDao;
 import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.LedController.LedControllerDao;
 import com.gadgetworks.codeshelf.model.domain.LocationABC;
-import com.gadgetworks.codeshelf.model.domain.LocationABC.LocationABCDao;
+//import com.gadgetworks.codeshelf.model.domain.LocationABC.LocationABCDao;
 import com.gadgetworks.codeshelf.model.domain.LocationAlias;
 import com.gadgetworks.codeshelf.model.domain.LocationAlias.LocationAliasDao;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
@@ -89,7 +88,7 @@ import com.gadgetworks.codeshelf.model.domain.SiteController.SiteControllerDao;
 import com.gadgetworks.codeshelf.model.domain.Slot;
 import com.gadgetworks.codeshelf.model.domain.Slot.SlotDao;
 import com.gadgetworks.codeshelf.model.domain.SubLocationABC;
-import com.gadgetworks.codeshelf.model.domain.SubLocationABC.SubLocationDao;
+//import com.gadgetworks.codeshelf.model.domain.SubLocationABC.SubLocationDao;
 import com.gadgetworks.codeshelf.model.domain.Tier;
 import com.gadgetworks.codeshelf.model.domain.Tier.TierDao;
 import com.gadgetworks.codeshelf.model.domain.UomMaster;
@@ -101,7 +100,7 @@ import com.gadgetworks.codeshelf.model.domain.UserSession.UserSessionDao;
 import com.gadgetworks.codeshelf.model.domain.Vertex;
 import com.gadgetworks.codeshelf.model.domain.Vertex.VertexDao;
 import com.gadgetworks.codeshelf.model.domain.WirelessDeviceABC;
-import com.gadgetworks.codeshelf.model.domain.WirelessDeviceABC.WirelessDeviceDao;
+//import com.gadgetworks.codeshelf.model.domain.WirelessDeviceABC.WirelessDeviceDao;
 import com.gadgetworks.codeshelf.model.domain.WorkArea;
 import com.gadgetworks.codeshelf.model.domain.WorkArea.WorkAreaDao;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
@@ -285,11 +284,11 @@ public final class ServerMain {
 				requestStaticInjection(ItemDdcGroup.class);
 				bind(new TypeLiteral<ITypedDao<ItemDdcGroup>>() {
 				}).to(ItemDdcGroupDao.class);
-
+/*
 				requestStaticInjection(LocationABC.class);
 				bind(new TypeLiteral<ITypedDao<LocationABC>>() {
 				}).to(LocationABCDao.class);
-
+*/
 				requestStaticInjection(LocationAlias.class);
 				bind(new TypeLiteral<ITypedDao<LocationAlias>>() {
 				}).to(LocationAliasDao.class);
@@ -330,9 +329,11 @@ public final class ServerMain {
 				bind(new TypeLiteral<ITypedDao<Slot>>() {
 				}).to(SlotDao.class);
 
+				/*
 				requestStaticInjection(SubLocationABC.class);
 				bind(new TypeLiteral<ITypedDao<SubLocationABC>>() {
 				}).to(SubLocationDao.class);
+				*/
 
 				requestStaticInjection(Tier.class);
 				bind(new TypeLiteral<ITypedDao<Tier>>() {
@@ -353,11 +354,11 @@ public final class ServerMain {
 				requestStaticInjection(Vertex.class);
 				bind(new TypeLiteral<ITypedDao<Vertex>>() {
 				}).to(VertexDao.class);
-
+/*
 				requestStaticInjection(WirelessDeviceABC.class);
 				bind(new TypeLiteral<ITypedDao<WirelessDeviceABC>>() {
 				}).to(WirelessDeviceDao.class);
-
+*/
 				requestStaticInjection(WorkArea.class);
 				bind(new TypeLiteral<ITypedDao<WorkArea>>() {
 				}).to(WorkAreaDao.class);

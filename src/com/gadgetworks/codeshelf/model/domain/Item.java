@@ -146,16 +146,12 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	}
 
 	public final void setStoredLocation(final ILocation<?> inStoredLocation) {
-		// If it's already in another location then remove it from that location.
-		// Shall we use its existing domainID (which will change momentarily?
-		// Or compute what its domainID must have been in that location?
-		if (storedLocation != null) {
-			storedLocation.removeStoredItemFromMasterIdAndUom(getItemId(), getUomMasterId());
-		}
-		storedLocation = (LocationABC<?>) inStoredLocation;
+		storedLocation = (LocationABC<?>) inStoredLocation; 
+				
 		// The stored location is part of the domain key for an item's instance.
-		setDomainId(makeDomainId(getItemId(), inStoredLocation, getUomMasterId()));
-		inStoredLocation.addStoredItem(this);
+		//setDomainId(makeDomainId(getItemId(), inStoredLocation, getUomMasterId()));
+		//inStoredLocation.addStoredItem(this);
+		
 	}
 
 	public final List<IDomainObject> getChildren() {

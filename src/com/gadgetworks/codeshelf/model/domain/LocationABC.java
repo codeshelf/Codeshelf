@@ -69,7 +69,7 @@ import com.google.inject.Singleton;
 @DiscriminatorColumn(name = "dtype", discriminatorType = DiscriminatorType.STRING)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public abstract class LocationABC<P extends IDomainObject> extends DomainObjectTreeABC<P> implements ILocation<P> {
-
+/*
 	@SuppressWarnings("rawtypes")
 	@Inject
 	public static ITypedDao<LocationABC>	DAO;
@@ -87,7 +87,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		public final Class<LocationABC> getDaoClass() {
 			return LocationABC.class;
 		}
-	}
+	}*/
 
 	// This really should somehow include the space between the bay if there are gaps in a long row with certain kinds of LED strips.
 	// For example, the current strips are spaced exactly 3.125cm apart.
@@ -256,7 +256,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		anchorPosX = x;
 		anchorPosY = y;
 		anchorPosZ = z;
-		DAO.store(this);
+		this.getDao().store(this);
 	}
 
 	public Point getAnchorPoint() {
@@ -326,7 +326,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 		// There's some weirdness with Ebean and navigating a recursive hierarchy. (You can't go down and then back up to a different class.)
 		// This fixes that problem, but it's not pretty.
-		checkParent = DAO.findByPersistentId(checkParent.getClass(), checkParent.getPersistentId());
+		checkParent = this.getDao().findByPersistentId(checkParent.getClass(), checkParent.getPersistentId());
 
 		if (checkParent.getClass().equals(inClassWanted)) {
 			// This is the parent we want.
@@ -389,7 +389,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 			// There's some weirdness with Ebean and navigating a recursive hierarchy. (You can't go down and then back up to a different class.)
 			// This fixes that problem, but it's not pretty.
 			UUID persistentId = checkParent.getPersistentId();
-			checkParent = DAO.findByPersistentId(checkParent.getClass(), persistentId);
+			checkParent = this.getDao().findByPersistentId(checkParent.getClass(), persistentId);
 			if (checkParent != null) {
 				if (checkParent.getClass().equals(inClassWanted)) {
 					// This is the parent we want. (We can cast safely since we checked the class.)
@@ -425,7 +425,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 			// There's some weirdness with Ebean and navigating a recursive hierarchy. (You can't go down and then back up to a different class.)
 			// This fixes that problem, but it's not pretty.
-			parent = DAO.findByPersistentId(parent.getClass(), parent.getPersistentId());
+			parent = this.getDao().findByPersistentId(parent.getClass(), parent.getPersistentId());
 			if ((parent != null) && (parent.getAnchorPoint().getPosTypeEnum().equals(PositionTypeEnum.METERS_FROM_PARENT))) {
 				result = anchor.add(parent.getAbsoluteAnchorPoint());
 			}
@@ -469,6 +469,16 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#getLocation(java.lang.String)
 	 */
 	public final ISubLocation<?> findLocationById(String inLocationId) {
+		if (this.getClass().equals(Facility.class)) {
+			Facility facility = (Facility) this;
+			LocationAlias alias = facility.getLocationAlias(inLocationId);
+			if ((alias != null) && (alias.getActive())) {
+				return alias.getMappedLocation();
+			}
+		} // else
+		return locations.get(inLocationId);
+		
+/*		
 		// There's some ebean weirdness around Map caches, so we have to use a different strategy to resolve this request.
 		//return locations.get(inLocationId);
 		ISubLocation<?> result = null;
@@ -495,6 +505,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		}
 
 		return result;
+		*/
 	}
 
 	// --------------------------------------------------------------------------
@@ -647,14 +658,24 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 	public final void addStoredItem(Item inItem) {
 		ILocation<?> previousLocation = inItem.getStoredLocation();
+		
+		// If it's already in another location then remove it from that location.
+		// Shall we use its existing domainID (which will change momentarily?
+		// Or compute what its domainID must have been in that location?
+		if (previousLocation != null) {
+			previousLocation.removeStoredItemFromMasterIdAndUom(inItem.getItemId(), inItem.getUomMasterId());
+			previousLocation = null;
+		}
+		
 		if(previousLocation == null) {
 			String domainId = Item.makeDomainId(inItem.getItemId(), this, inItem.getUomMasterId());
+			inItem.setDomainId(domainId);
 			// why not just ask the item for its domainId?
 			storedItems.put(domainId, inItem);
 			inItem.setStoredLocation(this);
-		} else if(!previousLocation.equals(this)) {
+		} /*else if(!previousLocation.equals(this)) {
 			LOGGER.error("cannot addStoredItem "+inItem.getDomainId()+" to "+this.getDomainId()+" because it is still stored at "+previousLocation.getDomainId());
-		}	
+		}	*/
 
 		
 	}
@@ -904,9 +925,9 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		return theLedRange;
 	}
 
-	public static void setDao(LocationABCDao inLocationDao) {
-		LocationABC.DAO = inLocationDao;
-	}
+//	public static void setDao(LocationABCDao inLocationDao) {
+//		LocationABC.DAO = inLocationDao;
+//	}
 
 	/*
 	@Override

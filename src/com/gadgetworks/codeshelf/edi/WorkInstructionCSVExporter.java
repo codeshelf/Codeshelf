@@ -56,8 +56,8 @@ public class WorkInstructionCSVExporter {
 
 			properties = new String[WI_ATTR_COUNT];
 			properties[DOMAINID_POS] = wi.getDomainId();
-			properties[TYPE_POS] = wi.getTypeEnum().toString();
-			properties[STATUS_POS] = wi.getStatusEnum().toString();
+			properties[TYPE_POS] = wi.getType().toString();
+			properties[STATUS_POS] = wi.getStatus().toString();
 
 			// groups are optional!
 			String groupStr = "";

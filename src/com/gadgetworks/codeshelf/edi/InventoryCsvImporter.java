@@ -249,7 +249,7 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 		final Timestamp inEdiProcessTime) {
 
 		try {
-			mItemDao.beginTransaction();
+			//mItemDao.beginTransaction();
 
 
 			
@@ -278,14 +278,14 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 				@SuppressWarnings("unused")
 				Item item = updateSlottedItem(true, inCsvBean, location, inEdiProcessTime, itemMaster, uomMaster);
 
-				mItemDao.commitTransaction();
+				//mItemDao.commitTransaction();
 			}
 			catch(InputValidationException e) {
 				LOGGER.error("unable to save line: " + inCsvBean, e);
 			}
 
 		} finally {
-			mItemDao.endTransaction();
+			//mItemDao.endTransaction();
 		}
 	}
 
@@ -470,7 +470,7 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 		} 
 		// setStoredLocation has the side effect of setting domainId, but that requires that UOM already be set. So setUomMaster first.
 		result.setUomMaster(inUomMaster);
-		result.setStoredLocation(inLocation);
+		inLocation.addStoredItem(result);
 		
 		result.setQuantity(quantity);
 		// This used to call only this

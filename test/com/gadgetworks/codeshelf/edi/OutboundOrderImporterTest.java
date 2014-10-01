@@ -160,11 +160,11 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		// If not specified, default to serial
 		OrderHeader order = facility.getOrderHeader("123");
 		Assert.assertNotNull(order);
-		Assert.assertEquals(order.getPickStrategyEnum(), PickStrategyEnum.SERIAL);
+		Assert.assertEquals(order.getPickStrategy(), PickStrategyEnum.SERIAL);
 
 		order = facility.getOrderHeader("789");
 		Assert.assertNotNull(order);
-		Assert.assertEquals(order.getPickStrategyEnum(), PickStrategyEnum.PARALLEL);
+		Assert.assertEquals(order.getPickStrategy(), PickStrategyEnum.PARALLEL);
 
 		this.getPersistenceService().endTenantTransaction();
 

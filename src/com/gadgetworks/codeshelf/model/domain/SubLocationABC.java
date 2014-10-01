@@ -34,7 +34,7 @@ import com.google.inject.Singleton;
 @Entity
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public abstract class SubLocationABC<P extends IDomainObject & ISubLocation<?>> extends LocationABC<P> implements ISubLocation<P> {
-
+/*
 	@SuppressWarnings("rawtypes")
 	@Inject
 	public static ITypedDao<SubLocationABC>	DAO;
@@ -51,7 +51,7 @@ public abstract class SubLocationABC<P extends IDomainObject & ISubLocation<?>> 
 			return SubLocationABC.class;
 		}
 	}
-
+*/
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(SubLocationABC.class);
 
 	// The owning location.
@@ -189,7 +189,7 @@ public abstract class SubLocationABC<P extends IDomainObject & ISubLocation<?>> 
 				LOGGER.debug(this.getFullDomainId() + " path pos: " + getPosAlongPath() + " Anchor x: " + locationAnchorPoint.getX()
 					+ " y: " + locationAnchorPoint.getY() + " Face x: ");
 				setPosAlongPath(newPosition);
-				LocationABC.DAO.store(this);
+				this.getDao().store(this);
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}
@@ -302,7 +302,4 @@ public abstract class SubLocationABC<P extends IDomainObject & ISubLocation<?>> 
 		return StringUIConverter.doubleToTwoDecimalsString(getPosAlongPath());
 	}
 
-	public static void setDao(SubLocationDao inSubLocationDao) {
-		SubLocationABC.DAO = inSubLocationDao;
-	}
 }

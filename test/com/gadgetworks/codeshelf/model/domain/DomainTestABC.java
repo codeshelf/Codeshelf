@@ -435,7 +435,7 @@ public abstract class DomainTestABC extends DAOTestABC {
 		result.setParent(inFacility);
 		result.setOrderGroup(inOrderGroup);
 		result.setOrderId(inOrderId);
-		result.setOrderTypeEnum(inOrderType);
+		result.setOrderType(inOrderType);
 		result.setOrderDate(new Timestamp(System.currentTimeMillis()));
 		result.setDueDate(new Timestamp(System.currentTimeMillis()));
 		result.setActive(true);
@@ -460,7 +460,7 @@ public abstract class DomainTestABC extends DAOTestABC {
 		result.setItemMaster(inItemMaster);
 		result.setQuantities(5);
 		result.setUomMaster(inItemMaster.getStandardUom());
-		result.setStatusEnum(OrderStatusEnum.CREATED);
+		result.setStatus(OrderStatusEnum.CREATED);
 		result.setActive(true);
 		result.setUpdated(new Timestamp(System.currentTimeMillis()));
 		mOrderDetailDao.store(result);

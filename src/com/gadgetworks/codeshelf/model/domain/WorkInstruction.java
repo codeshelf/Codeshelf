@@ -66,7 +66,7 @@ import com.google.inject.Singleton;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 @JsonIgnoreProperties({ "fullDomainId", "parentFullDomainId", "parentPersistentId", "className", "container", "itemMaster",
 		"location" })
-@ToString(of = { "typeEnum", "statusEnum", "itemId", "planQuantity", "actualQuantity", "locationId" }, callSuper = true, doNotUseGetters = true)
+@ToString(of = { "type", "status", "itemId", "planQuantity", "actualQuantity", "locationId" }, callSuper = true, doNotUseGetters = true)
 public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 
 	@Inject
@@ -96,7 +96,7 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 	@Getter
 	@Setter
 	@JsonProperty
-	private WorkInstructionTypeEnum		typeEnum;
+	private WorkInstructionTypeEnum		type;
 
 	// Status.
 	@Column(nullable = false)
@@ -104,7 +104,7 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 	@Getter
 	@Setter
 	@JsonProperty
-	private WorkInstructionStatusEnum	statusEnum;
+	private WorkInstructionStatusEnum	status;
 
 	// The container.
 	@Getter
@@ -184,7 +184,7 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 
 	// Picker ID.
 	@Column(nullable = true)
-	@Getter
+	@Getter 
 	@Setter
 	@JsonProperty
 	private String						pickerId;
@@ -453,8 +453,8 @@ public class WorkInstruction extends DomainObjectTreeABC<OrderDetail> {
 		this.setActualQuantity(actualQuant);
 		this.setCompleted(completeTime);
 		this.setStarted(startTime);
-		this.setStatusEnum(newStatus);
-		this.setTypeEnum(WorkInstructionTypeEnum.ACTUAL);
+		this.setStatus(newStatus);
+		this.setType(WorkInstructionTypeEnum.ACTUAL);
 
 		try {
 			WorkInstruction.DAO.store(this);

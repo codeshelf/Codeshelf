@@ -177,7 +177,7 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 			// Iterate all of the order headers in this order group to see if they're still active.
 			for (OrderHeader order : inFacility.getOrderHeaders()) {
 				try {
-					if (order.getOrderTypeEnum().equals(OrderTypeEnum.OUTBOUND)) {
+					if (order.getOrderType().equals(OrderTypeEnum.OUTBOUND)) {
 						Boolean orderHeaderIsActive = false;
 
 						// Iterate all of the order details in this order header to see if they're still active.
@@ -234,7 +234,7 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 				Boolean shouldInactivateContainer = true;
 
 				for (ContainerUse containerUse : container.getUses()) {
-					if (!containerUse.getOrderHeader().getOrderTypeEnum().equals(OrderTypeEnum.OUTBOUND)) {
+					if (!containerUse.getOrderHeader().getOrderType().equals(OrderTypeEnum.OUTBOUND)) {
 						shouldInactivateContainer = false;
 					} else {
 						if (containerUse.getUpdated().equals(inProcessTime)) {
@@ -326,7 +326,7 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 			result = new OrderGroup();
 			result.setOrderGroupId(inCsvBean.getOrderGroupId());
 			result.setDescription(OrderGroup.DEFAULT_ORDER_GROUP_DESC_PREFIX + inCsvBean.getOrderGroupId());
-			result.setStatusEnum(OrderStatusEnum.CREATED);
+			result.setStatus(OrderStatusEnum.CREATED);
 			result.setActive(true);
 			result.setUpdated(inEdiProcessTime);
 			inFacility.addOrderGroup(result);
@@ -431,8 +431,8 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 			inFacility.addOrderHeader(result);
 		}
 
-		result.setOrderTypeEnum(OrderTypeEnum.OUTBOUND);
-		result.setStatusEnum(OrderStatusEnum.CREATED);
+		result.setOrderType(OrderTypeEnum.OUTBOUND);
+		result.setStatus(OrderStatusEnum.CREATED);
 		result.setCustomerId(inCsvBean.getCustomerId());
 		result.setShipmentId(inCsvBean.getShipmentId());
 		if (inCsvBean.getWorkSequence() != null) {
@@ -470,7 +470,7 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 		if ((pickStrategyEnumId != null) && (pickStrategyEnumId.length() > 0)) {
 			pickStrategy = PickStrategyEnum.valueOf(pickStrategyEnumId);
 		}
-		result.setPickStrategyEnum(pickStrategy);
+		result.setPickStrategy(pickStrategy);
 		if (inOrderGroup != null) {
 			inOrderGroup.addOrderHeader(result);
 			result.setOrderGroup(inOrderGroup);
@@ -586,7 +586,7 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 			inOrder.addOrderDetail(result);
 		}
 
-		result.setStatusEnum(OrderStatusEnum.CREATED);
+		result.setStatus(OrderStatusEnum.CREATED);
 		result.setItemMaster(inItemMaster);
 		result.setDescription(inCsvBean.getDescription());
 		result.setUomMaster(inUomMaster);
