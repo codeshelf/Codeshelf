@@ -1629,6 +1629,8 @@ public class Facility extends SubLocationABC<Facility> {
 		String theLedCommands = LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList);
 		// Need to embed this in a command and send to site controller.
 		LOGGER.info("lightOneLocation called correctly. Need command and site controller implementation");
+		// will call sendToAllSiteControllers();
+
 	}
 
 	// --------------------------------------------------------------------------
@@ -1659,6 +1661,7 @@ public class Facility extends SubLocationABC<Facility> {
 		String theLedCommands = LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList);
 		// Need to embed this in a command and send to site controller.
 		LOGGER.info("lightOneItem called correctly. Need command and site controller implementation");
+		// will call sendToAllSiteControllers();
 	}
 
 	// -------UI support for lighting items and locations- END-----------------------
