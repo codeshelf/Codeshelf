@@ -2,6 +2,8 @@ package com.gadgetworks.codeshelf.ws.jetty.server;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.websocket.Session;
 
@@ -11,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import com.codahale.metrics.Counter;
 import com.gadgetworks.codeshelf.metrics.MetricsGroup;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
+import com.gadgetworks.codeshelf.model.domain.User;
 
 public class SessionManager {
 
@@ -66,6 +69,26 @@ public class SessionManager {
 			return null;
 		}
 		return this.activeSessions.get(sessionId);
+	}
+	
+	public CsSession getSession(User user) {
+		for (CsSession session : this.getSessions()) {
+			if(session.getUser().equals(user)) {
+				return session;
+			}
+		}
+		return null;
+	}
+	
+	public Set<CsSession> getSessions(Set<User> users) {
+		Set<CsSession> userSessions = new HashSet<CsSession>();
+		
+		for (CsSession session : this.getSessions()) {
+			if(users.contains(session.getUser())) {
+				userSessions.add(session);
+			}
+		}
+		return userSessions;
 	}
 	
 	public final Collection<CsSession> getSessions() {

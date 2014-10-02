@@ -43,7 +43,6 @@ import com.gadgetworks.codeshelf.device.LedCmdGroupSerializer;
 import com.gadgetworks.codeshelf.device.LedSample;
 import com.gadgetworks.codeshelf.edi.InventoryCsvImporter;
 import com.gadgetworks.codeshelf.edi.InventorySlottedCsvBean;
-import com.gadgetworks.codeshelf.edi.WorkInstructionCSVExporter;
 import com.gadgetworks.codeshelf.model.EdiProviderEnum;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.HeaderCounts;
@@ -67,6 +66,9 @@ import com.gadgetworks.codeshelf.validation.DefaultErrors;
 import com.gadgetworks.codeshelf.validation.ErrorCode;
 import com.gadgetworks.codeshelf.validation.Errors;
 import com.gadgetworks.codeshelf.validation.InputValidationException;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
+import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
+import com.gadgetworks.codeshelf.ws.jetty.server.SessionManager;
 import com.gadgetworks.flyweight.command.ColorEnum;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
@@ -2056,5 +2058,38 @@ public class Facility extends SubLocationABC<Facility> {
 			new Timestamp(System.currentTimeMillis()),
 			itemMaster,
 			uomMaster);
+	}
+	
+	public final int sendToAllSiteControllers(MessageABC message) {
+		SessionManager sessionManager = SessionManager.getInstance();
+		Set<User> users = this.getSiteControllerUsers();
+		Set<CsSession> sessions = sessionManager.getSessions(users);
+		for(CsSession session : sessions) {
+			session.sendMessage(message);
+		}
+		return sessions.size();
+	}
+	
+	public final Set<SiteController> getSiteControllers() {
+		Set<SiteController> siteControllers = new HashSet<SiteController>();
+		
+		for(CodeshelfNetwork network : this.getNetworks()) {
+			siteControllers.addAll(network.getSiteControllers().values());
+		}		
+		return siteControllers;
+	}
+	
+	public final Set<User> getSiteControllerUsers() {
+		Set<User> users = new HashSet<User>();
+		
+		for(SiteController sitecon : this.getSiteControllers()) {
+			User user = User.DAO.findByDomainId(this.getParentOrganization(), sitecon.getDomainId());
+			if(user != null) {
+				users.add(user);
+			} else {
+				LOGGER.warn("Couldn't find user for site controller "+sitecon.getDomainId());
+			}
+		}
+		return users;
 	}
 }

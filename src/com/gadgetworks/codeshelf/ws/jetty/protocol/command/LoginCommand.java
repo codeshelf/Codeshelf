@@ -47,7 +47,7 @@ public class LoginCommand extends CommandABC {
 				if (user.isPasswordValid(password)) {
 					Organization org = user.getParent();
 					session.setOrganizationName(org.getDomainId());
-					session.setAuthenticated(true);
+					session.setUser(user);
 					LOGGER.info("User "+userId+" of "+org.getDomainId()+" authenticated on session "+session.getSessionId());
 
 					// determine if site controller

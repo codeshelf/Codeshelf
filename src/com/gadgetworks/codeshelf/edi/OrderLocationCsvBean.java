@@ -50,7 +50,7 @@ public class OrderLocationCsvBean extends ImportCsvBeanABC implements Comparable
 		}
 		return nullSafeStringComparator(this.locationId, other.locationId);
 	}
-		
+	
 	private static int nullSafeStringComparator(final String one, final String two) {
 	    if (one == null ^ two == null) {
 	        return (one == null) ? -1 : 1;
@@ -60,6 +60,6 @@ public class OrderLocationCsvBean extends ImportCsvBeanABC implements Comparable
 	        return 0;
 	    }
 
-	    return one.compareToIgnoreCase(two);
+	    return one.compareToIgnoreCase(two); // silly FindBugs, this is fine
 	}
 }

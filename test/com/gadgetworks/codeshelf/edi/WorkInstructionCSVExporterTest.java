@@ -240,11 +240,6 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 	private SubLocationABC<Facility> mockSubLocation(String domainId) {
 		return new SubLocationABC<Facility>(facility, domainId, mock(Point.class), mock(Point.class)) {
 
-			/**
-			 * 
-			 */
-			private static final long	serialVersionUID	= 1L;
-
 			@Override
 			public String getDefaultDomainIdPrefix() {
 				// TODO Auto-generated method stub

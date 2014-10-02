@@ -1311,6 +1311,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	// --------------------------------------------------------------------------
 	/** Light position controllers appropriately for bay change, keyed off the previous work instruction's containerId
 	 */
+	@SuppressWarnings("unused")
 	private void showBayChange(String inContainerId) {
 		showSpecialPositionCode(PosControllerInstr.BAY_COMPLETE_CODE, inContainerId);
 	}
@@ -1318,6 +1319,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	// --------------------------------------------------------------------------
 	/** Light position controllers appropriately for repeat container, keyed off the previous work instruction's containerId
 	 */
+	@SuppressWarnings("unused")
 	private void showRepeatContainer(String inContainerId) {
 		showSpecialPositionCode(PosControllerInstr.REPEAT_CONTAINER_CODE, inContainerId);
 	}
