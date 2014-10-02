@@ -47,6 +47,7 @@ import com.gadgetworks.codeshelf.edi.InventorySlottedCsvBean;
 import com.gadgetworks.codeshelf.model.EdiProviderEnum;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.HeaderCounts;
+import com.gadgetworks.codeshelf.model.HousekeepingInjector;
 import com.gadgetworks.codeshelf.model.LedRange;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.OrderTypeEnum;
@@ -60,11 +61,15 @@ import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.util.SequenceNumber;
 import com.gadgetworks.codeshelf.util.UomNormalizer;
 import com.gadgetworks.codeshelf.validation.DefaultErrors;
 import com.gadgetworks.codeshelf.validation.ErrorCode;
 import com.gadgetworks.codeshelf.validation.Errors;
 import com.gadgetworks.codeshelf.validation.InputValidationException;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
+import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
+import com.gadgetworks.codeshelf.ws.jetty.server.SessionManager;
 import com.gadgetworks.flyweight.command.ColorEnum;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
@@ -712,18 +717,6 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 	/**
 	 * @return
 	 */
-	public final void ensureEdiExportService() {
-		// This is a weak kludge. Just do the get, which does a get and create if not found.
-		// Otherwise, the create only happens upon the first attempt at a work instruction save.
-		IEdiService theService = getEdiExportService();
-		if (theService == null)
-			LOGGER.error("Failed to get IronMQ service");
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * @return
-	 */
 	public final IEdiService getEdiExportService() {
 		return IronMqService.DAO.findByDomainId(this, IRONMQ_DOMAINID);
 	}
@@ -844,6 +837,11 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		filterParams.add(Restrictions.eq("assignedChe.persistentId", inChe.getPersistentId()));
 		filterParams.add(Restrictions.eq("type", WorkInstructionTypeEnum.PLAN));
 		for (WorkInstruction wi : WorkInstruction.DAO.findByFilter(filterParams)) {
+		// This is ugly. We probably do want a housekeeping type here, but then might want subtypes not in this query
+		filterParams.put("typeplan", WorkInstructionTypeEnum.PLAN.toString());
+		filterParams.put("typehkbaychange", WorkInstructionTypeEnum.HK_BAYCOMPLETE.toString());
+		filterParams.put("typehkrepeat", WorkInstructionTypeEnum.HK_REPEATPOS.toString());
+		for (WorkInstruction wi : WorkInstruction.DAO.findByFilter("assignedChe.persistentId = :chePersistentId and (typeEnum = :typeplan or typeEnum = :typehkbaychange or typeEnum = :typehkrepeat) ",
 			try {
 
 				Che assignedChe = wi.getAssignedChe();
@@ -851,8 +849,10 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 					assignedChe.removeWorkInstruction(wi); // necessary? new from v3
 					changedChes.add(assignedChe);
 				}
-				OrderDetail owningDetail = wi.getParent();
-				owningDetail.removeWorkInstruction(wi); // necessary? new from v3
+				OrderDetail owningDetail = wi.getOrderDetail();
+				// detail is optional from v5
+				if (owningDetail != null)
+					owningDetail.removeWorkInstruction(wi); // necessary? new from v3
 
 				WorkInstruction.DAO.delete(wi);
 			} catch (DaoException e) {
@@ -899,7 +899,8 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 
 		WorkInstructionSequencerABC sequencer = getSequencer();
 		List<WorkInstruction> sortedWIResults = sequencer.sort(this, wiResultList);
-		List<WorkInstruction> finalWIResults = sequencer.addHouseKeepingAndSaveSort(this, sortedWIResults);		
+		
+		List<WorkInstruction> finalWIResults = HousekeepingInjector.addHouseKeepingAndSaveSort(this, sortedWIResults);		
 		return finalWIResults.size();
 	}
 
@@ -980,6 +981,9 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		filterParams.add(Restrictions.eq("type", WorkInstructionTypeEnum.PLAN));
 		filterParams.add(Restrictions.ge("posAlongPath", startingPathPos));
 		
+		filterParams.put("typeplan", WorkInstructionTypeEnum.PLAN.toString());
+		filterParams.put("typehkbaychange", WorkInstructionTypeEnum.HK_BAYCOMPLETE.toString());
+		filterParams.put("typehkrepeat", WorkInstructionTypeEnum.HK_REPEATPOS.toString());
 		//String filter = "(assignedChe.persistentId = :chePersistentId) and (typeEnum = :type) and (posAlongPath >= :pos)";
 		//throw new NotImplementedException("Needs to be implemented with a custom query");
 		
@@ -1104,6 +1108,7 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		final Timestamp inTime) {
 
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
+		Integer count = 0;
 
 		// To proceed, there should container use linked to outbound order
 		// We want to add all orders represented in the container list because these containers (or for Accu, fake containers representing the order) were scanned for this CHE to do.
@@ -1114,6 +1119,8 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 				for (OrderDetail orderDetail : order.getOrderDetails()) {
 					// An order detail might be set to zero quantity by customer, essentially canceling that item. Don't make a WI if canceled.
 					if (orderDetail.getQuantity() > 0) {
+						count++;
+						LOGGER.debug("WI #" + count + "in generateOutboundInstructions");
 						WorkInstruction aWi = makeWIForOutbound(orderDetail, inChe, container, inTime); // Could be normal WI, or a short WI
 						if (aWi != null) {
 							wiResultList.add(aWi);
@@ -1363,9 +1370,9 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 			}
 
 			// Update the WI
-			resultWi.setDomainId(Long.toString(System.currentTimeMillis()));
-			resultWi.setType(inType);
-			resultWi.setStatus(inStatus);
+			long seq = SequenceNumber.generate();
+			String wiDomainId = Long.toString(seq);
+			resultWi.setDomainId(wiDomainId);
 
 			resultWi.setLocation(inLocation);
 			resultWi.setLocationId(inLocation.getFullDomainId());
@@ -2021,29 +2028,34 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		if (containersIdList.size() > 0) {
 			Integer wiCount = this.computeWorkInstructions(inChe, containersIdList);
 			// That did the work. Big side effect. Deleted existing WIs for the CHE. Made new ones. Assigned container uses to the CHE.
+			// The wiCount returned is mainly or convenience and debugging. It may not include some shorts
 
 			if (wiCount > 0) {
 				// debug aid. Does the CHE know its work instructions?
-				List<WorkInstruction> cheWiList = inChe.getCheWorkInstructions();
+				List<WorkInstruction> cheWiList = inChe.getCheWorkInstructions(); // This gets all, including shorts
 				Integer cheCountGot = cheWiList.size();
-				if (!cheCountGot.equals(wiCount)) {
-					LOGGER.warn("setUpCheContainerFromString did not result in CHE getting all work instructions. Why?"); // Should this be an error? Maybe shorts do not go the CHE
+				if (cheCountGot < wiCount) {
+					LOGGER.error("setUpCheContainerFromString did not result in CHE getting all work instructions. Why?"); 
+					// if there are shorts cheCountGot might be greater.
 				}
 
+				//  /*
+				
 				// Get the work instructions for this CHE at this location for the given containers. Can we pass empty string? Normally user would scan where the CHE is starting.
 				List<WorkInstruction> wiListAfterScanBlank = this.getWorkInstructions(inChe, ""); // cannot really scan blank, but this is how our UI simulation works
 				Integer wiCountGot = wiListAfterScanBlank.size();
-				// getWorkInstructions() has no side effects. But the site controller request gets these.
-				// As work instructions are executed, they come back with start and complete time. and PLAN/NEW changes to ACTUAL/COMPLETE or ACTUAL/SHORT
+				// getWorkInstructions() does a new filtered query from db
+				// Only PLAN and housekeeping types come
 				if (wiCountGot > 0) {
 					// debug aid. Does the CHE know its work instructions?
 					List<WorkInstruction> cheWiList2 = inChe.getCheWorkInstructions();
 					Integer cheCountGot2 = cheWiList2.size();
-					if (!cheCountGot2.equals(wiCountGot)) {
-						LOGGER.warn("setUpCheContainerFromString did not result in CHE getting all work instructions. Why?"); // Should this be an error? Maybe shorts do not go the CHE
+					if (cheCountGot2 < wiCountGot) {
+						LOGGER.error("setUpCheContainerFromString did not result in CHE getting all work instructions. Why?"); 
 					}
 
 				}
+				//  */
 
 			}
 		}
@@ -2178,16 +2190,50 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		aisle.setDomainId(inAisleId);
 		aisle.setAnchorPoint(inAnchorPoint);
 		aisle.setPickFaceEndPoint(inPickFaceEndPoint);
-		
+					
 		this.addAisle(aisle);
 		
 		return aisle;
 	}
 	
+
+	public final int sendToAllSiteControllers(MessageABC message) {
+		SessionManager sessionManager = SessionManager.getInstance();
+		Set<User> users = this.getSiteControllerUsers();
+		Set<CsSession> sessions = sessionManager.getSessions(users);
+		for(CsSession session : sessions) {
+			session.sendMessage(message);
+		}
+		return sessions.size();
+	}
+	
+	public final Set<SiteController> getSiteControllers() {
+		Set<SiteController> siteControllers = new HashSet<SiteController>();
+		
+		for(CodeshelfNetwork network : this.getNetworks()) {
+			siteControllers.addAll(network.getSiteControllers().values());
+		}		
+		return siteControllers;
+	}
+	
+	public final Set<User> getSiteControllerUsers() {
+		Set<User> users = new HashSet<User>();
+		
+		for(SiteController sitecon : this.getSiteControllers()) {
+			User user = User.DAO.findByDomainId(this.getParentOrganization(), sitecon.getDomainId());
+			if(user != null) {
+				users.add(user);
+			} else {
+				LOGGER.warn("Couldn't find user for site controller "+sitecon.getDomainId());
+			}
+		}
+		return users;
+	}
 	@Override
 	public void setParent(ISubLocation<?> inParent) {
 		LOGGER.error("tried to set Facility "+this.getDomainId()+" parent to non-organization "+inParent.getClassName()+" "+inParent.getDomainId());
 	}
+
 	public UomMaster createUomMaster(String inDomainId) {
 		UomMaster uomMaster = new UomMaster();
 		uomMaster.setDomainId(inDomainId);

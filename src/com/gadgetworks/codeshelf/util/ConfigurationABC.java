@@ -1,14 +1,10 @@
 package com.gadgetworks.codeshelf.util;
 
-public class PropertyUtils {
-
-	public static String getString(String name) {
-		String stringValue = System.getProperty(name);
-		return stringValue;
-	}
+public abstract class ConfigurationABC implements IConfiguration {
 	
-	public static int getInt(String name) {
-		String stringValue = PropertyUtils.getString(name);
+	@Override
+	public int getInt(String name) {
+		String stringValue = getString(name);
 		if (stringValue==null) {
 			throw new RuntimeException("Property is not defined: "+name);
 		}
@@ -16,8 +12,9 @@ public class PropertyUtils {
 		return value;
 	}
 
-	public static boolean getBoolean(String name) {
-		String stringValue = PropertyUtils.getString(name);
+	@Override
+	public boolean getBoolean(String name) {
+		String stringValue = getString(name);
 		if (stringValue==null) {
 			throw new RuntimeException("Property is not defined: "+name);
 		}
@@ -25,16 +22,18 @@ public class PropertyUtils {
 		return value;
 	}
 
-	public static String getString(String name, String defaultValue) {
-		String stringValue = PropertyUtils.getString(name);
+	@Override
+	public String getString(String name, String defaultValue) {
+		String stringValue = getString(name);
 		if (stringValue==null) {
 			return defaultValue;
 		}
 		return stringValue;
 	}
 
-	public static int getInt(String name, int defaultValue) {
-		String stringValue = PropertyUtils.getString(name);
+	@Override
+	public int getInt(String name, int defaultValue) {
+		String stringValue = getString(name);
 		if (stringValue==null) {
 			return defaultValue;
 		}
@@ -42,8 +41,9 @@ public class PropertyUtils {
 		return value;
 	}
 
-	public static Byte getByte(String name) {
-		String stringValue = PropertyUtils.getString(name);
+	@Override
+	public Byte getByte(String name) {
+		String stringValue = getString(name);
 		if (stringValue==null) {
 			throw new RuntimeException("Property is not defined: "+name);
 		}
@@ -51,8 +51,9 @@ public class PropertyUtils {
 		return value;
 	}
 
-	public static boolean getBoolean(String name, boolean defaultValue) {
-		String stringValue = PropertyUtils.getString(name);
+	@Override
+	public boolean getBoolean(String name, boolean defaultValue) {
+		String stringValue = getString(name);
 		if (stringValue==null) {
 			return defaultValue;
 		}

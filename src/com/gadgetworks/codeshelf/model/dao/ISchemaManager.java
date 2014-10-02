@@ -42,8 +42,9 @@ public interface ISchemaManager {
 	int		DATABASE_VERSION_17				= 17;								// Rename item field to meterFromAnchor.
 	int		DATABASE_VERSION_18				= 18;								// Add locationABC field: lowerLedNearAnchor.
 	int		DATABASE_VERSION_19				= 19;								// Add sitecontroller table
+	int		DATABASE_VERSION_20				= 20;								// Drop NOT NULL for workInstruction container and itemMaster. add orderDetail. change parent
 
-	int		DATABASE_VERSION_CUR			= DATABASE_VERSION_19;
+	int		DATABASE_VERSION_CUR			= DATABASE_VERSION_20;
 
 	String getDbAddress();
 

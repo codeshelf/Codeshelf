@@ -14,8 +14,11 @@ import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 // domain objects needed
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.model.HeaderCounts;
+import com.gadgetworks.codeshelf.model.HousekeepingInjector;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
@@ -36,7 +39,9 @@ import com.gadgetworks.flyweight.command.NetGuid;
  * 
  */
 public class CrossBatchRunTest extends EdiTestABC {
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(CrossBatchRunTest.class);
 
+	@SuppressWarnings({ "unused" })
 	private Facility setUpSimpleSlottedFacility(String inOrganizationName) {
 		// Besides basic crossbatch functionality, with this facility we want to test housekeeping WIs for
 		// 1) same position on cart
@@ -167,6 +172,7 @@ public class CrossBatchRunTest extends EdiTestABC {
 
 	}
 
+	@SuppressWarnings("unused")
 	private void setUpGroup1OrdersAndSlotting(Facility inFacility) throws IOException {
 		// These are group = "1". Orders "123", "456", and "789"
 		// 5 products batched into containers 11 through 15
@@ -257,11 +263,11 @@ public class CrossBatchRunTest extends EdiTestABC {
 		Integer detailCount = order.getOrderDetails().size();
 		Assert.assertEquals((Integer) 4, detailCount);
 		// Make sure our order locations ( from slotting file)  are valid. Make sure D-36 has early location on path
-		LocationABC locationD2 = (LocationABC) facility.findSubLocationById("A1.B1.T2.S4");
+		LocationABC<?> locationD2 = (LocationABC<?>) facility.findSubLocationById("A1.B1.T2.S4");
 		Assert.assertNotNull(locationD2);
-		LocationABC locationD2a = (LocationABC) facility.findSubLocationById("D-2");
+		LocationABC<?> locationD2a = (LocationABC<?>) facility.findSubLocationById("D-2");
 		Assert.assertNotNull(locationD2a);
-		LocationABC locationD36 = (LocationABC) facility.findSubLocationById("D-36");
+		LocationABC<?> locationD36 = (LocationABC<?>) facility.findSubLocationById("D-36");
 		Aisle aisle2 = (Aisle) facility.findSubLocationById("A2");
 		Double a2Pos = aisle2.getPosAlongPath();
 		Double d36Pos = locationD36.getPosAlongPath();
@@ -277,9 +283,12 @@ public class CrossBatchRunTest extends EdiTestABC {
 		Assert.assertTrue(theCounts.mActiveCntrUses == 5);
 		// Assume all is good.  Other tests in this class will not need to check these things.
 
+		// Turn off housekeeping work instructions so as to not confuse the counts
+		HousekeepingInjector.turnOffHK();
 		// Set up a cart for container 11, which should generate work instructions for orders 123 and 456.
 		facility.setUpCheContainerFromString(theChe, "11");
-
+		HousekeepingInjector.restoreHKDefaults();
+		
 		List<WorkInstruction> aList = theChe.getCheWorkInstructions();
 		Integer wiCount = aList.size();
 		Assert.assertEquals((Integer) 2, wiCount); // one product going to 2 orders
@@ -294,6 +303,7 @@ public class CrossBatchRunTest extends EdiTestABC {
 		Assert.assertEquals("0002", groupSortStr2);
 	}
 	
+	@SuppressWarnings("unused")
 	@Test
 	public final void basicHousekeeping() throws IOException {
 		Facility facility = setUpSimpleSlottedFacility("XB02");
@@ -304,24 +314,34 @@ public class CrossBatchRunTest extends EdiTestABC {
 		
 		// Set up a cart for containers 15 and 14, which should generate 4 work normal instructions.
 		// However, as we are coming from the same container for subsequent ones, there will be housekeeping WIs inserted.
+
+		// Make sure housekeeping is on
+		HousekeepingInjector.restoreHKDefaults();
 		facility.setUpCheContainerFromString(theChe, "15,14");
 
-		List<WorkInstruction> aList = theChe.getCheWorkInstructions();
+		// Important to realize. theChe.getWorkInstruction() just gives all work instructions in an arbitrary order.
+		List<WorkInstruction> aList = facility.getWorkInstructions(theChe, ""); // This returns them in working order.
 		Integer wiCount = aList.size();
-		Assert.assertEquals((Integer) 4, wiCount); // one product going to 1 order, and 1 product going to the same order and 2 more.
+		Assert.assertEquals((Integer) 7, wiCount); // one product going to 1 order, and 1 product going to the same order and 2 more.
+		// Just some quick log output to see it
+		for (WorkInstruction wi : aList)
+			LOGGER.debug("WiSort: " + wi.getGroupAndSortCode() + " cntr: " + wi.getContainerId() + " loc: " + wi.getPickInstruction() + " desc.: " + wi.getDescription());
 		
 		WorkInstruction wi1 = aList.get(0);
 		WorkInstruction wi2 = aList.get(1);
 		WorkInstruction wi3 = aList.get(2);
 		WorkInstruction wi4 = aList.get(3);
-		String wi1Cntr = wi1.getContainerId();
-		// no housekeeping WI needed here. Different container
-		String wi2Cntr = wi2.getContainerId();
-		// needed
-		String wi3Cntr = wi3.getContainerId();
-		// needed
-		String wi4Cntr = wi4.getContainerId();
-		Assert.assertEquals("14", wi4Cntr);
+		WorkInstruction wi5 = aList.get(4);
+		WorkInstruction wi6 = aList.get(5);
+		WorkInstruction wi7 = aList.get(6);
+
+		String wi2Desc = wi2.getDescription();
+		String wi5Desc = wi5.getDescription();
+		String wi6Desc = wi6.getDescription();
+	
+		Assert.assertEquals("Bay Change", wi2Desc);
+		Assert.assertEquals("Repeat Container", wi5Desc);
+		Assert.assertEquals("Bay Change", wi6Desc);
 
 	}
 

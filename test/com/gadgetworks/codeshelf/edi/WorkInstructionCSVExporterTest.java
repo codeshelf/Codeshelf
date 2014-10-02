@@ -174,7 +174,7 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 		
 		
 		WorkInstruction testWi = generateValidFullWorkInstruction();
-		testWi.getParent().setParent(new OrderHeader(facility, expectedValue));
+		testWi.getOrderDetail().setParent(new OrderHeader(facility, expectedValue));
 		List<WorkInstruction> wiList = ImmutableList.of(testWi);
 		List<String[]> table = toTable(wiList);
 		String[] dataRow = table.get(1);
@@ -192,7 +192,7 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 		
 		
 		WorkInstruction testWi = generateValidFullWorkInstruction();
-		testWi.getParent().getParent().setOrderGroup(new OrderGroup(facility, expectedValue));
+		testWi.getOrderDetail().getParent().setOrderGroup(new OrderGroup(facility, expectedValue));
 		List<WorkInstruction> wiList = ImmutableList.of(testWi);
 		List<String[]> table = toTable(wiList);
 		String[] dataRow = table.get(1);
@@ -206,7 +206,7 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 		this.getPersistenceService().beginTenantTransaction();
 
 		WorkInstruction testWi = generateValidFullWorkInstruction();
-		testWi.getParent().getParent().setOrderGroup(null);
+		testWi.getOrderDetail().getParent().setOrderGroup(null);
 		List<WorkInstruction> wiList = ImmutableList.of(testWi);
 		List<String[]> table = toTable(wiList);
 		String[] dataRow = table.get(1);
@@ -220,7 +220,8 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 		WorkInstruction workInstruction = new WorkInstruction();
 		OrderHeader orderHeader = new OrderHeader(facility, "OH1");
 		orderHeader.setOrderGroup(new OrderGroup(facility, "OG1"));
-		workInstruction.setParent(new OrderDetail(orderHeader, "OD1"));
+		workInstruction.setParent(facility);
+		workInstruction.setOrderDetail(new OrderDetail(orderHeader, "OD1"));
 		workInstruction.setDomainId("WIDOMAINID");
 		workInstruction.setContainer(facility.createContainer("C1"));
 		workInstruction.setItemMaster(facility.createItemMaster("ITEMID", facility.createUomMaster("UOMID")));
@@ -262,11 +263,6 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 	private SubLocationABC<Facility> mockSubLocation(String domainId) {
 		
 		SubLocationABC<Facility> mockLocation = new SubLocationABC<Facility>() {
-
-			/**
-			 * 
-			 */
-			private static final long	serialVersionUID	= 1L;
 
 			@Override
 			public String getDefaultDomainIdPrefix() {

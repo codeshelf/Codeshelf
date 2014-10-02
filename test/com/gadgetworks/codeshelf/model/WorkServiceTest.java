@@ -83,6 +83,7 @@ public class WorkServiceTest extends DAOTestABC {
 		this.getPersistenceService().endTenantTransaction();
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void exceptionIfWICannotBeFound() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
@@ -108,6 +109,7 @@ public class WorkServiceTest extends DAOTestABC {
 		this.getPersistenceService().endTenantTransaction();
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void doesNotExportIfWICannotBeStored() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
@@ -139,6 +141,7 @@ public class WorkServiceTest extends DAOTestABC {
 		this.getPersistenceService().endTenantTransaction();
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void allWorkInstructionsSent() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
@@ -210,6 +213,7 @@ public class WorkServiceTest extends DAOTestABC {
 		this.getPersistenceService().endTenantTransaction();
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	@Ignore
 	public void workInstructionExportingIsNotBlocked() throws IOException, InterruptedException {
@@ -337,6 +341,7 @@ public class WorkServiceTest extends DAOTestABC {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	private IEdiService createBlockingService(Lock callBlocker) throws IOException {
 		final IEdiService mockEdiExportService = mock(IEdiService.class);
 		doAnswer(new BlockedCall(callBlocker)).when(mockEdiExportService).sendWorkInstructionsToHost(any(List.class));

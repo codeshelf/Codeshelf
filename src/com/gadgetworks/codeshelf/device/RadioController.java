@@ -874,7 +874,6 @@ public class RadioController implements IRadioController {
 	 * 	Start the packet receivers.
 	 */
 	private void startPacketReceivers() {
-
 		// ~bhe: this should go into a separate class
 		Thread gwThread = new Thread(new Runnable() {
 			private final Counter packetsSentCounter = MetricsService.addCounter(MetricsGroup.Radio,"packets.sent");

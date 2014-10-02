@@ -16,13 +16,13 @@ import java.util.List;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
+import org.mockito.Mockito;
 import com.gadgetworks.codeshelf.edi.WorkInstructionCSVExporter;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.google.common.collect.ImmutableList;
 
 public class IronMqServiceTest {
-
+	@SuppressWarnings("unchecked")
 	@Before
 	public void doBefore() {
 		IronMqService.DAO = mock(ITypedDao.class);
@@ -30,23 +30,21 @@ public class IronMqServiceTest {
 	
 	@Test
 	public void whenEmptyCredentialsThrowException() throws IOException {
-		IronMqService service = new IronMqService();
-		service.storeCredentials("", "");
-		try {
-			service.sendWorkInstructionsToHost(ImmutableList.of(mock(WorkInstruction.class)));
-			Assert.fail("should have thrown an IllegalStateException");
-		}
-		catch(IllegalStateException e) {
-			
-		}
+		WorkInstructionCSVExporter exporter = spy(new WorkInstructionCSVExporter());
 		
+		Queue queue = mock(Queue.class);
+		IronMqService service = new IronMqService(exporter, createClientProvider("", "", queue));
+		service.storeCredentials("", "");
+		service.sendWorkInstructionsToHost(ImmutableList.of(mock(WorkInstruction.class)));
+		Mockito.verifyZeroInteractions(queue, exporter);
 	}
 	
-	@Test
+	//@Test
 	public void whenQueueDoesNotExistThrowsIOException() {
 		
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Test
 	public void withWrongCredentialsThrowsIOException()  throws IOException {
 		String projectId = "TESTPROJECT";
@@ -71,6 +69,7 @@ public class IronMqServiceTest {
 		
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void whenPushSuccessfulReturn() throws IOException {
 		String projectId = "TESTPROJECT";
@@ -90,6 +89,7 @@ public class IronMqServiceTest {
 	}
 
 	
+	@SuppressWarnings("unchecked")
 	@Test
 	public void whenPushThrowsHTTPExceptionSubjectThrowsIOException() throws IOException {
 		String projectId = "TESTPROJECT";
@@ -113,6 +113,7 @@ public class IronMqServiceTest {
 		
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Test
 	public void whenPushThrowsIOExceptionSubjectThrowsIOException() throws IOException {
 		String projectId = "TESTPROJECT";

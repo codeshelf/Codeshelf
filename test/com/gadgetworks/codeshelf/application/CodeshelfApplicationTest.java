@@ -52,6 +52,7 @@ import com.gadgetworks.codeshelf.model.domain.UomMaster;
 import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.report.IPickDocumentGenerator;
 import com.gadgetworks.codeshelf.report.PickDocumentGenerator;
+import com.gadgetworks.codeshelf.util.JVMSystemConfiguration;
 import com.gadgetworks.codeshelf.ws.jetty.server.JettyWebSocketServer;
 import com.google.inject.Binding;
 import com.google.inject.Injector;
@@ -256,7 +257,7 @@ public class CodeshelfApplicationTest {
 		
 		AdminServer adminServer = new AdminServer();
 		
-		JettyWebSocketServer jettyServer = new JettyWebSocketServer();
+		JettyWebSocketServer jettyServer = new JettyWebSocketServer(new JVMSystemConfiguration());
 
 		final ServerCodeshelfApplication application = new ServerCodeshelfApplication(
 			httpServer,

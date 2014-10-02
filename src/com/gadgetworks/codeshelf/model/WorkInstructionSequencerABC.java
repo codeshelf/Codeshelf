@@ -5,7 +5,6 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -13,7 +12,6 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 
 /**
@@ -22,7 +20,8 @@ import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
  */
 public abstract class WorkInstructionSequencerABC implements IWorkInstructionSequencer {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(WorkInstructionSequencerABC.class);
+	@SuppressWarnings("unused")
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(WorkInstructionSequencerABC.class);
 
 	/**
 	 * Sort WorkInstructions by their posAlongPath.
@@ -54,64 +53,6 @@ public abstract class WorkInstructionSequencerABC implements IWorkInstructionSeq
 	protected void preSortByPosAlongPath(List<WorkInstruction> inWiList) {
 		Collections.sort(inWiList, new PosAlongPathComparator());
 		return;
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * Are the workInstructions coming/going to the same cart position? If so, the user may be confused about the button press. We want an intervening housekeeping WI
-	 * @param prevWi
-	 * @param nextWi
-	 * @return
-	 */
-	private boolean wisNeedHouseKeepingBetween(WorkInstruction inPrevWi, WorkInstruction inNextWi) {
-		if (inPrevWi == null)
-			return false;
-		else if (inNextWi == null) {
-			LOGGER.error("null value in wisNeedHouseKeepingBetween");
-			return false;
-		}
-		else { // container is associated to cart position
-			return inPrevWi.getContainer().equals(inNextWi.getContainer());
-			// Nothing we can do on server side if multiple items will be recorded to same cart position.
-		}
-	}
-	
-	private WorkInstruction getNewHousekeepingWiSimilarTo(Facility inFacility, WorkInstruction inWi) {
-		// expand this. Call through to facility
-		// perhaps we would want to change the signature to include previous and the next wi. (inWi is the next wi)
-		
-		return null;
-	}	
-
-	// --------------------------------------------------------------------------
-	/**
-	 * This will add any necessary housekeeping WIs. And then add the sort and group codes and save each WI.
-	 * @param inSortedWiList
-	 * @return
-	 */
-	public List<WorkInstruction> addHouseKeepingAndSaveSort(Facility inFacility, List<WorkInstruction> inSortedWiList) {
-		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
-		WorkInstruction lastWi = null;
-		for (WorkInstruction wi : inSortedWiList) {
-			if (wisNeedHouseKeepingBetween(lastWi, wi)) {
-				WorkInstruction houseKeepingWi = getNewHousekeepingWiSimilarTo(inFacility, wi);
-				if (houseKeepingWi != null)
-					wiResultList.add(houseKeepingWi);
-				else 
-					LOGGER.debug("null returned from getNewHousekeepingWiSimilarTo");
-			}
-			wiResultList.add(wi);
-			lastWi = wi;
-		}
-		// At this point, some or none added. wiResultList is ordered. Time to add the sort codes.
-		int count = 0;
-		for (WorkInstruction wi : wiResultList) {
-			count++;
-			wi.setGroupAndSortCode(String.format("%04d", count));
-			WorkInstruction.DAO.store(wi);
-		}
-
-		return wiResultList;
 	}
 
 }

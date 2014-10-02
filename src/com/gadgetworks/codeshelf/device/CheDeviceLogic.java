@@ -17,7 +17,6 @@ import java.util.Map.Entry;
 import java.util.UUID;
 
 import lombok.Getter;
-import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import org.slf4j.Logger;
@@ -25,6 +24,7 @@ import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.device.AisleDeviceLogic.LedCmd;
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
+import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.flyweight.command.CommandControlButton;
 import com.gadgetworks.flyweight.command.CommandControlClearPosController;
@@ -37,6 +37,9 @@ import com.gadgetworks.flyweight.command.NetGuid;
 import com.gadgetworks.flyweight.controller.INetworkDevice;
 import com.gadgetworks.flyweight.controller.IRadioController;
 import com.gadgetworks.flyweight.controller.NetworkDeviceStateEnum;
+import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 
 /**
  * @author jeffw
@@ -56,22 +59,24 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private static final String		POSITION_PREFIX							= "P%";
 
 	// These are the message strings we send to the remote CHE.
-	// Currently, these cannot be longer than 10 characters.
-	private static final String		EMPTY_MSG								= "                    ";
-	private static final String		INVALID_SCAN_MSG						= "INVALID             ";
-	private static final String		SCAN_USERID_MSG							= "SCAN BADGE          ";							//		 new String(new byte[] { 0x7c, (byte) 0x05 });
-	private static final String		SCAN_LOCATION_MSG						= "SCAN LOCATION       ";
-	private static final String		SCAN_CONTAINER_MSG						= "SCAN CONTAINER      ";
-	private static final String		OR_START_WORK_MSG						= "OR START WORK       ";
-	private static final String		SELECT_POSITION_MSG						= "SELECT POSITION     ";
-	private static final String		SHORT_PICK_CONFIRM_MSG					= "CONFIRM SHORT       ";
-	private static final String		PICK_COMPLETE_MSG						= "ALL WORK COMPLETE   ";
-	private static final String		YES_NO_MSG								= "SCAN YES OR NO      ";
-	private static final String		NO_CONTAINERS_SETUP_MSG					= "NO SETUP CONTAINERS ";
-	private static final String		POSITION_IN_USE_MSG						= "POSITION IN USE     ";
-	private static final String		FINISH_SETUP_MSG						= "PLS SETUP CONTAINERS";
-	private static final String		COMPUTE_WORK_MSG						= "COMPUTING WORK      ";
-	private static final String		GET_WORK_MSG							= "GETTING WORK        ";
+	// Currently, these cannot be longer than 20 characters.
+	// "SCAN START LOCATION" is at the 20 limit. If you change to "SCAN STARTING LOCATION", you get very bad behavior. The class loader will not find the CheDeviceLogic. Repeating throws.	
+	private static final String		EMPTY_MSG								= cheLine("");
+	private static final String		INVALID_SCAN_MSG						= cheLine("INVALID");
+	private static final String		SCAN_USERID_MSG							= cheLine("SCAN BADGE");
+	private static final String		SCAN_LOCATION_MSG						= cheLine("SCAN START LOCATION");
+	private static final String		SCAN_CONTAINER_MSG						= cheLine("SCAN CONTAINER");
+	private static final String		OR_START_WORK_MSG						= cheLine("OR START WORK");
+	private static final String		SELECT_POSITION_MSG						= cheLine("SELECT POSITION");
+	private static final String		SHORT_PICK_CONFIRM_MSG					= cheLine("CONFIRM SHORT");
+	private static final String		PICK_COMPLETE_MSG						= cheLine("ALL WORK COMPLETE");
+	private static final String		YES_NO_MSG								= cheLine("SCAN YES OR NO");
+	private static final String		NO_CONTAINERS_SETUP_MSG					= cheLine("NO SETUP CONTAINERS");
+	private static final String		POSITION_IN_USE_MSG						= cheLine("POSITION IN USE");
+	private static final String		FINISH_SETUP_MSG						= cheLine("PLS SETUP CONTAINERS");
+	private static final String		COMPUTE_WORK_MSG						= cheLine("COMPUTING WORK");
+	private static final String		GET_WORK_MSG							= cheLine("GETTING WORK");
+	private static final String		NO_WORK_MSG								= cheLine("NO WORK TO DO");
 
 	private static final String		STARTWORK_COMMAND						= "START";
 	private static final String		SETUP_COMMAND							= "SETUP";
@@ -86,19 +91,16 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	// The CHE's current state.
 	@Accessors(prefix = "m")
 	@Getter
-	@Setter
 	private CheStateEnum			mCheStateEnum;
 
 	// The CHE's current location.
 	@Accessors(prefix = "m")
 	@Getter
-	@Setter
 	private String					mLocationId;
 
 	// The CHE's current user.
 	@Accessors(prefix = "m")
 	@Getter
-	@Setter
 	private String					mUserId;
 
 	// The CHE's container map.
@@ -111,9 +113,13 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private List<WorkInstruction>	mAllPicksWiList;
 
 	// The active pick WIs.
+	@Accessors(prefix = "m")
+	@Getter
 	private List<WorkInstruction>	mActivePickWiList;
 
 	// The completed  WIs.
+	@Accessors(prefix = "m")
+	@Getter
 	private List<WorkInstruction>	mCompletedWiList;
 
 	private NetGuid					mLastLedControllerGuid;
@@ -121,6 +127,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 	private WorkInstruction			mShortPickWi;
 	private Integer					mShortPickQty;
+
+	private boolean	connectedToServer = true;
 
 	public CheDeviceLogic(final UUID inPersistentId,
 		final NetGuid inGuid,
@@ -183,10 +191,16 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		final String inLine2Message,
 		final String inLine3Message,
 		final String inLine4Message) {
-		LOGGER.info("Display message: line1: " + inLine1Message);
-		LOGGER.info("Display message: line2: " + inLine2Message);
-		LOGGER.info("Display message: line3: " + inLine3Message);
-		LOGGER.info("Display message: line4: " + inLine4Message);
+		String displayString = "Display message for "+ getMyGuidStrForLog();
+		if (!inLine1Message.isEmpty())
+			displayString += " line1: " + inLine1Message;
+		if (!inLine2Message.isEmpty())
+			displayString += " line2: " + inLine2Message;
+		if (!inLine3Message.isEmpty())
+			displayString += " line3: " + inLine3Message;
+		if (!inLine4Message.isEmpty())
+			displayString += " line4: " + inLine4Message;
+		LOGGER.info(displayString);
 		ICommand command = new CommandControlDisplayMessage(NetEndpoint.PRIMARY_ENDPOINT,
 			inLine1Message,
 			inLine2Message,
@@ -299,7 +313,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		clearLastLedControllerGuids(); // Setting the state that we have nothing more to clear for this CHE.		
 	}
 
-		// --------------------------------------------------------------------------
+	// --------------------------------------------------------------------------
 	/**
 	 * Clear the LEDs for this CHE one whatever LED controllers it last sent to.
 	 * Side effect: clears its information on what was previously sent to.
@@ -315,7 +329,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			// check all
 			LOGGER.warn("Needing to clear multiple aisle controllers for one CHE device clear. This case should be unusual.");
 			forceClearAllLedsForThisCheDevice();
-		} 
+		}
 		// Normal case. Just clear the one aisle device we know we sent to last.
 		else {
 			INetworkDevice device = mDeviceManager.getDeviceByGuid(aisleControllerGuid);
@@ -364,7 +378,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		if (inWorkInstructionCount > 0) {
 			setState(CheStateEnum.LOCATION_SELECT);
 		} else {
-			setState(CheStateEnum.PICK_COMPLETE);
+			setState(CheStateEnum.NO_WORK);
 		}
 	}
 
@@ -383,8 +397,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		}
 
 		if (inWorkItemList.size() == 0) {
-			sendDisplayCommand(PICK_COMPLETE_MSG, EMPTY_MSG);
-			setState(CheStateEnum.PICK_COMPLETE);
+			setState(CheStateEnum.NO_WORK);
 		} else {
 			mActivePickWiList.clear();
 			mAllPicksWiList.clear();
@@ -396,26 +409,17 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	}
 
 	// --------------------------------------------------------------------------
-	/**
-	 */
-	public final void signalNetworkDown() {
-		//sendDisplayCommand("NETWORK DOWN", "");
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 */
-	public final void signalNetworkUp() {
-		//sendDisplayCommand("NETWORK UP", "");
-	}
-
-	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.flyweight.controller.INetworkDevice#commandReceived(java.lang.String)
 	 */
 	@Override
 	public final void scanCommandReceived(String inCommandStr) {
-		LOGGER.info("Remote command: " + inCommandStr);
+		if (!connectedToServer) {
+			LOGGER.debug("NotConnectedToServer: Ignoring scan command: " + inCommandStr);
+			return;
+		}
+
+		LOGGER.info(this + " received scan command: " + inCommandStr);
 
 		String scanPrefixStr = getScanPrefix(inCommandStr);
 		String scanStr = getScanContents(inCommandStr, scanPrefixStr);
@@ -463,9 +467,13 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 */
 	@Override
 	public void buttonCommandReceived(CommandControlButton inButtonCommand) {
-		// Send a command to clear the position, so the controller knows we've gotten the button press.
-		clearOnePositionController(inButtonCommand.getPosNum());
-		processButtonPress((int) inButtonCommand.getPosNum(), (int) inButtonCommand.getValue());
+		if (connectedToServer) {
+			// Send a command to clear the position, so the controller knows we've gotten the button press.
+			clearOnePositionController(inButtonCommand.getPosNum());
+			processButtonPress((int) inButtonCommand.getPosNum(), (int) inButtonCommand.getValue());
+		} else {
+			LOGGER.debug("NotConnectedToServer: Ignoring button command: " + inButtonCommand);
+		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -510,6 +518,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private void setState(final CheStateEnum inCheState) {
 		boolean wasSameState = inCheState == mCheStateEnum;
 		mCheStateEnum = inCheState;
+		LOGGER.debug("switching to state: " + inCheState + " sameState: " + wasSameState);
 
 		switch (inCheState) {
 			case IDLE:
@@ -552,6 +561,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 			case PICK_COMPLETE:
 				sendDisplayCommand(PICK_COMPLETE_MSG, EMPTY_MSG);
+				break;
+			case NO_WORK:
+				sendDisplayCommand(NO_WORK_MSG, EMPTY_MSG);
 				break;
 
 			default:
@@ -655,7 +667,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private void setupChe() {
 		LOGGER.info("Setup work");
 
-		if (mCheStateEnum.equals(CheStateEnum.PICK_COMPLETE)) {
+		if (mCheStateEnum.equals(CheStateEnum.PICK_COMPLETE) || mCheStateEnum.equals(CheStateEnum.NO_WORK)) {
 			mContainersMap.clear();
 			mContainerInSetup = "";
 			setState(CheStateEnum.CONTAINER_SELECT);
@@ -762,7 +774,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	/**
 	 */
 	private void doNextPick() {
-		LOGGER.info("Next pick");
+		LOGGER.debug(this + "doNextPick");
 
 		if (mActivePickWiList.size() > 0) {
 			// There are still picks in the active list.
@@ -815,6 +827,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	/**
 	 */
 	private boolean selectNextActivePicks() {
+		final boolean kDoMultipleWiPicks = false;
+		
 		boolean result = false;
 
 		// Loop through each container to see if there is a WI for that container at the next location.
@@ -823,6 +837,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		String firstItemId = null;
 		Collections.sort(mAllPicksWiList, new WiGroupSortComparator());
 		for (WorkInstruction wi : mAllPicksWiList) {
+			if (mContainersMap.values().isEmpty()) {
+				LOGGER.warn(this + " assigned work but no containers assigned");
+			}
 			for (String containerId : mContainersMap.values()) {
 				// If the WI is for this container then consider it.
 				if (wi.getContainerId().equals(containerId)) {
@@ -836,6 +853,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 								wi.setStarted(new Timestamp(System.currentTimeMillis()));
 								mActivePickWiList.add(wi);
 								result = true;
+								if (!kDoMultipleWiPicks)
+									return true; // bail here instead of continuing to next wi in mAllPicksWiList, looking for location/item match
 							}
 						}
 					}
@@ -885,19 +904,23 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				return -1;
 			} else if (inGroup2 == null) {
 				return 1;
-			} else {								
+			} else {
 				return inGroup1.compareTo(inGroup2);
 			}
 		}
 	};
 
+	private String getMyGuidStrForLog() {
+		return getGuid().getHexStringNoPrefix();
+	}
+	
 	// --------------------------------------------------------------------------
 	/**
 	 * Send to the LED controller the active picks for the work instruction that's active on the CHE now.
 	 */
 	private void showActivePicks() {
 		final int kMaxLedSetsToLog = 20;
-		
+
 		if (mActivePickWiList.size() > 0) {
 			// The first WI has the SKU and location info.
 			WorkInstruction firstWi = mActivePickWiList.get(0);
@@ -915,7 +938,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 			// Not as easy. Clear this CHE's last leds off of aisle controller(s), and tell aisle controller(s) what to light next
 			List<LedCmdGroup> ledCmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(firstWi.getLedCmdStream());
-			
+
 			// It is important sort the CmdGroups.
 			Collections.sort(ledCmdGroups, new CmdGroupComparator());
 
@@ -923,8 +946,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			// This is not about clearing controllers/channels this CHE had lights on for.  Rather, it was about iterating the command groups and making sure
 			// we do not clear out the first group when adding on a second. This is a concern for simultaneous multiple dispatch--not currently done.
 
-			String myGuidStr = getGuid().getHexStringNoPrefix();
-			
+			String myGuidStr = getMyGuidStrForLog();
+
 			for (Iterator<LedCmdGroup> iterator = ledCmdGroups.iterator(); iterator.hasNext();) {
 				LedCmdGroup ledCmdGroup = (LedCmdGroup) iterator.next();
 
@@ -945,7 +968,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 					NetGuid ledControllerGuid = ledController.getGuid();
 					String controllerGuidStr = ledControllerGuid.getHexStringNoPrefix();
 					short cmdGroupChannnel = ledCmdGroup.getChannelNum();
-					String toLogString = "CHE " + myGuidStr + " telling "+ controllerGuidStr + " to set LEDs. "+ EffectEnum.FLASH;
+					String toLogString = "CHE " + myGuidStr + " telling " + controllerGuidStr + " to set LEDs. " + EffectEnum.FLASH;
 					Integer setCount = 0;
 					for (LedSample ledSample : ledCmdGroup.getLedSampleList()) {
 
@@ -954,11 +977,11 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 						// Add this LED display to the aisleController. We are accumulating the log information here rather than logging separate in the called routine.
 						ledControllerSetLed(ledControllerGuid, cmdGroupChannnel, ledSample, EffectEnum.FLASH);
-						
+
 						// Log concisely instead of each ledCmd individually
-						setCount ++;
+						setCount++;
 						if (setCount <= kMaxLedSetsToLog)
-							toLogString  = toLogString + " " + ledSample.getPosition() + ":" + ledSample.getColor();				
+							toLogString = toLogString + " " + ledSample.getPosition() + ":" + ledSample.getColor();
 					}
 					if (setCount > 0)
 						LOGGER.info(toLogString);
@@ -972,22 +995,26 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				}
 			}
 
-			// Also pretty easy. Light the position controllers on this CHE
-			List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
-			for (WorkInstruction wi : mActivePickWiList) {
-				for (Entry<String, String> mapEntry : mContainersMap.entrySet()) {
-					if (mapEntry.getValue().equals(wi.getContainerId())) {
-						PosControllerInstr instruction = new PosControllerInstr(Byte.valueOf(mapEntry.getKey()),
-							byteValueForPositionDisplay(firstWi.getPlanQuantity()),
-							byteValueForPositionDisplay(firstWi.getPlanMinQuantity()),
-							byteValueForPositionDisplay(firstWi.getPlanMaxQuantity()),
-							PosControllerInstr.BRIGHT_FREQ,
-							PosControllerInstr.BRIGHT_DUTYCYCLE);
-						instructions.add(instruction);
+			// Housekeeping moves will result in a single work instruction in the active pickes. Enum tells if housekeeping.
+			if (!sendHousekeepingDisplay()) {
+
+				// Also pretty easy. Light the position controllers on this CHE
+				List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
+				for (WorkInstruction wi : mActivePickWiList) {
+					for (Entry<String, String> mapEntry : mContainersMap.entrySet()) {
+						if (mapEntry.getValue().equals(wi.getContainerId())) {
+							PosControllerInstr instruction = new PosControllerInstr(Byte.valueOf(mapEntry.getKey()),
+								byteValueForPositionDisplay(firstWi.getPlanQuantity()),
+								byteValueForPositionDisplay(firstWi.getPlanMinQuantity()),
+								byteValueForPositionDisplay(firstWi.getPlanMaxQuantity()),
+								PosControllerInstr.BRIGHT_FREQ,
+								PosControllerInstr.BRIGHT_DUTYCYCLE);
+							instructions.add(instruction);
+						}
 					}
 				}
+				sendPickRequestCommand(instructions);
 			}
-			sendPickRequestCommand(instructions);
 
 		}
 		ledControllerShowLeds(getGuid());
@@ -1034,7 +1061,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 */
 	private void processLocationScan(final String inScanPrefixStr, String inScanStr) {
 		if (LOCATION_PREFIX.equals(inScanPrefixStr)) {
-			setLocationId(inScanStr);
+			this.mLocationId = inScanStr;
 
 			new ArrayList<String>(mContainersMap.values());
 			mDeviceManager.getCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), inScanStr);
@@ -1208,6 +1235,31 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * Determine if the mActivePickWiList represents a housekeeping move. If so, display it and return true
+	 */
+	private boolean sendHousekeepingDisplay() {
+		boolean returnBool = false;
+		if (mActivePickWiList.size() == 1) {
+			WorkInstruction wi = mActivePickWiList.get(0);
+			if (wi == null)
+				LOGGER.error("misunderstanding in sendHousekeepingDisplay");
+			else {
+				WorkInstructionTypeEnum theEnum = wi.getTypeEnum();
+				if (theEnum == WorkInstructionTypeEnum.HK_BAYCOMPLETE) {
+					returnBool = true;
+					showSpecialPositionCode(PosControllerInstr.BAY_COMPLETE_CODE, wi.getContainerId());
+				} else if (theEnum == WorkInstructionTypeEnum.HK_REPEATPOS) {
+					returnBool = true;
+					showSpecialPositionCode(PosControllerInstr.REPEAT_CONTAINER_CODE, wi.getContainerId());
+				}
+			}
+		}
+		return returnBool;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * This shows all the positions already assigned to containers in the mContainersMap
 	 */
 	private void showAssignedPositions() {
 		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
@@ -1221,5 +1273,82 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			instructions.add(instruction);
 		}
 		sendPickRequestCommand(instructions);
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 */
+	private void showSpecialPositionCode(Byte inSpecialQuantityCode, String inContainerId) {
+		boolean codeUnderstood = false;
+		Byte codeToSend = inSpecialQuantityCode;
+		if (inSpecialQuantityCode == PosControllerInstr.BAY_COMPLETE_CODE)
+			codeUnderstood = true;
+		else if (inSpecialQuantityCode == PosControllerInstr.REPEAT_CONTAINER_CODE)
+			codeUnderstood = true;
+
+		if (!codeUnderstood) {
+			codeToSend = PosControllerInstr.ERROR_CODE_QTY;
+			LOGGER.error("showSpecialPositionCode: unknown quantity code in ");
+		}
+		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
+		for (Entry<String, String> mapEntry : mContainersMap.entrySet()) {
+			if (mapEntry.getValue().equals(inContainerId)) {
+				PosControllerInstr instruction = new PosControllerInstr(Byte.valueOf(mapEntry.getKey()),
+					codeToSend,
+					codeToSend,
+					codeToSend,
+					PosControllerInstr.BRIGHT_FREQ,
+					PosControllerInstr.BRIGHT_DUTYCYCLE);
+				instructions.add(instruction);
+			}
+		}
+		if (instructions.size() > 0)
+			sendPickRequestCommand(instructions);
+		else
+			LOGGER.error("container match not found in showSpecialPositionCode");
+	}
+
+	// --------------------------------------------------------------------------
+	/** Light position controllers appropriately for bay change, keyed off the previous work instruction's containerId
+	 */
+	@SuppressWarnings("unused")
+	private void showBayChange(String inContainerId) {
+		showSpecialPositionCode(PosControllerInstr.BAY_COMPLETE_CODE, inContainerId);
+	}
+
+	// --------------------------------------------------------------------------
+	/** Light position controllers appropriately for repeat container, keyed off the previous work instruction's containerId
+	 */
+	@SuppressWarnings("unused")
+	private void showRepeatContainer(String inContainerId) {
+		showSpecialPositionCode(PosControllerInstr.REPEAT_CONTAINER_CODE, inContainerId);
+	}
+
+	public String toString() {
+		return Objects.toStringHelper(this).add("netGuid", getGuid()).toString();
+	}
+
+	/**
+	 *  Currently, these cannot be longer than 20 characters.
+	 */
+	private static String cheLine(String message) {
+		Preconditions.checkNotNull(message, "Message cannot be null");
+		Preconditions.checkArgument(message.length() <= 20, "Message '%s' will not fit on che display", message);
+		return Strings.padEnd(message, 20 - message.length(), ' ');
+	}
+
+	public void disconnectedFromServer() {
+		connectedToServer = false;
+		sendDisplayCommand("Server Connection", "Unavailable", "Please Wait...", "");
+	}
+
+	public void connectedToServer() {
+		connectedToServer = true;
+		redisplayState();
+		
+	}
+	
+	private void redisplayState() {
+		setState(mCheStateEnum);
 	}
 }

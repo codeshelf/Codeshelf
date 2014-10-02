@@ -29,55 +29,47 @@ import com.google.common.collect.ImmutableList;
 
 public class WorkService {
 
-	private static final Logger	LOGGER = LoggerFactory.getLogger(WorkService.class);
-	private final BlockingQueue<WorkInstruction> completedWorkInstructions;
-	
+	private static final Logger						LOGGER	= LoggerFactory.getLogger(WorkService.class);
+	private final BlockingQueue<WorkInstruction>	completedWorkInstructions;
+
 	public WorkService() {
 		this(Integer.MAX_VALUE, new IEdiExportServiceProvider() {
-
 			@Override
 			public IEdiService getWorkInstructionExporter(Facility facility) {
 				return facility.getEdiExportService();
 			}
-		
 		}, 10000L);
 	}
-	
+
 	public WorkService(int capacity, final IEdiExportServiceProvider exportServiceProvider, final long retryDelay) {
 		completedWorkInstructions = new LinkedBlockingQueue<WorkInstruction>(capacity);
 		Executor executor = Executors.newSingleThreadExecutor();
 		executor.execute(new Runnable() {
 			public void run() {
 				try {
-					while(!Thread.interrupted()) {
+					while (!Thread.interrupted()) {
 						WorkInstruction wi = completedWorkInstructions.take();
 						boolean sent = false;
-						while(!sent) {
+						while (!sent) {
 							List<WorkInstruction> wiList = ImmutableList.of(wi);
 							try {
-								Facility facility = wi.getParent().getParent().getParent();
+								Facility facility = wi.getParent();
 								IEdiService ediExportService = exportServiceProvider.getWorkInstructionExporter(facility);
-								LOGGER.debug("attempting send of work instructions: " + wiList);
 								ediExportService.sendWorkInstructionsToHost(wiList);
-								LOGGER.debug("sent work instructions: " + wiList);
 								sent = true;
-							}
-							catch(IOException e) {
+							} catch (IOException e) {
 								Thread.sleep(retryDelay);
-								LOGGER.warn("failure to send work instructions, retrying: " , e);
+								LOGGER.warn("failure to send work instructions, retrying: ", e);
 							}
 						}
 					}
 				} catch (InterruptedException e) {
 					LOGGER.error("Work instruction exporter interrupted waiting for completed work instructions. Shutting down.", e);
 				}
-				
 			}
-			
 		});
-		
 	}
-	
+
 	public List<WiSetSummary> workSummary(String cheId, String facilityId) {
 		WiSummarizer summarizer = new WiSummarizer();
 		summarizer.computeWiSummariesForChe(cheId, facilityId);
@@ -90,14 +82,14 @@ public class WorkService {
 			try {
 				final WorkInstruction storedWi = persistWorkInstruction(incomingWI);
 				exportWorkInstruction(storedWi);
-			} catch(DaoException e) {
+			} catch (DaoException e) {
 				LOGGER.error("Unable to record work instruction: " + incomingWI, e);
 			}
 		} else {
 			throw new IllegalArgumentException("Could not find che for id: " + cheId);
 		}
 	}
-	
+
 	private WorkInstruction persistWorkInstruction(WorkInstruction updatedWi) throws DaoException {
 		UUID wiId = updatedWi.getPersistentId();
 		WorkInstruction storedWi = WorkInstruction.DAO.findByPersistentId(wiId);
@@ -113,10 +105,12 @@ public class WorkService {
 		WorkInstruction.DAO.store(storedWi);
 
 		OrderDetail orderDetail = setOrderDetailStatus(storedWi);
-		setOrderStatus(orderDetail);
+		// v5 orderDetail can be null for housekeeping wis
+		if (orderDetail != null)
+			setOrderStatus(orderDetail);
 		return storedWi;
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inWorkInstruction
@@ -127,7 +121,7 @@ public class WorkService {
 		LOGGER.debug("Queueing work instruction: " + inWorkInstruction);
 		completedWorkInstructions.add(inWorkInstruction);
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * Set order detail status for the WI.
@@ -135,7 +129,12 @@ public class WorkService {
 	 */
 	private OrderDetail setOrderDetailStatus(final WorkInstruction inWorkInstruction) {
 		// Find the order item for this WI and mark it.
-		OrderDetail detail = inWorkInstruction.getParent();
+		OrderDetail detail = inWorkInstruction.getOrderDetail();
+		// from v5 housekeeping WI may have null orderDetail
+		if (detail == null) {
+			// No need to log anything. This is commonly called by persistWorkInstruction
+			return null;
+		}
 		Double qtyPicked = 0.0;
 		for (WorkInstruction sumWi : detail.getWorkInstructions()) {
 			qtyPicked += sumWi.getActualQuantity();
@@ -148,7 +147,7 @@ public class WorkService {
 		OrderDetail.DAO.store(detail);
 		return detail;
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * Set the order status.
@@ -169,7 +168,7 @@ public class WorkService {
 		try {
 			OrderHeader.DAO.store(order);
 		} catch (DaoException e) {
-			LOGGER.error("", e);
+			LOGGER.error("Failed to update order status", e);
 		}
 	}
 

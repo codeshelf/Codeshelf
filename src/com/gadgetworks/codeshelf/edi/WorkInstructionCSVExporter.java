@@ -13,7 +13,7 @@ import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 
 public class WorkInstructionCSVExporter {
 
-	private static final String     TIME_FORMAT			= "yyyy-MM-dd'T'HH:mm:ss'Z'";
+	private static final String		TIME_FORMAT			= "yyyy-MM-dd'T'HH:mm:ss'Z'";
 
 	private static final Integer	DOMAINID_POS		= 0;
 	private static final Integer	TYPE_POS			= 1;
@@ -29,8 +29,8 @@ public class WorkInstructionCSVExporter {
 	private static final Integer	ASSIGNED_POS		= 11;
 	private static final Integer	STARTED_POS			= 12;
 	private static final Integer	COMPLETED_POS		= 13;
-	private static final Integer	WI_ATTR_COUNT		= 14;											// The total count of these attributes.
-	
+	private static final Integer	WI_ATTR_COUNT		= 14;							// The total count of these attributes.
+
 	public String exportWorkInstructions(List<WorkInstruction> inWorkInstructions) throws IOException {
 		// Convert the WI into a CSV string.
 		StringWriter stringWriter = new StringWriter();
@@ -61,12 +61,20 @@ public class WorkInstructionCSVExporter {
 
 			// groups are optional!
 			String groupStr = "";
-			OrderGroup theGroup = wi.getParent().getParent().getOrderGroup();
-			if (theGroup != null)
-				groupStr = theGroup.getDomainId();
+			// from v5, housekeeping wi may have no detail
+			if (wi.getOrderDetail() != null) {
+				OrderGroup theGroup = wi.getOrderDetail().getParent().getOrderGroup();
+				if (theGroup != null)
+					groupStr = theGroup.getDomainId();
+			}
 			properties[ORDERGROUPID_POS] = groupStr;
 
-			properties[ORDERID_POS] = wi.getParent().getOrderId();
+			// from v5, housekeeping wi may have no detail
+			String orderStr = "";
+			if (wi.getOrderDetail() != null) 
+				orderStr = wi.getOrderDetail().getOrderId();
+			properties[ORDERID_POS] = orderStr;
+			
 			properties[CONTAINERID_POS] = wi.getContainerId();
 			properties[ITEMID_POS] = wi.getItemId();
 
@@ -77,7 +85,7 @@ public class WorkInstructionCSVExporter {
 				LocationAlias locAlias = wi.getLocation().getAliases().get(0);
 				properties[LOCATIONID_POS] = locAlias.getDomainId();
 			}
-			
+
 			properties[PICKERID_POS] = wi.getPickerId();
 			properties[PLAN_QTY_POS] = Integer.toString(wi.getPlanQuantity());
 			properties[ACT_QTY_POS] = Integer.toString(wi.getActualQuantity());

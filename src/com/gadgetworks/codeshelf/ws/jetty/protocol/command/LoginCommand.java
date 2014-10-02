@@ -46,6 +46,7 @@ public class LoginCommand extends CommandABC {
 				String password = loginRequest.getPassword();
 				if (user.isPasswordValid(password)) {
 					boolean loginOkay = true;
+					session.setUser(user);
 					// determine if site controller
 					if(user.getType().equals(UserType.SITECON)) {
 						SiteController sitecon = SiteController.DAO.findByDomainId(null, userId);

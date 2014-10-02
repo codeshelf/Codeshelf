@@ -29,7 +29,9 @@ public enum CheStateEnum {
 	// @EnumValue("SHORT_PICK")
 	SHORT_PICK_CONFIRM(CheStateNum.SHORT_PICK, "SHORT_PICK"),
 	// @EnumValue("PICK_COMPLETE")
-	PICK_COMPLETE(CheStateNum.PICK_COMPLETE, "PICK_COMPLETE");
+	PICK_COMPLETE(CheStateNum.PICK_COMPLETE, "PICK_COMPLETE"),
+	@EnumValue("NO_WORK")
+	NO_WORK(CheStateNum.NO_WORK, "NO_WORK");
 
 	private int		mValue;
 	private String	mName;
@@ -108,7 +110,8 @@ public enum CheStateEnum {
 		static final byte	DO_PICK				= 6;
 		static final byte	SHORT_PICK			= 7;
 		static final byte	PICK_COMPLETE		= 8;
-
+		static final byte	NO_WORK				= 9;
+		
 		private CheStateNum() {
 		};
 	}

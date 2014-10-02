@@ -16,7 +16,8 @@ import org.eclipse.jetty.websocket.jsr356.server.deploy.WebSocketServerContainer
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.util.PropertyUtils;
+import com.gadgetworks.codeshelf.util.IConfiguration;
+import com.google.inject.Inject;
 
 @ServerEndpoint(value = "/")
 public class JettyWebSocketServer {
@@ -37,18 +38,19 @@ public class JettyWebSocketServer {
 	
 	private String	mKeystorePath;
 
-	public JettyWebSocketServer() {		
+	@Inject
+	public JettyWebSocketServer(IConfiguration configuration) {		
 		// fetch properties from configuration files
-		this.mHost = PropertyUtils.getString("websocket.hostname", DEFAULT_HOSTNAME);
-		this.mPort = PropertyUtils.getInt("websocket.port", DEFAULT_PORTNUM);
-		this.mKeystorePath = PropertyUtils.getString("keystore.path");
-		this.mKeystoreStorePassword = PropertyUtils.getString("keystore.store.password");
-		this.mKeystoreKeyPassword = PropertyUtils.getString("keystore.key.password");
+		this.mHost = configuration.getString("websocket.hostname", DEFAULT_HOSTNAME);
+		this.mPort = configuration.getInt("websocket.port", DEFAULT_PORTNUM);
+		this.mKeystorePath = configuration.getString("keystore.path");
+		this.mKeystoreStorePassword = configuration.getString("keystore.store.password");
+		this.mKeystoreKeyPassword = configuration.getString("keystore.key.password");
 		
 		// create and configure watch dog
 		this.watchdog = new ServerWatchdogThread(SessionManager.getInstance());
-		boolean suppressKeepAlive = PropertyUtils.getBoolean("websocket.idle.suppresskeepalive");
-		boolean killIdle = PropertyUtils.getBoolean("websocket.idle.kill");
+		boolean suppressKeepAlive = configuration.getBoolean("websocket.idle.suppresskeepalive");
+		boolean killIdle = configuration.getBoolean("websocket.idle.kill");
 		this.watchdog.setSuppressKeepAlive(suppressKeepAlive);
 		this.watchdog.setKillIdle(killIdle);
 	}

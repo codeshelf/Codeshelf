@@ -50,8 +50,7 @@ public class SiteControllerMessageProcessor extends MessageProcessor {
 				if (network != null) {
 					LOGGER.info("Attached to network "+network.getDomainId());
 					attached=true;
-					this.deviceManager.updateNetwork(network);
-					this.deviceManager.startRadio(network);
+					this.deviceManager.attached(network);
 				} else {
 					LOGGER.error("loginResponse has no network");
 				}
@@ -59,6 +58,7 @@ public class SiteControllerMessageProcessor extends MessageProcessor {
 			if (!attached) {
 				LOGGER.warn("Failed to attach network: "+response.getStatusMessage());
 				try {
+					this.deviceManager.unattached();
 					client.disconnect();
 				} 
 				catch (IOException e) {

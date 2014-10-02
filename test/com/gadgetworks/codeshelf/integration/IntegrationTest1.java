@@ -16,7 +16,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.gadgetworks.codeshelf.application.Configuration;
-import com.gadgetworks.codeshelf.device.CheDeviceLogic;
+import com.gadgetworks.codeshelf.device.CheStateEnum;
 import com.gadgetworks.codeshelf.edi.AislesFileCsvImporter;
 import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
 import com.gadgetworks.codeshelf.edi.ICsvLocationAliasImporter;
@@ -24,6 +24,7 @@ import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
 import com.gadgetworks.codeshelf.edi.InventoryCsvImporter;
 import com.gadgetworks.codeshelf.edi.LocationAliasCsvImporter;
 import com.gadgetworks.codeshelf.edi.OutboundOrderCsvImporter;
+import com.gadgetworks.codeshelf.model.HousekeepingInjector;
 import com.gadgetworks.codeshelf.model.WiSetSummary;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
@@ -256,8 +257,11 @@ public class IntegrationTest1 extends EndToEndIntegrationTest {
 		}
 		Assert.assertEquals(2, itemLocations.size());
 
+		// Turn off housekeeping work instructions so as to not confuse the counts
+		HousekeepingInjector.turnOffHK();
 		// Set up a cart for order 12345, which will generate work instructions
 		facility.setUpCheContainerFromString(che1, "12345");
+		HousekeepingInjector.restoreHKDefaults();
 
 		List<WorkInstruction> aList = che1.getCheWorkInstructions();
 		Integer wiCount = aList.size();
@@ -299,10 +303,6 @@ public class IntegrationTest1 extends EndToEndIntegrationTest {
 	public final void testPickViaChe() throws IOException {
 
 		Facility facility = setUpSimpleNoSlotFacility();
-		
-		// verify that che is in site controller's device list
-		CheDeviceLogic cheDeviceLogic = (CheDeviceLogic) this.siteController.getDeviceManager().getDeviceByGuid(cheGuid1);
-		Assert.assertNotNull(cheDeviceLogic);
 
 		// We are going to put cases in A3 and each in A2. Also showing variation in EA/each, etc.
 		// 402 and 403 are in A2, the each aisle. 502 and 503 are in A3, the case aisle, on a separate path.
@@ -311,7 +311,7 @@ public class IntegrationTest1 extends EndToEndIntegrationTest {
 				+ "1123,D502,12/16 oz Bowl Lids -PLA Compostable,6,CS,6/25/14 12:00,8\r\n" //
 				+ "1123,D503,12/16 oz Bowl Lids -PLA Compostable,6,CS,6/25/14 12:00,55\r\n" //
 				+ "1493,D502,PARK RANGER Doll,2,case,6/25/14 12:00,66\r\n" //
-				+ "1522,D503,SJJ BPP,1,Case,6/25/14 12:00,3\r\n" //
+				+ "1522,D503,SJJ BPP,1,case,6/25/14 12:00,3\r\n" //
 				+ "1522,D403,SJJ BPP,10,each,6/25/14 12:00,3\r\n";//
 
 		byte[] csvArray = csvString.getBytes();
@@ -371,52 +371,31 @@ public class IntegrationTest1 extends EndToEndIntegrationTest {
 		}
 		Assert.assertEquals(2, itemLocations.size());
 
+		// Turn off housekeeping work instructions so as to not confuse the counts
+		HousekeepingInjector.turnOffHK();
 		// Set up a cart for order 12345, which will generate work instructions
-		
-		
-		
-		
-		
-		
-		
-		
-		facility.setUpCheContainerFromString(che1, "12345");
+		PickSimulator picker = new PickSimulator(this,cheGuid1);
+		picker.login("Picker #1");
+		picker.setupContainer("12345", "1");
+		List<WorkInstruction> activeWIs=picker.start("402");
+		HousekeepingInjector.restoreHKDefaults();
 
-		List<WorkInstruction> aList = che1.getCheWorkInstructions();
-		Integer wiCount = aList.size();
-		Assert.assertEquals((Integer) 3, wiCount); // 3, but one should be short. Only 1123 and 1522 find each inventory
+		Assert.assertEquals(1, activeWIs.size());
+		WorkInstruction currentWI = activeWIs.get(0);
+		Assert.assertEquals("SJJ BPP", currentWI.getDescription());
+		Assert.assertEquals("1522", currentWI.getItemId());
 
-		List<WorkInstruction> wiListAfterScan = facility.getWorkInstructions(che1, "D402");
-		Integer wiCountAfterScan = wiListAfterScan.size();
-		Double posOf402 = locationD402.getPosAlongPath();
-		Double posOf403 = locationD403.getPosAlongPath();
-		Assert.assertTrue(posOf402 > posOf403);
-		
-		Assert.assertEquals((Integer) 1, wiCountAfterScan); // only the one each item in 402 should be there. The item in 403 is earlier on the path.
-		// See which work instruction is which
-		WorkInstruction wi1 = wiListAfterScan.get(0);
-		Assert.assertNotNull(wi1);
-		String wi1Item = wi1.getItemMasterId();
-		Double wi1Pos = wi1.getPosAlongPath();
+		// pick first item
+		activeWIs=picker.pick(1,1);
+		Assert.assertEquals(1, activeWIs.size());
+		currentWI = activeWIs.get(0);
+		Assert.assertEquals("1123", currentWI.getItemId());
 
-		// New from v4. Test our work instruction summarizer
-		List<WiSetSummary> summaries = new WorkService().workSummary(che1.getPersistentId().toString(),
-			facility.getPersistentId().toString());
+		// pick second item
+		activeWIs=picker.pick(1,1);
+		Assert.assertEquals(0, activeWIs.size());
 
-		// as this test, this facility only set up this one che, there should be only one wi set. But we have 3. How?
-		Assert.assertEquals(1, summaries.size());
-
-		// getAny should get the one. Call it somewhat as the UI would. Get a time, then query again with that time.
-		WiSetSummary theSummary = summaries.get(0);
-		// So, how many shorts, how many active? None complete yet.
-		int actives = theSummary.getActiveCount();
-		int shorts = theSummary.getShortCount();
-		int completes = theSummary.getCompleteCount();
-		Assert.assertEquals(0, completes);
-		Assert.assertEquals(2, actives);
-		Assert.assertEquals(1, shorts);
-		
+		picker.waitForCheState(CheStateEnum.PICK_COMPLETE,1000);
+		picker.logout();
 	}
-	
-
 }

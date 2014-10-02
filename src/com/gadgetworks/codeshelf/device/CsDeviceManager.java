@@ -22,7 +22,7 @@ import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
-import com.gadgetworks.codeshelf.util.PropertyUtils;
+import com.gadgetworks.codeshelf.util.IConfiguration;
 import com.gadgetworks.codeshelf.util.TwoKeyMap;
 import com.gadgetworks.codeshelf.ws.jetty.client.JettyWebSocketClient;
 import com.gadgetworks.codeshelf.ws.jetty.client.WebSocketEventListener;
@@ -35,6 +35,7 @@ import com.gadgetworks.flyweight.command.NetworkId;
 import com.gadgetworks.flyweight.controller.INetworkDevice;
 import com.gadgetworks.flyweight.controller.IRadioController;
 import com.gadgetworks.flyweight.controller.IRadioControllerEventListener;
+import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 
 /**
@@ -78,17 +79,17 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	boolean radioEnabled = true;
 	
 	@Inject
-	public CsDeviceManager(final IRadioController inRadioController) {
+	public CsDeviceManager(final IRadioController inRadioController, final IConfiguration configuration) {
 		// fetch properties from config file
-		radioEnabled = PropertyUtils.getBoolean("radio.enabled",true);
-		mUri = PropertyUtils.getString("websocket.uri");
-		suppressKeepAlive = PropertyUtils.getBoolean("websocket.idle.suppresskeepalive");
-		idleKill = PropertyUtils.getBoolean("websocket.idle.kill");
+		radioEnabled = configuration.getBoolean("radio.enabled",true);
+		mUri = configuration.getString("websocket.uri");
+		suppressKeepAlive = configuration.getBoolean("websocket.idle.suppresskeepalive", false);
+		idleKill = configuration.getBoolean("websocket.idle.kill", false);
 
 		mRadioController = inRadioController;
 		mDeviceMap = new TwoKeyMap<UUID, NetGuid, INetworkDevice>();
 
-		mNetworkCredential = System.getProperty("networkCredential");
+		mNetworkCredential = configuration.getString("networkCredential");
 	}
 
 	public final void start() {
@@ -96,7 +97,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 
 	}
 	
-	public final void startRadio(CodeshelfNetwork network) {
+	private final void startRadio(CodeshelfNetwork network) {
 		if (mRadioController.isRunning()) {
 			LOGGER.warn("Radio controller is already running, cannot start again");
 		} else if (this.radioEnabled) {
@@ -204,6 +205,10 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 		client.sendMessage(req);
 	}
 
+	/**
+	 * Websocket connects then this authenticates and receives the network it should use
+	 * @see #attached(CodeshelfNetwork)
+	 */
 	@Override
 	public void connected() {
 		// connected to server - send attach request
@@ -214,21 +219,44 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 		
 		client.sendMessage(loginRequest);
 	}
+	
+	/**
+	 * After connection and authentication this is received to indicate communication for devices is established
+	 * @see #connected()
+	 */
+	public void attached(CodeshelfNetwork network) {
+		LOGGER.info("Attached to server");
+		this.updateNetwork(network);
+		this.startRadio(network);
+		
+		for (INetworkDevice networkDevice : mDeviceMap.values()) {
+			if(networkDevice instanceof CheDeviceLogic ) {
+				((CheDeviceLogic) networkDevice).connectedToServer();
+			}
+		}
+	}
 
+	public void unattached() {
+		LOGGER.info("Unattached from server");
+		for (INetworkDevice networkDevice : mDeviceMap.values()) {
+			if(networkDevice instanceof CheDeviceLogic ) {
+				((CheDeviceLogic) networkDevice).disconnectedFromServer();
+			}
+		}
+	}
+	
 	@Override
 	public void disconnected() {
-		// disconnected from server
+		unattached();
 		LOGGER.info("Disconnected from server");
 	}
 
 	private void doCreateUpdateNetDevice(UUID persistentId, NetGuid deviceGuid, String deviceType) {
+		Preconditions.checkNotNull(persistentId, "persistentId of device cannot be null");
+		Preconditions.checkNotNull(deviceGuid, "deviceGuid of device cannot be null");
+		Preconditions.checkNotNull(deviceType, "deviceType of device cannot be null");
 		// Update the device or create if it does not exist
 		// NOTE: it appears CsDeviceManager receives but does not use about the domainId e.g. "CHE1" or "00000013"
-
-		if (persistentId == null || deviceGuid == null || deviceType == null) {
-			LOGGER.error("Invalid null parameter in call to doCreateUpdateNetDevice");
-			return;
-		}
 		boolean suppressMapUpdate = false;
 		INetworkDevice netDevice = mDeviceMap.get(persistentId);
 		
@@ -330,16 +358,26 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 		Set<UUID> updateDevices=new HashSet<UUID>();
 		// update network devices
 		for (Che che : network.getChes().values()) {
-			UUID id = che.getPersistentId();
-			NetGuid deviceGuid = new NetGuid(che.getDeviceGuid());
-			doCreateUpdateNetDevice(id, deviceGuid, DEVICETYPE_CHE);
-			updateDevices.add(id);
+			try {
+				UUID id = che.getPersistentId();
+				NetGuid deviceGuid = new NetGuid(che.getDeviceGuid());
+				doCreateUpdateNetDevice(id, deviceGuid, DEVICETYPE_CHE);
+				updateDevices.add(id);
+			} catch (Exception e) {
+				//error in one should not cause issues setting up others
+				LOGGER.error("Unable to handle network update for che: " + che, e);
+			}
 		}
 		for (LedController ledController : network.getLedControllers().values()) {
-			UUID id = ledController.getPersistentId();
-			NetGuid deviceGuid = new NetGuid(ledController.getDeviceGuid());
-			doCreateUpdateNetDevice(id, deviceGuid, DEVICETYPE_LED);
-			updateDevices.add(id);
+			try {
+				UUID id = ledController.getPersistentId();
+				NetGuid deviceGuid = new NetGuid(ledController.getDeviceGuid());
+				doCreateUpdateNetDevice(id, deviceGuid, DEVICETYPE_LED);
+				updateDevices.add(id);
+			} catch (Exception e) {
+				//error in one should not cause issues setting up others
+				LOGGER.error("Unable to handle network update for ledController: " + ledController, e);
+			}
 		}
 		
 		// now process deletions

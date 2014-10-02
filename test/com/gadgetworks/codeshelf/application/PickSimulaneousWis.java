@@ -22,6 +22,7 @@ import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
 import com.gadgetworks.codeshelf.edi.InventoryCsvImporter;
 import com.gadgetworks.codeshelf.edi.LocationAliasCsvImporter;
 import com.gadgetworks.codeshelf.edi.OutboundOrderCsvImporter;
+import com.gadgetworks.codeshelf.model.HousekeepingInjector;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
@@ -244,8 +245,11 @@ public class PickSimulaneousWis extends EdiTestABC {
 		Che theChe = theNetwork.getChe("CHE1");
 		Assert.assertNotNull(theChe);
 
+		// Turn off housekeeping work instructions so as to not confuse the counts
+		HousekeepingInjector.turnOffHK();
 		// Set up a cart for the five orders, which will generate work instructions. (Tweak the order. 12001/1123 should be the first WI by the path.
 		facility.setUpCheContainerFromString(theChe, "12004,12005,12001,12002,12003");
+		HousekeepingInjector.restoreHKDefaults();
 
 		List<WorkInstruction> aList = theChe.getCheWorkInstructions();
 		Integer wiCount = aList.size();

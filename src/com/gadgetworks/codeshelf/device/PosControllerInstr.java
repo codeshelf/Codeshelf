@@ -23,8 +23,9 @@ public class PosControllerInstr {
 	// We started with 255 and worked down just in case we some day go higher than 99.
 	public static final Byte	ZERO_QTY				= (byte) 0;
 	public static final Byte	ERROR_CODE_QTY			= (byte) 255;
-	public static final Byte	BAY_COMPLETE_QTY		= (byte) 254;
+	public static final Byte	BAY_COMPLETE_CODE		= (byte) 254; // sort of fake quantities for now
 	public static final Byte	POSITION_ASSIGNED_CODE	= (byte) 253;
+	public static final Byte	REPEAT_CONTAINER_CODE	= (byte) 252;
 
 	public static final Byte	BLINK_FREQ				= (byte) 0x15;
 	public static final Byte	BLINK_DUTYCYCLE			= (byte) 0x40;

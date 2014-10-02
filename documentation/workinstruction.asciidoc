@@ -1,0 +1,286 @@
+= Work Instruction Export CSV Format
+
+== Document History
+[cols="3*", options="header"]
+|===
+|Message Version
+| Document Version
+| Description
+
+|1.0
+|1.0.201.40916
+|Initial
+
+|1.0
+|1.0.20141001
+|Added Columns Before Release
+|===
+
+== Introduction
+The Codeshelf system will export the results of the work it has directed so that it can be utilized in other systems or spreadsheets.  Each movement of an item that was directed by the Codeshelf is tracked as a "Work Instruction" and describes what was moved, where it was moved and when it was moved.  The messages that come from the Codeshelf system are formatted as Comma Separated Value (CSV) records for each work instruction performed.  Work instruction records are unique within a Facility.  A facility represents a single warehouse or in some cases a logically separate operation in a multi-tenant space.  This document describes the format of the message and the data for each work instruction.
+
+== Message Structure
+The message received from the Codeshelf system consists of records broken up in to fields.  A message is typically sent for each work instruction near the time of completion.  Within each message the first record is considered the 'header' and describes the fields that occur within the records that follow the header.  There may be one or more work instruction records following the header.  The message has these properties:
+
+Message Character Encoding:: UTF-8
+Record Separator:: each record is separated by either a LF (0x0A) or CRLF (Ox0D0A) commonly represented as as '\n' or '\r\n'.
+Field Separator:: each field is separated by COMMA (0x2C) commonly represented as ','.
+Field Value:: the value of the field are the characters that occur between field separators
+Delimited Field Value:: A special value that is surrounded with a QUOTATION MARK (neutral/vertical quotation mark) (0x22) commonly represented as '"'. The quotation mark follows a field separator (or beginning of line) and precedes the next field separator (or end of line). The quotation marks are not considered part of the field value.
+
+== Header Record
+The first record of the message indicates the field names in the order they appear through out the message.
+The order of the columns may change across versions of the software. Processors MUST examine the header row of the message to determine the order of the field values that follow in the message.
+
+== Field Values
+The following describes how to handle special characters that may occur within field values. Unless otherwise noted in this specification, field values are strings of UTF-8 characters
+
+=== Embedded Comma
+A value that contains the field separator COMMA MUST be delimited with QUOTATION MARK
+
+=== Embedded Quotation Marks
+A field value that contains QUOTATION MARK, MUST be escaped with an additional QUOTATION MARK. For example the a field like this: "Doll ""The Rock"" 6"" plush", represents the value: Doll "The Rock" 6" plush.
+
+=== Embedded Record Delimiters
+A field cannot contain line separation characters.
+
+=== Numeric Field Values
+Numeric field values have special consideration in the cases below.
+
+==== Negative Numbers
+First character may be a DASH to indicate a negative number
+
+==== Positive Numbers
+Will not contain a PLUS character
+
+==== Floating Point Numbers
+Fixed point format using a PERIOD character as the separator between the integral and decimal digits (with optional negative sign).
+
+==== Exponential Numbers
+Numbers will NOT be written in exponential form using 'e' or 'E'
+
+==== Leading Zeros
+Values with leading zeros are significant when not in a numeric field, In general, the value should be treated as a UTF-8 string such as in zip codes and identifiers.
+
+=== Common Data Types
+These are common data types that may be specified for a field
+
+==== UTF-8 String
+The default type if unspecified
+
+==== Identifier
+All identifiers are considered unique only within the facility unless otherwise noted and should be treated as UTF-8 String unless otherwise noted. See globally unique identifiers below
+
+==== Globally unique identifier (GUID)
+An Identifier type that may be represented as a 128-bit number
+
+==== Numeric Float
+The default type for numeric fields
+
+==== Numeric Integer
+A numeric type that will not contain a PERIOD character and decimal parts. See numeric Floating Point Numbers above
+
+==== Enumerated Value
+When the field value represents a named member of a set of options, the field will be a UTF-8 String or Numeric Integer indicating the value
+
+== Treatment of White-space
+
+White-space characters such as TAB or SPACE following or preceding a field delimiter should be considered insignificant and trimmed before processing
+
+=== Treatment of Numeric Field Values
+
+==== Negative Numbers
+First character may be a DASH to indicate a negative number
+
+==== Positive Numbers
+Will not contain a PLUS
+
+==== Floating Point Numbers
+Fixed point format using a PERIOD as the separator between the integral and decimal digits (with optional negative sign).
+
+==== Exponential Numbers
+Numbers will NOT be written in exponential form using 'e' or 'E'
+
+==== Leading Zeros
+Values with leading zeros that are significant to the Codeshelf system will be delimited with DOUBLE-QUOTES. In general, the value should be treated as a string such as in zip codes and identifiers.
+
+== Processing Instructions
+
+=== Message Versioning
+The file version can be determined by finding a header prefixed with "version-". The number following the prefix indicates the Major and Minor version of the format separated by a PERIOD. Major versions are incremented if there is a change to the semantics of a field or removal of a field that may break processors of previous versions. Minor versions are incremented to indicate additional fields. Processors should be able to handle minor upgrades without error.
+
+For example: "version-2.3" indicates MAJOR version '2' and MINOR version '3'
+
+=== Extra Columns
+Processors should not fail in the presence of additional columns. Processors may attempt to store field values of the extra columns as a UTF-8 String.
+
+=== Extra Enumerated Values
+Enumerated values are 'named' values of a set.  Processors are expected to store undocumented enumerated values without error.
+Identifiers
+All identifiers are considered unique only within the facility unless otherwise noted and should be treated as UTF-8 String unless otherwise noted. A globally unique identifier (GUID) for instance, could be stored as a byte array.
+
+== Work Instruction Fields
+[cols="4*", options="header"]
+|===
+|Field Name
+|Data Type
+|Required
+|Description
+
+|version-X.Y
+|Empty
+|N/A
+|Encodes the version of the data. Data rows will have blank field values. See Message Versioning above.
+
+|facilityId
+|Identifier
+|Y
+|The identifier for the facility. This can be changed within the system.
+
+
+|workInstructionId
+|Identifier
+|Y
+|The identifier for the work that needs to be performed.
+
+|type
+|Enum WIType
+|Y
+|The work instruction type.
+
+|status
+|Enum WIStatus
+|Y
+|The latest status for this work instruction.  This status can be updated in a following message with the same domainId.
+
+|orderGroupId
+|Identifier
+|N
+|The id of the order group, if supplied as input into the system
+
+|orderId
+|Identifier
+|N
+|The id of the order provided as input into the system
+
+|containerId
+|Identifier
+|N
+|The id of the container used to process the work
+
+|itemId
+|Identifier
+|N
+|The id that matches the Codeshelf item record
+
+|uom
+|UTF-8 String
+|N
+|The unit of measure for the quantities
+
+|lotId
+|Identifier
+|N
+|FUTURE: The lot that the item came from
+
+|locationId
+|Identifier
+|N
+|The location alias as supplied to item locations or orders, otherwise the Codeshelf identifier within the facility
+
+|pickerId
+|Identifier
+|N
+|The id of the user that picked the item. Unique within the facility
+
+|planQuantity
+|Numeric Float
+|N
+|The quantity of the item that was expected to be processed
+
+|actualQuantity
+|Numeric Float
+|N
+|The quantity of the item that was able to be processed
+
+|cheId
+|Identifier
+|N
+|The identifier of the che unique within the facility
+
+|assigned
+|ISO8601 UTC
+|Y
+|The timestamp the work was assigned to the CHE
+
+|started
+|ISO8601 UTC
+|Y
+|The timestamp the work was displayed for execution
+
+|completed
+|ISO8601 UTC
+|Y
+|The timestamp the work was finished
+
+|===
+
+=== WIType Enumeration
+
+ACTUAL:: A result of work being completed
+HK_REPEATPOS:: A informational work instruction inserted between two similar work instructions
+HK_BAYCOMPLETE:: A informational work instruction inserted when all work is done in a bay.
+
+=== WIStatus Enumeration
+
+SHORT:: A Work instruction where the user or system indicated there was not enough of the item to fulfill the instruction
+COMPLETE:: A work instruction that was fulfilled as planned
+
+
+== Examples
+
+=== Single Picked Work Instruction
+Example of a typical pick
+
+[source,csv]
+----
+facilityId,workInstructionId,type,status,orderGroupId,orderId,containerId,itemId,uom,lotId,locationId,pickerId,planQuantity,actualQuantity,cheId,assigned,started,completed,version-1.0
+F1,121314345353,ACTUAL,COMPLETE,,ORD1234,CONT333,8899098-09238,EACH,,D-234,PICKER_BETH,5,5,CHE3,2014-09-05T13:15:30Z,1994-11-05T14:15:30Z,1994-11-05T14:25:30Z,
+----
+
+=== Multiple Work Instructions
+Example of two work instructions appearing in a message, one complete and one shorted
+
+[source,csv]
+----
+facilityId,workInstructionId,type,status,orderGroupId,orderId,containerId,itemId,uom,lotId,locationId,pickerId,planQuantity,actualQuantity,cheId,assigned,started,completed,version-1.0
+F1,12131434513153,ACTUAL,COMPLETE,,ORD1234,CONT333,8899098-09238,EACH,,D-234,PICKER_BETH,5,5,CHE3,2014-09-05T13:15:30Z,1994-11-05T14:15:30Z,1994-11-05T14:25:30Z,
+F1,12131434gg54,ACTUAL,SHORT,,ORD1234,CONT333,8899098-09238,EACH,,D-232,PICKER_BETH,5,2,CHE3,2014-09-05T13:15:30Z,1994-11-05T14:18:30Z,1994-11-05T14:28:30Z,
+----
+
+=== Floating Point Quantity
+This example uses a floating point quantity
+
+[source,csv]
+----
+facilityId,workInstructionId,type,status,orderGroupId,orderId,containerId,itemId,uom,lotId,locationId,pickerId,planQuantity,actualQuantity,cheId,assigned,started,completed,version-1.0
+F1,121314345aa53,ACTUAL,COMPLETE,,ORD1234,CONT333,8899098-09238,LBS,,D-234,PICKER_BETH,1.5,1.5,CHE3,2014-09-05T13:15:30Z,1994-11-05T14:15:30Z,1994-11-05T14:25:30Z,
+----
+
+=== Different Field Sequence
+This example contains fields in a different sequence than the above
+
+[source,csv]
+----
+facilityId,workInstructionId,type,status,orderGroupId,orderId,itemId,lotId,planQuantity,actualQuantity,uom,locationId,cheId,containerId,pickerId,assigned,started,completed,version-1.0
+F1,12131436663,ACTUAL,COMPLETE,WAVE1,ORD23212311-1231231312313sdf,RED-SAUCE3,LOT234,1.5,1.5,OZ,A2.B2.C3,CHE3,C234,PICKER_BEN,2014-09-05T13:15:30Z,1994-11-05T14:15:30Z,1994-11-05T14:25:30Z,
+----
+
+=== Unspecified Column Embedded Quotation
+This example contains an unspecified column 'itemDescription' with field values that contain QUOTATION MARKS
+
+[source,csv]
+----
+facilityId,workInstructionId,type,status,orderGroupId,orderId,itemDescription,itemId,lotId,planQuantity,actualQuantity,uom,locationId,cheId,containerId,pickerId,assigned,started,completed,version-1.0
+F1,12ss131436663,ACTUAL,COMPLETE,WAVE1,ORD23212311-1231231312313sdf,"Doll ""The Rock"" 6"" Plush",RED-SAUCE3,LOT234,1.5,1.5,OZ,A2.B2.C3,CHE3,C234,PICKER_BEN,2014-09-05T13:15:30Z,1994-11-05T14:15:30Z,1994-11-05T14:25:30Z,
+----

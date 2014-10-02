@@ -38,6 +38,7 @@ import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -57,8 +58,6 @@ import com.google.inject.Singleton;
 //@CacheStrategy(useBeanCache = true)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class IronMqService extends EdiServiceABC {
-
-	private static final long	serialVersionUID	= 1L;
 
 	@Inject
 	public static ITypedDao<IronMqService>	DAO;
@@ -163,13 +162,22 @@ public class IronMqService extends EdiServiceABC {
 		setCredentials(projectId, token);
 		if(getHasCredentials()) {
 			try {
-				Queue queue = getWorkInstructionQueue();
-				queue.getSize();
-				setServiceState(EdiServiceStateEnum.LINKED);
+				Optional<Queue> queue = getWorkInstructionQueue();
+				if (queue.isPresent()) {
+					queue.get().getSize();
+					setServiceStateEnum(EdiServiceStateEnum.LINKED);
+					LOGGER.warn("IronMqService is linked, will export work instructions");
+				}
+				else {
+					LOGGER.warn("Unable to get queue or no credentials set");
+					setServiceStateEnum(EdiServiceStateEnum.UNLINKED);
+					LOGGER.warn("IronMqService is unlinked, will not export work instructions");
+				}
 			}
 			catch(Exception e) {
 				LOGGER.warn("Unable to connect to iron mq with credentials", e);
 				setServiceState(EdiServiceStateEnum.UNLINKED);
+				LOGGER.warn("IronMqService is unlinked, will not export work instructions");
 			}
 		}
 		IronMqService.DAO.store(this); //This is the DAO the UI is listening to
@@ -186,33 +194,43 @@ public class IronMqService extends EdiServiceABC {
 	}
 
 	public final void sendWorkInstructionsToHost(final List<WorkInstruction> inWiList) throws IOException, IllegalStateException {
-		Queue queue = getWorkInstructionQueue();
-		String message = wiCSVExporter.exportWorkInstructions(inWiList);
-		queue.push(message);
-		LOGGER.debug("Sent " + inWiList.size() + " work instructions to iron mq service");
+		Optional<Queue> queue = getWorkInstructionQueue();
+		if (queue.isPresent()) {
+			LOGGER.debug("attempting send of work instructions: " + inWiList);
+			String message = wiCSVExporter.exportWorkInstructions(inWiList);
+			queue.get().push(message);
+			LOGGER.debug("Sent " + inWiList.size() + " work instructions to iron mq service");
+		}
+		else {
+			LOGGER.debug("Unable to send work instruction, no credentials for IronMqService");
+		}
 	}
 
 	String[] getMessages(@Max(100) int numberOfMessages, int timeoutInSeconds) throws IOException {
-
-		Messages messages = getWorkInstructionQueue().get(numberOfMessages, timeoutInSeconds);
-		Message[] messageArray = messages.getMessages();
-		String[] bodies = new String[messageArray.length];
-		for (int i = 0; i < messageArray.length; i++) {
-			Message message = messageArray[i];
-			bodies[i] = message.getBody();
+		Optional<Queue> queue = getWorkInstructionQueue();
+		if (queue.isPresent()) {
+			Messages messages = queue.get().get(numberOfMessages, timeoutInSeconds);
+			Message[] messageArray = messages.getMessages();
+			String[] bodies = new String[messageArray.length];
+			for (int i = 0; i < messageArray.length; i++) {
+				Message message = messageArray[i];
+				bodies[i] = message.getBody();
+			}
+			return bodies;
+		} else {
+			throw new IllegalStateException("No queue or credentials configured for IronMqService");
 		}
-		return bodies;
 	}
 
-	private Queue getWorkInstructionQueue() {
+	private Optional<Queue> getWorkInstructionQueue() {
 		if (getHasCredentials()) {
 			Credentials theCredentials = getCredentials();
 			Client client = clientProvider.get(theCredentials.getProjectId(), theCredentials.getToken());
 			Queue queue = client.queue(WI_QUEUE_NAME);
 			LOGGER.debug("Retrieving IronMQ Queue: " + WI_QUEUE_NAME + " for project: " + theCredentials.getProjectId());
-			return queue;
+			return Optional.of(queue);
 		} else { 
-			throw new IllegalStateException("Unable to send work instruction, no credentials for IronMqService");
+			return Optional.absent();
 		}
 	}
 

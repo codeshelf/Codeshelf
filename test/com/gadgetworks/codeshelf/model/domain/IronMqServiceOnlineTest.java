@@ -25,6 +25,7 @@ public class IronMqServiceOnlineTest extends DomainTestABC {
 	private Map<String, String> tempPropertyRestore  = new HashMap<String, String>();
 	
 	@Before
+	@SuppressWarnings("unchecked")
 	public void doBefore() {
 		super.doBefore();
 		//USE THE DEFAULT KEYSTORE COMMUNICATING TO IRON MQ

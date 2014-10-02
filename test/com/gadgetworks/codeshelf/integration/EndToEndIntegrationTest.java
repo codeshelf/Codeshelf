@@ -10,7 +10,6 @@ import org.slf4j.LoggerFactory;
 import com.gadgetworks.codeshelf.application.CsSiteControllerApplication;
 import com.gadgetworks.codeshelf.application.CsSiteControllerMain;
 import com.gadgetworks.codeshelf.device.CheDeviceLogic;
-import com.gadgetworks.codeshelf.device.CheStateEnum;
 import com.gadgetworks.codeshelf.device.CsDeviceManager;
 import com.gadgetworks.codeshelf.model.dao.DaoProvider;
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
@@ -20,7 +19,8 @@ import com.gadgetworks.codeshelf.model.domain.DomainTestABC;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.User;
-import com.gadgetworks.codeshelf.util.PropertyUtils;
+import com.gadgetworks.codeshelf.util.IConfiguration;
+import com.gadgetworks.codeshelf.util.JVMSystemConfiguration;
 import com.gadgetworks.codeshelf.util.ThreadUtils;
 import com.gadgetworks.codeshelf.ws.jetty.client.JettyWebSocketClient;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageProcessor;
@@ -43,12 +43,19 @@ public abstract class EndToEndIntegrationTest extends DomainTestABC {
 	protected static String facilityId = "F1";
 	protected static String networkId = CodeshelfNetwork.DEFAULT_NETWORK_NAME;
 	protected static String cheId1 = "CHE1";
+	@Getter
 	protected static NetGuid cheGuid1 = new NetGuid("0x23");
 	protected static String cheId2 = "CHE2";
+	@Getter
 	protected static NetGuid cheGuid2 = new NetGuid("0x24");
 
+	@Getter
 	JettyWebSocketServer webSocketServer;
+	
+	@Getter
 	CsSiteControllerApplication siteController;
+	
+	@Getter
 	CsDeviceManager deviceManager;
 	
 	@Getter
@@ -75,7 +82,8 @@ public abstract class EndToEndIntegrationTest extends DomainTestABC {
 	public static Injector setupWSSInjector() {
 		Injector injector = Guice.createInjector(new AbstractModule() {
 			@Override
-			protected void configure() {				
+			protected void configure() {
+				bind(IConfiguration.class).to(JVMSystemConfiguration.class);
 				bind(IDaoProvider.class).to(DaoProvider.class);
 				bind(MessageProcessor.class).to(ServerMessageProcessor.class);
 				requestStaticInjection(MessageProcessorFactory.class);
@@ -87,12 +95,16 @@ public abstract class EndToEndIntegrationTest extends DomainTestABC {
 	@SuppressWarnings("unused")
 	@Override
 	public void doBefore() {
+		Injector websocketServerInjector = setupWSSInjector();
+		Injector siteControllerInjector = CsSiteControllerMain.setupInjector();
+		
+		IConfiguration configuration = websocketServerInjector.getInstance(IConfiguration.class);
 		LOGGER.debug("-------------- Creating environment before running test case");
 		//The client WSS needs the self-signed certificate to be trusted
-		System.setProperty("javax.net.ssl.keyStore", PropertyUtils.getString("keystore.path"));
-		System.setProperty("javax.net.ssl.keyStorePassword",PropertyUtils.getString("keystore.store.password"));
-		System.setProperty("javax.net.ssl.trustStore", PropertyUtils.getString("keystore.path"));
-		System.setProperty("javax.net.ssl.trustStorePassword", PropertyUtils.getString("keystore.store.password"));
+		System.setProperty("javax.net.ssl.keyStore", configuration.getString("keystore.path"));
+		System.setProperty("javax.net.ssl.keyStorePassword", configuration.getString("keystore.store.password"));
+		System.setProperty("javax.net.ssl.trustStore", configuration.getString("keystore.path"));
+		System.setProperty("javax.net.ssl.trustStorePassword", configuration.getString("keystore.store.password"));
 		
 		// ensure facility, organization, network exist in database before booting up site controller
 		this.organization = mOrganizationDao.findByDomainId(null, organizationId);
@@ -137,8 +149,7 @@ public abstract class EndToEndIntegrationTest extends DomainTestABC {
 		}
 		
 		// start web socket server
-		setupWSSInjector();
-		webSocketServer = new JettyWebSocketServer();
+		webSocketServer = websocketServerInjector.getInstance(JettyWebSocketServer.class);
 		try {
 			webSocketServer.start();
 		} catch (Exception e) {
@@ -148,8 +159,7 @@ public abstract class EndToEndIntegrationTest extends DomainTestABC {
 		ThreadUtils.sleep(2000);
 		
 		// start site controller
-		Injector injector = CsSiteControllerMain.setupInjector();
-		siteController = injector.getInstance(CsSiteControllerApplication.class);
+		siteController = siteControllerInjector.getInstance(CsSiteControllerApplication.class);
 		try {
 			siteController.startApplication();
 		} catch (Exception e) {
@@ -220,18 +230,4 @@ public abstract class EndToEndIntegrationTest extends DomainTestABC {
 		}
 		LOGGER.debug("-------------- Clean up completed");
 	}
-	
-	protected void waitForCheState(CheDeviceLogic cheDeviceLogic, CheStateEnum state, int timeoutInMillis) {
-		long start = System.currentTimeMillis();
-		while (System.currentTimeMillis()-start<timeoutInMillis) {
-			// retry every 100ms
-			ThreadUtils.sleep(100);
-			if (cheDeviceLogic.getCheStateEnum()==state) {
-				// expected state found - all good
-				return;
-			}
-		}
-		Assert.fail("Che state "+state+" not encountered in "+timeoutInMillis+"ms");
-	}	
-
 }
