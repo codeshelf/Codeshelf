@@ -133,6 +133,7 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 		final EffectEnum inEffect) {
 		// CD_0041 note: perfect. Gets existing or makes command list. Adds new LedCmd to list. Note, does not check if same or similar command already in list.
 		// inNetGuid is the Guid of the CHE, not of this aisle controller.
+		// exception: GUID of this aisle controller if this is a temporary light command from the UI.
 		// Called only in CheDeviceLogic ledControllerSetLed(), if getLedCmdFor returned null.  So, perhaps a getOrAdd would be better.
 
 		List<LedCmd> ledCmds = mDeviceLedPosMap.get(inNetGuid);
@@ -216,6 +217,48 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 		return thisGuidStr;
 	}
 
+	// --------------------------------------------------------------------------
+	/**
+	 * Clear the data structure
+	 */
+	private void setLightsExpireTimer(int inSeconds) {
+		// TODO
+		// This should set some sort of time. On expiration, it should 
+		// clearExtraLedsFromMap(); and updateLeds();
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Clear the data structure
+	 */
+	private void clearExtraLedsFromMap() {
+		NetGuid thisAisleControllerGuid = getGuid();
+		mDeviceLedPosMap.remove(thisAisleControllerGuid);
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Light additional LEDs a user asked for. This is the function on AisleDeviceLogic that does most everything:
+	 * 1) Clear out any previous user lights
+	 * 2) Add the commands in, so that the call to updateLeds will result in these also showing.
+	 * 3) Set a timer
+	 * 4) Finally, call updateLeds() to make the lights go.
+	 */
+	public final void lightExtraLeds(int inSeconds, String inCommands) {
+		clearExtraLedsFromMap();
+
+		List<LedCmdGroup> ledCmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(inCommands);
+		for (LedCmdGroup ledCmdGroup :ledCmdGroups){
+			Short channnel = ledCmdGroup.getChannelNum();			
+			for (LedSample ledSample : ledCmdGroup.getLedSampleList()) {
+				// This is the clever part. Add for my own GUID, not a CHE guid.
+				addLedCmdFor(getGuid(), channnel, ledSample, EffectEnum.FLASH);
+			}
+		}
+		setLightsExpireTimer(inSeconds);
+		updateLeds();
+	}
+	
 	// --------------------------------------------------------------------------
 	/**
 	 * Light all of the LEDs required.

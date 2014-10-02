@@ -109,7 +109,7 @@ public class SiteControllerMessageProcessor extends MessageProcessor {
 		{
 			LightLedsMessage msg = (LightLedsMessage) message;
 			LOGGER.info("Processing LightLedsMessage");
-			// this.deviceManager.updateNetwork(update.getNetwork());
+			this.deviceManager.lightSomeLeds(msg.getNetGuid(), msg.getDurationSeconds(), msg.getLedCommands());
 		}
 	}
 	

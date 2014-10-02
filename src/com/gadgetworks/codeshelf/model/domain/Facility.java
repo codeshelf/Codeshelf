@@ -1613,6 +1613,8 @@ public class Facility extends SubLocationABC<Facility> {
 	 * May be called with BLACK to clear whatever you just sent. 
 	 */
 	public void lightOneLocation(final String inColorStr, final String inLocationNominalId) {
+		final int kDurationLocationLight = 5;
+		
 		ColorEnum theColor = ColorEnum.valueOf(inColorStr);
 		if (theColor == ColorEnum.INVALID) {
 			LOGGER.error("lightOneLocation called with unknown color");
@@ -1635,7 +1637,7 @@ public class Facility extends SubLocationABC<Facility> {
 
 			String theLedCommands = LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList);
 			LOGGER.info("lightOneLocation called from UI");
-			LightLedsMessage theMessage = new LightLedsMessage(theGuid, theLedCommands);
+			LightLedsMessage theMessage = new LightLedsMessage(theGuid, kDurationLocationLight, theLedCommands);
 			sendToAllSiteControllers(theMessage);
 		}
 
@@ -1648,6 +1650,8 @@ public class Facility extends SubLocationABC<Facility> {
 	 */
 	@SuppressWarnings("rawtypes")
 	public void lightOneItem(final String inColorStr, final String inItemPersistentId) {
+		final int kDurationItemLight = 5;
+
 		ColorEnum theColor = ColorEnum.valueOf(inColorStr);
 		if (theColor == ColorEnum.INVALID) {
 			LOGGER.error("lightOneItem called with unknown color");
@@ -1672,7 +1676,7 @@ public class Facility extends SubLocationABC<Facility> {
 
 			String theLedCommands = LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList);
 			LOGGER.info("lightOneLocation called from UI");
-			LightLedsMessage theMessage = new LightLedsMessage(theGuid, theLedCommands);
+			LightLedsMessage theMessage = new LightLedsMessage(theGuid, kDurationItemLight, theLedCommands);
 			sendToAllSiteControllers(theMessage);
 		}
 	}
