@@ -66,10 +66,12 @@ import com.gadgetworks.codeshelf.validation.DefaultErrors;
 import com.gadgetworks.codeshelf.validation.ErrorCode;
 import com.gadgetworks.codeshelf.validation.Errors;
 import com.gadgetworks.codeshelf.validation.InputValidationException;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.message.LightLedsMessage;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
 import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
 import com.gadgetworks.codeshelf.ws.jetty.server.SessionManager;
 import com.gadgetworks.flyweight.command.ColorEnum;
+import com.gadgetworks.flyweight.command.NetGuid;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -89,7 +91,7 @@ import com.google.inject.Singleton;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class Facility extends SubLocationABC<Facility> {
 
-	private static final String	IRONMQ_DOMAINID	= "IRONMQ";
+	private static final String			IRONMQ_DOMAINID	= "IRONMQ";
 
 	@Inject
 	public static ITypedDao<Facility>	DAO;
@@ -161,8 +163,6 @@ public class Facility extends SubLocationABC<Facility> {
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	private Map<String, LocationAlias>		locationAliases	= new HashMap<String, LocationAlias>();
-
-
 
 	@Transient
 	// for now installation specific.  property needs to be exposed as a configuration parameter.
@@ -695,7 +695,7 @@ public class Facility extends SubLocationABC<Facility> {
 		result.setActive(true);
 		//result.setCredential(Double.toString(Math.random()));
 		//result.setCredential("0.6910096026612129");
-		
+
 		this.addNetwork(result);
 
 		try {
@@ -703,11 +703,11 @@ public class Facility extends SubLocationABC<Facility> {
 		} catch (DaoException e) {
 			LOGGER.error("persistence error storing CodeshelfNetwork", e);
 		}
-		
+
 		result.createDefaultSiteControllerUser(); // this should go away. will only create default user+sitecon if it doesn't exist
 		return result;
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * Compute work instructions for a CHE that's at the listed location with the listed container IDs.
@@ -796,8 +796,8 @@ public class Facility extends SubLocationABC<Facility> {
 
 		WorkInstructionSequencerABC sequencer = getSequencer();
 		List<WorkInstruction> sortedWIResults = sequencer.sort(this, wiResultList);
-		
-		List<WorkInstruction> finalWIResults = HousekeepingInjector.addHouseKeepingAndSaveSort(this, sortedWIResults);		
+
+		List<WorkInstruction> finalWIResults = HousekeepingInjector.addHouseKeepingAndSaveSort(this, sortedWIResults);
 		return finalWIResults.size();
 	}
 
@@ -1077,7 +1077,8 @@ public class Facility extends SubLocationABC<Facility> {
 										if ((outOrderDetail.getItemMaster().equals(crossOrderDetail.getItemMaster()))
 												&& (outOrderDetail.getActive())) {
 											// Now make sure the UOM matches.
-											if (UomNormalizer.normalizedEquals(outOrderDetail.getUomMasterId(), crossOrderDetail.getUomMasterId())) {
+											if (UomNormalizer.normalizedEquals(outOrderDetail.getUomMasterId(),
+												crossOrderDetail.getUomMasterId())) {
 												for (Path path : getPaths()) {
 													OrderLocation firstOutOrderLoc = outOrder.getFirstOrderLocationOnPath(path);
 
@@ -1245,7 +1246,8 @@ public class Facility extends SubLocationABC<Facility> {
 				setCrossWorkInstructionLedPattern(resultWi,
 					inOrderDetail.getItemMasterId(),
 					inLocation,
-					inOrderDetail.getUomMasterId(), ColorEnum.BLUE);
+					inOrderDetail.getUomMasterId(),
+					ColorEnum.BLUE);
 			} else {
 				// This might be a cross batch case! The work instruction came from cross batch order, but position and leds comes from the outbound order.
 				// We could (should?) add a parameter to createWorkInstruction. Called from makeWIForOutbound() for normal outbound pick, and generateCrossWallInstructions().
@@ -1258,7 +1260,8 @@ public class Facility extends SubLocationABC<Facility> {
 					setOutboundWorkInstructionLedPatternAndPosAlongPathFromInventoryItem(resultWi,
 						inLocation,
 						inOrderDetail.getItemMasterId(),
-						inOrderDetail.getUomMasterId(), ColorEnum.BLUE);
+						inOrderDetail.getUomMasterId(),
+						ColorEnum.BLUE);
 				} else {
 					// The cross batch situation. We want the leds for the order location(s)
 					setWorkInstructionLedPatternFromOrderLocations(resultWi, passedInDetailParent, ColorEnum.BLUE);
@@ -1320,7 +1323,9 @@ public class Facility extends SubLocationABC<Facility> {
 	 * @param inWi
 	 * @param inOrder
 	 */
-	private void setWorkInstructionLedPatternFromOrderLocations(final WorkInstruction inWi, final OrderHeader inOrder, final ColorEnum inColor) {
+	private void setWorkInstructionLedPatternFromOrderLocations(final WorkInstruction inWi,
+		final OrderHeader inOrder,
+		final ColorEnum inColor) {
 		// This is used for GoodEggs cross batch processs. The order header passed in is the outbound order (which has order locations),
 		// but inWi was generated from the cross batch order detail.
 
@@ -1452,7 +1457,7 @@ public class Facility extends SubLocationABC<Facility> {
 		short firstLedPosNum = 0;
 		short lastLedPosNum = 0;
 		List<LedCmdGroup> ledCmdGroupList = new ArrayList<LedCmdGroup>();
-		
+
 		if (inItem != null) {
 			// Use our utility function to get the leds for the item
 			LedRange theRange = inItem.getFirstLastLedsForItem();
@@ -1522,10 +1527,10 @@ public class Facility extends SubLocationABC<Facility> {
 			// This will throw if aisles/tiers are not configured yet. Lets avoid by the null checks.
 			LedController theController = null;
 			Short theChannel = 0;
-				theController = theLocation.getEffectiveLedController();
-				theChannel = theLocation.getEffectiveLedChannel();
+			theController = theLocation.getEffectiveLedController();
+			theChannel = theLocation.getEffectiveLedChannel();
 
-				// If this location has no controller, let's bail on led pattern
+			// If this location has no controller, let's bail on led pattern
 			if (theController == null || theChannel == null || theChannel == 0)
 				continue; // just don't add a new ledCmdGrop to the WI command list
 
@@ -1607,7 +1612,6 @@ public class Facility extends SubLocationABC<Facility> {
 	 * Light one location transiently. Any subsequent activity on the aisle controller will wipe this away.
 	 * May be called with BLACK to clear whatever you just sent. 
 	 */
-	@SuppressWarnings("unused")
 	public void lightOneLocation(final String inColorStr, final String inLocationNominalId) {
 		ColorEnum theColor = ColorEnum.valueOf(inColorStr);
 		if (theColor == ColorEnum.INVALID) {
@@ -1619,17 +1623,21 @@ public class Facility extends SubLocationABC<Facility> {
 			LOGGER.error("lightOneLocation called with unknown location");
 			return;
 		}
-		
+
 		List<LedCmdGroup> ledCmdGroupList = getLedCmdGroupListForItemOrLocation(null, theColor, theLocation);
 		if (ledCmdGroupList.size() == 0) {
 			LOGGER.info("lightOneLocation called for location with incomplete LED configuration");
 			return;
 		}
-		
-		String theLedCommands = LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList);
-		// Need to embed this in a command and send to site controller.
-		LOGGER.info("lightOneLocation called correctly. Need command and site controller implementation");
-		// will call sendToAllSiteControllers();
+		LedController theController = theLocation.getEffectiveLedController();
+		if (theController != null) {
+			NetGuid theGuid = theController.getDeviceNetGuid();
+
+			String theLedCommands = LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList);
+			LOGGER.info("lightOneLocation called from UI");
+			LightLedsMessage theMessage = new LightLedsMessage(theGuid, theLedCommands);
+			sendToAllSiteControllers(theMessage);
+		}
 
 	}
 
@@ -1649,19 +1657,24 @@ public class Facility extends SubLocationABC<Facility> {
 		if (theItem == null) {
 			LOGGER.error("lightOneItem called with unknown item");
 			return;
-		}	
-		
+		}
+
 		LocationABC location = theItem.getStoredLocation();
 		List<LedCmdGroup> ledCmdGroupList = getLedCmdGroupListForItemOrLocation(theItem, theColor, location);
 		if (ledCmdGroupList.size() == 0) {
 			LOGGER.info("lightOneItem called for location with incomplete LED configuration");
 			return;
 		}
-		@SuppressWarnings("unused")
-		String theLedCommands = LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList);
-		// Need to embed this in a command and send to site controller.
-		LOGGER.info("lightOneItem called correctly. Need command and site controller implementation");
-		// will call sendToAllSiteControllers();
+
+		LedController theController = location.getEffectiveLedController();
+		if (theController != null) {
+			NetGuid theGuid = theController.getDeviceNetGuid();
+
+			String theLedCommands = LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList);
+			LOGGER.info("lightOneLocation called from UI");
+			LightLedsMessage theMessage = new LightLedsMessage(theGuid, theLedCommands);
+			sendToAllSiteControllers(theMessage);
+		}
 	}
 
 	// -------UI support for lighting items and locations- END-----------------------
@@ -1929,12 +1942,12 @@ public class Facility extends SubLocationABC<Facility> {
 				List<WorkInstruction> cheWiList = inChe.getCheWorkInstructions(); // This gets all, including shorts
 				Integer cheCountGot = cheWiList.size();
 				if (cheCountGot < wiCount) {
-					LOGGER.error("setUpCheContainerFromString did not result in CHE getting all work instructions. Why?"); 
+					LOGGER.error("setUpCheContainerFromString did not result in CHE getting all work instructions. Why?");
 					// if there are shorts cheCountGot might be greater.
 				}
 
 				//  /*
-				
+
 				// Get the work instructions for this CHE at this location for the given containers. Can we pass empty string? Normally user would scan where the CHE is starting.
 				List<WorkInstruction> wiListAfterScanBlank = this.getWorkInstructions(inChe, ""); // cannot really scan blank, but this is how our UI simulation works
 				Integer wiCountGot = wiListAfterScanBlank.size();
@@ -1945,7 +1958,7 @@ public class Facility extends SubLocationABC<Facility> {
 					List<WorkInstruction> cheWiList2 = inChe.getCheWorkInstructions();
 					Integer cheCountGot2 = cheWiList2.size();
 					if (cheCountGot2 < wiCountGot) {
-						LOGGER.error("setUpCheContainerFromString did not result in CHE getting all work instructions. Why?"); 
+						LOGGER.error("setUpCheContainerFromString did not result in CHE getting all work instructions. Why?");
 					}
 
 				}
@@ -2028,8 +2041,7 @@ public class Facility extends SubLocationABC<Facility> {
 		if (ediExportService != null) {
 			try {
 				ediExportService.sendWorkInstructionsToHost(inWiList);
-			}
-			catch (IOException e) {
+			} catch (IOException e) {
 				LOGGER.warn("Unable to send wi list to service:" + ediExportService, e);
 			}
 		}
@@ -2062,35 +2074,35 @@ public class Facility extends SubLocationABC<Facility> {
 			itemMaster,
 			uomMaster);
 	}
-	
+
 	public final int sendToAllSiteControllers(MessageABC message) {
 		SessionManager sessionManager = SessionManager.getInstance();
 		Set<User> users = this.getSiteControllerUsers();
 		Set<CsSession> sessions = sessionManager.getSessions(users);
-		for(CsSession session : sessions) {
+		for (CsSession session : sessions) {
 			session.sendMessage(message);
 		}
 		return sessions.size();
 	}
-	
+
 	public final Set<SiteController> getSiteControllers() {
 		Set<SiteController> siteControllers = new HashSet<SiteController>();
-		
-		for(CodeshelfNetwork network : this.getNetworks()) {
+
+		for (CodeshelfNetwork network : this.getNetworks()) {
 			siteControllers.addAll(network.getSiteControllers().values());
-		}		
+		}
 		return siteControllers;
 	}
-	
+
 	public final Set<User> getSiteControllerUsers() {
 		Set<User> users = new HashSet<User>();
-		
-		for(SiteController sitecon : this.getSiteControllers()) {
+
+		for (SiteController sitecon : this.getSiteControllers()) {
 			User user = User.DAO.findByDomainId(this.getParentOrganization(), sitecon.getDomainId());
-			if(user != null) {
+			if (user != null) {
 				users.add(user);
 			} else {
-				LOGGER.warn("Couldn't find user for site controller "+sitecon.getDomainId());
+				LOGGER.warn("Couldn't find user for site controller " + sitecon.getDomainId());
 			}
 		}
 		return users;

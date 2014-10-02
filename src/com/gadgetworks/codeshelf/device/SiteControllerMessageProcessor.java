@@ -9,6 +9,7 @@ import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.ws.jetty.client.JettyWebSocketClient;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.CommandABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.PingCommand;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.message.LightLedsMessage;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageProcessor;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.NetworkStatusMessage;
@@ -104,7 +105,12 @@ public class SiteControllerMessageProcessor extends MessageProcessor {
 			LOGGER.info("Processing Network Status update");
 			this.deviceManager.updateNetwork(update.getNetwork());
 		}
-
+		else if (message instanceof LightLedsMessage)
+		{
+			LightLedsMessage msg = (LightLedsMessage) message;
+			LOGGER.info("Processing LightLedsMessage");
+			// this.deviceManager.updateNetwork(update.getNetwork());
+		}
 	}
 	
 	@Override
