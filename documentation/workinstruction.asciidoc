@@ -17,15 +17,15 @@
 |===
 
 == Introduction
-The Codeshelf system will export the results of the work it has directed so that it can be utilized in other systems or spreadsheets.  Each movement of an item that was directed by the Codeshelf is tracked as a "Work Instruction" and describes what was moved, where it was moved and when it was moved.  The messages that come from the Codeshelf system are formatted as Comma Separated Value (CSV) records for each work instruction performed.  Work instruction records are unique within a Facility.  A facility represents a single warehouse or in some cases a logically separate operation in a multi-tenant space.  This document describes the format of the message and the data for each work instruction.
+The Codeshelf system will export the results of the work it has directed so that it can be utilized in other systems or spreadsheets.  Each instruction directed by the Codeshelf system is tracked as a "Work Instruction" and describes the what, where and when of how an item is moved.  The messages describing the completed work instructions are formatted as Comma Separated Value (CSV) records for each work instruction performed.  Each work instruction record is identified uniquely within a Facility.  A Facility often represents a single warehouse but in some cases a logically separate operation in a multi-tenant space.  This document describes the format of the message and the data for each work instruction.
 
 == Message Structure
-The message received from the Codeshelf system consists of records broken up in to fields.  A message is typically sent for each work instruction near the time of completion.  Within each message the first record is considered the 'header' and describes the fields that occur within the records that follow the header.  There may be one or more work instruction records following the header.  The message has these properties:
+The message received from the Codeshelf system consists of records broken up in to fields.  A message is typically sent for each work instruction soon after the time of completion.  Within each message the first record is considered the 'header' and describes the fields in the records that follow.  There may be one or more work instruction records following the header.  A message has these properties:
 
 Message Character Encoding:: UTF-8
-Record Separator:: each record is separated by either a LF (0x0A) or CRLF (Ox0D0A) commonly represented as as '\n' or '\r\n'.
+Record Separator:: each record is separated by either a LF (0x0A) or CRLF (Ox0D0A) commonly represented as '\n' or '\r\n'.
 Field Separator:: each field is separated by COMMA (0x2C) commonly represented as ','.
-Field Value:: the value of the field are the characters that occur between field separators
+Field Value:: the value of the field are the characters that occur between field separators.
 Delimited Field Value:: A special value that is surrounded with a QUOTATION MARK (neutral/vertical quotation mark) (0x22) commonly represented as '"'. The quotation mark follows a field separator (or beginning of line) and precedes the next field separator (or end of line). The quotation marks are not considered part of the field value.
 
 == Header Record
@@ -39,7 +39,7 @@ The following describes how to handle special characters that may occur within f
 A value that contains the field separator COMMA MUST be delimited with QUOTATION MARK
 
 === Embedded Quotation Marks
-A field value that contains QUOTATION MARK, MUST be escaped with an additional QUOTATION MARK. For example the a field like this: "Doll ""The Rock"" 6"" plush", represents the value: Doll "The Rock" 6" plush.
+A field value that contains a QUOTATION MARK, MUST be escaped with an additional QUOTATION MARK. For example, a field like this: "Doll ""The Rock"" 6"" plush", represents the value: Doll "The Rock" 6" plush.
 
 === Embedded Record Delimiters
 A field cannot contain line separation characters.
@@ -60,25 +60,25 @@ Fixed point format using a PERIOD character as the separator between the integra
 Numbers will NOT be written in exponential form using 'e' or 'E'
 
 ==== Leading Zeros
-Values with leading zeros are significant when not in a numeric field, In general, the value should be treated as a UTF-8 string such as in zip codes and identifiers.
+Values with leading zeros are significant when not in a field of data type Nuumeric, In general, the value should be treated as a UTF-8 string such as in zip codes and identifiers.
 
 === Common Data Types
 These are common data types that may be specified for a field
 
 ==== UTF-8 String
-The default type if unspecified
+The default type, if unspecified
 
 ==== Identifier
-All identifiers are considered unique only within the facility unless otherwise noted and should be treated as UTF-8 String unless otherwise noted. See globally unique identifiers below
+All identifiers are considered unique only within the facility, and should be treated as UTF-8 String unless otherwise noted. A globally unique identifier (GUID) is an example of an exception, see below.
 
 ==== Globally unique identifier (GUID)
-An Identifier type that may be represented as a 128-bit number
+An Identifier type that may be treated as a 128-bit number
 
 ==== Numeric Float
-The default type for numeric fields
+The default type for Numeric fields
 
 ==== Numeric Integer
-A numeric type that will not contain a PERIOD character and decimal parts. See numeric Floating Point Numbers above
+A numeric type that will not contain a PERIOD character and decimal parts. See Numeric Floating Point Numbers above
 
 ==== Enumerated Value
 When the field value represents a named member of a set of options, the field will be a UTF-8 String or Numeric Integer indicating the value
@@ -87,27 +87,10 @@ When the field value represents a named member of a set of options, the field wi
 
 White-space characters such as TAB or SPACE following or preceding a field delimiter should be considered insignificant and trimmed before processing
 
-=== Treatment of Numeric Field Values
-
-==== Negative Numbers
-First character may be a DASH to indicate a negative number
-
-==== Positive Numbers
-Will not contain a PLUS
-
-==== Floating Point Numbers
-Fixed point format using a PERIOD as the separator between the integral and decimal digits (with optional negative sign).
-
-==== Exponential Numbers
-Numbers will NOT be written in exponential form using 'e' or 'E'
-
-==== Leading Zeros
-Values with leading zeros that are significant to the Codeshelf system will be delimited with DOUBLE-QUOTES. In general, the value should be treated as a string such as in zip codes and identifiers.
-
 == Processing Instructions
 
 === Message Versioning
-The file version can be determined by finding a header prefixed with "version-". The number following the prefix indicates the Major and Minor version of the format separated by a PERIOD. Major versions are incremented if there is a change to the semantics of a field or removal of a field that may break processors of previous versions. Minor versions are incremented to indicate additional fields. Processors should be able to handle minor upgrades without error.
+The file version can be determined by finding a header prefixed with "version-". The number following the prefix indicates the Major and Minor version of the format separated by a PERIOD. Major versions are incremented if there is a change to the semantics of a field or removal of a field that may break processors of previous versions. Minor versions are incremented to indicate additional fields. Processors should be able to handle minor upgrades without error even if they ignore additional fields that appear.
 
 For example: "version-2.3" indicates MAJOR version '2' and MINOR version '3'
 
@@ -116,8 +99,6 @@ Processors should not fail in the presence of additional columns. Processors may
 
 === Extra Enumerated Values
 Enumerated values are 'named' values of a set.  Processors are expected to store undocumented enumerated values without error.
-Identifiers
-All identifiers are considered unique only within the facility unless otherwise noted and should be treated as UTF-8 String unless otherwise noted. A globally unique identifier (GUID) for instance, could be stored as a byte array.
 
 == Work Instruction Fields
 [cols="4*", options="header"]
@@ -151,7 +132,7 @@ All identifiers are considered unique only within the facility unless otherwise 
 |status
 |Enum WIStatus
 |Y
-|The latest status for this work instruction.  This status can be updated in a following message with the same domainId.
+|The latest status for this work instruction.  This status can be updated in a following message with the same workInstructionId.
 
 |orderGroupId
 |Identifier
@@ -191,7 +172,7 @@ All identifiers are considered unique only within the facility unless otherwise 
 |pickerId
 |Identifier
 |N
-|The id of the user that picked the item. Unique within the facility
+|The id of the user that picked the item.
 
 |planQuantity
 |Numeric Float
@@ -206,7 +187,7 @@ All identifiers are considered unique only within the facility unless otherwise 
 |cheId
 |Identifier
 |N
-|The identifier of the che unique within the facility
+|The identifier of the che used to perform work instruction
 
 |assigned
 |ISO8601 UTC
