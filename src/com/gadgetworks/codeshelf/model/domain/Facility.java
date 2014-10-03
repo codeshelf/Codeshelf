@@ -1444,13 +1444,13 @@ public class Facility extends SubLocationABC<Facility> {
 	/**
 	 * Utility function to create LED command group. Will return a list, which may be empty if there is nothing to send. Caller should check for empty list.
 	 * Called now for setting WI LED pattern for inventory pick.
-	 * May be called soon for directly lighting inventory item or location
+	 * Also called for directly lighting inventory item or location
 	 * @param inNetGuidStr
 	 * @param inItem
 	 * @param inColor
 	 */
 	@SuppressWarnings("rawtypes")
-	private List<LedCmdGroup> getLedCmdGroupListForItemOrLocation(final Item inItem,
+	public List<LedCmdGroup> getLedCmdGroupListForItemOrLocation(final Item inItem,
 		final ColorEnum inColor,
 		final ILocation<?> inLocation) {
 
@@ -1633,11 +1633,11 @@ public class Facility extends SubLocationABC<Facility> {
 		}
 		LedController theController = theLocation.getEffectiveLedController();
 		if (theController != null) {
-			NetGuid theGuid = theController.getDeviceNetGuid();
+			String theGuidStr = theController.getDeviceGuidStr();
 
 			String theLedCommands = LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList);
 			LOGGER.info("lightOneLocation called from UI");
-			LightLedsMessage theMessage = new LightLedsMessage(theGuid, kDurationLocationLight, theLedCommands);
+			LightLedsMessage theMessage = new LightLedsMessage(theGuidStr, kDurationLocationLight, theLedCommands);
 			sendToAllSiteControllers(theMessage);
 		}
 
@@ -1672,11 +1672,11 @@ public class Facility extends SubLocationABC<Facility> {
 
 		LedController theController = location.getEffectiveLedController();
 		if (theController != null) {
-			NetGuid theGuid = theController.getDeviceNetGuid();
+			String theGuidStr = theController.getDeviceGuidStr();
 
 			String theLedCommands = LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList);
 			LOGGER.info("lightOneLocation called from UI");
-			LightLedsMessage theMessage = new LightLedsMessage(theGuid, kDurationItemLight, theLedCommands);
+			LightLedsMessage theMessage = new LightLedsMessage(theGuidStr, kDurationItemLight, theLedCommands);
 			sendToAllSiteControllers(theMessage);
 		}
 	}
@@ -2071,12 +2071,17 @@ public class Facility extends SubLocationABC<Facility> {
 			errors.rejectValue("storedLocation", ErrorCode.FIELD_NOT_FOUND, "storedLocation was not found");
 			throw new InputValidationException(errors);
 		}
-		return importer.updateSlottedItem(false,
+		
+		// Proof of concept with existing UI
+		Item returnItem = importer.updateSlottedItem(false,
 			itemBean,
 			location,
 			new Timestamp(System.currentTimeMillis()),
 			itemMaster,
 			uomMaster);
+		if (returnItem != null)
+			this.lightOneItem("RED", returnItem.getPersistentId().toString());
+		return returnItem;
 	}
 
 	public final int sendToAllSiteControllers(MessageABC message) {

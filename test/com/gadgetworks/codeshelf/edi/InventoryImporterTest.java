@@ -12,17 +12,24 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.websocket.DecodeException;
+import javax.websocket.EncodeException;
+
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.application.Configuration;
+import com.gadgetworks.codeshelf.device.LedCmdGroup;
+import com.gadgetworks.codeshelf.device.LedCmdGroupSerializer;
+import com.gadgetworks.codeshelf.device.LedSample;
 import com.gadgetworks.codeshelf.model.HousekeepingInjector;
 import com.gadgetworks.codeshelf.model.LedRange;
 import com.gadgetworks.codeshelf.model.WiSetSummary;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Bay;
+import com.gadgetworks.codeshelf.model.domain.Tier;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
@@ -40,6 +47,12 @@ import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.model.domain.SubLocationABC;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.service.WorkService;
+import com.gadgetworks.codeshelf.ws.jetty.io.JsonDecoder;
+import com.gadgetworks.codeshelf.ws.jetty.io.JsonEncoder;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.message.LightLedsMessage;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.request.LoginRequest;
+import com.gadgetworks.flyweight.command.ColorEnum;
 import com.gadgetworks.flyweight.command.NetGuid;
 import com.google.common.base.Strings;
 
@@ -287,18 +300,19 @@ public class InventoryImporterTest extends EdiTestABC {
 		LedController controller1 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000011"));
 		LedController controller2 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000012"));
 		LedController controller3 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000013"));
+		String uuid1 = controller1.getPersistentId().toString();
+		String uuid2 = controller2.getPersistentId().toString();
+		String uuid3 = controller3.getPersistentId().toString();
+
 		SubLocationABC tier = (SubLocationABC) facility.findSubLocationById("A1.B1.T1");
-		tier.setLedController(controller1);
-		tier = (SubLocationABC) facility.findSubLocationById("A1.B2.T1");
-		tier.setLedController(controller1);
+
+		((Tier) tier).setControllerChannel(uuid1, "1", "aisle"); // all A1 T1
+
 		tier = (SubLocationABC) facility.findSubLocationById("A2.B1.T1");
-		tier.setLedController(controller2);
-		tier = (SubLocationABC) facility.findSubLocationById("A2.B2.T1");
-		tier.setLedController(controller2);
+		((Tier) tier).setControllerChannel(uuid2, "1", "aisle"); // all A2 T1
+
 		tier = (SubLocationABC) facility.findSubLocationById("A3.B1.T1");
-		tier.setLedController(controller3);
-		tier = (SubLocationABC) facility.findSubLocationById("A3.B2.T1");
-		tier.setLedController(controller3);
+		((Tier) tier).setControllerChannel(uuid3, "1", "aisle"); // all A3 T1
 
 		return facility;
 
@@ -664,10 +678,10 @@ public class InventoryImporterTest extends EdiTestABC {
 		HousekeepingInjector.turnOffHK();
 		// Set up a cart for order 12345, which will generate work instructions
 		facility.setUpCheContainerFromString(theChe, "12345");
-		
+
 		// Just checking variant case hard on ebeans. What if we immediately set up again? Answer optimistic lock exception and assorted bad behavior.
 		// facility.setUpCheContainerFromString(theChe, "12345");
-	
+
 		HousekeepingInjector.restoreHKDefaults();
 
 		List<WorkInstruction> aList = theChe.getCheWorkInstructions();
@@ -678,7 +692,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		Integer wiCountAfterScan = wiListAfterScan.size();
 		// Now getting 2. Something is wrong!
 		// Assert.assertEquals((Integer) 1, wiCountAfterScan); // only the one each item in 403 should be there. The item in 402 is earlier on the path.
-		
+
 		WorkInstruction wi1 = wiListAfterScan.get(0);
 		Assert.assertNotNull(wi1);
 		String groupSortStr1 = wi1.getGroupAndSortCode();
@@ -692,9 +706,9 @@ public class InventoryImporterTest extends EdiTestABC {
 		Assert.assertEquals("0002", groupSortStr2);
 		Double wi2Pos = wi2.getPosAlongPath();
 		String wi2Item = wi2.getItemMasterId();
-		
+
 		Double pos403 = locationD403.getPosAlongPath();
-		Double pos402 = locationD402.getPosAlongPath();		
+		Double pos402 = locationD402.getPosAlongPath();
 
 		// just checking the relationships of the work instruction
 		OrderDetail wiDetail = wi1.getOrderDetail();
@@ -763,8 +777,7 @@ public class InventoryImporterTest extends EdiTestABC {
 				+ "\r\n1,USF314,TARGET,12000,12000,1123,12/16 oz Bowl Lids -PLA Compostable,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,PENNYS,12010,12010,1123,12/16 oz Bowl Lids -PLA Compostable,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,12345,12345,1123,12/16 oz Bowl Lids -PLA Compostable,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n1,USF314,COSTCO,12345,12345,1522,SJJ BPP,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\n";
+				+ "\r\n1,USF314,COSTCO,12345,12345,1522,SJJ BPP,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0" + "\n";
 
 		byte[] csvArray2 = csvString2.getBytes();
 		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
@@ -803,16 +816,72 @@ public class InventoryImporterTest extends EdiTestABC {
 		Assert.assertNotNull(wi4);
 		String groupSortStr4 = wi4.getGroupAndSortCode();
 		Assert.assertEquals("0004", groupSortStr4);
-		
+
 		// We would really like to see in integration test if all three position controllers light at once for SKU 1123
 		// Just some quick log output to see it
 		for (WorkInstruction wi : wiListAfterScan)
-			LOGGER.debug("WiSort: " + wi.getGroupAndSortCode() + " cntr: " + wi.getContainerId() + " loc: " + wi.getPickInstruction() + " desc.: " + wi.getDescription());
+			LOGGER.debug("WiSort: " + wi.getGroupAndSortCode() + " cntr: " + wi.getContainerId() + " loc: "
+					+ wi.getPickInstruction() + " desc.: " + wi.getDescription());
 
 		// Try setting up the cart again in different order. DOES NOT WORK! Hits this optimistic commit case, then fails
 		// 		at com.avaje.ebeaninternal.server.core.DefaultServer.refresh(DefaultServer.java:545)
 		// facility.setUpCheContainerFromString(theChe, "12345,12010,12000");
 		// wiListAfterScan = facility.getWorkInstructions(theChe, ""); // get all in working order
+
+		// A small add on. Test the LightLedsMessage as we are able.
+		Item theItem = wi1.getWiItem();
+		if (theItem == null) {
+			LOGGER.error("fix testSameProductPick"); // use a wi with an item, a proper pick
+			return;
+		}
+		
+		// Just a check. The wi led stream is presumably serialized correctly. Let's look at it and verify.
+		String reference1 = wi1.getLedCmdStream();
+		LOGGER.info("  wi cmd stream: " + reference1);
+		List<LedCmdGroup> wi1LedCmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(reference1);
+		Assert.assertTrue(LedCmdGroupSerializer.verifyLedCmdGroupList(wi1LedCmdGroups));
+
+		
+		// Now we have an item. Mimic how the code works for lightOneItem
+		LocationABC location = theItem.getStoredLocation();
+		List<LedCmdGroup> ledCmdGroupList = facility.getLedCmdGroupListForItemOrLocation(theItem, ColorEnum.RED, location);
+		if (ledCmdGroupList.size() == 0) {
+			LOGGER.error("location with incomplete LED configuration in testSameProductPick");
+			return;
+		}
+		// Test serializer and deserializer and verify that all LED commands have a position.
+		Assert.assertTrue(LedCmdGroupSerializer.verifyLedCmdGroupList(ledCmdGroupList));		
+		String theLedCommands = LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList);		
+		LOGGER.info("item cmd stream: " + theLedCommands);
+	
+		List<LedCmdGroup> dsLedCmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(theLedCommands);
+		Assert.assertTrue(LedCmdGroupSerializer.verifyLedCmdGroupList(dsLedCmdGroups));
+
+
+		LedController theController = location.getEffectiveLedController();
+		if (theController != null) {
+			String theGuidStr = theController.getDeviceGuidStr();
+			LightLedsMessage theMessage = new LightLedsMessage(theGuidStr, 5, theLedCommands);
+			// check encode and decode of the message similar to how the jetty socket does it.
+			JsonEncoder encoder = new JsonEncoder();
+			String messageString = "";
+			try {
+				messageString = encoder.encode(theMessage);
+			} catch (EncodeException e) {
+				LOGGER.error("testSameProductPick Json encode", e);
+			}
+			
+			JsonDecoder decoder = new JsonDecoder();
+			MessageABC decodedMessage = null;
+			try {
+				decodedMessage = decoder.decode(messageString);
+			} catch (DecodeException e) {
+				LOGGER.error("testSameProductPick Json decode", e);
+			}
+			Assert.assertTrue(decodedMessage instanceof LightLedsMessage);
+			String djsonLedCmdGroupsString = ((LightLedsMessage)decodedMessage).getLedCommands();			
+			Assert.assertTrue(LightLedsMessage.verifyCommandString(djsonLedCmdGroupsString));
+		}
 
 	}
 

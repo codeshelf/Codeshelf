@@ -11,6 +11,8 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.UUID;
 
 import lombok.Getter;
@@ -195,9 +197,21 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 	private class LedPositionComparator implements Comparator<LedSample> {
 
 		public int compare(LedSample inSample1, LedSample inSample2) {
-			if (inSample1.getPosition() < inSample2.getPosition()) {
+			// throw proofing. See these errors sometimes.
+			if (inSample1 == null || inSample2 == null ){
+				LOGGER.error("null object in LedPositionComparator");
+				return 0;
+			}
+			Short short1 = inSample1.getPosition();
+			Short short2 = inSample2.getPosition();
+			if (short1 == null || short2 == null ){
+				LOGGER.error("uninitialized object in LedPositionComparator");
+				return 0;
+			}
+		
+			if (short1 < short2) {
 				return -1;
-			} else if (inSample1.getPosition() > inSample2.getPosition()) {
+			} else if (short1 > short2) {
 				return 1;
 			} else {
 				return 0;
@@ -219,12 +233,17 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * Clear the data structure
+	 * This should fire once after the input duration seconds. On firing, clear out extra LED lights and refresh the aisle lights.
 	 */
 	private void setLightsExpireTimer(int inSeconds) {
-		// TODO
-		// This should set some sort of time. On expiration, it should 
-		// clearExtraLedsFromMap(); and updateLeds();
+		Timer timer = new Timer();
+		timer.schedule(new TimerTask() {
+			  @Override
+			  public void run() {
+				  clearExtraLedsFromMap();
+				  updateLeds();
+			  }
+			}, inSeconds*1000);
 	}
 
 	// --------------------------------------------------------------------------

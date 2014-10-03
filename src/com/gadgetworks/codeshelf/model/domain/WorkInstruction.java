@@ -521,7 +521,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 			return returnStr;
 
 		LocationABC<?> theLocation = (LocationABC<?>) theWiLocation;
-		if (theLocation.getClass() == Facility.class)
+		if (theLocation instanceof Facility)
 			return returnStr;
 
 		Item wiItem = theLocation.getStoredItemFromMasterIdAndUom(getItemId(), getUomMasterId());
@@ -535,6 +535,19 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 			returnStr = theRange.getRangeString();
 		}
 		return returnStr;
+	}
+	
+	// convenience method. This may return null! Normally returns something only for pick wi
+	public Item getWiItem(){
+		ILocation<?> theWiLocation = this.getLocation();
+		if (theWiLocation == null)
+			return null; // should not happen
+		
+		LocationABC<?> theLocation = (LocationABC<?>) theWiLocation;
+		if (theLocation instanceof Facility)
+			return null;
+
+		return theLocation.getStoredItemFromMasterIdAndUom(getItemId(), getUomMasterId());
 	}
 
 	public String getItemMasterId() {
