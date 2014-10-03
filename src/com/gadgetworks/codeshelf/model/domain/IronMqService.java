@@ -165,12 +165,12 @@ public class IronMqService extends EdiServiceABC {
 				Optional<Queue> queue = getWorkInstructionQueue();
 				if (queue.isPresent()) {
 					queue.get().getSize();
-					setServiceStateEnum(EdiServiceStateEnum.LINKED);
+					setServiceState(EdiServiceStateEnum.LINKED);
 					LOGGER.warn("IronMqService is linked, will export work instructions");
 				}
 				else {
 					LOGGER.warn("Unable to get queue or no credentials set");
-					setServiceStateEnum(EdiServiceStateEnum.UNLINKED);
+					setServiceState(EdiServiceStateEnum.UNLINKED);
 					LOGGER.warn("IronMqService is unlinked, will not export work instructions");
 				}
 			}

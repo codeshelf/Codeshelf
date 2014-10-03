@@ -16,6 +16,7 @@ import org.mockito.ArgumentCaptor;
 import com.gadgetworks.codeshelf.generators.FacilityGenerator;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
+import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.util.MemoryConfiguration;
 import com.gadgetworks.flyweight.command.CommandControlDisplayMessage;
 import com.gadgetworks.flyweight.command.ICommand;
@@ -64,7 +65,8 @@ public class CsDeviceManagerTest {
 		NetGuid cheGuid = new NetGuid("0x001");
 
 		FacilityGenerator facilityGenerator = new FacilityGenerator();
-		CodeshelfNetwork network = new CodeshelfNetwork(facilityGenerator.generateValid(), "0x00", "");
+		Facility facility = facilityGenerator.generateValid();
+		CodeshelfNetwork network = facility.createNetwork("DEFAULTTEST");
 		Che che = new Che();
 		che.setPersistentId(UUID.randomUUID());
 		che.setDeviceNetGuid(cheGuid);

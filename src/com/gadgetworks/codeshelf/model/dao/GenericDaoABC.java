@@ -18,6 +18,7 @@ import javax.persistence.PersistenceException;
 import org.apache.commons.lang.NotImplementedException;
 import org.hibernate.Criteria;
 import org.hibernate.Session;
+import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.criterion.SimpleExpression;
 import org.slf4j.Logger;
@@ -202,11 +203,11 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 		List<T> results = criteria.list();
 		return results;
 	}*/
-	public final List<T> findByFilter(List<SimpleExpression> inFilter) {
+	public final List<T> findByFilter(List<Criterion> inFilter) {
 		// If we have a valid filter then get the filtered objects.
 		Session session = getCurrentSession();
         Criteria criteria = session.createCriteria(getDaoClass());
-		for (SimpleExpression expression : inFilter) {
+		for (Criterion expression : inFilter) {
 			criteria.add(expression);
 		}
 		List<T> results = criteria.list();

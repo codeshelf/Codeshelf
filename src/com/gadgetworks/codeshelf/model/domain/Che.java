@@ -97,7 +97,6 @@ public class Che extends WirelessDeviceABC {
 	@Getter
 	private List<ContainerUse>	uses	= new ArrayList<ContainerUse>();
 
-	// ebeans maintains a lazy-loaded list of work instructions for this CHE
 	@OneToMany(mappedBy = "assignedChe")
 	@OrderBy("groupAndSortCode")
 	@Getter
@@ -145,13 +144,24 @@ public class Che extends WirelessDeviceABC {
 			LOGGER.error("cannot remove ContainerUse "+inContainerUse.getDomainId()+" from "+this.getDomainId()+" because it isn't found in children");
 		}
 	}
-	
-	// Ebean Ops for work instructions
+
 	public final void addWorkInstruction(WorkInstruction inWorkInstruction) {
-		cheWorkInstructions.add(inWorkInstruction);
+		Che previousChe = inWorkInstruction.getAssignedChe();
+		if(previousChe == null) {
+			cheWorkInstructions.add(inWorkInstruction);
+			inWorkInstruction.setAssignedChe(this);
+		} else if(!previousChe.equals(this)) {
+			LOGGER.error("cannot add WorkInstruction "+inWorkInstruction.getPersistentId()+" to "+this.getDomainId()+" because it has not been removed from "+previousChe.getDomainId());
+		}	
 	}
+
 	public final void removeWorkInstruction(WorkInstruction inWorkInstruction) {
-		cheWorkInstructions.remove(inWorkInstruction);
+		if(this.cheWorkInstructions.contains(inWorkInstruction)) {
+			inWorkInstruction.setAssignedChe(null);
+			cheWorkInstructions.remove(inWorkInstruction);
+		} else {
+			LOGGER.error("cannot remove WorkInstruction "+inWorkInstruction.getPersistentId()+" from "+this.getDomainId()+" because it isn't found in children");
+		}
 	}
 	
 	// used to have a lomboc annotation, but that had an infinite loop potential with ContainerUse toString.

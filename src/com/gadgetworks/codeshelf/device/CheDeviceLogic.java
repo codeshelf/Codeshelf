@@ -1244,7 +1244,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			if (wi == null)
 				LOGGER.error("misunderstanding in sendHousekeepingDisplay");
 			else {
-				WorkInstructionTypeEnum theEnum = wi.getTypeEnum();
+				WorkInstructionTypeEnum theEnum = wi.getType();
 				if (theEnum == WorkInstructionTypeEnum.HK_BAYCOMPLETE) {
 					returnBool = true;
 					showSpecialPositionCode(PosControllerInstr.BAY_COMPLETE_CODE, wi.getContainerId());

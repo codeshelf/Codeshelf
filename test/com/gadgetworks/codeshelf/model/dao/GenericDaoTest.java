@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import org.hibernate.Session;
 import org.hibernate.Transaction;
+import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.criterion.SimpleExpression;
 import org.junit.Assert;
@@ -40,7 +41,7 @@ public class GenericDaoTest extends DAOTestABC {
 		organization.setDescription("LOADBYFILTER");
 		mOrganizationDao.store(organization);
 		
-		List<SimpleExpression> filterParams = new ArrayList<SimpleExpression>();
+		List<Criterion> filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("domainId", "LOADBYFILTERTEST1"));
 		List<Organization> foundOrganizationList = mOrganizationDao.findByFilter(filterParams);
 		

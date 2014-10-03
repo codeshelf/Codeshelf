@@ -71,8 +71,8 @@ public class SessionManager {
 		return this.activeSessions.get(sessionId);
 	}
 	
-	public CsSession getSession(User user) {
-		for (CsSession session : this.getSessions()) {
+	public UserSession getSession(User user) {
+		for (UserSession session : this.getSessions()) {
 			if(session.getUser().equals(user)) {
 				return session;
 			}
@@ -80,10 +80,10 @@ public class SessionManager {
 		return null;
 	}
 	
-	public Set<CsSession> getSessions(Set<User> users) {
-		Set<CsSession> userSessions = new HashSet<CsSession>();
+	public Set<UserSession> getSessions(Set<User> users) {
+		Set<UserSession> userSessions = new HashSet<UserSession>();
 		
-		for (CsSession session : this.getSessions()) {
+		for (UserSession session : this.getSessions()) {
 			if(users.contains(session.getUser())) {
 				userSessions.add(session);
 			}

@@ -54,17 +54,18 @@ public class WiFactory {
 		Container ourCntr = inPrevWi.getContainer();
 		
 		WorkInstruction resultWi = new WorkInstruction();
-		resultWi.setParent(inFacility);
 		resultWi.setOrderDetail(null);
 		resultWi.setCreated(new Timestamp(System.currentTimeMillis()));
 		resultWi.setLedCmdStream("[]"); // empty array
+		inFacility.addWorkInstruction(resultWi);
 		setWorkInstructionLedPatternForHK(resultWi, inType, inPrevWi);
+		
 
 		long seq = SequenceNumber.generate();
 		String wiDomainId = Long.toString(seq);
 		resultWi.setDomainId(wiDomainId);
-		resultWi.setTypeEnum(inType);
-		resultWi.setStatusEnum(WorkInstructionStatusEnum.NEW); // perhaps there could be a general housekeep status as there is for short, 
+		resultWi.setType(inType);
+		resultWi.setStatus(WorkInstructionStatusEnum.NEW); // perhaps there could be a general housekeep status as there is for short, 
 		// but short denotes completion as short, even if it was short from the start and there was never a chance to complete or short.
 
 		resultWi.setLocation(inFacility);

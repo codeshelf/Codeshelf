@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -31,6 +32,7 @@ import javax.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
+import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.criterion.SimpleExpression;
 import org.postgresql.util.PSQLException;
@@ -68,8 +70,8 @@ import com.gadgetworks.codeshelf.validation.ErrorCode;
 import com.gadgetworks.codeshelf.validation.Errors;
 import com.gadgetworks.codeshelf.validation.InputValidationException;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
-import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
 import com.gadgetworks.codeshelf.ws.jetty.server.SessionManager;
+import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
 import com.gadgetworks.flyweight.command.ColorEnum;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
@@ -162,6 +164,10 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	private Map<String, LocationAlias>		locationAliases	= new HashMap<String, LocationAlias>();
+
+	@OneToMany(mappedBy = "parent")
+	@Getter
+	private List<WorkInstruction>			workInstructions= new ArrayList<WorkInstruction>();
 
 
 
@@ -322,6 +328,25 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 			ediServices.remove(inEdiService);			
 		} else {
 			LOGGER.error("cannot remove EdiService "+inEdiService.getDomainId()+" from "+this.getDomainId()+" because it isn't found in children");
+		}
+	}
+
+	public final void addWorkInstruction(WorkInstruction wi) {
+		Facility previousFacility = wi.getParent();
+		if(previousFacility == null) {
+			workInstructions.add(wi);
+			wi.setParent(this);
+		} else if(!previousFacility.equals(this)) {
+			LOGGER.error("cannot add WorkInstruction "+wi.getPersistentId()+" to "+this.getDomainId()+" because it has not been removed from "+previousFacility.getDomainId());
+		}	
+	}
+
+	public final void removeWorkInstruction(WorkInstruction wi) {
+		if(this.workInstructions.contains(wi)) {
+			wi.setParent(null);
+			workInstructions.remove(wi);			
+		} else {
+			LOGGER.error("cannot remove WorkInstruction "+wi.getPersistentId()+" from "+this.getDomainId()+" because it isn't found in children");
 		}
 	}
 
@@ -832,16 +857,18 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		Set<Che> changedChes = new HashSet<Che>();
 		changedChes.add(inChe);
 
-		// Delete any planned WIs for this CHE.
-		List<SimpleExpression> filterParams = new ArrayList<SimpleExpression>();
-		filterParams.add(Restrictions.eq("assignedChe.persistentId", inChe.getPersistentId()));
-		filterParams.add(Restrictions.eq("type", WorkInstructionTypeEnum.PLAN));
-		for (WorkInstruction wi : WorkInstruction.DAO.findByFilter(filterParams)) {
 		// This is ugly. We probably do want a housekeeping type here, but then might want subtypes not in this query
-		filterParams.put("typeplan", WorkInstructionTypeEnum.PLAN.toString());
-		filterParams.put("typehkbaychange", WorkInstructionTypeEnum.HK_BAYCOMPLETE.toString());
-		filterParams.put("typehkrepeat", WorkInstructionTypeEnum.HK_REPEATPOS.toString());
-		for (WorkInstruction wi : WorkInstruction.DAO.findByFilter("assignedChe.persistentId = :chePersistentId and (typeEnum = :typeplan or typeEnum = :typehkbaychange or typeEnum = :typehkrepeat) ",
+		Collection<WorkInstructionTypeEnum> wiTypes=new ArrayList<WorkInstructionTypeEnum>(3);
+		wiTypes.add(WorkInstructionTypeEnum.PLAN);
+		wiTypes.add(WorkInstructionTypeEnum.HK_BAYCOMPLETE);
+		wiTypes.add(WorkInstructionTypeEnum.HK_REPEATPOS);
+		
+		// Delete any planned WIs for this CHE.
+		List<Criterion> filterParams = new ArrayList<Criterion>();
+		filterParams.add(Restrictions.eq("assignedChe.persistentId", inChe.getPersistentId()));
+		filterParams.add(Restrictions.in("type", wiTypes));
+
+		for (WorkInstruction wi : WorkInstruction.DAO.findByFilter(filterParams)) {
 			try {
 
 				Che assignedChe = wi.getAssignedChe();
@@ -975,15 +1002,17 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 			startingPathPos = selectedBay.getPosAlongPath();
 		}
 
+		Collection<WorkInstructionTypeEnum> wiTypes = new ArrayList<WorkInstructionTypeEnum>(3);
+		wiTypes.add(WorkInstructionTypeEnum.PLAN);
+		wiTypes.add(WorkInstructionTypeEnum.HK_BAYCOMPLETE);
+		wiTypes.add(WorkInstructionTypeEnum.HK_REPEATPOS);
+		
 		// Get all of the PLAN WIs assigned to this CHE beyond the specified position.
-		List<SimpleExpression> filterParams = new ArrayList<SimpleExpression>();
+		List<Criterion> filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("assignedChe", inChe));
-		filterParams.add(Restrictions.eq("type", WorkInstructionTypeEnum.PLAN));
+		filterParams.add(Restrictions.in("type", wiTypes));
 		filterParams.add(Restrictions.ge("posAlongPath", startingPathPos));
 		
-		filterParams.put("typeplan", WorkInstructionTypeEnum.PLAN.toString());
-		filterParams.put("typehkbaychange", WorkInstructionTypeEnum.HK_BAYCOMPLETE.toString());
-		filterParams.put("typehkrepeat", WorkInstructionTypeEnum.HK_REPEATPOS.toString());
 		//String filter = "(assignedChe.persistentId = :chePersistentId) and (typeEnum = :type) and (posAlongPath >= :pos)";
 		//throw new NotImplementedException("Needs to be implemented with a custom query");
 		
@@ -1322,6 +1351,9 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		for (WorkInstruction wi : inOrderDetail.getWorkInstructions()) {
 			if (wi.getType().equals(WorkInstructionTypeEnum.PLAN)) {
 				resultWi = wi;
+				if(!wi.getFacility().equals(this)) {
+					LOGGER.error("Strange: Work instruction "+resultWi.getPersistentId()+" in OrderDetail "+inOrderDetail.getDomainId()+" does not belong to Facility "+this.getDomainId()+" (continuing)");
+				}
 				break;
 			} else if (wi.getType().equals(WorkInstructionTypeEnum.ACTUAL)) {
 				// Deduct any WIs already completed for this line item.
@@ -1337,8 +1369,11 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 			// If there is no planned WI then create one.
 			if (resultWi == null) {
 				resultWi = new WorkInstruction();
+				resultWi.setOrderDetail(inOrderDetail);
 				resultWi.setCreated(new Timestamp(System.currentTimeMillis()));
 				resultWi.setLedCmdStream("[]"); // empty array
+				resultWi.setStatus(WorkInstructionStatusEnum.NEW);
+				this.addWorkInstruction(resultWi);
 			}
 
 			// Set the LED lighting pattern for this WI.
@@ -1400,12 +1435,12 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 			}
 
 			resultWi.setContainer(inContainer);
-			resultWi.setAssignedChe(inChe);
 			resultWi.setPlanQuantity(qtyToPick);
 			resultWi.setPlanMinQuantity(minQtyToPick);
 			resultWi.setPlanMaxQuantity(maxQtyToPick);
 			resultWi.setActualQuantity(0);
 			resultWi.setAssigned(inTime);
+			resultWi.setType(inType);
 
 			inOrderDetail.addWorkInstruction(resultWi); // set parent
 			inChe.addWorkInstruction(resultWi); // attach to che
@@ -2200,8 +2235,8 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 	public final int sendToAllSiteControllers(MessageABC message) {
 		SessionManager sessionManager = SessionManager.getInstance();
 		Set<User> users = this.getSiteControllerUsers();
-		Set<CsSession> sessions = sessionManager.getSessions(users);
-		for(CsSession session : sessions) {
+		Set<UserSession> sessions = sessionManager.getSessions(users);
+		for(UserSession session : sessions) {
 			session.sendMessage(message);
 		}
 		return sessions.size();
@@ -2220,7 +2255,7 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		Set<User> users = new HashSet<User>();
 		
 		for(SiteController sitecon : this.getSiteControllers()) {
-			User user = User.DAO.findByDomainId(this.getParentOrganization(), sitecon.getDomainId());
+			User user = User.DAO.findByDomainId(this.getOrganization(), sitecon.getDomainId());
 			if(user != null) {
 				users.add(user);
 			} else {

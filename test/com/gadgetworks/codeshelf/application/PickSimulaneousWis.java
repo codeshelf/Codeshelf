@@ -62,8 +62,6 @@ public class PickSimulaneousWis extends EdiTestABC {
 		// All tiers have controllers associated.
 		// There are two CHE called CHE1 and CHE2
 
-		this.getPersistenceService().beginTenantTransaction();
-
 		Organization organization = new Organization();
 		String oName = "O-" + inOrganizationName;
 		organization.setDomainId(oName);
@@ -166,7 +164,6 @@ public class PickSimulaneousWis extends EdiTestABC {
 		tier.setLedController(controller3);
 		tier = (SubLocationABC) facility.findSubLocationById("A3.B2.T1");
 		tier.setLedController(controller3);
-		getPersistenceService().endTenantTransaction();
 
 		return facility;
 
@@ -175,6 +172,7 @@ public class PickSimulaneousWis extends EdiTestABC {
 	@SuppressWarnings("unused")
 	@Test
 	public final void testPick() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
 
 		Facility facility = setUpSimpleNoSlotFacility("PK01");
 
@@ -199,8 +197,6 @@ public class PickSimulaneousWis extends EdiTestABC {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		this.getPersistenceService().beginTenantTransaction();
-
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvInventoryImporter importer = new InventoryCsvImporter(mItemMasterDao, mItemDao, mUomMasterDao);
 		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
@@ -208,7 +204,6 @@ public class PickSimulaneousWis extends EdiTestABC {
 
 		LocationABC<?> locationD402 = (LocationABC<?>) facility.findSubLocationById("D402");
 
-		this.getPersistenceService().beginTenantTransaction();
 		Item item1123Loc402EA = locationD402.getStoredItemFromMasterIdAndUom("1123", "EA");
 		Assert.assertNotNull(item1123Loc402EA);
 

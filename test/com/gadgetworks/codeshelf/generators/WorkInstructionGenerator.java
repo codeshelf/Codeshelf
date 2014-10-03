@@ -28,13 +28,22 @@ public class WorkInstructionGenerator {
 		workInstruction.setOrderDetail(generateValidOrderDetail(facility));
 		workInstruction.setDomainId("WIDOMAINID");
 		workInstruction.setDescription("A DESCRIPTION");
-		workInstruction.setContainer(new Container(facility, "C1"));
-		workInstruction.setItemMaster(new ItemMaster(facility, "ITEMID", new UomMaster(facility, "UOMID")));
+		
+		Container container = facility.createContainer("C1");
+		workInstruction.setContainer(container);
+		
+		UomMaster uomMaster = facility.createUomMaster("UOMID");
+		
+		ItemMaster itemMaster = facility.createItemMaster("ITEMID", uomMaster);
+		workInstruction.setItemMaster(itemMaster);
 		workInstruction.setLocationId("LOCID");
-		workInstruction.setLocation(new Aisle(facility, "A1", Point.getZeroPoint(), Point.getZeroPoint()));
+		
+		Aisle aisle=facility.createAisle("A1", Point.getZeroPoint(), Point.getZeroPoint());
+		
+		workInstruction.setLocation(aisle);
 		workInstruction.setPickerId("Picker");
-		workInstruction.setTypeEnum(WorkInstructionTypeEnum.ACTUAL);
-		workInstruction.setStatusEnum(WorkInstructionStatusEnum.NEW);
+		workInstruction.setType(WorkInstructionTypeEnum.ACTUAL);
+		workInstruction.setStatus(WorkInstructionStatusEnum.NEW);
 		workInstruction.setPickInstruction("Pick it");
 		workInstruction.setPlanQuantity(2);
 		workInstruction.setPlanMinQuantity(2);

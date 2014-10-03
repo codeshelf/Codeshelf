@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.criterion.SimpleExpression;
 import org.slf4j.Logger;
@@ -55,7 +56,7 @@ public class RegisterFilterCommand extends CommandABC {
 			List<Map<String, Object>> filterParams = request.getFilterParams();
 			
 			// extract property map
-			List<SimpleExpression> processedParams = new ArrayList<SimpleExpression>();
+			List<Criterion> processedParams = new ArrayList<Criterion>();
 			//HashMap<String, Object> processedParams = new HashMap<String, Object>();
 			for (Map<String, Object> map : filterParams) {
 				String name = (String) map.get("name");

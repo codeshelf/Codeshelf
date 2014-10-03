@@ -95,8 +95,6 @@ import com.gadgetworks.codeshelf.model.domain.UomMaster;
 import com.gadgetworks.codeshelf.model.domain.UomMaster.UomMasterDao;
 import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.model.domain.User.UserDao;
-import com.gadgetworks.codeshelf.model.domain.UserSession;
-import com.gadgetworks.codeshelf.model.domain.UserSession.UserSessionDao;
 import com.gadgetworks.codeshelf.model.domain.Vertex;
 import com.gadgetworks.codeshelf.model.domain.Vertex.VertexDao;
 import com.gadgetworks.codeshelf.model.domain.WirelessDeviceABC;
@@ -349,10 +347,6 @@ public final class ServerMain {
 				requestStaticInjection(User.class);
 				bind(new TypeLiteral<ITypedDao<User>>() {
 				}).to(UserDao.class);
-
-				requestStaticInjection(UserSession.class);
-				bind(new TypeLiteral<ITypedDao<UserSession>>() {
-				}).to(UserSessionDao.class);
 
 				requestStaticInjection(Vertex.class);
 				bind(new TypeLiteral<ITypedDao<Vertex>>() {

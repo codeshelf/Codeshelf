@@ -7,6 +7,7 @@ import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
 
+import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.SimpleExpression;
 
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
@@ -22,7 +23,7 @@ public class Filter extends Listener {
 	String clause;
 	
 	@Getter @Setter
-	List<SimpleExpression> params;
+	List<Criterion> params;
 	
 	public Filter(Class<IDomainObject> classObject) {
 		super(classObject);

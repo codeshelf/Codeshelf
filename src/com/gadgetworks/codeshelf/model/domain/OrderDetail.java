@@ -189,10 +189,10 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	}
 	
 	public final void addWorkInstruction(WorkInstruction inWorkInstruction) {
-		OrderDetail previousOrderDetail = inWorkInstruction.getParent();
+		OrderDetail previousOrderDetail = inWorkInstruction.getOrderDetail();
 		if(previousOrderDetail == null) {
 			workInstructions.add(inWorkInstruction);
-			inWorkInstruction.setParent(this);
+			inWorkInstruction.setOrderDetail(this);
 		} else if(!previousOrderDetail.equals(this)) {
 			LOGGER.error("cannot add WorkInstruction "+inWorkInstruction.getDomainId()+" to "+this.getDomainId()+" because it has not been removed from "+previousOrderDetail.getDomainId());
 		}	

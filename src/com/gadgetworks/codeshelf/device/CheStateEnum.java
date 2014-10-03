@@ -30,7 +30,7 @@ public enum CheStateEnum {
 	SHORT_PICK_CONFIRM(CheStateNum.SHORT_PICK, "SHORT_PICK"),
 	// @EnumValue("PICK_COMPLETE")
 	PICK_COMPLETE(CheStateNum.PICK_COMPLETE, "PICK_COMPLETE"),
-	@EnumValue("NO_WORK")
+	// @EnumValue("NO_WORK")
 	NO_WORK(CheStateNum.NO_WORK, "NO_WORK");
 
 	private int		mValue;

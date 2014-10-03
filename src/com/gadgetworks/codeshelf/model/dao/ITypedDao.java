@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.SimpleExpression;
 
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
@@ -34,7 +35,7 @@ public interface ITypedDao<T> extends IDao {
 
 	//List<T> findByFilter(String inFilter, Map<String, Object> inFilterParams);
 	//List<T> findByFilter(Map<String, Object> inFilterParams);
-	List<T> findByFilter(List<SimpleExpression> inFilter);
+	List<T> findByFilter(List<Criterion> inFilter);
 
 	<L> List<L> findByFilterAndClass(String inFilter, Map<String, Object> inFilterParams, Class<L> inClass);
 

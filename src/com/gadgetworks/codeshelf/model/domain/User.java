@@ -130,11 +130,6 @@ public class User extends DomainObjectTreeABC<Organization> {
 	@JsonProperty
 	private Boolean				active;
 
-	// For a network this is a list of all of the control groups that belong in the set.
-	@OneToMany(mappedBy = "parent")
-	@Getter
-	private List<UserSession>	userSessions		= new ArrayList<UserSession>();
-
 	public User() {
 		created = new Timestamp(System.currentTimeMillis());
 		active = true;
@@ -161,19 +156,6 @@ public class User extends DomainObjectTreeABC<Organization> {
 		parent = inParent;
 	}
 
-	public final List<? extends IDomainObject> getChildren() {
-		return getUserSessions();
-	}
-
-	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
-	public final void addUserSession(UserSession inPromoCodeUse) {
-		userSessions.add(inPromoCodeUse);
-	}
-
-	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
-	public final void removeUserSession(UserSession inPromoCodeUse) {
-		userSessions.remove(inPromoCodeUse);
-	}
 
 	public final void setPassword(final String inPassword) {
 		try {

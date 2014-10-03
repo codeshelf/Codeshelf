@@ -18,9 +18,9 @@ public enum WorkInstructionTypeEnum {
 	ACTUAL(WorkInstructionTypeNum.ACTUAL, "ACTUAL"),
 	// @EnumValue("INDICATOR")
 	INDICATOR(WorkInstructionTypeNum.INDICATOR, "INDICATOR"),
-	@EnumValue("HK_REPEATPOS")
+	// @EnumValue("HK_REPEATPOS")
 	HK_REPEATPOS(WorkInstructionTypeNum.HK_REPEATPOS, "HK_REPEATPOS"),
-	@EnumValue("HK_BAYCOMPLETE")
+	// @EnumValue("HK_BAYCOMPLETE")
 	HK_BAYCOMPLETE(WorkInstructionTypeNum.HK_BAYCOMPLETE, "HK_BAYCOMPLETE");
 	
 	// If you add a new one, please search code for filters like this

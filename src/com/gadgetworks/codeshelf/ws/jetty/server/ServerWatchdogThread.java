@@ -75,21 +75,21 @@ public class ServerWatchdogThread extends Thread {
 	
 	private void doSessionWatchdog() {
 		// check status, send keepalive etc on all sessions
-		Collection<CsSession> sessions = this.sessionManager.getSessions();
-		for (CsSession session : sessions) {
+		Collection<UserSession> sessions = this.sessionManager.getSessions();
+		for (UserSession session : sessions) {
 			doSessionWatchdog(session);
 
 		}
 	}
 	
-	private void doSessionWatchdog(CsSession session) {
+	private void doSessionWatchdog(UserSession session) {
 		if(!suppressKeepAlive) {
 			// consider sending keepalive
 			long timeSinceLastSent = System.currentTimeMillis() - session.getLastMessageSent();
 			if (timeSinceLastSent>keepAliveInterval) {
-				if (session.getLastState()==CsSession.State.INACTIVE) {
+				if (session.getLastState()==UserSession.State.INACTIVE) {
 					// don't send keep-alives on inactive sessions
-					LOGGER.warn("Session is INACTIVE, not sending keepalives - "+session.getType().toString()+" ",session.getSessionId());
+					LOGGER.warn("Session is INACTIVE, not sending keepalives - ",session.getSessionId());
 				} else {
 					LOGGER.debug("Sending keep-alive on "+session.getSessionId());
 					try {
@@ -102,14 +102,14 @@ public class ServerWatchdogThread extends Thread {
 		} // else suppressing keepalives
 
 		// regardless of keepalive setting, monitor session activity state
-		CsSession.State newSessionState = determineSessionState(session);
+		UserSession.State newSessionState = determineSessionState(session);
 		if(newSessionState != session.getLastState()) {
-			LOGGER.info("Session state on "+session.getType().toString()+" changed from "+session.getLastState().toString()+" to "+newSessionState.toString());
+			LOGGER.info("Session state on "+session.getSessionId()+" changed from "+session.getLastState().toString()+" to "+newSessionState.toString());
 			session.setLastState(newSessionState);
 			
-			if(killIdle && newSessionState == CsSession.State.INACTIVE) {
+			if(killIdle && newSessionState == UserSession.State.INACTIVE) {
 				// kill idle session on state change, if configured to do so
-				LOGGER.warn("Connection timed out with "+session.getType().toString()+".  Closing session.");
+				LOGGER.warn("Connection timed out with "+session.getSessionId()+".  Closing session.");
 				session.disconnect(new CloseReason(CloseCodes.GOING_AWAY, "Timeout"));
 			}
 		}

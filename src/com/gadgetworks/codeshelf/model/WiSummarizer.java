@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.criterion.SimpleExpression;
 
@@ -41,16 +42,11 @@ public class WiSummarizer {
 		if (Strings.isNullOrEmpty(inCheId) || Strings.isNullOrEmpty(inFacilityId)) {
 			return;
 		}
-		List<SimpleExpression> filterParams = new ArrayList<SimpleExpression>();
+		List<Criterion> filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("assignedChe.persistentId", inCheId));
-		filterParams.add(Restrictions.eq("parent.parent.parent.persistentId", inFacilityId));
-		Map<String, Object> filterParams = new HashMap<String, Object>();
-		filterParams.put("chePersistentId", inCheId);
-		filterParams.put("facilityPersistentId", inFacilityId);
-		// wi -via orderDetail field-> orderDetail -> orderHeader -> facility
+		filterParams.add(Restrictions.eq("parent.persistentId", inFacilityId));
 		// wi -> facility
-		for (WorkInstruction wi : WorkInstruction.DAO.findByFilter("assignedChe.persistentId = :chePersistentId and parent.persistentId = :facilityPersistentId",
-			filterParams)) {
+		for (WorkInstruction wi : WorkInstruction.DAO.findByFilter(filterParams)) {
 			Timestamp wiAssignTime = wi.getAssigned();
 			WiSetSummary theSummary = getOrCreateSummaryForTime(wiAssignTime);
 			WorkInstructionStatusEnum status = wi.getStatus();

@@ -27,8 +27,17 @@
         
         <mapping class="com.gadgetworks.codeshelf.model.domain.LocationABC"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.SubLocationABC"/>
-        <mapping class="com.gadgetworks.codeshelf.model.domain.Organization"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.Facility"/>
+        <mapping class="com.gadgetworks.codeshelf.model.domain.Bay"/>
+        <mapping class="com.gadgetworks.codeshelf.model.domain.Aisle"/>
+        <mapping class="com.gadgetworks.codeshelf.model.domain.Tier"/>
+        <mapping class="com.gadgetworks.codeshelf.model.domain.Slot"/>
+
+        <mapping class="com.gadgetworks.codeshelf.model.domain.EdiServiceABC"/>
+        <mapping class="com.gadgetworks.codeshelf.model.domain.DropboxService"/>
+        <mapping class="com.gadgetworks.codeshelf.model.domain.IronMqService"/>
+
+        <mapping class="com.gadgetworks.codeshelf.model.domain.Organization"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.Che"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.LedController"/>
@@ -43,24 +52,16 @@
         <mapping class="com.gadgetworks.codeshelf.model.domain.Vertex"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.PersistentProperty"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.User"/>
-        <mapping class="com.gadgetworks.codeshelf.model.domain.Bay"/>
-        <mapping class="com.gadgetworks.codeshelf.model.domain.Aisle"/>
-        <mapping class="com.gadgetworks.codeshelf.model.domain.Tier"/>
-        <mapping class="com.gadgetworks.codeshelf.model.domain.Slot"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.Container"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.ContainerKind"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.ContainerUse"/>
-        <mapping class="com.gadgetworks.codeshelf.model.domain.EdiServiceABC"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.OrderGroup"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.OrderHeader"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.OrderDetail"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.OrderLocation"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.WorkInstruction"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.WorkArea"/>
-        <mapping class="com.gadgetworks.codeshelf.model.domain.UserSession"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.EdiDocumentLocator"/>
-        <mapping class="com.gadgetworks.codeshelf.model.domain.DropboxService"/>
-        <mapping class="com.gadgetworks.codeshelf.model.domain.IronMqService"/>
 
     </session-factory>
 </hibernate-configuration>

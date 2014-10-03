@@ -107,9 +107,9 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	private WorkInstructionStatusEnum	status;
 
 	// The container. Change to nullable v5 upgrade020
-	@Column(nullable = true)
+	//@Column(nullable = true)
 	@Getter
-	@ManyToOne(optional = false)
+	@ManyToOne(optional = true)
 	private Container					container;
 
 	// Denormalized for serialized WIs at the site controller.
@@ -173,7 +173,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 
 	// From location.
 	@SuppressWarnings("rawtypes")
-	@Column(nullable = false)
+	//@Column(nullable = false)
 	@ManyToOne(optional = false)
 	private LocationABC					location;
 
@@ -192,7 +192,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	private String						pickerId;
 
 	// Assigned CHE
-	@Column(nullable = true)
+	//@Column(nullable = true)
 	@Getter
 	@Setter
 	@ManyToOne(optional = true)
@@ -244,7 +244,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	private Timestamp					completed;
 
 	// The parent order detail item.
-	@Column(nullable = true)
+	//@Column(nullable = true)
 	@ManyToOne(optional = true)
 	private OrderDetail					orderDetail;
 
@@ -569,6 +569,6 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 
 	@Override
 	public Facility getFacility() {
-		return getParent().getFacility();
+		return getParent();
 	}
 }
