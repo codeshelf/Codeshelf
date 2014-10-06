@@ -27,13 +27,13 @@ public class ConnectionManagerThread extends Thread {
 	int initialWaitTime = 2*1000;
 	
 	@Getter @Setter
-	int siteControllerTimeout = 60*1000;
+	int siteControllerTimeout = 24*1000;
 	
 	@Getter @Setter
-	int keepAliveInterval = 10*1000;	
+	int keepAliveInterval = 5*1000;	
 	
 	@Getter @Setter
-	int idleWarningTimeout = 15*1000;	
+	int idleWarningTimeout = 14*1000;	
 	
 	@Getter @Setter
 	CsSession.State lastState = CsSession.State.INACTIVE;
@@ -48,6 +48,7 @@ public class ConnectionManagerThread extends Thread {
 	public void run() {
 		ThreadUtils.sleep(initialWaitTime);
 		LOGGER.info("WS connection manager thread is starting");
+		LOGGER.info("WS connection manager idleKill: " + deviceManager.isIdleKill() + ", suppressKeepAlive: " + deviceManager.isSuppressKeepAlive());
 		while(!exit) {
 	    	try {
 	    		JettyWebSocketClient client = deviceManager.getClient();
@@ -59,6 +60,7 @@ public class ConnectionManagerThread extends Thread {
 					long timeSinceLastSent = System.currentTimeMillis() - client.getLastMessageSent();
 					if (!deviceManager.isSuppressKeepAlive()) {
 						if (timeSinceLastSent>keepAliveInterval) {
+							LOGGER.debug("Sending keep alive from the site controller");
 							client.sendMessage(new KeepAlive());
 						}
 					}
