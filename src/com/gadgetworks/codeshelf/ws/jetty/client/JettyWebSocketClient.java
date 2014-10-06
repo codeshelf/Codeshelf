@@ -81,6 +81,7 @@ public class JettyWebSocketClient {
     
     public void disconnect() throws IOException {
     	if(session!=null) {
+    		LOGGER.debug("closing session");
         	session.close(new CloseReason(CloseCodes.NORMAL_CLOSURE, "Connection closed by client"));
     	} else {
     		LOGGER.warn("disconnecting client, but there is no session to close");
@@ -117,6 +118,12 @@ public class JettyWebSocketClient {
     	}
     	catch (Exception e) {
     		LOGGER.error("Exception while trying to send message #"+message.getMessageId(),e);
+    		try {
+    			this.disconnect();
+    		}
+    		catch (IOException ioe) {
+    			LOGGER.debug("IOException during disconnect", ioe);
+    		}
     		return false;
     	}
     }
