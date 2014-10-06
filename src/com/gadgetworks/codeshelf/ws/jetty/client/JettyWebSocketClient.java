@@ -82,10 +82,14 @@ public class JettyWebSocketClient {
     public void disconnect() throws IOException {
     	if(session!=null) {
     		LOGGER.debug("closing session");
+    		//this does not notify the endpoint callback until the closure messages reaches client, which 
+    		// when disconnected may take up to session.getMaxIdleTimeout
         	session.close(new CloseReason(CloseCodes.NORMAL_CLOSURE, "Connection closed by client"));
     	} else {
     		LOGGER.warn("disconnecting client, but there is no session to close");
     	}
+    	//fire disconnected to listeners
+    	disconnected(session);
     }
     
     public boolean sendMessage(MessageABC message) {
@@ -153,9 +157,14 @@ public class JettyWebSocketClient {
     	}
     }
 
-	public void disconnected() {
-		this.session = null;
-    	if (this.eventListener!=null) eventListener.disconnected();
+	public void disconnected(Session session) {
+		if (session.equals(this.session)) {
+			this.session = null;
+	    	if (this.eventListener!=null) eventListener.disconnected();
+		}
+		else {
+			LOGGER.debug("Session being closed is no longer current: " + session);
+		}
 	}
 
 	public void messageReceived() {
