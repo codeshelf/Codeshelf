@@ -22,6 +22,7 @@ public class HousekeepingInjector {
 
 	}
 	
+	@SuppressWarnings("unused")
 	private static boolean shouldCreateThisHK(WorkInstructionTypeEnum inType){
 		switch (inType) {			
 			case HK_REPEATPOS:

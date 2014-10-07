@@ -22,6 +22,7 @@ import com.gadgetworks.codeshelf.filter.ObjectEventListener;
 import com.gadgetworks.codeshelf.model.dao.IDaoListener;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
+import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
 import com.google.common.base.Objects;
 
@@ -42,7 +43,7 @@ public class CsSession implements IDaoListener {
 	Date sessionStart = new Date();
 	
 	@Getter @Setter
-	boolean isAuthenticated = false;
+	User user;
 
 	@Getter @Setter
 	SessionType type = SessionType.Unknown;

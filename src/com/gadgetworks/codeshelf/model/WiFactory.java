@@ -12,19 +12,15 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.device.CheDeviceLogic;
 import com.gadgetworks.codeshelf.device.LedCmdGroup;
 import com.gadgetworks.codeshelf.device.LedCmdGroupSerializer;
-import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum.WorkInstructionTypeNum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.Container;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.ILocation;
-import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.util.SequenceNumber;
-import com.gadgetworks.flyweight.command.ColorEnum;
 
 /**
  * This generates work instructions
@@ -148,7 +144,7 @@ public class WiFactory {
 	/**
 	 * ok to return null if no aisle lights. Only some kinds of housekeeps involve aisle lights.
 	 */
-	private static List<LedCmdGroup> getLedCmdGroupListForHK(WorkInstructionTypeEnum inType, ILocation inLocation) {
+	private static List<LedCmdGroup> getLedCmdGroupListForHK(WorkInstructionTypeEnum inType, ILocation<?> inLocation) {
 		return Collections.<LedCmdGroup>emptyList(); // returns empty immutable list
 	}
 

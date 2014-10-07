@@ -61,8 +61,6 @@ import com.google.inject.Singleton;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class IronMqService extends EdiServiceABC {
 
-	private static final long	serialVersionUID	= 1L;
-
 	@Inject
 	public static ITypedDao<IronMqService>	DAO;
 

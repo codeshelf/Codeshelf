@@ -34,6 +34,12 @@ public class LedSample {
 	public static final byte[]	LED_BLACK	= { OFF, OFF, OFF };
 	public static final byte[]	LED_WHITE	= { ON_, ON_, ON_ };
 
+	// big change at v6. Add these annotation to mPosition. Without, serialize, deserialize did not result in the same objects.
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	@SerializedName(value = "p")
+	@Expose
 	private Short				mPosition;
 
 	@Accessors(prefix = "m")

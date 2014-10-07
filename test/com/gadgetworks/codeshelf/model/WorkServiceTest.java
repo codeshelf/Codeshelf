@@ -43,7 +43,6 @@ import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.service.WorkService;
-
 import com.gadgetworks.codeshelf.validation.InputValidationException;
 import com.google.common.collect.ImmutableList;
 
@@ -79,6 +78,7 @@ public class WorkServiceTest {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void exceptionIfWICannotBeFound() throws IOException {
 		UUID cheId = UUID.randomUUID();
@@ -101,6 +101,7 @@ public class WorkServiceTest {
 		verify(WorkInstruction.DAO, never()).store(any(WorkInstruction.class));
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void doesNotExportIfWICannotBeStored() throws IOException {
 		IEdiService mockEdiExportService = mock(IEdiService.class);
@@ -129,6 +130,7 @@ public class WorkServiceTest {
 		verify(mockEdiExportService, never()).sendWorkInstructionsToHost(any(List.class));
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void allWorkInstructionsSent() throws IOException {
 		IEdiService mockEdiExportService = mock(IEdiService.class);
@@ -191,6 +193,7 @@ public class WorkServiceTest {
 
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void workInstructionExportingIsNotBlocked() throws IOException, InterruptedException {
 		final int total = 100;
@@ -307,6 +310,7 @@ public class WorkServiceTest {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	private IEdiService createBlockingService(Lock callBlocker) throws IOException {
 		final IEdiService mockEdiExportService = mock(IEdiService.class);
 		doAnswer(new BlockedCall(callBlocker)).when(mockEdiExportService).sendWorkInstructionsToHost(any(List.class));

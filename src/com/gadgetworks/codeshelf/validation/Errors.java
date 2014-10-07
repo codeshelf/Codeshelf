@@ -16,6 +16,7 @@
 
 package com.gadgetworks.codeshelf.validation;
 
+import java.net.BindException;
 import java.util.List;
 
 /**

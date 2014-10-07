@@ -937,7 +937,12 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			sendDisplayWorkInstruction(firstWi.getPickInstruction(), firstWi.getDescription(), firstWi.getPlanQuantity());
 
 			// Not as easy. Clear this CHE's last leds off of aisle controller(s), and tell aisle controller(s) what to light next
-			List<LedCmdGroup> ledCmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(firstWi.getLedCmdStream());
+			// List<LedCmdGroup> ledCmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(firstWi.getLedCmdStream());
+			String wiCmdString = firstWi.getLedCmdStream();
+			LOGGER.info("deserialize and send out this WI cmd string: " + wiCmdString);
+			List<LedCmdGroup> ledCmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(wiCmdString);
+			if (!LedCmdGroupSerializer.verifyLedCmdGroupList(ledCmdGroups))
+				LOGGER.error("WI cmd string did not deserialize properly");
 
 			// It is important sort the CmdGroups.
 			Collections.sort(ledCmdGroups, new CmdGroupComparator());
@@ -1311,6 +1316,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	// --------------------------------------------------------------------------
 	/** Light position controllers appropriately for bay change, keyed off the previous work instruction's containerId
 	 */
+	@SuppressWarnings("unused")
 	private void showBayChange(String inContainerId) {
 		showSpecialPositionCode(PosControllerInstr.BAY_COMPLETE_CODE, inContainerId);
 	}
@@ -1318,6 +1324,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	// --------------------------------------------------------------------------
 	/** Light position controllers appropriately for repeat container, keyed off the previous work instruction's containerId
 	 */
+	@SuppressWarnings("unused")
 	private void showRepeatContainer(String inContainerId) {
 		showSpecialPositionCode(PosControllerInstr.REPEAT_CONTAINER_CODE, inContainerId);
 	}

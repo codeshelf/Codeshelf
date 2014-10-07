@@ -11,6 +11,8 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.UUID;
 
 import lombok.Getter;
@@ -133,6 +135,7 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 		final EffectEnum inEffect) {
 		// CD_0041 note: perfect. Gets existing or makes command list. Adds new LedCmd to list. Note, does not check if same or similar command already in list.
 		// inNetGuid is the Guid of the CHE, not of this aisle controller.
+		// exception: GUID of this aisle controller if this is a temporary light command from the UI.
 		// Called only in CheDeviceLogic ledControllerSetLed(), if getLedCmdFor returned null.  So, perhaps a getOrAdd would be better.
 
 		List<LedCmd> ledCmds = mDeviceLedPosMap.get(inNetGuid);
@@ -194,9 +197,21 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 	private class LedPositionComparator implements Comparator<LedSample> {
 
 		public int compare(LedSample inSample1, LedSample inSample2) {
-			if (inSample1.getPosition() < inSample2.getPosition()) {
+			// throw proofing. See these errors sometimes.
+			if (inSample1 == null || inSample2 == null ){
+				LOGGER.error("null object in LedPositionComparator");
+				return 0;
+			}
+			Short short1 = inSample1.getPosition();
+			Short short2 = inSample2.getPosition();
+			if (short1 == null || short2 == null ){
+				LOGGER.error("uninitialized object in LedPositionComparator");
+				return 0;
+			}
+		
+			if (short1 < short2) {
 				return -1;
-			} else if (inSample1.getPosition() > inSample2.getPosition()) {
+			} else if (short1 > short2) {
 				return 1;
 			} else {
 				return 0;
@@ -216,6 +231,53 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 		return thisGuidStr;
 	}
 
+	// --------------------------------------------------------------------------
+	/**
+	 * This should fire once after the input duration seconds. On firing, clear out extra LED lights and refresh the aisle lights.
+	 */
+	private void setLightsExpireTimer(int inSeconds) {
+		Timer timer = new Timer();
+		timer.schedule(new TimerTask() {
+			  @Override
+			  public void run() {
+				  clearExtraLedsFromMap();
+				  updateLeds();
+			  }
+			}, inSeconds*1000);
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Clear the data structure
+	 */
+	private void clearExtraLedsFromMap() {
+		NetGuid thisAisleControllerGuid = getGuid();
+		mDeviceLedPosMap.remove(thisAisleControllerGuid);
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Light additional LEDs a user asked for. This is the function on AisleDeviceLogic that does most everything:
+	 * 1) Clear out any previous user lights
+	 * 2) Add the commands in, so that the call to updateLeds will result in these also showing.
+	 * 3) Set a timer
+	 * 4) Finally, call updateLeds() to make the lights go.
+	 */
+	public final void lightExtraLeds(int inSeconds, String inCommands) {
+		clearExtraLedsFromMap();
+
+		List<LedCmdGroup> ledCmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(inCommands);
+		for (LedCmdGroup ledCmdGroup :ledCmdGroups){
+			Short channnel = ledCmdGroup.getChannelNum();			
+			for (LedSample ledSample : ledCmdGroup.getLedSampleList()) {
+				// This is the clever part. Add for my own GUID, not a CHE guid.
+				addLedCmdFor(getGuid(), channnel, ledSample, EffectEnum.FLASH);
+			}
+		}
+		setLightsExpireTimer(inSeconds);
+		updateLeds();
+	}
+	
 	// --------------------------------------------------------------------------
 	/**
 	 * Light all of the LEDs required.

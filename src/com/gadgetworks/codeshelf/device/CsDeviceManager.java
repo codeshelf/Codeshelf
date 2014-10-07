@@ -427,4 +427,16 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 		// do nothing
 	}
 
+	public void lightSomeLeds(NetGuid inGuid, int inSeconds, String inCommands) {
+		INetworkDevice aDevice = getDeviceByGuid(inGuid);
+		if (aDevice != null && aDevice instanceof AisleDeviceLogic) {
+			((AisleDeviceLogic) aDevice).lightExtraLeds(inSeconds, inCommands);
+		}
+		else {
+			// By design, the LightLedsMessage broadcast to all site controllers for this facility. If this site controller does not have the mentioned device, it is an error today
+			// but may not be later when we have our multi-controller implementation.
+			LOGGER.debug("unknown GUID in lightSomeLeds");		
+		}
+	}
+
 }

@@ -1,5 +1,11 @@
 package com.gadgetworks.codeshelf.model.domain;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import io.iron.ironmq.Client;
 import io.iron.ironmq.HTTPException;
 import io.iron.ironmq.Queue;
@@ -12,29 +18,12 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-
-
-
-
 import com.gadgetworks.codeshelf.edi.WorkInstructionCSVExporter;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.model.domain.EdiServiceABC;
-import com.gadgetworks.codeshelf.model.domain.IronMqService;
-import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.google.common.collect.ImmutableList;
 
 public class IronMqServiceTest {
-
+	@SuppressWarnings("unchecked")
 	@Before
 	public void doBefore() {
 		EdiServiceABC.DAO = mock(ITypedDao.class);
@@ -56,6 +45,7 @@ public class IronMqServiceTest {
 		
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Test
 	public void withWrongCredentialsThrowsIOException()  throws IOException {
 		String projectId = "TESTPROJECT";
@@ -80,6 +70,7 @@ public class IronMqServiceTest {
 		
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void whenPushSuccessfulReturn() throws IOException {
 		String projectId = "TESTPROJECT";
@@ -99,6 +90,7 @@ public class IronMqServiceTest {
 	}
 
 	
+	@SuppressWarnings("unchecked")
 	@Test
 	public void whenPushThrowsHTTPExceptionSubjectThrowsIOException() throws IOException {
 		String projectId = "TESTPROJECT";
@@ -122,6 +114,7 @@ public class IronMqServiceTest {
 		
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Test
 	public void whenPushThrowsIOExceptionSubjectThrowsIOException() throws IOException {
 		String projectId = "TESTPROJECT";
