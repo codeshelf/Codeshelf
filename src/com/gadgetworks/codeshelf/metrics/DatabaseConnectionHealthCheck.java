@@ -12,7 +12,7 @@ public class DatabaseConnectionHealthCheck extends CodeshelfHealthCheck {
 	IDatabase database;
 
 	public DatabaseConnectionHealthCheck(IDatabase database) {
-		super("connection");
+		super("Database Connection");
 		this.database = database;
 	}
 	

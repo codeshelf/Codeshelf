@@ -47,9 +47,8 @@ public class MetricsService {
 		}
 	}
 	
-	public static void registerHealthCheck(MetricsGroup group, String metricName, HealthCheck healthCheck) {
-		String fullName = getFullName(group,metricName);
-		getHealthCheckRegistry().register(fullName, healthCheck);
+	public static void registerHealthCheck(CodeshelfHealthCheck healthCheck) {
+		getHealthCheckRegistry().register(healthCheck.getName(), healthCheck);
 		LOGGER.info("Registered Healthcheck "+healthCheck);
 	}
 	
