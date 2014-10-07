@@ -91,6 +91,8 @@ import com.google.inject.Singleton;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class Facility extends SubLocationABC<Facility> {
 
+	private static final int	LIGHT_LOCATION_DURATION_SECS	= 20;
+
 	private static final String			IRONMQ_DOMAINID	= "IRONMQ";
 
 	@Inject
@@ -1613,8 +1615,8 @@ public class Facility extends SubLocationABC<Facility> {
 	 * May be called with BLACK to clear whatever you just sent. 
 	 */
 	public void lightOneLocation(final String inColorStr, final String inLocationNominalId) {
-		final int kDurationLocationLight = 5;
-		
+		final int kDurationLocationLight = LIGHT_LOCATION_DURATION_SECS;
+				
 		ColorEnum theColor = ColorEnum.valueOf(inColorStr);
 		if (theColor == ColorEnum.INVALID) {
 			LOGGER.error("lightOneLocation called with unknown color");
@@ -1650,7 +1652,7 @@ public class Facility extends SubLocationABC<Facility> {
 	 */
 	@SuppressWarnings("rawtypes")
 	public void lightOneItem(final String inColorStr, final String inItemPersistentId) {
-		final int kDurationItemLight = 5;
+		final int kDurationItemLight = LIGHT_LOCATION_DURATION_SECS;
 
 		ColorEnum theColor = ColorEnum.valueOf(inColorStr);
 		if (theColor == ColorEnum.INVALID) {
