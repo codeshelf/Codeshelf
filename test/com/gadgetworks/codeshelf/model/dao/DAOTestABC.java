@@ -27,7 +27,10 @@ import com.gadgetworks.codeshelf.model.domain.ContainerUse;
 import com.gadgetworks.codeshelf.model.domain.ContainerUse.ContainerUseDao;
 import com.gadgetworks.codeshelf.model.domain.DropboxService;
 import com.gadgetworks.codeshelf.model.domain.DropboxService.DropboxServiceDao;
-//import com.gadgetworks.codeshelf.model.domain.EdiServiceABC.EdiServiceABCDao;
+import com.gadgetworks.codeshelf.model.domain.EdiDocumentLocator;
+import com.gadgetworks.codeshelf.model.domain.EdiDocumentLocator.EdiDocumentLocatorDao;
+import com.gadgetworks.codeshelf.model.domain.EdiServiceABC;
+import com.gadgetworks.codeshelf.model.domain.EdiServiceABC.EdiServiceABCDao;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Facility.FacilityDao;
 import com.gadgetworks.codeshelf.model.domain.IronMqService;
@@ -85,8 +88,6 @@ public abstract class DAOTestABC {
 	
 	protected OrganizationDao		mOrganizationDao;
 	protected UserDao				mUserDao;
-	//protected LocationABCDao		mLocationDao;
-//	protected SubLocationDao		mSubLocationDao;
 	protected FacilityDao			mFacilityDao;
 	protected PathDao				mPathDao;
 	protected PathSegmentDao		mPathSegmentDao;
@@ -95,7 +96,8 @@ public abstract class DAOTestABC {
 	protected TierDao				mTierDao;
 	protected SlotDao				mSlotDao;
 	protected DropboxServiceDao		mDropboxServiceDao;
-	//protected EdiServiceABCDao 		mEdiServiceABCDao;
+	protected EdiServiceABCDao 		mEdiServiceABCDao;
+	protected EdiDocumentLocatorDao			mEdiDocumentLocatorDao;
 	protected OrderGroupDao			mOrderGroupDao;
 	protected OrderHeaderDao		mOrderHeaderDao;
 	protected OrderDetailDao		mOrderDetailDao;
@@ -118,14 +120,10 @@ public abstract class DAOTestABC {
 
 	public DAOTestABC() {
 		super();
-		init();
-	}
-	
-	public void init() {
 	}
 
 	@Before
-	public final void setup() {
+	public final void setup() throws Exception {
 		this.persistenceService = PersistenceService.getInstance();
 		this.persistenceService.start();
 
@@ -162,8 +160,11 @@ public abstract class DAOTestABC {
 		mIronMqServiceDao = new IronMqServiceDao(persistenceService);
 		IronMqService.DAO = mIronMqServiceDao;
 
-//		mEdiServiceABCDao = new EdiServiceABCDao(persistenceService);
-//		EdiServiceABC.DAO = mEdiServiceABCDao;
+		mEdiServiceABCDao = new EdiServiceABCDao(persistenceService);
+		EdiServiceABC.DAO = mEdiServiceABCDao;
+		
+		mEdiDocumentLocatorDao = new EdiDocumentLocatorDao(persistenceService);
+		EdiDocumentLocator.DAO = mEdiDocumentLocatorDao;
 		
 		mCodeshelfNetworkDao = new CodeshelfNetworkDao(persistenceService);
 		CodeshelfNetwork.DAO = mCodeshelfNetworkDao;
@@ -234,7 +235,7 @@ public abstract class DAOTestABC {
 		doBefore();
 	}
 	
-	public void doBefore() {
+	public void doBefore() throws Exception {
 	}
 	
 	@After

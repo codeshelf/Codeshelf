@@ -10,6 +10,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
@@ -49,7 +52,7 @@ import com.google.gson.reflect.TypeToken;
  */
 public final class LedCmdGroupSerializer {
 
-//	private static final Logger	LOGGER	= LoggerFactory.getLogger(LedCmdGroupSerializer.class);
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(LedCmdGroupSerializer.class);
 	
 	// Don't expose a constructor.
 	private LedCmdGroupSerializer() {
@@ -84,6 +87,28 @@ public final class LedCmdGroupSerializer {
 		result = mGson.fromJson(inCmdString, collectionType);
 
 		return result;
+	}
+	
+	// Just a utility checker.
+	public static boolean verifyLedCmdGroupList(final List<LedCmdGroup> inLedCmdGroupList){
+		boolean allOk = true;
+		for (LedCmdGroup ledCmdGroup : inLedCmdGroupList) {
+			Short dsChannnel = ledCmdGroup.getChannelNum();
+			if (dsChannnel == null){
+				LOGGER.error("bad channeld in verifyCommandString");
+				allOk = false;
+			}
+			for (LedSample dsLedSample : ledCmdGroup.getLedSampleList()) {
+				if (dsLedSample.getPosition() == null){
+					// only do this warn once
+					if (allOk) 
+						LOGGER.error("Poorly formed LED commands");
+					allOk = false;
+				}
+			}
+		}
+		return allOk;
+
 	}
 
 }

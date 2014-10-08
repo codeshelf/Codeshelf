@@ -83,41 +83,41 @@ public class DropboxService extends EdiServiceABC {
 		}
 	}
 
-	public static final String		DROPBOX_SERVICE_NAME	= "DROPBOX";
+	public static final String	DROPBOX_SERVICE_NAME	= "DROPBOX";
 
-	private static final Logger		LOGGER					= LoggerFactory.getLogger(DropboxService.class);
+	private static final Logger	LOGGER					= LoggerFactory.getLogger(DropboxService.class);
 
-	private static final String		APPKEY					= "0l3auhytaxn2q50";
-	private static final String		APPSECRET				= "5syhdiyq0bd2oxq";
+	private static final String	APPKEY					= "0l3auhytaxn2q50";
+	private static final String	APPSECRET				= "5syhdiyq0bd2oxq";
 	//private static final Integer	LINK_RETRIES			= 20;
 	//private static final Integer	RETRY_SECONDS			= 10 * 1000;
 
-	private static final String		FACILITY_FOLDER_PATH	= "FACILITY_";
+	private static final String	FACILITY_FOLDER_PATH	= "FACILITY_";
 
-	private static final String		IMPORT_DIR_PATH			= "import";
-	private static final String		IMPORT_ORDERS_PATH		= "orders";
-	private static final String		IMPORT_BATCHES_PATH		= "batches";
-	private static final String		IMPORT_AISLES_PATH		= "site"; // site configuration, where you drop the aisles files
-	private static final String		IMPORT_INVENTORY_PATH	= "inventory";
-	private static final String		IMPORT_LOCATIONS_PATH	= "locations"; // this is location aliases
-	private static final String		IMPORT_SLOTTING_PATH	= "slotting";
-	private static final String		PROCESSED_PATH			= "processed";
+	private static final String	IMPORT_DIR_PATH			= "import";
+	private static final String	IMPORT_ORDERS_PATH		= "orders";
+	private static final String	IMPORT_BATCHES_PATH		= "batches";
+	private static final String	IMPORT_AISLES_PATH		= "site";											// site configuration, where you drop the aisles files
+	private static final String	IMPORT_INVENTORY_PATH	= "inventory";
+	private static final String	IMPORT_LOCATIONS_PATH	= "locations";										// this is location aliases
+	private static final String	IMPORT_SLOTTING_PATH	= "slotting";
+	private static final String	PROCESSED_PATH			= "processed";
 
-	private static final String		EXPORT_DIR_PATH			= "export";
-	private static final String		EXPORT_WIS_PATH			= "work";
+	private static final String	EXPORT_DIR_PATH			= "export";
+	private static final String	EXPORT_WIS_PATH			= "work";
 
-	private static final String		TIME_FORMAT				= "HH-mm-ss";
+	private static final String	TIME_FORMAT				= "HH-mm-ss";
 
 	@Column(nullable = true, name = "CURSOR")
 	@Getter
 	@Setter
 	@JsonProperty
-	private String					dbCursor;
+	private String				dbCursor;
 
 	public DropboxService() {
 
 	}
-	
+
 	public final static void setDao(ITypedDao<DropboxService> dao) {
 		DropboxService.DAO = dao;
 	}
@@ -136,7 +136,7 @@ public class DropboxService extends EdiServiceABC {
 	public boolean getHasCredentials() {
 		return !Strings.isNullOrEmpty(getProviderCredentials());
 	}
-	
+
 	public final boolean getUpdatesFromHost(ICsvOrderImporter inCsvOrderImporter,
 		ICsvOrderLocationImporter inCsvOrderLocationImporter,
 		ICsvInventoryImporter inCsvInventoryImporter,
@@ -289,7 +289,6 @@ public class DropboxService extends EdiServiceABC {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * @return
 	 */
 	private DbxClient getClient() {
 
@@ -304,29 +303,37 @@ public class DropboxService extends EdiServiceABC {
 	}
 
 	private String getFacilityPath() {
-		return new String(System.getProperty("file.separator") + FACILITY_FOLDER_PATH + getParent().getDomainId()).toLowerCase();
+		String returnStr = new String(System.getProperty("file.separator") + FACILITY_FOLDER_PATH + getParent().getDomainId()).toLowerCase();
+		// decomposed for debugging ease
+		return returnStr;
 	}
 
 	private String getFacilityImportPath() {
-		return new String(getFacilityPath() + System.getProperty("file.separator") + IMPORT_DIR_PATH).toLowerCase();
+		String returnStr = new String(getFacilityPath() + System.getProperty("file.separator") + IMPORT_DIR_PATH).toLowerCase();
+		return returnStr;
 	}
 
-	private String getFacilityImportSubDirPath(final String inImportSubDirPath) {
-		return new String(getFacilityImportPath() + System.getProperty("file.separator") + inImportSubDirPath).toLowerCase();
+	// public to allow test to find this.
+	public String getFacilityImportSubDirPath(final String inImportSubDirPath) {
+		String returnStr = new String(getFacilityImportPath() + System.getProperty("file.separator") + inImportSubDirPath).toLowerCase();
+		return returnStr;
 	}
 
 	private String getFacilityImportSubDirProcessedPath(final String inImportSubDirPath) {
-		return new String(getFacilityImportPath() + System.getProperty("file.separator") + inImportSubDirPath
+		String returnStr = new String(getFacilityImportPath() + System.getProperty("file.separator") + inImportSubDirPath
 				+ System.getProperty("file.separator") + PROCESSED_PATH).toLowerCase();
+		return returnStr;
 	}
 
 	private String getFacilityExportPath() {
-		return new String(getFacilityPath() + System.getProperty("file.separator") + EXPORT_DIR_PATH).toLowerCase();
+		String returnStr = new String(getFacilityPath() + System.getProperty("file.separator") + EXPORT_DIR_PATH).toLowerCase();
+		return returnStr;
 	}
 
 	@SuppressWarnings("unused")
 	private String getFacilityExportSubDirPath(final String inExportSubDirPath) {
-		return new String(getFacilityExportPath() + System.getProperty("file.separator") + inExportSubDirPath).toLowerCase();
+		String returnStr = new String(getFacilityExportPath() + System.getProperty("file.separator") + inExportSubDirPath).toLowerCase();
+		return returnStr;
 	}
 
 	// --------------------------------------------------------------------------
@@ -367,6 +374,8 @@ public class DropboxService extends EdiServiceABC {
 	private boolean ensureDirectory(DbxClient inClient, String inPath) {
 		boolean result = false;
 
+		if (inPath != null)
+			LOGGER.debug("ensureDirectory: " + inPath);
 		try {
 			DbxEntry dirEntry = inClient.getMetadata(inPath);
 			if (dirEntry == null) {
@@ -528,6 +537,24 @@ public class DropboxService extends EdiServiceABC {
 		try {
 
 			String filepath = inEntry.lcPath;
+			
+			// Uncomment this and below to work on DropboxRealTest.java
+			/*
+			String startingUid = "";
+			if (inEntry.metadata .isFile())
+				startingUid = ((DbxEntry.File) inEntry.metadata).rev;
+			
+			List<DbxEntry.File> beginRevisions = inClient.getRevisions(filepath);
+			int beginCount = 0;
+			String beginZerothRev = "";
+			for (DbxEntry.File revEntry : beginRevisions){
+				String revUid = revEntry.rev;
+				if (beginCount == 0)
+					beginZerothRev = revUid;
+				beginCount++;
+			}
+			*/
+
 			Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 
 			//DropboxInputStream stream = inClient.getFileStream(filepath, null);
@@ -556,6 +583,38 @@ public class DropboxService extends EdiServiceABC {
 			}
 
 			if (success) {
+
+				// Uncomment this and above to work on DropboxRealTest.java
+				/*
+				// DEV-454  Jeff suggests:  make sure that the DBX version of the file (from the DBX structures) matches the current version in the DBX store.
+				//  If no match then don't move and re-mark file for processing.
+				// Not implemented yet.
+				// This same fix might address the DEV-455 scenario
+				DbxEntry dirEntry = inClient.getMetadata(filepath); 
+				
+				String endingUid = "";
+				if (dirEntry.isFile())
+					endingUid = ((DbxEntry.File) dirEntry).rev;
+				
+				if (!startingUid.equals(endingUid)) {
+					LOGGER.warn("unusual DBX event. New file came while this one processing."); // does not work
+				}
+				
+				List<DbxEntry.File> endRevisions = inClient.getRevisions(filepath);
+				int endCount = 0;
+				String endZerothRev = "";
+				for (DbxEntry.File revEntry : endRevisions){
+					String revUid = revEntry.rev;
+					if (endCount == 0)
+						endZerothRev = revUid;
+					endCount++;
+				}
+				
+				if (!beginZerothRev.equals(endZerothRev)) {
+					LOGGER.warn("unusual DBX event. New file came while this one processing. (getRevisions)"); // does not work
+				}
+				*/
+
 				moveEntryToProcessed(inClient, inEntry);
 			}
 		} catch (DbxException | IOException e) {
@@ -578,7 +637,8 @@ public class DropboxService extends EdiServiceABC {
 		try {
 			if (inClient.getMetadata(toPath) != null) {
 				// The to path already exists.  Tack on some extra versioning.
-				toPath = FilenameUtils.removeExtension(toPath) + "." + new SimpleDateFormat(TIME_FORMAT).format(System.currentTimeMillis()) + ".csv";
+				toPath = FilenameUtils.removeExtension(toPath) + "."
+						+ new SimpleDateFormat(TIME_FORMAT).format(System.currentTimeMillis()) + ".csv";
 			}
 
 			inClient.move(fromPath, toPath);

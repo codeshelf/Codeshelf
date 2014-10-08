@@ -75,10 +75,6 @@ public abstract class EndToEndIntegrationTest extends DomainTestABC {
 	
 	int connectionTimeOut = 30 * 1000;
 
-	@Override
-	public void init() { 
-	}
-
 	public static Injector setupWSSInjector() {
 		Injector injector = Guice.createInjector(new AbstractModule() {
 			@Override

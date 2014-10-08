@@ -85,7 +85,17 @@ public class ObjectUpdateCommand extends CommandABC {
 					Map<String, Throwable> failures = new HashMap<String, Throwable>();
 					for (Map.Entry<String, Object> property : properties.entrySet()) {
 						try {
-							propertyUtil.setProperty(updateObject, property.getKey(), property.getValue());
+							Object propertyValue = property.getValue();
+							Class<?> propertyType = propertyUtil.getPropertyDescriptor(updateObject, property.getKey()).getPropertyType();
+							if (Short.class.isAssignableFrom(propertyType)) {
+								if (propertyValue instanceof Number) {
+									propertyValue = new Short(((Number) propertyValue).shortValue());
+								}
+								else if (propertyValue instanceof String) {
+									propertyValue = new Short((String)propertyValue);
+								}
+							}
+							propertyUtil.setProperty(updateObject, property.getKey(), propertyValue);
 						}
 						catch(InvocationTargetException e) {
 							failures.put(property.getKey(), e.getTargetException());

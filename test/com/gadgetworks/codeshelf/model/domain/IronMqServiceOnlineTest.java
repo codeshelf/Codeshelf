@@ -21,7 +21,7 @@ public class IronMqServiceOnlineTest extends DomainTestABC {
 	private Map<String, String> tempPropertyRestore  = new HashMap<String, String>();
 	
 	@Before
-	public void doBefore() {
+	public void doBefore() throws Exception {
 		super.doBefore();
 		//USE THE DEFAULT KEYSTORE COMMUNICATING TO IRON MQ
 		String[] keys = new String[]{

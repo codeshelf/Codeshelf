@@ -105,10 +105,10 @@ public class CsClientEndpoint {
 	}
 
 	@OnClose
-	public final void onDisconnect(CloseReason reason) {
+	public final void onDisconnect(Session session, CloseReason reason) {
 		sessionEndCounter.inc();
 		LOGGER.info("Disconnected from server: " + reason);
-		client.disconnected();
+		client.disconnected(session);
 	}
 
 	@OnError
