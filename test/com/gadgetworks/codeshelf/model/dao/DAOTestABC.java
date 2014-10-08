@@ -25,6 +25,8 @@ import com.gadgetworks.codeshelf.model.domain.ContainerUse;
 import com.gadgetworks.codeshelf.model.domain.ContainerUse.ContainerUseDao;
 import com.gadgetworks.codeshelf.model.domain.DropboxService;
 import com.gadgetworks.codeshelf.model.domain.DropboxService.DropboxServiceDao;
+import com.gadgetworks.codeshelf.model.domain.EdiDocumentLocator;
+import com.gadgetworks.codeshelf.model.domain.EdiDocumentLocator.EdiDocumentLocatorDao;
 import com.gadgetworks.codeshelf.model.domain.EdiServiceABC;
 import com.gadgetworks.codeshelf.model.domain.EdiServiceABC.EdiServiceABCDao;
 import com.gadgetworks.codeshelf.model.domain.Facility;
@@ -94,6 +96,7 @@ public abstract class DAOTestABC {
 	protected DropboxServiceDao		mDropboxServiceDao;
 	protected IronMqServiceDao		mIronMqServiceDao;
 	protected EdiServiceABCDao 		mEdiServiceABCDao;
+	protected EdiDocumentLocatorDao			mEdiDocumentLocatorDao;
 	protected OrderGroupDao			mOrderGroupDao;
 	protected OrderHeaderDao		mOrderHeaderDao;
 	protected OrderDetailDao		mOrderDetailDao;
@@ -176,6 +179,9 @@ public abstract class DAOTestABC {
 
 		mEdiServiceABCDao = new EdiServiceABCDao(mSchemaManager);
 		EdiServiceABC.DAO = mEdiServiceABCDao;
+		
+		mEdiDocumentLocatorDao = new EdiDocumentLocatorDao(mSchemaManager);
+		EdiDocumentLocator.DAO = mEdiDocumentLocatorDao;
 		
 		mCodeshelfNetworkDao = new CodeshelfNetworkDao(mSchemaManager);
 		CodeshelfNetwork.DAO = mCodeshelfNetworkDao;
