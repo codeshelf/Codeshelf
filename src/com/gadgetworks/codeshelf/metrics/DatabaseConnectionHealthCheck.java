@@ -7,7 +7,7 @@ public class DatabaseConnectionHealthCheck extends CodeshelfHealthCheck {
 	PersistenceService database;
 
 	public DatabaseConnectionHealthCheck(PersistenceService database) {
-		super("connection");
+		super("Database Connection");
 		this.database = database;
 	}
 	

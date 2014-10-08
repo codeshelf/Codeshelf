@@ -14,6 +14,8 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 
+import lombok.Getter;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,6 +86,7 @@ public class RadioController implements IRadioController {
 	private static final long									MAX_PACKET_AGE_MILLIS		= 20000;
 	private static final long									EVENT_SLEEP_MILLIS			= 50;
 	private static final long									INTERFACE_CHECK_MILLIS		= 750;
+	private static final long									TOO_LONG_DURATION_MILLIS	= 2000;
 	private static final long									CONTROLLER_SLEEP_MILLIS		= 10;
 	private static final int									MAX_CHANNEL_VALUE			= 255;
 
@@ -95,7 +98,10 @@ public class RadioController implements IRadioController {
 	private Boolean												mShouldRun					= true;
 	private Map<NetGuid, INetworkDevice>						mDeviceGuidMap;
 	private Map<NetAddress, INetworkDevice>						mDeviceNetAddrMap;
-	private IGatewayInterface									mGatewayInterface;
+	
+	@Getter
+	private IGatewayInterface									gatewayInterface;
+	
 	private NetAddress											mServerAddress;
 	private NetAddress											mBroadcastAddress;
 	private NetworkId											mBroadcastNetworkId;
@@ -129,7 +135,7 @@ public class RadioController implements IRadioController {
 	 */
 	@Inject
 	public RadioController(final IGatewayInterface inGatewayInterface) {
-		mGatewayInterface = inGatewayInterface;
+		gatewayInterface = inGatewayInterface;
 		mServerAddress = new NetAddress(IPacket.GATEWAY_ADDRESS);
 		mBroadcastAddress = new NetAddress(IPacket.BROADCAST_ADDRESS);
 		mBroadcastNetworkId = new NetworkId(IPacket.BROADCAST_NETWORK_ID);
@@ -194,7 +200,7 @@ public class RadioController implements IRadioController {
 	public final void stopController() {
 
 		// Stop all of the interfaces.
-		mGatewayInterface.stopInterface();
+		gatewayInterface.stopInterface();
 
 		// Signal that we want to stop.
 		mShouldRun = false;
@@ -235,7 +241,7 @@ public class RadioController implements IRadioController {
 		// They start on a thread since this op won't complete if no dongle is attached.
 		Thread interfaceStarterThread = new Thread(new Runnable() {
 			public void run() {
-				mGatewayInterface.startInterface();
+				gatewayInterface.startInterface();
 			}
 		}, STARTER_THREAD_NAME);
 		interfaceStarterThread.setPriority(STARTER_THREAD_PRIORITY);
@@ -247,7 +253,7 @@ public class RadioController implements IRadioController {
 		// Wait until the interfaces start.
 		boolean started;
 		do {
-			started = mGatewayInterface.isStarted();
+			started = gatewayInterface.isStarted();
 			if (!started) {
 				try {
 					Thread.sleep(INTERFACE_CHECK_MILLIS);
@@ -265,7 +271,7 @@ public class RadioController implements IRadioController {
 		while (mShouldRun) {
 			try {
 				if (/*(!mIntfCheckPending) && */(mLastIntfCheckMillis + INTERFACE_CHECK_MILLIS < System.currentTimeMillis())
-						&& (mGatewayInterface.isStarted())) {
+						&& (gatewayInterface.isStarted())) {
 
 					if (testNum == MAX_NETWORK_TEST_NUM)
 						testNum = 0;
@@ -277,10 +283,16 @@ public class RadioController implements IRadioController {
 						mPreferredChannel,
 						new NetChannelValue((byte) 0),
 						new NetChannelValue((byte) 0));
+					// This send ( beacon ) goes to radio. The response is immediate, which will clear mIntfCheckPending.
+					// The radio broadcast goes out. All associated controllers should receive it. They reboot if they do not see one in 3.5 seconds.
 					sendCommand(netCheck, mBroadcastAddress, false);
 					mIntfCheckPending = true;
-
-					mLastIntfCheckMillis = System.currentTimeMillis();
+					long currentTime = System.currentTimeMillis();
+					Long durationSinceLastCheck = currentTime - mLastIntfCheckMillis;
+					if (durationSinceLastCheck >  TOO_LONG_DURATION_MILLIS) {
+						LOGGER.warn("Duration since last beacon sent to radio: " + durationSinceLastCheck + "millis");
+					}
+					mLastIntfCheckMillis = currentTime;
 					// Wait for the next check.
 					Thread.sleep(INTERFACE_CHECK_MILLIS);
 				} else {
@@ -311,7 +323,7 @@ public class RadioController implements IRadioController {
 			mChannelSelected = true;
 			mRadioChannel = inChannel;
 			CommandNetMgmtSetup netSetupCmd = new CommandNetMgmtSetup(mNetworkId, mRadioChannel);
-			if (mGatewayInterface instanceof FTDIInterface) {
+			if (gatewayInterface instanceof FTDIInterface) {
 				// Net mgmt commands only get sent to the FTDI-controlled radio network.
 				sendCommand(netSetupCmd, mBroadcastAddress, false);
 			}
@@ -880,8 +892,8 @@ public class RadioController implements IRadioController {
 			public void run() {
 				while (mShouldRun) {
 					try {
-						if (mGatewayInterface.isStarted()) {
-							IPacket packet = mGatewayInterface.receivePacket(mNetworkId);
+						if (gatewayInterface.isStarted()) {
+							IPacket packet = gatewayInterface.receivePacket(mNetworkId);
 							if (packet != null) {
 								if (packet.getPacketType() == IPacket.ACK_PACKET) {
 									LOGGER.info("Packet remote ACK req RECEIVED: " + packet.toString());
@@ -909,7 +921,7 @@ public class RadioController implements IRadioController {
 					}
 				}
 			}
-		}, RECEIVER_THREAD_NAME + ": " + mGatewayInterface.getClass().getSimpleName());
+		}, RECEIVER_THREAD_NAME + ": " + gatewayInterface.getClass().getSimpleName());
 		gwThread.setPriority(RECEIVER_THREAD_PRIORITY);
 		gwThread.start();
 	}
@@ -950,14 +962,14 @@ public class RadioController implements IRadioController {
 	private void sendPacket(IPacket inPacket) {
 
 		try {
-			if (mGatewayInterface.isStarted()) {
+			if (gatewayInterface.isStarted()) {
 				while ((System.currentTimeMillis() - mLastPacketSentMillis) < PACKET_SPACING_MILLIS) {
 					Thread.sleep(Math.max(0, PACKET_SPACING_MILLIS - (System.currentTimeMillis() - mLastPacketSentMillis)));
 				}
 				inPacket.setSentTimeMillis(System.currentTimeMillis());
 				inPacket.incrementSendCount();
 				mLastPacketSentMillis = System.currentTimeMillis();
-				mGatewayInterface.sendPacket(inPacket);
+				gatewayInterface.sendPacket(inPacket);
 				this.packetsSentCounter.inc();
 			} else {
 				Thread.sleep(CTRL_START_DELAY_MILLIS);

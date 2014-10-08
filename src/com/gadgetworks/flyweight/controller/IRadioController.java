@@ -102,4 +102,6 @@ public interface IRadioController extends Runnable {
 	 */
 	boolean isRunning();
 	
+	IGatewayInterface getGatewayInterface();
+	
 }

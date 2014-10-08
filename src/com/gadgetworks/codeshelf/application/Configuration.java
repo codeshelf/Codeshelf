@@ -125,7 +125,9 @@ public final class Configuration {
 				String oldValue = properties.getProperty(name);
 				if(oldValue != null) {
 					if(!oldValue.equals(value)) {
-						System.out.println("configuration override: "+name+"="+value+" (was "+oldValue+") from "+configFileName);
+						// don't print passwords and such to console, silly
+						// System.out.println("configuration override: "+name+"="+value+" (was "+oldValue+") from "+configFileName);
+						System.out.println("configuration override: "+name+" from "+configFileName);
 					}
 				}
 				properties.setProperty(name, value);

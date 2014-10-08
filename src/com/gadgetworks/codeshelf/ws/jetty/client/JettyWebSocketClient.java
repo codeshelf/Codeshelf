@@ -88,7 +88,7 @@ public class JettyWebSocketClient {
         	//fire disconnected to listeners
         	disconnected(session);
     	} else {
-    		LOGGER.error("disconnecting client requested, but there is no session to close");
+    		LOGGER.warn("disconnecting client requested, but there is no session to close");
     	}
     }
     
