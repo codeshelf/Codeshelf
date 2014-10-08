@@ -7,10 +7,21 @@
 package com.gadgetworks.codeshelf.application;
 
 import java.lang.management.ManagementFactory;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codahale.metrics.Metric;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.jvm.MemoryUsageGaugeSet;
+import com.gadgetworks.codeshelf.metrics.MetricsGroup;
+import com.gadgetworks.codeshelf.metrics.MetricsService;
+import com.gadgetworks.codeshelf.metrics.OpenTsdb;
+import com.gadgetworks.codeshelf.metrics.OpenTsdbReporter;
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 
 public abstract class ApplicationABC implements ICodeshelfApplication {
@@ -21,8 +32,12 @@ public abstract class ApplicationABC implements ICodeshelfApplication {
 	private Thread				mShutdownHookThread;
 	private Runnable			mShutdownRunnable;
 
+	private AdminServer			mAdminServer;
+	private MemoryUsageGaugeSet	memoryUsage;
+
 	@Inject
-	public ApplicationABC() {
+	public ApplicationABC(AdminServer inAdminServer) {
+		mAdminServer = inAdminServer;
 	}
 
 	protected abstract void doStartup() throws Exception;
@@ -138,4 +153,50 @@ public abstract class ApplicationABC implements ICodeshelfApplication {
 		mShutdownHookThread.setContextClassLoader(ClassLoader.getSystemClassLoader());
 		Runtime.getRuntime().addShutdownHook(mShutdownHookThread);
 	}
+
+	protected void startAdminServer() {
+		// start admin server, if enabled
+		String useAdminServer = System.getProperty("metrics.adminserver");
+		if ("true".equalsIgnoreCase(useAdminServer)) {
+			Integer port = Integer.getInteger("metrics.adminserver.port");
+			if (port != null) {
+				LOGGER.info("Starting Admin Server");
+				mAdminServer.startServer(port);
+			} else {
+				LOGGER.error("Could not start admin server, metrics.adminserver.port needs to be specified");
+			}
+		} else {
+			LOGGER.info("Admin Server not enabled");
+		}
+	}
+
+	protected void startTsdbReporter() {
+		// publish metrics to opentsdb
+		String useMetricsReporter = System.getProperty("metrics.reporter.enabled");
+		if ("true".equalsIgnoreCase(useMetricsReporter)) {
+			String metricsServerUrl = System.getProperty("metrics.reporter.serverurl");
+			String intervalStr = System.getProperty("metrics.reporter.interval");
+			int interval = Integer.parseInt(intervalStr);
+			LOGGER.info("Starting OpenTSDB Reporter writing to " + metricsServerUrl + " in " + interval + " sec intervals");
+			MetricRegistry registry = MetricsService.getRegistry();
+			String hostName = MetricsService.getInstance().getHostName();
+			OpenTsdbReporter.forRegistry(registry)
+				.prefixedWith("")
+				.withTags(ImmutableMap.of("host", hostName))
+				.build(OpenTsdb.forService(metricsServerUrl).create())
+				.start(interval, TimeUnit.SECONDS);
+		} else {
+			LOGGER.info("Metrics reporter is not enabled");
+		}
+	}
+
+	protected void registerMemoryUsageMetrics() {
+		// register JVM metrics
+		memoryUsage = new MemoryUsageGaugeSet();
+		Map<String, Metric> memoryMetrics = memoryUsage.getMetrics();
+		for (Entry<String, Metric> entry : memoryMetrics.entrySet()) {
+			MetricsService.registerMetric(MetricsGroup.JVM, "memory." + entry.getKey(), entry.getValue());
+		}
+	}
+
 }

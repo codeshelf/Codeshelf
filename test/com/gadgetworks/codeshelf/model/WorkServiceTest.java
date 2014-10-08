@@ -43,7 +43,6 @@ import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.service.WorkService;
-
 import com.gadgetworks.codeshelf.validation.InputValidationException;
 import com.google.common.collect.ImmutableList;
 

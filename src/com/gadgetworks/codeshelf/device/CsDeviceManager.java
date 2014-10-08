@@ -50,7 +50,9 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	private static final String							DEVICETYPE_LED			= "LED Controller";
 	
 	private TwoKeyMap<UUID, NetGuid, INetworkDevice> mDeviceMap;
-	private IRadioController				mRadioController;
+	
+	@Getter
+	private IRadioController				radioController;
 /*
 	private String							mOrganizationId;
 	private String							mFacilityId;
@@ -86,7 +88,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 		suppressKeepAlive = configuration.getBoolean("websocket.idle.suppresskeepalive", false);
 		idleKill = configuration.getBoolean("websocket.idle.kill", false);
 
-		mRadioController = inRadioController;
+		radioController = inRadioController;
 		mDeviceMap = new TwoKeyMap<UUID, NetGuid, INetworkDevice>();
 
 		mNetworkCredential = configuration.getString("networkCredential");
@@ -98,17 +100,17 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	}
 	
 	private final void startRadio(CodeshelfNetwork network) {
-		if (mRadioController.isRunning()) {
+		if (radioController.isRunning()) {
 			LOGGER.warn("Radio controller is already running, cannot start again");
 		} else if (this.radioEnabled) {
 			// start radio controller
 			NetworkId networkId = new NetworkId(network.getNetworkNum().byteValue());
-			mRadioController.setNetworkId(networkId);
-			mRadioController.startController(network.getChannel().byteValue());
-			mRadioController.addControllerEventListener(this);
+			radioController.setNetworkId(networkId);
+			radioController.startController(network.getChannel().byteValue());
+			radioController.addControllerEventListener(this);
 		} else {			
 			LOGGER.warn("Radio controller disabled by setting, cannot start");
-			mRadioController.setNetworkId(new NetworkId((byte) 1)); // for test
+			radioController.setNetworkId(new NetworkId((byte) 1)); // for test
 
 		}
 	}
@@ -132,7 +134,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	}
 
 	public final void stop() {
-		mRadioController.stopController();
+		radioController.stopController();
 		connectionManagerThread.setExit(true);
 	}
 
@@ -263,49 +265,49 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 		if (netDevice == null) {
 			// new device
 			if (deviceType.equals(DEVICETYPE_CHE)) {
-				netDevice = new CheDeviceLogic(persistentId, deviceGuid, this, mRadioController);
+				netDevice = new CheDeviceLogic(persistentId, deviceGuid, this, radioController);
 			} else if (deviceType.equals(DEVICETYPE_LED)) {
-				netDevice = new AisleDeviceLogic(persistentId, deviceGuid, this, mRadioController);
+				netDevice = new AisleDeviceLogic(persistentId, deviceGuid, this, radioController);
 			} else {
 				LOGGER.error("Don't know how to create new network device of type "+deviceType);
 				suppressMapUpdate = true;
 			}
 
 			if(!suppressMapUpdate) {
-				INetworkDevice oldNetworkDevice = mRadioController.getNetworkDevice(deviceGuid);
+				INetworkDevice oldNetworkDevice = radioController.getNetworkDevice(deviceGuid);
 				if (oldNetworkDevice != null) {
 					LOGGER.warn("Creating " + deviceType + " " + deviceGuid
 							+ " but a NetworkDevice already existed with that NetGuid (removing)");
-					mRadioController.removeNetworkDevice(oldNetworkDevice);
+					radioController.removeNetworkDevice(oldNetworkDevice);
 				} else {
 					LOGGER.info("Creating " + deviceType + " " + persistentId + " / " + netDevice.getGuid());
 				}
-				mRadioController.addNetworkDevice(netDevice);
+				radioController.addNetworkDevice(netDevice);
 			}
 		} else {
 			// update existing device
 			if (!netDevice.getGuid().equals(deviceGuid)) {
 				// changing NetGuid (deprecated/bad!)
-				INetworkDevice oldNetworkDevice = mRadioController.getNetworkDevice(netDevice.getGuid());
+				INetworkDevice oldNetworkDevice = radioController.getNetworkDevice(netDevice.getGuid());
 				if (oldNetworkDevice != null) {
 					LOGGER.warn("Changing NetGuid of " + deviceType + " " + persistentId + " from " + netDevice.getGuid() + " to "
 							+ deviceGuid);
-					mRadioController.removeNetworkDevice(oldNetworkDevice);
+					radioController.removeNetworkDevice(oldNetworkDevice);
 				} else {
 					LOGGER.error("Changing NetGuid of " + deviceType + " " + persistentId + " from " + netDevice.getGuid() + " to "
 							+ deviceGuid + " but couldn't find original NetworkDevice");
 				}
 				// can't really change the NetGuid so we will create new device
 				if (deviceType.equals(DEVICETYPE_CHE)) {
-					netDevice = new CheDeviceLogic(persistentId, deviceGuid, this, mRadioController);
+					netDevice = new CheDeviceLogic(persistentId, deviceGuid, this, radioController);
 				} else if (deviceType.equals(DEVICETYPE_LED)) {
-					netDevice = new AisleDeviceLogic(persistentId, deviceGuid, this, mRadioController);
+					netDevice = new AisleDeviceLogic(persistentId, deviceGuid, this, radioController);
 				} else {
 					LOGGER.error("Cannot update existing network device of unrecognized type "+deviceType);
 					suppressMapUpdate = true;
 				}
 				if(!suppressMapUpdate) {
-					mRadioController.addNetworkDevice(netDevice);
+					radioController.addNetworkDevice(netDevice);
 				}
 			} else {
 				// if not changing netGuid, there is nothing to change
@@ -332,9 +334,9 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 				LOGGER.error("Failed to remove " + deviceType + " " + persistentId + " / " + deviceGuid
 						+ " from device map by NetGuid");
 				// but still try to remove from radio controller
-				INetworkDevice deviceByNetGuid = mRadioController.getNetworkDevice(deviceGuid);
+				INetworkDevice deviceByNetGuid = radioController.getNetworkDevice(deviceGuid);
 				if (deviceByNetGuid != null) {
-					mRadioController.removeNetworkDevice(deviceByNetGuid);
+					radioController.removeNetworkDevice(deviceByNetGuid);
 					LOGGER.error("Removed unmapped " + deviceType + " " + persistentId + " / " + deviceGuid
 							+ " from Radio Controller by NetGuid");
 				} else {
@@ -343,13 +345,13 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 				}
 			} else {
 				deviceType = netDevice.getClass().getSimpleName();
-				mRadioController.removeNetworkDevice(netDevice);
+				radioController.removeNetworkDevice(netDevice);
 				LOGGER.warn("Removed partially unmapped " + deviceType + " " + persistentId + " / " + deviceGuid
 						+ " from device map and Radio Controller by NetGuid");
 			}
 		} else {
 			deviceType = netDevice.getClass().getSimpleName();
-			mRadioController.removeNetworkDevice(netDevice);
+			radioController.removeNetworkDevice(netDevice);
 			LOGGER.info("Removed " + deviceType + " " + persistentId + " / " + netDevice.getGuid());
 		}
 	}
@@ -426,5 +428,4 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	public void processWorkInstructionCompletedResponse(UUID workInstructionId) {
 		// do nothing
 	}
-
 }

@@ -19,12 +19,10 @@ public class AdminServer {
 
 	Server server;
 	
-	int port = 8088;
-	
 	public AdminServer() {
 	}
 	
-	public final void startServer() {
+	public final void startServer(int port) {
 		try {
 			Server server = new Server(port);
 			ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);

@@ -11,6 +11,7 @@ import java.util.UUID;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.flyweight.command.NetGuid;
 import com.gadgetworks.flyweight.controller.INetworkDevice;
+import com.gadgetworks.flyweight.controller.IRadioController;
 
 /**
  * @author jeffw
@@ -52,4 +53,5 @@ public interface ICsDeviceManager {
 
 	List<AisleDeviceLogic> getAisleControllers();
 
+	IRadioController getRadioController();
 }

@@ -5,7 +5,6 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -13,11 +12,6 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum.WorkInstructionTypeNum;
-import com.gadgetworks.codeshelf.model.domain.Bay;
-import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.ILocation;
-import com.gadgetworks.codeshelf.model.domain.LocationABC;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 
 /**

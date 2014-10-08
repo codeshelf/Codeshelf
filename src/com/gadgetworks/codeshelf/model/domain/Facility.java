@@ -43,7 +43,6 @@ import com.gadgetworks.codeshelf.device.LedCmdGroupSerializer;
 import com.gadgetworks.codeshelf.device.LedSample;
 import com.gadgetworks.codeshelf.edi.InventoryCsvImporter;
 import com.gadgetworks.codeshelf.edi.InventorySlottedCsvBean;
-import com.gadgetworks.codeshelf.edi.WorkInstructionCSVExporter;
 import com.gadgetworks.codeshelf.model.EdiProviderEnum;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.HeaderCounts;

@@ -13,7 +13,6 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
-import com.codahale.metrics.health.HealthCheck;
 import com.codahale.metrics.health.HealthCheckRegistry;
 
 public class MetricsService {
@@ -47,9 +46,8 @@ public class MetricsService {
 		}
 	}
 	
-	public static void registerHealthCheck(MetricsGroup group, String metricName, HealthCheck healthCheck) {
-		String fullName = getFullName(group,metricName);
-		getHealthCheckRegistry().register(fullName, healthCheck);
+	public static void registerHealthCheck(CodeshelfHealthCheck healthCheck) {
+		getHealthCheckRegistry().register(healthCheck.getName(), healthCheck);
 		LOGGER.info("Registered Healthcheck "+healthCheck);
 	}
 	

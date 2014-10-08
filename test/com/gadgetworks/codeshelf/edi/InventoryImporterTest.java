@@ -20,7 +20,6 @@ import org.slf4j.LoggerFactory;
 import com.gadgetworks.codeshelf.application.Configuration;
 import com.gadgetworks.codeshelf.model.HousekeepingInjector;
 import com.gadgetworks.codeshelf.model.LedRange;
-import com.gadgetworks.codeshelf.model.WiFactory;
 import com.gadgetworks.codeshelf.model.WiSetSummary;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Bay;

@@ -14,14 +14,11 @@ import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 // domain objects needed
-
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.model.HeaderCounts;
 import com.gadgetworks.codeshelf.model.HousekeepingInjector;
-import com.gadgetworks.codeshelf.model.WiFactory;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
@@ -33,7 +30,6 @@ import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.PathSegment;
 import com.gadgetworks.codeshelf.model.domain.Point;
-import com.gadgetworks.codeshelf.model.domain.SubLocationABC;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.flyweight.command.ColorEnum;
 import com.gadgetworks.flyweight.command.NetGuid;
@@ -176,6 +172,7 @@ public class CrossBatchRunTest extends EdiTestABC {
 
 	}
 
+	@SuppressWarnings("unused")
 	private void setUpGroup1OrdersAndSlotting(Facility inFacility) throws IOException {
 		// These are group = "1". Orders "123", "456", and "789"
 		// 5 products batched into containers 11 through 15
@@ -266,11 +263,11 @@ public class CrossBatchRunTest extends EdiTestABC {
 		Integer detailCount = order.getOrderDetails().size();
 		Assert.assertEquals((Integer) 4, detailCount);
 		// Make sure our order locations ( from slotting file)  are valid. Make sure D-36 has early location on path
-		LocationABC locationD2 = (LocationABC) facility.findSubLocationById("A1.B1.T2.S4");
+		LocationABC<?> locationD2 = (LocationABC<?>) facility.findSubLocationById("A1.B1.T2.S4");
 		Assert.assertNotNull(locationD2);
-		LocationABC locationD2a = (LocationABC) facility.findSubLocationById("D-2");
+		LocationABC<?> locationD2a = (LocationABC<?>) facility.findSubLocationById("D-2");
 		Assert.assertNotNull(locationD2a);
-		LocationABC locationD36 = (LocationABC) facility.findSubLocationById("D-36");
+		LocationABC<?> locationD36 = (LocationABC<?>) facility.findSubLocationById("D-36");
 		Aisle aisle2 = (Aisle) facility.findSubLocationById("A2");
 		Double a2Pos = aisle2.getPosAlongPath();
 		Double d36Pos = locationD36.getPosAlongPath();
@@ -306,6 +303,7 @@ public class CrossBatchRunTest extends EdiTestABC {
 		Assert.assertEquals("0002", groupSortStr2);
 	}
 	
+	@SuppressWarnings("unused")
 	@Test
 	public final void basicHousekeeping() throws IOException {
 		Facility facility = setUpSimpleSlottedFacility("XB02");

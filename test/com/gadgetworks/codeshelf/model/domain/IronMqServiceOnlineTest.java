@@ -7,13 +7,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import javax.validation.GroupSequence;
-
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 
 import com.gadgetworks.codeshelf.generators.FacilityGenerator;
 import com.gadgetworks.codeshelf.generators.WorkInstructionGenerator;
