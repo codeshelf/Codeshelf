@@ -12,7 +12,6 @@ import java.sql.Timestamp;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.Assert;
-import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -91,6 +90,7 @@ public class DropboxRealTest extends EdiTestABC {
 		mCsvOrderLocationImporter = new OrderLocationCsvImporter(mOrderLocationDao);
 	}
 
+	@SuppressWarnings("unused")
 	private Facility setUpStartingFacility(String inOrganizationName) {
 		// The organization will get "O-" prepended to the name. Facility F-
 		// Caller must use a different organization name each time this is used
@@ -242,6 +242,7 @@ public class DropboxRealTest extends EdiTestABC {
 	}
 
 	// @Test
+	@SuppressWarnings("unused")
 	public final void testDBX2() {
 		// See DEV-454 and 455 for the purpose of this test.
 		// Although as specified, it was to move file in during (slow) processing, this almost mimics it much more easily.

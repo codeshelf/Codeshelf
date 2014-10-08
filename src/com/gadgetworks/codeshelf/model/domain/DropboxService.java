@@ -14,7 +14,6 @@ import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Locale;
-import java.util.UUID;
 
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;

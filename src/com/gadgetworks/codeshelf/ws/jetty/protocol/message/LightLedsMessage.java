@@ -2,17 +2,18 @@ package com.gadgetworks.codeshelf.ws.jetty.protocol.message;
 
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import lombok.Getter;
 import lombok.Setter;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.device.LedCmdGroup;
 import com.gadgetworks.codeshelf.device.LedCmdGroupSerializer;
 
 public class LightLedsMessage extends MessageABC {
 	
+	@SuppressWarnings("unused")
 	private static final Logger		LOGGER									= LoggerFactory.getLogger(LightLedsMessage.class);
 	
 	@Getter @Setter
