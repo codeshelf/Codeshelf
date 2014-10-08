@@ -73,6 +73,7 @@ import com.gadgetworks.codeshelf.ws.jetty.server.SessionManager;
 import com.gadgetworks.flyweight.command.ColorEnum;
 import com.gadgetworks.flyweight.command.NetGuid;
 import com.google.common.base.Strings;
+import com.google.gson.annotations.SerializedName;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -402,6 +403,19 @@ public class Facility extends SubLocationABC<Facility> {
 		return 0.0;
 	}
 
+	@JsonProperty("primaryChannel")
+	public Short getPrimaryChannel() {
+		CodeshelfNetwork network = this.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
+		return network.getChannel();
+	}
+
+	@JsonProperty("primaryChannel")
+	public void setPrimaryChannel(Short channel) {
+		CodeshelfNetwork network = this.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
+		network.setChannel(channel);
+		network.getDao().store(network);
+	}
+	
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inProtoBayWidthMeters

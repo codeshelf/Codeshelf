@@ -1,0 +1,338 @@
+/*******************************************************************************
+ *  CodeShelf
+ *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
+ *  $Id: InventoryImporterTest.java,v 1.12 2013/07/22 04:30:36 jeffw Exp $
+ *******************************************************************************/
+package com.gadgetworks.codeshelf.edi;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.sql.Timestamp;
+
+import org.apache.commons.io.FileUtils;
+import org.junit.Assert;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.gadgetworks.codeshelf.application.Configuration;
+import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
+import com.gadgetworks.codeshelf.model.dao.DaoException;
+import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
+import com.gadgetworks.codeshelf.model.domain.DropboxService;
+import com.gadgetworks.codeshelf.model.domain.EdiServiceABC;
+import com.gadgetworks.codeshelf.model.domain.Facility;
+import com.gadgetworks.codeshelf.model.domain.LedController;
+import com.gadgetworks.codeshelf.model.domain.OrderHeader;
+import com.gadgetworks.codeshelf.model.domain.Organization;
+import com.gadgetworks.codeshelf.model.domain.Point;
+import com.gadgetworks.flyweight.command.NetGuid;
+
+/**
+ * @author jon ranstrom
+ *
+ */
+public class DropboxRealTest extends EdiTestABC {
+	private static final Logger			LOGGER				= LoggerFactory.getLogger(DropboxRealTest.class);
+
+	private ICsvOrderImporter			mCsvOrderImporter;
+	private ICsvInventoryImporter		mCsvInventoryImporter;
+	private ICsvLocationAliasImporter	mCsvLocationAliasImporter;
+	private AislesFileCsvImporter		mAislesFileCsvImporter;
+	private ICsvCrossBatchImporter		mCsvCrossBatchImporter;
+	private ICsvOrderLocationImporter	mCsvOrderLocationImporter;
+
+	static {
+		Configuration.loadConfig("test");
+	}
+	// This obtained by jon Oct. 5 2014.  Pretty easy. Just run server normally. Dropbox link, etc.  Then later, pull this from the provider_credentials field in the database.
+	private final static String			TEST_CREDENTIALS3	= "rMS4NWXXc90AAAAAAAAAbXlihAPhBC7TafUSn3Tla4H3U43UauXCuWsFA7U3K-1U";
+	
+	
+	// To continue the dropbox investigation
+	// 1) Make sure you have your local dropbox working
+	// 2) Change LOCAL_DROPBOX_DIR
+	// 3) Uncomment @Test two places below
+	// 3b) Does it work? Or do you need to obtain your own credentials for your dropbox account? See above.
+	// 4) In DropboxService.handleImport(), undo two block comments
+	// Can you figure out how to see that the file is changed in handleImport?
+	
+	private final static String			LOCAL_DROPBOX_DIR 	= "/Users/jonranstrom/Dropbox/Apps/Codeshelf-Interface";
+
+	public DropboxRealTest() {
+		super();
+	}
+
+	protected void doBefore() throws Exception {
+		super.doBefore();
+
+		mCsvOrderImporter = new OutboundOrderCsvImporter(mOrderGroupDao,
+			mOrderHeaderDao,
+			mOrderDetailDao,
+			mContainerDao,
+			mContainerUseDao,
+			mItemMasterDao,
+			mUomMasterDao);
+
+		mCsvInventoryImporter = new InventoryCsvImporter(mItemMasterDao, mItemDao, mUomMasterDao);
+
+		mCsvLocationAliasImporter = new LocationAliasCsvImporter(mLocationAliasDao);
+
+		mAislesFileCsvImporter = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+
+		mCsvCrossBatchImporter = new CrossBatchCsvImporter(mOrderGroupDao,
+			mOrderHeaderDao,
+			mOrderDetailDao,
+			mContainerDao,
+			mContainerUseDao,
+			mUomMasterDao);
+
+		mCsvOrderLocationImporter = new OrderLocationCsvImporter(mOrderLocationDao);
+	}
+
+	private Facility setUpStartingFacility(String inOrganizationName) {
+		// The organization will get "O-" prepended to the name. Facility F-
+		// Caller must use a different organization name each time this is used
+
+		Organization organization = new Organization();
+		String oName = "O-" + inOrganizationName;
+		organization.setDomainId(oName);
+		mOrganizationDao.store(organization);
+
+		String fName = "F-" + inOrganizationName;
+		organization.createFacility(fName, "TEST", Point.getZeroPoint());
+		Facility facility = organization.getFacility(fName);
+
+		String nName = "N-" + inOrganizationName;
+		CodeshelfNetwork network = facility.createNetwork(nName);
+		//Che che = 
+		network.createChe("CHE1", new NetGuid("0x00000001"));
+		network.createChe("CHE2", new NetGuid("0x00000002"));
+
+		LedController controller1 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000011"));
+		LedController controller2 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000012"));
+		LedController controller3 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000013"));
+
+		DropboxService dropboxService = facility.getDropboxService();
+		if (dropboxService == null) {
+			facility.createDropboxService();
+			dropboxService = facility.getDropboxService();
+			LOGGER.warn("had to createDropboxService. Unusual for this JUNIT test. Please understand why the change ");
+			;
+		}
+		try {
+			dropboxService.setDomainId("DB");
+			dropboxService.setProviderCredentials(TEST_CREDENTIALS3);
+			dropboxService.setServiceStateEnum(EdiServiceStateEnum.LINKED);
+			EdiServiceABC.DAO.store(dropboxService);
+		} catch (DaoException e) {
+			LOGGER.error("Unable to store dropboxservice change after setting test credentials", e);
+		}
+
+		return facility;
+
+	}
+
+	// @Test
+	public final void testDBX1() throws IOException {
+		// This calls dropboxService.getUpdatesFromHost() directly
+
+		LOGGER.info("START creation of facility DBX01");
+		Facility facility = setUpStartingFacility("DBX01");
+		LOGGER.info("facility DBX01 made");
+
+		String csvString2 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
+				+ "\r\n1,USF314,COSTCO,12345,12345,1123,12/16 oz Bowl Lids -PLA Compostable,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,12345,12345,1493,PARK RANGER Doll,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,12345,12345,1522,SJJ BPP,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0" + "\r\n";
+
+		/*
+		 * This all works. Just established the reference results for real dropbox test
+		byte[] csvArray2 = csvString2.getBytes();
+
+		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
+		InputStreamReader reader2 = new InputStreamReader(stream2);
+
+		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
+		ICsvOrderImporter importer2 = new OutboundOrderCsvImporter(mOrderGroupDao,
+			mOrderHeaderDao,
+			mOrderDetailDao,
+			mContainerDao,
+			mContainerUseDao,
+			mItemMasterDao,
+			mUomMasterDao);
+
+		LOGGER.info("start simulated orders read");
+		importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);
+		LOGGER.info("finish simulated orders read");
+
+		// We should have one order with 3 details. Only 2 of which are fulfillable.
+		OrderHeader order = facility.getOrderHeader("12345");
+		Assert.assertNotNull(order);
+		Integer detailCount = order.getOrderDetails().size();
+		Assert.assertEquals((Integer) 3, detailCount);
+		*/
+
+		DropboxService dropboxService = facility.getDropboxService();
+
+		String ordersDirPath = dropboxService.getFacilityImportSubDirPath("orders"); // IMPORT_ORDERS_PATH
+		String orderFileFragment = "/testorder.csv";
+		String processedFragment = "/processed";
+		String fullOrdersDirPath = LOCAL_DROPBOX_DIR + ordersDirPath;
+
+		// No file present yet
+		LOGGER.info("calling dbx getUpdatesFromHost");
+		dropboxService.getUpdatesFromHost(mCsvOrderImporter,
+			mCsvOrderLocationImporter,
+			mCsvInventoryImporter,
+			mCsvLocationAliasImporter,
+			mCsvCrossBatchImporter,
+			mAislesFileCsvImporter);
+		LOGGER.info("finish dbx getUpdatesFromHost");
+
+		try {
+			String csvFilePath = fullOrdersDirPath + orderFileFragment;
+			LOGGER.debug("full file path: " + csvFilePath);
+			FileUtils.writeStringToFile(new File(csvFilePath), csvString2);
+			LOGGER.debug("wrote the file ");
+
+		} catch (IOException e) {
+			LOGGER.error("failed to create test orders file", e);
+		}
+
+		// giving time for dropbox/file system interaction
+		try {
+			Thread.sleep(500);
+		} catch (InterruptedException e) {
+			LOGGER.error("", e);
+		}
+
+		LOGGER.info("second  call to getUpdatesFromHost, after new orders file written");
+		dropboxService.getUpdatesFromHost(mCsvOrderImporter,
+			mCsvOrderLocationImporter,
+			mCsvInventoryImporter,
+			mCsvLocationAliasImporter,
+			mCsvCrossBatchImporter,
+			mAislesFileCsvImporter);
+		LOGGER.info("finish second call to getUpdatesFromHost");
+
+		// We should have one order with 3 details.
+		OrderHeader order = facility.getOrderHeader("12345");
+		Assert.assertNotNull(order);
+		Integer detailCount = order.getOrderDetails().size();
+		Assert.assertEquals((Integer) 3, detailCount);
+
+		// giving time for dropbox/file system interaction
+		try {
+			Thread.sleep(500);
+		} catch (InterruptedException e) {
+			LOGGER.error("", e);
+		}
+
+		// Clean up so test may run again on the same file system
+		String processedCsvFilePath = fullOrdersDirPath + processedFragment + orderFileFragment;
+		LOGGER.debug("full file path: " + processedCsvFilePath);
+		// could delete the entire dbx02 directory
+		if (FileUtils.deleteQuietly(new File(processedCsvFilePath))) // does not throw!
+			LOGGER.debug("deleted the file ");
+		else
+			LOGGER.error("failed to delete processed file ");
+
+	}
+
+	// @Test
+	public final void testDBX2() {
+		// See DEV-454 and 455 for the purpose of this test.
+		// Although as specified, it was to move file in during (slow) processing, this almost mimics it much more easily.
+		// - Start processing
+		// - Which starts the orders importer
+		// - Which reads the files and creates the orders bean list
+		// - And process the beans (sometimes slowly, if the DAO is slow
+		// - Finish. Anonymous class puts another file back with the same name before the file is moved.
+		// - As normal, move the file to processed.
+		// DEV-454 says that if the file has the same name, but is different, then don't move it. AND make sure it will be processed.
+
+		LOGGER.info("START creation of facility DBX02");
+		Facility facility = setUpStartingFacility("DBX02");
+		Assert.assertNotNull(facility);
+		LOGGER.info("facility DBX02 made");
+
+		DropboxService dropboxService = facility.getDropboxService();
+
+		final String csvString1 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
+				+ "\r\n1,USF314,COSTCO,12345,12345,1123,12/16 oz Bowl Lids -PLA Compostable,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,12345,12345,1493,PARK RANGER Doll,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,12345,12345,1522,SJJ BPP,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0" + "\r\n";
+
+		String ordersDirPath = dropboxService.getFacilityImportSubDirPath("orders"); // IMPORT_ORDERS_PATH
+		String orderFileFragment = "/testorder.csv";
+		String processedFragment = "/processed";
+		String fullOrdersDirPath = LOCAL_DROPBOX_DIR + ordersDirPath;
+
+		final String csvFilePath = fullOrdersDirPath + orderFileFragment;
+		try {
+			LOGGER.debug("full file path: " + csvFilePath);
+			FileUtils.writeStringToFile(new File(csvFilePath), csvString1);
+			LOGGER.debug("wrote the file ");
+		} catch (IOException e) {
+			LOGGER.error("failed to create test orders file", e);
+		}
+		long timeMillisOriginalFileWrite = System.currentTimeMillis();
+
+		// giving time for dropbox/file system interaction
+		try {
+			Thread.sleep(500);
+		} catch (InterruptedException e) {
+			LOGGER.error("", e);
+		}
+
+		// Provide a wrapper for CsvOrderImporter
+		ICsvOrderImporter testImporter = new ICsvOrderImporter() {
+			@Override
+			public ImportResult importOrdersFromCsvStream(InputStreamReader inCsvStreamReader,
+				Facility inFacility,
+				Timestamp inProcessTime) throws IOException {
+
+				ImportResult result = mCsvOrderImporter.importOrdersFromCsvStream(inCsvStreamReader, inFacility, inProcessTime);
+				LOGGER.info("Anonymous Order Importer just finished");
+				//file manipulation here
+				String csvString2 = csvString1
+						+ "1,USF314,COSTCO,12345,12345,1622,Raggety Ann Doll,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+						+ "\r\n";
+				try {
+					LOGGER.debug("full file path: " + csvFilePath);
+					FileUtils.writeStringToFile(new File(csvFilePath), csvString2);
+					LOGGER.debug("overwrote the file with fourth detail for 12345 ");
+				} catch (IOException e) {
+					LOGGER.error("failed to overwrite file", e);
+				}
+				return result;
+			}
+		};
+
+		LOGGER.info("START dbx getUpdatesFromHost for DBX02");
+		// testImporter instead of mCsvOrderImporter
+		dropboxService.getUpdatesFromHost(testImporter,
+			mCsvOrderLocationImporter,
+			mCsvInventoryImporter,
+			mCsvLocationAliasImporter,
+			mCsvCrossBatchImporter,
+			mAislesFileCsvImporter);
+		LOGGER.info("FINISH dbx getUpdatesFromHost for DBX02. Did the file move to processed?");
+
+		// We should have one order with 3 details. (The 4th detail is now in the file, but was not as it processed into beans.)
+		OrderHeader order = facility.getOrderHeader("12345");
+		Assert.assertNotNull(order);
+		Integer detailCount = order.getOrderDetails().size();
+		Assert.assertEquals((Integer) 3, detailCount);
+		
+		if (FileUtils.isFileNewer(new File(csvFilePath), timeMillisOriginalFileWrite))
+			LOGGER.info("as expected, file system sees the overwritten file as newer");
+		else
+			LOGGER.error("file system does not see the overwritten file as newer"); // never see this
+
+
+	}
+
+}
