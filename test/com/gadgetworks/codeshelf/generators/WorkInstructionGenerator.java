@@ -8,6 +8,7 @@ import com.gadgetworks.codeshelf.device.LedSample;
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
+import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.Container;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster;
@@ -41,6 +42,7 @@ public class WorkInstructionGenerator {
 		workInstruction.setPlanMinQuantity(2);
 		workInstruction.setPlanMaxQuantity(2);
 		workInstruction.setActualQuantity(2);
+		workInstruction.setAssignedChe(new Che("CHE1"));
 		workInstruction.setAssigned( new Timestamp(System.currentTimeMillis()-10000));
 		workInstruction.setStarted(  new Timestamp(System.currentTimeMillis()-5000));
 		workInstruction.setCompleted(new Timestamp(System.currentTimeMillis()-0000));
@@ -59,6 +61,7 @@ public class WorkInstructionGenerator {
 		orderHeader.setOrderGroup(new OrderGroup(facility, "OG1"));
 		OrderDetail detail = new OrderDetail(orderHeader, "OD1");
 		detail.setQuantities(5);
+		detail.setUomMaster(new UomMaster(facility, "newUOM"));
 		return detail;
 		
 	}

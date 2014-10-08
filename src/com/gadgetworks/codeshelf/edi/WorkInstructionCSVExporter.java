@@ -15,34 +15,45 @@ public class WorkInstructionCSVExporter {
 
 	private static final String		TIME_FORMAT			= "yyyy-MM-dd'T'HH:mm:ss'Z'";
 
-	private static final Integer	DOMAINID_POS		= 0;
-	private static final Integer	TYPE_POS			= 1;
-	private static final Integer	STATUS_POS			= 2;
-	private static final Integer	ORDERGROUPID_POS	= 3;
-	private static final Integer	ORDERID_POS			= 4;
-	private static final Integer	CONTAINERID_POS		= 5;
-	private static final Integer	ITEMID_POS			= 6;
-	private static final Integer	LOCATIONID_POS		= 7;
-	private static final Integer	PICKERID_POS		= 8;
-	private static final Integer	PLAN_QTY_POS		= 9;
-	private static final Integer	ACT_QTY_POS			= 10;
-	private static final Integer	ASSIGNED_POS		= 11;
-	private static final Integer	STARTED_POS			= 12;
-	private static final Integer	COMPLETED_POS		= 13;
-	private static final Integer	WI_ATTR_COUNT		= 14;							// The total count of these attributes.
+	private static final String CURRENT_VERSION = "1.0";
+	
+	private static final Integer	FACILITYID_POS			= 0;
+	private static final Integer	WORKINSTRUCTIONID_POS	= 1;
+	private static final Integer	TYPE_POS				= 2;
+	private static final Integer	STATUS_POS				= 3;
+	private static final Integer	ORDERGROUPID_POS		= 4;
+	private static final Integer	ORDERID_POS				= 5;
+	private static final Integer	CONTAINERID_POS			= 6;
+	private static final Integer	ITEMID_POS				= 7;
+	private static final Integer	UOM_POS					= 8;
+	private static final Integer	LOTID_POS				= 9;
+	private static final Integer	LOCATIONID_POS			= 10;
+	private static final Integer	PICKERID_POS			= 11;
+	private static final Integer	PLAN_QTY_POS			= 12;
+	private static final Integer	ACT_QTY_POS				= 13;
+	private static final Integer	CHEID_POS				= 14;
+	private static final Integer	ASSIGNED_POS			= 15;
+	private static final Integer	STARTED_POS				= 16;
+	private static final Integer	COMPLETED_POS			= 17;
+	private static final Integer	VERSION_POS				= 18;
+	private static final Integer	WI_ATTR_COUNT			= 19;							// The total count of these attributes.
 
 	public String exportWorkInstructions(List<WorkInstruction> inWorkInstructions) throws IOException {
 		// Convert the WI into a CSV string.
 		StringWriter stringWriter = new StringWriter();
 		CSVWriter csvWriter = new CSVWriter(stringWriter);
 		String[] properties = new String[WI_ATTR_COUNT];
-		properties[DOMAINID_POS] = "domainId";
+		properties[FACILITYID_POS] = "facilityId";
+		properties[WORKINSTRUCTIONID_POS] = "workInstructionId";
 		properties[TYPE_POS] = "type";
 		properties[STATUS_POS] = "status";
 		properties[ORDERGROUPID_POS] = "orderGroupId";
 		properties[ORDERID_POS] = "orderId";
 		properties[CONTAINERID_POS] = "containerId";
 		properties[ITEMID_POS] = "itemId";
+		properties[UOM_POS] = "uom";
+		properties[LOTID_POS] = "lotId";
+		properties[CHEID_POS] = "cheId";
 		properties[LOCATIONID_POS] = "locationId";
 		properties[PICKERID_POS] = "pickerId";
 		properties[PLAN_QTY_POS] = "planQuantity";
@@ -50,12 +61,14 @@ public class WorkInstructionCSVExporter {
 		properties[ASSIGNED_POS] = "assigned";
 		properties[STARTED_POS] = "started";
 		properties[COMPLETED_POS] = "completed";
+		properties[VERSION_POS] = "version-" + CURRENT_VERSION;
 		csvWriter.writeNext(properties);
 
 		for (WorkInstruction wi : inWorkInstructions) {
 
 			properties = new String[WI_ATTR_COUNT];
-			properties[DOMAINID_POS] = wi.getDomainId();
+			properties[FACILITYID_POS] = wi.getParent().getDomainId();
+			properties[WORKINSTRUCTIONID_POS] = wi.getDomainId();
 			properties[TYPE_POS] = wi.getTypeEnum().toString();
 			properties[STATUS_POS] = wi.getStatusEnum().toString();
 
@@ -77,6 +90,9 @@ public class WorkInstructionCSVExporter {
 			
 			properties[CONTAINERID_POS] = wi.getContainerId();
 			properties[ITEMID_POS] = wi.getItemId();
+			properties[UOM_POS] = wi.getUomMasterId();
+			properties[LOTID_POS] = "";
+			properties[ITEMID_POS] = wi.getItemId();
 
 			//Default to location id
 			properties[LOCATIONID_POS] = wi.getLocationId();
@@ -89,9 +105,11 @@ public class WorkInstructionCSVExporter {
 			properties[PICKERID_POS] = wi.getPickerId();
 			properties[PLAN_QTY_POS] = Integer.toString(wi.getPlanQuantity());
 			properties[ACT_QTY_POS] = Integer.toString(wi.getActualQuantity());
+			properties[CHEID_POS] = wi.getAssignedCheName();
 			properties[ASSIGNED_POS] = new SimpleDateFormat(TIME_FORMAT).format(wi.getAssigned());
 			properties[STARTED_POS] = new SimpleDateFormat(TIME_FORMAT).format(wi.getStarted());
 			properties[COMPLETED_POS] = new SimpleDateFormat(TIME_FORMAT).format(wi.getCompleted());
+			properties[VERSION_POS] = ""; //always blank in the data
 			csvWriter.writeNext(properties);
 		}
 		csvWriter.close();
