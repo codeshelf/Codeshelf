@@ -9,8 +9,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import javax.persistence.Column;
@@ -36,6 +38,7 @@ import org.slf4j.LoggerFactory;
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.gadgetworks.codeshelf.device.LedCmdPath;
 import com.gadgetworks.codeshelf.model.LedRange;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
@@ -799,6 +802,19 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 			}
 		}
 		return theChannel;
+	}
+	
+	public Set<LedCmdPath> getAllLedCmdPaths() {
+		Set<LedCmdPath> cmdPathsSet = new HashSet<LedCmdPath>();
+		if (getEffectiveLedController() != null) {
+			cmdPathsSet.add(new LedCmdPath(getEffectiveLedController().getDeviceGuidStr(), getEffectiveLedChannel()));
+		}
+		else {
+			for (ISubLocation child : getChildren()) {
+				cmdPathsSet.addAll(child.getAllLedCmdPaths());
+			}
+		}
+		return cmdPathsSet;
 	}
 	
 	public final Boolean isLeftSideTowardsAnchor() {

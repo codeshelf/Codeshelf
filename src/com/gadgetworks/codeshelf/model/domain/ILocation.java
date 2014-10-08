@@ -7,8 +7,12 @@ package com.gadgetworks.codeshelf.model.domain;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import com.gadgetworks.codeshelf.device.LedCmdGroup;
+import com.gadgetworks.codeshelf.device.LedCmdPath;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
+import com.gadgetworks.flyweight.command.ColorEnum;
 
 public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P> {
 
@@ -259,5 +263,8 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 	 * The effective channel is this one, or any of its parent up the chain
 	 */
 	Short getEffectiveLedChannel();
+	
+	List<LedCmdGroup> getLedsToCheck(ColorEnum inColor);
+	Set<LedCmdPath> getAllLedCmdPaths();
 	
 }
