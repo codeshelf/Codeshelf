@@ -84,6 +84,7 @@ public class RadioController implements IRadioController {
 	private static final long									MAX_PACKET_AGE_MILLIS		= 20000;
 	private static final long									EVENT_SLEEP_MILLIS			= 50;
 	private static final long									INTERFACE_CHECK_MILLIS		= 750;
+	private static final long									TOO_LONG_DURATION_MILLIS	= 2000;
 	private static final long									CONTROLLER_SLEEP_MILLIS		= 10;
 	private static final int									MAX_CHANNEL_VALUE			= 255;
 
@@ -277,10 +278,16 @@ public class RadioController implements IRadioController {
 						mPreferredChannel,
 						new NetChannelValue((byte) 0),
 						new NetChannelValue((byte) 0));
+					// This send ( beacon ) goes to radio. The response is immediate, which will clear mIntfCheckPending.
+					// The radio broadcast goes out. All associated controllers should receive it. They reboot if they do not see one in 3.5 seconds.
 					sendCommand(netCheck, mBroadcastAddress, false);
 					mIntfCheckPending = true;
-
-					mLastIntfCheckMillis = System.currentTimeMillis();
+					long currentTime = System.currentTimeMillis();
+					Long durationSinceLastCheck = currentTime - mLastIntfCheckMillis;
+					if (durationSinceLastCheck >  TOO_LONG_DURATION_MILLIS) {
+						LOGGER.warn("Duration since last beacon sent to radio: " + durationSinceLastCheck + "millis");
+					}
+					mLastIntfCheckMillis = currentTime;
 					// Wait for the next check.
 					Thread.sleep(INTERFACE_CHECK_MILLIS);
 				} else {
