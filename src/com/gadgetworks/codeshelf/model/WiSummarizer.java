@@ -14,7 +14,6 @@ import java.util.TreeMap;
 
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
-import org.hibernate.criterion.SimpleExpression;
 
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.google.common.base.Strings;

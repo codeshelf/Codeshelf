@@ -38,7 +38,6 @@ import com.gadgetworks.codeshelf.model.domain.ItemMaster;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster.ItemMasterDao;
 import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.LedController.LedControllerDao;
-import com.gadgetworks.codeshelf.model.domain.LocationABC;
 //import com.gadgetworks.codeshelf.model.domain.LocationABC.LocationABCDao;
 import com.gadgetworks.codeshelf.model.domain.LocationAlias;
 import com.gadgetworks.codeshelf.model.domain.LocationAlias.LocationAliasDao;
@@ -60,7 +59,6 @@ import com.gadgetworks.codeshelf.model.domain.SiteController;
 import com.gadgetworks.codeshelf.model.domain.SiteController.SiteControllerDao;
 import com.gadgetworks.codeshelf.model.domain.Slot;
 import com.gadgetworks.codeshelf.model.domain.Slot.SlotDao;
-import com.gadgetworks.codeshelf.model.domain.SubLocationABC;
 //import com.gadgetworks.codeshelf.model.domain.SubLocationABC.SubLocationDao;
 import com.gadgetworks.codeshelf.model.domain.Tier;
 import com.gadgetworks.codeshelf.model.domain.Tier.TierDao;
@@ -128,7 +126,7 @@ public abstract class DAOTestABC {
 
 	@Before
 	public final void setup() {
-		this.persistenceService = new PersistenceService();
+		this.persistenceService = PersistenceService.getInstance();
 		this.persistenceService.start();
 
 		mOrganizationDao = new OrganizationDao(persistenceService);

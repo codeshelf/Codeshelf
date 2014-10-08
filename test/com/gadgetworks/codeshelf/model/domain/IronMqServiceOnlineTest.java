@@ -1,7 +1,5 @@
 package com.gadgetworks.codeshelf.model.domain;
 
-import static org.mockito.Mockito.mock;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -15,8 +13,6 @@ import org.junit.Test;
 import com.gadgetworks.codeshelf.generators.FacilityGenerator;
 import com.gadgetworks.codeshelf.generators.WorkInstructionGenerator;
 import com.gadgetworks.codeshelf.model.EdiProviderEnum;
-import com.gadgetworks.codeshelf.model.dao.DAOTestABC;
-import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.google.common.collect.ImmutableList;
 
 // TODO: should use mock DAO 
@@ -25,7 +21,6 @@ public class IronMqServiceOnlineTest extends DomainTestABC {
 	private Map<String, String> tempPropertyRestore  = new HashMap<String, String>();
 	
 	@Before
-	@SuppressWarnings("unchecked")
 	public void doBefore() {
 		super.doBefore();
 		//USE THE DEFAULT KEYSTORE COMMUNICATING TO IRON MQ

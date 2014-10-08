@@ -35,8 +35,6 @@ import com.google.inject.Inject;
  */
 public class EdiProcessorTest extends EdiTestABC {
 
-	//PersistenceService persistenceService = new PersistenceService();
-	
 	@Test
 	public final void ediProcessThreadTest() {
 
@@ -105,7 +103,8 @@ public class EdiProcessorTest extends EdiTestABC {
 			orderLocationImporter,
 			crossBatchImporter,
 			aislesFileImporter,
-			Facility.DAO);
+			Facility.DAO,
+			this.getPersistenceService());
 		BlockingQueue<String> testBlockingQueue = new ArrayBlockingQueue<>(100);
 		ediProcessor.startProcessor(testBlockingQueue);
 
@@ -516,7 +515,8 @@ public class EdiProcessorTest extends EdiTestABC {
 			orderLocationImporter,
 			crossBatchImporter,
 			aislesFileImporter,
-			facilityDao);
+			facilityDao,
+			this.getPersistenceService());
 		BlockingQueue<String> testBlockingQueue = new ArrayBlockingQueue<>(100);
 		ediProcessor.startProcessor(testBlockingQueue);
 

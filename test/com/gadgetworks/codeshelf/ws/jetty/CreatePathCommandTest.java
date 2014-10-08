@@ -44,7 +44,7 @@ import com.natpryce.makeiteasy.Maker;
 @RunWith(MockitoJUnitRunner.class)
 public class CreatePathCommandTest extends DAOTestABC {
 
-	PersistenceService persistenceService = new PersistenceService();
+	PersistenceService persistenceService = PersistenceService.getInstance();
 
 	@Mock
 	private IDaoProvider mockDaoProvider;
@@ -100,6 +100,7 @@ public class CreatePathCommandTest extends DAOTestABC {
 		Assert.assertTrue(response instanceof CreatePathResponse);
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testCreatePathViaObjectMethod() throws JsonParseException, JsonMappingException, IOException {
 		int numberOfSegments = 3;

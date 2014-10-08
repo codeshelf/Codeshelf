@@ -45,7 +45,7 @@ import com.google.inject.Inject;
 public class ServerMessageProcessor extends MessageProcessor {
 
 	private static final Logger	LOGGER = LoggerFactory.getLogger(ServerMessageProcessor.class);
-
+	
 	private final Counter requestCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.processed");
 	private final Counter responseCounter = MetricsService.addCounter(MetricsGroup.WSS,"responses.processed");
 	private final Counter loginCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.logins");
@@ -63,7 +63,7 @@ public class ServerMessageProcessor extends MessageProcessor {
 //	private final Meter requestMeter = MetricsService.addMeter(MetricsGroup.WSS,"requests.meter");
 //	private final Meter responseMeter = MetricsService.addMeter(MetricsGroup.WSS,"responses.meter");
 	private final Timer requestProcessingTimer = MetricsService.addTimer(MetricsGroup.WSS,"requests.processing-time");
-	private final Timer responseProcessingTimer = MetricsService.addTimer(MetricsGroup.WSS,"responses.processing-time");
+//	private final Timer responseProcessingTimer = MetricsService.addTimer(MetricsGroup.WSS,"responses.processing-time");
 	//private final Histogram pingHistogram = MetricsService.addHistogram(MetricsGroup.WSS, "ping-histogram");
 	
 	final private IDaoProvider daoProvider;
@@ -75,7 +75,6 @@ public class ServerMessageProcessor extends MessageProcessor {
 		LOGGER.debug("Creating "+this.getClass().getSimpleName());
 		this.daoProvider = daoProvider;
 		this.workService = new WorkService();
-		
 	}
 	
 	@Override
@@ -87,7 +86,8 @@ public class ServerMessageProcessor extends MessageProcessor {
 
         // process message...
     	final Timer.Context context = requestProcessingTimer.time();
-	    try {
+
+    	try {
 			// TODO: get rid of message type handling using if statements and type casts...
 			if (request instanceof LoginRequest) {
 				LoginRequest loginRequest = (LoginRequest) request;
@@ -146,22 +146,22 @@ public class ServerMessageProcessor extends MessageProcessor {
 			if (command==null) {
 				LOGGER.warn("Unable to find matching command for request "+request+". Ignoring request.");
 		        context.stop();
-				return null;
+			} else {
+				// inject context
+				command.setDaoProvider(this.daoProvider);
+
+				// execute command and generate response to be sent to client
+				response = command.exec();
+				if (response!=null) {
+					// automatically tie response to request
+					response.setRequestId(request.getMessageId());
+				}
+				else {
+					LOGGER.warn("No response generated for request "+request);
+					missingResponseCounter.inc();
+				}
 			}
 
-			// inject context
-			command.setDaoProvider(this.daoProvider);
-
-			// execute command and generate response to be sent to client
-			response = command.exec();
-			if (response!=null) {
-				// automatically tie response to request
-				response.setRequestId(request.getMessageId());
-			}
-			else {
-				LOGGER.warn("No response generated for request "+request);
-				missingResponseCounter.inc();
-			}
 	    } finally {
 	        context.stop();
 	    }
@@ -170,11 +170,12 @@ public class ServerMessageProcessor extends MessageProcessor {
 	}
 
 	@Override
-	public void handleResponse(UserSession csSession, ResponseABC response) {
+	public void handleResponse(UserSession session, ResponseABC response) {
 		responseCounter.inc();
+		LOGGER.warn("Unexpected response received on session "+session+": "+response);
+		/*
 		final Timer.Context context = responseProcessingTimer.time();
 	    try {		
-			/*
 			if (response instanceof PingResponse) {
 				PingResponse pingResponse = (PingResponse) response;
 				long now = System.currentTimeMillis();
@@ -189,10 +190,10 @@ public class ServerMessageProcessor extends MessageProcessor {
 					LOGGER.warn("Unable to set pong received data: Matching session not found.");
 				}
 			}
-			*/
 	    } finally {
 	        context.stop();
 	    }
+		*/
 	}
 
 

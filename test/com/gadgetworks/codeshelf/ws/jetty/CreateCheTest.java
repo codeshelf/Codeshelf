@@ -13,12 +13,9 @@ import com.gadgetworks.codeshelf.model.dao.DAOTestABC;
 import com.gadgetworks.codeshelf.model.dao.MockDaoProvider;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
-import com.gadgetworks.codeshelf.model.domain.DropboxService;
 import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.IronMqService;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Point;
-import com.gadgetworks.codeshelf.model.domain.Vertex;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectUpdateRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectUpdateResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
@@ -42,7 +39,7 @@ public class CreateCheTest extends DAOTestABC {
 		String description1 = "che description";
 		String description2 = "changed che description";
 		
-		//setupDaos();
+		setupDaos();
 
 		Organization organization = new Organization();
 		organization.setOrganizationId("CTEST1.O1");
@@ -262,7 +259,7 @@ public class CreateCheTest extends DAOTestABC {
 		
 		mSession = Mockito.mock(UserSession.class);
 		mSession.setSessionId("test-session");
-		
+		/*
 		Organization.setDao(mDaoProvider.getDaoInstance(Organization.class));
 		Facility.setDao(mDaoProvider.getDaoInstance(Facility.class));
 		CodeshelfNetwork.setDao(mDaoProvider.getDaoInstance(CodeshelfNetwork.class));
@@ -271,6 +268,6 @@ public class CreateCheTest extends DAOTestABC {
 		DropboxService.setDao(mDaoProvider.getDaoInstance(DropboxService.class));
 		IronMqService.setDao(mDaoProvider.getDaoInstance(IronMqService.class));
 		CodeshelfNetwork.setDao(mDaoProvider.getDaoInstance(CodeshelfNetwork.class));
+		*/
 	}	
-
 }

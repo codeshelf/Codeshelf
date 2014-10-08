@@ -5,9 +5,9 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -15,12 +15,11 @@ import java.util.concurrent.LinkedBlockingQueue;
 import javax.persistence.OptimisticLockException;
 import javax.persistence.PersistenceException;
 
-import org.apache.commons.lang.NotImplementedException;
 import org.hibernate.Criteria;
+import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
-import org.hibernate.criterion.SimpleExpression;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -214,26 +213,33 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 		return results;
 	}
 
+	/*
+	public final List<T> findByFilter(String clause,Map<String,Object> params) {
+		Session session = getCurrentSession();
+		String queryString = "from Che where "+clause;
+		Query query = session.createQuery(queryString);
+		for(Entry<String, Object> entry : params.entrySet()) {
+			query.setParameter(entry.getKey(), UUID.fromString(entry.getValue().toString()) );
+		}
+		//query.setProperties(params);
+		
+		List<T> results = query.list();
+		return results;
+	}*/
+
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#findByIdList(java.util.List)
 	 */
-	public final <L> List<L> findByFilterAndClass(String inFilter, Map<String, Object> inFilterParams, Class<L> inClass) {
-		if ((inFilter != null) && (inFilter.length() > 0)) {
-			// If we have a valid filter then get the filtered objects.
-			throw new NotImplementedException();
-			/*
-			Query<L> query = mServer.find(inClass);
-			query = query.where(inFilter);
-			for (Entry<String, Object> param : inFilterParams.entrySet()) {
-				query.setParameter(param.getKey(), param.getValue());
-			}
-			List<L> methodResultsList = query.findList();
-			return methodResultsList;
-			*/
-		} else {
-			return new ArrayList<L>();
-		}
+	public final List<T> findByFilterAndClass(String filter, Map<String, Object> params, Class<T> clazz) {
+		Session session = getCurrentSession();
+		String queryString = "from "+clazz.getSimpleName()+" where "+filter;
+		Query query = session.createQuery(queryString);
+		for(Entry<String, Object> entry : params.entrySet()) {
+			query.setParameter(entry.getKey(), UUID.fromString(entry.getValue().toString()) );
+		}		
+		List<T> results = query.list();
+		return results;
 	}
 
 	// --------------------------------------------------------------------------
@@ -369,9 +375,9 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.dao.ITypedDao#commitTransaction()
 	 */
-	public final void commitTransaction() {
-		this.persistenceService.endTenantTransaction();
-	}
+	//public final void commitTransaction() {
+	//	this.persistenceService.endTenantTransaction();
+	//}
 	
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)

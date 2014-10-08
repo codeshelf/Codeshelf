@@ -26,7 +26,6 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
-import com.gadgetworks.codeshelf.model.TravelDirectionEnum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
@@ -76,6 +75,7 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 			Session session = this.getCurrentSession();
 	        Criteria criteria = session.createCriteria(LocationABC.class);
 			criteria.add(Restrictions.eq("pathSegment",inPathSegment));
+			@SuppressWarnings("unchecked")
 			List<LocationABC> locations = criteria.list();
 			return locations;
 			/*

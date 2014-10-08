@@ -12,6 +12,8 @@ import javax.websocket.OnOpen;
 import javax.websocket.Session;
 import javax.websocket.server.ServerEndpoint;
 
+import lombok.Getter;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,6 +21,7 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
 import com.gadgetworks.codeshelf.metrics.MetricsGroup;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.ws.jetty.io.JsonDecoder;
 import com.gadgetworks.codeshelf.ws.jetty.io.JsonEncoder;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.KeepAlive;
@@ -32,6 +35,9 @@ public class CsServerEndPoint {
 
 	private static final Logger	LOGGER = LoggerFactory.getLogger(CsServerEndPoint.class);
 
+	@Getter
+	private final PersistenceService persistenceService;
+
 	private static final Counter messageCounter = MetricsService.addCounter(MetricsGroup.WSS,"messages.received");
 
 	MessageProcessor messageProcessor;
@@ -42,7 +48,8 @@ public class CsServerEndPoint {
 	// time to close session after mins of inactivity
 	int idleTimeOut = 60;
 	
-	public CsServerEndPoint() {	
+	public CsServerEndPoint() {
+		persistenceService = PersistenceService.getInstance();
 		sessionManager = SessionManager.getInstance();
 		messageProcessor = MessageProcessorFactory.getInstance();
 		if (messageProcessor==null) {
@@ -60,6 +67,8 @@ public class CsServerEndPoint {
     @OnMessage(maxMessageSize=JsonEncoder.WEBSOCKET_MAX_MESSAGE_SIZE)
     public void onMessage(Session session, MessageABC message) throws IOException, EncodeException {
     	messageCounter.inc();
+    	this.getPersistenceService().beginTenantTransaction();
+
     	UserSession csSession = sessionManager.getSession(session);
     	csSession.messageReceived();
 		sessionManager.messageReceived(session);
@@ -86,6 +95,8 @@ public class CsServerEndPoint {
         	LOGGER.debug("Received message on session "+csSession+": "+message);
         	messageProcessor.handleOtherMessage(csSession, message);
     	}
+    	
+    	this.getPersistenceService().endTenantTransaction();
     }
     
     @OnClose

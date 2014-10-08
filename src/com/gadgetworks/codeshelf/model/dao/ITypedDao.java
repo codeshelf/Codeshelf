@@ -11,7 +11,6 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.hibernate.criterion.Criterion;
-import org.hibernate.criterion.SimpleExpression;
 
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 
@@ -35,9 +34,10 @@ public interface ITypedDao<T> extends IDao {
 
 	//List<T> findByFilter(String inFilter, Map<String, Object> inFilterParams);
 	//List<T> findByFilter(Map<String, Object> inFilterParams);
+	//List<T> findByFilter(String clause, Map<String, Object> params);
 	List<T> findByFilter(List<Criterion> inFilter);
 
-	<L> List<L> findByFilterAndClass(String inFilter, Map<String, Object> inFilterParams, Class<L> inClass);
+	List<T> findByFilterAndClass(String inFilter, Map<String, Object> inFilterParams, Class<T> inClass);
 
 	void store(T inDomainObject) throws DaoException;
 
@@ -53,7 +53,7 @@ public interface ITypedDao<T> extends IDao {
 	
 	// TODO: remove transaction methods from DAO layer
 	void beginTransaction();
-	void commitTransaction();
+	//void commitTransaction();
 	void endTransaction();
 	
 	/**
@@ -67,4 +67,5 @@ public interface ITypedDao<T> extends IDao {
 	void broadcastUpdate(IDomainObject inDomainObject, Set<String> inChangedProperties);
 
 	void broadcastDelete(IDomainObject inDomainObject);
+
 }

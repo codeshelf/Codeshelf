@@ -21,7 +21,6 @@ import javax.persistence.Column;
 
 import org.apache.commons.lang.NotImplementedException;
 import org.hibernate.criterion.Criterion;
-import org.hibernate.criterion.SimpleExpression;
 
 import com.eaio.uuid.UUIDGen;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
@@ -149,7 +148,7 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 	}
 
 	@Override
-	public final <L> List<L> findByFilterAndClass(String inFilter, Map<String, Object> inFilterParams, Class<L> inClass) {
+	public final List<T> findByFilterAndClass(String inFilter, Map<String, Object> inFilterParams, Class<T> inClass) {
 		throw new NotImplementedException();
 	}
 
@@ -164,10 +163,6 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 
 	@Override
 	public void endTransaction() {
-	}
-
-	@Override
-	public void commitTransaction() {	
 	}
 
 	@Override

@@ -9,7 +9,6 @@ import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.SiteController;
 import com.gadgetworks.codeshelf.model.domain.User;
-import com.gadgetworks.codeshelf.model.domain.UserType;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.LoginRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.LoginResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
@@ -45,30 +44,24 @@ public class LoginCommand extends CommandABC {
 			if (user != null) {
 				String password = loginRequest.getPassword();
 				if (user.isPasswordValid(password)) {
-					boolean loginOkay = true;
+					Organization org = user.getParent();
 					session.setUser(user);
+
 					// determine if site controller
-					if(user.getType().equals(UserType.SITECON)) {
-						SiteController sitecon = SiteController.DAO.findByDomainId(null, userId);
-						if(sitecon  != null) {
-							CodeshelfNetwork network = sitecon.getParent();
-							network.getDomainId(); // restore entity
-							response.setNetwork(network); 
-							// send all network updates to this session for this network 
-							NetworkChangeListener.registerWithSession(session, network, daoProvider);
-						} else {
-							LOGGER.warn("Sitecon user "+userId+" - assoc site controller not found, cannot log in");
-							response.setStatus(ResponseStatus.Authentication_Failed);
-							loginOkay = false;
-						}
+					SiteController sitecon = SiteController.DAO.findByDomainId(null, userId);
+					if(sitecon  != null) {
+						CodeshelfNetwork network = sitecon.getParent();
+						network.getDomainId(); // restore entity
+						response.setNetwork(network); 
+						// send all network updates to this session for this network 
+						NetworkChangeListener.registerWithSession(session, network, daoProvider);
+					}  else {
+						response.setOrganization(org);
 					}
-					if(loginOkay) {
-						Organization org = user.getParent();
-						session.setUser(user);
-						LOGGER.info("User "+userId+" of "+org.getDomainId()+" authenticated on session "+session.getSessionId());
-						response.setUser(user);
-						response.setStatus(ResponseStatus.Success);
-					}
+
+					LOGGER.info("User "+userId+" of "+org.getDomainId()+" authenticated on session "+session.getSessionId());
+					response.setUser(user);
+					response.setStatus(ResponseStatus.Success);
 					
 				} else {
 					LOGGER.warn("Invalid password for user: " + user.getDomainId());

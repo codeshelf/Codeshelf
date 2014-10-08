@@ -7,6 +7,8 @@ package com.gadgetworks.codeshelf.edi;
 
 import java.util.concurrent.BlockingQueue;
 
+import lombok.Getter;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,6 +19,7 @@ import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.IEdiService;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.google.inject.Inject;
 
 // --------------------------------------------------------------------------
@@ -32,6 +35,9 @@ public final class EdiProcessor implements IEdiProcessor {
 	private long						mLastProcessMillis;
 	private boolean						mShouldRun;
 	private Thread						mProcessorThread;
+	
+	@Getter
+	private PersistenceService			persistenceService;
 
 	private ICsvOrderImporter			mCsvOrderImporter;
 	private ICsvOrderLocationImporter	mCsvOrderLocationImporter;
@@ -50,7 +56,8 @@ public final class EdiProcessor implements IEdiProcessor {
 		final ICsvOrderLocationImporter inCsvOrderLocationImporter,
 		final ICsvCrossBatchImporter inCsvCrossBatchImporter,
 		final ICsvAislesFileImporter inCsvAislesFileImporter,
-		final ITypedDao<Facility> inFacilityDao) {
+		final ITypedDao<Facility> inFacilityDao,
+		final PersistenceService persistenceService) {
 
 		mCsvOrderImporter = inCsvOrdersImporter;
 		mCsvOrderLocationImporter = inCsvOrderLocationImporter;
@@ -62,6 +69,8 @@ public final class EdiProcessor implements IEdiProcessor {
 
 		mShouldRun = false;
 		mLastProcessMillis = 0;
+		
+		this.persistenceService = persistenceService;
 
 	}
 
@@ -71,7 +80,7 @@ public final class EdiProcessor implements IEdiProcessor {
 	public void startProcessor(final BlockingQueue<String> inEdiSignalQueue) {
 		mShouldRun = true;
 		try {
-			Thread.sleep(5000);
+			Thread.sleep(10000);
 		} catch (InterruptedException e) {
 		}
 		mProcessorThread = new Thread(new Runnable() {
@@ -128,6 +137,8 @@ public final class EdiProcessor implements IEdiProcessor {
 	 */
 	private void checkEdiServices(BlockingQueue<String> inEdiSignalQueue) {
 		LOGGER.debug("Begin EDI process.");
+		this.getPersistenceService().beginTenantTransaction();
+		
     	final Timer.Context context = ediProcessingTimer.time();
     	try {
 			// Loop through each facility to make sure that it's EDI service processes any queued EDI.
@@ -153,6 +164,8 @@ public final class EdiProcessor implements IEdiProcessor {
     	} finally {
     		context.stop();
     	}
+
+    	this.getPersistenceService().endTenantTransaction();
 		LOGGER.debug("End EDI process.");
 	}
 }

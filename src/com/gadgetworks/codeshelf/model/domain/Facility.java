@@ -34,7 +34,6 @@ import lombok.Setter;
 
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
-import org.hibernate.criterion.SimpleExpression;
 import org.postgresql.util.PSQLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -567,8 +566,8 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 	public final Path createPath(String inDomainId, PathSegment[] inPathSegments) {
 		Path path = createPath(inDomainId);
 		for (PathSegment pathSegment : inPathSegments) {
-			PathSegment.DAO.store(pathSegment);
 			path.addPathSegment(pathSegment);
+			PathSegment.DAO.store(pathSegment);
 		}
 		return path;
 		// Recompute the distances of the structures?

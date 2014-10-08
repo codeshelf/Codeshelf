@@ -43,6 +43,8 @@ public class PersistenceService extends Service {
 
 	String schemaName;
 	
+	private static PersistenceService theInstance = null;
+	
 	// stores the factories for different tenants
 	Map<Tenant,SessionFactory> factories = new HashMap<Tenant, SessionFactory>();
 
@@ -50,9 +52,23 @@ public class PersistenceService extends Service {
 	Tenant fixedTenant;
 	
 	public PersistenceService() {
+		setInstance();
 		fixedTenant = new Tenant();
 		fixedTenant.setName("Tenant #1");
 		fixedTenant.setShardId(1);
+	}
+	
+	private void setInstance() {
+		PersistenceService.theInstance = this;
+	}
+	
+	public final synchronized static PersistenceService getInstance() {
+		if(theInstance == null) {
+			theInstance = new PersistenceService();
+			theInstance.start();
+			LOGGER.warn("Unless this is a test, PersistanceService should have been initialized already but was not!");
+		}
+		return theInstance;
 	}
 	
 	/*
@@ -232,17 +248,18 @@ public class PersistenceService extends Service {
 		return this.fixedTenant;
 	}
 	
-	public final void beginTenantTransaction() {
+	public final Transaction beginTenantTransaction() {
 		Session session = getCurrentTenantSession();
 		Transaction tx = session.getTransaction();
 		if (tx != null) {
 			if (tx.isActive()) {
 				LOGGER.warn("tried to begin transaction, but was already in active transaction");
-				return;
+				return tx;
 			}
 		}
 		
-		session.beginTransaction();
+		Transaction txBegun = session.beginTransaction();
+		return txBegun;
 	}
 
 	public final void endTenantTransaction() {

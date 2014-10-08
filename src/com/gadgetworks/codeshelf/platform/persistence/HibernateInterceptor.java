@@ -26,34 +26,38 @@ public class HibernateInterceptor extends EmptyInterceptor {
 		Object[] previousState,
 		String[] propertyNames,
 		Type[] types) {
+		
+		boolean result=false;
 		if (entity instanceof DomainObjectABC) {
 			// update domain object
 			Set<String> changedProperties = new HashSet<String>();
 			DomainObjectABC domainObject = (DomainObjectABC) entity;
-			for (int i=0;i<propertyNames.length;i++) {
-				if (currentState[i]==null && previousState[i]==null) {
-					continue;
+			result = super.onFlushDirty(entity, id, currentState, previousState, propertyNames, types);
+
+			if(previousState != null) {
+				for (int i=0;i<propertyNames.length;i++) {
+					if (currentState[i]==null && previousState[i]==null) {
+						continue;
+					} else if (currentState[i]==null && previousState[i]!=null) {
+						LOGGER.trace(propertyNames[i]+" changed from "+previousState[i]+" to "+currentState[i]);
+						changedProperties.add(propertyNames[i]);
+					} else if (!currentState[i].equals(previousState[i])) {
+						LOGGER.trace(propertyNames[i]+" changed from "+previousState[i]+" to "+currentState[i]);
+						changedProperties.add(propertyNames[i]);
+					}
 				}
-				if (currentState[i]==null && previousState[i]!=null) {
-					LOGGER.trace(propertyNames[i]+" changed from "+previousState[i]+" to "+currentState[i]);
-					changedProperties.add(propertyNames[i]);
-				}
-				else if (!currentState[i].equals(previousState[i])) {
-					LOGGER.trace(propertyNames[i]+" changed from "+previousState[i]+" to "+currentState[i]);
-					changedProperties.add(propertyNames[i]);
-				}
-			}
-			if (changedProperties.size()>0) {
-				ITypedDao<IDomainObject> dao = domainObject.getDao();
-				if (dao!=null) {
-					dao.broadcastUpdate(domainObject, changedProperties);
-				}
-				else {
-					LOGGER.error("Failed to broadcast update notification. DAO for type "+domainObject.getClass().getSimpleName()+" is undefined");
+				if (changedProperties.size()>0) {
+					ITypedDao<IDomainObject> dao = domainObject.getDao();
+					if (dao!=null) {
+						dao.broadcastUpdate(domainObject, changedProperties);
+					}
+					else {
+						LOGGER.error("Failed to broadcast update notification. DAO for type "+domainObject.getClass().getSimpleName()+" is undefined");
+					}
 				}
 			}
 		}
-		return super.onFlushDirty(entity, id, currentState, previousState, propertyNames, types);
+		return result;
 	}
 	
 	@Override
@@ -73,16 +77,21 @@ public class HibernateInterceptor extends EmptyInterceptor {
 	
 	@Override
 	public boolean onSave(Object entity, Serializable id, Object[] state, String[] propertyNames, Type[] types) {
+		boolean result = super.onSave(entity, id, state, propertyNames, types);
 		if (entity instanceof DomainObjectABC) {
 			DomainObjectABC domainObject = (DomainObjectABC) entity;
-			ITypedDao<IDomainObject> dao = domainObject.getDao();
-			if (dao!=null) {
-				dao.broadcastAdd(domainObject);
-			}
-			else {
-				LOGGER.error("Failed to broadcast add notification. DAO for type "+domainObject.getClass().getSimpleName()+" is undefined");
-			}
+			doBroadcastAdd(domainObject);
 		}
-		return super.onSave(entity, id, state, propertyNames, types);
+		return result;
+	}
+	
+	private void doBroadcastAdd(DomainObjectABC domainObject) {
+		ITypedDao<IDomainObject> dao = domainObject.getDao();
+		if (dao!=null) {
+			dao.broadcastAdd(domainObject);
+		}
+		else {
+			LOGGER.error("Failed to broadcast add notification. DAO for type "+domainObject.getClass().getSimpleName()+" is undefined");
+		}
 	}
 }

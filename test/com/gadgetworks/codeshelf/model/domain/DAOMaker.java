@@ -17,8 +17,8 @@ import com.natpryce.makeiteasy.PropertyLookup;
 public class DAOMaker {
 
 	public DAOMaker(PersistenceService persistenceService) {
-		Organization.DAO = new OrganizationDao(persistenceService);
-		Facility.DAO = new FacilityDao(persistenceService);
+		Organization.setDao(new OrganizationDao(persistenceService));
+		Facility.setDao(new FacilityDao(persistenceService));
 
 	}
 

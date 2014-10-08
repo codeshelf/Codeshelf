@@ -24,14 +24,9 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
-import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.flyweight.command.NetAddress;
 import com.gadgetworks.flyweight.command.NetGuid;
 import com.gadgetworks.flyweight.controller.NetworkDeviceStateEnum;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**

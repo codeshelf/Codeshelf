@@ -1,12 +1,9 @@
 package com.gadgetworks.codeshelf.ws.jetty.protocol.command;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.hibernate.criterion.Criterion;
-import org.hibernate.criterion.Restrictions;
-import org.hibernate.criterion.SimpleExpression;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,8 +53,8 @@ public class RegisterFilterCommand extends CommandABC {
 			List<Map<String, Object>> filterParams = request.getFilterParams();
 			
 			// extract property map
-			List<Criterion> processedParams = new ArrayList<Criterion>();
-			//HashMap<String, Object> processedParams = new HashMap<String, Object>();
+			//List<Criterion> processedParams = new ArrayList<Criterion>();
+			HashMap<String, Object> processedParams = new HashMap<String, Object>();
 			for (Map<String, Object> map : filterParams) {
 				String name = (String) map.get("name");
 				Object value = map.get("value");
@@ -65,8 +62,8 @@ public class RegisterFilterCommand extends CommandABC {
 				if (!Strings.isNullOrEmpty(className)) {
 					value = convertFilterParam(className, value);
 				}
-				//processedParams.put(name, value);
-				processedParams.add(Restrictions.eq(name, value));
+				processedParams.put(name, value);
+				//processedParams.add(Restrictions.eq(name, value));
 			}
 
 			// First we find the object (by it's ID).

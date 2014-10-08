@@ -27,8 +27,6 @@ import com.gadgetworks.codeshelf.edi.InventoryCsvImporter;
 import com.gadgetworks.codeshelf.edi.LocationAliasCsvImporter;
 import com.gadgetworks.codeshelf.edi.OrderLocationCsvImporter;
 import com.gadgetworks.codeshelf.edi.OutboundOrderCsvImporter;
-import com.gadgetworks.codeshelf.model.dao.H2SchemaManager;
-import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.dao.MockDao;
 import com.gadgetworks.codeshelf.model.dao.Result;
@@ -50,6 +48,7 @@ import com.gadgetworks.codeshelf.model.domain.Slot;
 import com.gadgetworks.codeshelf.model.domain.Tier;
 import com.gadgetworks.codeshelf.model.domain.UomMaster;
 import com.gadgetworks.codeshelf.model.domain.User;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.report.IPickDocumentGenerator;
 import com.gadgetworks.codeshelf.report.PickDocumentGenerator;
 import com.gadgetworks.codeshelf.util.JVMSystemConfiguration;
@@ -245,16 +244,17 @@ public class CodeshelfApplicationTest {
 			orderLocationImporter,
 			crossBatchImporter,
 			aislesFileImporter,
-			facilityDao);
+			facilityDao,
+			PersistenceService.getInstance());
 		IPickDocumentGenerator pickDocumentGenerator = new PickDocumentGenerator();
-		ISchemaManager schemaManager = new H2SchemaManager(
+/*		ISchemaManager schemaManager = new H2SchemaManager(
 			"codeshelf",
 			"codeshelf",
 			"codeshelf",
 			"codeshelf",
 			"localhost",
 			"");
-		
+	*/	
 		AdminServer adminServer = new AdminServer();
 		
 		JettyWebSocketServer jettyServer = new JettyWebSocketServer(new JVMSystemConfiguration());
@@ -265,10 +265,10 @@ public class CodeshelfApplicationTest {
 			pickDocumentGenerator,
 			persistentPropertyDao,
 			organizationDao,
-			facilityDao,
 			userDao,
 			adminServer,
-			jettyServer);
+			jettyServer,
+			PersistenceService.getInstance());
 
 		final Result checkAppRunning = new Result();
 

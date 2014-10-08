@@ -70,7 +70,6 @@ public class OrderLocationCsvImporter implements ICsvOrderLocationImporter {
 				// Iterate over the order location map import beans.
 				for (OrderLocationCsvBean orderLocationBean : orderLocationBeanList) {
 					try {	
-						mOrderLocationDao.beginTransaction();
 
 						String errorMsg = orderLocationBean.validateBean();
 						if (errorMsg != null) {
@@ -83,7 +82,6 @@ public class OrderLocationCsvImporter implements ICsvOrderLocationImporter {
 							orderLocationCsvBeanImport(orderLocationBean, inFacility, inProcessTime);
 							lastOrderId = orderLocationBean.getOrderId();
 						}
-						mOrderLocationDao.commitTransaction();
 					} catch (DaoException e) {
 						LOGGER.warn("dao persistence issue importing order location: " + orderLocationBean, e);
 					} catch(EdiFileReadException e) {
@@ -117,7 +115,6 @@ public class OrderLocationCsvImporter implements ICsvOrderLocationImporter {
 
 		// Inactivate the locations aliases that don't match the import timestamp.
 		try {
-			mOrderLocationDao.beginTransaction();
 			for (OrderHeader order : inFacility.getOrderHeaders()) {
 				for (OrderLocation orderLocation : order.getOrderLocations()) {
 					if (!orderLocation.getUpdated().equals(inProcessTime)) {
@@ -127,9 +124,7 @@ public class OrderLocationCsvImporter implements ICsvOrderLocationImporter {
 					}
 				}
 			}
-			mOrderLocationDao.commitTransaction();
 		} finally {
-			mOrderLocationDao.endTransaction();
 		}
 
 	}

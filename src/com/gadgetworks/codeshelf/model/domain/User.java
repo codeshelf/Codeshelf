@@ -10,8 +10,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.List;
 
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
@@ -20,7 +18,6 @@ import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 import lombok.Getter;
@@ -111,9 +108,11 @@ public class User extends DomainObjectTreeABC<Organization> {
 	private String				hashedPassword;
 
 	// sitecon, webapp, system user etc
+	@Column(nullable = false)
 	@Getter
 	@Setter
 	@Enumerated(value = EnumType.STRING)
+	@JsonProperty
 	private UserType			type;
 
 	// Create date.
