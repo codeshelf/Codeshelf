@@ -9,8 +9,6 @@ package com.gadgetworks.codeshelf.application;
 import lombok.Getter;
 
 import com.gadgetworks.codeshelf.device.ICsDeviceManager;
-import com.gadgetworks.codeshelf.metrics.DatabaseConnectionHealthCheck;
-import com.gadgetworks.codeshelf.metrics.MetricsGroup;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
 import com.gadgetworks.codeshelf.metrics.RadioOnHealthCheck;
 import com.google.inject.Inject;
@@ -50,7 +48,7 @@ public final class CsSiteControllerApplication extends ApplicationABC {
 
 		// create site controller specific health checks
 		RadioOnHealthCheck radioCheck = new RadioOnHealthCheck(this.deviceManager);
-		MetricsService.registerHealthCheck(MetricsGroup.Radio, radioCheck.getName(), radioCheck);
+		MetricsService.registerHealthCheck(radioCheck);
 
 	}
 

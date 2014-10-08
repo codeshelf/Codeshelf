@@ -17,8 +17,8 @@ import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.device.RadioController;
 import com.gadgetworks.codeshelf.edi.IEdiProcessor;
+import com.gadgetworks.codeshelf.metrics.ActiveSiteControllerHealthCheck;
 import com.gadgetworks.codeshelf.metrics.DatabaseConnectionHealthCheck;
-import com.gadgetworks.codeshelf.metrics.MetricsGroup;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.IDatabase;
@@ -111,7 +111,10 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		
 		// create server-specific health checks
 		DatabaseConnectionHealthCheck dbCheck = new DatabaseConnectionHealthCheck(this.mDatabase);
-		MetricsService.registerHealthCheck(MetricsGroup.Database, dbCheck.getName(), dbCheck);
+		MetricsService.registerHealthCheck(dbCheck);
+		
+		ActiveSiteControllerHealthCheck sessionCheck = new ActiveSiteControllerHealthCheck();
+		MetricsService.registerHealthCheck(sessionCheck);
 		
 	}
 

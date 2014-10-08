@@ -5,7 +5,7 @@ import lombok.Getter;
 public enum MetricsGroup {
 	JVM("jvm"),
 	Database("database"),
-	WSS("wss"), 
+	WSS("wss"),
 	EDI("edi"), 
 	Radio("radio");
 	
