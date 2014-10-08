@@ -15,6 +15,8 @@ import com.gadgetworks.codeshelf.model.domain.WirelessDeviceABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.NetworkStatusMessage;
 import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 
 public class NetworkChangeListener implements ObjectEventListener {
 
@@ -67,20 +69,11 @@ public class NetworkChangeListener implements ObjectEventListener {
 		NetworkChangeListener listener = new NetworkChangeListener(network,"network-change-listener");
 		session.registerObjectEventListener(listener);
 
-		// register session with daos
-		Class<?> cheClass = Che.class;
-		@SuppressWarnings("unchecked")
-		ITypedDao<IDomainObject> cheDao = daoProvider.getDaoInstance((Class<IDomainObject>) cheClass);
-		session.registerAsDAOListener(cheDao);
-		
-		Class<?> ledControllerClass = LedController.class;
-		@SuppressWarnings("unchecked")
-		ITypedDao<IDomainObject> ledControllerDao = daoProvider.getDaoInstance((Class<IDomainObject>) ledControllerClass);
-		session.registerAsDAOListener(ledControllerDao);
-
-		Class<?> siteControllerClass = SiteController.class;
-		@SuppressWarnings("unchecked")
-		ITypedDao<IDomainObject> siteControllerDao = daoProvider.getDaoInstance((Class<IDomainObject>) siteControllerClass);
-		session.registerAsDAOListener(siteControllerDao);	}
+		for (Class<?> domainClass: ImmutableList.<Class<?>>of(Che.class, LedController.class, SiteController.class, CodeshelfNetwork.class)) {
+			@SuppressWarnings("unchecked")
+			ITypedDao<IDomainObject> dao = daoProvider.getDaoInstance((Class<IDomainObject>) domainClass);
+			session.registerAsDAOListener(dao);
+		}
+	}
 	
 }
