@@ -606,8 +606,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			PosControllerInstr.ERROR_CODE_QTY,
 			PosControllerInstr.ZERO_QTY,
 			PosControllerInstr.ZERO_QTY,
-			PosControllerInstr.BLINK_FREQ,
-			PosControllerInstr.BLINK_DUTYCYCLE);
+			PosControllerInstr.MED_FREQ, // change from BLINK_FREQ
+			PosControllerInstr.MED_DUTYCYCLE); // change from BLINK_DUTYCYCLE v6
 		instructions.add(instruction);
 		sendPickRequestCommand(instructions);
 	}
@@ -1302,8 +1302,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 					codeToSend,
 					codeToSend,
 					codeToSend,
-					PosControllerInstr.BRIGHT_FREQ,
-					PosControllerInstr.BRIGHT_DUTYCYCLE);
+					PosControllerInstr.MED_FREQ, // change from BRIGHT_FREQ
+					PosControllerInstr.MED_DUTYCYCLE); // change from BRIGHT_DUTYCYCLE v6
 				instructions.add(instruction);
 			}
 		}
