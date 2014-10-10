@@ -101,7 +101,13 @@ public class Che extends WirelessDeviceABC {
 	@Getter
 	private List<WorkInstruction>	cheWorkInstructions	= new ArrayList<WorkInstruction>();
 
+	public Che(String domainId) {
+		this();
+		setDomainId(domainId);
+	}
+	
 	public Che() {
+		super();
 		color = ColorEnum.BLUE;
 	}
 
