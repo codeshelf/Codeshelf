@@ -25,6 +25,8 @@ import com.google.inject.Singleton;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class SiteController extends WirelessDeviceABC {
 	
+	private static final long	serialVersionUID	= 8823417927183852929L;
+
 	public final static String defaultLocationDescription = "Unknown";
 	
 	@Inject
