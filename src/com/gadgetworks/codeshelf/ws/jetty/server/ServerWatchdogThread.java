@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.util.ThreadUtils;
+import com.gadgetworks.codeshelf.ws.ContextLogging;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.KeepAlive;
 
 public class ServerWatchdogThread extends Thread {
@@ -77,7 +78,12 @@ public class ServerWatchdogThread extends Thread {
 		// check status, send keepalive etc on all sessions
 		Collection<CsSession> sessions = this.sessionManager.getSessions();
 		for (CsSession session : sessions) {
-			doSessionWatchdog(session);
+			ContextLogging.set(session);
+			try {
+				doSessionWatchdog(session);
+			} finally {
+				ContextLogging.clear();
+			}
 		}
 	}
 	

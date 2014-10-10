@@ -19,6 +19,7 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
 import com.gadgetworks.codeshelf.metrics.MetricsGroup;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
+import com.gadgetworks.codeshelf.ws.ContextLogging;
 import com.gadgetworks.codeshelf.ws.jetty.io.JsonDecoder;
 import com.gadgetworks.codeshelf.ws.jetty.io.JsonEncoder;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.KeepAlive;
@@ -52,50 +53,69 @@ public class CsServerEndPoint {
 	
 	@OnOpen
     public void onOpen(Session session, EndpointConfig ec) {
-		session.setMaxIdleTimeout(1000*60*idleTimeOut);
-		LOGGER.info("WS Session Started: " + session.getId()+", timeout: "+session.getMaxIdleTimeout());
-		sessionManager.sessionStarted(session);
+		ContextLogging.set(sessionManager.getSession(session));
+		try {
+			session.setMaxIdleTimeout(1000*60*idleTimeOut);
+			LOGGER.info("WS Session Started: " + session.getId()+", timeout: "+session.getMaxIdleTimeout());
+			sessionManager.sessionStarted(session);
+		} finally {
+			ContextLogging.clear();
+		}
     }
 
     @OnMessage(maxMessageSize=JsonEncoder.WEBSOCKET_MAX_MESSAGE_SIZE)
     public void onMessage(Session session, MessageABC message) throws IOException, EncodeException {
     	messageCounter.inc();
     	CsSession csSession = sessionManager.getSession(session);
-    	csSession.messageReceived();
-		sessionManager.messageReceived(session);
-    	if (message instanceof ResponseABC) {
-    		ResponseABC response = (ResponseABC) message;
-            LOGGER.debug("Received response on session "+csSession+": " + response);
-            messageProcessor.handleResponse(csSession, response);
-    	}
-    	else if (message instanceof RequestABC) {
-    		RequestABC request = (RequestABC) message;
-            LOGGER.debug("Received request on session "+csSession+": " + request);
-           // pass request to processor to execute command
-            ResponseABC response = messageProcessor.handleRequest(csSession, request);
-            if (response!=null) {
-            	// send response to client
-            	LOGGER.debug("Sending response "+response+" for request "+request);
-            	csSession.sendMessage(response);
-            }
-            else {
-            	LOGGER.warn("No response generated for request "+request);
-            }    	
-    	}  else if (!(message instanceof KeepAlive)) {
-    		// handle all other messages
-        	LOGGER.debug("Received message on session "+csSession+": "+message);
-        	messageProcessor.handleOtherMessage(csSession, message);
+		ContextLogging.set(csSession);
+    	try{
+        	csSession.messageReceived();
+    		sessionManager.messageReceived(session);
+        	if (message instanceof ResponseABC) {
+        		ResponseABC response = (ResponseABC) message;
+                LOGGER.debug("Received response on session "+csSession+": " + response);
+                messageProcessor.handleResponse(csSession, response);
+        	}
+        	else if (message instanceof RequestABC) {
+        		RequestABC request = (RequestABC) message;
+                LOGGER.debug("Received request on session "+csSession+": " + request);
+               // pass request to processor to execute command
+                ResponseABC response = messageProcessor.handleRequest(csSession, request);
+                if (response!=null) {
+                	// send response to client
+                	LOGGER.debug("Sending response "+response+" for request "+request);
+                	csSession.sendMessage(response);
+                }
+                else {
+                	LOGGER.warn("No response generated for request "+request);
+                }    	
+        	}  else if (!(message instanceof KeepAlive)) {
+        		// handle all other messages
+            	LOGGER.debug("Received message on session "+csSession+": "+message);
+            	messageProcessor.handleOtherMessage(csSession, message);
+        	}
+    	} finally {
+    		ContextLogging.clear();
     	}
     }
     
-    @OnClose
+	@OnClose
     public void onClose(Session session, CloseReason reason) {
-    	LOGGER.info(String.format("WS Session %s closed because of %s", session.getId(), reason));
-		sessionManager.sessionEnded(session);
+		ContextLogging.set(sessionManager.getSession(session));
+		try {
+	    	LOGGER.info(String.format("WS Session %s closed because of %s", session.getId(), reason));
+			sessionManager.sessionEnded(session);		
+		} finally {
+			ContextLogging.clear();
+		}
     }
     
     @OnError
     public void onError(Session session, Throwable cause) {
+    	ContextLogging.set(sessionManager.getSession(session));
     	LOGGER.error("WebSocket error", cause);
+    	ContextLogging.clear();
     }
+
+
 }
