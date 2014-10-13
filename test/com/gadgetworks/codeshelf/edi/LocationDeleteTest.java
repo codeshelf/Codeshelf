@@ -40,9 +40,12 @@ import com.gadgetworks.flyweight.command.NetGuid;
  */
 public class LocationDeleteTest extends EdiTestABC {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(LocationDeleteTest.class);
+	
+	private final boolean LARGER_FACILITY = true;
+	private final boolean SMALLER_FACILITY = true;
 
 	@SuppressWarnings({ "unused" })
-	private Facility setUpSimpleSlottedFacility(String inOrganizationName) {
+	private Facility setUpSimpleSlottedFacility(String inOrganizationName, boolean inWhichFacility) {
 		// This returns a facility with aisle A1 and A2, with two bays with two tier each. 5 slots per tier, like GoodEggs. With a path, associated to both aisles.
 		// Zigzag bays like GoodEggs. 10 valid locations per aisle, named as GoodEggs
 		// One controllers associated per aisle
@@ -57,8 +60,11 @@ public class LocationDeleteTest extends EdiTestABC {
 		organization.createFacility(fName, "TEST", Point.getZeroPoint());
 		Facility facility = organization.getFacility(fName);
 
-		readStandardAisleFile(facility);
-		
+		if (inWhichFacility == LARGER_FACILITY)
+			readStandardAisleFile(facility);
+		else 
+			readSmallerAisleFile(facility);
+	
 		// Get the aisles
 		Aisle aisle1 = Aisle.DAO.findByDomainId(facility, "A1");
 		Assert.assertNotNull(aisle1);
@@ -277,7 +283,7 @@ public class LocationDeleteTest extends EdiTestABC {
 		// Make no throws as those things are accessed.
 		// Bring it back
 
-		Facility facility = setUpSimpleSlottedFacility("LD01");
+		Facility facility = setUpSimpleSlottedFacility("LD01", LARGER_FACILITY);
 		setUpGroup1OrdersAndSlotting(facility);
 
 		// Let's find our CHE
@@ -334,6 +340,33 @@ public class LocationDeleteTest extends EdiTestABC {
 		Assert.assertEquals("0002", groupSortStr2);
 		
 		// Now the test starts. Delete aisle A1
+		Aisle aisle1 = (Aisle) facility.findSubLocationById("A1");
+		Assert.assertTrue(aisle1.getActive());
+		
+		LOGGER.info("Making ailse A1 inactive, with its children");
+		aisle1.makeInactiveAndAllChildren();
+		// fetch again as the earlier reference is probably stale
+		aisle1 = (Aisle) facility.findSubLocationById("A1");
+		Assert.assertFalse(aisle1.getActive());
+		// This should have also inactivated all children,  recursively.
+		LocationABC<?> locationA1B1 = (LocationABC<?>) facility.findSubLocationById("A1.B1");
+		Assert.assertFalse(locationA1B1.getActive());
+		LocationABC<?> locationA1B1T1 = (LocationABC<?>) facility.findSubLocationById("A1.B1.T1");
+		Assert.assertFalse(locationA1B1T1.getActive());
+		LocationABC<?> locationA1B1T1S1 = (LocationABC<?>) facility.findSubLocationById("A1.B1.T1.S1");
+		Assert.assertFalse(locationA1B1T1S1.getActive());
+
+		LOGGER.info("Read back the aisles file. Should make A1 and its children active again");
+		readStandardAisleFile(facility);
+		aisle1 = (Aisle) facility.findSubLocationById("A1");
+		Assert.assertTrue(aisle1.getActive());
+		locationA1B1 = (LocationABC<?>) facility.findSubLocationById("A1.B1");
+		Assert.assertTrue(locationA1B1.getActive());
+		locationA1B1T1 = (LocationABC<?>) facility.findSubLocationById("A1.B1.T1");
+		Assert.assertTrue(locationA1B1T1.getActive());
+		locationA1B1T1S1 = (LocationABC<?>) facility.findSubLocationById("A1.B1.T1.S1");
+		Assert.assertTrue(locationA1B1T1S1.getActive());
+
 	}
 	
 	@Test
@@ -341,16 +374,56 @@ public class LocationDeleteTest extends EdiTestABC {
 		// The idea is to setup, then redo "smaller" aisle file that results in deleted bays, tiers, and slots.
 		// Bring it back with original
 		
-		Facility facility = setUpSimpleSlottedFacility("LD02");
+		LOGGER.info("DeleteLocation Test 2. Start by setting up standard aisles A1 and A2");
+		Facility facility = setUpSimpleSlottedFacility("LD02", LARGER_FACILITY);
 		setUpGroup1OrdersAndSlotting(facility);
+		
+		LOGGER.info("Reread same aisles file again. Just to see that there is no throw.");
+		readStandardAisleFile(facility);
 
+		LOGGER.info("And another reread."); // Reread case is covered in AisleImporterTest
+		readStandardAisleFile(facility);
+
+		// Note: this does not make locations inactive yet.
 		LOGGER.info("reading aisles file that should remove bay, tier, and slot");
 		readSmallerAisleFile(facility);
 		// Look at the normal and deleted locations.
 		
-		readStandardAisleFile(facility);
+		// Why does this next one throw on obscure method not found?
 		LOGGER.info("reading original aisles file that should restore the bay, tier, and slot");
+		readStandardAisleFile(facility);
 		// Look at the normal and deleted locations.
+
+	}
+
+	@Test
+	public final void locationDelete3() throws IOException {
+		// The purpose of this is to investigate "java.lang.NoSuchMethodException: com.gadgetworks.codeshelf.model.domain.Aisle.setPickFaceEndPosX(java.lang.Double)"
+		// That we see in locationDelete2. This just flips the larger and smaller aisle file reads to see if that matters.
+		
+		// Also note, if you have this exception as a breakpoint, you will catch it during all facility setup during IronMQ setup. That should be cleaned up.
+		
+		LOGGER.info("DeleteLocation Test . Start by setting up smaller aisle A1 and A2");
+		Facility facility = setUpSimpleSlottedFacility("LD02", SMALLER_FACILITY);
+		setUpGroup1OrdersAndSlotting(facility);
+		
+		LOGGER.info("Reread same aisles file again. Just to see that there is no throw.");
+		readSmallerAisleFile(facility);
+
+		LOGGER.info("And another reread."); 
+		readSmallerAisleFile(facility);
+
+		LOGGER.info("reading larger aisles file that should add bay, tier, and slot");
+		readStandardAisleFile(facility);
+
+		// BIZARRE! comment these two lines. Then there will be a throw in readSmallerAisleFile()
+		LOGGER.info("Reread same aisles file again. Just to see that there is no throw.");
+		readStandardAisleFile(facility);
+
+		// Why does this next one throw on obscure method not found?
+		// Note: this does not make locations inactive yet.
+		LOGGER.info("reading original aisles file that should make the added bay, tier, and slot inactive");
+		readSmallerAisleFile(facility);
 
 	}
 
