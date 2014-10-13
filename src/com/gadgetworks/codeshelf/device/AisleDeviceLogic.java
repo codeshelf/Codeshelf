@@ -90,7 +90,7 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 		LOGGER.info("Clear LEDs for all CHEs on " + getMyGuidStr());
 
 		// Only send the command if the device is known active.
-		if ((getDeviceStateEnum() != null) && (getDeviceStateEnum() == NetworkDeviceStateEnum.STARTED)) {
+		if (isDeviceAssociated()) {
 			// Send a blanking command on each channel.
 			List<LedSample> sampleList = new ArrayList<LedSample>();
 			LedSample sample = new LedSample(CommandControlLed.POSITION_NONE, ColorEnum.BLACK);
@@ -116,7 +116,7 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 
 		mDeviceLedPosMap.remove(inNetGuid);
 		// Only send the command if the device is known active.
-		if ((getDeviceStateEnum() != null) && (getDeviceStateEnum() == NetworkDeviceStateEnum.STARTED)) {
+		if (isDeviceAssociated()) {
 			updateLeds();
 		}
 	}
