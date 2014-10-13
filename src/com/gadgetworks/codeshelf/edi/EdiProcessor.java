@@ -76,6 +76,7 @@ public final class EdiProcessor implements IEdiProcessor {
 		}
 		mProcessorThread = new Thread(new Runnable() {
 			public void run() {
+				//ContextLogging.setUser("SYSTEM");
 				process(inEdiSignalQueue);
 			}
 		}, EDIPROCESSOR_THREAD_NAME);
