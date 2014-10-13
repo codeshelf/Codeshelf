@@ -42,7 +42,7 @@ public final class CsSiteControllerApplication extends ApplicationABC {
 
 		startAdminServer();
 		startTsdbReporter();
-		registerMemoryUsageMetrics();
+		registerSystemMetrics();
 		
 		// Start the device manager.
 		deviceManager.start();

@@ -16,5 +16,5 @@ public abstract class MessageProcessor {
 
 	public abstract void handleResponse(CsSession session, ResponseABC response);
 
-	public abstract void handleOtherMessage(CsSession session, MessageABC message);
+	public abstract void handleMessage(CsSession session, MessageABC message);
 }

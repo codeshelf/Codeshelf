@@ -100,7 +100,7 @@ public class CsClientEndpoint {
 				LOGGER.warn("No matching CS session found for session " + session.getId());
 			}
 			// null session ok here?
-			messageProcessor.handleOtherMessage(csSession, message);
+			messageProcessor.handleMessage(csSession, message);
 		}
 	}
 

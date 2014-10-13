@@ -46,20 +46,24 @@ public class LoginCommand extends CommandABC {
 				String password = loginRequest.getPassword();
 				if (user.isPasswordValid(password)) {
 					Organization org = user.getParent();
+					/*
 					session.setOrganizationName(org.getDomainId());
 					session.setUser(user);
-					LOGGER.info("User "+userId+" of "+org.getDomainId()+" authenticated on session "+session.getSessionId());
-
+					*/
 					// determine if site controller
+					SessionType sessionType = SessionType.Unknown;
 					SiteController sitecon = user.getSiteController();
 					CodeshelfNetwork network = null;
-					if(sitecon  != null) {
-						session.setType(SessionType.SiteController);
+					if (sitecon  != null) {
+						sessionType = SessionType.SiteController;
 						network = sitecon.getParent();
 						network.getDomainId(); // restore entity
 					} else {
-						session.setType(SessionType.UserApp);						
+						sessionType = SessionType.UserApp;
 					}
+					session.authenticated(user,org.getDomainId(),sessionType);
+					LOGGER.info("User "+userId+" of "+org.getDomainId()+" authenticated on session "+session.getSessionId());
+
 					// generate login response
 					response.setStatus(ResponseStatus.Success);
 					response.setOrganization(org);

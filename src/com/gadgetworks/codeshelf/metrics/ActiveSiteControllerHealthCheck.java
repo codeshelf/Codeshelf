@@ -22,8 +22,11 @@ public class ActiveSiteControllerHealthCheck extends CodeshelfHealthCheck {
     			c++;
     		}
     	}
-    	if (c>0) {
-            return Result.healthy(c+" active site controller(s) connected");
+    	if (c>1) {
+            return Result.healthy(c+" active site controllers connected");
+    	}
+    	else if (c==1) {
+            return Result.healthy(c+" active site controller connected");    		
     	}
     	return Result.unhealthy("No site controller connected");
     }

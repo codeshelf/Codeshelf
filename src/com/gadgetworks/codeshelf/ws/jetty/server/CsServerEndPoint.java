@@ -21,7 +21,6 @@ import com.gadgetworks.codeshelf.metrics.MetricsGroup;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
 import com.gadgetworks.codeshelf.ws.jetty.io.JsonDecoder;
 import com.gadgetworks.codeshelf.ws.jetty.io.JsonEncoder;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.message.KeepAlive;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageProcessor;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RequestABC;
@@ -81,10 +80,11 @@ public class CsServerEndPoint {
             else {
             	LOGGER.warn("No response generated for request "+request);
             }    	
-    	}  else if (!(message instanceof KeepAlive)) {
-    		// handle all other messages
+    	}  
+    	else {
+    		// handle p2p messages
         	LOGGER.debug("Received message on session "+csSession+": "+message);
-        	messageProcessor.handleOtherMessage(csSession, message);
+        	messageProcessor.handleMessage(csSession, message);
     	}
     }
     

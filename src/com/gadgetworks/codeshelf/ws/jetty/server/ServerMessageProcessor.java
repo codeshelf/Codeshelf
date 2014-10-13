@@ -24,6 +24,7 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ObjectUpdateCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.RegisterFilterCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.RegisterListenerCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ServiceMethodCommand;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.message.KeepAlive;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageProcessor;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.CompleteWorkInstructionRequest;
@@ -62,11 +63,13 @@ public class ServerMessageProcessor extends MessageProcessor {
 	private final Counter objectDeleteCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.object-delete");
 	private final Counter objectListenerCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.object-listener");
 	private final Counter objectFilterCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.register-filter");
+	private final Counter keepAliveCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.keep-alive");
+	private final Counter applicationRequestCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.application");
+	private final Counter systemRequestCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.system");
 //	private final Meter requestMeter = MetricsService.addMeter(MetricsGroup.WSS,"requests.meter");
 //	private final Meter responseMeter = MetricsService.addMeter(MetricsGroup.WSS,"responses.meter");
 	private final Timer requestProcessingTimer = MetricsService.addTimer(MetricsGroup.WSS,"requests.processing-time");
 	private final Timer responseProcessingTimer = MetricsService.addTimer(MetricsGroup.WSS,"responses.processing-time");
-	private final Histogram pingHistogram = MetricsService.addHistogram(MetricsGroup.WSS, "ping-histogram");
 	
 	final private IDaoProvider daoProvider;
 
@@ -95,6 +98,7 @@ public class ServerMessageProcessor extends MessageProcessor {
 				LoginRequest loginRequest = (LoginRequest) request;
 				command = new LoginCommand(csSession,loginRequest,daoProvider);
 				loginCounter.inc();
+				applicationRequestCounter.inc();
 			}
 			else if (request instanceof EchoRequest) {
 				command = new EchoCommand(csSession,(EchoRequest) request);
@@ -103,46 +107,57 @@ public class ServerMessageProcessor extends MessageProcessor {
 			else if (request instanceof CompleteWorkInstructionRequest) {
 				command = new CompleteWorkInstructionCommand(csSession,(CompleteWorkInstructionRequest) request, this.workService);
 				completeWiCounter.inc();
+				applicationRequestCounter.inc();
 			}
 			else if (request instanceof ComputeWorkRequest) {
 				command = new ComputeWorkCommand(csSession,(ComputeWorkRequest) request);
 				computeWorkCounter.inc();
+				applicationRequestCounter.inc();
 			}			
 			else if (request instanceof GetWorkRequest) {
 				command = new GetWorkCommand(csSession,(GetWorkRequest) request);
 				getWorkCounter.inc();
+				applicationRequestCounter.inc();
 			}
 			else if (request instanceof ObjectGetRequest) {
 				command = new ObjectGetCommand(csSession,(ObjectGetRequest) request);
 				objectGetCounter.inc();
+				applicationRequestCounter.inc();
 			}			
 			else if (request instanceof ObjectUpdateRequest) {
 				command = new ObjectUpdateCommand(this.daoProvider, csSession,(ObjectUpdateRequest) request);
 				objectUpdateCounter.inc();
+				applicationRequestCounter.inc();
 			}
 			else if (request instanceof ObjectDeleteRequest) {
 				command = new ObjectDeleteCommand(this.daoProvider, csSession,(ObjectDeleteRequest) request);
 				objectDeleteCounter.inc();
+				applicationRequestCounter.inc();
 			}
 			else if (request instanceof ObjectMethodRequest) {
 				command = new ObjectMethodCommand(csSession,(ObjectMethodRequest) request);
 				objectUpdateCounter.inc();
+				applicationRequestCounter.inc();
 			}
 			else if (request instanceof ServiceMethodRequest) {
 				command = new ServiceMethodCommand(csSession,(ServiceMethodRequest) request);
 				objectUpdateCounter.inc();
+				applicationRequestCounter.inc();
 			}
 			else if (request instanceof RegisterListenerRequest) {
 				command = new RegisterListenerCommand(csSession, (RegisterListenerRequest) request);
 				objectListenerCounter.inc();
+				applicationRequestCounter.inc();
 			}			
 			else if (request instanceof RegisterFilterRequest) {
 				command = new RegisterFilterCommand(csSession,(RegisterFilterRequest) request);
 				objectFilterCounter.inc();
+				applicationRequestCounter.inc();
 			}			
 			else if (request instanceof CreatePathRequest) {
 				command = new CreatePathCommand(csSession,(CreatePathRequest) request);
 				objectFilterCounter.inc();
+				applicationRequestCounter.inc();
 			}			
 			// check if matching command was found
 			if (command==null) {
@@ -178,13 +193,8 @@ public class ServerMessageProcessor extends MessageProcessor {
 	    try {		
 			if (response instanceof PingResponse) {
 				PingResponse pingResponse = (PingResponse) response;
-				long now = System.currentTimeMillis();
-				long delta = now-pingResponse.getStartTime();
-				pingHistogram.update(delta);
-				double elapsedSec = ((double) delta)/1000; 
-				LOGGER.debug("Ping roundtrip on session "+csSession +" in "+elapsedSec+"s");
 				if (csSession!=null) {
-					csSession.setLastPongReceived(now);
+					csSession.pongReceived(pingResponse.getStartTime());
 				}
 				else {
 					LOGGER.warn("Unable to set pong received data: Matching session not found.");
@@ -195,9 +205,14 @@ public class ServerMessageProcessor extends MessageProcessor {
 	    }
 	}
 
-
 	@Override
-	public void handleOtherMessage(CsSession session, MessageABC message) {
-		LOGGER.warn("Unexpected message received on session "+session+": "+message);
+	public void handleMessage(CsSession session, MessageABC message) {
+		if (message instanceof KeepAlive) {
+			keepAliveCounter.inc();
+			systemRequestCounter.inc();
+		}
+		else {
+			LOGGER.warn("Unexpected message received on session "+session+": "+message);
+		}
 	}
 }

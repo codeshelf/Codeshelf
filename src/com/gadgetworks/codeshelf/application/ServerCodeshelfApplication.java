@@ -104,10 +104,9 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 
 		mHttpServer.startServer();
 
-
 		startAdminServer();
 		startTsdbReporter();
-		registerMemoryUsageMetrics();
+		registerSystemMetrics();
 		
 		// create server-specific health checks
 		DatabaseConnectionHealthCheck dbCheck = new DatabaseConnectionHealthCheck(this.mDatabase);

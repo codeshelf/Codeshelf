@@ -7,6 +7,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import javax.websocket.CloseReason;
 import javax.websocket.Session;
@@ -18,7 +19,10 @@ import org.eclipse.jetty.util.ConcurrentHashSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codahale.metrics.Timer;
 import com.gadgetworks.codeshelf.filter.ObjectEventListener;
+import com.gadgetworks.codeshelf.metrics.MetricsGroup;
+import com.gadgetworks.codeshelf.metrics.MetricsService;
 import com.gadgetworks.codeshelf.model.dao.IDaoListener;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
@@ -55,6 +59,12 @@ public class CsSession implements IDaoListener {
 	long lastPongReceived = 0;
 	
 	@Getter @Setter
+	long lastPingSent = 0;
+	
+	@Getter @Setter
+	long lastPondRoundtripDuration = 0;
+	
+	@Getter @Setter
 	long lastMessageSent = System.currentTimeMillis();
 	
 	@Getter @Setter
@@ -65,6 +75,8 @@ public class CsSession implements IDaoListener {
 	
 	@Getter @Setter
 	String organizationName;
+	
+	private Timer pingTimer = null;
 	
 	// used to be new HashMap
 	private Map<String,ObjectEventListener> eventListeners = new ConcurrentHashMap<String,ObjectEventListener>();
@@ -78,12 +90,12 @@ public class CsSession implements IDaoListener {
 		this.messageSender = Executors.newSingleThreadExecutor();
 	}
 
-	public void sendMessage(final MessageABC response) {
+	public void sendMessage(final MessageABC message) {
 		messageSender.execute(new Runnable() {
 			@Override
 			public void run() {
 				try {
-					session.getBasicRemote().sendObject(response);
+					session.getBasicRemote().sendObject(message);
 					CsSession.this.messageSent();
 				} catch (Exception e) {
 					LOGGER.error("Failed to send message", e);
@@ -176,6 +188,25 @@ public class CsSession implements IDaoListener {
 		return Objects.toStringHelper(this)
 			.add("sessionId", this.sessionId)
 			.toString();
+	}
+
+	public void authenticated(User user, String organizationName, SessionType sessionType) {
+		this.user = user;
+		this.organizationName = organizationName;
+		this.type = sessionType;
+		if (this.type == SessionType.SiteController) {
+			this.pingTimer = MetricsService.addTimer(MetricsGroup.WSS,"ping."+user.getDomainId());
+		}
+	}
+
+	public void pongReceived(long startTime) {
+		long now = System.currentTimeMillis();
+		long delta = now-startTime;
+		if (this.pingTimer!=null) {
+			pingTimer.update(delta, TimeUnit.MILLISECONDS);
+		}
+		double elapsedSec = ((double) delta)/1000; 
+		LOGGER.debug("Ping roundtrip on session "+this.sessionId +" in "+elapsedSec+"s");
 	}
 
 }
