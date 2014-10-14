@@ -140,8 +140,8 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 						slottedInventoryCsvBeanImport(slottedInventoryBean, inFacility, inProcessTime);
 					}
 				}
-
-				archiveCheckItemStatuses(inFacility, inProcessTime);
+				// JR says this looks dangerous. Any random file in import/inventory would result in inactivation of all inventory and most masters.
+				// archiveCheckItemStatuses(inFacility, inProcessTime);
 
 				LOGGER.debug("End slotted inventory import.");
 			}
@@ -164,7 +164,8 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 	 * @param inProcessTime
 	 */
 	private void archiveCheckItemStatuses(final Facility inFacility, final Timestamp inProcessTime) {
-		LOGGER.debug("Archive unreferenced item data");
+		LOGGER.info("Archive unreferenced item data");
+		// JR says this all looks dangerous. Not calling for now.
 
 		// Inactivate the DDC item that don't match the import timestamp.
 		try {
@@ -175,14 +176,14 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 					if (item.getUpdated().equals(inProcessTime)) {
 						itemMasterIsActive = true;
 					} else {
-						LOGGER.debug("Archive old item: " + itemMaster.getItemId());
+						LOGGER.info("Archive old item: " + itemMaster.getItemId());
 						item.setActive(false);
 						mItemDao.store(item);
 					}
 				}
 
 				if (!itemMasterIsActive) {
-					LOGGER.debug("Archive old item master: " + itemMaster.getItemId());
+					LOGGER.info("Archive old item master: " + itemMaster.getItemId());
 					itemMaster.setActive(false);
 					mItemMasterDao.store(itemMaster);
 				}

@@ -20,6 +20,8 @@ public class CheSimulationTest extends EndToEndIntegrationTest {
 
 	@Test
 	public final void testNoWorkToDo() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
+
 		// get basic data from database
 		Organization organization = mOrganizationDao.findByDomainId(null, organizationId);
 		Assert.assertNotNull(organization);
@@ -36,5 +38,7 @@ public class CheSimulationTest extends EndToEndIntegrationTest {
 		picker.start(null);
 		picker.waitForCheState(CheStateEnum.NO_WORK,1000);
 		picker.logout();
+
+		this.getPersistenceService().endTenantTransaction();
 	}
 }

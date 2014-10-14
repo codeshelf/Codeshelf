@@ -429,10 +429,12 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 		clrRTS();
 		writeBytes(buffer, bufPos);
 		setRTS();
-		
+
 		boolean isMerelyNetManagementTraffic = false;
 		ICommand aCommand = inPacket.getCommand();
 		isMerelyNetManagementTraffic = aCommand != null && aCommand.getCommandTypeEnum() == CommandGroupEnum.NETMGMT;
+
+		// The CommandAssocABC and CommandNetMagmtCheck commands have a mGuid field. Others do not; there is no convenient way to know the GUID.
 		if (isMerelyNetManagementTraffic)
 			LOGGER.debug("Send packet:    " + inPacket.toString());
 		else

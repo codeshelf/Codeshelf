@@ -191,6 +191,14 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		final String inLine2Message,
 		final String inLine3Message,
 		final String inLine4Message) {
+		// DEV-459 if this CHE is not associated, there is no point in sending out a display.
+		// Lots of upstream code generates display messages.
+		if (!this.isDeviceAssociated()) {
+			LOGGER.debug("skipping send display for unassociated " + this.getMyGuidStrForLog());
+			// This is far less logging than if the command actually goes, so might as well say what is going on.
+			return;
+		}
+		
 		String displayString = "Display message for "+ getMyGuidStrForLog();
 		if (!inLine1Message.isEmpty())
 			displayString += " line1: " + inLine1Message;
@@ -606,8 +614,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			PosControllerInstr.ERROR_CODE_QTY,
 			PosControllerInstr.ZERO_QTY,
 			PosControllerInstr.ZERO_QTY,
-			PosControllerInstr.BLINK_FREQ,
-			PosControllerInstr.BLINK_DUTYCYCLE);
+			PosControllerInstr.MED_FREQ, // change from BLINK_FREQ
+			PosControllerInstr.MED_DUTYCYCLE); // change from BLINK_DUTYCYCLE v6
 		instructions.add(instruction);
 		sendPickRequestCommand(instructions);
 	}
@@ -993,8 +1001,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 					if (setCount > kMaxLedSetsToLog)
 						LOGGER.info("And more LED not logged. Total LED Sets this update = " + setCount);
 
-					if ((ledController.getDeviceStateEnum() != null)
-							&& (ledController.getDeviceStateEnum() == NetworkDeviceStateEnum.STARTED)) {
+					if (ledController.isDeviceAssociated()) {
 						ledControllerShowLeds(ledControllerGuid);
 					}
 				}
@@ -1302,8 +1309,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 					codeToSend,
 					codeToSend,
 					codeToSend,
-					PosControllerInstr.BRIGHT_FREQ,
-					PosControllerInstr.BRIGHT_DUTYCYCLE);
+					PosControllerInstr.MED_FREQ, // change from BRIGHT_FREQ
+					PosControllerInstr.MED_DUTYCYCLE); // change from BRIGHT_DUTYCYCLE v6
 				instructions.add(instruction);
 			}
 		}

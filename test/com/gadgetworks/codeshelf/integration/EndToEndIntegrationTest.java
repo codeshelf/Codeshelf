@@ -102,6 +102,9 @@ public abstract class EndToEndIntegrationTest extends DomainTestABC {
 		System.setProperty("javax.net.ssl.trustStore", configuration.getString("keystore.path"));
 		System.setProperty("javax.net.ssl.trustStorePassword", configuration.getString("keystore.store.password"));
 		
+		
+		this.getPersistenceService().beginTenantTransaction();
+		
 		// ensure facility, organization, network exist in database before booting up site controller
 		this.organization = mOrganizationDao.findByDomainId(null, organizationId);
 		if (organization==null) {
@@ -153,7 +156,7 @@ public abstract class EndToEndIntegrationTest extends DomainTestABC {
 			throw new RuntimeException("Failed to start WebSocket server");
 		}
 		ThreadUtils.sleep(2000);
-		
+
 		// start site controller
 		siteController = siteControllerInjector.getInstance(CsSiteControllerApplication.class);
 		try {
@@ -198,6 +201,7 @@ public abstract class EndToEndIntegrationTest extends DomainTestABC {
 		
 		LOGGER.debug("Embedded site controller and server connected");
 		LOGGER.debug("-------------- Environment created");
+		this.getPersistenceService().endTenantTransaction();
 	}
 	
 	@Override 

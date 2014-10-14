@@ -11,6 +11,7 @@ import com.gadgetworks.codeshelf.application.Configuration;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.dao.MockDaoProvider;
 import com.gadgetworks.codeshelf.model.domain.Organization;
+import com.gadgetworks.codeshelf.model.domain.SiteController;
 import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.model.domain.UserType;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.LoginRequest;
@@ -32,9 +33,11 @@ public class LoginTest {
 
 		ITypedDao<Organization> organizationDao = daoProvider.getDaoInstance(Organization.class);
 		ITypedDao<User> userDao = daoProvider.getDaoInstance(User.class);
+		ITypedDao<SiteController> siteControllerDao = daoProvider.getDaoInstance(SiteController.class);
 		
 		Organization.setDao(organizationDao);
 		User.setDao(userDao);
+		SiteController.setDao(siteControllerDao);
 			
 		Organization organization = new Organization();
 		organization.setPersistentId(new UUID(UUIDGen.newTime(), UUIDGen.getClockSeqAndNode()));
@@ -85,6 +88,7 @@ public class LoginTest {
 		User user = new User();
 		user.setParent(organization);
 		user.setDomainId("user@example.com");
+		user.setType(UserType.APPUSER);
 		String password = "password";
 		user.setPassword(password);
 		user.setActive(true);
@@ -122,6 +126,7 @@ public class LoginTest {
 		User user = new User();
 		user.setParent(organization);
 		user.setDomainId("user@example.com");
+		user.setType(UserType.APPUSER);
 		String password = "password";
 		user.setPassword(password);
 		user.setActive(true);

@@ -120,7 +120,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 
 	// The itemMaster. Change to nullable v5 upgrade020
 	@Getter
-	@ManyToOne(optional = false)
+	@ManyToOne(optional = true)
 	private ItemMaster					itemMaster;
 
 	// Denormalized for serialized WIs at the site controller.

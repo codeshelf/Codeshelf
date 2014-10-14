@@ -109,4 +109,14 @@ public abstract class DeviceLogicABC implements INetworkDevice {
 
 		return result;
 	}
+	
+	// --------------------------------------------------------------------------
+	/* Is device fully associated? Only so if mDeviseStateEnum = STARTED.
+	 * See RadioController.networkDeviceBecameActive()
+	 */
+	public final boolean isDeviceAssociated() {
+		return (mDeviceStateEnum != null && mDeviceStateEnum.equals(NetworkDeviceStateEnum.STARTED));
+	}
+
+
 }

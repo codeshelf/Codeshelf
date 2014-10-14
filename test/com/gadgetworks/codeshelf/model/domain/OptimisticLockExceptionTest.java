@@ -2,6 +2,8 @@ package com.gadgetworks.codeshelf.model.domain;
 
 import java.sql.Timestamp;
 
+import lombok.Getter;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -18,6 +20,7 @@ import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 
 public class OptimisticLockExceptionTest {
 
+	@Getter
 	PersistenceService persistenceService = PersistenceService.getInstance();
 
 	@Before
@@ -26,6 +29,7 @@ public class OptimisticLockExceptionTest {
 
 	@Test
 	public final void optimisticLockExceptionTest() {
+		this.getPersistenceService().beginTenantTransaction();
 
 		// EbeanServer defaultServer = Ebean.getServer(null);
 
@@ -68,5 +72,7 @@ public class OptimisticLockExceptionTest {
 
 		foundOrder = OrderHeader.DAO.findByDomainId(facility, "OPTIMISTIC-123");
 		Assert.assertEquals(foundOrder.getStatus(), order1.getStatus());
+
+		this.getPersistenceService().endTenantTransaction();
 	}
 }

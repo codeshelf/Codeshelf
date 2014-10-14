@@ -16,6 +16,8 @@ public class CheTest extends DomainTestABC {
 
 	@Test
 	public final void trivialCheTest() {
+		this.getPersistenceService().beginTenantTransaction();
+
 		Facility facility = createDefaultFacility("CTEST1.O1");
 		Assert.assertNotNull(facility);
 		
@@ -29,6 +31,7 @@ public class CheTest extends DomainTestABC {
 			
 		}
 		
+		this.getPersistenceService().endTenantTransaction();
 		
 	}
 

@@ -302,7 +302,8 @@ public class DropboxService extends EdiServiceABC {
 		return result;
 	}
 
-	private String getFacilityPath() {
+	// public to allow test to find this.
+	public String getFacilityPath() {
 		String returnStr = new String(System.getProperty("file.separator") + FACILITY_FOLDER_PATH + getParent().getDomainId()).toLowerCase();
 		// decomposed for debugging ease
 		return returnStr;
@@ -524,6 +525,50 @@ public class DropboxService extends EdiServiceABC {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * Easy way to optionally have extreme logging in the system for developer, but easy off in production
+	 * @param inClient
+	 * @param inFilePath
+	 */
+	private void logDetails(String inStuffToLog) {
+		final boolean LOG_EXTREME_DETAILS = false;
+
+		if (LOG_EXTREME_DETAILS)
+			LOGGER.debug(inStuffToLog);
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Does the file path match the import folder, either as .csv or as .csv.processing?
+	 * @param inFilePath
+	 * @param inWhichFolder
+	 */
+	private boolean fileMatches(String inFilePath, String inWhichFolder) {
+		final String regexSuffix1 = "/[^/]+\\.csv"; // used to be only this
+		final String regexSuffix2 = "/[^/]+\\.csv.processing";
+
+		return inFilePath.matches(getFacilityImportSubDirPath(inWhichFolder) + regexSuffix1)
+				|| inFilePath.matches(getFacilityImportSubDirPath(inWhichFolder) + regexSuffix2);
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Helper function. Adds .processing unless the file already ends that way.
+	 * @param inClient
+	 * @param inFilePath
+	 */
+	private String renameToProcessing(DbxClient inClient, String inFilePath) {
+		String filepath = inFilePath;
+
+		if (!inFilePath.contains(".processing")) {
+			logDetails("Add .processing");
+			filepath = renameToRemoveAppend(inClient, inFilePath, null, "processing");
+			logDetails("2)" + filepath);
+		}
+		return filepath;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
 	 */
 	private void handleImport(DbxClient inClient,
 		DbxDelta.Entry<DbxEntry> inEntry,
@@ -533,119 +578,213 @@ public class DropboxService extends EdiServiceABC {
 		ICsvLocationAliasImporter inCsvLocationAliasImporter,
 		ICsvCrossBatchImporter inCsvCrossBatchImporter,
 		ICsvAislesFileImporter inCsvAislesFileImporter) {
+		
+		// IMPORTANT: if you change this at all, please go to DropboxRealTest.java. See comments there about how to run it locally.
+		// It cannot run on TeamCity
 
 		try {
 
 			String filepath = inEntry.lcPath;
-			
-			// Uncomment this and below to work on DropboxRealTest.java
-			/*
-			String startingUid = "";
-			if (inEntry.metadata .isFile())
-				startingUid = ((DbxEntry.File) inEntry.metadata).rev;
-			
-			List<DbxEntry.File> beginRevisions = inClient.getRevisions(filepath);
-			int beginCount = 0;
-			String beginZerothRev = "";
-			for (DbxEntry.File revEntry : beginRevisions){
-				String revUid = revEntry.rev;
-				if (beginCount == 0)
-					beginZerothRev = revUid;
-				beginCount++;
+
+			/*  Warning: this is called rather indiscriminately. Whatever Dropbox sees anywhere (even in export and processed folders) gets called here.
+			 * 
+			 *  New protocol deals with file redrop of the same name before we finish processing. See DropboxRealTest.java
+			 * 1) Just skip the file if .FAILED
+			 * 2) just after converting file to stream, rename the file as ".processing". But not if already .processing.
+			 * 3) Process the file, which as two main parts you do not fully see here: 
+			 * 3a) Convert to bean list
+			 * 3b) Process the bean list
+			 * 4) On success, move to processed folder and rename removing the .processing
+			 * 4b) On fail, rename to .FAILED and leave in import
+			 * 4c) On exception, rename to .FAILED and leave in import
+			 * 
+			 * Goals to achieve with all this:
+			 * New files get processed.
+			 * New file overwritten with the same name gets processed. (The name will change in the processed folder to avoid duplicate)
+			 * .FAILED files are plainly visible in the import folder
+			 * .processing files are visible. Most importantly, the host may drop a new file of the same name and we do not move the new file when we finish processing.
+			 * And, do not rename, move, etc. files that are not actually processed.
+			 */
+
+			// 1) Just skip the file if .FAILED
+			String lowerCaseFilePath = filepath;
+			lowerCaseFilePath = lowerCaseFilePath.toLowerCase(Locale.ENGLISH);
+			if (lowerCaseFilePath.contains(".failed")) {
+				return;
 			}
-			*/
+			
+			// We used to load to stream all files, then process only the direct matches. Let's filter a bit to not stream all the files in the processed folder.
+			// If the file path contains /processed/ or /export/, skip it.
+			if (filepath.contains("/processed/") || filepath.contains("/export/")) {
+				logDetails("Skipping: " + filepath);
+				return;
+			}
 
+			logDetails("1) loading file into stream for potential processing" + filepath);
 			Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-
-			//DropboxInputStream stream = inClient.getFileStream(filepath, null);
 			ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-			//DbxEntry.File downloadedFile = 
 			inClient.getFile(inEntry.lcPath, null, outputStream);
 			InputStreamReader reader = new InputStreamReader(new ByteArrayInputStream(outputStream.toByteArray()));
 
+			// Done within each if. We only want to rename as processing if we are actually processing.
+			// 2) just after converting file to stream, rename the file as ".processing".
+			// 3) Process the file stream, if we match what we are looking for
 			boolean success = false;
+			boolean processedAttempt = false;
 
-			// orders-slotting needs to come before orders, because orders is a subset of the orders-slotting regex.
-			if (filepath.matches(getFacilityImportSubDirPath(IMPORT_SLOTTING_PATH) + "/[^/]+\\.csv")) {
-				success = inCsvOrderLocationImporter.importOrderLocationsFromCsvStream(reader, getParent(), ediProcessTime);
-			} else if (filepath.matches(getFacilityImportSubDirPath(IMPORT_ORDERS_PATH) + "/[^/]+\\.csv")) {
-				success = inCsvOrderImporter.importOrdersFromCsvStream(reader, getParent(), ediProcessTime).isSuccessful();
-			} else if (filepath.matches(getFacilityImportSubDirPath(IMPORT_INVENTORY_PATH) + "/[^/]+\\.csv")) {
-				success = inCsvInventoryImporter.importSlottedInventoryFromCsvStream(reader, getParent(), ediProcessTime);
-			} else if (filepath.matches(getFacilityImportSubDirPath(IMPORT_INVENTORY_PATH) + "/[^/]+\\.csv")) {
-				success = inCsvInventoryImporter.importDdcInventoryFromCsvStream(reader, getParent(), ediProcessTime);
-			} else if (filepath.matches(getFacilityImportSubDirPath(IMPORT_LOCATIONS_PATH) + "/[^/]+\\.csv")) {
-				success = inCsvLocationAliasImporter.importLocationAliasesFromCsvStream(reader, getParent(), ediProcessTime);
-			} else if (filepath.matches(getFacilityImportSubDirPath(IMPORT_BATCHES_PATH) + "/[^/]+\\.csv")) {
-				success = inCsvCrossBatchImporter.importCrossBatchesFromCsvStream(reader, getParent(), ediProcessTime);
-			} else if (filepath.matches(getFacilityImportSubDirPath(IMPORT_AISLES_PATH) + "/[^/]+\\.csv")) {
-				success = inCsvAislesFileImporter.importAislesFileFromCsvStream(reader, getParent(), ediProcessTime);
+			try {
+				// orders-slotting needs to come before orders, because orders is a subset of the orders-slotting regex.
+				if (fileMatches(filepath, IMPORT_SLOTTING_PATH)) {
+					filepath = renameToProcessing(inClient, filepath);
+					processedAttempt = true;
+					success = inCsvOrderLocationImporter.importOrderLocationsFromCsvStream(reader, getParent(), ediProcessTime);
+				} else if (fileMatches(filepath, IMPORT_ORDERS_PATH)) {
+					filepath = renameToProcessing(inClient, filepath);
+					processedAttempt = true;
+					success = inCsvOrderImporter.importOrdersFromCsvStream(reader, getParent(), ediProcessTime).isSuccessful();
+				} else if (fileMatches(filepath, IMPORT_INVENTORY_PATH)) {
+					filepath = renameToProcessing(inClient, filepath);
+					processedAttempt = true;
+					success = inCsvInventoryImporter.importSlottedInventoryFromCsvStream(reader, getParent(), ediProcessTime);
+				} 
+				// Notice that there is no distinguisher for DDC file. Following should never execute anyway. Making it more obvious.
+				// Jeff says DDC may come back.
+				else if (false && fileMatches(filepath, IMPORT_INVENTORY_PATH)) {
+					filepath = renameToProcessing(inClient, filepath);
+					processedAttempt = true;
+					success = inCsvInventoryImporter.importDdcInventoryFromCsvStream(reader, getParent(), ediProcessTime);
+				} 
+				else if (fileMatches(filepath, IMPORT_LOCATIONS_PATH)) {
+					filepath = renameToProcessing(inClient, filepath);
+					processedAttempt = true;
+					success = inCsvLocationAliasImporter.importLocationAliasesFromCsvStream(reader, getParent(), ediProcessTime);
+				} else if (fileMatches(filepath, IMPORT_BATCHES_PATH)) {
+					filepath = renameToProcessing(inClient, filepath);
+					processedAttempt = true;
+					success = inCsvCrossBatchImporter.importCrossBatchesFromCsvStream(reader, getParent(), ediProcessTime);
+				} else if (fileMatches(filepath, IMPORT_AISLES_PATH)) {
+					filepath = renameToProcessing(inClient, filepath);
+					processedAttempt = true;
+					success = inCsvAislesFileImporter.importAislesFileFromCsvStream(reader, getParent(), ediProcessTime);
+				}
+				if (!processedAttempt) {
+					LOGGER.warn("Did not find importer for: " + filepath);				
+				}
+			} catch (Exception e) {
+				// 4c) On exception, rename to .FAILED and leave in import
+				LOGGER.warn("Exception during dropbox file read. Left a .FAILED file for " + filepath);
+				filepath = renameToRemoveAppend(inClient, filepath, "processing", "FAILED");
+				logDetails("4c)" + filepath);
 			}
 
 			if (success) {
 
-				// Uncomment this and above to work on DropboxRealTest.java
-				/*
-				// DEV-454  Jeff suggests:  make sure that the DBX version of the file (from the DBX structures) matches the current version in the DBX store.
-				//  If no match then don't move and re-mark file for processing.
-				// Not implemented yet.
-				// This same fix might address the DEV-455 scenario
-				DbxEntry dirEntry = inClient.getMetadata(filepath); 
-				
-				String endingUid = "";
-				if (dirEntry.isFile())
-					endingUid = ((DbxEntry.File) dirEntry).rev;
-				
-				if (!startingUid.equals(endingUid)) {
-					LOGGER.warn("unusual DBX event. New file came while this one processing."); // does not work
-				}
-				
-				List<DbxEntry.File> endRevisions = inClient.getRevisions(filepath);
-				int endCount = 0;
-				String endZerothRev = "";
-				for (DbxEntry.File revEntry : endRevisions){
-					String revUid = revEntry.rev;
-					if (endCount == 0)
-						endZerothRev = revUid;
-					endCount++;
-				}
-				
-				if (!beginZerothRev.equals(endZerothRev)) {
-					LOGGER.warn("unusual DBX event. New file came while this one processing. (getRevisions)"); // does not work
-				}
-				*/
+				// 4) On success, move to processed folder and rename removing the .processing
+				logDetails("Moving file to processed");
+				filepath = moveEntryToProcessed(inClient, filepath);
+				logDetails("4a1)" + filepath);
 
-				moveEntryToProcessed(inClient, inEntry);
+				logDetails("Removing the .processed suffix");
+				filepath = renameToRemoveAppend(inClient, filepath, "processing", null);
+				logDetails("4a2)" + filepath);
+
+			} else if (processedAttempt) {
+				// 4b) On fail, rename to .FAILED and leave in import. But don't rename random files that we did not process
+				LOGGER.warn("Failed to complete dropbox file read. Left a .FAILED file for " + filepath);
+				logDetails("Removing .processing; adding .FAILED");
+				filepath = renameToRemoveAppend(inClient, filepath, "processing", "FAILED");
+				logDetails("4b)" + filepath);
+
 			}
 		} catch (DbxException | IOException e) {
-			LOGGER.error("", e);
+			LOGGER.error("DBX or IO exception trying to get the next dropbox file", e);
 		}
 	}
 
 	// --------------------------------------------------------------------------
 	/**
+	 * Returns the new file path if file of that name exists. Normally returns the path passed in .
 	 * @param inClient
-	 * @param inEntry
+	 * @param inProposedFilePath
 	 */
-	private void moveEntryToProcessed(DbxClient inClient, DbxDelta.Entry<DbxEntry> inEntry) {
-		// Figure out where to add the "processed" path path.
-		String fromPath = inEntry.lcPath;
-		java.nio.file.Path path = Paths.get(fromPath);
-		String toPath = path.getParent() + System.getProperty("file.separator") + PROCESSED_PATH
-				+ System.getProperty("file.separator") + path.getFileName();
-
+	private String avoidFileNameCollision(DbxClient inClient, String inProposedFilePath) {
+		String toPath = inProposedFilePath;
 		try {
 			if (inClient.getMetadata(toPath) != null) {
 				// The to path already exists.  Tack on some extra versioning.
 				toPath = FilenameUtils.removeExtension(toPath) + "."
 						+ new SimpleDateFormat(TIME_FORMAT).format(System.currentTimeMillis()) + ".csv";
 			}
+		} catch (DbxException e) {
+			LOGGER.error("avoidFileNameCollision", e);
+		}
+		return toPath;
+	}
 
+	// --------------------------------------------------------------------------
+	/**
+	 * Returns the new file path.  Will attempt a modification if intended file name already exists in target directory
+	 * @param inClient
+	 * @param inExistingFilePath
+	 */
+	private String moveEntryToProcessed(DbxClient inClient, String inExistingFilePath) {
+		// Figure out where to add the "processed" path path.
+		String fromPath = inExistingFilePath;
+		java.nio.file.Path path = Paths.get(fromPath);
+		String toPath = path.getParent() + System.getProperty("file.separator") + PROCESSED_PATH
+				+ System.getProperty("file.separator") + path.getFileName();
+
+		try {
+			toPath = avoidFileNameCollision(inClient, toPath);
 			inClient.move(fromPath, toPath);
 			LOGGER.info("Dropbox processed: " + fromPath);
 		} catch (DbxException e) {
-			LOGGER.error("", e);
+			LOGGER.error("moveEntryToProcessed", e);
 		}
+		return toPath;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Rename implemented as a "move" to different path. This adds the "dot".
+	 * If the file name already ends in the appendStr, another is not added. 
+	 * Returns the new file path. Will attempt a modification if intended file name already exists in target directory
+	 * @param inClient
+	 * @param inExistingFilePath
+	 */
+	private String renameToRemoveAppend(DbxClient inClient, String inExistingFilePath, String inRemoveStr, String inAppendStr) {
+		if (inAppendStr != null && (inAppendStr.isEmpty() || inAppendStr.charAt(0) == '.')) {
+			LOGGER.error("Incorrect call to renameToAppend()");
+			return inExistingFilePath;
+		}
+		if (inRemoveStr != null && (inRemoveStr.isEmpty() || inRemoveStr.charAt(0) == '.')) {
+			LOGGER.error("Incorrect call to renameToAppend()");
+			return inExistingFilePath;
+		}
+		String fromPath = inExistingFilePath;
+		String toPath = fromPath;
+
+		if (inRemoveStr != null) {
+			String suffix = "." + inRemoveStr;
+			if (toPath.endsWith(suffix)) {
+				toPath = toPath.substring(0, toPath.length() - suffix.length());
+			}
+		}
+
+		if (inAppendStr != null)
+			toPath = toPath + "." + inAppendStr;
+		toPath = avoidFileNameCollision(inClient, toPath);
+		try {
+			if (inClient.getMetadata(fromPath) == null) {
+				LOGGER.error("File does not exist in renameToRemoveAppend()"); // Calling logic error
+			} else {
+				inClient.move(fromPath, toPath);
+				LOGGER.debug("Dropbox rename: " + toPath);
+			}
+		} catch (DbxException e) {
+			LOGGER.error("renameToRemoveAppend", e);
+		}
+		return toPath;
 	}
 
 	// --------------------------------------------------------------------------

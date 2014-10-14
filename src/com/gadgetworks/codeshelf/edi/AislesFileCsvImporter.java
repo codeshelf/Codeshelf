@@ -736,6 +736,10 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 			// So only a matter of updating the anchor and pickFace points
 			slot.setAnchorPoint(anchorPoint);
 			slot.setPickFaceEndPoint(pickFaceEndPoint);
+			if (!slot.getActive()) {
+				LOGGER.info("Activating previously inactivated slot: " + slotId);
+				slot.setActive(true);
+			}
 		}
 
 		try {
@@ -745,9 +749,7 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 			LOGGER.error("", e);
 			throw new EdiFileReadException("Could not store the slot update.");
 		}
-
 		return slot;
-
 	}
 
 	// --------------------------------------------------------------------------
@@ -793,6 +795,11 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 			// So only a matter of updating the anchor and pickFace points
 			tier.setAnchorPoint(anchorPoint);
 			tier.setPickFaceEndPoint(pickFaceEndPoint);
+			if (!tier.getActive()) {
+				LOGGER.info("Activating previously inactivated tier: " + inTierId);
+				tier.setActive(true);
+			}
+
 		}
 
 		try {
@@ -870,6 +877,10 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 			// So only a matter of updating the anchor and pickFace points
 			bay.setAnchorPoint(anchorPoint);
 			bay.setPickFaceEndPoint(pickFaceEndPoint);
+			if (!bay.getActive()) {
+				LOGGER.info("Activating previously inactivated bay: " + inBayId);
+				bay.setActive(true);
+			}
 		}
 		try {
 			// transaction?
@@ -923,6 +934,11 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 			// update existing aisle. DomainId is not changing as we found it that way from the facility parent.
 			// So only a matter of updating the anchor point. Don't bother with pickface end as it gets reset later. Now we could only set to zero.
 			aisle.setAnchorPoint(inAnchorPoint);
+			// See if we are reactivating a previous inactive aisle.
+			if (!aisle.getActive()) {
+				LOGGER.info("Activating previously inactivated aisle: " + inAisleId);
+				aisle.setActive(true);
+			}
 		}
 
 		try {
@@ -930,7 +946,7 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 			mAisleDao.store(aisle);
 
 		} catch (DaoException e) {
-			LOGGER.error("", e);
+			LOGGER.error("editOrCreateOneAisle", e);
 			throw new EdiFileReadException("Could not store the aisle update.");
 		}
 		return aisle;

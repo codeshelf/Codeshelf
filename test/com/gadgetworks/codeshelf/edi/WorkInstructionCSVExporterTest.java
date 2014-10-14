@@ -18,43 +18,48 @@ import org.junit.Test;
 
 import au.com.bytecode.opencsv.CSVReader;
 
-import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
-import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
+import com.gadgetworks.codeshelf.generators.WorkInstructionGenerator;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.DomainTestABC;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.model.domain.LocationAlias;
-import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderGroup;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.model.domain.SubLocationABC;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 
 public class WorkInstructionCSVExporterTest extends DomainTestABC {
 
 	private Facility facility;
 	private WorkInstructionCSVExporter exporter;
+	private WorkInstructionGenerator wiGenerator = new WorkInstructionGenerator();
 	
 	private static final String     TIME_FORMAT			= "yyyy-MM-dd'T'HH:mm:ss'Z'";
 	
 	private String[] expectedHeaders = new String[]{
-			"domainId",
+			"facilityId",
+			"workInstructionId",
 			"type",
 			"status",
 			"orderGroupId",
 			"orderId",
 			"containerId",
 			"itemId",
+			"uom",
+			"lotId",
 			"locationId",
 			"pickerId",
 			"planQuantity",
 			"actualQuantity",
+			"cheId",
 			"assigned",
 			"started",
-			"completed"	
+			"completed",
+			"version-1.0"
 	};
 
 	String[] dateFields = new String[]{
@@ -87,11 +92,15 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 		//data row
 		String[] dataRow = table.get(1);
 		Assert.assertEquals(expectedHeaders.length, dataRow.length);
+		List<String> headers = Lists.newArrayList(expectedHeaders);
 		for (int i = 0; i < dataRow.length; i++) {
 			String dataField = dataRow[i];
+			System.out.println(i+ " , " + dataField);
 			Assert.assertNotNull("Data Field Value was null at position: " + i, dataField);
-			Assert.assertNotEquals("Data Field Value was empty at position: " + i, "", dataField.trim());
-			
+			if (i != headers.indexOf("lotId") &&
+				i != headers.indexOf("version-1.0")) {
+				Assert.assertNotEquals("Data Field Value was empty at position: " + i, "", dataField.trim());
+			}
 		}
 		
 		this.getPersistenceService().endTenantTransaction();
@@ -217,31 +226,14 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 
 	
 	private WorkInstruction generateValidFullWorkInstruction() {
-		WorkInstruction workInstruction = new WorkInstruction();
-		OrderHeader orderHeader = new OrderHeader(facility, "OH1");
-		orderHeader.setOrderGroup(new OrderGroup(facility, "OG1"));
-		workInstruction.setParent(facility);
-		workInstruction.setOrderDetail(new OrderDetail(orderHeader, "OD1"));
-		workInstruction.setDomainId("WIDOMAINID");
-		workInstruction.setContainer(facility.createContainer("C1"));
-		workInstruction.setItemMaster(facility.createItemMaster("ITEMID", facility.createUomMaster("UOMID")));
-		workInstruction.setLocationId("LOCID");
-		workInstruction.setLocation(facility.createAisle("A1", Point.getZeroPoint(), Point.getZeroPoint()));
-		workInstruction.setPickerId("Picker");
-		workInstruction.setType(WorkInstructionTypeEnum.ACTUAL);
-		workInstruction.setStatus(WorkInstructionStatusEnum.COMPLETE);
-		workInstruction.setPlanQuantity(2);
-		workInstruction.setActualQuantity(2);
-		workInstruction.setAssigned( new Timestamp(System.currentTimeMillis()-10000));
-		workInstruction.setStarted(  new Timestamp(System.currentTimeMillis()-5000));
-		workInstruction.setCompleted(new Timestamp(System.currentTimeMillis()-0000));
-		return workInstruction;
+		return wiGenerator.generateValid(facility);
 	}
 	
 	private void assertHeaderRow(String [] header) {
 		Arrays.sort(header);
-		Arrays.sort(expectedHeaders);
-		Assert.assertArrayEquals(expectedHeaders, header);
+		String[] sortedExpectedHeaders = Arrays.copyOf(expectedHeaders, expectedHeaders.length);
+		Arrays.sort(sortedExpectedHeaders );
+		Assert.assertArrayEquals(sortedExpectedHeaders , header);
 		
 	}
 	

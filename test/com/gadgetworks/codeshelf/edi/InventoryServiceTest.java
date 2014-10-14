@@ -57,14 +57,22 @@ public class InventoryServiceTest extends DomainTestABC {
 	 */
 	@Test
 	public void testExistingItemWithEachIsMoved() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
+
 		String testUom = "each";
 		testMove(testUom);
+
+		this.getPersistenceService().endTenantTransaction();
 	}
 
 	@Test
 	public void testExistingItemWithEACHAliasIsMoved() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
+
 		String testUom = "EA";
 		testMove(testUom);
+
+		this.getPersistenceService().endTenantTransaction();
 	}
 	
 	/**
@@ -74,6 +82,8 @@ public class InventoryServiceTest extends DomainTestABC {
 	 */
 	@Test
 	public void testNonEachItemCreatedIfDifferentLocation() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
+
 		String testUom = "case";
 		String sku = "10706961";
 		Integer testCmFromLeft = 10;
@@ -94,6 +104,8 @@ public class InventoryServiceTest extends DomainTestABC {
 		Assert.assertNotEquals("Should not be the same item", createdItem.getPersistentId(), additionalItem.getPersistentId());
 		Assert.assertEquals(createdItem.getUomMaster(), additionalItem.getUomMaster());
 		Assert.assertEquals(createdItem.getItemId(), additionalItem.getItemId());
+
+		this.getPersistenceService().endTenantTransaction();
 	}
 	
 
@@ -104,6 +116,8 @@ public class InventoryServiceTest extends DomainTestABC {
 	 */
 	@Test
 	public void testNonEachItemIsUpdated() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
+
 		String testUom = "case";
 		String sku = "10706961";
 		Integer testCmFromLeft = 10;
@@ -117,6 +131,8 @@ public class InventoryServiceTest extends DomainTestABC {
 		Item updatedItem = facility.upsertItem(itemMaster.getItemId(), locationAlias, String.valueOf(testCmFromLeft), "15", testUom);
 		Assert.assertEquals("Should have been the same item", createdItem.getPersistentId(), updatedItem.getPersistentId());
 		Assert.assertEquals(testCmFromLeft, updatedItem.getCmFromLeft());
+
+		this.getPersistenceService().endTenantTransaction();
 	}
 	
 
@@ -140,6 +156,8 @@ public class InventoryServiceTest extends DomainTestABC {
 	@SuppressWarnings("unused")
 	@Test
 	public void testUpsertItemNullLocationAlias() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
+
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
 		ItemMaster itemMaster = facility.getItemMaster("10700589");
@@ -152,11 +170,15 @@ public class InventoryServiceTest extends DomainTestABC {
 		catch (InputValidationException e) {
 			Assert.assertTrue(e.hasViolationForProperty("storedLocation"));
 		}
+
+		this.getPersistenceService().endTenantTransaction();
 	}
 
 	@SuppressWarnings("unused")
 	@Test
 	public void testUpsertItemEmptyLocationAlias() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
+
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
 		ItemMaster itemMaster = facility.getItemMaster("10700589");
@@ -168,11 +190,15 @@ public class InventoryServiceTest extends DomainTestABC {
 		catch (InputValidationException e) {
 			Assert.assertTrue(e.hasViolationForProperty("storedLocation"));
 		}
+
+		this.getPersistenceService().endTenantTransaction();
 	}
 
 	@SuppressWarnings("unused")
 	@Test
 	public void testUpsertItemUsingAlphaCount() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
+
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
 		ItemMaster itemMaster = facility.getItemMaster("10700589");
@@ -185,11 +211,15 @@ public class InventoryServiceTest extends DomainTestABC {
 		catch (InputValidationException e) {
 			Assert.assertTrue(e.hasViolationForProperty("quantity"));
 		}
+
+		this.getPersistenceService().endTenantTransaction();
 	}
 
 	@SuppressWarnings("unused")
 	@Test
 	public void testUpsertItemUsingNegativeCount() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
+
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
 		ItemMaster itemMaster = facility.getItemMaster("10700589");
@@ -202,11 +232,15 @@ public class InventoryServiceTest extends DomainTestABC {
 		catch (InputValidationException e) {
 			Assert.assertTrue(e.hasViolationForProperty("quantity"));
 		}
+
+		this.getPersistenceService().endTenantTransaction();
 	}
 
 	@SuppressWarnings("unused")
 	@Test
 	public void testUpsertItemUsingNegativePositionFromLeft() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
+
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
 		ItemMaster itemMaster = facility.getItemMaster("10700589");
@@ -219,11 +253,15 @@ public class InventoryServiceTest extends DomainTestABC {
 		catch (InputValidationException e) {
 			Assert.assertTrue(e.hasViolationForProperty("positionFromLeft"));
 		}
+
+		this.getPersistenceService().endTenantTransaction();
 	}
 	
 	@SuppressWarnings("unused")
 	@Test
 	public void testUpsertItemUsingAlphaPositionFromLeft() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
+
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
 		ItemMaster itemMaster = facility.getItemMaster("10700589");
@@ -236,31 +274,43 @@ public class InventoryServiceTest extends DomainTestABC {
 		catch (InputValidationException e) {
 			Assert.assertTrue(e.hasViolationForProperty("positionFromLeft"));
 		}
+
+		this.getPersistenceService().endTenantTransaction();
 	}
 	
 	@Test
 	public void testUpsertItemUsingEmptyPositionFromLeft() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
+		
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
 		ItemMaster itemMaster = facility.getItemMaster("10700589");
 		String locationAlias = tier.getAliases().get(0).getAlias();
 		Item item = facility.upsertItem(itemMaster.getItemId(), locationAlias, "", "1", uomMaster.getUomMasterId());
 		Assert.assertEquals(0, item.getCmFromLeft().intValue());
+
+		this.getPersistenceService().endTenantTransaction();
 	}
 	
 	@Test
 	public void testUpsertItemUsingNullPositionFromLeft() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
+
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
 		ItemMaster itemMaster = facility.getItemMaster("10700589");
 		String locationAlias = tier.getAliases().get(0).getAlias();
 		Item item = facility.upsertItem(itemMaster.getItemId(), locationAlias, null, "1", uomMaster.getUomMasterId());
 		Assert.assertEquals(0, item.getCmFromLeft().intValue());
+
+		this.getPersistenceService().endTenantTransaction();
 	}
 	
 	@SuppressWarnings("unused")
 	@Test
 	public void testUpsertItemUsingEmptyUom() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
+
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
 		ItemMaster itemMaster = facility.getItemMaster("10700589");
@@ -273,20 +323,28 @@ public class InventoryServiceTest extends DomainTestABC {
 		catch (InputValidationException e) {
 			Assert.assertTrue(e.toString(), e.hasViolationForProperty("uomMasterId"));
 		}
+
+		this.getPersistenceService().endTenantTransaction();
 	}
 
 	@SuppressWarnings("unused")
 	@Test
 	public void testUpsertItemUsingUomDifferentCase() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
+
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
 		ItemMaster itemMaster = facility.getItemMaster("10700589");
 		Item item = facility.upsertItem(itemMaster.getItemId(), tier.getNominalLocationId(), "1", "1", "EACH");
 		Assert.assertEquals(tier, item.getStoredLocation());
+
+		this.getPersistenceService().endTenantTransaction();
 	}
 	
 	@Test
 	public void testUpsertItemUsingNominalLocationId() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
+
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
 		ItemMaster itemMaster = facility.getItemMaster("10700589");
@@ -294,10 +352,14 @@ public class InventoryServiceTest extends DomainTestABC {
 		
 		Item item = facility.upsertItem(itemMaster.getItemId(), tier.getNominalLocationId(), "1", "1", uomMaster.getUomMasterId());
 		Assert.assertEquals(tier, item.getStoredLocation());
+
+		this.getPersistenceService().endTenantTransaction();
 	}
 
 	@Test
 	public void testUpsertItemUsingLocationAlias() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
+
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
 		ItemMaster itemMaster = facility.getItemMaster("10700589");
@@ -305,6 +367,8 @@ public class InventoryServiceTest extends DomainTestABC {
 		String locationAlias = tier.getAliases().get(0).getAlias();
 		Item item = facility.upsertItem(itemMaster.getItemId(), locationAlias, "1", "1", uomMaster.getUomMasterId());
 		Assert.assertEquals(tier, item.getStoredLocation());
+
+		this.getPersistenceService().endTenantTransaction();
 	}
 	
 

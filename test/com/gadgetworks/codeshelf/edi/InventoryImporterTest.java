@@ -67,6 +67,8 @@ public class InventoryImporterTest extends EdiTestABC {
 
 	@Test
 	public final void testInventoryImporterFromCsvStream() {
+		this.getPersistenceService().beginTenantTransaction();
+
 		String csvString = "itemId,itemDetailId,description,quantity,uom,locationId,lotId,inventoryDate\r\n" //
 				+ "3001,3001,Widget,100,each,A1.B1,111,2012-09-26 11:31:01\r\n";
 		Facility facility = setupInventoryData("testInventoryImporterFromCsvStream", csvString);
@@ -77,20 +79,27 @@ public class InventoryImporterTest extends EdiTestABC {
 		ItemMaster itemMaster = item.getParent();
 		Assert.assertNotNull(itemMaster);
 
+		this.getPersistenceService().endTenantTransaction();
 	}
 
 	@Test
 	public final void testEmptyUom() {
+		this.getPersistenceService().beginTenantTransaction();
+
 		String csvString = "itemId,itemDetailId,description,quantity,uom,locationId,lotId,inventoryDate\r\n" //
 				+ "3001,3001,Widget,A,,A1.B1,111,2012-09-26 11:31:01\r\n";
 		Facility facility = setupInventoryData("testEmptyUom", csvString);
 
 		Item item = facility.getStoredItemFromMasterIdAndUom("3001", "");
 		Assert.assertNull(item);
+
+		this.getPersistenceService().endTenantTransaction();
 	}
 
 	@Test
 	public final void testAlphaQuantity() {
+		this.getPersistenceService().beginTenantTransaction();
+
 		String csvString = "itemId,itemDetailId,description,quantity,uom,locationId,lotId,inventoryDate\r\n" //
 				+ "3001,3001,Widget,A,each,A1.B1,111,2012-09-26 11:31:01\r\n";
 		Facility facility = setupInventoryData("testAlphaQuantity", csvString);
@@ -101,10 +110,14 @@ public class InventoryImporterTest extends EdiTestABC {
 
 		ItemMaster itemMaster = item.getParent();
 		Assert.assertNotNull(itemMaster);
+
+		this.getPersistenceService().endTenantTransaction();
 	}
 
 	@Test
 	public final void testNegativeQuantity() {
+		this.getPersistenceService().beginTenantTransaction();
+
 		String csvString = "itemId,itemDetailId,description,quantity,uom,locationId,lotId,inventoryDate\r\n" //
 				+ "3001,3001,Widget,-2,each,A1.B1,111,2012-09-26 11:31:01\r\n";
 		Facility facility = setupInventoryData("testNegativeQuantity", csvString);
@@ -115,6 +128,8 @@ public class InventoryImporterTest extends EdiTestABC {
 
 		ItemMaster itemMaster = item.getParent();
 		Assert.assertNotNull(itemMaster);
+
+		this.getPersistenceService().endTenantTransaction();
 	}
 
 	// --------------------------------------------------------------------------
@@ -123,6 +138,7 @@ public class InventoryImporterTest extends EdiTestABC {
 	 */
 	@Test
 	public final void testMultipleNonEachItemInstancesInventoryImporterFromCsvStream() {
+		this.getPersistenceService().beginTenantTransaction();
 
 		String csvString = "itemId,itemDetailId,description,quantity,uom,locationId,lotId,inventoryDate\r\n" //
 				+ "3001,3001,Widget,100,case,A1.B1,111,2012-09-26 11:31:01\r\n" //
@@ -194,6 +210,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		itemMaster = item.getParent();
 		Assert.assertNotNull(itemMaster);
 
+		this.getPersistenceService().endTenantTransaction();
 	}
 
 	@SuppressWarnings("rawtypes")
@@ -319,6 +336,8 @@ public class InventoryImporterTest extends EdiTestABC {
 	@SuppressWarnings({ "rawtypes", "unused" })
 	@Test
 	public final void testBayAnchors() {
+		this.getPersistenceService().beginTenantTransaction();
+
 		// This is critical for path values for non-slotted inventory. Otherwise, this belongs in aisle file test, and not in inventory test.
 		Facility facility = setUpSimpleNoSlotFacility("XX01");
 		SubLocationABC locationB1 = (SubLocationABC) facility.findSubLocationById("A1.B1");
@@ -368,11 +387,14 @@ public class InventoryImporterTest extends EdiTestABC {
 		// The last slot in bay3 should have same path value as the bay
 		Assert.assertEquals(slot4Pos, bay3Pos);
 
+		this.getPersistenceService().endTenantTransaction();
+
 	}
 
 	@SuppressWarnings({ "rawtypes", "unused" })
 	@Test
 	public final void testNonSlottedInventory() {
+		this.getPersistenceService().beginTenantTransaction();
 
 		Facility facility = setUpSimpleNoSlotFacility("XX02");
 
@@ -479,11 +501,13 @@ public class InventoryImporterTest extends EdiTestABC {
 		Assert.assertEquals(32, theLedRange3.mFirstLedToLight);
 		Assert.assertEquals(35, theLedRange3.mLastLedToLight);
 
+		this.getPersistenceService().endTenantTransaction();
 	}
 
 	@SuppressWarnings("rawtypes")
 	@Test
 	public final void testNonSlottedInventory2() {
+		this.getPersistenceService().beginTenantTransaction();
 
 		Facility facility = setUpSimpleNoSlotFacility("XX03");
 
@@ -530,11 +554,13 @@ public class InventoryImporterTest extends EdiTestABC {
 		Assert.assertEquals(112, theLedRange.mFirstLedToLight);
 		Assert.assertEquals(115, theLedRange.mLastLedToLight);
 
+		this.getPersistenceService().endTenantTransaction();
 	}
 
 	@SuppressWarnings("rawtypes")
 	@Test
 	public final void testNonSlottedInventory3() {
+		this.getPersistenceService().beginTenantTransaction();
 
 		Facility facility = setUpSimpleNoSlotFacility("XX04");
 
@@ -568,6 +594,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		Assert.assertNotNull(item1123Loc403CS);
 		// Not tested here. Later, we will enforce only one each location per item in a facility (or perhaps work area) even as we allow multiple case locations.
 
+		this.getPersistenceService().endTenantTransaction();
 	}
 
 	private Facility setupInventoryData(String organizationId, String csvString) {
@@ -592,6 +619,7 @@ public class InventoryImporterTest extends EdiTestABC {
 	@SuppressWarnings({ "rawtypes", "unused" })
 	@Test
 	public final void testNonSlottedPick() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
 
 		Facility facility = setUpSimpleNoSlotFacility("XX05");
 
@@ -732,6 +760,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		Assert.assertEquals(2, actives);
 		Assert.assertEquals(1, shorts);
 
+		this.getPersistenceService().endTenantTransaction();
 	}
 
 	// --------------------------------------------------------------------------
@@ -741,6 +770,7 @@ public class InventoryImporterTest extends EdiTestABC {
 	@SuppressWarnings({ "rawtypes", "unused" })
 	@Test
 	public final void testSameProductPick() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
 
 		Facility facility = setUpSimpleNoSlotFacility("XX06");
 
@@ -880,6 +910,9 @@ public class InventoryImporterTest extends EdiTestABC {
 			String djsonLedCmdGroupsString = ((LightLedsMessage)decodedMessage).getLedCommands();			
 			Assert.assertTrue(LightLedsMessage.verifyCommandString(djsonLedCmdGroupsString));
 		}
+		
+		this.getPersistenceService().endTenantTransaction();
+
 
 	}
 

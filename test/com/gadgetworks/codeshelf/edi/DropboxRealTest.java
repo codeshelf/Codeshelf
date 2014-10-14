@@ -1,8 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
- *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: InventoryImporterTest.java,v 1.12 2013/07/22 04:30:36 jeffw Exp $
- *******************************************************************************/
+ *  Copyright (c) 2014, Codeshelf All rights reserved
+  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
 import java.io.File;
@@ -23,7 +22,7 @@ import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.DropboxService;
 import com.gadgetworks.codeshelf.model.domain.EdiServiceABC;
 import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.LedController;
+// import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Point;
@@ -48,17 +47,16 @@ public class DropboxRealTest extends EdiTestABC {
 	}
 	// This obtained by jon Oct. 5 2014.  Pretty easy. Just run server normally. Dropbox link, etc.  Then later, pull this from the provider_credentials field in the database.
 	private final static String			TEST_CREDENTIALS3	= "rMS4NWXXc90AAAAAAAAAbXlihAPhBC7TafUSn3Tla4H3U43UauXCuWsFA7U3K-1U";
-	
-	
+
 	// To continue the dropbox investigation
 	// 1) Make sure you have your local dropbox working
 	// 2) Change LOCAL_DROPBOX_DIR
-	// 3) Uncomment @Test two places below
+	// 3) Uncomment @Test on the test functions below. For TeamCity, we only keep the stub testDBX0() as @test.
 	// 3b) Does it work? Or do you need to obtain your own credentials for your dropbox account? See above.
-	// 4) In DropboxService.handleImport(), undo two block comments
-	// Can you figure out how to see that the file is changed in handleImport?
-	
-	private final static String			LOCAL_DROPBOX_DIR 	= "/Users/jonranstrom/Dropbox/Apps/Codeshelf-Interface";
+	// 4) See DropboxService.handleImport(). Very complicated.
+	// Any change there requires someone to run these tests again.
+
+	private final static String			LOCAL_DROPBOX_DIR	= "/Users/jonranstrom/Dropbox/Apps/Codeshelf-Interface";
 
 	public DropboxRealTest() {
 		super();
@@ -91,7 +89,6 @@ public class DropboxRealTest extends EdiTestABC {
 		mCsvOrderLocationImporter = new OrderLocationCsvImporter(mOrderLocationDao);
 	}
 
-	@SuppressWarnings("unused")
 	private Facility setUpStartingFacility(String inOrganizationName) {
 		// The organization will get "O-" prepended to the name. Facility F-
 		// Caller must use a different organization name each time this is used
@@ -111,10 +108,12 @@ public class DropboxRealTest extends EdiTestABC {
 		network.createChe("CHE1", new NetGuid("0x00000001"));
 		network.createChe("CHE2", new NetGuid("0x00000002"));
 
+		/*
 		LedController controller1 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000011"));
 		LedController controller2 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000012"));
 		LedController controller3 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000013"));
-
+		*/
+		
 		DropboxService dropboxService = facility.getDropboxService();
 		if (dropboxService == null) {
 			facility.createDropboxService();
@@ -132,7 +131,17 @@ public class DropboxRealTest extends EdiTestABC {
 		}
 
 		return facility;
+	}
 
+	/**
+	 * Brain-dead wait. No guarantee that dbx and file system are synched
+	 */
+	private void waitForDbxSynch() {
+		try {
+			Thread.sleep(1500);
+		} catch (InterruptedException e) {
+			LOGGER.error("", e);
+		}
 	}
 
 	@Test
@@ -141,115 +150,118 @@ public class DropboxRealTest extends EdiTestABC {
 		Integer a = 1;
 		Assert.assertEquals(a, (Integer) 1);
 	}
-		// @Test
+
+	// @Test
 	public final void testDBX1() throws IOException {
 		// This calls dropboxService.getUpdatesFromHost() directly
 
-		LOGGER.info("START creation of facility DBX01");
-		Facility facility = setUpStartingFacility("DBX01");
-		LOGGER.info("facility DBX01 made");
-
-		String csvString2 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
-				+ "\r\n1,USF314,COSTCO,12345,12345,1123,12/16 oz Bowl Lids -PLA Compostable,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n1,USF314,COSTCO,12345,12345,1493,PARK RANGER Doll,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n1,USF314,COSTCO,12345,12345,1522,SJJ BPP,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0" + "\r\n";
-
-		/*
-		 * This all works. Just established the reference results for real dropbox test
-		byte[] csvArray2 = csvString2.getBytes();
-
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		InputStreamReader reader2 = new InputStreamReader(stream2);
-
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvOrderImporter importer2 = new OutboundOrderCsvImporter(mOrderGroupDao,
-			mOrderHeaderDao,
-			mOrderDetailDao,
-			mContainerDao,
-			mContainerUseDao,
-			mItemMasterDao,
-			mUomMasterDao);
-
-		LOGGER.info("start simulated orders read");
-		importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);
-		LOGGER.info("finish simulated orders read");
-
-		// We should have one order with 3 details. Only 2 of which are fulfillable.
-		OrderHeader order = facility.getOrderHeader("12345");
-		Assert.assertNotNull(order);
-		Integer detailCount = order.getOrderDetails().size();
-		Assert.assertEquals((Integer) 3, detailCount);
-		*/
-
-		DropboxService dropboxService = facility.getDropboxService();
-
-		String ordersDirPath = dropboxService.getFacilityImportSubDirPath("orders"); // IMPORT_ORDERS_PATH
-		String orderFileFragment = "/testorder.csv";
-		String processedFragment = "/processed";
-		String fullOrdersDirPath = LOCAL_DROPBOX_DIR + ordersDirPath;
-
-		// No file present yet
-		LOGGER.info("calling dbx getUpdatesFromHost");
-		dropboxService.getUpdatesFromHost(mCsvOrderImporter,
-			mCsvOrderLocationImporter,
-			mCsvInventoryImporter,
-			mCsvLocationAliasImporter,
-			mCsvCrossBatchImporter,
-			mAislesFileCsvImporter);
-		LOGGER.info("finish dbx getUpdatesFromHost");
-
+		String facilityDirPath = "";
 		try {
-			String csvFilePath = fullOrdersDirPath + orderFileFragment;
-			LOGGER.debug("full file path: " + csvFilePath);
-			FileUtils.writeStringToFile(new File(csvFilePath), csvString2);
-			LOGGER.debug("wrote the file ");
 
-		} catch (IOException e) {
-			LOGGER.error("failed to create test orders file", e);
+			LOGGER.info("START creation of facility DBX01");
+			Facility facility = setUpStartingFacility("DBX01");
+			LOGGER.info("facility DBX01 made");
+
+			String csvString2 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
+					+ "\r\n1,USF314,COSTCO,12345,12345,1123,12/16 oz Bowl Lids -PLA Compostable,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+					+ "\r\n1,USF314,COSTCO,12345,12345,1493,PARK RANGER Doll,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+					+ "\r\n1,USF314,COSTCO,12345,12345,1522,SJJ BPP,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0" + "\r\n";
+
+			/*
+			 * This all works. Just established the reference results for real dropbox test
+			byte[] csvArray2 = csvString2.getBytes();
+
+			ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
+			InputStreamReader reader2 = new InputStreamReader(stream2);
+
+			Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
+			ICsvOrderImporter importer2 = new OutboundOrderCsvImporter(mOrderGroupDao,
+				mOrderHeaderDao,
+				mOrderDetailDao,
+				mContainerDao,
+				mContainerUseDao,
+				mItemMasterDao,
+				mUomMasterDao);
+
+			LOGGER.info("start simulated orders read");
+			importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);
+			LOGGER.info("finish simulated orders read");
+
+			// We should have one order with 3 details. Only 2 of which are fulfillable.
+			OrderHeader order = facility.getOrderHeader("12345");
+			Assert.assertNotNull(order);
+			Integer detailCount = order.getOrderDetails().size();
+			Assert.assertEquals((Integer) 3, detailCount);
+			*/
+
+			DropboxService dropboxService = facility.getDropboxService();
+
+			String ordersDirPath = dropboxService.getFacilityImportSubDirPath("orders"); // IMPORT_ORDERS_PATH
+			String orderFileFragment = "/testorder.csv";
+			String processedFragment = "/processed";
+			String fullOrdersDirPath = LOCAL_DROPBOX_DIR + ordersDirPath;
+			facilityDirPath = LOCAL_DROPBOX_DIR + dropboxService.getFacilityPath();
+
+			// No file present yet
+			LOGGER.info("calling dbx getUpdatesFromHost");
+			dropboxService.getUpdatesFromHost(mCsvOrderImporter,
+				mCsvOrderLocationImporter,
+				mCsvInventoryImporter,
+				mCsvLocationAliasImporter,
+				mCsvCrossBatchImporter,
+				mAislesFileCsvImporter);
+			LOGGER.info("finish dbx getUpdatesFromHost");
+
+			try {
+				String csvFilePath = fullOrdersDirPath + orderFileFragment;
+				LOGGER.debug("full file path: " + csvFilePath);
+				FileUtils.writeStringToFile(new File(csvFilePath), csvString2);
+				LOGGER.debug("wrote the file ");
+
+			} catch (IOException e) {
+				LOGGER.error("failed to create test orders file", e);
+			}
+
+			waitForDbxSynch();
+
+			LOGGER.info("second  call to getUpdatesFromHost, after new orders file written");
+			dropboxService.getUpdatesFromHost(mCsvOrderImporter,
+				mCsvOrderLocationImporter,
+				mCsvInventoryImporter,
+				mCsvLocationAliasImporter,
+				mCsvCrossBatchImporter,
+				mAislesFileCsvImporter);
+			LOGGER.info("finish second call to getUpdatesFromHost");
+
+			// We should have one order with 3 details.
+			OrderHeader order = facility.getOrderHeader("12345");
+			Assert.assertNotNull(order);
+			Integer detailCount = order.getOrderDetails().size();
+			Assert.assertEquals((Integer) 3, detailCount);
+
+			waitForDbxSynch();
+
+			// Check that the processed file is there as we expect
+			String processedCsvFilePath = fullOrdersDirPath + processedFragment + orderFileFragment;
+			LOGGER.debug("delete: " + processedCsvFilePath);
+			if (!FileUtils.deleteQuietly(new File(processedCsvFilePath))) {
+				Assert.fail("file was not there to delete");
+			}
+
+		} finally {
+			waitForDbxSynch();
+
+			// Delete the entire dbx03 directory
+			if (FileUtils.deleteQuietly(new File(facilityDirPath)))
+				LOGGER.debug("deleted entire facility dbx01 folder ");
+			else
+				LOGGER.error("failed to delete facility dbx01folder ");
+
 		}
-
-		// giving time for dropbox/file system interaction
-		try {
-			Thread.sleep(500);
-		} catch (InterruptedException e) {
-			LOGGER.error("", e);
-		}
-
-		LOGGER.info("second  call to getUpdatesFromHost, after new orders file written");
-		dropboxService.getUpdatesFromHost(mCsvOrderImporter,
-			mCsvOrderLocationImporter,
-			mCsvInventoryImporter,
-			mCsvLocationAliasImporter,
-			mCsvCrossBatchImporter,
-			mAislesFileCsvImporter);
-		LOGGER.info("finish second call to getUpdatesFromHost");
-
-		// We should have one order with 3 details.
-		OrderHeader order = facility.getOrderHeader("12345");
-		Assert.assertNotNull(order);
-		Integer detailCount = order.getOrderDetails().size();
-		Assert.assertEquals((Integer) 3, detailCount);
-
-		// giving time for dropbox/file system interaction
-		try {
-			Thread.sleep(500);
-		} catch (InterruptedException e) {
-			LOGGER.error("", e);
-		}
-
-		// Clean up so test may run again on the same file system
-		String processedCsvFilePath = fullOrdersDirPath + processedFragment + orderFileFragment;
-		LOGGER.debug("full file path: " + processedCsvFilePath);
-		// could delete the entire dbx02 directory
-		if (FileUtils.deleteQuietly(new File(processedCsvFilePath))) // does not throw!
-			LOGGER.debug("deleted the file ");
-		else
-			LOGGER.error("failed to delete processed file ");
 
 	}
 
 	// @Test
-	@SuppressWarnings("unused")
 	public final void testDBX2() {
 		// See DEV-454 and 455 for the purpose of this test.
 		// Although as specified, it was to move file in during (slow) processing, this almost mimics it much more easily.
@@ -261,86 +273,232 @@ public class DropboxRealTest extends EdiTestABC {
 		// - As normal, move the file to processed.
 		// DEV-454 says that if the file has the same name, but is different, then don't move it. AND make sure it will be processed.
 
-		LOGGER.info("START creation of facility DBX02");
-		Facility facility = setUpStartingFacility("DBX02");
-		Assert.assertNotNull(facility);
-		LOGGER.info("facility DBX02 made");
-
-		DropboxService dropboxService = facility.getDropboxService();
-
-		final String csvString1 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
-				+ "\r\n1,USF314,COSTCO,12345,12345,1123,12/16 oz Bowl Lids -PLA Compostable,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n1,USF314,COSTCO,12345,12345,1493,PARK RANGER Doll,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n1,USF314,COSTCO,12345,12345,1522,SJJ BPP,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0" + "\r\n";
-
-		String ordersDirPath = dropboxService.getFacilityImportSubDirPath("orders"); // IMPORT_ORDERS_PATH
-		String orderFileFragment = "/testorder.csv";
-		String processedFragment = "/processed";
-		String fullOrdersDirPath = LOCAL_DROPBOX_DIR + ordersDirPath;
-
-		final String csvFilePath = fullOrdersDirPath + orderFileFragment;
+		String facilityDirPath = "";
 		try {
-			LOGGER.debug("full file path: " + csvFilePath);
-			FileUtils.writeStringToFile(new File(csvFilePath), csvString1);
-			LOGGER.debug("wrote the file ");
-		} catch (IOException e) {
-			LOGGER.error("failed to create test orders file", e);
-		}
-		long timeMillisOriginalFileWrite = System.currentTimeMillis();
 
-		// giving time for dropbox/file system interaction
-		try {
-			Thread.sleep(500);
-		} catch (InterruptedException e) {
-			LOGGER.error("", e);
-		}
+			LOGGER.info("START creation of facility DBX02");
+			Facility facility = setUpStartingFacility("DBX02");
+			Assert.assertNotNull(facility);
+			LOGGER.info("facility DBX02 made");
 
-		// Provide a wrapper for CsvOrderImporter
-		ICsvOrderImporter testImporter = new ICsvOrderImporter() {
-			@Override
-			public ImportResult importOrdersFromCsvStream(InputStreamReader inCsvStreamReader,
-				Facility inFacility,
-				Timestamp inProcessTime) throws IOException {
+			DropboxService dropboxService = facility.getDropboxService();
 
-				ImportResult result = mCsvOrderImporter.importOrdersFromCsvStream(inCsvStreamReader, inFacility, inProcessTime);
-				LOGGER.info("Anonymous Order Importer just finished");
-				//file manipulation here
-				String csvString2 = csvString1
-						+ "1,USF314,COSTCO,12345,12345,1622,Raggety Ann Doll,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-						+ "\r\n";
-				try {
-					LOGGER.debug("full file path: " + csvFilePath);
-					FileUtils.writeStringToFile(new File(csvFilePath), csvString2);
-					LOGGER.debug("overwrote the file with fourth detail for 12345 ");
-				} catch (IOException e) {
-					LOGGER.error("failed to overwrite file", e);
-				}
-				return result;
+			final String csvString1 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
+					+ "\r\n1,USF314,COSTCO,12345,12345,1123,12/16 oz Bowl Lids -PLA Compostable,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+					+ "\r\n1,USF314,COSTCO,12345,12345,1493,PARK RANGER Doll,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+					+ "\r\n1,USF314,COSTCO,12345,12345,1522,SJJ BPP,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0" + "\r\n";
+
+			String ordersDirPath = dropboxService.getFacilityImportSubDirPath("orders"); // IMPORT_ORDERS_PATH
+			String orderFileFragment = "/testorder.csv";
+			// String processedFragment = "/processed";
+			String fullOrdersDirPath = LOCAL_DROPBOX_DIR + ordersDirPath;
+			facilityDirPath = LOCAL_DROPBOX_DIR + dropboxService.getFacilityPath();
+
+			final String csvFilePath = fullOrdersDirPath + orderFileFragment;
+			try {
+				LOGGER.debug("full file path: " + csvFilePath);
+				FileUtils.writeStringToFile(new File(csvFilePath), csvString1);
+				LOGGER.debug("wrote the file ");
+			} catch (IOException e) {
+				LOGGER.error("failed to create test orders file", e);
 			}
-		};
+			long timeMillisOriginalFileWrite = System.currentTimeMillis();
 
-		LOGGER.info("START dbx getUpdatesFromHost for DBX02");
-		// testImporter instead of mCsvOrderImporter
-		dropboxService.getUpdatesFromHost(testImporter,
-			mCsvOrderLocationImporter,
-			mCsvInventoryImporter,
-			mCsvLocationAliasImporter,
-			mCsvCrossBatchImporter,
-			mAislesFileCsvImporter);
-		LOGGER.info("FINISH dbx getUpdatesFromHost for DBX02. Did the file move to processed?");
+			waitForDbxSynch();
 
-		// We should have one order with 3 details. (The 4th detail is now in the file, but was not as it processed into beans.)
-		OrderHeader order = facility.getOrderHeader("12345");
-		Assert.assertNotNull(order);
-		Integer detailCount = order.getOrderDetails().size();
-		Assert.assertEquals((Integer) 3, detailCount);
-		
-		if (FileUtils.isFileNewer(new File(csvFilePath), timeMillisOriginalFileWrite))
-			LOGGER.info("as expected, file system sees the overwritten file as newer");
-		else
-			LOGGER.error("file system does not see the overwritten file as newer"); // never see this
+			// Provide a wrapper for CsvOrderImporter
+			ICsvOrderImporter testImporter = new ICsvOrderImporter() {
+				@Override
+				public ImportResult importOrdersFromCsvStream(InputStreamReader inCsvStreamReader,
+					Facility inFacility,
+					Timestamp inProcessTime) throws IOException {
 
+					ImportResult result = mCsvOrderImporter.importOrdersFromCsvStream(inCsvStreamReader, inFacility, inProcessTime);
+					LOGGER.info("Anonymous Order Importer just finished");
+					//file manipulation here
+					String csvString2 = csvString1
+							+ "1,USF314,COSTCO,12345,12345,1622,Raggety Ann Doll,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+							+ "\r\n";
+					try {
+						LOGGER.debug("full file path: " + csvFilePath);
+						FileUtils.writeStringToFile(new File(csvFilePath), csvString2);
+						LOGGER.debug("overwrote the file with fourth detail for 12345 ");
+					} catch (IOException e) {
+						LOGGER.error("failed to overwrite file", e);
+					}
+					return result;
+				}
+			};
 
+			LOGGER.info("START dbx getUpdatesFromHost for DBX02");
+			// testImporter instead of mCsvOrderImporter
+			dropboxService.getUpdatesFromHost(testImporter,
+				mCsvOrderLocationImporter,
+				mCsvInventoryImporter,
+				mCsvLocationAliasImporter,
+				mCsvCrossBatchImporter,
+				mAislesFileCsvImporter);
+			LOGGER.info("FINISH dbx getUpdatesFromHost for DBX02. Did the file move to processed?");
+
+			// We should have one order with 3 details. (The 4th detail is now in the file, but was not as it processed into beans.)
+			OrderHeader order = facility.getOrderHeader("12345");
+			Assert.assertNotNull(order);
+			Integer detailCount = order.getOrderDetails().size();
+			Assert.assertEquals((Integer) 3, detailCount);
+
+			if (FileUtils.isFileNewer(new File(csvFilePath), timeMillisOriginalFileWrite))
+				LOGGER.info("as expected, file system sees the overwritten file as newer");
+			else
+				LOGGER.error("file system does not see the overwritten file as newer"); // never see this
+
+			waitForDbxSynch();
+
+			LOGGER.info("START dbx getUpdatesFromHost for DBX02 after new file came");
+			// use the normal mCsvOrderImporter as we don't want to inject a new file again
+			dropboxService.getUpdatesFromHost(mCsvOrderImporter,
+				mCsvOrderLocationImporter,
+				mCsvInventoryImporter,
+				mCsvLocationAliasImporter,
+				mCsvCrossBatchImporter,
+				mAislesFileCsvImporter);
+			LOGGER.info("FINISH getUpdatesFromHost. Moved .processing to processed folder, then rename. File of that name exists so should get a different file name");
+
+			// The 4th detail should have been read now)
+			order = facility.getOrderHeader("12345");
+			Assert.assertNotNull(order);
+			detailCount = order.getOrderDetails().size();
+			Assert.assertEquals((Integer) 4, detailCount);
+
+			// We have two files in processed now. One is testorder.csv. The other is something like testorder.09-26-56.csv that we cannot easily check for
+			// just let the finally clean up
+
+		} finally {
+			waitForDbxSynch();
+
+			// Delete the entire dbx03 directory
+			if (FileUtils.deleteQuietly(new File(facilityDirPath)))
+				LOGGER.debug("deleted entire facility dbx02 folder ");
+			else
+				LOGGER.error("failed to delete facility dbx02 folder ");
+
+		}
+
+	}
+
+	// @Test
+	public final void testDBX3() {
+		// Edge cases
+		// Make sure leftover .processing file is processed and moved normally to /processed folder
+		// Make sure leftover .FAILED file is not processed.
+
+		String facilityDirPath = "";
+
+		try {
+
+			Facility facility = setUpStartingFacility("DBX03");
+			Assert.assertNotNull(facility);
+			LOGGER.info("facility DBX03 made");
+
+			DropboxService dropboxService = facility.getDropboxService();
+
+			final String csvString1 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
+					+ "\r\n1,USF314,COSTCO,12345,12345,1123,12/16 oz Bowl Lids -PLA Compostable,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+					+ "\r\n1,USF314,COSTCO,12345,12345,1493,PARK RANGER Doll,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+					+ "\r\n1,USF314,COSTCO,12345,12345,1522,SJJ BPP,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0" + "\r\n";
+
+			String ordersDirPath = dropboxService.getFacilityImportSubDirPath("orders"); // IMPORT_ORDERS_PATH
+			String orderFileFragment = "/testorder.csv";
+			String processingFileFragment = "/testorder.csv.processing";
+			String failedFileFragment = "/testorder.csv.FAILED";
+			String processedFragment = "/processed";
+			String fullOrdersDirPath = LOCAL_DROPBOX_DIR + ordersDirPath;
+			facilityDirPath = LOCAL_DROPBOX_DIR + dropboxService.getFacilityPath();
+
+			final String csvFilePath = fullOrdersDirPath + processingFileFragment;
+			try {
+				LOGGER.debug("writing new file: " + csvFilePath);
+				FileUtils.writeStringToFile(new File(csvFilePath), csvString1);
+			} catch (IOException e) {
+				LOGGER.error("failed to create test orders file", e);
+			}
+
+			waitForDbxSynch();
+
+			LOGGER.info("START dbx getUpdatesFromHost for DBX03");
+			dropboxService.getUpdatesFromHost(mCsvOrderImporter,
+				mCsvOrderLocationImporter,
+				mCsvInventoryImporter,
+				mCsvLocationAliasImporter,
+				mCsvCrossBatchImporter,
+				mAislesFileCsvImporter);
+			LOGGER.info("FINISH dbx getUpdatesFromHost for DBX03. The .processing file hould have movedto processed and renamed as normal");
+
+			// We should have one order with 3 details.
+			OrderHeader order = facility.getOrderHeader("12345");
+			Assert.assertNotNull(order);
+			Integer detailCount = order.getOrderDetails().size();
+			Assert.assertEquals((Integer) 3, detailCount);
+
+			waitForDbxSynch();
+
+			// Add a .FAILED file
+			String csvString2 = csvString1
+					+ "1,USF314,COSTCO,12345,12345,1622,Raggety Ann Doll,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0" + "\r\n";
+			final String csvFilePath2 = fullOrdersDirPath + failedFileFragment;
+
+			try {
+				LOGGER.debug("full file path: " + csvFilePath2);
+				FileUtils.writeStringToFile(new File(csvFilePath2), csvString2);
+				LOGGER.debug("the .FAILED file has a fourth detail for 12345 ");
+			} catch (IOException e) {
+				LOGGER.error("failed to write file", e);
+			}
+
+			LOGGER.info("START dbx getUpdatesFromHost for DBX03 after .FAILED file came");
+			// use the normal mCsvOrderImporter as we don't want to inject a new file again
+			dropboxService.getUpdatesFromHost(mCsvOrderImporter,
+				mCsvOrderLocationImporter,
+				mCsvInventoryImporter,
+				mCsvLocationAliasImporter,
+				mCsvCrossBatchImporter,
+				mAislesFileCsvImporter);
+			LOGGER.info("FINISH getUpdatesFromHost. Nothing should have happened");
+
+			// Still only 3 details)
+			order = facility.getOrderHeader("12345");
+			Assert.assertNotNull(order);
+			detailCount = order.getOrderDetails().size();
+			Assert.assertEquals((Integer) 3, detailCount);
+
+			// Final cleanup. We have have testorder.csv in processed, and testorder.csv.FAILED in the orders folder.. 
+			// Let's first make sure our leftover files are as we expect
+			String processedCsvFilePath = fullOrdersDirPath + processedFragment + orderFileFragment;
+			if (!FileUtils.deleteQuietly(new File(processedCsvFilePath))) {
+				Assert.fail("file was not there to delete");
+			}
+
+			String failedCsvFilePath = fullOrdersDirPath + failedFileFragment;
+			LOGGER.debug("delete: " + failedCsvFilePath);
+			if (!FileUtils.deleteQuietly(new File(failedCsvFilePath))) {
+				Assert.fail("file was not there to delete");
+			}
+
+			// Just checking that deleteQuietly returns false if the file is not found.
+			String bogusCsvFilePath = fullOrdersDirPath + failedFileFragment + "xxx.csv";
+			if (FileUtils.deleteQuietly(new File(bogusCsvFilePath))) {
+				Assert.fail("deleteQuietly return true for missing file. Other test results are suspect.");
+			}
+
+		} finally {
+			waitForDbxSynch();
+
+			// Delete the entire dbx03 directory
+			if (FileUtils.deleteQuietly(new File(facilityDirPath)))
+				LOGGER.debug("deleted entire facility dbx03 folder ");
+			else
+				LOGGER.error("failed to delete facility dbx03folder ");
+
+		}
 	}
 
 }

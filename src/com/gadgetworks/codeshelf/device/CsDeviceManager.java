@@ -441,4 +441,9 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 		}
 	}
 
+	@Override
+	public JettyWebSocketClient getWebSocketCient() {
+		return this.client;
+	}
+
 }

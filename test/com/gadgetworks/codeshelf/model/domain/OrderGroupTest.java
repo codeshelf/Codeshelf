@@ -20,7 +20,8 @@ public class OrderGroupTest extends DomainTestABC {
 
 	@Test
 	public final void addRemoveOrderGroupTest() {
-		
+		this.getPersistenceService().beginTenantTransaction();
+
 		Organization organization = new Organization();
 		organization.setOrganizationId("OG.1");
 		mOrganizationDao.store(organization);
@@ -75,10 +76,13 @@ public class OrderGroupTest extends DomainTestABC {
 		Assert.assertNull(orderGroup.getOrderHeader(order2.getOrderId()));
 				
 		Assert.assertFalse(orderGroup.release());	
+
+		this.getPersistenceService().endTenantTransaction();
 	}
 
 	@Test
 	public final void releaseOrderGroupTest() {
+		this.getPersistenceService().beginTenantTransaction();
 		
 		Organization organization = new Organization();
 		organization.setOrganizationId("OG.2");
@@ -110,5 +114,7 @@ public class OrderGroupTest extends DomainTestABC {
 		Assert.assertTrue(orderGroup.release());
 		
 		Assert.assertFalse(orderGroup.release());	
+
+		this.getPersistenceService().endTenantTransaction();
 	}
 }

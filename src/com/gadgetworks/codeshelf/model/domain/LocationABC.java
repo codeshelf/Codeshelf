@@ -34,8 +34,10 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.gadgetworks.codeshelf.edi.EdiFileReadException;
 import com.gadgetworks.codeshelf.model.LedRange;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
+import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.util.StringUIConverter;
 
 // --------------------------------------------------------------------------
@@ -238,15 +240,15 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	private Boolean						active;
 
 	public LocationABC() {
-		active=true;
+		active = true;
 	}
 
 	public LocationABC(String domainId, final Point inAnchorPoint) {
 		super(domainId);
-		active=true;
+		active = true;
 		setAnchorPoint(inAnchorPoint);
 	}
-	
+
 	public void updateAnchorPoint(Double x, Double y, Double z) {
 		anchorPosX = x;
 		anchorPosY = y;
@@ -272,6 +274,26 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	@SuppressWarnings("rawtypes")
 	public final List<ISubLocation> getChildren() {
 		return new ArrayList<ISubLocation>(locations.values());
+	}
+
+	// --------------------------------------------------------------------------
+	/* 
+	 * this is the "delete" method. Does not delete. Merely makes inactive, along with all its children.
+	 * This does the DAO persist.
+	 */
+	@SuppressWarnings("rawtypes")
+	public void makeInactiveAndAllChildren() {
+		this.setActive(false);
+		try {
+			this.getDao().store(this);
+		} catch (DaoException e) {
+			LOGGER.error("makeInactive", e);
+		}
+
+		List<ISubLocation> childList = getChildren();
+		for (ISubLocation sublocation : childList) {
+			((LocationABC)sublocation).makeInactiveAndAllChildren();
+		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -339,7 +361,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 		return result;
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.ILocation#getLocationIdToParentLevel(java.lang.Class)
@@ -351,14 +373,13 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		// Let's not NPE.
 		if (this.getClass().equals(Facility.class))
 			return "";
-		
+
 		@SuppressWarnings("unchecked")
 		ILocation<P> checkParent = (ILocation<P>) getParent();
 		if (checkParent.getClass().equals(Facility.class)) {
 			// This is the last child  we want.
 			result = getLocationId();
-		}
-		else {
+		} else {
 			// The current parent is not the class we want so recurse up the hierarchy.
 			result = checkParent.getNominalLocationId();
 			result = result + "." + getLocationId();
@@ -372,12 +393,12 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	 */
 	@SuppressWarnings("unchecked")
 	public final <T extends ILocation<?>> T getParentAtLevel(Class<? extends ILocation<?>> inClassWanted) {
-		
+
 		// if you call aisle.getParentAtLevel(Aisle.class), return itself. This is moderately common.
-		if (this.getClass().equals(inClassWanted)) 
+		if (this.getClass().equals(inClassWanted))
 			return (T) this; // (We can cast safely since we checked the class.)
-			
-		T result = null;		
+
+		T result = null;
 
 		ILocation<P> checkParent = (ILocation<P>) getParent();
 		if (checkParent != null) {
@@ -398,8 +419,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 						result = (T) checkParent.getParentAtLevel(inClassWanted);
 					}
 				}
-			}
-			else {
+			} else {
 				LOGGER.error("parent location of: " + this + " could not be retrieved with id: " + persistentId);
 			}
 		}
@@ -574,12 +594,12 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		}
 		return "";
 	}
-	
-	public final String getVerticesUi(){
+
+	public final String getVerticesUi() {
 		// A UI meta field. Mostly for developers as we refine our graphic ui
 		List<Vertex> vList = getVerticesInOrder();
 		String returnStr = "";
-		for(Vertex vertex : vList) {
+		for (Vertex vertex : vList) {
 			// we want to assemble "(xvalue,yvalue)" for each vertex in order
 			String vString = "(";
 			vString += StringUIConverter.doubleToTwoDecimalsString(vertex.getPosX());
@@ -682,7 +702,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		Item returnItem = storedItems.get(domainId);
 		return returnItem;
 	}
-	
+
 	public final Item getStoredItem(final String inItemDomainId) {
 		return storedItems.get(inItemDomainId);
 	}
@@ -798,8 +818,9 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 			if (inLoc1.getAnchorPosZ() > inLoc2.getAnchorPosZ()) {
 				return -1;
 			} else if (inLoc1.getPosAlongPath() == null || inLoc2.getPosAlongPath() == null) {
-				LOGGER.error("posAlongPath null for location in LocationWorkingOrderComparator");;
-				return 0;			
+				LOGGER.error("posAlongPath null for location in LocationWorkingOrderComparator");
+				;
+				return 0;
 			} else if (inLoc1.getPosAlongPath() < inLoc2.getPosAlongPath()) {
 				return -1;
 			}
@@ -865,30 +886,28 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		}
 		return theChannel;
 	}
-	
+
 	public final Boolean isLeftSideTowardsAnchor() {
 		// As you face the pickface, is the left toward the anchor (where the B1/S1 side is)
 		Aisle theAisle = this.getParentAtLevel(Aisle.class);
 		if (theAisle == null) {
 			return false;
-		}
-		else {
+		} else {
 			return theAisle.isLeftSideAsYouFaceByB1S1();
 			// this is moderately expensive, and rarely changes. Cache after first computation? Used extensively in item cmFromLeft calculations
 		}
 	}
-	
+
 	public final Boolean isPathIncreasingFromAnchor() {
 		Aisle theAisle = this.getParentAtLevel(Aisle.class);
 		if (theAisle == null) {
 			return true; // as good a default as any
-		}
-		else {
+		} else {
 			return theAisle.associatedPathSegmentIncreasesFromAnchor();
 			// this is moderately expensive, and rarely changes. Cache after first computation? Used in item.getPosAlongPath computation
 		}
 	}
-	
+
 	public final Boolean isLowerLedNearAnchor() {
 		// This answer may not be meaningful for some locations, such as for a bay with zigzag led pattern.
 		Boolean answer = getLowerLedNearAnchor();
@@ -897,7 +916,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		// The only way would have been to examine siblings of this location. Or children if there are any.
 		// Not siblings with the same parent, but same level tier for adjacent bay. Note that zigzags are tricky.				
 	}
-	
+
 	public final Boolean isActive() {
 		return getActive();
 	}
@@ -905,18 +924,18 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	public LedRange getFirstLastLedsForLocation() {
 		// This often returns the stated leds for slots. But if the span is large, returns the central 4 leds.
 		LedRange theLedRange = new LedRange();
-		
+
 		// to compute, we need the locations first and last led positions
-		int firstLocLed = getFirstLedNumAlongPath(); 
-		int lastLocLed = getLastLedNumAlongPath(); 
+		int firstLocLed = getFirstLedNumAlongPath();
+		int lastLocLed = getLastLedNumAlongPath();
 		// following cast not safe if the stored location is facility
 		if (this instanceof Facility)
 			return theLedRange; // was initialized to give values of 0,0
-				
+
 		boolean lowerLedNearAnchor = this.isLowerLedNearAnchor();
-		
+
 		theLedRange.computeLedsToLightForLocationNoOffset(firstLocLed, lastLocLed, lowerLedNearAnchor);
-		
+
 		return theLedRange;
 	}
 

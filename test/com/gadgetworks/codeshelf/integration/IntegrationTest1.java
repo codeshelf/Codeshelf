@@ -187,7 +187,8 @@ public class IntegrationTest1 extends EndToEndIntegrationTest {
 	@SuppressWarnings({ "unused", "rawtypes" })
 	@Test
 	public final void testPick() throws IOException {
-
+		this.getPersistenceService().beginTenantTransaction();
+		
 		Facility facility = setUpSimpleNoSlotFacility();
 
 		// We are going to put cases in A3 and each in A2. Also showing variation in EA/each, etc.
@@ -296,11 +297,14 @@ public class IntegrationTest1 extends EndToEndIntegrationTest {
 		Assert.assertEquals(0, completes);
 		Assert.assertEquals(2, actives);
 		Assert.assertEquals(1, shorts);
+
+		this.getPersistenceService().endTenantTransaction();
 	}
 	
 	@SuppressWarnings({ "unused", "rawtypes" })
 	@Test
 	public final void testPickViaChe() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
 
 		Facility facility = setUpSimpleNoSlotFacility();
 
@@ -397,5 +401,7 @@ public class IntegrationTest1 extends EndToEndIntegrationTest {
 
 		picker.waitForCheState(CheStateEnum.PICK_COMPLETE,1000);
 		picker.logout();
+
+		this.getPersistenceService().endTenantTransaction();
 	}
 }

@@ -75,6 +75,7 @@ public class WorkInstructionTest extends DomainTestABC {
 	@SuppressWarnings("unused")
 	@Test
 	public final void addRemoveOrderGroupTest() {
+		this.getPersistenceService().beginTenantTransaction();
 
 		Organization organization = new Organization();
 		organization.setOrganizationId("OWI.1");
@@ -189,6 +190,7 @@ public class WorkInstructionTest extends DomainTestABC {
 		theString = facility.toString();
 		// no containerUse in this test case
 	
+		this.getPersistenceService().endTenantTransaction();
 
 	}
 

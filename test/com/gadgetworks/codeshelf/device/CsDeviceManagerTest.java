@@ -9,6 +9,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import lombok.Getter;
+
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -17,19 +19,26 @@ import com.gadgetworks.codeshelf.generators.FacilityGenerator;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.util.MemoryConfiguration;
 import com.gadgetworks.flyweight.command.CommandControlDisplayMessage;
 import com.gadgetworks.flyweight.command.ICommand;
 import com.gadgetworks.flyweight.command.NetAddress;
 import com.gadgetworks.flyweight.command.NetGuid;
+import com.gadgetworks.flyweight.controller.INetworkDevice;
 import com.gadgetworks.flyweight.controller.IRadioController;
+import com.gadgetworks.flyweight.controller.NetworkDeviceStateEnum;
 
 public class CsDeviceManagerTest {
+	@Getter
+	PersistenceService persistenceService = PersistenceService.getInstance();
 
 	@Test
 	public void communicatesServerUnattachedToChe() {
+		this.getPersistenceService().beginTenantTransaction();
+
 		IRadioController mockRadioController = mock(IRadioController.class);
-		CsDeviceManager attachedDeviceManager = produceAttachedDeviceManager(mockRadioController);
+		CsDeviceManager attachedDeviceManager = produceAttachedDeviceManager(mockRadioController);		
 
 		attachedDeviceManager.disconnected();
 		
@@ -39,10 +48,14 @@ public class CsDeviceManagerTest {
 		verify(mockRadioController, atLeast(1)).sendCommand(commandCaptor.capture(), any(NetAddress.class), any(Boolean.class));
 		
 		Assert.assertTrue("Should be showing network unavailable", ((CommandControlDisplayMessage)commandCaptor.getValue()).getEntireMessageStr().contains("Unavailable"));
+
+		this.getPersistenceService().endTenantTransaction();
 	}
 	
 	@Test
 	public void communicatesServerDisconnectionToChe() {
+		this.getPersistenceService().beginTenantTransaction();
+
 		IRadioController mockRadioController = mock(IRadioController.class);
 		CsDeviceManager attachedDeviceManager = produceAttachedDeviceManager(mockRadioController);
 
@@ -52,6 +65,8 @@ public class CsDeviceManagerTest {
 		verify(mockRadioController, atLeast(1)).sendCommand(commandCaptor.capture(), any(NetAddress.class), any(Boolean.class));
 		
 		Assert.assertTrue("Should be showing network unavailable", ((CommandControlDisplayMessage)commandCaptor.getValue()).getEntireMessageStr().contains("Unavailable"));
+
+		this.getPersistenceService().endTenantTransaction();
 	}
 
 	private CsDeviceManager produceAttachedDeviceManager(IRadioController mockRadioController) {
@@ -73,6 +88,12 @@ public class CsDeviceManagerTest {
 		network.addChe(che);
 
 		deviceManager.attached(network);
+		
+		// DEV-459  additions. Need at least one associated CHE to see a CHE display message. Critical for above tests of disconnect or unattached.
+		INetworkDevice theCheDevice = deviceManager.getDeviceByGuid(cheGuid);
+		theCheDevice.setDeviceStateEnum(NetworkDeviceStateEnum.STARTED); // Always call this with startDevice, as this says the device is associated.
+		theCheDevice.startDevice();
+
 		return deviceManager;
 	}
 }

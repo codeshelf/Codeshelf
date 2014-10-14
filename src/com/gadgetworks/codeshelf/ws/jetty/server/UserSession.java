@@ -22,6 +22,7 @@ import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.model.domain.UserType;
+import com.gadgetworks.codeshelf.ws.ContextLogging;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
 
 public class UserSession implements IDaoListener {
@@ -64,11 +65,14 @@ public class UserSession implements IDaoListener {
 	}
 
 	public void sendMessage(final MessageABC response) {
+		ContextLogging.set(this);
 		try {
 			this.wsSession.getBasicRemote().sendObject(response);
 			this.messageSent();
 		} catch (Exception e) {
 			LOGGER.error("Failed to send message", e);
+				} finally {
+					ContextLogging.clear();
 		}
 	}
 	

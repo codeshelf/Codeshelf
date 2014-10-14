@@ -61,6 +61,8 @@ public class CreatePathCommandTest extends DAOTestABC {
 	
 	@Test
 	public void testCreatePathWithCommand() throws JsonGenerationException, JsonMappingException, IOException {
+		this.getPersistenceService().beginTenantTransaction();
+
 		int numberOfSegments = 3;
 		String testPathDomainId = "DOMID-2";
 		
@@ -98,11 +100,16 @@ public class CreatePathCommandTest extends DAOTestABC {
 		ResponseABC response = processor.handleRequest(session, request);
 
 		Assert.assertTrue(response instanceof CreatePathResponse);
+
+		this.getPersistenceService().endTenantTransaction();
 	}
 	
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testCreatePathViaObjectMethod() throws JsonParseException, JsonMappingException, IOException {
+		this.getPersistenceService().beginTenantTransaction();
+
+		
 		int numberOfSegments = 3;
 		String testPathDomainId = "DOMID";
 		
@@ -144,6 +151,8 @@ public class CreatePathCommandTest extends DAOTestABC {
 		Path createdPath1 = Path.DAO.findByDomainId(testFacility, testPathDomainId);
 		Assert.assertNotNull(createdPath1);
 		Assert.assertEquals(numberOfSegments, createdPath1.getSegments().size());
+
+		this.getPersistenceService().endTenantTransaction();
 	}
 	
 	private PathSegment[] createPathSegment(int numberOfSegments) {

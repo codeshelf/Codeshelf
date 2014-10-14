@@ -18,6 +18,7 @@ public class PathTest extends DomainTestABC {
 
 	@Test
 	public final void addRemoveOrderGroupTest() {
+		this.getPersistenceService().beginTenantTransaction();
 
 		Facility facility = createFacilityWithOutboundOrders("O-PT.1");
 		Path path = facility.getPath(Path.DEFAULT_FACILITY_PATH_ID);
@@ -34,10 +35,12 @@ public class PathTest extends DomainTestABC {
 		List<Tier> tierList = path.<Tier> getLocationsByClass(Tier.class);
 		Assert.assertEquals(0, tierList.size());
 
+		this.getPersistenceService().endTenantTransaction();
 	}
 
 	@Test
 	public final void isOrderOnPath() {
+		this.getPersistenceService().beginTenantTransaction();
 
 		Facility facility = createFacilityWithOutboundOrders("O-PT.2");
 		Path path = facility.getPath(Path.DEFAULT_FACILITY_PATH_ID);
@@ -45,11 +48,13 @@ public class PathTest extends DomainTestABC {
 
 		Assert.assertTrue(path.isOrderOnPath(order));
 
+		this.getPersistenceService().endTenantTransaction();
 	}
 	
 	@Test
 	public final void computePosALongPath() {
-		
+		this.getPersistenceService().beginTenantTransaction();
+
 		Facility facility = createFacilityWithOutboundOrders("O-PT.3");
 		Path path = facility.getPath(Path.DEFAULT_FACILITY_PATH_ID);
 		for (PathSegment segment : path.getSegments()) {
@@ -62,5 +67,6 @@ public class PathTest extends DomainTestABC {
 		PathSegment segment2 = path.getPathSegment(1);
 		Assert.assertEquals(segment2.getStartPosAlongPath().doubleValue(), 5.0, 0.0);
 		
+		this.getPersistenceService().endTenantTransaction();
 	}
 }

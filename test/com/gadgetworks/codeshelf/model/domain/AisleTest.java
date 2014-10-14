@@ -12,13 +12,19 @@ public class AisleTest extends DomainTestABC {
 
 	@Test
 	public final void testGetLocationIdWithInvalidSublevel() {
+		this.getPersistenceService().beginTenantTransaction();
+		
 		Aisle aisle = getDefaultAisle(getDefaultFacility(), "A1");
 		String locationId = aisle.getLocationIdToParentLevel(Tier.class);
 		Assert.assertEquals("", locationId);
+		
+		this.getPersistenceService().endTenantTransaction();
 	}
 	
 	@Test
 	public final void updateControllerOnAisle() {
+		this.getPersistenceService().beginTenantTransaction();
+
 		LedController controller = getDefaultController(getDefaultNetwork(getDefaultFacility()), "0xABCDEF");
 		Aisle aisle = getDefaultAisle(getDefaultFacility(getDefaultOrganization("Org1")), "A1");
 
@@ -28,10 +34,14 @@ public class AisleTest extends DomainTestABC {
 		Aisle storedAisle = mAisleDao.findByPersistentId(aisle.getPersistentId());
 		assertEquals(controller.getDomainId(), storedAisle.getLedControllerId());
 		assertEquals(testChannel, storedAisle.getLedChannel());
+
+		this.getPersistenceService().endTenantTransaction();
 	}
 
 	@Test
 	public final void updateNonexistantController() {
+		this.getPersistenceService().beginTenantTransaction();
+
 		Short testChannel = 8;
 		Aisle aisle = getDefaultAisle(getDefaultFacility(), "A1");
 		try {
@@ -42,11 +52,13 @@ public class AisleTest extends DomainTestABC {
 			
 		}
 		
-		
+		this.getPersistenceService().endTenantTransaction();
 	}
 	
 	@Test
 	public final void updatePathSegment() {
+		this.getPersistenceService().beginTenantTransaction();
+
 		String aisleDomainId = "A1";
 		
 		Facility facility = getDefaultFacility();
@@ -60,10 +72,14 @@ public class AisleTest extends DomainTestABC {
 	
 		Aisle storedAisle = (Aisle) facility.findLocationById(aisleDomainId);
 		assertEquals(pathSegment.getPersistentId(), storedAisle.getAssociatedPathSegment().getPersistentId());
+
+		this.getPersistenceService().endTenantTransaction();
 	}
 	
 	@Test
 	public final void updateNonexistantPathSegment() {
+		this.getPersistenceService().beginTenantTransaction();
+
 		Aisle aisle = getDefaultAisle(getDefaultFacility(), "A1");
 		try {
 			aisle.associatePathSegment(UUID.randomUUID().toString());
@@ -73,6 +89,7 @@ public class AisleTest extends DomainTestABC {
 			
 		}
 		
+		this.getPersistenceService().endTenantTransaction();
 		
 	}
 

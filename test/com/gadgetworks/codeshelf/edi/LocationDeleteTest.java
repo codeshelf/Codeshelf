@@ -38,41 +38,18 @@ import com.gadgetworks.flyweight.command.NetGuid;
  * 
  * 
  */
-public class CrossBatchRunTest extends EdiTestABC {
-	private static final Logger	LOGGER	= LoggerFactory.getLogger(CrossBatchRunTest.class);
+public class LocationDeleteTest extends EdiTestABC {
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(LocationDeleteTest.class);
+	
+	private final boolean LARGER_FACILITY = true;
+	private final boolean SMALLER_FACILITY = true;
 
 	@SuppressWarnings({ "unused" })
-	private Facility setUpSimpleSlottedFacility(String inOrganizationName) {
-		// Besides basic crossbatch functionality, with this facility we want to test housekeeping WIs for
-		// 1) same position on cart
-		// 2) Bay done/change bay
-		// 3) aisle done/change aisle
-
+	private Facility setUpSimpleSlottedFacility(String inOrganizationName, boolean inWhichFacility) {
 		// This returns a facility with aisle A1 and A2, with two bays with two tier each. 5 slots per tier, like GoodEggs. With a path, associated to both aisles.
 		// Zigzag bays like GoodEggs. 10 valid locations per aisle, named as GoodEggs
 		// One controllers associated per aisle
 		// Two CHE called CHE1 and CHE2. CHE1 colored green and CHE2 magenta
-
-		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
-				+ "Aisle,A1,,,,,zigzagB1S1Side,12.85,43.45,X,40,Y\r\n" //
-				+ "Bay,B1,112,,,,,\r\n" //
-				+ "Tier,T1,,5,32,0,,\r\n" //
-				+ "Tier,T2,,5,32,120,,\r\n" //
-				+ "Bay,B2,112,,,,,\r\n" //
-				+ "Tier,T1,,5,32,0,,\r\n" //
-				+ "Tier,T2,,5,32,120,,\r\n" //
-				+ "Aisle,A2,,,,,zigzagB1S1Side,12.85,55.45,X,120,Y\r\n" //
-				+ "Bay,B1,112,,,,,\r\n" //
-				+ "Tier,T1,,5,32,0,,\r\n" //
-				+ "Tier,T2,,5,32,120,,\r\n" //
-				+ "Bay,B2,112,,,,,\r\n" //
-				+ "Tier,T1,,5,32,0,,\r\n" //
-				+ "Tier,T2,,5,32,120,,\r\n"; //
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
 
 		Organization organization = new Organization();
 		String oName = "O-" + inOrganizationName;
@@ -83,10 +60,11 @@ public class CrossBatchRunTest extends EdiTestABC {
 		organization.createFacility(fName, "TEST", Point.getZeroPoint());
 		Facility facility = organization.getFacility(fName);
 
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
-		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
-
+		if (inWhichFacility == LARGER_FACILITY)
+			readStandardAisleFile(facility);
+		else 
+			readSmallerAisleFile(facility);
+	
 		// Get the aisles
 		Aisle aisle1 = Aisle.DAO.findByDomainId(facility, "A1");
 		Assert.assertNotNull(aisle1);
@@ -171,6 +149,61 @@ public class CrossBatchRunTest extends EdiTestABC {
 		return facility;
 
 	}
+	
+	private void readStandardAisleFile(Facility inFacility){
+		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A1,,,,,zigzagB1S1Side,12.85,43.45,X,40,Y\r\n" //
+				+ "Bay,B1,112,,,,,\r\n" //
+				+ "Tier,T1,,5,32,0,,\r\n" //
+				+ "Tier,T2,,5,32,120,,\r\n" //
+				+ "Bay,B2,112,,,,,\r\n" //
+				+ "Tier,T1,,5,32,0,,\r\n" //
+				+ "Tier,T2,,5,32,120,,\r\n" //
+				+ "Aisle,A2,,,,,zigzagB1S1Side,12.85,55.45,X,120,Y\r\n" //
+				+ "Bay,B1,112,,,,,\r\n" //
+				+ "Tier,T1,,5,32,0,,\r\n" //
+				+ "Tier,T2,,5,32,120,,\r\n" //
+				+ "Bay,B2,112,,,,,\r\n" //
+				+ "Tier,T1,,5,32,0,,\r\n" //
+				+ "Tier,T2,,5,32,120,,\r\n"; //
+
+		byte[] csvArray = csvString.getBytes();
+
+		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
+		InputStreamReader reader = new InputStreamReader(stream);
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		importer.importAislesFileFromCsvStream(reader, inFacility, ediProcessTime);
+	}
+
+	private void readSmallerAisleFile(Facility inFacility){
+		// Compared to the standard, this is missing:
+		// A1.B1.T2
+		// A1.B2.T1.S5
+		// A2.B2
+		
+		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A1,,,,,zigzagB1S1Side,12.85,43.45,X,40,Y\r\n" //
+				+ "Bay,B1,112,,,,,\r\n" //
+				+ "Tier,T1,,5,32,0,,\r\n" //
+				+ "Bay,B2,112,,,,,\r\n" //
+				+ "Tier,T1,,4,32,0,,\r\n" //
+				+ "Tier,T2,,5,32,120,,\r\n" //
+				+ "Aisle,A2,,,,,zigzagB1S1Side,12.85,55.45,X,120,Y\r\n" //
+				+ "Bay,B1,112,,,,,\r\n" //
+				+ "Tier,T1,,5,32,0,,\r\n" //
+				+ "Tier,T2,,5,32,120,,\r\n"; //
+
+		byte[] csvArray = csvString.getBytes();
+
+		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
+		InputStreamReader reader = new InputStreamReader(stream);
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		importer.importAislesFileFromCsvStream(reader, inFacility, ediProcessTime);
+	}
 
 	@SuppressWarnings("unused")
 	private void setUpGroup1OrdersAndSlotting(Facility inFacility) throws IOException {
@@ -178,11 +211,11 @@ public class CrossBatchRunTest extends EdiTestABC {
 		// 5 products batched into containers 11 through 15
 
 		String orderCsvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
-				+ "\r\n1,USF314,COSTCO,,123,10700589,Napa Valley Bistro - Jalapeño Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,,123,10700589,Napa Valley Bistro - Jalape��o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,,123,10722222,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,,123,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,,123,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n1,USF314,COSTCO,,456,10700589,Napa Valley Bistro - Jalapeño Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\n1,USF314,COSTCO,,456,10700589,Napa Valley Bistro - Jalape��o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,,456,10722222,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,,456,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,,456,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
@@ -245,10 +278,12 @@ public class CrossBatchRunTest extends EdiTestABC {
 	}
 
 	@Test
-	public final void basicCrossBatchRun() throws IOException {
-		this.getPersistenceService().beginTenantTransaction();
+	public final void locationDelete1() throws IOException {
+		// The idea is to setup, then delete an aisle that has order locations, complete and active work instruction, associated path and controller.
+		// Make no throws as those things are accessed.
+		// Bring it back
 
-		Facility facility = setUpSimpleSlottedFacility("XB01");
+		Facility facility = setUpSimpleSlottedFacility("LD01", LARGER_FACILITY);
 		setUpGroup1OrdersAndSlotting(facility);
 
 		// Let's find our CHE
@@ -303,53 +338,93 @@ public class CrossBatchRunTest extends EdiTestABC {
 		Assert.assertNotNull(wi2);
 		String groupSortStr2 = wi2.getGroupAndSortCode();
 		Assert.assertEquals("0002", groupSortStr2);
+		
+		// Now the test starts. Delete aisle A1
+		Aisle aisle1 = (Aisle) facility.findSubLocationById("A1");
+		Assert.assertTrue(aisle1.getActive());
+		
+		LOGGER.info("Making ailse A1 inactive, with its children");
+		aisle1.makeInactiveAndAllChildren();
+		// fetch again as the earlier reference is probably stale
+		aisle1 = (Aisle) facility.findSubLocationById("A1");
+		Assert.assertFalse(aisle1.getActive());
+		// This should have also inactivated all children,  recursively.
+		LocationABC<?> locationA1B1 = (LocationABC<?>) facility.findSubLocationById("A1.B1");
+		Assert.assertFalse(locationA1B1.getActive());
+		LocationABC<?> locationA1B1T1 = (LocationABC<?>) facility.findSubLocationById("A1.B1.T1");
+		Assert.assertFalse(locationA1B1T1.getActive());
+		LocationABC<?> locationA1B1T1S1 = (LocationABC<?>) facility.findSubLocationById("A1.B1.T1.S1");
+		Assert.assertFalse(locationA1B1T1S1.getActive());
 
-		this.getPersistenceService().endTenantTransaction();
+		LOGGER.info("Read back the aisles file. Should make A1 and its children active again");
+		readStandardAisleFile(facility);
+		aisle1 = (Aisle) facility.findSubLocationById("A1");
+		Assert.assertTrue(aisle1.getActive());
+		locationA1B1 = (LocationABC<?>) facility.findSubLocationById("A1.B1");
+		Assert.assertTrue(locationA1B1.getActive());
+		locationA1B1T1 = (LocationABC<?>) facility.findSubLocationById("A1.B1.T1");
+		Assert.assertTrue(locationA1B1T1.getActive());
+		locationA1B1T1S1 = (LocationABC<?>) facility.findSubLocationById("A1.B1.T1.S1");
+		Assert.assertTrue(locationA1B1T1S1.getActive());
+
 	}
 	
-	@SuppressWarnings("unused")
 	@Test
-	public final void basicHousekeeping() throws IOException {
-		this.getPersistenceService().beginTenantTransaction();
-
-		Facility facility = setUpSimpleSlottedFacility("XB02");
+	public final void locationDelete2() throws IOException {
+		// The idea is to setup, then redo "smaller" aisle file that results in deleted bays, tiers, and slots.
+		// Bring it back with original
+		
+		LOGGER.info("DeleteLocation Test 2. Start by setting up standard aisles A1 and A2");
+		Facility facility = setUpSimpleSlottedFacility("LD02", LARGER_FACILITY);
 		setUpGroup1OrdersAndSlotting(facility);
-
-		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
-		Che theChe = theNetwork.getChe("CHE1");
 		
-		// Set up a cart for containers 15 and 14, which should generate 4 work normal instructions.
-		// However, as we are coming from the same container for subsequent ones, there will be housekeeping WIs inserted.
+		LOGGER.info("Reread same aisles file again. Just to see that there is no throw.");
+		readStandardAisleFile(facility);
 
-		// Make sure housekeeping is on
-		HousekeepingInjector.restoreHKDefaults();
-		facility.setUpCheContainerFromString(theChe, "15,14");
+		LOGGER.info("And another reread."); // Reread case is covered in AisleImporterTest
+		readStandardAisleFile(facility);
 
-		// Important to realize. theChe.getWorkInstruction() just gives all work instructions in an arbitrary order.
-		List<WorkInstruction> aList = facility.getWorkInstructions(theChe, ""); // This returns them in working order.
-		Integer wiCount = aList.size();
-		Assert.assertEquals((Integer) 7, wiCount); // one product going to 1 order, and 1 product going to the same order and 2 more.
-		// Just some quick log output to see it
-		for (WorkInstruction wi : aList)
-			LOGGER.debug("WiSort: " + wi.getGroupAndSortCode() + " cntr: " + wi.getContainerId() + " loc: " + wi.getPickInstruction() + " desc.: " + wi.getDescription());
+		// Note: this does not make locations inactive yet.
+		LOGGER.info("reading aisles file that should remove bay, tier, and slot");
+		readSmallerAisleFile(facility);
+		// Look at the normal and deleted locations.
 		
-		WorkInstruction wi1 = aList.get(0);
-		WorkInstruction wi2 = aList.get(1);
-		WorkInstruction wi3 = aList.get(2);
-		WorkInstruction wi4 = aList.get(3);
-		WorkInstruction wi5 = aList.get(4);
-		WorkInstruction wi6 = aList.get(5);
-		WorkInstruction wi7 = aList.get(6);
+		// Why does this next one throw on obscure method not found?
+		LOGGER.info("reading original aisles file that should restore the bay, tier, and slot");
+		readStandardAisleFile(facility);
+		// Look at the normal and deleted locations.
 
-		String wi2Desc = wi2.getDescription();
-		String wi5Desc = wi5.getDescription();
-		String wi6Desc = wi6.getDescription();
-	
-		Assert.assertEquals("Bay Change", wi2Desc);
-		Assert.assertEquals("Repeat Container", wi5Desc);
-		Assert.assertEquals("Bay Change", wi6Desc);
+	}
 
-		this.getPersistenceService().endTenantTransaction();
+	@Test
+	public final void locationDelete3() throws IOException {
+		// The purpose of this is to investigate "java.lang.NoSuchMethodException: com.gadgetworks.codeshelf.model.domain.Aisle.setPickFaceEndPosX(java.lang.Double)"
+		// That we see in locationDelete2. This just flips the larger and smaller aisle file reads to see if that matters.
+		
+		// Also note, if you have this exception as a breakpoint, you will catch it during all facility setup during IronMQ setup. That should be cleaned up.
+		
+		LOGGER.info("DeleteLocation Test . Start by setting up smaller aisle A1 and A2");
+		Facility facility = setUpSimpleSlottedFacility("LD02", SMALLER_FACILITY);
+		setUpGroup1OrdersAndSlotting(facility);
+		
+		LOGGER.info("Reread same aisles file again. Just to see that there is no throw.");
+		readSmallerAisleFile(facility);
+
+		LOGGER.info("And another reread."); 
+		readSmallerAisleFile(facility);
+
+		LOGGER.info("reading larger aisles file that should add bay, tier, and slot");
+		readStandardAisleFile(facility);
+
+		// BIZARRE! comment these two lines. Then there will be a throw in readSmallerAisleFile()
+		LOGGER.info("Reread same aisles file again. Just to see that there is no throw.");
+		readStandardAisleFile(facility);
+
+		// Why does this next one throw on obscure method not found?
+		// Note: this does not make locations inactive yet.
+		LOGGER.info("reading original aisles file that should make the added bay, tier, and slot inactive");
+		readSmallerAisleFile(facility);
+
 	}
 
 }
