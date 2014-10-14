@@ -27,6 +27,7 @@ import com.gadgetworks.codeshelf.model.dao.IDaoListener;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.model.domain.User;
+import com.gadgetworks.codeshelf.ws.ContextLogging;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
 import com.google.common.base.Objects;
 
@@ -94,11 +95,14 @@ public class CsSession implements IDaoListener {
 		messageSender.execute(new Runnable() {
 			@Override
 			public void run() {
+				ContextLogging.set(CsSession.this);
 				try {
 					session.getBasicRemote().sendObject(message);
 					CsSession.this.messageSent();
 				} catch (Exception e) {
 					LOGGER.error("Failed to send message", e);
+				} finally {
+					ContextLogging.clear();
 				}
 			}
 		});
@@ -195,7 +199,7 @@ public class CsSession implements IDaoListener {
 		this.organizationName = organizationName;
 		this.type = sessionType;
 		if (this.type == SessionType.SiteController) {
-			this.pingTimer = MetricsService.addTimer(MetricsGroup.WSS,"ping."+user.getDomainId());
+			this.pingTimer = MetricsService.addTimer(MetricsGroup.WSS,"ping-"+organizationName+"."+user.getDomainId());
 		}
 	}
 

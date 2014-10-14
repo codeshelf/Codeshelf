@@ -9,6 +9,7 @@ import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.SiteController;
 import com.gadgetworks.codeshelf.model.domain.User;
+import com.gadgetworks.codeshelf.ws.ContextLogging;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.LoginRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.LoginResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
@@ -46,10 +47,9 @@ public class LoginCommand extends CommandABC {
 				String password = loginRequest.getPassword();
 				if (user.isPasswordValid(password)) {
 					Organization org = user.getParent();
-					/*
-					session.setOrganizationName(org.getDomainId());
-					session.setUser(user);
-					*/
+					ContextLogging.set(session);
+					LOGGER.info("User "+userId+" of "+org.getDomainId()+" authenticated on session "+session.getSessionId());
+
 					// determine if site controller
 					SessionType sessionType = SessionType.Unknown;
 					SiteController sitecon = user.getSiteController();
