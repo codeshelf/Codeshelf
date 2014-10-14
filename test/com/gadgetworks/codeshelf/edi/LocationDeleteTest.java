@@ -417,8 +417,8 @@ public class LocationDeleteTest extends EdiTestABC {
 		readStandardAisleFile(facility);
 
 		// BIZARRE! comment these two lines. Then there will be a throw in readSmallerAisleFile()
-		LOGGER.info("Reread same aisles file again. Just to see that there is no throw.");
-		readStandardAisleFile(facility);
+		// LOGGER.info("Reread same aisles file again. Just to see that there is no throw.");
+		// readStandardAisleFile(facility);
 
 		// Why does this next one throw on obscure method not found?
 		// Note: this does not make locations inactive yet.

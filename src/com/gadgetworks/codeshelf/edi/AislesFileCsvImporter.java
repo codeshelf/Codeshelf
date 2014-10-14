@@ -189,6 +189,8 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 						// but not if we threw out of last aisle
 						if (lastAisle != null && lastAisle != mLastReadAisle & !needAisleBean) {
 							finalizeTiersInThisAisle(lastAisle);
+							// Kludge!  make sure lastAisle reference is not stale
+							lastAisle = Aisle.DAO.findByDomainId(mFacility, lastAisle.getDomainId());
 							finalizeVerticesThisAisle(lastAisle, mLastReadBayForVertices);
 							// starting an aisle copied mLastReadBay to mLastReadBayForVertices and cleared mLastReadBay
 							// do not do makeUnusedLocationsInactive() here. Done in the aisle bean read if a new aisle
@@ -197,9 +199,12 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 				}
 				// finish the last aisle read, but not if we threw out of last aisle
 				if (!needAisleBean) {
-					finalizeTiersInThisAisle(mLastReadAisle);
-					finalizeVerticesThisAisle(mLastReadAisle, mLastReadBay);
-					makeUnusedLocationsInactive(mLastReadAisle);
+					Aisle theAisleReference = mLastReadAisle;
+					finalizeTiersInThisAisle(theAisleReference);
+					// Kludge! make sure lastAisle reference is not stale
+					theAisleReference = Aisle.DAO.findByDomainId(mFacility, theAisleReference.getDomainId());
+					finalizeVerticesThisAisle(theAisleReference, mLastReadBay);
+					makeUnusedLocationsInactive(theAisleReference);
 				}
 
 				// As an aid to the configurer, create a few LED controllers.
