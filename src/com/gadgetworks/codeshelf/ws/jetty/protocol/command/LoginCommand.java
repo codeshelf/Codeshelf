@@ -3,13 +3,13 @@ package com.gadgetworks.codeshelf.ws.jetty.protocol.command;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.gadgetworks.codeshelf.application.ContextLogging;
 import com.gadgetworks.codeshelf.filter.NetworkChangeListener;
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.SiteController;
 import com.gadgetworks.codeshelf.model.domain.User;
-import com.gadgetworks.codeshelf.ws.ContextLogging;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.LoginRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.LoginResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
@@ -47,31 +47,35 @@ public class LoginCommand extends CommandABC {
 				String password = loginRequest.getPassword();
 				if (user.isPasswordValid(password)) {
 					Organization org = user.getParent();
-					ContextLogging.set(session);
-					LOGGER.info("User "+userId+" of "+org.getDomainId()+" authenticated on session "+session.getSessionId());
+					ContextLogging.setSession(session);
+					try {
+						LOGGER.info("User "+userId+" of "+org.getDomainId()+" authenticated on session "+session.getSessionId());
 
-					// determine if site controller
-					SessionType sessionType = SessionType.Unknown;
-					SiteController sitecon = user.getSiteController();
-					CodeshelfNetwork network = null;
-					if (sitecon  != null) {
-						sessionType = SessionType.SiteController;
-						network = sitecon.getParent();
-						network.getDomainId(); // restore entity
-					} else {
-						sessionType = SessionType.UserApp;
+						// determine if site controller
+						SessionType sessionType = SessionType.Unknown;
+						SiteController sitecon = user.getSiteController();
+						CodeshelfNetwork network = null;
+						if (sitecon  != null) {
+							sessionType = SessionType.SiteController;
+							network = sitecon.getParent();
+							network.getDomainId(); // restore entity
+						} else {
+							sessionType = SessionType.UserApp;
+						}
+						session.authenticated(user,org.getDomainId(),sessionType);
+						LOGGER.info("User "+userId+" of "+org.getDomainId()+" authenticated on session "+session.getSessionId());
+
+						// generate login response
+						response.setStatus(ResponseStatus.Success);
+						response.setOrganization(org);
+						response.setUser(user);
+						response.setNetwork(network); // null if not sitecon
+						
+						// send all network updates to this session for this network 
+						NetworkChangeListener.registerWithSession(session, network, daoProvider);
+					} finally {
+						ContextLogging.clearSession();
 					}
-					session.authenticated(user,org.getDomainId(),sessionType);
-					LOGGER.info("User "+userId+" of "+org.getDomainId()+" authenticated on session "+session.getSessionId());
-
-					// generate login response
-					response.setStatus(ResponseStatus.Success);
-					response.setOrganization(org);
-					response.setUser(user);
-					response.setNetwork(network); // null if not sitecon
-					
-					// send all network updates to this session for this network 
-					NetworkChangeListener.registerWithSession(session, network, daoProvider);
 				} else {
 					LOGGER.warn("Invalid password for user: " + user.getDomainId());
 					response.setStatus(ResponseStatus.Authentication_Failed);
