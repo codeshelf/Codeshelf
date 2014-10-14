@@ -148,4 +148,10 @@ public interface INetworkDevice {
 	 */
 	short getSleepSeconds();
 	
+	// --------------------------------------------------------------------------
+	/**
+	 * Was this device associated?
+	 */
+	public boolean isDeviceAssociated();
+	
 }

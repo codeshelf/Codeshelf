@@ -30,6 +30,7 @@ import com.gadgetworks.flyweight.command.NetAddress;
 import com.gadgetworks.flyweight.command.NetEndpoint;
 import com.gadgetworks.flyweight.command.NetGuid;
 import com.gadgetworks.flyweight.controller.IRadioController;
+import com.gadgetworks.flyweight.controller.NetworkDeviceStateEnum;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -55,6 +56,7 @@ public class CheDeviceLogicTest {
 		
 		CheDeviceLogic cheDeviceLogic = new CheDeviceLogic(UUID.randomUUID(), new NetGuid("0xABC"), mock(ICsDeviceManager.class), radioController);
 		
+		cheDeviceLogic.setDeviceStateEnum(NetworkDeviceStateEnum.STARTED); // Always call this with startDevice, as this says the device is associated.
 		cheDeviceLogic.startDevice();
 		
 		cheDeviceLogic.scanCommandReceived("U%PICKER1");
@@ -93,6 +95,7 @@ public class CheDeviceLogicTest {
 		
 		CheDeviceLogic cheDeviceLogic = new CheDeviceLogic(UUID.randomUUID(), new NetGuid("0xABC"), mock(ICsDeviceManager.class), radioController);
 		
+		cheDeviceLogic.setDeviceStateEnum(NetworkDeviceStateEnum.STARTED); // Always call this with startDevice, as this says the device is associated.
 		cheDeviceLogic.startDevice();
 		
 		cheDeviceLogic.scanCommandReceived("U%PICKER1");
@@ -124,6 +127,7 @@ public class CheDeviceLogicTest {
 		
 		CheDeviceLogic cheDeviceLogic = new CheDeviceLogic(UUID.randomUUID(), new NetGuid("0xABC"), mock(ICsDeviceManager.class), radioController);
 		
+		cheDeviceLogic.setDeviceStateEnum(NetworkDeviceStateEnum.STARTED); // Always call this with startDevice, as this says the device is associated.
 		cheDeviceLogic.startDevice();
 		
 		cheDeviceLogic.scanCommandReceived("U%PICKER1");
@@ -147,6 +151,7 @@ public class CheDeviceLogicTest {
 		
 		CheDeviceLogic cheDeviceLogic = new CheDeviceLogic(UUID.randomUUID(), new NetGuid("0xABC"), mock(ICsDeviceManager.class), radioController);
 		
+		cheDeviceLogic.setDeviceStateEnum(NetworkDeviceStateEnum.STARTED); // Always call this with startDevice, as this says the device is associated.
 		cheDeviceLogic.startDevice();
 		
 		cheDeviceLogic.disconnectedFromServer();
@@ -167,6 +172,7 @@ public class CheDeviceLogicTest {
 		
 		CheDeviceLogic cheDeviceLogic = new CheDeviceLogic(UUID.randomUUID(), new NetGuid("0xABC"), mock(ICsDeviceManager.class), radioController);
 		
+		cheDeviceLogic.setDeviceStateEnum(NetworkDeviceStateEnum.STARTED); // Always call this with startDevice, as this says the device is associated.
 		cheDeviceLogic.startDevice();
 		
 		cheDeviceLogic.disconnectedFromServer();

@@ -21,14 +21,16 @@ import com.gadgetworks.flyweight.command.CommandControlDisplayMessage;
 import com.gadgetworks.flyweight.command.ICommand;
 import com.gadgetworks.flyweight.command.NetAddress;
 import com.gadgetworks.flyweight.command.NetGuid;
+import com.gadgetworks.flyweight.controller.INetworkDevice;
 import com.gadgetworks.flyweight.controller.IRadioController;
+import com.gadgetworks.flyweight.controller.NetworkDeviceStateEnum;
 
 public class CsDeviceManagerTest {
 
 	@Test
 	public void communicatesServerUnattachedToChe() {
 		IRadioController mockRadioController = mock(IRadioController.class);
-		CsDeviceManager attachedDeviceManager = produceAttachedDeviceManager(mockRadioController);
+		CsDeviceManager attachedDeviceManager = produceAttachedDeviceManager(mockRadioController);		
 
 		attachedDeviceManager.disconnected();
 		
@@ -71,6 +73,12 @@ public class CsDeviceManagerTest {
 		network.addChe(che);
 
 		deviceManager.attached(network);
+		
+		// DEV-459  additions. Need at least one associated CHE to see a CHE display message. Critical for above tests of disconnect or unattached.
+		INetworkDevice theCheDevice = deviceManager.getDeviceByGuid(cheGuid);
+		theCheDevice.setDeviceStateEnum(NetworkDeviceStateEnum.STARTED); // Always call this with startDevice, as this says the device is associated.
+		theCheDevice.startDevice();
+
 		return deviceManager;
 	}
 }
