@@ -11,8 +11,8 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.gadgetworks.codeshelf.application.ContextLogging;
 import com.gadgetworks.codeshelf.util.ThreadUtils;
-import com.gadgetworks.codeshelf.ws.ContextLogging;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.KeepAlive;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.PingRequest;
 
@@ -82,7 +82,7 @@ public class ServerWatchdogThread extends Thread {
 		// check status, send keepalive etc on all sessions
 		Collection<CsSession> sessions = this.sessionManager.getSessions();
 		for (CsSession session : sessions) {
-			ContextLogging.set(session);
+			ContextLogging.setSession(session);
 			// send ping periodically to measure latency
 			if (session.getType()==SessionType.SiteController && System.currentTimeMillis()-session.getLastPingSent()>pingInterval) {
 				// send ping
@@ -95,7 +95,7 @@ public class ServerWatchdogThread extends Thread {
 			try {
 				processSession(session);
 			} finally {
-				ContextLogging.clear();
+				ContextLogging.clearSession();
 			}
 			// check if keep alive needs to be sent
 		}

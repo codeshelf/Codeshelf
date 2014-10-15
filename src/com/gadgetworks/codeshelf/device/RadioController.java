@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.Counter;
+import com.gadgetworks.codeshelf.application.ContextLogging;
 import com.gadgetworks.codeshelf.metrics.MetricsGroup;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
 import com.gadgetworks.flyweight.bitfields.NBitInteger;
@@ -349,20 +350,31 @@ public class RadioController implements IRadioController {
 						// Look at the next packet in the queue.
 						IPacket packet = queue.peek();
 						if (packet != null) {
-							// If we've timed out waiting for an ACK then resend the command.
-							if (System.currentTimeMillis() > (packet.getSentTimeMillis() + (ACK_TIMEOUT_MILLIS * packet.getSendCount()))) {
-								if ((packet.getSendCount() < ACK_SEND_RETRY_COUNT)
-										&& ((System.currentTimeMillis() - packet.getCreateTimeMillis() < MAX_PACKET_AGE_MILLIS))) {
-									//sendCommand(command, packet.getNetworkType(), packet.getDstAddr());
-									sendPacket(packet);
-								} else {
-									// If we've exceeded the retry time then remove the packet.
-									// We should probably mark the device lost and clear the queue.
-									packet.setAckState(AckStateEnum.NO_RESPONSE);
-									LOGGER.info("Packet acked NO_RESPONSE: " + packet.toString());
-									queue.remove();
-								}
+							INetworkDevice device = this.mDeviceNetAddrMap.get(packet.getDstAddr());
+							if(device != null) {
+								ContextLogging.setNetGuid(device.getGuid());
 							}
+							try {
+								// If we've timed out waiting for an ACK then resend the command.
+								if (System.currentTimeMillis() > (packet.getSentTimeMillis() + (ACK_TIMEOUT_MILLIS * packet.getSendCount()))) {
+									if ((packet.getSendCount() < ACK_SEND_RETRY_COUNT)
+											&& ((System.currentTimeMillis() - packet.getCreateTimeMillis() < MAX_PACKET_AGE_MILLIS))) {
+										//sendCommand(command, packet.getNetworkType(), packet.getDstAddr());
+										sendPacket(packet);
+									} else {
+										// If we've exceeded the retry time then remove the packet.
+										// We should probably mark the device lost and clear the queue.
+										packet.setAckState(AckStateEnum.NO_RESPONSE);
+										LOGGER.info("Packet acked NO_RESPONSE: " + packet.toString());
+										queue.remove();
+									}
+								}
+								
+							} finally {
+								ContextLogging.clearNetGuid();
+							}
+							
+							
 						}
 					}
 				}
@@ -480,7 +492,6 @@ public class RadioController implements IRadioController {
 	public final void receiveCommand(final ICommand inCommand, final NetAddress inSrcAddr) {
 
 		if (inCommand != null) {
-
 			switch (inCommand.getCommandTypeEnum()) {
 
 				case NETMGMT:
@@ -489,7 +500,8 @@ public class RadioController implements IRadioController {
 
 				case ASSOC:
 					if (mChannelSelected) {
-						processAssocCmd((CommandAssocABC) inCommand, inSrcAddr);
+						CommandAssocABC assocCmd = (CommandAssocABC) inCommand;
+						processAssocCmd(assocCmd, inSrcAddr);
 					}
 					break;
 
@@ -501,6 +513,7 @@ public class RadioController implements IRadioController {
 				default:
 					break;
 			}
+			
 		}
 	}
 
@@ -521,59 +534,68 @@ public class RadioController implements IRadioController {
 	 * @see com.gadgetworks.flyweight.controller.IRadioController#sendCommand(com.gadgetworks.flyweight.command.ICommand, com.gadgetworks.flyweight.command.NetworkId, com.gadgetworks.flyweight.command.NetAddress, boolean)
 	 */
 	public final void sendCommand(ICommand inCommand, NetworkId inNetworkId, NetAddress inDstAddr, boolean inAckRequested) {
-
-		IPacket packet = new Packet(inCommand, inNetworkId, mServerAddress, inDstAddr, inAckRequested);
-		inCommand.setPacket(packet);
-
-		/*
-		 * Certain commands can request the remote to ACK (to guarantee that the command arrived).
-		 * Most packets will not contain a command that requests and ACK, so normally packets will just
-		 * get sent right here.  
-		 * 
-		 * If a packet's command requires an ACK then we perform the following steps:
-		 * 
-		 * - Check that the packet address is something other than a broadcast network ID or network address.  
-		 * 		(We don't support broadcast ACK.)
-		 * - If a packet queue does not exist for the destination then:
-		 * 		1. Create a packet queue for the destination.
-		 * 		2. Put the packet in the queue.
-		 * 		3. Send the packet.
-		 * - If a packet queue does exist for the destination then just put the packet in it.
-		 */
-
-		if ((inAckRequested) && (inNetworkId.getValue() != (IPacket.BROADCAST_NETWORK_ID))
-				&& (inDstAddr.getValue() != (IPacket.BROADCAST_ADDRESS))) {
-
-			// If we're pending an ACK then assign an ACK ID.
-			mAckId++;
-			if (mAckId == 0) {
-				// To the network protocol a ACK ID of zero means we don't want a command ACK.
-				mAckId = 1;
-			}
-			packet.setAckId(mAckId);
-			packet.setAckState(AckStateEnum.PENDING);
-
-			// Add the command to the pending ACKs map, and increment the command ID counter.
-			BlockingQueue<IPacket> queue = mPendingAcksMap.get(inDstAddr);
-			if (queue == null) {
-				queue = new ArrayBlockingQueue<IPacket>(ACK_QUEUE_SIZE);
-				mPendingAcksMap.put(inDstAddr, queue);
-			}
-
-			// If the ACK queue is too full then pause.
-			// (Tho' in practice this starves the system - I raised ACK_QUEUE_SIZE to a crazy-high number until I can figure this out better.)
-			while (queue.size() >= ACK_QUEUE_SIZE) {
-				try {
-					Thread.sleep(1);
-				} catch (InterruptedException e) {
-					LOGGER.error("", e);
-				}
-			}
-			queue.add(packet);
-			LOGGER.info("Queue packet:    " + packet.toString());
-		} else {
-			sendPacket(packet);
+		INetworkDevice device = this.mDeviceNetAddrMap.get(inDstAddr);
+		if(device != null) {
+			ContextLogging.setNetGuid(device.getGuid());
 		}
+		try {
+			IPacket packet = new Packet(inCommand, inNetworkId, mServerAddress, inDstAddr, inAckRequested);
+			inCommand.setPacket(packet);
+
+			/*
+			 * Certain commands can request the remote to ACK (to guarantee that the command arrived).
+			 * Most packets will not contain a command that requests and ACK, so normally packets will just
+			 * get sent right here.  
+			 * 
+			 * If a packet's command requires an ACK then we perform the following steps:
+			 * 
+			 * - Check that the packet address is something other than a broadcast network ID or network address.  
+			 * 		(We don't support broadcast ACK.)
+			 * - If a packet queue does not exist for the destination then:
+			 * 		1. Create a packet queue for the destination.
+			 * 		2. Put the packet in the queue.
+			 * 		3. Send the packet.
+			 * - If a packet queue does exist for the destination then just put the packet in it.
+			 */
+
+			if ((inAckRequested) && (inNetworkId.getValue() != (IPacket.BROADCAST_NETWORK_ID))
+					&& (inDstAddr.getValue() != (IPacket.BROADCAST_ADDRESS))) {
+
+				// If we're pending an ACK then assign an ACK ID.
+				mAckId++;
+				if (mAckId == 0) {
+					// To the network protocol a ACK ID of zero means we don't want a command ACK.
+					mAckId = 1;
+				}
+				packet.setAckId(mAckId);
+				packet.setAckState(AckStateEnum.PENDING);
+
+				// Add the command to the pending ACKs map, and increment the command ID counter.
+				BlockingQueue<IPacket> queue = mPendingAcksMap.get(inDstAddr);
+				if (queue == null) {
+					queue = new ArrayBlockingQueue<IPacket>(ACK_QUEUE_SIZE);
+					mPendingAcksMap.put(inDstAddr, queue);
+				}
+
+				// If the ACK queue is too full then pause.
+				// (Tho' in practice this starves the system - I raised ACK_QUEUE_SIZE to a crazy-high number until I can figure this out better.)
+				while (queue.size() >= ACK_QUEUE_SIZE) {
+					try {
+						Thread.sleep(1);
+					} catch (InterruptedException e) {
+						LOGGER.error("", e);
+					}
+				}
+				queue.add(packet);
+				LOGGER.info("Queue packet:    " + packet.toString());
+			} else {
+				sendPacket(packet);
+			}
+			
+		} finally {
+			ContextLogging.clearNetGuid();
+		}
+
 	}
 
 	/* --------------------------------------------------------------------------
@@ -734,26 +756,31 @@ public class RadioController implements IRadioController {
 	private void processAssocCmd(CommandAssocABC inCommand, NetAddress inSrcAddr) {
 
 		// Figure out what kind of associate sub-command we have.
+		ContextLogging.setNetGuid(inCommand.getGUID());
+		try {
+			switch (inCommand.getExtendedCommandID().getValue()) {
+				case CommandAssocABC.ASSOC_REQ_COMMAND:
+					processAssocReqCommand((CommandAssocReq) inCommand, inSrcAddr);
+					break;
 
-		switch (inCommand.getExtendedCommandID().getValue()) {
-			case CommandAssocABC.ASSOC_REQ_COMMAND:
-				processAssocReqCommand((CommandAssocReq) inCommand, inSrcAddr);
-				break;
+				case CommandAssocABC.ASSOC_RESP_COMMAND:
+					processAssocRespCommand((CommandAssocResp) inCommand, inSrcAddr);
+					break;
 
-			case CommandAssocABC.ASSOC_RESP_COMMAND:
-				processAssocRespCommand((CommandAssocResp) inCommand, inSrcAddr);
-				break;
+				case CommandAssocABC.ASSOC_CHECK_COMMAND:
+					processAssocCheckCommand((CommandAssocCheck) inCommand, inSrcAddr);
+					break;
 
-			case CommandAssocABC.ASSOC_CHECK_COMMAND:
-				processAssocCheckCommand((CommandAssocCheck) inCommand, inSrcAddr);
-				break;
+				case CommandAssocABC.ASSOC_ACK_COMMAND:
+					processAssocAckCommand((CommandAssocAck) inCommand, inSrcAddr);
+					break;
 
-			case CommandAssocABC.ASSOC_ACK_COMMAND:
-				processAssocAckCommand((CommandAssocAck) inCommand, inSrcAddr);
-				break;
-
-			default:
+				default:
+			}
+		} finally {
+			ContextLogging.clearNetGuid();
 		}
+
 	}
 
 	// --------------------------------------------------------------------------
@@ -784,34 +811,40 @@ public class RadioController implements IRadioController {
 			INetworkDevice foundDevice = mDeviceGuidMap.get(new NetGuid("0x" + uid));
 
 			if (foundDevice != null) {
-				foundDevice.setDeviceStateEnum(NetworkDeviceStateEnum.SETUP);
+				ContextLogging.setNetGuid(foundDevice.getGuid());
+				try {
+					
+					foundDevice.setDeviceStateEnum(NetworkDeviceStateEnum.SETUP);
 
-				LOGGER.info("----------------------------------------------------");
-				LOGGER.info("Device associated: " + foundDevice.getGuid().getHexStringNoPrefix());
-				if ((inCommand.getSystemStatus() & 0x02) > 0) {
-					LOGGER.info(" Status: LVD");
-				}
-				if ((inCommand.getSystemStatus() & 0x04) > 0) {
-					LOGGER.info(" Status: ICG");
-				}
-				if ((inCommand.getSystemStatus() & 0x10) > 0) {
-					LOGGER.info(" Status: ILOP");
-				}
-				if ((inCommand.getSystemStatus() & 0x20) > 0) {
-					LOGGER.info(" Status: COP");
-				}
-				if ((inCommand.getSystemStatus() & 0x40) > 0) {
-					LOGGER.info(" Status: PIN");
-				}
-				if ((inCommand.getSystemStatus() & 0x80) > 0) {
-					LOGGER.info(" Status: POR");
-				}
-				LOGGER.info("----------------------------------------------------");
+					//LOGGER.info("----------------------------------------------------");
+					LOGGER.info("Device associated: " + foundDevice.getGuid().getHexStringNoPrefix());
+					if ((inCommand.getSystemStatus() & 0x02) > 0) {
+						LOGGER.info(" Status: LVD");
+					}
+					if ((inCommand.getSystemStatus() & 0x04) > 0) {
+						LOGGER.info(" Status: ICG");
+					}
+					if ((inCommand.getSystemStatus() & 0x10) > 0) {
+						LOGGER.info(" Status: ILOP");
+					}
+					if ((inCommand.getSystemStatus() & 0x20) > 0) {
+						LOGGER.info(" Status: COP");
+					}
+					if ((inCommand.getSystemStatus() & 0x40) > 0) {
+						LOGGER.info(" Status: PIN");
+					}
+					if ((inCommand.getSystemStatus() & 0x80) > 0) {
+						LOGGER.info(" Status: POR");
+					}
+					//LOGGER.info("----------------------------------------------------");
 
-				// Create and send an assign command to the remote that just woke up.
-				CommandAssocResp assignCmd = new CommandAssocResp(uid, mNetworkId, foundDevice.getAddress(), foundDevice.getSleepSeconds());
-				this.sendCommand(assignCmd, mBroadcastNetworkId, mBroadcastAddress, false);
-				foundDevice.setDeviceStateEnum(NetworkDeviceStateEnum.ASSIGN_SENT);
+					// Create and send an assign command to the remote that just woke up.
+					CommandAssocResp assignCmd = new CommandAssocResp(uid, mNetworkId, foundDevice.getAddress(), foundDevice.getSleepSeconds());
+					this.sendCommand(assignCmd, mBroadcastNetworkId, mBroadcastAddress, false);
+					foundDevice.setDeviceStateEnum(NetworkDeviceStateEnum.ASSIGN_SENT);
+				} finally {
+					ContextLogging.clearNetGuid();
+				}
 			}
 		}
 	}
@@ -836,40 +869,45 @@ public class RadioController implements IRadioController {
 		INetworkDevice foundDevice = mDeviceGuidMap.get(new NetGuid("0x" + uid));
 
 		if (foundDevice != null) {
-			CommandAssocAck ackCmd;
-			LOGGER.info("Assoc check: " + foundDevice.toString());
+			ContextLogging.setNetGuid(foundDevice.getGuid());
+			try {
+				CommandAssocAck ackCmd;
+				LOGGER.info("Assoc check: " + foundDevice.toString());
 
-			short level = inCommand.getBatteryLevel();
-			if (foundDevice.getLastBatteryLevel() != level) {
-				foundDevice.setLastBatteryLevel(level);
+				short level = inCommand.getBatteryLevel();
+				if (foundDevice.getLastBatteryLevel() != level) {
+					foundDevice.setLastBatteryLevel(level);
+				}
+
+				byte status = CommandAssocAck.IS_ASSOCIATED;
+
+				// If the found device isn't in the STARTED state then it's not associated with us.
+				if (foundDevice.getDeviceStateEnum() == null) {
+					status = CommandAssocAck.IS_NOT_ASSOCIATED;
+					LOGGER.info("AssocCheck - NOT ASSOC: state was: " + foundDevice.getDeviceStateEnum());
+				} else if (foundDevice.getDeviceStateEnum().equals(NetworkDeviceStateEnum.ASSIGN_SENT)) {
+					networkDeviceBecameActive(foundDevice);
+				} else if (!foundDevice.getDeviceStateEnum().equals(NetworkDeviceStateEnum.STARTED)) {
+					status = CommandAssocAck.IS_NOT_ASSOCIATED;
+					LOGGER.info("AssocCheck - NOT ASSOC: state was: " + foundDevice.getDeviceStateEnum());
+				}
+
+				// If the found device has the wrong GUID then we have the wrong device.
+				// (This could be two matching network IDs on the same channel.  
+				// This could be a serious flaw in the network protocol.)
+				if (!foundDevice.getGuid().toString().equalsIgnoreCase("0x" + uid)) {
+					LOGGER.info("AssocCheck - NOT ASSOC: GUID mismatch: " + foundDevice.getGuid() + " and " + uid);
+					status = CommandAssocAck.IS_NOT_ASSOCIATED;
+				}
+
+				// Create and send an ack command to the remote that we think is in the running state.
+				ackCmd = new CommandAssocAck(uid, new NBitInteger(CommandAssocAck.ASSOCIATE_STATE_BITS, status));
+
+				// Send the command.
+				sendCommand(ackCmd, inSrcAddr, false);
+			} finally {
+				ContextLogging.clearNetGuid();
 			}
-
-			byte status = CommandAssocAck.IS_ASSOCIATED;
-
-			// If the found device isn't in the STARTED state then it's not associated with us.
-			if (foundDevice.getDeviceStateEnum() == null) {
-				status = CommandAssocAck.IS_NOT_ASSOCIATED;
-				LOGGER.info("AssocCheck - NOT ASSOC: state was: " + foundDevice.getDeviceStateEnum());
-			} else if (foundDevice.getDeviceStateEnum().equals(NetworkDeviceStateEnum.ASSIGN_SENT)) {
-				networkDeviceBecameActive(foundDevice);
-			} else if (!foundDevice.getDeviceStateEnum().equals(NetworkDeviceStateEnum.STARTED)) {
-				status = CommandAssocAck.IS_NOT_ASSOCIATED;
-				LOGGER.info("AssocCheck - NOT ASSOC: state was: " + foundDevice.getDeviceStateEnum());
-			}
-
-			// If the found device has the wrong GUID then we have the wrong device.
-			// (This could be two matching network IDs on the same channel.  
-			// This could be a serious flaw in the network protocol.)
-			if (!foundDevice.getGuid().toString().equalsIgnoreCase("0x" + uid)) {
-				LOGGER.info("AssocCheck - NOT ASSOC: GUID mismatch: " + foundDevice.getGuid() + " and " + uid);
-				status = CommandAssocAck.IS_NOT_ASSOCIATED;
-			}
-
-			// Create and send an ack command to the remote that we think is in the running state.
-			ackCmd = new CommandAssocAck(uid, new NBitInteger(CommandAssocAck.ASSOCIATE_STATE_BITS, status));
-
-			// Send the command.
-			sendCommand(ackCmd, inSrcAddr, false);
 		}
 	}
 
@@ -894,20 +932,7 @@ public class RadioController implements IRadioController {
 					try {
 						if (gatewayInterface.isStarted()) {
 							IPacket packet = gatewayInterface.receivePacket(mNetworkId);
-							if (packet != null) {
-								if (packet.getPacketType() == IPacket.ACK_PACKET) {
-									LOGGER.info("Packet remote ACK req RECEIVED: " + packet.toString());
-									processAckPacket(packet);
-								} else {
-									// If the inbound packet had an ACK ID then respond with an ACK ID.
-									byte ackId = packet.getAckId();
-									if (ackId != IPacket.EMPTY_ACK_ID) {
-										respondToAck(ackId, packet.getNetworkId(), packet.getSrcAddr());
-									}
-									receiveCommand(packet.getCommand(), packet.getSrcAddr());
-								}
-								this.packetsSentCounter.inc();
-							}
+							receivePacket(packet);			
 						} else {
 							try {
 								Thread.sleep(CTRL_START_DELAY_MILLIS);
@@ -925,6 +950,33 @@ public class RadioController implements IRadioController {
 		gwThread.setPriority(RECEIVER_THREAD_PRIORITY);
 		gwThread.start();
 	}
+	
+	private void receivePacket(IPacket packet) {
+		if (packet != null) {
+			INetworkDevice device = 
+					this.mDeviceNetAddrMap.get(packet.getSrcAddr());
+			if(device!=null) {
+				ContextLogging.setNetGuid(device.getGuid());
+			}
+			
+			try {				
+				if (packet.getPacketType() == IPacket.ACK_PACKET) {
+					LOGGER.info("Packet remote ACK req RECEIVED: " + packet.toString());
+					processAckPacket(packet);
+				} else {
+					// If the inbound packet had an ACK ID then respond with an ACK ID.
+					byte ackId = packet.getAckId();
+					if (ackId != IPacket.EMPTY_ACK_ID) {
+						respondToAck(ackId, packet.getNetworkId(), packet.getSrcAddr());
+					}
+					receiveCommand(packet.getCommand(), packet.getSrcAddr());
+				}
+				this.packetsSentCounter.inc();
+			} finally {
+				ContextLogging.clearNetGuid();
+			}
+		}
+	}
 
 	// --------------------------------------------------------------------------
 	/**
@@ -938,20 +990,26 @@ public class RadioController implements IRadioController {
 			LOGGER.warn("Unable to respond to ack: Device with address "+inSrcAddr+" not found");
 			return;
 		}
-		if (device.isAckIdNew(inAckId)) {
+		ContextLogging.setNetGuid(device.getGuid());
+		try {
+			if (device.isAckIdNew(inAckId)) {
 
-			LOGGER.info("Remote ack request RECEIVED: ack: " + inAckId + " net: " + inNetId + " src: " + inSrcAddr);
+				LOGGER.info("Remote ack request RECEIVED: ack: " + inAckId + " net: " + inNetId + " src: " + inSrcAddr);
 
-			device.setLastAckId(inAckId);
-			CommandAssocAck ackCmd = new CommandAssocAck("00000000",
-				new NBitInteger(CommandAssocAck.ASSOCIATE_STATE_BITS, (byte) 0));
+				device.setLastAckId(inAckId);
+				CommandAssocAck ackCmd = new CommandAssocAck("00000000",
+					new NBitInteger(CommandAssocAck.ASSOCIATE_STATE_BITS, (byte) 0));
 
-			sendCommand(ackCmd, inNetId, inSrcAddr, false);
-			IPacket ackPacket = new Packet(ackCmd, inNetId, mServerAddress, inSrcAddr, false);
-			ackCmd.setPacket(ackPacket);
-			ackPacket.setAckId(inAckId);
-			sendPacket(ackPacket);
+				sendCommand(ackCmd, inNetId, inSrcAddr, false);
+				IPacket ackPacket = new Packet(ackCmd, inNetId, mServerAddress, inSrcAddr, false);
+				ackCmd.setPacket(ackPacket);
+				ackPacket.setAckId(inAckId);
+				sendPacket(ackPacket);
+			}
+		} finally {
+			ContextLogging.clearNetGuid();
 		}
+
 
 	}
 
@@ -1036,8 +1094,14 @@ public class RadioController implements IRadioController {
 	 *  @param inSession	The device that just became active.
 	 */
 	private void networkDeviceBecameActive(INetworkDevice inNetworkDevice) {
-		inNetworkDevice.setDeviceStateEnum(NetworkDeviceStateEnum.STARTED);
-		inNetworkDevice.startDevice();
+		ContextLogging.setNetGuid(inNetworkDevice.getGuid());
+		try {
+			inNetworkDevice.setDeviceStateEnum(NetworkDeviceStateEnum.STARTED);
+			inNetworkDevice.startDevice();
+		} finally {
+			ContextLogging.clearNetGuid();
+		}
+		
 	}
 
 	// --------------------------------------------------------------------------
@@ -1050,20 +1114,24 @@ public class RadioController implements IRadioController {
 
 		INetworkDevice device = mDeviceNetAddrMap.get(inSrcAddr);
 		if (device != null) {
+			ContextLogging.setNetGuid(device.getGuid());
+			try {
+				switch (inCommand.getExtendedCommandID().getValue()) {
+					case CommandControlABC.SCAN:
+						CommandControlScan scanCommand = (CommandControlScan) inCommand;
+						device.scanCommandReceived(scanCommand.getCommandString());
+						break;
 
-			switch (inCommand.getExtendedCommandID().getValue()) {
-				case CommandControlABC.SCAN:
-					CommandControlScan scanCommand = (CommandControlScan) inCommand;
-					device.scanCommandReceived(scanCommand.getCommandString());
-					break;
+					case CommandControlABC.BUTTON:
+						CommandControlButton buttonCommand = (CommandControlButton) inCommand;
+						device.buttonCommandReceived(buttonCommand);
+						break;
 
-				case CommandControlABC.BUTTON:
-					CommandControlButton buttonCommand = (CommandControlButton) inCommand;
-					device.buttonCommandReceived(buttonCommand);
-					break;
-
-				default:
-					break;
+					default:
+						break;
+				}
+			} finally {
+				ContextLogging.clearNetGuid();
 			}
 		}
 
@@ -1075,14 +1143,20 @@ public class RadioController implements IRadioController {
 	 */
 	@Override
 	public final void addNetworkDevice(final INetworkDevice inNetworkDevice) {
+		ContextLogging.setNetGuid(inNetworkDevice.getGuid());
+		try {
+			// If the device has no address then assign one.
+			if ((inNetworkDevice.getAddress() == null) || (inNetworkDevice.getAddress().equals(mServerAddress))) {
+				inNetworkDevice.setAddress(new NetAddress(mNextAddress++));
+			}
 
-		// If the device has no address then assign one.
-		if ((inNetworkDevice.getAddress() == null) || (inNetworkDevice.getAddress().equals(mServerAddress))) {
-			inNetworkDevice.setAddress(new NetAddress(mNextAddress++));
+			mDeviceGuidMap.put(inNetworkDevice.getGuid(), inNetworkDevice);
+			mDeviceNetAddrMap.put(inNetworkDevice.getAddress(), inNetworkDevice);
+			
+		} finally {
+			ContextLogging.clearNetGuid();
 		}
 
-		mDeviceGuidMap.put(inNetworkDevice.getGuid(), inNetworkDevice);
-		mDeviceNetAddrMap.put(inNetworkDevice.getAddress(), inNetworkDevice);
 	}
 
 	// --------------------------------------------------------------------------
@@ -1091,8 +1165,13 @@ public class RadioController implements IRadioController {
 	 */
 	@Override
 	public final void removeNetworkDevice(INetworkDevice inNetworkDevice) {
-		mDeviceGuidMap.remove(inNetworkDevice.getGuid());
-		mDeviceNetAddrMap.remove(inNetworkDevice.getAddress());
+		ContextLogging.setNetGuid(inNetworkDevice.getGuid());
+		try {
+			mDeviceGuidMap.remove(inNetworkDevice.getGuid());
+			mDeviceNetAddrMap.remove(inNetworkDevice.getAddress());
+		} finally {
+			ContextLogging.clearNetGuid();
+		}
 	}
 
 	// --------------------------------------------------------------------------

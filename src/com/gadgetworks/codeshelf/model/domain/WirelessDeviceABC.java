@@ -16,7 +16,6 @@ import javax.persistence.Transient;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,6 +24,7 @@ import com.avaje.ebean.annotation.CacheStrategy;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.gadgetworks.codeshelf.application.ContextLogging;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
@@ -47,7 +47,6 @@ import com.google.inject.Singleton;
 @Entity
 @CacheStrategy(useBeanCache = true)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-@ToString(doNotUseGetters = true, callSuper = true)
 public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNetwork> {
 
 	public static final int						MAC_ADDR_BYTES		= 8;
@@ -177,7 +176,10 @@ public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNet
 	}
 
 	public final void setNetworkDeviceState(NetworkDeviceStateEnum inState) {
+		ContextLogging.setNetGuid(this.getDeviceNetGuid());
 		LOGGER.debug(Arrays.toString(deviceGuid) + " state changed: " + networkDeviceStatus + "->" + inState);
+		ContextLogging.clearNetGuid();
+
 		networkDeviceStatus = inState;
 	}
 
@@ -209,5 +211,10 @@ public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNet
 		//		mDeviceType = inDeviceType;
 	}
 	 */
+	public String toString() {
+		// used to set domainId from changeControllerId(), so don't reference domainId unless that is changed
+		return getDefaultDomainIdPrefix()+"-"+this.getDeviceNetGuid().getHexStringNoPrefix();
+	}
+
 
 }
