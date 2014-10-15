@@ -113,13 +113,22 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 			radioController.setNetworkId(new NetworkId((byte) 1)); // for test
 
 		}
-	}
-	
+	}	
+
 	public final List<AisleDeviceLogic> getAisleControllers() {
 		ArrayList<AisleDeviceLogic> aList = new ArrayList<AisleDeviceLogic>();
 		for (INetworkDevice theDevice :mDeviceMap.values()) {
 			if (theDevice instanceof AisleDeviceLogic)
 				aList.add((AisleDeviceLogic) theDevice);			
+		}
+		return aList;
+	}
+
+	public final List<CheDeviceLogic> getCheControllers() {
+		ArrayList<CheDeviceLogic> aList = new ArrayList<CheDeviceLogic>();
+		for (INetworkDevice theDevice :mDeviceMap.values()) {
+			if (theDevice instanceof CheDeviceLogic)
+				aList.add((CheDeviceLogic) theDevice);			
 		}
 		return aList;
 	}
