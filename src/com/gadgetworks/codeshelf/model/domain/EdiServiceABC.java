@@ -122,10 +122,6 @@ public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implem
 
 	}
 
-	public final List<? extends IDomainObject> getChildren() {
-		return null; //getEdiDocuments();
-	}
-
 	public final String getDefaultDomainIdPrefix() {
 		return "EDI";
 	}

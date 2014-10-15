@@ -104,6 +104,10 @@ public class IronMqService extends EdiServiceABC {
 
 	public static class Credentials {
 
+		public Credentials() {
+			this("", "");
+		}
+		
 		public Credentials(final String inProjectId, final String inToken) {
 			mProjectId = inProjectId;
 			mToken = inToken;

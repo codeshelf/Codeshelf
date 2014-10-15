@@ -89,10 +89,6 @@ public class UomMaster extends DomainObjectTreeABC<Facility> {
 		parent = inParent;
 	}
 
-	public final List<? extends IDomainObject> getChildren() {
-		return new ArrayList<IDomainObject>();
-	}
-
 	public final String getUomMasterId() {
 		return getDomainId();
 	}

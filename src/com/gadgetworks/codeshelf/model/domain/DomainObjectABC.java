@@ -26,6 +26,7 @@ import lombok.NonNull;
 import lombok.Setter;
 import lombok.ToString;
 
+import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.lang.WordUtils;
 import org.atteo.classindex.IndexSubclasses;
 import org.slf4j.Logger;
@@ -201,8 +202,7 @@ public abstract class DomainObjectABC implements IDomainObject {
 	 */
 	public final void setFieldValueByName(final String inFieldName, final Object inFieldValue) {
 		try {
-			Method method = getClass().getDeclaredMethod("set" + WordUtils.capitalize(inFieldName), inFieldValue.getClass());
-			method.invoke(this, inFieldValue);
+			PropertyUtils.setProperty(this, inFieldName, inFieldValue);
 		} catch (InvocationTargetException | NoSuchMethodException | SecurityException | IllegalArgumentException
 				| IllegalAccessException e) {
 			LOGGER.error("Caught exception invoking setter by name", e);

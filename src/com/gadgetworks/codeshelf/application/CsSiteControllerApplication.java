@@ -9,6 +9,7 @@ package com.gadgetworks.codeshelf.application;
 import lombok.Getter;
 
 import com.gadgetworks.codeshelf.device.ICsDeviceManager;
+import com.gadgetworks.codeshelf.metrics.AssociatedRadioHealthCheck;
 import com.gadgetworks.codeshelf.metrics.ConnectedToServerHealthCheck;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
 import com.gadgetworks.codeshelf.metrics.RadioOnHealthCheck;
@@ -53,6 +54,9 @@ public final class CsSiteControllerApplication extends ApplicationABC {
 		
 		ConnectedToServerHealthCheck serverConnectionCheck = new ConnectedToServerHealthCheck(this.deviceManager);
 		MetricsService.registerHealthCheck(serverConnectionCheck);
+		
+		AssociatedRadioHealthCheck associateCheck = new AssociatedRadioHealthCheck(this.deviceManager);
+		MetricsService.registerHealthCheck(associateCheck);
 	}
 
 	// --------------------------------------------------------------------------

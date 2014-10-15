@@ -13,8 +13,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +33,7 @@ import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Bay;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
+import com.gadgetworks.codeshelf.model.domain.ILocation;
 import com.gadgetworks.codeshelf.model.domain.ISubLocation;
 import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.Path;
@@ -49,38 +53,39 @@ import com.google.inject.Singleton;
 @Singleton
 public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 
-	private static double		CM_PER_M		= 100D;
-	private static int			maxSlotForTier	= 30;
+	private static double			CM_PER_M		= 100D;
+	private static int				maxSlotForTier	= 30;
 
-	private static final Logger	LOGGER			= LoggerFactory.getLogger(EdiProcessor.class);
+	private static final Logger		LOGGER			= LoggerFactory.getLogger(EdiProcessor.class);
 
-	private ITypedDao<Aisle>	mAisleDao;
-	private ITypedDao<Bay>		mBayDao;
-	private ITypedDao<Tier>		mTierDao;
-	private ITypedDao<Slot>		mSlotDao;
+	private ITypedDao<Aisle>		mAisleDao;
+	private ITypedDao<Bay>			mBayDao;
+	private ITypedDao<Tier>			mTierDao;
+	private ITypedDao<Slot>			mSlotDao;
 
-	private Facility			mFacility;
+	private Facility				mFacility;
 	// keep track of the file read. This instead of a state machine and other structures
-	private Aisle				mLastReadAisle;
-	private Bay					mLastReadBay;
-	private Bay					mLastReadBayForVertices;
+	private Aisle					mLastReadAisle;
+	private Bay						mLastReadBay;
+	private Bay						mLastReadBayForVertices;
 	@SuppressWarnings("unused")
-	private Tier				mLastReadTier;													// actually, this is used, suppressing bogus warning
-	private int					mBayCountThisAisle;
-	private int					mTierCountThisBay;
+	private Tier					mLastReadTier;
+	private int						mBayCountThisAisle;
+	private int						mTierCountThisBay;
 
 	// values from the file that will be in the bean
-	private String				mControllerLed;
-	private Short				mLedsPerTier;
-	private Integer				mBayLengthCm;
-	private Integer				mTierFloorCm;
-	private boolean				mIsOrientationX;
-	private Integer				mDepthCm;
+	private String					mControllerLed;
+	private Short					mLedsPerTier;
+	private Integer					mBayLengthCm;
+	private Integer					mTierFloorCm;
+	private boolean					mIsOrientationX;
+	private Integer					mDepthCm;
 
 	// short term memory
-	private String				mLastControllerLed;
+	private String					mLastControllerLed;
 
-	private List<Tier>			mTiersThisAisle;
+	private List<Tier>				mTiersThisAisle;
+	private Map<UUID, ILocation>	mAisleLocationsMapThatMayBecomeInactive;
 
 	private String getAppropriateControllerLed() {
 		if (mLastControllerLed.isEmpty())
@@ -116,6 +121,7 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 		mIsOrientationX = true;
 
 		mTiersThisAisle = new ArrayList<Tier>();
+		mAisleLocationsMapThatMayBecomeInactive = new HashMap<UUID, ILocation>();
 
 		mLastControllerLed = "";
 		mControllerLed = "";
@@ -183,15 +189,22 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 						// but not if we threw out of last aisle
 						if (lastAisle != null && lastAisle != mLastReadAisle & !needAisleBean) {
 							finalizeTiersInThisAisle(lastAisle);
+							// Kludge!  make sure lastAisle reference is not stale
+							lastAisle = Aisle.DAO.findByDomainId(mFacility, lastAisle.getDomainId());
 							finalizeVerticesThisAisle(lastAisle, mLastReadBayForVertices);
 							// starting an aisle copied mLastReadBay to mLastReadBayForVertices and cleared mLastReadBay
+							// do not do makeUnusedLocationsInactive() here. Done in the aisle bean read if a new aisle
 						}
 					}
 				}
 				// finish the last aisle read, but not if we threw out of last aisle
 				if (!needAisleBean) {
-					finalizeTiersInThisAisle(mLastReadAisle);
-					finalizeVerticesThisAisle(mLastReadAisle, mLastReadBay);
+					Aisle theAisleReference = mLastReadAisle;
+					finalizeTiersInThisAisle(theAisleReference);
+					// Kludge! make sure lastAisle reference is not stale
+					theAisleReference = Aisle.DAO.findByDomainId(mFacility, theAisleReference.getDomainId());
+					finalizeVerticesThisAisle(theAisleReference, mLastReadBay);
+					makeUnusedLocationsInactive(theAisleReference);
 				}
 
 				// As an aid to the configurer, create a few LED controllers.
@@ -340,6 +353,8 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 		// Any remainder slot will essentially inGuardHigh += 1 until on slots until the remainder runs out.
 
 		final int kMaxLedsPerSlot = 4;
+		int guardLow = inGuardLow;
+		int guardHigh = inGuardHigh;
 
 		// First get our list of slot. Fighting through the cast.
 		List<Slot> slotList = new ArrayList<Slot>();
@@ -364,16 +379,27 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 		short slotCount = (short) (slotList.size());
 		if (slotCount == 0)
 			return;
-		short ledsPerSlot = (short) (inLedCountThisTier / slotCount);
+
+		// Special case for lasers. One "LED" per slot.  Use it below
+		boolean onePerSlotCase = (slotCount == inLedCountThisTier);
+
+		short ledsAvailablePerSlot = (short) (inLedCountThisTier / slotCount);
 		short remainderLeds = (short) (inLedCountThisTier % slotCount);
+
+		if (onePerSlotCase || ledsAvailablePerSlot < 4) {
+			guardLow = 0;
+			guardHigh = 0;
+		}
 
 		// Guard concept might be wrong in this algorithm. Treats it slot by slot, leaving gap between slots (end of last and start of next).
 		// There may also be a need to adjust leds to skip at the start and end of the tier. That is, keep the internal guards, but skip or decrease the ends.
-		int guardTotal = inGuardLow + inGuardHigh;
+		int guardTotal = guardLow + guardHigh;
 		if (guardTotal == 0)
 			guardTotal = 1;
 		// The extra -1 matters only when inLedCountThisTier is divisible by (slotCount * (inGuardLow + inGuardHigh))
-		short ledsToLightPerSlot = (short) ((inLedCountThisTier - 1 - (slotCount * guardTotal)) / slotCount);
+		short ledsToLightPerSlot = 1;
+		if (!onePerSlotCase)
+			ledsToLightPerSlot = (short) ((inLedCountThisTier - 1 - (slotCount * guardTotal)) / slotCount);
 
 		short lastSlotEndingLed = (short) (inTier.getFirstLedNumAlongPath() - 1);
 		short slotIndex = 0;
@@ -391,25 +417,34 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 
 			slotIndex += 1;
 			short thisSlotStartLed = (short) (lastSlotEndingLed + 1);
-			short thisSlotEndLed = (short) (thisSlotStartLed + ledsPerSlot - 1);
+			short thisSlotEndLed = (short) (thisSlotStartLed + ledsAvailablePerSlot - 1);
 			if (slotIndex < remainderLeds)
 				thisSlotEndLed += 1; // distribute the unevenness among the first few slots
 
-			short firstLitLed = (short) (thisSlotStartLed + inGuardLow);
-			short lastLitLed = (short) (firstLitLed + ledsToLightPerSlot);
+			short firstLitLed = (short) (thisSlotStartLed + guardLow);
+			short lastLitLed = firstLitLed;
+			if (!onePerSlotCase)
+				lastLitLed = (short) (firstLitLed + ledsToLightPerSlot);
 			if (inLedCountThisTier == (short) 0) {
 				// Common case-pick: no leds installed, so just set zeros.
 				firstLitLed = 0;
 				lastLitLed = 0;
 				thisSlotEndLed = 0;
 			}
-			// A correction for v4.1, mostly for good egs. Do not set more than 4 leds.
+			// A correction for v4.1, mostly for good eggs. Do not set more than 4 leds.
 			// And if <= halfway through the slot, take it out of the upper. else the lower.
 			if (lastLitLed - firstLitLed > kMaxLedsPerSlot) {
 				if (slotIndex > slotCount / 2)
 					firstLitLed = (short) (lastLitLed - kMaxLedsPerSlot + 1);
 				else
 					lastLitLed = (short) (firstLitLed + kMaxLedsPerSlot - 1);
+			}
+			// finally. Algorithm flaw for sparse leds (like 8 leds for 5 positions) might lead to last < first. If so, just log and switch
+			if (firstLitLed > lastLitLed) {
+				short temp = firstLitLed;
+				firstLitLed = lastLitLed;
+				lastLitLed = temp;
+				LOGGER.warn("Algorithm error in setSlotLeds");
 			}
 
 			thisSlot.setFirstLedNumAlongPath((short) (firstLitLed));
@@ -578,6 +613,24 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * If the aisle got smaller (fewer bays, tiers, or slots) then the missing ones will be in mAisleLocationsMapThatMayBecomeInactive.
+	 * @param inAisle
+	 */
+	private void makeUnusedLocationsInactive(final Aisle inAisle) {
+		Integer howManyFewerLocations = mAisleLocationsMapThatMayBecomeInactive.size();
+		if (howManyFewerLocations > 0) {
+			LOGGER.info("Aisle " + inAisle.getDomainId() + " has " + howManyFewerLocations
+					+ " fewer locations that will become inactive.");
+			/*
+			for (ILocation location : mAisleLocationsMapThatMayBecomeInactive.values()) {
+				LOGGER.info(location.getNominalLocationId());
+			}
+			*/
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
 	 * @param inAisle
 	 */
 	private void finalizeTiersInThisAisle(final Aisle inAisle) {
@@ -740,6 +793,12 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 				LOGGER.info("Activating previously inactivated slot: " + slotId);
 				slot.setActive(true);
 			}
+
+			UUID key = slot.getPersistentId();
+			if (key != null)
+				mAisleLocationsMapThatMayBecomeInactive.remove(key);
+			else
+				LOGGER.error("reread slot should have persistentID");
 		}
 
 		try {
@@ -800,6 +859,11 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 				tier.setActive(true);
 			}
 
+			UUID key = tier.getPersistentId();
+			if (key != null)
+				mAisleLocationsMapThatMayBecomeInactive.remove(key);
+			else
+				LOGGER.error("reread tier should have persistentID");
 		}
 
 		try {
@@ -883,6 +947,12 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 				LOGGER.info("Activating previously inactivated bay: " + inBayId);
 				bay.setActive(true);
 			}
+
+			UUID key = bay.getPersistentId();
+			if (key != null)
+				mAisleLocationsMapThatMayBecomeInactive.remove(key);
+			else
+				LOGGER.error("reread bay should have persistentID");
 		}
 		try {
 			// transaction?
@@ -927,6 +997,14 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 			throw new EdiFileReadException("Incorrect aisle name: " + inAisleId + " Should be similar to A14");
 		}
 
+		// starting a new aisle. Let's clean up (inactives) for previous aisle, if any
+		if (mLastReadAisle != null)
+			makeUnusedLocationsInactive(mLastReadAisle);
+
+		mAisleLocationsMapThatMayBecomeInactive.clear();
+		if (mAisleLocationsMapThatMayBecomeInactive.size() > 0)
+			LOGGER.error("Seeing this???");
+
 		// Create the aisle if it doesn't already exist.
 		Aisle aisle = mAisleDao.findByDomainId(mFacility, inAisleId);
 		if (aisle == null) {
@@ -941,9 +1019,26 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 				LOGGER.info("Activating previously inactivated aisle: " + inAisleId);
 				aisle.setActive(true);
 			}
+			// To deal with redefining an aisle, losing some bays, tiers, or slots, we also will mark all the locations we currently have.
+			// As we work, if we don't find them in the marked collections, those are locations that need to be inactivated.
+			// Remember, aisle file goes aisle by aisle. Reading a new aisle file does not delete aisles that are not represented.
+			// no need to add the aisle itself, but add its children
+			for (ILocation<?> level2Location : aisle.getChildren()) {
+				mAisleLocationsMapThatMayBecomeInactive.put(level2Location.getPersistentId(), level2Location); // bay
+				// and its children
+				for (ILocation<?> level3Location : level2Location.getChildren()) {
+					mAisleLocationsMapThatMayBecomeInactive.put(level3Location.getPersistentId(), level3Location); // tier
+					// and its children
+					for (ILocation<?> level4Location : level3Location.getChildren()) {
+						mAisleLocationsMapThatMayBecomeInactive.put(level4Location.getPersistentId(), level4Location); // slot
+					}
+				}
+			}
+
 		}
 
 		try {
+			// if we had added the aisle to mAisleLocationsMapThatMayBecomeInactive, we would remove it here.
 			// transaction?
 			mAisleDao.store(aisle);
 

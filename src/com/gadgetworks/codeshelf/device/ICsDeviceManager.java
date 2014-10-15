@@ -54,6 +54,8 @@ public interface ICsDeviceManager {
 
 	List<AisleDeviceLogic> getAisleControllers();
 
+	List<CheDeviceLogic> getCheControllers();
+
 	IRadioController getRadioController();
 
 	JettyWebSocketClient getWebSocketCient();

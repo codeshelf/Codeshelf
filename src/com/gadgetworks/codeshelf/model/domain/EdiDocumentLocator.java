@@ -132,10 +132,6 @@ public class EdiDocumentLocator extends DomainObjectTreeABC<DropboxService> {
 		parent = inParent;
 	}
 
-	public final List<? extends IDomainObject> getChildren() {
-		return null; //getEdiTransactionDetails();
-	}
-
 	public final String getParentEdiServiceID() {
 		return parent.getDomainId();
 	}

@@ -29,7 +29,6 @@ import com.gadgetworks.flyweight.command.ICommand;
 import com.gadgetworks.flyweight.command.NetEndpoint;
 import com.gadgetworks.flyweight.command.NetGuid;
 import com.gadgetworks.flyweight.controller.IRadioController;
-import com.gadgetworks.flyweight.controller.NetworkDeviceStateEnum;
 
 public class AisleDeviceLogic extends DeviceLogicABC {
 

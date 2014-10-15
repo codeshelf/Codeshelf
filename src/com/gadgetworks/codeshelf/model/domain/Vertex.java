@@ -123,9 +123,6 @@ public class Vertex extends DomainObjectTreeABC<ILocation<?>> {
 		parent = (LocationABC<?>) inParent;
 	}
 
-	public final List<IDomainObject> getChildren() {
-		return new ArrayList<IDomainObject>();
-	}
 
 	public final void updatePoint(Double x, Double y, Double z) {
 		posX = x;

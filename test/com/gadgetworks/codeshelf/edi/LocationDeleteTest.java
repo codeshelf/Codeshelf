@@ -179,9 +179,9 @@ public class LocationDeleteTest extends EdiTestABC {
 
 	private void readSmallerAisleFile(Facility inFacility){
 		// Compared to the standard, this is missing:
-		// A1.B1.T2
-		// A1.B2.T1.S5
-		// A2.B2
+		// A1.B1.T2  (one tier, five slots missing)
+		// A1.B2.T1.S5 (one more slot missing) = 7 fewer locations in A1
+		// A2.B2 (one bay, two tiers, 10 slots missing) = 13 fewer locations in A2
 		
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A1,,,,,zigzagB1S1Side,12.85,43.45,X,40,Y\r\n" //
@@ -417,8 +417,8 @@ public class LocationDeleteTest extends EdiTestABC {
 		readStandardAisleFile(facility);
 
 		// BIZARRE! comment these two lines. Then there will be a throw in readSmallerAisleFile()
-		LOGGER.info("Reread same aisles file again. Just to see that there is no throw.");
-		readStandardAisleFile(facility);
+		// LOGGER.info("Reread same aisles file again. Just to see that there is no throw.");
+		// readStandardAisleFile(facility);
 
 		// Why does this next one throw on obscure method not found?
 		// Note: this does not make locations inactive yet.

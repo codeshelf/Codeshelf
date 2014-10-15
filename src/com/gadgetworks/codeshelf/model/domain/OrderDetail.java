@@ -185,10 +185,6 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 		parent = inParent;
 	}
 
-	public final List<IDomainObject> getChildren() {
-		return new ArrayList<IDomainObject>();
-	}
-
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void addWorkInstruction(WorkInstruction inWorkInstruction) {
 		workInstructions.add(inWorkInstruction);

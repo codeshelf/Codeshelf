@@ -101,10 +101,6 @@ public class PersistentProperty extends DomainObjectTreeABC<Organization> {
 		parent = inParent;
 	}
 
-	public final List<IDomainObject> getChildren() {
-		return new ArrayList<IDomainObject>();
-	}
-
 	// Default value methods.
 	public final String getDefaultValueAsStr() {
 		return defaultValueStr;

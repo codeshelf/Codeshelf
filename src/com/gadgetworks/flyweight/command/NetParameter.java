@@ -61,9 +61,16 @@ public class NetParameter {
 	 * @param inParamValueString
 	 */
 	public final void setParamValueFromString(final String inParamValueString) {
-		if (!inParamValueString.startsWith("0x"))
-			throw new OutOfRangeException("Net parameter must start with 0x");
-		byte[] tempArray = convertStringToByteArray(inParamValueString.substring("0x".length()));
+		String hex = inParamValueString.replaceFirst("(0x|)0*", "");
+		int targetLength = this.mParamByteCount*2;
+		if(hex.matches("[1-9a-fA-F][0-9a-fA-F]{0,"+(targetLength-1)+"}")) {
+			while(hex.length()<targetLength)
+				hex = "0"+hex;
+		} else {
+			throw new OutOfRangeException("Net parameter must be a hexadecimal number");
+		}
+		
+		byte[] tempArray = convertStringToByteArray(hex);
 		setParamValueFromByteArray(tempArray);
 	}
 
