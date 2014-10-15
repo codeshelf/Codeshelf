@@ -30,5 +30,10 @@ public interface IRadioControllerEventListener {
 	 *  @param inNetworkDevice	The the device that got removed.
 	 */
 	void deviceLost(INetworkDevice inNetworkDevice);
+
+	/**
+	 * Called when device has associated and is active
+	 */
+	void deviceActive(INetworkDevice inNetworkDevice);
 	
 }
