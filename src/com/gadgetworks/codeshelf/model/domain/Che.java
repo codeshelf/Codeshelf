@@ -124,11 +124,6 @@ public class Che extends WirelessDeviceABC {
 		return "CHE";
 	}
 
-	// jr comment. Why are the containerUses the children? ContainerUse parent is not the Che.
-	public final List<? extends IDomainObject> getChildren() {
-		return getUses();
-	}
-
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void addContainerUse(ContainerUse inContainerUse) {
 		uses.add(inContainerUse);

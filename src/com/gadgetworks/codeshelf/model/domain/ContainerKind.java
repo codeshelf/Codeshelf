@@ -120,7 +120,4 @@ public class ContainerKind extends DomainObjectTreeABC<Facility> {
 		parent = inParent;
 	}
 
-	public final List<IDomainObject> getChildren() {
-		return new ArrayList<IDomainObject>();
-	}
 }

@@ -111,7 +111,4 @@ public class UserSession extends DomainObjectTreeABC<User> {
 		parent = inParent;
 	}
 
-	public final List<IDomainObject> getChildren() {
-		return new ArrayList<IDomainObject>();
-	}
 }

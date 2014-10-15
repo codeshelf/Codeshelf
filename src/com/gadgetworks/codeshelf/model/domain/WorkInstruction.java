@@ -283,10 +283,6 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 		orderDetail = inDetail;
 	}
 
-	public final List<? extends IDomainObject> getChildren() {
-		return new ArrayList<IDomainObject>();
-	}
-
 	public final ILocation<?> getLocation() {
 		return (ILocation<?>) location;
 	}

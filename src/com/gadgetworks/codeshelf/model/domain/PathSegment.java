@@ -191,10 +191,6 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 		return DAO.findLocations(this);
 	}
 
-	public final List<IDomainObject> getChildren() {
-		return new ArrayList<IDomainObject>();
-	}
-
 	public final String getParentPathID() {
 		if (this.parent == null)
 			return null;

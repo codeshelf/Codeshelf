@@ -318,7 +318,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		List<T> result = new ArrayList<T>();
 
 		// Loop through all of the children.
-		for (ISubLocation<? extends IDomainObject> child : getChildren()) {
+		for (ISubLocation<?> child : getChildren()) {
 			if (child.getClass().equals(inClassWanted)) {
 				// If the child is the kind we want then add it to the list.
 				result.add((T) child);

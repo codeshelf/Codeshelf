@@ -168,10 +168,6 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		inStoredLocation.addStoredItem(this);
 	}
 
-	public final List<IDomainObject> getChildren() {
-		return new ArrayList<IDomainObject>();
-	}
-
 	// Assorted meta fields for the UI
 	public final String getNominalLocationId() {
 		ILocation<?> theLoc = getStoredLocation();

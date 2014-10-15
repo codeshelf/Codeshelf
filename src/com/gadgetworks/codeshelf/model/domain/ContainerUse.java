@@ -144,10 +144,6 @@ public class ContainerUse extends DomainObjectTreeABC<Container> {
 		return returnString;
 	}
 
-	public final List<IDomainObject> getChildren() {
-		return new ArrayList<IDomainObject>();
-	}
-
 	// UI meta-field support
 	public final String getContainerName() {
 		Container theContainer = getParent();
