@@ -15,6 +15,7 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.response.LoginResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
 import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
+import com.gadgetworks.codeshelf.ws.jetty.server.SessionManager;
 import com.gadgetworks.codeshelf.ws.jetty.server.SessionType;
 
 public class LoginCommand extends CommandABC {
@@ -61,8 +62,12 @@ public class LoginCommand extends CommandABC {
 					} else {
 						sessionType = SessionType.UserApp;
 					}
+					session.setType(sessionType);
 					session.authenticated(user,org.getDomainId(),sessionType);
 					LOGGER.info("User "+userId+" of "+org.getDomainId()+" authenticated on session "+session.getSessionId());
+
+					// update session counters
+					SessionManager.getInstance().updateCounters();
 
 					// generate login response
 					response.setStatus(ResponseStatus.Success);

@@ -113,8 +113,7 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		MetricsService.registerHealthCheck(dbCheck);
 		
 		ActiveSiteControllerHealthCheck sessionCheck = new ActiveSiteControllerHealthCheck();
-		MetricsService.registerHealthCheck(sessionCheck);
-		
+		MetricsService.registerHealthCheck(sessionCheck);	
 	}
 
 	// --------------------------------------------------------------------------
