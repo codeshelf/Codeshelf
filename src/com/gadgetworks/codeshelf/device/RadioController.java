@@ -1098,6 +1098,9 @@ public class RadioController implements IRadioController {
 		try {
 			inNetworkDevice.setDeviceStateEnum(NetworkDeviceStateEnum.STARTED);
 			inNetworkDevice.startDevice();
+			for (IRadioControllerEventListener radioEventListener : mEventListeners) {
+				radioEventListener.deviceActive(inNetworkDevice);
+			}
 		} finally {
 			ContextLogging.clearNetGuid();
 		}

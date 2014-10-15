@@ -77,6 +77,8 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	@Getter
 	private long	lastNetworkUpdate=0;
 	
+	private boolean isAttachedToServer = false;
+	
 	@Getter @Setter
 	boolean radioEnabled = true;
 	
@@ -178,6 +180,19 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	@Override
 	public void deviceLost(INetworkDevice inNetworkDevice) {
 	}
+	
+	@Override
+	public void deviceActive(INetworkDevice inNetworkDevice) {
+		if(inNetworkDevice instanceof CheDeviceLogic ) {
+			if (isAttachedToServer) {
+				((CheDeviceLogic) inNetworkDevice).connectedToServer();
+			}
+			else {
+				((CheDeviceLogic) inNetworkDevice).disconnectedFromServer();
+			}
+		}
+		
+	}
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
@@ -240,6 +255,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 		this.updateNetwork(network);
 		this.startRadio(network);
 		
+		isAttachedToServer = true;
 		for (INetworkDevice networkDevice : mDeviceMap.values()) {
 			if(networkDevice instanceof CheDeviceLogic ) {
 				((CheDeviceLogic) networkDevice).connectedToServer();
@@ -249,6 +265,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 
 	public void unattached() {
 		LOGGER.info("Unattached from server");
+		isAttachedToServer = false;
 		for (INetworkDevice networkDevice : mDeviceMap.values()) {
 			if(networkDevice instanceof CheDeviceLogic ) {
 				((CheDeviceLogic) networkDevice).disconnectedFromServer();
