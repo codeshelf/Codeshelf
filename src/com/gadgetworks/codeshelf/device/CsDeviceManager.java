@@ -5,6 +5,7 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -59,7 +60,8 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	private String							mNetworkCredential;
 
 	/* Device Manager owns websocket configuration too */
-	private String							mUri;
+	@Getter
+	private URI							mUri;
 	
 	@Getter @Setter
 	boolean suppressKeepAlive = false;
@@ -82,7 +84,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	public CsDeviceManager(final IRadioController inRadioController, final IConfiguration configuration) {
 		// fetch properties from config file
 		radioEnabled = configuration.getBoolean("radio.enabled",true);
-		mUri = configuration.getString("websocket.uri");
+		mUri = URI.create(configuration.getString("websocket.uri"));
 		suppressKeepAlive = configuration.getBoolean("websocket.idle.suppresskeepalive", false);
 		idleKill = configuration.getBoolean("websocket.idle.kill", false);
 
@@ -125,6 +127,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	public final void startWebSocketClient() {
     	// create response processor and register it with WS client
 		SiteControllerMessageProcessor responseProcessor = new SiteControllerMessageProcessor(this);
+		
     	client = new JettyWebSocketClient(mUri,responseProcessor,this);
     	responseProcessor.setWebClient(client);
     	connectionManagerThread = new ConnectionManagerThread(this);

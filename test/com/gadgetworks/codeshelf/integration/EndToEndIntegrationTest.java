@@ -96,7 +96,6 @@ public abstract class EndToEndIntegrationTest extends DomainTestABC {
 	@Override
 	public void doBefore() throws Exception {
 		Injector websocketServerInjector = setupWSSInjector();
-		Injector siteControllerInjector = CsSiteControllerMain.setupInjector();
 		
 		IConfiguration configuration = websocketServerInjector.getInstance(IConfiguration.class);
 		LOGGER.debug("-------------- Creating environment before running test case");
@@ -156,7 +155,8 @@ public abstract class EndToEndIntegrationTest extends DomainTestABC {
 		ThreadUtils.sleep(2000);
 		
 		// start site controller
-		siteController = siteControllerInjector.getInstance(CsSiteControllerApplication.class);
+		//TODO future just use a different IGateway implementation instead of disableRadio
+		siteController = CsSiteControllerMain.createApplication(new CsSiteControllerMain.DefaultModule());
 		siteController.startApplication();
 		ThreadUtils.sleep(2000);
 		
