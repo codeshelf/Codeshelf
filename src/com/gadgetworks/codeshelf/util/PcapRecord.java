@@ -2,13 +2,11 @@ package com.gadgetworks.codeshelf.util;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.text.SimpleDateFormat;
 import java.util.Arrays;
-import java.util.Date;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import lombok.Getter;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /*
 typedef struct pcaprec_hdr_s {

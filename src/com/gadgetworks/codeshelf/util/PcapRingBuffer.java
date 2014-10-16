@@ -37,9 +37,7 @@ public class PcapRingBuffer {
 			}
 			// make room
 			while(byteRing.free() < spaceWanted) {
-				if(this.get() == null) {
-					throw new RuntimeException("Internal error: could not free space on packet ring buffer");
-				}
+				new PcapRecord(this.byteRing); // consume a record
 			}
 			byteRing.put(record.getHeaderBytes());
 			byteRing.put(record.getPacket());
@@ -69,9 +67,7 @@ public class PcapRingBuffer {
 		synchronized(this) {
 			if(unsafeCheckAvailable()) {
 				result = new PcapRecord(this.byteRing);
-				if(result != null) {
-					this.available--;
-				}
+				this.available--;
 			}
 		}
 		return result;

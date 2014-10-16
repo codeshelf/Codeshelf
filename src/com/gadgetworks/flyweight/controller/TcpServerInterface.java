@@ -39,6 +39,7 @@ public class TcpServerInterface extends SerialInterfaceABC {
 	 * 
 	 */
 	public TcpServerInterface() {
+		
 	}
 
 	// --------------------------------------------------------------------------
