@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.UUID;
 
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
+import com.gadgetworks.codeshelf.util.PcapRingBuffer;
 import com.gadgetworks.codeshelf.ws.jetty.client.JettyWebSocketClient;
 import com.gadgetworks.flyweight.command.NetGuid;
 import com.gadgetworks.flyweight.controller.INetworkDevice;
@@ -59,4 +60,6 @@ public interface ICsDeviceManager {
 	IRadioController getRadioController();
 
 	JettyWebSocketClient getWebSocketCient();
+
+	PcapRingBuffer getPcapBuffer();
 }

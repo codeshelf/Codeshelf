@@ -5,6 +5,7 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -23,6 +24,7 @@ import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.util.IConfiguration;
+import com.gadgetworks.codeshelf.util.PcapRecord;
 import com.gadgetworks.codeshelf.util.PcapRingBuffer;
 import com.gadgetworks.codeshelf.util.TwoKeyMap;
 import com.gadgetworks.codeshelf.ws.jetty.client.JettyWebSocketClient;
@@ -36,6 +38,7 @@ import com.gadgetworks.flyweight.command.NetworkId;
 import com.gadgetworks.flyweight.controller.INetworkDevice;
 import com.gadgetworks.flyweight.controller.IRadioController;
 import com.gadgetworks.flyweight.controller.IRadioControllerEventListener;
+import com.gadgetworks.flyweight.controller.PacketCaptureListener;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 
@@ -43,7 +46,7 @@ import com.google.inject.Inject;
  * @author jeffw
  *
  */
-public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventListener, WebSocketEventListener {
+public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventListener, WebSocketEventListener, PacketCaptureListener {
 
 	private static final Logger				LOGGER						= LoggerFactory.getLogger(CsDeviceManager.class);
 
@@ -54,6 +57,9 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	
 	@Getter
 	private IRadioController				radioController;
+	
+	@Getter
+	private PcapRingBuffer					pcapBuffer;
 
 	private	String							username;
 	private String							password;
@@ -93,9 +99,13 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 		password = configuration.getString("networkCredential");
 		
 		if(configuration.getBoolean("pcapbuffer.enable")) {
+			// set up ring buffer
 			int pcSize = configuration.getInt("pcapbuffer.size", PcapRingBuffer.DEFAULT_SIZE);
-			int pcSlack = configuration.getInt("pcapbuffer.slack", PcapRingBuffer.DEFAULT_SLACK);			
-			radioController.getGatewayInterface().setPcapBuffer(new PcapRingBuffer(pcSize,pcSlack));
+			int pcSlack = configuration.getInt("pcapbuffer.slack", PcapRingBuffer.DEFAULT_SLACK);	
+			this.pcapBuffer = new PcapRingBuffer(pcSize, pcSlack);
+
+			// listen for packets
+			radioController.getGatewayInterface().setPacketListener(this);
 		}
 	}
 	
@@ -458,6 +468,16 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	@Override
 	public JettyWebSocketClient getWebSocketCient() {
 		return this.client;
+	}
+
+	@Override
+	public void capture(byte[] packet) {
+		PcapRecord pcap = new PcapRecord(packet);
+		try {
+			this.pcapBuffer.put(pcap);
+		} catch (IOException e) {
+			LOGGER.error("Unexpected problem putting packet of size "+packet.length+" in ring buffer", e);
+		}
 	}
 
 }

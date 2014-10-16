@@ -12,7 +12,8 @@ import com.gadgetworks.codeshelf.util.PcapRecord;
 import com.gadgetworks.codeshelf.util.PcapRingBuffer;
 
 public class RadioServlet extends HttpServlet {
-    private static final String CONTENT_TYPE = "text/html";
+	private static final long	serialVersionUID	= 8642709590957174287L;
+	private static final String CONTENT_TYPE = "text/html";
     private static final String CACHE_CONTROL = "Cache-Control";
     private static final String NO_CACHE = "must-revalidate,no-cache,no-store";
 
@@ -40,8 +41,8 @@ public class RadioServlet extends HttpServlet {
     private void prettyPrintAll(PrintWriter out) throws IOException {
     	out.println("<html><head><title>radio traffic</title></head><body><h4>recent radio traffic</h4>");
     	PcapRecord record;
-    	PcapRingBuffer ring = this.deviceManager.getRadioController().getGatewayInterface().getPcapBuffer();
-    	while((record = ring.get(false)) != null) {
+    	PcapRingBuffer ring = this.deviceManager.getPcapBuffer();
+    	while((record = ring.get()) != null) {
     		out.println(record.toString());
     		out.println("<br/>");
     	}

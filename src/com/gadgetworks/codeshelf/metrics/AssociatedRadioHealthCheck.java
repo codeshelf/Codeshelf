@@ -3,7 +3,6 @@ package com.gadgetworks.codeshelf.metrics;
 import com.gadgetworks.codeshelf.device.AisleDeviceLogic;
 import com.gadgetworks.codeshelf.device.CheDeviceLogic;
 import com.gadgetworks.codeshelf.device.ICsDeviceManager;
-import com.gadgetworks.flyweight.controller.IRadioController;
 
 public class AssociatedRadioHealthCheck extends CodeshelfHealthCheck {
 

@@ -8,10 +8,12 @@ public class PcapRingBuffer {
 
 	private ByteRingBuffer byteRing;
 	private int targetSlackBytes;
+	private int available;
 	private boolean hold;
 	
 	public PcapRingBuffer(int lengthBytes, int targetAvailableBytes) {
 		this.hold = false;
+		this.available = 0;
 		this.byteRing = new ByteRingBuffer(lengthBytes);
 		this.targetSlackBytes = targetAvailableBytes;
 	}
@@ -29,41 +31,50 @@ public class PcapRingBuffer {
 			}
 			// make room
 			while(byteRing.free() < spaceWanted) {
-				if(this.get(false) == null) {
+				if(this.get() == null) {
 					throw new RuntimeException("Internal error: could not free space on packet ring buffer");
 				}
 			}
 			byteRing.put(record.getHeaderBytes());
 			byteRing.put(record.getPacket());
+			this.available++;
 			this.notify();
 		}
 	}
 	
-	public PcapRecord get(boolean block) throws IOException {
+	public PcapRecord blockingGet() throws IOException {
 		PcapRecord result = null;
-		
-		if(block) {
-			synchronized(this) { 
-				while(!unsafeCheckAvailable()) {
-					try {
-						this.wait();
-					} catch (InterruptedException e) {
-					}
+		synchronized(this) { 
+			while(!unsafeCheckAvailable()) {
+				try {
+					this.wait();
+				} catch (InterruptedException e) {
 				}
-				result = new PcapRecord(this.byteRing);
 			}
-		} else {
-			// nonblocking
-			synchronized(this) {
-				if(unsafeCheckAvailable()) {
-					result = new PcapRecord(this.byteRing);
+			result = new PcapRecord(this.byteRing);
+			this.available--;
+		}
+		return result;
+	}
+	
+	public PcapRecord get() throws IOException {
+		PcapRecord result = null;		
+		synchronized(this) {
+			if(unsafeCheckAvailable()) {
+				result = new PcapRecord(this.byteRing);
+				if(result != null) {
+					this.available--;
 				}
 			}
 		}
 		return result;
 	}
 	
+	public int available() {
+		return this.available;
+	}
+	
 	private boolean unsafeCheckAvailable() {
-		return byteRing.available() > 0;
+		return this.available > 0;
 	}
 }

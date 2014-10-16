@@ -8,17 +8,13 @@ package com.gadgetworks.flyweight.controller;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 
-import lombok.Getter;
 import lombok.Setter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.application.ContextLogging;
-import com.gadgetworks.codeshelf.util.PcapRecord;
-import com.gadgetworks.codeshelf.util.PcapRingBuffer;
 import com.gadgetworks.flyweight.bitfields.BitFieldInputStream;
 import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
 import com.gadgetworks.flyweight.command.CommandAssocABC;
@@ -49,9 +45,8 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 
 	private final Object		mLock					= new Object();
 
-	@Getter
 	@Setter
-	private PcapRingBuffer 		pcapBuffer				= null;
+	private PacketCaptureListener		packetListener			= null;
 
 	private boolean				mIsStarted;
 	private boolean				mShouldRun				= true;
@@ -403,12 +398,8 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 		byte[] result = new byte[bytesReceived];
 		System.arraycopy(frameBuffer, 0, result, 0, bytesReceived);
 		
-		if(this.pcapBuffer != null) {
-			try {
-				this.pcapBuffer.put(new PcapRecord(result));
-			} catch (IOException e) {
-				LOGGER.error("unexpected exception putting incoming packet in ring buffer", e);
-			}
+		if(this.packetListener != null) {
+			this.packetListener.capture(result);
 		}
 		
 		return result;
@@ -473,12 +464,8 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 			}
 		}
 		
-		if(this.pcapBuffer != null) {
-			try {
-				this.pcapBuffer.put(new PcapRecord(packetBytes));
-			} catch (IOException e) {
-				LOGGER.error("unexpected exception putting outbound packet in ring buffer", e);
-			}
+		if(this.packetListener != null) {
+			this.packetListener.capture(packetBytes);
 		}
 	}
 

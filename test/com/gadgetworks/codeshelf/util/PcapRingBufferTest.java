@@ -18,10 +18,10 @@ public class PcapRingBufferTest {
 					Arrays.fill(packet, (byte)i);
 					pb.put(new PcapRecord(packet));
 				}
-				Assert.assertTrue(pb.get(false).getPacket()[0] == (byte)0x02);
-				Assert.assertTrue(pb.get(false).getPacket()[0] == (byte)0x03);
-				Assert.assertTrue(pb.get(false).getPacket()[0] == (byte)0x04);
-				Assert.assertNull(pb.get(false));
+				Assert.assertTrue(pb.get().getPacket()[0] == (byte)0x02);
+				Assert.assertTrue(pb.get().getPacket()[0] == (byte)0x03);
+				Assert.assertTrue(pb.get().getPacket()[0] == (byte)0x04);
+				Assert.assertNull(pb.get());
 			}
 		} catch (IOException e) {
 			Assert.fail();

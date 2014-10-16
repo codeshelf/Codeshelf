@@ -16,7 +16,6 @@ import jd2xx.JD2XX.DeviceInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.util.PcapRingBuffer;
 import com.gadgetworks.flyweight.command.Packet;
 
 /**
