@@ -6,7 +6,9 @@
 
 package com.gadgetworks.flyweight.command;
 
+import com.gadgetworks.flyweight.bitfields.IllegalBoundsException;
 import com.gadgetworks.flyweight.bitfields.NBitInteger;
+import com.gadgetworks.flyweight.bitfields.OutOfRangeException;
 
 /** 
  *  --------------------------------------------------------------------------
@@ -16,7 +18,7 @@ import com.gadgetworks.flyweight.bitfields.NBitInteger;
  *  @throws OutOfRangeException
  */
 
-@SuppressWarnings("serial")
+@SuppressWarnings({ "serial", "unused" })
 public final class NetCommandGroup extends NBitInteger {
 
 	private static final byte	BITS_CMD_GROUP	= 4;

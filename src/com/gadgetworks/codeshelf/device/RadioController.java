@@ -926,7 +926,7 @@ public class RadioController implements IRadioController {
 	private void startPacketReceivers() {
 		// ~bhe: this should go into a separate class
 		Thread gwThread = new Thread(new Runnable() {
-			private final Counter packetsSentCounter = MetricsService.addCounter(MetricsGroup.Radio,"packets.sent");
+			//private final Counter packetsSentCounter = MetricsService.addCounter(MetricsGroup.Radio,"packets.sent");
 			public void run() {
 				while (mShouldRun) {
 					try {
@@ -1189,5 +1189,17 @@ public class RadioController implements IRadioController {
 	@Override
 	public boolean isRunning() {
 		return this.mRunning;
+	}
+	
+	public NetGuid getNetGuidFromNetAddress(byte networkAddr) {
+		return getNetGuidFromNetAddress(new NetAddress(networkAddr));		
+	}
+
+	public NetGuid getNetGuidFromNetAddress(NetAddress netAddress) {
+		INetworkDevice device = this.mDeviceNetAddrMap.get(netAddress);
+		if(device != null) {
+			return device.getGuid();
+		} //else
+		return null;
 	}
 }
