@@ -100,7 +100,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 		username = configuration.getString("username");
 		password = configuration.getString("networkCredential");
 		
-		if(configuration.getBoolean("pcapbuffer.enable")) {
+		if(configuration.getBoolean("pcapbuffer.enable", false)) {
 			// set up ring buffer
 			int pcSize = configuration.getInt("pcapbuffer.size", PcapRingBuffer.DEFAULT_SIZE);
 			int pcSlack = configuration.getInt("pcapbuffer.slack", PcapRingBuffer.DEFAULT_SLACK);	

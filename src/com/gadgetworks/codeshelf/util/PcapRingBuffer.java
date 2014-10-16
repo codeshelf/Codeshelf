@@ -38,6 +38,7 @@ public class PcapRingBuffer {
 			// make room
 			while(byteRing.free() < spaceWanted) {
 				new PcapRecord(this.byteRing); // consume a record
+				this.available--;
 			}
 			byteRing.put(record.getHeaderBytes());
 			byteRing.put(record.getPacket());
