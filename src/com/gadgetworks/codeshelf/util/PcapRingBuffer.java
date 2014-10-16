@@ -9,16 +9,19 @@ public class PcapRingBuffer {
 	static public final int DEFAULT_SIZE = 1024*100; // 100kB
 	static public final int DEFAULT_SLACK = 1024; // 1% slack
 
+	final public static int PCAP_MAGIC = 0xA1B2C3D4; 
+	final public static short PCAP_VERSION_MAJOR = 2;  
+	final public static short PCAP_VERSION_MINOR = 4; 
+
+	
 	private ByteRingBuffer byteRing;
 	private int targetSlackBytes;
 	private int available;
-	private int datalinkId;
 	
-	public PcapRingBuffer(int lengthBytes, int targetAvailableBytes, int datalinkId) {
+	public PcapRingBuffer(int lengthBytes, int targetAvailableBytes) {
 		this.available = 0;
 		this.byteRing = new ByteRingBuffer(lengthBytes);
 		this.targetSlackBytes = targetAvailableBytes;
-		this.datalinkId = datalinkId;
 	}
 	
 	public void put(PcapRecord record) throws IOException {
@@ -121,17 +124,20 @@ public class PcapRingBuffer {
 		        guint32 network;        
 		} pcap_hdr_t;
 		 */
+
+		// always big-endian
+		
 		ByteBuffer bb = ByteBuffer.allocate(24); // 24 bytes
-		bb.order(ByteOrder.nativeOrder());
+		bb.order(ByteOrder.BIG_ENDIAN);
 		bb.clear();
 		
-		bb.putInt(0x1b2c3d4); // magic_number
-		bb.putShort((short)2); // major version number
-		bb.putShort((short)4); // minor version number
+		bb.putInt(PCAP_MAGIC); 
+		bb.putShort(PCAP_VERSION_MAJOR); 
+		bb.putShort(PCAP_VERSION_MINOR); 
 		bb.putInt(TimeZone.getDefault().getRawOffset() / 1000); // timezone in seconds
 		bb.putInt(0); // accuracy of timestamps
 		bb.putInt(PcapRecord.PACKET_TRUNCATE_LENGTH); // snaplen
-		bb.putInt(datalinkId); // data link type		
+		bb.putInt(PcapRecord.getLinkTypeId()); // data link type		
 		bb.flip();
 		
 		byte[] result=new byte[24];

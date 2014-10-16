@@ -9,7 +9,7 @@ import org.junit.Test;
 public class PcapRingBufferTest {
 	@Test
 	public void fillAndEmpty() {
-		PcapRingBuffer pb = new PcapRingBuffer(129,16,0); // enough room for slightly more than 3.5 packets (16 hdr+16 buffer)
+		PcapRingBuffer pb = new PcapRingBuffer(129,16); // enough room for slightly more than 3.5 packets (16 hdr+16 buffer)
 
 		try {
 			byte[] packet = new byte[16];

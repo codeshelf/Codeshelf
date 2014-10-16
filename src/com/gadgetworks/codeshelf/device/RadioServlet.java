@@ -48,7 +48,7 @@ public class RadioServlet extends HttpServlet {
             } finally {
                 writer.close();
             }
-    	} else if(fmt.equals("html")) {
+    	} else if(fmt.equals("json")) {
     		// json output, consume packets as they are output
             resp.setContentType(CONTENT_TYPE_TEXT);
             PrintWriter writer = resp.getWriter();
@@ -128,16 +128,15 @@ public class RadioServlet extends HttpServlet {
 				for(PcapRecord record : records) {
 		    		out.println(record.asText(timestampFormat));
 		    	}
-		    	out.println("</pre><hr></body></html>");
 			}
 			*/
     		PcapRecord record;
     		while((record = ring.get())!=null) {
-    			out.print(record.asText(timestampFormat));
-    			out.println(",");
+    			out.println(record.asText(timestampFormat));
     		}
 		} catch (IOException e) {
 			e.printStackTrace(out);
 		}
+    	out.println("</pre><hr></body></html>");
     }
 }

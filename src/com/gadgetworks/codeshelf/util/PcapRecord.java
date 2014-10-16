@@ -6,6 +6,8 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import lombok.Getter;
 
 /*
@@ -20,6 +22,9 @@ typedef struct pcaprec_hdr_s {
 public class PcapRecord {
 	final static public int HEADER_LENGTH = 16;  
 	final static public int PACKET_TRUNCATE_LENGTH = 65535; 
+	
+    final public static int LINKTYPE_DLT_USER0 = 147;
+    final public static int getLinkTypeId() { return LINKTYPE_DLT_USER0; } 
 
 	@Getter
     private long microseconds;         /* timestamp microseconds (including whole seconds) */        
@@ -66,10 +71,14 @@ public class PcapRecord {
 		return (int)readUint32(raw);
 	}
 	
+	@JsonIgnore
 	public byte[] getHeaderBytes() {
 		byte[] result = new byte[PcapRecord.HEADER_LENGTH];
 		long ts_sec = (this.microseconds/1000000);
 		long ts_usec = (this.microseconds%1000000);
+		
+		// always big-endian
+		
 		result[0] = (byte)(ts_sec >> 24);
 		result[1] = (byte)(ts_sec >> 16);
 		result[2] = (byte)(ts_sec >> 8);
@@ -92,6 +101,7 @@ public class PcapRecord {
 		return result;
 	}
 	
+	@JsonIgnore
 	public int getLength() {
 		return PcapRecord.HEADER_LENGTH + this.packet.length;
 	}
