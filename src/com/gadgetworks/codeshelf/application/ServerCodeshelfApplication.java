@@ -104,7 +104,7 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 
 		mHttpServer.startServer();
 
-		startAdminServer();
+		startAdminServer(null);
 		startTsdbReporter();
 		registerSystemMetrics();
 		

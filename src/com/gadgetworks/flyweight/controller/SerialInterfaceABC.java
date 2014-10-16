@@ -8,11 +8,17 @@ package com.gadgetworks.flyweight.controller;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+
+import lombok.Getter;
+import lombok.Setter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.application.ContextLogging;
+import com.gadgetworks.codeshelf.util.PcapRecord;
+import com.gadgetworks.codeshelf.util.PcapRingBuffer;
 import com.gadgetworks.flyweight.bitfields.BitFieldInputStream;
 import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
 import com.gadgetworks.flyweight.command.CommandAssocABC;
@@ -43,6 +49,10 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 
 	private final Object		mLock					= new Object();
 
+	@Getter
+	@Setter
+	private PcapRingBuffer 		pcapBuffer				= null;
+
 	private boolean				mIsStarted;
 	private boolean				mShouldRun				= true;
 	private boolean				mIsStartingInterface;
@@ -52,12 +62,11 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 	 *  The constructor tries to setup the serial connection.
 	 */
 	SerialInterfaceABC() {
-
 		mIsStarted = false;
 		//		mHexDumpEncoder = new HexDumpEncoder();
 
 	}
-
+	
 	/* --------------------------------------------------------------------------
 	 * (non-Javadoc)
 	 * @see com.gadgetworks.flyweight.controller.IGatewayInterface#startInterface()
@@ -393,6 +402,15 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 		// Create a byte array that is exactly the right size.
 		byte[] result = new byte[bytesReceived];
 		System.arraycopy(frameBuffer, 0, result, 0, bytesReceived);
+		
+		if(this.pcapBuffer != null) {
+			try {
+				this.pcapBuffer.put(new PcapRecord(result));
+			} catch (IOException e) {
+				LOGGER.error("unexpected exception putting incoming packet in ring buffer", e);
+			}
+		}
+		
 		return result;
 	}
 
@@ -452,6 +470,14 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 				hexDumpArray(packetBytes);
 			} catch (Exception e) {
 				LOGGER.error("", e);
+			}
+		}
+		
+		if(this.pcapBuffer != null) {
+			try {
+				this.pcapBuffer.put(new PcapRecord(packetBytes));
+			} catch (IOException e) {
+				LOGGER.error("unexpected exception putting outbound packet in ring buffer", e);
 			}
 		}
 	}

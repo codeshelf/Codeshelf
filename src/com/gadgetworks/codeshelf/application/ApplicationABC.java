@@ -19,6 +19,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.jvm.GarbageCollectorMetricSet;
 import com.codahale.metrics.jvm.MemoryUsageGaugeSet;
 import com.codahale.metrics.jvm.ThreadStatesGaugeSet;
+import com.gadgetworks.codeshelf.device.ICsDeviceManager;
 import com.gadgetworks.codeshelf.metrics.MetricsGroup;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
 import com.gadgetworks.codeshelf.metrics.OpenTsdb;
@@ -155,7 +156,7 @@ public abstract class ApplicationABC implements ICodeshelfApplication {
 		Runtime.getRuntime().addShutdownHook(mShutdownHookThread);
 	}
 	
-	protected void startAdminServer() {
+	protected void startAdminServer(ICsDeviceManager deviceManager) {
 
 		// start admin server, if enabled
 		String useAdminServer = System.getProperty("metrics.adminserver");
@@ -164,7 +165,7 @@ public abstract class ApplicationABC implements ICodeshelfApplication {
 			Integer port = Integer.getInteger("metrics.adminserver.port");
 			if(port != null) {
 				LOGGER.info("Starting Admin Server");
-				mAdminServer.startServer(port);
+				mAdminServer.startServer(port,deviceManager);
 			} else {
 				LOGGER.error("Could not start admin server, metrics.adminserver.port needs to be specified");
 			}

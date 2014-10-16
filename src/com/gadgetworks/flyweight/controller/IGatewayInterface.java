@@ -5,6 +5,7 @@
  *******************************************************************************/
 package com.gadgetworks.flyweight.controller;
 
+import com.gadgetworks.codeshelf.util.PcapRingBuffer;
 import com.gadgetworks.flyweight.command.IPacket;
 import com.gadgetworks.flyweight.command.NetworkId;
 
@@ -61,5 +62,9 @@ public interface IGatewayInterface {
 	 *  @return	The packet read from the interface.
 	 */
 	IPacket receivePacket(NetworkId inMyNetworkId);
+	
+	PcapRingBuffer getPcapBuffer();
+	
+	void setPcapBuffer(PcapRingBuffer pcapBuffer);
 
 }

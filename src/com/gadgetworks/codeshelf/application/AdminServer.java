@@ -11,6 +11,8 @@ import com.codahale.metrics.health.HealthCheckRegistry;
 import com.codahale.metrics.servlets.HealthCheckServlet;
 import com.codahale.metrics.servlets.MetricsServlet;
 import com.codahale.metrics.servlets.PingServlet;
+import com.gadgetworks.codeshelf.device.ICsDeviceManager;
+import com.gadgetworks.codeshelf.device.RadioServlet;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
 
 public class AdminServer {
@@ -22,7 +24,7 @@ public class AdminServer {
 	public AdminServer() {
 	}
 	
-	public final void startServer(int port) {
+	public final void startServer(int port, ICsDeviceManager deviceManager) {
 		try {
 			Server server = new Server(port);
 			ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
@@ -41,6 +43,10 @@ public class AdminServer {
 			
 			// add ping servlet
 			context.addServlet(new ServletHolder(new PingServlet()),"/ping");
+			
+			if(deviceManager != null) {
+				context.addServlet(new ServletHolder(new RadioServlet(deviceManager)),"/radio");
+			}
 
 			server.start();
 			// server.join();

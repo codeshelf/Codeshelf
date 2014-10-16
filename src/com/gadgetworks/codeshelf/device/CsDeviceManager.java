@@ -23,6 +23,7 @@ import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.util.IConfiguration;
+import com.gadgetworks.codeshelf.util.PcapRingBuffer;
 import com.gadgetworks.codeshelf.util.TwoKeyMap;
 import com.gadgetworks.codeshelf.ws.jetty.client.JettyWebSocketClient;
 import com.gadgetworks.codeshelf.ws.jetty.client.WebSocketEventListener;
@@ -53,12 +54,9 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	
 	@Getter
 	private IRadioController				radioController;
-/*
-	private String							mOrganizationId;
-	private String							mFacilityId;
-	private String							mNetworkId;
-	*/
-	private String							mNetworkCredential;
+
+	private	String							username;
+	private String							password;
 
 	/* Device Manager owns websocket configuration too */
 	private String							mUri;
@@ -91,9 +89,16 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 		radioController = inRadioController;
 		mDeviceMap = new TwoKeyMap<UUID, NetGuid, INetworkDevice>();
 
-		mNetworkCredential = configuration.getString("networkCredential");
+		username = configuration.getString("username");
+		password = configuration.getString("networkCredential");
+		
+		if(configuration.getBoolean("pcapbuffer.enable")) {
+			int pcSize = configuration.getInt("pcapbuffer.size", PcapRingBuffer.DEFAULT_SIZE);
+			int pcSlack = configuration.getInt("pcapbuffer.slack", PcapRingBuffer.DEFAULT_SLACK);			
+			radioController.getGatewayInterface().setPcapBuffer(new PcapRingBuffer(pcSize,pcSlack));
+		}
 	}
-
+	
 	public final void start() {
 		startWebSocketClient();
 
@@ -225,8 +230,8 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 		// connected to server - send attach request
 		LOGGER.info("Connected to server");
 		LoginRequest loginRequest = new LoginRequest();
-		loginRequest.setUserId(CodeshelfNetwork.DEFAULT_SITECON_SERIAL);
-		loginRequest.setPassword(mNetworkCredential);
+		loginRequest.setUserId(username);	
+		loginRequest.setPassword(password);
 		
 		client.sendMessage(loginRequest);
 	}
