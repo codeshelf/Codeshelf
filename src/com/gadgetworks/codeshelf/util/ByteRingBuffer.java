@@ -7,12 +7,15 @@ public class ByteRingBuffer extends InputStream {
 	private byte[] buffer;
 	
 	int head, tail;
+	int savedHead,savedTail;
 	
 	public ByteRingBuffer(int length) {
 		buffer = new byte[length];
 		
 		// head = 0; doesn't matter
 		tail = -1;
+		
+		savedHead=-1;
 	}
 	
 	public int length() {
@@ -64,6 +67,9 @@ public class ByteRingBuffer extends InputStream {
 	}
 	
 	public void put(byte b) {
+		if(savedHead>=0) {
+			throw new RuntimeException("Tried to put while ring is frozen");
+		}
 		if(free() == 0) {
 			throw new IndexOutOfBoundsException("CircularByteBuffer overflow");
 		}
@@ -75,6 +81,9 @@ public class ByteRingBuffer extends InputStream {
 	}
 	
 	public void put(byte[] buf) {
+		if(savedHead>=0) {
+			throw new RuntimeException("Tried to put while ring is frozen");
+		}
 		if(free() < buf.length) {
 			throw new IndexOutOfBoundsException("CircularByteBuffer overflow");
 		}
@@ -109,5 +118,31 @@ public class ByteRingBuffer extends InputStream {
 			throw new IndexOutOfBoundsException("CircularByteBuffer underflow");
 		}
 		return (byte)result;
+	}
+
+	public byte[] bytes() {
+		int length=available();
+		byte[] result = new byte[length];
+		if(length>0) {
+			int dstPos = 0;
+			int srcPos;
+			for(srcPos=tail; srcPos != head; srcPos = (srcPos+1)%buffer.length ) {
+				result[dstPos++] = buffer[srcPos];
+			}
+		}
+		return result;
+	}
+	
+	public void freeze() {
+		this.savedHead = head;
+		this.savedTail = tail;
+	}
+	
+	public void unfreeze(boolean restore) {
+		if(restore) {
+			head = savedHead;
+			tail = savedTail;
+		}
+		savedHead = -1;
 	}
 }

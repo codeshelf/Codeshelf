@@ -60,6 +60,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	
 	@Getter
 	private PcapRingBuffer					pcapBuffer;
+    private static final int LINKTYPE_IEEE802_15_4_NOFCS = 230;
 
 	private	String							username;
 	private String							password;
@@ -102,7 +103,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 			// set up ring buffer
 			int pcSize = configuration.getInt("pcapbuffer.size", PcapRingBuffer.DEFAULT_SIZE);
 			int pcSlack = configuration.getInt("pcapbuffer.slack", PcapRingBuffer.DEFAULT_SLACK);	
-			this.pcapBuffer = new PcapRingBuffer(pcSize, pcSlack);
+			this.pcapBuffer = new PcapRingBuffer(pcSize, pcSlack, LINKTYPE_IEEE802_15_4_NOFCS );
 
 			// listen for packets
 			radioController.getGatewayInterface().setPacketListener(this);

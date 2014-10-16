@@ -28,7 +28,7 @@ public class JsonEncoder implements Encoder.Text<MessageABC> {
 	public String encode(MessageABC message) throws EncodeException {
 		try {
 			String jsonString = null;
-			ObjectMapper mapper = new ObjectMapper();
+			ObjectMapper mapper = new ObjectMapper(); // TODO: should reuse and share globally per jackson documentation -ic
 			jsonString = mapper.writeValueAsString(message);
 			
 			LOGGER.debug("Encoding message: "+jsonString);

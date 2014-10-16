@@ -19,7 +19,7 @@ typedef struct pcaprec_hdr_s {
 
 public class PcapRecord {
 	final static public int HEADER_LENGTH = 16;  
-	final static public int MAX_PACKET_LENGTH = 65535; 
+	final static public int PACKET_TRUNCATE_LENGTH = 65535; 
 
 	@Getter
     private long microseconds;         /* timestamp microseconds (including whole seconds) */        
@@ -32,8 +32,8 @@ public class PcapRecord {
 	
 	public PcapRecord(byte[] data) {
 		originalLength = data.length;
-		if(originalLength > PcapRecord.MAX_PACKET_LENGTH) {
-			storedLength = PcapRecord.MAX_PACKET_LENGTH;
+		if(originalLength > PcapRecord.PACKET_TRUNCATE_LENGTH) {
+			storedLength = PcapRecord.PACKET_TRUNCATE_LENGTH;
 			packet = Arrays.copyOf(data, storedLength);
 		} else {
 			storedLength = originalLength;
@@ -95,18 +95,21 @@ public class PcapRecord {
 	public int getLength() {
 		return PcapRecord.HEADER_LENGTH + this.packet.length;
 	}
-	
+
+	public String asText(SimpleDateFormat timestampFormat) {
+		String result = String.format("%s %s", 
+							timestampFormat.format(new Date(this.microseconds/1000)),
+							this.toString());
+		return result;
+	}
+
 	@Override
 	public String toString() {
-		SimpleDateFormat TIMESTAMP_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS"); // TODO: DUHHHHH
-		
-		String result = String.format("%s [%4d/%4d] %s", 
-							TIMESTAMP_FORMAT.format(new Date(this.microseconds/1000)),
+		String result = String.format("[%4d] %s", 
 							this.storedLength,
-							this.originalLength,
+							//this.originalLength,
 							StringUIConverter.bytesToHexString(this.getPacket())
 						);
 		return result;
 	}
-	
 }
