@@ -66,14 +66,8 @@ import com.gadgetworks.codeshelf.validation.DefaultErrors;
 import com.gadgetworks.codeshelf.validation.ErrorCode;
 import com.gadgetworks.codeshelf.validation.Errors;
 import com.gadgetworks.codeshelf.validation.InputValidationException;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.message.LightLedsMessage;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
-import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
-import com.gadgetworks.codeshelf.ws.jetty.server.SessionManager;
 import com.gadgetworks.flyweight.command.ColorEnum;
-import com.gadgetworks.flyweight.command.NetGuid;
 import com.google.common.base.Strings;
-import com.google.gson.annotations.SerializedName;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -92,7 +86,8 @@ import com.google.inject.Singleton;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class Facility extends SubLocationABC<Facility> {
 
-	private static final int	LIGHT_LOCATION_DURATION_SECS	= 20;
+	@SuppressWarnings("unused")
+	private static final long	serialVersionUID	= 1L;
 
 	private static final String			IRONMQ_DOMAINID	= "IRONMQ";
 
@@ -1621,84 +1616,6 @@ public class Facility extends SubLocationABC<Facility> {
 		inWi.setLedCmdStream(LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList));
 	}
 
-	// -------UI support for lighting items and locations- START ------------------
-
-	// --------------------------------------------------------------------------
-	/**
-	 * Light one location transiently. Any subsequent activity on the aisle controller will wipe this away.
-	 * May be called with BLACK to clear whatever you just sent. 
-	 */
-	public void lightOneLocation(final String inColorStr, final String inLocationNominalId) {
-		final int kDurationLocationLight = LIGHT_LOCATION_DURATION_SECS;
-				
-		ColorEnum theColor = ColorEnum.valueOf(inColorStr);
-		if (theColor == ColorEnum.INVALID) {
-			LOGGER.error("lightOneLocation called with unknown color");
-			return;
-		}
-		ISubLocation<?> theLocation = this.findSubLocationById(inLocationNominalId);
-		if (theLocation == null || theLocation instanceof Facility) {
-			LOGGER.error("lightOneLocation called with unknown location");
-			return;
-		}
-
-		List<LedCmdGroup> ledCmdGroupList = getLedCmdGroupListForItemOrLocation(null, theColor, theLocation);
-		if (ledCmdGroupList.size() == 0) {
-			LOGGER.info("lightOneLocation called for location with incomplete LED configuration");
-			return;
-		}
-		LedController theController = theLocation.getEffectiveLedController();
-		if (theController != null) {
-			String theGuidStr = theController.getDeviceGuidStr();
-
-			String theLedCommands = LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList);
-			LOGGER.info("lightOneLocation called from UI");
-			LightLedsMessage theMessage = new LightLedsMessage(theGuidStr, kDurationLocationLight, theLedCommands);
-			sendToAllSiteControllers(theMessage);
-		}
-
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * Light one item. Any subsequent activity on the aisle controller will wipe this away.
-	 * May be called with BLACK to clear whatever you just sent.
-	 */
-	@SuppressWarnings("rawtypes")
-	public void lightOneItem(final String inColorStr, final String inItemPersistentId) {
-		final int kDurationItemLight = LIGHT_LOCATION_DURATION_SECS;
-
-		ColorEnum theColor = ColorEnum.valueOf(inColorStr);
-		if (theColor == ColorEnum.INVALID) {
-			LOGGER.error("lightOneItem called with unknown color");
-			return;
-		}
-		Item theItem = Item.DAO.findByPersistentId(inItemPersistentId);
-		if (theItem == null) {
-			LOGGER.error("lightOneItem called with unknown item");
-			return;
-		}
-
-		LocationABC location = theItem.getStoredLocation();
-		List<LedCmdGroup> ledCmdGroupList = getLedCmdGroupListForItemOrLocation(theItem, theColor, location);
-		if (ledCmdGroupList.size() == 0) {
-			LOGGER.info("lightOneItem called for location with incomplete LED configuration");
-			return;
-		}
-
-		LedController theController = location.getEffectiveLedController();
-		if (theController != null) {
-			String theGuidStr = theController.getDeviceGuidStr();
-
-			String theLedCommands = LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList);
-			LOGGER.info("lightOneLocation called from UI");
-			LightLedsMessage theMessage = new LightLedsMessage(theGuidStr, kDurationItemLight, theLedCommands);
-			sendToAllSiteControllers(theMessage);
-		}
-	}
-
-	// -------UI support for lighting items and locations- END-----------------------
-
 	/**
 	 * Compare Items by their ItemMasterDdc.
 	 *
@@ -2050,23 +1967,6 @@ public class Facility extends SubLocationABC<Facility> {
 		return outHeaderCounts;
 	}
 
-	// --------------------------------------------------------------------------
-	/**
-	 * @param inWorkInstruction
-	 */
-	public final void sendWorkInstructionsToHost(final List<WorkInstruction> inWiList) {
-
-		IEdiService ediExportService = getEdiExportService(); // this should succeed, or catch its own throw and return null
-
-		if (ediExportService != null) {
-			try {
-				ediExportService.sendWorkInstructionsToHost(inWiList);
-			} catch (IOException e) {
-				LOGGER.warn("Unable to send wi list to service:" + ediExportService, e);
-			}
-		}
-	}
-
 	public Item upsertItem(String itemId, String storedLocationId, String cmDistanceFromLeft, String quantity, String inUomId) {
 		//TODO This is a proof of concept and needs refactor to not have a dependency out of the EDI package
 		storedLocationId = Strings.nullToEmpty(storedLocationId);
@@ -2088,48 +1988,12 @@ public class Facility extends SubLocationABC<Facility> {
 			throw new InputValidationException(errors);
 		}
 		
-		// Proof of concept with existing UI
 		Item returnItem = importer.updateSlottedItem(false,
 			itemBean,
 			location,
 			new Timestamp(System.currentTimeMillis()),
 			itemMaster,
 			uomMaster);
-		if (returnItem != null)
-			this.lightOneItem("RED", returnItem.getPersistentId().toString());
 		return returnItem;
-	}
-
-	public final int sendToAllSiteControllers(MessageABC message) {
-		SessionManager sessionManager = SessionManager.getInstance();
-		Set<User> users = this.getSiteControllerUsers();
-		Set<CsSession> sessions = sessionManager.getSessions(users);
-		for (CsSession session : sessions) {
-			session.sendMessage(message);
-		}
-		return sessions.size();
-	}
-
-	public final Set<SiteController> getSiteControllers() {
-		Set<SiteController> siteControllers = new HashSet<SiteController>();
-
-		for (CodeshelfNetwork network : this.getNetworks()) {
-			siteControllers.addAll(network.getSiteControllers().values());
-		}
-		return siteControllers;
-	}
-
-	public final Set<User> getSiteControllerUsers() {
-		Set<User> users = new HashSet<User>();
-
-		for (SiteController sitecon : this.getSiteControllers()) {
-			User user = User.DAO.findByDomainId(this.getParentOrganization(), sitecon.getDomainId());
-			if (user != null) {
-				users.add(user);
-			} else {
-				LOGGER.warn("Couldn't find user for site controller " + sitecon.getDomainId());
-			}
-		}
-		return users;
 	}
 }

@@ -458,13 +458,13 @@ public class InventoryImporterTest extends EdiTestABC {
 		Assert.assertEquals(80, lastLocLed);
 		// now the tricky stuff
 		LedRange theLedRange = itemBOL1.getFirstLastLedsForItem();
-		Assert.assertEquals(39, theLedRange.mFirstLedToLight);
-		Assert.assertEquals(42, theLedRange.mLastLedToLight, 1);
+		Assert.assertEquals(39, theLedRange.getFirstLedToLight());
+		Assert.assertEquals(42, theLedRange.getLastLedToLight(), 1);
 
 		// item1123 for CS in D101 which is the A1.B1.T1. 16 cm from left of 230 cm aisle
 		LedRange theLedRange2 = item1123.getFirstLastLedsForItem();
-		Assert.assertEquals(73, theLedRange2.mFirstLedToLight);
-		Assert.assertEquals(76, theLedRange2.mLastLedToLight);
+		Assert.assertEquals(73, theLedRange2.getFirstLedToLight());
+		Assert.assertEquals(76, theLedRange2.getLastLedToLight());
 
 		// item1123 for EA in D403 which is the A2.B2.T1. 135 cm from left of 230 cm aisle
 		LocationABC locationA2B2T1 = (LocationABC) facility.findSubLocationById("A2.B2.T1");
@@ -478,8 +478,8 @@ public class InventoryImporterTest extends EdiTestABC {
 		Assert.assertFalse(locationD403.isLowerLedNearAnchor());
 		// This is A2 bay 2; LEDs come from that side in A2. ((230-135)/230)*80 == 33 is the central LED.
 		LedRange theLedRange3 = item1123EA.getFirstLastLedsForItem();
-		Assert.assertEquals(32, theLedRange3.mFirstLedToLight);
-		Assert.assertEquals(35, theLedRange3.mLastLedToLight);
+		Assert.assertEquals(32, theLedRange3.getFirstLedToLight());
+		Assert.assertEquals(35, theLedRange3.getLastLedToLight());
 
 	}
 
@@ -529,8 +529,8 @@ public class InventoryImporterTest extends EdiTestABC {
 		Assert.assertNotNull(item1123EA);
 		LedRange theLedRange = item1123EA.getFirstLastLedsForItem();
 		// central led at about (((230-135)/230) * 80) + 80
-		Assert.assertEquals(112, theLedRange.mFirstLedToLight);
-		Assert.assertEquals(115, theLedRange.mLastLedToLight);
+		Assert.assertEquals(112, theLedRange.getFirstLedToLight());
+		Assert.assertEquals(115, theLedRange.getLastLedToLight());
 
 	}
 

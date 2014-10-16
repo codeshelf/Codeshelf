@@ -264,7 +264,6 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 	 */
 	Short getEffectiveLedChannel();
 	
-	List<LedCmdGroup> getLedsToCheck(ColorEnum inColor);
 	Set<LedCmdPath> getAllLedCmdPaths();
 	
 }
