@@ -19,6 +19,8 @@ import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.model.HeaderCounts;
 import com.gadgetworks.codeshelf.model.HousekeepingInjector;
+import com.gadgetworks.codeshelf.model.HousekeepingInjector.BayChangeChoice;
+import com.gadgetworks.codeshelf.model.HousekeepingInjector.RepeatPosChoice;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
@@ -184,8 +186,9 @@ public class CrossBatchRunTest extends EdiTestABC {
 				+ "\r\n1,USF314,COSTCO,,123,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,,456,10700589,Napa Valley Bistro - Jalapeño Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,,456,10722222,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
-				+ "\r\n1,USF314,COSTCO,,456,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\n1,USF314,COSTCO,,456,10706962,Authentic Pizza Sauces,2,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,,456,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\n1,USF314,COSTCO,,789,10706962,Authentic Pizza Sauces,2,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,,789,10100250,Organic Fire-Roasted Red Bell Peppers,3,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,,789,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
 
@@ -244,6 +247,12 @@ public class CrossBatchRunTest extends EdiTestABC {
 
 	}
 
+	private void logWiList(List<WorkInstruction> inList) {
+		for (WorkInstruction wi : inList)
+			LOGGER.debug("WiSort: " + wi.getGroupAndSortCode() + " cntr: " + wi.getContainerId() + " loc: "
+					+ wi.getPickInstruction() + " count: " + wi.getPlanQuantity() + " order: " + wi.getOrderId() + " desc.: " + wi.getDescription());
+	}
+
 	@Test
 	public final void basicCrossBatchRun() throws IOException {
 		Facility facility = setUpSimpleSlottedFacility("XB01");
@@ -288,12 +297,14 @@ public class CrossBatchRunTest extends EdiTestABC {
 		// Set up a cart for container 11, which should generate work instructions for orders 123 and 456.
 		facility.setUpCheContainerFromString(theChe, "11");
 		HousekeepingInjector.restoreHKDefaults();
-		
+
 		List<WorkInstruction> aList = theChe.getCheWorkInstructions();
 		Integer wiCount = aList.size();
 		Assert.assertEquals((Integer) 2, wiCount); // one product going to 2 orders
 
 		List<WorkInstruction> wiListAfterScan = facility.getWorkInstructions(theChe, "D-36"); // this is earliest on path
+		// Just some quick log output to see it
+		logWiList(wiListAfterScan);
 		Integer wiCountAfterScan = wiListAfterScan.size();
 		Assert.assertEquals((Integer) 2, wiCountAfterScan);
 
@@ -302,7 +313,7 @@ public class CrossBatchRunTest extends EdiTestABC {
 		String groupSortStr2 = wi2.getGroupAndSortCode();
 		Assert.assertEquals("0002", groupSortStr2);
 	}
-	
+
 	@SuppressWarnings("unused")
 	@Test
 	public final void basicHousekeeping() throws IOException {
@@ -311,10 +322,11 @@ public class CrossBatchRunTest extends EdiTestABC {
 
 		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
 		Che theChe = theNetwork.getChe("CHE1");
-		
+
 		// Set up a cart for containers 15 and 14, which should generate 4 work normal instructions.
 		// However, as we are coming from the same container for subsequent ones, there will be housekeeping WIs inserted.
 
+		LOGGER.info("basicHousekeeping.  Set up CHE for 15,14");
 		// Make sure housekeeping is on
 		HousekeepingInjector.restoreHKDefaults();
 		facility.setUpCheContainerFromString(theChe, "15,14");
@@ -324,9 +336,8 @@ public class CrossBatchRunTest extends EdiTestABC {
 		Integer wiCount = aList.size();
 		Assert.assertEquals((Integer) 7, wiCount); // one product going to 1 order, and 1 product going to the same order and 2 more.
 		// Just some quick log output to see it
-		for (WorkInstruction wi : aList)
-			LOGGER.debug("WiSort: " + wi.getGroupAndSortCode() + " cntr: " + wi.getContainerId() + " loc: " + wi.getPickInstruction() + " desc.: " + wi.getDescription());
-		
+		logWiList(aList);
+
 		WorkInstruction wi1 = aList.get(0);
 		WorkInstruction wi2 = aList.get(1);
 		WorkInstruction wi3 = aList.get(2);
@@ -338,11 +349,79 @@ public class CrossBatchRunTest extends EdiTestABC {
 		String wi2Desc = wi2.getDescription();
 		String wi5Desc = wi5.getDescription();
 		String wi6Desc = wi6.getDescription();
-	
+
 		Assert.assertEquals("Bay Change", wi2Desc);
 		Assert.assertEquals("Repeat Container", wi5Desc);
 		Assert.assertEquals("Bay Change", wi6Desc);
 
 	}
+
+	@SuppressWarnings("unused")
+	@Test
+	public final void housekeepingNegativeTest() throws IOException {
+		// Same as basic housekeeping, but showing that no housekeeps if set to pathSegmentChange and containerAndCount
+		Facility facility = setUpSimpleSlottedFacility("XB02");
+		setUpGroup1OrdersAndSlotting(facility);
+
+		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
+		Che theChe = theNetwork.getChe("CHE1");
+
+		// Set up a cart for containers 15 and 14, which should generate 4 work normal instructions.
+		// However, as we are coming from the same container for subsequent ones, there will be housekeeping WIs inserted.
+
+		LOGGER.info("housekeepingNegativeTest.  Set up CHE for 15,14");
+		// Job 3 and 4 are same container, different count. No repeate container by the parameter
+		// Job 3 and 4 are different bays on the same path. No bay change by the parameter
+		// Future proof for other kinds of housekeeps
+		HousekeepingInjector.turnOffHK();
+		HousekeepingInjector.setBayChangeChoice(BayChangeChoice.BayChangePathSegmentChange);
+		HousekeepingInjector.setRepeatPosChoice(RepeatPosChoice.RepeatPosContainerAndCount);
+		facility.setUpCheContainerFromString(theChe, "15,14");
+		HousekeepingInjector.restoreHKDefaults();
+
+		// Important to realize. theChe.getWorkInstruction() just gives all work instructions in an arbitrary order.
+		List<WorkInstruction> aList = facility.getWorkInstructions(theChe, ""); // This returns them in working order.
+
+		Integer wiCount = aList.size();
+		Assert.assertEquals((Integer) 4, wiCount); // one product going to 1 order, and 1 product going to the same order and 2 more.
+		// Just some quick log output to see it
+		logWiList(aList);
+	}
+
+	@Test
+	public final void housekeepingContainerAndCount() throws IOException {
+		Facility facility = setUpSimpleSlottedFacility("XB02");
+		setUpGroup1OrdersAndSlotting(facility);
+
+		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
+		Che theChe = theNetwork.getChe("CHE1");
+
+		// Set up a cart for containers 11,12,13, which should generate 6 normal work instructions.
+		LOGGER.info("housekeepingContainerAndCount.  Set up CHE for 11,12,13");
+
+		// Future proof for other kinds of housekeeps
+		HousekeepingInjector.turnOffHK();
+		HousekeepingInjector.setBayChangeChoice(BayChangeChoice.BayChangeNone);
+		HousekeepingInjector.setRepeatPosChoice(RepeatPosChoice.RepeatPosContainerAndCount);
+		facility.setUpCheContainerFromString(theChe, "11,12,13");
+		HousekeepingInjector.restoreHKDefaults(); // set it back
+
+		// Important to realize. theChe.getWorkInstruction() just gives all work instructions in an arbitrary order.
+		List<WorkInstruction> aList = facility.getWorkInstructions(theChe, ""); // This returns them in working order.
+
+		Integer wiCount = aList.size();
+		Assert.assertEquals((Integer) 8, wiCount); // one product going to 1 order, and 1 product going to the same order and 2 more.
+		// Just some quick log output to see it
+		logWiList(aList);
+
+		WorkInstruction wi4 = aList.get(3);
+
+		String wi4Desc = wi4.getDescription();
+
+		Assert.assertEquals("Repeat Container", wi4Desc);
+
+	}
+	
+	// Important: BayChangeExceptSamePathDistance is not tested here. Need positive and negative tests
 
 }
