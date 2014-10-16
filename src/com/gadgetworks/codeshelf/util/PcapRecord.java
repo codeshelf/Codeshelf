@@ -105,12 +105,21 @@ public class PcapRecord {
 	public int getLength() {
 		return PcapRecord.HEADER_LENGTH + this.packet.length;
 	}
+	
+	@JsonIgnore
+	public byte getSourceAddress() {
+		if(this.packet.length > 4) {
+			return packet[1];
+		}//else
+		return -1;
+	}
 
-	public String asText(SimpleDateFormat timestampFormat) {
-		String result = String.format("%s %s", 
-							timestampFormat.format(new Date(this.microseconds/1000)),
-							this.toString());
-		return result;
+	@JsonIgnore
+	public byte getDestinationAddress() {
+		if(this.packet.length > 4) {
+			return packet[2];
+		}//else
+		return -1;
 	}
 
 	@Override

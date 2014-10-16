@@ -3,6 +3,7 @@ package com.gadgetworks.codeshelf.device;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
@@ -13,6 +14,7 @@ import javax.servlet.http.HttpServletResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gadgetworks.codeshelf.util.PcapRecord;
 import com.gadgetworks.codeshelf.util.PcapRingBuffer;
+import com.gadgetworks.flyweight.command.NetGuid;
 
 public class RadioServlet extends HttpServlet {
 	private static final long	serialVersionUID	= 8642709590957174287L;
@@ -132,11 +134,30 @@ public class RadioServlet extends HttpServlet {
 			*/
     		PcapRecord record;
     		while((record = ring.get())!=null) {
-    			out.println(record.asText(timestampFormat));
+    			out.println(String.format("%s %9s->%9s %s", 
+					timestampFormat.format(new Date(record.getMicroseconds() / 1000)),
+					describeNetworkAddress(record.getSourceAddress()),
+					describeNetworkAddress(record.getDestinationAddress()),
+					record.toString() 
+					));
     		}
 		} catch (IOException e) {
 			e.printStackTrace(out);
 		}
     	out.println("</pre><hr></body></html>");
     }
+
+	private String describeNetworkAddress(byte netAddress) {
+		if(netAddress == 0) {
+			return "gateway";
+		} //else
+		if(netAddress == -1) {
+			return "broadcast";
+		} //else
+		NetGuid guid = this.deviceManager.getRadioController().getNetGuidFromNetAddress(netAddress);
+		if(guid != null) {
+			return guid.getHexStringNoPrefix();
+		} //else
+		return "unknown";
+	}
 }

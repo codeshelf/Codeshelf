@@ -1187,4 +1187,16 @@ public class RadioController implements IRadioController {
 	public boolean isRunning() {
 		return this.mRunning;
 	}
+	
+	public NetGuid getNetGuidFromNetAddress(byte networkAddr) {
+		return getNetGuidFromNetAddress(new NetAddress(networkAddr));		
+	}
+
+	public NetGuid getNetGuidFromNetAddress(NetAddress netAddress) {
+		INetworkDevice device = this.mDeviceNetAddrMap.get(netAddress);
+		if(device != null) {
+			return device.getGuid();
+		} //else
+		return null;
+	}
 }
