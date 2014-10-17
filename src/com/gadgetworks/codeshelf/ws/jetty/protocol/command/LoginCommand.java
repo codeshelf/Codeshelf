@@ -46,15 +46,14 @@ public class LoginCommand extends CommandABC {
 			if (user != null) {
 				String password = loginRequest.getPassword();
 				if (user.isPasswordValid(password)) {
-					Organization org = user.getParent();
-					session.setUser(user);
+					session.authenticated(user);
 					ContextLogging.setSession(session);
 					try {
-						session.authenticated(user);
+						Organization org = user.getParent();
 						LOGGER.info("User "+userId+" of "+org.getDomainId()+" authenticated on session "+session.getSessionId());
 						
 						// determine if site controller
-						SiteController sitecon = SiteController.DAO.findByDomainId(org, userId);
+						SiteController sitecon = SiteController.DAO.findByDomainId(null, userId);
 						CodeshelfNetwork network=null;
 						if (sitecon  != null) {
 							network = sitecon.getParent();

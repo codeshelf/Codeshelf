@@ -77,6 +77,10 @@ public class ServerMessageProcessor extends MessageProcessor {
 	public ServerMessageProcessor(IDaoProvider daoProvider) {
 		LOGGER.debug("Creating "+this.getClass().getSimpleName());
 		this.daoProvider = daoProvider;
+		if(daoProvider == null) {
+			LOGGER.error("got null daoProvider creating ServerMessageProcessor");
+		}
+			
 		this.workService = new WorkService();
 	}
 	

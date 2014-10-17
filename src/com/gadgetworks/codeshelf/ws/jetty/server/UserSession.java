@@ -42,7 +42,7 @@ public class UserSession implements IDaoListener {
 	@Getter @Setter
 	String sessionId;
 
-	@Getter @Setter
+	@Getter 
 	User user;
 	
 	@Getter
@@ -144,7 +144,9 @@ public class UserSession implements IDaoListener {
 	}
 
 	public void registerAsDAOListener(ITypedDao<IDomainObject> dao) {
-		if (!daoList.contains(dao)) {
+		if (dao == null) {
+			LOGGER.error("couldn't register session as listener to null dao");
+		} else if (!daoList.contains(dao)) {
 			dao.registerDAOListener(this);
 			LOGGER.debug("Registered session "+this.sessionId+" with "+dao.getClass().getSimpleName());
 			this.daoList.add(dao);

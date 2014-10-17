@@ -64,6 +64,8 @@ public class LocationAliasImporterTest extends EdiTestABC {
 		ICsvLocationAliasImporter importer = new LocationAliasCsvImporter(mLocationAliasDao);
 		importer.importLocationAliasesFromCsvStream(reader, facility, ediProcessTime);
 
+		this.getPersistenceService().endTenantTransaction();
+		
 		this.getPersistenceService().beginTenantTransaction();
 
 		// Make sure we can still look up an aisle by it's FQN.

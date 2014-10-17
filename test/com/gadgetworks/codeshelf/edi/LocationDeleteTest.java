@@ -22,6 +22,7 @@ import com.gadgetworks.codeshelf.model.HousekeepingInjector;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
+import com.gadgetworks.codeshelf.model.domain.DomainTestABC;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.LocationABC;
@@ -38,7 +39,7 @@ import com.gadgetworks.flyweight.command.NetGuid;
  * 
  * 
  */
-public class LocationDeleteTest extends EdiTestABC {
+public class LocationDeleteTest extends DomainTestABC {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(LocationDeleteTest.class);
 	
 	private final boolean LARGER_FACILITY = true;
@@ -282,6 +283,7 @@ public class LocationDeleteTest extends EdiTestABC {
 		// The idea is to setup, then delete an aisle that has order locations, complete and active work instruction, associated path and controller.
 		// Make no throws as those things are accessed.
 		// Bring it back
+		this.getPersistenceService().beginTenantTransaction();
 
 		Facility facility = setUpSimpleSlottedFacility("LD01", LARGER_FACILITY);
 		setUpGroup1OrdersAndSlotting(facility);
@@ -367,12 +369,15 @@ public class LocationDeleteTest extends EdiTestABC {
 		locationA1B1T1S1 = (LocationABC<?>) facility.findSubLocationById("A1.B1.T1.S1");
 		Assert.assertTrue(locationA1B1T1S1.getActive());
 
+		this.getPersistenceService().endTenantTransaction();
 	}
 	
 	@Test
 	public final void locationDelete2() throws IOException {
 		// The idea is to setup, then redo "smaller" aisle file that results in deleted bays, tiers, and slots.
 		// Bring it back with original
+		this.getPersistenceService().beginTenantTransaction();
+
 		
 		LOGGER.info("DeleteLocation Test 2. Start by setting up standard aisles A1 and A2");
 		Facility facility = setUpSimpleSlottedFacility("LD02", LARGER_FACILITY);
@@ -394,6 +399,7 @@ public class LocationDeleteTest extends EdiTestABC {
 		readStandardAisleFile(facility);
 		// Look at the normal and deleted locations.
 
+		this.getPersistenceService().endTenantTransaction();
 	}
 
 	@Test
@@ -402,7 +408,9 @@ public class LocationDeleteTest extends EdiTestABC {
 		// That we see in locationDelete2. This just flips the larger and smaller aisle file reads to see if that matters.
 		
 		// Also note, if you have this exception as a breakpoint, you will catch it during all facility setup during IronMQ setup. That should be cleaned up.
-		
+
+		this.getPersistenceService().beginTenantTransaction();
+
 		LOGGER.info("DeleteLocation Test . Start by setting up smaller aisle A1 and A2");
 		Facility facility = setUpSimpleSlottedFacility("LD02", SMALLER_FACILITY);
 		setUpGroup1OrdersAndSlotting(facility);
@@ -425,6 +433,7 @@ public class LocationDeleteTest extends EdiTestABC {
 		LOGGER.info("reading original aisles file that should make the added bay, tier, and slot inactive");
 		readSmallerAisleFile(facility);
 
+		this.getPersistenceService().endTenantTransaction();
 	}
 
 }

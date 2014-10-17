@@ -104,6 +104,7 @@ public class CsServerEndPoint {
         	}
     	} finally {
     		ContextLogging.clearSession();
+        	this.getPersistenceService().endTenantTransaction();
     	}
     }
     

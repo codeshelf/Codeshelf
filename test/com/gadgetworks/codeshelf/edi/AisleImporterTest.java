@@ -523,6 +523,7 @@ public class AisleImporterTest extends DomainTestABC {
 	@SuppressWarnings("unused")
 	@Test
 	public final void testSparseLeds() {
+		this.getPersistenceService().beginTenantTransaction();
 
 		// Lasers are sparse: one led per slot
 		// Paul tested 8 leds for 5 slots and found bad behavior
@@ -634,6 +635,8 @@ public class AisleImporterTest extends DomainTestABC {
 		short slotB1T5S5Last = slotB1T5S5.getLastLedNumAlongPath();
 		Assert.assertTrue(slotB1T5S5First == 7);
 		Assert.assertTrue(slotB1T5S5Last == 7);
+
+		this.getPersistenceService().endTenantTransaction();
 
 	}
 

@@ -103,7 +103,7 @@ public abstract class DAOTestABC {
 	protected OrderDetailDao		mOrderDetailDao;
 	protected OrderLocationDao		mOrderLocationDao;
 	protected CodeshelfNetworkDao	mCodeshelfNetworkDao;
-	protected CheDao				mCheDao;
+	protected ITypedDao<Che>				mCheDao;
 	protected SiteControllerDao		mSiteControllerDao; 
 	protected ContainerDao			mContainerDao;
 	protected ContainerKindDao		mContainerKindDao;

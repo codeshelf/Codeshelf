@@ -292,5 +292,10 @@ public class User extends DomainObjectTreeABC<Organization> {
 		// TODO Auto-generated method stub
 		return null;
 	}
+	
+	@Override
+	public Organization getOrganization() {
+		return this.getParent();
+	}
 
 }

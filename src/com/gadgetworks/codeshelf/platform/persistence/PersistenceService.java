@@ -51,6 +51,10 @@ public class PersistenceService extends Service {
 	// temp solution to get current tenant, while multitenancy has not been built out
 	Tenant fixedTenant;
 	
+	// for debugging only, remove
+	Map<Session,StackTraceElement[]> sessionStarted=new HashMap<Session,StackTraceElement[]>(); 
+	Map<Transaction,StackTraceElement[]> transactionStarted=new HashMap<Transaction,StackTraceElement[]>(); 
+	
 	public PersistenceService() {
 		setInstance();
 		fixedTenant = new Tenant();
@@ -241,6 +245,11 @@ public class PersistenceService extends Service {
 			this.factories.put(tenant, fac);
 		}
 		Session session = fac.getCurrentSession();
+		
+		if(!this.sessionStarted.containsKey(session)) {
+			this.sessionStarted.put(session, Thread.currentThread().getStackTrace());
+		}
+		
 		return session;
 	}
 
@@ -250,15 +259,28 @@ public class PersistenceService extends Service {
 	
 	public final Transaction beginTenantTransaction() {
 		Session session = getCurrentTenantSession();
+		StackTraceElement st[]=this.sessionStarted.get(session);
 		Transaction tx = session.getTransaction();
+		if(!this.transactionStarted.containsKey(tx)) {
+			this.transactionStarted.put(tx,Thread.currentThread().getStackTrace());
+		}
 		if (tx != null) {
 			if (tx.isActive()) {
+				StackTraceElement[] tst=transactionStarted.get(tx);
 				LOGGER.warn("tried to begin transaction, but was already in active transaction");
 				return tx;
-			}
+			} 
 		}
 		
 		Transaction txBegun = session.beginTransaction();
+
+		if(tx != null) {
+			if(tx != txBegun && tx.equals(txBegun)) {
+				LOGGER.warn("beginTenantTransaction CREATED IDENTICAL transaction");
+			} else {
+				LOGGER.warn("beginTenantTransaction REPLACED transaction");
+			}
+		}
 		return txBegun;
 	}
 
