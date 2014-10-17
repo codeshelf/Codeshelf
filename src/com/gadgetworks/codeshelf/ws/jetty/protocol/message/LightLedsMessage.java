@@ -7,10 +7,12 @@ import org.slf4j.LoggerFactory;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 import com.gadgetworks.codeshelf.device.LedCmdGroup;
 import com.gadgetworks.codeshelf.device.LedCmdGroupSerializer;
 
+@ToString
 public class LightLedsMessage extends MessageABC {
 	
 	private static final Logger		LOGGER									= LoggerFactory.getLogger(LightLedsMessage.class);

@@ -109,28 +109,29 @@ public class LightService {
 				
 		ColorEnum theColor = ColorEnum.valueOf(inColorStr);
 		if (theColor == ColorEnum.INVALID) {
-			LOGGER.error("lightOneLocation called with unknown color");
+			LOGGER.error("lightOneLocation called with unknown color: " + theColor);
 			return;
 		}
 
 		Facility facility = Facility.DAO.findByPersistentId(facilityPersistentId);
 		if (facility == null) {
-			LOGGER.error("lightAllControllers called with unknown facility");
+			LOGGER.error("lightOneLocation called with unknown facility: " + facilityPersistentId);
 			return;
 		}
 
 		ISubLocation<?> theLocation = facility.findSubLocationById(inLocationNominalId);
 		if (theLocation == null || theLocation instanceof Facility) {
-			LOGGER.error("lightOneLocation called with unknown location");
+			LOGGER.error("lightOneLocation called with unknown location: " + theLocation);
 			return;
 		}
 
 		// IMPORTANT. When DEV-411 resumes, change to 4.  For now, we want only 3 LED lit at GoodEggs.
 		List<LedCmdGroup> ledCmdGroupList = getLedCmdGroupListForLocation(3, theColor, theLocation);
 		if (ledCmdGroupList.size() == 0) {
-			LOGGER.info("lightOneLocation called for location with incomplete LED configuration");
+			LOGGER.info("lightOneLocation called for location with incomplete LED configuration: " + theLocation);
 			return;
-		}
+		} 
+		
 		sendToAllSiteControllers(facility, ledCmdGroupList);
 	}
 
@@ -149,7 +150,7 @@ public class LightService {
 
 		Facility facility = Facility.DAO.findByPersistentId(facilityPersistentId);
 		if (facility == null) {
-			LOGGER.error("lightAllControllers called with unknown facility");
+			LOGGER.error("lightOneItem called with unknown facility");
 			return;
 		}
 		
@@ -162,11 +163,13 @@ public class LightService {
 		// IMPORTANT. When DEV-411 resumes, change to 4.  For now, we want only 3 LED lit at GoodEggs.
 		List<LedCmdGroup> ledCmdGroupList = getLedCmdGroupListForItem(3, theColor, theItem);
 		if (ledCmdGroupList.size() == 0) {
-			LOGGER.info("lightOneItem called for location with incomplete LED configuration");
+			LOGGER.info("lightOneItem called for location with incomplete LED configuration: " + theItem);
 			return;
 		}
+		else {
+			sendToAllSiteControllers(facility, ledCmdGroupList);
+		}
 
-		sendToAllSiteControllers(facility, ledCmdGroupList);
 	}
 
 	private final void sendToAllSiteControllers(Facility facility, List<LedCmdGroup> ledCmdGroupList) {
@@ -180,6 +183,7 @@ public class LightService {
 			
 			String theLedCommands = LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroups);
 			LightLedsMessage theMessage = new LightLedsMessage(theGuidStr, LIGHT_LOCATION_DURATION_SECS, theLedCommands);
+			LOGGER.debug("Sending LightLedsMessage to all site controllers: " + theMessage);
 			sendToAllSiteControllers(facility, theMessage);
 		}
 
