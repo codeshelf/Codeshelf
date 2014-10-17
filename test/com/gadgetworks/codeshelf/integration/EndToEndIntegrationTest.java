@@ -24,13 +24,15 @@ import com.gadgetworks.codeshelf.util.JVMSystemConfiguration;
 import com.gadgetworks.codeshelf.util.ThreadUtils;
 import com.gadgetworks.codeshelf.ws.jetty.client.JettyWebSocketClient;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageProcessor;
+import com.gadgetworks.codeshelf.ws.jetty.server.CsServerEndPoint;
 import com.gadgetworks.codeshelf.ws.jetty.server.JettyWebSocketServer;
-import com.gadgetworks.codeshelf.ws.jetty.server.MessageProcessorFactory;
 import com.gadgetworks.codeshelf.ws.jetty.server.ServerMessageProcessor;
+import com.gadgetworks.codeshelf.ws.jetty.server.SessionManager;
 import com.gadgetworks.flyweight.command.NetGuid;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Singleton;
 
 @Ignore
 public abstract class EndToEndIntegrationTest extends DomainTestABC {
@@ -85,8 +87,10 @@ public abstract class EndToEndIntegrationTest extends DomainTestABC {
 			protected void configure() {
 				bind(IConfiguration.class).to(JVMSystemConfiguration.class);
 				bind(IDaoProvider.class).to(DaoProvider.class);
-				bind(MessageProcessor.class).to(ServerMessageProcessor.class);
-				requestStaticInjection(MessageProcessorFactory.class);
+				bind(SessionManager.class).toInstance(SessionManager.getInstance());
+				// jetty websocket
+				bind(MessageProcessor.class).to(ServerMessageProcessor.class).in(Singleton.class);
+
 			}
 		});
 		return injector;
@@ -97,7 +101,15 @@ public abstract class EndToEndIntegrationTest extends DomainTestABC {
 	public void doBefore() throws Exception {
 		Injector websocketServerInjector = setupWSSInjector();
 		Injector siteControllerInjector = CsSiteControllerMain.setupInjector();
-		
+		try { //Ideally this would be statically initialized once before all of the integration tests
+			// Burying the exception allows the normal mode for the design to raise issue,
+			//  but in testing assume that it got setup once the first time this is called
+			CsServerEndPoint.setSessionManager(websocketServerInjector.getInstance(SessionManager.class));
+			CsServerEndPoint.setMessageProcessor(websocketServerInjector.getInstance(ServerMessageProcessor.class));
+		}
+		catch(RuntimeException e) {
+			LOGGER.debug("CsServerEndpoint already setup: " + e.toString());
+		}
 		IConfiguration configuration = websocketServerInjector.getInstance(IConfiguration.class);
 		LOGGER.debug("-------------- Creating environment before running test case");
 		//The client WSS needs the self-signed certificate to be trusted
