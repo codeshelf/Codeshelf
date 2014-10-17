@@ -5,6 +5,8 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model;
 
+import lombok.ToString;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,60 +15,55 @@ import org.slf4j.LoggerFactory;
  * But does the led computation for non-slotted
  * 
  */
+@ToString()
 public class LedRange {
-	public int		mFirstLedToLight;
-	public int		mLastLedToLight;
-	@SuppressWarnings("unused")
-	private int		mLedCountToLight;
-	private int		mFirstLocationLed;
-	private int		mLastLocationLed;
-	private Double	mLocationWidth;
-	private Double	mMetersFromAnchor;
-	private boolean	mFirstLedNearAnchor;
-
-	public LedRange() {
-		mFirstLedToLight = 0;
-		mLastLedToLight = 0;
-		mLedCountToLight = 4;
-		mFirstLocationLed = 0;
-		mLastLocationLed = 0;
-		mLocationWidth = 0.0;
-		mMetersFromAnchor = 0.0;
-		mFirstLedNearAnchor = true;
-	}
 
 	private static final Logger		LOGGER		= LoggerFactory.getLogger(LedRange.class);
+	private static final LedRange ZERO = new LedRange(0,0);
+	
+	private int		mFirstLedToLight;
+	private int		mLastLedToLight;
 
-	public void setLedCountToLight(int inLedsToLight) {
-		mLedCountToLight = inLedsToLight; // probably will not call this for a while. Just use the default of 4.
+	public LedRange(int inFirstLedToLight, int inLastLedToLight) {
+		mFirstLedToLight = inFirstLedToLight;
+		mLastLedToLight = inLastLedToLight;
 	}
-
-	public void computeLedsToLight(int inFirstLocLed,
+	
+	public static LedRange zero() {
+		return ZERO;
+	}
+	
+	public static LedRange computeLedsToLight(int inFirstLocLed,
 		int inLastLocLed,
+		boolean inFirstLedNearAnchor,
 		Double inLocWidth,
-		Double inMetersFromAnchor,
-		boolean inFirstLedNearAnchor) {
-		mFirstLocationLed = inFirstLocLed;
-		mLastLocationLed = inLastLocLed;
-		mLocationWidth = inLocWidth;
+		Double inMetersFromAnchor) {
 		if (inLocWidth == null)
-			mLocationWidth = 0.0;
-		mMetersFromAnchor = inMetersFromAnchor;
+			inLocWidth = 0.0;
 		if (inMetersFromAnchor == null)
-			mMetersFromAnchor = 0.0;
-		mFirstLedNearAnchor = inFirstLedNearAnchor;
-		_computeLedsToLight();
+			inMetersFromAnchor = 0.0;
+		return _computeLedsToLight(inFirstLocLed, inLastLocLed, inFirstLedNearAnchor, inLocWidth, inMetersFromAnchor);
 	}
 
-	public void computeLedsToLightForLocationNoOffset(int inFirstLocLed,
+	public static LedRange computeLedsToLightForLocationNoOffset(int inFirstLocLed,
 		int inLastLocLed,
 		boolean inFirstLedNearAnchor) {
-		mFirstLocationLed = inFirstLocLed;
-		mLastLocationLed = inLastLocLed;
-		mLocationWidth = 0.0;
-		mMetersFromAnchor = 0.0;
-		mFirstLedNearAnchor = inFirstLedNearAnchor; // Does not really matter. Just centers in the led span
-		_computeLedsToLight();
+		return _computeLedsToLight(inFirstLocLed, inLastLocLed, inFirstLedNearAnchor, 0.0, 0.0);
+	}
+	
+	public LedRange capLeds(int maxLeds) {
+		int limit = Math.min(totalLeds(), maxLeds);
+		boolean ascending = (mLastLedToLight - mFirstLedToLight) >= 0;
+		if (ascending) {
+			return new LedRange(mFirstLedToLight, Math.max(0,mFirstLedToLight + limit-1));
+		} else {
+			return new LedRange(mFirstLedToLight, Math.max(0,mFirstLedToLight - limit-1));
+		}
+	}
+	
+	private int totalLeds () {
+
+		return Math.abs(mLastLedToLight - mFirstLedToLight) +1;
 	}
 	
 	public String getRangeString(){
@@ -90,67 +87,65 @@ public class LedRange {
 		return (short) mLastLedToLight;
 	}
 
-
-	private void _computeLedsToLight() {
+	
+	
+	private static LedRange _computeLedsToLight(int inFirstLocationLed, int inLastLocationLed, boolean inFirstLedNearAnchor, double inLocationWidth, double inMetersFromAnchor) {
 		// Note mLocationWidth = 0 may be commonly used by computeLedsToLightForLocationNoOffset. There is a width, but does not matter to the computation. So passed as 0.
-		mFirstLedToLight = 0;
-		mLastLedToLight = 0;
-		if (mFirstLocationLed <= 0 || mLastLocationLed <= 0) {
+		if (inFirstLocationLed <= 0 || inLastLocationLed <= 0) {
 			// log?
-			return;
+			return zero();
 		}
-		if (mFirstLocationLed > mLastLocationLed) {
+		if (inFirstLocationLed > inLastLocationLed) {
 			// log?
-			return;
+			return zero();
 		}
-		int ledSpan = mLastLocationLed - mFirstLocationLed + 1;
-		if (mMetersFromAnchor < 0.0 || mLocationWidth < 0.0) {
+
+		if (inMetersFromAnchor < 0.0 || inLocationWidth < 0.0) {
 			LOGGER.error("unexpected width or metersFromAnchor in _computeLedsToLight");;
-			return;
+			return zero();
 		}
-		if (mMetersFromAnchor > mLocationWidth) {
+		if (inMetersFromAnchor > inLocationWidth) {
 			LOGGER.error("metersFromAnchor larger than width in _computeLedsToLight");;
-			return;
+			return zero();
 		}
-		Double fractionOfSpan = 0.0;
-		Boolean slottedInventory = false;
-		Boolean uninitializedCmFromLeft = false;
-		if (mMetersFromAnchor.equals((Double) 0.0) || mLocationWidth.equals((Double) 0.0) || mMetersFromAnchor.equals(mLocationWidth))  {// if uninitialized, just take the middle of the location
+		
+		double fractionOfSpan = 0.5;
+		boolean uninitializedCmFromLeft = false;
+		if (inLocationWidth == 0.0 || inMetersFromAnchor == 0.0 || inMetersFromAnchor == inLocationWidth)  {// if uninitialized, just take the middle of the location
 			// tricky. cmFromLeft is 0 if uninitialized, but we convert to metersFromAnchor, which may be the full width.
-			fractionOfSpan = 0.5;
 			uninitializedCmFromLeft = true;
 		}
-		else
-			fractionOfSpan = mMetersFromAnchor/mLocationWidth;
-		
-		// let's detect slotted inventory
-		if (uninitializedCmFromLeft && ledSpan <= 5)
-			slottedInventory = true;
-		
-		// if slotted, we just want to return first and last led for the location
-		if (slottedInventory) {
-			mFirstLedToLight = mFirstLocationLed;
-			mLastLedToLight = mLastLocationLed;
-			return;
+		else {
+			fractionOfSpan = inMetersFromAnchor/inLocationWidth;
 		}
 		
-		// non-slotted: do the calculation
-		
-		if (!mFirstLedNearAnchor)
-			fractionOfSpan = 1.0 - fractionOfSpan;
-		int centralLed = (int) Math.round((fractionOfSpan) * ledSpan) + mFirstLocationLed - 1;
-		//  for four leds, we will go one less, to two more, unless we hit the end of the range.
-		//  need to add a computation based on mLedCountToLight someday
-		
-		int ledsLess = 1;
-		int ledsMore = 2;
-		mFirstLedToLight = centralLed - ledsLess;
-		if (mFirstLedToLight < mFirstLocationLed)
-			mFirstLedToLight = mFirstLocationLed;
-		mLastLedToLight = centralLed + ledsMore;
-		if (mLastLedToLight > mLastLocationLed)
-			mLastLedToLight = mLastLocationLed;
+		// let's detect slotted inventory
+		int ledSpan = inLastLocationLed - inFirstLocationLed + 1;
+		if (uninitializedCmFromLeft && ledSpan <= 5) { //slotted
+			return new LedRange(inFirstLocationLed, inLastLocationLed);
+		}
+		else { // non-slotted: do the calculation
+			if (!inFirstLedNearAnchor) {
+				fractionOfSpan = 1.0 - fractionOfSpan;
+			}
+			
+			int centralLed = (int) Math.round((fractionOfSpan) * ledSpan) + inFirstLocationLed - 1;
+			//  for four leds, we will go one less, to two more, unless we hit the end of the range.
+			//  need to add a computation based on mLedCountToLight someday
+			
+			int ledsLess = 1;
+			int ledsMore = 2;
 
+			int firstLedToLight = centralLed - ledsLess;
+			if (firstLedToLight < inFirstLocationLed) {
+				firstLedToLight = inFirstLocationLed;
+			}
+			int lastLedToLight = centralLed + ledsMore;
+			if (lastLedToLight > inLastLocationLed) {
+				lastLedToLight = inLastLocationLed;
+			}
+			return new LedRange(firstLedToLight, lastLedToLight);
+		}
 	}
 
 }

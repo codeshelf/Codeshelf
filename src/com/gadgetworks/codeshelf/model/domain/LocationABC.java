@@ -9,8 +9,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import javax.persistence.Column;
@@ -36,6 +38,7 @@ import org.slf4j.LoggerFactory;
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.gadgetworks.codeshelf.device.LedCmdPath;
 import com.gadgetworks.codeshelf.model.LedRange;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
@@ -50,20 +53,20 @@ import com.google.inject.Singleton;
 // --------------------------------------------------------------------------
 /**
  * LocationABC
- * 
+ *
  * The anchor point and vertex collection to define the planar space of a work structure (e.g. facility, bay, shelf, etc.)
- * 
+ *
  * NB: We can't use bean cache for location because SubLocation exists to make it so that a Facility doesn't have to have a parent location.
  * The problem with that is that cachebeans get stored with properties from their highest class (not all class in the hierarchy), so
  * the "parent" property is often not available (to the LocationABC root location object).  There are two ways to fix this:
- * 
+ *
  * 1. Go back and get rid of SubLocationABC and make Facility be its own parent so that we can enfore parent constraint on all location.
  * 2. Fix ebean caches to be a bit smarter and bring in all properties for a location.
- * 
+ *
  * There is a possibility that we could make SubLocationABC's parent a SubLocation and then the bean cache would always pull in
  * the SubLocationClass (instead of LocationABC), but there's some weird thing the causes a ClassCastException when the setParent()
  * gets called.  If that we fixable it might be a good way to go.
- * 
+ *
  * @author jeffw
  */
 
@@ -290,7 +293,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	}
 
 	// --------------------------------------------------------------------------
-	/* 
+	/*
 	 * this is the "delete" method. Does not delete. Merely makes inactive, along with all its children.
 	 * This does the DAO persist.
 	 */
@@ -497,7 +500,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		//return locations.get(inLocationId);
 		ISubLocation<?> result = null;
 
-		// If the current location is a facility then first look for an alias 
+		// If the current location is a facility then first look for an alias
 		if (this.getClass().equals(Facility.class)) {
 			Facility facility = (Facility) this;
 			LocationAlias alias = facility.getLocationAlias(inLocationId);
@@ -606,7 +609,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	}
 
 	public final String getPrimaryAliasId() {
-		// to support list view meta-field 
+		// to support list view meta-field
 		LocationAlias theAlias = getPrimaryAlias();
 		if (theAlias != null) {
 			return theAlias.getAlias();
@@ -821,6 +824,19 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		return theChannel;
 	}
 
+	public Set<LedCmdPath> getAllLedCmdPaths() {
+		Set<LedCmdPath> cmdPathsSet = new HashSet<LedCmdPath>();
+		if (getEffectiveLedController() != null) {
+			cmdPathsSet.add(new LedCmdPath(getEffectiveLedController().getDeviceGuidStr(), getEffectiveLedChannel()));
+		}
+		else {
+			for (ISubLocation child : getChildren()) {
+				cmdPathsSet.addAll(child.getAllLedCmdPaths());
+			}
+		}
+		return cmdPathsSet;
+	}
+
 	public final Boolean isLeftSideTowardsAnchor() {
 		// As you face the pickface, is the left toward the anchor (where the B1/S1 side is)
 		Aisle theAisle = this.getParentAtLevel(Aisle.class);
@@ -848,7 +864,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		return (answer == null || answer);
 		// Could this have been computed instead of persisted?
 		// The only way would have been to examine siblings of this location. Or children if there are any.
-		// Not siblings with the same parent, but same level tier for adjacent bay. Note that zigzags are tricky.				
+		// Not siblings with the same parent, but same level tier for adjacent bay. Note that zigzags are tricky.
 	}
 
 	public final Boolean isActive() {
@@ -857,18 +873,16 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 	public LedRange getFirstLastLedsForLocation() {
 		// This often returns the stated leds for slots. But if the span is large, returns the central 4 leds.
-		LedRange theLedRange = new LedRange();
-
 		// to compute, we need the locations first and last led positions
 		int firstLocLed = getFirstLedNumAlongPath();
 		int lastLocLed = getLastLedNumAlongPath();
 		// following cast not safe if the stored location is facility
 		if (this instanceof Facility)
-			return theLedRange; // was initialized to give values of 0,0
+			return LedRange.zero(); // was initialized to give values of 0,0
 
 		boolean lowerLedNearAnchor = this.isLowerLedNearAnchor();
 
-		theLedRange.computeLedsToLightForLocationNoOffset(firstLocLed, lastLocLed, lowerLedNearAnchor);
+		LedRange theLedRange = LedRange.computeLedsToLightForLocationNoOffset(firstLocLed, lastLocLed, lowerLedNearAnchor);
 
 		return theLedRange;
 	}

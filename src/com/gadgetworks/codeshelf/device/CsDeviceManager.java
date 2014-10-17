@@ -6,6 +6,7 @@
 package com.gadgetworks.codeshelf.device;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -52,12 +53,12 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 
 	private static final String							DEVICETYPE_CHE			= "CHE";
 	private static final String							DEVICETYPE_LED			= "LED Controller";
-	
+
 	private TwoKeyMap<UUID, NetGuid, INetworkDevice> mDeviceMap;
-	
+
 	@Getter
 	private IRadioController				radioController;
-	
+
 	@Getter
 	private PcapRingBuffer					pcapBuffer;
 
@@ -65,32 +66,33 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	private String							password;
 
 	/* Device Manager owns websocket configuration too */
-	private String							mUri;
-	
+	@Getter
+	private URI							mUri;
+
 	@Getter @Setter
 	boolean suppressKeepAlive = false;
-	
+
 	@Getter @Setter
 	boolean idleKill = false;
-	
+
 	@Getter
 	private JettyWebSocketClient client;
-	
+
 	private ConnectionManagerThread connectionManagerThread;
 
 	@Getter
 	private long	lastNetworkUpdate=0;
-	
+
 	private boolean isAttachedToServer = false;
-	
+
 	@Getter @Setter
 	boolean radioEnabled = true;
-	
+
 	@Inject
 	public CsDeviceManager(final IRadioController inRadioController, final IConfiguration configuration) {
 		// fetch properties from config file
 		radioEnabled = configuration.getBoolean("radio.enabled",true);
-		mUri = configuration.getString("websocket.uri");
+		mUri = URI.create(configuration.getString("websocket.uri"));
 		suppressKeepAlive = configuration.getBoolean("websocket.idle.suppresskeepalive", false);
 		idleKill = configuration.getBoolean("websocket.idle.kill", false);
 
@@ -99,23 +101,23 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 
 		username = configuration.getString("username");
 		password = configuration.getString("networkCredential");
-		
+
 		if(configuration.getBoolean("pcapbuffer.enable", false)) {
 			// set up ring buffer
 			int pcSize = configuration.getInt("pcapbuffer.size", PcapRingBuffer.DEFAULT_SIZE);
-			int pcSlack = configuration.getInt("pcapbuffer.slack", PcapRingBuffer.DEFAULT_SLACK);	
+			int pcSlack = configuration.getInt("pcapbuffer.slack", PcapRingBuffer.DEFAULT_SLACK);
 			this.pcapBuffer = new PcapRingBuffer(pcSize, pcSlack);
 
 			// listen for packets
 			radioController.getGatewayInterface().setPacketListener(this);
 		}
 	}
-	
+
 	public final void start() {
 		startWebSocketClient();
 
 	}
-	
+
 	private final void startRadio(CodeshelfNetwork network) {
 		if (radioController.isRunning()) {
 			LOGGER.warn("Radio controller is already running, cannot start again");
@@ -125,18 +127,18 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 			radioController.setNetworkId(networkId);
 			radioController.startController(network.getChannel().byteValue());
 			radioController.addControllerEventListener(this);
-		} else {			
+		} else {
 			LOGGER.warn("Radio controller disabled by setting, cannot start");
 			radioController.setNetworkId(new NetworkId((byte) 1)); // for test
 
 		}
-	}	
+	}
 
 	public final List<AisleDeviceLogic> getAisleControllers() {
 		ArrayList<AisleDeviceLogic> aList = new ArrayList<AisleDeviceLogic>();
 		for (INetworkDevice theDevice :mDeviceMap.values()) {
 			if (theDevice instanceof AisleDeviceLogic)
-				aList.add((AisleDeviceLogic) theDevice);			
+				aList.add((AisleDeviceLogic) theDevice);
 		}
 		return aList;
 	}
@@ -145,7 +147,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 		ArrayList<CheDeviceLogic> aList = new ArrayList<CheDeviceLogic>();
 		for (INetworkDevice theDevice :mDeviceMap.values()) {
 			if (theDevice instanceof CheDeviceLogic)
-				aList.add((CheDeviceLogic) theDevice);			
+				aList.add((CheDeviceLogic) theDevice);
 		}
 		return aList;
 	}
@@ -153,6 +155,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	public final void startWebSocketClient() {
     	// create response processor and register it with WS client
 		SiteControllerMessageProcessor responseProcessor = new SiteControllerMessageProcessor(this);
+
     	client = new JettyWebSocketClient(mUri,responseProcessor,this);
     	responseProcessor.setWebClient(client);
     	connectionManagerThread = new ConnectionManagerThread(this);
@@ -195,7 +198,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	@Override
 	public void deviceLost(INetworkDevice inNetworkDevice) {
 	}
-	
+
 	@Override
 	public void deviceActive(INetworkDevice inNetworkDevice) {
 		if(inNetworkDevice instanceof CheDeviceLogic ) {
@@ -206,7 +209,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 				((CheDeviceLogic) inNetworkDevice).disconnectedFromServer();
 			}
 		}
-		
+
 	}
 
 	// --------------------------------------------------------------------------
@@ -255,12 +258,12 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 		// connected to server - send attach request
 		LOGGER.info("Connected to server");
 		LoginRequest loginRequest = new LoginRequest();
-		loginRequest.setUserId(username);	
+		loginRequest.setUserId(username);
 		loginRequest.setPassword(password);
-		
+
 		client.sendMessage(loginRequest);
 	}
-	
+
 	/**
 	 * After connection and authentication this is received to indicate communication for devices is established
 	 * @see #connected()
@@ -269,7 +272,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 		LOGGER.info("Attached to server");
 		this.updateNetwork(network);
 		this.startRadio(network);
-		
+
 		isAttachedToServer = true;
 		for (INetworkDevice networkDevice : mDeviceMap.values()) {
 			if(networkDevice instanceof CheDeviceLogic ) {
@@ -287,7 +290,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 			}
 		}
 	}
-	
+
 	@Override
 	public void disconnected() {
 		unattached();
@@ -302,7 +305,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 		// NOTE: it appears CsDeviceManager receives but does not use about the domainId e.g. "CHE1" or "00000013"
 		boolean suppressMapUpdate = false;
 		INetworkDevice netDevice = mDeviceMap.get(persistentId);
-		
+
 		if (netDevice == null) {
 			// new device
 			if (deviceType.equals(DEVICETYPE_CHE)) {
@@ -396,7 +399,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 			LOGGER.info("Removed " + deviceType + " " + persistentId + " / " + netDevice.getGuid());
 		}
 	}
-	
+
 	public void updateNetwork(CodeshelfNetwork network) {
 		Set<UUID> updateDevices=new HashSet<UUID>();
 		// update network devices
@@ -422,7 +425,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 				LOGGER.error("Unable to handle network update for ledController: " + ledController, e);
 			}
 		}
-		
+
 		// now process deletions
 		Set<UUID> deleteDevices=new HashSet<UUID>();
 		for (UUID existingDevice : mDeviceMap.keys1()) {
@@ -435,7 +438,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 			NetGuid netGuid = mDeviceMap.getKeys(dev).key2;
 			doDeleteNetDevice(deleteUUID, netGuid);
 		}
-		this.lastNetworkUpdate = System.currentTimeMillis();		
+		this.lastNetworkUpdate = System.currentTimeMillis();
 		LOGGER.debug("Network updated: "+updateDevices.size()+" active devices, "+ deleteDevices.size()+" removed");
 	}
 
@@ -449,7 +452,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 			LOGGER.warn("Unable to assign work count to CHE "+cheId+": CHE not found");
 		}
 	}
-	
+
 	public void processGetWorkResponse(String networkGuid, List<WorkInstruction> workInstructions) {
 		NetGuid cheId = new NetGuid("0x" + networkGuid);
 		CheDeviceLogic cheDevice = (CheDeviceLogic) mDeviceMap.get(cheId);
@@ -478,7 +481,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 		else {
 			// By design, the LightLedsMessage broadcast to all site controllers for this facility. If this site controller does not have the mentioned device, it is an error today
 			// but may not be later when we have our multi-controller implementation.
-			LOGGER.debug("unknown GUID in lightSomeLeds");		
+			LOGGER.debug("unknown GUID in lightSomeLeds");
 		}
 	}
 
