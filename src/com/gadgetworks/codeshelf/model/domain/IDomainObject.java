@@ -44,12 +44,6 @@ public interface IDomainObject {
 	/**
 	 * @return
 	 */
-	//	List<? extends IDomainObject> getChildren();
-
-	// --------------------------------------------------------------------------
-	/**
-	 * @return
-	 */
 	String getClassName();
 
 	// --------------------------------------------------------------------------

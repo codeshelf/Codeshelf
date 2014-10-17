@@ -34,7 +34,6 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.gadgetworks.codeshelf.edi.EdiFileReadException;
 import com.gadgetworks.codeshelf.model.LedRange;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
@@ -305,7 +304,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		List<T> result = new ArrayList<T>();
 
 		// Loop through all of the children.
-		for (ISubLocation<? extends IDomainObject> child : getChildren()) {
+		for (ISubLocation<?> child : getChildren()) {
 			if (child.getClass().equals(inClassWanted)) {
 				// If the child is the kind we want then add it to the list.
 				result.add((T) child);

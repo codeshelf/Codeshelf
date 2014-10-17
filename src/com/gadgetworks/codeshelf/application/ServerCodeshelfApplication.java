@@ -109,18 +109,16 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 
 		mHttpServer.startServer();
 
-
-		startAdminServer();
+		startAdminServer(null);
 		startTsdbReporter();
-		registerMemoryUsageMetrics();
+		registerSystemMetrics();
 		
 		// create server-specific health checks
 		DatabaseConnectionHealthCheck dbCheck = new DatabaseConnectionHealthCheck(persistenceService);
 		MetricsService.registerHealthCheck(dbCheck);
 		
 		ActiveSiteControllerHealthCheck sessionCheck = new ActiveSiteControllerHealthCheck();
-		MetricsService.registerHealthCheck(sessionCheck);
-		
+		MetricsService.registerHealthCheck(sessionCheck);	
 	}
 
 	// --------------------------------------------------------------------------

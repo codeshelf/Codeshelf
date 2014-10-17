@@ -6,8 +6,6 @@
 package com.gadgetworks.codeshelf.model.domain;
 
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -152,10 +150,6 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		//setDomainId(makeDomainId(getItemId(), inStoredLocation, getUomMasterId()));
 		//inStoredLocation.addStoredItem(this);
 		
-	}
-
-	public final List<IDomainObject> getChildren() {
-		return new ArrayList<IDomainObject>();
 	}
 
 	// Assorted meta fields for the UI

@@ -9,11 +9,15 @@ package com.gadgetworks.flyweight.controller;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 
+import lombok.Setter;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.gadgetworks.codeshelf.application.ContextLogging;
 import com.gadgetworks.flyweight.bitfields.BitFieldInputStream;
 import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
+import com.gadgetworks.flyweight.command.CommandAssocABC;
 import com.gadgetworks.flyweight.command.CommandGroupEnum;
 import com.gadgetworks.flyweight.command.ICommand;
 import com.gadgetworks.flyweight.command.IPacket;
@@ -41,6 +45,9 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 
 	private final Object		mLock					= new Object();
 
+	@Setter
+	private PacketCaptureListener		packetListener			= null;
+
 	private boolean				mIsStarted;
 	private boolean				mShouldRun				= true;
 	private boolean				mIsStartingInterface;
@@ -50,12 +57,11 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 	 *  The constructor tries to setup the serial connection.
 	 */
 	SerialInterfaceABC() {
-
 		mIsStarted = false;
 		//		mHexDumpEncoder = new HexDumpEncoder();
 
 	}
-
+	
 	/* --------------------------------------------------------------------------
 	 * (non-Javadoc)
 	 * @see com.gadgetworks.flyweight.controller.IGatewayInterface#startInterface()
@@ -196,6 +202,11 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 				//				}
 			}
 			if ((LOGGER.isDebugEnabled() && (result != null))) {
+				ICommand command = result.getCommand();
+				if(command instanceof CommandAssocABC) {
+					CommandAssocABC assocCmd = (CommandAssocABC) command;
+					ContextLogging.setNetGuid(assocCmd.getGUID());
+				}
 				try {
 					boolean isMerelyNetManagementTraffic = false;
 					ICommand aCommand = packet.getCommand();
@@ -208,6 +219,8 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 					hexDumpArray(nextFrameArray);
 				} catch (Exception e) {
 					LOGGER.error("", e);
+				} finally {
+					ContextLogging.clearNetGuid();
 				}
 			}
 		}
@@ -384,6 +397,11 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 		// Create a byte array that is exactly the right size.
 		byte[] result = new byte[bytesReceived];
 		System.arraycopy(frameBuffer, 0, result, 0, bytesReceived);
+		
+		if(this.packetListener != null) {
+			this.packetListener.capture(result);
+		}
+		
 		return result;
 	}
 
@@ -393,7 +411,6 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 	 */
 
 	private void sendFrame(IPacket inPacket, ByteArrayOutputStream inByteArrayStream) {
-
 		byte[] packetBytes = inByteArrayStream.toByteArray();
 		byte[] buffer = new byte[MAX_FRAME_BYTES];
 		int bufPos = 0;
@@ -439,12 +456,16 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 			LOGGER.debug("Send packet:    " + inPacket.toString());
 		else
 			LOGGER.info("Send packet:    " + inPacket.toString());
-		if (LOGGER.isDebugEnabled()) {
-			try {
-				hexDumpArray(packetBytes);
-			} catch (Exception e) {
-				LOGGER.error("", e);
-			}
+		//if (LOGGER.isDebugEnabled()) {
+		//	try {
+		//		hexDumpArray(packetBytes);
+		//	} catch (Exception e) {
+		//		LOGGER.error("", e);
+		//	}
+		//}
+		
+		if(this.packetListener != null) {
+			this.packetListener.capture(packetBytes);
 		}
 	}
 

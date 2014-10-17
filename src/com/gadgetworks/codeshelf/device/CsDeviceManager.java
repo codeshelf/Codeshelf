@@ -5,6 +5,7 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -23,6 +24,8 @@ import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.util.IConfiguration;
+import com.gadgetworks.codeshelf.util.PcapRecord;
+import com.gadgetworks.codeshelf.util.PcapRingBuffer;
 import com.gadgetworks.codeshelf.util.TwoKeyMap;
 import com.gadgetworks.codeshelf.ws.jetty.client.JettyWebSocketClient;
 import com.gadgetworks.codeshelf.ws.jetty.client.WebSocketEventListener;
@@ -35,6 +38,7 @@ import com.gadgetworks.flyweight.command.NetworkId;
 import com.gadgetworks.flyweight.controller.INetworkDevice;
 import com.gadgetworks.flyweight.controller.IRadioController;
 import com.gadgetworks.flyweight.controller.IRadioControllerEventListener;
+import com.gadgetworks.flyweight.controller.PacketCaptureListener;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 
@@ -42,7 +46,7 @@ import com.google.inject.Inject;
  * @author jeffw
  *
  */
-public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventListener, WebSocketEventListener {
+public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventListener, WebSocketEventListener, PacketCaptureListener {
 
 	private static final Logger				LOGGER						= LoggerFactory.getLogger(CsDeviceManager.class);
 
@@ -53,12 +57,12 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	
 	@Getter
 	private IRadioController				radioController;
-/*
-	private String							mOrganizationId;
-	private String							mFacilityId;
-	private String							mNetworkId;
-	*/
-	private String							mNetworkCredential;
+	
+	@Getter
+	private PcapRingBuffer					pcapBuffer;
+
+	private	String							username;
+	private String							password;
 
 	/* Device Manager owns websocket configuration too */
 	private String							mUri;
@@ -77,6 +81,8 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	@Getter
 	private long	lastNetworkUpdate=0;
 	
+	private boolean isAttachedToServer = false;
+	
 	@Getter @Setter
 	boolean radioEnabled = true;
 	
@@ -91,9 +97,20 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 		radioController = inRadioController;
 		mDeviceMap = new TwoKeyMap<UUID, NetGuid, INetworkDevice>();
 
-		mNetworkCredential = configuration.getString("networkCredential");
-	}
+		username = configuration.getString("username");
+		password = configuration.getString("networkCredential");
+		
+		if(configuration.getBoolean("pcapbuffer.enable", false)) {
+			// set up ring buffer
+			int pcSize = configuration.getInt("pcapbuffer.size", PcapRingBuffer.DEFAULT_SIZE);
+			int pcSlack = configuration.getInt("pcapbuffer.slack", PcapRingBuffer.DEFAULT_SLACK);	
+			this.pcapBuffer = new PcapRingBuffer(pcSize, pcSlack);
 
+			// listen for packets
+			radioController.getGatewayInterface().setPacketListener(this);
+		}
+	}
+	
 	public final void start() {
 		startWebSocketClient();
 
@@ -113,13 +130,22 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 			radioController.setNetworkId(new NetworkId((byte) 1)); // for test
 
 		}
-	}
-	
+	}	
+
 	public final List<AisleDeviceLogic> getAisleControllers() {
 		ArrayList<AisleDeviceLogic> aList = new ArrayList<AisleDeviceLogic>();
 		for (INetworkDevice theDevice :mDeviceMap.values()) {
 			if (theDevice instanceof AisleDeviceLogic)
 				aList.add((AisleDeviceLogic) theDevice);			
+		}
+		return aList;
+	}
+
+	public final List<CheDeviceLogic> getCheControllers() {
+		ArrayList<CheDeviceLogic> aList = new ArrayList<CheDeviceLogic>();
+		for (INetworkDevice theDevice :mDeviceMap.values()) {
+			if (theDevice instanceof CheDeviceLogic)
+				aList.add((CheDeviceLogic) theDevice);			
 		}
 		return aList;
 	}
@@ -169,6 +195,19 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	@Override
 	public void deviceLost(INetworkDevice inNetworkDevice) {
 	}
+	
+	@Override
+	public void deviceActive(INetworkDevice inNetworkDevice) {
+		if(inNetworkDevice instanceof CheDeviceLogic ) {
+			if (isAttachedToServer) {
+				((CheDeviceLogic) inNetworkDevice).connectedToServer();
+			}
+			else {
+				((CheDeviceLogic) inNetworkDevice).disconnectedFromServer();
+			}
+		}
+		
+	}
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
@@ -216,8 +255,8 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 		// connected to server - send attach request
 		LOGGER.info("Connected to server");
 		LoginRequest loginRequest = new LoginRequest();
-		loginRequest.setUserId(CodeshelfNetwork.DEFAULT_SITECON_SERIAL);
-		loginRequest.setPassword(mNetworkCredential);
+		loginRequest.setUserId(username);	
+		loginRequest.setPassword(password);
 		
 		client.sendMessage(loginRequest);
 	}
@@ -231,6 +270,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 		this.updateNetwork(network);
 		this.startRadio(network);
 		
+		isAttachedToServer = true;
 		for (INetworkDevice networkDevice : mDeviceMap.values()) {
 			if(networkDevice instanceof CheDeviceLogic ) {
 				((CheDeviceLogic) networkDevice).connectedToServer();
@@ -240,6 +280,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 
 	public void unattached() {
 		LOGGER.info("Unattached from server");
+		isAttachedToServer = false;
 		for (INetworkDevice networkDevice : mDeviceMap.values()) {
 			if(networkDevice instanceof CheDeviceLogic ) {
 				((CheDeviceLogic) networkDevice).disconnectedFromServer();
@@ -444,6 +485,16 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	@Override
 	public JettyWebSocketClient getWebSocketCient() {
 		return this.client;
+	}
+
+	@Override
+	public void capture(byte[] packet) {
+		PcapRecord pcap = new PcapRecord(packet);
+		try {
+			this.pcapBuffer.put(pcap);
+		} catch (IOException e) {
+			LOGGER.error("Unexpected problem putting packet of size "+packet.length+" in ring buffer", e);
+		}
 	}
 
 }

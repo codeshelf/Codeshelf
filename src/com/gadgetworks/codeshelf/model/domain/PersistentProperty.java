@@ -5,9 +5,6 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
@@ -90,10 +87,6 @@ public class PersistentProperty extends DomainObjectTreeABC<Organization> {
 
 	public final String getDefaultDomainIdPrefix() {
 		return "";
-	}
-
-	public final List<IDomainObject> getChildren() {
-		return new ArrayList<IDomainObject>();
 	}
 
 	// Default value methods.

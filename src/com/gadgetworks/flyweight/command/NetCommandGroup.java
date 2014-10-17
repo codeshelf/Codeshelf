@@ -18,7 +18,7 @@ import com.gadgetworks.flyweight.bitfields.OutOfRangeException;
  *  @throws OutOfRangeException
  */
 
-@SuppressWarnings("serial")
+@SuppressWarnings({ "serial", "unused" })
 public final class NetCommandGroup extends NBitInteger {
 
 	private static final byte	BITS_CMD_GROUP	= 4;

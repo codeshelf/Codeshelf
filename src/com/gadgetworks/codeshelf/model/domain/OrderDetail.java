@@ -184,9 +184,6 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 		parent = inParent;
 	}
 
-	public final List<IDomainObject> getChildren() {
-		return new ArrayList<IDomainObject>();
-	}
 	
 	public final void addWorkInstruction(WorkInstruction inWorkInstruction) {
 		OrderDetail previousOrderDetail = inWorkInstruction.getOrderDetail();

@@ -116,10 +116,6 @@ public class WorkArea extends DomainObjectTreeABC<Path> {
 		parent = inParent;
 	}
 
-	public final List<? extends IDomainObject> getChildren() {
-		return getLocations();
-	}
-
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void addLocation(ISubLocation<?> inSubLocation) {
 		// Ebean can't deal with interfaces.

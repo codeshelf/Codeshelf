@@ -11,9 +11,10 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.gadgetworks.codeshelf.application.ContextLogging;
 import com.gadgetworks.codeshelf.util.ThreadUtils;
-import com.gadgetworks.codeshelf.ws.ContextLogging;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.KeepAlive;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.request.PingRequest;
 
 public class ServerWatchdogThread extends Thread {
 	
@@ -51,6 +52,9 @@ public class ServerWatchdogThread extends Thread {
 	@Getter @Setter
 	int idleWarningTimeout = 15*1000; // 15 seconds warning if no keepalive
 	
+	@Getter @Setter
+	int pingInterval = 60*1000;
+	
 	public ServerWatchdogThread(SessionManager sessionManager) {
 		this.sessionManager = sessionManager;
 		this.setDaemon(true);
@@ -78,16 +82,26 @@ public class ServerWatchdogThread extends Thread {
 		// check status, send keepalive etc on all sessions
 		Collection<UserSession> sessions = this.sessionManager.getSessions();
 		for (UserSession session : sessions) {
-			ContextLogging.set(session);
-			try {
-				doSessionWatchdog(session);
-			} finally {
-				ContextLogging.clear();
+			ContextLogging.setSession(session);
+			// send ping periodically to measure latency
+			if (session.isSiteController() && System.currentTimeMillis()-session.getLastPingSent()>pingInterval) {
+				// send ping
+				PingRequest request = new PingRequest();
+				long now = System.currentTimeMillis();
+				session.setLastPingSent(now);
+				LOGGER.debug("Sending ping on "+session.getSessionId());
+				session.sendMessage(request);
 			}
+			try {
+				processSession(session);
+			} finally {
+				ContextLogging.clearSession();
+			}
+			// check if keep alive needs to be sent
 		}
 	}
 	
-	private void doSessionWatchdog(UserSession session) {
+	private void processSession(UserSession session) {
 		if(!suppressKeepAlive) {
 			// consider sending keepalive
 			long timeSinceLastSent = System.currentTimeMillis() - session.getLastMessageSent();

@@ -97,7 +97,7 @@ public class SiteControllerMessageProcessor extends MessageProcessor {
 	}
 
 	@Override
-	public void handleOtherMessage(UserSession session, MessageABC message) {
+	public void handleMessage(UserSession session, MessageABC message) {
 		//////////////////////////////////////////
 		// Handler for Network Update
 		if (message instanceof NetworkStatusMessage) {

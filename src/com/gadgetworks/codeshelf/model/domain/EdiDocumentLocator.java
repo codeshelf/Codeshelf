@@ -6,7 +6,6 @@
 package com.gadgetworks.codeshelf.model.domain;
 
 import java.sql.Timestamp;
-import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -130,10 +129,6 @@ public class EdiDocumentLocator extends DomainObjectTreeABC<EdiServiceABC> {
 
 	public final void setParent(EdiServiceABC inParent) {
 		parent = inParent;
-	}
-
-	public final List<? extends IDomainObject> getChildren() {
-		return null; //getEdiTransactionDetails();
 	}
 
 	public final String getParentEdiServiceID() {

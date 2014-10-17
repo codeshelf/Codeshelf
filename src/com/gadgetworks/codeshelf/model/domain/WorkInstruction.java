@@ -6,8 +6,6 @@
 package com.gadgetworks.codeshelf.model.domain;
 
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -278,10 +276,6 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 
 	public final void setOrderDetail(OrderDetail inDetail) {
 		orderDetail = inDetail;
-	}
-
-	public final List<? extends IDomainObject> getChildren() {
-		return new ArrayList<IDomainObject>();
 	}
 
 	public final ILocation<?> getLocation() {

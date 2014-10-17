@@ -25,7 +25,7 @@ public class LogResponseProcessor extends MessageProcessor {
 	}
 
 	@Override
-	public void handleOtherMessage(UserSession session, MessageABC message) {
+	public void handleMessage(UserSession session, MessageABC message) {
 		LOGGER.info("Message received:"+message);
 	}
 }

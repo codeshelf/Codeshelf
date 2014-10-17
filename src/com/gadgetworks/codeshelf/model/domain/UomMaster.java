@@ -5,9 +5,6 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
@@ -88,10 +85,6 @@ public class UomMaster extends DomainObjectTreeABC<Facility> {
 
 	public final void setParent(Facility inParent) {
 		parent = inParent;
-	}
-
-	public final List<? extends IDomainObject> getChildren() {
-		return new ArrayList<IDomainObject>();
 	}
 
 	public final String getUomMasterId() {

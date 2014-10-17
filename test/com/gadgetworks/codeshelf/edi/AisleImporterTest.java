@@ -520,6 +520,123 @@ public class AisleImporterTest extends DomainTestABC {
 
 	}
 
+	@SuppressWarnings("unused")
+	@Test
+	public final void testSparseLeds() {
+
+		// Lasers are sparse: one led per slot
+		// Paul tested 8 leds for 5 slots and found bad behavior
+		// Other bad ones
+		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A91,,,,,zigzagB1S1Side,12.85,43.45,X,120,\r\n" //
+				+ "Bay,B1,115,,,,,\r\n" //
+				+ "Tier,T1,,5,5,0,,\r\n" //
+				+ "Tier,T2,,5,15,0,,\r\n" //
+				+ "Tier,T3,,5,10,0,,\r\n" //
+				+ "Tier,T4,,5,12,0,,\r\n" //
+				+ "Tier,T5,,5,8,0,,\r\n"; //
+
+		byte[] csvArray = csvString.getBytes();
+
+		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
+		InputStreamReader reader = new InputStreamReader(stream);
+
+		Organization organization = new Organization();
+		organization.setDomainId("O-SPARSE91");
+		mOrganizationDao.store(organization);
+
+		organization.createFacility("F-SPARSE91", "TEST", Point.getZeroPoint());
+		Facility facility = organization.getFacility("F-SPARSE91");
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+
+		// Check what we got
+		Aisle aisle = Aisle.DAO.findByDomainId(facility, "A91");
+		Assert.assertNotNull(aisle);
+
+		Bay bayA91B1 = Bay.DAO.findByDomainId(aisle, "B1");
+
+		Tier tierB1T1 = Tier.DAO.findByDomainId(bayA91B1, "T1");
+		Tier tierB1T2 = Tier.DAO.findByDomainId(bayA91B1, "T2");
+		Tier tierB1T3 = Tier.DAO.findByDomainId(bayA91B1, "T3");
+		Tier tierB1T4 = Tier.DAO.findByDomainId(bayA91B1, "T4");
+		Tier tierB1T5 = Tier.DAO.findByDomainId(bayA91B1, "T5");
+
+		// This is a zigzag bay. T1 is last. This is the "laser" shelf, one "LED" per slot)
+		Slot slotB1T1S1 = Slot.DAO.findByDomainId(tierB1T1, "S1");
+		Slot slotB1T1S2 = Slot.DAO.findByDomainId(tierB1T1, "S2");
+		Slot slotB1T1S3 = Slot.DAO.findByDomainId(tierB1T1, "S3");
+		Slot slotB1T1S4 = Slot.DAO.findByDomainId(tierB1T1, "S4");
+		Slot slotB1T1S5 = Slot.DAO.findByDomainId(tierB1T1, "S5");
+
+		Assert.assertTrue(tierB1T1.getFirstLedNumAlongPath() == 46);
+		Assert.assertTrue(tierB1T1.getLastLedNumAlongPath() == 50);
+
+		short slotB1T1S1First = slotB1T1S1.getFirstLedNumAlongPath();
+		short slotB1T1S1Last = slotB1T1S1.getLastLedNumAlongPath();
+		Assert.assertTrue(slotB1T1S1First == 46);
+		Assert.assertTrue(slotB1T1S1Last == 46);
+
+		short slotB1T1S2First = slotB1T1S2.getFirstLedNumAlongPath();
+		short slotB1T1S2Last = slotB1T1S2.getLastLedNumAlongPath();
+		Assert.assertTrue(slotB1T1S2First == 47);
+		Assert.assertTrue(slotB1T1S2Last == 47);
+
+		short slotB1T1S3First = slotB1T1S3.getFirstLedNumAlongPath();
+		short slotB1T1S3Last = slotB1T1S3.getLastLedNumAlongPath();
+		Assert.assertTrue(slotB1T1S3First == 48);
+		Assert.assertTrue(slotB1T1S3Last == 48);
+
+		short slotB1T1S4First = slotB1T1S4.getFirstLedNumAlongPath();
+		short slotB1T1S4Last = slotB1T1S4.getLastLedNumAlongPath();
+		Assert.assertTrue(slotB1T1S4First == 49);
+		Assert.assertTrue(slotB1T1S4Last == 49);
+
+		short slotB1T1S5First = slotB1T1S5.getFirstLedNumAlongPath();
+		short slotB1T1S5Last = slotB1T1S5.getLastLedNumAlongPath();
+		Assert.assertTrue(slotB1T1S5First == 50);
+		Assert.assertTrue(slotB1T1S5Last == 50);
+
+		// T5 is the 8 Leds over 5 slots shelf, leds 1-8)
+		Slot slotB1T5S1 = Slot.DAO.findByDomainId(tierB1T5, "S1");
+		Slot slotB1T5S2 = Slot.DAO.findByDomainId(tierB1T5, "S2");
+		Slot slotB1T5S3 = Slot.DAO.findByDomainId(tierB1T5, "S3");
+		Slot slotB1T5S4 = Slot.DAO.findByDomainId(tierB1T5, "S4");
+		Slot slotB1T5S5 = Slot.DAO.findByDomainId(tierB1T5, "S5");
+
+		Assert.assertTrue(tierB1T5.getFirstLedNumAlongPath() == 1);
+		Assert.assertTrue(tierB1T5.getLastLedNumAlongPath() == 8);
+
+		// Ok if algorithm change affects these slot values. Change the test if reasonable.
+		short slotB1T5S1First = slotB1T5S1.getFirstLedNumAlongPath();
+		short slotB1T5S1Last = slotB1T5S1.getLastLedNumAlongPath();
+		Assert.assertTrue(slotB1T5S1First == 1);
+		Assert.assertTrue(slotB1T5S1Last == 1);
+
+		short slotB1T5S2First = slotB1T5S2.getFirstLedNumAlongPath();
+		short slotB1T5S2Last = slotB1T5S2.getLastLedNumAlongPath();
+		Assert.assertTrue(slotB1T5S2First == 3);
+		Assert.assertTrue(slotB1T5S2Last == 3);
+
+		short slotB1T5S3First = slotB1T5S3.getFirstLedNumAlongPath();
+		short slotB1T5S3Last = slotB1T5S3.getLastLedNumAlongPath();
+		Assert.assertTrue(slotB1T5S3First == 5);
+		Assert.assertTrue(slotB1T5S3Last == 5);
+
+		short slotB1T5S4First = slotB1T5S4.getFirstLedNumAlongPath();
+		short slotB1T5S4Last = slotB1T5S4.getLastLedNumAlongPath();
+		Assert.assertTrue(slotB1T5S4First == 6);
+		Assert.assertTrue(slotB1T5S4Last == 6);
+
+		short slotB1T5S5First = slotB1T5S5.getFirstLedNumAlongPath();
+		short slotB1T5S5Last = slotB1T5S5.getLastLedNumAlongPath();
+		Assert.assertTrue(slotB1T5S5First == 7);
+		Assert.assertTrue(slotB1T5S5Last == 7);
+
+	}
+
 	@Test
 	public final void testZigzagB1S1Side() {
 		this.getPersistenceService().beginTenantTransaction();

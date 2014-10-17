@@ -2,9 +2,9 @@ package com.gadgetworks.codeshelf.metrics;
 
 import java.util.Collection;
 
+import com.gadgetworks.codeshelf.ws.jetty.server.SessionManager;
 import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
 import com.gadgetworks.codeshelf.ws.jetty.server.UserSession.State;
-import com.gadgetworks.codeshelf.ws.jetty.server.SessionManager;
 
 public class ActiveSiteControllerHealthCheck extends CodeshelfHealthCheck {
 
@@ -21,8 +21,11 @@ public class ActiveSiteControllerHealthCheck extends CodeshelfHealthCheck {
     			c++;
     		}
     	}
-    	if (c>0) {
-            return Result.healthy(c+" active site controller(s) connected");
+    	if (c>1) {
+            return Result.healthy(c+" active site controllers connected");
+    	}
+    	else if (c==1) {
+            return Result.healthy(c+" active site controller connected");    		
     	}
     	return Result.unhealthy("No site controller connected");
     }

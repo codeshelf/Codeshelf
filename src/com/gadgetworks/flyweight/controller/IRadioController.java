@@ -103,5 +103,10 @@ public interface IRadioController extends Runnable {
 	boolean isRunning();
 	
 	IGatewayInterface getGatewayInterface();
+
 	
+	NetGuid getNetGuidFromNetAddress(byte networkAddr);
+	
+	NetGuid getNetGuidFromNetAddress(NetAddress netAddress);
+
 }

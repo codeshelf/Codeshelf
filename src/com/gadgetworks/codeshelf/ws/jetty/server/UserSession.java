@@ -4,6 +4,7 @@ import java.util.Date;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 import javax.websocket.CloseReason;
 import javax.websocket.CloseReason.CloseCodes;
@@ -16,13 +17,16 @@ import org.eclipse.jetty.util.ConcurrentHashSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codahale.metrics.Timer;
+import com.gadgetworks.codeshelf.application.ContextLogging;
 import com.gadgetworks.codeshelf.filter.ObjectEventListener;
+import com.gadgetworks.codeshelf.metrics.MetricsGroup;
+import com.gadgetworks.codeshelf.metrics.MetricsService;
 import com.gadgetworks.codeshelf.model.dao.IDaoListener;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.model.domain.UserType;
-import com.gadgetworks.codeshelf.ws.ContextLogging;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
 
 public class UserSession implements IDaoListener {
@@ -48,6 +52,12 @@ public class UserSession implements IDaoListener {
 	private Session	wsSession=null;
 	
 	@Getter @Setter
+	long lastPingSent = 0;
+	
+	@Getter @Setter
+	long lastPondRoundtripDuration = 0;
+	
+	@Getter @Setter
 	long lastMessageSent = System.currentTimeMillis();
 	
 	@Getter @Setter
@@ -55,6 +65,8 @@ public class UserSession implements IDaoListener {
 	
 	@Getter @Setter
 	State lastState = State.ACTIVE;
+	
+	private Timer pingTimer = null;
 	
 	private Map<String,ObjectEventListener> eventListeners = new ConcurrentHashMap<String,ObjectEventListener>();
 	
@@ -64,15 +76,15 @@ public class UserSession implements IDaoListener {
 		this.wsSession = session;
 	}
 
-	public void sendMessage(final MessageABC response) {
-		ContextLogging.set(this);
+	public void sendMessage(final MessageABC message) {
+		ContextLogging.setSession(UserSession.this);
 		try {
-			this.wsSession.getBasicRemote().sendObject(response);
+			this.wsSession.getBasicRemote().sendObject(message);
 			this.messageSent();
 		} catch (Exception e) {
 			LOGGER.error("Failed to send message", e);
-				} finally {
-					ContextLogging.clear();
+		} finally {
+			ContextLogging.clearSession();
 		}
 	}
 	
@@ -173,5 +185,23 @@ public class UserSession implements IDaoListener {
 			}
 			this.wsSession=null;
 		}
+	}
+
+	public void authenticated(User user) {
+		this.user = user;
+		if (isSiteController()) {
+			String organizationName = user.getOrganization().getDomainId();
+			this.pingTimer = MetricsService.addTimer(MetricsGroup.WSS,"ping-"+organizationName+"."+user.getDomainId());
+		}
+	}
+
+	public void pongReceived(long startTime) {
+		long now = System.currentTimeMillis();
+		long delta = now-startTime;
+		if (this.pingTimer!=null) {
+			pingTimer.update(delta, TimeUnit.MILLISECONDS);
+		}
+		double elapsedSec = ((double) delta)/1000; 
+		LOGGER.debug("Ping roundtrip on session "+this.sessionId +" in "+elapsedSec+"s");
 	}
 }

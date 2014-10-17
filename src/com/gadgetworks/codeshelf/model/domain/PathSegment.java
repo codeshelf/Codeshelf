@@ -5,7 +5,6 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.persistence.Column;
@@ -201,10 +200,6 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 	@SuppressWarnings("rawtypes")
 	public final List<LocationABC> getLocations() {
 		return DAO.findLocations(this);
-	}
-
-	public final List<IDomainObject> getChildren() {
-		return new ArrayList<IDomainObject>();
 	}
 
 	public final String getParentPathID() {

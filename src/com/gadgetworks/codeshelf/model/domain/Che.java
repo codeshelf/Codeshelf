@@ -125,11 +125,6 @@ public class Che extends WirelessDeviceABC {
 		return "CHE";
 	}
 
-	// jr comment. Why are the containerUses the children? ContainerUse parent is not the Che.
-	public final List<? extends IDomainObject> getChildren() {
-		return getUses();
-	}
-
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void addContainerUse(ContainerUse inContainerUse) {
 		Che previousChe = inContainerUse.getCurrentChe();
@@ -170,13 +165,6 @@ public class Che extends WirelessDeviceABC {
 		}
 	}
 	
-	// used to have a lomboc annotation, but that had an infinite loop potential with ContainerUse toString.
-	public final String toString() {
-		// What we would want to see if logged as toString?
-		String returnString = getDomainId();
-		return returnString;
-	}
-
 	//  Called from the UI, so really should return any persistence error.
 	// Perhaps this should be at ancestor level. CHE changes this field only. LED controller changes domain ID and controller ID.
 	public final void changeControllerId(String inNewControllerId) {
@@ -195,6 +183,7 @@ public class Che extends WirelessDeviceABC {
 		if (newGuid != null) {
 			try {
 				this.setDeviceNetGuid(newGuid);
+				this.setDomainId(this.toString()); 
 				// curious that setDeviceNetGuid does not do the persist
 				Che.DAO.store(this);
 			} catch (DaoException e) {

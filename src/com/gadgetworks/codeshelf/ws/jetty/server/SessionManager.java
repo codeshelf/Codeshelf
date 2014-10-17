@@ -14,6 +14,7 @@ import com.codahale.metrics.Counter;
 import com.gadgetworks.codeshelf.metrics.MetricsGroup;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
 import com.gadgetworks.codeshelf.model.domain.User;
+import com.gadgetworks.codeshelf.ws.jetty.server.UserSession.State;
 
 public class SessionManager {
 
@@ -24,9 +25,9 @@ public class SessionManager {
 	private HashMap<String,UserSession> activeSessions = new HashMap<String, UserSession>();
 	
 	private final Counter activeSessionsCounter = MetricsService.addCounter(MetricsGroup.WSS,"sessions.active");
+	private final Counter activeSiteControlerSessionsCounter = MetricsService.addCounter(MetricsGroup.WSS,"sessions.sitecontrollers");
 	private final Counter totalSessionsCounter = MetricsService.addCounter(MetricsGroup.WSS,"sessions.total");
 
-	
 	private SessionManager() {
 	}
 	 
@@ -41,7 +42,7 @@ public class SessionManager {
 			csSession.setSessionId(sessionId);
 			activeSessions.put(sessionId, csSession);
 			LOGGER.info("Session "+session.getId()+" started");
-			activeSessionsCounter.inc();
+			updateCounters();
 			totalSessionsCounter.inc();
 		}
 		else {
@@ -56,7 +57,7 @@ public class SessionManager {
 			csSession.disconnect();
 			activeSessions.remove(sessionId);
 			LOGGER.info("Session "+session.getId()+" ended");
-			activeSessionsCounter.dec();
+			updateCounters();
 		}
 		else {
 			LOGGER.warn("Unable to unregister session: Session with ID "+sessionId+" not found");
@@ -82,7 +83,6 @@ public class SessionManager {
 	
 	public Set<UserSession> getSessions(Set<User> users) {
 		Set<UserSession> userSessions = new HashSet<UserSession>();
-		
 		for (UserSession session : this.getSessions()) {
 			if(users.contains(session.getUser())) {
 				userSessions.add(session);
@@ -119,5 +119,22 @@ public class SessionManager {
 	
 	public void resetSessions() {
 		activeSessions.clear();
+	}
+	
+	public void updateCounters() {
+		int activeSiteController = 0, numActiveSessions = 0;
+		for (UserSession session : activeSessions.values()) {
+			if ((session.getLastState()==State.ACTIVE || session.getLastState()==State.IDLE_WARNING)) {
+				numActiveSessions++;
+				if (session.isSiteController()) {
+					activeSiteController++;
+				}
+			}
+		}
+		// this is needed, since counters don't have an explicit set method
+		long c = activeSiteControlerSessionsCounter.getCount();
+		activeSiteControlerSessionsCounter.inc(activeSiteController-c);		
+		c = activeSessionsCounter.getCount();
+		activeSessionsCounter.inc(numActiveSessions-c);
 	}
 }

@@ -16,7 +16,6 @@ import javax.persistence.Transient;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.gadgetworks.codeshelf.application.ContextLogging;
 import com.gadgetworks.flyweight.command.NetAddress;
 import com.gadgetworks.flyweight.command.NetGuid;
 import com.gadgetworks.flyweight.controller.NetworkDeviceStateEnum;
@@ -43,7 +43,6 @@ import com.gadgetworks.flyweight.controller.NetworkDeviceStateEnum;
 //@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 //@Table(name = "devices")
 //@DiscriminatorColumn(name = "dtype", discriminatorType = DiscriminatorType.STRING)
-@ToString(doNotUseGetters = true, callSuper = true)
 public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNetwork> {
 
 	public static final int						MAC_ADDR_BYTES		= 8;
@@ -172,7 +171,10 @@ public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNet
 	}
 
 	public final void setNetworkDeviceState(NetworkDeviceStateEnum inState) {
+		ContextLogging.setNetGuid(this.getDeviceNetGuid());
 		LOGGER.debug(Arrays.toString(deviceGuid) + " state changed: " + networkDeviceStatus + "->" + inState);
+		ContextLogging.clearNetGuid();
+
 		networkDeviceStatus = inState;
 	}
 
@@ -208,5 +210,11 @@ public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNet
 	public Facility getFacility() {
 		return this.getParent().getParent();
 	}
+		
+	public String toString() {
+		// used to set domainId from changeControllerId(), so don't reference domainId unless that is changed
+		return getDefaultDomainIdPrefix()+"-"+this.getDeviceNetGuid().getHexStringNoPrefix();
+	}
+
 
 }

@@ -34,7 +34,7 @@ public class JsonDecoder implements Decoder.Text<MessageABC> {
 
 		try {
 			LOGGER.debug("Decoding message: "+decompressedMessage);
-			ObjectMapper mapper = new ObjectMapper();
+			ObjectMapper mapper = new ObjectMapper(); // TODO: should reuse and share globally per jackson documentation -ic
 			// register classes
 			Iterable<Class<? extends MessageABC>> requestClasses = ClassIndex.getSubclasses(MessageABC.class);
 			for (Class<? extends MessageABC> requestType : requestClasses) {
