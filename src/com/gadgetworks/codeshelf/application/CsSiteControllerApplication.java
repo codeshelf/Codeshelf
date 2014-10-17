@@ -41,7 +41,7 @@ public final class CsSiteControllerApplication extends ApplicationABC {
 	 */
 	protected void doStartup() {
 
-		startAdminServer();
+		startAdminServer(this.deviceManager);
 		startTsdbReporter();
 		registerSystemMetrics();
 		

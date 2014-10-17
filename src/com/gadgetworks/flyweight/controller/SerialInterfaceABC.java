@@ -9,6 +9,8 @@ package com.gadgetworks.flyweight.controller;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 
+import lombok.Setter;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,6 +45,9 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 
 	private final Object		mLock					= new Object();
 
+	@Setter
+	private PacketCaptureListener		packetListener			= null;
+
 	private boolean				mIsStarted;
 	private boolean				mShouldRun				= true;
 	private boolean				mIsStartingInterface;
@@ -52,12 +57,11 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 	 *  The constructor tries to setup the serial connection.
 	 */
 	SerialInterfaceABC() {
-
 		mIsStarted = false;
 		//		mHexDumpEncoder = new HexDumpEncoder();
 
 	}
-
+	
 	/* --------------------------------------------------------------------------
 	 * (non-Javadoc)
 	 * @see com.gadgetworks.flyweight.controller.IGatewayInterface#startInterface()
@@ -393,6 +397,11 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 		// Create a byte array that is exactly the right size.
 		byte[] result = new byte[bytesReceived];
 		System.arraycopy(frameBuffer, 0, result, 0, bytesReceived);
+		
+		if(this.packetListener != null) {
+			this.packetListener.capture(result);
+		}
+		
 		return result;
 	}
 
@@ -447,12 +456,16 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 			LOGGER.debug("Send packet:    " + inPacket.toString());
 		else
 			LOGGER.info("Send packet:    " + inPacket.toString());
-		if (LOGGER.isDebugEnabled()) {
-			try {
-				hexDumpArray(packetBytes);
-			} catch (Exception e) {
-				LOGGER.error("", e);
-			}
+		//if (LOGGER.isDebugEnabled()) {
+		//	try {
+		//		hexDumpArray(packetBytes);
+		//	} catch (Exception e) {
+		//		LOGGER.error("", e);
+		//	}
+		//}
+		
+		if(this.packetListener != null) {
+			this.packetListener.capture(packetBytes);
 		}
 	}
 

@@ -1,5 +1,7 @@
 package com.gadgetworks.codeshelf.ws.jetty;
 
+import static org.mockito.Mockito.mock;
+
 import java.util.HashMap;
 
 import org.junit.Assert;
@@ -18,6 +20,7 @@ import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.model.domain.Vertex;
+import com.gadgetworks.codeshelf.service.WorkService;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectUpdateRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectUpdateResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
@@ -71,7 +74,7 @@ public class CreateCheTest extends DAOTestABC {
 		properties.put("description", description2);
 		req.setProperties(properties);
 		
-		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider);
+		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider, mock(WorkService.class));
 		ResponseABC response = processor.handleRequest(session, req);
 
 		Assert.assertTrue(response instanceof ObjectUpdateResponse);
@@ -131,7 +134,7 @@ public class CreateCheTest extends DAOTestABC {
 		properties.put("description", description2);
 		req.setProperties(properties);
 		
-		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider);
+		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider, mock(WorkService.class));
 
 		ResponseABC response = processor.handleRequest(session, req);
 		Assert.assertTrue(response instanceof ObjectUpdateResponse);
@@ -183,7 +186,7 @@ public class CreateCheTest extends DAOTestABC {
 		properties.put("description", description2);
 		req.setProperties(properties);
 		
-		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider);
+		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider, mock(WorkService.class));
 
 		ResponseABC response = processor.handleRequest(session, req);
 		Assert.assertTrue(response instanceof ObjectUpdateResponse);
@@ -212,7 +215,7 @@ public class CreateCheTest extends DAOTestABC {
 		properties.put("foo", "bar");
 		req.setProperties(properties);
 		
-		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider);
+		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider, mock(WorkService.class));
 
 		ResponseABC response = processor.handleRequest(session, req);
 		Assert.assertTrue(response instanceof ObjectUpdateResponse);
@@ -264,7 +267,7 @@ public class CreateCheTest extends DAOTestABC {
 		properties.put("description", description2);
 		req.setProperties(properties);
 		
-		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider);
+		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider, mock(WorkService.class));
 
 		ResponseABC response = processor.handleRequest(session, req);
 		Assert.assertTrue(response instanceof ObjectUpdateResponse);

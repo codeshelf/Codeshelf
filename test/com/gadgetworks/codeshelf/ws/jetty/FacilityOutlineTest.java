@@ -12,6 +12,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
+import static org.mockito.Mockito.mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import com.fasterxml.jackson.core.JsonParseException;
@@ -28,6 +29,7 @@ import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.model.domain.Vertex;
+import com.gadgetworks.codeshelf.service.WorkService;
 import com.gadgetworks.codeshelf.ws.jetty.io.JsonEncoder;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ArgsClass;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectMethodRequest;
@@ -102,7 +104,7 @@ public class FacilityOutlineTest {
 		} catch (EncodeException e) {
 		}		
 		
-		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider);
+		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider, Mockito.mock(WorkService.class));
 		ResponseABC response = processor.handleRequest(Mockito.mock(CsSession.class), request);
 		Assert.assertTrue(response instanceof ObjectMethodResponse);
 		
@@ -167,7 +169,7 @@ public class FacilityOutlineTest {
 			Assert.fail("Failed to seriaize request");
 		}
 				
-		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider);
+		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider, mock(WorkService.class));
 		ResponseABC response = processor.handleRequest(Mockito.mock(CsSession.class), request);
 
 		Assert.assertTrue(response instanceof ObjectUpdateResponse);

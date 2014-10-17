@@ -5,8 +5,15 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStreamReader;
 import java.sql.Timestamp;
 
+import org.junit.Assert;
+
+import com.gadgetworks.codeshelf.edi.AislesFileCsvImporter;
+import com.gadgetworks.codeshelf.edi.ICsvLocationAliasImporter;
+import com.gadgetworks.codeshelf.edi.LocationAliasCsvImporter;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
@@ -337,7 +344,7 @@ public abstract class DomainTestABC extends DAOTestABC {
 
 		return resultFacility;
 	}
-
+	
 	protected UomMaster createUomMaster(String inUom, Facility inFacility) {
 		UomMaster uomMaster = new UomMaster();
 		uomMaster.setUomMasterId(inUom);

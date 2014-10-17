@@ -25,7 +25,8 @@ public class JettyWebSocketClient {
 	
 	private static final Logger	LOGGER = LoggerFactory.getLogger(JettyWebSocketClient.class);
 	
-	String connectionString = null;
+	private final URI uri;
+	
 	Session session;
 	
 	MessageProcessor responseProcessor = null;
@@ -49,8 +50,8 @@ public class JettyWebSocketClient {
 	@Getter @Setter
 	long lastMessageReceived = 0;
 	
-	public JettyWebSocketClient(String connectionString, MessageProcessor responseProcessor, WebSocketEventListener eventListener) {
-		this.connectionString = connectionString;
+	public JettyWebSocketClient(URI uri, MessageProcessor responseProcessor, WebSocketEventListener eventListener) {
+		this.uri = uri;
 		this.eventListener = eventListener;
 		this.responseProcessor = responseProcessor;
 		
@@ -66,16 +67,14 @@ public class JettyWebSocketClient {
 	}
 	
     public void connect() throws DeploymentException, IOException {    			
-    	LOGGER.info("Connecting to WS server at "+connectionString);
+    	LOGGER.info("Connecting to WS server at "+ uri);
         // connect to the server
-        URI uri = URI.create(connectionString);
-        
         Session session = container.connectToServer(endpoint,uri);
         if (session.isOpen()) {
         	LOGGER.info("Connected to WS server");
         }
         else {
-        	LOGGER.warn("Failed to start session on "+connectionString);
+        	LOGGER.warn("Failed to start session on "+ uri);
         }
     }
     

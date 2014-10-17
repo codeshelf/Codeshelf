@@ -9,75 +9,70 @@ import org.slf4j.LoggerFactory;
 import com.gadgetworks.codeshelf.model.domain.Bay;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.ILocation;
+import com.gadgetworks.codeshelf.model.domain.PathSegment;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 
 public class HousekeepingInjector {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(HousekeepingInjector.class);
-	
-	private static boolean kWantHK_REPEATPOS = true;
-	private static boolean kWantHK_BAYCOMPLETE = true;
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(HousekeepingInjector.class);
+
+	public enum BayChangeChoice {
+		BayChangeNone,
+		BayChangeBayChange,
+		BayChangePathSegmentChange,
+		BayChangeExceptSamePathDistance
+	}
+
+	public enum RepeatPosChoice {
+		RepeatPosNone,
+		RepeatPosContainerOnly,
+		RepeatPosContainerAndCount
+	}
+
+	private static RepeatPosChoice	mRepeatPosChoice	= RepeatPosChoice.RepeatPosContainerOnly;
+	private static BayChangeChoice	mBayChangeChoice	= BayChangeChoice.BayChangeBayChange;
 
 	private HousekeepingInjector() {
 
 	}
-	
-	@SuppressWarnings("unused")
-	private static boolean shouldCreateThisHK(WorkInstructionTypeEnum inType){
-		switch (inType) {			
-			case HK_REPEATPOS:
-				return kWantHK_REPEATPOS;
-			case HK_BAYCOMPLETE:
-				return kWantHK_BAYCOMPLETE;
-			default:
-				LOGGER.error("shouldCreateThisHK unknown case");
-				return false;
-		}		
-	}
-	
-	public static boolean getShouldCreateThisHK(WorkInstructionTypeEnum inType) {
-		switch (inType) {			
-			case HK_REPEATPOS:
-				return kWantHK_REPEATPOS;
-			case HK_BAYCOMPLETE:
-				return kWantHK_BAYCOMPLETE;
-			default:
-				LOGGER.error("getShouldCreateThisHK unknown case");
-				return false;
-		}		
+
+	public static RepeatPosChoice getRepeatPosChoice() {
+		return mRepeatPosChoice;
 	}
 
-	public static void setCreateThisHK(WorkInstructionTypeEnum inType, boolean inValue){
-		switch (inType) {			
-			case HK_REPEATPOS:
-				kWantHK_REPEATPOS = inValue;
-			case HK_BAYCOMPLETE:
-				kWantHK_BAYCOMPLETE = inValue;
-			default:
-				LOGGER.error("setCreateThisHK unknown case");
-		}		
+	public static void setRepeatPosChoice(RepeatPosChoice inRepeatPosChoice) {
+		HousekeepingInjector.mRepeatPosChoice = inRepeatPosChoice;
 	}
-	
-	public static void restoreHKDefaults(){
-		kWantHK_REPEATPOS = true;
-		kWantHK_BAYCOMPLETE = true;
+
+	public static BayChangeChoice getBayChangeChoice() {
+		return mBayChangeChoice;
 	}
-	public static void turnOffHK(){
-		kWantHK_REPEATPOS = false;
-		kWantHK_BAYCOMPLETE = false;
+
+	public static void setBayChangeChoice(BayChangeChoice inBayChangeChoice) {
+		HousekeepingInjector.mBayChangeChoice = inBayChangeChoice;
+	}
+
+	public static void restoreHKDefaults() {
+		setRepeatPosChoice(RepeatPosChoice.RepeatPosContainerOnly);
+		setBayChangeChoice(BayChangeChoice.BayChangeBayChange);
+	}
+
+	public static void turnOffHK() {
+		setRepeatPosChoice(RepeatPosChoice.RepeatPosNone);
+		setBayChangeChoice(BayChangeChoice.BayChangeNone);
+
 	}
 
 	public static WorkInstructionSequencerABC createSequencer(WorkInstructionSequencerType type) {
-		if (type==WorkInstructionSequencerType.BayDistance) {
+		if (type == WorkInstructionSequencerType.BayDistance) {
 			return new BayDistanceWorkInstructionSequencer();
-		}
-		else if (type==WorkInstructionSequencerType.BayDistanceTopLast) {
+		} else if (type == WorkInstructionSequencerType.BayDistanceTopLast) {
 			return new BayDistanceTopLastWorkInstructionSequencer();
 		}
-		LOGGER.error("Sequencer type "+type+" is not supported");
+		LOGGER.error("Sequencer type " + type + " is not supported");
 		return null;
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * Helper function. Adds to existing list, or creates the list if null
@@ -95,6 +90,100 @@ public class HousekeepingInjector {
 			returnList.add(inEnum);
 			return returnList;
 		}
+	}
+
+	// helper function
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	private static boolean isDifferentNotNullBay(ILocation inLoc1, ILocation inLoc2) {
+		ILocation bay1 = inLoc1.getParentAtLevel(Bay.class);
+		ILocation bay2 = inLoc2.getParentAtLevel(Bay.class);
+		if (bay1 != null && bay2 != null && !bay1.equals(bay2))
+			return true;
+		return false;
+	}
+
+	// helper function
+	@SuppressWarnings("rawtypes")
+	private static boolean hasDifferentNotNullPathSegment(ILocation inLoc1, ILocation inLoc2) {
+		PathSegment segment1 = inLoc1.getAssociatedPathSegment();
+		PathSegment segment2 = inLoc2.getAssociatedPathSegment();
+		if (segment1 != null && segment2 != null && !segment1.equals(segment2))
+			return true;
+		return false;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Three choices of behavior
+	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	private static boolean wantBayChangeBetween(BayChangeChoice inBayChangeChoice,
+		WorkInstruction inPrevWi,
+		WorkInstruction inNextWi) {
+		if (inBayChangeChoice == BayChangeChoice.BayChangeNone)
+			return false;
+		
+		try {
+			// This can be tricky. Crossbatch put WI may have multiple locations. Initial implementation will not be completely right if the multiple locations span across bays.
+			// In our model, the WI.location field in this case is the arbitrary "first" location of all the locations for the outbound order.
+			ILocation loc1 = inPrevWi.getLocation();
+			ILocation loc2 = inNextWi.getLocation();
+			if (loc1 == null || loc2 == null) {
+				LOGGER.error("null WI location in wisNeedHouseKeepingBetween");
+				return false;
+			} else if (inBayChangeChoice == BayChangeChoice.BayChangeBayChange) {
+				if (isDifferentNotNullBay(loc1, loc2))
+					return true;
+			} else if (inBayChangeChoice == BayChangeChoice.BayChangePathSegmentChange) {
+				if (hasDifferentNotNullPathSegment(loc1, loc2))
+					return true;
+			} else if (inBayChangeChoice == BayChangeChoice.BayChangeExceptSamePathDistance) {
+				if (isDifferentNotNullBay(loc1, loc2)) {
+					// tentatively return true; Only not true if same path segment and bays on opposite side of same aisle
+					if (!hasDifferentNotNullPathSegment(loc1, loc2)) {
+						// As a surrogate, if each bay has the same domain ID, then assume the same distance along path.
+						ILocation bay1 = loc1.getParentAtLevel(Bay.class);
+						ILocation bay2 = loc2.getParentAtLevel(Bay.class);
+						if (bay1 != null && bay2 != null && bay1.getDomainId().equals(bay2.getDomainId()))
+							return false;
+						return true;
+					}
+				}
+			} else
+				LOGGER.error("unimplemented case in wantBayChangeBetween");
+		// Code above is complicated. Uncaught throw here (probably NPE) would result in aborted work instruction computation
+		} catch (Exception e) {
+			LOGGER.error("wantBayChangeBetween", e);
+		}
+
+		return false;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Three choices of behavior
+	 */
+	private static boolean wantRepeatContainerBetween(RepeatPosChoice inRepeatPosChoice,
+		WorkInstruction inPrevWi,
+		WorkInstruction inNextWi) {
+		if (inRepeatPosChoice == RepeatPosChoice.RepeatPosNone)
+			return false;
+		
+		try {
+		if (inPrevWi.getContainer().equals(inNextWi.getContainer())) {
+			if (inRepeatPosChoice == RepeatPosChoice.RepeatPosContainerOnly)
+				return true;
+			else if (inRepeatPosChoice == RepeatPosChoice.RepeatPosContainerAndCount) {
+				if (inPrevWi.getPlanQuantity().equals(inNextWi.getPlanQuantity()))
+					return true;
+			} else
+				LOGGER.error("unimplemented case in wantRepeatContainerBetween");
+		}
+		// Code above is complicated. Uncaught throw here (probably NPE) would result in aborted work instruction computation
+		} catch (Exception e) {
+			LOGGER.error("wantRepeatContainerBetween", e);
+		}
+		return false;
 	}
 
 	// --------------------------------------------------------------------------
@@ -116,26 +205,12 @@ public class HousekeepingInjector {
 			LOGGER.error("null value in wisNeedHouseKeepingBetween");
 			return null;
 		} else {
-
-			// container is associated to cart position. User cares about same cart position twice in a row.
-			if (kWantHK_REPEATPOS && inPrevWi.getContainer().equals(inNextWi.getContainer())) {
-				// Nothing we can do on server side if multiple items will be recorded to same cart position.
+			// If both repeatContainer and bayChange, this inserts the repeatContainer first
+			if (wantRepeatContainerBetween(getRepeatPosChoice(), inPrevWi, inNextWi)) {
 				returnList = addHouseKeepEnumToList(returnList, WorkInstructionTypeEnum.HK_REPEATPOS);
 			}
-
-			if (kWantHK_BAYCOMPLETE) {
-				// This can be tricky. Crossbatch put WI may have multiple locations. Initial implementation will not be completely right if the multiple locations span across bays.
-				// In our model, the WI.location field in this case is the arbitrary "first" location of all the locations for the outbound order.
-				ILocation loc1 = inPrevWi.getLocation();
-				ILocation loc2 = inNextWi.getLocation();
-				if (loc1 == null || loc2 == null)
-					LOGGER.error("unanticipated case in wisNeedHouseKeepingBetween");
-				else {
-					ILocation bay1 = loc1.getParentAtLevel(Bay.class);
-					ILocation bay2 = loc2.getParentAtLevel(Bay.class);
-					if (bay1 != null && bay2 != null && !bay1.equals(bay2))
-						returnList = addHouseKeepEnumToList(returnList, WorkInstructionTypeEnum.HK_BAYCOMPLETE);
-				}
+			if (wantBayChangeBetween(getBayChangeChoice(), inPrevWi, inNextWi)) {
+				returnList = addHouseKeepEnumToList(returnList, WorkInstructionTypeEnum.HK_BAYCOMPLETE);
 			}
 		}
 		return returnList;
@@ -159,8 +234,7 @@ public class HousekeepingInjector {
 					if (houseKeepingWi != null) {
 						wiResultList.add(houseKeepingWi);
 						LOGGER.info("adding housekeeping WI type " + houseKeepingWi.getDescription());
-					}
-					else
+					} else
 						LOGGER.debug("null returned from getNewHousekeepingWiOfType");
 				}
 			}

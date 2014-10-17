@@ -57,6 +57,7 @@ public class CsDeviceManagerTest {
 
 	private CsDeviceManager produceAttachedDeviceManager(IRadioController mockRadioController) {
 		Map<String, String> properties = new HashMap<String, String>();
+		properties.put("websocket.uri", "wss://uri:800");
 		CsDeviceManager deviceManager = new CsDeviceManager(mockRadioController, new MemoryConfiguration(properties));
 		
 		deviceManager.start();
