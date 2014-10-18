@@ -118,13 +118,16 @@ public class OpenTsdb {
         if (batchSizeLimit > 0 && metrics.size() > batchSizeLimit) {
             final Set<OpenTsdbMetric> smallMetrics = new HashSet<OpenTsdbMetric>();
             for (final OpenTsdbMetric metric: metrics) {
-            	// skip undefined metrics and exclude deadlock metric
+            	// skip undefined metrics
+            	/*
             	if (metric.getValue()==null) continue;
             	if (metric.getValue().getClass().isArray()) {
             		Object[] v = (Object[]) metric.getValue();
             		if (v.length==0) continue;
             	}            	
-            	//if (metric.getMetric().equals("jvm-thread.deadlocks")) continue;
+            	*/
+            	// exclude deadlock metric
+            	if (metric.getMetric().equals("jvm-thread.deadlocks")) continue;
             	// add metric to list and send if batch size reached
                 smallMetrics.add(metric);
                 if (smallMetrics.size() >= batchSizeLimit) {
