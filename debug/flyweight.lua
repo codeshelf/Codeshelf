@@ -91,7 +91,7 @@ end
 -- Flyweight protocol
 local VER_BITS = {[0] = "1", [1] = "Ver 2"}
 local TYPE_BITS = {[0] = "Std", [1] = "Ack"}
-local NET_BITS = {[15] = "Broadcast Net"}
+local NET_IDS = {[1] = "1", [2] = "2", [3] = "3", [15] = "Broadcast Net"}
 local GROUP_BITS = {[0] = "NetMgmt", [1] = "Assoc", [2] = "Info", [3] = "Control"}
 local VAL_BITS = {}
 local NET_CMDS = {[0] = "NetSetup", [1] = "NetCheck", [2] = "NetIntfTest" }
@@ -112,7 +112,7 @@ fwfields.f_ackid = ProtoField.uint16("flyweight.ackid", "AckID", base.DEC)
 fwfields.f_packet_header_ver = ProtoField.uint8("flyweight.version" , "Packet Version", base.DEC, VER_BITS, 0xc0)
 fwfields.f_packet_header_type = ProtoField.uint8("flyweight.type" , "Packet Type", base.DEC,TYPE_BITS, 0x20)
 fwfields.f_packet_header_reserved = ProtoField.uint8("flyweight.reserved" , "Reserved", base.DEC,VAL_BITS, 0x10)
-fwfields.f_packet_header_network = ProtoField.uint8("flyweight.network" , "Network ID", base.DEC,NET_BITS, 0x0f)
+fwfields.f_packet_header_network = ProtoField.uint8("flyweight.network" , "Network ID", base.DEC,NET_IDS, 0x0f)
 
 fwfields.f_command_group = ProtoField.uint8("flyweight.cmd.group" , "Command Group", base.DEC, GROUP_BITS, 0xf0)
 fwfields.f_command_ep = ProtoField.uint8("flyweight.cmd.ep" , "Endpoint", base.DEC, VAL_BITS, 0x0f)
@@ -127,6 +127,9 @@ fwfields.f_netmgmt_lqi = ProtoField.uint8("flyweight.netmgt.lqi" , "LQI", base.D
 
 fwfields.f_assoc_cmd = ProtoField.uint8("flyweight.assoc.cmd" , "Type", base.DEC, ASSOC_CMDS)
 fwfields.f_assoc_guid = ProtoField.string("flyweight.assoc.guid" , "GUID", ftypes.STRING)
+fwfields.f_assoc_resp_addr = ProtoField.uint8("flyweight.assoc.resp.addr" , "Assigned Addr", base.DEC)
+fwfields.f_assoc_resp_netid = ProtoField.uint8("flyweight.assoc.resp.netid" , "Assigned NetId", base.DEC, NET_IDS, 0x0f)
+fwfields.f_assoc_resp_sleep_sec = ProtoField.uint8("flyweight.assoc.resp.sleep" , "Sleep Sec", base.DEC)
 
 fwfields.f_info_cmd = ProtoField.uint8("flyweight.info.cmd" , "Type", base.DEC)
 
@@ -142,6 +145,11 @@ fwfields.f_control_led_blue = ProtoField.uint8("flyweight.led.blue" , "Blue", ba
 local f_control_led_chan_field = Field.new("flyweight.led.chan")
 local f_control_led_effect_field = Field.new("flyweight.led.effect")
 local f_control_led_samples_field = Field.new("flyweight.led.samples")
+
+local f_assoc_resp_addr = Field.new("flyweight.assoc.resp.addr")
+local f_assoc_resp_netid = Field.new("flyweight.assoc.resp.netid")
+
+local addr_map = {}
 
 -- Flyweight dissector function
 function flyweightproto.dissector(tvb, pkt, root)
@@ -164,19 +172,25 @@ function flyweightproto.dissector(tvb, pkt, root)
   
   local src_addr = tvb:range(3,1):uint()
   if src_addr == 0x00 then
-    src_addr = "gateway"
+    pkt.cols.src = "gateway"
+  elseif src_addr == 0x0f then
+    pkt.cols.src = "broadcast"
+  elseif addr_map[src_addr] ~= nil then
+    pkt.cols.src = addr_map[src_addr]
   else
-    src_addr = string.format("%02X", src_addr)
+    pkt.cols.src = src_addr
   end
-  pkt.cols.src = src_addr
 
   local dst_addr = tvb:range(4,1):uint()
-  if dst_addr == 0xff then
-    dst_addr = "broadcast"
+  if dst_addr == 0x00 then
+    pkt.cols.dst = "gateway"
+  elseif dst_addr == 0xff then
+    pkt.cols.dst = "broadcast"
+  elseif addr_map[dst_addr] ~= nil then
+    pkt.cols.dst = addr_map[dst_addr]
   else
-    dst_addr = string.format("%02X", dst_addr)
+    pkt.cols.dst = dst_addr
   end
-  pkt.cols.dst = dst_addr
   
   local ackid = tvb:range(5,1):uint()
   local packet_type = tvb:range(2,1):bitfield(2,1)
@@ -242,9 +256,6 @@ function assoc(tvb, pkt, root, flyweight_tree)
   local assoc_tree = flyweight_tree:add_packet_field(fwfields.f_assoc_cmd, tvb:range(7,1), ENC_BIG_ENDIAN)
   assoc_tree:add_packet_field(fwfields.f_assoc_guid, tvb:range(8,8), ENC_BIG_ENDIAN)
   
-  local data_dissector = Dissector.get("data")
-  data_dissector:call(tvb(9):tvb(), pkt, root)
-  
   local assoc_cmd = tvb:range(7,1):uint()
   local guid = tvb:range(8,8):string()
   
@@ -252,6 +263,12 @@ function assoc(tvb, pkt, root, flyweight_tree)
     pkt.cols.info = "AssocReq".." GUID: "..guid
   elseif assoc_cmd == 1 then
     pkt.cols.info = "AssocResp".." GUID: "..guid
+    assoc_tree:add_packet_field(fwfields.f_assoc_resp_addr, tvb:range(16,1), ENC_BIG_ENDIAN)
+    pkt.cols.info:append(" assigned addr: "..f_assoc_resp_addr().display)
+    addr_map[f_assoc_resp_addr().value] = guid
+    assoc_tree:add_packet_field(fwfields.f_assoc_resp_netid, tvb:range(17,1), ENC_BIG_ENDIAN)
+    pkt.cols.info:append(" net: "..f_assoc_resp_netid().display)
+    assoc_tree:add_packet_field(fwfields.f_assoc_resp_sleep_sec, tvb:range(18,1), ENC_BIG_ENDIAN)
   elseif assoc_cmd == 2 then
     pkt.cols.info = "AssocCheck".." GUID: "..guid
   elseif assoc_cmd == 3 then
@@ -301,8 +318,6 @@ function control(tvb, pkt, root, flyweight_tree)
       sample_tree:add_packet_field(fwfields.f_control_led_green, tvb:range(offset + 13,1), ENC_BIG_ENDIAN)
       sample_tree:add_packet_field(fwfields.f_control_led_blue, tvb:range(offset + 14,1), ENC_BIG_ENDIAN)
     end
-    local data_dissector = Dissector.get("data")
-    data_dissector:call(tvb(samples * 4 + 11):tvb(), pkt, root)
   elseif control_cmd == 3 then
     pkt.cols.info = "Set Pos Controller"
     local data_dissector = Dissector.get("data")
