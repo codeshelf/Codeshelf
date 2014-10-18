@@ -40,7 +40,7 @@ public class PcapRingBuffer {
 				new PcapRecord(this.byteRing); // consume a record
 				this.available--;
 			}
-			byteRing.put(record.getHeaderBytes());
+			byteRing.put(record.getHeaderAndPrependBytes());
 			byteRing.put(record.getPacket());
 			this.available++;
 			this.notify();

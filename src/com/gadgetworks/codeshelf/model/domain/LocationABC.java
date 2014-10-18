@@ -830,7 +830,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 			cmdPathsSet.add(new LedCmdPath(getEffectiveLedController().getDeviceGuidStr(), getEffectiveLedChannel()));
 		}
 		else {
-			for (ISubLocation child : getChildren()) {
+			for (ISubLocation<?> child : getChildren()) {
 				cmdPathsSet.addAll(child.getAllLedCmdPaths());
 			}
 		}

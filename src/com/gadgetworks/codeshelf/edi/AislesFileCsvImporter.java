@@ -85,7 +85,7 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 	private String					mLastControllerLed;
 
 	private List<Tier>				mTiersThisAisle;
-	private Map<UUID, ILocation>	mAisleLocationsMapThatMayBecomeInactive;
+	private Map<UUID, ILocation<?>>	mAisleLocationsMapThatMayBecomeInactive;
 
 	private String getAppropriateControllerLed() {
 		if (mLastControllerLed.isEmpty())
@@ -121,7 +121,7 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 		mIsOrientationX = true;
 
 		mTiersThisAisle = new ArrayList<Tier>();
-		mAisleLocationsMapThatMayBecomeInactive = new HashMap<UUID, ILocation>();
+		mAisleLocationsMapThatMayBecomeInactive = new HashMap<UUID, ILocation<?>>();
 
 		mLastControllerLed = "";
 		mControllerLed = "";

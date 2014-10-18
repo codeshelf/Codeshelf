@@ -1,5 +1,7 @@
 package com.gadgetworks.codeshelf.ws.jetty;
 
+import static org.mockito.Mockito.mock;
+
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -12,7 +14,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
-import static org.mockito.Mockito.mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import com.fasterxml.jackson.core.JsonParseException;
