@@ -117,6 +117,9 @@ public class OpenTsdb {
         if (batchSizeLimit > 0 && metrics.size() > batchSizeLimit) {
             final Set<OpenTsdbMetric> smallMetrics = new HashSet<OpenTsdbMetric>();
             for (final OpenTsdbMetric metric: metrics) {
+            	// skip undefined metrics
+            	if (metric.getValue()==null) continue;
+            	// add metric to list and send if batch size reached
                 smallMetrics.add(metric);
                 if (smallMetrics.size() >= batchSizeLimit) {
                     sendHelper(smallMetrics);
