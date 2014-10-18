@@ -25,7 +25,7 @@ public class OpenTsdb {
 	@SuppressWarnings("unused")
 	private static final Logger	LOGGER = LoggerFactory.getLogger(OpenTsdb.class);
 
-    public static final int DEFAULT_BATCH_SIZE_LIMIT = 1;
+    public static final int DEFAULT_BATCH_SIZE_LIMIT = 5;
     public static final int CONN_TIMEOUT_DEFAULT_MS = 5000;
     public static final int READ_TIMEOUT_DEFAULT_MS = 5000;
 
