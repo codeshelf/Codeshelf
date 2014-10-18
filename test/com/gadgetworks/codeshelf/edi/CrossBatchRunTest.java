@@ -356,7 +356,6 @@ public class CrossBatchRunTest extends EdiTestABC {
 
 	}
 
-	@SuppressWarnings("unused")
 	@Test
 	public final void housekeepingNegativeTest() throws IOException {
 		// Same as basic housekeeping, but showing that no housekeeps if set to pathSegmentChange and containerAndCount

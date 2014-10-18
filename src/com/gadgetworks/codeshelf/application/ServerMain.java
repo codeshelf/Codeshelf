@@ -111,7 +111,6 @@ import com.gadgetworks.codeshelf.model.domain.WorkInstruction.WorkInstructionDao
 import com.gadgetworks.codeshelf.report.IPickDocumentGenerator;
 import com.gadgetworks.codeshelf.report.PickDocumentGenerator;
 import com.gadgetworks.codeshelf.security.CodeshelfRealm;
-import com.gadgetworks.codeshelf.service.WorkService;
 import com.gadgetworks.codeshelf.util.IConfiguration;
 import com.gadgetworks.codeshelf.util.JVMSystemConfiguration;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageProcessor;
