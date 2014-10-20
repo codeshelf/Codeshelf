@@ -296,6 +296,12 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 		}
 	}
 
+	public final Boolean amIHouseKeepingWi() {
+		// if called the more obvious isHouseKeepingWi, then jackson wants to serialize it.
+		WorkInstructionTypeEnum theType = this.getTypeEnum();
+		return (theType == WorkInstructionTypeEnum.HK_REPEATPOS || theType == WorkInstructionTypeEnum.HK_BAYCOMPLETE);
+	}
+
 	// Denormalized for serialized WIs at the site controller.
 	public final void setItemMaster(ItemMaster inItemMaster) {
 		itemMaster = inItemMaster;
