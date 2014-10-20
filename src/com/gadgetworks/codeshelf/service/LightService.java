@@ -89,7 +89,7 @@ public class LightService {
 		ArrayList<LedCmdGroup> ledCmdGroups = new ArrayList<LedCmdGroup>();
 		for (Entry<ControllerChannelBayKey, Tier> keyedTier : lastLocationWithinBay.entrySet()) {
 			Tier lastTierInBayForControllerChannel = keyedTier.getValue();
-			List<LedCmdGroup> ledCmdGroupList = getLedCmdGroupListForLocation(3, theColor, lastTierInBayForControllerChannel);
+			List<LedCmdGroup> ledCmdGroupList = getLedCmdGroupListForLocation(2, theColor, lastTierInBayForControllerChannel);
 			ledCmdGroups.addAll(ledCmdGroupList);
 		} 
 		
