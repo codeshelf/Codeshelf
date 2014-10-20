@@ -35,6 +35,7 @@ import com.gadgetworks.codeshelf.model.domain.OrderGroup;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.UomMaster;
 import com.gadgetworks.codeshelf.util.DateTimeParser;
+import com.gadgetworks.codeshelf.validation.ErrorCode;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -375,7 +376,7 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 				result = new Container();
 				result.setParent(inFacility);
 				result.setContainerId(inCsvBean.getPreAssignedContainerId());
-				ContainerKind kind = inFacility.getContainerKind(ContainerKind.DEFAULT_CONTAINER_KIND); 
+				ContainerKind kind = inFacility.getContainerKind(ContainerKind.DEFAULT_CONTAINER_KIND);
 				result.setKind(kind);
 				inFacility.addContainer(result);
 			}
@@ -604,15 +605,19 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 		result.setUomMaster(inUomMaster);
 		result.setQuantities(Integer.valueOf(inCsvBean.getQuantity()));
 
-		// Override the min quantity if specified - otherwise make the same as the nominal quantity.
-		if (inCsvBean.getMinQuantity() != null) {
-			result.setMinQuantity(Integer.valueOf(inCsvBean.getMinQuantity()));
-		} 
+		try {
+			// Override the min quantity if specified - otherwise make the same as the nominal quantity.
+			if (inCsvBean.getMinQuantity() != null) {
+				result.setMinQuantity(Integer.valueOf(inCsvBean.getMinQuantity()));
+			}
 
-		// Override the max quantity if specified - otherwise make the same as the nominal quantity.
-		if (inCsvBean.getMaxQuantity() != null) {
-			result.setMaxQuantity(Integer.valueOf(inCsvBean.getMaxQuantity()));
-		} 
+			// Override the max quantity if specified - otherwise make the same as the nominal quantity.
+			if (inCsvBean.getMaxQuantity() != null) {
+				result.setMaxQuantity(Integer.valueOf(inCsvBean.getMaxQuantity()));
+			}
+		} catch (NumberFormatException e) {
+			LOGGER.warn("bad or missing value in min or max quantity field for " + detailId);
+		}
 
 		result.setActive(true);
 		result.setUpdated(inEdiProcessTime);

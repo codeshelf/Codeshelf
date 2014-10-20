@@ -887,4 +887,52 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		return theLedRange;
 	}
 
+	private class InventoryPositionComparator implements Comparator<Item> {
+
+		public int compare(Item item1, Item item2) {
+			Double item1Pos = item1.getPosAlongPath();
+			Double item2Pos = item2.getPosAlongPath();
+
+			if (item1Pos == null && item2Pos == null)
+				return 0;
+			else if (item1Pos == null)
+				return 1;
+			else if (item2Pos == null)
+				return -1;
+
+			if (item1Pos > item2Pos)
+				return -1;
+			else if (item1Pos < item2Pos)
+				return 1;
+			return 0;
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Gets inventory in its, and its direct children only. Most useful tier and/or slot
+	 * Public mainly for testability
+	 * 
+	 */
+	public List<Item> getInventorySortedByPosAlongPath() {
+		ArrayList<Item> aList = new ArrayList<Item>();
+		// Add my inventory
+		for (Item item : getStoredItems().values()) {
+			aList.add(item);
+		}
+		// Add my children's inventory
+		for (SubLocationABC location : locations.values()) {
+			LocationABC childLocation = (LocationABC) location;
+			for (Object anObject : childLocation.getStoredItems().values()) {
+				Item theItem = (Item) anObject;
+				aList.add(theItem);
+			}
+		}
+		// Sort as we want it
+		Collections.sort(aList, new InventoryPositionComparator());
+
+		return aList;
+	}
+
+
 }
