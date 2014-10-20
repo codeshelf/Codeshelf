@@ -622,6 +622,10 @@ public class InventoryImporterTest extends EdiTestABC {
 		Item item1123Loc402EA = locationD402.getStoredItemFromMasterIdAndUom("1123", "EA");
 		Assert.assertNotNull(item1123Loc402EA);
 
+		// A brief side trip to check the list we use for lighting inventory in a tier
+		List<Item>  invList = locationD502.getInventorySortedByPosAlongPath();
+		Assert.assertTrue(invList.size() == 2);
+
 		// Outbound order. No group. Using 5 digit order number and preassigned container number.
 		// Item 1123 exists in case and each.
 		// Item 1493 exists in case only. Order for each should short.
