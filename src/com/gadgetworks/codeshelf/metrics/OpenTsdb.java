@@ -24,7 +24,7 @@ public class OpenTsdb {
 	@SuppressWarnings("unused")
 	private static final Logger	LOGGER = LoggerFactory.getLogger(OpenTsdb.class);
 
-    public static final int DEFAULT_BATCH_SIZE_LIMIT = 0;
+    public static final int DEFAULT_BATCH_SIZE_LIMIT = 5;
     public static final int CONN_TIMEOUT_DEFAULT_MS = 5000;
     public static final int READ_TIMEOUT_DEFAULT_MS = 5000;
 
@@ -117,6 +117,8 @@ public class OpenTsdb {
         if (batchSizeLimit > 0 && metrics.size() > batchSizeLimit) {
             final Set<OpenTsdbMetric> smallMetrics = new HashSet<OpenTsdbMetric>();
             for (final OpenTsdbMetric metric: metrics) {
+            	// exclude deadlock metric, since it breaks opentsdb reporting
+            	if (metric.getMetric().equals("jvm-thread.deadlocks")) continue;
                 smallMetrics.add(metric);
                 if (smallMetrics.size() >= batchSizeLimit) {
                     sendHelper(smallMetrics);
