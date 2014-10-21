@@ -142,9 +142,17 @@ fwfields.f_control_led_red = ProtoField.uint8("flyweight.led.red" , "Red", base.
 fwfields.f_control_led_green = ProtoField.uint8("flyweight.led.green" , "Green", base.DEC)
 fwfields.f_control_led_blue = ProtoField.uint8("flyweight.led.blue" , "Blue", base.DEC)
 
+fwfields.f_control_pos_samples = ProtoField.uint8("flyweight.pos.samples" , "Samples", base.DEC)
+fwfields.f_control_pos_num = ProtoField.uint8("flyweight.pos.num" , "Pos Num", base.DEC)
+fwfields.f_control_pos_reqval = ProtoField.uint8("flyweight.pos.reqval" , "ReqVal", base.DEC)
+fwfields.f_control_pos_minval = ProtoField.uint8("flyweight.pos.minval" , "MinVal", base.DEC)
+fwfields.f_control_pos_maxval = ProtoField.uint8("flyweight.pos.maxval" , "MaxVal", base.DEC)
+fwfields.f_control_pos_pwmfreq = ProtoField.uint8("flyweight.pos.freq" , "Freq", base.DEC)
+fwfields.f_control_pos_pwmduty = ProtoField.uint8("flyweight.pos.duty" , "Duty", base.DEC)
+
 local f_control_led_chan_field = Field.new("flyweight.led.chan")
 local f_control_led_effect_field = Field.new("flyweight.led.effect")
-local f_control_led_samples_field = Field.new("flyweight.led.samples")
+local f_control_pos_samples_field = Field.new("flyweight.pos.samples")
 
 local f_assoc_resp_addr = Field.new("flyweight.assoc.resp.addr")
 local f_assoc_resp_netid = Field.new("flyweight.assoc.resp.netid")
@@ -320,8 +328,18 @@ function control(tvb, pkt, root, flyweight_tree)
     end
   elseif control_cmd == 3 then
     pkt.cols.info = "Set Pos Controller"
-    local data_dissector = Dissector.get("data")
-    data_dissector:call(tvb(8):tvb(), pkt, root)
+    local sample_tree = control_tree:add_packet_field(fwfields.f_control_pos_samples, tvb:range(8,1), ENC_BIG_ENDIAN)
+    pkt.cols.info:append(" count: "..f_control_pos_samples_field().display)
+    local samples = tvb:range(10,1):uint()
+    for sample = 0, samples - 1, 1 do
+      local offset = sample * 4
+      sample_tree:add_packet_field(fwfields.f_control_pos_num, tvb:range(offset + 9,1), ENC_BIG_ENDIAN)
+      sample_tree:add_packet_field(fwfields.f_control_pos_reqval, tvb:range(offset + 10,1), ENC_BIG_ENDIAN)
+      sample_tree:add_packet_field(fwfields.f_control_pos_minval, tvb:range(offset + 11,1), ENC_BIG_ENDIAN)
+      sample_tree:add_packet_field(fwfields.f_control_pos_maxval, tvb:range(offset + 12,1), ENC_BIG_ENDIAN)
+      sample_tree:add_packet_field(fwfields.f_control_pos_pwmfreq, tvb:range(offset + 13,1), ENC_BIG_ENDIAN)
+      sample_tree:add_packet_field(fwfields.f_control_pos_pwmduty, tvb:range(offset + 14,1), ENC_BIG_ENDIAN)
+    end
   elseif control_cmd == 4 then
     pkt.cols.info = "Clr Pos Controller"
     local data_dissector = Dissector.get("data")
