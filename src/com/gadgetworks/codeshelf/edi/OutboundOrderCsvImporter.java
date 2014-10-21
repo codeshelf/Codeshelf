@@ -608,12 +608,20 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 		try {
 			// Override the min quantity if specified - otherwise make the same as the nominal quantity.
 			if (inCsvBean.getMinQuantity() != null) {
-				result.setMinQuantity(Integer.valueOf(inCsvBean.getMinQuantity()));
+				Integer minVal = Integer.valueOf(inCsvBean.getMinQuantity());
+				if (minVal > result.getQuantity())
+					LOGGER.warn("minQuantity may not be higher than quantity");
+				else
+					result.setMinQuantity(minVal);
 			}
 
 			// Override the max quantity if specified - otherwise make the same as the nominal quantity.
 			if (inCsvBean.getMaxQuantity() != null) {
-				result.setMaxQuantity(Integer.valueOf(inCsvBean.getMaxQuantity()));
+				Integer maxVal = Integer.valueOf(inCsvBean.getMaxQuantity());
+				if (maxVal < result.getQuantity())
+					LOGGER.warn("maxQuantity may not be lower than quantity");
+				else
+					result.setMaxQuantity(maxVal);
 			}
 		} catch (NumberFormatException e) {
 			LOGGER.warn("bad or missing value in min or max quantity field for " + detailId);
