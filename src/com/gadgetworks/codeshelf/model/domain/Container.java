@@ -129,7 +129,7 @@ public class Container extends DomainObjectTreeABC<Facility> {
 		if(previousContainer == null) {
 			uses.add(inContainerUse);
 			inContainerUse.setParent(this);
-		} else {
+		} else if((!previousContainer.equals(this)) || (!uses.contains(inContainerUse))) {
 			LOGGER.error("cannot add ContainerUse "+inContainerUse.getDomainId()+" to "+this.getDomainId()+" because it has not been removed from "+previousContainer.getDomainId());
 		}	
 	}

@@ -282,7 +282,7 @@ public class IntegrationTest1 extends EndToEndIntegrationTest {
 		Double wi1Pos = wi1.getPosAlongPath();
 
 		// New from v4. Test our work instruction summarizer
-		List<WiSetSummary> summaries = new WorkService().workSummary(che1.getPersistentId().toString(),
+		List<WiSetSummary> summaries = new WorkService(this.getPersistenceService()).start().workSummary(che1.getPersistentId().toString(),
 			facility.getPersistentId().toString());
 
 		// as this test, this facility only set up this one che, there should be only one wi set. But we have 3. How?

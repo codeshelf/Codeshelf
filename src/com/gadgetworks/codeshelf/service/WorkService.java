@@ -8,6 +8,9 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,51 +26,88 @@ import com.gadgetworks.codeshelf.model.domain.IEdiService;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.validation.ErrorCode;
 import com.gadgetworks.codeshelf.validation.InputValidationException;
 import com.google.common.collect.ImmutableList;
+import com.google.inject.Inject;
 
 public class WorkService {
 
+	public static final long DEFAULT_RETRY_DELAY 	= 10000L;
+	public static final int DEFAULT_CAPACITY		= Integer.MAX_VALUE;
+	
 	private static final Logger						LOGGER	= LoggerFactory.getLogger(WorkService.class);
-	private final BlockingQueue<WorkInstruction>	completedWorkInstructions;
+	private BlockingQueue<WorkInstruction>	completedWorkInstructions;
 
-	public WorkService() {
-		this(Integer.MAX_VALUE, new IEdiExportServiceProvider() {
-			@Override
-			public IEdiService getWorkInstructionExporter(Facility facility) {
-				return facility.getEdiExportService();
-			}
-		}, 10000L);
+	@Getter
+	@Setter
+	long retryDelay;
+
+	@Getter
+	@Setter
+	int capacity;
+	
+	IEdiExportServiceProvider exportServiceProvider;
+	
+	@Getter
+	PersistenceService persistenceService;
+	
+	@Inject
+	public WorkService(PersistenceService persistenceService) {
+		this.persistenceService = persistenceService;
+
+		this.exportServiceProvider = new IEdiExportServiceProvider() {
+				@Override
+				public IEdiService getWorkInstructionExporter(Facility facility) {
+					return facility.getEdiExportService();
+				}
+			};
+
+		this.retryDelay = DEFAULT_RETRY_DELAY;
+		this.capacity = DEFAULT_CAPACITY;
 	}
 
-	public WorkService(int capacity, final IEdiExportServiceProvider exportServiceProvider, final long retryDelay) {
-		completedWorkInstructions = new LinkedBlockingQueue<WorkInstruction>(capacity);
+	public WorkService start() {
+		this.completedWorkInstructions = new LinkedBlockingQueue<WorkInstruction>(this.capacity);
+
 		Executor executor = Executors.newSingleThreadExecutor();
 		executor.execute(new Runnable() {
 			public void run() {
 				try {
 					while (!Thread.interrupted()) {
-						WorkInstruction wi = completedWorkInstructions.take();
-						boolean sent = false;
-						while (!sent) {
-							List<WorkInstruction> wiList = ImmutableList.of(wi);
-							try {
-								Facility facility = wi.getParent();
-								IEdiService ediExportService = exportServiceProvider.getWorkInstructionExporter(facility);
-								ediExportService.sendWorkInstructionsToHost(wiList);
-								sent = true;
-							} catch (IOException e) {
-								Thread.sleep(retryDelay);
-								LOGGER.warn("failure to send work instructions, retrying: ", e);
-							}
-						}
+						
+						sendWorkInstructions();
+
 					}
 				} catch (InterruptedException e) {
 					LOGGER.error("Work instruction exporter interrupted waiting for completed work instructions. Shutting down.", e);
 				}
 			}
 		});
+		
+		return this;
+	}
+	
+	private void sendWorkInstructions() throws InterruptedException {
+		persistenceService.beginTenantTransaction();
+
+		WorkInstruction wi = completedWorkInstructions.take();
+		boolean sent = false;
+		while (!sent) {
+			List<WorkInstruction> wiList = ImmutableList.of(wi);
+			try {
+				Facility facility = wi.getParent();
+				IEdiService ediExportService = exportServiceProvider.getWorkInstructionExporter(facility);
+				ediExportService.sendWorkInstructionsToHost(wiList);
+				sent = true;
+			} catch (IOException e) {
+				Thread.sleep(retryDelay);
+				LOGGER.warn("failure to send work instructions, retrying: ", e);
+			}
+		}
+
+		persistenceService.endTenantTransaction();
 	}
 
 	public List<WiSetSummary> workSummary(String cheId, String facilityId) {

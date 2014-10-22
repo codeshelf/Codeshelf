@@ -68,7 +68,7 @@ public class WorkServiceTest extends DAOTestABC {
 		}
 		when(workInstructionDao.findByFilter(anyList())).thenReturn(inputs);
 
-		WorkService workService = new WorkService();
+		WorkService workService = new WorkService(this.getPersistenceService()).start();
 		List<WiSetSummary> workSummaries  = workService.workSummary("testCheId", "testFacilityId");
 
 		//since each timestamp is unique they will each get summarized into their own summary object
@@ -290,7 +290,13 @@ public class WorkServiceTest extends DAOTestABC {
 		IEdiExportServiceProvider provider = mock(IEdiExportServiceProvider.class);
 		when(provider.getWorkInstructionExporter(any(Facility.class))).thenReturn(ediService);
 
-		return new WorkService(capacity, provider, retryDelay);
+		WorkService ws = new WorkService(this.getPersistenceService());
+		ws.setCapacity(capacity);
+		ws.setRetryDelay(retryDelay);
+		
+		ws.start();
+		
+		return ws;
 	}
 
 	private class TimedExceptionAnswer extends ThrowsException {
