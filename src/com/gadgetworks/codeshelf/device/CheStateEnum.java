@@ -27,8 +27,9 @@ public enum CheStateEnum {
 	// @EnumValue("DO_PICK")
 	DO_PICK(CheStateNum.DO_PICK, "DO_PICK"),
 	// @EnumValue("SHORT_PICK")
-	SHORT_PICK_CONFIRM(CheStateNum.SHORT_PICK, "SHORT_PICK"),
-	// @EnumValue("PICK_COMPLETE")
+	SHORT_PICK(CheStateNum.SHORT_PICK, "SHORT_PICK"),
+	//@EnumValue("SHORT_PICK_CONFIRM")
+	SHORT_PICK_CONFIRM(CheStateNum.SHORT_PICK_CONFIRM, "SHORT_PICK_CONFIRM"),
 	PICK_COMPLETE(CheStateNum.PICK_COMPLETE, "PICK_COMPLETE"),
 	// @EnumValue("NO_WORK")
 	NO_WORK(CheStateNum.NO_WORK, "NO_WORK");
@@ -74,6 +75,10 @@ public enum CheStateEnum {
 				break;
 
 			case CheStateNum.SHORT_PICK:
+				result = CheStateEnum.SHORT_PICK;
+				break;
+
+			case CheStateNum.SHORT_PICK_CONFIRM:
 				result = CheStateEnum.SHORT_PICK_CONFIRM;
 				break;
 
@@ -111,6 +116,7 @@ public enum CheStateEnum {
 		static final byte	SHORT_PICK			= 7;
 		static final byte	PICK_COMPLETE		= 8;
 		static final byte	NO_WORK				= 9;
+		static final byte	SHORT_PICK_CONFIRM	= 10; // added Oct. 2014
 		
 		private CheStateNum() {
 		};

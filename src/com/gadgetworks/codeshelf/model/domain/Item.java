@@ -424,12 +424,10 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	}
 	
 	public LedRange getFirstLastLedsForItem() {
-		LedRange theLedRange = new LedRange();
-		
 		// to compute, we need the locations first and last led positions
 		ILocation<?> theLocation = this.getStoredLocation();
 		if (theLocation instanceof Facility)
-			return theLedRange; // was initialized to give values of 0,0
+			return LedRange.zero(); // was initialized to give values of 0,0
 
 		int firstLocLed = theLocation.getFirstLedNumAlongPath(); 
 		int lastLocLed = theLocation.getLastLedNumAlongPath(); 
@@ -439,8 +437,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		Double locationWidth = ((SubLocationABC<?>) theLocation).getLocationWidthMeters();
 		boolean lowerLedNearAnchor = theLocation.isLowerLedNearAnchor();
 		
-		theLedRange.computeLedsToLight(firstLocLed, lastLocLed, locationWidth, metersFromAnchor, lowerLedNearAnchor);
-		
+		LedRange theLedRange = LedRange.computeLedsToLight(firstLocLed, lastLocLed, lowerLedNearAnchor, locationWidth, metersFromAnchor); 
 		return theLedRange;
 	}
 	

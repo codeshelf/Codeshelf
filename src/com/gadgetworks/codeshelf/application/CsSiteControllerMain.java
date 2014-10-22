@@ -55,8 +55,7 @@ public final class CsSiteControllerMain {
 	public static void main(String[] inArgs) throws Exception {
 
 		// Create and start the application.
-		Injector injector = setupInjector();
-		ICodeshelfApplication application = injector.getInstance(CsSiteControllerApplication.class);
+		ICodeshelfApplication application = createApplication(new DefaultModule());
 		application.startApplication();
 		
 		// public metrics to opentsdb
@@ -87,22 +86,33 @@ public final class CsSiteControllerMain {
 	}
 
 	// --------------------------------------------------------------------------
-	/**
-	 * @return
-	 */
-	public static Injector setupInjector() {
-		Injector injector = Guice.createInjector(new AbstractModule() {
-			@Override
-			protected void configure() {
-				bind(ICodeshelfApplication.class).to(CsSiteControllerApplication.class);
-				bind(IRadioController.class).to(RadioController.class);
-				bind(IConfiguration.class).to(JVMSystemConfiguration.class);
-				bind(IGatewayInterface.class).to(FTDIInterface.class);
-				bind(ICsDeviceManager.class).to(CsDeviceManager.class);
-				bind(IDaoProvider.class).to(DaoProvider.class);
-			}
-		});
-
-		return injector;
+	
+	public static CsSiteControllerApplication createApplication(AbstractModule guiceModule) {
+		Injector injector = Guice.createInjector(guiceModule);
+		return injector.getInstance(CsSiteControllerApplication.class); 
 	}
+	
+	public static class BaseModule extends AbstractModule {
+		
+		@Override
+		protected void configure() {
+			bind(ICodeshelfApplication.class).to(CsSiteControllerApplication.class);
+			bind(IRadioController.class).to(RadioController.class);
+			bind(IConfiguration.class).to(JVMSystemConfiguration.class);
+			bind(ICsDeviceManager.class).to(CsDeviceManager.class);
+			bind(IDaoProvider.class).to(DaoProvider.class);
+		}
+		
+	}
+
+	public static class DefaultModule extends BaseModule {
+		
+		@Override
+		protected void configure() {
+			super.configure();
+			bind(IGatewayInterface.class).to(FTDIInterface.class);
+		}
+		
+	}
+
 }

@@ -1,5 +1,7 @@
 package com.gadgetworks.codeshelf.ws.jetty;
 
+import static org.mockito.Mockito.mock;
+
 import java.util.HashMap;
 
 import org.junit.Assert;
@@ -17,6 +19,7 @@ import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Point;
+import com.gadgetworks.codeshelf.service.WorkService;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectUpdateRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectUpdateResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
@@ -30,7 +33,7 @@ import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
 // TODO: should use mock DAO
 @RunWith(MockitoJUnitRunner.class)
 public class CreateCheTest extends DAOTestABC {
-	MockDaoProvider mDaoProvider;
+	MockDaoProvider daoProvider;
 	UserSession mSession;
 	
 	@Test
@@ -67,7 +70,7 @@ public class CreateCheTest extends DAOTestABC {
 		properties.put("description", description2);
 		req.setProperties(properties);
 		
-		ServerMessageProcessor processor = new ServerMessageProcessor(mDaoProvider);
+		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider, mock(WorkService.class));
 		ResponseABC response = processor.handleRequest(mSession, req);
 
 		Assert.assertTrue(response instanceof ObjectUpdateResponse);
@@ -119,7 +122,7 @@ public class CreateCheTest extends DAOTestABC {
 		properties.put("description", description2);
 		req.setProperties(properties);
 		
-		ServerMessageProcessor processor = new ServerMessageProcessor(mDaoProvider);
+		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider, mock(WorkService.class));
 
 		ResponseABC response = processor.handleRequest(mSession, req);
 		Assert.assertTrue(response instanceof ObjectUpdateResponse);
@@ -167,7 +170,7 @@ public class CreateCheTest extends DAOTestABC {
 		properties.put("description", description2);
 		req.setProperties(properties);
 		
-		ServerMessageProcessor processor = new ServerMessageProcessor(mDaoProvider);
+		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider, mock(WorkService.class));
 
 		ResponseABC response = processor.handleRequest(mSession, req);
 		Assert.assertTrue(response instanceof ObjectUpdateResponse);
@@ -196,7 +199,7 @@ public class CreateCheTest extends DAOTestABC {
 		properties.put("foo", "bar");
 		req.setProperties(properties);
 		
-		ServerMessageProcessor processor = new ServerMessageProcessor(mDaoProvider);
+		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider, mock(WorkService.class));
 
 		ResponseABC response = processor.handleRequest(session, req);
 		Assert.assertTrue(response instanceof ObjectUpdateResponse);
@@ -242,7 +245,7 @@ public class CreateCheTest extends DAOTestABC {
 		properties.put("description", description2);
 		req.setProperties(properties);
 		
-		ServerMessageProcessor processor = new ServerMessageProcessor(mDaoProvider);
+		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider, mock(WorkService.class));
 
 		ResponseABC response = processor.handleRequest(mSession, req);
 		Assert.assertTrue(response instanceof ObjectUpdateResponse);
@@ -257,7 +260,7 @@ public class CreateCheTest extends DAOTestABC {
 	}
 
 	private void setupDaos() {
-		mDaoProvider = new MockDaoProvider();
+		daoProvider = new MockDaoProvider();
 		
 		mSession = Mockito.mock(UserSession.class);
 		mSession.setSessionId("test-session");

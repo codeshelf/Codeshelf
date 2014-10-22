@@ -1,9 +1,9 @@
 package com.gadgetworks.codeshelf.ws.jetty.protocol.command;
 
+import lombok.Setter;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import lombok.Setter;
 
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;

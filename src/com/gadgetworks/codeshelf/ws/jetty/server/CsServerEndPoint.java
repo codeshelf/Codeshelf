@@ -18,7 +18,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.Counter;
-import com.codahale.metrics.MetricRegistry;
 import com.gadgetworks.codeshelf.application.ContextLogging;
 import com.gadgetworks.codeshelf.metrics.MetricsGroup;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
@@ -40,21 +39,18 @@ public class CsServerEndPoint {
 
 	private static final Counter messageCounter = MetricsService.addCounter(MetricsGroup.WSS,"messages.received");
 
-	MessageProcessor messageProcessor;
-	SessionManager sessionManager;
+	//These are singletons injected at startup. 
+	//  This allows us to avoid trying to hook Guice into the object creation  process of javax.websocket/Jetty
+	//     but allow Guice to control object creation for these singletons
+	private static MessageProcessor messageProcessor;
+	private static SessionManager sessionManager;
 	
-	MetricRegistry metricsRegistry;
-    
 	// time to close session after mins of inactivity
 	int idleTimeOut = 60;
 	
+	
 	public CsServerEndPoint() {
 		persistenceService = PersistenceService.getInstance();
-		sessionManager = SessionManager.getInstance();
-		messageProcessor = MessageProcessorFactory.getInstance();
-		if (messageProcessor==null) {
-			LOGGER.error("Unable to get Web Socket message processor from factory");
-		}
 	}
 	
 	@OnOpen
@@ -125,6 +121,22 @@ public class CsServerEndPoint {
     	LOGGER.error("WebSocket error", cause);
     	ContextLogging.clearSession();
     }
+
+    //Injected see ServerMain
+	public static void setSessionManager(SessionManager instance) {
+		if (sessionManager != null) {
+			throw new IllegalArgumentException("SessionManager should only be initialized once");
+		}
+		sessionManager = instance;
+	}
+
+	//Injected see ServerMain
+	public static void setMessageProcessor(ServerMessageProcessor instance) {
+		if (messageProcessor != null) {
+			throw new IllegalArgumentException("MessageProcessor should only be initialized once");
+		}
+		messageProcessor = instance;
+	}
 
 
 }

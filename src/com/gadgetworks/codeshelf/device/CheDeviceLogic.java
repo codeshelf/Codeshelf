@@ -127,7 +127,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private WorkInstruction			mShortPickWi;
 	private Integer					mShortPickQty;
 
-	private boolean	connectedToServer = true;
+	private boolean					connectedToServer						= true;
 
 	public CheDeviceLogic(final UUID inPersistentId,
 		final NetGuid inGuid,
@@ -197,8 +197,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			// This is far less logging than if the command actually goes, so might as well say what is going on.
 			return;
 		}
-		
-		String displayString = "Display message for "+ getMyGuidStrForLog();
+
+		String displayString = "Display message for " + getMyGuidStrForLog();
 		if (!inLine1Message.isEmpty())
 			displayString += " line1: " + inLine1Message;
 		if (!inLine2Message.isEmpty())
@@ -226,7 +226,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 */
 	private void sendDisplayWorkInstruction(final String inPickInstructions,
 		final String inDescription,
-		final Integer inPlanQuantity) {
+		final Integer inPlanQuantity,
+		boolean inShortInstructionNeeded) {
 		String displayDescription = inDescription;
 		if (inPlanQuantity > maxCountForPositionControllerDisplay - 1) {
 			String countStr = inPlanQuantity.toString();
@@ -248,6 +249,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			int toGet = Math.min(20, displayDescription.length() - pos);
 			descriptionLine[2] += displayDescription.substring(pos, pos + toGet);
 		}
+
+		if (inShortInstructionNeeded)
+			descriptionLine[2] = "DECREMENT POSITION";
 
 		// Note: pickInstruction is more or less a location. Commonly a location alias, but may be a locationId or DDcId.
 		sendDisplayCommand(inPickInstructions, descriptionLine[0], descriptionLine[1], descriptionLine[2]);
@@ -372,7 +376,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 * @see com.gadgetworks.flyweight.controller.INetworkDevice#start()
 	 */
 	public final void startDevice() {
-		setState(mCheStateEnum);
+		// setState(mCheStateEnum);  Always, after start, there is the device associate chain and redisplay which will call setState(mCheStateEnum);
 		setLastAckId((byte) 0);
 	}
 
@@ -411,7 +415,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			mCompletedWiList.clear();
 			mAllPicksWiList.addAll(inWorkItemList);
 			doNextPick();
-			setState(CheStateEnum.DO_PICK);
+			// setState(CheStateEnum.DO_PICK);  // doNextPick will set the state.
 		}
 	}
 
@@ -431,7 +435,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		String scanPrefixStr = getScanPrefix(inCommandStr);
 		String scanStr = getScanContents(inCommandStr, scanPrefixStr);
 
-		clearAllPositionControllers();
+		// Fix short break from May 11 2014.  Very kludgy
+		if (!scanStr.equals(SHORT_COMMAND) && (mCheStateEnum != CheStateEnum.SHORT_PICK_CONFIRM))
+			clearAllPositionControllers();
 
 		// A command scan is always an option at any state.
 		if (inCommandStr.startsWith(COMMAND_PREFIX)) {
@@ -560,15 +566,20 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				sendDisplayCommand(SHORT_PICK_CONFIRM_MSG, YES_NO_MSG);
 				break;
 
+			case SHORT_PICK:
+				// first try. Show normally, but based on state, the wi min count will be set to zero.
+				showActivePicks();
+				break;
+
 			case DO_PICK:
-				if (wasSameState) {
-					showActivePicks();
-				}
+				showActivePicks(); // used to only fire if not already in this state. Now if setState(DO_PICK) is called, it always calls showActivePicks.
+				// fewer direct calls to showActivePicks elsewhere.
 				break;
 
 			case PICK_COMPLETE:
 				sendDisplayCommand(PICK_COMPLETE_MSG, EMPTY_MSG);
 				break;
+
 			case NO_WORK:
 				sendDisplayCommand(NO_WORK_MSG, EMPTY_MSG);
 				break;
@@ -587,6 +598,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private void invalidScanMsg(final CheStateEnum inCheState) {
 		mCheStateEnum = inCheState;
 
+		byte positionControllerToSendTo = PosControllerInstr.POSITION_ALL;
+		boolean sendPositionControllerInstructions = true;
+
 		switch (inCheState) {
 			case IDLE:
 				sendDisplayCommand(SCAN_USERID_MSG, INVALID_SCAN_MSG);
@@ -604,19 +618,31 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				sendDisplayCommand(SELECT_POSITION_MSG, INVALID_SCAN_MSG);
 				break;
 
+			case DO_PICK:
+				/* New attempts, but left as the default.  Test cases
+				 * Short a housekeeping work instruction. (All E's is bad.)
+				 * Yes or No on a normal pick
+				 */				
+				
+				// positionControllerToSendTo =  just the one, if we can figure it out. Or
+				// sendPositionControllerInstructions = false;
+				break;
+
 			default:
 				break;
 		}
 
-		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
-		PosControllerInstr instruction = new PosControllerInstr(PosControllerInstr.POSITION_ALL,
-			PosControllerInstr.ERROR_CODE_QTY,
-			PosControllerInstr.ZERO_QTY,
-			PosControllerInstr.ZERO_QTY,
-			PosControllerInstr.MED_FREQ, // change from BLINK_FREQ
-			PosControllerInstr.MED_DUTYCYCLE); // change from BLINK_DUTYCYCLE v6
-		instructions.add(instruction);
-		sendPickRequestCommand(instructions);
+		if (sendPositionControllerInstructions) {
+			List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
+			PosControllerInstr instruction = new PosControllerInstr(positionControllerToSendTo,
+				PosControllerInstr.ERROR_CODE_QTY,
+				PosControllerInstr.ZERO_QTY,
+				PosControllerInstr.ZERO_QTY,
+				PosControllerInstr.MED_FREQ, // change from BLINK_FREQ
+				PosControllerInstr.MED_DUTYCYCLE); // change from BLINK_DUTYCYCLE v6
+			instructions.add(instruction);
+			sendPickRequestCommand(instructions);
+		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -711,7 +737,12 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 */
 	private void shortPick() {
 		if (mActivePickWiList.size() > 0) {
-			setState(CheStateEnum.SHORT_PICK_CONFIRM);
+			// short scan of housekeeping work instruction makes no sense
+			WorkInstruction wi = mActivePickWiList.get(0);
+			if (wi.amIHouseKeepingWi())
+				invalidScanMsg(mCheStateEnum); // Invalid to short a housekeep
+			else
+				setState(CheStateEnum.SHORT_PICK); // Used to be SHORT_PICK_CONFIRM
 		} else {
 			// Stay in the same state - the scan made no sense.
 			invalidScanMsg(mCheStateEnum);
@@ -765,6 +796,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 				if (mActivePickWiList.size() > 0) {
 					// If there's more active picks then show them.
+					// This is tricky. Simultaneous work instructions: which was short? All of them?
+					LOGGER.error("Simulataneous work instructions turned off currently, so unexpected case in confirmShortPick");
 					showActivePicks();
 				} else {
 					// There's no more active picks, so move to the next set.
@@ -773,22 +806,29 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			}
 		} else {
 			// Just return to showing the active picks.
-			showActivePicks();
+			setState(CheStateEnum.DO_PICK);
+			// showActivePicks();
 		}
 	}
 
 	// --------------------------------------------------------------------------
-	/**
+	/**  doNextPick has a major side effect of setState(DO_PICK) if there is more work.
+	 *   Then setState(DO_PICK) calls showActivePicks()
 	 */
 	private void doNextPick() {
 		LOGGER.debug(this + "doNextPick");
 
 		if (mActivePickWiList.size() > 0) {
 			// There are still picks in the active list.
+			LOGGER.error("Unexpected case in doNextPick");
 			showActivePicks();
+			// each caller to doNextPick already checked mActivePickWiList.size(). Therefore new situation if found
+
 		} else {
+
 			if (selectNextActivePicks()) {
-				showActivePicks();
+				setState(CheStateEnum.DO_PICK); // This will cause showActivePicks();
+				// showActivePicks();
 			} else {
 				processPickComplete();
 			}
@@ -835,7 +875,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 */
 	private boolean selectNextActivePicks() {
 		final boolean kDoMultipleWiPicks = false;
-		
+
 		boolean result = false;
 
 		// Loop through each container to see if there is a WI for that container at the next location.
@@ -920,7 +960,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private String getMyGuidStrForLog() {
 		return getGuid().getHexStringNoPrefix();
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * Send to the LED controller the active picks for the work instruction that's active on the CHE now.
@@ -933,7 +973,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			WorkInstruction firstWi = mActivePickWiList.get(0);
 
 			// Send the CHE a display command (any of the WIs has the info we need).
-			if (getCheStateEnum() != CheStateEnum.DO_PICK) {
+			if (getCheStateEnum() != CheStateEnum.DO_PICK && getCheStateEnum() != CheStateEnum.SHORT_PICK) {
+				LOGGER.error("unanticipated state in showActivePicks");
 				setState(CheStateEnum.DO_PICK);
 			}
 
@@ -941,7 +982,10 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			ledControllerClearLeds();
 
 			// This part is easy. Just display on the CHE controller
-			sendDisplayWorkInstruction(firstWi.getPickInstruction(), firstWi.getDescription(), firstWi.getPlanQuantity());
+			if (getCheStateEnum() == CheStateEnum.SHORT_PICK)
+				sendDisplayWorkInstruction(firstWi.getPickInstruction(), firstWi.getDescription(), firstWi.getPlanQuantity(), true);
+			else
+				sendDisplayWorkInstruction(firstWi.getPickInstruction(), firstWi.getDescription(), firstWi.getPlanQuantity(), false);
 
 			// Not as easy. Clear this CHE's last leds off of aisle controller(s), and tell aisle controller(s) what to light next
 			// List<LedCmdGroup> ledCmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(firstWi.getLedCmdStream());
@@ -1008,6 +1052,11 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 			// Housekeeping moves will result in a single work instruction in the active pickes. Enum tells if housekeeping.
 			if (!sendHousekeepingDisplay()) {
+				byte planQuantityForPositionController = byteValueForPositionDisplay(firstWi.getPlanQuantity());
+				byte minQuantityForPositionController = byteValueForPositionDisplay(firstWi.getPlanMinQuantity());
+				byte maxQuantityForPositionController = byteValueForPositionDisplay(firstWi.getPlanMaxQuantity());
+				if (getCheStateEnum() == CheStateEnum.SHORT_PICK)
+					minQuantityForPositionController = byteValueForPositionDisplay(0); // allow shorts to decrement on position controller down to zero
 
 				// Also pretty easy. Light the position controllers on this CHE
 				List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
@@ -1015,9 +1064,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 					for (Entry<String, String> mapEntry : mContainersMap.entrySet()) {
 						if (mapEntry.getValue().equals(wi.getContainerId())) {
 							PosControllerInstr instruction = new PosControllerInstr(Byte.valueOf(mapEntry.getKey()),
-								byteValueForPositionDisplay(firstWi.getPlanQuantity()),
-								byteValueForPositionDisplay(firstWi.getPlanMinQuantity()),
-								byteValueForPositionDisplay(firstWi.getPlanMaxQuantity()),
+								planQuantityForPositionController,
+								minQuantityForPositionController,
+								maxQuantityForPositionController,
 								PosControllerInstr.BRIGHT_FREQ,
 								PosControllerInstr.BRIGHT_DUTYCYCLE);
 							instructions.add(instruction);
@@ -1214,6 +1263,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 		if (mActivePickWiList.size() > 0) {
 			// If there's more active picks then show them.
+			LOGGER.error("Simulataneous work instructions turned off currently, so unexpected case in processNormalPick");
 			showActivePicks();
 		} else {
 			// There's no more active picks, so move to the next set.
@@ -1356,9 +1406,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	public void connectedToServer() {
 		connectedToServer = true;
 		redisplayState();
-		
+
 	}
-	
+
 	private void redisplayState() {
 		setState(mCheStateEnum);
 	}

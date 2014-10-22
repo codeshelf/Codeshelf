@@ -183,4 +183,5 @@ public class Aisle extends SubLocationABC<Facility> {
 		this.setParent((ILocation<?>)inParent);
 	}
 
+
 }

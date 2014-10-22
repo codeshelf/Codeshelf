@@ -273,7 +273,6 @@ public abstract class SubLocationABC<P extends IDomainObject & ISubLocation<?>> 
 		return getPickFaceEndPosY() == 0.0;
 	}
 
-	
 	// UI fields
 	public String getAnchorPosXui() {
 		return StringUIConverter.doubleToTwoDecimalsString(getAnchorPosX());

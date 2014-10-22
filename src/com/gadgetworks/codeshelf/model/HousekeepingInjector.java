@@ -195,7 +195,6 @@ public class HousekeepingInjector {
 	 * @param nextWi
 	 * @return
 	 */
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private static List<WorkInstructionTypeEnum> wisNeedHouseKeepingBetween(WorkInstruction inPrevWi, WorkInstruction inNextWi) {
 		List<WorkInstructionTypeEnum> returnList = null;
 

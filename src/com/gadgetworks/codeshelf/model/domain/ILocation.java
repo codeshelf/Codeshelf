@@ -7,7 +7,9 @@ package com.gadgetworks.codeshelf.model.domain;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import com.gadgetworks.codeshelf.device.LedCmdPath;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 
 public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P> {
@@ -259,5 +261,7 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 	 * The effective channel is this one, or any of its parent up the chain
 	 */
 	Short getEffectiveLedChannel();
+	
+	Set<LedCmdPath> getAllLedCmdPaths();
 	
 }

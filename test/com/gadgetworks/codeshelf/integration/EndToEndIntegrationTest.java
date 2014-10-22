@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.application.CsSiteControllerApplication;
-import com.gadgetworks.codeshelf.application.CsSiteControllerMain;
 import com.gadgetworks.codeshelf.device.CheDeviceLogic;
 import com.gadgetworks.codeshelf.device.CsDeviceManager;
 import com.gadgetworks.codeshelf.model.dao.DaoProvider;
@@ -24,13 +23,15 @@ import com.gadgetworks.codeshelf.util.JVMSystemConfiguration;
 import com.gadgetworks.codeshelf.util.ThreadUtils;
 import com.gadgetworks.codeshelf.ws.jetty.client.JettyWebSocketClient;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageProcessor;
+import com.gadgetworks.codeshelf.ws.jetty.server.CsServerEndPoint;
 import com.gadgetworks.codeshelf.ws.jetty.server.JettyWebSocketServer;
-import com.gadgetworks.codeshelf.ws.jetty.server.MessageProcessorFactory;
 import com.gadgetworks.codeshelf.ws.jetty.server.ServerMessageProcessor;
+import com.gadgetworks.codeshelf.ws.jetty.server.SessionManager;
 import com.gadgetworks.flyweight.command.NetGuid;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Singleton;
 
 @Ignore
 public abstract class EndToEndIntegrationTest extends DomainTestABC {
@@ -51,28 +52,28 @@ public abstract class EndToEndIntegrationTest extends DomainTestABC {
 
 	@Getter
 	JettyWebSocketServer webSocketServer;
-	
+
 	@Getter
 	CsSiteControllerApplication siteController;
-	
+
 	@Getter
 	CsDeviceManager deviceManager;
-	
+
 	@Getter
 	Organization organization;
-	
+
 	@Getter
 	Facility facility;
-	
+
 	@Getter
 	CodeshelfNetwork network;
-	
+
 	@Getter
 	Che che1;
-	
+
 	@Getter
 	Che che2;
-	
+
 	int connectionTimeOut = 30 * 1000;
 
 	public static Injector setupWSSInjector() {
@@ -81,19 +82,29 @@ public abstract class EndToEndIntegrationTest extends DomainTestABC {
 			protected void configure() {
 				bind(IConfiguration.class).to(JVMSystemConfiguration.class);
 				bind(IDaoProvider.class).to(DaoProvider.class);
-				bind(MessageProcessor.class).to(ServerMessageProcessor.class);
-				requestStaticInjection(MessageProcessorFactory.class);
+				bind(SessionManager.class).toInstance(SessionManager.getInstance());
+				// jetty websocket
+				bind(MessageProcessor.class).to(ServerMessageProcessor.class).in(Singleton.class);
+
 			}
 		});
 		return injector;
-	}	
-	
+	}
+
 	@SuppressWarnings("unused")
 	@Override
 	public void doBefore() {
 		Injector websocketServerInjector = setupWSSInjector();
-		Injector siteControllerInjector = CsSiteControllerMain.setupInjector();
-		
+		try { //Ideally this would be statically initialized once before all of the integration tests
+			// Burying the exception allows the normal mode for the design to raise issue,
+			//  but in testing assume that it got setup once the first time this is called
+			CsServerEndPoint.setSessionManager(websocketServerInjector.getInstance(SessionManager.class));
+			CsServerEndPoint.setMessageProcessor(websocketServerInjector.getInstance(ServerMessageProcessor.class));
+		}
+		catch(RuntimeException e) {
+			LOGGER.debug("CsServerEndpoint already setup (NORMAL): " + e.toString());
+		}
+
 		IConfiguration configuration = websocketServerInjector.getInstance(IConfiguration.class);
 		LOGGER.debug("-------------- Creating environment before running test case");
 		//The client WSS needs the self-signed certificate to be trusted
@@ -101,7 +112,7 @@ public abstract class EndToEndIntegrationTest extends DomainTestABC {
 		System.setProperty("javax.net.ssl.keyStorePassword", configuration.getString("keystore.store.password"));
 		System.setProperty("javax.net.ssl.trustStore", configuration.getString("keystore.path"));
 		System.setProperty("javax.net.ssl.trustStorePassword", configuration.getString("keystore.store.password"));
-		
+
 		
 		this.getPersistenceService().beginTenantTransaction();
 		
@@ -128,7 +139,7 @@ public abstract class EndToEndIntegrationTest extends DomainTestABC {
 			facility.addNetwork(network);
 			mCodeshelfNetworkDao.store(network);
 		}
-		
+
 		User scUser = network.createDefaultSiteControllerUser();
 		che1 = network.getChe(cheId1);
 		if (che1==null) {
@@ -146,7 +157,7 @@ public abstract class EndToEndIntegrationTest extends DomainTestABC {
 			che2.setDeviceGuidStr(cheGuid2.getHexStringWithPrefix());
 			mCheDao.store(che2);
 		}
-		
+
 		// start web socket server
 		webSocketServer = websocketServerInjector.getInstance(JettyWebSocketServer.class);
 		try {
@@ -158,7 +169,7 @@ public abstract class EndToEndIntegrationTest extends DomainTestABC {
 		ThreadUtils.sleep(2000);
 
 		// start site controller
-		siteController = siteControllerInjector.getInstance(CsSiteControllerApplication.class);
+		//TODO future just use a different IGateway implementation instead of disableRadio
 		try {
 			siteController.startApplication();
 		} catch (Exception e) {
@@ -166,7 +177,7 @@ public abstract class EndToEndIntegrationTest extends DomainTestABC {
 			throw new RuntimeException("Failed to start site controller");
 		}
 		ThreadUtils.sleep(2000);
-		
+
 		// wait for site controller/server connection to be established
 		deviceManager = (CsDeviceManager) siteController.getDeviceManager();
 		JettyWebSocketClient client = deviceManager.getClient();
@@ -198,13 +209,13 @@ public abstract class EndToEndIntegrationTest extends DomainTestABC {
 		Assert.assertNotNull("Che-1 device logic not found",cheDeviceLogic1);
 		CheDeviceLogic cheDeviceLogic2 = (CheDeviceLogic) this.siteController.getDeviceManager().getDeviceByGuid(cheGuid2);
 		Assert.assertNotNull("Che-2 device logic not found",cheDeviceLogic2);
-		
+
 		LOGGER.debug("Embedded site controller and server connected");
 		LOGGER.debug("-------------- Environment created");
 		this.getPersistenceService().endTenantTransaction();
 	}
-	
-	@Override 
+
+	@Override
 	public void doAfter() {
 		stop();
 		webSocketServer = null;
@@ -214,7 +225,7 @@ public abstract class EndToEndIntegrationTest extends DomainTestABC {
 		System.clearProperty("javax.net.ssl.trustStore");
 		System.clearProperty("javax.net.ssl.trustStorePassword");
 	}
-	
+
 	private void stop() {
 		LOGGER.debug("-------------- Cleaning up after running test case");
 		try {

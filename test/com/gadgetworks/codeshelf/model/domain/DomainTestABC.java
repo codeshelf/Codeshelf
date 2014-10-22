@@ -345,7 +345,7 @@ public abstract class DomainTestABC extends DAOTestABC {
 
 		return resultFacility;
 	}
-
+	
 	protected UomMaster createUomMaster(String inUom, Facility inFacility) {
 		UomMaster uomMaster = new UomMaster();
 		uomMaster.setUomMasterId(inUom);

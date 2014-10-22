@@ -108,12 +108,14 @@ import com.gadgetworks.codeshelf.security.CodeshelfRealm;
 import com.gadgetworks.codeshelf.util.IConfiguration;
 import com.gadgetworks.codeshelf.util.JVMSystemConfiguration;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageProcessor;
-import com.gadgetworks.codeshelf.ws.jetty.server.MessageProcessorFactory;
+import com.gadgetworks.codeshelf.ws.jetty.server.CsServerEndPoint;
 import com.gadgetworks.codeshelf.ws.jetty.server.ServerMessageProcessor;
+import com.gadgetworks.codeshelf.ws.jetty.server.SessionManager;
 import com.gadgetworks.codeshelf.ws.websocket.IWebSocketSslContextGenerator;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
 import com.google.inject.name.Names;
 
@@ -144,6 +146,8 @@ public final class ServerMain {
 		// Create and start the application.
 		Injector dynamicInjector = setupInjector();
 		ICodeshelfApplication application = dynamicInjector.getInstance(ServerCodeshelfApplication.class);
+		CsServerEndPoint.setSessionManager(dynamicInjector.getInstance(SessionManager.class));
+		CsServerEndPoint.setMessageProcessor(dynamicInjector.getInstance(ServerMessageProcessor.class));
 		application.startApplication();
 
 		// Handle events until the application exits.
@@ -203,9 +207,10 @@ public final class ServerMain {
 				bind(ICsvAislesFileImporter.class).to(AislesFileCsvImporter.class);
 				bind(ICsvCrossBatchImporter.class).to(CrossBatchCsvImporter.class);
 
+				bind(SessionManager.class).toInstance(SessionManager.getInstance());
+				
 				// jetty websocket
-				bind(MessageProcessor.class).to(ServerMessageProcessor.class);
-				requestStaticInjection(MessageProcessorFactory.class);
+				bind(MessageProcessor.class).to(ServerMessageProcessor.class).in(Singleton.class);
 				
 				// Shiro modules
 				bind(Realm.class).to(CodeshelfRealm.class);

@@ -73,11 +73,13 @@ public class ObjectUpdateCommand extends CommandABC {
 				// First locate an instance of the parent class.
 				@SuppressWarnings("unchecked")
 				ITypedDao<IDomainObject> dao = daoProvider.getDaoInstance((Class<IDomainObject>) classObject);
+				IDomainObject updateObject = null;
 				if(dao == null) {
 					LOGGER.error("got null dao for "+className);
+				} else {
+					updateObject = dao.findByPersistentId(objectId);					
 				}
-				IDomainObject updateObject = dao.findByPersistentId(objectId);
-
+				
 				// Execute the "set" method against the parents to return the children.
 				// (The method *must* start with "set" to ensure other methods don't get called.)
 				if (updateObject != null) {

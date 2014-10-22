@@ -14,6 +14,7 @@ import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.SiteController;
 import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.model.domain.UserType;
+import com.gadgetworks.codeshelf.service.WorkService;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.LoginRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.LoginResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
@@ -61,7 +62,7 @@ public class LoginTest {
 		request.setUserId(user.getDomainId());
 		request.setPassword(password);
 		
-		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider);
+		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider, Mockito.mock(WorkService.class));
 		ResponseABC response = processor.handleRequest(Mockito.mock(UserSession.class), request);
 
 		Assert.assertTrue(response instanceof LoginResponse);
@@ -100,7 +101,7 @@ public class LoginTest {
 		request.setUserId("user@invalid.com");
 		request.setPassword(password);
 		
-		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider);
+		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider, Mockito.mock(WorkService.class));
 		ResponseABC response = processor.handleRequest(Mockito.mock(UserSession.class), request);
 
 		Assert.assertTrue(response instanceof LoginResponse);
@@ -138,7 +139,7 @@ public class LoginTest {
 		request.setUserId(user.getDomainId());
 		request.setPassword("invalid");
 		
-		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider);
+		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider, Mockito.mock(WorkService.class));
 		ResponseABC response = processor.handleRequest(Mockito.mock(UserSession.class), request);
 
 		Assert.assertTrue(response instanceof LoginResponse);

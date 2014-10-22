@@ -42,7 +42,9 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RequestABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ServiceMethodRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
+@Singleton
 public class ServerMessageProcessor extends MessageProcessor {
 
 	private static final Logger	LOGGER = LoggerFactory.getLogger(ServerMessageProcessor.class);
@@ -69,19 +71,20 @@ public class ServerMessageProcessor extends MessageProcessor {
 	private final Timer requestProcessingTimer = MetricsService.addTimer(MetricsGroup.WSS,"requests.processing-time");
 //	private final Timer responseProcessingTimer = MetricsService.addTimer(MetricsGroup.WSS,"responses.processing-time");
 	
-	final private IDaoProvider daoProvider;
+	private final IDaoProvider daoProvider;
 
-	final private WorkService	workService;
+	//TODO should turn into a provider for all server service endpoints instead of just work service
+	private final WorkService  workService;
 	
 	@Inject
-	public ServerMessageProcessor(IDaoProvider daoProvider) {
+	//TODO should turn into a provider for all server service endpoints instead of just work service
+	public ServerMessageProcessor(IDaoProvider daoProvider, WorkService workService) {
 		LOGGER.debug("Creating "+this.getClass().getSimpleName());
 		this.daoProvider = daoProvider;
+		this.workService = workService;
 		if(daoProvider == null) {
 			LOGGER.error("got null daoProvider creating ServerMessageProcessor");
 		}
-			
-		this.workService = new WorkService();
 	}
 	
 	@Override

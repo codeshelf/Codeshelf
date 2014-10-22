@@ -21,10 +21,9 @@ import com.sun.jersey.api.json.JSONConfiguration;
  */
 public class OpenTsdb {
 
-	@SuppressWarnings("unused")
 	private static final Logger	LOGGER = LoggerFactory.getLogger(OpenTsdb.class);
 
-    public static final int DEFAULT_BATCH_SIZE_LIMIT = 0;
+    public static final int DEFAULT_BATCH_SIZE_LIMIT = 5;
     public static final int CONN_TIMEOUT_DEFAULT_MS = 5000;
     public static final int READ_TIMEOUT_DEFAULT_MS = 5000;
 
@@ -117,6 +116,17 @@ public class OpenTsdb {
         if (batchSizeLimit > 0 && metrics.size() > batchSizeLimit) {
             final Set<OpenTsdbMetric> smallMetrics = new HashSet<OpenTsdbMetric>();
             for (final OpenTsdbMetric metric: metrics) {
+            	// skip undefined metrics
+            	/*
+            	if (metric.getValue()==null) continue;
+            	if (metric.getValue().getClass().isArray()) {
+            		Object[] v = (Object[]) metric.getValue();
+            		if (v.length==0) continue;
+            	}            	
+            	*/
+            	// exclude deadlock metric
+            	if (metric.getMetric().equals("jvm-thread.deadlocks")) continue;
+            	// add metric to list and send if batch size reached
                 smallMetrics.add(metric);
                 if (smallMetrics.size() >= batchSizeLimit) {
                     sendHelper(smallMetrics);
@@ -137,10 +147,11 @@ public class OpenTsdb {
          * circle back on this if it's a problem.
          */
         if (!metrics.isEmpty()) {
+        	String jsonString="";
             try {
             	// create json message using jackson to avoid jaxb generics issue
     			ObjectMapper mapper = new ObjectMapper();
-    			String jsonString = mapper.writeValueAsString(metrics);
+    			jsonString = mapper.writeValueAsString(metrics);
     			// System.out.println(jsonString);
                 apiResource.path("/api/put")
                         .type(MediaType.APPLICATION_JSON)
@@ -148,6 +159,7 @@ public class OpenTsdb {
                         .entity(jsonString)
                         .post();
             } catch (Exception ex) {
+            	LOGGER.error("Failed to post metrics: "+jsonString);
             	throw new ReportingException(ex.getMessage());
             }
         }
