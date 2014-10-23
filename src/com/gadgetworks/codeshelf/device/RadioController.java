@@ -792,7 +792,7 @@ public class RadioController implements IRadioController {
 		// First get the unique ID from the command.
 		String uid = inCommand.getGUID();
 
-		LOGGER.info("AssocReq rcvd: " + inCommand.toString());
+		// LOGGER.info("AssocReq rcvd: " + inCommand.toString()); No longer do this. Happens all the time.
 
 		// This is a device running on the radio network.
 
@@ -806,7 +806,8 @@ public class RadioController implements IRadioController {
 		}
 
 		if (!canAssociate) {
-			LOGGER.info("Device not allowed: " + uid);
+			// LOGGER.info("Device not allowed: " + uid); No longer do this. Happens all the time, especially in the office
+			// Could keep a counter on these.
 		} else {
 			INetworkDevice foundDevice = mDeviceGuidMap.get(new NetGuid("0x" + uid));
 

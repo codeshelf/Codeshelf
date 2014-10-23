@@ -70,6 +70,7 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 	}
 
 	public void startDevice() {
+		LOGGER.info("Start aisle controller (after association " + getMyGuidStr());
 		//		short position = 1;
 		//		sendLightCommand(CommandControlLed.CHANNEL1, position, ColorEnum.BLUE, CommandControlLed.EFFECT_SOLID);
 		updateLeds();
@@ -186,8 +187,7 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 	 */
 	@Override
 	public void buttonCommandReceived(CommandControlButton inButtonCommand) {
-		// TODO Auto-generated method stub
-
+	
 	}
 
 	/**
@@ -277,21 +277,21 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 		updateLeds();
 	}
 	
-	// --------------------------------------------------------------------------
+// --------------------------------------------------------------------------
 	/**
 	 * Light all of the LEDs required.
 	 * 
-	 * TODO: Right now we just send the FLASH commands.  Those are the LEDs that get lit in the "ON" part of the cycle only.
+	 * Right now we just send the FLASH commands.  Those are the LEDs that get lit in the "ON" part of the cycle only.
 	 * What we need to do is sort the samples by effect and send them in "effect groups."  There is no immediate need to 
 	 * support any other effects, so we're skipping it for now.
 	 */
 	public final void updateLeds() {
-		// CD_0041 note: Perfect for initial scope. DEV-411 will have us send out separate CommandControlLed if the byte stream of samples > 125.
+		// See CD_0041 for initial scope. DEV-411 will have us send out separate CommandControlLed if the byte stream of samples > 125.
 		// Looks like it does not really work yet for multiple channels. Does this need to figure out each channel, then send separate commands? Probably.
 		final Integer kMaxLedCmdToLog = 25;
 		final Integer kMaxLedCmdSendAtATime = 20;
-		final Integer kDelayMillisBetweenPartialSends = 0;
-		final Boolean splitLargeLedSendsIntoPartials = false; // abandoning this work at least through V5
+		final Integer kDelayMillisBetweenPartialSends = 30;
+		final Boolean splitLargeLedSendsIntoPartials = true; // became true at V7
 		String myGuidStr = getMyGuidStr();
 
 		Short channel = 1;
@@ -338,33 +338,35 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 				partialCount++;
 				partialSamples.add(theSample);
 				if (partialCount == kMaxLedCmdSendAtATime) {
+					LOGGER.info("partial send to aisle controller");
 					ICommand command = new CommandControlLed(NetEndpoint.PRIMARY_ENDPOINT,
 						channel,
 						EffectEnum.FLASH,
 						partialSamples);
 					mRadioController.sendCommand(command, getAddress(), true);
+					
 					partialCount = 0;
-					partialSamples.clear();
-					LOGGER.info("partial send to aisle controller");
+					// we have to leave the old reference to partialSamples as that is floating off in a command.
+					// New list to accumulate more samples
+					partialSamples = new ArrayList<LedSample>();
 
-					// experiment. Set to 0 now for V5
+					// experiment. Set to 30 for v7
 					if (kDelayMillisBetweenPartialSends > 0)
-						try { // This does not appear to help anything. Might need to throw in another thread and modify the protocol a bit.
+						try { // Not sure this helps. I hate to starve this thread at all. Definitely cuts down on useless sends to aisle controller that cannot receive yet.
 							Thread.sleep(kDelayMillisBetweenPartialSends);
 						} catch (InterruptedException e) {
 							LOGGER.error("updateLeds delay exeption", e);
 						}
-
 				}
 			}
 			if (partialCount > 0) { // send the final leftovers
+				LOGGER.info("last partial send to aisle controller");
 				ICommand command = new CommandControlLed(NetEndpoint.PRIMARY_ENDPOINT, channel, EffectEnum.FLASH, partialSamples);
 				mRadioController.sendCommand(command, getAddress(), true);
-				LOGGER.info("last partial send to aisle controller");
 				
-				// experiment. Set to 0 now for V5
+				// same as above. Wait after last partial
 				if (kDelayMillisBetweenPartialSends > 0)
-					try { // This does not appear to help anything. Might need to throw in another thread and modify the protocol a bit.
+					try { // Not sure this helps. Might need to throw in another thread and modify the protocol a bit.
 						Thread.sleep(kDelayMillisBetweenPartialSends);
 					} catch (InterruptedException e) {
 						LOGGER.error("updateLeds delay exeption", e);
