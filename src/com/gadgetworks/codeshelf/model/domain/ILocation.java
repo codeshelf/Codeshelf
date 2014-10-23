@@ -173,6 +173,14 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 
 	// --------------------------------------------------------------------------
 	/**
+	 * Get all of the ACTIVE child locations for this location. These child locations that have not been soft-deleted
+	 * @return
+	 */
+	@SuppressWarnings("rawtypes")
+	List<ISubLocation> getActiveChildren();
+
+	// --------------------------------------------------------------------------
+	/**
 	 * Get all of the children of this type (no matter how far down the hierarchy).
 	 * 
 	 * To get it to strongly type the return for you then use this unusual Java construct at the caller:

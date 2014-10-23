@@ -343,7 +343,7 @@ public class LocationDeleteTest extends EdiTestABC {
 		Aisle aisle1 = (Aisle) facility.findSubLocationById("A1");
 		Assert.assertTrue(aisle1.getActive());
 		
-		LOGGER.info("Making ailse A1 inactive, with its children");
+		LOGGER.info("Making aisle A1 inactive, with its children");
 		aisle1.makeInactiveAndAllChildren();
 		// fetch again as the earlier reference is probably stale
 		aisle1 = (Aisle) facility.findSubLocationById("A1");
@@ -355,6 +355,11 @@ public class LocationDeleteTest extends EdiTestABC {
 		Assert.assertFalse(locationA1B1T1.getActive());
 		LocationABC<?> locationA1B1T1S1 = (LocationABC<?>) facility.findSubLocationById("A1.B1.T1.S1");
 		Assert.assertFalse(locationA1B1T1S1.getActive());
+		// check the new getActiveChildren
+		// facility is "stale". Will hibernate fix this?
+		// Assert.assertTrue(facility.getActiveChildren().size() == 1);
+		Assert.assertTrue(facility.getChildren().size() == 2);
+		Assert.assertTrue(locationA1B1.getActiveChildren().size() == 0);
 
 		LOGGER.info("Read back the aisles file. Should make A1 and its children active again");
 		readStandardAisleFile(facility);

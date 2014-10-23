@@ -292,6 +292,16 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		return new ArrayList<ISubLocation>(locations.values());
 	}
 
+	@SuppressWarnings("rawtypes")
+	public final List<ISubLocation> getActiveChildren() {
+		ArrayList<ISubLocation> aList = new ArrayList<ISubLocation>();
+		for (ISubLocation loc : locations.values()) {
+			if (loc.isActive())
+				aList.add(loc);
+		}
+		return aList;
+	}
+
 	// --------------------------------------------------------------------------
 	/*
 	 * this is the "delete" method. Does not delete. Merely makes inactive, along with all its children.
@@ -306,7 +316,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 			LOGGER.error("makeInactive", e);
 		}
 
-		List<ISubLocation> childList = getChildren();
+		List<ISubLocation> childList = getActiveChildren();
 		for (ISubLocation sublocation : childList) {
 			((LocationABC)sublocation).makeInactiveAndAllChildren();
 		}
@@ -768,7 +778,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	public List<ILocation<?>> getSubLocationsInWorkingOrder() {
 		List<ILocation<?>> result = new ArrayList<ILocation<?>>();
 		@SuppressWarnings("rawtypes")
-		List<ISubLocation> childLocations = getChildren();
+		List<ISubLocation> childLocations = getActiveChildren();
 		Collections.sort(childLocations, new LocationWorkingOrderComparator());
 		for (ILocation<?> childLocation : childLocations) {
 			// add sublocation
@@ -830,7 +840,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 			cmdPathsSet.add(new LedCmdPath(getEffectiveLedController().getDeviceGuidStr(), getEffectiveLedChannel()));
 		}
 		else {
-			for (ISubLocation<?> child : getChildren()) {
+			for (ISubLocation<?> child : getActiveChildren()) {
 				cmdPathsSet.addAll(child.getAllLedCmdPaths());
 			}
 		}

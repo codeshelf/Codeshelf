@@ -190,7 +190,7 @@ public abstract class SubLocationABC<P extends IDomainObject & ISubLocation<?>> 
 
 		// Also force a recompute for all of the child locations.
 		@SuppressWarnings("rawtypes")
-		List<ISubLocation> locations = getChildren();
+		List<ISubLocation> locations = getActiveChildren();
 		for (@SuppressWarnings("rawtypes") ISubLocation location : locations) {
 			location.computePosAlongPath(inPathSegment);
 		}

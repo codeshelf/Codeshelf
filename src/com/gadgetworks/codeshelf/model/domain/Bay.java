@@ -95,7 +95,7 @@ public class Bay extends SubLocationABC<Aisle> {
 	@Override
 	public List<ILocation<?>> getSubLocationsInWorkingOrder() {
 		@SuppressWarnings("rawtypes")
-		List<ISubLocation> copy = new ArrayList<ISubLocation>(getChildren());
+		List<ISubLocation> copy = new ArrayList<ISubLocation>(getActiveChildren());
 		Collections.sort(copy, topDownTierOrder);
 		List<ILocation<?>> result = new ArrayList<ILocation<?>>();
 		for (ILocation<?> childLocation : copy) {

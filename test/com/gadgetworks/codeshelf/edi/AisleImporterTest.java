@@ -882,10 +882,10 @@ public class AisleImporterTest extends DomainTestABC {
 		Assert.assertTrue(b2T2FaceEnd < 2.0);
 
 		@SuppressWarnings("rawtypes")
-		List<ISubLocation> theB1T1Slots = tierB1T1.getChildren();
+		List<ISubLocation> theB1T1Slots = tierB1T1.getActiveChildren();
 		Assert.assertTrue(theB1T1Slots.size() == 5);
 		@SuppressWarnings("rawtypes")
-		List<ISubLocation> theB1T2Slots = tierB1T2.getChildren();
+		List<ISubLocation> theB1T2Slots = tierB1T2.getActiveChildren();
 		Assert.assertTrue(theB1T2Slots.size() == 4);
 		short tierB1T2First = tierB1T2.getFirstLedNumAlongPath();
 		Assert.assertTrue(tierB1T2First == 1);

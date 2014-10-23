@@ -1796,7 +1796,7 @@ public class Facility extends SubLocationABC<Facility> {
 		LOGGER.debug("DDC get locations");
 		List<ILocation<?>> ddcLocations = new ArrayList<ILocation<?>>();
 		for (Aisle aisle : getAisles()) {
-			for (ILocation<?> location : aisle.getChildren()) {
+			for (ILocation<?> location : aisle.getActiveChildren()) {
 				if (location.getFirstDdcId() != null) {
 					ddcLocations.add(location);
 				}
