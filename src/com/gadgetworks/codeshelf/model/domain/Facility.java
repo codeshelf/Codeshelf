@@ -118,10 +118,6 @@ public class Facility extends SubLocationABC<Facility> {
 	//	private SubLocationABC					parent;
 
 	@OneToMany(mappedBy = "parent")
-	@Getter
-	private List<Aisle>						aisles			= new ArrayList<Aisle>();
-
-	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	private Map<String, Container>			containers		= new HashMap<String, Container>();
 
@@ -227,14 +223,6 @@ public class Facility extends SubLocationABC<Facility> {
 
 	public final void setFacilityId(String inFacilityId) {
 		setDomainId(inFacilityId);
-	}
-
-	public final void addAisle(Aisle inAisle) {
-		aisles.add(inAisle);
-	}
-
-	public final void removeAisle(Aisle inAisle) {
-		aisles.remove(inAisle);
 	}
 
 	public final void addPath(Path inPath) {
@@ -1790,12 +1778,13 @@ public class Facility extends SubLocationABC<Facility> {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * @return
+	 * Not currently used. An old stitch-fix feature.  Remember that getActiveChildren() is recursive, so it returns bays, tiers, or slots--whatever has the Ddc.
 	 */
 	private List<ILocation<?>> getDdcLocations() {
 		LOGGER.debug("DDC get locations");
-		List<ILocation<?>> ddcLocations = new ArrayList<ILocation<?>>();
-		for (Aisle aisle : getAisles()) {
+		List<ILocation<?>> ddcLocations = new ArrayList<ILocation<?>>();		
+		for (ISubLocation<?> aisle : getActiveChildrenAtLevel(Aisle.class)) {
+			// no actual need for above line. facility.getActiveChildren would work equally
 			for (ILocation<?> location : aisle.getActiveChildren()) {
 				if (location.getFirstDdcId() != null) {
 					ddcLocations.add(location);
