@@ -318,26 +318,30 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 		List<ISubLocation> childList = getActiveChildren();
 		for (ISubLocation sublocation : childList) {
-			((LocationABC)sublocation).makeInactiveAndAllChildren();
+			((LocationABC) sublocation).makeInactiveAndAllChildren();
 		}
 	}
 
 	// --------------------------------------------------------------------------
-	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#getChildrenAtLevel(java.lang.Class)
+	/* getActiveChildrenAtLevel should only be called for active locations. By our model, it should be impossible for active child to have inactive parents.
+	 * See CD_0051 Delete Locations. Once inactive child is encountered, it does not look further down that child chain. Also, will not return itself if inactive and of the right class
 	 */
 	@SuppressWarnings("unchecked")
-	public final <T extends ISubLocation<?>> List<T> getChildrenAtLevel(Class<? extends ISubLocation<?>> inClassWanted) {
+	public final <T extends ISubLocation<?>> List<T> getActiveChildrenAtLevel(Class<? extends ISubLocation<?>> inClassWanted) {
 		List<T> result = new ArrayList<T>();
+		if (!this.isActive()) {
+			LOGGER.error("getActiveChildrenAtLevel called for inactive location");
+			return result;
+		}
 
-		// Loop through all of the children.
-		for (ISubLocation<?> child : getChildren()) {
+		// Loop through all of the active children.
+		for (ISubLocation<?> child : getActiveChildren()) {
 			if (child.getClass().equals(inClassWanted)) {
 				// If the child is the kind we want then add it to the list.
 				result.add((T) child);
 			} else {
 				// If the child is not the kind we want the recurse.
-				result.addAll((List<T>) child.getChildrenAtLevel(inClassWanted));
+				result.addAll((List<T>) child.getActiveChildrenAtLevel(inClassWanted));
 			}
 		}
 
@@ -838,8 +842,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		Set<LedCmdPath> cmdPathsSet = new HashSet<LedCmdPath>();
 		if (getEffectiveLedController() != null) {
 			cmdPathsSet.add(new LedCmdPath(getEffectiveLedController().getDeviceGuidStr(), getEffectiveLedChannel()));
-		}
-		else {
+		} else {
 			for (ISubLocation<?> child : getActiveChildren()) {
 				cmdPathsSet.addAll(child.getAllLedCmdPaths());
 			}
@@ -943,6 +946,5 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 		return aList;
 	}
-
 
 }

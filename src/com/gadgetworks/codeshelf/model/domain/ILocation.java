@@ -185,13 +185,13 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 	 * 
 	 * To get it to strongly type the return for you then use this unusual Java construct at the caller:
 	 * 
-	 * Aisle aisle = facility.<Aisle> getChildrenAtLevel(Aisle.class)
+	 * Aisle aisle = facility.<Aisle> getActiveChildrenAtLevel(Aisle.class)
 	 * (If calling this method from a generic location type then you need to define it as LocationABC<?> location.)
 	 * 
 	 * @param inClassWanted
 	 * @return
 	 */
-	<T extends ISubLocation<?>> List<T> getChildrenAtLevel(Class<? extends ISubLocation<?>> inClassWanted);
+	<T extends ISubLocation<?>> List<T> getActiveChildrenAtLevel(Class<? extends ISubLocation<?>> inClassWanted);
 
 	// --------------------------------------------------------------------------
 	/**

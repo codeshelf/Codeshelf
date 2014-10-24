@@ -393,7 +393,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 		// Path segments get return in direction order.
 		for (PathSegment pathSegment : getSegments()) {
 			for (ILocation<?> pathLocation : pathSegment.getLocations()) {
-				locations.addAll(pathLocation.<T> getChildrenAtLevel(inClassWanted));
+				locations.addAll(pathLocation.<T> getActiveChildrenAtLevel(inClassWanted));
 			}
 		}
 

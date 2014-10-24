@@ -189,7 +189,7 @@ public class Tier extends SubLocationABC<Bay> {
 		String firstSlotName = "";
 		String lastSlotName = "";
 
-		List<Slot> slotList = this.getChildrenAtLevel(Slot.class);
+		List<Slot> slotList = this.getActiveChildrenAtLevel(Slot.class);
 		if (slotList.size() == 0) {
 			String tierAlias = this.getPrimaryAliasId();
 			return tierAlias;
@@ -231,7 +231,7 @@ public class Tier extends SubLocationABC<Bay> {
 			// The goal is to get to the aisle, then ask for all tiers. Filter those to the subset with the same domainID (like "T2")
 			Bay bayParent = this.getParent();
 			Aisle aisleParent = bayParent.getParent();
-			List<Tier> locationList = aisleParent.getChildrenAtLevel(Tier.class);
+			List<Tier> locationList = aisleParent.getActiveChildrenAtLevel(Tier.class);
 
 			String thisDomainId = this.getDomainId();
 			UUID thisPersistId = this.getPersistentId();

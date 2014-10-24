@@ -360,15 +360,12 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 		List<Slot> slotList = new ArrayList<Slot>();
 
 		@SuppressWarnings("rawtypes")
-		List<? extends ISubLocation> locationList = inTier.getChildren();
+		List<? extends ISubLocation> locationList = inTier.getActiveChildren();
 
 		@SuppressWarnings("unchecked")
 		Collection<? extends Slot> slotCollection = (Collection<? extends Slot>) locationList;
 
 		slotList.addAll(slotCollection);
-
-		//List<? extends ISubLocation> locationList = inTier.getChildren();
-		//slotList.addAll((Collection<? extends Slot>) locationList);
 
 		// sort the slots in the direction the led count will increase		
 		Collections.sort(slotList, new SlotNameComparable());
@@ -505,7 +502,7 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 	 */
 	private void ensureLedControllers() {
 		// If the LEDs are set, then assuming no multi-channel capability per controller, we simply need to count tiers with LED starting at 1.
-		List<Tier> tiersList = mFacility.getChildrenAtLevel(Tier.class);
+		List<Tier> tiersList = mFacility.getActiveChildrenAtLevel(Tier.class);
 		int aisleTierCount = 0;
 		for (Tier tier : tiersList) {
 			Short firstLedNum = tier.getFirstLedNumAlongPath();
@@ -600,7 +597,7 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 		mFacility.createOrUpdateVertices(inAisle, aPoint);
 
 		// Each bay also has vertices. The point will come from pickfaceEnd, then translate to the anchor coordinate system for the vertices.
-		List<Bay> locationList = inAisle.getChildrenAtLevel(Bay.class);
+		List<Bay> locationList = inAisle.getActiveChildrenAtLevel(Bay.class);
 
 		ListIterator<Bay> li = null;
 		li = locationList.listIterator();
@@ -1023,13 +1020,13 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 			// As we work, if we don't find them in the marked collections, those are locations that need to be inactivated.
 			// Remember, aisle file goes aisle by aisle. Reading a new aisle file does not delete aisles that are not represented.
 			// no need to add the aisle itself, but add its children
-			for (ILocation<?> level2Location : aisle.getChildren()) {
+			for (ILocation<?> level2Location : aisle.getActiveChildren()) {
 				mAisleLocationsMapThatMayBecomeInactive.put(level2Location.getPersistentId(), level2Location); // bay
 				// and its children
-				for (ILocation<?> level3Location : level2Location.getChildren()) {
+				for (ILocation<?> level3Location : level2Location.getActiveChildren()) {
 					mAisleLocationsMapThatMayBecomeInactive.put(level3Location.getPersistentId(), level3Location); // tier
 					// and its children
-					for (ILocation<?> level4Location : level3Location.getChildren()) {
+					for (ILocation<?> level4Location : level3Location.getActiveChildren()) {
 						mAisleLocationsMapThatMayBecomeInactive.put(level4Location.getPersistentId(), level4Location); // slot
 					}
 				}
