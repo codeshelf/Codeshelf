@@ -120,8 +120,20 @@ public class TcpServerInterface extends SerialInterfaceABC {
 	 */
 	@Override
 	protected void doStopInterface() {
-		// TODO Auto-generated method stub
-
+		try {
+			mServerSocket.close();
+			doSetupConnection();
+		} catch (IOException e1) {
+			LOGGER.error("", e1);
+		}
+		for (Remote remote : mRemotes) {
+			try {
+				remote.clientSocket.close();
+			} catch (IOException e) {
+				LOGGER.error("", e);
+			}
+		}
+		mRemotes.clear();
 	}
 
 	// --------------------------------------------------------------------------
