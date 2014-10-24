@@ -1180,8 +1180,9 @@ public class AisleImporterTest extends DomainTestABC {
 		Assert.assertNotNull(network);
 
 		// There are led controllers, but we will make a new one. If it exists already, no harm.
-		String cntlrId = "0x000026";
-		LedController ledController = network.findOrCreateLedController(cntlrId, new NetGuid(cntlrId));
+		String cntlrId = "000026";
+		String guidId = "0x000026";
+		LedController ledController = network.findOrCreateLedController(cntlrId, new NetGuid(guidId));
 		Assert.assertNotNull(ledController);
 		LedController aController = network.getLedController(cntlrId); // make sure we can get it as we might
 		Assert.assertNotNull(aController);
@@ -1223,8 +1224,9 @@ public class AisleImporterTest extends DomainTestABC {
 		Assert.assertEquals(b2T1Channel, slotB2T1S1.getEffectiveLedChannel());
 		
 		// New from v8. Setting controller on aisle should clear the earlier tier set.
-		String cntlrId2 = "0x000066";
-		LedController ledController2 = network.findOrCreateLedController(cntlrId2, new NetGuid(cntlrId2));
+		String cntlrId2 = "000066";
+		String guidId2 = "0x000066";
+		LedController ledController2 = network.findOrCreateLedController(cntlrId2, new NetGuid(guidId2));
 		Assert.assertNotNull(ledController2);
 		LedController aController2 = network.getLedController(cntlrId2); // make sure we can get it as we might
 		Assert.assertNotNull(aController2);
@@ -1240,6 +1242,16 @@ public class AisleImporterTest extends DomainTestABC {
 		Assert.assertNull(tierB1T1.getLedChannel());
 		Assert.assertEquals(ledController2, tierB1T1.getEffectiveLedController());
 		Assert.assertTrue(tierB1T1.getEffectiveLedChannel() == 2);
+		// and the new v8 UI fields
+		// Aisle has the direct association, so no parenthesis around it. Tier is indirect via getEffective.
+		String aisleCntrlUiField = aisle16.getLedControllerIdUi();
+		String aisleChannelUiField = aisle16.getLedChannelUi();
+		Assert.assertEquals("000066", aisleCntrlUiField);
+		Assert.assertEquals("2", aisleChannelUiField);
+		String tierCntrlUiField = tierB1T1.getLedControllerIdUi();
+		String tierChannelUiField = tierB1T1.getLedChannelUi();
+		Assert.assertEquals("(000066)", tierCntrlUiField);
+		Assert.assertEquals("(2)", tierChannelUiField);
 
 	}
 

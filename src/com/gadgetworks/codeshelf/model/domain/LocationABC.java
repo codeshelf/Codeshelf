@@ -596,12 +596,45 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		return "";
 	}
 
+	/**
+	 * This gets the associated channel. Or if indirect via getEffectiveController, then parenthesis around it.
+	 */
+	public final String getLedChannelUi() {
+		Short theValue = getLedChannel();
+		if (theValue != null) {
+			return theValue.toString();
+		} else {
+			theValue = getEffectiveLedChannel();
+			if (theValue != null)
+				return "(" + theValue.toString() + ")";
+		}
+		return "";
+	}
+
+	/**
+	 * This directly get the associated controller only
+	 */
 	public final String getLedControllerId() {
 		// to support list view meta-field ledControllerId
 		LedController aLedController = getLedController();
 
 		if (aLedController != null) {
 			return aLedController.getDomainId();
+		}
+		return "";
+	}
+
+	/**
+	 * This gets the associated controller. Or if indirect via getEffectiveController, then parenthesis around it.
+	 */
+	public final String getLedControllerIdUi() {
+		LedController aLedController = getLedController();
+		if (aLedController != null) {
+			return aLedController.getDomainId();
+		} else {
+			aLedController = getEffectiveLedController();
+			if (aLedController != null)
+				return "(" + aLedController.getDomainId() + ")";
 		}
 		return "";
 	}
