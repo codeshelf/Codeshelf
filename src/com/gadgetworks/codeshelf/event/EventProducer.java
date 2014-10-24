@@ -23,30 +23,31 @@ public class EventProducer {
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(EventProducer.class);
 	
-	public static Set<String> tags(String... tags) {
-		return Sets.newHashSet(tags);
+	public static Set<String> tags(String... inTags) {
+		return Sets.newHashSet(inTags);
 	}
 
-	public void produceEvent(Set<String> tags, Exception e) {
-		produceEvent(tags, e, null);
+	public void produceEvent(Set<String> inTags, EventSeverity inSeverity, Exception inException) {
+		produceEvent(inTags, inSeverity, inException, null);
 	}
 	
-	public void produceEvent(Set<String> tags, Exception e, Object relatedObject) {
-		produceEvent(EventInterval.INSTANTANEOUS, tags, e, relatedObject);
+	public void produceEvent(Set<String> inTags, EventSeverity inSeverity, Exception inException, Object inRelatedObject) {
+		produceEvent(EventInterval.INSTANTANEOUS, inTags, inSeverity, inException, inRelatedObject);
 	}
 
-	private void produceEvent(EventInterval interval, Set<String> tags, Exception e, Object relatedObject) {
+	private void produceEvent(EventInterval inInterval, Set<String> inTags, EventSeverity inSeverity, Exception inException, Object inRelatedObject) {
 		Map<String, ?> namedValues = Collections.emptyMap();
-		if (relatedObject != null) {
-			namedValues = ImmutableMap.of("relatedObject", relatedObject);
+		if (inRelatedObject != null) {
+			namedValues = ImmutableMap.of("relatedObject", inRelatedObject);
 		}
 		String logMessage = Objects.toStringHelper("Event")
-			.add("tags", tags)
-			.add("interval", interval)
+			.add("tags", inTags)
+			.add("severity", inSeverity)
+			.add("interval", inInterval)
 			.add("namedValues", namedValues).toString();
 		
-		if (e != null) {
-			LOGGER.error(logMessage, e);
+		if (inException != null) {
+			LOGGER.error(logMessage, inException);
 		} else {
 			LOGGER.info(logMessage);
 		}
@@ -64,20 +65,20 @@ public class EventProducer {
 	 *  Which will produce a begin and end event with the same event context information
 	 * 
 	 */
-	public EventIntervalContext produceEventInterval(final Set<String> tags, final Object relatedObject) {
-		produceEvent(EventInterval.BEGIN, tags, null, relatedObject);
+	public EventIntervalContext produceEventInterval(final Set<String> inTags, final EventSeverity inEventSeverity, final Object inRelatedObject) {
+		produceEvent(EventInterval.BEGIN, inTags, inEventSeverity, null, inRelatedObject);
 
 		return new EventIntervalContext() {
 			
 			@Override
 			public void end() {
-				produceEvent(EventInterval.END, tags, null, relatedObject);
+				produceEvent(EventInterval.END, inTags, inEventSeverity, null, inRelatedObject);
 			}
 		};
 	}
 
 	/**
-	 *  An autocloseable instance that produces an END event for an event that had a BEGIN
+	 *  An AutoCloseable context object that produces a corresponding END event for an event that had a BEGIN
 	 */
 	public static abstract class EventIntervalContext implements AutoCloseable {
 		
