@@ -5,6 +5,8 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
+import static org.mockito.Mockito.mock;
+
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.Timestamp;
@@ -37,63 +39,11 @@ public class EdiProcessorTest extends EdiTestABC {
 	public final void ediProcessThreadTest() {
 
 		ICsvOrderImporter orderImporter = 	generateFailingImporter();
-		ICsvInventoryImporter inventoryImporter = new ICsvInventoryImporter() {
-
-			@Override
-			public boolean importSlottedInventoryFromCsvStream(InputStreamReader inCsvStreamReader,
-				Facility inFacility,
-				Timestamp inProcessTime) {
-				return false;
-			}
-
-			@Override
-			public boolean importDdcInventoryFromCsvStream(InputStreamReader inCsvStreamReader,
-				Facility inFacility,
-				Timestamp inProcessTime) {
-				return false;
-			}
-		};
-
-		ICsvLocationAliasImporter locationImporter = new ICsvLocationAliasImporter() {
-
-			@Override
-			public boolean importLocationAliasesFromCsvStream(InputStreamReader inCsvStreamReader,
-				Facility inFacility,
-				Timestamp inProcessTime) {
-				return false;
-			}
-		};
-
-		ICsvOrderLocationImporter orderLocationImporter = new ICsvOrderLocationImporter() {
-
-			@Override
-			public boolean importOrderLocationsFromCsvStream(InputStreamReader inCsvStreamReader,
-				Facility inFacility,
-				Timestamp inProcessTime) {
-				return false;
-			}
-		};
-
-		ICsvCrossBatchImporter crossBatchImporter = new ICsvCrossBatchImporter() {
-
-			@Override
-			public boolean importCrossBatchesFromCsvStream(InputStreamReader inCsvStreamReader,
-				Facility inFacility,
-				Timestamp inProcessTime) {
-				return false;
-			}
-		};
-		
-		ICsvAislesFileImporter aislesFileImporter = new ICsvAislesFileImporter() {
-
-			@Override
-			public boolean importAislesFileFromCsvStream(InputStreamReader inCsvStreamReader,
-				Facility inFacility,
-				Timestamp inProcessTime) {
-				return false;
-			}
-		};
-
+		ICsvInventoryImporter inventoryImporter = mock(ICsvInventoryImporter.class);
+		ICsvLocationAliasImporter locationImporter = mock(ICsvLocationAliasImporter.class);
+		ICsvOrderLocationImporter orderLocationImporter = mock(ICsvOrderLocationImporter.class);
+		ICsvCrossBatchImporter crossBatchImporter = mock(ICsvCrossBatchImporter.class);
+		ICsvAislesFileImporter aislesFileImporter = mock(ICsvAislesFileImporter.class);
 
 		IEdiProcessor ediProcessor = new EdiProcessor(orderImporter,
 			inventoryImporter,
@@ -160,63 +110,11 @@ public class EdiProcessorTest extends EdiTestABC {
 		}
 
 		ICsvOrderImporter orderImporter = generateFailingImporter();
-		
-		ICsvInventoryImporter inventoryImporter = new ICsvInventoryImporter() {
-
-			@Override
-			public boolean importSlottedInventoryFromCsvStream(InputStreamReader inCsvStreamReader,
-				Facility inFacility,
-				Timestamp inProcessTime) {
-				return false;
-			}
-
-			@Override
-			public boolean importDdcInventoryFromCsvStream(InputStreamReader inCsvStreamReader,
-				Facility inFacility,
-				Timestamp inProcessTime) {
-				return false;
-			}
-		};
-
-		ICsvLocationAliasImporter locationImporter = new ICsvLocationAliasImporter() {
-
-			@Override
-			public boolean importLocationAliasesFromCsvStream(InputStreamReader inCsvStreamReader,
-				Facility inFacility,
-				Timestamp inProcessTime) {
-				return false;
-			}
-		};
-
-		ICsvOrderLocationImporter orderLocationImporter = new ICsvOrderLocationImporter() {
-
-			@Override
-			public boolean importOrderLocationsFromCsvStream(InputStreamReader inCsvStreamReader,
-				Facility inFacility,
-				Timestamp inProcessTime) {
-				return false;
-			}
-		};
-
-		ICsvCrossBatchImporter crossBatchImporter = new ICsvCrossBatchImporter() {
-
-			@Override
-			public boolean importCrossBatchesFromCsvStream(InputStreamReader inCsvStreamReader,
-				Facility inFacility,
-				Timestamp inProcessTime) {
-				return false;
-			}
-		};
-
-		ICsvAislesFileImporter aislesFileImporter = new ICsvAislesFileImporter() {
-
-			@Override
-			public boolean importAislesFileFromCsvStream(InputStreamReader inCsvStreamReader,
-				Facility inFacility,
-				Timestamp inProcessTime) {
-				return false;
-			}
-		};
+		ICsvInventoryImporter inventoryImporter = mock(ICsvInventoryImporter.class);
+		ICsvLocationAliasImporter locationImporter = mock(ICsvLocationAliasImporter.class);
+		ICsvOrderLocationImporter orderLocationImporter = mock(ICsvOrderLocationImporter.class);
+		ICsvCrossBatchImporter crossBatchImporter = mock(ICsvCrossBatchImporter.class);
+		ICsvAislesFileImporter aislesFileImporter = mock(ICsvAislesFileImporter.class);
 
 		final Result linkedResult = new Result();
 		final Result unlinkedResult = new Result();
