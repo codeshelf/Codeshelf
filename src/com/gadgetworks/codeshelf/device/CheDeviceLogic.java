@@ -376,6 +376,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 * @see com.gadgetworks.flyweight.controller.INetworkDevice#start()
 	 */
 	public final void startDevice() {
+		LOGGER.info("Start CHE controller (after association) ");
+
 		// setState(mCheStateEnum);  Always, after start, there is the device associate chain and redisplay which will call setState(mCheStateEnum);
 		setLastAckId((byte) 0);
 	}

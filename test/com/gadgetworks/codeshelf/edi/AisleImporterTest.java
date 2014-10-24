@@ -903,10 +903,10 @@ public class AisleImporterTest extends DomainTestABC {
 		Assert.assertTrue(b2T2FaceEnd < 2.0);
 
 		@SuppressWarnings("rawtypes")
-		List<ISubLocation> theB1T1Slots = tierB1T1.getChildren();
+		List<ISubLocation> theB1T1Slots = tierB1T1.getActiveChildren();
 		Assert.assertTrue(theB1T1Slots.size() == 5);
 		@SuppressWarnings("rawtypes")
-		List<ISubLocation> theB1T2Slots = tierB1T2.getChildren();
+		List<ISubLocation> theB1T2Slots = tierB1T2.getActiveChildren();
 		Assert.assertTrue(theB1T2Slots.size() == 4);
 		short tierB1T2First = tierB1T2.getFirstLedNumAlongPath();
 		Assert.assertTrue(tierB1T2First == 1);
@@ -1254,6 +1254,26 @@ public class AisleImporterTest extends DomainTestABC {
 		Assert.assertEquals(b2T1Channel, slotB2T1S1.getEffectiveLedChannel());
 
 		this.getPersistenceService().endTenantTransaction();
+
+		
+		// New from v8. Setting controller on aisle should clear the earlier tier set.
+		String cntlrId2 = "0x000066";
+		LedController ledController2 = network.findOrCreateLedController(cntlrId2, new NetGuid(cntlrId2));
+		Assert.assertNotNull(ledController2);
+		LedController aController2 = network.getLedController(cntlrId2); // make sure we can get it as we might
+		Assert.assertNotNull(aController2);
+		UUID cntlrPersistID2 = aController2.getPersistentId();
+		String cntrlPersistIdStr2 = cntlrPersistID2.toString();
+		// verify we have something on the tier
+		Assert.assertNotNull(tierB1T1.getLedController());
+		Assert.assertNotNull(tierB1T1.getLedChannel());
+		// set the aisle, then make sure tier got cleared and tier getEffectiveXXX() works
+		aisle16.setControllerChannel(cntrlPersistIdStr2, "2");
+		tierB1T1 = Tier.DAO.findByDomainId(bayA16B1, "T1"); // get the tier again. Will Hibernate fix this ebeans problem?
+		Assert.assertNull(tierB1T1.getLedController());
+		Assert.assertNull(tierB1T1.getLedChannel());
+		Assert.assertEquals(ledController2, tierB1T1.getEffectiveLedController());
+		Assert.assertTrue(tierB1T1.getEffectiveLedChannel() == 2);
 
 	}
 

@@ -33,7 +33,7 @@ import com.google.inject.Singleton;
 @Singleton
 public class LocationAliasCsvImporter implements ICsvLocationAliasImporter {
 
-	private static final Logger			LOGGER	= LoggerFactory.getLogger(EdiProcessor.class);
+	private static final Logger			LOGGER	= LoggerFactory.getLogger(LocationAliasCsvImporter.class);
 
 	private ITypedDao<LocationAlias>	mLocationAliasDao;
 

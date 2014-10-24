@@ -152,6 +152,8 @@ fwfields.f_control_pos_pwmduty = ProtoField.uint8("flyweight.pos.duty" , "Duty",
 
 local f_control_led_chan_field = Field.new("flyweight.led.chan")
 local f_control_led_effect_field = Field.new("flyweight.led.effect")
+local f_control_led_samples_field = Field.new("flyweight.led.samples")
+
 local f_control_pos_samples_field = Field.new("flyweight.pos.samples")
 
 local f_assoc_resp_addr = Field.new("flyweight.assoc.resp.addr")

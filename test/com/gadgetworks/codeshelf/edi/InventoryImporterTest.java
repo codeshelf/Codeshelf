@@ -644,7 +644,7 @@ public class InventoryImporterTest extends EdiTestABC {
 
 		LocationABC locationD403 = (LocationABC) facility.findSubLocationById("D403");
 		LocationABC locationD402 = (LocationABC) facility.findSubLocationById("D402");
-		LocationABC locationD502 = (LocationABC) facility.findSubLocationById("D502");
+		LocationABC<?> locationD502 = (LocationABC) facility.findSubLocationById("D502");
 		LocationABC locationD503 = (LocationABC) facility.findSubLocationById("D503");
 
 		Item item1123Loc402EA = locationD402.getStoredItemFromMasterIdAndUom("1123", "EA");

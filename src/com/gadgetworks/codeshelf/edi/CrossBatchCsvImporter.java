@@ -12,6 +12,8 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.persistence.PersistenceException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,7 +44,7 @@ import com.google.inject.Singleton;
 @Singleton
 public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 
-	private static final Logger		LOGGER	= LoggerFactory.getLogger(EdiProcessor.class);
+	private static final Logger		LOGGER	= LoggerFactory.getLogger(CrossBatchCsvImporter.class);
 
 	private ITypedDao<OrderGroup>	mOrderGroupDao;
 	private ITypedDao<OrderHeader>	mOrderHeaderDao;
@@ -74,9 +76,9 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 	public final boolean importCrossBatchesFromCsvStream(InputStreamReader inCsvStreamReader,
 		Facility inFacility,
 		Timestamp inProcessTime) {
-		
+
 		boolean result = true;
-		
+
 		try {
 			mOrderGroupDao.clearAllCaches(); // avoids a class cast exception if ebeans had trimmed some objects
 			CSVReader csvReader = new CSVReader(inCsvStreamReader);
@@ -119,7 +121,7 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 			LOGGER.error("", e);
 			result = false;
 		}
-		
+
 		return result;
 	}
 
@@ -139,29 +141,42 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 			for (OrderHeader order : inFacility.getOrderHeaders()) {
 				if (order.getOrderType().equals(OrderTypeEnum.CROSS)) {
 					Boolean shouldArchiveOrder = true;
-					if (!inImportedIdList.contains(order.getContainerId())) {
-						shouldArchiveOrder = false;
-					} else {
-						for (OrderDetail orderDetail : order.getOrderDetails()) {
-							if (orderDetail.getUpdated().equals(inProcessTime)) {
-								shouldArchiveOrder = false;
-							} else {
-								LOGGER.debug("Archive old wonderwall order detail: " + orderDetail.getDomainId());
-								orderDetail.setActive(false);
-								mOrderDetailDao.store(orderDetail);
+					// Make this more robust if the beans are not quite consistent. We do not want to totally fail out of EDI just because we cannot fully investigate
+					// (I only got this by deleting containerUses table, so order.getContainerId() threw EntityNotFound)
+					// By catching here and below, we accomplish two things. 1) Orders that can be archived are. 2) The batch file is processed and is not left as .FAILED
+					try {
+						if (!inImportedIdList.contains(order.getContainerId())) {
+							shouldArchiveOrder = false;
+						} else {
+							for (OrderDetail orderDetail : order.getOrderDetails()) {
+								if (orderDetail.getUpdated().equals(inProcessTime)) {
+									shouldArchiveOrder = false;
+								} else {
+									LOGGER.debug("Archive old wonderwall order detail: " + orderDetail.getDomainId());
+									orderDetail.setActive(false);
+									mOrderDetailDao.store(orderDetail);
+								}
 							}
 						}
+					} catch (PersistenceException e) {
+						LOGGER.error("Caught exception investigating an order in archiveCheckCrossBatches", e);
 					}
 
 					if (shouldArchiveOrder) {
-						order.setActive(false);
-						mOrderHeaderDao.store(order);
+						try {
 
-						ContainerUse containerUse = order.getContainerUse();
-						if (containerUse != null) {
-							containerUse.setActive(false);
-							mContainerUseDao.store(containerUse);
+							order.setActive(false);
+							mOrderHeaderDao.store(order);
+
+							ContainerUse containerUse = order.getContainerUse();
+							if (containerUse != null) {
+								containerUse.setActive(false);
+								mContainerUseDao.store(containerUse);
+							}
+						} catch (PersistenceException e) {
+							LOGGER.error("Caught exception archiving order or containerUse in archiveCheckCrossBatches", e);
 						}
+
 					}
 				}
 			}

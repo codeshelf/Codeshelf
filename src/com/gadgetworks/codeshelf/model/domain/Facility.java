@@ -1936,7 +1936,7 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		List<ILocation<?>> ddcLocations = new ArrayList<ILocation<?>>();
 		for (ILocation<?> aisle : this.getLocations().values()) {
 			if(aisle.getClass().equals(Aisle.class)) {
-				for (ILocation<?> location : aisle.getChildren()) {
+				for (ILocation<?> location : aisle.getActiveChildren()) {
 					if (location.getFirstDdcId() != null) {
 						ddcLocations.add(location);
 					}

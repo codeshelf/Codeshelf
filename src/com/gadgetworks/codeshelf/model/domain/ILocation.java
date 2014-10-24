@@ -173,17 +173,25 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 
 	// --------------------------------------------------------------------------
 	/**
+	 * Get all of the ACTIVE child locations for this location. These child locations that have not been soft-deleted
+	 * @return
+	 */
+	@SuppressWarnings("rawtypes")
+	List<ISubLocation> getActiveChildren();
+
+	// --------------------------------------------------------------------------
+	/**
 	 * Get all of the children of this type (no matter how far down the hierarchy).
 	 * 
 	 * To get it to strongly type the return for you then use this unusual Java construct at the caller:
 	 * 
-	 * Aisle aisle = facility.<Aisle> getChildrenAtLevel(Aisle.class)
+	 * Aisle aisle = facility.<Aisle> getActiveChildrenAtLevel(Aisle.class)
 	 * (If calling this method from a generic location type then you need to define it as LocationABC<?> location.)
 	 * 
 	 * @param inClassWanted
 	 * @return
 	 */
-	<T extends ISubLocation<?>> List<T> getChildrenAtLevel(Class<? extends ISubLocation<?>> inClassWanted);
+	<T extends ISubLocation<?>> List<T> getActiveChildrenAtLevel(Class<? extends ISubLocation<?>> inClassWanted);
 
 	// --------------------------------------------------------------------------
 	/**

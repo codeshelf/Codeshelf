@@ -290,10 +290,9 @@ public class WorkServiceTest extends DAOTestABC {
 		IEdiExportServiceProvider provider = mock(IEdiExportServiceProvider.class);
 		when(provider.getWorkInstructionExporter(any(Facility.class))).thenReturn(ediService);
 
-		WorkService ws = new WorkService(this.getPersistenceService());
+		WorkService ws = new WorkService(this.getPersistenceService(),provider);
 		ws.setCapacity(capacity);
-		ws.setRetryDelay(retryDelay);
-		
+		ws.setRetryDelay(retryDelay);		
 		ws.start();
 		
 		return ws;

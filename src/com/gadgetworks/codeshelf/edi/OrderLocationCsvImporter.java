@@ -35,7 +35,7 @@ import com.google.inject.Singleton;
 @Singleton
 public class OrderLocationCsvImporter implements ICsvOrderLocationImporter {
 
-	private static final Logger			LOGGER	= LoggerFactory.getLogger(EdiProcessor.class);
+	private static final Logger			LOGGER	= LoggerFactory.getLogger(OrderLocationCsvImporter.class);
 
 	private ITypedDao<OrderLocation>	mOrderLocationDao;
 
@@ -179,7 +179,7 @@ public class OrderLocationCsvImporter implements ICsvOrderLocationImporter {
 
 			OrderHeader order = inFacility.getOrderHeader(orderId);
 			if (order == null) {
-				order = OrderHeader.createEmptyOrderHeader(inFacility, orderId);
+				order = OrderHeader.createEmptyOrderHeader(inFacility, orderId); // I have not yet figured out why FindBugs flags this -ic
 			}
 
 			String orderLocationId = OrderLocation.makeDomainId(order, mappedLocation);

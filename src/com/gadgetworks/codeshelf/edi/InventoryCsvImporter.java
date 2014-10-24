@@ -42,7 +42,7 @@ import com.google.inject.Singleton;
 @Singleton
 public class InventoryCsvImporter implements ICsvInventoryImporter {
 
-	private static final Logger		LOGGER	= LoggerFactory.getLogger(EdiProcessor.class);
+	private static final Logger		LOGGER	= LoggerFactory.getLogger(InventoryCsvImporter.class);
 
 	private ITypedDao<ItemMaster>	mItemMasterDao;
 	private ITypedDao<Item>			mItemDao;

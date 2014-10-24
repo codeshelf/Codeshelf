@@ -72,7 +72,7 @@ public class LightService {
 		}
 
 		HashMap<ControllerChannelBayKey, Tier> lastLocationWithinBay = new HashMap<ControllerChannelBayKey, Tier>();
-		List<Tier> tiers = theLocation.getChildrenAtLevel(Tier.class);
+		List<Tier> tiers = theLocation.getActiveChildrenAtLevel(Tier.class);
 		if (tiers.isEmpty()) {
 			LOGGER.error("lightAllControllers called with location with no tiers");
 			return;

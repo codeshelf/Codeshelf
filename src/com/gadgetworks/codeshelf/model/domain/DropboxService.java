@@ -578,7 +578,7 @@ public class DropboxService extends EdiServiceABC {
 		ICsvLocationAliasImporter inCsvLocationAliasImporter,
 		ICsvCrossBatchImporter inCsvCrossBatchImporter,
 		ICsvAislesFileImporter inCsvAislesFileImporter) {
-		
+
 		// IMPORTANT: if you change this at all, please go to DropboxRealTest.java. See comments there about how to run it locally.
 		// It cannot run on TeamCity
 
@@ -612,7 +612,7 @@ public class DropboxService extends EdiServiceABC {
 			if (lowerCaseFilePath.contains(".failed")) {
 				return;
 			}
-			
+
 			// We used to load to stream all files, then process only the direct matches. Let's filter a bit to not stream all the files in the processed folder.
 			// If the file path contains /processed/ or /export/, skip it.
 			if (filepath.contains("/processed/") || filepath.contains("/export/")) {
@@ -646,15 +646,14 @@ public class DropboxService extends EdiServiceABC {
 					filepath = renameToProcessing(inClient, filepath);
 					processedAttempt = true;
 					success = inCsvInventoryImporter.importSlottedInventoryFromCsvStream(reader, getParent(), ediProcessTime);
-				} 
+				}
 				// Notice that there is no distinguisher for DDC file. Following should never execute anyway. Making it more obvious.
 				// Jeff says DDC may come back.
 				else if (false && fileMatches(filepath, IMPORT_INVENTORY_PATH)) {
 					filepath = renameToProcessing(inClient, filepath);
 					processedAttempt = true;
 					success = inCsvInventoryImporter.importDdcInventoryFromCsvStream(reader, getParent(), ediProcessTime);
-				} 
-				else if (fileMatches(filepath, IMPORT_LOCATIONS_PATH)) {
+				} else if (fileMatches(filepath, IMPORT_LOCATIONS_PATH)) {
 					filepath = renameToProcessing(inClient, filepath);
 					processedAttempt = true;
 					success = inCsvLocationAliasImporter.importLocationAliasesFromCsvStream(reader, getParent(), ediProcessTime);
@@ -668,11 +667,11 @@ public class DropboxService extends EdiServiceABC {
 					success = inCsvAislesFileImporter.importAislesFileFromCsvStream(reader, getParent(), ediProcessTime);
 				}
 				if (!processedAttempt) {
-					LOGGER.warn("Did not find importer for: " + filepath);				
+					LOGGER.warn("Did not find importer for: " + filepath);
 				}
 			} catch (Exception e) {
 				// 4c) On exception, rename to .FAILED and leave in import
-				LOGGER.warn("Exception during dropbox file read. Left a .FAILED file for " + filepath);
+				LOGGER.warn("Exception during dropbox file read. Left a .FAILED file for " + filepath, e);
 				filepath = renameToRemoveAppend(inClient, filepath, "processing", "FAILED");
 				logDetails("4c)" + filepath);
 			}
@@ -771,18 +770,27 @@ public class DropboxService extends EdiServiceABC {
 			}
 		}
 
-		if (inAppendStr != null)
-			toPath = toPath + "." + inAppendStr;
-		toPath = avoidFileNameCollision(inClient, toPath);
-		try {
-			if (inClient.getMetadata(fromPath) == null) {
-				LOGGER.error("File does not exist in renameToRemoveAppend()"); // Calling logic error
-			} else {
-				inClient.move(fromPath, toPath);
-				LOGGER.debug("Dropbox rename: " + toPath);
+		if (inAppendStr != null) {
+			// if already .FAILED or .processing, do not add another
+			String suffix = "." + inAppendStr;
+			if (!toPath.endsWith(suffix))
+				toPath = toPath + "." + inAppendStr;
+			else 
+				LOGGER.warn("file already had the suffix " + suffix + " ; not adding again"); // happens in some exceptions
+		}
+
+		if (!fromPath.equals(toPath)) { // don't do anything if nothing changed
+			toPath = avoidFileNameCollision(inClient, toPath);
+			try {
+				if (inClient.getMetadata(fromPath) == null) {
+					LOGGER.error("File does not exist in renameToRemoveAppend()"); // Calling logic error
+				} else {
+					inClient.move(fromPath, toPath);
+					LOGGER.debug("Dropbox rename: " + toPath);
+				}
+			} catch (DbxException e) {
+				LOGGER.error("renameToRemoveAppend", e);
 			}
-		} catch (DbxException e) {
-			LOGGER.error("renameToRemoveAppend", e);
 		}
 		return toPath;
 	}
