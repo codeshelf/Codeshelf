@@ -47,7 +47,11 @@ public class EventProducer {
 			.add("namedValues", namedValues).toString();
 		
 		if (inException != null) {
-			LOGGER.error(logMessage, inException);
+			if (inSeverity.equals(EventSeverity.WARN)) {
+				LOGGER.warn(logMessage, inException);
+			} else {
+				LOGGER.error(logMessage, inException);
+			}
 		} else {
 			LOGGER.info(logMessage);
 		}
