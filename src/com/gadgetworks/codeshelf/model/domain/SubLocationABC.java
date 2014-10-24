@@ -97,7 +97,7 @@ public abstract class SubLocationABC<P extends IDomainObject & ISubLocation<?>> 
 		super(domainId, inAnchorPoint);
 		setParent(parent);
 		if (parent != null && parent instanceof SubLocationABC<?>) {
-			((SubLocationABC<?>)parent).addLocation(this);
+			((SubLocationABC<?>) parent).addLocation(this);
 		}
 		setPickFaceEndPosTypeEnum(inPickFaceEndPoint.getPosTypeEnum());
 		setPickFaceEndPosX(inPickFaceEndPoint.getX());
@@ -130,12 +130,12 @@ public abstract class SubLocationABC<P extends IDomainObject & ISubLocation<?>> 
 	public final void setParent(P inParent) {
 		parent = (SubLocationABC<?>) inParent;
 	}
-	
+
 	public Point getAbsolutePickFaceEndPoint() {
 		Point base = getAbsoluteAnchorPoint();
 		return base.add(getPickFaceEndPosX(), getPickFaceEndPosY(), getPickFaceEndPosZ());
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * @return
@@ -155,8 +155,6 @@ public abstract class SubLocationABC<P extends IDomainObject & ISubLocation<?>> 
 		pickFaceEndPosZ = inPickFaceEndPoint.getZ();
 	}
 
-	
-	
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#computePosAlongPath(com.gadgetworks.codeshelf.model.domain.PathSegment)
@@ -166,7 +164,7 @@ public abstract class SubLocationABC<P extends IDomainObject & ISubLocation<?>> 
 			LOGGER.error("null pathSegment in computePosAlongPath");
 			return;
 		}
-		
+
 		// Complete revision at V4
 		Point locationAnchorPoint = getAbsoluteAnchorPoint();
 		Point pickFaceEndPoint = getAbsolutePickFaceEndPoint();
@@ -179,8 +177,8 @@ public abstract class SubLocationABC<P extends IDomainObject & ISubLocation<?>> 
 		// Doing this to avoid the DAO needing to check the change, which also generates a bunch of logging.
 		if (!newPosition.equals(oldPosition)) {
 			try {
-				LOGGER.debug(this.getFullDomainId() + " path pos: " + getPosAlongPath() + " Anchor x: " + locationAnchorPoint.getX()
-					+ " y: " + locationAnchorPoint.getY() + " Face x: ");
+				LOGGER.debug(this.getFullDomainId() + " path pos: " + getPosAlongPath() + " Anchor x: "
+						+ locationAnchorPoint.getX() + " y: " + locationAnchorPoint.getY() + " Face x: ");
 				setPosAlongPath(newPosition);
 				LocationABC.DAO.store(this);
 			} catch (DaoException e) {
@@ -191,30 +189,47 @@ public abstract class SubLocationABC<P extends IDomainObject & ISubLocation<?>> 
 		// Also force a recompute for all of the child locations.
 		@SuppressWarnings("rawtypes")
 		List<ISubLocation> locations = getActiveChildren();
-		for (@SuppressWarnings("rawtypes") ISubLocation location : locations) {
+		for (@SuppressWarnings("rawtypes")
+		ISubLocation location : locations) {
 			location.computePosAlongPath(inPathSegment);
 		}
 	}
 
+	/**
+	 * Clears controller and channel back to null state, as if they had never been set after initialization
+	 */
+	protected final void doClearControllerChannel() {
+		if (getLedController() != null || getLedChannel() != null) {
+			try {
+				this.setLedController(null);
+				this.setLedChannel(null);
+				this.getDao().store(this);
+			} catch (DaoException e) {
+				LOGGER.error("doClearControllerChannel", e);
+			}
+		}
+	}
 
+	/**
+	 * Both Aisle and Tier have setControllerChannel functions that call through to this.
+	 * Side effect adds a little complexity. If setting to a valid controller, make sure there is a channel (default 1) even if never set to user set to 0.
+	 */
 	protected final void doSetControllerChannel(String inControllerPersistentIDStr, String inChannelStr) {
-		// this is for callMethod from the UI
-		// We are setting the controller and channel for the tier. Depending on the inTierStr parameter, may set also for
-		// on all other same tier in the aisle, or perhaps other patterns.
-		
+
 		// Initially, log
 		LOGGER.debug("On " + this + ", set LED controller to " + inControllerPersistentIDStr);
-		
+
 		// Get the LedController
 		UUID persistentId = UUID.fromString(inControllerPersistentIDStr);
 		LedController theLedController = LedController.DAO.findByPersistentId(persistentId);
-		
+
 		// set this tier's
 		if (theLedController != null) {
 			// Get the channel
 			Short theChannel;
-			try { theChannel = Short.valueOf(inChannelStr); }
-			catch (NumberFormatException e) { 
+			try {
+				theChannel = Short.valueOf(inChannelStr);
+			} catch (NumberFormatException e) {
 				theChannel = 0; // not recognizable as a number
 			}
 			if (theChannel < 0) {
@@ -225,21 +240,19 @@ public abstract class SubLocationABC<P extends IDomainObject & ISubLocation<?>> 
 			this.setLedController(theLedController);
 			if (theChannel != null && theChannel > 0) {
 				this.setLedChannel(theChannel);
-			}
-			else {
+			} else {
 				// if channel passed is 0 or null Short, make sure tier has a ledChannel. Set to 1 if there is not yet a channel.
 				Short thisLedChannel = this.getLedChannel();
 				if (thisLedChannel == null || thisLedChannel <= 0)
 					this.setLedChannel((short) 1);
 			}
-			
-			this.getDao().store(this);		
-		}
-		else {
+
+			this.getDao().store(this);
+		} else {
 			throw new DaoException("Unable to set controller, controller " + inControllerPersistentIDStr + " not found");
 		}
 	}
-	
+
 	// converts A3 into 003.  Could put the A back on.  Could be a static, but called this way conveniently from tier and from bay
 	public String getCompString(String inString) {
 		String s = inString.substring(1); // Strip off the A, B, T, or S
@@ -257,16 +270,16 @@ public abstract class SubLocationABC<P extends IDomainObject & ISubLocation<?>> 
 		String ss = sb.toString();
 		return ss;
 	}
-	
+
 	public Double getLocationWidthMeters() {
 		// Seems funny, but it is so. Anchor is relative to parent. PickFaceEnd is relative to anchor.
 		// So, the width is just the pickface end value.
 		if (isLocationXOriented())
 			return this.getPickFaceEndPosX();
 		else
-			return this.getPickFaceEndPosY();			
+			return this.getPickFaceEndPosY();
 	}
-	
+
 	public boolean isLocationXOriented() {
 		return getPickFaceEndPosY() == 0.0;
 	}
@@ -275,21 +288,27 @@ public abstract class SubLocationABC<P extends IDomainObject & ISubLocation<?>> 
 	public String getAnchorPosXui() {
 		return StringUIConverter.doubleToTwoDecimalsString(getAnchorPosX());
 	}
+
 	public String getAnchorPosYui() {
 		return StringUIConverter.doubleToTwoDecimalsString(getAnchorPosY());
 	}
+
 	public String getAnchorPosZui() {
 		return StringUIConverter.doubleToTwoDecimalsString(getAnchorPosZ());
 	}
+
 	public String getPickFaceEndPosXui() {
 		return StringUIConverter.doubleToTwoDecimalsString(getPickFaceEndPosX());
 	}
+
 	public String getPickFaceEndPosYui() {
 		return StringUIConverter.doubleToTwoDecimalsString(getPickFaceEndPosY());
 	}
+
 	public String getPickFaceEndPosZui() {
 		return StringUIConverter.doubleToTwoDecimalsString(getPickFaceEndPosZ());
 	}
+
 	public String getPosAlongPathui() {
 		return StringUIConverter.doubleToTwoDecimalsString(getPosAlongPath());
 	}

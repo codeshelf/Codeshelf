@@ -1221,6 +1221,26 @@ public class AisleImporterTest extends DomainTestABC {
 		Assert.assertNull(slotB2T1S1.getLedChannel());
 		Assert.assertEquals(b2T1Controller, slotB2T1S1.getEffectiveLedController());
 		Assert.assertEquals(b2T1Channel, slotB2T1S1.getEffectiveLedChannel());
+		
+		// New from v8. Setting controller on aisle should clear the earlier tier set.
+		String cntlrId2 = "0x000066";
+		LedController ledController2 = network.findOrCreateLedController(cntlrId2, new NetGuid(cntlrId2));
+		Assert.assertNotNull(ledController2);
+		LedController aController2 = network.getLedController(cntlrId2); // make sure we can get it as we might
+		Assert.assertNotNull(aController2);
+		UUID cntlrPersistID2 = aController2.getPersistentId();
+		String cntrlPersistIdStr2 = cntlrPersistID2.toString();
+		// verify we have something on the tier
+		Assert.assertNotNull(tierB1T1.getLedController());
+		Assert.assertNotNull(tierB1T1.getLedChannel());
+		// set the aisle, then make sure tier got cleared and tier getEffectiveXXX() works
+		aisle16.setControllerChannel(cntrlPersistIdStr2, "2");
+		tierB1T1 = Tier.DAO.findByDomainId(bayA16B1, "T1"); // get the tier again. Will Hibernate fix this ebeans problem?
+		Assert.assertNull(tierB1T1.getLedController());
+		Assert.assertNull(tierB1T1.getLedChannel());
+		Assert.assertEquals(ledController2, tierB1T1.getEffectiveLedController());
+		Assert.assertTrue(tierB1T1.getEffectiveLedChannel() == 2);
+
 	}
 
 	@Test

@@ -5,6 +5,7 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
+import java.util.List;
 import java.util.UUID;
 
 import javax.persistence.DiscriminatorValue;
@@ -105,8 +106,18 @@ public class Aisle extends SubLocationABC<Facility> {
 			LOGGER.error("associatePathSegment did not correctly update locations array");
 	}
 
+	/**
+	 * this is for callMethod from the UI.  Huge side effect, new from v8. If we are setting for the aisle, then clear out any tier sets done earlier.
+	 * This fixes the possible perceived bug of set tier controller. Oops, this is zigzag aisle. Set aisle controller correctly. Some tiers never set.
+	 * This makes the getEffectiveXXX() calls work, searching upward until they find the aisle value
+	 */
 	public final void setControllerChannel(String inControllerPersistentIDStr, String inChannelStr) {
 		doSetControllerChannel(inControllerPersistentIDStr, inChannelStr);
+		
+		List<Tier> aList = getActiveChildrenAtLevel(Tier.class);
+		for (Tier aTier : aList) {
+			aTier.doClearControllerChannel();
+		}
 	}
 
 	// As you face the pick face, is the left toward the anchor point? If so, any cm offset adds to an anchor point. 

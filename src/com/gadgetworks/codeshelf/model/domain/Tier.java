@@ -223,6 +223,7 @@ public class Tier extends SubLocationABC<Bay> {
 	}
 
 	public final void setControllerChannel(String inControllerPersistentIDStr, String inChannelStr, String inTiersStr) {
+		// this is for callMethod from the UI
 		// This, or all of this tier in aisle
 		doSetControllerChannel(inControllerPersistentIDStr, inChannelStr);
 		boolean allTiers = inTiersStr != null && inTiersStr.equalsIgnoreCase(ALL_TIERS_IN_AISLE);
