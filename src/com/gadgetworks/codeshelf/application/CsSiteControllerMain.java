@@ -29,6 +29,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Module;
 
 // --------------------------------------------------------------------------
 /**
@@ -87,7 +88,7 @@ public final class CsSiteControllerMain {
 
 	// --------------------------------------------------------------------------
 	
-	public static CsSiteControllerApplication createApplication(AbstractModule guiceModule) {
+	public static CsSiteControllerApplication createApplication(Module guiceModule) {
 		Injector injector = Guice.createInjector(guiceModule);
 		return injector.getInstance(CsSiteControllerApplication.class); 
 	}
