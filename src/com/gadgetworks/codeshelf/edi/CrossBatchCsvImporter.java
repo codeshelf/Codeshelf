@@ -5,12 +5,16 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
-import java.io.FileNotFoundException;
+import static com.gadgetworks.codeshelf.event.EventProducer.tags;
+
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.Reader;
 import java.sql.Timestamp;
-import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.persistence.PersistenceException;
 
@@ -21,6 +25,8 @@ import au.com.bytecode.opencsv.CSVReader;
 import au.com.bytecode.opencsv.bean.CsvToBean;
 import au.com.bytecode.opencsv.bean.HeaderColumnNameMappingStrategy;
 
+import com.gadgetworks.codeshelf.event.EventProducer;
+import com.gadgetworks.codeshelf.event.EventSeverity;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
@@ -34,6 +40,9 @@ import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderGroup;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.UomMaster;
+import com.gadgetworks.codeshelf.validation.DefaultErrors;
+import com.gadgetworks.codeshelf.validation.ErrorCode;
+import com.gadgetworks.codeshelf.validation.InputValidationException;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -53,6 +62,8 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 	private ITypedDao<ContainerUse>	mContainerUseDao;
 	private ITypedDao<UomMaster>	mUomMasterDao;
 
+	private EventProducer	mEventProducer;
+
 	@Inject
 	public CrossBatchCsvImporter(final ITypedDao<OrderGroup> inOrderGroupDao,
 		final ITypedDao<OrderHeader> inOrderHeaderDao,
@@ -67,62 +78,51 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 		mContainerDao = inContainerDao;
 		mContainerUseDao = inContainerUseDao;
 		mUomMasterDao = inUomMasterDao;
+		mEventProducer = new EventProducer();
 	}
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.edi.ICsvImporter#importInventoryFromCsvStream(java.io.InputStreamReader, com.gadgetworks.codeshelf.model.domain.Facility)
 	 */
-	public final boolean importCrossBatchesFromCsvStream(InputStreamReader inCsvStreamReader,
+	public final int importCrossBatchesFromCsvStream(Reader inCsvStreamReader,
 		Facility inFacility,
 		Timestamp inProcessTime) {
 
-		boolean result = true;
-
-		try {
-			mOrderGroupDao.clearAllCaches(); // avoids a class cast exception if ebeans had trimmed some objects
-			CSVReader csvReader = new CSVReader(inCsvStreamReader);
+		int importedRecords = 0;
+		List<CrossBatchCsvBean> crossBatchBeanList = Collections.emptyList();
+		mOrderGroupDao.clearAllCaches(); // avoids a class cast exception if ebeans had trimmed some objects
+		try(CSVReader csvReader = new CSVReader(inCsvStreamReader)) {
 
 			HeaderColumnNameMappingStrategy<CrossBatchCsvBean> strategy = new HeaderColumnNameMappingStrategy<CrossBatchCsvBean>();
 			strategy.setType(CrossBatchCsvBean.class);
 
 			CsvToBean<CrossBatchCsvBean> csv = new CsvToBean<CrossBatchCsvBean>();
-			List<CrossBatchCsvBean> crossBatchBeanList = csv.parse(strategy, csvReader);
-
-			if (crossBatchBeanList.size() > 0) {
-
-				LOGGER.debug("Begin cross batch import.");
-
-				List<String> importedIdList = new ArrayList<String>();
-
-				// Iterate over the put batch import beans.
-				for (CrossBatchCsvBean crossBatchBean : crossBatchBeanList) {
-					String errorMsg = crossBatchBean.validateBean();
-					if (errorMsg != null) {
-						LOGGER.error("Cross-batch: import errors: " + errorMsg);
-					} else {
-						if (!importedIdList.contains(crossBatchBean.getContainerId())) {
-							importedIdList.add(crossBatchBean.getContainerId());
-						}
-						crossBatchCsvBeanImport(crossBatchBean, inFacility, inProcessTime);
-					}
-				}
-
-				archiveCheckCrossBatches(inFacility, inProcessTime, importedIdList);
-
-				LOGGER.debug("End cross batch import.");
-			}
-
-			csvReader.close();
-		} catch (FileNotFoundException e) {
-			LOGGER.error("", e);
-			result = false;
+			crossBatchBeanList = csv.parse(strategy, csvReader);
 		} catch (IOException e) {
 			LOGGER.error("", e);
-			result = false;
+			return importedRecords;
+		}
+			
+		LOGGER.debug("Begin cross batch import.");
+
+		Set<String> importedContainerIds = new HashSet<String>();
+		// Iterate over the put batch import beans.
+		for (CrossBatchCsvBean crossBatchBean : crossBatchBeanList) {
+			try {
+				Container container = crossBatchCsvBeanImport(crossBatchBean, inFacility, inProcessTime);
+				importedContainerIds.add(container.getContainerId());
+				importedRecords++;
+			}
+			catch(InputValidationException e) {
+				mEventProducer.produceEvent(tags("import", "crossbatch"), EventSeverity.WARN, e, crossBatchBean);
+			}
 		}
 
-		return result;
+		archiveCheckCrossBatches(inFacility, inProcessTime, importedContainerIds);
+
+		LOGGER.debug("End cross batch import.");
+		return importedRecords;
 	}
 
 	// --------------------------------------------------------------------------
@@ -132,7 +132,7 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 	 */
 	private void archiveCheckCrossBatches(final Facility inFacility,
 		final Timestamp inProcessTime,
-		final List<String> inImportedIdList) {
+		final Set<String> inImportedContainerIds) {
 		LOGGER.debug("Archive unreferenced put batch data");
 
 		// Inactivate the WONDERWALL order detail that don't match the import timestamp.
@@ -145,7 +145,7 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 					// (I only got this by deleting containerUses table, so order.getContainerId() threw EntityNotFound)
 					// By catching here and below, we accomplish two things. 1) Orders that can be archived are. 2) The batch file is processed and is not left as .FAILED
 					try {
-						if (!inImportedIdList.contains(order.getContainerId())) {
+						if (!inImportedContainerIds.contains(order.getContainerId())) {
 							shouldArchiveOrder = false;
 						} else {
 							for (OrderDetail orderDetail : order.getOrderDetails()) {
@@ -193,45 +193,53 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 	 * @param inFacility
 	 * @param inEdiProcessTime
 	 */
-	private void crossBatchCsvBeanImport(final CrossBatchCsvBean inCsvBean,
+	private Container crossBatchCsvBeanImport(final CrossBatchCsvBean inCsvBean,
 		final Facility inFacility,
-		final Timestamp inEdiProcessTime) {
+		final Timestamp inEdiProcessTime) throws InputValidationException {
 
-		// Only create the CROSS detail if the quantity is > 0.
-		if (Integer.valueOf(inCsvBean.getQuantity()) > 0) {
+		DefaultErrors errors = new DefaultErrors(inCsvBean.getClass());  
+		try {
+			mOrderHeaderDao.beginTransaction();
+
+			LOGGER.info(inCsvBean.toString());
 			try {
-				mOrderHeaderDao.beginTransaction();
-
-				LOGGER.info(inCsvBean.toString());
-
-				try {
-					ItemMaster itemMaster = inFacility.getItemMaster(inCsvBean.getItemId());
-
-					if (itemMaster == null) {
-						LOGGER.error("Cross-batch import: unknown item master sent.");
-					} else {
-						OrderGroup group = updateOptionalOrderGroup(inCsvBean, inFacility, inEdiProcessTime);
-						OrderHeader order = updateOrderHeader(inCsvBean, inFacility, inEdiProcessTime, group);
-						Container container = updateContainer(inCsvBean, inFacility, inEdiProcessTime, order);
-						UomMaster uomMaster = updateUomMaster(inCsvBean, inFacility);
-						@SuppressWarnings("unused")
-						OrderDetail detail = updateOrderDetail(inCsvBean,
-							inFacility,
-							inEdiProcessTime,
-							order,
-							itemMaster,
-							container,
-							uomMaster);
-					}
-				} catch (Exception e) {
-					LOGGER.error("Caught exception while importing cross-batch", e);
+				int quantity = Integer.valueOf(inCsvBean.getQuantity());
+				// Only create the CROSS detail if the quantity is > 0.
+				if (quantity <= 0) {
+					errors.minViolation("quantity", quantity, 0);
 				}
-				mOrderHeaderDao.commitTransaction();
-
-			} finally {
-				mOrderHeaderDao.endTransaction();
 			}
+			catch(NumberFormatException e) {
+				errors.bindViolation("quantity", inCsvBean.getQuantity(), Integer.class);
+			}
+
+			
+			ItemMaster itemMaster = inFacility.getItemMaster(inCsvBean.getItemId());
+			if (itemMaster == null) {
+				errors.rejectValue("itemId", ErrorCode.FIELD_NOT_FOUND, "Unknown ItemMaster");
+			} 
+			
+			if (!errors.hasErrors()) {
+				OrderGroup group = updateOptionalOrderGroup(inCsvBean, inFacility, inEdiProcessTime);
+				OrderHeader order = updateOrderHeader(inCsvBean, inFacility, inEdiProcessTime, group);
+				UomMaster uomMaster = updateUomMaster(inCsvBean, inFacility);
+				@SuppressWarnings("unused")
+				OrderDetail detail = updateOrderDetail(inCsvBean,
+					inFacility,
+					inEdiProcessTime,
+					order,
+					itemMaster,
+					uomMaster);
+				Container container = updateContainer(inCsvBean, inFacility, inEdiProcessTime, order);
+				mOrderHeaderDao.commitTransaction();
+				return container;
+			}
+		} catch (Exception e) {
+			errors.reject(ErrorCode.GENERAL, e.toString());
+		} finally {
+			mOrderHeaderDao.endTransaction();
 		}
+		throw new InputValidationException(errors);
 	}
 
 	// --------------------------------------------------------------------------
@@ -331,7 +339,6 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 		final Timestamp inEdiProcessTime,
 		final OrderHeader inOrder,
 		final ItemMaster inItemMaster,
-		final Container inContainer,
 		final UomMaster inUomMaster) {
 		OrderDetail result = null;
 

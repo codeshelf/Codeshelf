@@ -663,7 +663,8 @@ public class DropboxService extends EdiServiceABC {
 				} else if (fileMatches(filepath, IMPORT_BATCHES_PATH)) {
 					filepath = renameToProcessing(inClient, filepath);
 					processedAttempt = true;
-					success = inCsvCrossBatchImporter.importCrossBatchesFromCsvStream(reader, getParent(), ediProcessTime);
+					int numRecords = inCsvCrossBatchImporter.importCrossBatchesFromCsvStream(reader, getParent(), ediProcessTime);
+					success = (numRecords > 0);
 				} else if (fileMatches(filepath, IMPORT_AISLES_PATH)) {
 					filepath = renameToProcessing(inClient, filepath);
 					processedAttempt = true;
