@@ -29,9 +29,13 @@ import com.gadgetworks.codeshelf.ws.jetty.server.JettyWebSocketServer;
 import com.gadgetworks.codeshelf.ws.jetty.server.ServerMessageProcessor;
 import com.gadgetworks.codeshelf.ws.jetty.server.SessionManager;
 import com.gadgetworks.flyweight.command.NetGuid;
+import com.gadgetworks.flyweight.controller.FTDIInterface;
+import com.gadgetworks.flyweight.controller.IGatewayInterface;
+import com.gadgetworks.flyweight.controller.TcpServerInterface;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Module;
 import com.google.inject.Singleton;
 
 @Ignore
@@ -168,8 +172,15 @@ public abstract class EndToEndIntegrationTest extends DomainTestABC {
 		ThreadUtils.sleep(2000);
 
 		// start site controller
-		//TODO future just use a different IGateway implementation instead of disableRadio
-		siteController = CsSiteControllerMain.createApplication(new CsSiteControllerMain.DefaultModule());
+		//Use a different IGateway implementation instead of disableRadio
+		Module integrationTestModule = new CsSiteControllerMain.BaseModule() {
+			@Override
+			protected void configure() {
+				super.configure();
+				bind(IGatewayInterface.class).to(TcpServerInterface.class);
+			}
+		};
+		siteController = CsSiteControllerMain.createApplication(integrationTestModule);
 		siteController.startApplication();
 		ThreadUtils.sleep(2000);
 

@@ -66,6 +66,8 @@ import com.gadgetworks.codeshelf.validation.ErrorCode;
 import com.gadgetworks.codeshelf.validation.Errors;
 import com.gadgetworks.codeshelf.validation.InputValidationException;
 import com.gadgetworks.flyweight.command.ColorEnum;
+import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -1060,45 +1062,26 @@ public class Facility extends SubLocationABC<Facility> {
 			// Iterate over all active CROSS orders on the path.
 			OrderHeader crossOrder = container.getCurrentOrderHeader();
 			if ((crossOrder != null) && (crossOrder.getActive()) && (crossOrder.getOrderTypeEnum().equals(OrderTypeEnum.CROSS))) {
-				// Iterate over all active OUTBOUND on the path.
-				for (OrderHeader outOrder : getOrderHeaders()) {
-					if ((outOrder.getOrderTypeEnum().equals(OrderTypeEnum.OUTBOUND)) && (outOrder.getActive())) {
-						// Only use orders without an order group, or orders in the same order group as the cross order.
-						if (((outOrder.getOrderGroup() == null) && (crossOrder.getOrderGroup() == null))
-								|| (outOrder.getOrderGroup() != null)
-								&& (outOrder.getOrderGroup().equals(crossOrder.getOrderGroup()))) {
-							// OK, we have an OUTBOUND order on the same path as the CROSS order.
-							// Check to see if any of the active CROSS order detail items match OUTBOUND order details.
-							for (OrderDetail crossOrderDetail : crossOrder.getOrderDetails()) {
-								if (crossOrderDetail.getActive()) {
-									for (OrderDetail outOrderDetail : outOrder.getOrderDetails()) {
-										if ((outOrderDetail.getItemMaster().equals(crossOrderDetail.getItemMaster()))
-												&& (outOrderDetail.getActive())) {
-											// Now make sure the UOM matches.
-											if (UomNormalizer.normalizedEquals(outOrderDetail.getUomMasterId(),
-												crossOrderDetail.getUomMasterId())) {
-												for (Path path : getPaths()) {
-													OrderLocation firstOutOrderLoc = outOrder.getFirstOrderLocationOnPath(path);
+				for (OrderDetail crossOrderDetail : crossOrder.getOrderDetails()) {
+					if (crossOrderDetail.getActive()) {
+						List<OrderDetail> matchingOrderDetails = getMatchingOutboundOrderDetail(crossOrderDetail);
+						//if (empty?) Error
+						for (OrderDetail matchingOutboundOrderDetail : matchingOrderDetails) {
+							List<ISubLocation<?>> firstLocationPerPath = toPossibleLocations(matchingOutboundOrderDetail);
+							//if (locations.empty) Error
+							for (ISubLocation<?> firstLocationOnPath : firstLocationPerPath) {
+								WorkInstruction wi = createWorkInstruction(WorkInstructionStatusEnum.NEW,
+									WorkInstructionTypeEnum.PLAN,
+									matchingOutboundOrderDetail,
+									container,
+									inChe,
+									(LocationABC<?>) firstLocationOnPath,
+									inTime);
 
-													if (firstOutOrderLoc != null) {
-														WorkInstruction wi = createWorkInstruction(WorkInstructionStatusEnum.NEW,
-															WorkInstructionTypeEnum.PLAN,
-															outOrderDetail,
-															container,
-															inChe,
-															(LocationABC<?>) (firstOutOrderLoc.getLocation()),
-															inTime);
-
-														// If we created a WI then add it to the list.
-														if (wi != null) {
-															setWiPickInstruction(wi, outOrder);
-															wiList.add(wi);
-														}
-													}
-												}
-											}
-										}
-									}
+								// If we created a WI then add it to the list.
+								if (wi != null) {
+									setWiPickInstruction(wi, matchingOutboundOrderDetail.getParent());
+									wiList.add(wi);
 								}
 							}
 						}
@@ -1109,6 +1092,43 @@ public class Facility extends SubLocationABC<Facility> {
 		return wiList;
 	}
 
+	private List<ISubLocation<?>> toPossibleLocations(OrderDetail matchingOutboundOrderDetail) {
+		ArrayList<ISubLocation<?>> locations = new ArrayList<ISubLocation<?>>();
+		for (Path path : getPaths()) {
+			OrderLocation firstOutOrderLoc = matchingOutboundOrderDetail.getParent().getFirstOrderLocationOnPath(path);
+			locations.add(firstOutOrderLoc.getLocation());
+		}
+		return locations;
+	}
+		
+	private List<OrderDetail> getMatchingOutboundOrderDetail(OrderDetail crossbatchOrderDetail) {
+		Preconditions.checkNotNull(crossbatchOrderDetail);
+		Preconditions.checkArgument(crossbatchOrderDetail.getActive());
+		Preconditions.checkArgument(crossbatchOrderDetail.getParent().getOrderTypeEnum().equals(OrderTypeEnum.CROSS));
+		
+		List<OrderDetail> matchingOutboundOrderDetail = new ArrayList<OrderDetail>();
+		for (OrderHeader outOrder : getOrderHeaders()) {
+			boolean match = true;
+			match &= outOrder.getOrderTypeEnum().equals(OrderTypeEnum.OUTBOUND);
+			match &= outOrder.getActive();
+			match &= Objects.equal(crossbatchOrderDetail.getParent().getOrderGroup(), outOrder.getOrderGroup());
+			if (match) {
+				for (OrderDetail outOrderDetail : outOrder.getOrderDetails()) {
+					if (outOrderDetail.getActive()) {
+						boolean matchDetail = true;
+						matchDetail &= outOrderDetail.getItemMaster().equals(crossbatchOrderDetail.getItemMaster());
+						matchDetail &= UomNormalizer.normalizedEquals(outOrderDetail.getUomMasterId(),	crossbatchOrderDetail.getUomMasterId());
+						if (matchDetail) {
+							matchingOutboundOrderDetail.add(outOrderDetail);
+						}
+					}
+					
+				}
+			}
+		}
+		return matchingOutboundOrderDetail;
+	}
+	
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inOrder
