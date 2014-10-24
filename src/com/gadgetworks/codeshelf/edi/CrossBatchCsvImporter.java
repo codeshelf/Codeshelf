@@ -44,7 +44,7 @@ import com.google.inject.Singleton;
 @Singleton
 public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 
-	private static final Logger		LOGGER	= LoggerFactory.getLogger(EdiProcessor.class);
+	private static final Logger		LOGGER	= LoggerFactory.getLogger(CrossBatchCsvImporter.class);
 
 	private ITypedDao<OrderGroup>	mOrderGroupDao;
 	private ITypedDao<OrderHeader>	mOrderHeaderDao;

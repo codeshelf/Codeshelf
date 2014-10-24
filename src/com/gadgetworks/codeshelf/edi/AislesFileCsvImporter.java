@@ -56,7 +56,7 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 	private static double			CM_PER_M		= 100D;
 	private static int				maxSlotForTier	= 30;
 
-	private static final Logger		LOGGER			= LoggerFactory.getLogger(EdiProcessor.class);
+	private static final Logger		LOGGER			= LoggerFactory.getLogger(AislesFileCsvImporter.class);
 
 	private ITypedDao<Aisle>		mAisleDao;
 	private ITypedDao<Bay>			mBayDao;
