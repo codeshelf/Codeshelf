@@ -37,7 +37,7 @@ public class JettyTestClient {
     		client.sendMessage(genericRequest);
     		
         	// create a login request and send it to the server
-    		LoginRequest loginRequest = new LoginRequest("DEMO1","a@example.com","testme");
+    		LoginRequest loginRequest = new LoginRequest("a@example.com","testme");
     		client.sendMessage(loginRequest);
     		
     		Thread.sleep(10000);

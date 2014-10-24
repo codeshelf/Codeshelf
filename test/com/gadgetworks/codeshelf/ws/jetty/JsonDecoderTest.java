@@ -35,7 +35,7 @@ public class JsonDecoderTest  {
 	@Test
 	public void testLoginRequestDecoding() throws DecodeException {
 		JsonDecoder decoder = new JsonDecoder();
-		String rawMessage = "{'LoginRequest':{'organizationId':'DEMO1','userId':'a@example.com','password':'testme','messageId':'cid_4'}}".replace('\'', '"');
+		String rawMessage = "{'LoginRequest':{'userId':'a@example.com','password':'testme','messageId':'cid_4'}}".replace('\'', '"');
 		MessageABC messageABC = decoder.decode(rawMessage);
 		Assert.assertTrue(messageABC instanceof LoginRequest);
 	}
