@@ -551,6 +551,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#getSubLocationById(java.lang.String)
+	 * This will return "deleted" location, but if it does so, it will log a WARN
 	 */
 	public final ISubLocation<?> findSubLocationById(final String inLocationId) {
 		ISubLocation<?> result = null;
@@ -568,6 +569,9 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 				result = firstPartLocation.findSubLocationById(secondPart);
 			}
 		}
+		if (result != null)
+			if (!result.isActive())
+				LOGGER.warn("findSubLocationById succeeded with an inactive location. Is this business case intentional?");
 		return result;
 	}
 
