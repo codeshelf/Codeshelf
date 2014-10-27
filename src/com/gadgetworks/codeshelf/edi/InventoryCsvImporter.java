@@ -40,7 +40,7 @@ import com.google.inject.Singleton;
  *
  */
 @Singleton
-public class InventoryCsvImporter implements ICsvInventoryImporter {
+public class InventoryCsvImporter extends CsvImporter implements ICsvInventoryImporter {
 
 	private static final Logger		LOGGER	= LoggerFactory.getLogger(InventoryCsvImporter.class);
 
@@ -53,6 +53,8 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 		final ITypedDao<Item> inItemDao,
 		final ITypedDao<UomMaster> inUomMaster) {
 
+		super();
+		
 		mItemMasterDao = inItemMasterDao;
 		mItemDao = inItemDao;
 		mUomMasterDao = inUomMaster;

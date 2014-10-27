@@ -51,7 +51,7 @@ import com.google.inject.Singleton;
  *
  */
 @Singleton
-public class AislesFileCsvImporter implements ICsvAislesFileImporter {
+public class AislesFileCsvImporter extends CsvImporter implements ICsvAislesFileImporter {
 
 	private static double			CM_PER_M		= 100D;
 	private static int				maxSlotForTier	= 30;
@@ -104,6 +104,9 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 		final ITypedDao<Bay> inBayDao,
 		final ITypedDao<Tier> inTierDao,
 		final ITypedDao<Slot> inSlotDao) {
+		
+		super();
+		
 		// facility needed? but not facilityDao
 		mAisleDao = inAisleDao;
 		mBayDao = inBayDao;

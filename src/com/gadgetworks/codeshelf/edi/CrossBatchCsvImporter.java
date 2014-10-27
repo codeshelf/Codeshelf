@@ -8,7 +8,6 @@ package com.gadgetworks.codeshelf.edi;
 import static com.gadgetworks.codeshelf.event.EventProducer.tags;
 
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.Reader;
 import java.sql.Timestamp;
 import java.util.Collections;
@@ -25,7 +24,6 @@ import au.com.bytecode.opencsv.CSVReader;
 import au.com.bytecode.opencsv.bean.CsvToBean;
 import au.com.bytecode.opencsv.bean.HeaderColumnNameMappingStrategy;
 
-import com.gadgetworks.codeshelf.event.EventProducer;
 import com.gadgetworks.codeshelf.event.EventSeverity;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.OrderTypeEnum;
@@ -51,7 +49,7 @@ import com.google.inject.Singleton;
  *
  */
 @Singleton
-public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
+public class CrossBatchCsvImporter extends CsvImporter implements ICsvCrossBatchImporter {
 
 	private static final Logger		LOGGER	= LoggerFactory.getLogger(CrossBatchCsvImporter.class);
 
@@ -62,8 +60,6 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 	private ITypedDao<ContainerUse>	mContainerUseDao;
 	private ITypedDao<UomMaster>	mUomMasterDao;
 
-	private EventProducer	mEventProducer;
-
 	@Inject
 	public CrossBatchCsvImporter(final ITypedDao<OrderGroup> inOrderGroupDao,
 		final ITypedDao<OrderHeader> inOrderHeaderDao,
@@ -71,14 +67,14 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 		final ITypedDao<Container> inContainerDao,
 		final ITypedDao<ContainerUse> inContainerUseDao,
 		final ITypedDao<UomMaster> inUomMasterDao) {
-
+		
+		super();
 		mOrderGroupDao = inOrderGroupDao;
 		mOrderHeaderDao = inOrderHeaderDao;
 		mOrderDetailDao = inOrderDetailDao;
 		mContainerDao = inContainerDao;
 		mContainerUseDao = inContainerUseDao;
 		mUomMasterDao = inUomMasterDao;
-		mEventProducer = new EventProducer();
 	}
 
 	// --------------------------------------------------------------------------
@@ -113,9 +109,10 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 				Container container = crossBatchCsvBeanImport(crossBatchBean, inFacility, inProcessTime);
 				importedContainerIds.add(container.getContainerId());
 				importedRecords++;
+				getEventProducer().reportAsResolution(tags("import", "crossbatch"), crossBatchBean);
 			}
 			catch(InputValidationException e) {
-				mEventProducer.produceEvent(tags("import", "crossbatch"), EventSeverity.WARN, e, crossBatchBean);
+				getEventProducer().produceEvent(tags("import", "crossbatch"), EventSeverity.WARN, e, crossBatchBean);
 			}
 		}
 

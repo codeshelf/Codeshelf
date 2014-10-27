@@ -20,7 +20,6 @@ import au.com.bytecode.opencsv.CSVReader;
 import au.com.bytecode.opencsv.bean.CsvToBean;
 import au.com.bytecode.opencsv.bean.HeaderColumnNameMappingStrategy;
 
-import com.gadgetworks.codeshelf.event.EventProducer;
 import com.gadgetworks.codeshelf.event.EventSeverity;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Facility;
@@ -35,29 +34,26 @@ import com.google.inject.Singleton;
  *
  */
 @Singleton
-public class LocationAliasCsvImporter implements ICsvLocationAliasImporter {
+public class LocationAliasCsvImporter extends CsvImporter implements ICsvLocationAliasImporter {
 
 	private static final Logger			LOGGER	= LoggerFactory.getLogger(LocationAliasCsvImporter.class);
 
 	private final ITypedDao<LocationAlias>	mLocationAliasDao;
 
-	private final EventProducer	mEventProducer;
-
 	@Inject
 	public LocationAliasCsvImporter(final ITypedDao<LocationAlias> inLocationAliasDao) {
-
+		super();
 		mLocationAliasDao = inLocationAliasDao;
-		mEventProducer = new EventProducer();
 	}
 
 	private void reportAsResolution(Object inRelatedObject){
 		// Replace with EventProducer call
-		mEventProducer.reportAsResolution(tags("import", "location alias"), inRelatedObject);
+		getEventProducer().reportAsResolution(tags("import", "location alias"), inRelatedObject);
 	}
 	
 	private void reportBusinessEvent(EventSeverity inSeverity, Exception e, Object inRelatedObject){
 		// Replace with EventProducer call
-		mEventProducer.produceEvent(tags("import", "location alias"), inSeverity, e, inRelatedObject);
+		getEventProducer().produceEvent(tags("import", "location alias"), inSeverity, e, inRelatedObject);
 	}
 
 	// --------------------------------------------------------------------------

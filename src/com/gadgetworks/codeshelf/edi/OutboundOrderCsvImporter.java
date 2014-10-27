@@ -44,7 +44,7 @@ import com.google.inject.Singleton;
  *
  */
 @Singleton
-public class OutboundOrderCsvImporter implements ICsvOrderImporter {
+public class OutboundOrderCsvImporter extends CsvImporter implements ICsvOrderImporter {
 
 	private static final Logger		LOGGER	= LoggerFactory.getLogger(OutboundOrderCsvImporter.class);
 
@@ -65,6 +65,8 @@ public class OutboundOrderCsvImporter implements ICsvOrderImporter {
 		final ITypedDao<ContainerUse> inContainerUseDao,
 		final ITypedDao<ItemMaster> inItemMasterDao,
 		final ITypedDao<UomMaster> inUomMaster) {
+
+		super();
 
 		mOrderGroupDao = inOrderGroupDao;
 		mOrderHeaderDao = inOrderHeaderDao;

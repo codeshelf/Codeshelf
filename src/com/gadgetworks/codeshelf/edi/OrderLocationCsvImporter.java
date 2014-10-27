@@ -33,7 +33,7 @@ import com.google.inject.Singleton;
  *
  */
 @Singleton
-public class OrderLocationCsvImporter implements ICsvOrderLocationImporter {
+public class OrderLocationCsvImporter extends CsvImporter implements ICsvOrderLocationImporter {
 
 	private static final Logger			LOGGER	= LoggerFactory.getLogger(OrderLocationCsvImporter.class);
 
@@ -41,6 +41,7 @@ public class OrderLocationCsvImporter implements ICsvOrderLocationImporter {
 
 	@Inject
 	public OrderLocationCsvImporter(final ITypedDao<OrderLocation> inOrderLocationDao) {
+		super();
 
 		mOrderLocationDao = inOrderLocationDao;
 	}
