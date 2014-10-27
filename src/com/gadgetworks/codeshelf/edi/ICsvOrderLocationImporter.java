@@ -5,7 +5,7 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
-import java.io.InputStreamReader;
+import java.io.Reader;
 import java.sql.Timestamp;
 
 import com.gadgetworks.codeshelf.model.domain.Facility;
@@ -16,6 +16,6 @@ import com.gadgetworks.codeshelf.model.domain.Facility;
  */
 public interface ICsvOrderLocationImporter {
 
-	boolean importOrderLocationsFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime);
+	boolean importOrderLocationsFromCsvStream(Reader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime);
 
 }

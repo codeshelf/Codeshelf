@@ -5,7 +5,7 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
-import java.io.InputStreamReader;
+import java.io.Reader;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -129,14 +129,14 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.edi.ICsvImporter#importInventoryFromCsvStream(java.io.InputStreamReader, com.gadgetworks.codeshelf.model.domain.Facility)
 	 */
-	public final boolean importAislesFileFromCsvStream(InputStreamReader inCsvStreamReader,
+	public final boolean importAislesFileFromCsvStream(Reader inCsvReader,
 		Facility inFacility,
 		Timestamp inProcessTime) {
 		boolean result = true;
 
 		mFacility = inFacility;
 
-		List<AislesFileCsvBean> aislesFileBeanList = toCsvBean(inCsvStreamReader, AislesFileCsvBean.class);
+		List<AislesFileCsvBean> aislesFileBeanList = toCsvBean(inCsvReader, AislesFileCsvBean.class);
 		if (aislesFileBeanList.size() > 0) {
 
 			LOGGER.debug("Begin aisles file import.");

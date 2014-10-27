@@ -5,19 +5,12 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.Reader;
 import java.sql.Timestamp;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import au.com.bytecode.opencsv.CSVReader;
-import au.com.bytecode.opencsv.bean.CsvToBean;
-import au.com.bytecode.opencsv.bean.HeaderColumnNameMappingStrategy;
 
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
@@ -118,7 +111,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.edi.ICsvImporter#importInventoryFromCsvStream(java.io.InputStreamReader, com.gadgetworks.codeshelf.model.domain.Facility)
 	 */
-	public final boolean importSlottedInventoryFromCsvStream(InputStreamReader inCsvReader,
+	public final boolean importSlottedInventoryFromCsvStream(Reader inCsvReader,
 		Facility inFacility,
 		Timestamp inProcessTime) {
 		boolean result = true;

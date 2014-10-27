@@ -5,7 +5,7 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
-import java.io.InputStreamReader;
+import java.io.Reader;
 import java.sql.Timestamp;
 import java.util.Collections;
 import java.util.Iterator;
@@ -45,7 +45,7 @@ public class OrderLocationCsvImporter extends CsvImporter<OrderLocationCsvBean> 
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.edi.ICsvImporter#importInventoryFromCsvStream(java.io.InputStreamReader, com.gadgetworks.codeshelf.model.domain.Facility)
 	 */
-	public final boolean importOrderLocationsFromCsvStream(InputStreamReader inCsvReader,
+	public final boolean importOrderLocationsFromCsvStream(Reader inCsvReader,
 		Facility inFacility,
 		Timestamp inProcessTime) {
 		boolean result = true;

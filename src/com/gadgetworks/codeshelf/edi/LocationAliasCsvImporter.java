@@ -57,10 +57,10 @@ public class LocationAliasCsvImporter extends CsvImporter<LocationAliasCsvBean> 
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.edi.ICsvImporter#importInventoryFromCsvStream(java.io.InputStreamReader, com.gadgetworks.codeshelf.model.domain.Facility)
 	 */
-	public final boolean importLocationAliasesFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime) {
+	public final boolean importLocationAliasesFromCsvStream(Reader inCsvReader, Facility inFacility, Timestamp inProcessTime) {
 
 		boolean result = true;
-		List<LocationAliasCsvBean> locationAliasBeanList = toCsvBean(inCsvStreamReader, LocationAliasCsvBean.class);
+		List<LocationAliasCsvBean> locationAliasBeanList = toCsvBean(inCsvReader, LocationAliasCsvBean.class);
 
 		if (locationAliasBeanList.size() > 0) {
 

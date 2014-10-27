@@ -5,7 +5,7 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
-import java.io.InputStreamReader;
+import java.io.Reader;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
@@ -76,7 +76,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.edi.ICsvImporter#importOrdersFromCsvStream(java.io.InputStreamReader, com.gadgetworks.codeshelf.model.domain.Facility)
 	 */
-	public final ImportResult importOrdersFromCsvStream(final InputStreamReader inCsvReader,
+	public final ImportResult importOrdersFromCsvStream(final Reader inCsvReader,
 		final Facility inFacility,
 		Timestamp inProcessTime) {
 		mOrderGroupDao.clearAllCaches();

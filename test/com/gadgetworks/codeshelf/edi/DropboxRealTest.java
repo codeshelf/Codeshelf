@@ -7,6 +7,7 @@ package com.gadgetworks.codeshelf.edi;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.Reader;
 import java.sql.Timestamp;
 
 import org.apache.commons.io.FileUtils;
@@ -309,7 +310,7 @@ public class DropboxRealTest extends EdiTestABC {
 			// Provide a wrapper for CsvOrderImporter
 			ICsvOrderImporter testImporter = new ICsvOrderImporter() {
 				@Override
-				public ImportResult importOrdersFromCsvStream(InputStreamReader inCsvStreamReader,
+				public ImportResult importOrdersFromCsvStream(Reader inCsvStreamReader,
 					Facility inFacility,
 					Timestamp inProcessTime) throws IOException {
 

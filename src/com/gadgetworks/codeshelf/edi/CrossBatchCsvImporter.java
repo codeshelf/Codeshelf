@@ -7,7 +7,6 @@ package com.gadgetworks.codeshelf.edi;
 
 import static com.gadgetworks.codeshelf.event.EventProducer.tags;
 
-import java.io.InputStreamReader;
 import java.io.Reader;
 import java.sql.Timestamp;
 import java.util.HashSet;
