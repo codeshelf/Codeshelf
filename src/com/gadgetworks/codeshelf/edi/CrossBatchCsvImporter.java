@@ -7,10 +7,9 @@ package com.gadgetworks.codeshelf.edi;
 
 import static com.gadgetworks.codeshelf.event.EventProducer.tags;
 
-import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.Reader;
 import java.sql.Timestamp;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -19,10 +18,6 @@ import javax.persistence.PersistenceException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import au.com.bytecode.opencsv.CSVReader;
-import au.com.bytecode.opencsv.bean.CsvToBean;
-import au.com.bytecode.opencsv.bean.HeaderColumnNameMappingStrategy;
 
 import com.gadgetworks.codeshelf.event.EventSeverity;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
@@ -49,7 +44,7 @@ import com.google.inject.Singleton;
  *
  */
 @Singleton
-public class CrossBatchCsvImporter extends CsvImporter implements ICsvCrossBatchImporter {
+public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implements ICsvCrossBatchImporter {
 
 	private static final Logger		LOGGER	= LoggerFactory.getLogger(CrossBatchCsvImporter.class);
 
@@ -85,23 +80,11 @@ public class CrossBatchCsvImporter extends CsvImporter implements ICsvCrossBatch
 		Facility inFacility,
 		Timestamp inProcessTime) {
 
-		int importedRecords = 0;
-		List<CrossBatchCsvBean> crossBatchBeanList = Collections.emptyList();
-		mOrderGroupDao.clearAllCaches(); // avoids a class cast exception if ebeans had trimmed some objects
-		try(CSVReader csvReader = new CSVReader(inCsvStreamReader)) {
-
-			HeaderColumnNameMappingStrategy<CrossBatchCsvBean> strategy = new HeaderColumnNameMappingStrategy<CrossBatchCsvBean>();
-			strategy.setType(CrossBatchCsvBean.class);
-
-			CsvToBean<CrossBatchCsvBean> csv = new CsvToBean<CrossBatchCsvBean>();
-			crossBatchBeanList = csv.parse(strategy, csvReader);
-		} catch (IOException e) {
-			LOGGER.error("", e);
-			return importedRecords;
-		}
-			
 		LOGGER.debug("Begin cross batch import.");
+		mOrderGroupDao.clearAllCaches(); // avoids a class cast exception if ebeans had trimmed some objects
+		List<CrossBatchCsvBean> crossBatchBeanList = toCsvBean(inCsvStreamReader, CrossBatchCsvBean.class);
 
+		int importedRecords = 0;
 		Set<String> importedContainerIds = new HashSet<String>();
 		// Iterate over the put batch import beans.
 		for (CrossBatchCsvBean crossBatchBean : crossBatchBeanList) {

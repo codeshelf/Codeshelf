@@ -5,7 +5,6 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -14,10 +13,6 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import au.com.bytecode.opencsv.CSVReader;
-import au.com.bytecode.opencsv.bean.CsvToBean;
-import au.com.bytecode.opencsv.bean.HeaderColumnNameMappingStrategy;
 
 import com.avaje.ebean.annotation.Transactional;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
@@ -35,7 +30,6 @@ import com.gadgetworks.codeshelf.model.domain.OrderGroup;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.UomMaster;
 import com.gadgetworks.codeshelf.util.DateTimeParser;
-import com.gadgetworks.codeshelf.validation.ErrorCode;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -44,7 +38,7 @@ import com.google.inject.Singleton;
  *
  */
 @Singleton
-public class OutboundOrderCsvImporter extends CsvImporter implements ICsvOrderImporter {
+public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> implements ICsvOrderImporter {
 
 	private static final Logger		LOGGER	= LoggerFactory.getLogger(OutboundOrderCsvImporter.class);
 
@@ -82,57 +76,50 @@ public class OutboundOrderCsvImporter extends CsvImporter implements ICsvOrderIm
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.edi.ICsvImporter#importOrdersFromCsvStream(java.io.InputStreamReader, com.gadgetworks.codeshelf.model.domain.Facility)
 	 */
-	public final ImportResult importOrdersFromCsvStream(final InputStreamReader inCsvStreamReader,
+	public final ImportResult importOrdersFromCsvStream(final InputStreamReader inCsvReader,
 		final Facility inFacility,
-		Timestamp inProcessTime) throws IOException {
+		Timestamp inProcessTime) {
 		mOrderGroupDao.clearAllCaches();
-		try (CSVReader csvReader = new CSVReader(inCsvStreamReader);) {
-			HeaderColumnNameMappingStrategy<OutboundOrderCsvBean> strategy = new HeaderColumnNameMappingStrategy<OutboundOrderCsvBean>();
-			strategy.setType(OutboundOrderCsvBean.class);
+		List<OutboundOrderCsvBean> list = toCsvBean(inCsvReader, OutboundOrderCsvBean.class);
 
-			CsvToBean<OutboundOrderCsvBean> csv = new CsvToBean<OutboundOrderCsvBean>();
-			List<OutboundOrderCsvBean> list = csv.parse(strategy, csvReader);
+		List<OrderHeader> orderList = new ArrayList<OrderHeader>();
 
-			List<OrderHeader> orderList = new ArrayList<OrderHeader>();
-
-			LOGGER.debug("Begin order import.");
-			ImportResult result = new ImportResult();
-			for (OutboundOrderCsvBean orderBean : list) {
-				String errorMsg = orderBean.validateBean();
-				if (errorMsg != null) {
-					LOGGER.error("Import errors: " + errorMsg);
-					result.addFailure(orderBean, "errorMsg");
-				} else {
-					try {
-						OrderHeader order = orderCsvBeanImport(orderBean, inFacility, inProcessTime);
-						if ((order != null) && (!orderList.contains(order))) {
-							orderList.add(order);
-						}
-					} catch (Exception e) {
-						result.addFailure(orderBean, e);
-						LOGGER.error("unable to import order line: " + orderBean, e);
-					}
-
-				}
-			}
-
-			if (orderList.size() == 0) {
-				// Do nothing.
-			} else if (orderList.size() == 1) {
-				// If we've only imported one order then don't change the status of other orders.
-				archiveCheckOneOrder(inFacility, orderList, inProcessTime);
+		LOGGER.debug("Begin order import.");
+		ImportResult result = new ImportResult();
+		for (OutboundOrderCsvBean orderBean : list) {
+			String errorMsg = orderBean.validateBean();
+			if (errorMsg != null) {
+				LOGGER.error("Import errors: " + errorMsg);
+				result.addFailure(orderBean, "errorMsg");
 			} else {
-				// If we've imported more than one order then do a full archive.
-				archiveCheckAllOrders(inFacility, inProcessTime);
+				try {
+					OrderHeader order = orderCsvBeanImport(orderBean, inFacility, inProcessTime);
+					if ((order != null) && (!orderList.contains(order))) {
+						orderList.add(order);
+					}
+				} catch (Exception e) {
+					result.addFailure(orderBean, e);
+					LOGGER.error("unable to import order line: " + orderBean, e);
+				}
+
 			}
-			archiveCheckAllContainers(inFacility, inProcessTime);
-
-			LOGGER.debug("End order import.");
-
-			cleanupArchivedOrders();
-			return result;
 		}
 
+		if (orderList.size() == 0) {
+			// Do nothing.
+		} else if (orderList.size() == 1) {
+			// If we've only imported one order then don't change the status of other orders.
+			archiveCheckOneOrder(inFacility, orderList, inProcessTime);
+		} else {
+			// If we've imported more than one order then do a full archive.
+			archiveCheckAllOrders(inFacility, inProcessTime);
+		}
+		archiveCheckAllContainers(inFacility, inProcessTime);
+
+		LOGGER.debug("End order import.");
+
+		cleanupArchivedOrders();
+		return result;
 	}
 
 	// --------------------------------------------------------------------------

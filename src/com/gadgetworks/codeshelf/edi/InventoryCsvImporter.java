@@ -8,6 +8,7 @@ package com.gadgetworks.codeshelf.edi;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.Reader;
 import java.sql.Timestamp;
 import java.util.List;
 
@@ -40,7 +41,7 @@ import com.google.inject.Singleton;
  *
  */
 @Singleton
-public class InventoryCsvImporter extends CsvImporter implements ICsvInventoryImporter {
+public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> implements ICsvInventoryImporter {
 
 	private static final Logger		LOGGER	= LoggerFactory.getLogger(InventoryCsvImporter.class);
 
@@ -60,10 +61,12 @@ public class InventoryCsvImporter extends CsvImporter implements ICsvInventoryIm
 		mUomMasterDao = inUomMaster;
 	}
 
+	//WHEN RENABLED SPLIT TO ITS OWN IMPORTER
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.edi.ICsvImporter#importInventoryFromCsvStream(java.io.InputStreamReader, com.gadgetworks.codeshelf.model.domain.Facility)
 	 */
+	/*
 	public final boolean importDdcInventoryFromCsvStream(InputStreamReader inCsvStreamReader,
 		Facility inFacility,
 		Timestamp inProcessTime) {
@@ -109,54 +112,37 @@ public class InventoryCsvImporter extends CsvImporter implements ICsvInventoryIm
 		}
 
 		return result;
-	}
+	}*/
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.edi.ICsvImporter#importInventoryFromCsvStream(java.io.InputStreamReader, com.gadgetworks.codeshelf.model.domain.Facility)
 	 */
-	public final boolean importSlottedInventoryFromCsvStream(InputStreamReader inCsvStreamReader,
+	public final boolean importSlottedInventoryFromCsvStream(InputStreamReader inCsvReader,
 		Facility inFacility,
 		Timestamp inProcessTime) {
 		boolean result = true;
-		try {
 
-			CSVReader csvReader = new CSVReader(inCsvStreamReader);
+		List<InventorySlottedCsvBean> inventoryBeanList = toCsvBean(inCsvReader, InventorySlottedCsvBean.class);
 
-			HeaderColumnNameMappingStrategy<InventorySlottedCsvBean> strategy = new HeaderColumnNameMappingStrategy<InventorySlottedCsvBean>();
-			strategy.setType(InventorySlottedCsvBean.class);
+		if (inventoryBeanList.size() > 0) {
 
-			CsvToBean<InventorySlottedCsvBean> csv = new CsvToBean<InventorySlottedCsvBean>();
-			List<InventorySlottedCsvBean> inventoryBeanList = csv.parse(strategy, csvReader);
+			LOGGER.debug("Begin slotted inventory import.");
 
-			if (inventoryBeanList.size() > 0) {
-
-				LOGGER.debug("Begin slotted inventory import.");
-
-				// Iterate over the inventory import beans.
-				for (InventorySlottedCsvBean slottedInventoryBean : inventoryBeanList) {
-					String errorMsg = slottedInventoryBean.validateBean();
-					if (errorMsg != null) {
-						LOGGER.error("Import errors: " + errorMsg);
-					} else {
-						slottedInventoryCsvBeanImport(slottedInventoryBean, inFacility, inProcessTime);
-					}
+			// Iterate over the inventory import beans.
+			for (InventorySlottedCsvBean slottedInventoryBean : inventoryBeanList) {
+				String errorMsg = slottedInventoryBean.validateBean();
+				if (errorMsg != null) {
+					LOGGER.error("Import errors: " + errorMsg);
+				} else {
+					slottedInventoryCsvBeanImport(slottedInventoryBean, inFacility, inProcessTime);
 				}
-				// JR says this looks dangerous. Any random file in import/inventory would result in inactivation of all inventory and most masters.
-				// archiveCheckItemStatuses(inFacility, inProcessTime);
-
-				LOGGER.debug("End slotted inventory import.");
 			}
+			// JR says this looks dangerous. Any random file in import/inventory would result in inactivation of all inventory and most masters.
+			// archiveCheckItemStatuses(inFacility, inProcessTime);
 
-			csvReader.close();
-		} catch (FileNotFoundException e) {
-			result = false;
-			LOGGER.error("Inventory file not found", e);
-		} catch (IOException e) {
-			result = false;
-			LOGGER.error("Inventory file IO", e);
+			LOGGER.debug("End slotted inventory import.");
 		}
-
 		return result;
 	}
 

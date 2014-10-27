@@ -5,7 +5,6 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.Timestamp;
 import java.util.Collections;
@@ -14,10 +13,6 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import au.com.bytecode.opencsv.CSVReader;
-import au.com.bytecode.opencsv.bean.CsvToBean;
-import au.com.bytecode.opencsv.bean.HeaderColumnNameMappingStrategy;
 
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
@@ -33,7 +28,7 @@ import com.google.inject.Singleton;
  *
  */
 @Singleton
-public class OrderLocationCsvImporter extends CsvImporter implements ICsvOrderLocationImporter {
+public class OrderLocationCsvImporter extends CsvImporter<OrderLocationCsvBean> implements ICsvOrderLocationImporter {
 
 	private static final Logger			LOGGER	= LoggerFactory.getLogger(OrderLocationCsvImporter.class);
 
@@ -50,61 +45,51 @@ public class OrderLocationCsvImporter extends CsvImporter implements ICsvOrderLo
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.edi.ICsvImporter#importInventoryFromCsvStream(java.io.InputStreamReader, com.gadgetworks.codeshelf.model.domain.Facility)
 	 */
-	public final boolean importOrderLocationsFromCsvStream(InputStreamReader inCsvStreamReader,
+	public final boolean importOrderLocationsFromCsvStream(InputStreamReader inCsvReader,
 		Facility inFacility,
 		Timestamp inProcessTime) {
 		boolean result = true;
-		try(CSVReader csvReader = new CSVReader(inCsvStreamReader);) {
-			HeaderColumnNameMappingStrategy<OrderLocationCsvBean> strategy = new HeaderColumnNameMappingStrategy<OrderLocationCsvBean>();
-			strategy.setType(OrderLocationCsvBean.class);
+		List<OrderLocationCsvBean> orderLocationBeanList = toCsvBean(inCsvReader, OrderLocationCsvBean.class);
+		//Sort to put orders with same id together
+		Collections.sort(orderLocationBeanList);
 
-			CsvToBean<OrderLocationCsvBean> csv = new CsvToBean<OrderLocationCsvBean>();
-			List<OrderLocationCsvBean> orderLocationBeanList = csv.parse(strategy, csvReader);
-			//Sort to put orders with same id together
-			Collections.sort(orderLocationBeanList);
+		if (orderLocationBeanList.size() > 0) {
 
-			if (orderLocationBeanList.size() > 0) {
+			LOGGER.debug("Begin order location import.");
 
-				LOGGER.debug("Begin order location import.");
+			String lastOrderId = null; //when changes, locations should be cleared
+			// Iterate over the order location map import beans.
+			for (OrderLocationCsvBean orderLocationBean : orderLocationBeanList) {
+				try {	
+					mOrderLocationDao.beginTransaction();
 
-				String lastOrderId = null; //when changes, locations should be cleared
-				// Iterate over the order location map import beans.
-				for (OrderLocationCsvBean orderLocationBean : orderLocationBeanList) {
-					try {	
-						mOrderLocationDao.beginTransaction();
+					String errorMsg = orderLocationBean.validateBean();
+					if (errorMsg != null) {
+						LOGGER.error("Order location error: " + errorMsg + " for line: " + orderLocationBean);
+					} else {
 
-						String errorMsg = orderLocationBean.validateBean();
-						if (errorMsg != null) {
-							LOGGER.error("Order location error: " + errorMsg + " for line: " + orderLocationBean);
-						} else {
-	
-							if (!orderLocationBean.getOrderId().equals(lastOrderId)) {
-								deleteOrderLocations(orderLocationBean.getOrderId(), inFacility, inProcessTime);
-							}
-							orderLocationCsvBeanImport(orderLocationBean, inFacility, inProcessTime);
-							lastOrderId = orderLocationBean.getOrderId();
+						if (!orderLocationBean.getOrderId().equals(lastOrderId)) {
+							deleteOrderLocations(orderLocationBean.getOrderId(), inFacility, inProcessTime);
 						}
-						mOrderLocationDao.commitTransaction();
-					} catch (DaoException e) {
-						LOGGER.warn("dao persistence issue importing order location: " + orderLocationBean, e);
-					} catch(EdiFileReadException e) {
-						LOGGER.warn("file input issue importing order location: " + orderLocationBean, e);
-					} catch (Exception e) {
-						LOGGER.error("unknown issue importing order location: " + orderLocationBean, e);
-					} finally {
-						mOrderLocationDao.endTransaction();
+						orderLocationCsvBeanImport(orderLocationBean, inFacility, inProcessTime);
+						lastOrderId = orderLocationBean.getOrderId();
 					}
+					mOrderLocationDao.commitTransaction();
+				} catch (DaoException e) {
+					LOGGER.warn("dao persistence issue importing order location: " + orderLocationBean, e);
+				} catch(EdiFileReadException e) {
+					LOGGER.warn("file input issue importing order location: " + orderLocationBean, e);
+				} catch (Exception e) {
+					LOGGER.error("unknown issue importing order location: " + orderLocationBean, e);
+				} finally {
+					mOrderLocationDao.endTransaction();
 				}
-
-				archiveCheckOrderLocations(inFacility, inProcessTime);
-
-				LOGGER.debug("End order location import.");
 			}
 
-		} catch (IOException | DaoException e) {
-			result = false;
-			LOGGER.error("Unable to process order location stream", e);
-		} 
+			archiveCheckOrderLocations(inFacility, inProcessTime);
+
+			LOGGER.debug("End order location import.");
+		}
 		return result;
 	}
 

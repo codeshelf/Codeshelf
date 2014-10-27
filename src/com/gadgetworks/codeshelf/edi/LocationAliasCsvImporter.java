@@ -10,15 +10,12 @@ import static com.gadgetworks.codeshelf.event.EventProducer.tags;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.Reader;
 import java.sql.Timestamp;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import au.com.bytecode.opencsv.CSVReader;
-import au.com.bytecode.opencsv.bean.CsvToBean;
-import au.com.bytecode.opencsv.bean.HeaderColumnNameMappingStrategy;
 
 import com.gadgetworks.codeshelf.event.EventSeverity;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
@@ -34,7 +31,7 @@ import com.google.inject.Singleton;
  *
  */
 @Singleton
-public class LocationAliasCsvImporter extends CsvImporter implements ICsvLocationAliasImporter {
+public class LocationAliasCsvImporter extends CsvImporter<LocationAliasCsvBean> implements ICsvLocationAliasImporter {
 
 	private static final Logger			LOGGER	= LoggerFactory.getLogger(LocationAliasCsvImporter.class);
 
@@ -60,49 +57,30 @@ public class LocationAliasCsvImporter extends CsvImporter implements ICsvLocatio
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.edi.ICsvImporter#importInventoryFromCsvStream(java.io.InputStreamReader, com.gadgetworks.codeshelf.model.domain.Facility)
 	 */
-	public final boolean importLocationAliasesFromCsvStream(InputStreamReader inCsvStreamReader,
-		Facility inFacility,
-		Timestamp inProcessTime) {
+	public final boolean importLocationAliasesFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime) {
+
 		boolean result = true;
-		try {
+		List<LocationAliasCsvBean> locationAliasBeanList = toCsvBean(inCsvStreamReader, LocationAliasCsvBean.class);
 
-			CSVReader csvReader = new CSVReader(inCsvStreamReader);
+		if (locationAliasBeanList.size() > 0) {
 
-			HeaderColumnNameMappingStrategy<LocationAliasCsvBean> strategy = new HeaderColumnNameMappingStrategy<LocationAliasCsvBean>();
-			strategy.setType(LocationAliasCsvBean.class);
+			LOGGER.debug("Begin location alias map import.");
 
-			CsvToBean<LocationAliasCsvBean> csv = new CsvToBean<LocationAliasCsvBean>();
-			List<LocationAliasCsvBean> locationAliasBeanList = csv.parse(strategy, csvReader);
-
-			if (locationAliasBeanList.size() > 0) {
-
-				LOGGER.debug("Begin location alias map import.");
-
-				// Iterate over the location alias import beans.
-				for (LocationAliasCsvBean locationAliasBean : locationAliasBeanList) {
-					try {
-						locationAliasCsvBeanImport(locationAliasBean, inFacility, inProcessTime);
-						reportAsResolution(locationAliasBean);
-					}
-					catch(Exception e) {
-						reportBusinessEvent(EventSeverity.WARN, e, locationAliasBean);
-					}
+			// Iterate over the location alias import beans.
+			for (LocationAliasCsvBean locationAliasBean : locationAliasBeanList) {
+				try {
+					locationAliasCsvBeanImport(locationAliasBean, inFacility, inProcessTime);
+					reportAsResolution(locationAliasBean);
 				}
-
-				archiveCheckLocationAliases(inFacility, inProcessTime);
-
-				LOGGER.debug("End location alias import.");
+				catch(Exception e) {
+					reportBusinessEvent(EventSeverity.WARN, e, locationAliasBean);
+				}
 			}
 
-			csvReader.close();
-		} catch (FileNotFoundException e) {
-			result = false;
-			LOGGER.error("", e);
-		} catch (IOException e) {
-			result = false;
-			LOGGER.error("", e);
-		}
+			archiveCheckLocationAliases(inFacility, inProcessTime);
 
+			LOGGER.debug("End location alias import.");
+		}
 		return result;
 	}
 

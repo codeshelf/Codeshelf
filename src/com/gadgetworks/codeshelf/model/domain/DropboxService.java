@@ -652,11 +652,11 @@ public class DropboxService extends EdiServiceABC {
 				}
 				// Notice that there is no distinguisher for DDC file. Following should never execute anyway. Making it more obvious.
 				// Jeff says DDC may come back.
-				else if (false && fileMatches(filepath, IMPORT_INVENTORY_PATH)) {
+				/*else if (false && fileMatches(filepath, IMPORT_INVENTORY_PATH)) {
 					filepath = renameToProcessing(inClient, filepath);
 					processedAttempt = true;
 					success = inCsvInventoryImporter.importDdcInventoryFromCsvStream(reader, getParent(), ediProcessTime);
-				} else if (fileMatches(filepath, IMPORT_LOCATIONS_PATH)) {
+				}*/ else if (fileMatches(filepath, IMPORT_LOCATIONS_PATH)) {
 					filepath = renameToProcessing(inClient, filepath);
 					processedAttempt = true;
 					success = inCsvLocationAliasImporter.importLocationAliasesFromCsvStream(reader, getParent(), ediProcessTime);
