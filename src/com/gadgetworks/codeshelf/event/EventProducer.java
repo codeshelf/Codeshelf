@@ -27,8 +27,8 @@ public class EventProducer {
 		return Sets.newHashSet(inTags);
 	}
 
-	public void produceEvent(Set<String> inTags, EventSeverity inSeverity, Exception inException) {
-		produceEvent(inTags, inSeverity, inException, null);
+	public void reportAsResolution(Set<String> inTags, Object inRelatedObject) {
+		produceEvent(inTags, EventSeverity.INFO, null, inRelatedObject);
 	}
 	
 	public void produceEvent(Set<String> inTags, EventSeverity inSeverity, Exception inException, Object inRelatedObject) {
@@ -93,6 +93,8 @@ public class EventProducer {
 			end();
 		}
 	}
+
+
 	
 	/* Unused at the moment but planned for validation violations 
 	private <T> void produceEvent(Set<ConstraintViolation<T>> violations, List<String> tags, T importBean) {
