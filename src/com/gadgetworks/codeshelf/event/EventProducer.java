@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Sets;
 
 /**
  * Helper class for producing events of concern at a business level and sent in an implementation specific way for collection and analysis.  
@@ -22,20 +21,16 @@ public class EventProducer {
 	//May need to turn tags into a set of enums
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(EventProducer.class);
-	
-	public static Set<String> tags(String... inTags) {
-		return Sets.newHashSet(inTags);
-	}
 
-	public void produceSuccessEvent(Set<String> inTags, Object inRelatedObject) {
-		produceViolationEvent(inTags, EventSeverity.INFO, null, inRelatedObject);
+	public void produceSuccessEvent(Set<EventTag> inTags, Object inRelatedObject) {
+		produceEvent(EventInterval.INSTANTANEOUS, inTags, EventSeverity.INFO, null, inRelatedObject);
 	}
 	
-	public void produceViolationEvent(Set<String> inTags, EventSeverity inSeverity, Exception inException, Object inRelatedObject) {
+	public void produceViolationEvent(Set<EventTag> inTags, EventSeverity inSeverity, Exception inException, Object inRelatedObject) {
 		produceEvent(EventInterval.INSTANTANEOUS, inTags, inSeverity, inException, inRelatedObject);
 	}
 
-	private void produceEvent(EventInterval inInterval, Set<String> inTags, EventSeverity inSeverity, Exception inException, Object inRelatedObject) {
+	private void produceEvent(EventInterval inInterval, Set<EventTag> inTags, EventSeverity inSeverity, Exception inException, Object inRelatedObject) {
 		Map<String, ?> namedValues = Collections.emptyMap();
 		if (inRelatedObject != null) {
 			namedValues = ImmutableMap.of("relatedObject", inRelatedObject);
@@ -53,7 +48,13 @@ public class EventProducer {
 				LOGGER.error(logMessage, inException);
 			}
 		} else {
-			LOGGER.info(logMessage);
+			if (inSeverity.equals(EventSeverity.WARN)) {
+				LOGGER.warn(logMessage, inException);
+			} else if (inSeverity.equals(EventSeverity.ERROR)){
+				LOGGER.error(logMessage, inException);
+			} else {
+				LOGGER.info(logMessage);
+			}
 		}
 	}
 	
@@ -69,7 +70,7 @@ public class EventProducer {
 	 *  Which will produce a begin and end event with the same event context information
 	 * 
 	 */
-	public EventIntervalContext produceEventInterval(final Set<String> inTags, final EventSeverity inEventSeverity, final Object inRelatedObject) {
+	public EventIntervalContext produceEventInterval(final Set<EventTag> inTags, final EventSeverity inEventSeverity, final Object inRelatedObject) {
 		produceEvent(EventInterval.BEGIN, inTags, inEventSeverity, null, inRelatedObject);
 
 		return new EventIntervalContext() {

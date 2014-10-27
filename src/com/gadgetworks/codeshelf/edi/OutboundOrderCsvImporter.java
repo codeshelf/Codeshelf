@@ -9,13 +9,16 @@ import java.io.Reader;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.Transactional;
 import com.gadgetworks.codeshelf.event.EventSeverity;
+import com.gadgetworks.codeshelf.event.EventTag;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.PickStrategyEnum;
@@ -625,5 +628,10 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		result.setUpdated(inEdiProcessTime);
 		mOrderDetailDao.store(result);
 		return result;
+	}
+
+	@Override
+	protected Set<EventTag> getEventTagsForImporter() {
+		return EnumSet.of(EventTag.IMPORT, EventTag.ORDER_OUTBOUND);
 	}
 }

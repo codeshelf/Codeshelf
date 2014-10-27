@@ -12,6 +12,7 @@ import au.com.bytecode.opencsv.bean.HeaderColumnNameMappingStrategy;
 
 import com.gadgetworks.codeshelf.event.EventProducer;
 import com.gadgetworks.codeshelf.event.EventSeverity;
+import com.gadgetworks.codeshelf.event.EventTag;
 
 public abstract class CsvImporter<T> {
 
@@ -43,8 +44,5 @@ public abstract class CsvImporter<T> {
 		mEventProducer.produceViolationEvent(getEventTagsForImporter(), inSeverity, e, inRelatedObject);
 	}
 	
-	protected Set<String> getEventTagsForImporter() {
-		String classTag = this.getClass().getSimpleName().toLowerCase().replace("csvimporter", "");
-		return EventProducer.tags("import", classTag);
-	}
+	protected abstract Set<EventTag> getEventTagsForImporter();
 }

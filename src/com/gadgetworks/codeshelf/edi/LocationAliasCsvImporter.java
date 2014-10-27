@@ -7,12 +7,15 @@ package com.gadgetworks.codeshelf.edi;
 
 import java.io.Reader;
 import java.sql.Timestamp;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.event.EventSeverity;
+import com.gadgetworks.codeshelf.event.EventTag;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Facility;
@@ -155,4 +158,10 @@ public class LocationAliasCsvImporter extends CsvImporter<LocationAliasCsvBean> 
 			mLocationAliasDao.endTransaction();
 		}
 	}
+	
+	@Override
+	protected Set<EventTag> getEventTagsForImporter() {
+		return EnumSet.of(EventTag.IMPORT, EventTag.LOCATION_ALIAS);
+	}
+
 }
