@@ -618,11 +618,17 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 		if (howManyFewerLocations > 0) {
 			LOGGER.info("Aisle " + inAisle.getDomainId() + " has " + howManyFewerLocations
 					+ " fewer locations that will become inactive.");
-			/*
+
 			for (ILocation location : mAisleLocationsMapThatMayBecomeInactive.values()) {
-				LOGGER.info(location.getNominalLocationId());
+				String deletingStr = "archiving location " + location.getNominalLocationId();
+				LOGGER.info(deletingStr);
+				try {
+					location.setActive(false);
+					location.getDao().store(location);
+				} catch (DaoException e) {
+					LOGGER.error("Could not makeUnusedLocationsInactive", e);
+				}
 			}
-			*/
 		}
 	}
 

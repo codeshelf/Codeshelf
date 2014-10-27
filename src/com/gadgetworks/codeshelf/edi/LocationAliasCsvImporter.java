@@ -5,11 +5,14 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
+import static com.gadgetworks.codeshelf.event.EventProducer.tags;
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +21,7 @@ import au.com.bytecode.opencsv.CSVReader;
 import au.com.bytecode.opencsv.bean.CsvToBean;
 import au.com.bytecode.opencsv.bean.HeaderColumnNameMappingStrategy;
 
+import com.gadgetworks.codeshelf.event.EventSeverity;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Facility;
@@ -41,6 +45,11 @@ public class LocationAliasCsvImporter implements ICsvLocationAliasImporter {
 	public LocationAliasCsvImporter(final ITypedDao<LocationAlias> inLocationAliasDao) {
 
 		mLocationAliasDao = inLocationAliasDao;
+	}
+	
+	private void reportBusinessEvent(Set<String> inTags, EventSeverity inSeverity, String inMessage){
+		// Replace with EventProducer call
+		LOGGER.warn(inMessage);
 	}
 
 	// --------------------------------------------------------------------------
@@ -162,7 +171,18 @@ public class LocationAliasCsvImporter implements ICsvLocationAliasImporter {
 		// Get or create the item at the specified location.
 		String locationAliasId = inCsvBean.getLocationAlias();
 		result = inFacility.getLocationAlias(locationAliasId);
-		ISubLocation<?> mappedLocation = inFacility.findSubLocationById(inCsvBean.getMappedLocationId());
+		String mappedLocationID = inCsvBean.getMappedLocationId();
+		ISubLocation<?> mappedLocation = inFacility.findSubLocationById(mappedLocationID);
+		
+		// Check for deleted location
+		if (mappedLocation == null || mappedLocation instanceof Facility) {
+			reportBusinessEvent(tags("import", "location alias"), EventSeverity.WARN, "Could not resolve location: " + mappedLocationID);
+			return null;
+		}
+		if (!mappedLocation.isActive() ){
+			reportBusinessEvent(tags("import", "location alias"), EventSeverity.WARN, "Location was deleted and is now inactive: " + mappedLocationID);
+			return null;			
+		}
 
 		if ((result == null) && (inCsvBean.getMappedLocationId() != null) && (mappedLocation != null)) {
 			result = new LocationAlias();

@@ -78,6 +78,33 @@ public class LocationDeleteTest extends EdiTestABC {
 		Aisle aisle2 = Aisle.DAO.findByDomainId(facility, "A2");
 		Assert.assertNotNull(aisle2);
 		aisle2.associatePathSegment(persistStr);
+		
+		readLocationAliases(facility);
+
+		String nName = "N-" + inOrganizationName;
+		CodeshelfNetwork network = facility.createNetwork(nName);
+		//Che che = 
+		network.createChe("CHE1", new NetGuid("0x00000001"));
+		network.createChe("CHE2", new NetGuid("0x00000002"));
+
+		Che che1 = network.getChe("CHE1");
+		che1.setColor(ColorEnum.GREEN);
+		Che che2 = network.getChe("CHE2");
+		che1.setColor(ColorEnum.MAGENTA);
+
+		LedController controller1 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000011"));
+		LedController controller2 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000012"));
+		aisle1.setLedController(controller1);
+		aisle2.setLedController(controller2);
+
+		return facility;
+
+	}
+	
+	private void readLocationAliases(Facility inFacility) {
+		// Notice that as we read the location aliases, some of the positions are invalid. Either deleted or never came. Should get
+		// appropriate WARNS at a first, and soon business events.
+		// One bogus line should always report that it could not map: "A9.B9.T9.S9, X-999\r\n", but never that it existed before but is now inactive.
 
 		String csvString2 = "mappedLocationId,locationAlias\r\n" //
 				+ "A1.B1.T2.S5,D-1\r\n" //
@@ -119,6 +146,7 @@ public class LocationDeleteTest extends EdiTestABC {
 				+ "A2.B2.T1.S4, D-37\r\n" //
 				+ "A2.B2.T1.S3, D-38\r\n" //
 				+ "A2.B2.T1.S2, D-39\r\n" //
+				+ "A9.B9.T9.S9, X-999\r\n" //
 				+ "A2.B2.T1.S1, D-40\r\n"; //
 
 		byte[] csvArray2 = csvString2.getBytes();
@@ -128,26 +156,7 @@ public class LocationDeleteTest extends EdiTestABC {
 
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvLocationAliasImporter importer2 = new LocationAliasCsvImporter(mLocationAliasDao);
-		importer2.importLocationAliasesFromCsvStream(reader2, facility, ediProcessTime2);
-
-		String nName = "N-" + inOrganizationName;
-		CodeshelfNetwork network = facility.createNetwork(nName);
-		//Che che = 
-		network.createChe("CHE1", new NetGuid("0x00000001"));
-		network.createChe("CHE2", new NetGuid("0x00000002"));
-
-		Che che1 = network.getChe("CHE1");
-		che1.setColor(ColorEnum.GREEN);
-		Che che2 = network.getChe("CHE2");
-		che1.setColor(ColorEnum.MAGENTA);
-
-		LedController controller1 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000011"));
-		LedController controller2 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000012"));
-		aisle1.setLedController(controller1);
-		aisle2.setLedController(controller2);
-
-		return facility;
-
+		importer2.importLocationAliasesFromCsvStream(reader2, inFacility, ediProcessTime2);		
 	}
 	
 	private void readStandardAisleFile(Facility inFacility){
@@ -280,7 +289,7 @@ public class LocationDeleteTest extends EdiTestABC {
 	@Test
 	public final void locationDelete1() throws IOException {
 		// The idea is to setup, then delete an aisle that has order locations, complete and active work instruction, associated path and controller.
-		// Make no throws as those things are accessed.
+		// Make sure  no throws as those things are accessed.
 		// Bring it back
 
 		Facility facility = setUpSimpleSlottedFacility("LD01", LARGER_FACILITY);
@@ -389,15 +398,25 @@ public class LocationDeleteTest extends EdiTestABC {
 		LOGGER.info("And another reread."); // Reread case is covered in AisleImporterTest
 		readStandardAisleFile(facility);
 
-		// Note: this does not make locations inactive yet.
+		
 		LOGGER.info("reading aisles file that should remove bay, tier, and slot");
 		readSmallerAisleFile(facility);
-		// Look at the normal and deleted locations.
+				
+		LOGGER.info("A1.B2.T1.S5 should be inactive now. findSubLocationById succeeds, but should warn");
+		LocationABC<?> locationA1B2T1S5 = (LocationABC<?>) facility.findSubLocationById("A1.B2.T1.S5");
+		Assert.assertNotNull(locationA1B2T1S5);
+		Assert.assertFalse(locationA1B2T1S5.isActive());
 		
-		// Why does this next one throw on obscure method not found?
+		LOGGER.info("Reading location aliases again should warn about A1.B2.T1.S5 and other being inactive");
+		readLocationAliases(facility);
+			
+		// This used to generate an ebeans optimistic commit error
 		LOGGER.info("reading original aisles file that should restore the bay, tier, and slot");
 		readStandardAisleFile(facility);
-		// Look at the normal and deleted locations.
+		locationA1B2T1S5 = (LocationABC<?>) facility.findSubLocationById("A1.B2.T1.S5"); // get it again; our ebeans reference would be stale
+		Assert.assertNotNull(locationA1B2T1S5);
+		Assert.assertTrue(locationA1B2T1S5.isActive());
+
 
 	}
 
