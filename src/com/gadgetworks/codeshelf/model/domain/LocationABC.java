@@ -714,6 +714,16 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		return returnItem;
 	}
 
+	public final Item getStoredItemFromLocationAndMasterIdAndUom(final String inLocationName,
+		final String inItemMasterId,
+		final String inUom) {
+		Item returnItem = null;
+		ISubLocation<?> location = this.findSubLocationById(inLocationName);
+		if (location != null)
+			returnItem = location.getStoredItemFromMasterIdAndUom(inItemMasterId, inUom);
+		return returnItem;
+	}
+
 	public final Item getStoredItem(final String inItemDomainId) {
 		return storedItems.get(inItemDomainId);
 	}

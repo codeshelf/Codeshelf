@@ -267,9 +267,10 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 				
 				String theLocationID = inCsvBean.getLocationId();
 				ILocation<? extends IDomainObject> location = inFacility.findSubLocationById(theLocationID);
+				// Remember, findSubLocationById will find inactive locations.
 				// We couldn't find the location, so assign the inventory to the facility itself (which is a location);
 				if (location == null) {
-					LOGGER.warn("Updating inventory item for location because did not recognize: " + theLocationID);
+					LOGGER.warn("Updating inventory item to facility location because did not recognize: " + theLocationID);
 					location = inFacility;
 				}
 
