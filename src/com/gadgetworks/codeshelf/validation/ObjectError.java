@@ -44,7 +44,7 @@ public class ObjectError implements Serializable {
 
 	private final String objectName;
 	
-	private String[]	codes;
+	private ErrorCode[]	codes;
 	private Object[]	arguments;
 
 	private String	defaultMessage;
@@ -67,7 +67,7 @@ public class ObjectError implements Serializable {
 	 * @param arguments	the array of arguments to be used to resolve this message
 	 * @param defaultMessage the default message to be used to resolve this message
 	 */
-	public ObjectError(String objectName, String[] codes, Object[] arguments, String defaultMessage) {
+	public ObjectError(String objectName, ErrorCode[] codes, Object[] arguments, String defaultMessage) {
 		Preconditions.checkNotNull(objectName, "Object name must not be null");
 		this.objectName = objectName;
 		this.codes = codes;
@@ -107,7 +107,7 @@ public class ObjectError implements Serializable {
 		return super.hashCode() * 29 + getObjectName().hashCode();
 	}
 	
-	protected String[] getCodes() {
+	protected ErrorCode[] getCodes() {
 		return this.codes;
 	}
 

@@ -71,7 +71,7 @@ public class FieldError extends ObjectError {
 	 */
 	public FieldError(
 			String objectName, String field, Object rejectedValue, boolean bindingFailure,
-			String[] codes, Object[] arguments, String defaultMessage) {
+			ErrorCode[] codes, Object[] arguments, String defaultMessage) {
 
 		super(objectName, codes, arguments, defaultMessage);
 		Preconditions.checkNotNull(field, "Field must not be null");
