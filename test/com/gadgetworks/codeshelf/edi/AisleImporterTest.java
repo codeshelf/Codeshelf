@@ -38,7 +38,7 @@ import com.gadgetworks.flyweight.command.NetGuid;
  * @author ranstrom
  * Also see createAisleTest() in FacilityTest.java
  */
-public class AisleImporterTest extends DomainTestABC {
+public class AisleImporterTest extends EdiTestABC {
 
 	@Test
 	public final void testTierB1S1Side() {
@@ -67,7 +67,7 @@ public class AisleImporterTest extends DomainTestABC {
 		Facility facility = organization.getFacility("F-AISLE9");
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		AislesFileCsvImporter importer = createAisleFileImporter();
 		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Check the aisle
@@ -226,7 +226,7 @@ public class AisleImporterTest extends DomainTestABC {
 		Facility facility = organization.getFacility("F-AISLE10");
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		AislesFileCsvImporter importer = createAisleFileImporter();
 		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		/* getLocationIdToParentLevel gives "" for this. You might argue it should give "F1". 
@@ -415,7 +415,7 @@ public class AisleImporterTest extends DomainTestABC {
 		Facility facility = organization.getFacility("F-AISLE11");
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		AislesFileCsvImporter importer = createAisleFileImporter();
 		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Check what we got
@@ -535,7 +535,7 @@ public class AisleImporterTest extends DomainTestABC {
 		Facility facility = organization.getFacility("F-SPARSE91");
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		AislesFileCsvImporter importer = createAisleFileImporter();
 		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Check what we got
@@ -650,7 +650,7 @@ public class AisleImporterTest extends DomainTestABC {
 		Facility facility = organization.getFacility("F-AISLE12");
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		AislesFileCsvImporter importer = createAisleFileImporter();
 		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Check what we got
@@ -731,7 +731,7 @@ public class AisleImporterTest extends DomainTestABC {
 		Facility facility = organization.getFacility("F-AISLE13");
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		AislesFileCsvImporter importer = createAisleFileImporter();
 		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Check what we got
@@ -858,7 +858,7 @@ public class AisleImporterTest extends DomainTestABC {
 		Facility facility = organization.getFacility("F-AISLE2X");
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		AislesFileCsvImporter importer = createAisleFileImporter();
 		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Check what we got
@@ -941,7 +941,7 @@ public class AisleImporterTest extends DomainTestABC {
 		Facility facility = organization.getFacility("F-AISLE14");
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		AislesFileCsvImporter importer = createAisleFileImporter();
 		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Check what we got from this bad file
@@ -1001,7 +1001,7 @@ public class AisleImporterTest extends DomainTestABC {
 		Facility facility = organization.getFacility("F-AISLE15");
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		AislesFileCsvImporter importer = createAisleFileImporter();
 		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Check what we got
@@ -1037,7 +1037,7 @@ public class AisleImporterTest extends DomainTestABC {
 		InputStreamReader reader2 = new InputStreamReader(stream2);
 
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer2 = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		AislesFileCsvImporter importer2 = createAisleFileImporter();
 		importer2.importAislesFileFromCsvStream(reader2, facility, ediProcessTime2);
 
 		aisle = Aisle.DAO.findByDomainId(facility, "A15");
@@ -1091,7 +1091,7 @@ public class AisleImporterTest extends DomainTestABC {
 		InputStreamReader reader3 = new InputStreamReader(stream3);
 
 		Timestamp ediProcessTime3 = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer3 = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		AislesFileCsvImporter importer3 = createAisleFileImporter();
 		importer3.importAislesFileFromCsvStream(reader3, facility, ediProcessTime3);
 
 		// Check what we got
@@ -1151,7 +1151,7 @@ public class AisleImporterTest extends DomainTestABC {
 		Facility facility = organization.getFacility("F-AISLE16");
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		AislesFileCsvImporter importer = createAisleFileImporter();
 		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Get the objects we will use
@@ -1280,7 +1280,7 @@ public class AisleImporterTest extends DomainTestABC {
 		Facility facility = organization.getFacility("F-AISLE21");
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		AislesFileCsvImporter importer = createAisleFileImporter();
 		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Check what we got
@@ -1400,7 +1400,7 @@ public class AisleImporterTest extends DomainTestABC {
 		Facility facility = organization.getFacility("F-AISLE5X");
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		AislesFileCsvImporter importer = createAisleFileImporter();
 		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Get A31
@@ -1477,7 +1477,7 @@ public class AisleImporterTest extends DomainTestABC {
 		Facility facility = organization.getFacility("F-AISLE3X");
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		AislesFileCsvImporter importer = createAisleFileImporter();
 		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Get A31
@@ -1691,7 +1691,7 @@ public class AisleImporterTest extends DomainTestABC {
 		Facility facility = organization.getFacility("F-AISLE6X");
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		AislesFileCsvImporter importer = createAisleFileImporter();
 		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Get the aisle

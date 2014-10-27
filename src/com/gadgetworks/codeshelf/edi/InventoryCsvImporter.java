@@ -48,11 +48,11 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 	private ITypedDao<UomMaster>	mUomMasterDao;
 
 	@Inject
-	public InventoryCsvImporter(final ITypedDao<ItemMaster> inItemMasterDao,
+	public InventoryCsvImporter(final EventProducer inProducer, final ITypedDao<ItemMaster> inItemMasterDao,
 		final ITypedDao<Item> inItemDao,
 		final ITypedDao<UomMaster> inUomMaster) {
 
-		super();
+		super(inProducer);
 		
 		mItemMasterDao = inItemMasterDao;
 		mItemDao = inItemDao;

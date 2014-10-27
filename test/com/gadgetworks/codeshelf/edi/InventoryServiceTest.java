@@ -12,7 +12,6 @@ import org.junit.Test;
 
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
-import com.gadgetworks.codeshelf.model.domain.DomainTestABC;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster;
@@ -31,7 +30,7 @@ import com.gadgetworks.flyweight.command.NetGuid;
  * @author jeffw
  *
  */
-public class InventoryServiceTest extends DomainTestABC {
+public class InventoryServiceTest extends EdiTestABC {
 
 
 	private ICsvOrderImporter	importer;
@@ -39,13 +38,7 @@ public class InventoryServiceTest extends DomainTestABC {
 	
 	@Before
 	public void initTest() throws IOException {
-		importer = new OutboundOrderCsvImporter(mOrderGroupDao,
-			mOrderHeaderDao,
-			mOrderDetailDao,
-			mContainerDao,
-			mContainerUseDao,
-			mItemMasterDao,
-			mUomMasterDao);
+		importer = createOrderImporter();
 		facility = setupData(this.getClass().toString() + System.currentTimeMillis());
 	}
 	
@@ -384,7 +377,7 @@ public class InventoryServiceTest extends DomainTestABC {
 		Facility facility = organization.getFacility(fName);
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		AislesFileCsvImporter importer = createAisleFileImporter();
 		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Get the aisle
@@ -427,7 +420,7 @@ public class InventoryServiceTest extends DomainTestABC {
 		InputStreamReader reader2 = new InputStreamReader(stream2);
 
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvLocationAliasImporter importer2 = new LocationAliasCsvImporter(mLocationAliasDao);
+		ICsvLocationAliasImporter importer2 = createLocationAliasImporter();
 		importer2.importLocationAliasesFromCsvStream(reader2, facility, ediProcessTime2);
 
 		String nName = "N-" + inOrganizationName;

@@ -18,8 +18,8 @@ public abstract class CsvImporter<T> {
 
 	private final EventProducer	mEventProducer;
 
-	public CsvImporter() {
-		mEventProducer = new EventProducer();
+	public CsvImporter(EventProducer inProducer) {
+		mEventProducer = inProducer;
 	}
 
 	protected List<T> toCsvBean(Reader inCsvReader, Class<T> inClass) {

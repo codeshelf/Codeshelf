@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.Transactional;
+import com.gadgetworks.codeshelf.event.EventProducer;
 import com.gadgetworks.codeshelf.event.EventSeverity;
 import com.gadgetworks.codeshelf.event.EventTag;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
@@ -57,7 +58,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 	DateTimeParser					mDateTimeParser;
 
 	@Inject
-	public OutboundOrderCsvImporter(final ITypedDao<OrderGroup> inOrderGroupDao,
+	public OutboundOrderCsvImporter(final EventProducer inProducer, final ITypedDao<OrderGroup> inOrderGroupDao,
 		final ITypedDao<OrderHeader> inOrderHeaderDao,
 		final ITypedDao<OrderDetail> inOrderDetailDao,
 		final ITypedDao<Container> inContainerDao,
@@ -65,7 +66,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		final ITypedDao<ItemMaster> inItemMasterDao,
 		final ITypedDao<UomMaster> inUomMaster) {
 
-		super();
+		super(inProducer);
 
 		mOrderGroupDao = inOrderGroupDao;
 		mOrderHeaderDao = inOrderHeaderDao;

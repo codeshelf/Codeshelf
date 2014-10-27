@@ -17,6 +17,7 @@ import javax.persistence.PersistenceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.gadgetworks.codeshelf.event.EventProducer;
 import com.gadgetworks.codeshelf.event.EventSeverity;
 import com.gadgetworks.codeshelf.event.EventTag;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
@@ -55,14 +56,14 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 	private ITypedDao<UomMaster>	mUomMasterDao;
 
 	@Inject
-	public CrossBatchCsvImporter(final ITypedDao<OrderGroup> inOrderGroupDao,
+	public CrossBatchCsvImporter(final EventProducer inProducer, final ITypedDao<OrderGroup> inOrderGroupDao,
 		final ITypedDao<OrderHeader> inOrderHeaderDao,
 		final ITypedDao<OrderDetail> inOrderDetailDao,
 		final ITypedDao<Container> inContainerDao,
 		final ITypedDao<ContainerUse> inContainerUseDao,
 		final ITypedDao<UomMaster> inUomMasterDao) {
 		
-		super();
+		super(inProducer);
 		mOrderGroupDao = inOrderGroupDao;
 		mOrderHeaderDao = inOrderHeaderDao;
 		mOrderDetailDao = inOrderDetailDao;

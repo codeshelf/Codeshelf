@@ -42,6 +42,7 @@ import com.gadgetworks.codeshelf.device.LedCmdGroupSerializer;
 import com.gadgetworks.codeshelf.device.LedSample;
 import com.gadgetworks.codeshelf.edi.InventoryCsvImporter;
 import com.gadgetworks.codeshelf.edi.InventorySlottedCsvBean;
+import com.gadgetworks.codeshelf.event.EventProducer;
 import com.gadgetworks.codeshelf.model.EdiProviderEnum;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.HeaderCounts;
@@ -1979,7 +1980,7 @@ public class Facility extends SubLocationABC<Facility> {
 		//TODO This is a proof of concept and needs refactor to not have a dependency out of the EDI package
 		storedLocationId = Strings.nullToEmpty(storedLocationId);
 
-		InventoryCsvImporter importer = new InventoryCsvImporter(ItemMaster.DAO, Item.DAO, UomMaster.DAO);
+		InventoryCsvImporter importer = new InventoryCsvImporter(new EventProducer(), ItemMaster.DAO, Item.DAO, UomMaster.DAO);
 		UomMaster uomMaster = importer.upsertUomMaster(inUomId, this);
 
 		ItemMaster itemMaster = this.getItemMaster(itemId);

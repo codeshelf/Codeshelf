@@ -22,6 +22,7 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.gadgetworks.codeshelf.event.EventProducer;
 import com.gadgetworks.codeshelf.event.EventSeverity;
 import com.gadgetworks.codeshelf.event.EventTag;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
@@ -99,12 +100,13 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 	}
 
 	@Inject
-	public AislesFileCsvImporter(final ITypedDao<Aisle> inAisleDao,
+	public AislesFileCsvImporter(final EventProducer inProducer, 
+		final ITypedDao<Aisle> inAisleDao,
 		final ITypedDao<Bay> inBayDao,
 		final ITypedDao<Tier> inTierDao,
 		final ITypedDao<Slot> inSlotDao) {
 		
-		super();
+		super(inProducer);
 		
 		// facility needed? but not facilityDao
 		mAisleDao = inAisleDao;

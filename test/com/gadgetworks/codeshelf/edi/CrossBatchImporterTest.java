@@ -77,12 +77,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 
 	
 	private int importCsvString(Facility inFacility, String csvString, Timestamp ediProcessTime) {
-		ICsvCrossBatchImporter importer = new CrossBatchCsvImporter(mOrderGroupDao,
-			mOrderHeaderDao,
-			mOrderDetailDao,
-			mContainerDao,
-			mContainerUseDao,
-			mUomMasterDao);
+		ICsvCrossBatchImporter importer = createCrossBatchImporter();
 		return importer.importCrossBatchesFromCsvStream(new StringReader(csvString), inFacility, ediProcessTime);
 	}
 
@@ -433,13 +428,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		InputStreamReader reader = new InputStreamReader(new ByteArrayInputStream(orderCsvString.getBytes()));
 
 		Timestamp ordersEdiProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvOrderImporter orderImporter = new OutboundOrderCsvImporter(mOrderGroupDao,
-			mOrderHeaderDao,
-			mOrderDetailDao,
-			mContainerDao,
-			mContainerUseDao,
-			mItemMasterDao,
-			mUomMasterDao);
+		ICsvOrderImporter orderImporter = createOrderImporter();
 		orderImporter.importOrdersFromCsvStream(reader, facility, ordersEdiProcessTime);
 
 		// Make sure we imported the outbound order.

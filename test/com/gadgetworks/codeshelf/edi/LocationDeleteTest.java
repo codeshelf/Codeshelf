@@ -155,7 +155,7 @@ public class LocationDeleteTest extends EdiTestABC {
 		InputStreamReader reader2 = new InputStreamReader(stream2);
 
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvLocationAliasImporter importer2 = new LocationAliasCsvImporter(mLocationAliasDao);
+		ICsvLocationAliasImporter importer2 = createLocationAliasImporter();
 		importer2.importLocationAliasesFromCsvStream(reader2, inFacility, ediProcessTime2);		
 	}
 	
@@ -182,7 +182,7 @@ public class LocationDeleteTest extends EdiTestABC {
 		InputStreamReader reader = new InputStreamReader(stream);
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		AislesFileCsvImporter importer = createAisleFileImporter();
 		importer.importAislesFileFromCsvStream(reader, inFacility, ediProcessTime);
 	}
 
@@ -210,7 +210,7 @@ public class LocationDeleteTest extends EdiTestABC {
 		InputStreamReader reader = new InputStreamReader(stream);
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		AislesFileCsvImporter importer = createAisleFileImporter();
 		importer.importAislesFileFromCsvStream(reader, inFacility, ediProcessTime);
 	}
 
@@ -237,13 +237,7 @@ public class LocationDeleteTest extends EdiTestABC {
 		InputStreamReader reader = new InputStreamReader(stream);
 
 		Timestamp ordersEdiProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvOrderImporter orderImporter = new OutboundOrderCsvImporter(mOrderGroupDao,
-			mOrderHeaderDao,
-			mOrderDetailDao,
-			mContainerDao,
-			mContainerUseDao,
-			mItemMasterDao,
-			mUomMasterDao);
+		ICsvOrderImporter orderImporter = createOrderImporter();
 		orderImporter.importOrdersFromCsvStream(reader, inFacility, ordersEdiProcessTime);
 
 		// Slotting file
@@ -256,7 +250,7 @@ public class LocationDeleteTest extends EdiTestABC {
 		byte[] csvArray2 = csvString2.getBytes();
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvOrderLocationImporter importer = new OrderLocationCsvImporter(mOrderLocationDao);
+		ICsvOrderLocationImporter importer = createOrderLocationImporter();
 		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
 		InputStreamReader reader2 = new InputStreamReader(stream2);
 
@@ -276,12 +270,7 @@ public class LocationDeleteTest extends EdiTestABC {
 		InputStreamReader reader3 = new InputStreamReader(stream3);
 
 		Timestamp thirdEdiProcessTime = new Timestamp(System.currentTimeMillis());
-		CrossBatchCsvImporter importer3 = new CrossBatchCsvImporter(mOrderGroupDao,
-			mOrderHeaderDao,
-			mOrderDetailDao,
-			mContainerDao,
-			mContainerUseDao,
-			mUomMasterDao);
+		ICsvCrossBatchImporter importer3 = createCrossBatchImporter();
 		importer3.importCrossBatchesFromCsvStream(reader3, inFacility, thirdEdiProcessTime);
 
 	}

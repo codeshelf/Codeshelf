@@ -119,6 +119,9 @@ public abstract class DomainTestABC extends DAOTestABC {
 		return controller;
 	}
 	
+	protected Facility createFacility() {
+		return createFacility(testName.getMethodName());
+	}
 	
 	protected Facility createFacility(String orgId) {
 		Organization organization = getOrganization(orgId);

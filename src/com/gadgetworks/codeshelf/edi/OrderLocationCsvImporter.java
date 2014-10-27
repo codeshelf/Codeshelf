@@ -16,6 +16,7 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.gadgetworks.codeshelf.event.EventProducer;
 import com.gadgetworks.codeshelf.event.EventSeverity;
 import com.gadgetworks.codeshelf.event.EventTag;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
@@ -40,8 +41,8 @@ public class OrderLocationCsvImporter extends CsvImporter<OrderLocationCsvBean> 
 	private ITypedDao<OrderLocation>	mOrderLocationDao;
 
 	@Inject
-	public OrderLocationCsvImporter(final ITypedDao<OrderLocation> inOrderLocationDao) {
-		super();
+	public OrderLocationCsvImporter(final EventProducer inProducer, final ITypedDao<OrderLocation> inOrderLocationDao) {
+		super(inProducer);
 
 		mOrderLocationDao = inOrderLocationDao;
 	}
