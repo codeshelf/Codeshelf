@@ -506,8 +506,12 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	}
 
 	// --------------------------------------------------------------------------
-	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#getLocation(java.lang.String)
+	/* 
+	 * Normally called via facility.findSubLocationById(). If no dots in the name, calls this, which first looks for alias, but only if at the facility level.
+	 * Aside from the facility/alias special case, it looks directly for domainId, which may be useful only for looking for direct children.
+	 * for example, facility.findLocationById("A2") would find the aisle.
+	 * bay bay.findLocationById("T3") would find the tier.
+	 * This may return null
 	 */
 	public final ISubLocation<?> findLocationById(String inLocationId) {
 		// There's some ebean weirdness around Map caches, so we have to use a different strategy to resolve this request.
@@ -549,9 +553,9 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	}
 
 	// --------------------------------------------------------------------------
-	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#getSubLocationById(java.lang.String)
-	 * This will return "deleted" location, but if it does so, it will log a WARN
+	/* 
+	 * Normally called as facility.findSubLocationById(). If no dots in the name, calls findLocationById(), which first looks for alias, but only if at the facility level.
+	 * This will return "deleted" location, but if it does so, it will log a WARN.
 	 */
 	public final ISubLocation<?> findSubLocationById(final String inLocationId) {
 		ISubLocation<?> result = null;

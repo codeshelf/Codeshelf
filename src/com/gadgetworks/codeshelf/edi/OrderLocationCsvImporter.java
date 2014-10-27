@@ -5,12 +5,15 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
+import static com.gadgetworks.codeshelf.event.EventProducer.tags;
+
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.Timestamp;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +22,7 @@ import au.com.bytecode.opencsv.CSVReader;
 import au.com.bytecode.opencsv.bean.CsvToBean;
 import au.com.bytecode.opencsv.bean.HeaderColumnNameMappingStrategy;
 
+import com.gadgetworks.codeshelf.event.EventSeverity;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Facility;
@@ -44,6 +48,12 @@ public class OrderLocationCsvImporter implements ICsvOrderLocationImporter {
 
 		mOrderLocationDao = inOrderLocationDao;
 	}
+	
+	private void reportBusinessEvent(Set<String> inTags, EventSeverity inSeverity, String inMessage){
+		// Replace with EventProducer call
+		LOGGER.warn(inMessage);
+	}
+
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
@@ -180,8 +190,17 @@ public class OrderLocationCsvImporter implements ICsvOrderLocationImporter {
 
 		// Only create an OrderLocation mapping if the location is valid.
 		ILocation<?> mappedLocation = inFacility.findSubLocationById(locationId);
-		if (mappedLocation != null) {
-
+		if (mappedLocation == null) {
+			// throw new EdiFileReadException("No location found for location: " + locationId);
+			reportBusinessEvent(tags("import", "slotting"), EventSeverity.WARN, "Could not resolve location: " + locationId + " during slotting import for order: " + orderId);			
+			return null;
+		}
+		else if (!mappedLocation.isActive()){
+			reportBusinessEvent(tags("import", "slotting"), EventSeverity.WARN, "Found inactive location: " + locationId + " during slotting import for order: " + orderId);			
+			return null;
+		}
+		// Normal case. Notice that if slotting file came before orders, we createEmptyOrderHeader to backfill later.
+		else {
 			OrderHeader order = inFacility.getOrderHeader(orderId);
 			if (order == null) {
 				order = OrderHeader.createEmptyOrderHeader(inFacility, orderId);
@@ -206,10 +225,8 @@ public class OrderLocationCsvImporter implements ICsvOrderLocationImporter {
 				mOrderLocationDao.store(result);
 			} 
 			
-		} else {
-			throw new EdiFileReadException("No location found for location: " + locationId);
-			
-		} 
+		}
+ 
 		return result;
 	}
 

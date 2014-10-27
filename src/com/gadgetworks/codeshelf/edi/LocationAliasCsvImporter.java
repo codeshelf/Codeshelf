@@ -176,11 +176,11 @@ public class LocationAliasCsvImporter implements ICsvLocationAliasImporter {
 		
 		// Check for deleted location
 		if (mappedLocation == null || mappedLocation instanceof Facility) {
-			reportBusinessEvent(tags("import", "location alias"), EventSeverity.WARN, "Could not resolve location: " + mappedLocationID);
+			reportBusinessEvent(tags("import", "location alias"), EventSeverity.WARN, "Could not resolve location: " + mappedLocationID + " during location alias import");
 			return null;
 		}
 		if (!mappedLocation.isActive() ){
-			reportBusinessEvent(tags("import", "location alias"), EventSeverity.WARN, "Location was deleted and is now inactive: " + mappedLocationID);
+			reportBusinessEvent(tags("import", "location alias"), EventSeverity.WARN, "Inactive location found during location alias import: " + mappedLocationID);
 			return null;			
 		}
 

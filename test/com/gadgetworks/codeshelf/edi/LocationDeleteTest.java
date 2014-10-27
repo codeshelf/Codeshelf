@@ -23,6 +23,7 @@ import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
+import com.gadgetworks.codeshelf.model.domain.ILocation;
 import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.LocationABC;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
@@ -42,7 +43,7 @@ public class LocationDeleteTest extends EdiTestABC {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(LocationDeleteTest.class);
 	
 	private final boolean LARGER_FACILITY = true;
-	private final boolean SMALLER_FACILITY = true;
+	private final boolean SMALLER_FACILITY = false;
 
 	@SuppressWarnings({ "unused" })
 	private Facility setUpSimpleSlottedFacility(String inOrganizationName, boolean inWhichFacility) {
@@ -406,6 +407,12 @@ public class LocationDeleteTest extends EdiTestABC {
 		LocationABC<?> locationA1B2T1S5 = (LocationABC<?>) facility.findSubLocationById("A1.B2.T1.S5");
 		Assert.assertNotNull(locationA1B2T1S5);
 		Assert.assertFalse(locationA1B2T1S5.isActive());
+		// Location alias was D-26 for this. Should still know it.
+		Assert.assertEquals("D-26", locationA1B2T1S5.getPrimaryAliasId());
+		// If you ask by the mapped name, should still get the location
+		ILocation<?> mappedLocation = facility.findSubLocationById("D-26");
+		Assert.assertEquals(locationA1B2T1S5, mappedLocation);
+
 		
 		LOGGER.info("Reading location aliases again should warn about A1.B2.T1.S5 and other being inactive");
 		readLocationAliases(facility);
@@ -422,32 +429,12 @@ public class LocationDeleteTest extends EdiTestABC {
 
 	@Test
 	public final void locationDelete3() throws IOException {
-		// The purpose of this is to investigate "java.lang.NoSuchMethodException: com.gadgetworks.codeshelf.model.domain.Aisle.setPickFaceEndPosX(java.lang.Double)"
-		// That we see in locationDelete2. This just flips the larger and smaller aisle file reads to see if that matters.
-		
-		// Also note, if you have this exception as a breakpoint, you will catch it during all facility setup during IronMQ setup. That should be cleaned up.
-		
+		// This test starts with the smaller file. Do D-25/A1.B2.T1.S5 never existed. In test2, the location is inactive after reading the smaller file.
+		// One of the order locations is for D-25
 		LOGGER.info("DeleteLocation Test . Start by setting up smaller aisle A1 and A2");
 		Facility facility = setUpSimpleSlottedFacility("LD02", SMALLER_FACILITY);
 		setUpGroup1OrdersAndSlotting(facility);
 		
-		LOGGER.info("Reread same aisles file again. Just to see that there is no throw.");
-		readSmallerAisleFile(facility);
-
-		LOGGER.info("And another reread."); 
-		readSmallerAisleFile(facility);
-
-		LOGGER.info("reading larger aisles file that should add bay, tier, and slot");
-		readStandardAisleFile(facility);
-
-		// BIZARRE! comment these two lines. Then there will be a throw in readSmallerAisleFile()
-		// LOGGER.info("Reread same aisles file again. Just to see that there is no throw.");
-		// readStandardAisleFile(facility);
-
-		// Why does this next one throw on obscure method not found?
-		// Note: this does not make locations inactive yet.
-		LOGGER.info("reading original aisles file that should make the added bay, tier, and slot inactive");
-		readSmallerAisleFile(facility);
 
 	}
 
