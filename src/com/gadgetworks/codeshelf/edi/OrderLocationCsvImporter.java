@@ -14,12 +14,14 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.gadgetworks.codeshelf.event.EventSeverity;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.ILocation;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.OrderLocation;
+import com.gadgetworks.codeshelf.validation.InputValidationException;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -61,29 +63,15 @@ public class OrderLocationCsvImporter extends CsvImporter<OrderLocationCsvBean> 
 			// Iterate over the order location map import beans.
 			for (OrderLocationCsvBean orderLocationBean : orderLocationBeanList) {
 				try {	
-					mOrderLocationDao.beginTransaction();
-
-					String errorMsg = orderLocationBean.validateBean();
-					if (errorMsg != null) {
-						LOGGER.error("Order location error: " + errorMsg + " for line: " + orderLocationBean);
-					} else {
-
-						if (!orderLocationBean.getOrderId().equals(lastOrderId)) {
-							deleteOrderLocations(orderLocationBean.getOrderId(), inFacility, inProcessTime);
-						}
-						orderLocationCsvBeanImport(orderLocationBean, inFacility, inProcessTime);
-						lastOrderId = orderLocationBean.getOrderId();
-					}
-					mOrderLocationDao.commitTransaction();
-				} catch (DaoException e) {
-					LOGGER.warn("dao persistence issue importing order location: " + orderLocationBean, e);
-				} catch(EdiFileReadException e) {
-					LOGGER.warn("file input issue importing order location: " + orderLocationBean, e);
+					lastOrderId = orderLocationCsvBeanImport(lastOrderId, orderLocationBean, inFacility, inProcessTime);
+					produceRecordSuccessEvent(orderLocationBean);
+				} catch(DaoException | EdiFileReadException | InputValidationException e) {
+					produceRecordViolationEvent(EventSeverity.WARN, e, orderLocationBean);
+					LOGGER.warn("Unable to process record: " + orderLocationBean, e);
 				} catch (Exception e) {
-					LOGGER.error("unknown issue importing order location: " + orderLocationBean, e);
-				} finally {
-					mOrderLocationDao.endTransaction();
-				}
+					produceRecordViolationEvent(EventSeverity.ERROR, e, orderLocationBean);
+					LOGGER.error("Unable to process record: " + orderLocationBean, e);
+				} 
 			}
 
 			archiveCheckOrderLocations(inFacility, inProcessTime);
@@ -128,20 +116,34 @@ public class OrderLocationCsvImporter extends CsvImporter<OrderLocationCsvBean> 
 	 * @param inFacility
 	 * @param inEdiProcessTime
 	 */
-	private void orderLocationCsvBeanImport(final OrderLocationCsvBean inCsvBean,
+	private String orderLocationCsvBeanImport(final String lastOrderId, final OrderLocationCsvBean inCsvBean,
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime) {
 
 		LOGGER.info(inCsvBean.toString());
-
-		if ((inCsvBean.getLocationId() == null) || inCsvBean.getLocationId().length() == 0) {
-			deleteOrderLocations(inCsvBean.getOrderId(), inFacility, inEdiProcessTime);
-		} else if ((inCsvBean.getOrderId() == null) || inCsvBean.getOrderId().length() == 0) {
-			deleteLocation(inCsvBean.getLocationId(), inFacility, inEdiProcessTime);
-		} else {
-			updateOrderLocation(inCsvBean, inFacility, inEdiProcessTime);
+		try {	
+			mOrderLocationDao.beginTransaction();
+			String errorMsg = inCsvBean.validateBean();
+			if (errorMsg != null) {
+				throw new InputValidationException(inCsvBean, errorMsg);
+			} 
+			if (!inCsvBean.getOrderId().equals(lastOrderId)) {
+				deleteOrderLocations(inCsvBean.getOrderId(), inFacility, inEdiProcessTime);
+			}
+		
+			if ((inCsvBean.getLocationId() == null) || inCsvBean.getLocationId().length() == 0) {
+				deleteOrderLocations(inCsvBean.getOrderId(), inFacility, inEdiProcessTime);
+			} else if ((inCsvBean.getOrderId() == null) || inCsvBean.getOrderId().length() == 0) {
+				deleteLocation(inCsvBean.getLocationId(), inFacility, inEdiProcessTime);
+			} else {
+				updateOrderLocation(inCsvBean, inFacility, inEdiProcessTime);
+			}
+			mOrderLocationDao.commitTransaction();
+			return inCsvBean.getOrderId();
 		}
-
+		finally {
+			mOrderLocationDao.endTransaction();
+		}
 	}
 
 	// --------------------------------------------------------------------------

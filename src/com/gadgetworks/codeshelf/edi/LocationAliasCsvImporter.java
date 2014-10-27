@@ -5,8 +5,6 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
-import static com.gadgetworks.codeshelf.event.EventProducer.tags;
-
 import java.io.Reader;
 import java.sql.Timestamp;
 import java.util.List;
@@ -42,16 +40,6 @@ public class LocationAliasCsvImporter extends CsvImporter<LocationAliasCsvBean> 
 		mLocationAliasDao = inLocationAliasDao;
 	}
 
-	private void reportAsResolution(Object inRelatedObject){
-		// Replace with EventProducer call
-		getEventProducer().reportAsResolution(tags("import", "location alias"), inRelatedObject);
-	}
-	
-	private void reportBusinessEvent(EventSeverity inSeverity, Exception e, Object inRelatedObject){
-		// Replace with EventProducer call
-		getEventProducer().produceEvent(tags("import", "location alias"), inSeverity, e, inRelatedObject);
-	}
-
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.edi.ICsvImporter#importInventoryFromCsvStream(java.io.InputStreamReader, com.gadgetworks.codeshelf.model.domain.Facility)
@@ -69,10 +57,15 @@ public class LocationAliasCsvImporter extends CsvImporter<LocationAliasCsvBean> 
 			for (LocationAliasCsvBean locationAliasBean : locationAliasBeanList) {
 				try {
 					locationAliasCsvBeanImport(locationAliasBean, inFacility, inProcessTime);
-					reportAsResolution(locationAliasBean);
+					produceRecordSuccessEvent(locationAliasBean);
+				}
+				catch(InputValidationException e) {
+					produceRecordViolationEvent(EventSeverity.WARN, e, locationAliasBean);
+					LOGGER.warn("Unable to process record: " + locationAliasBean, e);
 				}
 				catch(Exception e) {
-					reportBusinessEvent(EventSeverity.WARN, e, locationAliasBean);
+					produceRecordViolationEvent(EventSeverity.ERROR, e, locationAliasBean);
+					LOGGER.error("Unable to process record: " + locationAliasBean, e);
 				}
 			}
 

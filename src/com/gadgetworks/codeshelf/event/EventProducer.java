@@ -27,11 +27,11 @@ public class EventProducer {
 		return Sets.newHashSet(inTags);
 	}
 
-	public void reportAsResolution(Set<String> inTags, Object inRelatedObject) {
-		produceEvent(inTags, EventSeverity.INFO, null, inRelatedObject);
+	public void produceSuccessEvent(Set<String> inTags, Object inRelatedObject) {
+		produceViolationEvent(inTags, EventSeverity.INFO, null, inRelatedObject);
 	}
 	
-	public void produceEvent(Set<String> inTags, EventSeverity inSeverity, Exception inException, Object inRelatedObject) {
+	public void produceViolationEvent(Set<String> inTags, EventSeverity inSeverity, Exception inException, Object inRelatedObject) {
 		produceEvent(EventInterval.INSTANTANEOUS, inTags, inSeverity, inException, inRelatedObject);
 	}
 

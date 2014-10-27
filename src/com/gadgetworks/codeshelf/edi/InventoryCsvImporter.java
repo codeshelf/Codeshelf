@@ -12,6 +12,8 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.gadgetworks.codeshelf.event.EventProducer;
+import com.gadgetworks.codeshelf.event.EventSeverity;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Facility;
@@ -124,11 +126,17 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 
 			// Iterate over the inventory import beans.
 			for (InventorySlottedCsvBean slottedInventoryBean : inventoryBeanList) {
-				String errorMsg = slottedInventoryBean.validateBean();
-				if (errorMsg != null) {
-					LOGGER.error("Import errors: " + errorMsg);
-				} else {
+				try {
 					slottedInventoryCsvBeanImport(slottedInventoryBean, inFacility, inProcessTime);
+					produceRecordSuccessEvent(slottedInventoryBean);
+				}
+				catch(InputValidationException e) {
+					produceRecordViolationEvent(EventSeverity.WARN, e, slottedInventoryBean);
+					LOGGER.warn("Unable to process record: " + slottedInventoryBean, e);
+				}
+				catch(Exception e) {
+					produceRecordViolationEvent(EventSeverity.ERROR, e, slottedInventoryBean);
+					LOGGER.warn("Unable to process record: " + slottedInventoryBean, e);
 				}
 			}
 			// JR says this looks dangerous. Any random file in import/inventory would result in inactivation of all inventory and most masters.
@@ -228,43 +236,40 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 	 */
 	private void slottedInventoryCsvBeanImport(final InventorySlottedCsvBean inCsvBean,
 		final Facility inFacility,
-		final Timestamp inEdiProcessTime) {
+		final Timestamp inEdiProcessTime) throws InputValidationException {
 
 		try {
 			mItemDao.beginTransaction();
-
-
 			
-			try {
-				LOGGER.info(inCsvBean.toString());
-				
-				UomMaster uomMaster = upsertUomMaster(inCsvBean.getUom(), inFacility);
-				
-				ItemMaster itemMaster = updateItemMaster(inCsvBean.getItemId(),
-					inCsvBean.getDescription(),
-					inFacility,
-					inEdiProcessTime,
-					uomMaster);
-				
-				String theLocationID = inCsvBean.getLocationId();
-				ILocation<? extends IDomainObject> location = inFacility.findSubLocationById(theLocationID);
-				// We couldn't find the location, so assign the inventory to the facility itself (which is a location);
-				if (location == null) {
-					LOGGER.warn("Updating inventory item for location because did not recognize: " + theLocationID);
-					location = inFacility;
-				}
-
-				if (Strings.isNullOrEmpty(inCsvBean.getCmFromLeft())) {
-					inCsvBean.setCmFromLeft("0");
-				}
-				@SuppressWarnings("unused")
-				Item item = updateSlottedItem(true, inCsvBean, location, inEdiProcessTime, itemMaster, uomMaster);
-
-				mItemDao.commitTransaction();
+			LOGGER.info(inCsvBean.toString());
+			String errorMsg = inCsvBean.validateBean();
+			if (errorMsg != null) {
+				throw new InputValidationException(inCsvBean, errorMsg);
+			} 
+			
+			UomMaster uomMaster = upsertUomMaster(inCsvBean.getUom(), inFacility);
+			
+			ItemMaster itemMaster = updateItemMaster(inCsvBean.getItemId(),
+				inCsvBean.getDescription(),
+				inFacility,
+				inEdiProcessTime,
+				uomMaster);
+			
+			String theLocationID = inCsvBean.getLocationId();
+			ILocation<? extends IDomainObject> location = inFacility.findSubLocationById(theLocationID);
+			// We couldn't find the location, so assign the inventory to the facility itself (which is a location);
+			if (location == null) {
+				LOGGER.warn("Updating inventory item for location because did not recognize: " + theLocationID);
+				location = inFacility;
 			}
-			catch(InputValidationException e) {
-				LOGGER.error("unable to save line: " + inCsvBean, e);
+
+			if (Strings.isNullOrEmpty(inCsvBean.getCmFromLeft())) {
+				inCsvBean.setCmFromLeft("0");
 			}
+			@SuppressWarnings("unused")
+			Item item = updateSlottedItem(true, inCsvBean, location, inEdiProcessTime, itemMaster, uomMaster);
+
+			mItemDao.commitTransaction();
 
 		} finally {
 			mItemDao.endTransaction();

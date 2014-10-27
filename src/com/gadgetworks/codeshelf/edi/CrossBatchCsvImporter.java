@@ -91,10 +91,15 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 				Container container = crossBatchCsvBeanImport(crossBatchBean, inFacility, inProcessTime);
 				importedContainerIds.add(container.getContainerId());
 				importedRecords++;
-				getEventProducer().reportAsResolution(tags("import", "crossbatch"), crossBatchBean);
+				produceRecordSuccessEvent(crossBatchBean);
 			}
 			catch(InputValidationException e) {
-				getEventProducer().produceEvent(tags("import", "crossbatch"), EventSeverity.WARN, e, crossBatchBean);
+				produceRecordViolationEvent(EventSeverity.WARN, e, crossBatchBean);
+				LOGGER.warn("Unable to process record: " + crossBatchBean, e);
+			}
+			catch(Exception e) {
+				produceRecordViolationEvent(EventSeverity.ERROR, e, crossBatchBean);
+				LOGGER.error("Unable to process record: " + crossBatchBean, e);
 			}
 		}
 
@@ -178,6 +183,11 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 
 		DefaultErrors errors = new DefaultErrors(inCsvBean.getClass());  
 		try {
+			String errorMsg = inCsvBean.validateBean();
+			if (errorMsg != null) {
+				throw new InputValidationException(inCsvBean, errorMsg);
+			} 
+
 			mOrderHeaderDao.beginTransaction();
 
 			LOGGER.info(inCsvBean.toString());

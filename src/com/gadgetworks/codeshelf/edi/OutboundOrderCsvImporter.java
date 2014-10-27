@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.Transactional;
+import com.gadgetworks.codeshelf.event.EventSeverity;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.PickStrategyEnum;
@@ -30,6 +31,7 @@ import com.gadgetworks.codeshelf.model.domain.OrderGroup;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.UomMaster;
 import com.gadgetworks.codeshelf.util.DateTimeParser;
+import com.gadgetworks.codeshelf.validation.InputValidationException;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -87,21 +89,20 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		LOGGER.debug("Begin order import.");
 		ImportResult result = new ImportResult();
 		for (OutboundOrderCsvBean orderBean : list) {
-			String errorMsg = orderBean.validateBean();
-			if (errorMsg != null) {
-				LOGGER.error("Import errors: " + errorMsg);
-				result.addFailure(orderBean, "errorMsg");
-			} else {
-				try {
-					OrderHeader order = orderCsvBeanImport(orderBean, inFacility, inProcessTime);
-					if ((order != null) && (!orderList.contains(order))) {
-						orderList.add(order);
-					}
-				} catch (Exception e) {
-					result.addFailure(orderBean, e);
-					LOGGER.error("unable to import order line: " + orderBean, e);
+			try {
+				OrderHeader order = orderCsvBeanImport(orderBean, inFacility, inProcessTime);
+				if ((order != null) && (!orderList.contains(order))) {
+					orderList.add(order);
 				}
-
+				produceRecordSuccessEvent(orderBean);
+			} catch(InputValidationException e) {
+				result.addFailure(orderBean, e);
+				produceRecordViolationEvent(EventSeverity.WARN, e, orderBean);
+				LOGGER.warn("Unable to process record: " + orderBean, e);
+			} catch(Exception e) {
+				result.addFailure(orderBean, e);
+				produceRecordViolationEvent(EventSeverity.WARN, e, orderBean);
+				LOGGER.error("Unable to process record: " + orderBean, e);
 			}
 		}
 
@@ -278,6 +279,10 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 
 		try {
 			mOrderHeaderDao.beginTransaction();
+			String errorMsg = inCsvBean.validateBean();
+			if (errorMsg != null) {
+				throw new InputValidationException(inCsvBean, errorMsg);
+			} 
 
 			OrderGroup group = updateOptionalOrderGroup(inCsvBean, inFacility, inEdiProcessTime);
 			OrderHeader order = updateOrderHeader(inCsvBean, inFacility, inEdiProcessTime, group);
