@@ -20,6 +20,13 @@ public class InputValidationException extends ValidationException {
 		defaultErrors.rejectValue(field, errorCode);
 		this.errors = defaultErrors;
 	}
+
+	public InputValidationException(Object instance, String customMessage) {
+		DefaultErrors defaultErrors = new DefaultErrors(instance.getClass());
+		defaultErrors.reject(ErrorCode.GENERAL, customMessage);
+		this.errors = defaultErrors;
+	}
+	
 	public InputValidationException(Errors errors) {
 		this.errors = errors;
 	}

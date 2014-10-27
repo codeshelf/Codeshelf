@@ -1992,7 +1992,7 @@ public class Facility extends SubLocationABC<Facility> {
 		LocationABC<?> location = (LocationABC<?>) this.findSubLocationById(storedLocationId);
 		if (location == null && !Strings.isNullOrEmpty(storedLocationId)) {
 			Errors errors = new DefaultErrors(Item.class);
-			errors.rejectValue("storedLocation", ErrorCode.FIELD_NOT_FOUND, "storedLocation was not found");
+			errors.rejectValue("storedLocation", ErrorCode.FIELD_REFERENCE_NOT_FOUND, "storedLocation was not found");
 			throw new InputValidationException(errors);
 		}
 		

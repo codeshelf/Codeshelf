@@ -7,9 +7,6 @@ package com.gadgetworks.codeshelf.edi;
 
 import static com.gadgetworks.codeshelf.event.EventProducer.tags;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.Reader;
 import java.sql.Timestamp;
 import java.util.List;
@@ -18,11 +15,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.event.EventSeverity;
+import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.ISubLocation;
 import com.gadgetworks.codeshelf.model.domain.LocationAlias;
-import com.gadgetworks.codeshelf.validation.ViolationException;
+import com.gadgetworks.codeshelf.validation.ErrorCode;
+import com.gadgetworks.codeshelf.validation.InputValidationException;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -118,7 +117,7 @@ public class LocationAliasCsvImporter extends CsvImporter<LocationAliasCsvBean> 
 	 */
 	private void locationAliasCsvBeanImport(final LocationAliasCsvBean inCsvBean,
 		final Facility inFacility,
-		final Timestamp inEdiProcessTime) throws ViolationException {
+		final Timestamp inEdiProcessTime) throws InputValidationException, DaoException {
 
 		try {
 			mLocationAliasDao.beginTransaction();
@@ -126,21 +125,21 @@ public class LocationAliasCsvImporter extends CsvImporter<LocationAliasCsvBean> 
 			LOGGER.info(inCsvBean.toString());
 			String errorMsg = inCsvBean.validateBean();
 			if (errorMsg != null) {
-				throw new ViolationException(inCsvBean, errorMsg);
+				throw new InputValidationException(inCsvBean, errorMsg);
 			}
 
 			// Get or create the item at the specified location.
 			String locationAliasId = inCsvBean.getLocationAlias();
 			LocationAlias result = inFacility.getLocationAlias(locationAliasId);
-			String mappedLocationID = inCsvBean.getMappedLocationId();
-			ISubLocation<?> mappedLocation = inFacility.findSubLocationById(mappedLocationID);
+			String mappedLocationId = inCsvBean.getMappedLocationId();
+			ISubLocation<?> mappedLocation = inFacility.findSubLocationById(mappedLocationId);
 			
 			// Check for deleted location
 			if (mappedLocation == null || mappedLocation instanceof Facility) {
-				throw new ViolationException(inCsvBean, "Could not resolve location: " + mappedLocationID);
+				throw new InputValidationException(inCsvBean, "mappedLocationId", ErrorCode.FIELD_REFERENCE_NOT_FOUND);
 			}
 			if (!mappedLocation.isActive() ){
-				throw new ViolationException(inCsvBean, "Location was deleted and is now inactive: " + mappedLocationID);
+				throw new InputValidationException(inCsvBean, "mappedLocationId", ErrorCode.FIELD_REFERENCE_INACTIVE);
 			}
 
 			if ((result == null) && (inCsvBean.getMappedLocationId() != null) && (mappedLocation != null)) {

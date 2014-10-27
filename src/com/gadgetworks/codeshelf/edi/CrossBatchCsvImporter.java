@@ -195,7 +195,7 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 			
 			ItemMaster itemMaster = inFacility.getItemMaster(inCsvBean.getItemId());
 			if (itemMaster == null) {
-				errors.rejectValue("itemId", ErrorCode.FIELD_NOT_FOUND, "Unknown ItemMaster");
+				errors.rejectValue("itemId", ErrorCode.FIELD_REFERENCE_NOT_FOUND, "Unknown ItemMaster");
 			} 
 			
 			if (!errors.hasErrors()) {
