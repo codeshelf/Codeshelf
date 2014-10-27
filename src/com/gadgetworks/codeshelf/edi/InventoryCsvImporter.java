@@ -5,11 +5,14 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
+import static com.gadgetworks.codeshelf.event.EventProducer.tags;
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +21,7 @@ import au.com.bytecode.opencsv.CSVReader;
 import au.com.bytecode.opencsv.bean.CsvToBean;
 import au.com.bytecode.opencsv.bean.HeaderColumnNameMappingStrategy;
 
+import com.gadgetworks.codeshelf.event.EventSeverity;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Facility;
@@ -57,6 +61,12 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 		mItemDao = inItemDao;
 		mUomMasterDao = inUomMaster;
 	}
+
+	private void reportBusinessEvent(Set<String> inTags, EventSeverity inSeverity, String inMessage){
+		// Replace with EventProducer call
+		LOGGER.warn(inMessage);
+	}
+
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
@@ -259,7 +269,8 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 				
 				UomMaster uomMaster = upsertUomMaster(inCsvBean.getUom(), inFacility);
 				
-				ItemMaster itemMaster = updateItemMaster(inCsvBean.getItemId(),
+				String theItemID = inCsvBean.getItemId();
+				ItemMaster itemMaster = updateItemMaster(theItemID,
 					inCsvBean.getDescription(),
 					inFacility,
 					inEdiProcessTime,
@@ -268,9 +279,15 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 				String theLocationID = inCsvBean.getLocationId();
 				ILocation<? extends IDomainObject> location = inFacility.findSubLocationById(theLocationID);
 				// Remember, findSubLocationById will find inactive locations.
-				// We couldn't find the location, so assign the inventory to the facility itself (which is a location);
+				// We couldn't find the location, so assign the inventory to the facility itself (which is a location);  Not sure this is best, but it is the historical behavior from pre-v1.
 				if (location == null) {
-					LOGGER.warn("Updating inventory item to facility location because did not recognize: " + theLocationID);
+					reportBusinessEvent(tags("import", "inventory"), EventSeverity.WARN, "Updating inventory item: " + theItemID + " to facility because did not recognize location: " + theLocationID);			
+					location = inFacility;
+				}
+				// If location is inactive, then what? Would we want to move existing inventory there to facility? Doing that initially mostly because it is easier.
+				// Might be better to ask if this inventory item is already in that inactive location, and not move it if so.
+				else if (!location.isActive()) {
+					reportBusinessEvent(tags("import", "inventory"), EventSeverity.WARN, "Updating inventory item: " + theItemID + " to facility because location: " + theLocationID + " was deleted.");			
 					location = inFacility;
 				}
 
