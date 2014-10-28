@@ -59,6 +59,7 @@ import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.codeshelf.util.CompareNullChecker;
 import com.gadgetworks.codeshelf.util.SequenceNumber;
 import com.gadgetworks.codeshelf.util.UomNormalizer;
 import com.gadgetworks.codeshelf.validation.DefaultErrors;
@@ -806,23 +807,23 @@ public class Facility extends SubLocationABC<Facility> {
 	}
 
 	private class GroupAndSortCodeComparator implements Comparator<WorkInstruction> {
+		// Sort the WIs by their sort code. This is identical to CheDeviceLogic.WiGroupSortComparator
 
 		public int compare(WorkInstruction inWi1, WorkInstruction inWi2) {
-			// watch for uninitialized data
-			String sort1 = inWi1.getGroupAndSortCode();
-			String sort2 = inWi2.getGroupAndSortCode();
-			if (sort1 == null) {
-				if (sort2 == null)
-					return 0;
-				else
-					return -1;
-			}
-			if (sort2 == null)
-				return 1;
-			else
-				return sort1.compareTo(sort2);
+
+			int value = CompareNullChecker.compareNulls(inWi1, inWi2);
+			if (value != 0)
+				return value;
+			
+			String w1Sort = inWi1.getGroupAndSortCode();
+			String w2Sort = inWi2.getGroupAndSortCode();
+			value = CompareNullChecker.compareNulls(w1Sort, w2Sort);
+			if (value != 0)
+				return value;
+			
+			return w1Sort.compareTo(w2Sort);
 		}
-	};
+	}
 
 	// --------------------------------------------------------------------------
 	/**

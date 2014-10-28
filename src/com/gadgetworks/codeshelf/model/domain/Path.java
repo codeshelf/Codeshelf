@@ -37,6 +37,7 @@ import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.codeshelf.util.CompareNullChecker;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -315,27 +316,25 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	}
 
 	/**
-	 * Comparator for WI sorting.
+	 * Comparator for WI sorting. This is identical to CheDeviceLogic.WiDistanceComparator
 	 *
 	 */
 	private class WiComparable implements Comparator<WorkInstruction> {
 
 		public int compare(WorkInstruction inWi1, WorkInstruction inWi2) {
+			int value = CompareNullChecker.compareNulls(inWi1, inWi2);
+			if (value != 0)
+				return value;
 
-			if ((inWi1 == null) && (inWi2 == null)) {
-				return 0;
-			} else if (inWi2 == null) {
-				return -1;
-			} else if (inWi1 == null) {
-				return 1;
-			} else if (inWi1.getPosAlongPath() < inWi2.getPosAlongPath()) {
-				return -1;
-			} else if (inWi1.getPosAlongPath() > inWi2.getPosAlongPath()) {
-				return 1;
-			} else {
-				return 0;
-			}
+			Double wi1Pos = inWi1.getPosAlongPath();
+			Double wi2Pos = inWi2.getPosAlongPath();
+			value = CompareNullChecker.compareNulls(wi1Pos, wi2Pos);
+			if (value != 0)
+				return value;
+			
+			return wi1Pos.compareTo(wi2Pos);
 		}
+
 	}
 
 	// --------------------------------------------------------------------------

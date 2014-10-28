@@ -842,7 +842,6 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	/**
 	 * Sort the WIs by their distance along the path.
 	 */
-	@SuppressWarnings("unused")
 	private class WiDistanceComparator implements Comparator<WorkInstruction> {
 
 		public int compare(WorkInstruction inWi1, WorkInstruction inWi2) {
@@ -862,7 +861,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * Sort the WIs by their distance along the path.
+	 * Sort the WIs by their sort code.
 	 */
 	private class WiGroupSortComparator implements Comparator<WorkInstruction> {
 
