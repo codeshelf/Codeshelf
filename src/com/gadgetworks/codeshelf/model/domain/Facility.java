@@ -883,7 +883,17 @@ public class Facility extends SubLocationABC<Facility> {
 		filterParams.put("pos", startingPathPos);
 		String filter = "(assignedChe.persistentId = :chePersistentId) and (typeEnum = :typeplan or typeEnum = :typehkbaychange or typeEnum = :typehkrepeat) and (posAlongPath >= :pos)";
 		for (WorkInstruction wi : WorkInstruction.DAO.findByFilter(filter, filterParams)) {
-			wiResultList.add(wi);
+			// Very unlikely. But if some wiLocations were deleted between start work and scan starting location, let's not give out the "deleted" wis
+			// Note: puts may have had multiple order locations, now quite denormalized on WI fields and hard to decompose.  We just take the first as the WI location.
+			// Not ambiguous for picks.
+			ILocation<?> loc = wi.getLocation();
+			// so far, wi must have a location. Even housekeeping and shorts
+			if (loc == null)
+				LOGGER.error("getWorkInstructions found active work instruction with null location"); // new from v8
+			else if (loc.isActive())
+				wiResultList.add(wi);
+			else
+				LOGGER.warn("getWorkInstructions found active work instruction in deleted locations"); // new from v8
 		}
 
 		// New from V4. make sure sorted correctly. Hard to believe we did not catch this before. (Should we have the DB sort for us?)
