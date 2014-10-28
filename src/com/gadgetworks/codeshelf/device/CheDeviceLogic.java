@@ -26,6 +26,7 @@ import com.gadgetworks.codeshelf.device.AisleDeviceLogic.LedCmd;
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
+import com.gadgetworks.codeshelf.util.CompareNullChecker;
 import com.gadgetworks.flyweight.command.CommandControlButton;
 import com.gadgetworks.flyweight.command.CommandControlClearPosController;
 import com.gadgetworks.flyweight.command.CommandControlDisplayMessage;
@@ -624,8 +625,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				/* New attempts, but left as the default.  Test cases
 				 * Short a housekeeping work instruction. (All E's is bad.)
 				 * Yes or No on a normal pick
-				 */				
-				
+				 */
+
 				// positionControllerToSendTo =  just the one, if we can figure it out. Or
 				// sendPositionControllerInstructions = false;
 				break;
@@ -845,13 +846,17 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private class WiDistanceComparator implements Comparator<WorkInstruction> {
 
 		public int compare(WorkInstruction inWi1, WorkInstruction inWi2) {
-			if (inWi1 == null) {
-				return -1;
-			} else if (inWi2 == null) {
-				return 1;
-			} else {
-				return inWi1.getPosAlongPath().compareTo(inWi2.getPosAlongPath());
-			}
+			int value = CompareNullChecker.compareNulls(inWi1, inWi2);
+			if (value != 0)
+				return value;
+
+			Double wi1Pos = inWi1.getPosAlongPath();
+			Double wi2Pos = inWi2.getPosAlongPath();
+			value = CompareNullChecker.compareNulls(wi1Pos, wi2Pos);
+			if (value != 0)
+				return value;
+
+			return wi1Pos.compareTo(wi2Pos);
 		}
 	};
 
@@ -862,13 +867,18 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private class WiGroupSortComparator implements Comparator<WorkInstruction> {
 
 		public int compare(WorkInstruction inWi1, WorkInstruction inWi2) {
-			if (inWi1 == null) {
-				return -1;
-			} else if (inWi2 == null) {
-				return 1;
-			} else {
-				return inWi1.getGroupAndSortCode().compareTo(inWi2.getGroupAndSortCode());
-			}
+
+			int value = CompareNullChecker.compareNulls(inWi1, inWi2);
+			if (value != 0)
+				return value;
+			
+			String w1Sort = inWi1.getGroupAndSortCode();
+			String w2Sort = inWi2.getGroupAndSortCode();
+			value = CompareNullChecker.compareNulls(w1Sort, w2Sort);
+			if (value != 0)
+				return value;
+			
+			return w1Sort.compareTo(w2Sort);
 		}
 	};
 
