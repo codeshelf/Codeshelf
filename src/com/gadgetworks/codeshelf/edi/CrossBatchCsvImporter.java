@@ -5,13 +5,9 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
-import static com.gadgetworks.codeshelf.event.EventProducer.tags;
-
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.Reader;
 import java.sql.Timestamp;
-import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -21,12 +17,9 @@ import javax.persistence.PersistenceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import au.com.bytecode.opencsv.CSVReader;
-import au.com.bytecode.opencsv.bean.CsvToBean;
-import au.com.bytecode.opencsv.bean.HeaderColumnNameMappingStrategy;
-
 import com.gadgetworks.codeshelf.event.EventProducer;
 import com.gadgetworks.codeshelf.event.EventSeverity;
+import com.gadgetworks.codeshelf.event.EventTag;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
@@ -51,7 +44,7 @@ import com.google.inject.Singleton;
  *
  */
 @Singleton
-public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
+public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implements ICsvCrossBatchImporter {
 
 	private static final Logger		LOGGER	= LoggerFactory.getLogger(CrossBatchCsvImporter.class);
 
@@ -62,23 +55,21 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 	private ITypedDao<ContainerUse>	mContainerUseDao;
 	private ITypedDao<UomMaster>	mUomMasterDao;
 
-	private EventProducer	mEventProducer;
-
 	@Inject
-	public CrossBatchCsvImporter(final ITypedDao<OrderGroup> inOrderGroupDao,
+	public CrossBatchCsvImporter(final EventProducer inProducer, final ITypedDao<OrderGroup> inOrderGroupDao,
 		final ITypedDao<OrderHeader> inOrderHeaderDao,
 		final ITypedDao<OrderDetail> inOrderDetailDao,
 		final ITypedDao<Container> inContainerDao,
 		final ITypedDao<ContainerUse> inContainerUseDao,
 		final ITypedDao<UomMaster> inUomMasterDao) {
-
+		
+		super(inProducer);
 		mOrderGroupDao = inOrderGroupDao;
 		mOrderHeaderDao = inOrderHeaderDao;
 		mOrderDetailDao = inOrderDetailDao;
 		mContainerDao = inContainerDao;
 		mContainerUseDao = inContainerUseDao;
 		mUomMasterDao = inUomMasterDao;
-		mEventProducer = new EventProducer();
 	}
 
 	// --------------------------------------------------------------------------
@@ -89,23 +80,11 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 		Facility inFacility,
 		Timestamp inProcessTime) {
 
-		int importedRecords = 0;
-		List<CrossBatchCsvBean> crossBatchBeanList = Collections.emptyList();
-		mOrderGroupDao.clearAllCaches(); // avoids a class cast exception if ebeans had trimmed some objects
-		try(CSVReader csvReader = new CSVReader(inCsvStreamReader)) {
-
-			HeaderColumnNameMappingStrategy<CrossBatchCsvBean> strategy = new HeaderColumnNameMappingStrategy<CrossBatchCsvBean>();
-			strategy.setType(CrossBatchCsvBean.class);
-
-			CsvToBean<CrossBatchCsvBean> csv = new CsvToBean<CrossBatchCsvBean>();
-			crossBatchBeanList = csv.parse(strategy, csvReader);
-		} catch (IOException e) {
-			LOGGER.error("", e);
-			return importedRecords;
-		}
-			
 		LOGGER.debug("Begin cross batch import.");
+		mOrderGroupDao.clearAllCaches(); // avoids a class cast exception if ebeans had trimmed some objects
+		List<CrossBatchCsvBean> crossBatchBeanList = toCsvBean(inCsvStreamReader, CrossBatchCsvBean.class);
 
+		int importedRecords = 0;
 		Set<String> importedContainerIds = new HashSet<String>();
 		// Iterate over the put batch import beans.
 		for (CrossBatchCsvBean crossBatchBean : crossBatchBeanList) {
@@ -113,9 +92,15 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 				Container container = crossBatchCsvBeanImport(crossBatchBean, inFacility, inProcessTime);
 				importedContainerIds.add(container.getContainerId());
 				importedRecords++;
+				produceRecordSuccessEvent(crossBatchBean);
 			}
 			catch(InputValidationException e) {
-				mEventProducer.produceEvent(tags("import", "crossbatch"), EventSeverity.WARN, e, crossBatchBean);
+				produceRecordViolationEvent(EventSeverity.WARN, e, crossBatchBean);
+				LOGGER.warn("Unable to process record: " + crossBatchBean, e);
+			}
+			catch(Exception e) {
+				produceRecordViolationEvent(EventSeverity.ERROR, e, crossBatchBean);
+				LOGGER.error("Unable to process record: " + crossBatchBean, e);
 			}
 		}
 
@@ -199,6 +184,11 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 
 		DefaultErrors errors = new DefaultErrors(inCsvBean.getClass());  
 		try {
+			String errorMsg = inCsvBean.validateBean();
+			if (errorMsg != null) {
+				throw new InputValidationException(inCsvBean, errorMsg);
+			} 
+
 			mOrderHeaderDao.beginTransaction();
 
 			LOGGER.info(inCsvBean.toString());
@@ -216,7 +206,7 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 			
 			ItemMaster itemMaster = inFacility.getItemMaster(inCsvBean.getItemId());
 			if (itemMaster == null) {
-				errors.rejectValue("itemId", ErrorCode.FIELD_NOT_FOUND, "Unknown ItemMaster");
+				errors.rejectValue("itemId", inCsvBean.getItemId(), ErrorCode.FIELD_REFERENCE_NOT_FOUND);
 			} 
 			
 			if (!errors.hasErrors()) {
@@ -459,5 +449,11 @@ public class CrossBatchCsvImporter implements ICsvCrossBatchImporter {
 		}
 
 		return result;
+	}
+	
+
+	@Override
+	protected Set<EventTag> getEventTagsForImporter() {
+		return EnumSet.of(EventTag.IMPORT, EventTag.ORDER_CROSSBATCH);
 	}
 }

@@ -5,27 +5,26 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.Reader;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import au.com.bytecode.opencsv.CSVReader;
-import au.com.bytecode.opencsv.bean.CsvToBean;
-import au.com.bytecode.opencsv.bean.HeaderColumnNameMappingStrategy;
-
+import com.gadgetworks.codeshelf.event.EventProducer;
+import com.gadgetworks.codeshelf.event.EventSeverity;
+import com.gadgetworks.codeshelf.event.EventTag;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
@@ -42,6 +41,7 @@ import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.model.domain.Slot;
 import com.gadgetworks.codeshelf.model.domain.SubLocationABC;
 import com.gadgetworks.codeshelf.model.domain.Tier;
+import com.gadgetworks.codeshelf.validation.InputValidationException;
 import com.gadgetworks.flyweight.command.NetGuid;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -51,7 +51,7 @@ import com.google.inject.Singleton;
  *
  */
 @Singleton
-public class AislesFileCsvImporter implements ICsvAislesFileImporter {
+public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implements ICsvAislesFileImporter {
 
 	private static double			CM_PER_M		= 100D;
 	private static int				maxSlotForTier	= 30;
@@ -100,10 +100,14 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 	}
 
 	@Inject
-	public AislesFileCsvImporter(final ITypedDao<Aisle> inAisleDao,
+	public AislesFileCsvImporter(final EventProducer inProducer, 
+		final ITypedDao<Aisle> inAisleDao,
 		final ITypedDao<Bay> inBayDao,
 		final ITypedDao<Tier> inTierDao,
 		final ITypedDao<Slot> inSlotDao) {
+		
+		super(inProducer);
+		
 		// facility needed? but not facilityDao
 		mAisleDao = inAisleDao;
 		mBayDao = inBayDao;
@@ -132,96 +136,74 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.edi.ICsvImporter#importInventoryFromCsvStream(java.io.InputStreamReader, com.gadgetworks.codeshelf.model.domain.Facility)
 	 */
-	public final boolean importAislesFileFromCsvStream(InputStreamReader inCsvStreamReader,
+	public final boolean importAislesFileFromCsvStream(Reader inCsvReader,
 		Facility inFacility,
 		Timestamp inProcessTime) {
 		boolean result = true;
 
 		mFacility = inFacility;
 
-		try {
+		List<AislesFileCsvBean> aislesFileBeanList = toCsvBean(inCsvReader, AislesFileCsvBean.class);
+		if (aislesFileBeanList.size() > 0) {
 
-			CSVReader csvReader = new CSVReader(inCsvStreamReader);
+			LOGGER.debug("Begin aisles file import.");
 
-			HeaderColumnNameMappingStrategy<AislesFileCsvBean> strategy = new HeaderColumnNameMappingStrategy<AislesFileCsvBean>();
-			strategy.setType(AislesFileCsvBean.class);
+			boolean needAisleBean = true;
+			// Iterate over the location import beans.
+			for (AislesFileCsvBean aislesFileBean : aislesFileBeanList) {
+				Aisle lastAisle = mLastReadAisle;
 
-			CsvToBean<AislesFileCsvBean> csv = new CsvToBean<AislesFileCsvBean>();
-			List<AislesFileCsvBean> aislesFileBeanList = csv.parse(strategy, csvReader);
+				// Fairly simple error handling. Throw anywhere in the read with EdiFileReadException. Causes skip to next aisle, if any
+				try {
+					// This creates one location: aisle, bay, tier; (tier also creates slots). 
+					boolean readAisleBean = aislesFileCsvBeanImport(aislesFileBean, inProcessTime, needAisleBean);
+					// debug aid
+					if (readAisleBean)
+						readAisleBean = true;
+					// If we needed an aisle, and got one, then we don't need aisle again
+					if (needAisleBean && readAisleBean)
+						needAisleBean = false;
+				} catch (EdiFileReadException e) {
+					produceRecordViolationEvent(EventSeverity.WARN, e, aislesFileBean);
+					LOGGER.warn("Unable to process record: " + aislesFileBean, e);
 
-			if (aislesFileBeanList.size() > 0) {
+					// Mark that that we must now skip beans until the next aisle starts
+					needAisleBean = true;
 
-				LOGGER.debug("Begin aisles file import.");
-
-				boolean needAisleBean = true;
-				// Iterate over the location import beans.
-				for (AislesFileCsvBean aislesFileBean : aislesFileBeanList) {
-					String errorMsg = aislesFileBean.validateBean();
-					if (errorMsg != null) {
-						LOGGER.error("Import errors: " + errorMsg);
-					} else {
-						Aisle lastAisle = mLastReadAisle;
-
-						// Fairly simple error handling. Throw anywhere in the read with EdiFileReadException. Causes skip to next aisle, if any
-						try {
-							// This creates one location: aisle, bay, tier; (tier also creates slots). 
-							boolean readAisleBean = aislesFileCsvBeanImport(aislesFileBean, inProcessTime, needAisleBean);
-							// debug aid
-							if (readAisleBean)
-								readAisleBean = true;
-							// If we needed an aisle, and got one, then we don't need aisle again
-							if (needAisleBean && readAisleBean)
-								needAisleBean = false;
-						} catch (EdiFileReadException e) {
-							// Log out what the exception said
-							LOGGER.error("", e);
-
-							// Mark that that we must now skip beans until the next aisle starts
-							needAisleBean = true;
-
-							// Don't have leftover tiers in the next aisle. Normally cleared in finalize, which will not happen
-							mTiersThisAisle.clear();
-							mLastReadBayForVertices = null; // barely necessary. But cleanliness is good.
-						} catch (Exception e) {
-							LOGGER.error("unknown exception in file read", e);
-						}
-						// if we started a new aisle, then the previous aisle is done. Do those computations and set those fields
-						// but not if we threw out of last aisle
-						if (lastAisle != null && lastAisle != mLastReadAisle & !needAisleBean) {
-							finalizeTiersInThisAisle(lastAisle);
-							// Kludge!  make sure lastAisle reference is not stale
-							lastAisle = Aisle.DAO.findByDomainId(mFacility, lastAisle.getDomainId());
-							finalizeVerticesThisAisle(lastAisle, mLastReadBayForVertices);
-							// starting an aisle copied mLastReadBay to mLastReadBayForVertices and cleared mLastReadBay
-							// do not do makeUnusedLocationsInactive() here. Done in the aisle bean read if a new aisle
-						}
-					}
+					// Don't have leftover tiers in the next aisle. Normally cleared in finalize, which will not happen
+					mTiersThisAisle.clear();
+					mLastReadBayForVertices = null; // barely necessary. But cleanliness is good.
+				} catch (Exception e) {
+					produceRecordViolationEvent(EventSeverity.ERROR, e, aislesFileBean);
+					LOGGER.error("Unable to process record: " + aislesFileBean, e);
 				}
-				// finish the last aisle read, but not if we threw out of last aisle
-				if (!needAisleBean) {
-					Aisle theAisleReference = mLastReadAisle;
-					finalizeTiersInThisAisle(theAisleReference);
-					// Kludge! make sure lastAisle reference is not stale
-					theAisleReference = Aisle.DAO.findByDomainId(mFacility, theAisleReference.getDomainId());
-					finalizeVerticesThisAisle(theAisleReference, mLastReadBay);
-					makeUnusedLocationsInactive(theAisleReference);
+				// if we started a new aisle, then the previous aisle is done. Do those computations and set those fields
+				// but not if we threw out of last aisle
+				if (lastAisle != null && lastAisle != mLastReadAisle & !needAisleBean) {
+					finalizeTiersInThisAisle(lastAisle);
+					// Kludge!  make sure lastAisle reference is not stale
+					lastAisle = Aisle.DAO.findByDomainId(mFacility, lastAisle.getDomainId());
+					finalizeVerticesThisAisle(lastAisle, mLastReadBayForVertices);
+					// starting an aisle copied mLastReadBay to mLastReadBayForVertices and cleared mLastReadBay
+					// do not do makeUnusedLocationsInactive() here. Done in the aisle bean read if a new aisle
 				}
-
-				// As an aid to the configurer, create a few LED controllers.
-				ensureLedControllers();
-
-				// archiveCheckLocationAliases(inFacility, inProcessTime);
-
-				LOGGER.debug("End aisles file import.");
+			}
+			// finish the last aisle read, but not if we threw out of last aisle
+			if (!needAisleBean) {
+				Aisle theAisleReference = mLastReadAisle;
+				finalizeTiersInThisAisle(theAisleReference);
+				// Kludge! make sure lastAisle reference is not stale
+				theAisleReference = Aisle.DAO.findByDomainId(mFacility, theAisleReference.getDomainId());
+				finalizeVerticesThisAisle(theAisleReference, mLastReadBay);
+				makeUnusedLocationsInactive(theAisleReference);
 			}
 
-			csvReader.close();
-		} catch (FileNotFoundException e) {
-			result = false;
-			LOGGER.error("", e);
-		} catch (IOException e) {
-			result = false;
-			LOGGER.error("", e);
+			// As an aid to the configurer, create a few LED controllers.
+			ensureLedControllers();
+
+			// archiveCheckLocationAliases(inFacility, inProcessTime);
+
+			LOGGER.debug("End aisles file import.");
 		}
 
 		return result;
@@ -1061,7 +1043,11 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 	private boolean aislesFileCsvBeanImport(final AislesFileCsvBean inCsvBean,
 		final Timestamp inEdiProcessTime,
 		boolean inNeedAisleBean) {
-
+		String errorMsg = inCsvBean.validateBean();
+		if (errorMsg != null) {
+			throw new InputValidationException(inCsvBean, errorMsg);
+		} 
+		
 		boolean returnThisIsAisleBean = false;
 
 		LOGGER.info(inCsvBean.toString());
@@ -1214,4 +1200,9 @@ public class AislesFileCsvImporter implements ICsvAislesFileImporter {
 		return returnThisIsAisleBean;
 	}
 
+	@Override
+	protected Set<EventTag> getEventTagsForImporter() {
+		return EnumSet.of(EventTag.IMPORT, EventTag.LOCATION);
+	}	
+	
 }

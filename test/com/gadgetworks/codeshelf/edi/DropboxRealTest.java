@@ -6,7 +6,7 @@ package com.gadgetworks.codeshelf.edi;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.Reader;
 import java.sql.Timestamp;
 
 import org.apache.commons.io.FileUtils;
@@ -65,28 +65,17 @@ public class DropboxRealTest extends EdiTestABC {
 	protected void doBefore() throws Exception {
 		super.doBefore();
 
-		mCsvOrderImporter = new OutboundOrderCsvImporter(mOrderGroupDao,
-			mOrderHeaderDao,
-			mOrderDetailDao,
-			mContainerDao,
-			mContainerUseDao,
-			mItemMasterDao,
-			mUomMasterDao);
+		mCsvOrderImporter = createOrderImporter();
 
-		mCsvInventoryImporter = new InventoryCsvImporter(mItemMasterDao, mItemDao, mUomMasterDao);
+		mCsvInventoryImporter = createInventoryImporter();
 
-		mCsvLocationAliasImporter = new LocationAliasCsvImporter(mLocationAliasDao);
+		mCsvLocationAliasImporter = createLocationAliasImporter();
 
-		mAislesFileCsvImporter = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		mAislesFileCsvImporter = createAisleFileImporter();
 
-		mCsvCrossBatchImporter = new CrossBatchCsvImporter(mOrderGroupDao,
-			mOrderHeaderDao,
-			mOrderDetailDao,
-			mContainerDao,
-			mContainerUseDao,
-			mUomMasterDao);
+		mCsvCrossBatchImporter = createCrossBatchImporter();
 
-		mCsvOrderLocationImporter = new OrderLocationCsvImporter(mOrderLocationDao);
+		mCsvOrderLocationImporter = createOrderLocationImporter();
 	}
 
 	private Facility setUpStartingFacility(String inOrganizationName) {
@@ -309,7 +298,7 @@ public class DropboxRealTest extends EdiTestABC {
 			// Provide a wrapper for CsvOrderImporter
 			ICsvOrderImporter testImporter = new ICsvOrderImporter() {
 				@Override
-				public ImportResult importOrdersFromCsvStream(InputStreamReader inCsvStreamReader,
+				public ImportResult importOrdersFromCsvStream(Reader inCsvStreamReader,
 					Facility inFacility,
 					Timestamp inProcessTime) throws IOException {
 

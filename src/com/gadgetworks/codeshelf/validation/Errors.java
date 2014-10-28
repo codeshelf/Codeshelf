@@ -100,7 +100,7 @@ public interface Errors {
 	 * using the given error description.
 	 * @param errorCode error code, interpretable as a message key
 	 */
-	void reject(String errorCode);
+	void reject(ErrorCode errorCode);
 
 	/**
 	 * Register a global error for the entire target object,
@@ -108,7 +108,7 @@ public interface Errors {
 	 * @param errorCode error code, interpretable as a message key
 	 * @param defaultMessage fallback default message
 	 */
-	void reject(String errorCode, String defaultMessage);
+	void reject(ErrorCode errorCode, String defaultMessage);
 
 	/**
 	 * Register a global error for the entire target object,
@@ -118,7 +118,7 @@ public interface Errors {
 	 * (can be {@code null})
 	 * @param defaultMessage fallback default message
 	 */
-	void reject(String errorCode, Object[] errorArgs, String defaultMessage);
+	void reject(ErrorCode errorCode, Object[] errorArgs, String defaultMessage);
 
 	/**
 	 * Register a field error for the specified field of the current object
@@ -132,7 +132,7 @@ public interface Errors {
 	 * @param errorCode error code, interpretable as a message key
 	 * @see #getNestedPath()
 	 */
-	void rejectValue(String field, String errorCode);
+	void rejectValue(String field, ErrorCode errorCode);
 
 	/**
 	 * Register a field error for the specified field of the current object
@@ -147,7 +147,7 @@ public interface Errors {
 	 * @param defaultMessage fallback default message
 	 * @see #getNestedPath()
 	 */
-	void rejectValue(String field, String errorCode, String defaultMessage);
+	void rejectValue(String field, ErrorCode errorCode, String defaultMessage);
 
 	/**
 	 * Register a field error for the specified field of the current object
@@ -164,7 +164,7 @@ public interface Errors {
 	 * @param defaultMessage fallback default message
 	 * @see #getNestedPath()
 	 */
-	void rejectValue(String field, String errorCode, Object[] errorArgs, String defaultMessage);
+	void rejectValue(String field, ErrorCode errorCode, Object[] errorArgs, String defaultMessage);
 
 	/**
 	 * Add all errors from the given {@code Errors} instance to this

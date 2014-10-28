@@ -11,11 +11,11 @@ import com.gadgetworks.codeshelf.application.CsSiteControllerApplication;
 import com.gadgetworks.codeshelf.application.CsSiteControllerMain;
 import com.gadgetworks.codeshelf.device.CheDeviceLogic;
 import com.gadgetworks.codeshelf.device.CsDeviceManager;
+import com.gadgetworks.codeshelf.edi.EdiTestABC;
 import com.gadgetworks.codeshelf.model.dao.DaoProvider;
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
-import com.gadgetworks.codeshelf.model.domain.DomainTestABC;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.User;
@@ -29,7 +29,6 @@ import com.gadgetworks.codeshelf.ws.jetty.server.JettyWebSocketServer;
 import com.gadgetworks.codeshelf.ws.jetty.server.ServerMessageProcessor;
 import com.gadgetworks.codeshelf.ws.jetty.server.SessionManager;
 import com.gadgetworks.flyweight.command.NetGuid;
-import com.gadgetworks.flyweight.controller.FTDIInterface;
 import com.gadgetworks.flyweight.controller.IGatewayInterface;
 import com.gadgetworks.flyweight.controller.TcpServerInterface;
 import com.google.inject.AbstractModule;
@@ -39,7 +38,7 @@ import com.google.inject.Module;
 import com.google.inject.Singleton;
 
 @Ignore
-public abstract class EndToEndIntegrationTest extends DomainTestABC {
+public abstract class EndToEndIntegrationTest extends EdiTestABC {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(EndToEndIntegrationTest.class);
 

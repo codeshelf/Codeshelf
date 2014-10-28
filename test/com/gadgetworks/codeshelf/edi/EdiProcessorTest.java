@@ -8,7 +8,7 @@ package com.gadgetworks.codeshelf.edi;
 import static org.mockito.Mockito.mock;
 
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.Reader;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
@@ -212,7 +212,7 @@ public class EdiProcessorTest extends EdiTestABC {
 		return new ICsvOrderImporter() {
 
 			@Override
-			public ImportResult importOrdersFromCsvStream(InputStreamReader inCsvStreamReader,
+			public ImportResult importOrdersFromCsvStream(Reader inCsvStreamReader,
 				Facility inFacility,
 				Timestamp inProcessTime) throws IOException {
 				ImportResult result = new ImportResult();

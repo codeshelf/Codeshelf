@@ -5,12 +5,10 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
-import static com.gadgetworks.codeshelf.event.EventProducer.tags;
-
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.Reader;
 import java.sql.Timestamp;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -18,17 +16,17 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import au.com.bytecode.opencsv.CSVReader;
-import au.com.bytecode.opencsv.bean.CsvToBean;
-import au.com.bytecode.opencsv.bean.HeaderColumnNameMappingStrategy;
-
+import com.gadgetworks.codeshelf.event.EventProducer;
 import com.gadgetworks.codeshelf.event.EventSeverity;
+import com.gadgetworks.codeshelf.event.EventTag;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.ILocation;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.OrderLocation;
+import com.gadgetworks.codeshelf.validation.ErrorCode;
+import com.gadgetworks.codeshelf.validation.InputValidationException;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -37,14 +35,15 @@ import com.google.inject.Singleton;
  *
  */
 @Singleton
-public class OrderLocationCsvImporter implements ICsvOrderLocationImporter {
+public class OrderLocationCsvImporter extends CsvImporter<OrderLocationCsvBean> implements ICsvOrderLocationImporter {
 
 	private static final Logger			LOGGER	= LoggerFactory.getLogger(OrderLocationCsvImporter.class);
 
 	private ITypedDao<OrderLocation>	mOrderLocationDao;
 
 	@Inject
-	public OrderLocationCsvImporter(final ITypedDao<OrderLocation> inOrderLocationDao) {
+	public OrderLocationCsvImporter(final EventProducer inProducer, final ITypedDao<OrderLocation> inOrderLocationDao) {
+		super(inProducer);
 
 		mOrderLocationDao = inOrderLocationDao;
 	}
@@ -59,61 +58,37 @@ public class OrderLocationCsvImporter implements ICsvOrderLocationImporter {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.edi.ICsvImporter#importInventoryFromCsvStream(java.io.InputStreamReader, com.gadgetworks.codeshelf.model.domain.Facility)
 	 */
-	public final boolean importOrderLocationsFromCsvStream(InputStreamReader inCsvStreamReader,
+	public final boolean importOrderLocationsFromCsvStream(Reader inCsvReader,
 		Facility inFacility,
 		Timestamp inProcessTime) {
 		boolean result = true;
-		try(CSVReader csvReader = new CSVReader(inCsvStreamReader);) {
-			HeaderColumnNameMappingStrategy<OrderLocationCsvBean> strategy = new HeaderColumnNameMappingStrategy<OrderLocationCsvBean>();
-			strategy.setType(OrderLocationCsvBean.class);
+		List<OrderLocationCsvBean> orderLocationBeanList = toCsvBean(inCsvReader, OrderLocationCsvBean.class);
+		//Sort to put orders with same id together
+		Collections.sort(orderLocationBeanList);
 
-			CsvToBean<OrderLocationCsvBean> csv = new CsvToBean<OrderLocationCsvBean>();
-			List<OrderLocationCsvBean> orderLocationBeanList = csv.parse(strategy, csvReader);
-			//Sort to put orders with same id together
-			Collections.sort(orderLocationBeanList);
+		if (orderLocationBeanList.size() > 0) {
 
-			if (orderLocationBeanList.size() > 0) {
+			LOGGER.debug("Begin order location import.");
 
-				LOGGER.debug("Begin order location import.");
-
-				String lastOrderId = null; //when changes, locations should be cleared
-				// Iterate over the order location map import beans.
-				for (OrderLocationCsvBean orderLocationBean : orderLocationBeanList) {
-					try {	
-						mOrderLocationDao.beginTransaction();
-
-						String errorMsg = orderLocationBean.validateBean();
-						if (errorMsg != null) {
-							LOGGER.error("Order location error: " + errorMsg + " for line: " + orderLocationBean);
-						} else {
-	
-							if (!orderLocationBean.getOrderId().equals(lastOrderId)) {
-								deleteOrderLocations(orderLocationBean.getOrderId(), inFacility, inProcessTime);
-							}
-							orderLocationCsvBeanImport(orderLocationBean, inFacility, inProcessTime);
-							lastOrderId = orderLocationBean.getOrderId();
-						}
-						mOrderLocationDao.commitTransaction();
-					} catch (DaoException e) {
-						LOGGER.warn("dao persistence issue importing order location: " + orderLocationBean, e);
-					} catch(EdiFileReadException e) {
-						LOGGER.warn("file input issue importing order location: " + orderLocationBean, e);
-					} catch (Exception e) {
-						LOGGER.error("unknown issue importing order location: " + orderLocationBean, e);
-					} finally {
-						mOrderLocationDao.endTransaction();
-					}
-				}
-
-				archiveCheckOrderLocations(inFacility, inProcessTime);
-
-				LOGGER.debug("End order location import.");
+			String lastOrderId = null; //when changes, locations should be cleared
+			// Iterate over the order location map import beans.
+			for (OrderLocationCsvBean orderLocationBean : orderLocationBeanList) {
+				try {	
+					lastOrderId = orderLocationCsvBeanImport(lastOrderId, orderLocationBean, inFacility, inProcessTime);
+					produceRecordSuccessEvent(orderLocationBean);
+				} catch(DaoException | EdiFileReadException | InputValidationException e) {
+					produceRecordViolationEvent(EventSeverity.WARN, e, orderLocationBean);
+					LOGGER.warn("Unable to process record: " + orderLocationBean, e);
+				} catch (Exception e) {
+					produceRecordViolationEvent(EventSeverity.ERROR, e, orderLocationBean);
+					LOGGER.error("Unable to process record: " + orderLocationBean, e);
+				} 
 			}
 
-		} catch (IOException | DaoException e) {
-			result = false;
-			LOGGER.error("Unable to process order location stream", e);
-		} 
+			archiveCheckOrderLocations(inFacility, inProcessTime);
+
+			LOGGER.debug("End order location import.");
+		}
 		return result;
 	}
 
@@ -152,20 +127,34 @@ public class OrderLocationCsvImporter implements ICsvOrderLocationImporter {
 	 * @param inFacility
 	 * @param inEdiProcessTime
 	 */
-	private void orderLocationCsvBeanImport(final OrderLocationCsvBean inCsvBean,
+	private String orderLocationCsvBeanImport(final String lastOrderId, final OrderLocationCsvBean inCsvBean,
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime) {
 
 		LOGGER.info(inCsvBean.toString());
-
-		if ((inCsvBean.getLocationId() == null) || inCsvBean.getLocationId().length() == 0) {
-			deleteOrderLocations(inCsvBean.getOrderId(), inFacility, inEdiProcessTime);
-		} else if ((inCsvBean.getOrderId() == null) || inCsvBean.getOrderId().length() == 0) {
-			deleteLocation(inCsvBean.getLocationId(), inFacility, inEdiProcessTime);
-		} else {
-			updateOrderLocation(inCsvBean, inFacility, inEdiProcessTime);
+		try {	
+			mOrderLocationDao.beginTransaction();
+			String errorMsg = inCsvBean.validateBean();
+			if (errorMsg != null) {
+				throw new InputValidationException(inCsvBean, errorMsg);
+			} 
+			if (!inCsvBean.getOrderId().equals(lastOrderId)) {
+				deleteOrderLocations(inCsvBean.getOrderId(), inFacility, inEdiProcessTime);
+			}
+		
+			if ((inCsvBean.getLocationId() == null) || inCsvBean.getLocationId().length() == 0) {
+				deleteOrderLocations(inCsvBean.getOrderId(), inFacility, inEdiProcessTime);
+			} else if ((inCsvBean.getOrderId() == null) || inCsvBean.getOrderId().length() == 0) {
+				deleteLocation(inCsvBean.getLocationId(), inFacility, inEdiProcessTime);
+			} else {
+				updateOrderLocation(inCsvBean, inFacility, inEdiProcessTime);
+			}
+			mOrderLocationDao.commitTransaction();
+			return inCsvBean.getOrderId();
 		}
-
+		finally {
+			mOrderLocationDao.endTransaction();
+		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -192,11 +181,11 @@ public class OrderLocationCsvImporter implements ICsvOrderLocationImporter {
 		ILocation<?> mappedLocation = inFacility.findSubLocationById(locationId);
 		if (mappedLocation == null) {
 			// throw new EdiFileReadException("No location found for location: " + locationId);
-			reportBusinessEvent(tags("import", "slotting"), EventSeverity.WARN, "Could not resolve location: " + locationId + " during slotting import for order: " + orderId);			
+			produceRecordViolationEvent(inCsvBean, "locationId", locationId, ErrorCode.FIELD_REFERENCE_NOT_FOUND);
 			return null;
 		}
 		else if (!mappedLocation.isActive()){
-			reportBusinessEvent(tags("import", "slotting"), EventSeverity.WARN, "Found inactive location: " + locationId + " during slotting import for order: " + orderId);			
+			produceRecordViolationEvent(inCsvBean, "locationId", locationId, ErrorCode.FIELD_REFERENCE_INACTIVE);
 			return null;
 		}
 		// Normal case. Notice that if slotting file came before orders, we createEmptyOrderHeader to backfill later.
@@ -273,5 +262,11 @@ public class OrderLocationCsvImporter implements ICsvOrderLocationImporter {
 				}
 			}
 		}
+	}
+	
+
+	@Override
+	protected Set<EventTag> getEventTagsForImporter() {
+		return EnumSet.of(EventTag.IMPORT, EventTag.ORDER_LOCATION);
 	}
 }

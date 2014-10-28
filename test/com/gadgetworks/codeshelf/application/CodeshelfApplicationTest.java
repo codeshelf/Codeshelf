@@ -5,6 +5,8 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.application;
 
+import static org.mockito.Mockito.mock;
+
 import java.lang.annotation.Annotation;
 import java.util.List;
 import java.util.Map;
@@ -12,6 +14,7 @@ import java.util.Set;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import com.gadgetworks.codeshelf.edi.AislesFileCsvImporter;
 import com.gadgetworks.codeshelf.edi.CrossBatchCsvImporter;
@@ -221,26 +224,12 @@ public class CodeshelfApplicationTest {
 			"1qazse4",
 			"1qazse4");
 
-		ICsvOrderImporter orderImporter = new OutboundOrderCsvImporter(orderGroupDao,
-			orderHeaderDao,
-			orderDetailDao,
-			containerDao,
-			containerUseDao,
-			itemMasterDao,
-			uomMasterDao);
-		ICsvInventoryImporter inventoryImporter = new InventoryCsvImporter(itemMasterDao, itemDao, uomMasterDao);
-		ICsvLocationAliasImporter locationAliasImporter = new LocationAliasCsvImporter(locationAliasDao);
-		ICsvOrderLocationImporter orderLocationImporter = new OrderLocationCsvImporter(orderLocationDao);
-		ICsvCrossBatchImporter crossBatchImporter = new CrossBatchCsvImporter(orderGroupDao,
-			orderHeaderDao,
-			orderDetailDao,
-			containerDao,
-			containerUseDao,
-			uomMasterDao);
-		ICsvAislesFileImporter aislesFileImporter = new AislesFileCsvImporter(aisleDao,
-			bayDao,
-			tierDao,
-			slotDao);
+		ICsvOrderImporter orderImporter = mock(ICsvOrderImporter.class);
+		ICsvInventoryImporter inventoryImporter = mock(ICsvInventoryImporter.class);
+		ICsvLocationAliasImporter locationAliasImporter = mock(ICsvLocationAliasImporter.class);
+		ICsvOrderLocationImporter orderLocationImporter = mock(ICsvOrderLocationImporter.class);
+		ICsvCrossBatchImporter crossBatchImporter = mock(ICsvCrossBatchImporter.class);
+		ICsvAislesFileImporter aislesFileImporter = mock(ICsvAislesFileImporter.class);
 		IEdiProcessor ediProcessor = new EdiProcessor(orderImporter,
 			inventoryImporter,
 			locationAliasImporter,

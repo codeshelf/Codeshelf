@@ -33,22 +33,26 @@ public class DefaultErrors extends AbstractErrors {
 	}
 
 	@Override
-	public void reject(String errorCode, Object[] errorArgs, String defaultMessage) {
-		this.globalErrors.add(new ObjectError(getObjectName(), new String[]{errorCode}, errorArgs, defaultMessage));
+	public void reject(ErrorCode errorCode, Object[] errorArgs, String defaultMessage) {
+		this.globalErrors.add(new ObjectError(getObjectName(), new ErrorCode[]{errorCode}, errorArgs, defaultMessage));
 		
 	}
 
 	@Override
-	public void rejectValue(String field, String errorCode, Object[] errorArgs, String defaultMessage) {
-		addFieldError(field, new FieldError(getObjectName(), field, null, false, new String[]{errorCode}, errorArgs, defaultMessage));
+	public void rejectValue(String field, ErrorCode errorCode, Object[] errorArgs, String defaultMessage) {
+		addFieldError(field, new FieldError(getObjectName(), field, null, false, new ErrorCode[]{errorCode}, errorArgs, defaultMessage));
+	}
+
+	public void rejectValue(String field, Object rejectedValue, ErrorCode errorCode) {
+		addFieldError(field, new FieldError(getObjectName(), field, rejectedValue, false, new ErrorCode[]{errorCode}, new Object[]{}, errorCode.toDefaultMessage(field, rejectedValue)));
 	}
 
 	public void minViolation(String field, int rejectedValue, int min) {
-		addFieldError(field, new FieldError(getObjectName(), field, rejectedValue, false, new String[]{ErrorCode.FIELD_NUMBER_BELOW_MIN}, new Object[]{}, ""));
+		addFieldError(field, new FieldError(getObjectName(), field, rejectedValue, false, new ErrorCode[]{ErrorCode.FIELD_NUMBER_BELOW_MIN}, new Object[]{}, ErrorCode.FIELD_NUMBER_BELOW_MIN.toDefaultMessage(field, rejectedValue)));
 	}
 	
 	public void bindViolation(String field, String rejectedValue, Class<?> type) {
-		addFieldError(field, new FieldError(getObjectName(), field, rejectedValue, true, new String[]{ErrorCode.FIELD_WRONG_TYPE}, new Object[]{}, ""));
+		addFieldError(field, new FieldError(getObjectName(), field, rejectedValue, true, new ErrorCode[]{ErrorCode.FIELD_WRONG_TYPE}, new Object[]{}, ErrorCode.FIELD_WRONG_TYPE.toDefaultMessage(field, rejectedValue)));
 	}
 
 	private void addFieldError(String field, FieldError error) {
@@ -81,6 +85,7 @@ public class DefaultErrors extends AbstractErrors {
 		}
 		return fieldErrorsFlat;
 	}
+
 
 	
 	

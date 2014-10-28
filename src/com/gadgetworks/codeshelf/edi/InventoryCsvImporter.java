@@ -5,23 +5,18 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
-import static com.gadgetworks.codeshelf.event.EventProducer.tags;
-
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.Reader;
 import java.sql.Timestamp;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import au.com.bytecode.opencsv.CSVReader;
-import au.com.bytecode.opencsv.bean.CsvToBean;
-import au.com.bytecode.opencsv.bean.HeaderColumnNameMappingStrategy;
-
+import com.gadgetworks.codeshelf.event.EventProducer;
 import com.gadgetworks.codeshelf.event.EventSeverity;
+import com.gadgetworks.codeshelf.event.EventTag;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Facility;
@@ -44,7 +39,7 @@ import com.google.inject.Singleton;
  *
  */
 @Singleton
-public class InventoryCsvImporter implements ICsvInventoryImporter {
+public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> implements ICsvInventoryImporter {
 
 	private static final Logger		LOGGER	= LoggerFactory.getLogger(InventoryCsvImporter.class);
 
@@ -53,25 +48,23 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 	private ITypedDao<UomMaster>	mUomMasterDao;
 
 	@Inject
-	public InventoryCsvImporter(final ITypedDao<ItemMaster> inItemMasterDao,
+	public InventoryCsvImporter(final EventProducer inProducer, final ITypedDao<ItemMaster> inItemMasterDao,
 		final ITypedDao<Item> inItemDao,
 		final ITypedDao<UomMaster> inUomMaster) {
 
+		super(inProducer);
+		
 		mItemMasterDao = inItemMasterDao;
 		mItemDao = inItemDao;
 		mUomMasterDao = inUomMaster;
 	}
 
-	private void reportBusinessEvent(Set<String> inTags, EventSeverity inSeverity, String inMessage){
-		// Replace with EventProducer call
-		LOGGER.warn(inMessage);
-	}
-
-
+	//WHEN RENABLED SPLIT TO ITS OWN IMPORTER
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.edi.ICsvImporter#importInventoryFromCsvStream(java.io.InputStreamReader, com.gadgetworks.codeshelf.model.domain.Facility)
 	 */
+	/*
 	public final boolean importDdcInventoryFromCsvStream(InputStreamReader inCsvStreamReader,
 		Facility inFacility,
 		Timestamp inProcessTime) {
@@ -117,54 +110,43 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 		}
 
 		return result;
-	}
+	}*/
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.edi.ICsvImporter#importInventoryFromCsvStream(java.io.InputStreamReader, com.gadgetworks.codeshelf.model.domain.Facility)
 	 */
-	public final boolean importSlottedInventoryFromCsvStream(InputStreamReader inCsvStreamReader,
+	public final boolean importSlottedInventoryFromCsvStream(Reader inCsvReader,
 		Facility inFacility,
 		Timestamp inProcessTime) {
 		boolean result = true;
-		try {
 
-			CSVReader csvReader = new CSVReader(inCsvStreamReader);
+		List<InventorySlottedCsvBean> inventoryBeanList = toCsvBean(inCsvReader, InventorySlottedCsvBean.class);
 
-			HeaderColumnNameMappingStrategy<InventorySlottedCsvBean> strategy = new HeaderColumnNameMappingStrategy<InventorySlottedCsvBean>();
-			strategy.setType(InventorySlottedCsvBean.class);
+		if (inventoryBeanList.size() > 0) {
 
-			CsvToBean<InventorySlottedCsvBean> csv = new CsvToBean<InventorySlottedCsvBean>();
-			List<InventorySlottedCsvBean> inventoryBeanList = csv.parse(strategy, csvReader);
+			LOGGER.debug("Begin slotted inventory import.");
 
-			if (inventoryBeanList.size() > 0) {
-
-				LOGGER.debug("Begin slotted inventory import.");
-
-				// Iterate over the inventory import beans.
-				for (InventorySlottedCsvBean slottedInventoryBean : inventoryBeanList) {
-					String errorMsg = slottedInventoryBean.validateBean();
-					if (errorMsg != null) {
-						LOGGER.error("Import errors: " + errorMsg);
-					} else {
-						slottedInventoryCsvBeanImport(slottedInventoryBean, inFacility, inProcessTime);
-					}
+			// Iterate over the inventory import beans.
+			for (InventorySlottedCsvBean slottedInventoryBean : inventoryBeanList) {
+				try {
+					slottedInventoryCsvBeanImport(slottedInventoryBean, inFacility, inProcessTime);
+					produceRecordSuccessEvent(slottedInventoryBean);
 				}
-				// JR says this looks dangerous. Any random file in import/inventory would result in inactivation of all inventory and most masters.
-				// archiveCheckItemStatuses(inFacility, inProcessTime);
-
-				LOGGER.debug("End slotted inventory import.");
+				catch(InputValidationException e) {
+					produceRecordViolationEvent(EventSeverity.WARN, e, slottedInventoryBean);
+					LOGGER.warn("Unable to process record: " + slottedInventoryBean, e);
+				}
+				catch(Exception e) {
+					produceRecordViolationEvent(EventSeverity.ERROR, e, slottedInventoryBean);
+					LOGGER.warn("Unable to process record: " + slottedInventoryBean, e);
+				}
 			}
+			// JR says this looks dangerous. Any random file in import/inventory would result in inactivation of all inventory and most masters.
+			// archiveCheckItemStatuses(inFacility, inProcessTime);
 
-			csvReader.close();
-		} catch (FileNotFoundException e) {
-			result = false;
-			LOGGER.error("Inventory file not found", e);
-		} catch (IOException e) {
-			result = false;
-			LOGGER.error("Inventory file IO", e);
+			LOGGER.debug("End slotted inventory import.");
 		}
-
 		return result;
 	}
 
@@ -257,51 +239,56 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 	 */
 	private void slottedInventoryCsvBeanImport(final InventorySlottedCsvBean inCsvBean,
 		final Facility inFacility,
-		final Timestamp inEdiProcessTime) {
+		final Timestamp inEdiProcessTime) throws InputValidationException {
 
 		try {
 			mItemDao.beginTransaction();
-
-
 			
-			try {
-				LOGGER.info(inCsvBean.toString());
-				
-				UomMaster uomMaster = upsertUomMaster(inCsvBean.getUom(), inFacility);
-				
-				String theItemID = inCsvBean.getItemId();
-				ItemMaster itemMaster = updateItemMaster(theItemID,
-					inCsvBean.getDescription(),
-					inFacility,
-					inEdiProcessTime,
-					uomMaster);
-				
-				String theLocationID = inCsvBean.getLocationId();
-				ILocation<? extends IDomainObject> location = inFacility.findSubLocationById(theLocationID);
-				// Remember, findSubLocationById will find inactive locations.
-				// We couldn't find the location, so assign the inventory to the facility itself (which is a location);  Not sure this is best, but it is the historical behavior from pre-v1.
-				if (location == null) {
-					reportBusinessEvent(tags("import", "inventory"), EventSeverity.WARN, "Updating inventory item: " + theItemID + " to facility because did not recognize location: " + theLocationID);			
-					location = inFacility;
-				}
-				// If location is inactive, then what? Would we want to move existing inventory there to facility? Doing that initially mostly because it is easier.
-				// Might be better to ask if this inventory item is already in that inactive location, and not move it if so.
-				else if (!location.isActive()) {
-					reportBusinessEvent(tags("import", "inventory"), EventSeverity.WARN, "Updating inventory item: " + theItemID + " to facility because location: " + theLocationID + " was deleted.");			
-					location = inFacility;
-				}
+			LOGGER.info(inCsvBean.toString());
+			String errorMsg = inCsvBean.validateBean();
+			if (errorMsg != null) {
+				throw new InputValidationException(inCsvBean, errorMsg);
+			} 
+			
+			UomMaster uomMaster = upsertUomMaster(inCsvBean.getUom(), inFacility);
 
-				if (Strings.isNullOrEmpty(inCsvBean.getCmFromLeft())) {
-					inCsvBean.setCmFromLeft("0");
-				}
-				@SuppressWarnings("unused")
-				Item item = updateSlottedItem(true, inCsvBean, location, inEdiProcessTime, itemMaster, uomMaster);
+			String theItemID = inCsvBean.getItemId();
+			ItemMaster itemMaster = updateItemMaster(theItemID,
+				inCsvBean.getDescription(),
+				inFacility,
+				inEdiProcessTime,
+				uomMaster);
+			
+			String theLocationID = inCsvBean.getLocationId();
+			ILocation<? extends IDomainObject> location = inFacility.findSubLocationById(theLocationID);
+			// Remember, findSubLocationById will find inactive locations.
+			// We couldn't find the location, so assign the inventory to the facility itself (which is a location);  Not sure this is best, but it is the historical behavior from pre-v1.
+			if (location == null) {
+				produceRecordViolationEvent(inCsvBean, "locationId", theLocationID, ErrorCode.FIELD_REFERENCE_NOT_FOUND);			
+				produceRecordViolationEvent(inCsvBean, "Using facility for missing location");
+				//produceRecordViolationEvent(inCsvBean, "locationId", theLocationID, ErrorCode.FIELD_IMPLIED_VALUE, inFacility.getLocationId());			
+				location = inFacility;
+			}
+			// If location is inactive, then what? Would we want to move existing inventory there to facility? Doing that initially mostly because it is easier.
+			// Might be better to ask if this inventory item is already in that inactive location, and not move it if so.
+			else if (!location.isActive()) {
+				produceRecordViolationEvent(inCsvBean, "locationId", theLocationID, ErrorCode.FIELD_REFERENCE_INACTIVE);			
+				produceRecordViolationEvent(inCsvBean, "Using facility for inactive location");
+				//produceRecordViolationEvent(inCsvBean, "locationId", theLocationID, ErrorCode.FIELD_IMPLIED_VALUE, inFacility.getLocationId());			
+				location = inFacility;
+			}
 
-				mItemDao.commitTransaction();
+			if (Strings.isNullOrEmpty(inCsvBean.getCmFromLeft())) {
+				inCsvBean.setCmFromLeft("0");
 			}
-			catch(InputValidationException e) {
-				LOGGER.error("unable to save line: " + inCsvBean, e);
+
+			if (Strings.isNullOrEmpty(inCsvBean.getCmFromLeft())) {
+				inCsvBean.setCmFromLeft("0");
 			}
+			@SuppressWarnings("unused")
+			Item item = updateSlottedItem(true, inCsvBean, location, inEdiProcessTime, itemMaster, uomMaster);
+
+			mItemDao.commitTransaction();
 
 		} finally {
 			mItemDao.endTransaction();
@@ -523,5 +510,10 @@ public class InventoryCsvImporter implements ICsvInventoryImporter {
 		} 
 		mItemDao.store(result);
 		return result;
+	}
+	
+	@Override
+	protected Set<EventTag> getEventTagsForImporter() {
+		return EnumSet.of(EventTag.IMPORT, EventTag.INVENTORY_SLOTTED);
 	}
 }

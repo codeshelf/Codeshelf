@@ -151,7 +151,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		mSubLocationDao.store(bay2);
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvInventoryImporter importer = new InventoryCsvImporter(mItemMasterDao, mItemDao, mUomMasterDao);
+		ICsvInventoryImporter importer = createInventoryImporter();
 		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
 
 		bay1 = (Bay) facility.findSubLocationById("A1.B1");
@@ -180,7 +180,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		reader = new InputStreamReader(stream);
 
 		ediProcessTime = new Timestamp(System.currentTimeMillis());
-		importer = new InventoryCsvImporter(mItemMasterDao, mItemDao, mUomMasterDao);
+		importer = createInventoryImporter();
 		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
 
 		bay1 = (Bay) facility.findSubLocationById("A1.B1");
@@ -244,7 +244,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		Facility facility = organization.getFacility(fName);
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		AislesFileCsvImporter importer = createAisleFileImporter();
 		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Get the aisle
@@ -287,7 +287,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		InputStreamReader reader2 = new InputStreamReader(stream2);
 
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvLocationAliasImporter importer2 = new LocationAliasCsvImporter(mLocationAliasDao);
+		ICsvLocationAliasImporter importer2 = createLocationAliasImporter();
 		importer2.importLocationAliasesFromCsvStream(reader2, facility, ediProcessTime2);
 
 		String nName = "N-" + inOrganizationName;
@@ -396,7 +396,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		InputStreamReader reader = new InputStreamReader(stream);
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvInventoryImporter importer = new InventoryCsvImporter(mItemMasterDao, mItemDao, mUomMasterDao);
+		ICsvInventoryImporter importer = createInventoryImporter();
 		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
 
 		// How do you find the inventory items made?
@@ -497,7 +497,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		InputStreamReader reader = new InputStreamReader(stream);
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvInventoryImporter importer = new InventoryCsvImporter(mItemMasterDao, mItemDao, mUomMasterDao);
+		ICsvInventoryImporter importer = createInventoryImporter();
 		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
 
 		// item1123 for EA in D402 which is the A2.B1.T1. 135 cm from left of 230 cm aisle
@@ -550,7 +550,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		InputStreamReader reader = new InputStreamReader(stream);
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvInventoryImporter importer = new InventoryCsvImporter(mItemMasterDao, mItemDao, mUomMasterDao);
+		ICsvInventoryImporter importer = createInventoryImporter();
 		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
 
 		LocationABC locationD403 = (LocationABC) facility.findSubLocationById("D403");
@@ -584,7 +584,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		Facility facility = organization.getFacility("F-INV1.1");
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvInventoryImporter importer = new InventoryCsvImporter(mItemMasterDao, mItemDao, mUomMasterDao);
+		ICsvInventoryImporter importer = createInventoryImporter();
 		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
 		return facility;
 	}
@@ -611,7 +611,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		InputStreamReader reader = new InputStreamReader(stream);
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvInventoryImporter importer = new InventoryCsvImporter(mItemMasterDao, mItemDao, mUomMasterDao);
+		ICsvInventoryImporter importer = createInventoryImporter();
 		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
 
 		LocationABC locationD403 = (LocationABC) facility.findSubLocationById("D403");
@@ -646,13 +646,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		InputStreamReader reader2 = new InputStreamReader(stream2);
 
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvOrderImporter importer2 = new OutboundOrderCsvImporter(mOrderGroupDao,
-			mOrderHeaderDao,
-			mOrderDetailDao,
-			mContainerDao,
-			mContainerUseDao,
-			mItemMasterDao,
-			mUomMasterDao);
+		ICsvOrderImporter importer2 = createOrderImporter();
 		importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);
 
 		// We should have one order with 3 details. Only 2 of which are fulfillable.
@@ -759,7 +753,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		InputStreamReader reader = new InputStreamReader(stream);
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvInventoryImporter importer = new InventoryCsvImporter(mItemMasterDao, mItemDao, mUomMasterDao);
+		ICsvInventoryImporter importer = createInventoryImporter();
 		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
 
 		LocationABC locationD403 = (LocationABC) facility.findSubLocationById("D403");
@@ -786,13 +780,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		InputStreamReader reader2 = new InputStreamReader(stream2);
 
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvOrderImporter importer2 = new OutboundOrderCsvImporter(mOrderGroupDao,
-			mOrderHeaderDao,
-			mOrderDetailDao,
-			mContainerDao,
-			mContainerUseDao,
-			mItemMasterDao,
-			mUomMasterDao);
+		ICsvOrderImporter importer2 = createOrderImporter();
 		importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);
 
 		// Let's find our CHE

@@ -112,22 +112,22 @@ public abstract class AbstractErrors implements Errors, Serializable {
 
 
 	@Override
-	public void reject(String errorCode) {
+	public void reject(ErrorCode errorCode) {
 		reject(errorCode, null, null);
 	}
 
 	@Override
-	public void reject(String errorCode, String defaultMessage) {
+	public void reject(ErrorCode errorCode, String defaultMessage) {
 		reject(errorCode, null, defaultMessage);
 	}
 
 	@Override
-	public void rejectValue(String field, String errorCode) {
+	public void rejectValue(String field, ErrorCode errorCode) {
 		rejectValue(field, errorCode, null, null);
 	}
 
 	@Override
-	public void rejectValue(String field, String errorCode, String defaultMessage) {
+	public void rejectValue(String field, ErrorCode errorCode, String defaultMessage) {
 		rejectValue(field, errorCode, null, defaultMessage);
 	}
 
