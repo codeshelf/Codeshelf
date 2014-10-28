@@ -65,7 +65,7 @@ public class FieldError extends ObjectError {
 	 * @param defaultMessage the default message to be used to resolve this message
 	 */
 	public FieldError(String objectName, String field, Object rejectedValue, ErrorCode errorCode) {
-		this(objectName, field, rejectedValue, false, new ErrorCode[]{errorCode}, null, "");
+		this(objectName, field, rejectedValue, false, new ErrorCode[]{errorCode}, null, errorCode.toDefaultMessage(field, rejectedValue));
 	}
 	
 	/**

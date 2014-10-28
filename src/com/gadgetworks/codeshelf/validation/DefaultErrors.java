@@ -44,15 +44,15 @@ public class DefaultErrors extends AbstractErrors {
 	}
 
 	public void rejectValue(String field, Object rejectedValue, ErrorCode errorCode) {
-		addFieldError(field, new FieldError(getObjectName(), field, rejectedValue, false, new ErrorCode[]{errorCode}, new Object[]{}, ""));
+		addFieldError(field, new FieldError(getObjectName(), field, rejectedValue, false, new ErrorCode[]{errorCode}, new Object[]{}, errorCode.toDefaultMessage(field, rejectedValue)));
 	}
 
 	public void minViolation(String field, int rejectedValue, int min) {
-		addFieldError(field, new FieldError(getObjectName(), field, rejectedValue, false, new ErrorCode[]{ErrorCode.FIELD_NUMBER_BELOW_MIN}, new Object[]{}, ""));
+		addFieldError(field, new FieldError(getObjectName(), field, rejectedValue, false, new ErrorCode[]{ErrorCode.FIELD_NUMBER_BELOW_MIN}, new Object[]{}, ErrorCode.FIELD_NUMBER_BELOW_MIN.toDefaultMessage(field, rejectedValue)));
 	}
 	
 	public void bindViolation(String field, String rejectedValue, Class<?> type) {
-		addFieldError(field, new FieldError(getObjectName(), field, rejectedValue, true, new ErrorCode[]{ErrorCode.FIELD_WRONG_TYPE}, new Object[]{}, ""));
+		addFieldError(field, new FieldError(getObjectName(), field, rejectedValue, true, new ErrorCode[]{ErrorCode.FIELD_WRONG_TYPE}, new Object[]{}, ErrorCode.FIELD_WRONG_TYPE.toDefaultMessage(field, rejectedValue)));
 	}
 
 	private void addFieldError(String field, FieldError error) {
