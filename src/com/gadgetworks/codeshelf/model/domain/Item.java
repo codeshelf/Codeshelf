@@ -190,7 +190,11 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		if (alias == null) {
 			throw new DaoException("could not find location with alias: " + inLocationAliasId);
 		}
-		setStoredLocation(alias.getMappedLocation());
+		ISubLocation<?> loc = alias.getMappedLocation();
+		if (!loc.isActive()) {
+			throw new DaoException("The location with alias: " + inLocationAliasId + " was deleted");
+		}
+		setStoredLocation(loc);
 	}
 
 	public final String getItemCmFromLeft() {

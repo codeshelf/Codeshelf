@@ -76,7 +76,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	public static String computeCrossOrderId(String inContainerId, Timestamp inTimestamp) {
 		return inContainerId + "." + inTimestamp;
 	}
-	
+
 	public static OrderHeader createEmptyOrderHeader(Facility inFacility, String inOrderId) {
 		OrderHeader header = new OrderHeader();
 		header.setParent(inFacility);
@@ -199,7 +199,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		statusEnum = OrderStatusEnum.CREATED;
 		pickStrategyEnum = PickStrategyEnum.SERIAL;
 	}
-	
+
 	public OrderHeader(Facility facility, String domainId) {
 		super(domainId);
 		parent = facility;
@@ -258,7 +258,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		addOrderLocation(result);
 		return result;
 	}
-	
+
 	private OrderLocation createOrderLocation(ILocation<?> inLocation) {
 		OrderLocation result = new OrderLocation();
 		result.setDomainId(OrderLocation.makeDomainId(this, inLocation));
@@ -281,16 +281,28 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	public final void removeOrderLocation(String inOrderLocationId) {
 		orderLocations.remove(inOrderLocationId);
 	}
-	
-	public final List<OrderLocation> getActiveOrderLocations() {
+
+	private final List<OrderLocation> getOrderHeaderOrderLocations(boolean inIncludeInactiveLocations) {
 		//TODO do efficient DB lookup
 		List<OrderLocation> newActiveOrderLocations = new ArrayList<OrderLocation>();
 		for (OrderLocation orderLocation : getOrderLocations()) {
 			if (orderLocation.getActive()) {
-				newActiveOrderLocations.add(orderLocation);
+				ISubLocation<?> loc = orderLocation.getLocation();
+				if (inIncludeInactiveLocations || loc.isActive()) // do not need null check due to database constraint
+					newActiveOrderLocations.add(orderLocation);
 			}
 		}
 		return newActiveOrderLocations;
+	}
+
+	public final List<OrderLocation> getActiveOrderLocations() {
+		// New from v8. If the location was deleted, do not return with getActiveOrderLocations even if the orderLocation flag is active. (It will archive eventually.)
+		return getOrderHeaderOrderLocations(false);
+	}
+
+	public final List<OrderLocation> getActiveOrderLocationsIncludeInactiveLocations() {
+		// new function from v8. Only called by the UI function
+		return getOrderHeaderOrderLocations(true);
 	}
 
 	public final List<OrderLocation> getOrderLocations() {
@@ -377,14 +389,15 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 			if (orderDetail.getActive()) {
 				result++;
 			}
-		}		
+		}
 		return result;
 	}
 
 	// --------------------------------------------------------------------------
 	/**
 	 * Return the first order location we find along the path (in path working order).
-	 * This is used as a metafield for order in the UI.
+	 * This is used in Crossbatch order processing. This may return null, especially if 
+	 * Locations for some orders were deleted as getActiveOrderLocations() excludes those.
 	 * @param inPath
 	 * @return
 	 */
@@ -401,21 +414,22 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 
 		return result;
 	}
+
 	// --------------------------------------------------------------------------
 	/**
 	 * Return the alias name of the first order location found. If we should later know the first or only path, could use getFirstOrderLocationOnPath
 	 * Jeff wants delimitted list if multiple locations.
 	 * Jeff really wants that list in the order the user thinks about, which he says may not be the path order.
-	 * @return
+	 * Note: this is called ONLY by the UI.  We want to include locations with deleted locations for UI purpose.
 	 */
 	public final String getOrderLocationAliasIds() {
 		String result = "";
-		
-		List<OrderLocation> oLocations = getActiveOrderLocations();
+
+		List<OrderLocation> oLocations = getActiveOrderLocationsIncludeInactiveLocations();
 		int numLocations = oLocations.size();
 		if (numLocations == 0)
 			return result;
-		
+
 		OrderLocation firstLocation = oLocations.get(0);
 		if (firstLocation != null) {
 			ISubLocation<?> theLoc = firstLocation.getLocation();
@@ -429,7 +443,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 				if (nextLocation != null) {
 					ISubLocation<?> theLoc = nextLocation.getLocation();
 					if (theLoc != null)
-						result =  result + ";" + ((LocationABC<?>) theLoc).getPrimaryAliasId();
+						result = result + ";" + ((LocationABC<?>) theLoc).getPrimaryAliasId();
 				}
 			}
 		}

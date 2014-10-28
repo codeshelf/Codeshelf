@@ -426,11 +426,13 @@ public class LocationDeleteTest extends EdiTestABC {
 		LocationABC<?> locationA1B2T1S5 = (LocationABC<?>) facility.findSubLocationById("A1.B2.T1.S5");
 		Assert.assertNotNull(locationA1B2T1S5);
 		Assert.assertFalse(locationA1B2T1S5.isActive());
-		// Location alias was D-26 for this. Should still know it.
-		Assert.assertEquals("D-26", locationA1B2T1S5.getPrimaryAliasId());
+		// Location alias was D-26 for this. Should still know it. However, display comes with brackets.
+		Assert.assertEquals("<D-26>", locationA1B2T1S5.getPrimaryAliasId());
 		// If you ask by the mapped name, should still get the location
 		ILocation<?> mappedLocation = facility.findSubLocationById("D-26");
 		Assert.assertEquals(locationA1B2T1S5, mappedLocation);
+		// Nominal positions also come with brackets
+		Assert.assertEquals("<A1.B2.T1.S5>", locationA1B2T1S5.getNominalLocationId());
 
 		LOGGER.info("Reading location aliases again should warn about A1.B2.T1.S5 and other being inactive");
 		readLocationAliases(facility);

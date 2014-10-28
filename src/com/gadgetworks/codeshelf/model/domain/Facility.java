@@ -88,10 +88,9 @@ import com.google.inject.Singleton;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class Facility extends SubLocationABC<Facility> {
 
-	@SuppressWarnings("unused")
-	private static final long	serialVersionUID	= 1L;
+	private static final long			serialVersionUID	= 1L;
 
-	private static final String			IRONMQ_DOMAINID	= "IRONMQ";
+	private static final String			IRONMQ_DOMAINID		= "IRONMQ";
 
 	@Inject
 	public static ITypedDao<Facility>	DAO;
@@ -400,7 +399,7 @@ public class Facility extends SubLocationABC<Facility> {
 		network.setChannel(channel);
 		network.getDao().store(network);
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inProtoBayWidthMeters
@@ -814,13 +813,13 @@ public class Facility extends SubLocationABC<Facility> {
 			int value = CompareNullChecker.compareNulls(inWi1, inWi2);
 			if (value != 0)
 				return value;
-			
+
 			String w1Sort = inWi1.getGroupAndSortCode();
 			String w2Sort = inWi2.getGroupAndSortCode();
 			value = CompareNullChecker.compareNulls(w1Sort, w2Sort);
 			if (value != 0)
 				return value;
-			
+
 			return w1Sort.compareTo(w2Sort);
 		}
 	}
@@ -975,9 +974,8 @@ public class Facility extends SubLocationABC<Facility> {
 		} else {
 			for (Path path : getPaths()) {
 				boolean foundOne = false;
-				// Item item = itemMaster.getFirstItemOnPath(path); // was this before v3
 				String uomStr = inOrderDetail.getUomMasterId();
-				Item item = itemMaster.getFirstItemMatchingUomOnPath(path, uomStr);
+				Item item = itemMaster.getFirstActiveItemMatchingUomOnPath(path, uomStr);
 
 				if (item != null) {
 					resultWi = createWorkInstruction(WorkInstructionStatusEnum.NEW,
@@ -1103,20 +1101,24 @@ public class Facility extends SubLocationABC<Facility> {
 		return wiList;
 	}
 
+	/**
+	 * toPossibleLocations will return a list, but the list may be empty
+	 */
 	private List<ISubLocation<?>> toPossibleLocations(OrderDetail matchingOutboundOrderDetail) {
 		ArrayList<ISubLocation<?>> locations = new ArrayList<ISubLocation<?>>();
 		for (Path path : getPaths()) {
 			OrderLocation firstOutOrderLoc = matchingOutboundOrderDetail.getParent().getFirstOrderLocationOnPath(path);
-			locations.add(firstOutOrderLoc.getLocation());
+			if (firstOutOrderLoc != null)
+				locations.add(firstOutOrderLoc.getLocation());
 		}
 		return locations;
 	}
-		
+
 	private List<OrderDetail> getMatchingOutboundOrderDetail(OrderDetail crossbatchOrderDetail) {
 		Preconditions.checkNotNull(crossbatchOrderDetail);
 		Preconditions.checkArgument(crossbatchOrderDetail.getActive());
 		Preconditions.checkArgument(crossbatchOrderDetail.getParent().getOrderTypeEnum().equals(OrderTypeEnum.CROSS));
-		
+
 		List<OrderDetail> matchingOutboundOrderDetail = new ArrayList<OrderDetail>();
 		for (OrderHeader outOrder : getOrderHeaders()) {
 			boolean match = true;
@@ -1128,18 +1130,19 @@ public class Facility extends SubLocationABC<Facility> {
 					if (outOrderDetail.getActive()) {
 						boolean matchDetail = true;
 						matchDetail &= outOrderDetail.getItemMaster().equals(crossbatchOrderDetail.getItemMaster());
-						matchDetail &= UomNormalizer.normalizedEquals(outOrderDetail.getUomMasterId(),	crossbatchOrderDetail.getUomMasterId());
+						matchDetail &= UomNormalizer.normalizedEquals(outOrderDetail.getUomMasterId(),
+							crossbatchOrderDetail.getUomMasterId());
 						if (matchDetail) {
 							matchingOutboundOrderDetail.add(outOrderDetail);
 						}
 					}
-					
+
 				}
 			}
 		}
 		return matchingOutboundOrderDetail;
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inOrder
@@ -1151,17 +1154,6 @@ public class Facility extends SubLocationABC<Facility> {
 		// For DEV-315, if more than one location, sort them.
 		List<String> locIdList = new ArrayList<String>();
 
-		// old way. Not sorted. Just took the locations on the order in whatever order they were.
-		/*
-		for (OrderLocation orderLocation : inOrder.getOrderLocations()) {
-			LocationAlias locAlias = orderLocation.getLocation().getPrimaryAlias();
-			if (locAlias != null) {
-				locationString += locAlias.getAlias() + " ";
-			} else {
-				locationString += orderLocation.getLocation().getLocationId();
-			}
-		}
-		*/
 		for (OrderLocation orderLocation : inOrder.getActiveOrderLocations()) {
 			LocationAlias locAlias = orderLocation.getLocation().getPrimaryAlias();
 			if (locAlias != null) {
@@ -1284,6 +1276,7 @@ public class Facility extends SubLocationABC<Facility> {
 
 				// This test might be fragile. If it was a cross batch situation, then the orderHeader will have one or more locations.
 				// If no order locations, then it must be a pick order. We want the leds for the inventory item.
+				// getOrderLocations or getActiveOrderLocations? Let's assume if any orderlocations at all for this order header, then crossbatch
 				if (passedInDetailParent.getOrderLocations().size() == 0) {
 					isInventoryPickInstruction = true;
 					setOutboundWorkInstructionLedPatternAndPosAlongPathFromInventoryItem(resultWi,
@@ -1813,7 +1806,7 @@ public class Facility extends SubLocationABC<Facility> {
 	 */
 	private List<ILocation<?>> getDdcLocations() {
 		LOGGER.debug("DDC get locations");
-		List<ILocation<?>> ddcLocations = new ArrayList<ILocation<?>>();		
+		List<ILocation<?>> ddcLocations = new ArrayList<ILocation<?>>();
 		for (ISubLocation<?> aisle : getActiveChildrenAtLevel(Aisle.class)) {
 			// no actual need for above line. facility.getActiveChildren would work equally
 			for (ILocation<?> location : aisle.getActiveChildren()) {
@@ -2006,7 +1999,7 @@ public class Facility extends SubLocationABC<Facility> {
 			errors.rejectValue("storedLocation", ErrorCode.FIELD_NOT_FOUND, "storedLocation was not found");
 			throw new InputValidationException(errors);
 		}
-		
+
 		Item returnItem = importer.updateSlottedItem(false,
 			itemBean,
 			location,
