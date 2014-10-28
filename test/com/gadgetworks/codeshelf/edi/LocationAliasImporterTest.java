@@ -14,11 +14,14 @@ import static org.mockito.Mockito.verify;
 import java.io.StringReader;
 import java.sql.Timestamp;
 import java.util.EnumSet;
+import java.util.Set;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import com.gadgetworks.codeshelf.event.EventProducer;
+import com.gadgetworks.codeshelf.event.EventSeverity;
 import com.gadgetworks.codeshelf.event.EventTag;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Bay;
@@ -48,16 +51,48 @@ public class LocationAliasImporterTest extends EdiTestABC {
 		Bay bay2 = new Bay(aisleA2, "B2", Point.getZeroPoint(), Point.getZeroPoint());
 		bay2.getDao().store(bay2);
 		
-		
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		EventProducer producer = mock(EventProducer.class);
 		ICsvLocationAliasImporter importer = new LocationAliasCsvImporter(producer, mLocationAliasDao);
 		importer.importLocationAliasesFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
 		verify(producer, times(2)).produceSuccessEvent(eq(EnumSet.of(EventTag.IMPORT, EventTag.LOCATION_ALIAS)), any(ImportCsvBeanABC.class));
-		
-		
+		verify(producer, Mockito.never()).produceViolationEvent(any(Set.class), any(EventSeverity.class),  any(Exception.class), any(Object.class));
 	}
+
+	@Test
+	public final void violationEventProducedWhenLocationInactive() {
+		String csvString = "mappedLocationId,locationAlias\r\n" //
+				+ "A1, AisleA\r\n";
 		
+		Facility facility = createFacility();
+		Aisle aisleA1 = new Aisle(facility, "A1", Point.getZeroPoint(), Point.getZeroPoint());
+		aisleA1.setActive(false);
+		aisleA1.getDao().store(aisleA1);
+				
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		EventProducer producer = mock(EventProducer.class);
+		ICsvLocationAliasImporter importer = new LocationAliasCsvImporter(producer, mLocationAliasDao);
+		importer.importLocationAliasesFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
+		verify(producer, times(1)).produceViolationEvent(eq(EnumSet.of(EventTag.IMPORT, EventTag.LOCATION_ALIAS)), eq(EventSeverity.WARN), any(Exception.class), any(ImportCsvBeanABC.class));
+		verify(producer, Mockito.never()).produceSuccessEvent(any(Set.class), any(Object.class));
+	}
+
+	@Test
+	public final void violationEventProducedWhenLocationNotFound() {
+		String csvString = "mappedLocationId,locationAlias\r\n" //
+				+ "ANOTTHERE, AisleA\r\n";
+		
+		Facility facility = createFacility();
+				
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		EventProducer producer = mock(EventProducer.class);
+		ICsvLocationAliasImporter importer = new LocationAliasCsvImporter(producer, mLocationAliasDao);
+		importer.importLocationAliasesFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
+		verify(producer, times(1)).produceViolationEvent(eq(EnumSet.of(EventTag.IMPORT, EventTag.LOCATION_ALIAS)), eq(EventSeverity.WARN), any(Exception.class), any(ImportCsvBeanABC.class));
+		verify(producer, Mockito.never()).produceSuccessEvent(any(Set.class), any(Object.class));
+	}
+
+	
 	@Test
 	public final void findLocationByIdAfterImport() {
 
