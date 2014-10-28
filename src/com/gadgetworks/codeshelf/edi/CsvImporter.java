@@ -13,6 +13,9 @@ import au.com.bytecode.opencsv.bean.HeaderColumnNameMappingStrategy;
 import com.gadgetworks.codeshelf.event.EventProducer;
 import com.gadgetworks.codeshelf.event.EventSeverity;
 import com.gadgetworks.codeshelf.event.EventTag;
+import com.gadgetworks.codeshelf.validation.DefaultErrors;
+import com.gadgetworks.codeshelf.validation.ErrorCode;
+import com.gadgetworks.codeshelf.validation.InputValidationException;
 
 public abstract class CsvImporter<T> {
 
@@ -37,11 +40,27 @@ public abstract class CsvImporter<T> {
 	}
 
 	protected void produceRecordSuccessEvent(Object inRelatedObject) {
-		mEventProducer.produceSuccessEvent(getEventTagsForImporter(), inRelatedObject);
+		mEventProducer.produceEvent(getEventTagsForImporter(), EventSeverity.INFO, inRelatedObject);
 	}
 
+	protected void produceRecordViolationEvent(EventSeverity inSeverity, InputValidationException e, Object inRelatedObject) {
+		mEventProducer.produceViolationEvent(getEventTagsForImporter(), inSeverity, e.getErrors(), inRelatedObject);
+	}
+	
 	protected void produceRecordViolationEvent(EventSeverity inSeverity, Exception e, Object inRelatedObject) {
 		mEventProducer.produceViolationEvent(getEventTagsForImporter(), inSeverity, e, inRelatedObject);
+	}
+
+	protected void produceRecordViolationEvent(Object inRelatedObject, String generalMessage) {
+		DefaultErrors errors = new DefaultErrors(inRelatedObject.getClass());
+		errors.reject(ErrorCode.GENERAL, generalMessage);
+		mEventProducer.produceViolationEvent(getEventTagsForImporter(), EventSeverity.WARN, errors, inRelatedObject);
+	}
+
+	protected void produceRecordViolationEvent(Object inRelatedObject, String inFieldName, Object inRejectedValue, ErrorCode inErrorCode) {
+		DefaultErrors errors = new DefaultErrors(inRelatedObject.getClass());
+		errors.rejectValue(inFieldName, inRejectedValue, inErrorCode);
+		mEventProducer.produceViolationEvent(getEventTagsForImporter(), EventSeverity.WARN, errors, inRelatedObject);
 	}
 	
 	protected abstract Set<EventTag> getEventTagsForImporter();

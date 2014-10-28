@@ -43,6 +43,10 @@ public class DefaultErrors extends AbstractErrors {
 		addFieldError(field, new FieldError(getObjectName(), field, null, false, new ErrorCode[]{errorCode}, errorArgs, defaultMessage));
 	}
 
+	public void rejectValue(String field, Object rejectedValue, ErrorCode errorCode) {
+		addFieldError(field, new FieldError(getObjectName(), field, rejectedValue, false, new ErrorCode[]{errorCode}, new Object[]{}, ""));
+	}
+
 	public void minViolation(String field, int rejectedValue, int min) {
 		addFieldError(field, new FieldError(getObjectName(), field, rejectedValue, false, new ErrorCode[]{ErrorCode.FIELD_NUMBER_BELOW_MIN}, new Object[]{}, ""));
 	}
@@ -81,6 +85,7 @@ public class DefaultErrors extends AbstractErrors {
 		}
 		return fieldErrorsFlat;
 	}
+
 
 	
 	

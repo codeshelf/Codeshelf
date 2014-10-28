@@ -28,6 +28,7 @@ import com.gadgetworks.codeshelf.model.domain.Bay;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.ILocation;
 import com.gadgetworks.codeshelf.model.domain.Point;
+import com.gadgetworks.codeshelf.validation.Errors;
 
 /**
  * @author jeffw
@@ -55,7 +56,7 @@ public class LocationAliasImporterTest extends EdiTestABC {
 		EventProducer producer = mock(EventProducer.class);
 		ICsvLocationAliasImporter importer = new LocationAliasCsvImporter(producer, mLocationAliasDao);
 		importer.importLocationAliasesFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
-		verify(producer, times(2)).produceSuccessEvent(eq(EnumSet.of(EventTag.IMPORT, EventTag.LOCATION_ALIAS)), any(ImportCsvBeanABC.class));
+		verify(producer, times(2)).produceEvent(eq(EnumSet.of(EventTag.IMPORT, EventTag.LOCATION_ALIAS)), eq(EventSeverity.INFO), any(ImportCsvBeanABC.class));
 		verify(producer, Mockito.never()).produceViolationEvent(any(Set.class), any(EventSeverity.class),  any(Exception.class), any(Object.class));
 	}
 
@@ -73,8 +74,8 @@ public class LocationAliasImporterTest extends EdiTestABC {
 		EventProducer producer = mock(EventProducer.class);
 		ICsvLocationAliasImporter importer = new LocationAliasCsvImporter(producer, mLocationAliasDao);
 		importer.importLocationAliasesFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
-		verify(producer, times(1)).produceViolationEvent(eq(EnumSet.of(EventTag.IMPORT, EventTag.LOCATION_ALIAS)), eq(EventSeverity.WARN), any(Exception.class), any(ImportCsvBeanABC.class));
-		verify(producer, Mockito.never()).produceSuccessEvent(any(Set.class), any(Object.class));
+		verify(producer, times(1)).produceViolationEvent(eq(EnumSet.of(EventTag.IMPORT, EventTag.LOCATION_ALIAS)), eq(EventSeverity.WARN), any(Errors.class), any(ImportCsvBeanABC.class));
+		verify(producer, Mockito.never()).produceEvent(any(Set.class), eq(EventSeverity.INFO), any(Object.class));
 	}
 
 	@Test
@@ -88,8 +89,8 @@ public class LocationAliasImporterTest extends EdiTestABC {
 		EventProducer producer = mock(EventProducer.class);
 		ICsvLocationAliasImporter importer = new LocationAliasCsvImporter(producer, mLocationAliasDao);
 		importer.importLocationAliasesFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
-		verify(producer, times(1)).produceViolationEvent(eq(EnumSet.of(EventTag.IMPORT, EventTag.LOCATION_ALIAS)), eq(EventSeverity.WARN), any(Exception.class), any(ImportCsvBeanABC.class));
-		verify(producer, Mockito.never()).produceSuccessEvent(any(Set.class), any(Object.class));
+		verify(producer, times(1)).produceViolationEvent(eq(EnumSet.of(EventTag.IMPORT, EventTag.LOCATION_ALIAS)), eq(EventSeverity.WARN), any(Errors.class), any(ImportCsvBeanABC.class));
+		verify(producer, Mockito.never()).produceEvent(any(Set.class), eq(EventSeverity.INFO),  any(Object.class));
 	}
 
 	

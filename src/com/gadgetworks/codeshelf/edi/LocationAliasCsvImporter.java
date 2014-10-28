@@ -60,8 +60,10 @@ public class LocationAliasCsvImporter extends CsvImporter<LocationAliasCsvBean> 
 			// Iterate over the location alias import beans.
 			for (LocationAliasCsvBean locationAliasBean : locationAliasBeanList) {
 				try {
-					locationAliasCsvBeanImport(locationAliasBean, inFacility, inProcessTime);
-					produceRecordSuccessEvent(locationAliasBean);
+					LocationAlias locationAlias = locationAliasCsvBeanImport(locationAliasBean, inFacility, inProcessTime);
+					if (locationAlias != null) {
+						produceRecordSuccessEvent(locationAliasBean);
+					}
 				}
 				catch(InputValidationException e) {
 					produceRecordViolationEvent(EventSeverity.WARN, e, locationAliasBean);
@@ -112,7 +114,7 @@ public class LocationAliasCsvImporter extends CsvImporter<LocationAliasCsvBean> 
 	 * @param inEdiProcessTime
 	 * @throws ViolationException 
 	 */
-	private void locationAliasCsvBeanImport(final LocationAliasCsvBean inCsvBean,
+	private LocationAlias locationAliasCsvBeanImport(final LocationAliasCsvBean inCsvBean,
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime) throws InputValidationException, DaoException {
 
@@ -122,7 +124,8 @@ public class LocationAliasCsvImporter extends CsvImporter<LocationAliasCsvBean> 
 			LOGGER.info(inCsvBean.toString());
 			String errorMsg = inCsvBean.validateBean();
 			if (errorMsg != null) {
-				throw new InputValidationException(inCsvBean, errorMsg);
+				produceRecordViolationEvent(inCsvBean, errorMsg);
+				return null;
 			}
 
 			// Get or create the item at the specified location.
@@ -133,10 +136,12 @@ public class LocationAliasCsvImporter extends CsvImporter<LocationAliasCsvBean> 
 			
 			// Check for deleted location
 			if (mappedLocation == null || mappedLocation instanceof Facility) {
-				throw new InputValidationException(inCsvBean, "mappedLocationId", ErrorCode.FIELD_REFERENCE_NOT_FOUND);
+				produceRecordViolationEvent(inCsvBean, "mappedLocationId", mappedLocationId, ErrorCode.FIELD_REFERENCE_NOT_FOUND);
+				return null;
 			}
 			if (!mappedLocation.isActive() ){
-				throw new InputValidationException(inCsvBean, "mappedLocationId", ErrorCode.FIELD_REFERENCE_INACTIVE);
+				produceRecordViolationEvent(inCsvBean, "mappedLocationId", mappedLocationId, ErrorCode.FIELD_REFERENCE_INACTIVE);
+				return null;
 			}
 
 			if ((result == null) && (inCsvBean.getMappedLocationId() != null) && (mappedLocation != null)) {
@@ -155,6 +160,7 @@ public class LocationAliasCsvImporter extends CsvImporter<LocationAliasCsvBean> 
 				mLocationAliasDao.store(result);
 			}
 			mLocationAliasDao.commitTransaction();
+			return result;
 		} finally {
 			mLocationAliasDao.endTransaction();
 		}

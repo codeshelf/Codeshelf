@@ -62,6 +62,16 @@ public class FieldError extends ObjectError {
 	 * Create a new FieldError instance.
 	 * @param objectName the name of the affected object
 	 * @param field the affected field of the object
+	 * @param defaultMessage the default message to be used to resolve this message
+	 */
+	public FieldError(String objectName, String field, Object rejectedValue, ErrorCode errorCode) {
+		this(objectName, field, rejectedValue, false, new ErrorCode[]{errorCode}, null, "");
+	}
+	
+	/**
+	 * Create a new FieldError instance.
+	 * @param objectName the name of the affected object
+	 * @param field the affected field of the object
 	 * @param rejectedValue the rejected field value
 	 * @param bindingFailure whether this error represents a binding failure
 	 * (like a type mismatch); else, it is a validation failure
