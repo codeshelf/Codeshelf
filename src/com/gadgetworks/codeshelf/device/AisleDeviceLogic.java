@@ -289,8 +289,8 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 		// See CD_0041 for initial scope. DEV-411 will have us send out separate CommandControlLed if the byte stream of samples > 125.
 		// Looks like it does not really work yet for multiple channels. Does this need to figure out each channel, then send separate commands? Probably.
 		final Integer kMaxLedCmdToLog = 25;
-		final Integer kMaxLedCmdSendAtATime = 20;
-		final Integer kDelayMillisBetweenPartialSends = 30;
+		final Integer kMaxLedCmdSendAtATime = 12;
+		final Integer kDelayMillisBetweenPartialSends = 5;
 		final Boolean splitLargeLedSendsIntoPartials = true; // became true at V7
 		String myGuidStr = getMyGuidStr();
 

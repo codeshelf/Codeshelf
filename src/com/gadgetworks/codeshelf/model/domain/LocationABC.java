@@ -393,27 +393,39 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	}
 
 	// --------------------------------------------------------------------------
-	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.ILocation#getLocationIdToParentLevel(java.lang.Class)
+	/* Returns something like A2.B1.T3.S5. Needs to call recursively up the chain.
+	 * This is private helper for getNominalLocationId()
+	 * 
 	 */
-	public final String getNominalLocationId() {
+	private final String getNominalLocationIdWithoutBracket() {
 		String result;
 
 		// It seems reasonable in the code to ask for getLocationIdToParentLevel(Aisle.class) when the class of the object is unknown, and might even be the facility.
 		// Let's not NPE.
 		if (this.getClass().equals(Facility.class))
 			return "";
-
-		@SuppressWarnings("unchecked")
-		ILocation<P> checkParent = (ILocation<P>) getParent();
+		
+		@SuppressWarnings("rawtypes")
+		LocationABC checkParent = (LocationABC) getParent();
 		if (checkParent.getClass().equals(Facility.class)) {
 			// This is the last child  we want.
 			result = getLocationId();
 		} else {
 			// The current parent is not the class we want so recurse up the hierarchy.
-			result = checkParent.getNominalLocationId();
+			result = checkParent.getNominalLocationIdWithoutBracket();
 			result = result + "." + getLocationId();
 		}
+		return result;
+	}
+	
+	// --------------------------------------------------------------------------
+	/* Returns something like A2.B1.T3.S5. Or if the location is inactive, <A2.B1.T3.S5>
+	 * 
+	 */
+	public final String getNominalLocationId() {
+		String result = getNominalLocationIdWithoutBracket();
+		if (!this.isActive())
+			result = "<" + result + ">";
 		return result;
 	}
 
@@ -667,7 +679,10 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		// to support list view meta-field
 		LocationAlias theAlias = getPrimaryAlias();
 		if (theAlias != null) {
-			return theAlias.getAlias();
+			if (this.isActive())
+				return theAlias.getAlias();
+			else
+				return "<" + theAlias.getAlias() + ">"; // new from v8. If location is inactive, surround with <>
 		}
 		return "";
 	}
