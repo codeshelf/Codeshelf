@@ -211,7 +211,9 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 	 * Get the location id up to but not including the facility
 	 */
 	String getNominalLocationId();
-	
+
+	String getNominalLocationIdExcludeBracket(); // If location is deleted, it would have brackets.
+
 	String getLocationId();
 
 	// --------------------------------------------------------------------------

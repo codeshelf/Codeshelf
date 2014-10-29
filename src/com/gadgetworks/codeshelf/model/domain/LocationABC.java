@@ -397,7 +397,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	 * This is private helper for getNominalLocationId()
 	 * 
 	 */
-	private final String getNominalLocationIdWithoutBracket() {
+	public final String getNominalLocationIdExcludeBracket() {
 		String result;
 
 		// It seems reasonable in the code to ask for getLocationIdToParentLevel(Aisle.class) when the class of the object is unknown, and might even be the facility.
@@ -412,7 +412,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 			result = getLocationId();
 		} else {
 			// The current parent is not the class we want so recurse up the hierarchy.
-			result = checkParent.getNominalLocationIdWithoutBracket();
+			result = checkParent.getNominalLocationIdExcludeBracket();
 			result = result + "." + getLocationId();
 		}
 		return result;
@@ -423,7 +423,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	 * 
 	 */
 	public final String getNominalLocationId() {
-		String result = getNominalLocationIdWithoutBracket();
+		String result = getNominalLocationIdExcludeBracket();
 		if (!this.isActive())
 			result = "<" + result + ">";
 		return result;

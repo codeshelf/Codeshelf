@@ -128,7 +128,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		if (inUom == null)
 			revisedUom = "?uom";
 		else revisedUom = UomNormalizer.normalizeString(inUom);
-		return inItemMasterId + "-" + inLocation.getNominalLocationId() + "-" + revisedUom;
+		return inItemMasterId + "-" + inLocation.getNominalLocationIdExcludeBracket() + "-" + revisedUom;
 	}
 
 	public Item() {
