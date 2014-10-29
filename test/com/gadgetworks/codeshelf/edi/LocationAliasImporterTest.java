@@ -38,6 +38,8 @@ public class LocationAliasImporterTest extends EdiTestABC {
 
 	@Test
 	public final void successEventsProduced() {
+		this.getPersistenceService().beginTenantTransaction();
+
 		String csvString = "mappedLocationId,locationAlias\r\n" //
 				+ "A1, AisleA\r\n" //
 				+ "A2.B2, B34\r\n"; //
@@ -58,10 +60,14 @@ public class LocationAliasImporterTest extends EdiTestABC {
 		importer.importLocationAliasesFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
 		verify(producer, times(2)).produceEvent(eq(EnumSet.of(EventTag.IMPORT, EventTag.LOCATION_ALIAS)), eq(EventSeverity.INFO), any(ImportCsvBeanABC.class));
 		verify(producer, Mockito.never()).produceViolationEvent(any(Set.class), any(EventSeverity.class),  any(Exception.class), any(Object.class));
+
+		this.getPersistenceService().endTenantTransaction();
 	}
 
 	@Test
 	public final void violationEventProducedWhenLocationInactive() {
+		this.getPersistenceService().beginTenantTransaction();
+
 		String csvString = "mappedLocationId,locationAlias\r\n" //
 				+ "A1, AisleA\r\n";
 		
@@ -76,10 +82,14 @@ public class LocationAliasImporterTest extends EdiTestABC {
 		importer.importLocationAliasesFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
 		verify(producer, times(1)).produceViolationEvent(eq(EnumSet.of(EventTag.IMPORT, EventTag.LOCATION_ALIAS)), eq(EventSeverity.WARN), any(Errors.class), any(ImportCsvBeanABC.class));
 		verify(producer, Mockito.never()).produceEvent(any(Set.class), eq(EventSeverity.INFO), any(Object.class));
+		
+		this.getPersistenceService().endTenantTransaction();
 	}
 
 	@Test
 	public final void violationEventProducedWhenLocationNotFound() {
+		this.getPersistenceService().beginTenantTransaction();
+
 		String csvString = "mappedLocationId,locationAlias\r\n" //
 				+ "ANOTTHERE, AisleA\r\n";
 		
@@ -91,11 +101,14 @@ public class LocationAliasImporterTest extends EdiTestABC {
 		importer.importLocationAliasesFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
 		verify(producer, times(1)).produceViolationEvent(eq(EnumSet.of(EventTag.IMPORT, EventTag.LOCATION_ALIAS)), eq(EventSeverity.WARN), any(Errors.class), any(ImportCsvBeanABC.class));
 		verify(producer, Mockito.never()).produceEvent(any(Set.class), eq(EventSeverity.INFO),  any(Object.class));
+
+		this.getPersistenceService().endTenantTransaction();
 	}
 
 	
 	@Test
 	public final void findLocationByIdAfterImport() {
+		this.getPersistenceService().beginTenantTransaction();
 
 		String csvString = "mappedLocationId,locationAlias\r\n" //
 				+ "A1, AisleA\r\n" //

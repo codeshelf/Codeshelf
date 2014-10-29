@@ -37,6 +37,8 @@ public class CrossBatchImporterTest extends EdiTestABC {
 	
 	@Override
 	public void doBefore() {
+		this.getPersistenceService().beginTenantTransaction();
+
 		Organization organization = new Organization();
 		organization.setDomainId("O-" + testName .getMethodName());
 		mOrganizationDao.store(organization);
@@ -45,6 +47,9 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		organization.createFacility(facilityId, "TEST", Point.getZeroPoint());
 		Facility facility = organization.getFacility(facilityId);
 		mFacility = facility;
+		
+		this.getPersistenceService().endTenantTransaction();
+
 	}
 	
 	private ItemMaster createItemMaster(final String inItemMasterId, final String inUom, final Facility inFacility) {
@@ -78,6 +83,8 @@ public class CrossBatchImporterTest extends EdiTestABC {
 
 	@Test
 	public final void testMissingItemMaster() {
+		this.getPersistenceService().beginTenantTransaction();
+
 		String csvString = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
 				+ ",C111,I111.valid,100,ea\r\n" //
 				+ ",C111,I111.missing,200,ea\r\n"; //
@@ -86,10 +93,14 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		
 		int count = importCsvString(mFacility, csvString, new Timestamp(System.currentTimeMillis()));
 		Assert.assertEquals(1,  count);
+
+		this.getPersistenceService().endTenantTransaction();
 	}
 
 	@Test
 	public final void testEmptyItemMaster() {
+		this.getPersistenceService().beginTenantTransaction();
+
 		String csvString = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
 				+ ",C111,I111.valid,100,ea\r\n" //
 				+ ",C111,,200,ea\r\n"; //
@@ -98,10 +109,14 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		
 		int count = importCsvString(mFacility, csvString, new Timestamp(System.currentTimeMillis()));
 		Assert.assertEquals(1,  count);
+		
+		this.getPersistenceService().endTenantTransaction();
 	}
 
 	@Test
 	public final void testInvalidQuantity() {
+		this.getPersistenceService().beginTenantTransaction();
+
 		String[] invalidQuantities = new String[]{"0", "-1", "NaN", "1.1"};
 
 		String csvStringTemplate = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
@@ -117,10 +132,14 @@ public class CrossBatchImporterTest extends EdiTestABC {
 			Assert.assertEquals(1,  count);
 			Assert.assertTrue("Did not contain quantity: " + csvString, csvString.contains(invalidQuantity));// sanity check
 		}
+
+		this.getPersistenceService().endTenantTransaction();
 	}
 
 	@Test
 	public final void testCrossBatchImporter() {
+		this.getPersistenceService().beginTenantTransaction();
+
 		Facility facility = mFacility;
 		HeaderCounts theCounts = facility.countCrossOrders();
 		Assert.assertTrue(theCounts.mTotalHeaders == 0);
@@ -280,6 +299,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 	@Test
 	public final void testResendCrossBatchAddItem() {
 		this.getPersistenceService().beginTenantTransaction();
+		
 		Facility facility = mFacility;
 		String csvString = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
 				+ "G1,C777,I777.1,100,ea\r\n" //
